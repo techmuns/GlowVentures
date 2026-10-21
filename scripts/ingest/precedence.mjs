@@ -552,10 +552,12 @@ for (const provider of [
   // category, so none is claimed here (Stage 10cv). Not the ASK PMS
   // mandates above: a different issuer, a different document, a different book.
   "ASK Absolute Return Fund",
-  // Redeemed to nil and carrying no holding — the entry is here anyway, because
-  // a provider with no precedence block contributes nothing SILENTLY, and an
-  // account that holds nothing and an account nobody wired look identical from
-  // the book. This one is a decision; that one is a defect.
+  // Redeemed to nil: both classes are carried as MEASURED zeros, with the dated
+  // record (a contribution, a B2→F1 switch, a payout) that took them there. The
+  // entry matters because a provider with no precedence block contributes
+  // nothing SILENTLY, and an account that holds nothing and an account nobody
+  // wired look identical from the book. (Dated rows need no rule here: build-book
+  // unions `cashFlows` across every issue of an account, `datedRowsAcross`.)
   "Motilal Oswal Hedged Equity Multi Factor Strategy",
 ]) {
   PRECEDENCE[provider] = {

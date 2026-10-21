@@ -1,5 +1,6 @@
 // One statement-basis projection of the canonical book and reconciled ledger.
 // Built with every deployment, never maintained as a second portfolio register.
+import { investedOnOf } from "./investedOn";
 import template from "../data/consolidatedTemplate.json";
 import {
   BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_AS_OF, BOOK_UNVALUED_HOLDINGS,
@@ -96,6 +97,9 @@ export function buildConsolidatedSheet(docs: ArchiveDoc[], input: { accounts: Ac
     const a = accountById.get(p.accountId), c = classify(p);
     const tranche = BOOK_POSITION_TRANCHES[`${p.accountId}|${p.securityKey}`];
     const purchaseDates = dates(tranche?.moves.map(m => m.date) ?? []);
+    // EVERY DATE THAT DATES THE HOLDING (Stage 10fw): allotments, a lot register,
+    // its own dated trades, a drawdown call, the review — the holdings tables' one rule.
+    const invested = investedOnOf([p]);
     const capital = dated.behind([p], positions);
     const xirr = capital?.dated && capital.days >= 365 && capital.annualPct != null ? capital.annualPct / 100 : null;
     const source = sourcesFor(a).filter(d => d.holdings?.some(h => h.securityKey === p.securityKey && h.marketValue === p.marketValue))
@@ -104,13 +108,13 @@ export function buildConsolidatedSheet(docs: ArchiveDoc[], input: { accounts: Ac
     const check = !counted ? "Duplicate reporting: excluded from consolidated totals" : p.valuedAtCost ? "Held at cost; no measured gain"
       : p.costBasis == null ? "Cost not reported" : "OK";
     const notes = [p.review ? `${reviewNote}; ${p.reviewNote ?? ""}` : source?.docKey ?? `${a?.provider ?? "Unknown account"} · ${a?.accountNo ?? p.accountId}`,
-      !purchaseDates.length && !p.heldSince ? "Purchase dates not reported" : "",
+      !invested ? "Purchase dates not reported" : "",
       xirr == null ? capital?.dated ? "History under one year: annualised XIRR withheld" : capital?.reason ?? "No complete dated capital record for this holding" : "",
       p.valuedAtCost ? "Value is recorded cost, not a market valuation" : "",
       !counted ? `Also reported under ${p.alsoReportedUnder?.join(", ") ?? p.dedupeGroup}` : ""].filter(Boolean).join("; ");
     return { hid: `H${String(i + 1).padStart(4, "0")}`, acct: p.accountId, sec: p.securityKey, ent: a ? ownerDisplayName(a.ownerId) : null,
       adv: a?.provider ?? null, name: securityLabel(p.securityKey, p.security), ...c, basket: basketCodes[c.basket] ?? c.basket,
-      first: p.heldSince ?? purchaseDates[0] ?? null, last: purchaseDates.at(-1) ?? null,
+      first: invested?.first ?? null, last: invested && invested.last !== invested.first ? invested.last : purchaseDates.at(-1) ?? null,
       qty: p.quantity, cost: p.costBasis, avg: p.avgCost, price: p.currentPrice,
       basis: p.valuedAtCost ? "At cost" : p.review ? "Review value" : "Statement value", mvov: null, mv: p.marketValue,
       // The holding's FIFO return — unrealised, realised and the income it paid,

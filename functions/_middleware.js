@@ -176,7 +176,28 @@ export async function onRequest(context) {
   // Already signed in? Let the request through to the static assets / SPA.
   const cookies = parseCookies(request.headers.get("Cookie"));
   if (configured && cookies[COOKIE] && timingSafeEqual(cookies[COOKIE], await sessionToken())) {
-    return next();
+    const response = await next();
+    if (response.headers.get("Content-Type")?.includes("text/html")) {
+      // Pages' SPA fallback serves index.html for nonexistent hashed assets.
+      // A missing script/style must fail as an asset, not succeed as HTML.
+      if (url.pathname.startsWith("/assets/")) {
+        return new Response("Asset not found", { status: 404, headers: {
+          "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store",
+        } });
+      }
+      const fresh = new Response(response.body, response);
+      fresh.headers.set("Cache-Control", "private, no-cache");
+      return fresh;
+    }
+    return response;
+  }
+
+  // Expired sessions must not deliver a login document as executable code.
+  // The client's recovery reload opens the sign-in wall at the page URL.
+  if (url.pathname.startsWith("/assets/")) {
+    return new Response("Sign in required", { status: 401, headers: {
+      "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store",
+    } });
   }
 
   // Otherwise show the login wall (200 so it renders cleanly on any deep link).

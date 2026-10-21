@@ -1,3 +1,4 @@
+import { InfiniteTableBody } from "@/components/InfiniteTableBody";
 import { useEffect, useMemo, useState } from "react";
 import { Receipt, Landmark, Timer, Percent } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
@@ -290,16 +291,12 @@ export function CapitalGains() {
   const harvestRows = harvestQ.trim()
     ? harvest.filter((h) => h.security.toLowerCase().includes(harvestQ.trim().toLowerCase()))
     : harvest;
-  // THE CAP IS APPLIED AFTER THE SORT, so a reader who ranks by a column sees
-  // the top 30 OF THAT RANKING rather than the first 30 of the default one
-  // re-ordered among themselves — the rule the transactions tape already
-  // follows for its own cap.
   const holdShown = sortRows(holdCandidates, holdView.sort, {
     security: (h) => h.security,
     gain: (h) => h.gain,
     turns: (h) => h.daysLeft,
     saved: (h) => h.saving,
-  }).slice(0, 30);
+  });
   const candidateNames = new Set(holdCandidates.map((x) => `${x.accountId}|${x.securityKey}`)).size;
   const harvestShown = sortRows(harvestRows, harvestView.sort, {
     security: (h) => h.security,
@@ -307,7 +304,7 @@ export function CapitalGains() {
     loss: (h) => h.unrealizedPnL,
     return: (h) => h.returnPct,
     marked: (h) => accountAsOf.get(h.accountId) ?? null,
-  }).slice(0, 30);
+  });
   const harvestTotal = sumOrNull(harvest.map((x) => x.unrealizedPnL));
   /**
    * ── A LOSS IS ONLY AS CURRENT AS THE MARK IT IS STRUCK ON (XA-22) ────────
@@ -829,11 +826,11 @@ export function CapitalGains() {
                     <SortHeader col="saved" view={holdView}>Tax saved</SortHeader>
                   </Tr>
                 </thead>
-                <tbody className="divide-y divide-ink-700/70">
+                <InfiniteTableBody rows={holdShown} columns={holdView.order.length} resetKey={JSON.stringify([holdView.sort, scope.owners ? [...scope.owners].sort() : null])} className="divide-y divide-ink-700/70">
                   {/* ONE ROW PER SHORT-TERM LOT (Stage 10fx): a holding's lots
                       turn long-term on their own dates, and each one's gain is
                       its own units at the mark less its own cost. */}
-                  {holdShown.map((h) => (
+                  {(h) => (
                     <Tr view={holdView} key={`${h.securityKey}@${h.accountId}@${h.purchaseDate}`} className="hover:bg-ink-700/40">
                       <td className="px-4 py-2.5 text-slate-100" data-xa="cg-hold-lot" data-key={h.securityKey} data-account={h.accountId}
                         data-bought={h.purchaseDate} data-gain={h.gain} data-lt={h.ltDate}>
@@ -850,8 +847,8 @@ export function CapitalGains() {
                         {money(h.saving)}
                       </td>
                     </Tr>
-                  ))}
-                </tbody>
+                  )}
+                </InfiniteTableBody>
               </table>
             </div>
           )}
@@ -891,8 +888,9 @@ export function CapitalGains() {
                       <SortHeader col="term" view={harvestView} sortable={false}>ST / LT</SortHeader>
                     </Tr>
                   </thead>
-                  <tbody className="divide-y divide-ink-700/70">
-                    {harvestShown.map((h) => (
+                  <InfiniteTableBody rows={harvestShown} columns={harvestView.order.length} resetKey={JSON.stringify([harvestQ, harvestView.sort, scope.owners ? [...scope.owners].sort() : null])} className="divide-y divide-ink-700/70"
+                    empty={<tr><td colSpan={harvestView.order.length} className="py-10 text-center text-sm text-slate-500">No security matches "{harvestQ}".</td></tr>}>
+                    {(h) => (
                       <Tr view={harvestView} key={h.securityKey + "@" + h.accountId} className="hover:bg-ink-700/40">
                         <td className="px-4 py-2.5 text-slate-100" data-xa="cg-harvest-row" data-key={h.securityKey}
                           data-account={h.accountId} data-marked={accountAsOf.get(h.accountId) ?? ""}
@@ -959,13 +957,8 @@ export function CapitalGains() {
                           );
                         })()}
                       </Tr>
-                    ))}
-                    {harvestRows.length === 0 && (
-                      <tr><td colSpan={harvestView.order.length} className="py-10 text-center text-sm text-slate-500">
-                        No security matches "{harvestQ}".
-                      </td></tr>
                     )}
-                  </tbody>
+                  </InfiniteTableBody>
                 </table>
               </div>
             </>

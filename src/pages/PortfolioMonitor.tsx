@@ -1,4 +1,4 @@
-import { TablePageControls, useTablePagination } from "@/components/PagedTableBody";
+import { InfiniteTableEnd, useInfiniteTable } from "@/components/InfiniteTableBody";
 import { Fragment, useEffect, useMemo, useState, useCallback, type ReactNode } from "react";
 import { statementNoteForSet } from "@/lib/statementNotes";
 import { Link, useSearchParams } from "react-router-dom";
@@ -39,7 +39,7 @@ import { costedFigures, commonMark, costCoverNote, markKey, splitMarkReason, VAC
 import { rollup, acctKey, realisedAbsence, realisedCoverageNote, STAGGERED_MIN, type GroupRow, type InstrumentRow } from "@/lib/txnRollup";
 import {
   trancheTable, trancheKey, capitalRollup, capitalMovesWithCalls, capitalReturn, clubCapitalReturn, capitalReturnCoverage,
-  carriedCostOf, carriedCostNote, grossPaidOf, grossPaidNote, boughtNavOf, callDatesByHolding,
+  carriedCostOf, carriedCostNote, grossPaidOf, grossPaidNote, boughtNavOf,
   type TrancheTable, type TrancheRow, type CapitalSide, type CapitalGroup,
 } from "@/lib/tranches";
 // THE TWO DATED RECORDS, MERGED INTO ONE ROW SET — and the two money blocks
@@ -87,6 +87,9 @@ import { notHeldNote } from "@/components/QuantityMovement";
 import { movementsFor } from "@/lib/shareMovements";
 import { allRecordedLines, recordedLabel, recordedLineFor } from "@/lib/recordedHoldings";
 import type { Position } from "@/lib/types";
+import { investedOnOf, holdingTradesOf, lineUndatedReason, accountInvestedOn, type InvestedOn } from "@/lib/investedOn";
+import { InvestedOnCell } from "@/components/InvestedOnCell";
+import { holdingPeriodOf, type HoldingPeriod } from "@/lib/holdingFlows";
 import { AbsentCell, AbsentFromBook, AbsentSection, AbsentValue, DASH } from "@/components/Absent";
 import { SortHeader, SortableTable, Tr, TrFoot } from "@/components/SortHeader";
 // THE SAME TABLE STANDARD THE PRIVATE MARKET PAGE READS — a row opens into rows
@@ -176,7 +179,9 @@ type Venue = {
   heldSince: string | null; assetClass: string;
   /** The line's purchase facts for the CAGR gate (Stage 10fx, `clubbedPurchase`). */
   purchaseDates?: number; costOfUnitsSold?: number | null;
-  investedOn: { first: string; last: string; payments: number } | null;
+  /** When the units held now began, where the line's own dated trades prove it (Stage 10fw) — its YTD. */
+  opened?: HoldingPeriod | null;
+  investedOn: InvestedOn | null;
 };
 
 /**
@@ -193,9 +198,13 @@ type MandateHolding = {
   heldSince: string | null; assetClass: string;
   /** The share's purchase facts for the CAGR gate (Stage 10fx, `singlePurchaseGap`). */
   purchaseDates?: number; costOfUnitsSold?: number | null;
+  /** When the units held now began, where the line's own dated trades prove it (Stage 10fw) — its YTD. */
+  opened?: HoldingPeriod | null;
   /** The date this share's value is struck at — where its return window ends. */
   valuedAt: string | null;
-  investedOn: { first: string; last: string; payments: number } | null;
+  investedOn: InvestedOn | null;
+  /** The statement line itself — for its own dated trades and why they date it or not (Stage 10fm). */
+  position: Position;
   /** DL-8: the share's own realised on its account's capital gain statement. */
   accountId: string;
   realised: number | null;
@@ -257,64 +266,6 @@ type MandateInfo = {
   holdings: MandateHolding[];
   accountMV: number; accountCount: number;
 };
-/**
- * WHEN A HOLDING'S OWN MONEY WENT IN, over the positions a row sums.
- *
- * Three sources, strongest first, and all are the HOLDING'S OWN dates rather
- * than its account's:
- *
- *   • `Position.heldSince` — the acquisition date on a lot register, emitted
- *     only where the lots account for every unit held;
- *   • the position's own tranche record, keyed on (account, security), which is
- *     the dated allotments a fund reports against that very folio;
- *   • a drawdown fund's own dated CALLS, where the account holds nothing but
- *     that fund and its paid-in covers every call (`callDatesByHolding`). A call
- *     carries no unit count, so it can date the money without splitting it.
- *     Five folios on this book: Baring, Carnelian Bharat Amritkaal, Delphi and
- *     both Founders Fund folios.
- *
- * AN ACCOUNT-LEVEL DATE IS DELIBERATELY NOT A FOURTH TIER. An account's first
- * contribution is when the FAMILY funded the account, not when a manager bought
- * the share this row is about — putting it here would print a date under a
- * heading that says something else about it, for every share in a mandate. The
- * account-level record has its own home, on the mandate page and on What I
- * invested. The calls tier is not that: on an account holding one fund and
- * nothing else, the account's calls and the holding's purchases are the same
- * payments, and `callDatesByHolding` refuses every account where they are not.
- *
- * ── AND THE ACCOUNT-LEVEL TIER CANNOT BE CAUGHT ON THIS BOOK, SO IT IS WRITTEN DOWN ──
- *
- * Adding it was REINTRODUCED as a bug and the sweep came back clean. Measured,
- * every position in a funded account is already one of three things: in a PMS
- * (125 of them, rolled into a mandate row, which carries no date by design),
- * already own-dated (7), or closed and not drawn (3). ZERO would newly borrow
- * one — so the wrong rule and the right one render identically here, and the
- * page check that guards it (`a holding the book cannot date shows a dash`)
- * can only be shown to bite by a borrowed CONSTANT, which is what it was
- * verified against. The first drop that funds a non-PMS account holding
- * something with no allotment record of its own makes this live, silently, on a
- * page computing correctly — which is why the rule is stated here rather than
- * left to be inferred from the absence of a test for it.
- */
-const CALL_DATES = callDatesByHolding(BOOK_COMMITMENTS, BOOK_POSITIONS);
-function investedOnOf(ps: Position[]): { first: string; last: string; payments: number } | null {
-  const dates: string[] = [];
-  for (const p of ps) {
-    const own = BOOK_POSITION_TRANCHES[trancheKey(p.accountId, p.securityKey)];
-    const ins = own?.moves.filter((m) => m.direction === "in").map((m) => m.date) ?? [];
-    if (ins.length) { dates.push(...ins); continue; }
-    if (p.heldSince) { dates.push(p.heldSince); continue; }
-    const called = CALL_DATES.get(trancheKey(p.accountId, p.securityKey));
-    if (called?.length) { dates.push(...called); continue; }
-    // ONE UNDATED CONSTITUENT AND THE ROW HAS NO FIRST PAYMENT. Returning the
-    // earliest of the rest would name a date the row's own money predates.
-    return null;
-  }
-  if (!dates.length) return null;
-  dates.sort();
-  return { first: dates[0], last: dates[dates.length - 1], payments: dates.length };
-}
-
 type Row = {
   /**
    * A SECURITY the family holds, or a MANDATE it has handed to a discretionary
@@ -396,6 +347,8 @@ type Row = {
    * applied to a date: one missing input makes the answer unknown, not older.
    */
   heldSince: string | null;
+  /** When the units held now began, where every line's dated trades prove it (`holdingPeriodOf`, Stage 10fw). */
+  opened?: HoldingPeriod | null;
   /**
    * WHETHER `heldSince` STARTS ONE PURCHASE HELD THROUGHOUT (Stage 10fx) — the
    * distinct purchase dates behind the units held and the cost of units sold,
@@ -438,7 +391,7 @@ type Row = {
    * date, the same gate `heldSince` uses. A "first payment" over the subset that
    * happens to be dated is not the first payment.
    */
-  investedOn: { first: string; last: string; payments: number } | null;
+  investedOn: InvestedOn | null;
   /**
    * The positions this row was built from — its own deduped set — carried ONLY
    * so a per-contribution breakdown can be struck on exactly what the row sums.
@@ -760,9 +713,9 @@ const LIVE_CELL = "Recalculated from the live price. Quantity and cost come from
  * Delphi, Carnelian Amritkaal, Neo Infra and Baring, which print 1 to 6 dated
  * calls each. What they do not print is WHICH UNITS each call bought.
  */
-// Keyed on the ACCOUNT, for the reason an undated cell gives. `CALL_DATES`
-// above is keyed on the HOLDING and dates one — Stage 10cy's third tier, which
-// fires only where the account's one line with money in it is that fund.
+// Keyed on the ACCOUNT, for the reason an undated cell gives. `investedOnOf`'s
+// call tier is keyed on the HOLDING and dates one — Stage 10cy's, which fires
+// only where the account's one line with money in it is that fund.
 const ACCOUNT_CALL_DATES = new Map<string, string[]>(BOOK_COMMITMENTS
   .filter((c) => !!c.accountId && (c.calls ?? []).length > 0)
   .map((c) => [c.accountId, (c.calls ?? []).map((x) => x.date).filter((d): d is string => !!d).sort()]));
@@ -1568,12 +1521,14 @@ export function PortfolioMonitor() {
         // That money is on the Transactions card, in Capital in and out.
         heldSince: null,
         valuedAt: commonValueDate(ps.map(valueDate)),
-        // NOR AN INVESTED-ON DATE, AND FOR THE SAME REASON ONE LEVEL UP. A
-        // mandate is an ACCOUNT; the family funded it on dates the statements do
-        // report, but those dates belong to the account and not to any share in
-        // it. They are on the mandate's own page, beside its Invested tile and
-        // under What the family put in.
-        investedOn: null,
+        // A MANDATE'S OWN INVESTED-ON IS THE FAMILY'S (Stage 10fm). It is an
+        // ACCOUNT, and the family funded it on the inception date its statement
+        // prints — the date that was missing from this row while the statement
+        // carried it. Never lent to the shares inside: theirs are the manager's
+        // purchases, each dated by its own trades. Filtered to part of the
+        // mandate, the row is those shares, and so are its dates.
+        investedOn: lines.every((l) => l.holdings === l.accountCount)
+          ? accountInvestedOn(accountIds) : investedOnOf(ps),
         // A MANDATE IS NEVER "REDEEMED": it is an account, and an account that
         // holds nothing says so through `noPositionsReason` on its own page.
         fundClasses: [],
@@ -1622,7 +1577,7 @@ export function PortfolioMonitor() {
             costBasis: x.costBasis, marketValue: x.marketValue, unrealizedPnL: x.unrealizedPnL,
             returnPct: x.returnPct, costNA: !!x.costUnavailable || x.costBasis === null, live: !!x.live,
             dayChangePct: x.dayChangePct ?? null,
-            heldSince: x.heldSince, assetClass: x.assetClass, investedOn: investedOnOf([x]),
+            heldSince: x.heldSince, assetClass: x.assetClass, investedOn: investedOnOf([x]), position: x, opened: holdingPeriodOf([x]),
             purchaseDates: x.purchaseDates, costOfUnitsSold: x.costOfUnitsSold ?? null,
             valuedAt: valueDate(x),
             accountId: x.accountId,
@@ -1800,6 +1755,7 @@ export function PortfolioMonitor() {
           // Every line the review's, held at cost — no gain to strike (Stage 10dh).
           valuedAtCost: dps.every((x) => x.valuedAtCost === true),
           heldSince, purchaseDates: purchase.purchaseDates, costOfUnitsSold: purchase.costOfUnitsSold,
+          opened: holdingPeriodOf(dps),
           // The deduped set's ONE value date, or null where its lines are marked
           // on different dates — that row refuses to annualise rather than pick.
           valuedAt: commonValueDate(dps.map(valueDate)),
@@ -1877,6 +1833,7 @@ export function PortfolioMonitor() {
         costNA: !!p.costUnavailable || p.costBasis === null,
         valuedAtCost: p.valuedAtCost === true,
         heldSince: p.heldSince, purchaseDates: p.purchaseDates, costOfUnitsSold: p.costOfUnitsSold ?? null,
+        opened: holdingPeriodOf([p]),
         valuedAt: valueDate(p),
         // One statement line that is the whole folio IS the account.
         capital: datedCap?.behind([p], fifoOpts.universe) ?? undefined,
@@ -2833,10 +2790,24 @@ export function PortfolioMonitor() {
    * lot register that does not account for every unit held dates none of them;
    * a cash balance is not bought at all. "This account issues neither" was false
    * of every fund that prints dated calls.
+   *
+   * AND A SHARE IN A MANDATE IS DATED BY ITS TRADES WHERE THEY REACH (Stage
+   * 10fm). "The manager's statement reports what this share cost but not the
+   * date it was bought" stood on every PMS row while the manager's transaction
+   * statement dated each buy. The line's own record now says what its trades
+   * date and what they cannot — a window that opens after the units were held,
+   * units on no dated trade — in measured words (`lineUndatedReason`).
    */
-  const investedOnWhy = (ps: readonly Pick<Position, "accountId" | "assetClass">[]): string => {
+  const investedOnWhy = (ps: readonly Position[]): string => {
     if (ps.length && ps.every((p) => p.assetClass === "Cash")) {
       return "a cash balance is not bought on a date — it is money the account holds, so there is no purchase to date";
+    }
+    const undated = ps.filter((p) => !investedOnOf([p]));
+    const own = undated.map(lineUndatedReason).find((x): x is string => !!x);
+    if (own) {
+      return undated.length < ps.length
+        ? `${undated.length} of the ${ps.length} lines behind this row carry no purchase date, and a row is dated only where every line is: ${own}`
+        : own;
     }
     const accts = [...new Set(ps.map((p) => p.accountId))];
     const calls = accts.flatMap((a) => ACCOUNT_CALL_DATES.get(a) ?? []).sort();
@@ -2844,7 +2815,7 @@ export function PortfolioMonitor() {
       return `the fund's statements date the capital it called — ${calls.length} call${calls.length === 1 ? "" : "s"}, the first on ${fmtDate(calls[0])} — but not which units each call bought, so no one purchase date stands for this holding; each call is on the Transactions card`;
     }
     if (accts.length && accts.every((a) => accIdx.get(a)?.engagement === "PMS")) {
-      return "the manager's statement reports what this share cost but not the date it was bought";
+      return "the manager's statements in this drop report what this share cost, and none of its transaction statements reaches this holding's date, so nothing dates its purchase";
     }
     if (accts.some((a) => CG_WINDOW.has(a))) {
       return "this account's lot register does not account for every unit held today, so no purchase date can be read off it";
@@ -2860,14 +2831,15 @@ export function PortfolioMonitor() {
     const windows = accts.map((a) => CG_WINDOW.get(a)).filter((w): w is { from: string | null; to: string | null } => !!w);
     return realisedWindowNote(windows, accts.length - windows.length, fmtDate);
   };
-  const dateCell = (d: { first: string; last: string; payments: number } | null, why: string) =>
-    d === null ? <AbsentCell reason={why} />
-      : <span title={d.payments > 1 ? `Funded over ${d.payments} dated payments, ${fmtDate(d.first)} to ${fmtDate(d.last)} — each is its own row below.` : `One dated payment, ${fmtDate(d.first)}.`}>
-          {fmtDate(d.first)}{d.payments > 1 && <span className="ml-1 text-[10px] text-slate-500">+{d.payments - 1}</span>}
-        </span>;
+  /**
+   * AN INVESTED-ON DATE — `InvestedOnCell`, the one rendering every holdings table uses.
+   */
+  const dateCell = (d: InvestedOn | null, why: string, more = "") => <InvestedOnCell d={d} why={why} more={more} />;
   /** One child row: the tree cell, then the figures in their own columns. */
-  const childRow = (key: string, kind: string, depth: 1 | 2, name: {
+  const childRow = (key: string, kind: string, depth: 1 | 2 | 3, name: {
     title: ReactNode; sub?: ReactNode; last?: boolean; ancestorLast?: boolean;
+    /** A depth-3 row's two ancestors, outermost first, each the last of its kind. */
+    ancestorsLast?: [boolean, boolean];
     /** A line that opens rows of its own — a fund line into its instruments. */
     toggle?: { open: boolean; label: string };
   }, cells: ChildCells, data: Record<string, string | number | undefined> = {}, adjust = false) => (
@@ -2876,7 +2848,7 @@ export function PortfolioMonitor() {
       {...(name.toggle ? rowToggle(() => toggleRow(key)) : {})}
       data-tree-child={kind} {...data}>
       <TreeNameCell depth={depth} density="dense" className="min-w-[16rem]"
-        title={name.title} sub={name.sub} last={name.last} ancestorLast={name.ancestorLast}
+        title={name.title} sub={name.sub} last={name.last} ancestorLast={name.ancestorLast} ancestorsLast={name.ancestorsLast}
         {...(name.toggle ? {
           open: name.toggle.open, onToggle: () => toggleRow(key), toggleLabel: name.toggle.label,
           toggleData: { "data-child-toggle": key },
@@ -2884,6 +2856,84 @@ export function PortfolioMonitor() {
       {childTds(cells)}
     </Tr>
   );
+  /** How many dated trades sit behind a set of lines (`BOOK_HOLDING_TRADES`). */
+  const tradeCount = (ps: readonly Pick<Position, "accountId" | "securityKey">[]) =>
+    sum(ps.map((p) => holdingTradesOf(p).length));
+  /** The toggle a line carries where trades sit behind it — and nothing where none do. */
+  const tradesToggle = (key: string, ps: readonly Pick<Position, "accountId" | "securityKey">[]) => {
+    const n = tradeCount(ps);
+    if (!n) return {};
+    const open = expanded.has(key);
+    return { toggle: { open, label: open ? "Hide the dated trades" : `Show the ${n} dated trade${n === 1 ? "" : "s"}` } };
+  };
+  /**
+   * ── EVERY DATED BUY AND SELL BEHIND A LINE (Stage 10fm) ──────────────────
+   *
+   *   *"make sure that we are showing investment dates … and all the
+   *    transaction dates as well."*
+   *
+   * The account's own transaction statement, oldest first, as rows of this
+   * table under the line they belong to: the date in Invested on, the units in
+   * Qty, the trade's rate in Avg cost and a buy's settled amount in Invested. A
+   * sale's proceeds, and the dates its capital gain statement says its units
+   * were bought, ride under its name — Invested is a cost and a sale is not one.
+   *
+   * WHERE THE TRADES DO NOT ACCOUNT FOR EVERY UNIT, a line says how many they
+   * leave on no dated trade, and why that leaves the holding undated; it is
+   * arithmetic, so it is set like Counted once. A trade after the line's own
+   * statement is listed and says so: the line's quantity is struck before it.
+   */
+  const tradeRows = (lineKey: string, ps: readonly Position[], depth: 1 | 2 | 3,
+    ancestry: { ancestorLast?: boolean; ancestorsLast?: [boolean, boolean] }, lastOfParent = true): ReactNode[] => {
+    const items: { key: string; render: (last: boolean) => ReactNode }[] = [];
+    for (const p of ps) {
+      const rec = p.tradeRecord;
+      const stmt = accIdx.get(p.accountId)?.asOf ?? null;
+      const pk = `${lineKey}~${p.accountId}`;
+      if (rec && rec.unaccounted !== null && rec.unaccounted > 0) {
+        items.push({ key: `${pk}#untraded`, render: (last) => childRow(`${pk}#untraded`, "trade-untraded", depth, {
+          title: "On no dated trade",
+          sub: `units the trades from ${fmtDate(rec.from)} do not account for`,
+          last, ...ancestry,
+        }, {
+          qty: fmtNum(rec.unaccounted!),
+          investedOn: <AbsentCell reason={rec.reason ?? "the dated trades do not account for these units"} />,
+        }, { "data-trade-untraded": rec.unaccounted!, "data-trade-account": p.accountId, "data-trade-key": p.securityKey }, true) });
+      }
+      holdingTradesOf(p).forEach((t, i) => {
+        const after = stmt !== null && t.date > stmt;
+        const bought = t.boughtOn?.length
+          ? (t.boughtOn.length === 1 ? `bought ${fmtDate(t.boughtOn[0])}` : `bought ${fmtDate(t.boughtOn[0])} – ${fmtDate(t.boughtOn.at(-1)!)}`)
+          : null;
+        const sub = [
+          t.side === "sell" && t.amount !== null ? `${fmtFromBase(t.amount, { compact: true })} received` : null,
+          bought,
+          after ? `after the statement of ${fmtDate(stmt!)}` : null,
+        ].filter(Boolean).join(" · ");
+        const k = `${pk}#${t.date}#${t.side}#${i}`;
+        items.push({ key: k, render: (last) => childRow(k, "trade", depth, {
+          title: t.side === "buy" ? "Bought" : "Sold",
+          sub: sub || undefined,
+          last, ...ancestry,
+        }, {
+          qty: t.quantity === null ? <AbsentCell reason="this trade row prints no unit count on its statement" />
+            : t.side === "sell" ? `−${fmtNum(t.quantity)}` : fmtNum(t.quantity),
+          avgCost: t.price === null ? <AbsentCell reason="this trade row prints no unit price on its statement" /> : fmtFromBase(t.price),
+          invested: t.side === "sell" ? undefined
+            : t.amount === null ? <AbsentCell reason="this trade row prints no settled amount on its statement" />
+            : fmtFromBase(t.amount, { compact: true }),
+          investedOn: <span title={t.side === "sell" && bought
+            ? `Sold ${fmtDate(t.date)}; the capital gain statement's lots for this sale were ${bought}.`
+            : `${t.side === "buy" ? "Bought" : "Sold"} ${fmtDate(t.date)}, as the transaction statement prints it.`}>{fmtDate(t.date)}</span>,
+        }, {
+          "data-trade-row": lineKey, "data-trade-date": t.date, "data-trade-side": t.side,
+          "data-trade-qty": t.quantity ?? undefined, "data-trade-account": p.accountId, "data-trade-key": p.securityKey,
+          "data-trade-after": after ? stmt! : undefined,
+        }) });
+      });
+    }
+    return items.map((x, i) => x.render(lastOfParent && i === items.length - 1));
+  };
   /**
    * THE DATED CONTRIBUTIONS BEHIND ONE STATEMENT — each its own units at the
    * NAV it bought at, valued at today's mark. The line above them is the
@@ -3092,7 +3142,7 @@ export function PortfolioMonitor() {
   // is run for more than one (Stage 10dn).
   const canExpand = (r: Row) => r.kind === "mandate" ? (r.mandate?.holdings.length ?? 0) > 0
     : r.venues ? (r.venues.length > 0 || fundLinesOf(r).length > 0)
-    : !!trancheInfo.get(r.key);
+    : !!trancheInfo.get(r.key) || tradeCount(r.trancheSet) > 0;
   /**
    * THE ROUTE SPLIT, IN THE CHEVRON'S HOVER (Stage 10cg).
    *
@@ -3184,6 +3234,7 @@ export function PortfolioMonitor() {
           // mandate.
           sub: accountMV > 0 ? `${((h.marketValue / accountMV) * 100).toFixed(1)}% of the mandate` : undefined,
           last, ancestorLast,
+          ...tradesToggle(key, [h.position]),
         }, {
           reviewScope: { securityKey: h.securityKey, accountId: h.accountId },
           qty: h.quantity === null ? <AbsentCell reason={NO_UNIT_COUNT} /> : fmtNum(h.quantity),
@@ -3193,7 +3244,7 @@ export function PortfolioMonitor() {
           invested: h.costNA ? <AbsentCell reason={NO_COST_LINE} /> : fmtFromBase(h.costBasis, { compact: true }),
           investedOn: dateCell(h.investedOn, h.costNA
             ? "no statement reports what this share cost, so there is no payment to date"
-            : "the manager's statement reports what this share cost but not the date it was bought"),
+            : investedOnWhy([h.position])),
           // A SHARE'S PRICE SAYS WHETHER IT IS LIVE, as every other price on
           // this table does, and a quote the corporate-action check held back
           // is named as that (DL-9).
@@ -3214,19 +3265,28 @@ export function PortfolioMonitor() {
           // lot gain — ABCAPITAL's +129.93% carries ₹1.16 Cr realised — so a blank
           // here made the row impossible to reconcile from its own columns.
           realised: h.realised === null
-            ? <AbsentCell reason={realisedReason({ realizedPnL: null, realizedLotsAfter: h.realisedLotsAfter ?? undefined })} />
+            ? <AbsentCell reason={realisedReason({ ...h.position, realizedLotsAfter: h.realisedLotsAfter ?? undefined })} />
             : <span className={changeColor(h.realised)} title={realisedWindowOf([{ accountId: h.accountId, realizedPnL: h.realised }])}
                 data-child-realised={h.realised}>{fmtFromBase(h.realised, { compact: true, sign: true })}</span>,
-          ret: (measure) => childReturn({ returnPct: h.returnPct, heldSince: h.heldSince, valuedAt: h.valuedAt, assetClass: h.assetClass, costNA: h.costNA, costBasis: h.costBasis, marketValue: h.marketValue, purchaseDates: h.purchaseDates, costOfUnitsSold: h.costOfUnitsSold }, measure),
+          ret: (measure) => childReturn({ hprUnavailableReason: h.position.hprUnavailableReason, returnPct: h.returnPct, heldSince: h.heldSince, valuedAt: h.valuedAt, assetClass: h.assetClass, costNA: h.costNA, costBasis: h.costBasis, marketValue: h.marketValue,
+            purchaseDates: h.purchaseDates, costOfUnitsSold: h.costOfUnitsSold,
+            // ITS OWN DATED MONEY, where its trades or lots date every unit (Stage 10fw).
+            capital: datedCap?.behind([h.position], holdingsUniverse) ?? undefined, opened: h.opened }, measure),
           sector: isFundVehicle(h) ? <AbsentCell reason={fundSectorWhy(h.assetClass)} /> : sectorCell(h.sector, h.securityKey, [], true),
         }, { "data-constituent": h.securityKey || h.security, "data-constituent-account": h.accountId, "data-constituent-mv": h.marketValue });
       // ONE ACCOUNT: the row IS that account, so its shares hang straight from it.
       if (m.accounts.length === 1) {
         const a = m.accounts[0];
-        m.holdings.forEach((h, i) => out.push(shareRow(h, `${r.key}>${h.securityKey || h.security}`, 1, i === m.holdings.length - 1, false, a.accountMV)));
+        m.holdings.forEach((h, i) => {
+          const k = `${r.key}>${h.securityKey || h.security}`, last = i === m.holdings.length - 1;
+          out.push(shareRow(h, k, 1, last, false, a.accountMV));
+          if (expanded.has(k)) out.push(...tradeRows(k, [h.position], 2, { ancestorLast: last }));
+        });
         return out;
       }
       const MANDATE_NOT_A_SECURITY = "a mandate is an account, not a security: the shares inside it carry the quantities and it carries none. A 0 here would say the manager holds nothing.";
+      /** The statement lines of one member's account that are on this row. */
+      const hsOf = (accountId: string) => m.holdings.filter((h) => h.accountId === accountId).map((h) => h.position);
       m.accounts.forEach((l, i) => {
         const costWhy = `an unrealised gain is market value less cost, and no statement for account ${l.accountNo} reports a cost for these holdings`;
         const capNote = l.costNA ? "" : investedBasisNote(l.fifo, (v) => fmtFromBase(v, { compact: true }));
@@ -3251,7 +3311,12 @@ export function PortfolioMonitor() {
           avgCost: <AbsentCell reason="an average cost per unit needs one security; this account holds many, each with a cost of its own" />,
           invested: l.costNA ? <AbsentCell reason={costWhy} />
             : <span title={capNote || undefined}>{fmtFromBase(l.invested, { compact: true })}</span>,
-          investedOn: <AbsentCell reason="a mandate is an account, not a holding: the family funded it on dates its statements do report, and those are on the account's own page beside its Invested figure" />,
+          // THE ACCOUNT'S OWN DATE — when the family funded it (Stage 10fm). Never
+          // the shares': those are the manager's purchases, dated under each.
+          investedOn: dateCell(l.holdings === l.accountCount ? accountInvestedOn([l.accountId]) : investedOnOf(hsOf(l.accountId)),
+            l.holdings === l.accountCount
+              ? `no statement for account ${l.accountNo} prints when the family first invested in it`
+              : investedOnWhy(hsOf(l.accountId))),
           cmp: <AbsentCell reason="a mandate has no price per unit — it is an account, not a security" />,
           day: dayCell(l.live, l.dayChangePct),
           mv: fmtFromBase(l.marketValue, { compact: true }),
@@ -3263,7 +3328,7 @@ export function PortfolioMonitor() {
                 title={`Everything account ${l.accountNo} has booked since it opened — every sale its manager made, and its income less its fees.`}>
                 {fmtFromBase(l.realised, { compact: true, sign: true })}
               </span>,
-          ret: (measure) => childReturn({ returnPct: l.returnPct, heldSince: null, valuedAt: l.valuedAt, assetClass: "", costNA: l.costNA, costBasis: l.costBasis, marketValue: l.marketValue, capital: l.capital ?? null }, measure),
+          ret: (measure) => childReturn({ fifo: l.fifo, returnPct: l.returnPct, heldSince: null, valuedAt: l.valuedAt, assetClass: "", costNA: l.costNA, costBasis: l.costBasis, marketValue: l.marketValue, capital: l.capital ?? null }, measure),
           sector: <AbsentCell reason="a mandate spans many sectors and is not one holding; each share under this line carries its own" />,
           entity: <span className="text-[12px]">{l.owner}</span>,
         }, {
@@ -3280,7 +3345,11 @@ export function PortfolioMonitor() {
         // …AND THE SHARES IN THAT ACCOUNT, under it, as its own page lists them.
         const hs = m.holdings.filter((h) => h.accountId === l.accountId);
         const lastLine = i === m.accounts.length - 1;
-        hs.forEach((h, j) => out.push(shareRow(h, `${r.key}>${l.accountId}>${h.securityKey || h.security}`, 2, j === hs.length - 1, lastLine, l.accountMV)));
+        hs.forEach((h, j) => {
+          const k = `${r.key}>${l.accountId}>${h.securityKey || h.security}`, last = j === hs.length - 1;
+          out.push(shareRow(h, k, 2, last, lastLine, l.accountMV));
+          if (expanded.has(k)) out.push(...tradeRows(k, [h.position], 3, { ancestorsLast: [lastLine, last] }));
+        });
       });
       return out;
     }
@@ -3290,6 +3359,7 @@ export function PortfolioMonitor() {
       if (info?.direct) {
         out.push(...trancheRows(r.key, r.key, splitFundClass(r.security)?.cls ?? null, r.assetClass, info.direct, 1, false));
       }
+      out.push(...tradeRows(r.key, r.trancheSet, 1, {}));
       return out;
     }
     const vs = r.venues;
@@ -3354,6 +3424,7 @@ export function PortfolioMonitor() {
         sub: <>{asClass ? v.owner : <>{vehicle} · {v.route}</>} · {acct(v.accountNo)}{vs.length > 1 && vs.some((x) => x.marketValue !== 0)
           ? <> · {(v.share * 100).toFixed(1)}% of the {asClass ? "fund" : "holding"}</> : null}</>,
         last: lastLine,
+        ...tradesToggle(`${r.key}>${fk}`, v.positions),
       }, {
         reviewScope: { positions: v.positions },
         qty: v.quantity === null ? <AbsentCell reason={NO_UNIT_COUNT} /> : fmtNum(v.quantity),
@@ -3405,13 +3476,13 @@ export function PortfolioMonitor() {
         realised: (() => {
           const rz = sumOrNull(v.positions.map((p) => (typeof p.realizedPnL === "number" ? p.realizedPnL : null)));
           return rz === null
-            ? <AbsentCell reason={realisedReason(v.positions.find((p) => p.realizedLotsAfter) ?? v.positions[0] ?? { realizedPnL: null })} />
+            ? <AbsentCell reason={realisedReason(v.positions.find((p) => p.hprUnavailableReason || p.realizedLotsAfter) ?? v.positions[0] ?? { realizedPnL: null })} />
             : <span className={changeColor(rz)} title={realisedWindowOf(v.positions)} data-child-realised={rz}>{fmtFromBase(rz, { compact: true, sign: true })}</span>;
         })(),
         // A line that is one WHOLE folio is that account, and carries its dated
         // record's money-weighted rate — Buoyant's two folios under the row
         // pooling both, each at the rate its own fact sheet prints.
-        ret: (measure) => childReturn({ returnPct: v.returnPct, heldSince: v.heldSince, valuedAt: v.valuedAt, assetClass: v.assetClass, costNA: v.costNA, costBasis: v.costBasis, marketValue: v.marketValue,
+        ret: (measure) => childReturn({ hprUnavailableReason: v.positions.find(p => p.hprUnavailableReason)?.hprUnavailableReason, returnPct: v.returnPct, heldSince: v.heldSince, valuedAt: v.valuedAt, assetClass: v.assetClass, costNA: v.costNA, costBasis: v.costBasis, marketValue: v.marketValue, opened: v.opened,
           purchaseDates: v.purchaseDates, costOfUnitsSold: v.costOfUnitsSold,
           valuedAtCost: v.valuedAtCost, capital: datedCap?.behind(v.positions, holdingsUniverse) ?? undefined }, measure),
         entity: v.owner,
@@ -3421,6 +3492,7 @@ export function PortfolioMonitor() {
         ...(t ? { "data-folio-tranches": t.rows.length } : {}),
       }));
       if (t) out.push(...trancheRows(r.key, fk, v.cls, v.assetClass, t, 2, lastLine));
+      if (expanded.has(`${r.key}>${fk}`)) out.push(...tradeRows(`${r.key}>${fk}`, v.positions, 2, { ancestorLast: lastLine }));
     });
     /**
      * COUNTED ONCE — the line that makes the lines add to the row. A holding
@@ -3506,9 +3578,9 @@ export function PortfolioMonitor() {
   const sectionKeys = showBucketSections ? bucketGroups.map((g) => `${groupAxis}|${g.key}`) : [];
   const orderedHoldings = bucketGroups.flatMap((grp) =>
     showBucketSections && closedSections.has(`${groupAxis}|${grp.key}`) ? [] : sortRows(grp.rows, holdView.sort, holdAccessors));
-  const holdingPage = useTablePagination(orderedHoldings.length,
-    JSON.stringify([groupAxis, holdingsView, entity, sector, bucket, [...selected].sort(), holdView.sort, [...closedSections].sort()]));
-  const visibleHoldings = new Set(orderedHoldings.slice(holdingPage.start, holdingPage.start + holdingPage.limit));
+  const holdingScroll = useInfiniteTable(orderedHoldings.length,
+    JSON.stringify([groupAxis, holdingsView, entity, sector, bucket, [...selected].sort(), holdView.sort, [...closedSections].sort(), memberScope.owners ? [...memberScope.owners].sort() : null]));
+  const visibleHoldings = new Set(orderedHoldings.slice(0, holdingScroll.shown));
   const allOpen = expandableKeys.length > 0
     && expandableKeys.every((k) => expanded.has(k)) && sectionKeys.every((k) => !closedSections.has(k));
   const toggleAll = () => {
@@ -3810,7 +3882,7 @@ export function PortfolioMonitor() {
                     figure it belongs to.
                   */}
                   <SortHeader col="investedOn" view={holdView} align="left" pad="px-2 py-1.5"
-                    title="When this holding's own money went in, from a lot register's acquisition date, the fund's own dated allotments against this very folio, or the capital calls a drawdown fund dates against a folio that holds nothing else. It is the HOLDING's date, never its account's: when the family funded a mandate is a fact about the account and is on that mandate's own page. A row that rolls up several holdings shows a date only where every one of them carries one.">Invested on</SortHeader>
+                    title="When this holding's own money went in: the fund's dated allotments against this very folio, a lot register's acquisition date, the account's own dated trades where they account for every unit held (matched first-in, first-out), the capital calls a drawdown fund dates against a folio that holds nothing else, or the investment dates the family's review prints. A mandate's row is the family's own: the inception date its statement prints, and its dated contributions where its capital record starts there — never lent to the shares inside, which carry their manager's trade dates. A row that rolls up several holdings shows a date only where every one of them carries one. Open a row for each dated purchase and sale.">Invested on</SortHeader>
                   <SortHeader col="cmp" view={holdView} pad="px-2 py-1.5">CMP</SortHeader>
                   <SortHeader col="day" view={holdView} pad="px-2 py-1.5">Day</SortHeader>
                   {/* WHO CHOSE THE SHARES, ONE COLUMN EACH (stock axis only): the
@@ -3914,8 +3986,8 @@ export function PortfolioMonitor() {
                   // band). Where the table draws no band there is nothing to close.
                   const secKey = `${groupAxis}|${grp.key}`;
                   const secOpen = !showBucketSections || !closedSections.has(secKey);
-                  const pageRows = secOpen ? sortRows(grp.rows, holdView.sort, holdAccessors).filter((r) => visibleHoldings.has(r)) : [];
-                  if (secOpen && !pageRows.length) return null;
+                  const visibleRows = secOpen ? sortRows(grp.rows, holdView.sort, holdAccessors).filter((r) => visibleHoldings.has(r)) : [];
+                  if (secOpen && !visibleRows.length) return null;
                   return (
                   <Fragment key={grp.key}>
                     {showBucketSections && (
@@ -4139,7 +4211,7 @@ export function PortfolioMonitor() {
                        * for statements nobody owes, which this book already
                        * records as worse than a blank cell.
                        */
-                      const retWhy =
+                      const retWhy = tot.fifo.hprUnavailableReason ?? (
                         tot.vacuous ? `${VACUOUS_COST_REASON}, and a return on cost has nothing to divide`
                         : tot.cost === null ? `no statement behind ${label} reports a cost, so there is nothing to measure a return against`
                         : tot.mv <= 0 ? `${label} is measured at nil — every statement behind it reports a zero balance — so there is no value to measure a return on`
@@ -4149,7 +4221,7 @@ export function PortfolioMonitor() {
                         : [uncostedMV > 1 ? `${fmtFromBase(uncostedMV, { compact: true })} of this category's ${fmtFromBase(tot.mv, { compact: true })} is held in accounts that report no cost` : "",
                             tot.atCostMV > 1 ? `${fmtFromBase(tot.atCostMV, { compact: true })} of it is private investments held at cost, with no valuation to strike a gain on` : ""]
                             .filter(Boolean).join(", and ")
-                          + `, so a return on cost would divide one set of holdings by another and describe neither column beside it. The ${tot.costedCount - tot.atCostCount} holdings with a cost and a valuation show their own return on their own rows.`;
+                          + `, so a return on cost would divide one set of holdings by another and describe neither column beside it. The ${tot.costedCount - tot.atCostCount} holdings with a cost and a valuation show their own return on their own rows.`);
                       const realised = tot.fifo.realised;
                       /**
                        * THE SECTION'S INVESTED IS THE SUM OF ITS ROWS', and a
@@ -4314,7 +4386,7 @@ export function PortfolioMonitor() {
                         </Tr>
                       );
                     })()}
-                    {pageRows.map((r) => {
+                    {visibleRows.map((r) => {
                   const isOpen = expanded.has(r.key);
                   const multi = r.entities.length > 1;
                   /**
@@ -4627,22 +4699,19 @@ export function PortfolioMonitor() {
                           worried about.
                         */}
                         <td className="px-2 py-1.5 text-left mono text-slate-400 whitespace-nowrap" data-invested-on={r.investedOn?.first ?? ""}>
-                          {r.investedOn === null
-                            ? <AbsentCell reason={m
-                              ? "a mandate is an account, not a holding: the family funded it on dates its statements do report, and those are on the mandate's own page beside its Invested figure"
+                          {dateCell(r.investedOn,
+                            m
+                              ? (m.accounts.every((l) => l.holdings === l.accountCount)
+                                ? "no statement for this mandate prints when the family first invested in it"
+                                : investedOnWhy(m.holdings.map((h) => h.position)))
                               : r.measuredNA
                                 ? DERIVED_ONLY_WHY
                                 : r.costNA
                                 ? "no statement in this book reports what this holding cost, so there is no payment to date. A depository records what is held and never what was paid for it"
-                                : investedOnWhy(r.trancheSet)} />
-                            : <span title={r.investedOn.payments > 1
-                              ? `Funded over ${r.investedOn.payments} dated payments, ${fmtDate(r.investedOn.first)} to ${fmtDate(r.investedOn.last)}. Open the row for each payment's own units, entry NAV and return — they are not the same return, because each has been at work for a different length of time.`
-                              : `One dated payment, ${fmtDate(r.investedOn.first)}.`}>
-                              {fmtDate(r.investedOn.first)}
-                              {r.investedOn.payments > 1 && (
-                                <span className="ml-1 text-[10px] text-slate-500">+{r.investedOn.payments - 1}</span>
-                              )}
-                            </span>}
+                                : investedOnWhy(r.trancheSet),
+                            // WHERE THE DATES ARE, ONE CLICK DOWN: each payment's own units and
+                            // entry NAV on a fund, each dated trade on a share.
+                            expandable && !m ? " Open the row for each dated purchase on its own line." : "")}
                         </td>
                         {/* A live price comes from the quote feed, not the workbook, so it
                             carries no audit link back to the ledger. Only a workbook mark
@@ -4875,7 +4944,8 @@ export function PortfolioMonitor() {
                                  them from the book, and holds each to being whole in
                                  this row, rather than reading the page's figure back. */
                               {...(r.capital ? {
-                                "data-capital": r.capital.dated ? "dated" : "undated",
+                                // "holding" where the dated money is the row's holdings' own (Stage 10fw).
+                                "data-capital": r.capital.dated ? (r.capital.holdings ? "holding" : "dated") : "undated",
                                 "data-capital-accounts": r.capital.accountIds.join(" "),
                                 "data-row-keys": r.realizedKeys.join(" "),
                               } : {})}
@@ -4926,7 +4996,7 @@ export function PortfolioMonitor() {
                   </Fragment>
                   );
                 })}
-                <TablePageControls pagination={holdingPage} columns={COL_COUNT} />
+                <InfiniteTableEnd scroll={holdingScroll} columns={COL_COUNT} />
                 {/* A PICKED HOLDING THIS AXIS DOES NOT DRAW — see `pickedNotRows`.
                     It stands in for the generic empty line where it explains the
                     whole of an empty table, and sits under the company rows where
@@ -5259,9 +5329,9 @@ export function PortfolioMonitor() {
                           {!onCost
                             ? <AbsentCell reason={`This is the whole book, not a holding: ${AGG_NO_MEASURE[measure]} Its cumulative return shows under HPR — tick Holding Period Return to see it.`} />
                             : totalRet === null
-                            ? <AbsentCell reason={footStruckLines === 0 && footCover.atCost.lines > 0
+                            ? <AbsentCell reason={totFifoCosted.hprUnavailableReason ?? (footStruckLines === 0 && footCover.atCost.lines > 0
                                 ? `every holding in this table that reports a cost is ${AT_COST_RETURN}`
-                                : "no holding in this table reports a cost, so there is nothing to strike a return over — each costed holding shows its own on its row"} />
+                                : "no holding in this table reports a cost, so there is nothing to strike a return over — each costed holding shows its own on its row")} />
                             : feedLive ? fmtPct(totalRet, { sign: true })
                             : <Auditable formula={{ title: "Total return (FIFO)", excel: "= (Σ unrealised + Σ realised) ÷ Σ capital deployed × 100", plain: "Everything the holdings in this table have produced — the unrealised gain on what is held and the realised gain on what was already sold, matched first-in, first-out — over every rupee that bought a unit of them. A whole mandate is struck on its capital since inception.", worked: `= (${money(totFifoCosted.unrealised ?? 0, true)} + ${money(totFifoCosted.realised ?? 0, true)}${totFifoCosted.income !== null ? ` + ${money(totFifoCosted.income, true)} dividends` : ""}) ÷ ${money(totFifoCosted.deployed ?? 0)} × 100 = ${fmtPct(totalRet, { sign: true })}${exitedNote(totFifoCosted, money) ? ` · ${exitedNote(totFifoCosted, money)}` : ""}${totFifo.uncosted ? ` · over the holdings that report a cost; ${totFifo.uncosted} worth ${money(totFifo.uncostedValue)} report none and are in no part of it` : ""}${totFifo.atCost ? ` · ${atCostNote(totFifo, money)}` : ""}` }}>{fmtPct(totalRet, { sign: true })}</Auditable>}
                         </td>
@@ -5565,6 +5635,7 @@ function venuesOf(ps: Position[], accIdx: AccountIndex, valueDate: (p: Position)
       valuedAt: commonValueDate(xs.map(valueDate)),
       assetClass: xs[0].assetClass,
       investedOn: investedOnOf(xs),
+      opened: holdingPeriodOf(xs),
     };
   }).sort((a, b) => b.marketValue - a.marketValue);
   const raw = sum(built.map((v) => v.marketValue));

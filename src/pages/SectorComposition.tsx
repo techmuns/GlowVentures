@@ -57,7 +57,7 @@ const ROUTE_ABSENT_SECTOR: Record<"direct" | "manager" | "other", string> = {
 import { chartTooltipStyle, chartTooltipLabelStyle, chartTooltipItemStyle, CHART_COLORS } from "@/lib/chartTheme";
 import { Auditable } from "@/components/Auditable";
 import { returnFormula, weightFormula } from "@/lib/auditFormulas";
-import { AbsentCell, AbsentSection } from "@/components/Absent";
+import { AbsentCell } from "@/components/Absent";
 
 /** The NAV chart's series colours, so the book and the index are the same two colours on both tabs. */
 const BOOK_COLOR = "var(--chart-book, #d9c48f)";
@@ -332,8 +332,14 @@ const EMBED_SECTOR_VIEWS = SECTOR_VIEWS.filter((v) => v.key !== "compare");
  * THE NAV CHART'S INDICES, BY THE NAV CHART'S KEYS (`BENCHMARKS`), so an index
  * is one thing on both tabs. Their sector weights are the publisher's own
  * factsheet, placed in GICS sectors by the map the book's own sectors go
- * through — `indexSectors.ts` says how, and why the two BSE indices are offered
- * and absent.
+ * through — `indexSectors.ts` says how.
+ *
+ * ONLY THE INDICES WITH WEIGHTS ARE OFFERED (Stage 10fo). *"Sensex and BSE500
+ * not showing any sector allocation information so you can remove them as
+ * options."* BSE publishes no sector weights a run can read, so those two pills
+ * could only ever open an absence; the list is filtered on the data, so an
+ * index whose factsheet a future run reads joins it with no change here. A
+ * stale `?vs=sensex` link falls back to Off (`useViewParam`).
  *
  * ORTHOGONAL TO THE SET. Consolidated or Direct Equity is WHAT of the family's
  * is weighed; the index is what it is weighed against. So it is a second
@@ -346,14 +352,12 @@ const EMBED_SECTOR_VIEWS = SECTOR_VIEWS.filter((v) => v.key !== "compare");
 type IndexPick = "off" | BenchmarkKey;
 const INDEX_PICKS: readonly ViewDef<IndexPick>[] = [
   { key: "off", label: "Off", title: "The family's sector allocation on its own." },
-  ...BENCHMARKS.map((b): ViewDef<IndexPick> => {
+  ...BENCHMARKS.flatMap((b): ViewDef<IndexPick>[] => {
     const ix = indexSectors(b.key);
-    return {
+    return ix.ok ? [{
       key: b.key, label: b.label,
-      title: ix.ok
-        ? `${b.name} — its sector weights as ${ix.publisher}'s factsheet of ${fmtDate(ix.asOf)} prints them, set beside the family's.`
-        : `${b.name} — ${ix.reason}`,
-    };
+      title: `${b.name} — its sector weights as ${ix.publisher}'s factsheet of ${fmtDate(ix.asOf)} prints them, set beside the family's.`,
+    }] : [];
   }),
 ];
 
@@ -1099,28 +1103,23 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
   );
 
   /**
-   * THE INDEX CONTROL — the NAV chart's pills, in the same order. An index whose
-   * publisher prints no readable sector weights is offered all the same, muted,
-   * and says why on its hover and in the panel when picked: absent, never
-   * quietly dropped from the list.
+   * THE INDEX CONTROL — the NAV chart's pills, in the same order, less any
+   * index with no sector weights to show (see `INDEX_PICKS`).
    */
   const indexPicker = view === "compare" ? null : (
     <div className="flex flex-wrap items-center gap-2" data-sector-vs-picker>
       <span className="label-xs">Vs index</span>
       <div role="tablist" aria-label="Index to set the sector allocation against"
         className="inline-flex flex-wrap items-center gap-0.5 rounded-lg border border-ink-700 bg-ink-800/60 p-0.5">
-        {INDEX_PICKS.map((p) => {
-          const absent = p.key !== "off" && !indexSectors(p.key).ok;
-          return (
-            <button key={p.key} type="button" role="tab" aria-selected={vsKey === p.key} title={p.title}
-              data-sector-vs-pick={p.key} {...(absent ? { "data-vs-absent": "true" } : {})} onClick={() => setVs(p.key)}
-              className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${vsKey === p.key
-                ? "bg-champagne-500 text-ink-950"
-                : absent ? "text-slate-500 hover:bg-ink-700/60" : "text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"}`}>
-              {p.label}
-            </button>
-          );
-        })}
+        {INDEX_PICKS.map((p) => (
+          <button key={p.key} type="button" role="tab" aria-selected={vsKey === p.key} title={p.title}
+            data-sector-vs-pick={p.key} onClick={() => setVs(p.key)}
+            className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${vsKey === p.key
+              ? "bg-champagne-500 text-ink-950"
+              : "text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"}`}>
+            {p.label}
+          </button>
+        ))}
       </div>
     </div>
   );
@@ -1199,12 +1198,8 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
         {/* LEFT — the donut and what it is made of. On Compare it is the picker. */}
         <Card className="flex min-h-0 flex-col lg:max-h-full lg:self-start" pad={false}>
           <div className="min-h-0 flex-1 overflow-auto px-5 py-4" data-sector-left>
-            {/* AN INDEX PICKED: its bars in the donut's place — or, for an index
-                whose publisher prints no readable weights, that absence. */}
-            {vsChart
-              || (view !== "compare" && vsIndex && !vsIndex.ok
-                ? <AbsentSection what={`No sector weights for ${vsIndex.bench.name}`} needs={vsIndex.reason} />
-                : donut)}
+            {/* AN INDEX PICKED: its bars in the donut's place. */}
+            {vsChart || donut}
             {view === "compare" ? (
               <div className="mt-4" data-sector-picker>
                 <div className="mb-1.5 flex items-center justify-between">

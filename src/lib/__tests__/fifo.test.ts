@@ -412,20 +412,43 @@ for (const id of ["buoyant-capital-103472", "buoyant-capital-103473"]) {
 // and Buoyant (a net ABOVE its gross, the ₹58,861.66 Gain Distr. reinvested,
 // charges null). The larger-of is asserted as a WITNESS only: written as the
 // rule it would pick whichever figure a future layout printed larger.
+//
+// ONE ROW CARRIES BOTH, AND THE WITNESS THERE IS THE PAGE ITSELF. Carnelian
+// Amritkaal's 31 Dec 2025 allotment is a ₹5 Cr drawdown, ₹2,925.10 of fund income
+// the fund reinvested, less ₹2,500.02 of stamp duty: net + charges is the gross
+// PLUS the reinvested income, so neither the larger-of nor "costed at its gross"
+// describes it. There the rule's excess over the gross must be a figure the
+// statement's own pages print — the reinvested income, in the page's own
+// grouping — read off `pages.json`, never off the reader's notes.
 {
   const dir = path.join(process.cwd(), "public/audit");
-  const buys = fs.readdirSync(dir).map((d) => path.join(dir, d, "document.json")).filter((f) => fs.existsSync(f))
-    .flatMap((f) => ((JSON.parse(fs.readFileSync(f, "utf8")).cashFlows ?? []) as
-      { kind?: string; units?: unknown; amount?: unknown; netAmount?: unknown; expenses?: unknown; notes?: string }[])
-      .filter((c) => c.kind === "contribution" && isNum(c.units) && (c.units as number) > 0 && isNum(c.netAmount)));
+  const buys = fs.readdirSync(dir).filter((d) => fs.existsSync(path.join(dir, d, "document.json")))
+    .flatMap((d) => ((JSON.parse(fs.readFileSync(path.join(dir, d, "document.json"), "utf8")).cashFlows ?? []) as
+      { kind?: string; units?: unknown; amount?: unknown; netAmount?: unknown; expenses?: unknown; notes?: string; docKey?: string }[])
+      .filter((c) => c.kind === "contribution" && isNum(c.units) && (c.units as number) > 0 && isNum(c.netAmount))
+      .map((c) => ({ ...c, docKey: d })));
   const rule = (c: typeof buys[number]) => (c.netAmount as number) + (isNum(c.expenses) ? c.expenses : 0);
   const witness = (c: typeof buys[number]) => Math.max(isNum(c.amount) ? c.amount : -Infinity, c.netAmount as number);
-  ok("C4b every buy row: net + printed charges agrees with the larger of gross and net (a witness)", buys.length > 0
-    && buys.every((c) => Math.abs(rule(c) - witness(c)) <= 0.01), `${buys.length} buy row(s)`);
-  const charged = buys.filter((c) => isNum(c.expenses) && (c.expenses as number) > 0);
+  const indian = (v: number) => {
+    const [w, f] = v.toFixed(2).split(".");
+    return `${w.length > 3 ? `${w.slice(0, -3).replace(/B(?=(d{2})+(?!d))/g, ",")},${w.slice(-3)}` : w}.${f}`;
+  };
+  /** Charged, and paid for by more than its gross: the excess is printed on the statement's own pages. */
+  const chargedAndReinvested = (c: typeof buys[number]) => isNum(c.expenses) && (c.expenses as number) > 0
+    && isNum(c.amount) && rule(c) > (c.amount as number) + 0.01;
+  const excessPrinted = (c: typeof buys[number]) => {
+    const raw = fs.readFileSync(path.join(dir, c.docKey!, "pages.json"), "utf8");
+    const excess = indian(Math.round((rule(c) - (c.amount as number)) * 100) / 100);
+    return new RegExp(`(^|[^\d.,])${excess.replace(/[.]/g, "\.")}(?![\d])`).test(raw);
+  };
+  const both = buys.filter(chargedAndReinvested);
+  ok("C4b every buy row: net + printed charges agrees with the larger of gross and net (a witness) — or, on a row carrying a charge AND a reinvestment, exceeds its gross by a figure its own pages print",
+    buys.length > 0 && buys.every((c) => chargedAndReinvested(c) ? excessPrinted(c) : Math.abs(rule(c) - witness(c)) <= 0.01),
+    `${buys.length} buy row(s), ${both.length} charged and reinvested: ${both.map((c) => `${c.docKey} +${(rule(c) - (c.amount as number)).toFixed(2)}`).join(", ")}`);
+  const charged = buys.filter((c) => isNum(c.expenses) && (c.expenses as number) > 0 && !chargedAndReinvested(c));
   const reinvested = buys.filter((c) => !isNum(c.expenses) && isNum(c.amount) && (c.netAmount as number) > (c.amount as number) + 0.01);
-  ok("C4b …a row that prints charges is costed at its gross (3P)", charged.length > 0
-    && charged.every((c) => isNum(c.amount) && Math.abs(rule(c) - (c.amount as number)) <= 0.01), `${charged.length} row(s)`);
+  ok("C4b …a row that prints charges is costed at its gross (3P), unless it also carries a reinvestment its pages print",
+    charged.length > 0 && charged.every((c) => isNum(c.amount) && Math.abs(rule(c) - (c.amount as number)) <= 0.01), `${charged.length} row(s)`);
   ok("C4b …and a row printing a net above its gross and no charge line keeps its net (Buoyant's reinvested distribution)",
     reinvested.length > 0 && reinvested.every((c) => Math.abs(rule(c) - (c.netAmount as number)) <= 0.01),
     `${reinvested.length} row(s), ${reinvested.map((c) => ((c.netAmount as number) - (c.amount as number)).toFixed(2)).join(", ")} above gross`);

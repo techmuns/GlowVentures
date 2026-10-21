@@ -162,10 +162,10 @@ export function returnColumnMeta(measure: ReturnMeasure, cov: ReturnCoverage, as
       return {
         note: `${cov.xirr} money-weighted of ${cov.total}`,
         title: (cov.xirr > 0
-          ? `A money-weighted XIRR on ${cov.xirr} of ${cov.total} rows — each a whole account, or a fund over its whole folios, whose every payment in and out is dated, solved over the same record the Transactions card uses.`
-          : `A money-weighted XIRR needs every dated payment behind a row, and no row here is a whole account with every payment on record.`)
+          ? `A money-weighted XIRR on ${cov.xirr} of ${cov.total} rows — each a whole account, or a fund over its whole folios, whose every payment in and out is dated, solved over the same record the Transactions card uses; or a holding whose every unit its account's dated trades or lot register account for, solved over its own purchases, sales and dividends.`
+          : `A money-weighted XIRR needs every dated payment behind a row, and no row here is a whole account with every payment on record or a holding whose every purchase is dated.`)
           + (fallback > 0 ? ` ${fallback} ${fallback === 1 ? "row is" : "rows are"} funded under a year ago and show ${fallback === 1 ? "its" : "their"} holding-period return instead, marked HPR, because annualising a part-year would state a rate for a year the money has not seen.` : "")
-          + (cov.absent > 0 ? ` The other ${cov.absent} are holdings inside an account, which have no cash flows of their own, or accounts whose payments are not all on record — each cell says which. The per-account money-weighted return, where one can be struck, is on Performance.` : ""),
+          + (cov.absent > 0 ? ` The other ${cov.absent} are holdings whose dated trades do not account for every unit they hold, or accounts whose payments are not all on record — each cell says which. The per-account money-weighted return, where one can be struck, is on Performance.` : ""),
       };
     }
     case "calendar":
@@ -177,7 +177,7 @@ export function returnColumnMeta(measure: ReturnMeasure, cov: ReturnCoverage, as
       return {
         note: `${cov.shown} of ${cov.total}`,
         title: `Holding Period Return is the total return on cost since purchase, not annualised. It is shown on ${cov.shown} of ${cov.total} rows`
-          + (cov.absent > 0 ? `; the other ${cov.absent} report no cost, so there is nothing to strike a return against.` : "."),
+          + (cov.absent > 0 ? `; the other ${cov.absent} have no verified holding-period return; each cell names the missing cost or transaction evidence.` : "."),
       };
   }
 }

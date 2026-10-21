@@ -27,8 +27,11 @@
 // exactly the statements it was needed for. Where a PAN IS printed in full it is
 // carried too, and `shared/owners.mjs` resolves the holder on it.
 //
-// A folio held by an entity that resolves to no canonical owner carries
-// `excludedFromBook` with the reason. Nothing filters it downstream; it simply
+// A non-individual holder that resolves to no canonical owner carries
+// `excludedFromBook` with the reason. One that DOES resolve — Hope India Trust,
+// registered in shared/owners.mjs by the family's decision of 21 Oct 2026 — is
+// in the book as its own entity; its printed tax status stays on the document
+// (`providerEngagement`). Nothing filters it downstream; it simply
 // belongs to nobody this book knows, and the build report says so rather than
 // dropping an account silently.
 //
@@ -36,7 +39,8 @@
 //
 //   ABSL      a PORTFOLIO SUMMARY table: scheme, units, NAV, value, cost
 //   HDFC      per-scheme blocks closed by
-//   Kotak     `Market Value of Balance Units at NAV of <nav> on <date> (INR) : <v>`
+//   Kotak     `Market Value of Balance Units at NAV of <nav> on <date> (INR) : <v>`,
+//             under an ACCOUNT SUMMARY that prints each scheme's cost
 //   Mirae     `ISIN : … Balance Units : …` then `Current Value : … Investment Value : …`
 //
 // All three are located by ANCHOR TEXT rather than by position, so an AMC
@@ -66,7 +70,7 @@
 import { parseNum } from "../lib/parseNum.mjs";
 import { makeHolding, makeTotals, makeCashFlow } from "../lib/document.mjs";
 import { toIso } from "../lib/classify.mjs";
-import { panHolderType } from "../../../shared/owners.mjs";
+import { panHolderType, resolveOwner } from "../../../shared/owners.mjs";
 
 export const PROVIDER = "Mutual fund folio";
 
@@ -108,6 +112,39 @@ const cleanName = (s) => String(s ?? "")
 const BLOCK_HEAD = /^\s*[A-Z0-9]{2,8}\s*\/\s*(.+?)\s*-\s*(IN[EF][0-9A-Z]{9})\b/;
 const BLOCK_VALUE = /Market Value of Balance Units at NAV of\s*([\d,]+\.?\d*)\s*on\s*(\d{2}\/\d{2}\/\d{4})\s*\(INR\)\s*:\s*([\d,]+\.?\d*)/i;
 const CLOSING_UNITS = /Closing (?:Unit )?Balance(?: as on \d{2}\/\d{2}\/\d{4})?\s*:?\s*([\d,]+\.\d{3})/i;
+/**
+ * One ACCOUNT SUMMARY row: `<scheme> <mode> <NAV date> <NAV> [NA] <units>
+ * <cost> <market value>`. HDFC's extra `NA` is its 31-Jan-2018 NAV column.
+ */
+const SUMMARY_ROW = /(\d{2}-[A-Za-z]{3}-\d{4})\s+([\d,]+\.\d+)\s+(?:NA\s+)?([\d,]+\.\d{3})\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s*$/;
+
+/**
+ * THE COST THE ACCOUNT SUMMARY PRINTS for the scheme a block values, or null.
+ *
+ * HDFC and Kotak head the statement with `Account Summary as on <date>` and a
+ * `Cost (INR)` column — HDFC Balanced Advantage, 83,001.863 units, cost
+ * 25,000,000.00, the gross purchase its ledger prints with the stamp duty
+ * inside it. The block below carries units and value but no cost, and this
+ * reader took only the block, so these folios reached the book with no cost.
+ *
+ * Kotak splits one scheme into a `Lump sum` row and an `IDCW REINVESTMENT`
+ * row, so the rows are summed. They are found on the block's own NAV and NAV
+ * date, and the cost is published only where their units AND value add to the
+ * block's — the same units, the same money, or no cost at all.
+ */
+function summaryCost(lines, nav, navDate, units, value) {
+  if (nav === null || !navDate || !(units > 0) || value === null) return null;
+  const start = lines.findIndex((l) => /^\s*Account Summary as on/i.test(l));
+  if (start < 0) return null;
+  let u = 0, cost = 0, v = 0, rows = 0;
+  for (let i = start + 1; i < lines.length && !BLOCK_HEAD.test(lines[i]); i++) {
+    const m = SUMMARY_ROW.exec(lines[i]);
+    if (!m || toIso(m[1]) !== navDate || num(m[2]) !== nav) continue;
+    u += num(m[3]); cost += num(m[4]); v += num(m[5]); rows += 1;
+  }
+  if (!rows || Math.abs(u - units) > 0.0005 || Math.abs(v - value) > 0.005) return null;
+  return Math.round(cost * 100) / 100;
+}
 
 /**
  * ABSL: one row per scheme under `PORTFOLIO SUMMARY`.
@@ -171,6 +208,7 @@ function readBlockLayout(lines, source) {
       assetClass: "Mutual Fund",
       quantity: units,
       marketPrice: num(v[1]),
+      totalCost: summaryCost(lines, num(v[1]), toIso(v[2]), units, num(v[3])),
       marketValue: num(v[3]),
       priceAsOn: toIso(v[2]),
       source,
@@ -182,6 +220,9 @@ function readBlockLayout(lines, source) {
 // Some new folios have a complete multi-year ledger and no financial movement
 // during this FY. A reconciled prior balance is enough to establish the FY's
 // units; it does not require treating old switches as new external cash.
+// Since Stage 10fj the ledger itself is read (layout 7, `schemeLedgerFlows`)
+// and carries the printed opening; this remains the fallback for a statement
+// whose blocks print no dated movement and no ledger warning.
 function staticBlockOpenings(lines, holdings, from, to) {
   if (!from || !to) return [];
   const year = Number(to.slice(0,4)) - (to.slice(5,7) < '04' ? 1 : 0);
@@ -765,6 +806,522 @@ function camsListingFlows(lines, holdings, warnings) {
   return flows;
 }
 
+// ── Layout 7: THE AMC'S OWN UNIT LEDGER, PRINTED INSIDE EACH SCHEME BLOCK ────
+//
+// The HDFC and Kotak account statements (CAMS-serviced) print, under each
+// `<code> / <scheme> - <ISIN>` heading, `Opening Balance as on <date> <units>`
+// and then every movement: purchase, switch in and out, IDCW reinvestment and
+// redemption, as `<date> <type> <NAV> <amount> <price> <units> <balance>` —
+// amount and units parenthesised when they leave. A since-inception statement
+// (HDFC 15644806: 17-APR-2019 to 31-AUG-2026) prints the folio's whole history,
+// including the schemes it has since redeemed to nil. Stage 10em read only the
+// last balance from it (`staticBlockOpenings`); the dated rows are read here.
+//
+// The text layer breaks rows four ways, each seen on the archived statements:
+//
+//   Gross Purchase Physical 25,000,000.00      a purchase or switch-in levied
+//   Less: Stamp Duty 1,249.94                   stamp duty prints its GROSS and
+//   03/08/2022 Net Purchase 301.183 24,998,750.06 …  the duty ABOVE the net row (HDFC);
+//   07/07/2020 Switch-In - From … 424,978.75 …  Kotak prints the duty BELOW it,
+//   Less: Stamp Duty 21.25                      and the gross is net + duty;
+//   29/05/2025 153.314 (4,045,420.78) …         the type cell wraps BELOW its figures,
+//   Switch out - To HDFC Arbitrage Fund …       or its last word (`… , less` / `STT`);
+//   *** STT Paid *** (40.45)                    and the STT / TDS line follows the row.
+//
+// What each row is (the kinds the book already consumes — see iciciLedgerFlows):
+//
+//   PURCHASE     contribution: gross (net + stamp duty), net, the duty as its charge.
+//   REDEMPTION   withdrawal: the printed amount is what was PAID — units × price
+//                is the gross, and gross less the STT line is the printed amount
+//                ("grossed upward to provide for the deduction of STT").
+//   IDCW         allotment: units bought with the fund's own distribution.
+//   SWITCH       a switch between two schemes OF THIS FOLIO moves no money in or
+//                out: both legs are carried as `reclassification` (the class-switch
+//                convention, classSwitch.mjs), the out-leg at the rupees paid out,
+//                the in-leg at its gross, which is the same rupees. The in-leg is
+//                credited on the switch-out scheme's settlement day ("switch-in will
+//                be processed based on the settlement cycle of the switch-out
+//                scheme"), so the two legs can carry DIFFERENT printed dates; the
+//                out-leg's `settlementDate` is the in-leg's printed date, which is
+//                how the pair is found again downstream. A switch-in whose out-leg
+//                this statement does not print (Kotak 7125255's Overnight Fund) is
+//                money from outside the record, carried as a contribution under
+//                its own words, as Invesco's `Lateral shift in` is.
+//
+// Published per document only where EVERY row ties: amount = units × price
+// (within the price's printed precision), gross − duty = net, units × price −
+// STT = the paid amount, the running units reach every printed balance from the
+// printed opening, the last balance is the scheme's closing units, and every
+// switch-out finds its switch-in. One failure publishes no row of the
+// document's ledger and says why — a half-read history reads like a whole one.
+const LD = String.raw`\d{2}\/\d{2}\/\d{4}`;
+const LN = String.raw`[\d,]+\.\d+`;
+const LU = String.raw`\(?[\d,]+\.\d{3}\)?`;
+const LEDGER_ROW = new RegExp(String.raw`^(${LD})\s+(\D.*?)\s+(${LN})\s+(\(?${LN}\)?)\s+(${LN})\s+(${LU})\s+([\d,]+\.\d{3})$`);
+const LEDGER_ROW_UNTYPED = new RegExp(String.raw`^(${LD})\s+(${LN})\s+(\(?${LN}\)?)\s+(${LN})\s+(${LU})\s+([\d,]+\.\d{3})$`);
+const LEDGER_OPEN = new RegExp(String.raw`^Opening (?:Unit )?Balance as on (${LD})\s+([\d,]+\.\d{3})$`, "i");
+const LEDGER_GROSS = /^Gross\s+(.+?)\s+([\d,]+\.\d{2})$/i;
+const LEDGER_STAMP = /^Less\s*:\s*Stamp Duty\s+([\d,]+\.\d{2})$/i;
+const LEDGER_STT = /^\*{3}\s*STT Paid\s*\*{3}\s*\(?([\d,]+\.\d{2})\)?$/i;
+const LEDGER_TDS = /^\*{3}\s*TDS on (?:Cumulative IDCW|Above)\s*\*{3}\s*([\d,]+\.\d{2})?$/i;
+const LEDGER_ADMIN = new RegExp(String.raw`^${LD}\s+\*{3}.*\*{3}$`);
+/**
+ * An IDCW wholly withheld as TDS: NAV, price and the unchanged balance, no
+ * amount and no units (Kotak 4295974, 1–4 Jun 2026), its TDS on the next line.
+ */
+const LEDGER_ROW_NIL = new RegExp(String.raw`^(${LD})\s+(IDCW Reinvest.*?)\s+(${LN})\s+(${LN})\s+([\d,]+\.\d{3})$`, "i");
+/** `16/09/2026 IDCW Reinvested 16-SEP-2026_Duplicate Request received 640.290` — a notice, not a movement; its balance is checked. */
+const LEDGER_NOTICE = new RegExp(String.raw`^(${LD})\s+(.*?Duplicate Request received)\s+([\d,]+\.\d{3})$`, "i");
+/** A non-dated line that still carries a movement word and an amount is a row this reader lost. */
+const LEDGER_STRAY = /\b(?:Purchase|Redemption|Switch|Reinvest(?:ed|ment)?\s*@|STT|Stamp Duty|TDS)\b.*\d[\d,]*\.\d{2}\b/i;
+const furnitureFree = (s) => s.replace(/\s*EISC-\S+.*$/, "").replace(/\s+/g, " ").trim();
+const decimalsOf = (s) => (/\.(\d+)\)?$/.exec(String(s)) || [, ""])[1].length;
+const unitsTie = (units, priceText, amount) => {
+  const price = num(priceText);
+  return Math.abs(Math.abs(units) * price - Math.abs(amount))
+    <= Math.abs(units) * 0.5 * 10 ** -decimalsOf(priceText) + price * 0.0005 + 0.011;
+};
+const kindOfType = (type) => /^(?:Net\s+)?Purchase\b/i.test(type) ? "purchase"
+  : /^\*?Redemption\b/i.test(type) ? "redeem"
+  : /^IDCW\s+Reinvest/i.test(type) ? "reinvest"
+  : /^(?:Net\s+)?Switch[- ]?In\b/i.test(type) ? "switch-in"
+  : /^\*?Switch[- ]?Out\b/i.test(type) ? "switch-out"
+  : null;
+const daysBetween = (a, b) => (Date.parse(b) - Date.parse(a)) / 86400000;
+const squash = (s) => String(s ?? "").toLowerCase().replace(/[^a-z]/g, "");
+
+/**
+ * The units the ACCOUNT SUMMARY prints for a scheme valued at `nav` on `navDate`
+ * (summed over its rows — Kotak splits one scheme into `Lump sum` and `IDCW
+ * REINVESTMENT`), or null. `<NAV date> <NAV> [NA] <units> <cost> <value>`.
+ */
+function accountSummaryUnits(lines, nav, navDate) {
+  if (nav === null || nav === undefined || !navDate) return null;
+  const start = lines.findIndex((l) => /^\s*Account Summary as on/i.test(l));
+  if (start < 0) return null;
+  let units = null;
+  for (let i = start + 1; i < lines.length && !BLOCK_HEAD.test(lines[i]); i++) {
+    const m = /(\d{2}-[A-Za-z]{3}-\d{4})\s+([\d,]+\.\d+)\s+(?:NA\s+)?([\d,]+\.\d{3})\s+[\d,]+\.\d{2}\s+[\d,]+\.\d{2}\s*$/.exec(lines[i]);
+    if (m && toIso(m[1]) === navDate && num(m[2]) === nav) units = Math.round(((units ?? 0) + num(m[3])) * 1000) / 1000;
+  }
+  return units;
+}
+
+/** Every scheme block's lines, keyed by ISIN; a repeated heading continues its block. */
+function schemeLedgerBlocks(lines) {
+  const blocks = new Map();
+  let cur = null, closed = null;
+  for (const raw of lines) {
+    const l = furnitureFree(raw);
+    if (!l) continue;
+    const h = BLOCK_HEAD.exec(l);
+    if (h) {
+      if (!blocks.has(h[2])) blocks.set(h[2], { isin: h[2], name: cleanName(h[1]), lines: [], idcw: null });
+      cur = blocks.get(h[2]);
+      closed = null;
+      continue;
+    }
+    if (/^Non Financial Transaction/i.test(l)) { cur = null; closed = null; continue; }
+    // The block's own IDCW figure for the period, printed under its closing.
+    const idcw = /^IDCW reinvested \/ paid \(INR\)\s*:\s*([\d,]+\.\d{2})\b/i.exec(l);
+    if (idcw && closed && closed.idcw === null) { closed.idcw = num(idcw[1]); continue; }
+    if (!cur) continue;
+    if (/^(?:Available Units to Redeem|Market Value of Balance Units)\b/i.test(l)) { closed = cur; cur = null; continue; }
+    cur.lines.push(l);
+  }
+  return [...blocks.values()];
+}
+
+/** One block's opening and rows, in printed order. `unsupported` names a line it could not read. */
+function parseSchemeLedger(block) {
+  const out = { opening: null, rows: [], unsupported: [] };
+  const L = block.lines;
+  let pendingGross = null;
+  for (let k = 0; k < L.length; k++) {
+    const l = L[k];
+    const open = LEDGER_OPEN.exec(l);
+    if (open) {
+      if (out.opening) out.unsupported.push(`a second opening balance: ${l}`);
+      else out.opening = { date: toIso(open[1]), units: num(open[2]) };
+      continue;
+    }
+    const gross = LEDGER_GROSS.exec(l);
+    if (gross) {
+      if (pendingGross) out.unsupported.push(`a gross line with no row: ${pendingGross.line}`);
+      pendingGross = { label: gross[1], amount: num(gross[2]), stamp: null, line: l };
+      continue;
+    }
+    const stamp = LEDGER_STAMP.exec(l);
+    if (stamp) {
+      const last = out.rows.at(-1);
+      if (pendingGross && pendingGross.stamp === null) pendingGross.stamp = num(stamp[1]);
+      else if (last && last.stampAfter === null && last.gross === null) last.stampAfter = num(stamp[1]);
+      else out.unsupported.push(`a stamp duty line with no row: ${l}`);
+      continue;
+    }
+    const stt = LEDGER_STT.exec(l);
+    if (stt) {
+      const last = out.rows.at(-1);
+      if (last && last.stt === null) last.stt = num(stt[1]);
+      else out.unsupported.push(`an STT line with no row: ${l}`);
+      continue;
+    }
+    const tds = LEDGER_TDS.exec(l);
+    if (tds) {
+      let amount = tds[1];
+      if (!amount && /^[\d,]+\.\d{2}$/.test(L[k + 1] ?? "")) { amount = L[k + 1]; k += 1; }
+      const last = out.rows.at(-1);
+      if (amount && last && last.tds === null) last.tds = num(amount);
+      else out.unsupported.push(`a TDS line with no row: ${l}`);
+      continue;
+    }
+    if (LEDGER_ADMIN.test(l)) continue;
+    const notice = LEDGER_NOTICE.exec(l);
+    if (notice) { out.rows.push({ date: toIso(notice[1]), type: notice[2], kind: "notice", balance: num(notice[3]) }); continue; }
+    // Tried only after the full row: five figures also end in "number number units".
+    const nil = LEDGER_ROW.test(l) || LEDGER_ROW_UNTYPED.test(l) ? null : LEDGER_ROW_NIL.exec(l);
+    if (nil) {
+      out.rows.push({ date: toIso(nil[1]), type: nil[2].trim(), kind: "reinvest", nav: num(nil[3]), amount: null, priceText: nil[4],
+        price: num(nil[4]), units: null, balance: num(nil[5]), gross: null, stampBefore: null, stampAfter: null, stt: null, tds: null });
+      continue;
+    }
+    let m = LEDGER_ROW.exec(l);
+    let date, type, nav, amount, price, units, balance;
+    if (m) {
+      [, date, type, nav, amount, price, units, balance] = m;
+      // `… , less` / `STT`: the type's last word wrapped below the figures.
+      if (/^STT$/i.test(L[k + 1] ?? "")) { type = `${type} ${L[k + 1]}`; k += 1; }
+    } else if ((m = LEDGER_ROW_UNTYPED.exec(l))) {
+      [, date, nav, amount, price, units, balance] = m;
+      const next = L[k + 1] ?? "";
+      if (!kindOfType(next)) { out.unsupported.push(`a row whose type is not printed: ${l}`); continue; }
+      type = next;
+      k += 1;
+    } else {
+      if (new RegExp(`^${LD}\\b`).test(l) || LEDGER_STRAY.test(l)) out.unsupported.push(l);
+      continue;
+    }
+    const kind = kindOfType(type);
+    if (!kind) { out.unsupported.push(l); continue; }
+    if (pendingGross && !(kind === "purchase" || kind === "switch-in")) {
+      out.unsupported.push(`a gross line above a ${kind}: ${pendingGross.line}`);
+      pendingGross = null;
+    }
+    out.rows.push({
+      date: toIso(date), type: type.replace(/\s+/g, " ").trim(), kind,
+      nav: num(nav), amount: num(amount), priceText: price, price: num(price), units: num(units), balance: num(balance),
+      gross: pendingGross?.amount ?? null, stampBefore: pendingGross?.stamp ?? null,
+      stampAfter: null, stt: null, tds: null,
+    });
+    pendingGross = null;
+  }
+  if (pendingGross) out.unsupported.push(`a gross line with no row: ${pendingGross.line}`);
+  return out;
+}
+
+/**
+ * Verify one scheme's rows (see the layout note above) and return them with
+ * their gross and charges resolved, or the reason they do not tie. `rows` are
+ * in printed order; a ledger printed newest-first is walked oldest-first.
+ */
+function walkSchemeLedger(name, opening, printed, closingUnits) {
+  if (!opening) return { why: "no printed opening balance" };
+  let rows = printed;
+  const dates = rows.map((r) => r.date);
+  const ascending = dates.every((d, i) => i === 0 || dates[i - 1] <= d);
+  const descending = dates.every((d, i) => i === 0 || dates[i - 1] >= d);
+  if (!ascending && descending) rows = [...rows].reverse();
+  else if (!ascending) return { why: "dated rows are in neither date order" };
+  let running = opening.units;
+  const out = [];
+  for (const r of rows) {
+    const at = `${r.date} ${r.type}`;
+    if (r.kind === "notice") {
+      if (Math.abs(running - r.balance) > 0.0005) return { why: `${at}: a notice printing ${r.balance} units where the ledger stands at ${running}` };
+      continue;
+    }
+    if (r.units === null && r.amount === null) {
+      // An IDCW wholly withheld as TDS prints no amount and no units — and, on
+      // ABSL, no balance either; where one is printed it must not have moved.
+      if (r.kind !== "reinvest" || r.tds === null) return { why: `${at}: no amount or units printed` };
+      if (r.balance !== null && Math.abs(running - r.balance) > 0.0005) return { why: `${at}: no units printed, yet the balance reads ${r.balance}` };
+      out.push({ ...r, charges: r.tds });
+      continue;
+    }
+    let gross = null, stamp = null, charges = null;
+    if (r.kind === "purchase" || r.kind === "switch-in") {
+      if (r.amount <= 0 || r.units <= 0) return { why: `${at}: prints a negative amount or units` };
+      stamp = r.stampBefore ?? r.stampAfter;
+      gross = r.gross !== null ? r.gross : stamp !== null ? Math.round((r.amount + stamp) * 100) / 100 : r.amount;
+      if (r.gross !== null && (stamp === null || Math.abs(r.gross - stamp - r.amount) > 0.011)) {
+        return { why: `${at}: gross ${r.gross} less stamp duty ${stamp} is not the printed net ${r.amount}` };
+      }
+      if (r.date >= STAMP_DUTY_FROM && stamp === null) return { why: `${at}: no stamp duty printed on a purchase after 1 July 2020` };
+      if (!unitsTie(r.units, r.priceText, r.amount)) return { why: `${at}: ${r.units} units × ${r.price} is not ${r.amount}` };
+      charges = stamp;
+    } else if (r.kind === "reinvest") {
+      if (r.amount <= 0 || r.units <= 0) return { why: `${at}: prints a negative amount or units` };
+      stamp = r.stampAfter ?? r.stampBefore;
+      if (r.gross !== null && (stamp === null || Math.abs(r.gross - stamp - r.amount) > 0.011)) {
+        return { why: `${at}: gross ${r.gross} less stamp duty ${stamp} is not the printed amount ${r.amount}` };
+      }
+      if (!unitsTie(r.units, r.priceText, r.amount)) return { why: `${at}: ${r.units} units × ${r.price} is not ${r.amount}` };
+      gross = r.gross;
+      charges = r.tds !== null || stamp !== null ? Math.round(((r.tds ?? 0) + (stamp ?? 0)) * 100) / 100 : null;
+    } else {
+      if (r.amount >= 0 || r.units >= 0) return { why: `${at}: a redemption or switch-out prints a positive amount or units` };
+      if (r.gross !== null || r.stampAfter !== null) return { why: `${at}: a stamp duty line under money going out` };
+      if (!unitsTie(r.units, r.priceText, -r.amount + (r.stt ?? 0))) {
+        return { why: `${at}: ${-r.units} units × ${r.price} is not the paid ${-r.amount}${r.stt !== null ? ` plus STT ${r.stt}` : ""}` };
+      }
+      charges = r.stt;
+    }
+    running = Math.round((running + r.units) * 1000) / 1000;
+    if (Math.abs(running - r.balance) > 0.0005) return { why: `${at}: running units ${running} do not reach the printed balance ${r.balance}` };
+    out.push({ ...r, gross, stamp, charges });
+  }
+  if (closingUnits !== null && closingUnits !== undefined && Math.abs(running - closingUnits) > 0.0005) {
+    return { why: `the ledger ends at ${running} units against the ${closingUnits} the statement closes ${name} at` };
+  }
+  return { rows: out, closing: running };
+}
+
+/**
+ * Pair every switch-out with the switch-in it funded: the same rupees (the
+ * out-leg's paid amount is the in-leg's gross), credited on or after the
+ * switch-out within a settlement week, into a scheme the out-leg's own words
+ * name. Returns the pairs, or the switch-out nothing in the statement received.
+ */
+function pairSwitches(schemes) {
+  const legs = schemes.flatMap((s) => s.rows.filter((r) => r.kind === "switch-in" || r.kind === "switch-out")
+    .map((r) => ({ r, s })));
+  const ins = legs.filter((x) => x.r.kind === "switch-in");
+  const used = new Set();
+  const pairs = [];
+  for (const o of legs.filter((x) => x.r.kind === "switch-out").sort((a, b) => a.r.date.localeCompare(b.r.date))) {
+    const to = squash(/\bTo\s+(.+?)(?:\s*,\s*less\b.*)?$/i.exec(o.r.type)?.[1]);
+    const i = ins.find((x) => !used.has(x) && x.s !== o.s
+      && Math.abs(x.r.gross - -o.r.amount) <= 0.011
+      && x.r.date >= o.r.date && daysBetween(o.r.date, x.r.date) <= 7
+      && to.slice(0, 10) === squash(x.s.security).slice(0, 10));
+    if (!i) return { unpaired: o };
+    used.add(i);
+    pairs.push({ out: o, in: i });
+  }
+  return { pairs, inbound: ins.filter((x) => !used.has(x)) };
+}
+
+/** Layout 7's flows for every scheme block whose holding this document carries. */
+function schemeLedgerFlows(lines, holdings, warnings) {
+  const blocks = schemeLedgerBlocks(lines).map((b) => ({ ...b, ...parseSchemeLedger(b) }));
+  if (!blocks.some((b) => b.rows.length || b.unsupported.length)) return [];
+  const fail = (why) => { warn(warnings, "ledger-not-published", why); return []; };
+  for (const b of blocks) {
+    for (const u of b.unsupported) warn(warnings, "unsupported-movement", `${b.name}: a dated movement is outside the verified ledger layout — ${u}`);
+  }
+  if (blocks.some((b) => b.unsupported.length)) return fail("the scheme ledgers contain a line this reader could not place, so no row of them is published");
+  const schemes = [];
+  for (const b of blocks) {
+    const holding = holdings.find((h) => h.isin === b.isin);
+    if (!holding) {
+      if (b.rows.length) return fail(`${b.name}: a ledger with no scheme block value to close it`);
+      continue;
+    }
+    const walked = walkSchemeLedger(b.name, b.opening, b.rows, null);
+    if (walked.why) return fail(`${b.name}: ${walked.why}`);
+    // The block's printed `IDCW reinvested / paid` for the period is the sum of
+    // the reinvestments the ledger reads — every scheme in this archive ties to
+    // the paisa (HDFC 15644806's ₹21,84,195.27 over 270 rows).
+    const reinvested = Math.round(walked.rows.filter((r) => r.kind === "reinvest").reduce((t, r) => t + (r.amount ?? 0), 0) * 100) / 100;
+    if (b.idcw !== null && Math.abs(reinvested - b.idcw) > 0.011) {
+      return fail(`${b.name}: the reinvestments read sum to ${reinvested} against the ${b.idcw} of IDCW the statement prints for the period`);
+    }
+    /**
+     * THE LEDGER MUST CLOSE AT A UNIT BALANCE THE STATEMENT PRINTS. The block's
+     * own closing units first; where they differ, the Account Summary's units
+     * for the same NAV and NAV date are a second printed closing. Kotak 4295974's
+     * 5 Oct statement walks every row to 641.448, which its Account Summary
+     * prints (451.356 + 190.092), while the block's `Available Units to Redeem`
+     * reads 641.954 — the statement's own ₹619 disagreement (Stage 10eu). The
+     * rows are published with that named on the opening row; the holding keeps
+     * the figure it always read.
+     */
+    let disagreement = null;
+    if (holding.quantity === null || Math.abs(walked.closing - holding.quantity) > 0.0005) {
+      const summary = accountSummaryUnits(lines, holding.marketPrice, holding.priceAsOn);
+      if (summary === null || Math.abs(walked.closing - summary) > 0.0005) {
+        return fail(`${b.name}: the ledger ends at ${walked.closing} units against the ${holding.quantity} the block closes at`
+          + `${summary !== null ? ` and the ${summary} its Account Summary prints` : ""}`);
+      }
+      if (holding.quantity !== null) {
+        disagreement = `the ledger closes at ${walked.closing} units, the Account Summary's own figure; the scheme block's `
+          + `closing reads ${holding.quantity}, and the statement does not reconcile the two`;
+      }
+    }
+    schemes.push({ security: holding.security, isin: holding.isin, opening: b.opening, rows: walked.rows, disagreement });
+  }
+  const switches = pairSwitches(schemes);
+  if (switches.unpaired) {
+    const o = switches.unpaired;
+    return fail(`${o.s.security}: the ${o.r.date} switch-out of ${-o.r.amount} reaches no switch-in this statement prints`);
+  }
+  const partner = new Map();
+  for (const p of switches.pairs) { partner.set(p.out.r, p.in); partner.set(p.in.r, p.out); }
+  const flows = [];
+  for (const s of schemes) {
+    flows.push(makeCashFlow({ date: s.opening.date, description: "Opening Balance", security: s.security, isin: s.isin,
+      kind: "opening-units", units: s.opening.units, balance: s.opening.units, notes: s.disagreement }));
+    for (const r of s.rows) {
+      const base = { date: r.date, description: r.type, security: s.security, isin: s.isin, units: r.units, balance: r.balance };
+      const at = `at NAV ${r.price}`;
+      const other = partner.get(r);
+      if (r.kind === "purchase" || (r.kind === "switch-in" && !other)) {
+        flows.push(makeCashFlow({ ...base, kind: "contribution", amount: r.gross, netAmount: r.amount, expenses: r.stamp,
+          notes: [`allotted ${at}`, r.stamp !== null ? `stamp duty ${r.stamp}` : r.date < STAMP_DUTY_FROM ? "no stamp duty line (levied only from 1 July 2020)" : null,
+            r.kind === "switch-in" ? "switched in from a scheme whose ledger this statement does not print" : null].filter(Boolean).join("; ") }));
+      } else if (r.kind === "switch-in") {
+        flows.push(makeCashFlow({ ...base, kind: "reclassification", amount: r.gross, netAmount: r.amount, expenses: r.stamp,
+          notes: [`allotted ${at}`, r.stamp !== null ? `stamp duty ${r.stamp}` : null,
+            `switched in from ${other.s.security} (switched out ${other.r.date})`].filter(Boolean).join("; ") }));
+      } else if (r.kind === "switch-out") {
+        flows.push(makeCashFlow({ ...base, kind: "reclassification", amount: r.amount, netAmount: r.amount, expenses: r.stt,
+          settlementDate: other.r.date,
+          notes: [`switched out ${at}`, r.stt !== null ? `STT ${r.stt}` : null,
+            `switched into ${other.s.security} (credited ${other.r.date})`].filter(Boolean).join("; ") }));
+      } else if (r.kind === "redeem") {
+        flows.push(makeCashFlow({ ...base, kind: "withdrawal", amount: r.amount, netAmount: r.amount, expenses: r.stt,
+          notes: `redeemed ${at}${r.stt !== null ? `; STT ${r.stt}` : ""}` }));
+      } else {
+        flows.push(makeCashFlow({ ...base, kind: "allotment", amount: r.amount, netAmount: r.amount, expenses: r.charges,
+          notes: r.units === null
+            ? `IDCW wholly withheld as TDS ${r.tds}: no amount, units or balance printed, and the next balance shows none allotted`
+            : [`IDCW reinvested ${at}`, r.gross !== null ? `gross ${r.gross}` : null, r.stamp !== null ? `stamp duty ${r.stamp}` : null,
+              r.tds !== null ? `TDS ${r.tds}` : null].filter(Boolean).join("; ") }));
+      }
+    }
+  }
+  return flows;
+}
+
+/**
+ * ABSL's own ACCOUNT STATEMENT ledger (the trust's monthly statements, 1 Jul
+ * and 3 Aug 2026). Per scheme:
+ *
+ *   B153DZ Aditya Birla Sun Life Liquid Fund - Daily IDCW # -Direct Plan - NAV as on 30/06/2026 : 100.1950
+ *   Reinvestment - INF209K01UZ2
+ *   Closing Balance as on 30/06/2026 : 766,421.41 7,649.298
+ *   30/06/2026 IDCW Reinvestment @ Rs.0.06231576 per unit 428.39 100.1950 100.1950 4.276 7,649.298
+ *   Gross Amount: Rs.428.41/-; Stamp Duty charges Levied 0.02
+ *   *** TDS on Cumulative IDCW *** 48.00
+ *   04/06/2026 IDCW Reinvestment @ Rs.0.02343048 per unit 100.1950 100.1950    ← all of it TDS
+ *   *** TDS on Cumulative IDCW *** 178.00
+ *   Opening Balance as on 01/06/2026 7,609.792
+ *
+ * Columns: Amount, Price, NAV, Units, Balance. The June statement prints
+ * newest-first and the July one oldest-first; both are walked oldest-first.
+ * The block is joined to the PORTFOLIO SUMMARY holding whose units and value
+ * are the block's printed closing balance — the summary prints no ISIN.
+ */
+const ABSL_LEDGER_HEAD = /^([A-Z0-9]{2,8})\s+(Aditya Birla Sun Life .+?)\s+NAV as on\s+(\d{2}\/\d{2}\/\d{4})\s*:\s*([\d,]+\.\d+)$/;
+const ABSL_LEDGER_ROW = new RegExp(String.raw`^(${LD})\s+(\D.*?)\s+(${LN})\s+(${LN})\s+(${LN})\s+(${LU})\s+([\d,]+\.\d{3})$`);
+const ABSL_LEDGER_EMPTY = new RegExp(String.raw`^(${LD})\s+(IDCW Reinvestment\b.*?)\s+(${LN})\s+(${LN})$`, "i");
+const ABSL_LEDGER_GROSS = /^Gross Amount:\s*Rs\.?\s*([\d,]+(?:\.\d+)?)\/-;?\s*Stamp Duty charges Levied\s*([\d,]+\.\d{2})$/i;
+const ABSL_LEDGER_CLOSE = new RegExp(String.raw`^Closing Balance as on (${LD})\s*:\s*([\d,]+\.\d{2})\s+([\d,]+\.\d{3})$`, "i");
+
+function abslLedgerFlows(lines, holdings, warnings) {
+  const blocks = new Map();
+  let cur = null;
+  for (const raw of lines) {
+    const l = furnitureFree(raw);
+    if (!l) continue;
+    const h = ABSL_LEDGER_HEAD.exec(l);
+    if (h) {
+      if (!blocks.has(h[1])) blocks.set(h[1], { code: h[1], name: cleanName(h[2]), opening: null, close: null, rows: [], unsupported: [] });
+      cur = blocks.get(h[1]);
+      continue;
+    }
+    if (!cur) continue;
+    if (/^(?:Your Advisor|Lien Units)\b/i.test(l)) { cur = null; continue; }
+    const open = LEDGER_OPEN.exec(l);
+    if (open) { cur.opening = { date: toIso(open[1]), units: num(open[2]) }; continue; }
+    const close = ABSL_LEDGER_CLOSE.exec(l);
+    if (close) { cur.close = { date: toIso(close[1]), value: num(close[2]), units: num(close[3]) }; continue; }
+    const g = ABSL_LEDGER_GROSS.exec(l);
+    if (g) {
+      const last = cur.rows.at(-1);
+      if (last && last.gross === null) { last.gross = num(g[1]); last.stampAfter = num(g[2]); } else cur.unsupported.push(l);
+      continue;
+    }
+    const tds = LEDGER_TDS.exec(l);
+    if (tds) {
+      const last = cur.rows.at(-1);
+      if (last && last.tds === null) last.tds = tds[1] ? num(tds[1]) : "pending"; else cur.unsupported.push(l);
+      continue;
+    }
+    if (/^[\d,]+\.\d{2}$/.test(l) && cur.rows.at(-1)?.tds === "pending") { cur.rows.at(-1).tds = num(l); continue; }
+    const m = ABSL_LEDGER_ROW.exec(l);
+    const e = m ? null : ABSL_LEDGER_EMPTY.exec(l);
+    if (m || e) {
+      const type = (m ? m[2] : e[2]).trim();
+      const kind = kindOfType(type);
+      if (kind !== "reinvest") { cur.unsupported.push(l); continue; }
+      cur.rows.push(m
+        ? { date: toIso(m[1]), type, kind, amount: num(m[3]), priceText: m[4], price: num(m[4]), nav: num(m[5]), units: num(m[6]), balance: num(m[7]),
+          gross: null, stampBefore: null, stampAfter: null, stt: null, tds: null }
+        : { date: toIso(e[1]), type, kind, amount: null, priceText: e[3], price: num(e[3]), nav: num(e[4]), units: null, balance: null,
+          gross: null, stampBefore: null, stampAfter: null, stt: null, tds: null });
+      continue;
+    }
+    if (LEDGER_ADMIN.test(l)) continue;
+    if (new RegExp(`^${LD}\\b`).test(l) || LEDGER_STRAY.test(l)) cur.unsupported.push(l);
+  }
+  const withRows = [...blocks.values()].filter((b) => b.rows.length || b.unsupported.length);
+  if (!withRows.length) return [];
+  const fail = (why) => { warn(warnings, "ledger-not-published", why); return []; };
+  for (const b of withRows) {
+    for (const u of b.unsupported) warn(warnings, "unsupported-movement", `${b.name}: a dated movement is outside the verified ledger layout — ${u}`);
+    if (b.rows.some((r) => r.tds === "pending")) return fail(`${b.name}: a TDS line prints no amount`);
+  }
+  if (withRows.some((b) => b.unsupported.length)) return fail("the scheme ledger contains a line this reader could not place, so no row of it is published");
+  const flows = [];
+  for (const b of withRows) {
+    if (!b.close) return fail(`${b.name}: no Closing Balance line`);
+    const matches = holdings.filter((h) => h.quantity !== null && Math.abs(h.quantity - b.close.units) <= 0.0005
+      && Math.abs((h.printed?.marketValue ?? NaN) - b.close.value) <= 0.011);
+    if (matches.length !== 1) return fail(`${b.name}: the closing balance ${b.close.units} / ${b.close.value} is not one summary holding's units and value`);
+    const holding = matches[0];
+    const walked = walkSchemeLedger(b.name, b.opening, b.rows, b.close.units);
+    if (walked.why) return fail(`${b.name}: ${walked.why}`);
+    // The PORTFOLIO SUMMARY's `IDCW Earned` for the scheme is the month's
+    // reinvestments read here (₹3,958.33 in June, ₹3,606.75 in July).
+    const earned = lines.map((x) => ABSL_ROW.exec(x.trim())).find((x) => x && Math.abs(num(x[2]) - b.close.units) <= 0.0005);
+    const reinvested = Math.round(walked.rows.reduce((t, r) => t + (r.amount ?? 0), 0) * 100) / 100;
+    if (earned && Math.abs(num(earned[7]) - reinvested) > 0.011) {
+      return fail(`${b.name}: the reinvestments read sum to ${reinvested} against the IDCW Earned of ${num(earned[7])} the summary prints`);
+    }
+    // An all-TDS row allots nothing: the balance either side of it must agree.
+    const ordered = walked.rows;
+    for (let i = 0; i < ordered.length; i++) {
+      if (ordered[i].units !== null) continue;
+      const before = i ? ordered.slice(0, i).reverse().find((r) => r.balance !== null)?.balance ?? b.opening.units : b.opening.units;
+      const after = ordered.slice(i + 1).find((r) => r.units !== null);
+      const next = after ? Math.round((after.balance - after.units) * 1000) / 1000 : walked.closing;
+      if (Math.abs(before - next) > 0.0005) return fail(`${b.name}: ${ordered[i].date}: a row with no units printed, across which the balance moves`);
+    }
+    flows.push(makeCashFlow({ date: b.opening.date, description: "Opening Balance", security: holding.security, isin: holding.isin,
+      kind: "opening-units", units: b.opening.units, balance: b.opening.units }));
+    for (const r of ordered) {
+      flows.push(makeCashFlow({ date: r.date, description: r.type, security: holding.security, isin: holding.isin,
+        kind: "allotment", amount: r.amount, netAmount: r.amount, expenses: r.charges, units: r.units, balance: r.balance,
+        notes: r.units === null
+          ? `IDCW wholly withheld as TDS ${r.tds}: no amount, units or balance printed, and the balance either side shows none allotted`
+          : [`IDCW reinvested at ${r.price}`, r.gross !== null ? `gross ${r.gross}` : null, r.stamp !== null ? `stamp duty ${r.stamp}` : null,
+            r.tds !== null ? `TDS ${r.tds}` : null].filter(Boolean).join("; ") }));
+    }
+  }
+  return flows;
+}
+
 export function extract({ grid, meta }) {
   const warnings = [];
   const source = meta.docKey;
@@ -870,9 +1427,13 @@ export function extract({ grid, meta }) {
   // dated, with its amount, NAV, units and running balance (and the gross and
   // stamp duty, or STT, beside it) — published only where all of them tie. The
   // CAMS listing prints its daily IDCW reinvestments the same way.
+  // HDFC's and Kotak's scheme blocks print the same ledger, NAV column first
+  // (layout 7), and ABSL's account statement its own (newest-first in June).
   const cashFlows = [
     ...iciciLedgerFlows(lines, holdings, warnings),
     ...camsListingFlows(lines, holdings, warnings),
+    ...schemeLedgerFlows(lines, holdings, warnings),
+    ...abslLedgerFlows(lines, holdings, warnings),
   ];
   if (/^Account Statement\s+Since Inception\b/im.test(flat) && cashFlows.length) {
     cashFlows[0].notes = [cashFlows[0].notes, 'Ledger scope: since inception'].filter(Boolean).join('\n');
@@ -886,14 +1447,19 @@ export function extract({ grid, meta }) {
    *
    * A holder whose printed tax status is anything but `Individual` is a separate
    * taxpayer, and its assets are not a person's net worth. That is a fact off the
-   * page, so it is recorded as one; whether the family wants the trust
-   * consolidated is a decision for them, and making it here would be inventing an
-   * owner. One entry in `shared/owners.mjs` reverses it.
+   * page, so it is recorded as one (`providerEngagement`); whether the family
+   * wants the trust consolidated is a decision for them, and making it here would
+   * be inventing an owner. The decision lives in ONE place: an entry in
+   * `shared/owners.mjs`. A holder that resolves there — by PAN first, then by
+   * name, exactly as extract.mjs resolves `ownerId` — is consolidated as its own
+   * entity (Hope India Trust, 21 Oct 2026); one that does not stays out, with the
+   * reason.
    */
   const statusKind = printedStatus ? printedStatus.toLowerCase() : null;
   const isIndividual = statusKind === "individual";
   const panKind = panHolderType(pan);
-  const excludedFromBook = isIndividual
+  const registered = resolveOwner(owner, pan).owner;
+  const excludedFromBook = isIndividual || registered
     ? null
     : `holder ${owner ?? "(unread)"} is filed by the AMC as ${printedStatus ?? "an entity of unstated status"}`
       + `${panKind && panKind !== "individual" ? `, and its PAN carries the ${panKind} holder code` : ""}`

@@ -232,8 +232,9 @@ const offValue = DEP.filter((p) => {
 });
 ok("...and its value is exactly those units × the NAV AMFI published, dated as AMFI dated it",
   offValue.length === 0, offValue.map((p) => p.securityKey).join("; "));
-ok("no row carries a cost — a depository holds units and did not buy them, and a ₹0 cost would book the lot as profit",
-  DEP.every((p) => p.costBasis === null && p.unrealizedPnL === null && p.returnPct === null && p.costUnavailable === true));
+ok("costs require exact supplementary lot evidence; other depository rows remain uncosted",
+  DEP.every((p) => p.recoveredCost ? p.costBasis === p.recoveredCost.costBasis && !p.costUnavailable
+    : p.costBasis === null && p.unrealizedPnL === null && p.returnPct === null && p.costUnavailable === true));
 ok("every row says where it came from: the depository's window and the NAV's own date",
   DEP.every((p) => p.navPriced === true && !!p.navDate && !!p.depositoryUnits?.asOf && !!p.depositoryUnits?.source));
 const doubled = DEP.filter((p) => BOOK_POSITIONS.some((b) =>
@@ -318,8 +319,9 @@ const offValueF = FUNDS.filter((p) => {
 });
 ok("...its value exactly those units × AMFI's NAV, dated as AMFI dated it",
   offValueF.length === 0, offValueF.map((p) => p.securityKey).join("; "));
-ok("...with no cost, and saying where it came from",
-  FUNDS.every((p) => p.costBasis === null && p.unrealizedPnL === null && p.costUnavailable === true
+ok("...with cost only from reconciled supplementary lots, and saying where it came from",
+  FUNDS.every((p) => (p.recoveredCost ? p.costBasis === p.recoveredCost.costBasis && !p.costUnavailable
+    : p.costBasis === null && p.unrealizedPnL === null && p.costUnavailable === true)
     && p.navPriced === true && !!p.depositoryUnits?.asOf && !!p.depositoryUnits?.source));
 const doubledF = FUNDS.filter((p) => BOOK_POSITIONS.some((b) =>
   b.isin && p.isin && b.isin.toUpperCase() === p.isin.toUpperCase() && Math.abs((b.quantity ?? NaN) - (p.quantity ?? NaN)) < 0.0005));
@@ -436,9 +438,11 @@ ok("a feed that prices a share makes no row while no corporate-action capture ha
 const priced = one?.symbol ? depositoryShareHoldings(feedOf(one.symbol, 250), CAPTURE) : [];
 ok("a feed that prices one share makes exactly that share a row",
   priced.length === 1 && priced[0].isin === one?.isin, priced.map((p) => p.symbol).join("; "));
-ok("...at its closing units × the quote, live, with no cost and no NAV",
+const oneCost = shareCandidates().find(p => p.accountId === one.accountId && p.isin === one.isin)?.costBasis ?? null;
+ok("...at its closing units × the quote, live, retaining a recovered cost and no NAV",
   priced.length === 1 && priced[0].marketValue === (one?.quantity ?? 0) * 250 && priced[0].live === true
-    && priced[0].costBasis === null && priced[0].unrealizedPnL === null && !priced[0].navPriced);
+    && priced[0].costBasis === oneCost
+    && priced[0].unrealizedPnL === (oneCost === null ? null : priced[0].marketValue - oneCost) && !priced[0].navPriced);
 /**
  * THE GATE ITSELF, on constructed captures: a split between the balance's date
  * and the quote's is projected (twice the units, at the quote), and an event

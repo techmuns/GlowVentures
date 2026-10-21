@@ -21,17 +21,37 @@ assert.equal(part.terminalValue, 116019848);
 assert.equal(part.asOf.toISOString().slice(0, 10), '2026-09-22');
 assert(part.flows.some(f => f.date.toISOString().slice(0, 10) === '2026-09-17'));
 assert(current.gaps.some(g => g.accountId === id && g.asOf === '2026-10-06' && /2026-09-22/.test(g.reason)));
-const tile = bookMoneyWeighted(statement, statement, new Date('2026-10-15'));
+// Stage 10fc — NEVER A PARTIAL POOL. Accounts holding value without a verified
+// record leave the book's rate absent, named; those with nothing of their own to
+// measure are outside it, not gaps in it.
+assert.equal(current.whole, false);
+assert.equal(current.annPct, null);
+assert.equal(current.toDatePct, null);
+assert(current.reason && /no whole return/.test(current.reason));
+for (const no of ['9039671821', '103473', '49794950']) assert(current.missing.some(m => m.accountNo === no), `${no} holds value without a verified record`);
+for (const no of ['3041491081', '67786137', '1000632']) assert(current.outside.some(m => m.accountNo === no), `${no} has nothing of its own to measure`);
+assert(!current.missing.some(m => current.parts.some(p => p.accountId === m.accountId)));
+assert.equal(current.parts.length + current.missing.length + current.outside.length, statement.accounts.length, 'every account is accounted for once');
+const blocked = bookMoneyWeighted(statement, statement, new Date('2026-10-15'));
+assert.equal(blocked.result.pct, null);
+assert.equal(blocked.flows.length, 0, 'no rate, no partial inputs');
+assert.equal(blocked.bookAccounts, current.parts.length + current.missing.length);
+assert.equal(blocked.reason, current.reason);
+// Over the accounts that ARE wholly measured, the tile and the pool agree.
+const recorded = { ...statement, accounts: statement.accounts.filter(a => current.parts.some(p => p.accountId === a.accountId)) };
+const pooled = measuredAccountsReturn(recorded, recorded.accounts);
+assert.equal(pooled.whole, true);
+const tile = bookMoneyWeighted(recorded, recorded, new Date('2026-10-15'));
 assert.equal(tile.lastClose, current.lastClose);
 assert.equal(tile.measuredValue, current.measuredMV);
-assert(Math.abs(tile.result.pct! - current.toDatePct!) < 1e-9);
-assert.equal(tile.flows.length, current.parts.reduce((n, p) => n + p.flows.length + 1, 0));
+assert(Math.abs(tile.result.pct! - pooled.toDatePct!) < 1e-9);
+assert.equal(tile.flows.length, pooled.parts.reduce((n, p) => n + p.flows.length + 1, 0));
 // Stage 10fx: a fund-of-funds line carries no valuation date and runs since
 // inception, so it is named and never pooled into the FY-window accounts' rate —
 // nor dated at the page's clock.
 {
-  const withFund = { ...statement, privateMarkets: { ...empty, peFunds: [{ name: 'Constructed fund', firstInvest: '2023-01-01', committed: 100, drawn: 100, distributed: 0, currentValue: 150, tvpi: null, dpi: null }] } } as unknown as Portfolio;
-  const t2 = bookMoneyWeighted(withFund, statement, new Date('2026-10-15'));
+  const withFund = { ...recorded, privateMarkets: { ...empty, peFunds: [{ name: 'Constructed fund', firstInvest: '2023-01-01', committed: 100, drawn: 100, distributed: 0, currentValue: 150, tvpi: null, dpi: null }] } } as unknown as Portfolio;
+  const t2 = bookMoneyWeighted(withFund, recorded, new Date('2026-10-15'));
   assert.equal(t2.flows.length, tile.flows.length, 'a private leg is not pooled into the accounts window');
   assert(Math.abs(t2.result.pct! - tile.result.pct!) < 1e-12);
   assert.deepEqual(t2.privateExcluded.map(x => x.name), ['Constructed fund']);
@@ -67,7 +87,6 @@ const redeemedReturn = measuredAccountsReturn(redeemed, redeemed.accounts);
 assert.equal(redeemedReturn.parts.length, 1);
 assert(Math.abs(redeemedReturn.toDatePct! - 10) < 1e-7, 'a verified closing zero still includes redemption proceeds');
 assert.equal(bookMoneyWeighted(redeemed, redeemed, new Date('2026-10-15')).result.pct, redeemedReturn.toDatePct);
-console.log(`PASS current corpus returns: ${current.toDatePct?.toFixed(1)}%, through ${current.lastClose}; latest source and named gaps shared across return surfaces`);
 
 // D9 (Stage 10fx): an entity's FYTD return is struck on ISO dates (a 1 Apr
 // opening NAV is kept in any time zone), closes on its own latest STATEMENT
@@ -84,3 +103,4 @@ console.log(`PASS current corpus returns: ${current.toDatePct?.toFixed(1)}%, thr
   assert.equal(entityYtdPct({ ...ent, entityNavHistory: {} } as unknown as Portfolio, 'E', 1), null);
 }
 console.log('PASS entity FYTD: ISO dates, statement close, Modified Dietz');
+console.log(`PASS ${current.parts.length} verified accounts (${pooled.toDatePct?.toFixed(1)}% over them alone), ${current.missing.length} holding value without a record, ${current.outside.length} with nothing to measure; the book's rate is absent until every account is measured`);

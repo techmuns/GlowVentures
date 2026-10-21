@@ -322,7 +322,17 @@ console.log("\n── a row carries an account's record only where it holds all 
   const svan = BOOK_ACCOUNTS.find((a) => /svan/i.test(a.provider) && dc.of(a.accountId));
   const shares = svan ? own(svan.accountId).filter((p) => p.marketValue > 0) : [];
   ok("a mandate on a dated record is rated as a whole", !!svan && !!dc.behind(own(svan.accountId), universe)?.dated);
-  ok("…and one of its shares is not an account: no capital at all", shares.length > 1 && dc.behind([shares[0]], universe) === null);
+  // …AND ONE OF ITS SHARES IS NOT THE ACCOUNT (Stage 10fw). It never takes the
+  // account's record. Where its own dated trades account for every unit it
+  // holds, its money is dated as a holding's — `holdings` set, struck over that
+  // line alone; where they do not, it carries no capital at all.
+  const undatedShare = shares.find((p) => !(p.tradeRecord && p.tradeRecord.unaccounted === 0) && !p.heldSince);
+  const datedShare = shares.find((p) => p.tradeRecord?.unaccounted === 0 && p.tradeRecord.held);
+  ok("…and one of its shares is not an account: no capital where nothing dates every unit of it",
+    shares.length > 1 && !!undatedShare && dc.behind([undatedShare], universe) === null);
+  const own1 = datedShare ? dc.behind([datedShare], universe) : null;
+  ok("…and a share its trades date in full carries its own dated money, never the account's",
+    !!own1 && own1.dated && !!own1.holdings && own1.accounts === 1 && own1.holdings.trades === 1);
   // A whole account with no dated record is marked, and says why.
   const undatedMandate = BOOK_ACCOUNTS.find((a) => a.engagement === "PMS" && !BOOK_CAPITAL_MOVES.some((m) => m.accountId === a.accountId)
     && own(a.accountId).length > 0);

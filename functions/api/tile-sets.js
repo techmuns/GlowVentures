@@ -16,8 +16,8 @@
 // partitioned storage a browser gives a page embedded in another site's frame —
 // and the dashboard is served inside one (the session cookie is `SameSite=None`
 // for exactly that reason). Each of those reads to the family as "it did not
-// save". So the choice lives here, in the same KV namespace the capital-call
-// column uses (`GLOW_STORE`), and `localStorage` stays as the instant copy the
+// save". So the choice lives here, in the same shared store the capital-call
+// column uses (the repository's store file, `shared/dashboardStore.mjs`), and `localStorage` stays as the instant copy the
 // page paints from before this answers — and as the whole of the memory where
 // this store is not connected.
 //
@@ -36,9 +36,11 @@
 // current build does not know is dropped by the page rather than drawn blank.
 // Nothing here reaches `glowData.ts`.
 //
-// Set-up is the capital-call column's, once: a KV namespace binding named
-// `GLOW_STORE`. Until then every request answers 503 `NOT_CONFIGURED` and the
+// Set-up is the capital-call column's, once: the site's `GLOW_GITHUB_TOKEN`
+// secret. Until then every request answers 503 `NOT_CONFIGURED` and the
 // page keeps the choice in the browser, saying so inside the tile picker.
+
+import { storeFor } from "../../shared/dashboardStore.mjs";
 
 const PREFIX = "tile-set:";
 const PAGE = /^[a-z0-9][a-z0-9-]{0,39}$/;
@@ -107,10 +109,10 @@ async function listSets(kv) {
 export async function onRequest(context) {
   const { request, env } = context;
   const url = new URL(request.url);
-  const kv = env?.GLOW_STORE;
-  if (!kv || typeof kv.list !== "function") {
+  const kv = storeFor(env);
+  if (!kv) {
     return fail(503, "NOT_CONFIGURED",
-      "Saving tile layouts for everyone is not switched on yet: the site's shared store (a Cloudflare KV binding named GLOW_STORE) has not been connected.");
+      "Saving tile layouts for everyone is not switched on yet: the site has no GitHub token (GLOW_GITHUB_TOKEN) to save them to the repository with.");
   }
 
   if (request.method === "GET") {
@@ -142,6 +144,7 @@ export async function onRequest(context) {
   if (v.error) return fail(400, "INVALID", v.error);
   try {
     await kv.put(PREFIX + v.set.page, JSON.stringify(v.set), { metadata: v.set });
+    await kv.flush?.();
     // KV's list is eventually consistent, so the answer applies the save itself:
     // whoever saved must never see the old layout come back.
     const sets = await listSets(kv);

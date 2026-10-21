@@ -7,7 +7,7 @@
 import type { KvLike } from "./capital-calls";
 
 export type TileSetsContext = {
-  env: { GLOW_STORE?: KvLike } & Record<string, unknown>;
+  env: { DASHBOARD_STORE?: KvLike; GLOW_GITHUB_TOKEN?: string } & Record<string, unknown>;
   request: Request;
 };
 

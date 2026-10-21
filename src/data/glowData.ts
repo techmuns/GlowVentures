@@ -9,8 +9,8 @@
 // list and what document would supply each.
 import type {
   Account, AccountBridge, AccountReturnBlock, AccountReturnCoverage, BookSummary, CapitalMove, CashFlow, Commitment,
-  Attribution, CorporateAction, EntityCG, FundInvestment, NavCoverage, NavPoint, Position, PositionTranches,
-  RealisedByClass, ReviewFlow, ReviewSuperseded, ReviewWrittenOff, ShareMovement, StartupInvestment, UndatedCapital, UnvaluedStatementHolding,
+  Attribution, CorporateAction, EntityCG, FundInvestment, HoldingTrade, NavCoverage, NavPoint, Position, PositionTranches,
+  RealisedByClass, RecoveredHoldingCost, ReviewFlow, ReviewSuperseded, ReviewWrittenOff, ShareMovement, StartupInvestment, UndatedCapital, UnvaluedStatementHolding,
 } from "@/lib/types";
 
 /** Newest report date across all accounts. Individual accounts can be older. */
@@ -18,14 +18,14 @@ export const BOOK_AS_OF = "2026-10-07";
 
 export const BOOK_SUMMARY: BookSummary = {
   "asOf": "2026-10-07",
-  "listedValue": 6434797581.79,
+  "listedValue": 6438109112.5,
   "privateValue": 1930944270.36,
   "unplacedValue": 0,
-  "totalValue": 8365741852.15,
-  "positionsCount": 448,
-  "entitiesCount": 8,
+  "totalValue": 8369053382.86,
+  "positionsCount": 459,
+  "entitiesCount": 9,
   "startupsCount": 0,
-  "accountsCount": 76
+  "accountsCount": 80
 };
 
 /** Account registry — one row per (provider, account no). Positions join on accountId. */
@@ -166,6 +166,38 @@ export const BOOK_ACCOUNTS: Account[] = [
     "noPositionsReason": null
   },
   {
+    "accountId": "aditya-birla-sun-life-mutual-fund-1019265797",
+    "provider": "Aditya Birla Sun Life Mutual Fund",
+    "accountNo": "1019265797",
+    "ownerId": "hope-india-trust",
+    "owner": "Hope India Trust",
+    "strategy": null,
+    "engagement": "Direct",
+    "providerEngagement": "folio held by a trust",
+    "members": [],
+    "asOf": "2026-10-06",
+    "inceptionDate": null,
+    "capitalRecordTo": null,
+    "custodian": "Aditya Birla Sun Life Mutual Fund",
+    "noPositionsReason": null
+  },
+  {
+    "accountId": "aditya-birla-sun-life-mutual-fund-1038104611",
+    "provider": "Aditya Birla Sun Life Mutual Fund",
+    "accountNo": "1038104611",
+    "ownerId": "hope-india-trust",
+    "owner": "Hope India Trust",
+    "strategy": null,
+    "engagement": "Direct",
+    "providerEngagement": "folio held by a trust",
+    "members": [],
+    "asOf": "2026-08-03",
+    "inceptionDate": null,
+    "capitalRecordTo": null,
+    "custodian": "Aditya Birla Sun Life Mutual Fund",
+    "noPositionsReason": null
+  },
+  {
     "accountId": "ask-absolute-return-fund-9039917111",
     "provider": "ASK Absolute Return Fund",
     "accountNo": "9039917111",
@@ -255,7 +287,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-03-31",
     "inceptionDate": null,
-    "capitalRecordTo": null,
+    "capitalRecordTo": "2026-03-31",
     "custodian": "Baring Private Equity India Fund",
     "noPositionsReason": null
   },
@@ -326,7 +358,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-31",
     "inceptionDate": null,
-    "capitalRecordTo": null,
+    "capitalRecordTo": "2026-07-31",
     "custodian": "Carnelian Bharat Amritkaal Fund",
     "noPositionsReason": null
   },
@@ -466,7 +498,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-10-01",
     "inceptionDate": null,
-    "capitalRecordTo": null,
+    "capitalRecordTo": "2026-08-31",
     "custodian": "HDFC Mutual Fund",
     "noPositionsReason": null
   },
@@ -482,7 +514,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-10-01",
     "inceptionDate": null,
-    "capitalRecordTo": null,
+    "capitalRecordTo": "2026-09-30",
     "custodian": "HDFC Mutual Fund",
     "noPositionsReason": null
   },
@@ -498,7 +530,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-10-01",
     "inceptionDate": null,
-    "capitalRecordTo": null,
+    "capitalRecordTo": "2026-08-31",
     "custodian": "HDFC Mutual Fund",
     "noPositionsReason": null
   },
@@ -695,6 +727,22 @@ export const BOOK_ACCOUNTS: Account[] = [
     "noPositionsReason": null
   },
   {
+    "accountId": "kotak-mahindra-mutual-fund-4295974",
+    "provider": "Kotak Mahindra Mutual Fund",
+    "accountNo": "4295974",
+    "ownerId": "hope-india-trust",
+    "owner": "Hope India Trust",
+    "strategy": null,
+    "engagement": "Direct",
+    "providerEngagement": "folio held by a trust",
+    "members": [],
+    "asOf": "2026-10-05",
+    "inceptionDate": null,
+    "capitalRecordTo": null,
+    "custodian": "Kotak Mahindra Mutual Fund",
+    "noPositionsReason": null
+  },
+  {
     "accountId": "kotak-mahindra-mutual-fund-7125255",
     "provider": "Kotak Mahindra Mutual Fund",
     "accountNo": "7125255",
@@ -706,7 +754,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-10-05",
     "inceptionDate": null,
-    "capitalRecordTo": null,
+    "capitalRecordTo": "2026-09-30",
     "custodian": "Kotak Mahindra Mutual Fund",
     "noPositionsReason": null
   },
@@ -761,6 +809,22 @@ export const BOOK_ACCOUNTS: Account[] = [
     "capital": null
   },
   {
+    "accountId": "mirae-asset-mutual-fund-70413280453",
+    "provider": "Mirae Asset Mutual Fund",
+    "accountNo": "70413280453",
+    "ownerId": "hope-india-trust",
+    "owner": "Hope India Trust",
+    "strategy": null,
+    "engagement": "Direct",
+    "providerEngagement": "folio held by a trust",
+    "members": [],
+    "asOf": "2026-10-06",
+    "inceptionDate": null,
+    "capitalRecordTo": null,
+    "custodian": "Mirae Asset Mutual Fund",
+    "noPositionsReason": null
+  },
+  {
     "accountId": "molecule-ventures-llp-7810404",
     "provider": "Molecule Ventures LLP",
     "accountNo": "7810404",
@@ -811,7 +875,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-06-30",
     "inceptionDate": null,
-    "capitalRecordTo": null,
+    "capitalRecordTo": "2026-06-30",
     "custodian": "Motilal Oswal Delphi Equity Fund",
     "noPositionsReason": null
   },
@@ -940,7 +1004,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-09-30",
     "inceptionDate": null,
-    "capitalRecordTo": null,
+    "capitalRecordTo": "2026-09-30",
     "custodian": "Motilal Oswal Founders Fund",
     "noPositionsReason": null
   },
@@ -956,7 +1020,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-09-30",
     "inceptionDate": null,
-    "capitalRecordTo": null,
+    "capitalRecordTo": "2026-09-30",
     "custodian": "Motilal Oswal Founders Fund",
     "noPositionsReason": null
   },
@@ -972,9 +1036,9 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-31",
     "inceptionDate": null,
-    "capitalRecordTo": null,
+    "capitalRecordTo": "2026-07-31",
     "custodian": "Motilal Oswal Hedged Equity Multi Factor Strategy",
-    "noPositionsReason": "every holding on this account's holdings statement of 2026-07-31 has been redeemed — the balance is nil, and that is a measurement"
+    "noPositionsReason": null
   },
   {
     "accountId": "motilal-oswal-mutual-fund-90414963315",
@@ -1405,6 +1469,10 @@ export const BOOK_OWNERS = [
     "displayName": "Bharat Jaisinghani Family Trust"
   },
   {
+    "ownerId": "hope-india-trust",
+    "displayName": "Hope India Trust"
+  },
+  {
     "ownerId": "not-attributed",
     "displayName": "Not attributed to a member"
   }
@@ -1587,6 +1655,65 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
+  },
+  {
+    "securityKey": "aditya-birla-sun-life-liquid-fund-daily-idcw-direct-plan",
+    "security": "Aditya Birla Sun Life Liquid Fund - Daily IDCW-Direct Plan",
+    "symbol": null,
+    "accountId": "aditya-birla-sun-life-mutual-fund-1019265797",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Mutual Fund",
+    "marketSide": "listed",
+    "quantity": 7756.542,
+    "avgCost": 100.2974,
+    "currentPrice": 100.195,
+    "costBasis": 777961.25,
+    "marketValue": 777166.73,
+    "unrealizedPnL": -794.52,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": 0.38,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-10-05",
+    "accruedIncome": null,
+    "dividendReceived": 3739.98,
+    "dividendFrom": "2026-09-01",
+    "positionIrrPct": null,
+    "avgCostDerived": true
+  },
+  {
+    "securityKey": "absl-liquid-fund-direct-growth",
+    "security": "ABSL Liquid Fund - Direct-Growth",
+    "symbol": null,
+    "accountId": "aditya-birla-sun-life-mutual-fund-1038104611",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Mutual Fund",
+    "marketSide": "listed",
+    "quantity": 1752.565,
+    "avgCost": 306.4915,
+    "currentPrice": 455.6544,
+    "costBasis": 537146.28,
+    "marketValue": 798563.95,
+    "unrealizedPnL": 261417.67,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": 48.67,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-07-31",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "ask-absolute-return-fund-class-a6-series-31-01-2025",
@@ -1834,6 +1961,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 2,
+      "unaccounted": 210000,
+      "held": null,
+      "reason": "the transaction statements from 2026-04-01 to 2026-09-30 buy 0 and sell 64543 units of it against 145457 held, so 210000 of them are on no dated trade in this drop"
+    },
     "accruedIncome": 0,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -1861,6 +1997,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 125500,
+      "held": null,
+      "reason": "none of its 125500 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": 95958,
     "dividendReceived": 62750,
     "dividendFrom": "2026-04-01",
@@ -1889,6 +2034,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 1,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-07-24",
+        "last": "2026-07-24",
+        "lots": 1
+      },
+      "reason": null
+    },
     "accruedIncome": 0,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -1943,6 +2101,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 2,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-08-25",
+        "last": "2026-08-25",
+        "lots": 2
+      },
+      "reason": null
+    },
     "accruedIncome": 0,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -1970,6 +2141,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 5,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-06-30",
+        "last": "2026-07-22",
+        "lots": 5
+      },
+      "reason": null
+    },
     "accruedIncome": 165040,
     "dividendReceived": 165040,
     "dividendFrom": "2026-04-01",
@@ -1998,6 +2182,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 282771,
+      "held": null,
+      "reason": "none of its 282771 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": 0,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -2025,6 +2218,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 27900,
+      "held": null,
+      "reason": "none of its 27900 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": 495063,
     "dividendReceived": 306900,
     "dividendFrom": "2026-04-01",
@@ -2053,6 +2255,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 2,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-07-13",
+        "last": "2026-07-13",
+        "lots": 2
+      },
+      "reason": null
+    },
     "accruedIncome": 146000,
     "dividendReceived": 146000,
     "dividendFrom": "2026-04-01",
@@ -2082,6 +2297,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 1,
+      "unaccounted": 32659,
+      "held": null,
+      "reason": "the transaction statements from 2026-04-01 to 2026-09-30 buy 0 and sell 882 units of it against 31777 held, so 32659 of them are on no dated trade in this drop"
+    },
     "accruedIncome": 0,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -2109,6 +2333,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 69817,
+      "held": null,
+      "reason": "none of its 69817 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": 0,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -2136,6 +2369,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 1,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-08-07",
+        "last": "2026-08-07",
+        "lots": 1
+      },
+      "reason": null
+    },
     "accruedIncome": 0,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -2163,6 +2409,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 6,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-08-11",
+        "last": "2026-08-21",
+        "lots": 6
+      },
+      "reason": null
+    },
     "accruedIncome": 2788,
     "dividendReceived": 2787.6,
     "dividendFrom": "2026-04-01",
@@ -2179,7 +2438,7 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "AIF",
     "marketSide": "listed",
     "quantity": 12993094.825,
-    "avgCost": null,
+    "avgCost": 11.5448,
     "currentPrice": 12.554,
     "costBasis": 150002925.1,
     "marketValue": 163115312.43,
@@ -2193,7 +2452,8 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "banco-products-india",
@@ -2218,6 +2478,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 2000,
+      "held": null,
+      "reason": "none of its 2000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
+    },
     "accruedIncome": 16000,
     "dividendReceived": 16000,
     "dividendFrom": "2026-04-01",
@@ -2246,6 +2515,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 6000,
+      "held": null,
+      "reason": "none of its 6000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
+    },
     "accruedIncome": 3000,
     "dividendReceived": 3000,
     "dividendFrom": "2026-04-01",
@@ -2274,6 +2552,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 6000,
+      "held": null,
+      "reason": "none of its 6000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
+    },
     "accruedIncome": 7200,
     "dividendReceived": 7200,
     "dividendFrom": "2026-04-01",
@@ -2302,6 +2589,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 3000,
+      "held": null,
+      "reason": "none of its 3000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
+    },
     "accruedIncome": 24000,
     "dividendReceived": 24000,
     "dividendFrom": "2026-04-01",
@@ -2330,6 +2626,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 900,
+      "held": null,
+      "reason": "none of its 900 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
+    },
     "accruedIncome": 3600,
     "dividendReceived": 7200,
     "dividendFrom": "2026-04-01",
@@ -2385,6 +2690,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 1,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-07-24",
+        "last": "2026-07-24",
+        "lots": 1
+      },
+      "reason": null
+    },
     "accruedIncome": 8000,
     "dividendReceived": 8000,
     "dividendFrom": "2026-04-01",
@@ -2413,6 +2731,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 1,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-06-24",
+        "last": "2026-06-24",
+        "lots": 1
+      },
+      "reason": null
+    },
     "accruedIncome": 1600,
     "dividendReceived": 1600,
     "dividendFrom": "2026-04-01",
@@ -2441,6 +2772,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 9500,
+      "held": null,
+      "reason": "none of its 9500 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
+    },
     "accruedIncome": 14250,
     "dividendReceived": 14250,
     "dividendFrom": "2026-04-01",
@@ -2469,6 +2809,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 2,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-08-04",
+        "last": "2026-08-04",
+        "lots": 2
+      },
+      "reason": null
+    },
     "accruedIncome": 28800,
     "dividendReceived": 28800,
     "dividendFrom": "2026-04-01",
@@ -2497,6 +2850,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 1100,
+      "held": null,
+      "reason": "none of its 1100 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
+    },
     "accruedIncome": 59400,
     "dividendReceived": 59400,
     "dividendFrom": "2026-04-01",
@@ -2526,6 +2888,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 2000,
+      "held": null,
+      "reason": "none of its 2000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
+    },
     "accruedIncome": 24000,
     "dividendReceived": 24000,
     "dividendFrom": "2026-04-01",
@@ -2554,6 +2925,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 3,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-04-09",
+        "last": "2026-04-21",
+        "lots": 3
+      },
+      "reason": null
+    },
     "accruedIncome": 30000,
     "dividendReceived": 30000,
     "dividendFrom": "2026-04-01",
@@ -2582,6 +2966,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 7750,
+      "held": null,
+      "reason": "none of its 7750 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
+    },
     "accruedIncome": 31000,
     "dividendReceived": 31000,
     "dividendFrom": "2026-04-01",
@@ -2610,6 +3003,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 2,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-05-07",
+        "last": "2026-05-07",
+        "lots": 2
+      },
+      "reason": null
+    },
     "accruedIncome": 9750,
     "dividendReceived": 9750,
     "dividendFrom": "2026-04-01",
@@ -2639,6 +3045,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 8500,
+      "held": null,
+      "reason": "none of its 8500 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
+    },
     "accruedIncome": 22100,
     "dividendReceived": 22100,
     "dividendFrom": "2026-04-01",
@@ -2667,6 +3082,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 500,
+      "held": null,
+      "reason": "none of its 500 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
+    },
     "accruedIncome": 7500,
     "dividendReceived": 7500,
     "dividendFrom": "2026-04-01",
@@ -2695,6 +3119,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 6000,
+      "held": null,
+      "reason": "none of its 6000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
+    },
     "accruedIncome": 60000,
     "dividendReceived": 60000,
     "dividendFrom": "2026-04-01",
@@ -2723,6 +3156,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 2,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-05-29",
+        "last": "2026-06-01",
+        "lots": 2
+      },
+      "reason": null
+    },
     "accruedIncome": 16200,
     "dividendReceived": 16200,
     "dividendFrom": "2026-04-01",
@@ -2751,6 +3197,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 800,
+      "held": null,
+      "reason": "none of its 800 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
+    },
     "accruedIncome": 26400,
     "dividendReceived": 26400,
     "dividendFrom": "2026-04-01",
@@ -2779,6 +3234,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 2250,
+      "held": null,
+      "reason": "none of its 2250 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
+    },
     "accruedIncome": 13500,
     "dividendReceived": null,
     "positionIrrPct": 32.86
@@ -2806,6 +3270,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 1250,
+      "held": null,
+      "reason": "none of its 1250 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
+    },
     "accruedIncome": 0,
     "dividendReceived": null,
     "positionIrrPct": 43.15
@@ -2833,6 +3306,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 1000,
+      "held": null,
+      "reason": "none of its 1000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
+    },
     "accruedIncome": 6000,
     "dividendReceived": 4000,
     "dividendFrom": "2026-04-01",
@@ -2861,6 +3343,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 1,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-08-11",
+        "last": "2026-08-11",
+        "lots": 1
+      },
+      "reason": null
+    },
     "accruedIncome": 0,
     "dividendReceived": null,
     "positionIrrPct": 1551.17
@@ -2888,6 +3383,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 45000,
+      "held": null,
+      "reason": "none of its 45000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
+    },
     "accruedIncome": 4500,
     "dividendReceived": 4500,
     "dividendFrom": "2026-04-01",
@@ -2916,6 +3420,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 1250,
+      "held": null,
+      "reason": "none of its 1250 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
+    },
     "accruedIncome": 25000,
     "dividendReceived": 25000,
     "dividendFrom": "2026-04-01",
@@ -2944,6 +3457,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 9000,
+      "held": null,
+      "reason": "none of its 9000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
+    },
     "accruedIncome": 59850,
     "dividendReceived": 48600,
     "dividendFrom": "2026-04-01",
@@ -2973,6 +3495,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 2250,
+      "held": null,
+      "reason": "none of its 2250 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
+    },
     "accruedIncome": 39038,
     "dividendReceived": 39037.5,
     "dividendFrom": "2026-04-01",
@@ -3001,6 +3532,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 1,
+      "sells": 1,
+      "unaccounted": 6500,
+      "held": null,
+      "reason": "the transaction statements from 2026-04-01 to 2026-10-06 buy 2300 and sell 2800 units of it against 6000 held, so 6500 of them are on no dated trade in this drop"
+    },
     "accruedIncome": 17550,
     "dividendReceived": 12000,
     "dividendFrom": "2026-04-01",
@@ -3029,6 +3569,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 5000,
+      "held": null,
+      "reason": "none of its 5000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
+    },
     "accruedIncome": 0,
     "dividendReceived": null,
     "positionIrrPct": -6.98
@@ -3056,6 +3605,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 3750,
+      "held": null,
+      "reason": "none of its 3750 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
+    },
     "accruedIncome": 37500,
     "dividendReceived": 3750,
     "dividendFrom": "2026-04-01",
@@ -3084,6 +3642,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 1,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-05-29",
+        "last": "2026-05-29",
+        "lots": 1
+      },
+      "reason": null
+    },
     "accruedIncome": 1000,
     "dividendReceived": 1000,
     "dividendFrom": "2026-04-01",
@@ -3112,6 +3683,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 2800,
+      "held": null,
+      "reason": "none of its 2800 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
+    },
     "accruedIncome": 2800,
     "dividendReceived": 2800,
     "dividendFrom": "2026-04-01",
@@ -3140,6 +3720,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 5000,
+      "held": null,
+      "reason": "none of its 5000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
+    },
     "accruedIncome": 40000,
     "dividendReceived": 40000,
     "dividendFrom": "2026-04-01",
@@ -3168,6 +3757,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 12500,
+      "held": null,
+      "reason": "none of its 12500 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
+    },
     "accruedIncome": 6250,
     "dividendReceived": 6250,
     "dividendFrom": "2026-04-01",
@@ -3196,6 +3794,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 15000,
+      "held": null,
+      "reason": "none of its 15000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
+    },
     "accruedIncome": 18000,
     "dividendReceived": 18000,
     "dividendFrom": "2026-04-01",
@@ -3224,6 +3831,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 7000,
+      "held": null,
+      "reason": "none of its 7000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
+    },
     "accruedIncome": 56000,
     "dividendReceived": 56000,
     "dividendFrom": "2026-04-01",
@@ -3252,6 +3868,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 2000,
+      "held": null,
+      "reason": "none of its 2000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
+    },
     "accruedIncome": 8000,
     "dividendReceived": 16000,
     "dividendFrom": "2026-04-01",
@@ -3307,6 +3932,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 1,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-07-24",
+        "last": "2026-07-24",
+        "lots": 1
+      },
+      "reason": null
+    },
     "accruedIncome": 25000,
     "dividendReceived": 25000,
     "dividendFrom": "2026-04-01",
@@ -3335,6 +3973,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 1,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-06-24",
+        "last": "2026-06-24",
+        "lots": 1
+      },
+      "reason": null
+    },
     "accruedIncome": 3600,
     "dividendReceived": 3600,
     "dividendFrom": "2026-04-01",
@@ -3363,6 +4014,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 20000,
+      "held": null,
+      "reason": "none of its 20000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
+    },
     "accruedIncome": 30000,
     "dividendReceived": 30000,
     "dividendFrom": "2026-04-01",
@@ -3391,6 +4051,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 2,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-08-04",
+        "last": "2026-08-04",
+        "lots": 2
+      },
+      "reason": null
+    },
     "accruedIncome": 72000,
     "dividendReceived": 72000,
     "dividendFrom": "2026-04-01",
@@ -3419,6 +4092,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 2500,
+      "held": null,
+      "reason": "none of its 2500 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
+    },
     "accruedIncome": 135000,
     "dividendReceived": 135000,
     "dividendFrom": "2026-04-01",
@@ -3448,6 +4130,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 5000,
+      "held": null,
+      "reason": "none of its 5000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
+    },
     "accruedIncome": 60000,
     "dividendReceived": 60000,
     "dividendFrom": "2026-04-01",
@@ -3476,6 +4167,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 3,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-04-09",
+        "last": "2026-04-21",
+        "lots": 3
+      },
+      "reason": null
+    },
     "accruedIncome": 60000,
     "dividendReceived": 60000,
     "dividendFrom": "2026-04-01",
@@ -3504,6 +4208,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 17500,
+      "held": null,
+      "reason": "none of its 17500 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
+    },
     "accruedIncome": 70000,
     "dividendReceived": 70000,
     "dividendFrom": "2026-04-01",
@@ -3532,6 +4245,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 2,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-05-07",
+        "last": "2026-05-07",
+        "lots": 2
+      },
+      "reason": null
+    },
     "accruedIncome": 21000,
     "dividendReceived": 21000,
     "dividendFrom": "2026-04-01",
@@ -3561,6 +4287,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 20000,
+      "held": null,
+      "reason": "none of its 20000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
+    },
     "accruedIncome": 52000,
     "dividendReceived": 52000,
     "dividendFrom": "2026-04-01",
@@ -3589,6 +4324,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 1200,
+      "held": null,
+      "reason": "none of its 1200 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
+    },
     "accruedIncome": 18000,
     "dividendReceived": 18000,
     "dividendFrom": "2026-04-01",
@@ -3617,6 +4361,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 16400,
+      "held": null,
+      "reason": "none of its 16400 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
+    },
     "accruedIncome": 164000,
     "dividendReceived": 164000,
     "dividendFrom": "2026-04-01",
@@ -3645,6 +4398,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 2,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-05-29",
+        "last": "2026-06-01",
+        "lots": 2
+      },
+      "reason": null
+    },
     "accruedIncome": 36000,
     "dividendReceived": 36000,
     "dividendFrom": "2026-04-01",
@@ -3673,6 +4439,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 1800,
+      "held": null,
+      "reason": "none of its 1800 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
+    },
     "accruedIncome": 59400,
     "dividendReceived": 59400,
     "dividendFrom": "2026-04-01",
@@ -3701,6 +4476,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 5000,
+      "held": null,
+      "reason": "none of its 5000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
+    },
     "accruedIncome": 30000,
     "dividendReceived": null,
     "positionIrrPct": 32.86
@@ -3728,6 +4512,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 3300,
+      "held": null,
+      "reason": "none of its 3300 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
+    },
     "accruedIncome": 0,
     "dividendReceived": null,
     "positionIrrPct": 49.1
@@ -3755,6 +4548,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 2200,
+      "held": null,
+      "reason": "none of its 2200 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
+    },
     "accruedIncome": 13200,
     "dividendReceived": 8800,
     "dividendFrom": "2026-04-01",
@@ -3783,6 +4585,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 1,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-08-11",
+        "last": "2026-08-11",
+        "lots": 1
+      },
+      "reason": null
+    },
     "accruedIncome": 0,
     "dividendReceived": null,
     "positionIrrPct": 1551.17
@@ -3810,6 +4625,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 100000,
+      "held": null,
+      "reason": "none of its 100000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
+    },
     "accruedIncome": 10000,
     "dividendReceived": 10000,
     "dividendFrom": "2026-04-01",
@@ -3838,6 +4662,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 3000,
+      "held": null,
+      "reason": "none of its 3000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
+    },
     "accruedIncome": 60000,
     "dividendReceived": 60000,
     "dividendFrom": "2026-04-01",
@@ -3866,6 +4699,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 21000,
+      "held": null,
+      "reason": "none of its 21000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
+    },
     "accruedIncome": 139650,
     "dividendReceived": 113400,
     "dividendFrom": "2026-04-01",
@@ -3895,6 +4737,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 5000,
+      "held": null,
+      "reason": "none of its 5000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
+    },
     "accruedIncome": 86750,
     "dividendReceived": 86750,
     "dividendFrom": "2026-04-01",
@@ -3923,6 +4774,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 1,
+      "sells": 1,
+      "unaccounted": 16000,
+      "held": null,
+      "reason": "the transaction statements from 2026-04-01 to 2026-10-06 buy 6500 and sell 7500 units of it against 15000 held, so 16000 of them are on no dated trade in this drop"
+    },
     "accruedIncome": 41250,
     "dividendReceived": 30000,
     "dividendFrom": "2026-04-01",
@@ -3951,6 +4811,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 10000,
+      "held": null,
+      "reason": "none of its 10000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
+    },
     "accruedIncome": 0,
     "dividendReceived": null,
     "positionIrrPct": -7.34
@@ -3978,6 +4847,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 8500,
+      "held": null,
+      "reason": "none of its 8500 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
+    },
     "accruedIncome": 85000,
     "dividendReceived": 8500,
     "dividendFrom": "2026-04-01",
@@ -4006,6 +4884,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 1,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-05-29",
+        "last": "2026-05-29",
+        "lots": 1
+      },
+      "reason": null
+    },
     "accruedIncome": 3000,
     "dividendReceived": 3000,
     "dividendFrom": "2026-04-01",
@@ -4034,6 +4925,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-06",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 6000,
+      "held": null,
+      "reason": "none of its 6000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"
+    },
     "accruedIncome": 6000,
     "dividendReceived": 6000,
     "dividendFrom": "2026-04-01",
@@ -4062,6 +4962,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-13",
+      "to": "2026-07-27",
+      "buys": 15,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-05-02",
+        "last": "2025-12-22",
+        "lots": 15
+      },
+      "reason": null
+    },
     "accruedIncome": 5644,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -4089,6 +5002,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-13",
+      "to": "2026-07-27",
+      "buys": 22,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-01-14",
+        "last": "2026-04-17",
+        "lots": 22
+      },
+      "reason": null
+    },
     "accruedIncome": 3410,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -4117,6 +5043,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-13",
+      "to": "2026-07-27",
+      "buys": 15,
+      "sells": 1,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-10-10",
+        "last": "2026-01-07",
+        "lots": 15
+      },
+      "reason": null
+    },
     "accruedIncome": 0,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -4144,6 +5083,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-13",
+      "to": "2026-07-27",
+      "buys": 8,
+      "sells": 24,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-02-09",
+        "last": "2026-02-09",
+        "lots": 1
+      },
+      "reason": null
+    },
     "accruedIncome": 0,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -4172,6 +5124,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-13",
+      "to": "2026-07-27",
+      "buys": 4,
+      "sells": 1,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-07-18",
+        "last": "2025-09-25",
+        "lots": 4
+      },
+      "reason": null
+    },
     "accruedIncome": 17850,
     "dividendReceived": 17850,
     "dividendFrom": "2026-04-01",
@@ -4200,6 +5165,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-13",
+      "to": "2026-07-27",
+      "buys": 11,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-01-14",
+        "last": "2026-04-09",
+        "lots": 11
+      },
+      "reason": null
+    },
     "accruedIncome": 10763.2,
     "dividendReceived": 10763.2,
     "dividendFrom": "2026-04-01",
@@ -4282,6 +5260,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-13",
+      "to": "2026-07-27",
+      "buys": 9,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-04-04",
+        "last": "2026-03-17",
+        "lots": 9
+      },
+      "reason": null
+    },
     "accruedIncome": 56070,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -4309,6 +5300,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-13",
+      "to": "2026-07-27",
+      "buys": 14,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-08-04",
+        "last": "2026-03-25",
+        "lots": 14
+      },
+      "reason": null
+    },
     "accruedIncome": 14234,
     "dividendReceived": 14234,
     "dividendFrom": "2026-04-01",
@@ -4337,6 +5341,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-13",
+      "to": "2026-07-27",
+      "buys": 1,
+      "sells": 4,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-01-23",
+        "last": "2025-01-23",
+        "lots": 1
+      },
+      "reason": null
+    },
     "accruedIncome": 5100,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -4364,6 +5381,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-13",
+      "to": "2026-07-27",
+      "buys": 9,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-11-03",
+        "last": "2025-12-09",
+        "lots": 9
+      },
+      "reason": null
+    },
     "accruedIncome": 959,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -4391,6 +5421,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-13",
+      "to": "2026-07-27",
+      "buys": 9,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-10-30",
+        "last": "2026-01-02",
+        "lots": 9
+      },
+      "reason": null
+    },
     "accruedIncome": 12040,
     "dividendReceived": 12040,
     "dividendFrom": "2026-04-01",
@@ -4420,6 +5463,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-13",
+      "to": "2026-07-27",
+      "buys": 10,
+      "sells": 16,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-04-08",
+        "last": "2025-05-16",
+        "lots": 7
+      },
+      "reason": null
+    },
     "accruedIncome": 1789,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -4447,6 +5503,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-13",
+      "to": "2026-07-27",
+      "buys": 10,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-09-12",
+        "last": "2026-04-01",
+        "lots": 10
+      },
+      "reason": null
+    },
     "accruedIncome": 10150,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -4474,6 +5543,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-13",
+      "to": "2026-07-27",
+      "buys": 2,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-04-13",
+        "last": "2026-04-17",
+        "lots": 2
+      },
+      "reason": null
+    },
     "accruedIncome": 4360,
     "dividendReceived": 4360,
     "dividendFrom": "2026-04-01",
@@ -4502,6 +5584,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-13",
+      "to": "2026-07-27",
+      "buys": 29,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-08-26",
+        "last": "2026-04-07",
+        "lots": 29
+      },
+      "reason": null
+    },
     "accruedIncome": 15302,
     "dividendReceived": 15302,
     "dividendFrom": "2026-04-01",
@@ -4530,6 +5625,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-13",
+      "to": "2026-07-27",
+      "buys": 9,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-01-14",
+        "last": "2026-04-28",
+        "lots": 9
+      },
+      "reason": null
+    },
     "accruedIncome": 8100,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -4558,6 +5666,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-13",
+      "to": "2026-07-27",
+      "buys": 6,
+      "sells": 10,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-02-20",
+        "last": "2026-03-25",
+        "lots": 5
+      },
+      "reason": null
+    },
     "accruedIncome": 0,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -4586,6 +5707,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-13",
+      "to": "2026-07-27",
+      "buys": 5,
+      "sells": 1,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-01-14",
+        "last": "2025-03-10",
+        "lots": 5
+      },
+      "reason": null
+    },
     "accruedIncome": 12900,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -4613,6 +5747,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-13",
+      "to": "2026-07-27",
+      "buys": 24,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-03-04",
+        "last": "2026-06-09",
+        "lots": 24
+      },
+      "reason": null
+    },
     "accruedIncome": 11673,
     "dividendReceived": 11673.2,
     "dividendFrom": "2026-04-01",
@@ -4641,6 +5788,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-13",
+      "to": "2026-07-27",
+      "buys": 15,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-04-25",
+        "last": "2026-06-18",
+        "lots": 15
+      },
+      "reason": null
+    },
     "accruedIncome": 2947,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -4668,6 +5828,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-13",
+      "to": "2026-07-27",
+      "buys": 5,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-01-14",
+        "last": "2026-04-09",
+        "lots": 5
+      },
+      "reason": null
+    },
     "accruedIncome": 82628,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -4695,6 +5868,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-13",
+      "to": "2026-07-27",
+      "buys": 7,
+      "sells": 4,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-07-03",
+        "last": "2025-10-27",
+        "lots": 5
+      },
+      "reason": null
+    },
     "accruedIncome": 12567,
     "dividendReceived": 12567,
     "dividendFrom": "2026-04-01",
@@ -4723,6 +5909,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-13",
+      "to": "2026-07-27",
+      "buys": 16,
+      "sells": 4,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-04-29",
+        "last": "2026-06-17",
+        "lots": 14
+      },
+      "reason": null
+    },
     "accruedIncome": 0,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -4750,6 +5949,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-13",
+      "to": "2026-07-27",
+      "buys": 2,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-01-14",
+        "last": "2025-06-27",
+        "lots": 2
+      },
+      "reason": null
+    },
     "accruedIncome": 51163,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -4778,6 +5990,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-13",
+      "to": "2026-07-27",
+      "buys": 2,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-01-14",
+        "last": "2025-06-25",
+        "lots": 2
+      },
+      "reason": null
+    },
     "accruedIncome": 66228,
     "dividendReceived": 44763,
     "dividendFrom": "2026-04-01",
@@ -4806,6 +6031,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-13",
+      "to": "2026-07-27",
+      "buys": 2,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-04-15",
+        "last": "2026-04-16",
+        "lots": 2
+      },
+      "reason": null
+    },
     "accruedIncome": 27792,
     "dividendReceived": 27792,
     "dividendFrom": "2026-04-01",
@@ -4834,6 +6072,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-13",
+      "to": "2026-07-27",
+      "buys": 25,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-04-01",
+        "last": "2026-06-15",
+        "lots": 25
+      },
+      "reason": null
+    },
     "accruedIncome": 0,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -4861,6 +6112,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-13",
+      "to": "2026-07-27",
+      "buys": 3,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-04-08",
+        "last": "2026-05-05",
+        "lots": 3
+      },
+      "reason": null
+    },
     "accruedIncome": 5680,
     "dividendReceived": 5680,
     "dividendFrom": "2026-04-01",
@@ -4889,6 +6153,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-13",
+      "to": "2026-07-27",
+      "buys": 12,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-04-17",
+        "last": "2026-05-19",
+        "lots": 12
+      },
+      "reason": null
+    },
     "accruedIncome": 0,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -4916,6 +6193,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-13",
+      "to": "2026-07-27",
+      "buys": 3,
+      "sells": 2,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-01-14",
+        "last": "2025-10-09",
+        "lots": 3
+      },
+      "reason": null
+    },
     "accruedIncome": 134933,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -4943,6 +6233,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-13",
+      "to": "2026-07-27",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 4340,
+      "held": null,
+      "reason": "none of its 4340 units is on a dated trade: the transaction statements in this drop run from 2025-01-13 to 2026-07-27 and record no buy or sell of it"
+    },
     "accruedIncome": 0,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -4970,6 +6269,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-13",
+      "to": "2026-07-27",
+      "buys": 6,
+      "sells": 0,
+      "unaccounted": 430,
+      "held": null,
+      "reason": "the transaction statements from 2025-01-13 to 2026-07-27 buy 86 and sell 0 units of it against 516 held, so 430 of them are on no dated trade in this drop"
+    },
     "accruedIncome": 2064,
     "dividendReceived": 2064,
     "dividendFrom": "2026-04-01",
@@ -4998,6 +6306,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-16",
+      "to": "2026-07-27",
+      "buys": 15,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-05-02",
+        "last": "2025-12-22",
+        "lots": 15
+      },
+      "reason": null
+    },
     "accruedIncome": 11140,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -5025,6 +6346,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-16",
+      "to": "2026-07-27",
+      "buys": 22,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-01-20",
+        "last": "2026-04-17",
+        "lots": 22
+      },
+      "reason": null
+    },
     "accruedIncome": 6720,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -5053,6 +6387,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-16",
+      "to": "2026-07-27",
+      "buys": 15,
+      "sells": 1,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-10-10",
+        "last": "2026-01-07",
+        "lots": 15
+      },
+      "reason": null
+    },
     "accruedIncome": 0,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -5080,6 +6427,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-16",
+      "to": "2026-07-27",
+      "buys": 6,
+      "sells": 25,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-02-09",
+        "last": "2026-02-09",
+        "lots": 1
+      },
+      "reason": null
+    },
     "accruedIncome": 0,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -5108,6 +6468,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-16",
+      "to": "2026-07-27",
+      "buys": 4,
+      "sells": 1,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-07-18",
+        "last": "2025-09-25",
+        "lots": 4
+      },
+      "reason": null
+    },
     "accruedIncome": 35400,
     "dividendReceived": 35400,
     "dividendFrom": "2026-04-01",
@@ -5136,6 +6509,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-16",
+      "to": "2026-07-27",
+      "buys": 12,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-01-20",
+        "last": "2026-04-09",
+        "lots": 12
+      },
+      "reason": null
+    },
     "accruedIncome": 21270.2,
     "dividendReceived": 21270.2,
     "dividendFrom": "2026-04-01",
@@ -5218,6 +6604,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-16",
+      "to": "2026-07-27",
+      "buys": 9,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-04-04",
+        "last": "2026-03-17",
+        "lots": 9
+      },
+      "reason": null
+    },
     "accruedIncome": 110610,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -5245,6 +6644,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-16",
+      "to": "2026-07-27",
+      "buys": 14,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-08-04",
+        "last": "2026-03-25",
+        "lots": 14
+      },
+      "reason": null
+    },
     "accruedIncome": 28100,
     "dividendReceived": 28100,
     "dividendFrom": "2026-04-01",
@@ -5273,6 +6685,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-16",
+      "to": "2026-07-27",
+      "buys": 1,
+      "sells": 4,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-01-23",
+        "last": "2025-01-23",
+        "lots": 1
+      },
+      "reason": null
+    },
     "accruedIncome": 10100,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -5300,6 +6725,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-16",
+      "to": "2026-07-27",
+      "buys": 9,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-11-03",
+        "last": "2025-12-09",
+        "lots": 9
+      },
+      "reason": null
+    },
     "accruedIncome": 1893,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -5327,6 +6765,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-16",
+      "to": "2026-07-27",
+      "buys": 9,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-10-30",
+        "last": "2026-01-02",
+        "lots": 9
+      },
+      "reason": null
+    },
     "accruedIncome": 23758,
     "dividendReceived": 23758,
     "dividendFrom": "2026-04-01",
@@ -5356,6 +6807,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-16",
+      "to": "2026-07-27",
+      "buys": 10,
+      "sells": 16,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-04-08",
+        "last": "2025-05-16",
+        "lots": 7
+      },
+      "reason": null
+    },
     "accruedIncome": 3530,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -5383,6 +6847,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-16",
+      "to": "2026-07-27",
+      "buys": 10,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-09-12",
+        "last": "2026-04-01",
+        "lots": 10
+      },
+      "reason": null
+    },
     "accruedIncome": 19600,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -5410,6 +6887,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-16",
+      "to": "2026-07-27",
+      "buys": 1,
+      "sells": 0,
+      "unaccounted": 170,
+      "held": null,
+      "reason": "the transaction statements from 2025-01-16 to 2026-07-27 buy 275 and sell 0 units of it against 445 held, so 170 of them are on no dated trade in this drop"
+    },
     "accruedIncome": 8900,
     "dividendReceived": 8900,
     "dividendFrom": "2026-04-01",
@@ -5438,6 +6924,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-16",
+      "to": "2026-07-27",
+      "buys": 29,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-08-26",
+        "last": "2026-04-07",
+        "lots": 29
+      },
+      "reason": null
+    },
     "accruedIncome": 30275,
     "dividendReceived": 30275,
     "dividendFrom": "2026-04-01",
@@ -5466,6 +6965,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-16",
+      "to": "2026-07-27",
+      "buys": 9,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-01-20",
+        "last": "2026-04-28",
+        "lots": 9
+      },
+      "reason": null
+    },
     "accruedIncome": 15750,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -5494,6 +7006,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-16",
+      "to": "2026-07-27",
+      "buys": 6,
+      "sells": 10,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-02-20",
+        "last": "2026-03-25",
+        "lots": 5
+      },
+      "reason": null
+    },
     "accruedIncome": 0,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -5522,6 +7047,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-16",
+      "to": "2026-07-27",
+      "buys": 6,
+      "sells": 1,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-01-20",
+        "last": "2025-03-10",
+        "lots": 6
+      },
+      "reason": null
+    },
     "accruedIncome": 25480,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -5549,6 +7087,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-16",
+      "to": "2026-07-27",
+      "buys": 24,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-03-04",
+        "last": "2026-06-09",
+        "lots": 24
+      },
+      "reason": null
+    },
     "accruedIncome": 23052,
     "dividendReceived": 23051.6,
     "dividendFrom": "2026-04-01",
@@ -5577,6 +7128,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-16",
+      "to": "2026-07-27",
+      "buys": 15,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-04-25",
+        "last": "2026-06-18",
+        "lots": 15
+      },
+      "reason": null
+    },
     "accruedIncome": 5816,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -5604,6 +7168,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-16",
+      "to": "2026-07-27",
+      "buys": 4,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-01-20",
+        "last": "2025-06-11",
+        "lots": 4
+      },
+      "reason": null
+    },
     "accruedIncome": 170684,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -5631,6 +7208,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-16",
+      "to": "2026-07-27",
+      "buys": 7,
+      "sells": 4,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-07-03",
+        "last": "2025-10-27",
+        "lots": 5
+      },
+      "reason": null
+    },
     "accruedIncome": 24813,
     "dividendReceived": 24813,
     "dividendFrom": "2026-04-01",
@@ -5659,6 +7249,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-16",
+      "to": "2026-07-27",
+      "buys": 15,
+      "sells": 4,
+      "unaccounted": 157,
+      "held": null,
+      "reason": "the transaction statements from 2025-01-16 to 2026-07-27 buy 799 and sell 370 units of it against 586 held, so 157 of them are on no dated trade in this drop"
+    },
     "accruedIncome": 0,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -5686,6 +7285,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-16",
+      "to": "2026-07-27",
+      "buys": 2,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-01-20",
+        "last": "2025-06-27",
+        "lots": 2
+      },
+      "reason": null
+    },
     "accruedIncome": 98261,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -5714,6 +7326,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-16",
+      "to": "2026-07-27",
+      "buys": 2,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-01-20",
+        "last": "2025-06-25",
+        "lots": 2
+      },
+      "reason": null
+    },
     "accruedIncome": 129334,
     "dividendReceived": 88311.5,
     "dividendFrom": "2026-04-01",
@@ -5742,6 +7367,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-16",
+      "to": "2026-07-27",
+      "buys": 2,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-04-15",
+        "last": "2026-04-16",
+        "lots": 2
+      },
+      "reason": null
+    },
     "accruedIncome": 55800,
     "dividendReceived": 55800,
     "dividendFrom": "2026-04-01",
@@ -5770,6 +7408,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-16",
+      "to": "2026-07-27",
+      "buys": 24,
+      "sells": 0,
+      "unaccounted": 41,
+      "held": null,
+      "reason": "the transaction statements from 2025-01-16 to 2026-07-27 buy 1217 and sell 0 units of it against 1258 held, so 41 of them are on no dated trade in this drop"
+    },
     "accruedIncome": 0,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -5797,6 +7444,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-16",
+      "to": "2026-07-27",
+      "buys": 2,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-04-08",
+        "last": "2026-04-09",
+        "lots": 2
+      },
+      "reason": null
+    },
     "accruedIncome": 11280,
     "dividendReceived": 11280,
     "dividendFrom": "2026-04-01",
@@ -5825,6 +7485,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-16",
+      "to": "2026-07-27",
+      "buys": 12,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-04-17",
+        "last": "2026-05-19",
+        "lots": 12
+      },
+      "reason": null
+    },
     "accruedIncome": 0,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -5852,6 +7525,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-16",
+      "to": "2026-07-27",
+      "buys": 3,
+      "sells": 2,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-01-20",
+        "last": "2025-10-09",
+        "lots": 3
+      },
+      "reason": null
+    },
     "accruedIncome": 266115,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -5879,6 +7565,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-16",
+      "to": "2026-07-27",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 8569,
+      "held": null,
+      "reason": "none of its 8569 units is on a dated trade: the transaction statements in this drop run from 2025-01-16 to 2026-07-27 and record no buy or sell of it"
+    },
     "accruedIncome": 0,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -5906,6 +7601,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2025-01-16",
+      "to": "2026-07-27",
+      "buys": 6,
+      "sells": 0,
+      "unaccounted": 860,
+      "held": null,
+      "reason": "the transaction statements from 2025-01-16 to 2026-07-27 buy 172 and sell 0 units of it against 1032 held, so 860 of them are on no dated trade in this drop"
+    },
     "accruedIncome": 4128,
     "dividendReceived": 4128,
     "dividendFrom": "2026-04-01",
@@ -5925,12 +7629,13 @@ export const BOOK_POSITIONS: Position[] = [
     "quantity": 0,
     "avgCost": null,
     "currentPrice": 21.718,
-    "costBasis": null,
+    "costBasis": 0,
+    "costBasisSource": "fifo",
     "marketValue": 0,
-    "unrealizedPnL": null,
-    "realizedPnL": null,
-    "costOfUnitsSold": null,
-    "returnPct": null,
+    "unrealizedPnL": 0,
+    "realizedPnL": 6216606.17,
+    "costOfUnitsSold": 90756530.93,
+    "returnPct": 6.85,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -5952,14 +7657,14 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Mutual Fund",
     "marketSide": "listed",
     "quantity": 83001.863,
-    "avgCost": null,
+    "avgCost": 301.1981,
     "currentPrice": 525.843,
-    "costBasis": null,
+    "costBasis": 25000000,
     "marketValue": 43645948.65,
-    "unrealizedPnL": null,
-    "realizedPnL": null,
-    "costOfUnitsSold": null,
-    "returnPct": null,
+    "unrealizedPnL": 18645948.65,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "returnPct": 74.58,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -5967,7 +7672,8 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-08-31",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "hdfc-liquid-fund-direct-plan-idcw-daily-reinvest",
@@ -5983,19 +7689,21 @@ export const BOOK_POSITIONS: Position[] = [
     "quantity": 0,
     "avgCost": null,
     "currentPrice": 1019.82,
-    "costBasis": null,
+    "costBasis": 0,
+    "costBasisSource": "fifo",
     "marketValue": 0,
-    "unrealizedPnL": null,
-    "realizedPnL": null,
-    "costOfUnitsSold": null,
-    "returnPct": null,
+    "unrealizedPnL": 0,
+    "realizedPnL": 2.27,
+    "costOfUnitsSold": 206957917.21,
+    "returnPct": 1.06,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "priceAsOf": "2026-08-31",
     "accruedIncome": null,
-    "dividendReceived": null,
+    "dividendReceived": 2184195.27,
+    "dividendFrom": "2019-04-17",
     "positionIrrPct": null
   },
   {
@@ -6012,12 +7720,13 @@ export const BOOK_POSITIONS: Position[] = [
     "quantity": 0,
     "avgCost": null,
     "currentPrice": 4078.5457,
-    "costBasis": null,
+    "costBasis": 0,
+    "costBasisSource": "fifo",
     "marketValue": 0,
-    "unrealizedPnL": null,
-    "realizedPnL": null,
-    "costOfUnitsSold": null,
-    "returnPct": null,
+    "unrealizedPnL": 0,
+    "realizedPnL": 274690.96,
+    "costOfUnitsSold": 65121122.62,
+    "returnPct": 0.42,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -6041,12 +7750,13 @@ export const BOOK_POSITIONS: Position[] = [
     "quantity": 0,
     "avgCost": null,
     "currentPrice": 160.949,
-    "costBasis": null,
+    "costBasis": 0,
+    "costBasisSource": "fifo",
     "marketValue": 0,
-    "unrealizedPnL": null,
-    "realizedPnL": null,
-    "costOfUnitsSold": null,
-    "returnPct": null,
+    "unrealizedPnL": 0,
+    "realizedPnL": 318603.5,
+    "costOfUnitsSold": 881396.5,
+    "returnPct": 36.15,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -6070,12 +7780,13 @@ export const BOOK_POSITIONS: Position[] = [
     "quantity": 0,
     "avgCost": null,
     "currentPrice": 21.812,
-    "costBasis": null,
+    "costBasis": 0,
+    "costBasisSource": "fifo",
     "marketValue": 0,
-    "unrealizedPnL": null,
-    "realizedPnL": null,
-    "costOfUnitsSold": null,
-    "returnPct": null,
+    "unrealizedPnL": 0,
+    "realizedPnL": 3779220.72,
+    "costOfUnitsSold": 59837856.8,
+    "returnPct": 6.32,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -6099,19 +7810,21 @@ export const BOOK_POSITIONS: Position[] = [
     "quantity": 0,
     "avgCost": null,
     "currentPrice": 11.33,
-    "costBasis": null,
+    "costBasis": 0,
+    "costBasisSource": "fifo",
     "marketValue": 0,
-    "unrealizedPnL": null,
-    "realizedPnL": null,
-    "costOfUnitsSold": null,
-    "returnPct": null,
+    "unrealizedPnL": 0,
+    "realizedPnL": 11562.1,
+    "costOfUnitsSold": 30807873.77,
+    "returnPct": 2.66,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "priceAsOf": "2026-09-30",
     "accruedIncome": null,
-    "dividendReceived": null,
+    "dividendReceived": 807873.77,
+    "dividendFrom": "2019-05-08",
     "positionIrrPct": null
   },
   {
@@ -6128,12 +7841,13 @@ export const BOOK_POSITIONS: Position[] = [
     "quantity": 0,
     "avgCost": null,
     "currentPrice": 5593.1126,
-    "costBasis": null,
+    "costBasis": 0,
+    "costBasisSource": "fifo",
     "marketValue": 0,
-    "unrealizedPnL": null,
-    "realizedPnL": null,
-    "costOfUnitsSold": null,
-    "returnPct": null,
+    "unrealizedPnL": 0,
+    "realizedPnL": 170891.85,
+    "costOfUnitsSold": 13929108.15,
+    "returnPct": 1.23,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -6184,21 +7898,24 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Mutual Fund",
     "marketSide": "listed",
     "quantity": 48.183,
-    "avgCost": null,
+    "avgCost": 2888.2276,
     "currentPrice": 4094.7017,
-    "costBasis": null,
+    "costBasis": 139163.47,
+    "costBasisSource": "fifo",
+    "printedCostBasis": 142847.57,
     "marketValue": 197295.01,
-    "unrealizedPnL": null,
-    "realizedPnL": null,
-    "costOfUnitsSold": null,
-    "returnPct": null,
+    "unrealizedPnL": 58131.54,
+    "realizedPnL": 1411596.13,
+    "costOfUnitsSold": 28588403.87,
+    "returnPct": 10.95,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "priceAsOf": "2026-09-30",
     "accruedIncome": null,
-    "dividendReceived": null,
+    "dividendReceived": 1675096.28,
+    "dividendFrom": "2019-05-08",
     "positionIrrPct": null
   },
   {
@@ -6213,14 +7930,14 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Mutual Fund",
     "marketSide": "listed",
     "quantity": 49917.632,
-    "avgCost": null,
+    "avgCost": 300.495,
     "currentPrice": 525.843,
-    "costBasis": null,
+    "costBasis": 15000000,
     "marketValue": 26248837.36,
-    "unrealizedPnL": null,
-    "realizedPnL": null,
-    "costOfUnitsSold": null,
-    "returnPct": null,
+    "unrealizedPnL": 11248837.36,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "returnPct": 74.99,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -6228,7 +7945,8 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-08-31",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "hdfc-liquid-fund-direct-plan-idcw-daily-reinvest",
@@ -6256,7 +7974,8 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "priceAsOf": "2026-08-31",
     "accruedIncome": null,
-    "dividendReceived": null,
+    "dividendReceived": 112557.52,
+    "dividendFrom": "2019-07-10",
     "positionIrrPct": null
   },
   {
@@ -6273,12 +7992,13 @@ export const BOOK_POSITIONS: Position[] = [
     "quantity": 0,
     "avgCost": null,
     "currentPrice": 4078.5457,
-    "costBasis": null,
+    "costBasis": 0,
+    "costBasisSource": "fifo",
     "marketValue": 0,
-    "unrealizedPnL": null,
-    "realizedPnL": null,
-    "costOfUnitsSold": null,
-    "returnPct": null,
+    "unrealizedPnL": 0,
+    "realizedPnL": 2173.27,
+    "costOfUnitsSold": 3372562.06,
+    "returnPct": 0.06,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -6302,12 +8022,13 @@ export const BOOK_POSITIONS: Position[] = [
     "quantity": 0,
     "avgCost": null,
     "currentPrice": 160.949,
-    "costBasis": null,
+    "costBasis": 0,
+    "costBasisSource": "fifo",
     "marketValue": 0,
-    "unrealizedPnL": null,
-    "realizedPnL": null,
-    "costOfUnitsSold": null,
-    "returnPct": null,
+    "unrealizedPnL": 0,
+    "realizedPnL": 2221456.1,
+    "costOfUnitsSold": 1739995.46,
+    "returnPct": 127.67,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -6387,7 +8108,7 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Mutual Fund",
     "marketSide": "listed",
     "quantity": 19123041.38,
-    "avgCost": null,
+    "avgCost": 16.2108,
     "currentPrice": 16.21,
     "costBasis": 310000000,
     "marketValue": 309984500.77,
@@ -6402,7 +8123,8 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-08-06",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "clean-max-enviro-energy-solutions",
@@ -6416,14 +8138,15 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Equity",
     "marketSide": "listed",
     "quantity": 94967,
-    "avgCost": null,
+    "avgCost": 988.322164541367,
     "currentPrice": null,
-    "costBasis": null,
+    "costBasis": 93857991,
+    "costBasisSource": "supplementary-record",
     "marketValue": 126923395.5,
-    "unrealizedPnL": null,
-    "realizedPnL": null,
-    "costOfUnitsSold": null,
-    "returnPct": null,
+    "unrealizedPnL": 33065404.5,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "returnPct": 35.22918416184723,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -6431,7 +8154,29 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-03-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true,
+    "costUnavailable": false,
+    "recoveredCost": {
+      "accountId": "icici-bank-nsdl-demat-49794950",
+      "isin": "INE647U01026",
+      "quantity": 94967,
+      "asOf": "2026-03-31",
+      "costBasis": 93857991,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "dividendReceived": null,
+      "evidence": [
+        {
+          "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+          "sheet": "Transactions since inception",
+          "rows": [
+            262
+          ]
+        }
+      ],
+      "notes": []
+    }
   },
   {
     "securityKey": "ema-partners-india",
@@ -6445,14 +8190,15 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Equity",
     "marketSide": "listed",
     "quantity": 44643,
-    "avgCost": null,
+    "avgCost": 104,
     "currentPrice": null,
-    "costBasis": null,
+    "costBasis": 4642872,
+    "costBasisSource": "supplementary-record",
     "marketValue": 3660726,
-    "unrealizedPnL": null,
+    "unrealizedPnL": -982146,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": null,
+    "returnPct": -21.153846153846153,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -6460,7 +8206,31 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-03-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true,
+    "costUnavailable": false,
+    "recoveredCost": {
+      "accountId": "icici-bank-nsdl-demat-49794950",
+      "isin": "INE0ZOL01023",
+      "quantity": 44643,
+      "asOf": "2026-03-31",
+      "costBasis": 4642872,
+      "realizedPnL": null,
+      "costOfUnitsSold": null,
+      "dividendReceived": null,
+      "evidence": [
+        {
+          "path": "source/august-2026-f/NEW INVESTMENT SHEET.xlsx",
+          "sheet": "AJAY SIR - AARTI",
+          "rows": [
+            46
+          ]
+        }
+      ],
+      "notes": [
+        "Payment register matches owner and every unit; no complete separate sales/income record is claimed"
+      ]
+    }
   },
   {
     "securityKey": "fractal-analytics",
@@ -6474,14 +8244,15 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Equity",
     "marketSide": "listed",
     "quantity": 180185,
-    "avgCost": null,
+    "avgCost": 981.6515303715626,
     "currentPrice": null,
-    "costBasis": null,
+    "costBasis": 176878881,
+    "costBasisSource": "supplementary-record",
     "marketValue": 151724779.25,
-    "unrealizedPnL": null,
-    "realizedPnL": null,
-    "costOfUnitsSold": null,
-    "returnPct": null,
+    "unrealizedPnL": -25154101.75,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "returnPct": -14.221088242863772,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -6489,7 +8260,30 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-03-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true,
+    "costUnavailable": false,
+    "recoveredCost": {
+      "accountId": "icici-bank-nsdl-demat-49794950",
+      "isin": "INE212S01015",
+      "quantity": 180185,
+      "asOf": "2026-03-31",
+      "costBasis": 176878881,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "dividendReceived": null,
+      "evidence": [
+        {
+          "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+          "sheet": "Transactions since inception",
+          "rows": [
+            275,
+            276
+          ]
+        }
+      ],
+      "notes": []
+    }
   },
   {
     "securityKey": "grand-continent-hotels",
@@ -6503,14 +8297,15 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Equity",
     "marketSide": "listed",
     "quantity": 262125,
-    "avgCost": null,
+    "avgCost": 62.09728183118741,
     "currentPrice": null,
-    "costBasis": null,
+    "costBasis": 16277250,
+    "costBasisSource": "supplementary-record",
     "marketValue": 29344893.75,
-    "unrealizedPnL": null,
-    "realizedPnL": null,
-    "costOfUnitsSold": null,
-    "returnPct": null,
+    "unrealizedPnL": 13067643.75,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "returnPct": 80.28164309081693,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -6518,7 +8313,33 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-03-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true,
+    "costUnavailable": false,
+    "recoveredCost": {
+      "accountId": "icici-bank-nsdl-demat-49794950",
+      "isin": "INE12E301017",
+      "quantity": 262125,
+      "asOf": "2026-03-31",
+      "costBasis": 16277250,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "dividendReceived": null,
+      "evidence": [
+        {
+          "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+          "sheet": "Transactions since inception",
+          "rows": [
+            323,
+            324,
+            325
+          ]
+        }
+      ],
+      "notes": [
+        "row 325: duplicated purchase amount excluded from the noncash split; Closing independently equals purchase cost"
+      ]
+    }
   },
   {
     "securityKey": "insolation-energy",
@@ -6532,14 +8353,15 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Equity",
     "marketSide": "listed",
     "quantity": 212000,
-    "avgCost": null,
+    "avgCost": 328.7,
     "currentPrice": null,
-    "costBasis": null,
+    "costBasis": 69684400,
+    "costBasisSource": "supplementary-record",
     "marketValue": 25251320,
-    "unrealizedPnL": null,
-    "realizedPnL": null,
-    "costOfUnitsSold": null,
-    "returnPct": null,
+    "unrealizedPnL": -44433080,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "returnPct": -63.76331000912686,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -6547,7 +8369,30 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-03-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true,
+    "costUnavailable": false,
+    "recoveredCost": {
+      "accountId": "icici-bank-nsdl-demat-49794950",
+      "isin": "INE0LGX01024",
+      "quantity": 212000,
+      "asOf": "2026-03-31",
+      "costBasis": 69684400,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "dividendReceived": null,
+      "evidence": [
+        {
+          "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+          "sheet": "Transactions since inception",
+          "rows": [
+            299,
+            300
+          ]
+        }
+      ],
+      "notes": []
+    }
   },
   {
     "securityKey": "jaro-institute-of-technology-management-and-research",
@@ -6561,14 +8406,15 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Equity",
     "marketSide": "listed",
     "quantity": 116979,
-    "avgCost": null,
+    "avgCost": 641.1437095547064,
     "currentPrice": null,
-    "costBasis": null,
+    "costBasis": 75000350,
+    "costBasisSource": "supplementary-record",
     "marketValue": 57758381.25,
-    "unrealizedPnL": null,
-    "realizedPnL": null,
-    "costOfUnitsSold": null,
-    "returnPct": null,
+    "unrealizedPnL": -17241968.75,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "returnPct": -22.989184383806208,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -6576,7 +8422,30 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-03-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true,
+    "costUnavailable": false,
+    "recoveredCost": {
+      "accountId": "icici-bank-nsdl-demat-49794950",
+      "isin": "INE00YJ01010",
+      "quantity": 116979,
+      "asOf": "2026-03-31",
+      "costBasis": 75000350,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "dividendReceived": null,
+      "evidence": [
+        {
+          "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+          "sheet": "Transactions since inception",
+          "rows": [
+            305,
+            306
+          ]
+        }
+      ],
+      "notes": []
+    }
   },
   {
     "securityKey": "parth-electricals-and-engineering",
@@ -6590,14 +8459,15 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Equity",
     "marketSide": "listed",
     "quantity": 59000,
-    "avgCost": null,
+    "avgCost": 170,
     "currentPrice": null,
-    "costBasis": null,
+    "costBasis": 10030000,
+    "costBasisSource": "supplementary-record",
     "marketValue": 26252050,
-    "unrealizedPnL": null,
-    "realizedPnL": null,
-    "costOfUnitsSold": null,
-    "returnPct": null,
+    "unrealizedPnL": 16222050,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "returnPct": 161.73529411764707,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -6605,7 +8475,29 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-03-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true,
+    "costUnavailable": false,
+    "recoveredCost": {
+      "accountId": "icici-bank-nsdl-demat-49794950",
+      "isin": "INE1H7V01011",
+      "quantity": 59000,
+      "asOf": "2026-03-31",
+      "costBasis": 10030000,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "dividendReceived": null,
+      "evidence": [
+        {
+          "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+          "sheet": "Transactions since inception",
+          "rows": [
+            374
+          ]
+        }
+      ],
+      "notes": []
+    }
   },
   {
     "securityKey": "smartworks-coworking-spaces",
@@ -6619,14 +8511,15 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Equity",
     "marketSide": "listed",
     "quantity": 187778,
-    "avgCost": null,
+    "avgCost": 450,
     "currentPrice": null,
-    "costBasis": null,
+    "costBasis": 84500100,
+    "costBasisSource": "supplementary-record",
     "marketValue": 91269496.9,
-    "unrealizedPnL": null,
-    "realizedPnL": null,
-    "costOfUnitsSold": null,
-    "returnPct": null,
+    "unrealizedPnL": 6769396.900000006,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "returnPct": 8.011111111111118,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -6634,7 +8527,29 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-03-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true,
+    "costUnavailable": false,
+    "recoveredCost": {
+      "accountId": "icici-bank-nsdl-demat-49794950",
+      "isin": "INE0NAZ01010",
+      "quantity": 187778,
+      "asOf": "2026-03-31",
+      "costBasis": 84500100,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "dividendReceived": null,
+      "evidence": [
+        {
+          "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+          "sheet": "Transactions since inception",
+          "rows": [
+            379
+          ]
+        }
+      ],
+      "notes": []
+    }
   },
   {
     "securityKey": "yash-highvoltage",
@@ -6648,14 +8563,16 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Equity",
     "marketSide": "listed",
     "quantity": 138462,
-    "avgCost": null,
+    "avgCost": 72.22284814606174,
     "currentPrice": null,
-    "costBasis": null,
+    "costBasis": 10000120,
+    "costBasisSource": "supplementary-record",
     "marketValue": 125446572,
-    "unrealizedPnL": null,
-    "realizedPnL": null,
-    "costOfUnitsSold": null,
-    "returnPct": null,
+    "unrealizedPnL": 115446452,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "realizedLotsAfter": 3,
+    "returnPct": 1154.450666592001,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -6663,7 +8580,30 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-03-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true,
+    "costUnavailable": false,
+    "recoveredCost": {
+      "accountId": "icici-bank-nsdl-demat-49794950",
+      "isin": "INE00GK01023",
+      "quantity": 138462,
+      "asOf": "2026-03-31",
+      "costBasis": 10000120,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "dividendReceived": null,
+      "salesAfter": 3,
+      "evidence": [
+        {
+          "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+          "sheet": "Transactions since inception",
+          "rows": [
+            434
+          ]
+        }
+      ],
+      "notes": []
+    }
   },
   {
     "securityKey": "balanced-advantage-fund-growth",
@@ -6766,7 +8706,7 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Mutual Fund",
     "marketSide": "listed",
     "quantity": 327918.76,
-    "avgCost": null,
+    "avgCost": 18.2972,
     "currentPrice": 17.1686,
     "costBasis": 6000000,
     "marketValue": 5629906.02,
@@ -6781,7 +8721,8 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-10-01",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "icici-prudential-nifty-100-low-volatility-30-etf-fof-direct-plan-growth",
@@ -6795,7 +8736,7 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Mutual Fund",
     "marketSide": "listed",
     "quantity": 218612.507,
-    "avgCost": null,
+    "avgCost": 18.2972,
     "currentPrice": 17.1686,
     "costBasis": 4000000,
     "marketValue": 3753270.69,
@@ -6810,7 +8751,8 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-10-01",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "india-sme-investments-fund-ii-class-a2",
@@ -7104,21 +9046,21 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
-    "securityKey": "kotak-large-and-mid-cap-fund-direct-growth",
-    "security": "Kotak Large & Mid Cap Fund - Direct Growth",
+    "securityKey": "kotak-flexi-cap-fund-direct-growth",
+    "security": "Kotak Flexi Cap Fund Direct Growth",
     "symbol": null,
-    "isin": "INF174K01LF9",
-    "accountId": "kotak-mahindra-mutual-fund-7125255",
+    "isin": "INF174K01LS2",
+    "accountId": "kotak-mahindra-mutual-fund-4295974",
     "memberId": null,
     "sector": "Unclassified",
     "providerSector": null,
     "assetClass": "Mutual Fund",
     "marketSide": "listed",
-    "quantity": 27900.484,
+    "quantity": 0,
     "avgCost": null,
-    "currentPrice": 388.839,
+    "currentPrice": 92.517,
     "costBasis": null,
-    "marketValue": 10848796.3,
+    "marketValue": 0,
     "unrealizedPnL": null,
     "realizedPnL": null,
     "costOfUnitsSold": null,
@@ -7133,6 +9075,182 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "securityKey": "kotak-flexi-cap-fund-regular-growth",
+    "security": "Kotak Flexi Cap Fund Regular Growth",
+    "symbol": null,
+    "isin": "INF174K01336",
+    "accountId": "kotak-mahindra-mutual-fund-4295974",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Mutual Fund",
+    "marketSide": "listed",
+    "quantity": 0,
+    "avgCost": null,
+    "currentPrice": 81.304,
+    "costBasis": null,
+    "marketValue": 0,
+    "unrealizedPnL": null,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": null,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-09-30",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "securityKey": "kotak-liquid-fund-direct-plan-daily-idcw",
+    "security": "Kotak Liquid Fund Direct Plan Daily - IDCW #",
+    "symbol": null,
+    "isin": "INF174K01NH1",
+    "accountId": "kotak-mahindra-mutual-fund-4295974",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Mutual Fund",
+    "marketSide": "listed",
+    "quantity": 641.954,
+    "avgCost": null,
+    "currentPrice": 1222.81,
+    "costBasis": null,
+    "marketValue": 784987.77,
+    "unrealizedPnL": null,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": null,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-09-30",
+    "accruedIncome": null,
+    "dividendReceived": 12216.17,
+    "dividendFrom": "2026-06-01",
+    "positionIrrPct": null
+  },
+  {
+    "securityKey": "kotak-liquid-fund-regular-plan-daily-idcw",
+    "security": "Kotak Liquid Fund Regular Plan Daily - IDCW #",
+    "symbol": null,
+    "isin": "INF174K01NL3",
+    "accountId": "kotak-mahindra-mutual-fund-4295974",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Mutual Fund",
+    "marketSide": "listed",
+    "quantity": 0,
+    "avgCost": null,
+    "currentPrice": 1283.5466,
+    "costBasis": null,
+    "marketValue": 0,
+    "unrealizedPnL": null,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": null,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-09-30",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "securityKey": "kotak-mid-cap-fund-direct-growth",
+    "security": "Kotak Mid Cap Fund Direct Growth",
+    "symbol": null,
+    "isin": "INF174K01LT0",
+    "accountId": "kotak-mahindra-mutual-fund-4295974",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Mutual Fund",
+    "marketSide": "listed",
+    "quantity": 0,
+    "avgCost": null,
+    "currentPrice": 160.989,
+    "costBasis": null,
+    "marketValue": 0,
+    "unrealizedPnL": null,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": null,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-09-30",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "securityKey": "kotak-mid-cap-fund-regular-growth",
+    "security": "Kotak Mid Cap Fund Regular Growth",
+    "symbol": null,
+    "isin": "INF174K01DS9",
+    "accountId": "kotak-mahindra-mutual-fund-4295974",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Mutual Fund",
+    "marketSide": "listed",
+    "quantity": 0,
+    "avgCost": null,
+    "currentPrice": 137.417,
+    "costBasis": null,
+    "marketValue": 0,
+    "unrealizedPnL": null,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": null,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-09-30",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "securityKey": "kotak-large-and-mid-cap-fund-direct-growth",
+    "security": "Kotak Large & Mid Cap Fund - Direct Growth",
+    "symbol": null,
+    "isin": "INF174K01LF9",
+    "accountId": "kotak-mahindra-mutual-fund-7125255",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Mutual Fund",
+    "marketSide": "listed",
+    "quantity": 27900.484,
+    "avgCost": 120.4616,
+    "currentPrice": 388.839,
+    "costBasis": 3360937,
+    "marketValue": 10848796.3,
+    "unrealizedPnL": 7487859.3,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": 222.79,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-09-30",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null,
+    "avgCostDerived": true
+  },
+  {
     "securityKey": "belrise-industries",
     "security": "BELRISE INDUSTRIES LIMITED",
     "symbol": "BELRISE",
@@ -7144,7 +9262,7 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Equity",
     "marketSide": "listed",
     "quantity": 12500,
-    "avgCost": null,
+    "avgCost": 141.89,
     "currentPrice": 186,
     "costBasis": 1773625,
     "costBasisSource": "opening-position",
@@ -7168,7 +9286,8 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "capri-global-capital",
@@ -7182,7 +9301,7 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Equity",
     "marketSide": "listed",
     "quantity": 7000,
-    "avgCost": null,
+    "avgCost": 177.6573,
     "currentPrice": 165.85,
     "costBasis": 1243601.1,
     "costBasisSource": "opening-position",
@@ -7206,7 +9325,8 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "crompton-greaves-consumer-electrical",
@@ -7220,7 +9340,7 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Equity",
     "marketSide": "listed",
     "quantity": 5000,
-    "avgCost": null,
+    "avgCost": 309.4036,
     "currentPrice": 223.45,
     "costBasis": 1547017.8,
     "costBasisSource": "opening-position",
@@ -7236,7 +9356,8 @@ export const BOOK_POSITIONS: Position[] = [
     "purchaseDates": 2,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "electronics-mart-india",
@@ -7250,7 +9371,7 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Equity",
     "marketSide": "listed",
     "quantity": 10000,
-    "avgCost": null,
+    "avgCost": 105.6112,
     "currentPrice": 88.15,
     "costBasis": 1056112,
     "costBasisSource": "opening-position",
@@ -7274,7 +9395,8 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "jyothy-labs",
@@ -7288,7 +9410,7 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Equity",
     "marketSide": "listed",
     "quantity": 4000,
-    "avgCost": null,
+    "avgCost": 352.0537,
     "currentPrice": 197.1,
     "costBasis": 1408214.6,
     "costBasisSource": "opening-position",
@@ -7312,7 +9434,8 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "mrs-bectors-food-specialities",
@@ -7326,7 +9449,7 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Equity",
     "marketSide": "listed",
     "quantity": 6000,
-    "avgCost": null,
+    "avgCost": 250.5825,
     "currentPrice": 179.05,
     "costBasis": 1503495.2,
     "costBasisSource": "opening-position",
@@ -7342,7 +9465,8 @@ export const BOOK_POSITIONS: Position[] = [
     "purchaseDates": 2,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "nip-etnf1d-rtliqbees",
@@ -7385,7 +9509,7 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Equity",
     "marketSide": "listed",
     "quantity": 650,
-    "avgCost": null,
+    "avgCost": 582.6625,
     "currentPrice": 513.55,
     "costBasis": 378730.63,
     "costBasisSource": "opening-position",
@@ -7408,7 +9532,8 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "transrail-lighting",
@@ -7422,7 +9547,7 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Equity",
     "marketSide": "listed",
     "quantity": 2525,
-    "avgCost": null,
+    "avgCost": 790.4262,
     "currentPrice": 451.85,
     "costBasis": 1995826.25,
     "costBasisSource": "opening-position",
@@ -7438,7 +9563,8 @@ export const BOOK_POSITIONS: Position[] = [
     "purchaseDates": 2,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "varun-beverages",
@@ -7452,7 +9578,7 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Equity",
     "marketSide": "listed",
     "quantity": 2700,
-    "avgCost": null,
+    "avgCost": 461.9193,
     "currentPrice": 384.05,
     "costBasis": 1247182.11,
     "costBasisSource": "opening-position",
@@ -7476,7 +9602,38 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
+  },
+  {
+    "securityKey": "mirae-asset-liquid-fund-formerly-mirae-asset-cash-management-fund-direct-plan-mirae-asset-liquid-fund-formerly-mirae-asset-cash-management-fund-direct-plan-growth",
+    "security": "Mirae Asset Liquid Fund ( formerly Mirae Asset Cash Management Fund ) - Direct Plan Mirae Asset Liquid Fund ( formerly Mirae Asset Cash Management Fund ) - Direct Plan Growth",
+    "symbol": null,
+    "isin": "INF769K01CM1",
+    "accountId": "mirae-asset-mutual-fund-70413280453",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Mutual Fund",
+    "marketSide": "listed",
+    "quantity": 316.19,
+    "avgCost": 2010.5785,
+    "currentPrice": 3007.0915,
+    "costBasis": 635724.81,
+    "marketValue": 950812.26,
+    "unrealizedPnL": 315087.45,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": 49.56,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-09-30",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "arvind-fashions",
@@ -7501,6 +9658,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-07-31",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 4000,
+      "held": null,
+      "reason": "none of its 4000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-07-31 and record no buy or sell of it"
+    },
     "accruedIncome": 6400,
     "dividendReceived": null,
     "positionIrrPct": -12.71
@@ -7555,6 +9721,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-07-31",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 1000,
+      "held": null,
+      "reason": "none of its 1000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-07-31 and record no buy or sell of it"
+    },
     "accruedIncome": 1250,
     "dividendReceived": null,
     "positionIrrPct": -43.5
@@ -7582,6 +9757,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-07-31",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 3000,
+      "held": null,
+      "reason": "none of its 3000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-07-31 and record no buy or sell of it"
+    },
     "accruedIncome": 600,
     "dividendReceived": null,
     "positionIrrPct": -31.52
@@ -7609,6 +9793,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-07-31",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 1500,
+      "held": null,
+      "reason": "none of its 1500 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-07-31 and record no buy or sell of it"
+    },
     "accruedIncome": 48750,
     "dividendReceived": 11250,
     "dividendFrom": "2026-07-01",
@@ -7637,6 +9830,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-07-31",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 23000,
+      "held": null,
+      "reason": "none of its 23000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-07-31 and record no buy or sell of it"
+    },
     "accruedIncome": 0,
     "dividendReceived": null,
     "positionIrrPct": 25.72
@@ -7664,6 +9866,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-07-31",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 2967,
+      "held": null,
+      "reason": "none of its 2967 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-07-31 and record no buy or sell of it"
+    },
     "accruedIncome": 34120,
     "dividendReceived": 8901,
     "dividendFrom": "2026-07-01",
@@ -7692,6 +9903,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-07-31",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 10000,
+      "held": null,
+      "reason": "none of its 10000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-07-31 and record no buy or sell of it"
+    },
     "accruedIncome": 5000,
     "dividendReceived": null,
     "positionIrrPct": -1.13
@@ -7719,6 +9939,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-07-31",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 800,
+      "held": null,
+      "reason": "none of its 800 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-07-31 and record no buy or sell of it"
+    },
     "accruedIncome": 0,
     "dividendReceived": null,
     "positionIrrPct": 211.07
@@ -7746,6 +9975,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-07-31",
+      "buys": 1,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-06-24",
+        "last": "2026-06-24",
+        "lots": 1
+      },
+      "reason": null
+    },
     "accruedIncome": 1300,
     "dividendReceived": 1300,
     "dividendFrom": "2026-07-01",
@@ -7790,7 +10032,7 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "Mutual Fund",
     "marketSide": "listed",
     "quantity": 15245765.959,
-    "avgCost": null,
+    "avgCost": 14.0498,
     "currentPrice": 14.0491,
     "costBasis": 214200000,
     "marketValue": 214189290.53,
@@ -7804,7 +10046,8 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "motilal-oswal-wealth-delphi-equity-fund",
@@ -7817,7 +10060,7 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "AIF",
     "marketSide": "listed",
     "quantity": 99995,
-    "avgCost": null,
+    "avgCost": 1000.05,
     "currentPrice": 1112.931,
     "costBasis": 100000000,
     "marketValue": 111287535.35,
@@ -7832,7 +10075,8 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-06-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "motilal-oswal-founders-fund-series-ii-class-g1",
@@ -7846,7 +10090,7 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "AIF",
     "marketSide": "listed",
     "quantity": 9514997.798,
-    "avgCost": null,
+    "avgCost": 10.5097,
     "currentPrice": 11.6809,
     "costBasis": 100000000,
     "marketValue": 111143737.78,
@@ -7861,7 +10105,8 @@ export const BOOK_POSITIONS: Position[] = [
     "priceAsOf": "2026-09-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "motilal-oswal-founders-fund-series-ii-class-g1",
@@ -7875,7 +10120,7 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "AIF",
     "marketSide": "listed",
     "quantity": 18895852.36,
-    "avgCost": null,
+    "avgCost": 10.5843,
     "currentPrice": 11.6809,
     "costBasis": 200000000,
     "marketValue": 220720561.83,
@@ -7888,6 +10133,64 @@ export const BOOK_POSITIONS: Position[] = [
     "daysToLT": null,
     "heldSince": null,
     "priceAsOf": "2026-09-30",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null,
+    "avgCostDerived": true
+  },
+  {
+    "securityKey": "motilal-oswal-hedged-equity-multi-factor-strategy-class-b2",
+    "security": "Motilal Oswal Hedged Equity Multi Factor Strategy — Class B2",
+    "symbol": null,
+    "accountId": "motilal-oswal-hedged-equity-multi-factor-strategy-90410014574",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "AIF",
+    "marketSide": null,
+    "quantity": 0,
+    "avgCost": null,
+    "currentPrice": 8.9812,
+    "costBasis": null,
+    "marketValue": 0,
+    "unrealizedPnL": null,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": null,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-07-31",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "securityKey": "motilal-oswal-hedged-equity-multi-factor-strategy-class-f1",
+    "security": "Motilal Oswal Hedged Equity Multi Factor Strategy — Class F1",
+    "symbol": null,
+    "accountId": "motilal-oswal-hedged-equity-multi-factor-strategy-90410014574",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "AIF",
+    "marketSide": null,
+    "quantity": 0,
+    "avgCost": null,
+    "currentPrice": 8.5353,
+    "costBasis": 0,
+    "costBasisSource": "fifo",
+    "marketValue": 0,
+    "unrealizedPnL": 0,
+    "realizedPnL": -18103030.58,
+    "costOfUnitsSold": 130000000,
+    "returnPct": -13.93,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2025-07-31",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -11586,7 +13889,7 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "AIF",
     "marketSide": "listed",
     "quantity": 6045934.485,
-    "avgCost": null,
+    "avgCost": 124.0503,
     "currentPrice": 161.5675,
     "costBasis": 750000000,
     "costBasisSource": "gross-paid",
@@ -11602,7 +13905,8 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e",
@@ -11615,7 +13919,7 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "AIF",
     "marketSide": "listed",
     "quantity": 1211186.597,
-    "avgCost": null,
+    "avgCost": 123.8455,
     "currentPrice": 161.5675,
     "costBasis": 150000000,
     "costBasisSource": "gross-paid",
@@ -11631,7 +13935,8 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-a2",
@@ -11644,7 +13949,7 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "AIF",
     "marketSide": "listed",
     "quantity": 2341480.851,
-    "avgCost": null,
+    "avgCost": 106.77,
     "currentPrice": 125.3582,
     "costBasis": 250000000,
     "costBasisSource": "gross-paid",
@@ -11660,7 +13965,8 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e",
@@ -11673,7 +13979,7 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "AIF",
     "marketSide": "listed",
     "quantity": 1820926.864,
-    "avgCost": null,
+    "avgCost": 120.8176,
     "currentPrice": 161.5675,
     "costBasis": 220000000,
     "costBasisSource": "gross-paid",
@@ -11689,7 +13995,8 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e",
@@ -11702,7 +14009,7 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "AIF",
     "marketSide": "listed",
     "quantity": 1761264.629,
-    "avgCost": null,
+    "avgCost": 116.3936,
     "currentPrice": 161.5675,
     "costBasis": 205000000,
     "costBasisSource": "gross-paid",
@@ -11718,7 +14025,8 @@ export const BOOK_POSITIONS: Position[] = [
     "heldSince": null,
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null
+    "positionIrrPct": null,
+    "avgCostDerived": true
   },
   {
     "securityKey": "sky-capital-rising-titans-fund-i",
@@ -11927,6 +14235,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 1,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-08-20",
+        "last": "2026-08-20",
+        "lots": 1
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -11954,6 +14275,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 9360,
+      "held": null,
+      "reason": "none of its 9360 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": 14976,
     "dividendFrom": "2026-04-01",
@@ -11982,6 +14312,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 10110,
+      "held": null,
+      "reason": "none of its 10110 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": 40440,
     "dividendFrom": "2026-04-01",
@@ -12010,6 +14349,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 6965,
+      "held": null,
+      "reason": "none of its 6965 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -12037,6 +14385,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 1,
+      "sells": 0,
+      "unaccounted": 1930,
+      "held": null,
+      "reason": "the transaction statements from 2026-04-01 to 2026-09-30 buy 535 and sell 0 units of it against 2465 held, so 1930 of them are on no dated trade in this drop"
+    },
     "accruedIncome": 9860,
     "dividendReceived": 19720,
     "dividendFrom": "2026-04-01",
@@ -12119,6 +14476,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 1590,
+      "held": null,
+      "reason": "none of its 1590 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": 55650,
     "dividendReceived": 55650,
     "dividendFrom": "2026-04-01",
@@ -12147,6 +14513,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 5190,
+      "held": null,
+      "reason": "none of its 5190 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": 20760,
     "dividendFrom": "2026-04-01",
@@ -12175,6 +14550,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 3855,
+      "held": null,
+      "reason": "none of its 3855 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": 1927.5,
     "dividendReceived": 1927.5,
     "dividendFrom": "2026-04-01",
@@ -12203,6 +14587,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 1,
+      "sells": 0,
+      "unaccounted": 2230,
+      "held": null,
+      "reason": "the transaction statements from 2026-04-01 to 2026-09-30 buy 1630 and sell 0 units of it against 3860 held, so 2230 of them are on no dated trade in this drop"
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -12230,6 +14623,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 6460,
+      "held": null,
+      "reason": "none of its 6460 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": 6460,
     "dividendFrom": "2026-04-01",
@@ -12258,6 +14660,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 29855,
+      "held": null,
+      "reason": "none of its 29855 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": 44782.5,
     "dividendReceived": 44782.5,
     "dividendFrom": "2026-04-01",
@@ -12286,6 +14697,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 31090,
+      "held": null,
+      "reason": "none of its 31090 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": 7772.5,
     "dividendReceived": 7772.5,
     "dividendFrom": "2026-04-01",
@@ -12314,6 +14734,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 12340,
+      "held": null,
+      "reason": "none of its 12340 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -12341,6 +14770,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 6085,
+      "held": null,
+      "reason": "none of its 6085 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": 73020,
     "dividendFrom": "2026-04-01",
@@ -12369,6 +14807,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 1,
+      "sells": 0,
+      "unaccounted": 19850,
+      "held": null,
+      "reason": "the transaction statements from 2026-04-01 to 2026-09-30 buy 9145 and sell 0 units of it against 28995 held, so 19850 of them are on no dated trade in this drop"
+    },
     "accruedIncome": null,
     "dividendReceived": 11910,
     "dividendFrom": "2026-04-01",
@@ -12397,6 +14844,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 1,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-06-09",
+        "last": "2026-06-09",
+        "lots": 1
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": 26000,
     "dividendFrom": "2026-04-01",
@@ -12425,6 +14885,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 1,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-09-09",
+        "last": "2026-09-09",
+        "lots": 1
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -12452,6 +14925,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 8220,
+      "held": null,
+      "reason": "none of its 8220 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": 27948,
     "dividendFrom": "2026-04-01",
@@ -12480,6 +14962,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 8220,
+      "held": null,
+      "reason": "none of its 8220 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -12507,6 +14998,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 2095,
+      "held": null,
+      "reason": "none of its 2095 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -12534,6 +15034,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 16100,
+      "held": null,
+      "reason": "none of its 16100 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": 24150,
     "dividendFrom": "2026-04-01",
@@ -12562,6 +15071,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 1,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-09-29",
+        "last": "2026-09-29",
+        "lots": 1
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -12589,6 +15111,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 7500,
+      "held": null,
+      "reason": "none of its 7500 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -12616,6 +15147,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 24000,
+      "held": null,
+      "reason": "none of its 24000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": 7200,
     "dividendReceived": 7200,
     "dividendFrom": "2026-04-01",
@@ -12644,6 +15184,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 2005,
+      "held": null,
+      "reason": "none of its 2005 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": 32080,
     "dividendFrom": "2026-04-01",
@@ -12672,6 +15221,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 300,
+      "held": null,
+      "reason": "none of its 300 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": 10200,
     "dividendReceived": 10200,
     "dividendFrom": "2026-04-01",
@@ -12700,6 +15258,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 3,
+      "sells": 0,
+      "unaccounted": 8395,
+      "held": null,
+      "reason": "the transaction statements from 2026-04-01 to 2026-09-30 buy 1185 and sell 0 units of it against 9580 held, so 8395 of them are on no dated trade in this drop"
+    },
     "accruedIncome": 28740,
     "dividendReceived": 28740,
     "dividendFrom": "2026-04-01",
@@ -12728,6 +15295,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 1,
+      "sells": 2,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-05-07",
+        "last": "2026-05-07",
+        "lots": 1
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": 2430,
     "dividendFrom": "2026-04-01",
@@ -12756,6 +15336,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 4170,
+      "held": null,
+      "reason": "none of its 4170 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": 2502,
     "dividendReceived": 2502,
     "dividendFrom": "2026-04-01",
@@ -12784,6 +15373,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 2515,
+      "held": null,
+      "reason": "none of its 2515 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": 2515,
     "dividendFrom": "2026-04-01",
@@ -12812,6 +15410,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 2915,
+      "held": null,
+      "reason": "none of its 2915 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": 8745,
     "dividendReceived": 8745,
     "dividendFrom": "2026-04-01",
@@ -12840,6 +15447,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 16350,
+      "held": null,
+      "reason": "none of its 16350 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -12868,6 +15484,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 4,
+      "unaccounted": 9930,
+      "held": null,
+      "reason": "the transaction statements from 2026-04-01 to 2026-09-30 buy 0 and sell 6805 units of it against 3125 held, so 9930 of them are on no dated trade in this drop"
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -12895,6 +15520,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 1350,
+      "held": null,
+      "reason": "none of its 1350 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": 1350,
     "dividendReceived": 1350,
     "dividendFrom": "2026-04-01",
@@ -12924,6 +15558,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 1,
+      "unaccounted": 4710,
+      "held": null,
+      "reason": "the transaction statements from 2026-04-01 to 2026-09-30 buy 0 and sell 1050 units of it against 3660 held, so 4710 of them are on no dated trade in this drop"
+    },
     "accruedIncome": null,
     "dividendReceived": 18300,
     "dividendFrom": "2026-04-01",
@@ -12952,6 +15595,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 1920,
+      "held": null,
+      "reason": "none of its 1920 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": 17280,
     "dividendFrom": "2026-04-01",
@@ -12980,6 +15632,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 3350,
+      "held": null,
+      "reason": "none of its 3350 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": 67000,
     "dividendReceived": 67000,
     "dividendFrom": "2026-04-01",
@@ -13008,6 +15669,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 3935,
+      "held": null,
+      "reason": "none of its 3935 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": 13772.5,
     "dividendFrom": "2026-04-01",
@@ -13036,6 +15706,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 2,
+      "sells": 1,
+      "unaccounted": 2585,
+      "held": null,
+      "reason": "the transaction statements from 2026-04-01 to 2026-09-30 buy 350 and sell 385 units of it against 2550 held, so 2585 of them are on no dated trade in this drop"
+    },
     "accruedIncome": null,
     "dividendReceived": 3825,
     "dividendFrom": "2026-04-01",
@@ -13064,6 +15743,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 10900,
+      "held": null,
+      "reason": "none of its 10900 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": 16350,
     "dividendFrom": "2026-04-01",
@@ -13092,6 +15780,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 31600,
+      "held": null,
+      "reason": "none of its 31600 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -13119,6 +15816,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 9200,
+      "held": null,
+      "reason": "none of its 9200 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": 13800,
     "dividendReceived": 27600,
     "dividendFrom": "2026-04-01",
@@ -13147,6 +15853,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 1,
+      "sells": 0,
+      "unaccounted": 5930,
+      "held": null,
+      "reason": "the transaction statements from 2026-04-01 to 2026-09-30 buy 1145 and sell 0 units of it against 7075 held, so 5930 of them are on no dated trade in this drop"
+    },
     "accruedIncome": null,
     "dividendReceived": 8895,
     "dividendFrom": "2026-04-01",
@@ -13175,6 +15890,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 2,
+      "sells": 0,
+      "unaccounted": 9100,
+      "held": null,
+      "reason": "the transaction statements from 2026-04-01 to 2026-09-30 buy 10335 and sell 0 units of it against 19435 held, so 9100 of them are on no dated trade in this drop"
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -13202,6 +15926,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 1,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-05-29",
+        "last": "2026-05-29",
+        "lots": 1
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -13229,6 +15966,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 4245,
+      "held": null,
+      "reason": "none of its 4245 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": 8490,
     "dividendReceived": 8490,
     "dividendFrom": "2026-04-01",
@@ -13257,6 +16003,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 5090,
+      "held": null,
+      "reason": "none of its 5090 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": 64134,
     "dividendReceived": 64134,
     "dividendFrom": "2026-04-01",
@@ -13285,6 +16040,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 1,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-08-20",
+        "last": "2026-08-20",
+        "lots": 1
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -13312,6 +16080,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 6660,
+      "held": null,
+      "reason": "none of its 6660 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": 10656,
     "dividendFrom": "2026-04-01",
@@ -13340,6 +16117,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 6560,
+      "held": null,
+      "reason": "none of its 6560 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": 26240,
     "dividendFrom": "2026-04-01",
@@ -13368,6 +16154,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 4530,
+      "held": null,
+      "reason": "none of its 4530 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -13395,6 +16190,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 1,
+      "sells": 0,
+      "unaccounted": 1260,
+      "held": null,
+      "reason": "the transaction statements from 2026-04-01 to 2026-09-30 buy 340 and sell 0 units of it against 1600 held, so 1260 of them are on no dated trade in this drop"
+    },
     "accruedIncome": 6400,
     "dividendReceived": 12800,
     "dividendFrom": "2026-04-01",
@@ -13450,6 +16254,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 1040,
+      "held": null,
+      "reason": "none of its 1040 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": 36400,
     "dividendFrom": "2026-04-01",
@@ -13478,6 +16291,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 3370,
+      "held": null,
+      "reason": "none of its 3370 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": 13480,
     "dividendFrom": "2026-04-01",
@@ -13506,6 +16328,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 2505,
+      "held": null,
+      "reason": "none of its 2505 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": 1252.5,
     "dividendReceived": 1252.5,
     "dividendFrom": "2026-04-01",
@@ -13534,6 +16365,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 1,
+      "sells": 0,
+      "unaccounted": 1715,
+      "held": null,
+      "reason": "the transaction statements from 2026-04-01 to 2026-09-30 buy 800 and sell 0 units of it against 2515 held, so 1715 of them are on no dated trade in this drop"
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -13561,6 +16401,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 4215,
+      "held": null,
+      "reason": "none of its 4215 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": 4215,
     "dividendFrom": "2026-04-01",
@@ -13589,6 +16438,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 19415,
+      "held": null,
+      "reason": "none of its 19415 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": 29122.5,
     "dividendReceived": 29122.5,
     "dividendFrom": "2026-04-01",
@@ -13617,6 +16475,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 19685,
+      "held": null,
+      "reason": "none of its 19685 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": 4921.25,
     "dividendReceived": 4921.25,
     "dividendFrom": "2026-04-01",
@@ -13645,6 +16512,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 8050,
+      "held": null,
+      "reason": "none of its 8050 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -13672,6 +16548,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 3970,
+      "held": null,
+      "reason": "none of its 3970 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": 47640,
     "dividendFrom": "2026-04-01",
@@ -13700,6 +16585,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 1,
+      "sells": 0,
+      "unaccounted": 12955,
+      "held": null,
+      "reason": "the transaction statements from 2026-04-01 to 2026-09-30 buy 5925 and sell 0 units of it against 18880 held, so 12955 of them are on no dated trade in this drop"
+    },
     "accruedIncome": null,
     "dividendReceived": 7773,
     "dividendFrom": "2026-04-01",
@@ -13728,6 +16622,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 1,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-06-09",
+        "last": "2026-06-09",
+        "lots": 1
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": 16900,
     "dividendFrom": "2026-04-01",
@@ -13756,6 +16663,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 1,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-09-09",
+        "last": "2026-09-09",
+        "lots": 1
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -13783,6 +16703,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 5365,
+      "held": null,
+      "reason": "none of its 5365 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": 18241,
     "dividendFrom": "2026-04-01",
@@ -13811,6 +16740,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 5365,
+      "held": null,
+      "reason": "none of its 5365 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -13838,6 +16776,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 1490,
+      "held": null,
+      "reason": "none of its 1490 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -13865,6 +16812,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 10505,
+      "held": null,
+      "reason": "none of its 10505 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": 15757.5,
     "dividendFrom": "2026-04-01",
@@ -13893,6 +16849,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 5000,
+      "held": null,
+      "reason": "none of its 5000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -13920,6 +16885,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 15660,
+      "held": null,
+      "reason": "none of its 15660 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": 4698,
     "dividendFrom": "2026-04-01",
@@ -13948,6 +16922,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 1310,
+      "held": null,
+      "reason": "none of its 1310 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": 20960,
     "dividendFrom": "2026-04-01",
@@ -13976,6 +16959,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 195,
+      "held": null,
+      "reason": "none of its 195 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": 6630,
     "dividendFrom": "2026-04-01",
@@ -14004,6 +16996,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 3,
+      "sells": 0,
+      "unaccounted": 5455,
+      "held": null,
+      "reason": "the transaction statements from 2026-04-01 to 2026-09-30 buy 785 and sell 0 units of it against 6240 held, so 5455 of them are on no dated trade in this drop"
+    },
     "accruedIncome": 18720,
     "dividendReceived": 18720,
     "dividendFrom": "2026-04-01",
@@ -14032,6 +17033,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 2,
+      "sells": 2,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-05-11",
+        "last": "2026-05-11",
+        "lots": 1
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": 1575,
     "dividendFrom": "2026-04-01",
@@ -14060,6 +17074,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 2885,
+      "held": null,
+      "reason": "none of its 2885 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": 1731,
     "dividendFrom": "2026-04-01",
@@ -14088,6 +17111,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 1640,
+      "held": null,
+      "reason": "none of its 1640 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": 1640,
     "dividendFrom": "2026-04-01",
@@ -14116,6 +17148,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 2075,
+      "held": null,
+      "reason": "none of its 2075 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": 6225,
     "dividendFrom": "2026-04-01",
@@ -14144,6 +17185,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 11370,
+      "held": null,
+      "reason": "none of its 11370 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -14172,6 +17222,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 4,
+      "unaccounted": 6480,
+      "held": null,
+      "reason": "the transaction statements from 2026-04-01 to 2026-09-30 buy 0 and sell 4445 units of it against 2035 held, so 6480 of them are on no dated trade in this drop"
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -14199,6 +17258,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 980,
+      "held": null,
+      "reason": "none of its 980 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": 980,
     "dividendFrom": "2026-04-01",
@@ -14228,6 +17296,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 1,
+      "unaccounted": 3050,
+      "held": null,
+      "reason": "the transaction statements from 2026-04-01 to 2026-09-30 buy 0 and sell 670 units of it against 2380 held, so 3050 of them are on no dated trade in this drop"
+    },
     "accruedIncome": null,
     "dividendReceived": 11900,
     "dividendFrom": "2026-04-01",
@@ -14256,6 +17333,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 1245,
+      "held": null,
+      "reason": "none of its 1245 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": 11205,
     "dividendFrom": "2026-04-01",
@@ -14284,6 +17370,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 2390,
+      "held": null,
+      "reason": "none of its 2390 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": 47800,
     "dividendReceived": 47800,
     "dividendFrom": "2026-04-01",
@@ -14312,6 +17407,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 2570,
+      "held": null,
+      "reason": "none of its 2570 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": 8995,
     "dividendFrom": "2026-04-01",
@@ -14340,6 +17444,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 2,
+      "sells": 1,
+      "unaccounted": 1675,
+      "held": null,
+      "reason": "the transaction statements from 2026-04-01 to 2026-09-30 buy 230 and sell 250 units of it against 1655 held, so 1675 of them are on no dated trade in this drop"
+    },
     "accruedIncome": null,
     "dividendReceived": 2482.5,
     "dividendFrom": "2026-04-01",
@@ -14368,6 +17481,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 7760,
+      "held": null,
+      "reason": "none of its 7760 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": 11640,
     "dividendFrom": "2026-04-01",
@@ -14396,6 +17518,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 20550,
+      "held": null,
+      "reason": "none of its 20550 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -14423,6 +17554,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 6005,
+      "held": null,
+      "reason": "none of its 6005 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": 18015,
     "dividendFrom": "2026-04-01",
@@ -14451,6 +17591,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 1,
+      "sells": 0,
+      "unaccounted": 4310,
+      "held": null,
+      "reason": "the transaction statements from 2026-04-01 to 2026-09-30 buy 295 and sell 0 units of it against 4605 held, so 4310 of them are on no dated trade in this drop"
+    },
     "accruedIncome": null,
     "dividendReceived": 6465,
     "dividendFrom": "2026-04-01",
@@ -14479,6 +17628,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 2,
+      "sells": 0,
+      "unaccounted": 5925,
+      "held": null,
+      "reason": "the transaction statements from 2026-04-01 to 2026-09-30 buy 6715 and sell 0 units of it against 12640 held, so 5925 of them are on no dated trade in this drop"
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -14506,6 +17664,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 1,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-05-29",
+        "last": "2026-05-29",
+        "lots": 1
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -14533,6 +17704,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 3090,
+      "held": null,
+      "reason": "none of its 3090 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": 6180,
     "dividendFrom": "2026-04-01",
@@ -14561,6 +17741,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 3320,
+      "held": null,
+      "reason": "none of its 3320 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": 41832,
     "dividendFrom": "2026-04-01",
@@ -14682,6 +17871,19 @@ export const BOOK_POSITIONS: Position[] = [
     "daysToLT": 231,
     "heldSince": "2025-08-05",
     "purchaseDates": 2,
+    "tradeRecord": {
+      "from": "2025-07-29",
+      "to": "2026-10-07",
+      "buys": 2,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-08-05",
+        "last": "2026-05-25",
+        "lots": 2
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": 15764.4,
     "dividendFrom": "2026-04-01",
@@ -14712,6 +17914,19 @@ export const BOOK_POSITIONS: Position[] = [
     "daysToLT": null,
     "heldSince": "2025-07-31",
     "purchaseDates": 1,
+    "tradeRecord": {
+      "from": "2025-07-29",
+      "to": "2026-10-07",
+      "buys": 1,
+      "sells": 3,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-07-31",
+        "last": "2025-07-31",
+        "lots": 1
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -14794,6 +18009,19 @@ export const BOOK_POSITIONS: Position[] = [
     "daysToLT": 252,
     "heldSince": "2025-07-31",
     "purchaseDates": 3,
+    "tradeRecord": {
+      "from": "2025-07-29",
+      "to": "2026-10-07",
+      "buys": 3,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-07-31",
+        "last": "2026-07-15",
+        "lots": 3
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -14822,6 +18050,19 @@ export const BOOK_POSITIONS: Position[] = [
     "daysToLT": null,
     "heldSince": "2025-07-31",
     "purchaseDates": 2,
+    "tradeRecord": {
+      "from": "2025-07-29",
+      "to": "2026-10-07",
+      "buys": 2,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-07-31",
+        "last": "2025-08-07",
+        "lots": 2
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": 91032.5,
     "dividendFrom": "2026-04-01",
@@ -14851,6 +18092,19 @@ export const BOOK_POSITIONS: Position[] = [
     "daysToLT": 231,
     "heldSince": "2025-09-19",
     "purchaseDates": 2,
+    "tradeRecord": {
+      "from": "2025-07-29",
+      "to": "2026-10-07",
+      "buys": 2,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-09-19",
+        "last": "2026-05-25",
+        "lots": 2
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": 50556,
     "dividendFrom": "2026-04-01",
@@ -14880,6 +18134,19 @@ export const BOOK_POSITIONS: Position[] = [
     "daysToLT": null,
     "heldSince": "2025-07-31",
     "purchaseDates": 3,
+    "tradeRecord": {
+      "from": "2025-07-29",
+      "to": "2026-10-07",
+      "buys": 3,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-07-31",
+        "last": "2025-08-19",
+        "lots": 3
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -14908,6 +18175,19 @@ export const BOOK_POSITIONS: Position[] = [
     "daysToLT": 282,
     "heldSince": "2025-08-05",
     "purchaseDates": 2,
+    "tradeRecord": {
+      "from": "2025-07-29",
+      "to": "2026-10-07",
+      "buys": 2,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-08-05",
+        "last": "2026-07-15",
+        "lots": 2
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": 25189.5,
     "dividendFrom": "2026-04-01",
@@ -14937,6 +18217,15 @@ export const BOOK_POSITIONS: Position[] = [
     "daysToLT": null,
     "heldSince": "2025-08-05",
     "purchaseDates": 1,
+    "tradeRecord": {
+      "from": "2025-07-29",
+      "to": "2026-10-07",
+      "buys": 1,
+      "sells": 0,
+      "unaccounted": 1412,
+      "held": null,
+      "reason": "the transaction statements from 2025-07-29 to 2026-10-07 buy 353 and sell 0 units of it against 1765 held, so 1412 of them are on no dated trade in this drop"
+    },
     "accruedIncome": null,
     "dividendReceived": 24710,
     "dividendFrom": "2026-04-01",
@@ -14966,6 +18255,19 @@ export const BOOK_POSITIONS: Position[] = [
     "daysToLT": null,
     "heldSince": "2025-08-05",
     "purchaseDates": 2,
+    "tradeRecord": {
+      "from": "2025-07-29",
+      "to": "2026-10-07",
+      "buys": 2,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-08-05",
+        "last": "2025-08-06",
+        "lots": 2
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -14994,6 +18296,19 @@ export const BOOK_POSITIONS: Position[] = [
     "daysToLT": null,
     "heldSince": "2025-08-05",
     "purchaseDates": 1,
+    "tradeRecord": {
+      "from": "2025-07-29",
+      "to": "2026-10-07",
+      "buys": 1,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-08-05",
+        "last": "2025-08-05",
+        "lots": 1
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -15022,6 +18337,19 @@ export const BOOK_POSITIONS: Position[] = [
     "daysToLT": 115,
     "heldSince": "2025-07-31",
     "purchaseDates": 3,
+    "tradeRecord": {
+      "from": "2025-07-29",
+      "to": "2026-10-07",
+      "buys": 3,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-07-31",
+        "last": "2026-05-25",
+        "lots": 3
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -15050,6 +18378,19 @@ export const BOOK_POSITIONS: Position[] = [
     "daysToLT": null,
     "heldSince": "2025-07-31",
     "purchaseDates": 1,
+    "tradeRecord": {
+      "from": "2025-07-29",
+      "to": "2026-10-07",
+      "buys": 1,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-07-31",
+        "last": "2025-07-31",
+        "lots": 1
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": 29511,
     "dividendFrom": "2026-04-01",
@@ -15079,6 +18420,19 @@ export const BOOK_POSITIONS: Position[] = [
     "daysToLT": 115,
     "heldSince": "2025-08-05",
     "purchaseDates": 2,
+    "tradeRecord": {
+      "from": "2025-07-29",
+      "to": "2026-10-07",
+      "buys": 2,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-08-05",
+        "last": "2026-01-29",
+        "lots": 2
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -15107,6 +18461,19 @@ export const BOOK_POSITIONS: Position[] = [
     "daysToLT": null,
     "heldSince": "2025-08-05",
     "purchaseDates": 1,
+    "tradeRecord": {
+      "from": "2025-07-29",
+      "to": "2026-10-07",
+      "buys": 1,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-08-05",
+        "last": "2025-08-05",
+        "lots": 1
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -15134,6 +18501,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-08-13",
+      "buys": 1,
+      "sells": 0,
+      "unaccounted": 3678,
+      "held": null,
+      "reason": "the transaction statements from 2026-04-01 to 2026-08-13 buy 1772 and sell 0 units of it against 5450 held, so 3678 of them are on no dated trade in this drop"
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -15162,6 +18538,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-08-13",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 8400,
+      "held": null,
+      "reason": "none of its 8400 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-08-13 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -15244,6 +18629,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-08-13",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 22191,
+      "held": null,
+      "reason": "none of its 22191 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-08-13 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": 66573,
     "dividendFrom": "2026-04-01",
@@ -15272,6 +18666,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-08-13",
+      "buys": 4,
+      "sells": 0,
+      "unaccounted": 8643,
+      "held": null,
+      "reason": "the transaction statements from 2026-04-01 to 2026-08-13 buy 22735 and sell 0 units of it against 31378 held, so 8643 of them are on no dated trade in this drop"
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -15299,6 +18702,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-08-13",
+      "buys": 1,
+      "sells": 0,
+      "unaccounted": 74149,
+      "held": null,
+      "reason": "the transaction statements from 2026-04-01 to 2026-08-13 buy 86587 and sell 0 units of it against 160736 held, so 74149 of them are on no dated trade in this drop"
+    },
     "accruedIncome": 200920,
     "dividendReceived": 200920,
     "dividendFrom": "2026-04-01",
@@ -15327,6 +18739,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-08-13",
+      "buys": 3,
+      "sells": 0,
+      "unaccounted": 24063,
+      "held": null,
+      "reason": "the transaction statements from 2026-04-01 to 2026-08-13 buy 56764 and sell 0 units of it against 80827 held, so 24063 of them are on no dated trade in this drop"
+    },
     "accruedIncome": 77208,
     "dividendReceived": 77208,
     "dividendFrom": "2026-04-01",
@@ -15355,6 +18776,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-08-13",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 262684,
+      "held": null,
+      "reason": "none of its 262684 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-08-13 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -15382,6 +18812,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-08-13",
+      "buys": 2,
+      "sells": 0,
+      "unaccounted": 16691,
+      "held": null,
+      "reason": "the transaction statements from 2026-04-01 to 2026-08-13 buy 50306 and sell 0 units of it against 66997 held, so 16691 of them are on no dated trade in this drop"
+    },
     "accruedIncome": null,
     "dividendReceived": 25036.5,
     "dividendFrom": "2026-04-01",
@@ -15410,6 +18849,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-08-13",
+      "buys": 2,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-06-15",
+        "last": "2026-08-10",
+        "lots": 2
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -15437,6 +18889,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-08-13",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 12172,
+      "held": null,
+      "reason": "none of its 12172 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-08-13 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -15464,6 +18925,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-08-13",
+      "buys": 1,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-08-10",
+        "last": "2026-08-10",
+        "lots": 1
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -15491,6 +18965,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-08-13",
+      "buys": 2,
+      "sells": 0,
+      "unaccounted": 48807,
+      "held": null,
+      "reason": "the transaction statements from 2026-04-01 to 2026-08-13 buy 81055 and sell 0 units of it against 129862 held, so 48807 of them are on no dated trade in this drop"
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -15518,6 +19001,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-08-13",
+      "buys": 2,
+      "sells": 0,
+      "unaccounted": 14726,
+      "held": null,
+      "reason": "the transaction statements from 2026-04-01 to 2026-08-13 buy 11216.667 and sell 0 units of it against 25942.667 held, so 14726 of them are on no dated trade in this drop"
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -15545,6 +19037,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-08-13",
+      "buys": 1,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-07-30",
+        "last": "2026-07-30",
+        "lots": 1
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -15572,6 +19077,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-08-13",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 13121,
+      "held": null,
+      "reason": "none of its 13121 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-08-13 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -15599,6 +19113,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-08-13",
+      "buys": 3,
+      "sells": 0,
+      "unaccounted": 11644,
+      "held": null,
+      "reason": "the transaction statements from 2026-04-01 to 2026-08-13 buy 29334 and sell 0 units of it against 40978 held, so 11644 of them are on no dated trade in this drop"
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -15626,9 +19149,1008 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-08-13",
+      "buys": 1,
+      "sells": 0,
+      "unaccounted": 4906,
+      "held": null,
+      "reason": "the transaction statements from 2026-04-01 to 2026-08-13 buy 2614 and sell 0 units of it against 7520 held, so 4906 of them are on no dated trade in this drop"
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
+  }
+];
+
+/** Supplementary source costs, accepted only for the exact account, ISIN, date and unit balance. No valuation or quantity overrides. */
+export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "isin": "INE00GK01023",
+    "quantity": 138462,
+    "asOf": "2026-03-31",
+    "costBasis": 10000120,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "salesAfter": 3,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          434
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "isin": "INE00YJ01010",
+    "quantity": 116979,
+    "asOf": "2026-03-31",
+    "costBasis": 75000350,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          305,
+          306
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "isin": "INE0LGX01024",
+    "quantity": 212000,
+    "asOf": "2026-03-31",
+    "costBasis": 69684400,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          299,
+          300
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "isin": "INE0NAZ01010",
+    "quantity": 187778,
+    "asOf": "2026-03-31",
+    "costBasis": 84500100,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          379
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "isin": "INE0ZOL01023",
+    "quantity": 44643,
+    "asOf": "2026-03-31",
+    "costBasis": 4642872,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-f/NEW INVESTMENT SHEET.xlsx",
+        "sheet": "AJAY SIR - AARTI",
+        "rows": [
+          46
+        ]
+      }
+    ],
+    "notes": [
+      "Payment register matches owner and every unit; no complete separate sales/income record is claimed"
+    ]
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "isin": "INE12E301017",
+    "quantity": 262125,
+    "asOf": "2026-03-31",
+    "costBasis": 16277250,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          323,
+          324,
+          325
+        ]
+      }
+    ],
+    "notes": [
+      "row 325: duplicated purchase amount excluded from the noncash split; Closing independently equals purchase cost"
+    ]
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "isin": "INE1H7V01011",
+    "quantity": 59000,
+    "asOf": "2026-03-31",
+    "costBasis": 10030000,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          374
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "isin": "INE212S01015",
+    "quantity": 180185,
+    "asOf": "2026-03-31",
+    "costBasis": 176878881,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          275,
+          276
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "isin": "INE647U01026",
+    "quantity": 94967,
+    "asOf": "2026-03-31",
+    "costBasis": 93857991,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          262
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
+    "isin": "INE013P01021",
+    "quantity": 43000,
+    "asOf": "2026-07-31",
+    "costBasis": 57061000,
+    "realizedPnL": 23795397.75,
+    "costOfUnitsSold": 62939610,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          216,
+          217,
+          218,
+          219
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
+    "isin": "INE559A01017",
+    "quantity": 15772,
+    "asOf": "2026-07-31",
+    "costBasis": 23865639.84,
+    "realizedPnL": -22586920.91,
+    "costOfUnitsSold": 73027344.39,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          278,
+          279,
+          280,
+          281,
+          282,
+          283,
+          284,
+          285,
+          286,
+          287,
+          288,
+          289,
+          290
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
+    "isin": "INE589A01014",
+    "quantity": 32000,
+    "asOf": "2026-07-31",
+    "costBasis": 10034018.55,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          366,
+          367
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
+    "isin": "INE943D01017",
+    "quantity": 4878,
+    "asOf": "2026-07-31",
+    "costBasis": 8860617.08,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          355,
+          356,
+          357
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
+    "isin": "INF109KA11J9",
+    "quantity": 9320249.865,
+    "asOf": "2026-07-31",
+    "costBasis": 232819841.63,
+    "realizedPnL": null,
+    "costOfUnitsSold": 43190188.98,
+    "dividendReceived": null,
+    "hprUnavailableReason": "Sale proceeds are unverified on review row(s) 474; original lots establish remaining cost only",
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          473,
+          474,
+          475
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
+    "isin": "INF109KC1RH9",
+    "quantity": 4850206.378,
+    "asOf": "2026-07-31",
+    "costBasis": 184990762.71,
+    "realizedPnL": 4463855.58,
+    "costOfUnitsSold": 32498362.8,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          673,
+          674,
+          675,
+          676,
+          677,
+          678
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
+    "isin": "INF174K01LF9",
+    "quantity": 34045.997,
+    "asOf": "2026-07-31",
+    "costBasis": 12499374.97,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          683,
+          684
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
+    "isin": "INF174KA1HV3",
+    "quantity": 4183009.836,
+    "asOf": "2026-07-31",
+    "costBasis": 87270636.48,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          707,
+          708,
+          709,
+          710,
+          711,
+          712,
+          713,
+          714
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
+    "isin": "INF179KB1HP9",
+    "quantity": 2282.178,
+    "asOf": "2026-07-31",
+    "costBasis": 12499375.94,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          118,
+          119
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "isin": "INE07K301024",
+    "quantity": 12000,
+    "asOf": "2026-07-31",
+    "costBasis": 5017440,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          441,
+          442
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "isin": "INE0MRE01011",
+    "quantity": 8000,
+    "asOf": "2026-07-31",
+    "costBasis": 2646660,
+    "realizedPnL": -88917.69,
+    "costOfUnitsSold": 330630,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          291,
+          292,
+          293,
+          294,
+          295,
+          296,
+          297,
+          298
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "isin": "INE365Y01019",
+    "quantity": 603,
+    "asOf": "2026-07-31",
+    "costBasis": 907450.32,
+    "realizedPnL": 1135.05,
+    "costOfUnitsSold": 22569.75,
+    "dividendReceived": 603,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          223,
+          224,
+          225,
+          226,
+          227,
+          228,
+          229
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "isin": "INE647U01026",
+    "quantity": 94967,
+    "asOf": "2026-07-31",
+    "costBasis": 93857991,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          264,
+          265
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "isin": "INF03VN01761",
+    "quantity": 3915742.08,
+    "asOf": "2026-07-31",
+    "costBasis": 59989168.67,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          479,
+          480
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "isin": "INF084M01AB8",
+    "quantity": 393095.951,
+    "asOf": "2026-07-31",
+    "costBasis": 31654413.89,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          447,
+          448,
+          449,
+          450
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "isin": "INF0R8701046",
+    "quantity": 5100984.835,
+    "asOf": "2026-07-31",
+    "costBasis": 72403187.18,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          655,
+          656,
+          657,
+          658,
+          659,
+          660
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "isin": "INF109KC1RH9",
+    "quantity": 993739.133,
+    "asOf": "2026-07-31",
+    "costBasis": 39998000.1,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          679,
+          680
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "isin": "INF194K01V89",
+    "quantity": 24406.691,
+    "asOf": "2026-07-31",
+    "costBasis": 3926402.01,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          624,
+          625
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "isin": "INF740KA1RE3",
+    "quantity": 123000,
+    "asOf": "2026-07-31",
+    "costBasis": 17222067.17,
+    "realizedPnL": 14667670.15,
+    "costOfUnitsSold": 14981798.27,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          91,
+          92,
+          93
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "isin": "INF740KA1SW3",
+    "quantity": 205000,
+    "asOf": "2026-07-31",
+    "costBasis": 30193698.9,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          11,
+          12
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
+    "isin": "INE013P01021",
+    "quantity": 48000,
+    "asOf": "2026-07-31",
+    "costBasis": 63696000,
+    "realizedPnL": 5405142.15,
+    "costOfUnitsSold": 16304849,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          220,
+          221,
+          222
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
+    "isin": "INE800A01015",
+    "quantity": 11900,
+    "asOf": "2026-07-31",
+    "costBasis": 2863973,
+    "realizedPnL": -299952,
+    "costOfUnitsSold": 1107082,
+    "dividendReceived": 70125,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          247,
+          248,
+          249,
+          250,
+          251,
+          252,
+          253
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
+    "isin": "INF03VN01761",
+    "quantity": 1366820.78,
+    "asOf": "2026-07-31",
+    "costBasis": 16999150.04,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          481,
+          482
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
+    "isin": "INF084M01AB8",
+    "quantity": 183499.511,
+    "asOf": "2026-07-31",
+    "costBasis": 14999250.03,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          451,
+          452
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
+    "isin": "INF0R8701046",
+    "quantity": 2407981.455,
+    "asOf": "2026-07-31",
+    "costBasis": 34788260.57,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          661,
+          662,
+          663,
+          664,
+          665,
+          666,
+          667,
+          668
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
+    "isin": "INF109K012B0",
+    "quantity": 146856.943,
+    "asOf": "2026-07-31",
+    "costBasis": 11190499.06,
+    "realizedPnL": 1223545.74,
+    "costOfUnitsSold": 8812304.83,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          468,
+          469,
+          470
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
+    "isin": "INF109KC1RH9",
+    "quantity": 602441.424,
+    "asOf": "2026-07-31",
+    "costBasis": 23555459.68,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          681,
+          682
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838335",
+    "isin": "INE457L01029",
+    "quantity": 180000,
+    "asOf": "2026-07-31",
+    "costBasis": 94396845.22,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          376,
+          377,
+          378
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838335",
+    "isin": "INF084M01AB8",
+    "quantity": 242412.122,
+    "asOf": "2026-07-31",
+    "costBasis": 19999000.07,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          445,
+          446
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838335",
+    "isin": "INF109K01Q49",
+    "quantity": 21012.887,
+    "asOf": "2026-07-31",
+    "costBasis": 8592579.25,
+    "realizedPnL": 22966.05,
+    "costOfUnitsSold": 12706355.62,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          126,
+          127,
+          128
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838335",
+    "isin": "INF174KA1HV3",
+    "quantity": 612631.862,
+    "asOf": "2026-07-31",
+    "costBasis": 12724363.77,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          705,
+          706
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838335",
+    "isin": "INF194K01V89",
+    "quantity": 132634.709,
+    "asOf": "2026-07-31",
+    "costBasis": 21337476.18,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          609,
+          610
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838335",
+    "isin": "INF740KA1SW3",
+    "quantity": 1195000,
+    "asOf": "2026-07-31",
+    "costBasis": 203682805.64,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          5,
+          6,
+          7
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090032387399",
+    "isin": "INF109K01Q49",
+    "quantity": 46654.378,
+    "asOf": "2026-07-31",
+    "costBasis": 18215301.46,
+    "realizedPnL": 128261.98,
+    "costOfUnitsSold": 11783198.53,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          135,
+          136,
+          137
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090032387399",
+    "isin": "INF205K01KR8",
+    "quantity": 1092470.994,
+    "asOf": "2026-07-31",
+    "costBasis": 37698115.08,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          148,
+          149
+        ]
+      }
+    ],
+    "notes": []
   }
 ];
 
@@ -18175,8 +22697,8 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
   {
     "period": "2026-07-01",
     "date": "2026-07-01",
-    "nav": 1119877053.25,
-    "accountsOnDate": 1,
+    "nav": 1122211497.89,
+    "accountsOnDate": 4,
     "accountsCarried": 12,
     "flowIn": 0,
     "unreportedFlowValue": 0,
@@ -18186,185 +22708,211 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "panelComplete": false
   },
   {
+    "period": "2026-07-02",
+    "date": "2026-07-02",
+    "nav": 1123147884.71,
+    "accountsOnDate": 1,
+    "accountsCarried": 16,
+    "flowIn": 0,
+    "unreportedFlowValue": 0,
+    "linkOpen": 1122211497.89,
+    "linkClose": 1122211497.89,
+    "linkAccounts": 16,
+    "panelComplete": false
+  },
+  {
     "period": "2026-07-06",
     "date": "2026-07-06",
-    "nav": 1173011510.3,
+    "nav": 1176282341.76,
     "accountsOnDate": 2,
-    "accountsCarried": 11,
+    "accountsCarried": 15,
     "flowIn": -7494,
     "unreportedFlowValue": 0,
-    "linkOpen": 1119877053.25,
-    "linkClose": 1173011510.3,
-    "linkAccounts": 13,
+    "linkOpen": 1123147884.71,
+    "linkClose": 1176282341.76,
+    "linkAccounts": 17,
     "panelComplete": false
   },
   {
     "period": "2026-07-10",
     "date": "2026-07-10",
-    "nav": 1296935421.69,
+    "nav": 1300206253.15,
     "accountsOnDate": 3,
-    "accountsCarried": 10,
+    "accountsCarried": 14,
     "flowIn": -142601,
     "unreportedFlowValue": 0,
-    "linkOpen": 1173011510.3,
-    "linkClose": 1296935421.69,
-    "linkAccounts": 13,
+    "linkOpen": 1176282341.76,
+    "linkClose": 1300206253.15,
+    "linkAccounts": 17,
     "panelComplete": false
   },
   {
     "period": "2026-07-27",
     "date": "2026-07-27",
-    "nav": 1293262920.41,
+    "nav": 1296533751.87,
     "accountsOnDate": 2,
-    "accountsCarried": 11,
+    "accountsCarried": 15,
     "flowIn": -9559,
     "unreportedFlowValue": 0,
-    "linkOpen": 1296935421.69,
-    "linkClose": 1293262920.41,
-    "linkAccounts": 13,
+    "linkOpen": 1300206253.15,
+    "linkClose": 1296533751.87,
+    "linkAccounts": 17,
     "panelComplete": false
   },
   {
     "period": "2026-07-31",
     "date": "2026-07-31",
-    "nav": 2399642048.62,
+    "nav": 2402912880.08,
     "accountsOnDate": 8,
-    "accountsCarried": 9,
+    "accountsCarried": 13,
     "flowIn": -22945,
     "unreportedFlowValue": 0,
-    "linkOpen": 1293262920.41,
-    "linkClose": 1301627529.54,
-    "linkAccounts": 13,
+    "linkOpen": 1296533751.87,
+    "linkClose": 1304898361,
+    "linkAccounts": 17,
+    "panelComplete": true
+  },
+  {
+    "period": "2026-08-03",
+    "date": "2026-08-03",
+    "nav": 2402924233.33,
+    "accountsOnDate": 3,
+    "accountsCarried": 18,
+    "flowIn": 0,
+    "unreportedFlowValue": 7201.78,
+    "linkOpen": 2402912880.08,
+    "linkClose": 2402924233.33,
+    "linkAccounts": 21,
     "panelComplete": true
   },
   {
     "period": "2026-08-06",
     "date": "2026-08-06",
-    "nav": 2399642048.62,
-    "accountsOnDate": 1,
-    "accountsCarried": 16,
+    "nav": 2402928953.22,
+    "accountsOnDate": 2,
+    "accountsCarried": 19,
     "flowIn": 0,
     "unreportedFlowValue": 0,
-    "linkOpen": 2399642048.62,
-    "linkClose": 2399642048.62,
-    "linkAccounts": 17,
+    "linkOpen": 2402924233.33,
+    "linkClose": 2402928953.22,
+    "linkAccounts": 21,
     "panelComplete": true
   },
   {
     "period": "2026-08-10",
     "date": "2026-08-10",
-    "nav": 2394873637.54,
+    "nav": 2398160542.14,
     "accountsOnDate": 1,
-    "accountsCarried": 16,
+    "accountsCarried": 20,
     "flowIn": -30690,
     "unreportedFlowValue": 0,
-    "linkOpen": 2399642048.62,
-    "linkClose": 2394873637.54,
-    "linkAccounts": 17,
+    "linkOpen": 2402928953.22,
+    "linkClose": 2398160542.14,
+    "linkAccounts": 21,
     "panelComplete": true
   },
   {
     "period": "2026-08-11",
     "date": "2026-08-11",
-    "nav": 2404372525.3,
+    "nav": 2407659429.9,
     "accountsOnDate": 2,
-    "accountsCarried": 15,
+    "accountsCarried": 19,
     "flowIn": -65735,
     "unreportedFlowValue": 0,
-    "linkOpen": 2394873637.54,
-    "linkClose": 2404372525.3,
-    "linkAccounts": 17,
+    "linkOpen": 2398160542.14,
+    "linkClose": 2407659429.9,
+    "linkAccounts": 21,
     "panelComplete": true
   },
   {
     "period": "2026-08-13",
     "date": "2026-08-13",
-    "nav": 2514297035.48,
+    "nav": 2517583940.08,
     "accountsOnDate": 2,
-    "accountsCarried": 15,
+    "accountsCarried": 19,
     "flowIn": 112393342,
     "unreportedFlowValue": 0,
-    "linkOpen": 2404372525.3,
-    "linkClose": 2514297035.48,
-    "linkAccounts": 17,
+    "linkOpen": 2407659429.9,
+    "linkClose": 2517583940.08,
+    "linkAccounts": 21,
     "panelComplete": true
   },
   {
     "period": "2026-08-31",
     "date": "2026-08-31",
-    "nav": 2534513699.73,
+    "nav": 2537800604.33,
     "accountsOnDate": 3,
-    "accountsCarried": 14,
+    "accountsCarried": 18,
     "flowIn": -14984.6,
     "unreportedFlowValue": 5781806.04,
-    "linkOpen": 2514297035.48,
-    "linkClose": 2534513699.73,
-    "linkAccounts": 17,
+    "linkOpen": 2517583940.08,
+    "linkClose": 2537800604.33,
+    "linkAccounts": 21,
     "panelComplete": true
   },
   {
     "period": "2026-09-29",
     "date": "2026-09-29",
-    "nav": 2499068704.83,
+    "nav": 2502355609.43,
     "accountsOnDate": 2,
-    "accountsCarried": 15,
+    "accountsCarried": 19,
     "flowIn": 0,
     "unreportedFlowValue": 0,
-    "linkOpen": 2534513699.73,
-    "linkClose": 2499068704.83,
-    "linkAccounts": 17,
+    "linkOpen": 2537800604.33,
+    "linkClose": 2502355609.43,
+    "linkAccounts": 21,
     "panelComplete": true
   },
   {
     "period": "2026-09-30",
     "date": "2026-09-30",
-    "nav": 2478694553.51,
+    "nav": 2481981458.11,
     "accountsOnDate": 9,
-    "accountsCarried": 8,
+    "accountsCarried": 12,
     "flowIn": -81004.8,
     "unreportedFlowValue": 0,
-    "linkOpen": 2499068704.83,
-    "linkClose": 2478694553.51,
-    "linkAccounts": 17,
+    "linkOpen": 2502355609.43,
+    "linkClose": 2481981458.11,
+    "linkAccounts": 21,
     "panelComplete": true
   },
   {
     "period": "2026-10-05",
     "date": "2026-10-05",
-    "nav": 2478694553.51,
-    "accountsOnDate": 1,
-    "accountsCarried": 16,
+    "nav": 2481989240.07,
+    "accountsOnDate": 2,
+    "accountsCarried": 19,
     "flowIn": 0,
-    "unreportedFlowValue": 0,
-    "linkOpen": 2478694553.51,
-    "linkClose": 2478694553.51,
-    "linkAccounts": 17,
+    "unreportedFlowValue": 7781.96,
+    "linkOpen": 2481981458.11,
+    "linkClose": 2481989240.07,
+    "linkAccounts": 21,
     "panelComplete": true
   },
   {
     "period": "2026-10-06",
     "date": "2026-10-06",
-    "nav": 2467553079.41,
-    "accountsOnDate": 2,
-    "accountsCarried": 15,
+    "nav": 2470864610.12,
+    "accountsOnDate": 4,
+    "accountsCarried": 17,
     "flowIn": -70005,
-    "unreportedFlowValue": 0,
-    "linkOpen": 2478694553.51,
-    "linkClose": 2467553079.41,
-    "linkAccounts": 17,
+    "unreportedFlowValue": 7138.6,
+    "linkOpen": 2481989240.07,
+    "linkClose": 2470864610.12,
+    "linkAccounts": 21,
     "panelComplete": true
   },
   {
     "period": "2026-10-07",
     "date": "2026-10-07",
-    "nav": 2467182384.06,
+    "nav": 2470493914.77,
     "accountsOnDate": 2,
-    "accountsCarried": 15,
+    "accountsCarried": 19,
     "flowIn": -18689,
     "unreportedFlowValue": 0,
-    "linkOpen": 2467553079.41,
-    "linkClose": 2467182384.06,
-    "linkAccounts": 17,
+    "linkOpen": 2470864610.12,
+    "linkClose": 2470493914.77,
+    "linkAccounts": 21,
     "panelComplete": true
   }
 ];
@@ -18411,6 +22959,35 @@ export const BOOK_ACCOUNT_NAV_HISTORY: Record<string, NavPoint[]> = {
       "period": "2026-09-30",
       "date": "2026-09-30",
       "nav": 12528737.43
+    }
+  ],
+  "aditya-birla-sun-life-mutual-fund-1019265797": [
+    {
+      "period": "2026-07-01",
+      "date": "2026-07-01",
+      "nav": 766421.41
+    },
+    {
+      "period": "2026-08-03",
+      "date": "2026-08-03",
+      "nav": 770028.13
+    },
+    {
+      "period": "2026-10-06",
+      "date": "2026-10-06",
+      "nav": 777166.73
+    }
+  ],
+  "aditya-birla-sun-life-mutual-fund-1038104611": [
+    {
+      "period": "2026-07-01",
+      "date": "2026-07-01",
+      "nav": 794412.48
+    },
+    {
+      "period": "2026-08-03",
+      "date": "2026-08-03",
+      "nav": 798563.95
     }
   ],
   "buoyant-capital-103472": [
@@ -18584,6 +23161,40 @@ export const BOOK_ACCOUNT_NAV_HISTORY: Record<string, NavPoint[]> = {
       "nav": 0
     }
   ],
+  "kotak-mahindra-mutual-fund-4295974": [
+    {
+      "period": "2026-07-01",
+      "date": "2026-07-01",
+      "nav": 773610.75
+    },
+    {
+      "period": "2026-08-03",
+      "date": "2026-08-03",
+      "nav": 777205.81
+    },
+    {
+      "period": "2026-10-05",
+      "date": "2026-10-05",
+      "nav": 784987.77
+    }
+  ],
+  "mirae-asset-mutual-fund-70413280453": [
+    {
+      "period": "2026-07-02",
+      "date": "2026-07-02",
+      "nav": 936386.82
+    },
+    {
+      "period": "2026-08-06",
+      "date": "2026-08-06",
+      "nav": 941106.71
+    },
+    {
+      "period": "2026-10-06",
+      "date": "2026-10-06",
+      "nav": 950812.26
+    }
+  ],
   "molecule-ventures-llp-7810404": [
     {
       "period": "2026-06-30",
@@ -18754,6 +23365,24 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "flowBasis": "units-unchanged"
     },
     {
+      "accountId": "aditya-birla-sun-life-mutual-fund-1019265797",
+      "points": 3,
+      "first": "2026-07-01",
+      "last": "2026-10-06",
+      "latestValue": 777166.73,
+      "bookValue": 777166.73,
+      "flowBasis": "unreported"
+    },
+    {
+      "accountId": "aditya-birla-sun-life-mutual-fund-1038104611",
+      "points": 2,
+      "first": "2026-07-01",
+      "last": "2026-08-03",
+      "latestValue": 798563.95,
+      "bookValue": 798563.95,
+      "flowBasis": "units-unchanged"
+    },
+    {
       "accountId": "buoyant-capital-103472",
       "points": 4,
       "first": "2026-07-31",
@@ -18823,6 +23452,24 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "last": "2026-10-05",
       "latestValue": 0,
       "bookValue": 0,
+      "flowBasis": "units-unchanged"
+    },
+    {
+      "accountId": "kotak-mahindra-mutual-fund-4295974",
+      "points": 3,
+      "first": "2026-07-01",
+      "last": "2026-10-05",
+      "latestValue": 784987.77,
+      "bookValue": 784987.77,
+      "flowBasis": "unreported"
+    },
+    {
+      "accountId": "mirae-asset-mutual-fund-70413280453",
+      "points": 3,
+      "first": "2026-07-02",
+      "last": "2026-10-06",
+      "latestValue": 950812.26,
+      "bookValue": 950812.26,
       "flowBasis": "units-unchanged"
     },
     {
@@ -19066,6 +23713,13 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "bookValue": 111287535.35
     },
     {
+      "accountId": "motilal-oswal-hedged-equity-multi-factor-strategy-90410014574",
+      "provider": "Motilal Oswal Hedged Equity Multi Factor Strategy",
+      "accountNo": "90410014574",
+      "date": "2026-07-31",
+      "bookValue": 0
+    },
+    {
       "accountId": "motilal-oswal-mutual-fund-90414963315",
       "provider": "Motilal Oswal Mutual Fund",
       "accountNo": "90414963315",
@@ -19283,12 +23937,6 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "provider": "Motilal Oswal Financial Services (demat)",
       "accountNo": "1201090037436848",
       "bookValue": 0
-    },
-    {
-      "accountId": "motilal-oswal-hedged-equity-multi-factor-strategy-90410014574",
-      "provider": "Motilal Oswal Hedged Equity Multi Factor Strategy",
-      "accountNo": "90410014574",
-      "bookValue": 0
     }
   ],
   "from": "2026-03-31",
@@ -19318,15 +23966,15 @@ export const BOOK_UNDATED_CAPITAL: UndatedCapital[] = [];
 export const BOOK_ATTRIBUTION: Attribution = {
   "from": "2026-05-31",
   "to": "2026-10-07",
-  "openValue": 2375217970.88,
-  "closeValue": 2467182384.06,
-  "priceEffect": -21905414.73,
-  "tradeEffect": 85830650.66,
-  "enteredValue": 168239942.86,
-  "exitedValue": 99106191.53,
+  "openValue": 2378488802.34,
+  "closeValue": 2470493914.77,
+  "priceEffect": -21886837.81,
+  "tradeEffect": 85842027.68,
+  "enteredValue": 169017109.59,
+  "exitedValue": 99872612.94,
   "undecomposedValue": -41094574.09,
-  "bookValue": 8365741852.15,
-  "coveredBookValue": 2467745464.98,
+  "bookValue": 8369053382.86,
+  "coveredBookValue": 2471056995.69,
   "accounts": [
     {
       "accountId": "360-one-private-wealth-37702",
@@ -19361,6 +24009,40 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "rowsEntered": 0,
       "rowsExited": 0,
       "rowsUnpriced": 1
+    },
+    {
+      "accountId": "aditya-birla-sun-life-mutual-fund-1019265797",
+      "from": "2026-07-01",
+      "to": "2026-10-06",
+      "days": 97,
+      "openValue": 766421.41,
+      "closeValue": 777166.73,
+      "priceEffect": 0,
+      "tradeEffect": 0,
+      "enteredValue": 777166.73,
+      "exitedValue": 766421.41,
+      "undecomposedValue": 0,
+      "rowsHeld": 0,
+      "rowsEntered": 1,
+      "rowsExited": 1,
+      "rowsUnpriced": 0
+    },
+    {
+      "accountId": "aditya-birla-sun-life-mutual-fund-1038104611",
+      "from": "2026-07-01",
+      "to": "2026-08-03",
+      "days": 33,
+      "openValue": 794412.48,
+      "closeValue": 798563.95,
+      "priceEffect": 4151.48,
+      "tradeEffect": 0,
+      "enteredValue": 0,
+      "exitedValue": 0,
+      "undecomposedValue": 0,
+      "rowsHeld": 1,
+      "rowsEntered": 0,
+      "rowsExited": 0,
+      "rowsUnpriced": 0
     },
     {
       "accountId": "buoyant-capital-103472",
@@ -19494,6 +24176,40 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "exitedValue": 0,
       "undecomposedValue": 0,
       "rowsHeld": 2,
+      "rowsEntered": 0,
+      "rowsExited": 0,
+      "rowsUnpriced": 0
+    },
+    {
+      "accountId": "kotak-mahindra-mutual-fund-4295974",
+      "from": "2026-07-01",
+      "to": "2026-10-05",
+      "days": 96,
+      "openValue": 773610.75,
+      "closeValue": 784987.77,
+      "priceEffect": 0,
+      "tradeEffect": 11377.02,
+      "enteredValue": 0,
+      "exitedValue": 0,
+      "undecomposedValue": 0,
+      "rowsHeld": 1,
+      "rowsEntered": 5,
+      "rowsExited": 2,
+      "rowsUnpriced": 0
+    },
+    {
+      "accountId": "mirae-asset-mutual-fund-70413280453",
+      "from": "2026-07-02",
+      "to": "2026-10-06",
+      "days": 96,
+      "openValue": 936386.82,
+      "closeValue": 950812.26,
+      "priceEffect": 14425.44,
+      "tradeEffect": 0,
+      "enteredValue": 0,
+      "exitedValue": 0,
+      "undecomposedValue": 0,
+      "rowsHeld": 1,
       "rowsEntered": 0,
       "rowsExited": 0,
       "rowsUnpriced": 0
@@ -21337,6 +26053,23 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": 0.9598
     },
     {
+      "securityKey": "mirae-asset-liquid-fund-formerly-mirae-asset-cash-management-fund-direct-plan-mirae-asset-liquid-fund-formerly-mirae-asset-cash-management-fund-direct-plan-growth",
+      "security": "Mirae Asset Liquid Fund ( formerly Mirae Asset Cash Management Fund ) - Direct Plan Mirae Asset Liquid Fund ( formerly Mirae Asset Cash Management Fund ) - Direct Plan Growth",
+      "accountId": "mirae-asset-mutual-fund-70413280453",
+      "from": "2026-07-02",
+      "to": "2026-10-06",
+      "openValue": 936386.82,
+      "closeValue": 950812.26,
+      "openPrice": 2961.4688,
+      "closePrice": 3007.0915,
+      "openQty": 316.19,
+      "closeQty": 316.19,
+      "kind": "held",
+      "priceEffect": 14425.44,
+      "tradeEffect": 0,
+      "returnPct": 1.5405
+    },
+    {
       "securityKey": "manali-petrochemical",
       "security": "MANALI PETROCHEMICAL LTD.",
       "accountId": "molecule-ventures-llp-7810404",
@@ -21386,6 +26119,23 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "priceEffect": 5500,
       "tradeEffect": 0,
       "returnPct": 1.4897
+    },
+    {
+      "securityKey": "absl-liquid-fund-direct-growth",
+      "security": "ABSL Liquid Fund - Direct-Growth",
+      "accountId": "aditya-birla-sun-life-mutual-fund-1038104611",
+      "from": "2026-07-01",
+      "to": "2026-08-03",
+      "openValue": 794412.48,
+      "closeValue": 798563.95,
+      "openPrice": 453.2856,
+      "closePrice": 455.6544,
+      "openQty": 1752.565,
+      "closeQty": 1752.565,
+      "kind": "held",
+      "priceEffect": 4151.48,
+      "tradeEffect": 0,
+      "returnPct": 0.5226
     },
     {
       "securityKey": "axis-liquid-fund-direct-plan-growth-option",
@@ -21522,6 +26272,23 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "priceEffect": 0,
       "tradeEffect": 0,
       "returnPct": null
+    },
+    {
+      "securityKey": "kotak-liquid-fund-direct-plan-daily-idcw",
+      "security": "Kotak Liquid Fund Direct Plan Daily - IDCW #",
+      "accountId": "kotak-mahindra-mutual-fund-4295974",
+      "from": "2026-07-01",
+      "to": "2026-10-05",
+      "openValue": 773610.75,
+      "closeValue": 784987.77,
+      "openPrice": 1222.81,
+      "closePrice": 1222.81,
+      "openQty": 632.65,
+      "closeQty": 641.954,
+      "kind": "held",
+      "priceEffect": 0,
+      "tradeEffect": 11377.02,
+      "returnPct": 0
     },
     {
       "securityKey": "cash",
@@ -24125,6 +28892,40 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": null
     },
     {
+      "securityKey": "absl-liquid-fund-direct-idcw-daily",
+      "security": "ABSL Liquid Fund -Direct-IDCW Daily",
+      "accountId": "aditya-birla-sun-life-mutual-fund-1019265797",
+      "from": "2026-07-01",
+      "to": "2026-10-06",
+      "openValue": 766421.41,
+      "closeValue": null,
+      "openPrice": 100.195,
+      "closePrice": null,
+      "openQty": 7649.298,
+      "closeQty": null,
+      "kind": "exited",
+      "priceEffect": null,
+      "tradeEffect": null,
+      "returnPct": null
+    },
+    {
+      "securityKey": "aditya-birla-sun-life-liquid-fund-daily-idcw-direct-plan",
+      "security": "Aditya Birla Sun Life Liquid Fund - Daily IDCW-Direct Plan",
+      "accountId": "aditya-birla-sun-life-mutual-fund-1019265797",
+      "from": "2026-07-01",
+      "to": "2026-10-06",
+      "openValue": null,
+      "closeValue": 777166.73,
+      "openPrice": null,
+      "closePrice": 100.195,
+      "openQty": null,
+      "closeQty": 7756.542,
+      "kind": "entered",
+      "priceEffect": null,
+      "tradeEffect": null,
+      "returnPct": null
+    },
+    {
       "securityKey": "cash",
       "security": "Cash",
       "accountId": "buoyant-capital-103472",
@@ -24543,6 +29344,125 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "openPrice": 742.6,
       "closePrice": null,
       "openQty": 4093,
+      "closeQty": null,
+      "kind": "exited",
+      "priceEffect": null,
+      "tradeEffect": null,
+      "returnPct": null
+    },
+    {
+      "securityKey": "kotak-flexi-cap-fund-direct-growth",
+      "security": "Kotak Flexi Cap Fund Direct Growth",
+      "accountId": "kotak-mahindra-mutual-fund-4295974",
+      "from": "2026-07-01",
+      "to": "2026-10-05",
+      "openValue": null,
+      "closeValue": 0,
+      "openPrice": null,
+      "closePrice": 92.517,
+      "openQty": null,
+      "closeQty": 0,
+      "kind": "entered",
+      "priceEffect": null,
+      "tradeEffect": null,
+      "returnPct": null
+    },
+    {
+      "securityKey": "kotak-flexi-cap-fund-regular-growth",
+      "security": "Kotak Flexi Cap Fund Regular Growth",
+      "accountId": "kotak-mahindra-mutual-fund-4295974",
+      "from": "2026-07-01",
+      "to": "2026-10-05",
+      "openValue": null,
+      "closeValue": 0,
+      "openPrice": null,
+      "closePrice": 81.304,
+      "openQty": null,
+      "closeQty": 0,
+      "kind": "entered",
+      "priceEffect": null,
+      "tradeEffect": null,
+      "returnPct": null
+    },
+    {
+      "securityKey": "kotak-flexicap-fund-direct-growth-erstwhile-kotak-standard-multicap-fund-dir-gr",
+      "security": "Kotak Flexicap Fund - Direct Growth (Erstwhile Kotak Standard Multicap Fund - Dir Gr)",
+      "accountId": "kotak-mahindra-mutual-fund-4295974",
+      "from": "2026-07-01",
+      "to": "2026-10-05",
+      "openValue": 0,
+      "closeValue": null,
+      "openPrice": 96.62,
+      "closePrice": null,
+      "openQty": 0,
+      "closeQty": null,
+      "kind": "exited",
+      "priceEffect": null,
+      "tradeEffect": null,
+      "returnPct": null
+    },
+    {
+      "securityKey": "kotak-liquid-fund-regular-plan-daily-idcw",
+      "security": "Kotak Liquid Fund Regular Plan Daily - IDCW #",
+      "accountId": "kotak-mahindra-mutual-fund-4295974",
+      "from": "2026-07-01",
+      "to": "2026-10-05",
+      "openValue": null,
+      "closeValue": 0,
+      "openPrice": null,
+      "closePrice": 1283.5466,
+      "openQty": null,
+      "closeQty": 0,
+      "kind": "entered",
+      "priceEffect": null,
+      "tradeEffect": null,
+      "returnPct": null
+    },
+    {
+      "securityKey": "kotak-mid-cap-fund-direct-growth",
+      "security": "Kotak Mid Cap Fund Direct Growth",
+      "accountId": "kotak-mahindra-mutual-fund-4295974",
+      "from": "2026-07-01",
+      "to": "2026-10-05",
+      "openValue": null,
+      "closeValue": 0,
+      "openPrice": null,
+      "closePrice": 160.989,
+      "openQty": null,
+      "closeQty": 0,
+      "kind": "entered",
+      "priceEffect": null,
+      "tradeEffect": null,
+      "returnPct": null
+    },
+    {
+      "securityKey": "kotak-mid-cap-fund-regular-growth",
+      "security": "Kotak Mid Cap Fund Regular Growth",
+      "accountId": "kotak-mahindra-mutual-fund-4295974",
+      "from": "2026-07-01",
+      "to": "2026-10-05",
+      "openValue": null,
+      "closeValue": 0,
+      "openPrice": null,
+      "closePrice": 137.417,
+      "openQty": null,
+      "closeQty": 0,
+      "kind": "entered",
+      "priceEffect": null,
+      "tradeEffect": null,
+      "returnPct": null
+    },
+    {
+      "securityKey": "kotak-midcap-fund-direct-plan-growth-erstwhile-kotak-emerging-equity-scheme",
+      "security": "Kotak Midcap Fund- Direct Plan - Growth (Erstwhile Kotak Emerging Equity Scheme)",
+      "accountId": "kotak-mahindra-mutual-fund-4295974",
+      "from": "2026-07-01",
+      "to": "2026-10-05",
+      "openValue": 0,
+      "closeValue": null,
+      "openPrice": 168.093,
+      "closePrice": null,
+      "openQty": 0,
       "closeQty": null,
       "kind": "exited",
       "priceEffect": null,
@@ -25136,6 +30056,34 @@ export const BOOK_CAPITAL_GAINS: EntityCG[] = [
     "absent": "no capital gain statement issued for this account in this drop"
   },
   {
+    "entity": "Hope India Trust · Aditya 1019265797",
+    "accountId": "aditya-birla-sun-life-mutual-fund-1019265797",
+    "ownerId": "hope-india-trust",
+    "realisedST": null,
+    "realisedLT": null,
+    "unrealisedST": null,
+    "unrealisedLT": null,
+    "periodFrom": null,
+    "periodTo": null,
+    "lots": 0,
+    "source": null,
+    "absent": "no capital gain statement issued for this account in this drop"
+  },
+  {
+    "entity": "Hope India Trust · Aditya 1038104611",
+    "accountId": "aditya-birla-sun-life-mutual-fund-1038104611",
+    "ownerId": "hope-india-trust",
+    "realisedST": null,
+    "realisedLT": null,
+    "unrealisedST": null,
+    "unrealisedLT": null,
+    "periodFrom": null,
+    "periodTo": null,
+    "lots": 0,
+    "source": null,
+    "absent": "no capital gain statement issued for this account in this drop"
+  },
+  {
     "entity": "Ajay Jaisinghani · ASK 9039917111",
     "accountId": "ask-absolute-return-fund-9039917111",
     "ownerId": "ajay-jaisinghani",
@@ -25651,6 +30599,20 @@ export const BOOK_CAPITAL_GAINS: EntityCG[] = [
     "absent": "no capital gain statement issued for this account in this drop"
   },
   {
+    "entity": "Hope India Trust · Kotak 4295974",
+    "accountId": "kotak-mahindra-mutual-fund-4295974",
+    "ownerId": "hope-india-trust",
+    "realisedST": null,
+    "realisedLT": null,
+    "unrealisedST": null,
+    "unrealisedLT": null,
+    "periodFrom": null,
+    "periodTo": null,
+    "lots": 0,
+    "source": null,
+    "absent": "no capital gain statement issued for this account in this drop"
+  },
+  {
     "entity": "Ajay Jaisinghani · Kotak 7125255",
     "accountId": "kotak-mahindra-mutual-fund-7125255",
     "ownerId": "ajay-jaisinghani",
@@ -25738,6 +30700,20 @@ export const BOOK_CAPITAL_GAINS: EntityCG[] = [
       }
     ],
     "source": "marathon-trends-advisory-pvt-ltd-5110837-2026-09-09-capital-gain"
+  },
+  {
+    "entity": "Hope India Trust · Mirae 70413280453",
+    "accountId": "mirae-asset-mutual-fund-70413280453",
+    "ownerId": "hope-india-trust",
+    "realisedST": null,
+    "realisedLT": null,
+    "unrealisedST": null,
+    "unrealisedLT": null,
+    "periodFrom": null,
+    "periodTo": null,
+    "lots": 0,
+    "source": null,
+    "absent": "no capital gain statement issued for this account in this drop"
   },
   {
     "entity": "Ajay Jaisinghani · Molecule 7810404",
@@ -27391,6 +32367,16 @@ export const BOOK_ACCOUNT_RETURN_RECORDS: Record<string, AccountReturnCoverage> 
     },
     "gap": null
   },
+  "aditya-birla-sun-life-mutual-fund-1019265797": {
+    "latestValuationDate": "2026-10-05",
+    "record": null,
+    "gap": "Opening valuation and complete dated cash flows are missing"
+  },
+  "aditya-birla-sun-life-mutual-fund-1038104611": {
+    "latestValuationDate": "2026-07-31",
+    "record": null,
+    "gap": "Opening valuation and complete dated cash flows are missing"
+  },
   "ask-absolute-return-fund-9039917111": {
     "latestValuationDate": "2026-03-31",
     "record": null,
@@ -28090,6 +33076,11 @@ export const BOOK_ACCOUNT_RETURN_RECORDS: Record<string, AccountReturnCoverage> 
     "gap": null,
     "notApplicable": "Nil throughout the verified period through 2026-09-30; no invested capital to measure"
   },
+  "kotak-mahindra-mutual-fund-4295974": {
+    "latestValuationDate": "2026-09-30",
+    "record": null,
+    "gap": "Opening valuation and complete dated cash flows are missing"
+  },
   "kotak-mahindra-mutual-fund-7125255": {
     "latestValuationDate": "2026-09-30",
     "record": {
@@ -28128,6 +33119,11 @@ export const BOOK_ACCOUNT_RETURN_RECORDS: Record<string, AccountReturnCoverage> 
     "latestValuationDate": "2026-09-09",
     "record": null,
     "gap": "No complete valued portfolio for a return"
+  },
+  "mirae-asset-mutual-fund-70413280453": {
+    "latestValuationDate": "2026-09-30",
+    "record": null,
+    "gap": "Opening valuation and complete dated cash flows are missing"
   },
   "molecule-ventures-llp-7810404": {
     "latestValuationDate": "2026-09-30",
@@ -28192,7 +33188,8 @@ export const BOOK_ACCOUNT_RETURN_RECORDS: Record<string, AccountReturnCoverage> 
   "motilal-oswal-hedged-equity-multi-factor-strategy-90410014574": {
     "latestValuationDate": "2026-07-31",
     "record": null,
-    "gap": "No complete valued portfolio for a return"
+    "gap": null,
+    "notApplicable": "Nil throughout the verified period through 2026-07-31; no invested capital to measure"
   },
   "motilal-oswal-mutual-fund-90414963315": {
     "latestValuationDate": "2026-09-30",
@@ -28426,6 +33423,99 @@ export const BOOK_ACCOUNT_RETURN_RECORDS: Record<string, AccountReturnCoverage> 
  */
 export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
   {
+    "accountId": "hdfc-mutual-fund-15644806",
+    "date": "2019-04-17",
+    "direction": "in",
+    "label": "Purchase",
+    "amount": 176352772,
+    "invested": 176352772,
+    "charges": null,
+    "units": 172925.391,
+    "security": "HDFC Liquid Fund - Direct Plan - IDCW # - Daily Reinvest",
+    "securityKey": "hdfc-liquid-fund-direct-plan-idcw-daily-reinvest"
+  },
+  {
+    "accountId": "hdfc-mutual-fund-15644806",
+    "date": "2019-04-25",
+    "direction": "out",
+    "label": "Redemption - Direct Credit - HDFC",
+    "amount": 110000000,
+    "invested": null,
+    "units": -107862.172,
+    "security": "HDFC Liquid Fund - Direct Plan - IDCW # - Daily Reinvest",
+    "securityKey": "hdfc-liquid-fund-direct-plan-idcw-daily-reinvest"
+  },
+  {
+    "accountId": "hdfc-mutual-fund-15725046",
+    "date": "2019-05-08",
+    "direction": "in",
+    "label": "Purchase",
+    "amount": 100000000,
+    "invested": 100000000,
+    "charges": null,
+    "units": 98056.52,
+    "security": "HDFC Liquid Fund - Direct Plan - IDCW # - Daily Reinvest",
+    "securityKey": "hdfc-liquid-fund-direct-plan-idcw-daily-reinvest"
+  },
+  {
+    "accountId": "hdfc-mutual-fund-15644806",
+    "date": "2019-05-30",
+    "direction": "out",
+    "label": "Redemption - Direct Credit - HDFC",
+    "amount": 50900000,
+    "invested": null,
+    "units": -49910.769,
+    "security": "HDFC Liquid Fund - Direct Plan - IDCW # - Daily Reinvest",
+    "securityKey": "hdfc-liquid-fund-direct-plan-idcw-daily-reinvest"
+  },
+  {
+    "accountId": "hdfc-mutual-fund-15644806",
+    "date": "2019-06-03",
+    "direction": "in",
+    "label": "Purchase",
+    "amount": 180000,
+    "invested": 180000,
+    "charges": null,
+    "units": 3826.775,
+    "security": "HDFC Small Cap Fund - Direct Growth Plan",
+    "securityKey": "hdfc-small-cap-fund-direct-growth-plan"
+  },
+  {
+    "accountId": "hdfc-mutual-fund-15644806",
+    "date": "2019-07-04",
+    "direction": "out",
+    "label": "Redemption - Direct Credit - HDFC",
+    "amount": 16057919.48,
+    "invested": null,
+    "units": -15745.837,
+    "security": "HDFC Liquid Fund - Direct Plan - IDCW # - Daily Reinvest",
+    "securityKey": "hdfc-liquid-fund-direct-plan-idcw-daily-reinvest"
+  },
+  {
+    "accountId": "hdfc-mutual-fund-15644806",
+    "date": "2019-07-10",
+    "direction": "in",
+    "label": "Purchase",
+    "amount": 5000000,
+    "invested": 5000000,
+    "charges": null,
+    "units": 4902.826,
+    "security": "HDFC Liquid Fund - Direct Plan - IDCW # - Daily Reinvest",
+    "securityKey": "hdfc-liquid-fund-direct-plan-idcw-daily-reinvest"
+  },
+  {
+    "accountId": "hdfc-mutual-fund-16002141",
+    "date": "2019-07-10",
+    "direction": "in",
+    "label": "Purchase",
+    "amount": 5000000,
+    "invested": 5000000,
+    "charges": null,
+    "units": 4902.826,
+    "security": "HDFC Liquid Fund - Direct Plan - IDCW # - Daily Reinvest",
+    "securityKey": "hdfc-liquid-fund-direct-plan-idcw-daily-reinvest"
+  },
+  {
     "accountId": "ask-investment-managers-limited-10032723",
     "date": "2019-07-26",
     "direction": "in",
@@ -28435,6 +33525,18 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": null,
     "security": null,
     "securityKey": null
+  },
+  {
+    "accountId": "hdfc-mutual-fund-15644806",
+    "date": "2019-07-29",
+    "direction": "in",
+    "label": "Purchase",
+    "amount": 60000000,
+    "invested": 60000000,
+    "charges": null,
+    "units": 58833.912,
+    "security": "HDFC Liquid Fund - Direct Plan - IDCW # - Daily Reinvest",
+    "securityKey": "hdfc-liquid-fund-direct-plan-idcw-daily-reinvest"
   },
   {
     "accountId": "ask-investment-managers-limited-10032723",
@@ -28470,6 +33572,28 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "hdfc-mutual-fund-15725046",
+    "date": "2019-10-16",
+    "direction": "out",
+    "label": "Redemption - Direct Credit - HDFC",
+    "amount": 1000000,
+    "invested": null,
+    "units": -262.368,
+    "security": "HDFC Liquid Fund-Direct Plan-Growth Option",
+    "securityKey": "hdfc-liquid-fund-direct-plan-growth-option"
+  },
+  {
+    "accountId": "hdfc-mutual-fund-15725046",
+    "date": "2019-11-04",
+    "direction": "out",
+    "label": "Redemption - Direct Credit - HDFC",
+    "amount": 1100000,
+    "invested": null,
+    "units": -287.81,
+    "security": "HDFC Liquid Fund-Direct Plan-Growth Option",
+    "securityKey": "hdfc-liquid-fund-direct-plan-growth-option"
+  },
+  {
     "accountId": "icici-prudential-mutual-fund-14320536",
     "date": "2019-11-04",
     "direction": "in",
@@ -28493,6 +33617,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "hdfc-mutual-fund-15725046",
+    "date": "2019-12-12",
+    "direction": "out",
+    "label": "Redemption - Direct Credit - HDFC",
+    "amount": 12000000,
+    "invested": null,
+    "units": -3123.025,
+    "security": "HDFC Liquid Fund-Direct Plan-Growth Option",
+    "securityKey": "hdfc-liquid-fund-direct-plan-growth-option"
+  },
+  {
     "accountId": "ask-investment-managers-limited-10034025",
     "date": "2020-02-26",
     "direction": "in",
@@ -28502,6 +33637,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": null,
     "security": null,
     "securityKey": null
+  },
+  {
+    "accountId": "hdfc-mutual-fund-15725046",
+    "date": "2020-02-28",
+    "direction": "out",
+    "label": "Redemption - Direct Credit - HDFC , less STT",
+    "amount": 30819435.87,
+    "invested": null,
+    "units": -2930469.134,
+    "security": "HDFC Arbitrage Fund - Direct Plan - Monthly IDCW # Payout Option",
+    "securityKey": "hdfc-arbitrage-fund-direct-plan-monthly-idcw-payout-option"
   },
   {
     "accountId": "icici-prudential-mutual-fund-14320536",
@@ -28526,6 +33672,18 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "hdfc-mutual-fund-15725046",
+    "date": "2020-03-04",
+    "direction": "in",
+    "label": "Purchase",
+    "amount": 30819436,
+    "invested": 30819436,
+    "charges": null,
+    "units": 2077621.41,
+    "security": "HDFC Arbitrage Fund - Direct Plan - Growth Option",
+    "securityKey": "hdfc-arbitrage-fund-direct-plan-growth-option"
+  },
+  {
     "accountId": "icici-prudential-mutual-fund-14320536",
     "date": "2020-03-05",
     "direction": "in",
@@ -28536,6 +33694,75 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": 570472.417,
     "security": "ICICI Prudential Arbitrage Fund - Direct Plan - Growth",
     "securityKey": "icici-prudential-arbitrage-fund-direct-plan-growth"
+  },
+  {
+    "accountId": "hdfc-mutual-fund-15644806",
+    "date": "2020-03-10",
+    "direction": "out",
+    "label": "Redemption - Direct Credit - HDFC",
+    "amount": 30000000,
+    "invested": null,
+    "units": -29416.956,
+    "security": "HDFC Liquid Fund - Direct Plan - IDCW # - Daily Reinvest",
+    "securityKey": "hdfc-liquid-fund-direct-plan-idcw-daily-reinvest"
+  },
+  {
+    "accountId": "hdfc-mutual-fund-15644806",
+    "date": "2020-03-17",
+    "direction": "out",
+    "label": "Redemption - Direct Credit - HDFC",
+    "amount": 34801452.9,
+    "invested": null,
+    "units": -11731.474,
+    "security": "HDFC Overnight Fund - Direct Plan - Growth Option",
+    "securityKey": "hdfc-overnight-fund-direct-plan-growth-option"
+  },
+  {
+    "accountId": "hdfc-mutual-fund-16002141",
+    "date": "2020-03-17",
+    "direction": "out",
+    "label": "Redemption - HDFCR52020031874719624",
+    "amount": 3374735.33,
+    "invested": null,
+    "units": -1137.614,
+    "security": "HDFC Overnight Fund - Direct Plan - Growth Option",
+    "securityKey": "hdfc-overnight-fund-direct-plan-growth-option"
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-7125255",
+    "date": "2020-03-17",
+    "direction": "in",
+    "label": "Purchase (Continuous Offer)",
+    "amount": 42187,
+    "invested": 42187,
+    "charges": null,
+    "units": 383.776,
+    "security": "Kotak Large & Mid Cap Fund - Direct Growth",
+    "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
+  },
+  {
+    "accountId": "hdfc-mutual-fund-15644806",
+    "date": "2020-03-19",
+    "direction": "in",
+    "label": "Purchase",
+    "amount": 120000000,
+    "invested": 120000000,
+    "charges": null,
+    "units": 40441.846,
+    "security": "HDFC Overnight Fund - Direct Plan - Growth Option",
+    "securityKey": "hdfc-overnight-fund-direct-plan-growth-option"
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-7125255",
+    "date": "2020-03-30",
+    "direction": "in",
+    "label": "Switch-In - From Kotak Overnight Fund Direct - Grow",
+    "amount": 112500,
+    "invested": 112500,
+    "charges": null,
+    "units": 1126.419,
+    "security": "Kotak Large & Mid Cap Fund - Direct Growth",
+    "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
   },
   {
     "accountId": "ask-investment-managers-limited-10034025",
@@ -28549,6 +33776,18 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "kotak-mahindra-mutual-fund-7125255",
+    "date": "2020-04-07",
+    "direction": "in",
+    "label": "Switch-In - From Kotak Overnight Fund Direct - Grow",
+    "amount": 56250,
+    "invested": 56250,
+    "charges": null,
+    "units": 543.836,
+    "security": "Kotak Large & Mid Cap Fund - Direct Growth",
+    "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
+  },
+  {
     "accountId": "ask-investment-managers-limited-10032723",
     "date": "2020-04-13",
     "direction": "in",
@@ -28558,6 +33797,209 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": null,
     "security": null,
     "securityKey": null
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-7125255",
+    "date": "2020-04-13",
+    "direction": "in",
+    "label": "Switch-In - From Kotak Overnight Fund Direct - Grow",
+    "amount": 56250,
+    "invested": 56250,
+    "charges": null,
+    "units": 527.644,
+    "security": "Kotak Large & Mid Cap Fund - Direct Growth",
+    "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-7125255",
+    "date": "2020-04-20",
+    "direction": "in",
+    "label": "Switch-In - From Kotak Overnight Fund Direct - Grow - via Internet",
+    "amount": 56250,
+    "invested": 56250,
+    "charges": null,
+    "units": 504.095,
+    "security": "Kotak Large & Mid Cap Fund - Direct Growth",
+    "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-7125255",
+    "date": "2020-04-27",
+    "direction": "in",
+    "label": "Switch-In - From Kotak Overnight Fund Direct - Grow - via Internet",
+    "amount": 56250,
+    "invested": 56250,
+    "charges": null,
+    "units": 504.24,
+    "security": "Kotak Large & Mid Cap Fund - Direct Growth",
+    "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-7125255",
+    "date": "2020-05-04",
+    "direction": "in",
+    "label": "Switch-In - From Kotak Overnight Fund Direct - Grow - via Internet",
+    "amount": 56250,
+    "invested": 56250,
+    "charges": null,
+    "units": 505.818,
+    "security": "Kotak Large & Mid Cap Fund - Direct Growth",
+    "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-7125255",
+    "date": "2020-05-11",
+    "direction": "in",
+    "label": "Switch-In - From Kotak Overnight Fund Direct - Grow - via Internet",
+    "amount": 56250,
+    "invested": 56250,
+    "charges": null,
+    "units": 506.679,
+    "security": "Kotak Large & Mid Cap Fund - Direct Growth",
+    "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-7125255",
+    "date": "2020-05-18",
+    "direction": "in",
+    "label": "Switch-In - From Kotak Overnight Fund Direct - Grow - via Internet",
+    "amount": 112500,
+    "invested": 112500,
+    "charges": null,
+    "units": 1051.097,
+    "security": "Kotak Large & Mid Cap Fund - Direct Growth",
+    "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-7125255",
+    "date": "2020-05-26",
+    "direction": "in",
+    "label": "Switch-In - From Kotak Overnight Fund Direct - Grow - via Internet",
+    "amount": 112500,
+    "invested": 112500,
+    "charges": null,
+    "units": 1019.798,
+    "security": "Kotak Large & Mid Cap Fund - Direct Growth",
+    "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-7125255",
+    "date": "2020-06-01",
+    "direction": "in",
+    "label": "Switch-In - From Kotak Overnight Fund Direct - Grow - via Internet",
+    "amount": 112500,
+    "invested": 112500,
+    "charges": null,
+    "units": 960.742,
+    "security": "Kotak Large & Mid Cap Fund - Direct Growth",
+    "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-7125255",
+    "date": "2020-06-08",
+    "direction": "in",
+    "label": "Switch-In - From Kotak Overnight Fund Direct - Grow - via Internet",
+    "amount": 193750,
+    "invested": 193750,
+    "charges": null,
+    "units": 1606.817,
+    "security": "Kotak Large & Mid Cap Fund - Direct Growth",
+    "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-7125255",
+    "date": "2020-06-16",
+    "direction": "in",
+    "label": "Switch-In - From Kotak Overnight Fund Direct - Grow - via Internet",
+    "amount": 425000,
+    "invested": 425000,
+    "charges": null,
+    "units": 3571.188,
+    "security": "Kotak Large & Mid Cap Fund - Direct Growth",
+    "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-7125255",
+    "date": "2020-06-23",
+    "direction": "in",
+    "label": "Switch-In - From Kotak Overnight Fund Direct - Grow - via Internet",
+    "amount": 425000,
+    "invested": 425000,
+    "charges": null,
+    "units": 3426.894,
+    "security": "Kotak Large & Mid Cap Fund - Direct Growth",
+    "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-7125255",
+    "date": "2020-06-30",
+    "direction": "in",
+    "label": "Switch-In - From Kotak Overnight Fund Direct - Grow - via Internet",
+    "amount": 425000,
+    "invested": 425000,
+    "charges": null,
+    "units": 3427.862,
+    "security": "Kotak Large & Mid Cap Fund - Direct Growth",
+    "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
+  },
+  {
+    "accountId": "hdfc-mutual-fund-15644806",
+    "date": "2020-07-07",
+    "direction": "out",
+    "label": "Redemption - Direct Credit - HDFC",
+    "amount": 30594360.68,
+    "invested": null,
+    "units": -10225.742,
+    "security": "HDFC Overnight Fund - Direct Plan - Growth Option",
+    "securityKey": "hdfc-overnight-fund-direct-plan-growth-option"
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-7125255",
+    "date": "2020-07-07",
+    "direction": "in",
+    "label": "Switch-In - From Kotak Overnight Fund Direct - Grow - via Internet",
+    "amount": 425000,
+    "invested": 424978.75,
+    "charges": 21.25,
+    "units": 3319.265,
+    "security": "Kotak Large & Mid Cap Fund - Direct Growth",
+    "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-7125255",
+    "date": "2020-07-14",
+    "direction": "in",
+    "label": "Switch-In - From Kotak Overnight Fund Direct - Grow - via Internet",
+    "amount": 212500,
+    "invested": 212489.38,
+    "charges": 10.62,
+    "units": 1676.445,
+    "security": "Kotak Large & Mid Cap Fund - Direct Growth",
+    "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-7125255",
+    "date": "2020-07-21",
+    "direction": "in",
+    "label": "Switch-In - From Kotak Overnight Fund Direct - Grow - via Internet",
+    "amount": 212500,
+    "invested": 212489.38,
+    "charges": 10.62,
+    "units": 1616.258,
+    "security": "Kotak Large & Mid Cap Fund - Direct Growth",
+    "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-7125255",
+    "date": "2020-07-28",
+    "direction": "in",
+    "label": "Switch-In - From Kotak Overnight Fund Direct - Grow - via Internet",
+    "amount": 212500,
+    "invested": 212489.38,
+    "charges": 10.62,
+    "units": 1621.611,
+    "security": "Kotak Large & Mid Cap Fund - Direct Growth",
+    "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
   },
   {
     "accountId": "ask-investment-managers-limited-10034025",
@@ -28659,6 +34101,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "hdfc-mutual-fund-15725046",
+    "date": "2020-12-13",
+    "direction": "out",
+    "label": "Redemption - Direct Credit - HDFC",
+    "amount": 30000000,
+    "invested": null,
+    "units": -9898.379,
+    "security": "HDFC Overnight Fund - Direct Plan - Growth Option",
+    "securityKey": "hdfc-overnight-fund-direct-plan-growth-option"
+  },
+  {
     "accountId": "ask-investment-managers-limited-10032723",
     "date": "2020-12-25",
     "direction": "out",
@@ -28679,6 +34132,50 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": null,
     "security": null,
     "securityKey": null
+  },
+  {
+    "accountId": "hdfc-mutual-fund-15644806",
+    "date": "2021-01-14",
+    "direction": "out",
+    "label": "*Redemption - Direct Credit - HDFC , less STT",
+    "amount": 25000000,
+    "invested": null,
+    "units": -1634858.096,
+    "security": "HDFC Arbitrage Fund - Direct Plan - Growth Option",
+    "securityKey": "hdfc-arbitrage-fund-direct-plan-growth-option"
+  },
+  {
+    "accountId": "hdfc-mutual-fund-15725046",
+    "date": "2021-01-14",
+    "direction": "out",
+    "label": "*Redemption - Direct Credit - HDFC , less STT",
+    "amount": 25000000,
+    "invested": null,
+    "units": -1634858.096,
+    "security": "HDFC Arbitrage Fund - Direct Plan - Growth Option",
+    "securityKey": "hdfc-arbitrage-fund-direct-plan-growth-option"
+  },
+  {
+    "accountId": "hdfc-mutual-fund-16002141",
+    "date": "2021-01-14",
+    "direction": "out",
+    "label": "*Redemption - HDFCR52021011970110520 , less STT",
+    "amount": 500000,
+    "invested": null,
+    "units": -9512.309,
+    "security": "HDFC Small Cap Fund - Direct Growth Plan",
+    "securityKey": "hdfc-small-cap-fund-direct-growth-plan"
+  },
+  {
+    "accountId": "hdfc-mutual-fund-15725046",
+    "date": "2021-02-09",
+    "direction": "out",
+    "label": "*Redemption - Direct Credit - HDFC , less STT",
+    "amount": 10000000,
+    "invested": null,
+    "units": -651769.536,
+    "security": "HDFC Arbitrage Fund - Direct Plan - Growth Option",
+    "securityKey": "hdfc-arbitrage-fund-direct-plan-growth-option"
   },
   {
     "accountId": "ask-investment-managers-limited-10032723",
@@ -28703,6 +34200,28 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "hdfc-mutual-fund-15644806",
+    "date": "2021-03-17",
+    "direction": "out",
+    "label": "*Redemption - Direct Credit - HDFC , less STT",
+    "amount": 1200000,
+    "invested": null,
+    "units": -20779.069,
+    "security": "HDFC Small Cap Fund - Direct Growth Plan",
+    "securityKey": "hdfc-small-cap-fund-direct-growth-plan"
+  },
+  {
+    "accountId": "hdfc-mutual-fund-16002141",
+    "date": "2021-03-17",
+    "direction": "out",
+    "label": "*Redemption - NEFT PAYOUT - HDFCR52021032282857206 , less STT",
+    "amount": 900000,
+    "invested": null,
+    "units": -15584.301,
+    "security": "HDFC Small Cap Fund - Direct Growth Plan",
+    "securityKey": "hdfc-small-cap-fund-direct-growth-plan"
+  },
+  {
     "accountId": "ask-investment-managers-limited-10032723",
     "date": "2021-03-27",
     "direction": "out",
@@ -28723,6 +34242,28 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": null,
     "security": null,
     "securityKey": null
+  },
+  {
+    "accountId": "hdfc-mutual-fund-15725046",
+    "date": "2021-04-06",
+    "direction": "out",
+    "label": "*Redemption - Direct Credit - HDFC , less STT",
+    "amount": 20000000,
+    "invested": null,
+    "units": -1295517.554,
+    "security": "HDFC Arbitrage Fund - Direct Plan - Growth Option",
+    "securityKey": "hdfc-arbitrage-fund-direct-plan-growth-option"
+  },
+  {
+    "accountId": "hdfc-mutual-fund-15644806",
+    "date": "2021-04-08",
+    "direction": "out",
+    "label": "Redemption - Direct Credit - HDFC , less STT",
+    "amount": 67802914.88,
+    "invested": null,
+    "units": -4389150.238,
+    "security": "HDFC Arbitrage Fund - Direct Plan - Growth Option",
+    "securityKey": "hdfc-arbitrage-fund-direct-plan-growth-option"
   },
   {
     "accountId": "icici-prudential-mutual-fund-14320536",
@@ -29473,6 +35014,30 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "hdfc-mutual-fund-15644806",
+    "date": "2022-08-03",
+    "direction": "in",
+    "label": "Net Purchase",
+    "amount": 25000000,
+    "invested": 24998750.06,
+    "charges": 1249.94,
+    "units": 83001.863,
+    "security": "HDFC Balanced Advantage Fund - Regular Plan - Growth",
+    "securityKey": "hdfc-balanced-advantage-fund-regular-plan-growth"
+  },
+  {
+    "accountId": "hdfc-mutual-fund-16002141",
+    "date": "2022-08-05",
+    "direction": "in",
+    "label": "Net Purchase",
+    "amount": 15000000,
+    "invested": 14999250.04,
+    "charges": 749.96,
+    "units": 49917.632,
+    "security": "HDFC Balanced Advantage Fund - Regular Plan - Growth",
+    "securityKey": "hdfc-balanced-advantage-fund-regular-plan-growth"
+  },
+  {
     "accountId": "ask-investment-managers-limited-10034025",
     "date": "2022-08-10",
     "direction": "out",
@@ -30066,6 +35631,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": null,
     "security": null,
     "securityKey": null
+  },
+  {
+    "accountId": "hdfc-mutual-fund-15725046",
+    "date": "2023-07-25",
+    "direction": "out",
+    "label": "Redemption - Direct Credit - HDFC - 414209808 , less STT",
+    "amount": 8617077.52,
+    "invested": null,
+    "units": -495609.566,
+    "security": "HDFC Arbitrage Fund - Direct Plan - Growth Option",
+    "securityKey": "hdfc-arbitrage-fund-direct-plan-growth-option"
   },
   {
     "accountId": "ask-investment-managers-limited-10032723",
@@ -30789,6 +36365,18 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "motilal-oswal-hedged-equity-multi-factor-strategy-90410014574",
+    "date": "2024-07-29",
+    "direction": "in",
+    "label": "Contribution",
+    "amount": 130000000,
+    "invested": 129993500.32,
+    "charges": 6499.68,
+    "units": 11996779.195,
+    "security": "Motilal Oswal Hedged Equity Multi Factor Strategy — Class B2",
+    "securityKey": "motilal-oswal-hedged-equity-multi-factor-strategy-class-b2"
+  },
+  {
     "accountId": "ask-investment-managers-limited-10032723",
     "date": "2024-08-02",
     "direction": "out",
@@ -30809,6 +36397,30 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": null,
     "security": null,
     "securityKey": null
+  },
+  {
+    "accountId": "motilal-oswal-founders-fund-90410016093",
+    "date": "2024-08-06",
+    "direction": "in",
+    "label": "Contribution",
+    "amount": 50000000,
+    "invested": 49997500.12,
+    "charges": 2499.88,
+    "units": 4999750.012,
+    "security": "Motilal Oswal Founders Fund Series II — Class G1",
+    "securityKey": "motilal-oswal-founders-fund-series-ii-class-g1"
+  },
+  {
+    "accountId": "motilal-oswal-founders-fund-90410016104",
+    "date": "2024-08-06",
+    "direction": "in",
+    "label": "Contribution",
+    "amount": 100000000,
+    "invested": 99995000.25,
+    "charges": 4999.75,
+    "units": 9999500.025,
+    "security": "Motilal Oswal Founders Fund Series II — Class G1",
+    "securityKey": "motilal-oswal-founders-fund-series-ii-class-g1"
   },
   {
     "accountId": "ask-investment-managers-limited-10032723",
@@ -30945,6 +36557,18 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "motilal-oswal-founders-fund-90410016093",
+    "date": "2024-09-09",
+    "direction": "in",
+    "label": "Contribution",
+    "amount": 10000000,
+    "invested": 9999500.02,
+    "charges": 499.98,
+    "units": 956706.852,
+    "security": "Motilal Oswal Founders Fund Series II — Class G1",
+    "securityKey": "motilal-oswal-founders-fund-series-ii-class-g1"
+  },
+  {
     "accountId": "ask-investment-managers-limited-10032723",
     "date": "2024-09-20",
     "direction": "out",
@@ -31000,6 +36624,18 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "baring-private-equity-india-fund-AIFM_BPEPF6_0584",
+    "date": "2024-10-03",
+    "direction": "in",
+    "label": "Drawdown 1",
+    "amount": 6500000,
+    "invested": 6500000,
+    "charges": null,
+    "units": 65,
+    "security": "Baring Private Equity India Fund 6 — Class A1",
+    "securityKey": "baring-private-equity-india-fund-6-class-a1"
+  },
+  {
     "accountId": "ask-investment-managers-limited-10032723",
     "date": "2024-10-04",
     "direction": "out",
@@ -31020,6 +36656,30 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": null,
     "security": null,
     "securityKey": null
+  },
+  {
+    "accountId": "motilal-oswal-founders-fund-90410016093",
+    "date": "2024-10-16",
+    "direction": "in",
+    "label": "Contribution",
+    "amount": 40000000,
+    "invested": 39998000.1,
+    "charges": 1999.9,
+    "units": 3558540.934,
+    "security": "Motilal Oswal Founders Fund Series II — Class G1",
+    "securityKey": "motilal-oswal-founders-fund-series-ii-class-g1"
+  },
+  {
+    "accountId": "motilal-oswal-founders-fund-90410016104",
+    "date": "2024-10-16",
+    "direction": "in",
+    "label": "Contribution",
+    "amount": 100000000,
+    "invested": 99995000.25,
+    "charges": 4999.75,
+    "units": 8896352.335,
+    "security": "Motilal Oswal Founders Fund Series II — Class G1",
+    "securityKey": "motilal-oswal-founders-fund-series-ii-class-g1"
   },
   {
     "accountId": "icici-prudential-mutual-fund-36378950",
@@ -31068,6 +36728,18 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "motilal-oswal-delphi-equity-fund-9049241536",
+    "date": "2024-11-29",
+    "direction": "in",
+    "label": "Contribution Amount",
+    "amount": 100000000,
+    "invested": 99995000.25,
+    "charges": 4999.75,
+    "units": 99995,
+    "security": "Motilal Oswal Wealth Delphi Equity Fund",
+    "securityKey": "motilal-oswal-wealth-delphi-equity-fund"
+  },
+  {
     "accountId": "svan-investment-managers-llp-8710090",
     "date": "2024-12-03",
     "direction": "in",
@@ -31078,6 +36750,18 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": null,
     "security": null,
     "securityKey": null
+  },
+  {
+    "accountId": "baring-private-equity-india-fund-AIFM_BPEPF6_0584",
+    "date": "2024-12-05",
+    "direction": "in",
+    "label": "Drawdown 2",
+    "amount": 5000000,
+    "invested": 5000000,
+    "charges": null,
+    "units": 50,
+    "security": "Baring Private Equity India Fund 6 — Class A1",
+    "securityKey": "baring-private-equity-india-fund-6-class-a1"
   },
   {
     "accountId": "svan-investment-managers-llp-8710067",
@@ -31453,6 +37137,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e"
   },
   {
+    "accountId": "hdfc-mutual-fund-16002141",
+    "date": "2025-05-28",
+    "direction": "out",
+    "label": "Redemption - NEFT PAYOUT - HDFCR52025053075885519 , less STT",
+    "amount": 2561451.56,
+    "invested": null,
+    "units": -16759.755,
+    "security": "HDFC Small Cap Fund - Direct Growth Plan",
+    "securityKey": "hdfc-small-cap-fund-direct-growth-plan"
+  },
+  {
     "accountId": "green-lantern-capital-llp-510854",
     "date": "2025-06-02",
     "direction": "out",
@@ -31612,6 +37307,18 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "baring-private-equity-india-fund-AIFM_BPEPF6_0584",
+    "date": "2025-07-22",
+    "direction": "in",
+    "label": "Drawdown 3",
+    "amount": 2500000,
+    "invested": 2500000,
+    "charges": null,
+    "units": 25,
+    "security": "Baring Private Equity India Fund 6 — Class A1",
+    "securityKey": "baring-private-equity-india-fund-6-class-a1"
+  },
+  {
     "accountId": "svan-investment-managers-llp-8710067",
     "date": "2025-07-24",
     "direction": "out",
@@ -31665,6 +37372,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": null,
     "security": null,
     "securityKey": null
+  },
+  {
+    "accountId": "motilal-oswal-hedged-equity-multi-factor-strategy-90410014574",
+    "date": "2025-07-31",
+    "direction": "out",
+    "label": "Unit Redemption-Payout",
+    "amount": 111896969.42,
+    "invested": null,
+    "units": -13109904.68,
+    "security": "Motilal Oswal Hedged Equity Multi Factor Strategy — Class F1",
+    "securityKey": "motilal-oswal-hedged-equity-multi-factor-strategy-class-f1"
   },
   {
     "accountId": "buoyant-capital-103472",
@@ -31809,6 +37527,18 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": null,
     "security": null,
     "securityKey": null
+  },
+  {
+    "accountId": "carnelian-bharat-amritkaal-fund-4551",
+    "date": "2025-08-31",
+    "direction": "in",
+    "label": "Contribution Amount",
+    "amount": 100000000,
+    "invested": 99995000.25,
+    "charges": 4999.75,
+    "units": 8775109.058,
+    "security": "Carnelian Bharat Amritkaal Fund",
+    "securityKey": "carnelian-bharat-amritkaal-fund"
   },
   {
     "accountId": "svan-investment-managers-llp-8710067",
@@ -32042,6 +37772,18 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": null,
     "security": null,
     "securityKey": null
+  },
+  {
+    "accountId": "baring-private-equity-india-fund-AIFM_BPEPF6_0584",
+    "date": "2025-09-25",
+    "direction": "in",
+    "label": "Drawdown 4",
+    "amount": 6250000,
+    "invested": 6250000,
+    "charges": null,
+    "units": 62.5,
+    "security": "Baring Private Equity India Fund 6 — Class A1",
+    "securityKey": "baring-private-equity-india-fund-6-class-a1"
   },
   {
     "accountId": "green-lantern-capital-llp-510854",
@@ -32465,6 +38207,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "hdfc-mutual-fund-15644806",
+    "date": "2025-11-26",
+    "direction": "out",
+    "label": "Redemption - Direct Credit - HDFC - 1343278064 , less STT",
+    "amount": 4170222.22,
+    "invested": null,
+    "units": -201686.121,
+    "security": "HDFC Arbitrage Fund - Direct Plan - Growth Option",
+    "securityKey": "hdfc-arbitrage-fund-direct-plan-growth-option"
+  },
+  {
     "accountId": "v-e-c-assago-capital-management-llp-128004",
     "date": "2025-11-27",
     "direction": "out",
@@ -32631,6 +38384,18 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": null,
     "security": null,
     "securityKey": null
+  },
+  {
+    "accountId": "carnelian-bharat-amritkaal-fund-4551",
+    "date": "2025-12-31",
+    "direction": "in",
+    "label": "DRAWDOWN Transaction",
+    "amount": 50000000,
+    "invested": 50000425.08,
+    "charges": 2500.02,
+    "units": 4217985.767,
+    "security": "Carnelian Bharat Amritkaal Fund",
+    "securityKey": "carnelian-bharat-amritkaal-fund"
   },
   {
     "accountId": "buoyant-capital-103472",
@@ -33565,7 +39330,11 @@ export const BOOK_CAPITAL_FROM_INCEPTION: string[] = [
   "3p-investment-managers-3000048",
   "ask-absolute-return-fund-9039917111",
   "ask-absolute-return-fund-9039917144",
+  "baring-private-equity-india-fund-AIFM_BPEPF6_0584",
+  "buoyant-capital-103472",
   "buoyant-capital-103473",
+  "carnelian-bharat-amritkaal-fund-4551",
+  "hdfc-mutual-fund-16002141",
   "helios-mutual-fund-10355977",
   "icici-prudential-mutual-fund-14320536",
   "icici-prudential-mutual-fund-36378950",
@@ -33573,7 +39342,12 @@ export const BOOK_CAPITAL_FROM_INCEPTION: string[] = [
   "invesco-mutual-fund-3041491081",
   "invesco-mutual-fund-3041491145",
   "invesco-mutual-fund-3041794916",
-  "motilal-oswal-active-momentum-fund-904168868444"
+  "kotak-mahindra-mutual-fund-7125255",
+  "motilal-oswal-active-momentum-fund-904168868444",
+  "motilal-oswal-delphi-equity-fund-9049241536",
+  "motilal-oswal-founders-fund-90410016093",
+  "motilal-oswal-founders-fund-90410016104",
+  "motilal-oswal-hedged-equity-multi-factor-strategy-90410014574"
 ];
 
 /**
@@ -33582,6 +39356,135 @@ export const BOOK_CAPITAL_FROM_INCEPTION: string[] = [
  * is absent by that gate rather than shown partially — see `positionTranchesFrom`.
  */
 export const BOOK_POSITION_TRANCHES: Record<string, PositionTranches> = {
+  "hdfc-mutual-fund-15725046|hdfc-overnight-fund-direct-plan-growth-option": {
+    "accountId": "hdfc-mutual-fund-15725046",
+    "securityKey": "hdfc-overnight-fund-direct-plan-growth-option",
+    "moves": [
+      {
+        "accountId": "hdfc-mutual-fund-15725046",
+        "date": "2019-09-02",
+        "direction": "in",
+        "label": "IDCW Reinvested @ Rs.0.3329 per unit · switched in from HDFC Liquid Fund - Direct Plan - IDCW # - Daily Reinvest · 34.934% of it still held",
+        "amount": 11576.23,
+        "invested": 11576.23,
+        "units": 4.0081,
+        "security": "HDFC Overnight Fund - Direct Plan - Growth Option",
+        "securityKey": "hdfc-overnight-fund-direct-plan-growth-option"
+      },
+      {
+        "accountId": "hdfc-mutual-fund-15725046",
+        "date": "2019-09-03",
+        "direction": "in",
+        "label": "IDCW Reinvested @ Rs.0.1146 per unit · switched in from HDFC Liquid Fund - Direct Plan - IDCW # - Daily Reinvest",
+        "amount": 11411.18,
+        "invested": 11411.18,
+        "units": 3.9508,
+        "security": "HDFC Overnight Fund - Direct Plan - Growth Option",
+        "securityKey": "hdfc-overnight-fund-direct-plan-growth-option"
+      },
+      {
+        "accountId": "hdfc-mutual-fund-15725046",
+        "date": "2019-09-04",
+        "direction": "in",
+        "label": "IDCW Reinvested @ Rs.0.1271 per unit · switched in from HDFC Liquid Fund - Direct Plan - IDCW # - Daily Reinvest",
+        "amount": 12657.27,
+        "invested": 12657.27,
+        "units": 4.3823,
+        "security": "HDFC Overnight Fund - Direct Plan - Growth Option",
+        "securityKey": "hdfc-overnight-fund-direct-plan-growth-option"
+      },
+      {
+        "accountId": "hdfc-mutual-fund-15725046",
+        "date": "2019-09-05",
+        "direction": "in",
+        "label": "IDCW Reinvested @ Rs.0.1348 per unit · switched in from HDFC Liquid Fund - Direct Plan - IDCW # - Daily Reinvest",
+        "amount": 13425.75,
+        "invested": 13425.75,
+        "units": 4.6486,
+        "security": "HDFC Overnight Fund - Direct Plan - Growth Option",
+        "securityKey": "hdfc-overnight-fund-direct-plan-growth-option"
+      },
+      {
+        "accountId": "hdfc-mutual-fund-15725046",
+        "date": "2019-09-06",
+        "direction": "in",
+        "label": "IDCW Reinvested @ Rs.0.1281 per unit · switched in from HDFC Liquid Fund - Direct Plan - IDCW # - Daily Reinvest",
+        "amount": 12760.13,
+        "invested": 12760.13,
+        "units": 4.418,
+        "security": "HDFC Overnight Fund - Direct Plan - Growth Option",
+        "securityKey": "hdfc-overnight-fund-direct-plan-growth-option"
+      },
+      {
+        "accountId": "hdfc-mutual-fund-15725046",
+        "date": "2019-09-08",
+        "direction": "in",
+        "label": "IDCW Reinvested @ Rs.0.2183 per unit · switched in from HDFC Liquid Fund - Direct Plan - IDCW # - Daily Reinvest",
+        "amount": 21747.75,
+        "invested": 21747.75,
+        "units": 7.5299,
+        "security": "HDFC Overnight Fund - Direct Plan - Growth Option",
+        "securityKey": "hdfc-overnight-fund-direct-plan-growth-option"
+      },
+      {
+        "accountId": "hdfc-mutual-fund-15725046",
+        "date": "2019-09-09",
+        "direction": "in",
+        "label": "IDCW Reinvested @ Rs.0.1186 per unit · switched in from HDFC Liquid Fund - Direct Plan - IDCW # - Daily Reinvest",
+        "amount": 11817.84,
+        "invested": 11817.84,
+        "units": 4.0917,
+        "security": "HDFC Overnight Fund - Direct Plan - Growth Option",
+        "securityKey": "hdfc-overnight-fund-direct-plan-growth-option"
+      },
+      {
+        "accountId": "hdfc-mutual-fund-15725046",
+        "date": "2019-09-10",
+        "direction": "in",
+        "label": "IDCW Reinvested @ Rs.0.1087 per unit · switched in from HDFC Liquid Fund - Direct Plan - IDCW # - Daily Reinvest",
+        "amount": 10832.62,
+        "invested": 10832.62,
+        "units": 3.7506,
+        "security": "HDFC Overnight Fund - Direct Plan - Growth Option",
+        "securityKey": "hdfc-overnight-fund-direct-plan-growth-option"
+      },
+      {
+        "accountId": "hdfc-mutual-fund-15725046",
+        "date": "2019-09-11",
+        "direction": "in",
+        "label": "IDCW Reinvested @ Rs.0.1284 per unit · switched in from HDFC Liquid Fund - Direct Plan - IDCW # - Daily Reinvest",
+        "amount": 12797.21,
+        "invested": 12797.21,
+        "units": 4.4307,
+        "security": "HDFC Overnight Fund - Direct Plan - Growth Option",
+        "securityKey": "hdfc-overnight-fund-direct-plan-growth-option"
+      },
+      {
+        "accountId": "hdfc-mutual-fund-15725046",
+        "date": "2019-09-12",
+        "direction": "in",
+        "label": "IDCW Reinvested @ Rs.0.1256 per unit · switched in from HDFC Liquid Fund - Direct Plan - IDCW # - Daily Reinvest",
+        "amount": 12519.72,
+        "invested": 12519.72,
+        "units": 4.3347,
+        "security": "HDFC Overnight Fund - Direct Plan - Growth Option",
+        "securityKey": "hdfc-overnight-fund-direct-plan-growth-option"
+      },
+      {
+        "accountId": "hdfc-mutual-fund-15725046",
+        "date": "2019-09-13",
+        "direction": "in",
+        "label": "IDCW Reinvested @ Rs.0.1084 per unit · switched in from HDFC Liquid Fund - Direct Plan - IDCW # - Daily Reinvest",
+        "amount": 7617.77,
+        "invested": 7617.77,
+        "units": 2.6377,
+        "security": "HDFC Overnight Fund - Direct Plan - Growth Option",
+        "securityKey": "hdfc-overnight-fund-direct-plan-growth-option"
+      }
+    ],
+    "units": 48.183,
+    "basis": "fifo"
+  },
   "neo-infra-income-opportunities-fund-9039920536|neo-infra-income-opportunities-fund-i-class-a5": {
     "accountId": "neo-infra-income-opportunities-fund-9039920536",
     "securityKey": "neo-infra-income-opportunities-fund-i-class-a5",
@@ -33655,6 +39558,61 @@ export const BOOK_POSITION_TRANCHES: Record<string, PositionTranches> = {
     ],
     "units": 485837.2,
     "basis": "fifo"
+  },
+  "baring-private-equity-india-fund-AIFM_BPEPF6_0584|baring-private-equity-india-fund-6-class-a1": {
+    "accountId": "baring-private-equity-india-fund-AIFM_BPEPF6_0584",
+    "securityKey": "baring-private-equity-india-fund-6-class-a1",
+    "moves": [
+      {
+        "accountId": "baring-private-equity-india-fund-AIFM_BPEPF6_0584",
+        "date": "2024-10-03",
+        "direction": "in",
+        "label": "Drawdown 1",
+        "amount": 6500000,
+        "invested": 6500000,
+        "charges": null,
+        "units": 65,
+        "security": "Baring Private Equity India Fund 6 — Class A1",
+        "securityKey": "baring-private-equity-india-fund-6-class-a1"
+      },
+      {
+        "accountId": "baring-private-equity-india-fund-AIFM_BPEPF6_0584",
+        "date": "2024-12-05",
+        "direction": "in",
+        "label": "Drawdown 2",
+        "amount": 5000000,
+        "invested": 5000000,
+        "charges": null,
+        "units": 50,
+        "security": "Baring Private Equity India Fund 6 — Class A1",
+        "securityKey": "baring-private-equity-india-fund-6-class-a1"
+      },
+      {
+        "accountId": "baring-private-equity-india-fund-AIFM_BPEPF6_0584",
+        "date": "2025-07-22",
+        "direction": "in",
+        "label": "Drawdown 3",
+        "amount": 2500000,
+        "invested": 2500000,
+        "charges": null,
+        "units": 25,
+        "security": "Baring Private Equity India Fund 6 — Class A1",
+        "securityKey": "baring-private-equity-india-fund-6-class-a1"
+      },
+      {
+        "accountId": "baring-private-equity-india-fund-AIFM_BPEPF6_0584",
+        "date": "2025-09-25",
+        "direction": "in",
+        "label": "Drawdown 4",
+        "amount": 6250000,
+        "invested": 6250000,
+        "charges": null,
+        "units": 62.5,
+        "security": "Baring Private Equity India Fund 6 — Class A1",
+        "securityKey": "baring-private-equity-india-fund-6-class-a1"
+      }
+    ],
+    "units": 202.5
   },
   "buoyant-capital-103472|buoyant-opportunities-strategy-category-iii-class-a4": {
     "accountId": "buoyant-capital-103472",
@@ -33820,6 +39778,75 @@ export const BOOK_POSITION_TRANCHES: Record<string, PositionTranches> = {
     ],
     "units": 3416657.417
   },
+  "carnelian-bharat-amritkaal-fund-4551|carnelian-bharat-amritkaal-fund": {
+    "accountId": "carnelian-bharat-amritkaal-fund-4551",
+    "securityKey": "carnelian-bharat-amritkaal-fund",
+    "moves": [
+      {
+        "accountId": "carnelian-bharat-amritkaal-fund-4551",
+        "date": "2025-08-31",
+        "direction": "in",
+        "label": "Contribution Amount",
+        "amount": 100000000,
+        "invested": 100000000,
+        "charges": 4999.75,
+        "units": 8775109.058,
+        "security": "Carnelian Bharat Amritkaal Fund",
+        "securityKey": "carnelian-bharat-amritkaal-fund"
+      },
+      {
+        "accountId": "carnelian-bharat-amritkaal-fund-4551",
+        "date": "2025-12-31",
+        "direction": "in",
+        "label": "DRAWDOWN Transaction",
+        "amount": 50000000,
+        "invested": 50002925.1,
+        "charges": 2500.02,
+        "units": 4217985.767,
+        "security": "Carnelian Bharat Amritkaal Fund",
+        "securityKey": "carnelian-bharat-amritkaal-fund"
+      }
+    ],
+    "units": 12993094.825
+  },
+  "hdfc-mutual-fund-15644806|hdfc-balanced-advantage-fund-regular-plan-growth": {
+    "accountId": "hdfc-mutual-fund-15644806",
+    "securityKey": "hdfc-balanced-advantage-fund-regular-plan-growth",
+    "moves": [
+      {
+        "accountId": "hdfc-mutual-fund-15644806",
+        "date": "2022-08-03",
+        "direction": "in",
+        "label": "Net Purchase",
+        "amount": 25000000,
+        "invested": 25000000,
+        "charges": 1249.94,
+        "units": 83001.863,
+        "security": "HDFC Balanced Advantage Fund - Regular Plan - Growth",
+        "securityKey": "hdfc-balanced-advantage-fund-regular-plan-growth"
+      }
+    ],
+    "units": 83001.863
+  },
+  "hdfc-mutual-fund-16002141|hdfc-balanced-advantage-fund-regular-plan-growth": {
+    "accountId": "hdfc-mutual-fund-16002141",
+    "securityKey": "hdfc-balanced-advantage-fund-regular-plan-growth",
+    "moves": [
+      {
+        "accountId": "hdfc-mutual-fund-16002141",
+        "date": "2022-08-05",
+        "direction": "in",
+        "label": "Net Purchase",
+        "amount": 15000000,
+        "invested": 15000000,
+        "charges": 749.96,
+        "units": 49917.632,
+        "security": "HDFC Balanced Advantage Fund - Regular Plan - Growth",
+        "securityKey": "hdfc-balanced-advantage-fund-regular-plan-growth"
+      }
+    ],
+    "units": 49917.632
+  },
   "helios-mutual-fund-10355977|helios-flexi-cap-fund-direct-growth": {
     "accountId": "helios-mutual-fund-10355977",
     "securityKey": "helios-flexi-cap-fund-direct-growth",
@@ -33877,6 +39904,241 @@ export const BOOK_POSITION_TRANCHES: Record<string, PositionTranches> = {
     ],
     "units": 218612.507
   },
+  "kotak-mahindra-mutual-fund-7125255|kotak-large-and-mid-cap-fund-direct-growth": {
+    "accountId": "kotak-mahindra-mutual-fund-7125255",
+    "securityKey": "kotak-large-and-mid-cap-fund-direct-growth",
+    "moves": [
+      {
+        "accountId": "kotak-mahindra-mutual-fund-7125255",
+        "date": "2020-03-17",
+        "direction": "in",
+        "label": "Purchase (Continuous Offer)",
+        "amount": 42187,
+        "invested": 42187,
+        "charges": null,
+        "units": 383.776,
+        "security": "Kotak Large & Mid Cap Fund - Direct Growth",
+        "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
+      },
+      {
+        "accountId": "kotak-mahindra-mutual-fund-7125255",
+        "date": "2020-03-30",
+        "direction": "in",
+        "label": "Switch-In - From Kotak Overnight Fund Direct - Grow",
+        "amount": 112500,
+        "invested": 112500,
+        "charges": null,
+        "units": 1126.419,
+        "security": "Kotak Large & Mid Cap Fund - Direct Growth",
+        "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
+      },
+      {
+        "accountId": "kotak-mahindra-mutual-fund-7125255",
+        "date": "2020-04-07",
+        "direction": "in",
+        "label": "Switch-In - From Kotak Overnight Fund Direct - Grow",
+        "amount": 56250,
+        "invested": 56250,
+        "charges": null,
+        "units": 543.836,
+        "security": "Kotak Large & Mid Cap Fund - Direct Growth",
+        "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
+      },
+      {
+        "accountId": "kotak-mahindra-mutual-fund-7125255",
+        "date": "2020-04-13",
+        "direction": "in",
+        "label": "Switch-In - From Kotak Overnight Fund Direct - Grow",
+        "amount": 56250,
+        "invested": 56250,
+        "charges": null,
+        "units": 527.644,
+        "security": "Kotak Large & Mid Cap Fund - Direct Growth",
+        "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
+      },
+      {
+        "accountId": "kotak-mahindra-mutual-fund-7125255",
+        "date": "2020-04-20",
+        "direction": "in",
+        "label": "Switch-In - From Kotak Overnight Fund Direct - Grow - via Internet",
+        "amount": 56250,
+        "invested": 56250,
+        "charges": null,
+        "units": 504.095,
+        "security": "Kotak Large & Mid Cap Fund - Direct Growth",
+        "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
+      },
+      {
+        "accountId": "kotak-mahindra-mutual-fund-7125255",
+        "date": "2020-04-27",
+        "direction": "in",
+        "label": "Switch-In - From Kotak Overnight Fund Direct - Grow - via Internet",
+        "amount": 56250,
+        "invested": 56250,
+        "charges": null,
+        "units": 504.24,
+        "security": "Kotak Large & Mid Cap Fund - Direct Growth",
+        "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
+      },
+      {
+        "accountId": "kotak-mahindra-mutual-fund-7125255",
+        "date": "2020-05-04",
+        "direction": "in",
+        "label": "Switch-In - From Kotak Overnight Fund Direct - Grow - via Internet",
+        "amount": 56250,
+        "invested": 56250,
+        "charges": null,
+        "units": 505.818,
+        "security": "Kotak Large & Mid Cap Fund - Direct Growth",
+        "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
+      },
+      {
+        "accountId": "kotak-mahindra-mutual-fund-7125255",
+        "date": "2020-05-11",
+        "direction": "in",
+        "label": "Switch-In - From Kotak Overnight Fund Direct - Grow - via Internet",
+        "amount": 56250,
+        "invested": 56250,
+        "charges": null,
+        "units": 506.679,
+        "security": "Kotak Large & Mid Cap Fund - Direct Growth",
+        "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
+      },
+      {
+        "accountId": "kotak-mahindra-mutual-fund-7125255",
+        "date": "2020-05-18",
+        "direction": "in",
+        "label": "Switch-In - From Kotak Overnight Fund Direct - Grow - via Internet",
+        "amount": 112500,
+        "invested": 112500,
+        "charges": null,
+        "units": 1051.097,
+        "security": "Kotak Large & Mid Cap Fund - Direct Growth",
+        "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
+      },
+      {
+        "accountId": "kotak-mahindra-mutual-fund-7125255",
+        "date": "2020-05-26",
+        "direction": "in",
+        "label": "Switch-In - From Kotak Overnight Fund Direct - Grow - via Internet",
+        "amount": 112500,
+        "invested": 112500,
+        "charges": null,
+        "units": 1019.798,
+        "security": "Kotak Large & Mid Cap Fund - Direct Growth",
+        "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
+      },
+      {
+        "accountId": "kotak-mahindra-mutual-fund-7125255",
+        "date": "2020-06-01",
+        "direction": "in",
+        "label": "Switch-In - From Kotak Overnight Fund Direct - Grow - via Internet",
+        "amount": 112500,
+        "invested": 112500,
+        "charges": null,
+        "units": 960.742,
+        "security": "Kotak Large & Mid Cap Fund - Direct Growth",
+        "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
+      },
+      {
+        "accountId": "kotak-mahindra-mutual-fund-7125255",
+        "date": "2020-06-08",
+        "direction": "in",
+        "label": "Switch-In - From Kotak Overnight Fund Direct - Grow - via Internet",
+        "amount": 193750,
+        "invested": 193750,
+        "charges": null,
+        "units": 1606.817,
+        "security": "Kotak Large & Mid Cap Fund - Direct Growth",
+        "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
+      },
+      {
+        "accountId": "kotak-mahindra-mutual-fund-7125255",
+        "date": "2020-06-16",
+        "direction": "in",
+        "label": "Switch-In - From Kotak Overnight Fund Direct - Grow - via Internet",
+        "amount": 425000,
+        "invested": 425000,
+        "charges": null,
+        "units": 3571.188,
+        "security": "Kotak Large & Mid Cap Fund - Direct Growth",
+        "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
+      },
+      {
+        "accountId": "kotak-mahindra-mutual-fund-7125255",
+        "date": "2020-06-23",
+        "direction": "in",
+        "label": "Switch-In - From Kotak Overnight Fund Direct - Grow - via Internet",
+        "amount": 425000,
+        "invested": 425000,
+        "charges": null,
+        "units": 3426.894,
+        "security": "Kotak Large & Mid Cap Fund - Direct Growth",
+        "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
+      },
+      {
+        "accountId": "kotak-mahindra-mutual-fund-7125255",
+        "date": "2020-06-30",
+        "direction": "in",
+        "label": "Switch-In - From Kotak Overnight Fund Direct - Grow - via Internet",
+        "amount": 425000,
+        "invested": 425000,
+        "charges": null,
+        "units": 3427.862,
+        "security": "Kotak Large & Mid Cap Fund - Direct Growth",
+        "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
+      },
+      {
+        "accountId": "kotak-mahindra-mutual-fund-7125255",
+        "date": "2020-07-07",
+        "direction": "in",
+        "label": "Switch-In - From Kotak Overnight Fund Direct - Grow - via Internet",
+        "amount": 425000,
+        "invested": 425000,
+        "charges": 21.25,
+        "units": 3319.265,
+        "security": "Kotak Large & Mid Cap Fund - Direct Growth",
+        "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
+      },
+      {
+        "accountId": "kotak-mahindra-mutual-fund-7125255",
+        "date": "2020-07-14",
+        "direction": "in",
+        "label": "Switch-In - From Kotak Overnight Fund Direct - Grow - via Internet",
+        "amount": 212500,
+        "invested": 212500,
+        "charges": 10.62,
+        "units": 1676.445,
+        "security": "Kotak Large & Mid Cap Fund - Direct Growth",
+        "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
+      },
+      {
+        "accountId": "kotak-mahindra-mutual-fund-7125255",
+        "date": "2020-07-21",
+        "direction": "in",
+        "label": "Switch-In - From Kotak Overnight Fund Direct - Grow - via Internet",
+        "amount": 212500,
+        "invested": 212500,
+        "charges": 10.62,
+        "units": 1616.258,
+        "security": "Kotak Large & Mid Cap Fund - Direct Growth",
+        "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
+      },
+      {
+        "accountId": "kotak-mahindra-mutual-fund-7125255",
+        "date": "2020-07-28",
+        "direction": "in",
+        "label": "Switch-In - From Kotak Overnight Fund Direct - Grow - via Internet",
+        "amount": 212500,
+        "invested": 212500,
+        "charges": 10.62,
+        "units": 1621.611,
+        "security": "Kotak Large & Mid Cap Fund - Direct Growth",
+        "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
+      }
+    ],
+    "units": 27900.484
+  },
   "motilal-oswal-active-momentum-fund-904168868444|motilal-oswal-active-momentum-fund-direct-plan-growth-option": {
     "accountId": "motilal-oswal-active-momentum-fund-904168868444",
     "securityKey": "motilal-oswal-active-momentum-fund-direct-plan-growth-option",
@@ -33895,6 +40157,99 @@ export const BOOK_POSITION_TRANCHES: Record<string, PositionTranches> = {
       }
     ],
     "units": 15245765.959
+  },
+  "motilal-oswal-delphi-equity-fund-9049241536|motilal-oswal-wealth-delphi-equity-fund": {
+    "accountId": "motilal-oswal-delphi-equity-fund-9049241536",
+    "securityKey": "motilal-oswal-wealth-delphi-equity-fund",
+    "moves": [
+      {
+        "accountId": "motilal-oswal-delphi-equity-fund-9049241536",
+        "date": "2024-11-29",
+        "direction": "in",
+        "label": "Contribution Amount",
+        "amount": 100000000,
+        "invested": 100000000,
+        "charges": 4999.75,
+        "units": 99995,
+        "security": "Motilal Oswal Wealth Delphi Equity Fund",
+        "securityKey": "motilal-oswal-wealth-delphi-equity-fund"
+      }
+    ],
+    "units": 99995
+  },
+  "motilal-oswal-founders-fund-90410016093|motilal-oswal-founders-fund-series-ii-class-g1": {
+    "accountId": "motilal-oswal-founders-fund-90410016093",
+    "securityKey": "motilal-oswal-founders-fund-series-ii-class-g1",
+    "moves": [
+      {
+        "accountId": "motilal-oswal-founders-fund-90410016093",
+        "date": "2024-08-06",
+        "direction": "in",
+        "label": "Contribution",
+        "amount": 50000000,
+        "invested": 50000000,
+        "charges": 2499.88,
+        "units": 4999750.012,
+        "security": "Motilal Oswal Founders Fund Series II — Class G1",
+        "securityKey": "motilal-oswal-founders-fund-series-ii-class-g1"
+      },
+      {
+        "accountId": "motilal-oswal-founders-fund-90410016093",
+        "date": "2024-09-09",
+        "direction": "in",
+        "label": "Contribution",
+        "amount": 10000000,
+        "invested": 10000000,
+        "charges": 499.98,
+        "units": 956706.852,
+        "security": "Motilal Oswal Founders Fund Series II — Class G1",
+        "securityKey": "motilal-oswal-founders-fund-series-ii-class-g1"
+      },
+      {
+        "accountId": "motilal-oswal-founders-fund-90410016093",
+        "date": "2024-10-16",
+        "direction": "in",
+        "label": "Contribution",
+        "amount": 40000000,
+        "invested": 40000000,
+        "charges": 1999.9,
+        "units": 3558540.934,
+        "security": "Motilal Oswal Founders Fund Series II — Class G1",
+        "securityKey": "motilal-oswal-founders-fund-series-ii-class-g1"
+      }
+    ],
+    "units": 9514997.798
+  },
+  "motilal-oswal-founders-fund-90410016104|motilal-oswal-founders-fund-series-ii-class-g1": {
+    "accountId": "motilal-oswal-founders-fund-90410016104",
+    "securityKey": "motilal-oswal-founders-fund-series-ii-class-g1",
+    "moves": [
+      {
+        "accountId": "motilal-oswal-founders-fund-90410016104",
+        "date": "2024-08-06",
+        "direction": "in",
+        "label": "Contribution",
+        "amount": 100000000,
+        "invested": 100000000,
+        "charges": 4999.75,
+        "units": 9999500.025,
+        "security": "Motilal Oswal Founders Fund Series II — Class G1",
+        "securityKey": "motilal-oswal-founders-fund-series-ii-class-g1"
+      },
+      {
+        "accountId": "motilal-oswal-founders-fund-90410016104",
+        "date": "2024-10-16",
+        "direction": "in",
+        "label": "Contribution",
+        "amount": 100000000,
+        "invested": 100000000,
+        "charges": 4999.75,
+        "units": 8896352.335,
+        "security": "Motilal Oswal Founders Fund Series II — Class G1",
+        "securityKey": "motilal-oswal-founders-fund-series-ii-class-g1"
+      }
+    ],
+    "units": 18895852.36
   },
   "sanshi-fund-9039671821|sanshi-fund-i-open-ended-aif-cat-iii-class-e": {
     "accountId": "sanshi-fund-9039671821",
@@ -34089,6 +40444,12361 @@ export const BOOK_POSITION_TRANCHES: Record<string, PositionTranches> = {
     ],
     "units": 7500
   }
+};
+
+/**
+ * EVERY DATED BUY AND SELL BEHIND A HOLDING (Stage 10fm), keyed
+ * `<accountId>|<securityKey>` — the account's own transaction statement, oldest
+ * first, after the holding's statement date or not. A sale carries `boughtOn`,
+ * the purchase dates of the lots its capital gain statement settles it with,
+ * only where those lots' units add to the day's sales exactly.
+ * `Position.tradeRecord` says which of these date the units held.
+ */
+export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
+  "carnelian-asset-management-and-advisors-pvt-ltd-3517383|aditya-birla-capital": [
+    {
+      "date": "2026-08-10",
+      "side": "sell",
+      "quantity": 50369,
+      "price": 407.75,
+      "amount": 20505096.43,
+      "boughtOn": [
+        "2025-01-06"
+      ]
+    },
+    {
+      "date": "2026-08-11",
+      "side": "sell",
+      "quantity": 14174,
+      "price": 403.7113,
+      "amount": 5713621.46,
+      "boughtOn": [
+        "2025-01-06"
+      ]
+    }
+  ],
+  "carnelian-asset-management-and-advisors-pvt-ltd-3517383|caliber-mining-and-logistics": [
+    {
+      "date": "2026-07-24",
+      "side": "buy",
+      "quantity": 38660,
+      "price": 494.8501,
+      "amount": 19159601.22
+    }
+  ],
+  "carnelian-asset-management-and-advisors-pvt-ltd-3517383|cyient": [
+    {
+      "date": "2026-08-25",
+      "side": "buy",
+      "quantity": 6246,
+      "price": 926.8642,
+      "amount": 5798456.38
+    },
+    {
+      "date": "2026-08-25",
+      "side": "buy",
+      "quantity": 18596,
+      "price": 911.9746,
+      "amount": 16984518.23
+    }
+  ],
+  "carnelian-asset-management-and-advisors-pvt-ltd-3517383|gland-pharma": [
+    {
+      "date": "2026-06-30",
+      "side": "buy",
+      "quantity": 3618,
+      "price": 2477.0019,
+      "amount": 8975235.57
+    },
+    {
+      "date": "2026-07-01",
+      "side": "buy",
+      "quantity": 1255,
+      "price": 2450.8682,
+      "amount": 3080760.9
+    },
+    {
+      "date": "2026-07-02",
+      "side": "buy",
+      "quantity": 2750,
+      "price": 2445.1669,
+      "amount": 6734295.07
+    },
+    {
+      "date": "2026-07-22",
+      "side": "buy",
+      "quantity": 300,
+      "price": 2435.9998,
+      "amount": 731896.11
+    },
+    {
+      "date": "2026-07-22",
+      "side": "buy",
+      "quantity": 329,
+      "price": 2428.5003,
+      "amount": 800175.06
+    }
+  ],
+  "carnelian-asset-management-and-advisors-pvt-ltd-3517383|kalyan-jewellers-india": [
+    {
+      "date": "2026-07-13",
+      "side": "buy",
+      "quantity": 14600,
+      "price": 484.0715,
+      "amount": 7081578.79
+    },
+    {
+      "date": "2026-07-13",
+      "side": "buy",
+      "quantity": 43800,
+      "price": 493.4852,
+      "amount": 21649235.56
+    }
+  ],
+  "carnelian-asset-management-and-advisors-pvt-ltd-3517383|pvr-inox": [
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 882,
+      "price": 1450,
+      "amount": 1276981.59,
+      "boughtOn": [
+        "2026-01-02"
+      ]
+    }
+  ],
+  "carnelian-asset-management-and-advisors-pvt-ltd-3517383|tata-technologies": [
+    {
+      "date": "2026-08-07",
+      "side": "buy",
+      "quantity": 18902,
+      "price": 853.5526,
+      "amount": 16158052.03
+    }
+  ],
+  "carnelian-asset-management-and-advisors-pvt-ltd-3517383|vishnu-chemicals": [
+    {
+      "date": "2026-08-11",
+      "side": "buy",
+      "quantity": 1132,
+      "price": 588.857,
+      "amount": 667652.63
+    },
+    {
+      "date": "2026-08-12",
+      "side": "buy",
+      "quantity": 3050,
+      "price": 588.159,
+      "amount": 1796755.14
+    },
+    {
+      "date": "2026-08-13",
+      "side": "buy",
+      "quantity": 2021,
+      "price": 599.97,
+      "amount": 1214479.44
+    },
+    {
+      "date": "2026-08-14",
+      "side": "buy",
+      "quantity": 2517,
+      "price": 606.7547,
+      "amount": 1529645.19
+    },
+    {
+      "date": "2026-08-20",
+      "side": "buy",
+      "quantity": 572,
+      "price": 624.864,
+      "amount": 357958.32
+    },
+    {
+      "date": "2026-08-21",
+      "side": "buy",
+      "quantity": 175,
+      "price": 625,
+      "amount": 109539.03
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|deep-industries": [
+    {
+      "date": "2026-07-24",
+      "side": "buy",
+      "quantity": 3200,
+      "price": 477.5,
+      "amount": 1531056
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|eclerx-services": [
+    {
+      "date": "2026-06-24",
+      "side": "buy",
+      "quantity": 1600,
+      "price": 1404.7669,
+      "amount": 2252122.29
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|great-eastern-shipping": [
+    {
+      "date": "2026-08-04",
+      "side": "buy",
+      "quantity": 464,
+      "price": 1432.5,
+      "amount": 666009.31
+    },
+    {
+      "date": "2026-08-04",
+      "side": "buy",
+      "quantity": 1536,
+      "price": 1432.4281,
+      "amount": 2204609.94
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|indian-energy-exchange": [
+    {
+      "date": "2026-04-09",
+      "side": "buy",
+      "quantity": 10536,
+      "price": 128.8256,
+      "amount": 1360020.87
+    },
+    {
+      "date": "2026-04-10",
+      "side": "buy",
+      "quantity": 6,
+      "price": 129,
+      "amount": 775.55
+    },
+    {
+      "date": "2026-04-21",
+      "side": "buy",
+      "quantity": 4458,
+      "price": 126.25,
+      "amount": 563947.88
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|jindal-stainless": [
+    {
+      "date": "2026-05-07",
+      "side": "buy",
+      "quantity": 2257,
+      "price": 768,
+      "amount": 1736842.75
+    },
+    {
+      "date": "2026-05-07",
+      "side": "buy",
+      "quantity": 993,
+      "price": 768,
+      "amount": 764149.24
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|lupin": [
+    {
+      "date": "2026-05-29",
+      "side": "buy",
+      "quantity": 220,
+      "price": 2260,
+      "amount": 498194.4
+    },
+    {
+      "date": "2026-06-01",
+      "side": "buy",
+      "quantity": 680,
+      "price": 2254.4413,
+      "amount": 1536086.18
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|poojaa-precision-engineering": [
+    {
+      "date": "2026-08-11",
+      "side": "buy",
+      "quantity": 2550,
+      "price": 498.5633,
+      "amount": 1273878.93
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|suprajit-engineering": [
+    {
+      "date": "2026-04-21",
+      "side": "buy",
+      "quantity": 2300,
+      "price": 417.7706,
+      "amount": 962793.86
+    },
+    {
+      "date": "2026-06-15",
+      "side": "sell",
+      "quantity": 2800,
+      "price": 473.5,
+      "amount": 1323148.41
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|waaree-energies": [
+    {
+      "date": "2026-05-29",
+      "side": "buy",
+      "quantity": 500,
+      "price": 3129.9998,
+      "amount": 1568129.9
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|deep-industries": [
+    {
+      "date": "2026-07-24",
+      "side": "buy",
+      "quantity": 10000,
+      "price": 477.5,
+      "amount": 4784550.01
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|eclerx-services": [
+    {
+      "date": "2026-06-24",
+      "side": "buy",
+      "quantity": 3600,
+      "price": 1404.7669,
+      "amount": 5067275.14
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|great-eastern-shipping": [
+    {
+      "date": "2026-08-04",
+      "side": "buy",
+      "quantity": 1158,
+      "price": 1432.5,
+      "amount": 1662152.55
+    },
+    {
+      "date": "2026-08-04",
+      "side": "buy",
+      "quantity": 3842,
+      "price": 1432.4281,
+      "amount": 5514395.44
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|indian-energy-exchange": [
+    {
+      "date": "2026-04-09",
+      "side": "buy",
+      "quantity": 22476,
+      "price": 128.8256,
+      "amount": 2901274.59
+    },
+    {
+      "date": "2026-04-10",
+      "side": "buy",
+      "quantity": 15,
+      "price": 129,
+      "amount": 1938.88
+    },
+    {
+      "date": "2026-04-21",
+      "side": "buy",
+      "quantity": 7509,
+      "price": 126.25,
+      "amount": 949906.82
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|jindal-stainless": [
+    {
+      "date": "2026-05-07",
+      "side": "buy",
+      "quantity": 4863,
+      "price": 768,
+      "amount": 3742253.57
+    },
+    {
+      "date": "2026-05-07",
+      "side": "buy",
+      "quantity": 2137,
+      "price": 768,
+      "amount": 1644498.42
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|lupin": [
+    {
+      "date": "2026-05-29",
+      "side": "buy",
+      "quantity": 488,
+      "price": 2260,
+      "amount": 1105085.76
+    },
+    {
+      "date": "2026-06-01",
+      "side": "buy",
+      "quantity": 1512,
+      "price": 2254.4413,
+      "amount": 3415532.79
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|poojaa-precision-engineering": [
+    {
+      "date": "2026-08-11",
+      "side": "buy",
+      "quantity": 6376,
+      "price": 498.5633,
+      "amount": 3185196.88
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|suprajit-engineering": [
+    {
+      "date": "2026-04-21",
+      "side": "buy",
+      "quantity": 6500,
+      "price": 417.7706,
+      "amount": 2720939.18
+    },
+    {
+      "date": "2026-06-15",
+      "side": "sell",
+      "quantity": 7500,
+      "price": 473.5,
+      "amount": 3544147.54
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|waaree-energies": [
+    {
+      "date": "2026-05-29",
+      "side": "buy",
+      "quantity": 1500,
+      "price": 3129.9998,
+      "amount": 4704389.7
+    }
+  ],
+  "green-lantern-capital-llp-510854|aarti-drugs": [
+    {
+      "date": "2025-05-02",
+      "side": "buy",
+      "quantity": 310,
+      "price": 348.5822,
+      "amount": 108276.61
+    },
+    {
+      "date": "2025-05-05",
+      "side": "buy",
+      "quantity": 430,
+      "price": 354.6344,
+      "amount": 152797.76
+    },
+    {
+      "date": "2025-05-06",
+      "side": "buy",
+      "quantity": 840,
+      "price": 350.7335,
+      "amount": 295205.35
+    },
+    {
+      "date": "2025-05-07",
+      "side": "buy",
+      "quantity": 240,
+      "price": 382.021,
+      "amount": 91868.41
+    },
+    {
+      "date": "2025-05-13",
+      "side": "buy",
+      "quantity": 100,
+      "price": 458.8325,
+      "amount": 45975.02
+    },
+    {
+      "date": "2025-06-11",
+      "side": "buy",
+      "quantity": 100,
+      "price": 473.7151,
+      "amount": 47466.25
+    },
+    {
+      "date": "2025-07-21",
+      "side": "buy",
+      "quantity": 60,
+      "price": 536.2308,
+      "amount": 32238.19
+    },
+    {
+      "date": "2025-08-22",
+      "side": "buy",
+      "quantity": 47,
+      "price": 475.5889,
+      "amount": 22397.38
+    },
+    {
+      "date": "2025-08-26",
+      "side": "buy",
+      "quantity": 49,
+      "price": 474.7982,
+      "amount": 23311.65
+    },
+    {
+      "date": "2025-08-28",
+      "side": "buy",
+      "quantity": 37,
+      "price": 470.4927,
+      "amount": 17443.05
+    },
+    {
+      "date": "2025-09-08",
+      "side": "buy",
+      "quantity": 92,
+      "price": 475.7038,
+      "amount": 43852.27
+    },
+    {
+      "date": "2025-09-09",
+      "side": "buy",
+      "quantity": 29,
+      "price": 491.4748,
+      "amount": 14281.27
+    },
+    {
+      "date": "2025-11-11",
+      "side": "buy",
+      "quantity": 92,
+      "price": 484.8172,
+      "amount": 44692.38
+    },
+    {
+      "date": "2025-12-09",
+      "side": "buy",
+      "quantity": 272,
+      "price": 399.5783,
+      "amount": 108902.68
+    },
+    {
+      "date": "2025-12-22",
+      "side": "buy",
+      "quantity": 124,
+      "price": 391.4467,
+      "amount": 48636.46
+    }
+  ],
+  "green-lantern-capital-llp-510854|alivus-life-sciences": [
+    {
+      "date": "2025-01-14",
+      "side": "buy",
+      "quantity": 510,
+      "price": 992.0417,
+      "amount": 506953.19
+    },
+    {
+      "date": "2025-06-11",
+      "side": "buy",
+      "quantity": 50,
+      "price": 1015.734,
+      "amount": 50888.28
+    },
+    {
+      "date": "2025-06-12",
+      "side": "buy",
+      "quantity": 110,
+      "price": 1063.4372,
+      "amount": 117212.04
+    },
+    {
+      "date": "2025-08-28",
+      "side": "buy",
+      "quantity": 12,
+      "price": 948.945,
+      "amount": 11410.12
+    },
+    {
+      "date": "2025-09-01",
+      "side": "buy",
+      "quantity": 16,
+      "price": 939.1475,
+      "amount": 15056.42
+    },
+    {
+      "date": "2025-09-02",
+      "side": "buy",
+      "quantity": 11,
+      "price": 938.4473,
+      "amount": 10343.56
+    },
+    {
+      "date": "2025-09-05",
+      "side": "buy",
+      "quantity": 17,
+      "price": 926.0747,
+      "amount": 15774.75
+    },
+    {
+      "date": "2025-09-08",
+      "side": "buy",
+      "quantity": 26,
+      "price": 922.0158,
+      "amount": 24020.35
+    },
+    {
+      "date": "2025-09-10",
+      "side": "buy",
+      "quantity": 31,
+      "price": 952.0097,
+      "amount": 29571.32
+    },
+    {
+      "date": "2025-11-17",
+      "side": "buy",
+      "quantity": 95,
+      "price": 944.4024,
+      "amount": 89897.67
+    },
+    {
+      "date": "2025-11-18",
+      "side": "buy",
+      "quantity": 67,
+      "price": 926.6691,
+      "amount": 62211.01
+    },
+    {
+      "date": "2025-11-19",
+      "side": "buy",
+      "quantity": 557,
+      "price": 911.9747,
+      "amount": 508884.21
+    },
+    {
+      "date": "2025-12-04",
+      "side": "buy",
+      "quantity": 43,
+      "price": 878.7347,
+      "amount": 37861.15
+    },
+    {
+      "date": "2026-03-17",
+      "side": "buy",
+      "quantity": 208,
+      "price": 934.4768,
+      "amount": 194721.04
+    },
+    {
+      "date": "2026-03-20",
+      "side": "buy",
+      "quantity": 20,
+      "price": 946.015,
+      "amount": 18954.36
+    },
+    {
+      "date": "2026-03-23",
+      "side": "buy",
+      "quantity": 13,
+      "price": 928.1477,
+      "amount": 12087.64
+    },
+    {
+      "date": "2026-03-24",
+      "side": "buy",
+      "quantity": 29,
+      "price": 967.1869,
+      "amount": 28098.91
+    },
+    {
+      "date": "2026-03-30",
+      "side": "buy",
+      "quantity": 16,
+      "price": 970.4744,
+      "amount": 15555.54
+    },
+    {
+      "date": "2026-04-01",
+      "side": "buy",
+      "quantity": 85,
+      "price": 996.1898,
+      "amount": 84828.56
+    },
+    {
+      "date": "2026-04-06",
+      "side": "buy",
+      "quantity": 82,
+      "price": 1000.9552,
+      "amount": 82226.08
+    },
+    {
+      "date": "2026-04-07",
+      "side": "buy",
+      "quantity": 86,
+      "price": 1039.522,
+      "amount": 89559.81
+    },
+    {
+      "date": "2026-04-17",
+      "side": "buy",
+      "quantity": 56,
+      "price": 1071.6538,
+      "amount": 60120.63
+    },
+    {
+      "date": "2026-08-07",
+      "side": "buy",
+      "quantity": 16,
+      "price": 1338.2788,
+      "amount": 21451
+    },
+    {
+      "date": "2026-08-10",
+      "side": "buy",
+      "quantity": 85,
+      "price": 1368.7795,
+      "amount": 116555.69
+    },
+    {
+      "date": "2026-08-13",
+      "side": "buy",
+      "quantity": 35,
+      "price": 1376.6094,
+      "amount": 48268.06
+    },
+    {
+      "date": "2026-08-14",
+      "side": "buy",
+      "quantity": 3,
+      "price": 1366.2267,
+      "amount": 4106.06
+    },
+    {
+      "date": "2026-08-18",
+      "side": "buy",
+      "quantity": 75,
+      "price": 1397.346,
+      "amount": 104989.59
+    },
+    {
+      "date": "2026-09-11",
+      "side": "buy",
+      "quantity": 9,
+      "price": 1385.3022,
+      "amount": 12490.16
+    },
+    {
+      "date": "2026-09-21",
+      "side": "buy",
+      "quantity": 27,
+      "price": 1416.0922,
+      "amount": 38303.32
+    }
+  ],
+  "green-lantern-capital-llp-510854|aurobindo-pharma": [
+    {
+      "date": "2025-10-10",
+      "side": "buy",
+      "quantity": 519,
+      "price": 1138.4018,
+      "amount": 592012.19
+    },
+    {
+      "date": "2025-10-13",
+      "side": "buy",
+      "quantity": 47,
+      "price": 1136.9334,
+      "amount": 53542.73
+    },
+    {
+      "date": "2025-10-14",
+      "side": "buy",
+      "quantity": 126,
+      "price": 1123.6939,
+      "amount": 141868.58
+    },
+    {
+      "date": "2025-10-16",
+      "side": "buy",
+      "quantity": 41,
+      "price": 1105.2859,
+      "amount": 45407.35
+    },
+    {
+      "date": "2025-10-20",
+      "side": "buy",
+      "quantity": 49,
+      "price": 1104.7969,
+      "amount": 54243.32
+    },
+    {
+      "date": "2025-10-27",
+      "side": "buy",
+      "quantity": 189,
+      "price": 1090.7865,
+      "amount": 206570.95
+    },
+    {
+      "date": "2025-12-09",
+      "side": "buy",
+      "quantity": 138,
+      "price": 1170.7953,
+      "amount": 161892.88
+    },
+    {
+      "date": "2025-12-15",
+      "side": "buy",
+      "quantity": 47,
+      "price": 1185.6591,
+      "amount": 55837.43
+    },
+    {
+      "date": "2025-12-17",
+      "side": "buy",
+      "quantity": 100,
+      "price": 1192.0662,
+      "amount": 119445.03
+    },
+    {
+      "date": "2025-12-19",
+      "side": "buy",
+      "quantity": 47,
+      "price": 1219.9645,
+      "amount": 57453.01
+    },
+    {
+      "date": "2025-12-30",
+      "side": "buy",
+      "quantity": 92,
+      "price": 1187.7243,
+      "amount": 109489.18
+    },
+    {
+      "date": "2025-12-31",
+      "side": "buy",
+      "quantity": 45,
+      "price": 1189.7307,
+      "amount": 53644.96
+    },
+    {
+      "date": "2026-01-01",
+      "side": "buy",
+      "quantity": 182,
+      "price": 1185.6644,
+      "amount": 216222.49
+    },
+    {
+      "date": "2026-01-06",
+      "side": "buy",
+      "quantity": 70,
+      "price": 1232.5274,
+      "amount": 86449.48
+    },
+    {
+      "date": "2026-01-07",
+      "side": "buy",
+      "quantity": 68,
+      "price": 1249.7757,
+      "amount": 85154.71
+    },
+    {
+      "date": "2026-05-07",
+      "side": "sell",
+      "quantity": 104,
+      "price": 1475,
+      "amount": 153139.22,
+      "boughtOn": [
+        "2025-10-10"
+      ]
+    },
+    {
+      "date": "2026-09-17",
+      "side": "sell",
+      "quantity": 192,
+      "price": 1671.4693,
+      "amount": 320280.26
+    },
+    {
+      "date": "2026-09-21",
+      "side": "sell",
+      "quantity": 48,
+      "price": 1714.1527,
+      "amount": 82114.77
+    },
+    {
+      "date": "2026-09-22",
+      "side": "sell",
+      "quantity": 96,
+      "price": 1693.0046,
+      "amount": 162203.38
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 143,
+      "price": 1703.5019,
+      "amount": 243113.57
+    }
+  ],
+  "green-lantern-capital-llp-510854|axis-liquid-fund-direct-plan-growth-option": [
+    {
+      "date": "2025-01-16",
+      "side": "buy",
+      "quantity": 10151.771,
+      "price": 2839.4621,
+      "amount": 28825568.66
+    },
+    {
+      "date": "2025-01-17",
+      "side": "buy",
+      "quantity": 1206.872,
+      "price": 2841.7324,
+      "amount": 3429607.24
+    },
+    {
+      "date": "2025-01-21",
+      "side": "buy",
+      "quantity": 15.727,
+      "price": 2842.2586,
+      "amount": 44700.2
+    },
+    {
+      "date": "2025-01-23",
+      "side": "sell",
+      "quantity": 696,
+      "price": 2843.6666,
+      "amount": 1979191.95
+    },
+    {
+      "date": "2025-01-31",
+      "side": "buy",
+      "quantity": 83.885,
+      "price": 2847.696,
+      "amount": 238878.98
+    },
+    {
+      "date": "2025-04-03",
+      "side": "sell",
+      "quantity": 350,
+      "price": 2887.181,
+      "amount": 1010513.35
+    },
+    {
+      "date": "2025-04-07",
+      "side": "sell",
+      "quantity": 1300,
+      "price": 2889.1239,
+      "amount": 3755861.07
+    },
+    {
+      "date": "2025-05-07",
+      "side": "sell",
+      "quantity": 450,
+      "price": 2904.3552,
+      "amount": 1306959.84
+    },
+    {
+      "date": "2025-05-14",
+      "side": "sell",
+      "quantity": 470,
+      "price": 2907.9723,
+      "amount": 1366746.98
+    },
+    {
+      "date": "2025-06-11",
+      "side": "sell",
+      "quantity": 1570,
+      "price": 2923.6389,
+      "amount": 4590113.07
+    },
+    {
+      "date": "2025-06-27",
+      "side": "buy",
+      "quantity": 143.268,
+      "price": 2930.3198,
+      "amount": 419821.06
+    },
+    {
+      "date": "2025-06-30",
+      "side": "buy",
+      "quantity": 428.601,
+      "price": 2931.5607,
+      "amount": 1256469.83
+    },
+    {
+      "date": "2025-07-15",
+      "side": "sell",
+      "quantity": 250,
+      "price": 2939.8451,
+      "amount": 734961.28
+    },
+    {
+      "date": "2025-08-19",
+      "side": "sell",
+      "quantity": 280,
+      "price": 2955.5553,
+      "amount": 827555.48
+    },
+    {
+      "date": "2025-09-04",
+      "side": "sell",
+      "quantity": 520,
+      "price": 2964.5601,
+      "amount": 1541571.25
+    },
+    {
+      "date": "2025-09-10",
+      "side": "sell",
+      "quantity": 690,
+      "price": 2965.3036,
+      "amount": 2046059.48
+    },
+    {
+      "date": "2025-09-15",
+      "side": "sell",
+      "quantity": 60,
+      "price": 2967.6201,
+      "amount": 178057.21
+    },
+    {
+      "date": "2025-09-24",
+      "side": "sell",
+      "quantity": 230,
+      "price": 2971.9175,
+      "amount": 683541.02
+    },
+    {
+      "date": "2025-10-09",
+      "side": "sell",
+      "quantity": 390,
+      "price": 2979.5767,
+      "amount": 1162034.91
+    },
+    {
+      "date": "2025-10-28",
+      "side": "sell",
+      "quantity": 580,
+      "price": 2988.3054,
+      "amount": 1733217.13
+    },
+    {
+      "date": "2025-11-05",
+      "side": "sell",
+      "quantity": 390,
+      "price": 2992.2039,
+      "amount": 1166959.52
+    },
+    {
+      "date": "2025-11-30",
+      "side": "sell",
+      "quantity": 590,
+      "price": 3004.1823,
+      "amount": 1772467.56
+    },
+    {
+      "date": "2026-01-06",
+      "side": "sell",
+      "quantity": 389,
+      "price": 3022.4959,
+      "amount": 1175750.91
+    },
+    {
+      "date": "2026-01-09",
+      "side": "buy",
+      "quantity": 11.421,
+      "price": 3023.0386,
+      "amount": 34526.12
+    },
+    {
+      "date": "2026-02-09",
+      "side": "buy",
+      "quantity": 406.825,
+      "price": 3038.7899,
+      "amount": 1236255.71
+    },
+    {
+      "date": "2026-03-09",
+      "side": "sell",
+      "quantity": 650,
+      "price": 3052.9241,
+      "amount": 1984400.66
+    },
+    {
+      "date": "2026-03-16",
+      "side": "sell",
+      "quantity": 147.49,
+      "price": 3055.4363,
+      "amount": 450646.3
+    },
+    {
+      "date": "2026-03-24",
+      "side": "sell",
+      "quantity": 671,
+      "price": 3059.2254,
+      "amount": 2052740.24
+    },
+    {
+      "date": "2026-04-05",
+      "side": "sell",
+      "quantity": 573,
+      "price": 3071.3921,
+      "amount": 1759907.67
+    },
+    {
+      "date": "2026-04-12",
+      "side": "sell",
+      "quantity": 333.69,
+      "price": 3077.148,
+      "amount": 1026813.52
+    },
+    {
+      "date": "2026-04-16",
+      "side": "sell",
+      "quantity": 736,
+      "price": 3079.9851,
+      "amount": 2266869.03
+    },
+    {
+      "date": "2026-05-03",
+      "side": "sell",
+      "quantity": 130,
+      "price": 3086.8753,
+      "amount": 401293.79
+    },
+    {
+      "date": "2026-09-16",
+      "side": "buy",
+      "quantity": 895.59,
+      "price": 3163.4186,
+      "amount": 2833126.03
+    },
+    {
+      "date": "2026-09-18",
+      "side": "buy",
+      "quantity": 707.944,
+      "price": 3164.3213,
+      "amount": 2240162.28
+    }
+  ],
+  "green-lantern-capital-llp-510854|bajaj-auto": [
+    {
+      "date": "2025-07-18",
+      "side": "buy",
+      "quantity": 50,
+      "price": 8344.2376,
+      "amount": 418046.3
+    },
+    {
+      "date": "2025-07-21",
+      "side": "buy",
+      "quantity": 30,
+      "price": 8426.3677,
+      "amount": 253246.05
+    },
+    {
+      "date": "2025-08-18",
+      "side": "buy",
+      "quantity": 6,
+      "price": 8592.3367,
+      "amount": 51646.81
+    },
+    {
+      "date": "2025-09-25",
+      "side": "buy",
+      "quantity": 33,
+      "price": 8847.5739,
+      "amount": 292495.49
+    },
+    {
+      "date": "2026-07-14",
+      "side": "sell",
+      "quantity": 16,
+      "price": 12000,
+      "amount": 191673.6,
+      "boughtOn": [
+        "2025-07-18"
+      ]
+    },
+    {
+      "date": "2026-09-11",
+      "side": "sell",
+      "quantity": 42,
+      "price": 11657.485,
+      "amount": 488733.06
+    },
+    {
+      "date": "2026-09-15",
+      "side": "sell",
+      "quantity": 40,
+      "price": 11487.3228,
+      "amount": 458665.83
+    },
+    {
+      "date": "2026-09-16",
+      "side": "sell",
+      "quantity": 20,
+      "price": 11502.407,
+      "amount": 229634.05
+    },
+    {
+      "date": "2026-09-17",
+      "side": "sell",
+      "quantity": 1,
+      "price": 11470.91,
+      "amount": 11450.26
+    }
+  ],
+  "green-lantern-capital-llp-510854|bharat-heavy-electricals": [
+    {
+      "date": "2025-01-14",
+      "side": "buy",
+      "quantity": 5130,
+      "price": 195.0574,
+      "amount": 1002646.32
+    },
+    {
+      "date": "2026-03-04",
+      "side": "buy",
+      "quantity": 295,
+      "price": 249.4478,
+      "amount": 73734.26
+    },
+    {
+      "date": "2026-03-05",
+      "side": "buy",
+      "quantity": 175,
+      "price": 254.5104,
+      "amount": 44628.4
+    },
+    {
+      "date": "2026-03-10",
+      "side": "buy",
+      "quantity": 30,
+      "price": 257.6943,
+      "amount": 7746.29
+    },
+    {
+      "date": "2026-03-13",
+      "side": "buy",
+      "quantity": 180,
+      "price": 261.8666,
+      "amount": 47220.82
+    },
+    {
+      "date": "2026-03-23",
+      "side": "buy",
+      "quantity": 288,
+      "price": 251.3576,
+      "amount": 72521.27
+    },
+    {
+      "date": "2026-03-24",
+      "side": "buy",
+      "quantity": 235,
+      "price": 258.4251,
+      "amount": 60839.2
+    },
+    {
+      "date": "2026-03-27",
+      "side": "buy",
+      "quantity": 102,
+      "price": 256.329,
+      "amount": 26192.62
+    },
+    {
+      "date": "2026-03-30",
+      "side": "buy",
+      "quantity": 219,
+      "price": 247.7253,
+      "amount": 54349.47
+    },
+    {
+      "date": "2026-04-01",
+      "side": "buy",
+      "quantity": 218,
+      "price": 254.8849,
+      "amount": 55664.92
+    },
+    {
+      "date": "2026-04-09",
+      "side": "buy",
+      "quantity": 816,
+      "price": 277.1045,
+      "amount": 226524.22
+    }
+  ],
+  "green-lantern-capital-llp-510854|engineers-india": [
+    {
+      "date": "2025-04-04",
+      "side": "buy",
+      "quantity": 31,
+      "price": 162.799,
+      "amount": 5056.86
+    },
+    {
+      "date": "2025-04-04",
+      "side": "buy",
+      "quantity": 2488,
+      "price": 163.0468,
+      "amount": 406471.64
+    },
+    {
+      "date": "2025-04-07",
+      "side": "buy",
+      "quantity": 2530,
+      "price": 153.445,
+      "amount": 388992.17
+    },
+    {
+      "date": "2025-04-08",
+      "side": "buy",
+      "quantity": 1900,
+      "price": 163.6537,
+      "amount": 311563.81
+    },
+    {
+      "date": "2025-04-09",
+      "side": "buy",
+      "quantity": 661,
+      "price": 160.4982,
+      "amount": 106301.42
+    },
+    {
+      "date": "2025-04-15",
+      "side": "buy",
+      "quantity": 1200,
+      "price": 168.0658,
+      "amount": 202082.24
+    },
+    {
+      "date": "2025-04-16",
+      "side": "buy",
+      "quantity": 2040,
+      "price": 175.6045,
+      "amount": 358949.64
+    },
+    {
+      "date": "2025-04-24",
+      "side": "buy",
+      "quantity": 1610,
+      "price": 184.7488,
+      "amount": 298040.39
+    },
+    {
+      "date": "2026-03-17",
+      "side": "buy",
+      "quantity": 183,
+      "price": 189.6254,
+      "amount": 34763.91
+    }
+  ],
+  "green-lantern-capital-llp-510854|exide-industries": [
+    {
+      "date": "2025-08-04",
+      "side": "buy",
+      "quantity": 1490,
+      "price": 386.2613,
+      "amount": 576680.3
+    },
+    {
+      "date": "2025-08-05",
+      "side": "buy",
+      "quantity": 1070,
+      "price": 389.0493,
+      "amount": 417115.25
+    },
+    {
+      "date": "2025-08-07",
+      "side": "buy",
+      "quantity": 190,
+      "price": 375.7977,
+      "amount": 71544.36
+    },
+    {
+      "date": "2025-08-18",
+      "side": "buy",
+      "quantity": 980,
+      "price": 378,
+      "amount": 371180.88
+    },
+    {
+      "date": "2025-08-19",
+      "side": "buy",
+      "quantity": 1130,
+      "price": 383.3964,
+      "amount": 434104.3
+    },
+    {
+      "date": "2025-09-17",
+      "side": "buy",
+      "quantity": 192,
+      "price": 420.0637,
+      "amount": 80813.52
+    },
+    {
+      "date": "2026-03-16",
+      "side": "buy",
+      "quantity": 375,
+      "price": 298.182,
+      "amount": 112041.86
+    },
+    {
+      "date": "2026-03-17",
+      "side": "buy",
+      "quantity": 473,
+      "price": 301.1032,
+      "amount": 142706.65
+    },
+    {
+      "date": "2026-03-18",
+      "side": "buy",
+      "quantity": 220,
+      "price": 308.6386,
+      "amount": 68036.28
+    },
+    {
+      "date": "2026-03-19",
+      "side": "buy",
+      "quantity": 227,
+      "price": 303.8163,
+      "amount": 69104.23
+    },
+    {
+      "date": "2026-03-20",
+      "side": "buy",
+      "quantity": 219,
+      "price": 305.8746,
+      "amount": 67120.49
+    },
+    {
+      "date": "2026-03-23",
+      "side": "buy",
+      "quantity": 112,
+      "price": 294.7194,
+      "amount": 33074.59
+    },
+    {
+      "date": "2026-03-24",
+      "side": "buy",
+      "quantity": 219,
+      "price": 298.5559,
+      "amount": 65514.49
+    },
+    {
+      "date": "2026-03-25",
+      "side": "buy",
+      "quantity": 220,
+      "price": 307.8504,
+      "amount": 67862.54
+    }
+  ],
+  "green-lantern-capital-llp-510854|glenmark-pharmaceuticals": [
+    {
+      "date": "2025-01-23",
+      "side": "buy",
+      "quantity": 1430,
+      "price": 1522.4094,
+      "amount": 2180964.11
+    },
+    {
+      "date": "2025-07-16",
+      "side": "sell",
+      "quantity": 130,
+      "price": 2200.3639,
+      "amount": 285475.22
+    },
+    {
+      "date": "2025-07-17",
+      "side": "sell",
+      "quantity": 70,
+      "price": 2198.8021,
+      "amount": 153608.31
+    },
+    {
+      "date": "2025-07-28",
+      "side": "sell",
+      "quantity": 140,
+      "price": 2155.869,
+      "amount": 301218.03
+    },
+    {
+      "date": "2025-08-04",
+      "side": "sell",
+      "quantity": 70,
+      "price": 2090.3799,
+      "amount": 146033.93
+    }
+  ],
+  "green-lantern-capital-llp-510854|gmm-pfaudler": [
+    {
+      "date": "2025-11-03",
+      "side": "buy",
+      "quantity": 382,
+      "price": 1299.2804,
+      "amount": 497317.76
+    },
+    {
+      "date": "2025-11-04",
+      "side": "buy",
+      "quantity": 235,
+      "price": 1269.9201,
+      "amount": 298968.39
+    },
+    {
+      "date": "2025-11-06",
+      "side": "buy",
+      "quantity": 3,
+      "price": 1277.9467,
+      "amount": 3841.5
+    },
+    {
+      "date": "2025-11-07",
+      "side": "buy",
+      "quantity": 47,
+      "price": 1221.783,
+      "amount": 57538.64
+    },
+    {
+      "date": "2025-11-10",
+      "side": "buy",
+      "quantity": 55,
+      "price": 1245.8722,
+      "amount": 68660.01
+    },
+    {
+      "date": "2025-11-13",
+      "side": "buy",
+      "quantity": 237,
+      "price": 1260.0005,
+      "amount": 299157.64
+    },
+    {
+      "date": "2025-11-17",
+      "side": "buy",
+      "quantity": 121,
+      "price": 1213.0283,
+      "amount": 147069.97
+    },
+    {
+      "date": "2025-11-18",
+      "side": "buy",
+      "quantity": 46,
+      "price": 1239.1976,
+      "amount": 57117.09
+    },
+    {
+      "date": "2025-12-09",
+      "side": "buy",
+      "quantity": 36,
+      "price": 1076.5464,
+      "amount": 38833.17
+    },
+    {
+      "date": "2026-08-06",
+      "side": "sell",
+      "quantity": 856,
+      "price": 982.318,
+      "amount": 839350.61
+    },
+    {
+      "date": "2026-08-07",
+      "side": "sell",
+      "quantity": 98,
+      "price": 964.9778,
+      "amount": 94397.59
+    },
+    {
+      "date": "2026-08-10",
+      "side": "sell",
+      "quantity": 208,
+      "price": 969.7586,
+      "amount": 201346.71
+    }
+  ],
+  "green-lantern-capital-llp-510854|graphite-india": [
+    {
+      "date": "2025-10-30",
+      "side": "buy",
+      "quantity": 663,
+      "price": 640.3552,
+      "amount": 425404.65
+    },
+    {
+      "date": "2025-10-31",
+      "side": "buy",
+      "quantity": 155,
+      "price": 626.5875,
+      "amount": 97315.3
+    },
+    {
+      "date": "2025-11-03",
+      "side": "buy",
+      "quantity": 120,
+      "price": 619.7783,
+      "amount": 74522.15
+    },
+    {
+      "date": "2025-11-06",
+      "side": "buy",
+      "quantity": 136,
+      "price": 601.8221,
+      "amount": 82011.5
+    },
+    {
+      "date": "2025-11-07",
+      "side": "buy",
+      "quantity": 94,
+      "price": 584.77,
+      "amount": 55078.32
+    },
+    {
+      "date": "2025-11-10",
+      "side": "buy",
+      "quantity": 142,
+      "price": 539.6526,
+      "amount": 76783.94
+    },
+    {
+      "date": "2025-12-09",
+      "side": "buy",
+      "quantity": 139,
+      "price": 538.0199,
+      "amount": 74934.34
+    },
+    {
+      "date": "2025-12-30",
+      "side": "buy",
+      "quantity": 135,
+      "price": 592.7595,
+      "amount": 80182.56
+    },
+    {
+      "date": "2026-01-02",
+      "side": "buy",
+      "quantity": 136,
+      "price": 658.1401,
+      "amount": 89686.06
+    },
+    {
+      "date": "2026-08-04",
+      "side": "sell",
+      "quantity": 402,
+      "price": 710.8751,
+      "amount": 285285.02
+    },
+    {
+      "date": "2026-08-05",
+      "side": "sell",
+      "quantity": 402,
+      "price": 713.4172,
+      "amount": 286305.92
+    },
+    {
+      "date": "2026-08-06",
+      "side": "sell",
+      "quantity": 80,
+      "price": 711.0761,
+      "amount": 56789.2
+    },
+    {
+      "date": "2026-08-14",
+      "side": "sell",
+      "quantity": 41,
+      "price": 721.0824,
+      "amount": 29514.31
+    },
+    {
+      "date": "2026-08-21",
+      "side": "sell",
+      "quantity": 243,
+      "price": 715.1422,
+      "amount": 173484.27
+    },
+    {
+      "date": "2026-08-24",
+      "side": "sell",
+      "quantity": 81,
+      "price": 720.2501,
+      "amount": 58241.42
+    },
+    {
+      "date": "2026-08-25",
+      "side": "sell",
+      "quantity": 81,
+      "price": 711.4128,
+      "amount": 57526.32
+    },
+    {
+      "date": "2026-08-26",
+      "side": "sell",
+      "quantity": 20,
+      "price": 684.1045,
+      "amount": 13658.81
+    },
+    {
+      "date": "2026-08-27",
+      "side": "sell",
+      "quantity": 41,
+      "price": 692.238,
+      "amount": 28333.7
+    },
+    {
+      "date": "2026-09-01",
+      "side": "sell",
+      "quantity": 41,
+      "price": 742.9,
+      "amount": 30407.12
+    },
+    {
+      "date": "2026-09-09",
+      "side": "sell",
+      "quantity": 41,
+      "price": 823.0002,
+      "amount": 33685.49
+    },
+    {
+      "date": "2026-09-16",
+      "side": "sell",
+      "quantity": 204,
+      "price": 803.8101,
+      "amount": 163699.04
+    },
+    {
+      "date": "2026-09-17",
+      "side": "sell",
+      "quantity": 43,
+      "price": 812.1126,
+      "amount": 34861.41
+    }
+  ],
+  "green-lantern-capital-llp-510854|gujarat-ambuja-exports": [
+    {
+      "date": "2025-04-03",
+      "side": "buy",
+      "quantity": 240,
+      "price": 110.0007,
+      "amount": 26452.97
+    },
+    {
+      "date": "2025-04-04",
+      "side": "buy",
+      "quantity": 6300,
+      "price": 114.414,
+      "amount": 722249.73
+    },
+    {
+      "date": "2025-04-07",
+      "side": "buy",
+      "quantity": 1820,
+      "price": 111.0588,
+      "amount": 202531.35
+    },
+    {
+      "date": "2025-04-08",
+      "side": "buy",
+      "quantity": 5070,
+      "price": 120.388,
+      "amount": 611587.95
+    },
+    {
+      "date": "2025-04-09",
+      "side": "buy",
+      "quantity": 2530,
+      "price": 116.0671,
+      "amount": 294237.14
+    },
+    {
+      "date": "2025-04-15",
+      "side": "buy",
+      "quantity": 1170,
+      "price": 119.2346,
+      "amount": 139783.45
+    },
+    {
+      "date": "2025-04-16",
+      "side": "buy",
+      "quantity": 1440,
+      "price": 124.9636,
+      "amount": 180307.53
+    },
+    {
+      "date": "2025-04-17",
+      "side": "buy",
+      "quantity": 960,
+      "price": 128.0154,
+      "amount": 123140.55
+    },
+    {
+      "date": "2025-05-15",
+      "side": "buy",
+      "quantity": 290,
+      "price": 123.3346,
+      "amount": 35838.56
+    },
+    {
+      "date": "2025-05-16",
+      "side": "buy",
+      "quantity": 580,
+      "price": 124.6352,
+      "amount": 72432.98
+    },
+    {
+      "date": "2026-06-29",
+      "side": "sell",
+      "quantity": 1584,
+      "price": 163.0827,
+      "amount": 257858.12,
+      "boughtOn": [
+        "2025-04-03",
+        "2025-04-04"
+      ]
+    },
+    {
+      "date": "2026-06-30",
+      "side": "sell",
+      "quantity": 367,
+      "price": 165.5835,
+      "amount": 60659.74,
+      "boughtOn": [
+        "2025-04-04"
+      ]
+    },
+    {
+      "date": "2026-07-07",
+      "side": "sell",
+      "quantity": 105,
+      "price": 161.0653,
+      "amount": 16881.42,
+      "boughtOn": [
+        "2025-04-04"
+      ]
+    },
+    {
+      "date": "2026-07-08",
+      "side": "sell",
+      "quantity": 211,
+      "price": 161.1683,
+      "amount": 33945.3,
+      "boughtOn": [
+        "2025-04-04"
+      ]
+    },
+    {
+      "date": "2026-07-09",
+      "side": "sell",
+      "quantity": 136,
+      "price": 159.2417,
+      "amount": 21617.88,
+      "boughtOn": [
+        "2025-04-04"
+      ]
+    },
+    {
+      "date": "2026-07-13",
+      "side": "sell",
+      "quantity": 2250,
+      "price": 148.1992,
+      "amount": 332847.9,
+      "boughtOn": [
+        "2025-04-04"
+      ]
+    },
+    {
+      "date": "2026-07-14",
+      "side": "sell",
+      "quantity": 596,
+      "price": 149.2678,
+      "amount": 88803.49,
+      "boughtOn": [
+        "2025-04-04"
+      ]
+    },
+    {
+      "date": "2026-07-15",
+      "side": "sell",
+      "quantity": 410,
+      "price": 149.5837,
+      "amount": 61218.91,
+      "boughtOn": [
+        "2025-04-04"
+      ]
+    },
+    {
+      "date": "2026-07-16",
+      "side": "sell",
+      "quantity": 722,
+      "price": 148.9945,
+      "amount": 107380.4,
+      "boughtOn": [
+        "2025-04-04"
+      ]
+    },
+    {
+      "date": "2026-07-17",
+      "side": "sell",
+      "quantity": 282,
+      "price": 146.2945,
+      "amount": 41180.8,
+      "boughtOn": [
+        "2025-04-04",
+        "2025-04-07"
+      ]
+    },
+    {
+      "date": "2026-07-20",
+      "side": "sell",
+      "quantity": 372,
+      "price": 144.7933,
+      "amount": 53766.16,
+      "boughtOn": [
+        "2025-04-07"
+      ]
+    },
+    {
+      "date": "2026-07-21",
+      "side": "sell",
+      "quantity": 84,
+      "price": 144.9488,
+      "amount": 12153.78,
+      "boughtOn": [
+        "2025-04-07"
+      ]
+    },
+    {
+      "date": "2026-07-22",
+      "side": "sell",
+      "quantity": 1047,
+      "price": 144.2245,
+      "amount": 150731.23,
+      "boughtOn": [
+        "2025-04-07"
+      ]
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 567,
+      "price": 140.4105,
+      "amount": 79469.47,
+      "boughtOn": [
+        "2025-04-07",
+        "2025-04-08"
+      ]
+    },
+    {
+      "date": "2026-07-24",
+      "side": "sell",
+      "quantity": 4118,
+      "price": 147.3698,
+      "amount": 605776.46,
+      "boughtOn": [
+        "2025-04-08"
+      ]
+    },
+    {
+      "date": "2026-07-27",
+      "side": "sell",
+      "quantity": 393,
+      "price": 157.2506,
+      "amount": 61688.25,
+      "boughtOn": [
+        "2025-04-08"
+      ]
+    },
+    {
+      "date": "2026-08-03",
+      "side": "sell",
+      "quantity": 586,
+      "price": 176.0455,
+      "amount": 102976.99
+    },
+    {
+      "date": "2026-08-04",
+      "side": "sell",
+      "quantity": 396,
+      "price": 178.1345,
+      "amount": 70414.29
+    },
+    {
+      "date": "2026-08-05",
+      "side": "sell",
+      "quantity": 579,
+      "price": 177.0649,
+      "amount": 102336.02
+    },
+    {
+      "date": "2026-08-06",
+      "side": "sell",
+      "quantity": 579,
+      "price": 176.1816,
+      "amount": 101825.56
+    },
+    {
+      "date": "2026-08-07",
+      "side": "sell",
+      "quantity": 773,
+      "price": 170.5094,
+      "amount": 131566.53
+    },
+    {
+      "date": "2026-08-10",
+      "side": "sell",
+      "quantity": 97,
+      "price": 170.1473,
+      "amount": 16474.58
+    },
+    {
+      "date": "2026-08-11",
+      "side": "sell",
+      "quantity": 224,
+      "price": 170.2936,
+      "amount": 38077.11
+    },
+    {
+      "date": "2026-08-12",
+      "side": "sell",
+      "quantity": 291,
+      "price": 167.0661,
+      "amount": 48528.71
+    },
+    {
+      "date": "2026-08-13",
+      "side": "sell",
+      "quantity": 79,
+      "price": 167.2303,
+      "amount": 13187.41
+    },
+    {
+      "date": "2026-08-21",
+      "side": "sell",
+      "quantity": 388,
+      "price": 178.9813,
+      "amount": 69324.86
+    },
+    {
+      "date": "2026-08-24",
+      "side": "sell",
+      "quantity": 583,
+      "price": 180.7317,
+      "amount": 105185.42
+    },
+    {
+      "date": "2026-08-25",
+      "side": "sell",
+      "quantity": 970,
+      "price": 179.4804,
+      "amount": 173795.79
+    },
+    {
+      "date": "2026-08-26",
+      "side": "sell",
+      "quantity": 975,
+      "price": 174.6701,
+      "amount": 170016.05
+    },
+    {
+      "date": "2026-08-27",
+      "side": "sell",
+      "quantity": 195,
+      "price": 168.6679,
+      "amount": 32833.95
+    },
+    {
+      "date": "2026-08-28",
+      "side": "sell",
+      "quantity": 429,
+      "price": 167.4136,
+      "amount": 71697.13
+    },
+    {
+      "date": "2026-08-31",
+      "side": "sell",
+      "quantity": 12,
+      "price": 171.8592,
+      "amount": 2058.81
+    }
+  ],
+  "green-lantern-capital-llp-510854|hindustan-aeronautics": [
+    {
+      "date": "2025-09-12",
+      "side": "buy",
+      "quantity": 117,
+      "price": 4740.9582,
+      "amount": 555690.55
+    },
+    {
+      "date": "2025-09-22",
+      "side": "buy",
+      "quantity": 48,
+      "price": 4862.579,
+      "amount": 233823.91
+    },
+    {
+      "date": "2025-09-23",
+      "side": "buy",
+      "quantity": 48,
+      "price": 4784.6538,
+      "amount": 230076.78
+    },
+    {
+      "date": "2025-09-25",
+      "side": "buy",
+      "quantity": 46,
+      "price": 4771.1,
+      "amount": 219865.64
+    },
+    {
+      "date": "2025-10-14",
+      "side": "buy",
+      "quantity": 31,
+      "price": 4745.0774,
+      "amount": 147362.18
+    },
+    {
+      "date": "2026-03-09",
+      "side": "buy",
+      "quantity": 48,
+      "price": 3987.3262,
+      "amount": 191774.44
+    },
+    {
+      "date": "2026-03-12",
+      "side": "buy",
+      "quantity": 21,
+      "price": 4013.3886,
+      "amount": 84449.72
+    },
+    {
+      "date": "2026-03-17",
+      "side": "buy",
+      "quantity": 39,
+      "price": 3947.8177,
+      "amount": 154272.81
+    },
+    {
+      "date": "2026-03-24",
+      "side": "buy",
+      "quantity": 6,
+      "price": 3687.5,
+      "amount": 22169.25
+    },
+    {
+      "date": "2026-04-01",
+      "side": "buy",
+      "quantity": 21,
+      "price": 3643.2748,
+      "amount": 76661.79
+    }
+  ],
+  "green-lantern-capital-llp-510854|ingersollrand-india": [
+    {
+      "date": "2026-04-13",
+      "side": "buy",
+      "quantity": 139,
+      "price": 3967.8186,
+      "amount": 552519.55
+    },
+    {
+      "date": "2026-04-17",
+      "side": "buy",
+      "quantity": 79,
+      "price": 4100,
+      "amount": 324483.02
+    }
+  ],
+  "green-lantern-capital-llp-510854|intellect-design-arena": [
+    {
+      "date": "2025-08-26",
+      "side": "buy",
+      "quantity": 218,
+      "price": 983.7486,
+      "amount": 214886.1
+    },
+    {
+      "date": "2025-08-28",
+      "side": "buy",
+      "quantity": 218,
+      "price": 974.7571,
+      "amount": 212922.03
+    },
+    {
+      "date": "2025-09-01",
+      "side": "buy",
+      "quantity": 24,
+      "price": 988.2783,
+      "amount": 23766.12
+    },
+    {
+      "date": "2025-09-02",
+      "side": "buy",
+      "quantity": 28,
+      "price": 989.9971,
+      "amount": 27775.36
+    },
+    {
+      "date": "2025-09-03",
+      "side": "buy",
+      "quantity": 110,
+      "price": 960.4266,
+      "amount": 105858.22
+    },
+    {
+      "date": "2025-09-08",
+      "side": "buy",
+      "quantity": 48,
+      "price": 909.1971,
+      "amount": 43728.74
+    },
+    {
+      "date": "2025-09-09",
+      "side": "buy",
+      "quantity": 73,
+      "price": 943.2505,
+      "amount": 68995
+    },
+    {
+      "date": "2025-09-10",
+      "side": "buy",
+      "quantity": 95,
+      "price": 995.8658,
+      "amount": 94796.46
+    },
+    {
+      "date": "2025-09-11",
+      "side": "buy",
+      "quantity": 22,
+      "price": 1013.8782,
+      "amount": 22349.92
+    },
+    {
+      "date": "2025-09-12",
+      "side": "buy",
+      "quantity": 62,
+      "price": 1023.0394,
+      "amount": 63555.3
+    },
+    {
+      "date": "2025-09-16",
+      "side": "buy",
+      "quantity": 52,
+      "price": 1040.0254,
+      "amount": 54189.48
+    },
+    {
+      "date": "2025-09-17",
+      "side": "buy",
+      "quantity": 169,
+      "price": 1045.9055,
+      "amount": 177111.55
+    },
+    {
+      "date": "2025-10-10",
+      "side": "buy",
+      "quantity": 36,
+      "price": 989.5928,
+      "amount": 35696.59
+    },
+    {
+      "date": "2025-10-13",
+      "side": "buy",
+      "quantity": 55,
+      "price": 990.3293,
+      "amount": 54577.05
+    },
+    {
+      "date": "2025-10-14",
+      "side": "buy",
+      "quantity": 60,
+      "price": 966.4432,
+      "amount": 58102.56
+    },
+    {
+      "date": "2025-10-20",
+      "side": "buy",
+      "quantity": 47,
+      "price": 950.8236,
+      "amount": 44778.09
+    },
+    {
+      "date": "2025-11-18",
+      "side": "buy",
+      "quantity": 87,
+      "price": 1101.8285,
+      "amount": 96050.8
+    },
+    {
+      "date": "2025-11-20",
+      "side": "buy",
+      "quantity": 24,
+      "price": 1098.6329,
+      "amount": 26419.93
+    },
+    {
+      "date": "2025-12-02",
+      "side": "buy",
+      "quantity": 7,
+      "price": 1094.9129,
+      "amount": 7679.71
+    },
+    {
+      "date": "2025-12-30",
+      "side": "buy",
+      "quantity": 93,
+      "price": 950.6508,
+      "amount": 88587.35
+    },
+    {
+      "date": "2026-01-05",
+      "side": "buy",
+      "quantity": 23,
+      "price": 972.2552,
+      "amount": 22406.59
+    },
+    {
+      "date": "2026-01-13",
+      "side": "buy",
+      "quantity": 22,
+      "price": 926.9214,
+      "amount": 20433.05
+    },
+    {
+      "date": "2026-01-20",
+      "side": "buy",
+      "quantity": 91,
+      "price": 905.2729,
+      "amount": 82544.59
+    },
+    {
+      "date": "2026-03-09",
+      "side": "buy",
+      "quantity": 130,
+      "price": 673.1015,
+      "amount": 87660.71
+    },
+    {
+      "date": "2026-03-10",
+      "side": "buy",
+      "quantity": 87,
+      "price": 678.8418,
+      "amount": 59165.55
+    },
+    {
+      "date": "2026-03-11",
+      "side": "buy",
+      "quantity": 45,
+      "price": 676.8349,
+      "amount": 30512.4
+    },
+    {
+      "date": "2026-03-13",
+      "side": "buy",
+      "quantity": 43,
+      "price": 662.856,
+      "amount": 28554.11
+    },
+    {
+      "date": "2026-03-17",
+      "side": "buy",
+      "quantity": 176,
+      "price": 650.1891,
+      "amount": 114639.27
+    },
+    {
+      "date": "2026-04-07",
+      "side": "buy",
+      "quantity": 41,
+      "price": 667.8622,
+      "amount": 27431.64
+    }
+  ],
+  "green-lantern-capital-llp-510854|isgec-heavy-engineering": [
+    {
+      "date": "2025-01-14",
+      "side": "buy",
+      "quantity": 1620,
+      "price": 1235.0782,
+      "amount": 2004428.4
+    },
+    {
+      "date": "2026-03-04",
+      "side": "buy",
+      "quantity": 18,
+      "price": 856.9989,
+      "amount": 15456.84
+    },
+    {
+      "date": "2026-03-17",
+      "side": "buy",
+      "quantity": 38,
+      "price": 898.1342,
+      "amount": 34190.53
+    },
+    {
+      "date": "2026-03-23",
+      "side": "buy",
+      "quantity": 73,
+      "price": 879.7399,
+      "amount": 64336.62
+    },
+    {
+      "date": "2026-03-24",
+      "side": "buy",
+      "quantity": 447,
+      "price": 893,
+      "amount": 399889.51
+    },
+    {
+      "date": "2026-03-27",
+      "side": "buy",
+      "quantity": 52,
+      "price": 894.7048,
+      "amount": 46608.4
+    },
+    {
+      "date": "2026-03-30",
+      "side": "buy",
+      "quantity": 112,
+      "price": 869.6933,
+      "amount": 97580.99
+    },
+    {
+      "date": "2026-04-09",
+      "side": "buy",
+      "quantity": 53,
+      "price": 959.8238,
+      "amount": 50962.23
+    },
+    {
+      "date": "2026-04-28",
+      "side": "buy",
+      "quantity": 203,
+      "price": 1093,
+      "amount": 222278.38
+    }
+  ],
+  "green-lantern-capital-llp-510854|jamna-auto-ind": [
+    {
+      "date": "2025-12-01",
+      "side": "buy",
+      "quantity": 3616,
+      "price": 115.8538,
+      "amount": 419765.36
+    },
+    {
+      "date": "2026-02-20",
+      "side": "buy",
+      "quantity": 3512,
+      "price": 143.949,
+      "amount": 506559.82
+    },
+    {
+      "date": "2026-03-04",
+      "side": "buy",
+      "quantity": 4242,
+      "price": 139.585,
+      "amount": 593303.89
+    },
+    {
+      "date": "2026-03-09",
+      "side": "buy",
+      "quantity": 1323,
+      "price": 122.8192,
+      "amount": 162814.75
+    },
+    {
+      "date": "2026-03-13",
+      "side": "buy",
+      "quantity": 423,
+      "price": 117.2678,
+      "amount": 49703.51
+    },
+    {
+      "date": "2026-03-25",
+      "side": "buy",
+      "quantity": 847,
+      "price": 121.4515,
+      "amount": 103075.2
+    },
+    {
+      "date": "2026-07-14",
+      "side": "sell",
+      "quantity": 405,
+      "price": 131.0032,
+      "amount": 52960.8,
+      "boughtOn": [
+        "2025-12-01"
+      ]
+    },
+    {
+      "date": "2026-07-15",
+      "side": "sell",
+      "quantity": 1014,
+      "price": 131.1288,
+      "amount": 132725.27,
+      "boughtOn": [
+        "2025-12-01"
+      ]
+    },
+    {
+      "date": "2026-07-16",
+      "side": "sell",
+      "quantity": 405,
+      "price": 134.4429,
+      "amount": 54351.34,
+      "boughtOn": [
+        "2025-12-01"
+      ]
+    },
+    {
+      "date": "2026-07-17",
+      "side": "sell",
+      "quantity": 250,
+      "price": 131.8696,
+      "amount": 32908.05,
+      "boughtOn": [
+        "2025-12-01"
+      ]
+    },
+    {
+      "date": "2026-07-20",
+      "side": "sell",
+      "quantity": 254,
+      "price": 134.0114,
+      "amount": 33977.63,
+      "boughtOn": [
+        "2025-12-01"
+      ]
+    },
+    {
+      "date": "2026-07-21",
+      "side": "sell",
+      "quantity": 939,
+      "price": 135.3749,
+      "amount": 126888.22,
+      "boughtOn": [
+        "2025-12-01"
+      ]
+    },
+    {
+      "date": "2026-07-22",
+      "side": "sell",
+      "quantity": 555,
+      "price": 132.4309,
+      "amount": 73366.88,
+      "boughtOn": [
+        "2025-12-01",
+        "2026-02-20"
+      ]
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 858,
+      "price": 131.8436,
+      "amount": 112918.17,
+      "boughtOn": [
+        "2026-02-20"
+      ]
+    },
+    {
+      "date": "2026-07-24",
+      "side": "sell",
+      "quantity": 1283,
+      "price": 129.7253,
+      "amount": 166137.94,
+      "boughtOn": [
+        "2026-02-20"
+      ]
+    },
+    {
+      "date": "2026-07-27",
+      "side": "sell",
+      "quantity": 603,
+      "price": 133.7064,
+      "amount": 80479.81,
+      "boughtOn": [
+        "2026-02-20"
+      ]
+    },
+    {
+      "date": "2026-07-28",
+      "side": "sell",
+      "quantity": 201,
+      "price": 132.7115,
+      "amount": 26626.98
+    }
+  ],
+  "green-lantern-capital-llp-510854|kaveri-seed": [
+    {
+      "date": "2025-01-14",
+      "side": "buy",
+      "quantity": 2250,
+      "price": 898.6636,
+      "amount": 2026036.95
+    },
+    {
+      "date": "2025-01-23",
+      "side": "buy",
+      "quantity": 90,
+      "price": 923.8299,
+      "amount": 83310.98
+    },
+    {
+      "date": "2025-02-21",
+      "side": "buy",
+      "quantity": 10,
+      "price": 983.261,
+      "amount": 9852.27
+    },
+    {
+      "date": "2025-02-27",
+      "side": "buy",
+      "quantity": 60,
+      "price": 1028.7477,
+      "amount": 61848.3
+    },
+    {
+      "date": "2025-03-10",
+      "side": "buy",
+      "quantity": 270,
+      "price": 1078.1928,
+      "amount": 291694.26
+    },
+    {
+      "date": "2026-06-22",
+      "side": "sell",
+      "quantity": 100,
+      "price": 944.9592,
+      "amount": 94325.83,
+      "boughtOn": [
+        "2025-01-14"
+      ]
+    }
+  ],
+  "green-lantern-capital-llp-510854|ksb": [
+    {
+      "date": "2026-03-04",
+      "side": "buy",
+      "quantity": 36,
+      "price": 735.1864,
+      "amount": 26514.35
+    },
+    {
+      "date": "2026-03-05",
+      "side": "buy",
+      "quantity": 26,
+      "price": 738.655,
+      "amount": 19239.6
+    },
+    {
+      "date": "2026-03-09",
+      "side": "buy",
+      "quantity": 199,
+      "price": 744.9665,
+      "amount": 148515.18
+    },
+    {
+      "date": "2026-03-10",
+      "side": "buy",
+      "quantity": 49,
+      "price": 757.3673,
+      "amount": 37177.8
+    },
+    {
+      "date": "2026-03-11",
+      "side": "buy",
+      "quantity": 205,
+      "price": 760.196,
+      "amount": 156105.1
+    },
+    {
+      "date": "2026-03-12",
+      "side": "buy",
+      "quantity": 124,
+      "price": 758.1505,
+      "amount": 94170.48
+    },
+    {
+      "date": "2026-03-13",
+      "side": "buy",
+      "quantity": 71,
+      "price": 749.8941,
+      "amount": 53338.31
+    },
+    {
+      "date": "2026-03-16",
+      "side": "buy",
+      "quantity": 74,
+      "price": 745.1323,
+      "amount": 55239.04
+    },
+    {
+      "date": "2026-03-20",
+      "side": "buy",
+      "quantity": 86,
+      "price": 797.4887,
+      "amount": 68707.48
+    },
+    {
+      "date": "2026-03-23",
+      "side": "buy",
+      "quantity": 542,
+      "price": 767.4802,
+      "amount": 416723.03
+    },
+    {
+      "date": "2026-03-24",
+      "side": "buy",
+      "quantity": 45,
+      "price": 803.4389,
+      "amount": 36219.84
+    },
+    {
+      "date": "2026-03-25",
+      "side": "buy",
+      "quantity": 218,
+      "price": 812.2954,
+      "amount": 177399.14
+    },
+    {
+      "date": "2026-04-01",
+      "side": "buy",
+      "quantity": 43,
+      "price": 833.9333,
+      "amount": 35923.68
+    },
+    {
+      "date": "2026-04-02",
+      "side": "buy",
+      "quantity": 21,
+      "price": 823.0657,
+      "amount": 17315.5
+    },
+    {
+      "date": "2026-04-02",
+      "side": "buy",
+      "quantity": 21,
+      "price": 823.0657,
+      "amount": 17315.5
+    },
+    {
+      "date": "2026-04-09",
+      "side": "buy",
+      "quantity": 32,
+      "price": 872.9797,
+      "amount": 27985.63
+    },
+    {
+      "date": "2026-04-13",
+      "side": "buy",
+      "quantity": 68,
+      "price": 908.1179,
+      "amount": 61863.17
+    },
+    {
+      "date": "2026-04-15",
+      "side": "buy",
+      "quantity": 463,
+      "price": 932.5,
+      "amount": 432524.65
+    },
+    {
+      "date": "2026-04-17",
+      "side": "buy",
+      "quantity": 186,
+      "price": 952.641,
+      "amount": 177510.17
+    },
+    {
+      "date": "2026-05-04",
+      "side": "buy",
+      "quantity": 144,
+      "price": 899.4131,
+      "amount": 129748.62
+    },
+    {
+      "date": "2026-06-04",
+      "side": "buy",
+      "quantity": 37,
+      "price": 788.9365,
+      "amount": 29240.28
+    },
+    {
+      "date": "2026-06-05",
+      "side": "buy",
+      "quantity": 43,
+      "price": 808.9874,
+      "amount": 34845.6
+    },
+    {
+      "date": "2026-06-08",
+      "side": "buy",
+      "quantity": 42,
+      "price": 820.4995,
+      "amount": 34519.56
+    },
+    {
+      "date": "2026-06-09",
+      "side": "buy",
+      "quantity": 45,
+      "price": 804.4991,
+      "amount": 36264
+    }
+  ],
+  "green-lantern-capital-llp-510854|mishra-dhatu-nigam": [
+    {
+      "date": "2025-04-25",
+      "side": "buy",
+      "quantity": 940,
+      "price": 291.2143,
+      "amount": 274288.91
+    },
+    {
+      "date": "2025-04-28",
+      "side": "buy",
+      "quantity": 600,
+      "price": 304.2576,
+      "amount": 182919.64
+    },
+    {
+      "date": "2025-04-30",
+      "side": "buy",
+      "quantity": 290,
+      "price": 314.733,
+      "amount": 91455.1
+    },
+    {
+      "date": "2025-05-06",
+      "side": "buy",
+      "quantity": 220,
+      "price": 307.1868,
+      "amount": 67716.24
+    },
+    {
+      "date": "2025-05-08",
+      "side": "buy",
+      "quantity": 450,
+      "price": 309.507,
+      "amount": 139556.71
+    },
+    {
+      "date": "2025-05-09",
+      "side": "buy",
+      "quantity": 190,
+      "price": 318.6558,
+      "amount": 60665.67
+    },
+    {
+      "date": "2025-05-13",
+      "side": "buy",
+      "quantity": 40,
+      "price": 344.429,
+      "amount": 13804.72
+    },
+    {
+      "date": "2025-10-29",
+      "side": "buy",
+      "quantity": 131,
+      "price": 385.8853,
+      "amount": 50652.06
+    },
+    {
+      "date": "2025-11-11",
+      "side": "buy",
+      "quantity": 66,
+      "price": 388.4162,
+      "amount": 25686.73
+    },
+    {
+      "date": "2025-11-14",
+      "side": "buy",
+      "quantity": 181,
+      "price": 369.8914,
+      "amount": 67084.22
+    },
+    {
+      "date": "2025-12-08",
+      "side": "buy",
+      "quantity": 53,
+      "price": 296.844,
+      "amount": 15764.19
+    },
+    {
+      "date": "2025-12-09",
+      "side": "buy",
+      "quantity": 114,
+      "price": 299.6846,
+      "amount": 34232.36
+    },
+    {
+      "date": "2025-12-22",
+      "side": "buy",
+      "quantity": 192,
+      "price": 310.2328,
+      "amount": 59683.82
+    },
+    {
+      "date": "2026-04-01",
+      "side": "buy",
+      "quantity": 230,
+      "price": 289.8124,
+      "amount": 66776.82
+    },
+    {
+      "date": "2026-06-18",
+      "side": "buy",
+      "quantity": 92,
+      "price": 430.8276,
+      "amount": 39707.47
+    }
+  ],
+  "green-lantern-capital-llp-510854|power-finance": [
+    {
+      "date": "2025-01-14",
+      "side": "buy",
+      "quantity": 2480,
+      "price": 410.35,
+      "amount": 1019703.79
+    },
+    {
+      "date": "2025-05-13",
+      "side": "buy",
+      "quantity": 960,
+      "price": 413.7536,
+      "amount": 397878.68
+    },
+    {
+      "date": "2025-06-10",
+      "side": "buy",
+      "quantity": 220,
+      "price": 431.8385,
+      "amount": 95194.47
+    },
+    {
+      "date": "2025-06-11",
+      "side": "buy",
+      "quantity": 260,
+      "price": 434.7008,
+      "amount": 113248.25
+    },
+    {
+      "date": "2026-04-09",
+      "side": "buy",
+      "quantity": 255,
+      "price": 426.3061,
+      "amount": 108892.86
+    }
+  ],
+  "green-lantern-capital-llp-510854|punjab-national-bank": [
+    {
+      "date": "2025-06-30",
+      "side": "buy",
+      "quantity": 2680,
+      "price": 109.6353,
+      "amount": 294410.15
+    },
+    {
+      "date": "2025-07-01",
+      "side": "buy",
+      "quantity": 500,
+      "price": 109.7868,
+      "amount": 55003.15
+    },
+    {
+      "date": "2025-07-03",
+      "side": "buy",
+      "quantity": 3730,
+      "price": 111.1412,
+      "amount": 415385.64
+    },
+    {
+      "date": "2025-07-18",
+      "side": "buy",
+      "quantity": 1040,
+      "price": 113.4196,
+      "amount": 118192.28
+    },
+    {
+      "date": "2025-10-09",
+      "side": "buy",
+      "quantity": 1191,
+      "price": 114.1466,
+      "amount": 136220.44
+    },
+    {
+      "date": "2025-10-23",
+      "side": "buy",
+      "quantity": 1233,
+      "price": 119.2496,
+      "amount": 147328.76
+    },
+    {
+      "date": "2025-10-27",
+      "side": "buy",
+      "quantity": 463,
+      "price": 118.3949,
+      "amount": 54926.48
+    },
+    {
+      "date": "2026-02-04",
+      "side": "sell",
+      "quantity": 2411,
+      "price": 123.6257,
+      "amount": 297465.5
+    },
+    {
+      "date": "2026-02-05",
+      "side": "sell",
+      "quantity": 1808,
+      "price": 123.7137,
+      "amount": 223227.05
+    },
+    {
+      "date": "2026-02-09",
+      "side": "sell",
+      "quantity": 603,
+      "price": 123.5512,
+      "amount": 74352.4
+    },
+    {
+      "date": "2026-02-23",
+      "side": "sell",
+      "quantity": 1826,
+      "price": 130.8836,
+      "amount": 238515.62
+    }
+  ],
+  "green-lantern-capital-llp-510854|ratnamani-metals-and-tubes": [
+    {
+      "date": "2026-04-27",
+      "side": "buy",
+      "quantity": 95,
+      "price": 2688.8036,
+      "amount": 255896.13
+    },
+    {
+      "date": "2026-04-28",
+      "side": "buy",
+      "quantity": 81,
+      "price": 2709.9907,
+      "amount": 219904.37
+    },
+    {
+      "date": "2026-04-29",
+      "side": "buy",
+      "quantity": 79,
+      "price": 2650,
+      "amount": 209726.83
+    },
+    {
+      "date": "2026-04-30",
+      "side": "buy",
+      "quantity": 33,
+      "price": 2646.2221,
+      "amount": 87482.51
+    },
+    {
+      "date": "2026-05-04",
+      "side": "buy",
+      "quantity": 15,
+      "price": 2670.0827,
+      "amount": 40123.33
+    },
+    {
+      "date": "2026-05-05",
+      "side": "buy",
+      "quantity": 12,
+      "price": 2709.41,
+      "amount": 32571.44
+    },
+    {
+      "date": "2026-05-07",
+      "side": "buy",
+      "quantity": 21,
+      "price": 2820.149,
+      "amount": 59329.73
+    },
+    {
+      "date": "2026-05-08",
+      "side": "buy",
+      "quantity": 16,
+      "price": 2868.4781,
+      "amount": 45973.68
+    },
+    {
+      "date": "2026-05-15",
+      "side": "buy",
+      "quantity": 18,
+      "price": 2720.5817,
+      "amount": 49053.72
+    },
+    {
+      "date": "2026-06-03",
+      "side": "buy",
+      "quantity": 25,
+      "price": 2566.7492,
+      "amount": 64284.24
+    },
+    {
+      "date": "2026-06-04",
+      "side": "buy",
+      "quantity": 6,
+      "price": 2639.9817,
+      "amount": 15868.4
+    },
+    {
+      "date": "2026-06-08",
+      "side": "buy",
+      "quantity": 12,
+      "price": 2569.295,
+      "amount": 30887.03
+    },
+    {
+      "date": "2026-06-09",
+      "side": "buy",
+      "quantity": 4,
+      "price": 2561.75,
+      "amount": 10265.45
+    },
+    {
+      "date": "2026-06-12",
+      "side": "buy",
+      "quantity": 9,
+      "price": 2568.1433,
+      "amount": 23154.89
+    },
+    {
+      "date": "2026-06-15",
+      "side": "buy",
+      "quantity": 21,
+      "price": 2600.3319,
+      "amount": 54705.27
+    },
+    {
+      "date": "2026-06-17",
+      "side": "buy",
+      "quantity": 37,
+      "price": 2648.0024,
+      "amount": 98152.45
+    },
+    {
+      "date": "2026-07-21",
+      "side": "sell",
+      "quantity": 34,
+      "price": 2546.135,
+      "amount": 86395.45,
+      "boughtOn": [
+        "2026-04-27"
+      ]
+    },
+    {
+      "date": "2026-07-22",
+      "side": "sell",
+      "quantity": 61,
+      "price": 2472.3772,
+      "amount": 150513.37,
+      "boughtOn": [
+        "2026-04-27"
+      ]
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 43,
+      "price": 2422.2572,
+      "amount": 103948.74,
+      "boughtOn": [
+        "2026-04-28"
+      ]
+    },
+    {
+      "date": "2026-07-24",
+      "side": "sell",
+      "quantity": 45,
+      "price": 2403.7827,
+      "amount": 107953.88,
+      "boughtOn": [
+        "2026-04-28",
+        "2026-04-29"
+      ]
+    },
+    {
+      "date": "2026-07-28",
+      "side": "sell",
+      "quantity": 24,
+      "price": 2374.0804,
+      "amount": 56863.97
+    },
+    {
+      "date": "2026-08-06",
+      "side": "sell",
+      "quantity": 13,
+      "price": 2386.6869,
+      "amount": 30964.87
+    },
+    {
+      "date": "2026-08-07",
+      "side": "sell",
+      "quantity": 78,
+      "price": 2269.5847,
+      "amount": 176673.55
+    },
+    {
+      "date": "2026-08-10",
+      "side": "sell",
+      "quantity": 25,
+      "price": 2266.9456,
+      "amount": 56560.3
+    },
+    {
+      "date": "2026-08-24",
+      "side": "sell",
+      "quantity": 26,
+      "price": 2636.6188,
+      "amount": 68435.44
+    },
+    {
+      "date": "2026-08-25",
+      "side": "sell",
+      "quantity": 135,
+      "price": 2712.1985,
+      "amount": 365524.15
+    }
+  ],
+  "green-lantern-capital-llp-510854|rural-electrification": [
+    {
+      "date": "2025-01-14",
+      "side": "buy",
+      "quantity": 1090,
+      "price": 472.4661,
+      "amount": 516017.97
+    },
+    {
+      "date": "2025-06-27",
+      "side": "buy",
+      "quantity": 1081,
+      "price": 403.3927,
+      "amount": 436939.65
+    }
+  ],
+  "green-lantern-capital-llp-510854|state-bank-of-india": [
+    {
+      "date": "2025-01-14",
+      "side": "buy",
+      "quantity": 1350,
+      "price": 748.5,
+      "amount": 1012495.48
+    },
+    {
+      "date": "2025-06-25",
+      "side": "buy",
+      "quantity": 1230,
+      "price": 801.1558,
+      "amount": 987392.4
+    }
+  ],
+  "green-lantern-capital-llp-510854|tech-mahindra": [
+    {
+      "date": "2026-04-15",
+      "side": "buy",
+      "quantity": 587,
+      "price": 1471.6891,
+      "amount": 865436.46
+    },
+    {
+      "date": "2026-04-16",
+      "side": "buy",
+      "quantity": 185,
+      "price": 1489.0082,
+      "amount": 275962.36
+    }
+  ],
+  "green-lantern-capital-llp-510854|the-anup-engineering": [
+    {
+      "date": "2026-04-01",
+      "side": "buy",
+      "quantity": 52,
+      "price": 1712.9956,
+      "amount": 89236.1
+    },
+    {
+      "date": "2026-04-02",
+      "side": "buy",
+      "quantity": 39,
+      "price": 1732.6818,
+      "amount": 67696.22
+    },
+    {
+      "date": "2026-04-02",
+      "side": "buy",
+      "quantity": 39,
+      "price": 1732.6818,
+      "amount": 67696.22
+    },
+    {
+      "date": "2026-04-06",
+      "side": "buy",
+      "quantity": 23,
+      "price": 1708.0587,
+      "amount": 39356.06
+    },
+    {
+      "date": "2026-04-07",
+      "side": "buy",
+      "quantity": 74,
+      "price": 1734.0711,
+      "amount": 128552.24
+    },
+    {
+      "date": "2026-04-13",
+      "side": "buy",
+      "quantity": 21,
+      "price": 1934.3167,
+      "amount": 40693.77
+    },
+    {
+      "date": "2026-04-15",
+      "side": "buy",
+      "quantity": 11,
+      "price": 2018.0164,
+      "amount": 22238.14
+    },
+    {
+      "date": "2026-04-16",
+      "side": "buy",
+      "quantity": 37,
+      "price": 2064.09,
+      "amount": 76508.8
+    },
+    {
+      "date": "2026-04-20",
+      "side": "buy",
+      "quantity": 32,
+      "price": 2047.1769,
+      "amount": 65627.58
+    },
+    {
+      "date": "2026-04-27",
+      "side": "buy",
+      "quantity": 28,
+      "price": 2204.7896,
+      "amount": 61845.24
+    },
+    {
+      "date": "2026-04-30",
+      "side": "buy",
+      "quantity": 26,
+      "price": 2035.3415,
+      "amount": 53014.14
+    },
+    {
+      "date": "2026-05-21",
+      "side": "buy",
+      "quantity": 25,
+      "price": 1967.7788,
+      "amount": 49283.02
+    },
+    {
+      "date": "2026-05-22",
+      "side": "buy",
+      "quantity": 42,
+      "price": 1982.9488,
+      "amount": 83433.76
+    },
+    {
+      "date": "2026-05-25",
+      "side": "buy",
+      "quantity": 7,
+      "price": 1982.0829,
+      "amount": 13899.56
+    },
+    {
+      "date": "2026-05-26",
+      "side": "buy",
+      "quantity": 35,
+      "price": 1983.9751,
+      "amount": 69564.12
+    },
+    {
+      "date": "2026-05-27",
+      "side": "buy",
+      "quantity": 3,
+      "price": 1949.9633,
+      "amount": 5859.84
+    },
+    {
+      "date": "2026-05-29",
+      "side": "buy",
+      "quantity": 34,
+      "price": 1820.9371,
+      "amount": 62023.3
+    },
+    {
+      "date": "2026-06-01",
+      "side": "buy",
+      "quantity": 8,
+      "price": 1818.4538,
+      "amount": 14573.82
+    },
+    {
+      "date": "2026-06-02",
+      "side": "buy",
+      "quantity": 15,
+      "price": 1831.5073,
+      "amount": 27522.06
+    },
+    {
+      "date": "2026-06-03",
+      "side": "buy",
+      "quantity": 30,
+      "price": 1948.393,
+      "amount": 58557
+    },
+    {
+      "date": "2026-06-04",
+      "side": "buy",
+      "quantity": 4,
+      "price": 1909.5775,
+      "amount": 7652.06
+    },
+    {
+      "date": "2026-06-05",
+      "side": "buy",
+      "quantity": 10,
+      "price": 1918.12,
+      "amount": 19215.73
+    },
+    {
+      "date": "2026-06-08",
+      "side": "buy",
+      "quantity": 13,
+      "price": 1912.5346,
+      "amount": 24907.7
+    },
+    {
+      "date": "2026-06-09",
+      "side": "buy",
+      "quantity": 8,
+      "price": 1862.2638,
+      "amount": 14924.93
+    },
+    {
+      "date": "2026-06-15",
+      "side": "buy",
+      "quantity": 21,
+      "price": 1950,
+      "amount": 41023.71
+    }
+  ],
+  "green-lantern-capital-llp-510854|thermax": [
+    {
+      "date": "2026-04-08",
+      "side": "buy",
+      "quantity": 154,
+      "price": 3274.6295,
+      "amount": 505200.66
+    },
+    {
+      "date": "2026-04-09",
+      "side": "buy",
+      "quantity": 129,
+      "price": 3435.8768,
+      "amount": 444025.92
+    },
+    {
+      "date": "2026-05-05",
+      "side": "buy",
+      "quantity": 1,
+      "price": 4108.06,
+      "amount": 4115.46
+    }
+  ],
+  "green-lantern-capital-llp-510854|triveni-turbine": [
+    {
+      "date": "2026-04-17",
+      "side": "buy",
+      "quantity": 688,
+      "price": 515.7641,
+      "amount": 355555.42
+    },
+    {
+      "date": "2026-04-20",
+      "side": "buy",
+      "quantity": 39,
+      "price": 569.6,
+      "amount": 22258.82
+    },
+    {
+      "date": "2026-04-21",
+      "side": "buy",
+      "quantity": 100,
+      "price": 567.5886,
+      "amount": 56872.38
+    },
+    {
+      "date": "2026-04-22",
+      "side": "buy",
+      "quantity": 70,
+      "price": 571.9831,
+      "amount": 40118.9
+    },
+    {
+      "date": "2026-04-23",
+      "side": "buy",
+      "quantity": 79,
+      "price": 578.7959,
+      "amount": 45816.34
+    },
+    {
+      "date": "2026-04-24",
+      "side": "buy",
+      "quantity": 56,
+      "price": 563.8184,
+      "amount": 31636.97
+    },
+    {
+      "date": "2026-04-27",
+      "side": "buy",
+      "quantity": 504,
+      "price": 579.1213,
+      "amount": 292460.89
+    },
+    {
+      "date": "2026-04-29",
+      "side": "buy",
+      "quantity": 133,
+      "price": 585.3915,
+      "amount": 78012.79
+    },
+    {
+      "date": "2026-04-30",
+      "side": "buy",
+      "quantity": 74,
+      "price": 567.8668,
+      "amount": 42106.18
+    },
+    {
+      "date": "2026-05-05",
+      "side": "buy",
+      "quantity": 83,
+      "price": 559.5941,
+      "amount": 46525.27
+    },
+    {
+      "date": "2026-05-08",
+      "side": "buy",
+      "quantity": 318,
+      "price": 595.6722,
+      "amount": 189745.79
+    },
+    {
+      "date": "2026-05-19",
+      "side": "buy",
+      "quantity": 47,
+      "price": 591.9077,
+      "amount": 27866.95
+    }
+  ],
+  "green-lantern-capital-llp-510854|vedanta": [
+    {
+      "date": "2025-01-14",
+      "side": "buy",
+      "quantity": 4670,
+      "price": 430.9922,
+      "amount": 2016758.87
+    },
+    {
+      "date": "2025-06-11",
+      "side": "buy",
+      "quantity": 243,
+      "price": 464.2356,
+      "amount": 113034.86
+    },
+    {
+      "date": "2025-10-09",
+      "side": "buy",
+      "quantity": 549,
+      "price": 477.6076,
+      "amount": 262678.5
+    },
+    {
+      "date": "2026-02-05",
+      "side": "sell",
+      "quantity": 883,
+      "price": 648.885,
+      "amount": 571819.6
+    },
+    {
+      "date": "2026-02-17",
+      "side": "sell",
+      "quantity": 239,
+      "price": 667.0506,
+      "amount": 159106.25
+    }
+  ],
+  "green-lantern-capital-llp-510854|zf-commercial-vehicle-control-systems-india": [
+    {
+      "date": "2025-05-30",
+      "side": "buy",
+      "quantity": 20,
+      "price": 13163.9855,
+      "amount": 263806.28
+    },
+    {
+      "date": "2025-12-01",
+      "side": "buy",
+      "quantity": 39,
+      "price": 13852.9923,
+      "amount": 541239.18
+    },
+    {
+      "date": "2026-03-04",
+      "side": "buy",
+      "quantity": 5,
+      "price": 14245.612,
+      "amount": 71356.27
+    },
+    {
+      "date": "2026-03-09",
+      "side": "buy",
+      "quantity": 5,
+      "price": 13949.968,
+      "amount": 69889.34
+    },
+    {
+      "date": "2026-03-10",
+      "side": "buy",
+      "quantity": 5,
+      "price": 14000,
+      "amount": 70140
+    },
+    {
+      "date": "2026-03-18",
+      "side": "buy",
+      "quantity": 12,
+      "price": 13859.9825,
+      "amount": 166619.16
+    }
+  ],
+  "green-lantern-capital-llp-510861|aarti-drugs": [
+    {
+      "date": "2025-05-02",
+      "side": "buy",
+      "quantity": 600,
+      "price": 348.5822,
+      "amount": 209567.63
+    },
+    {
+      "date": "2025-05-05",
+      "side": "buy",
+      "quantity": 850,
+      "price": 354.6344,
+      "amount": 302042.09
+    },
+    {
+      "date": "2025-05-06",
+      "side": "buy",
+      "quantity": 1670,
+      "price": 350.7335,
+      "amount": 586896.35
+    },
+    {
+      "date": "2025-05-07",
+      "side": "buy",
+      "quantity": 470,
+      "price": 382.021,
+      "amount": 179908.96
+    },
+    {
+      "date": "2025-05-13",
+      "side": "buy",
+      "quantity": 210,
+      "price": 458.8325,
+      "amount": 96547.54
+    },
+    {
+      "date": "2025-06-11",
+      "side": "buy",
+      "quantity": 190,
+      "price": 473.7151,
+      "amount": 90185.88
+    },
+    {
+      "date": "2025-07-21",
+      "side": "buy",
+      "quantity": 110,
+      "price": 536.2308,
+      "amount": 59103.36
+    },
+    {
+      "date": "2025-08-22",
+      "side": "buy",
+      "quantity": 92,
+      "price": 475.589,
+      "amount": 43841.71
+    },
+    {
+      "date": "2025-08-26",
+      "side": "buy",
+      "quantity": 96,
+      "price": 474.7982,
+      "amount": 45671.79
+    },
+    {
+      "date": "2025-08-28",
+      "side": "buy",
+      "quantity": 74,
+      "price": 470.4927,
+      "amount": 34886.1
+    },
+    {
+      "date": "2025-09-08",
+      "side": "buy",
+      "quantity": 189,
+      "price": 475.7038,
+      "amount": 90087.84
+    },
+    {
+      "date": "2025-09-09",
+      "side": "buy",
+      "quantity": 55,
+      "price": 491.4749,
+      "amount": 27085.18
+    },
+    {
+      "date": "2025-11-11",
+      "side": "buy",
+      "quantity": 181,
+      "price": 484.8172,
+      "amount": 87927.41
+    },
+    {
+      "date": "2025-12-09",
+      "side": "buy",
+      "quantity": 539,
+      "price": 399.5783,
+      "amount": 215803.45
+    },
+    {
+      "date": "2025-12-22",
+      "side": "buy",
+      "quantity": 244,
+      "price": 391.4467,
+      "amount": 95704
+    }
+  ],
+  "green-lantern-capital-llp-510861|alivus-life-sciences": [
+    {
+      "date": "2025-01-20",
+      "side": "buy",
+      "quantity": 910,
+      "price": 1102.9627,
+      "amount": 1005703.29
+    },
+    {
+      "date": "2025-06-11",
+      "side": "buy",
+      "quantity": 90,
+      "price": 1015.734,
+      "amount": 91598.88
+    },
+    {
+      "date": "2025-06-12",
+      "side": "buy",
+      "quantity": 320,
+      "price": 1063.4372,
+      "amount": 340980.49
+    },
+    {
+      "date": "2025-08-28",
+      "side": "buy",
+      "quantity": 24,
+      "price": 948.945,
+      "amount": 22820.22
+    },
+    {
+      "date": "2025-09-01",
+      "side": "buy",
+      "quantity": 35,
+      "price": 939.1477,
+      "amount": 32935.91
+    },
+    {
+      "date": "2025-09-02",
+      "side": "buy",
+      "quantity": 12,
+      "price": 938.4475,
+      "amount": 11283.89
+    },
+    {
+      "date": "2025-09-05",
+      "side": "buy",
+      "quantity": 33,
+      "price": 926.0745,
+      "amount": 30621.57
+    },
+    {
+      "date": "2025-09-08",
+      "side": "buy",
+      "quantity": 60,
+      "price": 922.0158,
+      "amount": 55431.6
+    },
+    {
+      "date": "2025-09-10",
+      "side": "buy",
+      "quantity": 62,
+      "price": 952.0098,
+      "amount": 59142.65
+    },
+    {
+      "date": "2025-11-17",
+      "side": "buy",
+      "quantity": 200,
+      "price": 944.4024,
+      "amount": 189258.25
+    },
+    {
+      "date": "2025-11-18",
+      "side": "buy",
+      "quantity": 120,
+      "price": 926.6691,
+      "amount": 111422.69
+    },
+    {
+      "date": "2025-11-19",
+      "side": "buy",
+      "quantity": 1098,
+      "price": 911.9747,
+      "amount": 1003150.55
+    },
+    {
+      "date": "2025-12-04",
+      "side": "buy",
+      "quantity": 85,
+      "price": 878.7347,
+      "amount": 74841.83
+    },
+    {
+      "date": "2026-03-17",
+      "side": "buy",
+      "quantity": 425,
+      "price": 934.4768,
+      "amount": 397867.52
+    },
+    {
+      "date": "2026-03-20",
+      "side": "buy",
+      "quantity": 27,
+      "price": 946.0148,
+      "amount": 25588.37
+    },
+    {
+      "date": "2026-03-23",
+      "side": "buy",
+      "quantity": 28,
+      "price": 928.1479,
+      "amount": 26034.92
+    },
+    {
+      "date": "2026-03-24",
+      "side": "buy",
+      "quantity": 66,
+      "price": 967.187,
+      "amount": 63949.23
+    },
+    {
+      "date": "2026-03-30",
+      "side": "buy",
+      "quantity": 21,
+      "price": 970.4743,
+      "amount": 20416.64
+    },
+    {
+      "date": "2026-04-01",
+      "side": "buy",
+      "quantity": 169,
+      "price": 996.1898,
+      "amount": 168659.13
+    },
+    {
+      "date": "2026-04-06",
+      "side": "buy",
+      "quantity": 160,
+      "price": 1000.9553,
+      "amount": 160441.13
+    },
+    {
+      "date": "2026-04-07",
+      "side": "buy",
+      "quantity": 170,
+      "price": 1039.522,
+      "amount": 177036.83
+    },
+    {
+      "date": "2026-04-17",
+      "side": "buy",
+      "quantity": 117,
+      "price": 1071.6538,
+      "amount": 125609.18
+    },
+    {
+      "date": "2026-08-07",
+      "side": "buy",
+      "quantity": 27,
+      "price": 1338.2785,
+      "amount": 36198.56
+    },
+    {
+      "date": "2026-08-10",
+      "side": "buy",
+      "quantity": 167,
+      "price": 1368.7795,
+      "amount": 228997.64
+    },
+    {
+      "date": "2026-08-13",
+      "side": "buy",
+      "quantity": 68,
+      "price": 1376.6093,
+      "amount": 93777.93
+    },
+    {
+      "date": "2026-08-14",
+      "side": "buy",
+      "quantity": 8,
+      "price": 1366.2262,
+      "amount": 10949.48
+    },
+    {
+      "date": "2026-08-18",
+      "side": "buy",
+      "quantity": 147,
+      "price": 1397.346,
+      "amount": 205779.6
+    },
+    {
+      "date": "2026-09-11",
+      "side": "buy",
+      "quantity": 18,
+      "price": 1385.3017,
+      "amount": 24980.32
+    },
+    {
+      "date": "2026-09-21",
+      "side": "buy",
+      "quantity": 53,
+      "price": 1416.0925,
+      "amount": 75187.99
+    }
+  ],
+  "green-lantern-capital-llp-510861|aurobindo-pharma": [
+    {
+      "date": "2025-10-10",
+      "side": "buy",
+      "quantity": 1026,
+      "price": 1138.4018,
+      "amount": 1170336.25
+    },
+    {
+      "date": "2025-10-13",
+      "side": "buy",
+      "quantity": 94,
+      "price": 1136.9333,
+      "amount": 107085.47
+    },
+    {
+      "date": "2025-10-14",
+      "side": "buy",
+      "quantity": 248,
+      "price": 1123.6939,
+      "amount": 279233.41
+    },
+    {
+      "date": "2025-10-16",
+      "side": "buy",
+      "quantity": 80,
+      "price": 1105.2858,
+      "amount": 88599.7
+    },
+    {
+      "date": "2025-10-20",
+      "side": "buy",
+      "quantity": 94,
+      "price": 1104.797,
+      "amount": 104058.61
+    },
+    {
+      "date": "2025-10-27",
+      "side": "buy",
+      "quantity": 375,
+      "price": 1090.7865,
+      "amount": 409863
+    },
+    {
+      "date": "2025-12-09",
+      "side": "buy",
+      "quantity": 273,
+      "price": 1170.7953,
+      "amount": 320266.35
+    },
+    {
+      "date": "2025-12-15",
+      "side": "buy",
+      "quantity": 91,
+      "price": 1185.6592,
+      "amount": 108110.78
+    },
+    {
+      "date": "2025-12-17",
+      "side": "buy",
+      "quantity": 197,
+      "price": 1192.0662,
+      "amount": 235306.7
+    },
+    {
+      "date": "2025-12-19",
+      "side": "buy",
+      "quantity": 93,
+      "price": 1219.9644,
+      "amount": 113683.59
+    },
+    {
+      "date": "2025-12-30",
+      "side": "buy",
+      "quantity": 181,
+      "price": 1187.7243,
+      "amount": 215408.05
+    },
+    {
+      "date": "2025-12-31",
+      "side": "buy",
+      "quantity": 90,
+      "price": 1189.7307,
+      "amount": 107289.9
+    },
+    {
+      "date": "2026-01-01",
+      "side": "buy",
+      "quantity": 359,
+      "price": 1185.6644,
+      "amount": 426504.81
+    },
+    {
+      "date": "2026-01-06",
+      "side": "buy",
+      "quantity": 138,
+      "price": 1232.5274,
+      "amount": 170428.96
+    },
+    {
+      "date": "2026-01-07",
+      "side": "buy",
+      "quantity": 134,
+      "price": 1249.7758,
+      "amount": 167804.89
+    },
+    {
+      "date": "2026-05-07",
+      "side": "sell",
+      "quantity": 205,
+      "price": 1475,
+      "amount": 301860.96,
+      "boughtOn": [
+        "2025-10-10"
+      ]
+    },
+    {
+      "date": "2026-09-17",
+      "side": "sell",
+      "quantity": 383,
+      "price": 1671.4693,
+      "amount": 638892.39
+    },
+    {
+      "date": "2026-09-21",
+      "side": "sell",
+      "quantity": 100,
+      "price": 1714.1528,
+      "amount": 171072.44
+    },
+    {
+      "date": "2026-09-22",
+      "side": "sell",
+      "quantity": 210,
+      "price": 1693.0046,
+      "amount": 354819.91
+    }
+  ],
+  "green-lantern-capital-llp-510861|axis-liquid-fund-direct-plan-growth-option": [
+    {
+      "date": "2025-01-17",
+      "side": "buy",
+      "quantity": 19126.812,
+      "price": 2841.7324,
+      "amount": 54353280.98
+    },
+    {
+      "date": "2025-01-21",
+      "side": "buy",
+      "quantity": 4284.286,
+      "price": 2842.2586,
+      "amount": 12177048.75
+    },
+    {
+      "date": "2025-01-23",
+      "side": "sell",
+      "quantity": 1259,
+      "price": 2843.6666,
+      "amount": 3580176.25
+    },
+    {
+      "date": "2025-04-03",
+      "side": "sell",
+      "quantity": 560,
+      "price": 2887.181,
+      "amount": 1616821.36
+    },
+    {
+      "date": "2025-04-07",
+      "side": "sell",
+      "quantity": 2560,
+      "price": 2889.1239,
+      "amount": 7396157.18
+    },
+    {
+      "date": "2025-05-04",
+      "side": "sell",
+      "quantity": 1160,
+      "price": 2902.8852,
+      "amount": 3367346.83
+    },
+    {
+      "date": "2025-05-07",
+      "side": "sell",
+      "quantity": 400,
+      "price": 2904.3552,
+      "amount": 1161742.08
+    },
+    {
+      "date": "2025-05-14",
+      "side": "sell",
+      "quantity": 980,
+      "price": 2907.9723,
+      "amount": 2849812.85
+    },
+    {
+      "date": "2025-06-11",
+      "side": "sell",
+      "quantity": 3130,
+      "price": 2923.6389,
+      "amount": 9150989.76
+    },
+    {
+      "date": "2025-06-27",
+      "side": "buy",
+      "quantity": 176.179,
+      "price": 2930.3198,
+      "amount": 516260.81
+    },
+    {
+      "date": "2025-06-30",
+      "side": "buy",
+      "quantity": 726.593,
+      "price": 2931.5607,
+      "amount": 2130051.46
+    },
+    {
+      "date": "2025-07-15",
+      "side": "sell",
+      "quantity": 490,
+      "price": 2939.8451,
+      "amount": 1440524.1
+    },
+    {
+      "date": "2025-08-19",
+      "side": "sell",
+      "quantity": 470,
+      "price": 2955.5553,
+      "amount": 1389110.99
+    },
+    {
+      "date": "2025-09-04",
+      "side": "sell",
+      "quantity": 1030,
+      "price": 2964.5601,
+      "amount": 3053496.9
+    },
+    {
+      "date": "2025-09-10",
+      "side": "sell",
+      "quantity": 1370,
+      "price": 2965.3036,
+      "amount": 4062465.93
+    },
+    {
+      "date": "2025-09-15",
+      "side": "sell",
+      "quantity": 100,
+      "price": 2967.6201,
+      "amount": 296762.01
+    },
+    {
+      "date": "2025-09-24",
+      "side": "sell",
+      "quantity": 460,
+      "price": 2971.9175,
+      "amount": 1367082.05
+    },
+    {
+      "date": "2025-10-06",
+      "side": "sell",
+      "quantity": 740,
+      "price": 2978.3466,
+      "amount": 2203976.48
+    },
+    {
+      "date": "2025-10-28",
+      "side": "sell",
+      "quantity": 1210,
+      "price": 2988.3054,
+      "amount": 3615849.53
+    },
+    {
+      "date": "2025-11-05",
+      "side": "sell",
+      "quantity": 770,
+      "price": 2992.2039,
+      "amount": 2303997
+    },
+    {
+      "date": "2025-11-30",
+      "side": "sell",
+      "quantity": 1160,
+      "price": 3004.1823,
+      "amount": 3484851.47
+    },
+    {
+      "date": "2026-01-06",
+      "side": "sell",
+      "quantity": 765,
+      "price": 3022.4959,
+      "amount": 2312209.36
+    },
+    {
+      "date": "2026-01-09",
+      "side": "buy",
+      "quantity": 22.759,
+      "price": 3023.0386,
+      "amount": 68801.34
+    },
+    {
+      "date": "2026-02-09",
+      "side": "buy",
+      "quantity": 705.531,
+      "price": 3038.7899,
+      "amount": 2143960.5
+    },
+    {
+      "date": "2026-03-09",
+      "side": "sell",
+      "quantity": 1330,
+      "price": 3052.9241,
+      "amount": 4060389.05
+    },
+    {
+      "date": "2026-03-16",
+      "side": "sell",
+      "quantity": 341.15,
+      "price": 3055.4363,
+      "amount": 1042362.09
+    },
+    {
+      "date": "2026-03-24",
+      "side": "sell",
+      "quantity": 1344,
+      "price": 3059.2254,
+      "amount": 4111598.94
+    },
+    {
+      "date": "2026-04-05",
+      "side": "sell",
+      "quantity": 1118,
+      "price": 3071.3921,
+      "amount": 3433816.37
+    },
+    {
+      "date": "2026-04-12",
+      "side": "sell",
+      "quantity": 601.03,
+      "price": 3077.148,
+      "amount": 1849458.26
+    },
+    {
+      "date": "2026-04-16",
+      "side": "sell",
+      "quantity": 1464,
+      "price": 3079.9851,
+      "amount": 4509098.19
+    },
+    {
+      "date": "2026-05-03",
+      "side": "sell",
+      "quantity": 228,
+      "price": 3086.8753,
+      "amount": 703807.57
+    },
+    {
+      "date": "2026-09-16",
+      "side": "buy",
+      "quantity": 1730.049,
+      "price": 3163.4186,
+      "amount": 5472869.12
+    },
+    {
+      "date": "2026-09-18",
+      "side": "buy",
+      "quantity": 1394.719,
+      "price": 3164.3213,
+      "amount": 4413339.05
+    }
+  ],
+  "green-lantern-capital-llp-510861|bajaj-auto": [
+    {
+      "date": "2025-07-18",
+      "side": "buy",
+      "quantity": 100,
+      "price": 8344.2376,
+      "amount": 836092.6
+    },
+    {
+      "date": "2025-07-21",
+      "side": "buy",
+      "quantity": 50,
+      "price": 8426.3678,
+      "amount": 422076.77
+    },
+    {
+      "date": "2025-08-18",
+      "side": "buy",
+      "quantity": 6,
+      "price": 8592.3367,
+      "amount": 51646.81
+    },
+    {
+      "date": "2025-09-25",
+      "side": "buy",
+      "quantity": 80,
+      "price": 8847.574,
+      "amount": 709079.98
+    },
+    {
+      "date": "2026-07-14",
+      "side": "sell",
+      "quantity": 34,
+      "price": 12000,
+      "amount": 407306.4,
+      "boughtOn": [
+        "2025-07-18"
+      ]
+    },
+    {
+      "date": "2026-09-11",
+      "side": "sell",
+      "quantity": 82,
+      "price": 11657.485,
+      "amount": 954193.13
+    },
+    {
+      "date": "2026-09-15",
+      "side": "sell",
+      "quantity": 78,
+      "price": 11487.3227,
+      "amount": 894398.36
+    },
+    {
+      "date": "2026-09-16",
+      "side": "sell",
+      "quantity": 39,
+      "price": 11502.4069,
+      "amount": 447786.41
+    },
+    {
+      "date": "2026-09-17",
+      "side": "sell",
+      "quantity": 3,
+      "price": 11470.9133,
+      "amount": 34350.8
+    }
+  ],
+  "green-lantern-capital-llp-510861|bharat-heavy-electricals": [
+    {
+      "date": "2025-01-20",
+      "side": "buy",
+      "quantity": 9260,
+      "price": 216.9845,
+      "amount": 2013295.42
+    },
+    {
+      "date": "2026-01-13",
+      "side": "buy",
+      "quantity": 391,
+      "price": 265.7751,
+      "amount": 104125.87
+    },
+    {
+      "date": "2026-03-04",
+      "side": "buy",
+      "quantity": 690,
+      "price": 249.4478,
+      "amount": 172463.19
+    },
+    {
+      "date": "2026-03-05",
+      "side": "buy",
+      "quantity": 440,
+      "price": 254.5104,
+      "amount": 112208.54
+    },
+    {
+      "date": "2026-03-10",
+      "side": "buy",
+      "quantity": 335,
+      "price": 257.6943,
+      "amount": 86500.21
+    },
+    {
+      "date": "2026-03-13",
+      "side": "buy",
+      "quantity": 356,
+      "price": 261.8666,
+      "amount": 93392.29
+    },
+    {
+      "date": "2026-03-23",
+      "side": "buy",
+      "quantity": 573,
+      "price": 251.3576,
+      "amount": 144287.1
+    },
+    {
+      "date": "2026-03-24",
+      "side": "buy",
+      "quantity": 510,
+      "price": 258.4251,
+      "amount": 132034.02
+    },
+    {
+      "date": "2026-03-27",
+      "side": "buy",
+      "quantity": 151,
+      "price": 256.329,
+      "amount": 38775.34
+    },
+    {
+      "date": "2026-03-30",
+      "side": "buy",
+      "quantity": 432,
+      "price": 247.7253,
+      "amount": 107209.93
+    },
+    {
+      "date": "2026-04-01",
+      "side": "buy",
+      "quantity": 424,
+      "price": 254.8849,
+      "amount": 108265.72
+    },
+    {
+      "date": "2026-04-09",
+      "side": "buy",
+      "quantity": 1631,
+      "price": 277.1045,
+      "amount": 452770.83
+    }
+  ],
+  "green-lantern-capital-llp-510861|engineers-india": [
+    {
+      "date": "2025-04-04",
+      "side": "buy",
+      "quantity": 62,
+      "price": 162.7989,
+      "amount": 10113.71
+    },
+    {
+      "date": "2025-04-04",
+      "side": "buy",
+      "quantity": 4917,
+      "price": 163.0468,
+      "amount": 803304.29
+    },
+    {
+      "date": "2025-04-07",
+      "side": "buy",
+      "quantity": 5000,
+      "price": 153.445,
+      "amount": 768759.23
+    },
+    {
+      "date": "2025-04-08",
+      "side": "buy",
+      "quantity": 3760,
+      "price": 163.6537,
+      "amount": 616568.39
+    },
+    {
+      "date": "2025-04-09",
+      "side": "buy",
+      "quantity": 1321,
+      "price": 160.4982,
+      "amount": 212442.03
+    },
+    {
+      "date": "2025-04-15",
+      "side": "buy",
+      "quantity": 2370,
+      "price": 168.0658,
+      "amount": 399112.42
+    },
+    {
+      "date": "2025-04-16",
+      "side": "buy",
+      "quantity": 3990,
+      "price": 175.6045,
+      "amount": 702063.27
+    },
+    {
+      "date": "2025-04-24",
+      "side": "buy",
+      "quantity": 3160,
+      "price": 184.7488,
+      "amount": 584973.67
+    },
+    {
+      "date": "2026-03-17",
+      "side": "buy",
+      "quantity": 386,
+      "price": 189.6254,
+      "amount": 73327.16
+    }
+  ],
+  "green-lantern-capital-llp-510861|exide-industries": [
+    {
+      "date": "2025-08-04",
+      "side": "buy",
+      "quantity": 2940,
+      "price": 386.2613,
+      "amount": 1137879.26
+    },
+    {
+      "date": "2025-08-05",
+      "side": "buy",
+      "quantity": 2110,
+      "price": 389.0493,
+      "amount": 822535.67
+    },
+    {
+      "date": "2025-08-07",
+      "side": "buy",
+      "quantity": 380,
+      "price": 375.7977,
+      "amount": 143088.73
+    },
+    {
+      "date": "2025-08-18",
+      "side": "buy",
+      "quantity": 1940,
+      "price": 378,
+      "amount": 734786.64
+    },
+    {
+      "date": "2025-08-19",
+      "side": "buy",
+      "quantity": 2230,
+      "price": 383.3964,
+      "amount": 856683.7
+    },
+    {
+      "date": "2025-09-17",
+      "side": "buy",
+      "quantity": 372,
+      "price": 420.0637,
+      "amount": 156576.21
+    },
+    {
+      "date": "2026-03-16",
+      "side": "buy",
+      "quantity": 744,
+      "price": 298.182,
+      "amount": 222291.05
+    },
+    {
+      "date": "2026-03-17",
+      "side": "buy",
+      "quantity": 927,
+      "price": 301.1032,
+      "amount": 279680.92
+    },
+    {
+      "date": "2026-03-18",
+      "side": "buy",
+      "quantity": 451,
+      "price": 308.6386,
+      "amount": 139474.39
+    },
+    {
+      "date": "2026-03-19",
+      "side": "buy",
+      "quantity": 450,
+      "price": 303.8163,
+      "amount": 136990.77
+    },
+    {
+      "date": "2026-03-20",
+      "side": "buy",
+      "quantity": 421,
+      "price": 305.8746,
+      "amount": 129030.72
+    },
+    {
+      "date": "2026-03-23",
+      "side": "buy",
+      "quantity": 222,
+      "price": 294.7194,
+      "amount": 65558.55
+    },
+    {
+      "date": "2026-03-24",
+      "side": "buy",
+      "quantity": 482,
+      "price": 298.5559,
+      "amount": 144191.72
+    },
+    {
+      "date": "2026-03-25",
+      "side": "buy",
+      "quantity": 381,
+      "price": 307.8504,
+      "amount": 117525.56
+    }
+  ],
+  "green-lantern-capital-llp-510861|glenmark-pharmaceuticals": [
+    {
+      "date": "2025-01-23",
+      "side": "buy",
+      "quantity": 2830,
+      "price": 1522.4094,
+      "amount": 4316173.73
+    },
+    {
+      "date": "2025-07-16",
+      "side": "sell",
+      "quantity": 250,
+      "price": 2200.3639,
+      "amount": 548990.81
+    },
+    {
+      "date": "2025-07-17",
+      "side": "sell",
+      "quantity": 130,
+      "price": 2198.8022,
+      "amount": 285272.6
+    },
+    {
+      "date": "2025-07-28",
+      "side": "sell",
+      "quantity": 270,
+      "price": 2155.869,
+      "amount": 580920.48
+    },
+    {
+      "date": "2025-08-04",
+      "side": "sell",
+      "quantity": 160,
+      "price": 2090.3798,
+      "amount": 333791.85
+    }
+  ],
+  "green-lantern-capital-llp-510861|gmm-pfaudler": [
+    {
+      "date": "2025-11-03",
+      "side": "buy",
+      "quantity": 754,
+      "price": 1299.2804,
+      "amount": 981616.74
+    },
+    {
+      "date": "2025-11-04",
+      "side": "buy",
+      "quantity": 465,
+      "price": 1269.9201,
+      "amount": 591575.75
+    },
+    {
+      "date": "2025-11-06",
+      "side": "buy",
+      "quantity": 4,
+      "price": 1277.9475,
+      "amount": 5122.01
+    },
+    {
+      "date": "2025-11-07",
+      "side": "buy",
+      "quantity": 93,
+      "price": 1221.783,
+      "amount": 113853.08
+    },
+    {
+      "date": "2025-11-10",
+      "side": "buy",
+      "quantity": 109,
+      "price": 1245.8721,
+      "amount": 136071.66
+    },
+    {
+      "date": "2025-11-13",
+      "side": "buy",
+      "quantity": 468,
+      "price": 1260.0005,
+      "amount": 590741.65
+    },
+    {
+      "date": "2025-11-17",
+      "side": "buy",
+      "quantity": 239,
+      "price": 1213.0283,
+      "amount": 290493.58
+    },
+    {
+      "date": "2025-11-18",
+      "side": "buy",
+      "quantity": 90,
+      "price": 1239.1976,
+      "amount": 111750.84
+    },
+    {
+      "date": "2025-12-09",
+      "side": "buy",
+      "quantity": 71,
+      "price": 1076.5463,
+      "amount": 76587.65
+    },
+    {
+      "date": "2026-08-06",
+      "side": "sell",
+      "quantity": 1678,
+      "price": 982.318,
+      "amount": 1645362.53
+    },
+    {
+      "date": "2026-08-07",
+      "side": "sell",
+      "quantity": 197,
+      "price": 964.9778,
+      "amount": 189758.44
+    },
+    {
+      "date": "2026-08-10",
+      "side": "sell",
+      "quantity": 418,
+      "price": 969.7586,
+      "amount": 404629.45
+    }
+  ],
+  "green-lantern-capital-llp-510861|graphite-india": [
+    {
+      "date": "2025-10-30",
+      "side": "buy",
+      "quantity": 1309,
+      "price": 640.3552,
+      "amount": 839901.47
+    },
+    {
+      "date": "2025-10-31",
+      "side": "buy",
+      "quantity": 305,
+      "price": 626.5875,
+      "amount": 191491.41
+    },
+    {
+      "date": "2025-11-03",
+      "side": "buy",
+      "quantity": 238,
+      "price": 619.7783,
+      "amount": 147802.26
+    },
+    {
+      "date": "2025-11-06",
+      "side": "buy",
+      "quantity": 268,
+      "price": 601.8221,
+      "amount": 161610.89
+    },
+    {
+      "date": "2025-11-07",
+      "side": "buy",
+      "quantity": 186,
+      "price": 584.77,
+      "amount": 108984.76
+    },
+    {
+      "date": "2025-11-10",
+      "side": "buy",
+      "quantity": 281,
+      "price": 539.6526,
+      "amount": 151945.68
+    },
+    {
+      "date": "2025-12-09",
+      "side": "buy",
+      "quantity": 274,
+      "price": 538.0199,
+      "amount": 147712.28
+    },
+    {
+      "date": "2025-12-30",
+      "side": "buy",
+      "quantity": 266,
+      "price": 592.7595,
+      "amount": 157989.36
+    },
+    {
+      "date": "2026-01-02",
+      "side": "buy",
+      "quantity": 267,
+      "price": 658.1401,
+      "amount": 176074.84
+    },
+    {
+      "date": "2026-08-04",
+      "side": "sell",
+      "quantity": 780,
+      "price": 710.8751,
+      "amount": 553538.09
+    },
+    {
+      "date": "2026-08-05",
+      "side": "sell",
+      "quantity": 798,
+      "price": 713.4172,
+      "amount": 568338.62
+    },
+    {
+      "date": "2026-08-06",
+      "side": "sell",
+      "quantity": 159,
+      "price": 711.0761,
+      "amount": 112868.54
+    },
+    {
+      "date": "2026-08-14",
+      "side": "sell",
+      "quantity": 82,
+      "price": 721.0824,
+      "amount": 59028.63
+    },
+    {
+      "date": "2026-08-21",
+      "side": "sell",
+      "quantity": 481,
+      "price": 715.1422,
+      "amount": 343398.92
+    },
+    {
+      "date": "2026-08-24",
+      "side": "sell",
+      "quantity": 161,
+      "price": 720.2501,
+      "amount": 115763.81
+    },
+    {
+      "date": "2026-08-25",
+      "side": "sell",
+      "quantity": 156,
+      "price": 711.4128,
+      "amount": 110791.42
+    },
+    {
+      "date": "2026-08-26",
+      "side": "sell",
+      "quantity": 37,
+      "price": 684.1046,
+      "amount": 25268.79
+    },
+    {
+      "date": "2026-08-27",
+      "side": "sell",
+      "quantity": 71,
+      "price": 692.238,
+      "amount": 49065.67
+    },
+    {
+      "date": "2026-09-01",
+      "side": "sell",
+      "quantity": 83,
+      "price": 742.9,
+      "amount": 61555.88
+    },
+    {
+      "date": "2026-09-09",
+      "side": "sell",
+      "quantity": 82,
+      "price": 823.0002,
+      "amount": 67370.97
+    },
+    {
+      "date": "2026-09-16",
+      "side": "sell",
+      "quantity": 417,
+      "price": 803.8101,
+      "amount": 334620.1
+    },
+    {
+      "date": "2026-09-17",
+      "side": "sell",
+      "quantity": 87,
+      "price": 812.1126,
+      "amount": 70533.56
+    }
+  ],
+  "green-lantern-capital-llp-510861|gujarat-ambuja-exports": [
+    {
+      "date": "2025-04-03",
+      "side": "buy",
+      "quantity": 480,
+      "price": 110.0007,
+      "amount": 52905.95
+    },
+    {
+      "date": "2025-04-04",
+      "side": "buy",
+      "quantity": 12440,
+      "price": 114.414,
+      "amount": 1426156.61
+    },
+    {
+      "date": "2025-04-07",
+      "side": "buy",
+      "quantity": 3600,
+      "price": 111.0588,
+      "amount": 400611.45
+    },
+    {
+      "date": "2025-04-08",
+      "side": "buy",
+      "quantity": 10020,
+      "price": 120.388,
+      "amount": 1208700.45
+    },
+    {
+      "date": "2025-04-09",
+      "side": "buy",
+      "quantity": 5030,
+      "price": 116.0671,
+      "amount": 584985.31
+    },
+    {
+      "date": "2025-04-15",
+      "side": "buy",
+      "quantity": 2310,
+      "price": 119.2346,
+      "amount": 275982.71
+    },
+    {
+      "date": "2025-04-16",
+      "side": "buy",
+      "quantity": 2790,
+      "price": 124.9636,
+      "amount": 349345.84
+    },
+    {
+      "date": "2025-04-17",
+      "side": "buy",
+      "quantity": 1880,
+      "price": 128.0154,
+      "amount": 241150.26
+    },
+    {
+      "date": "2025-05-15",
+      "side": "buy",
+      "quantity": 570,
+      "price": 123.3346,
+      "amount": 70441.3
+    },
+    {
+      "date": "2025-05-16",
+      "side": "buy",
+      "quantity": 1140,
+      "price": 124.6352,
+      "amount": 142368.26
+    },
+    {
+      "date": "2026-06-29",
+      "side": "sell",
+      "quantity": 3175,
+      "price": 163.0827,
+      "amount": 516855.76,
+      "boughtOn": [
+        "2025-04-03",
+        "2025-04-04"
+      ]
+    },
+    {
+      "date": "2026-06-30",
+      "side": "sell",
+      "quantity": 660,
+      "price": 165.5835,
+      "amount": 109088.38,
+      "boughtOn": [
+        "2025-04-04"
+      ]
+    },
+    {
+      "date": "2026-07-07",
+      "side": "sell",
+      "quantity": 196,
+      "price": 161.0653,
+      "amount": 31511.97,
+      "boughtOn": [
+        "2025-04-04"
+      ]
+    },
+    {
+      "date": "2026-07-08",
+      "side": "sell",
+      "quantity": 418,
+      "price": 161.1683,
+      "amount": 67247.1,
+      "boughtOn": [
+        "2025-04-04"
+      ]
+    },
+    {
+      "date": "2026-07-09",
+      "side": "sell",
+      "quantity": 268,
+      "price": 159.2417,
+      "amount": 42599.96,
+      "boughtOn": [
+        "2025-04-04"
+      ]
+    },
+    {
+      "date": "2026-07-13",
+      "side": "sell",
+      "quantity": 4444,
+      "price": 148.1992,
+      "amount": 657411.58,
+      "boughtOn": [
+        "2025-04-04"
+      ]
+    },
+    {
+      "date": "2026-07-14",
+      "side": "sell",
+      "quantity": 1176,
+      "price": 149.2678,
+      "amount": 175222.98,
+      "boughtOn": [
+        "2025-04-04"
+      ]
+    },
+    {
+      "date": "2026-07-15",
+      "side": "sell",
+      "quantity": 810,
+      "price": 149.5837,
+      "amount": 120944.68,
+      "boughtOn": [
+        "2025-04-04"
+      ]
+    },
+    {
+      "date": "2026-07-16",
+      "side": "sell",
+      "quantity": 1430,
+      "price": 148.9945,
+      "amount": 212678.62,
+      "boughtOn": [
+        "2025-04-04"
+      ]
+    },
+    {
+      "date": "2026-07-17",
+      "side": "sell",
+      "quantity": 557,
+      "price": 146.2945,
+      "amount": 81339.38,
+      "boughtOn": [
+        "2025-04-04",
+        "2025-04-07"
+      ]
+    },
+    {
+      "date": "2026-07-20",
+      "side": "sell",
+      "quantity": 678,
+      "price": 144.7933,
+      "amount": 97993.18,
+      "boughtOn": [
+        "2025-04-07"
+      ]
+    },
+    {
+      "date": "2026-07-21",
+      "side": "sell",
+      "quantity": 177,
+      "price": 144.9488,
+      "amount": 25609.75,
+      "boughtOn": [
+        "2025-04-07"
+      ]
+    },
+    {
+      "date": "2026-07-22",
+      "side": "sell",
+      "quantity": 2140,
+      "price": 144.2245,
+      "amount": 308084.83,
+      "boughtOn": [
+        "2025-04-07"
+      ]
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 1050,
+      "price": 140.4105,
+      "amount": 147165.68,
+      "boughtOn": [
+        "2025-04-07",
+        "2025-04-08"
+      ]
+    },
+    {
+      "date": "2026-07-24",
+      "side": "sell",
+      "quantity": 8171,
+      "price": 147.3698,
+      "amount": 1201991.12,
+      "boughtOn": [
+        "2025-04-08"
+      ]
+    },
+    {
+      "date": "2026-07-27",
+      "side": "sell",
+      "quantity": 792,
+      "price": 157.2506,
+      "amount": 124318.31,
+      "boughtOn": [
+        "2025-04-08"
+      ]
+    },
+    {
+      "date": "2026-08-03",
+      "side": "sell",
+      "quantity": 1143,
+      "price": 176.0455,
+      "amount": 200857.86
+    },
+    {
+      "date": "2026-08-04",
+      "side": "sell",
+      "quantity": 782,
+      "price": 178.1345,
+      "amount": 139050.44
+    },
+    {
+      "date": "2026-08-05",
+      "side": "sell",
+      "quantity": 1132,
+      "price": 177.0649,
+      "amount": 200076.63
+    },
+    {
+      "date": "2026-08-06",
+      "side": "sell",
+      "quantity": 1125,
+      "price": 176.1816,
+      "amount": 197847.59
+    },
+    {
+      "date": "2026-08-07",
+      "side": "sell",
+      "quantity": 1543,
+      "price": 170.5094,
+      "amount": 262622.43
+    },
+    {
+      "date": "2026-08-10",
+      "side": "sell",
+      "quantity": 191,
+      "price": 170.1473,
+      "amount": 32439.63
+    },
+    {
+      "date": "2026-08-11",
+      "side": "sell",
+      "quantity": 444,
+      "price": 170.2936,
+      "amount": 75474.28
+    },
+    {
+      "date": "2026-08-12",
+      "side": "sell",
+      "quantity": 546,
+      "price": 167.0661,
+      "amount": 91053.87
+    },
+    {
+      "date": "2026-08-13",
+      "side": "sell",
+      "quantity": 152,
+      "price": 167.2303,
+      "amount": 25373.25
+    },
+    {
+      "date": "2026-08-21",
+      "side": "sell",
+      "quantity": 779,
+      "price": 178.9813,
+      "amount": 139185.73
+    },
+    {
+      "date": "2026-08-24",
+      "side": "sell",
+      "quantity": 1168,
+      "price": 180.7317,
+      "amount": 210731.69
+    },
+    {
+      "date": "2026-08-25",
+      "side": "sell",
+      "quantity": 1923,
+      "price": 179.4804,
+      "amount": 344545.68
+    },
+    {
+      "date": "2026-08-26",
+      "side": "sell",
+      "quantity": 1931,
+      "price": 174.6701,
+      "amount": 336718.95
+    },
+    {
+      "date": "2026-08-27",
+      "side": "sell",
+      "quantity": 378,
+      "price": 168.6679,
+      "amount": 63647.35
+    },
+    {
+      "date": "2026-08-28",
+      "side": "sell",
+      "quantity": 857,
+      "price": 167.4136,
+      "amount": 143227.15
+    },
+    {
+      "date": "2026-08-31",
+      "side": "sell",
+      "quantity": 24,
+      "price": 171.8596,
+      "amount": 4117.62
+    }
+  ],
+  "green-lantern-capital-llp-510861|hindustan-aeronautics": [
+    {
+      "date": "2025-09-12",
+      "side": "buy",
+      "quantity": 231,
+      "price": 4740.9582,
+      "amount": 1097132.61
+    },
+    {
+      "date": "2025-09-22",
+      "side": "buy",
+      "quantity": 94,
+      "price": 4862.579,
+      "amount": 457905.17
+    },
+    {
+      "date": "2025-09-23",
+      "side": "buy",
+      "quantity": 95,
+      "price": 4784.6538,
+      "amount": 455360.29
+    },
+    {
+      "date": "2025-09-25",
+      "side": "buy",
+      "quantity": 91,
+      "price": 4771.1,
+      "amount": 434951.6
+    },
+    {
+      "date": "2025-10-14",
+      "side": "buy",
+      "quantity": 49,
+      "price": 4745.0773,
+      "amount": 232927.3
+    },
+    {
+      "date": "2026-03-09",
+      "side": "buy",
+      "quantity": 107,
+      "price": 3987.3262,
+      "amount": 427497.18
+    },
+    {
+      "date": "2026-03-12",
+      "side": "buy",
+      "quantity": 41,
+      "price": 4013.3888,
+      "amount": 164878.04
+    },
+    {
+      "date": "2026-03-17",
+      "side": "buy",
+      "quantity": 80,
+      "price": 3947.8178,
+      "amount": 316457.06
+    },
+    {
+      "date": "2026-03-24",
+      "side": "buy",
+      "quantity": 9,
+      "price": 3687.5011,
+      "amount": 33253.89
+    },
+    {
+      "date": "2026-04-01",
+      "side": "buy",
+      "quantity": 42,
+      "price": 3643.275,
+      "amount": 153323.58
+    }
+  ],
+  "green-lantern-capital-llp-510861|ingersollrand-india": [
+    {
+      "date": "2026-04-13",
+      "side": "buy",
+      "quantity": 275,
+      "price": 3967.8186,
+      "amount": 1093114.2
+    }
+  ],
+  "green-lantern-capital-llp-510861|intellect-design-arena": [
+    {
+      "date": "2025-08-26",
+      "side": "buy",
+      "quantity": 434,
+      "price": 983.7486,
+      "amount": 427800.77
+    },
+    {
+      "date": "2025-08-28",
+      "side": "buy",
+      "quantity": 428,
+      "price": 974.7571,
+      "amount": 418030.41
+    },
+    {
+      "date": "2025-09-01",
+      "side": "buy",
+      "quantity": 48,
+      "price": 988.2781,
+      "amount": 47532.21
+    },
+    {
+      "date": "2025-09-02",
+      "side": "buy",
+      "quantity": 55,
+      "price": 989.9971,
+      "amount": 54558.73
+    },
+    {
+      "date": "2025-09-03",
+      "side": "buy",
+      "quantity": 218,
+      "price": 960.4266,
+      "amount": 209791.74
+    },
+    {
+      "date": "2025-09-08",
+      "side": "buy",
+      "quantity": 95,
+      "price": 909.1971,
+      "amount": 86546.45
+    },
+    {
+      "date": "2025-09-09",
+      "side": "buy",
+      "quantity": 144,
+      "price": 943.2506,
+      "amount": 136099.74
+    },
+    {
+      "date": "2025-09-10",
+      "side": "buy",
+      "quantity": 188,
+      "price": 995.8658,
+      "amount": 187597.2
+    },
+    {
+      "date": "2025-09-11",
+      "side": "buy",
+      "quantity": 44,
+      "price": 1013.8784,
+      "amount": 44699.87
+    },
+    {
+      "date": "2025-09-12",
+      "side": "buy",
+      "quantity": 122,
+      "price": 1023.0393,
+      "amount": 125060.41
+    },
+    {
+      "date": "2025-09-15",
+      "side": "buy",
+      "quantity": 150,
+      "price": 1020.3086,
+      "amount": 153352.41
+    },
+    {
+      "date": "2025-09-17",
+      "side": "buy",
+      "quantity": 276,
+      "price": 1045.9055,
+      "amount": 289247.26
+    },
+    {
+      "date": "2025-10-10",
+      "side": "buy",
+      "quantity": 78,
+      "price": 989.5929,
+      "amount": 77342.62
+    },
+    {
+      "date": "2025-10-13",
+      "side": "buy",
+      "quantity": 108,
+      "price": 990.3292,
+      "amount": 107169.45
+    },
+    {
+      "date": "2025-10-14",
+      "side": "buy",
+      "quantity": 120,
+      "price": 966.4431,
+      "amount": 116205.12
+    },
+    {
+      "date": "2025-10-20",
+      "side": "buy",
+      "quantity": 92,
+      "price": 950.8237,
+      "amount": 87650.72
+    },
+    {
+      "date": "2025-11-18",
+      "side": "buy",
+      "quantity": 172,
+      "price": 1101.8285,
+      "amount": 189893.53
+    },
+    {
+      "date": "2025-11-20",
+      "side": "buy",
+      "quantity": 46,
+      "price": 1098.633,
+      "amount": 50638.2
+    },
+    {
+      "date": "2025-12-02",
+      "side": "buy",
+      "quantity": 13,
+      "price": 1094.9138,
+      "amount": 14262.34
+    },
+    {
+      "date": "2025-12-30",
+      "side": "buy",
+      "quantity": 184,
+      "price": 950.6508,
+      "amount": 175269.6
+    },
+    {
+      "date": "2026-01-05",
+      "side": "buy",
+      "quantity": 50,
+      "price": 972.255,
+      "amount": 48709.99
+    },
+    {
+      "date": "2026-01-13",
+      "side": "buy",
+      "quantity": 41,
+      "price": 926.9215,
+      "amount": 38079.79
+    },
+    {
+      "date": "2026-01-20",
+      "side": "buy",
+      "quantity": 180,
+      "price": 905.2729,
+      "amount": 163275.02
+    },
+    {
+      "date": "2026-03-09",
+      "side": "buy",
+      "quantity": 257,
+      "price": 673.1015,
+      "amount": 173298.47
+    },
+    {
+      "date": "2026-03-10",
+      "side": "buy",
+      "quantity": 189,
+      "price": 678.8418,
+      "amount": 128532.05
+    },
+    {
+      "date": "2026-03-11",
+      "side": "buy",
+      "quantity": 70,
+      "price": 676.8349,
+      "amount": 47463.73
+    },
+    {
+      "date": "2026-03-13",
+      "side": "buy",
+      "quantity": 167,
+      "price": 662.856,
+      "amount": 110896.2
+    },
+    {
+      "date": "2026-03-17",
+      "side": "buy",
+      "quantity": 267,
+      "price": 650.1891,
+      "amount": 173912.98
+    },
+    {
+      "date": "2026-04-07",
+      "side": "buy",
+      "quantity": 89,
+      "price": 667.8621,
+      "amount": 59546.72
+    }
+  ],
+  "green-lantern-capital-llp-510861|isgec-heavy-engineering": [
+    {
+      "date": "2025-01-20",
+      "side": "buy",
+      "quantity": 3150,
+      "price": 1279.02,
+      "amount": 4036165.25
+    },
+    {
+      "date": "2026-03-04",
+      "side": "buy",
+      "quantity": 38,
+      "price": 856.9987,
+      "amount": 32631.09
+    },
+    {
+      "date": "2026-03-17",
+      "side": "buy",
+      "quantity": 121,
+      "price": 898.1342,
+      "amount": 108869.85
+    },
+    {
+      "date": "2026-03-23",
+      "side": "buy",
+      "quantity": 147,
+      "price": 879.7398,
+      "amount": 129554.54
+    },
+    {
+      "date": "2026-03-24",
+      "side": "buy",
+      "quantity": 880,
+      "price": 893,
+      "amount": 787254.51
+    },
+    {
+      "date": "2026-03-27",
+      "side": "buy",
+      "quantity": 108,
+      "price": 894.7049,
+      "amount": 96802.07
+    },
+    {
+      "date": "2026-03-30",
+      "side": "buy",
+      "quantity": 217,
+      "price": 869.6933,
+      "amount": 189063.17
+    },
+    {
+      "date": "2026-04-09",
+      "side": "buy",
+      "quantity": 104,
+      "price": 959.8237,
+      "amount": 100001.34
+    },
+    {
+      "date": "2026-04-28",
+      "side": "buy",
+      "quantity": 402,
+      "price": 1093,
+      "amount": 440176.9
+    }
+  ],
+  "green-lantern-capital-llp-510861|jamna-auto-ind": [
+    {
+      "date": "2025-12-01",
+      "side": "buy",
+      "quantity": 7000,
+      "price": 115.8538,
+      "amount": 812598.88
+    },
+    {
+      "date": "2026-02-20",
+      "side": "buy",
+      "quantity": 7075,
+      "price": 143.949,
+      "amount": 1020475.71
+    },
+    {
+      "date": "2026-03-04",
+      "side": "buy",
+      "quantity": 8375,
+      "price": 139.585,
+      "amount": 1171362.59
+    },
+    {
+      "date": "2026-03-09",
+      "side": "buy",
+      "quantity": 2614,
+      "price": 122.8192,
+      "amount": 321691.44
+    },
+    {
+      "date": "2026-03-13",
+      "side": "buy",
+      "quantity": 836,
+      "price": 117.2678,
+      "amount": 98231.98
+    },
+    {
+      "date": "2026-03-25",
+      "side": "buy",
+      "quantity": 1671,
+      "price": 121.4515,
+      "amount": 203351.43
+    },
+    {
+      "date": "2026-07-14",
+      "side": "sell",
+      "quantity": 800,
+      "price": 131.0032,
+      "amount": 104613.92,
+      "boughtOn": [
+        "2025-12-01"
+      ]
+    },
+    {
+      "date": "2026-07-15",
+      "side": "sell",
+      "quantity": 2014,
+      "price": 131.1288,
+      "amount": 263618.04,
+      "boughtOn": [
+        "2025-12-01"
+      ]
+    },
+    {
+      "date": "2026-07-16",
+      "side": "sell",
+      "quantity": 799,
+      "price": 134.4429,
+      "amount": 107226.49,
+      "boughtOn": [
+        "2025-12-01"
+      ]
+    },
+    {
+      "date": "2026-07-17",
+      "side": "sell",
+      "quantity": 473,
+      "price": 131.8696,
+      "amount": 62262.05,
+      "boughtOn": [
+        "2025-12-01"
+      ]
+    },
+    {
+      "date": "2026-07-20",
+      "side": "sell",
+      "quantity": 540,
+      "price": 134.0114,
+      "amount": 72235.91,
+      "boughtOn": [
+        "2025-12-01"
+      ]
+    },
+    {
+      "date": "2026-07-21",
+      "side": "sell",
+      "quantity": 1896,
+      "price": 135.3749,
+      "amount": 256208.8,
+      "boughtOn": [
+        "2025-12-01"
+      ]
+    },
+    {
+      "date": "2026-07-22",
+      "side": "sell",
+      "quantity": 1049,
+      "price": 132.4309,
+      "amount": 138670,
+      "boughtOn": [
+        "2025-12-01",
+        "2026-02-20"
+      ]
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 1600,
+      "price": 131.8436,
+      "amount": 210570.01,
+      "boughtOn": [
+        "2026-02-20"
+      ]
+    },
+    {
+      "date": "2026-07-24",
+      "side": "sell",
+      "quantity": 2454,
+      "price": 129.7253,
+      "amount": 317772.81,
+      "boughtOn": [
+        "2026-02-20"
+      ]
+    },
+    {
+      "date": "2026-07-27",
+      "side": "sell",
+      "quantity": 1322,
+      "price": 133.7064,
+      "amount": 176441.65,
+      "boughtOn": [
+        "2026-02-20"
+      ]
+    },
+    {
+      "date": "2026-07-28",
+      "side": "sell",
+      "quantity": 411,
+      "price": 132.7115,
+      "amount": 54446.23
+    }
+  ],
+  "green-lantern-capital-llp-510861|kaveri-seed": [
+    {
+      "date": "2025-01-20",
+      "side": "buy",
+      "quantity": 4430,
+      "price": 911.8371,
+      "amount": 4047517.08
+    },
+    {
+      "date": "2025-01-23",
+      "side": "buy",
+      "quantity": 180,
+      "price": 923.8299,
+      "amount": 166621.95
+    },
+    {
+      "date": "2025-02-21",
+      "side": "buy",
+      "quantity": 20,
+      "price": 983.261,
+      "amount": 19704.54
+    },
+    {
+      "date": "2025-02-27",
+      "side": "buy",
+      "quantity": 110,
+      "price": 1028.7477,
+      "amount": 113388.57
+    },
+    {
+      "date": "2025-03-05",
+      "side": "buy",
+      "quantity": 520,
+      "price": 1024.9108,
+      "amount": 534019.53
+    },
+    {
+      "date": "2025-03-10",
+      "side": "buy",
+      "quantity": 60,
+      "price": 1078.1928,
+      "amount": 64820.95
+    },
+    {
+      "date": "2026-06-22",
+      "side": "sell",
+      "quantity": 224,
+      "price": 944.9592,
+      "amount": 211289.87,
+      "boughtOn": [
+        "2025-01-20"
+      ]
+    }
+  ],
+  "green-lantern-capital-llp-510861|ksb": [
+    {
+      "date": "2026-03-04",
+      "side": "buy",
+      "quantity": 71,
+      "price": 735.1863,
+      "amount": 52292.19
+    },
+    {
+      "date": "2026-03-05",
+      "side": "buy",
+      "quantity": 52,
+      "price": 738.6548,
+      "amount": 38479.19
+    },
+    {
+      "date": "2026-03-09",
+      "side": "buy",
+      "quantity": 392,
+      "price": 744.9665,
+      "amount": 292552.52
+    },
+    {
+      "date": "2026-03-10",
+      "side": "buy",
+      "quantity": 96,
+      "price": 757.3674,
+      "amount": 72838.14
+    },
+    {
+      "date": "2026-03-11",
+      "side": "buy",
+      "quantity": 438,
+      "price": 760.196,
+      "amount": 333531.88
+    },
+    {
+      "date": "2026-03-12",
+      "side": "buy",
+      "quantity": 214,
+      "price": 758.1505,
+      "amount": 162520.03
+    },
+    {
+      "date": "2026-03-13",
+      "side": "buy",
+      "quantity": 126,
+      "price": 749.8941,
+      "amount": 94656.74
+    },
+    {
+      "date": "2026-03-16",
+      "side": "buy",
+      "quantity": 158,
+      "price": 745.1323,
+      "amount": 117942.81
+    },
+    {
+      "date": "2026-03-20",
+      "side": "buy",
+      "quantity": 179,
+      "price": 797.4887,
+      "amount": 143007.43
+    },
+    {
+      "date": "2026-03-23",
+      "side": "buy",
+      "quantity": 1080,
+      "price": 767.4802,
+      "amount": 830370.62
+    },
+    {
+      "date": "2026-03-24",
+      "side": "buy",
+      "quantity": 72,
+      "price": 803.4389,
+      "amount": 57951.73
+    },
+    {
+      "date": "2026-03-25",
+      "side": "buy",
+      "quantity": 430,
+      "price": 812.2954,
+      "amount": 349915.71
+    },
+    {
+      "date": "2026-04-01",
+      "side": "buy",
+      "quantity": 83,
+      "price": 833.9333,
+      "amount": 69341.04
+    },
+    {
+      "date": "2026-04-02",
+      "side": "buy",
+      "quantity": 43,
+      "price": 823.0658,
+      "amount": 35455.54
+    },
+    {
+      "date": "2026-04-02",
+      "side": "buy",
+      "quantity": 43,
+      "price": 823.0658,
+      "amount": 35455.54
+    },
+    {
+      "date": "2026-04-09",
+      "side": "buy",
+      "quantity": 62,
+      "price": 872.9798,
+      "amount": 54222.17
+    },
+    {
+      "date": "2026-04-13",
+      "side": "buy",
+      "quantity": 135,
+      "price": 908.118,
+      "amount": 122816.61
+    },
+    {
+      "date": "2026-04-15",
+      "side": "buy",
+      "quantity": 952,
+      "price": 932.5,
+      "amount": 889337.93
+    },
+    {
+      "date": "2026-04-17",
+      "side": "buy",
+      "quantity": 367,
+      "price": 952.641,
+      "amount": 350248.56
+    },
+    {
+      "date": "2026-05-04",
+      "side": "buy",
+      "quantity": 246,
+      "price": 899.4131,
+      "amount": 221653.88
+    },
+    {
+      "date": "2026-06-04",
+      "side": "buy",
+      "quantity": 73,
+      "price": 788.9366,
+      "amount": 57690.28
+    },
+    {
+      "date": "2026-06-05",
+      "side": "buy",
+      "quantity": 94,
+      "price": 808.9874,
+      "amount": 76174.1
+    },
+    {
+      "date": "2026-06-08",
+      "side": "buy",
+      "quantity": 78,
+      "price": 820.4996,
+      "amount": 64107.77
+    },
+    {
+      "date": "2026-06-09",
+      "side": "buy",
+      "quantity": 85,
+      "price": 804.4991,
+      "amount": 68498.66
+    }
+  ],
+  "green-lantern-capital-llp-510861|mishra-dhatu-nigam": [
+    {
+      "date": "2025-04-25",
+      "side": "buy",
+      "quantity": 1850,
+      "price": 291.2143,
+      "amount": 539823.92
+    },
+    {
+      "date": "2025-04-28",
+      "side": "buy",
+      "quantity": 1190,
+      "price": 304.2576,
+      "amount": 362790.61
+    },
+    {
+      "date": "2025-04-30",
+      "side": "buy",
+      "quantity": 570,
+      "price": 314.733,
+      "amount": 179756.59
+    },
+    {
+      "date": "2025-05-06",
+      "side": "buy",
+      "quantity": 450,
+      "price": 307.1868,
+      "amount": 138510.49
+    },
+    {
+      "date": "2025-05-08",
+      "side": "buy",
+      "quantity": 890,
+      "price": 309.507,
+      "amount": 276012.15
+    },
+    {
+      "date": "2025-05-09",
+      "side": "buy",
+      "quantity": 370,
+      "price": 318.6558,
+      "amount": 118138.43
+    },
+    {
+      "date": "2025-05-13",
+      "side": "buy",
+      "quantity": 80,
+      "price": 344.429,
+      "amount": 27609.43
+    },
+    {
+      "date": "2025-10-29",
+      "side": "buy",
+      "quantity": 249,
+      "price": 385.8853,
+      "amount": 96277.58
+    },
+    {
+      "date": "2025-11-11",
+      "side": "buy",
+      "quantity": 127,
+      "price": 388.4162,
+      "amount": 49427.52
+    },
+    {
+      "date": "2025-11-14",
+      "side": "buy",
+      "quantity": 358,
+      "price": 369.8914,
+      "amount": 132685.93
+    },
+    {
+      "date": "2025-12-08",
+      "side": "buy",
+      "quantity": 105,
+      "price": 296.844,
+      "amount": 31230.94
+    },
+    {
+      "date": "2025-12-09",
+      "side": "buy",
+      "quantity": 225,
+      "price": 299.6846,
+      "amount": 67563.88
+    },
+    {
+      "date": "2025-12-22",
+      "side": "buy",
+      "quantity": 378,
+      "price": 310.2328,
+      "amount": 117502.52
+    },
+    {
+      "date": "2026-04-01",
+      "side": "buy",
+      "quantity": 457,
+      "price": 289.8124,
+      "amount": 132682.65
+    },
+    {
+      "date": "2026-06-18",
+      "side": "buy",
+      "quantity": 184,
+      "price": 430.8276,
+      "amount": 79414.96
+    }
+  ],
+  "green-lantern-capital-llp-510861|power-finance": [
+    {
+      "date": "2025-01-20",
+      "side": "buy",
+      "quantity": 4570,
+      "price": 437.9926,
+      "amount": 2005629.3
+    },
+    {
+      "date": "2025-05-13",
+      "side": "buy",
+      "quantity": 2230,
+      "price": 413.7536,
+      "amount": 924239.01
+    },
+    {
+      "date": "2025-06-10",
+      "side": "buy",
+      "quantity": 420,
+      "price": 431.8385,
+      "amount": 181734.9
+    },
+    {
+      "date": "2025-06-11",
+      "side": "buy",
+      "quantity": 1110,
+      "price": 434.7008,
+      "amount": 483482.94
+    }
+  ],
+  "green-lantern-capital-llp-510861|punjab-national-bank": [
+    {
+      "date": "2025-06-30",
+      "side": "buy",
+      "quantity": 5290,
+      "price": 109.6353,
+      "amount": 581130.49
+    },
+    {
+      "date": "2025-07-01",
+      "side": "buy",
+      "quantity": 980,
+      "price": 109.7868,
+      "amount": 107806.16
+    },
+    {
+      "date": "2025-07-03",
+      "side": "buy",
+      "quantity": 7360,
+      "price": 111.1412,
+      "amount": 819634.92
+    },
+    {
+      "date": "2025-07-18",
+      "side": "buy",
+      "quantity": 2040,
+      "price": 113.4196,
+      "amount": 231838.7
+    },
+    {
+      "date": "2025-10-09",
+      "side": "buy",
+      "quantity": 2376,
+      "price": 114.1466,
+      "amount": 271754.63
+    },
+    {
+      "date": "2025-10-23",
+      "side": "buy",
+      "quantity": 2436,
+      "price": 119.2496,
+      "amount": 291072.89
+    },
+    {
+      "date": "2025-10-27",
+      "side": "buy",
+      "quantity": 915,
+      "price": 118.3949,
+      "amount": 108548
+    },
+    {
+      "date": "2026-02-04",
+      "side": "sell",
+      "quantity": 4760,
+      "price": 123.6257,
+      "amount": 587281.53
+    },
+    {
+      "date": "2026-02-05",
+      "side": "sell",
+      "quantity": 3570,
+      "price": 123.7137,
+      "amount": 440774.64
+    },
+    {
+      "date": "2026-02-09",
+      "side": "sell",
+      "quantity": 1190,
+      "price": 123.5512,
+      "amount": 146731.94
+    },
+    {
+      "date": "2026-02-23",
+      "side": "sell",
+      "quantity": 3606,
+      "price": 130.8836,
+      "amount": 471022.63
+    }
+  ],
+  "green-lantern-capital-llp-510861|ratnamani-metals-and-tubes": [
+    {
+      "date": "2026-04-27",
+      "side": "buy",
+      "quantity": 187,
+      "price": 2688.8036,
+      "amount": 503711.32
+    },
+    {
+      "date": "2026-04-28",
+      "side": "buy",
+      "quantity": 160,
+      "price": 2709.9907,
+      "amount": 434378.99
+    },
+    {
+      "date": "2026-04-30",
+      "side": "buy",
+      "quantity": 65,
+      "price": 2646.2222,
+      "amount": 172314.05
+    },
+    {
+      "date": "2026-05-04",
+      "side": "buy",
+      "quantity": 29,
+      "price": 2670.0828,
+      "amount": 77571.78
+    },
+    {
+      "date": "2026-05-05",
+      "side": "buy",
+      "quantity": 24,
+      "price": 2709.4096,
+      "amount": 65142.87
+    },
+    {
+      "date": "2026-05-07",
+      "side": "buy",
+      "quantity": 42,
+      "price": 2820.149,
+      "amount": 118659.47
+    },
+    {
+      "date": "2026-05-08",
+      "side": "buy",
+      "quantity": 36,
+      "price": 2868.4778,
+      "amount": 103440.75
+    },
+    {
+      "date": "2026-05-15",
+      "side": "buy",
+      "quantity": 30,
+      "price": 2720.5813,
+      "amount": 81756.19
+    },
+    {
+      "date": "2026-06-03",
+      "side": "buy",
+      "quantity": 52,
+      "price": 2566.749,
+      "amount": 133711.2
+    },
+    {
+      "date": "2026-06-04",
+      "side": "buy",
+      "quantity": 10,
+      "price": 2639.982,
+      "amount": 26447.34
+    },
+    {
+      "date": "2026-06-08",
+      "side": "buy",
+      "quantity": 24,
+      "price": 2569.295,
+      "amount": 61774.07
+    },
+    {
+      "date": "2026-06-09",
+      "side": "buy",
+      "quantity": 7,
+      "price": 2561.75,
+      "amount": 17964.53
+    },
+    {
+      "date": "2026-06-12",
+      "side": "buy",
+      "quantity": 18,
+      "price": 2568.1433,
+      "amount": 46309.78
+    },
+    {
+      "date": "2026-06-15",
+      "side": "buy",
+      "quantity": 42,
+      "price": 2600.3317,
+      "amount": 109410.51
+    },
+    {
+      "date": "2026-06-17",
+      "side": "buy",
+      "quantity": 73,
+      "price": 2648.0025,
+      "amount": 193652.12
+    },
+    {
+      "date": "2026-07-21",
+      "side": "sell",
+      "quantity": 61,
+      "price": 2546.1351,
+      "amount": 155003.61,
+      "boughtOn": [
+        "2026-04-27"
+      ]
+    },
+    {
+      "date": "2026-07-22",
+      "side": "sell",
+      "quantity": 130,
+      "price": 2472.3772,
+      "amount": 320766.22,
+      "boughtOn": [
+        "2026-04-27",
+        "2026-04-28"
+      ]
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 84,
+      "price": 2422.2571,
+      "amount": 203062.66,
+      "boughtOn": [
+        "2026-04-28"
+      ]
+    },
+    {
+      "date": "2026-07-24",
+      "side": "sell",
+      "quantity": 95,
+      "price": 2403.7827,
+      "amount": 227902.64,
+      "boughtOn": [
+        "2026-04-28",
+        "2026-04-29"
+      ]
+    },
+    {
+      "date": "2026-07-28",
+      "side": "sell",
+      "quantity": 48,
+      "price": 2374.0802,
+      "amount": 113727.93
+    },
+    {
+      "date": "2026-08-06",
+      "side": "sell",
+      "quantity": 24,
+      "price": 2386.6871,
+      "amount": 57165.93
+    },
+    {
+      "date": "2026-08-07",
+      "side": "sell",
+      "quantity": 156,
+      "price": 2269.5848,
+      "amount": 353347.11
+    },
+    {
+      "date": "2026-08-10",
+      "side": "sell",
+      "quantity": 48,
+      "price": 2266.9454,
+      "amount": 108595.76
+    },
+    {
+      "date": "2026-08-24",
+      "side": "sell",
+      "quantity": 49,
+      "price": 2636.6188,
+      "amount": 128974.47
+    },
+    {
+      "date": "2026-08-25",
+      "side": "sell",
+      "quantity": 261,
+      "price": 2712.1985,
+      "amount": 706680.03
+    }
+  ],
+  "green-lantern-capital-llp-510861|rural-electrification": [
+    {
+      "date": "2025-01-20",
+      "side": "buy",
+      "quantity": 2060,
+      "price": 485.5952,
+      "amount": 1002326.22
+    },
+    {
+      "date": "2025-06-27",
+      "side": "buy",
+      "quantity": 2123,
+      "price": 403.3927,
+      "amount": 858115.52
+    }
+  ],
+  "green-lantern-capital-llp-510861|state-bank-of-india": [
+    {
+      "date": "2025-01-20",
+      "side": "buy",
+      "quantity": 2580,
+      "price": 776.147,
+      "amount": 2006464.01
+    },
+    {
+      "date": "2025-06-25",
+      "side": "buy",
+      "quantity": 2510,
+      "price": 801.1558,
+      "amount": 2014922.71
+    }
+  ],
+  "green-lantern-capital-llp-510861|tech-mahindra": [
+    {
+      "date": "2026-04-15",
+      "side": "buy",
+      "quantity": 1160,
+      "price": 1471.6891,
+      "amount": 1710232.19
+    },
+    {
+      "date": "2026-04-16",
+      "side": "buy",
+      "quantity": 390,
+      "price": 1489.0082,
+      "amount": 581758.48
+    }
+  ],
+  "green-lantern-capital-llp-510861|the-anup-engineering": [
+    {
+      "date": "2026-04-01",
+      "side": "buy",
+      "quantity": 100,
+      "price": 1712.9955,
+      "amount": 171607.89
+    },
+    {
+      "date": "2026-04-02",
+      "side": "buy",
+      "quantity": 77,
+      "price": 1732.6817,
+      "amount": 133656.63
+    },
+    {
+      "date": "2026-04-02",
+      "side": "buy",
+      "quantity": 77,
+      "price": 1732.6817,
+      "amount": 133656.63
+    },
+    {
+      "date": "2026-04-06",
+      "side": "buy",
+      "quantity": 49,
+      "price": 1708.0588,
+      "amount": 83845.52
+    },
+    {
+      "date": "2026-04-07",
+      "side": "buy",
+      "quantity": 146,
+      "price": 1734.0711,
+      "amount": 253630.11
+    },
+    {
+      "date": "2026-04-13",
+      "side": "buy",
+      "quantity": 37,
+      "price": 1934.317,
+      "amount": 71698.56
+    },
+    {
+      "date": "2026-04-15",
+      "side": "buy",
+      "quantity": 24,
+      "price": 2018.0162,
+      "amount": 48519.57
+    },
+    {
+      "date": "2026-04-16",
+      "side": "buy",
+      "quantity": 75,
+      "price": 2064.0899,
+      "amount": 155085.4
+    },
+    {
+      "date": "2026-04-20",
+      "side": "buy",
+      "quantity": 63,
+      "price": 2047.1768,
+      "amount": 129204.29
+    },
+    {
+      "date": "2026-04-27",
+      "side": "buy",
+      "quantity": 55,
+      "price": 2204.7895,
+      "amount": 121481.7
+    },
+    {
+      "date": "2026-04-30",
+      "side": "buy",
+      "quantity": 61,
+      "price": 2035.3415,
+      "amount": 124379.31
+    },
+    {
+      "date": "2026-05-21",
+      "side": "buy",
+      "quantity": 40,
+      "price": 1967.779,
+      "amount": 78852.84
+    },
+    {
+      "date": "2026-05-22",
+      "side": "buy",
+      "quantity": 82,
+      "price": 1982.9488,
+      "amount": 162894.48
+    },
+    {
+      "date": "2026-05-25",
+      "side": "buy",
+      "quantity": 18,
+      "price": 1982.0833,
+      "amount": 35741.72
+    },
+    {
+      "date": "2026-05-26",
+      "side": "buy",
+      "quantity": 66,
+      "price": 1983.9752,
+      "amount": 131178.06
+    },
+    {
+      "date": "2026-05-27",
+      "side": "buy",
+      "quantity": 8,
+      "price": 1949.9625,
+      "amount": 15626.22
+    },
+    {
+      "date": "2026-05-29",
+      "side": "buy",
+      "quantity": 64,
+      "price": 1820.9372,
+      "amount": 116749.76
+    },
+    {
+      "date": "2026-06-01",
+      "side": "buy",
+      "quantity": 17,
+      "price": 1818.4529,
+      "amount": 30969.34
+    },
+    {
+      "date": "2026-06-02",
+      "side": "buy",
+      "quantity": 28,
+      "price": 1831.5075,
+      "amount": 51374.52
+    },
+    {
+      "date": "2026-06-03",
+      "side": "buy",
+      "quantity": 55,
+      "price": 1948.3929,
+      "amount": 107354.5
+    },
+    {
+      "date": "2026-06-04",
+      "side": "buy",
+      "quantity": 15,
+      "price": 1909.578,
+      "amount": 28695.24
+    },
+    {
+      "date": "2026-06-05",
+      "side": "buy",
+      "quantity": 18,
+      "price": 1918.1206,
+      "amount": 34588.31
+    },
+    {
+      "date": "2026-06-08",
+      "side": "buy",
+      "quantity": 27,
+      "price": 1912.5348,
+      "amount": 51731.39
+    },
+    {
+      "date": "2026-06-09",
+      "side": "buy",
+      "quantity": 15,
+      "price": 1862.2633,
+      "amount": 27984.23
+    }
+  ],
+  "green-lantern-capital-llp-510861|thermax": [
+    {
+      "date": "2026-04-08",
+      "side": "buy",
+      "quantity": 304,
+      "price": 3274.6295,
+      "amount": 997279.25
+    },
+    {
+      "date": "2026-04-09",
+      "side": "buy",
+      "quantity": 260,
+      "price": 3435.8768,
+      "amount": 894935.96
+    }
+  ],
+  "green-lantern-capital-llp-510861|triveni-turbine": [
+    {
+      "date": "2026-04-17",
+      "side": "buy",
+      "quantity": 1358,
+      "price": 515.7641,
+      "amount": 701808.52
+    },
+    {
+      "date": "2026-04-20",
+      "side": "buy",
+      "quantity": 78,
+      "price": 569.6,
+      "amount": 44517.66
+    },
+    {
+      "date": "2026-04-21",
+      "side": "buy",
+      "quantity": 196,
+      "price": 567.5886,
+      "amount": 111469.87
+    },
+    {
+      "date": "2026-04-22",
+      "side": "buy",
+      "quantity": 140,
+      "price": 571.9831,
+      "amount": 80237.79
+    },
+    {
+      "date": "2026-04-23",
+      "side": "buy",
+      "quantity": 155,
+      "price": 578.7959,
+      "amount": 89892.78
+    },
+    {
+      "date": "2026-04-24",
+      "side": "buy",
+      "quantity": 131,
+      "price": 563.8184,
+      "amount": 74007.93
+    },
+    {
+      "date": "2026-04-27",
+      "side": "buy",
+      "quantity": 976,
+      "price": 579.1213,
+      "amount": 566352.81
+    },
+    {
+      "date": "2026-04-29",
+      "side": "buy",
+      "quantity": 262,
+      "price": 585.3915,
+      "amount": 153679.31
+    },
+    {
+      "date": "2026-04-30",
+      "side": "buy",
+      "quantity": 151,
+      "price": 567.8668,
+      "amount": 85919.39
+    },
+    {
+      "date": "2026-05-05",
+      "side": "buy",
+      "quantity": 159,
+      "price": 559.5941,
+      "amount": 89126.72
+    },
+    {
+      "date": "2026-05-08",
+      "side": "buy",
+      "quantity": 629,
+      "price": 595.6722,
+      "amount": 375314.78
+    },
+    {
+      "date": "2026-05-19",
+      "side": "buy",
+      "quantity": 93,
+      "price": 591.9077,
+      "amount": 55140.99
+    }
+  ],
+  "green-lantern-capital-llp-510861|vedanta": [
+    {
+      "date": "2025-01-20",
+      "side": "buy",
+      "quantity": 8730,
+      "price": 461.5719,
+      "amount": 4037580.88
+    },
+    {
+      "date": "2025-06-11",
+      "side": "buy",
+      "quantity": 955,
+      "price": 464.2356,
+      "amount": 444231.66
+    },
+    {
+      "date": "2025-10-09",
+      "side": "buy",
+      "quantity": 1097,
+      "price": 477.6076,
+      "amount": 524878.53
+    },
+    {
+      "date": "2026-02-05",
+      "side": "sell",
+      "quantity": 1741,
+      "price": 648.885,
+      "amount": 1127449.52
+    },
+    {
+      "date": "2026-02-17",
+      "side": "sell",
+      "quantity": 472,
+      "price": 667.0506,
+      "amount": 314218.21
+    }
+  ],
+  "green-lantern-capital-llp-510861|zf-commercial-vehicle-control-systems-india": [
+    {
+      "date": "2025-05-30",
+      "side": "buy",
+      "quantity": 40,
+      "price": 13163.9855,
+      "amount": 527612.56
+    },
+    {
+      "date": "2025-12-01",
+      "side": "buy",
+      "quantity": 77,
+      "price": 13852.9922,
+      "amount": 1068600.42
+    },
+    {
+      "date": "2026-03-04",
+      "side": "buy",
+      "quantity": 8,
+      "price": 14245.6112,
+      "amount": 114170.02
+    },
+    {
+      "date": "2026-03-09",
+      "side": "buy",
+      "quantity": 11,
+      "price": 13949.9673,
+      "amount": 153756.54
+    },
+    {
+      "date": "2026-03-10",
+      "side": "buy",
+      "quantity": 11,
+      "price": 14000,
+      "amount": 154308
+    },
+    {
+      "date": "2026-03-18",
+      "side": "buy",
+      "quantity": 25,
+      "price": 13859.9824,
+      "amount": 347123.26
+    }
+  ],
+  "lkp-securities-98245|belrise-industries": [
+    {
+      "date": "2026-06-25",
+      "side": "sell",
+      "quantity": 6000,
+      "price": 251.496,
+      "amount": 1508976,
+      "boughtOn": [
+        "2025-09-10"
+      ]
+    }
+  ],
+  "lkp-securities-98245|capri-global-capital": [
+    {
+      "date": "2026-06-15",
+      "side": "sell",
+      "quantity": 3500,
+      "price": 217.3123,
+      "amount": 760592.97,
+      "boughtOn": [
+        "2025-07-10"
+      ]
+    },
+    {
+      "date": "2026-06-19",
+      "side": "sell",
+      "quantity": 3500,
+      "price": 224.55,
+      "amount": 785925,
+      "boughtOn": [
+        "2025-07-10"
+      ]
+    }
+  ],
+  "lkp-securities-98245|electronics-mart-india": [
+    {
+      "date": "2026-07-02",
+      "side": "sell",
+      "quantity": 3500,
+      "price": 134.9329,
+      "amount": 472265.18,
+      "boughtOn": [
+        "2026-01-02"
+      ]
+    },
+    {
+      "date": "2026-07-03",
+      "side": "sell",
+      "quantity": 3500,
+      "price": 142.2938,
+      "amount": 498028.37,
+      "boughtOn": [
+        "2026-01-02"
+      ]
+    },
+    {
+      "date": "2026-07-09",
+      "side": "sell",
+      "quantity": 3000,
+      "price": 131.8731,
+      "amount": 395619.39,
+      "boughtOn": [
+        "2026-01-02"
+      ]
+    }
+  ],
+  "lkp-securities-98245|jyothy-labs": [
+    {
+      "date": "2026-07-09",
+      "side": "sell",
+      "quantity": 4000,
+      "price": 195.2788,
+      "amount": 781115.34,
+      "boughtOn": [
+        "2025-04-17",
+        "2026-01-02"
+      ]
+    }
+  ],
+  "lkp-securities-98245|pricol": [
+    {
+      "date": "2026-05-05",
+      "side": "buy",
+      "quantity": 2225,
+      "price": 580.9495,
+      "amount": 1292612.67
+    },
+    {
+      "date": "2026-08-03",
+      "side": "sell",
+      "quantity": 2875,
+      "price": 718.56,
+      "amount": 2065860
+    }
+  ],
+  "lkp-securities-98245|varun-beverages": [
+    {
+      "date": "2026-04-21",
+      "side": "sell",
+      "quantity": 2700,
+      "price": 483.3813,
+      "amount": 1305129.51,
+      "boughtOn": [
+        "2025-07-10"
+      ]
+    }
+  ],
+  "molecule-ventures-llp-7810404|sansera-engineering": [
+    {
+      "date": "2026-09-21",
+      "side": "sell",
+      "quantity": 200,
+      "price": 4300.0006,
+      "amount": 857617.92
+    },
+    {
+      "date": "2026-09-22",
+      "side": "sell",
+      "quantity": 200,
+      "price": 4494.3803,
+      "amount": 896386.19
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 100,
+      "price": 4634.9604,
+      "amount": 462212.16
+    },
+    {
+      "date": "2026-09-25",
+      "side": "sell",
+      "quantity": 100,
+      "price": 4670.1729,
+      "amount": 465723.66
+    }
+  ],
+  "molecule-ventures-llp-7810404|sasken-communication-technologies": [
+    {
+      "date": "2026-06-24",
+      "side": "buy",
+      "quantity": 100,
+      "price": 2288.4049,
+      "amount": 229508.64
+    }
+  ],
+  "svan-investment-managers-llp-8710067|apollo-pipes": [
+    {
+      "date": "2026-08-20",
+      "side": "buy",
+      "quantity": 5700,
+      "price": 591.9999,
+      "amount": 3379797.5
+    }
+  ],
+  "svan-investment-managers-llp-8710067|caplin-point-laboratories": [
+    {
+      "date": "2026-04-15",
+      "side": "buy",
+      "quantity": 535,
+      "price": 1736.4878,
+      "amount": 930507.33
+    }
+  ],
+  "svan-investment-managers-llp-8710067|credit-access-grameen": [
+    {
+      "date": "2026-08-14",
+      "side": "buy",
+      "quantity": 1630,
+      "price": 1563.1561,
+      "amount": 2552021.05
+    }
+  ],
+  "svan-investment-managers-llp-8710067|ghcl-textiles": [
+    {
+      "date": "2026-08-13",
+      "side": "buy",
+      "quantity": 9145,
+      "price": 118.9929,
+      "amount": 1089930.1
+    }
+  ],
+  "svan-investment-managers-llp-8710067|gland-pharma": [
+    {
+      "date": "2026-06-09",
+      "side": "buy",
+      "quantity": 1300,
+      "price": 2289.9445,
+      "amount": 2981690.92
+    }
+  ],
+  "svan-investment-managers-llp-8710067|graphite-india": [
+    {
+      "date": "2026-09-09",
+      "side": "buy",
+      "quantity": 2700,
+      "price": 809.4235,
+      "amount": 2188939.57
+    }
+  ],
+  "svan-investment-managers-llp-8710067|kajaria-ceramics": [
+    {
+      "date": "2026-09-29",
+      "side": "buy",
+      "quantity": 1700,
+      "price": 1189.9991,
+      "amount": 2026235.1
+    }
+  ],
+  "svan-investment-managers-llp-8710067|nitin-spinners": [
+    {
+      "date": "2026-08-14",
+      "side": "buy",
+      "quantity": 115,
+      "price": 542.7225,
+      "amount": 62512.53
+    },
+    {
+      "date": "2026-08-17",
+      "side": "buy",
+      "quantity": 310,
+      "price": 554.4728,
+      "amount": 172161.68
+    },
+    {
+      "date": "2026-08-18",
+      "side": "buy",
+      "quantity": 760,
+      "price": 595.8654,
+      "amount": 453582.4
+    }
+  ],
+  "svan-investment-managers-llp-8710067|paras-defence-and-space-technologies": [
+    {
+      "date": "2026-05-07",
+      "side": "buy",
+      "quantity": 3650,
+      "price": 834.0916,
+      "amount": 3049304.8
+    },
+    {
+      "date": "2026-06-18",
+      "side": "sell",
+      "quantity": 615,
+      "price": 1285.8526,
+      "amount": 789533.88,
+      "boughtOn": [
+        "2026-05-07"
+      ]
+    },
+    {
+      "date": "2026-06-19",
+      "side": "sell",
+      "quantity": 605,
+      "price": 1436.0027,
+      "amount": 867391.36,
+      "boughtOn": [
+        "2026-05-07"
+      ]
+    }
+  ],
+  "svan-investment-managers-llp-8710067|sg-mart": [
+    {
+      "date": "2026-04-10",
+      "side": "sell",
+      "quantity": 1750,
+      "price": 552.6335,
+      "amount": 965561.51,
+      "boughtOn": [
+        "2025-03-28"
+      ]
+    },
+    {
+      "date": "2026-05-21",
+      "side": "sell",
+      "quantity": 900,
+      "price": 630.0236,
+      "amount": 566114.04,
+      "boughtOn": [
+        "2025-03-28"
+      ]
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 2440,
+      "price": 675.0922,
+      "amount": 1644589.77,
+      "boughtOn": [
+        "2025-03-28",
+        "2025-09-04"
+      ]
+    },
+    {
+      "date": "2026-08-31",
+      "side": "sell",
+      "quantity": 1715,
+      "price": 791.1861,
+      "amount": 1353875.28,
+      "boughtOn": [
+        "2025-09-04"
+      ]
+    }
+  ],
+  "svan-investment-managers-llp-8710067|shankara-buildpro": [
+    {
+      "date": "2026-05-19",
+      "side": "sell",
+      "quantity": 1050,
+      "price": 1159.2689,
+      "amount": 1215285.07,
+      "boughtOn": [
+        "2024-10-29"
+      ]
+    }
+  ],
+  "svan-investment-managers-llp-8710067|syrma-sgs-technology": [
+    {
+      "date": "2026-04-22",
+      "side": "buy",
+      "quantity": 175,
+      "price": 1011.2508,
+      "amount": 177252.06
+    },
+    {
+      "date": "2026-04-24",
+      "side": "buy",
+      "quantity": 175,
+      "price": 971.4201,
+      "amount": 170270.51
+    },
+    {
+      "date": "2026-06-25",
+      "side": "sell",
+      "quantity": 385,
+      "price": 1467.1272,
+      "amount": 563940.09,
+      "boughtOn": [
+        "2026-02-05"
+      ]
+    }
+  ],
+  "svan-investment-managers-llp-8710067|varroc-engineering": [
+    {
+      "date": "2026-08-14",
+      "side": "buy",
+      "quantity": 1145,
+      "price": 852.984,
+      "amount": 978229.58
+    }
+  ],
+  "svan-investment-managers-llp-8710067|viyash-scientific": [
+    {
+      "date": "2026-05-20",
+      "side": "buy",
+      "quantity": 8035,
+      "price": 257.0186,
+      "amount": 2068448.44
+    },
+    {
+      "date": "2026-07-30",
+      "side": "buy",
+      "quantity": 2300,
+      "price": 252.2341,
+      "amount": 581066.42
+    }
+  ],
+  "svan-investment-managers-llp-8710067|wockhardt": [
+    {
+      "date": "2026-05-29",
+      "side": "buy",
+      "quantity": 1600,
+      "price": 1925,
+      "amount": 3084928
+    }
+  ],
+  "svan-investment-managers-llp-8710090|apollo-pipes": [
+    {
+      "date": "2026-08-20",
+      "side": "buy",
+      "quantity": 3500,
+      "price": 591.9999,
+      "amount": 2075314.5
+    }
+  ],
+  "svan-investment-managers-llp-8710090|caplin-point-laboratories": [
+    {
+      "date": "2026-04-15",
+      "side": "buy",
+      "quantity": 340,
+      "price": 1736.4878,
+      "amount": 591350.06
+    }
+  ],
+  "svan-investment-managers-llp-8710090|credit-access-grameen": [
+    {
+      "date": "2026-08-14",
+      "side": "buy",
+      "quantity": 800,
+      "price": 1563.1561,
+      "amount": 1252526.12
+    }
+  ],
+  "svan-investment-managers-llp-8710090|ghcl-textiles": [
+    {
+      "date": "2026-08-13",
+      "side": "buy",
+      "quantity": 5925,
+      "price": 118.9929,
+      "amount": 706160.38
+    }
+  ],
+  "svan-investment-managers-llp-8710090|gland-pharma": [
+    {
+      "date": "2026-06-09",
+      "side": "buy",
+      "quantity": 845,
+      "price": 2289.9445,
+      "amount": 1938099.05
+    }
+  ],
+  "svan-investment-managers-llp-8710090|graphite-india": [
+    {
+      "date": "2026-09-09",
+      "side": "buy",
+      "quantity": 1800,
+      "price": 809.4235,
+      "amount": 1459293.38
+    }
+  ],
+  "svan-investment-managers-llp-8710090|nitin-spinners": [
+    {
+      "date": "2026-08-14",
+      "side": "buy",
+      "quantity": 80,
+      "price": 542.7225,
+      "amount": 43486.85
+    },
+    {
+      "date": "2026-08-17",
+      "side": "buy",
+      "quantity": 205,
+      "price": 554.4728,
+      "amount": 113849.1
+    },
+    {
+      "date": "2026-08-18",
+      "side": "buy",
+      "quantity": 500,
+      "price": 595.8654,
+      "amount": 298409.45
+    }
+  ],
+  "svan-investment-managers-llp-8710090|paras-defence-and-space-technologies": [
+    {
+      "date": "2026-05-07",
+      "side": "buy",
+      "quantity": 450,
+      "price": 834.0916,
+      "amount": 375941.4
+    },
+    {
+      "date": "2026-05-11",
+      "side": "buy",
+      "quantity": 1835,
+      "price": 869.0521,
+      "amount": 1597262.37
+    },
+    {
+      "date": "2026-06-18",
+      "side": "sell",
+      "quantity": 315,
+      "price": 1285.8526,
+      "amount": 404395.55,
+      "boughtOn": [
+        "2026-05-07"
+      ]
+    },
+    {
+      "date": "2026-06-19",
+      "side": "sell",
+      "quantity": 395,
+      "price": 1436.0027,
+      "amount": 566313.74,
+      "boughtOn": [
+        "2026-05-07",
+        "2026-05-11"
+      ]
+    }
+  ],
+  "svan-investment-managers-llp-8710090|sg-mart": [
+    {
+      "date": "2026-04-10",
+      "side": "sell",
+      "quantity": 1200,
+      "price": 552.6335,
+      "amount": 662099.4,
+      "boughtOn": [
+        "2025-03-28"
+      ]
+    },
+    {
+      "date": "2026-05-21",
+      "side": "sell",
+      "quantity": 580,
+      "price": 630.0236,
+      "amount": 364829.45,
+      "boughtOn": [
+        "2025-03-28"
+      ]
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 1555,
+      "price": 675.0922,
+      "amount": 1048088.59,
+      "boughtOn": [
+        "2025-03-28"
+      ]
+    },
+    {
+      "date": "2026-08-31",
+      "side": "sell",
+      "quantity": 1110,
+      "price": 791.1861,
+      "amount": 876269.42,
+      "boughtOn": [
+        "2025-03-28",
+        "2025-09-04"
+      ]
+    }
+  ],
+  "svan-investment-managers-llp-8710090|shankara-buildpro": [
+    {
+      "date": "2026-05-19",
+      "side": "sell",
+      "quantity": 670,
+      "price": 1159.2689,
+      "amount": 775467.17,
+      "boughtOn": [
+        "2024-12-03"
+      ]
+    }
+  ],
+  "svan-investment-managers-llp-8710090|syrma-sgs-technology": [
+    {
+      "date": "2026-04-22",
+      "side": "buy",
+      "quantity": 115,
+      "price": 1011.2508,
+      "amount": 116479.61
+    },
+    {
+      "date": "2026-04-24",
+      "side": "buy",
+      "quantity": 115,
+      "price": 971.4201,
+      "amount": 111892.33
+    },
+    {
+      "date": "2026-06-25",
+      "side": "sell",
+      "quantity": 250,
+      "price": 1467.1272,
+      "amount": 366194.75,
+      "boughtOn": [
+        "2026-02-05"
+      ]
+    }
+  ],
+  "svan-investment-managers-llp-8710090|varroc-engineering": [
+    {
+      "date": "2026-08-14",
+      "side": "buy",
+      "quantity": 295,
+      "price": 852.984,
+      "amount": 252033.23
+    }
+  ],
+  "svan-investment-managers-llp-8710090|viyash-scientific": [
+    {
+      "date": "2026-05-20",
+      "side": "buy",
+      "quantity": 5205,
+      "price": 257.0186,
+      "amount": 1339922.42
+    },
+    {
+      "date": "2026-07-30",
+      "side": "buy",
+      "quantity": 1510,
+      "price": 252.2341,
+      "amount": 381482.95
+    }
+  ],
+  "svan-investment-managers-llp-8710090|wockhardt": [
+    {
+      "date": "2026-05-29",
+      "side": "buy",
+      "quantity": 1045,
+      "price": 1925,
+      "amount": 2014843.98
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|amrutanjan-health-care": [
+    {
+      "date": "2025-08-05",
+      "side": "buy",
+      "quantity": 3663,
+      "price": 682.419,
+      "amount": 2504200.43
+    },
+    {
+      "date": "2026-05-25",
+      "side": "buy",
+      "quantity": 1773,
+      "price": 564.0896,
+      "amount": 1001931.02
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|ather-energy": [
+    {
+      "date": "2025-07-31",
+      "side": "buy",
+      "quantity": 14399,
+      "price": 347.2384,
+      "amount": 5008885.76
+    },
+    {
+      "date": "2025-09-16",
+      "side": "sell",
+      "quantity": 4399,
+      "price": 552.1925,
+      "amount": 2424722.33
+    },
+    {
+      "date": "2026-01-27",
+      "side": "sell",
+      "quantity": 4000,
+      "price": 619,
+      "amount": 2471543.4
+    },
+    {
+      "date": "2026-10-06",
+      "side": "sell",
+      "quantity": 3000,
+      "price": 1405.0004,
+      "amount": 4207414.2,
+      "boughtOn": [
+        "2025-07-31"
+      ]
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|eureka-forbes": [
+    {
+      "date": "2025-07-31",
+      "side": "buy",
+      "quantity": 4456,
+      "price": 560.9727,
+      "amount": 2504194.2
+    },
+    {
+      "date": "2026-06-15",
+      "side": "buy",
+      "quantity": 4376,
+      "price": 457.008,
+      "amount": 2003466.87
+    },
+    {
+      "date": "2026-07-15",
+      "side": "buy",
+      "quantity": 4200,
+      "price": 475.0537,
+      "amount": 1999475.67
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|gateway-distriparks": [
+    {
+      "date": "2025-07-31",
+      "side": "buy",
+      "quantity": 34964,
+      "price": 71.5007,
+      "amount": 2504450.42
+    },
+    {
+      "date": "2025-08-07",
+      "side": "buy",
+      "quantity": 37862,
+      "price": 66.0278,
+      "amount": 2504443.68
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|greaves-cotton": [
+    {
+      "date": "2025-09-19",
+      "side": "buy",
+      "quantity": 10737,
+      "price": 223.5288,
+      "amount": 2404348.5
+    },
+    {
+      "date": "2026-05-25",
+      "side": "buy",
+      "quantity": 14541,
+      "price": 171.9253,
+      "amount": 2504465.17
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|jaiprakash-power-ventures": [
+    {
+      "date": "2025-07-31",
+      "side": "buy",
+      "quantity": 118623,
+      "price": 21.0751,
+      "amount": 2504496.32
+    },
+    {
+      "date": "2025-08-07",
+      "side": "buy",
+      "quantity": 133024,
+      "price": 18.7935,
+      "amount": 2504481.9
+    },
+    {
+      "date": "2025-08-19",
+      "side": "buy",
+      "quantity": 53657,
+      "price": 18.6355,
+      "amount": 1001724.51
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|navneet-education": [
+    {
+      "date": "2025-08-05",
+      "side": "buy",
+      "quantity": 16793,
+      "price": 148.8687,
+      "amount": 2504452.13
+    },
+    {
+      "date": "2026-07-15",
+      "side": "buy",
+      "quantity": 12900,
+      "price": 152.1104,
+      "amount": 1966402.74
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|nuvama-wealth-management": [
+    {
+      "date": "2025-08-05",
+      "side": "buy",
+      "quantity": 353,
+      "price": 7067.1671,
+      "amount": 2499200.74
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|panacea-biotec": [
+    {
+      "date": "2025-08-05",
+      "side": "buy",
+      "quantity": 2750,
+      "price": 415.5168,
+      "amount": 1144728.3
+    },
+    {
+      "date": "2025-08-06",
+      "side": "buy",
+      "quantity": 3306,
+      "price": 409.897,
+      "amount": 1357558.52
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|sbfc-finance": [
+    {
+      "date": "2025-08-05",
+      "side": "buy",
+      "quantity": 48078,
+      "price": 103.996,
+      "amount": 5008919.78
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|shoppers-stop": [
+    {
+      "date": "2025-07-31",
+      "side": "buy",
+      "quantity": 4698,
+      "price": 532.0511,
+      "amount": 2504075.54
+    },
+    {
+      "date": "2026-01-29",
+      "side": "buy",
+      "quantity": 4245,
+      "price": 353.3919,
+      "amount": 1502848.68
+    },
+    {
+      "date": "2026-05-25",
+      "side": "buy",
+      "quantity": 4415,
+      "price": 339.7698,
+      "amount": 1502783.66
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|shree-digvijay-cement": [
+    {
+      "date": "2025-07-31",
+      "side": "buy",
+      "quantity": 29511,
+      "price": 84.7119,
+      "amount": 2504433.73
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|tejas-networks": [
+    {
+      "date": "2025-08-05",
+      "side": "buy",
+      "quantity": 4286,
+      "price": 583.3026,
+      "amount": 2504534.79
+    },
+    {
+      "date": "2026-01-29",
+      "side": "buy",
+      "quantity": 3034,
+      "price": 329.6146,
+      "amount": 1001850.76
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|wockhardt": [
+    {
+      "date": "2025-08-05",
+      "side": "buy",
+      "quantity": 3225,
+      "price": 1550.1996,
+      "amount": 5008393.35
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128005|amrutanjan-health-care": [
+    {
+      "date": "2026-05-25",
+      "side": "buy",
+      "quantity": 1772,
+      "price": 564.0896,
+      "amount": 1001366.47
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128005|eureka-forbes": [
+    {
+      "date": "2026-06-15",
+      "side": "buy",
+      "quantity": 2188,
+      "price": 457.008,
+      "amount": 1001733.44
+    },
+    {
+      "date": "2026-07-15",
+      "side": "buy",
+      "quantity": 4200,
+      "price": 475.0537,
+      "amount": 1999475.67
+    },
+    {
+      "date": "2026-07-30",
+      "side": "buy",
+      "quantity": 10864,
+      "price": 453.6885,
+      "amount": 4939371.53
+    },
+    {
+      "date": "2026-08-03",
+      "side": "buy",
+      "quantity": 5483,
+      "price": 455.8736,
+      "amount": 2504054.6
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128005|gateway-distriparks": [
+    {
+      "date": "2026-08-10",
+      "side": "buy",
+      "quantity": 86587,
+      "price": 57.7445,
+      "amount": 5008923.34
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128005|greaves-cotton": [
+    {
+      "date": "2026-05-25",
+      "side": "buy",
+      "quantity": 14541,
+      "price": 171.9253,
+      "amount": 2504465.17
+    },
+    {
+      "date": "2026-07-30",
+      "side": "buy",
+      "quantity": 20833,
+      "price": 236.9235,
+      "amount": 4946341
+    },
+    {
+      "date": "2026-08-03",
+      "side": "buy",
+      "quantity": 21390,
+      "price": 233.75,
+      "amount": 5008912.43
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128005|navneet-education": [
+    {
+      "date": "2026-07-15",
+      "side": "buy",
+      "quantity": 12900,
+      "price": 152.1104,
+      "amount": 1966402.74
+    },
+    {
+      "date": "2026-08-10",
+      "side": "buy",
+      "quantity": 37406,
+      "price": 133.6684,
+      "amount": 5008998.87
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128005|nuvama-wealth-management": [
+    {
+      "date": "2026-06-15",
+      "side": "buy",
+      "quantity": 1187,
+      "price": 1685,
+      "amount": 2003695.08
+    },
+    {
+      "date": "2026-08-10",
+      "side": "buy",
+      "quantity": 3101,
+      "price": 1612.3549,
+      "amount": 5008912.52
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128005|praj-industries": [
+    {
+      "date": "2026-08-10",
+      "side": "buy",
+      "quantity": 15052,
+      "price": 332.1798,
+      "amount": 5008969.78
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128005|sbfc-finance": [
+    {
+      "date": "2026-07-30",
+      "side": "buy",
+      "quantity": 53846,
+      "price": 90.6262,
+      "amount": 4890253.97
+    },
+    {
+      "date": "2026-08-03",
+      "side": "buy",
+      "quantity": 27209,
+      "price": 91.8799,
+      "amount": 2504460.06
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128005|shoppers-stop": [
+    {
+      "date": "2026-05-25",
+      "side": "buy",
+      "quantity": 7357,
+      "price": 339.7698,
+      "amount": 2504186.05
+    },
+    {
+      "date": "2026-08-13",
+      "side": "buy",
+      "quantity": 3859.667,
+      "price": 421.5049,
+      "amount": 1629797.03
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128005|shree-digvijay-cement": [
+    {
+      "date": "2026-07-30",
+      "side": "buy",
+      "quantity": 67500,
+      "price": 73.0291,
+      "amount": 4939962.4
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128005|vip-industries": [
+    {
+      "date": "2026-06-15",
+      "side": "buy",
+      "quantity": 3075,
+      "price": 325.2346,
+      "amount": 1001896.51
+    },
+    {
+      "date": "2026-07-30",
+      "side": "buy",
+      "quantity": 16359,
+      "price": 298.1398,
+      "amount": 4887659.26
+    },
+    {
+      "date": "2026-07-31",
+      "side": "buy",
+      "quantity": 9900,
+      "price": 299.5926,
+      "amount": 2972284.19
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128005|wockhardt": [
+    {
+      "date": "2026-07-30",
+      "side": "buy",
+      "quantity": 2614,
+      "price": 1893.1692,
+      "amount": 4959287.1
+    }
+  ]
+};
+
+/**
+ * THE CASH DIVIDENDS EACH HOLDING WAS PAID, ON THEIR OWN DATES
+ * (Stage 10fw) — the same events `Position.dividendReceived` totals, keyed as
+ * `BOOK_HOLDING_TRADES`. `date` is the received date, else the ex date; null
+ * where the statement prints neither. What a money-weighted return over the
+ * holding's own dated trades adds on each day.
+ */
+export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: number }[]> = {
+  "aditya-birla-sun-life-mutual-fund-1019265797|aditya-birla-sun-life-liquid-fund-daily-idcw-direct-plan": [
+    {
+      "date": "2026-09-01",
+      "amount": 199.95
+    },
+    {
+      "date": "2026-09-02",
+      "amount": 249.69
+    },
+    {
+      "date": "2026-09-03",
+      "amount": 277.24
+    },
+    {
+      "date": "2026-09-04",
+      "amount": 169.82
+    },
+    {
+      "date": "2026-09-06",
+      "amount": 236.55
+    },
+    {
+      "date": "2026-09-07",
+      "amount": 105.33
+    },
+    {
+      "date": "2026-09-08",
+      "amount": 97.93
+    },
+    {
+      "date": "2026-09-09",
+      "amount": 143.32
+    },
+    {
+      "date": "2026-09-10",
+      "amount": 136.75
+    },
+    {
+      "date": "2026-09-11",
+      "amount": 62.15
+    },
+    {
+      "date": "2026-09-14",
+      "amount": 360.25
+    },
+    {
+      "date": "2026-09-15",
+      "amount": 29.66
+    },
+    {
+      "date": "2026-09-16",
+      "amount": 96.66
+    },
+    {
+      "date": "2026-09-17",
+      "amount": 112.11
+    },
+    {
+      "date": "2026-09-18",
+      "amount": 110.61
+    },
+    {
+      "date": "2026-09-20",
+      "amount": 251.31
+    },
+    {
+      "date": "2026-09-21",
+      "amount": 169.22
+    },
+    {
+      "date": "2026-09-22",
+      "amount": 191.75
+    },
+    {
+      "date": "2026-09-23",
+      "amount": 115.05
+    },
+    {
+      "date": "2026-09-24",
+      "amount": 49.3
+    },
+    {
+      "date": "2026-09-27",
+      "amount": 199.2
+    },
+    {
+      "date": "2026-09-28",
+      "amount": 93.19
+    },
+    {
+      "date": "2026-09-29",
+      "amount": 109.94
+    },
+    {
+      "date": "2026-09-30",
+      "amount": 173
+    }
+  ],
+  "baring-private-equity-india-fund-AIFM_BPEPF6_0584|baring-private-equity-india-fund-6-class-a1": [
+    {
+      "date": "2025-09-30",
+      "amount": 18909
+    },
+    {
+      "date": "2026-03-31",
+      "amount": 37252
+    }
+  ],
+  "buoyant-capital-103473|buoyant-opportunities-strategy-category-iii-class-a4": [
+    {
+      "date": "2026-04-01",
+      "amount": 58861.66
+    }
+  ],
+  "carnelian-asset-management-and-advisors-pvt-ltd-3517383|biocon": [
+    {
+      "date": "2026-08-14",
+      "amount": 62750
+    }
+  ],
+  "carnelian-asset-management-and-advisors-pvt-ltd-3517383|gland-pharma": [
+    {
+      "date": "2026-09-03",
+      "amount": 165040
+    }
+  ],
+  "carnelian-asset-management-and-advisors-pvt-ltd-3517383|kalpataru-projects-international": [
+    {
+      "date": "2026-07-20",
+      "amount": 306900
+    }
+  ],
+  "carnelian-asset-management-and-advisors-pvt-ltd-3517383|kalyan-jewellers-india": [
+    {
+      "date": "2026-09-29",
+      "amount": 146000
+    }
+  ],
+  "carnelian-asset-management-and-advisors-pvt-ltd-3517383|vishnu-chemicals": [
+    {
+      "date": "2026-09-15",
+      "amount": 2787.6
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|banco-products-india": [
+    {
+      "date": "2026-09-11",
+      "amount": 16000
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|bls-international-services": [
+    {
+      "date": "2026-09-16",
+      "amount": 3000
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|blue-jet-healthcare": [
+    {
+      "date": "2026-09-11",
+      "amount": 7200
+    },
+    {
+      "date": "2026-09-30",
+      "amount": -7200
+    },
+    {
+      "date": "2026-09-30",
+      "amount": 7200
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|can-fin-homes": [
+    {
+      "date": "2026-07-03",
+      "amount": 24000
+    },
+    {
+      "date": "2026-08-04",
+      "amount": -24000
+    },
+    {
+      "date": "2026-08-04",
+      "amount": 24000
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|caplin-point-laboratories": [
+    {
+      "date": "2026-05-29",
+      "amount": 3600
+    },
+    {
+      "date": "2026-06-09",
+      "amount": -3600
+    },
+    {
+      "date": "2026-06-09",
+      "amount": 3600
+    },
+    {
+      "date": "2026-09-18",
+      "amount": 3600
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|deep-industries": [
+    {
+      "date": "2026-08-21",
+      "amount": 8000
+    },
+    {
+      "date": "2026-09-09",
+      "amount": -8000
+    },
+    {
+      "date": "2026-09-09",
+      "amount": 8000
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|eclerx-services": [
+    {
+      "date": "2026-08-21",
+      "amount": 1600
+    },
+    {
+      "date": "2026-09-09",
+      "amount": -1600
+    },
+    {
+      "date": "2026-09-09",
+      "amount": 1600
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|eih": [
+    {
+      "date": "2026-07-31",
+      "amount": 14250
+    },
+    {
+      "date": "2026-08-13",
+      "amount": -14250
+    },
+    {
+      "date": "2026-08-13",
+      "amount": 14250
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|great-eastern-shipping": [
+    {
+      "date": "2026-08-07",
+      "amount": 28800
+    },
+    {
+      "date": "2026-08-28",
+      "amount": -28800
+    },
+    {
+      "date": "2026-08-28",
+      "amount": 28800
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|hdfc-asset-management": [
+    {
+      "date": "2026-06-05",
+      "amount": 59400
+    },
+    {
+      "date": "2026-06-30",
+      "amount": -59400
+    },
+    {
+      "date": "2026-06-30",
+      "amount": 59400
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|icici-bank": [
+    {
+      "date": "2026-08-03",
+      "amount": 24000
+    },
+    {
+      "date": "2026-08-27",
+      "amount": -24000
+    },
+    {
+      "date": "2026-08-27",
+      "amount": 24000
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|indian-energy-exchange": [
+    {
+      "date": "2026-05-15",
+      "amount": 30000
+    },
+    {
+      "date": "2026-09-17",
+      "amount": -30000
+    },
+    {
+      "date": "2026-09-17",
+      "amount": 30000
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|indraprastha-medical": [
+    {
+      "date": "2026-09-18",
+      "amount": 31000
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|jindal-stainless": [
+    {
+      "date": "2026-08-21",
+      "amount": 9750
+    },
+    {
+      "date": "2026-09-16",
+      "amount": -9750
+    },
+    {
+      "date": "2026-09-16",
+      "amount": 9750
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|karur-vysya-bank": [
+    {
+      "date": "2026-07-24",
+      "amount": 22100
+    },
+    {
+      "date": "2026-08-07",
+      "amount": -22100
+    },
+    {
+      "date": "2026-08-07",
+      "amount": 22100
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|kovai-medical-center-and-hospital": [
+    {
+      "date": "2026-08-19",
+      "amount": 7500
+    },
+    {
+      "date": "2026-09-16",
+      "amount": -7500
+    },
+    {
+      "date": "2026-09-16",
+      "amount": 7500
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|life-insurance-corp-of-india": [
+    {
+      "date": "2026-06-25",
+      "amount": 60000
+    },
+    {
+      "date": "2026-07-30",
+      "amount": -60000
+    },
+    {
+      "date": "2026-07-30",
+      "amount": 60000
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|lupin": [
+    {
+      "date": "2026-07-17",
+      "amount": 16200
+    },
+    {
+      "date": "2026-08-07",
+      "amount": -16200
+    },
+    {
+      "date": "2026-08-07",
+      "amount": 16200
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|mahindra-and-mahindra": [
+    {
+      "date": "2026-07-03",
+      "amount": 26400
+    },
+    {
+      "date": "2026-08-05",
+      "amount": -26400
+    },
+    {
+      "date": "2026-08-05",
+      "amount": 26400
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|oberoi-realty": [
+    {
+      "date": "2026-05-14",
+      "amount": 2000
+    },
+    {
+      "date": "2026-05-25",
+      "amount": -2000
+    },
+    {
+      "date": "2026-05-25",
+      "amount": 2000
+    },
+    {
+      "date": "2026-07-23",
+      "amount": 2000
+    },
+    {
+      "date": "2026-08-01",
+      "amount": -2000
+    },
+    {
+      "date": "2026-08-01",
+      "amount": 2000
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|sagility": [
+    {
+      "date": "2026-08-07",
+      "amount": 4500
+    },
+    {
+      "date": "2026-09-16",
+      "amount": -4500
+    },
+    {
+      "date": "2026-09-16",
+      "amount": 4500
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|sharda-motor-industries": [
+    {
+      "date": "2026-09-18",
+      "amount": 25000
+    },
+    {
+      "date": "2026-09-30",
+      "amount": -25000
+    },
+    {
+      "date": "2026-09-30",
+      "amount": 25000
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|sonata-software": [
+    {
+      "date": "2026-07-17",
+      "amount": 37350
+    },
+    {
+      "date": "2026-08-12",
+      "amount": -37350
+    },
+    {
+      "date": "2026-08-12",
+      "amount": 37350
+    },
+    {
+      "date": "2026-08-14",
+      "amount": 11250
+    },
+    {
+      "date": "2026-08-28",
+      "amount": -11250
+    },
+    {
+      "date": "2026-08-28",
+      "amount": 11250
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|state-bank-of-india": [
+    {
+      "date": "2026-05-15",
+      "amount": 39037.5
+    },
+    {
+      "date": "2026-06-05",
+      "amount": -39037.5
+    },
+    {
+      "date": "2026-06-05",
+      "amount": 39037.5
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|suprajit-engineering": [
+    {
+      "date": "2026-09-01",
+      "amount": 12000
+    },
+    {
+      "date": "2026-09-17",
+      "amount": -12000
+    },
+    {
+      "date": "2026-09-17",
+      "amount": 12000
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|transport-corp-of-india": [
+    {
+      "date": "2026-07-17",
+      "amount": 3750
+    },
+    {
+      "date": "2026-08-05",
+      "amount": -3750
+    },
+    {
+      "date": "2026-08-05",
+      "amount": 3750
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|waaree-energies": [
+    {
+      "date": "2026-09-11",
+      "amount": 1000
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|zydus-lifesciences": [
+    {
+      "date": "2026-07-24",
+      "amount": 2800
+    },
+    {
+      "date": "2026-08-17",
+      "amount": -2800
+    },
+    {
+      "date": "2026-08-17",
+      "amount": 2800
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|banco-products-india": [
+    {
+      "date": "2026-09-11",
+      "amount": 40000
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|bls-international-services": [
+    {
+      "date": "2026-09-16",
+      "amount": 6250
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|blue-jet-healthcare": [
+    {
+      "date": "2026-09-11",
+      "amount": 18000
+    },
+    {
+      "date": "2026-09-30",
+      "amount": -18000
+    },
+    {
+      "date": "2026-09-30",
+      "amount": 18000
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|can-fin-homes": [
+    {
+      "date": "2026-07-03",
+      "amount": 56000
+    },
+    {
+      "date": "2026-08-04",
+      "amount": -56000
+    },
+    {
+      "date": "2026-08-04",
+      "amount": 56000
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|caplin-point-laboratories": [
+    {
+      "date": "2026-05-29",
+      "amount": 8000
+    },
+    {
+      "date": "2026-06-09",
+      "amount": -8000
+    },
+    {
+      "date": "2026-06-09",
+      "amount": 8000
+    },
+    {
+      "date": "2026-09-18",
+      "amount": 8000
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|deep-industries": [
+    {
+      "date": "2026-08-21",
+      "amount": 25000
+    },
+    {
+      "date": "2026-09-09",
+      "amount": -25000
+    },
+    {
+      "date": "2026-09-09",
+      "amount": 25000
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|eclerx-services": [
+    {
+      "date": "2026-08-21",
+      "amount": 3600
+    },
+    {
+      "date": "2026-09-09",
+      "amount": -3600
+    },
+    {
+      "date": "2026-09-09",
+      "amount": 3600
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|eih": [
+    {
+      "date": "2026-07-31",
+      "amount": 30000
+    },
+    {
+      "date": "2026-08-13",
+      "amount": -30000
+    },
+    {
+      "date": "2026-08-13",
+      "amount": 30000
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|great-eastern-shipping": [
+    {
+      "date": "2026-08-07",
+      "amount": 72000
+    },
+    {
+      "date": "2026-08-28",
+      "amount": -72000
+    },
+    {
+      "date": "2026-08-28",
+      "amount": 72000
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|hdfc-asset-management": [
+    {
+      "date": "2026-06-05",
+      "amount": 135000
+    },
+    {
+      "date": "2026-06-30",
+      "amount": -135000
+    },
+    {
+      "date": "2026-06-30",
+      "amount": 135000
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|icici-bank": [
+    {
+      "date": "2026-08-03",
+      "amount": 60000
+    },
+    {
+      "date": "2026-08-27",
+      "amount": -60000
+    },
+    {
+      "date": "2026-08-27",
+      "amount": 60000
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|indian-energy-exchange": [
+    {
+      "date": "2026-05-15",
+      "amount": 60000
+    },
+    {
+      "date": "2026-09-17",
+      "amount": -60000
+    },
+    {
+      "date": "2026-09-17",
+      "amount": 60000
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|indraprastha-medical": [
+    {
+      "date": "2026-09-18",
+      "amount": 70000
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|jindal-stainless": [
+    {
+      "date": "2026-08-21",
+      "amount": 21000
+    },
+    {
+      "date": "2026-09-16",
+      "amount": -21000
+    },
+    {
+      "date": "2026-09-16",
+      "amount": 21000
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|karur-vysya-bank": [
+    {
+      "date": "2026-07-24",
+      "amount": 52000
+    },
+    {
+      "date": "2026-08-07",
+      "amount": -52000
+    },
+    {
+      "date": "2026-08-07",
+      "amount": 52000
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|kovai-medical-center-and-hospital": [
+    {
+      "date": "2026-08-19",
+      "amount": 18000
+    },
+    {
+      "date": "2026-09-16",
+      "amount": -18000
+    },
+    {
+      "date": "2026-09-16",
+      "amount": 18000
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|life-insurance-corp-of-india": [
+    {
+      "date": "2026-06-25",
+      "amount": 164000
+    },
+    {
+      "date": "2026-07-30",
+      "amount": -164000
+    },
+    {
+      "date": "2026-07-30",
+      "amount": 164000
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|lupin": [
+    {
+      "date": "2026-07-17",
+      "amount": 36000
+    },
+    {
+      "date": "2026-08-07",
+      "amount": -36000
+    },
+    {
+      "date": "2026-08-07",
+      "amount": 36000
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|mahindra-and-mahindra": [
+    {
+      "date": "2026-07-03",
+      "amount": 59400
+    },
+    {
+      "date": "2026-08-05",
+      "amount": -59400
+    },
+    {
+      "date": "2026-08-05",
+      "amount": 59400
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|oberoi-realty": [
+    {
+      "date": "2026-05-14",
+      "amount": 4400
+    },
+    {
+      "date": "2026-05-25",
+      "amount": -4400
+    },
+    {
+      "date": "2026-05-25",
+      "amount": 4400
+    },
+    {
+      "date": "2026-07-23",
+      "amount": 4400
+    },
+    {
+      "date": "2026-08-01",
+      "amount": -4400
+    },
+    {
+      "date": "2026-08-01",
+      "amount": 4400
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|sagility": [
+    {
+      "date": "2026-08-07",
+      "amount": 10000
+    },
+    {
+      "date": "2026-09-16",
+      "amount": -10000
+    },
+    {
+      "date": "2026-09-16",
+      "amount": 10000
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|sharda-motor-industries": [
+    {
+      "date": "2026-09-18",
+      "amount": 60000
+    },
+    {
+      "date": "2026-09-30",
+      "amount": -60000
+    },
+    {
+      "date": "2026-09-30",
+      "amount": 60000
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|sonata-software": [
+    {
+      "date": "2026-07-17",
+      "amount": 87150
+    },
+    {
+      "date": "2026-08-12",
+      "amount": -87150
+    },
+    {
+      "date": "2026-08-12",
+      "amount": 87150
+    },
+    {
+      "date": "2026-08-14",
+      "amount": 26250
+    },
+    {
+      "date": "2026-08-28",
+      "amount": -26250
+    },
+    {
+      "date": "2026-08-28",
+      "amount": 26250
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|state-bank-of-india": [
+    {
+      "date": "2026-05-15",
+      "amount": 86750
+    },
+    {
+      "date": "2026-06-05",
+      "amount": -86750
+    },
+    {
+      "date": "2026-06-05",
+      "amount": 86750
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|suprajit-engineering": [
+    {
+      "date": "2026-09-01",
+      "amount": 30000
+    },
+    {
+      "date": "2026-09-17",
+      "amount": -30000
+    },
+    {
+      "date": "2026-09-17",
+      "amount": 30000
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|transport-corp-of-india": [
+    {
+      "date": "2026-07-17",
+      "amount": 8500
+    },
+    {
+      "date": "2026-08-05",
+      "amount": -8500
+    },
+    {
+      "date": "2026-08-05",
+      "amount": 8500
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|waaree-energies": [
+    {
+      "date": "2026-09-11",
+      "amount": 3000
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|zydus-lifesciences": [
+    {
+      "date": "2026-07-24",
+      "amount": 6000
+    },
+    {
+      "date": "2026-08-17",
+      "amount": -6000
+    },
+    {
+      "date": "2026-08-17",
+      "amount": 6000
+    }
+  ],
+  "green-lantern-capital-llp-510854|bajaj-auto": [
+    {
+      "date": "2026-07-29",
+      "amount": 17850
+    }
+  ],
+  "green-lantern-capital-llp-510854|bharat-heavy-electricals": [
+    {
+      "date": "2026-07-17",
+      "amount": 10763.2
+    }
+  ],
+  "green-lantern-capital-llp-510854|exide-industries": [
+    {
+      "date": "2026-07-21",
+      "amount": 14234
+    }
+  ],
+  "green-lantern-capital-llp-510854|graphite-india": [
+    {
+      "date": "2026-08-10",
+      "amount": 12040
+    }
+  ],
+  "green-lantern-capital-llp-510854|ingersollrand-india": [
+    {
+      "date": "2026-07-13",
+      "amount": 4360
+    }
+  ],
+  "green-lantern-capital-llp-510854|intellect-design-arena": [
+    {
+      "date": "2026-07-24",
+      "amount": 15302
+    }
+  ],
+  "green-lantern-capital-llp-510854|ksb": [
+    {
+      "date": "2026-06-11",
+      "amount": 11673.2
+    }
+  ],
+  "green-lantern-capital-llp-510854|punjab-national-bank": [
+    {
+      "date": "2026-06-25",
+      "amount": 12567
+    }
+  ],
+  "green-lantern-capital-llp-510854|state-bank-of-india": [
+    {
+      "date": "2026-06-05",
+      "amount": 44763
+    }
+  ],
+  "green-lantern-capital-llp-510854|tech-mahindra": [
+    {
+      "date": "2026-07-31",
+      "amount": 27792
+    }
+  ],
+  "green-lantern-capital-llp-510854|thermax": [
+    {
+      "date": "2026-08-10",
+      "amount": 5680
+    }
+  ],
+  "green-lantern-capital-llp-510854|zf-commercial-vehicle-control-systems-india": [
+    {
+      "date": "2026-07-10",
+      "amount": 2064
+    }
+  ],
+  "green-lantern-capital-llp-510861|bajaj-auto": [
+    {
+      "date": "2026-07-29",
+      "amount": 35400
+    }
+  ],
+  "green-lantern-capital-llp-510861|bharat-heavy-electricals": [
+    {
+      "date": "2026-07-17",
+      "amount": 21270.2
+    }
+  ],
+  "green-lantern-capital-llp-510861|exide-industries": [
+    {
+      "date": "2026-07-21",
+      "amount": 28100
+    }
+  ],
+  "green-lantern-capital-llp-510861|graphite-india": [
+    {
+      "date": "2026-08-10",
+      "amount": 23758
+    }
+  ],
+  "green-lantern-capital-llp-510861|ingersollrand-india": [
+    {
+      "date": "2026-07-13",
+      "amount": 8900
+    }
+  ],
+  "green-lantern-capital-llp-510861|intellect-design-arena": [
+    {
+      "date": "2026-07-24",
+      "amount": 30275
+    }
+  ],
+  "green-lantern-capital-llp-510861|ksb": [
+    {
+      "date": "2026-06-11",
+      "amount": 23051.6
+    }
+  ],
+  "green-lantern-capital-llp-510861|punjab-national-bank": [
+    {
+      "date": "2026-06-25",
+      "amount": 24813
+    }
+  ],
+  "green-lantern-capital-llp-510861|state-bank-of-india": [
+    {
+      "date": "2026-06-05",
+      "amount": 88311.5
+    }
+  ],
+  "green-lantern-capital-llp-510861|tech-mahindra": [
+    {
+      "date": "2026-07-31",
+      "amount": 55800
+    }
+  ],
+  "green-lantern-capital-llp-510861|thermax": [
+    {
+      "date": "2026-08-10",
+      "amount": 11280
+    }
+  ],
+  "green-lantern-capital-llp-510861|zf-commercial-vehicle-control-systems-india": [
+    {
+      "date": "2026-07-10",
+      "amount": 4128
+    }
+  ],
+  "hdfc-mutual-fund-15644806|hdfc-liquid-fund-direct-plan-idcw-daily-reinvest": [
+    {
+      "date": "2019-04-18",
+      "amount": 24226.85
+    },
+    {
+      "date": "2019-04-21",
+      "amount": 74904.28
+    },
+    {
+      "date": "2019-04-22",
+      "amount": 23063.91
+    },
+    {
+      "date": "2019-04-23",
+      "amount": 22322.83
+    },
+    {
+      "date": "2019-04-24",
+      "amount": 23173.68
+    },
+    {
+      "date": "2019-04-25",
+      "amount": 24578.76
+    },
+    {
+      "date": "2019-04-26",
+      "amount": 8991.69
+    },
+    {
+      "date": "2019-04-29",
+      "amount": 28277.4
+    },
+    {
+      "date": "2019-04-30",
+      "amount": 8520.12
+    },
+    {
+      "date": "2019-05-01",
+      "amount": 9415.78
+    },
+    {
+      "date": "2019-05-02",
+      "amount": 8489.77
+    },
+    {
+      "date": "2019-05-03",
+      "amount": 9091.74
+    },
+    {
+      "date": "2019-05-05",
+      "amount": 18793.46
+    },
+    {
+      "date": "2019-05-06",
+      "amount": 9500.66
+    },
+    {
+      "date": "2019-05-07",
+      "amount": 10129.38
+    },
+    {
+      "date": "2019-05-08",
+      "amount": 9934.84
+    },
+    {
+      "date": "2019-05-09",
+      "amount": 9622.54
+    },
+    {
+      "date": "2019-05-10",
+      "amount": 9264.34
+    },
+    {
+      "date": "2019-05-12",
+      "amount": 18688.19
+    },
+    {
+      "date": "2019-05-13",
+      "amount": 9811.11
+    },
+    {
+      "date": "2019-05-14",
+      "amount": 10466.72
+    },
+    {
+      "date": "2019-05-15",
+      "amount": 10402.94
+    },
+    {
+      "date": "2019-05-16",
+      "amount": 11307.6
+    },
+    {
+      "date": "2019-05-17",
+      "amount": 9836.92
+    },
+    {
+      "date": "2019-05-19",
+      "amount": 18570.49
+    },
+    {
+      "date": "2019-05-20",
+      "amount": 9834.56
+    },
+    {
+      "date": "2019-05-21",
+      "amount": 9855.65
+    },
+    {
+      "date": "2019-05-22",
+      "amount": 10322.13
+    },
+    {
+      "date": "2019-05-23",
+      "amount": 11633.84
+    },
+    {
+      "date": "2019-05-24",
+      "amount": 10096.21
+    },
+    {
+      "date": "2019-05-26",
+      "amount": 18190.34
+    },
+    {
+      "date": "2019-05-27",
+      "amount": 9071.43
+    },
+    {
+      "date": "2019-05-28",
+      "amount": 10088.74
+    },
+    {
+      "date": "2019-05-29",
+      "amount": 9618.21
+    },
+    {
+      "date": "2019-05-30",
+      "amount": 9245.82
+    },
+    {
+      "date": "2019-05-31",
+      "amount": 2783.26
+    },
+    {
+      "date": "2019-06-02",
+      "amount": 4272.8
+    },
+    {
+      "date": "2019-06-03",
+      "amount": 2416.05
+    },
+    {
+      "date": "2019-06-04",
+      "amount": 2234.51
+    },
+    {
+      "date": "2019-06-05",
+      "amount": 2244.24
+    },
+    {
+      "date": "2019-06-06",
+      "amount": 2724.52
+    },
+    {
+      "date": "2019-06-07",
+      "amount": 2147.67
+    },
+    {
+      "date": "2019-06-09",
+      "amount": 4179.81
+    },
+    {
+      "date": "2019-06-10",
+      "amount": 2092.02
+    },
+    {
+      "date": "2019-06-11",
+      "amount": 2010.67
+    },
+    {
+      "date": "2019-06-12",
+      "amount": 2095.69
+    },
+    {
+      "date": "2019-06-13",
+      "amount": 2084.98
+    },
+    {
+      "date": "2019-06-14",
+      "amount": 2060.13
+    },
+    {
+      "date": "2019-06-16",
+      "amount": 4178.89
+    },
+    {
+      "date": "2019-06-17",
+      "amount": 2089.2
+    },
+    {
+      "date": "2019-06-18",
+      "amount": 2037.63
+    },
+    {
+      "date": "2019-06-19",
+      "amount": 2061.46
+    },
+    {
+      "date": "2019-06-20",
+      "amount": 2946.44
+    },
+    {
+      "date": "2019-06-21",
+      "amount": 1705.32
+    },
+    {
+      "date": "2019-06-23",
+      "amount": 4008.33
+    },
+    {
+      "date": "2019-06-24",
+      "amount": 1915.04
+    },
+    {
+      "date": "2019-06-25",
+      "amount": 1946.72
+    },
+    {
+      "date": "2019-06-26",
+      "amount": 1942.24
+    },
+    {
+      "date": "2019-06-27",
+      "amount": 2143.8
+    },
+    {
+      "date": "2019-06-28",
+      "amount": 2048.13
+    },
+    {
+      "date": "2019-06-30",
+      "amount": 4027.56
+    },
+    {
+      "date": "2019-07-01",
+      "amount": 2273.94
+    },
+    {
+      "date": "2019-07-02",
+      "amount": 2261.67
+    },
+    {
+      "date": "2019-07-03",
+      "amount": 2515.42
+    },
+    {
+      "date": "2019-07-04",
+      "amount": 2353.66
+    },
+    {
+      "date": "2019-07-11",
+      "amount": 686.4
+    },
+    {
+      "date": "2019-07-12",
+      "amount": 647.75
+    },
+    {
+      "date": "2019-07-14",
+      "amount": 1158.27
+    },
+    {
+      "date": "2019-07-15",
+      "amount": 637.44
+    },
+    {
+      "date": "2019-07-16",
+      "amount": 787.92
+    },
+    {
+      "date": "2019-07-17",
+      "amount": 763.92
+    },
+    {
+      "date": "2019-07-18",
+      "amount": 563.45
+    },
+    {
+      "date": "2019-07-19",
+      "amount": 610.36
+    },
+    {
+      "date": "2019-07-21",
+      "amount": 1124.34
+    },
+    {
+      "date": "2019-07-22",
+      "amount": 536.74
+    },
+    {
+      "date": "2019-07-23",
+      "amount": 546.27
+    },
+    {
+      "date": "2019-07-24",
+      "amount": 601.25
+    },
+    {
+      "date": "2019-07-25",
+      "amount": 567.23
+    },
+    {
+      "date": "2019-07-26",
+      "amount": 599.5
+    },
+    {
+      "date": "2019-07-28",
+      "amount": 1122.9
+    },
+    {
+      "date": "2019-07-29",
+      "amount": 725.72
+    },
+    {
+      "date": "2019-07-30",
+      "amount": 7965.53
+    },
+    {
+      "date": "2019-07-31",
+      "amount": 9708.59
+    },
+    {
+      "date": "2019-08-01",
+      "amount": 9480.66
+    },
+    {
+      "date": "2019-08-02",
+      "amount": 8351.57
+    },
+    {
+      "date": "2019-08-04",
+      "amount": 14679.07
+    },
+    {
+      "date": "2019-08-05",
+      "amount": 7814.52
+    },
+    {
+      "date": "2019-08-06",
+      "amount": 8597.75
+    },
+    {
+      "date": "2019-08-07",
+      "amount": 11962.3
+    },
+    {
+      "date": "2019-08-08",
+      "amount": 9361.81
+    },
+    {
+      "date": "2019-08-09",
+      "amount": 9806.92
+    },
+    {
+      "date": "2019-08-12",
+      "amount": 21379.41
+    },
+    {
+      "date": "2019-08-13",
+      "amount": 5365.65
+    },
+    {
+      "date": "2019-08-14",
+      "amount": 4998.2
+    },
+    {
+      "date": "2019-08-15",
+      "amount": 7180.72
+    },
+    {
+      "date": "2019-08-16",
+      "amount": 7968.18
+    },
+    {
+      "date": "2019-08-18",
+      "amount": 14320.38
+    },
+    {
+      "date": "2019-08-19",
+      "amount": 7894.77
+    },
+    {
+      "date": "2019-08-20",
+      "amount": 8397.15
+    },
+    {
+      "date": "2019-08-21",
+      "amount": 8633.79
+    },
+    {
+      "date": "2019-08-22",
+      "amount": 7424.02
+    },
+    {
+      "date": "2019-08-23",
+      "amount": 7215.63
+    },
+    {
+      "date": "2019-08-25",
+      "amount": 14153.86
+    },
+    {
+      "date": "2019-08-26",
+      "amount": 7459.04
+    },
+    {
+      "date": "2019-08-27",
+      "amount": 7758.04
+    },
+    {
+      "date": "2019-08-28",
+      "amount": 7746.28
+    },
+    {
+      "date": "2019-08-29",
+      "amount": 7290.37
+    },
+    {
+      "date": "2019-08-30",
+      "amount": 7113.52
+    },
+    {
+      "date": "2019-09-02",
+      "amount": 21127.12
+    },
+    {
+      "date": "2019-09-03",
+      "amount": 7275.33
+    },
+    {
+      "date": "2019-09-04",
+      "amount": 8058.58
+    },
+    {
+      "date": "2019-09-05",
+      "amount": 8547.85
+    },
+    {
+      "date": "2019-09-06",
+      "amount": 8124.07
+    },
+    {
+      "date": "2019-09-08",
+      "amount": 13846.27
+    },
+    {
+      "date": "2019-09-09",
+      "amount": 7524.14
+    },
+    {
+      "date": "2019-09-10",
+      "amount": 6896.87
+    },
+    {
+      "date": "2019-09-11",
+      "amount": 8147.68
+    },
+    {
+      "date": "2019-09-12",
+      "amount": 7971
+    },
+    {
+      "date": "2019-09-13",
+      "amount": 6880.28
+    },
+    {
+      "date": "2019-09-15",
+      "amount": 13698.55
+    },
+    {
+      "date": "2019-09-16",
+      "amount": 7187.23
+    },
+    {
+      "date": "2019-09-17",
+      "amount": 6182.49
+    },
+    {
+      "date": "2019-09-18",
+      "amount": 6810.91
+    },
+    {
+      "date": "2019-09-19",
+      "amount": 7223.87
+    },
+    {
+      "date": "2019-09-20",
+      "amount": 3545.74
+    },
+    {
+      "date": "2019-09-22",
+      "amount": 12902.37
+    },
+    {
+      "date": "2019-09-23",
+      "amount": 3140.58
+    },
+    {
+      "date": "2019-09-24",
+      "amount": 5304.36
+    },
+    {
+      "date": "2019-09-25",
+      "amount": 6757.9
+    },
+    {
+      "date": "2019-09-26",
+      "amount": 8123.02
+    },
+    {
+      "date": "2019-09-27",
+      "amount": 8396.95
+    },
+    {
+      "date": "2019-09-29",
+      "amount": 14180.82
+    },
+    {
+      "date": "2019-09-30",
+      "amount": 10914.13
+    },
+    {
+      "date": "2019-10-01",
+      "amount": 10134.9
+    },
+    {
+      "date": "2019-10-02",
+      "amount": 6886.24
+    },
+    {
+      "date": "2019-10-03",
+      "amount": 7496.33
+    },
+    {
+      "date": "2019-10-04",
+      "amount": 9217.56
+    },
+    {
+      "date": "2019-10-06",
+      "amount": 13853.7
+    },
+    {
+      "date": "2019-10-07",
+      "amount": 8141.26
+    },
+    {
+      "date": "2019-10-08",
+      "amount": 6903.8
+    },
+    {
+      "date": "2019-10-09",
+      "amount": 7164.96
+    },
+    {
+      "date": "2019-10-10",
+      "amount": 7205.21
+    },
+    {
+      "date": "2019-10-11",
+      "amount": 8691.66
+    },
+    {
+      "date": "2019-10-13",
+      "amount": 13582.15
+    },
+    {
+      "date": "2019-10-14",
+      "amount": 8218.32
+    },
+    {
+      "date": "2019-10-15",
+      "amount": 8302.52
+    },
+    {
+      "date": "2019-10-16",
+      "amount": 7249.76
+    },
+    {
+      "date": "2019-10-17",
+      "amount": 6837.89
+    },
+    {
+      "date": "2019-10-18",
+      "amount": 6597.32
+    },
+    {
+      "date": "2019-10-21",
+      "amount": 20041.65
+    },
+    {
+      "date": "2019-10-22",
+      "amount": 5056.43
+    },
+    {
+      "date": "2019-10-23",
+      "amount": 6532.48
+    },
+    {
+      "date": "2019-10-24",
+      "amount": 7218.84
+    },
+    {
+      "date": "2019-10-25",
+      "amount": 6895.81
+    },
+    {
+      "date": "2019-10-28",
+      "amount": 19883.12
+    },
+    {
+      "date": "2019-10-29",
+      "amount": 6924.07
+    },
+    {
+      "date": "2019-10-30",
+      "amount": 8151.63
+    },
+    {
+      "date": "2019-10-31",
+      "amount": 8990.78
+    },
+    {
+      "date": "2019-11-01",
+      "amount": 6769.42
+    },
+    {
+      "date": "2019-11-03",
+      "amount": 12905.16
+    },
+    {
+      "date": "2019-11-04",
+      "amount": 5952.04
+    },
+    {
+      "date": "2019-11-05",
+      "amount": 5453.28
+    },
+    {
+      "date": "2019-11-06",
+      "amount": 4012.53
+    },
+    {
+      "date": "2019-11-07",
+      "amount": 5479.47
+    },
+    {
+      "date": "2019-11-08",
+      "amount": 5645.03
+    },
+    {
+      "date": "2019-11-10",
+      "amount": 13183.48
+    },
+    {
+      "date": "2019-11-11",
+      "amount": 7514.08
+    },
+    {
+      "date": "2019-11-12",
+      "amount": 6557.52
+    },
+    {
+      "date": "2019-11-13",
+      "amount": 8608.81
+    },
+    {
+      "date": "2019-11-14",
+      "amount": 7568.64
+    },
+    {
+      "date": "2019-11-15",
+      "amount": 6128.01
+    },
+    {
+      "date": "2019-11-17",
+      "amount": 13266.97
+    },
+    {
+      "date": "2019-11-18",
+      "amount": 6701.54
+    },
+    {
+      "date": "2019-11-19",
+      "amount": 7351.46
+    },
+    {
+      "date": "2019-11-20",
+      "amount": 8425.3
+    },
+    {
+      "date": "2019-11-21",
+      "amount": 6216.61
+    },
+    {
+      "date": "2019-11-22",
+      "amount": 6522.04
+    },
+    {
+      "date": "2019-11-24",
+      "amount": 12912.01
+    },
+    {
+      "date": "2019-11-25",
+      "amount": 6479.53
+    },
+    {
+      "date": "2019-11-26",
+      "amount": 6615.35
+    },
+    {
+      "date": "2019-11-27",
+      "amount": 7625.57
+    },
+    {
+      "date": "2019-11-28",
+      "amount": 7924.92
+    },
+    {
+      "date": "2019-11-29",
+      "amount": 9691.43
+    },
+    {
+      "date": "2019-12-01",
+      "amount": 12411.46
+    },
+    {
+      "date": "2019-12-02",
+      "amount": 6321.28
+    },
+    {
+      "date": "2019-12-03",
+      "amount": 6400.04
+    },
+    {
+      "date": "2019-12-04",
+      "amount": 6781.67
+    },
+    {
+      "date": "2019-12-06",
+      "amount": 6020.31
+    },
+    {
+      "date": "2019-12-08",
+      "amount": 12911.85
+    },
+    {
+      "date": "2019-12-09",
+      "amount": 7699.11
+    },
+    {
+      "date": "2019-12-10",
+      "amount": 7142.33
+    },
+    {
+      "date": "2019-12-11",
+      "amount": 6914.54
+    },
+    {
+      "date": "2019-12-12",
+      "amount": 6597.77
+    },
+    {
+      "date": "2019-12-13",
+      "amount": 5537.87
+    },
+    {
+      "date": "2019-12-15",
+      "amount": 12816.94
+    },
+    {
+      "date": "2019-12-16",
+      "amount": 6530.44
+    },
+    {
+      "date": "2019-12-17",
+      "amount": 6501.16
+    },
+    {
+      "date": "2019-12-18",
+      "amount": 6666.9
+    },
+    {
+      "date": "2019-12-19",
+      "amount": 6832.69
+    },
+    {
+      "date": "2019-12-20",
+      "amount": 5607.72
+    },
+    {
+      "date": "2019-12-22",
+      "amount": 12785.17
+    },
+    {
+      "date": "2019-12-23",
+      "amount": 6485.96
+    },
+    {
+      "date": "2019-12-24",
+      "amount": 6171.01
+    },
+    {
+      "date": "2019-12-25",
+      "amount": 6463.67
+    },
+    {
+      "date": "2019-12-26",
+      "amount": 6419.87
+    },
+    {
+      "date": "2019-12-27",
+      "amount": 7646.18
+    },
+    {
+      "date": "2019-12-29",
+      "amount": 12804.42
+    },
+    {
+      "date": "2019-12-30",
+      "amount": 6060.43
+    },
+    {
+      "date": "2019-12-31",
+      "amount": 6209.16
+    },
+    {
+      "date": "2020-01-01",
+      "amount": 7143.13
+    },
+    {
+      "date": "2020-01-02",
+      "amount": 9283.91
+    },
+    {
+      "date": "2020-01-03",
+      "amount": 7024.27
+    },
+    {
+      "date": "2020-01-05",
+      "amount": 12487.53
+    },
+    {
+      "date": "2020-01-06",
+      "amount": 5457.2
+    },
+    {
+      "date": "2020-01-07",
+      "amount": 6190.36
+    },
+    {
+      "date": "2020-01-08",
+      "amount": 6057.61
+    },
+    {
+      "date": "2020-01-09",
+      "amount": 6305.84
+    },
+    {
+      "date": "2020-01-10",
+      "amount": 4883.85
+    },
+    {
+      "date": "2020-01-12",
+      "amount": 12683.73
+    },
+    {
+      "date": "2020-01-13",
+      "amount": 4097.45
+    },
+    {
+      "date": "2020-01-14",
+      "amount": 5421.72
+    },
+    {
+      "date": "2020-01-15",
+      "amount": 6279.31
+    },
+    {
+      "date": "2020-01-16",
+      "amount": 6597.41
+    },
+    {
+      "date": "2020-01-17",
+      "amount": 6344.07
+    },
+    {
+      "date": "2020-01-19",
+      "amount": 12898.96
+    },
+    {
+      "date": "2020-01-20",
+      "amount": 6015.63
+    },
+    {
+      "date": "2020-01-21",
+      "amount": 6710.34
+    },
+    {
+      "date": "2020-01-22",
+      "amount": 6387.23
+    },
+    {
+      "date": "2020-01-23",
+      "amount": 6229.12
+    },
+    {
+      "date": "2020-01-24",
+      "amount": 6356.73
+    },
+    {
+      "date": "2020-01-26",
+      "amount": 12892.53
+    },
+    {
+      "date": "2020-01-27",
+      "amount": 6320.5
+    },
+    {
+      "date": "2020-01-28",
+      "amount": 6608.76
+    },
+    {
+      "date": "2020-01-29",
+      "amount": 6399.91
+    },
+    {
+      "date": "2020-01-30",
+      "amount": 6972.02
+    },
+    {
+      "date": "2020-01-31",
+      "amount": 6267.88
+    },
+    {
+      "date": "2020-02-02",
+      "amount": 13057.75
+    },
+    {
+      "date": "2020-02-03",
+      "amount": 6282.45
+    },
+    {
+      "date": "2020-02-04",
+      "amount": 6951.64
+    },
+    {
+      "date": "2020-02-05",
+      "amount": 6450.8
+    },
+    {
+      "date": "2020-02-06",
+      "amount": 7149.92
+    },
+    {
+      "date": "2020-02-07",
+      "amount": 7074.51
+    },
+    {
+      "date": "2020-02-09",
+      "amount": 13051.79
+    },
+    {
+      "date": "2020-02-10",
+      "amount": 6632.03
+    },
+    {
+      "date": "2020-02-11",
+      "amount": 8589.87
+    },
+    {
+      "date": "2020-02-12",
+      "amount": 7263.94
+    },
+    {
+      "date": "2020-02-13",
+      "amount": 7302.86
+    },
+    {
+      "date": "2020-02-14",
+      "amount": 6274.81
+    },
+    {
+      "date": "2020-02-16",
+      "amount": 12982.76
+    },
+    {
+      "date": "2020-02-17",
+      "amount": 6861.15
+    },
+    {
+      "date": "2020-02-18",
+      "amount": 6482.51
+    },
+    {
+      "date": "2020-02-19",
+      "amount": 6502.21
+    },
+    {
+      "date": "2020-02-20",
+      "amount": 5937.67
+    },
+    {
+      "date": "2020-02-23",
+      "amount": 19535.77
+    },
+    {
+      "date": "2020-02-24",
+      "amount": 6410.12
+    },
+    {
+      "date": "2020-02-25",
+      "amount": 6126.94
+    },
+    {
+      "date": "2020-02-26",
+      "amount": 6432.31
+    },
+    {
+      "date": "2020-02-27",
+      "amount": 3892.79
+    },
+    {
+      "date": "2020-02-28",
+      "amount": 6446.04
+    },
+    {
+      "date": "2020-03-01",
+      "amount": 13204.58
+    },
+    {
+      "date": "2020-03-02",
+      "amount": 6060.48
+    },
+    {
+      "date": "2020-03-03",
+      "amount": 8056.73
+    },
+    {
+      "date": "2020-03-04",
+      "amount": 13778.79
+    },
+    {
+      "date": "2020-03-05",
+      "amount": 8846.98
+    },
+    {
+      "date": "2020-03-06",
+      "amount": 8390.85
+    },
+    {
+      "date": "2020-03-08",
+      "amount": 15144.87
+    },
+    {
+      "date": "2020-03-09",
+      "amount": 8679.84
+    },
+    {
+      "date": "2020-03-10",
+      "amount": 7843.04
+    },
+    {
+      "date": "2020-03-11",
+      "amount": 3979.13
+    },
+    {
+      "date": "2020-03-12",
+      "amount": 2151.77
+    }
+  ],
+  "hdfc-mutual-fund-15725046|hdfc-arbitrage-fund-direct-plan-monthly-idcw-payout-option": [
+    {
+      "date": "2019-09-20",
+      "amount": 142666.92
+    },
+    {
+      "date": "2019-10-25",
+      "amount": 143347.78
+    },
+    {
+      "date": "2019-11-22",
+      "amount": 144031.82
+    },
+    {
+      "date": "2019-12-20",
+      "amount": 130247.15
+    },
+    {
+      "date": "2020-01-24",
+      "amount": 116273.13
+    },
+    {
+      "date": "2020-02-21",
+      "amount": 131306.97
+    }
+  ],
+  "hdfc-mutual-fund-15725046|hdfc-overnight-fund-direct-plan-growth-option": [
+    {
+      "date": "2019-05-09",
+      "amount": 14433.92
+    },
+    {
+      "date": "2019-05-10",
+      "amount": 13896.61
+    },
+    {
+      "date": "2019-05-12",
+      "amount": 28032.49
+    },
+    {
+      "date": "2019-05-13",
+      "amount": 14716.77
+    },
+    {
+      "date": "2019-05-14",
+      "amount": 15700.2
+    },
+    {
+      "date": "2019-05-15",
+      "amount": 15604.52
+    },
+    {
+      "date": "2019-05-16",
+      "amount": 16961.51
+    },
+    {
+      "date": "2019-05-17",
+      "amount": 14755.48
+    },
+    {
+      "date": "2019-05-19",
+      "amount": 27855.94
+    },
+    {
+      "date": "2019-05-20",
+      "amount": 14751.94
+    },
+    {
+      "date": "2019-05-21",
+      "amount": 14783.58
+    },
+    {
+      "date": "2019-05-22",
+      "amount": 15483.3
+    },
+    {
+      "date": "2019-05-23",
+      "amount": 17450.88
+    },
+    {
+      "date": "2019-05-24",
+      "amount": 15144.42
+    },
+    {
+      "date": "2019-05-26",
+      "amount": 27285.7
+    },
+    {
+      "date": "2019-05-27",
+      "amount": 13607.24
+    },
+    {
+      "date": "2019-05-28",
+      "amount": 15133.22
+    },
+    {
+      "date": "2019-05-29",
+      "amount": 14427.41
+    },
+    {
+      "date": "2019-05-30",
+      "amount": 13868.83
+    },
+    {
+      "date": "2019-05-31",
+      "amount": 17471.24
+    },
+    {
+      "date": "2019-06-02",
+      "amount": 26821.46
+    },
+    {
+      "date": "2019-06-03",
+      "amount": 15166.14
+    },
+    {
+      "date": "2019-06-04",
+      "amount": 14026.62
+    },
+    {
+      "date": "2019-06-05",
+      "amount": 14087.65
+    },
+    {
+      "date": "2019-06-06",
+      "amount": 17102.5
+    },
+    {
+      "date": "2019-06-07",
+      "amount": 13481.47
+    },
+    {
+      "date": "2019-06-09",
+      "amount": 26237.73
+    },
+    {
+      "date": "2019-06-10",
+      "amount": 13132.14
+    },
+    {
+      "date": "2019-06-11",
+      "amount": 12621.51
+    },
+    {
+      "date": "2019-06-12",
+      "amount": 13155.22
+    },
+    {
+      "date": "2019-06-13",
+      "amount": 13087.95
+    },
+    {
+      "date": "2019-06-14",
+      "amount": 12931.95
+    },
+    {
+      "date": "2019-06-16",
+      "amount": 26231.97
+    },
+    {
+      "date": "2019-06-17",
+      "amount": 13114.48
+    },
+    {
+      "date": "2019-06-18",
+      "amount": 12790.75
+    },
+    {
+      "date": "2019-06-19",
+      "amount": 12940.32
+    },
+    {
+      "date": "2019-06-20",
+      "amount": 18495.6
+    },
+    {
+      "date": "2019-06-21",
+      "amount": 10704.75
+    },
+    {
+      "date": "2019-06-23",
+      "amount": 25161.31
+    },
+    {
+      "date": "2019-06-24",
+      "amount": 12021.23
+    },
+    {
+      "date": "2019-06-25",
+      "amount": 12220.09
+    },
+    {
+      "date": "2019-06-26",
+      "amount": 12191.95
+    },
+    {
+      "date": "2019-06-27",
+      "amount": 13457.2
+    },
+    {
+      "date": "2019-06-28",
+      "amount": 12856.65
+    },
+    {
+      "date": "2019-06-30",
+      "amount": 25282.05
+    },
+    {
+      "date": "2019-07-01",
+      "amount": 14274.12
+    },
+    {
+      "date": "2019-07-02",
+      "amount": 14197.1
+    },
+    {
+      "date": "2019-07-03",
+      "amount": 15789.95
+    },
+    {
+      "date": "2019-07-04",
+      "amount": 14774.52
+    },
+    {
+      "date": "2019-07-05",
+      "amount": 14895.29
+    },
+    {
+      "date": "2019-07-07",
+      "amount": 24634.74
+    },
+    {
+      "date": "2019-07-08",
+      "amount": 12953.21
+    },
+    {
+      "date": "2019-07-09",
+      "amount": 13152.66
+    },
+    {
+      "date": "2019-07-10",
+      "amount": 14133.53
+    },
+    {
+      "date": "2019-07-11",
+      "amount": 13848.65
+    },
+    {
+      "date": "2019-07-12",
+      "amount": 13068.98
+    },
+    {
+      "date": "2019-07-14",
+      "amount": 24241.6
+    },
+    {
+      "date": "2019-07-15",
+      "amount": 13341.03
+    },
+    {
+      "date": "2019-07-16",
+      "amount": 16490.43
+    },
+    {
+      "date": "2019-07-17",
+      "amount": 15988.23
+    },
+    {
+      "date": "2019-07-18",
+      "amount": 11792.57
+    },
+    {
+      "date": "2019-07-19",
+      "amount": 12774.3
+    },
+    {
+      "date": "2019-07-21",
+      "amount": 23531.45
+    },
+    {
+      "date": "2019-07-22",
+      "amount": 11233.54
+    },
+    {
+      "date": "2019-07-23",
+      "amount": 11432.93
+    },
+    {
+      "date": "2019-07-24",
+      "amount": 12583.59
+    },
+    {
+      "date": "2019-07-25",
+      "amount": 11871.67
+    },
+    {
+      "date": "2019-07-26",
+      "amount": 12546.99
+    },
+    {
+      "date": "2019-07-28",
+      "amount": 23501.28
+    },
+    {
+      "date": "2019-07-29",
+      "amount": 15188.67
+    },
+    {
+      "date": "2019-07-30",
+      "amount": 12424.45
+    },
+    {
+      "date": "2019-07-31",
+      "amount": 15143.23
+    },
+    {
+      "date": "2019-08-01",
+      "amount": 14808.27
+    },
+    {
+      "date": "2019-08-02",
+      "amount": 13044.69
+    },
+    {
+      "date": "2019-08-04",
+      "amount": 22927.89
+    },
+    {
+      "date": "2019-08-05",
+      "amount": 12205.84
+    },
+    {
+      "date": "2019-08-06",
+      "amount": 13447.89
+    },
+    {
+      "date": "2019-08-07",
+      "amount": 18710.44
+    },
+    {
+      "date": "2019-08-08",
+      "amount": 14663.35
+    },
+    {
+      "date": "2019-08-09",
+      "amount": 15360.52
+    },
+    {
+      "date": "2019-08-12",
+      "amount": 33486.45
+    },
+    {
+      "date": "2019-08-13",
+      "amount": 8404.18
+    },
+    {
+      "date": "2019-08-14",
+      "amount": 7828.66
+    },
+    {
+      "date": "2019-08-15",
+      "amount": 11247.12
+    },
+    {
+      "date": "2019-08-16",
+      "amount": 12480.52
+    },
+    {
+      "date": "2019-08-18",
+      "amount": 22429.93
+    },
+    {
+      "date": "2019-08-19",
+      "amount": 12365.54
+    },
+    {
+      "date": "2019-08-20",
+      "amount": 13152.41
+    },
+    {
+      "date": "2019-08-21",
+      "amount": 13541.88
+    },
+    {
+      "date": "2019-08-22",
+      "amount": 11644.39
+    },
+    {
+      "date": "2019-08-23",
+      "amount": 11317.54
+    },
+    {
+      "date": "2019-08-25",
+      "amount": 22199.97
+    },
+    {
+      "date": "2019-08-26",
+      "amount": 11699.32
+    },
+    {
+      "date": "2019-08-27",
+      "amount": 12168.3
+    },
+    {
+      "date": "2019-08-28",
+      "amount": 12149.85
+    },
+    {
+      "date": "2019-08-29",
+      "amount": 11434.77
+    },
+    {
+      "date": "2019-08-30",
+      "amount": 11157.37
+    },
+    {
+      "date": "2019-09-02",
+      "amount": 33137.35
+    },
+    {
+      "date": "2019-09-03",
+      "amount": 11411.18
+    },
+    {
+      "date": "2019-09-04",
+      "amount": 12657.27
+    },
+    {
+      "date": "2019-09-05",
+      "amount": 13425.75
+    },
+    {
+      "date": "2019-09-06",
+      "amount": 12760.13
+    },
+    {
+      "date": "2019-09-08",
+      "amount": 21747.75
+    },
+    {
+      "date": "2019-09-09",
+      "amount": 11817.84
+    },
+    {
+      "date": "2019-09-10",
+      "amount": 10832.62
+    },
+    {
+      "date": "2019-09-11",
+      "amount": 12797.21
+    },
+    {
+      "date": "2019-09-12",
+      "amount": 12519.72
+    },
+    {
+      "date": "2019-09-13",
+      "amount": 7617.77
+    }
+  ],
+  "hdfc-mutual-fund-16002141|hdfc-liquid-fund-direct-plan-idcw-daily-reinvest": [
+    {
+      "date": "2019-07-11",
+      "amount": 686.4
+    },
+    {
+      "date": "2019-07-12",
+      "amount": 647.75
+    },
+    {
+      "date": "2019-07-14",
+      "amount": 1167.88
+    },
+    {
+      "date": "2019-07-15",
+      "amount": 642.73
+    },
+    {
+      "date": "2019-07-16",
+      "amount": 794.45
+    },
+    {
+      "date": "2019-07-17",
+      "amount": 770.26
+    },
+    {
+      "date": "2019-07-18",
+      "amount": 568.13
+    },
+    {
+      "date": "2019-07-19",
+      "amount": 615.42
+    },
+    {
+      "date": "2019-07-21",
+      "amount": 1133.67
+    },
+    {
+      "date": "2019-07-22",
+      "amount": 541.19
+    },
+    {
+      "date": "2019-07-23",
+      "amount": 550.8
+    },
+    {
+      "date": "2019-07-24",
+      "amount": 606.24
+    },
+    {
+      "date": "2019-07-25",
+      "amount": 571.94
+    },
+    {
+      "date": "2019-07-26",
+      "amount": 604.47
+    },
+    {
+      "date": "2019-07-28",
+      "amount": 1132.21
+    },
+    {
+      "date": "2019-07-29",
+      "amount": 731.74
+    },
+    {
+      "date": "2019-07-30",
+      "amount": 598.57
+    },
+    {
+      "date": "2019-07-31",
+      "amount": 729.55
+    },
+    {
+      "date": "2019-08-01",
+      "amount": 703.16
+    },
+    {
+      "date": "2019-08-02",
+      "amount": 619.42
+    },
+    {
+      "date": "2019-08-04",
+      "amount": 1088.72
+    },
+    {
+      "date": "2019-08-05",
+      "amount": 579.59
+    },
+    {
+      "date": "2019-08-06",
+      "amount": 629.27
+    },
+    {
+      "date": "2019-08-07",
+      "amount": 875.52
+    },
+    {
+      "date": "2019-08-08",
+      "amount": 681.8
+    },
+    {
+      "date": "2019-08-09",
+      "amount": 714.21
+    },
+    {
+      "date": "2019-08-12",
+      "amount": 1557.01
+    },
+    {
+      "date": "2019-08-13",
+      "amount": 390.77
+    },
+    {
+      "date": "2019-08-14",
+      "amount": 364.01
+    },
+    {
+      "date": "2019-08-15",
+      "amount": 522.95
+    },
+    {
+      "date": "2019-08-16",
+      "amount": 580.3
+    },
+    {
+      "date": "2019-08-18",
+      "amount": 1042.92
+    },
+    {
+      "date": "2019-08-19",
+      "amount": 574.96
+    },
+    {
+      "date": "2019-08-20",
+      "amount": 611.54
+    },
+    {
+      "date": "2019-08-21",
+      "amount": 625.65
+    },
+    {
+      "date": "2019-08-22",
+      "amount": 537.98
+    },
+    {
+      "date": "2019-08-23",
+      "amount": 522.88
+    },
+    {
+      "date": "2019-08-25",
+      "amount": 1025.66
+    },
+    {
+      "date": "2019-08-26",
+      "amount": 540.52
+    },
+    {
+      "date": "2019-08-27",
+      "amount": 562.19
+    },
+    {
+      "date": "2019-08-28",
+      "amount": 561.33
+    },
+    {
+      "date": "2019-08-29",
+      "amount": 528.3
+    },
+    {
+      "date": "2019-08-30",
+      "amount": 515.48
+    },
+    {
+      "date": "2019-09-02",
+      "amount": 1530.97
+    },
+    {
+      "date": "2019-09-03",
+      "amount": 527.21
+    },
+    {
+      "date": "2019-09-04",
+      "amount": 572.31
+    },
+    {
+      "date": "2019-09-05",
+      "amount": 607.06
+    },
+    {
+      "date": "2019-09-06",
+      "amount": 576.96
+    },
+    {
+      "date": "2019-09-08",
+      "amount": 983.35
+    },
+    {
+      "date": "2019-09-09",
+      "amount": 534.36
+    },
+    {
+      "date": "2019-09-10",
+      "amount": 489.81
+    },
+    {
+      "date": "2019-09-11",
+      "amount": 578.64
+    },
+    {
+      "date": "2019-09-12",
+      "amount": 566.09
+    },
+    {
+      "date": "2019-09-13",
+      "amount": 488.63
+    },
+    {
+      "date": "2019-09-15",
+      "amount": 972.86
+    },
+    {
+      "date": "2019-09-16",
+      "amount": 510.43
+    },
+    {
+      "date": "2019-09-17",
+      "amount": 430.13
+    },
+    {
+      "date": "2019-09-18",
+      "amount": 473.85
+    },
+    {
+      "date": "2019-09-19",
+      "amount": 502.58
+    },
+    {
+      "date": "2019-09-20",
+      "amount": 246.68
+    },
+    {
+      "date": "2019-09-22",
+      "amount": 897.64
+    },
+    {
+      "date": "2019-09-23",
+      "amount": 218.5
+    },
+    {
+      "date": "2019-09-24",
+      "amount": 369.03
+    },
+    {
+      "date": "2019-09-25",
+      "amount": 470.16
+    },
+    {
+      "date": "2019-09-26",
+      "amount": 565.13
+    },
+    {
+      "date": "2019-09-27",
+      "amount": 584.19
+    },
+    {
+      "date": "2019-09-29",
+      "amount": 986.58
+    },
+    {
+      "date": "2019-09-30",
+      "amount": 759.31
+    },
+    {
+      "date": "2019-10-01",
+      "amount": 705.1
+    },
+    {
+      "date": "2019-10-02",
+      "amount": 474.1
+    },
+    {
+      "date": "2019-10-03",
+      "amount": 516.1
+    },
+    {
+      "date": "2019-10-04",
+      "amount": 634.61
+    },
+    {
+      "date": "2019-10-06",
+      "amount": 953.79
+    },
+    {
+      "date": "2019-10-07",
+      "amount": 560.51
+    },
+    {
+      "date": "2019-10-08",
+      "amount": 475.31
+    },
+    {
+      "date": "2019-10-09",
+      "amount": 493.29
+    },
+    {
+      "date": "2019-10-10",
+      "amount": 490.84
+    },
+    {
+      "date": "2019-10-11",
+      "amount": 592.1
+    },
+    {
+      "date": "2019-10-13",
+      "amount": 925.26
+    },
+    {
+      "date": "2019-10-14",
+      "amount": 559.86
+    },
+    {
+      "date": "2019-10-15",
+      "amount": 559.57
+    },
+    {
+      "date": "2019-10-16",
+      "amount": 488.62
+    },
+    {
+      "date": "2019-10-17",
+      "amount": 460.86
+    },
+    {
+      "date": "2019-10-18",
+      "amount": 444.65
+    },
+    {
+      "date": "2019-10-21",
+      "amount": 1350.77
+    },
+    {
+      "date": "2019-10-22",
+      "amount": 340.79
+    },
+    {
+      "date": "2019-10-23",
+      "amount": 435.54
+    },
+    {
+      "date": "2019-10-24",
+      "amount": 481.3
+    },
+    {
+      "date": "2019-10-25",
+      "amount": 459.76
+    },
+    {
+      "date": "2019-10-28",
+      "amount": 1325.66
+    },
+    {
+      "date": "2019-10-29",
+      "amount": 461.65
+    },
+    {
+      "date": "2019-10-30",
+      "amount": 537.57
+    },
+    {
+      "date": "2019-10-31",
+      "amount": 592.91
+    },
+    {
+      "date": "2019-11-01",
+      "amount": 446.42
+    },
+    {
+      "date": "2019-11-03",
+      "amount": 851.05
+    },
+    {
+      "date": "2019-11-04",
+      "amount": 392.52
+    },
+    {
+      "date": "2019-11-05",
+      "amount": 355.66
+    },
+    {
+      "date": "2019-11-06",
+      "amount": 261.7
+    },
+    {
+      "date": "2019-11-07",
+      "amount": 357.37
+    },
+    {
+      "date": "2019-11-08",
+      "amount": 368.17
+    },
+    {
+      "date": "2019-11-10",
+      "amount": 859.83
+    },
+    {
+      "date": "2019-11-11",
+      "amount": 490.07
+    },
+    {
+      "date": "2019-11-12",
+      "amount": 422.92
+    },
+    {
+      "date": "2019-11-13",
+      "amount": 555.21
+    },
+    {
+      "date": "2019-11-14",
+      "amount": 488.13
+    },
+    {
+      "date": "2019-11-15",
+      "amount": 395.21
+    },
+    {
+      "date": "2019-11-17",
+      "amount": 855.63
+    },
+    {
+      "date": "2019-11-18",
+      "amount": 432.2
+    },
+    {
+      "date": "2019-11-19",
+      "amount": 468.77
+    },
+    {
+      "date": "2019-11-20",
+      "amount": 537.25
+    },
+    {
+      "date": "2019-11-21",
+      "amount": 396.41
+    },
+    {
+      "date": "2019-11-22",
+      "amount": 415.88
+    },
+    {
+      "date": "2019-11-24",
+      "amount": 823.34
+    },
+    {
+      "date": "2019-11-25",
+      "amount": 413.17
+    },
+    {
+      "date": "2019-11-26",
+      "amount": 417.02
+    },
+    {
+      "date": "2019-11-27",
+      "amount": 480.7
+    },
+    {
+      "date": "2019-11-28",
+      "amount": 499.57
+    },
+    {
+      "date": "2019-11-29",
+      "amount": 610.93
+    },
+    {
+      "date": "2019-12-01",
+      "amount": 782.39
+    },
+    {
+      "date": "2019-12-02",
+      "amount": 398.48
+    },
+    {
+      "date": "2019-12-03",
+      "amount": 398.78
+    },
+    {
+      "date": "2019-12-04",
+      "amount": 422.56
+    },
+    {
+      "date": "2019-12-06",
+      "amount": 375.12
+    },
+    {
+      "date": "2019-12-08",
+      "amount": 804.53
+    },
+    {
+      "date": "2019-12-09",
+      "amount": 479.73
+    },
+    {
+      "date": "2019-12-10",
+      "amount": 439.83
+    },
+    {
+      "date": "2019-12-11",
+      "amount": 425.8
+    },
+    {
+      "date": "2019-12-12",
+      "amount": 406.29
+    },
+    {
+      "date": "2019-12-13",
+      "amount": 341.02
+    },
+    {
+      "date": "2019-12-15",
+      "amount": 789.27
+    },
+    {
+      "date": "2019-12-16",
+      "amount": 402.15
+    },
+    {
+      "date": "2019-12-17",
+      "amount": 395.6
+    },
+    {
+      "date": "2019-12-18",
+      "amount": 405.69
+    },
+    {
+      "date": "2019-12-19",
+      "amount": 415.78
+    },
+    {
+      "date": "2019-12-20",
+      "amount": 341.24
+    },
+    {
+      "date": "2019-12-22",
+      "amount": 777.99
+    },
+    {
+      "date": "2019-12-23",
+      "amount": 394.68
+    },
+    {
+      "date": "2019-12-24",
+      "amount": 371.01
+    },
+    {
+      "date": "2019-12-25",
+      "amount": 388.6
+    },
+    {
+      "date": "2019-12-26",
+      "amount": 385.97
+    },
+    {
+      "date": "2019-12-27",
+      "amount": 459.7
+    },
+    {
+      "date": "2019-12-29",
+      "amount": 769.82
+    },
+    {
+      "date": "2019-12-30",
+      "amount": 364.36
+    },
+    {
+      "date": "2019-12-31",
+      "amount": 368.77
+    },
+    {
+      "date": "2020-01-01",
+      "amount": 424.23
+    },
+    {
+      "date": "2020-01-02",
+      "amount": 551.38
+    },
+    {
+      "date": "2020-01-03",
+      "amount": 417.18
+    },
+    {
+      "date": "2020-01-05",
+      "amount": 741.64
+    },
+    {
+      "date": "2020-01-06",
+      "amount": 324.11
+    },
+    {
+      "date": "2020-01-07",
+      "amount": 363.13
+    },
+    {
+      "date": "2020-01-08",
+      "amount": 355.34
+    },
+    {
+      "date": "2020-01-09",
+      "amount": 369.9
+    },
+    {
+      "date": "2020-01-10",
+      "amount": 286.49
+    },
+    {
+      "date": "2020-01-12",
+      "amount": 744.02
+    },
+    {
+      "date": "2020-01-13",
+      "amount": 240.36
+    },
+    {
+      "date": "2020-01-14",
+      "amount": 314.07
+    },
+    {
+      "date": "2020-01-15",
+      "amount": 363.75
+    },
+    {
+      "date": "2020-01-16",
+      "amount": 382.18
+    },
+    {
+      "date": "2020-01-17",
+      "amount": 367.5
+    },
+    {
+      "date": "2020-01-19",
+      "amount": 747.21
+    },
+    {
+      "date": "2020-01-20",
+      "amount": 348.47
+    },
+    {
+      "date": "2020-01-21",
+      "amount": 383.81
+    },
+    {
+      "date": "2020-01-22",
+      "amount": 365.33
+    },
+    {
+      "date": "2020-01-23",
+      "amount": 356.28
+    },
+    {
+      "date": "2020-01-24",
+      "amount": 363.58
+    },
+    {
+      "date": "2020-01-26",
+      "amount": 737.4
+    },
+    {
+      "date": "2020-01-27",
+      "amount": 361.51
+    },
+    {
+      "date": "2020-01-28",
+      "amount": 373.15
+    },
+    {
+      "date": "2020-01-29",
+      "amount": 361.36
+    },
+    {
+      "date": "2020-01-30",
+      "amount": 393.67
+    },
+    {
+      "date": "2020-01-31",
+      "amount": 353.91
+    },
+    {
+      "date": "2020-02-02",
+      "amount": 737.29
+    },
+    {
+      "date": "2020-02-03",
+      "amount": 354.73
+    },
+    {
+      "date": "2020-02-04",
+      "amount": 387.42
+    },
+    {
+      "date": "2020-02-05",
+      "amount": 359.51
+    },
+    {
+      "date": "2020-02-06",
+      "amount": 398.47
+    },
+    {
+      "date": "2020-02-07",
+      "amount": 394.27
+    },
+    {
+      "date": "2020-02-09",
+      "amount": 727.39
+    },
+    {
+      "date": "2020-02-10",
+      "amount": 369.61
+    },
+    {
+      "date": "2020-02-11",
+      "amount": 472.42
+    },
+    {
+      "date": "2020-02-12",
+      "amount": 399.5
+    },
+    {
+      "date": "2020-02-13",
+      "amount": 401.64
+    },
+    {
+      "date": "2020-02-14",
+      "amount": 345.1
+    },
+    {
+      "date": "2020-02-16",
+      "amount": 714.01
+    },
+    {
+      "date": "2020-02-17",
+      "amount": 377.34
+    },
+    {
+      "date": "2020-02-18",
+      "amount": 351.76
+    },
+    {
+      "date": "2020-02-19",
+      "amount": 352.83
+    },
+    {
+      "date": "2020-02-20",
+      "amount": 322.2
+    },
+    {
+      "date": "2020-02-23",
+      "amount": 1060.07
+    },
+    {
+      "date": "2020-02-24",
+      "amount": 347.83
+    },
+    {
+      "date": "2020-02-25",
+      "amount": 327.97
+    },
+    {
+      "date": "2020-02-26",
+      "amount": 344.31
+    },
+    {
+      "date": "2020-02-27",
+      "amount": 208.38
+    },
+    {
+      "date": "2020-02-28",
+      "amount": 345.05
+    },
+    {
+      "date": "2020-03-01",
+      "amount": 706.82
+    },
+    {
+      "date": "2020-03-02",
+      "amount": 324.41
+    },
+    {
+      "date": "2020-03-03",
+      "amount": 425.34
+    },
+    {
+      "date": "2020-03-04",
+      "amount": 727.43
+    },
+    {
+      "date": "2020-03-05",
+      "amount": 467.06
+    },
+    {
+      "date": "2020-03-06",
+      "amount": 442.98
+    },
+    {
+      "date": "2020-03-08",
+      "amount": 799.55
+    },
+    {
+      "date": "2020-03-09",
+      "amount": 458.24
+    },
+    {
+      "date": "2020-03-10",
+      "amount": 408.3
+    },
+    {
+      "date": "2020-03-11",
+      "amount": 385.86
+    },
+    {
+      "date": "2020-03-12",
+      "amount": 208.66
+    }
+  ],
+  "icici-prudential-mutual-fund-14320536|icici-prudential-arbitrage-fund-direct-plan-idcw-idcw-reinvestment": [
+    {
+      "date": "2020-02-06",
+      "amount": 18174.23
+    },
+    {
+      "date": "2020-02-17",
+      "amount": 18195.96
+    },
+    {
+      "date": "2020-02-25",
+      "amount": 18217.73
+    }
+  ],
+  "kotak-mahindra-mutual-fund-4295974|kotak-liquid-fund-direct-plan-daily-idcw": [
+    {
+      "date": "2026-06-05",
+      "amount": 225.55
+    },
+    {
+      "date": "2026-06-07",
+      "amount": 276.87
+    },
+    {
+      "date": "2026-06-08",
+      "amount": 182.82
+    },
+    {
+      "date": "2026-06-09",
+      "amount": 282.82
+    },
+    {
+      "date": "2026-06-10",
+      "amount": 167.62
+    },
+    {
+      "date": "2026-06-11",
+      "amount": 143.62
+    },
+    {
+      "date": "2026-06-12",
+      "amount": 181.22
+    },
+    {
+      "date": "2026-06-14",
+      "amount": 269.27
+    },
+    {
+      "date": "2026-06-15",
+      "amount": 281.02
+    },
+    {
+      "date": "2026-06-16",
+      "amount": 276.11
+    },
+    {
+      "date": "2026-06-17",
+      "amount": 108.71
+    },
+    {
+      "date": "2026-06-18",
+      "amount": 153.59
+    },
+    {
+      "date": "2026-06-19",
+      "amount": 132.57
+    },
+    {
+      "date": "2026-06-21",
+      "amount": 261.83
+    },
+    {
+      "date": "2026-06-22",
+      "amount": 106.88
+    },
+    {
+      "date": "2026-06-23",
+      "amount": 111.35
+    },
+    {
+      "date": "2026-06-24",
+      "amount": 154.09
+    },
+    {
+      "date": "2026-06-25",
+      "amount": 178.03
+    },
+    {
+      "date": "2026-06-28",
+      "amount": 398.2
+    },
+    {
+      "date": "2026-06-29",
+      "amount": 74.53
+    },
+    {
+      "date": "2026-06-30",
+      "amount": 520.41
+    },
+    {
+      "date": "2026-07-01",
+      "amount": 345.33
+    },
+    {
+      "date": "2026-07-02",
+      "amount": 156.58
+    },
+    {
+      "date": "2026-07-03",
+      "amount": 122.84
+    },
+    {
+      "date": "2026-07-05",
+      "amount": 247.65
+    },
+    {
+      "date": "2026-07-08",
+      "amount": 29.67
+    },
+    {
+      "date": "2026-07-09",
+      "amount": 181.72
+    },
+    {
+      "date": "2026-07-10",
+      "amount": 240.64
+    },
+    {
+      "date": "2026-07-12",
+      "amount": 254.24
+    },
+    {
+      "date": "2026-07-13",
+      "amount": 115.92
+    },
+    {
+      "date": "2026-07-14",
+      "amount": 6.23
+    },
+    {
+      "date": "2026-07-15",
+      "amount": 90.29
+    },
+    {
+      "date": "2026-07-16",
+      "amount": 164.17
+    },
+    {
+      "date": "2026-07-17",
+      "amount": 222.18
+    },
+    {
+      "date": "2026-07-19",
+      "amount": 259.03
+    },
+    {
+      "date": "2026-07-20",
+      "amount": 94.35
+    },
+    {
+      "date": "2026-07-21",
+      "amount": 128.02
+    },
+    {
+      "date": "2026-07-22",
+      "amount": 63.56
+    },
+    {
+      "date": "2026-07-23",
+      "amount": 156.25
+    },
+    {
+      "date": "2026-07-24",
+      "amount": 186.08
+    },
+    {
+      "date": "2026-07-26",
+      "amount": 262.11
+    },
+    {
+      "date": "2026-07-27",
+      "amount": 110.82
+    },
+    {
+      "date": "2026-07-28",
+      "amount": 96.53
+    },
+    {
+      "date": "2026-07-29",
+      "amount": 136.68
+    },
+    {
+      "date": "2026-07-30",
+      "amount": 134.5
+    },
+    {
+      "date": "2026-07-31",
+      "amount": 189.29
+    },
+    {
+      "date": "2026-09-01",
+      "amount": 198.63
+    },
+    {
+      "date": "2026-09-02",
+      "amount": 250.2
+    },
+    {
+      "date": "2026-09-03",
+      "amount": 298.84
+    },
+    {
+      "date": "2026-09-04",
+      "amount": 158.7
+    },
+    {
+      "date": "2026-09-06",
+      "amount": 228.87
+    },
+    {
+      "date": "2026-09-07",
+      "amount": 92.9
+    },
+    {
+      "date": "2026-09-08",
+      "amount": 102.66
+    },
+    {
+      "date": "2026-09-09",
+      "amount": 142.95
+    },
+    {
+      "date": "2026-09-10",
+      "amount": 120.82
+    },
+    {
+      "date": "2026-09-11",
+      "amount": 73.65
+    },
+    {
+      "date": "2026-09-14",
+      "amount": 349.18
+    },
+    {
+      "date": "2026-09-15",
+      "amount": 48.83
+    },
+    {
+      "date": "2026-09-16",
+      "amount": 95.35
+    },
+    {
+      "date": "2026-09-17",
+      "amount": 105.74
+    },
+    {
+      "date": "2026-09-18",
+      "amount": 118.51
+    },
+    {
+      "date": "2026-09-20",
+      "amount": 249.79
+    },
+    {
+      "date": "2026-09-21",
+      "amount": 160.67
+    },
+    {
+      "date": "2026-09-22",
+      "amount": 181.64
+    },
+    {
+      "date": "2026-09-23",
+      "amount": 114.83
+    },
+    {
+      "date": "2026-09-24",
+      "amount": 53.93
+    },
+    {
+      "date": "2026-09-27",
+      "amount": 202.17
+    },
+    {
+      "date": "2026-09-28",
+      "amount": 87
+    },
+    {
+      "date": "2026-09-29",
+      "amount": 126.33
+    },
+    {
+      "date": "2026-09-30",
+      "amount": 172.19
+    }
+  ],
+  "molecule-ventures-llp-7810404|indian-metals-and-ferro-alloys": [
+    {
+      "date": "2026-07-31",
+      "amount": 11250
+    }
+  ],
+  "molecule-ventures-llp-7810404|kirloskar-ferrous-industries": [
+    {
+      "date": "2026-07-17",
+      "amount": 8901
+    }
+  ],
+  "molecule-ventures-llp-7810404|sasken-communication-technologies": [
+    {
+      "date": "2026-07-24",
+      "amount": 1300
+    }
+  ],
+  "neo-infra-income-opportunities-fund-9039920536|neo-infra-income-opportunities-fund-i-class-a5": [
+    {
+      "date": "2024-06-13",
+      "amount": 120149
+    },
+    {
+      "date": "2024-06-13",
+      "amount": 123033
+    },
+    {
+      "date": "2024-08-30",
+      "amount": 733
+    },
+    {
+      "date": "2024-08-30",
+      "amount": 186952
+    },
+    {
+      "date": "2024-08-30",
+      "amount": 242079
+    },
+    {
+      "date": "2024-11-29",
+      "amount": 1937
+    },
+    {
+      "date": "2024-11-29",
+      "amount": 139843
+    },
+    {
+      "date": "2024-11-29",
+      "amount": 180447
+    },
+    {
+      "date": "2025-03-25",
+      "amount": 4
+    },
+    {
+      "date": "2025-03-25",
+      "amount": 15921
+    },
+    {
+      "date": "2025-03-25",
+      "amount": 204822
+    },
+    {
+      "date": "2025-03-25",
+      "amount": 409033
+    },
+    {
+      "date": "2025-06-09",
+      "amount": 62
+    },
+    {
+      "date": "2025-06-09",
+      "amount": 14748
+    },
+    {
+      "date": "2025-06-09",
+      "amount": 139870
+    },
+    {
+      "date": "2025-06-09",
+      "amount": 160511
+    },
+    {
+      "date": "2025-08-29",
+      "amount": 2193
+    },
+    {
+      "date": "2025-08-29",
+      "amount": 3406
+    },
+    {
+      "date": "2025-08-29",
+      "amount": 16554
+    },
+    {
+      "date": "2025-08-29",
+      "amount": 29777
+    },
+    {
+      "date": "2025-08-29",
+      "amount": 63144
+    },
+    {
+      "date": "2025-08-29",
+      "amount": 106194
+    },
+    {
+      "date": "2025-08-29",
+      "amount": 182570
+    },
+    {
+      "date": "2026-01-05",
+      "amount": 545
+    },
+    {
+      "date": "2026-01-05",
+      "amount": 15298
+    },
+    {
+      "date": "2026-01-05",
+      "amount": 68787
+    },
+    {
+      "date": "2026-01-05",
+      "amount": 903365
+    },
+    {
+      "date": "2026-03-30",
+      "amount": 628
+    },
+    {
+      "date": "2026-03-30",
+      "amount": 24282
+    },
+    {
+      "date": "2026-03-30",
+      "amount": 331231
+    }
+  ],
+  "svan-investment-managers-llp-8710067|arvind-fashions": [
+    {
+      "date": "2026-08-25",
+      "amount": 14976
+    }
+  ],
+  "svan-investment-managers-llp-8710067|birlasoft": [
+    {
+      "date": "2026-07-31",
+      "amount": 40440
+    }
+  ],
+  "svan-investment-managers-llp-8710067|caplin-point-laboratories": [
+    {
+      "date": "2026-06-10",
+      "amount": 9860
+    },
+    {
+      "date": "2026-09-18",
+      "amount": 9860
+    }
+  ],
+  "svan-investment-managers-llp-8710067|ceat": [
+    {
+      "date": "2026-08-26",
+      "amount": 55650
+    }
+  ],
+  "svan-investment-managers-llp-8710067|cosmo-first": [
+    {
+      "date": "2026-08-14",
+      "amount": 20760
+    }
+  ],
+  "svan-investment-managers-llp-8710067|creative-newtech": [
+    {
+      "date": "2026-09-23",
+      "amount": 1927.5
+    }
+  ],
+  "svan-investment-managers-llp-8710067|dilip-buildcon": [
+    {
+      "date": "2026-09-29",
+      "amount": 6460
+    }
+  ],
+  "svan-investment-managers-llp-8710067|edelweiss-financial-services": [
+    {
+      "date": "2026-10-06",
+      "amount": 44782.5
+    }
+  ],
+  "svan-investment-managers-llp-8710067|ester-industries": [
+    {
+      "date": "2026-09-17",
+      "amount": 7772.5
+    }
+  ],
+  "svan-investment-managers-llp-8710067|ghcl": [
+    {
+      "date": "2026-07-03",
+      "amount": 73020
+    }
+  ],
+  "svan-investment-managers-llp-8710067|ghcl-textiles": [
+    {
+      "date": "2026-07-03",
+      "amount": 11910
+    }
+  ],
+  "svan-investment-managers-llp-8710067|gland-pharma": [
+    {
+      "date": "2026-09-03",
+      "amount": 26000
+    }
+  ],
+  "svan-investment-managers-llp-8710067|heg-advanced-materials": [
+    {
+      "date": "2026-08-13",
+      "amount": 27948
+    }
+  ],
+  "svan-investment-managers-llp-8710067|indo-count-industries": [
+    {
+      "date": "2026-09-01",
+      "amount": 24150
+    }
+  ],
+  "svan-investment-managers-llp-8710067|laxmi-organic-industries": [
+    {
+      "date": "2026-08-13",
+      "amount": 7200
+    }
+  ],
+  "svan-investment-managers-llp-8710067|mastek": [
+    {
+      "date": "2026-09-23",
+      "amount": 32080
+    }
+  ],
+  "svan-investment-managers-llp-8710067|neuland-laboratories": [
+    {
+      "date": "2026-08-14",
+      "amount": 10200
+    }
+  ],
+  "svan-investment-managers-llp-8710067|nitin-spinners": [
+    {
+      "date": "2026-10-06",
+      "amount": 28740
+    }
+  ],
+  "svan-investment-managers-llp-8710067|paras-defence-and-space-technologies": [
+    {
+      "date": "2026-09-18",
+      "amount": 2430
+    }
+  ],
+  "svan-investment-managers-llp-8710067|pokarna": [
+    {
+      "date": "2026-08-17",
+      "amount": 2502
+    }
+  ],
+  "svan-investment-managers-llp-8710067|polyplex": [
+    {
+      "date": "2026-09-28",
+      "amount": 2515
+    }
+  ],
+  "svan-investment-managers-llp-8710067|punjab-chem-and-crop-prot-l": [
+    {
+      "date": "2026-08-07",
+      "amount": 8745
+    }
+  ],
+  "svan-investment-managers-llp-8710067|shakti-pumps-india": [
+    {
+      "date": "2026-08-13",
+      "amount": 1350
+    }
+  ],
+  "svan-investment-managers-llp-8710067|shankara-buildpro": [
+    {
+      "date": "2026-07-13",
+      "amount": 18300
+    }
+  ],
+  "svan-investment-managers-llp-8710067|sharda-cropchem": [
+    {
+      "date": "2026-08-21",
+      "amount": 17280
+    }
+  ],
+  "svan-investment-managers-llp-8710067|sharda-motor-industries": [
+    {
+      "date": "2026-10-01",
+      "amount": 67000
+    }
+  ],
+  "svan-investment-managers-llp-8710067|stove-kraft": [
+    {
+      "date": "2026-09-17",
+      "amount": 13772.5
+    }
+  ],
+  "svan-investment-managers-llp-8710067|syrma-sgs-technology": [
+    {
+      "date": "2026-09-03",
+      "amount": 3825
+    }
+  ],
+  "svan-investment-managers-llp-8710067|time-technoplast": [
+    {
+      "date": "2026-09-30",
+      "amount": 16350
+    }
+  ],
+  "svan-investment-managers-llp-8710067|vaibhav-global": [
+    {
+      "date": "2026-08-13",
+      "amount": 13800
+    },
+    {
+      "date": "2026-08-25",
+      "amount": 13800
+    }
+  ],
+  "svan-investment-managers-llp-8710067|varroc-engineering": [
+    {
+      "date": "2026-09-03",
+      "amount": 8895
+    }
+  ],
+  "svan-investment-managers-llp-8710067|wpil": [
+    {
+      "date": "2026-08-17",
+      "amount": 8490
+    }
+  ],
+  "svan-investment-managers-llp-8710067|zensar-technologies": [
+    {
+      "date": "2026-08-10",
+      "amount": 64134
+    }
+  ],
+  "svan-investment-managers-llp-8710090|arvind-fashions": [
+    {
+      "date": "2026-08-25",
+      "amount": 10656
+    }
+  ],
+  "svan-investment-managers-llp-8710090|birlasoft": [
+    {
+      "date": "2026-07-31",
+      "amount": 26240
+    }
+  ],
+  "svan-investment-managers-llp-8710090|caplin-point-laboratories": [
+    {
+      "date": "2026-06-10",
+      "amount": 6400
+    },
+    {
+      "date": "2026-09-18",
+      "amount": 6400
+    }
+  ],
+  "svan-investment-managers-llp-8710090|ceat": [
+    {
+      "date": "2026-08-26",
+      "amount": 36400
+    }
+  ],
+  "svan-investment-managers-llp-8710090|cosmo-first": [
+    {
+      "date": "2026-08-14",
+      "amount": 13480
+    }
+  ],
+  "svan-investment-managers-llp-8710090|creative-newtech": [
+    {
+      "date": "2026-09-23",
+      "amount": 1252.5
+    }
+  ],
+  "svan-investment-managers-llp-8710090|dilip-buildcon": [
+    {
+      "date": "2026-09-29",
+      "amount": 4215
+    }
+  ],
+  "svan-investment-managers-llp-8710090|edelweiss-financial-services": [
+    {
+      "date": "2026-10-06",
+      "amount": 29122.5
+    }
+  ],
+  "svan-investment-managers-llp-8710090|ester-industries": [
+    {
+      "date": "2026-09-17",
+      "amount": 4921.25
+    }
+  ],
+  "svan-investment-managers-llp-8710090|ghcl": [
+    {
+      "date": "2026-07-03",
+      "amount": 47640
+    }
+  ],
+  "svan-investment-managers-llp-8710090|ghcl-textiles": [
+    {
+      "date": "2026-07-03",
+      "amount": 7773
+    }
+  ],
+  "svan-investment-managers-llp-8710090|gland-pharma": [
+    {
+      "date": "2026-09-03",
+      "amount": 16900
+    }
+  ],
+  "svan-investment-managers-llp-8710090|heg-advanced-materials": [
+    {
+      "date": "2026-08-13",
+      "amount": 18241
+    }
+  ],
+  "svan-investment-managers-llp-8710090|indo-count-industries": [
+    {
+      "date": "2026-09-01",
+      "amount": 15757.5
+    }
+  ],
+  "svan-investment-managers-llp-8710090|laxmi-organic-industries": [
+    {
+      "date": "2026-08-13",
+      "amount": 4698
+    }
+  ],
+  "svan-investment-managers-llp-8710090|mastek": [
+    {
+      "date": "2026-09-23",
+      "amount": 20960
+    }
+  ],
+  "svan-investment-managers-llp-8710090|neuland-laboratories": [
+    {
+      "date": "2026-08-14",
+      "amount": 6630
+    }
+  ],
+  "svan-investment-managers-llp-8710090|nitin-spinners": [
+    {
+      "date": "2026-10-06",
+      "amount": 18720
+    }
+  ],
+  "svan-investment-managers-llp-8710090|paras-defence-and-space-technologies": [
+    {
+      "date": "2026-09-18",
+      "amount": 1575
+    }
+  ],
+  "svan-investment-managers-llp-8710090|pokarna": [
+    {
+      "date": "2026-08-17",
+      "amount": 1731
+    }
+  ],
+  "svan-investment-managers-llp-8710090|polyplex": [
+    {
+      "date": "2026-09-28",
+      "amount": 1640
+    }
+  ],
+  "svan-investment-managers-llp-8710090|punjab-chem-and-crop-prot-l": [
+    {
+      "date": "2026-08-07",
+      "amount": 6225
+    }
+  ],
+  "svan-investment-managers-llp-8710090|shakti-pumps-india": [
+    {
+      "date": "2026-08-13",
+      "amount": 980
+    }
+  ],
+  "svan-investment-managers-llp-8710090|shankara-buildpro": [
+    {
+      "date": "2026-07-13",
+      "amount": 11900
+    }
+  ],
+  "svan-investment-managers-llp-8710090|sharda-cropchem": [
+    {
+      "date": "2026-08-21",
+      "amount": 11205
+    }
+  ],
+  "svan-investment-managers-llp-8710090|sharda-motor-industries": [
+    {
+      "date": "2026-10-01",
+      "amount": 47800
+    }
+  ],
+  "svan-investment-managers-llp-8710090|stove-kraft": [
+    {
+      "date": "2026-09-17",
+      "amount": 8995
+    }
+  ],
+  "svan-investment-managers-llp-8710090|syrma-sgs-technology": [
+    {
+      "date": "2026-09-03",
+      "amount": 2482.5
+    }
+  ],
+  "svan-investment-managers-llp-8710090|time-technoplast": [
+    {
+      "date": "2026-09-30",
+      "amount": 11640
+    }
+  ],
+  "svan-investment-managers-llp-8710090|vaibhav-global": [
+    {
+      "date": "2026-08-13",
+      "amount": 9007.5
+    },
+    {
+      "date": "2026-08-25",
+      "amount": 9007.5
+    }
+  ],
+  "svan-investment-managers-llp-8710090|varroc-engineering": [
+    {
+      "date": "2026-09-03",
+      "amount": 6465
+    }
+  ],
+  "svan-investment-managers-llp-8710090|wpil": [
+    {
+      "date": "2026-08-17",
+      "amount": 6180
+    }
+  ],
+  "svan-investment-managers-llp-8710090|zensar-technologies": [
+    {
+      "date": "2026-08-10",
+      "amount": 41832
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|amrutanjan-health-care": [
+    {
+      "date": "2026-10-03",
+      "amount": 15764.4
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|gateway-distriparks": [
+    {
+      "date": "2026-08-24",
+      "amount": 91032.5
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|greaves-cotton": [
+    {
+      "date": "2026-08-17",
+      "amount": 50556
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|navneet-education": [
+    {
+      "date": "2026-06-15",
+      "amount": 25189.5
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|nuvama-wealth-management": [
+    {
+      "date": "2026-05-27",
+      "amount": 24710
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|shree-digvijay-cement": [
+    {
+      "date": "2026-10-05",
+      "amount": 29511
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128005|crompton-greaves-consumer-electrical": [
+    {
+      "date": "2026-08-10",
+      "amount": 66573
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128005|gateway-distriparks": [
+    {
+      "date": "2026-08-11",
+      "amount": 200920
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128005|greaves-cotton": [
+    {
+      "date": "2026-07-28",
+      "amount": 77208
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128005|navneet-education": [
+    {
+      "date": "2026-06-15",
+      "amount": 25036.5
+    }
+  ]
+};
+
+/**
+ * THE LOTS A LOT REGISTER DATES A HOLDING BY (Stage 10fw), keyed as
+ * `BOOK_HOLDING_TRADES` — present exactly where `Position.heldSince` is, under
+ * the same gate: the lots account for every unit held. Each lot's purchase
+ * date, units and total cost as the register prints them.
+ */
+export const BOOK_HOLDING_LOTS: Record<string, { date: string; quantity: number | null; cost: number }[]> = {
+  "lkp-securities-98245|crompton-greaves-consumer-electrical": [
+    {
+      "date": "2025-03-04",
+      "quantity": 3000,
+      "cost": 988054.8
+    },
+    {
+      "date": "2025-11-12",
+      "quantity": 2000,
+      "cost": 558963
+    }
+  ],
+  "lkp-securities-98245|mrs-bectors-food-specialities": [
+    {
+      "date": "2025-11-12",
+      "quantity": 2500,
+      "cost": 646040
+    },
+    {
+      "date": "2026-01-02",
+      "quantity": 3500,
+      "cost": 857455.2
+    }
+  ],
+  "lkp-securities-98245|transrail-lighting": [
+    {
+      "date": "2025-09-10",
+      "quantity": 2500,
+      "cost": 1976450
+    },
+    {
+      "date": "2025-09-17",
+      "quantity": 25,
+      "cost": 19376.25
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|amrutanjan-health-care": [
+    {
+      "date": "2025-08-05",
+      "quantity": 3663,
+      "cost": 2501700.43
+    },
+    {
+      "date": "2026-05-25",
+      "quantity": 1773,
+      "cost": 1000931.02
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|ather-energy": [
+    {
+      "date": "2025-07-31",
+      "quantity": 3000,
+      "cost": 1042548.6
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|eureka-forbes": [
+    {
+      "date": "2025-07-31",
+      "quantity": 4456,
+      "cost": 2501694.2
+    },
+    {
+      "date": "2026-06-15",
+      "quantity": 4376,
+      "cost": 2001466.87
+    },
+    {
+      "date": "2026-07-15",
+      "quantity": 4200,
+      "cost": 1997480.38
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|gateway-distriparks": [
+    {
+      "date": "2025-07-31",
+      "quantity": 34964,
+      "cost": 2501950.42
+    },
+    {
+      "date": "2025-08-07",
+      "quantity": 37862,
+      "cost": 2501943.68
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|greaves-cotton": [
+    {
+      "date": "2025-09-19",
+      "quantity": 10737,
+      "cost": 2401948.5
+    },
+    {
+      "date": "2026-05-25",
+      "quantity": 14541,
+      "cost": 2501965.17
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|jaiprakash-power-ventures": [
+    {
+      "date": "2025-07-31",
+      "quantity": 118623,
+      "cost": 2501996.32
+    },
+    {
+      "date": "2025-08-07",
+      "quantity": 133024,
+      "cost": 2501981.9
+    },
+    {
+      "date": "2025-08-19",
+      "quantity": 53657,
+      "cost": 1000724.51
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|navneet-education": [
+    {
+      "date": "2025-08-05",
+      "quantity": 16793,
+      "cost": 2501952.13
+    },
+    {
+      "date": "2026-07-15",
+      "quantity": 12900,
+      "cost": 1964440.74
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|nuvama-wealth-management": [
+    {
+      "date": "2025-08-05",
+      "quantity": 1765,
+      "cost": 2496705.74
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|panacea-biotec": [
+    {
+      "date": "2025-08-05",
+      "quantity": 2750,
+      "cost": 1143585.3
+    },
+    {
+      "date": "2025-08-06",
+      "quantity": 3306,
+      "cost": 1356203.52
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|sbfc-finance": [
+    {
+      "date": "2025-08-05",
+      "quantity": 48078,
+      "cost": 5003919.78
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|shoppers-stop": [
+    {
+      "date": "2025-07-31",
+      "quantity": 4698,
+      "cost": 2501575.54
+    },
+    {
+      "date": "2026-01-29",
+      "quantity": 4245,
+      "cost": 1501348.68
+    },
+    {
+      "date": "2026-05-25",
+      "quantity": 4415,
+      "cost": 1501283.66
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|shree-digvijay-cement": [
+    {
+      "date": "2025-07-31",
+      "quantity": 29511,
+      "cost": 2501933.73
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|tejas-networks": [
+    {
+      "date": "2025-08-05",
+      "quantity": 4286,
+      "cost": 2502034.79
+    },
+    {
+      "date": "2026-01-29",
+      "quantity": 3034,
+      "cost": 1000850.76
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|wockhardt": [
+    {
+      "date": "2025-08-05",
+      "quantity": 3225,
+      "cost": 5003393.36
+    }
+  ]
 };
 
 /**

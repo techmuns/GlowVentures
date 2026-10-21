@@ -12,8 +12,8 @@ if it is not, so a delivery that lands a file nobody reads cannot pass silently.
 | Read | 394 | one or more documents in `public/audit/` |
 | Read via a byte-identical twin | 44 | the pipeline reads each md5 once; the data IS in the archive |
 | Read as a witness | 18 | a spreadsheet export of the PDF beside it — rows archived, figures checked, no facts |
-| Read by `build-book` | 1 | the family's consolidated review — the book's source for every private-market line |
-| Held out by decision | 1 | read perfectly and deliberately not a source |
+| Read by `build-book` | 2 | the review supplies private lines and exact lot costs; the register supplies verified payment evidence |
+| Held out by decision | 0 | read perfectly and deliberately not a source |
 | Not a document | 156 | macOS `__MACOSX/._*` resource forks — checked, not assumed |
 | Excluded by policy | 2 | the drop's own password notes |
 | **Unread** | **0** | **must be zero** |
@@ -23,14 +23,16 @@ Those files produce **424 documents** in the archive.
 
 ## Read by `build-book`
 
-The family asked for the consolidated review (MOPWM, as on 30 June 2026) to be the source of
-every private-market figure on the dashboard (Stage 10dh). `build-book` reads those lines
-straight from the workbook (`scripts/lib/reviewBook.mjs`); every other figure in the book is
-still the statements', and for those the review stays an independent cross-check.
+The consolidated review supplies the private-market lines (Stage 10dh). At the family's
+21 October instruction, its dated equity/fund transactions and the investment register also
+supply missing purchase costs only after exact owner, identity, date and quantity reconciliation.
+Both workbooks are read in full; source rows and rejected balances are in COST-RECOVERY.md.
+They remain held out of generic statement extraction; this is not an unread or missing file.
 
 | File | Where its data goes |
 | --- | --- |
-| `source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx` | the book's private-market lines; `npm run reconcile:review` cross-checks the rest |
+| `source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx` | private-market lines and exact dated equity/fund lot costs; `npm run reconcile:review` checks the rest |
+| `source/august-2026-f/NEW INVESTMENT SHEET.xlsx` | exact payment-register cost evidence; `npm run reconcile:register` checks the rest |
 
 ## Held out by decision
 
@@ -40,7 +42,6 @@ struck it. It is recorded in the archive with that reason — it is NOT a missin
 
 | File | Where its data goes instead |
 | --- | --- |
-| `source/august-2026-f/NEW INVESTMENT SHEET.xlsx` | `npm run reconcile:register` — an independent cross-check of the generated book |
 
 ## Excluded by policy
 

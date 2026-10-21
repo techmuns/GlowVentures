@@ -82,16 +82,16 @@ export const TREE_CELL_DENSE = {
  * children hang from — so its x is the parent cell's own left padding plus
  * half a chevron, and a depth-2 guide sits one indent further in.
  */
-const NAME_GEOMETRY: Record<TreeDensity, { parent: string; child: [string, string]; guide: [string, string] }> = {
+const NAME_GEOMETRY: Record<TreeDensity, { parent: string; child: [string, string, string]; guide: [string, string, string] }> = {
   regular: {
     parent: TREE_CELL.parent,
-    child: ["py-1.5 pl-[3.25rem] pr-4", "py-1.5 pl-[4.5rem] pr-4"],
-    guide: ["left-[1.6rem]", "left-[2.85rem]"],
+    child: ["py-1.5 pl-[3.25rem] pr-4", "py-1.5 pl-[4.5rem] pr-4", "py-1.5 pl-[5.75rem] pr-4"],
+    guide: ["left-[1.6rem]", "left-[2.85rem]", "left-[4.1rem]"],
   },
   dense: {
     parent: TREE_CELL_DENSE.parent,
-    child: ["py-1 pl-[2.35rem] pr-2", "py-1 pl-[3.5rem] pr-2"],
-    guide: ["left-[1rem]", "left-[2.15rem]"],
+    child: ["py-1 pl-[2.35rem] pr-2", "py-1 pl-[3.5rem] pr-2", "py-1 pl-[4.65rem] pr-2"],
+    guide: ["left-[1rem]", "left-[2.15rem]", "left-[3.3rem]"],
   },
 };
 
@@ -165,9 +165,14 @@ export function TreeChevron({ open, onToggle, label, density = "regular", ...dat
  * fund it belongs to. Its cell carries BOTH guides: its own, and its parent's
  * continuing past it to the parent's next sibling, which stops where that
  * parent was the last of its kind (`ancestorLast`), exactly as a └ does.
+ *
+ * DEPTH 3 is one level further — a share's dated trades under the share, under
+ * the member's account, under the mandate (Stage 10fm). It carries three
+ * guides, and `ancestorsLast` says, outermost first, which of its two
+ * ancestors was the last of its kind.
  */
-export function TreeNameCell({ depth, title, sub, hint, open, onToggle, toggleLabel, toggleData, last, ancestorLast, density = "regular", className = "" }: {
-  depth: 0 | 1 | 2;
+export function TreeNameCell({ depth, title, sub, hint, open, onToggle, toggleLabel, toggleData, last, ancestorLast, ancestorsLast, density = "regular", className = "" }: {
+  depth: 0 | 1 | 2 | 3;
   title: ReactNode;
   /** A second, quieter line: what the row is, never a figure another column holds. */
   sub?: ReactNode;
@@ -186,12 +191,16 @@ export function TreeNameCell({ depth, title, sub, hint, open, onToggle, toggleLa
   last?: boolean;
   /** On a depth-2 row: its depth-1 parent was the last of ITS siblings. */
   ancestorLast?: boolean;
+  /** On a depth-3 row: its depth-1 and depth-2 ancestors, each the last of its siblings. */
+  ancestorsLast?: [boolean, boolean];
   density?: TreeDensity;
   className?: string;
 }) {
   const g = NAME_GEOMETRY[density];
   if (depth >= 1) {
-    const d = depth === 2 ? 1 : 0;
+    const d = depth - 1;
+    // Each ancestor's guide runs on past this row to that ancestor's next sibling.
+    const through = depth === 3 ? (ancestorsLast ?? [false, false]) : depth === 2 ? [!!ancestorLast] : [];
     const text = (
       <div className="min-w-0">
         <div className="text-slate-200">{title}</div>
@@ -200,9 +209,9 @@ export function TreeNameCell({ depth, title, sub, hint, open, onToggle, toggleLa
     );
     return (
       <td className={`relative ${g.child[d]} ${className}`} title={hint}>
-        {depth === 2 && !ancestorLast && (
-          <span aria-hidden className={`absolute ${g.guide[0]} top-0 bottom-0 border-l border-ink-600`} />
-        )}
+        {through.map((wasLast, i) => !wasLast && (
+          <span key={i} aria-hidden className={`absolute ${g.guide[i]} top-0 bottom-0 border-l border-ink-600`} />
+        ))}
         <span aria-hidden className={`absolute ${g.guide[d]} top-0 border-l border-ink-600 ${last ? "h-1/2" : "bottom-0"}`} />
         <span aria-hidden className={`absolute ${g.guide[d]} top-1/2 w-3.5 border-t border-ink-600`} />
         {/* A CHILD THAT OPENS ROWS OF ITS OWN carries the same chevron a parent

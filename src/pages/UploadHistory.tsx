@@ -168,6 +168,7 @@ export function UploadHistory() {
         </Card>
       ) : (
       <Card pad={false}>
+        <div className="overflow-x-auto">
         <table className="min-w-full text-sm">
           <thead className="border-b border-ink-700">
             <Tr view={view}>
@@ -249,6 +250,7 @@ export function UploadHistory() {
             ))}
           </tbody>
         </table>
+        </div>
       </Card>
       )}
       {nav.length > 0 && (

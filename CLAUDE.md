@@ -81,7 +81,10 @@ every one takes the reason as a required argument.
 - **Never blend a missing value into a total as zero** — `sumOrNull` in
   `src/lib/analytics.ts`.
 - **A figure that exists for SOME accounts is shown for those and the rest are
-  named**, including in the total's own caption.
+  named**, including in the total's own caption. **A pooled return is the exception: never
+  partial.** It is struck over every account holding value or shown as `—`
+  with the unmeasured accounts named (`nothingToMeasure`, `measuredAccountsReturn`
+  in `src/lib/returns.ts`; Stage 10fc).
 - **A COMPUTED zero is legitimate and stays**, with its reason on the face.
 - **A caption must neither narrow nor widen the figure it describes.**
 - **A total must tie to its own columns.**
@@ -160,13 +163,16 @@ One line per area; the history files explain each in depth.
   `insideMovers.ts` / `fundDisclosures.ts` — companies inside AIFs and mandates.
 - `src/lib/tranches.ts` (the family's dated capital, `capitalRollup`,
   `capitalReturn`), `datedCapital.ts` (money-weighted rate where a row is whole
-  accounts), `txnLedger.ts` (capital and trades as one row set — never added),
+  accounts, or holdings whose trades or lots date every unit — `holdingFlows.ts`,
+  Stage 10fw), `txnLedger.ts` (capital and trades as one row set — never added),
   `txnAxis.ts`, `txnSort.ts`, `txnRollup.ts`, `ledger.ts` (runtime dated record
   from `public/audit/`), `capitalCalls.ts`, `fundReturns.ts`, `privateBook.ts`
   (Private Market's one model; brand grouping via `brandOf`/`BRAND_OVERRIDES`),
   `investmentProfiles.ts` (supplied strategy/description, matched by identity —
-  security key → ISIN → name → brand → folio; Stage 10eo), `enteredProfiles.ts`
-  (the same cells typed on the table, shown over a file's; Stage 10ev).
+  security key → ISIN → name → brand → folio; Stage 10eo),
+  `investedOn.ts` (a holding's Invested on and its dated trades, every holdings
+  table; built off `Position.tradeRecord` / `BOOK_HOLDING_TRADES` from
+  `scripts/lib/holdingTrades.mjs`; Stage 10fm).
 - `src/lib/navSeries.ts`, `attribution.ts` (no caller; kept, tested),
   `benchmarks.ts` (seven indices, name-checked), `indexSectors.ts` (their sector
   weights off NSE's factsheets, through `resolveSector`; Stage 10fe), `indices.ts`, `periodReturns.ts`
@@ -183,7 +189,9 @@ One line per area; the history files explain each in depth.
   the same table, never a table in a cell.
 - `src/lib/enteredCalls.ts` + `functions/api/capital-calls.js`, `enteredProfiles.ts` +
   `functions/api/investment-profiles.js`, `tileSets.ts` +
-  `functions/api/tile-sets.js` — shared KV store (`GLOW_STORE`, not yet bound).
+  `functions/api/tile-sets.js` — the shared store: one JSON file on the repo's
+  `dashboard-store` branch, written with `GLOW_GITHUB_TOKEN` (`shared/dashboardStore.mjs`,
+  Stage 10ex; the repo is public, so everything saved there is public).
 - `src/lib/priceAlerts.ts`, `watchlist.ts`, `researchLevels.ts`/`researchSync.ts`
   — price alerts (per browser) and the send to Glow Central Research.
 - `src/lib/searchIndex.ts` + `components/SmartSearch.tsx` — the top-bar search.
@@ -267,6 +275,10 @@ extraction mirrors each archive's own path under `source/`.
 | Sky Capital Rising Titans Fund | SKY024 | Bharat Jaisinghani Family Trust 3 | 2026-08-31 | ₹0.75 Cr |
 | ICICI Prudential Mutual Fund | 36378950 | Ajay Jaisinghani | 2026-10-05 | ₹0.56 Cr |
 | ICICI Prudential Mutual Fund | 36379637 | Bharat Jaisinghani | 2026-10-05 | ₹0.38 Cr |
+| Mirae Asset Mutual Fund | 70413280453 | Hope India Trust | 2026-10-06 | ₹0.10 Cr |
+| Aditya Birla Sun Life Mutual Fund | 1038104611 | Hope India Trust | 2026-08-03 | ₹0.08 Cr |
+| Kotak Mahindra Mutual Fund | 4295974 | Hope India Trust | 2026-10-05 | ₹0.08 Cr |
+| Aditya Birla Sun Life Mutual Fund | 1019265797 | Hope India Trust | 2026-10-06 | ₹0.08 Cr |
 | HDFC Mutual Fund | 15725046 | Aarti Jaisinghani | 2026-10-01 | ₹0.02 Cr |
 | ASK Investment Managers Limited | 10034025 | Ajay Jaisinghani | 2026-09-08 | ₹0.34 (a MEASURED residue — the mandate is closed; its bank balance is under the ₹1,000 floor) |
 | ASK Investment Managers Limited | 10032723 | Ankita Jaisinghani | 2026-09-08 | ₹0.01 (a MEASURED residue — the mandate is closed; its bank balance is under the ₹1,000 floor) |
@@ -292,7 +304,7 @@ extraction mirrors each archive's own path under `source/`.
 | Motilal Oswal Financial Services (demat) | 1201090032387399 | Bharat Jaisinghani Family Trust | 2026-07-31 | — (**quantity only** — the Rate column is the last movement's price, Stage 10cz) |
 | Motilal Oswal Financial Services (demat) | 1201090037359311 | Ajay Jaisinghani | 2026-07-31 | — (**quantity only** — the rate printed is face value) |
 | Motilal Oswal Financial Services (demat) | 1201090037436848 | Bharat Jaisinghani | 2026-07-31 | ₹0 (a MEASURED zero — the statement's balance is nil) |
-| Motilal Oswal Hedged Equity Multi Factor Strategy | 90410014574 | Ajay Jaisinghani | 2026-07-31 | ₹0 (a MEASURED zero — the statement's balance is nil) |
+| Motilal Oswal Hedged Equity Multi Factor Strategy | 90410014574 | Ajay Jaisinghani | 2026-07-31 | ₹0 (a MEASURED zero — both classes redeemed to nil) |
 | Motilal Oswal Mutual Fund | 90414963315 | Ajay Jaisinghani | 2026-09-30 | ₹0 (a MEASURED zero — every scheme redeemed to nil) |
 
 The table above is **regenerated every time, never patched**: `npm run
@@ -312,8 +324,8 @@ block, which is ring-fenced: out of this column and every total, shown only on
 `/polycab`.
 
 **Consolidated.** `BOOK_SUMMARY` in `glowData.ts` is authoritative; at the time
-of writing: 76 accounts, 448 positions, 8 owners/entities, current value of
-holdings ₹836.57 Cr — listed ₹643.48 Cr, private ₹193.09 Cr, nothing unplaced.
+of writing: 80 accounts, 459 positions, 9 owners/entities, current value of
+holdings ₹836.91 Cr — listed ₹643.81 Cr, private ₹193.09 Cr, nothing unplaced.
 
 **Side of the book**, decided in this order and generated as
 `Position.marketSide`: the family's own fund placing (`FAMILY_MARKET_SIDE`) → a
@@ -347,10 +359,17 @@ Never derive one side from the others.
   splices Polycab out into `BOOK_POLYCAB`; `src/pages/Polycab.tsx` is its only
   reader. Polycab is named on no other route; the register's sentinel name
   appears on no route.
-- **The review is the source of the PRIVATE book only** (Stage 10dh):
+- **The review is the source of the PRIVATE book** (Stage 10dh):
   `scripts/lib/reviewBook.mjs` + `shared/reviewHolders.mjs` turn its private
   blocks into positions, each with a `reviewSource` (sheet, block, row), and
-  throw rather than guess. For everything else the review is a cross-check
+  throw rather than guess. At the family's 21 October instruction,
+  `scripts/lib/recoverHoldingCosts.mjs` also reads its dated equity and fund transactions
+  and the investment register to fill missing costs only after exact
+  owner/ISIN/date/quantity reconciliation. It never replaces a statement's
+  quantity, valuation, date or existing cost. Every join and unresolved balance
+  is in `docs/COST-RECOVERY.md`. Closing rows keep fund folios separate; a known
+  cost with unverified sale proceeds carries `hprUnavailableReason`, withholding
+  realised gain and individual/pooled HPR. Other review figures remain a cross-check
   (`npm run reconcile:review`). At-cost lines carry no gain or return
   (`AT_COST_BUCKET`, `AT_COST_RETURN`).
 - **The Motilal CDSL "rate" is the last movement's price**, not a mark or a cost
@@ -401,9 +420,15 @@ All steps are idempotent; `glowData.ts` regenerates byte-identically.
   `partial` document, a `failed` one not held out by decision or recorded in
   `scripts/ingest/acceptedUnread.mjs` (reason + the action that fixes it — only
   for a file that carries nothing to read), a read account the book neither
-  carries nor excludes by name, and a book date older than the newest statement
-  read. Never silence it by widening the note list or the accepted list for a
-  file a reader could read: write the reader.
+  carries nor excludes by name, a book date older than the newest statement
+  read, a statement that PRINTS dated transactions while its reading carries
+  none (opening-unit markers do not count), and a dated contribution or
+  withdrawal with no capital move in the book that day (Stage 10fj — a fully
+  redeemed investment's history is data). Never silence it by widening the note
+  list or the accepted list for a file a reader could read: write the reader.
+- **Every file feeds the dashboard** (the family, 21 Oct 2026), except the held-
+  out review/register by decision and the two in `acceptedUnread.mjs`. Hope India
+  Trust is its own entity in the book (`shared/owners.mjs`), not a person's.
 
 ## The live layer
 
@@ -413,11 +438,12 @@ All steps are idempotent; `glowData.ts` regenerates byte-identically.
 - `indices.js`, `prices.js` — Yahoo, keyless, every symbol checked by the name
   the upstream reports. `fx.js` — ECB, keyless. `research`, `insider`,
   `announcements`, `ratios`, `news` — muns. `polycab.js` — BSE, keyless.
-  `capital-calls.js`, `tile-sets.js` — the `GLOW_STORE` KV binding (until it is
-  bound, they say so). `corporate-actions.js` — the Glow Central Research
+  `capital-calls.js`, `tile-sets.js`, `investment-profiles.js` — the repo's store
+  file via `GLOW_GITHUB_TOKEN` (until it is set, they say so). `corporate-actions.js` — the Glow Central Research
   capture. `stock-exposure.ts` — the look-through read model.
 - Workflows: `harvest.yml` (macro series store), `fund-navs.yml` (AMFI NAVs),
-  `polycab.yml` (Polycab exchange data).
+  `polycab.yml` (Polycab exchange data), `index-sectors.yml` (NSE factsheet
+  sector weights, days 1–15 monthly).
 - With no token and no network every page renders on statement marks.
 
 ## Conventions
@@ -494,7 +520,7 @@ And:
 - Replays (each `--check` is a no-op control; follow with `build-book`):
   `rekey:archive`, `replay:calls`, `replay:owners`, `replay:dedupe`,
   `replay:movements`, `replay:flows`, `replay:flow-lines`,
-  `replay:demat-holdings`.
+  `replay:demat-holdings`, `replay:folio-cost`.
 - Reference data: `build-symbols`, `build-sectors`, `build-index-sectors`
   (monthly; index sector weights), `build-fund-navs`,
   `build-upstox-instruments`, `build-scheme-names`, `build-lookthrough`

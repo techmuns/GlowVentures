@@ -1,5 +1,5 @@
 import type { Portfolio } from "./types";
-import { measuredAccountsReturn, accountReturnInputs } from "./returns";
+import { measuredAccountsReturn, accountReturnInputs, nothingToMeasure } from "./returns";
 import { accountEmptiness } from "./searchIndex";
 import { xirrPct, totalReturnFromXirr } from "./bucketXirr";
 import { fmtDate } from "./format";
@@ -43,12 +43,16 @@ export function annualisedReturnIssue(annualPct: number | null, days: number | n
 /** Statement accounts only: coverage and the destination show exactly this set. */
 export function investorAnnualReturn(statement: Portfolio) {
   const measured = measuredAccountsReturn(statement, statement.accounts);
-  const issue = annualisedReturnIssue(measured.annPct, measured.windowDays, measured.windowStart);
+  // Whole or absent: the missing accounts name the cause before the window does.
+  const issue = measured.missing.length
+    ? { issueLabel: "Incomplete records", reason: measured.reason, detail: null }
+    : annualisedReturnIssue(measured.annPct, measured.windowDays, measured.windowStart);
   return { ...issue, start: measured.windowStart, end: measured.lastClose,
-    covered: measured.parts.length, total: statement.accounts.length,
+    covered: measured.parts.length, total: measured.parts.length + measured.missing.length,
+    missing: measured.missing, outside: measured.outside,
     windowDays: measured.windowDays, measuredValue: measured.measuredMV,
     pct: issue.reason ? null : measured.annPct,
-    flows: measured.parts.flatMap((p) => [...p.flows, { date: p.asOf, amount: p.terminalValue }]),
+    flows: measured.whole ? measured.parts.flatMap((p) => [...p.flows, { date: p.asOf, amount: p.terminalValue }]) : [],
   };
 }
 
@@ -95,8 +99,11 @@ export function investorPeriodReturn(statement: Portfolio, today: Date, period: 
       || (value === 0 && !input.source && accountEmptiness(a, rows)?.kind !== "redeemed")) return [];
     return [{ account: a, asOf: input.asOf, value, flows: input.flows }];
   });
-  const covered = parts.length;
-  const total = statement.accounts.length;
+  // The set the return must cover: every account except those with nothing of
+  // their own to measure (a verified nil, or valued nowhere in the book).
+  const outside = new Set(statement.accounts.filter((a) => nothingToMeasure(statement, a)).map((a) => a.accountId));
+  const covered = parts.filter((p) => !outside.has(p.account.accountId)).length;
+  const total = statement.accounts.filter((a) => !outside.has(a.accountId)).length;
   const distinctCloses = new Set(parts.map((p) => p.asOf));
   const closes = [...distinctCloses].sort();
   const end = closes[closes.length - 1] ?? null;
@@ -124,6 +131,7 @@ export function investorPeriodReturn(statement: Portfolio, today: Date, period: 
     start, end, covered, total, reason,
     pct: reason ? null : pct,
     gain: reason ? null : value + movements,
-    flows, annualPct, windowDays: days,
+    // No figure, no inputs: a partial panel's flows are not the calculation of anything shown.
+    flows: reason ? [] : flows, annualPct: reason ? null : annualPct, windowDays: days,
   };
 }

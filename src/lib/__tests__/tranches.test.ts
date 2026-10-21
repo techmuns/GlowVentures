@@ -279,8 +279,26 @@ for (const k of keys) {
     if (rec && rec.invested != null && r.move.invested === r.move.amount && rec.invested !== rec.amount) {
       const netNav = (rec.invested / r.move.units!).toFixed(4);
       grossCosted++;
+      // HELD TO THE PAGE'S OWN PRECISION, NEVER A WIDENED ONE. Sanshi and Helios
+      // print the NAV to four decimals; Kotak's folio statement prints it to
+      // three (7125255: `128.034`). A three-decimal print witnesses the derived
+      // figure only where the derived figure IS that number — its fourth decimal
+      // a zero — and only as a whole figure on the page, never as the prefix of
+      // a longer one. A derived 128.0341 still fails against a printed 128.034.
+      const threeDp = netNav.endsWith("0") ? netNav.slice(0, -1) : null;
+      const printedAt3 = threeDp !== null
+        && new RegExp(`(^|[^\\d.,])${threeDp.replace(".", "\\.")}(?![\\d])`).test(raw);
+      // AND IN THE PAGE'S OWN DIGIT GROUPING. Delphi prints its allotment NAV as
+      // `1,000.0000` — the same four decimals, with the Indian thousands comma —
+      // so the derived figure is looked for as the page would print it too, still
+      // as a whole figure and never as part of a longer one.
+      const [whole, frac] = netNav.split(".");
+      const indian = whole.length > 3
+        ? `${whole.slice(0, -3).replace(/\B(?=(\d{2})+(?!\d))/g, ",")},${whole.slice(-3)}.${frac}` : null;
+      const printedGrouped = indian !== null
+        && new RegExp(`(^|[^\\d.,])${indian.replace(/[.]/g, "\\.")}(?![\\d])`).test(raw);
       ok(`${acctNo} ${r.date} costed at its gross — its net ÷ units, ${netNav}, is the NAV the page prints`,
-        raw.includes(netNav));
+        raw.includes(netNav) || printedAt3 || printedGrouped);
       continue;
     }
     // The statement prints its NAV to four decimals, so that is the precision
@@ -308,12 +326,16 @@ ok("every tranche carried through a class switch was set aside for carriedCost.t
 // while the dated record's net does not. LOAD-BEARING on this book (Helios, Active
 // Momentum and, since VD-24, every Sanshi tranche), so the branch above cannot pass
 // by never running.
-const grossInBook = keys.filter((k) => {
-  const tr = BOOK_POSITION_TRANCHES[k];
-  return tr.moves.some((m) => m.invested === m.amount && BOOK_CAPITAL_MOVES.some((c) =>
+// Counted per TRANCHE, not per position: Kotak 7125255's nineteen switch-ins
+// were levied stamp duty only from 1 July 2020, so four of them are costed at a
+// gross above their net and fifteen print a single amount that is both — those
+// fifteen are witnessed in the plain branch, and counting them here (as the
+// per-position count did, when every gross-costed position was Sanshi's,
+// gross-costed throughout) would demand a net-NAV check of a row that has none.
+const grossInBook = keys.flatMap((k) => BOOK_POSITION_TRANCHES[k].moves.filter((m) =>
+  m.invested === m.amount && BOOK_CAPITAL_MOVES.some((c) =>
     c.accountId === m.accountId && c.date === m.date && c.direction === "in" && c.units === m.units
-    && c.invested != null && c.invested !== c.amount));
-}).reduce((a, k) => a + BOOK_POSITION_TRANCHES[k].moves.length, 0);
+    && c.invested != null && c.invested !== c.amount))).length;
 ok("every tranche costed at its gross had its printed NAV checked through the net",
   grossCosted === grossInBook && grossCosted > 0, `${grossCosted} checked, ${grossInBook} in the book`);
 
@@ -447,7 +469,10 @@ console.log("\n── a drawdown fund's own calls date the one holding they boug
   const covered = new Set(got);
   // Accounts with a dated record of their own already date their holding; the
   // calls tier only has to answer for the rest, so those are the ones asserted.
-  ok("the five single-fund drawdown folios with no allotment record are dated by their calls",
+  // All five now carry their own allotment record too (their Transaction Details /
+  // Capital Transactions are read), so their calls are the FALLBACK tier here —
+  // still exercised on their real call lists, which is what this block tests.
+  ok("the five single-fund drawdown folios are dated by their calls",
     expected.every((a) => covered.has(a)), got.join(", "));
   for (const [k, dates] of byHolding) {
     const [acct, key] = k.split("|");

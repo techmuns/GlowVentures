@@ -73,10 +73,12 @@ import {
  * row without a date shows the holding-period figure alone and the tooltip says
  * which document would supply one.
  *
- * XIRR IS A THIRD LINE ONLY WHERE THE ROW IS AN ACCOUNT. A holding inside an
- * account has no cash flows of its own — the statements cover the current
- * period — so a dash on every row of every name would say that 371 times, and
- * none is drawn. But a row that is one WHOLE folio of a fund (Buoyant's, a
+ * XIRR IS A THIRD LINE ONLY WHERE THE ROW'S MONEY IS DATED. A holding inside an
+ * account has cash flows of its own only where its account's dated trades or its
+ * lot register account for every unit it holds (Stage 10fw) — there the line
+ * shows, solved over its own purchases, sales and dividends; a dash on every
+ * other row would say "not dated" hundreds of times, and none is drawn. And a
+ * row that is one WHOLE folio of a fund (Buoyant's, a
  * Sanshi folio, a drawdown fund) IS that account, and the account's dated
  * record of every payment in and out is exactly what a money-weighted return is
  * solved over (`datedCapital.ts`). There it shows — **15.30% and 9.76%** on
@@ -1270,8 +1272,11 @@ export function StockInfo() {
         </td>
         <td className="px-4 py-2.5 text-right mono text-slate-300">{r.quantity === null ? <AbsentCell reason={NO_UNIT_COUNT} /> : fmtNum(r.quantity)}</td>
         <td className="px-4 py-2.5 text-right mono text-slate-400">{r.avgCost === null ? <AbsentCell reason={r.review && r.quantity === null ? NO_UNIT_COUNT
+          : r.costBasis === null ? "this statement reports no cost for the holding, so there is nothing to divide by its units"
           : r.review ? "the family's consolidated review prints no per-unit cost for this holding"
-          : "this provider prints no per-unit cost for the holding"} /> : price(r.avgCost)}</td>
+          : "this provider prints no per-unit cost for the holding"} />
+          : r.avgCostDerived ? <span title="Invested ÷ units — the statement prints the total cost and the units, and no per-unit cost" data-avg-cost-derived>{price(r.avgCost)}</span>
+          : price(r.avgCost)}</td>
         {/* THE MARK, PER STATEMENT, WITH THE DATE IT WAS STRUCK. The date is
             the cell's own hover rather than a second column. Guarded before
             `price()`, which returns a BARE dash — an absence names its cause. */}
@@ -1328,7 +1333,7 @@ export function StockInfo() {
         {/* WHICH RETURN, stated in the cell. `measuredReturn` is the one place
             the methodology lives (Stage 10af). */}
         <td className="px-4 py-2.5 text-right mono" data-stock-return
-          data-capital={rowCap ? (rowCap.dated ? "dated" : "undated") : undefined}>
+          data-capital={rowCap ? (rowCap.dated ? (rowCap.holdings ? "holding" : "dated") : "undated") : undefined}>
           <ReturnCells p={r} valuedAt={valueDateOf(r, accIdx.get(r.accountId)?.asOf, nowMs)} capital={rowCap} />
         </td>
       </Tr>

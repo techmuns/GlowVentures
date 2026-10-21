@@ -147,15 +147,26 @@ console.log("\n── nothing redeemed ──");
 // unrealised P&L for the fund — a second path to one figure.
 console.log("\n── a distribution reinvested ──");
 {
+  // WORTH MORE THAN EVERYTHING PAID ON THE ROW, ITS PRINTED CHARGES INCLUDED —
+  // what the family paid is `invested + charges`. Carnelian Amritkaal's 31 Dec
+  // 2025 allotment (a ₹5 Cr drawdown, ₹2,925.10 of fund income reinvested, less
+  // ₹2,500.02 stamp duty) is the case where the charge and the reinvestment sit
+  // on one row; re-derived here off the moves, never off the helper.
+  const beyondPaid = (m: { amount: number | null; invested: number | null; charges?: number | null }) =>
+    m.amount == null || m.invested == null ? 0
+      : Math.max(0, Math.round((m.invested + (m.charges ?? 0) - m.amount) * 100) / 100);
   const withReinvest = G.filter((g) => {
     const ins = BOOK_CAPITAL_MOVES.filter((m) => m.accountId === g.accountId && m.direction === "in");
-    return ins.some((m) => m.amount != null && m.invested != null && m.invested > m.amount);
+    return ins.some((m) => beyondPaid(m) > 0);
   });
   ok("the book carries a reinvested distribution (LOAD-BEARING)", withReinvest.length > 0,
     withReinvest.map((g) => g.accountId).join(", "));
+  ok("…including one whose reinvestment shares its row with a printed charge",
+    withReinvest.some((g) => BOOK_CAPITAL_MOVES.some((m) => m.accountId === g.accountId && m.direction === "in"
+      && beyondPaid(m) > 0 && (m.charges ?? 0) > 0)));
   for (const g of withReinvest) {
     const ins = BOOK_CAPITAL_MOVES.filter((m) => m.accountId === g.accountId && m.direction === "in");
-    const reinvested = ins.reduce((s, m) => s + Math.max(0, (m.invested ?? 0) - (m.amount ?? 0)), 0);
+    const reinvested = ins.reduce((s, m) => s + beyondPaid(m), 0);
     ok(`${g.accountId}: nothing else came back`, g.redemption === 0);
     near(`${g.accountId}: realised is the distribution reinvested`, g.realised, reinvested);
     const own = BOOK_POSITIONS.filter((p) => p.accountId === g.accountId);
@@ -240,9 +251,15 @@ console.log("\n── dated, typed payouts ──");
     // EVIDENCED, NEVER SILENT: such a fund still exists — Baring — and the
     // family's review dates it since Stage 10dh. §8c holds the statement rule
     // on a constructed fund, so the path is still checked.
-    const taken = allWithPayouts.filter((c) => !recorded.has(c.accountId) && REVIEWED.has(c.accountId));
-    ok("every fund with dated payouts and no capital record is dated by the family's review now", taken.length > 0,
-      taken.map((c) => c.accountId).join(", "));
+    // Baring's own statement now publishes a capital record too — its four
+    // DRAWDOWN rows, read since its Capital Transactions table was, and the same
+    // four dates and amounts as the review's purchases — so "no capital record"
+    // no longer describes it. What this asserts is unchanged: the review dates
+    // it, and nothing its statement dates reaches the table beside the review.
+    const taken = allWithPayouts.filter((c) => REVIEWED.has(c.accountId));
+    ok("every statement fund with dated payouts and no capital record of its own on the table is dated by the family's review now",
+      taken.length > 0 && taken.every((c) => RECORD.filter((m) => m.accountId === c.accountId).every((m) => m.fromReview)),
+      taken.map((c) => `${c.accountId}${recorded.has(c.accountId) ? " (its statement's record set aside for the review's)" : ""}`).join(", "));
     console.log("NOT CHECKED a statement-dated fund with dated payouts and no capital record, on this book: the review dates the only one since Stage 10dh — §8c holds the rule on a constructed fund");
   }
   // …AND ONE WITH A CAPITAL RECORD OF ITS OWN. Since Stage 10ca Neo Infra's unit
@@ -411,7 +428,30 @@ console.log("\n── capital calls as purchases ──");
 {
   const recorded = new Set(BOOK_CAPITAL_MOVES.map((m) => m.accountId));
   const calls = RECORD.filter((m) => m.fromCall);
-  ok("calls reach the table for funds with no capital record", calls.length > 0, `${calls.length} calls`);
+  if (calls.length) {
+    ok("calls reach the table for funds with no capital record", true, `${calls.length} calls`);
+  } else {
+    // EVIDENCED, NEVER SILENT. The five call-dated folios — Founders ×2, Delphi,
+    // Carnelian Amritkaal and Baring — publish their own capital record since
+    // their Transaction Details / Capital Transactions tables are read, and the
+    // rest are the review's lines. So every fund that prints calls is either on
+    // a record of its own (asserted per account below: the record, never the
+    // calls on top of it) or dated by the review; the path itself is held on a
+    // constructed call-only fund.
+    const callFunds = BOOK_COMMITMENTS.filter((c) => c.calls.length);
+    ok("every fund that prints dated calls is on a capital record of its own or dated by the review — no call-only fund on this book",
+      callFunds.length > 0 && callFunds.every((c) => recorded.has(c.accountId) || REVIEWED.has(c.accountId)),
+      callFunds.map((c) => c.accountId).join(", "));
+    const acc = [{ accountId: "k", provider: "Fund", accountNo: "4", owner: "O", strategy: null,
+      inceptionDate: "2024-01-01", asOf: "2026-03-31", engagement: "AIF" }];
+    const commitment = { accountId: "k", name: "Fund", total: 20_000_000, contributed: 20_000_000,
+      called: 20_000_000, paid: 20_000_000, pending: null, undrawn: 0, distributed: null,
+      calls: [{ date: "2024-01-01", amount: 10_000_000, label: "Call 1" }, { date: "2025-01-01", amount: 10_000_000, label: "Call 2" }],
+      payouts: null } as unknown as Commitment;
+    const kMoves = capitalMovesWithCalls([], [commitment], acc, []);
+    ok("calls reach the table for a fund with no capital record (constructed)",
+      kMoves.length === 2 && kMoves.every((m) => m.fromCall && m.direction === "in"), `${kMoves.length} calls`);
+  }
   ok("…and never for an account that already publishes one", calls.every((m) => !recorded.has(m.accountId)));
   ok("…nor for an account the family's review dates", calls.every((m) => !REVIEWED.has(m.accountId)));
   for (const c of BOOK_COMMITMENTS) {
@@ -460,10 +500,30 @@ console.log("\n── capital calls as purchases ──");
   }
   // A DRAWDOWN FUND THAT PRINTS NO DISTRIBUTION LINE has no stated redemption.
   const noDist = G.filter((g) => g.source === "calls" && g.redemption === null && g.value != null);
-  ok("a fund printing no distribution line states no redemption — never ₹0", noDist.length > 0
-    && noDist.every((g) => g.appreciation === null), noDist.map((g) => g.accountId).join(", "));
-  ok("…but still shows its unrealised mark against the statement's own cost",
-    noDist.every((g) => g.unrealised != null));
+  if (noDist.length) {
+    ok("a fund printing no distribution line states no redemption — never ₹0",
+      noDist.every((g) => g.appreciation === null), noDist.map((g) => g.accountId).join(", "));
+    ok("…but still shows its unrealised mark against the statement's own cost",
+      noDist.every((g) => g.unrealised != null));
+  } else {
+    // EVIDENCED: the drawdown folios that printed no distribution line were
+    // call-dated; each now carries its own complete dated record, whose rows are
+    // every payment in AND out the statement prints (an undeclared row withholds
+    // the record), so what came back is measured there. The rule is held on a
+    // constructed call-only fund.
+    const acc = [{ accountId: "n", provider: "Fund", accountNo: "5", owner: "O", strategy: null,
+      inceptionDate: "2024-01-01", asOf: "2026-03-31", engagement: "AIF" }];
+    const commitment = { accountId: "n", name: "Fund", total: 10_000_000, contributed: 10_000_000,
+      called: 10_000_000, paid: 10_000_000, pending: null, undrawn: 0, distributed: null,
+      calls: [{ date: "2024-01-01", amount: 10_000_000, label: "Call 1" }], payouts: null } as unknown as Commitment;
+    const n = capitalRollup(capitalMovesWithCalls([], [commitment], acc, []), acc,
+      [{ accountId: "n", securityKey: "fn", security: "Fund", assetClass: "AIF", quantity: 1,
+        marketValue: 12_000_000, costBasis: 10_000_000 } as Position], {}, "all", "recent", { commitments: [commitment] })[0];
+    ok("a fund printing no distribution line states no redemption — never ₹0 (constructed)",
+      !!n && n.source === "calls" && n.redemption === null && n.appreciation === null, n?.appreciationReason ?? "missing");
+    ok("…but still shows its unrealised mark against the statement's own cost (constructed)",
+      !!n && n.unrealised === 2_000_000, String(n?.unrealised));
+  }
 }
 
 // ── 10. A FILTER NARROWS THE MOVEMENTS AND WITHHOLDS THE WHOLE-RECORD FIGURES

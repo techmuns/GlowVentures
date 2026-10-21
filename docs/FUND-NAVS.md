@@ -8,8 +8,8 @@ ISIN** and never on a name. 14,397 scheme rows read.
 
 | | |
 | --- | ---: |
-| Schemes priced | **36** |
-| …of which identified by the family's own statement | 36 |
+| Schemes priced | **43** |
+| …of which identified by the family's own statement | 43 |
 | …by the look-through's resolved ISIN | 0 |
 | …of the statement's, confirmed by the look-through | 19 |
 | Resolved but **not usable to value a holding** | 3 |
@@ -21,7 +21,7 @@ ISIN** and never on a name. 14,397 scheme rows read.
 | Security | ISIN | via | SEBI category | NAV | Date | Day |
 | --- | --- | --- | --- | ---: | --- | ---: |
 | ABSL BAL ADV-GROWTH | `INF084M01AB8` | statement | Dynamic Asset Allocation or Balanced Advantage | 110.52 | 2026-10-19 | -0.66% |
-| ABSL LIQF D-GROWTH | `INF209K01VA3` | statement | Liquid Fund | 461.741 | 2026-10-19 | +0.02% |
+| ABSL LIQF D-GROWTH | `INF209K01VA3` | statement | Liquid Fund | 461.8237 | 2026-10-20 | +0.02% |
 | BNDH L&MCF DP GR | `INF194K01V89` | statement | Large & Mid Cap Fund | 159.264 | 2026-10-19 | -1.17% |
 | HDFC Arbitrage Fund - Direct Plan - Growth Option | `INF179KA1KT6` | statement | Arbitrage Fund | 21.886 | 2026-10-19 | -0.04% |
 | HDFC Arbitrage Fund - Direct Plan - Monthly IDCW # Payout Option | `INF179KA1KS8` | statement | Arbitrage Fund | 11.369 | 2026-10-19 | -0.04% |
@@ -34,7 +34,7 @@ ISIN** and never on a name. 14,397 scheme rows read.
 | HELIOS FCF D-GROW | `INF0R8701046` | statement | Flexi Cap Fund | 15.42 | 2026-10-19 | -0.96% |
 | Helios Flexi Cap Fund - Direct Growth | `INF0R8701046` | statement | Flexi Cap Fund | 15.42 | 2026-10-19 | -0.96% |
 | ICICI IOPPF D-GRW | `INF109KC1RH9` | statement | Sectoral/ Thematic | 38.3 | 2026-10-19 | -1.36% |
-| ICICI LIQF D-GROWTH | `INF109K01Q49` | statement | Liquid Fund | 422.7574 | 2026-10-19 | +0.02% |
+| ICICI LIQF D-GROWTH | `INF109K01Q49` | statement | Liquid Fund | 422.8296 | 2026-10-20 | +0.02% |
 | ICICI NFT NT 50 DP G | `INF109K01Y80` | statement | Index Funds | 63.9335 | 2026-10-19 | -0.43% |
 | ICICI NFT NX 50 R GR | `INF109K01IF1` | statement | Index Funds | 60.3794 | 2026-10-19 | -0.43% |
 | ICICI NIFT50IND DP G | `INF109K012M7` | statement | Index Funds | 242.3022 | 2026-10-19 | -1.11% |
@@ -47,8 +47,15 @@ ISIN** and never on a name. 14,397 scheme rows read.
 | Invesco India Arbitrage Fund - Direct Plan Growth (AF-D1) | `INF205K01KR8` | statement | Arbitrage Fund | 37.5515 | 2026-10-19 | +0.03% |
 | Invesco India Arbitrage Fund - Regular Plan Growth (AF-GP) | `INF205K01122` | statement | Arbitrage Fund | 34.4257 | 2026-10-19 | +0.02% |
 | KOTAK ARBFD DP GROW | `INF174K01LC6` | statement | Arbitrage Fund | 43.5069 | 2026-10-19 | -0.01% |
+| Kotak Flexi Cap Fund Direct Growth | `INF174K01LS2` | statement | Flexi Cap Fund | 91.747 | 2026-10-19 | — |
+| Kotak Flexi Cap Fund Regular Growth | `INF174K01336` | statement | Flexi Cap Fund | 80.592 | 2026-10-19 | — |
 | Kotak Large & Mid Cap Fund - Direct Growth | `INF174K01LF9` | statement | Large & Mid Cap Fund | 385.465 | 2026-10-19 | -1.01% |
+| Kotak Liquid Fund Direct Plan Daily - IDCW # | `INF174K01NH1` | statement | Liquid Fund | 1222.81 | 2026-10-20 | — |
+| Kotak Liquid Fund Regular Plan Daily - IDCW # | `INF174K01NL3` | statement | Liquid Fund | 1283.5466 | 2026-10-20 | — |
+| Kotak Mid Cap Fund Direct Growth | `INF174K01LT0` | statement | Mid Cap Fund | 157.951 | 2026-10-19 | — |
+| Kotak Mid Cap Fund Regular Growth | `INF174K01DS9` | statement | Mid Cap Fund | 134.757 | 2026-10-19 | — |
 | KOTAK MTCF D-GROW | `INF174KA1HV3` | statement | Multi Cap Fund | 20.783 | 2026-10-19 | -0.70% |
+| Mirae Asset Liquid Fund ( formerly Mirae Asset Cash Management Fund ) - Direct Plan Mirae Asset Liquid Fund ( formerly Mirae Asset Cash Management Fund ) - Direct Plan Growth | `INF769K01CM1` | statement | Liquid Fund | 3016.6418 | 2026-10-20 | — |
 | Motilal Oswal Active Momentum Fund - Direct Plan Growth Option | `INF247L01EP5` | statement | Sectoral/ Thematic | 14.2733 | 2026-10-19 | -1.26% |
 | NIP ETNF1D RTLIQBEES | `INF732E01037` | statement | Other ETFs | 1000 | 2026-10-20 | +0.00% |
 | WOC MAAF D-GROW | `INF03VN01761` | statement | Multi Asset Allocation Fund | 16.431 | 2026-10-19 | -0.33% |

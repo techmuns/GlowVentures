@@ -53,13 +53,13 @@ export function PeriodReturnCalculation({ measured, type, inception, result, con
       <p className="text-xs text-slate-400">Amounts are rounded for display. The return uses full precision.</p>
     </>}
     {!!accounts.length && <div data-return-included>
-      <p className="font-medium text-slate-100">Accounts used</p>
+      <p className="font-medium text-slate-100">{available ? "Accounts used" : "Accounts with verified records"}</p>
       <ul className="mt-2 space-y-2 text-xs text-slate-400">{accounts.map((a, i) => <li key={i}><span className="text-slate-200">{a.label}</span><br />{fmtDate(a.from)} → {fmtDate(a.to)}</li>)}</ul>
       {w?.opening === 0 && !inception && accounts.every((a) => a.openedInWindow) && <p className="mt-2 text-xs text-slate-400">These accounts first invested inside the selected period, so their opening value is zero. This is not the whole portfolio’s opening value.</p>}
     </div>}
     {!!excluded.length && <div data-return-excluded>
-      <p className="font-medium text-slate-100">{excluded.length} accounts excluded</p>
-      <p className="mt-1 text-xs text-slate-400">Excluded accounts are not counted as zero returns. We need an opening valuation (or a complete record from the first investment), dated money in and out, and a later closing valuation to include an account.</p>
+      <p className="font-medium text-slate-100">{excluded.length} {excluded.length === 1 ? "account" : "accounts"} not measured</p>
+      <p className="mt-1 text-xs text-slate-400">No portfolio return is shown until every account holding value is measured, and none is counted as zero. Each needs an opening valuation (or a complete record from the first investment), dated money in and out, and a later closing valuation.</p>
       <ul className="mt-3 space-y-3 text-xs">{excluded.map((a, i) => <li key={i}><span className="font-medium text-slate-200">{a.label}</span><p className="text-slate-400">{a.reason}</p></li>)}</ul>
     </div>}
   </>;

@@ -425,8 +425,10 @@ export type UnvaluedAccount = {
   /**
    * WHAT THE ACCOUNT'S FUND INVESTS IN — `accountFundSide`, since an account
    * holding nothing has no position to read a side off. The Private Market page
-   * lists only the private ones: Motilal Oswal's Hedged Equity strategy is an
-   * AIF holding nothing too, and it is not a private-market fund.
+   * lists only the private ones. (Motilal Oswal's Hedged Equity strategy, once
+   * the listed example here, now carries its two classes as measured zeros —
+   * redeemed to nil on its own dated record — so it is not an account holding
+   * nothing at all.)
    */
   side: MarketSide | null;
   kind: UnvaluedKind;

@@ -426,8 +426,11 @@ export function Performance() {
 
         {consolidatedXirr == null ? (
           <StatTile label="Money-weighted return (XIRR)"
-            {...absentTile("no dated capital movements to measure against",
-              "XIRR needs dated external flows. No statement in this book carries them.")}
+            {...(mw.missing.length
+              ? absentTile(`${mw.missing.length} of ${mw.parts.length + mw.missing.length} accounts not measured`,
+                `${mw.reason}. Each is named in the table below; no consolidated rate is struck over the rest.`)
+              : absentTile("no dated capital movements to measure against",
+                "XIRR needs dated external flows. No statement in this book carries them."))}
             icon={<Percent className="h-4 w-4" />} />
         ) : (
           <StatTile label="Money-weighted return (to date)"
@@ -656,7 +659,7 @@ export function Performance() {
                   Consolidated
                   {unmeasurable.length > 0 && (
                     <div className="text-[10.5px] font-normal text-slate-500">
-                      {measurable.length} of {accounts.length} accounts · {money(measuredMV)} of the statements' {money(statementBookMV)}
+                      {measurable.length} of {mw.parts.length + mw.missing.length} accounts measured · {money(measuredMV)} of the statements' {money(statementBookMV)}
                     </div>
                   )}
                 </td>
@@ -668,7 +671,8 @@ export function Performance() {
                 </td>
                 <td className="px-3 py-2.5 text-right mono">
                   {consolidatedTotalReturn == null
-                    ? <AbsentCell reason={!mw.parts.length
+                    ? <AbsentCell reason={mw.missing.length ? mw.reason ?? "not every account is measured"
+                      : !mw.parts.length
                         ? "no account's statements carry both dated flows and an opening portfolio value to measure against"
                         : "the pooled flows and their statement values do not solve for a single rate"} />
                     : <span className={consolidatedTotalReturn >= 0 ? "text-gain" : "text-loss"}

@@ -20,6 +20,8 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DIR = fs.mkdtempSync(path.join(ROOT, "node_modules", ".glow-test-"));
 
 const SUITES = [
+  ["chunk recovery", "src/lib/__tests__/chunkRecovery.test.ts"],
+  ["recovered purchase costs", "src/lib/__tests__/recoveredCosts.test.ts"],
   ["latest verified account returns", "src/lib/__tests__/latestAccountReturns.test.ts"],
   ["consolidated sheet", "src/lib/__tests__/consolidatedSheet.test.ts"],
   ["research background cache", "src/lib/__tests__/researchCache.test.ts"],
@@ -47,6 +49,7 @@ const SUITES = [
   ["private market table", "src/lib/__tests__/privateBook.test.ts"],
   ["investment profiles", "src/lib/__tests__/investmentProfiles.test.ts"],
   ["entered strategy and description", "src/lib/__tests__/enteredProfiles.test.ts"],
+  ["dashboard store in GitHub", "src/lib/__tests__/dashboardStore.test.ts"],
   ["review as private-market source", "src/lib/__tests__/reviewBook.test.ts"],
   ["review optional columns", "src/lib/__tests__/reviewColumns.test.ts"],
   ["separate investments", "src/lib/__tests__/separateInvestments.test.ts"],
@@ -115,6 +118,8 @@ const SUITES = [
   ["day move", "src/lib/__tests__/dayMove.test.ts"],
   ["concentration by investment", "src/lib/__tests__/concentration.test.ts"],
   ["lot terms and the hold-to-LTCG planner", "src/lib/__tests__/ltDate.test.ts"],
+  ["invested on", "src/lib/__tests__/investedOn.test.ts"],
+  ["holding flows", "src/lib/__tests__/holdingFlows.test.ts"],
 ];
 
 let failed = 0;

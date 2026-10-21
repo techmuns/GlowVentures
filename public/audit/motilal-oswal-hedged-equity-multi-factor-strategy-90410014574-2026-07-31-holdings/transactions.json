@@ -1,0 +1,55 @@
+{
+ "name": "transactions",
+ "rows": [
+  [
+   "date",
+   "class",
+   "description",
+   "kind",
+   "amount",
+   "net",
+   "units",
+   "balanceUnits"
+  ],
+  [
+   "2024-07-29",
+   "Motilal Oswal Hedged Equity Multi Factor Strategy — Class B2",
+   "Contribution",
+   "contribution",
+   130000000,
+   129993500.32,
+   11996779.195,
+   11996779.195
+  ],
+  [
+   "2024-07-31",
+   "Motilal Oswal Hedged Equity Multi Factor Strategy — Class B2",
+   "Switch Out",
+   "reclassification",
+   -131105601.75,
+   "",
+   -11996779.195,
+   0
+  ],
+  [
+   "2024-07-31",
+   "Motilal Oswal Hedged Equity Multi Factor Strategy — Class F1",
+   "Switch in",
+   "reclassification",
+   131105601.75,
+   131099046.8,
+   13109904.68,
+   13109904.68
+  ],
+  [
+   "2025-07-31",
+   "Motilal Oswal Hedged Equity Multi Factor Strategy — Class F1",
+   "Unit Redemption-Payout",
+   "withdrawal",
+   -111896969.42,
+   "",
+   -13109904.68,
+   0
+  ]
+ ]
+}

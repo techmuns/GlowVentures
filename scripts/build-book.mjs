@@ -28,12 +28,15 @@ import { lotGroupsOf, daySalesOf, settleSales, settledSecurityOf } from "../shar
 import { sourceFor } from "./ingest/precedence.mjs";
 import { AIF_UNITS, PROVIDER as CDSL_DEMAT_PROVIDER } from "./ingest/providers/motilalDemat.mjs";
 import { reclassificationsFrom, carryLotsThroughSwitches, carryCostThroughSwitches, UNIT_TIE } from "./lib/classSwitch.mjs";
+import { tradeWindows, windowThrough, oneCopyPerTrade, holdingTradeRows, holdingTradeRecord } from "./lib/holdingTrades.mjs";
 import { PROVIDER as NSDL_DEMAT_PROVIDER } from "./ingest/providers/nsdlDemat.mjs";
 import { PROVIDER as HDFC_NSDL_PROVIDER } from "./ingest/providers/hdfcNsdl.mjs";
 import { SEPARATE_INVESTMENTS } from "../shared/separateInvestments.mjs";
 import { KEPT_UNVALUED, keptUnvaluedFor, keptUnvaluedReason } from "../shared/keptUnvalued.mjs";
 import { buildAccountReturnRecords } from "./lib/accountReturnRecords.mjs";
 import { returnCoverageReport } from "./lib/returnCoverageReport.mjs";
+import { recoverHoldingCosts, recoveryReport } from "./lib/recoverHoldingCosts.mjs";
+import { applyRecoveredCost } from "../shared/recoveredCosts.mjs";
 
 /**
  * THE DEPOSITORY ACCOUNTS, BOTH OF THEM.
@@ -160,8 +163,7 @@ function loadArchive() {
   return fs.readdirSync(AUDIT_DIR).sort()
     .map((dir) => path.join(AUDIT_DIR, dir, "document.json"))
     .filter((f) => fs.existsSync(f))
-    .map((f) => JSON.parse(fs.readFileSync(f, "utf8")))
-    .filter((d) => d.status !== "failed");
+    .map((f) => JSON.parse(fs.readFileSync(f, "utf8")));
 }
 
 /** account key — provider + account number is the identity, as in the archive. */
@@ -1205,7 +1207,20 @@ const CAPITAL_KINDS = new Set(["contribution", "withdrawal"]);
  * other two tests, and failing those, withholds the return with the reason.
  */
 function capitalRecordFromInception(cashFlows) {
-  const rows = (cashFlows ?? []).filter((c) => c.date && CAPITAL_KINDS.has(c.kind));
+  const all = cashFlows ?? [];
+  /**
+   * A CLASS CAN BEGIN WITH A SWITCH (Stage 10fj). Motilal Oswal's Hedged Equity
+   * moved its whole B2 holding into F1 on 31 Jul 2024, and Buoyant's A4 class
+   * was born of A1 the same way: the new class's first row is the switch's
+   * INCOMING leg, not a contribution. It is the class's origin exactly as a
+   * first purchase is — provided the same day carries the equal and opposite
+   * outgoing leg of another class, so the money demonstrably came from inside
+   * the account and not from a purchase this record lacks.
+   */
+  const legIn = (c) => c.kind === "reclassification" && isNum(c.amount) && c.amount > 0 && !!c.securityKey
+    && all.some((o) => o.kind === "reclassification" && o.date === c.date && o.securityKey && o.securityKey !== c.securityKey
+      && isNum(o.amount) && Math.abs(o.amount + c.amount) <= 1);
+  const rows = all.filter((c) => c.date && (CAPITAL_KINDS.has(c.kind) || legIn(c)));
   const ins = rows.filter((c) => c.kind === "contribution");
   if (!ins.length) return false;
   const evidenced = (c) => isNum(c.balance) || !!c.seriesIssued;
@@ -1214,7 +1229,7 @@ function capitalRecordFromInception(cashFlows) {
   for (const c of [...rows].filter((r) => r.securityKey && isNum(r.units) && evidenced(r)).sort((a, b) => a.date.localeCompare(b.date))) {
     if (!first.has(c.securityKey)) first.set(c.securityKey, c);
   }
-  return [...first.values()].every((c) => c.kind === "contribution" && (isNum(c.balance)
+  return [...first.values()].every((c) => (c.kind === "contribution" || legIn(c)) && (isNum(c.balance)
     ? Math.abs(Math.abs(c.balance) - Math.abs(c.units)) <= UNIT_TIE
     : c.date === c.seriesIssued));
 }
@@ -2155,6 +2170,34 @@ function positionTranchesFrom(capitalMoves, reclassifications, positions, notes,
 }
 
 /**
+ * ── A PER-UNIT COST WHERE THE STATEMENT PRINTS ONLY THE TOTAL ────────────────
+ *
+ * *"a lot of holdings are missing purchase prices"* — the family, 21 Oct 2026.
+ *
+ * Stage 10bm left this open for them: the Avg cost COLUMN printed the
+ * statement's per-unit cost and showed `—` wherever a statement prints a total
+ * cost and a unit count but no per-unit figure (every AMC folio, every AIF
+ * capital statement), while the consolidated row beside it and the live
+ * roll-forward already divide cost by units. Their answer is the figure: the
+ * cost over the units it bought, both primitives the statement prints. A
+ * printed per-unit cost is never replaced; `avgCostDerived` says which
+ * figures are the division. A row with no cost, no units, or a value that IS
+ * its cost (`valuedAtCost`) keeps its absence.
+ */
+function avgCostOverUnits(positions, notes) {
+  let derived = 0;
+  for (const p of positions) {
+    if (p.avgCost !== null || !isNum(p.costBasis) || !(p.costBasis > 0) || !(p.quantity > 0)) continue;
+    if (p.valuedAtCost || p.costUnavailable) continue;
+    p.avgCost = Math.round((p.costBasis / p.quantity) * 1e4) / 1e4;
+    p.avgCostDerived = true;
+    derived += 1;
+  }
+  notes.push(`avg cost: ${derived} position(s) print a total cost and a unit count and no per-unit cost — `
+    + "their Avg cost is that cost over those units (`avgCostDerived`)");
+}
+
+/**
  * ── A COST IS EVERY RUPEE PAID IN (VD-24) ────────────────────────────────────
  *
  * Stamp duty was treated two ways: netted out of Sanshi's cost, carried inside
@@ -2336,7 +2379,7 @@ function bridgeTieOf(b) {
 
 // ── Build ────────────────────────────────────────────────────────────────────
 
-function build(archived) {
+function build(archived, archiveCount = archived.length) {
   const notes = [];
   // AN EXPORT IS A WITNESS, NEVER A DOCUMENT OF THE BOOK. A spreadsheet that
   // sits beside its PDF (`askimpms_…_BankBook178CT.xlsx`, Marathon's `.csv`) is
@@ -2555,6 +2598,12 @@ function build(archived) {
   const bankAccounts = [];
   /** Positions whose lot register does not account for the units held — no split. */
   const splitUnreconciled = [];
+  /** Every dated buy and sell behind a holding, keyed `${accountId}|${securityKey}` — see `holdingTradeRows`. */
+  const holdingTrades = {};
+  /** The cash income each holding was paid, dated as its statement dates it (Stage 10fw). */
+  const holdingIncome = {};
+  /** The lots a lot register dates a holding by, where they account for every unit held (Stage 10fw). */
+  const holdingLots = {};
   /** Positions whose statement cost FIFO over the fund's own unit record restates — named in the report. */
   const fifoRestated = [];
   /** The FIFO lots still held, per `${accountId}|${securityKey}` — the per-contribution breakdown's source. */
@@ -3134,6 +3183,35 @@ function build(archived) {
     const cgTo = allIssues.filter((d) => (d.capitalGains ?? []).length)
       .map((d) => d.periodTo ?? d.asOf).filter(Boolean).sort().at(-1) ?? null;
     const dematClosings = allIssues.flatMap((d) => d.dematBalances ?? []).filter((b) => b.kind === "closing" && b.isin && b.date);
+    /**
+     * THE ACCOUNT'S OWN TRADES, AS DATES ON EACH HOLDING (Stage 10fm) — read off
+     * the same authoritative report type the sales are settled from, so a trade
+     * a manager prints on both its transaction statement and its investor report
+     * is one trade. A fund's own allotment printed on a tape is its unit record's
+     * row, which the holding's tranches already date, and is left there.
+     * `holdingTradeRecord` says what the window can date and what it cannot.
+     */
+    // The window holding the holdings' own date — or, where every window ends
+    // before it, the last of them, so the record can say the tape stops short.
+    const tapeWindows = saleType ? tradeWindows(allIssues.filter((d) => d.reportType === saleType)) : [];
+    const tapeWindow = windowThrough(tapeWindows, asOf) ?? (asOf ? tapeWindows.filter((w) => w.to < asOf).at(-1) ?? null : null);
+    const tapeOf = (securityKey) => oneCopyPerTrade((saleType ? dated.transactions : [])
+      .filter((t) => t.securityKey === securityKey && typeOfDoc.get(t.source) === saleType)
+      .filter((t) => !ownFundMoves.some((m) => m.securityKey === t.securityKey && m.date === t.date))
+      .map((t) => ({ ...t, amount: settledOf(t) })));
+    const tradeRecordOf = (h) => {
+      const rows = holdingTradeRows(tapeOf(h.securityKey), dated.capitalGains.filter((l) => l.securityKey === h.securityKey));
+      // A CASH BALANCE IS NOT BOUGHT ON A DATE. A liquid fund the manager parks
+      // cash in is typed Cash by its statement and IS traded, so a Cash line is
+      // left out only where no trade names it.
+      if (h.assetClass === "Cash" && !rows.length) return null;
+      // A tape that stops before the holding's date and never names it says
+      // nothing about it — a fund whose own allotments are its tranches, say.
+      if (!rows.length && (!tapeWindow || !asOf || tapeWindow.to < asOf)) return null;
+      if (rows.length) holdingTrades[`${accountId}|${h.securityKey}`] = rows;
+
+      return holdingTradeRecord({ rows, quantity: h.quantity, asOf, window: tapeWindow });
+    };
     const rollForwardOf = (h, base) => {
       if (!asOf || !tapeTo || tapeTo <= asOf || !isNum(h.quantity) || !h.securityKey) return null;
       const rows = dated.transactions
@@ -3212,6 +3290,14 @@ function build(archived) {
     const LETTER_KIND = /^distribution$/i;
     const cashSeen = new Set();
     const dividendByKey = new Map();
+    /**
+     * …AND EACH OF THOSE DIVIDENDS ON ITS OWN DATE (Stage 10fw) — the received
+     * date, else the ex date, as the statement prints them; null where it
+     * prints neither. A holding's FIFO return adds its dividends as a total; a
+     * money-weighted return over its dated trades needs the same dividends on
+     * their days, or the two would be struck over different money.
+     */
+    const datedIncomeByKey = new Map();
     const corporateActions = [];
     /**
      * WHICH WINDOW EACH HOLDING'S INCOME COVERS (Stage 10fx) — `Position.dividendFrom`.
@@ -3225,8 +3311,12 @@ function build(archived) {
      * does not say makes the window unknown (null), never the others' start.
      */
     const dividendFromByKey = new Map();
-    const addIncome = (key, amount, from) => {
+    // Every rupee of income is added with its day (Stage 10fw's dated record,
+    // Stage 10fx's sources): the FIFO total and a money-weighted return over
+    // the holding's dated money must count the same dividends.
+    const addIncome = (key, amount, from, dated = [{ date: null, amount }]) => {
       dividendByKey.set(key, r2((dividendByKey.get(key) ?? 0) + amount));
+      datedIncomeByKey.set(key, [...(datedIncomeByKey.get(key) ?? []), ...dated.map((d) => ({ date: d.date ?? null, amount: r2(d.amount) }))]);
       const was = dividendFromByKey.get(key);
       dividendFromByKey.set(key, was === undefined ? from ?? null
         : was === null || !from ? null : from < was ? from : was);
@@ -3288,7 +3378,7 @@ function build(archived) {
           if (asOf && ev.exDate && ev.exDate > asOf) { lateIncome += 1; continue; }
           if (!isNum(ev.receivable) && !isNum(ev.tds)) netOnly += 1;
           cashCounted.push({ securityKey: ev.securityKey, dates: [ev.exDate, ev.receivedDate].filter(Boolean), net: ev.netAmount, gross });
-          addIncome(ev.securityKey, gross, docOf.get(ev.source)?.periodFrom ?? null);
+          addIncome(ev.securityKey, gross, docOf.get(ev.source)?.periodFrom ?? null, [{ date: ev.receivedDate ?? ev.exDate ?? null, amount: gross }]);
         } else {
           // Non-cash: a bonus prints Amount 0.00, and that zero is REAL — the
           // entitlement is the substance. Carried as an action, never summed
@@ -3347,7 +3437,7 @@ function build(archived) {
       const same = cashCounted.findIndex((e) => e.securityKey === c.securityKey && e.dates.includes(c.date)
         && (Math.abs((e.net ?? NaN) - c.amount) <= 0.01 || Math.abs(e.gross - gross) <= 0.01));
       if (same >= 0) { cashCounted.splice(same, 1); countedTwice += 1; continue; }
-      addIncome(c.securityKey, gross, recordFrom(c));
+      addIncome(c.securityKey, gross, recordFrom(c), [{ date: c.date ?? null, amount: gross }]);
     }
     /**
      * A GAIN DISTRIBUTION REINVESTED INTO AN ALLOTMENT IS INCOME TOO (Stage 10fx).
@@ -3364,7 +3454,7 @@ function build(archived) {
       if (c.kind !== "contribution" || !c.securityKey || !isNum(c.amount) || !isNum(c.netAmount) || isNum(c.expenses)) continue;
       if (!(c.netAmount > c.amount) || !/Gain Distr[^;]*reinvested/i.test(c.notes ?? "")) continue;
       if (asOf && c.date && c.date > asOf) { lateFundIncome += 1; continue; }
-      addIncome(c.securityKey, r2(c.netAmount - c.amount), recordFrom(c));
+      addIncome(c.securityKey, r2(c.netAmount - c.amount), recordFrom(c), [{ date: c.date ?? null, amount: r2(c.netAmount - c.amount) }]);
     }
     /**
      * INCOME FOLLOWS A WHOLE-CLASS SWITCH (Stage 10fx). Buoyant's Gain Distr. was
@@ -3391,9 +3481,11 @@ function build(archived) {
         if (to === key || !heldNow.has(to)) continue;
         const amount = dividendByKey.get(key);
         const from = dividendFromByKey.get(key) ?? null;
+        const datedHere = datedIncomeByKey.get(key) ?? [{ date: null, amount }];
         dividendByKey.delete(key);
         dividendFromByKey.delete(key);
-        addIncome(to, amount, from);
+        datedIncomeByKey.delete(key);
+        addIncome(to, amount, from, datedHere);
         notes.push(`account ${accountNo}: ${amount.toLocaleString("en-IN")} of income earned on ${key} follows its units through the class switch to ${to}, which holds them`);
       }
     }
@@ -3441,7 +3533,7 @@ function build(archived) {
           const calls = (commitment.calls ?? []).map((k) => k.date).filter(Boolean).sort();
           const opens = inception ?? calls[0] ?? paid.map((k) => k.date).sort()[0];
           const sumOf = (kind) => r2(sum(paid.filter((k) => k.kind === kind).map(gross)));
-          addIncome(key, r2(sum(paid.map(gross))), opens);
+          addIncome(key, r2(sum(paid.map(gross))), opens, paid.map((k) => ({ date: k.date, amount: gross(k) })));
           notes.push(`account ${accountNo}: ${paid.length} distribution(s) its commitment block prints through ${asOf} are this holding's income, gross of TDS — `
             + `${sumOf("income").toLocaleString("en-IN")} distributed income and ${sumOf("equalisation").toLocaleString("en-IN")} equalisation received; `
             + "a capital redemption is a withdrawal and is not income"
@@ -3794,6 +3886,13 @@ function build(archived) {
         // first surviving unit was bought.
         for (const l of dated) if (heldSince === null || l.purchaseDate < heldSince) heldSince = l.purchaseDate;
         purchaseDates = new Set(dated.map((l) => l.purchaseDate)).size;
+        // EACH LOT ON ITS OWN DATE (Stage 10fw): a holding bought in two lots
+        // was not all bought on the oldest one's day, and a rate compounded from
+        // it says it was. The lots go to the book so a money-weighted return can
+        // place each rupee on its own day.
+        holdingLots[`${accountId}|${h.securityKey}`] = dated
+          .map((l) => ({ date: l.purchaseDate, quantity: isNum(l.quantity) ? l.quantity : null, cost: r2(l.totalCost) }))
+          .sort((a, b) => a.date.localeCompare(b.date) || a.cost - b.cost);
       }
       positions.push({
         securityKey: h.securityKey,
@@ -3867,6 +3966,16 @@ function build(archived) {
         daysToLT,
         heldSince,
         ...(purchaseDates !== undefined ? { purchaseDates } : {}),
+        /** What the account's own dated trades say about when these units were bought — see `holdingTradeRecord`. */
+        tradeRecord: tradeRecordOf(h) ?? undefined,
+        ...((income) => {
+          // THE SAME DIVIDENDS `dividendReceived` TOTALS, each on its day (Stage 10fw).
+          if (income.length) {
+            holdingIncome[`${accountId}|${h.securityKey}`] = [...income]
+              .sort((a, b) => (a.date ?? "9999").localeCompare(b.date ?? "9999") || a.amount - b.amount);
+          }
+          return {};
+        })(datedIncomeByKey.get(h.securityKey) ?? []),
         // The date the statement PRINTS its price or value as struck at, which
         // need not be the account's as-of: ICICI's NSDL balance is at 31 Mar and
         // its values "Prices as on 30-Mar-2026". Only where printed; never the as-of.
@@ -5030,6 +5139,8 @@ function build(archived) {
   // from it, on the positions a switch restated and nowhere else.
   carryCostThroughSwitches(positions, positionTranches, reclassifications, accountBridges, notes);
   grossPaidCost(positions, positionTranches, notes);
+  // Last, so the per-unit figure is struck on the cost every pass above settled.
+  avgCostOverUnits(positions, notes);
   // TWO PATHS TO ONE COST, AND THEY MUST AGREE. A class switch with no sale is
   // carried above by `carryCostThroughSwitches`; FIFO ran over the same unit
   // record and reached its own answer independently. They are different code
@@ -5080,11 +5191,28 @@ function build(archived) {
     delete shareMovements[keys[0]];
   }
 
+  const holdingCostRecovery = recoverHoldingCosts({ root: ROOT, accounts, positions,
+    unvalued: unvaluedHoldings, shareMovements, docs, archiveCount });
+  for (const p of positions) Object.assign(p, applyRecoveredCost(p, holdingCostRecovery.records));
+  notes.push(`cost recovery: ${holdingCostRecovery.records.length} exact account/ISIN/quantity records from the saved workbooks; `
+    + `${holdingCostRecovery.unresolved.length} recorded security balances still require acquisition or movement evidence. See docs/COST-RECOVERY.md.`);
+
   return {
     accounts, positions, polycab, owners, capitalGains, accountCashFlows, entityCashFlows,
     accountReturnRecords: buildAccountReturnRecords({ accounts, accountCashFlows, byAccount,
       historicalNavs: JSON.parse(fs.readFileSync(path.join(ROOT, 'scripts/ingest/reference/amfi-opening-navs.json'), 'utf8')) }),
-    capitalMoves, positionTranches, shareMovements,
+    capitalMoves, positionTranches, shareMovements, holdingCostRecovery,
+    // Keyed on the holdings this book carries, in key order, so the file
+    // regenerates byte-identically however the accounts were walked.
+    holdingTrades: Object.fromEntries(Object.keys(holdingTrades).sort()
+      .filter((k) => positions.some((p) => `${p.accountId}|${p.securityKey}` === k))
+      .map((k) => [k, holdingTrades[k]])),
+    holdingIncome: Object.fromEntries(Object.keys(holdingIncome).sort()
+      .filter((k) => positions.some((p) => `${p.accountId}|${p.securityKey}` === k))
+      .map((k) => [k, holdingIncome[k]])),
+    holdingLots: Object.fromEntries(Object.keys(holdingLots).sort()
+      .filter((k) => positions.some((p) => `${p.accountId}|${p.securityKey}` === k))
+      .map((k) => [k, holdingLots[k]])),
     capitalFromInception: [...capitalFromInception].sort(),
     navHistory, accountNavHistory, navCoverage, undatedCapital, attribution,
     excludedAccounts, bankAccounts, unvaluedHoldings, separateInvestments,
@@ -5164,8 +5292,8 @@ function emit(book) {
   L.push("// list and what document would supply each.");
   L.push("import type {");
   L.push("  Account, AccountBridge, AccountReturnBlock, AccountReturnCoverage, BookSummary, CapitalMove, CashFlow, Commitment,");
-  L.push("  Attribution, CorporateAction, EntityCG, FundInvestment, NavCoverage, NavPoint, Position, PositionTranches,");
-  L.push("  RealisedByClass, ReviewFlow, ReviewSuperseded, ReviewWrittenOff, ShareMovement, StartupInvestment, UndatedCapital, UnvaluedStatementHolding,");
+  L.push("  Attribution, CorporateAction, EntityCG, FundInvestment, HoldingTrade, NavCoverage, NavPoint, Position, PositionTranches,");
+  L.push("  RealisedByClass, RecoveredHoldingCost, ReviewFlow, ReviewSuperseded, ReviewWrittenOff, ShareMovement, StartupInvestment, UndatedCapital, UnvaluedStatementHolding,");
   L.push('} from "@/lib/types";');
   L.push("");
   L.push(`/** Newest report date across all accounts. Individual accounts can be older. */`);
@@ -5180,6 +5308,9 @@ function emit(book) {
   L.push(`export const BOOK_OWNERS = ${j(book.owners)};`);
   L.push("");
   L.push(`export const BOOK_POSITIONS: Position[] = ${j(book.positions)};`);
+  L.push("");
+  L.push("/** Supplementary source costs, accepted only for the exact account, ISIN, date and unit balance. No valuation or quantity overrides. */");
+  L.push(`export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = ${j(book.holdingCostRecovery.records)};`);
   L.push("");
   L.push("/**");
   L.push(" * HELD, AND VALUED BY NO STATEMENT — a QUANTITY, never a value, and in no total.");
@@ -5322,6 +5453,33 @@ function emit(book) {
   L.push(" * is absent by that gate rather than shown partially — see `positionTranchesFrom`.");
   L.push(" */");
   L.push(`export const BOOK_POSITION_TRANCHES: Record<string, PositionTranches> = ${j(book.positionTranches)};`);
+  L.push("");
+  L.push("/**");
+  L.push(" * EVERY DATED BUY AND SELL BEHIND A HOLDING (Stage 10fm), keyed");
+  L.push(" * `<accountId>|<securityKey>` — the account's own transaction statement, oldest");
+  L.push(" * first, after the holding's statement date or not. A sale carries `boughtOn`,");
+  L.push(" * the purchase dates of the lots its capital gain statement settles it with,");
+  L.push(" * only where those lots' units add to the day's sales exactly.");
+  L.push(" * `Position.tradeRecord` says which of these date the units held.");
+  L.push(" */");
+  L.push(`export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = ${j(book.holdingTrades)};`);
+  L.push("");
+  L.push("/**");
+  L.push(" * THE CASH DIVIDENDS EACH HOLDING WAS PAID, ON THEIR OWN DATES");
+  L.push(" * (Stage 10fw) — the same events `Position.dividendReceived` totals, keyed as");
+  L.push(" * `BOOK_HOLDING_TRADES`. `date` is the received date, else the ex date; null");
+  L.push(" * where the statement prints neither. What a money-weighted return over the");
+  L.push(" * holding's own dated trades adds on each day.");
+  L.push(" */");
+  L.push(`export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: number }[]> = ${j(book.holdingIncome)};`);
+  L.push("");
+  L.push("/**");
+  L.push(" * THE LOTS A LOT REGISTER DATES A HOLDING BY (Stage 10fw), keyed as");
+  L.push(" * `BOOK_HOLDING_TRADES` — present exactly where `Position.heldSince` is, under");
+  L.push(" * the same gate: the lots account for every unit held. Each lot's purchase");
+  L.push(" * date, units and total cost as the register prints them.");
+  L.push(" */");
+  L.push(`export const BOOK_HOLDING_LOTS: Record<string, { date: string; quantity: number | null; cost: number }[]> = ${j(book.holdingLots)};`);
 
   L.push("");
   L.push("/**");
@@ -5835,6 +5993,46 @@ function report(book) {
     }
   }
   L.push("");
+  L.push("## When each holding was bought (Stage 10fm)");
+  L.push("");
+  {
+    // The holdings a purchase date is a question about: units bought on a day,
+    // so neither a cash balance nor a closed line.
+    const held = book.positions.filter((p) => !(p.assetClass === "Cash" && !p.tradeRecord) && p.quantity !== 0);
+    const tranche = (p) => (book.positionTranches[`${p.accountId}|${p.securityKey}`]?.moves ?? []).some((m) => m.direction === "in");
+    const dated = { tranche: 0, lots: 0, trades: 0, review: 0 };
+    const undated = [];
+    for (const p of held) {
+      if (tranche(p)) dated.tranche++;
+      else if (p.heldSince) dated.lots++;
+      else if (p.tradeRecord?.held) dated.trades++;
+      else if (p.investedDates) dated.review++;
+      else undated.push(p);
+    }
+    const tradeRows = Object.values(book.holdingTrades).flat();
+    L.push(`Of **${held.length}** holdings, **${held.length - undated.length}** carry the date their units were bought: `
+      + `${dated.tranche} by the fund's own dated allotments, ${dated.lots} by a lot register, `
+      + `${dated.trades} by their account's own dated trades (every unit held matched to a buy, first-in, first-out) `
+      + `and ${dated.review} by the family's review's investment dates. A drawdown fund's dated calls date a few more on the page.`);
+    L.push("");
+    L.push(`**${tradeRows.length}** dated buys and sells sit behind **${Object.keys(book.holdingTrades).length}** holdings `
+      + `(\`BOOK_HOLDING_TRADES\`); **${tradeRows.filter((t) => t.boughtOn).length}** of the sales also carry the purchase dates `
+      + "of the lots their capital gain statement settles them with.");
+    L.push("");
+    const byWhy = new Map();
+    for (const p of undated) {
+      const why = p.tradeRecord
+        ? (p.tradeRecord.buys + p.tradeRecord.sells ? "the trades do not account for every unit held" : "no trade in the transaction statements' window")
+        : "no transaction statement or dated allotment reaches it";
+      const a = book.accounts.find((x) => x.accountId === p.accountId);
+      const k = `${a?.provider ?? p.accountId} ${a?.accountNo ?? ""} — ${why}`;
+      byWhy.set(k, (byWhy.get(k) ?? 0) + 1);
+    }
+    L.push("The rest are undated on the page, each with its reason:");
+    L.push("");
+    for (const [k, n] of [...byWhy.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))) L.push(`- ${k}: ${n}`);
+  }
+  L.push("");
   L.push("## Sector allocation");
   L.push("");
   const bySector = new Map();
@@ -5867,16 +6065,18 @@ function report(book) {
 
 // ── Main ─────────────────────────────────────────────────────────────────────
 
-const docs = loadArchive();
+const archive = loadArchive();
+const docs = archive.filter((d) => d.status !== "failed");
 if (!docs.length) {
   console.error("No documents in the audit archive. Run `npm run extract` first.");
   process.exit(1);
 }
-const book = build(docs);
+const book = build(docs, archive.length);
 fs.mkdirSync(path.dirname(OUT), { recursive: true });
 fs.writeFileSync(OUT, emit(book));
 fs.mkdirSync(path.dirname(REPORT), { recursive: true });
 fs.writeFileSync(REPORT, report(book));
+fs.writeFileSync(path.join(path.dirname(REPORT), 'COST-RECOVERY.md'), recoveryReport(book.holdingCostRecovery, book.accounts));
 const returnCoverage = returnCoverageReport(book, docs);
 fs.writeFileSync(path.join(path.dirname(REPORT), 'RETURN-COVERAGE.md'), returnCoverage.markdown);
 

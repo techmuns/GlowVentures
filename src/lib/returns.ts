@@ -81,7 +81,20 @@ export type AccountsReturn = {
   excluded: string[];
   /** Newer valuations that lack matching verified capital records, by account. */
   gaps: { accountId: string; accountNo: string; asOf: string; reason: string }[];
+  /**
+   * Accounts the pooled rate must cover and cannot, each with its reason. Any
+   * one of them leaves the pooled rate absent (`whole` false).
+   */
+  missing: UnmeasuredAccount[];
+  /** Accounts with nothing of their own to measure: a verified nil, or valued nowhere in the book. */
+  outside: UnmeasuredAccount[];
+  /** True only when every account that must be covered is measured. */
+  whole: boolean;
+  /** Why the pooled rate is absent, where it is; null when it is struck. */
+  reason: string | null;
 };
+
+export type UnmeasuredAccount = { accountId: string; accountNo: string; reason: string };
 
 /** Use the latest verified return endpoint; holding quantities retain their own statement date. */
 export function accountReturnInputs(statement: Portfolio, account: Portfolio['accounts'][number]) {
@@ -103,6 +116,22 @@ export function accountReturnInputs(statement: Portfolio, account: Portfolio['ac
 const isoOf = (d: Date) => d.toISOString().slice(0, 10);
 
 /**
+ * WHY AN ACCOUNT HAS NOTHING OF ITS OWN TO MEASURE, or null where it has. Not a
+ * gap in a whole-portfolio return: a verified nil (`notApplicable`), or an
+ * account the book values nowhere — no verified record, no position and no
+ * opening value — which the book's total leaves out the same way. Every other
+ * account without a verified record is one a pooled return cannot cover.
+ * One rule for every return surface (Stage 10fc).
+ */
+export function nothingToMeasure(statement: Portfolio, account: Portfolio["accounts"][number],
+  input = accountReturnInputs(statement, account)): string | null {
+  if (input.notApplicable) return input.notApplicable;
+  if (input.source || statement.positions.some((p) => p.accountId === account.accountId)
+    || input.flows.some((f) => /^opening portfolio value/i.test(f.description ?? ""))) return null;
+  return account.noPositionsReason ?? "no statement in this book values this account";
+}
+
+/**
  * The money-weighted return over `accounts`, on `statement` — the portfolio
  * the flows were recorded against (`statementPortfolio`, never the live one).
  */
@@ -113,16 +142,31 @@ export function measuredAccountsReturn(
   const parts: MeasuredPart[] = [];
   const excluded: string[] = [];
   const gaps: AccountsReturn['gaps'] = [];
+  const missing: UnmeasuredAccount[] = [];
+  const outside: UnmeasuredAccount[] = [];
   for (const a of accounts) {
     const input = accountReturnInputs(statement, a);
     const mv = input.value;
     if (input.gap && !input.notApplicable) gaps.push({ accountId: a.accountId, accountNo: a.accountNo,
       asOf: input.latestValuationDate, reason: input.gap });
+    const unmeasured = (reason: string) => {
+      const row = { accountId: a.accountId, accountNo: a.accountNo };
+      const none = nothingToMeasure(statement, a, input);
+      if (none) outside.push({ ...row, reason: none });
+      else missing.push({ ...row, reason });
+    };
     // A sourced closing zero is real (redemption); an unvalued legacy account
     // is not. Decide the account set here so every surface pools the same flows.
-    if (!Number.isFinite(mv) || mv < 0 || (mv === 0 && !input.source)) continue;
+    if (!Number.isFinite(mv) || mv < 0 || (mv === 0 && !input.source)) {
+      unmeasured(input.gap ?? "no verified valuation on a date its dated capital reaches");
+      continue;
+    }
     const flows = input.flows.map((f) => ({ date: new Date(f.date), amount: f.amount }));
-    if (!input.flows.some((f) => /^opening portfolio value/i.test(f.description ?? '')) || !flows.length) { excluded.push(a.accountNo); continue; }
+    if (!input.flows.some((f) => /^opening portfolio value/i.test(f.description ?? '')) || !flows.length) {
+      excluded.push(a.accountNo);
+      unmeasured(input.gap ?? "no verified opening value and complete dated capital record");
+      continue;
+    }
     parts.push({ accountId: a.accountId, accountNo: a.accountNo, flows, terminalValue: mv, asOf: new Date(input.asOf), source: input.source });
   }
   let first: number | null = null, lastC: number | null = null, firstC: number | null = null;
@@ -132,7 +176,10 @@ export function measuredAccountsReturn(
     if (lastC == null || c > lastC) lastC = c;
     if (firstC == null || c < firstC) firstC = c;
   }
-  const annPct = parts.length ? xirrPct(parts.flatMap(p => [...p.flows, { date: p.asOf, amount: p.terminalValue }])) : null;
+  // NEVER A PARTIAL POOL: a rate over some of the accounts is not the return of
+  // the set asked for, so it stays absent until every account is measured.
+  const whole = parts.length > 0 && missing.length === 0;
+  const annPct = whole ? xirrPct(parts.flatMap(p => [...p.flows, { date: p.asOf, amount: p.terminalValue }])) : null;
   const windowDays = first != null && lastC != null ? Math.round((lastC - first) / 864e5) : null;
   return {
     annPct,
@@ -145,11 +192,22 @@ export function measuredAccountsReturn(
     parts,
     excluded,
     gaps,
+    missing,
+    outside,
+    whole,
+    reason: whole ? null
+      : missing.length ? incompleteReason(missing.length)
+      : "no account here holds anything to measure",
   };
 }
 
+/** Why a pooled return is absent: how many accounts lack which records. */
+export function incompleteReason(n: number): string {
+  return `${n} ${n === 1 ? "account holding value lacks" : "accounts holding value lack"} a verified opening value and dated capital through a closing valuation, so no whole return can be struck`;
+}
+
 export type OwnerReturn = {
-  /** Annualised money-weighted return (%), over MEASURABLE accounts only. Null when none qualify. */
+  /** Annualised money-weighted return (%) over every account of the owner; null unless all are measured. */
   annPct: number | null;
   /** The above de-annualised to the window the flows span (%). */
   toDatePct: number | null;
@@ -163,6 +221,10 @@ export type OwnerReturn = {
   covered: number;
   /** Days the measured window spans. */
   windowDays: number | null;
+  /** The owner's accounts that hold value and lack a verified record (`AccountsReturn.missing`). */
+  missing: UnmeasuredAccount[];
+  /** Why the rate is absent, where it is. */
+  reason: string | null;
 };
 
 /**
@@ -189,6 +251,7 @@ export function ownerMeasuredReturn(statement: Portfolio, positions: Position[],
   return {
     annPct: r.annPct, toDatePct: r.toDatePct, measuredMV: r.measuredMV, totalMV,
     excluded: r.excluded, covered: r.parts.length, windowDays: r.windowDays,
+    missing: r.missing, reason: r.reason,
   };
 }
 

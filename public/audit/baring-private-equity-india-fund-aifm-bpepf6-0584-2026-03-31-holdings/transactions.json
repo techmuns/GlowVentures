@@ -1,0 +1,55 @@
+{
+ "name": "transactions",
+ "rows": [
+  [
+   "date",
+   "class",
+   "description",
+   "kind",
+   "amount",
+   "net",
+   "units",
+   "balanceUnits"
+  ],
+  [
+   "2024-10-03",
+   "Baring Private Equity India Fund 6 — Class A1",
+   "Drawdown 1",
+   "contribution",
+   6500000,
+   6500000,
+   65,
+   65
+  ],
+  [
+   "2024-12-05",
+   "Baring Private Equity India Fund 6 — Class A1",
+   "Drawdown 2",
+   "contribution",
+   5000000,
+   5000000,
+   50,
+   115
+  ],
+  [
+   "2025-07-22",
+   "Baring Private Equity India Fund 6 — Class A1",
+   "Drawdown 3",
+   "contribution",
+   2500000,
+   2500000,
+   25,
+   140
+  ],
+  [
+   "2025-09-25",
+   "Baring Private Equity India Fund 6 — Class A1",
+   "Drawdown 4",
+   "contribution",
+   6250000,
+   6250000,
+   62.5,
+   202.5
+  ]
+ ]
+}
