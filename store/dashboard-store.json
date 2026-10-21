@@ -11,16 +11,6 @@
     "updatedAt": "2026-10-21T11:28:31.044Z"
    }
   },
-  "investment-profile:strategy:zippmat-private-ltd-abhijeet-kudva": {
-   "value": "{\"fund\":\"zippmat-private-ltd-abhijeet-kudva\",\"field\":\"strategy\",\"fundName\":\"Zippmat\",\"text\":\"Tes strategy\",\"updatedAt\":\"2026-10-21T11:28:28.849Z\"}",
-   "metadata": {
-    "fund": "zippmat-private-ltd-abhijeet-kudva",
-    "field": "strategy",
-    "fundName": "Zippmat",
-    "text": "Tes strategy",
-    "updatedAt": "2026-10-21T11:28:28.849Z"
-   }
-  },
   "tile-set:cio": {
    "value": "{\"page\":\"cio\",\"ids\":[\"value\",\"gain\",\"fytd\",\"mwr\"],\"updatedAt\":\"2026-10-21T10:19:36.844Z\"}",
    "metadata": {
