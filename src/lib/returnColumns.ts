@@ -173,7 +173,7 @@ export function returnColumnMeta(measure: ReturnMeasure, cov: ReturnCoverage, as
       return {
         note: `${cov.shown} of ${cov.total}`,
         title: `Holding Period Return is the total return on cost since purchase, not annualised. It is shown on ${cov.shown} of ${cov.total} rows`
-          + (cov.absent > 0 ? `; the other ${cov.absent} report no cost, so there is nothing to strike a return against.` : "."),
+          + (cov.absent > 0 ? `; the other ${cov.absent} have no verified holding-period return; each cell names the missing cost or transaction evidence.` : "."),
       };
   }
 }

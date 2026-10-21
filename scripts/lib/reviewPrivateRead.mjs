@@ -5,8 +5,10 @@
 // family asked for the review to feed the whole dashboard rather than a tab of its
 // own. `scripts/lib/reviewBook.mjs` turns what is read here into book rows, and
 // `build-book` splices them in. For everything else the review is still only a
-// cross-check (`npm run reconcile:review`), and nothing read here moves a listed
-// figure. Private investments are carried AT COST, as the review carries them.
+// cross-check (`npm run reconcile:review`). The 21 Oct 2026 instruction also
+// licenses exact equity and fund cost recovery from readTransactions; see
+// recoverHoldingCosts.mjs. Listed quantities and valuations remain statements'.
+// Private investments are carried AT COST, as the review carries them.
 //
 // Columns are found by HEADER TEXT, never by position (lib/table.mjs's rule): the
 // review's tabs put the product in column 1 on some and column 2 on others.
@@ -181,7 +183,7 @@ function readMembers(wb) {
 }
 
 /** Transactions since inception: the dated rows behind the private-market lines. */
-function readTransactions(wb, keep) {
+export function readTransactions(wb, keep = () => true) {
   const s = sheet(wb, "Transactions since inception");
   const h = header(s, { investor: /^investor$/, advisor: /^advisor$/, assetClass: /^asset class$/, category: /^category$/, product: /^product$/, txn: /^transaction$/, date: /^date$/, qty: /^quantity$/, rate: /^rate$/, value: /^value$/ });
   const c = h.cols;

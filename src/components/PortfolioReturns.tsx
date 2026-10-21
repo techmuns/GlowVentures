@@ -11,7 +11,11 @@
  * at the family's request), and under those the return ATTRIBUTION — which
  * category, asset class, basket, sector, side or security earned the return
  * (`SegmentReturns`, Stage 10fd: *"a section inside the returns page only"*).
- * The panel scrolls inside itself; the page does not.
+ * The panel scrolls inside itself; the page does not. One toolbar strip holds
+ * the controls; the portfolio card carries its window as chips in its header
+ * and its five amounts as tiles beside the figure; the benchmarks are tiles on
+ * one bar scale (Stage 10fp: *"very cluttered … a lot of un-utilized empty
+ * space"*).
  *
  * A DATED WINDOW OPENS ON A MARKET VALUE, NEVER A COST. Each account opens on
  * its latest statement valuation on or before the opening date and closes on
@@ -39,8 +43,6 @@ import { AbsentCell } from "@/components/Absent";
 import { ReturnCalculationInfo } from "@/components/ReturnCalculation";
 import { PeriodReturnCalculation } from "@/components/PeriodReturnCalculation";
 import SegmentReturns from "@/components/SegmentReturns";
-import { SortHeader, Tr } from "@/components/SortHeader";
-import { useTableView, sortRows } from "@/lib/tableView";
 import { BENCHMARKS, benchmarkIdentity, benchmarkMismatchReason } from "@/lib/benchmarks";
 import { fetchPriceHistory, priceErrorReason, type PriceHistory, type PriceResult } from "@/lib/prices";
 import { usePortfolio } from "@/context/PortfolioContext";
@@ -64,13 +66,10 @@ const ISO = /^\d{4}-\d{2}-\d{2}$/;
 const pctText = (n: number) => `${n >= 0 ? "+" : ""}${n.toFixed(2)}%`;
 const basisWord = (m: Measured) => m.basis === "annual" ? "a year" : "not annualised";
 
-const BENCH_COLS = ["bench", "ret", "gap"] as const;
-
 export default function PortfolioReturns() {
   const { statementPortfolio, fmtFromBase, displayCurrency, scope } = usePortfolio();
   const [params, setParams] = useSearchParams();
   const money = (n: number) => fmtFromBase(n, { compact: true });
-  const benchView = useTableView("cio-returns-bench", BENCH_COLS);
 
   const period = (PERIODS.find((p) => p.key === params.get("rp"))?.key ?? "fytd") as PeriodKey;
   const rtype = (RETURN_TYPES.find((r) => r.key === params.get("rtype"))?.key ?? "xirr") as ReturnType;
@@ -223,16 +222,33 @@ export default function PortfolioReturns() {
     return { ...base, pct, reason: null, span: { from: c0.date, to: c1.date, v0: c0.value, v1: c1.value, days: d } };
   });
   const gapOf = (r: BenchRow) => (portfolioPct != null && r.pct != null ? portfolioPct - r.pct : null);
-  const benchSorted = sortRows(benchRows, benchView.sort, { bench: (r) => r.label, ret: (r) => r.pct, gap: (r) => gapOf(r) });
 
-  const btn = (on: boolean) => `rounded-md px-2.5 py-1 text-[12px] font-semibold transition ${on ? "bg-champagne-400 text-ink-900" : "text-slate-400 hover:text-slate-200 hover:bg-ink-700/50"}`;
+  const btn = (on: boolean) => `rounded-md px-2.5 py-1 text-[12px] font-semibold transition ${on ? "bg-champagne-400 text-ink-900 shadow-sm" : "text-slate-400 hover:text-slate-200"}`;
   const basisTag = annualise ? "a year" : "not annualised";
+  // THE BARS ARE ONE SCALE: the largest move on the table, the portfolio's
+  // included, fills half a track either side of zero.
+  const barScale = Math.max(1e-9, ...[portfolioPct, ...benchRows.map((r) => r.pct)].filter((v): v is number => v != null).map(Math.abs));
+  const bar = (v: number | null) => (v == null ? <span className="ret-bar opacity-40" aria-hidden /> : (
+    <span className="ret-bar" aria-hidden>
+      <span className="absolute inset-y-0 left-1/2 w-px" style={{ backgroundColor: "rgba(148, 163, 184, 0.55)" }} />
+      <span className={`absolute inset-y-0 rounded-full ${v >= 0 ? "bg-emerald-500" : "bg-rose-500"}`}
+        style={{ opacity: 0.75, width: `${(Math.abs(v) / barScale) * 50}%`, ...(v >= 0 ? { left: "50%" } : { right: "50%" }) }} />
+    </span>
+  ));
+  const figures: [string, number | null, string][] = [
+    ["Opening", total?.open ?? null, period === "inception" ? "Since investment is struck on the capital paid in, not on an opening value" : "Market value at the opening date — never the original cost"],
+    ["Capital in", total?.cin ?? null, "Money put in during the window, on its dates"],
+    ["Capital out", total?.cout ?? null, "Money taken out during the window, on its dates"],
+    ["Closing", total?.close ?? null, "Market value at each account's closing date"],
+    ["Gain", gainTotal, "Closing − opening − capital in + capital out"],
+  ];
 
   return (
-    <div className="flex h-auto min-h-0 flex-col gap-4 lg:h-full" data-portfolio-returns>
-      {/* ── Selectors ── */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <div className="flex flex-wrap items-center gap-1 rounded-lg border border-ink-700 p-1" data-returns-periods>
+    <div className="flex h-auto min-h-0 flex-col gap-3 lg:h-full" data-portfolio-returns>
+      {/* ── ONE TOOLBAR (Stage 10fp): the period, the window and the measure on
+          one strip, so the cards below start at the top of the panel. ── */}
+      <div className="card flex flex-wrap items-center gap-x-4 gap-y-2 px-3 py-2">
+        <div className="ret-well flex flex-wrap items-center gap-0.5" data-returns-periods>
           {PERIODS.map((p) => (
             <button key={p.key} type="button" title={p.title} className={btn(period === p.key)} data-returns-period={p.key} aria-pressed={period === p.key}
               onClick={() => set(p.key === "custom" ? { rp: "custom", rfrom: start ?? fromParam } : { rp: p.key === "fytd" ? null : p.key })}>
@@ -240,22 +256,25 @@ export default function PortfolioReturns() {
             </button>
           ))}
         </div>
-        <label className="flex items-center gap-1.5 text-[12px] text-slate-400" title="Opening date — the window opens on each account's value at the close of this day">
-          From
-          <input type="date" className="rounded border border-ink-700 bg-ink-800 px-1.5 py-0.5 text-slate-200" data-returns-from
-            value={period === "inception" ? (measuredFrom ?? "") : (start ?? "")} disabled={period === "inception"}
-            onChange={(e) => set({ rp: "custom", rfrom: e.target.value || null })} />
-        </label>
-        <label className="flex items-center gap-1.5 text-[12px] text-slate-400" title="Closing date — each account closes on its latest statement value on or before this day">
-          To
-          <input type="date" className="rounded border border-ink-700 bg-ink-800 px-1.5 py-0.5 text-slate-200" data-returns-to
-            value={end ?? ""} max={latest ?? undefined} disabled={period === "inception"}
-            onChange={(e) => set({ rto: e.target.value || null })} />
-        </label>
-        <label className="ml-auto flex items-center gap-1.5 text-[12px] text-slate-400" data-returns-types
+        <div className="flex items-center gap-1.5 text-[12px] text-slate-400">
+          <label className="flex items-center gap-1.5" title="Opening date — the window opens on each account's value at the close of this day">
+            <span className="label-xs">From</span>
+            <input type="date" className="rounded-md border border-ink-700 bg-ink-800 px-1.5 py-0.5 text-[12px] text-slate-200" data-returns-from
+              value={period === "inception" ? (measuredFrom ?? "") : (start ?? "")} disabled={period === "inception"}
+              onChange={(e) => set({ rp: "custom", rfrom: e.target.value || null })} />
+          </label>
+          <span className="text-slate-500" aria-hidden>→</span>
+          <label className="flex items-center gap-1.5" title="Closing date — each account closes on its latest statement value on or before this day">
+            <span className="label-xs">To</span>
+            <input type="date" className="rounded-md border border-ink-700 bg-ink-800 px-1.5 py-0.5 text-[12px] text-slate-200" data-returns-to
+              value={end ?? ""} max={latest ?? undefined} disabled={period === "inception"}
+              onChange={(e) => set({ rto: e.target.value || null })} />
+          </label>
+        </div>
+        <label className="ml-auto flex items-center gap-2 text-[12px] text-slate-400" data-returns-types
           title={RETURN_TYPES.find((r) => r.key === rtype)!.title}>
-          Return type
-          <select className="rounded border border-ink-700 bg-ink-800 px-2 py-1 text-[12.5px] font-semibold text-slate-100" data-returns-type-select
+          <span className="label-xs">Return type</span>
+          <select className="rounded-md border border-ink-700 bg-ink-800 px-2 py-1 text-[12.5px] font-semibold text-slate-100" data-returns-type-select
             value={rtype} onChange={(e) => set({ rtype: e.target.value === "xirr" ? null : e.target.value })}>
             {RETURN_TYPES.map((r) => (
               <option key={r.key} value={r.key} title={r.title} data-returns-type={r.key} data-active={rtype === r.key ? "true" : "false"}>
@@ -263,18 +282,34 @@ export default function PortfolioReturns() {
               </option>
             ))}
           </select>
-          <span className="text-[12px] text-slate-300" data-returns-type-desc={rtype}>
+          <span className="max-w-[16rem] truncate text-[11.5px] text-slate-500" data-returns-type-desc={rtype}>
             {RETURN_TYPES.find((r) => r.key === rtype)!.short}
           </span>
         </label>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-auto" data-returns-stack>
-        {/* ── The selected accounts: window, figures and calculation info ── */}
+        {/* ── The whole portfolio: the window as chips in the header, the
+            figure beside the five amounts it is struck on ── */}
         <div className="shrink-0" data-returns-portfolio>
-        <Card title="Portfolio return" subtitle={`The whole portfolio over one window, by ${typeLabel}. Open the info button for the calculation.`}>
-          <div className="flex flex-wrap items-baseline justify-between gap-3" data-returns-figure="Return">
-            <div>
+        <Card title="Portfolio return" subtitle={`The whole portfolio over one window, by ${typeLabel}. Open the info button for the calculation.`}
+          right={
+            <div className="flex flex-wrap justify-end gap-1.5" data-returns-window>
+              <span className="ret-chip" title="The window asked for">
+                Requested <span className="mono text-slate-200" data-returns-requested>{requested}</span>
+              </span>
+              <span className="ret-chip" title="Each account opens on its latest statement value on or before the opening date asked for, and closes on its latest on or before the closing date — so the measured window can start earlier than the one asked for">
+                Measured <span className="mono text-slate-100" data-returns-measured
+                  data-measured-from={measuredFrom ?? ""} data-measured-to={measuredTo ?? ""} data-measured-days={days ?? ""}>{measuredDates}</span>
+              </span>
+              <span className="ret-chip" title={excludedHover}>
+                <span className={`h-1.5 w-1.5 rounded-full ${whole ? "bg-emerald-500" : "bg-amber-500"}`} aria-hidden />
+                <span className="mono text-slate-200" data-returns-coverage data-returns-excluded={excluded.length}>{coveredCount} of {accountsTotal} accounts</span>
+              </span>
+            </div>
+          }>
+          <div className="grid gap-4 lg:grid-cols-[minmax(15rem,1fr)_minmax(0,2.4fr)] lg:items-center">
+            <div data-returns-figure="Return">
               <div className="flex items-center gap-2">
                 <div className="label-xs">Return · {typeLabel}</div>
                 <ReturnCalculationInfo key={`${period}:${rtype}:${start}:${end}`} label={typeLabel} value={portfolioPct != null ? pctText(portfolioPct) : DASH}>
@@ -288,87 +323,68 @@ export default function PortfolioReturns() {
                 </ReturnCalculationInfo>
               </div>
               {portfolioPct != null && measured ? (
-                <div className={`mono font-display text-[28px] font-semibold ${changeColor(portfolioPct)}`} data-returns-pct={portfolioPct.toFixed(4)} data-returns-basis={measured.basis}>
+                <div className={`mono mt-1 font-display text-[34px] font-semibold leading-none ${changeColor(portfolioPct)}`} data-returns-pct={portfolioPct.toFixed(4)} data-returns-basis={measured.basis}>
                   {pctText(portfolioPct)} <span className="text-[12px] font-normal text-slate-500">{basisWord(measured)}</span>
                 </div>
               ) : (
-                <div className="text-[20px]" data-returns-pct=""><AbsentCell reason={measured?.reason ?? "pick a window whose opening date is before its closing date"} /></div>
+                <div className="mt-1 text-[24px] leading-none" data-returns-pct=""><AbsentCell reason={measured?.reason ?? "pick a window whose opening date is before its closing date"} /></div>
               )}
-              {portfolioPct == null && <p data-returns-unavailable data-prose-ok="The actual reason the selected return is unavailable must stay visible" className="mt-1 max-w-lg text-xs text-slate-400">{needsYear ? `Needs at least 1 year · ${days} days available` : measured?.reason ?? "Choose an opening date before the closing date."}</p>}
+              {portfolioPct == null && <p data-returns-unavailable data-prose-ok="The actual reason the selected return is unavailable must stay visible" className="mt-2 max-w-md text-[11.5px] leading-snug text-slate-400">{needsYear ? `Needs at least 1 year · ${days} days available` : measured?.reason ?? "Choose an opening date before the closing date."}</p>}
             </div>
-            <div className="space-y-0.5 text-right text-[12px] text-slate-400" data-returns-window>
-              <div title="The window asked for">Requested <span className="mono text-slate-200" data-returns-requested>
-                {period === "inception" ? "since first purchase" : start && end ? `${fmtDate(start)} → ${fmtDate(end)}` : DASH}
-              </span></div>
-              <div title="Each account opens on its latest statement value on or before the opening date asked for, and closes on its latest on or before the closing date — so the measured window can start earlier than the one asked for">Measured <span className="mono text-slate-100" data-returns-measured
-                data-measured-from={measuredFrom ?? ""} data-measured-to={measuredTo ?? ""} data-measured-days={days ?? ""}>
-                {measuredFrom && measuredTo ? `${fmtDate(measuredFrom)} → ${fmtDate(measuredTo)} · ${days} days` : DASH}
-              </span></div>
-              <div title={excludedHover}>Accounts measured <span className="mono text-slate-200" data-returns-coverage data-returns-excluded={excluded.length}>{coveredCount} of {accountsTotal} accounts</span></div>
-            </div>
-          </div>
-          <div className="mt-4 grid grid-cols-2 gap-3 border-t sm:grid-cols-5 border-ink-700 pt-3 text-[12px]">
-            {[
-              ["Opening", total?.open ?? null, period === "inception" ? "Since investment is struck on the capital paid in, not on an opening value" : "Market value at the opening date — never the original cost"],
-              ["Capital in", total?.cin ?? null, "Money put in during the window, on its dates"],
-              ["Capital out", total?.cout ?? null, "Money taken out during the window, on its dates"],
-              ["Closing", total?.close ?? null, "Market value at each account's closing date"],
-              ["Gain", gainTotal, "Closing − opening − capital in + capital out"],
-            ].map(([l, v, h]) => (
-              <div key={l as string} title={h as string} data-returns-figure={l as string}>
-                <div className="label-xs">{l as string}</div>
-                <div className={`mono ${l === "Gain" && typeof v === "number" ? changeColor(v) : "text-slate-100"}`}>
-                  {typeof v === "number" ? money(v) : <AbsentCell reason={whole ? h as string : incomplete} />}
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+              {figures.map(([l, v, h]) => (
+                <div key={l} title={h} data-returns-figure={l} className="ret-stat">
+                  <div className="label-xs">{l}</div>
+                  <div className={`mono mt-1 text-[15px] font-semibold ${l === "Gain" && typeof v === "number" ? changeColor(v) : "text-slate-100"}`}>
+                    {typeof v === "number" ? money(v) : <AbsentCell reason={whole ? h : incomplete} />}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </Card>
         </div>
 
-        {/* ── Benchmarks over the same window ── */}
+        {/* ── BENCHMARKS AS TILES, ONE BAR SCALE (Stage 10fp). Three columns
+            stretched across the panel left most of a table empty; eight tiles
+            in two rows carry the same figures — each index's return, its bar,
+            and the portfolio's lead over it — with the portfolio first. ── */}
         <div className="shrink-0" data-returns-benchmarks>
-        <Card pad={false} title="Benchmarks"
+        <Card title="Benchmarks"
           subtitle={`Each index's close-to-close return over the measured window, ${annualise ? "annualised because the selected return is" : "not annualised, as the selected return is not"}. Price indices exclude dividends. ${whole ? `Selected measure: ${typeLabel}.` : "With no whole-portfolio return measured, each index runs over the window asked for."}`}
->
-          <div className="overflow-x-auto">
-            <table className="min-w-full whitespace-nowrap text-[12.5px]" data-returns-bench-table>
-              <thead className="border-b border-ink-700 bg-ink-800">
-                <Tr view={benchView}>
-                  <SortHeader col="bench" view={benchView} align="left" pad="px-4 py-2">Index</SortHeader>
-                  <SortHeader col="ret" view={benchView} pad="px-3 py-2">Return · {basisTag}</SortHeader>
-                  <SortHeader col="gap" view={benchView} pad="px-4 py-2">Portfolio vs index</SortHeader>
-                </Tr>
-              </thead>
-              <tbody className="divide-y divide-ink-700/60">
-                <Tr view={benchView} className="bg-ink-700/30" data-returns-bench-portfolio>
-                  <td className="px-4 py-2 font-semibold text-slate-100">Portfolio · {typeLabel}</td>
-                  <td className="px-3 py-2 text-right mono">
-                    {portfolioPct != null ? <span className={changeColor(portfolioPct)}>{pctText(portfolioPct)}</span> : <AbsentCell reason={measured?.reason ?? "not measured on this window"} />}
-                  </td>
-                  <td className="px-4 py-2 text-right text-slate-500">{DASH}</td>
-                </Tr>
-                {benchSorted.map((r) => {
-                  const gap = gapOf(r);
-                  return (
-                    <Tr view={benchView} key={r.key} data-returns-bench={r.key} data-bench-pct={r.pct != null ? r.pct.toFixed(4) : ""}
-                      data-bench-gap={gap != null ? gap.toFixed(4) : ""} data-bench-from={r.span?.from ?? ""} data-bench-to={r.span?.to ?? ""}>
-                      <td className="px-4 py-2 text-slate-200" title={r.title}>{r.label}</td>
-                      <td className="px-3 py-2 text-right mono">
-                        {r.pct != null && r.span
-                          ? <span className={changeColor(r.pct)} title={`${fmtDate(r.span.from)} close ${r.span.v0.toFixed(2)} → ${fmtDate(r.span.to)} close ${r.span.v1.toFixed(2)} · ${r.span.days} days`}>{pctText(r.pct)}</span>
-                          : <AbsentCell reason={r.reason ?? "not measured"} />}
-                      </td>
-                      <td className="px-4 py-2 text-right mono">
-                        {gap != null
-                          ? <span className={changeColor(gap)} title="The portfolio's return less the index's, in percentage points">{gap >= 0 ? "+" : ""}{gap.toFixed(2)} pp</span>
-                          : <AbsentCell reason={portfolioPct == null ? "The portfolio's return is not measured on this window" : (r.reason ?? "no index return")} />}
-                      </td>
-                    </Tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          right={<span className="label-xs pt-1">{benchFrom && benchTo ? `${fmtDate(benchFrom)} → ${fmtDate(benchTo)}` : DASH} · {basisTag}</span>}>
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-4" data-returns-bench-table>
+            <div className="ret-stat border-champagne-400" data-returns-bench-portfolio>
+              <div className="flex items-center gap-1.5 text-[12px] font-semibold text-slate-100">
+                <span className="h-2 w-2 rounded-full bg-champagne-400" aria-hidden />Portfolio · {typeLabel}
+              </div>
+              <div className="mono mt-1.5 text-[18px] font-semibold">
+                {portfolioPct != null ? <span className={changeColor(portfolioPct)}>{pctText(portfolioPct)}</span> : <AbsentCell reason={measured?.reason ?? "not measured on this window"} />}
+              </div>
+              <div className="mt-2 flex items-center gap-3">{bar(portfolioPct)}</div>
+            </div>
+            {benchRows.map((r) => {
+              const gap = gapOf(r);
+              return (
+                <div key={r.key} className="ret-stat" data-returns-bench={r.key} data-bench-pct={r.pct != null ? r.pct.toFixed(4) : ""}
+                  data-bench-gap={gap != null ? gap.toFixed(4) : ""} data-bench-from={r.span?.from ?? ""} data-bench-to={r.span?.to ?? ""}>
+                  <div className="text-[12px] font-semibold text-slate-200" title={r.title}>{r.label}</div>
+                  <div className="mono mt-1.5 text-[18px] font-semibold">
+                    {r.pct != null && r.span
+                      ? <span className={changeColor(r.pct)} title={`${fmtDate(r.span.from)} close ${r.span.v0.toFixed(2)} → ${fmtDate(r.span.to)} close ${r.span.v1.toFixed(2)} · ${r.span.days} days`}>{pctText(r.pct)}</span>
+                      : <AbsentCell reason={r.reason ?? "not measured"} />}
+                  </div>
+                  <div className="mt-2 flex items-center gap-3">
+                    {bar(r.pct)}
+                    <span className="mono shrink-0 text-[11px]">
+                      {gap != null
+                        ? <span className={changeColor(gap)} title="The portfolio's return less the index's, in percentage points">{gap >= 0 ? "+" : ""}{gap.toFixed(2)} pp</span>
+                        : <AbsentCell reason={portfolioPct == null ? "The portfolio's return is not measured on this window, so no lead over the index is struck" : (r.reason ?? "no index return")} />}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </Card>
         </div>

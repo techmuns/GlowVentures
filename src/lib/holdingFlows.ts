@@ -1,5 +1,5 @@
 /**
- * ── A HOLDING'S OWN DATED MONEY (Stage 10fs) ────────────────────────────────
+ * ── A HOLDING'S OWN DATED MONEY (Stage 10fw) ────────────────────────────────
  *
  *   *"We need to also make sure that we are accounting for all the dates to
  *    calculate the returns everywhere on the dashboard, so that the returns
@@ -107,7 +107,7 @@ export function holdingFlowsOf(p: Position, asOf: string | null): HoldingFlows |
 }
 
 /**
- * ── WHEN THE CURRENT HOLDING BEGAN, WHERE ITS TRADES PROVE IT (Stage 10fs) ──
+ * ── WHEN THE CURRENT HOLDING BEGAN, WHERE ITS TRADES PROVE IT (Stage 10fw) ──
  *
  * A year-to-date return on a holding needs its value on 1 January — unless it
  * held nothing that day, when its whole return since it was opened IS its year

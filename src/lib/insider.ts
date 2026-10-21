@@ -45,7 +45,8 @@ export function getHoldingsInsider(holdings: AnnHolding[], force = false): Promi
     itemsField: "items",
     dedupeKey: (t) => `${t.company}|${t.insider}|${t.transaction}|${t.shares}|${t.broadcastDate}`,
     sortDesc: (t) => t.broadcastDate || t.toDate || "",
-    displayCap: 150,
+    // The table appends batches as it scrolls; retain every disclosed feed row.
+    displayCap: Infinity,
   }).then((r): InsiderResponse => {
     if (!r.ok && _cache.get(key) === promise) _cache.delete(key);
     return r.ok

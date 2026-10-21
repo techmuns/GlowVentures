@@ -1,4 +1,4 @@
-import { TablePageControls, useTablePagination } from "@/components/PagedTableBody";
+import { InfiniteTableEnd, useInfiniteTable } from "@/components/InfiniteTableBody";
 import { Fragment, useEffect, useMemo, useState, useCallback, type ReactNode } from "react";
 import { statementNoteForSet } from "@/lib/statementNotes";
 import { Link, useSearchParams } from "react-router-dom";
@@ -175,7 +175,7 @@ type Venue = {
   depositoryWhy: string | null;
   live: boolean; dayChangePct: number | null;
   heldSince: string | null; assetClass: string;
-  /** When the units held now began, where the line's own dated trades prove it (Stage 10fs) — its YTD. */
+  /** When the units held now began, where the line's own dated trades prove it (Stage 10fw) — its YTD. */
   opened?: HoldingPeriod | null;
   investedOn: InvestedOn | null;
 };
@@ -192,7 +192,7 @@ type MandateHolding = {
   /** For the row's own Day, Invested on and return cells — see `Venue`. */
   dayChangePct: number | null;
   heldSince: string | null; assetClass: string;
-  /** When the units held now began, where the line's own dated trades prove it (Stage 10fs) — its YTD. */
+  /** When the units held now began, where the line's own dated trades prove it (Stage 10fw) — its YTD. */
   opened?: HoldingPeriod | null;
   /** The date this share's value is struck at — where its return window ends. */
   valuedAt: string | null;
@@ -341,7 +341,7 @@ type Row = {
    * applied to a date: one missing input makes the answer unknown, not older.
    */
   heldSince: string | null;
-  /** When the units held now began, where every line's dated trades prove it (`holdingPeriodOf`, Stage 10fs). */
+  /** When the units held now began, where every line's dated trades prove it (`holdingPeriodOf`, Stage 10fw). */
   opened?: HoldingPeriod | null;
   /**
    * The ONE date this row's value is struck at (`commonValueDate`), where its
@@ -3162,11 +3162,11 @@ export function PortfolioMonitor() {
           // lot gain — ABCAPITAL's +129.93% carries ₹1.16 Cr realised — so a blank
           // here made the row impossible to reconcile from its own columns.
           realised: h.realised === null
-            ? <AbsentCell reason={realisedReason({ realizedPnL: null, realizedLotsAfter: h.realisedLotsAfter ?? undefined })} />
+            ? <AbsentCell reason={realisedReason({ ...h.position, realizedLotsAfter: h.realisedLotsAfter ?? undefined })} />
             : <span className={changeColor(h.realised)} title={realisedWindowOf([{ accountId: h.accountId, realizedPnL: h.realised }])}
                 data-child-realised={h.realised}>{fmtFromBase(h.realised, { compact: true, sign: true })}</span>,
-          ret: (measure) => childReturn({ returnPct: h.returnPct, heldSince: h.heldSince, valuedAt: h.valuedAt, assetClass: h.assetClass, costNA: h.costNA, costBasis: h.costBasis, marketValue: h.marketValue,
-            // ITS OWN DATED MONEY, where its trades or lots date every unit (Stage 10fs).
+          ret: (measure) => childReturn({ hprUnavailableReason: h.position.hprUnavailableReason, returnPct: h.returnPct, heldSince: h.heldSince, valuedAt: h.valuedAt, assetClass: h.assetClass, costNA: h.costNA, costBasis: h.costBasis, marketValue: h.marketValue,
+            // ITS OWN DATED MONEY, where its trades or lots date every unit (Stage 10fw).
             capital: datedCap?.behind([h.position], holdingsUniverse) ?? undefined, opened: h.opened }, measure),
           sector: isFundVehicle(h) ? <AbsentCell reason={fundSectorWhy(h.assetClass)} /> : sectorCell(h.sector, h.securityKey, [], true),
         }, { "data-constituent": h.securityKey || h.security, "data-constituent-account": h.accountId, "data-constituent-mv": h.marketValue });
@@ -3224,7 +3224,7 @@ export function PortfolioMonitor() {
                 title={`Everything account ${l.accountNo} has booked since it opened — every sale its manager made, and its income less its fees.`}>
                 {fmtFromBase(l.realised, { compact: true, sign: true })}
               </span>,
-          ret: (measure) => childReturn({ returnPct: l.returnPct, heldSince: null, valuedAt: l.valuedAt, assetClass: "", costNA: l.costNA, costBasis: l.costBasis, marketValue: l.marketValue, capital: l.capital ?? null }, measure),
+          ret: (measure) => childReturn({ fifo: l.fifo, returnPct: l.returnPct, heldSince: null, valuedAt: l.valuedAt, assetClass: "", costNA: l.costNA, costBasis: l.costBasis, marketValue: l.marketValue, capital: l.capital ?? null }, measure),
           sector: <AbsentCell reason="a mandate spans many sectors and is not one holding; each share under this line carries its own" />,
           entity: <span className="text-[12px]">{l.owner}</span>,
         }, {
@@ -3372,13 +3372,13 @@ export function PortfolioMonitor() {
         realised: (() => {
           const rz = sumOrNull(v.positions.map((p) => (typeof p.realizedPnL === "number" ? p.realizedPnL : null)));
           return rz === null
-            ? <AbsentCell reason={realisedReason(v.positions.find((p) => p.realizedLotsAfter) ?? v.positions[0] ?? { realizedPnL: null })} />
+            ? <AbsentCell reason={realisedReason(v.positions.find((p) => p.hprUnavailableReason || p.realizedLotsAfter) ?? v.positions[0] ?? { realizedPnL: null })} />
             : <span className={changeColor(rz)} title={realisedWindowOf(v.positions)} data-child-realised={rz}>{fmtFromBase(rz, { compact: true, sign: true })}</span>;
         })(),
         // A line that is one WHOLE folio is that account, and carries its dated
         // record's money-weighted rate — Buoyant's two folios under the row
         // pooling both, each at the rate its own fact sheet prints.
-        ret: (measure) => childReturn({ returnPct: v.returnPct, heldSince: v.heldSince, valuedAt: v.valuedAt, assetClass: v.assetClass, costNA: v.costNA, costBasis: v.costBasis, marketValue: v.marketValue, opened: v.opened,
+        ret: (measure) => childReturn({ hprUnavailableReason: v.positions.find(p => p.hprUnavailableReason)?.hprUnavailableReason, returnPct: v.returnPct, heldSince: v.heldSince, valuedAt: v.valuedAt, assetClass: v.assetClass, costNA: v.costNA, costBasis: v.costBasis, marketValue: v.marketValue, opened: v.opened,
           valuedAtCost: v.valuedAtCost, capital: datedCap?.behind(v.positions, holdingsUniverse) ?? undefined }, measure),
         entity: v.owner,
       }, {
@@ -3473,9 +3473,9 @@ export function PortfolioMonitor() {
   const sectionKeys = showBucketSections ? bucketGroups.map((g) => `${groupAxis}|${g.key}`) : [];
   const orderedHoldings = bucketGroups.flatMap((grp) =>
     showBucketSections && closedSections.has(`${groupAxis}|${grp.key}`) ? [] : sortRows(grp.rows, holdView.sort, holdAccessors));
-  const holdingPage = useTablePagination(orderedHoldings.length,
-    JSON.stringify([groupAxis, holdingsView, entity, sector, bucket, [...selected].sort(), holdView.sort, [...closedSections].sort()]));
-  const visibleHoldings = new Set(orderedHoldings.slice(holdingPage.start, holdingPage.start + holdingPage.limit));
+  const holdingScroll = useInfiniteTable(orderedHoldings.length,
+    JSON.stringify([groupAxis, holdingsView, entity, sector, bucket, [...selected].sort(), holdView.sort, [...closedSections].sort(), memberScope.owners ? [...memberScope.owners].sort() : null]));
+  const visibleHoldings = new Set(orderedHoldings.slice(0, holdingScroll.shown));
   const allOpen = expandableKeys.length > 0
     && expandableKeys.every((k) => expanded.has(k)) && sectionKeys.every((k) => !closedSections.has(k));
   const toggleAll = () => {
@@ -3876,8 +3876,8 @@ export function PortfolioMonitor() {
                   // band). Where the table draws no band there is nothing to close.
                   const secKey = `${groupAxis}|${grp.key}`;
                   const secOpen = !showBucketSections || !closedSections.has(secKey);
-                  const pageRows = secOpen ? sortRows(grp.rows, holdView.sort, holdAccessors).filter((r) => visibleHoldings.has(r)) : [];
-                  if (secOpen && !pageRows.length) return null;
+                  const visibleRows = secOpen ? sortRows(grp.rows, holdView.sort, holdAccessors).filter((r) => visibleHoldings.has(r)) : [];
+                  if (secOpen && !visibleRows.length) return null;
                   return (
                   <Fragment key={grp.key}>
                     {showBucketSections && (
@@ -4101,7 +4101,7 @@ export function PortfolioMonitor() {
                        * for statements nobody owes, which this book already
                        * records as worse than a blank cell.
                        */
-                      const retWhy =
+                      const retWhy = tot.fifo.hprUnavailableReason ?? (
                         tot.vacuous ? `${VACUOUS_COST_REASON}, and a return on cost has nothing to divide`
                         : tot.cost === null ? `no statement behind ${label} reports a cost, so there is nothing to measure a return against`
                         : tot.mv <= 0 ? `${label} is measured at nil — every statement behind it reports a zero balance — so there is no value to measure a return on`
@@ -4111,7 +4111,7 @@ export function PortfolioMonitor() {
                         : [uncostedMV > 1 ? `${fmtFromBase(uncostedMV, { compact: true })} of this category's ${fmtFromBase(tot.mv, { compact: true })} is held in accounts that report no cost` : "",
                             tot.atCostMV > 1 ? `${fmtFromBase(tot.atCostMV, { compact: true })} of it is private investments held at cost, with no valuation to strike a gain on` : ""]
                             .filter(Boolean).join(", and ")
-                          + `, so a return on cost would divide one set of holdings by another and describe neither column beside it. The ${tot.costedCount - tot.atCostCount} holdings with a cost and a valuation show their own return on their own rows.`;
+                          + `, so a return on cost would divide one set of holdings by another and describe neither column beside it. The ${tot.costedCount - tot.atCostCount} holdings with a cost and a valuation show their own return on their own rows.`);
                       const realised = tot.fifo.realised;
                       /**
                        * THE SECTION'S INVESTED IS THE SUM OF ITS ROWS', and a
@@ -4274,7 +4274,7 @@ export function PortfolioMonitor() {
                         </Tr>
                       );
                     })()}
-                    {pageRows.map((r) => {
+                    {visibleRows.map((r) => {
                   const isOpen = expanded.has(r.key);
                   const multi = r.entities.length > 1;
                   /**
@@ -4827,7 +4827,7 @@ export function PortfolioMonitor() {
                                  them from the book, and holds each to being whole in
                                  this row, rather than reading the page's figure back. */
                               {...(r.capital ? {
-                                // "holding" where the dated money is the row's holdings' own (Stage 10fs).
+                                // "holding" where the dated money is the row's holdings' own (Stage 10fw).
                                 "data-capital": r.capital.dated ? (r.capital.holdings ? "holding" : "dated") : "undated",
                                 "data-capital-accounts": r.capital.accountIds.join(" "),
                                 "data-row-keys": r.realizedKeys.join(" "),
@@ -4879,7 +4879,7 @@ export function PortfolioMonitor() {
                   </Fragment>
                   );
                 })}
-                <TablePageControls pagination={holdingPage} columns={COL_COUNT} />
+                <InfiniteTableEnd scroll={holdingScroll} columns={COL_COUNT} />
                 {/* A PICKED HOLDING THIS AXIS DOES NOT DRAW — see `pickedNotRows`.
                     It stands in for the generic empty line where it explains the
                     whole of an empty table, and sits under the company rows where
@@ -5200,9 +5200,9 @@ export function PortfolioMonitor() {
                           {!onCost
                             ? <AbsentCell reason={`This is the whole book, not a holding: ${AGG_NO_MEASURE[measure]} Its cumulative return shows under HPR — tick Holding Period Return to see it.`} />
                             : totalRet === null
-                            ? <AbsentCell reason={footStruckLines === 0 && footCover.atCost.lines > 0
+                            ? <AbsentCell reason={totFifoCosted.hprUnavailableReason ?? (footStruckLines === 0 && footCover.atCost.lines > 0
                                 ? `every holding in this table that reports a cost is ${AT_COST_RETURN}`
-                                : "no holding in this table reports a cost, so there is nothing to strike a return over — each costed holding shows its own on its row"} />
+                                : "no holding in this table reports a cost, so there is nothing to strike a return over — each costed holding shows its own on its row")} />
                             : feedLive ? fmtPct(totalRet, { sign: true })
                             : <Auditable formula={{ title: "Total return (FIFO)", excel: "= (Σ unrealised + Σ realised) ÷ Σ capital deployed × 100", plain: "Everything the holdings in this table have produced — the unrealised gain on what is held and the realised gain on what was already sold, matched first-in, first-out — over every rupee that bought a unit of them. A whole mandate is struck on its capital since inception.", worked: `= (${money(totFifoCosted.unrealised ?? 0, true)} + ${money(totFifoCosted.realised ?? 0, true)}) ÷ ${money(totFifoCosted.deployed ?? 0)} × 100 = ${fmtPct(totalRet, { sign: true })}${totFifo.uncosted ? ` · over the holdings that report a cost; ${totFifo.uncosted} worth ${money(totFifo.uncostedValue)} report none and are in no part of it` : ""}${totFifo.atCost ? ` · ${atCostNote(totFifo, money)}` : ""}` }}>{fmtPct(totalRet, { sign: true })}</Auditable>}
                         </td>

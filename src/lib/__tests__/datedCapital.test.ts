@@ -322,7 +322,7 @@ console.log("\n── a row carries an account's record only where it holds all 
   const svan = BOOK_ACCOUNTS.find((a) => /svan/i.test(a.provider) && dc.of(a.accountId));
   const shares = svan ? own(svan.accountId).filter((p) => p.marketValue > 0) : [];
   ok("a mandate on a dated record is rated as a whole", !!svan && !!dc.behind(own(svan.accountId), universe)?.dated);
-  // …AND ONE OF ITS SHARES IS NOT THE ACCOUNT (Stage 10fs). It never takes the
+  // …AND ONE OF ITS SHARES IS NOT THE ACCOUNT (Stage 10fw). It never takes the
   // account's record. Where its own dated trades account for every unit it
   // holds, its money is dated as a holding's — `holdings` set, struck over that
   // line alone; where they do not, it carries no capital at all.

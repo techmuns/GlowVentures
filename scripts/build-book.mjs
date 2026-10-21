@@ -35,6 +35,8 @@ import { SEPARATE_INVESTMENTS } from "../shared/separateInvestments.mjs";
 import { KEPT_UNVALUED, keptUnvaluedFor, keptUnvaluedReason } from "../shared/keptUnvalued.mjs";
 import { buildAccountReturnRecords } from "./lib/accountReturnRecords.mjs";
 import { returnCoverageReport } from "./lib/returnCoverageReport.mjs";
+import { recoverHoldingCosts, recoveryReport } from "./lib/recoverHoldingCosts.mjs";
+import { applyRecoveredCost } from "../shared/recoveredCosts.mjs";
 
 /**
  * THE DEPOSITORY ACCOUNTS, BOTH OF THEM.
@@ -160,8 +162,7 @@ function loadArchive() {
   return fs.readdirSync(AUDIT_DIR).sort()
     .map((dir) => path.join(AUDIT_DIR, dir, "document.json"))
     .filter((f) => fs.existsSync(f))
-    .map((f) => JSON.parse(fs.readFileSync(f, "utf8")))
-    .filter((d) => d.status !== "failed");
+    .map((f) => JSON.parse(fs.readFileSync(f, "utf8")));
 }
 
 /** account key — provider + account number is the identity, as in the archive. */
@@ -2371,7 +2372,7 @@ function bridgeTieOf(b) {
 
 // ── Build ────────────────────────────────────────────────────────────────────
 
-function build(archived) {
+function build(archived, archiveCount = archived.length) {
   const notes = [];
   // AN EXPORT IS A WITNESS, NEVER A DOCUMENT OF THE BOOK. A spreadsheet that
   // sits beside its PDF (`askimpms_…_BankBook178CT.xlsx`, Marathon's `.csv`) is
@@ -2584,9 +2585,9 @@ function build(archived) {
   const splitUnreconciled = [];
   /** Every dated buy and sell behind a holding, keyed `${accountId}|${securityKey}` — see `holdingTradeRows`. */
   const holdingTrades = {};
-  /** The cash income each holding was paid, dated as its statement dates it (Stage 10fs). */
+  /** The cash income each holding was paid, dated as its statement dates it (Stage 10fw). */
   const holdingIncome = {};
-  /** The lots a lot register dates a holding by, where they account for every unit held (Stage 10fs). */
+  /** The lots a lot register dates a holding by, where they account for every unit held (Stage 10fw). */
   const holdingLots = {};
   /** Positions whose statement cost FIFO over the fund's own unit record restates — named in the report. */
   const fifoRestated = [];
@@ -3262,7 +3263,7 @@ function build(archived) {
     const cashSeen = new Set();
     const dividendByKey = new Map();
     /**
-     * …AND EACH OF THOSE DIVIDENDS ON ITS OWN DATE (Stage 10fs) — the received
+     * …AND EACH OF THOSE DIVIDENDS ON ITS OWN DATE (Stage 10fw) — the received
      * date, else the ex date, as the statement prints them; null where it
      * prints neither. A holding's FIFO return adds its dividends as a total; a
      * money-weighted return over its dated trades needs the same dividends on
@@ -3660,7 +3661,7 @@ function build(archived) {
         // The OLDEST lot, not the newest: the holding has existed since its
         // first surviving unit was bought.
         for (const l of dated) if (heldSince === null || l.purchaseDate < heldSince) heldSince = l.purchaseDate;
-        // EACH LOT ON ITS OWN DATE (Stage 10fs): a holding bought in two lots
+        // EACH LOT ON ITS OWN DATE (Stage 10fw): a holding bought in two lots
         // was not all bought on the oldest one's day, and a rate compounded from
         // it says it was. The lots go to the book so a money-weighted return can
         // place each rupee on its own day.
@@ -3739,7 +3740,7 @@ function build(archived) {
         /** What the account's own dated trades say about when these units were bought — see `holdingTradeRecord`. */
         tradeRecord: tradeRecordOf(h) ?? undefined,
         ...((income) => {
-          // THE SAME DIVIDENDS `dividendReceived` TOTALS, each on its day (Stage 10fs).
+          // THE SAME DIVIDENDS `dividendReceived` TOTALS, each on its day (Stage 10fw).
           if (income.length) {
             holdingIncome[`${accountId}|${h.securityKey}`] = [...income]
               .sort((a, b) => (a.date ?? "9999").localeCompare(b.date ?? "9999") || a.amount - b.amount);
@@ -4940,11 +4941,17 @@ function build(archived) {
     delete shareMovements[keys[0]];
   }
 
+  const holdingCostRecovery = recoverHoldingCosts({ root: ROOT, accounts, positions,
+    unvalued: unvaluedHoldings, shareMovements, docs, archiveCount });
+  for (const p of positions) Object.assign(p, applyRecoveredCost(p, holdingCostRecovery.records));
+  notes.push(`cost recovery: ${holdingCostRecovery.records.length} exact account/ISIN/quantity records from the saved workbooks; `
+    + `${holdingCostRecovery.unresolved.length} recorded security balances still require acquisition or movement evidence. See docs/COST-RECOVERY.md.`);
+
   return {
     accounts, positions, polycab, owners, capitalGains, accountCashFlows, entityCashFlows,
     accountReturnRecords: buildAccountReturnRecords({ accounts, accountCashFlows, byAccount,
       historicalNavs: JSON.parse(fs.readFileSync(path.join(ROOT, 'scripts/ingest/reference/amfi-opening-navs.json'), 'utf8')) }),
-    capitalMoves, positionTranches, shareMovements,
+    capitalMoves, positionTranches, shareMovements, holdingCostRecovery,
     // Keyed on the holdings this book carries, in key order, so the file
     // regenerates byte-identically however the accounts were walked.
     holdingTrades: Object.fromEntries(Object.keys(holdingTrades).sort()
@@ -5036,7 +5043,7 @@ function emit(book) {
   L.push("import type {");
   L.push("  Account, AccountBridge, AccountReturnBlock, AccountReturnCoverage, BookSummary, CapitalMove, CashFlow, Commitment,");
   L.push("  Attribution, CorporateAction, EntityCG, FundInvestment, HoldingTrade, NavCoverage, NavPoint, Position, PositionTranches,");
-  L.push("  RealisedByClass, ReviewFlow, ReviewSuperseded, ReviewWrittenOff, ShareMovement, StartupInvestment, UndatedCapital, UnvaluedStatementHolding,");
+  L.push("  RealisedByClass, RecoveredHoldingCost, ReviewFlow, ReviewSuperseded, ReviewWrittenOff, ShareMovement, StartupInvestment, UndatedCapital, UnvaluedStatementHolding,");
   L.push('} from "@/lib/types";');
   L.push("");
   L.push(`/** Newest report date across all accounts. Individual accounts can be older. */`);
@@ -5051,6 +5058,9 @@ function emit(book) {
   L.push(`export const BOOK_OWNERS = ${j(book.owners)};`);
   L.push("");
   L.push(`export const BOOK_POSITIONS: Position[] = ${j(book.positions)};`);
+  L.push("");
+  L.push("/** Supplementary source costs, accepted only for the exact account, ISIN, date and unit balance. No valuation or quantity overrides. */");
+  L.push(`export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = ${j(book.holdingCostRecovery.records)};`);
   L.push("");
   L.push("/**");
   L.push(" * HELD, AND VALUED BY NO STATEMENT — a QUANTITY, never a value, and in no total.");
@@ -5206,7 +5216,7 @@ function emit(book) {
   L.push("");
   L.push("/**");
   L.push(" * THE CASH DIVIDENDS EACH HOLDING WAS PAID, ON THEIR OWN DATES");
-  L.push(" * (Stage 10fs) — the same events `Position.dividendReceived` totals, keyed as");
+  L.push(" * (Stage 10fw) — the same events `Position.dividendReceived` totals, keyed as");
   L.push(" * `BOOK_HOLDING_TRADES`. `date` is the received date, else the ex date; null");
   L.push(" * where the statement prints neither. What a money-weighted return over the");
   L.push(" * holding's own dated trades adds on each day.");
@@ -5214,7 +5224,7 @@ function emit(book) {
   L.push(`export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: number }[]> = ${j(book.holdingIncome)};`);
   L.push("");
   L.push("/**");
-  L.push(" * THE LOTS A LOT REGISTER DATES A HOLDING BY (Stage 10fs), keyed as");
+  L.push(" * THE LOTS A LOT REGISTER DATES A HOLDING BY (Stage 10fw), keyed as");
   L.push(" * `BOOK_HOLDING_TRADES` — present exactly where `Position.heldSince` is, under");
   L.push(" * the same gate: the lots account for every unit held. Each lot's purchase");
   L.push(" * date, units and total cost as the register prints them.");
@@ -5805,16 +5815,18 @@ function report(book) {
 
 // ── Main ─────────────────────────────────────────────────────────────────────
 
-const docs = loadArchive();
+const archive = loadArchive();
+const docs = archive.filter((d) => d.status !== "failed");
 if (!docs.length) {
   console.error("No documents in the audit archive. Run `npm run extract` first.");
   process.exit(1);
 }
-const book = build(docs);
+const book = build(docs, archive.length);
 fs.mkdirSync(path.dirname(OUT), { recursive: true });
 fs.writeFileSync(OUT, emit(book));
 fs.mkdirSync(path.dirname(REPORT), { recursive: true });
 fs.writeFileSync(REPORT, report(book));
+fs.writeFileSync(path.join(path.dirname(REPORT), 'COST-RECOVERY.md'), recoveryReport(book.holdingCostRecovery, book.accounts));
 const returnCoverage = returnCoverageReport(book, docs);
 fs.writeFileSync(path.join(path.dirname(REPORT), 'RETURN-COVERAGE.md'), returnCoverage.markdown);
 

@@ -33,7 +33,7 @@
  * row over its folios, one statement line that is the whole folio. A row holding
  * part of an account (one share of a mandate, a sector's slice) never takes the
  * account's record: it is dated by its holdings' own trades or lots where they
- * date every unit (`holdingsBehind`, Stage 10fs), and keeps the per-holding
+ * date every unit (`holdingsBehind`, Stage 10fw), and keeps the per-holding
  * refusal where they do not. Measured over the
  * positions that CARRY some of the account's money: each Buoyant folio prints a
  * ₹0 Cash line beside its units, and the category axis files that line apart,
@@ -138,7 +138,7 @@ export function buildDatedCapital(input: {
   const unitLabel = (u: string) => byKey.get(u)?.label ?? labelOf.get(u.split("|")[0]) ?? u;
 
   /**
-   * ── …AND A ROW OF HOLDINGS, WHERE EVERY ONE IS DATED IN FULL (Stage 10fs) ──
+   * ── …AND A ROW OF HOLDINGS, WHERE EVERY ONE IS DATED IN FULL (Stage 10fw) ──
    *
    * A share inside a mandate is not an account, and for a long time that ended
    * the question. It does not any more: where its account's dated trades — or

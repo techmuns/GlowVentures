@@ -74,7 +74,7 @@ import {
  *
  * XIRR IS A THIRD LINE ONLY WHERE THE ROW'S MONEY IS DATED. A holding inside an
  * account has cash flows of its own only where its account's dated trades or its
- * lot register account for every unit it holds (Stage 10fs) — there the line
+ * lot register account for every unit it holds (Stage 10fw) — there the line
  * shows, solved over its own purchases, sales and dividends; a dash on every
  * other row would say "not dated" hundreds of times, and none is drawn. And a
  * row that is one WHOLE folio of a fund (Buoyant's, a

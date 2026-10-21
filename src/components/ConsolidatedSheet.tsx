@@ -1,3 +1,4 @@
+import { InfiniteTableBody } from "./InfiniteTableBody";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Download, Search, FileSpreadsheet } from "lucide-react";
@@ -16,7 +17,6 @@ export function ConsolidatedSheet({ onSources, onLoaded }: { onSources: () => vo
   const [book, setBook] = useState<ConsolidatedBook | null>(null);
   const [failed, setFailed] = useState(false), [retry, setRetry] = useState(0);
   const [exporting, setExporting] = useState(false), [exportError, setExportError] = useState(false);
-  const [showAll, setShowAll] = useState(false);
   const [params, setParams] = useSearchParams();
   useEffect(() => {
     let alive = true;
@@ -39,7 +39,6 @@ export function ConsolidatedSheet({ onSources, onLoaded }: { onSources: () => vo
     return sheet?.rows.map((row, index) => ({ row, index })).filter(({ row }) => Object.entries(scope).every(([key, v]) => row.values[sheet.columns.findIndex(c => c.key === key)] === v)
       && (!q || row.values.some(v => String(v ?? "").toLowerCase().includes(q)))) ?? [];
   }, [sheet, query, scope]);
-  useEffect(() => setShowAll(false), [sheet?.name, query]);
   function navigate(link: ConsolidatedLink) {
     const next = new URLSearchParams();
     if (link.file !== undefined) {
@@ -88,7 +87,7 @@ export function ConsolidatedSheet({ onSources, onLoaded }: { onSources: () => vo
         <table className="w-full border-separate border-spacing-0 text-xs" data-table-static="the consolidated workbook format preserves its summary hierarchy and register column order">
           <thead className="sticky top-0 z-20"><tr>{sheet.columns.map((c, i) => <th key={c.key} className={`border-b border-r border-ink-700 bg-ink-800 px-3 py-3 text-left font-semibold text-slate-200 ${i === 0 ? "sticky left-0 z-30" : ""}`}
             style={{ minWidth: Math.min(220, Math.max(100, c.width * 7)), maxWidth: 340 }}><span className="block">{c.label}</span></th>)}</tr></thead>
-          <tbody>{(showAll ? filtered : filtered.slice(0, 200)).map(({ row, index }) => <tr key={index} data-consolidated-row={index} className={row.kind ? "font-semibold" : "hover:bg-ink-700/30"}>
+          <InfiniteTableBody rows={filtered} columns={sheet.columns.length} resetKey={JSON.stringify([sheet.name, query, scope])}>{({ row, index }) => <tr key={index} data-consolidated-row={index} className={row.kind ? "font-semibold" : "hover:bg-ink-700/30"}>
             {row.values.map((value, i) => {
               const c = sheet.columns[i], link = row.links?.[c.key];
               const text = display(value, c);
@@ -97,12 +96,11 @@ export function ConsolidatedSheet({ onSources, onLoaded }: { onSources: () => vo
                 className={`border-b border-r border-ink-700/50 px-3 py-2.5 align-top ${typeof value === "number" ? "text-right mono whitespace-nowrap" : "text-left"} ${i === 0 ? "sticky left-0 z-10" : ""} ${row.kind === "group" ? "bg-champagne-500/10 text-champagne-400" : row.kind === "total" ? "bg-ink-700 text-slate-100" : "bg-ink-900 text-slate-300"}`} style={{ maxWidth: 340 }}>
                 {target && value != null ? <Link to={target} onClick={() => { if (link?.file !== undefined) onSources(); }} className="text-champagne-400 underline decoration-champagne-500/40 underline-offset-2 hover:decoration-champagne-400">{text}</Link> : text}
               </td>;
-            })}</tr>)}</tbody>
+            })}</tr>}</InfiniteTableBody>
         </table>
         {!filtered.length && <p className="p-6 text-sm text-slate-500">No matching rows.</p>}
       </div>
     </Card>
-    <div className="mt-2 flex items-center gap-3 text-xs text-slate-500"><span>{filtered.length.toLocaleString("en-IN")} {query ? "matching " : ""}rows · all 17 subtabs included in Excel</span>
-      {!showAll && filtered.length > 200 && <button className="text-champagne-400 underline" onClick={() => setShowAll(true)}>Show all rows</button>}</div>
+    <div className="mt-2 flex items-center gap-3 text-xs text-slate-500"><span>{filtered.length.toLocaleString("en-IN")} {query ? "matching " : ""}rows · all 17 subtabs included in Excel</span></div>
   </section>;
 }

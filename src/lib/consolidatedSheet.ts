@@ -97,7 +97,7 @@ export function buildConsolidatedSheet(docs: ArchiveDoc[], input: { accounts: Ac
     const a = accountById.get(p.accountId), c = classify(p);
     const tranche = BOOK_POSITION_TRANCHES[`${p.accountId}|${p.securityKey}`];
     const purchaseDates = dates(tranche?.moves.map(m => m.date) ?? []);
-    // EVERY DATE THAT DATES THE HOLDING (Stage 10fs): allotments, a lot register,
+    // EVERY DATE THAT DATES THE HOLDING (Stage 10fw): allotments, a lot register,
     // its own dated trades, a drawdown call, the review — the holdings tables' one rule.
     const invested = investedOnOf([p]);
     const capital = dated.behind([p], positions);

@@ -122,7 +122,8 @@ One line per area; the history files explain each in depth.
   `insideMovers.ts` / `fundDisclosures.ts` — companies inside AIFs and mandates.
 - `src/lib/tranches.ts` (the family's dated capital, `capitalRollup`,
   `capitalReturn`), `datedCapital.ts` (money-weighted rate where a row is whole
-  accounts), `txnLedger.ts` (capital and trades as one row set — never added),
+  accounts, or holdings whose trades or lots date every unit — `holdingFlows.ts`,
+  Stage 10fw), `txnLedger.ts` (capital and trades as one row set — never added),
   `txnAxis.ts`, `txnSort.ts`, `txnRollup.ts`, `ledger.ts` (runtime dated record
   from `public/audit/`), `capitalCalls.ts`, `fundReturns.ts`, `privateBook.ts`
   (Private Market's one model; brand grouping via `brandOf`/`BRAND_OVERRIDES`),
@@ -317,10 +318,17 @@ Never derive one side from the others.
   splices Polycab out into `BOOK_POLYCAB`; `src/pages/Polycab.tsx` is its only
   reader. Polycab is named on no other route; the register's sentinel name
   appears on no route.
-- **The review is the source of the PRIVATE book only** (Stage 10dh):
+- **The review is the source of the PRIVATE book** (Stage 10dh):
   `scripts/lib/reviewBook.mjs` + `shared/reviewHolders.mjs` turn its private
   blocks into positions, each with a `reviewSource` (sheet, block, row), and
-  throw rather than guess. For everything else the review is a cross-check
+  throw rather than guess. At the family's 21 October instruction,
+  `scripts/lib/recoverHoldingCosts.mjs` also reads its dated equity and fund transactions
+  and the investment register to fill missing costs only after exact
+  owner/ISIN/date/quantity reconciliation. It never replaces a statement's
+  quantity, valuation, date or existing cost. Every join and unresolved balance
+  is in `docs/COST-RECOVERY.md`. Closing rows keep fund folios separate; a known
+  cost with unverified sale proceeds carries `hprUnavailableReason`, withholding
+  realised gain and individual/pooled HPR. Other review figures remain a cross-check
   (`npm run reconcile:review`). At-cost lines carry no gain or return
   (`AT_COST_BUCKET`, `AT_COST_RETURN`).
 - **The Motilal CDSL "rate" is the last movement's price**, not a mark or a cost

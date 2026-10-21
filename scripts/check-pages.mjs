@@ -4667,7 +4667,7 @@ const CAPITAL_GROUPS = (() => {
  * ACT/365 NPV, a path the page's Newton solver does not take.
  */
 /**
- * ── A HOLDING'S OWN DATED MONEY, RESTATED OFF THE BOOK (Stage 10fs) ────────
+ * ── A HOLDING'S OWN DATED MONEY, RESTATED OFF THE BOOK (Stage 10fw) ────────
  *
  * `holdingFlows.ts` re-expressed rather than imported, because it is the code
  * under test: a line is dated by its account's trades where they account for
@@ -4888,7 +4888,7 @@ const DATED_CAPITAL_BOOK = (() => {
  * THE STATEMENT LINES A NON-MANDATE ROW HOLDS, as `account|security` keys — the
  * current holdings under its keys, each dedupeGroup once, as the page builds the
  * row; off the security axis a PMS line is inside its mandate's row, not this
- * one (Stage 10fs). What `HOLDING_FLOWS_BOOK.solve` is asked about.
+ * one (Stage 10fw). What `HOLDING_FLOWS_BOOK.solve` is asked about.
  */
 const holdingLinesOf = (B, c, securityAxis) => {
   if (c.mandate) return null;
@@ -7753,6 +7753,8 @@ const ROUTES = [
    */
   ["cio-sectors-vs", "/cio?tab=sectors&vs=nifty-500"],
   ["cio-sectors-vs-direct", "/cio?tab=sectors&view=direct&vs=nifty-50"],
+  // Stage 10fo: Sensex is no longer offered, so its old link opens the panel Off.
+  ["cio-sectors-vs-retired", "/cio?tab=sectors&vs=sensex"],
   ["cio-returns", "/cio?tab=returns"],
   ["cio-returns-custom", "/cio?tab=returns&rp=custom&rfrom=2026-06-30&rto=2026-07-31&rtype=absolute"],
   ["cio-returns-live", "/cio?tab=returns&rp=custom&rfrom=2026-04-01&rto=2026-08-31&rtype=absolute"],
@@ -8125,7 +8127,7 @@ const ROUTES = [
   // only where a holding was opened during the year, a dash naming why otherwise.
   ["monitor-ytd", "/monitor?group=category&ret=ytd"],
   // ...AND XIRR: on a row that is whole accounts, or holdings whose trades or
-  // lots date every unit (Stage 10fs); a dash with the reason everywhere else.
+  // lots date every unit (Stage 10fw); a dash with the reason everywhere else.
   ["monitor-xirr", "/monitor?group=category&ret=xirr"],
   // ...AND ON THE SECURITY AXIS, where a PMS share is a row of its own and its
   // trades are what date it — the case the category axis files inside mandates.
@@ -16347,7 +16349,7 @@ const stockLayoutChecks = () => [
         // that line's. `wholeOf` answers in units for exactly this.
         const units = set.length ? B.wholeOf(set) : null;
         // A LINE THAT IS NOT A WHOLE ACCOUNT is dated by its own trades or lots
-        // where the book dates every unit of it (Stage 10fs).
+        // where the book dates every unit of it (Stage 10fw).
         const hsol = !units && set.length && HOLDING_FLOWS_BOOK
           ? HOLDING_FLOWS_BOOK.solve(set.filter(B.carries).map((p) => `${p.accountId}|${p.securityKey}`)) : null;
         const want = units ? (units.every((u) => B.rated.has(u)) ? "dated" : "undated")
@@ -18287,7 +18289,7 @@ const VALUE_WINDOW_BOOK = (() => {
     const newest = accounts.reduce((m, a) => (a.asOf > m ? a.asOf : m), "");
     // Dated holdings whose OWN window reaches a year — the rows the CAGR column
     // must annualise from their oldest lot, over their own window. A row whose
-    // every line is dated lot by lot or trade by trade (Stage 10fs) is not one:
+    // every line is dated lot by lot or trade by trade (Stage 10fw) is not one:
     // its rate is the dated-money rule's, checked on its own.
     const datedLines = new Set(onRows.filter((p) => HOLDING_FLOWS_BOOK?.lineOf(`${p.accountId}|${p.securityKey}`))
       .map((p) => p.securityKey));
@@ -20291,19 +20293,16 @@ function cioSectorsVs(key, set) {
   return [
     ["the index data derived — the factsheet file is committed and the NAV chart declares its indices", () =>
       INDEX_SECTORS != null && BENCH_KEYS.length >= 2 && want() != null],
-    ["the control offers Off and then the NAV chart's indices in the NAV chart's order, with the one in the address picked", (t, ctx) => {
-      const V = ctx?.sectorVs;
-      if (V === undefined) return notChecked("the index probe did not run on this pass");
-      if (!V) return false;
-      return V.picks.map((p) => p.key).join() === ["off", ...BENCH_KEYS].join()
-        && V.picks.filter((p) => p.active).map((p) => p.key).join() === key;
-    }],
-    ["an index with no factsheet read is offered and marked absent, with its reason on the hover — every index read is not", (t, ctx) => {
+    /* Stage 10fo: only the NAV chart's indices whose factsheet is read are
+       offered — "Sensex and BSE500 … you can remove them as options". The
+       expected list is the NAV chart's order filtered on the committed file, so
+       an index read later joins it, and one with no weights can never be a pill. */
+    ["the control offers Off and then the NAV chart's indices that carry sector weights, in its order, with the one in the address picked", (t, ctx) => {
       const V = ctx?.sectorVs;
       if (V === undefined) return notChecked("the index probe did not run on this pass");
       if (!V || !INDEX_SECTORS) return false;
-      return V.picks.filter((p) => p.key !== "off").every((p) =>
-        INDEX_SECTORS[p.key] ? !p.absent : p.absent && (p.title ?? "").length > 40);
+      return V.picks.map((p) => p.key).join() === ["off", ...BENCH_KEYS.filter((k) => INDEX_SECTORS[k])].join()
+        && V.picks.filter((p) => p.active).map((p) => p.key).join() === key;
     }],
     [`the ${set} set is the one weighed`, (t, ctx) => {
       const L = ctx?.sectorLayout;
@@ -26478,6 +26477,7 @@ const INVARIANTS = {
   "cio-sectors": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_SECTORS, ...CIO_SECTORS_VS_OFF],
   "cio-sectors-vs": [...CIO_SHARED, ...CIO_TAB_CONTROL, CIO_SECTORS[0], ...cioSectorsVs("nifty-500", "consolidated")],
   "cio-sectors-vs-direct": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...cioSectorsVs("nifty-50", "direct")],
+  "cio-sectors-vs-retired": [...CIO_SHARED, ...CIO_TAB_CONTROL, CIO_SECTORS[0], ...CIO_SECTORS_VS_OFF],
   "cio-returns": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT, ...CIO_SEGMENTS],
   "cio-returns-custom": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT, ...CIO_SEGMENTS],
   "cio-returns-cagr": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT, ...CIO_SEGMENTS],
@@ -32822,7 +32822,7 @@ const INVARIANTS = {
     }],
     /**
      * A HOLDING BOUGHT OVER SEVERAL DATED PAYMENTS IS NOT COMPOUNDED FROM ITS
-     * FIRST (Stage 10fs). Crompton Greaves went in as ₹9.88 L in March 2025 and
+     * FIRST (Stage 10fw). Crompton Greaves went in as ₹9.88 L in March 2025 and
      * ₹5.59 L in November; CAGR from March treated all of it as a year old. Where
      * the book dates a row's every line by its trades or lots, the CAGR cell
      * refuses several payments and names XIRR, compounds one payment from its
@@ -32988,7 +32988,7 @@ const INVARIANTS = {
    * "Fixed income… more than one year should be XIRR… an XIRR when there are
    * multiple tranches." The methodology routes to XIRR, and a holding carries
    * one only where its account's dated trades or its lot register date every
-   * unit it holds (Stage 10fs), re-solved below off the book; `positionIrrPct` is
+   * unit it holds (Stage 10fw), re-solved below off the book; `positionIrrPct` is
    * the banned extrapolation. Every other cell is a dash with the reason.
    */
   "monitor-xirr": [
@@ -33026,7 +33026,7 @@ const INVARIANTS = {
         const v = signedPctOf(c.text);
         /**
          * …OR A ROW OF HOLDINGS EVERY ONE OF WHICH ITS TRADES OR LOTS DATE IN
-         * FULL (Stage 10fs): the rate re-solves off the book's own trades, lots
+         * FULL (Stage 10fw): the rate re-solves off the book's own trades, lots
          * and dividends, on the same guard — under a year it is the HPR.
          */
         if (c.capital === "holding") {
@@ -33086,7 +33086,7 @@ const INVARIANTS = {
         if (units === undefined) return false;
         if (!units) {
           // NOT WHOLE ACCOUNTS: a row of holdings, dated exactly where the book
-          // dates every line of it in full (Stage 10fs) — "holding" — short of a
+          // dates every line of it in full (Stage 10fw) — "holding" — short of a
           // figure where one line's record is — "undated" — and nothing else.
           const lines = holdingLinesOf(B, c, securityAxis);
           const sol = HOLDING_FLOWS_BOOK && lines?.length ? HOLDING_FLOWS_BOOK.solve(lines) : null;
@@ -37176,7 +37176,7 @@ const TILE_PICKER_CHECKS = tilePickerChecks({
  * subject it does not draw.
  */
 {
-  // The same XIRR and CAGR claims on the security axis (Stage 10fs).
+  // The same XIRR and CAGR claims on the security axis (Stage 10fw).
   INVARIANTS["monitor-xirr-security"] = INVARIANTS["monitor-xirr"];
   // Less the mandate-row reasons (MH-09, MH-15): off the category axis a mandate is not a row.
   INVARIANTS["monitor-cagr-security"] = INVARIANTS["monitor-cagr"].filter(([d]) => !/(MH-09, MH-18)|(MH-15)/.test(d));
@@ -43161,7 +43161,7 @@ for (const theme of THEMES) {
         return {
           picks: [...picker.querySelectorAll("[data-sector-vs-pick]")].map((b) => ({
             key: b.getAttribute("data-sector-vs-pick"), active: b.getAttribute("aria-selected") === "true",
-            absent: b.getAttribute("data-vs-absent") === "true", title: b.getAttribute("title") })),
+            title: b.getAttribute("title") })),
           chart: chart ? {
             index: chart.getAttribute("data-vs-index"), asOf: chart.getAttribute("data-vs-asof"),
             rows: [...chart.querySelectorAll("[data-vs-row]")].map((r) => ({

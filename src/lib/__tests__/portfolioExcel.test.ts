@@ -225,7 +225,7 @@ function solveXirr(recordKeys: readonly string[]): number | null {
 }
 
 /**
- * ── A HOLDING'S OWN DATED MONEY, SOLVED HERE (Stage 10fs) ──────────────────
+ * ── A HOLDING'S OWN DATED MONEY, SOLVED HERE (Stage 10fw) ──────────────────
  *
  * Where a line's account's trades account for every unit it holds, or its lot
  * register does and none of it was sold, each buy is money in on its day and
@@ -505,7 +505,7 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
     if (!valuedAt) continue;
     const mv = navMV(p);
     const hpr = fifoOf(p, mv);
-    // EACH LOT ON ITS OWN DAY (Stage 10fs): where the register dates the line's
+    // EACH LOT ON ITS OWN DAY (Stage 10fw): where the register dates the line's
     // whole money it takes the family's rule on its lots — never a CAGR
     // compounded from the oldest of them over money bought later. Only a line
     // whose money is NOT all dated keeps the oldest-lot rule.
@@ -540,7 +540,7 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
     && !datedRowNames.has(r["Security"] as string)).length;
   eq("exactly those direct rows are annualised, and no other", sheetCagr, annualised);
   // INSIDE A MANDATE the same rule binds, on the line's OWN dated money: its
-  // account's trades where they date every unit (Stage 10fs), or its lot
+  // account's trades where they date every unit (Stage 10fw), or its lot
   // register. A mandate line nothing dates in full must never annualise.
   const pmsDated = new Set(NAV_SET.held.filter((p) => { const x = isPms(p) ? holdingRate([p]) : null; return !!x && x !== "short" && x.days >= 365; })
     .map((p) => displaySecurity(PAGE[RAW.indexOf(p)].security)));
@@ -550,7 +550,7 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
     mandateCagr.filter((r) => !pmsDated.has(r["Security"] as string)).map((r) => r["Security"]).join(", ") || `${mandateCagr.length} dated mandate row(s)`);
   // THE WINDOW IS THE ROW'S OWN, never the book's newest date (2026-08-29): an
   // annualised row names both ends of it — from the oldest unit still held, or,
-  // on a row whose money is dated (5b, Stage 10fs), from its one payment.
+  // on a row whose money is dated (5b, Stage 10fw), from its one payment.
   const cagrRows = ROWS.filter((r) => r["Measure"] === "CAGR");
   ok("an annualised row states its window in Notes", cagrRows.length > 0
      && cagrRows.every((r) => /Annualised over the \d+ days from \d{4}-\d\d-\d\d, the oldest unit still held, to its valuation on \d{4}-\d\d-\d\d/.test(String(r["Notes"]))
@@ -598,7 +598,7 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
   // LOAD-BEARING: the book must carry a row the rule takes to XIRR, or a sheet
   // that never handed the capital to the measure would pass the check above.
   ok("...and the book carries one the rule takes to XIRR, so the guard can fail", xirrs > 0, `${xirrs} XIRR`);
-  // …AND THE HOLDINGS WHOSE OWN MONEY IS DATED (Stage 10fs): a direct row over
+  // …AND THE HOLDINGS WHOSE OWN MONEY IS DATED (Stage 10fw): a direct row over
   // its lines, a mandate row per account — each XIRR exactly where its own
   // dated money calls for it, at the rate re-solved here.
   let holdingXirrs = 0;

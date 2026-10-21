@@ -273,7 +273,7 @@ function consolidate(held: Position[], accounts: Account[], nowMs: number, dated
        * FIFO over the row's own deduped holdings — the realised gain on units
        * already sold stays in it — then `measuredReturn(…, "auto", …)`, which
        * annualises only where the row's money is dated — whole accounts'
-       * payments, or (Stage 10fs) its holdings' own trades or lots — and a year
+       * payments, or (Stage 10fw) its holdings' own trades or lots — and a year
        * old: several payments as XIRR, one compounded from its own day. Crompton
        * at LKP, bought in two lots, is the case the sheet got wrong twice: its
        * return on cost under the tab's CAGR heading, then a CAGR from its older
