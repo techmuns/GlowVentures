@@ -43,26 +43,28 @@ The baseline was read from production. The repaired date counts below reconcile 
 
 The two additional Cash review-context ranges cover the separately keyed ABSL Liquid Direct and Liquid BeES products; they do not resolve missing owner/folio lots.
 
-**PMS:** all six strategy rows have the family's inception/contribution dates. Those dates must not be lent to the manager's underlying securities. Across the ten active account statements, 106 of 271 non-cash position lines have complete holding-date support; **165 do not**. The source trade windows often begin after the opening shares were acquired. Cash balances themselves have no purchase date.
+**PMS:** all six strategy rows have the family's inception/contribution dates. Those dates must not be lent to the manager's underlying securities. Across the ten active account statements, 108 of 271 non-cash position lines have complete holding-date support; **163 do not**. The source trade windows often begin after the opening shares were acquired. Cash balances themselves have no purchase date.
 
 | PMS account | Holder | Dated non-cash positions | Remaining date evidence |
 | --- | --- | ---: | --- |
 | Carnelian 3517383 | Ajay | 6 / 12 | Original lots for opening shares; saved trades cover 1 Apr–30 Sep 2026. |
 | Goldstandard 100022 | Ankita | 8 / 32 | Original lots for opening shares; saved trades cover 1 Apr–6 Oct 2026. |
 | Goldstandard 100023 | Ajay | 8 / 32 | Same window; separate owner/account lots required. |
-| Green Lantern 510854 | Ankita | 29 / 31 | Reconcile the two unmatched securities's opening units/corporate actions; window begins 13 Jan 2025. |
-| Green Lantern 510861 | Ajay | 26 / 31 | Reconcile five unmatched securities' opening units/corporate actions; window begins 16 Jan 2025. |
+| Green Lantern 510854 | Ankita | 30 / 31 | Reconcile the one unmatched security's opening units/corporate actions; window begins 13 Jan 2025. |
+| Green Lantern 510861 | Ajay | 27 / 31 | Reconcile four unmatched securities' opening units/corporate actions; window begins 16 Jan 2025. |
 | Molecule 7810404 | Ajay | 1 / 9 | Original lots for opening shares; saved trades cover 1 Apr–31 Jul 2026. |
 | SVAN 8710067 | Ajay | 6 / 47 | Original lots for opening shares; saved trades cover 1 Apr–30 Sep 2026. |
 | SVAN 8710090 | Bharat | 5 / 46 | Same window; separate owner/account lots required. |
 | V.E.C 128004 | Ankita | 14 / 14 | No remaining holding-date gap in this source account. |
 | V.E.C 128005 | Ajay | 3 / 17 | Original lots for opening shares; saved trades cover 1 Apr–13 Aug 2026. |
 
-Request the managers' since-inception security transaction/lot exports, including opening acquisition dates, cost, units, transfers and corporate actions. No repeat request is needed for the mandates' funding/inception dates already present. The account/security details behind the 165 positions are listed below; costs being known does not establish their dates.
+Request the managers' since-inception security transaction/lot exports, including opening acquisition dates, cost, units, transfers and corporate actions. No repeat request is needed for the mandates' funding/inception dates already present. The account/security details behind the 163 positions are listed below; costs being known does not establish their dates.
 
 For remaining cost, HPR and balance discrepancies, use [the account-by-account client request](client/PURCHASE-COST-RECORDS-NEEDED.md). Companies held only inside funds have no family-account stock acquisition date: the family's dated purchase is of fund units.
 
 The June review's direct-family purchases of MPS, Vedanta and Borosil do not date those companies' shares in PMS accounts. These six manager-held lines remain undated rather than borrowing another route's investment range.
+
+Two further Green Lantern ZF date gaps are recovered from saved evidence: 86 and 172 original purchased shares become exactly 516 and 1,032 after the recorded 5:1 bonus on 24 June 2026. Both holdings retain their six original purchase dates, 30 May 2025–18 March 2026. The bonus date is not a purchase date. No additional client evidence is requested for those two bridges. This date-only proof requires no sales, all buys before the bonus, a verified identity, a covered action window and an exact closing quantity; it changes no cost, units, valuation or return.
 
 ## Undated PMS account/security lines
 
@@ -123,12 +125,10 @@ The June review's direct-family purchases of MPS, Vedanta and Borosil do not dat
 | Ajay Jaisinghani / 100023 | Transport Corp. of India Ltd. | 8500 | none of its 8500 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it |
 | Ajay Jaisinghani / 100023 | Zydus Lifesciences Ltd. | 6000 | none of its 6000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it |
 | Ankita Jaisinghani / 510854 | Vedanta Aluminium Metal Limited | 4340 | none of its 4340 units is on a dated trade: the transaction statements in this drop run from 2025-01-13 to 2026-07-27 and record no buy or sell of it |
-| Ankita Jaisinghani / 510854 | ZF Commercial Vehicle Control Systems India Ltd | 516 | the transaction statements from 2025-01-13 to 2026-07-27 buy 86 and sell 0 units of it against 516 held, so 430 of them are on no dated trade in this drop |
 | Ajay Jaisinghani / 510861 | Ingersollrand India Ltd | 445 | the transaction statements from 2025-01-16 to 2026-07-27 buy 275 and sell 0 units of it against 445 held, so 170 of them are on no dated trade in this drop |
 | Ajay Jaisinghani / 510861 | Ratnamani Metals & Tubes Ltd | 586 | the transaction statements from 2025-01-16 to 2026-07-27 buy 799 and sell 370 units of it against 586 held, so 157 of them are on no dated trade in this drop |
 | Ajay Jaisinghani / 510861 | The Anup Engineering Ltd | 1258 | the transaction statements from 2025-01-16 to 2026-07-27 buy 1217 and sell 0 units of it against 1258 held, so 41 of them are on no dated trade in this drop |
 | Ajay Jaisinghani / 510861 | Vedanta Aluminium Metal Limited | 8569 | none of its 8569 units is on a dated trade: the transaction statements in this drop run from 2025-01-16 to 2026-07-27 and record no buy or sell of it |
-| Ajay Jaisinghani / 510861 | ZF Commercial Vehicle Control Systems India Ltd | 1032 | the transaction statements from 2025-01-16 to 2026-07-27 buy 172 and sell 0 units of it against 1032 held, so 860 of them are on no dated trade in this drop |
 | Ajay Jaisinghani / 7810404 | ARVIND FASHIONS LIMITED | 4000 | none of its 4000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-07-31 and record no buy or sell of it |
 | Ajay Jaisinghani / 7810404 | CHEMFAB ALKALIS LIMITED | 1000 | none of its 1000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-07-31 and record no buy or sell of it |
 | Ajay Jaisinghani / 7810404 | DCW LIMITED | 3000 | none of its 3000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-07-31 and record no buy or sell of it |

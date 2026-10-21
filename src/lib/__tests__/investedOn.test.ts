@@ -96,8 +96,11 @@ const ACC = new Map(BOOK_ACCOUNTS.map((a) => [a.accountId, a]));
   const partial = BOOK_POSITIONS.filter((p) => p.tradeRecord && !p.tradeRecord.held && (p.tradeRecord.unaccounted ?? 0) > 0
     && !p.heldSince && !p.investedDates && !p.recoveredCost?.heldPurchases);
   ok("the book carries holdings the trades only partly account for", partial.length > 0, `${partial.length} holdings`);
-  ok("none of them is dated", partial.every((p) => investedOnOf([p]) === null));
+  ok("incomplete trades date a holding only with an exact saved bonus bridge", partial.every((p) => {
+    const d=investedOnOf([p]);return !d || d.sources.includes("bonus-trades");
+  }));
   ok("each says why, in the window's own terms", partial.every((p) => {
+    if (investedOnOf([p])) return true;
     const why = lineUndatedReason(p) ?? "";
     return why.includes(p.tradeRecord!.from) && /dated trade/.test(why);
   }));
@@ -163,6 +166,17 @@ const ACC = new Map(BOOK_ACCOUNTS.map((a) => [a.accountId, a]));
   const directMps=all.find(p=>p.recoveredCost&&p.securityKey==='mps')!;
   ok('direct product dates never date a manager-held stock',!!managerMps&&investedOnOf([managerMps])===null);
   ok('a mixed direct/PMS company cannot borrow the direct review range',!!directMps&&investedOnOf([directMps,managerMps])===null);
+}
+
+{
+  for (const [account, units] of [['510854',516],['510861',1032]] as const) {
+    const p=BOOK_POSITIONS.find(p=>p.accountId.endsWith(account)&&p.securityKey==='zf-commercial-vehicle-control-systems-india')!;
+    const before=JSON.stringify(p), d=investedOnOf([p]);
+    ok(`ZF ${account}: the six original purchases survive the saved 5:1 bonus`,p.quantity===units&&d?.first==='2025-05-30'&&d.last==='2026-03-18'&&d.payments===6&&d.sources.includes('bonus-trades')&&d.adjustments?.some(a=>a.includes('2026-06-24'))===true);
+    ok('a bonus date never replaces the purchase dates or changes financial data',d?.first!<'2026-06-24'&&before===JSON.stringify(p));
+    ok('a bonus bridge cannot date a different quantity',investedOnOf([{...p,quantity:units+1}])===null);
+    ok('a bonus after the holding date cannot date that holding',investedOnOf([{...p,tradeRecord:{...p.tradeRecord!,to:'2026-06-23'}}])===null);
+  }
 }
 
 if (fails) { console.log(`\n${fails} failed`); process.exit(1); }

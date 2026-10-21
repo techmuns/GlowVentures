@@ -40,15 +40,17 @@ import { callDatesByHolding, trancheKey } from "./tranches";
 import { fmtDate } from "./format";
 import type { Account, HoldingTrade, Position } from "./types";
 import { reviewField } from "./reviewColumns";
+import savedActions from "../../public/data/corporate-actions.json";
+import { symbolForKey } from "./quotes";
 
-export type InvestedOnSource = "allotments" | "lots" | "trades" | "recovered-lots" | "calls" | "review" | "account";
+export type InvestedOnSource = "allotments" | "lots" | "trades" | "bonus-trades" | "recovered-lots" | "calls" | "review" | "account";
 
 /**
  * The first and last date the money went in, and how many dated payments that
  * is — NULL where the source dates a span and not each payment (the review's
  * range, an account's inception date alone).
  */
-export type InvestedOn = { first: string; last: string; payments: number | null; sources: InvestedOnSource[]; reviewSource?: string };
+export type InvestedOn = { first: string; last: string; payments: number | null; sources: InvestedOnSource[]; reviewSource?: string; adjustments?: string[] };
 
 export type InvestmentDateScope = {
   positions?: readonly Position[]; accountId?: string; accountIds?: readonly string[]; isMandate?: boolean;
@@ -73,9 +75,38 @@ export function investmentDateMissingReason(scope?: InvestmentDateScope): string
 }
 
 const CALL_DATES = callDatesByHolding(BOOK_COMMITMENTS, BOOK_POSITIONS);
+const ACTIONS = new Map<string, typeof savedActions.rows>();
+const ACTION_TICKERS = new Map<string, typeof savedActions.rows>();
+for (const row of savedActions.rows) {
+  if (row.isin) ACTIONS.set(row.isin, [...(ACTIONS.get(row.isin) ?? []), row]);
+  if (row.ticker) ACTION_TICKERS.set(row.ticker, [...(ACTION_TICKERS.get(row.ticker) ?? []), row]);
+}
+type LineDates = { dates: string[]; source: InvestedOnSource; payments?: number; adjustments?: string[] };
+
+/** No sales, every purchase before the bonus, and an exact independent closing-unit control. */
+function bonusPurchaseDates(p: Position): LineDates | null {
+  const r = p.tradeRecord;
+  if (!r || r.sells || !Number.isFinite(p.quantity) || !(p.quantity! > 0)
+    || r.from < savedActions.requestedFrom || r.to > savedActions.verifiedThrough) return null;
+  const ts = holdingTradesOf(p).filter(t => t.date >= r.from && t.date <= r.to);
+  if (!ts.length || ts.some(t => t.side !== "buy" || !Number.isFinite(t.quantity) || !(t.quantity! > 0))) return null;
+  // Some PMS statements omit ISIN. Only the existing verified exchange-symbol
+  // mapping may bridge that identity; ambiguous ticker/ISIN records refuse it.
+  const records = p.isin ? ACTIONS.get(p.isin) ?? [] : ACTION_TICKERS.get(symbolForKey(p.securityKey) ?? "") ?? [];
+  if (new Set(records.map(a => a.isin)).size !== 1) return null;
+  const actions = records.filter(a => a.exDate >= r.from && a.exDate <= r.to && a.type !== "dividend");
+  if (!actions.length || actions.some(a => a.type !== "bonus" || a.issue || !Number.isFinite(a.factor) || !(a.factor! > 1))) return null;
+  const last = ts[ts.length - 1].date;
+  if (actions.some(a => a.exDate <= last)) return null; // Same-day entitlement needs settlement evidence.
+  const bought = ts.reduce((n,t) => n + t.quantity!,0);
+  const factor = actions.reduce((n,a) => n * a.factor!,1);
+  if (Math.abs(bought * factor - p.quantity!) > .0005) return null;
+  return { dates: ts.map(t => t.date), source: "bonus-trades", payments: ts.length,
+    adjustments: actions.map(a => `${a.exDate}: ${a.purpose}; ${a.source}; saved action ${a.id}`) };
+}
 
 /** One line's own dates, or null where nothing the book carries dates it. */
-function lineDates(p: Position): { dates: string[]; source: InvestedOnSource } | null {
+function lineDates(p: Position): LineDates | null {
   const own = BOOK_POSITION_TRANCHES[trancheKey(p.accountId, p.securityKey)];
   const ins = own?.moves.filter((m) => m.direction === "in").map((m) => m.date) ?? [];
   if (ins.length) return { dates: ins, source: "allotments" };
@@ -84,6 +115,8 @@ function lineDates(p: Position): { dates: string[]; source: InvestedOnSource } |
   // their first, last and count, which is all a cell needs.
   const held = p.tradeRecord?.held;
   if (held) return { dates: [held.first, held.last], source: "trades" };
+  const adjusted = bonusPurchaseDates(p);
+  if (adjusted) return adjusted;
   const recovered = p.recoveredCost;
   // The recovery is specific to an account, ISIN, closing date and exact unit
   // balance. Never lend a source record's dates to another position or balance.
@@ -98,7 +131,8 @@ function lineDates(p: Position): { dates: string[]; source: InvestedOnSource } |
 }
 
 /** How many dated payments a line is — null where its source dates a span. */
-function linePayments(p: Position, d: { dates: string[]; source: InvestedOnSource }): number | null {
+function linePayments(p: Position, d: LineDates): number | null {
+  if (d.source === "bonus-trades") return d.payments ?? null;
   if (d.source === "trades") return p.tradeRecord?.held?.lots ?? null;
   if (d.source === "recovered-lots") return p.recoveredCost?.heldPurchases?.lots ?? null;
   if (d.source === "review") return d.dates[0] === d.dates[1] && /^\d{4}-\d{2}-\d{2}$/.test(d.dates[0]) ? 1 : null;
@@ -109,6 +143,7 @@ function linePayments(p: Position, d: { dates: string[]; source: InvestedOnSourc
 export function investedOnOf(ps: readonly Position[]): InvestedOn | null {
   const dates: string[] = [];
   const sources = new Set<InvestedOnSource>();
+  const adjustments = new Set<string>();
   let payments: number | null = 0;
   for (const p of ps) {
     const d = lineDates(p);
@@ -116,12 +151,13 @@ export function investedOnOf(ps: readonly Position[]): InvestedOn | null {
     if (!d) return reviewedInvestmentDates(ps);
     dates.push(...d.dates);
     sources.add(d.source);
+    d.adjustments?.forEach(a => adjustments.add(a));
     const n = linePayments(p, d);
     payments = payments === null || n === null ? null : payments + n;
   }
   if (!dates.length) return null;
   dates.sort();
-  return { first: dates[0], last: dates[dates.length - 1], payments, sources: [...sources] };
+  return { first: dates[0], last: dates[dates.length - 1], payments, sources: [...sources], ...(adjustments.size ? {adjustments:[...adjustments]} : {}) };
 }
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -147,6 +183,7 @@ const SOURCE_WORDS: Record<InvestedOnSource, string> = {
   allotments: "the fund's own dated allotments",
   lots: "the lot register's acquisition dates",
   trades: "the account's own dated trades, every unit held matched to the buy that bought it, first-in, first-out",
+  "bonus-trades": "the account's original purchases, carried through the saved noncash bonus into the exact current holding quantity",
   "recovered-lots": "the original purchase lots in the supplementary records, reconciled to this account, ISIN and every unit still held, first-in, first-out",
   calls: "the fund's dated capital calls",
   review: "the family's review's investment dates",
@@ -162,7 +199,7 @@ export function investedOnTitle(d: InvestedOn): string {
     : d.payments !== null
       ? `${d.payments} dated payments, ${fmtInvestedDate(d.first)} to ${fmtInvestedDate(d.last)}`
       : `First invested ${fmtInvestedDate(d.first)}, last ${fmtInvestedDate(d.last)}`;
-  return `${when} — from ${src}.`;
+  return `${when} — from ${src}.${d.adjustments?.length ? ` Unit reconciliation: ${d.adjustments.join('; ')}.` : ""}`;
 }
 
 /** Every dated buy and sell behind one line, oldest first (`BOOK_HOLDING_TRADES`). */
