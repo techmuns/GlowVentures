@@ -4951,3 +4951,13 @@ current unrealized P&L."*
 - The muted pills and the "No sector weights" absent state are gone. `indexSectors()` still answers the BSE keys with the reason, and the NAV chart keeps all seven.
 - An old `?vs=sensex` / `?vs=bse-500` link falls back to Off.
 - `check:pages`: the control's expected keys are the NAV chart's order filtered on the JSON. New route `cio-sectors-vs-retired` asserts `?vs=sensex` opens Off.
+
+### Stage 10fp — THE RETURNS TAB, CLEANED UP: ONE TOOLBAR, TILES, NO EMPTY TABLE
+
+*"it is very cluttered right now and a lot of un-utilized empty space on the UI of this page."*
+
+- The period buttons, From → To and the return type sit on one toolbar strip. The type's short explanation stays beside the dropdown (Stage 10eb).
+- **Portfolio return**: Requested, Measured and the account coverage are chips in the card's header, with a dot for whole or incomplete. The figure (or its absence and reason) sits beside the five amounts — Opening, Capital in, Capital out, Closing, Gain — which are now stat tiles. The wide gap between the figure and the window is gone.
+- **Benchmarks** are eight tiles in two rows, portfolio first. Each shows its return, a bar on one shared scale and its gap in pp. This replaces the three-column table that stretched across the panel, together with its lone Edit Columns row. Every `data-returns-bench*` handle is unchanged.
+- The order is still portfolio, then benchmarks, then attribution (Stages 10dy, 10fd). The new surfaces use `.ret-well`, `.ret-stat`, `.ret-chip` and `.ret-bar`, each with a light-mode colour.
+- `check:pages` passes on every `cio-returns*` route. The only finding is the KPI strip's DL-11 invested-line check, which fails on main too.
