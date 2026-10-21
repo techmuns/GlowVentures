@@ -4,6 +4,8 @@ import * as book from '../../data/glowData';
 import manifest from '../../data/readModels.json';
 import { applyQuotes, quoteSymbolFor } from '../quotes';
 import type { QuoteFeed } from '../quotes';
+import { unpricedStatementUnits } from '../fundNavs';
+import { investedOnOf } from '../investedOn';
 const read = (name: string) => JSON.parse(readFileSync(`public/views/${manifest.revision}/${name}`, 'utf8'));
 const publication = read('publication.json');
 const root = JSON.parse(readFileSync('public/publication.json', 'utf8'));
@@ -30,7 +32,7 @@ for (const [i, p] of book.BOOK_POSITIONS.entries()) {
   assert.equal(fieldEvidence.fields[`${e.record.pointer}/marketValue`].value, sourceRow.marketValue);
 }
 for (const [account, first] of [['hdfc-mutual-fund-15644806', '2022-08-03'], ['hdfc-mutual-fund-16002141', '2022-08-05']]) {
-  const index = book.BOOK_POSITIONS.findIndex(p => p.accountId === account);
+  const index = book.BOOK_POSITIONS.findIndex(p => p.accountId === account && p.isin === 'INF179K01830');
   assert.ok(index >= 0); assert.equal(evidence[index].investmentDate.value.first, first);
 }
 for (const holding of book.BOOK_UNVALUED_HOLDINGS) {
@@ -41,9 +43,14 @@ for (const holding of book.BOOK_UNVALUED_HOLDINGS) {
   assert.equal(d.provider, account.provider); assert.equal(d.accountNo, account.accountNo);
   assert.equal(row.securityKey, holding.securityKey); assert.equal(row.quantity, holding.quantity);
 }
+const custodyFunds = unpricedStatementUnits();
 for (const [suffix, first] of [['12539150', '2025-03-06'], ['12838316', '2025-11-06'], ['12838320', '2025-07-11']]) {
-  const index = book.BOOK_POSITIONS.findIndex(p => p.accountId.endsWith(suffix) && p.isin === 'INF109KC1RH9');
-  assert.ok(index >= 0); assert.equal(evidence[index].investmentDate.value.first, first);
+  const holding = custodyFunds.find(p => p.accountId.endsWith(suffix) && p.isin === 'INF109KC1RH9');
+  assert.ok(holding); assert.equal(investedOnOf([holding])?.first, first);
+  const raw = book.BOOK_UNVALUED_HOLDINGS.find(p => p.accountId === holding.accountId && p.isin === holding.isin);
+  assert.ok(raw); assert.deepEqual(holding.statementRecord, raw.statementRecord);
+  assert.equal(holding.quantity, raw.quantity, 'The date belongs to the exact custody unit balance');
+  assert.equal(holding.priceEvidence?.instrument, holding.isin);
 }
 const p = book.BOOK_POSITIONS.find(p => p.quantity != null && p.currentPrice && quoteSymbolFor(p) && !p.review && p.assetClass === 'Equity')!;
 const symbol = quoteSymbolFor(p)!;

@@ -73,6 +73,9 @@ jobs:
       - name: Financial calculations and feed contracts
         run: npm run test:family
 
+      - name: Real estate records and ownership calculations
+        run: npm run test:real-estate
+
       - name: Asset response contracts
         run: node scripts/dev/check-asset-middleware.mjs
 
@@ -86,11 +89,20 @@ jobs:
             if curl --silent --fail http://127.0.0.1:4173/ > /dev/null; then break; fi
             sleep 1
           done
+          CHROME="$(command -v google-chrome)" node scripts/dev/check-real-estate.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-sector-return-details.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-investment-dates.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-publication-refresh.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-data-performance.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-chunk-recovery.mjs
+
+      - name: Preserve real estate browser diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: real-estate-browser-check
+          path: .cache/real-estate-check
+          if-no-files-found: ignore
 
       # A regeneration mismatch must fail this required job even though the
       # generated candidate is also built/tested to expose independent defects.
