@@ -122,6 +122,11 @@ test('invalid days cannot date a transaction or investment', () => {
   const next = later(); next.transactions = [{ date: '2026-02-30' }];
   assert.ok(has(assess([doc(), next]), 'INVALID_DATE'));
 });
+test('a renamed or dropped date column cannot silently remove verified transaction/lot dates', () => {
+  const old = doc(); old.transactions = [{ date: '2026-09-01', securityKey: 'example-fund', quantity: 10 }];
+  const next = later(); next.transactions = [{ date: null, securityKey: 'example-fund', quantity: 10 }];
+  assert.ok(has(assess([old, next], [old]), 'DATE_COVERAGE_LOSS'));
+});
 test('new material discrepancies cannot hide behind the same historical count', () => {
   const baselineReport = { rowSumChecks: [{ docKey: 'old', severity: 'material', delta: 7 }] };
   const report = { rowSumChecks: [{ docKey: 'new', severity: 'material', delta: 7 }] };

@@ -102,6 +102,11 @@ export function assessPublication({ baseline, documents, baselineReport = {}, re
       .sort((a, b) => b.asOf.localeCompare(a.asOf))[0];
     for (const section of RECORD_SECTIONS) {
       const rows = d[section] ?? [], seenRows = new Set();
+      const priorRows = previous?.[section] ?? [];
+      for (const field of ['date', 'purchaseDate', 'saleDate']) {
+        if (priorRows.length && priorRows.every(r => nonempty(r[field])) && rows.some(r => !nonempty(r[field]))) add('DATE_COVERAGE_LOSS', d,
+          `The new layout stopped supplying ${section}.${field}; undated rows cannot replace a verified dated record.`, `/${section}`);
+      }
       for (const [i, r] of rows.entries()) {
         const ptr = `/${section}/${i}`;
         walk(r, (v, p) => {
