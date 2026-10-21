@@ -11,6 +11,7 @@ import { usePortfolio } from "@/context/PortfolioContext";
 import { StockLink } from "@/components/StockLink";
 import { useStockExposure } from "@/lib/useStockExposure";
 import { companySectorIndex, type FundExposureRow } from "@/lib/lookthrough";
+import { heldRouteOf, measuredSplit, HELD_ROUTE_NOTE, type MeasuredSplit } from "@/lib/heldThrough";
 import { UNCLASSIFIED as UNCLASSIFIED_SECTOR } from "@/lib/sectors";
 import { symbolFor, symbolForKey, quoteSymbolFor } from "@/lib/quotes";
 import { liveWithheldReason } from "@/lib/corporateActions";
@@ -530,6 +531,12 @@ type Row = {
   viaFunds?: number;
   totalExposure?: number;
   /**
+   * `marketValue` on the stock axis, split by who chose the shares — the
+   * family's own account, a PMS manager, or another account (`measuredSplit`,
+   * over the same deduped set). Unset on every other axis and on a derived row.
+   */
+  split?: MeasuredSplit;
+  /**
    * A company NO statement in this book reports — it is held only inside a fund,
    * and everything about it except `viaFunds` is therefore absent rather than
    * zero. The cells read this to render `AbsentCell` with the reason; the footer
@@ -577,9 +584,23 @@ const canLookThrough = (r: { assetClass: string; securityKey: string }) =>
  */
 const MONITOR_COLS = ["security", "qty", "avgCost", "invested", "investedOn", "cmp", "day", "mv",
   "weight", "pnl", "realised", "return", "sector", "entity"] as const;
-const MONITOR_STOCK_COLS = ["security", "qty", "avgCost", "invested", "investedOn", "cmp", "day", "mv",
+/**
+ * THE MEASURED HALF, SPLIT BY WHO CHOSE THE SHARES. `Direct` and `PMS` stand
+ * before their subtotal `Direct + PMS` (`mv`), which every cost, gain and
+ * return column on the row is struck on, so the money reads left to right as
+ * Direct + PMS, then + Via funds = Total exposure.
+ */
+const MONITOR_STOCK_COLS = ["security", "qty", "avgCost", "invested", "investedOn", "cmp", "day", "direct", "pms", "mv",
+  "viaFunds", "totalExposure", "weight", "pnl", "realised", "return", "sector", "entity"] as const;
+const MONITOR_STOCK_COLS_OTHER = ["security", "qty", "avgCost", "invested", "investedOn", "cmp", "day", "direct", "pms", "otherRoute", "mv",
   "viaFunds", "totalExposure", "weight", "pnl", "realised", "return", "sector", "entity"] as const;
 const MONITOR_LEGACY_KEYS = ["monitor-stock"] as const;
+/** Why a company's route cell is empty while a statement does report it — through another route. */
+const ROUTE_ABSENT_ROW: Record<keyof MeasuredSplit, string> = {
+  direct: "no own demat or broking statement reports this company — the statements that do are the other accounts on this row",
+  manager: "no PMS mandate's statement reports this company — the statements that do are the other accounts on this row",
+  other: "every statement reporting this company is the family's own account or a PMS mandate",
+};
 
 /**
  * WHAT EACH COLUMN IS WORTH ON A ROW, for the reader's own ranking. An absent
@@ -610,6 +631,9 @@ const MONITOR_ACCESSORS: Record<string, (r: Row) => number | string | null | und
   investedOn: (r) => r.investedOn?.first ?? null,
   cmp: (r) => r.currentPrice,
   day: (r) => r.dayChangePct,
+  direct: (r) => r.split?.direct ?? null,
+  pms: (r) => r.split?.manager ?? null,
+  otherRoute: (r) => r.split?.other ?? null,
   mv: (r) => r.marketValue,
   viaFunds: (r) => r.viaFunds,
   totalExposure: (r) => r.totalExposure,
@@ -998,9 +1022,16 @@ export function PortfolioMonitor() {
    * because `useTableView` reconciles its stored order against this list and a
    * fresh array every render would re-run that on every keystroke.
    */
+  // An "Other accounts" column only where a company share sits in an account
+  // that is neither the family's own nor a PMS mandate — none in this drop.
+  const otherRouteHeld = useMemo(() => {
+    if (!bySecurity || !portfolio) return false;
+    const idx = accountIndex(portfolio.accounts);
+    return consolidated.some((p) => isCompanyShare(p) && heldRouteOf(holdingRoute(engagementOf(idx, p) || null)) === "other");
+  }, [bySecurity, portfolio, consolidated]);
   const holdCols = useMemo(
-    () => withReturnCols(bySecurity ? MONITOR_STOCK_COLS : MONITOR_COLS, returnMeasures),
-    [bySecurity, returnMeasures]);
+    () => withReturnCols(bySecurity ? (otherRouteHeld ? MONITOR_STOCK_COLS_OTHER : MONITOR_STOCK_COLS) : MONITOR_COLS, returnMeasures),
+    [bySecurity, otherRouteHeld, returnMeasures]);
   const holdView = useTableView("monitor", holdCols, { legacyKeys: MONITOR_LEGACY_KEYS, reviewKind: "holding", manualEditor: true });
   /**
    * AND THE ACCESSORS GAIN ONE PER MEASURE, so each return column sorts on the
@@ -1817,6 +1848,9 @@ export function PortfolioMonitor() {
           ...r,
           viaFunds,
           totalExposure,
+          // Over `trancheSet` — the deduped set `marketValue` sums — so Direct
+          // and PMS add to Direct + PMS on every row.
+          split: measuredSplit(r.trancheSet, (p) => holdingRoute(engagementOf(accIdx, p) || null)),
           // WEIGHT IS THE FAMILY'S OWN QUESTION — "this much percentage of the
           // portfolio" — so it is the TOTAL exposure over the book, not the
           // measured half. The column therefore sums to the stock share of the
@@ -2616,7 +2650,7 @@ export function PortfolioMonitor() {
   // statement reports no cost — it says so through `AbsentCell`, exactly as a
   // row does. A blank here is "see the row above", never "zero" and never
   // "nobody measured it".
-  type ChildCells = Partial<Record<"qty" | "avgCost" | "invested" | "investedOn" | "cmp" | "day" | "mv"
+  type ChildCells = Partial<Record<"qty" | "avgCost" | "invested" | "investedOn" | "cmp" | "day" | "direct" | "pms" | "otherRoute" | "mv"
     | "viaFunds" | "totalExposure" | "weight" | "pnl" | "realised" | "sector" | "entity", ReactNode>>
     & { ret?: (measure: ReturnMeasure) => ReactNode; reviewScope?: ReviewScope };
   const CHILD_NUM = `${TREE_CELL_DENSE.child} text-right mono whitespace-nowrap text-slate-400`;
@@ -2628,7 +2662,12 @@ export function PortfolioMonitor() {
     <td key="investedOn" className={`${TREE_CELL_DENSE.child} text-left mono whitespace-nowrap text-slate-400`}>{c.investedOn}</td>,
     <td key="cmp" className={CHILD_NUM}>{c.cmp}</td>,
     <td key="day" className={CHILD_NUM}>{c.day}</td>,
-    <td key="mv" className={`${TREE_CELL_DENSE.child} text-right mono whitespace-nowrap text-slate-200`}>{c.mv}</td>,
+    ...(bySecurity ? [
+      <td key="direct" className={CHILD_NUM}>{c.direct}</td>,
+      <td key="pms" className={CHILD_NUM}>{c.pms}</td>,
+      ...(otherRouteHeld ? [<td key="otherRoute" className={CHILD_NUM}>{c.otherRoute}</td>] : []),
+    ] : []),
+    <td key="mv"className={`${TREE_CELL_DENSE.child} text-right mono whitespace-nowrap text-slate-200`}>{c.mv}</td>,
     ...(bySecurity ? [
       <td key="viaFunds" className={CHILD_NUM}>{c.viaFunds}</td>,
       <td key="totalExposure" className={CHILD_NUM}>{c.totalExposure}</td>,
@@ -3245,6 +3284,11 @@ export function PortfolioMonitor() {
                 data-cmp-withheld={withheldOf(v.positions) ? "1" : undefined}>◦</span>
             )}</>,
         day: dayCell(v.live, v.dayChangePct),
+        // THE LINE'S VALUE UNDER ITS OWN ROUTE as well as under the subtotal,
+        // so the lines add to the row's Direct and PMS cells too.
+        ...(v.route === ROUTE_LABEL.own ? { direct: fmtFromBase(v.marketValue, { compact: true }) }
+          : v.route === ROUTE_LABEL.mandate ? { pms: fmtFromBase(v.marketValue, { compact: true }) }
+          : { otherRoute: fmtFromBase(v.marketValue, { compact: true }) }),
         mv: fmtFromBase(v.marketValue, { compact: true }),
         weight: pctOfBook(v.marketValue),
         pnl: v.costNA ? <AbsentCell reason={NO_COST_LINE} />
@@ -3281,6 +3325,15 @@ export function PortfolioMonitor() {
       const printedPnl = sumOrNull(vs.map((v) => v.unrealizedPnL));
       const printedQty = r.quantity === null ? null : totalQuantity(vs);
       const minus = (v: ReactNode) => <span className="text-amber-400">{v}</span>;
+      // The overlap under the route it sits in, so each route column adds up too.
+      const routeGap = (k: keyof MeasuredSplit) => {
+        if (!r.split) return undefined;
+        const onRoute = (v: Venue) => k === "direct" ? v.route === ROUTE_LABEL.own
+          : k === "manager" ? v.route === ROUTE_LABEL.mandate
+          : v.route !== ROUTE_LABEL.own && v.route !== ROUTE_LABEL.mandate;
+        const g = sum(vs.filter(onRoute).map((v) => v.marketValue)) - (r.split[k] ?? 0);
+        return g >= 1 ? minus(`−${fmtFromBase(g, { compact: true })}`) : undefined;
+      };
       out.push(childRow(`${r.key}>overlap`, "overlap", 1, {
         title: <span className="text-amber-400">Counted once</span>,
         sub: `one holding reported under ${vs.length === 2 ? "two" : vs.length} accounts`,
@@ -3290,6 +3343,7 @@ export function PortfolioMonitor() {
           ? minus(`−${fmtNum(printedQty - r.quantity)}`) : undefined,
         invested: printedCost !== null && r.costBasis !== null && printedCost - r.costBasis > 1
           ? minus(`−${fmtFromBase(printedCost - r.costBasis, { compact: true })}`) : undefined,
+        direct: routeGap("direct"), pms: routeGap("manager"), otherRoute: routeGap("other"),
         mv: minus(`−${fmtFromBase(gap, { compact: true })}`),
         weight: weightBase > 0 ? minus(`−${((gap / weightBase) * 100).toFixed(1)}%`) : undefined,
         pnl: printedPnl !== null && r.unrealizedPnL !== null && Math.abs(printedPnl - r.unrealizedPnL) > 1
@@ -3645,6 +3699,12 @@ export function PortfolioMonitor() {
                     title="When this holding's own money went in, from a lot register's acquisition date, the fund's own dated allotments against this very folio, or the capital calls a drawdown fund dates against a folio that holds nothing else. It is the HOLDING's date, never its account's: when the family funded a mandate is a fact about the account and is on that mandate's own page. A row that rolls up several holdings shows a date only where every one of them carries one.">Invested on</SortHeader>
                   <SortHeader col="cmp" view={holdView} pad="px-2 py-1.5">CMP</SortHeader>
                   <SortHeader col="day" view={holdView} pad="px-2 py-1.5">Day</SortHeader>
+                  {/* WHO CHOSE THE SHARES, ONE COLUMN EACH (stock axis only): the
+                      family's own demat or broking account, and a PMS manager's
+                      mandate. `Direct + PMS` beside them is their subtotal. */}
+                  {bySecurity && <SortHeader col="direct" view={holdView} pad="px-2 py-1.5" title={HELD_ROUTE_NOTE.direct}>Direct</SortHeader>}
+                  {bySecurity && <SortHeader col="pms" view={holdView} pad="px-2 py-1.5" title={HELD_ROUTE_NOTE.manager}>PMS</SortHeader>}
+                  {bySecurity && otherRouteHeld && <SortHeader col="otherRoute" view={holdView} pad="px-2 py-1.5" title={HELD_ROUTE_NOTE.other}>Other accounts</SortHeader>}
                   <SortHeader col="mv" view={holdView} pad="px-2 py-1.5">{bySecurity ? "Direct + PMS" : "Market value"}</SortHeader>
                   {/*
                     TWO COLUMNS THAT EXIST ONLY ON THE STOCK AXIS, because only
@@ -4527,6 +4587,17 @@ export function PortfolioMonitor() {
                                 ? "this holding is marked at a total value, not a per-unit price, so it has no day move"
                                 : "no live quote for this security, so there is no previous close to move from"} />}
                         </td>
+                        {bySecurity && ([["direct", "direct"], ["manager", "pms"], ...(otherRouteHeld ? [["other", "otherRoute"]] : [])] as [keyof MeasuredSplit, string][]).map(([k, col]) => {
+                          const v = r.split?.[k] ?? null;
+                          return (
+                            <td key={col} className="px-2 py-1.5 text-right mono text-slate-200 whitespace-nowrap" data-route-cell={col}>
+                              {v !== null ? fmtFromBase(v, { compact: true })
+                                : <AbsentCell reason={r.measuredNA
+                                    ? "no statement in this book reports this company as a holding — the family owns it only through a fund"
+                                    : ROUTE_ABSENT_ROW[k]} />}
+                            </td>
+                          );
+                        })}
                         <td className="px-2 py-1.5 text-right mono text-slate-100 whitespace-nowrap">
                           {/* A COMPANY NO STATEMENT REPORTS HAS NO MEASURED
                               VALUE, and ₹0 would say the family owns none of it
@@ -4859,6 +4930,20 @@ export function PortfolioMonitor() {
                         : `${totDayPct >= 0 ? "+" : ""}${totDayPct.toFixed(2)}%`}
                     </td>
                     ),
+                    /* THE ROUTE COLUMNS TOTAL FROM THEIR OWN ROWS, so Direct + PMS
+                       below them is their sum on the face of the footer. */
+                    ...(bySecurity ? Object.fromEntries(([["direct", "direct"], ["manager", "pms"], ...(otherRouteHeld ? [["other", "otherRoute"]] : [])] as [keyof MeasuredSplit, string][]).map(([k, col]) => {
+                      const t = sumOrNull(rows.map((r) => r.split?.[k] ?? null));
+                      return [col, (
+                        <td key={col} className="px-2 py-1.5 text-right mono text-slate-200 whitespace-nowrap" data-footer-route={col}>
+                          {t === null
+                            ? <AbsentCell reason={k === "direct" ? "no row in view is reported by an own demat or broking statement"
+                                : k === "manager" ? "no row in view is reported by a PMS mandate's statement"
+                                : "no row in view is reported by an account other than the family's own or a PMS mandate"} />
+                            : fmtFromBase(t, { compact: true })}
+                        </td>
+                      )];
+                    })) : {}),
                     mv: (
                     <td key="mv" className="px-2 py-1.5 text-right mono text-slate-100 whitespace-nowrap"
                       title={[feedLive ? LIVE_CELL : "", markBlend].filter(Boolean).join(" ")} data-mv-blend="">

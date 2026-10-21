@@ -92,6 +92,7 @@ const SUITES = [
   ["fund NAVs", "src/lib/__tests__/fundNavs.test.ts"],
   ["unpriced statement units", "src/lib/__tests__/unpricedUnits.test.ts"],
   ["return attribution", "src/lib/__tests__/attribution.test.ts"],
+  ["segment return attribution", "src/lib/__tests__/segmentReturns.test.ts"],
   ["negligible floor", "src/lib/__tests__/negligibleFloor.test.ts"],
   ["scheme labels & transaction order", "src/lib/__tests__/schemeLabel.test.ts"],
   ["daily NAV movers", "src/lib/__tests__/navMovers.test.ts"],
