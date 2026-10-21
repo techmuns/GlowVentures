@@ -45,6 +45,7 @@ try {
   failing = false;
   await page.getByRole("button", { name: "Save property", exact: true }).click(); await page.getByRole("button", { name: "Edit property", exact: true }).waitFor();
   assert.equal(store.data.size, 1);
+  const createdKey = [...store.data.keys()][0];
   await close();
   await page.reload(); await page.getByRole("button", { name: "Test apartment", exact: true }).waitFor();
   await page.getByRole("button", { name: "Test apartment", exact: true }).click();
@@ -91,7 +92,8 @@ try {
   await page.getByRole("button", { name: "Delete property", exact: true }).click();
   await page.getByRole("button", { name: "Delete", exact: true }).click();
   await page.getByRole("dialog").waitFor({ state: "hidden" });
-  assert.equal(store.data.has("real-estate:test-apartment"), false);
+  assert.equal(store.data.has(createdKey), false);
+  assert.equal(store.data.size, 3);
   assert.deepEqual(errors, []);
   console.log("Real estate browser check passed: create, validate, save failure/retry, persist, edit, filter, co-located pins, map editing, table/map detail parity, delete, light/dark and mobile.");
 } finally { await browser.close(); }
