@@ -1120,13 +1120,14 @@ export function MorningCIO() {
     {
       id: "annualised", label: "Annualised return", icon: <TrendingUp className="h-4 w-4" />,
       href: "/performance?summary=annualised#investor-return",
-      hrefTitle: `XIRR over statement accounts only, excluding separately modelled private investments. Covers ${m.annual.covered} of ${m.annual.total} accounts, worth ${money(m.annual.measuredValue)}. ${m.annual.start ? `Recorded window ${m.annual.start} to ${m.annual.end}. ` : ""}${m.annual.reason ?? "Annualised over at least one year."} Open the same return, dates and coverage in NAV & Performance.`,
+      hrefTitle: `XIRR over every statement account holding value, excluding separately modelled private investments — struck only when all of them are measured. ${m.annual.covered} of ${m.annual.total} accounts are, worth ${money(m.annual.measuredValue)}. ${m.annual.start ? `Recorded window ${m.annual.start} to ${m.annual.end}. ` : ""}${m.annual.reason ?? "Annualised over at least one year."} Open the same return, dates and coverage in NAV & Performance.`,
       value: m.annual.pct != null ? <>{pct1(m.annual.pct)} <span className="text-sm">p.a.</span></> : <AbsentValue />,
       calculation: <MoneyWeightedCalculation flows={m.annual.flows} annualPct={m.annual.pct}
         days={m.annual.windowDays} annualised reason={m.annual.reason} result={pct1(m.annual.pct)} money={calculationMoney} shortMoney={money}
-        coverage={<>Uses {m.annual.covered} of {m.annual.total} statement accounts with an opening value and dated movements. At least one year of history is required. Separately modelled private investments are excluded.</>} />,
-      second: <span className="whitespace-normal">XIRR · {m.annual.covered} of {m.annual.total} accounts</span>,
-      sub: m.annual.reason ? <>{m.annual.issueLabel}<br />{m.annual.reason}</>
+        coverage={<>Measured {m.annual.covered} of {m.annual.total} statement accounts holding value. No rate is shown until every one has an opening value and dated movements, and at least one year of history. Separately modelled private investments are excluded.</>} />,
+      second: <span className="whitespace-normal">XIRR · {m.annual.covered} of {m.annual.total} accounts measured</span>,
+      sub: m.annual.missing.length ? <>{m.annual.issueLabel}<br />{m.annual.missing.length} of {m.annual.total} accounts need opening values</>
+        : m.annual.reason ? <>{m.annual.issueLabel}<br />{m.annual.reason}</>
         : <>{m.annual.windowDays} days{m.annual.end ? ` · to ${fmtDate(m.annual.end)}` : ""}</>,
     },
     ...m.periods.map((r): TileMetric => ({
@@ -1154,20 +1155,23 @@ export function MorningCIO() {
       icon: <TrendingUp className="h-4 w-4" />,
       calculation: <MoneyWeightedCalculation flows={m.mwb.flows} annualPct={m.bookMW.annualPct}
         days={m.bookMW.windowDays} annualised={m.bookMW.annualised} result={pct1(m.bookMW.pct)} money={calculationMoney} shortMoney={money}
-        reason={m.bookMW.pct == null ? "The recorded amounts and dates do not provide a usable return" : null}
-        coverage={<>Uses the latest verified return records for {m.mwb.accountIds.length} of {m.mwb.bookAccounts} accounts. Each closes on its own valuation date.
+        reason={m.bookMW.pct == null ? m.mwb.reason ?? "The recorded amounts and dates do not provide a usable return" : null}
+        coverage={<>{m.mwb.missing.length ? "Verified return records cover" : "Uses the latest verified return records for"} {m.mwb.accountIds.length} of {m.mwb.bookAccounts} accounts holding value. Each closes on its own valuation date.
+          {m.mwb.missing.length > 0 && <span className="mt-2 block">No rate is shown until every account is measured. Not measured: {m.mwb.missing.map((g) => <span className="block" key={g.accountId}>{g.accountNo}: {g.reason}.</span>)}</span>}
           {m.mwb.gaps.length > 0 && <span className="mt-2 block">{m.mwb.gaps.map((g) => <span className="block" key={g.accountId}>{g.accountNo}: {g.reason}.</span>)}</span>}
           {m.privateCount > 0 && <> Separately modelled private investments with recorded investment dates are included too.</>}
           {m.bookMW.annualised ? " The card shows a yearly rate." : " The card shows the return for the measured period, not a yearly rate."}</>} />,
       href: drilldownHref("measured"),
-      hrefTitle: `Open the holdings of the accounts this rate covers — those whose statements carry an opening portfolio value — with the accounts it cannot cover a toggle away on the same page. It covers ${m.mwb.accountIds.length} of the book's ${m.mwb.bookAccounts} accounts, worth ${fmtFromBase(m.mwb.measuredValue, { compact: true })} on their own statements${m.totalValue > 0 ? ` — ${((m.mwb.measuredValue / m.totalValue) * 100).toFixed(1)}% of the ${fmtFromBase(m.totalValue, { compact: true })} current value of holdings` : ""}; the rest publish no opening value and are outside this rate, not outside the book.${
-        m.bookMW.windowDays == null ? "" :
+      hrefTitle: `${m.bookMW.pct == null && m.mwb.reason ? `No whole-book money-weighted return: ${m.mwb.reason}. ` : ""}Open the holdings of the accounts with verified return records — an opening portfolio value and dated capital through a closing valuation — with the accounts without one a toggle away on the same page. They are ${m.mwb.accountIds.length} of the ${m.mwb.bookAccounts} accounts holding value, worth ${fmtFromBase(m.mwb.measuredValue, { compact: true })} on their own statements${m.totalValue > 0 ? ` — ${((m.mwb.measuredValue / m.totalValue) * 100).toFixed(1)}% of the ${fmtFromBase(m.totalValue, { compact: true })} current value of holdings` : ""}; the rest publish no opening value, which is why the rate waits for them.${
+        m.bookMW.windowDays == null || m.bookMW.pct == null ? "" :
         m.bookMW.annualised
           ? ` The window is ${m.bookMW.windowDays} days, so this is a genuine annual rate.`
           : ` THE WINDOW IS ${m.bookMW.windowDays} DAYS${m.mwLastClose ? `, TO ${m.mwLastClose}` : ""}, AND THE RATE IS NOT ANNUALISED: it is what these accounts have actually earned over that window — each account valued on its own statement, on the date that statement strikes it. Compounding it onto a full year would be a projection rather than a year the book has lived — this tile once read +99.0% for exactly that reason, with nothing miscalculated, against the managers' own annualised since-inception figures of about 7% to 31% for these very accounts.`
       }`,
       value: pct1(m.bookMW.pct),
-      sub: m.bookMW.pct == null ? absentWhy("no statement in this book carries an opening portfolio value")
+      sub: m.bookMW.pct == null ? absentWhy(m.mwb.missing.length
+          ? `${m.mwb.missing.length} of ${m.mwb.bookAccounts} accounts need opening values`
+          : "no statement in this book carries an opening portfolio value")
         : <>Latest close {m.mwb.lastClose ? fmtDate(m.mwb.lastClose) : "—"} · {m.mwb.accountIds.length} of {m.mwb.bookAccounts} accounts
           {m.mwb.gaps.length > 0 && <><br />Some accounts still need return inputs</>}</>,
     },

@@ -4761,6 +4761,33 @@ cells just like the capital call cells."*
 - **The Performance block is archived as a `performance` section**: the TWRR table plus the client's XIRR and the approach's max/min/median XIRR. The approach figures cover all its investors and become no fact of the book.
 - `pmsReaders.test.mjs` re-reads the Z660 PDF and checks the placement, the window and the four XIRR lines; moving 3.31 under 3 Years by geometry must read as 3 Years. Book totals unchanged (₹836.57 Cr). Page checks fail the same two invariants on `main` (DL-11; bridge sub-lines), so neither is new.
 
+### Stage 10ex — THE SHARED STORE MOVES FROM CLOUDFLARE KV TO THE GITHUB REPOSITORY
+
+*"We will not store in Cloudflare. Instead, we should try to store it in GitHub."*
+— and, told the repository is public, *"it is ok to store in github still"*.
+
+- **`shared/dashboardStore.mjs`**: everything typed on the dashboard (capital
+  calls, strategy / description, tile layouts) is one JSON file,
+  `store/dashboard-store.json`, on its own `dashboard-store` branch. It is created
+  on the first save as one parentless commit, so it never carries a copy of the
+  site. Every save is one commit marked `[skip ci]` (no CI, no site build) and
+  never touches `main`. The server reads the file through GitHub's API on every
+  request, so a save is visible to everyone at once.
+- **Same calls, new backend**: `list/get/put/delete` plus `flush()`, which commits a
+  request's changes once (a four-line legal-name row is one commit). A stale-sha
+  refusal (409/422) re-reads the file and lays this request's changes over the
+  other person's, so two saves at once both land.
+- **Switch-on**: a fine-grained token (Contents read/write on this repo only) as
+  the site secret `GLOW_GITHUB_TOKEN`; `GLOW_GITHUB_REPO` / `_BRANCH` / `_PATH`
+  override the defaults. `SWITCH_ON_STEPS` and the `private-market-calls-off`
+  probe name the secret; `GLOW_STORE` is gone from code.
+- **Public**: the repository is public, so everything saved there can be read by
+  anyone, whatever the dashboard password.
+- `dashboardStore.test.ts` drives a fake GitHub: branch creation, one commit per
+  request, two concurrent saves, read-after-write, the Functions end to end.
+  `private-market-calls` fails 7 walk checks identically on main before 10ev
+  (pre-existing, not this change).
+
 ### Stage 10ey — PRIVATE MARKET: DATE OF INVESTMENT
 
 *"date of investment is missing from the table in private markets page, add column to show that"*
@@ -4858,3 +4885,41 @@ current unrealized P&L."*
 - `useHoldingsSources` reads each account's document totals so the strategy's Statement total hover names every account's printed total.
 - The capital card's long "Why:" line is now the hover on "no appreciation or return is struck" (this also fixes main's `mandate-sector` prose finding).
 - **Checks:** the two Monitor link invariants now require the name link on every row and no link on any account line. The `mandate-fifo` date, Invested and FIFO checks are struck over the strategy (`strategyIdsOf`). New routes `mandate-strategy` and `fund-clubbed` assert one line per holding account, holdings that add to the headline, and no per-account page link. A Monitor invariant checks the clubbed fund's `/fund/` link.
+
+### Stage 10fl — INDEX SECTOR WEIGHTS REFRESH THEMSELVES EACH MONTH
+
+- `.github/workflows/index-sectors.yml` runs `npm run build-index-sectors` at 04:00 UTC on days 1–15 of each month, and on demand. NSE publishes the month-end factsheets on no fixed day, so the window catches them whenever they land. Runs before and after the new sheets appear change nothing.
+- It commits `src/data/indexSectors.json` and `docs/INDEX-SECTORS.md` to main only when a weight moved, after `npm run build` passes against them. This is the `fund-navs.yml` pattern, with the build moved ahead of the commit.
+- A factsheet that names the wrong index, or whose table is missing or does not tie to 100, fails the run before anything is written. A partial table is never committed.
+
+### Stage 10fk — PURCHASE PRICES: THE COST TWO AMCs PRINT, AND COST OVER UNITS
+
+*"a lot of holdings are missing purchase prices in the dashboard holdings … make sure that it is not the case that the statements and files have purchase prices and we are not showing them."*
+
+- **Audit (Monitor, Category axis, all rows):** 105 Avg-cost dashes. 15 are by design (8 section totals, 6 mandate roll-ups, Sanshi's clubbed classes), 60 are review private lines (an amount paid, no unit count), and 30 had no cost on any statement.
+- **The statements did print one, for 4 of the 30.** The HDFC (15644806, 15725046, 16002141) and Kotak (7125255) account statements print `Cost (INR)` in their Account Summary, and `readBlockLayout` read only the scheme blocks. `summaryCost` takes the summary rows on the block's own NAV and NAV date (Kotak splits a scheme into Lump sum and IDCW rows) and publishes the cost only where their units AND value tie to the block. Hope India Trust's Kotak liquid folio does not tie on 3 of 4 statements and keeps no cost.
+- **`npm run replay:folio-cost`** lands the reader on the archive without `GLOW_PDF_PASSWORDS` (these PDFs are encrypted, and `extract` carries them forward unread). It runs the real `extract()` over `pages.json` and only adds a cost where the archive held null. Its `--check` was a no-op against the old reader.
+- **Stage 10bm's open question, answered by the family:** where a statement prints a total cost and units but no per-unit cost, `Position.avgCost` is now cost ÷ units, marked `avgCostDerived` (27 positions: Sanshi, Helios, Active Momentum, Founders, Delphi, Amritkaal, Neo Infra, ICICI Pru, LKP, the HDFC/Kotak folios). A printed per-unit cost is never replaced. The stock page's per-account cell says "Invested ÷ units" in its hover.
+- **Still absent, and correctly by the statements:** ICICI NSDL's 9 shares (₹63.76 Cr) and the Motilal CDSL demat lines are depository statements, quantity and value only, and LKP's liquid BeES is on no ledger. **The family's consolidated review does carry their cost:** its `Transactions since inception` sheet has per-holder purchases (date, units, rate) that reach the statement's units exactly on 8 of the 9 ICICI shares (≈₹54.6 Cr of cost) and on most demat fund lines. Since Stage 10dh the review is a source for the private book only, so this stays a decision for the family.
+- `clubbedFigures` A-14's constructed case is built on the Cash section's uncosted lines, because the section now holds one costed line (HDFC Overnight).
+
+### Stage 10fc — NO PARTIAL RETURNS: EVERY RETURN SURFACE READS ONE RECORD, WHOLE OR ABSENT
+
+*"not all accounts are being read into the dashboard. It says partial return, 2 out of 76 accounts … We do not need to show partial return anywhere on the dashboard"* — the family, 21 Oct 2026.
+
+- **Code cause:** Morning CIO → Returns built its own inputs from NAV history and cash-flow rows instead of the verified `accountReturnRecords` every other return surface reads (Stage 10ei/10em). FYTD measured 9 accounts where 17 are verified; the unit-ledger openings (HDFC ×3, Kotak, ICICI ×2, Invesco, 3P, Motilal MF) never reached it. The tab now opens and closes each account on its verified record, with statement marks between the two as window points.
+- **Data cause, unchanged:** 42 accounts holding value have no verified opening valuation and dated capital through a closing valuation (Sanshi ×5, the MOPWM review ×6, ICICI NSDL, Buoyant ×2, SVAN ×2, Motilal Founders/Delphi/Active Momentum, India SME ×3, Carnelian Amritkaal and others; `RETURN-COVERAGE.md`). Records start on 1 Apr 2026, so YTD and 1Y/2Y/3Y have no opening value for any account.
+- **Never a partial pool.** `measuredAccountsReturn` now returns `missing`, `outside`, `whole` and `reason`; its rate is null unless every account holding value is measured. Morning CIO's money-weighted and annualised tiles, NAV & Performance's consolidated row and tile, each Family & Entities member and `/holdings?of=measured` show `—` with the reason and the missing accounts named. A partial pool's flows are no longer handed to a calculation popup. The Returns tab's figures, opening/flows/closing/gain and portfolio-vs-index gap follow the same rule; "Partial return" is gone from every surface.
+- **Accounted for, not missing:** `nothingToMeasure` — a verified nil (`notApplicable`), or an account with no record, no position and no opening value (custody counted under the review, income-only folios, quantity-only demats, nil statements). 17 such accounts are outside the whole; the "N of M" counts are of the 59 accounts holding value.
+- Tests: `latestAccountReturns` (every account placed once; the book's rate absent; the tile and pool agree over the wholly verified set), `investorSummary` (an unvalued custody account neither blocks nor joins; a missing one leaves the annual rate absent with no inputs), `xirrWorking` (bridge proved on the verified set).
+
+### Stage 10fm — EVERY HOLDING SHOWS WHEN IT WAS BOUGHT, AND ITS DATED TRADES
+
+*"Investment dates are also missing in the dashboard in the portfolio holdings. So make sure that we are showing investment dates, like when was the holding purchased, and all the transaction dates as well."*
+
+- **The audit:** the Holdings table's Invested on column dated **2 of 154** rows (All Securities view). It read fund allotments, lot registers and drawdown calls only. It ignored the managers' transaction statements (1,028 dated buys and sells behind 151 holdings) and the review's investment dates (89 private lines, which Private Market already showed). It also told every PMS share "the manager's statement reports what this share cost but not the date it was bought". `docs/BOOK-REPORT.md` now lists the coverage, with each undated holding's reason.
+- **`scripts/lib/holdingTrades.mjs`** (build-book) puts **`Position.tradeRecord`** on every holding whose account's transaction statements reach its date. Trades are read off the same authoritative report type the sales are settled from. A holding is dated only where the window accounts for every unit held (`opening = held − bought + sold = 0`). Its buys are then matched FIFO, and `held` names the first and last buy still holding units. Units on no dated trade, or a tape that disagrees with the holding statement, date nothing, and `reason` gives the arithmetic. **`BOOK_HOLDING_TRADES`** lists every trade per holding, oldest first. A sale carries `boughtOn` from its capital gain lots where they add to the day's sales. One trade printed on two overlapping statements at different rate precision is kept once (Green Lantern's Alivus and Anup Engineering).
+- **`src/lib/investedOn.ts`** is the one derivation, used by the Monitor, the mandate page and the Excel export. Its tiers are allotments → lot register → trades → calls → the review's range (a month stays a month). A row is dated only where every line is. **A mandate row and a member's account line carry the family's own date**: the inception date the statement prints, plus the dated contributions where the capital record starts there. That date is never lent to the shares.
+- **Rows open into their trades:** an account line under a security, a share inside a mandate (depth 3 — `TreeNameCell` gained a third level) and a single-statement row. Each trade shows its date, units, rate and settled amount. A line the trades only partly cover shows the units "on no dated trade". The mandate drill-down gains an Invested on column; the Excel Holdings sheet gains one after Avg Cost.
+- **Coverage now:** 49 of 154 rows on All Securities, 86 of 117 on Category (every mandate). **212 of 401** holdings are dated in the book: 94 by trades, 87 by the review, 17 by lot registers, 14 by allotments. The rest have no date in this drop: SVAN, Goldstandard and Carnelian's tapes start 1 Apr 2026, ICICI's NSDL statement prints none, and LKP's trades postdate its 31 Mar holdings. Bonus and split units (ZF, Nuvama) leave a holding undated.
+- **Checks:** `holdingTrades.test.mjs` (test:ingest) breaks each gate on constructed inputs. `investedOn.test.ts` (test:family) anchors every trade date on the holding statement's units and the account's inception date. In `check:pages`, `INVESTED_ON_BOOK` gains the two tiers, and a new invariant dates each mandate row by its accounts' earliest inception.

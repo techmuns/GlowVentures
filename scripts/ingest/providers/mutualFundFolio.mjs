@@ -36,7 +36,8 @@
 //
 //   ABSL      a PORTFOLIO SUMMARY table: scheme, units, NAV, value, cost
 //   HDFC      per-scheme blocks closed by
-//   Kotak     `Market Value of Balance Units at NAV of <nav> on <date> (INR) : <v>`
+//   Kotak     `Market Value of Balance Units at NAV of <nav> on <date> (INR) : <v>`,
+//             under an ACCOUNT SUMMARY that prints each scheme's cost
 //   Mirae     `ISIN : … Balance Units : …` then `Current Value : … Investment Value : …`
 //
 // All three are located by ANCHOR TEXT rather than by position, so an AMC
@@ -108,6 +109,39 @@ const cleanName = (s) => String(s ?? "")
 const BLOCK_HEAD = /^\s*[A-Z0-9]{2,8}\s*\/\s*(.+?)\s*-\s*(IN[EF][0-9A-Z]{9})\b/;
 const BLOCK_VALUE = /Market Value of Balance Units at NAV of\s*([\d,]+\.?\d*)\s*on\s*(\d{2}\/\d{2}\/\d{4})\s*\(INR\)\s*:\s*([\d,]+\.?\d*)/i;
 const CLOSING_UNITS = /Closing (?:Unit )?Balance(?: as on \d{2}\/\d{2}\/\d{4})?\s*:?\s*([\d,]+\.\d{3})/i;
+/**
+ * One ACCOUNT SUMMARY row: `<scheme> <mode> <NAV date> <NAV> [NA] <units>
+ * <cost> <market value>`. HDFC's extra `NA` is its 31-Jan-2018 NAV column.
+ */
+const SUMMARY_ROW = /(\d{2}-[A-Za-z]{3}-\d{4})\s+([\d,]+\.\d+)\s+(?:NA\s+)?([\d,]+\.\d{3})\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s*$/;
+
+/**
+ * THE COST THE ACCOUNT SUMMARY PRINTS for the scheme a block values, or null.
+ *
+ * HDFC and Kotak head the statement with `Account Summary as on <date>` and a
+ * `Cost (INR)` column — HDFC Balanced Advantage, 83,001.863 units, cost
+ * 25,000,000.00, the gross purchase its ledger prints with the stamp duty
+ * inside it. The block below carries units and value but no cost, and this
+ * reader took only the block, so these folios reached the book with no cost.
+ *
+ * Kotak splits one scheme into a `Lump sum` row and an `IDCW REINVESTMENT`
+ * row, so the rows are summed. They are found on the block's own NAV and NAV
+ * date, and the cost is published only where their units AND value add to the
+ * block's — the same units, the same money, or no cost at all.
+ */
+function summaryCost(lines, nav, navDate, units, value) {
+  if (nav === null || !navDate || !(units > 0) || value === null) return null;
+  const start = lines.findIndex((l) => /^\s*Account Summary as on/i.test(l));
+  if (start < 0) return null;
+  let u = 0, cost = 0, v = 0, rows = 0;
+  for (let i = start + 1; i < lines.length && !BLOCK_HEAD.test(lines[i]); i++) {
+    const m = SUMMARY_ROW.exec(lines[i]);
+    if (!m || toIso(m[1]) !== navDate || num(m[2]) !== nav) continue;
+    u += num(m[3]); cost += num(m[4]); v += num(m[5]); rows += 1;
+  }
+  if (!rows || Math.abs(u - units) > 0.0005 || Math.abs(v - value) > 0.005) return null;
+  return Math.round(cost * 100) / 100;
+}
 
 /**
  * ABSL: one row per scheme under `PORTFOLIO SUMMARY`.
@@ -133,7 +167,7 @@ const MIRAE_VALUE = /Current Value\s*:?\s*\(?[`₹]?\)?\s*([\d,]+\.?\d*)/i;
 const MIRAE_COST = /Investment Value\s*:?\s*\(?[`₹]?\)?\s*([\d,]+\.?\d*)/i;
 const MIRAE_NAV = /NAV\s*:?\s*\(?[`₹]?\)?\s*([\d,]+\.?\d*)\s*\(as on\s*(\d{2}\/\d{2}\/\d{4})\)/i;
 
-function readBlockLayout(lines, source, warnings) {
+function readBlockLayout(lines, source) {
   const out = [];
   const heads = lines.map((l, i) => (BLOCK_HEAD.test(l) ? i : -1)).filter((i) => i >= 0);
   const seen = new Set();
@@ -171,28 +205,11 @@ function readBlockLayout(lines, source, warnings) {
       assetClass: "Mutual Fund",
       quantity: units,
       marketPrice: num(v[1]),
+      totalCost: summaryCost(lines, num(v[1]), toIso(v[2]), units, num(v[3])),
       marketValue: num(v[3]),
       priceAsOn: toIso(v[2]),
       source,
     }));
-  }
-  // The block supplies the ISIN; the Account Summary supplies its cost. Join
-  // only when units, NAV, NAV date and value all identify exactly one block.
-  const summaryStart = lines.findIndex((l) => /^Account Summary as on/i.test(l));
-  const summaryEnd = heads.find((i) => i > summaryStart);
-  if (summaryStart >= 0 && summaryEnd !== undefined) {
-    const summary = lines.slice(summaryStart, summaryEnd).join(" ");
-    const tail = /(\d{2}-[A-Za-z]{3}-\d{4})\s+([\d,]+\.\d+)\s+(?:NA\s+)?([\d,]+\.\d{3})\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})/g;
-    for (const m of summary.matchAll(tail)) {
-      const [date, nav, units, cost, value] = [toIso(m[1]), num(m[2]), num(m[3]), num(m[4]), num(m[5])];
-      const hits = out.filter((h) => h.priceAsOn === date && h.quantity === units
-        && h.marketPrice === nav && Math.abs(h.printed.marketValue - value) <= .01);
-      if (hits.length !== 1) {
-        warn(warnings, "block-summary-cost-not-joined", `Account Summary cost ${cost}: ${units} units at ${nav} on ${date}, value ${value}, matches ${hits.length} scheme blocks`);
-        continue;
-      }
-      hits[0].totalCost = cost;
-    }
   }
   return out;
 }
@@ -927,7 +944,7 @@ export function extract({ grid, meta }) {
 
   // ── the holdings, whichever layout this AMC uses ──────────────────────────
   const holdings = [
-    ...readBlockLayout(lines, source, warnings),
+    ...readBlockLayout(lines, source),
     ...readAbslLayout(lines, source),
     ...readMiraeLayout(lines, source, warnings),
     ...readIciciLayout(lines, source),

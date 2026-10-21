@@ -48,6 +48,7 @@ const SUITES = [
   ["private market table", "src/lib/__tests__/privateBook.test.ts"],
   ["investment profiles", "src/lib/__tests__/investmentProfiles.test.ts"],
   ["entered strategy and description", "src/lib/__tests__/enteredProfiles.test.ts"],
+  ["dashboard store in GitHub", "src/lib/__tests__/dashboardStore.test.ts"],
   ["review as private-market source", "src/lib/__tests__/reviewBook.test.ts"],
   ["review optional columns", "src/lib/__tests__/reviewColumns.test.ts"],
   ["separate investments", "src/lib/__tests__/separateInvestments.test.ts"],
@@ -112,6 +113,7 @@ const SUITES = [
   ["member scope", "src/lib/__tests__/memberScope.test.ts"],
   ["statement library", "src/lib/__tests__/statementLibrary.test.ts"],
   ["statement uploads", "src/lib/__tests__/statementUploads.test.ts"],
+  ["invested on", "src/lib/__tests__/investedOn.test.ts"],
 ];
 
 let failed = 0;

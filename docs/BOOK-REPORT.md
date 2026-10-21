@@ -282,6 +282,42 @@ A per-contribution breakdown is published for **14** position(s), of which **5**
 | Transition Venture Capital Fund I — Class A1 | transition-venture-capital-TVC262 | 1 | 7,500 | 75,00,000 |
 | Transition Venture Capital Fund I — Class A1 | transition-venture-capital-TVC263 | 1 | 7,500 | 75,00,000 |
 
+## When each holding was bought (Stage 10fm)
+
+Of **401** holdings, **212** carry the date their units were bought: 14 by the fund's own dated allotments, 17 by a lot register, 94 by their account's own dated trades (every unit held matched to a buy, first-in, first-out) and 87 by the family's review's investment dates. A drawdown fund's dated calls date a few more on the page.
+
+**1028** dated buys and sells sit behind **151** holdings (`BOOK_HOLDING_TRADES`); **94** of the sales also carry the purchase dates of the lots their capital gain statement settles them with.
+
+The rest are undated on the page, each with its reason:
+
+- SVAN Investment Managers LLP 8710067 — no trade in the transaction statements' window: 32
+- SVAN Investment Managers LLP 8710090 — no trade in the transaction statements' window: 32
+- Goldstandard Wealth Private Limited 100022 — no trade in the transaction statements' window: 23
+- Goldstandard Wealth Private Limited 100023 — no trade in the transaction statements' window: 23
+- ICICI Bank (NSDL demat) 49794950 — no transaction statement or dated allotment reaches it: 9
+- SVAN Investment Managers LLP 8710067 — the trades do not account for every unit held: 9
+- SVAN Investment Managers LLP 8710090 — the trades do not account for every unit held: 9
+- V.E.C Assago Capital Management LLP 128005 — the trades do not account for every unit held: 9
+- Molecule Ventures LLP 7810404 — no trade in the transaction statements' window: 8
+- LKP Securities 98245 — no transaction statement or dated allotment reaches it: 7
+- V.E.C Assago Capital Management LLP 128005 — no trade in the transaction statements' window: 5
+- Carnelian Asset Management and Advisors Pvt Ltd 3517383 — no trade in the transaction statements' window: 4
+- Green Lantern Capital LLP 510861 — the trades do not account for every unit held: 4
+- Carnelian Asset Management and Advisors Pvt Ltd 3517383 — the trades do not account for every unit held: 2
+- Carnelian Bharat Amritkaal Fund 4551 — no transaction statement or dated allotment reaches it: 1
+- Goldstandard Wealth Private Limited 100022 — the trades do not account for every unit held: 1
+- Goldstandard Wealth Private Limited 100023 — the trades do not account for every unit held: 1
+- Green Lantern Capital LLP 510854 — no trade in the transaction statements' window: 1
+- Green Lantern Capital LLP 510854 — the trades do not account for every unit held: 1
+- Green Lantern Capital LLP 510861 — no trade in the transaction statements' window: 1
+- HDFC Mutual Fund 15644806 — no transaction statement or dated allotment reaches it: 1
+- HDFC Mutual Fund 15725046 — no transaction statement or dated allotment reaches it: 1
+- HDFC Mutual Fund 16002141 — no transaction statement or dated allotment reaches it: 1
+- Kotak Mahindra Mutual Fund 7125255 — no transaction statement or dated allotment reaches it: 1
+- Motilal Oswal Delphi Equity Fund 9049241536 — no transaction statement or dated allotment reaches it: 1
+- Motilal Oswal Founders Fund 90410016093 — no transaction statement or dated allotment reaches it: 1
+- Motilal Oswal Founders Fund 90410016104 — no transaction statement or dated allotment reaches it: 1
+
 ## Sector allocation
 
 | Sector | Market value | Share |
@@ -848,6 +884,7 @@ never guessed into the nearest plausible bucket.
 - cost of Sanshi Fund-I (Open Ended AIF CAT-III) — Class A2 in sanshi-fund-9039671912 is what was paid in, 25,00,00,000: the statement prints 24,99,87,500.62 — what bought units after 12,499.38 of the stamp duty and charges it prints against the same contributions — and that figure is kept beside it as the check
 - cost of Sanshi Fund-I (Open Ended AIF CAT-III) — Class E in sanshi-fund-9069671554 is what was paid in, 22,00,00,000: the statement prints 21,99,89,000.54 — what bought units after 10,999.46 of the stamp duty and charges it prints against the same contributions — and that figure is kept beside it as the check
 - cost of Sanshi Fund-I (Open Ended AIF CAT-III) — Class E in sanshi-fund-9069671634 is what was paid in, 20,50,00,000: the statement prints 20,49,89,750.51 — what bought units after 10,249.49 of the stamp duty and charges it prints against the same contributions — and that figure is kept beside it as the check
+- avg cost: 27 position(s) print a total cost and a unit count and no per-unit cost — their Avg cost is that cost over those units (`avgCostDerived`)
 - FIFO agrees with the class-switch carry on Buoyant Opportunities Strategy — Category III — Class A4 (buoyant-capital-103472): both hold 24,85,00,000 of cost in the units still held, and the unit record shows none sold.
 - FIFO agrees with the class-switch carry on Buoyant Opportunities Strategy — Category III — Class A4 (buoyant-capital-103473): both hold 46,00,58,861.66 of cost in the units still held, and the unit record shows none sold.
 - share movements: 90 holding-window(s) from the demat statements, 90 of which walk their own printed opening balance to their own printed closing balance and carry an opening-to-closing split. 0 join a position this book carries and 23 a holding it carries as a quantity with no value; 39 close at nil, securities the account sold out of during the window; 19 close with units still held on an account that sent no holding statement, so the tape's closing balance is the only record of them; 9 sit on an account whose own holding statement is in the drop and are deliberately not carried as positions — a fund reporting its own units, or a row with no mark. 0 movement row(s) matched no known particular and are counted in the in/out totals by their own balance change.

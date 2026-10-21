@@ -310,7 +310,7 @@ const notesUnderTotal = [1, 2, 3].map((d) => String(holdings.getRow(footerRow + 
 // gone because the tab's table has none (Stage 10af); Priced as of and Notes
 // are the tab's hovers, which a workbook has no other way to carry.
 eq("Holdings columns: money first, descriptors last", headersOf(holdings), [
-  "Security", "Qty", "Avg Cost (₹)", "CMP (₹)", "Market Value (₹)",
+  "Security", "Qty", "Avg Cost (₹)", "Invested on", "CMP (₹)", "Market Value (₹)",
   "Weight of book", "Unreal. P&L (₹)", "Return", "Measure",
   "Class", "Held via", "Mandate", "Asset Class (family)", "Basket (family)", "Sector", "Entities",
   "Priced as of", "Notes",

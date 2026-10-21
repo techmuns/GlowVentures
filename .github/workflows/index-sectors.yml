@@ -1,0 +1,84 @@
+name: Index sectors
+
+# Monthly refresh of each index's sector weights
+# (`scripts/build-index-sectors.mjs` → `src/data/indexSectors.json` +
+# `docs/INDEX-SECTORS.md`), read from the index's own NSE factsheet — the
+# "Sector Representation" table Sector Composition sets the family's allocation
+# against (Stage 10fe). Without this run the comparison ages a month at a time;
+# the card names the factsheet's date, so a stale figure is honest, but it is
+# still stale.
+#
+# THE FIRST FIFTEEN DAYS OF EACH MONTH, EVERY MORNING. NSE dates a factsheet the
+# last trading day of the month and publishes it some days into the next; the
+# exact day is not announced. A daily run over the window catches it whichever
+# day it lands, and the builder is idempotent, so every run before and after
+# the new sheets appear changes nothing and commits nothing. 04:00 UTC is
+# 09:30 IST. Each index carries its own `asOf`, so a run that sees three new
+# sheets and two old ones records exactly that.
+#
+# A MISREAD IS A FAILED RUN, NEVER A PARTIAL FILE. The builder writes only after
+# every factsheet has named its index, yielded its table by the header and tied
+# to 100 within the printed rounding; one that does not throws before anything
+# is written, and this job goes red with the reason rather than committing a
+# table that would put a wrong weight on screen.
+#
+# KEYLESS. niftyindices.com serves the factsheets unauthenticated.
+on:
+  schedule:
+    - cron: "0 4 1-15 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: index-sectors
+  cancel-in-progress: false
+
+jobs:
+  index-sectors:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Read every index's factsheet
+        run: npm run build-index-sectors
+
+      - name: Did a weight move?
+        id: diff
+        run: |
+          if git diff --quiet -- src/data/indexSectors.json docs/INDEX-SECTORS.md; then
+            echo "No factsheet changed — nothing to commit."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            git diff --stat -- src/data/indexSectors.json docs/INDEX-SECTORS.md
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # BUILT BEFORE IT IS COMMITTED. The JSON is imported by the page, so a file
+      # the app cannot build against never reaches main.
+      - name: Verify the app builds against the new weights
+        if: steps.diff.outputs.changed == 'true'
+        run: npm run build
+
+      - name: Commit the new weights
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          git config user.name  "glow-harvest[bot]"
+          git config user.email "glow-harvest[bot]@users.noreply.github.com"
+          git add src/data/indexSectors.json docs/INDEX-SECTORS.md
+          git commit -m "Index sectors: refresh from NSE's factsheets
+
+          Automated monthly run of \`npm run build-index-sectors\`. Each index's
+          sector weights are its own factsheet's, dated as printed;
+          docs/INDEX-SECTORS.md shows each label and the GICS sector it maps to."
+          for i in 1 2 3 4; do
+            git push && break || { echo "push failed, retrying"; sleep $((2**i)); git pull --rebase origin ${{ github.ref_name }}; }
+          done
