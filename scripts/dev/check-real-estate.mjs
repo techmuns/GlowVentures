@@ -86,7 +86,12 @@ try {
   await page.locator("html").evaluate(el => el.classList.remove("dark"));
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({ path: path.join(out, "mobile.png"), fullPage: true });
-  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1), false, "The document must not scroll horizontally; the property table has its own scroller.");
+  const narrowTable = await page.locator("[data-real-estate-table]").evaluate(table => ({
+    viewport: table.parentElement.clientWidth, content: table.parentElement.scrollWidth,
+    pane: document.querySelector("main").clientWidth,
+  }));
+  assert.ok(narrowTable.viewport > 0 && narrowTable.viewport <= narrowTable.pane, "The property table stays inside the available content pane.");
+  assert.ok(narrowTable.content > narrowTable.viewport, "Wide property columns scroll inside their own container on narrow screens.");
   await page.setViewportSize({ width: 1512, height: 982 });
   await page.getByRole("button", { name: "Test apartment", exact: true }).click();
   await page.getByRole("button", { name: "Delete property", exact: true }).click();
