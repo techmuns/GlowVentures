@@ -214,8 +214,10 @@ test('Git publishes a complete immutable tree on codex, keeps HEAD/index untouch
 });
 test('merge finalization requires green CI, reviewed exact head and all protected review gates', () => {
   const publication = { commit: 'abc' }, review = { commit: 'abc', kind: 'local', feedbackAddressed: true, automatedUnavailableReason: 'Review service unavailable; diff reviewed locally.' };
-  const pr = { headRefOid: 'abc', reviewDecision: '', statusCheckRollup: [{ name: 'build', status: 'COMPLETED', conclusion: 'SUCCESS' }], reviews: [] };
+  const pr = { headRefOid: 'abc', reviewDecision: '', statusCheckRollup: ['build', 'statements'].map(name => ({ name, status: 'COMPLETED', conclusion: 'SUCCESS' })), reviews: [] };
   assert.doesNotThrow(() => finalizationGate(pr, review, publication));
+  assert.throws(() => finalizationGate({ ...pr, statusCheckRollup: pr.statusCheckRollup.slice(0, 1) }, review, publication), /required statements/);
+  assert.throws(() => finalizationGate({ ...pr, statusCheckRollup: [pr.statusCheckRollup[0], { name: 'statements', status: 'COMPLETED', conclusion: 'SKIPPED' }] }, review, publication), /required statements/);
   assert.throws(() => finalizationGate({ ...pr, headRefOid: 'changed' }, review, publication), /exact prepared commit/);
   assert.throws(() => finalizationGate({ ...pr, statusCheckRollup: [] }, review, publication), /No CI/);
   assert.throws(() => finalizationGate({ ...pr, reviewDecision: 'REVIEW_REQUIRED' }, review, publication), /Review gate/);

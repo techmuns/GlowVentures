@@ -23,7 +23,9 @@ export function finalizationGate(pr, review, publication) {
     const result = check.conclusion ?? check.state;
     if (!['SUCCESS', 'SKIPPED', 'NEUTRAL'].includes(result)) throw new Error(`CI is not green: ${check.name ?? check.context}`);
   }
-  if (!pr.statusCheckRollup.some(c => (c.name === 'build') && c.conclusion === 'SUCCESS')) throw new Error('The required build/publication tests have not passed.');
+  for (const required of ['build', 'statements']) {
+    if (!pr.statusCheckRollup.some(c => c.name === required && c.conclusion === 'SUCCESS')) throw new Error(`The required ${required} checks have not passed.`);
+  }
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try {
