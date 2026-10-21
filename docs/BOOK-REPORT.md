@@ -279,6 +279,38 @@ A per-contribution breakdown is published for **23** position(s), of which **11*
 | Transition Venture Capital Fund I — Class A1 | transition-venture-capital-TVC262 | 1 | 7,500 | 75,00,000 |
 | Transition Venture Capital Fund I — Class A1 | transition-venture-capital-TVC263 | 1 | 7,500 | 75,00,000 |
 
+## When each holding was bought (Stage 10fm)
+
+Of **405** holdings, **220** carry the date their units were bought: 23 by the fund's own dated allotments, 17 by a lot register, 94 by their account's own dated trades (every unit held matched to a buy, first-in, first-out) and 86 by the family's review's investment dates. A drawdown fund's dated calls date a few more on the page.
+
+**1028** dated buys and sells sit behind **151** holdings (`BOOK_HOLDING_TRADES`); **94** of the sales also carry the purchase dates of the lots their capital gain statement settles them with.
+
+The rest are undated on the page, each with its reason:
+
+- SVAN Investment Managers LLP 8710067 — no trade in the transaction statements' window: 32
+- SVAN Investment Managers LLP 8710090 — no trade in the transaction statements' window: 32
+- Goldstandard Wealth Private Limited 100022 — no trade in the transaction statements' window: 23
+- Goldstandard Wealth Private Limited 100023 — no trade in the transaction statements' window: 23
+- ICICI Bank (NSDL demat) 49794950 — no transaction statement or dated allotment reaches it: 9
+- SVAN Investment Managers LLP 8710067 — the trades do not account for every unit held: 9
+- SVAN Investment Managers LLP 8710090 — the trades do not account for every unit held: 9
+- V.E.C Assago Capital Management LLP 128005 — the trades do not account for every unit held: 9
+- Molecule Ventures LLP 7810404 — no trade in the transaction statements' window: 8
+- LKP Securities 98245 — no transaction statement or dated allotment reaches it: 7
+- V.E.C Assago Capital Management LLP 128005 — no trade in the transaction statements' window: 5
+- Carnelian Asset Management and Advisors Pvt Ltd 3517383 — no trade in the transaction statements' window: 4
+- Green Lantern Capital LLP 510861 — the trades do not account for every unit held: 4
+- Carnelian Asset Management and Advisors Pvt Ltd 3517383 — the trades do not account for every unit held: 2
+- Aditya Birla Sun Life Mutual Fund 1019265797 — no transaction statement or dated allotment reaches it: 1
+- Aditya Birla Sun Life Mutual Fund 1038104611 — no transaction statement or dated allotment reaches it: 1
+- Goldstandard Wealth Private Limited 100022 — the trades do not account for every unit held: 1
+- Goldstandard Wealth Private Limited 100023 — the trades do not account for every unit held: 1
+- Green Lantern Capital LLP 510854 — no trade in the transaction statements' window: 1
+- Green Lantern Capital LLP 510854 — the trades do not account for every unit held: 1
+- Green Lantern Capital LLP 510861 — no trade in the transaction statements' window: 1
+- Kotak Mahindra Mutual Fund 4295974 — no transaction statement or dated allotment reaches it: 1
+- Mirae Asset Mutual Fund 70413280453 — no transaction statement or dated allotment reaches it: 1
+
 ## Sector allocation
 
 | Sector | Market value | Share |

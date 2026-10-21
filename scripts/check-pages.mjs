@@ -12491,16 +12491,18 @@ const KEPT_UNVALUED_BOOK = (() => {
 /**
  * HOW MANY HOLDINGS CAN HONESTLY CARRY AN INVESTED-ON DATE.
  *
- * Three sources, and all are the HOLDING'S OWN: a lot register's acquisition
+ * Five sources, and all are the HOLDING'S OWN: a lot register's acquisition
  * date (`heldSince`), the fund's own dated allotments against that very folio
- * (`BOOK_POSITION_TRANCHES`, keyed on account + security), or a drawdown fund's
+ * (`BOOK_POSITION_TRANCHES`, keyed on account + security), a drawdown fund's
  * dated calls where the account carries no other line with money in it, the
  * line is an AIF, the statement's paid-in covers every call and nothing is
- * printed as called and unpaid (Stage 10cy). Re-expressed here rather than
- * imported from `callDatesByHolding`, which is the code under test. An
- * ACCOUNT's first contribution is deliberately not a fourth tier — that is when
- * the family funded the account, not when a manager bought the share a row is
- * about.
+ * printed as called and unpaid (Stage 10cy), the account's own dated trades
+ * where they account for every unit held (`tradeRecord.held`, Stage 10fm), and
+ * the family's review's investment range (`investedDates`, Stage 10fm).
+ * Re-expressed here rather than imported from `investedOnOf`, which is the
+ * code under test. An ACCOUNT's first contribution is deliberately not a tier
+ * for a holding — that is when the family funded the account, not when a
+ * manager bought the share a row is about; a mandate's own row carries it.
  *
  * Measured here so the column's coverage is checked against the BOOK rather than
  * against the page's own count of what it drew, which would agree with itself
@@ -12518,6 +12520,18 @@ const KEPT_UNVALUED_BOOK = (() => {
  * current, each `dedupeGroup` once, and never a mandate's, which the page lifts
  * into a mandate row of its own (`byKeyNp`'s model in `MONITOR_BASIS_BOOK`).
  */
+/**
+ * WHEN THE FAMILY FIRST INVESTED IN EACH ACCOUNT, as its statement prints it —
+ * a mandate row's Invested on (Stage 10fm). Keyed on accountId; read straight
+ * off `BOOK_ACCOUNTS` rather than through `accountInvestedOn`, the code under test.
+ */
+const INCEPTION_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    return new Map((bookArray(src, "BOOK_ACCOUNTS") ?? []).map((a) => [a.accountId, a.inceptionDate ?? null]));
+  } catch { return null; }
+})();
+
 const INVESTED_ON_BOOK = (() => {
   try {
     const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
@@ -12542,7 +12556,8 @@ const INVESTED_ON_BOOK = (() => {
     const datedLine = (p) => {
       const own = tranches[`${p.accountId}|${p.securityKey}`];
       const ins = (own?.moves ?? []).filter((m) => m.direction === "in");
-      return Boolean(ins.length || p.heldSince || called.has(`${p.accountId}|${p.securityKey}`));
+      return Boolean(ins.length || p.heldSince || called.has(`${p.accountId}|${p.securityKey}`)
+        || p.tradeRecord?.held || p.investedDates);
     };
     // The lines a SECURITY row is built from: current (a closed position and a
     // sub-₹1,000 speck are not rows), each `dedupeGroup` once, and no mandate's.
@@ -31555,6 +31570,26 @@ const INVARIANTS = {
      * family's consolidated review's own Transition Venture line, beside the two
      * trusts' dated ones.
      */
+    /**
+     * A MANDATE ROW CARRIES THE FAMILY'S OWN DATE (Stage 10fm): the earliest
+     * inception date its accounts' statements print, and a dash where one of
+     * them prints none. It was a dash on every mandate while every PMS
+     * statement printed the date. Struck on the row's own handles against the
+     * registry, so a row that borrowed a share's trade date, or one account's
+     * date for two, fails here.
+     */
+    ["a mandate row is dated by the inception its accounts print — the earliest, every account or none", (t, ctx) => {
+      const rows = ctx?.tableRows;
+      if (!rows?.length) return { notChecked: "the table was not captured on this run" };
+      if (!INCEPTION_BOOK) return { notChecked: "the book could not be read" };
+      const mandates = rows.filter((r) => r.mandateAccounts?.length);
+      if (!mandates.length) return { notChecked: "no mandate row is on screen under these filters" };
+      return mandates.every((r) => {
+        const ds = r.mandateAccounts.map((a) => INCEPTION_BOOK.get(a) ?? null);
+        const want = ds.every(Boolean) ? [...ds].sort()[0] : "";
+        return (r.investedOn ?? "") === want;
+      });
+    }],
     ["...and a holding the book cannot date shows a dash, never a borrowed one", (t, ctx) => {
       const rows = ctx?.tableRows;
       if (!rows?.length) return { notChecked: "the table was not captured on this run" };
@@ -40134,6 +40169,8 @@ for (const theme of THEMES) {
            */
           sector: tr.querySelector("[data-sector]")?.getAttribute("data-sector") ?? null,
           sectorWhy: tr.querySelector("[data-sector]")?.getAttribute("title") ?? null,
+          // THE DATE THE ROW'S INVESTED ON CELL DREW (Stage 10fm), off its handle.
+          investedOn: tr.querySelector("td[data-invested-on]")?.getAttribute("data-invested-on") ?? null,
           /**
            * WHETHER THE ROW'S PRICE SAYS ITS QUOTE WAS HELD BACK (DL-9), off the
            * marker's own handle rather than its words, and which account a

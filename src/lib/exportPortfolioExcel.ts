@@ -38,6 +38,7 @@ import { costedFigures, commonMark, markKey, VACUOUS_COST_REASON } from "./clubb
 import { buildDatedCapital, type DatedCapital } from "./datedCapital";
 import { labelledAccounts, labelledPositions } from "./securityLabel";
 import { describeDepositoryUnits } from "./fundNavs";
+import { investedOnOf, lineUndatedReason } from "./investedOn";
 import {
   BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS,
   BOOK_POSITION_TRANCHES, BOOK_CAPITAL_FROM_INCEPTION,
@@ -132,6 +133,13 @@ type HoldingRow = {
   /** Null where a line carries no unit count — the review records none for many private investments. */
   qty: number | null; avgCost: number | null; cmp: number | null; marketValue: number;
   weight: number | null; pnl: number | null;
+  /**
+   * WHEN THE ROW'S OWN MONEY WENT IN — the tab's Invested on, through the same
+   * `investedOnOf` (Stage 10fm): the first date, the last where it differs, and
+   * how many dated payments where the source counts them. ISO, so a sort on
+   * the column is a sort by date; a month the source prints as a month stays one.
+   */
+  investedOn: string | null;
   /**
    * THE TAB'S DEFAULT RETURN, NOT A SECOND ONE (MSX-10). `measuredReturn(…,
    * "auto", …)` on the same inputs the tab's row carries: the FIFO return on the
@@ -302,6 +310,13 @@ function consolidate(held: Position[], accounts: Account[], nowMs: number, dated
        * statement it is rather than asserting one cause over all of them.
        */
       const notes: string[] = [];
+      const inv = investedOnOf(ps);
+      const investedOn = inv && (inv.first === inv.last ? inv.first : `${inv.first} → ${inv.last}`)
+        + (inv.payments !== null && inv.payments > 1 ? ` (${inv.payments} payments)` : "");
+      if (!inv) {
+        const why = ps.filter((x) => !investedOnOf([x])).map(lineUndatedReason).find((x): x is string => !!x);
+        if (why) notes.push(`Invested on — ${why}`);
+      }
       if (costNA) {
         const why = cf.vacuous ? VACUOUS_COST_REASON
           : zeroCost ? "the statement reports a cost of zero against a positive market value, which would book the whole holding as profit, so no cost-based figure is struck on it"
@@ -414,7 +429,7 @@ function consolidate(held: Position[], accounts: Account[], nowMs: number, dated
         // provider prints none (360 ONE marks its AIF at a Net Asset Value with no
         // NAV per unit). Kept null here and rendered as an em dash by the caller,
         // never as a zero price that would read as a measurement.
-        qty, avgCost, cmp: mark.price,
+        qty, avgCost, cmp: mark.price, investedOn: investedOn || null,
         marketValue: mv, weight: totalMV > 0 ? (mv / totalMV) * 100 : null,
         // NULL, NEVER 0. The cell already rendered an em dash; the zero survived
         // in the model and was summed into the Total row below.
@@ -660,6 +675,8 @@ function buildHoldings(wb: ExcelJS.Workbook, positions: Position[], accounts: Ac
     { key: "security", header: "Security", width: 34 },
     { key: "qty", header: "Qty", width: 14, numFmt: QTY, numFmtFor: qtyFormat, align: "right" },
     { key: "avgCost", header: "Avg Cost (₹)", width: 13, numFmt: PRICE, align: "right" },
+    // BESIDE THE COST, AS ON THE TAB — the date is the other half of what was paid.
+    { key: "investedOn", header: "Invested on", width: 26, align: "left" },
     { key: "cmp", header: "CMP (₹)", width: 12, numFmt: PRICE, align: "right" },
     { key: "marketValue", header: "Market Value (₹)", width: 18, numFmt: MONEY, align: "right" },
     // Named on the header rather than left to be assumed: the denominator is the
@@ -749,6 +766,7 @@ function buildHoldings(wb: ExcelJS.Workbook, positions: Position[], accounts: Ac
       security: displaySecurity(h.security),
       qty: h.qty ?? DASH,
       avgCost: h.avgCost ?? DASH,
+      investedOn: h.investedOn ?? DASH,
       cmp: h.cmp ?? DASH,
       marketValue: h.marketValue,
       weight: h.weight ?? DASH,
