@@ -1,3 +1,4 @@
+import { ExportableTable } from "@/components/ExportableTable";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ChevronRight, Wallet, Coins, TrendingUp, Layers, Percent } from "lucide-react";
@@ -893,7 +894,7 @@ export function MandateHoldings() {
         right={<SearchInput value={q} onChange={setQ} placeholder="Filter by name or ISIN…" className="w-56"
           suggestions={rows.map((r) => r.security)} />}>
         <div className="overflow-x-auto">
-          <table className="min-w-full whitespace-nowrap text-sm">
+          <ExportableTable className="min-w-full whitespace-nowrap text-sm">
             <thead className="border-b border-ink-700">
               <Tr view={holdingsView}>
                 <SortHeader col="security" view={holdingsView} align="left">Security</SortHeader>
@@ -981,7 +982,7 @@ export function MandateHoldings() {
                   pnl: <td key="pnl" className={`px-4 py-2.5 text-right mono ${changeColor(pnl)}`}>{pnl === null ? <AbsentValue /> : money(pnl, true)}</td>,
                 }} />
             </tfoot>
-          </table>
+          </ExportableTable>
         </div>
         {/* ONE LINE UNDER THE TABLE, and the paragraph that stood here is its
             hover. *"no one is reading these kind of … notes that you have put in
@@ -1340,7 +1341,7 @@ function HeldByMany({ kind, name, provider, accounts, fund }: {
       <Card className="mt-5" pad={false} title="Who holds it"
         subtitle="One line per family account, each struck over its own statement. The Total is the sum of the lines; its return is FIFO over every account at once.">
         <div className="overflow-x-auto">
-          <table className="min-w-full whitespace-nowrap text-sm" data-strategy-holders>
+          <ExportableTable className="min-w-full whitespace-nowrap text-sm" data-strategy-holders>
             <thead className="border-b border-ink-700">
               <Tr view={holdersView}>
                 <SortHeader col="entity" view={holdersView} align="left">Entity</SortHeader>
@@ -1398,7 +1399,7 @@ function HeldByMany({ kind, name, provider, accounts, fund }: {
                   ret: <td key="ret" className={`px-4 py-2.5 text-right mono ${changeColor(ret)}`}>{ret === null ? <AbsentValue /> : <span title="FIFO over every account at once — (value + withdrawn − paid in) ÷ paid in for the whole — never an average of the lines.">{fmtPct(ret, { sign: true })}</span>}</td>,
                 }} />
             </tfoot>
-          </table>
+          </ExportableTable>
         </div>
       </Card>
 
@@ -1408,7 +1409,7 @@ function HeldByMany({ kind, name, provider, accounts, fund }: {
         right={<SearchInput value={q} onChange={setQ} placeholder="Filter by name, ISIN or member…" className="w-56"
           suggestions={[...new Set(rows.map((r) => r.security))]} />}>
         <div className="overflow-x-auto">
-          <table className="min-w-full whitespace-nowrap text-sm" data-strategy-holdings>
+          <ExportableTable className="min-w-full whitespace-nowrap text-sm" data-strategy-holdings>
             <thead className="border-b border-ink-700">
               <Tr view={holdingsView}>
                 <SortHeader col="security" view={holdingsView} align="left">Security</SortHeader>
@@ -1498,7 +1499,7 @@ function HeldByMany({ kind, name, provider, accounts, fund }: {
                   heldBy: <td key="heldBy" className="px-4 py-2.5 text-[12px] text-slate-300">{n} accounts</td>,
                 }} />
             </tfoot>
-          </table>
+          </ExportableTable>
         </div>
         <div className="border-t border-ink-700/60 px-4 py-2 text-[11px] text-slate-500">
           {hidden > 0 && (
@@ -1631,7 +1632,7 @@ function CapitalIn({ account, owner }: { account: Account; owner?: string }) {
         </span>
       }>
       <div className="overflow-x-auto">
-        <table className="min-w-full whitespace-nowrap text-sm" data-capital-table={account.accountId}>
+        <ExportableTable className="min-w-full whitespace-nowrap text-sm" data-capital-table={account.accountId}>
           <thead className="border-b border-ink-700">
             <Tr view={capitalView}>
               <SortHeader col="date" view={capitalView} align="left">Invested on</SortHeader>
@@ -1698,7 +1699,7 @@ function CapitalIn({ account, owner }: { account: Account; owner?: string }) {
                 ),
               }} />
           </tfoot>
-        </table>
+        </ExportableTable>
       </div>
       {/*
         WHAT IT MADE, AND ON WHAT — never on "net invested".
@@ -1830,7 +1831,7 @@ function ManagerTrades({ account, owner }: { account: Account; owner?: string })
       ) : (
         <>
           <div className="overflow-x-auto rounded-lg border border-ink-700">
-            <table className="min-w-full text-[13px]" data-manager-trades>
+            <ExportableTable className="min-w-full text-[13px]" data-manager-trades>
               <thead className="bg-ink-800">
                 <Tr view={tradeView} className="border-b border-ink-700">
                   <SortHeader col="security" view={tradeView} align="left" pad="px-3 py-2">Security</SortHeader>
@@ -1911,7 +1912,7 @@ function ManagerTrades({ account, owner }: { account: Account; owner?: string })
                   );
                 })}
               </tbody>
-            </table>
+            </ExportableTable>
           </div>
           <p className="mt-2 text-[11px] text-slate-500"
             title="Over the period this account's statements cover. These are the manager's decisions inside a mandate the family funded; the family's own capital into it is on the Transactions card.">

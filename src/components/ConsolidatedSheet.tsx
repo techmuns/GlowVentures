@@ -1,3 +1,4 @@
+import { ExportableTable } from "@/components/ExportableTable";
 import { InfiniteTableBody } from "./InfiniteTableBody";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
@@ -84,7 +85,7 @@ export function ConsolidatedSheet({ onSources, onLoaded }: { onSources: () => vo
     <p data-prose-ok="consolidated template units, valuation basis and missing-input coverage" className="mb-3 max-w-5xl text-xs leading-relaxed text-slate-400">{sheet.note}</p>
     <Card pad={false}>
       <div className="max-h-[65vh] overflow-auto">
-        <table className="w-full border-separate border-spacing-0 text-xs" data-table-static="the consolidated workbook format preserves its summary hierarchy and register column order">
+        <ExportableTable exportName={`Consolidated — ${sheet.name}`} className="w-full border-separate border-spacing-0 text-xs" data-table-static="the consolidated workbook format preserves its summary hierarchy and register column order">
           <thead className="sticky top-0 z-20"><tr>{sheet.columns.map((c, i) => <th key={c.key} className={`border-b border-r border-ink-700 bg-ink-800 px-3 py-3 text-left font-semibold text-slate-200 ${i === 0 ? "sticky left-0 z-30" : ""}`}
             style={{ minWidth: Math.min(220, Math.max(100, c.width * 7)), maxWidth: 340 }}><span className="block">{c.label}</span></th>)}</tr></thead>
           <InfiniteTableBody rows={filtered} columns={sheet.columns.length} resetKey={JSON.stringify([sheet.name, query, scope])}>{({ row, index }) => <tr key={index} data-consolidated-row={index} className={row.kind ? "font-semibold" : "hover:bg-ink-700/30"}>
@@ -92,12 +93,12 @@ export function ConsolidatedSheet({ onSources, onLoaded }: { onSources: () => vo
               const c = sheet.columns[i], link = row.links?.[c.key];
               const text = display(value, c);
               const target = link?.file !== undefined ? `/audit?${link.file ? `file=${encodeURIComponent(link.file)}` : "sources=1"}` : link?.sheet ? `/audit?consolidated=${encodeURIComponent(link.sheet)}${link.find ? `&q=${encodeURIComponent(link.find)}` : ""}${link.where ? `&scope=${encodeURIComponent(JSON.stringify(link.where))}` : ""}` : null;
-              return <td key={c.key} title={value == null ? "Not reported or unsupported by the available source record. See the sheet note and Checks." : String(value)}
+              return <td key={c.key} data-export-value={value == null ? "—" : value} data-export-type={typeof value === "number" ? "number" : "text"} data-export-format={c.format} title={value == null ? "Not reported or unsupported by the available source record. See the sheet note and Checks." : String(value)}
                 className={`border-b border-r border-ink-700/50 px-3 py-2.5 align-top ${typeof value === "number" ? "text-right mono whitespace-nowrap" : "text-left"} ${i === 0 ? "sticky left-0 z-10" : ""} ${row.kind === "group" ? "bg-champagne-500/10 text-champagne-400" : row.kind === "total" ? "bg-ink-700 text-slate-100" : "bg-ink-900 text-slate-300"}`} style={{ maxWidth: 340 }}>
                 {target && value != null ? <Link to={target} onClick={() => { if (link?.file !== undefined) onSources(); }} className="text-champagne-400 underline decoration-champagne-500/40 underline-offset-2 hover:decoration-champagne-400">{text}</Link> : text}
               </td>;
             })}</tr>}</InfiniteTableBody>
-        </table>
+        </ExportableTable>
         {!filtered.length && <p className="p-6 text-sm text-slate-500">No matching rows.</p>}
       </div>
     </Card>

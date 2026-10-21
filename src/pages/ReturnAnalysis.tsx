@@ -1,3 +1,4 @@
+import { ExportableTable } from "@/components/ExportableTable";
 import { useMemo } from "react";
 import {
   BarChart, Bar, Cell, ResponsiveContainer, Tooltip, CartesianGrid, XAxis, YAxis, ReferenceLine,
@@ -515,7 +516,7 @@ export function ReturnAnalysis() {
         <Card className="lg:col-span-2" title="Contribution by sector"
           subtitle="Company shares by sector, funds by class, each as a share of total cost — every share in a company, a manager's mandate included, and every fund wrapper under its own class.">
           <div className="overflow-x-auto">
-            <table className="w-full text-[12.5px]">
+            <ExportableTable className="w-full text-[12.5px]">
               <thead className="label-xs border-b border-ink-700">
                 <Tr view={sectorView}>
                   <SortHeader col="sector" view={sectorView} align="left" pad="px-2 py-2">Sector / class</SortHeader>
@@ -547,7 +548,7 @@ export function ReturnAnalysis() {
                     contrib: <td key="contrib" className={`px-2 py-2 text-right mono ${changeColor(m.embeddedRet ?? 0)}`}>{fmtPct(m.embeddedRet, { sign: true, decimals: 2 })}</td>,
                   }} />
               </tfoot>
-            </table>
+            </ExportableTable>
           </div>
           {/* ONE LINE, the reasoning in its hover — the family asked for the
               notes under the tables to go. Which classes are bucketed by class
@@ -593,7 +594,7 @@ export function ReturnAnalysis() {
       <Card className="mt-5" title="Per account"
         subtitle="Every account, with its best and worst name — the same measure on every account the book carries; a PMS mandate is one account here, and so is the family's own demat.">
         <div className="overflow-x-auto">
-          <table className="w-full text-[12.5px]">
+          <ExportableTable className="w-full text-[12.5px]">
             <thead className="label-xs border-b border-ink-700">
               <Tr view={accountView}>
                 <SortHeader col="account" view={accountView} align="left" pad="px-3 py-2">Account</SortHeader>
@@ -640,7 +641,7 @@ export function ReturnAnalysis() {
                 </Tr>
               ))}
             </tbody>
-          </table>
+          </ExportableTable>
         </div>
       </Card>
 
@@ -699,7 +700,7 @@ function ContribTable({ rows, money, storageKey }: {
   }
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-[12.5px]">
+      <ExportableTable className="w-full text-[12.5px]">
         <thead className="label-xs border-b border-ink-700">
           <Tr view={view}>
             <SortHeader col="security" view={view} align="left" pad="px-2 py-2">Security</SortHeader>
@@ -723,7 +724,7 @@ function ContribTable({ rows, money, storageKey }: {
             </Tr>
           ))}
         </tbody>
-      </table>
+      </ExportableTable>
     </div>
   );
 }
@@ -753,7 +754,7 @@ function DrawdownTable({ index }: { index: { date: string; index: number }[] }) 
   });
   return (
     <div className="overflow-x-auto">
-      <table className="min-w-full text-sm">
+      <ExportableTable className="min-w-full text-sm">
         <thead className="border-b border-ink-700">
           <Tr view={view}>
             <SortHeader col="date" view={view} align="left">Statement date</SortHeader>
@@ -781,7 +782,7 @@ function DrawdownTable({ index }: { index: { date: string; index: number }[] }) 
             </Tr>
           ))}
         </tbody>
-      </table>
+      </ExportableTable>
     </div>
   );
 }
