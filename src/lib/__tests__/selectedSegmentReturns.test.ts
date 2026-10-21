@@ -94,3 +94,11 @@ for (const inception of [false, true]) {
  assert.match(returnGapText(outside.total.missing.find(g => g.accountId === 'b')!.reason, sel.start), /worth at the start/);
 }
 assert.match(returnGapText('it held nothing across the window', sel.start), /outside this period/);
+
+// A closed PMS account's tiny bank balance cannot claim its equity gains as Cash.
+const closedCash = pos({ securityKey: 'cash', security: 'Bank balance', assetClass: 'Cash', marketValue: 0.34, costBasis: 0.34 });
+const closedAccount = acct('a', { engagement: 'PMS', capital: { contributed: 100, withdrawn: 150 } as Account['capital'] });
+for (const axis of ['sector', 'security', 'assetClass', 'basket'] as const) {
+ const closed = selectedSegmentReturns([], [closedCash], [closedAccount], axis, { ...sel, inception: true });
+ near(closed.total.gain, 50.34); near(closed.rows.find(r => r.key === UNSPLIT_RETURNS)!.gain, 50.34);
+}

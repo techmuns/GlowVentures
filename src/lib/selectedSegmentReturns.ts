@@ -113,7 +113,11 @@ export function selectedSegmentReturns(current: readonly Position[], exited: rea
   const allocated = new Map<string, ReturnUnit[]>(), unsplit: ReturnUnit[] = [];
   for (const u of units) {
     const ps = u.positions.filter(carries), keys = new Set((ps.length ? ps : u.positions).map(seg.key));
-    if (keys.size !== 1) { unsplit.push(u); continue; }
+    // A closed managed account's cash residue does not identify the stocks
+    // that earned its gain. Only category/side can keep that mandate whole.
+    const closedMandate = u.key === u.accountId && idx.get(u.accountId)?.engagement === 'PMS'
+      && !current.some(p => p.accountId === u.accountId);
+    if (keys.size !== 1 || (closedMandate && axis !== 'category' && axis !== 'side')) { unsplit.push(u); continue; }
     const key = [...keys][0];
     if (!groups.has(key)) groups.set(key, []); // A fully exited segment still earned its gain.
     allocated.set(key, [...(allocated.get(key) ?? []), u]);
