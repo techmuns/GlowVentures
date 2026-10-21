@@ -28,6 +28,7 @@ import { lotGroupsOf, daySalesOf, settleSales, settledSecurityOf } from "../shar
 import { sourceFor } from "./ingest/precedence.mjs";
 import { AIF_UNITS, PROVIDER as CDSL_DEMAT_PROVIDER } from "./ingest/providers/motilalDemat.mjs";
 import { reclassificationsFrom, carryLotsThroughSwitches, carryCostThroughSwitches, UNIT_TIE } from "./lib/classSwitch.mjs";
+import { tradeWindows, windowThrough, oneCopyPerTrade, holdingTradeRows, holdingTradeRecord } from "./lib/holdingTrades.mjs";
 import { PROVIDER as NSDL_DEMAT_PROVIDER } from "./ingest/providers/nsdlDemat.mjs";
 import { PROVIDER as HDFC_NSDL_PROVIDER } from "./ingest/providers/hdfcNsdl.mjs";
 import { SEPARATE_INVESTMENTS } from "../shared/separateInvestments.mjs";
@@ -2540,6 +2541,8 @@ function build(archived) {
   const bankAccounts = [];
   /** Positions whose lot register does not account for the units held — no split. */
   const splitUnreconciled = [];
+  /** Every dated buy and sell behind a holding, keyed `${accountId}|${securityKey}` — see `holdingTradeRows`. */
+  const holdingTrades = {};
   /** Positions whose statement cost FIFO over the fund's own unit record restates — named in the report. */
   const fifoRestated = [];
   /** The FIFO lots still held, per `${accountId}|${securityKey}` — the per-contribution breakdown's source. */
@@ -3119,6 +3122,34 @@ function build(archived) {
     const cgTo = allIssues.filter((d) => (d.capitalGains ?? []).length)
       .map((d) => d.periodTo ?? d.asOf).filter(Boolean).sort().at(-1) ?? null;
     const dematClosings = allIssues.flatMap((d) => d.dematBalances ?? []).filter((b) => b.kind === "closing" && b.isin && b.date);
+    /**
+     * THE ACCOUNT'S OWN TRADES, AS DATES ON EACH HOLDING (Stage 10fm) — read off
+     * the same authoritative report type the sales are settled from, so a trade
+     * a manager prints on both its transaction statement and its investor report
+     * is one trade. A fund's own allotment printed on a tape is its unit record's
+     * row, which the holding's tranches already date, and is left there.
+     * `holdingTradeRecord` says what the window can date and what it cannot.
+     */
+    // The window holding the holdings' own date — or, where every window ends
+    // before it, the last of them, so the record can say the tape stops short.
+    const tapeWindows = saleType ? tradeWindows(allIssues.filter((d) => d.reportType === saleType)) : [];
+    const tapeWindow = windowThrough(tapeWindows, asOf) ?? (asOf ? tapeWindows.filter((w) => w.to < asOf).at(-1) ?? null : null);
+    const tapeOf = (securityKey) => oneCopyPerTrade((saleType ? dated.transactions : [])
+      .filter((t) => t.securityKey === securityKey && typeOfDoc.get(t.source) === saleType)
+      .filter((t) => !ownFundMoves.some((m) => m.securityKey === t.securityKey && m.date === t.date))
+      .map((t) => ({ ...t, amount: settledOf(t) })));
+    const tradeRecordOf = (h) => {
+      const rows = holdingTradeRows(tapeOf(h.securityKey), dated.capitalGains.filter((l) => l.securityKey === h.securityKey));
+      // A CASH BALANCE IS NOT BOUGHT ON A DATE. A liquid fund the manager parks
+      // cash in is typed Cash by its statement and IS traded, so a Cash line is
+      // left out only where no trade names it.
+      if (h.assetClass === "Cash" && !rows.length) return null;
+      // A tape that stops before the holding's date and never names it says
+      // nothing about it — a fund whose own allotments are its tranches, say.
+      if (!rows.length && (!tapeWindow || !asOf || tapeWindow.to < asOf)) return null;
+      if (rows.length) holdingTrades[`${accountId}|${h.securityKey}`] = rows;
+      return holdingTradeRecord({ rows, quantity: h.quantity, asOf, window: tapeWindow });
+    };
     const rollForwardOf = (h, base) => {
       if (!asOf || !tapeTo || tapeTo <= asOf || !isNum(h.quantity) || !h.securityKey) return null;
       const rows = dated.transactions
@@ -3642,6 +3673,8 @@ function build(archived) {
         ltCostBasis,
         daysToLT,
         heldSince,
+        /** What the account's own dated trades say about when these units were bought — see `holdingTradeRecord`. */
+        tradeRecord: tradeRecordOf(h) ?? undefined,
         // The date the statement PRINTS its price or value as struck at, which
         // need not be the account's as-of: ICICI's NSDL balance is at 31 Mar and
         // its values "Prices as on 30-Mar-2026". Only where printed; never the as-of.
@@ -4839,6 +4872,11 @@ function build(archived) {
     accountReturnRecords: buildAccountReturnRecords({ accounts, accountCashFlows, byAccount,
       historicalNavs: JSON.parse(fs.readFileSync(path.join(ROOT, 'scripts/ingest/reference/amfi-opening-navs.json'), 'utf8')) }),
     capitalMoves, positionTranches, shareMovements,
+    // Keyed on the holdings this book carries, in key order, so the file
+    // regenerates byte-identically however the accounts were walked.
+    holdingTrades: Object.fromEntries(Object.keys(holdingTrades).sort()
+      .filter((k) => positions.some((p) => `${p.accountId}|${p.securityKey}` === k))
+      .map((k) => [k, holdingTrades[k]])),
     capitalFromInception: [...capitalFromInception].sort(),
     navHistory, accountNavHistory, navCoverage, undatedCapital, attribution,
     excludedAccounts, bankAccounts, unvaluedHoldings, separateInvestments,
@@ -4918,7 +4956,7 @@ function emit(book) {
   L.push("// list and what document would supply each.");
   L.push("import type {");
   L.push("  Account, AccountBridge, AccountReturnBlock, AccountReturnCoverage, BookSummary, CapitalMove, CashFlow, Commitment,");
-  L.push("  Attribution, CorporateAction, EntityCG, FundInvestment, NavCoverage, NavPoint, Position, PositionTranches,");
+  L.push("  Attribution, CorporateAction, EntityCG, FundInvestment, HoldingTrade, NavCoverage, NavPoint, Position, PositionTranches,");
   L.push("  RealisedByClass, ReviewFlow, ReviewSuperseded, ReviewWrittenOff, ShareMovement, StartupInvestment, UndatedCapital, UnvaluedStatementHolding,");
   L.push('} from "@/lib/types";');
   L.push("");
@@ -5076,6 +5114,16 @@ function emit(book) {
   L.push(" * is absent by that gate rather than shown partially — see `positionTranchesFrom`.");
   L.push(" */");
   L.push(`export const BOOK_POSITION_TRANCHES: Record<string, PositionTranches> = ${j(book.positionTranches)};`);
+  L.push("");
+  L.push("/**");
+  L.push(" * EVERY DATED BUY AND SELL BEHIND A HOLDING (Stage 10fm), keyed");
+  L.push(" * `<accountId>|<securityKey>` — the account's own transaction statement, oldest");
+  L.push(" * first, after the holding's statement date or not. A sale carries `boughtOn`,");
+  L.push(" * the purchase dates of the lots its capital gain statement settles it with,");
+  L.push(" * only where those lots' units add to the day's sales exactly.");
+  L.push(" * `Position.tradeRecord` says which of these date the units held.");
+  L.push(" */");
+  L.push(`export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = ${j(book.holdingTrades)};`);
 
   L.push("");
   L.push("/**");
@@ -5587,6 +5635,46 @@ function report(book) {
       L.push(`| ${p?.security ?? t.securityKey} | ${t.accountId} | ${t.moves.length} | `
         + `${t.units.toLocaleString("en-IN")} | ${r2(inv).toLocaleString("en-IN")} |`);
     }
+  }
+  L.push("");
+  L.push("## When each holding was bought (Stage 10fm)");
+  L.push("");
+  {
+    // The holdings a purchase date is a question about: units bought on a day,
+    // so neither a cash balance nor a closed line.
+    const held = book.positions.filter((p) => !(p.assetClass === "Cash" && !p.tradeRecord) && p.quantity !== 0);
+    const tranche = (p) => (book.positionTranches[`${p.accountId}|${p.securityKey}`]?.moves ?? []).some((m) => m.direction === "in");
+    const dated = { tranche: 0, lots: 0, trades: 0, review: 0 };
+    const undated = [];
+    for (const p of held) {
+      if (tranche(p)) dated.tranche++;
+      else if (p.heldSince) dated.lots++;
+      else if (p.tradeRecord?.held) dated.trades++;
+      else if (p.investedDates) dated.review++;
+      else undated.push(p);
+    }
+    const tradeRows = Object.values(book.holdingTrades).flat();
+    L.push(`Of **${held.length}** holdings, **${held.length - undated.length}** carry the date their units were bought: `
+      + `${dated.tranche} by the fund's own dated allotments, ${dated.lots} by a lot register, `
+      + `${dated.trades} by their account's own dated trades (every unit held matched to a buy, first-in, first-out) `
+      + `and ${dated.review} by the family's review's investment dates. A drawdown fund's dated calls date a few more on the page.`);
+    L.push("");
+    L.push(`**${tradeRows.length}** dated buys and sells sit behind **${Object.keys(book.holdingTrades).length}** holdings `
+      + `(\`BOOK_HOLDING_TRADES\`); **${tradeRows.filter((t) => t.boughtOn).length}** of the sales also carry the purchase dates `
+      + "of the lots their capital gain statement settles them with.");
+    L.push("");
+    const byWhy = new Map();
+    for (const p of undated) {
+      const why = p.tradeRecord
+        ? (p.tradeRecord.buys + p.tradeRecord.sells ? "the trades do not account for every unit held" : "no trade in the transaction statements' window")
+        : "no transaction statement or dated allotment reaches it";
+      const a = book.accounts.find((x) => x.accountId === p.accountId);
+      const k = `${a?.provider ?? p.accountId} ${a?.accountNo ?? ""} — ${why}`;
+      byWhy.set(k, (byWhy.get(k) ?? 0) + 1);
+    }
+    L.push("The rest are undated on the page, each with its reason:");
+    L.push("");
+    for (const [k, n] of [...byWhy.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))) L.push(`- ${k}: ${n}`);
   }
   L.push("");
   L.push("## Sector allocation");

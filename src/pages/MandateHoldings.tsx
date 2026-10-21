@@ -26,6 +26,8 @@ import { BOOK_CAPITAL_MOVES, BOOK_POSITION_TRANCHES, BOOK_COMMITMENTS, BOOK_CAPI
 const DATED_ACCOUNTS = new Set(BOOK_CAPITAL_MOVES.map((m) => m.accountId)).size;
 import { fmtCurrency, fmtNum, fmtPct, fmtDate, changeColor } from "@/lib/format";
 import type { Account, Position } from "@/lib/types";
+import { investedOnOf, lineUndatedReason } from "@/lib/investedOn";
+import { InvestedOnCell } from "@/components/InvestedOnCell";
 import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
 import { useTableView, sortRows } from "@/lib/tableView";
 import { withReviewAccessors } from "@/lib/reviewColumns";
@@ -207,7 +209,7 @@ function bucketsOf(rows: Position[], engagement: string | null | undefined) {
  * in below, which is what `<Tr>` permutes from. The first is the row's SUBJECT
  * and never moves (see `src/lib/tableView.ts`).
  */
-const MANDATE_COLS = ["security", "sector", "qty", "avgCost", "invested", "cmp", "mv", "weight", "pnl"] as const;
+const MANDATE_COLS = ["security", "sector", "qty", "avgCost", "invested", "investedOn", "cmp", "mv", "weight", "pnl"] as const;
 const CAPITAL_COLS = ["date", "type", "in", "out", "units", "security"] as const;
 /**
  * The family's own dated record AND the drawdown funds' own dated calls — the
@@ -652,6 +654,7 @@ export function MandateHoldings() {
     qty: (r) => r.quantity,
     avgCost: (r) => r.avgCost,
     invested: (r) => r.costBasis,
+    investedOn: (r) => investedOnOf([r])?.first ?? null,
     cmp: (r) => r.currentPrice,
     mv: (r) => r.marketValue,
     weight: (r) => (mv > 0 ? r.marketValue : null),
@@ -821,6 +824,8 @@ export function MandateHoldings() {
                 <SortHeader col="qty" view={holdingsView}>Qty</SortHeader>
                 <SortHeader col="avgCost" view={holdingsView}>Avg cost</SortHeader>
                 <SortHeader col="invested" view={holdingsView}>Invested</SortHeader>
+                <SortHeader col="investedOn" view={holdingsView} align="left"
+                  title="When the units this share holds were bought: the account's own dated trades where they account for every unit held, matched first-in, first-out, or a lot register's acquisition dates. The Portfolio Monitor's holdings open each share into its dated trades.">Invested on</SortHeader>
                 <SortHeader col="cmp" view={holdingsView}>CMP</SortHeader>
                 <SortHeader col="mv" view={holdingsView}>Market value</SortHeader>
                 <SortHeader col="weight" view={holdingsView}>Weight</SortHeader>
@@ -861,6 +866,11 @@ export function MandateHoldings() {
                     </td>
                     <td className="px-4 py-2.5 text-right mono text-slate-400">
                       {r.costBasis === null ? <AbsentCell reason="this statement reports no cost for the holding" /> : money(r.costBasis)}
+                    </td>
+                    <td className="px-4 py-2.5 text-left mono text-[12px] text-slate-400" data-mandate-invested-on={investedOnOf([r])?.first ?? ""}>
+                      <InvestedOnCell d={investedOnOf([r])} why={isBalance
+                        ? "a cash balance is not bought on a date — it is money the account holds"
+                        : lineUndatedReason(r) ?? "no transaction statement or lot register in this drop dates the purchase of these units"} />
                     </td>
                     <td className="px-4 py-2.5 text-right mono text-slate-400">
                       {price(r.currentPrice) ?? <AbsentCell reason="the book carries this holding's value as a total, with no price per unit" />}
