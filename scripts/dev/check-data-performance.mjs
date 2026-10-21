@@ -8,6 +8,7 @@ const base = process.env.BASE || 'http://127.0.0.1:4173';
 assert.ok(['localhost', '127.0.0.1'].includes(new URL(base).hostname));
 const capture = JSON.parse(await fs.readFile('public/data/corporate-actions.json', 'utf8'));
 const browser = await chromium.launch({ executablePath: process.env.CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true });
+await fs.mkdir('.cache/table-scroll-check', { recursive: true });
 const results = [];
 const manifest = JSON.parse(await fs.readFile('public/audit/manifest.json', 'utf8'));
 const source = manifest.flatMap(f => f.sheets.map(s => ({file:f.fileKey, sheet:s.key, rows:s.rows})))
@@ -80,7 +81,7 @@ try {
       }
       assert.ok(await page.locator('main tbody tr').count()<120);
     }
-    if (route.startsWith('/monitor?group=')) {
+    if (route === '/monitor' || route.startsWith('/monitor?group=')) {
       const table=page.locator('[data-monitor-table="holdings"]');
       const holdings=table.locator('tbody tr[data-bucket]');
       assert.ok(await holdings.count()<=50, 'one 50-row limit across all sections');
@@ -90,10 +91,13 @@ try {
       await appendByScrolling(table);
       assert.ok(await holdings.count() > 50);
       assert.deepEqual((await holdings.evaluateAll(rows=>rows.map(r=>r.getAttribute('data-security-key')||r.getAttribute('data-mandate-account')))).slice(0, allKeys.length), allKeys, 'previous holdings stay mounted');
-      assert.ok(await table.locator('tr[data-section]').count()>0, 'scrolling retains section headings');
+      if (route.includes('group=')) assert.ok(await table.locator('tr[data-section]').count()>0, 'scrolling retains section headings');
       const total = await scrollToEnd(table);
       assert.equal(await holdings.count(), total, 'all grouped holdings remain reachable');
       assert.equal(await table.locator('tfoot').innerText(), totals, 'scrolling never changes full-data totals');
+      await page.screenshot({ path: `.cache/table-scroll-check/monitor-${new URL(base+route).searchParams.get('group') || 'security'}.png` });
+      await table.locator('[data-col-button="security"]').click();
+      assert.equal(await holdings.count(), 50, 'sorting resets the Monitor to its first batch');
     }
     assert.equal(await page.getByLabel('Rows per page').count(), 0, 'no page size selector');
     assert.equal(await page.getByRole('button', {name:'Next table page',exact:true}).count(), 0, 'no next page');
