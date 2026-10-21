@@ -37,6 +37,12 @@ test('owner name and canonical owner must agree; the folder does not override th
   assert.ok(has(assess([doc(), later({ owner: 'Ankita Jaisinghani' })]), 'UNVERIFIED_OWNER'));
   assert.ok(has(assess([doc(), later()], [doc()], { expected: { provider: 'Another Broker' } }), 'FOLDER_MISMATCH'));
 });
+test('new formats cannot borrow the only known account when no identifier was printed', () => {
+  assert.ok(has(assess([doc(), later({ accountNoSource: 'sole-account' })]), 'UNVERIFIED_ACCOUNT'));
+  const old = doc({ clientCode: 'CLIENT1' });
+  const next = later({ clientCode: 'CLIENT1', accountNoSource: 'client-code' });
+  assert.equal(assess([old, next], [old]).decision, 'verified');
+});
 test('an issuer/account may have several securities and the same security may belong to several owners', () => {
   const next = later({ accountNo: '456', owner: 'Ankita Jaisinghani', ownerId: 'ankita-jaisinghani' });
   assert.equal(assess([doc(), next]).decision, 'verified');

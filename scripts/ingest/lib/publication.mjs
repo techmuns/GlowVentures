@@ -78,6 +78,11 @@ export function assessPublication({ baseline, documents, baselineReport = {}, re
     const hasFacts = RECORD_SECTIONS.some(k => d[k]?.length) || d.flows || d.commitment;
     if (!d.twinOf && !d.excludedFromBook && hasFacts) {
       if (!d.accountNo || !d.ownerId) add('MISSING_IDENTITY', d, 'Financial records require an identified account and canonical owner.');
+      if (d.accountNoSource && d.accountNoSource !== 'printed') {
+        const witnesses = documents.filter(x => x.provider === d.provider && x.clientCode && x.clientCode === d.clientCode && x.accountNoSource === 'printed');
+        const accounts = new Set(witnesses.map(x => String(x.accountNo)));
+        if (d.accountNoSource !== 'client-code' || accounts.size !== 1 || !accounts.has(String(d.accountNo))) add('UNVERIFIED_ACCOUNT', d, 'A missing account number needs a unique printed client-code/account witness; a sole-known-account assumption is insufficient for a new delivery.');
+      }
       const resolved = resolveOwner(d.owner, d.pan ?? null).owner;
       if (!resolved || resolved.ownerId !== d.ownerId) add('UNVERIFIED_OWNER', d, 'The printed holder/PAN must resolve to the recorded canonical owner.');
       const owners = ownerByAccount.get(accountKey(d));
