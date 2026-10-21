@@ -4,17 +4,11 @@
  * A period selector (MTD, YTD, FYTD, trailing 1Y/2Y/3Y, since investment and a
  * custom From/To), a return-type DROPDOWN over the three selected types
  * `RETURN_TYPES` carries, each explained in one short line beside it (Stage
- * 10eb), and an info popup for the calculation selected, with the window
- * actually measured printed beside the one asked for.
+ * 10eb). Benchmarks follow the selected window and return type.
  *
- * The portfolio's card stays above two subtabs: Return attribution (default)
- * and Benchmarks. Both remain inside Returns, with their own state preserved
- * while switching. The selected subtab is shareable through `?rview=`.
- * The panel scrolls inside itself; the page does not. One toolbar strip holds
- * the controls; the portfolio card carries its window as chips in its header
- * and its five amounts as tiles beside the figure; the benchmarks are tiles on
- * one bar scale (Stage 10fp: *"very cluttered … a lot of un-utilized empty
- * space"*).
+ * Return attribution (default) and Benchmarks are subtabs below the toolbar.
+ * Both retain their state while switching; `?rview=` shares the selected tab.
+ * The panel scrolls inside itself. Benchmarks are tiles on one bar scale.
  *
  * A DATED WINDOW OPENS ON A MARKET VALUE, NEVER A COST. Each account opens on
  * its latest statement valuation on or before the opening date and closes on
@@ -39,14 +33,12 @@ import { useEffect, useId, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Card } from "@/components/Card";
 import { AbsentCell } from "@/components/Absent";
-import { ReturnCalculationInfo } from "@/components/ReturnCalculation";
-import { PeriodReturnCalculation } from "@/components/PeriodReturnCalculation";
 import SegmentReturns from "@/components/SegmentReturns";
 import { useViewParam } from "@/components/ViewToggle";
 import { BENCHMARKS, benchmarkIdentity, benchmarkMismatchReason } from "@/lib/benchmarks";
 import { fetchPriceHistory, priceErrorReason, type PriceHistory, type PriceResult } from "@/lib/prices";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { fmtDate, fmtCr, DASH, changeColor } from "@/lib/format";
+import { fmtDate, DASH, changeColor } from "@/lib/format";
 import { mandateLabel } from "@/lib/analytics";
 import { inScopeAccount } from "@/lib/memberScope";
 import { capitalMovesWithCalls, capitalRollup, capitalWindow } from "@/lib/tranches";
@@ -64,14 +56,13 @@ import {
 const OPENING_ROW = /^opening portfolio value/i;
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
 const pctText = (n: number) => `${n >= 0 ? "+" : ""}${n.toFixed(2)}%`;
-const basisWord = (m: Measured) => m.basis === "annual" ? "a year" : "not annualised";
 const RETURN_VIEWS = [
   { key: "attribution", label: "Return attribution" },
   { key: "benchmarks", label: "Benchmarks" },
 ] as const;
 
 export default function PortfolioReturns() {
-  const { statementPortfolio, fmtFromBase, displayCurrency, scope } = usePortfolio();
+  const { statementPortfolio, fmtFromBase, scope } = usePortfolio();
   const [params, setParams] = useSearchParams();
   const [view, setView] = useViewParam(RETURN_VIEWS, {}, "rview");
   const tabsId = useId();
@@ -181,18 +172,10 @@ export default function PortfolioReturns() {
     : period === "inception" ? measureInception(inception.rows, rtype, money)
     : measureWindow(win!.included, rtype, money);
 
-  const total = !whole ? null : period === "inception"
-    ? { open: null as number | null, cin: inception.rows.reduce((s, r) => s + r.paidIn, 0), cout: inception.rows.reduce((s, r) => s + r.takenOut, 0), close: inception.rows.reduce((s, r) => s + r.value, 0) }
-    : win ? { open: win.openValue, cin: win.capitalIn, cout: win.capitalOut, close: win.closeValue } : null;
-  const gainTotal = total ? total.close - (total.open ?? 0) - total.cin + total.cout : null;
   const measuredFrom = !whole ? null : period === "inception" ? inception.rows.map((r) => r.first).sort()[0] ?? null : win?.measuredFrom ?? null;
   const measuredTo = !whole ? null : period === "inception" ? inception.rows.map((r) => r.valueAsOf).sort().at(-1) ?? null : win?.measuredTo ?? null;
   const days = measuredFrom && measuredTo ? daysBetween(measuredFrom, measuredTo) : null;
   const typeLabel = RETURN_TYPES.find((r) => r.key === rtype)!.label;
-  const excludedHover = excluded.length
-    ? `No portfolio return until every account is measured. Not measured: ${excluded.map((e) => `${e.label} — ${e.reason}`).join("; ")}. None is counted as zero.`
-    : "Every account holding value is measured over this window.";
-
   // ── Benchmarks over the same measured window ─────────────────────────────
   const [hist, setHist] = useState<Record<string, PriceResult | undefined>>({});
   useEffect(() => {
@@ -207,9 +190,6 @@ export default function PortfolioReturns() {
   const benchTo = measuredTo ?? end;
   const annualise = !!(measured?.shown && measured.basis === "annual");
   const portfolioPct = measured?.shown && measured.pct != null ? measured.pct : null;
-  const requested = period === "inception" ? "since first purchase" : start && end ? `${fmtDate(start)} → ${fmtDate(end)}` : DASH;
-  const measuredDates = measuredFrom && measuredTo ? `${fmtDate(measuredFrom)} → ${fmtDate(measuredTo)} · ${days} days` : DASH;
-  const needsYear = rtype === "cagr" && !!measured?.reason?.includes("at least 365 days");
   const benchRows: BenchRow[] = BENCHMARKS.map((b) => {
     const h = hist[b.key];
     const base = { key: b.key, label: b.label, title: b.title };
@@ -241,19 +221,11 @@ export default function PortfolioReturns() {
         style={{ opacity: 0.75, width: `${(Math.abs(v) / barScale) * 50}%`, ...(v >= 0 ? { left: "50%" } : { right: "50%" }) }} />
     </span>
   ));
-  const figures: [string, number | null, string][] = [
-    ["Opening", total?.open ?? null, period === "inception" ? "Since investment is struck on the capital paid in, not on an opening value" : "Market value at the opening date — never the original cost"],
-    ["Capital in", total?.cin ?? null, "Money put in during the window, on its dates"],
-    ["Capital out", total?.cout ?? null, "Money taken out during the window, on its dates"],
-    ["Closing", total?.close ?? null, "Market value at each account's closing date"],
-    ["Gain", gainTotal, "Closing − opening − capital in + capital out"],
-  ];
-
   return (
     <div className="flex h-auto min-h-0 flex-col gap-3 lg:h-full" data-portfolio-returns>
       {/* ── ONE TOOLBAR (Stage 10fp): the period, the window and the measure on
           one strip, so the cards below start at the top of the panel. ── */}
-      <div className="card flex flex-wrap items-center gap-x-4 gap-y-2 px-3 py-2">
+      <div className="card flex flex-wrap items-center gap-x-4 gap-y-2 px-3 py-2" data-returns-toolbar>
         <div className="ret-well flex flex-wrap items-center gap-0.5" data-returns-periods>
           {PERIODS.map((p) => (
             <button key={p.key} type="button" title={p.title} className={btn(period === p.key)} data-returns-period={p.key} aria-pressed={period === p.key}
@@ -295,62 +267,6 @@ export default function PortfolioReturns() {
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-auto" data-returns-stack>
-        {/* ── The whole portfolio: the window as chips in the header, the
-            figure beside the five amounts it is struck on ── */}
-        <div className="shrink-0" data-returns-portfolio>
-        <Card title="Portfolio return" subtitle={`The whole portfolio over one window, by ${typeLabel}. Open the info button for the calculation.`}
-          right={
-            <div className="flex flex-wrap justify-end gap-1.5" data-returns-window>
-              <span className="ret-chip" title="The window asked for">
-                Requested <span className="mono text-slate-200" data-returns-requested>{requested}</span>
-              </span>
-              <span className="ret-chip" title="Each account opens on its latest statement value on or before the opening date asked for, and closes on its latest on or before the closing date — so the measured window can start earlier than the one asked for">
-                Measured <span className="mono text-slate-100" data-returns-measured
-                  data-measured-from={measuredFrom ?? ""} data-measured-to={measuredTo ?? ""} data-measured-days={days ?? ""}>{measuredDates}</span>
-              </span>
-              <span className="ret-chip" title={excludedHover}>
-                <span className={`h-1.5 w-1.5 rounded-full ${whole ? "bg-emerald-500" : "bg-amber-500"}`} aria-hidden />
-                <span className="mono text-slate-200" data-returns-coverage data-returns-excluded={excluded.length}>{coveredCount} of {accountsTotal} accounts</span>
-              </span>
-            </div>
-          }>
-          <div className="grid gap-4 lg:grid-cols-[minmax(15rem,1fr)_minmax(0,2.4fr)] lg:items-center">
-            <div data-returns-figure="Return">
-              <div className="flex items-center gap-2">
-                <div className="label-xs">Return · {typeLabel}</div>
-                <ReturnCalculationInfo key={`${period}:${rtype}:${start}:${end}`} label={typeLabel} value={portfolioPct != null ? pctText(portfolioPct) : DASH}>
-                  <PeriodReturnCalculation measured={measured} type={rtype} inception={period === "inception"}
-                    result={portfolioPct != null ? pctText(portfolioPct) : DASH} money={fmtFromBase} shortMoney={(n) => fmtFromBase(n, { compact: true })}
-                    stepMoney={(n) => typeof n === "number" && displayCurrency === "INR" && portfolioPct != null && Math.abs(portfolioPct) >= 0.005 ? fmtCr(n, 4) : fmtFromBase(n)}
-                    context={<><p>Requested: {requested}</p><p>Measured: {measuredDates}</p><p>Measured {coveredCount} of {accountsTotal} accounts holding value.{!whole && excluded.length > 0 && " No portfolio return is shown until every one is measured."}</p></>}
-                    accounts={period === "inception" ? inception.rows.map((r) => ({ label: r.label, from: r.first, to: r.valueAsOf }))
-                      : (win?.included ?? []).map((r) => ({ label: r.label, from: r.openDate, to: r.closeDate, openedInWindow: r.openedInWindow }))}
-                    excluded={excluded} />
-                </ReturnCalculationInfo>
-              </div>
-              {portfolioPct != null && measured ? (
-                <div className={`mono mt-1 font-display text-[34px] font-semibold leading-none ${changeColor(portfolioPct)}`} data-returns-pct={portfolioPct.toFixed(4)} data-returns-basis={measured.basis}>
-                  {pctText(portfolioPct)} <span className="text-[12px] font-normal text-slate-500">{basisWord(measured)}</span>
-                </div>
-              ) : (
-                <div className="mt-1 text-[24px] leading-none" data-returns-pct=""><AbsentCell reason={measured?.reason ?? "pick a window whose opening date is before its closing date"} /></div>
-              )}
-              {portfolioPct == null && <p data-returns-unavailable data-prose-ok="The actual reason the selected return is unavailable must stay visible" className="mt-2 max-w-md text-[11.5px] leading-snug text-slate-400">{needsYear ? `Needs at least 1 year · ${days} days available` : measured?.reason ?? "Choose an opening date before the closing date."}</p>}
-            </div>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-              {figures.map(([l, v, h]) => (
-                <div key={l} title={h} data-returns-figure={l} className="ret-stat">
-                  <div className="label-xs">{l}</div>
-                  <div className={`mono mt-1 text-[15px] font-semibold ${l === "Gain" && typeof v === "number" ? changeColor(v) : "text-slate-100"}`}>
-                    {typeof v === "number" ? money(v) : <AbsentCell reason={whole ? h : incomplete} />}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </Card>
-        </div>
-
         <div role="tablist" aria-label="Return details" data-returns-tabs
           className="inline-flex w-fit shrink-0 items-center gap-0.5 rounded-lg border border-ink-700 bg-ink-800/60 p-0.5">
           {RETURN_VIEWS.map((v, index) => (
@@ -382,12 +298,15 @@ export default function PortfolioReturns() {
             in two rows carry the same figures — each index's return, its bar,
             and the portfolio's lead over it — with the portfolio first. ── */}
         <div role="tabpanel" id={`${tabsId}-panel-benchmarks`} aria-labelledby={`${tabsId}-tab-benchmarks`}
-          hidden={view !== "benchmarks"} tabIndex={0} className="shrink-0" data-returns-panel="benchmarks" data-returns-benchmarks>
+          hidden={view !== "benchmarks"} tabIndex={0} className="shrink-0" data-returns-panel="benchmarks" data-returns-benchmarks
+          data-measured-from={measuredFrom ?? ""} data-measured-to={measuredTo ?? ""} data-measured-days={days ?? ""}>
         <Card title="Benchmarks"
           subtitle={`Each index's close-to-close return over the measured window, ${annualise ? "annualised because the selected return is" : "not annualised, as the selected return is not"}. Price indices exclude dividends. ${whole ? `Selected measure: ${typeLabel}.` : "With no whole-portfolio return measured, each index runs over the window asked for."}`}
           right={<span className="label-xs pt-1">{benchFrom && benchTo ? `${fmtDate(benchFrom)} → ${fmtDate(benchTo)}` : DASH} · {basisTag}</span>}>
           <div className="grid grid-cols-2 gap-2 md:grid-cols-4" data-returns-bench-table>
-            <div className="ret-stat border-champagne-400" data-returns-bench-portfolio>
+            <div className="ret-stat border-champagne-400" data-returns-bench-portfolio
+              data-returns-pct={portfolioPct?.toFixed(4) ?? ""} data-returns-basis={measured?.shown ? measured.basis : ""}
+              data-returns-excluded={excluded.length}>
               <div className="flex items-center gap-1.5 text-[12px] font-semibold text-slate-100">
                 <span className="h-2 w-2 rounded-full bg-champagne-400" aria-hidden />Portfolio · {typeLabel}
               </div>
