@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import ExcelJS from "exceljs";
 import { buildConsolidatedSheet, type ConsolidatedBook } from "../consolidatedSheet";
 import { createConsolidatedWorkbook, consolidatedExcelTarget } from "../exportConsolidatedExcel";
-import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_AS_OF, BOOK_SUMMARY, BOOK_COMMITMENTS } from "../../data/glowData";
+import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_AS_OF, BOOK_SUMMARY, BOOK_COMMITMENTS, BOOK_RECOVERED_COSTS } from "../../data/glowData";
 import { deriveTransactions, deriveRealisedLots, type ArchiveDoc } from "../ledgerModel";
 import revision from "../../data/readModels.json";
 
@@ -47,6 +47,22 @@ assert.deepEqual(firstHolding.links!.ent.where, { name: value("Holdings", 0, "en
 const entityTarget = consolidatedExcelTarget(book, firstHolding.links!.ent)!;
 assert.equal(value("Entities", Number(/A(\d+)$/.exec(entityTarget)![1]) - 6, "name"), value("Holdings", 0, "ent"));
 assert.ok(!JSON.stringify(book).match(/#REF!|#DIV\/0!|NaN|Infinity/));
+
+// A custody statement need not price its units for the exact account's
+// reconciled purchase cost and dates to appear in the audit register.
+for (const [suffix, first, last] of [["12539150", "2025-03-06", "2026-03-23"], ["12838316", "2025-11-06", "2025-11-06"], ["12838320", "2025-07-11", "2025-07-11"]]) {
+  const record = BOOK_RECOVERED_COSTS.find(r => r.accountId.endsWith(suffix) && r.isin === "INF109KC1RH9")!;
+  const i = sheet("Holdings").rows.findIndex((_, i) => value("Holdings", i, "acct") === record.accountId && value("Holdings", i, "sec") === "icici-ioppf-d-grw");
+  assert.ok(i >= 0, "Every verified custody balance has its own audit row");
+  assert.equal(value("Holdings", i, "qty"), record.quantity);
+  assert.equal(value("Holdings", i, "cost"), record.costBasis);
+  assert.equal(value("Holdings", i, "rgain"), record.realizedPnL);
+  assert.equal(value("Holdings", i, "income"), record.dividendReceived);
+  assert.equal(value("Holdings", i, "first"), first); assert.equal(value("Holdings", i, "last"), last);
+  for (const field of ["price", "mv", "ugain", "absret", "xirr"]) assert.equal(value("Holdings", i, field), null);
+  assert.ok(sheet("Holdings").rows[i].links?.src?.file, "The row opens its actual custody source");
+}
+
 for (const t of book.tabs) for (const r of t.rows) for (const link of Object.values(r.links ?? {})) {
   if (link.sheet) assert.ok(sheet(link.sheet), `missing linked subtab ${link.sheet}`);
   if (link.sheet === "Securities" && link.where?.id) assert.ok(sheet("Securities").rows.some(r => r.values[0] === link.where!.id), `missing security master ${link.where.id}`);
