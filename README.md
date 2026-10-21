@@ -466,3 +466,5 @@ Further reading: [CLAUDE.md](CLAUDE.md) for the conventions and why each exists,
 [docs/FIGURE-PROVENANCE.md](docs/FIGURE-PROVENANCE.md) for every figure's source,
 [docs/EXTRACTION-REPORT.md](docs/EXTRACTION-REPORT.md) for whether it ties out,
 and [docs/BOOK-REPORT.md](docs/BOOK-REPORT.md) for what the book does not carry.
+The [investment-date audit](docs/INVESTMENT-DATE-AUDIT.md) separates cost, date
+and HPR coverage by category and lists the remaining client records needed.
