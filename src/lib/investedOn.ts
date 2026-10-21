@@ -37,15 +37,16 @@ import { BOOK_ACCOUNTS, BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_HOLDING_TRADE
 import { callDatesByHolding, trancheKey } from "./tranches";
 import { fmtDate } from "./format";
 import type { Account, HoldingTrade, Position } from "./types";
+import { reviewField } from "./reviewColumns";
 
-export type InvestedOnSource = "allotments" | "lots" | "trades" | "calls" | "review" | "account";
+export type InvestedOnSource = "allotments" | "lots" | "recovered-lots" | "trades" | "calls" | "review" | "account";
 
 /**
  * The first and last date the money went in, and how many dated payments that
  * is — NULL where the source dates a span and not each payment (the review's
  * range, an account's inception date alone).
  */
-export type InvestedOn = { first: string; last: string; payments: number | null; sources: InvestedOnSource[] };
+export type InvestedOn = { first: string; last: string; payments: number | null; sources: InvestedOnSource[]; reviewSource?: string };
 
 const CALL_DATES = callDatesByHolding(BOOK_COMMITMENTS, BOOK_POSITIONS);
 
@@ -55,6 +56,8 @@ function lineDates(p: Position): { dates: string[]; source: InvestedOnSource } |
   const ins = own?.moves.filter((m) => m.direction === "in").map((m) => m.date) ?? [];
   if (ins.length) return { dates: ins, source: "allotments" };
   if (p.heldSince) return { dates: [p.heldSince], source: "lots" };
+  const recovered = p.recoveredCost?.acquisitionDates;
+  if (recovered) return { dates: [recovered.first, recovered.last], source: "recovered-lots" };
   // The surviving buys' own dates are on BOOK_HOLDING_TRADES; the record keeps
   // their first, last and count, which is all a cell needs.
   const held = p.tradeRecord?.held;
@@ -67,6 +70,7 @@ function lineDates(p: Position): { dates: string[]; source: InvestedOnSource } |
 
 /** How many dated payments a line is — null where its source dates a span. */
 function linePayments(p: Position, d: { dates: string[]; source: InvestedOnSource }): number | null {
+  if (d.source === "recovered-lots") return p.recoveredCost?.acquisitionDates?.lots ?? null;
   if (d.source === "trades") return p.tradeRecord?.held?.lots ?? null;
   if (d.source === "review") return d.dates[0] === d.dates[1] && /^\d{4}-\d{2}-\d{2}$/.test(d.dates[0]) ? 1 : null;
   return d.dates.length;
@@ -80,7 +84,7 @@ export function investedOnOf(ps: readonly Position[]): InvestedOn | null {
   for (const p of ps) {
     const d = lineDates(p);
     // ONE UNDATED CONSTITUENT AND THE ROW HAS NO FIRST PAYMENT.
-    if (!d) return null;
+    if (!d) return reviewedInvestmentDates(ps);
     dates.push(...d.dates);
     sources.add(d.source);
     const n = linePayments(p, d);
@@ -91,6 +95,15 @@ export function investedOnOf(ps: readonly Position[]): InvestedOn | null {
   return { first: dates[0], last: dates[dates.length - 1], payments, sources: [...sources] };
 }
 
+/** A product's printed review range is useful, but does not verify every current custody lot. */
+function reviewedInvestmentDates(ps: readonly Position[]): InvestedOn | null {
+  if (!ps.length) return null;
+  const field = reviewField({ positions: ps }, "investmentRange");
+  return field.value != null && field.from && field.to
+    ? { first: field.from, last: field.to, payments: null, sources: ["review"], reviewSource: field.source }
+    : null;
+}
+
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 /** A date as its source prints it: a day, or a month (`YYYY-MM`) never widened to a day. */
 export const fmtInvestedDate = (d: string) =>
@@ -99,6 +112,7 @@ export const fmtInvestedDate = (d: string) =>
 const SOURCE_WORDS: Record<InvestedOnSource, string> = {
   allotments: "the fund's own dated allotments",
   lots: "the lot register's acquisition dates",
+  "recovered-lots": "the reconciled original acquisition lots still held after FIFO, matched to this owner, account, ISIN and quantity",
   trades: "the account's own dated trades, every unit held matched to the buy that bought it, first-in, first-out",
   calls: "the fund's dated capital calls",
   review: "the family's review's investment dates",
@@ -107,6 +121,7 @@ const SOURCE_WORDS: Record<InvestedOnSource, string> = {
 
 /** The cell's hover: what the dates are, and which document dates them. */
 export function investedOnTitle(d: InvestedOn): string {
+  if (d.reviewSource) return `Investment date/range recorded for the family product in the 30 June 2026 review, ${d.reviewSource}: ${fmtInvestedDate(d.first)}${d.last !== d.first ? ` to ${fmtInvestedDate(d.last)}` : ""}. This is the product's reviewed range; acquisition dates for every unit in the current custody balance are not reconciled.`;
   const src = d.sources.map((s) => SOURCE_WORDS[s]).join("; ");
   const when = d.first === d.last
     ? `${d.payments === 1 ? "One dated payment" : "Invested"}, ${fmtInvestedDate(d.first)}`
@@ -129,7 +144,7 @@ const ACCOUNTS = new Map<string, Account>(BOOK_ACCOUNTS.map((a) => [a.accountId,
  * the caller's own sentence is known.
  */
 export function lineUndatedReason(p: Position): string | null {
-  if (lineDates(p)) return null;
+  if (investedOnOf([p])) return null;
   if (p.tradeRecord?.reason) return p.tradeRecord.reason;
   const trades = holdingTradesOf(p);
   const a = ACCOUNTS.get(p.accountId);

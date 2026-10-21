@@ -17,8 +17,10 @@
 //   a review line's dates are the review's own printed range
 //
 // and each refusal is made to refuse on the real book.
-import { BOOK_ACCOUNTS, BOOK_HOLDING_TRADES, BOOK_POSITIONS } from "@/data/glowData";
-import { accountInvestedOn, holdingTradesOf, investedOnOf, lineUndatedReason } from "@/lib/investedOn";
+import { BOOK_ACCOUNTS, BOOK_HOLDING_TRADES, BOOK_POSITIONS, BOOK_RECOVERED_COSTS } from "@/data/glowData";
+import { accountInvestedOn, holdingTradesOf, investedOnOf, investedOnTitle, lineUndatedReason } from "@/lib/investedOn";
+import { depositoryFundHoldings, unpricedStatementUnits } from "@/lib/fundNavs";
+import { shareCandidates } from "@/lib/depositoryShares";
 import type { Position } from "@/lib/types";
 
 let fails = 0;
@@ -61,8 +63,12 @@ const ACC = new Map(BOOK_ACCOUNTS.map((a) => [a.accountId, a]));
   const partial = BOOK_POSITIONS.filter((p) => p.tradeRecord && !p.tradeRecord.held && (p.tradeRecord.unaccounted ?? 0) > 0
     && !p.heldSince && !p.investedDates);
   ok("the book carries holdings the trades only partly account for", partial.length > 0, `${partial.length} holdings`);
-  ok("none of them is dated", partial.every((p) => investedOnOf([p]) === null));
+  ok("incomplete trades never claim complete holding dates", partial.every((p) => {
+    const d = investedOnOf([p]);
+    return !d || !!d.reviewSource || d.sources.includes("recovered-lots");
+  }));
   ok("each says why, in the window's own terms", partial.every((p) => {
+    if (investedOnOf([p])) return true;
     const why = lineUndatedReason(p) ?? "";
     return why.includes(p.tradeRecord!.from) && /dated trade/.test(why);
   }));
@@ -71,13 +77,30 @@ const ACC = new Map(BOOK_ACCOUNTS.map((a) => [a.accountId, a]));
 // ── 3. A ROW IS DATED ONLY WHERE EVERY LINE IS ──────────────────────────────
 {
   const dated = BOOK_POSITIONS.find((p) => p.tradeRecord?.held)!;
-  const undated = BOOK_POSITIONS.find((p) => p.tradeRecord && !p.tradeRecord.held && !p.heldSince && !p.investedDates)!;
+  const undated = BOOK_POSITIONS.find((p) => p.tradeRecord && !investedOnOf([p]))!;
   ok("one undated line leaves the row undated, never dated by the rest", investedOnOf([dated, undated]) === null);
   const two = BOOK_POSITIONS.filter((p) => p.tradeRecord?.held).slice(0, 2);
   const both = investedOnOf(two)!;
   ok("two dated lines: the earlier first, the later last, their payments added",
     both.first === [two[0].tradeRecord!.held!.first, two[1].tradeRecord!.held!.first].sort()[0]
     && both.payments === two[0].tradeRecord!.held!.lots + two[1].tradeRecord!.held!.lots);
+}
+
+// RECOVERED COST IS DATED BY THE SURVIVING ORIGINAL LOTS, ON ALL THREE LIVE LAYERS.
+{
+  ok("all 44 exact cost recoveries retain their original FIFO acquisition dates", BOOK_RECOVERED_COSTS.every((r) =>
+    !!r.acquisitionDates && r.acquisitionDates.first <= r.acquisitionDates.last && r.acquisitionDates.last <= r.asOf));
+  const all = [...BOOK_POSITIONS, ...shareCandidates(), ...depositoryFundHoldings(), ...unpricedStatementUnits()];
+  const recovered = all.filter(p => p.recoveredCost);
+  ok("every recovered holding reaches the date derivation", recovered.every(p => !!investedOnOf([p])));
+  const esds = all.find(p => p.isin === 'INE0DRI01029')!;
+  const review = investedOnOf([esds]);
+  ok("ESDS keeps the printed review date without claiming its disputed units reconcile",
+    review?.first === '2024-09-09' && !!review.reviewSource && /not reconciled/.test(investedOnTitle(review)));
+  const unknown = { ...esds, securityKey:'no-reviewed-product', reviewSource:undefined };
+  ok("a different instrument cannot inherit that review date", investedOnOf([unknown]) === null);
+  const changedUnits = { ...esds, quantity:esds.quantity! + 42 };
+  ok("a review date is labelled as product context independently of a custody quantity", !!investedOnOf([changedUnits])?.reviewSource);
 }
 
 // ── 4. THE REVIEW'S RANGE, AS THE REVIEW PRINTS IT ──────────────────────────

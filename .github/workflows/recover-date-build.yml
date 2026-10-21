@@ -1,0 +1,26 @@
+name: Prepare acquisition date snapshot
+on:
+  push:
+    branches: [codex/unify-investment-dates]
+permissions:
+  contents: read
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run build-book
+      - uses: actions/upload-artifact@v4
+        with:
+          name: acquisition-dates
+          path: |
+            src/data/glowData.ts
+            docs/BOOK-REPORT.md
+            docs/COST-RECOVERY.md
+      - run: npm run build
+      - run: ONLY="invested on,table arrangement & return pick,portfolio excel,recovered purchase costs" node scripts/test-family.mjs

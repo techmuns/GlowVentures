@@ -18,6 +18,7 @@ export function InvestedOnCell({ d, why, more = "" }: { d: InvestedOn | null; wh
         : d.payments === null && d.last !== d.first
           ? <span className="ml-1 text-[10px] text-slate-500">→ {fmtInvestedDate(d.last)}</span>
           : null}
+      {d.reviewSource && <span className="ml-1 text-[10px] text-slate-500">review</span>}
     </span>
   );
 }

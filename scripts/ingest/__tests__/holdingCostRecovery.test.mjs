@@ -6,6 +6,7 @@ const rows=[row(1,'Purchase','2020-01-01',10,-100),row(2,'Purchase','2021-01-01'
 const args={isin:'INE647U01026',asOf:'2024-01-01',quantity:15};
 const r=replayReviewRows(rows,args);
 assert.equal(r.costBasis,225);assert.equal(r.costOfUnitsSold,175);assert.equal(r.realizedPnL,325);
+assert.deepEqual(r.acquisitionDates,{first:'2021-01-01',last:'2021-01-01',lots:1},'sold 2020 lots and the 2022 split do not date the surviving units');
 assert.ok(replayReviewRows(rows,{...args,quantity:16}).reason);
 assert.ok(replayReviewRows([...rows,row(5,'Sale','2023-01-02',20,100)],args).reason);
 assert.ok(replayReviewRows(rows.map(r=>r.row===4?{...r,value:-500}:r),args).reason);
@@ -35,6 +36,7 @@ const disputed=[row(1,'Purchase','2020-01-01',10,-100),row(2,'Purchase','2021-01
 const partial=replayReviewFundGroups(disputed,{...args,quantity:5});
 assert.equal(partial.costBasis,150);assert.equal(partial.costOfUnitsSold,250);
 assert.equal(partial.realizedPnL,null);assert.ok(partial.hprUnavailableReason);
+assert.deepEqual(partial.acquisitionDates,{first:'2021-01-01',last:'2021-01-01',lots:1},'unknown proceeds do not erase verified original purchase dates');
 const applied=applyRecoveredCost({...p,quantity:5},[{...rec,...partial,quantity:5}]);
 assert.equal(applied.avgCost,30);assert.equal(applied.unrealizedPnL,450);
 assert.equal(applied.returnPct,null);assert.equal(applied.realizedPnL,null);

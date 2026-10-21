@@ -43,6 +43,20 @@ export type StoredView = { order: readonly string[]; sort: TableSort; visibility
 const KEY = (k: string) => `glow:tableView:${k}:v1`;
 const EMPTY: StoredView = Object.freeze({ order: Object.freeze([]) as readonly string[], sort: null });
 const NO_LEGACY: readonly string[] = [];
+const NO_ALIASES: Readonly<Record<string, string>> = {};
+
+/** Merge retired columns without losing the reader's placement, visibility or sort. */
+export function mergeColumnAliases(view: StoredView, aliases: Readonly<Record<string, string>>): StoredView {
+  if (!Object.keys(aliases).length) return view;
+  const id = (col: string) => aliases[col] ?? col;
+  const visibility = { ...view.visibility };
+  for (const [old, next] of Object.entries(aliases)) {
+    // The merged column stays visible if either predecessor was visible.
+    if (visibility[old] === true) visibility[next] = true;
+    delete visibility[old];
+  }
+  return { order: [...new Set(view.order.map(id))], sort: view.sort ? { ...view.sort, col: id(view.sort.col) } : null, visibility };
+}
 
 /** Read what a table saved, from any build: unknown fields are ignored, a bad sort is dropped. */
 export function parseStoredView(raw: unknown): StoredView | null {
@@ -249,13 +263,14 @@ export function nudgeColumn(stored: readonly string[], declared: readonly string
  * would make every address unreadable. Visibility and arrangement only change
  * presentation; the records, calculations and export data remain intact.
  */
-export function useTableView(storageKey: string, columns: readonly string[], opts?: { legacyKeys?: readonly string[]; optional?: readonly string[]; manualEditor?: boolean; reviewKind?: ReviewKind }): TableView {
+export function useTableView(storageKey: string, columns: readonly string[], opts?: { legacyKeys?: readonly string[]; optional?: readonly string[]; manualEditor?: boolean; reviewKind?: ReviewKind; aliases?: Readonly<Record<string, string>> }): TableView {
   // Keyed on the CONTENT of the list, so a caller that rebuilds the same list
   // every render does not re-derive the arrangement every render.
   const colKey = columns.join("\u0001");
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const baseColumns = useMemo(() => columns.filter((c, i) => columns.indexOf(c) === i), [colKey]);
-  const additionalColumns = useMemo(() => opts?.reviewKind ? reviewColumnIds(opts.reviewKind).filter((c) => !baseColumns.includes(c)) : [], [opts?.reviewKind, baseColumns]);
+  const aliases = opts?.aliases ?? NO_ALIASES;
+  const additionalColumns = useMemo(() => opts?.reviewKind ? reviewColumnIds(opts.reviewKind).filter((c) => !baseColumns.includes(c) && !aliases[c]) : [], [opts?.reviewKind, baseColumns, aliases]);
   const declared = useMemo(() => [...baseColumns, ...additionalColumns], [baseColumns, additionalColumns]);
   const fixed = declared[0] ?? "";
   const legacy = opts?.legacyKeys ?? NO_LEGACY;
@@ -263,7 +278,8 @@ export function useTableView(storageKey: string, columns: readonly string[], opt
 
   const subscribe = useCallback((l: () => void) => subscribeMemory(KEY(storageKey), l), [storageKey]);
   const read = () => storedView(storageKey, legacy);
-  const stored = useSyncExternalStore(subscribe, read, read);
+  const rawStored = useSyncExternalStore(subscribe, read, read);
+  const stored = useMemo(() => mergeColumnAliases(rawStored, aliases), [rawStored, aliases]);
   const optionalKey = opts?.optional?.join("\u0001") ?? "";
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const optional = useMemo(() => [...additionalColumns, ...(opts?.optional ?? NO_LEGACY)], [additionalColumns, optionalKey]);
@@ -276,7 +292,7 @@ export function useTableView(storageKey: string, columns: readonly string[], opt
   // Every change reads what is saved NOW rather than what this render saw, so
   // two quick changes cannot write over each other.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const current = useCallback(() => storedView(storageKey, legacy), [storageKey, legacyKey]);
+  const current = useCallback(() => mergeColumnAliases(storedView(storageKey, legacy), aliases), [storageKey, legacyKey, aliases]);
   const save = useCallback((next: StoredView) => writeMemory(KEY(storageKey), next), [storageKey]);
 
   const toggleSort = useCallback((col: string) => {

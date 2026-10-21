@@ -195,6 +195,8 @@ export type RecoveredHoldingCost = {
   accountId: string; isin: string; quantity: number; asOf: string;
   costBasis: number; realizedPnL: number | null; costOfUnitsSold: number | null;
   dividendReceived: number | null;
+  /** Acquisition dates of the original FIFO lots still held, not sold lots or custody receipt dates. */
+  acquisitionDates?: { first: string; last: string; lots: number };
   /** Later review sale rows invalidate live pricing of the old snapshot. */
   salesAfter?: number;
   /** Purchase lots reconcile, but a recorded sale has no verified proceeds. */
