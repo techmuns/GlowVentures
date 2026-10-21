@@ -828,7 +828,7 @@ const H_OWNER = new Map([
   ["Bharat Jaisinghani Family Trust III", "bharat-jaisinghani-family-trust-3"],
   ["Bharat Jaisinghani Family Trust", "bharat-jaisinghani-family-trust"],
   // In the book as its own entity since the family's decision of 21 Oct 2026
-  // (shared/owners.mjs, Stage 10ff): its closings are read on its own folio
+  // (shared/owners.mjs, Stage 10fj): its closings are read on its own folio
   // statements like every other holder's, no longer filed "kept out".
   ["HOPE INDIA TRUST", "hope-india-trust"], ["Hope India Trust", "hope-india-trust"],
 ]);
@@ -959,7 +959,7 @@ const hDays = (a, b) => Math.round(Math.abs(Date.parse(a) - Date.parse(b)) / 864
 /**
  * Mirror of `REVIEW_LINES_KEPT_OUT` in src/lib/reviewGaps.ts (kept in step by
  * hand, like H_LINE_ISINS): Hope India Trust's four Cash-tab lines, keyed on the
- * FOLIO because two of their statements print no ISIN. Since Stage 10ff the
+ * FOLIO because two of their statements print no ISIN. Since Stage 10fj the
  * trust is in the book, so its closings are read on these folios' own holdings
  * — the scheme each folio holds units of — rather than filed "kept out".
  */
@@ -1014,7 +1014,7 @@ for (const pass of ["tie", "rest"]) for (const c of hOrdered) {
   const put = (verdict, statement, rows = [], later = []) => hResults.push({ c, verdict, statement, rows: rows.map((r) => ({ account: r.account, key: r.key, units: r.units })), later });
   // A holder the registry names but no account in the book is its: filed with
   // the holder, which the bridge takes out once (section F). Hope India Trust
-  // was the case until Stage 10ff; it is now read like every other holder.
+  // was the case until Stage 10fj; it is now read like every other holder.
   if (ownerId && !ACCOUNTS.some((a) => a.ownerId === ownerId)) { if (pass === "rest") put("kept out", `${c.investor} has no account in this book; its closings leave the bridge with the holder`); continue; }
   if (!ownerId) { if (pass === "rest") put("unresolved holder", `"${c.investor}" names no member of this book`); continue; }
   if (!c.qty && !c.value) { if (pass === "rest") put("nil", "the review carries nil — nothing to reconcile"); continue; }
@@ -1118,7 +1118,7 @@ hResults.sort((a, b) => a.c.row - b.c.row);
  * statements rather than on a name: `reported` — a statement of the holder's
  * carries it, tied, carried or at another quantity; `absent` — no statement in
  * `source/` reports it; `kept` — a holder with no account in this book (the Hope
- * India Trust until Stage 10ff, when the family consolidated it).
+ * India Trust until Stage 10fj, when the family consolidated it).
  */
 const hClass = (v) => (/^(ties|differs)/.test(v) || v === "not on a statement of that date" ? "reported"
   : v === "kept out" ? "kept" : v === "nil" ? "nil" : "absent");
