@@ -31,10 +31,12 @@ reconciliation in each browser. The main JavaScript bundle was 442.77 KB gzip.
   server data sources, date checks and missing-versus-pending semantics.
 - Corporate Actions, Portfolio Monitor holdings and the large Ledger Insights
   tables mount 50 rows by default. Sorting and totals use the complete result.
-  Next/Previous and an explicit All rows option keep every record accessible.
-  The Monitor's row limit spans every group with one table-wide pager, retaining
-  section headers and full-data totals. Page changes reset for changed filters,
-  not unrelated quote updates.
+  Scrolling appends the next 50 rows automatically, preserving previous rows.
+  One scroll boundary spans the Monitor's groups, retaining section headers and
+  full-data totals. Changed filters and sorts reset row loading; unrelated quote
+  updates preserve it. Data Audit, the consolidated workbook, capital-gain
+  planners and insider dealing also load every matching row by scrolling, with
+  no fixed display cutoff. A Load more button provides keyboard access.
 - Route code loads separately, reducing the main JS bundle to 139.09 KB gzip.
   Raw source detail remains available on Data Audit, on demand.
 
@@ -59,18 +61,18 @@ reconciliation in each browser. The main JavaScript bundle was 442.77 KB gzip.
 Functions compilation, financial browser invariants, and the dedicated corporate
 action/daily-movers regressions cover the changed contracts.
 
-`node scripts/dev/check-data-performance.mjs` visits 19 routes/variants with local
+`node scripts/dev/check-data-performance.mjs` visits 21 routes/variants and an insider-feed fixture with local
 feed fixtures and the actual stock-exposure handler. It verifies request budgets,
-no runtime errors, pagination across all grouping axes, full-data access, filter
+no runtime errors, infinite scrolling across all grouping axes, full-data access, filter
 resets and the deployment reload prompt. Company financial browser invariants
 also cover fund-only company activity. On this machine:
 
 | Local metric | Before | After |
 | --- | ---: | ---: |
 | Ledger source-document requests | 308 including manifest | 0; two prepared view requests |
-| Ledger initial mounted table rows | 2,895 | 105 including paging controls/summary rows |
-| Monitor initial mounted table rows | 630 | 51 including paging control |
-| Corporate Actions initial mounted rows | 282 | 51 including paging control |
+| Ledger initial mounted table rows | 2,895 | 105 including scroll status/summary rows |
+| Monitor initial mounted table rows | 630 | 51 including scroll status |
+| Corporate Actions initial mounted rows | 282 | 51 including scroll status |
 | Ledger observed long-task time | 392 ms | 0 ms |
 | Monitor observed long-task time | 313 ms | 0 ms |
 
