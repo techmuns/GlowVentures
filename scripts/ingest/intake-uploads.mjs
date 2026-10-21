@@ -108,8 +108,10 @@ function npm(script, args = [], env = {}) {
 
 // ── the inbox branch ──────────────────────────────────────────────────────────
 
+// Every fetch is the branch's tip alone: the inbox's history carries the bytes
+// of every statement ever uploaded, and none of it is needed to read the next.
 function fetchInbox() {
-  return git(["fetch", "--no-tags", "--quiet", REMOTE, `+refs/heads/${BRANCH}:refs/remotes/${REMOTE}/${BRANCH}`], { allowFail: true }).ok;
+  return git(["fetch", "--no-tags", "--quiet", "--depth=1", REMOTE, `+refs/heads/${BRANCH}:refs/remotes/${REMOTE}/${BRANCH}`], { allowFail: true }).ok;
 }
 
 /** A detached worktree of the inbox's tip at `.cache/statement-inbox`. */
@@ -163,7 +165,7 @@ const waitingFiles = (log) => [...log.batches].sort((a, b) => a.id.localeCompare
 // ── main, and what is already in source/ ─────────────────────────────────────
 
 function resetToMain() {
-  git(["fetch", "--no-tags", "--quiet", REMOTE, `+refs/heads/${MAIN}:refs/remotes/${REMOTE}/${MAIN}`]);
+  git(["fetch", "--no-tags", "--quiet", "--depth=1", REMOTE, `+refs/heads/${MAIN}:refs/remotes/${REMOTE}/${MAIN}`]);
   git(["reset", "--hard", "--quiet", `${REMOTE}/${MAIN}`]);
   git(["clean", "-fdq", "--", ...GENERATED]);
   // Every archive is expanded afresh by `inventory`; an expansion of a file a
@@ -414,31 +416,38 @@ function atBaseline(fn) {
   }
 }
 
-/** The gates CI runs on every PR. Null when all pass, or the one that failed because of these statements. */
+/**
+ * The gates CI runs on every PR. `blocked` names the one that fails because of
+ * these statements; `already` the ones that fail on main without them too.
+ */
 function gates() {
   const steps = [["accounts-table", ["--write"]], ["build", []], ["test:ingest", []], ["test:family", []]];
+  const already = [];
   for (const [script, args] of steps) {
     if (npm(script, args).ok) continue;
     if (!atBaseline(() => npm(script, args).ok)) {
       say(`  \`npm run ${script}\` fails on ${MAIN} without these statements too — not theirs to answer for.`);
+      already.push(script);
       continue;
     }
-    return `\`npm run ${script}\` fails with these statements and passes without them. The run log names the failing check${RUN ? `: ${RUN}` : "."}`;
+    return { blocked: `\`npm run ${script}\` fails with these statements and passes without them. The run log names the failing check${RUN ? `: ${RUN}` : "."}`, already };
   }
-  return null;
+  return { blocked: null, already };
 }
 
 /** One commit on main carrying the statements and everything regenerated from them. */
-function land(live, verdicts) {
+function land(live, verdicts, already) {
   git(["add", "-A", "--", ...GENERATED]);
   const list = live.map((p) => `- ${p.landing}${verdicts.get(p)?.providers?.length ? ` → ${verdicts.get(p).providers.join(", ")}` : ""}`);
+  const passed = ["accounts-table", "build", "test:ingest", "test:family"].filter((s) => !already.includes(s));
   const message = [
     `Statement intake: ${live.length} statement file${live.length === 1 ? "" : "s"} uploaded on the dashboard`,
     "",
     ...list,
     "",
-    "Read in full by the statement intake: inventory, extract, build-book, coverage:source,",
-    "check:reads, accounts-table, build, test:ingest and test:family pass with them.",
+    "Read in full by the statement intake: inventory, extract, build-book, coverage:source",
+    `and check:reads pass with them${passed.length ? `, and so do ${passed.join(", ")}` : ""}.`,
+    ...(already.length ? [`${already.join(", ")} already fail${already.length === 1 ? "s" : ""} on ${MAIN} without them.`] : []),
     ...(RUN ? ["", `Run: ${RUN}`] : []),
   ].join("\n");
   git([...BOT, "commit", "-q", "-m", message]);
@@ -504,13 +513,13 @@ async function intake(items) {
     if (!live.length) { pending = []; break; }
 
     const gate = gates();
-    if (gate) {
-      for (const p of live) results.set(keyOf(p.item), held("check-failed", gate));
+    if (gate.blocked) {
+      for (const p of live) results.set(keyOf(p.item), held("check-failed", gate.blocked));
       pending = [];
       break;
     }
 
-    const sha = land(live, verdicts);
+    const sha = land(live, verdicts, gate.already);
     if (sha) {
       for (const p of live) results.set(keyOf(p.item), { ...verdicts.get(p), landedAs: [p.landing], commit: sha });
       pending = [];
