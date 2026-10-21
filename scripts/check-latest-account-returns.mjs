@@ -38,10 +38,12 @@ try {
   assert.equal(Number((await dialog.locator('[data-return-result]').innerText()).replace(/[^0-9.+-]/g, '')), shown);
   assert.match(await dialog.innerText(), /What is missing/);
   assert.match(await dialog.innerText(), /Newer records still need checking/);
+  await dialog.locator('details').filter({ hasText: '2026-10-06' }).first().locator('summary').click();
   assert.match(await dialog.innerText(), /6 Oct|2026-10-06/);
-  assert.match(await dialog.innerText(), /22 Sept|22 Sep|2026-09-22/);
   await dialog.locator('[data-attribution-included] summary').click();
-  assert.match(await dialog.locator('[data-attribution-included]').innerText(), new RegExp(faceDate));
+  const included = await dialog.locator('[data-attribution-included]').innerText();
+  assert.match(included, new RegExp(faceDate));
+  assert.match(included, /22 Sept|22 Sep|2026-09-22/);
   assert.equal(await page.locator('[data-tile-slot="mwr"]').count(), 0);
   await page.screenshot({ path: path.join(output, 'cio-latest-return.png') });
   await page.keyboard.press('Escape');
