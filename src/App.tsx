@@ -27,6 +27,7 @@ const LedgerInsights = lazy(() => import("@/pages/LedgerInsights").then((m) => (
 const StockInfo = lazy(() => import("@/pages/StockInfo").then((m) => ({ default: m.StockInfo })));
 const CorporateActions = lazy(() => import("@/pages/CorporateActions").then((m) => ({ default: m.CorporateActions })));
 const MandateHoldings = lazy(() => import("@/pages/MandateHoldings").then((m) => ({ default: m.MandateHoldings })));
+const FundHoldings = lazy(() => import("@/pages/MandateHoldings").then((m) => ({ default: m.FundHoldings })));
 const HoldingsBehind = lazy(() => import("@/pages/HoldingsBehind").then((m) => ({ default: m.HoldingsBehind })));
 
 // A page only renders when there is something real to render. An empty book
@@ -172,6 +173,12 @@ export default function App() {
                 has its own strategy, its own as-of and its own statement total
                 to tie to. */}
             <Route path="/mandate/:accountId" element={<Gate><MandateHoldings /></Gate>} />
+            {/* ONE CLUBBED FUND — every unit class in every member's folio — the
+                page a fund row the Portfolio Monitor clubs across classes opens.
+                Keyed by the fund's name before the class, as the row is. A
+                strategy run for several members is one page the same way, at
+                any of its accounts' `/mandate/` addresses. */}
+            <Route path="/fund/:fund" element={<Gate><FundHoldings /></Gate>} />
             {/* WHAT IS BEHIND A FIGURE — the drill-down every total on Morning
                 CIO now opens into: each allocation row, each KPI tile and each
                 concentration figure. The SET lives in the address (`?of=`, plus
