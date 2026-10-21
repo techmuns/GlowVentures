@@ -65,7 +65,7 @@ export async function assertInlineProfileEditing(page, store) {
   await page.waitForFunction(selector => document.querySelector(selector)?.value === '', `${rowSelector} [data-pm-profile-input="description"]`);
   assert.equal(store.writes.at(-1).op, 'delete');
   assert.equal(await find('strategy').inputValue(), 'Fixture strategy', 'removing one field retains the other');
-  await page.getByRole('button', { name: 'By brand', exact: true }).click();
+  await page.getByRole('tab', { name: 'By brand', exact: true }).click();
   const shared = page.locator('form[data-pm-profile-form="strategy"][data-pm-profile-funds*=" "]').first();
   await shared.waitFor();
   const funds = (await shared.getAttribute('data-pm-profile-funds')).split(' ');
