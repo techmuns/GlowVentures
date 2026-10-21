@@ -748,13 +748,15 @@ export function HoldingsBehind() {
                  title={`Money-weighted: every dated contribution and withdrawal of the ${fmtNum(mw.accountIds.length)} account${mw.accountIds.length === 1 ? "" : "s"} whose statements carry an opening portfolio value, each closed at the value its own statement prints on its own date${mw.lastClose ? ` (the latest ${fmtDate(mw.lastClose)})` : ""}. ${mw.result.annualised ? "The window is at least a year, so this is the annual rate." : `The window is ${fmtNum(mw.result.windowDays ?? 0)} days and the rate is NOT annualised — compounding it onto a year would be a projection.`} The table's Return column is a different measure: FIFO on cost, cumulative since each purchase. They are not expected to agree.`}>
               Money-weighted{" "}
               {mw.result.pct == null
-                ? <AbsentCell reason={mw.accountIds.length === 0
+                ? <AbsentCell reason={mw.missing.length > 0
+                    ? `No whole money-weighted rate: ${mw.reason}. ${mw.missing.length} of ${mw.bookAccounts} accounts holding value lack one; a rate over the ${mw.accountIds.length} listed here would not be the book's.`
+                    : mw.accountIds.length === 0
                     ? "No account in this set carries an opening portfolio value, so there are no dated flows to strike a money-weighted rate on."
                     : "The dated flows of these accounts do not solve to a single rate, so none is shown."} />
                 : <span className={`mono font-semibold ${changeColor(mw.result.pct)}`}>{fmtPct(mw.result.pct, { sign: true, decimals: 1 })}</span>}
-              <span className="text-slate-500">
+              {mw.result.pct != null && <span className="text-slate-500">
                 {" "}· {mw.result.annualised ? "annual rate" : `${fmtNum(mw.result.windowDays ?? 0)} days${mw.lastClose ? ` to ${fmtDate(mw.lastClose)}` : ""} · not annualised`}
-              </span>
+              </span>}
             </div>
           )}
           {!d.absent && (

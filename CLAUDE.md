@@ -81,7 +81,10 @@ every one takes the reason as a required argument.
 - **Never blend a missing value into a total as zero** — `sumOrNull` in
   `src/lib/analytics.ts`.
 - **A figure that exists for SOME accounts is shown for those and the rest are
-  named**, including in the total's own caption.
+  named**, including in the total's own caption. **A pooled return is the exception: never
+  partial.** It is struck over every account holding value or shown as `—`
+  with the unmeasured accounts named (`nothingToMeasure`, `measuredAccountsReturn`
+  in `src/lib/returns.ts`; Stage 10fc).
 - **A COMPUTED zero is legitimate and stays**, with its reason on the face.
 - **A caption must neither narrow nor widen the figure it describes.**
 - **A total must tie to its own columns.**
@@ -124,8 +127,7 @@ One line per area; the history files explain each in depth.
   from `public/audit/`), `capitalCalls.ts`, `fundReturns.ts`, `privateBook.ts`
   (Private Market's one model; brand grouping via `brandOf`/`BRAND_OVERRIDES`),
   `investmentProfiles.ts` (supplied strategy/description, matched by identity —
-  security key → ISIN → name → brand → folio; Stage 10eo), `enteredProfiles.ts`
-  (the same cells typed on the table, shown over a file's; Stage 10ev).
+  security key → ISIN → name → brand → folio; Stage 10eo).
 - `src/lib/navSeries.ts`, `attribution.ts` (no caller; kept, tested),
   `benchmarks.ts` (seven indices, name-checked), `indexSectors.ts` (their sector
   weights off NSE's factsheets, through `resolveSector`; Stage 10fe), `indices.ts`, `periodReturns.ts`
