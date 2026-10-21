@@ -130,7 +130,9 @@ One line per area; the history files explain each in depth.
   security key → ISIN → name → brand → folio; Stage 10eo).
 - `src/lib/navSeries.ts`, `attribution.ts` (no caller; kept, tested),
   `benchmarks.ts` (seven indices, name-checked), `indices.ts`, `periodReturns.ts`
-  (Morning CIO Returns tab), `returnMeasures.ts`, `returnColumns.ts`.
+  (Morning CIO Returns tab), `segmentReturns.ts` (the Return Attribution tab:
+  FIFO gain and contribution by any axis, tied to the Gain / Loss tile),
+  `returnMeasures.ts`, `returnColumns.ts`.
 - `src/lib/fundNavs.ts` (AMFI NAV overlay; never sets `live`; depository cash and
   fund rows on the live basis only), `depositoryShares.ts`, `recordedHoldings.ts`,
   `corporateActions.ts`, `dailyMovers.ts`, `quotes.ts`, `quoteCache.ts`,
