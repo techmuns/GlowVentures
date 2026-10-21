@@ -100,5 +100,5 @@ const closedCash = pos({ securityKey: 'cash', security: 'Bank balance', assetCla
 const closedAccount = acct('a', { engagement: 'PMS', capital: { contributed: 100, withdrawn: 150 } as Account['capital'] });
 for (const axis of ['sector', 'security', 'assetClass', 'basket'] as const) {
  const closed = selectedSegmentReturns([], [closedCash], [closedAccount], axis, { ...sel, inception: true });
- near(closed.total.gain, 50.34); near(closed.rows.find(r => r.key === UNSPLIT_RETURNS)!.gain, 50.34);
+ near(closed.closingValue, 0.34); near(closed.total.gain, 50.34); near(closed.rows.find(r => r.key === UNSPLIT_RETURNS)!.gain, 50.34);
 }

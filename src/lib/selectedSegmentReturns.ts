@@ -32,7 +32,7 @@ export function sinceInvestmentUnits(current: readonly Position[], exited: reado
       const f = fifoTotals(held, { accounts, universe: current, exited: left });
       if (f.gain != null && f.deployed != null) {
         units.push({ key: accountId, accountId, label: sourceLabel(a), positions: [...held, ...left],
-          gain: f.gain, invested: f.deployed, close: held.reduce((s, p) => s + p.marketValue, 0), from: null, to: a.asOf });
+          gain: f.gain, invested: f.deployed, close: (held.length ? held : left).reduce((s, p) => s + p.marketValue, 0), from: null, to: a.asOf });
         continue;
       }
     }
