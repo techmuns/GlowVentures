@@ -7,10 +7,9 @@
  * 10eb), and an info popup for the calculation selected, with the window
  * actually measured printed beside the one asked for.
  *
- * ONE COLUMN: the portfolio's card first, the benchmarks under it (Stage 10dy,
- * at the family's request), and under those the return ATTRIBUTION — which
- * category, asset class, basket, sector, side or security earned the return
- * (`SegmentReturns`, Stage 10fd: *"a section inside the returns page only"*).
+ * The portfolio's card stays above two subtabs: Return attribution (default)
+ * and Benchmarks. Both remain inside Returns, with their own state preserved
+ * while switching. The selected subtab is shareable through `?rview=`.
  * The panel scrolls inside itself; the page does not. One toolbar strip holds
  * the controls; the portfolio card carries its window as chips in its header
  * and its five amounts as tiles beside the figure; the benchmarks are tiles on
@@ -36,13 +35,14 @@
  * No line on the face reads as a sentence (Stage 10cp): every explanation is a
  * hover on the figure or control it explains.
  */
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Card } from "@/components/Card";
 import { AbsentCell } from "@/components/Absent";
 import { ReturnCalculationInfo } from "@/components/ReturnCalculation";
 import { PeriodReturnCalculation } from "@/components/PeriodReturnCalculation";
 import SegmentReturns from "@/components/SegmentReturns";
+import { useViewParam } from "@/components/ViewToggle";
 import { BENCHMARKS, benchmarkIdentity, benchmarkMismatchReason } from "@/lib/benchmarks";
 import { fetchPriceHistory, priceErrorReason, type PriceHistory, type PriceResult } from "@/lib/prices";
 import { usePortfolio } from "@/context/PortfolioContext";
@@ -65,10 +65,16 @@ const OPENING_ROW = /^opening portfolio value/i;
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
 const pctText = (n: number) => `${n >= 0 ? "+" : ""}${n.toFixed(2)}%`;
 const basisWord = (m: Measured) => m.basis === "annual" ? "a year" : "not annualised";
+const RETURN_VIEWS = [
+  { key: "attribution", label: "Return attribution" },
+  { key: "benchmarks", label: "Benchmarks" },
+] as const;
 
 export default function PortfolioReturns() {
   const { statementPortfolio, fmtFromBase, displayCurrency, scope } = usePortfolio();
   const [params, setParams] = useSearchParams();
+  const [view, setView] = useViewParam(RETURN_VIEWS, {}, "rview");
+  const tabsId = useId();
   const money = (n: number) => fmtFromBase(n, { compact: true });
 
   const period = (PERIODS.find((p) => p.key === params.get("rp"))?.key ?? "fytd") as PeriodKey;
@@ -345,11 +351,38 @@ export default function PortfolioReturns() {
         </Card>
         </div>
 
+        <div role="tablist" aria-label="Return details" data-returns-tabs
+          className="inline-flex w-fit shrink-0 items-center gap-0.5 rounded-lg border border-ink-700 bg-ink-800/60 p-0.5">
+          {RETURN_VIEWS.map((v, index) => (
+            <button key={v.key} type="button" role="tab" id={`${tabsId}-tab-${v.key}`}
+              aria-selected={view === v.key} aria-controls={`${tabsId}-panel-${v.key}`}
+              tabIndex={view === v.key ? 0 : -1} data-returns-tab={v.key}
+              className={btn(view === v.key)} onClick={() => setView(v.key)}
+              onKeyDown={(e) => {
+                const next = e.key === "Home" ? 0 : e.key === "End" ? RETURN_VIEWS.length - 1
+                  : e.key === "ArrowRight" ? (index + 1) % RETURN_VIEWS.length
+                  : e.key === "ArrowLeft" ? (index + RETURN_VIEWS.length - 1) % RETURN_VIEWS.length : null;
+                if (next == null) return;
+                e.preventDefault();
+                setView(RETURN_VIEWS[next].key);
+                e.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>("[role=tab]")[next]?.focus();
+              }}>
+              {v.label}
+            </button>
+          ))}
+        </div>
+
+        <div role="tabpanel" id={`${tabsId}-panel-attribution`} aria-labelledby={`${tabsId}-tab-attribution`}
+          hidden={view !== "attribution"} tabIndex={0} className="shrink-0" data-returns-panel="attribution">
+          <SegmentReturns />
+        </div>
+
         {/* ── BENCHMARKS AS TILES, ONE BAR SCALE (Stage 10fp). Three columns
             stretched across the panel left most of a table empty; eight tiles
             in two rows carry the same figures — each index's return, its bar,
             and the portfolio's lead over it — with the portfolio first. ── */}
-        <div className="shrink-0" data-returns-benchmarks>
+        <div role="tabpanel" id={`${tabsId}-panel-benchmarks`} aria-labelledby={`${tabsId}-tab-benchmarks`}
+          hidden={view !== "benchmarks"} tabIndex={0} className="shrink-0" data-returns-panel="benchmarks" data-returns-benchmarks>
         <Card title="Benchmarks"
           subtitle={`Each index's close-to-close return over the measured window, ${annualise ? "annualised because the selected return is" : "not annualised, as the selected return is not"}. Price indices exclude dividends. ${whole ? `Selected measure: ${typeLabel}.` : "With no whole-portfolio return measured, each index runs over the window asked for."}`}
           right={<span className="label-xs pt-1">{benchFrom && benchTo ? `${fmtDate(benchFrom)} → ${fmtDate(benchTo)}` : DASH} · {basisTag}</span>}>
@@ -389,8 +422,6 @@ export default function PortfolioReturns() {
         </Card>
         </div>
 
-        {/* ── Which part of the book earned the return ── */}
-        <SegmentReturns />
       </div>
     </div>
   );
