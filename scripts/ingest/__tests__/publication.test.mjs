@@ -16,6 +16,7 @@ import { parseNum } from '../lib/parseNum.mjs';
 import { makeGridPdf } from './fixtures/makePdf.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
+fs.mkdirSync(path.join(ROOT, '.cache'), { recursive: true });
 const doc = (overrides = {}) => deriveDocument(makeDocument({ docKey: 'hdfc-123-2026-10-01', provider: 'HDFC Mutual Fund',
   accountNo: '123', owner: 'Ajay Jaisinghani', ownerId: 'ajay-jaisinghani', asOf: '2026-10-01', reportType: 'holdings', status: 'ok',
   sourcePath: 'source/test.pdf', holdings: [makeHolding({ security: 'Example Fund', isin: 'INF000000001', quantity: 10, totalCost: 90, marketPrice: 12, source: 'hdfc-123-2026-10-01' })], ...overrides }));
