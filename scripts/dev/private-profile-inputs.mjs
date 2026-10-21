@@ -3,8 +3,9 @@ import assert from 'node:assert/strict';
 // A browser-local store: no save in this regression reaches a hosted account.
 export async function installProfileStoreFixture(page) {
   const records = new Map(), writes = [];
-  let fail = false;
+  let fail = false, delay = 0;
   await page.route('**/api/investment-profiles', async route => {
+    let reply = [...records.values()];
     if (route.request().method() === 'POST') {
       const body = route.request().postDataJSON();
       writes.push(body);
@@ -12,15 +13,21 @@ export async function installProfileStoreFixture(page) {
         fail = false;
         return route.fulfill({ status: 502, json: { ok: false, message: 'Fixture save failed' } });
       }
+      const wait = delay; delay = 0;
+      if (wait) await new Promise(resolve => setTimeout(resolve, wait));
+      reply = reply.filter(p => p.field !== body.field || !body.funds.includes(p.fund));
       for (const fund of body.funds) {
         const key = `${fund}:${body.field}`;
         if (body.op === 'delete') records.delete(key);
-        else records.set(key, { fund, field: body.field, fundName: body.fundName, text: body.text, updatedAt: '2026-10-21T12:00:00Z' });
+        else {
+          const record = { fund, field: body.field, fundName: body.fundName, text: body.text, updatedAt: '2026-10-21T12:00:00Z' };
+          records.set(key, record); reply.push(record);
+        }
       }
     }
-    return route.fulfill({ json: { ok: true, profiles: [...records.values()] } });
+    return route.fulfill({ json: { ok: true, profiles: reply } });
   });
-  return { writes, records, failNextSave() { fail = true; } };
+  return { writes, records, failNextSave() { fail = true; }, delayNextSave(ms) { delay = ms; } };
 }
 
 export async function assertInlineProfileEditing(page, store) {
@@ -37,14 +44,19 @@ export async function assertInlineProfileEditing(page, store) {
   const save = field => page.locator(rowSelector).locator(`[data-pm-profile-save="${field}"]`);
   const initialFolios = await page.locator('tr[data-pm-folio-row]').count();
   await first.fill('Fixture strategy');
+  await find('description').fill('Fixture description\nSecond line');
   assert.equal(await page.locator('tr[data-pm-folio-row]').count(), initialFolios, 'editing never toggles its parent row');
   assert.equal(store.writes.length, 0, 'drafts do not write until Save');
+  store.delayNextSave(1000);
+  const response = field => page.waitForResponse(r => r.url().endsWith('/api/investment-profiles') && r.request().method() === 'POST' && r.request().postDataJSON().field === field);
+  const strategyReply = response('strategy'), descriptionReply = response('description');
   await save('strategy').click();
-  await page.locator(rowSelector).locator('[data-pm-profile-remove="strategy"]').waitFor();
-  assert.equal(store.writes.at(-1).field, 'strategy');
-  await find('description').fill('Fixture description\nSecond line');
   await save('description').click();
-  await page.locator(rowSelector).locator('[data-pm-profile-remove="description"]').waitFor();
+  await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+  await Promise.all([strategyReply, descriptionReply]);
+  await page.waitForFunction(selector => !document.querySelector(`${selector} [data-pm-profile-save]`), rowSelector);
+  assert.equal(await find('strategy').inputValue(), 'Fixture strategy', 'overlapping saves retain both fields without a refresh');
+  assert.equal(await find('description').inputValue(), 'Fixture description\nSecond line');
   await page.reload();
   await page.waitForFunction(selector => document.querySelector(selector)?.value === 'Fixture strategy', `${rowSelector} [data-pm-profile-input="strategy"]`);
   assert.equal(await find('description').inputValue(), 'Fixture description\nSecond line', 'saved fields persist after reopening the page');
