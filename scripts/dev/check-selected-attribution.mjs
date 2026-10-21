@@ -185,6 +185,7 @@ try {
    await saved.locator('[data-segment-returns]').waitFor();
    await saved.waitForFunction(expected => JSON.stringify([...document.querySelectorAll('[data-tile-slot]')].map(el => el.dataset.tileSlot)) === JSON.stringify(expected), scenario.expected);
    assert.deepEqual(writes, [], 'retiring a saved metric must not write an empty shared layout');
+   if (!scenario.local.synced) assert.deepEqual(await saved.evaluate(() => JSON.parse(localStorage.getItem('glow:cioTiles:v1'))), scenario.local, 'an older shared layout cannot overwrite the pending retired selection');
   } finally { await context.close(); }
  }
  await page.goto(base + '/cio?tab=returns&tiles=mwr');

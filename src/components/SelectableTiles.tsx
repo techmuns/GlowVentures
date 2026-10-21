@@ -194,6 +194,9 @@ export function SelectableTiles({ metrics, defaults, storageKey, page, param = "
       });
       return;
     }
+    // A pending local selection containing only retired ids still wins.
+    // It renders defaults; copying the older shared set would undo that choice.
+    if (choice.ids === null && local && !local.synced && !local.legacy) return;
     const shared = store.sets[page];
     if (shared?.length && (!local || !local.synced || local.ids.join(",") !== shared.join(","))) {
       writeLocalTileSet(storageKey, shared, true);
