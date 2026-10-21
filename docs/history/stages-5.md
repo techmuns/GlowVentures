@@ -4780,3 +4780,12 @@ cells just like the capital call cells."*
 - A holding with no cost, or held at cost, is in the value and in no gain. A segment with no struck holding shows `—` with its reason.
 - This is not the NAV bridge removed earlier: that probe still counts `[data-attrib-row]` on `cio`. The new handles are `data-seg-*`.
 - `segmentReturns.test.ts` (test:family) checks the tie on the committed book on every axis (₹112.51 Cr, 21.98% on the statement basis). `check:pages` adds `cio-attribution{,-sector,-security}` with `CIO_SEGMENTS`, and the tab-list check now expects seven panels.
+
+### Stage 10fa — DIRECT, PMS AND FUND EXPOSURE APART IN THE SECTOR AND SECURITY DRILL-DOWNS
+
+*"we need to show the clear distinction in holdings as well. Make direct, PMS and fund exposure clear in sector drill-downs."*
+
+- **Sector Composition's issuer drill-down** (Consolidated, a sector opened) printed one `Direct + PMS` figure per issuer. It now has Direct, PMS, Via funds · derived and Total exposure. A route that holds none of an issuer is an `AbsentCell` with its reason, never ₹0. A footer sums each column from its rows, so Total = Direct + PMS + Via funds.
+- **The Portfolio Monitor's All Securities axis** gains Direct and PMS columns before `Direct + PMS`, which stays as their subtotal: Invested, P&L and Return are struck on it. Each account line under a company puts its value in its own route's column, and the "Counted once" line subtracts the overlap there too. The footer totals both columns.
+- One split, `measuredSplit` in `src/lib/heldThrough.ts`, over the deduped set the measured cell already sums. The route is the account's engagement through `holdingRoute`/`heldRouteOf`. An account that is neither own nor PMS gets an "Other accounts" column on both pages, drawn only when the book has one (none today).
+- `check:pages`: `COL_STOCK` moves two places for the new columns. New invariants check that Direct and PMS add to Direct + PMS on the footer and every row, and that each route's footer matches the book's own figure off account engagement. A new `sectorSplit` probe opens the largest sector and checks each issuer's routes add to its Total, and that the footer ties to its rows.
