@@ -4728,10 +4728,28 @@ Follows Stage 10et. With `check:reads`' precedence filter removed, six more acco
 - **SVAN 8710067's appraisal prints a `Cash Rec/Payable` of −₹24.8 L**, which makes that key net negative (−₹22.6 L) for the first time. `negligibleFloor.test.ts` asserted no such key existed; it now checks that a net-negative key survives the floor on the live book. `clubbedFigures.test.ts`' re-expression now leaves the average cost absent over a non-positive unit count, as `costedFigures` does. `datedCapital.test.ts` and `carriedCost.test.ts` take Buoyant's close from the 30 Sep account statement, and keep the snap as a witness on its own date.
 - Book: consolidated ₹836.60 Cr → **₹836.57 Cr**, 444 → 448 positions. Left alone: Kotak 4295974's ₹619 MATERIAL break on a liquid-fund line (Hope India Trust, excluded from the book as a separate taxpayer), and 0.01-point weight deltas on Carnelian's report, whose printed weights total 99.93%.
 
+### Stage 10ev — PRIVATE MARKET: STRATEGY AND DESCRIPTION, TYPED IN THE CELL
 
-### Stage 10ez — NO PARTIAL RETURNS: EVERY RETURN SURFACE READS ONE RECORD, WHOLE OR ABSENT
+*"give the option to edit and write information in the strategy and description
+cells just like the capital call cells."*
 
-*"not all accounts are being read into the dashboard. It says partial return, 2 out of 76 accounts … We do not need to show partial return anywhere on the dashboard"* — the family, 21 Oct 2026.
+- **Store:** `functions/api/investment-profiles.js` — the capital calls' store and
+  gate (`GLOW_STORE` KV, edge password, same-origin writes), one key per
+  investment and field (`investment-profile:<field>:<fund>`), keyed on the calls'
+  own `callKeyOf`. A save may name several investments: a legal-name or brand row
+  writes its text to every fund line under it. Up to 2,000 characters, line
+  breaks kept; a record too long for KV metadata is read from its value.
+- **Client:** `src/lib/enteredProfiles.ts` (same `StoreCause` / `CAUSE_WORD` /
+  `SWITCH_ON_STEPS` as the calls) and `components/EnteredProfiles.tsx`. Each cell
+  is a button: its text, "Add", or the store's cause in a word; it opens an
+  editor row under the row with both fields. A member row only reads; its folio
+  lines edit.
+- **Precedence:** typed text (`matchedOn: "entered"`) shows over a supplied
+  file's (`withEntered`); "Remove typed text" shows the file's again. Cells,
+  sort and search read the one resolution; the hover says which it is.
+- `enteredProfiles.test.ts` drives the Function on an in-memory KV and the
+  precedence. Checked in the browser with the store mocked: save, remove, the
+  four-line Waterwala row. `check:pages ONLY=private-market`: no new finding.
 
 ### Stage 10ew — THE SEBI INVESTOR REPORT'S SINCE-INCEPTION TWRR AND ITS LOWER-CASE WINDOW
 
@@ -4751,6 +4769,10 @@ Follows Stage 10et. With `check:reads`' precedence filter removed, six more acco
 - **`BookFolio.invested`** (`investedSpanOf`) takes the review line's dates first, then the capital account's first and last dated call. An income-only view carries none: its units are the valued line's. `figuresOf` spans the earliest to the latest over the same folios `asOf` reads, and counts how many of them carry a date (`investedOf` of `investedAcross`).
 - **Private Market gains a "Date of investment" column** after the name (`data-col-cell="invested"`, `data-invested`). It shows one date, or a "first → last" range. A row where only some folios carry a date says "N of M folios". A row with no dated folio renders `—` with the reason. The column sorts by first date.
 - `privateBook.test.ts` checks the span on constructed folios and checks that every review line on the table is dated by the review.
+
+### Stage 10ez — NO PARTIAL RETURNS: EVERY RETURN SURFACE READS ONE RECORD, WHOLE OR ABSENT
+
+*"not all accounts are being read into the dashboard. It says partial return, 2 out of 76 accounts … We do not need to show partial return anywhere on the dashboard"* — the family, 21 Oct 2026.
 
 - **Code cause:** Morning CIO → Returns built its own inputs from NAV history and cash-flow rows instead of the verified `accountReturnRecords` every other return surface reads (Stage 10ei/10em). FYTD measured 9 accounts where 17 are verified; the unit-ledger openings (HDFC ×3, Kotak, ICICI ×2, Invesco, 3P, Motilal MF) never reached it. The tab now opens and closes each account on its verified record, with statement marks between the two as window points.
 - **Data cause, unchanged:** 42 accounts holding value have no verified opening valuation and dated capital through a closing valuation (Sanshi ×5, the MOPWM review ×6, ICICI NSDL, Buoyant ×2, SVAN ×2, Motilal Founders/Delphi/Active Momentum, India SME ×3, Carnelian Amritkaal and others; `RETURN-COVERAGE.md`). Records start on 1 Apr 2026, so YTD and 1Y/2Y/3Y have no opening value for any account.
