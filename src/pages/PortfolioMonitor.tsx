@@ -87,6 +87,7 @@ import { allRecordedLines, recordedLabel, recordedLineFor } from "@/lib/recorded
 import type { Position } from "@/lib/types";
 import { investedOnOf, holdingTradesOf, lineUndatedReason, accountInvestedOn, type InvestedOn } from "@/lib/investedOn";
 import { InvestedOnCell } from "@/components/InvestedOnCell";
+import { holdingPeriodOf, type HoldingPeriod } from "@/lib/holdingFlows";
 import { AbsentCell, AbsentFromBook, AbsentSection, AbsentValue, DASH } from "@/components/Absent";
 import { SortHeader, SortableTable, Tr, TrFoot } from "@/components/SortHeader";
 // THE SAME TABLE STANDARD THE PRIVATE MARKET PAGE READS — a row opens into rows
@@ -174,6 +175,8 @@ type Venue = {
   depositoryWhy: string | null;
   live: boolean; dayChangePct: number | null;
   heldSince: string | null; assetClass: string;
+  /** When the units held now began, where the line's own dated trades prove it (Stage 10fw) — its YTD. */
+  opened?: HoldingPeriod | null;
   investedOn: InvestedOn | null;
 };
 
@@ -189,6 +192,8 @@ type MandateHolding = {
   /** For the row's own Day, Invested on and return cells — see `Venue`. */
   dayChangePct: number | null;
   heldSince: string | null; assetClass: string;
+  /** When the units held now began, where the line's own dated trades prove it (Stage 10fw) — its YTD. */
+  opened?: HoldingPeriod | null;
   /** The date this share's value is struck at — where its return window ends. */
   valuedAt: string | null;
   investedOn: InvestedOn | null;
@@ -336,6 +341,8 @@ type Row = {
    * applied to a date: one missing input makes the answer unknown, not older.
    */
   heldSince: string | null;
+  /** When the units held now began, where every line's dated trades prove it (`holdingPeriodOf`, Stage 10fw). */
+  opened?: HoldingPeriod | null;
   /**
    * The ONE date this row's value is struck at (`commonValueDate`), where its
    * return window ends; null where its holdings are valued on different dates,
@@ -1497,7 +1504,7 @@ export function PortfolioMonitor() {
             costBasis: x.costBasis, marketValue: x.marketValue, unrealizedPnL: x.unrealizedPnL,
             returnPct: x.returnPct, costNA: !!x.costUnavailable || x.costBasis === null, live: !!x.live,
             dayChangePct: x.dayChangePct ?? null,
-            heldSince: x.heldSince, assetClass: x.assetClass, investedOn: investedOnOf([x]), position: x,
+            heldSince: x.heldSince, assetClass: x.assetClass, investedOn: investedOnOf([x]), position: x, opened: holdingPeriodOf([x]),
             valuedAt: valueDate(x),
             accountId: x.accountId,
             realised: typeof x.realizedPnL === "number" ? x.realizedPnL : null,
@@ -1671,6 +1678,7 @@ export function PortfolioMonitor() {
           // Every line the review's, held at cost — no gain to strike (Stage 10dh).
           valuedAtCost: dps.every((x) => x.valuedAtCost === true),
           heldSince,
+          opened: holdingPeriodOf(dps),
           // The deduped set's ONE value date, or null where its lines are marked
           // on different dates — that row refuses to annualise rather than pick.
           valuedAt: commonValueDate(dps.map(valueDate)),
@@ -1742,6 +1750,7 @@ export function PortfolioMonitor() {
         costNA: !!p.costUnavailable || p.costBasis === null,
         valuedAtCost: p.valuedAtCost === true,
         heldSince: p.heldSince,
+        opened: holdingPeriodOf([p]),
         valuedAt: valueDate(p),
         // One statement line that is the whole folio IS the account.
         capital: datedCap?.behind([p], fifoOpts.universe) ?? undefined,
@@ -3156,7 +3165,9 @@ export function PortfolioMonitor() {
             ? <AbsentCell reason={realisedReason({ ...h.position, realizedLotsAfter: h.realisedLotsAfter ?? undefined })} />
             : <span className={changeColor(h.realised)} title={realisedWindowOf([{ accountId: h.accountId, realizedPnL: h.realised }])}
                 data-child-realised={h.realised}>{fmtFromBase(h.realised, { compact: true, sign: true })}</span>,
-          ret: (measure) => childReturn({ hprUnavailableReason: h.position.hprUnavailableReason, returnPct: h.returnPct, heldSince: h.heldSince, valuedAt: h.valuedAt, assetClass: h.assetClass, costNA: h.costNA, costBasis: h.costBasis, marketValue: h.marketValue }, measure),
+          ret: (measure) => childReturn({ hprUnavailableReason: h.position.hprUnavailableReason, returnPct: h.returnPct, heldSince: h.heldSince, valuedAt: h.valuedAt, assetClass: h.assetClass, costNA: h.costNA, costBasis: h.costBasis, marketValue: h.marketValue,
+            // ITS OWN DATED MONEY, where its trades or lots date every unit (Stage 10fw).
+            capital: datedCap?.behind([h.position], holdingsUniverse) ?? undefined, opened: h.opened }, measure),
           sector: isFundVehicle(h) ? <AbsentCell reason={fundSectorWhy(h.assetClass)} /> : sectorCell(h.sector, h.securityKey, [], true),
         }, { "data-constituent": h.securityKey || h.security, "data-constituent-account": h.accountId, "data-constituent-mv": h.marketValue });
       // ONE ACCOUNT: the row IS that account, so its shares hang straight from it.
@@ -3367,7 +3378,7 @@ export function PortfolioMonitor() {
         // A line that is one WHOLE folio is that account, and carries its dated
         // record's money-weighted rate — Buoyant's two folios under the row
         // pooling both, each at the rate its own fact sheet prints.
-        ret: (measure) => childReturn({ hprUnavailableReason: v.positions.find(p => p.hprUnavailableReason)?.hprUnavailableReason, returnPct: v.returnPct, heldSince: v.heldSince, valuedAt: v.valuedAt, assetClass: v.assetClass, costNA: v.costNA, costBasis: v.costBasis, marketValue: v.marketValue,
+        ret: (measure) => childReturn({ hprUnavailableReason: v.positions.find(p => p.hprUnavailableReason)?.hprUnavailableReason, returnPct: v.returnPct, heldSince: v.heldSince, valuedAt: v.valuedAt, assetClass: v.assetClass, costNA: v.costNA, costBasis: v.costBasis, marketValue: v.marketValue, opened: v.opened,
           valuedAtCost: v.valuedAtCost, capital: datedCap?.behind(v.positions, holdingsUniverse) ?? undefined }, measure),
         entity: v.owner,
       }, {
@@ -4816,7 +4827,8 @@ export function PortfolioMonitor() {
                                  them from the book, and holds each to being whole in
                                  this row, rather than reading the page's figure back. */
                               {...(r.capital ? {
-                                "data-capital": r.capital.dated ? "dated" : "undated",
+                                // "holding" where the dated money is the row's holdings' own (Stage 10fw).
+                                "data-capital": r.capital.dated ? (r.capital.holdings ? "holding" : "dated") : "undated",
                                 "data-capital-accounts": r.capital.accountIds.join(" "),
                                 "data-row-keys": r.realizedKeys.join(" "),
                               } : {})}
@@ -5494,6 +5506,7 @@ function venuesOf(ps: Position[], accIdx: AccountIndex, valueDate: (p: Position)
       valuedAt: commonValueDate(xs.map(valueDate)),
       assetClass: xs[0].assetClass,
       investedOn: investedOnOf(xs),
+      opened: holdingPeriodOf(xs),
     };
   }).sort((a, b) => b.marketValue - a.marketValue);
   const raw = sum(built.map((v) => v.marketValue));

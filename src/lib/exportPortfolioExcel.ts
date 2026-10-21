@@ -272,12 +272,12 @@ function consolidate(held: Position[], accounts: Account[], nowMs: number, dated
        *
        * FIFO over the row's own deduped holdings — the realised gain on units
        * already sold stays in it — then `measuredReturn(…, "auto", …)`, which
-       * annualises only where every unit's purchase date is on a lot register
-       * (`heldSince` on EVERY line: one missing start makes the row's start
-       * unknown, not older) and the window to the row's ONE value date is a
-       * year or longer. Crompton at LKP is the case the sheet used to get
-       * wrong: −27.78% on cost printed under the same heading the tab fills
-       * with its CAGR.
+       * annualises only where the row's money is dated — whole accounts'
+       * payments, or (Stage 10fw) its holdings' own trades or lots — and a year
+       * old: several payments as XIRR, one compounded from its own day. Crompton
+       * at LKP, bought in two lots, is the case the sheet got wrong twice: its
+       * return on cost under the tab's CAGR heading, then a CAGR from its older
+       * lot as if all of it were a year old.
        */
       const fifo = fifoTotals(ps, fifoOpts);
       const fifoRet = costNA || (cost as number) <= 0 ? null : fifo.returnPct;
