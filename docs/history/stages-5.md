@@ -4961,3 +4961,10 @@ current unrealized P&L."*
 - **Benchmarks** are eight tiles in two rows, portfolio first. Each shows its return, a bar on one shared scale and its gap in pp. This replaces the three-column table that stretched across the panel, together with its lone Edit Columns row. Every `data-returns-bench*` handle is unchanged.
 - The order is still portfolio, then benchmarks, then attribution (Stages 10dy, 10fd). The new surfaces use `.ret-well`, `.ret-stat`, `.ret-chip` and `.ret-bar`, each with a light-mode colour.
 - `check:pages` passes on every `cio-returns*` route. The only finding is the KPI strip's DL-11 invested-line check, which fails on main too.
+
+### Stage 10fq — COMPLETE COST RECOVERY FOR LIVE FUND HOLDINGS
+
+- The second audit found that Stage 10fn covered quote-only shares but omitted the analogous fund overlays. Exact owner, scheme/plan, dated units and FIFO now recover 21 more fund/account costs. Twenty support HPR; ICICI Equity Savings recovers cost only because its sale proceeds have an inconsistent cash sign. Individual and pooled return paths withhold that unverified HPR. No UI files change.
+- A Closing ends a review folio block. Ajay's 34,045.997 Kotak Large & Mid Cap units must not be pooled with the separate, already-costed 27,900.484-unit AMC folio. Unmatched plans, later movements and even the 0.066-unit Motilal Arbitrage discrepancy refuse recovery.
+- The exact client request now includes residual fund balances, Hope's printed-cost/available-unit disagreement and the ESDS register's 42-share bridge and ₹774 rate/payment difference. The four-page HDFC scan was visually read: it has quantities, not acquisition costs. Existing source files are not requested again as though absent.
+- Tests cover separate/ambiguous folios, original FIFO lots, wrong-sign proceeds, exact-unit refusals and recovered costs reaching both fund overlays. Full source regeneration and financial CI verify reproducibility; source-row evidence stays beside every recovery.
