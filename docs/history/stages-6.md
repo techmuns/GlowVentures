@@ -17,7 +17,12 @@
 - Authenticated HTML revalidates privately, missing `/assets/` files return 404 instead of SPA HTML, and signed-out asset requests return 401 so a recovery reload opens sign-in at the original page.
 - Unit and middleware contracts cover classification, reload limits, blocked storage, cache policy and asset/auth responses. The built-app browser regression injects transient 404, persistent HTML/401, runtime exceptions and offline failures, and checks successful retry and address retention. CI runs these alongside the financial and table suites.
 
-### Stage 10fv — INVESTMENT DATES ON EVERY HOLDINGS TABLE
+### Stage 10fv — RETURN ATTRIBUTION AND BENCHMARKS IN SUBTABS
+
+- Morning CIO's Returns panel keeps the period controls and portfolio summary above two subtabs: Return attribution (default) and Benchmarks. Only the selected block is visible; switching preserves the attribution's grouping and expanded rows. `rview=benchmarks` supports direct links and browser history without changing the existing return parameters.
+- The controls link to labelled panels, support arrow keys and Home/End, and keep one tab in the keyboard tab order. Existing page checks now verify the selected panel and summary placement, with a separate benchmark route and the existing financial checks retained.
+
+### Stage 10fw — INVESTMENT DATES ON EVERY HOLDINGS TABLE
 
 - Holding tables now receive a visible Invested on column from the shared table system. Existing Portfolio Monitor, mandate and private-market date columns remain single columns. Saved arrangements from before the addition gain the date automatically, with sorting, visibility, movement and reset using the same layout.
 - Dates resolve from each row's actual positions, keyed by account and security, through the existing allotment, lot, trade, call and review sources. Whole mandates use their own inception record; incomplete groups and derived fund exposure cannot borrow a constituent's date. Member filters keep their own positions.
