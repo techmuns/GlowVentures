@@ -4924,6 +4924,15 @@ current unrealized P&L."*
 - **Coverage now:** 49 of 154 rows on All Securities, 86 of 117 on Category (every mandate). **212 of 401** holdings are dated in the book: 94 by trades, 87 by the review, 17 by lot registers, 14 by allotments. The rest have no date in this drop: SVAN, Goldstandard and Carnelian's tapes start 1 Apr 2026, ICICI's NSDL statement prints none, and LKP's trades postdate its 31 Mar holdings. Bonus and split units (ZF, Nuvama) leave a holding undated.
 - **Checks:** `holdingTrades.test.mjs` (test:ingest) breaks each gate on constructed inputs. `investedOn.test.ts` (test:family) anchors every trade date on the holding statement's units and the account's inception date. In `check:pages`, `INVESTED_ON_BOOK` gains the two tiers, and a new invariant dates each mandate row by its accounts' earliest inception.
 
+### Stage 10fn — RECOVER PURCHASE COSTS FROM THE EXISTING RECORDS, RECONCILE FIFO
+
+*"fix the recoverable purchase price and HPR gaps using the statements and workbooks we already have … Reconcile quantities and FIFO properly … Do not change any UI"*
+
+- `recoverHoldingCosts.mjs` reads the review's owner-specific dated equity transactions and the EMA payment-register row. Exact owner/account, ISIN, holding date and units license **20** cost records: nine ICICI holdings and eleven quantity-only shares that become valued on the live quote basis. Existing statement costs, prices, quantities and dates stand. Source workbook/sheet/rows accompany every join in `BOOK_RECOVERED_COSTS` and `docs/COST-RECOVERY.md`.
+- Splits carry original costs; sales consume the oldest lots. Infinium's 8,000 remaining shares cost ₹26,46,660 after its 1,000-share sale, with ₹88,917.69 realised loss. Grand Continent's copied amount on its noncash split is excluded only because the preceding payment and independent closing-cost control agree. Wrong cash signs, uncovered sales and quantity mismatches refuse recovery. Yash's March snapshot recovers its March cost; its three disputed June sales block live pricing of those old units.
+- Stages 10fk/10fj already recovered four HDFC/Kotak printed costs and their full scheme ledgers. Those improvements are retained and checked here: Aarti's HDFC Overnight return includes earlier redemptions and original costs carried through switches, rather than reporting the remaining balance's unrealised percentage as the whole HPR.
+- **Still needed:** fourteen equity balances (nine Ankita banks, Kaynes, Ajay Insolation, Nuvama, Vedanta Aluminium and ESDS), plus LKP Liquid BeES. `docs/client/PURCHASE-COST-RECORDS-NEEDED.md` specifies quantities, account numbers, disputed sales, transfer evidence, stale holding dates and two unusable attachments. Private positions carried at cost still need real dated valuations and, where absent, unit counts.
+- Tests cover original lots versus LIFO, splits, date cutoffs, wrong cash signs, quantity/owner refusal, the four folios' costs, generated cost coverage and the live quote overlay. No page, component, layout or style is changed.
 ### Stage 10fj — A REDEEMED INVESTMENT'S HISTORY IS DATA: EVERY STATEMENT FEEDS THE BOOK
 
 *"statements … showing all the redeemed units of the investments and zero current held units … are also meant to be read and fed into the dashboard because they provide historical returns values and give transactions context"*
@@ -4933,3 +4942,12 @@ current unrealized P&L."*
 - **Hope India Trust consolidated** by the family's decision as its own entity (`shared/owners.mjs`, no PAN by the password rule); the folio reader excludes a non-individual holder only when the registry does not know it.
 - **Sealed statements get reader improvements without the password**: every carried single document is re-read from its archived page text and kept only if it is the same document, keeps every archived holding unchanged and publishes no fewer facts. Control: with the readers unchanged, all 15 re-reads reproduced the archive byte for byte.
 - **The gate checks facts, not just statuses** (`check:reads` 5 and 6): printed dated transactions with none carried, and a dated external flow with no capital move that day, both fail. LKP's demat balances (roll-forward witnesses) and 360 ONE's 18 May distributions (carried via 360 ONE Alternates' notices) were confirmed fed.
+
+### Stage 10fo — ONLY INDICES WITH SECTOR WEIGHTS ARE OFFERED
+
+*"Sensex and BSE500 not showing any sector allocation information so you can remove them as options."*
+
+- Sector Composition's Vs index control now offers only the NAV chart's indices whose factsheet `build-index-sectors` reads. Today that is the five Nifty indices. The list is filtered on `src/data/indexSectors.json`, so an index read later joins it with no code change.
+- The muted pills and the "No sector weights" absent state are gone. `indexSectors()` still answers the BSE keys with the reason, and the NAV chart keeps all seven.
+- An old `?vs=sensex` / `?vs=bse-500` link falls back to Off.
+- `check:pages`: the control's expected keys are the NAV chart's order filtered on the JSON. New route `cio-sectors-vs-retired` asserts `?vs=sensex` opens Off.

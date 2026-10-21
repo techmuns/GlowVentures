@@ -35,6 +35,8 @@ import { SEPARATE_INVESTMENTS } from "../shared/separateInvestments.mjs";
 import { KEPT_UNVALUED, keptUnvaluedFor, keptUnvaluedReason } from "../shared/keptUnvalued.mjs";
 import { buildAccountReturnRecords } from "./lib/accountReturnRecords.mjs";
 import { returnCoverageReport } from "./lib/returnCoverageReport.mjs";
+import { recoverHoldingCosts, recoveryReport } from "./lib/recoverHoldingCosts.mjs";
+import { applyRecoveredCost } from "../shared/recoveredCosts.mjs";
 
 /**
  * THE DEPOSITORY ACCOUNTS, BOTH OF THEM.
@@ -4910,11 +4912,17 @@ function build(archived) {
     delete shareMovements[keys[0]];
   }
 
+  const holdingCostRecovery = recoverHoldingCosts({ root: ROOT, accounts, positions,
+    unvalued: unvaluedHoldings, shareMovements, docs });
+  for (const p of positions) Object.assign(p, applyRecoveredCost(p, holdingCostRecovery.records));
+  notes.push(`cost recovery: ${holdingCostRecovery.records.length} exact account/ISIN/quantity records from the saved workbooks; `
+    + `${holdingCostRecovery.unresolved.length} recorded equity balances still require acquisition or movement evidence. See docs/COST-RECOVERY.md.`);
+
   return {
     accounts, positions, polycab, owners, capitalGains, accountCashFlows, entityCashFlows,
     accountReturnRecords: buildAccountReturnRecords({ accounts, accountCashFlows, byAccount,
       historicalNavs: JSON.parse(fs.readFileSync(path.join(ROOT, 'scripts/ingest/reference/amfi-opening-navs.json'), 'utf8')) }),
-    capitalMoves, positionTranches, shareMovements,
+    capitalMoves, positionTranches, shareMovements, holdingCostRecovery,
     // Keyed on the holdings this book carries, in key order, so the file
     // regenerates byte-identically however the accounts were walked.
     holdingTrades: Object.fromEntries(Object.keys(holdingTrades).sort()
@@ -5000,7 +5008,7 @@ function emit(book) {
   L.push("import type {");
   L.push("  Account, AccountBridge, AccountReturnBlock, AccountReturnCoverage, BookSummary, CapitalMove, CashFlow, Commitment,");
   L.push("  Attribution, CorporateAction, EntityCG, FundInvestment, HoldingTrade, NavCoverage, NavPoint, Position, PositionTranches,");
-  L.push("  RealisedByClass, ReviewFlow, ReviewSuperseded, ReviewWrittenOff, ShareMovement, StartupInvestment, UndatedCapital, UnvaluedStatementHolding,");
+  L.push("  RealisedByClass, RecoveredHoldingCost, ReviewFlow, ReviewSuperseded, ReviewWrittenOff, ShareMovement, StartupInvestment, UndatedCapital, UnvaluedStatementHolding,");
   L.push('} from "@/lib/types";');
   L.push("");
   L.push(`/** Newest report date across all accounts. Individual accounts can be older. */`);
@@ -5015,6 +5023,9 @@ function emit(book) {
   L.push(`export const BOOK_OWNERS = ${j(book.owners)};`);
   L.push("");
   L.push(`export const BOOK_POSITIONS: Position[] = ${j(book.positions)};`);
+  L.push("");
+  L.push("/** Supplementary source costs, accepted only for the exact account, ISIN, date and unit balance. No valuation or quantity overrides. */");
+  L.push(`export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = ${j(book.holdingCostRecovery.records)};`);
   L.push("");
   L.push("/**");
   L.push(" * HELD, AND VALUED BY NO STATEMENT — a QUANTITY, never a value, and in no total.");
@@ -5762,6 +5773,7 @@ fs.mkdirSync(path.dirname(OUT), { recursive: true });
 fs.writeFileSync(OUT, emit(book));
 fs.mkdirSync(path.dirname(REPORT), { recursive: true });
 fs.writeFileSync(REPORT, report(book));
+fs.writeFileSync(path.join(path.dirname(REPORT), 'COST-RECOVERY.md'), recoveryReport(book.holdingCostRecovery, book.accounts));
 const returnCoverage = returnCoverageReport(book, docs);
 fs.writeFileSync(path.join(path.dirname(REPORT), 'RETURN-COVERAGE.md'), returnCoverage.markdown);
 
