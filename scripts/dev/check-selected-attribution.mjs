@@ -14,7 +14,7 @@ const statement = { accounts: b.BOOK_ACCOUNTS, positions: b.BOOK_POSITIONS, acco
 const inputs = b.accountInputs({ accounts: b.BOOK_ACCOUNTS, positions: b.BOOK_POSITIONS, returnRecords: b.BOOK_ACCOUNT_RETURN_RECORDS, navHistory: b.BOOK_ACCOUNT_NAV_HISTORY,
  cashFlows: b.BOOK_ACCOUNT_CASH_FLOWS, groups: [], coverage: b.BOOK_NAV_COVERAGE.covered, undated: b.BOOK_UNDATED_CAPITAL, fromInception: b.BOOK_CAPITAL_FROM_INCEPTION, labelOf: a => a.provider })
  .map(i => ({ ...i, outside: b.nothingToMeasure(statement, b.BOOK_ACCOUNTS.find(a => a.accountId === i.accountId)) }));
-const end = inputs.flatMap(i => i.valuations.map(v => v.date)).sort().at(-1);
+const end = '2026-10-22'; // Toolbar defaults to today; account measures retain their own verified closes.
 const browser = await chromium.launch({ executablePath: process.env.CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true });
 let page;
 try {
@@ -90,7 +90,7 @@ try {
  await page.locator('[data-returns-period="fytd"]').click();
  await page.locator('[data-returns-type-select]').selectOption('xirr');
  const total = table.locator('[data-seg-total]');
- assert.equal(await total.locator('[data-return-info]').count(), 2);
+ assert.equal(await total.locator('[data-return-info]').count(), 3);
  await total.getByRole('button', { name: 'What is included in total return?', exact: true }).click();
  const dialog = page.getByRole('dialog'); await dialog.waitFor();
  assert.match(await dialog.innerText(), /Based on the available records for 17 accounts only/);

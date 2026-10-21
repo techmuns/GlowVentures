@@ -223,3 +223,10 @@
 - Remaining gain and return cards retain their available figures and coverage info. Their hover text uses plain “return” wording.
 - Browser regressions check both menus, legacy links and local/shared saved layouts, including a layout containing only the retired card and conflicting local/shared preferences. The legacy measured-holdings bookmark keeps its independently verified calculation rather than depending on a removed card.
 - Review follow-up: an explicitly all-retired URL now selects defaults even when valid local/shared preferences exist. The older return-dialog and latest-record browser commands target the remaining history card and current coverage UI, and run in required CI.
+
+### Stage 10gp — HISTORICAL MARKET RETURNS FOR CURRENT HOLDINGS
+
+- Returns now fetch full public adjusted stock-price history and exact-ISIN fund NAV history. The FYTD, MTD, YTD, 1Y, 2Y, 3Y and custom selectors calculate a current-value-weighted market return alongside recorded investment returns. Both aggregate amounts before annualising; short periods remain unannualised.
+- The market summary and every attribution grouping share actual published calculation dates and show covered holding counts/value. Their info buttons explain current weights, sources and exclusions, naming each holding and account. Historical price changes are never passed off as actual purchase/sale profit or past portfolio ownership. Private investments retain recorded figures where supported.
+- The authenticated Pages proxy sends only public listing/fund identities to free Yahoo Finance and MFapi, checks INR listing and fund ISIN, bounds upstream responses, excludes unfinished sessions and caches public history. Browser requests deduplicate histories, limit concurrency and allow failed histories to be retried without reloading successful ones.
+- Focused arithmetic/feed tests cover capital weights, common dates, corporate-action-adjusted series, annualisation, exact identity and failures. Required CI exercises every period/type, totals, source/coverage dialogs, retry, sector regrouping and mobile layout.

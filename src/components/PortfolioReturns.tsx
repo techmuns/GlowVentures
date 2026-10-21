@@ -105,10 +105,11 @@ export default function PortfolioReturns() {
   }, [statementPortfolio, scope.accountIds]);
 
   // ── The window ──────────────────────────────────────────────────────────
-  const latest = useMemo(() => inputs.flatMap((a) => a.valuations.map((v) => v.date)).sort().at(-1) ?? null, [inputs]);
   const toParam = params.get("rto");
   const fromParam = params.get("rfrom");
-  const end = toParam && ISO.test(toParam) ? toParam : latest;
+  const today = new Date();
+  const currentDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  const end = toParam && ISO.test(toParam) ? toParam : currentDate;
   const start = period === "custom"
     ? (fromParam && ISO.test(fromParam) ? fromParam : null)
     : period === "inception" ? null : end ? periodStart(period, end) : null;
@@ -227,10 +228,10 @@ export default function PortfolioReturns() {
               onChange={(e) => set({ rp: "custom", rfrom: e.target.value || null })} />
           </label>
           <span className="text-slate-500" aria-hidden>→</span>
-          <label className="flex items-center gap-1.5" title="Closing date — each account closes on its latest statement value on or before this day">
+          <label className="flex items-center gap-1.5" title="Market prices close on or before this day. Recorded returns retain each account’s own verified statement date.">
             <span className="label-xs">To</span>
             <input type="date" className="rounded-md border border-ink-700 bg-ink-800 px-1.5 py-0.5 text-[12px] text-slate-200" data-returns-to
-              value={end ?? ""} max={latest ?? undefined} disabled={period === "inception"}
+              value={end ?? ""} max={currentDate} disabled={period === "inception"}
               onChange={(e) => set({ rto: e.target.value || null })} />
           </label>
         </div>

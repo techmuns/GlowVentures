@@ -20,6 +20,8 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DIR = fs.mkdtempSync(path.join(ROOT, "node_modules", ".glow-test-"));
 
 const SUITES = [
+  ["historical market returns", "src/lib/__tests__/marketReturns.test.ts"],
+  ["historical market feed", "src/lib/__tests__/marketHistoryFunction.test.ts"],
   ["available headline returns", "src/lib/__tests__/availableCardReturns.test.ts"],
   ["published data lineage", "src/lib/__tests__/publicationViews.test.ts"],
   ["selected attribution periods and coverage", "src/lib/__tests__/selectedSegmentReturns.test.ts"],
