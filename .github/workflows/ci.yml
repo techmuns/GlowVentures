@@ -40,6 +40,8 @@ jobs:
       #    passwords needed — so a non-empty diff means glowData.ts was hand-edited
       #    or drifted from its archive, which must never happen.
       - name: Book is byte-identical to its archive
+        id: book_snapshot
+        continue-on-error: true
         run: |
           npm run build-book
           if ! git diff --quiet -- src/data/glowData.ts src/data/reviewColumns.ts docs/BOOK-REPORT.md; then
@@ -49,7 +51,7 @@ jobs:
           fi
 
       - name: Preserve generated book on a regeneration mismatch
-        if: failure()
+        if: steps.book_snapshot.outcome == 'failure'
         uses: actions/upload-artifact@v4
         with:
           name: regenerated-book
@@ -88,6 +90,14 @@ jobs:
           CHROME="$(command -v google-chrome)" node scripts/dev/check-investment-dates.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-data-performance.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-chunk-recovery.mjs
+
+      # A regeneration mismatch must fail this required job even though the
+      # generated candidate is also built/tested to expose independent defects.
+      - name: Require the generated book to be committed
+        if: always() && steps.book_snapshot.outcome == 'failure'
+        run: |
+          echo "::error::Commit the verified generated book before merging."
+          exit 1
 
   # EVERY STATEMENT IN source/ IS READ IN FULL AND REACHES THE BOOK (Stage 10ep).
   # The job above trusts the committed archive; this one re-reads every file in
