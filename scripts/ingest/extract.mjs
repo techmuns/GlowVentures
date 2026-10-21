@@ -919,7 +919,7 @@ function backfillSecurityNames(docs) {
  */
 const isScanned = (d) => (d.warnings ?? []).some((w) => w.code === "text-recovered-from-scan");
 const depositoryOf = (provider) => (/\(NSDL demat\)$/.test(provider ?? "") ? "NSDL" : null);
-function nameScannedHoldings(docs) {
+export function nameScannedHoldings(docs) {
   const byIsin = new Map();
   for (const d of docs) {
     if (isScanned(d) || d.status === "failed") continue;
@@ -937,6 +937,9 @@ function nameScannedHoldings(docs) {
   };
   let renamed = 0;
   for (const d of docs.filter(isScanned)) {
+    // A carried scan already has the prior pass's derived naming notes.
+    // Recompute them once rather than appending them on every CI extraction.
+    d.warnings = d.warnings.filter(w => !["security-name-from-isin", "security-name-from-scan"].includes(w.code));
     const own = [], disputed = [];
     let here = 0;
     const depository = depositoryOf(d.provider);
@@ -1600,4 +1603,6 @@ async function main() {
   console.log("  docs/extraction-report.json");
 }
 
-main().catch((e) => { console.error(e); process.exit(1); });
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main().catch((e) => { console.error(e); process.exit(1); });
+}

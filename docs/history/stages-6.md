@@ -194,8 +194,14 @@
   - The store (`build-polycab`) carries the book's 1,90,10,140 shares. The corporate-action capture was re-imported for Bharat's 21 new symbols, so the depository-share gate can rule on each.
 - **Checks.** `test:ingest` adds suite `scanRead` (ISIN repair, the two printings, bytes, refusals) and golden case HDFC 22025655 (ten quantities read off the page). `checkReads` gains never-arrived and scan-not-verified cases; `statementUploads` refuses a notice and a sign-in page saved as `.pdf`. `test:statements` adds the three publication cases.
 
+### Stage 10gl — ADDRESS LOOKUP AND DRAGGABLE PROPERTY PINS
 
-### Stage 10gl — HEADLINE GAIN AND RETURN CARDS SHOW AVAILABLE DATA
+- Property entry removes latitude/longitude fields. Find on map locates an address with free Photon/OpenStreetMap search, fills missing location fields, offers matching addresses, flags approximate results and lets the user drag/click the pin. Old searches cannot replace a newer address or manually positioned pin; reopening never geocodes an existing pin.
+- The user requires ₹0 usage spend. Search and maps need no account, key or billing. Searches are explicit, spaced and cached; the authenticated proxy bounds responses, validates points and exposes no property ownership or financial data to the provider. No paid-provider fallback or production configuration change.
+- `docs/PROPERTY-MAPS.md` documents the free provider and limitations. CI covers address-only entry, choices, failures, actual Leaflet dragging/save/reload, stale responses, co-located properties and filtering. Public Indian landmarks are checked against the real free service without creating production records.
+- Main's statement CI was already failing because carrying the newly read scan appended its derived naming notes again. Recompute those two notes instead; a focused two-pass regression checks byte-identical output, quantities and retained OCR wording. No archive figures are edited.
+
+### Stage 10gm — HEADLINE GAIN AND RETURN CARDS SHOW AVAILABLE DATA
 
 - The family asked for the top Gain / Loss and return cards to show what can be calculated, with the same simple coverage info as attribution. The cards now use its verified subset model: one incomplete holding cannot erase other recorded gains. Whole managed accounts and exits stay in the gain.
 - FYTD/YTD use the same selected account inputs and dated-window measure as attribution. The history and money-weighted choices pool each usable account's own recorded window; under one year the former is labelled “Return over available history”, with “not annualised” and actual dates.

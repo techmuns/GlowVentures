@@ -2,15 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { hasPin, type Property } from "@/lib/realEstate";
-
-export const PROPERTY_COLORS: Record<string, string> = {
-  Land: "#678355", Apartment: "#596da4", "Villa / house": "#aa783b", Commercial: "#925e85", Office: "#477f83",
-  Warehouse: "#797054", Industrial: "#786e9c", Farmhouse: "#41795e", Other: "#737373",
-};
-export default function PropertyMap({ properties = [], onSelect, point, onPick }: {
-  properties?: readonly Property[]; onSelect?: (p: Property) => void;
-  point?: [number, number] | null; onPick?: (lat: number, lng: number) => void;
-}) {
+import { PROPERTY_COLORS, type PropertyMapProps } from "@/lib/propertyMaps";
+const NO_PROPERTIES: readonly Property[] = [];
+export default function PropertyMap({ properties = NO_PROPERTIES, onSelect, point, onPick }: PropertyMapProps) {
   const root = useRef<HTMLDivElement>(null);
   const instance = useRef<L.Map | null>(null);
   const pins = useRef<L.LayerGroup>();
@@ -67,14 +61,17 @@ export default function PropertyMap({ properties = [], onSelect, point, onPick }
     }
     const coordinates = [...groups.values()].map(group => [group[0].latitude!, group[0].longitude!] as [number, number]);
     if (point) {
-      L.marker(point, { icon: L.divIcon({ className: "property-pin-wrapper", iconSize: [30, 36], iconAnchor: [15, 34], html: '<span class="property-pin" style="background:#aa783b"></span>' }) }).addTo(layer);
+      const marker = L.marker(point, { draggable: !!onPick, title: onPick ? "Drag pin to the property" : "Property location",
+        icon: L.divIcon({ className: "property-pin-wrapper", iconSize: [30, 36], iconAnchor: [15, 34], html: '<span class="property-pin" style="background:#aa783b"></span>' }) }).addTo(layer);
+      marker.on("dragend", () => { const p = marker.getLatLng(); callbacks.current.onPick?.(p.lat, p.lng); });
       coordinates.push(point);
     }
-    if (coordinates.length) map.fitBounds(L.latLngBounds(coordinates), { padding: [45, 45], maxZoom: coordinates.length === 1 ? 17 : 14, animate: false });
-    else map.setView([22.4, 79], 5, { animate: false });
+    const keepView = point && properties.length === 0 && map.getZoom() >= 15 && map.getBounds().contains(point);
+    if (coordinates.length && !keepView) map.fitBounds(L.latLngBounds(coordinates), { padding: [45, 45], maxZoom: coordinates.length === 1 ? 17 : 14, animate: false });
+    else if (!coordinates.length) map.setView([22.4, 79], 5, { animate: false });
   }, [properties, point]);
   return <div className="relative">
-    <div ref={root} className={`property-map ${onPick ? "property-map-picker" : ""}`} aria-label={onPick ? "Click map to set property pin" : "Property locations"} />
+    <div ref={root} className={`property-map ${onPick ? "property-map-picker" : ""}`} aria-label={onPick ? "Click map or drag pin to set property location" : "Property locations"} />
     {tilesFailed && <div className="absolute bottom-8 left-3 right-3 z-[500] rounded-md border border-ink-600 bg-ink-900 p-2 text-xs text-slate-300" role="status">
       Map tiles unavailable. <button className="underline" type="button" onClick={() => { setTilesFailed(false); tiles.current?.redraw(); }}>Retry map</button>
     </div>}
