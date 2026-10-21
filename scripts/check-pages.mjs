@@ -9180,7 +9180,7 @@ const XA_BOOK = (() => {
         // rounded: a cash sleeve's ₹0.01 of P&L is a 0.00% return, which is not
         // a gain). A NAV-priced row's is FIFO's, struck here from its fields —
         // never this file's overlaid `returnPct`, which divides by cost alone.
-        // Realised and the dividends a holding paid: the page's FIFO gain (Stage 10fc).
+        // Realised and the dividends a holding paid: the page's FIFO gain (Stage 10fb).
         const realisedOf = (x) => (typeof x.realizedPnL === "number" ? x.realizedPnL : 0)
           + (typeof x.dividendReceived === "number" ? x.dividendReceived : 0);
         const soldOf = (x) => (typeof x.costOfUnitsSold === "number" ? x.costOfUnitsSold : 0);
