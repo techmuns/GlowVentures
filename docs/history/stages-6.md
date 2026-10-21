@@ -194,7 +194,14 @@
   - The store (`build-polycab`) carries the book's 1,90,10,140 shares. The corporate-action capture was re-imported for Bharat's 21 new symbols, so the depository-share gate can rule on each.
 - **Checks.** `test:ingest` adds suite `scanRead` (ISIN repair, the two printings, bytes, refusals) and golden case HDFC 22025655 (ten quantities read off the page). `checkReads` gains never-arrived and scan-not-verified cases; `statementUploads` refuses a notice and a sign-in page saved as `.pdf`. `test:statements` adds the three publication cases.
 
-### Stage 10gl — READABLE EXCEL EXPORTS WITH FROZEN HEADERS
+### Stage 10gl — ADDRESS LOOKUP AND DRAGGABLE PROPERTY PINS
+
+- Property entry removes latitude/longitude fields. Find on map locates an address with free Photon/OpenStreetMap search, fills missing location fields, offers matching addresses, flags approximate results and lets the user drag/click the pin. Old searches cannot replace a newer address or manually positioned pin; reopening never geocodes an existing pin.
+- The user requires ₹0 usage spend. Search and maps need no account, key or billing. Searches are explicit, spaced and cached; the authenticated proxy bounds responses, validates points and exposes no property ownership or financial data to the provider. No paid-provider fallback or production configuration change.
+- `docs/PROPERTY-MAPS.md` documents the free provider and limitations. CI covers address-only entry, choices, failures, actual Leaflet dragging/save/reload, stale responses, co-located properties and filtering. Public Indian landmarks are checked against the real free service without creating production records.
+- Main's statement CI was already failing because carrying the newly read scan appended its derived naming notes again. Recompute those two notes instead; a focused two-pass regression checks byte-identical output, quantities and retained OCR wording. No archive figures are edited.
+
+### Stage 10gm — READABLE EXCEL EXPORTS WITH FROZEN HEADERS
 
 *"Also freeze the column headers in the exported Excel files and auto-fit the column widths so all the data is readable."* — the family, 22 Oct 2026.
 
@@ -202,4 +209,3 @@
 - Long text wraps at a practical column width, with row heights fitted to the resulting lines and merged spans. Saved values, precision, notes, links, filters and complete export coverage are preserved.
 - Freeze the complete header band explicitly: all table header rows, four rows in the Portfolio Monitor workbook and five in the consolidated workbook. The first scrollable cell opens immediately below the header.
 - Serialized-workbook tests cover long values at the end of the data, expanded currency, multi-line descriptions, merged headers and all three export paths. Browser downloads check frozen panes and fitted columns as part of existing table coverage.
-- Required CI exposed a carry-forward replay defect from Stage 10gk: the scan-name enrichment appended its two derived notes again on every extraction. The naming pass now replaces its own notes before deriving them; a repeated-pass regression preserves original OCR words, quantities, unmatched rows and unrelated evidence. No archived statement or generated book values are changed.
