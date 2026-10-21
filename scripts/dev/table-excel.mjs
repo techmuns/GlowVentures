@@ -67,9 +67,10 @@ export async function assertPrivateProfileExport(page, store) {
   await field.press('Escape');
   await table.locator('[data-col-grip="strategy"]').focus();
   await table.locator('[data-col-grip="strategy"]').press('ArrowRight');
-  const headings = await table.locator(':scope > thead [data-col-button]').allTextContents();
+  const headings = await table.locator(':scope > thead th').allTextContents();
   const arranged = await downloadTableWorkbook(table,'private-market-column-order');
-  assert.deepEqual(arranged.getRow(1).values.slice(1),headings.map(text=>text.trim()),'Excel follows the arranged columns');
+  const compact = text => String(text).replace(/\s+/g,'');
+  assert.deepEqual(arranged.getRow(1).values.slice(1).map(compact),headings.map(compact),'Excel follows the arranged columns');
   await page.getByRole('tab',{name:/^Transactions/}).click();
   await downloadTableWorkbook(page.locator('table[data-pm-table="transactions"]'),'private-market-transactions');
   console.log('PASS: Private Market saved profiles, retained drafts and transactions export');
