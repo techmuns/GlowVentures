@@ -156,6 +156,9 @@ try {
     const expected = ids.length === 1 ? ['value', 'gain', 'annualised', 'fytd'] : ['value', 'gain'];
     await saved.waitForFunction(expected => JSON.stringify([...document.querySelectorAll('[data-tile-slot]')].map(el => el.dataset.tileSlot)) === JSON.stringify(expected), expected);
     assert.equal(await saved.locator('[data-tile-slot="mwr"]').count(), 0);
+    await saved.goto(base + '/cio?tab=returns&tiles=mwr');
+    await saved.locator('[data-segment-returns]').waitFor();
+    assert.deepEqual(await saved.locator('[data-tile-slot]').evaluateAll(els => els.map(el => el.dataset.tileSlot)), ['value', 'gain', 'annualised', 'fytd']);
    } finally { await context.close(); }
   }
  }

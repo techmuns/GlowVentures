@@ -161,7 +161,7 @@ export function SelectableTiles({ metrics, defaults, storageKey, page, param = "
     const shared = store.status === "shared" && store.sets[page] ? clean(store.sets[page]) : null;
     const loc = local ? { ...local, ids: clean(local.ids) } : null;
     return chooseTileSet({
-      fromParam: fromParam?.length ? fromParam : null,
+      fromParam,
       local: loc?.ids.length ? loc : null,
       shared: shared?.length ? shared : null,
       sharedLoaded: store.status === "shared",

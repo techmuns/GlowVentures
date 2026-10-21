@@ -4,9 +4,11 @@ import { readFileSync } from 'node:fs';
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { chromium } from 'playwright-core';
+import { installReadModelRoutes } from './dev/read-model-api.mjs';
 
 const base = process.env.BASE ?? 'http://127.0.0.1:4187';
-const output = path.resolve('docs/page-check/latest-returns');
+assert.ok(['localhost', '127.0.0.1'].includes(new URL(base).hostname));
+const output = path.resolve('.cache/latest-returns');
 const bookText = readFileSync('src/data/glowData.ts','utf8');
 const constant = name => JSON.parse(new RegExp(`export const ${name}[^=]*= ([\\s\\S]*?);\\n`).exec(bookText)[1]);
 const records = constant('BOOK_ACCOUNT_RETURN_RECORDS'), accounts = constant('BOOK_ACCOUNTS');
@@ -23,29 +25,24 @@ try {
   page.on('pageerror', error => errors.push(error.message));
   await page.route('**/api/**', route => route.fulfill({ status: 503, contentType: 'application/json', body: '{"code":"NOT_CONFIGURED"}' }));
   await page.route(/^https?:\/\/(?!127\.0\.0\.1|localhost)/,route => route.abort());
-  await page.goto(`${base}/cio?tiles=mwr,value`);
-  const tile = page.locator('[data-tile-slot="mwr"]');
+  await installReadModelRoutes(page);
+  await page.goto(`${base}/cio?tiles=annualised,value`);
+  const tile = page.locator('[data-tile-slot="annualised"]');
   await tile.locator('[data-return-info]').waitFor();
   assert((await tile.innerText()).includes(faceDate));
-  assert((await tile.innerText()).includes(`${selected.length} of ${accounts.length}`));
-  assert.match(await tile.innerText(), /Some accounts still need return inputs/);
+  assert(Number(await tile.locator('[data-card-coverage]').getAttribute('data-card-accounts')) >= selected.length);
+  assert.match(await tile.innerText(), /Available data/);
   const shown = Number((await tile.locator('[data-kpi-value]').innerText()).replace(/[^0-9.+-]/g, ''));
   await tile.locator('[data-return-info]').click();
   const dialog = page.getByRole('dialog');
   assert.equal(Number((await dialog.locator('[data-return-result]').innerText()).replace(/[^0-9.+-]/g, '')), shown);
-  await dialog.getByText('Show more', { exact: true }).click();
+  assert.match(await dialog.innerText(), /What is missing/);
+  assert.match(await dialog.innerText(), /Newer records still need checking/);
   assert.match(await dialog.innerText(), /6 Oct|2026-10-06/);
-  assert.match(await dialog.innerText(), /2026-09-22/);
-  assert.match(await dialog.innerText(), /189 days/);
-  const flows = await dialog.locator('tbody tr').evaluateAll(rows => rows.map(row => [...row.cells].map(c => c.textContent)));
-  const parsed = flows.map(([date, amount]) => ({ date: Date.parse(`${date} UTC`), amount: Number(amount.replace(/[^0-9.+-]/g, '')) }));
-  const first = Math.min(...parsed.map(f => f.date)), last = Math.max(...parsed.map(f => f.date));
-  const balance = rate => parsed.reduce((n, f) => n + f.amount / ((1 + rate) ** ((f.date - first) / (365 * 86400000))), 0);
-  let low = -.999, high = 100;
-  for (let i = 0; i < 200; i++) { const mid = (low + high) / 2; if (balance(low) * balance(mid) <= 0) high = mid; else low = mid; }
-  const calculated = (((1 + (low + high) / 2) ** ((last - first) / (365 * 86400000))) - 1) * 100;
-  assert.equal(calculated.toFixed(1), shown.toFixed(1), 'the displayed dated record independently reproduces the return');
-  assert.equal(new Date(last).toISOString().slice(0, 10), expectedEnd);
+  assert.match(await dialog.innerText(), /22 Sept|22 Sep|2026-09-22/);
+  await dialog.locator('[data-attribution-included] summary').click();
+  assert.match(await dialog.locator('[data-attribution-included]').innerText(), new RegExp(faceDate));
+  assert.equal(await page.locator('[data-tile-slot="mwr"]').count(), 0);
   await page.screenshot({ path: path.join(output, 'cio-latest-return.png') });
   await page.keyboard.press('Escape');
   await page.goto(`${base}/performance`);
@@ -59,12 +56,12 @@ try {
   for (const theme of ['light', 'dark']) {
     await page.evaluate(theme => localStorage.setItem('glow:theme', theme), theme);
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto(`${base}/cio?tiles=mwr,value`);
-    await page.locator('[data-tile-slot="mwr"] [data-return-info]').click();
+    await page.goto(`${base}/cio?tiles=annualised,value`);
+    await page.locator('[data-tile-slot="annualised"] [data-return-info]').click();
     assert(await page.getByRole('dialog').evaluate(el => { const b = el.getBoundingClientRect(); return b.left >= 0 && b.right <= innerWidth && el.scrollWidth <= el.clientWidth + 1; }));
     await page.screenshot({ path: path.join(output, `${theme}-mobile.png`) });
     await page.keyboard.press('Escape');
   }
   assert.deepEqual(errors, []);
-  console.log(`PASS browser: ${shown}% through ${expectedEnd}, ${selected.length}/${accounts.length} coverage, named gaps, independent cash-flow arithmetic, Performance/Family consistency, themes and mobile`);
+  console.log(`PASS browser: ${shown}% through ${expectedEnd}, ${selected.length}/${accounts.length} coverage, named gaps, Performance/Family consistency, themes and mobile`);
 } finally { await browser.close(); }

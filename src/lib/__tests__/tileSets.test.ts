@@ -230,6 +230,9 @@ console.log("── which set a page opens on ──");
   const a = chooseTileSet({ fromParam: ["gain"], local: local(["cash"], false), shared, sharedLoaded: true });
   ok("a ?tiles= address wins over everything, and is never pushed", JSON.stringify(a.ids) === '["gain"]' && !a.push);
 
+  const retired = chooseTileSet({ fromParam: [], local: local(["cash"], false), shared, sharedLoaded: true });
+  ok("an all-retired URL selects defaults even with local/shared preferences, without saving", retired.ids === null && !retired.push);
+
   const b = chooseTileSet({ fromParam: null, local: local(["cash", "gain"], false), shared, sharedLoaded: true });
   ok("an UNSYNCED change in this browser wins over an older shared layout", JSON.stringify(b.ids) === '["cash","gain"]');
   ok("…and is pushed once the store has answered", b.push);

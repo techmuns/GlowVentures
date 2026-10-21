@@ -166,7 +166,8 @@ export function writeLocalTileSet(key: string, ids: string[], synced: boolean) {
  *   a `?tiles=` address  >  an unsynced change made in this browser
  *                        >  the shared store's set  >  this browser's copy.
  *
- * `null` means "nothing chosen" and the strip draws its default.
+ * A present but empty `fromParam` selects defaults; it must not inherit saved
+ * preferences. Returned `ids: null` tells the strip to draw its default.
  */
 export function chooseTileSet(opts: {
   fromParam: string[] | null;
@@ -175,7 +176,8 @@ export function chooseTileSet(opts: {
   sharedLoaded: boolean;
 }): { ids: string[] | null; push: boolean } {
   const { fromParam, local, shared, sharedLoaded } = opts;
-  if (fromParam?.length) return { ids: fromParam, push: false };
+  // A present URL with no surviving metric still overrides saved preferences.
+  if (fromParam !== null) return { ids: fromParam.length ? fromParam : null, push: false };
   if (local && !local.synced && !local.legacy) return { ids: local.ids, push: sharedLoaded };
   if (shared?.length) return { ids: shared, push: false };
   if (local) return { ids: local.ids, push: sharedLoaded && !local.synced };
