@@ -1,4 +1,4 @@
-import { useTableExporting } from "@/lib/tableExportSnapshot";
+import { isTableExporting, useTableExporting } from "@/lib/tableExportSnapshot";
 // Portfolio state hub. Loads the ingested book as the default portfolio so the
 // dashboard is live on open. Display-currency toggle converts all aggregates
 // from the INR base at the display layer.
@@ -494,6 +494,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   const extraSymbols = useRef<Set<string>>(new Set());
   const [extraTick, setExtraTick] = useState(0);
   const requestSymbols = useCallback((symbols: readonly string[]) => {
+    if (isTableExporting()) return;
     let grew = false;
     for (const s of symbols) if (s && !extraSymbols.current.has(s)) { extraSymbols.current.add(s); grew = true; }
     if (grew) setExtraTick((n) => n + 1);
