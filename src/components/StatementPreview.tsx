@@ -107,6 +107,7 @@ function SheetGrid({ text }: { text: string }) {
       <div className="overflow-auto rounded-lg border border-ink-700">
         <ExportableTable className="min-w-full border-collapse text-[12px]"
           data-table-static="the file's own sheet, cell for cell as the provider laid it out">
+          {allRows => <>
           <thead className="text-left text-[10.5px] uppercase tracking-wide text-slate-500">
             <tr className="border-b border-ink-700">
               <th className="px-2 py-1.5 font-medium" />
@@ -114,7 +115,7 @@ function SheetGrid({ text }: { text: string }) {
             </tr>
           </thead>
           <tbody>
-            {visible.map((r, i) => (
+            {(allRows ? rows : visible).map((r, i) => (
               <tr key={i}>
                 <td className="mono px-2 py-1 text-right text-[10.5px] text-slate-600">{i + 1}</td>
                 {Array.from({ length: cols }, (_, c) => {
@@ -129,6 +130,7 @@ function SheetGrid({ text }: { text: string }) {
               </tr>
             ))}
           </tbody>
+          </>}
         </ExportableTable>
       </div>
       {rows.length > shown && (
