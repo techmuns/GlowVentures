@@ -159,11 +159,11 @@ export function LedgerInsights() {
       <div className="min-h-0 flex-1 overflow-auto">
         {status === "loading" && <div className="grid h-40 place-items-center text-sm text-slate-500">Reading the archive…</div>}
         {tab === "transactions" && viewTxn && (
-          <TransactionsView key={scope.label} data={viewTxn} sales={scope.owners ? null : sales}
+          <TransactionsView key={JSON.stringify(scope.owners ? [...scope.owners].sort() : null)} data={viewTxn} sales={scope.owners ? null : sales}
             scoped={scope.owners ? { label: scope.label, lots: viewLots } : null} />
         )}
-        {tab === "gains" && <GainsView key={scope.label} data={viewLots} />}
-        {tab === "income" && <IncomeView key={scope.label} data={viewIncome} />}
+        {tab === "gains" && <GainsView key={JSON.stringify(scope.owners ? [...scope.owners].sort() : null)} data={viewLots} />}
+        {tab === "income" && <IncomeView key={JSON.stringify(scope.owners ? [...scope.owners].sort() : null)} data={viewIncome} />}
       </div>
     </div>
   );

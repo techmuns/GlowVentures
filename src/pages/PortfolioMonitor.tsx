@@ -3463,7 +3463,7 @@ export function PortfolioMonitor() {
   const orderedHoldings = bucketGroups.flatMap((grp) =>
     showBucketSections && closedSections.has(`${groupAxis}|${grp.key}`) ? [] : sortRows(grp.rows, holdView.sort, holdAccessors));
   const holdingScroll = useInfiniteTable(orderedHoldings.length,
-    JSON.stringify([groupAxis, holdingsView, entity, sector, bucket, [...selected].sort(), holdView.sort, [...closedSections].sort()]));
+    JSON.stringify([groupAxis, holdingsView, entity, sector, bucket, [...selected].sort(), holdView.sort, [...closedSections].sort(), memberScope.owners ? [...memberScope.owners].sort() : null]));
   const visibleHoldings = new Set(orderedHoldings.slice(0, holdingScroll.shown));
   const allOpen = expandableKeys.length > 0
     && expandableKeys.every((k) => expanded.has(k)) && sectionKeys.every((k) => !closedSections.has(k));

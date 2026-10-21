@@ -61,7 +61,7 @@ reconciliation in each browser. The main JavaScript bundle was 442.77 KB gzip.
 Functions compilation, financial browser invariants, and the dedicated corporate
 action/daily-movers regressions cover the changed contracts.
 
-`node scripts/dev/check-data-performance.mjs` visits 19 routes/variants with local
+`node scripts/dev/check-data-performance.mjs` visits 21 routes/variants and an insider-feed fixture with local
 feed fixtures and the actual stock-exposure handler. It verifies request budgets,
 no runtime errors, infinite scrolling across all grouping axes, full-data access, filter
 resets and the deployment reload prompt. Company financial browser invariants

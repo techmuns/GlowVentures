@@ -10,6 +10,8 @@ const capture = JSON.parse(await fs.readFile('public/data/corporate-actions.json
 const browser = await chromium.launch({ executablePath: process.env.CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true });
 await fs.mkdir('.cache/table-scroll-check', { recursive: true });
 const results = [];
+const symbols = JSON.parse(await fs.readFile('src/data/nseSymbols.json', 'utf8'));
+let insiderPath;
 const manifest = JSON.parse(await fs.readFile('public/audit/manifest.json', 'utf8'));
 const source = manifest.flatMap(f => f.sheets.map(s => ({file:f.fileKey, sheet:s.key, rows:s.rows})))
   .filter(s => s.rows > 250).sort((a,b) => a.rows - b.rows)[0];
@@ -95,6 +97,10 @@ try {
       const total = await scrollToEnd(table);
       assert.equal(await holdings.count(), total, 'all grouped holdings remain reachable');
       assert.equal(await table.locator('tfoot').innerText(), totals, 'scrolling never changes full-data totals');
+      if (route === '/monitor') {
+        const links = await table.locator('a[href^="/stock/"]').evaluateAll(as => as.map(a => a.getAttribute('href')));
+        insiderPath = links.find(href => symbols[decodeURIComponent(href.split('/stock/')[1].split('?')[0])]);
+      }
       await page.screenshot({ path: `.cache/table-scroll-check/monitor-${new URL(base+route).searchParams.get('group') || 'security'}.png` });
       await table.locator('[data-col-button="security"]').click();
       assert.equal(await holdings.count(), 50, 'sorting resets the Monitor to its first batch');
@@ -122,6 +128,23 @@ try {
     assert.deepEqual(errors, [], `${route}: no runtime errors after interactions`);
     console.log(JSON.stringify(results.at(-1))); await page.close();
   }
+  // A feed larger than both old insider cutoffs (40 UI / 150 client rows).
+  assert.ok(insiderPath, 'the Monitor resolves a company with a known symbol');
+  const insiderPage = await browser.newPage({viewport:{width:1440,height:1000}});
+  await insiderPage.route('**/api/**', r => r.fulfill({json:{ok:false}}));
+  const disclosures = Array.from({length:175}, (_,i) => ({company:'Local fixture company', insider:`Local fixture ${i}`,
+    transaction:'Acquisition', shares:i+1, value:0, broadcastDate:'2026-10-01', key:`fixture-${i}`, postPct:'1%'}));
+  await insiderPage.route('**/api/insider', r => r.fulfill({json:{ok:true,items:disclosures}}));
+  await installReadModelRoutes(insiderPage);
+  const insiderURL = new URL(insiderPath, base);
+  insiderURL.searchParams.set('tab','research');
+  await insiderPage.goto(insiderURL.href);
+  await insiderPage.getByRole('button',{name:'Insider deals',exact:true}).click();
+  const insiderTable = insiderPage.locator('[data-insider-deals="ok"] table');
+  await insiderTable.waitFor();
+  assert.equal(await insiderTable.locator('tbody > tr:not([data-table-scroll-end])').count(), 50);
+  assert.equal(await scrollToEnd(insiderTable), disclosures.length, 'every disclosed insider row remains reachable');
+  await insiderPage.close();
   const updatePage=await browser.newPage();
   await updatePage.route('**/api/**',r=>r.fulfill({json:{ok:false}}));
   await updatePage.route('**/api/stock-exposure',r=>r.fulfill({status:409,json:{status:'revision_changed'}}));

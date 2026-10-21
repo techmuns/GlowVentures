@@ -687,7 +687,7 @@ export function CapitalGains() {
                     <SortHeader col="saved" view={holdView}>Tax saved</SortHeader>
                   </Tr>
                 </thead>
-                <InfiniteTableBody rows={holdShown} columns={HOLD_COLS.length} resetKey={JSON.stringify(holdView.sort)} className="divide-y divide-ink-700/70">
+                <InfiniteTableBody rows={holdShown} columns={HOLD_COLS.length} resetKey={JSON.stringify([holdView.sort, scope.owners ? [...scope.owners].sort() : null])} className="divide-y divide-ink-700/70">
                   {(h) => (
                     <Tr view={holdView} key={h.securityKey + "@" + h.accountId} className="hover:bg-ink-700/40">
                       <td className="px-4 py-2.5 text-slate-100"><StockLink securityKey={h.securityKey} name={h.security} /></td>
@@ -736,7 +736,7 @@ export function CapitalGains() {
                       <SortHeader col="term" view={harvestView} sortable={false}>ST / LT</SortHeader>
                     </Tr>
                   </thead>
-                  <InfiniteTableBody rows={harvestShown} columns={harvestView.order.length} resetKey={JSON.stringify([harvestQ, harvestView.sort])} className="divide-y divide-ink-700/70"
+                  <InfiniteTableBody rows={harvestShown} columns={harvestView.order.length} resetKey={JSON.stringify([harvestQ, harvestView.sort, scope.owners ? [...scope.owners].sort() : null])} className="divide-y divide-ink-700/70"
                     empty={<tr><td colSpan={harvestView.order.length} className="py-10 text-center text-sm text-slate-500">No security matches "{harvestQ}".</td></tr>}>
                     {(h) => (
                       <Tr view={harvestView} key={h.securityKey + "@" + h.accountId} className="hover:bg-ink-700/40">
