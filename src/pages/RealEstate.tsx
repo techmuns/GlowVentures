@@ -23,7 +23,7 @@ const LABELS: Record<string, string> = { name: "Property", type: "Type", locatio
 const TYPES_COLOR: Record<string, string> = { Land: "#678355", Apartment: "#596da4", "Villa / house": "#aa783b", Commercial: "#925e85", Office: "#477f83", Warehouse: "#797054", Industrial: "#786e9c", Farmhouse: "#41795e", Other: "#737373" };
 const date = (value: string | null) => value ? fmtDate(value) : DASH;
 const location = (p: Property) => [p.city, p.state, p.country === "India" ? "" : p.country].filter(Boolean).join(", ");
-const ownerNames = (p: Property) => p.owners.map(o => `${o.name} ${fmtNum(o.share, 2).replace(/\.00$/, "")}%`).join(" · ");
+const ownerNames = (p: Property) => p.owners.map(o => `${o.name} ${new Intl.NumberFormat("en-IN", { maximumFractionDigits: 6 }).format(o.share)}%`).join(" · ");
 const distinct = (values: string[]) => [...new Set(values.filter(Boolean))].sort((a, b) => a.localeCompare(b));
 const shareTitle = "Money follows the selected owners' recorded shares. Area and rent agreements describe the whole property.";
 
@@ -70,7 +70,7 @@ export function RealEstate() {
   const sum = (key: Exclude<keyof PropertyFigures, "share">) => propertyTotal(filtered, key, scope.owners);
   const metric = (id: Exclude<keyof PropertyFigures, "share">, label: string, icon: ReactNode): TileMetric => {
     const total = sum(id);
-    return { id, label, value: money(total.value), sub: coverage(total), icon,
+    return { id, label, value: money(total.value, { compact: true }), sub: coverage(total), icon,
       detail: `${shareTitle}${total.known < total.count ? ` Missing: ${filtered.filter(p => propertyFigures(p, scope.owners)[id] === null).map(p => p.name).join(", ")}.` : ""}` };
   };
   const metrics = [metric("value", "Property value", <Building2 className="h-4 w-4" />), metric("cost", "Total cost", <Wallet className="h-4 w-4" />), metric("rent", "Monthly rent", <Banknote className="h-4 w-4" />), metric("equity", "Net equity", <Landmark className="h-4 w-4" />), metric("debt", "Loan outstanding", <Landmark className="h-4 w-4" />), metric("netRent", "Net monthly rent", <Banknote className="h-4 w-4" />)];
@@ -141,7 +141,7 @@ export function RealEstate() {
           <div className="mb-4 flex flex-wrap items-center gap-3"><span className="text-sm text-slate-400">{selected.type} · {selected.status}</span><button type="button" className="btn-primary ml-auto" onClick={() => setEditing(true)}><Pencil className="h-3.5 w-3.5" />Edit property</button></div>
           <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {([
-              ["Address", [selected.address, location(selected), selected.pincode].filter(Boolean).join(", ")], ["Owner / share", ownerNames(selected)], ["Area", selected.area === null ? "—" : `${fmtNum(selected.area)} ${selected.areaUnit} · ${selected.areaBasis}`],
+              ["Address", [selected.address, location(selected), selected.pincode].filter(Boolean).join(", ")], ["Owner / share", ownerNames(selected)], ["Area", selected.area === null ? DASH : `${fmtNum(selected.area, 2).replace(/\.00$/, "")} ${selected.areaUnit} · ${selected.areaBasis}`],
               ["Current value", money(figures.value)], ["Valued on", date(selected.valuationDate)], ["Cost", money(figures.cost)], ["Purchased", date(selected.purchasedOn)], ["Loan outstanding", money(figures.debt)], ["Net equity", money(figures.equity)],
               ["Monthly rent", money(figures.rent)], ["Monthly costs", money(figures.costs)], ["Net monthly rent", money(figures.netRent)], ["Gross rental yield", fmtPct(figures.yield)], ["Tenant", selected.tenant || "—"], ["Lease ends", date(selected.leaseEnd)], ["Title", selected.titleStatus],
             ] as [string, ReactNode][]).map(([label, value]) => <div key={label}><dt className="label-xs">{label}</dt><dd className="mt-1 text-sm text-slate-200" title={shareTitle}>{value}</dd></div>)}
