@@ -20,6 +20,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DIR = fs.mkdtempSync(path.join(ROOT, "node_modules", ".glow-test-"));
 
 const SUITES = [
+  ["chunk recovery", "src/lib/__tests__/chunkRecovery.test.ts"],
   ["recovered purchase costs", "src/lib/__tests__/recoveredCosts.test.ts"],
   ["latest verified account returns", "src/lib/__tests__/latestAccountReturns.test.ts"],
   ["consolidated sheet", "src/lib/__tests__/consolidatedSheet.test.ts"],

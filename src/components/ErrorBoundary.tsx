@@ -1,4 +1,5 @@
 import { Component, ReactNode } from "react";
+import { isChunkLoadError, recoverChunkLoad } from "@/lib/chunkRecovery";
 
 export class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
   constructor(props: { children: ReactNode }) {
@@ -6,15 +7,23 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { error: E
     this.state = { error: null };
   }
   static getDerivedStateFromError(error: Error) { return { error }; }
-  componentDidCatch(error: Error) { console.error("[ErrorBoundary]", error); }
+  componentDidCatch(error: Error) {
+    console.error("[ErrorBoundary]", error);
+    recoverChunkLoad(error);
+  }
   render() {
     if (this.state.error) {
+      const pageLoad = isChunkLoadError(this.state.error);
+      const offline = pageLoad && navigator.onLine === false;
       return (
-        <div className="grid h-full place-items-center bg-ink-950 p-6 text-center">
+        <div role="alert" className="grid h-full place-items-center bg-ink-950 p-6 text-center">
           <div className="max-w-md">
-            <h1 className="font-display text-lg font-bold text-slate-100">Something went wrong</h1>
-            <p className="mt-2 text-sm text-slate-400">{this.state.error.message}</p>
-            <button className="btn-primary mt-4" onClick={() => location.reload()}>Reload</button>
+            <h1 className="font-display text-lg font-bold text-slate-100">{offline ? "You're offline" : pageLoad ? "This page couldn't load" : "Something went wrong"}</h1>
+            <p className="mt-2 text-sm text-slate-400">{offline
+              ? "Reconnect to the internet, then reload the dashboard."
+              : pageLoad ? "The dashboard may have updated, or the connection was interrupted. Reload to try again."
+              : this.state.error.message}</p>
+            <button type="button" className="btn-primary mt-4" onClick={() => location.reload()}>{pageLoad ? "Reload dashboard" : "Reload"}</button>
           </div>
         </div>
       );
