@@ -175,7 +175,7 @@ extraction mirrors each archive's own path under `source/`.
 | Consolidated review (MOPWM) | MOPWM | Ajay Jaisinghani | 2026-06-30 | ₹125.40 Cr |
 | Sanshi Fund | 9039671821 | Aarti Jaisinghani | 2026-06-30 | ₹97.68 Cr |
 | ICICI Bank (NSDL demat) | 49794950 | Ajay Jaisinghani | 2026-03-31 | ₹63.76 Cr\*\* |
-| Buoyant Capital | 103473 | Ajay Jaisinghani | 2026-08-31 | ₹50.33 Cr |
+| Buoyant Capital | 103473 | Ajay Jaisinghani | 2026-09-30 | ₹48.07 Cr |
 | Carnelian Asset Management and Advisors Pvt Ltd | 3517383 | Ajay Jaisinghani | 2026-09-30 | ₹38.16 Cr |
 | Consolidated review (MOPWM) | MOPWM | Bharat Jaisinghani | 2026-06-30 | ₹37.26 Cr |
 | Helios Mutual Fund | 10355977 | Ajay Jaisinghani | 2026-08-07 | ₹31.00 Cr |
@@ -183,18 +183,18 @@ extraction mirrors each archive's own path under `source/`.
 | Sanshi Fund | 9039671912 | Ajay Jaisinghani | 2026-06-30 | ₹29.35 Cr |
 | Consolidated review (MOPWM) | MOPWM | Ankita Jaisinghani | 2026-06-30 | ₹29.04 Cr |
 | Sanshi Fund | 9069671634 | Ajay Jaisinghani | 2026-06-30 | ₹28.46 Cr |
-| Buoyant Capital | 103472 | Ankita Jaisinghani | 2026-08-31 | ₹28.27 Cr |
+| Buoyant Capital | 103472 | Ankita Jaisinghani | 2026-09-30 | ₹27.00 Cr |
 | Motilal Oswal Founders Fund | 90410016104 | Ajay Jaisinghani | 2026-09-30 | ₹22.07 Cr |
 | Motilal Oswal Active Momentum Fund | 904168868444 | Ankita Jaisinghani | 2026-08-06 | ₹21.42 Cr |
 | V.E.C Assago Capital Management LLP | 128005 | Ajay Jaisinghani | 2026-08-13 | ₹20.29 Cr |
 | Sanshi Fund | 9039671854 | Bharat Jaisinghani | 2026-06-30 | ₹19.57 Cr |
 | Goldstandard Wealth Private Limited | 100023 | Ajay Jaisinghani | 2026-10-06 | ₹18.03 Cr |
-| SVAN Investment Managers LLP | 8710067 | Ajay Jaisinghani | 2026-07-31 | ₹16.45 Cr |
 | Carnelian Bharat Amritkaal Fund | 4551 | Ankita Jaisinghani | 2026-07-31 | ₹16.31 Cr |
+| SVAN Investment Managers LLP | 8710067 | Ajay Jaisinghani | 2026-09-30 | ₹16.22 Cr |
 | Green Lantern Capital LLP | 510861 | Ajay Jaisinghani | 2026-07-27 | ₹11.45 Cr |
 | Motilal Oswal Delphi Equity Fund | 9049241536 | Ajay Jaisinghani | 2026-06-30 | ₹11.13 Cr |
 | Motilal Oswal Founders Fund | 90410016093 | Ankita Jaisinghani | 2026-09-30 | ₹11.11 Cr |
-| SVAN Investment Managers LLP | 8710090 | Bharat Jaisinghani | 2026-09-30 | ₹10.51 Cr |
+| SVAN Investment Managers LLP | 8710090 | Bharat Jaisinghani | 2026-09-30 | ₹10.71 Cr |
 | India SME Investments | 175962 | Ajay Jaisinghani | 2026-06-30 | ₹9.56 Cr |
 | Goldstandard Wealth Private Limited | 100022 | Ankita Jaisinghani | 2026-10-06 | ₹7.67 Cr |
 | Consolidated review (MOPWM) | MOPWM | Not attributed to a member | 2026-06-30 | ₹7.26 Cr |
@@ -266,8 +266,8 @@ block, which is ring-fenced: out of this column and every total, shown only on
 `/polycab`.
 
 **Consolidated.** `BOOK_SUMMARY` in `glowData.ts` is authoritative; at the time
-of writing: 76 accounts, 444 positions, 8 owners/entities, current value of
-holdings ₹840.13 Cr — listed ₹647.03 Cr, private ₹193.09 Cr, nothing unplaced.
+of writing: 76 accounts, 448 positions, 8 owners/entities, current value of
+holdings ₹836.57 Cr — listed ₹643.48 Cr, private ₹193.09 Cr, nothing unplaced.
 
 **Side of the book**, decided in this order and generated as
 `Position.marketSide`: the family's own fund placing (`FAMILY_MARKET_SIDE`) → a

@@ -76,6 +76,12 @@ const GL = "green-lantern-capital-llp-510861";
 // — and the book's own close is held to the snap's printed value and date,
 // which is the only thing the snap can witness. Together the two say the rate
 // on screen is the manager's own method run one month further.
+//
+// SINCE STAGE 10et THE CLOSE IS THE 30 SEP ACCOUNT STATEMENT, which October's
+// delivery carried for both folios. Like the snap, it prints a value and no
+// IRR, so the witness is unchanged: the book closes on that statement's
+// printed value on its NAV date (the date the statement is struck at, not its
+// "As of 12/10/2026" header), and the rate is the method run two months on.
 console.log("\n── the IRR Buoyant's fact sheet prints ──");
 {
   const AUDIT = path.join(process.cwd(), "public", "audit");
@@ -94,13 +100,13 @@ console.log("\n── the IRR Buoyant's fact sheet prints ──");
     const val = /Portfolio Value\((\d\d\/\d\d\/\d{4})\)\s+([\d,]+)/.exec(text);
     return irr && val ? { irr: Number(irr[4]), value: num(val[2]), date: iso(val[1]) } : null;
   };
-  /** The 31 Aug snap's printed total value and its "As of" date. */
-  const snap = (accountId: string): { value: number; date: string } | null => {
-    const text = pagesOf(`buoyant-capital-${accountId.split("-").at(-1)}-2026-08-31-portfolio-snap`);
+  /** The 30 Sep account statement's printed total value and the NAV date it is struck on. */
+  const latest = (accountId: string): { value: number; date: string } | null => {
+    const text = pagesOf(`buoyant-capital-${accountId.split("-").at(-1)}-2026-09-30-holdings`);
     if (!text) return null;
-    const asOf = /Account Summary : As of (\d\d\/\d\d\/\d{4})/.exec(text);
+    const navDate = /BUOYANT OPPORTUNITIES\s+(\d\d\/\d\d\/\d{4})\s/.exec(text);
     const total = /\nTotal\s+[\d,.]+\s+[\d,.]+\s+([\d,]+\.\d\d)/.exec(text);
-    return asOf && total ? { value: num(total[1]), date: iso(asOf[1]) } : null;
+    return navDate && total ? { value: num(total[1]), date: iso(navDate[1]) } : null;
   };
   /** The book with ONE account as it stood on `date`, valued at `value`. */
   const bookOn = (accountId: string, date: string, value: number) => {
@@ -134,21 +140,21 @@ console.log("\n── the IRR Buoyant's fact sheet prints ──");
         && Math.abs(Math.round(capThen.annualPct * 100) / 100 - printed.irr) < 0.005,
       `solved ${capThen?.dated ? capThen.annualPct?.toFixed(4) : "nothing"} against printed ${printed?.irr}`);
 
-    // The book's own close: the 31 Aug snap's printed value, on its own date.
-    const now = snap(id);
+    // The book's own close: the 30 Sep account statement's printed value, on its NAV date.
+    const now = latest(id);
     const g = dc.of(id);
-    ok(`${id}: the book closes the folio on the snap's own printed value and date`,
+    ok(`${id}: the book closes the folio on the newest statement's own printed value and NAV date`,
       !!now && !!g && g.valueAsOf === now.date && g.value != null && Math.abs(g.value - now.value) < 0.01,
-      `book ${g?.value} on ${g?.valueAsOf} · snap ${now?.value} on ${now?.date}`);
+      `book ${g?.value} on ${g?.valueAsOf} · statement ${now?.value} on ${now?.date}`);
     const cap = dc.behind(own(id), universe);
     ok(`${id}: the folio is a whole account on a complete dated record`, !!cap?.dated, JSON.stringify(cap));
     if (!cap?.dated) continue;
     ok(`${id}: its payments span more than a year, so the rate is annual`, cap.days >= 365, `${cap.days} days`);
-    // LOAD-BEARING: the month between the two closes moved the rate, so the
+    // LOAD-BEARING: the months between the two closes moved the rate, so the
     // witness above is a different measurement from the figure on screen and
-    // the snap's close is doing work — a book still closing on 31 Jul would
+    // the newer close is doing work — a book still closing on 31 Jul would
     // print the fact sheet's IRR and pass the check above for the wrong reason.
-    ok(`${id}: the rate on screen is struck a month later than the one the manager printed`,
+    ok(`${id}: the rate on screen is struck later than the one the manager printed`,
       cap.to === now?.date && capThen?.dated === true && capThen.annualPct != null && cap.annualPct != null
         && Math.abs(cap.annualPct - capThen.annualPct) >= 0.01,
       `${capThen?.dated ? capThen.annualPct?.toFixed(2) : "—"}% to ${capThen?.dated ? capThen.to : "—"} · ${cap.annualPct?.toFixed(2)}% to ${cap.to}`);

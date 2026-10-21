@@ -1712,7 +1712,15 @@ const LAYOUTS = [
       : "Buoyant Opportunities Strategy — Category III"),
     account: (text) => FIELD(text, "Account", String.raw`(\d{4,})`),
     folio: (text) => FIELD(text, "Folio", String.raw`([A-Z0-9]{4,})`),
-    asOf: (text) => toIso((/As of\s+(\d{2}\/\d{2}\/\d{4})/i.exec(text) ?? [])[1]),
+    /**
+     * AS-OF FOLLOWS THE FIGURE (Stage 10et), as for Delphi and Neo: the NAV
+     * date the Account Summary row prints, not the "As of" in the header. The
+     * statement issued "As of 12/10/2026" values the units at the 30/09/2026
+     * NAV, and the one issued "As of 30/09/2026" at the 29/09/2026 NAV — dating
+     * either by its header would claim a valuation nobody struck.
+     */
+    asOf: (text) => toIso((BY_SUMMARY_ROW.exec(text) ?? [])[1])
+      ?? toIso((/As of\s+(\d{2}\/\d{2}\/\d{4})/i.exec(text) ?? [])[1]),
     // `Account : 103473 AJAY THAKURDAS JAISINGHANI` — the holder is on the
     // title line, after the account number and with no label of its own.
     holder: (text) => (/Account\s*:\s*\d{4,}\s+([A-Z][A-Z\s]{6,44}?)\s*(?:\n|Buoyant)/i.exec(text) ?? [])[1],

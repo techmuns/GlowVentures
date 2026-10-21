@@ -8290,14 +8290,14 @@
   ]
  },
  {
-  "docKey": "buoyant-capital-103472-2026-10-12-holdings",
+  "docKey": "buoyant-capital-103472-2026-09-30-holdings",
   "provider": "Buoyant Capital",
   "accountNo": "103472",
   "owner": "ANKITA JAISINGHANI",
   "ownerId": "ankita-jaisinghani",
   "familyGroup": null,
   "strategy": null,
-  "asOf": "2026-10-12",
+  "asOf": "2026-09-30",
   "reportType": "holdings",
   "sourcePath": "source/_extracted/october-2026-c/BUOYANT AJAY SIR ANKITA MAAM/I83_103472_AccountStatement5004CT.pdf",
   "pages": 2,
@@ -8307,9 +8307,9 @@
   ],
   "status": "ok",
   "warnings": 0,
-  "fileKey": "buoyant-capital-103472-2026-10-12-holdings",
+  "fileKey": "buoyant-capital-103472-2026-09-30-holdings",
   "label": "Buoyant Capital · 103472 · holdings",
-  "fy": "2026-10-12",
+  "fy": "2026-09-30",
   "source": "source/_extracted/october-2026-c/BUOYANT AJAY SIR ANKITA MAAM/I83_103472_AccountStatement5004CT.pdf",
   "sheets": [
    {
@@ -8327,14 +8327,14 @@
   ]
  },
  {
-  "docKey": "buoyant-capital-103473-2026-10-12-holdings",
+  "docKey": "buoyant-capital-103473-2026-09-30-holdings",
   "provider": "Buoyant Capital",
   "accountNo": "103473",
   "owner": "AJAY THAKURDAS JAISINGHANI",
   "ownerId": "ajay-jaisinghani",
   "familyGroup": null,
   "strategy": null,
-  "asOf": "2026-10-12",
+  "asOf": "2026-09-30",
   "reportType": "holdings",
   "sourcePath": "source/_extracted/october-2026-c/BUOYANT AJAY SIR ANKITA MAAM/I83_103473_AccountStatement5004CT (2).pdf",
   "pages": 2,
@@ -8344,9 +8344,9 @@
   ],
   "status": "ok",
   "warnings": 0,
-  "fileKey": "buoyant-capital-103473-2026-10-12-holdings",
+  "fileKey": "buoyant-capital-103473-2026-09-30-holdings",
   "label": "Buoyant Capital · 103473 · holdings",
-  "fy": "2026-10-12",
+  "fy": "2026-09-30",
   "source": "source/_extracted/october-2026-c/BUOYANT AJAY SIR ANKITA MAAM/I83_103473_AccountStatement5004CT (2).pdf",
   "sheets": [
    {
@@ -8614,7 +8614,7 @@
    {
     "key": "holdings",
     "name": "holdings",
-    "rows": 13,
+    "rows": 14,
     "cols": 9
    },
    {
@@ -9689,14 +9689,14 @@
   ]
  },
  {
-  "docKey": "buoyant-capital-103472-2026-09-30-holdings",
+  "docKey": "buoyant-capital-103472-2026-09-29-holdings",
   "provider": "Buoyant Capital",
   "accountNo": "103472",
   "owner": "ANKITA JAISINGHANI",
   "ownerId": "ankita-jaisinghani",
   "familyGroup": null,
   "strategy": null,
-  "asOf": "2026-09-30",
+  "asOf": "2026-09-29",
   "reportType": "holdings",
   "sourcePath": "source/_extracted/october-2026-c/MOTILAL FOLDER 1./I83_103472_AccountStatement5004CT.pdf",
   "pages": 2,
@@ -9706,9 +9706,9 @@
   ],
   "status": "ok",
   "warnings": 0,
-  "fileKey": "buoyant-capital-103472-2026-09-30-holdings",
+  "fileKey": "buoyant-capital-103472-2026-09-29-holdings",
   "label": "Buoyant Capital · 103472 · holdings",
-  "fy": "2026-09-30",
+  "fy": "2026-09-29",
   "source": "source/_extracted/october-2026-c/MOTILAL FOLDER 1./I83_103472_AccountStatement5004CT.pdf",
   "sheets": [
    {
@@ -9726,14 +9726,14 @@
   ]
  },
  {
-  "docKey": "buoyant-capital-103473-2026-09-30-holdings",
+  "docKey": "buoyant-capital-103473-2026-09-29-holdings",
   "provider": "Buoyant Capital",
   "accountNo": "103473",
   "owner": "AJAY THAKURDAS JAISINGHANI",
   "ownerId": "ajay-jaisinghani",
   "familyGroup": null,
   "strategy": null,
-  "asOf": "2026-09-30",
+  "asOf": "2026-09-29",
   "reportType": "holdings",
   "sourcePath": "source/_extracted/october-2026-c/MOTILAL FOLDER 1./I83_103473_AccountStatement5004CT.pdf",
   "pages": 2,
@@ -9743,9 +9743,9 @@
   ],
   "status": "ok",
   "warnings": 0,
-  "fileKey": "buoyant-capital-103473-2026-09-30-holdings",
+  "fileKey": "buoyant-capital-103473-2026-09-29-holdings",
   "label": "Buoyant Capital · 103473 · holdings",
-  "fy": "2026-09-30",
+  "fy": "2026-09-29",
   "source": "source/_extracted/october-2026-c/MOTILAL FOLDER 1./I83_103473_AccountStatement5004CT.pdf",
   "sheets": [
    {
@@ -13722,7 +13722,7 @@
    {
     "key": "holdings",
     "name": "holdings",
-    "rows": 47,
+    "rows": 48,
     "cols": 9
    },
    {

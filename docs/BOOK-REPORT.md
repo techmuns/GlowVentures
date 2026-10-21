@@ -7,8 +7,8 @@ Generated — **do not edit by hand**.
 
 | | |
 | --- | ---: |
-| Consolidated market value | 8,40,12,76,132.34 |
-| Positions | 444 |
+| Consolidated market value | 8,36,57,41,852.15 |
+| Positions | 448 |
 | Accounts | 76 |
 | Owners | 8 |
 | Newest as-of | 2026-10-07 |
@@ -28,8 +28,8 @@ Generated — **do not edit by hand**.
 | 10032723 | ASK Investment Managers Limited | Ankita Jaisinghani | ASK Indian Entrepreneur Portfolio | 2026-09-08 | 1 | 0.01 |
 | 10034025 | ASK Investment Managers Limited | Ajay Jaisinghani | ASK Indian Entrepreneur Portfolio | 2026-09-08 | 1 | 0.34 |
 | AIFM_BPEPF6_0584 | Baring Private Equity India Fund | Ankita Jaisinghani | — | 2026-03-31 | 1 | 1,88,42,208.74 |
-| 103472 | Buoyant Capital | Ankita Jaisinghani | Buoyant Opportunities Strategy - Investor | 2026-08-31 | 1 | 28,26,63,341.57 |
-| 103473 | Buoyant Capital | Ajay Jaisinghani | Buoyant Opportunities Strategy - Investor | 2026-08-31 | 1 | 50,32,76,370.81 |
+| 103472 | Buoyant Capital | Ankita Jaisinghani | Buoyant Opportunities Strategy - Investor | 2026-09-30 | 1 | 26,99,70,617.52 |
+| 103473 | Buoyant Capital | Ajay Jaisinghani | Buoyant Opportunities Strategy - Investor | 2026-09-30 | 1 | 48,06,77,231.99 |
 | 3517383 | Carnelian Asset Management and Advisors Pvt Ltd | Ajay Jaisinghani | CARNELIAN BESPOKE PORTFOLIO | 2026-09-30 | 13 | 38,16,29,575.81 |
 | 4551 | Carnelian Bharat Amritkaal Fund | Ankita Jaisinghani | — | 2026-07-31 | 1 | 16,31,15,312.43 |
 | 100022 | Goldstandard Wealth Private Limited | Ankita Jaisinghani | Aristos Equity Portfolio | 2026-10-06 | 33 | 7,67,18,509.44 |
@@ -87,8 +87,8 @@ Generated — **do not edit by hand**.
 | SKY022 | Sky Capital Rising Titans Fund | Ajay Jaisinghani | — | 2026-08-31 | 1 | 1,50,00,000 |
 | SKY023 | Sky Capital Rising Titans Fund | Bharat Jaisinghani Family Trust 2 | — | 2026-08-31 | 1 | 75,00,000 |
 | SKY024 | Sky Capital Rising Titans Fund | Bharat Jaisinghani Family Trust 3 | — | 2026-08-31 | 1 | 75,00,000 |
-| 8710067 | SVAN Investment Managers LLP | Ajay Jaisinghani | SVAN INVESTMENT MANAGERS LLP - VELOCITY | 2026-07-31 | 46 | 16,45,40,939.64 |
-| 8710090 | SVAN Investment Managers LLP | Bharat Jaisinghani | SVAN INVESTMENT MANAGERS LLP - VELOCITY | 2026-09-30 | 46 | 10,50,67,235.02 |
+| 8710067 | SVAN Investment Managers LLP | Ajay Jaisinghani | SVAN INVESTMENT MANAGERS LLP - VELOCITY | 2026-09-30 | 49 | 16,22,33,697.32 |
+| 8710090 | SVAN Investment Managers LLP | Bharat Jaisinghani | SVAN INVESTMENT MANAGERS LLP - VELOCITY | 2026-09-30 | 47 | 10,71,32,060.02 |
 | TVC262 | Transition Venture Capital | Bharat Jaisinghani Family Trust 2 | Transition Venture Capital Fund I | 2026-03-31 | 1 | 96,80,754 |
 | TVC263 | Transition Venture Capital | Bharat Jaisinghani Family Trust 3 | Transition Venture Capital Fund I | 2026-03-31 | 1 | 96,80,754 |
 | 128004 | V.E.C Assago Capital Management LLP | Ankita Jaisinghani | V.E.C ASSAGO Small and Mid-Cap Growth | 2026-10-07 | 16 | 6,10,99,614.2 |
@@ -192,9 +192,9 @@ The review's dated rows behind the holdings it values (65 rows, `BOOK_REVIEW_FLO
 
 | Owner | Accounts | Positions | Market value |
 | --- | ---: | ---: | ---: |
-| Ajay Jaisinghani | 32 | 219 | 4,91,12,20,534.1 |
-| Ankita Jaisinghani | 18 | 113 | 1,62,84,77,624.25 |
-| Bharat Jaisinghani | 13 | 95 | 75,06,09,122.27 |
+| Ajay Jaisinghani | 32 | 222 | 4,88,63,14,152.96 |
+| Ankita Jaisinghani | 18 | 113 | 1,61,57,84,900.2 |
+| Bharat Jaisinghani | 13 | 96 | 75,26,73,947.27 |
 | Aarti Jaisinghani | 3 | 6 | 97,70,23,814.92 |
 | Bharat Jaisinghani Family Trust 2 | 4 | 3 | 3,06,81,629 |
 | Bharat Jaisinghani Family Trust 3 | 4 | 3 | 3,06,81,629 |
@@ -253,7 +253,7 @@ page alone. `BOOK_POLYCAB` is its only reader; remove its key from
 | --- | --- | --- | --- | ---: | ---: |
 | POLYCAB INDIA LIMITED - EQ | Ajay Jaisinghani | ICICI Bank (NSDL demat) 49794950 | 2026-03-31 | 1,39,01,229 | 1,23,51,24,19,665 |
 
-Together **1,23,51,24,19,665**, excluded from the 8,40,12,76,132.34 consolidated market value above.
+Together **1,23,51,24,19,665**, excluded from the 8,36,57,41,852.15 consolidated market value above.
 
 ## The family's own dated investments
 
@@ -286,13 +286,13 @@ A per-contribution breakdown is published for **14** position(s), of which **5**
 
 | Sector | Market value | Share |
 | --- | ---: | ---: |
-| Unclassified | 6,98,55,89,525.03 | 83.15% |
-| Financials | 65,23,65,261.42 | 7.77% |
-| Health Care | 18,25,47,786.1 | 2.17% |
-| Consumer Discretionary | 18,07,07,727.82 | 2.15% |
-| Industrials | 14,54,23,477.65 | 1.73% |
-| Information Technology | 9,33,34,638.88 | 1.11% |
-| Cash | 8,97,68,456.39 | 1.07% |
+| Unclassified | 6,96,15,10,547.85 | 83.21% |
+| Financials | 65,23,65,261.42 | 7.80% |
+| Health Care | 18,25,47,786.1 | 2.18% |
+| Consumer Discretionary | 18,07,07,727.82 | 2.16% |
+| Industrials | 14,54,23,477.65 | 1.74% |
+| Information Technology | 9,33,34,638.88 | 1.12% |
+| Cash | 7,83,13,153.38 | 0.94% |
 | Materials | 2,38,08,046.25 | 0.28% |
 | Consumer Staples | 2,24,78,869.8 | 0.27% |
 | Communication Services | 1,05,04,208.2 | 0.13% |
@@ -372,12 +372,12 @@ never guessed into the nearest plausible bucket.
 - account AIFM_BPEPF6_0584: no time-weighted return series in any statement
 - account AIFM_BPEPF6_0584: no flow block in any statement, so no value bridge
 - account AIFM_BPEPF6_0584: no external capital movements found, so no money-weighted return series
-- account Buoyant Capital::103472: holdings 2026-07-31 superseded for SNAPSHOT facts by 2026-10-12 — `buoyant-capital-103472-2026-07-31-holdings`; its dated rows are still counted
-- account Buoyant Capital::103472: holdings 2026-09-30 superseded for SNAPSHOT facts by 2026-10-12 — `buoyant-capital-103472-2026-09-30-holdings`; its dated rows are still counted
+- account Buoyant Capital::103472: holdings 2026-07-31 superseded for SNAPSHOT facts by 2026-09-30 — `buoyant-capital-103472-2026-07-31-holdings`; its dated rows are still counted
+- account Buoyant Capital::103472: holdings 2026-09-29 superseded for SNAPSHOT facts by 2026-09-30 — `buoyant-capital-103472-2026-09-29-holdings`; its dated rows are still counted
 - account 103472: no external capital movements found, so no money-weighted return series
-- account Buoyant Capital::103473: holdings 2026-07-31 superseded for SNAPSHOT facts by 2026-10-12 — `buoyant-capital-103473-2026-07-31-holdings`; its dated rows are still counted
-- account Buoyant Capital::103473: holdings 2026-07-31 superseded for SNAPSHOT facts by 2026-10-12 — `buoyant-capital-103473-2026-07-31-holdings-2`; its dated rows are still counted
-- account Buoyant Capital::103473: holdings 2026-09-30 superseded for SNAPSHOT facts by 2026-10-12 — `buoyant-capital-103473-2026-09-30-holdings`; its dated rows are still counted
+- account Buoyant Capital::103473: holdings 2026-07-31 superseded for SNAPSHOT facts by 2026-09-30 — `buoyant-capital-103473-2026-07-31-holdings`; its dated rows are still counted
+- account Buoyant Capital::103473: holdings 2026-07-31 superseded for SNAPSHOT facts by 2026-09-30 — `buoyant-capital-103473-2026-07-31-holdings-2`; its dated rows are still counted
+- account Buoyant Capital::103473: holdings 2026-09-29 superseded for SNAPSHOT facts by 2026-09-30 — `buoyant-capital-103473-2026-09-29-holdings`; its dated rows are still counted
 - account 103473: 2 capital-register row(s) (Security in, Security out) are the legs of a class switch the fund's own reclassification record prints on the same date for the same rupees — not money moving, so not listed
 - account 103473: 2 cash-flow row(s) are the legs of a class switch the fund's own reclassification record prints on the same date for the same rupees — not money moving, so not a flow
 - account 103473: cash flows carry no opening portfolio value — no performance summary for the window, so a money-weighted return over it cannot be computed
@@ -400,6 +400,7 @@ never guessed into the nearest plausible bucket.
 - account Carnelian Asset Management and Advisors Pvt Ltd::3517383: performance-summary 2026-08-10 superseded for SNAPSHOT facts by 2026-10-07 — `carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-08-10-performance-summary`; its dated rows are still counted
 - account Carnelian Asset Management and Advisors Pvt Ltd::3517383: transaction-statement 2026-08-10 superseded for SNAPSHOT facts by 2026-09-30 — `carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-08-10-transaction-statement`; its dated rows are still counted
 - account Carnelian Asset Management and Advisors Pvt Ltd::3517383: 45 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
+- account Carnelian Asset Management and Advisors Pvt Ltd::3517383: investor-report 2026-10-07 (`carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-10-07-investor-report`) is newer than the 2026-09-30 record the book keeps, and is not used: Printed value-bridge lines reach 385169845.54, not the stated closing 385455077.32; retained as printed and not a reconciled return source
 - account 3517383: capital-gain lots printed as `dsp-mutual-fund-dsp-s-and-p-bse` settle this account's sales of `dsp-mutual-fund-dsp-s-and-p-bse-liquid-rate-etf` — same account and date, lot proceeds equal to each day's settled sale to the printed precision — so their realised gain is that holding's
 - account 3517383: the profit-and-loss value bridge 2026-04-01 → 2026-10-07 is WITHHELD — The report prints no opening value for this window, so its lines cannot be added up to its closing value. It prints no gain prior to takeover, profit / loss, accrued income or change in accruals line.
 - account 4551: no time-weighted return series in any statement
@@ -676,16 +677,7 @@ never guessed into the nearest plausible bucket.
 - account SVAN Investment Managers LLP::8710067: investor-report 2026-05-31 superseded for SNAPSHOT facts by 2026-07-31 — `svan-investment-managers-llp-8710067-2026-05-31-investor-report`; its dated rows are still counted
 - account SVAN Investment Managers LLP::8710067: investor-report 2026-06-30 superseded for SNAPSHOT facts by 2026-07-31 — `svan-investment-managers-llp-8710067-2026-06-30-investor-report`; its dated rows are still counted
 - account SVAN Investment Managers LLP::8710067: 13 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
-- account 8710067: 8 capital-gain lot(s) were sold after this account's holding statement of 2026-07-31, so the units they sold are still IN that statement's positions at its own mark. Their gain is on the capital gain statement and is not added to any position's return — doing so would count the same units once as value and once as profit.
-- account 8710067: credit-access-grameen is not rolled forward past 2026-07-31 — no depository balance or capital gain lot witnesses the tape; the statement's own quantity stands on the live basis
-- account 8710067: ghcl-textiles is not rolled forward past 2026-07-31 — no depository balance or capital gain lot witnesses the tape; the statement's own quantity stands on the live basis
-- account 8710067: nitin-spinners is not rolled forward past 2026-07-31 — no depository balance or capital gain lot witnesses the tape; the statement's own quantity stands on the live basis
-- account 8710067: sg-mart rolled forward on the account's own tape from 4840 on 2026-07-31 to 3125 on 2026-09-30 (1 trade(s); witnessed by capital gain lots to 2026-09-30)
-- account 8710067: shankara-building-products rolled forward on the account's own tape from 2818 on 2026-07-31 to 0 on 2026-09-30 (1 trade(s); witnessed by capital gain lots to 2026-09-30)
-- account 8710067: surya-roshni rolled forward on the account's own tape from 8030 on 2026-07-31 to 0 on 2026-09-30 (1 trade(s); witnessed by capital gain lots to 2026-09-30)
-- account 8710067: varroc-engineering is not rolled forward past 2026-07-31 — no depository balance or capital gain lot witnesses the tape; the statement's own quantity stands on the live basis
 - account 8710067: its bank book prints 12 dated deposit or withdrawal move(s) its dated capital record does not carry (0 in, 37099.8 out), but no profit-and-loss account states the capital the account received and paid back, so nothing witnesses those rows and none is listed as dated capital
-- account 8710067: its bank-book runs 2026-04-01 → 2026-09-30, so 15 row(s) after the 2026-07-31 value the series closes on (not yet inside it) are not flows of its money-weighted window
 - account 8710067: cash flows carry no opening portfolio value — no performance summary for the window, so a money-weighted return over it cannot be computed
 - account SVAN Investment Managers LLP::8710090: investor-report 2026-05-31 superseded for SNAPSHOT facts by 2026-09-30 — `svan-investment-managers-llp-8710090-2026-05-31-investor-report`; its dated rows are still counted
 - account SVAN Investment Managers LLP::8710090: investor-report 2026-06-30 superseded for SNAPSHOT facts by 2026-09-30 — `svan-investment-managers-llp-8710090-2026-06-30-investor-report`; its dated rows are still counted
@@ -803,24 +795,22 @@ never guessed into the nearest plausible bucket.
 - 1 ring-fenced holding(s) — POLYCAB INDIA LIMITED - EQ, 1,23,51,24,19,665 — are carried in the archive and in BOOK_POLYCAB, and OUT of every consolidated total, listed/private split, allocation, sector, entity and holdings table. This is the family's PROMOTER stock, shown only on the Polycab page. Remove the key from RINGFENCED_SECURITY_KEYS in build-book.mjs to fold it back into the book.
 - separate investments, confirmed by the family on 2026-09-28: 360 ONE Special Opportunities Fund — Series 8 — Class A3 (AIF Category II) under Ajay Jaisinghani (37702) and Bharat Jaisinghani (60117) — each counted in full, 2,91,60,825.51 across 2 account(s).
 - separate investments, confirmed by the family on 2026-09-28: Transition Venture Capital Fund I — Class A1 under Bharat Jaisinghani Family Trust 2 (TVC262) and Bharat Jaisinghani Family Trust 3 (TVC263) — each counted in full, 1,93,61,508 across 2 account(s).
-- market side: listed 6,47,03,31,861.98 over 354 holding(s), private 1,93,09,44,270.36 over 88, and 0 over 2 that nothing places on either side. An AIF is placed first by the family's own classification of what the fund invests in (FAMILY_MARKET_SIDE in shared/aifCategory.mjs), then by a fund naming its own discipline as private equity or venture, then by the SEBI category the statements print: Category III trades LISTED securities, Categories I and II are private capital. The three are summed from the positions and none is the remainder of the other two.
+- market side: listed 6,43,47,97,581.79 over 358 holding(s), private 1,93,09,44,270.36 over 88, and 0 over 2 that nothing places on either side. An AIF is placed first by the family's own classification of what the fund invests in (FAMILY_MARKET_SIDE in shared/aifCategory.mjs), then by a fund naming its own discipline as private equity or venture, then by the SEBI category the statements print: Category III trades LISTED securities, Categories I and II are private capital. The three are summed from the positions and none is the remainder of the other two.
 - market side: 23 AIF holding(s) placed by the family's own classification of what the fund invests in; 6 of them, in 3 fund(s), differ from what the printed SEBI category alone would say — India SME Investments Fund II — Class A2 (no category printed → private: private equity in early-growth SMEs); Motilal Oswal Founders Fund Series II — Class G1 (no category printed → listed: listed Indian equities); Motilal Oswal Wealth Delphi Equity Fund (no category printed → listed: Category III equity managers, as a fund of funds). The statement's category is unchanged; only the side is taken from the family.
 - market side: 1 fund(s) print NO SEBI category and the family have not classified them, so they are on neither side and are counted apart rather than defaulted to one: ASK Absolute Return Fund — Class A6 Series 31/01/2025. Putting them private would claim they are private capital and putting them listed would claim the opposite, and no document in this archive makes either claim. One line from the family, or a fund's own SEBI registration, settles each one.
 - market side: 1 holding(s) take a SEBI category the FAMILY declared, because no statement for them prints one — Motilal Oswal Wealth Delphi Equity Fund. A declaration only ever fills a category the statements leave empty and never overrides one they print; which side of the book each sits on is the family's own placing, noted above.
 - navHistory: 9 dated point(s) are a manager's own PRINTED OPENING VALUE (a performance summary's or investor report's opening corpus, dated the day before its window) rather than a holdings statement — carnelian-asset-management-and-advisors-pvt-ltd-3517383 2026-03-31; goldstandard-wealth-private-limited-100022 2026-03-31; goldstandard-wealth-private-limited-100023 2026-03-31; green-lantern-capital-llp-510854 2026-03-31; green-lantern-capital-llp-510861 2026-03-31; svan-investment-managers-llp-8710067 2026-04-30; svan-investment-managers-llp-8710090 2026-04-30; v-e-c-assago-capital-management-llp-128004 2026-03-31; v-e-c-assago-capital-management-llp-128005 2026-03-31. Where an opening and a holdings statement value one account on the same day (4 case(s)), the holdings statement is used and the two differ by at most 0.074% — the opening corpus can include accrued income the holdings basis carries apart. No attribution is struck across an opening value, because it carries no holding a price or a unit can be read off.
-- navHistory: 19 dated point(s) from 2026-03-31 to 2026-10-07 (190 days), over the 17 account(s) that publish MORE THAN ONE dated valuation (₹249.92 Cr at the last point, each dedupeGroup counted once). 31 account(s) publish exactly one dated valuation and 22 publish none — both are named in the coverage block rather than carried into the series as a flat line, which would drag its return towards a figure nothing measured. The panel is complete from 2026-07-31; before that each link is struck over the accounts valued at BOTH its ends, so an account ARRIVING contributes 0.00% instead of a step. The raw NAV level is only a book NAV from the date the panel completes, and is flagged per point.
-- navHistory: the capital moving between each covered account's marks is established by the statements themselves — dated-record: buoyant-capital-103473, carnelian-asset-management-and-advisors-pvt-ltd-3517383, green-lantern-capital-llp-510854, green-lantern-capital-llp-510861, svan-investment-managers-llp-8710090; printed totals (fact-sheet, performance-history, performance-summary): carnelian-asset-management-and-advisors-pvt-ltd-3517383, goldstandard-wealth-private-limited-100022, goldstandard-wealth-private-limited-100023, v-e-c-assago-capital-management-llp-128004, v-e-c-assago-capital-management-llp-128005; printed totals (fact-sheet): green-lantern-capital-llp-510854, green-lantern-capital-llp-510861, molecule-ventures-llp-7810404; printed totals (investor-report): svan-investment-managers-llp-8710067, svan-investment-managers-llp-8710090; printed totals (performance-summary): carnelian-asset-management-and-advisors-pvt-ltd-3517383, goldstandard-wealth-private-limited-100022, goldstandard-wealth-private-limited-100023, v-e-c-assago-capital-management-llp-128004, v-e-c-assago-capital-management-llp-128005; units-unchanged: 360-one-private-wealth-37702, 360-one-private-wealth-60117, hdfc-mutual-fund-16180583, motilal-oswal-founders-fund-90410016093, motilal-oswal-founders-fund-90410016104; unproven: buoyant-capital-103472. A step no statement settles is netted at nothing and its MOVE is carried as `unreportedFlowValue`.
+- navHistory: 20 dated point(s) from 2026-03-31 to 2026-10-07 (190 days), over the 17 account(s) that publish MORE THAN ONE dated valuation (₹246.72 Cr at the last point, each dedupeGroup counted once). 31 account(s) publish exactly one dated valuation and 22 publish none — both are named in the coverage block rather than carried into the series as a flat line, which would drag its return towards a figure nothing measured. The panel is complete from 2026-07-31; before that each link is struck over the accounts valued at BOTH its ends, so an account ARRIVING contributes 0.00% instead of a step. The raw NAV level is only a book NAV from the date the panel completes, and is flagged per point.
+- navHistory: the capital moving between each covered account's marks is established by the statements themselves — dated-record: buoyant-capital-103473, carnelian-asset-management-and-advisors-pvt-ltd-3517383, green-lantern-capital-llp-510854, green-lantern-capital-llp-510861, svan-investment-managers-llp-8710067, svan-investment-managers-llp-8710090; printed totals (fact-sheet, performance-history, performance-summary): carnelian-asset-management-and-advisors-pvt-ltd-3517383, goldstandard-wealth-private-limited-100022, goldstandard-wealth-private-limited-100023, v-e-c-assago-capital-management-llp-128004, v-e-c-assago-capital-management-llp-128005; printed totals (fact-sheet): green-lantern-capital-llp-510854, molecule-ventures-llp-7810404; printed totals (investor-report): svan-investment-managers-llp-8710067, svan-investment-managers-llp-8710090; printed totals (performance-summary): carnelian-asset-management-and-advisors-pvt-ltd-3517383, goldstandard-wealth-private-limited-100022, goldstandard-wealth-private-limited-100023, v-e-c-assago-capital-management-llp-128004, v-e-c-assago-capital-management-llp-128005; units-unchanged: 360-one-private-wealth-37702, 360-one-private-wealth-60117, buoyant-capital-103472, buoyant-capital-103473, hdfc-mutual-fund-16180583, motilal-oswal-founders-fund-90410016093, motilal-oswal-founders-fund-90410016104; unproven: buoyant-capital-103472. A step no statement settles is netted at nothing and its MOVE is carried as `unreportedFlowValue`.
 - navHistory: buoyant-capital-103472 2026-07-31 → 2026-08-31 is NOT PROVEN to be performance — no statement prints the capital that moved between these two marks. Its move over the step is named on screen as the part of the return that might be capital.
-- attribution: 17 account(s) publish a valued holdings statement at two or more dates, so 267 holding(s) are priced at both ends of a window. Over 2026-05-31 → 2026-10-07 the covered set runs ₹237.52 Cr → ₹249.92 Cr, of which price ₹0.96 Cr, trading ₹5.54 Cr, bought in ₹15.31 Cr, sold out ₹9.03 Cr. Largest detractor Jammu Kashmir Bank Ltd ₹-152.70 L. It covers ₹250.33 Cr of the book's ₹840.13 Cr; every other account publishes one statement, and one statement is a level rather than a change.
-- unrealised short/long-term split is populated on 17 of 444 position(s), across 2 of 76 account(s) (lkp-securities-98245, v-e-c-assago-capital-management-llp-128004): those are the accounts whose broker publishes a LOT REGISTER with dated acquisitions. It is NULL on the rest, because the capital register the managed accounts issue is a capital-account ledger (contributions, withdrawals, TDS transfers) and carries no purchase dates.
+- attribution: 17 account(s) publish a valued holdings statement at two or more dates, so 263 holding(s) are priced at both ends of a window. Over 2026-05-31 → 2026-10-07 the covered set runs ₹237.52 Cr → ₹246.72 Cr, of which price ₹-2.19 Cr, trading ₹8.58 Cr, bought in ₹16.82 Cr, sold out ₹9.91 Cr. Largest detractor Jammu Kashmir Bank Ltd ₹-150.29 L. It covers ₹246.77 Cr of the book's ₹836.57 Cr; every other account publishes one statement, and one statement is a level rather than a change.
+- unrealised short/long-term split is populated on 17 of 448 position(s), across 2 of 76 account(s) (lkp-securities-98245, v-e-c-assago-capital-management-llp-128004): those are the accounts whose broker publishes a LOT REGISTER with dated acquisitions. It is NULL on the rest, because the capital register the managed accounts issue is a capital-account ledger (contributions, withdrawals, TDS transfers) and carries no purchase dates.
 - realised is NULL, not ₹0, on BELRISE INDUSTRIES LIMITED (lkp-securities-98245): every one of its 1 capital-gain lot(s) was sold after the holding's own statement date, so the record holds no sale of it up to that date — a zero there would read as "sold nothing" where the record simply does not reach the holding.
 - realised is NULL, not ₹0, on CAPRI GLOBAL CAPITAL LIMITED (lkp-securities-98245): every one of its 2 capital-gain lot(s) was sold after the holding's own statement date, so the record holds no sale of it up to that date — a zero there would read as "sold nothing" where the record simply does not reach the holding.
 - realised is NULL, not ₹0, on Electronics Mart India Limited (lkp-securities-98245): every one of its 3 capital-gain lot(s) was sold after the holding's own statement date, so the record holds no sale of it up to that date — a zero there would read as "sold nothing" where the record simply does not reach the holding.
 - realised is NULL, not ₹0, on JYOTHY LABS LIMITED (lkp-securities-98245): every one of its 2 capital-gain lot(s) was sold after the holding's own statement date, so the record holds no sale of it up to that date — a zero there would read as "sold nothing" where the record simply does not reach the holding.
 - realised is NULL, not ₹0, on NIP ETNF1D RTLIQBEES (lkp-securities-98245): every one of its 1 capital-gain lot(s) was sold after the holding's own statement date, so the record holds no sale of it up to that date — a zero there would read as "sold nothing" where the record simply does not reach the holding.
 - realised is NULL, not ₹0, on Varun Beverages Limited (lkp-securities-98245): every one of its 1 capital-gain lot(s) was sold after the holding's own statement date, so the record holds no sale of it up to that date — a zero there would read as "sold nothing" where the record simply does not reach the holding.
-- realised is NULL, not ₹0, on Shankara Building Products Ltd (svan-investment-managers-llp-8710067): every one of its 4 capital-gain lot(s) was sold after the holding's own statement date, so the record holds no sale of it up to that date — a zero there would read as "sold nothing" where the record simply does not reach the holding.
-- realised is NULL, not ₹0, on Surya Roshni Ltd (svan-investment-managers-llp-8710067): every one of its 3 capital-gain lot(s) was sold after the holding's own statement date, so the record holds no sale of it up to that date — a zero there would read as "sold nothing" where the record simply does not reach the holding.
 - FIFO restates the cost of 3P India Equity Fund 1 - Class B3 (3p-investment-managers-3000048): the statement prints no cost, the fund's own unit record matched first-in, first-out holds 0 of cost in the units still held, and 28,50,00,000 of cost was sold for a realised 2,55,82,835.17. The record carries every unit from its first purchase, and its FIFO balance ties to the printed unit count.
 - FIFO restates the cost of ASK Absolute Return Fund — Class A6 Series 31/01/2025 (ask-absolute-return-fund-9039917111): the statement prints no cost, the fund's own unit record matched first-in, first-out holds 0 of cost in the units still held, and 20,00,00,000 of cost was sold for a realised 80,39,138.56. The record carries every unit from its first purchase, and its FIFO balance ties to the printed unit count.
 - FIFO restates the cost of ASK Absolute Return Fund — Class A6 Series 31/01/2025 (ask-absolute-return-fund-9039917144): the statement prints no cost, the fund's own unit record matched first-in, first-out holds 0 of cost in the units still held, and 18,80,00,000 of cost was sold for a realised 59,08,505.71. The record carries every unit from its first purchase, and its FIFO balance ties to the printed unit count.

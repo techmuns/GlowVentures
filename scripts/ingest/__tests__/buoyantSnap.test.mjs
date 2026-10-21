@@ -218,9 +218,14 @@ for (const K of [K_ANKITA, K_AJAY]) {
 
   // The book.
   const pos = bookPosition(`buoyant-capital-${P.accountNo}`);
-  ok(`${tag}: the book's position is the snap's units, NAV and value, on its date`,
-    pos && field(pos, "quantity") === P.page1.units && field(pos, "currentPrice") === P.page1.nav
-      && field(pos, "marketValue") === P.page1.value && field(pos, "priceAsOf") === "2026-08-31",
+  // The snap was the newest statement until October's account statements
+  // (Stage 10et): the book now carries the 30 Sep NAV, on the snap's units —
+  // nothing was allotted or redeemed in between.
+  const newest = docOf(`buoyant-capital-${P.accountNo}-2026-09-30-holdings`).holdings[0];
+  ok(`${tag}: the book's position is the newest statement's units, NAV and value, on its NAV date — the snap's units`,
+    pos && field(pos, "quantity") === P.page1.units && newest.quantity === P.page1.units
+      && field(pos, "currentPrice") === newest.marketPrice
+      && field(pos, "marketValue") === newest.marketValue && field(pos, "priceAsOf") === "2026-09-30",
     JSON.stringify(pos && ["quantity", "currentPrice", "marketValue", "priceAsOf"].map((k) => field(pos, k))));
   ok(`${tag}: …and keeps page 1's restated cost as the statement's own figure`,
     pos && field(pos, "printedCostBasis") === P.page1.cost && field(pos, "costBasisSource") === "carried-through-switch");

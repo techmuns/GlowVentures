@@ -173,6 +173,19 @@ const accountIdOf = (provider, accountNo) =>
  * one account. Falls back to nothing rather than to "whichever we saw last" —
  * that fallback is what precedence.mjs exists to prevent.
  */
+/**
+ * A SNAPSHOT THAT MAY SUPERSEDE ANOTHER (Stage 10eu): read whole, and agreeing
+ * with its own manager. A report with a read gap, or a section that prints a
+ * subtotal and no rows, would put a partial account in the book under a newer
+ * date. A report whose own value bridge does not reach its holdings total
+ * disagrees with the manager's other reports for the same day. Carnelian
+ * 3517383's 7 Oct Holding Report is ₹2.85 L below the ₹38.55 Cr closing its
+ * performance history, performance summary and fact sheet all print, so the
+ * last verified record stands, and the account notes name what was passed over.
+ */
+const wholeSnapshot = (d) => d.status === "ok" && !(d.sectionsWithoutRows?.length)
+  && !(d.warnings ?? []).some((w) => w.code === "value-bridge-mismatch");
+
 function authoritative(docs, provider, fact) {
   const rule = sourceFor(provider, fact);
   if (!rule) return null;
@@ -182,7 +195,7 @@ function authoritative(docs, provider, fact) {
   // tie on one date. Every other rule keeps "the first report type present".
   if (rule.newestWins) {
     const rank = (d) => rule.reportTypes.indexOf(d.reportType);
-    const candidates = docs.filter((d) => rank(d) >= 0);
+    const candidates = docs.filter((d) => rank(d) >= 0 && wholeSnapshot(d));
     candidates.sort((a, b) => ((b.asOf ?? "") < (a.asOf ?? "") ? -1 : (b.asOf ?? "") > (a.asOf ?? "") ? 1 : 0)
       || rank(a) - rank(b)
       || (a.docKey < b.docKey ? -1 : a.docKey > b.docKey ? 1 : 0));
@@ -2579,6 +2592,18 @@ function build(archived) {
     // shows, and a later transaction statement does not restate them.
     const holdingsDoc = authoritative(group, provider, "holdings");
     const asOf = holdingsDoc?.asOf ?? sample.asOf ?? null;
+    // A newer holdings report that could not supersede is named with its gap,
+    // never dropped in silence (the standing rule: retain the last verified
+    // record and name the newer source's date and gap).
+    const holdingsRule = sourceFor(provider, "holdings");
+    if (holdingsRule?.newestWins && asOf) {
+      for (const d of group) {
+        if (!holdingsRule.reportTypes.includes(d.reportType) || !d.asOf || d.asOf <= asOf || wholeSnapshot(d)) continue;
+        const why = (d.warnings ?? []).find((w) => w.code === "value-bridge-mismatch")?.detail
+          ?? (d.sectionsWithoutRows?.length ? `its ${d.sectionsWithoutRows.map((s) => s.section).join(", ")} section prints a subtotal and no rows` : `it is ${d.status}`);
+        notes.push(`account ${key}: ${d.reportType} ${d.asOf} (\`${d.docKey}\`) is newer than the ${asOf} record the book keeps, and is not used: ${why}`);
+      }
+    }
     const inception = group.map((d) => d.inceptionDate).find(Boolean) ?? null;
     /**
      * HOW FAR THE DATED CAPITAL RECORD REACHES — the other end of the question

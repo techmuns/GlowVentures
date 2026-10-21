@@ -72,7 +72,18 @@ export const FACTS = [
  * quietly disabled this whole table.
  */
 const PMS_REPORTING_SYSTEM = {
-    holdings:        { reportType: "appraisal", note: "MV = price x quantity exactly; the clean basis." },
+    /**
+     * THE NEWER OF THE APPRAISAL AND THE SEBI INVESTOR REPORT'S HOLDING REPORT
+     * (Stage 10eu). Both print every position with quantity, average cost, rate
+     * and value, so a newer Holding Report is the newer record of the same
+     * holdings. Only a report read whole and agreeing with its manager can win
+     * (build-book's `wholeSnapshot`). Green Lantern's quarterly report, whose
+     * Shares section prints a subtotal and no rows, never can. Nor, for now, can
+     * Carnelian 3517383's 7 Oct report: its total is ₹2.85 L below the closing
+     * the same manager's other 7 Oct reports print, so the 30 Sep appraisal
+     * stands. On one date the appraisal wins.
+     */
+    holdings:        { reportTypes: ["appraisal", "investor-report"], newestWins: true, note: "the NEWER of the appraisal and the investor report's Holding Report; on one date the appraisal — MV = price x quantity exactly, the clean basis." },
     quantity:        { reportType: "appraisal" },
     unitCost:        { reportType: "appraisal" },
     totalCost:       { reportType: "appraisal" },
@@ -156,16 +167,23 @@ export const PRECEDENCE = {
    * than a report-type order that would keep showing a month-old appraisal
    * while a later statement of the same holding sat in the archive (the 360
    * ONE May/June defect `newestPerReportType` exists for, one report type
-   * over). `newestWins` is honoured by build-book's `authoritative()` and
-   * applies to Buoyant's holdings alone; every other provider keeps the first
-   * report type its rule names.
+   * over). `newestWins` is honoured by build-book's `authoritative()`; since
+   * Stage 10eu it is set on the PMS reporting system's and SVAN's holdings too.
+   * Every other rule keeps the first report type it names.
+   *
+   * AND THE FUND'S OWN ACCOUNT STATEMENT IS THE SAME FACT AGAIN (Stage 10et).
+   * The snap is that statement with a third page. October's delivery carried
+   * the account statements alone — both folios, valued at the 29 and 30 Sep
+   * NAVs — and with `holdings` missing from this list they were read in full
+   * and never used: the book kept the 31 Aug snap. Both folios now send account
+   * statements, so the note above about 103472 sending none no longer holds.
    */
   "Buoyant Capital": {
     ...PMS_REPORTING_SYSTEM,
     holdings: {
-      reportTypes: ["appraisal", "portfolio-snap"],
+      reportTypes: ["appraisal", "portfolio-snap", "holdings"],
       newestWins: true,
-      note: "the NEWER of the PMS appraisal and the fund's own portfolio snap — two statements of the same units and NAV at different dates; on one date the appraisal wins.",
+      note: "the NEWEST of the PMS appraisal, the fund's portfolio snap and its account statement — three statements of the same units and NAV at different dates; on one date the appraisal wins, then the snap.",
     },
   },
 
@@ -298,9 +316,16 @@ export const PRECEDENCE = {
    * The holdings come from the DETAILED Holding Report, not the three-line
    * Portfolio Allocation summary on page 1: both are on the same basis and agree,
    * and only one of them carries positions.
+   *
+   * IT IS NO LONGER THE ONLY REPORT (Stage 10eu). October's delivery carried
+   * SVAN's 30 Sep report set from the shared PMS reporting system: appraisal,
+   * bank book, capital gains. For 8710090 the 30 Sep appraisal and investor
+   * report agree row for row. 8710067 got the appraisal alone, and with only
+   * the investor report named here the book stayed on 31 Jul. Holdings are now
+   * the newer of the two; on one date the investor report wins, as before.
    */
   "SVAN Investment Managers LLP": {
-    holdings:        { reportType: "investor-report", note: "the Holding Report; the page-1 allocation table is the cross-check." },
+    holdings:        { reportTypes: ["investor-report", "appraisal"], newestWins: true, note: "the NEWER of the Holding Report and the PMS appraisal; on one date the Holding Report, whose page-1 allocation table is the cross-check." },
     quantity:        { reportType: "investor-report" },
     unitCost:        { reportType: "investor-report", note: "average cost." },
     totalCost:       { reportType: "investor-report" },
@@ -556,8 +581,8 @@ export function sourceFor(provider, fact) {
     section: rule.section ?? null,
     note: rule.note ?? null,
     // The NEWEST of the named report types wins rather than the first one
-    // present. Set on one rule only (Buoyant's holdings); every other rule
-    // keeps the report-type order it names.
+    // present. Set on holdings rules only (Buoyant, the PMS reporting system,
+    // SVAN); every other rule keeps the report-type order it names.
     newestWins: rule.newestWins === true,
   };
 }

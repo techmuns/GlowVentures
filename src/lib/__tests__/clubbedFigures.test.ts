@@ -60,7 +60,9 @@ for (const [key, ps] of byKey) {
   const unitsKnown = costed.every((p) => typeof p.quantity === "number");
   const pass = f.cost === want
     && (gainWant === null ? f.unrealised === null : near(f.unrealised, gainWant, 0.01))
-    && (want === null || cu === 0 || !unitsKnown ? f.avgCost === null : near(f.avgCost, want / cu, 1e-6))
+    // No average cost over a unit count that is not positive: a net payable
+    // (SVAN's `Cash Rec/Payable`, Stage 10eu) holds negative units.
+    && (want === null || cu <= 0 || !unitsKnown ? f.avgCost === null : near(f.avgCost, want / cu, 1e-6))
     && f.atCost.lines === costed.length - struck.length
     && near(f.costedValue + f.uncosted.value, f.value, 0.01);
   if (!pass) ok(`${key}: cost, units, value and gain on one set`, false, JSON.stringify({ f, cost, cv, cu }));

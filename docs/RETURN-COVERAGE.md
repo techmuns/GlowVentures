@@ -21,8 +21,8 @@ Historical opening NAVs come from AMFI’s [31 March 2026 published file](https:
 | ASK Investment Managers Limited | 10032723 | Ankita Jaisinghani | 2026-09-08 | — | Opening valuation and complete dated cash flows are missing |
 | ASK Investment Managers Limited | 10034025 | Ajay Jaisinghani | 2026-09-08 | — | Opening valuation and complete dated cash flows are missing |
 | Baring Private Equity India Fund | AIFM_BPEPF6_0584 | Ankita Jaisinghani | 2026-03-31 | — | Opening valuation and complete dated cash flows are missing |
-| Buoyant Capital | 103472 | Ankita Jaisinghani | 2026-10-12 | — | Opening valuation and complete dated cash flows are missing |
-| Buoyant Capital | 103473 | Ajay Jaisinghani | 2026-10-12 | — | Opening valuation and complete dated cash flows are missing |
+| Buoyant Capital | 103472 | Ankita Jaisinghani | 2026-09-30 | — | Opening valuation and complete dated cash flows are missing |
+| Buoyant Capital | 103473 | Ajay Jaisinghani | 2026-09-30 | — | Opening valuation and complete dated cash flows are missing |
 | Carnelian Asset Management and Advisors Pvt Ltd | 3517383 | Ajay Jaisinghani | 2026-10-07 | 2026-10-07 | Complete through the selected date |
 | Carnelian Bharat Amritkaal Fund | 4551 | Ankita Jaisinghani | 2026-07-31 | — | Opening valuation and complete dated cash flows are missing |
 | Goldstandard Wealth Private Limited | 100022 | Ankita Jaisinghani | 2026-10-06 | 2026-10-06 | Complete through the selected date |

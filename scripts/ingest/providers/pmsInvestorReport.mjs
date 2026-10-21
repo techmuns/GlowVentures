@@ -137,6 +137,42 @@ function labelled(text, label) {
  */
 const RETURN_VALUE = /-?\d+\.\d+/g;
 
+/** The six-figure tail of a holding line with no name in front of it. */
+const FIGURES_ONLY = /^(?:[\d,]+\.\d{2,}\s+){5}[\d,]+\.\d{1,2}$/;
+const NAME_ONLY = /^[A-Za-z][A-Za-z0-9 .,&'’\-()/]*$/;
+const NOT_A_NAME = /^(?:Shares|Mutual\s+Funds?|Cash\s*\/\s*Bank|Total|Security\s+Name|Investments?\b|Page\s+\d+)/i;
+
+/**
+ * A NAME TOO LONG FOR ITS COLUMN WRAPS AROUND ITS FIGURES (Stage 10eu).
+ *
+ *   Star Health and Allied Insurance
+ *   69,817.00 451.55 550.55 31,525,586.25 38,437,749.35 9.97
+ *   Company Limited
+ *
+ * The figures land on a line of their own, between the two halves of the name,
+ * and a pattern that wants the name and the figures on one line matched
+ * neither. Carnelian's 7 Oct report lost Star Health this way (₹3.84 Cr) and
+ * SVAN 8710090's 30 Sep report lost Paras Defence (₹20.6 L), both with status
+ * `ok`. Where a name-only line is followed by a figures-only line, the two are
+ * read as one row, and a name-only line straight after joins the name. The
+ * sum check below is what proves no row is still lost.
+ */
+function stitchWrappedRows(lines) {
+  const out = [];
+  for (let i = 0; i < lines.length; i++) {
+    const t = lines[i], next = lines[i + 1] ?? "";
+    if (NAME_ONLY.test(t) && !NOT_A_NAME.test(t) && FIGURES_ONLY.test(next)) {
+      const tail = lines[i + 2] ?? "";
+      const name = NAME_ONLY.test(tail) && !NOT_A_NAME.test(tail) && tail.length <= 40 ? `${t} ${tail}` : t;
+      out.push(`${name} ${next}`);
+      i += name === t ? 1 : 2;
+      continue;
+    }
+    out.push(t);
+  }
+  return out;
+}
+
 function returnRow(text, label) {
   const line = new RegExp(label + String.raw`[^\n]*`, "i").exec(text);
   if (!line) return [];
@@ -180,8 +216,7 @@ export function extract({ grid, meta }) {
   // which is how the cash line gets its asset class without matching on its NAME.
   const holdings = [];
   let section = null;
-  for (const line of flat.split("\n")) {
-    const t = line.trim();
+  for (const t of stitchWrappedRows(flat.split("\n").map((l) => l.trim()))) {
     if (/^Shares\b/i.test(t)) section = "Equity";
     else if (/^Mutual\s+Funds?\b/i.test(t)) section = "Mutual Fund";
     else if (/^Cash\s*\/\s*Bank\b/i.test(t)) section = "Cash";
@@ -334,6 +369,22 @@ export function extract({ grid, meta }) {
   for (const s of sectionsWithoutRows) {
     warn(warnings, "section-rows-not-printed",
       `the ${s.section} section prints its subtotal (${s.printedValue.toLocaleString("en-IN")}) and no per-security rows; those holdings are not in this document and must come from another report for this account`);
+  }
+
+  /**
+   * THE ROWS READ MUST ADD UP TO THE TOTAL THE REPORT PRINTS (Stage 10eu). The
+   * printed Market Value column is what the Total row sums, accruals included,
+   * so the two tie to the paisa on a report read whole. A row the reader missed
+   * is a read gap and makes the document `partial`. Before this check, the
+   * reconciler did flag a dropped row as MATERIAL, but nothing failed on it.
+   * A section that prints no rows has already said so above and is left out.
+   */
+  if (allocTotal?.value != null && !sectionsWithoutRows.length) {
+    const read = Math.round(holdings.reduce((t, h) => t + (h.printed?.marketValue ?? 0), 0) * 100) / 100;
+    if (Math.abs(read - allocTotal.value) > 1) {
+      warn(warnings, "holdings-do-not-tie",
+        `the ${holdings.length} Holding Report row(s) read sum to ${read.toLocaleString("en-IN")} against the printed Total of ${allocTotal.value.toLocaleString("en-IN")}; a row was not read`);
+    }
   }
 
   /**

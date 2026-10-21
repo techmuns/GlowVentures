@@ -142,14 +142,15 @@ for (const [account, want] of Object.entries(controls)) {
 }
 
 for (const [account, owner, value, cost] of [
-  ["103472", "ankita-jaisinghani", 282663341.57, 248500000],
-  ["103473", "ajay-jaisinghani", 503276370.81, 460058861.66],
+  // The 30 Sep NAV from October's account statements (Stage 10et).
+  ["103472", "ankita-jaisinghani", 269970617.52, 248500000],
+  ["103473", "ajay-jaisinghani", 480677231.99, 460058861.66],
 ]) {
   const id = `buoyant-capital-${account}`;
   const a = accounts.find((a) => a.accountId === id);
   const rows = positions.filter((p) => p.accountId === id);
   check(`${account}: latest Buoyant valuation and original carried cost reach the book`,
-    a?.ownerId === owner && a.asOf === "2026-08-31" && rows.length === 1
+    a?.ownerId === owner && a.asOf === "2026-09-30" && rows.length === 1
     && near(rows[0].marketValue, value) && near(rows[0].costBasis, cost));
 }
 for (const [account, owner, realised, returned, count] of [

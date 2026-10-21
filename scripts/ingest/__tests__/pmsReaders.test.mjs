@@ -366,6 +366,28 @@ for (const docKey of INVESTOR) {
     f.otherExpenses === printed(text, /\d+\.\s*Other expenses\s+(-?[\d,]+\.\d+)/i), `got ${f.otherExpenses}`);
   ok(`${docKey}: its own lines reach its own closing`, ties(bridgeInvestor(f), f.corpus), `parts ${bridgeInvestor(f)} vs ${f.corpus}`);
 }
+// A NAME THAT WRAPS AROUND ITS FIGURES IS ONE ROW (Stage 10eu). Both reports
+// printed the row with status `ok` and the reader dropped it; the sum check is
+// what now makes a dropped row loud. The mutation removes the figures line and
+// expects the check to fire.
+for (const [docKey, name, qty] of [
+  ["carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-10-07-investor-report", "Star Health and Allied Insurance Company Limited", 69817],
+  ["svan-investment-managers-llp-8710090-2026-09-30-investor-report", "Paras Defence and Space Technologies Limited", 1575],
+]) {
+  const pages = pagesOf(docKey);
+  if (!pages) { ok(`${docKey}: its committed text is in the archive`, false); continue; }
+  const d = extractInvestorReport({ grid: { pages }, meta: { docKey } });
+  const sum = Math.round(d.holdings.reduce((t, h) => t + (h.printed?.marketValue ?? 0), 0) * 100) / 100;
+  ok(`${docKey}: the wrapped row reads, whole name and quantity`,
+    d.holdings.some((h) => h.security === name && h.quantity === qty), d.holdings.map((h) => h.security).join(" | "));
+  ok(`${docKey}: …and the rows sum to the printed Total, so no warning`,
+    sum === d.totals.totalMarketValue && !d.warnings.some((w) => w.code === "holdings-do-not-tie"), `${sum} vs ${d.totals.totalMarketValue}`);
+  const figures = new RegExp(String.raw`\n${qty.toLocaleString("en-US")}\.00 [^\n]*`);
+  const broken = pages.map((p) => ({ ...p, text: p.text.replace(figures, "\n") }));
+  const b = extractInvestorReport({ grid: { pages: broken }, meta: { docKey } });
+  ok(`${docKey}: with the row's figures removed, the sum check names the gap`,
+    b.warnings.some((w) => w.code === "holdings-do-not-tie") && b.status === "partial", b.warnings.map((w) => w.code).join(","));
+}
 {
   const docKey = "sanshi-fund-9039671821-2026-06-30-unknown";
   const pages = pagesOf(docKey);
