@@ -4886,6 +4886,12 @@ current unrealized P&L."*
 - The capital card's long "Why:" line is now the hover on "no appreciation or return is struck" (this also fixes main's `mandate-sector` prose finding).
 - **Checks:** the two Monitor link invariants now require the name link on every row and no link on any account line. The `mandate-fifo` date, Invested and FIFO checks are struck over the strategy (`strategyIdsOf`). New routes `mandate-strategy` and `fund-clubbed` assert one line per holding account, holdings that add to the headline, and no per-account page link. A Monitor invariant checks the clubbed fund's `/fund/` link.
 
+### Stage 10fl — INDEX SECTOR WEIGHTS REFRESH THEMSELVES EACH MONTH
+
+- `.github/workflows/index-sectors.yml` runs `npm run build-index-sectors` at 04:00 UTC on days 1–15 of each month, and on demand. NSE publishes the month-end factsheets on no fixed day, so the window catches them whenever they land. Runs before and after the new sheets appear change nothing.
+- It commits `src/data/indexSectors.json` and `docs/INDEX-SECTORS.md` to main only when a weight moved, after `npm run build` passes against them. This is the `fund-navs.yml` pattern, with the build moved ahead of the commit.
+- A factsheet that names the wrong index, or whose table is missing or does not tie to 100, fails the run before anything is written. A partial table is never committed.
+
 ### Stage 10fc — NO PARTIAL RETURNS: EVERY RETURN SURFACE READS ONE RECORD, WHOLE OR ABSENT
 
 *"not all accounts are being read into the dashboard. It says partial return, 2 out of 76 accounts … We do not need to show partial return anywhere on the dashboard"* — the family, 21 Oct 2026.
