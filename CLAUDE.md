@@ -378,7 +378,8 @@ All steps are idempotent; `glowData.ts` regenerates byte-identically.
   file via `GLOW_GITHUB_TOKEN` (until it is set, they say so). `corporate-actions.js` — the Glow Central Research
   capture. `stock-exposure.ts` — the look-through read model.
 - Workflows: `harvest.yml` (macro series store), `fund-navs.yml` (AMFI NAVs),
-  `polycab.yml` (Polycab exchange data).
+  `polycab.yml` (Polycab exchange data), `index-sectors.yml` (NSE factsheet
+  sector weights, days 1–15 monthly).
 - With no token and no network every page renders on statement marks.
 
 ## Conventions
