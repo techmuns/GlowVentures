@@ -159,7 +159,7 @@ export function trancheTable(
   // cost — FIFO's other half. The rows are the lots still held, so without this
   // the footer would be a return on the survivors, which is the defect the
   // whole book was moved to FIFO to end.
-  let realised = 0, costSold = 0;
+  let realised = 0, costSold = 0, income = 0;
   for (const p of positions) {
     const tr = index[trancheKey(p.accountId, p.securityKey)];
     if (!tr || !tr.moves.length) return null;
@@ -196,6 +196,7 @@ export function trancheTable(
     positionValue += p.marketValue;
     realised += typeof p.realizedPnL === "number" && Number.isFinite(p.realizedPnL) ? p.realizedPnL : 0;
     costSold += typeof p.costOfUnitsSold === "number" && Number.isFinite(p.costOfUnitsSold) ? p.costOfUnitsSold : 0;
+    income += typeof p.dividendReceived === "number" && Number.isFinite(p.dividendReceived) ? p.dividendReceived : 0;
     positionCost = positionCost === null || p.costBasis === null ? null : positionCost + p.costBasis;
   }
   if (!rows.length) return null;
@@ -207,9 +208,10 @@ export function trancheTable(
   return {
     rows, units, invested, value,
     // The position's own FIFO return: every lot still held, plus what the lots
-    // already sold realised, over every rupee that bought a unit.
+    // already sold realised and what the position paid, over every rupee that
+    // bought a unit.
     // Never `?? 0`: a return nobody could strike is not a flat one.
-    returnPct: fifoReturnPct(value, invested, realised, costSold),
+    returnPct: fifoReturnPct(value, invested, realised, costSold, income),
     positionUnits, positionValue, positionCost,
   };
 }

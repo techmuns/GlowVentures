@@ -88,6 +88,7 @@ const SUITES = [
   ["held through", "src/lib/__tests__/heldThrough.test.ts"],
   ["security names", "src/lib/__tests__/securityNames.test.ts"],
   ["screener sectors", "src/lib/__tests__/screenerSectors.test.ts"],
+  ["index sectors", "src/lib/__tests__/indexSectors.test.ts"],
   ["monitor sectors", "src/lib/__tests__/monitorSectors.test.ts"],
   ["fund NAVs", "src/lib/__tests__/fundNavs.test.ts"],
   ["unpriced statement units", "src/lib/__tests__/unpricedUnits.test.ts"],

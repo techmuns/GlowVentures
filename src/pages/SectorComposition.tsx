@@ -15,17 +15,25 @@ import { useStockExposure } from "@/lib/useStockExposure";
 import { fifoTotals } from "@/lib/fifo";
 import { companyExposure, companySymbol, type CompanyExposure } from "@/lib/lookthrough";
 import { isArbitrageFund } from "@/lib/fundNavs";
-import { UNCLASSIFIED } from "@/lib/sectors";
+import { UNCLASSIFIED, GICS_SECTORS } from "@/lib/sectors";
 import { useViewParam, type ViewDef } from "@/components/ViewToggle";
 import { fmtPct, fmtCurrency, changeColor, fmtDate } from "@/lib/format";
 import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
 import { heldRouteOf, measuredSplit, HELD_ROUTE_NOTE, type MeasuredSplit } from "@/lib/heldThrough";
 import { useTableView, sortRows } from "@/lib/tableView";
 import { withReviewAccessors } from "@/lib/reviewColumns";
+import { BENCHMARKS, type BenchmarkKey } from "@/lib/benchmarks";
+import { indexSectors, indexSectorFrom, type IndexSectorRow } from "@/lib/indexSectors";
 import type { Position } from "@/lib/types";
 
 /** The sector table's columns, in the order its rows write their cells. */
 const SECTOR_COLS = ["sector", "value", "weight", "count", "return", "top"] as const;
+/**
+ * ...and with an index set beside it (Stage 10fe): the index's own weight in
+ * each sector, and the family's difference from it in points, right after the
+ * family's weight so the three read together.
+ */
+const SECTOR_COLS_VS = ["sector", "value", "weight", "index", "active", "count", "return", "top"] as const;
 /**
  * ...and the two breakouts a sector row opens into. An issuer row carries its
  * measured half split by who chose the shares — the family's own account, a
@@ -49,7 +57,11 @@ const ROUTE_ABSENT_SECTOR: Record<"direct" | "manager" | "other", string> = {
 import { chartTooltipStyle, chartTooltipLabelStyle, chartTooltipItemStyle, CHART_COLORS } from "@/lib/chartTheme";
 import { Auditable } from "@/components/Auditable";
 import { returnFormula, weightFormula } from "@/lib/auditFormulas";
-import { AbsentCell } from "@/components/Absent";
+import { AbsentCell, AbsentSection } from "@/components/Absent";
+
+/** The NAV chart's series colours, so the book and the index are the same two colours on both tabs. */
+const BOOK_COLOR = "var(--chart-book, #d9c48f)";
+const INDEX_COLOR = "var(--chart-index, #6366f1)";
 
 /**
  * WHERE A LIVE FIGURE'S COST COMES FROM (FS-24). It read "Cost basis comes from
@@ -302,11 +314,70 @@ function returnCoverage(s: SectorRow, consolidated: boolean, fmt: (v: number) =>
  */
 const EMBED_SECTOR_VIEWS = SECTOR_VIEWS.filter((v) => v.key !== "compare");
 
+/**
+ * ── VERSUS AN INDEX (Stage 10fe) ─────────────────────────────────────────────
+ *
+ *   *"they should be able to compare the allocation of their own portfolio …
+ *    just how there is an option to compare nav of the portfolio with the
+ *    indexes performance. They should be able to select the index."*
+ *
+ * THE NAV CHART'S INDICES, BY THE NAV CHART'S KEYS (`BENCHMARKS`), so an index
+ * is one thing on both tabs. Their sector weights are the publisher's own
+ * factsheet, placed in GICS sectors by the map the book's own sectors go
+ * through — `indexSectors.ts` says how, and why the two BSE indices are offered
+ * and absent.
+ *
+ * ORTHOGONAL TO THE SET. Consolidated or Direct Equity is WHAT of the family's
+ * is weighed; the index is what it is weighed against. So it is a second
+ * control rather than a third tab, and works on either set.
+ *
+ * "OFF" FIRST, AND PARAM-FREE (`?vs=`), so `/sectors` and the Morning CIO tab
+ * open on the family's allocation alone as they always have — and every check
+ * written against that table still reads the columns it was written against.
+ */
+type IndexPick = "off" | BenchmarkKey;
+const INDEX_PICKS: readonly ViewDef<IndexPick>[] = [
+  { key: "off", label: "Off", title: "The family's sector allocation on its own." },
+  ...BENCHMARKS.map((b): ViewDef<IndexPick> => {
+    const ix = indexSectors(b.key);
+    return {
+      key: b.key, label: b.label,
+      title: ix.ok
+        ? `${b.name} — its sector weights as ${ix.publisher}'s factsheet of ${fmtDate(ix.asOf)} prints them, set beside the family's.`
+        : `${b.name} — ${ix.reason}`,
+    };
+  }),
+];
+
+/** A difference in weight, in percentage points — never a percent of a percent. */
+const fmtPts = (d: number) => {
+  const r = Math.round(d * 1000) / 10;
+  return `${r > 0 ? "+" : r < 0 ? "−" : ""}${Math.abs(r).toFixed(1)} pp`;
+};
+
+/**
+ * A sector the INDEX holds and the active set does not: a COMPUTED zero on the
+ * family's side, drawn as a row so the index column adds to the whole index and
+ * the largest underweight of all — a sector with nothing in it — is not missing.
+ */
+function emptySector(key: string): SectorRow {
+  return {
+    key, mv: 0, count: 0, weight: 0, measured: 0, derived: 0,
+    cost: null, pnl: null, returnPct: null, realised: null, deployed: null,
+    costed: 0, holdings: 0, uncostedMV: 0, costedMV: 0,
+    returnWhy: "The family holds nothing this view places in this sector, so there is no return to strike.",
+    top: null, topKey: null, topDerivedOnly: false,
+  };
+}
+
 export function SectorComposition({ embedded = false }: { embedded?: boolean } = {}) {
   const views = embedded ? EMBED_SECTOR_VIEWS : SECTOR_VIEWS;
   const { portfolio, consolidated, fmtFromBase, convertFromBase, displayCurrency, scope: memberScope } = usePortfolio();
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
-  const sectorView = useTableView("sectors", SECTOR_COLS, { reviewKind: "sector" });
+  const [vsKey, setVs] = useViewParam<IndexPick>(INDEX_PICKS, {}, "vs");
+  /** The index picked, read — or why it has no weights. `null` while the control is Off. */
+  const vsIndex = vsKey === "off" ? null : indexSectors(vsKey);
+  const sectorView = useTableView("sectors", vsIndex?.ok ? SECTOR_COLS_VS : SECTOR_COLS, { reviewKind: "sector" });
   /**
    * AN "OTHER ACCOUNTS" COLUMN ONLY WHERE THE BOOK HAS ONE. A company share in
    * an account that is neither the family's own nor a PMS mandate is named in
@@ -545,15 +616,38 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
   }, [consolidatedView, holdingsBySector]);
 
   /**
+   * ── THE ACTIVE SET AGAINST THE INDEX (Stage 10fe) ──────────────────────────
+   *
+   * Never on Compare, which reads both sets at once and has no single weight to
+   * set an index against. The family's weight is the SAME figure as the Weight
+   * column — this set's own total, Unclassified included — so a row never shows
+   * one sector at two weights; what that leaves unplaced is named on the
+   * Unclassified row, which takes no difference (a gap in classification is not
+   * a position against the index).
+   */
+  const vs = view !== "compare" && vsIndex?.ok ? vsIndex : null;
+  const idxBy = new Map<string, IndexSectorRow>((vs?.rows ?? []).map((r) => [r.sector, r]));
+  /** Every sector the index holds and this set does not, as a computed-zero row. */
+  const indexOnly = vs ? vs.rows.filter((r) => !sectors.some((s) => s.key === r.sector)).map((r) => emptySector(r.sector)) : [];
+  const tableSectors = [...sectors, ...indexOnly];
+  /** The index's weight in a sector: its factsheet's, or a computed zero where it lists none. */
+  const indexWeightOf = (key: string) => idxBy.get(key)?.weight ?? 0;
+  /** The family's difference from the index, in points — none for the unplaced. */
+  const activeOf = (s: SectorRow) => (s.key === UNCLASSIFIED ? null : s.weight - indexWeightOf(s.key));
+  const vsSetName = consolidatedView ? "total exposure" : "Direct Equity";
+
+  /**
    * THE TABLE'S OWN ORDER. `sectors` keeps the chart's ordering — the donut reads
    * it, and the swatch colour is keyed on a sector's place in it — so the table
    * sorts a copy and never that array.
    */
-  const sectorRows = sortRows(sectors, sectorView.sort, withReviewAccessors<typeof sectors[number]>({
+  const sectorRows = sortRows(tableSectors, sectorView.sort, withReviewAccessors<typeof sectors[number]>({
     sector: (x) => x.key,
     value: (x) => x.mv,
     // Weight is this sector's value over the page's, so it orders as Value does.
     weight: (x) => x.mv,
+    index: (x) => (vs ? indexWeightOf(x.key) : null),
+    active: (x) => (vs ? activeOf(x) : null),
     count: (x) => x.count,
     return: (x) => x.returnPct,
     top: (x) => x.top,
@@ -568,7 +662,11 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
    */
   const colorOf = (key: string) => {
     const i = consSectors.findIndex((s) => s.key === key);
-    const j = i >= 0 ? i : consSectors.length + directSectors.findIndex((s) => s.key === key);
+    const d = directSectors.findIndex((s) => s.key === key);
+    // A sector only an index holds follows both lists, in GICS order, so it
+    // never borrows the colour of the last sector the family does hold.
+    const j = i >= 0 ? i : d >= 0 ? consSectors.length + d
+      : consSectors.length + directSectors.length + Math.max(GICS_SECTORS.indexOf(key), 0);
     return CHART_COLORS[Math.max(j, 0) % CHART_COLORS.length];
   };
   const chartData = sectors.map((s) => ({ name: s.key, value: convertFromBase(s.mv) }));
@@ -878,6 +976,94 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
   );
 
   /**
+   * ── THE LEFT HALF AGAINST AN INDEX: TWO BARS A SECTOR (Stage 10fe) ─────────
+   *
+   * In the donut's place while an index is picked. A donut beside a second
+   * donut asks the reader to compare angles across two circles; two bars on one
+   * scale, the family's over the index's, put every sector's difference on one
+   * line. The colours are the NAV chart's — the book's gold, the index's indigo
+   * — so "which bar is the index" is the answer it already has there. Sectors in
+   * the table's order, the unplaced last: it is not a sector either side holds.
+   */
+  const vsRows = vs ? [...tableSectors].sort((a, b) =>
+    (a.key === UNCLASSIFIED ? 1 : 0) - (b.key === UNCLASSIFIED ? 1 : 0)
+    || b.weight - a.weight || indexWeightOf(b.key) - indexWeightOf(a.key)) : [];
+  const vsMax = Math.max(0.0001, ...vsRows.map((s) => Math.max(s.weight, indexWeightOf(s.key))));
+  const pct1 = (w: number) => `${(w * 100).toFixed(1)}%`;
+  const vsChart = vs && (
+    <div data-sector-vs data-vs-index={vs.bench.key} data-vs-asof={vs.asOf}>
+      <div className="flex items-center justify-between gap-2">
+        <span className="label-xs">Weight by sector</span>
+        <span className="flex items-center gap-3 text-[11px] text-slate-400">
+          <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm" style={{ background: BOOK_COLOR }} />
+            {consolidatedView ? "Family" : "Direct Equity"}</span>
+          <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm" style={{ background: INDEX_COLOR }} />
+            {vs.bench.label}</span>
+        </span>
+      </div>
+      <div className="mt-0.5 text-[11px] text-slate-500" data-vs-source
+        title={`${vs.publisher}'s factsheet for ${vs.bench.name}${vs.methodology ? ` (${vs.methodology.toLowerCase()} weighted)` : ""}: ${vs.url}`}>
+        {vs.bench.name} · factsheet of {fmtDate(vs.asOf)}{vs.constituents ? ` · ${vs.constituents} stocks` : ""}
+      </div>
+      <div className="mt-3 space-y-2.5">
+        {vsRows.map((s) => {
+          const iw = indexWeightOf(s.key);
+          return (
+            <div key={s.key} data-vs-row={s.key} data-vs-book={s.weight} data-vs-weight={iw}>
+              <div className="flex items-baseline justify-between gap-2 text-[12px]">
+                <span className="flex min-w-0 items-center gap-1.5 text-slate-200">
+                  <span className="h-2 w-2 shrink-0 rounded-sm" style={{ background: colorOf(s.key) }} />
+                  <span className="truncate">{s.key}</span>
+                </span>
+                <span className="mono shrink-0 text-[11px]"
+                  title={s.key === UNCLASSIFIED ? "The family's exposure no source placed in a sector, against what of the index its map places in none."
+                    : `${pct1(s.weight)} of the family's ${vsSetName} against ${pct1(iw)} of ${vs.bench.name}: ${fmtPts(s.weight - iw)}`}>
+                  <span style={{ color: BOOK_COLOR }}>{pct1(s.weight)}</span>
+                  <span className="text-slate-500"> · </span>
+                  <span style={{ color: INDEX_COLOR }}>{pct1(iw)}</span>
+                </span>
+              </div>
+              <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-ink-900/40">
+                <div className="h-full rounded-full" style={{ width: `${(s.weight / vsMax) * 100}%`, background: BOOK_COLOR }} />
+              </div>
+              <div className="mt-0.5 h-1.5 overflow-hidden rounded-full bg-ink-900/40">
+                <div className="h-full rounded-full" style={{ width: `${(iw / vsMax) * 100}%`, background: INDEX_COLOR }} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  /**
+   * THE INDEX CONTROL — the NAV chart's pills, in the same order. An index whose
+   * publisher prints no readable sector weights is offered all the same, muted,
+   * and says why on its hover and in the panel when picked: absent, never
+   * quietly dropped from the list.
+   */
+  const indexPicker = view === "compare" ? null : (
+    <div className="flex flex-wrap items-center gap-2" data-sector-vs-picker>
+      <span className="label-xs">Vs index</span>
+      <div role="tablist" aria-label="Index to set the sector allocation against"
+        className="inline-flex flex-wrap items-center gap-0.5 rounded-lg border border-ink-700 bg-ink-800/60 p-0.5">
+        {INDEX_PICKS.map((p) => {
+          const absent = p.key !== "off" && !indexSectors(p.key).ok;
+          return (
+            <button key={p.key} type="button" role="tab" aria-selected={vsKey === p.key} title={p.title}
+              data-sector-vs-pick={p.key} {...(absent ? { "data-vs-absent": "true" } : {})} onClick={() => setVs(p.key)}
+              className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${vsKey === p.key
+                ? "bg-champagne-500 text-ink-950"
+                : absent ? "text-slate-500 hover:bg-ink-700/60" : "text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"}`}>
+              {p.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  /**
    * THE SET TOGGLE, SHARED BY BOTH HOSTS. On `/sectors` it rides beside the
    * page title (the Portfolio Monitor's placement); embedded in Morning CIO it
    * sits inline at the top of the panel. `views.map`, not `SECTOR_VIEWS.map`,
@@ -906,10 +1092,12 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
            inline at the top of the panel where the family asked for it. */
         <div className="mb-3 flex flex-wrap items-center gap-2" data-cio-sector-head>
           {viewToggle}
+          <div className="ml-auto">{indexPicker}</div>
         </div>
       ) : (
       <PageHeader eyebrow="Allocation" title="Sector Composition"
         beside={viewToggle}
+        right={indexPicker ?? undefined}
         /* ── NO PILLS ON THIS HEADER ────────────────────────────────────────
            *"remove the highlighted texts from the dashboard UI"* — pointed at
            the basis pill, its "N accounts behind" companion and the "N sectors"
@@ -949,7 +1137,12 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
         {/* LEFT — the donut and what it is made of. On Compare it is the picker. */}
         <Card className="flex min-h-0 flex-col lg:max-h-full lg:self-start" pad={false}>
           <div className="min-h-0 flex-1 overflow-auto px-5 py-4" data-sector-left>
-            {donut}
+            {/* AN INDEX PICKED: its bars in the donut's place — or, for an index
+                whose publisher prints no readable weights, that absence. */}
+            {vsChart
+              || (view !== "compare" && vsIndex && !vsIndex.ok
+                ? <AbsentSection what={`No sector weights for ${vsIndex.bench.name}`} needs={vsIndex.reason} />
+                : donut)}
             {view === "compare" ? (
               <div className="mt-4" data-sector-picker>
                 <div className="mb-1.5 flex items-center justify-between">
@@ -1089,7 +1282,7 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
           <Card className="flex min-h-0 flex-col lg:max-h-full lg:self-start" pad={false}
             title={<span data-card-title-hint title={consolidatedView
               ? "Click a sector for the issuers in it — what the statements report and what the funds disclose."
-              : "Click a sector for its holdings."}>Sector breakdown</span>}>
+              : "Click a sector for its holdings."}>Sector breakdown{vs ? ` vs ${vs.bench.label}` : ""}</span>}>
             <div className="mt-3 min-h-0 flex-1 overflow-auto">
               <table className="min-w-full text-[13px]" data-sector-table>
                 <thead className="sticky top-0 z-10 bg-ink-800">
@@ -1097,6 +1290,12 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
                     <SortHeader col="sector" view={sectorView} align="left" pad="px-3 py-2">Sector</SortHeader>
                     <SortHeader col="value" view={sectorView} pad="px-3 py-2">Value</SortHeader>
                     <SortHeader col="weight" view={sectorView} pad="px-3 py-2">Weight</SortHeader>
+                    {vs && <SortHeader col="index" view={sectorView} pad="px-3 py-2"
+                      title={`${vs.bench.name}'s weight in each sector, from ${vs.publisher}'s factsheet of ${fmtDate(vs.asOf)} — its own sectors placed in GICS sectors by the map the family's holdings go through.`}>
+                      {vs.bench.label}</SortHeader>}
+                    {vs && <SortHeader col="active" view={sectorView} pad="px-3 py-2"
+                      title={`The family's weight minus ${vs.bench.name}'s, in percentage points: positive where their ${vsSetName} holds more of a sector than the index does.`}>
+                      Over / under</SortHeader>}
                     <SortHeader col="count" view={sectorView} pad="px-3 py-2">{consolidatedView ? "Issuers" : "Positions"}</SortHeader>
                     <SortHeader col="return" view={sectorView} pad="px-3 py-2">Return</SortHeader>
                     <SortHeader col="top" view={sectorView} align="left" pad="px-3 py-2"
@@ -1127,10 +1326,15 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
                       total: (e) => e.total,
                       share: (e) => e.total,
                     });
+                    /* A sector only the index holds has nothing to open into. */
+                    const indexOnlyRow = s.count === 0;
+                    const ir = idxBy.get(s.key);
+                    const active = vs ? activeOf(s) : null;
                     return (
                       <Fragment key={s.key}>
-                        <Tr view={sectorView} reviewScope={{ sector: s.key }} className="cursor-pointer hover:bg-ink-700/40" onClick={() => toggle(s.key)} aria-expanded={isOpen}
-                          data-sector-row={s.key}>
+                        <Tr view={sectorView} reviewScope={{ sector: s.key }} className={indexOnlyRow ? "" : "cursor-pointer hover:bg-ink-700/40"}
+                          onClick={indexOnlyRow ? undefined : () => toggle(s.key)} aria-expanded={indexOnlyRow ? undefined : isOpen}
+                          data-sector-row={s.key} {...(indexOnlyRow ? { "data-sector-index-only": "" } : {})}>
                           <td className="px-3 py-2">
                             {/* THE `title` GOES ON THE EXISTING SPAN, never on a new one
                                 wrapping the name: this is a FLEX container, so an added
@@ -1139,23 +1343,50 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
                                 check on this page. */}
                             <span className="flex items-center gap-2 whitespace-nowrap font-medium text-slate-100"
                               title={s.key === UNCLASSIFIED ? unclassifiedWhy(consolidatedView, consolidatedView ? unclassMix : undefined) : undefined}>
-                              <ChevronRight className={`h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform ${isOpen ? "rotate-90" : ""}`} />
+                              <ChevronRight className={`h-3.5 w-3.5 shrink-0 transition-transform ${indexOnlyRow ? "text-transparent" : "text-slate-500"} ${isOpen ? "rotate-90" : ""}`} />
                               <span className="h-2.5 w-2.5 rounded-sm" style={{ background: colorOf(s.key) }} />
                               {s.key}
                             </span>
                           </td>
-                          <td className="px-3 py-2 text-right mono text-slate-200 whitespace-nowrap" title={liveBySector[s.key] ? LIVE_CELL : undefined}>
-                            {liveBySector[s.key] ? fmtFromBase(s.mv, { compact: true })
+                          <td className="px-3 py-2 text-right mono text-slate-200 whitespace-nowrap" title={liveBySector[s.key] ? LIVE_CELL : undefined}
+                            data-cell="value">
+                            {/* A COMPUTED ZERO, WITH ITS REASON ON ITS FACE: the index holds
+                                this sector and nothing of the family's is placed in it. */}
+                            {indexOnlyRow
+                              ? <span title={`Nothing in the family's ${vsSetName} is placed in this sector; ${vs?.bench.name ?? "the index"} holds it.`}>
+                                  {money(0)} <span className="text-[10.5px] text-slate-500">none held</span></span>
+                              : liveBySector[s.key] ? fmtFromBase(s.mv, { compact: true })
                               : <Auditable formula={{ title: "Sector value", excel: "= Σ market value of the sector's holdings", plain: consolidatedView ? "Every issuer in this sector, added up — what the statements report plus the family's share of every instrument their funds disclose." : "Every holding in this sector, added up.", worked: `= ${money(s.mv)} across ${s.count} ${consolidatedView ? "issuers" : "holdings"}` }}>{fmtFromBase(s.mv, { compact: true })}</Auditable>}
                           </td>
-                          <td className="px-3 py-2 text-right mono text-slate-400" title={liveBySector[s.key] ? LIVE_CELL : undefined}>
-                            {liveBySector[s.key] ? `${(s.weight * 100).toFixed(1)}%`
+                          <td className="px-3 py-2 text-right mono text-slate-400" title={liveBySector[s.key] ? LIVE_CELL : undefined}
+                            data-cell="weight" data-weight={s.weight}>
+                            {indexOnlyRow || liveBySector[s.key] ? `${(s.weight * 100).toFixed(1)}%`
                               : <Auditable formula={weightFormula(s.mv, totalMV, s.weight * 100, money,
                                   /* The denominator is THIS page's set, not the book. */
                                   consolidatedView
                                     ? "the issuers on this page — the shares the statements report plus the derived share of every instrument the funds disclose"
                                     : "the family's own company shares on this page")}>{`${(s.weight * 100).toFixed(1)}%`}</Auditable>}
                           </td>
+                          {/* THE INDEX'S WEIGHT, AND WHAT OF ITS FACTSHEET MAKES IT UP. A
+                              sector its table does not list is a computed nil — the
+                              table is the whole index — and says so. */}
+                          {vs && (
+                            <td className="px-3 py-2 text-right mono text-slate-400" data-cell="index" data-index-weight={ir?.weight ?? 0}
+                              title={ir
+                                ? `${vs.bench.name}, ${fmtDate(vs.asOf)}: ${indexSectorFrom(ir)}${s.key === UNCLASSIFIED ? " — sectors the map places in no single GICS sector" : ""}`
+                                : s.key === UNCLASSIFIED
+                                  ? `Every sector ${vs.bench.name}'s factsheet prints is placed in a GICS sector, so none of the index is unplaced.`
+                                  : `${vs.bench.name}'s factsheet lists nothing placed in this sector, and its table is the whole index.`}>
+                              {((ir?.weight ?? 0) * 100).toFixed(1)}%
+                            </td>
+                          )}
+                          {vs && (
+                            <td className="px-3 py-2 text-right mono whitespace-nowrap text-slate-200" data-cell="active" data-active={active ?? ""}>
+                              {active === null
+                                ? <AbsentCell reason="Not a sector: what no source placed for the family. A difference from the index here would be a gap in classification, not a position." />
+                                : <span title={`${(s.weight * 100).toFixed(1)}% of the family's ${vsSetName} against ${(indexWeightOf(s.key) * 100).toFixed(1)}% of ${vs.bench.name}`}>{fmtPts(active)}</span>}
+                            </td>
+                          )}
                           <td className="px-3 py-2 text-right mono text-slate-400" data-cell="count">{s.count}</td>
                           {/* FIFO OVER THE COSTED HOLDINGS, NAMING ITS SET (Stage 10dt). A
                               dash only where no holding in the sector reports a cost. */}
@@ -1310,7 +1541,7 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
                                               {h.costUnavailable || h.costBasis == null
                                                 ? <AbsentCell reason="this holding's statement reports no cost — a depository holds the shares, it did not buy them" />
                                                 : h.live ? fmtPct(h.returnPct, { sign: true })
-                                                : <Auditable formula={returnFormula(h.marketValue, h.costBasis, h.returnPct, money, { realised: h.realizedPnL, costSold: h.costOfUnitsSold })}>{fmtPct(h.returnPct, { sign: true })}</Auditable>}
+                                                : <Auditable formula={returnFormula(h.marketValue, h.costBasis, h.returnPct, money, { realised: h.realizedPnL, costSold: h.costOfUnitsSold, income: h.dividendReceived })}>{fmtPct(h.returnPct, { sign: true })}</Auditable>}
                                             </td>
                                           </Tr>
                                         ))}

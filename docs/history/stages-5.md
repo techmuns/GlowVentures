@@ -4816,3 +4816,72 @@ cells just like the capital call cells."*
 - **The Portfolio Monitor's All Securities axis** gains Direct and PMS columns before `Direct + PMS`, which stays as their subtotal: Invested, P&L and Return are struck on it. Each account line under a company puts its value in its own route's column, and the "Counted once" line subtracts the overlap there too. The footer totals both columns.
 - One split, `measuredSplit` in `src/lib/heldThrough.ts`, over the deduped set the measured cell already sums. The route is the account's engagement through `holdingRoute`/`heldRouteOf`. An account that is neither own nor PMS gets an "Other accounts" column on both pages, drawn only when the book has one (none today).
 - `check:pages`: `COL_STOCK` moves two places for the new columns. New invariants check that Direct and PMS add to Direct + PMS on the footer and every row, and that each route's footer matches the book's own figure off account engagement. A new `sectorSplit` probe opens the largest sector and checks each issuer's routes add to its Total, and that the footer ties to its rows.
+
+### Stage 10fb — EVERY RETURN CARRIES REALISED GAINS AND DIVIDENDS
+
+*"Include realized gains/losses and dividends wherever we are showing returns …
+Do not calculate returns of investments and portfolio performance solely from
+current unrealized P&L."*
+
+- **One formula:** `fifoReturnPct` (`shared/fifo.mjs`) is now (unrealised +
+  realised + income) ÷ (cost held + cost sold). Income is `Position.dividendReceived`.
+  It is passed at every call: `build-book`, `classSwitch.mjs`, the quote, NAV and
+  roll-forward overlays, and the tranche footer.
+- **Per-holding cause:** a PMS holding's cash dividends were in no per-holding
+  or partial-set return (about 165 positions moved, for example +13.66% → +15.89%).
+  An IDCW reinvestment buys units that FIFO books at the reinvested amount, so
+  the dividend was in no gain at all. ICICI's redeemed arbitrage IDCW folio moves
+  1.65% → 2.02%.
+- **Fund records:** `build-book` now reads income off the fund's own unit
+  record: an IDCW/dividend `allotment` and a `distribution`, per security in the
+  account.
+- **Aggregates:** `fifoTotals` carries `income` and puts it in `gain` and `returnPct`.
+  A whole mandate's capital bridge already holds its income, so it is never added
+  twice. `fifoBasisNote` and the `returnFormula` popover name the dividends.
+- **Hand-rolled returns now on the same basis:**
+  - `bucketBy`
+  - Return & Drawdown: tile, contributors, sectors
+  - the consolidated sheet. Per-holding "Absolute return" is the holding's FIFO
+    `returnPct`, never unrealised ÷ cost. The portfolio row is FIFO over the
+    costed rows. "Gain incl. redeemed & income" ties to it.
+- **Morning CIO's return on capital:** the private-funds leg adds the
+  distributions already paid back (`privateTotalGain`).
+- **Unchanged:** money-weighted rates already close on account values that hold
+  the dividend cash and use external flows only.
+- **Checks:** the `check-pages` re-derivations add the dividends. The
+  `corporateActions` and `heldThrough` assertions follow the new rule; a recorded
+  ₹23 dividend on ₹1,000 is +2.3%.
+
+### Stage 10fd — RETURN ATTRIBUTION IS A SECTION OF THE RETURNS TAB, NOT A TAB
+
+*"We did not have to make a return attribution as a separate tab. It is supposed to be a section inside the returns page only … also give option to select sector as a segment."*
+
+- The Stage 10ez tab is gone. Morning CIO is back to six tabs. `SegmentReturns` is the Returns tab's third section, under the portfolio card and the benchmarks. Its axis selector (Category, Asset class, Basket, **Sector**, Listed / Private, All Securities), the top and drag pills and Expand all sit in the card's header.
+- The section is **since investment** and says so in its title, because it sits under a period selector it does not follow: no holding carries a dated value to open a window on.
+- `?tab=attribution` is aliased to `returns`, so a link from the one release still lands on the section.
+- Hovers now name dividends in the gain, after Stage 10fb added income to `fifoTotals`.
+- `check:pages`: every `cio-returns` route runs `CIO_SEGMENTS`, and a new invariant puts the section under the benchmarks (geometry). The tab-list check is back to six. `cio-returns-sector` and `cio-returns-security` replace the `cio-attribution*` routes. `cio-attribution-legacy` asserts the old address lands on Returns.
+
+### Stage 10fe — SECTOR COMPOSITION AGAINST AN INDEX
+
+*"they want there to be an option of versus index sector allocation … they should be able to select the index in comparison to which they want to compare their portfolio sector allocation."*
+
+- A **Vs index** control on the Sector Composition panel and `/sectors` (`?vs=`): Off, then the NAV chart's seven `BENCHMARKS` in their order. Off is the default and param-free, so both addresses open as before.
+- **The weights are the index's own factsheet.** `npm run build-index-sectors` fetches each Nifty factsheet from niftyindices.com, checks the sheet names the index, reads the "Sector Representation" table by its header, and refuses a table that does not sum to 100 ±0.1. Output: `src/data/indexSectors.json` and `docs/INDEX-SECTORS.md`, 30 Sep 2026 for all five. Re-run it monthly.
+- **One map places both sides.** `src/lib/indexSectors.ts` resolves NSE's sector names through `resolveSector`, the map statements already use. "Diversified" maps to no single GICS sector, so it is the index's own Unclassified (0.02% of the Nifty 500).
+- **Sensex and BSE 500 are offered and absent.** BSE's public API lists their constituents' sectors but no weights. Tables published elsewhere weight by full market cap. Their pills are muted, and when picked the left card shows the reason.
+- With an index picked, the table gains the index's weight and **Over / under** columns, in percentage points. The family's weight is the existing Weight column. Unclassified takes no difference.
+- A sector the index holds and the set does not is a "₹0 none held" row: a computed zero.
+- Two bars per sector, family and index, replace the donut, in the NAV chart's book and index colours. The factsheet date shows under the title.
+- `check:pages`: new `cio-sectors-vs` (Consolidated vs Nifty 500) and `cio-sectors-vs-direct` (Direct Equity vs Nifty 50) routes. The index column is re-derived from the JSON. The `cio-sectors` route asserts the control opens Off. `test:family` gains `index sectors`.
+
+### Stage 10ff — ONE DRILL-DOWN PAGE PER PMS STRATEGY AND CLUBBED FUND, EVERY MEMBER ON IT
+
+*"VEC main heading needs to have hyperlink that will open a single drill down page for all the transactions and different family entities as well, we do not need to make separate drill down page for separate entities … Remove the hyperlink from the Ajay and Ankita Jaisinghani account number … Follow this across all the PMS and AIFs funds."*
+
+- **Monitor.** A strategy run for several members (V.E.C, Goldstandard, SVAN, Green Lantern) now links from its NAME to `/mandate/<first account id>`; the per-account lines under it are plain text. A fund clubbed across unit classes (Sanshi A2/E) links from its name to the new `/fund/:fund`; its class lines are plain text. Single-class AIFs keep their `/stock/` page, which already lists every holder.
+- **`/mandate/:accountId`** serves the WHOLE strategy when the account is one of several with current holdings (same provider and `mandateLabel`), at any of their addresses: tiles over all accounts (FIFO pooled, never an average), a "Who holds it" table (one line per account: as-of, holdings, invested, value, share, P&L, realised, return; total = column sums), every holding with a Held-by column (one company's lines kept together), then each account's capital card and dealing card, titled with the member. A lone account keeps the old page; a member scope that leaves one account shows that account's page.
+- **`/fund/:fund`** is the same page for a clubbed fund (case-blind name match), without dealing cards.
+- `useHoldingsSources` reads each account's document totals so the strategy's Statement total hover names every account's printed total.
+- The capital card's long "Why:" line is now the hover on "no appreciation or return is struck" (this also fixes main's `mandate-sector` prose finding).
+- **Checks:** the two Monitor link invariants now require the name link on every row and no link on any account line. The `mandate-fifo` date, Invested and FIFO checks are struck over the strategy (`strategyIdsOf`). New routes `mandate-strategy` and `fund-clubbed` assert one line per holding account, holdings that add to the headline, and no per-account page link. A Monitor invariant checks the clubbed fund's `/fund/` link.
