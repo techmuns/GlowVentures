@@ -18,7 +18,7 @@ const RA_SECTOR_COLS = ["sector", "pnl", "return", "contrib"] as const;
 const RA_ACCOUNT_COLS = ["account", "names", "cost", "pnl", "return", "best", "worst"] as const;
 const RA_CONTRIB_COLS = ["security", "pnl", "return", "contrib"] as const;
 const RA_DD_COLS = ["date", "index", "interval", "fromPeak"] as const;
-import { sum, isPriced, unpriced, isCompanyShare, bucketLabel, dedupedPositions, readerClassOf } from "@/lib/analytics";
+import { sum, isPriced, isCostedForFifo, isCompanyShare, bucketLabel, dedupedPositions, readerClassOf } from "@/lib/analytics";
 import { companySectorIndex } from "@/lib/lookthrough";
 import { useStockExposure } from "@/lib/useStockExposure";
 import { fifoTotals } from "@/lib/fifo";
@@ -114,12 +114,14 @@ export function ReturnAnalysis() {
     // this the distribution puts the same ₹1.46 Cr in the same band twice. The
     // PER-ACCOUNT table below, and the spread struck from it, read the full
     // position set instead: see the note above `pricedByAccount`.
-    const priced = consolidated.filter(isPriced);
+    const costed = consolidated.filter(isCostedForFifo);
+    const pooledFifo = fifoTotals(costed);
+    const priced = costed.filter(isPriced);
     // Named, not just dropped: a position whose statement reports no cost cannot
     // answer a question about return, and the page says how many that is.
-    const withoutCost = unpriced(consolidated);
-    const cost = sum(priced.map((x) => x.costBasis));
-    const pnl = sum(priced.map((x) => x.unrealizedPnL));
+    const withoutCost = consolidated.filter(p => !isCostedForFifo(p));
+    const cost = sum(costed.map((x) => x.costBasis));
+    const pnl = sum(costed.map((x) => x.unrealizedPnL));
     /**
      * FIFO, HOLDING BY HOLDING — this page decomposes the return BY NAME, so
      * every figure on it is struck from each holding's own FIFO fields: the
@@ -134,7 +136,7 @@ export function ReturnAnalysis() {
     const incomeOf = (x: { dividendReceived?: number | null }) => (typeof x.dividendReceived === "number" ? x.dividendReceived : 0);
     const realised = sum(priced.map(realisedOf));
     const income = sum(priced.map(incomeOf));
-    const deployed = cost + sum(priced.map(soldOf));
+    const deployed = cost + sum(costed.map(soldOf));
 
     // Distribution by VALUE, not by count: ten small losers and one large winner
     // is a different book from the reverse, and a count hides that.
@@ -165,7 +167,7 @@ export function ReturnAnalysis() {
       .map((e) => ({
         key: e.key, security: e.security, pnl: e.pnl, accounts: e.accounts.size,
         returnPct: e.cost + e.sold > 0 ? (e.pnl / (e.cost + e.sold)) * 100 : 0,
-        contribPct: deployed > 0 ? (e.pnl / deployed) * 100 : 0,
+        contribPct: pooledFifo.gain === null ? null : deployed > 0 ? (e.pnl / deployed) * 100 : 0,
       }))
       .sort((a, b) => b.pnl - a.pnl);
 
@@ -199,7 +201,7 @@ export function ReturnAnalysis() {
     // EVERY HOLDING THAT IS NOT A COMPANY SHARE IS BY CLASS — a fund wrapper,
     // a private instrument, and a cash row too, whose statement prints the
     // sector string "Cash" but which is not a company and has no sector.
-    for (const x of priced) {
+    for (const x of costed) {
       const byClass = !isCompanyShare(x);
       // The READER'S class: a liquid or arbitrage fund is Cash here as on every
       // other page, never the wrapper its statement typed it as.
@@ -233,15 +235,18 @@ export function ReturnAnalysis() {
       if (t) placedBy[t]++; else unplaced++;
     }
     const sectorSource = { companies: shareKeys.length, ...placedBy, unplaced };
+    const unverifiedSectors = new Set(costed.filter(p => p.hprUnavailableReason).map(p => !isCompanyShare(p)
+      ? readerClassOf(p) : (companySectors.get(p.securityKey)?.sector || "Unclassified")));
     const sectors = [...bySector.entries()]
       .map(([sector, e]) => ({
         sector, ...e,
+        pnl: unverifiedSectors.has(sector) ? null : e.pnl,
         companies: e.keys.size,
         label: e.isClass ? bucketLabel(sector) : sector,
-        returnPct: e.deployed > 0 ? (e.pnl / e.deployed) * 100 : null,
-        contribPct: deployed > 0 ? (e.pnl / deployed) * 100 : 0,
+        returnPct: !unverifiedSectors.has(sector) && e.deployed > 0 ? (e.pnl / e.deployed) * 100 : null,
+        contribPct: pooledFifo.gain === null ? null : deployed > 0 ? (e.pnl / deployed) * 100 : 0,
       }))
-      .sort((a, b) => b.pnl - a.pnl);
+      .sort((a, b) => (b.pnl ?? -Infinity) - (a.pnl ?? -Infinity));
 
     // PER ACCOUNT, so this reads the full position set, NOT the deduped one.
     // Deduping here emptied Bharat's 360 ONE account entirely — his only holding
@@ -261,7 +266,7 @@ export function ReturnAnalysis() {
     //
     // Contrast HDFC 16180583, which really is ₹0: both its schemes are redeemed
     // to nil units, its `noPositionsReason` is null, and its zero stays.
-    const pricedByAccount = portfolio.positions.filter(isPriced);
+    const pricedByAccount = portfolio.positions.filter(isCostedForFifo);
     const byAccount = portfolio.accounts.map((a) => {
       const rows = pricedByAccount.filter((x) => x.accountId === a.accountId);
       const held = portfolio.positions.filter((x) => x.accountId === a.accountId).length;
@@ -272,7 +277,7 @@ export function ReturnAnalysis() {
       // applies: FIFO through the one aggregator, struck on its capital since
       // inception where the statements state it.
       const acctFifo = fifoTotals(rows, { accounts: portfolio.accounts, universe: portfolio.positions });
-      const sorted = [...rows].sort((x, y) => y.returnPct - x.returnPct);
+      const sorted = rows.filter(isPriced).sort((x, y) => y.returnPct - x.returnPct);
       return {
         account: a, names: rows.length, held,
         // Null, not zero, when nothing on this account carries a cost to sum.
@@ -281,7 +286,7 @@ export function ReturnAnalysis() {
         returnPct: measured && c > 0 ? acctFifo.returnPct : null,
         // Why the row is empty: the book's own reason where it has one, else the
         // fact that the account's holdings report no cost.
-        absentReason: a.noPositionsReason
+        absentReason: acctFifo.hprUnavailableReason ?? a.noPositionsReason
           ?? (held === 0
             ? "no holding on this account in the book"
             : "no holding on this account reports a cost basis, so cost and gain are not measurable"),
@@ -298,8 +303,9 @@ export function ReturnAnalysis() {
     const winners = priced.filter((x) => x.returnPct > 0);
     return {
       priced, withoutCost, cost, pnl, dist, contrib, sectors, wrapperClasses, sectorSource, byAccount, winners: winners.length,
-      embeddedRet: deployed > 0 ? ((pnl + realised + income) / deployed) * 100 : null,
-      realised, income, deployed,
+      embeddedRet: pooledFifo.returnPct,
+      returnUnavailableReason: pooledFifo.hprUnavailableReason,
+      realised, income, deployed, gain: pooledFifo.gain,
       hitRate: priced.length ? (winners.length / priced.length) * 100 : null,
       // Only across accounts that HAVE a return — an account without one is
       // named, never folded in as zero.
@@ -342,7 +348,7 @@ export function ReturnAnalysis() {
   }) : [];
 
 
-  if (!m.priced.length) {
+  if (!m.priced.length && m.cost === 0) {
     return (
       <div>
         <PageHeader eyebrow="Analytics" title="Return &amp; Drawdown" />
@@ -377,9 +383,9 @@ export function ReturnAnalysis() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatTile label="Return · FIFO, by holding"
-          value={<span className={changeColor(m.embeddedRet ?? 0)}>{fmtPct(m.embeddedRet ?? 0, { sign: true })}</span>}
+          value={<span className={changeColor(m.embeddedRet ?? 0)}>{fmtPct(m.embeddedRet, { sign: true })}</span>}
           sub={<>{money(m.pnl, true)} unrealised + {money(m.realised, true)} realised + {money(m.income, true)} dividends on {money(m.deployed)} deployed</>}
-          title="Each holding's own FIFO figures, summed before they are divided: the unrealised gain on what is held plus the realised gain on units already sold plus the dividends each holding paid, over the cost of both. A whole mandate's fees and earlier sales belong to no single name and are not here — Morning CIO strikes a whole mandate on its capital."
+          title={m.returnUnavailableReason ?? "Each holding's own FIFO figures, summed before they are divided: the unrealised gain on what is held plus the realised gain on units already sold plus the dividends each holding paid, over the cost of both. A whole mandate's fees and earlier sales belong to no single name and are not here — Morning CIO strikes a whole mandate on its capital."}
           icon={<Percent className="h-4 w-4" />} />
 
         <StatTile label="Holdings showing a gain"
@@ -410,8 +416,8 @@ export function ReturnAnalysis() {
           sub={m.spread === null
             ? "needs two accounts with a cost basis"
             : `${acctEnd(m.spreadEnds![0].account)} to ${acctEnd(m.spreadEnds![1].account)}`}
-          hint={m.unrated.length ? `${m.unrated.length} ${m.unrated.length === 1 ? "account has" : "accounts have"} no cost basis — left out, not counted as zero` : undefined}
-          title={m.unrated.length ? `${m.unrated.length === 1 ? "Account" : "Accounts"} ${m.unrated.join(", ")} ${m.unrated.length === 1 ? "has" : "have"} no cost basis and ${m.unrated.length === 1 ? "is" : "are"} excluded rather than counted as zero.` : undefined}
+          hint={m.unrated.length ? `${m.unrated.length} ${m.unrated.length === 1 ? "account has" : "accounts have"} no verified return — left out, not counted as zero` : undefined}
+          title={m.unrated.length ? `${m.unrated.length === 1 ? "Account" : "Accounts"} ${m.unrated.join(", ")} ${m.unrated.length === 1 ? "has" : "have"} no verified return and ${m.unrated.length === 1 ? "is" : "are"} excluded rather than counted as zero.` : undefined}
           icon={<Scale className="h-4 w-4" />} />
 
         {dd ? (
@@ -502,7 +508,7 @@ export function ReturnAnalysis() {
                     <td className={`px-2 py-2 text-right mono ${changeColor(s.pnl)}`}>{money(s.pnl, true)}</td>
                     <td className="px-2 py-2 text-right mono">
                       {s.returnPct === null
-                        ? <span className="text-slate-500" title="no cost basis on these rows">{DASH}</span>
+                        ? <span className="text-slate-500" title={m.returnUnavailableReason ?? "no cost basis on these rows"}>{DASH}</span>
                         : <span className={changeColor(s.returnPct)}>{fmtPct(s.returnPct, { sign: true, decimals: 1 })}</span>}
                     </td>
                     <td className={`px-2 py-2 text-right mono ${changeColor(s.contribPct)}`}>{fmtPct(s.contribPct, { sign: true, decimals: 2 })}</td>
@@ -512,9 +518,9 @@ export function ReturnAnalysis() {
               <tfoot className="border-t-2 border-ink-600 font-semibold">
                 <TrFoot view={sectorView} className="px-2 py-2 text-slate-200" label={<>Total</>}
                   cells={{
-                    pnl: <td key="pnl" className={`px-2 py-2 text-right mono ${changeColor(m.pnl + m.realised + m.income)}`}>{money(m.pnl + m.realised + m.income, true)}</td>,
-                    return: <td key="return" className={`px-2 py-2 text-right mono ${changeColor(m.embeddedRet ?? 0)}`}>{fmtPct(m.embeddedRet ?? 0, { sign: true, decimals: 1 })}</td>,
-                    contrib: <td key="contrib" className={`px-2 py-2 text-right mono ${changeColor(m.embeddedRet ?? 0)}`}>{fmtPct(m.embeddedRet ?? 0, { sign: true, decimals: 2 })}</td>,
+                    pnl: <td key="pnl" className={`px-2 py-2 text-right mono ${changeColor(m.gain)}`}>{money(m.gain, true)}</td>,
+                    return: <td key="return" className={`px-2 py-2 text-right mono ${changeColor(m.embeddedRet ?? 0)}`}>{fmtPct(m.embeddedRet, { sign: true, decimals: 1 })}</td>,
+                    contrib: <td key="contrib" className={`px-2 py-2 text-right mono ${changeColor(m.embeddedRet ?? 0)}`}>{fmtPct(m.embeddedRet, { sign: true, decimals: 2 })}</td>,
                   }} />
               </tfoot>
             </table>
@@ -651,7 +657,7 @@ export function ReturnAnalysis() {
 }
 
 function ContribTable({ rows, money, storageKey }: {
-  rows: { key: string; security: string; pnl: number; returnPct: number; contribPct: number; accounts: number }[];
+  rows: { key: string; security: string; pnl: number; returnPct: number; contribPct: number | null; accounts: number }[];
   money: (n: number, sign?: boolean) => string;
   /** Contributors and detractors are two tables, so each keeps its own order. */
   storageKey: string;

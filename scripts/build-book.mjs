@@ -162,8 +162,7 @@ function loadArchive() {
   return fs.readdirSync(AUDIT_DIR).sort()
     .map((dir) => path.join(AUDIT_DIR, dir, "document.json"))
     .filter((f) => fs.existsSync(f))
-    .map((f) => JSON.parse(fs.readFileSync(f, "utf8")))
-    .filter((d) => d.status !== "failed");
+    .map((f) => JSON.parse(fs.readFileSync(f, "utf8")));
 }
 
 /** account key — provider + account number is the identity, as in the archive. */
@@ -2373,7 +2372,7 @@ function bridgeTieOf(b) {
 
 // ── Build ────────────────────────────────────────────────────────────────────
 
-function build(archived) {
+function build(archived, archiveCount = archived.length) {
   const notes = [];
   // AN EXPORT IS A WITNESS, NEVER A DOCUMENT OF THE BOOK. A spreadsheet that
   // sits beside its PDF (`askimpms_…_BankBook178CT.xlsx`, Marathon's `.csv`) is
@@ -4913,7 +4912,7 @@ function build(archived) {
   }
 
   const holdingCostRecovery = recoverHoldingCosts({ root: ROOT, accounts, positions,
-    unvalued: unvaluedHoldings, shareMovements, docs });
+    unvalued: unvaluedHoldings, shareMovements, docs, archiveCount });
   for (const p of positions) Object.assign(p, applyRecoveredCost(p, holdingCostRecovery.records));
   notes.push(`cost recovery: ${holdingCostRecovery.records.length} exact account/ISIN/quantity records from the saved workbooks; `
     + `${holdingCostRecovery.unresolved.length} recorded security balances still require acquisition or movement evidence. See docs/COST-RECOVERY.md.`);
@@ -5763,12 +5762,13 @@ function report(book) {
 
 // ── Main ─────────────────────────────────────────────────────────────────────
 
-const docs = loadArchive();
+const archive = loadArchive();
+const docs = archive.filter((d) => d.status !== "failed");
 if (!docs.length) {
   console.error("No documents in the audit archive. Run `npm run extract` first.");
   process.exit(1);
 }
-const book = build(docs);
+const book = build(docs, archive.length);
 fs.mkdirSync(path.dirname(OUT), { recursive: true });
 fs.writeFileSync(OUT, emit(book));
 fs.mkdirSync(path.dirname(REPORT), { recursive: true });

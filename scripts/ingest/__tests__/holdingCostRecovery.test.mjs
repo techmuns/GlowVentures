@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { replayReviewRows, replayReviewFundGroups } from '../../lib/recoverHoldingCosts.mjs';
+import { replayReviewRows, replayReviewFundGroups, recoveryReport } from '../../lib/recoverHoldingCosts.mjs';
 import { applyRecoveredCost } from '../../../shared/recoveredCosts.mjs';
 const row=(row,txn,date,qty,value,rate=null)=>({row,txn,date,qty,value,rate});
 const rows=[row(1,'Purchase','2020-01-01',10,-100),row(2,'Purchase','2021-01-01',10,-300),row(3,'Bonus / Split','2022-01-01',20,0),row(4,'Sale','2023-01-01',25,500)];
@@ -41,3 +41,5 @@ assert.equal(applied.returnPct,null);assert.equal(applied.realizedPnL,null);
 assert.ok(applied.hprUnavailableReason);
 // A 0.066-unit discrepancy is not a rounding licence.
 assert.ok(replayReviewFundGroups(twoFolios,{...args,quantity:20.066}).reason);
+
+assert.match(recoveryReport({records:[],unresolved:[],sourceAudit:{archived:3,documents:2}},[]),/3 archived documents/);

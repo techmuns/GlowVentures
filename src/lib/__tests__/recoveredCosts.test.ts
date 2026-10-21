@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { depositoryFundHoldings, unpricedStatementUnits, applyFundNavs } from "../fundNavs";
-import { fifoTotals, positionFifoReturn } from "../fifo";
-import { bucketBy } from "../analytics";
+import { fifoTotals, positionFifoReturn, realisedReason } from "../fifo";
+import { bucketBy, isCostedForFifo, measuredReturn, holdingReturn } from "../analytics";
 import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_RECOVERED_COSTS } from "../../data/glowData";
 import { shareCandidates, depositoryShareHoldings } from "../depositoryShares";
 import { quoteSymbolFor, type QuoteFeed } from "../quotes";
@@ -104,3 +104,13 @@ const silver=BOOK_RECOVERED_COSTS.find(r=>r.accountId.endsWith('12838316')&&r.is
 near(silver.costBasis,17222067.17);near(silver.realizedPnL,14667670.15);near(silver.costOfUnitsSold,14981798.27);
 assert.equal(silver.quantity,123000);
 assert.ok(!funds.some(p=>p.accountId===silver.accountId&&p.isin===silver.isin),'recovering cost must not bypass the valuation/unit-basis gate');
+
+const aggregateInputs=[liquid,savings].filter(isCostedForFifo);
+assert.equal(aggregateInputs.length,2,'unknown proceeds must not remove a costed holding from the FIFO pool');
+const pooled=fifoTotals(aggregateInputs);assert.equal(pooled.returnPct,null);
+assert.equal(realisedReason(savings),savings.hprUnavailableReason);
+const absent=measuredReturn({...savings,heldSince:null},'absolute','2026-10-21');
+assert.ok(!absent.shown && absent.reason===savings.hprUnavailableReason);
+const grouped=measuredReturn({returnPct:null,heldSince:null,assetClass:'Mutual Fund',fifo:pooled},'absolute','2026-10-21');
+assert.ok(!grouped.shown && grouped.reason===savings.hprUnavailableReason);
+assert.deepEqual(holdingReturn({...savings,heldSince:null},'absolute','2026-10-21'),{kind:'absent',reason:savings.hprUnavailableReason});

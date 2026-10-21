@@ -132,7 +132,7 @@ function registerEma(root) {
     date:serialToIso(at(r,'INVESTMENT DATE')),evidence:{path:REGISTER,sheet:sheet.name,rows:[row]}};
 }
 
-export function recoverHoldingCosts({root,accounts,positions,unvalued,shareMovements,docs}) {
+export function recoverHoldingCosts({root,accounts,positions,unvalued,shareMovements,docs,archiveCount=docs.length}) {
   const workbook=readSpreadsheet(fs.readFileSync(path.join(root,REVIEW_WORKBOOK)));
   const rows=readTransactions(workbook).rows;
   const ema=registerEma(root), accountById=new Map(accounts.map((a)=>[a.accountId,a]));
@@ -179,8 +179,7 @@ export function recoverHoldingCosts({root,accounts,positions,unvalued,shareMovem
         ? {salesAfter:sourceRows.filter((r)=>r.txn==='Sale'&&r.date>t.asOf).length} : {}),
       evidence:[{path:REVIEW_WORKBOOK,sheet:'Transactions since inception',rows:result.rows}],notes:result.notes});
   }
-  const archived=fs.readdirSync(path.join(root,'public/audit')).filter(d=>fs.existsSync(path.join(root,'public/audit',d,'document.json'))).length;
-  return {records,unresolved,sourceAudit:{archived,documents:docs.length}};
+  return {records,unresolved,sourceAudit:{archived:archiveCount,documents:docs.length}};
 }
 
 export function recoveryReport({ records, unresolved, sourceAudit }, accounts) {
