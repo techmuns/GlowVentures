@@ -4834,3 +4834,38 @@ current unrealized P&L."*
 - `?tab=attribution` is aliased to `returns`, so a link from the one release still lands on the section.
 - Hovers now name dividends in the gain, after Stage 10fb added income to `fifoTotals`.
 - `check:pages`: every `cio-returns` route runs `CIO_SEGMENTS`, and a new invariant puts the section under the benchmarks (geometry). The tab-list check is back to six. `cio-returns-sector` and `cio-returns-security` replace the `cio-attribution*` routes. `cio-attribution-legacy` asserts the old address lands on Returns.
+
+### Stage 10fe — SECTOR COMPOSITION AGAINST AN INDEX
+
+*"they want there to be an option of versus index sector allocation … they should be able to select the index in comparison to which they want to compare their portfolio sector allocation."*
+
+- A **Vs index** control on the Sector Composition panel and `/sectors` (`?vs=`): Off, then the NAV chart's seven `BENCHMARKS` in their order. Off is the default and param-free, so both addresses open as before.
+- **The weights are the index's own factsheet.** `npm run build-index-sectors` fetches each Nifty factsheet from niftyindices.com, checks the sheet names the index, reads the "Sector Representation" table by its header, and refuses a table that does not sum to 100 ±0.1. Output: `src/data/indexSectors.json` and `docs/INDEX-SECTORS.md`, 30 Sep 2026 for all five. Re-run it monthly.
+- **One map places both sides.** `src/lib/indexSectors.ts` resolves NSE's sector names through `resolveSector`, the map statements already use. "Diversified" maps to no single GICS sector, so it is the index's own Unclassified (0.02% of the Nifty 500).
+- **Sensex and BSE 500 are offered and absent.** BSE's public API lists their constituents' sectors but no weights. Tables published elsewhere weight by full market cap. Their pills are muted, and when picked the left card shows the reason.
+- With an index picked, the table gains the index's weight and **Over / under** columns, in percentage points. The family's weight is the existing Weight column. Unclassified takes no difference.
+- A sector the index holds and the set does not is a "₹0 none held" row: a computed zero.
+- Two bars per sector, family and index, replace the donut, in the NAV chart's book and index colours. The factsheet date shows under the title.
+- `check:pages`: new `cio-sectors-vs` (Consolidated vs Nifty 500) and `cio-sectors-vs-direct` (Direct Equity vs Nifty 50) routes. The index column is re-derived from the JSON. The `cio-sectors` route asserts the control opens Off. `test:family` gains `index sectors`.
+
+### Stage 10ff — ONE DRILL-DOWN PAGE PER PMS STRATEGY AND CLUBBED FUND, EVERY MEMBER ON IT
+
+*"VEC main heading needs to have hyperlink that will open a single drill down page for all the transactions and different family entities as well, we do not need to make separate drill down page for separate entities … Remove the hyperlink from the Ajay and Ankita Jaisinghani account number … Follow this across all the PMS and AIFs funds."*
+
+- **Monitor.** A strategy run for several members (V.E.C, Goldstandard, SVAN, Green Lantern) now links from its NAME to `/mandate/<first account id>`; the per-account lines under it are plain text. A fund clubbed across unit classes (Sanshi A2/E) links from its name to the new `/fund/:fund`; its class lines are plain text. Single-class AIFs keep their `/stock/` page, which already lists every holder.
+- **`/mandate/:accountId`** serves the WHOLE strategy when the account is one of several with current holdings (same provider and `mandateLabel`), at any of their addresses: tiles over all accounts (FIFO pooled, never an average), a "Who holds it" table (one line per account: as-of, holdings, invested, value, share, P&L, realised, return; total = column sums), every holding with a Held-by column (one company's lines kept together), then each account's capital card and dealing card, titled with the member. A lone account keeps the old page; a member scope that leaves one account shows that account's page.
+- **`/fund/:fund`** is the same page for a clubbed fund (case-blind name match), without dealing cards.
+- `useHoldingsSources` reads each account's document totals so the strategy's Statement total hover names every account's printed total.
+- The capital card's long "Why:" line is now the hover on "no appreciation or return is struck" (this also fixes main's `mandate-sector` prose finding).
+- **Checks:** the two Monitor link invariants now require the name link on every row and no link on any account line. The `mandate-fifo` date, Invested and FIFO checks are struck over the strategy (`strategyIdsOf`). New routes `mandate-strategy` and `fund-clubbed` assert one line per holding account, holdings that add to the headline, and no per-account page link. A Monitor invariant checks the clubbed fund's `/fund/` link.
+
+### Stage 10fk — PURCHASE PRICES: THE COST TWO AMCs PRINT, AND COST OVER UNITS
+
+*"a lot of holdings are missing purchase prices in the dashboard holdings … make sure that it is not the case that the statements and files have purchase prices and we are not showing them."*
+
+- **Audit (Monitor, Category axis, all rows):** 105 Avg-cost dashes. 15 are by design (8 section totals, 6 mandate roll-ups, Sanshi's clubbed classes), 60 are review private lines (an amount paid, no unit count), and 30 had no cost on any statement.
+- **The statements did print one, for 4 of the 30.** The HDFC (15644806, 15725046, 16002141) and Kotak (7125255) account statements print `Cost (INR)` in their Account Summary, and `readBlockLayout` read only the scheme blocks. `summaryCost` takes the summary rows on the block's own NAV and NAV date (Kotak splits a scheme into Lump sum and IDCW rows) and publishes the cost only where their units AND value tie to the block. Hope India Trust's Kotak liquid folio does not tie on 3 of 4 statements and keeps no cost.
+- **`npm run replay:folio-cost`** lands the reader on the archive without `GLOW_PDF_PASSWORDS` (these PDFs are encrypted, and `extract` carries them forward unread). It runs the real `extract()` over `pages.json` and only adds a cost where the archive held null. Its `--check` was a no-op against the old reader.
+- **Stage 10bm's open question, answered by the family:** where a statement prints a total cost and units but no per-unit cost, `Position.avgCost` is now cost ÷ units, marked `avgCostDerived` (27 positions: Sanshi, Helios, Active Momentum, Founders, Delphi, Amritkaal, Neo Infra, ICICI Pru, LKP, the HDFC/Kotak folios). A printed per-unit cost is never replaced. The stock page's per-account cell says "Invested ÷ units" in its hover.
+- **Still absent, and correctly by the statements:** ICICI NSDL's 9 shares (₹63.76 Cr) and the Motilal CDSL demat lines are depository statements, quantity and value only, and LKP's liquid BeES is on no ledger. **The family's consolidated review does carry their cost:** its `Transactions since inception` sheet has per-holder purchases (date, units, rate) that reach the statement's units exactly on 8 of the 9 ICICI shares (≈₹54.6 Cr of cost) and on most demat fund lines. Since Stage 10dh the review is a source for the private book only, so this stays a decision for the family.
+- `clubbedFigures` A-14's constructed case is built on the Cash section's uncosted lines, because the section now holds one costed line (HDFC Overnight).

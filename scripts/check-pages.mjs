@@ -7636,6 +7636,13 @@ const ROUTES = [
    * `/sectors` routes; this walk asserts the embed's own two facts.
    */
   ["cio-sectors", "/cio?tab=sectors"],
+  /**
+   * Stage 10fe — the same panel set against an index: Consolidated against the
+   * Nifty 500, and Direct Equity against the Nifty 50, which is the walk where
+   * the index holds sectors the set does not (so the computed-zero rows draw).
+   */
+  ["cio-sectors-vs", "/cio?tab=sectors&vs=nifty-500"],
+  ["cio-sectors-vs-direct", "/cio?tab=sectors&view=direct&vs=nifty-50"],
   ["cio-returns", "/cio?tab=returns"],
   ["cio-returns-custom", "/cio?tab=returns&rp=custom&rfrom=2026-06-30&rto=2026-07-31&rtype=absolute"],
   ["cio-returns-live", "/cio?tab=returns&rp=custom&rfrom=2026-04-01&rto=2026-08-31&rtype=absolute"],
@@ -8197,6 +8204,11 @@ const ROUTES = [
   // DSM-D8) — the case the "no capital gain statement covers this account"
   // reason was false on. Derived in `TXN_T_BOOK`, never typed; every line opened.
   ["mandate-trades-realised", () => (TXN_T_BOOK?.cgMandate ? `/mandate/${encodeURIComponent(TXN_T_BOOK.cgMandate.accountId)}` : "/mandate/none-resolved-from-the-book")],
+  // ONE STRATEGY RUN FOR SEVERAL MEMBERS, AND ONE FUND HELD UNDER SEVERAL
+  // CLASSES — each one page with every member on it. Addressed at the account
+  // the Monitor links (the first by id) and at the fund's own name.
+  ["mandate-strategy", () => (MULTI_STRATEGY ? strategyHrefOf(MULTI_STRATEGY) : "/mandate/none-resolved-from-the-book")],
+  ["fund-clubbed", () => (CLUBBED_FUND_BOOK ? `/fund/${encodeURIComponent(CLUBBED_FUND_BOOK.fund)}` : "/fund/none-resolved-from-the-book")],
   /**
    * ── THE DRILL-DOWNS EVERY MORNING CIO FIGURE NOW OPENS ────────────────────
    *
@@ -12641,6 +12653,88 @@ const PMS_STRATEGY_BOOK = (() => {
     return { groups: [...groups.values()] };
   } catch { return null; }
 })();
+/**
+ * THE ACCOUNTS ONE `/mandate/` PAGE STANDS FOR — every account of the strategy
+ * an account belongs to where it is run in several, else the one account. Any
+ * of them addresses the page, and the Monitor links the first by id.
+ */
+const strategyIdsOf = (id) => (PMS_STRATEGY_BOOK?.groups ?? []).find((g) => g.includes(id)) ?? [id];
+const strategyHrefOf = (ids) => `/mandate/${encodeURIComponent([...ids].sort()[0])}`;
+/** The strategy run in the MOST accounts — the widest page of one strategy the book offers. */
+const MULTI_STRATEGY = [...(PMS_STRATEGY_BOOK?.groups ?? [])].filter((g) => g.length > 1)
+  .sort((a, b) => b.length - a.length || a.join().localeCompare(b.join()))[0] ?? null;
+
+/**
+ * ── A FUND HELD UNDER SEVERAL UNIT CLASSES, AS ONE PAGE ─────────────────────
+ *
+ * The Monitor clubs a fund whose current units sit under more than one class
+ * (Sanshi's A2 and E) into one row, and that row's name opens `/fund/:fund`.
+ * Re-expressed off `glowData.ts`: a name ending in "Class X" splits into the
+ * fund and the class, and the fund with the most accounts holding a current
+ * line of it, over two or more classes, is the one walked.
+ */
+const CLUBBED_FUND_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS") ?? [];
+    const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+    const small = smallKeysOf(positions);
+    const isCurrent = (p) => !(FUND_VEHICLE_CLASSES.has(p.assetClass) && p.quantity === 0 && (p.currentPrice != null || p.marketValue === 0))
+      && !small.has(p.securityKey);
+    const byFund = new Map();
+    for (const p of positions) {
+      const m = /^(.*?[A-Za-z]{3}.*?)[\s,\-–—]+Class\s+([A-Za-z0-9]+)\s*$/.exec(String(p.security ?? ""));
+      if (!m) continue;
+      const e = byFund.get(m[1]) ?? byFund.set(m[1], { fund: m[1], classes: new Set(), current: new Set(), rows: [] }).get(m[1]);
+      e.classes.add(m[2].toUpperCase());
+      if (isCurrent(p)) { e.current.add(m[2].toUpperCase()); e.rows.push(p); }
+    }
+    const accNo = new Map(accounts.map((a) => [a.accountId, String(a.accountNo)]));
+    const best = [...byFund.values()]
+      .filter((e) => e.classes.size > 1 && e.current.size === e.classes.size)
+      .map((e) => ({ fund: e.fund, rows: e.rows.length, accountNos: [...new Set(e.rows.map((p) => accNo.get(p.accountId)))].sort() }))
+      .sort((a, b) => b.accountNos.length - a.accountNos.length || a.fund.localeCompare(b.fund))[0];
+    return best ?? null;
+  } catch { return null; }
+})();
+
+/**
+ * WHO HOLDS IT, READ OFF THE PAGE — the account column of each line of the
+ * Who-holds-it table, its holdings column, and the holdings table's own rows
+ * with the account each names. Struck on the text the reader sees.
+ */
+function holdersOnPage(t) {
+  const lines = t.split("\n");
+  const h = lines.findIndex((l) => /^ENTITY\tACCOUNT\tAS OF\tHOLDINGS\b/.test(l));
+  const f = lines.findIndex((l, i) => i > h && /^Total · \d+ accounts\b/.test(l));
+  if (h < 0 || f < 0) return null;
+  const holders = lines.slice(h + 1, f).filter((l) => l.split("\t").length >= 4)
+    .map((l) => { const c = l.split("\t"); return { accountNo: c[1].trim(), holdings: cr(c[3]) }; });
+  const hh = lines.findIndex((l) => /^SECURITY\tSECTOR\tQTY\b.*\tHELD BY$/.test(l));
+  const hf = lines.findIndex((l, i) => i > hh && /^Total(\t|\s*\(whole (mandate|fund)\))/.test(l));
+  if (hh < 0 || hf < 0) return null;
+  const rows = lines.slice(hh + 1, hf).filter(isDataRow).map((l) => /a\/c\s+(\S+)\s*$/.exec(l)?.[1] ?? null);
+  return { holders, rows };
+}
+const strategyPageChecks = (want, headline) => [
+  ["the page has one line per account that holds it, and no other", (t) => {
+    const w = want();
+    if (!w) return false;
+    const p = holdersOnPage(t);
+    return !!p && p.holders.map((x) => x.accountNo).sort().join() === [...w].sort().join();
+  }],
+  ["its lines' holdings add to the headline, and every holding names one of those accounts", (t) => {
+    const w = want(), p = holdersOnPage(t);
+    const n = cr(headline.exec(t)?.[1]);
+    if (!w || !p || !Number.isFinite(n)) return false;
+    return p.holders.reduce((s, x) => s + x.holdings, 0) === n && p.rows.length === n
+      && p.rows.every((a) => a !== null && w.includes(a));
+  }],
+  // *"There will be no need to keep separate drill down pages for separate
+  // entities"* — nothing on this page sends a reader to one account's page.
+  ["no line of it opens a page of one member's account", (t, ctx) =>
+    !(ctx?.hrefs ?? []).some((x) => /^\/mandate\//.test(x))],
+];
 
 /**
  * ── A MANDATE THAT HOLDS NOTHING TODAY, AND ONE NO STATEMENT VALUES ──────────
@@ -15885,10 +15979,13 @@ function mandateDateChecks() {
   return [["the page is dated by its own account's statement, never the book's newest", (t, ctx) => {
     const b = ctx?.stockM2?.mandateBasis;
     const id = decodeURIComponent(((ctx?.url ?? "").split("/mandate/")[1] ?? "").split(/[?#]/)[0]);
-    const a = M2_BOOK?.accountOf(id);
-    if (!a || !b) return false;
-    return b.asOf === a.asOf && !/accounts behind/i.test(b.header ?? "")
-      && (a.asOf === M2_BOOK.newest || !(b.header ?? "").includes(M2_BOOK.newest));
+    // A STRATEGY RUN IN SEVERAL ACCOUNTS IS ONE PAGE, dated by each of its
+    // accounts' own statements — every one of them, and nothing else.
+    const as = strategyIdsOf(id).map((x) => M2_BOOK?.accountOf(x));
+    if (!as.length || as.some((a) => !a) || !b) return false;
+    const dates = [...new Set(as.map((a) => a.asOf))].sort();
+    return b.asOf === dates.join(" ") && !/accounts behind/i.test(b.header ?? "")
+      && (dates.includes(M2_BOOK.newest) || !(b.header ?? "").includes(M2_BOOK.newest));
   }]];
 }
 
@@ -19982,6 +20079,109 @@ const CIO_SECTORS = [
     return L.cards.length === 2 && L.table && L.wedges > 0 && !L.hasPicker && L.leftLists === 0;
   }],
 ];
+
+/**
+ * ── SECTOR COMPOSITION VERSUS AN INDEX (Stage 10fe) ──────────────────────────
+ *
+ * Re-expressed off the committed data rather than the helper under test: the
+ * index column is re-derived here from `src/data/indexSectors.json` through
+ * `resolveSector` (the one map), and the control's order from the NAV chart's
+ * own `BENCHMARKS` declaration in `src/lib/benchmarks.ts`. Struck on handles —
+ * `data-sector-vs-pick`, the table's cells by column id, the bars' `data-vs-*`.
+ */
+const INDEX_SECTORS = (() => {
+  try { return JSON.parse(readFileSync(new URL("../src/data/indexSectors.json", import.meta.url), "utf8")).indices; } catch { return null; }
+})();
+const BENCH_KEYS = (() => {
+  try {
+    const src = readFileSync(new URL("../src/lib/benchmarks.ts", import.meta.url), "utf8");
+    return [...src.matchAll(/bench\(\{ key: "([a-z0-9-]+)"/g)].map((m) => m[1]);
+  } catch { return []; }
+})();
+/** An index's weight in each GICS sector, as fractions — the factsheet's rows through the map. */
+function indexGics(key) {
+  const ix = INDEX_SECTORS?.[key];
+  if (!ix) return null;
+  const m = new Map();
+  for (const s of ix.sectors) {
+    const g = resolveSector(s.label).sector;
+    m.set(g, (m.get(g) ?? 0) + s.weight / 100);
+  }
+  return m;
+}
+const near = (a, b) => a != null && b != null && Math.abs(a - b) < 1e-9;
+
+/** On the panel's own address the control is drawn and Off, and nothing else changed. */
+const CIO_SECTORS_VS_OFF = [
+  ["the Vs index control is drawn and opens Off — the table keeps its own columns and the donut its place", (t, ctx) => {
+    const V = ctx?.sectorVs;
+    if (V === undefined) return notChecked("the index probe did not run on this pass");
+    if (!V) return false;
+    return V.picks.filter((p) => p.active).map((p) => p.key).join() === "off"
+      && V.rows.length > 0 && V.rows.every((r) => !r.hasIndexCell && !r.indexOnly)
+      && V.donut && V.chart === null;
+  }],
+];
+
+function cioSectorsVs(key, set) {
+  const want = () => indexGics(key);
+  return [
+    ["the index data derived — the factsheet file is committed and the NAV chart declares its indices", () =>
+      INDEX_SECTORS != null && BENCH_KEYS.length >= 2 && want() != null],
+    ["the control offers Off and then the NAV chart's indices in the NAV chart's order, with the one in the address picked", (t, ctx) => {
+      const V = ctx?.sectorVs;
+      if (V === undefined) return notChecked("the index probe did not run on this pass");
+      if (!V) return false;
+      return V.picks.map((p) => p.key).join() === ["off", ...BENCH_KEYS].join()
+        && V.picks.filter((p) => p.active).map((p) => p.key).join() === key;
+    }],
+    ["an index with no factsheet read is offered and marked absent, with its reason on the hover — every index read is not", (t, ctx) => {
+      const V = ctx?.sectorVs;
+      if (V === undefined) return notChecked("the index probe did not run on this pass");
+      if (!V || !INDEX_SECTORS) return false;
+      return V.picks.filter((p) => p.key !== "off").every((p) =>
+        INDEX_SECTORS[p.key] ? !p.absent : p.absent && (p.title ?? "").length > 40);
+    }],
+    [`the ${set} set is the one weighed`, (t, ctx) => {
+      const L = ctx?.sectorLayout;
+      if (L === undefined) return notChecked("the sector probe did not run on this pass");
+      return L?.views.find((v) => v.active)?.key === set;
+    }],
+    ["each row's index weight is the factsheet's sectors that the map places there, and a sector it lists none of is a computed nil", (t, ctx) => {
+      const V = ctx?.sectorVs, w = want();
+      if (V === undefined) return notChecked("the index probe did not run on this pass");
+      if (!V || !w || !V.rows.length) return false;
+      return V.rows.every((r) => r.hasIndexCell && near(r.index, w.get(r.key) ?? 0));
+    }],
+    ["every sector the index holds is a row — one the set holds none of is drawn at a computed zero, never left out", (t, ctx) => {
+      const V = ctx?.sectorVs, w = want();
+      if (V === undefined) return notChecked("the index probe did not run on this pass");
+      if (!V || !w) return false;
+      const keys = new Set(V.rows.map((r) => r.key));
+      const sum = V.rows.reduce((a, r) => a + (r.index ?? 0), 0);
+      const total = [...w.values()].reduce((a, x) => a + x, 0);
+      return [...w.keys()].every((k) => keys.has(k)) && near(sum, total)
+        && V.rows.filter((r) => r.indexOnly).every((r) => r.weight === 0 && (r.index ?? 0) > 0 && /none held/.test(r.valueText));
+    }],
+    ["over / under is the set's weight minus the index's, and the unplaced row takes none", (t, ctx) => {
+      const V = ctx?.sectorVs;
+      if (V === undefined) return notChecked("the index probe did not run on this pass");
+      if (!V || !V.rows.length) return false;
+      return V.rows.every((r) => r.key === "Unclassified"
+        ? r.active === null && r.activeText === "—" && !!r.activeTitle
+        : near(r.active, r.weight - r.index) && / pp$/.test(r.activeText));
+    }],
+    ["the bars stand in the donut's place, one pair per table row, on the table's own weights and the factsheet's date", (t, ctx) => {
+      const V = ctx?.sectorVs;
+      if (V === undefined) return notChecked("the index probe did not run on this pass");
+      if (!V?.chart || V.donut) return false;
+      const byKey = new Map(V.rows.map((r) => [r.key, r]));
+      return V.chart.index === key && V.chart.asOf === INDEX_SECTORS?.[key]?.asOf
+        && V.chart.rows.length === V.rows.length
+        && V.chart.rows.every((c) => byKey.has(c.key) && near(c.book, byKey.get(c.key).weight) && near(c.index, byKey.get(c.key).index));
+    }],
+  ];
+}
 
 /**
  * ── ALL ALERTS: WHAT EACH SEEDED ALERT MUST SAY ──────────────────────────────
@@ -26111,7 +26311,9 @@ const INVARIANTS = {
   // surface more than equity, and state the listed/private split.
   cio: [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_MOVERS, ...CIO_TILE_PICKER, ...CIO_BOOK_RETURN],
   "cio-allocation": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_ALLOC.filter(([description]) => !CIO_OPTIONAL_CAPITAL_CHECKS.has(description)), ...CIO_BOOK_RETURN, ...SIDE_HOVER_CHECKS],
-  "cio-sectors": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_SECTORS],
+  "cio-sectors": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_SECTORS, ...CIO_SECTORS_VS_OFF],
+  "cio-sectors-vs": [...CIO_SHARED, ...CIO_TAB_CONTROL, CIO_SECTORS[0], ...cioSectorsVs("nifty-500", "consolidated")],
+  "cio-sectors-vs-direct": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...cioSectorsVs("nifty-50", "direct")],
   "cio-returns": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT, ...CIO_SEGMENTS],
   "cio-returns-custom": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT, ...CIO_SEGMENTS],
   "cio-returns-cagr": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT, ...CIO_SEGMENTS],
@@ -31078,23 +31280,36 @@ const INVARIANTS = {
     // ...and each of those rows is a way IN. A mandate a reader cannot open is
     // a section that hides 271 positions instead of filing them.
     /**
-     * ONE ROW PER STRATEGY (Stage 10dn): a strategy run in ONE account links
-     * from its name; one run in several opens onto a line per account, each a
-     * link (asserted with every row open, on `monitor-open-all`). So the closed
-     * page carries exactly one mandate link per single-account row, and a
-     * several-account row names every account it stands for and links to none.
+     * ONE ROW PER STRATEGY (Stage 10dn), AND ONE PAGE PER STRATEGY: every row's
+     * NAME opens the strategy's drill-down — a strategy run in several accounts
+     * at the first of them by id, which serves all of them — and the lines
+     * under it link nowhere (asserted with every row open, on
+     * `monitor-open-all`). So the closed page carries exactly one mandate link
+     * per row. *"VEC main heading needs to have hyperlink that will open a
+     * single drill down page … Remove the hyperlink from the Ajay and Ankita
+     * Jaisinghani account number."*
      */
     ["every mandate row links to its own drill-down", (t, ctx) => {
       const gate = needRows(ctx?.tableRows);
       if (gate) return gate;
       const rows = mandatesIn(ctx.mandateRows, MANDATE_BUCKET);
       if (!rows.length) return false;
-      const single = rows.filter((r) => r.mandateAccounts.length === 1);
       const multi = rows.filter((r) => r.mandateAccounts.length > 1);
       const links = new Set((ctx?.hrefs ?? []).filter((h) => /^\/mandate\/./.test(h)));
-      return single.every((r) => r.nameHref === `/mandate/${encodeURIComponent(r.mandateAccounts[0])}`)
-        && multi.every((r) => r.nameHref === null && r.mandateLines === r.mandateAccounts.length)
-        && links.size === single.length;
+      return rows.every((r) => r.nameHref === strategyHrefOf(r.mandateAccounts))
+        && multi.every((r) => r.mandateLines === r.mandateAccounts.length)
+        && links.size === rows.length;
+    }],
+    // …AND A FUND CLUBBED ACROSS ITS UNIT CLASSES OPENS ITS ONE PAGE, never a
+    // class's: the row's name is the link wherever the row is drawn.
+    ["a fund clubbed across its unit classes opens its own page from its name", (t, ctx) => {
+      if (!CLUBBED_FUND_BOOK) return { notChecked: "the book holds no fund under more than one unit class" };
+      const hrefs = ctx?.hrefs ?? [];
+      if (!hrefs.some((h) => /^\/fund\//.test(h)) && !t.toLowerCase().includes(CLUBBED_FUND_BOOK.fund.toLowerCase())) return { notChecked: "this view draws no clubbed fund row" };
+      // Case-blind, as the route resolves it: the row prints the fund's name
+      // through its label, which may set "CAT-III" as "Cat-III".
+      const want = `/fund/${CLUBBED_FUND_BOOK.fund}`.toLowerCase();
+      return hrefs.some((h) => { try { return decodeURIComponent(h).toLowerCase() === want; } catch { return false; } });
     }],
     /**
      * ── THE SAME STRATEGY IS ONE ROW, WHOEVER HOLDS IT ───────────────────────
@@ -32966,10 +33181,10 @@ const INVARIANTS = {
     /**
      * ONE ROW PER STRATEGY, ITS ACCOUNTS AND THEIR SHARES ONE CLICK IN (Stage
      * 10dn). A strategy run in several accounts opens onto exactly one line per
-     * account — each linking to that account's own page — and under each line
-     * the shares IN THAT ACCOUNT, as its own page lists them. A strategy run in
-     * one account opens straight onto its shares, and its name is the link.
-     * *"And also show the holdings in the dropdown as well."*
+     * account — none of them a link, because the strategy's one page is the
+     * row's name — and under each line the shares IN THAT ACCOUNT. A strategy
+     * run in one account opens straight onto its shares. *"And also show the
+     * holdings in the dropdown as well."*
      */
     ["every mandate opens onto its shares, through one line per account where it is run in several", (t, ctx) => {
       const tr = ctx?.treeState;
@@ -32981,11 +33196,12 @@ const INVARIANTS = {
         && m.shares.every((x) => m.accounts.includes(x.account) && /^\/stock\/./.test(x.href ?? ""));
       if (!tr.mandates.every(sharesOk)) return false;
       if (!single.every((m) => m.lines.length === 0 && m.shares.every((x) => x.under === null)
-        && m.nameHref === `/mandate/${encodeURIComponent(m.accounts[0])}`)) return false;
+        && m.nameHref === strategyHrefOf(m.accounts))) return false;
       if (!multi.length) return { notChecked: "no strategy in this book is run in more than one account" };
       return multi.every((m) => m.lines.length === m.accounts.length
+        && m.nameHref === strategyHrefOf(m.accounts)
         && m.lines.map((l) => l.account).sort().join(" ") === [...m.accounts].sort().join(" ")
-        && m.lines.every((l) => l.href === `/mandate/${encodeURIComponent(l.account)}`)
+        && m.lines.every((l) => l.href === null)
         && m.lines.reduce((n, l) => n + l.holdings, 0) === m.holdings
         // each share sits under the line of the account that holds it, and
         // each line carries exactly its own holdings
@@ -34478,7 +34694,7 @@ const INVARIANTS = {
       /What the family put in/i.test(t)
       && (/Invested on/i.test(t) || /does not date what was paid into account/i.test(t))],
     ["it names its manager, its account number and how the account is run",
-      (t) => /Run by\s+\S[^\n]*\bfor\b/i.test(t) && /·\s*account\s+\S+/i.test(t) && /manager's mandate/i.test(t)],
+      (t) => /Run by\s+\S[^\n]*\bfor\b/i.test(t) && /·\s*accounts?\s+\S+/i.test(t) && /manager's mandate/i.test(t)],
     /**
      * MORE THAN ONE HOLDING, AND THE COUNT AGREES WITH THE ROWS DRAWN. The KPI,
      * the headline and the table are three renderings of one number; a page
@@ -34525,10 +34741,13 @@ const INVARIANTS = {
      * this pass by leaving nothing to compare.
      */
     ["the holding count agrees with the mandate row on Portfolio Monitor", (t) => {
-      const acct = /·\s*account\s+(\S+)/.exec(t)?.[1];
+      // One account, or every account of a strategy run in several — whose
+      // page counts the holdings of all of them, as its Monitor lines add up.
+      const accts = (/·\s*accounts?\s+([^\n·]+)/.exec(t)?.[1] ?? "").split(",").map((x) => x.trim()).filter(Boolean);
       const headline = cr(/([\d,]+)\s+holdings the manager runs/i.exec(t)?.[1]);
-      const seen = acct ? MANDATE_ROWS.get(acct) : undefined;
-      return !!seen && Number.isFinite(headline) && seen.holdings === headline;
+      const seen = accts.map((a) => MANDATE_ROWS.get(a));
+      return seen.length > 0 && seen.every(Boolean) && Number.isFinite(headline)
+        && seen.reduce((n, x) => n + x.holdings, 0) === headline;
     }],
     // A drill-down whose Security column is a dead end sends the reader back to
     // the table they came from. Each constituent keeps its own page.
@@ -34611,7 +34830,17 @@ const INVARIANTS = {
      * rows, and required to add up to the tile.
      */
     ["the Invested tile names its basis, and adds it up from what was paid in", (t, ctx) => {
-      const w = FIFO_BOOK?.worst, m = w ? M2_BOOK?.mandateOf(w.accountId) : null, r = ctx?.stockM2?.mandateInvested;
+      // The page is the STRATEGY's where the account is one of several, so
+      // the tile is struck over all of them: each figure summed, a missing
+      // capital record leaving the whole without one.
+      const w = FIFO_BOOK?.worst, r = ctx?.stockM2?.mandateInvested;
+      const ms = w ? strategyIdsOf(w.accountId).map((id) => M2_BOOK?.mandateOf(id)) : [];
+      const m = ms.length && ms.every(Boolean) ? {
+        allCosted: ms.every((x) => x.allCosted),
+        contributed: ms.some((x) => x.contributed == null) ? null : ms.reduce((s, x) => s + x.contributed, 0),
+        withdrawn: ms.reduce((s, x) => s + (x.withdrawn ?? 0), 0),
+        cost: ms.reduce((s, x) => s + x.cost, 0),
+      } : null;
       if (!m) return false;
       if (!m.allCosted) return { notChecked: "a row of this mandate reports no cost, so no reconciliation is printed" };
       if (!r || m.contributed == null) return false;
@@ -34623,9 +34852,15 @@ const INVARIANTS = {
     ["the Return · FIFO tile is the mandate's own capital return", (t) => {
       const w = FIFO_BOOK?.worst;
       if (!w) return false;
+      // Over every account of the strategy at once where it is run in several:
+      // (Σ value + Σ withdrawn − Σ paid in) ÷ Σ paid in, never an average.
+      const rs = strategyIdsOf(w.accountId).map((id) => FIFO_BOOK.byAccountId.get(id));
+      if (rs.some((x) => !x)) return false;
+      const paid = rs.reduce((s, x) => s + x.contributed, 0);
+      const want = ((rs.reduce((s, x) => s + x.mv + x.withdrawn, 0) - paid) / paid) * 100;
       const m = /RETURN · FIFO\s+([+\u2212-]?\d[\d,]*(?:\.\d+)?%)/i.exec(t);
       const got = m ? pctIn(m[1]) : null;
-      return got !== null && Math.abs(got.v - w.capitalRet) <= got.tie;
+      return got !== null && Math.abs(got.v - want) <= got.tie;
     }],
     ["…and the survivors-only figure it replaced is materially different (load-bearing)", () => {
       const w = FIFO_BOOK?.worst;
@@ -34695,6 +34930,33 @@ const INVARIANTS = {
    */
   "mandate-trades-realised": [
     ...mgrTradeChecks(),
+  ],
+  /**
+   * ── ONE STRATEGY, ONE PAGE, WHOEVER HOLDS IT ─────────────────────────────
+   *
+   *   *"VEC main heading needs to have hyperlink that will open a single drill
+   *    down page for all the transactions and different family entities as
+   *    well … Inside the main VEC drill down page show the different entities
+   *    who hold them and at what value at what price."*
+   *
+   * The strategy run in the most accounts, at the address the Monitor links.
+   */
+  "mandate-strategy": [
+    ["the route resolves to a real mandate, not the not-found state",
+      (t) => !/Mandate not found/i.test(t) && !/This account is not a PMS mandate/i.test(t)],
+    ["the book runs a strategy in more than one account (load-bearing)", () => !!MULTI_STRATEGY],
+    ...strategyPageChecks(() => MULTI_STRATEGY?.map((id) => String(M2_BOOK?.accountOf(id)?.accountNo ?? "")) ?? null,
+      /([\d,]+)\s+holdings the manager runs/i),
+    ...mandateDateChecks(),
+    ["each account's own capital and its manager's dealing are on the page, named for whose they are", (t) => {
+      const owners = (MULTI_STRATEGY ?? []).map((id) => M2_BOOK?.accountOf(id)?.owner).filter(Boolean);
+      return owners.length > 1 && owners.every((o) => t.includes(`What the family put in · ${o}`) && t.includes(`What the manager traded · ${o}`));
+    }],
+  ],
+  "fund-clubbed": [
+    ["the book holds a fund under more than one unit class (load-bearing)", () => !!CLUBBED_FUND_BOOK],
+    ["the route resolves to the fund, not the not-found state", (t) => !/Fund not found/i.test(t)],
+    ...strategyPageChecks(() => CLUBBED_FUND_BOOK?.accountNos ?? null, /([\d,]+)\s+holdings of the fund/i),
   ],
   "mandate-funded": [
     ["the route resolves to a real mandate, not the not-found state",
@@ -42629,6 +42891,41 @@ for (const theme of THEMES) {
        * `data-sector-layout` rather than by their titles, because the right
        * card's title changes with the tab.
        */
+      /**
+       * ── SECTOR COMPOSITION AGAINST AN INDEX (Stage 10fe) ──────────────────
+       * The control's pills, each table row's own weight / index / over-under
+       * cells by column id (`<Tr>` draws cells in the reader's order), and the
+       * bars that stand in the donut's place. `null` on a page without the
+       * control. See `cioSectorsVs`.
+       */
+      const sectorVs = FAST ? null : await page.evaluate(() => {
+        const picker = document.querySelector("main [data-sector-vs-picker]");
+        if (!picker) return null;
+        const num = (el, k) => (el?.hasAttribute(k) && el.getAttribute(k) !== "" ? Number(el.getAttribute(k)) : null);
+        const chart = document.querySelector("main [data-sector-vs]");
+        return {
+          picks: [...picker.querySelectorAll("[data-sector-vs-pick]")].map((b) => ({
+            key: b.getAttribute("data-sector-vs-pick"), active: b.getAttribute("aria-selected") === "true",
+            absent: b.getAttribute("data-vs-absent") === "true", title: b.getAttribute("title") })),
+          chart: chart ? {
+            index: chart.getAttribute("data-vs-index"), asOf: chart.getAttribute("data-vs-asof"),
+            rows: [...chart.querySelectorAll("[data-vs-row]")].map((r) => ({
+              key: r.getAttribute("data-vs-row"), book: num(r, "data-vs-book"), index: num(r, "data-vs-weight") })),
+          } : null,
+          donut: !!document.querySelector("main [data-sector-left] .recharts-pie-sector"),
+          rows: [...document.querySelectorAll("main [data-sector-row]")].map((r) => {
+            const ix = r.querySelector('[data-cell="index"]'), ac = r.querySelector('[data-cell="active"]');
+            return {
+              key: r.getAttribute("data-sector-row"), indexOnly: r.hasAttribute("data-sector-index-only"),
+              weight: num(r.querySelector('[data-cell="weight"]'), "data-weight"),
+              valueText: (r.querySelector('[data-cell="value"]')?.innerText ?? "").replace(/\s+/g, " ").trim(),
+              hasIndexCell: !!ix, index: num(ix, "data-index-weight"),
+              active: num(ac, "data-active"), activeText: (ac?.innerText ?? "").trim(),
+              activeTitle: ac?.querySelector("[title]")?.getAttribute("title") ?? null,
+            };
+          }),
+        };
+      });
       const sectorLayout = FAST ? null : await page.evaluate(() => {
         const root = document.querySelector("main [data-sector-layout]");
         if (!root) return null;
@@ -44209,7 +44506,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, sectorSplit, shortWindow, feSectors, accountRows, heldAccountRows, pmFunds, pmReviewRows, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, investorReturn, familyLayout, memberScopeDom, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, returnsDom, segDom, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, quotesServed: QUOTES_SERVED, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, pickTyped: PICK_TYPED[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, mandateSectors, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, monitorMember, monitorFoot, txnT, quoteHold, monitorC, headerTitles, mgrT, costGross, inside }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, sectorVs, sectorSplit, shortWindow, feSectors, accountRows, heldAccountRows, pmFunds, pmReviewRows, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, investorReturn, familyLayout, memberScopeDom, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, returnsDom, segDom, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, quotesServed: QUOTES_SERVED, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, pickTyped: PICK_TYPED[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, mandateSectors, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, monitorMember, monitorFoot, txnT, quoteHold, monitorC, headerTitles, mgrT, costGross, inside }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);
