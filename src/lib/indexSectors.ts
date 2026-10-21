@@ -22,12 +22,13 @@
 // GICS sector ("Diversified", NSE's conglomerates) is the index's own
 // Unclassified, at its weight, and named.
 //
-// THE BSE INDICES CARRY NO WEIGHTS, AND SAY SO. BSE Index Services publishes
-// which sector each Sensex and BSE 500 constituent is in, but no sector weight a
-// run can read; the tables that circulate elsewhere weight by full market
+// THE BSE INDICES CARRY NO WEIGHTS. BSE Index Services publishes which sector
+// each Sensex and BSE 500 constituent is in, but no sector weight a run can
+// read; the tables that circulate elsewhere weight by full market
 // capitalisation, which is not how either index is weighted. So those two are
-// offered and absent, with that reason, rather than filled from a figure that is
-// not the index's own.
+// never filled from a figure that is not the index's own: `indexSectors()`
+// answers them with the reason, and Sector Composition does not offer them
+// (Stage 10fo).
 import data from "@/data/indexSectors.json";
 import { resolveSector, UNCLASSIFIED } from "@/lib/sectors";
 import { BENCHMARKS, type Benchmark, type BenchmarkKey } from "@/lib/benchmarks";
