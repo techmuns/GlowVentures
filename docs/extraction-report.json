@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-21T02:27:34.050Z",
+  "generatedAt": "2026-10-21T03:37:10.670Z",
   "summary": {
     "documents": 424,
     "parsed": 420,
@@ -18,7 +18,7 @@
     "datedMaterial": 3,
     "datedExplained": 169,
     "datedRounding": 329,
-    "crossReportDeltas": 28,
+    "crossReportDeltas": 32,
     "suspectedDuplicates": 0,
     "quantityOnlyMatches": 3,
     "confirmedSeparateByFamily": 4,
@@ -226425,6 +226425,46 @@
       "asOf": "2026-10-07",
       "field": "flows.expenses",
       "a": {
+        "reportType": "investor-report",
+        "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-10-07-investor-report",
+        "value": 269390.05
+      },
+      "b": {
+        "reportType": "performance-summary",
+        "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-10-07-performance-summary",
+        "value": 314709.7
+      },
+      "delta": -45319.65,
+      "window": "2026-04-01..2026-10-07",
+      "severity": "material",
+      "authoritative": "performance-summary"
+    },
+    {
+      "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+      "accountNo": "3517383",
+      "asOf": "2026-10-07",
+      "field": "flows.expenses",
+      "a": {
+        "reportType": "investor-report",
+        "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-10-07-investor-report",
+        "value": 269390.05
+      },
+      "b": {
+        "reportType": "profit-and-loss",
+        "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-10-07-profit-and-loss",
+        "value": 292335.75
+      },
+      "delta": -22945.7,
+      "window": "2026-04-01..2026-10-07",
+      "severity": "material",
+      "authoritative": "performance-summary"
+    },
+    {
+      "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+      "accountNo": "3517383",
+      "asOf": "2026-10-07",
+      "field": "flows.expenses",
+      "a": {
         "reportType": "performance-summary",
         "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-10-07-performance-summary",
         "value": 314709.7
@@ -226435,6 +226475,26 @@
         "value": 292335.75
       },
       "delta": 22373.95,
+      "window": "2026-04-01..2026-10-07",
+      "severity": "material",
+      "authoritative": "performance-summary"
+    },
+    {
+      "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+      "accountNo": "3517383",
+      "asOf": "2026-10-07",
+      "field": "flows.fees",
+      "a": {
+        "reportType": "investor-report",
+        "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-10-07-investor-report",
+        "value": 1678079.5
+      },
+      "b": {
+        "reportType": "performance-summary",
+        "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-10-07-performance-summary",
+        "value": 1392847.72
+      },
+      "delta": 285231.78,
       "window": "2026-04-01..2026-10-07",
       "severity": "material",
       "authoritative": "performance-summary"
@@ -226458,6 +226518,26 @@
       "window": "2026-04-01..2026-10-07",
       "severity": "material",
       "authoritative": "performance-summary"
+    },
+    {
+      "provider": "Carnelian Asset Management and Advisors Pvt Ltd",
+      "accountNo": "3517383",
+      "asOf": "2026-10-07",
+      "field": "flows.corpus",
+      "a": {
+        "reportType": "investor-report",
+        "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-10-07-investor-report",
+        "value": 385455077.32
+      },
+      "b": {
+        "reportType": "profit-and-loss",
+        "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-10-07-profit-and-loss",
+        "value": 385169845.54
+      },
+      "delta": 285231.78,
+      "window": "2026-04-01..2026-10-07",
+      "severity": "material",
+      "authoritative": null
     },
     {
       "provider": "Carnelian Asset Management and Advisors Pvt Ltd",

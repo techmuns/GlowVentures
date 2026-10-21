@@ -4728,7 +4728,69 @@ Follows Stage 10et. With `check:reads`' precedence filter removed, six more acco
 - **SVAN 8710067's appraisal prints a `Cash Rec/Payable` of −₹24.8 L**, which makes that key net negative (−₹22.6 L) for the first time. `negligibleFloor.test.ts` asserted no such key existed; it now checks that a net-negative key survives the floor on the live book. `clubbedFigures.test.ts`' re-expression now leaves the average cost absent over a non-positive unit count, as `costedFigures` does. `datedCapital.test.ts` and `carriedCost.test.ts` take Buoyant's close from the 30 Sep account statement, and keep the snap as a witness on its own date.
 - Book: consolidated ₹836.60 Cr → **₹836.57 Cr**, 444 → 448 positions. Left alone: Kotak 4295974's ₹619 MATERIAL break on a liquid-fund line (Hope India Trust, excluded from the book as a separate taxpayer), and 0.01-point weight deltas on Carnelian's report, whose printed weights total 99.93%.
 
-### Stage 10ev — A REDEEMED INVESTMENT'S HISTORY IS DATA: EVERY STATEMENT FEEDS THE BOOK
+### Stage 10ev — PRIVATE MARKET: STRATEGY AND DESCRIPTION, TYPED IN THE CELL
+
+*"give the option to edit and write information in the strategy and description
+cells just like the capital call cells."*
+
+- **Store:** `functions/api/investment-profiles.js` — the capital calls' store and
+  gate (`GLOW_STORE` KV, edge password, same-origin writes), one key per
+  investment and field (`investment-profile:<field>:<fund>`), keyed on the calls'
+  own `callKeyOf`. A save may name several investments: a legal-name or brand row
+  writes its text to every fund line under it. Up to 2,000 characters, line
+  breaks kept; a record too long for KV metadata is read from its value.
+- **Client:** `src/lib/enteredProfiles.ts` (same `StoreCause` / `CAUSE_WORD` /
+  `SWITCH_ON_STEPS` as the calls) and `components/EnteredProfiles.tsx`. Each cell
+  is a button: its text, "Add", or the store's cause in a word; it opens an
+  editor row under the row with both fields. A member row only reads; its folio
+  lines edit.
+- **Precedence:** typed text (`matchedOn: "entered"`) shows over a supplied
+  file's (`withEntered`); "Remove typed text" shows the file's again. Cells,
+  sort and search read the one resolution; the hover says which it is.
+- `enteredProfiles.test.ts` drives the Function on an in-memory KV and the
+  precedence. Checked in the browser with the store mocked: save, remove, the
+  four-line Waterwala row. `check:pages ONLY=private-market`: no new finding.
+
+### Stage 10ew — THE SEBI INVESTOR REPORT'S SINCE-INCEPTION TWRR AND ITS LOWER-CASE WINDOW
+
+*"we need to integrate these files into the dashboard data … Make sure no information is missed"* — the family, 21 Oct 2026, re-sending `Svan - Bharat.zip`, `Svan _ Ajay.zip`, the Z660 report and `Svan - Bharat.eml`.
+
+- **Nothing new by bytes.** The three files are already in `source/october-2026-c/`, and the email's one attachment is the same Z660 PDF. Its provenance (Nuvama FA, 8 Oct, forwarded by Bharat on 9 Oct) is recorded in `source/README.md`. All 15 documents behind them read `ok`.
+- **The since-inception TWRR reached the book nowhere.** `pmsInvestorReport.mjs` mapped figures by their position on the flattened line, and blank 3Y/5Y/10Y cells vanish there. So `Returns of Client Portfolio 10.72 3.31` filed 3.31 as a 3-year return, on all nine investor reports, for accounts under two years old. `build-book` carries no 3-year field, so the figure was dropped. Each figure is now placed under the heading whose right edge it shares. Missing geometry raises `return-columns-not-read` and places nothing. `ReturnSeries` and `build-book` now carry `y3`/`y5`/`y10`.
+- **`From 01/09/2026 to 30/09/2026` read as no window.** The period pattern required "To". Bharat's SVAN 8710090 September report and Carnelian's 7 Oct report print "to", so both bridges were undated and dropped. 8710090 now has its September bridge on `/performance`, and its printed 31 Aug opening (₹11.12 Cr) joins the NAV series. Carnelian's 7 Oct bridge is WITHHELD, ₹2,85,231.78 short of its closing, the gap Stage 10eu names.
+- **The Performance block is archived as a `performance` section**: the TWRR table plus the client's XIRR and the approach's max/min/median XIRR. The approach figures cover all its investors and become no fact of the book.
+- `pmsReaders.test.mjs` re-reads the Z660 PDF and checks the placement, the window and the four XIRR lines; moving 3.31 under 3 Years by geometry must read as 3 Years. Book totals unchanged (₹836.57 Cr). Page checks fail the same two invariants on `main` (DL-11; bridge sub-lines), so neither is new.
+
+### Stage 10ey — PRIVATE MARKET: DATE OF INVESTMENT
+
+*"date of investment is missing from the table in private markets page, add column to show that"*
+
+- **The review's "Date investment range" column reaches the book.** `reviewBook.mjs` writes it onto every review position as `Position.investedDates` (`from`, `to`, `text`). Each end is a day, or a month (`YYYY-MM`) where the review prints only "Feb 20 - Jul 23"; a month is never widened to a day. A cell the reader cannot read as a date carries `null`. 89 review positions are dated; book totals are unchanged.
+- **`BookFolio.invested`** (`investedSpanOf`) takes the review line's dates first, then the capital account's first and last dated call. An income-only view carries none: its units are the valued line's. `figuresOf` spans the earliest to the latest over the same folios `asOf` reads, and counts how many of them carry a date (`investedOf` of `investedAcross`).
+- **Private Market gains a "Date of investment" column** after the name (`data-col-cell="invested"`, `data-invested`). It shows one date, or a "first → last" range. A row where only some folios carry a date says "N of M folios". A row with no dated folio renders `—` with the reason. The column sorts by first date.
+- `privateBook.test.ts` checks the span on constructed folios and checks that every review line on the table is dated by the review.
+
+### Stage 10ez — MORNING CIO: RETURN ATTRIBUTION BY ANY SEGMENT
+
+*"Select any such segment and see how the subcategories are performing and contributing to the portfolio returns."*
+
+- **A new Morning CIO tab, Return Attribution, right after Returns** (`?tab=attribution`, axis in `?seg=`). Axes: Category, Asset class, Basket, Sector, Listed / Private, All Securities. Each segment shows holdings, value, weight, capital deployed, FIFO gain, return and **contribution in pp** (its gain over the whole book's capital deployed). A row opens into its securities. For a security, and for the PMS mandates category, it opens into the accounts that hold it.
+- **One model, `src/lib/segmentReturns.ts`**: the current deduped holdings and the same `fifoTotals` as the Gain / Loss tile. The Total row is that tile's gain and return, and the contributions add to it. Since investment, never a window: no holding carries a dated value. The Returns tab's windows stay whole-account, and that tab still shows the whole portfolio only (Stage 10dt).
+- **A PMS mandate split across segments** (Sector, All Securities) enters holding by holding. The rest of its capital gain (income less fees, sales before the CG window) is **one named line**, never spread. The same remainder line sits under an opened segment, so its children add up. Category and Listed / Private keep each mandate whole and draw none.
+- A holding with no cost, or held at cost, is in the value and in no gain. A segment with no struck holding shows `—` with its reason.
+- This is not the NAV bridge removed earlier: that probe still counts `[data-attrib-row]` on `cio`. The new handles are `data-seg-*`.
+- `segmentReturns.test.ts` (test:family) checks the tie on the committed book on every axis (₹112.51 Cr, 21.98% on the statement basis). `check:pages` adds `cio-attribution{,-sector,-security}` with `CIO_SEGMENTS`, and the tab-list check now expects seven panels.
+
+### Stage 10fa — DIRECT, PMS AND FUND EXPOSURE APART IN THE SECTOR AND SECURITY DRILL-DOWNS
+
+*"we need to show the clear distinction in holdings as well. Make direct, PMS and fund exposure clear in sector drill-downs."*
+
+- **Sector Composition's issuer drill-down** (Consolidated, a sector opened) printed one `Direct + PMS` figure per issuer. It now has Direct, PMS, Via funds · derived and Total exposure. A route that holds none of an issuer is an `AbsentCell` with its reason, never ₹0. A footer sums each column from its rows, so Total = Direct + PMS + Via funds.
+- **The Portfolio Monitor's All Securities axis** gains Direct and PMS columns before `Direct + PMS`, which stays as their subtotal: Invested, P&L and Return are struck on it. Each account line under a company puts its value in its own route's column, and the "Counted once" line subtracts the overlap there too. The footer totals both columns.
+- One split, `measuredSplit` in `src/lib/heldThrough.ts`, over the deduped set the measured cell already sums. The route is the account's engagement through `holdingRoute`/`heldRouteOf`. An account that is neither own nor PMS gets an "Other accounts" column on both pages, drawn only when the book has one (none today).
+- `check:pages`: `COL_STOCK` moves two places for the new columns. New invariants check that Direct and PMS add to Direct + PMS on the footer and every row, and that each route's footer matches the book's own figure off account engagement. A new `sectorSplit` probe opens the largest sector and checks each issuer's routes add to its Total, and that the footer ties to its rows.
+
+### Stage 10fb — A REDEEMED INVESTMENT'S HISTORY IS DATA: EVERY STATEMENT FEEDS THE BOOK
 
 *"statements … showing all the redeemed units of the investments and zero current held units … are also meant to be read and fed into the dashboard because they provide historical returns values and give transactions context"*
 

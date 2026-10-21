@@ -1523,6 +1523,11 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "PE Funds",
       "row": 10
     },
+    "investedDates": {
+      "from": "2021-04",
+      "to": "2021-04",
+      "text": "Apr 2021"
+    },
     "reviewNote": "Valued at ₹1,45,80,413 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 10, its closing of 30 Jun 2026. One folio under each CRN — two investments, as the family confirmed on 28 Sep 2026. A statement says otherwise: CRN37702's statement of 31 Jul 2026 values the same units at ₹1,46,68,362.66."
   },
   {
@@ -1562,6 +1567,11 @@ export const BOOK_POSITIONS: Position[] = [
       "sheet": "Alternate",
       "block": "PE Funds",
       "row": 10
+    },
+    "investedDates": {
+      "from": "2021-04",
+      "to": "2021-04",
+      "text": "Apr 2021"
     },
     "reviewNote": "Valued at ₹1,45,80,412.51 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 10, its closing of 30 Jun 2026. One folio under each CRN — two investments, as the family confirmed on 28 Sep 2026."
   },
@@ -1856,6 +1866,11 @@ export const BOOK_POSITIONS: Position[] = [
       "sheet": "Alternate",
       "block": "PE Funds",
       "row": 9
+    },
+    "investedDates": {
+      "from": "2024-10",
+      "to": "2025-09",
+      "text": "Oct 2024 – Sep 2025"
     },
     "reviewNote": "Valued at ₹1,88,42,208.74 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 9, its closing of 31 Mar 2026. Ankita's folio. A statement says otherwise: Ankita's Motilal Oswal demat records 252.5 units on 31 Jul 2026, against the 202.5 the fund's statement and the review carry; the fund's statement of 31 Mar 2026 prints ₹56,161 paid out (₹18,909 on 30 Sep 2025 and ₹37,252 on 31 Mar 2026) where the review carries ₹1,42,867."
   },
@@ -6884,6 +6899,11 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "PE Funds",
       "row": 8
     },
+    "investedDates": {
+      "from": "2024-09",
+      "to": "2026-03",
+      "text": "Sep 2024 – Mar 2026"
+    },
     "reviewNote": "Valued at ₹9,55,80,000 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 8, its closing of 31 Mar 2026. Each folio's own statement; the review's closings (₹1,180 a unit on 31 Mar 2026), and the units the fund's own statements print. A statement says otherwise: the review's own closing carries 54,000 units at ₹1,770 a unit; the fund's statement prints the 81,000 units held."
   },
   {
@@ -6925,6 +6945,11 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "PE Funds",
       "row": 8
     },
+    "investedDates": {
+      "from": "2024-09",
+      "to": "2026-03",
+      "text": "Sep 2024 – Mar 2026"
+    },
     "reviewNote": "Valued at ₹3,18,60,000 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 8, its closing of 31 Mar 2026. Each folio's own statement; the review's closings (₹1,180 a unit on 31 Mar 2026), and the units the fund's own statements print. A statement says otherwise: the review's own closing carries 18,000 units; the fund's statement prints the 27,000 units held."
   },
   {
@@ -6965,6 +6990,11 @@ export const BOOK_POSITIONS: Position[] = [
       "sheet": "Alternate",
       "block": "PE Funds",
       "row": 8
+    },
+    "investedDates": {
+      "from": "2024-09",
+      "to": "2026-03",
+      "text": "Sep 2024 – Mar 2026"
     },
     "reviewNote": "Valued at ₹3,18,60,000 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 8, its closing of 31 Mar 2026. Each folio's own statement; the review's closings (₹1,180 a unit on 31 Mar 2026), and the units the fund's own statements print. A statement says otherwise: the review's own closing carries 18,000 units; the fund's statement prints the 27,000 units held; the fund's statement dates the ₹50,00,000 call the review puts on 29 Nov 2024 on 14 Jul 2025."
   },
@@ -8314,6 +8344,11 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "PE Funds",
       "row": 12
     },
+    "investedDates": {
+      "from": "2025-11",
+      "to": "2025-11",
+      "text": "Nov 2025"
+    },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 12. The review's Transactions row: 636 preference shares at ₹78,668, and the ICICI Bank NSDL statement's 636 in Ajay's account."
   },
   {
@@ -8356,6 +8391,11 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "Private Investments",
       "row": 20
     },
+    "investedDates": {
+      "from": "2024-09-09",
+      "to": "2024-09-09",
+      "text": "9 Sep 2024"
+    },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 20 — Ajay Jaisinghani's ₹3,02,40,000 of the line. Two holders; the family's investment register records each one's payment."
   },
   {
@@ -8396,6 +8436,11 @@ export const BOOK_POSITIONS: Position[] = [
       "sheet": "Private Investments",
       "block": "Private Investments",
       "row": 60
+    },
+    "investedDates": {
+      "from": "2025-08-20",
+      "to": "2025-08-20",
+      "text": "20 Aug 2025"
     },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 60 — Ajay Jaisinghani's ₹51,08,000 of the line. The family's investment register records Ankita's ₹1,52,51,640 and Ajay's ₹51,08,000 into the pool account; the rest of the review's line names no holder."
   },
@@ -8439,6 +8484,11 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "Private Investments",
       "row": 65
     },
+    "investedDates": {
+      "from": "2025-08-20",
+      "to": "2025-08-20",
+      "text": "20 Aug 2025"
+    },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 65 — Ajay Jaisinghani's ₹1,00,000 of the line. Two holders; the family's investment register records ₹1 L each. A statement says otherwise: the ICICI Bank NSDL statement of 31 Mar 2026 values Ajay's units at ₹98,742."
   },
   {
@@ -8481,6 +8531,11 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "Private Investments",
       "row": 19
     },
+    "investedDates": {
+      "from": "2025-02-12",
+      "to": "2025-02-12",
+      "text": "12 Feb 2025"
+    },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 19. One holder on the review's own Transactions and on the register. A statement says otherwise: the ICICI Bank NSDL statement of 31 Mar 2026 values the 2,83,018 warrants at ₹70,754.50."
   },
   {
@@ -8521,6 +8576,11 @@ export const BOOK_POSITIONS: Position[] = [
       "sheet": "Private Investments",
       "block": "Private Investments",
       "row": 66
+    },
+    "investedDates": {
+      "from": "2025-08-20",
+      "to": "2025-08-20",
+      "text": "20 Aug 2025"
     },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 66. One holder on the review's own Transactions and on the register."
   },
@@ -8564,6 +8624,11 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "Private Investments",
       "row": 61
     },
+    "investedDates": {
+      "from": "2025-08-06",
+      "to": "2025-08-06",
+      "text": "6 Aug 2025"
+    },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 61. One holder on the review's own Transactions and on the register."
   },
   {
@@ -8604,6 +8669,11 @@ export const BOOK_POSITIONS: Position[] = [
       "sheet": "Private Investments",
       "block": "Private Investments",
       "row": 40
+    },
+    "investedDates": {
+      "from": "2024-08-30",
+      "to": "2024-08-30",
+      "text": "30 Aug 2024"
     },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 40. One holder on the review's own Transactions and on the register."
   },
@@ -8647,6 +8717,11 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "Private Investments",
       "row": 4
     },
+    "investedDates": {
+      "from": "2022-01",
+      "to": "2023-05",
+      "text": "Jan 2022 – May 2023"
+    },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 4 — Ajay Jaisinghani's ₹2,53,18,588 of the line. Three holders; the family's investment register records each one's payment."
   },
   {
@@ -8687,6 +8762,11 @@ export const BOOK_POSITIONS: Position[] = [
       "sheet": "Private Investments",
       "block": "Private Investments",
       "row": 17
+    },
+    "investedDates": {
+      "from": "2021-12-24",
+      "to": "2021-12-24",
+      "text": "24 Dec 2021"
     },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 17 — Ajay Jaisinghani's ₹1,49,99,980.38 of the line. Two holders; the family's investment register records each one's payment."
   },
@@ -8730,6 +8810,11 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "Private Investments",
       "row": 7
     },
+    "investedDates": {
+      "from": "2024-12-05",
+      "to": "2024-12-05",
+      "text": "5 Dec 2024"
+    },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 7 — Ajay Jaisinghani's ₹9,99,98,625 of the line. The family's investment register records Ajay's ₹9,99,98,625 and Bharat's ₹2,99,99,419; the review's line is ₹2,99,99,418.80 more, which no document names a holder for."
   },
   {
@@ -8770,6 +8855,11 @@ export const BOOK_POSITIONS: Position[] = [
       "sheet": "Private Investments",
       "block": "Private Investments",
       "row": 56
+    },
+    "investedDates": {
+      "from": "2024-08-20",
+      "to": "2024-08-20",
+      "text": "20 Aug 2024"
     },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 56. One holder on the review's own Transactions and on the register."
   },
@@ -8813,6 +8903,11 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "Private Investments",
       "row": 14
     },
+    "investedDates": {
+      "from": "2024-03-01",
+      "to": "2024-03-01",
+      "text": "1 Mar 2024"
+    },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 14 — Ajay Jaisinghani's ₹3,00,00,000 of the line. Two holders; the family's investment register records each one's payment."
   },
   {
@@ -8854,6 +8949,11 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "Private Investments",
       "row": 8
     },
+    "investedDates": {
+      "from": "2025-01-24",
+      "to": "2025-01-24",
+      "text": "24 Jan 2025"
+    },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 8. One holder on the review's own Transactions and on the register."
   },
   {
@@ -8894,6 +8994,11 @@ export const BOOK_POSITIONS: Position[] = [
       "sheet": "Equity",
       "block": "Direct Equity - Unlisted",
       "row": 69
+    },
+    "investedDates": {
+      "from": "2022-12",
+      "to": "2023-08",
+      "text": "Dec 2022 – Aug 2023"
     },
     "reviewNote": "Valued at ₹25,93,75,000 on the family's consolidated review (MOPWM, 30 Jun 2026), Direct Equity - Unlisted row 69. 1,25,000 shares on Ajay's ICICI Bank NSDL statement and 75,000 on Ankita's Motilal Oswal demat; the review's ₹12.085 Cr cost split by shares, which is this book's judgement — the review prints one cost for the 2,00,000. Now a listed company: the family confirmed NSE has listed; the review's value is kept and no exchange price is published to this book (confirmed 2026-10-13)."
   },
@@ -8937,6 +9042,11 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "Private Investments",
       "row": 18
     },
+    "investedDates": {
+      "from": "2025-02-12",
+      "to": "2025-02-12",
+      "text": "12 Feb 2025"
+    },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 18. The ICICI Bank NSDL statement holds the 17,000 shares in Ajay's account."
   },
   {
@@ -8978,6 +9088,11 @@ export const BOOK_POSITIONS: Position[] = [
       "sheet": "Private Investments",
       "block": "Private Investments",
       "row": 67
+    },
+    "investedDates": {
+      "from": "2025-02-01",
+      "to": "2025-02-01",
+      "text": "1 Feb 2025"
     },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 67. One holder on the review's own Transactions and on the register."
   },
@@ -9021,6 +9136,11 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "Private Investments",
       "row": 31
     },
+    "investedDates": {
+      "from": "2024-07-18",
+      "to": "2024-07-18",
+      "text": "18 Jul 2024"
+    },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 31. One holder on the review's own Transactions and on the register."
   },
   {
@@ -9062,6 +9182,11 @@ export const BOOK_POSITIONS: Position[] = [
       "sheet": "Private Investments",
       "block": "Private Investments",
       "row": 21
+    },
+    "investedDates": {
+      "from": "2024-06-19",
+      "to": "2024-06-19",
+      "text": "19 Jun 2024"
     },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 21. One holder on the review's own Transactions and on the register."
   },
@@ -9105,6 +9230,11 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "Private Investments",
       "row": 9
     },
+    "investedDates": {
+      "from": "2025-03-25",
+      "to": "2025-03-25",
+      "text": "25 Mar 2025"
+    },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 9. One holder on the review's own Transactions and on the register."
   },
   {
@@ -9146,6 +9276,11 @@ export const BOOK_POSITIONS: Position[] = [
       "sheet": "Private Investments",
       "block": "Private Investments",
       "row": 28
+    },
+    "investedDates": {
+      "from": "2024-07-12",
+      "to": "2024-07-12",
+      "text": "12 Jul 2024"
     },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 28. One holder on the review's own Transactions and on the register."
   },
@@ -9189,6 +9324,11 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "Private Investments",
       "row": 13
     },
+    "investedDates": {
+      "from": "2024-05-08",
+      "to": "2024-05-08",
+      "text": "8 May 2024"
+    },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 13. One holder on the review's own Transactions and on the register."
   },
   {
@@ -9229,6 +9369,11 @@ export const BOOK_POSITIONS: Position[] = [
       "sheet": "Private Investments",
       "block": "Private Investments",
       "row": 15
+    },
+    "investedDates": {
+      "from": "2024-12-24",
+      "to": "2024-12-24",
+      "text": "24 Dec 2024"
     },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 15. One holder on the review's own Transactions and on the register."
   },
@@ -9272,6 +9417,11 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "Private Investments",
       "row": 5
     },
+    "investedDates": {
+      "from": "2022-06",
+      "to": "2023-02",
+      "text": "Jun 2022 – Feb 2023"
+    },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 5 — Ajay Jaisinghani's ₹1,00,00,000 of the line. Two holders; the family's investment register records each one's payment."
   },
   {
@@ -9312,6 +9462,11 @@ export const BOOK_POSITIONS: Position[] = [
       "sheet": "Private Investments",
       "block": "Private Investments",
       "row": 29
+    },
+    "investedDates": {
+      "from": "2024-09-09",
+      "to": "2024-09-09",
+      "text": "9 Sep 2024"
     },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 29. One holder on the review's own Transactions and on the register."
   },
@@ -9355,6 +9510,11 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "Private Investments",
       "row": 30
     },
+    "investedDates": {
+      "from": "2024-07-18",
+      "to": "2024-07-18",
+      "text": "18 Jul 2024"
+    },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 30. One holder on the review's own Transactions and on the register."
   },
   {
@@ -9394,6 +9554,11 @@ export const BOOK_POSITIONS: Position[] = [
       "sheet": "Equity",
       "block": "Direct Equity - Unlisted",
       "row": 70
+    },
+    "investedDates": {
+      "from": "2025-02",
+      "to": "2025-02",
+      "text": "Feb 2025"
     },
     "reviewNote": "Valued at ₹22,82,85,156.52 on the family's consolidated review (MOPWM, 30 Jun 2026), Direct Equity - Unlisted row 70, its closing of 31 Jul 2025. The review's own Transactions rows — 4,716 bought on 24 Feb 2025, closing at ₹22.83 Cr on 31 Jul 2025. A statement says otherwise: Ajay's Motilal Oswal demat 1201090012539150 shows the 4,716 preference shares converted, and 37,38,119 equity shares held on 31 Jul 2026."
   },
@@ -9436,6 +9601,11 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "Private Investments",
       "row": 49
     },
+    "investedDates": {
+      "from": "2023-02-14",
+      "to": "2023-02-14",
+      "text": "14 Feb 2023"
+    },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 49. One holder on the review's own Transactions and on the register."
   },
   {
@@ -9476,6 +9646,11 @@ export const BOOK_POSITIONS: Position[] = [
       "sheet": "Private Investments",
       "block": "Private Investments",
       "row": 60
+    },
+    "investedDates": {
+      "from": "2025-08-20",
+      "to": "2025-08-20",
+      "text": "20 Aug 2025"
     },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 60 — Ankita Jaisinghani's ₹1,52,51,640 of the line. The family's investment register records Ankita's ₹1,52,51,640 and Ajay's ₹51,08,000 into the pool account; the rest of the review's line names no holder."
   },
@@ -9519,6 +9694,11 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "Private Investments",
       "row": 65
     },
+    "investedDates": {
+      "from": "2025-08-20",
+      "to": "2025-08-20",
+      "text": "20 Aug 2025"
+    },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 65 — Ankita Jaisinghani's ₹1,00,000 of the line. Two holders; the family's investment register records ₹1 L each."
   },
   {
@@ -9561,6 +9741,11 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "Private Investments",
       "row": 4
     },
+    "investedDates": {
+      "from": "2022-01",
+      "to": "2023-05",
+      "text": "Jan 2022 – May 2023"
+    },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 4 — Ankita Jaisinghani's ₹1,60,93,284 of the line. Three holders; the family's investment register records each one's payment."
   },
   {
@@ -9602,6 +9787,11 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "Private Investments",
       "row": 35
     },
+    "investedDates": {
+      "from": "2020-11",
+      "to": "2022-11",
+      "text": "Nov 2020 – Nov 2022"
+    },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 35. One holder on the review's own Transactions and on the register."
   },
   {
@@ -9642,6 +9832,11 @@ export const BOOK_POSITIONS: Position[] = [
       "sheet": "Equity",
       "block": "Direct Equity - Unlisted",
       "row": 69
+    },
+    "investedDates": {
+      "from": "2022-12",
+      "to": "2023-08",
+      "text": "Dec 2022 – Aug 2023"
     },
     "reviewNote": "Valued at ₹15,56,25,000 on the family's consolidated review (MOPWM, 30 Jun 2026), Direct Equity - Unlisted row 69. 1,25,000 shares on Ajay's ICICI Bank NSDL statement and 75,000 on Ankita's Motilal Oswal demat; the review's ₹12.085 Cr cost split by shares, which is this book's judgement — the review prints one cost for the 2,00,000. Now a listed company: the family confirmed NSE has listed; the review's value is kept and no exchange price is published to this book (confirmed 2026-10-13)."
   },
@@ -9685,6 +9880,11 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "Private Investments",
       "row": 22
     },
+    "investedDates": {
+      "from": "2021-12",
+      "to": "2022-08",
+      "text": "Dec 2021 – Aug 2022"
+    },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 22. One holder on the review's own Transactions and on the register."
   },
   {
@@ -9726,6 +9926,11 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "Private Investments",
       "row": 39
     },
+    "investedDates": {
+      "from": "2023-03-21",
+      "to": "2023-03-21",
+      "text": "21 Mar 2023"
+    },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 39. One holder on the review's own Transactions and on the register."
   },
   {
@@ -9766,6 +9971,11 @@ export const BOOK_POSITIONS: Position[] = [
       "sheet": "Private Investments",
       "block": "Private Investments",
       "row": 57
+    },
+    "investedDates": {
+      "from": "2025-03-27",
+      "to": "2025-03-27",
+      "text": "27 Mar 2025"
     },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 57. One holder on the review's own Transactions and on the register."
   },
@@ -9809,6 +10019,11 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "Private Investments",
       "row": 27
     },
+    "investedDates": {
+      "from": "2021-09",
+      "to": "2023-03",
+      "text": "Sep 2021 – Mar 2023"
+    },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 27. One holder on the review's own Transactions and on the register."
   },
   {
@@ -9849,6 +10064,11 @@ export const BOOK_POSITIONS: Position[] = [
       "sheet": "Alternate",
       "block": "PE Funds",
       "row": 13
+    },
+    "investedDates": {
+      "from": "2025-08",
+      "to": "2025-10",
+      "text": "Aug 2025 – Oct 2025"
     },
     "reviewNote": "Valued at ₹32,85,877 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 13, its closing of 28 Feb 2026. Each trust's own folio, and Ankita's 2,500 units on the review's Transactions."
   },
@@ -9892,6 +10112,11 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "Private Investments",
       "row": 5
     },
+    "investedDates": {
+      "from": "2022-06",
+      "to": "2023-02",
+      "text": "Jun 2022 – Feb 2023"
+    },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 5 — Ankita Jaisinghani's ₹1,25,00,000 of the line. Two holders; the family's investment register records each one's payment."
   },
   {
@@ -9932,6 +10157,11 @@ export const BOOK_POSITIONS: Position[] = [
       "sheet": "Private Investments",
       "block": "Private Investments",
       "row": 37
+    },
+    "investedDates": {
+      "from": "2020-03-01",
+      "to": "2020-03-01",
+      "text": "1 Mar 2020"
     },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 37. One holder on the review's own Transactions and on the register."
   },
@@ -9974,6 +10204,11 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "Private Investments",
       "row": 42
     },
+    "investedDates": {
+      "from": "2023-06-08",
+      "to": "2023-06-08",
+      "text": "8 Jun 2023"
+    },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 42. One holder on the review's own Transactions and on the register."
   },
   {
@@ -10014,6 +10249,11 @@ export const BOOK_POSITIONS: Position[] = [
       "sheet": "Private Investments",
       "block": "Private Investments",
       "row": 50
+    },
+    "investedDates": {
+      "from": "2023-05-15",
+      "to": "2023-05-15",
+      "text": "15 May 2023"
     },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 50. One holder on the review's own Transactions and on the register."
   },
@@ -10056,6 +10296,11 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "Private Investments",
       "row": 51
     },
+    "investedDates": {
+      "from": "2023-12-12",
+      "to": "2023-12-12",
+      "text": "12 Dec 2023"
+    },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 51. One holder on the review's own Transactions and on the register."
   },
   {
@@ -10096,6 +10341,11 @@ export const BOOK_POSITIONS: Position[] = [
       "sheet": "Private Investments",
       "block": "Private Investments",
       "row": 26
+    },
+    "investedDates": {
+      "from": "2023-10",
+      "to": "2024-03",
+      "text": "Oct 2023 – Mar 2024"
     },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 26. One holder on the review's own Transactions and on the register."
   },
@@ -10139,6 +10389,11 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "Private Investments",
       "row": 20
     },
+    "investedDates": {
+      "from": "2024-09-09",
+      "to": "2024-09-09",
+      "text": "9 Sep 2024"
+    },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 20 — Bharat Jaisinghani's ₹1,00,80,000 of the line. Two holders; the family's investment register records each one's payment."
   },
   {
@@ -10181,6 +10436,11 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "Private Investments",
       "row": 4
     },
+    "investedDates": {
+      "from": "2022-01",
+      "to": "2023-05",
+      "text": "Jan 2022 – May 2023"
+    },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 4 — Bharat Jaisinghani's ₹61,95,952 of the line. Three holders; the family's investment register records each one's payment."
   },
   {
@@ -10221,6 +10481,11 @@ export const BOOK_POSITIONS: Position[] = [
       "sheet": "Private Investments",
       "block": "Private Investments",
       "row": 47
+    },
+    "investedDates": {
+      "from": "2021-06-28",
+      "to": "2021-06-28",
+      "text": "28 Jun 2021"
     },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 47. One holder on the review's own Transactions and on the register."
   },
@@ -10263,6 +10528,11 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "Private Investments",
       "row": 11
     },
+    "investedDates": {
+      "from": "2020-07",
+      "to": "2020-10",
+      "text": "Jul 2020 – Oct 2020"
+    },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 11. One holder on the review's own Transactions and on the register."
   },
   {
@@ -10303,6 +10573,11 @@ export const BOOK_POSITIONS: Position[] = [
       "sheet": "Private Investments",
       "block": "Private Investments",
       "row": 43
+    },
+    "investedDates": {
+      "from": "2020-04-01",
+      "to": "2020-04-01",
+      "text": "1 Apr 2020"
     },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 43. One holder on the review's own Transactions and on the register."
   },
@@ -10345,6 +10620,11 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "Private Investments",
       "row": 48
     },
+    "investedDates": {
+      "from": "2021-12-01",
+      "to": "2021-12-01",
+      "text": "1 Dec 2021"
+    },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 48. One holder on the review's own Transactions and on the register."
   },
   {
@@ -10385,6 +10665,11 @@ export const BOOK_POSITIONS: Position[] = [
       "sheet": "Private Investments",
       "block": "Private Investments",
       "row": 34
+    },
+    "investedDates": {
+      "from": "2020-12",
+      "to": "2021-12",
+      "text": "Dec 2020 – Dec 2021"
     },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 34. One holder on the review's own Transactions and on the register."
   },
@@ -10427,6 +10712,11 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "Private Investments",
       "row": 25
     },
+    "investedDates": {
+      "from": "2023-11-30",
+      "to": "2023-11-30",
+      "text": "30 Nov 2023"
+    },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 25. One holder on the review's own Transactions and on the register."
   },
   {
@@ -10467,6 +10757,11 @@ export const BOOK_POSITIONS: Position[] = [
       "sheet": "Private Investments",
       "block": "Private Investments",
       "row": 17
+    },
+    "investedDates": {
+      "from": "2021-12-24",
+      "to": "2021-12-24",
+      "text": "24 Dec 2021"
     },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 17 — Bharat Jaisinghani's ₹49,99,993.46 of the line. Two holders; the family's investment register records each one's payment."
   },
@@ -10510,6 +10805,11 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "Private Investments",
       "row": 7
     },
+    "investedDates": {
+      "from": "2024-12-05",
+      "to": "2024-12-05",
+      "text": "5 Dec 2024"
+    },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 7 — Bharat Jaisinghani's ₹2,99,99,419 of the line. The family's investment register records Ajay's ₹9,99,98,625 and Bharat's ₹2,99,99,419; the review's line is ₹2,99,99,418.80 more, which no document names a holder for."
   },
   {
@@ -10549,6 +10849,11 @@ export const BOOK_POSITIONS: Position[] = [
       "sheet": "Debt",
       "block": "Debt",
       "row": 11
+    },
+    "investedDates": {
+      "from": "2020-09",
+      "to": "2024-03",
+      "text": "Sep 2020 – Mar 2024"
     },
     "reviewNote": "Valued at ₹1,04,34,584.46 on the family's consolidated review (MOPWM, 30 Jun 2026), Debt row 11, its closing of 30 Jun 2026. Bharat's, on the review's own Transactions; the Private Investments tab's ₹20 L Credit Fair-K M Global line is the same loan, counted here once."
   },
@@ -10590,6 +10895,11 @@ export const BOOK_POSITIONS: Position[] = [
       "sheet": "Private Investments",
       "block": "Private Investments",
       "row": 53
+    },
+    "investedDates": {
+      "from": "2022-02-18",
+      "to": "2022-02-18",
+      "text": "18 Feb 2022"
     },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 53. One holder on the review's own Transactions and on the register."
   },
@@ -10633,6 +10943,11 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "Private Investments",
       "row": 14
     },
+    "investedDates": {
+      "from": "2024-03-01",
+      "to": "2024-03-01",
+      "text": "1 Mar 2024"
+    },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 14 — Bharat Jaisinghani's ₹1,50,00,000 of the line. Two holders; the family's investment register records each one's payment."
   },
   {
@@ -10673,6 +10988,11 @@ export const BOOK_POSITIONS: Position[] = [
       "sheet": "Private Investments",
       "block": "Private Investments",
       "row": 45
+    },
+    "investedDates": {
+      "from": "2024-01-04",
+      "to": "2024-01-04",
+      "text": "4 Jan 2024"
     },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 45. One holder on the review's own Transactions and on the register."
   },
@@ -10715,6 +11035,11 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "Private Investments",
       "row": 12
     },
+    "investedDates": {
+      "from": "2023-05",
+      "to": "2023-08",
+      "text": "May 2023 – Aug 2023"
+    },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 12. One holder on the review's own Transactions and on the register."
   },
   {
@@ -10755,6 +11080,11 @@ export const BOOK_POSITIONS: Position[] = [
       "sheet": "Private Investments",
       "block": "Private Investments",
       "row": 54
+    },
+    "investedDates": {
+      "from": "2020-08-18",
+      "to": "2020-08-18",
+      "text": "18 Aug 2020"
     },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 54. One holder on the review's own Transactions and on the register."
   },
@@ -10797,6 +11127,11 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "Private Investments",
       "row": 38
     },
+    "investedDates": {
+      "from": "2024-02-15",
+      "to": "2024-02-15",
+      "text": "15 Feb 2024"
+    },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 38. One holder on the review's own Transactions and on the register."
   },
   {
@@ -10837,6 +11172,11 @@ export const BOOK_POSITIONS: Position[] = [
       "sheet": "Private Investments",
       "block": "Private Investments",
       "row": 41
+    },
+    "investedDates": {
+      "from": "2023-02-06",
+      "to": "2023-02-06",
+      "text": "6 Feb 2023"
     },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 41. One holder on the review's own Transactions and on the register."
   },
@@ -10879,6 +11219,11 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "Private Investments",
       "row": 23
     },
+    "investedDates": {
+      "from": "2021-02-09",
+      "to": "2021-02-09",
+      "text": "9 Feb 2021"
+    },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 23. One holder on the review's own Transactions and on the register."
   },
   {
@@ -10919,6 +11264,11 @@ export const BOOK_POSITIONS: Position[] = [
       "sheet": "Private Investments",
       "block": "Private Investments",
       "row": 36
+    },
+    "investedDates": {
+      "from": "2023-08-22",
+      "to": "2023-08-22",
+      "text": "22 Aug 2023"
     },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 36. One holder on the review's own Transactions and on the register."
   },
@@ -10961,6 +11311,11 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "Private Investments",
       "row": 33
     },
+    "investedDates": {
+      "from": "2022-05-09",
+      "to": "2022-05-09",
+      "text": "9 May 2022"
+    },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 33. One holder on the review's own Transactions and on the register."
   },
   {
@@ -11001,6 +11356,11 @@ export const BOOK_POSITIONS: Position[] = [
       "sheet": "Private Investments",
       "block": "Private Investments",
       "row": 10
+    },
+    "investedDates": {
+      "from": "2021-05",
+      "to": "2023-01",
+      "text": "May 2021 – Jan 2023"
     },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 10. One holder on the review's own Transactions and on the register."
   },
@@ -11043,6 +11403,11 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "Private Investments",
       "row": 55
     },
+    "investedDates": {
+      "from": "2022-02-18",
+      "to": "2022-02-18",
+      "text": "18 Feb 2022"
+    },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 55. One holder on the review's own Transactions and on the register."
   },
   {
@@ -11083,6 +11448,11 @@ export const BOOK_POSITIONS: Position[] = [
       "sheet": "Private Investments",
       "block": "Private Investments",
       "row": 32
+    },
+    "investedDates": {
+      "from": "2023-06-08",
+      "to": "2023-06-08",
+      "text": "8 Jun 2023"
     },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 32. One holder on the review's own Transactions and on the register."
   },
@@ -11125,6 +11495,11 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "Private Investments",
       "row": 6
     },
+    "investedDates": {
+      "from": "2020-02",
+      "to": "2023-07",
+      "text": "Feb 2020 – Jul 2023"
+    },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 6. The family's investment register records both Waterwala payments under Bharat."
   },
   {
@@ -11165,6 +11540,11 @@ export const BOOK_POSITIONS: Position[] = [
       "sheet": "Private Investments",
       "block": "Private Investments",
       "row": 52
+    },
+    "investedDates": {
+      "from": "2022-02-10",
+      "to": "2022-02-10",
+      "text": "10 Feb 2022"
     },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 52. One holder on the review's own Transactions and on the register."
   },
@@ -11208,6 +11588,11 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "Private Investments",
       "row": 62
     },
+    "investedDates": {
+      "from": "2025-08-31",
+      "to": "2025-08-31",
+      "text": "31 Aug 2025"
+    },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 62 — Bharat Jaisinghani Family Trust 2's ₹1,35,00,875 of the line. 347 CCPS per family trust on both trusts' HDFC Bank NSDL statements, ₹1,35,00,875 each on the review's own member summary."
   },
   {
@@ -11250,6 +11635,11 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "Private Investments",
       "row": 62
     },
+    "investedDates": {
+      "from": "2025-08-31",
+      "to": "2025-08-31",
+      "text": "31 Aug 2025"
+    },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 62 — Bharat Jaisinghani Family Trust 3's ₹1,35,00,875 of the line. 347 CCPS per family trust on both trusts' HDFC Bank NSDL statements, ₹1,35,00,875 each on the review's own member summary."
   },
   {
@@ -11291,6 +11681,11 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "Private Investments",
       "row": 60
     },
+    "investedDates": {
+      "from": "2025-08-20",
+      "to": "2025-08-20",
+      "text": "20 Aug 2025"
+    },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 60 — Not attributed to a member's ₹1,70,48,360 of the line. The family's investment register records Ankita's ₹1,52,51,640 and Ajay's ₹51,08,000 into the pool account; the rest of the review's line names no holder."
   },
   {
@@ -11331,6 +11726,11 @@ export const BOOK_POSITIONS: Position[] = [
       "sheet": "Private Investments",
       "block": "Private Investments",
       "row": 44
+    },
+    "investedDates": {
+      "from": "2022-02-10",
+      "to": "2022-02-10",
+      "text": "10 Feb 2022"
     },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 44. No document in the drop names its holder."
   },
@@ -11374,6 +11774,11 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "Private Investments",
       "row": 7
     },
+    "investedDates": {
+      "from": "2024-12-05",
+      "to": "2024-12-05",
+      "text": "5 Dec 2024"
+    },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 7 — Not attributed to a member's ₹2,99,99,418.8 of the line. The family's investment register records Ajay's ₹9,99,98,625 and Bharat's ₹2,99,99,419; the review's line is ₹2,99,99,418.80 more, which no document names a holder for."
   },
   {
@@ -11415,6 +11820,11 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "Private Investments",
       "row": 63
     },
+    "investedDates": {
+      "from": "2025-07-16",
+      "to": "2025-07-16",
+      "text": "16 Jul 2025"
+    },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 63. No document in the drop names its holder."
   },
   {
@@ -11455,6 +11865,11 @@ export const BOOK_POSITIONS: Position[] = [
       "sheet": "Private Investments",
       "block": "Private Investments",
       "row": 64
+    },
+    "investedDates": {
+      "from": "2025-07-22",
+      "to": "2025-07-22",
+      "text": "22 Jul 2025"
     },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 64. No document in the drop names its holder."
   },
@@ -11642,6 +12057,11 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "PE Funds",
       "row": 11
     },
+    "investedDates": {
+      "from": "2025-05",
+      "to": "2026-02",
+      "text": "May 2025 – Feb 2026"
+    },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 11. Each folio's own statement. A statement says otherwise: SKY003's statement of 31 Jul 2026 prints ₹1,72,85,000 drawn — its 22 Apr 2026 call of ₹1,35,000 is on no row of the review."
   },
   {
@@ -11682,6 +12102,11 @@ export const BOOK_POSITIONS: Position[] = [
       "sheet": "Alternate",
       "block": "PE Funds",
       "row": 11
+    },
+    "investedDates": {
+      "from": "2025-05",
+      "to": "2026-02",
+      "text": "May 2025 – Feb 2026"
     },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 11. Each folio's own statement."
   },
@@ -11724,6 +12149,11 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "PE Funds",
       "row": 11
     },
+    "investedDates": {
+      "from": "2025-05",
+      "to": "2026-02",
+      "text": "May 2025 – Feb 2026"
+    },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 11. Each folio's own statement."
   },
   {
@@ -11764,6 +12194,11 @@ export const BOOK_POSITIONS: Position[] = [
       "sheet": "Alternate",
       "block": "PE Funds",
       "row": 11
+    },
+    "investedDates": {
+      "from": "2025-05",
+      "to": "2026-02",
+      "text": "May 2025 – Feb 2026"
     },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 11. Each folio's own statement."
   },
@@ -14402,6 +14837,11 @@ export const BOOK_POSITIONS: Position[] = [
       "block": "PE Funds",
       "row": 13
     },
+    "investedDates": {
+      "from": "2025-08",
+      "to": "2025-10",
+      "text": "Aug 2025 – Oct 2025"
+    },
     "reviewNote": "Valued at ₹96,80,754 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 13, its closing of 28 Feb 2026. Each trust's own folio, and Ankita's 2,500 units on the review's Transactions. A statement says otherwise: the trust's own statement of 31 Mar 2026 values its 7,500 units at ₹1,71,45,962.25 (₹2,286.13 a unit) against the review's 28 Feb mark."
   },
   {
@@ -14442,6 +14882,11 @@ export const BOOK_POSITIONS: Position[] = [
       "sheet": "Alternate",
       "block": "PE Funds",
       "row": 13
+    },
+    "investedDates": {
+      "from": "2025-08",
+      "to": "2025-10",
+      "text": "Aug 2025 – Oct 2025"
     },
     "reviewNote": "Valued at ₹96,80,754 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 13, its closing of 28 Feb 2026. Each trust's own folio, and Ankita's 2,500 units on the review's Transactions. A statement says otherwise: the trust's own statement of 31 Mar 2026 values its 7,500 units at ₹1,71,45,962.25 (₹2,286.13 a unit) against the review's 28 Feb mark."
   },
@@ -18081,26 +18526,26 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
   {
     "period": "2026-08-31",
     "date": "2026-08-31",
-    "nav": 2533660134.88,
-    "accountsOnDate": 2,
-    "accountsCarried": 19,
-    "flowIn": 0,
+    "nav": 2537800604.33,
+    "accountsOnDate": 3,
+    "accountsCarried": 18,
+    "flowIn": -14984.6,
     "unreportedFlowValue": 5781806.04,
     "linkOpen": 2517583940.08,
-    "linkClose": 2533660134.88,
+    "linkClose": 2537800604.33,
     "linkAccounts": 21,
     "panelComplete": true
   },
   {
     "period": "2026-09-29",
     "date": "2026-09-29",
-    "nav": 2498215139.98,
+    "nav": 2502355609.43,
     "accountsOnDate": 2,
     "accountsCarried": 19,
     "flowIn": 0,
     "unreportedFlowValue": 0,
-    "linkOpen": 2533660134.88,
-    "linkClose": 2498215139.98,
+    "linkOpen": 2537800604.33,
+    "linkClose": 2502355609.43,
     "linkAccounts": 21,
     "panelComplete": true
   },
@@ -18110,9 +18555,9 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "nav": 2481981458.11,
     "accountsOnDate": 9,
     "accountsCarried": 12,
-    "flowIn": -95989.4,
+    "flowIn": -81004.8,
     "unreportedFlowValue": 0,
-    "linkOpen": 2498215139.98,
+    "linkOpen": 2502355609.43,
     "linkClose": 2481981458.11,
     "linkAccounts": 21,
     "panelComplete": true
@@ -18521,6 +18966,11 @@ export const BOOK_ACCOUNT_NAV_HISTORY: Record<string, NavPoint[]> = {
       "nav": 107025588.35
     },
     {
+      "period": "2026-08-31",
+      "date": "2026-08-31",
+      "nav": 111166057.8
+    },
+    {
       "period": "2026-09-30",
       "date": "2026-09-30",
       "nav": 107132060.02
@@ -18746,7 +19196,7 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
     },
     {
       "accountId": "svan-investment-managers-llp-8710090",
-      "points": 5,
+      "points": 6,
       "first": "2026-04-30",
       "last": "2026-09-30",
       "latestValue": 107132060.02,
@@ -37957,6 +38407,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 17.45,
           "siAnnualised": true,
           "feeBasis": "after"
@@ -37971,6 +38424,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 21.99,
           "siAnnualised": true,
           "feeBasis": "after"
@@ -37985,6 +38441,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 18.55,
           "siAnnualised": true,
           "feeBasis": "after"
@@ -38007,6 +38466,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 17.92,
           "siAnnualised": true,
           "feeBasis": "after"
@@ -38021,6 +38483,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 21.47,
           "siAnnualised": true,
           "feeBasis": "after"
@@ -38035,6 +38500,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 18.33,
           "siAnnualised": true,
           "feeBasis": "after"
@@ -38057,6 +38525,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 9.76,
           "siAnnualised": true,
           "feeBasis": "after"
@@ -38077,6 +38548,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": 3.69,
           "m6": 4.7,
           "y1": 7.91,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 10.03,
           "siAnnualised": true,
           "feeBasis": null
@@ -38097,6 +38571,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": 5.87,
           "m6": null,
           "y1": 12.02,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 10.65,
           "siAnnualised": true,
           "feeBasis": "after"
@@ -38119,6 +38596,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 15.3,
           "siAnnualised": true,
           "feeBasis": "after"
@@ -38139,6 +38619,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": 3.64,
           "m6": 4.53,
           "y1": 7.41,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 9.65,
           "siAnnualised": true,
           "feeBasis": null
@@ -38159,6 +38642,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": 5.87,
           "m6": null,
           "y1": 11.56,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 10.28,
           "siAnnualised": true,
           "feeBasis": "after"
@@ -38181,6 +38667,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": -0.84,
           "m6": null,
           "y1": 5.77,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 14.15,
           "siAnnualised": true,
           "feeBasis": "after"
@@ -38195,6 +38684,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": -4.71,
           "m6": null,
           "y1": -3.81,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": -0.5,
           "siAnnualised": true,
           "feeBasis": "after"
@@ -38215,6 +38707,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": null,
           "siAnnualised": null,
           "feeBasis": null
@@ -38229,6 +38724,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": null,
           "siAnnualised": null,
           "feeBasis": null
@@ -38249,7 +38747,10 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": 5.77,
-          "si": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
+          "si": 14.15,
           "siAnnualised": null,
           "feeBasis": null
         },
@@ -38263,7 +38764,10 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": 17.16,
-          "si": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
+          "si": 11.44,
           "siAnnualised": null,
           "feeBasis": null
         },
@@ -38277,7 +38781,10 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": -3.81,
-          "si": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
+          "si": -0.5,
           "siAnnualised": null,
           "feeBasis": null
         }
@@ -38297,6 +38804,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": -0.84,
           "m6": 20.47,
           "y1": 5.77,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 14.15,
           "siAnnualised": true,
           "feeBasis": null
@@ -38311,6 +38821,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": -4.71,
           "m6": 4.64,
           "y1": -3.81,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": -0.5,
           "siAnnualised": true,
           "feeBasis": null
@@ -38333,6 +38846,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 2.44,
           "siAnnualised": false,
           "feeBasis": "after"
@@ -38347,6 +38863,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": -12.91,
           "siAnnualised": false,
           "feeBasis": "after"
@@ -38367,6 +38886,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": null,
           "siAnnualised": null,
           "feeBasis": null
@@ -38381,6 +38903,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": null,
           "siAnnualised": null,
           "feeBasis": null
@@ -38401,6 +38926,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": -1.68,
           "m6": 10.19,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 2.44,
           "siAnnualised": false,
           "feeBasis": null
@@ -38415,6 +38943,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": -7.4,
           "m6": -0.99,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": -12.91,
           "siAnnualised": false,
           "feeBasis": null
@@ -38437,6 +38968,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 3.2,
           "siAnnualised": false,
           "feeBasis": "after"
@@ -38451,6 +38985,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": -12.91,
           "siAnnualised": false,
           "feeBasis": "after"
@@ -38471,6 +39008,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": null,
           "siAnnualised": null,
           "feeBasis": null
@@ -38485,6 +39025,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": null,
           "siAnnualised": null,
           "feeBasis": null
@@ -38505,6 +39048,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": -1.02,
           "m6": 11.04,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 3.2,
           "siAnnualised": false,
           "feeBasis": null
@@ -38519,6 +39065,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": -7.4,
           "m6": -0.99,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": -12.91,
           "siAnnualised": false,
           "feeBasis": null
@@ -38541,6 +39090,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": -2.8,
           "m6": null,
           "y1": 9.37,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 10.09,
           "siAnnualised": true,
           "feeBasis": "after"
@@ -38555,6 +39107,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": -1.52,
           "m6": null,
           "y1": -1.93,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 5.12,
           "siAnnualised": true,
           "feeBasis": "after"
@@ -38575,6 +39130,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": null,
           "siAnnualised": null,
           "feeBasis": null
@@ -38589,6 +39147,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": null,
           "siAnnualised": null,
           "feeBasis": null
@@ -38609,6 +39170,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": -1.25,
           "m6": 11.89,
           "y1": 10.93,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 9.53,
           "siAnnualised": true,
           "feeBasis": null
@@ -38623,6 +39187,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": -4.96,
           "m6": 5.16,
           "y1": -3.66,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 3.38,
           "siAnnualised": true,
           "feeBasis": null
@@ -38645,6 +39212,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": -2.81,
           "m6": null,
           "y1": 9.43,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 9.32,
           "siAnnualised": true,
           "feeBasis": "after"
@@ -38659,6 +39229,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": -1.52,
           "m6": null,
           "y1": -1.93,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 3.81,
           "siAnnualised": true,
           "feeBasis": "after"
@@ -38679,7 +39252,10 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": 9.97,
-          "si": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
+          "si": 11.42,
           "siAnnualised": null,
           "feeBasis": null
         },
@@ -38693,7 +39269,10 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": 8.56,
-          "si": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
+          "si": 10.57,
           "siAnnualised": null,
           "feeBasis": null
         },
@@ -38707,7 +39286,10 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": -1.96,
-          "si": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
+          "si": 5.33,
           "siAnnualised": null,
           "feeBasis": null
         }
@@ -38727,6 +39309,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": null,
           "siAnnualised": null,
           "feeBasis": null
@@ -38741,6 +39326,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": null,
           "siAnnualised": null,
           "feeBasis": null
@@ -38761,6 +39349,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": -1.26,
           "m6": 11.9,
           "y1": 10.97,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 8.77,
           "siAnnualised": true,
           "feeBasis": null
@@ -38775,6 +39366,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": -4.96,
           "m6": 5.16,
           "y1": -3.66,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 2.12,
           "siAnnualised": true,
           "feeBasis": null
@@ -38797,6 +39391,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 10.67,
           "siAnnualised": true,
           "feeBasis": "after"
@@ -38811,6 +39408,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": -1.03,
           "siAnnualised": true,
           "feeBasis": "after"
@@ -38833,7 +39433,10 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": 7.27,
-          "si": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
+          "si": 5.86,
           "siAnnualised": null,
           "feeBasis": null
         },
@@ -38847,7 +39450,10 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": 6.57,
-          "si": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
+          "si": 3.15,
           "siAnnualised": null,
           "feeBasis": null
         },
@@ -38861,7 +39467,10 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": 2.98,
-          "si": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
+          "si": -0.12,
           "siAnnualised": null,
           "feeBasis": null
         }
@@ -38883,7 +39492,10 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": 10.72,
-          "si": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
+          "si": 3.31,
           "siAnnualised": null,
           "feeBasis": null
         },
@@ -38897,7 +39509,10 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": 8.27,
-          "si": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
+          "si": 2.24,
           "siAnnualised": null,
           "feeBasis": null
         },
@@ -38911,7 +39526,10 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": -2.33,
-          "si": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
+          "si": -0.77,
           "siAnnualised": null,
           "feeBasis": null
         }
@@ -38933,6 +39551,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 18.39,
           "siAnnualised": true,
           "feeBasis": "after"
@@ -38947,6 +39568,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": -2.26,
           "siAnnualised": true,
           "feeBasis": "after"
@@ -38961,6 +39585,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 4.36,
           "siAnnualised": true,
           "feeBasis": "after"
@@ -38981,6 +39608,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": null,
           "siAnnualised": null,
           "feeBasis": null
@@ -38995,6 +39625,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": null,
           "siAnnualised": null,
           "feeBasis": null
@@ -39015,6 +39648,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": -5.96,
           "m6": 33.39,
           "y1": 16.63,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 18.39,
           "siAnnualised": true,
           "feeBasis": null
@@ -39029,6 +39665,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": -5.31,
           "m6": 3.98,
           "y1": -4.42,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": -2.26,
           "siAnnualised": true,
           "feeBasis": null
@@ -39043,6 +39682,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": 0.09,
           "m6": 20.71,
           "y1": 5.7,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 4.36,
           "siAnnualised": true,
           "feeBasis": null
@@ -39065,6 +39707,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 15,
           "siAnnualised": true,
           "feeBasis": "after"
@@ -39079,6 +39724,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": -2.76,
           "siAnnualised": true,
           "feeBasis": "after"
@@ -39093,6 +39741,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 3.05,
           "siAnnualised": true,
           "feeBasis": "after"
@@ -39113,6 +39764,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": null,
           "siAnnualised": null,
           "feeBasis": null
@@ -39127,6 +39781,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": null,
           "m6": null,
           "y1": null,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": null,
           "siAnnualised": null,
           "feeBasis": null
@@ -39147,6 +39804,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": 11.68,
           "m6": 29.88,
           "y1": 21.51,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 19.82,
           "siAnnualised": true,
           "feeBasis": null
@@ -39161,6 +39821,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": 6.33,
           "m6": 1.98,
           "y1": 4.93,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 3.46,
           "siAnnualised": true,
           "feeBasis": null
@@ -39175,6 +39838,9 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "m3": 9.74,
           "m6": 15.25,
           "y1": 10.43,
+          "y3": null,
+          "y5": null,
+          "y10": null,
           "si": 6.52,
           "siAnnualised": true,
           "feeBasis": null
@@ -39616,6 +40282,37 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "residual": -0.01,
       "linesTotal": 385455077.33,
       "withheldReason": null
+    },
+    {
+      "reportType": "investor-report",
+      "source": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-10-07-investor-report",
+      "periodFrom": "2026-04-01",
+      "periodTo": "2026-10-07",
+      "basis": "financial-year-to-date",
+      "opening": 312627059.69,
+      "contribution": 0,
+      "withdrawal": 177851,
+      "netCapitalInOut": null,
+      "realized": -1763423.42,
+      "unrealized": 74695551.87,
+      "income": 1781297.6,
+      "fees": 1678079.5,
+      "expenses": 269390.05,
+      "closing": 385455077.32,
+      "profit": null,
+      "accruedIncome": null,
+      "changeInAccruals": null,
+      "otherExpenses": 45319.65,
+      "gainPriorToTakeover": null,
+      "unread": [
+        "accruedIncome",
+        "gainPriorToTakeover"
+      ],
+      "ties": false,
+      "openingNil": false,
+      "residual": 285231.78,
+      "linesTotal": 385169845.54,
+      "withheldReason": "Its lines do not add to its closing value. Not read from this report: gain prior to takeover and accrued income."
     },
     {
       "reportType": "performance-summary",
@@ -40445,6 +41142,39 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "openingNil": false,
       "residual": 0.01,
       "linesTotal": 164761718.63,
+      "withheldReason": null
+    }
+  ],
+  "svan-investment-managers-llp-8710090": [
+    {
+      "reportType": "investor-report",
+      "source": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "periodFrom": "2026-09-01",
+      "periodTo": "2026-09-30",
+      "basis": "window",
+      "opening": 111166057.8,
+      "contribution": 0,
+      "withdrawal": 6526,
+      "netCapitalInOut": null,
+      "realized": -122452.97,
+      "unrealized": -3926509.16,
+      "income": 90630,
+      "fees": 0,
+      "expenses": 1755,
+      "closing": 107240276.27,
+      "profit": null,
+      "accruedIncome": null,
+      "changeInAccruals": 44076.25,
+      "otherExpenses": 3244.65,
+      "gainPriorToTakeover": null,
+      "unread": [
+        "accruedIncome",
+        "gainPriorToTakeover"
+      ],
+      "ties": true,
+      "openingNil": false,
+      "residual": 0,
+      "linesTotal": 107240276.27,
       "withheldReason": null
     }
   ],

@@ -378,7 +378,7 @@ const REPORT = readFileSync("docs/REVIEW-RECONCILIATION.md", "utf8");
 //
 // The review files four Cash-tab lines under HOPE INDIA TRUST, and that
 // trust's own AMC folio statements are in the drop and report each of them.
-// Until Stage 10ev the book kept the trust out as a separate taxpayer; the
+// Until Stage 10fb the book kept the trust out as a separate taxpayer; the
 // family consolidated it on 21 Oct 2026 as its own entity, so each folio is
 // now the trust's account in the book. No ISIN tier can see the lines — two
 // of the four print no ISIN at all — and no name tier reaches the AMC's
@@ -627,7 +627,7 @@ const REPORT = readFileSync("docs/REVIEW-RECONCILIATION.md", "utf8");
   // also stop calling it "quantities only", and a check over that empty list
   // passes by asserting nothing — which is exactly what reintroducing the old
   // rule showed it doing.
-  // Since Stage 10ev every review holder has an account — the Hope India Trust,
+  // Since Stage 10fb every review holder has an account — the Hope India Trust,
   // the last one without, was consolidated — and the report says so in words
   // ("none" in the step, "no holder" in section D). Those words are the EMPTY
   // list, read as such and asserted below, never a holder called "none".

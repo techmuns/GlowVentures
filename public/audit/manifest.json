@@ -5543,6 +5543,7 @@
    "transactions",
    "capital",
    "allocation",
+   "performance",
    "pages"
   ],
   "status": "ok",
@@ -5574,6 +5575,12 @@
     "key": "allocation",
     "name": "allocation",
     "rows": 5,
+    "cols": 4
+   },
+   {
+    "key": "performance",
+    "name": "performance",
+    "rows": 11,
     "cols": 4
    },
    {
@@ -8651,6 +8658,7 @@
    "transactions",
    "capital",
    "allocation",
+   "performance",
    "pages"
   ],
   "status": "ok",
@@ -8682,6 +8690,12 @@
     "key": "allocation",
     "name": "allocation",
     "rows": 5,
+    "cols": 4
+   },
+   {
+    "key": "performance",
+    "name": "performance",
+    "rows": 8,
     "cols": 4
    },
    {
@@ -13017,6 +13031,7 @@
    "transactions",
    "capital",
    "allocation",
+   "performance",
    "pages"
   ],
   "status": "ok",
@@ -13048,6 +13063,12 @@
     "key": "allocation",
     "name": "allocation",
     "rows": 5,
+    "cols": 4
+   },
+   {
+    "key": "performance",
+    "name": "performance",
+    "rows": 11,
     "cols": 4
    },
    {
@@ -13419,6 +13440,7 @@
    "transactions",
    "capital",
    "allocation",
+   "performance",
    "pages"
   ],
   "status": "ok",
@@ -13450,6 +13472,12 @@
     "key": "allocation",
     "name": "allocation",
     "rows": 5,
+    "cols": 4
+   },
+   {
+    "key": "performance",
+    "name": "performance",
+    "rows": 11,
     "cols": 4
    },
    {
@@ -13773,6 +13801,7 @@
    "transactions",
    "capital",
    "allocation",
+   "performance",
    "pages"
   ],
   "status": "ok",
@@ -13804,6 +13833,12 @@
     "key": "allocation",
     "name": "allocation",
     "rows": 5,
+    "cols": 4
+   },
+   {
+    "key": "performance",
+    "name": "performance",
+    "rows": 11,
     "cols": 4
    },
    {
@@ -14625,6 +14660,7 @@
    "transactions",
    "capital",
    "allocation",
+   "performance",
    "pages"
   ],
   "status": "ok",
@@ -14659,6 +14695,12 @@
     "cols": 4
    },
    {
+    "key": "performance",
+    "name": "performance",
+    "rows": 11,
+    "cols": 4
+   },
+   {
     "key": "pages",
     "name": "Raw page text",
     "rows": 5,
@@ -14683,6 +14725,7 @@
    "transactions",
    "capital",
    "allocation",
+   "performance",
    "pages"
   ],
   "status": "ok",
@@ -14717,6 +14760,12 @@
     "cols": 4
    },
    {
+    "key": "performance",
+    "name": "performance",
+    "rows": 11,
+    "cols": 4
+   },
+   {
     "key": "pages",
     "name": "Raw page text",
     "rows": 6,
@@ -14741,6 +14790,7 @@
    "transactions",
    "capital",
    "allocation",
+   "performance",
    "pages"
   ],
   "status": "ok",
@@ -14775,6 +14825,12 @@
     "cols": 4
    },
    {
+    "key": "performance",
+    "name": "performance",
+    "rows": 11,
+    "cols": 4
+   },
+   {
     "key": "pages",
     "name": "Raw page text",
     "rows": 5,
@@ -14799,6 +14855,7 @@
    "transactions",
    "capital",
    "allocation",
+   "performance",
    "pages"
   ],
   "status": "ok",
@@ -14830,6 +14887,12 @@
     "key": "allocation",
     "name": "allocation",
     "rows": 5,
+    "cols": 4
+   },
+   {
+    "key": "performance",
+    "name": "performance",
+    "rows": 11,
     "cols": 4
    },
    {

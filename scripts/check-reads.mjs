@@ -145,7 +145,7 @@ for (const [k, ds] of [...held.entries()].sort()) {
 // *"a few statements were not being read because they were showing all the
 // redeemed units … they are also meant to be read and fed into the dashboard
 // because they provide historical returns values and give transactions
-// context"* — the family, 21 Oct 2026 (Stage 10ev). Motilal Oswal's Hedged
+// context"* — the family, 21 Oct 2026 (Stage 10fb). Motilal Oswal's Hedged
 // Equity statement printed ₹13 Cr in and ₹11.19 Cr out and its document carried
 // neither; it read "status ok" because a summary row of dashes is a fine
 // summary. A line that prints a date, a transaction word and a rupee amount is

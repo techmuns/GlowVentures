@@ -72,6 +72,32 @@ export function heldRouteOf(route: HoldingRoute): Exclude<HeldRoute, "fund"> {
 }
 
 /**
+ * ── ONE COMPANY'S MEASURED HALF, SPLIT BY WHO CHOSE THE SHARES ──────────────
+ *
+ *   *"we need to show the clear distinction in holdings as well. Make direct,
+ *    PMS and fund exposure clear in sector drill-downs."*
+ *
+ * Sector Composition's issuer drill-down and the Portfolio Monitor's stock axis
+ * printed one "Direct + PMS" figure per company, so a share the family bought
+ * and a share a manager chose read as one number. This is the split those
+ * columns print, struck over the rows the caller passes AS GIVEN — the caller
+ * passes the deduped set its own measured cell sums, so the parts add to it.
+ *
+ * A route no row takes is `null`, never ₹0: "no statement reports this company
+ * in an own account" is an absence the cell names, not a measured nil.
+ */
+export type MeasuredSplit = Record<Exclude<HeldRoute, "fund">, number | null>;
+
+export function measuredSplit(rows: readonly Position[], routeOf: (p: Position) => HoldingRoute): MeasuredSplit {
+  const out: MeasuredSplit = { direct: null, manager: null, other: null };
+  for (const p of rows) {
+    const k = heldRouteOf(routeOf(p));
+    out[k] = (out[k] ?? 0) + p.marketValue;
+  }
+  return out;
+}
+
+/**
  * ONE MEMBER'S SHARE OF ONE COMPANY, THROUGH ONE FUND.
  *
  * DERIVED, not a position: `value` is `fundValue × pctAum / 100` and nobody
