@@ -10,3 +10,9 @@
 ### Stage 10ft — NAME UNVERIFIED SALE PROCEEDS ON THE HOME GAIN CARD
 
 - Production verification of Stage 10fs found that the home Gain / loss card correctly withheld the unknown aggregate but called it missing cost. It now names unverified sale proceeds and carries the source-row reason into the existing calculation and hover. A separately measured private gain cannot replace an explicitly unverified book gain. No layout or controls change.
+
+### Stage 10fu — INVESTMENT DATES ON EVERY HOLDINGS TABLE
+
+- Holding tables now receive a visible Invested on column from the shared table system. Existing Portfolio Monitor, mandate and private-market date columns remain single columns. Saved arrangements from before the addition gain the date automatically, with sorting, visibility, movement and reset using the same layout.
+- Dates resolve from each row's actual positions, keyed by account and security, through the existing allotment, lot, trade, call and review sources. Whole mandates use their own inception record; incomplete groups and derived fund exposure cannot borrow a constituent's date. Member filters keep their own positions.
+- Regression checks anchor HDFC Balanced Advantage to the two source allotments (Ajay: 3 Aug 2022; Ankita: 5 Aug 2022), including entity and combined holdings views. CI also checks table alignment, route tabs, saved layouts, sorting, unchanged totals and mobile overflow.

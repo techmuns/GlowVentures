@@ -662,14 +662,15 @@ function ContribTable({ rows, money, storageKey }: {
   /** Contributors and detractors are two tables, so each keeps its own order. */
   storageKey: string;
 }) {
-  const { scope } = usePortfolio();
+  const { scope, portfolio } = usePortfolio();
+  const rowScope = (key: string) => ({ positions: portfolio?.positions.filter((p) => p.securityKey === key) ?? [] });
   const view = useTableView(storageKey, RA_CONTRIB_COLS, { reviewKind: "holding" });
   const shown = sortRows(rows, view.sort, withReviewAccessors<typeof rows[number]>({
     security: (r) => r.security,
     pnl: (r) => r.pnl,
     return: (r) => r.returnPct,
     contrib: (r) => r.contribPct,
-  }, (r) => ({ securityKey: r.key }), scope.owners !== null));
+  }, (r) => rowScope(r.key), scope.owners !== null));
   if (!rows.length) {
     return <p className="py-6 text-center text-[11.5px] text-slate-500">{DASH} no priced positions in the book</p>;
   }
@@ -686,7 +687,7 @@ function ContribTable({ rows, money, storageKey }: {
         </thead>
         <tbody>
           {shown.map((r) => (
-            <Tr view={view} reviewScope={{ securityKey: r.key }} key={r.key} className="border-t border-ink-700/60">
+            <Tr view={view} reviewScope={rowScope(r.key)} key={r.key} className="border-t border-ink-700/60">
               <td className="px-2 py-2" data-xa={`${storageKey}-row`} data-key={r.key} data-pnl={r.pnl} data-accounts={r.accounts}>
                 <a className="text-slate-200 hover:text-accent-400" href={stockHref(r.key)}>{r.security}</a>
                 {r.accounts > 1 && <span className="ml-1.5 text-[10.5px] text-slate-500"

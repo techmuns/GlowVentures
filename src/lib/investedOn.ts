@@ -47,6 +47,28 @@ export type InvestedOnSource = "allotments" | "lots" | "trades" | "calls" | "rev
  */
 export type InvestedOn = { first: string; last: string; payments: number | null; sources: InvestedOnSource[] };
 
+export type InvestmentDateScope = {
+  positions?: readonly Position[]; accountId?: string; accountIds?: readonly string[]; isMandate?: boolean;
+};
+
+/** The same row scope supplies both the displayed date and its sort value. */
+export function investmentDateOf(scope?: InvestmentDateScope): InvestedOn | null {
+  if (scope?.isMandate) {
+    return accountInvestedOn(scope.accountIds ?? (scope.accountId ? [scope.accountId] : []));
+  }
+  return investedOnOf(scope?.positions ?? []);
+}
+
+export function investmentDateMissingReason(scope?: InvestmentDateScope): string {
+  if (scope?.isMandate) return "The statements do not establish an inception date for every account in this row.";
+  const ps = scope?.positions ?? [];
+  if (!ps.length) return "No purchase record dates this row. A derived exposure is not a purchase by the family.";
+  const undated = ps.filter((p) => investedOnOf([p]) === null);
+  const reasons = [...new Set(undated.map(lineUndatedReason).filter(Boolean))];
+  return reasons.length ? reasons.join("; ")
+    : "The available records do not establish a purchase date for every holding in this row.";
+}
+
 const CALL_DATES = callDatesByHolding(BOOK_COMMITMENTS, BOOK_POSITIONS);
 
 /** One line's own dates, or null where nothing the book carries dates it. */

@@ -18,7 +18,8 @@
 //
 // and each refusal is made to refuse on the real book.
 import { BOOK_ACCOUNTS, BOOK_HOLDING_TRADES, BOOK_POSITIONS } from "@/data/glowData";
-import { accountInvestedOn, holdingTradesOf, investedOnOf, lineUndatedReason } from "@/lib/investedOn";
+import { accountInvestedOn, holdingTradesOf, investedOnOf, lineUndatedReason, investmentDateOf, investmentDateMissingReason } from "@/lib/investedOn";
+import { withReviewAccessors } from "@/lib/reviewColumns";
 import type { Position } from "@/lib/types";
 
 let fails = 0;
@@ -27,6 +28,23 @@ const ok = (name: string, pass: boolean, detail = "") => {
   else console.log(`ok   ${name}${detail ? ` — ${detail}` : ""}`);
 };
 const ACC = new Map(BOOK_ACCOUNTS.map((a) => [a.accountId, a]));
+
+{
+  const key = "hdfc-balanced-advantage-fund-regular-plan-growth";
+  const hdfc = BOOK_POSITIONS.filter((p) => p.securityKey === key);
+  const expected: Record<string, string> = { "hdfc-mutual-fund-15644806": "2022-08-03", "hdfc-mutual-fund-16002141": "2022-08-05" };
+  ok("the reported MF has both folios in the book", hdfc.length === 2);
+  for (const p of hdfc) {
+    const scope = { positions: [p] };
+    ok(`MF ${p.accountId}: its own allotment dates the row`, investmentDateOf(scope)?.first === expected[p.accountId]);
+    const accessors = withReviewAccessors<Position>({}, (p) => ({ positions: [p] }), true);
+    ok("member-scoped date sorting uses the same date as its cell", accessors.investedOn(p) === expected[p.accountId]);
+  }
+  ok("the combined MF row uses both folios", investmentDateOf({ positions: hdfc })?.first === "2022-08-03" && investmentDateOf({ positions: hdfc })?.last === "2022-08-05");
+  ok("a derived exposure never borrows a fund's purchase date", investmentDateOf() === null && investmentDateMissingReason().includes("derived exposure"));
+  const account = BOOK_ACCOUNTS.find((a) => a.engagement === "PMS" && a.inceptionDate)!;
+  ok("a mandate row uses the family's inception date", investmentDateOf({ accountId: account.accountId, isMandate: true })?.first === account.inceptionDate);
+}
 
 // ── 1. A TRADE-DATED HOLDING: THE WINDOW ACCOUNTS FOR EVERY UNIT ────────────
 {

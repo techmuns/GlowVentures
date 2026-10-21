@@ -469,7 +469,8 @@ export function PrivateMarket() {
   const measureKey = returnMeasures.join(",");
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const bookCols = useMemo(() => withReturnCols(BOOK_COLS, returnMeasures), [measureKey]);
-  const bookView = useTableView("pm-book", bookCols, { reviewKind: "holding", manualEditor: true, optional: PROFILE_COLS });
+  // `invested` already renders the investment date/range for groups and folios.
+  const bookView = useTableView("pm-book", bookCols, { reviewKind: "holding", investmentDates: false, manualEditor: true, optional: PROFILE_COLS });
   const callView = useTableView("pm-calls", CALL_COLS, { manualEditor: true });
   /**
    * THE CALLS THE FAMILY HAS ENTERED, and which row's editor is open. Called up
