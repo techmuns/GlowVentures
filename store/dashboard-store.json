@@ -2,16 +2,16 @@
  "version": 1,
  "records": {
   "tile-set:cio": {
-   "value": "{\"page\":\"cio\",\"ids\":[\"value\",\"gain\",\"fytd\",\"mwr\"],\"updatedAt\":\"2026-10-21T18:54:02.086Z\"}",
+   "value": "{\"page\":\"cio\",\"ids\":[\"value\",\"annualised\",\"fytd\",\"mwr\"],\"updatedAt\":\"2026-10-21T18:54:05.679Z\"}",
    "metadata": {
     "page": "cio",
     "ids": [
      "value",
-     "gain",
+     "annualised",
      "fytd",
      "mwr"
     ],
-    "updatedAt": "2026-10-21T18:54:02.086Z"
+    "updatedAt": "2026-10-21T18:54:05.679Z"
    }
   },
   "tile-set:private-market": {
