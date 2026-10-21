@@ -200,6 +200,19 @@ try {
   await watching.locator('tr[data-account-row="hdfc-mutual-fund-15644806"] [data-col-cell="investedOn"]').waitFor({ timeout: 45_000 });
   assert.equal(new URL(watching.url()).searchParams.get('members'), 'ajay-jaisinghani');
   assert.equal(await watching.locator('tr[data-account-row="hdfc-mutual-fund-15644806"] [data-col-cell="investedOn"]').getAttribute('data-invested-first'), '2022-08-03');
+  await page.goto(baseURL + '/statements'); await page.locator('[data-upload-state="ready"]').waitFor();
+  await page.waitForFunction(() => document.querySelectorAll('[data-upload-status="in-library"]').length === 7);
+  for (const f of inboxLog().batches.flatMap(b => b.files)) {
+    const uploaded = page.locator('tr[data-upload-status="in-library"]').filter({ has: page.getByText(path.basename(f.name), { exact: true }) });
+    assert.equal(await uploaded.count(), 1);
+    for (const provider of f.providers) assert.equal(await uploaded.getByRole('button', { name: provider, exact: true }).count(), 1);
+  }
+  const firstFile = inboxLog().batches[0].files[0], firstProvider = firstFile.providers[0];
+  await page.locator('tr[data-upload-status="in-library"]').filter({ has: page.getByText(path.basename(firstFile.name), { exact: true }) }).getByRole('button', { name: firstProvider, exact: true }).click();
+  await page.locator('[data-open-folder]').waitFor();
+  assert.equal(await page.locator('[data-open-folder]').getAttribute('data-open-folder'), firstProvider);
+  assert.ok(await page.locator('[data-preview-row]').count());
+  note('PASS all seven uploads report In library and open the actual issuer folder');
   const cells = [];
   for (const [key, entries] of [['hdfc-balanced-advantage-fund-regular-plan-growth', expected.slice(0, 2)], ['icici-ioppf-d-grw', expected.slice(2)]]) {
     await page.goto(baseURL + '/stock/' + key);
