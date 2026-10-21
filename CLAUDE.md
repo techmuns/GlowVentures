@@ -233,6 +233,10 @@ extraction mirrors each archive's own path under `source/`.
 | Sky Capital Rising Titans Fund | SKY024 | Bharat Jaisinghani Family Trust 3 | 2026-08-31 | ₹0.75 Cr |
 | ICICI Prudential Mutual Fund | 36378950 | Ajay Jaisinghani | 2026-10-05 | ₹0.56 Cr |
 | ICICI Prudential Mutual Fund | 36379637 | Bharat Jaisinghani | 2026-10-05 | ₹0.38 Cr |
+| Mirae Asset Mutual Fund | 70413280453 | Hope India Trust | 2026-10-06 | ₹0.10 Cr |
+| Aditya Birla Sun Life Mutual Fund | 1038104611 | Hope India Trust | 2026-08-03 | ₹0.08 Cr |
+| Kotak Mahindra Mutual Fund | 4295974 | Hope India Trust | 2026-10-05 | ₹0.08 Cr |
+| Aditya Birla Sun Life Mutual Fund | 1019265797 | Hope India Trust | 2026-10-06 | ₹0.08 Cr |
 | HDFC Mutual Fund | 15725046 | Aarti Jaisinghani | 2026-10-01 | ₹0.02 Cr |
 | ASK Investment Managers Limited | 10034025 | Ajay Jaisinghani | 2026-09-08 | ₹0.34 (a MEASURED residue — the mandate is closed; its bank balance is under the ₹1,000 floor) |
 | ASK Investment Managers Limited | 10032723 | Ankita Jaisinghani | 2026-09-08 | ₹0.01 (a MEASURED residue — the mandate is closed; its bank balance is under the ₹1,000 floor) |
@@ -258,7 +262,7 @@ extraction mirrors each archive's own path under `source/`.
 | Motilal Oswal Financial Services (demat) | 1201090032387399 | Bharat Jaisinghani Family Trust | 2026-07-31 | — (**quantity only** — the Rate column is the last movement's price, Stage 10cz) |
 | Motilal Oswal Financial Services (demat) | 1201090037359311 | Ajay Jaisinghani | 2026-07-31 | — (**quantity only** — the rate printed is face value) |
 | Motilal Oswal Financial Services (demat) | 1201090037436848 | Bharat Jaisinghani | 2026-07-31 | ₹0 (a MEASURED zero — the statement's balance is nil) |
-| Motilal Oswal Hedged Equity Multi Factor Strategy | 90410014574 | Ajay Jaisinghani | 2026-07-31 | ₹0 (a MEASURED zero — the statement's balance is nil) |
+| Motilal Oswal Hedged Equity Multi Factor Strategy | 90410014574 | Ajay Jaisinghani | 2026-07-31 | ₹0 (a MEASURED zero — both classes redeemed to nil) |
 | Motilal Oswal Mutual Fund | 90414963315 | Ajay Jaisinghani | 2026-09-30 | ₹0 (a MEASURED zero — every scheme redeemed to nil) |
 
 The table above is **regenerated every time, never patched**: `npm run
@@ -278,8 +282,8 @@ block, which is ring-fenced: out of this column and every total, shown only on
 `/polycab`.
 
 **Consolidated.** `BOOK_SUMMARY` in `glowData.ts` is authoritative; at the time
-of writing: 76 accounts, 448 positions, 8 owners/entities, current value of
-holdings ₹836.57 Cr — listed ₹643.48 Cr, private ₹193.09 Cr, nothing unplaced.
+of writing: 80 accounts, 459 positions, 9 owners/entities, current value of
+holdings ₹836.91 Cr — listed ₹643.81 Cr, private ₹193.09 Cr, nothing unplaced.
 
 **Side of the book**, decided in this order and generated as
 `Position.marketSide`: the family's own fund placing (`FAMILY_MARKET_SIDE`) → a
@@ -372,9 +376,15 @@ All steps are idempotent; `glowData.ts` regenerates byte-identically.
   `partial` document, a `failed` one not held out by decision or recorded in
   `scripts/ingest/acceptedUnread.mjs` (reason + the action that fixes it — only
   for a file that carries nothing to read), a read account the book neither
-  carries nor excludes by name, and a book date older than the newest statement
-  read. Never silence it by widening the note list or the accepted list for a
-  file a reader could read: write the reader.
+  carries nor excludes by name, a book date older than the newest statement
+  read, a statement that PRINTS dated transactions while its reading carries
+  none (opening-unit markers do not count), and a dated contribution or
+  withdrawal with no capital move in the book that day (Stage 10fj — a fully
+  redeemed investment's history is data). Never silence it by widening the note
+  list or the accepted list for a file a reader could read: write the reader.
+- **Every file feeds the dashboard** (the family, 21 Oct 2026), except the held-
+  out review/register by decision and the two in `acceptedUnread.mjs`. Hope India
+  Trust is its own entity in the book (`shared/owners.mjs`), not a person's.
 
 ## The live layer
 

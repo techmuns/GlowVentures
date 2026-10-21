@@ -53,7 +53,7 @@ export function reclassificationsFrom(cashFlows, accountId, notes, label) {
   const used = new Set();
   const out = [];
   for (const o of legs.filter((c) => c.amount < 0)) {
-    const i = ins.find((x) => !used.has(x) && x.date === o.date && x.securityKey !== o.securityKey
+    const i = ins.find((x) => !used.has(x) && x.date === (o.settlementDate ?? o.date) && x.securityKey !== o.securityKey
       && Math.abs(x.amount + o.amount) <= 1);
     if (!i) {
       notes.push(`${label}: the ${o.date} reclassification out of ${o.security} (${-o.amount}) has no leg into `

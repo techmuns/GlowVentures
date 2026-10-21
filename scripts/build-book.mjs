@@ -162,12 +162,7 @@ function loadArchive() {
   return fs.readdirSync(AUDIT_DIR).sort()
     .map((dir) => path.join(AUDIT_DIR, dir, "document.json"))
     .filter((f) => fs.existsSync(f))
-    .map((f) => {
-      const doc = JSON.parse(fs.readFileSync(f, "utf8"));
-      const lots = path.join(path.dirname(f), "schemeLots.json");
-      if (fs.existsSync(lots)) doc.sections = { schemeLots: JSON.parse(fs.readFileSync(lots, "utf8")) };
-      return doc;
-    })
+    .map((f) => JSON.parse(fs.readFileSync(f, "utf8")))
     .filter((d) => d.status !== "failed");
 }
 
@@ -1212,7 +1207,20 @@ const CAPITAL_KINDS = new Set(["contribution", "withdrawal"]);
  * other two tests, and failing those, withholds the return with the reason.
  */
 function capitalRecordFromInception(cashFlows) {
-  const rows = (cashFlows ?? []).filter((c) => c.date && CAPITAL_KINDS.has(c.kind));
+  const all = cashFlows ?? [];
+  /**
+   * A CLASS CAN BEGIN WITH A SWITCH (Stage 10fj). Motilal Oswal's Hedged Equity
+   * moved its whole B2 holding into F1 on 31 Jul 2024, and Buoyant's A4 class
+   * was born of A1 the same way: the new class's first row is the switch's
+   * INCOMING leg, not a contribution. It is the class's origin exactly as a
+   * first purchase is — provided the same day carries the equal and opposite
+   * outgoing leg of another class, so the money demonstrably came from inside
+   * the account and not from a purchase this record lacks.
+   */
+  const legIn = (c) => c.kind === "reclassification" && isNum(c.amount) && c.amount > 0 && !!c.securityKey
+    && all.some((o) => o.kind === "reclassification" && o.date === c.date && o.securityKey && o.securityKey !== c.securityKey
+      && isNum(o.amount) && Math.abs(o.amount + c.amount) <= 1);
+  const rows = all.filter((c) => c.date && (CAPITAL_KINDS.has(c.kind) || legIn(c)));
   const ins = rows.filter((c) => c.kind === "contribution");
   if (!ins.length) return false;
   const evidenced = (c) => isNum(c.balance) || !!c.seriesIssued;
@@ -1221,7 +1229,7 @@ function capitalRecordFromInception(cashFlows) {
   for (const c of [...rows].filter((r) => r.securityKey && isNum(r.units) && evidenced(r)).sort((a, b) => a.date.localeCompare(b.date))) {
     if (!first.has(c.securityKey)) first.set(c.securityKey, c);
   }
-  return [...first.values()].every((c) => c.kind === "contribution" && (isNum(c.balance)
+  return [...first.values()].every((c) => (c.kind === "contribution" || legIn(c)) && (isNum(c.balance)
     ? Math.abs(Math.abs(c.balance) - Math.abs(c.units)) <= UNIT_TIE
     : c.date === c.seriesIssued));
 }
@@ -3224,18 +3232,8 @@ function build(archived) {
     };
 
     /** FIFO over the fund's own unit record, where anything was sold or switched. */
-    const schemeRows = allIssues.filter((d) => !asOf || !d.asOf || d.asOf <= asOf).flatMap((d) => {
-      const rows = d.sections?.schemeLots?.rows ?? [];
-      return rows.slice(1).map((r) => Object.fromEntries(rows[0].map((k, i) => [k, r[i]])));
-    });
-    const schemeSeen = new Set();
-    const schemeUnits = schemeRows.filter((r) => {
-      const key = JSON.stringify([r.securityKey, r.date, r.kind, r.units, r.amount, r.balance]);
-      if (schemeSeen.has(key)) return false;
-      schemeSeen.add(key); return true;
-    });
-    const unitRecord = [...dated.cashFlows, ...schemeUnits];
-    const fundFifo = fifoFromCashFlows(unitRecord);
+    const fundFifo = fifoFromCashFlows(dated.cashFlows);
+    const unitRecord = dated.cashFlows;
     if (fundFifo?.reason) notes.push(`account ${accountNo}: FIFO not run over the fund's unit record — ${fundFifo.reason}; the statement's own cost stands`);
 
     const costFor = (key, quantity) => {
@@ -3537,8 +3535,7 @@ function build(archived) {
            */
           realizedPnL = 0;
           costOfUnitsSold = 0;
-          if (fifoCls.lots.some((l) => l.carriedFrom))
-            fifoSwitchOnly.push({ accountId, securityKey: h.securityKey, fifoCost: r2(fifoCls.costHeld) });
+          fifoSwitchOnly.push({ accountId, securityKey: h.securityKey, fifoCost: r2(fifoCls.costHeld) });
         } else if (!short.length && ties) {
           const fifoCost = r2(fifoCls.costHeld);
           if (!isNum(costBasis) || Math.abs(fifoCost - costBasis) > 1) {

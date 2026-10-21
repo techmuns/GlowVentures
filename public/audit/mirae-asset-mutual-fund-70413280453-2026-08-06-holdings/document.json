@@ -2,11 +2,11 @@
  "docKey": "mirae-asset-mutual-fund-70413280453-2026-08-06-holdings",
  "provider": "Mirae Asset Mutual Fund",
  "accountNo": "70413280453",
- "ownerSource": null,
+ "ownerSource": "printed",
  "accountNoSource": "printed",
  "clientCode": null,
  "owner": "HOPE INDIA TRUST",
- "ownerId": null,
+ "ownerId": "hope-india-trust",
  "familyGroup": null,
  "strategy": null,
  "engagement": "Direct",
@@ -18,12 +18,7 @@
  "sourcePath": "source/_extracted/august-2026/LKP 1/Mirae 70413280453.pdf",
  "pages": 2,
  "status": "ok",
- "warnings": [
-  {
-   "code": "owner-unresolved",
-   "detail": "\"HOPE INDIA TRUST\" / PAN AABTH4894A matches no canonical owner — add the PAN to shared/owners.mjs, which is evidence rather than a spelling"
-  }
- ],
+ "warnings": [],
  "holdings": [
   {
    "security": "Mirae Asset Liquid Fund ( formerly Mirae Asset Cash Management Fund ) - Direct Plan Mirae Asset Liquid Fund ( formerly Mirae Asset Cash Management Fund ) - Direct Plan Growth",
@@ -102,7 +97,7 @@
  "positionsAsOf": null,
  "dematBalances": [],
  "securityNameSource": null,
- "excludedFromBook": "holder HOPE INDIA TRUST is filed by the AMC as TRUST, and its PAN carries the trust holder code — a separate taxpayer, not a Jaisinghani individual. Consolidating it would put another taxpayer's assets into a person's net worth. Add the holder to shared/owners.mjs if the family confirms it belongs in this book.",
+ "excludedFromBook": null,
  "schemeHoldings": [],
  "aifEarnings": null,
  "jointHolders": [

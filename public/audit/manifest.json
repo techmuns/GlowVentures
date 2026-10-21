@@ -2203,6 +2203,7 @@
   "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Ajay Jaisinghani_Motilal Oswal Founders Fund.pdf",
   "pages": 2,
   "sections": [
+   "transactions",
    "pages"
   ],
   "status": "ok",
@@ -2212,6 +2213,12 @@
   "fy": "2026-07-31",
   "source": "source/_extracted/august-2026-d/MOTILAL REPORTS/Ajay Jaisinghani_Motilal Oswal Founders Fund.pdf",
   "sheets": [
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 3,
+    "cols": 8
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -2233,6 +2240,7 @@
   "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Ajay Jaisinghani_Motilal Oswal Hedged Equity Multi Factor Strategy.pdf",
   "pages": 3,
   "sections": [
+   "transactions",
    "pages"
   ],
   "status": "ok",
@@ -2242,6 +2250,12 @@
   "fy": "2026-07-31",
   "source": "source/_extracted/august-2026-d/MOTILAL REPORTS/Ajay Jaisinghani_Motilal Oswal Hedged Equity Multi Factor Strategy.pdf",
   "sheets": [
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 5,
+    "cols": 8
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -2263,6 +2277,7 @@
   "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Ankita Jaisinghani_Motilal Oswal Founders Fund.pdf",
   "pages": 2,
   "sections": [
+   "transactions",
    "pages"
   ],
   "status": "ok",
@@ -2272,6 +2287,12 @@
   "fy": "2026-07-31",
   "source": "source/_extracted/august-2026-d/MOTILAL REPORTS/Ankita Jaisinghani_Motilal Oswal Founders Fund.pdf",
   "sheets": [
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 4,
+    "cols": 8
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -2293,6 +2314,7 @@
   "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/ANKITA_JAISINGHANI_Class_A1_STATEMENT_2026-03-31_AIFM_BPEPF6_0584.pdf",
   "pages": 2,
   "sections": [
+   "transactions",
    "pages"
   ],
   "status": "ok",
@@ -2302,6 +2324,12 @@
   "fy": "2026-03-31",
   "source": "source/_extracted/august-2026-d/MOTILAL REPORTS/ANKITA_JAISINGHANI_Class_A1_STATEMENT_2026-03-31_AIFM_BPEPF6_0584.pdf",
   "sheets": [
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 5,
+    "cols": 8
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -2730,6 +2758,7 @@
   "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Carnelian _4551_06082026162230819762.pdf",
   "pages": 2,
   "sections": [
+   "transactions",
    "pages"
   ],
   "status": "ok",
@@ -2739,6 +2768,12 @@
   "fy": "2026-07-31",
   "source": "source/_extracted/august-2026-d/MOTILAL REPORTS/Carnelian _4551_06082026162230819762.pdf",
   "sheets": [
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 3,
+    "cols": 8
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -2760,6 +2795,7 @@
   "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Delphi Emerging Equity Fund –_9049241536_10072026143812407917.pdf",
   "pages": 2,
   "sections": [
+   "transactions",
    "pages"
   ],
   "status": "ok",
@@ -2769,6 +2805,12 @@
   "fy": "2026-06-30",
   "source": "source/_extracted/august-2026-d/MOTILAL REPORTS/Delphi Emerging Equity Fund –_9049241536_10072026143812407917.pdf",
   "sheets": [
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 2,
+    "cols": 8
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -5061,7 +5103,7 @@
   "provider": "Aditya Birla Sun Life Mutual Fund",
   "accountNo": "1019265797",
   "owner": "Hope India Trust",
-  "ownerId": null,
+  "ownerId": "hope-india-trust",
   "familyGroup": null,
   "strategy": null,
   "asOf": "2026-08-03",
@@ -5073,7 +5115,7 @@
    "pages"
   ],
   "status": "ok",
-  "warnings": 2,
+  "warnings": 1,
   "fileKey": "aditya-birla-sun-life-mutual-fund-1019265797-2026-08-03-holdings",
   "label": "Aditya Birla Sun Life Mutual Fund · 1019265797 · holdings",
   "fy": "2026-08-03",
@@ -5098,7 +5140,7 @@
   "provider": "Aditya Birla Sun Life Mutual Fund",
   "accountNo": "1038104611",
   "owner": "HOPE INDIA TRUST",
-  "ownerId": null,
+  "ownerId": "hope-india-trust",
   "familyGroup": null,
   "strategy": null,
   "asOf": "2026-08-03",
@@ -5110,7 +5152,7 @@
    "pages"
   ],
   "status": "ok",
-  "warnings": 2,
+  "warnings": 1,
   "fileKey": "aditya-birla-sun-life-mutual-fund-1038104611-2026-08-03-holdings",
   "label": "Aditya Birla Sun Life Mutual Fund · 1038104611 · holdings",
   "fy": "2026-08-03",
@@ -5172,7 +5214,7 @@
   "provider": "Kotak Mahindra Mutual Fund",
   "accountNo": "4295974",
   "owner": "Hope India Trust",
-  "ownerId": null,
+  "ownerId": "hope-india-trust",
   "familyGroup": null,
   "strategy": null,
   "asOf": "2026-08-03",
@@ -5184,7 +5226,7 @@
    "pages"
   ],
   "status": "ok",
-  "warnings": 2,
+  "warnings": 1,
   "fileKey": "kotak-mahindra-mutual-fund-4295974-2026-08-03-holdings",
   "label": "Kotak Mahindra Mutual Fund · 4295974 · holdings",
   "fy": "2026-08-03",
@@ -5209,7 +5251,7 @@
   "provider": "Mirae Asset Mutual Fund",
   "accountNo": "70413280453",
   "owner": "HOPE INDIA TRUST",
-  "ownerId": null,
+  "ownerId": "hope-india-trust",
   "familyGroup": null,
   "strategy": null,
   "asOf": "2026-08-06",
@@ -5221,7 +5263,7 @@
    "pages"
   ],
   "status": "ok",
-  "warnings": 1,
+  "warnings": 0,
   "fileKey": "mirae-asset-mutual-fund-70413280453-2026-08-06-holdings",
   "label": "Mirae Asset Mutual Fund · 70413280453 · holdings",
   "fy": "2026-08-06",
@@ -5460,6 +5502,7 @@
   "sourcePath": "source/_extracted/august-2026/reports/MOTILAL FOUNDERS FUND - AJAY.pdf",
   "pages": 2,
   "sections": [
+   "transactions",
    "pages"
   ],
   "status": "ok",
@@ -5469,6 +5512,12 @@
   "fy": "2026-07-31",
   "source": "source/_extracted/august-2026/reports/MOTILAL FOUNDERS FUND - AJAY.pdf",
   "sheets": [
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 3,
+    "cols": 8
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -6606,7 +6655,7 @@
   "provider": "Aditya Birla Sun Life Mutual Fund",
   "accountNo": "1038104611",
   "owner": "HOPE INDIA TRUST",
-  "ownerId": null,
+  "ownerId": "hope-india-trust",
   "familyGroup": null,
   "strategy": null,
   "asOf": "2026-07-01",
@@ -6618,7 +6667,7 @@
    "pages"
   ],
   "status": "ok",
-  "warnings": 2,
+  "warnings": 1,
   "fileKey": "aditya-birla-sun-life-mutual-fund-1038104611-2026-07-01-holdings",
   "label": "Aditya Birla Sun Life Mutual Fund · 1038104611 · holdings",
   "fy": "2026-07-01",
@@ -6643,7 +6692,7 @@
   "provider": "Aditya Birla Sun Life Mutual Fund",
   "accountNo": "1019265797",
   "owner": "Hope India Trust",
-  "ownerId": null,
+  "ownerId": "hope-india-trust",
   "familyGroup": null,
   "strategy": null,
   "asOf": "2026-07-01",
@@ -6655,7 +6704,7 @@
    "pages"
   ],
   "status": "ok",
-  "warnings": 2,
+  "warnings": 1,
   "fileKey": "aditya-birla-sun-life-mutual-fund-1019265797-2026-07-01-holdings",
   "label": "Aditya Birla Sun Life Mutual Fund · 1019265797 · holdings",
   "fy": "2026-07-01",
@@ -6717,7 +6766,7 @@
   "provider": "Kotak Mahindra Mutual Fund",
   "accountNo": "4295974",
   "owner": "Hope India Trust",
-  "ownerId": null,
+  "ownerId": "hope-india-trust",
   "familyGroup": null,
   "strategy": null,
   "asOf": "2026-07-01",
@@ -6729,7 +6778,7 @@
    "pages"
   ],
   "status": "ok",
-  "warnings": 2,
+  "warnings": 1,
   "fileKey": "kotak-mahindra-mutual-fund-4295974-2026-07-01-holdings",
   "label": "Kotak Mahindra Mutual Fund · 4295974 · holdings",
   "fy": "2026-07-01",
@@ -6754,7 +6803,7 @@
   "provider": "Mirae Asset Mutual Fund",
   "accountNo": "70413280453",
   "owner": "HOPE INDIA TRUST",
-  "ownerId": null,
+  "ownerId": "hope-india-trust",
   "familyGroup": null,
   "strategy": null,
   "asOf": "2026-07-02",
@@ -6766,7 +6815,7 @@
    "pages"
   ],
   "status": "ok",
-  "warnings": 1,
+  "warnings": 0,
   "fileKey": "mirae-asset-mutual-fund-70413280453-2026-07-02-holdings",
   "label": "Mirae Asset Mutual Fund · 70413280453 · holdings",
   "fy": "2026-07-02",
@@ -9055,7 +9104,7 @@
   "provider": "Aditya Birla Sun Life Mutual Fund",
   "accountNo": "1019265797",
   "owner": "Hope India Trust",
-  "ownerId": null,
+  "ownerId": "hope-india-trust",
   "familyGroup": null,
   "strategy": null,
   "asOf": "2026-10-06",
@@ -9067,7 +9116,7 @@
    "pages"
   ],
   "status": "ok",
-  "warnings": 2,
+  "warnings": 1,
   "fileKey": "aditya-birla-sun-life-mutual-fund-1019265797-2026-10-06-holdings",
   "label": "Aditya Birla Sun Life Mutual Fund · 1019265797 · holdings",
   "fy": "2026-10-06",
@@ -9129,7 +9178,7 @@
   "provider": "Kotak Mahindra Mutual Fund",
   "accountNo": "4295974",
   "owner": "Hope India Trust",
-  "ownerId": null,
+  "ownerId": "hope-india-trust",
   "familyGroup": null,
   "strategy": null,
   "asOf": "2026-10-05",
@@ -9141,7 +9190,7 @@
    "pages"
   ],
   "status": "ok",
-  "warnings": 2,
+  "warnings": 1,
   "fileKey": "kotak-mahindra-mutual-fund-4295974-2026-10-05-holdings",
   "label": "Kotak Mahindra Mutual Fund · 4295974 · holdings",
   "fy": "2026-10-05",
@@ -9166,7 +9215,7 @@
   "provider": "Mirae Asset Mutual Fund",
   "accountNo": "70413280453",
   "owner": "HOPE INDIA TRUST",
-  "ownerId": null,
+  "ownerId": "hope-india-trust",
   "familyGroup": null,
   "strategy": null,
   "asOf": "2026-10-06",
@@ -9178,7 +9227,7 @@
    "pages"
   ],
   "status": "ok",
-  "warnings": 1,
+  "warnings": 0,
   "fileKey": "mirae-asset-mutual-fund-70413280453-2026-10-06-holdings",
   "label": "Mirae Asset Mutual Fund · 70413280453 · holdings",
   "fy": "2026-10-06",
@@ -9507,7 +9556,6 @@
   "sourcePath": "source/_extracted/october-2026-c/MOTILAL FOLDER 1./Acctstmt_H_15644806 (1).pdf",
   "pages": 9,
   "sections": [
-   "schemeLots",
    "holdings",
    "pages"
   ],
@@ -9518,12 +9566,6 @@
   "fy": "2026-10-01",
   "source": "source/_extracted/october-2026-c/MOTILAL FOLDER 1./Acctstmt_H_15644806 (1).pdf",
   "sheets": [
-   {
-    "key": "schemeLots",
-    "name": "Scheme-level unit ledger",
-    "rows": 2,
-    "cols": 11
-   },
    {
     "key": "holdings",
     "name": "holdings",
@@ -9551,7 +9593,6 @@
   "sourcePath": "source/_extracted/october-2026-c/MOTILAL FOLDER 1./Acctstmt_H_15725046 (1).pdf",
   "pages": 6,
   "sections": [
-   "schemeLots",
    "holdings",
    "pages"
   ],
@@ -9562,12 +9603,6 @@
   "fy": "2026-10-01",
   "source": "source/_extracted/october-2026-c/MOTILAL FOLDER 1./Acctstmt_H_15725046 (1).pdf",
   "sheets": [
-   {
-    "key": "schemeLots",
-    "name": "Scheme-level unit ledger",
-    "rows": 4,
-    "cols": 11
-   },
    {
     "key": "holdings",
     "name": "holdings",
@@ -9595,7 +9630,6 @@
   "sourcePath": "source/_extracted/october-2026-c/MOTILAL FOLDER 1./Acctstmt_H_16002141 (1).pdf",
   "pages": 8,
   "sections": [
-   "schemeLots",
    "holdings",
    "pages"
   ],
@@ -9606,12 +9640,6 @@
   "fy": "2026-10-01",
   "source": "source/_extracted/october-2026-c/MOTILAL FOLDER 1./Acctstmt_H_16002141 (1).pdf",
   "sheets": [
-   {
-    "key": "schemeLots",
-    "name": "Scheme-level unit ledger",
-    "rows": 2,
-    "cols": 11
-   },
    {
     "key": "holdings",
     "name": "holdings",
@@ -9639,7 +9667,6 @@
   "sourcePath": "source/_extracted/october-2026-c/MOTILAL FOLDER 1./Acctstmt_K_7125255 (20).pdf",
   "pages": 3,
   "sections": [
-   "schemeLots",
    "holdings",
    "pages"
   ],
@@ -9650,12 +9677,6 @@
   "fy": "2026-10-05",
   "source": "source/_extracted/october-2026-c/MOTILAL FOLDER 1./Acctstmt_K_7125255 (20).pdf",
   "sheets": [
-   {
-    "key": "schemeLots",
-    "name": "Scheme-level unit ledger",
-    "rows": 20,
-    "cols": 11
-   },
    {
     "key": "holdings",
     "name": "holdings",
@@ -9683,6 +9704,7 @@
   "sourcePath": "source/_extracted/october-2026-c/MOTILAL FOLDER 1./AJAY JAISINGHANI SOA Motilal AIF.pdf",
   "pages": 2,
   "sections": [
+   "transactions",
    "pages"
   ],
   "status": "ok",
@@ -9692,6 +9714,12 @@
   "fy": "2026-09-30",
   "source": "source/_extracted/october-2026-c/MOTILAL FOLDER 1./AJAY JAISINGHANI SOA Motilal AIF.pdf",
   "sheets": [
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 3,
+    "cols": 8
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -9713,6 +9741,7 @@
   "sourcePath": "source/_extracted/october-2026-c/MOTILAL FOLDER 1./Ankita Jaisinghani  SOA Motilal AIF.pdf",
   "pages": 2,
   "sections": [
+   "transactions",
    "pages"
   ],
   "status": "ok",
@@ -9722,6 +9751,12 @@
   "fy": "2026-09-30",
   "source": "source/_extracted/october-2026-c/MOTILAL FOLDER 1./Ankita Jaisinghani  SOA Motilal AIF.pdf",
   "sheets": [
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 4,
+    "cols": 8
+   },
    {
     "key": "pages",
     "name": "Raw page text",

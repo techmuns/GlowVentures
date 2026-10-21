@@ -1,0 +1,35 @@
+{
+ "name": "transactions",
+ "rows": [
+  [
+   "date",
+   "class",
+   "description",
+   "kind",
+   "amount",
+   "net",
+   "units",
+   "balanceUnits"
+  ],
+  [
+   "2024-08-06",
+   "Motilal Oswal Founders Fund Series II — Class G1",
+   "Contribution",
+   "contribution",
+   100000000,
+   99995000.25,
+   9999500.025,
+   9999500.025
+  ],
+  [
+   "2024-10-16",
+   "Motilal Oswal Founders Fund Series II — Class G1",
+   "Contribution",
+   "contribution",
+   100000000,
+   99995000.25,
+   8896352.335,
+   18895852.36
+  ]
+ ]
+}

@@ -1,0 +1,25 @@
+{
+ "name": "transactions",
+ "rows": [
+  [
+   "date",
+   "class",
+   "description",
+   "kind",
+   "amount",
+   "net",
+   "units",
+   "balanceUnits"
+  ],
+  [
+   "2024-11-29",
+   "Motilal Oswal Wealth Delphi Equity Fund",
+   "Contribution Amount",
+   "contribution",
+   100000000,
+   99995000.25,
+   99995,
+   99995
+  ]
+ ]
+}

@@ -81,6 +81,45 @@ function section(md, heading = "## The family's own bank accounts") {
   return [lines[from], ...(to < 0 ? rest : rest.slice(0, to))].join("\n");
 }
 
+/**
+ * ONE OTHER TAXPAYER'S FOLIO, BECAUSE THE ARCHIVE NO LONGER CARRIES ONE.
+ *
+ * The "Read, and deliberately NOT in the book" section has two kinds of row and
+ * this suite checks the sentences about both. Its other-holder rows were Hope
+ * India Trust's four folios until the family consolidated the trust (Stage
+ * 10fc) — after which no archived document reaches that branch, and the checks
+ * below lost their subject. So the branch gets one the way the bank section
+ * does: a folio cloned from a real one's SHAPE, held by an invented trust the
+ * registry does not know, with invented figures — nothing here is a family
+ * figure, the rule this fixture file states at its head.
+ */
+function installOtherHolderFolio(archive) {
+  const template = "mirae-asset-mutual-fund-70413280453-2026-10-06-holdings";
+  const docKey = "mirae-asset-mutual-fund-99999999901-2026-10-06-holdings";
+  const doc = JSON.parse(fs.readFileSync(path.join(archive, template, "document.json"), "utf8"));
+  const holder = "Sample Charitable Trust";
+  const h = doc.holdings[0];
+  Object.assign(doc, {
+    docKey, accountNo: "99999999901", owner: holder, ownerId: null, pan: null, familyGroup: null,
+    excludedFromBook: `holder ${holder} is filed by the AMC as Trust — a separate taxpayer, not a Jaisinghani individual. `
+      + "Consolidating it would put another taxpayer's assets into a person's net worth. "
+      + "Add the holder to shared/owners.mjs if the family confirms it belongs in this book.",
+    holdings: [{ ...h, quantity: 100, unitCost: null, totalCost: 900, marketPrice: 10, marketValue: 1000,
+      printed: { ...h.printed, marketValue: 1000 }, source: docKey }],
+    totals: { ...doc.totals, totalMarketValue: 1000, totalCost: 900, positionCount: 1, source: docKey },
+    cashFlows: [], warnings: [], status: "ok",
+  });
+  fs.mkdirSync(path.join(archive, docKey), { recursive: true });
+  fs.writeFileSync(path.join(archive, docKey, "document.json"), JSON.stringify(doc, null, 1) + "\n");
+  const manifestPath = path.join(archive, "manifest.json");
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+  const entry = manifest.find((e) => e.docKey === template);
+  manifest.push({ ...entry, docKey, fileKey: docKey, accountNo: "99999999901", owner: holder, ownerId: null,
+    familyGroup: null, sourcePath: "source/fixture/Sample Charitable Trust.pdf", source: "source/fixture/Sample Charitable Trust.pdf",
+    sections: [], sheets: [], warnings: 0, status: "ok" });
+  fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 1) + "\n");
+}
+
 // ── RENDER ──────────────────────────────────────────────────────────────────
 const TMP = fs.mkdtempSync(path.join(os.tmpdir(), "glow-bank-report-"));
 let rendered = null, built = null, installed = null;
@@ -88,6 +127,7 @@ try {
   const archive = path.join(TMP, "audit");
   fs.cpSync(path.join(ROOT, "public", "audit"), archive, { recursive: true });
   installed = await installBankFixture({ root: ROOT, archive });
+  installOtherHolderFolio(archive);
 
   const out = path.join(TMP, "glowData.ts");
   const report = path.join(TMP, "BOOK-REPORT.md");

@@ -264,7 +264,9 @@ export function fifoFromCashFlows(cashFlows) {
   const ins = switches.filter((c) => c.units > 0);
   const used = new Set();
   for (const o of outs) {
-    const i = ins.find((x) => !used.has(x) && x.date === o.date && x.securityKey !== o.securityKey
+    // A switch-in credited on the switch-out's settlement day is the same switch
+    // (HDFC/Kotak folios: `settlementDate` on the out-leg is the in-leg's date).
+    const i = ins.find((x) => !used.has(x) && x.date === (o.settlementDate ?? o.date) && x.securityKey !== o.securityKey
       && isNum(x.amount) && isNum(o.amount) && Math.abs(Math.abs(x.amount) - Math.abs(o.amount)) <= 1);
     if (!i) return { ledger: null, reason: `the ${o.date} reclassification out of ${o.security} funds no same-day reclassification in` };
     used.add(i);

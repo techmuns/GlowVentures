@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-21T07:00:18.535Z",
+  "generatedAt": "2026-10-21T07:42:19.986Z",
   "summary": {
     "documents": 424,
     "parsed": 420,
@@ -24,7 +24,7 @@
     "confirmedSeparateByFamily": 4,
     "suspectedDuplicateEarnings": 1,
     "securitiesWithoutSymbol": 39,
-    "ownerNamesUnmatched": 2,
+    "ownerNamesUnmatched": 0,
     "stitchesApplied": 133
   },
   "coverage": {
@@ -227490,29 +227490,7 @@
         ]
       }
     ],
-    "ownerNamesUnmatched": [
-      {
-        "name": "Hope India Trust",
-        "docs": [
-          "aditya-birla-sun-life-mutual-fund-1019265797-2026-08-03-holdings",
-          "kotak-mahindra-mutual-fund-4295974-2026-08-03-holdings",
-          "aditya-birla-sun-life-mutual-fund-1019265797-2026-07-01-holdings",
-          "kotak-mahindra-mutual-fund-4295974-2026-07-01-holdings",
-          "aditya-birla-sun-life-mutual-fund-1019265797-2026-10-06-holdings",
-          "kotak-mahindra-mutual-fund-4295974-2026-10-05-holdings"
-        ]
-      },
-      {
-        "name": "HOPE INDIA TRUST",
-        "docs": [
-          "aditya-birla-sun-life-mutual-fund-1038104611-2026-08-03-holdings",
-          "mirae-asset-mutual-fund-70413280453-2026-08-06-holdings",
-          "aditya-birla-sun-life-mutual-fund-1038104611-2026-07-01-holdings",
-          "mirae-asset-mutual-fund-70413280453-2026-07-02-holdings",
-          "mirae-asset-mutual-fund-70413280453-2026-10-06-holdings"
-        ]
-      }
-    ],
+    "ownerNamesUnmatched": [],
     "reportTypesWithoutExtractor": [],
     "knownOwners": [
       {
@@ -227542,6 +227520,10 @@
       {
         "ownerId": "bharat-jaisinghani-family-trust",
         "displayName": "Bharat Jaisinghani Family Trust"
+      },
+      {
+        "ownerId": "hope-india-trust",
+        "displayName": "Hope India Trust"
       }
     ],
     "providersWithPrecedence": [
