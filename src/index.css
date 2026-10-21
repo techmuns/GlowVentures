@@ -2,6 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
+.property-map { height: 520px; width: 100%; z-index: 0; background: #eeeae1; }
+.property-map-picker { height: 340px; cursor: crosshair; }
+.property-pin-wrapper { background: transparent; border: 0; }
+.property-pin { display: grid; place-items: center; width: 28px; height: 28px; border: 3px solid white; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); box-shadow: 0 2px 6px #0005; color: white; font: bold 12px sans-serif; }
+.property-pin-list { display: grid; gap: 6px; }
+.property-pin-list button { text-align: left; text-decoration: underline; color: #43391e; padding: 3px; }
+.property-dialog { margin: auto; background: var(--chart-tooltip-bg); }
+.property-input { width: 100%; border: 1px solid var(--table-grid-thin); border-radius: 6px; padding: 6px 10px; font-size: 12.5px; background: var(--chart-tooltip-bg); color: var(--chart-tooltip-text); }
+.property-input:focus { outline: 1px solid var(--chart-book); }
+.property-map .leaflet-control-attribution { font-size: 11px; }
+@media (max-width: 640px) { .property-map { height: 400px; } .property-map-picker { height: 300px; } }
+
 :root {
   color-scheme: light;
   --chart-tooltip-bg: #ffffff;
