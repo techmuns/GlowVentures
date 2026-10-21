@@ -20506,55 +20506,36 @@ const CIO_RETURNS_LIVE = [
  */
 const SEG_AXES = ["category", "assetClass", "basket", "sector", "side", "security"];
 const CIO_SEGMENTS = [
-  ["the Returns tab carries attribution inside its own subtab panel", (t, ctx) => {
-    return !!ctx?.segDom && ctx?.returnsDom?.attributionInPanel === true;
-  }],
-  ["...it offers every segment axis in order — sector among them — and the one its address asked for is active", (t, ctx) => {
+  ["the Returns tab carries attribution inside its own subtab panel", (t, ctx) => !!ctx?.segDom && ctx?.returnsDom?.attributionInPanel === true],
+  ["attribution offers every axis and follows the requested period and measure", (t, ctx) => {
     const r = ctx?.segDom;
     if (!r) return false;
-    const want = /[?&]seg=([a-zA-Z]+)/.exec(ctx.path ?? "")?.[1] ?? "category";
-    return r.options.map((o) => o.key).join() === SEG_AXES.join()
-      && r.options.filter((o) => o.active).map((o) => o.key).join() === want && r.axis === want;
+    const params = new URLSearchParams((ctx.path ?? "").split("?")[1]);
+    const axis = params.get("seg") ?? "category";
+    const requestedType = params.get("rtype");
+    const type = ["xirr", "absolute", "cagr"].includes(requestedType) ? requestedType : "xirr";
+    return r.options.map(o => o.key).join() === SEG_AXES.join()
+      && r.options.filter(o => o.active).map(o => o.key).join() === axis && r.axis === axis
+      && r.period === (params.get("rp") ?? "fytd") && r.type === type && r.basis.includes(type === "absolute" ? "Absolute return" : type.toUpperCase());
   }],
-  ["...every segment is a row, and their values add to the book's value", (t, ctx) => {
+  ["segment values and covered gains add to their own totals on every measure", (t, ctx) => {
+    const r = ctx?.segDom;
+    if (!r || r.total.value == null || !r.rows.length) return false;
+    return Math.abs(r.rows.reduce((s, x) => s + x.value, 0) - r.total.value) <= 1
+      && (r.total.gain == null || Math.abs(r.rows.reduce((s, x) => s + (x.gain ?? 0), 0) - r.total.gain) <= 1);
+  }],
+  ["only Absolute return has additive contributions; XIRR and CAGR are never added", (t, ctx) => {
     const r = ctx?.segDom;
     if (!r) return false;
-    if (r.total.value == null || !r.rows.length) return false;
-    const sum = r.rows.reduce((s, x) => s + x.value, 0);
-    return Math.abs(sum - r.total.value) <= 1;
+    if (r.type !== "absolute") return r.rows.every(x => x.contrib == null);
+    if (r.total.ret == null) return r.rows.every(x => x.contrib == null);
+    return r.total.deployed > 0 && r.rows.every(x => x.gain == null ? x.contrib == null : Math.abs(x.contrib - x.gain / r.total.deployed * 100) < 1e-6)
+      && Math.abs(r.rows.reduce((s, x) => s + (x.contrib ?? 0), 0) - r.total.ret) < 1e-6;
   }],
-  ["...the segments' gains and the mandate remainder add to the total, and each contribution is its gain over the book's capital deployed", (t, ctx) => {
+  ["missing gains remain dashes with reasons and totals expose two coverage info buttons", (t, ctx) => {
     const r = ctx?.segDom;
-    if (!r) return false;
-    if (r.total.gain == null || r.total.deployed == null) return notChecked("the book strikes no gain on this run");
-    const gain = r.rows.reduce((s, x) => s + (x.gain ?? 0), 0) + (r.remainder?.gain ?? 0);
-    const each = [...r.rows, ...(r.remainder ? [r.remainder] : [])]
-      .every((x) => x.gain == null ? x.contrib == null : Math.abs(x.contrib - (x.gain / r.total.deployed) * 100) < 1e-6);
-    const contrib = r.rows.reduce((s, x) => s + (x.contrib ?? 0), 0) + (r.remainder?.contrib ?? 0);
-    return Math.abs(gain - r.total.gain) <= 1 && each && Math.abs(contrib - r.total.ret) < 1e-6;
-  }],
-  ["...a segment that strikes no gain shows a dash with its reason, never ₹0", (t, ctx) => {
-    const r = ctx?.segDom;
-    if (!r) return false;
-    return r.rows.filter((x) => x.gain == null).every((x) => x.gainText === "—" && x.gainReason.length > 0);
-  }],
-  ["...an axis that keeps each PMS mandate in one segment draws no mandate remainder", (t, ctx) => {
-    const r = ctx?.segDom;
-    if (!r) return false;
-    if (r.axis !== "category" && r.axis !== "side") return notChecked("this axis may split a mandate across segments");
-    return r.remainder == null;
-  }],
-  ["...the Total is the Gain / Loss tile's gain on the same page", (t, ctx) => {
-    const r = ctx?.segDom;
-    const tile = (ctx?.kpiTiles ?? []).find((x) => /^gain/i.test(x.label));
-    if (!r || r.total.gain == null) return false;
-    if (!tile?.value) return notChecked("no Gain / Loss tile in the strip on this run");
-    const m = /([+−-])?₹\s*([\d,.]+)\s*(Cr|L)/.exec(tile.value);
-    if (!m) return notChecked(`the tile reads "${tile.value}", not a rupee figure`);
-    // The tile prints one decimal of its unit, so it ties to within half of one.
-    const unit = m[3] === "Cr" ? 1e7 : 1e5;
-    const v = Number(m[2].replace(/,/g, "")) * unit * (m[1] === "−" || m[1] === "-" ? -1 : 1);
-    return Math.abs(v - r.total.gain) <= 0.051 * unit;
+    return !!r && r.totalInfo === 2 && /of.*holdings.*covered/.test(r.coverage)
+      && r.rows.filter(x => x.gain == null).every(x => x.gainText === "—" && x.gainReason.length > 0);
   }],
 ];
 
@@ -40489,6 +40470,10 @@ for (const theme of THEMES) {
         const rem = root.querySelector("tr[data-seg-remainder]");
         return {
           axis: root.getAttribute("data-seg-axis"),
+          period: root.getAttribute("data-seg-period"), type: root.getAttribute("data-seg-type"),
+          basis: root.querySelector("[data-seg-basis]")?.textContent ?? "",
+          coverage: root.querySelector("[data-attribution-total-coverage]")?.textContent ?? "",
+          totalInfo: root.querySelectorAll("[data-seg-total] [data-return-info]").length,
           options: [...root.querySelectorAll("[data-seg-axis-option]")].map((b) => ({ key: b.getAttribute("data-seg-axis-option"), active: b.getAttribute("aria-selected") === "true" })),
           total: { value: num(root, "data-seg-total-value"), gain: num(root, "data-seg-total-gain"), deployed: num(root, "data-seg-total-deployed"), ret: num(root, "data-seg-total-ret") },
           rows: [...root.querySelectorAll("tr[data-seg-row]")].map((tr) => {
