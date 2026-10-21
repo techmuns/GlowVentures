@@ -138,9 +138,16 @@ try {
   await go(mf);
   await page.setViewportSize({ width: 390, height: 844 });
   await check('stock-positions');
-  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'the table scrolls inside the phone viewport');
+  const mobile = await table('stock-positions').evaluate(t => {
+    const host = t.closest('.overflow-x-auto');
+    return host ? { width: host.clientWidth, content: host.scrollWidth, viewport: innerWidth, overflow: getComputedStyle(host).overflowX } : null;
+  });
+  if (!mobile || mobile.width > mobile.viewport || mobile.content <= mobile.width || !['auto', 'scroll'].includes(mobile.overflow)) {
+    errors.push(`the holding table needs its own horizontal scrollport on mobile: ${JSON.stringify(mobile)}`);
+  }
+  await table('stock-positions').locator('thead [data-col="investedOn"]').scrollIntoViewIfNeeded();
   await page.screenshot({ path: `${out}/hdfc-mobile.png` });
   assert.deepEqual(errors, []);
-  await fs.writeFile(`${out}/results.json`, JSON.stringify({ checked, errors }, null, 2));
+  await fs.writeFile(`${out}/results.json`, JSON.stringify({ checked, mobile, errors }, null, 2));
   console.log(`ok investment dates: ${checked.join(', ')}; exact MF allotments, saved layouts, sorting, movement, reset, member scope, totals and mobile`);
 } finally { await browser.close(); }
