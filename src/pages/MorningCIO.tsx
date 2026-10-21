@@ -1,3 +1,4 @@
+import { ExportableTable } from "@/components/ExportableTable";
 import { useMemo } from "react";
 import { Briefcase, Wallet, TrendingUp, TrendingDown, Percent, Fuel, Coins, Landmark, Layers, Users, Target, Scale, PieChart, Banknote, CalendarDays } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
@@ -1682,7 +1683,7 @@ export function MorningCIO() {
                     invariant struck on it would have abstained rather than
                     failed. Same contract `data-section` and `data-mandate`
                     already carry on the Portfolio Monitor. */}
-                <table className="min-w-full text-sm" data-alloc-table data-alloc-axis={allocAxis}>
+                <ExportableTable className="min-w-full text-sm" data-alloc-table data-alloc-axis={allocAxis}>
                   <thead>
                     <Tr view={allocView} className="border-b border-ink-700">
                       <SortHeader col="section" view={allocView} align="left" pad="px-2 py-2">{GROUP_COLUMN_HEAD[allocAxis]}</SortHeader>
@@ -1822,7 +1823,7 @@ export function MorningCIO() {
                       weight: <td key="weight" className="border-t-2 border-ink-600 px-2 py-2.5 text-right mono font-semibold text-slate-300">100%</td>,
                     }} />
                   </tfoot>
-                </table>
+                </ExportableTable>
                 {/*
                   ── WHOSE JUDGEMENT THIS VIEW IS, WHERE IT IS ONE ────────────────
 

@@ -1,3 +1,4 @@
+import { ExportableTable } from "@/components/ExportableTable";
 /**
  * OPENING, PLUS, MINUS, CLOSING — the family's own table.
  *
@@ -171,7 +172,7 @@ export function QuantityMovement(
       right={window ? <Pill>{window}</Pill> : undefined}>
       {movements.length > 0 && (
       <div className="overflow-x-auto">
-        <table className="min-w-full whitespace-nowrap text-sm" data-qty-movement>
+        <ExportableTable className="min-w-full whitespace-nowrap text-sm" data-qty-movement>
           <thead className="border-b border-ink-700">
             <Tr view={view}>
               <SortHeader col="account" view={view} align="left">Account</SortHeader>
@@ -245,7 +246,7 @@ export function QuantityMovement(
               </tr>
             </tfoot>
           )}
-        </table>
+        </ExportableTable>
       </div>
       )}
       {/* ONE SHORT LINE UNDER THE TABLE, and the sentences that stood here are

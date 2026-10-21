@@ -1,3 +1,4 @@
+import { ExportableTable } from "@/components/ExportableTable";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Bell, Pencil, Plus, X } from "lucide-react";
@@ -150,7 +151,7 @@ export function AllAlerts() {
         </div>
       ) : (
         <div className="mt-3 overflow-x-auto">
-          <table className="w-full text-sm" data-table="all-alerts">
+          <ExportableTable className="w-full text-sm" data-table="all-alerts">
             <thead className="border-b border-ink-700/70">
               <Tr view={view}>
                 <SortHeader col="holding" view={view} align="left" pad="px-5 py-2.5">Holding</SortHeader>
@@ -228,7 +229,7 @@ export function AllAlerts() {
                 );
               })}
             </tbody>
-          </table>
+          </ExportableTable>
         </div>
       )}
       <div className="space-y-0.5 border-t border-ink-700/70 px-5 py-3 text-[11px] leading-relaxed text-slate-500">

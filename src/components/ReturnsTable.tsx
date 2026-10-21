@@ -1,3 +1,4 @@
+import { ExportableTable } from "@/components/ExportableTable";
 import { useEffect, useMemo, useState } from "react";
 import { LineChart as LineIcon, AreaChart as AreaIcon, BarChart3 } from "lucide-react";
 import { Card } from "@/components/Card";
@@ -148,7 +149,7 @@ export function ReturnsTable({ ticker, name }: {
               order, so dragging one would break the sequence a reader reads it
               as. The exemption is declared on the table, which is what
               `check:pages` requires of any table that refuses both. */}
-          <table className="min-w-full whitespace-nowrap text-[12.5px]"
+          <ExportableTable className="min-w-full whitespace-nowrap text-[12.5px]"
             data-table-static="the columns are the periods of an upstream financial document and the rows are its own line items, in its own order — sorting the rows would scramble a statement and moving a period would break its chronology">
           <thead>
             <tr className="border-b border-ink-700">
@@ -178,7 +179,7 @@ export function ReturnsTable({ ticker, name }: {
               <td className="px-3 py-2.5 text-right mono text-slate-300">{fmtLevel(live.low52, unit)}</td>
             </tr>
           </tbody>
-        </table>
+        </ExportableTable>
       </div>
 
       {/* THE KEY TO THE ASTERISK STAYS ON THE FACE — which horizons are

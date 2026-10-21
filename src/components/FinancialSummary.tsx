@@ -1,3 +1,4 @@
+import { ExportableTable } from "@/components/ExportableTable";
 import { useMemo } from "react";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
@@ -121,7 +122,7 @@ export function FinancialSummary({ markdown, ticker }: { markdown: string; ticke
       right={<Pill tone="info">derived</Pill>}
       pad={false}>
       <div className="overflow-x-auto">
-        <table className="min-w-full whitespace-nowrap text-[12.5px]">
+        <ExportableTable className="min-w-full whitespace-nowrap text-[12.5px]">
           <thead className="border-b border-ink-700">
             <Tr view={view}>
               <SortHeader col="metric" view={view} align="left" pad="px-4 py-2">Metric</SortHeader>
@@ -176,7 +177,7 @@ export function FinancialSummary({ markdown, ticker }: { markdown: string; ticke
               </td></tr>
             )}
           </tbody>
-        </table>
+        </ExportableTable>
       </div>
 
       {/* THE ABSENT METRICS NAMED ON THE FACE, the reading rule its hover

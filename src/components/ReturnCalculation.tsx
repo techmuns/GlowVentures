@@ -1,3 +1,4 @@
+import { ExportableTable } from "@/components/ExportableTable";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Info, X } from "lucide-react";
@@ -160,10 +161,10 @@ export function MoneyWeightedCalculation({ flows, annualPct, days, annualised, r
       {!reason && <div>
         <p className="font-medium text-slate-100">Amounts and dates used</p>
         <p className="my-2 text-xs text-slate-400">Minus means money invested, including opening values. Plus means money taken out or a closing value. Amounts are rounded for display; the calculation uses full precision.</p>
-        <table className="w-full text-xs" data-table-static="Dated calculation inputs, in date order">
+        <ExportableTable className="w-full text-xs" data-table-static="Dated calculation inputs, in date order">
           <thead><tr className="text-slate-400"><th className="py-2 text-left font-medium">Date</th><th className="py-2 text-right font-medium">Amount</th></tr></thead>
           <tbody>{dated.map((f, i) => <tr key={i} className="border-t border-ink-700"><td className="py-1.5">{fmtDate(f.date.toISOString().slice(0, 10))}</td><td className="py-1.5 text-right tabular">{f.amount > 0 ? "+" : ""}{money(f.amount)}</td></tr>)}</tbody>
-        </table>
+        </ExportableTable>
       </div>}
       {more}
       </div>
