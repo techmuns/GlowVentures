@@ -46,6 +46,7 @@ export async function assertUnfilteredSearchExport(page, table, input, label) {
 }
 
 export async function assertPrivateMarketFilterExport(page) {
+  await page.getByRole('tab',{name:'By brand',exact:true}).click();
   const table = page.locator('table[data-pm-table="brands"]');
   const picker = page.getByRole('combobox', {name:'Show funds, companies or both', exact:true});
   const selection = await picker.inputValue();
