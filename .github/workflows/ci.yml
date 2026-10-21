@@ -21,9 +21,13 @@ jobs:
           cache: npm
       - run: npm ci
 
-      # 1. The app type-checks and builds.
-      - name: Build
-        run: npm run build
+      - name: Statement identity, format and publication contracts
+        env:
+          GLOW_PUBLICATION_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          npm run test:statements
+          git fetch --no-tags origin "$GLOW_PUBLICATION_BASE"
+          npm run statements:verify -- --base-ref "$GLOW_PUBLICATION_BASE"
 
       # 2. The book regenerates BYTE-IDENTICALLY from the committed audit archive.
       #    build-book reads public/audit/ (committed) — no source PDFs or
@@ -47,6 +51,11 @@ jobs:
             src/data/glowData.ts
             src/data/reviewColumns.ts
             docs/BOOK-REPORT.md
+
+      # Build only after checking the source/book contract. The audit revision
+      # must never be prepared from a book that needs regeneration.
+      - name: Build
+        run: npm run build
 
       # 3. The ingest & reconciliation test suites pass (parseNum, layout,
       #    pipeline, and the golden figures a human read off the real statements).

@@ -3670,6 +3670,7 @@ function build(archived, archiveCount = archived.length) {
           .sort((a, b) => a.date.localeCompare(b.date) || a.cost - b.cost);
       }
       positions.push({
+        statementRecord: { document: holdingsDoc.docKey, pointer: `/holdings/${holdingsDoc.holdings.indexOf(h)}` },
         securityKey: h.securityKey,
         security: h.security,
         symbol: symbols[h.securityKey] ?? null,

@@ -100,6 +100,8 @@ export function applyFundNavs(positions: Position[]): Position[] {
     return {
       ...p,
       currentPrice: e.nav,
+      priceEvidence: { kind: "published-nav", source: "AMFI", instrument: e.isin, value: e.nav,
+        effectiveAt: e.date, observedAt: null },
       marketValue,
       unrealizedPnL,
       // FIFO's one return: a live price moves the unrealised half and nothing
@@ -284,6 +286,7 @@ export function depositoryFundHoldings(
       returnPct: null,
       avgCost: null,
       currentPrice: nav.nav,
+      priceEvidence: { kind: "published-nav", source: "AMFI", instrument: nav.isin, value: nav.nav, effectiveAt: nav.date, observedAt: null },
       stCostBasis: null,
       ltCostBasis: null,
       daysToLT: null,
@@ -453,6 +456,7 @@ export function unpricedStatementUnits(
       returnPct: null,
       avgCost: null,
       currentPrice: nav.nav,
+      priceEvidence: { kind: "published-nav", source: "AMFI", instrument: nav.isin, value: nav.nav, effectiveAt: nav.date, observedAt: null },
       stCostBasis: null,
       ltCostBasis: null,
       daysToLT: null,

@@ -102,8 +102,9 @@ export function buildConsolidatedSheet(docs: ArchiveDoc[], input: { accounts: Ac
     const invested = investedOnOf([p]);
     const capital = dated.behind([p], positions);
     const xirr = capital?.dated && capital.days >= 365 && capital.annualPct != null ? capital.annualPct / 100 : null;
-    const source = sourcesFor(a).filter(d => d.holdings?.some(h => h.securityKey === p.securityKey && h.marketValue === p.marketValue))
-      .sort((a, b) => (b.asOf ?? "").localeCompare(a.asOf ?? ""))[0];
+    // The builder retained its actual selected row. Equal values in two
+    // statements are not evidence that either one supplied this field.
+    const source = p.statementRecord ? docById.get(p.statementRecord.document) : undefined;
     const counted = rows.includes(p);
     const check = !counted ? "Duplicate reporting: excluded from consolidated totals" : p.valuedAtCost ? "Held at cost; no measured gain"
       : p.costBasis == null ? "Cost not reported" : "OK";

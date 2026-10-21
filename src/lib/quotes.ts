@@ -261,6 +261,8 @@ export function applyQuotes(positions: Position[], feed: QuoteFeed | null): Posi
       live: true,
       symbol: sym?.startsWith("BSE:") ? p.symbol : sym ?? undefined,
       currentPrice: q.price,
+      priceEvidence: { kind: "quote", source: q.source ?? null, instrument: sym!, value: q.price,
+        effectiveAt: q.tradedAt ?? null, observedAt: q.observedAt ?? null },
       marketValue,
       unrealizedPnL,
       // FIFO's one return: a live price moves the unrealised half and nothing

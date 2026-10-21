@@ -206,6 +206,11 @@ export type RecoveredHoldingCost = {
 };
 
 export type Position = {
+  /** Exact normalized record selected by the builder, before any live overlay. */
+  statementRecord?: { document: string; pointer: string };
+  /** Price overlays retain their own identity/time and never replace statement evidence. */
+  priceEvidence?: { kind: "quote" | "published-nav"; source: string | null; instrument: string;
+    value: number; effectiveAt: string | null; observedAt: string | null };
   /**
    * Stable slug of the normalized security name — the join key used for
    * grouping, look-through, dedupe and the /stock/:securityKey route. Present on

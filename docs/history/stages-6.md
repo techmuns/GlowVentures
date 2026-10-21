@@ -44,3 +44,9 @@
 - Brand edits retain the existing exact investment keys and shared save endpoint. Aggregate rows keep their existing read-only resolution. Explicit column visibility choices, calculations, scrolling and sticky headers remain supported.
 - Inline saves are serialized because each response carries its starting store snapshot plus the edit; overlapping replies must not hide another successful field. Focus reads wait for pending saves and cannot replace a newer edit.
 - Existing profile/store suites verify identity and persistence contracts. The browser regression checks the default inputs, overlapping field saves and reopening the page, cancellation, a failed save and retry, removal, and a brand edit spanning several investments.
+
+### Stage 10fz — VERIFIED STATEMENT PUBLICATION AND EXACT SOURCE ROWS
+
+- Added the backend contract for the upload worker: isolate extraction/builds, verify owner/account/security and format/field coverage, compare individual reconciliation findings with the verified base, retain source receipts, seal artifacts and publish an atomic Git tree through a codex PR. CI/review and deployment verification remain explicit gates; intake never directly mutates production or clears staged files.
+- The generated book retains the actual selected normalized holding pointer. Audit source links use it, and canonical data, per-field evidence and all reporting projections share one content-addressed revision. Quotes/NAVs retain independent instrument/value/time evidence. No dashboard layout changes.
+- Added format-mutation, identity, duplicate, reconciliation, stale-artifact, atomic Git/retry and merge-gate tests, plus an actual-book/source-row contract. See `docs/STATEMENT-PUBLICATION.md` for the teammate's handoff and the precise evidence/format limitations.

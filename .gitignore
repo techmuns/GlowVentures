@@ -25,3 +25,4 @@ docs/page-check/
 # Prepared by build:views for this exact book revision.
 public/views/
 src/data/readModels.json
+public/publication.json
