@@ -3,7 +3,7 @@
 // intake run (Node) and the browser's tests share one implementation.
 
 export type InboxStatus = "queued" | "processing" | "landed" | "duplicate" | "held";
-export type InboxHold = "needs-reader" | "needs-password" | "unreadable" | "check-failed" | "intake-error";
+export type InboxHold = "needs-reader" | "needs-password" | "unreadable" | "not-a-statement" | "check-failed" | "intake-error";
 
 export type InboxFile = {
   /** The path as uploaded — a folder upload keeps its folders — cleaned. */

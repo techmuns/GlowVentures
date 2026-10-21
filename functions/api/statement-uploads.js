@@ -44,6 +44,7 @@ import {
   inboxFor, checkUpload, newBatchId, makeBatch, withBatch, uniqueNames, inboxPath,
   requeue, withoutFile, isBatchId, isBlobSha, InboxError, InboxRefusal, MAX_BATCH_FILES, MAX_FILE_BYTES,
 } from "../../shared/statementInbox.mjs";
+import { checkStatementBytes } from "../../shared/statementBytes.mjs";
 
 const MAX_JSON = 256 * 1024;
 
@@ -116,8 +117,14 @@ export async function onRequest(context, fetchImpl) {
     }
     const v = checkUpload({ name: form.get("name") || file.name, size: file.size });
     if (v.error) return fail(400, "INVALID", v.error);
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    // THE BYTES, NOT THE NAME. A mail server's removal notice under a statement's
+    // name, or a sign-in page saved as `.pdf`, is refused here with what it is —
+    // the moment the person who has the real file can still go and get it.
+    const what = checkStatementBytes(bytes, v.name);
+    if (!what.ok) return fail(400, what.removalNotice ? "NOT_A_STATEMENT" : "INVALID", what.why);
     try {
-      const blob = await inbox.putBlob(await file.arrayBuffer());
+      const blob = await inbox.putBlob(bytes);
       return json(200, { ok: true, staged: { name: v.name, size: file.size, blob } });
     } catch (e) {
       return storeFailed(e, "The file was not saved; try again.");

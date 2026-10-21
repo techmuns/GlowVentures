@@ -1,0 +1,60 @@
+name: Regenerate archive (temporary, fix/read-every-statement)
+
+# ONE-OFF, REMOVED BEFORE MERGE. The scanned HDFC statement is read by OCR
+# (scripts/ingest/lib/scan.mjs) and the archive and book must be regenerated on
+# Linux — the platform CI re-extracts on — so `statements` can check them byte
+# for byte. Runs on pushes to this branch only and commits the result back.
+on:
+  push:
+    branches: [fix/read-every-statement]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: regenerate-readall
+  cancel-in-progress: true
+
+jobs:
+  regenerate:
+    if: "!contains(github.event.head_commit.message, '[regen]')"
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/read-every-statement
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run inventory
+      - name: Extract — scans not yet read are read; everything archived carries forward
+        env:
+          GLOW_OCR: new
+        run: npm run extract
+      - name: NSE symbols — additions only
+        run: |
+          cp src/data/nseSymbols.json /tmp/nseSymbols.before.json
+          if npm run build-symbols && node -e '
+            const b = require("/tmp/nseSymbols.before.json"), a = require("./src/data/nseSymbols.json");
+            const changed = Object.entries(b).filter(([k, v]) => JSON.stringify(a[k]) !== JSON.stringify(v));
+            console.log("existing symbols changed:", changed.length, "added:", Object.keys(a).length - Object.keys(b).length);
+            process.exit(changed.length ? 1 : 0);'; then echo "symbols kept"; else
+            echo "symbols reverted"; git checkout -- src/data/nseSymbols.json docs/SECURITY-IDENTIFIERS.md; fi
+      - run: npm run build-book
+      - run: npm run accounts-table -- --write
+        continue-on-error: true
+      - run: npm run coverage:source
+        continue-on-error: true
+      - run: npm run check:reads
+        continue-on-error: true
+      - name: Commit the regenerated archive and book
+        run: |
+          git config user.name "glow-intake[bot]"
+          git config user.email "glow-intake[bot]@users.noreply.github.com"
+          git add -A -- source docs public/audit src/data CLAUDE.md
+          if git diff --cached --quiet; then echo "nothing changed"; exit 0; fi
+          git commit -m "Regenerate the archive and book on Linux: the scanned HDFC statement read, removal notices filed [regen]"
+          git push

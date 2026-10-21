@@ -27,6 +27,11 @@
 //   excluded-by-policy    — the drop's own password notes. They carry PANs and a
 //                           SEBI registration number, so they are read at runtime
 //                           from `GLOW_PDF_PASSWORDS` and never committed
+//   never-arrived         — a mail server's removal notice in place of a statement
+//                           (`attachment-removed`): read, and nothing in it. Each is
+//                           named; the sender has to re-send the statement
+//   not-read              — every document from it FAILED. Named here, and judged
+//                           by `check:reads`, which fails on any it does not accept
 //   unread                — anything else. This list must be empty, and the run
 //                           exits non-zero if it is not
 //
@@ -170,7 +175,7 @@ for (const f of files) {
   byHash.get(h).push(f);
 }
 
-const CLASSES = ["read", "read-via-duplicate", "read-as-witness", "read-by-build-book", "held-out-by-decision", "read-as-profile", "not-a-document", "excluded-by-policy", "unread"];
+const CLASSES = ["read", "read-via-duplicate", "read-as-witness", "read-by-build-book", "held-out-by-decision", "read-as-profile", "not-a-document", "excluded-by-policy", "never-arrived", "not-read", "unread"];
 const rows = [];
 for (const f of files) {
   // A PROFILE FILE IS READ BY `build-profiles`, whatever `extract` made of it —
@@ -195,13 +200,18 @@ for (const f of files) {
     const heldOut = docs.every((d) => (d.status === "failed")
       && /Family investment register|Consolidated family review/.test(d.provider ?? ""));
     const witness = docs.every((d) => d.twinOf);
-    rows.push({ f, cls: reviewSource ? "read-by-build-book" : heldOut ? "held-out-by-decision" : witness ? "read-as-witness" : "read", docs,
+    // A FILE WHOSE EVERY DOCUMENT FAILED WAS NOT READ, whatever the archive holds for it.
+    const failed = !reviewSource && !heldOut && docs.every((d) => d.status === "failed");
+    const removed = failed && docs.every((d) => d.failedBecause === "attachment-removed");
+    rows.push({ f, cls: reviewSource ? "read-by-build-book" : heldOut ? "held-out-by-decision" : removed ? "never-arrived"
+      : failed ? "not-read" : witness ? "read-as-witness" : "read", docs,
       note: witness ? `witness of ${docs.map((d) => d.twinOf).join(", ")}` : docs.map((d) => d.docKey).join(", ") });
     continue;
   }
   if (isResourceFork(f)) { rows.push({ f, cls: "not-a-document", docs: [], note: "macOS AppleDouble resource fork" }); continue; }
   if (isPasswordNote(f)) { rows.push({ f, cls: "excluded-by-policy", docs: [], note: "the drop's own password note — read from GLOW_PDF_PASSWORDS at runtime, never committed" }); continue; }
-  const twin = (byHash.get(md5(f)) ?? []).find((g) => g !== f && (bySource.get(g) ?? []).length);
+  // A twin counts only if it was READ: a copy of a file that failed carries nothing either.
+  const twin = (byHash.get(md5(f)) ?? []).find((g) => g !== f && (bySource.get(g) ?? []).some((d) => d.status !== "failed"));
   if (twin) { rows.push({ f, cls: "read-via-duplicate", docs: [], note: `byte-identical to ${twin}` }); continue; }
   rows.push({ f, cls: "unread", docs: [], note: "NO archive entry, no twin, and not excluded by any rule" });
 }
@@ -230,6 +240,8 @@ say(`| Held out by decision | ${count("held-out-by-decision")} | read perfectly 
 if (count("read-as-profile")) say(`| Read as a profile | ${count("read-as-profile")} | a fund's strategy or a company's description, supplied by the family — text, never a figure |`);
 say(`| Not a document | ${count("not-a-document")} | macOS \`__MACOSX/._*\` resource forks — checked, not assumed |`);
 say(`| Excluded by policy | ${count("excluded-by-policy")} | the drop's own password notes |`);
+if (count("never-arrived")) say(`| **Never arrived** | **${count("never-arrived")}** | **a mail server's removal notice in place of the statement — ask the sender to re-send it** |`);
+if (count("not-read")) say(`| Not read | ${count("not-read")} | every document from it failed — \`check:reads\` names why |`);
 say(`| **Unread** | **${unread.length}** | **must be zero** |`);
 say(`| **Total leaf files** | **${rows.length}** | |`);
 say();
@@ -240,6 +252,16 @@ if (unread.length) {
   say("## ⚠ UNREAD FILES");
   say();
   for (const r of unread) say(`- \`${r.f}\``);
+  say();
+}
+
+if (count("never-arrived")) {
+  say("## ⚠ Statements that never arrived");
+  say();
+  say("A mail server removed each of these attachments in transit and left a short notice under its name.");
+  say("There is nothing in the file to read; the statement has to be re-sent another way and uploaded.");
+  say();
+  for (const r of rows.filter((x) => x.cls === "never-arrived")) say(`- \`${r.f}\``);
   say();
 }
 

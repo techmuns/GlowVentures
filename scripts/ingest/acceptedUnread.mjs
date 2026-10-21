@@ -13,18 +13,14 @@
  *
  * Files held out BY DECISION (the family's review and register) need no entry:
  * they are read perfectly, and `held-out-by-decision` says so on the document.
+ *
+ * EMPTY SINCE 21 OCT 2026, and both of the files it held are accounted for:
+ *   • Bharat Jaisinghani's scanned HDFC NSDL statement is READ — by OCR, every
+ *     figure checked by the page itself (`lib/scan.mjs`, `providers/nsdlScan.mjs`).
+ *   • LKP's two October workbooks are mail-server removal notices. Such a file
+ *     needs no entry: `extract` files it as `attachment-removed`, naming the
+ *     statement that never arrived, and `check:reads` lists every one on every
+ *     run instead of failing on it — there is no reader to write for a file
+ *     with no statement in it, only a sender to ask.
  */
-export const ACCEPTED_UNREAD = Object.freeze({
-  "source/_extracted/october-2026-c/LKP EQUITY/519_06102026124925.xls": {
-    reason: "Not a workbook: an 85-byte notice a mail server left in place of the attachment "
-      + "(\"This attachment was removed because it contains data that could pose a security risk.\"). "
-      + "The statement itself never arrived.",
-    action: "Ask LKP to re-send the October equity workbook another way (a link, or zipped), drop it in a new "
-      + "delivery folder and re-run the pipeline.",
-  },
-  "source/august-2026-e/HOLDING STATEMENT AS ON 31 MARCH 2026.pdf": {
-    reason: "Bharat Jaisinghani's HDFC NSDL holding statement, scanned to four JPEGs: no text layer, and this "
-      + "book does not take figures from OCR of a photograph (CLAUDE.md, The data model).",
-    action: "Ask HDFC Bank for the same statement as a text PDF (the e-statement, not a scan).",
-  },
-});
+export const ACCEPTED_UNREAD = Object.freeze({});

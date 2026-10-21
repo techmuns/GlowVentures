@@ -68,14 +68,15 @@ import type { PolycabAction } from "@/data/polycabLive";
  * profit, and a nil pledge on a promoter block is the most consequential zero
  * available to invent.
  *
- * ── THE SECOND PROMOTER STATEMENT IS NOT MENTIONED HERE, BY REQUEST ────────
+ * ── THE SECOND PROMOTER STATEMENT IS A SECOND ROW ───────────────────────────
  *
- * Another member's promoter shares sit on an HDFC Bank NSDL statement that
- * arrived as a SCAN — four JPEG pages, no text layer — and is still unread in
- * `source/` (see `docs/EXTRACTION-REPORT.md`). The holding table is written over
- * the collection rather than as one hard-coded row, so that statement, re-sent
- * as a text PDF, is a second row with no code change — and the footer, which
- * only draws when there is more than one row to total, appears with it.
+ * Bharat's promoter shares sit on an HDFC Bank NSDL statement that arrived as a
+ * SCAN — four JPEG pages, no text layer — read since 21 Oct 2026 by OCR, every
+ * figure checked by the page (`scripts/ingest/lib/scan.mjs`). The holding table
+ * is written over the collection, so it is a second row with no code change and
+ * the footer appears with it. That statement prints QUANTITIES ONLY: its row has
+ * a share count and no statement value or mark, each absent with its reason, and
+ * the footer's value says how many demats it covers.
  */
 
 /**
@@ -204,6 +205,9 @@ export function Polycab() {
    */
   const mv = sumOrNull(BOOK_POLYCAB.map((p) => p.marketValue));
   const shares = sumOrNull(BOOK_POLYCAB.map((p) => p.quantity));
+  /** The rows a statement values — the footer's value says it covers these and names the rest. */
+  const valued = BOOK_POLYCAB.filter((p) => typeof p.marketValue === "number");
+  const unvaluedHolders = rows.filter(({ p }) => typeof p.marketValue !== "number").map(({ a }) => a?.owner ?? "a holder the registry does not resolve").join(", ");
   /** The one statement date, where every row shares one — otherwise null, and the page names them all. */
   const oneDate = STATEMENT_DATES.length === 1 ? STATEMENT_DATES[0] : null;
   const datesText = STATEMENT_DATES.map((d) => fmtDate(d)).join(", ");
@@ -492,7 +496,8 @@ export function Polycab() {
               <tbody className="divide-y divide-ink-700/60">
                 {holdingRows.map(({ p, a }) => {
                   const qty = typeof p.quantity === "number" ? p.quantity : null;
-                  const rowMark = qty !== null && qty > 0 ? p.marketValue / qty : null;
+                  // A row whose statement prints no value has no mark — `null / n` is 0 in JavaScript.
+                  const rowMark = qty !== null && qty > 0 && typeof p.marketValue === "number" ? p.marketValue / qty : null;
                   const atMarket = markedValue(qty, quote);
                   /* THIS ROW'S TWO DATES, in the Mark cell's hover — its balance
                      date and the pricing date its own statement prints. */
@@ -528,9 +533,14 @@ export function Polycab() {
                         {qty === null ? <AbsentCell reason="no statement here reports a share count for this row" /> : fmtNum(qty)}
                       </td>
                       <td className={`${CELL} text-right mono text-slate-400`} data-cell="mark" title={markTitle}>
-                        {price(rowMark) ?? <AbsentCell reason="this row reports no quantity, so a per-share mark cannot be derived from its value" />}
+                        {price(rowMark) ?? <AbsentCell reason={qty === null
+                          ? "this row reports no quantity, so a per-share mark cannot be derived from its value"
+                          : "this row's statement prints no value, so no per-share mark can be derived from it"} />}
                       </td>
-                      <td className={`${CELL} text-right mono text-slate-100`} data-cell="value">{money(p.marketValue)}</td>
+                      <td className={`${CELL} text-right mono text-slate-100`} data-cell="value">
+                        {typeof p.marketValue === "number" ? money(p.marketValue)
+                          : <AbsentCell reason="this row's statement prints quantities only — no rate and no value" />}
+                      </td>
                       <td className={`${CELL} text-right mono text-slate-300`} data-cell="cost">
                         {typeof p.costBasis === "number" ? money(p.costBasis) : <AbsentCell reason={COST_WHY} />}
                       </td>
@@ -570,7 +580,15 @@ export function Polycab() {
                         </td>
                       ),
                       shares: <td key="shares" className="border-t-2 border-ink-600 px-3 py-2 text-right mono font-semibold text-slate-200">{shares === null ? <AbsentCell reason="no row reports a share count" /> : fmtNum(shares)}</td>,
-                      value: <td key="value" className="border-t-2 border-ink-600 px-3 py-2 text-right mono font-semibold text-slate-100">{money(mv)}</td>,
+                      value: (
+                        <td key="value" className="border-t-2 border-ink-600 px-3 py-2 text-right mono font-semibold text-slate-100"
+                          data-polycab-value-covers={`${valued.length} of ${rows.length}`}
+                          title={valued.length < rows.length
+                            ? `The statement value of ${valued.length} of these ${rows.length} demats — ${unvaluedHolders} print${rows.length - valued.length === 1 ? "s" : ""} quantities only, so no statement values ${rows.length - valued.length === 1 ? "that row" : "those rows"}. The share count beside it is every demat's.`
+                            : undefined}>
+                          {money(mv)}{valued.length < rows.length && <span className="ml-1 text-[10px] font-normal text-slate-500">{valued.length} of {rows.length}</span>}
+                        </td>
+                      ),
                       marketValue: <td key="marketValue" className="border-t-2 border-ink-600 px-3 py-2 text-right mono font-semibold text-slate-200">{money(markedValue(shares, quote))}</td>,
                     }} />
                 </tfoot>

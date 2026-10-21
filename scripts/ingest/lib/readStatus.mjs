@@ -66,6 +66,10 @@ export const STATEMENT_NOTES = Object.freeze(new Set([
   // Provenance: how the file was opened, split, keyed or attributed.
   "pdf-encrypted",
   "text-recovered-by-rendering",
+  // A scan read by OCR, every published row checked by the page (lib/scan.mjs).
+  "text-recovered-from-scan",
+  // Printed under `Pending Demat`: the holder's shares, lodged and not yet free.
+  "pending-demat",
   "from-bundle",
   "duplicate-doc-key",
   "witness-of",
@@ -75,6 +79,8 @@ export const STATEMENT_NOTES = Object.freeze(new Set([
   "account-no-from-client-code",
   "account-no-from-sole-account",
   "security-name-from-isin",
+  // A scanned row no text-layer statement names: ISIN and quantity checked, spelling not.
+  "security-name-from-scan",
 ]));
 
 /**

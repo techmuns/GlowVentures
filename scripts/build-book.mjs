@@ -109,6 +109,11 @@ const r4 = (n) => (n === null || n === undefined ? null : Math.round(n * 10000) 
  * `check:pages` asserts the absence on nine routes and is what catches it.
  */
 const RINGFENCED_SECURITY_KEYS = new Set(["polycab-india"]);
+/** A fenced Position's fields, in emit order — for a quantity-only row when no valued one is there to copy. */
+const FENCED_POSITION_KEYS = ["securityKey", "security", "symbol", "isin", "accountId", "memberId", "sector", "providerSector",
+  "assetClass", "marketSide", "quantity", "avgCost", "currentPrice", "costBasis", "marketValue", "unrealizedPnL", "realizedPnL",
+  "costOfUnitsSold", "returnPct", "stCostBasis", "ltCostBasis", "daysToLT", "heldSince", "priceAsOf", "accruedIncome",
+  "dividendReceived", "positionIrrPct"];
 
 /**
  * THE FAMILY'S CONSOLIDATED REVIEW (MOPWM) IS THE SOURCE FOR PRIVATE-MARKET
@@ -4737,9 +4742,28 @@ function build(archived, archiveCount = archived.length) {
    * paired, because two statements drawn on different dates describe different
    * unit counts and neither may be assumed to contain the other.
    */
+  /**
+   * …AND A RING-FENCED ROW WITH NO VALUE IS STILL THE PROMOTER BLOCK. Bharat's
+   * HDFC Bank NSDL statement (a scan, read since 21 Oct 2026) prints 51,08,911
+   * Polycab shares and no value — a quantity-only custody row. Dropped here, it
+   * vanished from the book AND from the Polycab page; it moves into
+   * `BOOK_POLYCAB` instead, a Position with its share count and no value, which
+   * the page already totals with `sumOrNull` and names as unvalued.
+   */
   for (let i = unvaluedHoldings.length - 1; i >= 0; i--) {
-    if (RINGFENCED_SECURITY_KEYS.has(unvaluedHoldings[i].securityKey)) unvaluedHoldings.splice(i, 1);
+    const u = unvaluedHoldings[i];
+    if (!RINGFENCED_SECURITY_KEYS.has(u.securityKey)) continue;
+    const like = polycab[0] ?? null;
+    const row = Object.fromEntries((like ? Object.keys(like) : FENCED_POSITION_KEYS).map((k) => [k, null]));
+    Object.assign(row, {
+      securityKey: u.securityKey, security: u.security, symbol: like?.symbol ?? null, isin: u.isin ?? null,
+      accountId: u.accountId, sector: like?.sector ?? "Unclassified", assetClass: u.assetClass ?? like?.assetClass ?? "Equity",
+      marketSide: like?.marketSide ?? "listed", quantity: u.quantity, marketValue: null,
+    });
+    polycab.push(row);
+    unvaluedHoldings.splice(i, 1);
   }
+  polycab.sort((a, b) => a.accountId.localeCompare(b.accountId));
   // THE FAMILY'S KEEP-UNVALUED TABLE, CHECKED FOR DEAD ENTRIES. An entry that
   // reaches no row means its account or ISIN drifted, and the row it was about
   // went back to the statement's own reason without a word. Printed when every

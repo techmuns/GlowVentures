@@ -276,6 +276,31 @@ const GOLDEN = [
     ],
     corporateActions: { count: 6, date: "2026-05-18", netAmount: 853660 },
   },
+  /**
+   * A SCAN, READ BY OCR (lib/scan.mjs, providers/nsdlScan.mjs) — and these
+   * figures were read off the four page images by a person, 21 Oct 2026, so the
+   * reading the pipeline published is checked against eyes, not against itself.
+   * The statement prints quantities only: every row carries no market value.
+   */
+  {
+    label: "HDFC Bank NSDL · Bharat Jaisinghani 22025655 · as on 2026-03-31 (scanned)",
+    match: { provider: /HDFC Bank \(NSDL demat\)/, accountNo: "22025655" },
+    asOf: "2026-03-31",
+    owner: { printed: "BHARAT JAISINGHANI", ownerId: "bharat-jaisinghani" },
+    engagement: "Direct",
+    holdings: [
+      { reportType: "holdings", security: /polycab/i, quantity: 5108911, marketValue: null },
+      { reportType: "holdings", security: /sanshi/i, quantity: 1211186.597, marketValue: null },
+      { reportType: "holdings", security: /360 one|special opp/i, quantity: 990429.684, marketValue: null },
+      { reportType: "holdings", security: /smartworks/i, quantity: 101111, marketValue: null },
+      { reportType: "holdings", security: /head digital/i, quantity: 59458, marketValue: null },
+      { reportType: "holdings", security: /stay vista/i, quantity: 2699, marketValue: null },
+      { reportType: "holdings", security: /procyon/i, quantity: 7250, marketValue: null },
+      { reportType: "holdings", security: /reliance power/i, quantity: 27, marketValue: null },
+      { reportType: "holdings", security: /kei industries/i, quantity: 5, marketValue: null },
+      { reportType: "holdings", security: /everest fleet.*pref/i, quantity: 10, marketValue: null },
+    ],
+  },
 ];
 
 // ── Harness ──────────────────────────────────────────────────────────────────

@@ -55,13 +55,12 @@ function run({ docs, accounts, report = "", moves = [] }) {
 }
 
 const account = (asOf) => [{ accountId: "carnelian-1", provider: PROVIDER, accountNo: "1", asOf }];
-// The two files acceptedUnread.mjs names must be present AS FAILED, or the gate
-// (rightly) calls those entries stale; every case carries them.
+// A mail server's removal notice in place of a statement: read, nothing in it,
+// and NOT a read failure — every case carries one, so each also proves a notice
+// never holds back the statements beside it.
 const accepted = [
   { docKey: "lkp-notice", provider: "(unidentified)", sourcePath: "source/_extracted/october-2026-c/LKP EQUITY/519_06102026124925.xls",
-    status: "failed", warnings: [{ code: "pdf-read-failed", detail: "removal notice" }] },
-  { docKey: "hdfc-scan", provider: "(unidentified)", sourcePath: "source/august-2026-e/HOLDING STATEMENT AS ON 31 MARCH 2026.pdf",
-    status: "failed", warnings: [{ code: "no-text-layer", detail: "scan" }] },
+    status: "failed", warnings: [{ code: "attachment-removed", detail: "removal notice" }] },
 ];
 
 // ── control ───────────────────────────────────────────────────────────────────
@@ -95,8 +94,16 @@ const accepted = [
     r.code === 1 && /\[not read\] source\/new-delivery\/NewLayout\.pdf/.test(r.out), r.out);
 }
 {
-  const r = run({ docs: [accepted[1], holdingsDoc("a", "2026-09-30")], accounts: account("2026-09-30") });
-  ok("an accepted-unreadable entry whose file no longer fails is stale and fails", r.code === 1 && /\[stale exception\]/.test(r.out), r.out);
+  const r = run({ docs: [...accepted, holdingsDoc("a", "2026-09-30")], accounts: account("2026-09-30") });
+  ok("a statement that never arrived is named on every run, without failing the gate",
+    r.code === 0 && /NEVER ARRIVED/.test(r.out) && /519_06102026124925\.xls/.test(r.out), r.out);
+}
+{
+  const scan = { docKey: "scan", provider: "HDFC Bank (NSDL demat)", sourcePath: "source/new/scan.pdf",
+    status: "failed", warnings: [{ code: "scan-not-verified", detail: "a row the page could not check" }] };
+  const r = run({ docs: [...accepted, scan, holdingsDoc("a", "2026-09-30")], accounts: account("2026-09-30") });
+  ok("a scan whose rows the page could not check fails, naming the file",
+    r.code === 1 && /\[not read\] source\/new\/scan\.pdf/.test(r.out) && /scan-not-verified/.test(r.out), r.out);
 }
 {
   const r = run({ docs: [...accepted, holdingsDoc("a", "2026-09-30")], accounts: [] });

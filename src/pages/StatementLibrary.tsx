@@ -41,6 +41,9 @@ function StatusPill({ status }: { status: LibraryDoc["status"] }) {
   if (status === "held-out") {
     return <Pill tone="default"><span title="Read in full and deliberately not a statement source: no institution issued it, so no book figure is taken from it">Held out</span></Pill>;
   }
+  if (status === "never-arrived") {
+    return <Pill tone="warn"><span title="A mail server removed this attachment in transit and left a short notice under its name — the statement itself never arrived. Ask the sender to re-send it (a download link, or zipped) and upload it here.">Never arrived</span></Pill>;
+  }
   const tone = status === "partial" ? "warn" : status === "encrypted" ? "info" : "loss";
   const why = status === "partial"
     ? "Some sections of this document could not be read — see Data Audit for what it carried"
@@ -321,8 +324,8 @@ function UploadLog({ inbox, batches, served, folders, onOpen }: {
                       : <span className="text-slate-600">{DASH}</span>}
                   </td>
                   <td className="min-w-[200px] max-w-[320px] px-4 py-3 text-xs text-slate-500">
-                    {f.status === "held" || f.status === "duplicate"
-                      ? <span className="line-clamp-2" title={f.reason ?? undefined}>{f.reason}</span>
+                    {f.status === "held" || f.status === "duplicate" || (f.status === "landed" && f.reason)
+                      ? <span className={`line-clamp-2 ${f.status === "landed" ? "text-amber-400" : ""}`} title={f.reason ?? undefined}>{f.reason}</span>
                       : f.status === "landed" && f.landedAs?.length
                         ? <span className="mono line-clamp-2 break-all" title={f.landedAs.join("\n")}>{f.landedAs.join(", ")}</span>
                         : <span className="text-slate-600">{DASH}</span>}
@@ -439,7 +442,8 @@ function OpenFolder({ folder, onBack }: { folder: ProviderFolder; onBack: () => 
 function FolderTile({ folder, selected, onSelect, onOpen }: {
   folder: ProviderFolder; selected: boolean; onSelect: () => void; onOpen: () => void;
 }) {
-  const flagged = folder.status.partial + folder.status.failed;
+  const missing = folder.status["never-arrived"];
+  const flagged = folder.status.partial + folder.status.failed + missing;
   return (
     <button type="button"
       onClick={onSelect}
@@ -453,7 +457,9 @@ function FolderTile({ folder, selected, onSelect, onOpen }: {
         <Folder className="h-12 w-12 text-champagne-400/90 group-hover:text-champagne-300" strokeWidth={1.25} />
         {flagged > 0 && (
           <span className="absolute -right-1 -top-0.5 h-2.5 w-2.5 rounded-full bg-amber-400 ring-2 ring-[var(--row-alt)]"
-            title={`${flagged} document${flagged === 1 ? "" : "s"} did not fully read`} />
+            title={missing
+              ? `${missing} statement${missing === 1 ? "" : "s"} never arrived (a mail server removed the attachment)${flagged > missing ? `; ${flagged - missing} more did not fully read` : ""}`
+              : `${flagged} document${flagged === 1 ? "" : "s"} did not fully read`} />
         )}
       </div>
       <div className="min-w-0">
