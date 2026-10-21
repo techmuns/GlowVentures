@@ -14,6 +14,14 @@ export function AvailableReturnCoverage({ line: l, selection, accounts, money, f
   const coveredPositions = new Set(l.units.flatMap(u => u.positions.map(p => `${p.accountId}|${p.securityKey}`)));
   const coveredValue = l.positions.filter(p => coveredPositions.has(`${p.accountId}|${p.securityKey}`)).reduce((s, p) => s + p.marketValue, 0);
   const closing = l.units.reduce((s, u) => s + u.close, 0);
+  const gainParts = selection.inception && selection.type === 'absolute' ? [
+    ['Change in value of holdings still held', 'unrealised'],
+    ['Recorded sale / managed-account gains', 'realised'],
+    ['Recorded dividends and income', 'income'],
+  ].flatMap(([label, key]) => {
+    const amounts = l.units.map(u => u.gainParts?.[key as 'unrealised' | 'realised' | 'income']).filter((v): v is number => v != null);
+    return amounts.length ? [[label, amounts.reduce((s, v) => s + v, 0)] as const] : [];
+  }) : [];
   const gaps = [...l.missing].sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
   const count = new Set(l.units.map(u => u.accountId)).size;
   const reason = (line: SelectedLine) => line.measured?.reason ?? (line.missing.length ? returnGapText(line.missing[0].reason, selection.start)
@@ -32,6 +40,13 @@ export function AvailableReturnCoverage({ line: l, selection, accounts, money, f
             : selection.inception ? 'The gain is divided by the purchase cost of the holdings and units sold, or the money paid into a whole managed account.'
             : 'The gain is divided by the money at work. Money added later counts only for the days it was invested.'}</p>
         </>}
+        {gainParts.length > 0 && <details data-gain-parts>
+          <summary className="ring-focus cursor-pointer rounded text-slate-200">See how the gain adds up</summary>
+          <p className="mt-2">Add these recorded amounts to get the gain. Managed-account gains include money already paid back, which is outside the closing value.</p>
+          <dl className="mt-2 grid grid-cols-2 gap-3">{gainParts.map(([label, amount]) => <div className="contents" key={label}>
+            <dt>{label}</dt><dd className="text-right tabular">{money(amount, true)}</dd>
+          </div>)}</dl>
+        </details>}
         {l.units.length > 0 && <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm" data-attribution-amounts>
           {(l.measured?.working ? [
             ['Starting value', l.measured.working.opening], ['Money added', l.measured.working.capitalIn],

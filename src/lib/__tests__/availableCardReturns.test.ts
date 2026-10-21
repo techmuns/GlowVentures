@@ -29,6 +29,7 @@ const today = new Date(2026, 9, 22);
 const r = availableCardReturns(statement, positions, [input, missing], today);
 near(r.gain.total.gain, 3000); // 20 held + 10 sold, without the unverified sale.
 near(r.gain.total.invested, 15000); near(r.gain.total.returnPct, 20);
+near(r.gain.total.units.reduce((s, u) => s + Object.values(u.gainParts!).reduce<number>((n, v) => n + (v ?? 0), 0), 0), r.gain.total.gain!);
 assert.equal(r.gain.coveredHoldings, 1); near(r.gain.coveredValue, 12000);
 assert.ok(r.gain.total.missing.some(g => /Missing purchase/.test(g.label) && /purchase cost/.test(g.reason)));
 assert.ok(r.gain.total.missing.some(g => /Unchecked sale/.test(g.label) && /sale record/.test(g.reason)));

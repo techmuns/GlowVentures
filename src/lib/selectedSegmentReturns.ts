@@ -8,6 +8,7 @@ import { segmentOf, type SegmentAxis, type SectorLookup } from './segmentReturns
 export type ReturnGap = { accountId: string; label: string; owner?: string; reason: string; value?: number; securityKey?: string };
 export type ReturnUnit = { key: string; accountId: string; label: string; positions: readonly Position[];
   gain: number; invested: number; close: number; from: string | null; to: string;
+  gainParts?: { unrealised: number | null; realised: number | null; income: number | null };
   window?: AccountWindow; inception?: InceptionRow };
 export type SelectedLine = { key: string; label: string; positions: readonly Position[]; value: number;
   units: ReturnUnit[]; missing: ReturnGap[]; measured: Measured | null; gain: number | null;
@@ -32,7 +33,8 @@ export function sinceInvestmentUnits(current: readonly Position[], exited: reado
       const f = fifoTotals(held, { accounts, universe: current, exited: left });
       if (f.gain != null && f.deployed != null) {
         units.push({ key: accountId, accountId, label: sourceLabel(a), positions: [...held, ...left],
-          gain: f.gain, invested: f.deployed, close: (held.length ? held : left).reduce((s, p) => s + p.marketValue, 0), from: null, to: a.asOf });
+          gain: f.gain, invested: f.deployed, gainParts: { unrealised: f.unrealised, realised: f.realised, income: f.income },
+          close: (held.length ? held : left).reduce((s, p) => s + p.marketValue, 0), from: null, to: a.asOf });
         continue;
       }
     }
@@ -44,7 +46,7 @@ export function sinceInvestmentUnits(current: readonly Position[], exited: reado
       const f = fifoTotals(held.includes(p) ? [p] : [], { exited: held.includes(p) ? [] : [p] });
       if (f.gain == null || f.deployed == null) continue; // An empty, never-invested line has nothing to measure.
       units.push({ key: holdingKey(p), accountId, label: `${p.security} · ${sourceLabel(a)}`, positions: [p],
-        gain: f.gain, invested: f.deployed, close: held.includes(p) ? p.marketValue : 0,
+        gain: f.gain, invested: f.deployed, gainParts: { unrealised: f.unrealised, realised: f.realised, income: f.income }, close: held.includes(p) ? p.marketValue : 0,
         from: p.heldSince ?? null, to: a?.asOf ?? '' });
     }
   }
