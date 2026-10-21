@@ -4666,6 +4666,88 @@ const CAPITAL_GROUPS = (() => {
  * closing at its own STATEMENT value on its own date — by BISECTION on the
  * ACT/365 NPV, a path the page's Newton solver does not take.
  */
+/**
+ * ── A HOLDING'S OWN DATED MONEY, RESTATED OFF THE BOOK (Stage 10fw) ────────
+ *
+ * `holdingFlows.ts` re-expressed rather than imported, because it is the code
+ * under test: a line is dated by its account's trades where they account for
+ * every unit it holds (`tradeRecord.unaccounted === 0`), or by its lot register
+ * where no unit of it was sold; each buy is money in on its day, each sale and
+ * each dividend money out on its day, and the statement's value closes it on
+ * the statement's date. `lineOf` answers null where nothing dates the line,
+ * "short" where its record lacks an amount or a dividend's date, else the
+ * flows; `solve` pools a row's lines — every one dated, or no rate.
+ */
+const HOLDING_FLOWS_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const positions = statementBookPositions(src);
+    const accounts = bookArray(src, "BOOK_ACCOUNTS");
+    if (!Array.isArray(positions) || !Array.isArray(accounts)) return null;
+    const trades = bookObject(src, "BOOK_HOLDING_TRADES") ?? {};
+    const income = bookObject(src, "BOOK_HOLDING_INCOME") ?? {};
+    const lots = bookObject(src, "BOOK_HOLDING_LOTS") ?? {};
+    const asOf = new Map(accounts.map((a) => [a.accountId, a.asOf]));
+    const stmt = new Map(positions.map((p) => [`${p.accountId}|${p.securityKey}`, p]));
+    const lineOf = (k) => {
+      const p = stmt.get(k);
+      if (!p) return null;
+      const r = p.tradeRecord;
+      const inc = income[k] ?? [];
+      if (r && r.unaccounted === 0) {
+        const ts = (trades[k] ?? []).filter((t) => t.date >= r.from && t.date <= r.to);
+        if (!ts.length) return null;
+        if (ts.some((t) => t.amount === null) || inc.some((x) => !x.date)) return "short";
+        const flows = [
+          ...ts.map((t) => ({ t: Date.parse(t.date), a: t.side === "buy" ? -t.amount : t.amount })),
+          ...inc.filter((x) => x.date >= r.from && x.date <= r.to).map((x) => ({ t: Date.parse(x.date), a: x.amount })),
+        ];
+        const first = ts.find((t) => t.side === "buy")?.date ?? ts[0].date;
+        return { flows, since: Date.parse(first), close: p.marketValue > 0 ? { t: Date.parse(r.to), v: p.marketValue } : null, payments: ts.length };
+      }
+      const ls = lots[k];
+      const end = asOf.get(p.accountId);
+      if (p.heldSince && ls?.length && end) {
+        if ((p.costOfUnitsSold ?? 0) > 0 || inc.some((x) => !x.date)) return "short";
+        const flows = [
+          ...ls.map((l) => ({ t: Date.parse(l.date), a: -l.cost })),
+          ...inc.filter((x) => x.date >= ls[0].date && x.date <= end).map((x) => ({ t: Date.parse(x.date), a: x.amount })),
+        ];
+        return { flows, since: Date.parse(ls[0].date), close: p.marketValue > 0 ? { t: Date.parse(end), v: p.marketValue } : null, payments: ls.length };
+      }
+      return null;
+    };
+    /** Null where a line has no dated record; "short" where one is short of a figure; else the pooled rate. */
+    const solve = (keys) => {
+      const ls = keys.map(lineOf);
+      if (!ls.length || ls.some((x) => x === null)) return null;
+      if (ls.some((x) => x === "short")) return "short";
+      const flows = [];
+      let since = null, to = null, payments = 0;
+      for (const x of ls) {
+        flows.push(...x.flows);
+        payments += x.payments;
+        if (since === null || x.since < since) since = x.since;
+        const close = x.close ? x.close.t : Math.max(...x.flows.map((f) => f.t));
+        if (x.close) flows.push({ t: x.close.t, a: x.close.v });
+        if (to === null || close > to) to = close;
+      }
+      const t0 = Math.min(...flows.map((f) => f.t));
+      const npv = (rate) => flows.reduce((acc, f) => acc + f.a / Math.pow(1 + rate, (f.t - t0) / (365 * 864e5)), 0);
+      let lo = -0.99, hi = 10, annual = null;
+      if (Math.sign(npv(lo)) !== Math.sign(npv(hi))) {
+        for (let i = 0; i < 200; i++) {
+          const mid = (lo + hi) / 2;
+          if (Math.sign(npv(mid)) === Math.sign(npv(lo))) lo = mid; else hi = mid;
+        }
+        annual = ((lo + hi) / 2) * 100;
+      }
+      return { annual, days: Math.round((to - since) / 864e5), payments };
+    };
+    return { lineOf, solve, stmt };
+  } catch { return null; }
+})();
+
 const DATED_CAPITAL_BOOK = (() => {
   try {
     if (!CAPITAL_RECORD_BOOK || !CAPITAL_GROUPS) return null;
@@ -4802,6 +4884,21 @@ const DATED_CAPITAL_BOOK = (() => {
  * same way now, in units (Stage 10dh), which is also what makes a review holder
  * bucket's line a row of its own rather than a sixty-line pool.
  */
+/**
+ * THE STATEMENT LINES A NON-MANDATE ROW HOLDS, as `account|security` keys — the
+ * current holdings under its keys, each dedupeGroup once, as the page builds the
+ * row; off the security axis a PMS line is inside its mandate's row, not this
+ * one (Stage 10fw). What `HOLDING_FLOWS_BOOK.solve` is asked about.
+ */
+const holdingLinesOf = (B, c, securityAxis) => {
+  if (c.mandate) return null;
+  const keys = new Set(c.rowKeys.length ? c.rowKeys : c.rowKey ? [c.rowKey] : []);
+  if (!keys.size) return null;
+  return B.consolidated(keys).filter(B.carries)
+    .filter((p) => securityAxis || B.acc.get(p.accountId)?.engagement !== "PMS")
+    .map((p) => `${p.accountId}|${p.securityKey}`);
+};
+
 const rowUnits = (B, c) => {
   const keys = new Set(c.rowKeys.length ? c.rowKeys : c.rowKey ? [c.rowKey] : []);
   if (!keys.size) return undefined;
@@ -8030,10 +8127,13 @@ const ROUTES = [
   // ticked, YTD renders in the one Return column under the same rule — measurable
   // only where a holding was opened during the year, a dash naming why otherwise.
   ["monitor-ytd", "/monitor?group=category&ret=ytd"],
-  // ...AND XIRR, which per holding this book cannot strike (the statements carry
-  // no cash-flow history per security), so every cell is a dash with the reason
-  // rather than the banned `positionIrrPct` extrapolation.
+  // ...AND XIRR: on a row that is whole accounts, or holdings whose trades or
+  // lots date every unit (Stage 10fw); a dash with the reason everywhere else.
   ["monitor-xirr", "/monitor?group=category&ret=xirr"],
+  // ...AND ON THE SECURITY AXIS, where a PMS share is a row of its own and its
+  // trades are what date it — the case the category axis files inside mandates.
+  ["monitor-xirr-security", "/monitor?group=security&ret=xirr"],
+  ["monitor-cagr-security", "/monitor?group=security&ret=cagr"],
   // ...AND TWO MEASURES AT ONCE, the multi-select the family asked for: the one
   // column shows both, each on its own labelled line.
   ["monitor-returns-multi", "/monitor?group=category&ret=absolute,cagr"],
@@ -16249,9 +16349,14 @@ const stockLayoutChecks = () => [
         // bucket is an investment of its own, so the record behind this row is
         // that line's. `wholeOf` answers in units for exactly this.
         const units = set.length ? B.wholeOf(set) : null;
-        const want = !units ? null : units.every((u) => B.rated.has(u)) ? "dated" : "undated";
+        // A LINE THAT IS NOT A WHOLE ACCOUNT is dated by its own trades or lots
+        // where the book dates every unit of it (Stage 10fw).
+        const hsol = !units && set.length && HOLDING_FLOWS_BOOK
+          ? HOLDING_FLOWS_BOOK.solve(set.filter(B.carries).map((p) => `${p.accountId}|${p.securityKey}`)) : null;
+        const want = units ? (units.every((u) => B.rated.has(u)) ? "dated" : "undated")
+          : hsol === null ? null : hsol === "short" ? "undated" : "holding";
         if ((r.capital ?? null) !== want) return false;
-        const sol = want === "dated" ? B.solve(units) : null;
+        const sol = want === "dated" ? B.solve(units) : want === "holding" ? hsol : null;
         const expect = sol && sol.days >= 365 && sol.annual !== null ? sol.annual : null;
         if (expect === null) { if (r.xirr !== null) return false; continue; }
         // To the printed decimal: the line renders one place.
@@ -18184,10 +18289,14 @@ const VALUE_WINDOW_BOOK = (() => {
     const endOf = (key) => { const e = byKey.get(key); return e && e.dates.size === 1 ? [...e.dates][0] : null; };
     const newest = accounts.reduce((m, a) => (a.asOf > m ? a.asOf : m), "");
     // Dated holdings whose OWN window reaches a year — the rows the CAGR column
-    // must annualise, over their own window.
+    // must annualise from their oldest lot, over their own window. A row whose
+    // every line is dated lot by lot or trade by trade (Stage 10fw) is not one:
+    // its rate is the dated-money rule's, checked on its own.
+    const datedLines = new Set(onRows.filter((p) => HOLDING_FLOWS_BOOK?.lineOf(`${p.accountId}|${p.securityKey}`))
+      .map((p) => p.securityKey));
     const yearOld = [...byKey.entries()].filter(([k, e]) => {
       const end = endOf(k);
-      return end && e.since.length && e.since.every((x) => (Date.parse(end) - Date.parse(x)) / 86400000 >= 365);
+      return end && !datedLines.has(k) && e.since.length && e.since.every((x) => (Date.parse(end) - Date.parse(x)) / 86400000 >= 365);
     }).map(([k]) => k);
     return { endOf, newest, yearOld };
   } catch { return null; }
@@ -32712,13 +32821,40 @@ const INVARIANTS = {
       const cells = (ctx?.returnCells ?? []).filter((c) => c.measure === "cagr" && !c.tag && c.note && /Annualised over/.test(c.note));
       // The book says some holding is a year old to its own valuation, so a
       // column with nothing annualised is a finding, not an abstention.
-      if (!cells.length) return B.yearOld.length === 0 ? { notChecked: "no holding in this book is a year old to its own valuation" } : false;
+      if (!cells.length) return B.yearOld.length === 0 ? { notChecked: "no holding in this book is a year old to its own valuation and annualised from its oldest lot — every year-old lot-dated holding is dated lot by lot" } : false;
       return cells.every((c) => {
         const end = B.endOf(c.key);
         const m = /over the (\d+) days from (\d{4}-\d{2}-\d{2}), the oldest unit still held, to its valuation on (\d{4}-\d{2}-\d{2})/.exec(c.note);
         return !!end && c.valuedAt === end && !!m && m[3] === end
           && Number(m[1]) === Math.round((Date.parse(m[3]) - Date.parse(m[2])) / 86400000);
       }) && cells.some((c) => B.endOf(c.key) !== B.newest);
+    }],
+    /**
+     * A HOLDING BOUGHT OVER SEVERAL DATED PAYMENTS IS NOT COMPOUNDED FROM ITS
+     * FIRST (Stage 10fw). Crompton Greaves went in as ₹9.88 L in March 2025 and
+     * ₹5.59 L in November; CAGR from March treated all of it as a year old. Where
+     * the book dates a row's every line by its trades or lots, the CAGR cell
+     * refuses several payments and names XIRR, compounds one payment from its
+     * own day, and under a year stays the HPR — re-derived off the book.
+     */
+    ["a row of dated holdings: several payments refuse CAGR and name XIRR, one is compounded from its own day", (t, ctx) => {
+      const B = DATED_CAPITAL_BOOK;
+      const H = HOLDING_FLOWS_BOOK;
+      if (!B || !H) return false;
+      const securityAxis = !/group=(category|assetClass|basket)/.test(String(ctx?.path ?? ""));
+      const cells = (ctx?.returnCells ?? []).filter((c) => c.measure === "cagr" && c.capital === "holding");
+      const solved = cells.map((c) => ({ c, sol: H.solve(holdingLinesOf(B, c, securityAxis) ?? []) }));
+      if (!solved.length) {
+        const any = (ctx?.returnCells ?? []).some((c) => c.measure === "cagr" && !c.mandate
+          && (() => { const l = holdingLinesOf(B, c, securityAxis); return l?.length && H.solve(l) && H.solve(l) !== "short"; })());
+        return any ? false : { notChecked: "no row on screen is holdings the book dates in full" };
+      }
+      return solved.every(({ c, sol }) => {
+        if (!sol || sol === "short") return false;
+        if (sol.days < 365) return c.tag === "HPR" || /—/.test(c.text);
+        if (sol.payments > 1) return /—/.test(c.text) && /several dates/.test(c.reason ?? "") && /XIRR/.test(c.reason ?? "");
+        return !c.tag && /One payment on/.test(c.note ?? "");
+      });
     }],
     // The picker is on CAGR, and the CAGR caption explains what it annualises.
     // The measure is on the URL and the cells, not a "Return p.a." header any more.
@@ -32856,14 +32992,13 @@ const INVARIANTS = {
     }],
   ],
   /**
-   * ── XIRR PER HOLDING IS NOT MEASURABLE HERE, AND SAYS SO ───────────────────
+   * ── XIRR PER HOLDING ONLY WHERE ITS OWN MONEY IS DATED, AND SAYS SO ────────
    *
    * "Fixed income… more than one year should be XIRR… an XIRR when there are
-   * multiple tranches." The methodology routes to XIRR, and this book cannot
-   * strike one per holding: the statements carry no cash-flow history per
-   * security, and `positionIrrPct` is the banned extrapolation. So every cell is
-   * a dash with the reason — the honest answer, verified rather than a figure
-   * invented to fill the column.
+   * multiple tranches." The methodology routes to XIRR, and a holding carries
+   * one only where its account's dated trades or its lot register date every
+   * unit it holds (Stage 10fw), re-solved below off the book; `positionIrrPct` is
+   * the banned extrapolation. Every other cell is a dash with the reason.
    */
   "monitor-xirr": [
     ...RETURN_COLUMNS,
@@ -32895,8 +33030,25 @@ const INVARIANTS = {
       const mine = cells.filter((c) => c.measure === "xirr");
       if (mine.length !== cells.length) return false;
       let rates = 0;
+      const securityAxis = !/group=(category|assetClass|basket)/.test(String(ctx?.path ?? ""));
       for (const c of mine) {
         const v = signedPctOf(c.text);
+        /**
+         * …OR A ROW OF HOLDINGS EVERY ONE OF WHICH ITS TRADES OR LOTS DATE IN
+         * FULL (Stage 10fw): the rate re-solves off the book's own trades, lots
+         * and dividends, on the same guard — under a year it is the HPR.
+         */
+        if (c.capital === "holding") {
+          const H = HOLDING_FLOWS_BOOK;
+          const lines = holdingLinesOf(B, c, securityAxis);
+          const sol = H && lines?.length ? H.solve(lines) : null;
+          if (!sol || sol === "short") return false;
+          if (sol.days < 365) { if (!Number.isNaN(v) && c.tag !== "HPR") return false; continue; }
+          if (sol.annual === null) { if (!Number.isNaN(v)) return false; continue; }
+          if (c.tag || Number.isNaN(v) || Math.abs(v - sol.annual) > 0.006) return false;
+          rates++;
+          continue;
+        }
         if (c.capital !== "dated") {
           // A holding inside an account, or accounts with no complete dated
           // record: a dash, never a figure.
@@ -32937,10 +33089,20 @@ const INVARIANTS = {
       const B = DATED_CAPITAL_BOOK;
       if (!B) return false;
       let whole = 0;
+      const securityAxis = !/group=(category|assetClass|basket)/.test(String(ctx?.path ?? ""));
       for (const c of cells.filter((x) => x.measure === "xirr")) {
         const units = rowUnits(B, c);
         if (units === undefined) return false;
-        if (!units) { if (c.capital !== null) return false; continue; }
+        if (!units) {
+          // NOT WHOLE ACCOUNTS: a row of holdings, dated exactly where the book
+          // dates every line of it in full (Stage 10fw) — "holding" — short of a
+          // figure where one line's record is — "undated" — and nothing else.
+          const lines = holdingLinesOf(B, c, securityAxis);
+          const sol = HOLDING_FLOWS_BOOK && lines?.length ? HOLDING_FLOWS_BOOK.solve(lines) : null;
+          const want = sol === null ? null : sol === "short" ? "undated" : "holding";
+          if ((c.capital ?? null) !== want) return false;
+          continue;
+        }
         whole++;
         const want = units.every((u) => B.rated.has(u)) ? "dated" : "undated";
         // The page names the ACCOUNTS behind the row, which for a review holder
@@ -32961,7 +33123,7 @@ const INVARIANTS = {
       if (!h) return { notChecked: "the XIRR column was not on screen on this run" };
       const cells = (ctx?.returnCells ?? []).filter((c) => c.measure === "xirr");
       if (!cells.length) return false;
-      const rates = cells.filter((c) => c.capital === "dated" && !c.tag && !Number.isNaN(signedPctOf(c.text))).length;
+      const rates = cells.filter((c) => (c.capital === "dated" || c.capital === "holding") && !c.tag && !Number.isNaN(signedPctOf(c.text))).length;
       const short = /(\d+) money-weighted of (\d+)/.exec(h.note ?? "");
       const why = h.noteTitle ?? "";
       return !!short && Number(short[1]) === rates && Number(short[2]) === cells.length
@@ -37023,6 +37185,10 @@ const TILE_PICKER_CHECKS = tilePickerChecks({
  * subject it does not draw.
  */
 {
+  // The same XIRR and CAGR claims on the security axis (Stage 10fw).
+  INVARIANTS["monitor-xirr-security"] = INVARIANTS["monitor-xirr"];
+  // Less the mandate-row reasons (MH-09, MH-15): off the category axis a mandate is not a row.
+  INVARIANTS["monitor-cagr-security"] = INVARIANTS["monitor-cagr"].filter(([d]) => !/(MH-09, MH-18)|(MH-15)/.test(d));
   const all = INVARIANTS["private-market"];
   INVARIANTS["private-market"] = [...all.filter(([d]) => !FULL_STRIP_ONLY.has(d)), ...TILE_PICKER_CHECKS];
   INVARIANTS["private-market-tiles"] = [...all,
