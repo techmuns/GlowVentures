@@ -1,7 +1,8 @@
-import { lazy, Suspense, useMemo, useState, type FormEvent } from "react";
+import { lazy, Suspense, useEffect, useRef, useMemo, useState, type FormEvent } from "react";
 import { Plus, X } from "lucide-react";
 import { TextField, SelectField } from "@/components/FormBits";
 import { PROPERTY_TYPES, PROPERTY_STATUSES, AREA_UNITS, TITLE_STATUSES, validateProperty, type Property, type PropertyOwner } from "@/lib/realEstate";
+import { findPropertyAddress, type AddressMatch } from "@/lib/propertyMaps";
 const PropertyMap = lazy(() => import("./PropertyMap"));
 const options = (values: string[]) => values.map(value => ({ value, label: value }));
 const optionalNumber = (value: string) => value.trim() === "" ? null : Number(value.replace(/,/g, ""));
@@ -21,8 +22,19 @@ export function PropertyEditor({ property, members, onSave, onCancel }: {
   const [shares, setShares] = useState(() => property.owners.map(o => String(o.share)));
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const [mapOpen, setMapOpen] = useState(property.latitude === null);
-  const set = <K extends keyof Property>(key: K, value: Property[K]) => setDraft(p => ({ ...p, [key]: value }));
+  const [mapOpen, setMapOpen] = useState(false);
+  const [finding, setFinding] = useState(false);
+  const [matches, setMatches] = useState<AddressMatch[]>([]);
+  const [locationMessage, setLocationMessage] = useState("");
+  const searchId = useRef(0);
+  useEffect(() => () => { searchId.current++; }, []);
+  const set = <K extends keyof Property>(key: K, value: Property[K]) => {
+    if (["address", "city", "state", "country", "pincode"].includes(key)) {
+      searchId.current++; setFinding(false); setMatches([]);
+      setLocationMessage(numbers.latitude ? "Address changed. Find it again or adjust the existing pin." : "");
+    }
+    setDraft(p => ({ ...p, [key]: value }));
+  };
   const changeStatus = (status: string) => {
     const hadRent = ["Rented", "For sale"].includes(draft.status);
     set("status", status);
@@ -33,6 +45,32 @@ export function PropertyEditor({ property, members, onSave, onCancel }: {
     const lat = optionalNumber(numbers.latitude), lng = optionalNumber(numbers.longitude);
     return lat !== null && lng !== null && Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180 ? [lat, lng] : null;
   }, [numbers.latitude, numbers.longitude]);
+  const addressQuery = [draft.address, draft.city, draft.state, draft.pincode, draft.country].map(v => v.trim()).filter(Boolean).join(", ");
+  const pick = (lat: number, lng: number) => {
+    // A manual click or drag takes precedence over an unfinished address search.
+    searchId.current++; setFinding(false); setMatches([]);
+    setNumbers(n => ({ ...n, latitude: lat.toFixed(7), longitude: lng.toFixed(7) }));
+    setLocationMessage("Pin set. Drag it to adjust the exact spot.");
+  };
+  const locate = (match: AddressMatch) => {
+    setNumbers(n => ({ ...n, latitude: String(match.point[0]), longitude: String(match.point[1]) }));
+    setDraft(p => ({ ...p, city: p.city || match.city, state: p.state || match.state, country: match.country || p.country, pincode: p.pincode || match.pincode }));
+    setMatches([]); setMapOpen(true);
+    setLocationMessage(match.approximate ? "Approximate match. Drag the pin to the exact property." : "Address found. Check the pin and drag it if needed.");
+  };
+  const find = async () => {
+    if (!draft.address.trim()) { setLocationMessage("Enter the property address first."); return; }
+    const id = ++searchId.current;
+    setFinding(true); setLocationMessage(""); setMatches([]); setMapOpen(true);
+    try {
+      const results = await findPropertyAddress(addressQuery);
+      if (id !== searchId.current) return;
+      if (results.length === 1) locate(results[0]);
+      else if (results.length) { setMatches(results); setLocationMessage("Choose the matching address."); }
+      else setLocationMessage("No address found. Add a nearby landmark or place the pin on the map.");
+    } catch (e) { if (id === searchId.current) setLocationMessage(e instanceof Error ? e.message : "Address search failed. Try again."); }
+    finally { if (id === searchId.current) setFinding(false); }
+  };
   const numberField = (key: string, label: string, hint?: string) => <TextField key={key} label={label} value={numbers[key]} onChange={value => setNumbers(n => ({ ...n, [key]: value }))} hint={hint} placeholder="Not entered" />;
   const save = async (event: FormEvent) => {
     event.preventDefault();
@@ -60,6 +98,19 @@ export function PropertyEditor({ property, members, onSave, onCancel }: {
         {numberField("area", "Area")}
         <SelectField label="Area unit" value={draft.areaUnit} options={options(AREA_UNITS)} onChange={v => set("areaUnit", v)} />
         <SelectField label="Area basis" value={draft.areaBasis} options={options(["Plot", "Carpet", "Built-up", "Super built-up"])} onChange={v => set("areaBasis", v)} />
+      </div>
+      <div className="border-t border-ink-700 pt-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <h3 className="h-section">Property location</h3>
+          <button type="button" className="btn-ghost text-xs" disabled={finding || !draft.address.trim()} onClick={find}>{finding ? "Finding address…" : "Find on map"}</button>
+          <button type="button" className="btn-ghost text-xs" onClick={() => setMapOpen(open => !open)}>{mapOpen ? "Hide map" : point ? "Adjust pin" : "Place pin on map"}</button>
+          {point && <button type="button" className="text-xs underline text-slate-400" onClick={() => { searchId.current++; setFinding(false); setMatches([]); setNumbers(n => ({ ...n, latitude: "", longitude: "" })); setLocationMessage(""); }}>Clear pin</button>}
+          <span className="text-xs text-slate-400">{point ? "Pin set" : "No pin set"}</span>
+        </div>
+        {locationMessage && <p className="mt-2 text-xs text-slate-400" role="status">{locationMessage}</p>}
+        {(mapOpen || matches.length > 0) && <p className="mt-1 text-xs text-slate-400">Address search: <a className="underline" href="https://photon.komoot.io" target="_blank" rel="noopener noreferrer">Photon</a> · © <a className="underline" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a></p>}
+        {matches.length > 0 && <div className="mt-2 grid gap-2" aria-label="Matching addresses">{matches.map((match, i) => <button type="button" key={i} className="rounded-md border border-ink-600 p-3 text-left text-sm hover:bg-ink-800" onClick={() => locate(match)}>{match.label}{match.approximate && <span className="ml-2 text-xs text-slate-400">Approximate</span>}</button>)}</div>}
+        {mapOpen && <div className="mt-3">{!locationMessage && <p className="mb-2 text-xs text-slate-400">Drag the pin or click the map to set the exact spot.</p>}<Suspense fallback={<div className="p-8 text-sm text-slate-400">Loading map…</div>}><PropertyMap point={point} onPick={pick} /></Suspense></div>}
       </div>
       <div className="border-t border-ink-700 pt-4">
         <div className="mb-3 flex items-center gap-3"><h3 className="h-section">Family ownership</h3><button type="button" className="btn-ghost text-xs" onClick={() => { set("owners", [...draft.owners, { ownerId: null, name: "", share: 0 }]); setShares(s => [...s, ""]); }}><Plus className="h-3 w-3" />Add owner</button></div>
@@ -90,22 +141,11 @@ export function PropertyEditor({ property, members, onSave, onCancel }: {
           <TextField label="Notes" value={draft.notes} onChange={v => set("notes", v)} wide mono={false} />
         </div>
       </details>
-      <details className="border-t border-ink-700 pt-4" open={mapOpen} onToggle={e => setMapOpen(e.currentTarget.open)}>
-        <summary className="h-section cursor-pointer">Map pin {point ? "· set" : "· not set"}</summary>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          {numberField("latitude", "Latitude")}{numberField("longitude", "Longitude")}
-        </div>
-        <div className="my-3 flex flex-wrap items-center gap-3 text-xs text-slate-400"><span>Enter coordinates or click the exact location on the map.</span>
-          {point && <button type="button" className="underline" onClick={() => setNumbers(n => ({ ...n, latitude: "", longitude: "" }))}>Clear pin</button>}
-          <a className="text-champagne-400 underline" href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([draft.address, draft.city, draft.state, draft.country].filter(Boolean).join(", "))}`} target="_blank" rel="noopener noreferrer">Find address ↗</a>
-        </div>
-        <Suspense fallback={<div className="p-8 text-sm text-slate-400">Loading map…</div>}><PropertyMap point={point} onPick={(lat, lng) => setNumbers(n => ({ ...n, latitude: lat.toFixed(7), longitude: lng.toFixed(7) }))} /></Suspense>
-      </details>
     </fieldset>
     {error && <p role="alert" className="text-sm text-loss">{error}</p>}
     <div className="sticky bottom-0 flex justify-end gap-2 border-t border-ink-700 bg-ink-900 py-3">
       <button type="button" className="btn-ghost" disabled={busy} onClick={onCancel}>Cancel</button>
-      <button className="btn-primary" type="submit" disabled={busy}>{busy ? "Saving…" : "Save property"}</button>
+      <button className="btn-primary" type="submit" disabled={busy || finding}>{busy ? "Saving…" : "Save property"}</button>
     </div>
   </form>;
 }
