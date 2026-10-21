@@ -6,7 +6,7 @@ import { isTableExporting } from "@/lib/tableExportSnapshot";
 export function useInfiniteTable(total: number, resetKey: string, batchSize = 50) {
   const [state, setState] = useState({ key: resetKey, limit: batchSize });
   if (!isTableExporting() && state.key !== resetKey) setState({ key: resetKey, limit: batchSize });
-  const limit = state.key === resetKey ? state.limit : batchSize;
+  const limit = isTableExporting() || state.key === resetKey ? state.limit : batchSize;
   const shown = Math.min(total, limit);
   const loadMore = useCallback(() => {
     setState(current => current.key === resetKey

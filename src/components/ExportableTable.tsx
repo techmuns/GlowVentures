@@ -32,6 +32,9 @@ export function ExportableTable({ children, exportName, ...props }: Omit<TableHT
       const columns = Array.from(element.tHead?.rows[0]?.cells ?? []).slice(0, 3).map(cell => cell.textContent?.trim()).filter(Boolean).join(" · ");
       const title = exportName ?? `${heading} — ${columns || "Table"}`;
       const positions: [HTMLElement, number, number][] = [];
+      for (const port of document.querySelectorAll<HTMLElement>("*")) {
+        if (port.scrollTop || port.scrollLeft) positions.push([port, port.scrollTop, port.scrollLeft]);
+      }
       for (let parent = element.parentElement; parent; parent = parent.parentElement) positions.push([parent, parent.scrollTop, parent.scrollLeft]);
       let snapshot;
       try {
