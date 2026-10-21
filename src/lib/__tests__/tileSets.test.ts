@@ -92,7 +92,7 @@ async function call(
     headers,
     body: method === "POST" ? (init.raw ?? JSON.stringify(init.body)) : undefined,
   });
-  const res = await onRequest({ request, env: kv ? { GLOW_STORE: kv } : {} });
+  const res = await onRequest({ request, env: kv ? { DASHBOARD_STORE: kv } : {} });
   const text = await res.text();
   let body: Body | null = null;
   try { body = JSON.parse(text); } catch { body = null; }
@@ -105,7 +105,7 @@ async function call(
 console.log("── an unconnected store says so, and nothing is claimed saved ──");
 {
   const g = await call(undefined);
-  ok("GET with no GLOW_STORE binding answers 503 NOT_CONFIGURED", g.status === 503 && g.body?.code === "NOT_CONFIGURED", `${g.status} ${g.body?.code}`);
+  ok("GET with no GitHub token answers 503 NOT_CONFIGURED", g.status === 503 && g.body?.code === "NOT_CONFIGURED", `${g.status} ${g.body?.code}`);
   const p = await call(undefined, { body: { page: "cio", ids: ["value"] } });
   ok("…and so does a save", p.status === 503 && p.body?.ok === false && p.body?.code === "NOT_CONFIGURED");
   const reply = await readTileReply(g.again());
