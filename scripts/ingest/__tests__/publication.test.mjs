@@ -54,6 +54,9 @@ test('receipt preservation refuses unsafe filenames and symbolic links before re
   fs.symlinkSync(path.join(directory, 'original'), path.join(deliveries, 'c'.repeat(64) + '.json'));
   assert.throws(() => readDeliveryReceipts([directory]), /Unsafe delivery receipt/);
   assert.equal(fs.readFileSync(path.join(directory, 'original'), 'utf8'), 'opaque');
+  const linked = path.join(directory, 'linked'); fs.mkdirSync(linked);
+  fs.symlinkSync(path.join(directory, 'absent-target'), path.join(linked, 'deliveries'));
+  assert.throws(() => readDeliveryReceipts([linked]), /regular directory/);
 });
 
 test('verified later snapshot preserves the earlier document and is deterministic', () => {

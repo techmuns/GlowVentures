@@ -14,6 +14,7 @@ import { chromium } from 'playwright-core';
 import ts from 'typescript';
 import { onRequest } from '../../functions/api/statement-uploads.js';
 import { inboxService, localGit, readControl, writeControl } from './statement-e2e-git.mjs';
+import { cleanUploadPath } from '../../shared/statementInbox.mjs';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const workspace = path.resolve(process.argv[2] || '.cache/build-copies/statement-upload-e2e');
 assert.ok(workspace.startsWith(path.join(root, '.cache') + path.sep));
@@ -89,6 +90,11 @@ try {
   ].join('\n');
   execFileSync('python3', ['-c', prepare, JSON.stringify(['source/august-2026-d/MOTILAL REPORTS.zip', 'source/october-2026-c/MOTILAL FOLDER 1..zip']), JSON.stringify(names), fixtureDir], { cwd: workspace });
   fixtureFiles = names.map(name => ({ name, bytes: fs.readFileSync(path.join(fixtureDir, name)) }));
+  const uploadedFixture = name => {
+    const original = fixtureFiles.find(f => cleanUploadPath(f.name) === path.basename(name));
+    assert.ok(original, 'The uploaded safe filename identifies one original fixture: ' + name);
+    return original;
+  };
   const all = JSON.parse(fs.readFileSync(path.join(workspace, 'public/audit/manifest.json')));
   assert.equal(all.filter(d => names.includes(path.basename(d.sourcePath))).length, names.length);
   await npm('inventory', 'baseline-inventory');
@@ -136,7 +142,7 @@ try {
     const log = inboxLog();
     for (const batch of log.batches) for (const f of batch.files.filter(f => f.status !== 'duplicate' && f.status !== 'landed')) {
       const stored = execFileSync('git', ['--git-dir', remote, 'show', 'refs/heads/statement-inbox:files/' + batch.id + '/' + f.name]);
-      assert.equal(hash(stored), hash(fixtureFiles.find(x => x.name === path.basename(f.name)).bytes));
+      assert.equal(hash(stored), hash(uploadedFixture(f.name).bytes));
     }
   };
   const startWorker = () => {
@@ -224,7 +230,7 @@ try {
     const entry = publication.statementDocuments.find(d => d.document === version.document && d.revision === version.revision);
     assert.ok(entry, 'Published manifest attests to this exact uploaded document version');
     const provenance = await (await fetch(baseURL + '/views/' + published.revision + '/' + entry.evidence)).json();
-    assert.equal(provenance.source.sha256, hash(fixtureFiles.find(f => f.name === path.basename(uploaded.name)).bytes), 'The published source checksum belongs to these exact uploaded bytes');
+    assert.equal(provenance.source.sha256, hash(uploadedFixture(uploaded.name).bytes), 'The published source checksum belongs to these exact uploaded bytes');
     assert.ok(provenance.receipt, 'The published document retains its immutable delivery receipt');
   }
   for (const e of expected) { const p = afterPositions.find(p => p.accountId === e.accountId && p.isin === e.isin); assert.ok(p);

@@ -7,8 +7,9 @@ export function readDeliveryReceipts(archives) {
   const receipts = new Map();
   for (const archive of new Set(archives.map(p => path.resolve(p)))) {
     const directory = path.join(archive, 'deliveries');
-    if (!fs.existsSync(directory)) continue;
-    const stat = fs.lstatSync(directory);
+    let stat;
+    try { stat = fs.lstatSync(directory); }
+    catch (error) { if (error.code === 'ENOENT') continue; throw error; }
     if (!stat.isDirectory() || stat.isSymbolicLink()) throw new Error('Delivery receipts must be a regular directory');
     for (const name of fs.readdirSync(directory).sort()) {
       const file = path.join(directory, name), entry = fs.lstatSync(file);
