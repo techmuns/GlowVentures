@@ -49,6 +49,9 @@ function textOf(node: Node): string {
 
 /** Read only this table's rows; a nested drilldown has its own export control. */
 export function readTableExport(table: HTMLTableElement, title: string): TableExport {
+  const header = Array.from(table.tHead?.rows ?? []).find(row => row.hasAttribute("data-export-total-columns"));
+  const visibleColumns = Number(header?.dataset.exportVisibleColumns);
+  const totalColumns = Number(header?.dataset.exportTotalColumns);
   const rows = Array.from(table.rows).filter(row => row.closest("table") === table && !row.matches("[data-table-scroll-end], [data-export-ignore]"));
   return { title, url: window.location.href, rows: rows.map(row => ({
     kind: row.parentElement?.tagName === "THEAD" ? "header" : row.parentElement?.tagName === "TFOOT" ? "footer" : "body",
@@ -60,7 +63,8 @@ export function readTableExport(table: HTMLTableElement, title: string): TableEx
       const link = Array.from(cell.querySelectorAll<HTMLAnchorElement>("a[href]")).find(element => element.closest("table") === table);
       return { text, value, format: source?.getAttribute("data-export-format") ?? undefined,
         numeric: row.parentElement?.tagName !== "THEAD" && (cell.classList.contains("mono") || cell.classList.contains("text-right")),
-        colSpan: cell.colSpan, rowSpan: cell.rowSpan, note: cell.title || undefined,
+        colSpan: row.cells.length === 1 && cell.colSpan === visibleColumns ? totalColumns : cell.colSpan,
+        rowSpan: cell.rowSpan, note: cell.title || undefined,
         hyperlink: link && /^https?:$/.test(link.protocol) ? link.href : undefined };
     }),
   })) };
