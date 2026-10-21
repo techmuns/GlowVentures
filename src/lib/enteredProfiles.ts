@@ -107,15 +107,19 @@ async function send(body: unknown): Promise<Reply> {
 export function useEnteredProfiles() {
   const [state, setState] = useState<EnteredProfilesState>({ status: "loading" });
   const alive = useRef(true);
+  const writes = useRef(Promise.resolve());
+  const revision = useRef(0);
 
   const load = useCallback(async () => {
+    const started = revision.current;
+    await writes.current;
     let reply: Reply;
     try {
       reply = await readReply(await fetch(PROFILES_ENDPOINT, { credentials: "same-origin", cache: "no-store" }));
     } catch {
       reply = { ok: false, reason: REASONS.noAnswer, cause: "no-answer" };
     }
-    if (!alive.current) return;
+    if (!alive.current || started !== revision.current) return;
     // A refresh that fails keeps what was already shown (`enteredCalls.ts`).
     setState((prev) => reply.ok ? { status: "ready", profiles: reply.profiles }
       : prev.status === "ready" ? prev : { status: "unavailable", reason: reply.reason, cause: reply.cause });
@@ -133,10 +137,19 @@ export function useEnteredProfiles() {
     if (reply.ok && alive.current) setState({ status: "ready", profiles: reply.profiles });
     return reply;
   };
+  // Each save response contains the store's starting snapshot plus that edit.
+  // Inline fields can save together: serialize them so a later response cannot
+  // hide another cell's successful edit. Older focus reads are discarded too.
+  const mutate = useCallback((body: unknown) => {
+    revision.current++;
+    const result = writes.current.then(async () => apply(await send(body)));
+    writes.current = result.then(() => {}, () => {});
+    return result;
+  }, []);
   const save = useCallback(async (funds: readonly string[], field: ProfileFieldId, fundName: string, text: string) =>
-    apply(await send({ op: "save", funds, field, fundName, text })), []);
+    mutate({ op: "save", funds, field, fundName, text }), [mutate]);
   const remove = useCallback(async (funds: readonly string[], field: ProfileFieldId) =>
-    apply(await send({ op: "delete", funds, field })), []);
+    mutate({ op: "delete", funds, field }), [mutate]);
 
   return { state, save, remove, reload: load };
 }

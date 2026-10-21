@@ -177,7 +177,7 @@ export function combineProfiles(ps: readonly InvestmentProfile[]): InvestmentPro
 /** What a column's header hover says about the supplied records. */
 export function profileSupplyNote(field: ProfileFieldId, m: ReturnType<typeof matchProfiles>): string {
   const what = field === "strategy" ? "A fund's investment strategy" : "What the company does";
-  const type = ` Click a cell to type it in, saved for everyone; typed text shows over a file's.`;
+  const type = ` Edit the inline fields and save for everyone; typed text shows over a file's.`;
   if (!m.files) return `${what}, as the family supplies it. No statement prints one.${type} A sheet, CSV or JSON in the statement drop that names each investment (by name, ISIN or folio) beside a ${PROFILE_LABEL[field]} column fills it too.`;
   const used = m.unmatched.filter((u) => u.record[field]);
   return `${what}, as supplied in ${m.files} ${m.files === 1 ? "file" : "files"} (${m.records} records), matched to each investment by ISIN, name, brand or folio.${type}`
