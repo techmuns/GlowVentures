@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { makeDocument, makeHolding, deriveDocument } from '../lib/document.mjs';
 import { assessPublication, digest, stable, archiveRevision, documentEvidence, positionEvidence } from '../lib/publication.mjs';
-import { sourceFiles } from '../prepare-delivery.mjs';
+import { sourceFiles, duplicateBytes } from '../prepare-delivery.mjs';
 import { checkSeal, commitDelivery } from '../publish-delivery.mjs';
 import { finalizationGate } from '../finalize-delivery.mjs';
 import { completedBotReview, deploymentContains, monitorPublication } from '../lib/intakePublication.mjs';
@@ -160,6 +160,13 @@ test('raw checksum is standard SHA-256 and tampered/stale candidate sets publish
   assert.throws(() => checkSeal(seal, { currentBase: 'newer', read: () => bytes }), /STALE_BASE/);
   assert.throws(() => checkSeal(seal, { currentBase: 'base', read: () => Buffer.from('changed') }), /ARTIFACT_CHANGED/);
   assert.throws(() => checkSeal({ ...seal, artifacts: [{ ...seal.artifacts[0], path: 'functions/evil.js' }] }, { currentBase: 'base', read: () => bytes }), /Invalid/);
+});
+test('no extracted document is never treated as proof that new uploaded bytes were a duplicate', () => {
+  const files = [{ absolute: 'new.pdf', sha256: digest(Buffer.from('new statement')) }];
+  const fakeGit = args => args[0] === 'ls-tree' ? 'old-blob\n' : args[0] === 'hash-object' ? 'new-blob\n' : Buffer.from('old statement');
+  assert.equal(duplicateBytes(files, 'base', fakeGit), false);
+  const knownGit = args => args[0] === 'ls-tree' || args[0] === 'hash-object' ? 'same-blob\n' : Buffer.from('new statement');
+  assert.equal(duplicateBytes(files, 'base', knownGit), true);
 });
 test('upload requests reject paths outside source, missing digests and symbolic links', () => {
   const directory = fs.mkdtempSync(path.join(ROOT, '.cache/publication-test-'));

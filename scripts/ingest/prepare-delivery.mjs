@@ -26,6 +26,13 @@ export function atomicJson(file, data) {
   const temporary = `${file}.${process.pid}.tmp`;
   fs.writeFileSync(temporary, stable(data) + '\n', { flag: 'wx' }); fs.renameSync(temporary, file);
 }
+export function duplicateBytes(files, baseCommit, runGit = git) {
+  const known = new Set(runGit(['ls-tree', '-r', '--format=%(objectname)', baseCommit, '--', 'source']).trim().split('\n'));
+  return files.every(file => {
+    const blob = runGit(['hash-object', '--no-filters', '--', file.absolute]).trim();
+    return known.has(blob) && digest(runGit(['cat-file', 'blob', blob], { encoding: 'buffer' })) === file.sha256;
+  });
+}
 export function listFiles(directory) {
   return fs.readdirSync(directory, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name)).flatMap(entry => {
     const full = path.join(directory, entry.name);
@@ -61,9 +68,14 @@ export function prepare(request, { baseRef = 'origin/main', runStage } = {}) {
     stage('scripts/ingest/extract.mjs');
     const assessment = verify({ baseRef: baseCommit, auditDir: audit, expected: request.expected ?? {} });
     atomicJson(path.join(directory, 'assessment.json'), assessment);
-    if (assessment.decision === 'duplicate' || assessment.decision === 'unchanged') {
+    if (assessment.decision === 'duplicate' || (assessment.decision === 'unchanged' && duplicateBytes(files, baseCommit))) {
       status('duplicate', { assessment: 'assessment.json' });
       return { schemaVersion: 1, id, state: 'duplicate', directory, baseCommit };
+    }
+    if (assessment.decision === 'unchanged') {
+      assessment.decision = 'needs_review';
+      assessment.issues.push({ code: 'NO_NEW_DOCUMENTS', document: null, pointer: '', reason: 'The new bytes produced no new normalized document. That is not proof of a duplicate.' });
+      atomicJson(path.join(directory, 'assessment.json'), assessment);
     }
     if (assessment.decision !== 'verified') {
       status('needs_review', { assessment: 'assessment.json' });
