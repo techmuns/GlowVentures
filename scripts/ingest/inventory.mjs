@@ -29,9 +29,9 @@ import { readSpreadsheet } from "./lib/sheet.mjs";
 import { classify, REPORT_TYPES } from "./lib/classify.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
-const SOURCE_DIR = path.join(ROOT, "source");
+const SOURCE_DIR = process.env.GLOW_SOURCE_DIR ?? path.join(ROOT, "source");
 const EXTRACT_DIR = path.join(SOURCE_DIR, "_extracted");
-const DOCS_DIR = path.join(ROOT, "docs");
+const DOCS_DIR = process.env.GLOW_DOCS_DIR ?? path.join(ROOT, "docs");
 const JSON_OUT = path.join(DOCS_DIR, "ingest-inventory.json");
 const MD_OUT = path.join(DOCS_DIR, "INGEST-INVENTORY.md");
 

@@ -1574,6 +1574,10 @@ export const BOOK_POSITIONS: Position[] = [
     "reviewNote": "Valued at ₹1,45,80,412.51 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 10, its closing of 30 Jun 2026. One folio under each CRN — two investments, as the family confirmed on 28 Sep 2026."
   },
   {
+    "statementRecord": {
+      "document": "3p-investment-managers-3000048-2026-07-31-holdings",
+      "pointer": "/holdings/0"
+    },
     "securityKey": "3p-india-equity-fund-1-class-b1",
     "security": "3P India Equity Fund 1 - Class B1",
     "symbol": null,
@@ -1601,6 +1605,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "3p-investment-managers-3000048-2026-07-31-holdings",
+      "pointer": "/holdings/1"
+    },
     "securityKey": "3p-india-equity-fund-1-class-b2",
     "security": "3P India Equity Fund 1 - Class B2",
     "symbol": null,
@@ -1628,6 +1636,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "3p-investment-managers-3000048-2026-07-31-holdings",
+      "pointer": "/holdings/2"
+    },
     "securityKey": "3p-india-equity-fund-1-class-b3",
     "security": "3P India Equity Fund 1 - Class B3",
     "symbol": null,
@@ -1657,6 +1669,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "aditya-birla-sun-life-mutual-fund-1019265797-2026-10-06-holdings",
+      "pointer": "/holdings/0"
+    },
     "securityKey": "aditya-birla-sun-life-liquid-fund-daily-idcw-direct-plan",
     "security": "Aditya Birla Sun Life Liquid Fund - Daily IDCW-Direct Plan",
     "symbol": null,
@@ -1687,6 +1703,10 @@ export const BOOK_POSITIONS: Position[] = [
     "avgCostDerived": true
   },
   {
+    "statementRecord": {
+      "document": "aditya-birla-sun-life-mutual-fund-1038104611-2026-08-03-holdings",
+      "pointer": "/holdings/0"
+    },
     "securityKey": "absl-liquid-fund-direct-growth",
     "security": "ABSL Liquid Fund - Direct-Growth",
     "symbol": null,
@@ -1716,6 +1736,10 @@ export const BOOK_POSITIONS: Position[] = [
     "avgCostDerived": true
   },
   {
+    "statementRecord": {
+      "document": "ask-absolute-return-fund-9039917111-2026-03-31-holdings",
+      "pointer": "/holdings/0"
+    },
     "securityKey": "ask-absolute-return-fund-class-a6-series-31-01-2025",
     "security": "ASK Absolute Return Fund — Class A6 Series 31/01/2025",
     "symbol": null,
@@ -1746,6 +1770,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "ask-absolute-return-fund-9039917144-2026-03-31-holdings",
+      "pointer": "/holdings/0"
+    },
     "securityKey": "ask-absolute-return-fund-class-a6-series-31-01-2025",
     "security": "ASK Absolute Return Fund — Class A6 Series 31/01/2025",
     "symbol": null,
@@ -1776,6 +1804,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "ask-investment-managers-limited-10032723-2026-09-08-profit-and-loss",
+      "pointer": "/holdings/0"
+    },
     "securityKey": "balance-with-banks",
     "security": "Balance with Banks",
     "symbol": null,
@@ -1803,6 +1835,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "ask-investment-managers-limited-10034025-2026-09-08-profit-and-loss",
+      "pointer": "/holdings/0"
+    },
     "securityKey": "balance-with-banks",
     "security": "Balance with Banks",
     "symbol": null,
@@ -1877,6 +1913,10 @@ export const BOOK_POSITIONS: Position[] = [
     "reviewNote": "Valued at ₹1,88,42,208.74 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 9, its closing of 31 Mar 2026. Ankita's folio. A statement says otherwise: Ankita's Motilal Oswal demat records 252.5 units on 31 Jul 2026, against the 202.5 the fund's statement and the review carry; the fund's statement of 31 Mar 2026 prints ₹56,161 paid out (₹18,909 on 30 Sep 2025 and ₹37,252 on 31 Mar 2026) where the review carries ₹1,42,867."
   },
   {
+    "statementRecord": {
+      "document": "buoyant-capital-103472-2026-09-30-holdings",
+      "pointer": "/holdings/0"
+    },
     "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4",
     "security": "Buoyant Opportunities Strategy — Category III — Class A4",
     "symbol": null,
@@ -1907,6 +1947,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "buoyant-capital-103473-2026-09-30-holdings",
+      "pointer": "/holdings/0"
+    },
     "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4",
     "security": "Buoyant Opportunities Strategy — Category III — Class A4",
     "symbol": null,
@@ -1938,6 +1982,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-09-30-appraisal",
+      "pointer": "/holdings/0"
+    },
     "securityKey": "aditya-birla-capital",
     "security": "Aditya Birla Capital Ltd",
     "symbol": "ABCAPITAL",
@@ -1975,6 +2023,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-09-30-appraisal",
+      "pointer": "/holdings/1"
+    },
     "securityKey": "biocon",
     "security": "Biocon Ltd",
     "symbol": "BIOCON",
@@ -2012,6 +2064,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-09-30-appraisal",
+      "pointer": "/holdings/9"
+    },
     "securityKey": "caliber-mining-and-logistics",
     "security": "Caliber Mining and Logistics Limited",
     "symbol": "CMLL",
@@ -2052,6 +2108,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-09-30-appraisal",
+      "pointer": "/holdings/12"
+    },
     "securityKey": "cash",
     "security": "Cash",
     "symbol": null,
@@ -2079,6 +2139,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-09-30-appraisal",
+      "pointer": "/holdings/7"
+    },
     "securityKey": "cyient",
     "security": "Cyient Ltd",
     "symbol": null,
@@ -2119,6 +2183,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-09-30-appraisal",
+      "pointer": "/holdings/8"
+    },
     "securityKey": "gland-pharma",
     "security": "GLAND PHARMA LIMITED",
     "symbol": "GLAND",
@@ -2160,6 +2228,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-09-30-appraisal",
+      "pointer": "/holdings/3"
+    },
     "securityKey": "jammu-kashmir-bank",
     "security": "Jammu Kashmir Bank Ltd",
     "symbol": "J&KBANK",
@@ -2196,6 +2268,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-09-30-appraisal",
+      "pointer": "/holdings/4"
+    },
     "securityKey": "kalpataru-projects-international",
     "security": "Kalpataru Projects International Ltd",
     "symbol": "KPIL",
@@ -2233,6 +2309,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-09-30-appraisal",
+      "pointer": "/holdings/6"
+    },
     "securityKey": "kalyan-jewellers-india",
     "security": "KALYAN JEWELLERS INDIA LIMITED",
     "symbol": "KALYANKJIL",
@@ -2274,6 +2354,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-09-30-appraisal",
+      "pointer": "/holdings/2"
+    },
     "securityKey": "pvr-inox",
     "security": "PVR Inox Ltd",
     "symbol": "PVRINOX",
@@ -2311,6 +2395,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-09-30-appraisal",
+      "pointer": "/holdings/5"
+    },
     "securityKey": "star-health-and-allied-insurance",
     "security": "Star Health and Allied Insurance Company Limited",
     "symbol": "STARHEALTH",
@@ -2347,6 +2435,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-09-30-appraisal",
+      "pointer": "/holdings/10"
+    },
     "securityKey": "tata-technologies",
     "security": "TATA TECHNOLOGIES LIMITED",
     "symbol": "TATATECH",
@@ -2387,6 +2479,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-09-30-appraisal",
+      "pointer": "/holdings/11"
+    },
     "securityKey": "vishnu-chemicals",
     "security": "VISHNU CHEMICALS LIMITED",
     "symbol": null,
@@ -2428,6 +2524,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "carnelian-bharat-amritkaal-fund-4551-2026-07-31-holdings",
+      "pointer": "/holdings/0"
+    },
     "securityKey": "carnelian-bharat-amritkaal-fund",
     "security": "Carnelian Bharat Amritkaal Fund",
     "symbol": null,
@@ -2456,6 +2556,10 @@ export const BOOK_POSITIONS: Position[] = [
     "avgCostDerived": true
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100022-2026-10-06-appraisal",
+      "pointer": "/holdings/29"
+    },
     "securityKey": "banco-products-india",
     "security": "Banco Products India Ltd.",
     "symbol": "BANCOINDIA",
@@ -2493,6 +2597,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": 27.18
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100022-2026-10-06-appraisal",
+      "pointer": "/holdings/28"
+    },
     "securityKey": "bls-international-services",
     "security": "BLS International Services Ltd",
     "symbol": "BLS",
@@ -2530,6 +2638,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": -32.08
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100022-2026-10-06-appraisal",
+      "pointer": "/holdings/3"
+    },
     "securityKey": "blue-jet-healthcare",
     "security": "Blue Jet Healthcare Ltd.",
     "symbol": "BLUEJET",
@@ -2567,6 +2679,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": 41.74
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100022-2026-10-06-appraisal",
+      "pointer": "/holdings/21"
+    },
     "securityKey": "can-fin-homes",
     "security": "Can Fin Homes Ltd.",
     "symbol": "CANFINHOME",
@@ -2604,6 +2720,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": -25.72
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100022-2026-10-06-appraisal",
+      "pointer": "/holdings/16"
+    },
     "securityKey": "caplin-point-laboratories",
     "security": "Caplin Point Laboratories Ltd.",
     "symbol": "CAPLIPOINT",
@@ -2641,6 +2761,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": 117.67
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100022-2026-10-06-appraisal",
+      "pointer": "/holdings/32"
+    },
     "securityKey": "cash",
     "security": "Cash",
     "symbol": null,
@@ -2668,6 +2792,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": 0
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100022-2026-10-06-appraisal",
+      "pointer": "/holdings/15"
+    },
     "securityKey": "deep-industries",
     "security": "Deep Industries Ltd.",
     "symbol": "DEEPINDS",
@@ -2709,6 +2837,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": 822.66
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100022-2026-10-06-appraisal",
+      "pointer": "/holdings/5"
+    },
     "securityKey": "eclerx-services",
     "security": "eClerx Services Ltd.",
     "symbol": "ECLERX",
@@ -2750,6 +2882,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": 179.89
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100022-2026-10-06-appraisal",
+      "pointer": "/holdings/7"
+    },
     "securityKey": "eih",
     "security": "EIH Ltd.",
     "symbol": "EIHOTEL",
@@ -2787,6 +2923,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": -21.16
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100022-2026-10-06-appraisal",
+      "pointer": "/holdings/4"
+    },
     "securityKey": "great-eastern-shipping",
     "security": "Great Eastern Shipping Co. Ltd.",
     "symbol": "GESHIP",
@@ -2828,6 +2968,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": 71.99
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100022-2026-10-06-appraisal",
+      "pointer": "/holdings/12"
+    },
     "securityKey": "hdfc-asset-management",
     "security": "HDFC Asset Management Co. Ltd.",
     "symbol": "HDFCAMC",
@@ -2865,6 +3009,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": -6.86
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100022-2026-10-06-appraisal",
+      "pointer": "/holdings/10"
+    },
     "securityKey": "icici-bank",
     "security": "ICICI Bank Ltd.",
     "symbol": "ICICIBANK",
@@ -2903,6 +3051,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": -0.23
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100022-2026-10-06-appraisal",
+      "pointer": "/holdings/27"
+    },
     "securityKey": "indian-energy-exchange",
     "security": "Indian Energy Exchange Ltd.",
     "symbol": "IEX",
@@ -2944,6 +3096,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": -32.16
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100022-2026-10-06-appraisal",
+      "pointer": "/holdings/11"
+    },
     "securityKey": "indraprastha-medical",
     "security": "Indraprastha Medical Corp. Ltd.",
     "symbol": "INDRAMEDCO",
@@ -2981,6 +3137,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": -28.68
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100022-2026-10-06-appraisal",
+      "pointer": "/holdings/14"
+    },
     "securityKey": "jindal-stainless",
     "security": "Jindal Stainless Ltd",
     "symbol": "JSL",
@@ -3022,6 +3182,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": -7.27
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100022-2026-10-06-appraisal",
+      "pointer": "/holdings/9"
+    },
     "securityKey": "karur-vysya-bank",
     "security": "Karur Vysya Bank Ltd.",
     "symbol": "KARURVYSYA",
@@ -3060,6 +3224,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": 37.52
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100022-2026-10-06-appraisal",
+      "pointer": "/holdings/6"
+    },
     "securityKey": "kovai-medical-center-and-hospital",
     "security": "Kovai Medical Center & Hospital Ltd.",
     "symbol": "KOVAI",
@@ -3097,6 +3265,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": 4.19
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100022-2026-10-06-appraisal",
+      "pointer": "/holdings/17"
+    },
     "securityKey": "life-insurance-corp-of-india",
     "security": "Life Insurance Corp. of India",
     "symbol": "LICI",
@@ -3134,6 +3306,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": -6.86
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100022-2026-10-06-appraisal",
+      "pointer": "/holdings/25"
+    },
     "securityKey": "lupin",
     "security": "Lupin Ltd",
     "symbol": "LUPIN",
@@ -3175,6 +3351,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": -26.43
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100022-2026-10-06-appraisal",
+      "pointer": "/holdings/18"
+    },
     "securityKey": "mahindra-and-mahindra",
     "security": "Mahindra & Mahindra Ltd.",
     "symbol": "M&M",
@@ -3212,6 +3392,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": -15.87
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100022-2026-10-06-appraisal",
+      "pointer": "/holdings/20"
+    },
     "securityKey": "motilal-oswal-financial-services",
     "security": "Motilal Oswal Financial Services Ltd.",
     "symbol": "MOTILALOFS",
@@ -3248,6 +3432,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": 32.86
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100022-2026-10-06-appraisal",
+      "pointer": "/holdings/0"
+    },
     "securityKey": "mps",
     "security": "MPS Ltd",
     "symbol": "MPSLTD",
@@ -3284,6 +3472,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": 43.15
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100022-2026-10-06-appraisal",
+      "pointer": "/holdings/26"
+    },
     "securityKey": "oberoi-realty",
     "security": "Oberoi Realty Ltd.",
     "symbol": "OBEROIRLTY",
@@ -3321,6 +3513,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": 27.34
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100022-2026-10-06-appraisal",
+      "pointer": "/holdings/23"
+    },
     "securityKey": "poojaa-precision-engineering",
     "security": "Poojaa Precision Engineering Limited",
     "symbol": null,
@@ -3361,6 +3557,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": 1551.17
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100022-2026-10-06-appraisal",
+      "pointer": "/holdings/24"
+    },
     "securityKey": "sagility",
     "security": "Sagility Ltd.",
     "symbol": "SAGILITY",
@@ -3398,6 +3598,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": -19.61
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100022-2026-10-06-appraisal",
+      "pointer": "/holdings/31"
+    },
     "securityKey": "sharda-motor-industries",
     "security": "Sharda Motor Industries Ltd",
     "symbol": "SHARDAMOTR",
@@ -3435,6 +3639,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": 29.71
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100022-2026-10-06-appraisal",
+      "pointer": "/holdings/19"
+    },
     "securityKey": "sonata-software",
     "security": "Sonata Software Ltd.",
     "symbol": "SONATSOFTW",
@@ -3472,6 +3680,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": -32.48
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100022-2026-10-06-appraisal",
+      "pointer": "/holdings/22"
+    },
     "securityKey": "state-bank-of-india",
     "security": "State Bank of India",
     "symbol": "SBIN",
@@ -3510,6 +3722,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": 1.65
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100022-2026-10-06-appraisal",
+      "pointer": "/holdings/8"
+    },
     "securityKey": "suprajit-engineering",
     "security": "Suprajit Engineering Ltd.",
     "symbol": "SUPRAJIT",
@@ -3547,6 +3763,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": 6.66
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100022-2026-10-06-appraisal",
+      "pointer": "/holdings/13"
+    },
     "securityKey": "tenneco-clean-air-india",
     "security": "Tenneco Clean Air India Ltd.",
     "symbol": "TENNIND",
@@ -3583,6 +3803,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": -6.98
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100022-2026-10-06-appraisal",
+      "pointer": "/holdings/1"
+    },
     "securityKey": "transport-corp-of-india",
     "security": "Transport Corp. of India Ltd.",
     "symbol": "TCI",
@@ -3620,6 +3844,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": -21.2
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100022-2026-10-06-appraisal",
+      "pointer": "/holdings/30"
+    },
     "securityKey": "waaree-energies",
     "security": "Waaree Energies Ltd.",
     "symbol": "WAAREEENER",
@@ -3661,6 +3889,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": -55.48
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100022-2026-10-06-appraisal",
+      "pointer": "/holdings/2"
+    },
     "securityKey": "zydus-lifesciences",
     "security": "Zydus Lifesciences Ltd.",
     "symbol": "ZYDUSLIFE",
@@ -3698,6 +3930,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": 34.88
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100023-2026-10-06-appraisal",
+      "pointer": "/holdings/29"
+    },
     "securityKey": "banco-products-india",
     "security": "Banco Products India Ltd.",
     "symbol": "BANCOINDIA",
@@ -3735,6 +3971,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": 27.18
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100023-2026-10-06-appraisal",
+      "pointer": "/holdings/31"
+    },
     "securityKey": "bls-international-services",
     "security": "BLS International Services Ltd",
     "symbol": "BLS",
@@ -3772,6 +4012,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": -32.08
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100023-2026-10-06-appraisal",
+      "pointer": "/holdings/1"
+    },
     "securityKey": "blue-jet-healthcare",
     "security": "Blue Jet Healthcare Ltd.",
     "symbol": "BLUEJET",
@@ -3809,6 +4053,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": 43.41
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100023-2026-10-06-appraisal",
+      "pointer": "/holdings/19"
+    },
     "securityKey": "can-fin-homes",
     "security": "Can Fin Homes Ltd.",
     "symbol": "CANFINHOME",
@@ -3846,6 +4094,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": -25.72
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100023-2026-10-06-appraisal",
+      "pointer": "/holdings/16"
+    },
     "securityKey": "caplin-point-laboratories",
     "security": "Caplin Point Laboratories Ltd.",
     "symbol": "CAPLIPOINT",
@@ -3883,6 +4135,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": 117.67
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100023-2026-10-06-appraisal",
+      "pointer": "/holdings/32"
+    },
     "securityKey": "cash",
     "security": "Cash",
     "symbol": null,
@@ -3910,6 +4166,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": 0
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100023-2026-10-06-appraisal",
+      "pointer": "/holdings/3"
+    },
     "securityKey": "deep-industries",
     "security": "Deep Industries Ltd.",
     "symbol": "DEEPINDS",
@@ -3951,6 +4211,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": 822.66
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100023-2026-10-06-appraisal",
+      "pointer": "/holdings/8"
+    },
     "securityKey": "eclerx-services",
     "security": "eClerx Services Ltd.",
     "symbol": "ECLERX",
@@ -3992,6 +4256,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": 179.89
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100023-2026-10-06-appraisal",
+      "pointer": "/holdings/12"
+    },
     "securityKey": "eih",
     "security": "EIH Ltd.",
     "symbol": "EIHOTEL",
@@ -4029,6 +4297,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": -21.27
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100023-2026-10-06-appraisal",
+      "pointer": "/holdings/2"
+    },
     "securityKey": "great-eastern-shipping",
     "security": "Great Eastern Shipping Co. Ltd.",
     "symbol": "GESHIP",
@@ -4070,6 +4342,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": 71.99
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100023-2026-10-06-appraisal",
+      "pointer": "/holdings/14"
+    },
     "securityKey": "hdfc-asset-management",
     "security": "HDFC Asset Management Co. Ltd.",
     "symbol": "HDFCAMC",
@@ -4107,6 +4383,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": -7.04
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100023-2026-10-06-appraisal",
+      "pointer": "/holdings/9"
+    },
     "securityKey": "icici-bank",
     "security": "ICICI Bank Ltd.",
     "symbol": "ICICIBANK",
@@ -4145,6 +4425,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": -0.23
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100023-2026-10-06-appraisal",
+      "pointer": "/holdings/28"
+    },
     "securityKey": "indian-energy-exchange",
     "security": "Indian Energy Exchange Ltd.",
     "symbol": "IEX",
@@ -4186,6 +4470,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": -32.21
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100023-2026-10-06-appraisal",
+      "pointer": "/holdings/13"
+    },
     "securityKey": "indraprastha-medical",
     "security": "Indraprastha Medical Corp. Ltd.",
     "symbol": "INDRAMEDCO",
@@ -4223,6 +4511,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": -29.33
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100023-2026-10-06-appraisal",
+      "pointer": "/holdings/17"
+    },
     "securityKey": "jindal-stainless",
     "security": "Jindal Stainless Ltd",
     "symbol": "JSL",
@@ -4264,6 +4556,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": -7.27
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100023-2026-10-06-appraisal",
+      "pointer": "/holdings/10"
+    },
     "securityKey": "karur-vysya-bank",
     "security": "Karur Vysya Bank Ltd.",
     "symbol": "KARURVYSYA",
@@ -4302,6 +4598,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": 37.52
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100023-2026-10-06-appraisal",
+      "pointer": "/holdings/5"
+    },
     "securityKey": "kovai-medical-center-and-hospital",
     "security": "Kovai Medical Center & Hospital Ltd.",
     "symbol": "KOVAI",
@@ -4339,6 +4639,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": 4.23
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100023-2026-10-06-appraisal",
+      "pointer": "/holdings/11"
+    },
     "securityKey": "life-insurance-corp-of-india",
     "security": "Life Insurance Corp. of India",
     "symbol": "LICI",
@@ -4376,6 +4680,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": -6.87
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100023-2026-10-06-appraisal",
+      "pointer": "/holdings/25"
+    },
     "securityKey": "lupin",
     "security": "Lupin Ltd",
     "symbol": "LUPIN",
@@ -4417,6 +4725,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": -26.43
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100023-2026-10-06-appraisal",
+      "pointer": "/holdings/18"
+    },
     "securityKey": "mahindra-and-mahindra",
     "security": "Mahindra & Mahindra Ltd.",
     "symbol": "M&M",
@@ -4454,6 +4766,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": -15.92
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100023-2026-10-06-appraisal",
+      "pointer": "/holdings/20"
+    },
     "securityKey": "motilal-oswal-financial-services",
     "security": "Motilal Oswal Financial Services Ltd.",
     "symbol": "MOTILALOFS",
@@ -4490,6 +4806,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": 32.86
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100023-2026-10-06-appraisal",
+      "pointer": "/holdings/0"
+    },
     "securityKey": "mps",
     "security": "MPS Ltd",
     "symbol": "MPSLTD",
@@ -4526,6 +4846,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": 49.1
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100023-2026-10-06-appraisal",
+      "pointer": "/holdings/26"
+    },
     "securityKey": "oberoi-realty",
     "security": "Oberoi Realty Ltd.",
     "symbol": "OBEROIRLTY",
@@ -4563,6 +4887,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": 27.34
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100023-2026-10-06-appraisal",
+      "pointer": "/holdings/21"
+    },
     "securityKey": "poojaa-precision-engineering",
     "security": "Poojaa Precision Engineering Limited",
     "symbol": null,
@@ -4603,6 +4931,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": 1551.17
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100023-2026-10-06-appraisal",
+      "pointer": "/holdings/24"
+    },
     "securityKey": "sagility",
     "security": "Sagility Ltd.",
     "symbol": "SAGILITY",
@@ -4640,6 +4972,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": -19.61
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100023-2026-10-06-appraisal",
+      "pointer": "/holdings/30"
+    },
     "securityKey": "sharda-motor-industries",
     "security": "Sharda Motor Industries Ltd",
     "symbol": "SHARDAMOTR",
@@ -4677,6 +5013,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": 28.2
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100023-2026-10-06-appraisal",
+      "pointer": "/holdings/15"
+    },
     "securityKey": "sonata-software",
     "security": "Sonata Software Ltd.",
     "symbol": "SONATSOFTW",
@@ -4714,6 +5054,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": -32.37
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100023-2026-10-06-appraisal",
+      "pointer": "/holdings/23"
+    },
     "securityKey": "state-bank-of-india",
     "security": "State Bank of India",
     "symbol": "SBIN",
@@ -4752,6 +5096,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": 1.65
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100023-2026-10-06-appraisal",
+      "pointer": "/holdings/6"
+    },
     "securityKey": "suprajit-engineering",
     "security": "Suprajit Engineering Ltd.",
     "symbol": "SUPRAJIT",
@@ -4789,6 +5137,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": 8.27
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100023-2026-10-06-appraisal",
+      "pointer": "/holdings/22"
+    },
     "securityKey": "tenneco-clean-air-india",
     "security": "Tenneco Clean Air India Ltd.",
     "symbol": "TENNIND",
@@ -4825,6 +5177,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": -7.34
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100023-2026-10-06-appraisal",
+      "pointer": "/holdings/4"
+    },
     "securityKey": "transport-corp-of-india",
     "security": "Transport Corp. of India Ltd.",
     "symbol": "TCI",
@@ -4862,6 +5218,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": -21.28
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100023-2026-10-06-appraisal",
+      "pointer": "/holdings/27"
+    },
     "securityKey": "waaree-energies",
     "security": "Waaree Energies Ltd.",
     "symbol": "WAAREEENER",
@@ -4903,6 +5263,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": -55.48
   },
   {
+    "statementRecord": {
+      "document": "goldstandard-wealth-private-limited-100023-2026-10-06-appraisal",
+      "pointer": "/holdings/7"
+    },
     "securityKey": "zydus-lifesciences",
     "security": "Zydus Lifesciences Ltd.",
     "symbol": "ZYDUSLIFE",
@@ -4940,6 +5304,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": 34.88
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510854-2026-07-27-appraisal",
+      "pointer": "/holdings/21"
+    },
     "securityKey": "aarti-drugs",
     "security": "Aarti Drugs Ltd",
     "symbol": "AARTIDRUGS",
@@ -4980,6 +5348,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510854-2026-07-27-appraisal",
+      "pointer": "/holdings/6"
+    },
     "securityKey": "alivus-life-sciences",
     "security": "Alivus Life Sciences Ltd",
     "symbol": "ALIVUS",
@@ -5020,6 +5392,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510854-2026-07-27-appraisal",
+      "pointer": "/holdings/4"
+    },
     "securityKey": "aurobindo-pharma",
     "security": "Aurobindo Pharma Ltd",
     "symbol": "AUROPHARMA",
@@ -5061,6 +5437,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510854-2026-07-27-appraisal",
+      "pointer": "/holdings/33"
+    },
     "securityKey": "axis-liquid-fund-direct-plan-growth-option",
     "security": "Axis Liquid Fund - Direct Plan - Growth Option",
     "symbol": null,
@@ -5101,6 +5481,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510854-2026-07-27-appraisal",
+      "pointer": "/holdings/20"
+    },
     "securityKey": "bajaj-auto",
     "security": "Bajaj Auto Ltd",
     "symbol": "BAJAJ-AUTO",
@@ -5143,6 +5527,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510854-2026-07-27-appraisal",
+      "pointer": "/holdings/0"
+    },
     "securityKey": "bharat-heavy-electricals",
     "security": "Bharat Heavy Electricals Ltd",
     "symbol": "BHEL",
@@ -5184,6 +5572,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510854-2026-07-27-appraisal",
+      "pointer": "/holdings/31"
+    },
     "securityKey": "cash",
     "security": "Cash",
     "symbol": null,
@@ -5211,6 +5603,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510854-2026-07-27-appraisal",
+      "pointer": "/holdings/32"
+    },
     "securityKey": "cash-rec-payable",
     "security": "Cash Rec/Payable",
     "symbol": null,
@@ -5238,6 +5634,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510854-2026-07-27-appraisal",
+      "pointer": "/holdings/2"
+    },
     "securityKey": "engineers-india",
     "security": "Engineers India Ltd",
     "symbol": "ENGINERSIN",
@@ -5278,6 +5678,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510854-2026-07-27-appraisal",
+      "pointer": "/holdings/1"
+    },
     "securityKey": "exide-industries",
     "security": "Exide Industries Ltd",
     "symbol": "EXIDEIND",
@@ -5319,6 +5723,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510854-2026-07-27-appraisal",
+      "pointer": "/holdings/8"
+    },
     "securityKey": "glenmark-pharmaceuticals",
     "security": "Glenmark Pharmaceuticals Ltd",
     "symbol": "GLENMARK",
@@ -5359,6 +5767,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510854-2026-07-27-appraisal",
+      "pointer": "/holdings/26"
+    },
     "securityKey": "gmm-pfaudler",
     "security": "GMM Pfaudler Ltd",
     "symbol": "GMMPFAUDLR",
@@ -5399,6 +5811,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510854-2026-07-27-appraisal",
+      "pointer": "/holdings/22"
+    },
     "securityKey": "graphite-india",
     "security": "Graphite India Ltd",
     "symbol": "GRAPHITE",
@@ -5440,6 +5856,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510854-2026-07-27-appraisal",
+      "pointer": "/holdings/24"
+    },
     "securityKey": "gujarat-ambuja-exports",
     "security": "Gujarat Ambuja Exports Ltd",
     "symbol": "GAEL",
@@ -5481,6 +5901,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510854-2026-07-27-appraisal",
+      "pointer": "/holdings/10"
+    },
     "securityKey": "hindustan-aeronautics",
     "security": "Hindustan Aeronautics Ltd",
     "symbol": "HAL",
@@ -5521,6 +5945,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510854-2026-07-27-appraisal",
+      "pointer": "/holdings/27"
+    },
     "securityKey": "ingersollrand-india",
     "security": "Ingersollrand India Ltd",
     "symbol": "INGERRAND",
@@ -5562,6 +5990,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510854-2026-07-27-appraisal",
+      "pointer": "/holdings/13"
+    },
     "securityKey": "intellect-design-arena",
     "security": "Intellect Design Arena Ltd",
     "symbol": "INTELLECT",
@@ -5603,6 +6035,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510854-2026-07-27-appraisal",
+      "pointer": "/holdings/7"
+    },
     "securityKey": "isgec-heavy-engineering",
     "security": "Isgec Heavy Engineering Ltd",
     "symbol": "ISGEC",
@@ -5643,6 +6079,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510854-2026-07-27-appraisal",
+      "pointer": "/holdings/25"
+    },
     "securityKey": "jamna-auto-ind",
     "security": "Jamna Auto Ind Ltd",
     "symbol": "JAMNAAUTO",
@@ -5684,6 +6124,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510854-2026-07-27-appraisal",
+      "pointer": "/holdings/9"
+    },
     "securityKey": "kaveri-seed",
     "security": "Kaveri Seed Company Ltd",
     "symbol": "KSCL",
@@ -5725,6 +6169,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510854-2026-07-27-appraisal",
+      "pointer": "/holdings/5"
+    },
     "securityKey": "ksb",
     "security": "KSB Ltd",
     "symbol": "KSB",
@@ -5766,6 +6214,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510854-2026-07-27-appraisal",
+      "pointer": "/holdings/14"
+    },
     "securityKey": "mishra-dhatu-nigam",
     "security": "Mishra Dhatu Nigam Ltd",
     "symbol": "MIDHANI",
@@ -5806,6 +6258,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510854-2026-07-27-appraisal",
+      "pointer": "/holdings/12"
+    },
     "securityKey": "power-finance",
     "security": "Power Finance Corporation Ltd",
     "symbol": "PFC",
@@ -5846,6 +6302,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510854-2026-07-27-appraisal",
+      "pointer": "/holdings/30"
+    },
     "securityKey": "punjab-national-bank",
     "security": "Punjab National Bank",
     "symbol": "PNB",
@@ -5887,6 +6347,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510854-2026-07-27-appraisal",
+      "pointer": "/holdings/29"
+    },
     "securityKey": "ratnamani-metals-and-tubes",
     "security": "Ratnamani Metals & Tubes Ltd",
     "symbol": "RATNAMANI",
@@ -5927,6 +6391,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510854-2026-07-27-appraisal",
+      "pointer": "/holdings/28"
+    },
     "securityKey": "rural-electrification",
     "security": "Rural Electrification Corporation Ltd",
     "symbol": "RECLTD",
@@ -5967,6 +6435,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510854-2026-07-27-appraisal",
+      "pointer": "/holdings/3"
+    },
     "securityKey": "state-bank-of-india",
     "security": "State Bank Of India",
     "symbol": "SBIN",
@@ -6009,6 +6481,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510854-2026-07-27-appraisal",
+      "pointer": "/holdings/18"
+    },
     "securityKey": "tech-mahindra",
     "security": "Tech Mahindra Ltd",
     "symbol": "TECHM",
@@ -6050,6 +6526,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510854-2026-07-27-appraisal",
+      "pointer": "/holdings/15"
+    },
     "securityKey": "the-anup-engineering",
     "security": "The Anup Engineering Ltd",
     "symbol": "ANUP",
@@ -6090,6 +6570,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510854-2026-07-27-appraisal",
+      "pointer": "/holdings/17"
+    },
     "securityKey": "thermax",
     "security": "Thermax Ltd",
     "symbol": "THERMAX",
@@ -6131,6 +6615,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510854-2026-07-27-appraisal",
+      "pointer": "/holdings/16"
+    },
     "securityKey": "triveni-turbine",
     "security": "Triveni Turbine Ltd",
     "symbol": "TRITURBINE",
@@ -6171,6 +6659,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510854-2026-07-27-appraisal",
+      "pointer": "/holdings/23"
+    },
     "securityKey": "vedanta",
     "security": "Vedanta Ltd",
     "symbol": "VEDL",
@@ -6211,6 +6703,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510854-2026-07-27-appraisal",
+      "pointer": "/holdings/11"
+    },
     "securityKey": "vedanta-aluminium-metal",
     "security": "Vedanta Aluminium Metal Limited",
     "symbol": "VAML",
@@ -6247,6 +6743,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510854-2026-07-27-appraisal",
+      "pointer": "/holdings/19"
+    },
     "securityKey": "zf-commercial-vehicle-control-systems-india",
     "security": "ZF Commercial Vehicle Control Systems India Ltd",
     "symbol": "ZFCVINDIA",
@@ -6284,6 +6784,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510861-2026-07-27-appraisal",
+      "pointer": "/holdings/21"
+    },
     "securityKey": "aarti-drugs",
     "security": "Aarti Drugs Ltd",
     "symbol": "AARTIDRUGS",
@@ -6324,6 +6828,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510861-2026-07-27-appraisal",
+      "pointer": "/holdings/6"
+    },
     "securityKey": "alivus-life-sciences",
     "security": "Alivus Life Sciences Ltd",
     "symbol": "ALIVUS",
@@ -6364,6 +6872,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510861-2026-07-27-appraisal",
+      "pointer": "/holdings/4"
+    },
     "securityKey": "aurobindo-pharma",
     "security": "Aurobindo Pharma Ltd",
     "symbol": "AUROPHARMA",
@@ -6405,6 +6917,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510861-2026-07-27-appraisal",
+      "pointer": "/holdings/33"
+    },
     "securityKey": "axis-liquid-fund-direct-plan-growth-option",
     "security": "Axis Liquid Fund - Direct Plan - Growth Option",
     "symbol": null,
@@ -6445,6 +6961,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510861-2026-07-27-appraisal",
+      "pointer": "/holdings/20"
+    },
     "securityKey": "bajaj-auto",
     "security": "Bajaj Auto Ltd",
     "symbol": "BAJAJ-AUTO",
@@ -6487,6 +7007,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510861-2026-07-27-appraisal",
+      "pointer": "/holdings/0"
+    },
     "securityKey": "bharat-heavy-electricals",
     "security": "Bharat Heavy Electricals Ltd",
     "symbol": "BHEL",
@@ -6528,6 +7052,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510861-2026-07-27-appraisal",
+      "pointer": "/holdings/31"
+    },
     "securityKey": "cash",
     "security": "Cash",
     "symbol": null,
@@ -6555,6 +7083,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510861-2026-07-27-appraisal",
+      "pointer": "/holdings/32"
+    },
     "securityKey": "cash-rec-payable",
     "security": "Cash Rec/Payable",
     "symbol": null,
@@ -6582,6 +7114,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510861-2026-07-27-appraisal",
+      "pointer": "/holdings/2"
+    },
     "securityKey": "engineers-india",
     "security": "Engineers India Ltd",
     "symbol": "ENGINERSIN",
@@ -6622,6 +7158,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510861-2026-07-27-appraisal",
+      "pointer": "/holdings/1"
+    },
     "securityKey": "exide-industries",
     "security": "Exide Industries Ltd",
     "symbol": "EXIDEIND",
@@ -6663,6 +7203,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510861-2026-07-27-appraisal",
+      "pointer": "/holdings/8"
+    },
     "securityKey": "glenmark-pharmaceuticals",
     "security": "Glenmark Pharmaceuticals Ltd",
     "symbol": "GLENMARK",
@@ -6703,6 +7247,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510861-2026-07-27-appraisal",
+      "pointer": "/holdings/27"
+    },
     "securityKey": "gmm-pfaudler",
     "security": "GMM Pfaudler Ltd",
     "symbol": "GMMPFAUDLR",
@@ -6743,6 +7291,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510861-2026-07-27-appraisal",
+      "pointer": "/holdings/22"
+    },
     "securityKey": "graphite-india",
     "security": "Graphite India Ltd",
     "symbol": "GRAPHITE",
@@ -6784,6 +7336,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510861-2026-07-27-appraisal",
+      "pointer": "/holdings/24"
+    },
     "securityKey": "gujarat-ambuja-exports",
     "security": "Gujarat Ambuja Exports Ltd",
     "symbol": "GAEL",
@@ -6825,6 +7381,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510861-2026-07-27-appraisal",
+      "pointer": "/holdings/10"
+    },
     "securityKey": "hindustan-aeronautics",
     "security": "Hindustan Aeronautics Ltd",
     "symbol": "HAL",
@@ -6865,6 +7425,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510861-2026-07-27-appraisal",
+      "pointer": "/holdings/26"
+    },
     "securityKey": "ingersollrand-india",
     "security": "Ingersollrand India Ltd",
     "symbol": "INGERRAND",
@@ -6902,6 +7466,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510861-2026-07-27-appraisal",
+      "pointer": "/holdings/13"
+    },
     "securityKey": "intellect-design-arena",
     "security": "Intellect Design Arena Ltd",
     "symbol": "INTELLECT",
@@ -6943,6 +7511,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510861-2026-07-27-appraisal",
+      "pointer": "/holdings/7"
+    },
     "securityKey": "isgec-heavy-engineering",
     "security": "Isgec Heavy Engineering Ltd",
     "symbol": "ISGEC",
@@ -6983,6 +7555,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510861-2026-07-27-appraisal",
+      "pointer": "/holdings/25"
+    },
     "securityKey": "jamna-auto-ind",
     "security": "Jamna Auto Ind Ltd",
     "symbol": "JAMNAAUTO",
@@ -7024,6 +7600,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510861-2026-07-27-appraisal",
+      "pointer": "/holdings/9"
+    },
     "securityKey": "kaveri-seed",
     "security": "Kaveri Seed Company Ltd",
     "symbol": "KSCL",
@@ -7065,6 +7645,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510861-2026-07-27-appraisal",
+      "pointer": "/holdings/5"
+    },
     "securityKey": "ksb",
     "security": "KSB Ltd",
     "symbol": "KSB",
@@ -7106,6 +7690,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510861-2026-07-27-appraisal",
+      "pointer": "/holdings/14"
+    },
     "securityKey": "mishra-dhatu-nigam",
     "security": "Mishra Dhatu Nigam Ltd",
     "symbol": "MIDHANI",
@@ -7146,6 +7734,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510861-2026-07-27-appraisal",
+      "pointer": "/holdings/12"
+    },
     "securityKey": "power-finance",
     "security": "Power Finance Corporation Ltd",
     "symbol": "PFC",
@@ -7186,6 +7778,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510861-2026-07-27-appraisal",
+      "pointer": "/holdings/30"
+    },
     "securityKey": "punjab-national-bank",
     "security": "Punjab National Bank",
     "symbol": "PNB",
@@ -7227,6 +7823,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510861-2026-07-27-appraisal",
+      "pointer": "/holdings/29"
+    },
     "securityKey": "ratnamani-metals-and-tubes",
     "security": "Ratnamani Metals & Tubes Ltd",
     "symbol": "RATNAMANI",
@@ -7263,6 +7863,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510861-2026-07-27-appraisal",
+      "pointer": "/holdings/28"
+    },
     "securityKey": "rural-electrification",
     "security": "Rural Electrification Corporation Ltd",
     "symbol": "RECLTD",
@@ -7303,6 +7907,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510861-2026-07-27-appraisal",
+      "pointer": "/holdings/3"
+    },
     "securityKey": "state-bank-of-india",
     "security": "State Bank Of India",
     "symbol": "SBIN",
@@ -7345,6 +7953,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510861-2026-07-27-appraisal",
+      "pointer": "/holdings/18"
+    },
     "securityKey": "tech-mahindra",
     "security": "Tech Mahindra Ltd",
     "symbol": "TECHM",
@@ -7386,6 +7998,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510861-2026-07-27-appraisal",
+      "pointer": "/holdings/16"
+    },
     "securityKey": "the-anup-engineering",
     "security": "The Anup Engineering Ltd",
     "symbol": "ANUP",
@@ -7422,6 +8038,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510861-2026-07-27-appraisal",
+      "pointer": "/holdings/17"
+    },
     "securityKey": "thermax",
     "security": "Thermax Ltd",
     "symbol": "THERMAX",
@@ -7463,6 +8083,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510861-2026-07-27-appraisal",
+      "pointer": "/holdings/15"
+    },
     "securityKey": "triveni-turbine",
     "security": "Triveni Turbine Ltd",
     "symbol": "TRITURBINE",
@@ -7503,6 +8127,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510861-2026-07-27-appraisal",
+      "pointer": "/holdings/23"
+    },
     "securityKey": "vedanta",
     "security": "Vedanta Ltd",
     "symbol": "VEDL",
@@ -7543,6 +8171,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510861-2026-07-27-appraisal",
+      "pointer": "/holdings/11"
+    },
     "securityKey": "vedanta-aluminium-metal",
     "security": "Vedanta Aluminium Metal Limited",
     "symbol": "VAML",
@@ -7579,6 +8211,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510861-2026-07-27-appraisal",
+      "pointer": "/holdings/19"
+    },
     "securityKey": "zf-commercial-vehicle-control-systems-india",
     "security": "ZF Commercial Vehicle Control Systems India Ltd",
     "symbol": "ZFCVINDIA",
@@ -7616,6 +8252,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "hdfc-mutual-fund-15644806-2026-10-01-holdings",
+      "pointer": "/holdings/2"
+    },
     "securityKey": "hdfc-arbitrage-fund-direct-plan-growth-option",
     "security": "HDFC Arbitrage Fund - Direct Plan - Growth Option",
     "symbol": null,
@@ -7646,6 +8286,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "hdfc-mutual-fund-15644806-2026-10-01-holdings",
+      "pointer": "/holdings/3"
+    },
     "securityKey": "hdfc-balanced-advantage-fund-regular-plan-growth",
     "security": "HDFC Balanced Advantage Fund - Regular Plan - Growth",
     "symbol": null,
@@ -7676,6 +8320,10 @@ export const BOOK_POSITIONS: Position[] = [
     "avgCostDerived": true
   },
   {
+    "statementRecord": {
+      "document": "hdfc-mutual-fund-15644806-2026-10-01-holdings",
+      "pointer": "/holdings/4"
+    },
     "securityKey": "hdfc-liquid-fund-direct-plan-idcw-daily-reinvest",
     "security": "HDFC Liquid Fund - Direct Plan - IDCW # - Daily Reinvest",
     "symbol": null,
@@ -7707,6 +8355,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "hdfc-mutual-fund-15644806-2026-10-01-holdings",
+      "pointer": "/holdings/0"
+    },
     "securityKey": "hdfc-overnight-fund-direct-plan-growth-option",
     "security": "HDFC Overnight Fund - Direct Plan - Growth Option",
     "symbol": null,
@@ -7737,6 +8389,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "hdfc-mutual-fund-15644806-2026-10-01-holdings",
+      "pointer": "/holdings/1"
+    },
     "securityKey": "hdfc-small-cap-fund-direct-growth-plan",
     "security": "HDFC Small Cap Fund - Direct Growth Plan",
     "symbol": null,
@@ -7767,6 +8423,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "hdfc-mutual-fund-15725046-2026-10-01-holdings",
+      "pointer": "/holdings/1"
+    },
     "securityKey": "hdfc-arbitrage-fund-direct-plan-growth-option",
     "security": "HDFC Arbitrage Fund - Direct Plan - Growth Option",
     "symbol": null,
@@ -7797,6 +8457,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "hdfc-mutual-fund-15725046-2026-10-01-holdings",
+      "pointer": "/holdings/2"
+    },
     "securityKey": "hdfc-arbitrage-fund-direct-plan-monthly-idcw-payout-option",
     "security": "HDFC Arbitrage Fund - Direct Plan - Monthly IDCW # Payout Option",
     "symbol": null,
@@ -7828,6 +8492,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "hdfc-mutual-fund-15725046-2026-10-01-holdings",
+      "pointer": "/holdings/3"
+    },
     "securityKey": "hdfc-liquid-fund-direct-plan-growth-option",
     "security": "HDFC Liquid Fund-Direct Plan-Growth Option",
     "symbol": null,
@@ -7858,6 +8526,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "hdfc-mutual-fund-15725046-2026-10-01-holdings",
+      "pointer": "/holdings/4"
+    },
     "securityKey": "hdfc-liquid-fund-direct-plan-idcw-daily-reinvest",
     "security": "HDFC Liquid Fund - Direct Plan - IDCW # - Daily Reinvest",
     "symbol": null,
@@ -7888,6 +8560,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "hdfc-mutual-fund-15725046-2026-10-01-holdings",
+      "pointer": "/holdings/0"
+    },
     "securityKey": "hdfc-overnight-fund-direct-plan-growth-option",
     "security": "HDFC Overnight Fund - Direct Plan - Growth Option",
     "symbol": null,
@@ -7919,6 +8595,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "hdfc-mutual-fund-16002141-2026-10-01-holdings",
+      "pointer": "/holdings/2"
+    },
     "securityKey": "hdfc-balanced-advantage-fund-regular-plan-growth",
     "security": "HDFC Balanced Advantage Fund - Regular Plan - Growth",
     "symbol": null,
@@ -7949,6 +8629,10 @@ export const BOOK_POSITIONS: Position[] = [
     "avgCostDerived": true
   },
   {
+    "statementRecord": {
+      "document": "hdfc-mutual-fund-16002141-2026-10-01-holdings",
+      "pointer": "/holdings/3"
+    },
     "securityKey": "hdfc-liquid-fund-direct-plan-idcw-daily-reinvest",
     "security": "HDFC Liquid Fund - Direct Plan - IDCW # - Daily Reinvest",
     "symbol": null,
@@ -7979,6 +8663,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "hdfc-mutual-fund-16002141-2026-10-01-holdings",
+      "pointer": "/holdings/0"
+    },
     "securityKey": "hdfc-overnight-fund-direct-plan-growth-option",
     "security": "HDFC Overnight Fund - Direct Plan - Growth Option",
     "symbol": null,
@@ -8009,6 +8697,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "hdfc-mutual-fund-16002141-2026-10-01-holdings",
+      "pointer": "/holdings/1"
+    },
     "securityKey": "hdfc-small-cap-fund-direct-growth-plan",
     "security": "HDFC Small Cap Fund - Direct Growth Plan",
     "symbol": null,
@@ -8039,6 +8731,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "hdfc-mutual-fund-16180583-2026-10-05-holdings",
+      "pointer": "/holdings/1"
+    },
     "securityKey": "hdfc-liquid-fund-direct-plan-growth-option",
     "security": "HDFC Liquid Fund-Direct Plan-Growth Option",
     "symbol": null,
@@ -8068,6 +8764,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "hdfc-mutual-fund-16180583-2026-10-05-holdings",
+      "pointer": "/holdings/0"
+    },
     "securityKey": "hdfc-small-cap-fund-direct-growth-plan",
     "security": "HDFC Small Cap Fund - Direct Growth Plan",
     "symbol": null,
@@ -8097,6 +8797,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "helios-mutual-fund-10355977-2026-08-07-holdings",
+      "pointer": "/holdings/0"
+    },
     "securityKey": "helios-flexi-cap-fund-direct-growth",
     "security": "Helios Flexi Cap Fund - Direct Growth",
     "symbol": null,
@@ -8127,6 +8831,10 @@ export const BOOK_POSITIONS: Position[] = [
     "avgCostDerived": true
   },
   {
+    "statementRecord": {
+      "document": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings",
+      "pointer": "/holdings/4"
+    },
     "securityKey": "clean-max-enviro-energy-solutions",
     "security": "CLEAN MAX ENVIRO ENERGY SOLUTIONS LIMITED - EQ NEW FV RE.1/",
     "symbol": "CLEANMAX",
@@ -8184,6 +8892,10 @@ export const BOOK_POSITIONS: Position[] = [
     }
   },
   {
+    "statementRecord": {
+      "document": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings",
+      "pointer": "/holdings/6"
+    },
     "securityKey": "ema-partners-india",
     "security": "EMA PARTNERS INDIA LIMITED - EQ NEW FV RS 5/",
     "symbol": "EMAPARTNER",
@@ -8243,6 +8955,10 @@ export const BOOK_POSITIONS: Position[] = [
     }
   },
   {
+    "statementRecord": {
+      "document": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings",
+      "pointer": "/holdings/10"
+    },
     "securityKey": "fractal-analytics",
     "security": "FRACTAL ANALYTICS LIMITED - EQ",
     "symbol": "FRACTAL",
@@ -8301,6 +9017,10 @@ export const BOOK_POSITIONS: Position[] = [
     }
   },
   {
+    "statementRecord": {
+      "document": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings",
+      "pointer": "/holdings/11"
+    },
     "securityKey": "grand-continent-hotels",
     "security": "GRAND CONTINENT HOTELS LIMITED - EQ",
     "symbol": "GCHOTELS",
@@ -8362,6 +9082,10 @@ export const BOOK_POSITIONS: Position[] = [
     }
   },
   {
+    "statementRecord": {
+      "document": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings",
+      "pointer": "/holdings/15"
+    },
     "securityKey": "insolation-energy",
     "security": "INSOLATION ENERGY LIMITED - EQ NEW FV RE.1/",
     "symbol": "INA",
@@ -8420,6 +9144,10 @@ export const BOOK_POSITIONS: Position[] = [
     }
   },
   {
+    "statementRecord": {
+      "document": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings",
+      "pointer": "/holdings/17"
+    },
     "securityKey": "jaro-institute-of-technology-management-and-research",
     "security": "JARO INSTITUTE OF TECHNOLOGY MANAGEMENT AND RESEARCH LIMITED - EQ",
     "symbol": "JARO",
@@ -8478,6 +9206,10 @@ export const BOOK_POSITIONS: Position[] = [
     }
   },
   {
+    "statementRecord": {
+      "document": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings",
+      "pointer": "/holdings/22"
+    },
     "securityKey": "parth-electricals-and-engineering",
     "security": "PARTH ELECTRICALS & ENGINEERING LIMITED - EQ",
     "symbol": "PARTH",
@@ -8535,6 +9267,10 @@ export const BOOK_POSITIONS: Position[] = [
     }
   },
   {
+    "statementRecord": {
+      "document": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings",
+      "pointer": "/holdings/30"
+    },
     "securityKey": "smartworks-coworking-spaces",
     "security": "SMARTWORKS COWORKING SPACES LIMITED - EQ",
     "symbol": "SMARTWORKS",
@@ -8592,6 +9328,10 @@ export const BOOK_POSITIONS: Position[] = [
     }
   },
   {
+    "statementRecord": {
+      "document": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings",
+      "pointer": "/holdings/36"
+    },
     "securityKey": "yash-highvoltage",
     "security": "YASH HIGHVOLTAGE LIMITED - EQ NEW FV RS. 5/",
     "symbol": null,
@@ -8651,6 +9391,10 @@ export const BOOK_POSITIONS: Position[] = [
     }
   },
   {
+    "statementRecord": {
+      "document": "icici-prudential-mutual-fund-14320536-2026-10-01-holdings",
+      "pointer": "/holdings/0"
+    },
     "securityKey": "balanced-advantage-fund-growth",
     "security": "Balanced Advantage Fund Growth",
     "symbol": null,
@@ -8679,6 +9423,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "icici-prudential-mutual-fund-14320536-2026-10-01-holdings",
+      "pointer": "/holdings/2"
+    },
     "securityKey": "icici-prudential-arbitrage-fund-direct-plan-growth",
     "security": "ICICI Prudential Arbitrage Fund - Direct Plan - Growth",
     "symbol": null,
@@ -8709,6 +9457,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "icici-prudential-mutual-fund-14320536-2026-10-01-holdings",
+      "pointer": "/holdings/1"
+    },
     "securityKey": "icici-prudential-arbitrage-fund-direct-plan-idcw-idcw-reinvestment",
     "security": "ICICI Prudential Arbitrage Fund - Direct Plan - IDCW # IDCW Reinvestment",
     "symbol": null,
@@ -8740,6 +9492,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "icici-prudential-mutual-fund-36378950-2026-10-05-holdings",
+      "pointer": "/holdings/0"
+    },
     "securityKey": "icici-prudential-nifty-100-low-volatility-30-etf-fof-direct-plan-growth",
     "security": "ICICI Prudential Nifty 100 Low Volatility 30 ETF FOF Direct Plan Growth",
     "symbol": null,
@@ -8770,6 +9526,10 @@ export const BOOK_POSITIONS: Position[] = [
     "avgCostDerived": true
   },
   {
+    "statementRecord": {
+      "document": "icici-prudential-mutual-fund-36379637-2026-10-05-holdings",
+      "pointer": "/holdings/0"
+    },
     "securityKey": "icici-prudential-nifty-100-low-volatility-30-etf-fof-direct-plan-growth",
     "security": "ICICI Prudential Nifty 100 Low Volatility 30 ETF FOF Direct Plan Growth",
     "symbol": null,
@@ -8941,6 +9701,10 @@ export const BOOK_POSITIONS: Position[] = [
     "reviewNote": "Valued at ₹3,18,60,000 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 8, its closing of 31 Mar 2026. Each folio's own statement; the review's closings (₹1,180 a unit on 31 Mar 2026), and the units the fund's own statements print. A statement says otherwise: the review's own closing carries 18,000 units; the fund's statement prints the 27,000 units held; the fund's statement dates the ₹50,00,000 call the review puts on 29 Nov 2024 on 14 Jul 2025."
   },
   {
+    "statementRecord": {
+      "document": "invesco-mutual-fund-3041491081-2026-09-30-holdings",
+      "pointer": "/holdings/0"
+    },
     "securityKey": "invesco-india-arbitrage-fund-direct-plan-growth-af-d1",
     "security": "Invesco India Arbitrage Fund - Direct Plan Growth (AF-D1)",
     "symbol": null,
@@ -8971,6 +9735,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "invesco-mutual-fund-3041491145-2026-09-30-holdings",
+      "pointer": "/holdings/0"
+    },
     "securityKey": "invesco-india-arbitrage-fund-direct-plan-growth-af-d1",
     "security": "Invesco India Arbitrage Fund - Direct Plan Growth (AF-D1)",
     "symbol": null,
@@ -9001,6 +9769,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "invesco-mutual-fund-3041491145-2026-09-30-holdings",
+      "pointer": "/holdings/1"
+    },
     "securityKey": "invesco-india-arbitrage-fund-regular-plan-growth-af-gp",
     "security": "Invesco India Arbitrage Fund - Regular Plan Growth (AF-GP)",
     "symbol": null,
@@ -9031,6 +9803,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "invesco-mutual-fund-3041794916-2026-09-30-holdings",
+      "pointer": "/holdings/0"
+    },
     "securityKey": "invesco-india-arbitrage-fund-direct-plan-growth-af-d1",
     "security": "Invesco India Arbitrage Fund - Direct Plan Growth (AF-D1)",
     "symbol": null,
@@ -9061,6 +9837,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "invesco-mutual-fund-3041794916-2026-09-30-holdings",
+      "pointer": "/holdings/1"
+    },
     "securityKey": "invesco-india-arbitrage-fund-regular-plan-growth-af-gp",
     "security": "Invesco India Arbitrage Fund - Regular Plan Growth (AF-GP)",
     "symbol": null,
@@ -9091,6 +9871,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "kotak-mahindra-mutual-fund-4295974-2026-10-05-holdings",
+      "pointer": "/holdings/3"
+    },
     "securityKey": "kotak-flexi-cap-fund-direct-growth",
     "security": "Kotak Flexi Cap Fund Direct Growth",
     "symbol": null,
@@ -9120,6 +9904,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "kotak-mahindra-mutual-fund-4295974-2026-10-05-holdings",
+      "pointer": "/holdings/2"
+    },
     "securityKey": "kotak-flexi-cap-fund-regular-growth",
     "security": "Kotak Flexi Cap Fund Regular Growth",
     "symbol": null,
@@ -9149,6 +9937,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "kotak-mahindra-mutual-fund-4295974-2026-10-05-holdings",
+      "pointer": "/holdings/5"
+    },
     "securityKey": "kotak-liquid-fund-direct-plan-daily-idcw",
     "security": "Kotak Liquid Fund Direct Plan Daily - IDCW #",
     "symbol": null,
@@ -9179,6 +9971,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "kotak-mahindra-mutual-fund-4295974-2026-10-05-holdings",
+      "pointer": "/holdings/4"
+    },
     "securityKey": "kotak-liquid-fund-regular-plan-daily-idcw",
     "security": "Kotak Liquid Fund Regular Plan Daily - IDCW #",
     "symbol": null,
@@ -9208,6 +10004,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "kotak-mahindra-mutual-fund-4295974-2026-10-05-holdings",
+      "pointer": "/holdings/1"
+    },
     "securityKey": "kotak-mid-cap-fund-direct-growth",
     "security": "Kotak Mid Cap Fund Direct Growth",
     "symbol": null,
@@ -9237,6 +10037,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "kotak-mahindra-mutual-fund-4295974-2026-10-05-holdings",
+      "pointer": "/holdings/0"
+    },
     "securityKey": "kotak-mid-cap-fund-regular-growth",
     "security": "Kotak Mid Cap Fund Regular Growth",
     "symbol": null,
@@ -9266,6 +10070,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "kotak-mahindra-mutual-fund-7125255-2026-10-05-holdings",
+      "pointer": "/holdings/0"
+    },
     "securityKey": "kotak-large-and-mid-cap-fund-direct-growth",
     "security": "Kotak Large & Mid Cap Fund - Direct Growth",
     "symbol": null,
@@ -9296,6 +10104,10 @@ export const BOOK_POSITIONS: Position[] = [
     "avgCostDerived": true
   },
   {
+    "statementRecord": {
+      "document": "lkp-securities-98245-2026-03-31-holdings",
+      "pointer": "/holdings/0"
+    },
     "securityKey": "belrise-industries",
     "security": "BELRISE INDUSTRIES LIMITED",
     "symbol": "BELRISE",
@@ -9335,6 +10147,10 @@ export const BOOK_POSITIONS: Position[] = [
     "avgCostDerived": true
   },
   {
+    "statementRecord": {
+      "document": "lkp-securities-98245-2026-03-31-holdings",
+      "pointer": "/holdings/1"
+    },
     "securityKey": "capri-global-capital",
     "security": "CAPRI GLOBAL CAPITAL LIMITED",
     "symbol": "CGCL",
@@ -9374,6 +10190,10 @@ export const BOOK_POSITIONS: Position[] = [
     "avgCostDerived": true
   },
   {
+    "statementRecord": {
+      "document": "lkp-securities-98245-2026-03-31-holdings",
+      "pointer": "/holdings/2"
+    },
     "securityKey": "crompton-greaves-consumer-electrical",
     "security": "Crompton Greaves Consumer Elec",
     "symbol": "CROMPTON",
@@ -9405,6 +10225,10 @@ export const BOOK_POSITIONS: Position[] = [
     "avgCostDerived": true
   },
   {
+    "statementRecord": {
+      "document": "lkp-securities-98245-2026-03-31-holdings",
+      "pointer": "/holdings/3"
+    },
     "securityKey": "electronics-mart-india",
     "security": "Electronics Mart India Limited",
     "symbol": "EMIL",
@@ -9444,6 +10268,10 @@ export const BOOK_POSITIONS: Position[] = [
     "avgCostDerived": true
   },
   {
+    "statementRecord": {
+      "document": "lkp-securities-98245-2026-03-31-holdings",
+      "pointer": "/holdings/4"
+    },
     "securityKey": "jyothy-labs",
     "security": "JYOTHY LABS LIMITED",
     "symbol": "JYOTHYLAB",
@@ -9483,6 +10311,10 @@ export const BOOK_POSITIONS: Position[] = [
     "avgCostDerived": true
   },
   {
+    "statementRecord": {
+      "document": "lkp-securities-98245-2026-03-31-holdings",
+      "pointer": "/holdings/5"
+    },
     "securityKey": "mrs-bectors-food-specialities",
     "security": "Mrs. Bectors Food Specialities",
     "symbol": "BECTORFOOD",
@@ -9514,6 +10346,10 @@ export const BOOK_POSITIONS: Position[] = [
     "avgCostDerived": true
   },
   {
+    "statementRecord": {
+      "document": "lkp-securities-98245-2026-03-31-holdings",
+      "pointer": "/holdings/6"
+    },
     "securityKey": "nip-etnf1d-rtliqbees",
     "security": "NIP ETNF1D RTLIQBEES",
     "symbol": "LIQUIDBEES",
@@ -9543,6 +10379,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "lkp-securities-98245-2026-03-31-holdings",
+      "pointer": "/holdings/7"
+    },
     "securityKey": "pricol",
     "security": "PRICOL LIMITED",
     "symbol": "PRICOLLTD",
@@ -9581,6 +10421,10 @@ export const BOOK_POSITIONS: Position[] = [
     "avgCostDerived": true
   },
   {
+    "statementRecord": {
+      "document": "lkp-securities-98245-2026-03-31-holdings",
+      "pointer": "/holdings/8"
+    },
     "securityKey": "transrail-lighting",
     "security": "Transrail Lighting Limited",
     "symbol": "TRANSRAILL",
@@ -9612,6 +10456,10 @@ export const BOOK_POSITIONS: Position[] = [
     "avgCostDerived": true
   },
   {
+    "statementRecord": {
+      "document": "lkp-securities-98245-2026-03-31-holdings",
+      "pointer": "/holdings/9"
+    },
     "securityKey": "varun-beverages",
     "security": "Varun Beverages Limited",
     "symbol": "VBL",
@@ -9651,6 +10499,10 @@ export const BOOK_POSITIONS: Position[] = [
     "avgCostDerived": true
   },
   {
+    "statementRecord": {
+      "document": "mirae-asset-mutual-fund-70413280453-2026-10-06-holdings",
+      "pointer": "/holdings/0"
+    },
     "securityKey": "mirae-asset-liquid-fund-formerly-mirae-asset-cash-management-fund-direct-plan-mirae-asset-liquid-fund-formerly-mirae-asset-cash-management-fund-direct-plan-growth",
     "security": "Mirae Asset Liquid Fund ( formerly Mirae Asset Cash Management Fund ) - Direct Plan Mirae Asset Liquid Fund ( formerly Mirae Asset Cash Management Fund ) - Direct Plan Growth",
     "symbol": null,
@@ -9681,6 +10533,10 @@ export const BOOK_POSITIONS: Position[] = [
     "avgCostDerived": true
   },
   {
+    "statementRecord": {
+      "document": "molecule-ventures-llp-7810404-2026-07-31-holdings",
+      "pointer": "/holdings/0"
+    },
     "securityKey": "arvind-fashions",
     "security": "ARVIND FASHIONS LIMITED",
     "symbol": "ARVINDFASN",
@@ -9717,6 +10573,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": -12.71
   },
   {
+    "statementRecord": {
+      "document": "molecule-ventures-llp-7810404-2026-07-31-holdings",
+      "pointer": "/holdings/9"
+    },
     "securityKey": "cash",
     "security": "Cash",
     "symbol": null,
@@ -9744,6 +10604,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": 0
   },
   {
+    "statementRecord": {
+      "document": "molecule-ventures-llp-7810404-2026-07-31-holdings",
+      "pointer": "/holdings/1"
+    },
     "securityKey": "chemfab-alkalis",
     "security": "CHEMFAB ALKALIS LIMITED",
     "symbol": "CHEMFAB",
@@ -9780,6 +10644,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": -43.5
   },
   {
+    "statementRecord": {
+      "document": "molecule-ventures-llp-7810404-2026-07-31-holdings",
+      "pointer": "/holdings/2"
+    },
     "securityKey": "dcw",
     "security": "DCW LIMITED",
     "symbol": "DCW",
@@ -9816,6 +10684,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": -31.52
   },
   {
+    "statementRecord": {
+      "document": "molecule-ventures-llp-7810404-2026-07-31-holdings",
+      "pointer": "/holdings/3"
+    },
     "securityKey": "indian-metals-and-ferro-alloys",
     "security": "INDIAN METALS AND FERRO ALLOYS LTD.",
     "symbol": "IMFA",
@@ -9853,6 +10725,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": 72.06
   },
   {
+    "statementRecord": {
+      "document": "molecule-ventures-llp-7810404-2026-07-31-holdings",
+      "pointer": "/holdings/4"
+    },
     "securityKey": "jayaswal-neco-industries",
     "security": "JAYASWAL NECO INDUSTRIES LTD.",
     "symbol": "JAYNECOIND",
@@ -9889,6 +10765,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": 25.72
   },
   {
+    "statementRecord": {
+      "document": "molecule-ventures-llp-7810404-2026-07-31-holdings",
+      "pointer": "/holdings/5"
+    },
     "securityKey": "kirloskar-ferrous-industries",
     "security": "KIRLOSKAR FERROUS INDUSTRIES LTD.",
     "symbol": "KIRLFER",
@@ -9926,6 +10806,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": -11.61
   },
   {
+    "statementRecord": {
+      "document": "molecule-ventures-llp-7810404-2026-07-31-holdings",
+      "pointer": "/holdings/6"
+    },
     "securityKey": "manali-petrochemical",
     "security": "MANALI PETROCHEMICAL LTD.",
     "symbol": null,
@@ -9962,6 +10846,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": -1.13
   },
   {
+    "statementRecord": {
+      "document": "molecule-ventures-llp-7810404-2026-07-31-holdings",
+      "pointer": "/holdings/7"
+    },
     "securityKey": "sansera-engineering",
     "security": "SANSERA ENGINEERING LIMITED",
     "symbol": "SANSERA",
@@ -9998,6 +10886,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": 211.07
   },
   {
+    "statementRecord": {
+      "document": "molecule-ventures-llp-7810404-2026-07-31-holdings",
+      "pointer": "/holdings/8"
+    },
     "securityKey": "sasken-communication-technologies",
     "security": "SASKEN COMMUNICATION TECHNOLOGIES",
     "symbol": null,
@@ -10039,6 +10931,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": -89.48
   },
   {
+    "statementRecord": {
+      "document": "molecule-ventures-llp-7810404-2026-07-31-holdings",
+      "pointer": "/holdings/10"
+    },
     "securityKey": "tax-deducted-at-source",
     "security": "Tax Deducted at Source",
     "symbol": null,
@@ -10066,6 +10962,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": 0
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-active-momentum-fund-904168868444-2026-08-06-holdings",
+      "pointer": "/holdings/0"
+    },
     "securityKey": "motilal-oswal-active-momentum-fund-direct-plan-growth-option",
     "security": "Motilal Oswal Active Momentum Fund - Direct Plan Growth Option",
     "symbol": null,
@@ -10095,6 +10995,10 @@ export const BOOK_POSITIONS: Position[] = [
     "avgCostDerived": true
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-delphi-equity-fund-9049241536-2026-06-30-holdings",
+      "pointer": "/holdings/0"
+    },
     "securityKey": "motilal-oswal-wealth-delphi-equity-fund",
     "security": "Motilal Oswal Wealth Delphi Equity Fund",
     "symbol": null,
@@ -10124,6 +11028,10 @@ export const BOOK_POSITIONS: Position[] = [
     "avgCostDerived": true
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-founders-fund-90410016093-2026-09-30-holdings",
+      "pointer": "/holdings/0"
+    },
     "securityKey": "motilal-oswal-founders-fund-series-ii-class-g1",
     "security": "Motilal Oswal Founders Fund Series II — Class G1",
     "symbol": null,
@@ -10154,6 +11062,10 @@ export const BOOK_POSITIONS: Position[] = [
     "avgCostDerived": true
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-founders-fund-90410016104-2026-09-30-holdings",
+      "pointer": "/holdings/0"
+    },
     "securityKey": "motilal-oswal-founders-fund-series-ii-class-g1",
     "security": "Motilal Oswal Founders Fund Series II — Class G1",
     "symbol": null,
@@ -10184,6 +11096,10 @@ export const BOOK_POSITIONS: Position[] = [
     "avgCostDerived": true
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-hedged-equity-multi-factor-strategy-90410014574-2026-07-31-holdings",
+      "pointer": "/holdings/0"
+    },
     "securityKey": "motilal-oswal-hedged-equity-multi-factor-strategy-class-b2",
     "security": "Motilal Oswal Hedged Equity Multi Factor Strategy — Class B2",
     "symbol": null,
@@ -10212,6 +11128,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-hedged-equity-multi-factor-strategy-90410014574-2026-07-31-holdings",
+      "pointer": "/holdings/1"
+    },
     "securityKey": "motilal-oswal-hedged-equity-multi-factor-strategy-class-f1",
     "security": "Motilal Oswal Hedged Equity Multi Factor Strategy — Class F1",
     "symbol": null,
@@ -10241,6 +11161,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-mutual-fund-90414963315-2026-09-30-holdings",
+      "pointer": "/holdings/0"
+    },
     "securityKey": "motilal-oswal-arbitrage-fund-direct-plan-growth",
     "security": "Motilal Oswal Arbitrage Fund - Direct Plan Growth",
     "symbol": null,
@@ -10269,6 +11193,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-mutual-fund-90414963315-2026-09-30-holdings",
+      "pointer": "/holdings/2"
+    },
     "securityKey": "motilal-oswal-liquid-fund-direct-plan-growth",
     "security": "Motilal Oswal Liquid fund - Direct Plan Growth",
     "symbol": null,
@@ -10297,6 +11225,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-mutual-fund-90414963315-2026-09-30-holdings",
+      "pointer": "/holdings/1"
+    },
     "securityKey": "motilal-oswal-midcap-fund-direct-plan-growth",
     "security": "Motilal Oswal Midcap Fund - Direct Plan Growth",
     "symbol": null,
@@ -10325,6 +11257,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "neo-infra-income-opportunities-fund-9039920536-2026-06-30-holdings",
+      "pointer": "/holdings/0"
+    },
     "securityKey": "neo-infra-income-opportunities-fund-i-class-a5",
     "security": "Neo Infra Income Opportunities Fund I — Class A5",
     "symbol": null,
@@ -13924,6 +14860,10 @@ export const BOOK_POSITIONS: Position[] = [
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 64. No document in the drop names its holder."
   },
   {
+    "statementRecord": {
+      "document": "sanshi-fund-9039671821-2026-06-30-unknown",
+      "pointer": "/holdings/0"
+    },
     "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e",
     "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class E",
     "symbol": null,
@@ -13954,6 +14894,10 @@ export const BOOK_POSITIONS: Position[] = [
     "avgCostDerived": true
   },
   {
+    "statementRecord": {
+      "document": "sanshi-fund-9039671854-2026-06-30-unknown",
+      "pointer": "/holdings/0"
+    },
     "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e",
     "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class E",
     "symbol": null,
@@ -13984,6 +14928,10 @@ export const BOOK_POSITIONS: Position[] = [
     "avgCostDerived": true
   },
   {
+    "statementRecord": {
+      "document": "sanshi-fund-9039671912-2026-06-30-unknown",
+      "pointer": "/holdings/0"
+    },
     "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-a2",
     "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class A2",
     "symbol": null,
@@ -14014,6 +14962,10 @@ export const BOOK_POSITIONS: Position[] = [
     "avgCostDerived": true
   },
   {
+    "statementRecord": {
+      "document": "sanshi-fund-9069671554-2026-06-30-unknown",
+      "pointer": "/holdings/0"
+    },
     "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e",
     "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class E",
     "symbol": null,
@@ -14044,6 +14996,10 @@ export const BOOK_POSITIONS: Position[] = [
     "avgCostDerived": true
   },
   {
+    "statementRecord": {
+      "document": "sanshi-fund-9069671634-2026-06-30-unknown",
+      "pointer": "/holdings/0"
+    },
     "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e",
     "security": "Sanshi Fund-I (Open Ended AIF CAT-III) — Class E",
     "symbol": null,
@@ -14258,6 +15214,10 @@ export const BOOK_POSITIONS: Position[] = [
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 11. Each folio's own statement."
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "pointer": "/holdings/29"
+    },
     "securityKey": "apollo-pipes",
     "security": "APOLLO PIPES LIMITED",
     "symbol": null,
@@ -14298,6 +15258,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "pointer": "/holdings/18"
+    },
     "securityKey": "arvind-fashions",
     "security": "Arvind Fashions Ltd",
     "symbol": "ARVINDFASN",
@@ -14335,6 +15299,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "pointer": "/holdings/30"
+    },
     "securityKey": "birlasoft",
     "security": "Birlasoft Ltd",
     "symbol": "BSOFT",
@@ -14372,6 +15340,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "pointer": "/holdings/22"
+    },
     "securityKey": "borosil-renewables",
     "security": "BOROSIL RENEWABLES LTD",
     "symbol": "BORORENEW",
@@ -14408,6 +15380,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "pointer": "/holdings/1"
+    },
     "securityKey": "caplin-point-laboratories",
     "security": "Caplin Point Laboratories Ltd",
     "symbol": "CAPLIPOINT",
@@ -14445,6 +15421,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "pointer": "/holdings/47"
+    },
     "securityKey": "cash",
     "security": "Cash",
     "symbol": null,
@@ -14472,6 +15452,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "pointer": "/holdings/48"
+    },
     "securityKey": "cash-rec-payable",
     "security": "Cash Rec/Payable",
     "symbol": null,
@@ -14499,6 +15483,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "pointer": "/holdings/6"
+    },
     "securityKey": "ceat",
     "security": "Ceat Ltd",
     "symbol": "CEATLTD",
@@ -14536,6 +15524,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "pointer": "/holdings/11"
+    },
     "securityKey": "cosmo-first",
     "security": "Cosmo First Limited",
     "symbol": null,
@@ -14573,6 +15565,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "pointer": "/holdings/14"
+    },
     "securityKey": "creative-newtech",
     "security": "CREATIVE NEWTECH LIMITED",
     "symbol": "CNL",
@@ -14610,6 +15606,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "pointer": "/holdings/7"
+    },
     "securityKey": "credit-access-grameen",
     "security": "Credit Access Grameen Limited",
     "symbol": null,
@@ -14646,6 +15646,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "pointer": "/holdings/32"
+    },
     "securityKey": "dilip-buildcon",
     "security": "Dilip Buildcon Ltd",
     "symbol": "DBL",
@@ -14683,6 +15687,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "pointer": "/holdings/12"
+    },
     "securityKey": "edelweiss-financial-services",
     "security": "Edelweiss Financial Services Ltd",
     "symbol": "EDELWEISS",
@@ -14720,6 +15728,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "pointer": "/holdings/24"
+    },
     "securityKey": "ester-industries",
     "security": "Ester Industries Limited",
     "symbol": "ESTER",
@@ -14757,6 +15769,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "pointer": "/holdings/36"
+    },
     "securityKey": "fusion-finance",
     "security": "Fusion Finance Limited",
     "symbol": "FUSION",
@@ -14793,6 +15809,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "pointer": "/holdings/34"
+    },
     "securityKey": "ghcl",
     "security": "GHCL Ltd",
     "symbol": "GHCL",
@@ -14830,6 +15850,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "pointer": "/holdings/17"
+    },
     "securityKey": "ghcl-textiles",
     "security": "GHCL Textiles Limited",
     "symbol": "GHCLTEXTIL",
@@ -14867,6 +15891,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "pointer": "/holdings/16"
+    },
     "securityKey": "gland-pharma",
     "security": "GLAND PHARMA LIMITED",
     "symbol": "GLAND",
@@ -14908,6 +15936,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "pointer": "/holdings/39"
+    },
     "securityKey": "graphite-india",
     "security": "Graphite India Ltd",
     "symbol": "GRAPHITE",
@@ -14948,6 +15980,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "pointer": "/holdings/41"
+    },
     "securityKey": "heg-advanced-materials",
     "security": "HEG Advanced Materials Limited",
     "symbol": null,
@@ -14985,6 +16021,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "pointer": "/holdings/15"
+    },
     "securityKey": "heg-graphite",
     "security": "HEG Graphite Limited",
     "symbol": null,
@@ -15021,6 +16061,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "pointer": "/holdings/33"
+    },
     "securityKey": "ifb-industries",
     "security": "IFB Industries Ltd",
     "symbol": "IFBIND",
@@ -15057,6 +16101,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "pointer": "/holdings/0"
+    },
     "securityKey": "indo-count-industries",
     "security": "Indo Count Industries Ltd",
     "symbol": "ICIL",
@@ -15094,6 +16142,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "pointer": "/holdings/38"
+    },
     "securityKey": "kajaria-ceramics",
     "security": "Kajaria Ceramics Ltd",
     "symbol": null,
@@ -15134,6 +16186,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "pointer": "/holdings/44"
+    },
     "securityKey": "krishca-strapping-solutions",
     "security": "KRISHCA STRAPPING SOLUTIONS LTD",
     "symbol": null,
@@ -15170,6 +16226,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "pointer": "/holdings/13"
+    },
     "securityKey": "laxmi-organic-industries",
     "security": "Laxmi Organic Industries Limited",
     "symbol": "LXCHEM",
@@ -15207,6 +16267,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "pointer": "/holdings/25"
+    },
     "securityKey": "mastek",
     "security": "Mastek Ltd",
     "symbol": "MASTEK",
@@ -15244,6 +16308,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "pointer": "/holdings/3"
+    },
     "securityKey": "neuland-laboratories",
     "security": "Neuland Laboratories Ltd",
     "symbol": "NEULANDLAB",
@@ -15281,6 +16349,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "pointer": "/holdings/5"
+    },
     "securityKey": "nitin-spinners",
     "security": "NITIN SPINNERS LIMITED",
     "symbol": "NITINSPIN",
@@ -15318,6 +16390,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "pointer": "/holdings/23"
+    },
     "securityKey": "paras-defence-and-space-technologies",
     "security": "Paras Defence and Space Technologies Limited",
     "symbol": "PARAS",
@@ -15359,6 +16435,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "pointer": "/holdings/28"
+    },
     "securityKey": "pokarna",
     "security": "Pokarna Ltd",
     "symbol": "POKARNA",
@@ -15396,6 +16476,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "pointer": "/holdings/31"
+    },
     "securityKey": "polyplex",
     "security": "Polyplex Corporation Ltd",
     "symbol": "POLYPLEX",
@@ -15433,6 +16517,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "pointer": "/holdings/27"
+    },
     "securityKey": "punjab-chem-and-crop-prot-l",
     "security": "PUNJAB CHEM & CROP PROT L",
     "symbol": null,
@@ -15470,6 +16558,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "pointer": "/holdings/20"
+    },
     "securityKey": "puravankara",
     "security": "Puravankara Limited",
     "symbol": "PURVA",
@@ -15506,6 +16598,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "pointer": "/holdings/35"
+    },
     "securityKey": "sg-mart",
     "security": "SG Mart Limited",
     "symbol": "SGMART",
@@ -15543,6 +16639,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "pointer": "/holdings/46"
+    },
     "securityKey": "shakti-pumps-india",
     "security": "Shakti Pumps India Ltd",
     "symbol": "SHAKTIPUMP",
@@ -15580,6 +16680,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "pointer": "/holdings/10"
+    },
     "securityKey": "shankara-buildpro",
     "security": "Shankara Buildpro Ltd",
     "symbol": "BUILDPRO",
@@ -15618,6 +16722,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "pointer": "/holdings/45"
+    },
     "securityKey": "sharda-cropchem",
     "security": "Sharda Cropchem Ltd",
     "symbol": "SHARDACROP",
@@ -15655,6 +16763,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "pointer": "/holdings/21"
+    },
     "securityKey": "sharda-motor-industries",
     "security": "SHARDA MOTOR INDUSTRIES LIMITED",
     "symbol": "SHARDAMOTR",
@@ -15692,6 +16804,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "pointer": "/holdings/26"
+    },
     "securityKey": "stove-kraft",
     "security": "Stove Kraft Limited",
     "symbol": "STOVEKRAFT",
@@ -15729,6 +16845,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "pointer": "/holdings/9"
+    },
     "securityKey": "syrma-sgs-technology",
     "security": "Syrma SGS Technology Limited",
     "symbol": "SYRMA",
@@ -15766,6 +16886,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "pointer": "/holdings/40"
+    },
     "securityKey": "time-technoplast",
     "security": "Time Technoplast Ltd",
     "symbol": "TIMETECHNO",
@@ -15803,6 +16927,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "pointer": "/holdings/2"
+    },
     "securityKey": "v2-retail",
     "security": "V2 Retail Ltd",
     "symbol": "V2RETAIL",
@@ -15839,6 +16967,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "pointer": "/holdings/42"
+    },
     "securityKey": "vaibhav-global",
     "security": "Vaibhav Global Ltd",
     "symbol": "VAIBHAVGBL",
@@ -15876,6 +17008,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "pointer": "/holdings/4"
+    },
     "securityKey": "varroc-engineering",
     "security": "Varroc Engineering Limited",
     "symbol": "VARROC",
@@ -15913,6 +17049,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "pointer": "/holdings/8"
+    },
     "securityKey": "viyash-scientific",
     "security": "Viyash Scientific Limited",
     "symbol": "VIYASH",
@@ -15949,6 +17089,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "pointer": "/holdings/19"
+    },
     "securityKey": "wockhardt",
     "security": "Wockhardt Ltd",
     "symbol": "WOCKPHARMA",
@@ -15989,6 +17133,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "pointer": "/holdings/43"
+    },
     "securityKey": "wpil",
     "security": "Wpil Ltd",
     "symbol": "WPIL",
@@ -16026,6 +17174,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "pointer": "/holdings/37"
+    },
     "securityKey": "zensar-technologies",
     "security": "Zensar Technologies Ltd",
     "symbol": "ZENSARTECH",
@@ -16063,6 +17215,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "pointer": "/holdings/0"
+    },
     "securityKey": "apollo-pipes",
     "security": "APOLLO PIPES LIMITED",
     "symbol": null,
@@ -16103,6 +17259,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "pointer": "/holdings/1"
+    },
     "securityKey": "arvind-fashions",
     "security": "Arvind Fashions Ltd",
     "symbol": "ARVINDFASN",
@@ -16140,6 +17300,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "pointer": "/holdings/3"
+    },
     "securityKey": "birlasoft",
     "security": "Birlasoft Ltd",
     "symbol": "BSOFT",
@@ -16177,6 +17341,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "pointer": "/holdings/2"
+    },
     "securityKey": "borosil-renewables",
     "security": "BOROSIL RENEWABLES LTD",
     "symbol": "BORORENEW",
@@ -16213,6 +17381,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "pointer": "/holdings/5"
+    },
     "securityKey": "caplin-point-laboratories",
     "security": "Caplin Point Laboratories Ltd",
     "symbol": "CAPLIPOINT",
@@ -16250,6 +17422,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "pointer": "/holdings/46"
+    },
     "securityKey": "cash",
     "security": "Cash",
     "symbol": null,
@@ -16277,6 +17453,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "pointer": "/holdings/6"
+    },
     "securityKey": "ceat",
     "security": "Ceat Ltd",
     "symbol": "CEATLTD",
@@ -16314,6 +17494,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "pointer": "/holdings/7"
+    },
     "securityKey": "cosmo-first",
     "security": "Cosmo First Limited",
     "symbol": null,
@@ -16351,6 +17535,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "pointer": "/holdings/4"
+    },
     "securityKey": "creative-newtech",
     "security": "CREATIVE NEWTECH LIMITED",
     "symbol": "CNL",
@@ -16388,6 +17576,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "pointer": "/holdings/8"
+    },
     "securityKey": "credit-access-grameen",
     "security": "Credit Access Grameen Limited",
     "symbol": null,
@@ -16424,6 +17616,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "pointer": "/holdings/9"
+    },
     "securityKey": "dilip-buildcon",
     "security": "Dilip Buildcon Ltd",
     "symbol": "DBL",
@@ -16461,6 +17657,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "pointer": "/holdings/10"
+    },
     "securityKey": "edelweiss-financial-services",
     "security": "Edelweiss Financial Services Ltd",
     "symbol": "EDELWEISS",
@@ -16498,6 +17698,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "pointer": "/holdings/11"
+    },
     "securityKey": "ester-industries",
     "security": "Ester Industries Limited",
     "symbol": "ESTER",
@@ -16535,6 +17739,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "pointer": "/holdings/12"
+    },
     "securityKey": "fusion-finance",
     "security": "Fusion Finance Limited",
     "symbol": "FUSION",
@@ -16571,6 +17779,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "pointer": "/holdings/13"
+    },
     "securityKey": "ghcl",
     "security": "GHCL Ltd",
     "symbol": "GHCL",
@@ -16608,6 +17820,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "pointer": "/holdings/14"
+    },
     "securityKey": "ghcl-textiles",
     "security": "GHCL Textiles Limited",
     "symbol": "GHCLTEXTIL",
@@ -16645,6 +17861,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "pointer": "/holdings/15"
+    },
     "securityKey": "gland-pharma",
     "security": "GLAND PHARMA LIMITED",
     "symbol": "GLAND",
@@ -16686,6 +17906,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "pointer": "/holdings/16"
+    },
     "securityKey": "graphite-india",
     "security": "Graphite India Ltd",
     "symbol": "GRAPHITE",
@@ -16726,6 +17950,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "pointer": "/holdings/17"
+    },
     "securityKey": "heg-advanced-materials",
     "security": "HEG Advanced Materials Limited",
     "symbol": null,
@@ -16763,6 +17991,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "pointer": "/holdings/18"
+    },
     "securityKey": "heg-graphite",
     "security": "HEG Graphite Limited",
     "symbol": null,
@@ -16799,6 +18031,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "pointer": "/holdings/19"
+    },
     "securityKey": "ifb-industries",
     "security": "IFB Industries Ltd",
     "symbol": "IFBIND",
@@ -16835,6 +18071,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "pointer": "/holdings/20"
+    },
     "securityKey": "indo-count-industries",
     "security": "Indo Count Industries Ltd",
     "symbol": "ICIL",
@@ -16872,6 +18112,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "pointer": "/holdings/21"
+    },
     "securityKey": "krishca-strapping-solutions",
     "security": "KRISHCA STRAPPING SOLUTIONS LTD",
     "symbol": null,
@@ -16908,6 +18152,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "pointer": "/holdings/22"
+    },
     "securityKey": "laxmi-organic-industries",
     "security": "Laxmi Organic Industries Limited",
     "symbol": "LXCHEM",
@@ -16945,6 +18193,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "pointer": "/holdings/23"
+    },
     "securityKey": "mastek",
     "security": "Mastek Ltd",
     "symbol": "MASTEK",
@@ -16982,6 +18234,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "pointer": "/holdings/25"
+    },
     "securityKey": "neuland-laboratories",
     "security": "Neuland Laboratories Ltd",
     "symbol": "NEULANDLAB",
@@ -17019,6 +18275,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "pointer": "/holdings/24"
+    },
     "securityKey": "nitin-spinners",
     "security": "NITIN SPINNERS LIMITED",
     "symbol": "NITINSPIN",
@@ -17056,6 +18316,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "pointer": "/holdings/27"
+    },
     "securityKey": "paras-defence-and-space-technologies",
     "security": "Paras Defence and Space Technologies Limited",
     "symbol": "PARAS",
@@ -17097,6 +18361,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "pointer": "/holdings/28"
+    },
     "securityKey": "pokarna",
     "security": "Pokarna Ltd",
     "symbol": "POKARNA",
@@ -17134,6 +18402,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "pointer": "/holdings/29"
+    },
     "securityKey": "polyplex",
     "security": "Polyplex Corporation Ltd",
     "symbol": "POLYPLEX",
@@ -17171,6 +18443,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "pointer": "/holdings/26"
+    },
     "securityKey": "punjab-chem-and-crop-prot-l",
     "security": "PUNJAB CHEM & CROP PROT L",
     "symbol": null,
@@ -17208,6 +18484,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "pointer": "/holdings/30"
+    },
     "securityKey": "puravankara",
     "security": "Puravankara Limited",
     "symbol": "PURVA",
@@ -17244,6 +18524,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "pointer": "/holdings/31"
+    },
     "securityKey": "sg-mart",
     "security": "SG Mart Limited",
     "symbol": "SGMART",
@@ -17281,6 +18565,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "pointer": "/holdings/33"
+    },
     "securityKey": "shakti-pumps-india",
     "security": "Shakti Pumps India Ltd",
     "symbol": "SHAKTIPUMP",
@@ -17318,6 +18606,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "pointer": "/holdings/34"
+    },
     "securityKey": "shankara-buildpro",
     "security": "Shankara Buildpro Ltd",
     "symbol": "BUILDPRO",
@@ -17356,6 +18648,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "pointer": "/holdings/35"
+    },
     "securityKey": "sharda-cropchem",
     "security": "Sharda Cropchem Ltd",
     "symbol": "SHARDACROP",
@@ -17393,6 +18689,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "pointer": "/holdings/32"
+    },
     "securityKey": "sharda-motor-industries",
     "security": "SHARDA MOTOR INDUSTRIES LIMITED",
     "symbol": "SHARDAMOTR",
@@ -17430,6 +18730,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "pointer": "/holdings/36"
+    },
     "securityKey": "stove-kraft",
     "security": "Stove Kraft Limited",
     "symbol": "STOVEKRAFT",
@@ -17467,6 +18771,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "pointer": "/holdings/37"
+    },
     "securityKey": "syrma-sgs-technology",
     "security": "Syrma SGS Technology Limited",
     "symbol": "SYRMA",
@@ -17504,6 +18812,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "pointer": "/holdings/38"
+    },
     "securityKey": "time-technoplast",
     "security": "Time Technoplast Ltd",
     "symbol": "TIMETECHNO",
@@ -17541,6 +18853,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "pointer": "/holdings/39"
+    },
     "securityKey": "v2-retail",
     "security": "V2 Retail Ltd",
     "symbol": "V2RETAIL",
@@ -17577,6 +18893,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "pointer": "/holdings/40"
+    },
     "securityKey": "vaibhav-global",
     "security": "Vaibhav Global Ltd",
     "symbol": "VAIBHAVGBL",
@@ -17614,6 +18934,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "pointer": "/holdings/41"
+    },
     "securityKey": "varroc-engineering",
     "security": "Varroc Engineering Limited",
     "symbol": "VARROC",
@@ -17651,6 +18975,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "pointer": "/holdings/42"
+    },
     "securityKey": "viyash-scientific",
     "security": "Viyash Scientific Limited",
     "symbol": "VIYASH",
@@ -17687,6 +19015,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "pointer": "/holdings/43"
+    },
     "securityKey": "wockhardt",
     "security": "Wockhardt Ltd",
     "symbol": "WOCKPHARMA",
@@ -17727,6 +19059,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "pointer": "/holdings/44"
+    },
     "securityKey": "wpil",
     "security": "Wpil Ltd",
     "symbol": "WPIL",
@@ -17764,6 +19100,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "pointer": "/holdings/45"
+    },
     "securityKey": "zensar-technologies",
     "security": "Zensar Technologies Ltd",
     "symbol": "ZENSARTECH",
@@ -17893,6 +19233,10 @@ export const BOOK_POSITIONS: Position[] = [
     "reviewNote": "Valued at ₹96,80,754 on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 13, its closing of 28 Feb 2026. Each trust's own folio, and Ankita's 2,500 units on the review's Transactions. A statement says otherwise: the trust's own statement of 31 Mar 2026 values its 7,500 units at ₹1,71,45,962.25 (₹2,286.13 a unit) against the review's 28 Feb mark."
   },
   {
+    "statementRecord": {
+      "document": "v-e-c-assago-capital-management-llp-128004-2026-10-07-appraisal",
+      "pointer": "/holdings/11"
+    },
     "securityKey": "amrutanjan-health-care",
     "security": "Amrutanjan Health Care Ltd",
     "symbol": "AMRUTANJAN",
@@ -17935,6 +19279,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "v-e-c-assago-capital-management-llp-128004-2026-10-07-appraisal",
+      "pointer": "/holdings/5"
+    },
     "securityKey": "ather-energy",
     "security": "Ather Energy Ltd",
     "symbol": "ATHERENERG",
@@ -17977,6 +19325,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "v-e-c-assago-capital-management-llp-128004-2026-10-07-appraisal",
+      "pointer": "/holdings/14"
+    },
     "securityKey": "cash",
     "security": "CASH",
     "symbol": null,
@@ -18004,6 +19356,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "v-e-c-assago-capital-management-llp-128004-2026-10-07-appraisal",
+      "pointer": "/holdings/15"
+    },
     "securityKey": "cash-rec-payable",
     "security": "CASH Rec/Payable",
     "symbol": null,
@@ -18031,6 +19387,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "v-e-c-assago-capital-management-llp-128004-2026-10-07-appraisal",
+      "pointer": "/holdings/3"
+    },
     "securityKey": "eureka-forbes",
     "security": "Eureka Forbes Ltd",
     "symbol": "EUREKAFORB",
@@ -18072,6 +19432,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "v-e-c-assago-capital-management-llp-128004-2026-10-07-appraisal",
+      "pointer": "/holdings/7"
+    },
     "securityKey": "gateway-distriparks",
     "security": "Gateway Distriparks Ltd",
     "symbol": "GATEWAY",
@@ -18114,6 +19478,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "v-e-c-assago-capital-management-llp-128004-2026-10-07-appraisal",
+      "pointer": "/holdings/1"
+    },
     "securityKey": "greaves-cotton",
     "security": "GREAVES COTTON LTD.",
     "symbol": "GREAVESCOT",
@@ -18156,6 +19524,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "v-e-c-assago-capital-management-llp-128004-2026-10-07-appraisal",
+      "pointer": "/holdings/4"
+    },
     "securityKey": "jaiprakash-power-ventures",
     "security": "Jaiprakash Power Ventures Ltd",
     "symbol": "JPPOWER",
@@ -18197,6 +19569,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "v-e-c-assago-capital-management-llp-128004-2026-10-07-appraisal",
+      "pointer": "/holdings/8"
+    },
     "securityKey": "navneet-education",
     "security": "Navneet Education Ltd",
     "symbol": "NAVNETEDUL",
@@ -18239,6 +19615,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "v-e-c-assago-capital-management-llp-128004-2026-10-07-appraisal",
+      "pointer": "/holdings/10"
+    },
     "securityKey": "nuvama-wealth-management",
     "security": "Nuvama Wealth Management Ltd",
     "symbol": "NUVAMA",
@@ -18277,6 +19657,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "v-e-c-assago-capital-management-llp-128004-2026-10-07-appraisal",
+      "pointer": "/holdings/12"
+    },
     "securityKey": "panacea-biotec",
     "security": "Panacea Biotec Ltd",
     "symbol": "PANACEABIO",
@@ -18318,6 +19702,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "v-e-c-assago-capital-management-llp-128004-2026-10-07-appraisal",
+      "pointer": "/holdings/6"
+    },
     "securityKey": "sbfc-finance",
     "security": "SBFC Finance Ltd",
     "symbol": "SBFC",
@@ -18359,6 +19747,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "v-e-c-assago-capital-management-llp-128004-2026-10-07-appraisal",
+      "pointer": "/holdings/2"
+    },
     "securityKey": "shoppers-stop",
     "security": "Shoppers Stop Ltd",
     "symbol": "SHOPERSTOP",
@@ -18400,6 +19792,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "v-e-c-assago-capital-management-llp-128004-2026-10-07-appraisal",
+      "pointer": "/holdings/13"
+    },
     "securityKey": "shree-digvijay-cement",
     "security": "SHREE DIGVIJAY CEMENT CO.LTD",
     "symbol": "SHREDIGCEM",
@@ -18442,6 +19838,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "v-e-c-assago-capital-management-llp-128004-2026-10-07-appraisal",
+      "pointer": "/holdings/9"
+    },
     "securityKey": "tejas-networks",
     "security": "Tejas Networks Limited",
     "symbol": "TEJASNET",
@@ -18483,6 +19883,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "v-e-c-assago-capital-management-llp-128004-2026-10-07-appraisal",
+      "pointer": "/holdings/0"
+    },
     "securityKey": "wockhardt",
     "security": "Wockhardt Ltd",
     "symbol": "WOCKPHARMA",
@@ -18524,6 +19928,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "v-e-c-assago-capital-management-llp-128005-2026-08-13-appraisal",
+      "pointer": "/holdings/16"
+    },
     "securityKey": "amrutanjan-health-care",
     "security": "Amrutanjan Health Care Ltd",
     "symbol": "AMRUTANJAN",
@@ -18560,6 +19968,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "v-e-c-assago-capital-management-llp-128005-2026-08-13-appraisal",
+      "pointer": "/holdings/3"
+    },
     "securityKey": "ather-energy",
     "security": "Ather Energy Ltd",
     "symbol": "ATHERENERG",
@@ -18597,6 +20009,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "v-e-c-assago-capital-management-llp-128005-2026-08-13-appraisal",
+      "pointer": "/holdings/17"
+    },
     "securityKey": "cash",
     "security": "CASH",
     "symbol": null,
@@ -18624,6 +20040,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "v-e-c-assago-capital-management-llp-128005-2026-08-13-appraisal",
+      "pointer": "/holdings/18"
+    },
     "securityKey": "cash-rec-payable",
     "security": "CASH Rec/Payable",
     "symbol": null,
@@ -18651,6 +20071,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "v-e-c-assago-capital-management-llp-128005-2026-08-13-appraisal",
+      "pointer": "/holdings/11"
+    },
     "securityKey": "crompton-greaves-consumer-electrical",
     "security": "Crompton Greaves Consumer Electrical Ltd",
     "symbol": "CROMPTON",
@@ -18689,6 +20113,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "v-e-c-assago-capital-management-llp-128005-2026-08-13-appraisal",
+      "pointer": "/holdings/2"
+    },
     "securityKey": "eureka-forbes",
     "security": "Eureka Forbes Ltd",
     "symbol": "EUREKAFORB",
@@ -18725,6 +20153,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "v-e-c-assago-capital-management-llp-128005-2026-08-13-appraisal",
+      "pointer": "/holdings/8"
+    },
     "securityKey": "gateway-distriparks",
     "security": "Gateway Distriparks Ltd",
     "symbol": "GATEWAY",
@@ -18762,6 +20194,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "v-e-c-assago-capital-management-llp-128005-2026-08-13-appraisal",
+      "pointer": "/holdings/0"
+    },
     "securityKey": "greaves-cotton",
     "security": "GREAVES COTTON LTD.",
     "symbol": "GREAVESCOT",
@@ -18799,6 +20235,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "v-e-c-assago-capital-management-llp-128005-2026-08-13-appraisal",
+      "pointer": "/holdings/15"
+    },
     "securityKey": "jaiprakash-power-ventures",
     "security": "Jaiprakash Power Ventures Ltd",
     "symbol": "JPPOWER",
@@ -18835,6 +20275,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "v-e-c-assago-capital-management-llp-128005-2026-08-13-appraisal",
+      "pointer": "/holdings/7"
+    },
     "securityKey": "navneet-education",
     "security": "Navneet Education Ltd",
     "symbol": "NAVNETEDUL",
@@ -18872,6 +20316,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "v-e-c-assago-capital-management-llp-128005-2026-08-13-appraisal",
+      "pointer": "/holdings/9"
+    },
     "securityKey": "nuvama-wealth-management",
     "security": "Nuvama Wealth Management Ltd",
     "symbol": "NUVAMA",
@@ -18912,6 +20360,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "v-e-c-assago-capital-management-llp-128005-2026-08-13-appraisal",
+      "pointer": "/holdings/12"
+    },
     "securityKey": "panacea-biotec",
     "security": "Panacea Biotec Ltd",
     "symbol": "PANACEABIO",
@@ -18948,6 +20400,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "v-e-c-assago-capital-management-llp-128005-2026-08-13-appraisal",
+      "pointer": "/holdings/14"
+    },
     "securityKey": "praj-industries",
     "security": "Praj Industries Limited",
     "symbol": "PRAJIND",
@@ -18988,6 +20444,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "v-e-c-assago-capital-management-llp-128005-2026-08-13-appraisal",
+      "pointer": "/holdings/5"
+    },
     "securityKey": "sbfc-finance",
     "security": "SBFC Finance Ltd",
     "symbol": "SBFC",
@@ -19024,6 +20484,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "v-e-c-assago-capital-management-llp-128005-2026-08-13-appraisal",
+      "pointer": "/holdings/6"
+    },
     "securityKey": "shoppers-stop",
     "security": "Shoppers Stop Ltd",
     "symbol": "SHOPERSTOP",
@@ -19060,6 +20524,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "v-e-c-assago-capital-management-llp-128005-2026-08-13-appraisal",
+      "pointer": "/holdings/13"
+    },
     "securityKey": "shree-digvijay-cement",
     "security": "SHREE DIGVIJAY CEMENT CO.LTD",
     "symbol": "SHREDIGCEM",
@@ -19100,6 +20568,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "v-e-c-assago-capital-management-llp-128005-2026-08-13-appraisal",
+      "pointer": "/holdings/10"
+    },
     "securityKey": "tejas-networks",
     "security": "Tejas Networks Limited",
     "symbol": "TEJASNET",
@@ -19136,6 +20608,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "v-e-c-assago-capital-management-llp-128005-2026-08-13-appraisal",
+      "pointer": "/holdings/4"
+    },
     "securityKey": "vip-industries",
     "security": "VIP Industries Ltd",
     "symbol": "VIPIND",
@@ -19172,6 +20648,10 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "statementRecord": {
+      "document": "v-e-c-assago-capital-management-llp-128005-2026-08-13-appraisal",
+      "pointer": "/holdings/1"
+    },
     "securityKey": "wockhardt",
     "security": "Wockhardt Ltd",
     "symbol": "WOCKPHARMA",
@@ -20429,6 +21909,10 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
  */
 export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
   {
+    "statementRecord": {
+      "document": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings",
+      "pointer": "/holdings/7"
+    },
     "accountId": "icici-bank-nsdl-demat-49794950",
     "ownerId": "ajay-jaisinghani",
     "securityKey": "esds-software-solution-limited-eq-new-fv-rs-1",
@@ -20446,6 +21930,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 330898 unit(s) at their face value of 1, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings",
+      "pointer": "/holdings/13"
+    },
     "accountId": "icici-bank-nsdl-demat-49794950",
     "ownerId": "ajay-jaisinghani",
     "securityKey": "infobay-ai-limited-0-01-pref-18ag44",
@@ -20463,6 +21951,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 107 unit(s) at their face value of 10, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings",
+      "pointer": "/holdings/14"
+    },
     "accountId": "icici-bank-nsdl-demat-49794950",
     "ownerId": "ajay-jaisinghani",
     "securityKey": "innoviti-technologies",
@@ -20480,6 +21972,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 32017 unit(s) at their face value of 10, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings",
+      "pointer": "/holdings/35"
+    },
     "accountId": "icici-bank-nsdl-demat-49794950",
     "ownerId": "ajay-jaisinghani",
     "securityKey": "wevois-labs",
@@ -20497,6 +21993,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 55 unit(s) at their face value of 10, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/0"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "3p-india-equity-fund-1-class-b3",
@@ -20514,6 +22014,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 records 1416918.692 unit(s) at their face value of 100, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/1"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "absl-bal-adv-growth",
@@ -20531,6 +22035,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/2"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "axis-bank",
@@ -20548,6 +22056,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹1,368.25 a unit, on a receipt of 1,559 unit(s) on 2026-07-02 — not a valuation of the 7,300 unit(s) held, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/4"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "bharat-parenteral",
@@ -20565,6 +22077,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹1,604.2 a unit — not a valuation of the 603 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/5"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "bndh-l-and-mcf-dp-gr",
@@ -20582,6 +22098,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹160.874 a unit, on a receipt of 24,406.691 unit(s) on 2026-04-20 — not a valuation of the 24,406.691 unit(s) held, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/6"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "buoyant-opportunities-strategy-class-a4",
@@ -20599,6 +22119,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 records 1918953.2 unit(s) at their face value of 100, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/8"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "carnelian-bharat-amritkaal-fund-class-a2",
@@ -20616,6 +22140,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 records 12993094.825 unit(s) at their face value of 10, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/10"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "city-union",
@@ -20633,6 +22161,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹216.15 a unit, on a receipt of 28,745 unit(s) on 2026-07-02 — not a valuation of the 34,500 unit(s) held, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/11"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "clean-max-env",
@@ -20650,6 +22182,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/12"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "dsp-gold-etf",
@@ -20667,6 +22203,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹151.1 a unit — not a valuation of the 2,05,000 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/13"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "dsp-silver-etf",
@@ -20684,6 +22224,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹276.82 a unit — not a valuation of the 1,23,000 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/16"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "federal-bank",
@@ -20701,6 +22245,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹331.3 a unit, on a receipt of 24,402 unit(s) on 2026-07-02 — not a valuation of the 30,000 unit(s) held, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/17"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "hdfc-baf-r-grow",
@@ -20718,6 +22266,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹517.054 a unit, on a delivery of 8,407.246 unit(s) on 2026-07-27 — not a valuation of the 37,755.485 unit(s) held, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/18"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "helios-fcf-d-grow",
@@ -20735,6 +22287,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹14.18 a unit — not a valuation of the 51,00,984.835 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/19"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "icici-bank",
@@ -20752,6 +22308,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹1,379.1 a unit, on a receipt of 5,341 unit(s) on 2026-07-02 — not a valuation of the 14,500 unit(s) held, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/20"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "icici-ioppf-d-grw",
@@ -20769,6 +22329,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹40.25 a unit — not a valuation of the 9,93,739.133 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/21"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "indian-bank",
@@ -20786,6 +22350,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹820.95 a unit, on a receipt of 671 unit(s) on 2026-07-02 — not a valuation of the 9,000 unit(s) held, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/22"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "indusind-bank",
@@ -20803,6 +22371,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹941.15 a unit, on a receipt of 4,320 unit(s) on 2026-07-02 — not a valuation of the 5,250 unit(s) held, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/23"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "infinium-pharma",
@@ -20820,6 +22392,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹236.25 a unit — not a valuation of the 8,000 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/25"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "itf-class-a",
@@ -20837,6 +22413,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/35"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "karur-vysya-bank",
@@ -20854,6 +22434,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹300.15 a unit, on a receipt of 16,250 unit(s) on 2026-07-02 — not a valuation of the 16,250 unit(s) held, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/26"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "kaynes-technology",
@@ -20871,6 +22455,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹3,358.7 a unit, on a receipt of 4,875 unit(s) on 2026-07-07 — not a valuation of the 4,875 unit(s) held, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/27"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "mirae-lcf-d-grow",
@@ -20888,6 +22476,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/28"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "motilal-oswal-founders-fund-series-ii-class-g1",
@@ -20905,6 +22497,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/30"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "nip-etnf1d-rtliqbees",
@@ -20922,6 +22518,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹999.99 a unit, on a receipt of 0.197 unit(s) on 2026-07-27 — not a valuation of the 257.411 unit(s) held, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/32"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "rbl-bnk",
@@ -20939,6 +22539,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹361.75 a unit, on a receipt of 13,500 unit(s) on 2026-07-02 — not a valuation of the 13,500 unit(s) held, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/33"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "sanshi-fund-i-class-e",
@@ -20956,6 +22560,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/34"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "state-bank-of-india",
@@ -20973,6 +22581,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹1,044.25 a unit, on a receipt of 2,188 unit(s) on 2026-07-22 — not a valuation of the 27,750 unit(s) held, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/38"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "vof-i-class-a2",
@@ -20990,6 +22602,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/39"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "woc-maaf-d-grow",
@@ -21007,6 +22623,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹15.336 a unit — not a valuation of the 39,15,742.08 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/40"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
     "securityKey": "zaggle-prepaid",
@@ -21024,6 +22644,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹420.35 a unit — not a valuation of the 12,000 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-holdings",
+      "pointer": "/holdings/0"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
     "ownerId": "bharat-jaisinghani",
     "securityKey": "absl-bal-adv-growth",
@@ -21041,6 +22665,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹108.65 a unit — not a valuation of the 1,83,499.511 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-holdings",
+      "pointer": "/holdings/1"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
     "ownerId": "bharat-jaisinghani",
     "securityKey": "absl-liqf-d-growth",
@@ -21058,6 +22686,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹454.566 a unit, on a receipt of 2,64,720.521 unit(s) on 2026-07-01 — not a valuation of the 2,64,720.521 unit(s) held, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-holdings",
+      "pointer": "/holdings/2"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
     "ownerId": "bharat-jaisinghani",
     "securityKey": "birla-cable",
@@ -21075,6 +22707,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹170.6 a unit — not a valuation of the 11,900 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-holdings",
+      "pointer": "/holdings/3"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
     "ownerId": "bharat-jaisinghani",
     "securityKey": "hdfc-baf-d-grow",
@@ -21092,6 +22728,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹570.133 a unit, on a delivery of 26,309.651 unit(s) on 2026-07-13 — not a valuation of the 1,469.627 unit(s) held, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-holdings",
+      "pointer": "/holdings/4"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
     "ownerId": "bharat-jaisinghani",
     "securityKey": "helios-fcf-d-grow",
@@ -21109,6 +22749,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹15.74 a unit — not a valuation of the 24,07,981.455 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-holdings",
+      "pointer": "/holdings/5"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
     "ownerId": "bharat-jaisinghani",
     "securityKey": "icici-ioppf-d-grw",
@@ -21126,6 +22770,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹39.29 a unit — not a valuation of the 6,02,441.424 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-holdings",
+      "pointer": "/holdings/6"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
     "ownerId": "bharat-jaisinghani",
     "securityKey": "icici-nft-nt-50-dp-g",
@@ -21143,6 +22791,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹60.4 a unit — not a valuation of the 0.048 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-holdings",
+      "pointer": "/holdings/7"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
     "ownerId": "bharat-jaisinghani",
     "securityKey": "icici-nft-nx-50-r-gr",
@@ -21160,6 +22812,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹57.356 a unit — not a valuation of the 0.629 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-holdings",
+      "pointer": "/holdings/8"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
     "ownerId": "bharat-jaisinghani",
     "securityKey": "icici-nift50ind-dp-g",
@@ -21177,6 +22833,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹268.815 a unit — not a valuation of the 0.43 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-holdings",
+      "pointer": "/holdings/9"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
     "ownerId": "bharat-jaisinghani",
     "securityKey": "icici-pru-baf-dp-grw",
@@ -21194,6 +22854,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹86.47 a unit, on a delivery of 1,15,647.045 unit(s) on 2026-06-22 — not a valuation of the 1,46,856.943 unit(s) held, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-holdings",
+      "pointer": "/holdings/10"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
     "ownerId": "bharat-jaisinghani",
     "securityKey": "inves-con-r-growth",
@@ -21211,6 +22875,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹137.62 a unit — not a valuation of the 0.39 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-holdings",
+      "pointer": "/holdings/11"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
     "ownerId": "bharat-jaisinghani",
     "securityKey": "nip-etnf1d-rtliqbees",
@@ -21228,6 +22896,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹999.99 a unit, on a receipt of 2.925 unit(s) on 2026-07-27 — not a valuation of the 3,828.05 unit(s) held, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-holdings",
+      "pointer": "/holdings/12"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
     "ownerId": "bharat-jaisinghani",
     "securityKey": "onesource-special",
@@ -21245,6 +22917,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹1,792.85 a unit, on a delivery of 12,287 unit(s) on 2026-05-29 — not a valuation of the 48,000 unit(s) held, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-holdings",
+      "pointer": "/holdings/13"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
     "ownerId": "bharat-jaisinghani",
     "securityKey": "woc-maaf-d-grow",
@@ -21262,6 +22938,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹15.336 a unit — not a valuation of the 13,66,820.78 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838335-2026-07-31-holdings",
+      "pointer": "/holdings/0"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838335",
     "ownerId": "aarti-jaisinghani",
     "securityKey": "absl-bal-adv-growth",
@@ -21279,6 +22959,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838335-2026-07-31-holdings",
+      "pointer": "/holdings/1"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838335",
     "ownerId": "aarti-jaisinghani",
     "securityKey": "bndh-l-and-mcf-dp-gr",
@@ -21296,6 +22980,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹160.874 a unit, on a receipt of 1,32,634.709 unit(s) on 2026-04-20 — not a valuation of the 1,32,634.709 unit(s) held, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838335-2026-07-31-holdings",
+      "pointer": "/holdings/2"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838335",
     "ownerId": "aarti-jaisinghani",
     "securityKey": "dsp-gold-etf",
@@ -21313,6 +23001,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹141.24 a unit — not a valuation of the 11,95,000 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838335-2026-07-31-holdings",
+      "pointer": "/holdings/3"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838335",
     "ownerId": "aarti-jaisinghani",
     "securityKey": "icici-liqf-d-growth",
@@ -21330,6 +23022,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹409.572 a unit, on a delivery of 31,073 unit(s) on 2026-04-16 — not a valuation of the 21,012.887 unit(s) held, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838335-2026-07-31-holdings",
+      "pointer": "/holdings/4"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838335",
     "ownerId": "aarti-jaisinghani",
     "securityKey": "kotak-mtcf-d-grow",
@@ -21347,6 +23043,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹20.77 a unit, on a receipt of 6,12,631.862 unit(s) on 2026-04-20 — not a valuation of the 6,12,631.862 unit(s) held, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838335-2026-07-31-holdings",
+      "pointer": "/holdings/5"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838335",
     "ownerId": "aarti-jaisinghani",
     "securityKey": "nip-etnf1d-rtliqbees",
@@ -21364,6 +23064,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹999.99 a unit, on a receipt of 5.867 unit(s) on 2026-07-27 — not a valuation of the 7,679.495 unit(s) held, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838335-2026-07-31-holdings",
+      "pointer": "/holdings/6"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838335",
     "ownerId": "aarti-jaisinghani",
     "securityKey": "pg-electro",
@@ -21381,6 +23085,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹502.2 a unit — not a valuation of the 1,80,000 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090032387399-2026-07-31-holdings",
+      "pointer": "/holdings/0"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090032387399",
     "ownerId": "bharat-jaisinghani-family-trust",
     "securityKey": "icici-liqf-d-growth",
@@ -21398,6 +23106,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹394.625 a unit — not a valuation of the 46,654.378 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090032387399-2026-07-31-holdings",
+      "pointer": "/holdings/1"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090032387399",
     "ownerId": "bharat-jaisinghani-family-trust",
     "securityKey": "inves-arbf-d-grow",
@@ -21415,6 +23127,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹34.507 a unit — not a valuation of the 10,92,470.994 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090032387399-2026-07-31-holdings",
+      "pointer": "/holdings/2"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090032387399",
     "ownerId": "bharat-jaisinghani-family-trust",
     "securityKey": "kotak-arbfd-dp-grow",
@@ -21432,6 +23148,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹42.658 a unit, on a receipt of 6,13,293.929 unit(s) on 2026-07-02 — not a valuation of the 6,13,293.929 unit(s) held, so it carries a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090037359311-2026-07-31-holdings",
+      "pointer": "/holdings/0"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090037359311",
     "ownerId": "ajay-jaisinghani",
     "securityKey": "3p-india-equity-fund-1-class-b3",
@@ -21449,6 +23169,10 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 records 2053614.026 unit(s) at their face value of 100, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
   },
   {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090037359311-2026-07-31-holdings",
+      "pointer": "/holdings/1"
+    },
     "accountId": "motilal-oswal-financial-services-demat-1201090037359311",
     "ownerId": "ajay-jaisinghani",
     "securityKey": "buoyant-opportunities-strategy-class-a4",
@@ -22845,6 +24569,10 @@ export const BOOK_REVIEW_FLOWS: ReviewFlow[] = [
  */
 export const BOOK_POLYCAB: Position[] = [
   {
+    "statementRecord": {
+      "document": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings",
+      "pointer": "/holdings/23"
+    },
     "securityKey": "polycab-india",
     "security": "POLYCAB INDIA LIMITED - EQ",
     "symbol": "POLYCAB",
