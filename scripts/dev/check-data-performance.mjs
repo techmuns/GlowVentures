@@ -42,7 +42,7 @@ async function scrollToEnd(table) {
 }
 try {
   await assertTableHeaderFixture(browser,base);
-  for (const route of ['/corporate-actions','/monitor','/monitor?group=category','/monitor?group=basket','/monitor?group=assetClass','/monitor?show=transactions','/ledger','/sectors','/family','/capital-gains','/private-market','/holdings','/performance','/returns','/audit','/audit?consolidated=Transactions',sourceRoute,'/cio','/polycab','/upload','/statements']) {
+  for (const route of ['/corporate-actions','/monitor','/monitor?group=category','/monitor?group=basket','/monitor?group=assetClass','/monitor?show=transactions','/ledger','/sectors','/family','/capital-gains','/private-market','/holdings?of=book','/performance','/returns','/audit','/audit?consolidated=Transactions',sourceRoute,'/cio','/polycab','/upload','/statements']) {
     const page = await browser.newPage({ viewport: { width:1440, height:1000 } });
     const requests=[], errors=[];
     page.on('request', r => requests.push(new URL(r.url()).pathname));
@@ -68,7 +68,7 @@ try {
     if (['/monitor','/ledger','/private-market'].includes(route)) await assertCompleteColumnExport(page,page.locator('table[data-table-view]').first(),route);
     if (route === '/private-market') { await assertCollapsedSectionExport(page); await assertPrivateMarketFilterExport(page); }
     if (route === '/ledger') await assertExportRetry(page);
-    if (route === '/holdings') await assertUnfilteredSearchExport(page,page.locator('table[data-table-view="holdings-behind"]'),page.getByPlaceholder('Filter by name or ISIN…'),'holdings-behind');
+    if (route === '/holdings?of=book') await assertUnfilteredSearchExport(page,page.locator('table[data-table-view="holdings-behind"]'),page.getByPlaceholder('Filter by name or ISIN…'),'holdings-behind');
     if (route !== '/audit') assert.equal(requests.filter(p => /^\/audit\/[^/]+\/document.json$/.test(p)).length,0,`${route}: no browser archive fan-out`);
     assert.equal(requests.filter(p=>/^\/lookthrough\/\d+\.json$/.test(p)).length,0,`${route}: no browser fund fan-out`);
     if (route === '/corporate-actions') {

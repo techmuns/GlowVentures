@@ -13,7 +13,7 @@ export function createTableWorkbook(snapshot: TableExport): ExcelJS.Workbook {
     row.cells.forEach(source => {
       while (occupied.has(`${r + 1}:${c}`)) c++;
       const width = source.colSpan ?? 1, height = source.rowSpan ?? 1;
-      if (r + height > 1048576 || c + width - 1 > 16384) throw new Error("This table exceeds Excel's sheet size limit. Narrow the filters and try again.");
+      if (r + height > 1048576 || c + width - 1 > 16384) throw new Error("This table exceeds Excel's sheet size limit.");
       const cell = sheet.getCell(r + 1, c);
       const { value, format } = excelCellValue(source);
       // A string beginning with =, +, - or @ is still a literal, never a formula.
