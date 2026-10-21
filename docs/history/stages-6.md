@@ -44,3 +44,39 @@
 - Brand edits retain the existing exact investment keys and shared save endpoint. Aggregate rows keep their existing read-only resolution. Explicit column visibility choices, calculations, scrolling and sticky headers remain supported.
 - Inline saves are serialized because each response carries its starting store snapshot plus the edit; overlapping replies must not hide another successful field. Focus reads wait for pending saves and cannot replace a newer edit.
 - Existing profile/store suites verify identity and persistence contracts. The browser regression checks the default inputs, overlapping field saves and reopening the page, cancellation, a failed save and retry, removal, and a brand edit spanning several investments.
+
+### Stage 10fz — A FULL CALCULATION AUDIT AGAINST INDUSTRY STANDARDS
+
+*"logical calculations need to be correct as per the industry standards."*
+
+- **Scope:** six areas were audited against GIPS/CFA, ILPA and the Income-tax
+  Act, each finding reproduced on the book. Every finding and its fix is in
+  `docs/CALCULATION-AUDIT.md`. The rules now bind every session in `CLAUDE.md`
+  § Calculation standards.
+- **Headlines:**
+  - CAGR only for one purchase (`Position.purchaseDates`).
+  - Exits and closed mandates stay in since-inception returns: book FIFO
+    22.03% → 21.20%.
+  - The Returns tab reads the verified records, so FYTD now agrees with the tile.
+  - Period "Absolute" return is Modified Dietz; the benchmark comparison is PME.
+- **Private:**
+  - Distributions are the same cash the XIRR counts: ₹64.17 L → ₹94.53 L.
+  - Private funds' returns include their income: Neo 13.83% → 21.21%, 360 ONE
+    46.96% → 65.59%.
+  - TVPI/DPI/RVPI are struck.
+- **Tax:**
+  - Long-term from the anniversary + 1 day in calendar months
+    (`shared/holdingPeriod.mjs`).
+  - The planner works per lot.
+  - Dividends are gross of TDS.
+  - The ₹1.25 L exemption is applied per person.
+  - The headline is FY-scoped, superseding Stage 10da's windows headline.
+- **Exposure:**
+  - Entity-scoped look-through.
+  - Active weights over the classified equity sleeve.
+  - Concentration by fund (`concentrationNames`).
+  - The day move never blends a missing line in as ₹0.
+  - No constant FX rate.
+- **Tests:** new suites `calcAudit` (ingest), plus display FX rate, day move,
+  concentration and lot terms (family). The `check-pages` re-derivations follow
+  each rule.

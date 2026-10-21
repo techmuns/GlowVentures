@@ -40,9 +40,9 @@ import { fmtPct, fmtCurrency, changeColor, fmtFyPeriod, fmtNum, fmtDate } from "
 import { type XirrResult, fundXirr, startupXirr } from "@/lib/bucketXirr";
 import { fifoTotals, investedWithCapital, type FifoTotals } from "@/lib/fifo";
 import { type PrivateSheet, stockHref } from "@/lib/auditFormulas";
-import { netMultiple, netMultipleKind } from "@/lib/privateValue";
 import { countedOnceNote, commitmentTotals } from "@/lib/privateMarket";
 import { privateBookFolios, figuresOf, distributionLeftOutNote } from "@/lib/privateBook";
+import { concentrationNames } from "@/lib/concentration";
 import { BOOK_CORPORATE_ACTIONS } from "@/data/glowData";
 import { AbsentCell, AbsentSection, AbsentValue, DASH } from "@/components/Absent";
 import { costedFigures, VACUOUS_COST_REASON } from "@/lib/clubbedFigures";
@@ -376,13 +376,27 @@ export function MorningCIO() {
     const counted = cap.counting.counted;
     const distFig = figuresOf(pbook.folios, true);
     const fundDeploy = fundTotals([...pm.peFunds, ...pm.preIpoFunds, ...pm.unlistedCompanies, ...pm.debtFunds, ...pm.closedFunds]);
-    const deploy = commitments.length
+    /**
+     * ABSENT STAYS ABSENT (Stage 10fz). These were `sumOrNull([...]) ?? 0`, with
+     * the fund model's own totals always among the inputs — and `fundTotals`
+     * of an EMPTY model is 0, not null. So a book whose capital accounts print
+     * no undrawn figure read a measured "₹0 uncalled" built from a model that
+     * holds nothing. The model's term enters only where the model holds a
+     * fund, and a figure no input reports is null, rendered "—" with its reason.
+     */
+    const fundModelHolds = pm.peFunds.length + pm.preIpoFunds.length + pm.unlistedCompanies.length
+      + pm.debtFunds.length + pm.closedFunds.length > 0;
+    const modelTerm = (n: number) => (fundModelHolds ? n : null);
+    const deploy: {
+      committed: number; drawn: number | null; distributed: number | null; currentValue: number;
+      unfunded: number | null; tvpi: number | null; dpi: number | null;
+    } = commitments.length
       ? {
         committed: sum(counted.map((c) => c.committed)) + fundDeploy.committed,
-        drawn: sumOrNull([...counted.map((c) => c.drawn), fundDeploy.drawn]) ?? 0,
-        distributed: sumOrNull([distFig.distributed, fundDeploy.distributed]) ?? 0,
+        drawn: sumOrNull([...counted.map((c) => c.drawn), modelTerm(fundDeploy.drawn)]),
+        distributed: sumOrNull([distFig.distributed, modelTerm(fundDeploy.distributed)]),
         currentValue: fundDeploy.currentValue,
-        unfunded: sumOrNull([...counted.map((c) => c.undrawn), fundDeploy.unfunded]) ?? 0,
+        unfunded: sumOrNull([...counted.map((c) => c.undrawn), modelTerm(fundDeploy.unfunded)]),
         tvpi: fundDeploy.tvpi,
         dpi: fundDeploy.dpi,
       }
@@ -468,9 +482,21 @@ export function MorningCIO() {
      */
     // THE SET IS `costedBookSet`'s (B-07): the tile, the allocation Total row
     // and the page the tile opens all name it on their face from this object.
-    const { set: costedSet, fifo: bookFifo } = bookReturnOnCost(p, { accounts: portfolio.accounts, universe: p });
+    // THE UNIVERSE IS THE WHOLE DEDUPED BOOK (Stage 10fz), not `p`: the exits
+    // `bookReturnOnCost` adds back are the rows `currentHoldings` dropped from
+    // it, and `p` has none — the tile read 22.03% against /holdings' 21.20%.
+    const { set: costedSet, fifo: bookFifo } = bookReturnOnCost(p, { accounts: portfolio.accounts, universe: consolidated });
     // The private funds' leg carries the cash they have already returned —
     // distributions are booked gain, not a mark (Stage 10fb).
+    //
+    // AND IT IS THE FUND-OF-FUNDS MODEL'S LEG ALONE (Stage 10fz, measured). The
+    // private funds this book holds are POSITIONS — the review's private blocks
+    // (Stage 10dh) — so `bookFifo` above already strikes them, and their
+    // distributions reach it as `Position.dividendReceived`. `privateTotalGain`
+    // reads `pm.*`, which is empty on this book, so `privateCount` is 0 and the
+    // leg is null here. A fund that ever appeared in BOTH would be counted twice;
+    // the model and the positions must stay disjoint, which `privateMarkets`
+    // being separate from `positions` (see `privateInvested` above) is for.
     const gainUnavailableReason = bookFifo.hprUnavailableReason;
     const embeddedGain = gainUnavailableReason ? null : sumOrNull([bookFifo.gain, privateCount ? privateTotalGain : null]);
     const deployedCapital = sumOrNull([bookFifo.deployed, privateCount ? privateInvested : null]);
@@ -685,11 +711,15 @@ export function MorningCIO() {
       /** The bucket's only costed lines are nil balances beside uncosted value — `costedFigures` (A-14). */
       vacuous?: boolean;
       current: number;
-      kind: "MOIC" | "TVPI"; metric: number | null;   // money-multiple, for the popover
+      // NO MONEY MULTIPLE (Stage 10fz). `kind` / `metric` carried a MOIC — on a
+      // position bucket the costed mark over its cost, which leaves out what was
+      // realised and withdrawn — and nothing rendered it once the popover went.
+      // A figure no surface shows is one nobody checks, so it is gone from the
+      // type; the row's return is the FIFO one beside it.
       retPct: number | null;                          // total return on cost, for the popover
       /**
        * The market value of the holdings `invested` covers — the numerator of
-       * BOTH ratios above. It equals `current` wherever every holding reports a
+       * the return above. It equals `current` wherever every holding reports a
        * cost, and is smaller wherever one does not; the popover prints this
        * figure rather than `current`, and says how many holdings it spans.
        */
@@ -765,9 +795,8 @@ export function MorningCIO() {
       key: string, color: string, count: number, f: ReturnType<typeof fundTotals>, x: XirrResult, sheet: PrivateSheet,
     ): Bucket => ({
       key, color, count, invested: f.drawn, current: f.currentValue, distributed: f.distributed, investedFifo: null,
-      kind: netMultipleKind(f.distributed), fromPositions: false,
-      metric: netMultiple(f.drawn, f.currentValue, f.distributed),
-      // A fund's drawn capital covers the whole of it, so the multiple's
+      fromPositions: false,
+      // A fund's drawn capital covers the whole of it, so the return's
       // numerator IS the bucket's current value.
       costedMV: f.currentValue,
       retPct: f.drawn > 0 ? ((f.currentValue + f.distributed - f.drawn) / f.drawn) * 100 : null,
@@ -796,16 +825,9 @@ export function MorningCIO() {
       const cashRuleMV = sum(rows.filter((x) => groupSourceFor(axis, accIdx, x) === "cash-rule").map((x) => x.marketValue));
       const derivedMV = sum(rows.filter((x) => groupSourceFor(axis, accIdx, x) === "derived").map((x) => x.marketValue));
       return {
-        key, color: sectionColor(axis, key, i), count: g.count, invested: g.invested, current: g.mv, kind: "MOIC",
+        key, color: sectionColor(axis, key, i), count: g.count, invested: g.invested, current: g.mv,
         investedFifo: g.fifo, vacuous: g.vacuous,
         fromPositions: true, ruleMV, cashRuleMV, derivedMV, unplaced: key === UNCLASSIFIED,
-        // THE MULTIPLE IS STRUCK OVER THE ROWS THE COST COVERS, like the return
-        // beside it. It was `mv / cost` — the WHOLE bucket's market value over a
-        // cost `sumOrNull` struck on part of it — which on Direct Equity is
-        // ₹12,446.1 Cr over the ₹1.22 Cr that 9 of its 38 holdings report, and
-        // renders "MOIC 10240.51×". Nothing in the book multiplied by ten
-        // thousand; two different sets of holdings were divided by each other.
-        metric: g.invested !== null && g.invested > 0 ? g.costedMV / g.invested : null,
         retPct: g.ret, distributed: 0, xirr: null, xirrBasis: "ledger", xirrNote: null, sheet: null,
         withoutCost: g.withoutCost, withoutCostMV: g.withoutCostMV, costedMV: g.costedMV,
       };
@@ -839,7 +861,7 @@ export function MorningCIO() {
      * honest the day one does.
      */
     const fundModelBuckets: Bucket[] = [
-      { key: "Startups", color: "#6366f1", fromPositions: false, count: pm.startups.length, invested: st.invested, current: st.fairValue, kind: "MOIC", metric: st.moic, retPct: st.invested > 0 ? ((st.fairValue - st.invested) / st.invested) * 100 : null, distributed: 0, xirr: stX.pct, xirrBasis: "first-investment", xirrNote: fundBasis(stX), sheet: "startup", investedFifo: null, withoutCost: 0, withoutCostMV: 0, costedMV: st.fairValue, ruleMV: 0, cashRuleMV: 0, derivedMV: 0, unplaced: false },
+      { key: "Startups", color: "#6366f1", fromPositions: false, count: pm.startups.length, invested: st.invested, current: st.fairValue, retPct: st.invested > 0 ? ((st.fairValue - st.invested) / st.invested) * 100 : null, distributed: 0, xirr: stX.pct, xirrBasis: "first-investment", xirrNote: fundBasis(stX), sheet: "startup", investedFifo: null, withoutCost: 0, withoutCostMV: 0, costedMV: st.fairValue, ruleMV: 0, cashRuleMV: 0, derivedMV: 0, unplaced: false },
       // Fund buckets: the multiple and the return-on-cost both count cash already
       // returned, so a bucket in repayment isn't read as a loss.
       fundBucket("Unlisted Companies", "#10b981", pm.unlistedCompanies.length, unlF, unlX, "pre-ipo"),
@@ -870,7 +892,7 @@ export function MorningCIO() {
     // model's calls and marks — is `bookMoneyWeighted`'s, above: one function
     // for this tile and the page it opens.
 
-    // Concentration, consolidated on securityKey across accounts. ISIN cannot do
+    // Distinct names, consolidated on securityKey across accounts. ISIN cannot do
     // this here: the same company arrives from two platforms with two spellings
     // and, more often than not, no ISIN on either side.
     const byKey = new Map<string, number>();
@@ -882,16 +904,26 @@ export function MorningCIO() {
       ownersByKey.set(x.securityKey, s);
     }
     const crossHeld = [...ownersByKey.values()].filter((s) => s.size >= 2).length;
-    const bySecurity = [...byKey.entries()].sort((a, b) => b[1] - a[1]);
+    /**
+     * THE RANKING IS BY INVESTMENT, NOT BY SHARE CLASS (Stage 10fz) —
+     * `concentrationNames`. On `securityKey` Sanshi Fund I's Class E and Class
+     * A2 were two names, so the Largest holding read 20.9% where the fund is
+     * 24.4% (₹204.48 Cr), and Helios Flexi Cap's AMC folio and its depository
+     * units (one ISIN) stood apart. The Monitor already clubs the classes;
+     * this ranks on the same rule, and on the ISIN where two keys carry one.
+     */
+    const concNames = concentrationNames(p);
     // TOP_NAMES, not a literal 10: the drill-down ranks the same list and a
     // second copy of the cutoff is a second chance for the tile and the page it
     // opens to cover different sets.
-    const topNames = bySecurity.slice(0, TOP_NAMES);
-    const top10Pct = bookMV > 0 ? (sum(topNames.map(([, v]) => v)) / bookMV) * 100 : null;
-    const largest = bySecurity[0];
-    const largestRow = largest ? p.find((x) => x.securityKey === largest[0]) ?? null : null;
-    const largestName = largestRow?.security ?? null;
-    const largestPct = largest && bookMV > 0 ? (largest[1] / bookMV) * 100 : null;
+    const topNames = concNames.slice(0, TOP_NAMES);
+    const top10Pct = bookMV > 0 ? (sum(topNames.map((g) => g.value)) / bookMV) * 100 : null;
+    const largest = concNames[0] ?? null;
+    const largestRow = largest ? p.find((x) => x.securityKey === largest.leadKey) ?? null : null;
+    const largestName = largest?.label ?? null;
+    const largestPct = largest && bookMV > 0 ? (largest.value / bookMV) * 100 : null;
+    // A clubbed fund opens its own page, which carries every class (Stage 10ff).
+    const largestHref = largest?.clubbedFund ? `/fund/${encodeURIComponent(largest.clubbedFund)}` : null;
     // CONCENTRATION IS A BOOK-WIDE RISK MEASURE AND STAYS BOOK-WIDE — the
     // largest single name here IS a fund folio, and narrowing to companies
     // would hide the book's real biggest exposure. What it must not do is read
@@ -915,8 +947,10 @@ export function MorningCIO() {
     // has no year-end series until periodic valuation reports are ingested.
     const navSeries = portfolio.navHistory.map((n) => ({ period: n.period, value: convertFromBase(n.nav) }));
     const navFirst = portfolio.navHistory[0] ?? null;
-    const navLast = portfolio.navHistory[portfolio.navHistory.length - 1] ?? null;
-    const navGrowth = navFirst && navLast && navFirst.nav > 0 ? (navLast.nav / navFirst.nav - 1) * 100 : null;
+    // NO "NAV GROWTH" (Stage 10fz): last ÷ first − 1 across the history compared
+    // two different account panels with no flow adjustment, and no surface
+    // rendered it. A growth figure that ignores the capital paid in is not a
+    // return, and one nobody reads is one nobody checks.
 
     return {
       p, bookMV, bookCost, bookWhole, bookPnL, noCostCount: noCost.length, noCostMV, smallDropped,
@@ -953,8 +987,8 @@ export function MorningCIO() {
       // can no longer reach the screen as a yearly rate — see the note on it.
       bookMW: mwb.result,
       distinctNames: byKey.size, crossHeld, top10Pct,
-      largestName, largestKey: largest?.[0] ?? "", largestBucket, largestPct, winners, losers,
-      navSeries, navFirst, navGrowth,
+      largestName, largestKey: largest?.leadKey ?? "", largestHref, largestBucket, largestPct, winners, losers,
+      navSeries, navFirst,
     };
   }, [portfolio, statementPortfolio, convertFromBase, today]);
 
@@ -1008,7 +1042,8 @@ export function MorningCIO() {
   // A commitment schedule exists if ANY source reports one — a drawdown AIF's
   // capital account counts, not only a fund-of-funds block.
   const hasCommitments = (m.fundCount > 0 || m.commitments.length > 0) && m.deploy.committed > 0;
-  const calledPct = hasCommitments ? (m.deploy.drawn / m.deploy.committed) * 100 : null;
+  // Absent where no capital account prints what was called (Stage 10fz) — never 0%.
+  const calledPct = hasCommitments && m.deploy.drawn !== null ? (m.deploy.drawn / m.deploy.committed) * 100 : null;
 
   /**
    * ── THE TILES A READER CAN PUT ON THE STRIP ─────────────────────────────────
@@ -1121,7 +1156,7 @@ export function MorningCIO() {
     {
       id: "annualised", label: "Annualised return", icon: <TrendingUp className="h-4 w-4" />,
       href: "/performance?summary=annualised#investor-return",
-      hrefTitle: `XIRR over every statement account holding value, excluding separately modelled private investments — struck only when all of them are measured. ${m.annual.covered} of ${m.annual.total} accounts are, worth ${money(m.annual.measuredValue)}. ${m.annual.start ? `Recorded window ${m.annual.start} to ${m.annual.end}. ` : ""}${m.annual.reason ?? "Annualised over at least one year."} Open the same return, dates and coverage in NAV & Performance.`,
+      hrefTitle: `XIRR over every statement account holding value, excluding separately modelled private investments — struck only when all of them are measured. ${m.annual.covered} of ${m.annual.total} accounts are, worth ${money(m.annual.measuredValue)}. ${m.annual.start ? `Recorded window ${m.annual.start} to ${m.annual.end}. ` : ""}${m.annual.reason ? `${m.annual.reason}.${m.annual.detail ? ` ${m.annual.detail}` : ""}` : "Annualised over at least one year."} Open the same return, dates and coverage in NAV & Performance.`,
       value: m.annual.pct != null ? <>{pct1(m.annual.pct)} <span className="text-sm">p.a.</span></> : <AbsentValue />,
       calculation: <MoneyWeightedCalculation flows={m.annual.flows} annualPct={m.annual.pct}
         days={m.annual.windowDays} annualised reason={m.annual.reason} result={pct1(m.annual.pct)} money={calculationMoney} shortMoney={money}
@@ -1188,7 +1223,7 @@ export function MorningCIO() {
       hrefTitle: `Open the holdings this return is struck over — the ${fmtNum(m.costedSet.struckCount)} of ${fmtNum(m.costedSet.holdings)} with a cost and a valuation of their own, worth ${fmtFromBase(m.costedSet.struckValue, { compact: true })} of the ${fmtFromBase(m.costedSet.bookValue, { compact: true })} book — on the Current Value of Holdings page; the ${fmtFromBase(m.costedSet.bookValue - m.costedSet.costedValue, { compact: true })} that reports no cost is outside it${
         m.costedSet.atCost > 0
           ? `, and so are the ${fmtNum(m.costedSet.atCost)} private investments the family's consolidated review holds at cost, ${fmtFromBase(m.costedSet.atCostValue, { compact: true })}: their value is what was paid, so there is no gain on them to strike`
-          : ""}. FIFO: the unrealised gain on what is held plus the gain realised on units already sold, over the capital deployed — the cost of the units held plus the cost of the units sold, and each whole PMS mandate at the capital paid into it. Cumulative, not annualised. Dividends and fund distributions are not in it, except inside a whole mandate's capital.`,
+          : ""}. FIFO: the unrealised gain on what is held plus the gain realised on units already sold, over the capital deployed — the cost of the units held plus the cost of the units sold, and each whole PMS mandate at the capital paid into it. Cumulative, not annualised. It includes the dividends and distributions the holdings paid, gross of TDS, over the window each holding's income record covers — which need not run from purchase — and a whole mandate's are inside its capital.`,
       value: pct1(m.gainPct),
       // THE SET, ON ITS FACE (B-07) — the same words the allocation table's
       // Total row prints beside the same figure, from `costedSetLabel`.
@@ -1207,8 +1242,9 @@ export function MorningCIO() {
       hrefTitle: `Open the capital accounts behind it — committed, called and still to call, folio by folio. Undrawn capital is not a holding and has no row in the book's positions, so it is on the Private Market page rather than in the holdings drill-down.${
         m.capCoverage.count ? ` Summed as each statement prints it, over the ${m.capCoverage.undrawnOf} of the ${m.capCoverage.count} private-market capital accounts that print an undrawn figure${m.capCoverage.undrawnOf < m.capCoverage.count ? " — a floor, since the rest print none" : ""}; each on its own statement, dated ${m.capCoverage.first}${m.capCoverage.last && m.capCoverage.last !== m.capCoverage.first ? ` to ${m.capCoverage.last}` : ""}${m.capCoverage.oldestUndrawn > 0 && m.capCoverage.last !== m.capCoverage.first ? `, of which ${fmtFromBase(m.capCoverage.oldestUndrawn, { compact: true })} is on the ${m.capCoverage.first} statements — a call made since would not show` : ""}.` : ""}`
         + onceNote(m.capitalAlso.undrawn, "uncalled balance"),
-      value: hasCommitments ? <span className="text-amber-400">{fmtFromBase(m.deploy.unfunded, { compact: true })}</span> : <AbsentValue />,
-      sub: hasCommitments ? undefined : absentWhy("no statement in this book reports a capital commitment"),
+      value: hasCommitments && m.deploy.unfunded !== null ? <span className="text-amber-400">{fmtFromBase(m.deploy.unfunded, { compact: true })}</span> : <AbsentValue />,
+      sub: !hasCommitments ? absentWhy("no statement in this book reports a capital commitment")
+        : m.deploy.unfunded === null ? absentWhy("no capital account in this book prints an undrawn figure") : undefined,
     },
     {
       id: "distributions", label: "Distributions", icon: <Coins className="h-4 w-4" />,
@@ -1216,11 +1252,11 @@ export function MorningCIO() {
       // opens with its own Distributions tile, the same once-per-fund count (B-10).
       href: hasCommitments ? "/private-market?tiles=distributed,value,cost,uncalled" : undefined,
       hrefTitle: "Open the capital accounts behind it, with Private Market's own Distributions tile on the strip. Cash a fund has already returned is a movement on a capital account, not a position, so it lives with those accounts on the Private Market page."
-        + ` Counted as that page counts it: each fund's distribution once — from its capital account (income and principal, before TDS) or from the fund's own distribution letter (the cash remitted, after expenses and TDS) — ${m.distReported} of the ${m.distAccounts} private-market accounts that could report one do, and the rest are skipped, never counted as nil.`
+        + ` Counted as that page counts it: each fund's distribution once — from its capital account (income and principal, before TDS) or from the fund's own distribution letter (the cash remitted, after expenses and TDS), or, on a line the family's consolidated review values, from the review's dated income and sale rows up to its valuation (Stage 10fz) — ${m.distReported} of the ${m.distAccounts} private-market accounts that could report one do, and the rest are skipped, never counted as nil.`
         + (distAlso ? ` ${distAlso}` : ""),
-      value: hasCommitments && !m.distAbsent ? fmtFromBase(m.deploy.distributed, { compact: true }) : <AbsentValue />,
+      value: hasCommitments && !m.distAbsent && m.deploy.distributed !== null ? fmtFromBase(m.deploy.distributed, { compact: true }) : <AbsentValue />,
       sub: !hasCommitments ? absentWhy("no fund has distributed, because none is held")
-        : m.distAbsent ? absentWhy("no private-market fund's papers report a distribution") : undefined,
+        : m.distAbsent || m.deploy.distributed === null ? absentWhy("no private-market fund's papers report a distribution") : undefined,
     },
     /* ── EVERY OTHER FIGURE THIS PAGE CARRIES, one picker away ─────────────── */
     {
@@ -1288,8 +1324,8 @@ export function MorningCIO() {
     },
     {
       id: "largest", label: "Largest holding", icon: <Target className="h-4 w-4" />,
-      href: m.largestKey ? stockHref(m.largestKey) : undefined,
-      hrefTitle: m.largestName ? `Open ${m.largestName} — the single largest name in the book, by value across every account that holds it.` : undefined,
+      href: m.largestHref ?? (m.largestKey ? stockHref(m.largestKey) : undefined),
+      hrefTitle: m.largestName ? `Open ${m.largestName} — the single largest name in the book, by value across every account that holds it${m.largestHref ? " and every unit class of the fund" : ""}.` : undefined,
       value: m.largestPct == null ? <AbsentValue /> : `${m.largestPct.toFixed(1)}%`,
       second: m.largestName ? <span className="block max-w-full truncate" title={m.largestName}>{m.largestName}</span> : undefined,
       sub: m.largestPct == null ? absentWhy("the book carries no holding to rank") : undefined,
@@ -1355,7 +1391,6 @@ export function MorningCIO() {
               : `No unrealised gain is reported against the ${money(b.invested)} of cost here, so the return would have to be assumed rather than measured.`;
       return <span className="text-slate-500" title={why}>{DASH}</span>;
     }
-    const mult = b.metric == null ? DASH : `${b.metric.toFixed(2)}×`;
     /**
      * THE POPOVER STANDS ON THE SAME SET AS THE FIGURE IT EXPLAINS.
      *
@@ -1654,7 +1689,7 @@ export function MorningCIO() {
                       <SortHeader col="invested" view={allocView} pad="px-2 py-2">Invested</SortHeader>
                       <SortHeader col="current" view={allocView} pad="px-2 py-2">Current</SortHeader>
                       <SortHeader col="return" view={allocView} pad="px-2 py-2" className="whitespace-nowrap"
-                        title={`The holding-period return to date on the capital each ${GROUP_NOUN[allocAxis].one} deployed, FIFO: the unrealised gain on what is held plus the gain realised on units already sold, over the cost of the units held plus the cost of the units sold — and a whole PMS mandate on its capital since inception. Cumulative, not annualised. Dividends and fund distributions are not in it, except inside a whole mandate's capital.`}>Return (HPR)</SortHeader>
+                        title={`The holding-period return to date on the capital each ${GROUP_NOUN[allocAxis].one} deployed, FIFO: the unrealised gain on what is held plus the gain realised on units already sold, over the cost of the units held plus the cost of the units sold — and a whole PMS mandate on its capital since inception. Cumulative, not annualised. It includes the dividends and distributions the holdings paid, gross of TDS, over the window each holding's income record covers — which need not run from purchase — and a whole mandate's are inside its capital.`}>Return (HPR)</SortHeader>
                       <SortHeader col="weight" view={allocView} pad="px-2 py-2">Weight</SortHeader>
                     </Tr>
                   </thead>
@@ -1875,21 +1910,26 @@ export function MorningCIO() {
                     className="block rounded-md transition-colors hover:bg-ink-700/30">
                     <ul className="text-sm">
                       <li className="flex items-center justify-between py-2"><span className="text-slate-400">Fund commitments</span><span className="mono text-slate-100">{money(m.deploy.committed)}</span></li>
-                      <li className="flex items-center justify-between border-t border-ink-700/60 py-2"><span className="text-slate-400">Called / drawn &mdash; capital deployed</span><span className="mono text-slate-100">{money(m.deploy.drawn)}</span></li>
-                      <li className="flex items-center justify-between border-t border-ink-700/60 py-2"><span className="text-slate-400">Undrawn &mdash; uncalled capital</span><span className="mono text-amber-400">{money(m.deploy.unfunded)}</span></li>
-                      <li className="flex items-center justify-between border-t border-ink-700/60 py-2"><span className="text-slate-400">Distributions received</span><span className="mono text-slate-100" title={m.distAbsent ? "No private-market fund's papers report a distribution" : undefined}>{m.distAbsent ? DASH : money(m.deploy.distributed)}</span></li>
+                      <li className="flex items-center justify-between border-t border-ink-700/60 py-2"><span className="text-slate-400">Called / drawn &mdash; capital deployed</span><span className="mono text-slate-100">{m.deploy.drawn === null ? <AbsentCell reason="no capital account in this book prints what was called" /> : money(m.deploy.drawn)}</span></li>
+                      <li className="flex items-center justify-between border-t border-ink-700/60 py-2"><span className="text-slate-400">Undrawn &mdash; uncalled capital</span><span className="mono text-amber-400">{m.deploy.unfunded === null ? <AbsentCell reason="no capital account in this book prints an undrawn figure" /> : money(m.deploy.unfunded)}</span></li>
+                      <li className="flex items-center justify-between border-t border-ink-700/60 py-2"><span className="text-slate-400">Distributions received</span><span className="mono text-slate-100" title={m.distAbsent || m.deploy.distributed === null ? "No private-market fund's papers report a distribution" : undefined}>{m.distAbsent || m.deploy.distributed === null ? DASH : money(m.deploy.distributed)}</span></li>
                     </ul>
                   </Link>
+                  {/* THE BAR ONLY WHERE THE CALLED SHARE IS MEASURED (Stage 10fz):
+                      `calledPct ?? 0` drew "Called 0.0%" over a book whose capital
+                      accounts print no call at all. */}
+                  {calledPct !== null && <>
                   <div className="mt-3 flex h-2.5 overflow-hidden rounded-full border border-ink-700">
                     <div style={{ width: `${calledPct}%`, background: CHART_COLORS[0] }} />
-                    <div style={{ width: `${100 - (calledPct ?? 0)}%`, background: "rgba(245,158,11,.45)" }} />
+                    <div style={{ width: `${100 - calledPct}%`, background: "rgba(245,158,11,.45)" }} />
                   </div>
                   <div className="mt-1.5 flex justify-between text-[10.5px] text-slate-500">
-                    <span>Called {(calledPct ?? 0).toFixed(1)}%</span>
+                    <span>Called {calledPct.toFixed(1)}%</span>
                     {/* THE DENOMINATOR, NAMED (CK-C12): both shares are of what was committed. */}
                     <span className="text-slate-600">of the {fmtFromBase(m.deploy.committed, { compact: true })} committed</span>
-                    <span>Undrawn {(100 - (calledPct ?? 0)).toFixed(1)}%</span>
+                    <span>Undrawn {(100 - calledPct).toFixed(1)}%</span>
                   </div>
+                  </>}
                 </>
               ) : (
                 <AbsentSection
@@ -1958,7 +1998,7 @@ export function MorningCIO() {
                   <span className="text-slate-400">Largest name</span>
                   <span className="mono text-slate-100 truncate pl-3" title={m.largestName ?? undefined}>
                     {m.largestName == null || m.largestPct == null ? DASH
-                      : <><StockLink securityKey={m.largestKey} name={m.largestName} />
+                      : <>{m.largestHref ? <Link to={m.largestHref} className="underline decoration-dotted decoration-slate-500/40 underline-offset-[3px] transition-colors hover:decoration-champagne-500 hover:text-champagne-400">{m.largestName}</Link> : <StockLink securityKey={m.largestKey} name={m.largestName} />}
                           {m.largestBucket && <span className="ml-1.5 text-[10.5px] text-slate-500">{m.largestBucket}</span>}
                           {" · "}{m.largestPct.toFixed(1)}%</>}
                   </span>

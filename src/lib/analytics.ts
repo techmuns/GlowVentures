@@ -1105,12 +1105,13 @@ export type Bucket = {
 export function bucketBy(positions: Position[], keyFn: (p: Position) => string): Bucket[] {
   const m = new Map<string, {
     mv: number; costs: (number | null)[]; pnls: (number | null)[]; count: number; withoutCost: number;
-    realised: number; deployed: (number | null)[]; unverifiedReturn: boolean;
+    realised: number; deployed: (number | null)[]; unstruckMV: number; unverifiedReturn: boolean;
   }>();
   for (const p of positions) {
     const k = keyFn(p);
-    const c = m.get(k) ?? { mv: 0, costs: [], pnls: [], count: 0, withoutCost: 0, realised: 0, deployed: [], unverifiedReturn: false };
+    const c = m.get(k) ?? { mv: 0, costs: [], pnls: [], count: 0, withoutCost: 0, realised: 0, deployed: [], unstruckMV: 0, unverifiedReturn: false };
     c.mv += p.marketValue;
+    if (!strikesGain(p)) c.unstruckMV += p.marketValue;
     c.costs.push(p.costBasis);
     c.pnls.push(p.unrealizedPnL);
     c.count += 1;
@@ -1149,7 +1150,14 @@ export function bucketBy(positions: Position[], keyFn: (p: Position) => string):
         // — not 0, which reads as "this bucket broke even". A caller that can
         // see WHOLE mandates strikes them on their capital instead
         // (`src/lib/fifo.ts`); this roll-up has no account registry to do so.
-        returnPct: !v.unverifiedReturn && deployed !== null && pnl !== null && deployed > 0 ? ((pnl + v.realised) / deployed) * 100 : null,
+        //
+        // AND ONLY WHERE COST COVERS THE BUCKET (Stage 10fz) — `costCoversSet`,
+        // the gate `fifoTotals` applies: a bucket whose value is mostly
+        // depository rows (no cost) or review lines held at cost would print a
+        // return over a sliver of it under the whole bucket's name.
+        returnPct: !v.unverifiedReturn && deployed !== null && pnl !== null && deployed > 0
+          && (costCoversSet(v.mv, v.unstruckMV) || (v.mv === 0 && v.unstruckMV === 0))
+          ? ((pnl + v.realised) / deployed) * 100 : null,
         weight: total > 0 ? v.mv / total : 0,
       };
     })
@@ -1334,7 +1342,87 @@ export type Holdable = {
    *  where the row's holdings are valued on different dates; omitted where the
    *  caller has no value date and the fallback `asOf` stands. */
   valuedAt?: string | null;
+  /**
+   * How many distinct dates the units still held were bought on
+   * (`Position.purchaseDates`), and what the units already sold cost
+   * (`Position.costOfUnitsSold`) — the two facts that say whether `heldSince`
+   * is the start of ONE purchase held throughout, which is the only thing a
+   * single-start compound rate measures (Stage 10fz; `singlePurchaseGap`).
+   */
+  purchaseDates?: number;
+  costOfUnitsSold?: number | null;
 };
+
+/**
+ * ── A CAGR IS ONE PURCHASE, HELD THROUGHOUT (Stage 10fz) ────────────────────
+ *
+ * `heldSince` is the OLDEST unit still held. Compounding the whole holding's
+ * return on cost from that date treats every rupee as invested on it — the
+ * failure this book already refuses for an ACCOUNT funded over several dated
+ * payments (`cap.flows > 1`), and was still committing for a HOLDING bought in
+ * lots. V.E.C 128004's Eureka Forbes is three lots — ₹25.02 L on 31 Jul 2025,
+ * ₹20.01 L on 15 Jun 2026 and ₹19.97 L on 15 Jul 2026 — and read CAGR −25.50%
+ * over 433 days, where its money-weighted rate over the same lots is −46.11%:
+ * two thirds of the money had been in for weeks, not fourteen months. Navneet,
+ * Greaves Cotton, Shoppers Stop, Amrutanjan and Tejas at V.E.C and Crompton at
+ * LKP were the same shape.
+ *
+ * So a CAGR is struck only where the record PROVES one purchase:
+ *   • exactly one purchase date among the units held (`purchaseDates === 1`);
+ *   • nothing sold (`costOfUnitsSold` not above zero) — a FIFO return carries
+ *     the realised gain on sold units, whose own window is not `heldSince`'s;
+ *   • and the count is on file at all — a start date with no count cannot
+ *     prove that every unit was bought on it.
+ * Otherwise the reason, in the words that are true of THIS row. A clubbed row
+ * is one purchase only where every member is, on the same date
+ * (`clubbedPurchase`). Applied by `measuredReturn` — the holding's own measure —
+ * and not by `holdingReturn`, which is the arithmetic of one dated purchase and
+ * is called directly only for a capital tranche, one payment by construction.
+ */
+export const SEVERAL_PURCHASES =
+  "the units held were bought on several dates, so a single-start compound rate would treat every rupee as invested on the oldest one — "
+  + "a staggered purchase has a money-weighted rate, not a CAGR, and this book assembles no dated cash-flow record per holding to solve one; "
+  + "its Holding Period Return is the total return on cost";
+export const UNITS_SOLD_SINCE =
+  "some units of this holding have been sold, and its return on cost carries the gain realised on them, over their own dates — "
+  + "so it is not the return of one purchase held since the oldest unit still held, and compounding it from that date is not a CAGR; "
+  + "its Holding Period Return is the total return on cost";
+export const PURCHASES_NOT_COUNTED =
+  "the oldest unit's purchase date is on file but the number of purchases behind the units held is not, so nothing proves they were all bought on that date — "
+  + "a CAGR is struck only for one purchase held throughout; its Holding Period Return is the total return on cost";
+
+/** Why `heldSince` does NOT start one purchase held throughout — or null where it does. */
+export function singlePurchaseGap(p: Pick<Holdable, "heldSince" | "purchaseDates" | "costOfUnitsSold">): string | null {
+  if (!p.heldSince) return null;
+  if (typeof p.costOfUnitsSold === "number" && p.costOfUnitsSold > 0) return UNITS_SOLD_SINCE;
+  if (p.purchaseDates === undefined || p.purchaseDates === null) return PURCHASES_NOT_COUNTED;
+  if (p.purchaseDates !== 1) return SEVERAL_PURCHASES;
+  return null;
+}
+
+/**
+ * The purchase facts of a CLUBBED row — one security across several statement
+ * lines — for `holdingReturn` / `measuredReturn`. `heldSince` is the oldest
+ * start where EVERY line reports one (one missing start makes the row's start
+ * unknown, not older); the row is ONE purchase only where every line is one, on
+ * the same date; the cost of units sold is summed over the lines that report it.
+ */
+export function clubbedPurchase(
+  ps: readonly Pick<Position, "heldSince" | "purchaseDates" | "costOfUnitsSold">[],
+): { heldSince: string | null; purchaseDates?: number; costOfUnitsSold: number | null } {
+  const heldSince = ps.length && ps.every((x) => x.heldSince)
+    ? ps.reduce((a: string, x) => (x.heldSince! < a ? x.heldSince! : a), ps[0].heldSince!)
+    : null;
+  const sold = ps.filter((x) => typeof x.costOfUnitsSold === "number");
+  const costOfUnitsSold = sold.length ? sold.reduce((s, x) => s + (x.costOfUnitsSold as number), 0) : null;
+  if (!heldSince || !ps.every((x) => typeof x.purchaseDates === "number")) return { heldSince, costOfUnitsSold };
+  // Each line's own count, and — where every line is one purchase — the
+  // distinct dates across them: two accounts buying on one day is one date.
+  const purchaseDates = ps.every((x) => x.purchaseDates === 1)
+    ? new Set(ps.map((x) => x.heldSince)).size
+    : Math.max(2, ...ps.map((x) => x.purchaseDates as number));
+  return { heldSince, purchaseDates, costOfUnitsSold };
+}
 
 export function holdingReturn(p: Holdable, mode: ReturnMode, asOf: string): HoldingReturn {
   const pct = p.returnPct;
@@ -1508,7 +1596,7 @@ export type ReturnMeasureDef = {
 /** The picker's options, in reading order — `auto` first, as the default. */
 export const RETURN_MEASURES: ReturnMeasureDef[] = [
   { key: "auto", label: "By methodology", tag: "AUTO",
-    hint: "Equity held under a year: holding-period return. A year or more: CAGR. Fixed income, and an account funded over several dated payments: XIRR. Each cell says which one it is." },
+    hint: "Equity held under a year, or bought on several dates: holding-period return. One purchase held a year or more: CAGR. Fixed income, and an account funded over several dated payments: XIRR. Each cell says which one it is." },
   // The measure KEY stays "absolute" — the URL is `?ret=absolute`, and the
   // internal ReturnMode and HoldingReturn kind are "absolute" too, so the whole
   // not-annualised basis shares one identifier. Only the reader-facing label and
@@ -1564,6 +1652,9 @@ export type ReturnInput = {
   marketValue?: number;
   /** See `Holdable.valuedAt`. */
   valuedAt?: string | null;
+  /** See `Holdable.purchaseDates` / `singlePurchaseGap` (Stage 10fz). */
+  purchaseDates?: number;
+  costOfUnitsSold?: number | null;
   /** See `Holdable.opened`. */
   opened?: { nilSince: string; openedOn: string } | null;
   /**
@@ -1651,6 +1742,14 @@ const noCostReasonOf = (p: ReturnInput): string => p.hprUnavailableReason ?? p.f
 const wholeAccountsOf = (n: number): string => n === 1 ? "This row is one whole account" : `This row is ${n} whole accounts`;
 const DERIVED_ONLY_RETURN =
   "no statement in this book reports this company as a holding — the family reaches it only through funds whose filings name it — so there is no cost or value of the family's own to strike a return on";
+/**
+ * WHY A HOLDING INSIDE AN ACCOUNT HAS NO XIRR (Stage 10fz). It used to say the
+ * statements "cover the current period only", which is false of every
+ * lot-dated row — a lot register dates each purchase. What is true is narrower:
+ * a money-weighted rate needs the holding's every purchase, sale and payout as
+ * dated cash flows, and the book assembles that record per ACCOUNT, never per
+ * holding inside one.
+ */
 const NO_HOLDING_XIRR =
   "a money-weighted return (XIRR) needs every cash flow for this holding — the date and amount of every purchase and sale of every unit it holds — and no statement in this drop carries them all: its account's dated trades or lot register do not account for every unit it holds, or it has neither. The per-account money-weighted return is on the Performance page.";
 export const noCalendarReason = (asOf: string) =>
@@ -1757,6 +1856,13 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
   if (measure === "cagr") {
     const r = holdingReturn(p, "cagr", asOf);
     if (r.kind === "absent") return { shown: false, tag: "CAGR", reason: r.reason };
+    // NOT ONE PURCHASE (Stage 10fz): refused on the CAGR measure whatever the
+    // window, exactly as an account funded over several dated payments is
+    // (`cap.flows > 1` above). The gate is HERE, on the holding's own measure,
+    // and not in `holdingReturn`: that is the arithmetic of one dated purchase,
+    // which a capital tranche (`tranches.ts`) is by construction.
+    const gap = singlePurchaseGap(p);
+    if (gap) return { shown: false, tag: "CAGR", reason: gap };
     if (r.kind === "cagr") {
       return { shown: true, pct: r.pct, tag: "CAGR",
         note: `Annualised over the ${r.heldDays} days from ${r.since}, the oldest unit still held, to its valuation on ${windowEnd(p, asOf)}.` };
@@ -1827,6 +1933,13 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
   }
   // Equity and the pooled vehicles: annualise a measured year, otherwise the
   // total return on cost, tagged so the two bases never read as one.
+  // A holding bought in lots, or partly sold, is held a year by its OLDEST
+  // unit only: its return stays the HPR, with the cause (Stage 10fz).
+  const gap = heldDays !== null && heldDays >= YEAR_DAYS && end !== null ? singlePurchaseGap(p) : null;
+  if (gap) {
+    return { shown: true, pct: p.returnPct as number, tag: "HPR",
+      note: `Total return on cost, not annualised: the oldest unit has been held ${heldDays} days, but ${gap.replace(/; its Holding Period Return is the total return on cost$/, "")}.` };
+  }
   if (heldDays !== null && heldDays >= YEAR_DAYS) {
     const r = holdingReturn(p, "cagr", asOf);
     if (r.kind === "cagr") {
@@ -1850,20 +1963,23 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
  * than claimed — the same discipline `returnModeCoverage` keeps for the toggle.
  */
 export function returnCoverage(rows: ReturnInput[], measure: ReturnMeasure, asOf: string) {
-  let shown = 0, absent = 0, cagr = 0, absolute = 0, xirr = 0, staggered = 0;
+  let shown = 0, absent = 0, cagr = 0, absolute = 0, xirr = 0, staggered = 0, lotted = 0;
+  const notOnePurchase = new Set([SEVERAL_PURCHASES, UNITS_SOLD_SINCE, PURCHASES_NOT_COUNTED]);
   for (const r of rows) {
     // A row that is whole accounts funded over several dated payments — the
     // case CAGR refuses and XIRR answers — counted so a header can say where
     // those rows' annual rate is rather than filing them under "no date".
     if (r.capital?.dated && r.capital.flows > 1) staggered++;
     const m = measuredReturn(r, measure, asOf);
-    if (!m.shown) { absent++; continue; }
+    // A dated holding bought in lots or partly sold (Stage 10fz): refused by
+    // CAGR for a cause of its own, so a header does not file it under "no date".
+    if (!m.shown) { absent++; if (notOnePurchase.has(m.reason)) lotted++; continue; }
     shown++;
     if (m.tag === "CAGR") cagr++;
     else if (m.tag === "XIRR") xirr++;
     else absolute++;   // ABS (absolute, guarded, fixed-income) and YTD alike
   }
-  return { total: rows.length, shown, absent, cagr, absolute, xirr, staggered };
+  return { total: rows.length, shown, absent, cagr, absolute, xirr, staggered, lotted };
 }
 
 /**

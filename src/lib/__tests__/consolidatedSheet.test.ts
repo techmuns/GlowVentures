@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import ExcelJS from "exceljs";
 import { buildConsolidatedSheet, type ConsolidatedBook } from "../consolidatedSheet";
 import { createConsolidatedWorkbook, consolidatedExcelTarget } from "../exportConsolidatedExcel";
-import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_AS_OF, BOOK_SUMMARY } from "../../data/glowData";
+import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_AS_OF, BOOK_SUMMARY, BOOK_COMMITMENTS } from "../../data/glowData";
 import { deriveTransactions, deriveRealisedLots, type ArchiveDoc } from "../ledgerModel";
 import revision from "../../data/readModels.json";
 
@@ -88,4 +88,32 @@ const dateCol = sheet("Holdings").columns.findIndex(c => c.key === "stmt") + 1;
 assert.ok(hs.getCell(6, dateCol).value instanceof Date, "Excel dates remain typed dates");
 assert.equal(typeof hs.getCell(6, 18).value, "number", "holding market values remain typed INR numbers");
 assert.match((hs.getCell(6, 2).value as ExcelJS.CellHyperlinkValue).hyperlink, /^#'Accounts'!A\d+$/);
+// STAGE 10fz — TVPI counts only the distributions paid by the valuation date.
+// Neo's printed distributed includes a payout dated after the 30 Jun NAV it is
+// added to; re-derived off the commitment's own dated payouts.
+for (const c of BOOK_COMMITMENTS.filter(c => (c.distributed ?? 0) > 0 && c.payouts)) {
+  const row = sheet("Commitments").rows.find(r => r.values[sheet("Commitments").columns.findIndex(k => k.key === "acct")] === c.accountId)!;
+  const get = (k: string) => row.values[sheet("Commitments").columns.findIndex(x => x.key === k)];
+  const after = c.payouts!.filter(x => x.inPrintedTotal && x.kind !== "equalisation" && c.asOf != null && x.date > c.asOf);
+  const value = get("value");
+  if (typeof get("tvpi") !== "number" || typeof value !== "number") continue;
+  near(get("tvpi") as number, (value + c.distributed! - after.reduce((s, x) => s + x.gross, 0)) / c.paid!);
+  if (after.length) assert.ok(Math.abs((get("tvpi") as number) - (value + c.distributed!) / c.paid!) > 0.005, `${c.name}: TVPI leaves out the payouts dated after ${c.asOf}`);
+  if (after.length) assert.match(String(get("notes")), /not the \d+ paid after it/);
+}
+// STAGE 10fz — the XIRR column is ONE pooled money-weighted rate, never an
+// average of the rows' rates: it lies between the rates it pools, and on a row
+// that pools rates which differ it is not their value-weighted mean.
+{
+  const hsh = sheet("Holdings"), hx = hsh.columns.findIndex(c => c.key === "xirr"), hmv = hsh.columns.findIndex(c => c.key === "mv"), hck = hsh.columns.findIndex(c => c.key === "check");
+  const rates = hsh.rows.filter(r => !/^Duplicate/.test(String(r.values[hck] ?? ""))).map(r => ({ x: r.values[hx], mv: r.values[hmv] })).filter((r): r is { x: number; mv: number } => typeof r.x === "number" && typeof r.mv === "number");
+  const tot = value("Portfolio Allocation", sheet("Portfolio Allocation").rows.length - 1, "xirr");
+  if (rates.length > 1 && typeof tot === "number") {
+    const lo = Math.min(...rates.map(r => r.x)), hi = Math.max(...rates.map(r => r.x));
+    assert.ok(tot >= lo - 1e-9 && tot <= hi + 1e-9, `the pooled XIRR ${tot} lies between the rates it pools [${lo}, ${hi}]`);
+    const avg = rates.reduce((s, r) => s + r.x * r.mv, 0) / rates.reduce((s, r) => s + r.mv, 0);
+    assert.ok(Math.abs(tot - avg) > 1e-6, "the Total XIRR is pooled, not the value-weighted average of holding XIRRs");
+  }
+  assert.match(sheet("Portfolio Allocation").note, /XIRR is pooled/);
+}
 console.log(`PASS consolidated sheet: ${book.tabs.length} subtabs, ${book.documents} sources, ₹${book.totalValue}; future wiring, missing values, dedupe, typed Excel roundtrip and hyperlinks`);

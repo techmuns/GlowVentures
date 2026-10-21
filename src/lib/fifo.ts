@@ -123,6 +123,20 @@ export type FifoTotals = {
   holdings: number;
   /** The mandates struck whole on their capital, by accountId. */
   wholeMandates: string[];
+  /**
+   * ── WHAT WAS EXITED, IN THE GAIN AND NOT IN THE ROWS (Stage 10fz) ──────────
+   *
+   * The holdings and mandates the family has left — redeemed to nil, sold out,
+   * a closed mandate's residue under the ₹1,000 floor — that `opts.exited`
+   * handed in. Their realised gain, income and the cost of the units they sold
+   * are INSIDE `realised`, `income`, `deployed`, `gain` and `returnPct`;
+   * they are in no row, no value, no Invested and no coverage count, because
+   * none of them is held. Zero / empty where nothing exited is passed.
+   */
+  exitedHoldings: number;
+  exitedMandates: string[];
+  exitedGain: number;
+  exitedDeployed: number;
 };
 
 type AccountIndex = Map<string, Account> | Record<string, Account> | Account[];
@@ -147,6 +161,25 @@ export type FifoOptions = {
    * mandate" is measured against. Without it nothing is struck whole.
    */
   universe?: readonly Position[];
+  /**
+   * ── THE EXITS, FOR A SINCE-INCEPTION RETURN (Stage 10fz) ──────────────────
+   *
+   * Rows the current-holdings set drops (`droppedHoldings`: redeemed to nil,
+   * under the ₹1,000 floor) whose record carries what they EARNED. A return
+   * struck over what is still held is a survivor's return: 3P's class B3
+   * (₹2.56 Cr realised on ₹28.5 Cr), ASK Absolute Return's two folios
+   * (₹1.39 Cr on ₹38.8 Cr) and ASK's two closed PMS mandates (₹10.56 Cr on
+   * ₹13.10 Cr paid in) were in no aggregate, and the book read 21.98% where
+   * 21.16% is what the family's capital earned. GIPS keeps a terminated
+   * holding's realised result in since-inception performance, and so does
+   * this: each exit enters the gain and the capital deployed — never a row,
+   * the value or Invested (`exitedHoldings` / `exitedMandates` count them).
+   *
+   * An exit inside a mandate struck WHOLE in the set is already in its capital
+   * bridge and is skipped. A closed PMS mandate — no current holding in the
+   * universe — enters on its capital since inception, every row of it.
+   */
+  exited?: readonly Position[];
 };
 
 /**
@@ -193,10 +226,14 @@ export function fifoTotals(set: readonly Position[], opts: FifoOptions = {}): Fi
        * "what did this account earn"; it is not the answer for a set that only
        * shares a security with it, such as one cash line held in two accounts.
        */
+      //
+      // WHOLE WHEREVER EVERY ROW OF IT IS IN THE SET (Stage 10fz), no longer
+      // only where the set is that account alone: a book-wide set that carries
+      // a closed mandate's every row carries the whole account, and its capital
+      // is what that account earned. Every row, never one shared security: the
+      // test is on the ACCOUNT's own rows, all of them.
       const raw = (universe as Position[]).filter((p) => p.accountId === acct);
-      if (raw.length && set.every((p) => p.accountId === acct) && raw.every((p) => keys.has(p.securityKey))) {
-        whole.add(acct);
-      }
+      if (raw.length && raw.every((p) => keys.has(p.securityKey))) whole.add(acct);
     }
   }
 
@@ -210,6 +247,8 @@ export function fifoTotals(set: readonly Position[], opts: FifoOptions = {}): Fi
 
   const mandateMV = new Map<string, number>();
   const mandateCost = new Map<string, number>();
+  /** The value of a whole mandate's COSTED rows — what its unrealised half is struck on (B8). */
+  const mandateCostedMV = new Map<string, number>();
   for (const p of set) {
     marketValue += p.marketValue;
     /**
@@ -228,6 +267,7 @@ export function fifoTotals(set: readonly Position[], opts: FifoOptions = {}): Fi
       mandateMV.set(p.accountId, (mandateMV.get(p.accountId) ?? 0) + p.marketValue);
       if (costed(p)) {
         mandateCost.set(p.accountId, (mandateCost.get(p.accountId) ?? 0) + (p.costBasis as number));
+        mandateCostedMV.set(p.accountId, (mandateCostedMV.get(p.accountId) ?? 0) + p.marketValue);
         costHeld = add(costHeld, p.costBasis as number);
         unrealised = add(unrealised, p.marketValue - (p.costBasis as number));
       } else { uncostedValue += p.marketValue; uncosted += 1; }
@@ -249,13 +289,63 @@ export function fifoTotals(set: readonly Position[], opts: FifoOptions = {}): Fi
     const cap = accountOf(accounts!, acct)!.capital!;
     const mv = mandateMV.get(acct) ?? 0;
     const gain = mv + cap.withdrawn - cap.contributed;
-    const unr = mv - (mandateCost.get(acct) ?? 0);
+    // THE UNREALISED HALF IS THE COSTED ROWS' OWN (Stage 10fz, B8). It was
+    // `mv − cost` with `mv` over EVERY row and the cost over the costed ones,
+    // so a row with no cost had its value added to the unrealised here and
+    // never to the unrealised above — and it vanished from the mandate's gain.
+    // Struck over the same rows as the per-row unrealised, the realised half
+    // is the rest of the capital bridge, the uncosted row's value included.
+    const unr = (mandateCostedMV.get(acct) ?? 0) - (mandateCost.get(acct) ?? 0);
     realised = add(realised, gain - unr);
     deployed = add(deployed, cap.contributed);
     invested = add(invested, cap.contributed);
     wholeCostHeld += mandateCost.get(acct) ?? 0;
     wholeContributed += cap.contributed;
     wholeWithdrawn += cap.withdrawn;
+  }
+
+  // ── THE EXITS (Stage 10fz): in the gain and the capital deployed, nowhere else.
+  let exitedHoldings = 0, exitedGain = 0, exitedDeployed = 0;
+  const exitedMandates: string[] = [];
+  if (opts.exited?.length) {
+    const inSet = new Set(set);
+    const held = universe ? currentHoldings(universe as Position[]) : [];
+    const heldAccounts = new Set([...held, ...set].map((p) => p.accountId));
+    const byAccount = new Map<string, Position[]>();
+    for (const p of opts.exited) {
+      if (inSet.has(p) || whole.has(p.accountId)) continue;
+      const g = byAccount.get(p.accountId);
+      if (g) g.push(p); else byAccount.set(p.accountId, [p]);
+    }
+    for (const [acct, rows] of byAccount) {
+      const a = accountOf(accounts, acct);
+      const cap = a?.capital;
+      // A CLOSED MANDATE: nothing of it is held, so its capital since
+      // inception is the whole of what it earned — the ₹0.34 its bank still
+      // holds included, as the realised half of a bridge with nothing unrealised.
+      if (a?.engagement === "PMS" && cap && cap.contributed > 0 && !heldAccounts.has(acct)) {
+        const g = rows.reduce((s, p) => s + p.marketValue, 0) + cap.withdrawn - cap.contributed;
+        realised = add(realised, g);
+        deployed = add(deployed, cap.contributed);
+        exitedGain += g; exitedDeployed += cap.contributed;
+        exitedMandates.push(acct);
+        continue;
+      }
+      // AN EXITED HOLDING: what its own record says the units it sold earned —
+      // FIFO's realised half, over the cost of those units — and what it paid.
+      // Both halves of the sale or neither: a cost sold with no gain beside it
+      // (or a gain with no cost) would move one side of the division alone.
+      for (const p of rows) {
+        if (!costed(p) || !isNum(p.realizedPnL) || !isNum(p.costOfUnitsSold)) continue;
+        const inc = isNum(p.dividendReceived) ? p.dividendReceived : 0;
+        if (p.costOfUnitsSold === 0 && p.realizedPnL === 0 && inc === 0) continue;
+        realised = add(realised, p.realizedPnL);
+        deployed = add(deployed, p.costOfUnitsSold);
+        if (isNum(p.dividendReceived)) income = add(income, p.dividendReceived);
+        exitedGain += p.realizedPnL + inc; exitedDeployed += p.costOfUnitsSold;
+        exitedHoldings += 1;
+      }
+    }
   }
 
   if (unverifiedReturn) realised = null;
@@ -268,6 +358,7 @@ export function fifoTotals(set: readonly Position[], opts: FifoOptions = {}): Fi
     ...(unverifiedReturn ? { hprUnavailableReason: [...new Set(set.filter(p => !whole.has(p.accountId)).map(p => p.hprUnavailableReason).filter(Boolean))].join("; ") } : {}),
     wholeCostHeld, wholeContributed, wholeWithdrawn,
     uncostedValue, uncosted, atCostValue, atCost, realisedCovered, holdings: set.length, wholeMandates: [...whole].sort(),
+    exitedHoldings, exitedMandates: exitedMandates.sort(), exitedGain, exitedDeployed,
   };
 }
 
@@ -279,6 +370,8 @@ export function fifoTotals(set: readonly Position[], opts: FifoOptions = {}): Fi
 export function fifoBasisNote(t: FifoTotals, money: (n: number) => string): string {
   if (t.returnPct === null || t.gain === null || t.deployed === null) return "";
   const n = t.wholeMandates.length;
+  const ex = exitedNote(t, money);
+  const xh = t.exitedHoldings ?? 0, xm = t.exitedMandates?.length ?? 0;
   /**
    * A SET THAT IS WHOLE MANDATES AND NOTHING ELSE IS A RETURN ON CAPITAL, NOT
    * LOT FIFO (DL-7) — and it said lot FIFO. Carnelian's 19.91% is (value +
@@ -288,9 +381,14 @@ export function fifoBasisNote(t: FifoTotals, money: (n: number) => string): stri
    * units already sold", was false of every such set. It is named for what it
    * is here, and the lot clause is kept only for the holdings it describes.
    */
-  if (n > 0 && Math.abs(t.deployed - t.wholeContributed) <= 1) {
-    return `Return on capital, not lot FIFO: (value ${money(t.marketValue - t.atCostValue)} + withdrawn ${money(t.wholeWithdrawn)} − paid in ${money(t.wholeContributed)}) ÷ paid in ${money(t.wholeContributed)}`
+  // Whole mandates and nothing else — exited MANDATES aside, which are struck
+  // on their capital too; an exited HOLDING is lot FIFO and takes the branch below.
+  if (n > 0 && xh === 0 && Math.abs(t.deployed - t.wholeContributed - (t.exitedDeployed ?? 0)) <= 1) {
+    const exited = xm > 0 ? ` + exited mandates' gain ${money(t.exitedGain)}` : "";
+    const paidIn = xm > 0 ? `(paid in ${money(t.wholeContributed)} + exited mandates' ${money(t.exitedDeployed)})` : `paid in ${money(t.wholeContributed)}`;
+    return `Return on capital, not lot FIFO: (value ${money(t.marketValue - t.atCostValue)} + withdrawn ${money(t.wholeWithdrawn)} − paid in ${money(t.wholeContributed)}${exited}) ÷ ${paidIn}`
       + ` · ${n === 1 ? "a whole mandate is" : `${n} whole mandates are`} struck on the capital since inception, so the gain carries every sale the manager made and the income less fees; its lots are not all on record`
+      + (ex ? ` · ${ex}` : "")
       + (t.atCost > 0 ? ` · ${atCostNote(t, money)}` : "");
   }
   const parts = [`FIFO: (unrealised ${money(t.unrealised ?? 0)} + realised ${money(t.realised ?? 0)}`
@@ -301,8 +399,28 @@ export function fifoBasisNote(t: FifoTotals, money: (n: number) => string): stri
   parts.push(n
     ? "for every other holding, capital deployed is the cost of the units still held plus the cost of the units already sold"
     : "capital deployed is the cost of the units still held plus the cost of the units already sold");
+  if (ex) parts.push(ex);
   if (t.atCost > 0) parts.push(atCostNote(t, money));
   return parts.join(" · ");
+}
+
+/**
+ * The words for the exits a since-inception total carries (Stage 10fz): how
+ * many exited holdings and mandates, and what they put in the gain and the
+ * capital deployed — "in the gain and capital deployed, not in the rows".
+ * Empty where none is in the set.
+ */
+export function exitedNote(
+  t: Pick<FifoTotals, "exitedHoldings" | "exitedMandates" | "exitedGain" | "exitedDeployed">,
+  money: (n: number) => string,
+): string {
+  const h = t.exitedHoldings ?? 0, m = t.exitedMandates?.length ?? 0;
+  if (!h && !m) return "";
+  const who = [
+    h ? `${h} exited ${h === 1 ? "holding" : "holdings"}` : "",
+    m ? `${m} closed ${m === 1 ? "mandate" : "mandates"}` : "",
+  ].filter(Boolean).join(" and ");
+  return `${who} ${h + m === 1 ? "is" : "are"} in the gain (${money(t.exitedGain)}) and the capital deployed (${money(t.exitedDeployed)}), not in the rows or the value — a since-inception return keeps what the family earned on what it has since left`;
 }
 
 /**
