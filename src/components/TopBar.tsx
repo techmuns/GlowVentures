@@ -14,36 +14,57 @@ function readInitialTheme(): boolean {
 }
 
 function CurrencySwitch() {
-  const { displayCurrency, setDisplayCurrency, inrPerUsd, fxAsOf, fxIsLive } = usePortfolio();
+  const { displayCurrency, requestedCurrency, setDisplayCurrency, inrPerUsd, fxAsOf, fxState } = usePortfolio();
+  // USD asked for and no published rate in hand: the cockpit renders in INR.
+  const usdHeldBack = requestedCurrency === "USD" && displayCurrency !== "USD";
+  const usdWhy = fxState.status === "pending"
+    ? "Showing INR: the USD → INR reference rate is still loading, and this browser has no earlier rate saved. USD figures appear when it arrives."
+    : "Showing INR: the FX feed did not respond and this browser has no earlier rate saved, so there is no published rate to convert at. No USD figure is struck on a made-up rate.";
   return (
     <div className="flex items-center gap-2">
-      <div className="inline-flex items-center gap-0.5 rounded-md border border-ink-600 bg-ink-800/60 p-0.5" role="group" aria-label="Display currency">
+      <div className="inline-flex items-center gap-0.5 rounded-md border border-ink-600 bg-ink-800/60 p-0.5" role="group" aria-label="Display currency"
+        data-fx-status={fxState.status} data-ccy-requested={requestedCurrency} data-ccy-shown={displayCurrency}>
         {SUPPORTED_DISPLAY_CURRENCIES.map((c: DisplayCurrency) => {
+          // THE PRESSED BUTTON IS THE CURRENCY ON SCREEN. With USD held back for
+          // want of a rate the INR button is the one lit, and the USD button
+          // says why in its own hover — the reader's pick is remembered and
+          // takes effect the moment a rate arrives.
           const active = displayCurrency === c;
           return (
             <button key={c} onClick={() => setDisplayCurrency(c)} aria-pressed={active}
+              title={c === "USD" && usdHeldBack ? usdWhy : undefined}
               className={["rounded px-2 py-0.5 text-[11px] font-medium tabular transition-colors active:scale-[0.97]",
-                active ? "bg-champagne-500 text-ink-950 shadow-glow" : "text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"].join(" ")}>
+                active ? "bg-champagne-500 text-ink-950 shadow-glow"
+                  : c === "USD" && usdHeldBack ? "text-amber-400 hover:bg-ink-700/60"
+                  : "text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"].join(" ")}>
               {c}
             </button>
           );
         })}
       </div>
       {/* THE RATE SAYS WHETHER IT IS ONE. Every USD figure in the cockpit is this
-          number's divisor, so a stale fallback is wrong everywhere at once — and
-          it rendered identically to a live rate, with "fallback rate" only in a
+          number's divisor, so a stale rate is wrong everywhere at once — and it
+          rendered identically to a live rate, with "fallback rate" only in a
           tooltip that a touch device, a screenshot and a non-hovering reader all
           miss. The quote feed already flags a price it could not refresh; the
-          rate gets the same treatment, in the chip rather than behind it. */}
-      {displayCurrency === "USD" && (
+          rate gets the same treatment, in the chip rather than behind it.
+
+          AND THERE IS NO STATIC FALLBACK ANY MORE (Stage 10fz). `$1 = ₹83.50`
+          was a rate nobody published. With the feed down the chip names the
+          LAST rate this browser fetched and its date; with no such rate the
+          cockpit is in INR and the USD button above says why. */}
+      {displayCurrency === "USD" && inrPerUsd !== null && (
         <span
           className={["hidden items-center gap-1 whitespace-nowrap rounded px-1.5 py-0.5 text-[11px] tabular sm:inline-flex",
-            fxIsLive ? "text-slate-400" : "border border-amber-500/40 bg-amber-500/10 text-amber-400"].join(" ")}
-          title={fxIsLive
+            fxState.status === "live" ? "text-slate-400" : "border border-amber-500/40 bg-amber-500/10 text-amber-400"].join(" ")}
+          data-fx-chip={fxState.status}
+          title={fxState.status === "live"
             ? `USD → INR reference rate${fxAsOf ? ` · as of ${fxAsOf}` : ""}`
-            : "The FX feed did not respond. Every USD figure on screen is converted at a STATIC fallback rate, not today's — switch to INR for figures that tie to the statements."}>
+            : fxState.status === "saved"
+            ? `${fxState.feed === "failed" ? "The FX feed did not respond." : "Today's rate is still loading."} Every USD figure on screen is converted at the last rate this browser fetched — the reference rate${fxAsOf ? ` as of ${fxAsOf}` : " (its source printed no date)"}, fetched ${fxState.rate.fetchedAt.slice(0, 10)} — not today's. Switch to INR for figures that tie to the statements.`
+            : undefined}>
           $1 = ₹{inrPerUsd.toFixed(2)}
-          {!fxIsLive && <span className="font-semibold uppercase tracking-wide">· fallback</span>}
+          {fxState.status === "saved" && <span className="font-semibold uppercase tracking-wide">· {fxAsOf ?? fxState.rate.fetchedAt.slice(0, 10)}</span>}
         </span>
       )}
     </div>

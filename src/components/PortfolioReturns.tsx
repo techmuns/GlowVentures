@@ -11,11 +11,21 @@
  * The panel scrolls inside itself. Benchmarks are tiles on one bar scale.
  *
  * A DATED WINDOW OPENS ON A MARKET VALUE, NEVER A COST. Each account opens on
- * its latest statement valuation on or before the opening date and closes on
- * its latest on or before the end; capital moved inside the window is a dated
- * flow (`periodReturns.ts`). Since investment is struck on the capital paid in
- * (`capitalRollup`, the Transactions card's own record). An account that cannot
- * be measured is NAMED with its reason, never blended in as zero.
+ * its latest statement valuation on or before the opening date (no more than
+ * a week before it) and closes on its latest on or before the end; capital
+ * moved inside the window is a dated flow (`periodReturns.ts`). The opening,
+ * the flows, the close date and value are the account's VERIFIED RETURN
+ * RECORD — the one Morning CIO's tile and NAV & Performance close on
+ * (`accountInputs`, Stage 10fz) — so FYTD here is the tile's figure over the
+ * tile's accounts. Since investment is struck on the capital paid in
+ * (`capitalRollup`, the Transactions card's own record, closing on the newest
+ * verified record whose flows reconcile). An account that cannot be measured
+ * is NAMED with its reason, never blended in as zero.
+ *
+ * THE BENCHMARK GAP IS LIKE WITH LIKE (Stage 10fz): beside each index's own
+ * close-to-close move, the index is struck on the portfolio's own dated flows
+ * (PME, `pmeWindowRows`) by the measure the reader picked, and the gap is the
+ * portfolio less THAT.
  *
  * ONE RECORD, AND NEVER A PARTIAL RETURN (Stage 10fc). A dated window reads the
  * same verified account records every other return surface reads
@@ -41,7 +51,7 @@ import { usePortfolio } from "@/context/PortfolioContext";
 import { fmtDate, DASH, changeColor } from "@/lib/format";
 import { mandateLabel } from "@/lib/analytics";
 import { inScopeAccount } from "@/lib/memberScope";
-import { capitalMovesWithCalls, capitalRollup, capitalWindow } from "@/lib/tranches";
+import { capitalClose, capitalMovesWithCalls, capitalRollup, capitalWindow } from "@/lib/tranches";
 import {
   BOOK_ACCOUNT_NAV_HISTORY, BOOK_CAPITAL_FROM_INCEPTION, BOOK_CAPITAL_MOVES,
   BOOK_COMMITMENTS, BOOK_POSITION_TRANCHES, BOOK_REVIEW_FLOWS, BOOK_UNDATED_CAPITAL,
@@ -49,7 +59,7 @@ import {
 import { nothingToMeasure } from "@/lib/returns";
 import {
   PERIODS, RETURN_TYPES, FORMULAS, INCEPTION_FORMULAS, periodStart, windowReturns, measureWindow,
-  measureInception, daysBetween,
+  measureInception, daysBetween, pmeWindowRows, pmeInceptionRows,
   type AccountInput, type InceptionRow, type PeriodKey, type ReturnType, type Measured,
 } from "@/lib/periodReturns";
 
@@ -119,7 +129,7 @@ export default function PortfolioReturns() {
     const moves = capitalMovesWithCalls(BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, statementPortfolio.accounts, BOOK_REVIEW_FLOWS)
       .filter((m) => inScopeAccount(scope.accountIds, m.accountId));
     const groups = capitalRollup(moves, statementPortfolio.accounts, statementPortfolio.positions, BOOK_POSITION_TRANCHES, "all", "recent",
-      { commitments: BOOK_COMMITMENTS, fromInception: BOOK_CAPITAL_FROM_INCEPTION });
+      { commitments: BOOK_COMMITMENTS, fromInception: BOOK_CAPITAL_FROM_INCEPTION, returnRecords: statementPortfolio.accountReturnRecords });
     const outside = new Set(statementPortfolio.accounts.filter((a) => nothingToMeasure(statementPortfolio, a)).map((a) => a.accountId));
     const rows: InceptionRow[] = [];
     const skipped: { label: string; reason: string }[] = [];
@@ -134,7 +144,7 @@ export default function PortfolioReturns() {
         continue;
       }
       rows.push({ accountId: g.key, label, owner: g.owner, first: w.from, valueAsOf: w.to,
-        paidIn: g.paidIn, takenOut: g.tookOut ?? 0, value: g.value,
+        paidIn: g.paidIn, takenOut: g.tookOut ?? 0, value: capitalClose(g).value ?? g.value,
         flows: g.flows.map((f) => ({ date: f.date, amount: f.amount })) });
     }
     // An account holding value that dates no capital at all is a gap in the
@@ -190,24 +200,51 @@ export default function PortfolioReturns() {
   const benchTo = measuredTo ?? end;
   const annualise = !!(measured?.shown && measured.basis === "annual");
   const portfolioPct = measured?.shown && measured.pct != null ? measured.pct : null;
+  /**
+   * THE INDEX ON THE PORTFOLIO'S OWN FLOWS (Stage 10fz). Each account's every
+   * dated rupee buys or sells the index instead, each closes on its own date,
+   * and the measure the reader picked is struck over that — `pmeWindowRows`.
+   * The gap is the portfolio less this, never less the index's close-to-close
+   * move, which is a time-weighted figure over dates part of the pool was not
+   * measured on.
+   */
+  const pmeOf = (h: PriceHistory): { pct: number | null; reason: string | null } => {
+    if (portfolioPct == null || !measured) return { pct: null, reason: "The portfolio's return is not measured on this window, so the index is not struck on its flows" };
+    const level = (d: string) => closeOnOrBefore(h, d)?.value ?? null;
+    let m: Measured;
+    if (period === "inception") {
+      const p = pmeInceptionRows(inception.rows, level);
+      if (!p.rows) return { pct: null, reason: p.reason };
+      m = measureInception(p.rows, rtype, money);
+    } else {
+      const p = pmeWindowRows(win?.included ?? [], level);
+      if (!p.rows) return { pct: null, reason: p.reason };
+      m = measureWindow(p.rows, rtype, money);
+    }
+    if (!m.shown || m.pct == null) return { pct: null, reason: m.reason ?? "the index's flows do not yield this measure" };
+    return { pct: m.pct, reason: null };
+  };
   const benchRows: BenchRow[] = BENCHMARKS.map((b) => {
     const h = hist[b.key];
     const base = { key: b.key, label: b.label, title: b.title };
-    if (!h) return { ...base, pct: null, reason: `Fetching the ${b.label} closes`, span: null };
-    if (!h.ok) return { ...base, pct: null, reason: priceErrorReason(h, true), span: null };
+    const none = (reason: string) => ({ ...base, pct: null, reason, span: null, pme: null, pmeReason: reason });
+    if (!h) return none(`Fetching the ${b.label} closes`);
+    if (!h.ok) return none(priceErrorReason(h, true));
     const id = benchmarkIdentity(h, b);
-    if (!id.ok) return { ...base, pct: null, reason: benchmarkMismatchReason(b, id.reportedName), span: null };
-    if (!benchFrom || !benchTo || benchFrom >= benchTo) return { ...base, pct: null, reason: "No window is measured, so no benchmark return is struck", span: null };
+    if (!id.ok) return none(benchmarkMismatchReason(b, id.reportedName));
+    const pme = pmeOf(h);
+    const pmeFields = { pme: pme.pct, pmeReason: pme.reason };
+    if (!benchFrom || !benchTo || benchFrom >= benchTo) return { ...base, pct: null, reason: "No window is measured, so no benchmark return is struck", span: null, ...pmeFields };
     const c0 = closeOnOrBefore(h, benchFrom);
     const c1 = closeOnOrBefore(h, benchTo);
-    if (!c0) return { ...base, pct: null, reason: `${b.name}'s published history starts on ${h.first}, after the window opens on ${benchFrom}`, span: null };
-    if (!c1 || c1.date <= c0.date) return { ...base, pct: null, reason: `No ${b.label} close inside the window`, span: null };
+    if (!c0) return { ...base, pct: null, reason: `${b.name}'s published history starts on ${h.first}, after the window opens on ${benchFrom}`, span: null, ...pmeFields };
+    if (!c1 || c1.date <= c0.date) return { ...base, pct: null, reason: `No ${b.label} close inside the window`, span: null, ...pmeFields };
     const r = c1.value / c0.value - 1;
     const d = daysBetween(c0.date, c1.date);
     const pct = (annualise && d >= 365 ? Math.pow(1 + r, 365 / d) - 1 : r) * 100;
-    return { ...base, pct, reason: null, span: { from: c0.date, to: c1.date, v0: c0.value, v1: c1.value, days: d } };
+    return { ...base, pct, reason: null, span: { from: c0.date, to: c1.date, v0: c0.value, v1: c1.value, days: d }, ...pmeFields };
   });
-  const gapOf = (r: BenchRow) => (portfolioPct != null && r.pct != null ? portfolioPct - r.pct : null);
+  const gapOf = (r: BenchRow) => (portfolioPct != null && r.pme != null ? portfolioPct - r.pme : null);
 
   const btn = (on: boolean) => `rounded-md px-2.5 py-1 text-[12px] font-semibold transition ${on ? "bg-champagne-400 text-ink-900 shadow-sm" : "text-slate-400 hover:text-slate-200"}`;
   const basisTag = annualise ? "a year" : "not annualised";
@@ -301,7 +338,7 @@ export default function PortfolioReturns() {
           hidden={view !== "benchmarks"} tabIndex={0} className="shrink-0" data-returns-panel="benchmarks" data-returns-benchmarks
           data-measured-from={measuredFrom ?? ""} data-measured-to={measuredTo ?? ""} data-measured-days={days ?? ""}>
         <Card title="Benchmarks"
-          subtitle={`Each index's close-to-close return over the measured window, ${annualise ? "annualised because the selected return is" : "not annualised, as the selected return is not"}. Price indices exclude dividends. ${whole ? `Selected measure: ${typeLabel}.` : "With no whole-portfolio return measured, each index runs over the window asked for."}`}
+          subtitle={`Each index's close-to-close return over the measured window, and the index struck on the portfolio's own dated flows by ${typeLabel} (PME), which the lead is measured against; ${annualise ? "annualised because the selected return is" : "not annualised, as the selected return is not"}. Price indices exclude dividends. ${whole ? `Selected measure: ${typeLabel}.` : "With no whole-portfolio return measured, each index runs over the window asked for."}`}
           right={<span className="label-xs pt-1">{benchFrom && benchTo ? `${fmtDate(benchFrom)} → ${fmtDate(benchTo)}` : DASH} · {basisTag}</span>}>
           <div className="grid grid-cols-2 gap-2 md:grid-cols-4" data-returns-bench-table>
             <div className="ret-stat border-champagne-400" data-returns-bench-portfolio
@@ -319,6 +356,7 @@ export default function PortfolioReturns() {
               const gap = gapOf(r);
               return (
                 <div key={r.key} className="ret-stat" data-returns-bench={r.key} data-bench-pct={r.pct != null ? r.pct.toFixed(4) : ""}
+                  data-bench-pme={r.pme != null ? r.pme.toFixed(4) : ""}
                   data-bench-gap={gap != null ? gap.toFixed(4) : ""} data-bench-from={r.span?.from ?? ""} data-bench-to={r.span?.to ?? ""}>
                   <div className="text-[12px] font-semibold text-slate-200" title={r.title}>{r.label}</div>
                   <div className="mono mt-1.5 text-[18px] font-semibold">
@@ -326,12 +364,20 @@ export default function PortfolioReturns() {
                       ? <span className={changeColor(r.pct)} title={`${fmtDate(r.span.from)} close ${r.span.v0.toFixed(2)} → ${fmtDate(r.span.to)} close ${r.span.v1.toFixed(2)} · ${r.span.days} days`}>{pctText(r.pct)}</span>
                       : <AbsentCell reason={r.reason ?? "not measured"} />}
                   </div>
+                  {/* LIKE WITH LIKE (Stage 10fz): the portfolio's money-weighted
+                      figure is compared with the same dated flows run through
+                      the index (PME, Long–Nickels), never with the index's
+                      time-weighted close-to-close move above. */}
+                  <div className="mt-1 text-[11px] text-slate-400" data-bench-pme-line
+                    title={`Public-market equivalent (Long–Nickels): every rupee the included accounts put in or took out on its date buys or sells ${r.label} instead, each account closes on its own date, and ${typeLabel} is struck over those flows`}>
+                    Same flows · {r.pme != null ? <span className={`mono ${changeColor(r.pme)}`}>{pctText(r.pme)}</span> : <AbsentCell reason={r.pmeReason ?? "not struck"} />}
+                  </div>
                   <div className="mt-2 flex items-center gap-3">
                     {bar(r.pct)}
                     <span className="mono shrink-0 text-[11px]">
                       {gap != null
-                        ? <span className={changeColor(gap)} title="The portfolio's return less the index's, in percentage points">{gap >= 0 ? "+" : ""}{gap.toFixed(2)} pp</span>
-                        : <AbsentCell reason={portfolioPct == null ? "The portfolio's return is not measured on this window, so no lead over the index is struck" : (r.reason ?? "no index return")} />}
+                        ? <span className={changeColor(gap)} title={`The portfolio's ${typeLabel} less the same flows' ${typeLabel} in ${r.label} (PME), in percentage points`}>{gap >= 0 ? "+" : ""}{gap.toFixed(2)} pp</span>
+                        : <AbsentCell reason={portfolioPct == null ? "The portfolio's return is not measured on this window, so no lead over the index is struck" : (r.pmeReason ?? r.reason ?? "no index return on the portfolio's flows")} />}
                     </span>
                   </div>
                 </div>
@@ -349,6 +395,8 @@ export default function PortfolioReturns() {
 type BenchRow = {
   key: string; label: string; title: string; pct: number | null; reason: string | null;
   span: { from: string; to: string; v0: number; v1: number; days: number } | null;
+  /** The index struck on the portfolio's own dated flows by the selected measure (PME), and why not where it is not. */
+  pme: number | null; pmeReason: string | null;
 };
 
 /** The latest settled close on or before a date — never a later one. */

@@ -38,10 +38,31 @@
  * dates) falls back to its window, and a person with such a window opening
  * before the year gets no set-off, which `setOffWithheld` says for the page.
  *
- * What the page still does NOT do is apply the ₹1.25 L exemption, add surcharge
- * and cess, or tax a liquid fund's gain at the holder's slab rate (s.50AA) —
- * its footnote says so, and each of those turns on facts no statement here
- * carries (the year's other income, which lots are specified funds).
+ * THE ₹1.25 L s.112A EXEMPTION IS APPLIED, ONCE PER PERSON PER YEAR (Stage
+ * 10fz). Long-term gains on listed equity shares and equity-oriented fund units
+ * are taxed at 12.5% only on what exceeds ₹1.25 L in the financial year, per
+ * assessee, after the set-off. Leaving it out overstated every taxpayer with a
+ * long-term gain by up to ₹15,625. It is applied to the long-term head these
+ * statements report — the only long-term gains the page can see; a person's
+ * gains on accounts outside this book would share the same exemption, which
+ * the hover says — and only where the person's figure is one year's (a window
+ * spanning years carries several years' exemptions and gets none, like the
+ * set-off).
+ *
+ * EACH ACCOUNT'S YEAR ENDS AT ITS OWN STATEMENT (Stage 10fz). "The sales made
+ * in FY 2026-27" was the caption, and no account's statement covers the year:
+ * Molecule's closes 30 Jun, Green Lantern's 27 Jul, LKP's 31 Jul, V.E.C
+ * 128005's 13 Aug, the rest 30 Sep or 7 Oct. So every taxpayer's figure is
+ * "1 April to the close of each of their statements", and `spans` names each
+ * account's covered stretch; `coveredThrough` is the date to which ALL of a
+ * person's accounts are covered, and `shortOfNewest` flags a person whose
+ * accounts close before the newest close in the book — their figure is a
+ * shorter stretch of the year than another member's beside it.
+ *
+ * What the page still does NOT do is add surcharge and cess, or tax a liquid
+ * fund's gain at the holder's slab rate (s.50AA) — its footnote says so, and
+ * each of those turns on facts no statement here carries (the year's other
+ * income, which lots are specified funds).
  *
  * A REPORTED ROW WITH NO CANONICAL OWNER CANNOT BE TAXED PER PERSON. It is
  * returned in `unattributed` and left out of the total rather than pooled into
@@ -53,6 +74,11 @@ import { ownerDisplayName } from "./owners";
 /** Illustrative Indian equity rates: STCG u/s 111A = 20%; LTCG u/s 112A = 12.5%. */
 export const STCG_RATE = 0.2;
 export const LTCG_RATE = 0.125;
+/** s.112A: long-term gains up to ₹1.25 L a year, per assessee, are not taxed (FY 2024-25 onwards). */
+export const LTCG_EXEMPTION = 125_000;
+
+/** One account's stretch of the year its statement covers — from 1 April (or its window's opening, if later) to its close. */
+export type CoveredSpan = { entity: string; from: string | null; to: string | null };
 
 export type TaxpayerEstimate = {
   ownerId: string;
@@ -66,6 +92,16 @@ export type TaxpayerEstimate = {
   setOff: number;
   /** A short-term loss sits beside a long-term gain but the windows span financial years, so no set-off is struck. */
   setOffWithheld: boolean;
+  /** The s.112A exemption taken off this person's long-term gain after the set-off — at most ₹1.25 L; 0 where there is none to take. */
+  exemption: number;
+  /** A long-term gain is left after the set-off but the windows span financial years, so no year's exemption is applied. */
+  exemptionWithheld: boolean;
+  /** Each of this person's accounts, and the stretch of the year its statement covers. */
+  spans: CoveredSpan[];
+  /** The date to which EVERY one of this person's accounts is covered — the earliest close among them. */
+  coveredThrough: string | null;
+  /** True where one of this person's accounts closes before the newest close in the book. */
+  shortOfNewest: boolean;
   tax: number;
 };
 
@@ -84,6 +120,8 @@ export type RealisedTaxEstimate = {
   pooled: number | null;
   /** The financial year the estimate is for, as its 1 April ("YYYY-04-01"); "" when no window closes. */
   year: string;
+  /** The newest statement close among the reporting accounts — the date `shortOfNewest` is measured against. */
+  newestClose: string;
   /**
    * Gains the statements report from sales in an EARLIER financial year — a
    * past year's return, in no part of this estimate. One entry per account.
@@ -138,7 +176,8 @@ export function estimateRealisedTax(rows: readonly EntityCG[]): RealisedTaxEstim
   const reported = rows.filter((c) => c.realisedST !== null || c.realisedLT !== null);
   const unattributed = reported.filter((c) => !c.ownerId);
   const fyStart = financialYearStart(reported);
-  const byOwner = new Map<string, TaxpayerEstimate & { oneYear: boolean }>();
+  const newestClose = reported.reduce((a, c) => (c.periodTo && c.periodTo > a ? c.periodTo : a), "");
+  const byOwner = new Map<string, Omit<TaxpayerEstimate, "exemption" | "exemptionWithheld" | "coveredThrough" | "shortOfNewest"> & { oneYear: boolean }>();
   const earlierYears: RealisedTaxEstimate["earlierYears"] = [];
   const undated: RealisedTaxEstimate["undated"] = [];
   const heads = new Map<EntityCG, { st: number | null; lt: number | null }>();
@@ -157,8 +196,18 @@ export function estimateRealisedTax(rows: readonly EntityCG[]): RealisedTaxEstim
     if (!c.ownerId) continue;
     const e = byOwner.get(c.ownerId)
       ?? { ownerId: c.ownerId, owner: ownerDisplayName(c.ownerId), accounts: [], st: null, lt: null,
-        setOff: 0, setOffWithheld: false, tax: 0, oneYear: true };
+        setOff: 0, setOffWithheld: false, spans: [], tax: 0, oneYear: true };
     e.accounts.push(c.entity);
+    // The stretch of the year this account's figure covers: a split row from
+    // 1 April (or its window's later opening) to its close; an unsplit one is
+    // its window. A split row closing before the year covers none of it.
+    if (!(h.split && h.st === null && h.lt === null)) {
+      e.spans.push({
+        entity: c.entity,
+        from: h.split && fyStart ? (c.periodFrom && c.periodFrom > fyStart ? c.periodFrom : fyStart) : c.periodFrom ?? null,
+        to: c.periodTo ?? null,
+      });
+    }
     e.st = addNullable(e.st, h.st);
     e.lt = addNullable(e.lt, h.lt);
     // A figure split by sale date is the year's by construction; an unsplit
@@ -172,7 +221,20 @@ export function estimateRealisedTax(rows: readonly EntityCG[]): RealisedTaxEstim
       const setOff = pair && oneYear ? Math.min(-(e.st ?? 0), e.lt ?? 0) : 0;
       const st = e.st === null ? null : e.st + setOff;
       const lt = e.lt === null ? null : e.lt - setOff;
-      return { ...e, accounts: [...e.accounts].sort(), setOff, setOffWithheld: pair && !oneYear, tax: taxOn(st, lt) };
+      // s.112A: the first ₹1.25 L of the year's long-term gain, after the
+      // set-off, is not taxed — once per person, and only on a figure that is
+      // one year's.
+      const ltLeft = Math.max(0, lt ?? 0);
+      const exemption = oneYear ? Math.min(ltLeft, LTCG_EXEMPTION) : 0;
+      const closes = e.spans.map((s) => s.to).filter((d): d is string => !!d).sort();
+      const coveredThrough = closes[0] ?? null;
+      return {
+        ...e, accounts: [...e.accounts].sort(), spans: [...e.spans].sort((a, b) => a.entity.localeCompare(b.entity)),
+        setOff, setOffWithheld: pair && !oneYear,
+        exemption, exemptionWithheld: !oneYear && ltLeft > 0,
+        coveredThrough, shortOfNewest: !!coveredThrough && !!newestClose && coveredThrough < newestClose,
+        tax: taxOn(st, lt === null ? null : lt - exemption),
+      };
     })
     .sort((a, b) => b.tax - a.tax || a.owner.localeCompare(b.owner));
   const attributed = reported.filter((c) => !!c.ownerId);
@@ -183,5 +245,52 @@ export function estimateRealisedTax(rows: readonly EntityCG[]): RealisedTaxEstim
     pooledST = addNullable(pooledST, h.st); pooledLT = addNullable(pooledLT, h.lt);
   }
   const pooled = reported.length ? taxOn(pooledST, pooledLT) : null;
-  return { total, byTaxpayer, unattributed, pooled, year: fyStart, earlierYears, undated };
+  return { total, byTaxpayer, unattributed, pooled, year: fyStart, newestClose, earlierYears, undated };
+}
+
+/**
+ * ── THE YEAR'S REALISED GAINS, AS EACH STATEMENT COVERS THEM (Stage 10fz) ───
+ *
+ * Capital Gains' headline summed every account's WINDOW — ₹16.17 Cr on the
+ * October book, where ASK's and Marathon's windows run from 2019 and 2024 and
+ * carry seven financial years of sales, while the sales made in FY 2026-27
+ * total ₹3.35 Cr. On a tax page the year is the figure a reader acts on, so
+ * this is the year's realised, struck exactly as the estimate above strikes it
+ * (`yearHeadsOf`): a row split by sale date gives the year's own sales — a real
+ * ₹0 where it sold nothing in the year — and a row whose window closes before
+ * the year says nothing about it. A row with NO split, whose window reaches
+ * back before the year, cannot be placed in the year at all: it is named in
+ * `unplaced` and left out, never counted as the year's.
+ *
+ * Each account's figure runs only to its own statement's close, so `spans`
+ * carries every account's covered stretch and `newestClose` / `earliestClose`
+ * bound them; a caption must say "to each statement's close", never "the year".
+ */
+export function realisedInYear(rows: readonly EntityCG[]): {
+  year: string; st: number | null; lt: number | null; total: number | null;
+  spans: (CoveredSpan & { st: number | null; lt: number | null })[];
+  unplaced: string[]; newestClose: string; earliestClose: string;
+} {
+  const reported = rows.filter((c) => c.realisedST !== null || c.realisedLT !== null);
+  const year = financialYearStart(reported);
+  let st: number | null = null, lt: number | null = null;
+  const spans: (CoveredSpan & { st: number | null; lt: number | null })[] = [];
+  const unplaced: string[] = [];
+  for (const c of reported) {
+    const h = yearHeadsOf(c, year);
+    if (h.split && h.st === null && h.lt === null) continue;
+    if (!h.split && (!year || !c.periodFrom || c.periodFrom < year)) { unplaced.push(c.entity); continue; }
+    st = addNullable(st, h.st); lt = addNullable(lt, h.lt);
+    spans.push({
+      entity: c.entity, st: h.st, lt: h.lt,
+      from: c.periodFrom && (!year || c.periodFrom > year) ? c.periodFrom : year || null,
+      to: c.periodTo ?? null,
+    });
+  }
+  const closes = spans.map((s) => s.to).filter((d): d is string => !!d).sort();
+  return {
+    year, st, lt, total: st === null && lt === null ? null : (st ?? 0) + (lt ?? 0),
+    spans: spans.sort((a, b) => (a.to ?? "").localeCompare(b.to ?? "") || a.entity.localeCompare(b.entity)),
+    unplaced: unplaced.sort(), newestClose: closes.at(-1) ?? "", earliestClose: closes[0] ?? "",
+  };
 }

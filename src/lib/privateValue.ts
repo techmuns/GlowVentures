@@ -41,15 +41,21 @@ export type PrivateClass = {
   invested: number;
   current: number;
   markup: number;
-  /** MOIC — current mark ÷ invested. The mark-only reading. */
-  multiple: number;
-  distributed: number;
-  /** Current mark + cash already returned — everything the capital has produced. */
-  totalValue: number;
-  /** Net total return per ₹1 invested. See netMultiple(). */
-  netMultiple: number;
+  /**
+   * RVPI — current mark ÷ invested: the part of the capital still inside, the
+   * mark-only reading. It was labelled MOIC, which is (mark + cash returned) ÷
+   * invested; for a fund that has paid cash back the two differ by its DPI
+   * (Stage 10fz). Null where nothing was invested.
+   */
+  rvpi: number | null;
+  /** Cash returned — null where the class's source carries no distribution figure (the startup book). */
+  distributed: number | null;
+  /** Current mark + cash already returned — everything the capital has produced. Null where distributions are not carried. */
+  totalValue: number | null;
+  /** Net total return per ₹1 invested — (mark + distributed) ÷ invested. See netMultiple(). Null, never 0, where it cannot be struck. */
+  netMultiple: number | null;
   /** Total value − invested. The gain including cash already taken off the table. */
-  totalGain: number;
+  totalGain: number | null;
   /** Committed but not yet called. Zero for anything bought outright. */
   unfunded: number;
 };
@@ -83,9 +89,9 @@ function fundClass(
   return {
     key, label, short, color, sheet, funds, count: funds.length,
     invested: t.drawn, current: t.currentValue, markup: t.currentValue - t.drawn,
-    multiple: t.drawn > 0 ? t.currentValue / t.drawn : 0,
+    rvpi: t.drawn > 0 ? t.currentValue / t.drawn : null,
     distributed: t.distributed, totalValue,
-    netMultiple: netMultiple(t.drawn, t.currentValue, t.distributed) ?? 0,
+    netMultiple: netMultiple(t.drawn, t.currentValue, t.distributed),
     totalGain: totalValue - t.drawn,
     unfunded: t.unfunded,
   };
@@ -94,13 +100,18 @@ function fundClass(
 export function privateClasses(portfolio: Portfolio): PrivateClass[] {
   const f = taggedFunds(portfolio);
   const st = startupTotals(portfolio.privateMarkets.startups);
-  // The startup book records no distributions, so its net multiple is its MOIC.
+  // THE STARTUP BOOK CARRIES NO DISTRIBUTION FIELD (Stage 10fz). It read
+  // `distributed: 0` and a net multiple equal to its mark ÷ invested — a nil
+  // nobody measured, dressed as a MOIC. A startup that returned nothing and one
+  // whose returns the source does not carry look the same at 0, so the
+  // distribution is absent, the net multiple with it, and the mark-only reading
+  // is labelled for what it is: RVPI.
   const startups: PrivateClass = {
     key: "startups", label: "Startups", short: "Startups", color: "#d9c48f", sheet: "startup",
     funds: [], count: portfolio.privateMarkets.startups.length,
     invested: st.invested, current: st.fairValue, markup: st.fairValue - st.invested,
-    multiple: st.moic ?? 0, distributed: 0, totalValue: st.fairValue,
-    netMultiple: st.moic ?? 0, totalGain: st.fairValue - st.invested, unfunded: 0,
+    rvpi: st.moic, distributed: null, totalValue: null,
+    netMultiple: null, totalGain: null, unfunded: 0,
   };
   return [
     startups,
@@ -131,9 +142,11 @@ export const BUCKET_META: Record<BucketKey, { label: string; color: string; tone
 export const BUCKET_ORDER: BucketKey[] = ["value-driver", "on-track", "at-cost", "watch"];
 
 // Effective money-multiple for a startup: the stored MOIC, or fair value ÷
-// invested when the source doesn't carry one.
-export function startupMoic(s: { moic: number | null; invested: number; fairValue: number }): number {
-  return s.moic ?? (s.invested > 0 ? s.fairValue / s.invested : 1);
+// invested when the source doesn't carry one. NULL where neither can be struck
+// (Stage 10fz) — it fell back to 1.0×, a made-up "at cost" for a startup with
+// nothing recorded as invested.
+export function startupMoic(s: { moic: number | null; invested: number; fairValue: number }): number | null {
+  return s.moic ?? (s.invested > 0 ? s.fairValue / s.invested : null);
 }
 // Bucket a startup by its current mark. A starting heuristic — analyst-editable
 // once the data-bank backend exists.
@@ -144,13 +157,21 @@ export function bucketOf(moic: number): BucketKey {
   return "watch";
 }
 
-export type RankedStartup = StartupInvestment & { markup: number; moicEff: number; bucket: BucketKey };
-export type BucketAgg = { key: BucketKey; count: number; invested: number; fairValue: number; moic: number };
+/** A startup no multiple can be struck for has no bucket — never "At Cost" by default. */
+export type RankedStartup = StartupInvestment & { markup: number; moicEff: number | null; bucket: BucketKey | null };
+export type BucketAgg = { key: BucketKey; count: number; invested: number; fairValue: number; moic: number | null };
 
+/**
+ * Stage 10fz: every multiple here is null, never 0, where its denominator is
+ * nil; `rvpi` is the mark-only reading the model called MOIC; `moic` is the
+ * MOIC proper — (mark + cash returned) ÷ invested over the classes still held
+ * that carry what they returned.
+ */
 export type PrivateValueModel = {
-  invested: number; current: number; markup: number; moic: number;
-  distributed: number; dpi: number; dryPowder: number;
-  totalDrawn: number; tvpi: number;
+  invested: number; current: number; markup: number;
+  rvpi: number | null; moic: number | null;
+  distributed: number; dpi: number | null; dryPowder: number;
+  totalDrawn: number; tvpi: number | null;
   classes: PrivateClass[]; startups: RankedStartup[]; buckets: BucketAgg[];
   /** Fully-exited funds: no residual mark, so they sit outside the classes. */
   closed: TaggedFund[];
@@ -163,9 +184,10 @@ export type PrivateValueModel = {
 // view that counted them (₹30.7 Cr, MOIC 1.47×). Same book, two answers. The
 // merged page states each figure once:
 //
-//   • Headline multiple is MOIC — current marks ÷ capital still deployed. It
-//     answers "what is the money I'm holding worth now?", so exited funds sit
-//     outside both sides of the ratio.
+//   • The mark-only multiple is RVPI — current marks ÷ capital still deployed.
+//     It answers "what is the money I'm holding worth now?", so exited funds
+//     sit outside both sides of the ratio. It was called MOIC until Stage 10fz;
+//     MOIC adds the cash those same classes returned, and is `moic`.
 //   • TVPI is kept as a labelled secondary — it adds realised cash back in and
 //     divides by everything ever drawn, so it answers the lifecycle question.
 //   • Distributions & DPI are lifecycle figures throughout: cash returned is
@@ -183,28 +205,39 @@ export function privateValueModel(portfolio: Portfolio): PrivateValueModel {
   const invested = total((c) => c.invested);
   const current = total((c) => c.current);
   const markup = current - invested;
-  const moic = invested > 0 ? current / invested : 0;
+  const rvpi = invested > 0 ? current / invested : null;
   // Distributions & dry powder are lifecycle figures — include closed funds.
-  const distributed = total((c) => c.distributed) + closedF.distributed;
+  // The startup class carries no distribution figure (Stage 10fz), so it adds
+  // none here — and its capital is in no distribution-based multiple's
+  // denominator either, or it would read as capital that returned nothing.
+  const fundClasses = classes.filter((c) => c.distributed != null);
+  const heldDistributed = fundClasses.reduce((s, c) => s + (c.distributed ?? 0), 0);
+  const heldCurrent = fundClasses.reduce((s, c) => s + c.current, 0);
+  const fundInvested = fundClasses.reduce((s, c) => s + c.invested, 0);
+  const distributed = heldDistributed + closedF.distributed;
   const totalDrawn = invested + closedF.drawn;
-  const dpi = totalDrawn > 0 ? distributed / totalDrawn : 0;
+  const fundDrawn = fundInvested + closedF.drawn;
+  const dpi = fundDrawn > 0 ? distributed / fundDrawn : null;
   const dryPowder = total((c) => c.unfunded) + closedF.unfunded;
+  // MOIC over the classes still held that carry what they returned: (mark +
+  // cash returned) ÷ invested.
+  const moic = fundInvested > 0 ? (heldCurrent + heldDistributed) / fundInvested : null;
   // Lifecycle multiple: what's held now plus all cash returned, over everything
-  // ever drawn. Shown beside MOIC, never as the headline.
-  const tvpi = totalDrawn > 0 ? (current + distributed) / totalDrawn : 0;
+  // ever drawn — over the funds, whose distributions are carried.
+  const tvpi = fundDrawn > 0 ? (heldCurrent + distributed) / fundDrawn : null;
 
   const startups: RankedStartup[] = pm.startups
-    .map((s) => { const m = startupMoic(s); return { ...s, markup: s.fairValue - s.invested, moicEff: m, bucket: bucketOf(m) }; })
+    .map((s) => { const m = startupMoic(s); return { ...s, markup: s.fairValue - s.invested, moicEff: m, bucket: m == null ? null : bucketOf(m) }; })
     .sort((a, b) => b.markup - a.markup);
 
   const buckets: BucketAgg[] = BUCKET_ORDER.map((key) => {
     const rows = startups.filter((s) => s.bucket === key);
     const inv = rows.reduce((s, x) => s + x.invested, 0), fv = rows.reduce((s, x) => s + x.fairValue, 0);
-    return { key, count: rows.length, invested: inv, fairValue: fv, moic: inv > 0 ? fv / inv : 0 };
+    return { key, count: rows.length, invested: inv, fairValue: fv, moic: inv > 0 ? fv / inv : null };
   });
 
   return {
-    invested, current, markup, moic, distributed, dpi, dryPowder, totalDrawn, tvpi,
+    invested, current, markup, rvpi, moic, distributed, dpi, dryPowder, totalDrawn, tvpi,
     classes, startups, buckets, closed: taggedFunds(portfolio).closed,
   };
 }

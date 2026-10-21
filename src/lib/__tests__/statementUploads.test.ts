@@ -1,23 +1,29 @@
-// THE STATEMENT DROP BOX — the upload Function and its client, checked end to end.
+// THE STATEMENT UPLOAD — the Function, the inbox and the client, end to end.
 //   npm run test:family
 //
-// The Function (`functions/api/statement-uploads.js`) stages a raw statement in
-// R2 behind the password gate; the client (`src/lib/statementUploads.ts`) reads
-// its answers and names the cause of any failure. Two ways this could quietly go
-// wrong, both invisible until a statement is lost:
+// *"After uploading the file/folder it will automatically be saved in github …"*
 //
-//   • the Function accepts something that is not a statement, mislabels where it
-//     is filed, or lets a cross-site page write to it;
-//   • the client reads a "not switched on" or a "signed out" answer as an empty
-//     inbox, which reads as "nothing was uploaded".
+// The Function (`functions/api/statement-uploads.js`) stores each uploaded
+// statement as a git blob and files an upload as ONE commit on the repository's
+// `statement-inbox` branch (`shared/statementInbox.mjs`), then starts the intake
+// run. It is driven here against a FAKE GitHub — the git data API it calls,
+// with GitHub's own rule that a ref update which is not a fast-forward is
+// refused (422) — so every branch that decides whether a statement is kept or
+// lost runs:
 //
-// So this drives the Function against an in-memory R2 and asserts the full
-// round trip, the guards, and that the client maps each answer to its cause.
-
+//   · bytes survive the trip, past the chunk size of the base64 encoder;
+//   · the first upload makes the branch: one commit, no parent, [skip ci];
+//   · two uploads at once both land — the second re-reads and lays its own on;
+//   · a path a folder upload carries cannot climb out of its batch;
+//   · a file being read cannot be removed; a held one can be retried;
+//   · and the client names each failure's cause, and what each status means.
+import { onRequest } from "../../../functions/api/statement-uploads.js";
 import {
-  onRequest, validateUpload, slugProvider, safeFileName, extOf, isStagedKey,
-} from "../../../functions/api/statement-uploads.js";
-import { readReply, REASONS } from "@/lib/statementUploads";
+  githubInbox, cleanUploadPath, checkUpload, isJunkPath, newBatchId, isBatchId, withBatch, makeBatch,
+  applyUpdates, requeue, withoutFile, uniqueNames, serializeLog, parseLog, emptyLog, inboxPath,
+  INBOX_DEFAULTS, MAX_FILE_BYTES, MAX_SETTLED_BATCHES, type InboxLog,
+} from "../../../shared/statementInbox.mjs";
+import { readAnswer, planUpload, fileView, inFlight, REASONS, type PickedFile } from "@/lib/statementUploads";
 
 let fails = 0;
 const ok = (name: string, pass: boolean, detail = "") => {
@@ -25,111 +31,239 @@ const ok = (name: string, pass: boolean, detail = "") => {
   else console.log(`ok   ${name}${detail ? ` — ${detail}` : ""}`);
 };
 
-// ── A FAKE R2 BUCKET — the slice of the binding the Function uses ────────────
-function fakeBucket() {
-  const store = new Map<string, { body: Uint8Array; customMetadata?: Record<string, string>; httpMetadata?: { contentType?: string }; uploaded: string }>();
+const REPO = INBOX_DEFAULTS.repo, BRANCH = INBOX_DEFAULTS.branch;
+const b64 = (bytes: Uint8Array) => Buffer.from(bytes).toString("base64");
+
+/** A fake of the slice of GitHub's REST API the inbox calls. */
+function fakeGitHub() {
+  let n = 0;
+  const id = () => (++n).toString(16).padStart(40, "0");
+  const blobs = new Map<string, Uint8Array>();
+  const trees = new Map<string, Map<string, string>>();
+  const commits = new Map<string, { tree: string; parents: string[]; message: string }>();
+  let head: string | null = null;
+  let dispatches = 0;
+  /** Set to a function to let "somebody else" commit just before the next ref update. */
+  let interloper: (() => void) | null = null;
+  const reply = (status: number, body: unknown) =>
+    new Response(status === 204 ? null : JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
+  const addBlob = (bytes: Uint8Array) => { const s = id(); blobs.set(s, bytes); return s; };
+  const commitTree = (files: Map<string, string>, message: string) => {
+    const t = id(); trees.set(t, files);
+    const c = id(); commits.set(c, { tree: t, parents: head ? [head] : [], message });
+    head = c;
+  };
+
+  const fetchImpl = async (url: string, init?: RequestInit) => {
+    const u = new URL(url);
+    const method = init?.method ?? "GET";
+    const p = decodeURIComponent(u.pathname.replace(`/repos/${REPO}`, ""));
+    if (!String((init?.headers as Record<string, string>)?.authorization ?? "").startsWith("Bearer ")) return reply(401, {});
+    const raw = init?.body instanceof Blob ? await init.body.text() : (init?.body as string | undefined);
+    const body = raw ? JSON.parse(raw) : null;
+
+    if (method === "GET" && p === `/git/ref/heads/${BRANCH}`) return head ? reply(200, { object: { sha: head } }) : reply(404, {});
+    if (method === "GET" && p.startsWith("/git/commits/")) {
+      const c = commits.get(p.slice("/git/commits/".length));
+      return c ? reply(200, { sha: p.split("/").pop(), tree: { sha: c.tree } }) : reply(404, {});
+    }
+    if (method === "GET" && p === `/contents/${INBOX_DEFAULTS.log}`) {
+      const c = commits.get(u.searchParams.get("ref") ?? "");
+      const blob = c ? trees.get(c.tree)?.get(INBOX_DEFAULTS.log) : undefined;
+      return blob ? reply(200, { sha: blob, content: b64(blobs.get(blob)!) }) : reply(404, {});
+    }
+    if (method === "POST" && p === "/git/blobs") {
+      if (body.encoding !== "base64") return reply(422, {});
+      return reply(201, { sha: addBlob(new Uint8Array(Buffer.from(body.content, "base64"))) });
+    }
+    if (method === "POST" && p === "/git/trees") {
+      const files = new Map(body.base_tree ? trees.get(body.base_tree) : []);
+      for (const e of body.tree) {
+        if (e.content !== undefined) files.set(e.path, addBlob(new TextEncoder().encode(e.content)));
+        else if (e.sha === null) { if (!files.delete(e.path)) return reply(422, { message: "path not in tree" }); }
+        else if (blobs.has(e.sha)) files.set(e.path, e.sha);
+        else return reply(422, { message: "no such blob" });
+      }
+      const t = id(); trees.set(t, files);
+      return reply(201, { sha: t });
+    }
+    if (method === "POST" && p === "/git/commits") {
+      const c = id(); commits.set(c, { tree: body.tree, parents: body.parents, message: body.message });
+      return reply(201, { sha: c });
+    }
+    if (method === "PATCH" && p === `/git/refs/heads/${BRANCH}`) {
+      if (interloper) { const f = interloper; interloper = null; f(); }
+      const c = commits.get(body.sha);
+      if (!c || (!body.force && c.parents[0] !== head)) return reply(422, { message: "Update is not a fast forward" });
+      head = body.sha;
+      return reply(200, {});
+    }
+    if (method === "POST" && p === "/git/refs") {
+      if (head) return reply(422, { message: "Reference already exists" });
+      head = body.sha;
+      return reply(201, {});
+    }
+    if (method === "POST" && p === "/dispatches") {
+      if (body.event_type !== INBOX_DEFAULTS.event) return reply(422, {});
+      dispatches++;
+      return reply(204, null);
+    }
+    return reply(404, {});
+  };
+
+  const files = () => (head ? trees.get(commits.get(head)!.tree)! : new Map<string, string>());
   return {
-    _store: store,
-    async list({ prefix }: { prefix: string }) {
-      const objects = [...store.entries()].filter(([k]) => k.startsWith(prefix)).map(([key, v]) => ({
-        key, size: v.body.byteLength, uploaded: v.uploaded, customMetadata: v.customMetadata, httpMetadata: v.httpMetadata,
-      }));
-      return { objects, truncated: false };
+    fetchImpl: fetchImpl as unknown as typeof fetch,
+    files,
+    bytesAt: (path: string) => { const s = files().get(path); return s ? blobs.get(s)! : null; },
+    log: (): InboxLog => { const s = files().get(INBOX_DEFAULTS.log); return s ? parseLog(new TextDecoder().decode(blobs.get(s)!)) : emptyLog(); },
+    head: () => (head ? { sha: head, ...commits.get(head)! } : null),
+    dispatches: () => dispatches,
+    /** Somebody else's upload, committed just before ours updates the ref. */
+    interlope: (batchId: string) => {
+      interloper = () => {
+        const next = new Map(files());
+        const blob = addBlob(new TextEncoder().encode("theirs"));
+        next.set(inboxPath(batchId, "theirs.pdf"), blob);
+        const log = withBatch(parseLog(new TextDecoder().decode(blobs.get(files().get(INBOX_DEFAULTS.log)!)!)), makeBatch(batchId, [{ name: "theirs.pdf", size: 6, blob }]));
+        next.set(INBOX_DEFAULTS.log, addBlob(new TextEncoder().encode(serializeLog(log))));
+        commitTree(next, "their upload [skip ci]");
+      };
     },
-    async get(key: string) {
-      const v = store.get(key);
-      return v ? { body: v.body, customMetadata: v.customMetadata, httpMetadata: v.httpMetadata } : null;
-    },
-    async put(key: string, value: ArrayBuffer, opts?: { customMetadata?: Record<string, string>; httpMetadata?: { contentType?: string } }) {
-      store.set(key, { body: new Uint8Array(value), customMetadata: opts?.customMetadata, httpMetadata: opts?.httpMetadata, uploaded: new Date().toISOString() });
-    },
-    async delete(key: string) { store.delete(key); },
   };
 }
 
-const SITE = "https://glow.example.com";
-const call = (bucket: unknown, init: RequestInit & { path?: string }) =>
-  onRequest({ request: new Request(`${SITE}/api/statement-uploads${init.path ?? ""}`, init), env: { STATEMENT_UPLOADS: bucket } } as never);
-
-const postFile = (provider: string, name: string, bytes: string, headers: Record<string, string> = {}) => {
+const SITE = "https://glow.example";
+const ENV = { GLOW_GITHUB_TOKEN: "t" };
+const call = (gh: ReturnType<typeof fakeGitHub>, init: RequestInit = {}, env: Record<string, unknown> = ENV) =>
+  onRequest({ env, request: new Request(`${SITE}/api/statement-uploads`, { ...init, headers: { origin: SITE, ...(init.headers ?? {}) } }) }, gh.fetchImpl);
+const jsonBody = async (r: Response) => (await r.json()) as Record<string, any>;
+const postJson = (gh: ReturnType<typeof fakeGitHub>, body: unknown) =>
+  call(gh, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+const postFile = (gh: ReturnType<typeof fakeGitHub>, name: string, bytes: Uint8Array) => {
   const form = new FormData();
-  form.append("provider", provider);
-  form.append("file", new File([new TextEncoder().encode(bytes)], name, { type: "application/octet-stream" }));
-  return { method: "POST", body: form, headers: { origin: SITE, ...headers } } as RequestInit;
+  form.append("name", name);
+  form.append("file", new File([bytes as BlobPart], name.split("/").pop()!));
+  return call(gh, { method: "POST", body: form });
 };
 
 async function run() {
-  // ── 1. PURE VALIDATORS ────────────────────────────────────────────────────
-  ok("extOf reads the extension", extOf("Helios - Ajay.PDF") === "pdf" && extOf("noext") === "");
-  ok("slugProvider makes a path-safe slug", slugProvider("V.E.C Assago Capital Management LLP") === "v-e-c-assago-capital-management-llp");
-  ok("safeFileName strips the path and unsafe characters",
-    safeFileName("../../etc/Report #1.pdf") === "Report _1.pdf", safeFileName("../../etc/Report #1.pdf"));
-  ok("isStagedKey accepts only keys under the prefix, no traversal",
-    isStagedKey("uploads/helios/a.pdf") && !isStagedKey("other/a.pdf") && !isStagedKey("uploads/../secret"));
+  // ── 1. WHAT MAY BE UPLOADED, AND UNDER WHAT PATH ──────────────────────────
+  console.log("── paths and types ──");
+  ok("a folder upload keeps its folders", cleanUploadPath("Ajay/Sep 2026/Buoyant.pdf") === "Ajay/Sep 2026/Buoyant.pdf");
+  ok("a path cannot climb out of its batch", cleanUploadPath("../../etc/x.pdf") === "etc/x.pdf" && cleanUploadPath("/abs/x.pdf") === "abs/x.pdf",
+    String(cleanUploadPath("../../etc/x.pdf")));
+  ok("Windows separators and characters a file system refuses are cleaned", cleanUploadPath("a\\b\\c:d?.pdf") === "a/b/c_d_.pdf",
+    String(cleanUploadPath("a\\b\\c:d?.pdf")));
+  ok("a hidden name cannot become a dot-file", !String(cleanUploadPath(".git/config.pdf")).split("/").some((s) => s.startsWith(".")),
+    String(cleanUploadPath(".git/config.pdf")));
+  ok("macOS and Windows furniture is junk", isJunkPath("x/.DS_Store") && isJunkPath("__MACOSX/a.pdf") && isJunkPath("Thumbs.db") && !isJunkPath("a/b.pdf"));
+  ok("only what the pipeline reads is accepted", !!checkUpload({ name: "a.docx", size: 10 }).error && !!checkUpload({ name: "a.csv", size: 10 }).error
+    && checkUpload({ name: "A.PDF", size: 10 }).name === "A.PDF" && checkUpload({ name: "b.xls", size: 1 }).name === "b.xls" && checkUpload({ name: "c.zip", size: 1 }).name === "c.zip");
+  ok("an empty or an oversized file is refused", !!checkUpload({ name: "a.pdf", size: 0 }).error && !!checkUpload({ name: "a.pdf", size: MAX_FILE_BYTES + 1 }).error);
+  const bid = newBatchId(new Date("2026-10-21T10:15:03.456Z"), () => "AB12cd34-ffff");
+  ok("a batch id is sortable and safe as a folder name", bid === "20261021T101503Z-ab12cd34" && isBatchId(bid) && !isBatchId("../x"), bid);
+  ok("two files of one batch never share a path", uniqueNames([{ name: "a.pdf" }, { name: "A.pdf" }, { name: "a.pdf" }]).map((f) => f.name).join("|") === "a.pdf|A (2).pdf|a (3).pdf",
+    uniqueNames([{ name: "a.pdf" }, { name: "A.pdf" }, { name: "a.pdf" }]).map((f) => f.name).join("|"));
 
-  const good = validateUpload({ provider: "Helios Mutual Fund", fileName: "Helios - Ajay.pdf", size: 1234 },
-    new Date("2026-10-15T00:00:00Z"), () => "abcd1234ef");
-  ok("validateUpload accepts a statement and files it under its provider",
-    !good.error && good.key!.startsWith("uploads/helios-mutual-fund/") && good.key!.endsWith("_Helios - Ajay.pdf"), good.key ?? good.error);
-  ok("...and records the provider and content type",
-    good.record?.provider === "Helios Mutual Fund" && good.record?.contentType === "application/pdf");
-  ok("validateUpload refuses a non-statement extension", !!validateUpload({ provider: "X", fileName: "notes.txt", size: 10 }).error);
-  ok("validateUpload refuses an empty file", !!validateUpload({ provider: "X", fileName: "a.pdf", size: 0 }).error);
-  ok("validateUpload refuses an oversized file", !!validateUpload({ provider: "X", fileName: "a.zip", size: 999 * 1024 * 1024 }).error);
-  ok("validateUpload refuses a missing provider", !!validateUpload({ provider: "   ", fileName: "a.pdf", size: 10 }).error);
+  // ── 2. NO TOKEN: SAID, NEVER AN EMPTY INBOX ───────────────────────────────
+  console.log("── no token ──");
+  const none = fakeGitHub();
+  const nc = await call(none, {}, {});
+  ok("a site with no token answers NOT_CONFIGURED", nc.status === 503 && (await jsonBody(nc)).code === "NOT_CONFIGURED");
+  const ncA = await readAnswer(await call(none, {}, {}));
+  ok("…which the client names as not-configured", !ncA.ok && ncA.cause === "not-configured" && ncA.reason === REASONS.notConfigured);
 
-  // ── 2. NOT CONFIGURED — no binding ─────────────────────────────────────────
-  const unconf = await onRequest({ request: new Request(`${SITE}/api/statement-uploads`), env: {} } as never);
-  const unconfBody = await unconf.json();
-  ok("with no R2 binding the store answers 503 NOT_CONFIGURED", unconf.status === 503 && unconfBody.code === "NOT_CONFIGURED");
+  // ── 3. ONE FILE: ITS BYTES SURVIVE THE TRIP ────────────────────────────────
+  console.log("── upload ──");
+  const gh = fakeGitHub();
+  const empty = await jsonBody(await call(gh));
+  ok("an inbox nobody has uploaded to lists nothing", empty.ok === true && Array.isArray(empty.batches) && empty.batches.length === 0);
+  // Past 3 × 32 KiB, so the base64 encoder's chunk seams are crossed.
+  const big = new Uint8Array(200_003).map((_, i) => (i * 7919 + 13) % 256);
+  const s1 = await jsonBody(await postFile(gh, "Ajay/September/Buoyant 103473.pdf", big));
+  ok("a file is stored as a blob", s1.ok === true && /^[0-9a-f]{40}$/.test(s1.staged?.blob) && s1.staged?.name === "Ajay/September/Buoyant 103473.pdf");
+  const s2 = await jsonBody(await postFile(gh, "Ajay/September/SVAN.zip", new Uint8Array([80, 75, 5, 6, 0, 0])));
+  const bad = await postFile(gh, "notes.docx", new Uint8Array([1, 2, 3]));
+  ok("a file the pipeline cannot read is refused with the reason", bad.status === 400 && /PDF, Excel/.test((await jsonBody(bad)).message));
+  const cross = await onRequest({ env: ENV, request: new Request(`${SITE}/api/statement-uploads`, { method: "POST", headers: { origin: "https://evil.example", "content-type": "application/json" }, body: "{}" }) }, gh.fetchImpl);
+  ok("a cross-site write is refused", cross.status === 403);
 
-  // ── 3. ROUND TRIP against the fake bucket ──────────────────────────────────
-  const bucket = fakeBucket();
-  const empty = await (await call(bucket, { method: "GET" })).json();
-  ok("an empty store lists no uploads", empty.ok === true && Array.isArray(empty.uploads) && empty.uploads.length === 0);
+  // ── 4. COMMIT: ONE COMMIT, THE BRANCH MADE, THE RUN STARTED ────────────────
+  const c1 = await jsonBody(await postJson(gh, { op: "commit", files: [s1.staged, s2.staged] }));
+  const h1 = gh.head();
+  ok("the upload is filed as one batch", c1.ok === true && isBatchId(c1.batch) && c1.batches.length === 1 && c1.batches[0].files.length === 2);
+  ok("the first upload makes the branch: one commit, no parent, [skip ci]", !!h1 && h1.parents.length === 0 && /\[skip ci\]/.test(h1.message));
+  const at = inboxPath(c1.batch, "Ajay/September/Buoyant 103473.pdf");
+  const back = gh.bytesAt(at);
+  ok("the bytes on the branch are the bytes uploaded", !!back && back.length === big.length && back.every((x, i) => x === big[i]), at);
+  ok("every file is queued", gh.log().batches[0].files.every((f) => f.status === "queued" && f.blob));
+  ok("the intake run is started", c1.started === true && gh.dispatches() === 1);
+  const forged = await postJson(gh, { op: "commit", files: [{ name: "x.pdf", size: 3, blob: "not-a-sha" }] });
+  ok("a file that was not stored first cannot be filed", forged.status === 400);
 
-  const up = await call(bucket, postFile("Helios Mutual Fund", "Helios - Ajay.pdf", "STATEMENT-BYTES"));
-  const upBody = await up.json();
-  ok("a POST stages the file under its provider",
-    up.status === 200 && upBody.ok === true && upBody.upload.provider === "Helios Mutual Fund" && upBody.upload.fileName === "Helios - Ajay.pdf",
-    JSON.stringify(upBody).slice(0, 160));
-  ok("...and one object now sits in the store under the uploads prefix",
-    bucket._store.size === 1 && [...bucket._store.keys()][0].startsWith("uploads/helios-mutual-fund/"));
+  // ── 5. TWO UPLOADS AT ONCE BOTH LAND ──────────────────────────────────────
+  const s3 = await jsonBody(await postFile(gh, "HDFC.pdf", new Uint8Array([37, 80, 68, 70])));
+  gh.interlope("20261021T090000Z-theirs1");
+  const c2 = await jsonBody(await postJson(gh, { op: "commit", files: [s3.staged] }));
+  const ids = gh.log().batches.map((b) => b.id);
+  ok("an upload racing another is laid over it, and neither is lost",
+    c2.ok === true && ids.length === 3 && ids.includes("20261021T090000Z-theirs1") && ids.includes(c2.batch) && ids.includes(c1.batch), ids.join(","));
+  ok("…and the other upload's file is still on the branch", gh.files().has(inboxPath("20261021T090000Z-theirs1", "theirs.pdf")));
 
-  const list = await (await call(bucket, { method: "GET" })).json();
-  ok("the list now carries that upload", list.uploads.length === 1 && list.uploads[0].fileName === "Helios - Ajay.pdf");
+  // ── 6. REMOVE AND RETRY ───────────────────────────────────────────────────
+  console.log("── remove and retry ──");
+  const rm = await jsonBody(await postJson(gh, { op: "remove", batch: c2.batch, name: "HDFC.pdf" }));
+  ok("a queued file can be removed — from the log and the branch",
+    rm.ok === true && !gh.log().batches.some((b) => b.id === c2.batch) && !gh.files().has(inboxPath(c2.batch, "HDFC.pdf")));
+  // The intake run claims one file and holds the other.
+  const inbox = githubInbox({ token: "t", repo: REPO, branch: BRANCH }, gh.fetchImpl);
+  await inbox.commit({ message: "Intake", mutate: (log) => applyUpdates(log, [
+    { batch: c1.batch, name: "Ajay/September/Buoyant 103473.pdf", status: "processing" },
+    { batch: c1.batch, name: "Ajay/September/SVAN.zip", status: "held", hold: "needs-reader", reason: "no reader" },
+  ]) });
+  const busy = await postJson(gh, { op: "remove", batch: c1.batch, name: "Ajay/September/Buoyant 103473.pdf" });
+  ok("a file being read cannot be removed", busy.status === 409 && /being read/.test((await jsonBody(busy)).message));
+  const before = gh.dispatches();
+  const rt = await jsonBody(await postJson(gh, { op: "retry", batch: c1.batch }));
+  const svan = gh.log().batches.find((b) => b.id === c1.batch)!.files.find((f) => f.name.endsWith("SVAN.zip"))!;
+  ok("Retry puts a held file back in the queue and starts the run", rt.ok === true && svan.status === "queued" && svan.hold === null && svan.reason === null && gh.dispatches() === before + 1);
+  const again = await postJson(gh, { op: "retry", batch: c1.batch });
+  ok("Retry with nothing held says so", again.status === 409);
 
-  const key = list.uploads[0].key;
-  const dl = await call(bucket, { method: "GET", path: `?key=${encodeURIComponent(key)}` });
-  ok("the staged file downloads by key", dl.status === 200 && (await dl.text()) === "STATEMENT-BYTES");
+  // ── 7. THE LOG ────────────────────────────────────────────────────────────
+  console.log("── the log ──");
+  let log = emptyLog();
+  for (let i = 0; i < MAX_SETTLED_BATCHES + 5; i++) {
+    const id = `202610${String(1 + Math.floor(i / 24)).padStart(2, "0")}T${String(i % 24).padStart(2, "0")}0000Z-s${i}`;
+    log = withBatch(log, { ...makeBatch(id, [{ name: "a.pdf", size: 1, blob: "0".repeat(40) }]), files: [{ ...makeBatch(id, [{ name: "a.pdf", size: 1, blob: "0".repeat(40) }]).files[0], status: "landed" }] });
+  }
+  log = withBatch(log, makeBatch("20250101T000000Z-open", [{ name: "old.pdf", size: 1, blob: "0".repeat(40) }]));
+  ok("settled batches are capped; an open one is never dropped, however old",
+    log.batches.length === MAX_SETTLED_BATCHES + 1 && log.batches.some((b) => b.id === "20250101T000000Z-open"), String(log.batches.length));
+  ok("an update for a file somebody removed is dropped, not resurrected",
+    applyUpdates(log, [{ batch: "nope", name: "x.pdf", status: "landed" }]).batches.every((b) => b.files.every((f) => f.name !== "x.pdf")));
+  ok("only queued or held files can be removed", !!withoutFile(applyUpdates(log, [{ batch: "20250101T000000Z-open", name: "old.pdf", status: "landed" }]), "20250101T000000Z-open", "old.pdf").error);
+  ok("requeue touches held files only", requeue(log, "20250101T000000Z-open").count === 0);
 
-  // ── 4. GUARDS ──────────────────────────────────────────────────────────────
-  const badExt = await call(bucket, postFile("Helios Mutual Fund", "notes.txt", "x"));
-  ok("a non-statement upload is refused", badExt.status === 400 && (await badExt.json()).code === "INVALID");
-
-  const crossOrigin = await call(bucket, postFile("Helios Mutual Fund", "a.pdf", "x", { origin: "https://evil.example.com" }));
-  ok("a cross-origin upload is refused", crossOrigin.status === 403 && (await crossOrigin.json()).code === "CROSS_ORIGIN");
-
-  ok("the guards and the bad extension stored nothing new", bucket._store.size === 1);
-
-  // ── 5. DELETE ──────────────────────────────────────────────────────────────
-  const del = await call(bucket, { method: "DELETE", path: `?key=${encodeURIComponent(key)}`, headers: { origin: SITE } });
-  const delBody = await del.json();
-  ok("a DELETE removes the staged file", del.status === 200 && delBody.ok === true && delBody.uploads.length === 0 && bucket._store.size === 0);
-
-  // ── 6. THE CLIENT MAPS EACH ANSWER TO ITS CAUSE ────────────────────────────
-  const jsonHdr = { "content-type": "application/json" };
-  const okReply = await readReply(new Response(JSON.stringify({ ok: true, uploads: [{ key: "uploads/x/a.pdf", provider: "X", fileName: "a.pdf", size: 10, uploadedAt: "2026-10-15T00:00:00Z", contentType: "application/pdf" }] }), { headers: jsonHdr }));
-  ok("the client reads a good list", okReply.ok === true && okReply.uploads.length === 1);
-
-  const notConf = await readReply(new Response(JSON.stringify({ ok: false, code: "NOT_CONFIGURED" }), { status: 503, headers: jsonHdr }));
-  ok("the client names NOT_CONFIGURED as not-configured", !notConf.ok && notConf.cause === "not-configured" && notConf.reason === REASONS.notConfigured);
-
-  const signedOut = await readReply(new Response('<!doctype html><a href="/__auth/login">', { headers: { "content-type": "text/html" } }));
+  // ── 8. THE CLIENT ─────────────────────────────────────────────────────────
+  console.log("── the client ──");
+  const signedOut = await readAnswer(new Response('<!doctype html><a href="/__auth/login">', { headers: { "content-type": "text/html" } }));
   ok("the login page reads as signed-out, never an empty inbox", !signedOut.ok && signedOut.cause === "signed-out");
-
-  const noFn = await readReply(new Response("<!doctype html><div id=root></div>", { headers: { "content-type": "text/html" } }));
+  const noFn = await readAnswer(new Response("<!doctype html><div id=root></div>", { headers: { "content-type": "text/html" } }));
   ok("the app shell (a local preview) reads as no-function", !noFn.ok && noFn.cause === "no-function");
+  const pick = (path: string, size = 10): PickedFile => ({ file: new File([new Uint8Array(size)], path.split("/").pop()!), path });
+  const plan = planUpload([pick("Sep/.DS_Store"), pick("Sep/a.pdf"), pick("Sep/notes.docx"), pick("Sep/b.xlsx"), pick("Sep/empty.pdf", 0)]);
+  ok("a folder's system files are ignored, its other non-statements named, its statements sent",
+    plan.ignored === 1 && plan.accepted.map((a) => a.name).join("|") === "Sep/a.pdf|Sep/b.xlsx"
+    && plan.skipped.map((s) => s.path).join("|") === "Sep/notes.docx|Sep/empty.pdf");
+  const landed = { ...makeBatch("20261021T000000Z-x", [{ name: "a.pdf", size: 1, blob: "0".repeat(40) }]).files[0], status: "landed" as const, docKeys: ["k1", "k2"], commit: "abcdef1234" };
+  ok("a landed file is in the library only once the site serves its documents",
+    fileView(landed, new Set(["k1", "k2"])).key === "in-library" && fileView(landed, new Set(["k1"])).key === "publishing");
+  const sealed = { ...landed, status: "held" as const, hold: "needs-password" as const, reason: "Sealed" };
+  ok("a held file says what it needs", fileView(sealed, new Set()).label === "Needs password" && fileView(sealed, new Set()).title === "Sealed");
+  ok("the page keeps polling while anything is queued or being read",
+    inFlight([makeBatch("20261021T000000Z-y", [{ name: "a.pdf", size: 1, blob: "0".repeat(40) }])]) && !inFlight([{ id: "x", uploadedAt: "", files: [landed] }]));
 
   console.log(fails ? `\n${fails} FAILED` : `\nall passed`);
   process.exit(fails ? 1 : 0);

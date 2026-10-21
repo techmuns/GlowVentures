@@ -332,8 +332,23 @@ export function ReturnAnalysis() {
   // and Morning CIO's NAV chart are drawn from, so the three cannot disagree.
   const { index: ddIndex, drawdown: dd } = bookDrawdown(portfolio.navHistory ?? []);
   const ddCovered = BOOK_NAV_COVERAGE.covered.length;
+  /**
+   * A PEAK OR TROUGH STRUCK ON AN UNSETTLED STEP SAYS SO (Stage 10fz). The
+   * 31 Aug 2026 point — this drawdown's peak — carries ₹57.8 L of movement no
+   * statement settles (Buoyant 103472, `flowBasis` "unreported"): capital may
+   * have moved inside that step, and the chain cannot net what it cannot see.
+   * Named on the end it qualifies, from the points' own field and the
+   * coverage's own list, never typed.
+   */
+  const unreportedNos = BOOK_NAV_COVERAGE.covered.filter((c) => c.flowBasis === "unreported")
+    .map((c) => portfolio.accounts.find((a) => a.accountId === c.accountId)?.accountNo ?? c.accountId);
+  const ddEnds = dd ? ([["peak", dd.peakDate], ["trough", dd.troughDate]] as const)
+    .flatMap(([end, date]) => {
+      const pt = date ? ddIndex.find((x) => x.date === date) : undefined;
+      return pt && pt.unreportedFlowValue > 0 ? [`The ${end} (${fmtDate(pt.date)}) carries ${fmtFromBase(pt.unreportedFlowValue, { compact: true })} of movement no statement settles${unreportedNos.length ? ` (${unreportedNos.join(", ")}, whose capital in and out between marks is unreported)` : ""}, so capital may sit in that step as performance.`] : [];
+    }) : [];
   const ddNote = dd
-    ? `On the book's dated NAV series — ${dd.points} statement dates, ${fmtDate(dd.from)} → ${fmtDate(dd.to)}, chained over the accounts valued at both ends of each interval and net of the external capital that entered it. It covers the ${ddCovered} accounts that publish a series; between statement dates each is held at its latest mark, so a fall and recovery inside one interval is not seen.`
+    ? `On the book's dated NAV series — ${dd.points} statement dates, ${fmtDate(dd.from)} → ${fmtDate(dd.to)}, chained over the accounts valued at both ends of each interval and net of the external capital that entered it. It covers the ${ddCovered} accounts that publish a series; between statement dates each is held at its latest mark, so a fall and recovery inside one interval is not seen.${ddEnds.length ? ` ${ddEnds.join(" ")}` : ""}`
     : "";
   const sectorRows = m ? sortRows(m.sectors, sectorView.sort, withReviewAccessors<typeof m.sectors[number]>({
     sector: (x) => x.label,

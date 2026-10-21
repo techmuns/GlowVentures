@@ -430,6 +430,14 @@ export type Position = {
    */
   heldSince: string | null;
   /**
+   * How many DISTINCT purchase dates the units still held were bought on, under
+   * the same lot gate as `heldSince` (Stage 10fz). A single-start compound rate
+   * (CAGR) is a measurement only where this is 1 and nothing was sold: staggered
+   * purchases have a money-weighted annual rate, never a CAGR from the oldest
+   * lot. Absent where the lots are not on record.
+   */
+  purchaseDates?: number;
+  /**
    * WHAT THE ACCOUNT'S OWN DATED TRADES SAY ABOUT WHEN THESE UNITS WERE BOUGHT
    * (Stage 10fm) — present wherever the account's transaction statements reach
    * the holding's own date, absent where they do not.
@@ -463,7 +471,15 @@ export type Position = {
    * it no longer dates the figure on screen.
    */
   priceAsOf?: string | null;
-  dividendReceived: number | null; // INR, cumulative
+  /**
+   * Dividends and distributions the holding paid, GROSS of TDS (the TDS is the
+   * family's tax credit), paid out or reinvested, over the window its income
+   * record covers (`dividendFrom` → the holding's statement date) — not
+   * necessarily since purchase (Stage 10fz). INR.
+   */
+  dividendReceived: number | null;
+  /** The first date `dividendReceived` covers; null where the record does not say. */
+  dividendFrom?: string | null;
   /** Income accrued but not yet received, carried separately from market value. */
   accruedIncome?: number | null;
   /** Per-position IRR, where the provider computes one (Goldstandard does). */

@@ -143,6 +143,31 @@ export type FundDated = {
    */
   saleProceeds: number;
   /**
+   * THE INCOME THE HOLDING-PERIOD RETURN ALREADY COUNTS (Stage 10fz): the
+   * `dividendReceived` its folios' positions carry, which `fifoTotals` adds to
+   * the gain — income received, gross of TDS, over the window each record
+   * covers, from `incomeFrom`. Read off the positions rather than assumed, so a
+   * hover says income is in the figure exactly where it is. 0 where none
+   * carries any.
+   */
+  incomeInHpr: number;
+  /** The earliest date that income covers; null where no position says. */
+  incomeFrom: string | null;
+  /**
+   * TRUE WHERE A REVIEW LINE CARRIES FIFO'S COST rather than the review's net
+   * one (Stage 10fz): its sale is then in `redeemedAtCost`, booked at the
+   * units' cost, and in no `saleProceeds` — the words say so.
+   */
+  reviewFifo: boolean;
+  /**
+   * A REVIEW LINE WHOSE DATED ROWS DO NOT MOVE ALL ITS UNITS (Stage 10fz) —
+   * 360 ONE: the review buys 9,99,950.002 units and sells 5,751.296, against the
+   * 9,90,429.68 it carries. A sentence naming the gap, or null. No dated row
+   * moves those units and none moves cash for them, so a money-weighted return
+   * (which counts cash) still stands; the gap is said, never closed.
+   */
+  unitNote: string | null;
+  /**
    * WHY THIS RECORD CANNOT CARRY A DATED RETURN, in a sentence that is true of
    * this fund — or null where it can. Lower-case and full-stop-free, so each
    * measure can put it in its own sentence.
@@ -151,6 +176,9 @@ export type FundDated = {
 };
 
 const PAYOUT_KINDS: FundPayout["kind"][] = ["income", "capital", "equalisation"];
+
+/** Units to the third decimal the documents print, in the Indian grouping. */
+const unitsFmt = (n: number) => new Intl.NumberFormat("en-IN", { maximumFractionDigits: 3 }).format(n);
 
 /**
  * The dated record behind every fund row, keyed on `securityKey`.
@@ -197,6 +225,10 @@ export function fundDatedRecords(
     let withoutAccount = 0;
     let redeemedAtCost = 0;
     let saleProceeds = 0;
+    let incomeInHpr = 0;
+    let reviewFifo = false;
+    const incomeFroms: string[] = [];
+    const unitNotes: string[] = [];
     const sources = new Set<"statement" | "review">();
     for (const p of g) {
       sources.add(p.review ? "review" : "statement");
@@ -215,6 +247,10 @@ export function fundDatedRecords(
       // money-weighted return on, so the record is a gap — never pooled.
       if (isValuedAtCost(p)) { gaps.push(AT_COST_RETURN); continue; }
       parts.push({ accountId: p.accountId, valuedAt, value: p.marketValue, cost: p.costBasis });
+      if (typeof p.dividendReceived === "number" && Number.isFinite(p.dividendReceived) && p.dividendReceived !== 0) {
+        incomeInHpr += p.dividendReceived;
+        if (p.dividendFrom) incomeFroms.push(p.dividendFrom);
+      }
       /**
        * ── A LINE THE REVIEW VALUES IS DATED BY THE REVIEW ──────────────────
        *
@@ -234,8 +270,25 @@ export function fundDatedRecords(
         }
         const bought = rf.filter((r) => r.kind === "purchase").reduce((t, r) => t + r.amount, 0);
         const soldFor = rf.filter((r) => r.kind === "sale").reduce((t, r) => t + r.amount, 0);
-        if (p.costBasis == null || Math.abs(bought - soldFor - p.costBasis) > 1) {
-          gaps.push(`the review's dated purchases less its sale proceeds add to ${money(bought - soldFor)} against the ${p.costBasis == null ? "unreported" : money(p.costBasis)} cost it carries for this line, so the two sides of a return would describe different money`);
+        /**
+         * TWO COSTS A REVIEW LINE CAN CARRY, AND BOTH MUST TIE (Stage 10fz).
+         * The review's own: what was paid less what the sales returned. Or
+         * FIFO's, where every purchase and sale row prints its units
+         * (`measuredFromRows` in the build): the cost of the units held, with
+         * the cost of the units sold beside it in `costOfUnitsSold` — 360 ONE's
+         * ₹99,41,987.06 held and ₹57,512.96 sold, for ₹99,99,500.02 bought.
+         * Either way the dated purchases are every rupee deployed, so a FIFO
+         * line ties on cost held + cost sold, as a statement's redeemed units
+         * do below; read the old way it fell out of the XIRR as a "gap".
+         */
+        const fifoSold = typeof p.costOfUnitsSold === "number" && Number.isFinite(p.costOfUnitsSold) && p.costOfUnitsSold > 0
+          ? p.costOfUnitsSold : 0;
+        const tiesNet = p.costBasis != null && Math.abs(bought - soldFor - p.costBasis) <= 1;
+        const tiesFifo = p.costBasis != null && fifoSold > 0 && Math.abs(bought - (p.costBasis + fifoSold)) <= 1;
+        if (!tiesNet && !tiesFifo) {
+          gaps.push(fifoSold > 0
+            ? `the review's dated purchases add to ${money(bought)} against the ${p.costBasis == null ? "unreported" : money(p.costBasis)} cost held and ${money(fifoSold)} cost sold it carries for this line, so the two sides of a return would describe different money`
+            : `the review's dated purchases less its sale proceeds add to ${money(bought - soldFor)} against the ${p.costBasis == null ? "unreported" : money(p.costBasis)} cost it carries for this line, so the two sides of a return would describe different money`);
           unknownPayouts = true;
           continue;
         }
@@ -251,7 +304,19 @@ export function fundDatedRecords(
           // otherwise), so it is cash OUTSIDE the value, as a payout is.
           paidBack.push({ date: r.date, amount: r.amount, kind: r.kind === "sale" ? "capital" : "income", accountId: p.accountId, label: r.kind === "sale" ? "Sale" : "Income" });
         }
-        saleProceeds += soldFor;
+        // A cost net of sale proceeds already counts them; a FIFO cost books the
+        // units sold at their cost, as a statement's redemption is booked.
+        if (tiesFifo && !tiesNet) redeemedAtCost += fifoSold;
+        else saleProceeds += soldFor;
+        reviewFifo ||= tiesFifo && !tiesNet;
+        const moves = rf.filter((r) => r.kind !== "income");
+        if (p.quantity != null && moves.every((r) => r.units != null)) {
+          const boughtU = moves.filter((r) => r.kind === "purchase").reduce((t, r) => t + r.units!, 0);
+          const soldU = moves.filter((r) => r.kind === "sale").reduce((t, r) => t + r.units!, 0);
+          if (Math.abs(boughtU - soldU - p.quantity) > 0.005) {
+            unitNotes.push(`the review's dated rows buy ${unitsFmt(boughtU)} units and sell ${unitsFmt(soldU)} against the ${unitsFmt(p.quantity)} it carries — ${unitsFmt(Math.abs(boughtU - soldU - p.quantity))} units no dated row moves, and no row moves cash for them, so the rate (which counts cash) stands on the cash`);
+          }
+        }
         continue;
       }
       const c = byAccount.get(p.accountId);
@@ -318,6 +383,10 @@ export function fundDatedRecords(
       tranches: new Set(calls.map((c) => c.date)).size,
       redeemedAtCost,
       saleProceeds,
+      incomeInHpr,
+      incomeFrom: incomeFroms.sort()[0] ?? null,
+      reviewFifo,
+      unitNote: unitNotes.length ? unitNotes.join("; ") : null,
       gap: gaps[0] ?? null,
     });
   }
@@ -459,20 +528,41 @@ export function fundMeasuredReturn(
    */
   const statementPrincipal = d ? d.paidOutByKind.capital - d.saleProceeds : 0;
   const principalIn = d ? d.saleProceeds + (d.redeemedAtCost > 0 ? statementPrincipal : 0) : 0;
-  const outside = d ? d.paidOut - principalIn : 0;
+  /**
+   * …AND THE INCOME ITS POSITIONS CARRY (Stage 10fz): `fifoTotals` counts
+   * `dividendReceived` in the gain, so that income is inside this figure and
+   * only the rest of what was paid back is outside it. Read off the record
+   * (`incomeInHpr`), never assumed — a position that carries none leaves every
+   * income payout outside, as before.
+   */
+  const incomeIn = d ? Math.min(d.incomeInHpr, Math.max(d.paidOut - principalIn, 0)) : 0;
+  const outside = d ? d.paidOut - principalIn - incomeIn : 0;
+  // WHAT THE POSITION'S INCOME IS MADE OF, said from the payouts it matches:
+  // where it is exactly the income AND the equalisation the fund paid by the
+  // valuation (Neo Infra's ₹36.88 L is ₹28.19 L income and ₹8.69 L
+  // equalisation), the words say both, rather than call equalisation income.
+  const withEq = !!d && d.paidOutByKind.equalisation > 1
+    && Math.abs(d.incomeInHpr - d.paidOutByKind.income - d.paidOutByKind.equalisation) <= 1;
+  const incomeWhy = d && d.incomeInHpr !== 0
+    ? ` The ${money(d.incomeInHpr)} ${withEq ? `its record carries as income — ${money(d.paidOutByKind.income)} of income and ${money(d.paidOutByKind.equalisation)} of equalisation —` : "of income its record carries"}${d.incomeFrom ? ` from ${date(d.incomeFrom)}` : ""} is in it too — FIFO adds income received, gross of TDS, to the gain.`
+    : "";
   const inWhy = d?.source === "review"
-    ? ` The ${money(principalIn)} of sale proceeds is in this figure — the review nets it against the cost it carries.`
+    ? (d.reviewFifo
+      ? ` The ${money(principalIn)} of sale proceeds is in this figure — FIFO books the units sold at their cost, and the gain on them in the gain.`
+      : ` The ${money(principalIn)} of sale proceeds is in this figure — the review nets it against the cost it carries.`)
     : d?.source === "mixed"
       ? ` The ${money(principalIn)} returned as principal or as sale proceeds is in this figure — FIFO books redeemed units at their cost, and the review nets its sale proceeds against the cost it carries.`
       : ` The ${money(principalIn)} returned as principal is in this figure — FIFO books those units as redeemed at their cost.`;
   const paidNote = d && d.paidOut > 0 && d.valuedAt
-    ? (principalIn > 0
-      ? `${inWhy}${outside > 0 ? ` The other ${money(outside)} it had paid back by the ${date(d.valuedAt)} valuation (${payoutParts({ ...d, paidOutByKind: { ...d.paidOutByKind, capital: 0 } }, money)}) is not — XIRR counts it.` : ""}`
+    ? (principalIn > 0 || incomeIn > 0
+      ? `${principalIn > 0 ? inWhy : ""}${incomeWhy}${outside > 1 ? ` The other ${money(outside)} it had paid back by the ${date(d.valuedAt)} valuation is not — XIRR counts it.` : ""}`
       : ` The ${money(d.paidOut)} it had paid back by the ${date(d.valuedAt)} valuation (${payoutParts(d, money)}) is not in this figure — XIRR counts it.`)
-    : "";
+    : incomeWhy;
   /** What the holding-period figure is struck on, for the source it came from. */
   const hprBasis = d?.source === "review"
-    ? "The review's value against the cost it carries — what was paid, less any sale proceeds — not annualised, and not a return on Paid in."
+    ? (d.reviewFifo
+      ? "FIFO over the review's own dated purchases and sales: the gain on the units held plus the gain on the units sold, over what those units cost — not annualised, and not a return on Paid in."
+      : "The review's value against the cost it carries — what was paid, less any sale proceeds — not annualised, and not a return on Paid in.")
     : `FIFO: the gain on the units held plus the gain on any units redeemed, over what those units cost — the cost of the units held plus the cost of any redeemed — not annualised, and not a return on Paid in.${d?.source === "mixed" ? " The review's lines are struck on the cost it carries — what was paid, less any sale proceeds." : ""}`;
 
   if (measure === "absolute") {
@@ -595,7 +685,7 @@ function xirrOf(f: FundReturnInput, d: FundDated | undefined, money: Money, date
   if (pooled.annualised) {
     return {
       shown: true, pct: pooled.pct, tag,
-      note: `Money-weighted across ${flowsLine} — annualised over the ${pooled.windowDays} days since the first ${callWord(d)}.${afterLine}`,
+      note: `Money-weighted across ${flowsLine} — annualised over the ${pooled.windowDays} days since the first ${callWord(d)}.${afterLine}${d.unitNote ? ` ${sentence(d.unitNote)}.` : ""}`,
     };
   }
   // UNDER A YEAR. With every call on one date, every folio valued on one date
@@ -663,7 +753,7 @@ export const PM_AGG_NO_MEASURE: Partial<Record<ReturnMeasure, string>> = {
  */
 export const PM_RETURN_HINTS: Partial<Record<ReturnMeasure, string>> = {
   auto: "One call or purchase, held under a year: holding-period return. One, held a year or more: CAGR. More than one dated call or purchase, or cash paid back: XIRR. Each cell says which one it is.",
-  absolute: "The gain over what the holding cost, not annualised and not a return on Paid in — FIFO on a statement's lines, the review's own cost (what was paid, less any sale proceeds) on the review's. Income paid out is not in it — XIRR counts that.",
+  absolute: "The gain over what the holding cost, not annualised and not a return on Paid in — FIFO on a statement's lines and on a review line whose dated rows print their units, else the review's own cost (what was paid, less any sale proceeds). Income a holding's record carries is in it, over the window that record covers, and each cell's hover says how much; XIRR dates every payout.",
   cagr: "The return on cost annualised — only for a holding paid for in one call or purchase at least a year ago that has paid nothing back. One paid for over several dates is money-weighted instead.",
   xirr: "Money-weighted across every dated call or purchase, every dated payout or sale, and the value on its statement's or the review's date — a fund's own capital account, or the family's consolidated review, dates every one.",
   ytd: "The fund's own return since 1 January — measurable only where it was entered during the year, because no statement here values a fund on 1 January.",
