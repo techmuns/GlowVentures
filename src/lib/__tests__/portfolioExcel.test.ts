@@ -45,7 +45,7 @@ import path from "node:path";
 import {
   BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_SUMMARY,
   BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_POSITION_TRANCHES, BOOK_CAPITAL_FROM_INCEPTION,
-  BOOK_REVIEW_FLOWS,
+  BOOK_REVIEW_FLOWS, BOOK_HOLDING_TRADES, BOOK_HOLDING_INCOME, BOOK_HOLDING_LOTS,
 } from "@/data/glowData";
 import { BOOK_FUND_NAVS } from "@/data/fundNavs";
 import { buildPortfolioWorkbook } from "@/lib/exportPortfolioExcel";
@@ -223,6 +223,66 @@ function solveXirr(recordKeys: readonly string[]): number | null {
   }
   return ((lo + hi) / 2) * 100;
 }
+
+/**
+ * ── A HOLDING'S OWN DATED MONEY, SOLVED HERE (Stage 10fw) ──────────────────
+ *
+ * Where a line's account's trades account for every unit it holds, or its lot
+ * register does and none of it was sold, each buy is money in on its day and
+ * each sale and dividend money out on its day; the statement's value closes it
+ * on the statement's date. Re-expressed off the book — never `holdingFlows.ts`,
+ * the code under test. Null where nothing dates a line; "short" where its record
+ * lacks a figure.
+ */
+const STMT = new Map(BOOK_POSITIONS.map((p) => [`${p.accountId}|${p.securityKey}`, p]));
+function holdingRate(ps: readonly Position[]): { annual: number | null; days: number; payments: number } | null | "short" {
+  const flows: { t: number; amount: number }[] = [];
+  let since = Infinity, to = -Infinity, payments = 0;
+  for (const x of ps) {
+    const k = `${x.accountId}|${x.securityKey}`;
+    const p = STMT.get(k);
+    if (!p) return null;
+    const r = p.tradeRecord;
+    const inc = BOOK_HOLDING_INCOME[k] ?? [];
+    const lots = BOOK_HOLDING_LOTS[k];
+    let close: string, from: string;
+    if (r && r.unaccounted === 0) {
+      const ts = (BOOK_HOLDING_TRADES[k] ?? []).filter((t) => t.date >= r.from && t.date <= r.to);
+      if (!ts.length) return null;
+      if (ts.some((t) => t.amount === null) || inc.some((i) => !i.date)) return "short";
+      for (const t of ts) flows.push({ t: Date.parse(t.date), amount: t.side === "buy" ? -(t.amount as number) : (t.amount as number) });
+      since = Math.min(since, Date.parse(ts.find((t) => t.side === "buy")?.date ?? ts[0].date));
+      payments += ts.length; from = r.from; close = r.to;
+    } else if (p.heldSince && lots?.length) {
+      if ((p.costOfUnitsSold ?? 0) > 0 || inc.some((i) => !i.date)) return "short";
+      for (const l of lots) flows.push({ t: Date.parse(l.date), amount: -l.cost });
+      since = Math.min(since, Date.parse(lots[0].date));
+      payments += lots.length; from = lots[0].date; close = ACC.get(p.accountId)!.asOf;
+    } else return null;
+    for (const i of inc) if (i.date! >= from && i.date! <= close) flows.push({ t: Date.parse(i.date!), amount: i.amount });
+    if (p.marketValue > 0) flows.push({ t: Date.parse(close), amount: p.marketValue });
+    to = Math.max(to, p.marketValue > 0 ? Date.parse(close) : Math.max(...flows.map((fl) => fl.t)));
+  }
+  const t0 = Math.min(...flows.map((fl) => fl.t));
+  const npv = (rate: number) => flows.reduce((a, fl) => a + fl.amount / Math.pow(1 + rate, (fl.t - t0) / (365 * 86_400_000)), 0);
+  let lo = -0.9999, hi = 100, annual: number | null = null;
+  if (Math.sign(npv(lo)) !== Math.sign(npv(hi))) {
+    for (let i = 0; i < 300; i++) {
+      const mid = (lo + hi) / 2;
+      if (Math.sign(npv(mid)) === Math.sign(npv(lo))) lo = mid; else hi = mid;
+    }
+    annual = ((lo + hi) / 2) * 100;
+  }
+  return { annual, days: Math.round((to - since) / 86_400_000), payments };
+}
+/** The family's rule on a holding's dated money: under a year its HPR, several payments XIRR, one compounded from its day. */
+const ruleOn = (hpr: number, sol: { annual: number | null; days: number; payments: number }) =>
+  sol.days < 365 ? { tag: "HPR", pct: hpr as number | null }
+  : sol.payments > 1 ? { tag: "XIRR", pct: sol.annual }
+  : 1 + hpr / 100 > 0 ? { tag: "CAGR", pct: (Math.pow(1 + hpr / 100, 365 / sol.days) - 1) * 100 as number | null }
+  : { tag: "HPR", pct: hpr as number | null };
+/** A row dated by its ACCOUNTS' record — 5b's subject, apart from a row of dated holdings. */
+const accountDated = (key: string) => { const c = capitalOf(key); return !!c?.dated && !c.holdings; };
 
 // ── THE SHEETS ──────────────────────────────────────────────────────────────
 const TXNS: Txn[] = [
@@ -440,24 +500,30 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
     if (!p.heldSince || !costedLine(p) || !((p.costBasis as number) > 0)) continue;
     // A row that is whole accounts on a dated record takes the rule on its
     // payments instead, which 5b holds it to.
-    if (capitalOf(key)?.dated) continue;
+    if (accountDated(key)) continue;
     const valuedAt = valueDateOfLine(p);
     if (!valuedAt) continue;
     const mv = navMV(p);
     const hpr = fifoOf(p, mv);
+    // EACH LOT ON ITS OWN DAY (Stage 10fw): where the register dates the line's
+    // whole money it takes the family's rule on its lots — never a CAGR
+    // compounded from the oldest of them over money bought later. Only a line
+    // whose money is NOT all dated keeps the oldest-lot rule.
+    const sol = holdingRate([p]);
     const days = daysBetween(p.heldSince, valuedAt);
-    const cagr = days >= 365 && 1 + hpr / 100 > 0;
-    const want = cagr ? (Math.pow(1 + hpr / 100, 365 / days) - 1) * 100 : hpr;
+    const want = sol && sol !== "short" ? ruleOn(hpr, sol)
+      : days >= 365 && 1 + hpr / 100 > 0 ? { tag: "CAGR", pct: (Math.pow(1 + hpr / 100, 365 / days) - 1) * 100 as number | null }
+      : { tag: "HPR", pct: hpr as number | null };
     const name = displaySecurity(PAGE[RAW.indexOf(p)].security);
     const row = ROWS.filter((r) => r["Security"] === name && r["Mandate"] === DASH);
     subjects++;
-    if (cagr) annualised++;
-    if (row.length !== 1 || typeof row[0]["Return"] !== "number"
-        || !near(row[0]["Return"] as number, want, 1e-9) || row[0]["Measure"] !== (cagr ? "CAGR" : "HPR")) {
-      wrong.push(`${key}: want ${want.toFixed(4)} ${cagr ? "CAGR" : "HPR"} over ${days}d, got ${row.map((r) => `${r["Return"]} ${r["Measure"]}`).join(" / ") || "no row"}`);
+    if (want.tag !== "HPR") annualised++;
+    if (row.length !== 1 || want.pct === null || typeof row[0]["Return"] !== "number"
+        || !near(row[0]["Return"] as number, want.pct, 1e-6) || row[0]["Measure"] !== want.tag) {
+      wrong.push(`${key}: want ${want.pct?.toFixed(4)} ${want.tag}, got ${row.map((r) => `${r["Return"]} ${r["Measure"]}`).join(" / ") || "no row"}`);
     }
   }
-  ok("every lot-dated holding shows the tab's default measure: CAGR from a year, HPR under it",
+  ok("every lot-dated holding takes the family's rule on its own lots: HPR under a year, XIRR over several, CAGR on one",
      subjects > 0 && wrong.length === 0, wrong.join("; ") || `${subjects} lot-dated rows`);
   // LOAD-BEARING: the book must carry a holding the rule annualises, or a sheet
   // printing the plain return on cost everywhere would pass the check above.
@@ -468,27 +534,27 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
   // 29-11-2024 is the first such row the book carries (its Transaction Details
   // are read since the fund statements' dated tables were). Every OTHER direct
   // CAGR row must be one this rule annualised from its own lot register.
-  const datedRowNames = new Set([...DIRECT_ROWS].filter(([key]) => capitalOf(key)?.dated)
+  const datedRowNames = new Set([...DIRECT_ROWS].filter(([key]) => accountDated(key))
     .flatMap(([, ps]) => ps.map((p) => displaySecurity(p.security))));
-  const sheetCagr = ROWS.filter((r) => r["Measure"] === "CAGR" && r["Mandate"] === DASH
+  const sheetCagr = ROWS.filter((r) => (r["Measure"] === "CAGR" || r["Measure"] === "XIRR") && r["Mandate"] === DASH
     && !datedRowNames.has(r["Security"] as string)).length;
   eq("exactly those direct rows are annualised, and no other", sheetCagr, annualised);
-  // INSIDE A MANDATE the same rule binds, and only on the mandate's OWN lot
-  // register: V.E.C 128004's open-lots report (Stage 10ep) dates its lines, and
-  // a mandate line with no dated lot behind it must never annualise.
-  const pmsDated = new Set(NAV_SET.held.filter((p) => isPms(p) && p.heldSince)
+  // INSIDE A MANDATE the same rule binds, on the line's OWN dated money: its
+  // account's trades where they date every unit (Stage 10fw), or its lot
+  // register. A mandate line nothing dates in full must never annualise.
+  const pmsDated = new Set(NAV_SET.held.filter((p) => { const x = isPms(p) ? holdingRate([p]) : null; return !!x && x !== "short" && x.days >= 365; })
     .map((p) => displaySecurity(PAGE[RAW.indexOf(p)].security)));
-  const mandateCagr = ROWS.filter((r) => r["Measure"] === "CAGR" && r["Mandate"] !== DASH);
-  ok("a mandate row annualises only where its own lot register dates it",
-    mandateCagr.every((r) => pmsDated.has(r["Security"] as string)),
-    mandateCagr.filter((r) => !pmsDated.has(r["Security"] as string)).map((r) => r["Security"]).join(", ") || `${mandateCagr.length} lot-dated mandate row(s)`);
+  const mandateCagr = ROWS.filter((r) => (r["Measure"] === "CAGR" || r["Measure"] === "XIRR") && r["Mandate"] !== DASH);
+  ok("a mandate row annualises only where its own trades or lots date every unit of it, a year or more",
+    mandateCagr.length > 0 && mandateCagr.every((r) => pmsDated.has(r["Security"] as string)),
+    mandateCagr.filter((r) => !pmsDated.has(r["Security"] as string)).map((r) => r["Security"]).join(", ") || `${mandateCagr.length} dated mandate row(s)`);
   // THE WINDOW IS THE ROW'S OWN, never the book's newest date (2026-08-29): an
   // annualised row names both ends of it — from the oldest unit still held, or,
-  // on a dated whole-account row of one payment (5b), from that payment.
+  // on a row whose money is dated (5b, Stage 10fw), from its one payment.
   const cagrRows = ROWS.filter((r) => r["Measure"] === "CAGR");
   ok("an annualised row states its window in Notes", cagrRows.length > 0
      && cagrRows.every((r) => /Annualised over the \d+ days from \d{4}-\d\d-\d\d, the oldest unit still held, to its valuation on \d{4}-\d\d-\d\d/.test(String(r["Notes"]))
-       || (datedRowNames.has(r["Security"] as string) && /One payment on \d{4}-\d\d-\d\d, compounded over the \d+ days to \d{4}-\d\d-\d\d/.test(String(r["Notes"])))),
+       || (/One payment on \d{4}-\d\d-\d\d, compounded over the \d+ days to \d{4}-\d\d-\d\d/.test(String(r["Notes"])))),
      cagrRows.filter((r) => datedRowNames.has(r["Security"] as string)).map((r) => `${r["Security"]}: ${String(r["Notes"]).slice(0, 100)}`).join(" | "));
 }
 
@@ -508,7 +574,7 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
   const wrong: string[] = [];
   for (const [key, ps] of DIRECT_ROWS) {
     const cap = capitalOf(key);
-    if (!cap || !cap.dated) continue;
+    if (!cap || !cap.dated || cap.holdings) continue;
     const names = [...new Set(ps.map((p) => displaySecurity(p.security)))];
     if (names.length !== 1 || byName.get(names[0])!.length !== 1) continue;
     const row = ROWS.filter((r) => r["Security"] === names[0] && r["Mandate"] === DASH);
@@ -532,7 +598,30 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
   // LOAD-BEARING: the book must carry a row the rule takes to XIRR, or a sheet
   // that never handed the capital to the measure would pass the check above.
   ok("...and the book carries one the rule takes to XIRR, so the guard can fail", xirrs > 0, `${xirrs} XIRR`);
-  eq("exactly those rows are XIRR, and no other", ROWS.filter((r) => r["Measure"] === "XIRR").length, xirrs);
+  // …AND THE HOLDINGS WHOSE OWN MONEY IS DATED (Stage 10fw): a direct row over
+  // its lines, a mandate row per account — each XIRR exactly where its own
+  // dated money calls for it, at the rate re-solved here.
+  let holdingXirrs = 0;
+  const holdingWrong: string[] = [];
+  for (const [key, ps] of DIRECT_ROWS) {
+    if (accountDated(key)) continue;
+    const sol = holdingRate(firstOfGroup(ps));
+    if (!sol || sol === "short" || sol.days < 365 || sol.payments < 2 || sol.annual === null) continue;
+    holdingXirrs++;
+    const row = ROWS.filter((r) => r["Security"] === displaySecurity(ps[0].security) && r["Mandate"] === DASH);
+    if (row.length !== 1 || row[0]["Measure"] !== "XIRR" || !near(row[0]["Return"] as number, sol.annual, 1e-4)) holdingWrong.push(key);
+  }
+  for (const p of NAV_SET.held.filter(isPms)) {
+    const sol = holdingRate([p]);
+    if (!sol || sol === "short" || sol.days < 365 || sol.payments < 2 || sol.annual === null) continue;
+    holdingXirrs++;
+    const name = displaySecurity(PAGE[RAW.indexOf(p)].security);
+    const rows = ROWS.filter((r) => r["Security"] === name && r["Mandate"] !== DASH && r["Measure"] === "XIRR");
+    if (!rows.some((r) => near(r["Return"] as number, sol.annual as number, 1e-4))) holdingWrong.push(`${p.accountId}|${p.securityKey}`);
+  }
+  ok("a holding whose own money is dated over several payments, a year or more, shows its XIRR, re-solved here",
+     holdingXirrs > 0 && holdingWrong.length === 0, holdingWrong.slice(0, 4).join("; ") || `${holdingXirrs} holding rows`);
+  eq("exactly those rows are XIRR, and no other", ROWS.filter((r) => r["Measure"] === "XIRR").length, xirrs + holdingXirrs);
 
   // THE LEGEND COUNTS WHAT THE MEASURE COLUMN CARRIES.
   const legend = notesUnderTotal.find((n) => n.startsWith("Return is the Portfolio Monitor's default measure")) ?? "";

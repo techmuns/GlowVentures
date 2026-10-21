@@ -48298,6 +48298,1659 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
 };
 
 /**
+ * THE CASH DIVIDENDS EACH HOLDING WAS PAID, ON THEIR OWN DATES
+ * (Stage 10fw) — the same events `Position.dividendReceived` totals, keyed as
+ * `BOOK_HOLDING_TRADES`. `date` is the received date, else the ex date; null
+ * where the statement prints neither. What a money-weighted return over the
+ * holding's own dated trades adds on each day.
+ */
+export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: number }[]> = {
+  "carnelian-asset-management-and-advisors-pvt-ltd-3517383|biocon": [
+    {
+      "date": "2026-08-14",
+      "amount": 62750
+    }
+  ],
+  "carnelian-asset-management-and-advisors-pvt-ltd-3517383|gland-pharma": [
+    {
+      "date": "2026-09-03",
+      "amount": 165040
+    }
+  ],
+  "carnelian-asset-management-and-advisors-pvt-ltd-3517383|kalpataru-projects-international": [
+    {
+      "date": "2026-07-20",
+      "amount": 306900
+    }
+  ],
+  "carnelian-asset-management-and-advisors-pvt-ltd-3517383|kalyan-jewellers-india": [
+    {
+      "date": "2026-09-29",
+      "amount": 146000
+    }
+  ],
+  "carnelian-asset-management-and-advisors-pvt-ltd-3517383|vishnu-chemicals": [
+    {
+      "date": "2026-09-15",
+      "amount": 2787.6
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|banco-products-india": [
+    {
+      "date": "2026-09-11",
+      "amount": 16000
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|bls-international-services": [
+    {
+      "date": "2026-09-16",
+      "amount": 3000
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|blue-jet-healthcare": [
+    {
+      "date": "2026-09-11",
+      "amount": 7200
+    },
+    {
+      "date": "2026-09-30",
+      "amount": -7200
+    },
+    {
+      "date": "2026-09-30",
+      "amount": 7200
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|can-fin-homes": [
+    {
+      "date": "2026-07-03",
+      "amount": 24000
+    },
+    {
+      "date": "2026-08-04",
+      "amount": -24000
+    },
+    {
+      "date": "2026-08-04",
+      "amount": 21600
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|caplin-point-laboratories": [
+    {
+      "date": "2026-05-29",
+      "amount": 3600
+    },
+    {
+      "date": "2026-06-09",
+      "amount": -3600
+    },
+    {
+      "date": "2026-06-09",
+      "amount": 3600
+    },
+    {
+      "date": "2026-09-18",
+      "amount": 3600
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|deep-industries": [
+    {
+      "date": "2026-08-21",
+      "amount": 8000
+    },
+    {
+      "date": "2026-09-09",
+      "amount": -8000
+    },
+    {
+      "date": "2026-09-09",
+      "amount": 8000
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|eclerx-services": [
+    {
+      "date": "2026-08-21",
+      "amount": 1600
+    },
+    {
+      "date": "2026-09-09",
+      "amount": -1600
+    },
+    {
+      "date": "2026-09-09",
+      "amount": 1600
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|eih": [
+    {
+      "date": "2026-07-31",
+      "amount": 14250
+    },
+    {
+      "date": "2026-08-13",
+      "amount": -14250
+    },
+    {
+      "date": "2026-08-13",
+      "amount": 12825
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|great-eastern-shipping": [
+    {
+      "date": "2026-08-07",
+      "amount": 28800
+    },
+    {
+      "date": "2026-08-28",
+      "amount": -28800
+    },
+    {
+      "date": "2026-08-28",
+      "amount": 25920
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|hdfc-asset-management": [
+    {
+      "date": "2026-06-05",
+      "amount": 59400
+    },
+    {
+      "date": "2026-06-30",
+      "amount": -59400
+    },
+    {
+      "date": "2026-06-30",
+      "amount": 53460
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|icici-bank": [
+    {
+      "date": "2026-08-03",
+      "amount": 24000
+    },
+    {
+      "date": "2026-08-27",
+      "amount": -24000
+    },
+    {
+      "date": "2026-08-27",
+      "amount": 21600
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|indian-energy-exchange": [
+    {
+      "date": "2026-05-15",
+      "amount": 30000
+    },
+    {
+      "date": "2026-09-17",
+      "amount": -30000
+    },
+    {
+      "date": "2026-09-17",
+      "amount": 27000
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|indraprastha-medical": [
+    {
+      "date": "2026-09-18",
+      "amount": 31000
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|jindal-stainless": [
+    {
+      "date": "2026-08-21",
+      "amount": 9750
+    },
+    {
+      "date": "2026-09-16",
+      "amount": -9750
+    },
+    {
+      "date": "2026-09-16",
+      "amount": 9750
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|karur-vysya-bank": [
+    {
+      "date": "2026-07-24",
+      "amount": 22100
+    },
+    {
+      "date": "2026-08-07",
+      "amount": -22100
+    },
+    {
+      "date": "2026-08-07",
+      "amount": 19890
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|kovai-medical-center-and-hospital": [
+    {
+      "date": "2026-08-19",
+      "amount": 7500
+    },
+    {
+      "date": "2026-09-16",
+      "amount": -7500
+    },
+    {
+      "date": "2026-09-16",
+      "amount": 7500
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|life-insurance-corp-of-india": [
+    {
+      "date": "2026-06-25",
+      "amount": 60000
+    },
+    {
+      "date": "2026-07-30",
+      "amount": -60000
+    },
+    {
+      "date": "2026-07-30",
+      "amount": 54000
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|lupin": [
+    {
+      "date": "2026-07-17",
+      "amount": 16200
+    },
+    {
+      "date": "2026-08-07",
+      "amount": -16200
+    },
+    {
+      "date": "2026-08-07",
+      "amount": 14580
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|mahindra-and-mahindra": [
+    {
+      "date": "2026-07-03",
+      "amount": 26400
+    },
+    {
+      "date": "2026-08-05",
+      "amount": -26400
+    },
+    {
+      "date": "2026-08-05",
+      "amount": 23760
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|oberoi-realty": [
+    {
+      "date": "2026-05-14",
+      "amount": 2000
+    },
+    {
+      "date": "2026-05-25",
+      "amount": -2000
+    },
+    {
+      "date": "2026-05-25",
+      "amount": 2000
+    },
+    {
+      "date": "2026-07-23",
+      "amount": 2000
+    },
+    {
+      "date": "2026-08-01",
+      "amount": -2000
+    },
+    {
+      "date": "2026-08-01",
+      "amount": 2000
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|sagility": [
+    {
+      "date": "2026-08-07",
+      "amount": 4500
+    },
+    {
+      "date": "2026-09-16",
+      "amount": -4500
+    },
+    {
+      "date": "2026-09-16",
+      "amount": 4500
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|sharda-motor-industries": [
+    {
+      "date": "2026-09-18",
+      "amount": 25000
+    },
+    {
+      "date": "2026-09-30",
+      "amount": -25000
+    },
+    {
+      "date": "2026-09-30",
+      "amount": 22500
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|sonata-software": [
+    {
+      "date": "2026-07-17",
+      "amount": 37350
+    },
+    {
+      "date": "2026-08-12",
+      "amount": -37350
+    },
+    {
+      "date": "2026-08-12",
+      "amount": 33615
+    },
+    {
+      "date": "2026-08-14",
+      "amount": 11250
+    },
+    {
+      "date": "2026-08-28",
+      "amount": -11250
+    },
+    {
+      "date": "2026-08-28",
+      "amount": 10125
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|state-bank-of-india": [
+    {
+      "date": "2026-05-15",
+      "amount": 39037.5
+    },
+    {
+      "date": "2026-06-05",
+      "amount": -39037.5
+    },
+    {
+      "date": "2026-06-05",
+      "amount": 35133.5
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|suprajit-engineering": [
+    {
+      "date": "2026-09-01",
+      "amount": 12000
+    },
+    {
+      "date": "2026-09-17",
+      "amount": -12000
+    },
+    {
+      "date": "2026-09-17",
+      "amount": 10800
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|transport-corp-of-india": [
+    {
+      "date": "2026-07-17",
+      "amount": 3750
+    },
+    {
+      "date": "2026-08-05",
+      "amount": -3750
+    },
+    {
+      "date": "2026-08-05",
+      "amount": 3750
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|waaree-energies": [
+    {
+      "date": "2026-09-11",
+      "amount": 1000
+    }
+  ],
+  "goldstandard-wealth-private-limited-100022|zydus-lifesciences": [
+    {
+      "date": "2026-07-24",
+      "amount": 2800
+    },
+    {
+      "date": "2026-08-17",
+      "amount": -2800
+    },
+    {
+      "date": "2026-08-17",
+      "amount": 2800
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|banco-products-india": [
+    {
+      "date": "2026-09-11",
+      "amount": 40000
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|bls-international-services": [
+    {
+      "date": "2026-09-16",
+      "amount": 6250
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|blue-jet-healthcare": [
+    {
+      "date": "2026-09-11",
+      "amount": 18000
+    },
+    {
+      "date": "2026-09-30",
+      "amount": -18000
+    },
+    {
+      "date": "2026-09-30",
+      "amount": 16200
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|can-fin-homes": [
+    {
+      "date": "2026-07-03",
+      "amount": 56000
+    },
+    {
+      "date": "2026-08-04",
+      "amount": -56000
+    },
+    {
+      "date": "2026-08-04",
+      "amount": 50400
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|caplin-point-laboratories": [
+    {
+      "date": "2026-05-29",
+      "amount": 8000
+    },
+    {
+      "date": "2026-06-09",
+      "amount": -8000
+    },
+    {
+      "date": "2026-06-09",
+      "amount": 7200
+    },
+    {
+      "date": "2026-09-18",
+      "amount": 8000
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|deep-industries": [
+    {
+      "date": "2026-08-21",
+      "amount": 25000
+    },
+    {
+      "date": "2026-09-09",
+      "amount": -25000
+    },
+    {
+      "date": "2026-09-09",
+      "amount": 22500
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|eclerx-services": [
+    {
+      "date": "2026-08-21",
+      "amount": 3600
+    },
+    {
+      "date": "2026-09-09",
+      "amount": -3600
+    },
+    {
+      "date": "2026-09-09",
+      "amount": 3600
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|eih": [
+    {
+      "date": "2026-07-31",
+      "amount": 30000
+    },
+    {
+      "date": "2026-08-13",
+      "amount": -30000
+    },
+    {
+      "date": "2026-08-13",
+      "amount": 27000
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|great-eastern-shipping": [
+    {
+      "date": "2026-08-07",
+      "amount": 72000
+    },
+    {
+      "date": "2026-08-28",
+      "amount": -72000
+    },
+    {
+      "date": "2026-08-28",
+      "amount": 64800
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|hdfc-asset-management": [
+    {
+      "date": "2026-06-05",
+      "amount": 135000
+    },
+    {
+      "date": "2026-06-30",
+      "amount": -135000
+    },
+    {
+      "date": "2026-06-30",
+      "amount": 121500
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|icici-bank": [
+    {
+      "date": "2026-08-03",
+      "amount": 60000
+    },
+    {
+      "date": "2026-08-27",
+      "amount": -60000
+    },
+    {
+      "date": "2026-08-27",
+      "amount": 54000
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|indian-energy-exchange": [
+    {
+      "date": "2026-05-15",
+      "amount": 60000
+    },
+    {
+      "date": "2026-09-17",
+      "amount": -60000
+    },
+    {
+      "date": "2026-09-17",
+      "amount": 54000
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|indraprastha-medical": [
+    {
+      "date": "2026-09-18",
+      "amount": 70000
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|jindal-stainless": [
+    {
+      "date": "2026-08-21",
+      "amount": 21000
+    },
+    {
+      "date": "2026-09-16",
+      "amount": -21000
+    },
+    {
+      "date": "2026-09-16",
+      "amount": 18900
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|karur-vysya-bank": [
+    {
+      "date": "2026-07-24",
+      "amount": 52000
+    },
+    {
+      "date": "2026-08-07",
+      "amount": -52000
+    },
+    {
+      "date": "2026-08-07",
+      "amount": 46800
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|kovai-medical-center-and-hospital": [
+    {
+      "date": "2026-08-19",
+      "amount": 18000
+    },
+    {
+      "date": "2026-09-16",
+      "amount": -18000
+    },
+    {
+      "date": "2026-09-16",
+      "amount": 16200
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|life-insurance-corp-of-india": [
+    {
+      "date": "2026-06-25",
+      "amount": 164000
+    },
+    {
+      "date": "2026-07-30",
+      "amount": -164000
+    },
+    {
+      "date": "2026-07-30",
+      "amount": 147600
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|lupin": [
+    {
+      "date": "2026-07-17",
+      "amount": 36000
+    },
+    {
+      "date": "2026-08-07",
+      "amount": -36000
+    },
+    {
+      "date": "2026-08-07",
+      "amount": 32400
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|mahindra-and-mahindra": [
+    {
+      "date": "2026-07-03",
+      "amount": 59400
+    },
+    {
+      "date": "2026-08-05",
+      "amount": -59400
+    },
+    {
+      "date": "2026-08-05",
+      "amount": 53460
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|oberoi-realty": [
+    {
+      "date": "2026-05-14",
+      "amount": 4400
+    },
+    {
+      "date": "2026-05-25",
+      "amount": -4400
+    },
+    {
+      "date": "2026-05-25",
+      "amount": 4400
+    },
+    {
+      "date": "2026-07-23",
+      "amount": 4400
+    },
+    {
+      "date": "2026-08-01",
+      "amount": -4400
+    },
+    {
+      "date": "2026-08-01",
+      "amount": 4400
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|sagility": [
+    {
+      "date": "2026-08-07",
+      "amount": 10000
+    },
+    {
+      "date": "2026-09-16",
+      "amount": -10000
+    },
+    {
+      "date": "2026-09-16",
+      "amount": 9000
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|sharda-motor-industries": [
+    {
+      "date": "2026-09-18",
+      "amount": 60000
+    },
+    {
+      "date": "2026-09-30",
+      "amount": -60000
+    },
+    {
+      "date": "2026-09-30",
+      "amount": 54000
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|sonata-software": [
+    {
+      "date": "2026-07-17",
+      "amount": 87150
+    },
+    {
+      "date": "2026-08-12",
+      "amount": -87150
+    },
+    {
+      "date": "2026-08-12",
+      "amount": 78435
+    },
+    {
+      "date": "2026-08-14",
+      "amount": 26250
+    },
+    {
+      "date": "2026-08-28",
+      "amount": -26250
+    },
+    {
+      "date": "2026-08-28",
+      "amount": 23625
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|state-bank-of-india": [
+    {
+      "date": "2026-05-15",
+      "amount": 86750
+    },
+    {
+      "date": "2026-06-05",
+      "amount": -86750
+    },
+    {
+      "date": "2026-06-05",
+      "amount": 78075
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|suprajit-engineering": [
+    {
+      "date": "2026-09-01",
+      "amount": 30000
+    },
+    {
+      "date": "2026-09-17",
+      "amount": -30000
+    },
+    {
+      "date": "2026-09-17",
+      "amount": 27000
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|transport-corp-of-india": [
+    {
+      "date": "2026-07-17",
+      "amount": 8500
+    },
+    {
+      "date": "2026-08-05",
+      "amount": -8500
+    },
+    {
+      "date": "2026-08-05",
+      "amount": 8500
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|waaree-energies": [
+    {
+      "date": "2026-09-11",
+      "amount": 3000
+    }
+  ],
+  "goldstandard-wealth-private-limited-100023|zydus-lifesciences": [
+    {
+      "date": "2026-07-24",
+      "amount": 6000
+    },
+    {
+      "date": "2026-08-17",
+      "amount": -6000
+    },
+    {
+      "date": "2026-08-17",
+      "amount": 6000
+    }
+  ],
+  "green-lantern-capital-llp-510854|bajaj-auto": [
+    {
+      "date": "2026-07-29",
+      "amount": 17850
+    }
+  ],
+  "green-lantern-capital-llp-510854|bharat-heavy-electricals": [
+    {
+      "date": "2026-07-17",
+      "amount": 10763.2
+    }
+  ],
+  "green-lantern-capital-llp-510854|exide-industries": [
+    {
+      "date": "2026-07-21",
+      "amount": 14234
+    }
+  ],
+  "green-lantern-capital-llp-510854|graphite-india": [
+    {
+      "date": "2026-08-10",
+      "amount": 12040
+    }
+  ],
+  "green-lantern-capital-llp-510854|ingersollrand-india": [
+    {
+      "date": "2026-07-13",
+      "amount": 4360
+    }
+  ],
+  "green-lantern-capital-llp-510854|intellect-design-arena": [
+    {
+      "date": "2026-07-24",
+      "amount": 15302
+    }
+  ],
+  "green-lantern-capital-llp-510854|ksb": [
+    {
+      "date": "2026-06-11",
+      "amount": 11673.2
+    }
+  ],
+  "green-lantern-capital-llp-510854|punjab-national-bank": [
+    {
+      "date": "2026-06-25",
+      "amount": 12567
+    }
+  ],
+  "green-lantern-capital-llp-510854|state-bank-of-india": [
+    {
+      "date": "2026-06-05",
+      "amount": 44763
+    }
+  ],
+  "green-lantern-capital-llp-510854|tech-mahindra": [
+    {
+      "date": "2026-07-31",
+      "amount": 27792
+    }
+  ],
+  "green-lantern-capital-llp-510854|thermax": [
+    {
+      "date": "2026-08-10",
+      "amount": 5680
+    }
+  ],
+  "green-lantern-capital-llp-510854|zf-commercial-vehicle-control-systems-india": [
+    {
+      "date": "2026-07-10",
+      "amount": 2064
+    }
+  ],
+  "green-lantern-capital-llp-510861|bajaj-auto": [
+    {
+      "date": "2026-07-29",
+      "amount": 35400
+    }
+  ],
+  "green-lantern-capital-llp-510861|bharat-heavy-electricals": [
+    {
+      "date": "2026-07-17",
+      "amount": 21270.2
+    }
+  ],
+  "green-lantern-capital-llp-510861|exide-industries": [
+    {
+      "date": "2026-07-21",
+      "amount": 28100
+    }
+  ],
+  "green-lantern-capital-llp-510861|graphite-india": [
+    {
+      "date": "2026-08-10",
+      "amount": 23758
+    }
+  ],
+  "green-lantern-capital-llp-510861|ingersollrand-india": [
+    {
+      "date": "2026-07-13",
+      "amount": 8900
+    }
+  ],
+  "green-lantern-capital-llp-510861|intellect-design-arena": [
+    {
+      "date": "2026-07-24",
+      "amount": 30275
+    }
+  ],
+  "green-lantern-capital-llp-510861|ksb": [
+    {
+      "date": "2026-06-11",
+      "amount": 23051.6
+    }
+  ],
+  "green-lantern-capital-llp-510861|punjab-national-bank": [
+    {
+      "date": "2026-06-25",
+      "amount": 24813
+    }
+  ],
+  "green-lantern-capital-llp-510861|state-bank-of-india": [
+    {
+      "date": "2026-06-05",
+      "amount": 88311.5
+    }
+  ],
+  "green-lantern-capital-llp-510861|tech-mahindra": [
+    {
+      "date": "2026-07-31",
+      "amount": 55800
+    }
+  ],
+  "green-lantern-capital-llp-510861|thermax": [
+    {
+      "date": "2026-08-10",
+      "amount": 11280
+    }
+  ],
+  "green-lantern-capital-llp-510861|zf-commercial-vehicle-control-systems-india": [
+    {
+      "date": "2026-07-10",
+      "amount": 4128
+    }
+  ],
+  "molecule-ventures-llp-7810404|indian-metals-and-ferro-alloys": [
+    {
+      "date": "2026-07-31",
+      "amount": 11250
+    }
+  ],
+  "molecule-ventures-llp-7810404|kirloskar-ferrous-industries": [
+    {
+      "date": "2026-07-17",
+      "amount": 8901
+    }
+  ],
+  "molecule-ventures-llp-7810404|sasken-communication-technologies": [
+    {
+      "date": "2026-07-24",
+      "amount": 1300
+    }
+  ],
+  "svan-investment-managers-llp-8710067|arvind-fashions": [
+    {
+      "date": "2026-08-25",
+      "amount": 14976
+    }
+  ],
+  "svan-investment-managers-llp-8710067|birlasoft": [
+    {
+      "date": "2026-07-31",
+      "amount": 40440
+    }
+  ],
+  "svan-investment-managers-llp-8710067|caplin-point-laboratories": [
+    {
+      "date": "2026-06-10",
+      "amount": 9860
+    },
+    {
+      "date": "2026-09-18",
+      "amount": 9860
+    }
+  ],
+  "svan-investment-managers-llp-8710067|ceat": [
+    {
+      "date": "2026-08-26",
+      "amount": 55650
+    }
+  ],
+  "svan-investment-managers-llp-8710067|cosmo-first": [
+    {
+      "date": "2026-08-14",
+      "amount": 20760
+    }
+  ],
+  "svan-investment-managers-llp-8710067|creative-newtech": [
+    {
+      "date": "2026-09-23",
+      "amount": 1927.5
+    }
+  ],
+  "svan-investment-managers-llp-8710067|dilip-buildcon": [
+    {
+      "date": "2026-09-29",
+      "amount": 6460
+    }
+  ],
+  "svan-investment-managers-llp-8710067|edelweiss-financial-services": [
+    {
+      "date": "2026-10-06",
+      "amount": 44782.5
+    }
+  ],
+  "svan-investment-managers-llp-8710067|ester-industries": [
+    {
+      "date": "2026-09-17",
+      "amount": 7772.5
+    }
+  ],
+  "svan-investment-managers-llp-8710067|ghcl": [
+    {
+      "date": "2026-07-03",
+      "amount": 73020
+    }
+  ],
+  "svan-investment-managers-llp-8710067|ghcl-textiles": [
+    {
+      "date": "2026-07-03",
+      "amount": 11910
+    }
+  ],
+  "svan-investment-managers-llp-8710067|gland-pharma": [
+    {
+      "date": "2026-09-03",
+      "amount": 26000
+    }
+  ],
+  "svan-investment-managers-llp-8710067|heg-advanced-materials": [
+    {
+      "date": "2026-08-13",
+      "amount": 27948
+    }
+  ],
+  "svan-investment-managers-llp-8710067|indo-count-industries": [
+    {
+      "date": "2026-09-01",
+      "amount": 24150
+    }
+  ],
+  "svan-investment-managers-llp-8710067|laxmi-organic-industries": [
+    {
+      "date": "2026-08-13",
+      "amount": 7200
+    }
+  ],
+  "svan-investment-managers-llp-8710067|mastek": [
+    {
+      "date": "2026-09-23",
+      "amount": 32080
+    }
+  ],
+  "svan-investment-managers-llp-8710067|neuland-laboratories": [
+    {
+      "date": "2026-08-14",
+      "amount": 10200
+    }
+  ],
+  "svan-investment-managers-llp-8710067|nitin-spinners": [
+    {
+      "date": "2026-10-06",
+      "amount": 28740
+    }
+  ],
+  "svan-investment-managers-llp-8710067|paras-defence-and-space-technologies": [
+    {
+      "date": "2026-09-18",
+      "amount": 2430
+    }
+  ],
+  "svan-investment-managers-llp-8710067|pokarna": [
+    {
+      "date": "2026-08-17",
+      "amount": 2502
+    }
+  ],
+  "svan-investment-managers-llp-8710067|polyplex": [
+    {
+      "date": "2026-09-28",
+      "amount": 2515
+    }
+  ],
+  "svan-investment-managers-llp-8710067|punjab-chem-and-crop-prot-l": [
+    {
+      "date": "2026-08-07",
+      "amount": 8745
+    }
+  ],
+  "svan-investment-managers-llp-8710067|shakti-pumps-india": [
+    {
+      "date": "2026-08-13",
+      "amount": 1350
+    }
+  ],
+  "svan-investment-managers-llp-8710067|shankara-buildpro": [
+    {
+      "date": "2026-07-13",
+      "amount": 18300
+    }
+  ],
+  "svan-investment-managers-llp-8710067|sharda-cropchem": [
+    {
+      "date": "2026-08-21",
+      "amount": 17280
+    }
+  ],
+  "svan-investment-managers-llp-8710067|sharda-motor-industries": [
+    {
+      "date": "2026-10-01",
+      "amount": 67000
+    }
+  ],
+  "svan-investment-managers-llp-8710067|stove-kraft": [
+    {
+      "date": "2026-09-17",
+      "amount": 13772.5
+    }
+  ],
+  "svan-investment-managers-llp-8710067|syrma-sgs-technology": [
+    {
+      "date": "2026-09-03",
+      "amount": 3825
+    }
+  ],
+  "svan-investment-managers-llp-8710067|time-technoplast": [
+    {
+      "date": "2026-09-30",
+      "amount": 16350
+    }
+  ],
+  "svan-investment-managers-llp-8710067|vaibhav-global": [
+    {
+      "date": "2026-08-13",
+      "amount": 13800
+    },
+    {
+      "date": "2026-08-25",
+      "amount": 13800
+    }
+  ],
+  "svan-investment-managers-llp-8710067|varroc-engineering": [
+    {
+      "date": "2026-09-03",
+      "amount": 8895
+    }
+  ],
+  "svan-investment-managers-llp-8710067|wpil": [
+    {
+      "date": "2026-08-17",
+      "amount": 8490
+    }
+  ],
+  "svan-investment-managers-llp-8710067|zensar-technologies": [
+    {
+      "date": "2026-08-10",
+      "amount": 64134
+    }
+  ],
+  "svan-investment-managers-llp-8710090|arvind-fashions": [
+    {
+      "date": "2026-08-25",
+      "amount": 10656
+    }
+  ],
+  "svan-investment-managers-llp-8710090|birlasoft": [
+    {
+      "date": "2026-07-31",
+      "amount": 26240
+    }
+  ],
+  "svan-investment-managers-llp-8710090|caplin-point-laboratories": [
+    {
+      "date": "2026-06-10",
+      "amount": 6400
+    },
+    {
+      "date": "2026-09-18",
+      "amount": 6400
+    }
+  ],
+  "svan-investment-managers-llp-8710090|ceat": [
+    {
+      "date": "2026-08-26",
+      "amount": 36400
+    }
+  ],
+  "svan-investment-managers-llp-8710090|cosmo-first": [
+    {
+      "date": "2026-08-14",
+      "amount": 13480
+    }
+  ],
+  "svan-investment-managers-llp-8710090|creative-newtech": [
+    {
+      "date": "2026-09-23",
+      "amount": 1252.5
+    }
+  ],
+  "svan-investment-managers-llp-8710090|dilip-buildcon": [
+    {
+      "date": "2026-09-29",
+      "amount": 4215
+    }
+  ],
+  "svan-investment-managers-llp-8710090|edelweiss-financial-services": [
+    {
+      "date": "2026-10-06",
+      "amount": 29122.5
+    }
+  ],
+  "svan-investment-managers-llp-8710090|ester-industries": [
+    {
+      "date": "2026-09-17",
+      "amount": 4921.25
+    }
+  ],
+  "svan-investment-managers-llp-8710090|ghcl": [
+    {
+      "date": "2026-07-03",
+      "amount": 47640
+    }
+  ],
+  "svan-investment-managers-llp-8710090|ghcl-textiles": [
+    {
+      "date": "2026-07-03",
+      "amount": 7773
+    }
+  ],
+  "svan-investment-managers-llp-8710090|gland-pharma": [
+    {
+      "date": "2026-09-03",
+      "amount": 16900
+    }
+  ],
+  "svan-investment-managers-llp-8710090|heg-advanced-materials": [
+    {
+      "date": "2026-08-13",
+      "amount": 18241
+    }
+  ],
+  "svan-investment-managers-llp-8710090|indo-count-industries": [
+    {
+      "date": "2026-09-01",
+      "amount": 15757.5
+    }
+  ],
+  "svan-investment-managers-llp-8710090|laxmi-organic-industries": [
+    {
+      "date": "2026-08-13",
+      "amount": 4698
+    }
+  ],
+  "svan-investment-managers-llp-8710090|mastek": [
+    {
+      "date": "2026-09-23",
+      "amount": 20960
+    }
+  ],
+  "svan-investment-managers-llp-8710090|neuland-laboratories": [
+    {
+      "date": "2026-08-14",
+      "amount": 6630
+    }
+  ],
+  "svan-investment-managers-llp-8710090|nitin-spinners": [
+    {
+      "date": "2026-10-06",
+      "amount": 18720
+    }
+  ],
+  "svan-investment-managers-llp-8710090|paras-defence-and-space-technologies": [
+    {
+      "date": "2026-09-18",
+      "amount": 1575
+    }
+  ],
+  "svan-investment-managers-llp-8710090|pokarna": [
+    {
+      "date": "2026-08-17",
+      "amount": 1731
+    }
+  ],
+  "svan-investment-managers-llp-8710090|polyplex": [
+    {
+      "date": "2026-09-28",
+      "amount": 1640
+    }
+  ],
+  "svan-investment-managers-llp-8710090|punjab-chem-and-crop-prot-l": [
+    {
+      "date": "2026-08-07",
+      "amount": 6225
+    }
+  ],
+  "svan-investment-managers-llp-8710090|shakti-pumps-india": [
+    {
+      "date": "2026-08-13",
+      "amount": 980
+    }
+  ],
+  "svan-investment-managers-llp-8710090|shankara-buildpro": [
+    {
+      "date": "2026-07-13",
+      "amount": 11900
+    }
+  ],
+  "svan-investment-managers-llp-8710090|sharda-cropchem": [
+    {
+      "date": "2026-08-21",
+      "amount": 11205
+    }
+  ],
+  "svan-investment-managers-llp-8710090|sharda-motor-industries": [
+    {
+      "date": "2026-10-01",
+      "amount": 47800
+    }
+  ],
+  "svan-investment-managers-llp-8710090|stove-kraft": [
+    {
+      "date": "2026-09-17",
+      "amount": 8995
+    }
+  ],
+  "svan-investment-managers-llp-8710090|syrma-sgs-technology": [
+    {
+      "date": "2026-09-03",
+      "amount": 2482.5
+    }
+  ],
+  "svan-investment-managers-llp-8710090|time-technoplast": [
+    {
+      "date": "2026-09-30",
+      "amount": 11640
+    }
+  ],
+  "svan-investment-managers-llp-8710090|vaibhav-global": [
+    {
+      "date": "2026-08-13",
+      "amount": 9007.5
+    },
+    {
+      "date": "2026-08-25",
+      "amount": 9007.5
+    }
+  ],
+  "svan-investment-managers-llp-8710090|varroc-engineering": [
+    {
+      "date": "2026-09-03",
+      "amount": 6465
+    }
+  ],
+  "svan-investment-managers-llp-8710090|wpil": [
+    {
+      "date": "2026-08-17",
+      "amount": 6180
+    }
+  ],
+  "svan-investment-managers-llp-8710090|zensar-technologies": [
+    {
+      "date": "2026-08-10",
+      "amount": 41832
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|amrutanjan-health-care": [
+    {
+      "date": "2026-10-03",
+      "amount": 15764.4
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|gateway-distriparks": [
+    {
+      "date": "2026-08-24",
+      "amount": 91032.5
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|greaves-cotton": [
+    {
+      "date": "2026-08-17",
+      "amount": 50556
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|navneet-education": [
+    {
+      "date": "2026-06-15",
+      "amount": 25189.5
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|nuvama-wealth-management": [
+    {
+      "date": "2026-05-27",
+      "amount": 24710
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|shree-digvijay-cement": [
+    {
+      "date": "2026-10-05",
+      "amount": 29511
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128005|crompton-greaves-consumer-electrical": [
+    {
+      "date": "2026-08-10",
+      "amount": 66573
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128005|gateway-distriparks": [
+    {
+      "date": "2026-08-11",
+      "amount": 200920
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128005|greaves-cotton": [
+    {
+      "date": "2026-07-28",
+      "amount": 77208
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128005|navneet-education": [
+    {
+      "date": "2026-06-15",
+      "amount": 25036.5
+    }
+  ]
+};
+
+/**
+ * THE LOTS A LOT REGISTER DATES A HOLDING BY (Stage 10fw), keyed as
+ * `BOOK_HOLDING_TRADES` — present exactly where `Position.heldSince` is, under
+ * the same gate: the lots account for every unit held. Each lot's purchase
+ * date, units and total cost as the register prints them.
+ */
+export const BOOK_HOLDING_LOTS: Record<string, { date: string; quantity: number | null; cost: number }[]> = {
+  "lkp-securities-98245|crompton-greaves-consumer-electrical": [
+    {
+      "date": "2025-03-04",
+      "quantity": 3000,
+      "cost": 988054.8
+    },
+    {
+      "date": "2025-11-12",
+      "quantity": 2000,
+      "cost": 558963
+    }
+  ],
+  "lkp-securities-98245|mrs-bectors-food-specialities": [
+    {
+      "date": "2025-11-12",
+      "quantity": 2500,
+      "cost": 646040
+    },
+    {
+      "date": "2026-01-02",
+      "quantity": 3500,
+      "cost": 857455.2
+    }
+  ],
+  "lkp-securities-98245|transrail-lighting": [
+    {
+      "date": "2025-09-10",
+      "quantity": 2500,
+      "cost": 1976450
+    },
+    {
+      "date": "2025-09-17",
+      "quantity": 25,
+      "cost": 19376.25
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|amrutanjan-health-care": [
+    {
+      "date": "2025-08-05",
+      "quantity": 3663,
+      "cost": 2501700.43
+    },
+    {
+      "date": "2026-05-25",
+      "quantity": 1773,
+      "cost": 1000931.02
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|ather-energy": [
+    {
+      "date": "2025-07-31",
+      "quantity": 3000,
+      "cost": 1042548.6
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|eureka-forbes": [
+    {
+      "date": "2025-07-31",
+      "quantity": 4456,
+      "cost": 2501694.2
+    },
+    {
+      "date": "2026-06-15",
+      "quantity": 4376,
+      "cost": 2001466.87
+    },
+    {
+      "date": "2026-07-15",
+      "quantity": 4200,
+      "cost": 1997480.38
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|gateway-distriparks": [
+    {
+      "date": "2025-07-31",
+      "quantity": 34964,
+      "cost": 2501950.42
+    },
+    {
+      "date": "2025-08-07",
+      "quantity": 37862,
+      "cost": 2501943.68
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|greaves-cotton": [
+    {
+      "date": "2025-09-19",
+      "quantity": 10737,
+      "cost": 2401948.5
+    },
+    {
+      "date": "2026-05-25",
+      "quantity": 14541,
+      "cost": 2501965.17
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|jaiprakash-power-ventures": [
+    {
+      "date": "2025-07-31",
+      "quantity": 118623,
+      "cost": 2501996.32
+    },
+    {
+      "date": "2025-08-07",
+      "quantity": 133024,
+      "cost": 2501981.9
+    },
+    {
+      "date": "2025-08-19",
+      "quantity": 53657,
+      "cost": 1000724.51
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|navneet-education": [
+    {
+      "date": "2025-08-05",
+      "quantity": 16793,
+      "cost": 2501952.13
+    },
+    {
+      "date": "2026-07-15",
+      "quantity": 12900,
+      "cost": 1964440.74
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|nuvama-wealth-management": [
+    {
+      "date": "2025-08-05",
+      "quantity": 1765,
+      "cost": 2496705.74
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|panacea-biotec": [
+    {
+      "date": "2025-08-05",
+      "quantity": 2750,
+      "cost": 1143585.3
+    },
+    {
+      "date": "2025-08-06",
+      "quantity": 3306,
+      "cost": 1356203.52
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|sbfc-finance": [
+    {
+      "date": "2025-08-05",
+      "quantity": 48078,
+      "cost": 5003919.78
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|shoppers-stop": [
+    {
+      "date": "2025-07-31",
+      "quantity": 4698,
+      "cost": 2501575.54
+    },
+    {
+      "date": "2026-01-29",
+      "quantity": 4245,
+      "cost": 1501348.68
+    },
+    {
+      "date": "2026-05-25",
+      "quantity": 4415,
+      "cost": 1501283.66
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|shree-digvijay-cement": [
+    {
+      "date": "2025-07-31",
+      "quantity": 29511,
+      "cost": 2501933.73
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|tejas-networks": [
+    {
+      "date": "2025-08-05",
+      "quantity": 4286,
+      "cost": 2502034.79
+    },
+    {
+      "date": "2026-01-29",
+      "quantity": 3034,
+      "cost": 1000850.76
+    }
+  ],
+  "v-e-c-assago-capital-management-llp-128004|wockhardt": [
+    {
+      "date": "2025-08-05",
+      "quantity": 3225,
+      "cost": 5003393.36
+    }
+  ]
+};
+
+/**
  * OPENING, PLUS, MINUS, CLOSING — one entry per holding-window, keyed
  * `accountId|securityKey`.
  *
