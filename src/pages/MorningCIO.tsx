@@ -197,7 +197,7 @@ const CIO_TABS = [
   { key: "returns", label: "Returns", title: "Portfolio returns over a period you pick — the measured window, the type of return and its formula" },
   /**
    * ...AND RIGHT AFTER IT, WHICH PART OF THE BOOK EARNED THAT RETURN (Stage
-   * 10ex): *"select any such segment and see how the subcategories are
+   * 10ez): *"select any such segment and see how the subcategories are
    * performing and contributing to the portfolio returns."* Its own tab, not a
    * third card on Returns, which shows the whole portfolio only (Stage 10dt).
    * Not the NAV bridge removed below — that decomposed the NAV line by flow;

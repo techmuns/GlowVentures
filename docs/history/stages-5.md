@@ -4761,7 +4761,7 @@ cells just like the capital call cells."*
 - **The Performance block is archived as a `performance` section**: the TWRR table plus the client's XIRR and the approach's max/min/median XIRR. The approach figures cover all its investors and become no fact of the book.
 - `pmsReaders.test.mjs` re-reads the Z660 PDF and checks the placement, the window and the four XIRR lines; moving 3.31 under 3 Years by geometry must read as 3 Years. Book totals unchanged (₹836.57 Cr). Page checks fail the same two invariants on `main` (DL-11; bridge sub-lines), so neither is new.
 
-### Stage 10ex — MORNING CIO: RETURN ATTRIBUTION BY ANY SEGMENT
+### Stage 10ez — MORNING CIO: RETURN ATTRIBUTION BY ANY SEGMENT
 
 *"Select any such segment and see how the subcategories are performing and contributing to the portfolio returns."*
 
