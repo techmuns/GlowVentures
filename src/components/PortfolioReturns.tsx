@@ -10,31 +10,10 @@
  * Both retain their state while switching; `?rview=` shares the selected tab.
  * The panel scrolls inside itself. Benchmarks are tiles on one bar scale.
  *
- * A DATED WINDOW OPENS ON A MARKET VALUE, NEVER A COST. Each account opens on
- * its latest statement valuation on or before the opening date (no more than
- * a week before it) and closes on its latest on or before the end; capital
- * moved inside the window is a dated flow (`periodReturns.ts`). The opening,
- * the flows, the close date and value are the account's VERIFIED RETURN
- * RECORD — the one Morning CIO's tile and NAV & Performance close on
- * (`accountInputs`, Stage 10fz) — so FYTD here is the tile's figure over the
- * tile's accounts. Since investment is struck on the capital paid in
- * (`capitalRollup`, the Transactions card's own record, closing on the newest
- * verified record whose flows reconcile). An account that cannot be measured
- * is NAMED with its reason, never blended in as zero.
- *
- * THE BENCHMARK GAP IS LIKE WITH LIKE (Stage 10fz): beside each index's own
- * close-to-close move, the index is struck on the portfolio's own dated flows
- * (PME, `pmeWindowRows`) by the measure the reader picked, and the gap is the
- * portfolio less THAT.
- *
- * ONE RECORD, AND NEVER A PARTIAL RETURN (Stage 10fc). A dated window reads the
- * same verified account records every other return surface reads
- * (`accountReturnRecords`) — the tab once built its own from NAV history and
- * cash-flow rows and measured 9 accounts over FYTD where 17 are verified. The
- * portfolio's figures are struck only when EVERY account that holds value is
- * measured; otherwise they are absent, and the accounts and the records they
- * lack are named. An account with nothing of its own to measure (a verified
- * nil, or valued nowhere in the book) is outside the whole, not a gap in it.
+ * Dated windows read the shared verified account record, including nil
+ * origins, opening statement values and dated capital. Attribution measures
+ * the available subset and names gaps in its info cards (Stage 10gg).
+ * Benchmarks retain their whole-portfolio gate and same-flow index comparison.
  *
  * No line on the face reads as a sentence (Stage 10cp): every explanation is a
  * hover on the figure or control it explains.

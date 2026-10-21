@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import ExcelJS from 'exceljs';
 
-const output = path.resolve('.cache/table-export-check');
+const output = path.resolve('.cache/table-export-check', String(Date.now()));
 let sequence = 0;
 export async function downloadTableWorkbook(table, label) {
   await fs.mkdir(output, {recursive:true});
@@ -30,8 +30,9 @@ export async function assertTableExportControls(page, label) {
 }
 
 /** Export before scrolling so a DOM-only/first-batch implementation fails. */
-export async function assertInfiniteTableExport(page, label) {
-  const table = page.locator('table').filter({has:page.locator('[data-table-scroll-end]')}).first();
+export async function assertInfiniteTableExport(page, label, source = false) {
+  const tables = page.locator('table').filter({has:page.locator('[data-table-scroll-end]')});
+  const table = source ? tables.last() : tables.first();
   if (!await table.count()) return;
   const end = table.locator(':scope > tbody > [data-table-scroll-end]');
   if (!await end.count()) return;
@@ -48,6 +49,61 @@ export async function assertInfiniteTableExport(page, label) {
   assert.deepEqual(await ports(),positions,`${label}: export restores scroll positions`);
   assert.ok(!sheet.getSheetValues().flat(2).some(v=>typeof v==='string' && /Load more|Export Excel/.test(v)),`${label}: table controls are not exported`);
   console.log(`PASS: ${label} exports ${total} rows with ${loaded} loaded`);
+}
+
+/** Hidden fields and offscreen columns must survive without changing preferences. */
+export async function assertCompleteColumnExport(page, table, label) {
+  const key = await table.getAttribute('data-table-view');
+  assert.ok(key,`${label}: configurable table is ready`);
+  const picker = page.locator(`[data-edit-columns=${JSON.stringify(key)}]`).first();
+  const editor = page.locator(`[data-column-editor=${JSON.stringify(key)}]`);
+  await picker.click();
+  const columns = await editor.locator('[data-column-checkbox]').evaluateAll(inputs => inputs.map(input => ({
+    id:input.dataset.columnCheckbox, checked:input.checked, disabled:input.disabled,
+    label:input.closest('label').querySelector('span > span').textContent,
+  })));
+  const hide = columns.find(c=>c.checked&&!c.disabled&&['cost','mv','amount'].includes(c.id)) ?? columns.find(c=>c.checked&&!c.disabled);
+  assert.ok(hide);
+  await editor.locator(`[data-column-checkbox=${JSON.stringify(hide.id)}]`).uncheck();
+  await editor.getByRole('button',{name:'Close Edit Columns',exact:true}).click();
+  const visible = await table.locator(':scope > thead th[data-col]').evaluateAll(cells=>cells.map(cell=>cell.dataset.col));
+  assert.ok(!visible.includes(hide.id));
+  const preferences = await page.evaluate(key=>localStorage.getItem(`glow:tableView:${key}:v1`),key);
+  const beforeRows = await table.locator(':scope > tbody > tr').count();
+  const sheet = await downloadTableWorkbook(table,`${label}-all-columns`);
+  const headings = sheet.getRow(1).values.slice(1);
+  const compact = value=>String(value).replace(/\s+/g,'').toLowerCase();
+  assert.equal(headings.length,columns.length,`${label}: every available column is exported`);
+  columns.forEach((column,i)=>assert.ok(compact(headings[i]).startsWith(compact(column.label)),`${label}: ${column.id} has its own correctly arranged heading`));
+  assert.ok(headings.length>visible.length,`${label}: hidden fields are present in the workbook`);
+  assert.deepEqual(await table.locator(':scope > thead th[data-col]').evaluateAll(cells=>cells.map(cell=>cell.dataset.col)),visible,`${label}: screen visibility is unchanged`);
+  assert.equal(await table.locator(':scope > tbody > tr').count(),beforeRows,`${label}: export preserves the scroll batch`);
+  assert.equal(await page.evaluate(key=>localStorage.getItem(`glow:tableView:${key}:v1`),key),preferences,`${label}: exporting does not save visibility changes`);
+  await picker.click();
+  await editor.locator(`[data-column-checkbox=${JSON.stringify(hide.id)}]`).check();
+  await editor.getByRole('button',{name:'Close Edit Columns',exact:true}).click();
+  console.log(`PASS: ${label} exports all ${headings.length} columns with ${visible.length} visible`);
+}
+
+export async function assertCollapsedSectionExport(page) {
+  const table = page.locator('table[data-pm-table]').first();
+  const section = table.locator('[data-pm-section="atCost"]');
+  const toggle = table.locator('[data-pm-section-toggle="atCost"]');
+  if (await section.getAttribute('data-pm-section-open') !== 'true') await toggle.click();
+  const name = await table.locator('tr[data-pm-group] td').first().innerText();
+  const before = await table.locator('tr[data-pm-group]').count();
+  assert.ok(before>0);
+  await toggle.click();
+  assert.equal(await section.getAttribute('data-pm-section-open'),'false');
+  const collapsed = await table.locator('tr[data-pm-group]').count();
+  assert.ok(collapsed<before);
+  const sheet = await downloadTableWorkbook(table,'private-market-collapsed-section');
+  const compact = value=>String(value).replace(/\s+/g,'');
+  assert.ok(sheet.getColumn(1).values.some(value=>compact(value?.text??value)===compact(name)),'an investment inside a collapsed section is exported');
+  assert.equal(await table.locator('tr[data-pm-group]').count(),collapsed);
+  assert.equal(await section.getAttribute('data-pm-section-open'),'false','export preserves collapsed sections on screen');
+  await toggle.click();
+  console.log('PASS: collapsed Private Market investments are exported without changing section state');
 }
 
 export async function assertPrivateProfileExport(page, store) {
@@ -70,7 +126,13 @@ export async function assertPrivateProfileExport(page, store) {
   const headings = await table.locator(':scope > thead th').allTextContents();
   const arranged = await downloadTableWorkbook(table,'private-market-column-order');
   const compact = text => String(text).replace(/\s+/g,'');
-  assert.deepEqual(arranged.getRow(1).values.slice(1).map(compact),headings.map(compact),'Excel follows the arranged columns');
+  const exported = arranged.getRow(1).values.slice(1).map(compact);
+  let previous = -1;
+  for (const heading of headings.map(compact)) {
+    const index = exported.indexOf(heading,previous+1);
+    assert.ok(index>previous,'Excel preserves the arrangement while including hidden columns');
+    previous=index;
+  }
   await page.getByRole('tab',{name:/^Transactions/}).click();
   await downloadTableWorkbook(page.locator('table[data-pm-table="transactions"]'),'private-market-transactions');
   console.log('PASS: Private Market saved profiles, retained drafts and transactions export');
