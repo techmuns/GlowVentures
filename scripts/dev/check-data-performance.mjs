@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import { chromium } from 'playwright-core';
 import { installReadModelRoutes } from './read-model-api.mjs';
+import { assertStickyTableHeaders, assertTableHeaderFixture } from './table-headers.mjs';
 const base = process.env.BASE || 'http://127.0.0.1:4173';
 assert.ok(['localhost', '127.0.0.1'].includes(new URL(base).hostname));
 const capture = JSON.parse(await fs.readFile('public/data/corporate-actions.json', 'utf8'));
@@ -38,6 +39,7 @@ async function scrollToEnd(table) {
   assert.fail('table never reached its final row');
 }
 try {
+  await assertTableHeaderFixture(browser,base);
   for (const route of ['/corporate-actions','/monitor','/monitor?group=category','/monitor?group=basket','/monitor?group=assetClass','/monitor?show=transactions','/ledger','/sectors','/family','/capital-gains','/private-market','/holdings','/performance','/returns','/audit','/audit?consolidated=Transactions',sourceRoute,'/cio','/polycab','/upload','/history']) {
     const page = await browser.newPage({ viewport: { width:1440, height:1000 } });
     const requests=[], errors=[];
@@ -125,6 +127,7 @@ try {
       assert.equal(await table.locator('tbody > tr:not([data-table-scroll-end])').count(), total);
       assert.equal(await page.getByRole('button', {name:/Load all/}).count(), 0);
     }
+    Object.assign(results.at(-1), await assertStickyTableHeaders(page, route));
     assert.deepEqual(errors, [], `${route}: no runtime errors after interactions`);
     console.log(JSON.stringify(results.at(-1))); await page.close();
   }
@@ -144,6 +147,7 @@ try {
   await insiderTable.waitFor();
   assert.equal(await insiderTable.locator('tbody > tr:not([data-table-scroll-end])').count(), 50);
   assert.equal(await scrollToEnd(insiderTable), disclosures.length, 'every disclosed insider row remains reachable');
+  await assertStickyTableHeaders(insiderPage, 'insider disclosures');
   await insiderPage.close();
   const updatePage=await browser.newPage();
   await updatePage.route('**/api/**',r=>r.fulfill({json:{ok:false}}));
@@ -155,5 +159,5 @@ try {
   await updatePage.close();
   await fs.mkdir('.cache/table-scroll-check',{recursive:true});
   await fs.writeFile('.cache/table-scroll-check/data-performance.json',JSON.stringify(results,null,2));
-  console.log('PASS all routes, source-request budgets, default row limits, infinite scrolling, full-data access and filter reset');
+  console.log('PASS all routes, source-request budgets, default row limits, infinite scrolling, sticky headers in both themes, full-data access and filter reset');
 } finally { await browser.close(); }

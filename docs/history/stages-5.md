@@ -4962,15 +4962,16 @@ current unrealized P&L."*
 - The order is still portfolio, then benchmarks, then attribution (Stages 10dy, 10fd). The new surfaces use `.ret-well`, `.ret-stat`, `.ret-chip` and `.ret-bar`, each with a light-mode colour.
 - `check:pages` passes on every `cio-returns*` route. The only finding is the KPI strip's DL-11 invested-line check, which fails on main too.
 
+
 ### Stage 10fq — TABLES SCROLL CONTINUOUSLY, WITHOUT PAGES
 
 - The shared table body now appends 50 rows when its end enters view. Earlier rows remain mounted, sorting and totals use the full result, and filters/sorts reset loading and vertical scroll. One boundary spans all Portfolio Monitor groups. The previous/next buttons and page-size selector are removed throughout.
 - Data Audit, all consolidated workbook tabs, Capital Gains planners and Insider Deals use the same scroll behavior; their 200/30/40-row cutoffs and Show all controls are gone. Tables already showing their full collection continue to scroll normally. A Load more button also supports keyboard access and browsers without intersection observers.
 - The browser regression drives scrolling through the final row, checks preserved row identity and totals across grouping axes, and checks filter reset and the absence of paging controls. CI runs it with local feed fixtures after the build and financial suites.
 
-### Stage 10fr — COMPLETE COST RECOVERY FOR LIVE FUND HOLDINGS
 
-- The second audit found that Stage 10fn covered quote-only shares but omitted the analogous fund overlays. Exact owner, scheme/plan, dated units and FIFO now recover 21 more valued fund/account costs and three recorded DSP ETF costs. Twenty valued rows support HPR; ICICI Equity Savings recovers cost only because its sale proceeds have an inconsistent cash sign. Individual and pooled return paths withhold that unverified HPR. No layout, controls or styles change. Automated review also caught an aggregate path excluding the unknown-proceeds holding: Return Analysis now keeps it in the FIFO pool and withholds the pooled return. Existing absence helpers name the actual proceeds gap.
-- A Closing ends a review folio block. Ajay's 34,045.997 Kotak Large & Mid Cap units must not be pooled with the separate, already-costed 27,900.484-unit AMC folio. Unmatched plans, later movements and even the 0.066-unit Motilal Arbitrage discrepancy refuse recovery.
-- The exact client request now includes residual fund balances, Hope's printed-cost/available-unit disagreement and the ESDS register's 42-share bridge and ₹774 rate/payment difference. The four-page HDFC scan was visually read: it has quantities, not acquisition costs. Existing source files are not requested again as though absent.
-- Tests cover separate/ambiguous folios, original FIFO lots, wrong-sign proceeds, exact-unit refusals and recovered costs reaching both fund overlays. Full source regeneration and financial CI verify reproducibility; source-row evidence stays beside every recovery.
+### Stage 10fr — COLUMN HEADERS STAY VISIBLE WHILE TABLES SCROLL
+
+- One shared sticky rule pins each complete `thead`, including source-sheet column letters, preamble and headings, above scrolling cells. An opaque theme surface prevents body rows and pinned columns showing through. Calculation dialogs receive the same rule outside the app root.
+- Table wrappers that previously scrolled only horizontally now also scroll vertically at a bounded height. Existing panels retain their own scroll height; Snapshot History gains the same table wrapper. Print keeps normal repeating table headers.
+- The browser regression measures actual body movement and header position in both themes on every visited table, and checks that multi-row headers retain their row spacing. Existing infinite scrolling and full-data checks still run.
