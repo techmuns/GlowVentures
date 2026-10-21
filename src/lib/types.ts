@@ -694,6 +694,10 @@ export type ReturnSeries = {
   m3: number | null;
   m6: number | null;
   y1: number | null;
+  /** Trailing multi-year windows, as the SEBI PMS investor report labels them. */
+  y3: number | null;
+  y5: number | null;
+  y10: number | null;
   si: number | null;          // since inception
   /** False when the period is under a year — the reports annualise only past one. */
   siAnnualised: boolean | null;
