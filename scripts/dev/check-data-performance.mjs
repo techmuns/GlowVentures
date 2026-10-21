@@ -52,8 +52,7 @@ try {
     const started = Date.now(); await page.goto(base+route); await page.waitForLoadState('networkidle');
     const metrics = await page.evaluate(() => ({ rows:document.querySelectorAll('main tbody tr').length, longTasks:window.__long.length,
       blockedMs: Math.round(window.__long.reduce((s,d)=>s+d,0)), scriptBytes:performance.getEntriesByType('resource').filter(r=>r.initiatorType==='script').reduce((s,r)=>s+r.encodedBodySize,0) }));
-    const headers = await assertStickyTableHeaders(page, route);
-    results.push({route,...headers,settledMs:Date.now()-started,requests:requests.length,archiveRequests:requests.filter(p=>p.startsWith('/audit/')).length,...metrics});
+    results.push({route,settledMs:Date.now()-started,requests:requests.length,archiveRequests:requests.filter(p=>p.startsWith('/audit/')).length,...metrics});
     assert.deepEqual(errors, [], route);
     if (route !== '/audit') assert.equal(requests.filter(p => /^\/audit\/[^/]+\/document.json$/.test(p)).length,0,`${route}: no browser archive fan-out`);
     assert.equal(requests.filter(p=>/^\/lookthrough\/\d+\.json$/.test(p)).length,0,`${route}: no browser fund fan-out`);
@@ -128,6 +127,7 @@ try {
       assert.equal(await table.locator('tbody > tr:not([data-table-scroll-end])').count(), total);
       assert.equal(await page.getByRole('button', {name:/Load all/}).count(), 0);
     }
+    Object.assign(results.at(-1), await assertStickyTableHeaders(page, route));
     assert.deepEqual(errors, [], `${route}: no runtime errors after interactions`);
     console.log(JSON.stringify(results.at(-1))); await page.close();
   }
