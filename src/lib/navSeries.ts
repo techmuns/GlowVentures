@@ -84,7 +84,10 @@ export function navIndexSeries(history: NavPoint[]): NavIndexPoint[] {
    * undefined before it — the one thing a chain-link cannot rescue, because it
    * is a LEVEL rather than a return.
    */
-  const firstComplete = history.find((p) => p.panelComplete !== false);
+  // The whole-book series (Stage 10gd) says separately when its LEVEL is whole
+  // (`levelComplete`); the statement series only ever said it of its panel.
+  const levelWhole = (p: NavPoint) => (p.levelComplete ?? p.panelComplete) !== false;
+  const firstComplete = history.find(levelWhole);
   const base = firstComplete ? firstComplete.nav : history[0].nav;
   /**
    * …AND IT STARTS ON THE BOOK'S LINE, NOT AT ITS OWN 100 (MNT-12).
@@ -117,7 +120,10 @@ export function navIndexSeries(history: NavPoint[]): NavIndexPoint[] {
       const open = p.linkOpen ?? history[i - 1].nav;
       const close = p.linkClose ?? p.nav;
       const flow = p.flowIn ?? 0;
-      if (open > 0) idx *= (close - flow) / open;
+      // A LINK WHOSE ONLY MOVE IS ROUNDING MEASURED NOTHING. The whole-book
+      // series has a point on every date capital moved (Stage 10gd), and three
+      // figures each rounded to the paisa would otherwise print a −0.00% there.
+      if (open > 0 && Math.abs(close - flow - open) > open * 1e-10) idx *= (close - flow) / open;
     }
     if (p === firstComplete) anchor = idx;
     out.push({
@@ -125,7 +131,7 @@ export function navIndexSeries(history: NavPoint[]): NavIndexPoint[] {
       nav: p.nav,
       flowIn: p.flowIn ?? 0,
       index: idx,
-      navIndex: p.panelComplete === false || base <= 0 ? NaN : (p.nav / base) * anchor,
+      navIndex: !levelWhole(p) || base <= 0 ? NaN : (p.nav / base) * anchor,
       accountsOnDate: p.accountsOnDate ?? 0,
       accountsCarried: p.accountsCarried ?? 0,
       unreportedFlowValue: p.unreportedFlowValue ?? 0,

@@ -50,6 +50,37 @@ import { resolveSector } from "../shared/sectors.mjs";
 import { readRegister, partitionAgainstBook, REGISTER_PATH } from "./lib/registerRead.mjs";
 import * as XLSX from "xlsx";
 
+/**
+ * ── THE WHOLE BOOK'S NAV SERIES, AS THE CARD DRAWS IT (Stage 10gd) ──────────
+ *
+ * The series is struck at runtime off the book (`src/lib/bookNavBook.ts`), not
+ * emitted into `glowData.ts`, so its points are read the way `build:views`
+ * reads its models: bundled here and run once. Everything a claim below is
+ * struck on — the chained return, the level, the panel, the coverage — is
+ * then re-derived off those points by this file's own arithmetic, never by
+ * `navIndexSeries` or the component, and the level is tied back to
+ * `glowData.ts` independently (`NAV_LEVEL_TIE`). Null on any failure, so every
+ * claim struck on it FAILS rather than passing over nothing.
+ */
+const WHOLE_BOOK_NAV = await (async () => {
+  try {
+    const { build } = await import("esbuild");
+    const root = new URL("..", import.meta.url);
+    const rootPath = decodeURIComponent(root.pathname).replace(/^\/([A-Za-z]:)/, "$1");
+    const out = await build({
+      stdin: { contents: 'export { WHOLE_BOOK_NAV } from "./src/lib/bookNavBook";', resolveDir: rootPath },
+      bundle: true, write: false, format: "esm", platform: "node",
+      alias: { "@": `${rootPath.replace(/\/$/, "")}/src` }, logLevel: "error",
+    });
+    const mod = await import(`data:text/javascript;base64,${Buffer.from(out.outputFiles[0].text).toString("base64")}`);
+    return mod.WHOLE_BOOK_NAV ?? null;
+  } catch (e) {
+    console.error(`the whole-book NAV series could not be built: ${e?.message ?? e}`);
+    return null;
+  }
+})();
+
+
 const BASE = process.env.BASE ?? "http://127.0.0.1:4173";
 const OUT = process.env.OUT ?? "docs/page-check";
 const CHROME = process.env.CHROME ?? "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
@@ -9196,12 +9227,16 @@ const XA_BOOK = (() => {
     // ── Return & Drawdown's maximum drawdown (XA-17), chained here on each
     // point's own link — (close − capital in) ÷ open — never through
     // `navIndexSeries` or `maxDrawdown`, which is what the page calls.
+    // WHOLE BOOK ONLY since Stage 10gd: the page strikes its drawdown from the
+    // day every valued investment is in the series, so this does too.
+    const ddNav = (WHOLE_BOOK_NAV?.points ?? []).filter((n) => n.panelComplete !== false);
     const ddIdx = [];
     { let idx = 100;
-      nav.forEach((n, i) => {
+      ddNav.forEach((n, i) => {
         if (i > 0) {
-          const open = n.linkOpen ?? nav[i - 1].nav, close = n.linkClose ?? n.nav;
-          if (open > 0) idx *= (close - (n.flowIn ?? 0)) / open;
+          const open = n.linkOpen ?? ddNav[i - 1].nav, close = n.linkClose ?? n.nav;
+          // A move that is only rounding is no move (the page's rule, re-expressed).
+          if (open > 0 && Math.abs(close - (n.flowIn ?? 0) - open) > open * 1e-10) idx *= (close - (n.flowIn ?? 0)) / open;
         }
         ddIdx.push({ date: n.date, index: idx });
       }); }
@@ -9414,66 +9449,58 @@ const xaEl = (ctx, key) => (ctx?.xa ?? []).find((x) => x.xa === key) ?? null;
 
 const NAV_SERIES_BOOK = (() => {
   try {
-    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
-    const grab = (name, open) => {
-      const i = src.indexOf(`export const ${name}`);
-      if (i < 0) return null;
-      const eq = src.indexOf("=", i);
-      const start = src.indexOf(open, eq);
-      const close = open === "[" ? "\n];" : "\n};";
-      const end = src.indexOf(close, start);
-      if (start < 0 || end < 0) return null;
-      return JSON.parse(src.slice(start, end + 2));
+    const nav = WHOLE_BOOK_NAV?.points;
+    const cov = WHOLE_BOOK_NAV?.coverage;
+    if (!nav?.length || !cov) return null;
+    // The day the whole book is in the return, and the segment the card's
+    // return is struck over.
+    const segFrom = nav.findIndex((p) => p.panelComplete !== false);
+    const chainFrom = (from, step) => {
+      let x = 100;
+      for (let i = Math.max(1, from + 1); i < nav.length; i++) x *= step(nav[i], nav[i - 1]);
+      return x - 100;
     };
-    const nav = grab("BOOK_NAV_HISTORY", "[");
-    const cov = grab("BOOK_NAV_COVERAGE", "{");
-    if (!nav || !cov) return null;
+    const SPECK = 1000;
+    const holding = cov.units.filter((u) => Math.abs(u.endValue ?? u.bookValue) >= SPECK);
     return {
       /**
        * THE BOOK'S RETURN, CHAINED TWO WAYS — the right one and the wrong one.
        *
-       * Reproduced here from the emitted points, on a path the page does not
-       * take, so the pill can be checked against the book rather than against
-       * another rendering of itself. `byLink` divides each interval's closing
-       * end by its OPENING END OVER THE SAME ACCOUNTS; `byLevel` divides the
-       * whole marked panel by the previous one and therefore counts every
-       * account that ARRIVED. On this book they are +5.09% and +398.76%, and
-       * the second is what the card printed for one build of this change with
-       * the whole sweep reporting clean — which is why this exists.
+       * `byLink` divides each interval's closing end by its OPENING END OVER THE
+       * SAME INVESTMENTS, net of the capital that interval carried, over the
+       * whole-book segment the hover states; `byLevel` divides the whole NAV by
+       * the previous one over the whole series and therefore counts every
+       * investment that JOINED and every first valuation. A card printing
+       * either the second or the first over the wrong window fails.
        */
-      chainByLink: (() => {
-        let x = 100;
-        for (let i = 1; i < nav.length; i++) {
-          const p = nav[i];
-          const open = p.linkOpen ?? nav[i - 1].nav;
-          if (open > 0) x *= ((p.linkClose ?? p.nav) - (p.flowIn ?? 0)) / open;
-        }
-        return x - 100;
-      })(),
-      chainByLevel: (() => {
-        let x = 100;
-        for (let i = 1; i < nav.length; i++) {
-          if (nav[i - 1].nav > 0) x *= (nav[i].nav - (nav[i].flowIn ?? 0)) / nav[i - 1].nav;
-        }
-        return x - 100;
-      })(),
-      // The series' own extension, which is the other half of this change.
+      chainByLink: segFrom >= 0 ? chainFrom(segFrom, (p) => ((p.linkOpen ?? 0) > 0
+        && Math.abs((p.linkClose ?? 0) - (p.flowIn ?? 0) - p.linkOpen) > p.linkOpen * 1e-10
+        ? ((p.linkClose ?? 0) - (p.flowIn ?? 0)) / p.linkOpen : 1)) : null,
+      chainByLevel: chainFrom(0, (p, q) => (q.nav > 0 ? (p.nav - (p.flowIn ?? 0)) / q.nav : 1)),
       seriesPoints: nav.length,
       seriesFrom: nav[0]?.date ?? null,
       seriesTo: nav[nav.length - 1]?.date ?? null,
-      panelCompleteFrom: cov.panelCompleteFrom ?? null,
+      panelCompleteFrom: cov.returnCompleteFrom ?? null,
+      levelCompleteFrom: cov.levelCompleteFrom ?? null,
+      // Vertices each curve draws: the solid return from the whole-book day,
+      // the lighter stretch up to and including it, the NAV from the level's.
       completePanelPoints: nav.filter((p) => p.panelComplete !== false).length,
+      earlyPoints: nav.filter((p) => cov.returnCompleteFrom && p.date <= cov.returnCompleteFrom).length,
+      levelPoints: nav.filter((p) => p.levelComplete !== false).length,
       panelFirst: (nav[0]?.accountsOnDate ?? 0) + (nav[0]?.accountsCarried ?? 0),
       panelLast: (nav[nav.length - 1]?.accountsOnDate ?? 0) + (nav[nav.length - 1]?.accountsCarried ?? 0),
-      /**
-       * WHAT THE STATEMENTS DO NOT SETTLE, summed over the steps — a MOVE, never
-       * a value. Whether a step is settled is `navProof.test.ts`'s claim, held to
-       * the archive there; this carries the book's answer so the page can be
-       * held to it, in both directions: named where there is one, absent where
-       * there is none.
-       */
       unprovenMove: nav.reduce((a, p) => a + (p.unreportedFlowValue ?? 0), 0),
-      unprovenAccounts: (cov.covered ?? []).filter((c) => c.flowBasis === "unreported").map((c) => c.accountId),
+      unprovenAccounts: cov.units.filter((u) => u.unproven.length > 0).map((u) => u.key),
+      // The coverage, counted here off the units.
+      holding: holding.length,
+      inReturn: holding.filter((u) => u.returnFrom != null).length,
+      joined: holding.filter((u) => u.returnFrom != null && u.entry === "valuation").length,
+      atCost: holding.filter((u) => u.atCost).length,
+      atCostValue: holding.filter((u) => u.atCost).reduce((a, u) => a + (u.endValue ?? 0), 0),
+      holdingAccounts: [...new Set(holding.map((u) => u.accountId))],
+      levelEnd: cov.levelEnd,
+      // The whole-book segment's own points, for the drawdown (XA-17).
+      segment: segFrom >= 0 ? nav.slice(segFrom) : [],
     };
   } catch { return null; }
 })();
@@ -19322,16 +19349,53 @@ const NAV_RECON_BOOK = (() => {
     return { raw, once, doubled: raw - once, keys: [...keys].sort() };
   } catch { return null; }
 })();
+/**
+ * THE ACCOUNTS HOLDING VALUE, AND THE VALUATIONS NEWER THAN THE BOOK'S OWN —
+ * both off `glowData.ts` as generated, never off the series. For each account
+ * a statement values (the review's own lines aside), its latest-dated
+ * valuation — the selected return record's closing, the book's holdings, or the
+ * statement series, in that order on a tie — less the value the book carries.
+ */
+const NAV_HOLDING_ACCOUNTS = (() => {
+  try {
+    const ps = statementBookPositions(readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8"));
+    return [...new Set(ps.filter((x) => Math.abs(x.marketValue) >= 1000).map((x) => x.accountId))].sort();
+  } catch { return null; }
+})();
+const NAV_LEVEL_TIE = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS");
+    const ps = statementBookPositions(src);
+    const recs = bookObject(src, "BOOK_ACCOUNT_RETURN_RECORDS") ?? {};
+    const hist = bookObject(src, "BOOK_ACCOUNT_NAV_HISTORY") ?? {};
+    if (!accounts || !ps) return null;
+    let newer = 0;
+    for (const a of accounts) {
+      const own = ps.filter((x) => x.accountId === a.accountId);
+      if (a.reviewHolder || !own.length || own.every((x) => x.review)) continue;
+      const book = own.reduce((t, x) => t + x.marketValue, 0);
+      const rec = recs[a.accountId]?.record ?? null;
+      const cands = [];
+      if (a.asOf) cands.push({ date: a.asOf, value: book, rank: 1 });
+      if (rec) cands.push({ date: rec.asOf, value: rec.value, rank: 0 });
+      for (const h of hist[a.accountId] ?? []) cands.push({ date: h.date, value: h.nav, rank: 2 });
+      cands.sort((x, y) => (x.date < y.date ? 1 : x.date > y.date ? -1 : x.rank - y.rank));
+      if (cands.length) newer += cands[0].value - book;
+    }
+    return { newer };
+  } catch { return null; }
+})();
 const NAV_RECON = [
   ["the NAV card's lists, its statement book and the current value reconcile step by step (MNT-4)", (t, ctx) => {
     if (!NAV_RECON_BOOK || !COSTED_BOOK) return false;
-    const h = (ctx?.titles ?? []).find((x) => /^As each statement prints them, the three lists sum to ₹/.test(x));
+    const h = (ctx?.titles ?? []).find((x) => /^As each statement prints them, the investments sum to ₹/.test(x));
     if (!h) return false;
     // The gap between a statement sum and the current value, named as the
     // double count, is the defect itself.
     if (/above the current value/i.test(h)) return false;
     const rupees = (x) => (x == null ? NaN : Number(String(x).replace(/[₹,\s]/g, "")));
-    const per = rupees(/the three lists sum to (₹[\d,.]+)/.exec(h)?.[1]);
+    const per = rupees(/the investments sum to (₹[\d,.]+)/.exec(h)?.[1]);
     const cur = rupees(/The current value of holdings, (₹[\d,.]+),/.exec(h)?.[1]);
     const keys = (ctx?.navListRows?.twiceKeys ?? "").split(" ").filter(Boolean);
     let doubled, book;
@@ -19350,7 +19414,7 @@ const NAV_RECON = [
       // statement book, the footer says so in those words, and names no
       // holding as reported twice. Struck on the book, so a footer still
       // subtracting the family's pair fails rather than abstaining.
-      const m = /No holding is reported by two accounts, so the lists and the consolidated statement book agree, (₹[\d,.]+)\./.exec(h);
+      const m = /No holding is reported by two accounts, so that sum and the consolidated statement book agree, (₹[\d,.]+)\./.exec(h);
       if (!m || !Number.isFinite(per) || !Number.isFinite(cur)) return false;
       doubled = 0; book = rupees(m[1]);
       if (keys.length || /two accounts both report|each on two accounts' statements/i.test(h)) return false;
@@ -19360,7 +19424,18 @@ const NAV_RECON = [
     const dep = /(₹[\d,.]+\s*(?:Cr|L|K)?) of \d+ cash-equivalent funds?/.exec(h)?.[1];
     const steps = [nav, dep].filter(Boolean);
     const tie = steps.reduce((a, x) => a + compactTieCr(Math.abs(money2cr(x))), 0) + 1e-6;
-    return Math.abs(per - NAV_RECON_BOOK.raw) <= 0.01
+    // THE SERIES' OWN NAV, from the same book in named steps (Stage 10gd): the
+    // level at its last point, and the newer valuations re-derived here off the
+    // records and the statement series rather than read off the series.
+    const lv = /The series' NAV at \d{4}-\d{2}-\d{2}, (₹[\d,.]+), is that book(?: plus ([+−-]?₹[\d,.]+\s*(?:Cr|L|K)?) from valuations newer than the holdings statement the book carries)?/.exec(h);
+    if (!lv || !NAV_LEVEL_TIE || !NAV_SERIES_BOOK) return false;
+    const levelEnd = rupees(lv[1]);
+    const newer = lv[2] ? signedCr(lv[2]) * 1e7 : 0;
+    const levelTies = Math.abs(levelEnd - NAV_SERIES_BOOK.levelEnd) <= 1
+      && Math.abs(newer - NAV_LEVEL_TIE.newer) <= compactTieCr(Math.abs(NAV_LEVEL_TIE.newer) / 1e7) * 1e7 + 1
+      && Math.abs(levelEnd - (NAV_RECON_BOOK.once + NAV_LEVEL_TIE.newer)) <= 1;
+    return levelTies
+      && Math.abs(per - NAV_RECON_BOOK.raw) <= 0.01
       && Math.abs(doubled - NAV_RECON_BOOK.doubled) <= 0.01
       && Math.abs(book - NAV_RECON_BOOK.once) <= 0.01
       && Math.abs(cur - COSTED_BOOK.totalValue) <= 1
@@ -19379,7 +19454,7 @@ const NAV_BASIS = [
     const head = navBasis(ctx);
     if (head == null) return navBasisMissing(ctx);
     if (!NAV_RECON_BOOK || !COSTED_BOOK) return false;
-    const m = /accounts, ₹[\d,.]+\s*(?:Cr|L|K)? of the (₹[\d,.]+\s*(?:Cr|L|K)?) the statements value( \(the current value of holdings, (₹[\d,.]+\s*(?:Cr|L|K)?), is on today's prices\))?/.exec(head);
+    const m = /the NAV is ₹[\d,.]+\s*(?:Cr|L|K)? against the (₹[\d,.]+\s*(?:Cr|L|K)?) the statements value( \(the current value of holdings, (₹[\d,.]+\s*(?:Cr|L|K)?), is on today's prices\))?/.exec(head);
     if (!m) return false;
     const stmt = money2cr(m[1]);
     const book = NAV_RECON_BOOK.once / 1e7, live = COSTED_BOOK.totalValue / 1e7;
@@ -19400,7 +19475,7 @@ const NAV_BASIS = [
     const why = (ctx?.titles ?? []).find((x) => /The panel grows from/i.test(x));
     if (!why) return false;
     return !/valued at both of its ends/i.test(why)
-      && /measured over the accounts in the panel at both of its ends — each held at its most recent mark on or before that date, so a step in which none of them published a new statement is flat/.test(why);
+      && /measured over the investments in the panel at both of its ends — each held at its most recent valuation on or before that date, so a step in which none of them was revalued is flat/.test(why);
   }],
 ];
 
@@ -19514,15 +19589,19 @@ const CIO_NAV = [
      * counted off the emitted book — so a build that drew either over the wrong
      * span fails, in whichever direction.
      */
-    ["the raw NAV curve covers only the complete panel, and the book's covers the whole series", (t, ctx) => {
+    ["the raw NAV curve covers only the whole level, and the book's return is solid only over the whole-book segment", (t, ctx) => {
       const counts = ctx?.navChart?.vertexCounts;
       if (!counts || !NAV_SERIES_BOOK) return notChecked("the NAV chart was not found on this pass");
       if (NAV_SERIES_BOOK.completePanelPoints >= NAV_SERIES_BOOK.seriesPoints) {
         return notChecked("this book's panel is complete at the series' first point");
       }
-      // recharts emits one command per plotted vertex on a monotone curve.
+      // recharts emits one command per plotted vertex on a monotone curve. The
+      // stretch still joining shares the junction point with the solid line,
+      // so the two together draw every point of the series once and that one twice.
       return counts.includes(NAV_SERIES_BOOK.completePanelPoints)
-        && counts.includes(NAV_SERIES_BOOK.seriesPoints);
+        && counts.includes(NAV_SERIES_BOOK.earlyPoints)
+        && NAV_SERIES_BOOK.completePanelPoints + NAV_SERIES_BOOK.earlyPoints === NAV_SERIES_BOOK.seriesPoints + 1
+        && counts.includes(NAV_SERIES_BOOK.levelPoints);
     }],
 
     /**
@@ -19543,7 +19622,7 @@ const CIO_NAV = [
       }
       const why = (ctx?.titles ?? []).find((x) => /The panel grows from/i.test(x));
       if (!why) return false;
-      return new RegExp(`${NAV_SERIES_BOOK.panelFirst} to ${NAV_SERIES_BOOK.panelLast} accounts`).test(why)
+      return new RegExp(`${NAV_SERIES_BOOK.panelFirst} to ${NAV_SERIES_BOOK.panelLast} investments`).test(why)
         && why.includes(NAV_SERIES_BOOK.panelCompleteFrom);
     }],
 
@@ -19563,7 +19642,7 @@ const CIO_NAV = [
       // and the coverage are its hover since the basis line was removed.
       return new RegExp(`Portfolio NAV vs ${reEsc(wantedBenchLabel(ctx))}`).test(t)
         && /\d+ dated points, \d{4}-\d{2}-\d{2} → \d{4}-\d{2}-\d{2}/.test(head)
-        && /\d+ of \d+ accounts/.test(head);
+        && /\d+ of the \d+ investments holding value in the return/.test(head);
     }],
   /**
    * THE ADJUSTMENT IS LOAD-BEARING, AND THE PAGE PRINTS BOTH FIGURES.
@@ -19608,12 +19687,15 @@ const CIO_NAV = [
        * cannot date are two returns a reader will pair with the pill.
        */
       const raw = (ctx?.titles ?? [])
-        .map((x) => /the covered set reads\s*([+-]\d+\.\d+)%\s*with the capital left in against\s*([+-]\d+\.\d+)%/.exec(x))
+        .map((x) => /the book's NAV reads\s*([+-]\d+\.\d+)%\s*with the capital left in against\s*([+-]\d+\.\d+)%/.exec(x))
         .find(Boolean);
       if (!book || !raw) return false;
       const named = (ctx?.titles ?? []).some((x) =>
         /BOTH FIGURES ARE OVER THAT SEGMENT/.test(x) && /Over \d{4}-\d{2}-\d{2} → \d{4}-\d{2}-\d{2}/.test(x));
-      return named && Math.abs(Number(raw[1]) - Number(raw[2])) > 1;
+      // …and since Stage 10gd both are struck over the whole-book segment the
+      // hover's own return is, so the adjusted half must BE that figure.
+      return named && Math.abs(Number(raw[1]) - Number(raw[2])) > 1
+        && Math.abs(Number(raw[2]) - Number(book[1])) <= 0.011;
     }],
   /**
    * ── THE CHART ACTUALLY PAINTS ────────────────────────────────────────────
@@ -19734,7 +19816,7 @@ const CIO_NAV = [
    * for.
    */
   ["the NAV card’s methodology moved to the hover rather than going", (t, ctx) => {
-    const why = (ctx?.titles ?? []).find((x) => /most recent mark/i.test(x)) ?? "";
+    const why = (ctx?.titles ?? []).find((x) => /most recent (?:mark|valuation)/i.test(x)) ?? "";
     if (!why) return false;
     return /counts a holding two accounts both report once/i.test(why);
   }],
@@ -19816,42 +19898,35 @@ const CIO_NAV = [
    * widened or narrowed one list would keep printing a plausible count and only
    * the partition catches it.
    */
-  ["the excluded accounts are listed, and the three lists partition the book",
+  /**
+   * ── EVERY INVESTMENT IS NAMED, AND THE LISTS PARTITION THE BOOK (Stage 10gd)
+   *
+   * The whole-book series holds every investment carrying value: in the return,
+   * or held at cost and in the NAV only. The hover's count, the summary's, the
+   * book's own and the rows must all agree — and every account holding value in
+   * `glowData.ts`, re-derived here off the statement positions, must be one of
+   * the series' investments. A filter that dropped an account would keep
+   * printing plausible counts; only the re-derivation catches it.
+   */
+  ["the series' coverage names every investment, and its lists partition the book",
     (t, ctx) => {
-      /**
-       * SCOPED TO THE CARD, BECAUSE "N of M accounts" IS NOT UNIQUE ON THIS PAGE.
-       *
-       * The first draft matched the whole page and picked up the Money-weighted
-       * return tile's own coverage line ("7 of 49 accounts") four cards higher,
-       * so it compared the XIRR's coverage against the NAV series' exclusions and
-       * failed a page that was correct. Two figures of the same SHAPE describing
-       * different sets is exactly what a page-wide regex cannot tell apart.
-       */
-      // THE COVERAGE IS THE TITLE'S HOVER since the basis line went — still the
-      // card's own statement, and still distinct from the XIRR tile's.
       const card = navBasis(ctx);
       if (card == null) return navBasisMissing(ctx);
-      const cov = /(\d+) of (\d+) accounts/.exec(card);
-      // "Not in the series: N accounts · ₹X" on the fold's face (Stage 10cp);
-      // the sentence and the split are its hover, and each list's heading
-      // inside keeps its count.
-      const ex = /Not in the series:\s*(\d+) accounts/.exec(t);
-      if (/that cannot supply a\s+series —/.test(t)) return false;
-      const parts = /(\d+) publish exactly one dated valuation/i.exec(t);  // `label-xs` is uppercase in innerText
-      // "CARRY NO VALUED HOLDING" (MNT-14): true of every row the list holds,
-      // the two redeemed to a measured nil included — "publish no valuation at
-      // all" was false of those two, whose own statement struck the nil.
+      if (!NAV_SERIES_BOOK || !NAV_HOLDING_ACCOUNTS) return false;
+      const cov = /(\d+) of the (\d+) investments holding value in the return/.exec(card);
+      const sum = /In the return:\s*(\d+) of (\d+) investments/.exec(t);
+      const joined = /(\d+) join the return on a first valuation/i.exec(t);
+      const atCost = /(\d+) held at cost/i.exec(t);
       const none = /(\d+) carry no valued holding/i.exec(t);
-      if (!cov || !ex || !parts || !none) return false;
-      // The COUNTS have to partition…
-      if (Number(parts[1]) + Number(none[1]) !== Number(ex[1])) return false;
-      if (Number(cov[1]) + Number(ex[1]) !== Number(cov[2])) return false;
-      // …and the ROWS have to be there. A summary that counted 36 over two
-      // empty lists would satisfy the arithmetic and name nobody, which is the
-      // half of the request the arithmetic cannot check.
-      return ctx.navListRows
-        && ctx.navListRows.single === Number(parts[1])
-        && ctx.navListRows.unvalued === Number(none[1]);
+      if (!cov || !sum || !joined || !atCost || !none) return false;
+      if (cov[1] !== sum[1] || cov[2] !== sum[2]) return false;
+      if (Number(sum[1]) !== NAV_SERIES_BOOK.inReturn || Number(sum[2]) !== NAV_SERIES_BOOK.holding) return false;
+      // Every investment holding value is in the return or held at cost.
+      if (Number(sum[1]) + Number(atCost[1]) !== Number(sum[2])) return false;
+      if (Number(joined[1]) !== NAV_SERIES_BOOK.joined || Number(atCost[1]) !== NAV_SERIES_BOOK.atCost) return false;
+      const r = ctx.navListRows;
+      if (!r || r.joined !== Number(joined[1]) || r.atCost !== Number(atCost[1]) || r.unvalued !== Number(none[1])) return false;
+      return NAV_HOLDING_ACCOUNTS.every((id) => NAV_SERIES_BOOK.holdingAccounts.includes(id));
     }],
   /**
    * WITH NO FEED, THE MOVERS CARD SAYS SO AND PRINTS NO DAY CHANGE.
@@ -20721,7 +20796,9 @@ const NAV_BENCH_LIVE = [
     const head = navBasis(ctx);
     if (head == null) return navBasisMissing(ctx);
     const want = wantedBench(ctx);
-    const win = /Over the book's own window, (\d{4}-\d{2}-\d{2}) → (\d{4}-\d{2}-\d{2}):/.exec(head);
+    // The whole-book segment since Stage 10gd — the only window the book's
+    // return is stated over.
+    const win = /Over the whole book, (\d{4}-\d{2}-\d{2}) → (\d{4}-\d{2}-\d{2}):/.exec(head);
     const got = new RegExp(String.raw`${reEsc(want[1])} ([+-]\d+\.\d+)% over the same dates`).exec(head);
     if (!win || !got) return false;
     const expect = benchFixtureReturn(want[2], win[1], win[2]);
@@ -20751,8 +20828,9 @@ const NAV_BENCH_WRONG = [
     const head = navBasis(ctx) ?? "";
     return reqs.includes(want[2])
       && c.benchState === "mismatch"
-      // The book's two curves, and not a third: the index line has no points.
-      && c.pathLen.filter((n) => n > 20).length === 2
+      // The book's own curves — its return, the stretch still joining it, and
+      // its NAV — and not one more: the index line has no points.
+      && c.pathLen.filter((n) => n > 20).length === (NAV_SERIES_BOOK && NAV_SERIES_BOOK.earlyPoints > 1 ? 3 : 2)
       && /NIFTY MIDCAP 50/.test(c.mismatch ?? "") && (c.mismatch ?? "").includes(want[1])
       && !/over the same dates/.test(head)
       && new RegExp(`No ${reEsc(want[1])} line is drawn`).test(head);
@@ -20881,7 +20959,7 @@ const CIO_LIVE_NAV = [
          * it fails the second and must be re-read rather than passing.
          */
         const pair = (ctx?.titles ?? [])
-          .map((x) => /the covered set reads\s*([+-]\d+\.\d+)%\s*with the capital left in against\s*([+-]\d+\.\d+)%/.exec(x))
+          .map((x) => /the book's NAV reads\s*([+-]\d+\.\d+)%\s*with the capital left in against\s*([+-]\d+\.\d+)%/.exec(x))
           .find(Boolean);
         if (!pair) return false;
         const rawPct = Number(pair[1]), adjPct = Number(pair[2]);
@@ -40166,6 +40244,11 @@ for (const theme of THEMES) {
       const navListRows = FAST ? null : await page.evaluate(() => ({
         single: document.querySelectorAll('[data-testid="nav-single-list"] li').length,
         unvalued: document.querySelectorAll('[data-testid="nav-unvalued-list"] li').length,
+        // The whole-book series' lists (Stage 10gd).
+        joined: document.querySelectorAll('[data-testid="nav-joined-list"] li').length,
+        atCost: document.querySelectorAll('[data-testid="nav-atcost-list"] li').length,
+        stale: document.querySelectorAll('[data-testid="nav-stale-list"] li').length,
+        units: [...document.querySelectorAll('[data-testid="nav-excluded"] [data-nav-unit]')].map((e) => e.getAttribute("data-nav-unit")),
         // The holdings the lists' footer names as reported twice (MNT-4).
         twiceKeys: document.querySelector('[data-testid="nav-excluded-recon"]')?.getAttribute("data-reported-twice-keys") ?? null,
       }));

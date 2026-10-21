@@ -856,6 +856,12 @@ function navHistoryFrom(byAccount, keptAccountIds, dedupeByAcctSec, accountCashF
         latestValue: r2(snapshotsByAccount.get(id).snaps.at(-1).marketValue),
         bookValue: r2(bookValueOf.get(id) ?? 0),
         flowBasis: flowBasis[id].basis,
+        // EACH STEP'S PROOF, as `proveLink` struck it — so the whole-book series
+        // (`src/lib/bookNav.ts`) settles a step between two statement marks the
+        // way this one does rather than by a second reading of the statements.
+        steps: flowBasis[id].proofs.map((x) => ({
+          from: x.from, to: x.to, basis: x.basis, net: x.basis === "unproven" ? null : x.net,
+        })),
       })),
       single: single.map((s) => ({ ...s, bookValue: r2(bookValueOf.get(s.accountId) ?? 0) })),
       unvalued: unvalued.map((u) => ({ ...u, bookValue: r2(bookValueOf.get(u.accountId) ?? 0) })),

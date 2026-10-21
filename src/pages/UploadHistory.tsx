@@ -13,7 +13,7 @@ import { useTableView, sortRows } from "@/lib/tableView";
 
 /** The columns, in the order this table's rows write their cells. */
 const HISTORY_COLS = ["asOf", "nav", "change", "flowIn", "marked"] as const;
-import { BOOK_NAV_COVERAGE } from "@/data/glowData";
+import { BOOK_NAV_COVERAGE, BOOK_NAV_HISTORY } from "@/data/glowData";
 import { wholeFamilyOnly } from "@/lib/memberScope";
 
 export function UploadHistory() {
@@ -50,8 +50,13 @@ export function UploadHistory() {
    * were correct while there was nothing to describe, and wrong the moment
    * there was. Every caption below now describes the series in `navHistory`,
    * and the coverage — 13 of 49 accounts — is on the page rather than implied.
+   *
+   * THIS PAGE IS THE STATEMENTS' OWN SNAPSHOTS, so it reads the statement
+   * series (`BOOK_NAV_HISTORY`) and not the whole-book series `navHistory`
+   * carries since Stage 10gd: every caption here is about accounts a statement
+   * values twice, which is that series and not the other.
    */
-  const nav = portfolio.navHistory;
+  const nav = BOOK_NAV_HISTORY;
   const cov = BOOK_NAV_COVERAGE;
   const covered = cov.covered.length;
   const accounts = covered + cov.single.length + cov.unvalued.length;

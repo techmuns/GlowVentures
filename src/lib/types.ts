@@ -606,6 +606,20 @@ export type NavPoint = {
    * exists to avoid.
    */
   panelComplete?: boolean;
+  /**
+   * The whole-book series (`bookNav.ts`, Stage 10gd): true from the date every
+   * investment holding value at the end is in the NAV level — the date the
+   * level is the whole book rather than part of it.
+   */
+  levelComplete?: boolean;
+  /** How many investments the NAV level holds at this date. */
+  levelUnits?: number;
+  /** Net capital into the investments in the NAV level since the previous point, new money included. */
+  levelFlowIn?: number;
+  /** The value of investments joining the NAV level at a valuation they already had — not capital. */
+  levelJoined?: number;
+  /** The value of the investments in the return at this date — what the link's panel holds. */
+  panelValue?: number;
 };
 
 /**
@@ -718,6 +732,12 @@ export type NavCoverage = {
     bookValue: number;
     /** `reported` | `units-unchanged` | `unreported` — see BOOK_NAV_COVERAGE. */
     flowBasis: string;
+    /**
+     * Each step between two of this account's marks, as `proveLink` settled it:
+     * `printed-totals`, `units-unchanged`, `dated-record` or `unproven`, and the
+     * net capital in over the step (null where unproven).
+     */
+    steps?: { from: string; to: string; basis: string; net: number | null }[];
   }[];
   single: { accountId: string; provider: string; accountNo: string; date: string; bookValue: number }[];
   unvalued: { accountId: string; provider: string; accountNo: string; bookValue: number }[];

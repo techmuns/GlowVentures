@@ -8,11 +8,12 @@ import { AbsentSection, AbsentCell } from "@/components/Absent";
 import { useViewParam } from "@/components/ViewToggle";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { wholeFamilyOnly } from "@/lib/memberScope";
-import { BOOK_NAV_COVERAGE } from "@/data/glowData";
+import { WHOLE_BOOK_NAV } from "@/lib/bookNavBook";
+import { bookNavStats, type BookNavCoverage, type BookNavStats, type BookNavUnitCoverage } from "@/lib/bookNav";
 import { accountIndex } from "@/lib/accounts";
 import { ownerDisplayName } from "@/lib/owners";
 import {
-  navIndexSeries, rebasedIndex, navCoverageStats, windowReturnPct,
+  navIndexSeries, rebasedIndex,
   indexCurve, indexReturnBetween, rangeStart, rangeEnd, NAV_RANGES, type NavRangeKey,
   isMeasuredNilAccount,
 } from "@/lib/navSeries";
@@ -55,6 +56,11 @@ const BAND_COLOR = "var(--chart-band, rgba(217,196,143,0.07))";
 
 /** The dashed line's name, in the legend and as the tooltip's series key. */
 const NAV_LINE = "NAV incl. capital added";
+/** The return line, from the day the whole book is in it. */
+const BOOK_LINE = "Book · ex capital flows";
+/** …and the stretch before that day, while investments are still joining. */
+const EARLY_LINE = "Book · investments still joining";
+const EARLY_COLOR = "var(--chart-book-early, rgba(217,196,143,0.5))";
 
 const DAY = 86400000;
 const ts = (d: string) => Date.parse(`${d}T00:00:00Z`);
@@ -148,10 +154,11 @@ export function NavVsIndex() {
   const model = useMemo(() => {
     if (!portfolio) return null;
     const book = navIndexSeries(portfolio.navHistory);
-    // THE STATEMENT BOOK, because the series is struck on statement marks — a
-    // live or NAV-overlaid total beside a series level divides one basis by
-    // another (MNT-25). See `navCoverageStats`.
-    const stats = navCoverageStats(BOOK_NAV_COVERAGE, statementPortfolio ?? portfolio);
+    // THE WHOLE BOOK'S COVERAGE (Stage 10gd), counted off the units the series
+    // chained — see `bookNav.ts`. The statement book is still the basis the
+    // level is struck on (MNT-25).
+    const cov = WHOLE_BOOK_NAV.coverage;
+    const stats = bookNavStats(cov);
     const dates = book.map((p) => p.date);
     const bookFrom = dates[0] ?? null;
     const bookTo = dates[dates.length - 1] ?? null;
@@ -173,23 +180,42 @@ export function NavVsIndex() {
     const curve = bookFrom && pts.length ? indexCurve(pts, bookFrom, from) : [];
 
     const bookByDate = new Map(book.map((p) => [p.date, p]));
+    const pointByDate = new Map(portfolio.navHistory.map((p) => [p.date, p]));
     const allDates = [...new Set([...curve.map((c) => c.t), ...dates])]
       .filter((d) => (!from || d >= from) && (!until || d <= until))
       .sort();
     const curveByDate = new Map(curve.map((c) => [c.t, c.v]));
+    /**
+     * WHERE THE RETURN IS THE WHOLE BOOK'S. Before `returnCompleteFrom` the
+     * line is chained over the investments valued so far — 31 Mar opens with
+     * the mandates and folios whose statements value them that day, and the
+     * Sanshi folios, the drawdown funds and Buoyant join on their first
+     * valuations — so it is drawn as its own, lighter series and no return is
+     * ever printed over it (Stage 10fc: never a partial pool). The two series
+     * share the junction point, so the line is unbroken.
+     */
+    const completeFrom = cov.returnCompleteFrom;
 
     const rows = allDates.map((d) => {
       const p = bookByDate.get(d);
+      const pt = pointByDate.get(d);
       const level = curveByDate.get(d) ?? (idx.has(d) ? (idx.get(d) as number) : undefined);
+      const lvl = p ? Number(p.index.toFixed(3)) : null;
       return {
         t: ts(d),
         date: d,
-        book: p ? Number(p.index.toFixed(3)) : null,
-        // NULL, NEVER NaN — the raw line is undefined before the panel is
-        // complete (`navIndexSeries`), and recharts draws a gap for null while
+        book: p && (!completeFrom || d >= completeFrom) ? lvl : null,
+        bookEarly: p && completeFrom && d <= completeFrom && completeFrom > (bookFrom ?? "") ? lvl : null,
+        // NULL, NEVER NaN — the raw line is undefined before the level is
+        // whole (`navIndexSeries`), and recharts draws a gap for null while
         // NaN reaches the axis domain and drags it.
         nav: p && Number.isFinite(p.navIndex) ? Number(p.navIndex.toFixed(3)) : null,
+        navValue: pt?.nav ?? null,
+        panelValue: pt?.panelValue ?? null,
+        panelUnits: pt ? (pt.accountsOnDate ?? 0) + (pt.accountsCarried ?? 0) : null,
+        valued: (pt?.accountsOnDate ?? 0) > 0,
         flowIn: p?.flowIn ?? 0,
+        levelFlowIn: pt?.levelFlowIn ?? 0,
         unreportedFlowValue: p?.unreportedFlowValue ?? 0,
         index: level === undefined ? null : Number(level.toFixed(3)),
       };
@@ -208,61 +234,68 @@ export function NavVsIndex() {
     const panelAt = (p: (typeof book)[number]) => p.accountsOnDate + p.accountsCarried;
     const panelFirst = book.length ? panelAt(book[0]) : 0;
     const panelLast = book.length ? panelAt(book[book.length - 1]) : 0;
-    const completeFrom = book.find((p) => p.panelComplete)?.date ?? null;
+    const navPts = portfolio.navHistory;
+    const panelValueFirst = navPts[0]?.panelValue ?? null;
+    const panelValueLast = navPts[navPts.length - 1]?.panelValue ?? null;
 
     /**
-     * THE RAW-vs-ADJUSTED PAIR, STRUCK OVER ONE WINDOW.
-     *
-     * The raw NAV line is only defined where the panel is complete, and the
-     * adjusted line now runs 40 days further back — so setting the whole
-     * series' adjusted return against the raw line's last value would compare
-     * 74 days with 34 and call the difference "the deposit". Both would be
-     * right on their own terms, which is exactly the shape of contradiction
-     * this card's own footer rule exists to stop. Both are taken over the
-     * COMPLETE-PANEL segment, which is the only window the raw line has.
+     * THE BOOK'S RETURN IS STRUCK OVER THE WHOLE-BOOK SEGMENT ONLY — from the
+     * day every valued investment is in the return to the last valuation. The
+     * stretch before it is a composite still being joined, and a return over it
+     * would be a pool of part of the book (Stage 10fc). The raw NAV is taken
+     * over the SAME segment, so the pair the toggle states is one window.
      */
-    const segFrom = book.findIndex((p) => p.panelComplete);
-    const segRaw = segFrom >= 0 && book.length - segFrom >= 2
-      ? (book[book.length - 1].nav / book[segFrom].nav - 1) * 100 : null;
-    let segAdj: number | null = null;
-    if (segFrom >= 0 && book.length - segFrom >= 2) {
-      let idxSeg = 100;
-      for (let i = segFrom + 1; i < book.length; i++) {
-        const p = portfolio.navHistory[i];
-        const open = p.linkOpen ?? portfolio.navHistory[i - 1].nav;
-        const close = p.linkClose ?? p.nav;
-        if (open > 0) idxSeg *= (close - (p.flowIn ?? 0)) / open;
-      }
-      segAdj = idxSeg - 100;
-    }
+    const segFrom = completeFrom ? book.findIndex((p) => p.date >= completeFrom) : -1;
     const segFromDate = segFrom >= 0 ? book[segFrom].date : null;
+    const segOk = segFrom >= 0 && book.length - segFrom >= 2;
+    const bookRet = segOk ? (book[book.length - 1].index / book[segFrom].index - 1) * 100 : null;
+    const segRaw = segOk && book[segFrom].nav > 0 ? (book[book.length - 1].nav / book[segFrom].nav - 1) * 100 : null;
+    const segAdj = bookRet;
+    // The capital the segment took, which is what sets the pair apart.
+    const segCapital = segOk ? navPts.slice(segFrom + 1).reduce((a, p) => a + (p.levelFlowIn ?? 0), 0) : 0;
 
-    const bookRet = windowReturnPct(book);
     /**
      * THE LIKE-FOR-LIKE FIGURE, AND THE RANGE'S OWN, KEPT APART.
      *
-     * `indexRet` is the index over the BOOK'S window — the only window in which
-     * a comparison exists, and the one the headline pills state. `rangeRet` is
-     * the index over whatever period the reader selected and is INDEX-ONLY: the
-     * book has no measurement over it, so it is labelled as market history
-     * rather than set beside a book figure it does not correspond to.
+     * `indexRet` is the index over the book's WHOLE-BOOK segment — the only
+     * window in which a comparison exists, and the one the hover states.
+     * `rangeRet` is the index over whatever period the reader selected and is
+     * INDEX-ONLY: the book has no measurement over it, so it is labelled as
+     * market history rather than set beside a book figure it does not
+     * correspond to.
      */
-    const indexRet = bookFrom && bookTo && pts.length ? indexReturnBetween(pts, bookFrom, bookTo) : null;
+    const indexRet = segFromDate && bookTo && pts.length ? indexReturnBetween(pts, segFromDate, bookTo) : null;
     const rangeFrom = rows.length ? rows[0].date : null;
     const rangeTo = rows.length ? rows[rows.length - 1].date : null;
     const rangeRet = rangeFrom && rangeTo && pts.length ? indexReturnBetween(pts, rangeFrom, rangeTo) : null;
 
-    // The steps a reader would otherwise read as performance: an interval that
-    // took external capital. Marked ON the chart, not explained underneath it.
-    const flowMarks = rows.filter((r) => Math.abs(r.flowIn) > 1e5);
+    // The steps a reader would otherwise read as performance: capital in or
+    // out of the book on the dashed line's stretch. Marked ON the chart, at the
+    // date the money moved, not explained underneath it.
+    // A circle where the money is a step a reader could see — a tenth of a per
+    // cent of the book or more. A ₹1 L tax deduction on an ₹800 Cr book is
+    // capital too, and netted like the rest, but circling it hides the steps
+    // that matter among sixty that do not.
+    // The line's first point carries the capital of the interval BEFORE it.
+    const navStart = rows.find((r) => r.nav != null)?.date ?? null;
+    const flowMarks = rows.filter((r) => r.nav != null && r.date !== navStart && r.navValue != null
+      && Math.abs(r.levelFlowIn) >= Math.max(1e5, r.navValue * 1e-3));
+    // What the dashed line carries in: every rupee of capital in over its stretch.
+    const addedOnLine = rows.filter((r) => r.nav != null && r.date !== navStart).reduce((t, r) => t + Math.max(r.levelFlowIn, 0), 0);
     const unproven = rows.filter((r) => r.unreportedFlowValue > 0);
     const spanDays = rows.length > 1 ? (rows[rows.length - 1].t - rows[0].t) / DAY : 0;
     const { ticks, fmt: tickFmt } = axisTicks(
       spanDays > 75 ? allDates : dates, spanDays);
+    // Where the book's and the index's changes are struck from in the tooltip.
+    const anchorBook = segFromDate ? bookByDate.get(segFromDate)?.index ?? null : null;
+    const anchorIndex = segFromDate ? curveByDate.get(segFromDate) ?? idx.get(segFromDate) ?? null : null;
+    const completeAnchor = segFromDate && anchorBook != null
+      ? { date: segFromDate, book: anchorBook, index: anchorIndex } : null;
     return {
-      book, rows, stats, bookRet, indexRet, rangeRet, flowMarks, unproven, dates,
+      completeAnchor, hasEarly: rows.some((r) => r.bookEarly != null), addedOnLine,
+      book, rows, stats, cov, bookRet, indexRet, rangeRet, flowMarks, unproven, dates,
       bookFrom, bookTo, rangeFrom, rangeTo, ticks, tickFmt, spanDays,
-      panelFirst, panelLast, completeFrom, segRaw, segAdj, segFromDate,
+      panelFirst, panelLast, panelValueFirst, panelValueLast, completeFrom, segRaw, segAdj, segFromDate, segCapital,
       // COUNTED OFF THE ROWS THAT ARE DRAWN, not off the curve before it is
       // clipped — the book range caps at the last statement date, and a count
       // taken upstream of that would report closes the chart does not contain.
@@ -270,7 +303,8 @@ export function NavVsIndex() {
       // WHERE THE DASHED LINE STARTS, and its level there — the base its own
       // tooltip figure is struck from (MNT-12). It sits ON the book's line.
       navAnchor: (() => {
-        const r = rows.find((x) => x.nav != null && x.book != null);
+        // It sits ON the book's line — the solid one, or the stretch still joining.
+        const r = rows.find((x) => x.nav != null && (x.book != null || x.bookEarly != null));
         return r ? { date: r.date, level: r.nav as number } : null;
       })(),
     };
@@ -278,11 +312,10 @@ export function NavVsIndex() {
 
   if (!model || !portfolio) return null;
   const {
-    rows, stats, bookRet, indexRet, rangeRet, flowMarks, unproven,
+    rows, stats, cov, bookRet, indexRet, rangeRet, flowMarks, unproven, completeAnchor, hasEarly, addedOnLine,
     bookFrom, bookTo, rangeFrom, rangeTo, ticks, tickFmt, spanDays, indexRuns,
-    panelFirst, panelLast, completeFrom, segRaw, segAdj, segFromDate, navAnchor,
+    panelFirst, panelLast, panelValueFirst, panelValueLast, completeFrom, segRaw, segAdj, segFromDate, segCapital, navAnchor,
   } = model;
-  const cov = BOOK_NAV_COVERAGE;
   // NAMED FROM THE REGISTRY, NOT FROM THE ID. `accountId` is a slug and reads
   // as one; the registry is where "who runs this and whose money it is" lives,
   // and `custodianOf()` was deleted for guessing it out of text (§2).
@@ -294,12 +327,25 @@ export function NavVsIndex() {
     return `${a.provider}${owner ? ` · ${owner}` : ""}`;
   };
   /**
+   * AN INVESTMENT IS AN ACCOUNT, OR ONE LINE OF THE REVIEW'S HOLDER BUCKETS —
+   * named by its line there, because "Consolidated review · Ajay" is six
+   * separate companies (Stage 10dh).
+   */
+  const stmtBook = statementPortfolio ?? portfolio;
+  const lineName = new Map(stmtBook.positions.map((p) => [`${p.accountId}|${p.securityKey}`, p.security]));
+  const unitName = (u: { accountId: string; securityKey: string | null; key: string }) => {
+    const a = accts.get(u.accountId);
+    const line = u.securityKey ? lineName.get(`${u.accountId}|${u.securityKey}`) ?? u.securityKey : null;
+    if (a?.reviewHolder && line) return `${line} · ${a.ownerId ? ownerDisplayName(a.ownerId) : a.owner}`;
+    // Two folios of one fund under one member read alike without their number.
+    return `${nameOf(u.accountId)}${a?.accountNo ? ` · ${a.accountNo}` : ""}`;
+  };
+  /**
    * WHY AN ACCOUNT CARRIES NO VALUATION IS ITS OWN SENTENCE, ROUTED — never one
    * sentence for all of them (MNT-14). The statement copy of the account carries
    * the generated reason; the LIVE copy of one whose depository units are valued
    * carries `partialValuation` instead, and that is what the reader is shown.
    */
-  const stmtBook = statementPortfolio ?? portfolio;
   const stmtAccts = accountIndex(stmtBook.accounts);
   const whyOf = (id: string): Why => {
     const live = accts.get(id);
@@ -309,12 +355,19 @@ export function NavVsIndex() {
       reason: live?.partialValuation ?? stmt?.noPositionsReason ?? null,
     };
   };
+  // THE ACCOUNTS NO INVESTMENT IN THE SERIES STANDS FOR — no statement values
+  // them, or the one that does strikes a nil. Counted off the registry against
+  // the series' own units, never off a list typed here.
+  const inSeries = new Set(stats.holding.map((u) => u.accountId));
+  const unvalued = stmtBook.accounts
+    .filter((a) => !inSeries.has(a.accountId))
+    .filter((a) => !stmtBook.positions.some((p) => p.accountId === a.accountId && Math.abs(p.marketValue) >= 1000))
+    .map((a) => ({ accountId: a.accountId, accountNo: a.accountNo }));
   const sumOf = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
   const depositoryRows = portfolio.positions.filter((p) => p.depositoryUnits);
   const depositoryValue = sumOf(depositoryRows.map((p) => p.marketValue));
   const recon: Recon = {
-    perAccount: sumOf(cov.covered.map((c) => c.bookValue)) + sumOf(cov.single.map((s) => s.bookValue))
-      + sumOf(cov.unvalued.map((u) => u.bookValue)),
+    perAccount: sumOf(stmtBook.positions.map((p) => p.marketValue)),
     statementBook: stmtBook.totalValue,
     doubleCounted: sumOf(stmtBook.positions.map((p) => p.marketValue)) - stmtBook.totalValue,
     ...reportedTwiceOf(stmtBook.positions),
@@ -323,6 +376,10 @@ export function NavVsIndex() {
     depositoryCount: depositoryRows.length,
     priceDelta: portfolio.totalValue - stmtBook.totalValue - depositoryValue,
     quotesLive: livePriced > 0,
+    levelEnd: cov.levelEnd,
+    newerMarks: cov.newerMarks,
+    capitalAfter: cov.capitalAfterLastValuation,
+    seriesTo: cov.to,
   };
 
   // A series needs at least two points and a set to hold constant over. Both
@@ -336,9 +393,9 @@ export function NavVsIndex() {
   // comparison. `dates` is the book's, and is the only thing this branch is
   // about.
   // THE SERIES IS THE WHOLE FAMILY'S, AND A MEMBER SCOPE SAYS SO (Stage 10di).
-  // It is chained over the covered panel of accounts and split by no owner, so
+  // It is chained over the whole book's investments and split by no owner, so
   // under a scope the book's own dates are empty — and the sentence below, that
-  // no account publishes two valuations, would be false about the family.
+  // nothing in the book is valued twice, would be false about the family.
   if (scope.selected) {
     return (
       <Card className="flex flex-col" title={`Portfolio NAV vs ${bench.label}`}
@@ -355,9 +412,9 @@ export function NavVsIndex() {
       <Card className="flex flex-col" title={`Portfolio NAV vs ${bench.label}`}
         subtitle="Dated portfolio values from the statements, against the index">
         <AbsentSection
-          what="No account in this book publishes more than one dated valuation"
-          needs={`A NAV series needs the same account valued at two or more dates. ${stats.singleCount} account(s) publish exactly one and ${stats.unvaluedCount} publish none, so there is no set over which a series could hold its composition constant. The next monthly reissue of any statement already in the archive starts one.`} />
-        <ExcludedAccounts cov={cov} nameOf={nameOf} fmt={fmtFromBase} recon={recon} whyOf={whyOf} />
+          what="Nothing in this book is valued on two dates"
+          needs={`A NAV series needs the book valued at two or more dates. ${stats.holding.length} investment(s) hold value and none of them carries a second dated valuation or a dated payment inside the window, so there is nothing to chain. The next monthly reissue of any statement already in the archive starts one.`} />
+        <SeriesCoverage stats={stats} cov={cov} unitName={unitName} nameOf={nameOf} fmt={fmtFromBase} recon={recon} whyOf={whyOf} unvalued={unvalued} />
       </Card>
     );
   }
@@ -366,24 +423,11 @@ export function NavVsIndex() {
    * ── THE BASIS, THE COMPARISON AND THE DISCLOSURE ARE THE TITLE'S HOVER ──────
    *
    * *"remove the highlighted texts from the dashboard UI"* — pointed at this
-   * card's basis line AND at the four headline pills (Book, the index, the
-   * not-proven disclosure and the window under them). Every claim was audited
-   * before anything went, the method CLAUDE.md records for each removal:
-   *
-   *   · THE LIKE-FOR-LIKE PAIR — the book and the benchmark over the book's own
-   *     window. The chart's tooltip at the book's last point prints exactly
-   *     that pair (both lines are rebased at the book's first point), so it has
-   *     a second home ON THE FIGURE; it is also stated here in words.
-   *   · THE WINDOW, THE POINT COUNT, THE COVERAGE AND THE REBASE — the collapsed
-   *     list below names the accounts that CANNOT supply a series, which is the
-   *     complement; the figures themselves had no second home.
-   *   · THE NOT-PROVEN DISCLOSURE — no second home, and it qualifies the book's
-   *     return, which is the first sentence here.
-   *
-   * So all of it is this hover, on the heading that names the comparison. A
-   * hover is weaker than a caption, and that is recorded rather than glossed —
-   * what is unchanged is that every one of these is still derived, still on the
-   * card, and still read by `check:pages` at its new address.
+   * card's basis line AND at the four headline pills. Every claim was audited
+   * before anything went, and all of it is this hover, on the heading that
+   * names the comparison. Since Stage 10gd it describes the WHOLE book's
+   * series: what the return is struck over and from when, what joins it later,
+   * what the review holds at cost, and how the level ties to the statements.
    */
   const lastNav = model.book[model.book.length - 1].nav;
   /**
@@ -393,29 +437,34 @@ export function NavVsIndex() {
    * depository's own units that no statement marks — so it is named beside the
    * statement figure where the two differ, rather than standing in for it.
    */
-  const statementBook = stats.consolidatedValue;
+  const statementBook = stmtBook.totalValue;
   const liveDiffers = Math.abs(portfolio.totalValue - statementBook) > 1;
+  const c = (n: number | null | undefined) => fmtFromBase(n, { compact: true });
+  const joinedDates = [...new Set(stats.joinedLater.map((u) => u.returnFrom as string))].sort();
   const basisHover = [
-    bookRet == null
-      // Unreachable while the card needs two dated points to render, and it
-      // still names its cause rather than printing a bare absence (MNT-23).
-      ? `The book's own series over ${bookFrom} → ${bookTo} carries no return: a return needs two dated points of one panel, and the series has ${model.book.length}.`
+    bookRet == null || !segFromDate
+      // A return needs the whole-book segment to hold two points; name its
+      // cause rather than print a bare absence (MNT-23).
+      ? `The book's return is struck from the day every valued investment is in it${completeFrom ? `, ${completeFrom}` : ""}, and the series has no second point after that day — so no return is stated.`
       : indexRet != null
-        ? `Over the book's own window, ${bookFrom} → ${bookTo}: the book ${fmtPct(bookRet, { sign: true })} net of capital flows, ${bench.label} ${fmtPct(indexRet, { sign: true })} over the same dates. Hover the chart for both lines at any date.`
-        : `Over the book's own window, ${bookFrom} → ${bookTo}: the book ${fmtPct(bookRet, { sign: true })} net of capital flows. ${indexState === "loading" ? `The ${bench.label} history is still loading.` : `No ${bench.label} line is drawn, so there is no comparison figure.`}`,
-    `${model.dates.length} dated points, ${cov.from} → ${cov.to} · ${stats.coveredCount} of ${stats.accountsTotal} accounts, ${fmtFromBase(lastNav, { compact: true })} of the ${fmtFromBase(statementBook, { compact: true })} the statements value${liveDiffers ? ` (the current value of holdings, ${fmtFromBase(portfolio.totalValue, { compact: true })}, is on today's prices)` : ""} · the book and ${bench.label} lines rebased to 100 at ${cov.from}${navAnchor && navAnchor.date !== cov.from ? `; the line with capital left in starts on the book's at ${navAnchor.date}, where the panel is complete` : ""}.`,
-    "Each point holds every account at its most recent mark on or before that date, and counts a holding two accounts both report once.",
-    panelLast > panelFirst && completeFrom
+        ? `Over the whole book, ${segFromDate} → ${bookTo}: the book ${fmtPct(bookRet, { sign: true })} net of capital flows, ${bench.label} ${fmtPct(indexRet, { sign: true })} over the same dates. Hover the chart for both lines at any date.`
+        : `Over the whole book, ${segFromDate} → ${bookTo}: the book ${fmtPct(bookRet, { sign: true })} net of capital flows. ${indexState === "loading" ? `The ${bench.label} history is still loading.` : `No ${bench.label} line is drawn, so there is no comparison figure.`}`,
+    `${model.dates.length} dated points, ${cov.from} → ${cov.to} · ${stats.inReturn.length} of the ${stats.holding.length} investments holding value in the return, ${c(stats.inReturnValue)} of the ${c(lastNav)} the series' NAV holds · the NAV is ${c(lastNav)} against the ${c(statementBook)} the statements value${liveDiffers ? ` (the current value of holdings, ${c(portfolio.totalValue)}, is on today's prices)` : ""} · the book and ${bench.label} lines rebased to 100 at ${cov.from}${navAnchor && navAnchor.date !== cov.from ? `; the NAV line starts on the book's at ${navAnchor.date}, where every investment holding value is in it` : ""}.`,
+    "Each point holds every investment at its most recent valuation on or before that date, plus the capital dated after that valuation: a contribution, call or purchase on its own date at what was paid, a redemption, sale, dividend or income paid out on its own date at what was paid out. A manager's own trades inside a mandate are in its statement's marks, not here. Each point counts a holding two accounts both report once.",
+    panelLast > panelFirst && completeFrom && completeFrom > (bookFrom ?? "")
       // "VALUED AT BOTH OF ITS ENDS" COUNTED A CARRIED MARK AS A VALUATION
-      // (MNT-24): the 31 May → 25 Jun step is flat because its four accounts
-      // are carried at their 31 May marks, which no statement restated.
-      ? `The panel grows from ${panelFirst} to ${panelLast} accounts over the window and is complete from ${completeFrom}. Each step is measured over the accounts in the panel at both of its ends — each held at its most recent mark on or before that date, so a step in which none of them published a new statement is flat — and an account arriving contributes nothing. The dashed NAV line starts where the panel is complete, on the book's own line.`
+      // (MNT-24): a step in which nothing was revalued is flat because every
+      // investment in it is carried at its earlier valuation.
+      ? `The panel grows from ${panelFirst} to ${panelLast} investments over the window (${c(panelValueFirst)} to ${c(panelValueLast)}; one redeemed inside the window stays in it at nil) and is complete from ${completeFrom}; the lighter stretch of the line before it is the investments valued so far, and no return is stated over it. Each step is measured over the investments in the panel at both of its ends — each held at its most recent valuation on or before that date, so a step in which none of them was revalued is flat — and an investment joining contributes nothing.${joinedDates.length ? ` ${stats.joinedLater.length} join on their first valuation in the window (${joinedDates.join(", ")}): a holding bought before ${cov.from} and first valued after it has no value on ${cov.from} anywhere in the archive.` : ""}${stats.boughtInWindow.length ? ` ${stats.boughtInWindow.length === 1 ? "One was" : `${stats.boughtInWindow.length} were`} bought from nil inside the window and ${stats.boughtInWindow.length === 1 ? "joins" : "join"} on the day it was paid for.` : ""}`
+      : "",
+    stats.atCost.length
+      ? `${stats.atCost.length} private line(s), ${c(stats.atCostValue)}, are held at cost by the family's consolidated review: they are in the NAV at that cost and never in the return, because cost is not a valuation and a return over them would count an unmeasured line as 0%.`
       : "",
     unproven.length > 0
       // A MOVE, SUMMED OVER THE STEPS — never an account's standing value, and
       // never the largest single step: this printed ₹28.3 Cr, the VALUE of four
       // accounts, beside the ₹2.78 Cr they moved (A-10).
-      ? `Not proven to be performance: ${fmtFromBase(unproven.reduce((a, u) => a + u.unreportedFlowValue, 0), { compact: true })} of the move. ${stats.unreportedFlowAccounts.length} covered account(s) — ${stats.unreportedFlowAccounts.map(nameOf).join(", ")} — have a step between two of their marks that no statement settles: no printed capital total at both of its ends, no identical unit counts, no dated record. A subscription or redemption inside such a step would appear in the book's return. Every other step is settled by the statements themselves.`
+      ? `Not proven to be performance: ${c(unproven.reduce((a, u) => a + u.unreportedFlowValue, 0))} of the move. ${stats.unproven.length} investment(s) — ${stats.unproven.map(unitName).join(", ")} — have a step between two valuations that no record settles: no printed capital total at both of its ends, no identical unit counts, no dated record reaching it. A subscription or redemption inside such a step would appear in the book's return. Every other step is settled by the records themselves.`
       : "",
   ].filter(Boolean).join("\n\n");
 
@@ -518,14 +567,14 @@ export function NavVsIndex() {
           <button type="button" data-testid="nav-raw-toggle" aria-pressed={showRaw}
             onClick={() => setShowRaw((v) => !v)}
             title={segRaw == null || segAdj == null
-              ? "The raw NAV line needs a complete panel — before it, the level is a growing set of accounts rather than a book."
-              : `Over ${segFromDate} → ${bookTo}, the window the raw line covers, the covered set reads ${fmtPct(segRaw, { sign: true })} with the capital left in against ${fmtPct(segAdj, { sign: true })} net of it. The difference is the deposit rather than performance. BOTH FIGURES ARE OVER THAT SEGMENT and not over the whole series, which starts ${cov.from} — the raw level is undefined before the panel completes, and comparing a 74-day return with a 34-day one would call the extra weeks a deposit. The intervals that took capital are circled on the chart.`}
+              ? "The NAV line needs every investment holding value in it — before that, the level is part of the book rather than the book."
+              : `Over ${segFromDate} → ${bookTo}, the window the whole book's return is struck over, the book's NAV reads ${fmtPct(segRaw, { sign: true })} with the capital left in against ${fmtPct(segAdj, { sign: true })} net of it; ${fmtFromBase(segCapital, { compact: true, sign: true })} of capital moved in that window. The difference is that capital rather than performance. BOTH FIGURES ARE OVER THAT SEGMENT and not over the whole series, which starts ${cov.from} — before it, investments are still joining the return. The dates capital moved are circled on the chart.`}
             className={`rounded-md border px-2.5 py-1 text-xs font-medium transition-colors ${
               showRaw
                 ? "border-ink-600 bg-champagne-500 text-ink-950"
                 : "border-ink-700 bg-ink-800/60 text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"
             }`}>
-            NAV incl. {fmtFromBase(flowMarks.reduce((a, f) => a + Math.max(f.flowIn, 0), 0), { compact: true })} added
+            NAV incl. {fmtFromBase(addedOnLine, { compact: true })} added
           </button>
         )}
         {indexState === "ok" && indexRuns > 0 && (
@@ -587,13 +636,25 @@ export function NavVsIndex() {
                  left in starts on the book's where the panel is complete, so its
                  change is struck from THAT date. Printed bare, a +9.29% from
                  10 Jul sat beside a +5.09% from 31 May as if the two were a pair. */
-              formatter={(v: number, name: string) => {
-                const isNav = name === NAV_LINE;
-                const pct = isNav
-                  ? (navAnchor && navAnchor.level > 0 ? (v / navAnchor.level - 1) * 100 : null)
-                  : v - 100;
-                const since = isNav ? navAnchor?.date : bookFrom;
-                return [`${fmtNum(v, 2)}${pct == null || !since ? "" : ` (${fmtPct(pct, { sign: true })} since ${since})`}`, name];
+              formatter={(v: number, name: string, item: { payload?: (typeof rows)[number] }) => {
+                const row = item?.payload;
+                /* THE STRETCH STILL JOINING CARRIES NO RETURN (Stage 10fc): it
+                   says how much of the book is in it, never a percentage. */
+                if (name === EARLY_LINE) {
+                  return [`${fmtNum(v, 2)}${row?.panelUnits != null ? ` · ${row.panelUnits} investments, ${fmtFromBase(row.panelValue, { compact: true })}` : ""}`, name];
+                }
+                if (name === NAV_LINE) {
+                  const pct = navAnchor && navAnchor.level > 0 ? (v / navAnchor.level - 1) * 100 : null;
+                  return [`${row?.navValue != null ? `${fmtFromBase(row.navValue, { compact: true })} · ` : ""}${fmtNum(v, 2)}${pct == null || !navAnchor ? "" : ` (${fmtPct(pct, { sign: true })} since ${navAnchor.date})`}`, name];
+                }
+                /* THE BOOK'S AND THE INDEX'S CHANGE ARE STRUCK FROM ONE DATE —
+                   the day the whole book is in the return — so the pair a reader
+                   sees at any later point is like for like. */
+                const at = row?.date ?? null;
+                const base = name === BOOK_LINE ? completeAnchor?.book : completeAnchor?.index;
+                const since = completeAnchor && at && at >= completeAnchor.date ? completeAnchor.date : null;
+                const pct = since && base != null && base > 0 ? (v / base - 1) * 100 : null;
+                return [`${fmtNum(v, 2)}${pct == null ? "" : ` (${fmtPct(pct, { sign: true })} since ${since})`}`, name];
               }} />
             {/* THE LEGEND'S ORDER IS THE READING ORDER, NOT THE PAINT ORDER.
                 The book's line is drawn LAST so it sits above the index curve
@@ -602,7 +663,8 @@ export function NavVsIndex() {
                 on a card whose subject is the book. The payload is stated so the
                 two orders can differ on purpose. */}
             <Legend wrapperStyle={{ fontSize: 11 }} payload={[
-              { value: "Book · ex capital flows", type: "line", id: "book", color: BOOK_COLOR },
+              { value: BOOK_LINE, type: "line", id: "book", color: BOOK_COLOR },
+              ...(hasEarly ? [{ value: EARLY_LINE, type: "line" as const, id: "bookEarly", color: EARLY_COLOR }] : []),
               ...(showRaw ? [{ value: navAnchor ? `${NAV_LINE} · from ${navAnchor.date}` : NAV_LINE, type: "line" as const, id: "nav", color: NAV_COLOR }] : []),
               { value: bench.label, type: "line", id: "index", color: INDEX_COLOR },
             ]} />
@@ -625,8 +687,19 @@ export function NavVsIndex() {
             {/* DRAWN LAST SO IT SITS ON TOP. The book's line is the subject of
                 the card and there are seven points of it against up to twelve
                 hundred index closes; under the index curve it disappears. */}
-            <Line type="monotone" dataKey="book" stroke={BOOK_COLOR} strokeWidth={2.4} dot={{ r: 2.5 }}
-              name="Book · ex capital flows" connectNulls isAnimationActive={false} />
+            {hasEarly && (
+              <Line type="monotone" dataKey="bookEarly" stroke={EARLY_COLOR} strokeWidth={1.8} dot={false}
+                name={EARLY_LINE} connectNulls isAnimationActive={false} />
+            )}
+            {/* A DOT ONLY WHERE SOMETHING WAS VALUED. The whole-book series has a
+                point on every date capital moved too, and a dot on each would
+                read as sixty valuations. */}
+            <Line type="monotone" dataKey="book" stroke={BOOK_COLOR} strokeWidth={2.4}
+              dot={(p: { cx?: number; cy?: number; payload?: (typeof rows)[number]; index?: number }) =>
+                p.payload?.valued && p.cx != null && p.cy != null
+                  ? <circle key={`d${p.index}`} cx={p.cx} cy={p.cy} r={2.5} fill={BOOK_COLOR} stroke={BOOK_COLOR} />
+                  : <g key={`d${p.index}`} />}
+              name={BOOK_LINE} connectNulls isAnimationActive={false} />
             {/* THE STEP THAT IS MONEY, MARKED WHERE IT HAPPENS. A reader looking
                 at the dashed line jumping 8% in one interval must be able to see
                 on the chart that a deposit landed there, not read it in a
@@ -687,14 +760,14 @@ export function NavVsIndex() {
         </p>
       )}
 
-      <ExcludedAccounts cov={cov} nameOf={nameOf} fmt={fmtFromBase} recon={recon} whyOf={whyOf} />
+      <SeriesCoverage stats={stats} cov={cov} unitName={unitName} nameOf={nameOf} fmt={fmtFromBase} recon={recon} whyOf={whyOf} unvalued={unvalued} />
     </Card>
   );
 }
 
-/** The three lists set against the current value, one step at a time (MNT-4). */
+/** The statement book set against the series' NAV and the current value, one step at a time (MNT-4). */
 type Recon = {
-  /** Σ of the three lists — each statement's own value, as printed, not deduped. */
+  /** Σ of the statement positions as printed, not deduped. */
   perAccount: number;
   /** The consolidated statement book: each holding two accounts both report counted once. */
   statementBook: number;
@@ -716,6 +789,11 @@ type Recon = {
   /** What published NAVs and live quotes add to the statement marks. */
   priceDelta: number;
   quotesLive: boolean;
+  /** The series' NAV at its last point, and the two named steps from the statement book to it. */
+  levelEnd: number;
+  newerMarks: number;
+  capitalAfter: number;
+  seriesTo: string | null;
 };
 
 /** Every row of a `dedupeGroup` after its first: what a per-account sum counts twice. */
@@ -735,39 +813,46 @@ function reportedTwiceOf(positions: { dedupeGroup?: string | null; securityKey: 
 type Why = { nil: boolean; reason: string | null };
 
 /**
- * THE OTHER HALF OF THE ASK — "or state the accounts that cannot supply one".
+ * ── WHAT THE SERIES HOLDS, WHAT IT CANNOT, AND HOW IT TIES (Stage 10gd) ──────
  *
- * Two lists, kept apart because they send a reader to two different places: an
- * account publishing ONE dated valuation needs its next monthly statement, and
- * an account publishing NONE needs a fund that values it at all. Folding them
- * into one "not covered" count would hide which is which.
+ * The family's own ask ("or state the accounts that cannot supply one") is
+ * answered by name, now over the whole book's investments rather than over the
+ * accounts a statement values twice. Four lists, each sending a reader to a
+ * different place:
+ *
+ *   · JOIN THE RETURN LATER — bought before the window opened and first valued
+ *     inside it; what fills the gap is that investment's 31 March valuation.
+ *   · HELD AT COST — in the NAV at what was paid, never in the return; what
+ *     fills it is a valuation of the line.
+ *   · NOT REVALUED IN THE WINDOW — in the return at a valuation from its first
+ *     day, carried flat because no later statement restates it.
+ *   · NO VALUED HOLDING — accounts the series does not stand for at all, each
+ *     with its own account's reason.
  */
-function ExcludedAccounts({ cov, nameOf, fmt, recon, whyOf }: {
-  cov: typeof BOOK_NAV_COVERAGE;
+function SeriesCoverage({ stats, cov, unitName, nameOf, fmt, recon, whyOf, unvalued }: {
+  stats: BookNavStats;
+  cov: BookNavCoverage;
+  unitName: (u: BookNavUnitCoverage) => string;
   nameOf: (id: string) => string;
   fmt: (n: number | null | undefined, o?: { compact?: boolean; sign?: boolean }) => string;
   recon: Recon;
   whyOf: (id: string) => Why;
+  unvalued: { accountId: string; accountNo: string }[];
 }) {
-  const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
-  if (!cov.single.length && !cov.unvalued.length) return null;
   const c = (n: number, sign = false) => fmt(n, { compact: true, sign });
-  const nils = cov.unvalued.filter((u) => whyOf(u.accountId).nil).length;
+  const sumOf = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
+  const nils = unvalued.filter((u) => whyOf(u.accountId).nil).length;
+  const byValue = (xs: BookNavUnitCoverage[]) => [...xs].sort((a, b) => (b.endValue ?? 0) - (a.endValue ?? 0));
   /**
    * THE FOOTER RECONCILES, STEP BY STEP, AND THE STEPS ARE COMPUTED (MNT-4).
    *
-   * It used to say the lists' sum is ABOVE the current value "by the value two
-   * members both report". That was one step of four, and on this drop the sum
-   * is ₹63 Cr BELOW it: the current value is the statement book on the live
-   * layer — AMFI's published NAVs, any live quote, and cash-equivalent funds
-   * valued from a depository's own units, which no statement marks. Naming one
-   * cause for a gap made of several is the wrong-diagnosis failure, so each
-   * step is printed with its own figure and the sign is the arithmetic's.
+   * From the statements as printed, to the consolidated statement book, to the
+   * series' own NAV at its last point — which may carry a valuation newer than
+   * the holdings statement the book reads, and capital dated after a valuation —
+   * and separately to the current value on today's prices. Each step is printed
+   * with its own figure, and the sign is the arithmetic's.
    */
   const dedupeTies = Math.abs(recon.perAccount - (recon.statementBook + recon.doubleCounted)) <= 1;
-  // …AND THE GAP IS NAMED FROM ITS CAUSE, the holdings two accounts both
-  // report, not only inferred by subtraction; where the two disagree by more
-  // than a rupee both are printed rather than one assumed.
   const nTwice = recon.reportedTwiceKeys.length;
   const holdingsTwice = `${nTwice} holding${nTwice === 1 ? "" : "s"}, each on two accounts' statements`;
   const causeTies = Math.abs(recon.doubleCounted - recon.reportedTwice) <= 1;
@@ -779,69 +864,79 @@ function ExcludedAccounts({ cov, nameOf, fmt, recon, whyOf }: {
       ? `${c(recon.depositoryValue)} of ${recon.depositoryCount} cash-equivalent fund${recon.depositoryCount === 1 ? "" : "s"} valued from a depository's own closing units at AMFI's NAV — holdings no statement marks`
       : null,
   ].filter(Boolean);
-  const addsShort = [
-    Math.abs(recon.priceDelta) > 1 ? (recon.quotesLive ? "published NAVs and live quotes" : "the published NAVs") : null,
-    recon.depositoryValue > 1 ? "funds no statement marks" : null,
-  ].filter((x): x is string => !!x);
+  const seriesSteps = [
+    Math.abs(recon.newerMarks) > 1 ? `${c(recon.newerMarks, true)} from valuations newer than the holdings statement the book carries` : null,
+    Math.abs(recon.capitalAfter) > 1 ? `${c(recon.capitalAfter, true)} of capital dated after an investment's last valuation` : null,
+  ].filter(Boolean);
   const footHover = [
-    `As each statement prints them, the three lists sum to ${fmt(recon.perAccount)} — a per-account sum, which does not dedupe.`,
+    `As each statement prints them, the investments sum to ${fmt(recon.perAccount)} — a per-account sum, which does not dedupe.`,
     dedupeTies && causeTies
       ? nTwice === 0
-        ? `No holding is reported by two accounts, so the lists and the consolidated statement book agree, ${fmt(recon.statementBook)}.`
+        ? `No holding is reported by two accounts, so that sum and the consolidated statement book agree, ${fmt(recon.statementBook)}.`
         : `Counting once the ${fmt(recon.doubleCounted)} that two accounts both report gives the consolidated statement book, ${fmt(recon.statementBook)}; that is ${holdingsTwice}.`
-      : `The consolidated statement book is ${fmt(recon.statementBook)}; the lists differ from it by ${fmt(recon.perAccount - recon.statementBook, { sign: true })}, and ${fmt(recon.reportedTwice)} of that is ${holdingsTwice}.`,
+      : `The consolidated statement book is ${fmt(recon.statementBook)}; the per-account sum differs from it by ${fmt(recon.perAccount - recon.statementBook, { sign: true })}, and ${fmt(recon.reportedTwice)} of that is ${holdingsTwice}.`,
+    seriesSteps.length
+      ? `The series' NAV at ${recon.seriesTo}, ${fmt(recon.levelEnd)}, is that book plus ${seriesSteps.join(", and ")}.`
+      : `The series' NAV at ${recon.seriesTo} is that book, ${fmt(recon.levelEnd)}.`,
     liveSteps.length
       ? `The current value of holdings, ${fmt(recon.current)}, is that book plus ${liveSteps.join(", and ")}.`
       : `The current value of holdings is that book, ${fmt(recon.current)}.`,
   ].join(" ");
+  const outOfReturn = stats.joinedLater.length + stats.atCost.length;
+  const List = ({ id, items, right }: { id: string; items: BookNavUnitCoverage[]; right: (u: BookNavUnitCoverage) => string }) => (
+    <ul className="mt-2 space-y-1 text-[11px] text-slate-400" data-testid={id}>
+      {byValue(items).map((u) => (
+        <li key={u.key} className="flex justify-between gap-3" data-nav-unit={u.key}>
+          <span className="truncate" title={u.key}>{unitName(u)}</span>
+          <span className="shrink-0 tabular text-slate-500">{right(u)}</span>
+        </li>
+      ))}
+    </ul>
+  );
   return (
-    <details className="mt-3 rounded-lg border border-ink-700 bg-ink-900/40 px-3 py-2" data-testid="nav-excluded">
-      {/* THE SPLIT IS THE SUMMARY'S HOVER (Stage 10cp). "36 accounts cannot
-          supply a series" is one fact; "23 publish one valuation and 13 publish
-          none" is two, and they send a reader to two different places — a next
-          monthly statement, or a fund that values the folio at all — so a reader
-          who never opens the details can still read both off the summary. */}
+    <details className="mt-3 rounded-lg border border-ink-700 bg-ink-900/40 px-3 py-2" data-testid="nav-excluded"
+      data-in-return={stats.inReturn.length} data-holding={stats.holding.length}
+      data-joined={stats.joinedLater.length} data-at-cost={stats.atCost.length} data-unvalued={unvalued.length}>
+      {/* THE SPLIT IS THE SUMMARY'S HOVER (Stage 10cp): what joins later, what
+          is held at cost, and what carries no valued holding send a reader to
+          three different places, so a reader who never opens the details can
+          still read all three off the summary. */}
       <summary className="cursor-pointer text-[11.5px] text-slate-400"
-        title={`The ${cov.single.length + cov.unvalued.length} accounts that cannot supply a series: ${cov.single.length} publish exactly one dated valuation, ${cov.unvalued.length} carry no valued holding. The figure is their value as their statements print them — a per-account sum. Open to see each one named.`}>
-        Not in the series: <strong className="text-slate-300">{cov.single.length + cov.unvalued.length} accounts</strong>
-        {" "}· {fmt(sum(cov.single.map((s) => s.bookValue)) + sum(cov.unvalued.map((u) => u.bookValue)), { compact: true })}
+        title={`${stats.inReturn.length} of the ${stats.holding.length} investments holding value are in the return at ${cov.to}, ${c(stats.inReturnValue)}. ${stats.joinedLater.length} of those joined it on a first valuation inside the window; ${stats.atCost.length} private lines, ${c(stats.atCostValue)}, are held at cost and are in the NAV only; ${unvalued.length} accounts carry no valued holding. Open to see each one named.`}>
+        In the return: <strong className="text-slate-300">{stats.inReturn.length} of {stats.holding.length} investments</strong>
+        {" "}· {c(stats.inReturnValue)}
+        {outOfReturn > 0 && <> · {stats.joinedLater.length} joined later · {stats.atCost.length} at cost</>}
       </summary>
       <div className="mt-3 grid gap-4 md:grid-cols-2">
         <div>
-          <div className="label-xs" title="A level, never a change. Carrying them into the series as a flat line would drag its return towards a figure nothing measured. The next reissue of any of these statements gives each a second point.">
-            {cov.single.length} publish exactly one dated valuation
+          <div className="label-xs" title={`Each was bought before ${cov.from} and is first valued inside the window, so its value on ${cov.from} is nowhere in the archive: it joins the return on that valuation and contributes nothing before it. Its ${cov.from} valuation is what would bring it in from the first day.`}>
+            {stats.joinedLater.length} join the return on a first valuation
           </div>
-          <ul className="mt-2 space-y-1 text-[11px] text-slate-400" data-testid="nav-single-list">
-            {[...cov.single].sort((a, b) => b.bookValue - a.bookValue).map((s) => (
-              <li key={s.accountId} className="flex justify-between gap-3">
-                <span className="truncate" title={s.accountId}>{nameOf(s.accountId)} · {s.accountNo}</span>
-                <span className="shrink-0 tabular text-slate-500">{s.date} · {fmt(s.bookValue, { compact: true })}</span>
-              </li>
-            ))}
-          </ul>
+          <List id="nav-joined-list" items={stats.joinedLater} right={(u) => `${u.returnFrom} · ${fmt(u.endValue, { compact: true })}`} />
+          {stats.notRevalued.length > 0 && (
+            <>
+              <div className="label-xs mt-3" title={`In the return from ${cov.from} at a valuation on or before that day, and valued by no later statement — so each is carried flat at it, as every investment is between two valuations. A newer statement for any of them moves the line.`}>
+                {stats.notRevalued.length} not revalued since {cov.from}
+              </div>
+              <List id="nav-stale-list" items={stats.notRevalued} right={(u) => `${u.lastValued} · ${fmt(u.endValue, { compact: true })}`} />
+            </>
+          )}
         </div>
         <div>
+          <div className="label-xs" title="The family's consolidated review holds these at what was paid and values none of them, so each is in the NAV at its cost and never in the return — a return over a cost would count a line nobody valued as 0%.">
+            {stats.atCost.length} held at cost · {c(stats.atCostValue)}
+          </div>
+          <List id="nav-atcost-list" items={stats.atCost} right={(u) => fmt(u.endValue, { compact: true })} />
           {/* ONE SENTENCE THAT IS TRUE OF ALL OF THEM (MNT-14), in the label's
-              hover since Stage 10cp moved the lines that explain a card there.
-              The kinds-list it replaced named five kinds of account, left out
-              the custody accounts a face value prices and called the redeemed
-              ones an absence. Each row carries its own account's reason. The
-              face said "publish no valuation at all" over two rows whose own
-              statement struck a nil; "carry no valued holding" is true of every
-              row, the redeemed ones included. */}
-          <div className="label-xs" data-nav-unvalued-why
-            title={`None of these carries a valued holding, so none can start a series — each row names its own account's reason${nils > 0 ? `, and ${nils === 1 ? "a redeemed account shows" : `the ${nils} redeemed accounts show`} the nil balance ${nils === 1 ? "its" : "their"} statement struck` : ""}.`}>
-            {cov.unvalued.length} carry no valued holding
+              hover. Each row carries its own account's reason, and a redeemed
+              account shows the nil its own statement struck — a measured zero
+              and an absent measurement must never look the same (§2). */}
+          <div className="label-xs mt-3" data-nav-unvalued-why
+            title={`None of these carries a valued holding, so the series stands for none of them — each row names its own account's reason${nils > 0 ? `, and ${nils === 1 ? "a redeemed account shows" : `the ${nils} redeemed accounts show`} the nil balance ${nils === 1 ? "its" : "their"} statement struck` : ""}.`}>
+            {unvalued.length} carry no valued holding
           </div>
           <ul className="mt-2 space-y-1 text-[11px] text-slate-400" data-testid="nav-unvalued-list">
-            {/* A DASH WHERE NOTHING VALUES THE ACCOUNT, AND ₹0 WHERE ITS OWN
-                STATEMENT STRUCK A NIL BALANCE. §2: a measured zero and an absent
-                measurement must never look the same — and two of these accounts
-                are the first kind, redeemed to nil on their own holdings
-                statement, which the dash and its "absent valuation" hover used
-                to deny. The reason is the account's own, routed, never written
-                here (`whyOf`). */}
-            {cov.unvalued.map((u) => {
+            {unvalued.map((u) => {
               const why = whyOf(u.accountId);
               return (
                 <li key={u.accountId} className="flex justify-between gap-3"
@@ -853,7 +948,7 @@ function ExcludedAccounts({ cov, nameOf, fmt, recon, whyOf }: {
                     </span>
                   ) : (
                     <span className="shrink-0 tabular">
-                      <AbsentCell reason={why.reason ?? "no statement in this drop values this account, so it cannot start a series"} />
+                      <AbsentCell reason={why.reason ?? "no statement in this drop values this account, so the series cannot stand for it"} />
                     </span>
                   )}
                 </li>
@@ -862,16 +957,13 @@ function ExcludedAccounts({ cov, nameOf, fmt, recon, whyOf }: {
           </ul>
         </div>
       </div>
-      {/* THE FIGURE ON ITS FACE, THE RECONCILIATION IN ITS HOVER (Stage 10cp).
-          The hover is MNT-4's reconciliation, and it is not "the lists sum to
-          more than the current value": on the live book the current value is
-          ABOVE the per-account sum, by the published NAV and the depository's
-          cash funds, and BELOW it only by the double count. */}
+      {/* THE FIGURE ON ITS FACE, THE RECONCILIATION IN ITS HOVER (Stage 10cp). */}
       <p className="mt-3 border-t border-ink-700 pt-2 text-[11px] text-slate-500" data-testid="nav-excluded-recon"
         data-per-account={recon.perAccount} data-statement-book={recon.statementBook} data-current={recon.current}
+        data-level-end={recon.levelEnd} data-newer-marks={recon.newerMarks} data-capital-after={recon.capitalAfter}
         data-reported-twice={recon.reportedTwice} data-reported-twice-keys={recon.reportedTwiceKeys.join(" ")}
         title={footHover}>
-        All three lists · {c(recon.perAccount)}
+        NAV at {recon.seriesTo} · {c(recon.levelEnd)} · statements · {c(sumOf([recon.statementBook]))}
       </p>
     </details>
   );

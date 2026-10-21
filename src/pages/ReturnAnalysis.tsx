@@ -28,7 +28,8 @@ import { AbsentCell, AbsentSection, DASH } from "@/components/Absent";
 import { stockHref } from "@/lib/auditFormulas";
 import { bookDrawdown } from "@/lib/drawdown";
 import { wholeFamilyOnly } from "@/lib/memberScope";
-import { BOOK_NAV_COVERAGE } from "@/data/glowData";
+import { WHOLE_BOOK_NAV } from "@/lib/bookNavBook";
+import { bookNavStats } from "@/lib/bookNav";
 import { chartTooltipStyle, chartTooltipLabelStyle, chartTooltipItemStyle } from "@/lib/chartTheme";
 
 const GAIN = "#10b981", LOSS = "#ef4444";
@@ -326,10 +327,16 @@ export function ReturnAnalysis() {
     statementPortfolio ? dedupedPositions(statementPortfolio.positions) : undefined);
   // THE BOOK'S OWN DATED SERIES, chained on the link — the one `/history`
   // and Morning CIO's NAV chart are drawn from, so the three cannot disagree.
-  const { index: ddIndex, drawdown: dd } = bookDrawdown(portfolio.navHistory ?? []);
-  const ddCovered = BOOK_NAV_COVERAGE.covered.length;
+  // WHOLE BOOK ONLY (Stage 10fc, 10gd): the drawdown is struck from the day
+  // every valued investment is in the series — before it the index is a
+  // composite still being joined, and a fall over part of the book is not the
+  // book's fall.
+  const ddSeries = (portfolio.navHistory ?? []).filter((p) => p.panelComplete !== false);
+  const { index: ddIndex, drawdown: dd } = bookDrawdown(ddSeries);
+  const ddStats = bookNavStats(WHOLE_BOOK_NAV.coverage);
+  const ddCovered = ddStats.inReturn.length;
   const ddNote = dd
-    ? `On the book's dated NAV series — ${dd.points} statement dates, ${fmtDate(dd.from)} → ${fmtDate(dd.to)}, chained over the accounts valued at both ends of each interval and net of the external capital that entered it. It covers the ${ddCovered} accounts that publish a series; between statement dates each is held at its latest mark, so a fall and recovery inside one interval is not seen.`
+    ? `On the whole book's dated NAV series — ${dd.points} dated points, ${fmtDate(dd.from)} → ${fmtDate(dd.to)}, from the day every valued investment is in it — chained over the investments valued at both ends of each interval and net of the external capital that entered it. It covers the ${ddCovered} of ${ddStats.holding.length} investments holding value that carry a valuation; ${ddStats.atCost.length} private lines the review holds at cost are not in it. Between valuations each is held at its latest one, so a fall and recovery inside one interval is not seen.`
     : "";
   const sectorRows = m ? sortRows(m.sectors, sectorView.sort, withReviewAccessors<typeof m.sectors[number]>({
     sector: (x) => x.label,
@@ -430,7 +437,7 @@ export function ReturnAnalysis() {
             sub={dd.pct < 0
               ? `${fmtDate(dd.peakDate!)} → ${fmtDate(dd.troughDate!)} · ${dd.recoveredOn ? `recovered ${fmtDate(dd.recoveredOn)}` : "not yet recovered"}`
               : "a measured nil — the dated series never fell"}
-            hint={`On the dated NAV series of the ${ddCovered} accounts that publish one`}
+            hint={`On the whole book's dated NAV series, ${ddCovered} valued investments`}
             title={ddNote}
             icon={<TrendingDown className="h-4 w-4" />} />
         ) : scope.selected ? (

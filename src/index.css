@@ -30,6 +30,8 @@
   --chart-index: #4f46e5;
   --chart-nav: #7b8598;
   --chart-band: rgba(138, 106, 28, 0.07);
+  /* The NAV card's stretch still joining the return (Stage 10gd): the book's gold, lighter. */
+  --chart-book-early: rgba(138, 106, 28, 0.5);
   /* The second shade of a striped table row — see `tbody > tr:nth-child(even)`. */
   --row-alt: #f7f4ec;
   /* The highlight a data row takes under the pointer — see the override below the
@@ -55,6 +57,7 @@ html.dark {
   --chart-index: #818cf8;
   --chart-nav: #64748b;
   --chart-band: rgba(217, 196, 143, 0.07);
+  --chart-book-early: rgba(217, 196, 143, 0.5);
   --row-alt: #1a1740;
   /* Brighter than both the card and `--row-alt` (#1a1740), so a hover lifts the
      row rather than darkening into its even-row neighbour. */
