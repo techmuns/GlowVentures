@@ -11,6 +11,7 @@ import { isinValid, isinCandidates, resolveIsin } from "../lib/isin.mjs";
 import { quantityReadings } from "../lib/scan.mjs";
 import { extract, matchesScan, SCAN_LAYOUT } from "../providers/nsdlScan.mjs";
 import { isRemovalNotice, checkStatementBytes } from "../../../shared/statementBytes.mjs";
+import { nameScannedHoldings } from "../lib/scannedNames.mjs";
 
 let pass = 0, fail = 0;
 const ok = (label, cond, detail = "") => {
@@ -89,6 +90,31 @@ const scan = (extra = {}) => ({
 {
   const r = extract({ grid: { pages: [{ text: "STATEMENT OF HOLDINGS" }] }, meta: {} });
   ok("archived page text alone publishes nothing — the archived reading stands", r.status === "failed" && r.holdings.length === 0);
+}
+
+// A carried OCR reading goes through the same name pass on every CI replay.
+// Its quantities and original OCR words must stand, and notes cannot accumulate.
+{
+  const carried = { provider: "Fixture (NSDL demat)", status: "ok", warnings: [
+    { code: "text-recovered-from-scan", detail: "Layout fixture" },
+    { code: "no-rate-published", detail: "Quantity-only fixture" },
+  ], holdings: [
+    { isin: "FIXTURE00001", security: "OCR layout words", securityKey: "ocr-layout-words", quantity: 17 },
+    { isin: "FIXTURE00002", security: "Unmatched layout fixture", quantity: 23 },
+  ] };
+  const docs = [carried,
+    { provider: "Witness (NSDL demat)", status: "ok", holdings: [{ isin: "FIXTURE00001", security: "Layout Fixture Company EQ" }] },
+    { provider: "Other witness", status: "ok", holdings: [{ isin: "FIXTURE00001", security: "Alternate Fixture Naming" }] },
+  ];
+  ok("a scan takes its own depository's text-layer name", nameScannedHoldings(docs) === 1
+    && carried.holdings[0].security === "Layout Fixture Company EQ" && carried.holdings[0].printedSecurity === "OCR layout words");
+  const archived = JSON.stringify(carried);
+  for (let i = 0; i < 3; i++) nameScannedHoldings(docs);
+  ok("repeated carried-scan naming is byte-identical", JSON.stringify(carried) === archived);
+  ok("replay keeps one note per name source and the other evidence", carried.warnings.length === 4
+    && carried.warnings.filter(w => w.code === "security-name-from-isin").length === 1
+    && carried.warnings.filter(w => w.code === "security-name-from-scan").length === 1);
+  ok("replay preserves quantities, including unmatched rows", carried.holdings.map(h => h.quantity).join() === "17,23");
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);
