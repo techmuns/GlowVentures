@@ -1,5 +1,13 @@
 import { AbsentCell } from "@/components/Absent";
-import { fmtInvestedDate, investedOnTitle, type InvestedOn } from "@/lib/investedOn";
+import { fmtInvestedDate, investedOnTitle, investmentDateOf, investmentDateMissingReason, type InvestedOn, type InvestmentDateScope } from "@/lib/investedOn";
+
+export function InvestmentDateCell({ scope }: { scope?: InvestmentDateScope }) {
+  const d = investmentDateOf(scope);
+  return <td data-col-cell="investedOn" data-invested-first={d?.first ?? ""} data-invested-last={d?.last ?? ""}
+    className="px-3 py-2 text-left mono whitespace-nowrap text-xs text-slate-400">
+    <InvestedOnCell d={d} why={d ? "" : investmentDateMissingReason(scope)} />
+  </td>;
+}
 
 /**
  * AN INVESTED-ON DATE, AS EVERY HOLDINGS TABLE PRINTS IT (Stage 10fm) — the

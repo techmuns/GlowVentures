@@ -2,6 +2,7 @@ import { REVIEW_COLUMN_DATA } from "@/data/reviewColumns";
 import { familyBasket } from "@/lib/familyTaxonomy";
 import type { Position } from "@/lib/types";
 import type { Accessor } from "@/lib/tableView";
+import { investmentDateOf } from "@/lib/investedOn";
 
 export type ReviewField = { value: string | number | null; source: string; note?: string; sortValue?: string; precision?: string; from?: string; to?: string };
 type ReviewRecord = Record<string, ReviewField>;
@@ -95,7 +96,7 @@ export function reviewField(scope: ReviewScope | undefined, field: string): Revi
 
 /** Sorting and cells resolve exactly the same source field; missing figures sort last. */
 export function withReviewAccessors<T>(accessors: Record<string, Accessor<T>>, scope: (row: T) => ReviewScope, familySubset = false): Record<string, Accessor<T>> {
-  return { ...accessors, ...Object.fromEntries(REVIEW_COLUMNS.map((c) => [c.id, (row: T) => {
+  return { investedOn: (row: T) => investmentDateOf(scope(row))?.first ?? null, ...accessors, ...Object.fromEntries(REVIEW_COLUMNS.map((c) => [c.id, (row: T) => {
     const resolved = scope(row);
     const field = reviewField({ ...resolved, familySubset: familySubset || resolved.familySubset }, c.field);
     return field.value == null ? null : field.sortValue ?? field.value;

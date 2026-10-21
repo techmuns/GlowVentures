@@ -5,6 +5,7 @@ import { pressColumn } from "@/lib/columnDrag";
 import { AutoEditColumns, columnText } from "./EditColumns";
 import { reviewColumn, REVIEW_NOTE, type ReviewScope } from "@/lib/reviewColumns";
 import { ReviewColumnCell } from "./ReviewColumnCell";
+import { InvestmentDateCell } from "./InvestedOnCell";
 
 /**
  * ── ONE HEADER CELL FOR EVERY TABLE IN THE APP ──────────────────────────────
@@ -174,6 +175,12 @@ export function Tr({ view, children, reviewScope, ...rest }: { view: TableView; 
   const cells = Children.toArray(children).filter((c) => isValidElement(c) || c === 0 || !!c);
   const header = cells.some((cell) => isValidElement(cell) && cell.type === SortHeader);
   if (cells.length === view.baseColumns.length) for (const id of view.additionalColumns) {
+    if (id === "investedOn") {
+      cells.push(header
+        ? <SortHeader key={id} col={id} view={view} align="left" title="When this row's money was invested, from its own purchase records. A date is shown only when every holding in the row is dated.">Invested on</SortHeader>
+        : <InvestmentDateCell key={id} scope={reviewScope} />);
+      continue;
+    }
     const column = reviewColumn(id)!;
     cells.push(header
       ? <SortHeader key={id} col={id} view={view} align={column.format === "text" ? "left" : "right"} note="30 Jun 2026 review" title={REVIEW_NOTE}>{column.label}</SortHeader>

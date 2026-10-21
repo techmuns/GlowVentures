@@ -22,7 +22,7 @@
 //     loops on anything else), tells every reader of a key when it changes, and
 //     re-reads a key another browser tab wrote.
 import {
-  arrangeColumns, visibleOrder, moveColumn, nudgeColumn, parseStoredView, visibleSort, storedView, selectedColumns,
+  arrangeColumns, visibleOrder, moveColumn, nudgeColumn, parseStoredView, visibleSort, storedView, selectedColumns, investmentDateColumns,
 } from "../tableView";
 import {
   DEFAULT_RETURN_MEASURES, normaliseMeasures, resolveReturnMeasures, parseSavedMeasures, returnMeasuresKey,
@@ -37,6 +37,17 @@ const ok = (name: string, pass: boolean, detail = "") => {
   else console.log(`ok   ${name}${detail ? ` — ${detail}` : ""}`);
 };
 const same = (a: readonly unknown[], b: readonly unknown[]) => JSON.stringify(a) === JSON.stringify(b);
+
+{
+  const old = ["entity", "qty", "invested", "current", "return"];
+  const declared = investmentDateColumns(old, true);
+  ok("holdings dates appear beside invested capital", same(declared, ["entity", "qty", "invested", "investedOn", "current", "return"]));
+  ok("a saved arrangement from before purchase dates acquires the column", visibleOrder(["entity", "return", "invested", "qty", "current"], declared).includes("investedOn"));
+  ok("the optional review date being hidden cannot hide the purchase date", selectedColumns(declared, { "review:investmentRange": false }, ["review:investmentRange"]).includes("investedOn"));
+  ok("existing date columns are never duplicated", same(investmentDateColumns(declared, true), declared));
+  ok("the private-market table keeps its own investment date", same(investmentDateColumns(old, false), old));
+  ok("holdings without an invested amount put dates beside the name", same(investmentDateColumns(["security", "value"], true), ["security", "investedOn", "value"]));
+}
 
 // The Portfolio Monitor's own two column lists, one per axis kind.
 const CATEGORY = ["security", "qty", "avgCost", "invested", "investedOn", "cmp", "day", "mv",
