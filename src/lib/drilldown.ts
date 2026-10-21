@@ -36,7 +36,7 @@ import { fifoTotals, type FifoOptions, type FifoTotals } from "./fifo";
  * rather than paraphrased.
  */
 import { type GroupAxis, groupKeyFor, groupLabelFor, GROUP_NOUN } from "./groupAxis";
-import { measuredAccountsReturn } from "./returns";
+import { measuredAccountsReturn, type UnmeasuredAccount } from "./returns";
 import { xirrPct, moneyWeightedReturn, type MoneyWeighted } from "./bucketXirr";
 
 /** The route the drill-down lives at. Imported, never typed at a call site. */
@@ -880,9 +880,15 @@ export type BookMoneyWeighted = {
   measuredValue: number;
   /** Where the pool closes — the latest statement date among them. */
   lastClose: string | null;
-  /** Accounts in the book, for "N of M accounts". */
+  /** Accounts the rate must cover — measured or missing, never those with nothing to measure — for "N of M accounts". */
   bookAccounts: number;
   gaps: { accountId: string; accountNo: string; asOf: string; reason: string }[];
+  /** Accounts holding value that no verified record measures — any one leaves the rate absent. */
+  missing: UnmeasuredAccount[];
+  /** Accounts with nothing of their own to measure. */
+  outside: UnmeasuredAccount[];
+  /** Why the rate is absent, where it is. */
+  reason: string | null;
 };
 export function bookMoneyWeighted(portfolio: Portfolio, statement: Portfolio | null, today: Date): BookMoneyWeighted {
   const mw = measuredAccountsReturn(statement ?? portfolio, portfolio.accounts);
@@ -897,13 +903,15 @@ export function bookMoneyWeighted(portfolio: Portfolio, statement: Portfolio | n
   // The private flows join the SAME per-account parts, each still closing on
   // its own statement date. The window is the rate's own: its first flow to its
   // last — with no private flows (this book carries none), exactly the pool's.
-  const flows = [
+  // No rate, no inputs: a partial pool's flows are not the calculation of anything shown.
+  const flows = !mw.whole ? [] : [
     ...mw.parts.flatMap((x) => [...x.flows, { date: x.asOf, amount: x.terminalValue }]),
     ...privateFlows,
   ];
-  const annual = mw.parts.length ? xirrPct(flows) : null;
+  // Whole or absent: a rate over some accounts is not the book's (`measuredAccountsReturn`).
+  const annual = mw.whole ? xirrPct(flows) : null;
   const times = flows.map((f) => f.date.getTime());
-  const windowDays = mw.parts.length ? Math.round((Math.max(...times) - Math.min(...times)) / 864e5) : null;
+  const windowDays = flows.length ? Math.round((Math.max(...times) - Math.min(...times)) / 864e5) : null;
   return {
     result: moneyWeightedReturn(annual, windowDays),
     flows,
@@ -911,8 +919,11 @@ export function bookMoneyWeighted(portfolio: Portfolio, statement: Portfolio | n
     accountNos: mw.parts.map((x) => x.accountNo),
     measuredValue: mw.measuredMV,
     lastClose: mw.lastClose,
-    bookAccounts: portfolio.accounts.length,
+    bookAccounts: mw.parts.length + mw.missing.length,
     gaps: mw.gaps,
+    missing: mw.missing,
+    outside: mw.outside,
+    reason: mw.reason,
   };
 }
 

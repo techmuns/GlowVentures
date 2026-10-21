@@ -20,6 +20,15 @@
  * (`capitalRollup`, the Transactions card's own record). An account that cannot
  * be measured is NAMED with its reason, never blended in as zero.
  *
+ * ONE RECORD, AND NEVER A PARTIAL RETURN (Stage 10fc). A dated window reads the
+ * same verified account records every other return surface reads
+ * (`accountReturnRecords`) — the tab once built its own from NAV history and
+ * cash-flow rows and measured 9 accounts over FYTD where 17 are verified. The
+ * portfolio's figures are struck only when EVERY account that holds value is
+ * measured; otherwise they are absent, and the accounts and the records they
+ * lack are named. An account with nothing of its own to measure (a verified
+ * nil, or valued nowhere in the book) is outside the whole, not a gap in it.
+ *
  * No line on the face reads as a sentence (Stage 10cp): every explanation is a
  * hover on the figure or control it explains.
  */
@@ -40,11 +49,12 @@ import { mandateLabel } from "@/lib/analytics";
 import { inScopeAccount } from "@/lib/memberScope";
 import { capitalMovesWithCalls, capitalRollup, capitalWindow } from "@/lib/tranches";
 import {
-  BOOK_ACCOUNT_CASH_FLOWS, BOOK_ACCOUNT_NAV_HISTORY, BOOK_CAPITAL_FROM_INCEPTION, BOOK_CAPITAL_MOVES,
-  BOOK_COMMITMENTS, BOOK_NAV_COVERAGE, BOOK_POSITION_TRANCHES, BOOK_REVIEW_FLOWS, BOOK_UNDATED_CAPITAL,
+  BOOK_ACCOUNT_NAV_HISTORY, BOOK_CAPITAL_FROM_INCEPTION, BOOK_CAPITAL_MOVES,
+  BOOK_COMMITMENTS, BOOK_POSITION_TRANCHES, BOOK_REVIEW_FLOWS, BOOK_UNDATED_CAPITAL,
 } from "@/data/glowData";
+import { nothingToMeasure } from "@/lib/returns";
 import {
-  PERIODS, RETURN_TYPES, periodStart, windowReturns, measureWindow,
+  PERIODS, RETURN_TYPES, FORMULAS, INCEPTION_FORMULAS, periodStart, windowReturns, measureWindow,
   measureInception, daysBetween,
   type AccountInput, type InceptionRow, type PeriodKey, type ReturnType, type Measured,
 } from "@/lib/periodReturns";
@@ -73,54 +83,37 @@ export default function PortfolioReturns() {
   // ── Every account's valuations and dated flows ───────────────────────────
   const inputs = useMemo<AccountInput[]>(() => {
     if (!statementPortfolio) return [];
-    const coverage = new Map(BOOK_NAV_COVERAGE.covered.map((c) => [c.accountId, c]));
-    const groups = capitalRollup(
-      capitalMovesWithCalls(BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, statementPortfolio.accounts, BOOK_REVIEW_FLOWS),
-      statementPortfolio.accounts, statementPortfolio.positions, BOOK_POSITION_TRANCHES, "all", "recent",
-      { commitments: BOOK_COMMITMENTS, fromInception: BOOK_CAPITAL_FROM_INCEPTION },
-    );
     const out: AccountInput[] = [];
     for (const a of statementPortfolio.accounts) {
       const label = mandateLabel(a) || a.provider;
       const base = { accountId: a.accountId, label: `${label} · ${a.accountNo}`, owner: a.owner };
       const undated = BOOK_UNDATED_CAPITAL.filter((u) => u.accountId === a.accountId)
         .map((u) => ({ from: u.from, to: u.to, amount: u.undated }));
-      if (a.reviewHolder) {
+      const coverage = statementPortfolio.accountReturnRecords?.[a.accountId];
+      const record = coverage?.record;
+      const opening = record?.flows.find((f) => OPENING_ROW.test(f.description ?? ""));
+      if (!record || !opening) {
         out.push({ ...base, valuations: [], flows: [], knownFrom: null, knownTo: null, undated,
-          flowsUnknown: "the family's review values its lines on one date, so no window can be struck over it" });
+          outside: nothingToMeasure(statementPortfolio, a),
+          flowsUnknown: a.reviewHolder
+            ? "the family's review values its lines on one date and dates no capital, so no window can be struck over it"
+            : coverage?.gap ?? "no verified opening value and dated capital record" });
         continue;
       }
+      // The verified record: its opening value at the close of the day before
+      // its first dated flow, its dated capital, and its closing valuation. A
+      // statement valuation between the two is a mark a window may open or
+      // close on, because the capital between them is complete.
+      const d = new Date(`${opening.date}T00:00:00Z`);
+      d.setUTCDate(d.getUTCDate() - 1);
+      const openDate = d.toISOString().slice(0, 10);
       const vals = new Map<string, number>();
-      for (const p of BOOK_ACCOUNT_NAV_HISTORY[a.accountId] ?? []) vals.set(p.date, p.nav);
-      const held = statementPortfolio.positions.filter((p) => p.accountId === a.accountId);
-      if (held.length && !vals.has(a.asOf)) vals.set(a.asOf, held.reduce((s, p) => s + (p.marketValue ?? 0), 0));
-      const cash = BOOK_ACCOUNT_CASH_FLOWS[a.accountId] ?? [];
-      const opening = cash.find((c) => OPENING_ROW.test(c.description ?? ""));
-      let flows: { date: string; amount: number }[] = [];
-      let knownFrom: string | null = null;
-      let knownTo: string | null = null;
-      let flowsUnknown: string | null = null;
-      const mine = groups.filter((g) => g.accountId === a.accountId);
-      if (opening) {
-        const d = new Date(`${opening.date}T00:00:00Z`);
-        d.setUTCDate(d.getUTCDate() - 1);
-        const openDate = d.toISOString().slice(0, 10);
-        vals.set(openDate, -opening.amount);
-        flows = cash.filter((c) => c !== opening).map((c) => ({ date: c.date, amount: c.amount }));
-        knownFrom = openDate;
-        knownTo = a.capitalRecordTo ?? a.asOf;
-      } else if (mine.length === 1 && mine[0].flows && mine[0].appreciation != null && capitalWindow(mine[0])) {
-        flows = mine[0].flows.map((f) => ({ date: f.date, amount: f.amount }));
-        knownTo = capitalWindow(mine[0])!.to;
-      } else if (coverage.get(a.accountId)?.flowBasis === "units-unchanged") {
-        const c = coverage.get(a.accountId)!;
-        knownFrom = c.first; knownTo = c.last;
-      } else {
-        flowsUnknown = mine.length
-          ? (mine.find((g) => g.incompleteReason)?.incompleteReason ?? "its capital record does not reach the date its value is struck on")
-          : "no statement dates the capital put in or taken out";
-      }
-      out.push({ ...base, valuations: [...vals].map(([date, value]) => ({ date, value })), flows, knownFrom, knownTo, flowsUnknown, undated });
+      for (const p of BOOK_ACCOUNT_NAV_HISTORY[a.accountId] ?? []) if (p.date > openDate && p.date < record.asOf) vals.set(p.date, p.nav);
+      vals.set(openDate, -opening.amount);
+      vals.set(record.asOf, record.value);
+      out.push({ ...base, valuations: [...vals].map(([date, value]) => ({ date, value })),
+        flows: record.flows.filter((f) => f !== opening).map((f) => ({ date: f.date, amount: f.amount })),
+        knownFrom: openDate, knownTo: record.capitalRecordTo ?? record.asOf, flowsUnknown: null, undated });
     }
     return out;
   }, [statementPortfolio]);
@@ -131,12 +124,15 @@ export default function PortfolioReturns() {
       .filter((m) => inScopeAccount(scope.accountIds, m.accountId));
     const groups = capitalRollup(moves, statementPortfolio.accounts, statementPortfolio.positions, BOOK_POSITION_TRANCHES, "all", "recent",
       { commitments: BOOK_COMMITMENTS, fromInception: BOOK_CAPITAL_FROM_INCEPTION });
+    const outside = new Set(statementPortfolio.accounts.filter((a) => nothingToMeasure(statementPortfolio, a)).map((a) => a.accountId));
     const rows: InceptionRow[] = [];
     const skipped: { label: string; reason: string }[] = [];
     for (const g of groups) {
       const w = capitalWindow(g);
       const label = `${g.label} · ${g.accountNo}`;
-      if (g.atCost) { skipped.push({ label, reason: "held at its cost, so it carries no gain" }); continue; }
+      const complete = !g.atCost && w && g.flows && g.value != null && g.appreciation != null;
+      if (!complete && outside.has(g.accountId)) continue;
+      if (g.atCost) { skipped.push({ label, reason: "held at its cost: no valuation states its gain" }); continue; }
       if (!w || !g.flows || g.value == null || g.appreciation == null) {
         skipped.push({ label, reason: g.incompleteReason ?? "its dated capital record or its value is incomplete" });
         continue;
@@ -144,6 +140,12 @@ export default function PortfolioReturns() {
       rows.push({ accountId: g.key, label, owner: g.owner, first: w.from, valueAsOf: w.to,
         paidIn: g.paidIn, takenOut: g.tookOut ?? 0, value: g.value,
         flows: g.flows.map((f) => ({ date: f.date, amount: f.amount })) });
+    }
+    // An account holding value that dates no capital at all is a gap in the
+    // whole too, not an account the period never heard of.
+    for (const a of statementPortfolio.accounts) {
+      if (outside.has(a.accountId) || groups.some((g) => g.accountId === a.accountId)) continue;
+      skipped.push({ label: `${mandateLabel(a) || a.provider} · ${a.accountNo}`, reason: "no statement dates the capital put in or taken out since its first purchase" });
     }
     return { rows, skipped };
   }, [statementPortfolio, scope.accountIds]);
@@ -158,26 +160,33 @@ export default function PortfolioReturns() {
     : period === "inception" ? null : end ? periodStart(period, end) : null;
 
   const win = useMemo(() => (start && end && start < end ? windowReturns(inputs, start, end) : null), [inputs, start, end]);
-  const measured: Measured | null = period === "inception"
-    ? measureInception(inception.rows, rtype, money)
-    : win ? measureWindow(win.included, rtype, money) : null;
 
-  // ── The whole portfolio: one window, one set of figures ──────────────────
+  // ── The whole portfolio: one window, one set of figures — or none ────────
   const excluded = period === "inception" ? inception.skipped : (win?.excluded ?? []).map((e) => ({ label: e.label, reason: e.reason }));
   const coveredCount = period === "inception" ? inception.rows.length : (win?.included.length ?? 0);
+  const accountsTotal = coveredCount + excluded.length;
+  // NEVER A PARTIAL RETURN: a figure over some accounts is not the portfolio's.
+  const whole = coveredCount > 0 && excluded.length === 0;
+  const incomplete = `${coveredCount === 0 ? `None of the ${accountsTotal} accounts holding value has a` : `${excluded.length} of ${accountsTotal} accounts holding value ${excluded.length === 1 ? "has" : "have"} no`} verified ${period === "inception"
+    ? "dated capital record and valuation since the first purchase"
+    : `valuation on or before ${start ? fmtDate(start) : "the opening date"} with dated capital through a closing valuation`}, so no whole-portfolio return is struck`;
+  const measured: Measured | null = !(period === "inception" || win) ? null
+    : !whole ? { shown: false, formula: (period === "inception" ? INCEPTION_FORMULAS : FORMULAS)[rtype],
+      reason: coveredCount === 0 && excluded.length === 0 ? "no account holds anything to measure over this window" : incomplete }
+    : period === "inception" ? measureInception(inception.rows, rtype, money)
+    : measureWindow(win!.included, rtype, money);
 
-  const total = period === "inception"
+  const total = !whole ? null : period === "inception"
     ? { open: null as number | null, cin: inception.rows.reduce((s, r) => s + r.paidIn, 0), cout: inception.rows.reduce((s, r) => s + r.takenOut, 0), close: inception.rows.reduce((s, r) => s + r.value, 0) }
     : win ? { open: win.openValue, cin: win.capitalIn, cout: win.capitalOut, close: win.closeValue } : null;
   const gainTotal = total ? total.close - (total.open ?? 0) - total.cin + total.cout : null;
-  const measuredFrom = period === "inception" ? inception.rows.map((r) => r.first).sort()[0] ?? null : win?.measuredFrom ?? null;
-  const measuredTo = period === "inception" ? inception.rows.map((r) => r.valueAsOf).sort().at(-1) ?? null : win?.measuredTo ?? null;
+  const measuredFrom = !whole ? null : period === "inception" ? inception.rows.map((r) => r.first).sort()[0] ?? null : win?.measuredFrom ?? null;
+  const measuredTo = !whole ? null : period === "inception" ? inception.rows.map((r) => r.valueAsOf).sort().at(-1) ?? null : win?.measuredTo ?? null;
   const days = measuredFrom && measuredTo ? daysBetween(measuredFrom, measuredTo) : null;
-  const accountsTotal = period === "inception" ? inception.rows.length + inception.skipped.length : inputs.length;
   const typeLabel = RETURN_TYPES.find((r) => r.key === rtype)!.label;
   const excludedHover = excluded.length
-    ? `Not measured: ${excluded.map((e) => `${e.label} — ${e.reason}`).join("; ")}. None is counted as zero.`
-    : "Every account is measured over this window.";
+    ? `No portfolio return until every account is measured. Not measured: ${excluded.map((e) => `${e.label} — ${e.reason}`).join("; ")}. None is counted as zero.`
+    : "Every account holding value is measured over this window.";
 
   // ── Benchmarks over the same measured window ─────────────────────────────
   const [hist, setHist] = useState<Record<string, PriceResult | undefined>>({});
@@ -193,7 +202,6 @@ export default function PortfolioReturns() {
   const benchTo = measuredTo ?? end;
   const annualise = !!(measured?.shown && measured.basis === "annual");
   const portfolioPct = measured?.shown && measured.pct != null ? measured.pct : null;
-  const partial = coveredCount > 0 && coveredCount < accountsTotal;
   const requested = period === "inception" ? "since first purchase" : start && end ? `${fmtDate(start)} → ${fmtDate(end)}` : DASH;
   const measuredDates = measuredFrom && measuredTo ? `${fmtDate(measuredFrom)} → ${fmtDate(measuredTo)} · ${days} days` : DASH;
   const needsYear = rtype === "cagr" && !!measured?.reason?.includes("at least 365 days");
@@ -264,7 +272,7 @@ export default function PortfolioReturns() {
       <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-auto" data-returns-stack>
         {/* ── The selected accounts: window, figures and calculation info ── */}
         <div className="shrink-0" data-returns-portfolio>
-        <Card title="Portfolio return" subtitle={`${partial ? `Partial return over ${coveredCount} of ${accountsTotal} accounts` : "Portfolio over one window"}, by ${typeLabel}. Open the info button for the calculation.`}>
+        <Card title="Portfolio return" subtitle={`The whole portfolio over one window, by ${typeLabel}. Open the info button for the calculation.`}>
           <div className="flex flex-wrap items-baseline justify-between gap-3" data-returns-figure="Return">
             <div>
               <div className="flex items-center gap-2">
@@ -273,13 +281,12 @@ export default function PortfolioReturns() {
                   <PeriodReturnCalculation measured={measured} type={rtype} inception={period === "inception"}
                     result={portfolioPct != null ? pctText(portfolioPct) : DASH} money={fmtFromBase} shortMoney={(n) => fmtFromBase(n, { compact: true })}
                     stepMoney={(n) => typeof n === "number" && displayCurrency === "INR" && portfolioPct != null && Math.abs(portfolioPct) >= 0.005 ? fmtCr(n, 4) : fmtFromBase(n)}
-                    context={<><p>Requested: {requested}</p><p>Measured: {measuredDates}</p><p>{partial ? "Partial return — " : "Covers "}{coveredCount} of {accountsTotal} accounts. {partial && "Not the whole portfolio’s return."}</p></>}
+                    context={<><p>Requested: {requested}</p><p>Measured: {measuredDates}</p><p>Measured {coveredCount} of {accountsTotal} accounts holding value.{!whole && excluded.length > 0 && " No portfolio return is shown until every one is measured."}</p></>}
                     accounts={period === "inception" ? inception.rows.map((r) => ({ label: r.label, from: r.first, to: r.valueAsOf }))
                       : (win?.included ?? []).map((r) => ({ label: r.label, from: r.openDate, to: r.closeDate, openedInWindow: r.openedInWindow }))}
                     excluded={excluded} />
                 </ReturnCalculationInfo>
               </div>
-              {partial && <div data-returns-partial className="mt-1 text-xs text-slate-400">Partial return — {coveredCount} of {accountsTotal} accounts</div>}
               {portfolioPct != null && measured ? (
                 <div className={`mono font-display text-[28px] font-semibold ${changeColor(portfolioPct)}`} data-returns-pct={portfolioPct.toFixed(4)} data-returns-basis={measured.basis}>
                   {pctText(portfolioPct)} <span className="text-[12px] font-normal text-slate-500">{basisWord(measured)}</span>
@@ -297,7 +304,7 @@ export default function PortfolioReturns() {
                 data-measured-from={measuredFrom ?? ""} data-measured-to={measuredTo ?? ""} data-measured-days={days ?? ""}>
                 {measuredFrom && measuredTo ? `${fmtDate(measuredFrom)} → ${fmtDate(measuredTo)} · ${days} days` : DASH}
               </span></div>
-              <div title={excludedHover}>Covers <span className="mono text-slate-200" data-returns-coverage data-returns-excluded={excluded.length}>{coveredCount} of {accountsTotal} accounts</span></div>
+              <div title={excludedHover}>Accounts measured <span className="mono text-slate-200" data-returns-coverage data-returns-excluded={excluded.length}>{coveredCount} of {accountsTotal} accounts</span></div>
             </div>
           </div>
           <div className="mt-4 grid grid-cols-2 gap-3 border-t sm:grid-cols-5 border-ink-700 pt-3 text-[12px]">
@@ -311,7 +318,7 @@ export default function PortfolioReturns() {
               <div key={l as string} title={h as string} data-returns-figure={l as string}>
                 <div className="label-xs">{l as string}</div>
                 <div className={`mono ${l === "Gain" && typeof v === "number" ? changeColor(v) : "text-slate-100"}`}>
-                  {typeof v === "number" ? money(v) : <AbsentCell reason={h as string} />}
+                  {typeof v === "number" ? money(v) : <AbsentCell reason={whole ? h as string : incomplete} />}
                 </div>
               </div>
             ))}
@@ -322,7 +329,7 @@ export default function PortfolioReturns() {
         {/* ── Benchmarks over the same window ── */}
         <div className="shrink-0" data-returns-benchmarks>
         <Card pad={false} title="Benchmarks"
-          subtitle={`Each index's close-to-close return over the measured window, ${annualise ? "annualised because the selected return is" : "not annualised, as the selected return is not"}. Price indices exclude dividends. ${partial ? `The comparison uses only ${coveredCount} of ${accountsTotal} accounts, not the whole portfolio.` : `Selected measure: ${typeLabel}.`}`}
+          subtitle={`Each index's close-to-close return over the measured window, ${annualise ? "annualised because the selected return is" : "not annualised, as the selected return is not"}. Price indices exclude dividends. ${whole ? `Selected measure: ${typeLabel}.` : "With no whole-portfolio return measured, each index runs over the window asked for."}`}
 >
           <div className="overflow-x-auto">
             <table className="min-w-full whitespace-nowrap text-[12.5px]" data-returns-bench-table>
@@ -330,12 +337,12 @@ export default function PortfolioReturns() {
                 <Tr view={benchView}>
                   <SortHeader col="bench" view={benchView} align="left" pad="px-4 py-2">Index</SortHeader>
                   <SortHeader col="ret" view={benchView} pad="px-3 py-2">Return · {basisTag}</SortHeader>
-                  <SortHeader col="gap" view={benchView} pad="px-4 py-2">{partial ? "Included accounts vs index" : "Portfolio vs index"}</SortHeader>
+                  <SortHeader col="gap" view={benchView} pad="px-4 py-2">Portfolio vs index</SortHeader>
                 </Tr>
               </thead>
               <tbody className="divide-y divide-ink-700/60">
                 <Tr view={benchView} className="bg-ink-700/30" data-returns-bench-portfolio>
-                  <td className="px-4 py-2 font-semibold text-slate-100">{partial ? `Partial portfolio (${coveredCount} of ${accountsTotal})` : "Portfolio"} · {typeLabel}</td>
+                  <td className="px-4 py-2 font-semibold text-slate-100">Portfolio · {typeLabel}</td>
                   <td className="px-3 py-2 text-right mono">
                     {portfolioPct != null ? <span className={changeColor(portfolioPct)}>{pctText(portfolioPct)}</span> : <AbsentCell reason={measured?.reason ?? "not measured on this window"} />}
                   </td>
@@ -354,7 +361,7 @@ export default function PortfolioReturns() {
                       </td>
                       <td className="px-4 py-2 text-right mono">
                         {gap != null
-                          ? <span className={changeColor(gap)} title={`${partial ? "The included accounts'" : "The portfolio's"} return less the index's, in percentage points${partial ? "; not whole-portfolio outperformance" : ""}`}>{gap >= 0 ? "+" : ""}{gap.toFixed(2)} pp</span>
+                          ? <span className={changeColor(gap)} title="The portfolio's return less the index's, in percentage points">{gap >= 0 ? "+" : ""}{gap.toFixed(2)} pp</span>
                           : <AbsentCell reason={portfolioPct == null ? "The portfolio's return is not measured on this window" : (r.reason ?? "no index return")} />}
                       </td>
                     </Tr>

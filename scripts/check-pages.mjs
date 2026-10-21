@@ -5476,14 +5476,22 @@ const FAMILY_MWR = (() => {
     const latest = bookObject(src, "BOOK_ACCOUNT_RETURN_RECORDS") ?? {};
     const DAY_MS = 86400000;
     const byOwner = new Map();
+    // Stage 10fc — an owner with any account holding value and no verified
+    // record has no rate at all: `{ missing }` names those accounts.
+    const missingBy = new Map();
     for (const a of accounts) {
       const record = latest[a.accountId]?.record;
       const selected = record ?? null;
       const fl = selected?.flows ?? (latest[a.accountId] ? [] : cf[a.accountId] ?? []);
-      if (!fl.some((f) => /^opening portfolio value/i.test(f.description ?? ""))) continue;
-      const mv = selected?.value ?? positions.filter((p) => p.accountId === a.accountId).reduce((t, p) => t + p.marketValue, 0);
-      if (!Number.isFinite(mv) || mv < 0 || (mv === 0 && !selected?.source)) continue;
+      const opens = fl.some((f) => /^opening portfolio value/i.test(f.description ?? ""));
       const owner = a.ownerId || a.owner || "unattributed";
+      const outside = !!latest[a.accountId]?.notApplicable
+        || (!selected?.source && !positions.some((p) => p.accountId === a.accountId) && !opens);
+      const mv = selected?.value ?? positions.filter((p) => p.accountId === a.accountId).reduce((t, p) => t + p.marketValue, 0);
+      if (!opens || !Number.isFinite(mv) || mv < 0 || (mv === 0 && !selected?.source)) {
+        if (!outside) missingBy.set(owner, [...(missingBy.get(owner) ?? []), String(a.accountNo)]);
+        continue;
+      }
       const o = byOwner.get(owner) ?? { accounts: [], flows: [], lastClose: "" };
       o.accounts.push(String(a.accountNo));
       for (const x of fl) o.flows.push({ t: Date.parse(`${x.date}T00:00:00Z`), amount: x.amount });
@@ -5493,7 +5501,11 @@ const FAMILY_MWR = (() => {
       byOwner.set(owner, o);
     }
     const out = new Map();
+    for (const [owner, missing] of missingBy) {
+      out.set(owner, { missing: missing.sort(), accounts: [...(byOwner.get(owner)?.accounts ?? [])].sort() });
+    }
     for (const [owner, o] of byOwner) {
+      if (missingBy.has(owner)) continue;
       const t0 = Math.min(...o.flows.map((x) => x.t)), t1 = Date.parse(`${o.lastClose}T00:00:00Z`);
       const npv = (r) => o.flows.reduce((acc, x) => acc + x.amount / Math.pow(1 + r, (x.t - t0) / (365 * DAY_MS)), 0);
       let lo = -0.999, hi = 100;
@@ -5737,7 +5749,7 @@ const FAMILY_RETURN_COLUMNS = [
       const o = familyRowOwner(r);
       if (!o) return false;
       const want = FAMILY_MWR.get(o.owner);
-      if (!want) return true;
+      if (!want || want.missing) return true;
       measured += 1;
       const text = r.toDateText ?? "", title = r.toDateTitle ?? "";
       if (/p\.\s?a\./i.test(text) || /p\.\s?a\./i.test(title)) return false;
@@ -5770,7 +5782,7 @@ const FAMILY_RETURN_COLUMNS = [
       // Whether Return (to date) beside it is struck over exactly those
       // accounts, from that day — which is when the dash may say so.
       const mw = FAMILY_MWR?.get(o.owner);
-      const struck = mw === undefined ? false : mw === null ? null : (mw.accounts.length === c.opening && mw.start === fy);
+      const struck = mw === undefined || mw?.missing ? false : mw === null ? null : (mw.accounts.length === c.opening && mw.start === fy);
       const clause = (s) => (struck === null ? true : struck ? why.includes(s) : !why.includes(s));
       if (c.opening === 0) {
         return why.includes(c.held === 1 ? "the one account it holds something in publishes none"
@@ -5796,9 +5808,10 @@ const FAMILY_RETURN_COLUMNS = [
       if (!c) return false;
       if (Number(r.mwrRecords) !== c.records) return false;
       const want = FAMILY_MWR.get(o.owner);
-      if (want) return true;
+      if (want && !want.missing) return true;
       dashes += 1;
       const why = r.toDateTitle ?? "";
+      if (want?.missing) return /^no rate: /.test(why) && want.missing.every((n) => why.includes(n));
       if (/needs one on both sides/i.test(why)) return false;
       if (want === null) {
         return /^no rate: the dated flows of the (?:one account|\d+ accounts) that publish an opening portfolio value do not solve for one/.test(why);
@@ -9443,6 +9456,13 @@ const PERF_BOOK = (() => {
     }]));
     const measured = [...perAccount].filter(([, x]) => (x.stmtMV > 0 || (x.stmtMV === 0 && x.sourced)) && x.flows.length
       && x.flows.some((f) => /^opening portfolio value/i.test(f.description ?? ""))).map(([id]) => id);
+    // Stage 10fc — an account not measured is outside the whole only with nothing
+    // of its own to measure: a verified nil, or no record, no statement row and
+    // no opening value. Any other leaves the consolidated rate absent.
+    const missing = [...perAccount].filter(([id, x]) => !measured.includes(id)
+      && !latestReturns[id]?.notApplicable
+      && (x.sourced || stmt.some((p) => p.accountId === id) || x.flows.some((f) => /^opening portfolio value/i.test(f.description ?? ""))))
+      .map(([id]) => id);
     const solve = (ids, valueOf) => {
       const fl = ids.flatMap((id) => {
         const x = perAccount.get(id);
@@ -9489,8 +9509,8 @@ const PERF_BOOK = (() => {
       cols, optionalRows,
       tied: cols.filter((c) => c.ties).length, all: cols.length,
       linesOnly: cols.filter((c) => c.linesOnly).length,
-      perAccount, measured,
-      rateStatement: solve(measured, (x) => x.stmtMV),
+      perAccount, measured, missing, whole: measured.length > 0 && missing.length === 0,
+      rateStatement: missing.length ? null : solve(measured, (x) => x.stmtMV),
       firstClose: closes[0] ?? null, lastClose: closes[closes.length - 1] ?? null,
       bookNewest: accounts.map((a) => a.asOf).filter(Boolean).sort().pop() ?? null,
       undatedFor, capitalRecord,
@@ -9728,7 +9748,7 @@ const PERF_MW = [
     const d = ctx?.perfDom;
     if (!d || !d.cons) return FAST ? { notChecked: "the probe did not run" } : false;
     const B = PERF_BOOK;
-    if (!B || B.rateStatement == null || B.statementBook == null) return false;
+    if (!B || (B.whole && B.rateStatement == null) || B.statementBook == null) return false;
     const drawn = new Set(d.xirr.filter((r) => r.pct !== "").map((r) => r.id));
     // A verified account may enter the pool without solving by itself (for
     // example, first subscription and closing NAV on the same day). Its
@@ -9736,8 +9756,9 @@ const PERF_MW = [
     const individuallySolved = B.measured.filter((id) => B.solve([id], (x) => x.stmtMV) != null);
     const measuredMV = B.measured.reduce((s, id) => s + B.perAccount.get(id).stmtMV, 0);
     return drawn.size === individuallySolved.length && individuallySolved.every((id) => drawn.has(id))
-      && d.cons.text.includes(`${B.measured.length} of ${B.perAccount.size} accounts`)
-      && Math.abs(Number(d.cons.pct) - B.rateStatement) < 0.01
+      && d.cons.text.includes(`${B.measured.length} of ${B.measured.length + B.missing.length} accounts`)
+      // Never a partial pool: with an account unmeasured the rate is a dash.
+      && (B.whole ? Math.abs(Number(d.cons.pct) - B.rateStatement) < 0.01 : d.cons.pct === "")
       && Math.abs(Number(d.cons.mv) - measuredMV) <= 1
       && Math.abs(Number(d.cons.book) - B.statementBook) <= 1 && /of the statements'/i.test(d.cons.text);
   }],
@@ -9777,7 +9798,8 @@ const PERF_MW = [
       return Math.abs(Number(r.undated) - w) <= 1 && /dated in none of them/i.test(r.undatedTitle ?? "")
         && /no day is assumed/i.test(r.undatedTitle ?? "") && /undated · not in these flows/i.test(r.returnText);
     });
-    return rowsOk && Math.abs(Number(d.cons.undated) - total) <= 1 && /dated in none of them/i.test(d.cons.returnTitle ?? "");
+    // With no consolidated rate there is nothing beside it to name the capital on.
+    return rowsOk && (!B.whole ? d.cons.pct === "" : Math.abs(Number(d.cons.undated) - total) <= 1 && /dated in none of them/i.test(d.cons.returnTitle ?? ""));
   }],
   ["a rate over less than a year is named an extrapolation (XA-14, XA-29)", (t, ctx) => {
     const d = ctx?.perfDom;
@@ -9787,14 +9809,16 @@ const PERF_MW = [
     const sub = d.xirr.filter((r) => r.pct !== "" && Number(r.days) < 365);
     if (!sub.length) return { notChecked: "no measured account's window is under a year" };
     const rowsOk = sub.every((r) => /an extrapolation, not a rate earned/i.test(r.returnTitle ?? ""));
-    const consOk = Number(d.cons.days) >= 365 || /an extrapolation, not a rate earned/i.test(d.cons.returnTitle ?? "");
-    const tileOk = !!d.tileTitle && (Number(d.cons.days) >= 365 || /an extrapolation, not a rate earned/i.test(d.tileTitle));
+    // With no consolidated rate (an account unmeasured), there is none to extrapolate.
+    const consOk = !B.whole ? d.cons.pct === "" : Number(d.cons.days) >= 365 || /an extrapolation, not a rate earned/i.test(d.cons.returnTitle ?? "");
+    const tileOk = !B.whole || (!!d.tileTitle && (Number(d.cons.days) >= 365 || /an extrapolation, not a rate earned/i.test(d.tileTitle)));
     return rowsOk && consOk && tileOk && !/>\s*100% p\.a\./i.test(t) && !/reads >100%/i.test(`${t} ${d.tileTitle}`);
   }],
   ["the money-weighted tile's hover names the pool's own close range and the statements' value, never the book's newest date", (t, ctx) => {
     const d = ctx?.perfDom;
     if (!d) return FAST ? { notChecked: "the probe did not run" } : false;
     const B = PERF_BOOK;
+    if (B && !B.whole) return { notChecked: `${B.missing.length} accounts holding value are unmeasured, so no consolidated rate or close range is struck` };
     if (!B || !B.lastClose || !d.tileTitle) return false;
     if (B.bookNewest === B.lastClose) return { notChecked: "the pool's latest close is the book's newest date" };
     const range = B.firstClose === B.lastClose ? `at ${B.lastClose}` : `between ${B.firstClose} and ${B.lastClose}`;
@@ -14184,13 +14208,20 @@ const MWR_BOOK = (() => {
     let lastClose = "";
     let pooled = 0;
     const accountIds = new Set();
+    // Stage 10fc — WHOLE OR ABSENT. An account not pooled is outside the whole
+    // only if it has nothing of its own to measure: a verified nil, or no
+    // record, no statement row and no opening value. Every other one is missing,
+    // and any missing account leaves the book's rate absent.
+    let missing = 0;
     for (const a of accounts) {
       const record = latest[a.accountId]?.record;
       const selected = record ?? null;
       const fl = selected?.flows ?? (latest[a.accountId] ? [] : cf[a.accountId] ?? []);
-      if (!fl.some((f) => /^opening portfolio value/i.test(f.description ?? ""))) continue;
+      const opens = fl.some((f) => /^opening portfolio value/i.test(f.description ?? ""));
+      const held = positions.some((p) => p.accountId === a.accountId);
+      const outside = !!latest[a.accountId]?.notApplicable || (!selected?.source && !held && !opens);
       const mv = selected?.value ?? positions.filter((p) => p.accountId === a.accountId).reduce((t, p) => t + p.marketValue, 0);
-      if (!Number.isFinite(mv) || mv < 0 || (mv === 0 && !selected?.source)) continue;
+      if (!opens || !Number.isFinite(mv) || mv < 0 || (mv === 0 && !selected?.source)) { if (!outside) missing++; continue; }
       pooled++;
       accountIds.add(a.accountId);
       for (const f of fl) flows.push({ t: Date.parse(`${f.date}T00:00:00Z`), amount: f.amount });
@@ -14207,7 +14238,8 @@ const MWR_BOOK = (() => {
     const annual = ((lo + hi) / 2) * 100;
     const windowDays = Math.round((t1 - t0) / DAY_MS);
     const toDate = windowDays >= 365 ? annual : ((1 + annual / 100) ** (windowDays / 365) - 1) * 100;
-    return { annual, windowDays, toDate, lastClose, accounts: pooled, accountIds, bookNewest: accounts.reduce((m, a) => (a.asOf > m ? a.asOf : m), "") };
+    return { annual, windowDays, toDate, lastClose, accounts: pooled, accountIds, missing, whole: missing === 0, total: pooled + missing,
+      bookNewest: accounts.reduce((m, a) => (a.asOf > m ? a.asOf : m), "") };
   } catch { return null; }
 })();
 
@@ -17994,6 +18026,11 @@ const CIO_SHARED = [
     if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
     const tile = ctx.kpiTiles.find((x) => /^(money-weighted return|xirr \(annualised\))$/i.test(x.label));
     if (!tile) return { notChecked: "the reader's strip does not show the money-weighted tile" };
+    // Never a partial pool: with any account holding value unmeasured the tile
+    // is a dash that counts them, and its hover says no whole-book rate is struck.
+    if (!MWR_BOOK.whole) return !/ds*%/.test(tile.value ?? "")
+      && (tile.sub ?? "").includes(`${MWR_BOOK.missing} of ${MWR_BOOK.total} accounts need opening values`)
+      && /No whole-book money-weighted return/.test(tile.hover ?? "");
     const shown = Number(/([+\-−]?\d+(?:\.\d+)?)\s*%/.exec(tile.value ?? "")?.[1]?.replace("−", "-"));
     const days = Number(/the window is (\d+) days/i.exec(tile.hover ?? "")?.[1]);
     // The printed figure carries one decimal; half of it is the bound.
@@ -18378,6 +18415,8 @@ const CIO_BOOK_RETURN = [
   ["annualised return never substitutes the short-period percentage", (t, ctx) => {
     const tile = ctx?.kpiTiles?.find((x) => x.slot === "annualised");
     if (!tile || !MWR_BOOK) return false;
+    if (!MWR_BOOK.whole) return tile.absent && /Incomplete records/.test(tile.sub ?? "")
+      && (tile.sub ?? "").includes(`${MWR_BOOK.missing} of ${MWR_BOOK.total} accounts`);
     if (MWR_BOOK.windowDays >= 365) return /p.a./.test(tile.value ?? "");
     return tile.absent && /Insufficient history/.test(tile.sub ?? "")
       && (tile.sub ?? "").includes(`${MWR_BOOK.windowDays} days recorded`);
@@ -27656,7 +27695,10 @@ const INVARIANTS = {
     ["the money-weighted rate is the tile's, over the same accounts and window (B-06)", (t, ctx) => {
       if (!MWR_BOOK) return false;
       const w = ctx?.drilldown?.mwr;
-      if (!w || w.pct == null) return false;
+      if (!w) return false;
+      if (!MWR_BOOK.whole) return w.pct == null && w.accounts === MWR_BOOK.accounts && !Number.isFinite(CIO_FIGURES.get("mwrPct"))
+        && /—/.test(w.text) && !/not annualised|annual rate/.test(w.text);
+      if (w.pct == null) return false;
       const tile = CIO_FIGURES.get("mwrPct");
       if (!Number.isFinite(tile)) return false;
       return Math.abs(w.pct - MWR_BOOK.toDate) <= 0.05
@@ -34230,13 +34272,20 @@ const INVARIANTS = {
       if (!FAMILY_BOOK || !FAMILY_MWR) return false;
       const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
       const dateRe = (iso) => new RegExp(`\\b${Number(iso.slice(8, 10))}\\s+${MON[Number(iso.slice(5, 7)) - 1]}[a-z]*\\.?\\s+${iso.slice(0, 4)}\\b`);
-      let measured = 0;
+      let measured = 0, incomplete = 0;
       const ok = (L.rows ?? []).every((r) => {
         const o = FAMILY_BOOK.owners.find((x) => Math.abs(x.mv - r.mv) <= 1 && x.count === r.count);
         if (!o) return false;
         const want = FAMILY_MWR.get(o.owner) ?? null;
         const shown = Number(/([+\-−]?\d+(?:\.\d+)?)%/.exec(r.toDateText ?? "")?.[1]?.replace("−", "-"));
         if (!want) return !Number.isFinite(shown) && !r.mwrAccounts;
+        // Never a partial pool (Stage 10fc): a dash naming every unmeasured account.
+        if (want.missing) {
+          incomplete += 1;
+          const got = (r.mwrAccounts ?? "").split(",").filter(Boolean).sort();
+          return !Number.isFinite(shown) && got.join() === want.accounts.join()
+            && want.missing.every((n) => (r.toDateTitle ?? "").includes(n));
+        }
         measured += 1;
         const title = r.toDateTitle ?? "";
         const accts = (r.mwrAccounts ?? "").split(",").filter(Boolean).sort();
@@ -34247,7 +34296,7 @@ const INVARIANTS = {
           && new RegExp(`over ${want.days} days`).test(title)
           && Number.isFinite(shown) && Math.abs(shown - want.toDate) <= 0.005 + 1e-4;
       });
-      return ok && measured > 0;
+      return ok && measured + incomplete > 0;
     }],
     ...FAMILY_RETURN_COLUMNS,
     // ── AND THE TWO CARDS SIT SIDE BY SIDE ──
@@ -36367,7 +36416,9 @@ const INVARIANTS = {
      * +28% read as a yearly rate is exactly the +99% the tile once printed.
      */
     ["the money-weighted return says on its face that it is not annualised — the tile and the per-account card",
-      (t) => /to date · not annualised/i.test(t) && /money-weighted return to date, per account · not annualised/i.test(t)],
+      (t) => (PERF_BOOK && !PERF_BOOK.whole
+        ? new RegExp(`${PERF_BOOK.missing.length} of ${PERF_BOOK.measured.length + PERF_BOOK.missing.length} accounts not measured`).test(t)
+        : /to date · not annualised/i.test(t)) && /money-weighted return to date, per account · not annualised/i.test(t)],
     /**
      * THE VALUE BRIDGE AND THE MONEY-WEIGHTED TABLE, HELD TO THE BOOK (A-12,
      * CK-A3, XA-14, XA-21, VD-25). This page is on the STATEMENT basis now, so

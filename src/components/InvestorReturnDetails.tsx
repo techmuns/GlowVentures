@@ -18,7 +18,7 @@ export function InvestorReturnDetails({ statement, kind, money }: {
   const title = kind === "annualised" ? "Annualised return"
     : kind === "fytd" ? "Return this financial year" : "Return this calendar year";
   const methodology = annual
-    ? "XIRR over the recorded cash-flow window, which may start after inception. Only statement accounts with an opening value and dated cash flows are included; separately modelled private investments are excluded. At least one year of history is required."
+    ? "XIRR over the recorded cash-flow window, which may start after inception. Every statement account holding value needs an opening value and dated cash flows, and no rate is shown until all have them; separately modelled private investments are excluded. At least one year of history is required."
     : "Money-weighted return for the whole portfolio, adjusted for dated deposits and withdrawals and not annualised. Every account needs an opening value at the period start and a complete cash-flow record through a matching closing valuation. Fully redeemed accounts include their recorded proceeds. Live prices cannot fill gaps in this history.";
   return (
     <section id="investor-return" data-investor-return={kind} className="mb-5 scroll-mt-5">
@@ -28,8 +28,9 @@ export function InvestorReturnDetails({ statement, kind, money }: {
             <div data-investor-return-value className={`text-2xl font-bold tabular ${r.pct == null ? "text-slate-400" : changeColor(r.pct)}`}>
               {r.pct == null ? <AbsentValue /> : <>{fmtPct(r.pct, { sign: true, decimals: 1 })}{annual ? " p.a." : ""}</>}
             </div>
-            {r.reason && <p className="mt-2 text-sm text-slate-300">
-              <strong>{annual?.issueLabel ?? "Insufficient history"}</strong> · {r.reason}
+            {r.reason && <p className="mt-2 text-sm text-slate-300" title={r.reason}>
+              <strong>{annual?.issueLabel ?? "Insufficient history"}</strong> · {annual?.missing.length
+                ? `${annual.missing.length} of ${annual.total} accounts need opening values` : r.reason}
             </p>}
           </div>
           <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm text-slate-300">
