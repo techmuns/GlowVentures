@@ -13,7 +13,7 @@ export function sectorReturnHolding(p: Position, accounts: AccountIndex) {
     owner: ownerOf(accounts, p),
     provider: account?.provider || "Statement provider not recorded",
     accountNo: account?.accountNo || p.accountId,
-    statementDate: account?.asOf || null,
+    statementDate: p.depositoryUnits?.asOf || account?.asOf || null,
     missing: hasSectorReturnCost(p) ? null : p.costUnavailable && typeof p.costBasis === "number"
       ? "The purchase cost cannot be verified."
       : "The purchase cost is missing.",

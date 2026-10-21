@@ -21,6 +21,8 @@ assert.equal(missing[0].accountNo, "222");
 assert.equal(missing[0].statementDate, "2026-09-30");
 assert.equal(missing[0].missing, "The purchase cost is missing.");
 assert.equal(sectorReturnHolding(rows[0], accounts).missing, null);
+assert.equal(sectorReturnHolding({ ...rows[1], depositoryUnits: { asOf: "2026-07-31", source: null } }, accounts).statementDate,
+  "2026-07-31", "a live-priced share keeps its own source date, not the account's newer report date");
 const unreliable = { ...rows[0], costUnavailable: true };
 assert.equal(hasSectorReturnCost(unreliable), false);
 assert.match(sectorReturnHolding(unreliable, accounts).missing!, /cannot be verified/);
