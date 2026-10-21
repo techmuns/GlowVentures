@@ -23,11 +23,11 @@ export const REVIEW_PRIVATE_JOIN = [
   { line: /^Integris$/, keys: ["integris-medtech"], why: "the company's name on both; Pre-IPO on the review" },
   { line: /^SKS Fastener$/, keys: ["sks-fasteners"], why: "₹2.996 Cr ÷ 24,800 shares = ₹1,208 a share" },
   { line: /^Spray Engineering Devices/, keys: ["spray-engineering-devices"], why: "₹4.752 Cr ÷ 1,65,566 shares = ₹287 a share" },
-  { line: /^Matrix Gas And Renewables/, keys: ["matrix-gas-and-renewables"], why: "₹4.5 Cr ÷ 75,000 shares = ₹600 a share" },
+  { line: /^Matrix Gas And Renewables/, keys: ["matrix-gas-and-renewables"], why: "₹4.5 Cr ÷ 1,12,500 shares (Ajay's 75,000 on ICICI Bank NSDL, Bharat's 37,500 on HDFC Bank NSDL) = ₹400 a share, and Bharat's ₹1.5 Cr ÷ 37,500 = ₹400 too" },
   { line: /^ESDS$/, keys: ["esds-software-solution-limited-eq-new-fv-rs-1"], why: "the company's name on both; Pre-IPO on the review" },
   { line: /^Oil Max$/, keys: ["oilmax-energy"], why: "₹3.876 Cr ÷ 17,000 shares = ₹2,280 a share" },
   { line: /^Borosil Renewables$/, keys: ["borosil-renewables-limited-warrants-13ag26"], why: "₹3.75 Cr ÷ 2,83,018 warrants = ₹132.50, the 25% subscribed on a ₹530 warrant" },
-  { line: /^BIG BANG BOOM$/, keys: ["big-bang-boom-solutions-private-limited-0-001-pref-12sp44"], why: "₹4.032 Cr ÷ 48 preference shares = ₹8,40,000 a share" },
+  { line: /^BIG BANG BOOM$/, keys: ["big-bang-boom-solutions-private-limited-0-001-pref-12sp44"], why: "₹4.032 Cr ÷ 64 preference shares (Ajay's 48, Bharat's 16) = ₹6,30,000 a share, and Bharat's ₹1.008 Cr ÷ 16 = ₹6,30,000 too" },
   { line: /^RAY's$/, keys: ["rays-power-experts"], why: "₹2.006 Cr ÷ 59,000 shares = ₹340 a share" },
   { line: /^Pivot Ventures/, keys: ["pvc-ii-class-a1"], why: "₹1.6 Cr ÷ 16,000 units = ₹1,000 a unit, the face value" },
   { line: /^The OAKS Consumer Fund I/, keys: ["tocf-i-class-a2"], why: "The OAKS Consumer Fund I — TOCF-I on the depository" },
@@ -38,6 +38,10 @@ export const REVIEW_PRIVATE_JOIN = [
   { line: /^Swapeco Solutions Private Limited$/, keys: ["swapeco-solutions"], why: "347 Pre-Series-A CCPS per family trust, ₹1.35 Cr each on the review's member summary" },
   { line: /^Blue Ashva Varenya Account$/, keys: ["blue-ashva-varenya-fund-bavf-ser20-c6-restricted-transferability"], why: "the fund's own name, VARENYA, on both" },
   { line: /^Onix Renewable$/, keys: ["onix-renewable"], why: "the company's name on both" },
+  // The review line's own key first (its holder entry names none), then the
+  // spellings Bharat's scanned HDFC Bank NSDL statement carries (Stage 10gk).
+  { line: /^AL Trust - Karban/, keys: ["al-trust-karban-envirotech-ruv-nilesh-angelist", "al-trust-karban-envirotech-ruv-restricted-transferability"], why: "AL Trust's Karban Envirotech (RUV) on both; ₹10.2 L ÷ 10,000 units = ₹102 a unit" },
+  { line: /^Zippmat Private Ltd/, keys: ["zippmat-private-ltd-abhijeet-kudva", "zippmat", "zippmat-private-limited-0-01-series-seed-2-pref", "zippmat-private-limited-0-01-series-seed-4-pref-27ag44"], why: "the company's name on both — its equity share and two seed preference series on Bharat's statement" },
   // ── now listed: carried on the review's Equity tab, and in this book as a listed holding ──
   { line: /^M\/S Grand Continent Hotels$/, keys: ["grand-continent-hotels"], why: "now listed — the review carries it on its Equity tab", listed: "M/S Grand Continent Hotels" },
   { line: /^Parth Electrical & Engineering$/, keys: ["parth-electricals-and-engineering"], why: "listed in Aug'25 — the review carries it on its Equity tab", listed: "Parth Electrical & Engineering" },
@@ -48,7 +52,7 @@ export const REVIEW_PRIVATE_JOIN = [
   // ── PE funds, unlisted shares ──
   { line: /^India SME$/, keys: ["india-sme-investments-fund-ii-class-a2", "india-sme-investments-aif-trust-ii-cl-a2-restricted-transferability"], why: "the fund's own name on both" },
   { line: /^Baring PE India Fund 6$/, keys: ["baring-private-equity-india-fund-6-class-a1"], why: "202.5 units on both" },
-  { line: /^360 One Special Opportunities Fund/, keys: ["360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii"], why: "9,90,429.684 units under each CRN" },
+  { line: /^360 One Special Opportunities Fund/, keys: ["360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii", "360-one-private-equity-fund-spl-opp-fd-sr-8-cl-a3-restricted-transferability"], why: "9,90,429.684 units under each CRN, and on Bharat's HDFC Bank NSDL statement" },
   { line: /^Sky Capital Titan Rising Funds 1$/, keys: ["sky-capital-rising-titans-fund-hudle-class-a1", "sky-capital-rising-titans-fund-ted-class-a2", "sky-capital-rising-titans-fund-oncare-class-a3", "sky-capital-rising-titans-fund-i-skycrtf-oncarea3-restricted-transferability"], why: "the fund's own name on both" },
   { line: /^Assetgro Fintech Private Limited$/, keys: ["assetgro-fintech-private-limited-1-series-b-pref-25nv44"], why: "₹5.0033 Cr ÷ 636 preference shares = ₹78,668 a share, the review's own rate" },
   { line: /^Transition Venture Capital fund I$/, keys: ["transition-venture-capital-fund-i-class-a1"], why: "7,500 units per family trust on both" },
@@ -63,6 +67,7 @@ export const REFUSED = [
   { line: /^Waterwala Labs/, key: "wevois-labs", why: "Waterwala Labs (Drink Prime) is not Wevois Labs" },
   { line: /^EMA Preferred Shares$/, key: "ema-partners-india", why: "preference shares against the listed equity — a different instrument" },
   { line: /^SWAPECO SOLUTIONS PRIVATE LIMITED - /, key: "swapeco-solutions", why: "Bharat's own 244 equity shares; the statements carry the trusts' CCPS, a different instrument" },
+  { line: /^PROCYON ENTERPRISE LLP/, key: "procyon-star", why: "Procyon Enterprise LLP against Procyon Star Private Limited — a partnership and a company; nothing ties Bharat's 7,250 shares to the review's ₹4.01 Cr" },
 ];
 
 /**

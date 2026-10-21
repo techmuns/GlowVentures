@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-21T17:29:07.567Z",
+  "generatedAt": "2026-10-21T17:49:42.063Z",
   "summary": {
     "documents": 425,
     "parsed": 421,
@@ -23,7 +23,7 @@
     "quantityOnlyMatches": 4,
     "confirmedSeparateByFamily": 4,
     "suspectedDuplicateEarnings": 1,
-    "securitiesWithoutSymbol": 53,
+    "securitiesWithoutSymbol": 34,
     "ownerNamesUnmatched": 0,
     "stitchesApplied": 134
   },
@@ -227324,25 +227324,6 @@
         ]
       },
       {
-        "security": "Elgi Equipments Ltd",
-        "securityKey": "elgi-equipments",
-        "docs": [
-          "green-lantern-capital-llp-510861-2026-09-22-fact-sheet",
-          "green-lantern-capital-llp-510854-2026-09-22-fact-sheet"
-        ]
-      },
-      {
-        "security": "HEG Advanced Materials Limited",
-        "securityKey": "heg-advanced-materials",
-        "docs": [
-          "green-lantern-capital-llp-510861-2026-09-22-fact-sheet",
-          "green-lantern-capital-llp-510854-2026-09-22-fact-sheet",
-          "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
-          "svan-investment-managers-llp-8710090-2026-09-30-appraisal",
-          "svan-investment-managers-llp-8710090-2026-09-30-investor-report"
-        ]
-      },
-      {
         "security": "Poojaa Precision Engineering Limited",
         "securityKey": "poojaa-precision-engineering",
         "docs": [
@@ -227355,40 +227336,6 @@
           "goldstandard-wealth-private-limited-100022-2026-10-06-appraisal",
           "goldstandard-wealth-private-limited-100022-2026-10-06-fact-sheet",
           "goldstandard-wealth-private-limited-100022-2026-10-06-appraisal-2"
-        ]
-      },
-      {
-        "security": "Cyient Ltd",
-        "securityKey": "cyient",
-        "docs": [
-          "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-10-07-investor-report",
-          "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-09-30-appraisal",
-          "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-10-07-fact-sheet",
-          "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-09-30-holdings"
-        ]
-      },
-      {
-        "security": "VISHNU CHEMICALS LIMITED",
-        "securityKey": "vishnu-chemicals",
-        "docs": [
-          "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-10-07-investor-report",
-          "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-09-30-appraisal",
-          "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-10-07-fact-sheet",
-          "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-09-30-holdings"
-        ]
-      },
-      {
-        "security": "V MART RETAIL LIMITED",
-        "securityKey": "v-mart-retail",
-        "docs": [
-          "molecule-ventures-llp-7810404-2026-09-30-fact-sheet"
-        ]
-      },
-      {
-        "security": "Elecon Engineering Company Limited",
-        "securityKey": "elecon-engineering",
-        "docs": [
-          "molecule-ventures-llp-7810404-2026-09-30-fact-sheet"
         ]
       },
       {
@@ -227411,38 +227358,6 @@
           "molecule-ventures-llp-7810404-2026-07-31-holdings",
           "molecule-ventures-llp-7810404-2026-06-30-fact-sheet",
           "molecule-ventures-llp-7810404-2026-06-30-holdings"
-        ]
-      },
-      {
-        "security": "Diffusion Engineers Ltd",
-        "securityKey": "diffusion-engineers",
-        "docs": [
-          "v-e-c-assago-capital-management-llp-128005-2026-09-30-fact-sheet"
-        ]
-      },
-      {
-        "security": "Cosmo First Limited",
-        "securityKey": "cosmo-first",
-        "docs": [
-          "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
-          "svan-investment-managers-llp-8710090-2026-09-30-appraisal",
-          "svan-investment-managers-llp-8710090-2026-09-30-investor-report"
-        ]
-      },
-      {
-        "security": "APOLLO PIPES LIMITED",
-        "securityKey": "apollo-pipes",
-        "docs": [
-          "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
-          "svan-investment-managers-llp-8710090-2026-09-30-appraisal",
-          "svan-investment-managers-llp-8710090-2026-09-30-investor-report"
-        ]
-      },
-      {
-        "security": "Kajaria Ceramics Ltd",
-        "securityKey": "kajaria-ceramics",
-        "docs": [
-          "svan-investment-managers-llp-8710067-2026-09-30-appraisal"
         ]
       },
       {
@@ -227532,29 +227447,8 @@
         ]
       },
       {
-        "security": "BHAGYANAGAR INDIA LIMITED EQ NEW RV RS. 2/",
-        "securityKey": "bhagyanagar-india-limited-eq-new-rv",
-        "docs": [
-          "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings"
-        ]
-      },
-      {
-        "security": "FINOLEX CABLES LIMITED NEW 2/",
-        "securityKey": "finolex-cables-limited-new-2",
-        "docs": [
-          "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings"
-        ]
-      },
-      {
-        "security": "HAVELLS INDIA LTD",
-        "securityKey": "havells-india",
-        "docs": [
-          "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings"
-        ]
-      },
-      {
-        "security": "KEI INDUSTRIES LTD.",
-        "securityKey": "kei-industries",
+        "security": "FINOLEX CABLES LIMITED NEW EQ RS. 2/",
+        "securityKey": "finolex-cables-limited-new",
         "docs": [
           "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings"
         ]
@@ -227567,22 +227461,8 @@
         ]
       },
       {
-        "security": "PARAMOUNT COMMUNICATIONS LIMITED",
-        "securityKey": "paramount-communications",
-        "docs": [
-          "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings"
-        ]
-      },
-      {
-        "security": "POWER GRID CORPORATION OF INDIA LIMITED EQ",
-        "securityKey": "power-grid-corporation-of-india",
-        "docs": [
-          "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings"
-        ]
-      },
-      {
-        "security": "RELIANCE POWER LIMITED EQ. NEW RS. 10",
-        "securityKey": "reliance-power-limited-eq",
+        "security": "PARAMOUNT COMMUNICATIONS LIMITED NEWEQRS.",
+        "securityKey": "paramount-communications-limited-neweqrs",
         "docs": [
           "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings"
         ]
@@ -227597,34 +227477,6 @@
       {
         "security": "STERLITE GRID LIMITED EQ NEW FV RS 2/",
         "securityKey": "sterlite-grid",
-        "docs": [
-          "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings"
-        ]
-      },
-      {
-        "security": "STL NETWORKS LIMITED EQ",
-        "securityKey": "stl-networks",
-        "docs": [
-          "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings"
-        ]
-      },
-      {
-        "security": "SURANA TELECOM AND POWER LIMITED EQ NEW FV",
-        "securityKey": "surana-telecom-and-power-limited-eq-new-fv",
-        "docs": [
-          "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings"
-        ]
-      },
-      {
-        "security": "UNIVERSAL CABLES LIMITED .",
-        "securityKey": "universal-cables",
-        "docs": [
-          "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings"
-        ]
-      },
-      {
-        "security": "VINDHYA TELELINKS LIMITED EQ",
-        "securityKey": "vindhya-telelinks",
         "docs": [
           "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings"
         ]

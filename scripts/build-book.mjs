@@ -4171,6 +4171,15 @@ function build(archived, archiveCount = archived.length) {
           ? `this custody account's statement of ${holdingsDoc.asOf} values nothing: it prints ${unvaluedHere.length} holding(s) as quantities, ${lastMoved.length} of them with the price of their last depository movement — a transaction price, not a valuation of the balance`
             + `${facePriced.length ? `; ${facePriced.length} at the face value they were allotted at` : ""}${bare ? `; ${bare} with no rate at all` : ""}. `
             + "The units are in the archive. What values them on that date is a statement that marks the balance, such as CDSL's monthly Consolidated Account Statement"
+          /**
+           * A CUSTODY STATEMENT WITH NO RATE COLUMN AT ALL — NSDL's Statement of
+           * Holdings prints a quantity and a balance per ISIN and nothing to
+           * price them by (Bharat's scanned HDFC statement, Stage 10gk). It is
+           * not a fund and owes no NAV, which is what the next branch would say.
+           */
+          : unvaluedHere.length && bare === unvaluedHere.length && CUSTODY_PROVIDERS.has(provider)
+          ? `this custody account's statement of ${holdingsDoc.asOf} values nothing: it prints ${unvaluedHere.length} holding(s) as quantities and carries no rate or value column at all. `
+            + "The units are in the archive. What values them on that date is a statement that marks the balance, such as the depository's Consolidated Account Statement"
           : unvaluedHere.length
           ? `this fund publishes no NAV: its statement of ${holdingsDoc.asOf} carries ${unvaluedHere.length} holding(s) with units and the capital drawn against a commitment, and no valuation. The units and the cost are in the archive; there is nothing to mark them at, and the contributions are what was paid rather than what the stake is worth`
           : holdingsDoc && (holdingsDoc.warnings ?? []).some((w) => w?.code === "portfolio-reported-nil")

@@ -61,16 +61,14 @@ Full HPR is withheld on 1 recovered-cost record(s) with unverified sale proceeds
 | Holder | Account | Security | ISIN | Recorded units | Required evidence |
 | --- | --- | --- | --- | ---: | --- |
 | Bharat Jaisinghani | 22025655 | STERLITE GRID LIMITED EQ NEW FV RS 2/ | INE03QT01027 | 10 | No quantity-matched owner-specific acquisition record in the saved workbooks |
-| Bharat Jaisinghani | 22025655 | INTEGRIS MEDTECH LIMITED - EQ NEW FV RE.1/ | INE05GT01023 | 53394 | No quantity-matched owner-specific acquisition record in the saved workbooks |
-| Bharat Jaisinghani | 22025655 | PARAMOUNT COMMUNICATIONS LIMITED | INE074B01023 | 5 | No quantity-matched owner-specific acquisition record in the saved workbooks |
+| Bharat Jaisinghani | 22025655 | PARAMOUNT COMMUNICATIONS LIMITED NEWEQRS. | INE074B01023 | 5 | No quantity-matched owner-specific acquisition record in the saved workbooks |
 | Bharat Jaisinghani | 22025655 | Sterlite Technologies Ltd | INE089C01029 | 25 | No quantity-matched owner-specific acquisition record in the saved workbooks |
-| Bharat Jaisinghani | 22025655 | INSOLATION ENERGY LIMITED EQ NEW FV RE.1/ | INE0LGX01024 | 91000 | FIFO holds 91260 units; custodian records 91000 |
-| Bharat Jaisinghani | 22025655 | MATRIX GAS AND RENEWABLES LIMITED - EQ | INE0PO201010 | 37500 | No quantity-matched owner-specific acquisition record in the saved workbooks |
+| Bharat Jaisinghani | 22025655 | INSOLATION ENERGY LIMITED - EQ NEW FV RE.1/ | INE0LGX01024 | 91000 | FIFO holds 91260 units; custodian records 91000 |
 | Bharat Jaisinghani | 22025655 | STERLITE ELECTRIC LIMITED EQ | INE110V01015 | 10 | No quantity-matched owner-specific acquisition record in the saved workbooks |
 | Bharat Jaisinghani | 22025655 | SURANA TELECOM AND POWER LIMITED EQ NEW FV | INE130B01031 | 3 | No quantity-matched owner-specific acquisition record in the saved workbooks |
 | Bharat Jaisinghani | 22025655 | HAVELLS INDIA LTD | INE176B01034 | 20 | No quantity-matched owner-specific acquisition record in the saved workbooks |
 | Bharat Jaisinghani | 22025655 | STL NETWORKS LIMITED EQ | INE1VXE01018 | 25 | No quantity-matched owner-specific acquisition record in the saved workbooks |
-| Bharat Jaisinghani | 22025655 | FINOLEX CABLES LIMITED NEW 2/ | INE235A01022 | 5 | No quantity-matched owner-specific acquisition record in the saved workbooks |
+| Bharat Jaisinghani | 22025655 | FINOLEX CABLES LIMITED NEW EQ RS. 2/ | INE235A01022 | 5 | No quantity-matched owner-specific acquisition record in the saved workbooks |
 | Bharat Jaisinghani | 22025655 | NICCO CORPORATION LIMITED EQ NEW FV RS. 2/ | INE241C01026 | 10 | No quantity-matched owner-specific acquisition record in the saved workbooks |
 | Bharat Jaisinghani | 22025655 | UNIVERSAL CABLES LIMITED . | INE279A01012 | 5 | No quantity-matched owner-specific acquisition record in the saved workbooks |
 | Bharat Jaisinghani | 22025655 | BHAGYANAGAR INDIA LIMITED EQ NEW RV RS. 2/ | INE458B01036 | 2 | No quantity-matched owner-specific acquisition record in the saved workbooks |

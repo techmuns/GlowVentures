@@ -33,20 +33,16 @@
   },
   {
    "code": "security-name-from-isin",
-   "detail": "a scan's security names are OCR'd and cannot be checked; where a statement read from a text layer prints the same (check-digit-verified) ISIN, its name is used, and the scan's own words are kept in `printedSecurity`."
+   "detail": "a scan's security names are OCR'd and cannot be checked; 15 holding(s) take the name a statement read from a text layer prints against the same (check-digit-verified) ISIN — the NSDL depository's own name where one of its statements prints it — and the scan's own words are kept in `printedSecurity`."
   },
   {
    "code": "security-name-from-scan",
-   "detail": "27 holding(s) carry the name as OCR read it, because no other statement in this book prints their ISIN: 360 ONE PRIVATE EQUITY FUND SPL OPP FD SR 8 CL A3 - - Restricted Transferability (INF0RO522964); AL TRUST Forbidden Foods - Restricted Transferability (INF0RLL22CH4); TRUST Karban Envirotech (RUV) Restricted Transferability (INF0RLLH2YN9); AL TRUST Tamasha -FC - Restricted Transferability (INF0RLL22PC7); BHAGYANAGAR INDIA LIMITED EQ NEW RV RS. 2/ (INE458B01036); EVEREST FLEET PRIVATE LIMITED 0.001% SERIES B NEW PREF (INE0LTR03090); FINOLEX CABLES LIMITED NEW 2/ (INE235A01022); HEAD DIGITAL WORKS PRIVATE LIMITED EQ (INE07LN01014); ORBIT AGRITECH PRIVATE LIMITED 0.001% SERIES SEED PREF 28MY43 (INE2KRU03039); SME INVESTMENTS AIF TRUST II CL A2 Restricted - Transferability (INF0XAZ22055); INSOLATION ENERGY LIMITED EQ NEW FV RE.1/ (INE0LGX01024); NICCO CORPORATION LIMITED EQ NEW FV RS. 2/ (INE241C01026); PARAMOUNT COMMUNICATIONS LIMITED (INE074B01023); POWER GRID CORPORATION OF INDIA LIMITED EQ (INE752E01010); PROCYON STAR PRIVATE LIMITED EQ (INE29A501017); RELIANCE POWER LIMITED EQ. NEW RS. 10 (INE614G01033); Restricted Transferability (INF1ISW22079); STAY VISTA PRIVATE LIMITED 0.001% SERIES 2 PREF 02NV36 (INE0GD403024); STERLITE ELECTRIC LIMITED EQ (INE110V01015); STERLITE GRID LIMITED EQ NEW FV RS 2/ (INE03QT01027); STL NETWORKS LIMITED EQ (INE1VXE01018); SURANA TELECOM AND POWER LIMITED EQ NEW FV (INE130B01031); UNIVERSAL CABLES LIMITED . (INE279A01012); VINDHYA TELELINKS LIMITED EQ (INE707A01012); ZIPPMAT PRIVATE LIMITED 0.01% SERIES SEED 2 PREF (INE0X3603063); ZIPPMAT PRIVATE LIMITED 0.01% SERIES SEED 4 PREF 27AG44 (INE0X3603022); ZIPPMAT PRIVATE LIMITED EQ (INE0X3601018). The ISIN and the quantity are checked; the spelling of the name is not."
-  },
-  {
-   "code": "security-name-from-isin",
-   "detail": "this report clips security names to the column width; the fuller name printed against the same ISIN elsewhere in this drop is used for the key, and what this document printed is kept in `printedSecurity`."
+   "detail": "23 holding(s) carry the name as OCR read it; no other statement in this book prints the ISIN of 360 ONE PRIVATE EQUITY FUND SPL OPP FD - SR 8 CL A3 - Restricted Transferability (INF0RO522964); AL TRUST Forbidden Foods - Restricted Transferability (INF0RLL22CH4); AL TRUST Karban Envirotech (RUV) - Restricted Transferability (INF0RLLH2YN9); AL TRUST Tamasha -FC - Restricted Transferability (INF0RLL22PC7); BHAGYANAGAR INDIA LIMITED EQ NEW RV RS. 2/ (INE458B01036); FINOLEX CABLES LIMITED NEW EQ RS. 2/ (INE235A01022); HEAD DIGITAL WORKS PRIVATE LIMITED EQ (INE07LN01014); HIGHER ORBIT AGRITECH PRIVATE LIMITED 0.001% SERIES SEED PREF 28MY43 (INE2KRU03039); NICCO CORPORATION LIMITED EQ NEW FV RS. 2/ (INE241C01026); PARAMOUNT COMMUNICATIONS LIMITED NEWEQRS. (INE074B01023); POWER GRID CORPORATION OF INDIA LIMITED EQ (INE752E01010); PROCYON STAR PRIVATE LIMITED EQ (INE29A501017); RELIANCE POWER LIMITED EQ. NEW RS. 10 (INE614G01033); STAY VISTA PRIVATE LIMITED 0.001% SERIES 2 PREF 02NV36 (INE0GD403024); STERLITE ELECTRIC LIMITED EQ (INE110V01015); STERLITE GRID LIMITED EQ NEW FV RS 2/ (INE03QT01027); STL NETWORKS LIMITED EQ (INE1VXE01018); SURANA TELECOM AND POWER LIMITED EQ NEW FV (INE130B01031); UNIVERSAL CABLES LIMITED . (INE279A01012); VINDHYA TELELINKS LIMITED EQ (INE707A01012); ZIPPMAT PRIVATE LIMITED 0.01% SERIES SEED 2 PREF (INE0X3603063); ZIPPMAT PRIVATE LIMITED 0.01% SERIES SEED 4 PREF 27AG44 (INE0X3603022); ZIPPMAT PRIVATE LIMITED EQ (INE0X3601018). The ISIN and the quantity are checked; the spelling of the name is not."
   }
  ],
  "holdings": [
   {
-   "security": "360 ONE PRIVATE EQUITY FUND SPL OPP FD SR 8 CL A3 - - Restricted Transferability",
+   "security": "360 ONE PRIVATE EQUITY FUND SPL OPP FD - SR 8 CL A3 - Restricted Transferability",
    "securityKey": "360-one-private-equity-fund-spl-opp-fd-sr-8-cl-a3-restricted-transferability",
    "isin": "INF0RO522964",
    "symbol": null,
@@ -130,8 +126,8 @@
    "source": null
   },
   {
-   "security": "TRUST Karban Envirotech (RUV) Restricted Transferability",
-   "securityKey": "trust-karban-envirotech-ruv-restricted-transferability",
+   "security": "AL TRUST Karban Envirotech (RUV) - Restricted Transferability",
+   "securityKey": "al-trust-karban-envirotech-ruv-restricted-transferability",
    "isin": "INF0RLLH2YN9",
    "symbol": null,
    "printedSecurity": null,
@@ -302,7 +298,7 @@
    "securityKey": "everest-fleet-private-limited-0-001-series-b-new-pref-18ap43",
    "isin": "INE0LTR03090",
    "symbol": null,
-   "printedSecurity": "EVEREST FLEET PRIVATE LIMITED 0.001% SERIES B NEW PREF",
+   "printedSecurity": "EVEREST FLEET PRIVATE LIMITED 0.001% SERIES B NEW PREF 18AP43",
    "assetClass": "Unlisted",
    "providerSector": null,
    "manager": null,
@@ -382,8 +378,8 @@
    "source": null
   },
   {
-   "security": "FINOLEX CABLES LIMITED NEW 2/",
-   "securityKey": "finolex-cables-limited-new-2",
+   "security": "FINOLEX CABLES LIMITED NEW EQ RS. 2/",
+   "securityKey": "finolex-cables-limited-new",
    "isin": "INE235A01022",
    "symbol": null,
    "printedSecurity": null,
@@ -508,8 +504,8 @@
    "source": null
   },
   {
-   "security": "ORBIT AGRITECH PRIVATE LIMITED 0.001% SERIES SEED PREF 28MY43",
-   "securityKey": "orbit-agritech-private-limited-0-001-series-seed-pref-28my43",
+   "security": "HIGHER ORBIT AGRITECH PRIVATE LIMITED 0.001% SERIES SEED PREF 28MY43",
+   "securityKey": "higher-orbit-agritech-private-limited-0-001-series-seed-pref-28my43",
    "isin": "INE2KRU03039",
    "symbol": null,
    "printedSecurity": null,
@@ -550,11 +546,11 @@
    "source": null
   },
   {
-   "security": "SME INVESTMENTS AIF TRUST II CL A2 Restricted - Transferability",
-   "securityKey": "sme-investments-aif-trust-ii-cl-a2-restricted-transferability",
+   "security": "INDIA SME INVESTMENTS AIF TRUST II - CL A2 - Restricted Transferability",
+   "securityKey": "india-sme-investments-aif-trust-ii-cl-a2-restricted-transferability",
    "isin": "INF0XAZ22055",
    "symbol": null,
-   "printedSecurity": null,
+   "printedSecurity": "INDIA SME INVESTMENTS AIF TRUST II CL A2 - Restricted Transferability",
    "assetClass": "AIF",
    "providerSector": null,
    "manager": null,
@@ -634,11 +630,11 @@
    "source": null
   },
   {
-   "security": "INSOLATION ENERGY LIMITED EQ NEW FV RE.1/",
+   "security": "INSOLATION ENERGY LIMITED - EQ NEW FV RE.1/",
    "securityKey": "insolation-energy",
    "isin": "INE0LGX01024",
    "symbol": null,
-   "printedSecurity": null,
+   "printedSecurity": "INSOLATION ENERGY LIMITED NEW FV RE.1/- EQ",
    "assetClass": "Equity",
    "providerSector": null,
    "manager": null,
@@ -680,7 +676,7 @@
    "securityKey": "integris-medtech",
    "isin": "INE05GT01023",
    "symbol": null,
-   "printedSecurity": "INTEGRIS MEDTECH LIMITED EQ NEW FV",
+   "printedSecurity": "INTEGRIS MEDTECH LIMITED EQ NEW FV RE.1/",
    "assetClass": "Equity",
    "providerSector": null,
    "manager": null,
@@ -844,8 +840,8 @@
    "source": null
   },
   {
-   "security": "PARAMOUNT COMMUNICATIONS LIMITED",
-   "securityKey": "paramount-communications",
+   "security": "PARAMOUNT COMMUNICATIONS LIMITED NEWEQRS.",
+   "securityKey": "paramount-communications-limited-neweqrs",
    "isin": "INE074B01023",
    "symbol": null,
    "printedSecurity": null,
@@ -1054,11 +1050,11 @@
    "source": null
   },
   {
-   "security": "Restricted Transferability",
-   "securityKey": "restricted-transferability",
+   "security": "SANSHI TRUST - FD I CL E - Restricted Transferability",
+   "securityKey": "sanshi-trust-fd-i-cl-e-restricted-transferability",
    "isin": "INF1ISW22079",
    "symbol": null,
-   "printedSecurity": null,
+   "printedSecurity": "SANSHI TRUST FDICLE- Restricted Transferability",
    "assetClass": "AIF",
    "providerSector": null,
    "manager": null,
@@ -1100,7 +1096,7 @@
    "securityKey": "sky-capital-rising-titans-fund-hudle-class-a1",
    "isin": "INF1V9N22019",
    "symbol": null,
-   "printedSecurity": "CAPITAL RISING TITANS FUND I SKY RTF HUDLE Al - Restricted Transferability",
+   "printedSecurity": "SKY CAPITAL RISING TITANS FUND I SKY RTF HUDLE Al - Restricted Transferability",
    "assetClass": "AIF",
    "providerSector": null,
    "manager": null,

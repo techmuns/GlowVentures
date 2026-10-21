@@ -30,9 +30,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run inventory
-      - name: Extract — scans not yet read are read; everything archived carries forward
-        env:
-          GLOW_OCR: new
+      - name: Extract — the scan re-read by OCR (GLOW_OCR unset); everything else carries forward
         run: npm run extract
       - name: NSE symbols — additions only
         run: |
@@ -44,6 +42,7 @@ jobs:
             process.exit(changed.length ? 1 : 0);'; then echo "symbols kept"; else
             echo "symbols reverted"; git checkout -- src/data/nseSymbols.json docs/SECURITY-IDENTIFIERS.md; fi
       - run: npm run build-book
+      - run: npm run build-review-columns
       - run: npm run accounts-table -- --write
         continue-on-error: true
       - run: npm run coverage:source

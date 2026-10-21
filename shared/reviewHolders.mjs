@@ -261,6 +261,19 @@ export const SUPERSEDED = [
   // recorded line it is the quantity account of (`efpl-pref-18042043`, above). Its
   // key is the transaction statement's own spelling, so it is named by its ISIN.
   { accountId: "motilal-oswal-financial-services-demat-1201090012838316", isin: "INE0LTR03090", line: "efpl-pref-18042043", kind: "window" },
+  // Bharat's scanned HDFC Bank NSDL statement (Stage 10gk): the private lines the
+  // review carries for him, each by its join in REVIEW_PRIVATE_JOIN. Stay Vista
+  // (one row against two review lines), Procyon Star (refused), Innoviti
+  // Technologies (refused) and the lines the review does not carry stay his
+  // quantity-only statement rows.
+  ...[
+    "everest-fleet", "everest-fleet-private-limited-0-001-series-b-new-pref-18ap43", "integris-medtech",
+    "matrix-gas-and-renewables", "big-bang-boom-solutions-private-limited-0-001-pref-12sp44",
+    "india-sme-investments-aif-trust-ii-cl-a2-restricted-transferability", "sky-capital-rising-titans-fund-hudle-class-a1",
+    "360-one-private-equity-fund-spl-opp-fd-sr-8-cl-a3-restricted-transferability",
+    "al-trust-karban-envirotech-ruv-restricted-transferability",
+    "zippmat", "zippmat-private-limited-0-01-series-seed-2-pref", "zippmat-private-limited-0-01-series-seed-4-pref-27ag44",
+  ].map((securityKey) => ({ accountId: "hdfc-bank-nsdl-demat-22025655", securityKey, kind: "unvalued" })),
 ];
 
 /**

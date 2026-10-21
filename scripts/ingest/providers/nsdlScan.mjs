@@ -65,12 +65,17 @@ const NOISE = /^[^A-Za-z0-9%&()/.-]+$/;
 const DESC_WORDS = /^(Free|Balance|Ba|Pending|Demat|Pledged?|Lock-?in|Lent|Remat)$/i;
 const isinLike = (t) => /^[^A-Za-z0-9]*[A-Z]?[I1l|][NM][EF]/i.test(t) && t.replace(/[^A-Z0-9]/gi, "").length >= 11;
 
-/** Words grouped into lines, each line left to right. */
+/**
+ * Words grouped into lines, each line left to right — by each word's vertical
+ * CENTRE: a hyphen's box is a sliver at mid-height, and grouped by its top it is
+ * a line of its own ("FD SR 8 CL A3", "-", "Restricted …" for `FD - SR 8 CL A3`).
+ */
 function linesOf(words, lh) {
   const out = [];
-  for (const w of [...words].sort((a, b) => a.y - b.y)) {
-    const line = out.find((l) => Math.abs(l.y - w.y) < lh * 0.5);
-    if (line) line.words.push(w); else out.push({ y: w.y, words: [w] });
+  const mid = (w) => w.y + w.h / 2;
+  for (const w of [...words].sort((a, b) => mid(a) - mid(b))) {
+    const line = out.find((l) => Math.abs(l.mid - mid(w)) < lh * 0.5);
+    if (line) { line.words.push(w); line.y = Math.min(line.y, w.y); } else out.push({ y: w.y, mid: mid(w), words: [w] });
   }
   for (const l of out) l.words.sort((a, b) => a.x - b.x);
   return out.sort((a, b) => a.y - b.y);
@@ -234,13 +239,17 @@ export async function readScan(session) {
       const isin = resolveIsin(isinReadings);
       const inRow = p.words.filter((w) => w.y >= r.top && w.y < r.bottom);
       /**
-       * THE NAME: the description column's confident words, line by line, until
-       * a gap. A dotted separator OCR'd as letters ("BI oi be WEY") is low
-       * confidence; `Free Balance` drifting left on a skewed page is the next
-       * column's vocabulary; neither is the name.
+       * THE NAME: the description column's words, line by line, until a gap.
+       * A word is the name's if OCR is confident of it or it is letters at the
+       * height of text — tesseract scores real words low (`INDIA` 39, `AL` 55,
+       * `SANSHI TRUST` under 50), and a confidence cut dropped them from three
+       * names. A row separator OCR'd as letters is a sliver (`TS`, 8 px) or no
+       * letters at all (`==`, `~~`); `Free Balance` drifting left on a skewed
+       * page is the next column's vocabulary; neither is the name.
        */
+      const nameWord = (w) => w.conf >= 60 || (/[A-Za-z0-9]{2,}/.test(w.text) && w.h >= lh * 0.6);
       const nameLines = linesOf(inRow.filter((w) => w.x > a.x + a.w * 0.9 && w.x + w.w < descX - lh * 0.2
-        && w.conf >= 60 && !(DESC_WORDS.test(w.text) && w.x > descX - lh * 5)), lh);
+        && nameWord(w) && !(DESC_WORDS.test(w.text) && w.x > descX - lh * 5)), lh);
       const kept = [];
       for (const l of nameLines) {
         if (kept.length && l.y - kept.at(-1).y > lh * 1.8) break;

@@ -118,6 +118,11 @@ const emptyCell = (reason) => {
     const tail = n ? `; ${n[1]} of its lines are private and counted under the review, Stage 10dh` : "";
     return { cell: `— (**quantity only** — the Rate column is the last movement's price, Stage 10cz${tail})` };
   }
+  if (/as quantities and carries no rate or value column at all/.test(reason)) {
+    const n = /(\d+) of these are private-market holdings, counted under the family's consolidated review/.exec(reason);
+    const tail = n ? `; ${n[1]} of its lines are private and counted under the review, Stage 10dh` : "";
+    return { cell: `— (**quantity only** — the statement prints no rate or value, Stage 10gk${tail})` };
+  }
   if (/only price is the FACE VALUE/.test(reason))
     return { cell: "— (**quantity only** — the rate printed is face value)" };
   return { cell: "—", unmatched: true };
