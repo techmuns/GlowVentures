@@ -22,7 +22,12 @@ export async function downloadTableWorkbook(table, label) {
   const book = await downloadWorkbook(table.locator(':scope > caption [data-export-excel]'), label);
   assert.equal(await table.locator(':scope > caption [role=alert]').count(),0);
   assert.ok(book.getWorksheet('About'));
-  return book.getWorksheet('Table');
+  const sheet = book.getWorksheet('Table');
+  const headers = await table.locator(':scope > thead > tr').count();
+  assert.equal(sheet.views[0].state,'frozen',`${label}: Excel headers stay frozen`);
+  assert.equal(sheet.views[0].ySplit ?? 0,headers,`${label}: every header row stays frozen`);
+  for (const column of sheet.columns) assert.ok(column.width >= 12,`${label}: every Excel column has a fitted width`);
+  return sheet;
 }
 
 export async function assertTableExportControls(page, label) {
