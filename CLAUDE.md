@@ -173,6 +173,9 @@ One line per area; the history files explain each in depth.
   `investedOn.ts` (a holding's Invested on and its dated trades, every holdings
   table; built off `Position.tradeRecord` / `BOOK_HOLDING_TRADES` from
   `scripts/lib/holdingTrades.mjs`; Stage 10fm).
+- `src/lib/bookNav.ts` + `bookNavBook.ts` — the whole book's NAV series (every
+  investment, its latest valuation plus capital since; the NAV card and the
+  drawdown read it as `navHistory`; Stage 10gd).
 - `src/lib/navSeries.ts`, `attribution.ts` (no caller; kept, tested),
   `benchmarks.ts` (seven indices, name-checked), `indexSectors.ts` (their sector
   weights off NSE's factsheets, through `resolveSector`; Stage 10fe), `indices.ts`, `periodReturns.ts`
