@@ -185,7 +185,7 @@ function readBlockLayout(lines, source) {
 // Some new folios have a complete multi-year ledger and no financial movement
 // during this FY. A reconciled prior balance is enough to establish the FY's
 // units; it does not require treating old switches as new external cash.
-// Since Stage 10fb the ledger itself is read (layout 7, `schemeLedgerFlows`)
+// Since Stage 10fc the ledger itself is read (layout 7, `schemeLedgerFlows`)
 // and carries the printed opening; this remains the fallback for a statement
 // whose blocks print no dated movement and no ledger warning.
 function staticBlockOpenings(lines, holdings, from, to) {

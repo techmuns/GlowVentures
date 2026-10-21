@@ -366,7 +366,7 @@ All steps are idempotent; `glowData.ts` regenerates byte-identically.
   carries nor excludes by name, a book date older than the newest statement
   read, a statement that PRINTS dated transactions while its reading carries
   none (opening-unit markers do not count), and a dated contribution or
-  withdrawal with no capital move in the book that day (Stage 10fb — a fully
+  withdrawal with no capital move in the book that day (Stage 10fc — a fully
   redeemed investment's history is data). Never silence it by widening the note
   list or the accepted list for a file a reader could read: write the reader.
 - **Every file feeds the dashboard** (the family, 21 Oct 2026), except the held-

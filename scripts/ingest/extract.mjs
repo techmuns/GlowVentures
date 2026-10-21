@@ -1125,7 +1125,7 @@ function carriedForward(file, how) {
     return facts(after) > facts(before) ? [{ ...produced[0], reread: true }] : carried;
   }
   /**
-   * A DOCUMENT THAT READ IS RE-READ TOO (Stage 10fb), so a reader taught to read
+   * A DOCUMENT THAT READ IS RE-READ TOO (Stage 10fc), so a reader taught to read
    * more of a sealed statement — a folio's full ledger, a holder the registry now
    * knows — reaches it without the password. The re-read replaces the archived
    * reading only when it is provably no worse: the same document (issuer,

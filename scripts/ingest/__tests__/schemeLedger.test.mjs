@@ -1,5 +1,5 @@
 // The full unit ledger HDFC, Kotak and ABSL print inside each scheme block
-// (layout 7 of providers/mutualFundFolio.mjs, Stage 10fb), through the real
+// (layout 7 of providers/mutualFundFolio.mjs, Stage 10fc), through the real
 // `extract()`. Run: node scripts/ingest/__tests__/schemeLedger.test.mjs
 //
 // Written against the archived layouts with INVENTED holders, folios, schemes
