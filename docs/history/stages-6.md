@@ -193,3 +193,11 @@
   - `sectorReturnCoverage.test` used the fenced row as a Position.
   - The store (`build-polycab`) carries the book's 1,90,10,140 shares. The corporate-action capture was re-imported for Bharat's 21 new symbols, so the depository-share gate can rule on each.
 - **Checks.** `test:ingest` adds suite `scanRead` (ISIN repair, the two printings, bytes, refusals) and golden case HDFC 22025655 (ten quantities read off the page). `checkReads` gains never-arrived and scan-not-verified cases; `statementUploads` refuses a notice and a sign-in page saved as `.pdf`. `test:statements` adds the three publication cases.
+
+
+### Stage 10gl — HEADLINE GAIN AND RETURN CARDS SHOW AVAILABLE DATA
+
+- The family asked for the top Gain / Loss and return cards to show what can be calculated, with the same simple coverage info as attribution. The cards now use its verified subset model: one incomplete holding cannot erase other recorded gains. Whole managed accounts and exits stay in the gain.
+- FYTD/YTD use the same selected account inputs and dated-window measure as attribution. The history and money-weighted choices pool each usable account's own recorded window; under one year the former is labelled “Return over available history”, with “not annualised” and actual dates.
+- Every card names covered holdings/value/accounts. The shared info body explains amounts, includes account and statement names, lists the records needed for exclusions, and keeps newer incomplete source records visible beside the older verified record in use. Other strict whole-portfolio measures retain their existing gates.
+- Tests cover partial gain/capital arithmetic, exits, true zero versus absence, dated periods, a liquidated account, live-price isolation and the actual archive. Built-app browser checks cover default and saved card choices, info dialogs, focus restoration and FYTD card/table agreement.

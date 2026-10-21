@@ -6,7 +6,7 @@ import { Card } from "@/components/Card";
 import { AllocationChart } from "@/components/AllocationViews";
 import { Pill } from "@/components/Pill";
 import { SelectableTiles, type TileMetric } from "@/components/SelectableTiles";
-import { CapitalReturnCalculation, MoneyWeightedCalculation } from "@/components/ReturnCalculation";
+import { AvailableReturnCoverage } from "@/components/AvailableReturnCoverage";
 import { StockLink } from "@/components/StockLink";
 import { Link } from "react-router-dom";
 import { usePortfolio } from "@/context/PortfolioContext";
@@ -30,7 +30,7 @@ import {
 import { useViewParam } from "@/components/ViewToggle";
 import { AllAlerts } from "@/components/AllAlerts";
 import { usePriceAlerts } from "@/lib/usePriceAlerts";
-import { drilldownHref, AXIS_SCOPE, TOP_NAMES, bookMoneyWeighted, bookReturnOnCost, costedSetLabel, SIDE_NOTE } from "@/lib/drilldown";
+import { drilldownHref, AXIS_SCOPE, TOP_NAMES, bookReturnOnCost, costedSetLabel, SIDE_NOTE } from "@/lib/drilldown";
 import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
 
 /** The allocation table's columns, in the order its rows write their cells. */
@@ -54,7 +54,9 @@ import { DailyMovers } from "@/components/DailyMovers";
 import PortfolioReturns from "@/components/PortfolioReturns";
 import { SectorComposition } from "@/pages/SectorComposition";
 import { CHART_COLORS } from "@/lib/chartTheme";
-import { INVESTOR_DEFAULT_TILES, investorPeriodReturn, investorAnnualReturn } from "@/lib/investorSummary";
+import { INVESTOR_DEFAULT_TILES } from "@/lib/investorSummary";
+
+import { availableCardReturns, statementReturnInputs, type AvailableCardReturn } from "@/lib/availableCardReturns";
 
 // Morning CIO — the whole book in one screen: invested / current / return per
 // bucket, plus capital deployment, concentration and book performance. Every
@@ -667,37 +669,6 @@ export function MorningCIO() {
     }
     const bucketRows = rowsByAxis.get("category")!;
     const rowsIn = (key: string) => bucketRows.get(key) ?? [];
-    // ── Money-weighted returns, from the book's own dated flows ──
-    //
-    // Each account's external capital movements (capital register, or the bank
-    // book where a manager issues none) plus the window's opening portfolio
-    // value, closed against that side's market value.
-    //
-    // TWO RULES, BOTH LOAD-BEARING, both matching /performance exactly so the
-    // headline here and the table there are one measurement rather than two:
-    //
-    //   1. ONLY ACCOUNTS WITH AN OPENING VALUE COUNT — flows AND market value.
-    //      510854 publishes no FY performance summary, so its flows carry no
-    //      opening portfolio value. Pooling it anyway put ₹5.92 Cr into the
-    //      terminal flow with no opening stake behind it and returned 174.3%
-    //      against 109.7% for the accounts that can be measured.
-    //
-    //   2. EACH ACCOUNT CLOSES ON ITS OWN STATEMENT DATE, ON ITS STATEMENT
-    //      VALUE, AND THE WINDOW ENDS AT THE LATEST OF THOSE DATES — never at
-    //      `portfolio.asOf` and never at `new Date()`. This ended the window on
-    //      `portfolio.asOf`, the book's newest date (29 Aug, two quantity-only
-    //      trust demats that value nothing), so the tile de-annualised over 150
-    //      days where the pool closes on 13 Aug — +30.1% here against +26.5% on
-    //      /performance for the same seven accounts. And it closed each account
-    //      on its LIVE value dated to its statement: the flows are complete only
-    //      to the statement date, so a price struck today does not belong there.
-    //
-    // Both rules live in `measuredAccountsReturn`, which /performance and the
-    // Family & Entities rows call too, so the three are one computation — and
-    // `bookMoneyWeighted` wraps it for this tile AND the `?of=measured` page it
-    // opens (B-06), so the rate a reader clicks is the rate they land on.
-    const mwb = bookMoneyWeighted(portfolio, statementPortfolio ?? null, today);
-
     const stX = startupXirr(pm.startups, today, null);
     const unlX = fundXirr(pm.unlistedCompanies, today);
     const peX = fundXirr(pm.peFunds, today);
@@ -889,10 +860,6 @@ export function MorningCIO() {
     const bucketsByAxis = { category: bucketsFor("category"), assetClass: bucketsFor("assetClass"), basket: bucketsFor("basket") } as Record<GroupAxis, Bucket[]>;
     const buckets = bucketsByAxis.category;
 
-    // The book-level XIRR — the per-account parts pooled with the fund-of-funds
-    // model's calls and marks — is `bookMoneyWeighted`'s, above: one function
-    // for this tile and the page it opens.
-
     // Distinct names, consolidated on securityKey across accounts. ISIN cannot do
     // this here: the same company arrives from two platforms with two spellings
     // and, more often than not, no ISIN on either side.
@@ -976,17 +943,8 @@ export function MorningCIO() {
       privateCount, fundCount,
       closedInvested: closedF.drawn, closedDistributed: closedF.distributed,
       buckets, bucketsByAxis,
-      // Where the pool closes — stated in the tile's hover beside the window.
-      mwLastClose: mwb.lastClose,
-      mwb,
-      annual: investorAnnualReturn(statementPortfolio ?? portfolio),
-      periods: (["fytd", "ytd"] as const).map((period) => ({
-        period, ...investorPeriodReturn(statementPortfolio ?? portfolio, today, period),
-      })),
-      // THE ONE PLACE THE TILE'S FIGURE IS DECIDED. `moneyWeightedReturn`
-      // refuses to annualise a window shorter than a year, so a strong quarter
-      // can no longer reach the screen as a yearly rate — see the note on it.
-      bookMW: mwb.result,
+      available: availableCardReturns(statementPortfolio ?? portfolio, consolidated,
+        statementReturnInputs(statementPortfolio ?? portfolio), today),
       distinctNames: byKey.size, crossHeld, top10Pct,
       largestName, largestKey: largest?.leadKey ?? "", largestHref, largestBucket, largestPct, winners, losers,
       navSeries, navFirst,
@@ -1091,12 +1049,24 @@ export function MorningCIO() {
    */
   const POSITIONS_WHAT = `Open every holding in the book. ${fmtNum(m.p.length)} is the count of current holdings with each one two statements both report counted once${m.rawLines !== m.p.length ? ` — ${fmtNum(m.rawLines)} statement lines, ${fmtNum(m.rawLines - m.p.length)} of them a second report of a holding already counted` : ""}; the page lists them grouped one row per name and per mandate.`;
   const NAMES_WHAT = `Open every holding in the book. ${fmtNum(m.distinctNames)} is the count of distinct securities across every account; the page lists them grouped one row per name and per mandate, so a mandate's names are one row there.`;
-  const calculationMoney = (n: number | null | undefined) => fmtFromBase(n);
-  const capitalCalculation = <CapitalReturnCalculation gain={m.embeddedGain} capital={m.deployedCapital}
-    result={pct1(m.gainPct)} money={calculationMoney} shortMoney={money}
-    coverage={m.gainUnavailableReason ?? <>Covers {fmtNum(m.costedSet.struckCount)} of {fmtNum(m.costedSet.holdings)} holdings with both a cost and a valuation.
-      {m.privateCount > 0 && <> Separately modelled private investments also contribute their recorded gain and invested capital.</>}
-      {m.costedSet.atCost > 0 && <> Investments held at cost have no measured gain and are excluded.</>}</>} />;
+  const coverageInfo = (r: AvailableCardReturn, field: 'gain' | 'return') => <AvailableReturnCoverage
+    line={r.total} selection={r.selection} accounts={(statementPortfolio ?? portfolio).accounts}
+    money={(n, sign = false) => fmtFromBase(n, { compact: true, sign })} field={field} notes={r.notes} />;
+  const coveredCaption = (r: AvailableCardReturn) => <span data-card-coverage
+    data-card-gain={r.total.gain ?? ''} data-card-return={r.total.returnPct ?? ''}
+    data-card-covered={r.coveredHoldings} data-card-holdings={r.totalHoldings}
+    data-card-value={r.coveredValue} data-card-accounts={r.coveredAccounts} data-card-total-accounts={r.totalAccounts}
+    data-card-from={r.from ?? ''} data-card-to={r.to ?? ''} data-card-basis={r.total.measured?.basis ?? ''}>
+    {r.total.units.length ? 'Available data' : 'No usable return records'} · {r.coveredHoldings} of {r.totalHoldings} holdings<br />
+    {money(r.coveredValue)} covered · {r.coveredAccounts} of {r.totalAccounts} accounts</span>;
+  const history = m.available.history;
+  const historyAnnual = history.total.measured?.basis === 'annual';
+  const historyLabel = historyAnnual ? 'Annualised return' : 'Return over available history';
+  const historyValue = <>{pct1(history.total.returnPct)}{historyAnnual && history.total.returnPct != null && <span className="text-sm"> p.a.</span>}</>;
+  const measuredDates = (r: AvailableCardReturn) => r.from && r.to ? `${fmtDate(r.from)} → ${fmtDate(r.to)}` : 'No verified dates';
+  const returnsHref = (period: string) => `/cio?tab=returns&rp=${period}&rtype=${period === 'inception' ? 'absolute' : 'xirr'}`;
+  const since = m.available.gain;
+  const capitalCalculation = coverageInfo(since, 'return');
   const cioTiles: TileMetric[] = [
     /**
      * CURRENT VALUE OF HOLDINGS — AND WHAT WAS INVESTED IN THEM, ON ONE TILE.
@@ -1140,97 +1110,46 @@ export function MorningCIO() {
     },
     {
       id: "gain", label: "Gain / loss", icon: <TrendingUp className="h-4 w-4" />,
-      href: drilldownHref("book", undefined, "costed"),
-      hrefTitle: m.gainUnavailableReason ?? `Open the holdings whose statement reports a cost. The gain is struck over the ${fmtNum(m.costedSet.struckCount)} of them that also carry a valuation of their own, worth ${fmtFromBase(m.costedSet.struckValue, { compact: true })}. FIFO: the unrealised gain on what is held plus the gain already realised on units sold (for a whole PMS mandate, its value plus withdrawals less the capital paid in). Return on recorded capital is this gain over the capital deployed. This is the recorded gain, not a complete since-inception total return: separate dividends and fund distributions and sales outside the available statements are not included, except within a whole PMS mandate.${
-        m.costedSet.atCost > 0
-          ? ` The ${fmtNum(m.costedSet.atCost)} private investments the family's consolidated review holds at cost, ${fmtFromBase(m.costedSet.atCostValue, { compact: true })}, are in Recorded invested and in no gain: their value is what was paid.`
-          : ""}`,
-      value: m.embeddedGain == null ? <AbsentValue />
-        : <span className={changeColor(m.embeddedGain)}>{fmtFromBase(m.embeddedGain, { compact: true, sign: true })}</span>,
-      second: m.gainPct == null ? undefined : <>Return on capital {pct1(m.gainPct)}</>,
-      calculation: capitalCalculation,
-      calculationLabel: "Return on capital",
-      calculationValue: pct1(m.gainPct),
-      sub: m.embeddedGain == null ? absentWhy(m.gainUnavailableReason ? "Sale proceeds need verification" : "No recorded cost or gain")
-        : <>Recorded · {fmtNum(m.costedSet.struckCount)} of {fmtNum(m.costedSet.holdings)} holdings<br />Separate income excluded</>,
+      href: returnsHref('inception'),
+      hrefTitle: 'Recorded gain since investment for the available data. Open Return attribution for the same verified holdings. The info button lists the holdings left out and the records they need.',
+      value: since.total.gain == null ? <AbsentValue /> : <span className={changeColor(since.total.gain)}>{money(since.total.gain, true)}</span>,
+      second: since.total.returnPct == null ? undefined : <>Return on capital {pct1(since.total.returnPct)}</>,
+      calculation: coverageInfo(since, 'gain'),
+      sub: since.total.gain == null ? absentWhy('No verified purchase cost and value') : coveredCaption(since),
     },
     {
-      id: "annualised", label: "Annualised return", icon: <TrendingUp className="h-4 w-4" />,
-      href: "/performance?summary=annualised#investor-return",
-      hrefTitle: `XIRR over every statement account holding value, excluding separately modelled private investments — struck only when all of them are measured. ${m.annual.covered} of ${m.annual.total} accounts are, worth ${money(m.annual.measuredValue)}. ${m.annual.start ? `Recorded window ${m.annual.start} to ${m.annual.end}. ` : ""}${m.annual.reason ? `${m.annual.reason}.${m.annual.detail ? ` ${m.annual.detail}` : ""}` : "Annualised over at least one year."} Open the same return, dates and coverage in NAV & Performance.`,
-      value: m.annual.pct != null ? <>{pct1(m.annual.pct)} <span className="text-sm">p.a.</span></> : <AbsentValue />,
-      calculation: <MoneyWeightedCalculation flows={m.annual.flows} annualPct={m.annual.pct}
-        days={m.annual.windowDays} annualised reason={m.annual.reason} result={pct1(m.annual.pct)} money={calculationMoney} shortMoney={money}
-        coverage={<>Measured {m.annual.covered} of {m.annual.total} statement accounts holding value. No rate is shown until every one has an opening value and dated movements, and at least one year of history. Separately modelled private investments are excluded.</>} />,
-      second: <span className="whitespace-normal">XIRR · {m.annual.covered} of {m.annual.total} accounts measured</span>,
-      sub: m.annual.missing.length ? <>{m.annual.issueLabel}<br />{m.annual.missing.length} of {m.annual.total} accounts need opening values</>
-        : m.annual.reason ? <>{m.annual.issueLabel}<br />{m.annual.reason}</>
-        : <>{m.annual.windowDays} days{m.annual.end ? ` · to ${fmtDate(m.annual.end)}` : ""}</>,
+      id: "annualised", label: historyLabel, icon: <TrendingUp className="h-4 w-4" />,
+      href: returnsHref('fytd'),
+      hrefTitle: `Money-weighted return over available verified records, ${history.from ?? 'unknown'} to ${history.to ?? 'unknown'}. Each account uses its own recorded dates. The info button lists every included account and missing record. Open Returns to choose a common period.`,
+      value: historyValue,
+      calculation: coverageInfo(history, 'return'),
+      second: <span className="whitespace-normal">{measuredDates(history)} · {historyAnnual ? 'yearly rate' : 'not annualised'}</span>,
+      sub: coveredCaption(history),
     },
-    ...m.periods.map((r): TileMetric => ({
-      id: r.period, label: r.period === "fytd" ? "Return this financial year" : "Return this calendar year",
-      icon: <CalendarDays className="h-4 w-4" />,
-      href: `/performance?summary=${r.period}#investor-return`,
-      hrefTitle: `${r.period.toUpperCase()}: ${fmtDate(r.start)}${r.end ? ` to the latest eligible statement, ${fmtDate(r.end)}` : " onwards"}. Whole-portfolio money-weighted return, not annualised, adjusted for dated contributions and withdrawals. ${r.covered} of ${r.total} accounts have usable opening values and cash flows for this period. ${r.reason ? `${r.reason}. Supply opening valuations at the start of the period and capital movements through matching closing valuations for every account; live prices cannot fill missing history.` : "Gain includes income retained in the accounts or paid out through their recorded withdrawals."}`,
-      value: pct1(r.pct),
-      calculation: <MoneyWeightedCalculation flows={r.flows} annualPct={r.annualPct}
-        days={r.windowDays} annualised={false} reason={r.reason} result={pct1(r.pct)} money={calculationMoney} shortMoney={money}
-        coverage={<>Starts {fmtDate(r.start)}. {r.covered} of {r.total} accounts have usable history. Every account must have an opening value, a complete dated record and the same closing date. This is the return for the period, not a yearly rate.</>} />,
-      second: <span className="whitespace-normal">{r.period.toUpperCase()} · since {fmtDate(r.start)}{r.gain != null ? <> · {money(r.gain, true)}</> : null}</span>,
-      sub: r.reason ? <>Insufficient history · {r.covered} of {r.total} accounts<br />{r.reason}</>
-        : <>Through {r.end ? fmtDate(r.end) : "—"} · all {r.total} accounts</>,
-    })),
-    /**
-     * MONEY-WEIGHTED RETURN — an XIRR over the accounts that publish an opening
-     * portfolio value. `moneyWeightedReturn` refuses to annualise a window
-     * under a year (this tile once read +99.0% for exactly that reason, with
-     * nothing miscalculated), and the hover is where the window and that refusal
-     * are stated — Stage 10g(ii)'s guard, which must keep a home.
-     */
+    ...(['fytd', 'ytd'] as const).map((period): TileMetric => {
+      const r = m.available[period];
+      return {
+        id: period, label: period === 'fytd' ? 'Return this financial year' : 'Return this calendar year',
+        icon: <CalendarDays className="h-4 w-4" />, href: returnsHref(period),
+        hrefTitle: `Money-weighted return for available data from ${r.selection.start} through ${r.to ?? 'the latest verified statement'}. The info button explains coverage and missing records. Open the same period in Return attribution.`,
+        value: pct1(r.total.returnPct), calculation: coverageInfo(r, 'return'),
+        second: <span className="whitespace-normal">{period.toUpperCase()} · {measuredDates(r)}{r.total.gain != null && <> · {money(r.total.gain, true)}</>}</span>,
+        sub: coveredCaption(r),
+      };
+    }),
     {
-      id: "mwr", label: m.bookMW.annualised ? "XIRR (annualised)" : "Money-weighted return",
-      icon: <TrendingUp className="h-4 w-4" />,
-      calculation: <MoneyWeightedCalculation flows={m.mwb.flows} annualPct={m.bookMW.annualPct}
-        days={m.bookMW.windowDays} annualised={m.bookMW.annualised} result={pct1(m.bookMW.pct)} money={calculationMoney} shortMoney={money}
-        reason={m.bookMW.pct == null ? m.mwb.reason ?? "The recorded amounts and dates do not provide a usable return" : null}
-        coverage={<>{m.mwb.missing.length ? "Verified return records cover" : "Uses the latest verified return records for"} {m.mwb.accountIds.length} of {m.mwb.bookAccounts} accounts holding value. Each closes on its own valuation date.
-          {m.mwb.missing.length > 0 && <span className="mt-2 block">No rate is shown until every account is measured. Not measured: {m.mwb.missing.map((g) => <span className="block" key={g.accountId}>{g.accountNo}: {g.reason}.</span>)}</span>}
-          {m.mwb.gaps.length > 0 && <span className="mt-2 block">{m.mwb.gaps.map((g) => <span className="block" key={g.accountId}>{g.accountNo}: {g.reason}.</span>)}</span>}
-          {m.privateCount > 0 && <> Separately modelled private investments with recorded investment dates are included too.</>}
-          {m.bookMW.annualised ? " The card shows a yearly rate." : " The card shows the return for the measured period, not a yearly rate."}</>} />,
-      href: drilldownHref("measured"),
-      hrefTitle: `${m.bookMW.pct == null && m.mwb.reason ? `No whole-book money-weighted return: ${m.mwb.reason}. ` : ""}Open the holdings of the accounts with verified return records — an opening portfolio value and dated capital through a closing valuation — with the accounts without one a toggle away on the same page. They are ${m.mwb.accountIds.length} of the ${m.mwb.bookAccounts} accounts holding value, worth ${fmtFromBase(m.mwb.measuredValue, { compact: true })} on their own statements${m.totalValue > 0 ? ` — ${((m.mwb.measuredValue / m.totalValue) * 100).toFixed(1)}% of the ${fmtFromBase(m.totalValue, { compact: true })} current value of holdings` : ""}; the rest publish no opening value, which is why the rate waits for them.${
-        m.bookMW.windowDays == null || m.bookMW.pct == null ? "" :
-        m.bookMW.annualised
-          ? ` The window is ${m.bookMW.windowDays} days, so this is a genuine annual rate.`
-          : ` THE WINDOW IS ${m.bookMW.windowDays} DAYS${m.mwLastClose ? `, TO ${m.mwLastClose}` : ""}, AND THE RATE IS NOT ANNUALISED: it is what these accounts have actually earned over that window — each account valued on its own statement, on the date that statement strikes it. Compounding it onto a full year would be a projection rather than a year the book has lived — this tile once read +99.0% for exactly that reason, with nothing miscalculated, against the managers' own annualised since-inception figures of about 7% to 31% for these very accounts.`
-      }`,
-      value: pct1(m.bookMW.pct),
-      sub: m.bookMW.pct == null ? absentWhy(m.mwb.missing.length
-          ? `${m.mwb.missing.length} of ${m.mwb.bookAccounts} accounts need opening values`
-          : "no statement in this book carries an opening portfolio value")
-        : <>Latest close {m.mwb.lastClose ? fmtDate(m.mwb.lastClose) : "—"} · {m.mwb.accountIds.length} of {m.mwb.bookAccounts} accounts
-          {m.mwb.gaps.length > 0 && <><br />Some accounts still need return inputs</>}</>,
+      id: "mwr", label: historyAnnual ? 'XIRR (annualised)' : 'Money-weighted return',
+      icon: <TrendingUp className="h-4 w-4" />, href: returnsHref('fytd'),
+      hrefTitle: `Available verified history, ${history.from ?? 'unknown'} to ${history.to ?? 'unknown'}. Each account closes on its own statement date. Open Returns to choose a common period.`,
+      value: historyValue, calculation: coverageInfo(history, 'return'),
+      second: <span className="whitespace-normal">{measuredDates(history)} · {historyAnnual ? 'yearly rate' : 'not annualised'}</span>,
+      sub: coveredCaption(history),
     },
-    /**
-     * CONSOLIDATED RETURN — return on the capital actually invested, over the
-     * whole book. It opens the same page as the value tile, on the holdings the
-     * return is struck over: both figures divide by the same capital.
-     */
     {
       id: "return", label: "Consolidated return", icon: <Percent className="h-4 w-4" />,
-      calculation: capitalCalculation,
-      href: drilldownHref("book", undefined, "costed"),
-      hrefTitle: `Open the holdings this return is struck over — the ${fmtNum(m.costedSet.struckCount)} of ${fmtNum(m.costedSet.holdings)} with a cost and a valuation of their own, worth ${fmtFromBase(m.costedSet.struckValue, { compact: true })} of the ${fmtFromBase(m.costedSet.bookValue, { compact: true })} book — on the Current Value of Holdings page; the ${fmtFromBase(m.costedSet.bookValue - m.costedSet.costedValue, { compact: true })} that reports no cost is outside it${
-        m.costedSet.atCost > 0
-          ? `, and so are the ${fmtNum(m.costedSet.atCost)} private investments the family's consolidated review holds at cost, ${fmtFromBase(m.costedSet.atCostValue, { compact: true })}: their value is what was paid, so there is no gain on them to strike`
-          : ""}. FIFO: the unrealised gain on what is held plus the gain realised on units already sold, over the capital deployed — the cost of the units held plus the cost of the units sold, and each whole PMS mandate at the capital paid into it. Cumulative, not annualised. It includes the dividends and distributions the holdings paid, gross of TDS, over the window each holding's income record covers — which need not run from purchase — and a whole mandate's are inside its capital.`,
-      value: pct1(m.gainPct),
-      // THE SET, ON ITS FACE (B-07) — the same words the allocation table's
-      // Total row prints beside the same figure, from `costedSetLabel`.
-      second: m.gainPct == null ? undefined
-        : <span data-costed-label className="whitespace-normal text-[11px] text-slate-400">{costedSetLabel(m.costedSet, (n) => fmtFromBase(n, { compact: true }))}</span>,
-      sub: m.gainPct == null ? absentWhy("no statement in this book reports a cost basis") : undefined,
+      calculation: capitalCalculation, href: returnsHref('inception'),
+      hrefTitle: 'Return on recorded capital since investment for the available data. The info button lists the holdings left out and the records they need. Open Return attribution for the same verified holdings.',
+      value: pct1(since.total.returnPct), sub: coveredCaption(since),
     },
     /* Uncalled capital and Distributions are COMMITMENT facts. With no
        commitment in the book they have no denominator — "₹0 undrawn" would
