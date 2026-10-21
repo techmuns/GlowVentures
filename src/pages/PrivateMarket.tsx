@@ -2044,12 +2044,12 @@ export function PrivateMarket() {
   };
 
   /** A section band — heading, marker, and the section's own totals in their columns. */
-  const renderSection = (id: BookSectionId) => {
+  const renderSection = (id: BookSectionId, exporting = false) => {
     const s = book.sections[id];
     if (!s.groups.length) return null;
     const copy = SECTION_COPY[id];
     const title = copy.title;
-    const open = sectionOpen(id);
+    const open = exporting || sectionOpen(id);
     // EACH ROW CARRIES ITS OWN RETURN RESOLVER before it is sorted, so the
     // return columns order the rows on the figure each one prints.
     const shown = sortRows(
@@ -2294,6 +2294,7 @@ export function PrivateMarket() {
         {(view === "funds" || view === "brands") && (
           <div className="overflow-x-auto">
             <ExportableTable exportName={`Private Market — ${view === "brands" ? "By brand" : "By legal name"}`} className="min-w-full text-[13px]" data-pm-table={view}>
+              {allRows => <>
               <thead className="border-b border-ink-700">
                 <Tr view={bookView}>
                   <SortHeader col="name" view={bookView} align="left" className="min-w-[15rem]">{grouping === "fund" ? "Legal name" : grouping === "brand" ? "Brand" : "Legal entity"}</SortHeader>
@@ -2358,7 +2359,7 @@ export function PrivateMarket() {
                 </Tr>
               </thead>
               <tbody className="divide-y divide-ink-700/60">
-                {shown.map((id) => <Fragment key={id}>{renderSection(id)}</Fragment>)}
+                {shown.map((id) => <Fragment key={id}>{renderSection(id, allRows)}</Fragment>)}
               </tbody>
               <tfoot>
                 {show === "both" && totalRow(book.privateTotal, "Private market total", {
@@ -2382,6 +2383,7 @@ export function PrivateMarket() {
                   },
                 })}
               </tfoot>
+              </>}
             </ExportableTable>
           </div>
         )}

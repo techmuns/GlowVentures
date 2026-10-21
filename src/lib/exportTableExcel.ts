@@ -45,7 +45,7 @@ export function createTableWorkbook(snapshot: TableExport): ExcelJS.Workbook {
   about.columns = [{ width: 22 }, { width: 105 }];
   about.addRows([
     ["Table", snapshot.title], ["Dashboard", snapshot.url], ["Exported at", new Date().toISOString()],
-    ["View", "All matching rows, including rows not yet loaded by scrolling. Current sort, column order and visibility are preserved. Collapsed drilldowns stay collapsed."],
+    ["View", "All matching rows, including rows not yet loaded by scrolling, and every available column, including columns hidden in Edit Columns. Active filters, sort and column arrangement apply."],
     ["Numbers", "Source values are used where available; other numbers follow the displayed precision. Abbreviated amounts are expanded to currency units. A dash stays a dash; it does not become zero."],
     ["Editable text", "Strategy and Description include saved text. Unsaved drafts are not included."],
   ]);

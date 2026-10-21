@@ -1,5 +1,5 @@
-import { ExportableTable } from "@/components/ExportableTable";
-import { Children, ReactNode, isValidElement, useRef } from "react";
+import { ExportableTable, TableExportAllRows } from "@/components/ExportableTable";
+import { Children, ReactNode, isValidElement, useContext, useRef } from "react";
 import { ChevronUp, ChevronDown, ChevronsUpDown, GripVertical } from "lucide-react";
 import { useTableView, type TableView } from "@/lib/tableView";
 import { pressColumn } from "@/lib/columnDrag";
@@ -172,6 +172,8 @@ export function SortHeader({ col, view, children, align = "right", title, pad = 
  * drag, and the mismatch is loud in development.
  */
 export function Tr({ view, children, reviewScope, ...rest }: { view: TableView; children: ReactNode; reviewScope?: ReviewScope } & React.HTMLAttributes<HTMLTableRowElement>) {
+  const exporting = useContext(TableExportAllRows);
+  const order = exporting ? view.availableOrder : view.order;
   const row = useRef<HTMLTableRowElement>(null);
   const cells = Children.toArray(children).filter((c) => isValidElement(c) || c === 0 || !!c);
   const header = cells.some((cell) => isValidElement(cell) && cell.type === SortHeader);
@@ -199,7 +201,11 @@ export function Tr({ view, children, reviewScope, ...rest }: { view: TableView; 
     return <tr {...rest}>{children}</tr>;
   }
   const byCol = new Map(view.columns.map((c, i) => [c, cells[i]]));
-  return <tr ref={row} {...rest}>{header && <AutoEditColumns view={view} row={row} labels={labels} />}{view.order.map((c) => byCol.get(c))}</tr>;
+  return <tr ref={row} {...rest}
+    data-export-visible-columns={header && exporting ? view.order.length : undefined}
+    data-export-total-columns={header && exporting ? order.length : undefined}>
+    {header && <AutoEditColumns view={view} row={row} labels={labels} />}{order.map((c) => byCol.get(c))}
+  </tr>;
 }
 
 /**
@@ -235,8 +241,10 @@ export function TrFoot({ view, label, labelTitle, cells, className = "", ...rest
   cells: Record<string, ReactNode>;
   className?: string;
 } & React.HTMLAttributes<HTMLTableRowElement>) {
+  const exporting = useContext(TableExportAllRows);
+  const order = exporting ? view.availableOrder : view.order;
   let lead = 0;
-  while (lead < view.order.length && !(view.order[lead] in cells)) lead += 1;
+  while (lead < order.length && !(order[lead] in cells)) lead += 1;
   // A footer with a total in its very first column has no label span at all,
   // which is legitimate and must not become `colSpan={0}`.
   const span = Math.max(lead, 1);
@@ -246,7 +254,7 @@ export function TrFoot({ view, label, labelTitle, cells, className = "", ...rest
       {/* A COLUMN WITH NO TOTAL STILL NEEDS ITS CELL, and it takes the row's
           own class: the footer carries a top rule, and an unstyled filler
           breaks that line across the table. */}
-      {view.order.slice(span).map((c) => cells[c] ?? <td key={c} className={className} />)}
+      {order.slice(span).map((c) => cells[c] ?? <td key={c} className={className} />)}
     </tr>
   );
 }
