@@ -7636,6 +7636,13 @@ const ROUTES = [
    * `/sectors` routes; this walk asserts the embed's own two facts.
    */
   ["cio-sectors", "/cio?tab=sectors"],
+  /**
+   * Stage 10fe — the same panel set against an index: Consolidated against the
+   * Nifty 500, and Direct Equity against the Nifty 50, which is the walk where
+   * the index holds sectors the set does not (so the computed-zero rows draw).
+   */
+  ["cio-sectors-vs", "/cio?tab=sectors&vs=nifty-500"],
+  ["cio-sectors-vs-direct", "/cio?tab=sectors&view=direct&vs=nifty-50"],
   ["cio-returns", "/cio?tab=returns"],
   ["cio-returns-custom", "/cio?tab=returns&rp=custom&rfrom=2026-06-30&rto=2026-07-31&rtype=absolute"],
   ["cio-returns-live", "/cio?tab=returns&rp=custom&rfrom=2026-04-01&rto=2026-08-31&rtype=absolute"],
@@ -20074,6 +20081,109 @@ const CIO_SECTORS = [
 ];
 
 /**
+ * ── SECTOR COMPOSITION VERSUS AN INDEX (Stage 10fe) ──────────────────────────
+ *
+ * Re-expressed off the committed data rather than the helper under test: the
+ * index column is re-derived here from `src/data/indexSectors.json` through
+ * `resolveSector` (the one map), and the control's order from the NAV chart's
+ * own `BENCHMARKS` declaration in `src/lib/benchmarks.ts`. Struck on handles —
+ * `data-sector-vs-pick`, the table's cells by column id, the bars' `data-vs-*`.
+ */
+const INDEX_SECTORS = (() => {
+  try { return JSON.parse(readFileSync(new URL("../src/data/indexSectors.json", import.meta.url), "utf8")).indices; } catch { return null; }
+})();
+const BENCH_KEYS = (() => {
+  try {
+    const src = readFileSync(new URL("../src/lib/benchmarks.ts", import.meta.url), "utf8");
+    return [...src.matchAll(/bench\(\{ key: "([a-z0-9-]+)"/g)].map((m) => m[1]);
+  } catch { return []; }
+})();
+/** An index's weight in each GICS sector, as fractions — the factsheet's rows through the map. */
+function indexGics(key) {
+  const ix = INDEX_SECTORS?.[key];
+  if (!ix) return null;
+  const m = new Map();
+  for (const s of ix.sectors) {
+    const g = resolveSector(s.label).sector;
+    m.set(g, (m.get(g) ?? 0) + s.weight / 100);
+  }
+  return m;
+}
+const near = (a, b) => a != null && b != null && Math.abs(a - b) < 1e-9;
+
+/** On the panel's own address the control is drawn and Off, and nothing else changed. */
+const CIO_SECTORS_VS_OFF = [
+  ["the Vs index control is drawn and opens Off — the table keeps its own columns and the donut its place", (t, ctx) => {
+    const V = ctx?.sectorVs;
+    if (V === undefined) return notChecked("the index probe did not run on this pass");
+    if (!V) return false;
+    return V.picks.filter((p) => p.active).map((p) => p.key).join() === "off"
+      && V.rows.length > 0 && V.rows.every((r) => !r.hasIndexCell && !r.indexOnly)
+      && V.donut && V.chart === null;
+  }],
+];
+
+function cioSectorsVs(key, set) {
+  const want = () => indexGics(key);
+  return [
+    ["the index data derived — the factsheet file is committed and the NAV chart declares its indices", () =>
+      INDEX_SECTORS != null && BENCH_KEYS.length >= 2 && want() != null],
+    ["the control offers Off and then the NAV chart's indices in the NAV chart's order, with the one in the address picked", (t, ctx) => {
+      const V = ctx?.sectorVs;
+      if (V === undefined) return notChecked("the index probe did not run on this pass");
+      if (!V) return false;
+      return V.picks.map((p) => p.key).join() === ["off", ...BENCH_KEYS].join()
+        && V.picks.filter((p) => p.active).map((p) => p.key).join() === key;
+    }],
+    ["an index with no factsheet read is offered and marked absent, with its reason on the hover — every index read is not", (t, ctx) => {
+      const V = ctx?.sectorVs;
+      if (V === undefined) return notChecked("the index probe did not run on this pass");
+      if (!V || !INDEX_SECTORS) return false;
+      return V.picks.filter((p) => p.key !== "off").every((p) =>
+        INDEX_SECTORS[p.key] ? !p.absent : p.absent && (p.title ?? "").length > 40);
+    }],
+    [`the ${set} set is the one weighed`, (t, ctx) => {
+      const L = ctx?.sectorLayout;
+      if (L === undefined) return notChecked("the sector probe did not run on this pass");
+      return L?.views.find((v) => v.active)?.key === set;
+    }],
+    ["each row's index weight is the factsheet's sectors that the map places there, and a sector it lists none of is a computed nil", (t, ctx) => {
+      const V = ctx?.sectorVs, w = want();
+      if (V === undefined) return notChecked("the index probe did not run on this pass");
+      if (!V || !w || !V.rows.length) return false;
+      return V.rows.every((r) => r.hasIndexCell && near(r.index, w.get(r.key) ?? 0));
+    }],
+    ["every sector the index holds is a row — one the set holds none of is drawn at a computed zero, never left out", (t, ctx) => {
+      const V = ctx?.sectorVs, w = want();
+      if (V === undefined) return notChecked("the index probe did not run on this pass");
+      if (!V || !w) return false;
+      const keys = new Set(V.rows.map((r) => r.key));
+      const sum = V.rows.reduce((a, r) => a + (r.index ?? 0), 0);
+      const total = [...w.values()].reduce((a, x) => a + x, 0);
+      return [...w.keys()].every((k) => keys.has(k)) && near(sum, total)
+        && V.rows.filter((r) => r.indexOnly).every((r) => r.weight === 0 && (r.index ?? 0) > 0 && /none held/.test(r.valueText));
+    }],
+    ["over / under is the set's weight minus the index's, and the unplaced row takes none", (t, ctx) => {
+      const V = ctx?.sectorVs;
+      if (V === undefined) return notChecked("the index probe did not run on this pass");
+      if (!V || !V.rows.length) return false;
+      return V.rows.every((r) => r.key === "Unclassified"
+        ? r.active === null && r.activeText === "—" && !!r.activeTitle
+        : near(r.active, r.weight - r.index) && / pp$/.test(r.activeText));
+    }],
+    ["the bars stand in the donut's place, one pair per table row, on the table's own weights and the factsheet's date", (t, ctx) => {
+      const V = ctx?.sectorVs;
+      if (V === undefined) return notChecked("the index probe did not run on this pass");
+      if (!V?.chart || V.donut) return false;
+      const byKey = new Map(V.rows.map((r) => [r.key, r]));
+      return V.chart.index === key && V.chart.asOf === INDEX_SECTORS?.[key]?.asOf
+        && V.chart.rows.length === V.rows.length
+        && V.chart.rows.every((c) => byKey.has(c.key) && near(c.book, byKey.get(c.key).weight) && near(c.index, byKey.get(c.key).index));
+    }],
+  ];
+}
+
+/**
  * ── ALL ALERTS: WHAT EACH SEEDED ALERT MUST SAY ──────────────────────────────
  *
  * A FACTORY, run by the two walks that seed the store: `feedUp` is the only
@@ -26201,7 +26311,9 @@ const INVARIANTS = {
   // surface more than equity, and state the listed/private split.
   cio: [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_MOVERS, ...CIO_TILE_PICKER, ...CIO_BOOK_RETURN],
   "cio-allocation": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_ALLOC.filter(([description]) => !CIO_OPTIONAL_CAPITAL_CHECKS.has(description)), ...CIO_BOOK_RETURN, ...SIDE_HOVER_CHECKS],
-  "cio-sectors": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_SECTORS],
+  "cio-sectors": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_SECTORS, ...CIO_SECTORS_VS_OFF],
+  "cio-sectors-vs": [...CIO_SHARED, ...CIO_TAB_CONTROL, CIO_SECTORS[0], ...cioSectorsVs("nifty-500", "consolidated")],
+  "cio-sectors-vs-direct": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...cioSectorsVs("nifty-50", "direct")],
   "cio-returns": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT, ...CIO_SEGMENTS],
   "cio-returns-custom": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT, ...CIO_SEGMENTS],
   "cio-returns-cagr": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT, ...CIO_SEGMENTS],
@@ -42779,6 +42891,41 @@ for (const theme of THEMES) {
        * `data-sector-layout` rather than by their titles, because the right
        * card's title changes with the tab.
        */
+      /**
+       * ── SECTOR COMPOSITION AGAINST AN INDEX (Stage 10fe) ──────────────────
+       * The control's pills, each table row's own weight / index / over-under
+       * cells by column id (`<Tr>` draws cells in the reader's order), and the
+       * bars that stand in the donut's place. `null` on a page without the
+       * control. See `cioSectorsVs`.
+       */
+      const sectorVs = FAST ? null : await page.evaluate(() => {
+        const picker = document.querySelector("main [data-sector-vs-picker]");
+        if (!picker) return null;
+        const num = (el, k) => (el?.hasAttribute(k) && el.getAttribute(k) !== "" ? Number(el.getAttribute(k)) : null);
+        const chart = document.querySelector("main [data-sector-vs]");
+        return {
+          picks: [...picker.querySelectorAll("[data-sector-vs-pick]")].map((b) => ({
+            key: b.getAttribute("data-sector-vs-pick"), active: b.getAttribute("aria-selected") === "true",
+            absent: b.getAttribute("data-vs-absent") === "true", title: b.getAttribute("title") })),
+          chart: chart ? {
+            index: chart.getAttribute("data-vs-index"), asOf: chart.getAttribute("data-vs-asof"),
+            rows: [...chart.querySelectorAll("[data-vs-row]")].map((r) => ({
+              key: r.getAttribute("data-vs-row"), book: num(r, "data-vs-book"), index: num(r, "data-vs-weight") })),
+          } : null,
+          donut: !!document.querySelector("main [data-sector-left] .recharts-pie-sector"),
+          rows: [...document.querySelectorAll("main [data-sector-row]")].map((r) => {
+            const ix = r.querySelector('[data-cell="index"]'), ac = r.querySelector('[data-cell="active"]');
+            return {
+              key: r.getAttribute("data-sector-row"), indexOnly: r.hasAttribute("data-sector-index-only"),
+              weight: num(r.querySelector('[data-cell="weight"]'), "data-weight"),
+              valueText: (r.querySelector('[data-cell="value"]')?.innerText ?? "").replace(/\s+/g, " ").trim(),
+              hasIndexCell: !!ix, index: num(ix, "data-index-weight"),
+              active: num(ac, "data-active"), activeText: (ac?.innerText ?? "").trim(),
+              activeTitle: ac?.querySelector("[title]")?.getAttribute("title") ?? null,
+            };
+          }),
+        };
+      });
       const sectorLayout = FAST ? null : await page.evaluate(() => {
         const root = document.querySelector("main [data-sector-layout]");
         if (!root) return null;
@@ -44359,7 +44506,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, sectorSplit, shortWindow, feSectors, accountRows, heldAccountRows, pmFunds, pmReviewRows, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, investorReturn, familyLayout, memberScopeDom, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, returnsDom, segDom, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, quotesServed: QUOTES_SERVED, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, pickTyped: PICK_TYPED[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, mandateSectors, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, monitorMember, monitorFoot, txnT, quoteHold, monitorC, headerTitles, mgrT, costGross, inside }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, sectorVs, sectorSplit, shortWindow, feSectors, accountRows, heldAccountRows, pmFunds, pmReviewRows, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, investorReturn, familyLayout, memberScopeDom, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, returnsDom, segDom, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, quotesServed: QUOTES_SERVED, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, pickTyped: PICK_TYPED[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, mandateSectors, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, monitorMember, monitorFoot, txnT, quoteHold, monitorC, headerTitles, mgrT, costGross, inside }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);
