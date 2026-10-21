@@ -139,7 +139,7 @@ try {
   const insiderURL = new URL(insiderPath, base);
   insiderURL.searchParams.set('tab','research');
   await insiderPage.goto(insiderURL.href);
-  await insiderPage.getByRole('button',{name:'Insider deals',exact:true}).click();
+  await insiderPage.getByRole('tab',{name:'Insider deals',exact:true}).click();
   const insiderTable = insiderPage.locator('[data-insider-deals="ok"] table');
   await insiderTable.waitFor();
   assert.equal(await insiderTable.locator('tbody > tr:not([data-table-scroll-end])').count(), 50);
