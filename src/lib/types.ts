@@ -191,6 +191,16 @@ export type AccountCapital = {
 };
 
 // One current position: a security held within one account.
+export type RecoveredHoldingCost = {
+  accountId: string; isin: string; quantity: number; asOf: string;
+  costBasis: number; realizedPnL: number | null; costOfUnitsSold: number | null;
+  dividendReceived: number | null;
+  /** Later review sale rows invalidate live pricing of the old snapshot. */
+  salesAfter?: number;
+  evidence: { path: string; sheet: string; rows: number[] }[];
+  notes: string[];
+};
+
 export type Position = {
   /**
    * Stable slug of the normalized security name — the join key used for
@@ -311,7 +321,9 @@ export type Position = {
    * the statement's net stays beside it as `printedCostBasis`. See
    * `grossPaidCost` in `scripts/build-book.mjs`.
    */
-  costBasisSource?: "opening-position" | "carried-through-switch" | "fifo" | "gross-paid" | "review";
+  costBasisSource?: "opening-position" | "carried-through-switch" | "fifo" | "gross-paid" | "review" | "supplementary-record";
+  /** Source rows reconciled to this exact owner/account/ISIN/unit balance. */
+  recoveredCost?: RecoveredHoldingCost;
   /**
    * The cost the statement's own cost column prints, kept ONLY where the book's
    * cost differs from it (`costBasisSource`) — a CHECK beside the figure, never

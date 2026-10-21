@@ -76,7 +76,8 @@
 // prices it. Their kind is `last-movement`, because the statement DID print a
 // price against them and a page must say what that price was rather than that
 // there was none. The movement's price is never the price a row is valued at.
-import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_SHARE_MOVEMENTS, BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
+import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_SHARE_MOVEMENTS, BOOK_UNVALUED_HOLDINGS, BOOK_RECOVERED_COSTS } from "@/data/glowData";
+import { applyRecoveredCost } from "../../shared/recoveredCosts.mjs";
 import { symbolFor, symbolForKey, type QuoteFeed } from "./quotes";
 import { applyCorporateActionQuotes, type ActionFeed } from "./corporateActions";
 import { securityLabel } from "./securityLabel";
@@ -341,7 +342,8 @@ export function combinedShareCandidates(
   return kept;
 }
 
-const CANDIDATES = combinedShareCandidates([depositoryShareCandidates(), unpricedStatementShareCandidates()]);
+const CANDIDATES = combinedShareCandidates([depositoryShareCandidates(), unpricedStatementShareCandidates()])
+  .map((p) => applyRecoveredCost(p, BOOK_RECOVERED_COSTS));
 
 /** Every share either route could value, priced or not — for a page naming what is not valued. */
 export const shareCandidates = (): readonly Position[] => CANDIDATES;

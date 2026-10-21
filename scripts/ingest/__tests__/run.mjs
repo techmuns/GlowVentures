@@ -32,6 +32,7 @@ const SUITES = [
   { name: "neoFlows", file: "neoFlows.test.mjs", required: true },
   { name: "fundTxnDetails", file: "fundTxnDetails.test.mjs", required: true },
   { name: "mfPurchase", file: "mfPurchase.test.mjs", required: true },
+  { name: "costRecovery", file: "holdingCostRecovery.test.mjs", required: true },
   { name: "iciciFolio", file: "iciciFolio.test.mjs", required: true },
   { name: "schemeLedger", file: "schemeLedger.test.mjs", required: true },
   { name: "pmsReaders", file: "pmsReaders.test.mjs", required: true },
