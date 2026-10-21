@@ -1259,7 +1259,7 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
                       if (!s) return <AbsentCell reason="no own-account holding in this sector" />;
                       return <span className={changeColor(s.returnPct)}><SectorReturnDetails sector={s.key} positions={s.positions}
                         accounts={accIdx} returnPct={s.returnPct} reason={s.returnWhy} fundValue={0}
-                        live={!!liveBySector[s.key]} money={money} /></span>;
+                        live={s.positions.some(p => p.live)} money={money} /></span>;
                     }} />
                     <CompareRow label="Largest holding" keys={compare} plain render={(k) => directByKey.get(k)?.top ?? <AbsentCell reason="no own-account holding in this sector" />} />
                   </tbody>
@@ -1390,7 +1390,7 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
                               : <SectorReturnDetails sector={s.key} positions={s.positions} accounts={accIdx}
                                   returnPct={s.returnPct} reason={s.returnWhy}
                                   fundValue={consolidatedView ? Math.max(0, s.mv - s.costedMV - s.uncostedMV) : 0}
-                                  live={!!liveBySector[s.key]} money={money} />}
+                                  live={s.positions.some(p => p.live)} money={money} />}
                           </td>
                           <td className="px-3 py-2 text-left text-[12px] text-slate-400" data-cell="top"
                             data-top-key={s.topKey ?? ""} data-top-derived={s.topDerivedOnly ? "true" : "false"}>
