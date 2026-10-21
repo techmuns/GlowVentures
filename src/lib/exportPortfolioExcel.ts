@@ -28,7 +28,7 @@ import type { Txn, TxnData } from "./ledger";
 import { basketKeyOf, familyClassKeyOf } from "./familyTaxonomy";
 import { displaySecurity, fmtCr, fmtCurrency, DASH } from "./format";
 import {
-  valueDateOf, commonValueDate, measuredReturn, isFixedIncome,
+  valueDateOf, commonValueDate, measuredReturn, isFixedIncome, clubbedPurchase,
   currentHoldings, droppedHoldings, NEGLIGIBLE_VALUE_FLOOR,
   totalQuantity, AT_COST_PNL, NO_UNIT_COUNT, AT_COST_MARK, REVIEW_NO_MARK,
 } from "./analytics";
@@ -38,7 +38,7 @@ import { costedFigures, commonMark, markKey, VACUOUS_COST_REASON } from "./clubb
 import { buildDatedCapital, type DatedCapital } from "./datedCapital";
 import { labelledAccounts, labelledPositions } from "./securityLabel";
 import { describeDepositoryUnits } from "./fundNavs";
-import { investedOnOf, lineUndatedReason } from "./investedOn";
+import { investedOnOf, investedOnTitle, lineUndatedReason } from "./investedOn";
 import {
   BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS,
   BOOK_POSITION_TRANCHES, BOOK_CAPITAL_FROM_INCEPTION,
@@ -280,10 +280,15 @@ function consolidate(held: Position[], accounts: Account[], nowMs: number, dated
        * lot as if all of it were a year old.
        */
       const fifo = fifoTotals(ps, fifoOpts);
-      const fifoRet = costNA || (cost as number) <= 0 ? null : fifo.returnPct;
-      const since = ps.every((x) => x.heldSince)
-        ? ps.reduce((a: string, x) => (x.heldSince! < a ? x.heldSince! : a), ps[0].heldSince!)
-        : null;
+      // NO `cost > 0` GUARD (Stage 10fz, after 10df): a holding whose units
+      // are all sold holds a cost of ₹0 and its whole gain is realised —
+      // `fifoTotals` divides by the capital deployed (cost held + cost of
+      // units sold) and refuses only where that is not above zero.
+      const fifoRet = costNA ? null : fifo.returnPct;
+      // The row's start, and whether it is ONE purchase held throughout — the
+      // only thing a CAGR measures (Stage 10fz, `clubbedPurchase`).
+      const purchase = clubbedPurchase(ps);
+      const since = purchase.heldSince;
       const valuedAt = commonValueDate(ps.map(valueDate));
       /**
        * THE DATED CAPITAL, WHERE THIS ROW IS WHOLE ACCOUNTS — `behind`, against
@@ -293,7 +298,8 @@ function consolidate(held: Position[], accounts: Account[], nowMs: number, dated
        * carries none (`null`), and every rule below it is unchanged.
        */
       const capital = dated.behind(ps, held) ?? undefined;
-      const input = { returnPct: fifoRet, heldSince: since, valuedAt, assetClass: ps[0].assetClass, costNA, capital, valuedAtCost: allAtCost };
+      const input = { returnPct: fifoRet, heldSince: since, purchaseDates: purchase.purchaseDates, costOfUnitsSold: purchase.costOfUnitsSold,
+        valuedAt, assetClass: ps[0].assetClass, costNA, capital, valuedAtCost: allAtCost };
       const ret = measuredReturn(input, "auto", bookAsOf);
 
       // How each line was priced and on what date, oldest first.
@@ -312,7 +318,9 @@ function consolidate(held: Position[], accounts: Account[], nowMs: number, dated
       const notes: string[] = [];
       const inv = investedOnOf(ps);
       const investedOn = inv && (inv.first === inv.last ? inv.first : `${inv.first} → ${inv.last}`)
-        + (inv.payments !== null && inv.payments > 1 ? ` (${inv.payments} payments)` : "");
+        + (inv.payments !== null && inv.payments > 1 ? ` (${inv.payments} payments)` : "")
+        + (inv.reviewSource ? " (review)" : "");
+      if (inv?.reviewSource) notes.push(investedOnTitle(inv));
       if (!inv) {
         const why = ps.filter((x) => !investedOnOf([x])).map(lineUndatedReason).find((x): x is string => !!x);
         if (why) notes.push(`Invested on — ${why}`);
@@ -676,7 +684,7 @@ function buildHoldings(wb: ExcelJS.Workbook, positions: Position[], accounts: Ac
     { key: "qty", header: "Qty", width: 14, numFmt: QTY, numFmtFor: qtyFormat, align: "right" },
     { key: "avgCost", header: "Avg Cost (₹)", width: 13, numFmt: PRICE, align: "right" },
     // BESIDE THE COST, AS ON THE TAB — the date is the other half of what was paid.
-    { key: "investedOn", header: "Invested on", width: 26, align: "left" },
+    { key: "investedOn", header: "Investment date / range", width: 26, align: "left" },
     { key: "cmp", header: "CMP (₹)", width: 12, numFmt: PRICE, align: "right" },
     { key: "marketValue", header: "Market Value (₹)", width: 18, numFmt: MONEY, align: "right" },
     // Named on the header rather than left to be assumed: the denominator is the

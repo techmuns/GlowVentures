@@ -40,7 +40,8 @@
 // be most tempting. It is not re-derived here: `holdingReturn` decides, so the
 // guard that put +99.0% on the Morning CIO strip in Stage 10g(ii) lives in one
 // place still, and `positionIrrPct` stays unread.
-import type { CapitalMove, Commitment, Position, PositionTranches, ReviewFlow } from "./types";
+import type { AccountReturnCoverage, CapitalMove, Commitment, Position, PositionTranches, ReviewFlow } from "./types";
+import { BOOK_ACCOUNT_RETURN_RECORDS } from "../data/glowData";
 import {
   holdingReturn, sumOrNull, RETURN_MEASURES, isValuedAtCost, commonValueDate, AT_COST_RETURN,
   type HoldingReturn, type ReturnMode, type ReturnMeasure, type MeasuredReturn,
@@ -443,8 +444,22 @@ export type CapitalGroup = {
    * is not the same as the MEASURED ₹0 of a fund redeemed to nil units.
    */
   value: number | null;
-  /** The report date that value is struck at — the terminal date of the XIRR. */
+  /** The report date that value is struck at. */
   valueAsOf: string | null;
+  /**
+   * ── WHERE A MONEY-WEIGHTED RETURN CLOSES (Stage 10fz) ─────────────────────
+   *
+   * The newest verified valuation whose dated capital reconciles with this
+   * record (`newerVerifiedClose`) — Carnelian 3517383 on 7 Oct at ₹38.55 Cr,
+   * where its holdings statement is 30 Sep at ₹38.16 Cr — and otherwise the
+   * value above on its own date. The terminal value and date of every XIRR
+   * struck on this row (`capitalXirr`, `clubCapitalReturn`, `datedCapital`,
+   * the Returns tab's "Since investment"), so each closes on the record every
+   * other return surface closes on. Value today and appreciation stay on
+   * `value`: they sit beside the holdings' own cost.
+   */
+  closeValue?: number | null;
+  closeAsOf?: string | null;
   /**
    * TRUE WHERE SOME OF THAT VALUE IS A COST, NOT A VALUATION — a line the
    * family's consolidated review holds at what was paid (`valuedAtCost`). The
@@ -550,11 +565,37 @@ export function recordShortfall(a: { asOf?: string | null; capitalRecordTo?: str
  *     paid less what a sale returned, so the dated purchases less the dated sale
  *     proceeds must reproduce that cost to the rupee — or the two sides of a
  *     return describe different money (a purchase missing from the sheet).
+ *     A line on FIFO's cost ties instead on cost held + cost of the units
+ *     sold (`reviewCostBasis`, Stage 10fz).
  *   • IS EVERY ROW ON OR BEFORE THE VALUE'S DATE? A row after it is money the
  *     value cannot hold.
  *
  * Null where a return can be struck; otherwise the reason, true of this line.
  */
+/**
+ * ── TWO COSTS A REVIEW LINE CAN CARRY, AND EITHER MUST TIE (Stage 10fz) ─────
+ *
+ * The review's own: what was paid less what the sales returned ("net"). Or
+ * FIFO's, which the build now carries where every purchase and sale row prints
+ * its units: the cost of the units held, with the cost of the units sold beside
+ * it in `costOfUnitsSold` — 360 ONE Special Opportunities (37702 / 60117)
+ * carries ₹99,41,987.06 held and ₹57,512.96 sold for ₹99,99,500.02 bought, and
+ * the sale's ₹20,807.04 over that cost is realised gain. Either way the dated
+ * purchases are every rupee deployed, so a FIFO line ties on cost held + cost
+ * sold, exactly as `fundDatedRecords` ties it on the Private Market page.
+ * Null where neither ties.
+ */
+function reviewCostBasis(own: readonly Position[], all: readonly CapitalMove[]): { mode: "net" | "fifo"; costSold: number } | null {
+  const bought = all.filter((m) => m.direction === "in").reduce((t, m) => t + (m.amount ?? 0), 0);
+  const sold = all.filter((m) => m.direction === "out" && m.payoutKind === "capital").reduce((t, m) => t + (m.amount ?? 0), 0);
+  const cost = own.reduce((t, p) => t + (p.costBasis ?? Number.NaN), 0);
+  if (!Number.isFinite(cost)) return null;
+  if (Math.abs(bought - sold - cost) <= 1) return { mode: "net", costSold: 0 };
+  const costSold = own.reduce((t, p) => t + (typeof p.costOfUnitsSold === "number" && Number.isFinite(p.costOfUnitsSold) && p.costOfUnitsSold > 0 ? p.costOfUnitsSold : 0), 0);
+  if (costSold > 0 && Math.abs(bought - (cost + costSold)) <= 1) return { mode: "fifo", costSold };
+  return null;
+}
+
 function reviewShortfall(own: readonly Position[], all: readonly CapitalMove[], valueAsOf: string | null): string | null {
   const ins = all.filter((m) => m.direction === "in");
   if (!ins.length) return "the family's consolidated review prints no dated purchase for this line, so there is nothing to measure a return against";
@@ -566,11 +607,11 @@ function reviewShortfall(own: readonly Position[], all: readonly CapitalMove[], 
   if (!valueAsOf) {
     return "the holdings behind this row are valued on different dates, so there is no one date to close a return on";
   }
-  const bought = ins.reduce((t, m) => t + (m.amount ?? 0), 0);
-  const sold = all.filter((m) => m.direction === "out" && m.payoutKind === "capital").reduce((t, m) => t + (m.amount ?? 0), 0);
-  const cost = own.reduce((t, p) => t + (p.costBasis ?? Number.NaN), 0);
-  if (!Number.isFinite(cost) || Math.abs(bought - sold - cost) > 1) {
-    return "the review's dated purchases less its sale proceeds do not add up to the cost it carries for this line, so a purchase may be missing from its dated rows — and a return would set one sum of money against the value of another";
+  const basis = reviewCostBasis(own, all);
+  if (!basis) {
+    return own.some((p) => (p.costOfUnitsSold ?? 0) > 0)
+      ? "the review's dated purchases do not add up to the cost of the units it holds plus the cost of the units it sold, so a purchase may be missing from its dated rows — and a return would set one sum of money against the value of another"
+      : "the review's dated purchases less its sale proceeds do not add up to the cost it carries for this line, so a purchase may be missing from its dated rows — and a return would set one sum of money against the value of another";
   }
   const late = all.find((m) => m.date > valueAsOf);
   if (late) {
@@ -814,6 +855,55 @@ export function capitalMovesWithCalls(
 }
 
 /**
+ * ── A SINCE-INCEPTION RETURN CLOSES ON THE NEWEST VERIFIED VALUATION (Stage 10fz) ──
+ *
+ * The standing rule: money-weighted returns close on the newest account
+ * closing valuation with matching reconciled dated capital through that date,
+ * and every return surface reads the same selected record. The FY records
+ * (`accountReturnRecords`) do; the since-inception paths — `capitalXirr`, the
+ * Transactions card, the Monitor's XIRR through `datedCapital`, the Returns
+ * tab's "Since investment" — closed on the HOLDINGS statement's date instead.
+ * Carnelian 3517383 closed there on 30 Sep at ₹38.16 Cr while its verified
+ * record values it on 7 Oct at ₹38.55 Cr.
+ *
+ * So a capital RECORD account closes on its return record's valuation where
+ * that is newer than the holdings statement AND the two dated records agree
+ * across the gap: every dated movement in this rollup after the date the
+ * rollup was last whole, through the record's date, is a flow of the record
+ * on the same day for the same amount (₹1), and the other way round; nothing
+ * in the rollup moves after the record's date; and the record's own capital
+ * reaches its valuation. Green Lantern's record runs to 22 Sep, but its rollup
+ * stops on 27 Jul with eleven TDS payouts the rollup does not carry — so it
+ * stays on 27 Jul. Null where the close does not move.
+ */
+function newerVerifiedClose(
+  coverage: AccountReturnCoverage | undefined,
+  valueAsOf: string | null,
+  capitalRecordTo: string | null | undefined,
+  moves: readonly CapitalMove[],
+): { value: number; asOf: string; capitalRecordTo: string } | null {
+  const r = coverage?.record;
+  if (!r || !valueAsOf || !(r.asOf > valueAsOf) || !(r.capitalRecordTo >= r.asOf) || !Number.isFinite(r.value) || r.value < 0) return null;
+  const from = capitalRecordTo && capitalRecordTo < valueAsOf ? capitalRecordTo : valueAsOf;
+  const opening = r.flows.find((f) => /^opening portfolio value/i.test(f.description ?? ""));
+  // The record must itself be whole across the gap — open on or before it.
+  if (!opening || opening.date > from) return null;
+  if (moves.some((m) => m.date > r.asOf)) return null;
+  const inGap = (d: string) => d > from && d <= r.asOf;
+  const ours = moves.filter((m) => inGap(m.date));
+  if (ours.some((m) => m.amount == null)) return null;
+  const theirs = r.flows.filter((f) => f !== opening && inGap(f.date)).map((f) => ({ date: f.date, amount: f.amount }));
+  const left = ours.map((m) => ({ date: m.date, amount: m.direction === "in" ? -(m.amount as number) : (m.amount as number) }));
+  if (left.length !== theirs.length) return null;
+  for (const f of theirs) {
+    const i = left.findIndex((x) => x.date === f.date && Math.abs(x.amount - f.amount) <= 1);
+    if (i < 0) return null;
+    left.splice(i, 1);
+  }
+  return { value: r.value, asOf: r.asOf, capitalRecordTo: r.capitalRecordTo };
+}
+
+/**
  * One row per account the family funded, newest activity first.
  *
  * Takes the account registry and positions rather than reading the book, so the
@@ -821,6 +911,9 @@ export function capitalMovesWithCalls(
  * uses. `commitments` supplies what was promised and what a drawdown fund paid
  * back; `windowed` says a date filter is narrowing the movements, which — like a
  * side filter — withholds every figure struck over the whole record.
+ * `returnRecords` is the verified return record per account
+ * (`Portfolio.accountReturnRecords`; the book's own when omitted, so every
+ * caller closes on one record — `newerVerifiedClose`); `null` reads none.
  */
 export function capitalRollup(
   moves: CapitalMove[],
@@ -829,8 +922,9 @@ export function capitalRollup(
   index: Record<string, PositionTranches>,
   side: CapitalSide = "all",
   sort: TxnSort = "recent",
-  opts: { commitments?: Commitment[]; windowed?: boolean; fromInception?: readonly string[] } = {},
+  opts: { commitments?: Commitment[]; windowed?: boolean; fromInception?: readonly string[]; returnRecords?: Record<string, AccountReturnCoverage> | null } = {},
 ): CapitalGroup[] {
+  const records = opts.returnRecords === undefined ? BOOK_ACCOUNT_RETURN_RECORDS : opts.returnRecords;
   /**
    * ONE ROW PER ACCOUNT — EXCEPT UNDER A REVIEW HOLDER BUCKET, WHERE IT IS ONE
    * ROW PER LINE. A holder bucket (`Account.reviewHolder`) is the family's
@@ -888,7 +982,7 @@ export function capitalRollup(
       : null;
 
     const own = positions.filter((p) => p.accountId === accountId && (line == null || p.securityKey === line));
-    const value = own.length === 0 ? null : own.reduce((s, p) => s + p.marketValue, 0);
+    const heldValue = own.length === 0 ? null : own.reduce((s, p) => s + p.marketValue, 0);
     /**
      * WHERE THE VALUE IS STRUCK. A statement account's own report date; a line
      * the review values, the date the review values IT on (`priceAsOf` — the
@@ -896,9 +990,21 @@ export function capitalRollup(
      * line held at cost), which is often months before the bucket's 30 June.
      * Several lines valued on different dates have no one date to close on.
      */
-    const valueAsOf = source === "review"
+    const heldAsOf = source === "review"
       ? commonValueDate(own.map((p) => p.priceAsOf ?? a?.asOf ?? null))
       : a?.asOf ?? null;
+    // The newest verified valuation, where its dated capital reconciles with
+    // this record across the gap (Stage 10fz) — a statement account's record
+    // only, never a review line or a call list, and never conjuring a value
+    // for an account no holdings statement values. It moves the MONEY-WEIGHTED
+    // CLOSE (`closeValue` / `closeAsOf`) and nothing else: Value today, the
+    // appreciation and its split stay on the holdings statement, whose cost of
+    // what is held is the split's other half, and which the Transactions
+    // merge's `valueOfAccount` reads for every account row.
+    const newer = source === "record" && line == null && heldValue != null
+      ? newerVerifiedClose(records?.[accountId], heldAsOf, a?.capitalRecordTo, all) : null;
+    const value = heldValue;
+    const valueAsOf = heldAsOf;
     /** Held = not a fund row redeemed to nil. A cash sleeve at zero units still counts. */
     const held = own.filter((p) => !(p.quantity === 0 && p.marketValue === 0));
     const costOfHeld = held.length === 0 ? 0
@@ -1010,9 +1116,18 @@ export function capitalRollup(
        * the purchases less the sale proceeds ARE that cost.
        */
       const saleProceeds = outsAll.filter((m) => m.payoutKind === "capital").reduce((t, m) => t + (m.amount ?? 0), 0);
-      realised = R! - saleProceeds;
+      // A line on FIFO's cost (Stage 10fz) books its sale against the cost of
+      // the units sold, as a statement's redemption is booked: what the sale
+      // returned over that cost is realised gain beside the Div / Int, and
+      // unrealised is value less the cost of the units still held.
+      const fifo = reviewCostBasis(own, all);
+      const fifoSale = fifo?.mode === "fifo" && saleProceeds > 0;
+      realised = fifoSale ? R! - fifo!.costSold : R! - saleProceeds;
       unrealised = appreciation - realised;
-      if (R === 0) {
+      if (fifoSale) {
+        realisedNote = "the interest and dividends the family's consolidated review records this line paid out, plus what its sale returned over the FIFO cost of the units sold";
+        unrealisedNote = "value today less the FIFO cost of the units still held — what was paid, less the cost of the units sold";
+      } else if (R === 0) {
         realisedNote = "nothing has come back out of this line, so nothing is realised — a computed zero, not a missing figure";
         unrealisedNote = "value today less what was paid — the family's consolidated review's value against the cost it carries";
       } else {
@@ -1123,6 +1238,8 @@ export function capitalRollup(
       staggered: ins.length > 1,
       value,
       valueAsOf,
+      closeValue: newer ? newer.value : value,
+      closeAsOf: newer ? newer.asOf : valueAsOf,
       atCost: own.some(isValuedAtCost),
       appreciation, realised, unrealised,
       appreciationReason, realisedNote, unrealisedNote,
@@ -1179,24 +1296,30 @@ export function capitalRollup(
 const YEAR = 365;
 const dayDiff = (a: string, b: string) => Math.round((Date.parse(b) - Date.parse(a)) / 86_400_000);
 
-/** The first purchase to the date the value is struck — or to the last flow, for an account that holds nothing. */
+/** Where a money-weighted return on this row closes — `closeValue` / `closeAsOf`, else the value on its own date (Stage 10fz). */
+export const capitalClose = (g: CapitalGroup): { value: number | null; asOf: string | null } =>
+  g.closeValue !== undefined ? { value: g.closeValue, asOf: g.closeAsOf ?? g.valueAsOf } : { value: g.value, asOf: g.valueAsOf };
+
+/** The first purchase to the date the return closes — or to the last flow, for an account that holds nothing. */
 export function capitalWindow(g: CapitalGroup): { from: string; to: string; days: number } | null {
   const ins = g.moves.filter((m) => m.direction === "in").map((m) => m.date).sort();
   const from = ins[0];
   if (!from) return null;
   const lastFlow = (g.flows ?? []).map((f) => f.date).sort().at(-1) ?? g.last;
-  const to = g.value === 0 ? lastFlow : (g.valueAsOf ?? lastFlow);
+  const close = capitalClose(g);
+  const to = close.value === 0 ? lastFlow : (close.asOf ?? lastFlow);
   if (!to) return null;
   return { from, to, days: dayDiff(from, to) };
 }
 
 /** The account's money-weighted rate, annual, or null where the flows do not yield one. */
 export function capitalXirr(g: CapitalGroup): number | null {
-  if (!g.flows || g.flows.length === 0 || g.value == null) return null;
+  const close = capitalClose(g).value;
+  if (!g.flows || g.flows.length === 0 || g.value == null || close == null) return null;
   const w = capitalWindow(g);
   if (!w) return null;
   const flows: DatedFlow[] = g.flows.map((f) => ({ date: new Date(f.date), amount: f.amount }));
-  if (g.value > 0) flows.push({ date: new Date(w.to), amount: g.value });
+  if (close > 0) flows.push({ date: new Date(w.to), amount: close });
   return xirrPct(flows);
 }
 
@@ -1204,7 +1327,24 @@ export function capitalXirr(g: CapitalGroup): number | null {
 const multiFlow = (g: CapitalGroup) =>
   (g.flows ?? []).length > 1 || g.undatedOut != null;
 
-export function capitalReturn(g: CapitalGroup, measure: ReturnMeasure): MeasuredReturn {
+/** Today's date in India, "YYYY-MM-DD" — the current year a YTD return is of. */
+const istToday = () => new Date(Date.now() + 330 * 60_000).toISOString().slice(0, 10);
+
+/**
+ * ── WHICH YEAR "YEAR TO DATE" IS (Stage 10fz) ──────────────────────────────
+ *
+ * It was the year of the row's own value date, so a line the review values on
+ * 31 Jul 2025 (Zepto) read "YTD +52.17%" in October 2026 — a 2025 return under
+ * a 2026 label. The year is today's, in India, and a value struck before that
+ * year began has no year-to-date return at all.
+ */
+function ytdRefusal(valueAsOf: string | null, yearStart: string): string | null {
+  if (!valueAsOf) return "no date is stated for this value, so it cannot be placed in the current year";
+  if (valueAsOf < yearStart) return `its value is struck on ${fmtDate(valueAsOf)}, before ${fmtDate(yearStart)}, so it carries no value in the current year to strike a year-to-date return on`;
+  return null;
+}
+
+export function capitalReturn(g: CapitalGroup, measure: ReturnMeasure, today: string = istToday()): MeasuredReturn {
   const tagOf = (m: ReturnMeasure) => RETURN_MEASURES.find((x) => x.key === m)?.tag ?? "AUTO";
   const hpr = g.appreciation != null && g.paidIn > 0 ? (g.appreciation / g.paidIn) * 100 : null;
   const noReturn = g.appreciationReason
@@ -1222,8 +1362,10 @@ export function capitalReturn(g: CapitalGroup, measure: ReturnMeasure): Measured
       reason: "a calendar-year return needs this account's value at the start and end of that year, and no statement here values it at a past year-end" };
   }
   if (measure === "ytd") {
-    const yearStart = g.valueAsOf ? `${g.valueAsOf.slice(0, 4)}-01-01` : null;
-    if (w && yearStart && w.from >= yearStart) {
+    const yearStart = `${today.slice(0, 4)}-01-01`;
+    const stale = ytdRefusal(g.valueAsOf, yearStart);
+    if (stale) return { shown: false, tag: "YTD", reason: stale };
+    if (w && w.from >= yearStart) {
       return { shown: true, pct: hpr, tag: "YTD",
         note: `First purchased ${w.from}, inside the current year, so its year-to-date return is its whole return since then.` };
     }
@@ -1283,8 +1425,8 @@ export function capitalReturn(g: CapitalGroup, measure: ReturnMeasure): Measured
  * annualised (Stage 10g(ii)); a CAGR is refused wherever the money went in on
  * more than one date, exactly as it is for one account.
  */
-export function clubCapitalReturn(caps: CapitalGroup[], measure: ReturnMeasure): MeasuredReturn {
-  if (caps.length === 1) return capitalReturn(caps[0], measure);
+export function clubCapitalReturn(caps: CapitalGroup[], measure: ReturnMeasure, today: string = istToday()): MeasuredReturn {
+  if (caps.length === 1) return capitalReturn(caps[0], measure, today);
   const tagOf = (m: ReturnMeasure) => RETURN_MEASURES.find((x) => x.key === m)?.tag ?? "AUTO";
   const withheld = caps.filter((g) => g.appreciation == null);
   if (withheld.length > 0) {
@@ -1313,10 +1455,12 @@ export function clubCapitalReturn(caps: CapitalGroup[], measure: ReturnMeasure):
       reason: "a calendar-year return needs these accounts' value at the start and end of that year, and no statement here values them at a past year-end" };
   }
   if (measure === "ytd") {
+    const yearStart = `${today.slice(0, 4)}-01-01`;
+    const stale = caps.map((g) => ytdRefusal(g.valueAsOf, yearStart)).find((x) => x != null);
+    if (stale) return { shown: false, tag: "YTD", reason: `at least one of these accounts cannot be placed in the current year — ${stale}` };
     const inYear = caps.every((g, i) => {
       const w = wins[i];
-      const yearStart = g.valueAsOf ? `${g.valueAsOf.slice(0, 4)}-01-01` : null;
-      return w != null && yearStart != null && w.from >= yearStart;
+      return w != null && w.from >= yearStart;
     });
     if (inYear) return { shown: true, pct: hpr, tag: "YTD",
       note: `Every one of the ${n} accounts was first funded inside the current year, so their year-to-date return is their whole return since then.` };
@@ -1347,7 +1491,8 @@ export function clubCapitalReturn(caps: CapitalGroup[], measure: ReturnMeasure):
     for (let i = 0; i < caps.length; i++) {
       const g = caps[i], w = wins[i];
       for (const f of g.flows ?? []) flows.push({ date: new Date(f.date), amount: f.amount });
-      if ((g.value ?? 0) > 0 && w) flows.push({ date: new Date(w.to), amount: g.value as number });
+      const close = capitalClose(g).value;
+      if ((close ?? 0) > 0 && w) flows.push({ date: new Date(w.to), amount: close as number });
     }
     const x = xirrPct(flows);
     if (x == null) return { shown: false, tag: "XIRR", reason: "these dated flows do not yield a money-weighted rate" };

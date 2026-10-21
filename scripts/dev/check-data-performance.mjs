@@ -41,7 +41,7 @@ async function scrollToEnd(table) {
 }
 try {
   await assertTableHeaderFixture(browser,base);
-  for (const route of ['/corporate-actions','/monitor','/monitor?group=category','/monitor?group=basket','/monitor?group=assetClass','/monitor?show=transactions','/ledger','/sectors','/family','/capital-gains','/private-market','/holdings','/performance','/returns','/audit','/audit?consolidated=Transactions',sourceRoute,'/cio','/polycab','/upload','/history']) {
+  for (const route of ['/corporate-actions','/monitor','/monitor?group=category','/monitor?group=basket','/monitor?group=assetClass','/monitor?show=transactions','/ledger','/sectors','/family','/capital-gains','/private-market','/holdings','/performance','/returns','/audit','/audit?consolidated=Transactions',sourceRoute,'/cio','/polycab','/upload','/statements']) {
     const page = await browser.newPage({ viewport: { width:1440, height:1000 } });
     const requests=[], errors=[];
     page.on('request', r => requests.push(new URL(r.url()).pathname));
@@ -49,6 +49,12 @@ try {
     await page.route('**/api/**', r => r.fulfill({ json: new URL(r.request().url()).pathname === '/api/corporate-actions'
       ? { ok:true, retained:true, feed:capture } : { ok:false, reason:'local audit fixture' } }));
     await installReadModelRoutes(page);
+    if (route === '/monitor?group=category') await page.addInitScript(() => {
+      localStorage.setItem('glow:tableView:monitor:v1', JSON.stringify({
+        order:['security','review:investmentRange','mv','investedOn'], sort:{col:'review:investmentRange',dir:'asc'},
+        visibility:{'review:investmentRange':true,investedOn:false},
+      }));
+    });
     const profileStore = route === '/private-market' ? await installProfileStoreFixture(page) : null;
     await page.addInitScript(() => { window.__long=[]; new PerformanceObserver(l => window.__long.push(...l.getEntries().map(e=>e.duration))).observe({type:'longtask',buffered:true}); });
     const started = Date.now(); await page.goto(base+route); await page.waitForLoadState('networkidle');
@@ -108,6 +114,16 @@ try {
       await page.screenshot({ path: `.cache/table-scroll-check/monitor-${new URL(base+route).searchParams.get('group') || 'security'}.png` });
       await table.locator('[data-col-button="security"]').click();
       assert.equal(await holdings.count(), 50, 'sorting resets the Monitor to its first batch');
+      if (route === '/monitor?group=category') {
+        assert.equal(await table.locator('[data-col-button="review:investmentRange"]').count(),0,'the retired review date column cannot reappear from saved preferences');
+        assert.equal(await table.locator('[data-col-button="investedOn"]').count(),1,'one merged investment date column remains visible');
+        for (const [category, oldDated] of [['Direct Equity',4],['Mutual Fund',4],['Cash',1]]) {
+          await page.getByRole('tab',{name:category,exact:true}).click();
+          const count = Number(await table.locator('[data-invested-on-coverage]').getAttribute('data-invested-on-coverage'));
+          assert.ok(count>oldDated,`${category} includes the original dates behind recovered costs`);
+          assert.equal(await table.locator('[data-col-button="investedOn"]').count(),1,'date column stays merged when switching categories');
+        }
+      }
     }
     assert.equal(await page.getByLabel('Rows per page').count(), 0, 'no page size selector');
     assert.equal(await page.getByRole('button', {name:'Next table page',exact:true}).count(), 0, 'no next page');

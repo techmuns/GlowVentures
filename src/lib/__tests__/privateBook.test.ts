@@ -43,16 +43,17 @@
 // used to. Neither run implies the other: a table that stopped taking
 // anything out passes the first and fails the second, and one that still took
 // the pairs out fails the first.
-import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_COMMITMENTS, BOOK_SUMMARY, BOOK_CORPORATE_ACTIONS, BOOK_REVIEW_SUPERSEDED } from "@/data/glowData";
+import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_COMMITMENTS, BOOK_SUMMARY, BOOK_CORPORATE_ACTIONS, BOOK_REVIEW_SUPERSEDED, BOOK_REVIEW_FLOWS, BOOK_REVIEW_WRITTEN_OFF } from "@/data/glowData";
 import { accountIndex } from "@/lib/accounts";
 import { ownerDisplayName } from "@/lib/owners";
-import { sum, currentHoldings, dedupedPositions, doubleCountedValue } from "@/lib/analytics";
+import { sum, currentHoldings, dedupedPositions, doubleCountedValue, isValuedAtCost } from "@/lib/analytics";
+import { fundDatedRecords } from "@/lib/fundReturns";
 import { privateScope, unvaluedAccounts, capitalScope, INCOME_ONLY_VIEWS } from "@/lib/privateMarket";
 import { isValuedByNoStatement, unvaluedAifFolios } from "@/lib/aifCategory";
 import fs from "node:fs";
 import path from "node:path";
 import { schemeCalls, callTotals } from "@/lib/capitalCalls";
-import { bookFolios, privateBook, figuresOf, privateBookFolios, BOOK_SECTIONS, type BookFolio } from "@/lib/privateBook";
+import { bookFolios, privateBook, figuresOf, privateBookFolios, privateMultiples, writtenOffNote, BOOK_SECTIONS, type BookFolio } from "@/lib/privateBook";
 import { BRAND_NAMES, brandNameOf } from "@/lib/brandNames";
 import type { SchemeCall } from "@/lib/capitalCalls";
 import type { Position } from "@/lib/types";
@@ -77,6 +78,12 @@ const near = (name: string, got: number | null | undefined, want: number | null 
 
 // ── THE PAGE'S OWN INPUTS, BUILT THE WAY THE PAGE BUILDS THEM ───────────────
 const accIdx = accountIndex(BOOK_ACCOUNTS);
+/** Where a holding's value is struck — its own date, else its account's (re-expressed here, Stage 10fz). */
+const valuedAtOf = (p: Position) => p.priceAsOf ?? BOOK_ACCOUNTS.find((a) => a.accountId === p.accountId)?.asOf ?? null;
+/** The review's dated income and sale on a line, on or before that date — re-expressed, never through the module. */
+const reviewAmtOf = (p: Position) => BOOK_REVIEW_FLOWS
+  .filter((r) => r.accountId === p.accountId && r.securityKey === p.securityKey && r.kind !== "purchase" && r.date <= valuedAtOf(p)!)
+  .reduce((t, r) => t + r.amount, 0);
 /** The capital accounts ON the page — the private-market funds' — and the ones left out. */
 const cap = capitalScope(BOOK_COMMITMENTS, BOOK_ACCOUNTS);
 const commitments = cap.onPage;
@@ -90,7 +97,7 @@ function build(positions: Position[]) {
   const current = currentHoldings(positions);
   const folios = bookFolios({
     positions: current, allPositions: positions, accounts: BOOK_ACCOUNTS,
-    commitments, accIdx, schemes, distributions: BOOK_CORPORATE_ACTIONS,
+    commitments, accIdx, schemes, distributions: BOOK_CORPORATE_ACTIONS, reviewFlows: BOOK_REVIEW_FLOWS,
   });
   return { positions, current, folios, byFund: privateBook(folios, "fund"), byOwner: privateBook(folios, "owner"), byBrand: privateBook(folios, "brand") };
 }
@@ -536,21 +543,28 @@ console.log("\n── the two sections ──");
 }
 
 function paidBack({ label, b, overlap }: Run) {
-  console.log(`\n── what the funds paid back (${label}): each distribution once, on its own paper's basis (B-10) ──`);
+  console.log(`\n── what the funds paid back (${label}): each distribution once, on its own paper's basis (B-10, Stage 10fz) ──`);
   const { current, folios, byFund } = b;
   /**
    * DERIVED BY A SECOND PATH. A capital account's distribution is its printed
    * `distributed`, else its non-equalisation payouts, gross — re-expressed here,
    * never read through `distributionOf`. A letter's is `BOOK_CORPORATE_ACTIONS`'
-   * own amount. And "once" is struck the way every consolidated figure is: of a
-   * dedupe group's accounts, the one `dedupedPositions` keeps stands for the
-   * group — the income-only folios reaching it through the committed join table.
+   * own amount. A line the family's consolidated review values AND dates is
+   * paid back by the review's own rows (Stage 10fz): its income and sale rows on
+   * or before the review's value date — and then its capital account's figure
+   * and its income-only views' letters are that same cash and count nowhere.
+   * "Once" is struck the way every consolidated figure is: of a dedupe group's
+   * members, the one `dedupedPositions` keeps stands for the group.
    */
   const capDist = (c: (typeof commitments)[number]) => c.distributed != null ? c.distributed
     : c.payouts == null ? null
     : c.payouts.filter((p) => p.kind !== "equalisation").reduce((t, p) => t + p.gross, 0);
   const priv = current.filter((p) => p.marketSide === "private");
   const kept = new Set(dedupedPositions(priv));
+  const rowsOf = (p: Position) => BOOK_REVIEW_FLOWS.filter((r) => r.accountId === p.accountId && r.securityKey === p.securityKey);
+  const reviewDated = priv.filter((p) => p.review && rowsOf(p).length > 0 && valuedAtOf(p));
+  const reviewAmt = (p: Position) => rowsOf(p).filter((r) => r.kind !== "purchase" && r.date <= valuedAtOf(p)!).reduce((t, r) => t + r.amount, 0);
+  const reviewAcc = new Set(reviewDated.map((p) => p.accountId));
   const capitalAcc = new Set(commitments.map((c) => c.accountId));
   const capLeft = new Set<string>();
   for (const g of new Set(priv.map((p) => p.dedupeGroup).filter(Boolean))) {
@@ -558,50 +572,167 @@ function paidBack({ label, b, overlap }: Run) {
     const stand = members.find((p) => kept.has(p)) ?? members[0];
     for (const p of members) if (p !== stand) capLeft.add(p.accountId);
   }
+  // A capital account whose holding the review pays back reports nothing of its own.
+  const capRows = commitments.filter((c) => !reviewAcc.has(c.accountId));
   const letters = BOOK_CORPORATE_ACTIONS.filter((x) => x.kind === "distribution" && x.amount != null
     && INCOME_ONLY_VIEWS.some((v) => v.accountId === x.accountId));
   ok("this book carries a distribution letter on an income-only folio — so the fold's distribution has a subject",
     letters.length > 0, letters.map((x) => `${x.accountId} ₹${x.amount}`).join("; "));
-  // A letter stands for its holding's group when its view's valued holding is the kept member.
-  const viewKept = (accountId: string) => {
+  /** The valued holding a letter's view is of — same owner, the join table's fund. */
+  const viewHolding = (accountId: string) => {
     const v = INCOME_ONLY_VIEWS.find((x) => x.accountId === accountId);
     const acc = BOOK_ACCOUNTS.find((a) => a.accountId === accountId);
-    return priv.some((p) => kept.has(p) && p.securityKey === v?.securityKey && accIdx.get(p.accountId)?.ownerId === acc?.ownerId);
+    return priv.filter((p) => p.securityKey === v?.securityKey && accIdx.get(p.accountId)?.ownerId === acc?.ownerId);
   };
-  const printedWant = sum(commitments.map((c) => capDist(c) ?? 0)) + sum(letters.map((x) => x.amount!));
-  const onceWant = sum(commitments.filter((c) => !capLeft.has(c.accountId)).map((c) => capDist(c) ?? 0))
-    + sum(letters.filter((x) => viewKept(x.accountId)).map((x) => x.amount!));
-  near("counted once: the consolidated total is every counted capital account's plus each holding's letter once",
+  const onReview = (accountId: string) => viewHolding(accountId).some((p) => reviewDated.includes(p));
+  const liveLetters = letters.filter((x) => !onReview(x.accountId));
+  const viewKept = (accountId: string) => viewHolding(accountId).some((p) => kept.has(p));
+  ok("on the book every letter is a payment the review's rows on its valued line carry — so the supersession has a subject",
+    letters.every((x) => onReview(x.accountId)), letters.map((x) => `${x.accountId}: ${onReview(x.accountId)}`).join("; "));
+  ok("…each letter's amount is an income row on that valued line, to the rupee",
+    letters.every((x) => viewHolding(x.accountId).some((p) => rowsOf(p).some((r) => r.kind === "income" && Math.abs(r.amount - x.amount!) <= 1))));
+  const printedWant = sum(capRows.map((c) => capDist(c) ?? 0)) + sum(liveLetters.map((x) => x.amount!))
+    + sum(reviewDated.map(reviewAmt));
+  const onceWant = sum(capRows.filter((c) => !capLeft.has(c.accountId)).map((c) => capDist(c) ?? 0))
+    + sum(liveLetters.filter((x) => viewKept(x.accountId)).map((x) => x.amount!))
+    + sum(reviewDated.filter((p) => kept.has(p)).map(reviewAmt));
+  near("counted once: every counted capital account's, each holding's live letter once, and each kept review line's dated income and sale",
     byFund.privateTotal.distributed, onceWant);
-  near("as printed: every statement's and every letter's", figuresOf(folios, false).distributed, printedWant);
+  near("as printed: every statement's, every live letter's and every review line's", figuresOf(folios, false).distributed, printedWant);
   // THE ONE BUILD BOTH PAGES READ — Private Market's table and Morning CIO's
-  // Distributions tile, which read ₹57 L and ₹50 L while they were two builds.
+  // Distributions tile — with the review's rows DEFAULTED, so Morning CIO's
+  // two-argument call counts the review lines exactly as the page does.
   const shared = privateBookFolios({ positions: b.positions, accounts: BOOK_ACCOUNTS, commitments: BOOK_COMMITMENTS }, BOOK_CORPORATE_ACTIONS);
   near("…and the one build Morning CIO's tile and this page both read counts the same, once",
     figuresOf(shared.folios, true).distributed, onceWant);
-  // THE LOAD-BEARING GATE: counting both income-only folios would pass every
-  // relation written between the page's own rows. The two bases must differ by
-  // exactly the letters and capital the consolidated total leaves out.
-  const leftLetters = sum(letters.filter((x) => !viewKept(x.accountId)).map((x) => x.amount!));
-  const capGone = sum(commitments.filter((c) => capLeft.has(c.accountId)).map((c) => capDist(c) ?? 0));
-  near("the two bases differ by exactly the letters and the capital the consolidated total leaves out",
-    printedWant - onceWant, leftLetters + capGone);
-  if (overlap) ok("…and the gap is the second statement's letter, real on this copy", leftLetters > 1, `₹${leftLetters}`);
-  else eq("…which on the book is nothing: every letter and every capital account is its own holding's", [leftLetters, capGone], [0, 0]);
-  ok("each letter's folio says its basis is the letter, and each capital account's its capital account",
-    folios.filter((f) => f.distributed != null).every((f) => f.distributedBasis === (f.viewOf ? "letter" : "capital-account")));
+  const reviewGone = sum(reviewDated.filter((p) => !kept.has(p)).map(reviewAmt));
+  const capGone = sum(capRows.filter((c) => capLeft.has(c.accountId)).map((c) => capDist(c) ?? 0));
+  const leftLetters = sum(liveLetters.filter((x) => !viewKept(x.accountId)).map((x) => x.amount!));
+  near("the two bases differ by exactly what the consolidated total leaves out",
+    printedWant - onceWant, leftLetters + capGone + reviewGone);
+  if (overlap) ok("…and the gap is the second statement's review rows, real on this copy", reviewGone > 1, `₹${reviewGone}`);
+  else eq("…which on the book is nothing: every line is its own holding's", [leftLetters, capGone, reviewGone], [0, 0, 0]);
+  ok("each folio says its basis: the review's rows on a line the review dates, a letter on a live view, else its capital account",
+    folios.filter((f) => f.distributed != null).every((f) => f.distributedBasis === (
+      f.position && reviewDated.includes(f.position) ? "review" : f.viewOf ? "letter" : "capital-account")));
+  const superseded = folios.filter((f) => f.viewOf && f.letterOnReview != null);
+  ok("a view whose letter the review carries reports nothing, is in no coverage count, and names the line that counts it",
+    superseded.length === new Set(letters.map((x) => x.accountId)).size
+    && superseded.every((f) => f.distributed === null && !f.reportsDistribution
+      && folios.some((x) => x.accountId === f.distributionCountedAs && x.distributedBasis === "review" && x.fundKey === f.fundKey)));
   ok("the folio left out names the folio that stands for it",
-    folios.filter((f) => f.viewOf && f.distributed != null && !f.distributionCounted)
+    folios.filter((f) => f.distributed != null && !f.distributionCounted)
       .every((f) => folios.some((x) => x.accountId === f.distributionCountedAs && x.distributionCounted && x.fundKey === f.fundKey)));
-  ok("equalisation is in no distribution figure",
+  ok("equalisation is in no capital account's distribution figure",
     commitments.every((c) => c.distributed != null || c.payouts == null
       || Math.abs((capDist(c) ?? 0) - c.payouts.filter((p) => p.kind === "income" || p.kind === "capital").reduce((t, p) => t + p.gross, 0)) <= 0.01));
   eq("coverage: the accounts that report one, of those that could",
     [byFund.privateTotal.distributedOf, byFund.privateTotal.distributionAccounts],
-    [commitments.filter((c) => !capLeft.has(c.accountId) && capDist(c) != null).length + letters.filter((x) => viewKept(x.accountId)).length,
-      commitments.filter((c) => !capLeft.has(c.accountId)).length + letters.filter((x) => viewKept(x.accountId)).length]);
+    [capRows.filter((c) => !capLeft.has(c.accountId) && capDist(c) != null).length
+      + new Set(liveLetters.filter((x) => viewKept(x.accountId)).map((x) => x.accountId)).size
+      + reviewDated.filter((p) => kept.has(p)).length,
+    capRows.filter((c) => !capLeft.has(c.accountId)).length
+      + new Set(liveLetters.filter((x) => viewKept(x.accountId)).map((x) => x.accountId)).size
+      + reviewDated.filter((p) => kept.has(p)).length]);
+  /**
+   * ILPA: DISTRIBUTIONS TO DATE ARE THE CASH THE MONEY-WEIGHTED RETURN COUNTS.
+   * Every review-basis folio's figure must be its own XIRR record's paid-back
+   * cash — `fundDatedRecords` over that one holding — to the rupee. A table that
+   * read the capital account or the letters for a review line fails here.
+   */
+  const rf = folios.filter((f) => f.distributedBasis === "review");
+  ok("review lines are paid back by the review on this build", rf.length > 0, `${rf.length}`);
+  for (const f of rf) {
+    const d = fundDatedRecords([f.position!], commitments, BOOK_REVIEW_FLOWS, accIdx, (n) => `₹${n}`, (s) => s).get(f.position!.securityKey);
+    if (d && !d.gap) near(`${f.accountId}: its distribution is the cash its own XIRR counts`, f.distributed, d.paidOut);
+    else ok(`${f.accountId}: its distribution is the review's dated income and sale (its XIRR is refused: ${d?.gap ?? "no record"})`,
+      Math.abs((f.distributed ?? -1) - reviewAmt(f.position!)) <= 0.01);
+  }
 }
 for (const run of RUNS) paidBack(run);
+
+console.log("\n── the funds the audit named (Stage 10fz): before → after ──");
+{
+  const by = (acct: string) => folios.find((f) => f.accountId === acct && f.position);
+  const one = ["360-one-private-wealth-37702", "360-one-private-wealth-60117"].map(by);
+  ok("360 ONE's two CRN lines are on the table", one.every(Boolean));
+  for (const f of one) {
+    const rows = BOOK_REVIEW_FLOWS.filter((r) => r.accountId === f!.accountId && r.securityKey === f!.fundKey);
+    const income = rows.filter((r) => r.kind === "income").reduce((t, r) => t + r.amount, 0);
+    const sale = rows.filter((r) => r.kind === "sale").reduce((t, r) => t + r.amount, 0);
+    near(`${f!.accountId}: paid back = the review's income and sale proceeds (was the 18 May letter alone)`, f!.distributed, income + sale);
+    ok(`${f!.accountId}: …which is more than the letter it replaces`, (f!.distributed ?? 0) > 715619 + 1, `₹${f!.distributed}`);
+    const u = f!.reviewDistribution?.units;
+    ok(`${f!.accountId}: the units the review's rows do not move are carried, to be named`,
+      !!u && Math.abs(u.bought - u.sold - u.held) > 1, u ? `${u.bought} − ${u.sold} vs ${u.held}` : "none");
+  }
+  const sme = folios.filter((f) => f.position && f.fundKey === "india-sme-investments-fund-ii-class-a2");
+  ok("India SME Fund II's three folios are paid back by the review (each was absent)",
+    sme.length === 3 && sme.every((f) => f.distributedBasis === "review" && f.distributed != null));
+  near("…and add to the review's dated income on them",
+    sum(sme.map((f) => f.distributed ?? 0)),
+    BOOK_REVIEW_FLOWS.filter((r) => r.securityKey === "india-sme-investments-fund-ii-class-a2" && r.kind !== "purchase").reduce((t, r) => t + r.amount, 0));
+  const baring = by("baring-private-equity-india-fund-AIFM_BPEPF6_0584");
+  const bc = BOOK_COMMITMENTS.find((c) => c.accountId === "baring-private-equity-india-fund-AIFM_BPEPF6_0584");
+  ok("Baring is paid back by the review — the record its XIRR is struck on", baring?.distributedBasis === "review");
+  eq("…and the capital account's own figure and equalisation ride beside it, to be named where they disagree",
+    [baring?.reviewDistribution?.statement, baring?.reviewDistribution?.statementEqualisation],
+    [bc?.payouts?.filter((p) => p.kind !== "equalisation").reduce((t, p) => t + p.gross, 0),
+      bc?.payouts?.filter((p) => p.kind === "equalisation").reduce((t, p) => t + p.gross, 0)]);
+  ok("…and they do disagree on this book", Math.abs((baring?.reviewDistribution?.statement ?? 0) - (baring?.distributed ?? 0)) > 1);
+  // WITHOUT THE REVIEW'S ROWS THE TABLE IS WHAT IT WAS — the regression the
+  // finding measured: 6 of 13 accounts and the letters' ₹14.31 L for 360 ONE.
+  const before = bookFolios({ positions: current, allPositions: BOOK_POSITIONS, accounts: BOOK_ACCOUNTS, commitments, accIdx, schemes, distributions: BOOK_CORPORATE_ACTIONS });
+  const bt = figuresOf(before, true), at = byFund.privateTotal;
+  ok("with no review rows no folio is paid back by the review", before.every((f) => f.distributedBasis !== "review"));
+  ok("…and the review rows move the total up and its coverage to every account that could report one",
+    (at.distributed ?? 0) > (bt.distributed ?? 0) && at.distributedOf === at.distributionAccounts && bt.distributedOf < bt.distributionAccounts,
+    `₹${bt.distributed} (${bt.distributedOf} of ${bt.distributionAccounts}) → ₹${at.distributed} (${at.distributedOf} of ${at.distributionAccounts})`);
+
+  // ── DPI / RVPI / TVPI, by a second path ──
+  const mult = privateMultiples(folios);
+  const band = folios.filter((f) => f.section === "private" && f.position && f.counted && !isValuedAtCost(f.position));
+  const paidInOf = (f: BookFolio) => {
+    const at = valuedAtOf(f.position!)!;
+    if (f.distributedBasis === "review") return BOOK_REVIEW_FLOWS.filter((r) => r.accountId === f.accountId && r.securityKey === f.fundKey && r.kind === "purchase" && r.date <= at).reduce((t, r) => t + r.amount, 0);
+    const c = BOOK_COMMITMENTS.find((x) => x.accountId === f.accountId)!;
+    return c.calls.filter((k) => k.date <= at).reduce((t, k) => t + k.amount, 0);
+  };
+  const distOf = (f: BookFolio) => {
+    const at = valuedAtOf(f.position!)!;
+    if (f.distributedBasis === "review") return reviewAmtOf(f.position!);
+    const c = BOOK_COMMITMENTS.find((x) => x.accountId === f.accountId)!;
+    return (c.payouts ?? []).filter((p) => p.kind !== "equalisation" && p.date <= at).reduce((t, p) => t + p.gross, 0);
+  };
+  ok("every holding of the Private funds band can say what went in and came back, so the multiple is struck",
+    mult.tvpi != null && mult.missing.length === 0 && mult.parts.length === band.length,
+    mult.missing.map((x) => `${x.folio.accountId}: ${x.why}`).join("; "));
+  const pIn = sum(band.map(paidInOf)), pOut = sum(band.map(distOf)), nav = sum(band.map((f) => f.value ?? 0));
+  near("paid in", mult.paidIn, pIn);
+  near("paid back by each value date", mult.distributed, pOut);
+  near("value", mult.value, nav);
+  near("DPI = paid back ÷ paid in", mult.dpi, pOut / pIn, 1e-9);
+  near("RVPI = value ÷ paid in", mult.rvpi, nav / pIn, 1e-9);
+  near("TVPI = DPI + RVPI", mult.tvpi, (pOut + nav) / pIn, 1e-9);
+  ok("a payout after its holding's value date is left out — it is inside that value (Neo Infra's 9 Jul payment)", mult.afterValuation > 1, `₹${mult.afterValuation}`);
+  ok("no line held at cost is in it — their RVPI would be 1.0× by construction", mult.parts.every((x) => !isValuedAtCost(x.folio.position!)) && mult.atCost.holdings > 0);
+  const refused = privateMultiples(before);
+  ok("without the review's rows the multiple is refused, naming each holding that stops it",
+    refused.tvpi == null && refused.dpi == null && refused.missing.length > 0 && refused.missing.every((x) => x.why.length > 0),
+    refused.missing.map((x) => x.folio.accountId).join(", "));
+}
+
+console.log("\n── the review's write-offs are named wherever the private book is summed (Stage 10fz) ──");
+{
+  const note = writtenOffNote(BOOK_REVIEW_WRITTEN_OFF, false);
+  ok("the review writes off investments on this book", BOOK_REVIEW_WRITTEN_OFF.length > 0, `${BOOK_REVIEW_WRITTEN_OFF.length}`);
+  ok("the note counts them and names every one", note.includes(`${BOOK_REVIEW_WRITTEN_OFF.length} private investments`)
+    && BOOK_REVIEW_WRITTEN_OFF.every((w) => note.includes(w.security.trim())));
+  ok("…and says their capital is in no return — never a ₹0", /in no return/.test(note) && !/₹/.test(note));
+  const scoped = writtenOffNote(BOOK_REVIEW_WRITTEN_OFF, true);
+  ok("a member's view names none of them — the review names no holder", BOOK_REVIEW_WRITTEN_OFF.every((w) => !scoped.includes(w.security.trim())) && /no holder/.test(scoped));
+  eq("no write-offs, no note", writtenOffNote([], false), "");
+}
 
 console.log("\n── units never add across funds ──");
 {
@@ -630,6 +761,7 @@ console.log("\n── figuresOf on a constructed pair: absent is skipped, never 
     position: null, units: null, cost: null, value: null, pnl: null, counted: false,
     alsoCount: 1, alsoReportedUnder: [], capital: c, capitalCounted: true, capitalCountedAs: null,
     viewOf: null, distributed: null, distributedBasis: null, distributionCounted: true, distributionCountedAs: null,
+    reportsDistribution: true, reviewDistribution: null, letterOnReview: null, toValuation: null,
     reason: null, invested: null,
     profile: { strategy: { value: null, source: null, matchedOn: null, reason: "none supplied" }, description: { value: null, source: null, matchedOn: null, reason: "none supplied" } },
   });
@@ -677,8 +809,12 @@ console.log("\n── figuresOf on a constructed pair: absent is skipped, never 
   near("the band's deployed is the cost held plus what the redeemed units cost", priv.deployed, costHeld + sold);
   near("…and the total's is the same", byFund.privateTotal.deployed, costHeld + sold);
   ok("…and it is NOT the Cost column", priv.deployed != null && priv.cost != null && Math.abs(priv.deployed - priv.cost) > 1);
-  const gain = held.reduce((t, f) => t + (f.position!.marketValue - (f.cost ?? 0)) + (f.position!.realizedPnL ?? 0), 0);
-  near("the band's HPR is its FIFO gain over that denominator", priv.returnPct, (gain / (costHeld + sold)) * 100, 1e-6);
+  // …AND THE INCOME EACH HOLDING CARRIES (Stage 10fz): FIFO's gain is the
+  // unrealised and realised gain plus `dividendReceived`, gross of TDS, over the
+  // window its record covers.
+  const gain = held.reduce((t, f) => t + (f.position!.marketValue - (f.cost ?? 0)) + (f.position!.realizedPnL ?? 0)
+    + (f.position!.dividendReceived ?? 0), 0);
+  near("the band's HPR is its FIFO gain — income included — over that denominator", priv.returnPct, (gain / (costHeld + sold)) * 100, 1e-6);
   for (const g of byFund.sections.private.groups) {
     const gs = g.folios.filter((f) => f.position && f.counted);
     const gSold = gs.reduce((t, f) => t + (f.position!.costOfUnitsSold ?? 0), 0);

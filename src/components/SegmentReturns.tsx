@@ -16,7 +16,9 @@
  *
  * The model is `segmentAttribution`: the same current holdings and the same
  * FIFO as the Gain / Loss tile, so the Total row IS that tile's gain and
- * return, and the contributions add to it. Since investment, never a window:
+ * return, and the contributions add to it — exits included: what the family
+ * has since left is in the gains (an "Exited" line under its segment, or one of
+ * its own), in no segment's value (Stage 10fz). Since investment, never a window:
  * no holding carries a dated value, so a sector or a basket cannot be struck
  * over FYTD the way an account is. The section says so on its face, because it
  * sits under a period selector it does not follow.
@@ -34,7 +36,8 @@ import { changeColor } from "@/lib/format";
 import { AT_COST_RETURN, currentHoldings, isCompanyShare } from "@/lib/analytics";
 import { companySectorIndex } from "@/lib/lookthrough";
 import { useStockExposure } from "@/lib/useStockExposure";
-import { segmentAttribution, SEGMENT_VIEWS, type SegmentLine } from "@/lib/segmentReturns";
+import { segmentAttribution, SEGMENT_VIEWS, EXITED_KEY, type SegmentLine } from "@/lib/segmentReturns";
+import { exitedRows } from "@/lib/drilldown";
 
 const COLS = ["seg", "holdings", "value", "weight", "deployed", "gain", "ret", "contrib"] as const;
 const pct = (n: number) => `${n >= 0 ? "+" : ""}${n.toFixed(2)}%`;
@@ -57,9 +60,12 @@ export default function SegmentReturns() {
     [axis, consolidated, exposure],
   );
   const current = useMemo(() => currentHoldings(consolidated), [consolidated]);
+  // What the family has left, for the since-inception gains (Stage 10fz) —
+  // the same rows `bookReturnOnCost` takes from the whole deduped book.
+  const exited = useMemo(() => exitedRows(consolidated), [consolidated]);
   const a = useMemo(
-    () => (portfolio ? segmentAttribution(current, portfolio.accounts, axis, (k) => sectors?.get(k)?.sector || null) : null),
-    [current, portfolio, axis, sectors],
+    () => (portfolio ? segmentAttribution(current, portfolio.accounts, axis, (k) => sectors?.get(k)?.sector || null, exited) : null),
+    [current, exited, portfolio, axis, sectors],
   );
   if (!portfolio || !a) return null;
 
@@ -67,7 +73,7 @@ export default function SegmentReturns() {
     seg: (r) => r.label, holdings: (r) => r.holdings, value: (r) => r.value, weight: (r) => r.weightPct,
     deployed: (r) => r.deployed, gain: (r) => r.gain, ret: (r) => r.returnPct, contrib: (r) => r.contribPct,
   });
-  const maxAbs = Math.max(1e-9, ...a.rows.map((r) => Math.abs(r.contribPct ?? 0)), Math.abs(a.mandateRemainder?.contribPct ?? 0));
+  const maxAbs = Math.max(1e-9, ...a.rows.map((r) => Math.abs(r.contribPct ?? 0)), Math.abs(a.mandateRemainder?.contribPct ?? 0), Math.abs(a.exited?.contribPct ?? 0));
   const openable = a.rows.filter((r) => r.children.length > 1 || r.childRemainder);
   const allOpen = openable.length > 0 && openable.every((r) => exp.isOpen(r.key));
   const best = a.rows.filter((r) => r.contribPct != null).sort((x, y) => y.contribPct! - x.contribPct!);
@@ -75,11 +81,19 @@ export default function SegmentReturns() {
   const drag = best.length > 1 && best.at(-1)!.contribPct! < 0 ? best.at(-1)! : null;
 
   const gainHint = (l: SegmentLine) => {
-    const parts = [`FIFO since investment: unrealised + realised + dividends over ${l.struck} of ${l.holdings} holdings (${money(l.struckValue)} of ${money(l.value)})`];
+    const parts = [l.holdings === 0
+      ? "FIFO since investment: what the exits realised, plus their dividends, over the capital they deployed"
+      : `FIFO since investment: unrealised + realised + dividends over ${l.struck} of ${l.holdings} holdings (${money(l.struckValue)} of ${money(l.value)})`];
     if (l.gain != null && Math.abs(l.gain) < 0.5) parts.unshift("A measured zero: value less cost, plus anything realised, nets to nothing here — as for cash carried at its cost");
     if (l.uncostedValue > 0.5) parts.push(`${money(l.uncostedValue)} reports no cost and is in the value, in no gain`);
     if (l.atCostValue > 0.5) parts.push(`${money(l.atCostValue)} is held at cost and is in the value, in no gain`);
     if (l.wholeMandates) parts.push(`${l.wholeMandates === 1 ? "1 PMS mandate is" : `${l.wholeMandates} PMS mandates are`} struck whole on the capital paid in`);
+    // THE EXITS (Stage 10fz): in this gain and its capital deployed, in no row.
+    const ex = [
+      l.exitedHoldings ? `${l.exitedHoldings} exited ${l.exitedHoldings === 1 ? "holding" : "holdings"}` : "",
+      l.exitedMandates ? `${l.exitedMandates} closed ${l.exitedMandates === 1 ? "mandate" : "mandates"}` : "",
+    ].filter(Boolean).join(" and ");
+    if (ex) parts.push(`${ex} ${l.exitedHoldings + l.exitedMandates === 1 ? "is" : "are"} in the gain (${money(l.exitedGain, true)}) and the capital deployed (${money(l.exitedDeployed)}), not in the rows or the value`);
     return parts.join(" · ");
   };
   const noGain = (l: SegmentLine) => (l.atCostValue > 0 && l.atCostValue >= l.value - l.uncostedValue
@@ -188,6 +202,15 @@ export default function SegmentReturns() {
                     </Fragment>
                   );
                 })}
+                {a.exited && (
+                  <Tr view={view} className={TREE_ROW.adjust} data-seg-row={EXITED_KEY} data-seg-exited={a.exited.gain ?? ""}
+                    data-seg-value={a.exited.value} data-seg-gain={a.exited.gain ?? ""} data-seg-deployed={a.exited.deployed ?? ""}
+                    data-seg-contrib={a.exited.contribPct ?? ""} data-seg-children={0} data-seg-open="0">
+                    <TreeNameCell depth={0} title={a.exited.label}
+                      hint="Holdings redeemed or sold out, and mandates closed, whose segment holds nothing today. Their realised gain, income and the capital they deployed stay in a since-inception return; they hold nothing, so they carry no value or weight." />
+                    {cells(a.exited, "parent")}
+                  </Tr>
+                )}
                 {a.mandateRemainder && (
                   <Tr view={view} className={TREE_ROW.adjust} data-seg-remainder={a.mandateRemainder.gain} data-seg-contrib={a.mandateRemainder.contribPct ?? ""}>
                     <TreeNameCell depth={0} title="PMS mandate capital not held by one segment"

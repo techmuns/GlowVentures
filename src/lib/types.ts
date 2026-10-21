@@ -435,6 +435,14 @@ export type Position = {
    */
   heldSince: string | null;
   /**
+   * How many DISTINCT purchase dates the units still held were bought on, under
+   * the same lot gate as `heldSince` (Stage 10fz). A single-start compound rate
+   * (CAGR) is a measurement only where this is 1 and nothing was sold: staggered
+   * purchases have a money-weighted annual rate, never a CAGR from the oldest
+   * lot. Absent where the lots are not on record.
+   */
+  purchaseDates?: number;
+  /**
    * WHAT THE ACCOUNT'S OWN DATED TRADES SAY ABOUT WHEN THESE UNITS WERE BOUGHT
    * (Stage 10fm) — present wherever the account's transaction statements reach
    * the holding's own date, absent where they do not.
@@ -468,7 +476,15 @@ export type Position = {
    * it no longer dates the figure on screen.
    */
   priceAsOf?: string | null;
-  dividendReceived: number | null; // INR, cumulative
+  /**
+   * Dividends and distributions the holding paid, GROSS of TDS (the TDS is the
+   * family's tax credit), paid out or reinvested, over the window its income
+   * record covers (`dividendFrom` → the holding's statement date) — not
+   * necessarily since purchase (Stage 10fz). INR.
+   */
+  dividendReceived: number | null;
+  /** The first date `dividendReceived` covers; null where the record does not say. */
+  dividendFrom?: string | null;
   /** Income accrued but not yet received, carried separately from market value. */
   accruedIncome?: number | null;
   /** Per-position IRR, where the provider computes one (Goldstandard does). */
@@ -613,6 +629,20 @@ export type NavPoint = {
    * exists to avoid.
    */
   panelComplete?: boolean;
+  /**
+   * The whole-book series (`bookNav.ts`, Stage 10ge): true from the date every
+   * investment holding value at the end is in the NAV level — the date the
+   * level is the whole book rather than part of it.
+   */
+  levelComplete?: boolean;
+  /** How many investments the NAV level holds at this date. */
+  levelUnits?: number;
+  /** Net capital into the investments in the NAV level since the previous point, new money included. */
+  levelFlowIn?: number;
+  /** The value of investments joining the NAV level at a valuation they already had — not capital. */
+  levelJoined?: number;
+  /** The value of the investments in the return at this date — what the link's panel holds. */
+  panelValue?: number;
 };
 
 /**
@@ -725,6 +755,12 @@ export type NavCoverage = {
     bookValue: number;
     /** `reported` | `units-unchanged` | `unreported` — see BOOK_NAV_COVERAGE. */
     flowBasis: string;
+    /**
+     * Each step between two of this account's marks, as `proveLink` settled it:
+     * `printed-totals`, `units-unchanged`, `dated-record` or `unproven`, and the
+     * net capital in over the step (null where unproven).
+     */
+    steps?: { from: string; to: string; basis: string; net: number | null }[];
   }[];
   single: { accountId: string; provider: string; accountNo: string; date: string; bookValue: number }[];
   unvalued: { accountId: string; provider: string; accountNo: string; bookValue: number }[];

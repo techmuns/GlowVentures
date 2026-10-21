@@ -240,11 +240,15 @@ check("...and the Allocation group it sat in survives, with its other entries",
 
 // *"move data audit page at the bottom of the left navigation bar just above
 //  upload page selection button rather than at the top"* — both halves: the
-// group is LAST, and Data Audit sits immediately above Upload History rather
-// than merely somewhere below it.
-check("Data Audit closes the nav, immediately above Upload History",
-  navGroups.at(-1)?.group === "Admin" && same(navGroups.at(-1)?.entries, ["/audit", "/history"]),
+// group is LAST, and Data Audit sits immediately above the Statement Library
+// rather than merely somewhere below it.
+check("Data Audit closes the nav, immediately above the Statement Library",
+  navGroups.at(-1)?.group === "Admin" && same(navGroups.at(-1)?.entries, ["/audit", "/statements"]),
   `${navGroups.at(-1)?.group}: ${navGroups.at(-1)?.entries.join(" → ")}`);
+// *"Remove the upload history page from the dashboard UI."* — the family,
+// 21 Oct 2026. Its address forwards to the Statement Library (App.tsx).
+check("the Upload History nav entry is gone",
+  !navGroups.some((g) => g.entries.includes("/history")) && !/Upload History/i.test(text));
 check("...and the now-empty Setup group heading went with it",
   !groupOf("Setup") && !/(^|\n)\s*SETUP\s*(\n|$)/.test(text));
 
@@ -267,7 +271,7 @@ check("...holding exactly the five pages it carries, in the order given",
 check("...and the emptied Tax and Analytics headings went with their entries",
   !groupOf("Tax") && !groupOf("Analytics")
   && !/(^|\n)\s*TAX\s*(\n|$)/.test(text) && !/(^|\n)\s*ANALYTICS\s*(\n|$)/.test(text));
-check("...sitting above Admin, so Data Audit and Upload History still close the nav",
+check("...sitting above Admin, so Data Audit and the Statement Library still close the nav",
   navGroups.findIndex((g) => g.group === "Extras") >= 0
   && navGroups.findIndex((g) => g.group === "Extras") < navGroups.findIndex((g) => g.group === "Admin"));
 // IT IS A DROPDOWN: shut until asked, and none of the five clickable meanwhile.

@@ -54,6 +54,7 @@ import { shareCandidates } from "@/lib/depositoryShares";
 import { labelledAccounts, labelledPositions } from "@/lib/securityLabel";
 import { buildDatedCapital } from "@/lib/datedCapital";
 import { displaySecurity, DASH } from "@/lib/format";
+import { singlePurchaseGap } from "@/lib/analytics";
 import type { Position } from "@/lib/types";
 import type { Txn, TxnData } from "@/lib/ledger";
 
@@ -370,7 +371,7 @@ const notesUnderTotal = [1, 2, 3].map((d) => String(holdings.getRow(footerRow + 
 // gone because the tab's table has none (Stage 10af); Priced as of and Notes
 // are the tab's hovers, which a workbook has no other way to carry.
 eq("Holdings columns: money first, descriptors last", headersOf(holdings), [
-  "Security", "Qty", "Avg Cost (₹)", "Invested on", "CMP (₹)", "Market Value (₹)",
+  "Security", "Qty", "Avg Cost (₹)", "Investment date / range", "CMP (₹)", "Market Value (₹)",
   "Weight of book", "Unreal. P&L (₹)", "Return", "Measure",
   "Class", "Held via", "Mandate", "Asset Class (family)", "Basket (family)", "Sector", "Entities",
   "Priced as of", "Notes",
@@ -492,7 +493,7 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
     if (isPms(p)) continue;
     (byKey.get(p.securityKey) ?? byKey.set(p.securityKey, []).get(p.securityKey)!).push(p);
   }
-  let subjects = 0, annualised = 0;
+  let subjects = 0, annualised = 0, refused = 0;
   const wrong: string[] = [];
   for (const [key, ps] of byKey) {
     if (ps.length !== 1) continue;
@@ -511,8 +512,13 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
     // whose money is NOT all dated keeps the oldest-lot rule.
     const sol = holdingRate([p]);
     const days = daysBetween(p.heldSince, valuedAt);
+    // ONE PURCHASE, NOTHING SOLD (Stage 10fz): a line the dated record does not
+    // cover keeps the oldest-lot rule only where its units were bought on one
+    // date and none sold; bought in lots or partly sold, it stays its HPR.
+    const onePurchase = singlePurchaseGap(p) === null;
+    if (!(sol && sol !== "short") && days >= 365 && !onePurchase) refused++;
     const want = sol && sol !== "short" ? ruleOn(hpr, sol)
-      : days >= 365 && 1 + hpr / 100 > 0 ? { tag: "CAGR", pct: (Math.pow(1 + hpr / 100, 365 / days) - 1) * 100 as number | null }
+      : days >= 365 && onePurchase && 1 + hpr / 100 > 0 ? { tag: "CAGR", pct: (Math.pow(1 + hpr / 100, 365 / days) - 1) * 100 as number | null }
       : { tag: "HPR", pct: hpr as number | null };
     const name = displaySecurity(PAGE[RAW.indexOf(p)].security);
     const row = ROWS.filter((r) => r["Security"] === name && r["Mandate"] === DASH);
@@ -527,7 +533,12 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
      subjects > 0 && wrong.length === 0, wrong.join("; ") || `${subjects} lot-dated rows`);
   // LOAD-BEARING: the book must carry a holding the rule annualises, or a sheet
   // printing the plain return on cost everywhere would pass the check above.
-  ok("...and the book carries one the rule annualises, so the guard can fail", annualised > 0, `${annualised} annualised`);
+  // Either half of the rule can fail: a row it annualises (a sheet printing the
+  // plain return everywhere fails), or a year-old row it REFUSES because its
+  // units were bought on several dates (a sheet compounding from the oldest lot
+  // fails, Stage 10fz).
+  ok("...and the book carries a year-old row the rule annualises or refuses, so the guard can fail", annualised + refused > 0,
+     `${annualised} annualised, ${refused} refused as staggered or partly sold`);
   // A row that is whole accounts on a dated record of ONE payment held a year or
   // more is annualised too — by 5b's rule, on that payment ("One payment on …"),
   // and 5b holds it to its own rate. Delphi's single ₹10 Cr contribution of

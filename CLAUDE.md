@@ -90,6 +90,44 @@ every one takes the reason as a required argument.
 - **A total must tie to its own columns.**
 - `check:pages`' on-screen `₹0` / `0.00%` findings are leads, not verdicts.
 
+## Calculation standards
+
+*"logical calculations need to be correct as per the industry standards"* — the
+family, 21 Oct 2026, after a full audit (Stage 10fz, `docs/CALCULATION-AUDIT.md`).
+Before adding or changing any figure, hold it to these; a page that cannot meet
+one renders `—` with the reason.
+
+- **A return counts everything the money earned:** unrealised + realised +
+  dividends/distributions (gross of TDS; paid out or reinvested), over capital
+  deployed (cost held + cost of units sold). Never unrealised ÷ cost alone, and a
+  hover's worked arithmetic must carry every term the figure does.
+- **One measure per question, named on its face.** HPR is cumulative. CAGR only
+  for ONE purchase held a year or more (staggered money → XIRR). XIRR solves the
+  dated external flows plus the terminal value on its own valuation date; never
+  annualise under a year. A period return with dated flows is Modified Dietz or
+  TWR, never gain ÷ (opening + all capital in). Compare a money-weighted figure
+  only with a money-weighted benchmark (PME).
+- **Every surface for one question reads the same selected record** (the
+  standing rule) — never a second set of inputs for the same window.
+- **Numerator and denominator cover the same set:** same accounts, member scope,
+  dedupe, basis (statement/live), date and asset sleeve. Weights sum to 100% (or
+  name the residual); active weights against an index are over the classified,
+  like-for-like sleeve.
+- **No survivorship:** exited holdings and closed mandates stay in since-inception
+  gain and capital deployed; written-off lines are named where they cannot be
+  struck.
+- **Private markets (ILPA):** DPI = distributions ÷ paid-in, RVPI = NAV ÷ paid-in,
+  TVPI = DPI + RVPI; distributions are the same cash the IRR counts; a payout
+  after the NAV date is inside the NAV; return of capital is not income.
+- **Indian tax:** short-term means held not more than 12 calendar months (listed
+  equity / equity funds), 24 for unlisted; long-term starts on the anniversary +
+  1 day; specified (debt) funds bought on/after 1 Apr 2023 are never long-term;
+  ST/LT is per LOT; FY is 1 Apr – 31 Mar; dates are IST; the ₹1.25 L s.112A
+  exemption is per person per FY.
+- **Concentration is by issuer or fund**, never by share class or key variant.
+- **Never a constant in place of a market fact** (an FX rate, a price, a NAV):
+  the last fetched value with its date, or `—`.
+
 ## Layout
 
 One line per area; the history files explain each in depth.
@@ -106,9 +144,12 @@ One line per area; the history files explain each in depth.
   (which section a holding sits in, incl. `CASH_EQUIVALENT_KEYS`),
   `readerClassOf`, `marketSides` / `publicPrivateSplit`, `costCoversSet`,
   `measuredReturn` / `holdingReturn`, `isValuedAtCost`.
-- `src/lib/fifo.ts` + `shared/fifo.mjs` — FIFO, the one return:
-  `(unrealised + realised) ÷ (cost held + cost of units sold)`; a whole PMS
+- `src/lib/fifo.ts` + `shared/fifo.mjs` — FIFO, the one return (Stage 10fb):
+  `(unrealised + realised + income) ÷ (cost held + cost of units sold)`; a whole PMS
   mandate is struck on its capital (`fifoTotals`).
+- `shared/holdingPeriod.mjs` (+ `src/lib/ltDate.ts`) — the one s.2(42A) holding-period rule
+  for build and browser; `src/lib/concentration.ts` — concentration by fund / ISIN
+  (`concentrationNames`), never by share-class key (Stage 10fz).
 - `src/lib/accounts.ts` (registry), `securityKey.ts` (join key), `securityLabel.ts`
   (one name per key), `schemeLabel.ts` (AMFI scheme names by ISIN), `sectors.ts`
   (three sector tiers: statement → fund filing by ISIN → screener.in by symbol;
@@ -132,6 +173,9 @@ One line per area; the history files explain each in depth.
   `investedOn.ts` (a holding's Invested on and its dated trades, every holdings
   table; built off `Position.tradeRecord` / `BOOK_HOLDING_TRADES` from
   `scripts/lib/holdingTrades.mjs`; Stage 10fm).
+- `src/lib/bookNav.ts` + `bookNavBook.ts` — the whole book's NAV series (every
+  investment, its latest valuation plus capital since; the NAV card and the
+  drawdown read it as `navHistory`; Stage 10ge).
 - `src/lib/navSeries.ts`, `attribution.ts` (no caller; kept, tested),
   `benchmarks.ts` (seven indices, name-checked), `indexSectors.ts` (their sector
   weights off NSE's factsheets, through `resolveSector`; Stage 10fe), `indices.ts`, `periodReturns.ts`
@@ -151,6 +195,11 @@ One line per area; the history files explain each in depth.
   `functions/api/tile-sets.js` — the shared store: one JSON file on the repo's
   `dashboard-store` branch, written with `GLOW_GITHUB_TOKEN` (`shared/dashboardStore.mjs`,
   Stage 10ex; the repo is public, so everything saved there is public).
+- `src/lib/statementUploads.ts` + `functions/api/statement-uploads.js` — the
+  Statement Library's one upload (files or folders): each file a blob on the
+  repo's `statement-inbox` branch (`shared/statementInbox.mjs`), read into the
+  book by `scripts/ingest/intake-uploads.mjs` and landed on main only if every
+  gate passes; a file it cannot read is held with the reason (Stage 10ga).
 - `src/lib/priceAlerts.ts`, `watchlist.ts`, `researchLevels.ts`/`researchSync.ts`
   — price alerts (per browser) and the send to Glow Central Research.
 - `src/lib/searchIndex.ts` + `components/SmartSearch.tsx` — the top-bar search.
@@ -398,11 +447,14 @@ All steps are idempotent; `glowData.ts` regenerates byte-identically.
   the upstream reports. `fx.js` — ECB, keyless. `research`, `insider`,
   `announcements`, `ratios`, `news` — muns. `polycab.js` — BSE, keyless.
   `capital-calls.js`, `tile-sets.js`, `investment-profiles.js` — the repo's store
-  file via `GLOW_GITHUB_TOKEN` (until it is set, they say so). `corporate-actions.js` — the Glow Central Research
+  file via `GLOW_GITHUB_TOKEN` (until it is set, they say so); `statement-uploads.js`
+  the statement inbox, same token. `corporate-actions.js` — the Glow Central Research
   capture. `stock-exposure.ts` — the look-through read model.
 - Workflows: `harvest.yml` (macro series store), `fund-navs.yml` (AMFI NAVs),
   `polycab.yml` (Polycab exchange data), `index-sectors.yml` (NSE factsheet
-  sector weights, days 1–15 monthly).
+  sector weights, days 1–15 monthly), `statement-intake.yml` (dashboard uploads
+  → the book; dispatched by each upload, every 20 min as a backstop; sealed
+  PDFs need the `GLOW_PDF_PASSWORDS` Actions secret).
 - With no token and no network every page renders on statement marks.
 
 ## Conventions
