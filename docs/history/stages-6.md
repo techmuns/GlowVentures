@@ -273,3 +273,10 @@
 - Every entry uses the attribution table’s existing classification and the account registry’s exact fund/mandate, owner, provider, account and report date. Missing entries state the specific missing price, NAV, identity, valuation or source response and the next step in plain language. Pending histories stay named until they finish loading.
 - Structured gap reasons preserve the original diagnostics and calculations. A holding without a usable current value is explicitly left out rather than disappearing from the coverage reconciliation. Fund wording clearly distinguishes NAV changes from income paid out or reinvested.
 - Focused tests check membership and missing-data wording. Required browser coverage checks tab keyboard controls, complete/disjoint holding lists, fund and mandate context, searches, retry, focus restoration, reopening and all three tabs on mobile.
+
+### Stage 10gw — EXPLICIT ASSUMED HOLDINGS FILL PERIOD RETURN GAPS
+
+- The family authorised carrying recorded shares/units forward where no later purchase, sale or transfer contradicts the balance. Public prices and checked splits/dividend entitlements fill eligible period values, gains and returns; source records, unknown purchase costs and private marks stay intact.
+- Return attribution, its capital bridge and Morning CIO period/history cards use the same eligible holding calculations and prefer usable statement returns. Every affected figure has an assumed label and an owner-specific clickable info explanation. Excel includes a Holding basis column.
+- The public history service retains split-only closes separately from its dividend-adjusted return index, includes split events and refreshes older browser cache entries. Source audit and limitations are in `docs/ASSUMED-HOLDING-COVERAGE.md`.
+- Focused checks cover quantity provenance, dated ownership, later sales/transfers, separate owners, price gaps, splits, non-reinvested dividends, double counting, bridge arithmetic and headline parity.

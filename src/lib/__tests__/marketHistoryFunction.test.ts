@@ -14,7 +14,10 @@ globalThis.fetch = async (url, opts) => { calls++; assert.ok(/^https:\/\/(query1
 const request = async (query = 'symbol=KARURVYSYA') => (await onRequest({ request: new Request(`https://local.test/api/market-history?${query}`, { headers: { cookie: 'private', authorization: 'private' } }), waitUntil: p => { pending.push(p); } })).json();
 assert.equal((await request('symbol=https://evil.invalid')).ok, false); assert.equal(calls, 0);
 const first = await request(); assert.deepEqual(first.v, [100, 120]); assert.equal(first.last, '2026-10-21'); assert.equal(first.basis, 'adjusted-close');
+assert.equal(first.version,2); assert.deepEqual(first.c,[1000,1200]); assert.deepEqual(first.splits,[]);
 await Promise.all(pending.splice(0)); await request(); assert.equal(calls, 1, 'public identity cache is reused');
+cache.clear(); payload=stock(); (payload as any).chart.result[0].events={splits:{today:{date:stamp('2026-10-22'),numerator:2,denominator:1}}};
+const intraday=await request();assert.equal(intraday.last,'2026-10-21');assert.deepEqual(intraday.splits,[{date:'2026-10-22',factor:2}],'keep today’s split basis while excluding the unfinished close');
 cache.clear(); Date.now = () => Date.parse('2026-10-22T12:00:00Z'); assert.equal((await request()).last, '2026-10-22', 'settled close is usable the same day');
 cache.clear(); payload = stock(); (payload as ReturnType<typeof stock>).chart.result[0].meta.currency = 'USD'; assert.equal((await request()).ok, false);
 cache.clear(); payload = stock(); delete (payload as any).chart.result[0].indicators.adjclose; assert.match((await request()).reason, /adjusted/);

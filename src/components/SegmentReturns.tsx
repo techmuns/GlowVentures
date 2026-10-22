@@ -2,6 +2,9 @@ import { Fragment, useMemo } from 'react';
 import { useMarketHistories } from '@/lib/useMarketReturns';
 import { marketReturns, marketReturnSummary, marketHoldingKey } from '@/lib/marketReturns';
 import { MarketReturnInfo } from './MarketReturnInfo';
+import { HoldingAssumptionInfo } from './HoldingAssumptionInfo';
+import { assumedHoldingReturns } from '@/lib/assumedHoldingReturns';
+import { assumedHoldingBook } from '@/lib/assumedHoldingBook';
 import { CapitalBridge } from './CapitalBridge';
 import { capitalBridge } from '@/lib/capitalBridge';
 import { BOOK_ACCOUNT_BRIDGES, BOOK_CAPITAL_MOVES, BOOK_HOLDING_INCOME } from '@/data/glowData';
@@ -24,12 +27,12 @@ import { exitedRows } from '@/lib/drilldown';
 import { PERIODS, RETURN_TYPES, type PeriodKey } from '@/lib/periodReturns';
 import { selectedSegmentReturns, returnGapText, UNSPLIT_RETURNS, type ReturnSelection, type SelectedLine } from '@/lib/selectedSegmentReturns';
 
-const COLS = ['seg', 'holdings', 'value', 'weight', 'deployed', 'gain', 'market', 'ret', 'contrib'] as const;
+const COLS = ['seg', 'holdings', 'value', 'weight', 'deployed', 'gain', 'market', 'ret', 'contrib', 'basis'] as const;
 const pct = (n: number) => `${n >= 0 ? '+' : ''}${n.toFixed(2)}%`;
 const HEAD: Record<string, string> = { category: 'Category', assetClass: 'Asset class', basket: 'Basket', sector: 'Sector / class', side: 'Side', security: 'Security' };
 
-export default function SegmentReturns({ selection, period }: { selection: ReturnSelection; period: PeriodKey }) {
-  const { statementPortfolio, consolidated, fmtFromBase } = usePortfolio();
+export default function SegmentReturns({ selection: recordedSelection, period }: { selection: ReturnSelection; period: PeriodKey }) {
+  const { statementPortfolio, consolidated, fmtFromBase, corporateActions } = usePortfolio();
   const [axis, setAxis] = useViewParam(SEGMENT_VIEWS, {}, 'seg');
   const view = useTableView('cio-attribution', COLS), exp = useExpanded();
   const money = (n: number, sign = false) => fmtFromBase(n, { compact: true, sign });
@@ -40,6 +43,13 @@ export default function SegmentReturns({ selection, period }: { selection: Retur
   const exposure = useStockExposure(positions, axis === 'sector');
   const current = useMemo(() => currentHoldings(positions), [positions]);
   const exited = useMemo(() => exitedRows(statementPositions), [statementPositions]);
+  const marketFeed = useMarketHistories(current);
+  const selection = useMemo(() => {
+    if (!statementPortfolio || recordedSelection.inception || !recordedSelection.start || !recordedSelection.end) return recordedSelection;
+    const extra = assumedHoldingReturns(current, statementPortfolio.accounts, recordedSelection.start, recordedSelection.end,
+      assumedHoldingBook({ actions: corporateActions, instruments: marketFeed.instruments, histories: marketFeed.histories }));
+    return { ...recordedSelection, assumedUnits: extra.units, assumptionGaps: extra.gaps };
+  }, [recordedSelection, current, statementPortfolio, corporateActions, marketFeed.instruments, marketFeed.histories]);
   // The Sector axis is Sector Composition's own sectors (`SectorAttribution`, Stage 10gs), never this grouping.
   const sectorAxis = axis === 'sector';
   const a = useMemo(() => statementPortfolio && !sectorAxis ? selectedSegmentReturns(current, exited, statementPortfolio.accounts, axis, selection,
@@ -51,7 +61,6 @@ export default function SegmentReturns({ selection, period }: { selection: Retur
   const bridge = useMemo(() => pool && statementPortfolio ? capitalBridge(pool.total.units, { accounts: statementPortfolio.accounts,
     positions: statementPortfolio.positions, bridges: BOOK_ACCOUNT_BRIDGES, moves: BOOK_CAPITAL_MOVES, income: BOOK_HOLDING_INCOME }) : null,
   [pool, statementPortfolio]);
-  const marketFeed = useMarketHistories(current);
   const market = useMemo(() => marketReturns(current, marketFeed.instruments, marketFeed.histories, selection.start,
     selection.end ?? new Date().toISOString().slice(0, 10), selection.type, selection.inception), [current, marketFeed.instruments, marketFeed.histories, selection]);
   const marketOf = (ps: readonly typeof current[number][]) => {
@@ -98,7 +107,8 @@ export default function SegmentReturns({ selection, period }: { selection: Retur
   const reason = (l: SelectedLine) => l.measured?.reason ?? (l.missing.length ? returnGapText(l.missing[0].reason, selection.start)
     : 'No complete value and money record is available for these dates.');
   const rows = sortRows(a.rows, view.sort, { seg: r => r.label, holdings: r => r.positions.length, value: r => r.value,
-    weight: r => r.value, deployed: r => r.invested, gain: r => r.gain, market: r => marketOf(r.positions).pct, ret: r => r.returnPct, contrib: r => r.contribution });
+    weight: r => r.value, deployed: r => r.invested, gain: r => r.gain, market: r => marketOf(r.positions).pct, ret: r => r.returnPct, contrib: r => r.contribution,
+    basis: r => r.units.some(u => u.assumption) ? 'Assumed held' : 'Statement records' });
   const openable = a.rows.filter(r => r.children.length > 0);
   const allOpen = openable.length > 0 && openable.every(r => exp.isOpen(r.key));
   const totalCaption = `${a.coveredHoldings} of ${current.length} holdings · ${money(a.coveredValue)} covered`;
@@ -120,14 +130,16 @@ export default function SegmentReturns({ selection, period }: { selection: Retur
       <td key="weight" className={`${pad} text-right mono text-slate-400`}>{a.total.value > 0 && l.positions.length ? `${(l.value / a.total.value * 100).toFixed(1)}%` : <AbsentCell reason="No separate holding value on this row" />}</td>,
       <td key="deployed" className={`${pad} text-right mono text-slate-300`}>{l.invested != null ? money(l.invested) : <AbsentCell reason={reason(l)} />}</td>,
       <td key="gain" data-seg-cell="gain" className={`${pad} text-right mono ${changeColor(l.gain)}`}><span className="inline-flex items-center justify-end gap-1">
-        {l.gain != null ? money(l.gain, true) : <AbsentCell reason={reason(l)} />}{info(l, 'gain')}</span></td>,
+        {l.gain != null ? money(l.gain, true) : <AbsentCell reason={reason(l)} />}<HoldingAssumptionInfo units={l.units} />{info(l, 'gain')}</span></td>,
       <td key="market" data-seg-cell="market" data-market-return={m.pct ?? ''} className={`${pad} text-right mono ${changeColor(m.pct)}`}><span className="inline-flex items-center justify-end gap-1">
         {m.pct != null ? <>{pct(m.pct)}{m.annual && <span className="text-[10px]">p.a.</span>}</> : m.pending ? <span className="text-slate-400">Loading…</span> : <AbsentCell reason={m.gaps[0]?.reason ?? 'This row has no separately priced current holdings.'} />}
         {l.positions.length > 0 && marketInfo(l.key === 'total' ? 'Total' : l.label, l.positions)}</span></td>,
       <td key="ret" data-seg-cell="ret" className={`${pad} text-right mono ${changeColor(l.returnPct)}`}><span className="inline-flex items-center justify-end gap-1"
         title={l.measured?.basis === 'annual' && l.periodPct != null ? `${pct(l.periodPct)} over the period itself, not stated per year` : undefined}>
-        {l.returnPct != null ? <>{pct(l.returnPct)}{l.measured?.basis === 'annual' && <span className="text-[10px]">p.a.</span>}</> : <AbsentCell reason={reason(l)} />}{info(l, 'return')}</span></td>,
+        {l.returnPct != null ? <>{pct(l.returnPct)}{l.measured?.basis === 'annual' && <span className="text-[10px]">p.a.</span>}</> : <AbsentCell reason={reason(l)} />}<HoldingAssumptionInfo units={l.units} />{info(l, 'return')}</span></td>,
       <td key="contrib" className={`${pad} text-right mono ${changeColor(l.contribution)}`}>{l.contribution != null ? `${l.contribution >= 0 ? '+' : ''}${l.contribution.toFixed(2)} pp` : <AbsentCell reason={contributionReason} />}</td>,
+      <td key="basis" className={`${pad} text-right text-[11px] text-slate-400`}>{l.units.some(u => u.assumption)
+        ? l.units.every(u => u.assumption) ? 'Assumed held' : 'Statements + assumed held' : l.units.length ? 'Statement records' : 'Missing records'}</td>,
     ];
   };
   const totalCells = cells(a.total, 'parent');
@@ -135,11 +147,11 @@ export default function SegmentReturns({ selection, period }: { selection: Retur
     data-seg-start={selection.start ?? ''} data-seg-end={selection.end ?? ''} data-seg-covered={a.coveredHoldings}
     data-seg-total-gain={a.total.gain ?? ''} data-seg-total-deployed={a.denominator ?? a.total.invested ?? ''}
     data-seg-total-value={a.total.value} data-seg-total-ret={a.total.returnPct ?? ''} data-seg-total-period-ret={a.total.periodPct ?? ''}
-    data-status="ready">
+    data-seg-assumed={a.total.units.filter(u => u.assumption).length} data-status="ready">
     {bridgeCard}
     {marketCard}
     <Card pad={false} title={title}
-      subtitle="Historical market returns use current portfolio weights. Recorded gain and return cover the available investment records only. Open the info button for the amount covered and the missing records. Value now is the full holding value, including available live prices; return calculations use dated statement values."
+      subtitle="Gain and return use available statements plus labelled holding assumptions. Open the info button for shares, dates and missing records. Market return uses current portfolio weights."
       right={<div className="flex flex-wrap items-center justify-end gap-2 text-[12px]">
         {axisTabs}
         {openable.length > 0 && <ExpandAllButton allOpen={allOpen} onClick={() => exp.setMany(openable.map(r => r.key), !allOpen)} />}
@@ -151,10 +163,11 @@ export default function SegmentReturns({ selection, period }: { selection: Retur
           <SortHeader col="value" view={view} pad="px-4 py-2" title="Full holding value, including available live prices. The return calculation's own dated values are in its info card.">Value now</SortHeader>
           <SortHeader col="weight" view={view} pad="px-4 py-2">Current weight</SortHeader>
           <SortHeader col="deployed" view={view} pad="px-4 py-2" title={selection.inception ? 'Purchase cost or money paid in, for the measured portion only' : 'Opening value plus money added during the selected period, for the measured portion only'}>{selection.inception ? 'Invested' : 'Opening + added'}</SortHeader>
-          <SortHeader col="gain" view={view} pad="px-4 py-2">Recorded gain</SortHeader>
+          <SortHeader col="gain" view={view} pad="px-4 py-2">Gain / loss</SortHeader>
           <SortHeader col="market" view={view} pad="px-4 py-2" title="Historical price/NAV performance weighted by current holding values. The info button lists dates, weights, sources and exclusions.">Market return</SortHeader>
-          <SortHeader col="ret" view={view} pad="px-4 py-2">Recorded return · {type.label}</SortHeader>
+          <SortHeader col="ret" view={view} pad="px-4 py-2">Return · {type.label}</SortHeader>
           <SortHeader col="contrib" view={view} pad="px-4 py-2" title="For Absolute return only: row gain divided by the total's shared money base, so these contributions add to the total return.">Contribution</SortHeader>
+          <SortHeader col="basis" view={view} pad="px-4 py-2" title="Assumed held means no later sale or transfer appears in the records we have. This basis is also included in Excel exports.">Holding basis</SortHeader>
         </Tr></thead>
         <tbody className="divide-y divide-ink-700/60">{rows.map(r => <Fragment key={r.key}>
           <Tr view={view} className={r.children.length ? TREE_ROW.parent : ''} {...(r.children.length ? rowToggle(() => exp.toggle(r.key)) : {})}

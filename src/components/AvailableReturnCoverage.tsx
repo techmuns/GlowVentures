@@ -2,6 +2,7 @@ import { fmtDate } from '@/lib/format';
 import type { Account } from '@/lib/types';
 import { RETURN_TYPES } from '@/lib/periodReturns';
 import { returnGapText, type ReturnSelection, type SelectedLine } from '@/lib/selectedSegmentReturns';
+import { holdingAssumptionText } from '@/lib/assumedHoldingReturns';
 
 /** The same plain coverage explanation on attribution rows and headline cards. */
 export function AvailableReturnCoverage({ line: l, selection, accounts, money, field, notes = [] }: {
@@ -24,16 +25,21 @@ export function AvailableReturnCoverage({ line: l, selection, accounts, money, f
   }) : [];
   const gaps = [...l.missing].sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
   const count = new Set(l.units.map(u => u.accountId)).size;
+  const assumed = l.units.filter(u => u.assumption);
   const reason = (line: SelectedLine) => line.measured?.reason ?? (line.missing.length ? returnGapText(line.missing[0].reason, selection.start)
     : 'No complete value and money record is available for these dates.');
   return (
       <div data-attribution-coverage className="space-y-3 whitespace-normal font-normal text-left">
+        {assumed.length > 0 && <div className="rounded-lg bg-ink-900 p-3" data-return-assumption-summary>
+          <p>{holdingAssumptionText(new Set(assumed.map(u => u.assumption!.owner)).size === 1 ? assumed[0].assumption!.owner : 'each owner')}</p>
+          <p className="mt-1 text-xs">{assumed.length} assumed holdings · published prices and gross dividend entitlements. No new purchase cost is assumed.</p>
+        </div>}
         <p className="text-slate-100">{count ? <>Based on the available records for <strong>{count} {count === 1 ? 'account' : 'accounts'}</strong> only.</>
           : 'No account has enough information for this calculation on these dates.'}</p>
         <p>{selection.inception ? 'Since the first investment' : `Selected period: ${dates}`} · {type.label}{l.measured?.basis === 'annual' ? ' · per year' : ' · not annualised'}</p>
         {l.units.length > 0 && <>
           <p>{l.positions.length > 0 && <>The covered holdings are worth <strong>{money(coveredValue)}</strong> out of {money(l.value)} in total current holdings. </>}
-            The dated statement values used to close the calculation total <strong>{money(closing)}</strong>. Each statement is used on its own date.</p>
+            The closing values used total <strong>{money(closing)}</strong>. {assumed.length ? 'Labelled assumptions use recorded quantities and published prices; the rest use statements on their own dates.' : 'Each statement is used on its own date.'}</p>
           <p>{field === 'gain' ? 'Gain is the change in value after allowing for money added and taken out. For a purchase-cost record, it includes recorded sale gains and income.'
             : selection.type === 'xirr' ? (l.measured?.basis === 'annual'
               ? `The return allows for when money went in and came back, and is stated per year.${l.measured.working && l.measured.working.days < 365 && l.periodPct != null ? ` This period is ${l.measured.working.days} days, so its result is annualised; over the period itself it is ${l.periodPct >= 0 ? '+' : ''}${l.periodPct.toFixed(2)}%.` : ''}`
@@ -80,7 +86,7 @@ export function AvailableReturnCoverage({ line: l, selection, accounts, money, f
         </div>
         {l.units.length > 0 && <details data-attribution-included><summary className="ring-focus cursor-pointer rounded text-slate-200">View included accounts and dates</summary>
           <ul className="mt-3 space-y-3 text-xs">{l.units.map(u => <li key={u.key}><p className="text-slate-100">{u.label}</p>
-            <p>{u.from ? fmtDate(u.from) : 'Purchase-cost record'} → {u.to ? fmtDate(u.to) : 'Date unavailable'} · closing value {money(u.close)} · gain {money(u.gain, true)}</p></li>)}</ul>
+            <p>{u.from ? fmtDate(u.from) : 'Purchase-cost record'} → {u.to ? fmtDate(u.to) : 'Date unavailable'} · closing value {money(u.close)} · gain {money(u.gain, true)}{u.assumption ? ' · assumed holding' : ''}</p></li>)}</ul>
         </details>}
       </div>
   );

@@ -1,6 +1,8 @@
 import type { Position } from './types';
 import type { ReturnType } from './periodReturns';
-export type MarketHistory = { ok: true; symbol: string; isin: string | null; name: string; source: string; basis: 'adjusted-close' | 'nav'; first: string; last: string; t: string[]; v: number[] };
+export type MarketHistory = { ok: true; version?: number; symbol: string; isin: string | null; name: string; source: string; basis: 'adjusted-close' | 'nav'; first: string; last: string; t: string[]; v: number[];
+  /** Split-adjusted closes (NAV for funds), distinct from the total-return index v. */
+  c?: (number | null)[]; splits?: { date: string; factor: number }[] };
 export type MarketResult = MarketHistory | { ok: false; reason: string };
 export type MarketInstrument = { key: string; query: string };
 export type MarketUnit = { position: Position; periodPct: number; from: string; to: string; history: MarketHistory };

@@ -27,7 +27,7 @@ try {
   const symbol = q.get('symbol'), isin = q.get('isin'), fund = q.get('fund');
   // A real holding's first request fails. The retry button must recover it.
   if (symbol === 'KARURVYSYA' && !retrying) return r.fulfill({ json: { ok: false, reason: 'Temporary source failure' } });
-  return r.fulfill({ json: { ok: true, symbol: fund || symbol+'.NS', isin, name: fund || symbol, source: fund ? 'NAV fixture' : 'Adjusted stock fixture', basis: fund ? 'nav' : 'adjusted-close', first: t[0], last: t.at(-1), t, v } });
+  return r.fulfill({ json: { ok: true, version: 2, symbol: fund || symbol+'.NS', isin, name: fund || symbol, source: fund ? 'NAV fixture' : 'Adjusted stock fixture', basis: fund ? 'nav' : 'adjusted-close', first: t[0], last: t.at(-1), t, v } });
  });
  await page.goto(base + '/cio?tab=returns&tiles=value,gain,fytd');
  const summary = page.locator('[data-market-summary]'), table = page.locator('[data-segment-returns]');
@@ -61,7 +61,7 @@ try {
  const dialog = page.getByRole('dialog'); await dialog.waitFor();
  assert.equal(await dialog.getByRole('tab').count(),3);
  assert.equal(await dialog.getByRole('tab',{name:'Return Overview',exact:true}).getAttribute('aria-selected'),'true');
- assert.match(await dialog.innerText(),/values today/);assert.match(await dialog.innerText(),/Recorded gain/);
+ assert.match(await dialog.innerText(),/values today/);assert.match(await dialog.innerText(),/Gain \/ loss/);
  const detail=dialog.locator('[data-market-details]');
  const includedCount=Number(await detail.getAttribute('data-market-included-count'));
  const missingCount=Number(await detail.getAttribute('data-market-missing-count'));
