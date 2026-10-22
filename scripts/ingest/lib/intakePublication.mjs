@@ -25,7 +25,10 @@ export function unresolvedBotFindings(pr) {
     if (!/^chatgpt-codex-connector(?:\[bot\])?$/.test(comment.author?.login ?? '')) continue;
     const marker = /codex-review-state:v1 (\{[^\n]+\}) -->/.exec(comment.body ?? '');
     let review; try { review = JSON.parse(marker?.[1]).code_review; } catch { continue; }
-    if (review?.commit_sha === pr.headRefOid) return review.has_unresolved_findings === true;
+    // A failed/quota-limited review can set both finding flags true without
+    // producing a finding. Only a completed assessment attests to findings;
+    // actual inline threads and changes-requested reviews are checked separately.
+    if (review?.commit_sha === pr.headRefOid && /^(completed|success|succeeded)$/.test(review.status)) return review.has_unresolved_findings === true;
   }
   return false;
 }

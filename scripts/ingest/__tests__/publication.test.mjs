@@ -294,6 +294,9 @@ test('a bot summary must name the exact head and have no unresolved findings', (
   assert.equal(completedBotReview({ headRefOid: 'abc', comments: [comment('abc'), finding] }), null);
   assert.equal(unresolvedBotFindings({ headRefOid: 'abc', comments: [comment('abc'), finding] }), true);
   assert.equal(unresolvedBotFindings({ headRefOid: 'new', comments: [finding] }), false);
+  const outage = { ...finding, body: finding.body.replace('"status":"completed"', '"status":"failed"') };
+  assert.equal(unresolvedBotFindings({ headRefOid: 'abc', comments: [outage] }), false, 'Failed quota summaries are not actual findings');
+  assert.equal(unresolvedBotFindings({ headRefOid: 'abc', comments: [finding, outage] }), true, 'An outage cannot erase earlier completed findings');
 });
 function storedZip(name, bytes) {
   const label = Buffer.from(name), local = Buffer.alloc(30), central = Buffer.alloc(46), end = Buffer.alloc(22);
@@ -344,7 +347,7 @@ test('verified data automatically merges with green CI and no completed reviewer
     if (args[0] === 'api') return JSON.stringify({ data: { repository: { pullRequest: { reviewThreads: { nodes: [], pageInfo: {} } } } } });
     return JSON.stringify(pr);
   };
-  for (const comments of [[], [{ author: { login: 'chatgpt-codex-connector' }, body: `<!-- codex-review-state:v1 ${JSON.stringify({ code_review: { commit_sha: file.commit, status: 'failed', has_unresolved_findings: false } })} -->` }]]) {
+  for (const comments of [[], [{ author: { login: 'chatgpt-codex-connector' }, body: `<!-- codex-review-state:v1 ${JSON.stringify({ code_review: { commit_sha: file.commit, status: 'failed', has_any_findings: true, has_unresolved_findings: true } })} -->` }]]) {
     pr.comments = comments;
     assert.equal((await monitorPublication(file, { gh, currentBase: file.baseCommit, verifyData: check })).status, 'processing');
     assert.equal(calls.at(-1)[1], 'merge'); assert.equal(calls.at(-1).at(-1), file.commit);
