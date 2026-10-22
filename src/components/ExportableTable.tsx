@@ -120,7 +120,7 @@ export function ExportableTable({ children, exportName, controlsHost, ...props }
     {message && <span role="status" className="text-xs text-emerald-600">{message}</span>}
     {error && <span id={errorId} role="alert" className="text-xs text-loss">{error}</span>}
   </>;
-  return <><table {...props} ref={table} data-table-export data-table-export-id={exportId}>
+  return <><table {...props} ref={table} data-table-export data-table-export-id={exportId} data-table-export-name={exportName}>
     {controlsHost === undefined ? <caption className="p-2 text-left print:hidden" data-table-export-controls>
       <div className="sticky left-0 flex w-fit max-w-[calc(100vw-5rem)] flex-wrap items-center gap-2">{controls}</div>
     </caption> : controlsHost && createPortal(<span className="inline-flex flex-wrap items-center gap-2 print:hidden" data-table-export-controls>{controls}</span>, controlsHost)}

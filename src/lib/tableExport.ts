@@ -12,7 +12,7 @@ export type TableExportCell = {
   input?: InputChange;
 };
 export type TableExportRow = { cells: TableExportCell[]; kind: "header" | "body" | "footer" };
-export type TableExport = { title: string; url: string; rows: TableExportRow[]; inputs?: InputRecord[]; nested?: TableExport[] };
+export type TableExport = { title: string; url: string; rows: TableExportRow[]; inputs?: InputRecord[]; nested?: TableExport[]; context?: string; parentRow?: number };
 
 /** Only whole numeric cells qualify. Dates, identifiers and mixed captions stay text. */
 export function excelCellValue(cell: TableExportCell): { value: string | number; format?: string } {
@@ -71,5 +71,11 @@ export function readTableExport(table: HTMLTableElement, title: string): TableEx
         input: cell.dataset.inputExport ? JSON.parse(cell.dataset.inputExport) as InputChange : undefined };
     }),
   })), nested: Array.from(table.querySelectorAll<HTMLTableElement>("table[data-table-export]")).filter(child => child.parentElement?.closest("table") === table)
-    .map((child, i) => readTableExport(child, `${title} — Detail ${i + 1}`)) };
+    .map((child, i) => {
+      const panel = child.parentElement?.closest("tr");
+      const parent = panel?.previousElementSibling as HTMLTableRowElement | null;
+      const label = child.dataset.tableExportName || (parent?.cells?.[0] ? textOf(parent.cells[0]).split("\n").map(s => s.trim()).find(Boolean) : "");
+      const context = label?.slice(0, 120) || `Detail ${i + 1}`;
+      return { ...readTableExport(child, `${title} — ${context}`), context, parentRow: panel ? rows.indexOf(panel) : undefined };
+    }) };
 }

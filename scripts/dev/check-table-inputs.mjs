@@ -45,8 +45,10 @@ await context.route('**/api/investment-profiles', route => route.fulfill({ conte
 const page = await context.newPage(), errors = [];
 page.on('pageerror', e => errors.push(e.message));
 async function visit(route) { await page.goto(base + route); await page.locator('[data-edit-numbers]').first().waitFor(); await page.waitForFunction(() => !document.querySelector('[data-edit-numbers]')?.disabled); }
-async function download(name) {
-  const downloading = page.waitForEvent('download'); await page.locator('[data-export-excel]').first().click();
+async function download(name, selector) {
+  const id = selector ? await page.locator(selector).first().getAttribute('data-table-export-id') : null;
+  const button = id ? page.locator(`[data-export-for="${id}"]`) : page.locator('[data-export-excel]').first();
+  const downloading = page.waitForEvent('download'); await button.click();
   const file = path.join(out, name); await (await downloading).saveAs(file);
   const book = new ExcelJS.Workbook(); await book.xlsx.readFile(file); return { file, book };
 }
@@ -97,11 +99,15 @@ try {
   await page.waitForFunction(() => document.querySelector('[data-entered-numbers]')?.textContent?.includes('1 user-entered'));
   check('Restore original removes a number correction', (await snapshot()).catalog.find(r => r.id === holding.id).values.costBasis === holding.values.costBasis);
   await visit('/monitor');
-  const monitor = await download('monitor.xlsx');
+  const monitorRows = await page.locator('[data-monitor-table] > tbody > tr').count();
+  const monitor = await download('monitor.xlsx', '[data-monitor-table="holdings"]');
   check('The same correction appears in a different table export', inputCell(monitor.book, capital.id, 'paid', 'Capital inputs').value === 123456);
-  check('Nested tables travel in their own detail worksheets', monitor.book.worksheets.some(s => /^Detail /.test(s.name)));
+  check('The monitor exports its custom hierarchy in full', monitor.book.getWorksheet('Table').rowCount > monitorRows);
   await upload(monitor.file); await page.getByText('No number changes found.').waitFor();
   check('A complete nested export uploads unchanged without false edits', commits === 4);
+  await visit('/sectors');
+  const sectors = await download('sectors.xlsx', '[data-sector-table]');
+  check('Nested tables travel in their own detail worksheets', sectors.book.worksheets.some(s => /^Detail /.test(s.name)));
   inputCell(original.book, capital.id, 'paid', 'Capital inputs').value = 500;
   const stale = path.join(out, 'stale.xlsx'); await original.book.xlsx.writeFile(stale); await upload(stale);
   await page.getByRole('alert').filter({ hasText: 'changed since' }).waitFor();

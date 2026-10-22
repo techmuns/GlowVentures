@@ -47,8 +47,25 @@ export function createTableWorkbook(snapshot: TableExport): ExcelJS.Workbook {
   };
   draw(snapshot, "Table");
   let detail = 0;
-  const drawChildren = (table: TableExport) => { for (const nested of table.nested ?? []) { draw(nested, `Detail ${++detail}`); drawChildren(nested); } };
-  drawChildren(snapshot);
+  const detailNames: [string, string][] = [];
+  const referenceSheets = new Set<string>();
+  const drawChildren = (table: TableExport, parentSheet: string) => { for (const nested of table.nested ?? []) {
+    const label = (nested.context ?? "").replace(/[\\/*?:\[\]']/g, " ").replace(/\s+/g, " ").trim();
+    const name = `Detail ${++detail}${label ? ` ${label}` : ""}`.slice(0, 31);
+    draw(nested, name); detailNames.push([name, nested.title]);
+    if (nested.parentRow != null && nested.parentRow >= 0) {
+      const cell = book.getWorksheet(parentSheet)!.getCell(nested.parentRow + 1, 1);
+      cell.value = `${cell.text}${cell.text ? "\n" : ""}See ${name}`;
+      cell.alignment = { ...cell.alignment, wrapText: true };
+      referenceSheets.add(parentSheet);
+    }
+    drawChildren(nested, name);
+  } };
+  drawChildren(snapshot, "Table");
+  for (const name of referenceSheets) {
+    const sheet = book.getWorksheet(name)!, view = sheet.views[0];
+    fitExcelWorksheet(sheet, view?.state === "frozen" ? view.ySplit ?? 0 : 0, view?.state === "frozen" ? view.xSplit ?? 0 : 0);
+  }
   const about = book.addWorksheet("About");
   about.addRows([
     ["Table", snapshot.title], ["Dashboard", snapshot.url], ["Exported at", new Date().toISOString()],
@@ -59,6 +76,9 @@ export function createTableWorkbook(snapshot: TableExport): ExcelJS.Workbook {
   about.eachRow(row => { row.alignment = { wrapText: true, vertical: "top" }; row.getCell(1).font = { bold: true }; });
   fitExcelWorksheet(about, 0);
   if (snapshot.inputs) addInputWorkbook(book, snapshot.inputs, targets);
+  about.addRows(detailNames);
+  about.eachRow(row => { row.alignment = { wrapText: true, vertical: "top" }; row.getCell(1).font = { bold: true }; });
+  fitExcelWorksheet(about, 0);
   return book;
 }
 

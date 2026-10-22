@@ -211,9 +211,12 @@ export function Tr({ view, children, reviewScope, inputRecordId, ...rest }: { vi
   const byCol = new Map(view.columns.map((c, i) => [c, cells[i]]));
   const positions = reviewScope?.positions ?? [];
   const position = positions.length === 1 ? positions[0] : undefined;
-  const holdingId = inputRecordId ?? (position ? positionInputId(position) : undefined);
+  const precise = !position && reviewScope?.accountId && reviewScope.securityKey
+    ? inputs.catalog.filter(r => r.kind === "holding" && r.id.startsWith(`holding:${reviewScope.accountId}|${reviewScope.securityKey}|`)) : [];
+  const holdingId = inputRecordId ?? (position ? positionInputId(position) : precise.length === 1 ? precise[0].id : undefined);
+  const manualCapital = holdingId?.replace(/^holding:/, "private-capital:");
   const capitalId = position ? (inputs.catalog.some(r => r.id === privateCapitalId(position)) ? privateCapitalId(position) : capitalInputId(position.accountId))
-    : reviewScope?.accountId ? capitalInputId(reviewScope.accountId) : undefined;
+    : manualCapital && inputs.catalog.some(r => r.id === manualCapital) ? manualCapital : reviewScope?.accountId ? capitalInputId(reviewScope.accountId) : undefined;
   const recordIds = [...new Set([holdingId, capitalId, ...positions.flatMap(p => [positionInputId(p), capitalInputId(p.accountId), privateCapitalId(p)])].filter((s): s is string => !!s))];
   const renderCell = (column: string) => {
     const original = byCol.get(column);
@@ -230,8 +233,8 @@ export function Tr({ view, children, reviewScope, inputRecordId, ...rest }: { vi
     if (!record || !field) return original;
     // Live prices are not statement inputs. Their source mark remains editable
     // on the input sheet, without relabelling the live export as a source value.
-    const sourceMatchesDisplay = record.kind !== "holding" || !position
-      || ((position as unknown as Record<string, unknown>)[field] ?? null) === record.values[field];
+    const sourceMatchesDisplay = record.kind !== "holding" || (!!position
+      && ((position as unknown as Record<string, unknown>)[field] ?? null) === record.values[field]);
     const unit = record.fields.find(f => f.key === field)?.unit;
     const exportable = sourceMatchesDisplay && (unit || displayCurrency === "INR") && !(record.kind === "holding" && field === "marketValue" && (position?.live || position?.priceEvidence)) && !(record.kind === "property" && field !== "area");
     const value = record.values[field];

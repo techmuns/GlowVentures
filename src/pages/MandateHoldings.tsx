@@ -1,4 +1,4 @@
-import { useTableExportFilter } from "@/lib/tableExportSnapshot";
+import { useTableExportFilter, useTableExportExpansion } from "@/lib/tableExportSnapshot";
 import { ExportableTable } from "@/components/ExportableTable";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -1788,7 +1788,8 @@ function ManagerTrades({ account, owner }: { account: Account; owner?: string })
   const { fmtFromBase } = usePortfolio();
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [txns, setTxns] = useState<Txn[]>([]);
-  const [open, setOpen] = useState<Set<string>>(() => new Set());
+  const [openState, setOpen] = useState<Set<string>>(() => new Set());
+  const open = useTableExportExpansion(openState);
   const money = (v: number | null) => (v === null ? null : fmtFromBase(v, { compact: true }));
 
   useEffect(() => {

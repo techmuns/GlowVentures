@@ -9,8 +9,13 @@ import { privateBookFolios, figuresOf } from "../privateBook";
 import { onRequest } from "../../../functions/api/table-inputs";
 import type { Portfolio } from "../types";
 import { validateProperty } from "../../../shared/realEstate.mjs";
+import { tableExportExpansion } from "../tableExportSnapshot";
 
 const source = buildInputCatalog(BOOK_POSITIONS, BOOK_COMMITMENTS, BOOK_ACCOUNTS);
+const openRows = new Set(["originally-open"]);
+assert.equal(tableExportExpansion(openRows, true).has("closed-row"), true, "all hierarchy levels expand for export");
+assert.equal(openRows.has("closed-row"), false, "the user's expansion state stays untouched");
+assert.equal(tableExportExpansion(openRows, false), openRows, "the screen receives the exact original expansion Set");
 const target = source.find(r => r.kind === "holding" && r.values.quantity === null)!;
 assert.ok(target, "a genuinely missing input is available");
 const atCost = BOOK_POSITIONS.find(p => p.valuedAtCost)!;
@@ -93,6 +98,9 @@ assert.equal((exported.getWorksheet("Holding inputs")!.getCell("D2").fill as Exc
 assert.equal(exported.getWorksheet("_Glow")!.state, "veryHidden");
 assert.equal((exported.getWorksheet("Holding inputs")!.views[0] as ExcelJS.WorksheetViewFrozen).xSplit, 2, "both investment and account stay visible while editing");
 assert.ok(exported.getWorksheet("Holding inputs")!.getColumn(1).width! <= 48 && exported.getWorksheet("Holding inputs")!.getColumn(2).width! <= 48, "the frozen identity columns leave room for numbers");
+const nested = createTableWorkbook({ ...snapshot, rows: [...snapshot.rows, { kind: "body", cells: [{ text: "", colSpan: 3 }] }], nested: [{ context: "Test sector", parentRow: 2, title: "Test sector companies", url: snapshot.url, rows: snapshot.rows }] });
+assert.ok(nested.getWorksheet("Detail 1 Test sector"));
+assert.match(nested.getWorksheet("Table")!.getCell("A3").text, /See Detail 1 Test sector/, "a nested sheet stays attached to its parent row");
 const bytes = async (b: ExcelJS.Workbook) => await b.xlsx.writeBuffer() as unknown as ArrayBuffer;
 assert.deepEqual(await readInputWorkbook(await bytes(exported), source), [], "an untouched workbook makes no changes");
 exported.getWorksheet("Holding inputs")!.getCell("D2").value = 0;
