@@ -9,6 +9,7 @@ import { previewKey, unlockPdf } from '../lib/statementPreviewPdf.mjs';
 import { describePreview, openPreview, sealPreview, sealPrivateBytes, previewKeyBytes, keyCookieValue, PREVIEW_COOKIE } from '../../shared/statementPreviewCrypto.mjs';
 import { restoreStatementPasswords, PASSWORD_VAULT_DOMAIN } from '../lib/statementPasswords.mjs';
 import { onRequest as previewRequest } from '../../functions/api/statement-previews/[file].js';
+import { readDeployedPublication } from '../ingest/lib/intakePublication.mjs';
 
 async function read(bytes, password) {
   const task = getDocument({ data: new Uint8Array(bytes), password, verbosity: 0 });
@@ -66,6 +67,11 @@ test('sign-in provisions a protected key cookie; the PDF route authenticates cip
   const login = await onRequest({ request: new Request('https://local.test/__auth/login?next=/statements', {
     method: 'POST', body: new URLSearchParams({ password }) }), next: () => { throw Error('Login must not forward'); } });
   assert.equal(login.status, 302);
+  const publication = { statementDocuments: [{ document: 'fixture', revision: 'verified-version' }] };
+  assert.deepEqual(await readDeployedPublication({ credential: password, baseURL: 'https://local.test',
+    fetchImpl: (url, options) => onRequest({ request: new Request(url, options), next: async () => Response.json(
+      new URL(url).pathname === '/publication.json' ? { manifest: `/views/${'a'.repeat(20)}/publication.json` } : publication) }) }), publication,
+  'The intake deployment verifier must authenticate against the actual sign-in middleware');
   const cookies = login.headers.getSetCookie();
   assert.equal(cookies.length, 2);
   const cookie = cookies.find(c => c.startsWith(PREVIEW_COOKIE + '='));

@@ -2,6 +2,7 @@
 // Workerd caps PBKDF2 at 100,000 iterations; use the native supported primitive.
 const encoder = new TextEncoder();
 export const PREVIEW_COOKIE = 'glow_pdf';
+export const SESSION_DOMAIN = 'session::v2';
 export const MAX_PREVIEW_BYTES = 10 * 1024 * 1024;
 export async function previewKeyBytes(password) {
   const material = await crypto.subtle.importKey('raw', encoder.encode(password), 'PBKDF2', false, ['deriveBits']);

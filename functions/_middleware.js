@@ -18,7 +18,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Salted SHA-256 of the dashboard password. Managed by `npm run set-password`.
-import { PREVIEW_COOKIE, previewKeyBytes, keyCookieValue } from '../shared/statementPreviewCrypto.mjs';
+import { PREVIEW_COOKIE, SESSION_DOMAIN, previewKeyBytes, keyCookieValue } from '../shared/statementPreviewCrypto.mjs';
 const PASSWORD_HASH = "6da1b78fa68be61bd96cd363385ad72f91460c60c5b95447bfe54309f07dc774";
 
 // Fixed domain-separator folded into the hash (not a secret). Must stay in sync
@@ -36,7 +36,7 @@ const hashPassword = (pw) => sha256hex(`${PEPPER}\n${pw}`);
 // Session cookie value is derived from the password hash, so rotating the
 // password automatically invalidates every previously issued session cookie.
 // v2 asks existing sessions to sign in once to provision the preview key.
-const sessionToken = () => sha256hex(`session::v2\n${PASSWORD_HASH}`);
+const sessionToken = () => sha256hex(`${SESSION_DOMAIN}\n${PASSWORD_HASH}`);
 
 // Constant-time string compare (avoid leaking match length via early return).
 function timingSafeEqual(a, b) {
