@@ -418,11 +418,11 @@ export function MorningCIO() {
      * (B-10), which reads the funds' letters as well as their capital accounts.
      */
     const capCoverage = (() => {
-      const dates = [...new Set(counted.map((c) => c.asOf).filter((d): d is string => !!d))].sort();
-      const undrawnOf = counted.filter((c) => c.undrawn != null).length;
+      const dates = [...new Set([...counted.map((c) => c.asOf), ...enteredCapital.map(f => f.asOf)].filter((d): d is string => !!d))].sort();
+      const undrawnOf = counted.filter((c) => c.undrawn != null).length + enteredCapital.filter(f => f.position!.enteredCapital!.undrawn != null).length;
       const oldest = dates[0] ?? null;
       const oldestUndrawn = oldest ? sum(counted.filter((c) => c.asOf === oldest).map((c) => c.undrawn ?? 0)) : 0;
-      return { count: counted.length, undrawnOf, first: oldest, last: dates[dates.length - 1] ?? null, oldestUndrawn };
+      return { count: counted.length + enteredCapital.length, undrawnOf, first: oldest, last: dates[dates.length - 1] ?? null, oldestUndrawn };
     })();
     // How many private instruments the book actually carries. Zero means the
     // segment is ABSENT, not that it measured nothing — every private figure
@@ -951,7 +951,7 @@ export function MorningCIO() {
       largestName, largestKey: largest?.leadKey ?? "", largestHref, largestBucket, largestPct, winners, losers,
       navSeries, navFirst,
     };
-  }, [portfolio, statementPortfolio, convertFromBase, today, assumptionBook]);
+  }, [portfolio, statementPortfolio, enteredPortfolio, convertFromBase, today, assumptionBook]);
 
   if (!portfolio || !model) return null;
   const m = model;

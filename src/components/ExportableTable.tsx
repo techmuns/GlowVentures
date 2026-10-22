@@ -70,8 +70,9 @@ export function ExportableTable({ children, exportName, controlsHost, ...props }
           const ids = new Set(inputIds());
           // Analytical tables without a source row still offer the same book
           // input sheets, so every table has the same correction workflow.
-          snapshot.inputs = ids.size ? inputState.catalog.filter(r => ids.has(r.id)
-            || (r.kind === "private-capital" && ids.has(r.id.replace(/^private-capital:/, "holding:")))) : inputState.catalog;
+          const related = inputState.catalog.filter(r => ids.has(r.id)
+            || (r.kind === "private-capital" && ids.has(r.id.replace(/^private-capital:/, "holding:"))));
+          snapshot.inputs = related.length ? related : inputState.catalog;
         }
       } finally {
         flushSync(() => { setTableExporting(false); setAllRows(false); });
@@ -100,7 +101,7 @@ export function ExportableTable({ children, exportName, controlsHost, ...props }
       data-export-excel data-export-for={exportId} aria-describedby={error ? errorId : undefined}
       title="Export all rows regardless of filters and every column, including hidden columns and rows not yet loaded by scrolling"
       className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border border-emerald-600/30 bg-emerald-500/5 px-2.5 py-1.5 text-xs font-medium text-emerald-600 ring-focus hover:bg-emerald-500/10 disabled:opacity-50">
-      <FileSpreadsheet className="h-3.5 w-3.5" />{busy ? "Exporting…" : "Export Excel"}
+      <FileSpreadsheet className="h-3.5 w-3.5" />{busy ? "Please wait…" : "Export Excel"}
     </button>
     <button type="button" onClick={() => setEditing(value => !value)} disabled={busy || inputState.status !== "ready"} aria-pressed={editing}
       className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border border-ink-600 px-2.5 py-1.5 text-xs ring-focus disabled:opacity-50" data-edit-numbers>

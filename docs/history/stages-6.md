@@ -333,3 +333,9 @@
 - Poojaa Precision (Goldstandard, both mandates) listed on BSE SME on 4 Aug 2026 as `BSE:PPEL` (`INE288301026`). Upstox abbreviates the name, so a cited alias resolves it. Its statement prints neither ISIN nor NSE symbol, so the corporate-action capture could never be asked about it. `listingIsinFor` gives the gate and the evidence request the listing's ISIN where a statement prints none.
 - Still unresolved, correctly: HEG Graphite (demerged, not yet listed), NICCO Corporation, Sterlite Electric and Sterlite Grid (10 shares each, no listing).
 - Tests: `companyQuotes` (successor ISINs, Poojaa's alias and listing ISIN), `liveWithheld` (Poojaa covered by its listing ISIN, still held back by a capture not asked about it).
+
+### Stage 10hf — SHARED NUMBER EDITING AND EXCEL CORRECTIONS
+
+- Every table has Edit numbers, All inputs and Upload Excel beside the existing export. Single-investment source cells edit inline; full exports expand the tree and include nested tables, source input sheets and yellow missing-value cells. Totals, ratios, live prices and archived statement ledgers stay calculated/read-only.
+- Uploads preview changes, retain stable investment/field identities, reject altered structure, formulas and stale/conflicting edits, and commit the validated batch together to the existing GitHub dashboard store. Zero and unknown remain different. Property edits use the existing property record; holding corrections leave source statements and dated return records intact, with restore and provenance labels.
+- Private investment capital gaps can be filled without assigning them to every holding in a consolidated account. The private-book rollups and Morning CIO capital totals include those entered figures. Focused API, workbook, concurrency and isolated browser round-trip checks cover the shared workflow.
