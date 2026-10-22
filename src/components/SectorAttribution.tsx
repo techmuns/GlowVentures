@@ -24,9 +24,10 @@
  * to the total return. Market return is the only figure that follows the
  * Returns toolbar's dates, over the row's own priced holdings.
  */
-import { Fragment, type ReactNode } from 'react';
+import { Fragment, useState, type ReactNode } from 'react';
 import { usePortfolio } from '@/context/PortfolioContext';
 import { ExportableTable } from '@/components/ExportableTable';
+import { EditColumns } from '@/components/EditColumns';
 import { AbsentCell } from '@/components/Absent';
 import { SectorReturnDetails } from '@/components/SectorReturnDetails';
 import { SortHeader, Tr, TrFoot } from '@/components/SortHeader';
@@ -87,7 +88,9 @@ export default function SectorAttribution({ consolidated, exposure, marketOf, ma
 }) {
   const { portfolio, fmtFromBase } = usePortfolio();
   const [set, setSet] = useViewParam(SETS, {}, 'sset');
-  const view = useTableView('cio-sector-attribution', COLS), exp = useExpanded();
+  // Edit Columns and Export Excel share the set toggle's row, not rows of their own (Stage 10gy).
+  const view = useTableView('cio-sector-attribution', COLS, { manualEditor: true }), exp = useExpanded();
+  const [tools, setTools] = useState<HTMLSpanElement | null>(null);
   if (!portfolio) return null;
   const money = (n: number | null | undefined, sign = false) => fmtFromBase(n, { compact: true, sign });
   const accIdx = accountIndex(portfolio.accounts);
@@ -178,9 +181,13 @@ export default function SectorAttribution({ consolidated, exposure, marketOf, ma
         {SETS.map((v) => <button key={v.key} type="button" role="tab" aria-selected={set === v.key} title={v.title} data-sector-set-option={v.key}
           onClick={() => setSet(v.key)} className={btn(set === v.key)}>{v.label}</button>)}
       </div>
-      {openable.length > 0 && <ExpandAllButton allOpen={allOpen} onClick={() => exp.setMany(openable.map((l) => l.key), !allOpen)} />}
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        {openable.length > 0 && <ExpandAllButton allOpen={allOpen} onClick={() => exp.setMany(openable.map((l) => l.key), !allOpen)} />}
+        <EditColumns view={view} />
+        <span ref={setTools} className="inline-flex" data-table-tools />
+      </div>
     </div>
-    <div className="overflow-x-auto"><ExportableTable className="min-w-full whitespace-nowrap text-[12.5px]" data-sa-table>
+    <div className="overflow-x-auto"><ExportableTable className="min-w-full whitespace-nowrap text-[12.5px]" data-sa-table controlsHost={tools}>
       <thead className="border-b border-ink-700 bg-ink-800"><Tr view={view}>
         <SortHeader col="sector" view={view} align="left" pad="px-4 py-2">Sector</SortHeader>
         <SortHeader col="holdings" view={view} pad="px-4 py-2" title="Statement holdings behind the row. One stock held in two accounts is two holdings.">Holdings</SortHeader>
