@@ -1,7 +1,7 @@
 import { useTableExporting } from "@/lib/tableExportSnapshot";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Building2, MapPin, Table2, Map as MapIcon, Plus, Pencil, X, Wallet, Landmark, Banknote, Trash2, TrendingUp } from "lucide-react";
+import { Building2, MapPin, Table2, Map as MapIcon, Plus, Pencil, X, Wallet, Landmark, Banknote, Trash2, TrendingUp, Gift } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { DASH, AbsentValue } from "@/components/Absent";
 import { Card } from "@/components/Card";
@@ -15,13 +15,13 @@ import { PropertyEditor, emptyProperty } from "@/components/PropertyEditor";
 import { useTableView, sortRows, type Accessor } from "@/lib/tableView";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { fmtNum, fmtPct, fmtDate } from "@/lib/format";
-import { PROPERTY_TYPES, PROPERTY_STATUSES, propertyFigures, wholePropertyFigures, propertyLabel, propertyTotal, hasPin, useProperties, receivedWithoutPurchase, costLabel, acquiredOnLabel, appreciationGap, type Property, type PropertyFigures } from "@/lib/realEstate";
+import { PROPERTY_TYPES, PROPERTY_STATUSES, propertyFigures, wholePropertyFigures, propertyLabel, propertyTotal, hasPin, useProperties, receivedWithoutPurchase, costLabel, acquiredOnLabel, appreciationGap, isEarmarked, earmarkLabel, EARMARK_MARKER_ONLY, type Property, type PropertyFigures } from "@/lib/realEstate";
 const PropertyMap = lazy(() => import("@/components/PropertyMap"));
 const VIEWS = [{ key: "table", label: "Table", icon: Table2 }, { key: "map", label: "Map", icon: MapIcon }] as const;
 const DEFAULT_TILES = ["value", "cost", "rent"];
-const COLS = ["name", "type", "location", "owners", "area", "cost", "value", "gain", "gainPct", "rent", "yield", "status", "pin", "acquisition", "purchasedOn", "valuationDate", "debt", "equity", "netRent", "tenant", "leaseEnd", "titleStatus"];
+const COLS = ["name", "type", "location", "owners", "earmark", "area", "cost", "value", "gain", "gainPct", "rent", "yield", "status", "pin", "acquisition", "purchasedOn", "valuationDate", "debt", "equity", "netRent", "tenant", "leaseEnd", "titleStatus"];
 const OPTIONAL = ["acquisition", "purchasedOn", "valuationDate", "debt", "equity", "netRent", "tenant", "leaseEnd", "titleStatus"];
-const LABELS: Record<string, string> = { name: "Property", type: "Type", location: "Location", owners: "Owner / share", area: "Area", cost: "Cost", value: "Current value", gain: "Appreciation", gainPct: "Appreciation %", rent: "Rent / month", yield: "Gross yield", status: "Status", pin: "Map pin", acquisition: "Acquisition", purchasedOn: "Acquired on", valuationDate: "Valued on", debt: "Loan", equity: "Net equity", netRent: "Net rent / month", tenant: "Tenant", leaseEnd: "Lease ends", titleStatus: "Title" };
+const LABELS: Record<string, string> = { name: "Property", type: "Type", location: "Location", owners: "Owner / share", area: "Area", cost: "Cost", value: "Current value", gain: "Appreciation", gainPct: "Appreciation %", rent: "Rent / month", yield: "Gross yield", status: "Status", earmark: "Earmarked for", pin: "Map pin", acquisition: "Acquisition", purchasedOn: "Acquired on", valuationDate: "Valued on", debt: "Loan", equity: "Net equity", netRent: "Net rent / month", tenant: "Tenant", leaseEnd: "Lease ends", titleStatus: "Title" };
 type Summed = Exclude<keyof PropertyFigures, "share" | "gainPct">;
 const TYPES_COLOR: Record<string, string> = { Land: "#678355", Apartment: "#596da4", "Villa / house": "#aa783b", Commercial: "#925e85", Office: "#477f83", Warehouse: "#797054", Industrial: "#786e9c", Farmhouse: "#41795e", Other: "#737373" };
 const date = (value: string | null) => value ? fmtDate(value) : DASH;
@@ -33,6 +33,11 @@ const shareMissing = "Ownership share not entered or incomplete. Whole-property 
 // An absent figure and the few words that say why; the full reason is its hover.
 const gap = (reason: string, short: string) => <span title={reason}><AbsentValue /><span className="mt-1 block font-sans text-[10px] text-slate-500">{short}</span></span>;
 const receivedTag = (p: Property) => p.acquisition === "Inherited" ? "On inheritance" : "On gift";
+// The earmark filter: every earmarked property, one intended recipient, or none.
+const EARMARKED = "earmarked", NOT_EARMARKED = "not-earmarked", TO = "to:";
+const earmarkTitle = (p: Property) => [earmarkLabel(p), p.earmark?.note, EARMARK_MARKER_ONLY].filter((s): s is string => !!s).map(s => /[.!?]$/.test(s) ? s : `${s}.`).join(" ");
+const matchesEarmark = (p: Property, filter: string) => !filter || (filter === EARMARKED ? isEarmarked(p) : filter === NOT_EARMARKED ? !isEarmarked(p)
+  : filter.startsWith(TO) && isEarmarked(p) && p.earmark!.recipient === filter.slice(TO.length));
 // Cost totals that include values on the date of inheritance or gift say how many.
 function receivedNote(list: Property[], owners: ReadonlySet<string> | null) {
   const received = list.filter(p => receivedWithoutPurchase(p) && propertyFigures(p, owners).cost !== null);
@@ -54,7 +59,7 @@ export function RealEstate() {
   const [removeError, setRemoveError] = useState("");
   const [busy, setBusy] = useState(false);
   const dialog = useRef<HTMLDialogElement>(null);
-  const q = params.get("q") ?? "", state = params.get("state") ?? "", city = params.get("city") ?? "", country = params.get("country") ?? "", type = params.get("type") ?? "", status = params.get("status") ?? "";
+  const q = params.get("q") ?? "", state = params.get("state") ?? "", city = params.get("city") ?? "", country = params.get("country") ?? "", type = params.get("type") ?? "", status = params.get("status") ?? "", earmark = params.get("earmark") ?? "";
   const setFilter = (key: string, value: string) => {
     const next = new URLSearchParams(params);
     if (value) next.set(key, value); else next.delete(key);
@@ -63,14 +68,15 @@ export function RealEstate() {
     setParams(next, { replace: true });
   };
   const scoped = useMemo(() => store.properties.filter(p => !scope.owners || !p.owners.some(o => o.ownerId) || p.owners.some(o => o.ownerId && scope.owners!.has(o.ownerId))), [store.properties, scope.owners]);
-  const filtered = useMemo(() => exportingTable ? scoped : scoped.filter(p => (!country || p.country === country) && (!state || p.state === state) && (!city || p.city === city) && (!type || p.type === type) && (!status || p.status === status)
-    && (!q.trim() || [propertyLabel(p), p.address, p.city, p.state, p.country, p.pincode, p.type, p.acquisition, p.tenant, ...p.owners.map(o => o.name)].join(" ").toLowerCase().includes(q.trim().toLowerCase()))), [exportingTable, scoped, country, state, city, type, status, q]);
+  const filtered = useMemo(() => exportingTable ? scoped : scoped.filter(p => (!country || p.country === country) && (!state || p.state === state) && (!city || p.city === city) && (!type || p.type === type) && (!status || p.status === status) && matchesEarmark(p, earmark)
+    && (!q.trim() || [propertyLabel(p), p.address, p.city, p.state, p.country, p.pincode, p.type, p.acquisition, p.tenant, p.earmark?.recipient ?? "", ...p.owners.map(o => o.name)].join(" ").toLowerCase().includes(q.trim().toLowerCase()))), [exportingTable, scoped, country, state, city, type, status, earmark, q]);
   const accessors = useMemo<Record<string, Accessor<Property>>>(() => Object.fromEntries(COLS.map(key => [key, (p: Property) => {
     const figures = propertyFigures(p, scope.owners);
     if (key in figures) return figures[key as keyof PropertyFigures];
     if (key === "location") return location(p);
     if (key === "owners") return ownerNames(p);
     if (key === "pin") return hasPin(p) ? 1 : 0;
+    if (key === "earmark") return isEarmarked(p) ? p.earmark!.recipient || " " : null;
     // Areas with different units cannot be ranked as if their numbers shared a unit.
     if (key === "area") return p.area === null || !p.areaUnit ? null : p.area * ({ "sq ft": 1, "sq m": 10.7639104167, "sq yd": 9, acre: 43560, hectare: 107639.104167, cent: 435.6, guntha: 1089 }[p.areaUnit] ?? 1);
     return p[key as "name"];
@@ -126,6 +132,9 @@ export function RealEstate() {
       case "type": return !p.type ? <AbsentValue /> : <span className="inline-flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full" style={{ background: TYPES_COLOR[p.type] }} />{p.type}</span>;
       case "area": return p.area === null ? <span title="Area not entered"><AbsentValue /></span> : <span title={`${p.areaBasis} area · whole property`}>{fmtNum(p.area, 2).replace(/\.00$/, "")} {p.areaUnit}</span>;
       case "yield": return <span title={f.yield === null ? "Needs monthly rent and a current value above zero" : "Annual gross rent ÷ current value. Excludes expenses and financing."}>{fmtPct(f.yield)}</span>;
+      case "earmark": return isEarmarked(p)
+        ? <span data-earmark data-export-value={earmarkLabel(p)} title={earmarkTitle(p)} className="block"><span className="inline-flex items-center gap-1.5 text-slate-200"><Gift className="h-3 w-3 shrink-0 text-champagne-400" />{p.earmark!.recipient || <AbsentValue />}</span><span className="mt-1 block font-sans text-[10px] text-slate-500">{p.earmark!.recipient ? "To be gifted" : "To be gifted · recipient not entered"}</span></span>
+        : <span className="text-xs text-slate-500">Not earmarked</span>;
       case "pin": return <button type="button" data-export-value={hasPin(p) ? `${p.latitude}, ${p.longitude}` : "Pin needed"} onClick={() => { open(p); if (!hasPin(p)) setEditing(true); }} className={`inline-flex items-center gap-1 text-xs ${hasPin(p) ? "text-champagne-400" : "text-slate-500"}`}><MapPin className="h-3 w-3" />{hasPin(p) ? "View" : "Pin needed"}</button>;
       case "purchasedOn": case "valuationDate": case "leaseEnd": return <span title={p[key] ? undefined : "Not entered"}>{date(p[key])}</span>;
       default: return p[key as "status"] || <span title="Not entered"><AbsentValue /></span>;
@@ -148,7 +157,12 @@ export function RealEstate() {
         {filterSelect("city", city, "All cities / districts", scoped.filter(p => (!state || p.state === state) && (!country || p.country === country)).map(p => p.city))}
         {filterSelect("type", type, "All property types", PROPERTY_TYPES)}
         {filterSelect("status", status, "All statuses", PROPERTY_STATUSES)}
-        {(q || country || state || city || type || status) && <button type="button" className="text-xs text-champagne-400 underline" onClick={() => { const next = new URLSearchParams(params); ["q", "state", "city", "country", "type", "status"].forEach(k => next.delete(k)); setParams(next, { replace: true }); }}>Clear filters</button>}
+        <select aria-label="All earmarks" value={earmark} onChange={e => setFilter("earmark", e.target.value)} className="rounded-md border border-ink-600 bg-ink-800 px-2 py-1 text-xs text-slate-200" data-earmark-filter>
+          <option value="">All earmarks</option><option value={EARMARKED}>Earmarked / to be gifted</option>
+          {distinct([...scoped.filter(isEarmarked).map(p => p.earmark!.recipient), ...(earmark.startsWith(TO) ? [earmark.slice(TO.length)] : [])]).map(r => <option key={r} value={`${TO}${r}`}>To be gifted to {r}</option>)}
+          <option value={NOT_EARMARKED}>Not earmarked</option>
+        </select>
+        {(q || country || state || city || type || status || earmark) && <button type="button" className="text-xs text-champagne-400 underline" onClick={() => { const next = new URLSearchParams(params); ["q", "state", "city", "country", "type", "status", "earmark"].forEach(k => next.delete(k)); setParams(next, { replace: true }); }}>Clear filters</button>}
         <span className="ml-auto text-xs text-slate-500" title={shareTitle}>Selected owners’ share</span>
       </div>
       {view === "table" ? <div className="overflow-x-auto"><ExportableTable exportName="Real Estate — Properties" className="min-w-full text-[13px]" data-real-estate-table>
@@ -163,7 +177,7 @@ export function RealEstate() {
         </div>
         <div className="max-h-[590px] overflow-y-auto border-t border-ink-700 lg:border-l lg:border-t-0">
           {!filtered.length && <p className="px-4 py-10 text-center text-sm text-slate-500">{empty}</p>}
-          {filtered.map(p => <button type="button" key={p.id} onClick={() => open(p)} className="block w-full border-b border-ink-700 p-4 text-left hover:bg-ink-700/30"><span className="block font-medium text-slate-100">{propertyLabel(p)}</span><span className="mt-1 block text-xs text-slate-400">{[p.type, location(p)].filter(Boolean).join(" · ") || "Details not entered"}</span><span className="mt-2 flex justify-between gap-2 text-xs"><span className="mono text-slate-200">{money(propertyFigures(p, scope.owners).value)}</span><span className={hasPin(p) ? "text-champagne-400" : "text-slate-500"}>{hasPin(p) ? "View property" : "Pin needed"}</span></span></button>)}
+          {filtered.map(p => <button type="button" key={p.id} onClick={() => open(p)} className="block w-full border-b border-ink-700 p-4 text-left hover:bg-ink-700/30"><span className="block font-medium text-slate-100">{propertyLabel(p)}</span><span className="mt-1 block text-xs text-slate-400">{[p.type, location(p)].filter(Boolean).join(" · ") || "Details not entered"}</span>{isEarmarked(p) && <span className="mt-1 flex items-center gap-1.5 text-xs text-slate-300" title={earmarkTitle(p)}><Gift className="h-3 w-3 shrink-0 text-champagne-400" />{earmarkLabel(p)}</span>}<span className="mt-2 flex justify-between gap-2 text-xs"><span className="mono text-slate-200">{money(propertyFigures(p, scope.owners).value)}</span><span className={hasPin(p) ? "text-champagne-400" : "text-slate-500"}>{hasPin(p) ? "View property" : "Pin needed"}</span></span></button>)}
         </div>
       </div>}
     </Card>
@@ -175,6 +189,10 @@ export function RealEstate() {
           return reply;
         }} /> : selected && figures && <>
           <div className="mb-4 flex flex-wrap items-center gap-3"><span className="text-sm text-slate-400">{[selected.type, selected.status].filter(Boolean).join(" · ")}</span><button type="button" className="btn-primary ml-auto" onClick={() => setEditing(true)}><Pencil className="h-3.5 w-3.5" />Edit property</button></div>
+          {selected.earmark && <div data-earmark className="mb-4 rounded-lg border border-ink-600 bg-ink-800 p-3 text-sm">
+            <p className="flex items-center gap-2 font-medium text-slate-100" title={EARMARK_MARKER_ONLY}><Gift className="h-4 w-4 shrink-0 text-champagne-400" />{earmarkLabel(selected)}</p>
+            {selected.earmark.note && <p className="mt-1 whitespace-pre-wrap text-slate-300">{selected.earmark.note}</p>}
+          </div>}
           <p className="mb-3 text-xs text-slate-400">Whole-property figures</p>
           <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {([

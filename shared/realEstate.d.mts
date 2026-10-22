@@ -1,4 +1,6 @@
 export type PropertyOwner = { ownerId: string | null; name: string; share: number | null };
+/** Who the property is meant to be gifted to. A marker only: ownership and value stay with `owners`. */
+export type PropertyEarmark = { recipientId: string | null; recipient: string; note: string };
 export type Property = {
   id: string; name: string; type: string; address: string; city: string; state: string; country: string; pincode: string;
   owners: PropertyOwner[]; area: number | null; areaUnit: string; areaBasis: string;
@@ -7,6 +9,8 @@ export type Property = {
   /** "Purchased", "Inherited", "Gifted", or "" when not entered. */
   acquisition: string;
   status: string; tenant: string; titleStatus: string; notes: string;
+  /** null when the property is not earmarked; an older record without one reads as null. */
+  earmark: PropertyEarmark | null;
   latitude: number | null; longitude: number | null; updatedAt?: string;
 };
 export type PropertyFigures = { share: number | null; value: number | null; cost: number | null; debt: number | null; rent: number | null; costs: number | null; equity: number | null; netRent: number | null; yield: number | null; gain: number | null; gainPct: number | null };
@@ -23,6 +27,9 @@ export function propertyLabel(p: Property): string;
 export function receivedWithoutPurchase(p: Property): boolean;
 export function costLabel(p: Property): string;
 export function acquiredOnLabel(p: Property): string;
+export function isEarmarked(p: Property): boolean;
+export function earmarkLabel(p: Property): string;
+export const EARMARK_MARKER_ONLY: string;
 export function appreciationGap(p: Property): { short: string; reason: string } | null;
 export function propertyShare(p: Property, owners?: ReadonlySet<string> | null): number | null;
 export function wholePropertyFigures(p: Property): PropertyFigures;
