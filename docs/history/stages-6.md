@@ -244,3 +244,10 @@
 - A buyback buys only the shares a holder tenders, and a tender is a sale the account's own record carries (`realizedLotsAfter`, `rolledForward`). `isHolderElective` files it as an `elective` line with that reason, and a recorded sale still withholds the price. Rights issues, demergers and other events keep the gate.
 - `movesCloseBasis` drops buybacks from the ex-date previous-close guard in `dailyMovers` and `insideMovers`; a buyback does not move the exchange's close.
 - `liveWithheld.test.ts` now uses a demerger for the held-back case and asserts that a buyback goes live, or is held back only for recorded sales. `dailyMovers.test.ts` checks that a buyback's ex-date keeps the day move. `docs/CORPORATE-ACTIONS.md` says the same.
+
+### Stage 10gs — THREE CLEAR TABS FOR MARKET RETURN COVERAGE
+
+- The market-return popup opens on Return Overview, with short coverage, date and weighting explanations. All Securities Considered and Missing Values have live counts, searchable complete holding lists, and one entry per security/account rather than combining different owners or mandates.
+- Every entry uses the attribution table’s existing classification and the account registry’s exact fund/mandate, owner, provider, account and report date. Missing entries state the specific missing price, NAV, identity, valuation or source response and the next step in plain language. Pending histories stay named until they finish loading.
+- Structured gap reasons preserve the original diagnostics and calculations. A holding without a usable current value is explicitly left out rather than disappearing from the coverage reconciliation. Fund wording clearly distinguishes NAV changes from income paid out or reinvested.
+- Focused tests check membership and missing-data wording. Required browser coverage checks tab keyboard controls, complete/disjoint holding lists, fund and mandate context, searches, retry, focus restoration, reopening and all three tabs on mobile.

@@ -7,9 +7,9 @@ import type { DatedFlow } from "@/lib/xirr";
 import { xirrWorking } from "@/lib/xirrWorking";
 
 /** The result is the tile's own rendered value, never a second calculation. */
-export function ReturnCalculationInfo({ label, value, children, trigger, triggerLabel, intro }: {
+export function ReturnCalculationInfo({ label, value, children, trigger, triggerLabel, intro, wide = false }: {
   label: string; value: ReactNode; children: ReactNode;
-  trigger?: ReactNode; triggerLabel?: string; intro?: string;
+  trigger?: ReactNode; triggerLabel?: string; intro?: string; wide?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const button = useRef<HTMLButtonElement>(null);
@@ -51,7 +51,7 @@ export function ReturnCalculationInfo({ label, value, children, trigger, trigger
         const box = event.currentTarget.getBoundingClientRect();
         if (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom) setOpen(false);
       }}
-      className="return-calculation fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-lg overflow-y-auto rounded-2xl border border-ink-600 bg-ink-800 p-0 text-slate-200 shadow-card">
+      className={`return-calculation fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] ${wide ? 'max-w-3xl' : 'max-w-lg'} overflow-y-auto rounded-2xl border border-ink-600 bg-ink-800 p-0 text-slate-200 shadow-card`}>
       <div className="p-5 sm:p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
