@@ -14,7 +14,7 @@ export const CAPITAL_INPUTS: InputField[] = [
   { key: "pending", label: "Called but unpaid" },
 ];
 export const PROPERTY_INPUTS: InputField[] = [
-  { key: "cost", label: "Purchase cost" }, { key: "value", label: "Value" },
+  { key: "cost", label: "Cost / value when received" }, { key: "value", label: "Value" },
   { key: "monthlyRent", label: "Monthly rent" }, { key: "monthlyCosts", label: "Monthly costs" },
   { key: "debt", label: "Debt" }, { key: "area", label: "Area", unit: "area" },
 ];
@@ -56,8 +56,8 @@ export function buildInputCatalog(positions: readonly Position[], commitments: r
   records.forEach(r => counts.set(r.id, (counts.get(r.id) ?? 0) + 1));
   return records.filter(r => counts.get(r.id) === 1);
 }
-export function propertyInputRecord(p: { id: string; name?: string; address?: string; valuationDate?: string | null; updatedAt?: string; areaUnit?: string }): InputRecord {
-  return inputRecord(`property:${p.id}`, "property", p.name || p.address || "Untitled property", `Whole property · INR · Area: ${p.areaUnit || "unit not recorded"}`, p.valuationDate ?? "", PROPERTY_INPUTS, p, p.updatedAt ?? p);
+export function propertyInputRecord(p: { id: string; name?: string; address?: string; valuationDate?: string | null; updatedAt?: string; areaUnit?: string; acquisition?: string; purchasedOn?: string | null }): InputRecord {
+  return inputRecord(`property:${p.id}`, "property", p.name || p.address || "Untitled property", `Whole property${p.acquisition ? ` · ${p.acquisition}${p.purchasedOn ? ` on ${p.purchasedOn}` : ""}` : ""} · INR · Area: ${p.areaUnit || "unit not recorded"}`, p.valuationDate ?? "", PROPERTY_INPUTS, p, p.updatedAt ?? p);
 }
 export function callInputRecord(c: { id: string; fund: string; fundName: string; date: string; amount: number; updatedAt: string }): InputRecord {
   return inputRecord(`capital-call:${c.id}`, "call", c.fundName || c.fund, "Upcoming capital call", c.date, [{ key: "amount", label: "Call amount" }], c, c.updatedAt);

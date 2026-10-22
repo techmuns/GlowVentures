@@ -150,6 +150,18 @@ assert.equal(ownerBook.getWorksheet("Ownership inputs")!.getCell("D2").numFmt, "
 ownerBook.getWorksheet("Ownership inputs")!.getCell("D2").value = .6;
 assert.equal((await request(await readInputWorkbook(await bytes(ownerBook), ownerCatalog))).status, 200);
 assert.equal((record.get(`real-estate:${property.id}`) as typeof property).owners[0].share, 60, "ownership completes the Excel round trip without a factor-of-100 error");
+const inherited = validateProperty({ id: "test-inherited-inputs", name: "Test inherited property", acquisition: "Inherited", cost: null, purchasedOn: "2020-01-01", earmark: { recipient: "Test recipient", recipientId: null, note: "Keep this gift marker" } }).property!;
+record.set(`real-estate:${inherited.id}`, inherited);
+let inheritedRecord = (await request()).body.catalog.find((r: InputRecord) => r.id === `property:${inherited.id}`);
+assert.match(inheritedRecord.account, /Inherited on 2020-01-01/);
+const beforeInvalid = flushes;
+assert.equal((await request([change(inheritedRecord, "cost", 0)])).status, 400, "an unknown inheritance value cannot become a fabricated zero base");
+assert.equal(flushes, beforeInvalid);
+assert.equal((await request([change(inheritedRecord, "cost", 5000)])).status, 200);
+const inheritedSaved = record.get(`real-estate:${inherited.id}`) as typeof inherited;
+assert.equal(inheritedSaved.cost, 5000);
+assert.equal(inheritedSaved.acquisition, "Inherited");
+assert.deepEqual(inheritedSaved.earmark, inherited.earmark, "numeric corrections preserve the intended recipient and note");
 // Client snapshots must not regress when an older read completes after a save,
 // or disagree between a table, its existing editor and its workbook inputs.
 const originalFetch = globalThis.fetch;
