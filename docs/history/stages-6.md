@@ -333,3 +333,8 @@
 - Poojaa Precision (Goldstandard, both mandates) listed on BSE SME on 4 Aug 2026 as `BSE:PPEL` (`INE288301026`). Upstox abbreviates the name, so a cited alias resolves it. Its statement prints neither ISIN nor NSE symbol, so the corporate-action capture could never be asked about it. `listingIsinFor` gives the gate and the evidence request the listing's ISIN where a statement prints none.
 - Still unresolved, correctly: HEG Graphite (demerged, not yet listed), NICCO Corporation, Sterlite Electric and Sterlite Grid (10 shares each, no listing).
 - Tests: `companyQuotes` (successor ISINs, Poojaa's alias and listing ISIN), `liveWithheld` (Poojaa covered by its listing ISIN, still held back by a capture not asked about it).
+
+### Stage 10hg — REAL ESTATE TILES DROP NET EQUITY
+
+- The family asked for Net equity to come off the Real Estate tiles. It is no longer a tile option, and the default strip is Property value, Total cost and Monthly rent. A saved layout that named it drops that slot (`SelectableTiles` filters unknown ids).
+- Net equity stays as an optional table column and in property details.
