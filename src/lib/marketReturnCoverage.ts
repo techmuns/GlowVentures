@@ -38,6 +38,6 @@ export function marketGapExplanation(g: MarketGap, start: string | null, end: st
       if (p.assetClass === 'Mutual Fund') return { missing: 'This fund has not been matched to a price history.', needed: 'Its exact scheme code and ISIN, then the fund’s daily unit prices (NAVs).' };
       if (p.assetClass === 'Cash') return { missing: 'Cash has no traded market price.', needed: 'Use dated account balances and money in/out for its recorded return.' };
       if (p.assetClass === 'Bond' || p.assetClass === 'Structured Product') return { missing: 'This instrument has no matched price history.', needed: 'Dated prices or valuations for this exact instrument during the period.' };
-      return { missing: 'This holding has not been matched to a stock listing.', needed: 'Its confirmed exchange symbol or ISIN, so we can find the right price history.' };
+      return { missing: 'Public price history is missing.', needed: 'Public prices for the selected dates. For returns from your statements, check Recorded return.' };
   }
 }
