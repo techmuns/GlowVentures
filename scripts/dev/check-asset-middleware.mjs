@@ -6,10 +6,20 @@ import { onRequest } from '../../functions/_middleware.js';
 if (!globalThis.crypto) globalThis.crypto = webcrypto;
 const source = fs.readFileSync('functions/_middleware.js', 'utf8');
 const hash = /const PASSWORD_HASH = "([a-f0-9]+)"/.exec(source)[1];
-const session = createHash('sha256').update(`session::v1\n${hash}`).digest('hex');
+const session = createHash('sha256').update(`session::v2\n${hash}`).digest('hex');
 function request(path, type, body, auth = true, status = 200) {
   return onRequest({ request: new Request(`https://local.test${path}`, { headers: auth ? { Cookie: `glow_auth=${session}` } : {} }),
     next: async () => new Response(body, { status, headers: { 'Content-Type': type, 'Cache-Control': 'public, max-age=0, must-revalidate', ETag: 'fixture' } }) });
+}
+for (const path of ['/statement-files/original.pdf', '/statement-previews/' + 'a'.repeat(64) + '.bin', '/api/statement-previews/' + 'a'.repeat(64) + '.pdf']) {
+  const denied = await request(path, 'application/pdf', '%PDF-private-statement', false);
+  assert.equal(denied.status, 200);
+  assert.match(denied.headers.get('content-type'), /^text\/html/);
+  assert.equal(denied.headers.get('cache-control'), 'no-store');
+  assert.doesNotMatch(await denied.text(), /%PDF-private-statement/);
+  const allowed = await request(path, 'application/pdf', '%PDF-private-statement');
+  assert.equal(allowed.status, 200);
+  assert.equal(await allowed.text(), '%PDF-private-statement');
 }
 for (const path of ['/', '/index.html', '/stock/known?members=one', '/audit/source.html']) {
   const r = await request(path, 'text/html; charset=utf-8', '<!doctype html><html>app</html>');

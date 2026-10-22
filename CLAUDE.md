@@ -409,6 +409,21 @@ Never derive one side from the others.
   (Stage 10cz); those rows are quantities on the statement basis.
 - **Encrypted statements** open with `GLOW_PDF_PASSWORDS` from the environment.
   Passwords are PANs — **never commit them** or put them in any tracked file.
+  `build:statement-files` uses those passwords only at build time to save
+  previews encrypted with `GLOW_DASHBOARD_PASSWORD` in
+  `public/statement-previews/<original-sha256>.bin`. Never commit clear PDFs.
+  At sign-in, an HttpOnly, Secure, partitioned cookie provisions a derived key
+  scoped to `/api/statement-previews/`; that route decrypts only behind the edge
+  login and sends `private, no-store` PDFs. Later builds need neither password.
+  On password rotation regenerate previews with both password environment
+  variables before deploying; builds reject derivatives for an older hash.
+  Original downloads remain byte-identical. Intake prepares and retains previews
+  for new statements using its existing dashboard credential. The family's known
+  statement passwords are AES-GCM ciphertext in `config/statement-passwords.bin`,
+  restored only in the trusted build/intake process; an explicit
+  `GLOW_PDF_PASSWORDS` still takes precedence. On dashboard password rotation,
+  re-encrypt that vault too. No plaintext statement passwords enter any tracked
+  file, the index, browser bundle, URLs or logs.
 
 ## The ingest pipeline
 

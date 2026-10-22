@@ -4,6 +4,7 @@ import { git, readBaseline } from '../verify-publication.mjs';
 import { assessPublication, digest, documentRevision, stable } from './publication.mjs';
 import { reconcile } from '../reconcile.mjs';
 import { listEntries, readEntry, isMacMetadata } from './unzip.mjs';
+import { describePreview } from '../../../shared/statementPreviewCrypto.mjs';
 
 const generated = new Set([
   'src/data/glowData.ts', 'src/data/reviewColumns.ts', 'src/data/nseSymbols.json', 'src/data/privateProfiles.json',
@@ -57,7 +58,9 @@ export function verifyAutomaticPublication(file, { runGit = git, fetchHead = tru
     const m = /^:(\d+) (\d+) [a-f0-9]+ [a-f0-9]+ ([AMD])$/.exec(diff[i]), p = diff[i + 1];
     if (!m || !safePath(p) || (m[1] !== '100644' && m[1] !== '000000') || (m[2] !== '100644' && m[2] !== '000000')) throw new Error('Unexpected delivery change or file mode.');
     const audit = /^public\/audit\/(?:manifest\.json|[a-zA-Z0-9][a-zA-Z0-9._-]*\/[^/]+\.json)$/.test(p);
-    if (!(generated.has(p) || p === 'CLAUDE.md' || audit || statementPath(p))) throw new Error(`Automatic statement publication cannot change code or policy: ${p}`);
+    const preview = /^public\/statement-previews\/[a-f0-9]{64}\.bin$/.test(p);
+    if (!(generated.has(p) || p === 'CLAUDE.md' || audit || preview || statementPath(p))) throw new Error(`Automatic statement publication cannot change code or policy: ${p}`);
+    if (preview && m[3] !== 'A') throw new Error('A delivery cannot overwrite or delete an earlier statement preview.');
     if (m[3] === 'D' && (!audit || p.startsWith('public/audit/deliveries/'))) throw new Error('A delivery cannot delete source, receipts or generated book files.');
     if (p.startsWith('source/') && m[3] !== 'A') throw new Error('A delivery cannot overwrite earlier statement bytes.');
     if (p === 'CLAUDE.md' && withoutAccountsTable(read(p)) !== withoutAccountsTable(runGit(['show', `${file.baseCommit}:${p}`], { encoding: null }))) throw new Error('A statement delivery cannot change repository instructions.');
@@ -98,5 +101,11 @@ export function verifyAutomaticPublication(file, { runGit = git, fetchHead = tru
   const sorted = values => [...values].sort((a, b) => a.document.localeCompare(b.document));
   if (stable(sorted(expected)) !== stable(sorted(receipt.documents))
     || stable(sorted(expected.map(({ document, revision }) => ({ document, revision })))) !== stable(sorted(file.documentVersions ?? []))) throw new Error('Receipt document rows or versions do not match verified source bytes.');
+  for (const p of changes.keys()) {
+    if (!p.startsWith('public/statement-previews/')) continue;
+    const originalHash = p.split('/').pop().slice(0, -4);
+    if (!expected.some(d => d.sha256 === originalHash)) throw new Error('Statement preview must be bound to a verified source document.');
+    describePreview(read(p));
+  }
   return { commit: file.commit, archiveRevision: assessment.candidateRevision, documents: expected.length };
 }
