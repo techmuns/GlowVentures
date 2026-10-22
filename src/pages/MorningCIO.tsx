@@ -186,10 +186,9 @@ const ALLOC_TITLE: Record<GroupAxis, string> = {
  *
  * THE LABELS ARE DELIBERATELY NOT THE CARD HEADINGS THEY OPEN. A tab's text
  * sits in `innerText` on every one of this page's routes, so a label repeating
- * a heading would satisfy a check on a tab that heading is not drawn on. One in
- * particular is BANNED: this page's own roadmap-absence check asserts the words
- * "NAV vs benchmark" never return, because they once named a promised feature —
- * so the third tab is named for the index it actually charts.
+ * a heading would satisfy a check on a tab that heading is not drawn on. The
+ * benchmark tab keeps the family's chosen name, "Our Book vs Benchmark"; its
+ * chart names the selected index.
  */
 const CIO_TABS = [
   // NOT "today" (MNT-11): the funds branch is a published NAV struck on its own
