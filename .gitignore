@@ -26,3 +26,7 @@ docs/page-check/
 public/views/
 src/data/readModels.json
 public/publication.json
+
+# The original statement files, copied out of source/ by build:statement-files
+# for the Statement Library's preview — source/ is the committed copy.
+public/statement-files/

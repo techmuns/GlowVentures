@@ -2,12 +2,17 @@ import { ExportableTable } from "@/components/ExportableTable";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { X, ExternalLink, FileText, FileSpreadsheet, Loader2 } from "lucide-react";
+import { X, ExternalLink, FileText, FileSpreadsheet, Loader2, Download, Lock, Table2 } from "lucide-react";
+import type { WorkSheet } from "xlsx";
 import { Pill } from "@/components/Pill";
 import { AbsentSection, DASH } from "@/components/Absent";
+import { ViewToggle, type ViewDef } from "@/components/ViewToggle";
 import { fmtDate } from "@/lib/format";
 import type { LibraryDoc } from "@/lib/statementLibrary";
-import { cellText, columnLetters, hasText, isSheetFormat, sheetRows, unreadReason, type PageText } from "@/lib/statementPreview";
+import {
+  cellText, columnLetters, fileSize, hasText, isSheetFormat, mergeLayout, sheetRows, unreadReason,
+  type GridCell, type GridMerge, type PageText, type PublishedFile, type StatementFileIndex,
+} from "@/lib/statementPreview";
 
 const BASE = import.meta.env.BASE_URL;
 /** Rows a sheet shows before "Show more" — a broker's tape runs to thousands. */
@@ -76,6 +81,173 @@ function usePages(docKey: string): Loaded {
   return state;
 }
 
+// ── THE ORIGINAL FILE ────────────────────────────────────────────────────────
+
+type Original =
+  | { status: "loading" }
+  | { status: "ready"; file: PublishedFile; url: string }
+  | { status: "missing"; reason: string };
+
+// One index per page load: it lists every file the build published.
+let indexLoad: Promise<StatementFileIndex> | null = null;
+const loadIndex = () => (indexLoad ??= getJson(`${BASE}statement-files/index.json`).catch((e) => {
+  indexLoad = null;
+  throw e;
+}));
+
+/** The published original of this document, or why this build carries none. */
+function useOriginal(docKey: string): Original {
+  const [state, setState] = useState<Original>({ status: "loading" });
+  useEffect(() => {
+    let alive = true;
+    setState({ status: "loading" });
+    loadIndex()
+      .then((index): Original => {
+        const file = index.files?.[docKey];
+        if (file) return { status: "ready", file, url: `${BASE}statement-files/${encodeURIComponent(file.file)}` };
+        return { status: "missing", reason: index.missing?.[docKey] ?? "This build did not publish the original file." };
+      })
+      .catch((e: Error): Original => ({ status: "missing", reason: `The list of published files did not load (${e.message}).` }))
+      .then((s) => { if (alive) setState(s); });
+    return () => { alive = false; };
+  }, [docKey]);
+  return state;
+}
+
+/** A sheet ready to draw: rows of cells, the widest row's width, its merged blocks. */
+interface Grid {
+  rows: GridCell[][];
+  cols: number;
+  merges: GridMerge[];
+}
+
+/** A sheet of the text as read — tab-separated rows — as a grid. */
+function textGrid(text: string): Grid {
+  const { rows, cols } = sheetRows(text);
+  return { rows: rows.map((r) => r.map(cellText)), cols, merges: [] };
+}
+
+/**
+ * A worksheet of the original workbook as a grid, from A1 so the column letters
+ * are the file's own. Each cell shows its formatted text — the number and date
+ * formats the provider set, as Excel shows them — with the stored value on
+ * hover. The extent is the last cell that holds anything: a workbook's own range
+ * is often padded far past its data.
+ */
+function workbookGrid(XLSX: typeof import("xlsx"), ws: WorkSheet, textual: boolean): Grid {
+  let lastRow = -1;
+  let lastCol = -1;
+  for (const key of Object.keys(ws)) {
+    if (key.startsWith("!")) continue;
+    const cell = ws[key];
+    if (cell?.v == null && cell?.w == null) continue;
+    if (String(cell.w ?? cell.v).trim() === "") continue;
+    const at = XLSX.utils.decode_cell(key);
+    lastRow = Math.max(lastRow, at.r);
+    lastCol = Math.max(lastCol, at.c);
+  }
+  const rows: GridCell[][] = [];
+  for (let r = 0; r <= lastRow; r++) {
+    const row: GridCell[] = [];
+    for (let c = 0; c <= lastCol; c++) {
+      const cell = ws[XLSX.utils.encode_cell({ r, c })];
+      if (cell?.v == null && cell?.w == null) { row.push({ text: "", full: "", numeric: false }); continue; }
+      const text = String(cell.w ?? cell.v);
+      const stored = cell.v == null ? text : String(cell.v);
+      // A text file's cells are all text, so a figure in one is aligned by its look.
+      row.push({ text, full: stored, numeric: cell.t === "n" || (textual && cellText(text).numeric) });
+    }
+    rows.push(row);
+  }
+  const merges = ((ws["!merges"] ?? []) as GridMerge[])
+    .filter((m) => m.s.r <= lastRow && m.s.c <= lastCol)
+    .map((m) => ({ s: m.s, e: { r: Math.min(m.e.r, lastRow), c: Math.min(m.e.c, lastCol) } }));
+  return { rows, cols: lastCol + 1, merges };
+}
+
+type Workbook =
+  | { status: "loading" }
+  | { status: "ready"; sheets: SheetView[] }
+  | { status: "failed"; reason: string };
+
+interface SheetView {
+  key: string;
+  label: string;
+  grid: Grid;
+}
+
+/** The original spreadsheet, opened in the browser with the workbook reader. */
+function useWorkbook(url: string, format: string): Workbook {
+  const [state, setState] = useState<Workbook>({ status: "loading" });
+  useEffect(() => {
+    let alive = true;
+    setState({ status: "loading" });
+    const csv = format === "CSV" || format === "TSV";
+    Promise.all([import("xlsx"), fetch(url, { cache: "no-store" })])
+      .then(async ([XLSX, r]) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const bytes = new Uint8Array(await r.arrayBuffer());
+        // A TEXT FILE IS SHOWN AS WRITTEN. A CSV, or a broker's HTML table saved
+        // as .xls (LKP's export), carries its values as characters, and the
+        // reader would otherwise parse them: "01/07/2026" (1 July) became a date
+        // serial read month-first as 7 January. `raw` keeps every cell's text;
+        // a binary workbook's cells are typed by the file and are unaffected.
+        // Its built-in short date (format 14) follows the reader's locale in
+        // Excel; the workbook reader would draw it month-first, so it is drawn
+        // day-first, as these statements print dates.
+        const textual = csv || /^\s*</.test(new TextDecoder().decode(bytes.subarray(0, 64)));
+        const wb = csv
+          ? XLSX.read(new TextDecoder().decode(bytes), { type: "string", raw: true })
+          : XLSX.read(bytes, { type: "array", raw: true, dateNF: "dd/mm/yyyy" });
+        const sheets = wb.SheetNames.map((name) => ({ key: name, label: name, grid: workbookGrid(XLSX, wb.Sheets[name], textual) }));
+        return { status: "ready", sheets } as Workbook;
+      })
+      .catch((e: Error) => ({
+        status: "failed",
+        reason: `The browser could not open this workbook (${e.message}). Download it to open it in Excel, or see its text as read.`,
+      }) as Workbook)
+      .then((s) => { if (alive) setState(s); });
+    return () => { alive = false; };
+  }, [url, format]);
+  return state;
+}
+
+function OriginalSheets({ url, format }: { url: string; format: string }) {
+  const wb = useWorkbook(url, format);
+  if (wb.status === "loading") return <Opening what="Opening the workbook…" />;
+  if (wb.status === "failed") {
+    return (
+      <AbsentSection what="This workbook did not open here" needs={wb.reason}>
+        <p className="max-w-xl text-xs text-slate-500" data-prose-ok="why the original workbook did not open">{wb.reason}</p>
+      </AbsentSection>
+    );
+  }
+  return <SheetTabs sheets={wb.sheets} />;
+}
+
+/**
+ * The original PDF in the browser's own viewer — zoom, search, print and page
+ * thumbnails as the reader's browser draws them. A statement cut from a bundled
+ * file opens at its own first page. A password-protected PDF asks for its
+ * password in the viewer.
+ */
+function OriginalPdf({ url, file, title }: { url: string; file: PublishedFile; title: string }) {
+  return (
+    <iframe src={file.part ? `${url}#page=${file.part.from}` : url} title={title} data-preview-pdf
+      className="h-full min-h-0 w-full flex-1 rounded-lg border border-ink-700 bg-ink-800" />
+  );
+}
+
+function Opening({ what }: { what: string }) {
+  return (
+    <div role="status" className="flex items-center justify-center gap-2 py-16 text-sm text-slate-400">
+      <Loader2 className="h-4 w-4 animate-spin" /> {what}
+    </div>
+  );
+}
+
+// ── THE TEXT AS READ ─────────────────────────────────────────────────────────
+
 /** A PDF's pages, one after another, each as the text it carries. */
 function PageList({ pages }: { pages: PageText[] }) {
   return (
@@ -95,13 +267,35 @@ function PageList({ pages }: { pages: PageText[] }) {
   );
 }
 
-/** One sheet laid back out as a grid: column letters across, row numbers down. */
-function SheetGrid({ text }: { text: string }) {
-  const { rows, cols } = useMemo(() => sheetRows(text), [text]);
+const EMPTY_CELL: GridCell = { text: "", full: "", numeric: false };
+
+/** One sheet as a grid: column letters across, row numbers down, merged blocks
+ *  drawn as one cell. */
+function SheetGrid({ grid }: { grid: Grid }) {
+  const { rows, cols, merges } = grid;
   const [shown, setShown] = useState(ROW_STEP);
-  useEffect(() => setShown(ROW_STEP), [text]);
+  useEffect(() => setShown(ROW_STEP), [grid]);
   if (!rows.length) return <AbsentSection what="This sheet is empty" needs="The file carries this sheet with no cells in it." />;
-  const visible = rows.slice(0, shown);
+  const body = (allRows: boolean) => {
+    const drawn = allRows ? rows.length : Math.min(shown, rows.length);
+    const { spans, covered } = mergeLayout(merges, drawn);
+    return rows.slice(0, drawn).map((r, i) => (
+      <tr key={i}>
+        <td className="mono px-2 py-1 text-right text-[10.5px] text-slate-600">{i + 1}</td>
+        {Array.from({ length: cols }, (_, c) => {
+          if (covered.has(`${i}:${c}`)) return null;
+          const cell = r[c] ?? EMPTY_CELL;
+          const span = spans.get(`${i}:${c}`);
+          return (
+            <td key={c} rowSpan={span?.rowSpan} colSpan={span?.colSpan} title={cell.full !== cell.text ? cell.full : undefined}
+              className={`whitespace-nowrap px-3 py-1 text-slate-200 ${cell.numeric ? "mono text-right" : ""}`}>
+              {cell.text}
+            </td>
+          );
+        })}
+      </tr>
+    ));
+  };
   return (
     <div data-preview-sheet-rows={rows.length}>
       <div className="overflow-auto rounded-lg border border-ink-700">
@@ -114,22 +308,7 @@ function SheetGrid({ text }: { text: string }) {
               {Array.from({ length: cols }, (_, c) => <th key={c} className="px-3 py-1.5 font-medium">{columnLetters(c)}</th>)}
             </tr>
           </thead>
-          <tbody>
-            {(allRows ? rows : visible).map((r, i) => (
-              <tr key={i}>
-                <td className="mono px-2 py-1 text-right text-[10.5px] text-slate-600">{i + 1}</td>
-                {Array.from({ length: cols }, (_, c) => {
-                  const cell = cellText(r[c] ?? "");
-                  return (
-                    <td key={c} title={cell.full !== cell.text ? cell.full : undefined}
-                      className={`whitespace-nowrap px-3 py-1 text-slate-200 ${cell.numeric ? "mono text-right" : ""}`}>
-                      {cell.text}
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
-          </tbody>
+          <tbody>{body(allRows)}</tbody>
           </>}
         </ExportableTable>
       </div>
@@ -147,37 +326,54 @@ function SheetGrid({ text }: { text: string }) {
 }
 
 /** A workbook's sheets, one tab each — a CSV is a workbook of one. */
-function SheetTabs({ pages }: { pages: PageText[] }) {
+function SheetTabs({ sheets }: { sheets: SheetView[] }) {
   const [at, setAt] = useState(0);
-  const sheet = pages[Math.min(at, pages.length - 1)];
+  if (!sheets.length) return <AbsentSection what="This workbook has no sheets" needs="The file carries no worksheet to show." />;
+  const sheet = sheets[Math.min(at, sheets.length - 1)];
   return (
     <div>
-      {pages.length > 1 && (
+      {sheets.length > 1 && (
         <div className="mb-3 flex flex-wrap gap-1.5" role="tablist" aria-label="Sheets in this file">
-          {pages.map((p, i) => (
-            <button key={p.page} type="button" role="tab" aria-selected={i === at} onClick={() => setAt(i)}
-              data-preview-sheet-tab={p.page}
+          {sheets.map((s, i) => (
+            <button key={s.key} type="button" role="tab" aria-selected={i === at} onClick={() => setAt(i)}
+              data-preview-sheet-tab={s.key}
               className={`rounded-md border px-3 py-1 text-xs font-medium ${i === at
                 ? "border-champagne-500/50 bg-champagne-500/10 text-champagne-400"
                 : "border-ink-600 bg-ink-800 text-slate-300 hover:bg-ink-700"}`}>
-              Sheet {p.page}
+              {s.label}
             </button>
           ))}
         </div>
       )}
-      <SheetGrid text={sheet.text} />
+      <SheetGrid grid={sheet.grid} />
     </div>
   );
 }
+
+/** The text as read of a spreadsheet: its sheets, numbered as the reader wrote them. */
+function TextSheets({ pages }: { pages: PageText[] }) {
+  const sheets = useMemo(() => pages.map((p) => ({ key: String(p.page), label: `Sheet ${p.page}`, grid: textGrid(p.text) })), [pages]);
+  return <SheetTabs sheets={sheets} />;
+}
+
+type View = "original" | "text";
+const VIEWS: readonly ViewDef<View>[] = [
+  { key: "original", label: "Original file", icon: FileText, title: "The file as the provider sent it" },
+  { key: "text", label: "Text as read", icon: Table2,
+    title: "The text the ingest pipeline read from this file — the record every figure on this site is built from" },
+];
+
+const ACTION = "inline-flex shrink-0 items-center gap-1 rounded-md border border-ink-600 bg-ink-800 px-2.5 py-1.5 text-xs font-medium text-slate-300 hover:bg-ink-700";
 
 /**
  * THE PREVIEW WINDOW. Opened from a file's row in a Statement Library folder;
  * Escape, the close button or a click outside the window closes it.
  *
- * WHAT IT SHOWS ON ITS FACE: the text as read from the file, labelled so, with
- * the original file's name — a reader is never left to think the page drew the
- * statement's own layout. A file the pipeline could not read says why, in the
- * archive's words, through `AbsentSection`.
+ * It opens on the ORIGINAL FILE — a PDF in the browser's own viewer, a workbook
+ * drawn from its own cells — with the TEXT AS READ one switch away, so a reader
+ * can hold the two side by side. Each view says which it is; a file this build
+ * did not publish opens on its text and says why, and a file the pipeline could
+ * not read says why in the archive's words, through `AbsentSection`.
  *
  * Opened deliberately, it shows the statement whole: like Data Audit's raw page
  * text, a document may name the ring-fenced holding (the family's own email
@@ -185,10 +381,16 @@ function SheetTabs({ pages }: { pages: PageText[] }) {
  */
 export function StatementPreview({ doc, onClose }: { doc: LibraryDoc; onClose: () => void }) {
   const loaded = usePages(doc.fileKey);
+  const original = useOriginal(doc.fileKey);
+  const [picked, setPicked] = useState<View | null>(null);
+  const view: View = picked ?? (original.status === "missing" ? "text" : "original");
+  const published = original.status === "ready" ? original : null;
   const closeRef = useRef<HTMLButtonElement>(null);
   const close = useRef(onClose);
   close.current = onClose;
   const sheet = isSheetFormat(doc.format);
+  // The PDF viewer takes the whole window and scrolls itself.
+  const fills = view === "original" && !!published && !sheet;
 
   // Focus moves into the window when it opens and back to the row that opened
   // it when it closes.
@@ -212,6 +414,7 @@ export function StatementPreview({ doc, onClose }: { doc: LibraryDoc; onClose: (
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div role="dialog" aria-modal="true" aria-label={`${doc.reportLabel} — ${doc.fileName}`}
         data-statement-preview={doc.fileKey} data-preview-state={loaded.status} data-preview-format={doc.format}
+        data-preview-view={view} data-preview-original={original.status}
         className="flex h-full max-h-[880px] w-full max-w-5xl flex-col overflow-hidden rounded-xl border border-ink-700 bg-ink-900 shadow-2xl">
 
         <div className="flex items-start gap-3 border-b border-ink-700 px-4 py-3">
@@ -222,38 +425,77 @@ export function StatementPreview({ doc, onClose }: { doc: LibraryDoc; onClose: (
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
               <span className="text-sm font-semibold text-slate-100">{doc.reportLabel}</span>
               <Pill>{doc.format}</Pill>
-              {count != null && <Pill tone="info">{count} {sheet ? (count === 1 ? "sheet" : "sheets") : (count === 1 ? "page" : "pages")}</Pill>}
-              {count != null && <Pill><span title="The text the ingest pipeline read from this file — the record every figure on this site is built from. The file's own layout and styling are not reproduced.">Text as read</span></Pill>}
+              {published && <Pill>{fileSize(published.file.bytes)}</Pill>}
+              {published?.file.encrypted && (
+                <Pill tone="warn" icon={<Lock className="h-3 w-3" />}>
+                  <span title="This PDF opens with its account holder's statement password, and the viewer asks for it. Its text, as read, needs none.">
+                    Password-protected
+                  </span>
+                </Pill>
+              )}
+              {published?.file.part && (
+                <Pill tone="info">
+                  <span title="This statement is one part of a bundled PDF; the viewer opens the file at its first page.">
+                    {published.file.part.from === published.file.part.to
+                      ? `Page ${published.file.part.from} of the file`
+                      : `Pages ${published.file.part.from}–${published.file.part.to} of the file`}
+                  </span>
+                </Pill>
+              )}
+              {view === "text" && count != null && (
+                <Pill tone="info">{count} {sheet ? (count === 1 ? "sheet" : "sheets") : (count === 1 ? "page" : "pages")}</Pill>
+              )}
             </div>
             <div className="mono mt-1 truncate text-[11.5px] text-slate-400" title={doc.fileName}>{doc.fileName}</div>
             {meta.length > 0 && <div className="mt-0.5 text-[11px] text-slate-500">{meta.join(" · ")}</div>}
           </div>
-          {doc.hasSheets && (
-            <Link to={`/audit?file=${encodeURIComponent(doc.fileKey)}`}
-              className="inline-flex shrink-0 items-center gap-1 rounded-md border border-ink-600 bg-ink-800 px-2.5 py-1.5 text-xs font-medium text-slate-300 hover:bg-ink-700"
-              title="Open what was read from this file, table by table, in Data Audit">
-              <ExternalLink className="h-3.5 w-3.5" /> Data Audit
-            </Link>
-          )}
-          <button ref={closeRef} type="button" onClick={onClose} aria-label="Close preview" title="Close (Esc)"
-            className="btn-ghost h-8 shrink-0 px-2">
-            <X className="h-4 w-4" />
-          </button>
+          <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
+            {published && (
+              <>
+                <a href={published.url} download={doc.fileName} className={ACTION} title={`Download ${doc.fileName}`} data-preview-download>
+                  <Download className="h-3.5 w-3.5" /> Download
+                </a>
+                <a href={published.url} target="_blank" rel="noopener noreferrer" className={ACTION} title="Open the original file in a new tab">
+                  <ExternalLink className="h-3.5 w-3.5" /> New tab
+                </a>
+              </>
+            )}
+            {doc.hasSheets && (
+              <Link to={`/audit?file=${encodeURIComponent(doc.fileKey)}`} className={ACTION}
+                title="Open what was read from this file, table by table, in Data Audit">
+                <Table2 className="h-3.5 w-3.5" /> Data Audit
+              </Link>
+            )}
+            <button ref={closeRef} type="button" onClick={onClose} aria-label="Close preview" title="Close (Esc)"
+              className="btn-ghost h-8 shrink-0 px-2">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-auto px-4 py-4">
-          {loaded.status === "loading" && (
-            <div role="status" className="flex items-center justify-center gap-2 py-16 text-sm text-slate-400">
-              <Loader2 className="h-4 w-4 animate-spin" /> Opening the file…
-            </div>
+        <div className="px-4 pt-3">
+          <ViewToggle views={VIEWS} active={view} onChange={setPicked} />
+        </div>
+
+        <div className={`min-h-0 flex-1 px-4 pb-4 ${fills ? "flex flex-col" : "overflow-auto"}`}>
+          {view === "original" && original.status === "loading" && <Opening what="Opening the file…" />}
+          {view === "original" && original.status === "missing" && (
+            <AbsentSection what="The original file is not in this build" needs={original.reason}>
+              <p className="max-w-xl text-xs text-slate-500" data-prose-ok="why the original file is not shown">{original.reason}</p>
+            </AbsentSection>
           )}
-          {loaded.status !== "loading" && loaded.status !== "ready" && (
+          {view === "original" && published && (sheet
+            ? <OriginalSheets url={published.url} format={doc.format} />
+            : <OriginalPdf url={published.url} file={published.file} title={`${doc.reportLabel} — ${doc.fileName}`} />)}
+
+          {view === "text" && loaded.status === "loading" && <Opening what="Opening the file…" />}
+          {view === "text" && loaded.status !== "loading" && loaded.status !== "ready" && (
             <AbsentSection what={loaded.status === "unread" ? "Nothing could be read from this file" : "This file's contents did not load"}
               needs={loaded.reason}>
               <p className="max-w-xl text-xs text-slate-500" data-prose-ok="why this file has no contents to show">{loaded.reason}</p>
             </AbsentSection>
           )}
-          {loaded.status === "ready" && (sheet ? <SheetTabs pages={loaded.pages} /> : <PageList pages={loaded.pages} />)}
+          {view === "text" && loaded.status === "ready" && (sheet ? <TextSheets pages={loaded.pages} /> : <PageList pages={loaded.pages} />)}
         </div>
       </div>
     </div>,

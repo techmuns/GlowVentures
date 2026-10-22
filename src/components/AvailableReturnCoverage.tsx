@@ -24,12 +24,37 @@ export function AvailableReturnCoverage({ line: l, selection, accounts, money, f
   }) : [];
   const gaps = [...l.missing].sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
   const count = new Set(l.units.map(u => u.accountId)).size;
-  const reason = (line: SelectedLine) => line.measured?.reason ?? (line.missing.length ? returnGapText(line.missing[0].reason, selection.start)
-    : 'No complete value and money record is available for these dates.');
+  const reason = (line: SelectedLine) => returnGapText(line.measured?.reason ?? line.missing[0]?.reason
+    ?? 'We need values and dated payments for these dates.', selection.start);
   return (
       <div data-attribution-coverage className="space-y-3 whitespace-normal font-normal text-left">
         <p className="text-slate-100">{count ? <>Based on the available records for <strong>{count} {count === 1 ? 'account' : 'accounts'}</strong> only.</>
           : 'No account has enough information for this calculation on these dates.'}</p>
+        {field === 'return' && l.returnPct == null && (l.units.length > 0 || !l.missing.length) && <p className="rounded-lg bg-ink-900 p-3">{reason(l)}</p>}
+        {notes.length > 0 && <div><p className="font-semibold text-slate-100">Newer records still need checking</p>
+          <p>These accounts still use their last checked statement.</p>
+          <ul className="mt-2 space-y-2">{notes.map((n, i) => <li key={i}><strong>{n.label}</strong><p>{returnGapText(n.reason, selection.start)}</p><details><summary>Statement detail</summary>{n.reason}</details></li>)}</ul>
+        </div>}
+        <div data-attribution-missing>
+          <p className="font-semibold text-slate-100">What is missing?</p>
+          {l.missing.length ? <>
+            <p className="mt-1">These items are left out. Here is what we need to include them.</p>
+            <ul className="mt-3 space-y-3">{gaps.map((g, i) => <li key={`${g.label}|${i}`} data-return-gap={g.accountId} className="rounded-lg bg-ink-900 p-3">
+              <p className="font-medium text-slate-100">{(() => {
+                const source = accounts.find(a => a.accountId === g.accountId);
+                const suffix = source ? ` · ${source.owner} · ${source.provider} · account ${source.accountNo}` : '';
+                return suffix && g.label.endsWith(suffix) ? g.label.slice(0, -suffix.length) : g.label;
+              })()}</p>
+              <p className="mt-1" data-return-gap-reason>{returnGapText(g.reason, selection.start)}</p>
+              <details className="mt-2 text-xs text-slate-400"><summary className="cursor-pointer">Account and statement details</summary>
+                <p className="mt-1">{(() => { const source = accounts.find(a => a.accountId === g.accountId); return source ? `${source.owner} · ${source.provider} · account ${source.accountNo} · statement ${fmtDate(source.asOf)}` : g.accountId; })()}{g.value != null ? ` · ${money(g.value)}` : ''}</p>
+                <p className="mt-1">{g.reason}</p>
+              </details>
+            </li>)}</ul>
+          </> : <p className="mt-1">{l.units.length ? 'All available records for this row are included. Records missing elsewhere are listed in the total’s info card.' : reason(l)}</p>}
+        </div>
+        {l.units.length > 0 && <details data-attribution-method><summary className="ring-focus cursor-pointer rounded text-slate-200">How it’s calculated</summary>
+          <div className="mt-3 space-y-3">
         <p>{selection.inception ? 'Since the first investment' : `Selected period: ${dates}`} · {type.label}{l.measured?.basis === 'annual' ? ' · per year' : ' · not annualised'}</p>
         {l.units.length > 0 && <>
           <p>{l.positions.length > 0 && <>The covered holdings are worth <strong>{money(coveredValue)}</strong> out of {money(l.value)} in total current holdings. </>}
@@ -58,26 +83,8 @@ export function AvailableReturnCoverage({ line: l, selection, accounts, money, f
             <div className="contents" key={String(label)}><dt className="text-slate-400">{label}</dt><dd className="text-right tabular text-slate-100">{money(amount as number)}</dd></div>)}
           <dt className="text-slate-400">Gain / loss</dt><dd className="text-right tabular text-slate-100">{money(l.gain!, true)}</dd>
         </dl>}
-        {field === 'return' && l.returnPct == null && <p className="rounded-lg bg-ink-900 p-3">{reason(l)}</p>}
-        {notes.length > 0 && <div><p className="font-semibold text-slate-100">Newer records still need checking</p>
-          <p>We kept the last verified record for these accounts. Their newer statements cannot yet be used.</p>
-          <ul className="mt-2 space-y-2">{notes.map((n, i) => <li key={i}><strong>{n.label}</strong><p>{returnGapText(n.reason, selection.start)}</p><details><summary>Statement detail</summary>{n.reason}</details></li>)}</ul>
-        </div>}
-        <div data-attribution-missing>
-          <p className="font-semibold text-slate-100">What is missing?</p>
-          {l.missing.length ? <>
-            <p className="mt-1">These holdings are left out of this figure. Each item explains why and which records are needed.</p>
-            <ul className="mt-3 space-y-3">{gaps.map((g, i) => <li key={`${g.label}|${i}`} data-return-gap={g.accountId}>
-              <p className="font-medium text-slate-100">{(() => {
-                const source = accounts.find(a => a.accountId === g.accountId);
-                const suffix = source ? ` · ${source.owner} · ${source.provider} · account ${source.accountNo}` : '';
-                return suffix && g.label.endsWith(suffix) ? g.label.slice(0, -suffix.length) : g.label;
-              })()}</p>
-              <p className="text-xs text-slate-400">{(() => { const source = accounts.find(a => a.accountId === g.accountId); return source ? `${source.owner} · ${source.provider} · account ${source.accountNo} · statement ${fmtDate(source.asOf)} · ` : ''; })()}{g.value != null ? `${money(g.value)} · ` : ''}{returnGapText(g.reason, selection.start)}</p>
-              <details className="mt-1 text-xs text-slate-400"><summary className="cursor-pointer">Statement detail</summary><p className="mt-1">{g.reason}</p></details>
-            </li>)}</ul>
-          </> : <p className="mt-1">{l.units.length ? 'All available records for this row are included. Records missing elsewhere are listed in the total’s info card.' : reason(l)}</p>}
-        </div>
+          </div>
+        </details>}
         {l.units.length > 0 && <details data-attribution-included><summary className="ring-focus cursor-pointer rounded text-slate-200">View included accounts and dates</summary>
           <ul className="mt-3 space-y-3 text-xs">{l.units.map(u => <li key={u.key}><p className="text-slate-100">{u.label}</p>
             <p>{u.from ? fmtDate(u.from) : 'Purchase-cost record'} → {u.to ? fmtDate(u.to) : 'Date unavailable'} · closing value {money(u.close)} · gain {money(u.gain, true)}</p></li>)}</ul>
