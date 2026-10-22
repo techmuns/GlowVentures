@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { cashInstruments, instrumentIndex, resolveInstrument, type Listing } from "../../../shared/upstoxInstrumentLookup.mjs";
 import { UPSTOX_INSTRUMENTS, UPSTOX_ISIN_SYMBOLS } from "../../../shared/upstoxInstruments.mjs";
 import { BOOK_POSITIONS } from "../../data/glowData";
-import { applyQuotes, holdingQuoteSymbolFor, quoteSymbolFor, symbolFor, type QuoteFeed } from "../quotes";
+import { applyQuotes, holdingQuoteSymbolFor, moveSymbolFor, quoteSymbolFor, symbolFor, type QuoteFeed } from "../quotes";
 import { applyFundNavs } from "../fundNavs";
 
 const listing = (segment: string, isin: string, symbol: string, name = "Example Limited", series = "EQ"): Listing => ({
@@ -55,4 +55,24 @@ assert.equal(liquidLive.live, true);
 assert.equal(liquidLive.currentPrice, 1000);
 assert.equal(applyFundNavs([liquidLive])[0].currentPrice, 1000, "intraday ETF quote wins over the NAV overlay");
 assert.equal(holdingQuoteSymbolFor({ ...liquid, isin: null }), null, "fund pricing requires its exact listed-unit identity");
+
+// Stage 10hb: NSE is a review line the family placed on the listed side, and
+// its own ISIN is a BSE listing — priced off that, never off its name.
+const nseLines = BOOK_POSITIONS.filter((p) => p.securityKey === "national-stock-exchange-of-india");
+assert.ok(nseLines.length === 2 && nseLines.every((p) => p.review && p.marketSide === "listed" && p.isin === "INE721I01024"));
+assert.equal(UPSTOX_ISIN_SYMBOLS["INE721I01024"], "BSE:NSE");
+assert.equal(UPSTOX_INSTRUMENTS["BSE:NSE"].key, "BSE_EQ|INE721I01024");
+assert.equal(UPSTOX_INSTRUMENTS["BSE:NSE"].tradingSymbol, "NSE");
+assert.equal(moveSymbolFor(nseLines[0]), "BSE:NSE");
+assert.equal(moveSymbolFor(yash), "BSE:YASHHV", "a BSE-only listing's move is read under its exchange-qualified key");
+assert.equal(moveSymbolFor({ securityKey: "hdfc-bank", symbol: "HDFCBANK", isin: "INE040A01034" }), "HDFCBANK", "an NSE symbol is read as before");
+const nseFeed: QuoteFeed = { ...feed, quotes: { "BSE:NSE": { ...feed.quotes["BSE:YASHHV"], price: 2000, prevClose: 1980 } } };
+const nseLive = applyQuotes(nseLines, nseFeed);
+assert.ok(nseLive.every((p) => p.live && p.currentPrice === 2000), "the listed review line takes its BSE quote");
+assert.equal(nseLive[0].marketValue, nseLines[0].quantity! * 2000);
+assert.equal(nseLive[0].symbol, null, "the BSE key never enters NSE vendor calls");
+const privateLine = BOOK_POSITIONS.find((p) => p.review && p.marketSide === "private" && typeof p.quantity === "number")!;
+assert.ok(privateLine, "the book carries a private review line with units");
+assert.equal(applyQuotes([{ ...privateLine, isin: "INE721I01024" }], nseFeed)[0].live, false,
+  "a private review line is never priced, even when its ISIN resolves");
 console.log("Company CMP: exact NSE/BSE identities, fund-only companies, conflicts and valuation overlay passed");

@@ -314,10 +314,16 @@ export function applyCorporateActionQuotes(
  * them (null where a sale is not yet settled by a capital-gain lot), valued at
  * the statement's mark until a quote moves it. `realizedLotsAfter` is spent:
  * every one of those sales is inside the roll.
+ *
+ * A statement that prints a value and no price (ICICI NSDL's Yash Highvoltage,
+ * rolled on the review, Stage 10hb) marks a unit at that value over its own
+ * units — never the old count's whole value over the new count. And a roll
+ * whose sale cash is unverified carries no return.
  */
 function rolledPosition(p: Position, rf: NonNullable<Position["rolledForward"]>): Position {
   const quantity = rf.quantity;
-  const marketValue = p.currentPrice === null ? p.marketValue : quantity * p.currentPrice;
+  const mark = p.currentPrice ?? (typeof p.quantity === "number" && p.quantity > 0 ? p.marketValue / p.quantity : null);
+  const marketValue = mark === null ? p.marketValue : quantity * mark;
   const cost = rf.costBasis;
   const unrealizedPnL = cost === null ? null : marketValue - cost;
   return {
@@ -333,8 +339,9 @@ function rolledPosition(p: Position, rf: NonNullable<Position["rolledForward"]>)
     // the whole gain realised — though its return on what was deployed is a
     // measurement: `fifoReturnPct` abstains exactly where the cost held plus
     // the cost of the units sold is not positive.
-    returnPct: cost === null || unrealizedPnL === null ? null
+    returnPct: cost === null || unrealizedPnL === null || rf.hprUnavailableReason ? null
       : fifoReturnPct(marketValue, cost, rf.realizedPnL, rf.costOfUnitsSold, p.dividendReceived),
+    ...(rf.hprUnavailableReason ? { hprUnavailableReason: rf.hprUnavailableReason } : {}),
   };
 }
 

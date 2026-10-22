@@ -113,7 +113,7 @@ Full HPR is withheld on 1 recovered-cost record(s) with unverified sale proceeds
 
 ## Source qualifications
 
-- The March ICICI snapshot keeps its March quantity and mark. Yash has later June disposals whose cash signs conflict with their transaction type; the recorded later sales block a live quote on those old units. Newer broker holdings and sale confirmations are still required before rolling that snapshot forward.
+- The March ICICI snapshot keeps its March quantity and mark on the statement basis. Yash has later June disposals whose cash signs conflict with their transaction type. At the family's choice (22 Oct 2026) the live layer rolls it forward on those dated units, which tie to the review's own 30 Jun closing; the proceeds stay unverified, so realised gain and HPR remain absent until sale confirmations arrive.
 - Grand Continent’s split row repeats a purchase amount. It is excluded from cash only because its duplicate and the independent closing-at-cost control agree; the split carries the original lots and their cost.
 - The EMA payment register establishes the matched holding’s purchase cost. Separate realised gains and dividends remain unreported; they are not written as measured zero.
 - A Closing row terminates one review folio block. A second folio of the same product and owner is never pooled with it; exactly one block must close at the recorded holding quantity.

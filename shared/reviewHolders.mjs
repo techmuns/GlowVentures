@@ -195,13 +195,16 @@ export const VALUED_HOLDERS = [
   // review as it stood and left unchanged. The family said on 13 Oct 2026 that
   // NSE has since listed, so its asset class is `Equity` (a listed share's) and
   // its side is `listed` (`listed` below, which `push` reads for `marketSide`).
-  // The review's value is kept to the rupee: no exchange price is published to
-  // this book, and inventing a quote, a symbol or an exchange to mark the new
-  // listing is the fabrication this book exists to prevent. A dated, cited
+  // The review's value is kept to the rupee on the STATEMENT basis. Inventing a
+  // quote, a symbol or an exchange to mark the new listing is the fabrication
+  // this book exists to prevent — and none is invented: since 22 Oct 2026
+  // (Stage 10hb, *"use the BSE symbols for them to fetch live prices"*) the LIVE
+  // layer marks it at the BSE quote its own ISIN resolves to in Upstox's BSE
+  // master, `BSE_EQ|INE721I01024` (BSE: NSE, scrip 544937). A dated, cited
   // family decision, the standing of FAMILY_MARKET_SIDE — delete `listed` and
   // the holding is private again.
   { tab: "unlisted", line: /^National Stock Exchange$/, name: "National Stock Exchange of India", key: "national-stock-exchange-of-india", assetClass: "Equity",
-    listed: { since: "2026-10-13", source: "family", why: "the family confirmed NSE has listed; the review's value is kept and no exchange price is published to this book",
+    listed: { since: "2026-10-13", source: "family", why: "the family confirmed NSE has listed; the statement basis keeps the review's value, and since 22 Oct 2026 the live price is its BSE quote (BSE: NSE, matched by ISIN INE721I01024)",
       // No statement, filing or vendor page in this book places NSE, and the review
       // prints no sector for it. It is a stock exchange, which AMFI files under the
       // industry "Capital Markets" (as it does BSE Ltd); the GICS answer is whatever
