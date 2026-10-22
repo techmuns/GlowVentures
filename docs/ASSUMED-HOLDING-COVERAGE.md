@@ -27,6 +27,12 @@ prices near both dates, reconcile split factors with the corporate-action captur
 check gross dividend entitlements and avoid counting a verified account twice.
 The info buttons list the actual included holdings, dates and remaining gaps.
 
+A read-only real-price check of Bharat’s HDFC account found 10 of its 12 listed
+share candidates calculable from 1 September through the latest completed
+October prices. Havells remains excluded because the event record’s ISIN differs;
+Bhagyanagar remains excluded because its demerger needs a reconciled share balance.
+Insolation resolves through its BSE listing. No source quantity or event was guessed.
+
 ## Fields this fills
 
 - Opening and closing market values from recorded units and dated public prices.
