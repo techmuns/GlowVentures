@@ -1,5 +1,6 @@
 import { fmtDate } from '@/lib/format';
 import type { Account } from '@/lib/types';
+import { holdingAssumptionText } from '@/lib/assumedHoldingReturns';
 import { RETURN_TYPES } from '@/lib/periodReturns';
 import { returnGapText, type ReturnSelection, type SelectedLine } from '@/lib/selectedSegmentReturns';
 
@@ -24,10 +25,15 @@ export function AvailableReturnCoverage({ line: l, selection, accounts, money, f
   }) : [];
   const gaps = [...l.missing].sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
   const count = new Set(l.units.map(u => u.accountId)).size;
-  const reason = (line: SelectedLine) => returnGapText(line.measured?.reason ?? line.missing[0]?.reason
-    ?? 'We need values and dated payments for these dates.', selection.start);
+  const assumed = l.units.filter(u => u.assumption);
+  const reason = (line: SelectedLine) => !line.measured?.reason && line.missing[0]?.plainReason ? line.missing[0].reason
+    : returnGapText(line.measured?.reason ?? line.missing[0]?.reason ?? 'We need values and dated payments for these dates.', selection.start);
   return (
       <div data-attribution-coverage className="space-y-3 whitespace-normal font-normal text-left">
+        {assumed.length > 0 && <div className="rounded-lg bg-ink-900 p-3" data-return-assumption-summary>
+          <p>{holdingAssumptionText(new Set(assumed.map(u => u.assumption!.owner)).size === 1 ? assumed[0].assumption!.owner : 'each owner')}</p>
+          <p className="mt-1 text-xs">{assumed.length} assumed holdings · published prices and gross dividend entitlements. No new purchase cost is assumed.</p>
+        </div>}
         <p className="text-slate-100">{count ? <>Based on the available records for <strong>{count} {count === 1 ? 'account' : 'accounts'}</strong> only.</>
           : 'No account has enough information for this calculation on these dates.'}</p>
         {field === 'return' && l.returnPct == null && (l.units.length > 0 || !l.missing.length) && <p className="rounded-lg bg-ink-900 p-3">{reason(l)}</p>}
@@ -45,10 +51,10 @@ export function AvailableReturnCoverage({ line: l, selection, accounts, money, f
                 const suffix = source ? ` · ${source.owner} · ${source.provider} · account ${source.accountNo}` : '';
                 return suffix && g.label.endsWith(suffix) ? g.label.slice(0, -suffix.length) : g.label;
               })()}</p>
-              <p className="mt-1" data-return-gap-reason>{returnGapText(g.reason, selection.start)}</p>
+              <p className="mt-1" data-return-gap-reason>{g.plainReason ? g.reason : returnGapText(g.reason, selection.start)}</p>
               <details className="mt-2 text-xs text-slate-400"><summary className="cursor-pointer">Account and statement details</summary>
                 <p className="mt-1">{(() => { const source = accounts.find(a => a.accountId === g.accountId); return source ? `${source.owner} · ${source.provider} · account ${source.accountNo} · statement ${fmtDate(source.asOf)}` : g.accountId; })()}{g.value != null ? ` · ${money(g.value)}` : ''}</p>
-                <p className="mt-1">{g.reason}</p>
+                <p className="mt-1">{g.detail ?? g.reason}</p>
               </details>
             </li>)}</ul>
           </> : <p className="mt-1">{l.units.length ? 'All available records for this row are included. Records missing elsewhere are listed in the total’s info card.' : reason(l)}</p>}
@@ -58,7 +64,7 @@ export function AvailableReturnCoverage({ line: l, selection, accounts, money, f
         <p>{selection.inception ? 'Since the first investment' : `Selected period: ${dates}`} · {type.label}{l.measured?.basis === 'annual' ? ' · per year' : ' · not annualised'}</p>
         {l.units.length > 0 && <>
           <p>{l.positions.length > 0 && <>The covered holdings are worth <strong>{money(coveredValue)}</strong> out of {money(l.value)} in total current holdings. </>}
-            The dated statement values used to close the calculation total <strong>{money(closing)}</strong>. Each statement is used on its own date.</p>
+            The closing values used total <strong>{money(closing)}</strong>. {assumed.length ? 'Labelled assumptions use recorded quantities and published prices; the rest use statements on their own dates.' : 'Each statement is used on its own date.'}</p>
           <p>{field === 'gain' ? 'Gain is the change in value after allowing for money added and taken out. For a purchase-cost record, it includes recorded sale gains and income.'
             : selection.type === 'xirr' ? (l.measured?.basis === 'annual'
               ? `The return allows for when money went in and came back, and is stated per year.${l.measured.working && l.measured.working.days < 365 && l.periodPct != null ? ` This period is ${l.measured.working.days} days, so its result is annualised; over the period itself it is ${l.periodPct >= 0 ? '+' : ''}${l.periodPct.toFixed(2)}%.` : ''}`
@@ -87,7 +93,7 @@ export function AvailableReturnCoverage({ line: l, selection, accounts, money, f
         </details>}
         {l.units.length > 0 && <details data-attribution-included><summary className="ring-focus cursor-pointer rounded text-slate-200">View included accounts and dates</summary>
           <ul className="mt-3 space-y-3 text-xs">{l.units.map(u => <li key={u.key}><p className="text-slate-100">{u.label}</p>
-            <p>{u.from ? fmtDate(u.from) : 'Purchase-cost record'} → {u.to ? fmtDate(u.to) : 'Date unavailable'} · closing value {money(u.close)} · gain {money(u.gain, true)}</p></li>)}</ul>
+            <p>{u.from ? fmtDate(u.from) : 'Purchase-cost record'} → {u.to ? fmtDate(u.to) : 'Date unavailable'} · closing value {money(u.close)} · gain {money(u.gain, true)}{u.assumption ? ' · assumed holding' : ''}</p></li>)}</ul>
         </details>}
       </div>
   );

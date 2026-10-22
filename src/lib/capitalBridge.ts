@@ -35,7 +35,7 @@ import type { ReturnUnit } from './selectedSegmentReturns';
 import { currentHoldings } from './analytics';
 import { fifoTotals } from './fifo';
 
-export type BridgeSplitSource = 'statement' | 'fund-record' | 'purchase-cost';
+export type BridgeSplitSource = 'statement' | 'fund-record' | 'purchase-cost' | 'assumed-holding';
 /**
  * `charges` is null where the record prints none separately — a fund's costs
  * are inside its NAV, a purchase cost's inside the prices paid — so they are
@@ -150,6 +150,9 @@ function stepOf(u: ReturnUnit, b: BridgeBook): BridgeAccount {
   }
   if (u.window) {
     const w = u.window;
+    if (u.assumption) return { ...base, from: w.openDate, to: w.closeDate, opening: w.openValue, added: 0, takenOut: w.capitalOut,
+      split: { realised: 0, unrealised: w.closeValue - w.openValue, income: u.assumption.income, charges: null, source: 'assumed-holding',
+        note: 'Assumed unchanged holding: published prices and gross dividend entitlements; no sale or withdrawal is claimed.' }, unsplitReason: null };
     const own = u.key === u.accountId;
     const fromStatement = own ? statementSplit(b, u.accountId, w.openDate, w.closeDate, w.gain) : null;
     const fund = fromStatement ?? (own ? fundSplit(b, u.accountId, w.openDate, w.closeDate, w.gain) : 'its return covers part of an account');
