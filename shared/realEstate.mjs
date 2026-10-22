@@ -78,6 +78,14 @@ export function validateProperty(raw) {
     if (identity) seen.add(key);
     p.owners.push({ ownerId, name, share });
   }
+  // An earmark names who a property is meant for. It never moves ownership or
+  // value: those follow `owners` until a transfer is recorded there.
+  const earmark = raw.earmark ?? null;
+  if (earmark !== null && (typeof earmark !== "object" || Array.isArray(earmark)
+    || (earmark.recipient != null && (typeof earmark.recipient !== "string" || earmark.recipient.length > 160))
+    || (earmark.recipientId != null && (typeof earmark.recipientId !== "string" || !PROPERTY_ID.test(earmark.recipientId)))
+    || (earmark.note != null && (typeof earmark.note !== "string" || earmark.note.length > 1000)))) return { error: "Check the earmark: a recipient of up to 160 characters and a note of up to 1,000." };
+  p.earmark = earmark === null ? null : { recipientId: earmark.recipientId ?? null, recipient: text(earmark.recipient), note: text(earmark.note) };
   for (const [key, limit] of [["latitude", 90], ["longitude", 180]]) {
     const value = raw[key] ?? null;
     if (value !== null && (!number(value) || Math.abs(value) > limit)) return { error: `Enter a valid ${key}.` };
@@ -93,6 +101,9 @@ export const receivedWithoutPurchase = p => p.acquisition === "Inherited" || p.a
 const receivedEvent = p => p.acquisition === "Inherited" ? "inheritance" : "the gift";
 export const costLabel = p => receivedWithoutPurchase(p) ? `Value on date of ${p.acquisition === "Inherited" ? "inheritance" : "gift"}` : "Cost";
 export const acquiredOnLabel = p => p.acquisition === "Inherited" ? "Inherited on" : p.acquisition === "Gifted" ? "Gifted on" : "Purchased";
+export const isEarmarked = p => p.earmark != null;
+export const earmarkLabel = p => !isEarmarked(p) ? "Not earmarked" : p.earmark.recipient ? `To be gifted to ${p.earmark.recipient}` : "To be gifted · recipient not entered";
+export const EARMARK_MARKER_ONLY = "Marker only: ownership and value stay with the current owners until a transfer is recorded under Family ownership.";
 // Why appreciation is not measured, in a few words and in full. Never a 0% or a 100% in its place.
 export function appreciationGap(p) {
   if (p.value === null) return { short: "No current value", reason: "Needs the current value." };
