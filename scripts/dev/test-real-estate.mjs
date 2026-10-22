@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { validateProperty, propertyFigures, propertyTotal, hasPin, propertyShare, propertyLabel, wholePropertyFigures } from "../../shared/realEstate.mjs";
+import { validateProperty, propertyFigures, propertyTotal, hasPin, propertyShare, propertyLabel, wholePropertyFigures, appreciationGap, costLabel, acquiredOnLabel, isEarmarked, earmarkLabel } from "../../shared/realEstate.mjs";
 import { onRequest } from "../../functions/api/real-estate.js";
 import { property, memoryStore } from "./real-estate-fixtures.mjs";
 import { handlePropertyGeocode } from "../../functions/api/property-geocode.js";
@@ -13,7 +13,38 @@ async function call(body, { origin = site, method = body ? "POST" : "GET", env =
   return { status: response.status, body: await response.json(), headers: response.headers };
 }
 const full = propertyFigures(property());
-check("full property figures, net income and equity", () => assert.deepEqual(full, { share: 1, value: 15000000, cost: 10000000, debt: 3000000, rent: 50000, costs: 5000, equity: 12000000, netRent: 45000, yield: 4, gain: 5000000 }));
+check("full property figures, net income and equity", () => assert.deepEqual(full, { share: 1, value: 15000000, cost: 10000000, debt: 3000000, rent: 50000, costs: 5000, equity: 12000000, netRent: 45000, yield: 4, gain: 5000000, gainPct: 50 }));
+const inherited = patch => validateProperty(property({ acquisition: "Inherited", cost: null, ...patch })).property;
+check("acquisition types are kept; an older record without one reads as not entered", () => {
+  for (const type of ["Purchased", "Inherited", "Gifted"]) assert.equal(validateProperty(property({ acquisition: type })).property.acquisition, type);
+  assert.equal(validateProperty(property()).property.acquisition, "");
+  assert.ok(validateProperty(property({ acquisition: "Bought" })).error);
+});
+check("an inherited property may have no cost: value only, appreciation absent with its reason", () => {
+  const f = propertyFigures(inherited());
+  assert.deepEqual([f.value, f.cost, f.gain, f.gainPct], [15000000, null, null, null]);
+  assert.match(appreciationGap(inherited()).reason, /Inherited, so there is no purchase cost/);
+  assert.equal(propertyTotal([inherited(), property()], "gain").known, 1);
+});
+check("a ₹0 value on the date of inheritance or gift is refused rather than shown as 100% appreciation", () => {
+  assert.match(validateProperty(property({ acquisition: "Inherited", cost: 0 })).error, /date of inheritance blank/);
+  assert.match(validateProperty(property({ acquisition: "Gifted", cost: 0 })).error, /date of the gift blank/);
+});
+check("the value on the date of inheritance is labelled as such and measures appreciation since then", () => {
+  const p = inherited({ cost: 12000000 });
+  assert.equal(costLabel(p), "Value on date of inheritance"); assert.equal(acquiredOnLabel(p), "Inherited on");
+  assert.deepEqual([propertyFigures(p).gain, propertyFigures(p).gainPct], [3000000, 25]);
+  assert.equal(costLabel(property({ acquisition: "Gifted" })), "Value on date of gift"); assert.equal(costLabel(property()), "Cost");
+});
+check("a ₹0 cost on an older record never becomes a 100% or an infinite appreciation", () => {
+  const f = propertyFigures(property({ cost: 0 }));
+  assert.deepEqual([f.cost, f.gain, f.gainPct], [0, null, null]); assert.equal(appreciationGap(property({ cost: 0 })).short, "Cost is ₹0");
+});
+check("no current value means no appreciation, not a loss of the whole cost", () => { assert.equal(propertyFigures(property({ value: null })).gain, null); assert.equal(appreciationGap(property({ value: null })).short, "No current value"); });
+check("an incomplete share hides the amount but keeps the whole-property percentage", () => {
+  const f = propertyFigures(property({ owners: [{ name: "Test owner", ownerId: "test-a", share: null }] }));
+  assert.deepEqual([f.gain, f.gainPct], [null, 50]);
+});
 const scoped = propertyFigures(property(), new Set(["test-a"]));
 check("co-owner values use 60%, while yield stays 4%", () => assert.deepEqual([scoped.value, scoped.cost, scoped.rent, scoped.equity, scoped.netRent, scoped.yield], [9000000, 6000000, 30000, 7200000, 27000, 4]));
 check("an unrelated member has no property share", () => assert.equal(propertyShare(property(), new Set(["other"])), 0));
@@ -53,10 +84,34 @@ check("different entries for one owner stay editable without inflating totals", 
 const overallocated = validateProperty(property({ owners: [{ name: "Test A", ownerId: "test-a", share: 70 }, { name: "Test B", ownerId: "test-b", share: 60 }] })).property;
 check("unfinished shares above 100% save but do not enter family totals", () => { assert.ok(overallocated); assert.equal(propertyFigures(overallocated).value, null); });
 check("unknown and measured zero shares stay distinct", () => { assert.equal(propertyShare(minimal), null); assert.equal(propertyShare(property({ owners: [{ name: "Test A", ownerId: "test-a", share: 0 }] })), 0); });
+const earmarked = validateProperty(property({ earmark: { recipientId: "test-c", recipient: " Test recipient C ", note: "Test note" } })).property;
+check("an older record without an earmark reads as not earmarked", () => { assert.equal(validateProperty(property()).property.earmark, null); assert.equal(isEarmarked(validateProperty(property()).property), false); assert.equal(minimal.earmark, null); });
+check("an earmark keeps its recipient, the recipient's member id and its note", () => {
+  assert.deepEqual(earmarked.earmark, { recipientId: "test-c", recipient: "Test recipient C", note: "Test note" });
+  assert.equal(earmarkLabel(earmarked), "To be gifted to Test recipient C");
+});
+check("an earmark may be saved before its recipient is entered", () => {
+  const p = validateProperty(property({ earmark: {} })).property;
+  assert.deepEqual(p.earmark, { recipientId: null, recipient: "", note: "" }); assert.equal(isEarmarked(p), true);
+  assert.equal(earmarkLabel(p), "To be gifted · recipient not entered");
+});
+check("an earmark is a marker only: figures, shares and member scope stay with the current owners", () => {
+  assert.deepEqual(propertyFigures(earmarked), propertyFigures(property()));
+  assert.deepEqual(propertyFigures(earmarked, new Set(["test-a"])), propertyFigures(property(), new Set(["test-a"])));
+  assert.equal(propertyShare(earmarked, new Set(["test-c"])), 0, "The intended recipient holds no share until a transfer is recorded.");
+  assert.deepEqual(propertyTotal([earmarked], "value"), propertyTotal([property()], "value"));
+});
+for (const [i, earmark] of [["Test"], "Test", { recipient: "x".repeat(161) }, { note: "x".repeat(1001) }, { recipientId: "../bad" }, { recipient: 5 }].entries())
+  check(`invalid earmark ${i + 1} refused`, () => assert.match(validateProperty(property({ earmark })).error, /earmark/));
 assert.equal((await call({ op: "save", property: { id: "test-progressive" } })).status, 200);
 assert.equal((await call()).body.properties.find(p => p.id === "test-progressive").name, "");
 assert.equal((await call({ op: "save", property: { id: "test-progressive", name: "Test later details", value: 5000000, owners: [{ name: "Test owner", share: null }] } })).status, 200);
 assert.equal((await call()).body.properties.find(p => p.id === "test-progressive").value, 5000000);
+assert.equal((await call({ op: "save", property: { id: "test-progressive", earmark: { recipient: "Test recipient", note: "Test note" } } })).status, 200);
+assert.deepEqual((await call()).body.properties.find(p => p.id === "test-progressive").earmark, { recipientId: null, recipient: "Test recipient", note: "Test note" });
+assert.equal((await call({ op: "save", property: { id: "test-progressive", earmark: null } })).status, 200);
+assert.equal((await call()).body.properties.find(p => p.id === "test-progressive").earmark, null);
+check("an earmark saves, reads back and clears through the store", () => {});
 await call({ op: "delete", id: "test-progressive" });
 check("an empty store reads successfully", () => {});
 assert.deepEqual((await call()).body, { ok: true, properties: [] });

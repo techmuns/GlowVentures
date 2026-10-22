@@ -344,3 +344,17 @@
 
 - The family asked for Net equity to come off the Real Estate tiles. It is no longer a tile option, and the default strip is Property value, Total cost and Monthly rent. A saved layout that named it drops that slot (`SelectableTiles` filters unknown ids).
 - Net equity stays as an optional table column and in property details.
+
+### Stage 10hh — INHERITED AND GIFTED PROPERTIES WITHOUT A PURCHASE COST
+
+- A property records how it was acquired: Purchased, Inherited or Gifted (`acquisition`; an older record reads as not entered). For an inherited or gifted one the editor asks for the value on the date of inheritance (or gift) instead of a total cost, may leave it blank, and refuses ₹0, which would show the whole value as appreciation. The date field is relabelled to match.
+- That value is labelled wherever it appears: "On inheritance" under the cost cell, the detail row's own label, and the Total cost tile and footer count how many of their properties it covers.
+- New Appreciation and Appreciation % columns (and an Appreciation tile option). Without a cost, a current value or a cost above ₹0, both show — with the reason (`appreciationGap`), never 0% or 100%; with an inheritance value they read "Since inheritance". The percentage is whole-property, like gross yield.
+- Tests: `test:real-estate` (acquisition, blank and ₹0 inheritance values, labels, older ₹0 costs, shares); `check-real-estate.mjs` adds an inherited property through the editor and reads its cells.
+
+### Stage 10hi — REAL ESTATE: EARMARKED / TO BE GIFTED
+
+- A property can be flagged as earmarked to be gifted, with the intended recipient (a family member or entity, picked from the members list or typed; `recipientId` when it names a member) and a note (`Property.earmark`, null when not earmarked; an older record reads as null). A recipient may be added later.
+- It is a marker only: owners, shares, every figure, every total and the member scope stay with the current owners until a transfer is recorded under Family ownership. The recipient holds no share.
+- New "Earmarked for" column (recipient, "To be gifted", the note in its hover), an earmark filter (all earmarked, one recipient, or not earmarked; `?earmark=`), the recipient in search, a line in the map list and a callout in property details.
+- Tests: `test:real-estate` (validation, older records, figures and scope unchanged, store round trip); `check-real-estate.mjs` earmarks a property through the editor, filters on it and clears it.

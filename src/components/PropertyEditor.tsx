@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useRef, useMemo, useState, type FormEvent } from "react";
 import { Plus, X } from "lucide-react";
-import { TextField, SelectField } from "@/components/FormBits";
-import { PROPERTY_TYPES, PROPERTY_STATUSES, AREA_UNITS, TITLE_STATUSES, validateProperty, type Property, type PropertyOwner } from "@/lib/realEstate";
+import { TextField, SelectField, CheckField } from "@/components/FormBits";
+import { PROPERTY_TYPES, PROPERTY_STATUSES, AREA_UNITS, TITLE_STATUSES, ACQUISITION_TYPES, EARMARK_MARKER_ONLY, costLabel, receivedWithoutPurchase, validateProperty, type Property, type PropertyEarmark, type PropertyOwner } from "@/lib/realEstate";
 import { findPropertyAddress, type AddressMatch } from "@/lib/propertyMaps";
 const PropertyMap = lazy(() => import("./PropertyMap"));
 const options = (values: string[]) => values.map(value => ({ value, label: value }));
@@ -11,7 +11,7 @@ export function emptyProperty(): Property {
   return { id: crypto.randomUUID(), name: "", type: "", address: "", city: "", state: "", country: "India", pincode: "",
     owners: [{ ownerId: null, name: "", share: null }], area: null, areaUnit: "sq ft", areaBasis: "",
     cost: null, value: null, monthlyRent: null, monthlyCosts: null, debt: null,
-    purchasedOn: null, valuationDate: null, leaseEnd: null, status: "", tenant: "", titleStatus: "Not checked", notes: "", latitude: null, longitude: null };
+    purchasedOn: null, valuationDate: null, leaseEnd: null, acquisition: "", status: "", tenant: "", titleStatus: "Not checked", notes: "", earmark: null, latitude: null, longitude: null };
 }
 export function PropertyEditor({ property, members, onSave, onCancel }: {
   property: Property; members: { ownerId: string; label: string }[];
@@ -27,6 +27,8 @@ export function PropertyEditor({ property, members, onSave, onCancel }: {
   const [matches, setMatches] = useState<AddressMatch[]>([]);
   const [locationMessage, setLocationMessage] = useState("");
   const searchId = useRef(0);
+  // Unticking and ticking the earmark again keeps what was typed.
+  const lastEarmark = useRef<PropertyEarmark>(property.earmark ?? { recipientId: null, recipient: "", note: "" });
   useEffect(() => () => { searchId.current++; }, []);
   const set = <K extends keyof Property>(key: K, value: Property[K]) => {
     if (["address", "city", "state", "country", "pincode"].includes(key)) {
@@ -79,6 +81,8 @@ export function PropertyEditor({ property, members, onSave, onCancel }: {
     if (!reply.ok) { setError(reply.message || "Property could not be saved."); setBusy(false); }
   };
   const ownerChange = (index: number, patch: Partial<PropertyOwner>) => set("owners", draft.owners.map((o, i) => i === index ? { ...o, ...patch } : o));
+  const memberId = (name: string) => members.find(m => m.label.toLowerCase() === name.trim().toLowerCase())?.ownerId ?? null;
+  const earmarkChange = (patch: Partial<PropertyEarmark>) => { lastEarmark.current = { ...lastEarmark.current, ...patch }; set("earmark", lastEarmark.current); };
   return <form onSubmit={save} className="space-y-5" aria-label="Property editor">
     <fieldset disabled={busy} className="space-y-5 disabled:opacity-60">
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -90,7 +94,8 @@ export function PropertyEditor({ property, members, onSave, onCancel }: {
         <TextField label="State" value={draft.state} onChange={v => set("state", v)} mono={false} />
         <TextField label="Country" value={draft.country} onChange={v => set("country", v)} mono={false} />
         <TextField label="PIN / postal code" value={draft.pincode} onChange={v => set("pincode", v)} />
-        <TextField label="Purchase date" value={draft.purchasedOn ?? ""} type="date" onChange={v => set("purchasedOn", v || null)} />
+        <SelectField label="Acquisition" blank="Not entered" value={draft.acquisition} options={options(ACQUISITION_TYPES)} onChange={v => set("acquisition", v)} />
+        <TextField label={draft.acquisition === "Inherited" ? "Date of inheritance" : draft.acquisition === "Gifted" ? "Date of gift" : "Purchase date"} value={draft.purchasedOn ?? ""} type="date" onChange={v => set("purchasedOn", v || null)} />
         {numberField("area", "Area")}
         <SelectField label="Area unit" blank="Not entered" value={draft.areaUnit} options={options(AREA_UNITS)} onChange={v => set("areaUnit", v)} />
         <SelectField label="Area basis" blank="Not entered" value={draft.areaBasis} options={options(["Plot", "Carpet", "Built-up", "Super built-up"])} onChange={v => set("areaBasis", v)} />
@@ -112,15 +117,23 @@ export function PropertyEditor({ property, members, onSave, onCancel }: {
         <div className="mb-3 flex items-center gap-3"><h3 className="h-section">Family ownership</h3><button type="button" className="btn-ghost text-xs" onClick={() => { set("owners", [...draft.owners, { ownerId: null, name: "", share: null }]); setShares(s => [...s, ""]); }}><Plus className="h-3 w-3" />Add owner</button></div>
         <datalist id="property-owner-options">{members.map(m => <option key={m.ownerId} value={m.label} />)}</datalist>
         <div className="space-y-2">{draft.owners.map((o, i) => <div className="flex items-end gap-3" key={i}>
-          <label className="block flex-1"><span className="label-xs">Owner / entity</span><input className="property-input mt-1" aria-label={`Owner ${i + 1}`} list="property-owner-options" value={o.name} onChange={e => ownerChange(i, { name: e.target.value, ownerId: members.find(m => m.label.toLowerCase() === e.target.value.trim().toLowerCase())?.ownerId ?? null })} /></label>
+          <label className="block flex-1"><span className="label-xs">Owner / entity</span><input className="property-input mt-1" aria-label={`Owner ${i + 1}`} list="property-owner-options" value={o.name} onChange={e => ownerChange(i, { name: e.target.value, ownerId: memberId(e.target.value) })} /></label>
           <div className="w-28"><TextField label="Share %" value={shares[i]} onChange={v => setShares(s => s.map((share, j) => i === j ? v : share))} /></div>
           <button type="button" className="btn-ghost mb-0.5" aria-label={`Remove owner ${i + 1}`} onClick={() => { set("owners", draft.owners.filter((_, j) => i !== j)); setShares(s => s.filter((_, j) => i !== j)); }}><X className="h-4 w-4" /></button>
         </div>)}</div>
       </div>
       <div className="border-t border-ink-700 pt-4">
+        <div className="flex flex-wrap items-center gap-3"><h3 className="h-section">Earmark</h3><CheckField label="Earmarked / to be gifted" checked={!!draft.earmark} onChange={on => set("earmark", on ? lastEarmark.current : null)} hint={EARMARK_MARKER_ONLY} /></div>
+        {draft.earmark && <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <label className="block"><span className="label-xs text-slate-400" title="A family member or entity">Intended recipient</span><input className="property-input mt-1" list="property-owner-options" value={draft.earmark.recipient} onChange={e => earmarkChange({ recipient: e.target.value, recipientId: memberId(e.target.value) })} /></label>
+          <TextField label="Earmark note" value={draft.earmark.note} onChange={v => earmarkChange({ note: v })} wide mono={false} />
+        </div>}
+      </div>
+      <div className="border-t border-ink-700 pt-4">
         <h3 className="h-section mb-3">Value & income · INR · whole property</h3>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {numberField("cost", "Total cost (₹)", "Include stamp duty, registration and improvements.")}
+          {receivedWithoutPurchase(draft) ? numberField("cost", `${costLabel(draft)} (₹)`, "There is no purchase cost. Leave blank if the value on that date is not known; appreciation then shows as —.")
+            : numberField("cost", "Total cost (₹)", "Include stamp duty, registration and improvements.")}
           {numberField("value", "Current value (₹)")}
           <TextField label="Valuation date" value={draft.valuationDate ?? ""} type="date" onChange={v => set("valuationDate", v || null)} />
           {numberField("monthlyRent", "Monthly rent (₹)")}
