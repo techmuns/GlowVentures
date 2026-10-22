@@ -1,5 +1,5 @@
 import { ExportableTable } from "@/components/ExportableTable";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { X, ExternalLink, FileText, FileSpreadsheet, Loader2, Download, Lock, Table2 } from "lucide-react";
@@ -15,6 +15,7 @@ import {
 } from "@/lib/statementPreview";
 
 const BASE = import.meta.env.BASE_URL;
+const OriginalPdf = lazy(() => import("./PdfPreview"));
 /** Rows a sheet shows before "Show more" — a broker's tape runs to thousands. */
 const ROW_STEP = 500;
 
@@ -225,19 +226,6 @@ function OriginalSheets({ url, format }: { url: string; format: string }) {
   return <SheetTabs sheets={wb.sheets} />;
 }
 
-/**
- * The original PDF in the browser's own viewer — zoom, search, print and page
- * thumbnails as the reader's browser draws them. A statement cut from a bundled
- * file opens at its own first page. A password-protected PDF asks for its
- * password in the viewer.
- */
-function OriginalPdf({ url, file, title }: { url: string; file: PublishedFile; title: string }) {
-  return (
-    <iframe src={file.part ? `${url}#page=${file.part.from}` : url} title={title} data-preview-pdf
-      className="h-full min-h-0 w-full flex-1 rounded-lg border border-ink-700 bg-ink-800" />
-  );
-}
-
 function Opening({ what }: { what: string }) {
   return (
     <div role="status" className="flex items-center justify-center gap-2 py-16 text-sm text-slate-400">
@@ -369,7 +357,7 @@ const ACTION = "inline-flex shrink-0 items-center gap-1 rounded-md border border
  * THE PREVIEW WINDOW. Opened from a file's row in a Statement Library folder;
  * Escape, the close button or a click outside the window closes it.
  *
- * It opens on the ORIGINAL FILE — a PDF in the browser's own viewer, a workbook
+ * It opens on the ORIGINAL FILE — a PDF drawn inside the app, a workbook
  * drawn from its own cells — with the TEXT AS READ one switch away, so a reader
  * can hold the two side by side. Each view says which it is; a file this build
  * did not publish opens on its text and says why, and a file the pipeline could
@@ -417,7 +405,7 @@ export function StatementPreview({ doc, onClose }: { doc: LibraryDoc; onClose: (
         data-preview-view={view} data-preview-original={original.status}
         className="flex h-full max-h-[880px] w-full max-w-5xl flex-col overflow-hidden rounded-xl border border-ink-700 bg-ink-900 shadow-2xl">
 
-        <div className="flex items-start gap-3 border-b border-ink-700 px-4 py-3">
+        <div className="flex flex-wrap items-start gap-3 border-b border-ink-700 px-4 py-3 sm:flex-nowrap">
           <div className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-md border border-champagne-500/30 bg-champagne-500/10 text-champagne-400">
             {sheet ? <FileSpreadsheet className="h-5 w-5" /> : <FileText className="h-5 w-5" />}
           </div>
@@ -449,7 +437,7 @@ export function StatementPreview({ doc, onClose }: { doc: LibraryDoc; onClose: (
             <div className="mono mt-1 truncate text-[11.5px] text-slate-400" title={doc.fileName}>{doc.fileName}</div>
             {meta.length > 0 && <div className="mt-0.5 text-[11px] text-slate-500">{meta.join(" · ")}</div>}
           </div>
-          <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
+          <div className="flex w-full shrink-0 flex-wrap items-center justify-end gap-1.5 sm:w-auto">
             {published && (
               <>
                 <a href={published.url} download={doc.fileName} className={ACTION} title={`Download ${doc.fileName}`} data-preview-download>
@@ -486,7 +474,9 @@ export function StatementPreview({ doc, onClose }: { doc: LibraryDoc; onClose: (
           )}
           {view === "original" && published && (sheet
             ? <OriginalSheets url={published.url} format={doc.format} />
-            : <OriginalPdf url={published.url} file={published.file} title={`${doc.reportLabel} — ${doc.fileName}`} />)}
+            : <Suspense fallback={<Opening what="Opening PDF…" />}>
+                <OriginalPdf key={published.url} url={published.url} file={published.file} title={`${doc.reportLabel} — ${doc.fileName}`} />
+              </Suspense>)}
 
           {view === "text" && loaded.status === "loading" && <Opening what="Opening the file…" />}
           {view === "text" && loaded.status !== "loading" && loaded.status !== "ready" && (
