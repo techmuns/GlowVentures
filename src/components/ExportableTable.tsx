@@ -1,5 +1,5 @@
 import { createContext, useId, useRef, useState, type ReactNode, type TableHTMLAttributes } from "react";
-import { flushSync } from "react-dom";
+import { createPortal, flushSync } from "react-dom";
 import { FileSpreadsheet } from "lucide-react";
 import { readTableExport } from "@/lib/tableExport";
 import { prepareTableExport, setTableExporting, useTableExporting } from "@/lib/tableExportSnapshot";
@@ -7,10 +7,20 @@ import { prepareTableExport, setTableExporting, useTableExporting } from "@/lib/
 /** Include every row and available column in this table's export snapshot. */
 export const TableExportAllRows = createContext(false);
 
-export function ExportableTable({ children, exportName, ...props }: Omit<TableHTMLAttributes<HTMLTableElement>, "children"> & {
+export function ExportableTable({ children, exportName, controlsHost, ...props }: Omit<TableHTMLAttributes<HTMLTableElement>, "children"> & {
   children: ReactNode | ((allRows: boolean) => ReactNode);
   exportName?: string;
+  /**
+   * A toolbar the table's card already draws, to hold the Export Excel control
+   * instead of a caption row of its own above the header (Stage 10gy: *"there's
+   * a lot of empty space in this area, realign export excel in above empty
+   * space so that there is more space to see the below table"*). The control
+   * names its table (`data-export-for` ↔ `data-table-export-id`), so a check
+   * still finds each table's one control. Omit it for the caption row.
+   */
+  controlsHost?: HTMLElement | null;
 }) {
+  const exportId = useId();
   const table = useRef<HTMLTableElement>(null);
   const busyRef = useRef(false);
   const [allRows, setAllRows] = useState(false);
@@ -55,18 +65,19 @@ export function ExportableTable({ children, exportName, ...props }: Omit<TableHT
       busyRef.current = false; setBusy(false);
     }
   };
-  return <table {...props} ref={table} data-table-export>
-    <caption className="p-2 text-left print:hidden" data-table-export-controls>
-      <div className="sticky left-0 flex w-fit flex-wrap items-center gap-2">
-        <button type="button" onClick={() => { void download(); }} disabled={busy}
-          data-export-excel aria-describedby={error ? errorId : undefined}
-          title="Export all rows regardless of filters and every column, including hidden columns and rows not yet loaded by scrolling"
-          className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border border-emerald-600/30 bg-emerald-500/5 px-2.5 py-1.5 text-xs font-medium text-emerald-600 ring-focus hover:bg-emerald-500/10 disabled:opacity-50">
-          <FileSpreadsheet className="h-3.5 w-3.5" />{busy ? "Exporting…" : "Export Excel"}
-        </button>
-        {error && <span id={errorId} role="alert" className="text-xs text-loss">{error}</span>}
-      </div>
-    </caption>
+  const controls = <>
+    <button type="button" onClick={() => { void download(); }} disabled={busy}
+      data-export-excel data-export-for={exportId} aria-describedby={error ? errorId : undefined}
+      title="Export all rows regardless of filters and every column, including hidden columns and rows not yet loaded by scrolling"
+      className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border border-emerald-600/30 bg-emerald-500/5 px-2.5 py-1.5 text-xs font-medium text-emerald-600 ring-focus hover:bg-emerald-500/10 disabled:opacity-50">
+      <FileSpreadsheet className="h-3.5 w-3.5" />{busy ? "Exporting…" : "Export Excel"}
+    </button>
+    {error && <span id={errorId} role="alert" className="text-xs text-loss">{error}</span>}
+  </>;
+  return <table {...props} ref={table} data-table-export data-table-export-id={exportId}>
+    {controlsHost === undefined ? <caption className="p-2 text-left print:hidden" data-table-export-controls>
+      <div className="sticky left-0 flex w-fit flex-wrap items-center gap-2">{controls}</div>
+    </caption> : controlsHost && createPortal(<span className="inline-flex flex-wrap items-center gap-2 print:hidden" data-table-export-controls>{controls}</span>, controlsHost)}
     <TableExportAllRows.Provider value={snapshotRows}>{typeof children === "function" ? children(snapshotRows) : children}</TableExportAllRows.Provider>
   </table>;
 }

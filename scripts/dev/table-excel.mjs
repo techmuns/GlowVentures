@@ -18,9 +18,22 @@ async function downloadWorkbook(button, label) {
   await book.xlsx.readFile(destination);
   return book;
 }
+/**
+ * A table's own Excel control and its error: in the table's caption, or in the
+ * toolbar its card draws it in, which names the table (`data-export-for` ↔
+ * `data-table-export-id`, Stage 10gy).
+ */
+export async function exportControls(table) {
+  if (await table.locator(':scope > caption [data-export-excel]').count()) return table.locator(':scope > caption');
+  const id = await table.getAttribute('data-table-export-id');
+  return table.page().locator(`[data-table-export-controls]:has([data-export-for="${id}"])`);
+}
+const exportButton = async (table) => (await exportControls(table)).locator('[data-export-excel]');
+const exportAlert = async (table) => (await exportControls(table)).locator('[role=alert]');
+
 export async function downloadTableWorkbook(table, label) {
-  const book = await downloadWorkbook(table.locator(':scope > caption [data-export-excel]'), label);
-  assert.equal(await table.locator(':scope > caption [role=alert]').count(),0);
+  const book = await downloadWorkbook(await exportButton(table), label);
+  assert.equal(await (await exportAlert(table)).count(),0);
   assert.ok(book.getWorksheet('About'));
   const sheet = book.getWorksheet('Table');
   const headers = await table.locator(':scope > thead > tr').count();
@@ -33,7 +46,7 @@ export async function downloadTableWorkbook(table, label) {
 export async function assertTableExportControls(page, label) {
   const tables = page.locator('#root table, .return-calculation table');
   for (const table of await tables.all()) {
-    assert.equal(await table.locator(':scope > caption [data-export-excel]').count(),1,`${label}: every table has its own Excel control`);
+    assert.equal(await (await exportButton(table)).count(),1,`${label}: every table has its own Excel control`);
   }
 }
 
@@ -79,7 +92,7 @@ export async function assertInfiniteTableExport(page, label, source = false) {
   const loaded = Number(await end.getAttribute('data-loaded-rows'));
   const total = Number(await end.getAttribute('data-total-rows'));
   const before = await table.locator(':scope > tbody > tr').count();
-  await table.locator(':scope > caption [data-export-excel]').scrollIntoViewIfNeeded();
+  await (await exportButton(table)).scrollIntoViewIfNeeded();
   const ports = () => table.evaluate(t => { const values=[]; for(let p=t.parentElement;p;p=p.parentElement) values.push([p.scrollLeft,p.scrollTop]); return values; });
   const positions = await ports();
   const sheet = await downloadTableWorkbook(table,label);
@@ -184,8 +197,8 @@ export async function assertExportRetry(page) {
     const original=URL.createObjectURL;
     URL.createObjectURL=function(...args) { URL.createObjectURL=original; throw new Error('local export failure fixture'); };
   });
-  await table.locator(':scope > caption [data-export-excel]').click();
-  await table.locator(':scope > caption [role=alert]').waitFor();
+  await (await exportButton(table)).click();
+  await (await exportAlert(table)).waitFor();
   await downloadTableWorkbook(table,'retry-after-export-failure');
   console.log('PASS: Excel export failure is visible and retry succeeds');
 }
