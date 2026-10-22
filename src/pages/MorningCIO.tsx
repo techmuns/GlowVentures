@@ -210,7 +210,7 @@ const CIO_TABS = [
    */
   { key: "sectors", label: "Sector Composition", title: "What the book is exposed to by sector — every issuer their statements report and their funds disclose (Consolidated), or the shares the family bought themselves (Direct Equity), for the members currently selected" },
   { key: "allocation", label: "Allocation & Risk", title: "How the book is split, what is still to be called, and where it is concentrated" },
-  { key: "nav", label: "NAV vs Nifty 500", title: "The book's own dated valuation series against the index, net of capital in and out" },
+  { key: "nav", label: "Our Book vs Benchmark", title: "The book's own dated valuation series against the index, net of capital in and out" },
   /**
    * ...AND A FOURTH, THE FAMILY'S OWN PRICE ALERTS (Stage 10cq). *"in morning
    * CIO can you make an ALL alerts tab where … whenever the alerts which have

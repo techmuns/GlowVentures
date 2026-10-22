@@ -296,3 +296,7 @@
 - The Return attribution card stacked three rows above its table: the title with the axis tabs, an Edit Columns row (`AutoEditColumns`' own toolbar) and the Export Excel caption. Both controls now sit in the card header beside the axis tabs and Expand all, and on the Sector view in the Consolidated / Direct Equity row; the table header starts ~45 px below the card top instead of ~130 px at 1550 px wide.
 - `ExportableTable` takes an optional `controlsHost`: the control is drawn there (portal) instead of in a caption, and names its table (`data-export-for` ↔ `data-table-export-id`). `scripts/dev/table-excel.mjs` finds each table's one control either way (`exportControls`), so `assertTableExportControls` and the download/retry checks cover both placements. The two tables use `manualEditor` with `EditColumns` placed in the header.
 - Checked locally: export from the header downloads the complete table on both views; `check-selected-attribution`, `check-market-returns` and check:pages `cio-returns*` show no new findings.
+
+### Stage 10gz — OUR BOOK VS BENCHMARK
+
+- Renamed the Morning CIO tab and its search result to “Our Book vs Benchmark”. The existing tab link and benchmark calculations stay the same.
