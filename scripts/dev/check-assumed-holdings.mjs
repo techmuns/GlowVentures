@@ -47,7 +47,9 @@ try {
  const assumed=Number(await panel.getAttribute('data-seg-assumed')); assert.ok(assumed>=10);
  const hdfc=panel.locator('[data-seg-row]').filter({hasText:'Smartworks'}); await hdfc.first().waitFor();
  assert.ok(await hdfc.first().locator('[data-holding-assumption]').count()>0,'March HDFC shares now carry a period return');
- await hdfc.first().getByRole('button',{name:'Why is this holding assumed?',exact:true}).first().click();
+ await hdfc.first().locator('[data-seg-toggle]').click();
+ const ownerRow=panel.locator('[data-seg-child]').filter({hasText:'Bharat Jaisinghani · HDFC Bank'}).first();
+ await ownerRow.getByRole('button',{name:'Why is this holding assumed?',exact:true}).first().click();
  const dialog=page.getByRole('dialog'); await dialog.waitFor();
  assert.match(await dialog.locator('[data-assumption-explanation]').innerText(),/No sale appears in the records we have\. We assume Bharat Jaisinghani still holds these shares\./);
  await page.screenshot({path:out+'/owner-explanation.png'}); await page.keyboard.press('Escape');
