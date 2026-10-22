@@ -53,15 +53,16 @@
      shade of its neighbours. */
   --row-hover: #ece4ce;
   --row-section: #e8e0cb;
+  --row-section-muted: #5b586f;
   --row-child: #edf3fa;
   --row-child-alt: #e3edf7;
   --row-child-deep: #d9e6f4;
   --row-child-deep-alt: #cfdeef;
   --row-child-deepest: #c5d8ec;
   --row-child-deepest-alt: #bbd0e7;
-  --row-child-hover: #c2d5eb;
+  --row-child-hover: #adc7e3;
   --row-child-guide: #7e9fc3;
-  --row-child-muted: #4f5870;
+  --row-child-muted: #46516a;
   --table-grid: #9690a3;
   --table-grid-thin: #ddd7ca;
   --table-header-bg: #faf8f1;
@@ -86,13 +87,14 @@ html.dark {
      row rather than darkening into its even-row neighbour. */
   --row-hover: #2d2862;
   --row-section: #302b4a;
+  --row-section-muted: #a8b5ca;
   --row-child: #17243b;
   --row-child-alt: #1c2c45;
   --row-child-deep: #20334f;
   --row-child-deep-alt: #253b59;
   --row-child-deepest: #293e5c;
   --row-child-deepest-alt: #2e4666;
-  --row-child-hover: #304b6d;
+  --row-child-hover: #3c587d;
   --row-child-guide: #759ac6;
   --row-child-muted: #bdc9dc;
   --table-grid: #716b91;
@@ -656,12 +658,14 @@ html:not(.dark) .hover\:bg-champagne-400:hover { background-image: none; backgro
    stripes and warm section bands. Depth comes from the name cell so dragging
    columns cannot change the hierarchy. Custom detail rows use the same marker. */
 #root table > tbody > tr.tree-section-row {
+  --tree-muted-color: var(--row-section-muted);
   background-color: var(--row-section);
 }
 #root table > tbody > tr:is(.tree-child-row, [data-table-depth]),
 #root :where(tr[data-table-depth] table) > tbody > tr {
   --tree-row-bg: var(--row-child);
   --tree-row-alt: var(--row-child-alt);
+  --tree-muted-color: var(--row-child-muted);
   background-color: var(--tree-row-bg);
 }
 #root table > tbody > tr:is([data-table-depth="2"], :has(> [data-tree-depth="2"])) {
@@ -683,8 +687,9 @@ html:not(.dark) .hover\:bg-champagne-400:hover { background-image: none; backgro
 #root table > tbody > tr:is(.tree-child-row, [data-table-depth]) > td:first-child {
   box-shadow: inset 3px 0 var(--row-child-guide);
 }
-#root tr:is(.tree-child-row, [data-table-depth]) :is(.text-slate-400, .text-slate-500, .text-slate-600) {
-  color: var(--row-child-muted);
+:where(#root tr:is(.tree-child-row, .tree-section-row, [data-table-depth])) :is(.text-slate-400, .text-slate-500, .text-slate-600),
+html:not(.dark) :where(#root tr:is(.tree-child-row, .tree-section-row, [data-table-depth])) :is(.text-slate-400, .text-slate-500, .text-slate-600) {
+  color: var(--tree-muted-color);
 }
 /* One grid for every dashboard table, including nested and expanded tables.
    Separate borders stay attached to sticky headers, totals and pinned columns
