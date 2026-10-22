@@ -20,7 +20,10 @@ const index = {files:Object.fromEntries(keys.map(key => [key, {file:key+'.pdf', 
 const browser = await chromium.launch({executablePath:process.env.CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless:true});
 const context = await browser.newContext({viewport:{width:1512,height:982}});
 const page = await context.newPage(); const errors = []; const assetFailures = [];
+const diagnostics = [];
 page.on('pageerror', e => errors.push(e.message));
+page.on('console', m => {if (m.type() === 'error') diagnostics.push(m.text())});
+page.on('requestfailed', r => diagnostics.push({url:r.url(),failure:r.failure()}));
 page.on('response', r => {if (/\/pdf-assets\/|pdf\.worker/.test(r.url()) && !r.ok()) assetFailures.push(r.url())});
 await page.route('**/api/**', r => r.fulfill({status:503,json:{ok:false}}));
 await page.route('**/audit/manifest.json', r => r.fulfill({json:manifest}));
@@ -28,12 +31,16 @@ await page.route('**/audit/preview-*/pages.json', r => r.fulfill({json:{pages:[{
 await page.route('**/statement-files/index.json', r => r.fulfill({json:index}));
 await page.route('**/statement-files/preview-*.pdf', r => r.fulfill({contentType:'application/pdf',body:r.request().url().includes('preview-locked') ? locked : r.request().url().includes('preview-bad') ? Buffer.from('not a PDF') : plain}));
 const address = key => `${base}/statements?provider=Preview%20test&file=${key}`;
-await page.route('http://pdf-embed.test/', r => r.fulfill({contentType:'text/html',body:'<iframe src="http://pdf-embed.test/inner" style="width:100%;height:950px"></iframe>'}));
-await page.route('http://pdf-embed.test/inner', r => r.fulfill({contentType:'text/html',body:`<iframe sandbox="allow-scripts allow-same-origin allow-forms allow-downloads allow-popups" src="${address(keys[0])}" style="width:100%;height:930px"></iframe>`}));
+// Keep local navigation on one loopback origin: recent Chrome also blocks
+// local-network frame navigation across origins. Sandbox still denies the PDF
+// plugin, even with allow-scripts and allow-same-origin on the dashboard frame.
+const outer = `${base}/__pdf-embed-test`;
+await page.route(outer, r => r.fulfill({contentType:'text/html',body:`<iframe src="${outer}/inner" style="width:100%;height:950px"></iframe>`}));
+await page.route(`${outer}/inner`, r => r.fulfill({contentType:'text/html',body:`<iframe sandbox="allow-scripts allow-same-origin allow-forms allow-downloads allow-popups" src="${address(keys[0])}" style="width:100%;height:930px"></iframe>`}));
 const frame = page.frameLocator('iframe').frameLocator('iframe');
 const rendered = n => frame.locator(`canvas[data-pdf-page="${n}"]`);
 const open = async key => {
-  const app = page.frames().find(f => f.url().startsWith(base));
+  const app = page.frames().find(f => f.parentFrame() && f.url().startsWith(`${base}/statements?`));
   await app.goto(address(key));
   await frame.locator('[data-statement-preview]').waitFor();
 };
@@ -47,7 +54,7 @@ const ink = async n => {
   assert.ok(count > 500, 'The original page must contain visible ink, not an empty canvas.');
 };
 try {
-  await page.goto('http://pdf-embed.test/');
+  await page.goto(outer);
   await ink(1);
   assert.equal(await frame.locator('[data-preview-pdf] iframe, iframe[data-preview-pdf], object, embed').count(),0);
   await frame.getByRole('button',{name:'Next PDF page'}).click(); await ink(2);
@@ -61,7 +68,7 @@ try {
   await open('preview-locked');
   await frame.getByLabel('Statement password',{exact:true}).fill('wrong');
   await frame.getByRole('button',{name:'Open PDF',exact:true}).click();
-  await frame.getByRole('alert').getByText('Incorrect password. Try again.').waitFor();
+  await frame.getByRole('alert').filter({hasText:'Incorrect password. Try again.'}).waitFor();
   await frame.getByLabel('Statement password',{exact:true}).fill('preview-test');
   await frame.getByRole('button',{name:'Open PDF',exact:true}).click(); await ink(1);
   // Close/switch while password loading is pending; must leave no worker errors.
@@ -70,7 +77,7 @@ try {
   await frame.locator('[data-preview-page="1"]').waitFor();
   await frame.getByRole('tab',{name:'Original file',exact:true}).click();
   await frame.getByLabel('Statement password',{exact:true}).waitFor();
-  await open('preview-bad'); await frame.getByRole('alert').getByText(/could not be opened/).waitFor();
+  await open('preview-bad'); await frame.getByRole('alert').filter({hasText:/could not be opened/}).waitFor();
   await frame.getByRole('tab',{name:'Text as read',exact:true}).click(); await frame.locator('[data-preview-page="1"]').waitFor();
   await open('preview-plain'); await ink(1);
   await page.setViewportSize({width:430,height:932}); await ink(1);
@@ -78,5 +85,8 @@ try {
   await page.screenshot({path:path.join(out,'sandboxed-preview.png')});
   await fs.writeFile(path.join(out,'results.json'),JSON.stringify({sandboxedEmbed:true,visibleInk:true,pages:true,zoom:true,bundleStart:true,passwordRetry:true,cancellation:true,invalidFile:true,mobile:true,errors,assetFailures},null,2));
   console.log('PASS: sandboxed PDF renders original pages, zoom, bundle start, password retry, cancellation, invalid-file fallback and mobile layout.');
-} catch (e) {await page.screenshot({path:path.join(out,'failure.png')}).catch(()=>{}); throw e;}
+} catch (e) {
+  await fs.writeFile(path.join(out,'failure.json'),JSON.stringify({errors,assetFailures,diagnostics,frames:page.frames().map(f=>f.url())},null,2));
+  await page.screenshot({path:path.join(out,'failure.png')}).catch(()=>{}); throw e;
+}
 finally {await browser.close();}
