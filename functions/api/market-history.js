@@ -23,14 +23,14 @@ export async function onRequest(context) {
   if (fund ? !/^\d{3,9}$/.test(fund) || !/^[A-Z]{2}[A-Z0-9]{10}$/.test(isin) : !/^[A-Z0-9&^_.=-]{1,40}$/.test(raw)) return json({ ok: false, reason: 'A verified stock symbol or fund code and ISIN is needed.' });
   const symbol = fund ? fund : raw.includes('.') || raw.startsWith('^') ? raw : `${raw}.NS`;
   const today = new Date(Date.now() + 330 * 60000).toISOString().slice(0, 10);
-  const key = new Request(`${url.origin}/__cache/market-history/v1/${today}/${fund ? `fund/${fund}/${isin}` : `stock/${encodeURIComponent(symbol)}`}`);
+  const key = new Request(`${url.origin}/__cache/market-history/v2/${today}/${fund ? `fund/${fund}/${isin}` : `stock/${encodeURIComponent(symbol)}`}`);
   const hit = await caches.default.match(key).catch(() => null); if (hit) return hit;
   const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 20000);
   try {
     const upstream = fund ? `https://api.mfapi.in/mf/${fund}` : `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?period1=0&period2=9999999999&interval=1d&events=div%2Csplits&includeAdjustedClose=true`;
     const data = await boundedJson(await fetch(upstream, { signal: controller.signal, redirect: 'manual', headers: { 'User-Agent': 'Mozilla/5.0 (compatible; GlowVenturesDashboard/1.0)', accept: 'application/json' } }));
-    const points = new Map();
-    let name, source, basis;
+    const points = new Map(), closes = new Map();
+    let name, source, basis, splits = [];
     if (fund) {
       const meta = data?.meta;
       if (String(meta?.scheme_code) !== fund || ![meta?.isin_growth, meta?.isin_div_reinvestment].includes(isin)) throw new Error('The fund history did not match the holding’s exact ISIN and scheme code.');
@@ -44,7 +44,9 @@ export async function onRequest(context) {
     } else {
       const r = data?.chart?.result?.[0];
       if (!r || r.meta?.symbol?.toUpperCase() !== symbol || r.meta?.currency !== 'INR') throw new Error('The stock history did not match the requested INR listing.');
-      const values = r.indicators?.adjclose?.[0]?.adjclose;
+      const values = r.indicators?.adjclose?.[0]?.adjclose, closing = r.indicators?.quote?.[0]?.close;
+      splits = Object.values(r.events?.splits ?? {}).map(s => ({ date: Number.isFinite(s.date) ? new Date(s.date * 1000).toISOString().slice(0, 10) : null,
+        factor: Number(s.numerator) / Number(s.denominator) })).filter(s => s.date && s.date <= today && Number.isFinite(s.factor) && s.factor > 0);
       if (!Array.isArray(values)) throw new Error('Dividend and split-adjusted closing prices are not available for this listing.');
       const session = r.meta.currentTradingPeriod?.regular;
       const sessionDate = session?.start ? new Date(session.start * 1000).toISOString().slice(0, 10) : today;
@@ -53,12 +55,17 @@ export async function onRequest(context) {
       for (let i = 0; i < (r.timestamp?.length ?? 0); i++) {
         if (!Number.isFinite(r.timestamp[i])) continue;
         const date = new Date(r.timestamp[i] * 1000).toISOString().slice(0, 10), value = values[i];
-        if (date <= today && !(unfinished && date === sessionDate) && Number.isFinite(value) && value > 0) points.set(date, value);
+        if (date <= today && !(unfinished && date === sessionDate) && Number.isFinite(value) && value > 0) {
+          points.set(date, value);
+          if (Number.isFinite(closing?.[i]) && closing[i] > 0) closes.set(date, closing[i]);
+        }
       }
     }
     const ordered = [...points].sort(([a], [b]) => a.localeCompare(b));
     if (!ordered.length) throw new Error('No completed daily prices are available for this investment.');
-    const response = json({ ok: true, symbol, isin: fund ? isin : null, name, source, basis, first: ordered[0][0], last: ordered.at(-1)[0], t: ordered.map(([d]) => d), v: ordered.map(([, v]) => v) }, `public, max-age=${TTL}`);
+    // Yahoo's Close adjusts for splits only; Adj Close also adjusts for dividends.
+    // Keep both: an adjusted return index must never be multiplied by share units.
+    const response = json({ ok: true, version: 2, symbol, isin: fund ? isin : null, name, source, basis, first: ordered[0][0], last: ordered.at(-1)[0], t: ordered.map(([d]) => d), v: ordered.map(([, v]) => v), c: ordered.map(([d, v]) => fund ? v : closes.get(d) ?? null), splits }, `public, max-age=${TTL}`);
     context.waitUntil(caches.default.put(key, response.clone()).catch(() => {}));
     return response;
   } catch (error) {

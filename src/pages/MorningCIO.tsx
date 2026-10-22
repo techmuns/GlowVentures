@@ -56,7 +56,9 @@ import { CHART_COLORS } from "@/lib/chartTheme";
 import { INVESTOR_DEFAULT_TILES } from "@/lib/investorSummary";
 
 import { availableCardReturns, statementReturnInputs, type AvailableCardReturn } from "@/lib/availableCardReturns";
-import { warmMarketHistories } from "@/lib/useMarketReturns";
+import { useMarketHistories } from "@/lib/useMarketReturns";
+import { assumedHoldingBook } from "@/lib/assumedHoldingBook";
+import { HoldingAssumptionInfo } from "@/components/HoldingAssumptionInfo";
 
 // Morning CIO — the whole book in one screen: invested / current / return per
 // bucket, plus capital deployment, concentration and book performance. Every
@@ -231,7 +233,7 @@ const sectionColor = (axis: GroupAxis, key: string, i: number) => {
 };
 
 export function MorningCIO() {
-  const { consolidated, portfolio, statementPortfolio, fmtFromBase, convertFromBase, displayCurrency, scope: memberScope } = usePortfolio();
+  const { consolidated, portfolio, statementPortfolio, fmtFromBase, convertFromBase, displayCurrency, corporateActions, scope: memberScope } = usePortfolio();
   /**
    * WHICH AXIS THE ALLOCATION CARD IS GROUPED ON. In the URL (`?alloc=`) like
    * every other view in this app, and for the reason the Portfolio Monitor's
@@ -260,19 +262,14 @@ export function MorningCIO() {
   // date against the same valuation.
   const today = useMemo(() => new Date(), []);
   /**
-   * THE RETURNS TAB'S PRICE HISTORIES, LOADED BEFORE IT IS OPENED (Stage 10gu).
-   * Once the page is idle, whichever panel is showing, the public histories
-   * the Returns tab's market return needs start loading into this browser's
-   * copy (`useMarketReturns`), so opening the tab draws the figure rather than
-   * starting ~350 fetches. Histories already kept and still fresh are skipped.
+   * Shared public histories fill the headline assumptions as they arrive and
+   * are reused when Returns opens. Fresh histories already kept are skipped.
    */
-  useEffect(() => {
-    if (!consolidated.length) return;
-    const start = () => warmMarketHistories(currentHoldings(consolidated));
-    const idle = typeof window.requestIdleCallback === "function" ? window.requestIdleCallback(start, { timeout: 4000 }) : null;
-    const timer = idle == null ? setTimeout(start, 1500) : null;
-    return () => { if (idle != null) window.cancelIdleCallback(idle); if (timer) clearTimeout(timer); };
-  }, [consolidated]);
+  const returnHoldings = useMemo(() => currentHoldings(consolidated), [consolidated]);
+  const returnHistories = useMarketHistories(returnHoldings);
+  const assumptionBook = useMemo(() => assumedHoldingBook({ actions: corporateActions,
+    instruments: returnHistories.instruments, histories: returnHistories.histories }),
+  [corporateActions, returnHistories.instruments, returnHistories.histories]);
 
   const model = useMemo(() => {
     if (!portfolio) return null;
@@ -948,12 +945,12 @@ export function MorningCIO() {
       closedInvested: closedF.drawn, closedDistributed: closedF.distributed,
       buckets, bucketsByAxis,
       available: availableCardReturns(statementPortfolio ?? portfolio, consolidated,
-        statementReturnInputs(statementPortfolio ?? portfolio), today),
+        statementReturnInputs(statementPortfolio ?? portfolio), today, assumptionBook),
       distinctNames: byKey.size, crossHeld, top10Pct,
       largestName, largestKey: largest?.leadKey ?? "", largestHref, largestBucket, largestPct, winners, losers,
       navSeries, navFirst,
     };
-  }, [portfolio, statementPortfolio, convertFromBase, today]);
+  }, [portfolio, statementPortfolio, convertFromBase, today, assumptionBook]);
 
   if (!portfolio || !model) return null;
   const m = model;
@@ -1062,7 +1059,7 @@ export function MorningCIO() {
     data-card-value={r.coveredValue} data-card-accounts={r.coveredAccounts} data-card-total-accounts={r.totalAccounts}
     data-card-from={r.from ?? ''} data-card-to={r.to ?? ''} data-card-basis={r.total.measured?.basis ?? ''}>
     {r.total.units.length ? 'Available data' : 'No usable return records'} · {r.coveredHoldings} of {r.totalHoldings} holdings<br />
-    {money(r.coveredValue)} covered · {r.coveredAccounts} accounts</span>;
+    {money(r.coveredValue)} covered · {r.coveredAccounts} accounts <HoldingAssumptionInfo units={r.total.units} /></span>;
   const history = m.available.history;
   const historyAnnual = history.total.measured?.basis === 'annual';
   const historyLabel = historyAnnual ? 'Annualised return' : 'Return over available history';

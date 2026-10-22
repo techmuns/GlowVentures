@@ -74,7 +74,7 @@ function MarketReturnDetails({ units, gaps, positions, accounts, totalValue, fro
         </dl>
         {from && to && <p><strong>Price dates:</strong> {fmtDate(from)} → {fmtDate(to)} · {annual?'return per year':'return for this period'}.</p>}
         <p>Bigger holdings count more. We use their values today to set the weights. The included weights add to 100%; missing holdings are left out.</p>
-        <p>This is how today’s holdings moved in the market. Your profit from actual buys and sales is shown under Recorded gain.</p>
+        <p>This is how today’s holdings moved in the market. Gain / loss uses available investment records and labelled holding assumptions.</p>
         <p className="text-xs text-slate-400">Stock prices allow for dividends and share splits. Fund figures use the unit price (NAV). Income paid out or reinvested as extra units is excluded.</p>
         {inception && <p className="text-xs text-slate-400">“Since investment” uses the available price history here, rather than your purchase dates.</p>}
       </div>}

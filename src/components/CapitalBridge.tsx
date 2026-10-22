@@ -12,15 +12,17 @@
 import { AbsentCell } from '@/components/Absent';
 import { ExportableTable } from '@/components/ExportableTable';
 import { ReturnCalculationInfo } from '@/components/ReturnCalculation';
+import { HoldingAssumptionInfo } from './HoldingAssumptionInfo';
 import { changeColor, fmtDate } from '@/lib/format';
 import type { BridgeAccount, CapitalBridge as Bridge } from '@/lib/capitalBridge';
 import type { SelectedLine } from '@/lib/selectedSegmentReturns';
 
 const pct = (n: number) => `${n >= 0 ? '+' : ''}${n.toFixed(2)}%`;
-const SOURCE_WORDS = { statement: "Statement's own profit and loss", 'fund-record': "Fund's dated unit record", 'purchase-cost': 'Purchase cost, first-in first-out' } as const;
+const SOURCE_WORDS = { statement: "Statement's own profit and loss", 'fund-record': "Fund's dated unit record", 'purchase-cost': 'Purchase cost, first-in first-out', 'assumed-holding': 'Assumed still held' } as const;
 /** Where a record prints no separate charges, they are already inside another part. */
 const INSIDE = { statement: 'The statement prints no separate charges', 'fund-record': "A fund's costs are inside its NAV, so they are already in the unrealised change",
-  'purchase-cost': 'Costs are inside the purchase prices and sale proceeds, so they are already in the realised and unrealised gain' } as const;
+  'purchase-cost': 'Costs are inside the purchase prices and sale proceeds, so they are already in the realised and unrealised gain',
+  'assumed-holding': 'Trading charges are unknown. Fund charges are inside NAV; dividend figures are gross entitlements, not confirmed receipts.' } as const;
 
 export function CapitalBridge({ bridge: b, total, typeLabel, caption, money }: {
   bridge: Bridge | null; total: SelectedLine; typeLabel: string; caption: string;
@@ -31,14 +33,16 @@ export function CapitalBridge({ bridge: b, total, typeLabel, caption, money }: {
     <div className="mt-1 text-[13px]"><AbsentCell reason={total.missing.length ? 'No account has a verified opening value and dated money record for these dates; the info button on the Total row lists what each one needs.' : 'No account holds anything to measure over these dates.'} /></div>
   </div>;
   const dated = (d: string | null) => (d ? fmtDate(d) : '—');
+  const assumed = total.units.some(u => u.assumption);
+  const accountCount = new Set(total.units.map(u => u.accountId)).size;
   const days = total.measured?.working?.days ?? null;
   const steps: { key: string; label: string; value: number; sign?: boolean; sub: string; title: string }[] = b.mode === 'window' ? [
-    { key: 'opening', label: 'Value at start', value: b.opening, sub: dated(b.from), title: "Each account's statement value at the start of the period, on or before the opening date" },
+    { key: 'opening', label: 'Value at start', value: b.opening, sub: dated(b.from), title: "Statement values, plus published prices for labelled assumed holdings, on their measured starting dates" },
     // A computed zero says why on its face: the dated record shows no movement.
     { key: 'added', label: '+ Money added', value: b.added, sub: b.added === 0 ? 'none in this period' : 'new capital', title: 'Money put into these accounts during the period, on its dates' },
-    { key: 'taken', label: '− Money taken out', value: b.takenOut, sub: b.takenOut === 0 ? 'none in this period' : 'withdrawals', title: 'Money taken out of these accounts during the period — redemptions, withdrawals, payouts and tax deducted' },
+    { key: 'taken', label: assumed ? '− Payouts / taken out' : '− Money taken out', value: b.takenOut, sub: assumed ? 'includes dividend entitlements' : b.takenOut === 0 ? 'none in this period' : 'withdrawals', title: 'Recorded withdrawals and payouts, plus gross dividend entitlements on labelled assumed holdings' },
     { key: 'gain', label: '+ Gain', value: b.gain, sign: true, sub: 'see the split below', title: 'Value at end − value at start − money added + money taken out' },
-    { key: 'closing', label: '= Value at end', value: b.closing, sub: dated(b.to), title: "Each account's statement value on its own closing date, on or before the end of the period" },
+    { key: 'closing', label: '= Value at end', value: b.closing, sub: dated(b.to), title: "Statement values, plus published prices for labelled assumed holdings, on their measured closing dates" },
   ] : b.mode === 'inception' ? [
     { key: 'added', label: 'Money paid in', value: b.added, sub: `since ${dated(b.from)}`, title: 'Every dated purchase or contribution since the first investment' },
     { key: 'taken', label: '− Money taken out', value: b.takenOut, sub: 'redemptions and payouts', title: 'Every dated redemption, withdrawal and payout since the first investment' },
@@ -68,7 +72,8 @@ export function CapitalBridge({ bridge: b, total, typeLabel, caption, money }: {
     <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
       <div className="flex items-center gap-2">
         <span className="text-[12px] font-semibold text-slate-100" title="What the measured accounts started with, the money added and taken out, what they gained, and what they ended with. The same accounts and figures as the table's total.">Capital bridge</span>
-        <span className="text-[11.5px] text-slate-400" data-bridge-caption>{caption} · {b.rows.length} {b.rows.length === 1 ? 'account' : 'accounts'}</span>
+        <span className="text-[11.5px] text-slate-400" data-bridge-caption>{caption} · {accountCount} {accountCount === 1 ? 'account' : 'accounts'}</span>
+        <HoldingAssumptionInfo units={total.units} />
         <BridgeInfo b={b} money={money} />
       </div>
       <div className="text-[12px] text-slate-400" data-bridge-return={ret ?? ''} data-bridge-period-return={period ?? ''}>

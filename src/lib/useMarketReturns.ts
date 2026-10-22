@@ -40,7 +40,7 @@ function hydrate(): Promise<void> {
   }).catch(() => {});
   return hydrated;
 }
-const fresh = (e: Entry | undefined) => !!e && e.result.ok && Date.now() - e.fetchedAt < FRESH_MS;
+const fresh = (e: Entry | undefined) => !!e && e.result.ok && e.result.version === 2 && Date.now() - e.fetchedAt < FRESH_MS;
 
 async function fetchHistory(instrument: MarketInstrument): Promise<MarketResult> {
   try {
