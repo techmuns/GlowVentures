@@ -73,6 +73,10 @@ try {
   const edited = path.join(out, 'capital-edited.xlsx'); await original.book.xlsx.writeFile(edited);
   await upload(edited); await savePreview();
   check('Excel upload persists a missing private capital number', (await snapshot()).catalog.find(r => r.id === capital.id).values.paid === 123456 && commits === 1);
+  await page.locator('select[data-pm-show]').selectOption('both');
+  await page.getByRole('button', { name: 'Expand all', exact: true }).click();
+  const savedPaid = page.locator(`[data-pm-folio-row] [data-input-record="${capital.id}"][data-input-field="paid"]`).first();
+  check('Saved capital is visible in the expanded detail row', await savedPaid.evaluate(cell => cell.closest('tr').dataset.pmPaid === '123456' && cell.textContent.includes('₹')));
   await visit('/private-market');
   await page.locator('[data-edit-numbers]').first().click();
   const cost = page.locator('[data-input-record^="holding:"][data-input-field="costBasis"]').first();

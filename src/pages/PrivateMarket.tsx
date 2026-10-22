@@ -309,10 +309,7 @@ const folioReviewScope = (f: BookFolio): ReviewScope => ({ positions: f.position
 const groupReviewScope = (g: BookGroup): ReviewScope => ({ positions: g.folios.flatMap((f) => f.position ? [f.position] : []), securityKey: g.securityKey ?? undefined,
   accountId: g.folios.length === 1 ? g.folios[0].accountId : undefined });
 const folioFigures = (f: BookFolio): RowFigures => ({
-  committed: f.capital?.committed ?? null,
-  called: f.capital?.called ?? null,
-  paid: f.capital?.paid ?? null,
-  uncalled: f.capital?.uncalled ?? null,
+  ...figuresOf([f], false),
   units: f.units,
   cost: f.cost,
   value: f.value,
@@ -1984,7 +1981,7 @@ export function PrivateMarket() {
               {inOrder({
                 ...figureCells(fig, "folio", {
                 profileEdit: folioEdit,
-                noCapital: s ? undefined
+                noCapital: s || f.position?.enteredCapital ? undefined
                   : viewOfLine ? "an income-only folio — its documents report earnings and distributions, and no commitment"
                     : noCapitalWhy(g.section, "folio"),
                 noValue: viewOfLine
