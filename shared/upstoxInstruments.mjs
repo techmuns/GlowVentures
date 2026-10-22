@@ -236,6 +236,12 @@ export const UPSTOX_INSTRUMENTS = Object.freeze({
   "series": "EQ",
   "joinedBy": "isin"
  },
+ "APOLLOPIPE": {
+  "key": "NSE_EQ|INE126J01016",
+  "tradingSymbol": "APOLLOPIPE",
+  "series": "EQ",
+  "joinedBy": "symbol"
+ },
  "APOLLOTYRE": {
   "key": "NSE_EQ|INE438A01022",
   "tradingSymbol": "APOLLOTYRE",
@@ -446,6 +452,12 @@ export const UPSTOX_INSTRUMENTS = Object.freeze({
   "series": "EQ",
   "joinedBy": "isin"
  },
+ "BHAGYANGR": {
+  "key": "NSE_EQ|INE458B01036",
+  "tradingSymbol": "BHAGYANGR",
+  "series": "BE",
+  "joinedBy": "symbol+isin"
+ },
  "BHARATFORG": {
   "key": "NSE_EQ|INE465A01025",
   "tradingSymbol": "BHARATFORG",
@@ -590,6 +602,12 @@ export const UPSTOX_INSTRUMENTS = Object.freeze({
   "series": "A",
   "joinedBy": "isin"
  },
+ "BSE:PPEL": {
+  "key": "BSE_EQ|INE288301026",
+  "tradingSymbol": "PPEL",
+  "series": "M",
+  "joinedBy": "symbol+isin"
+ },
  "BSE:YASHHV": {
   "key": "BSE_EQ|INE00GK01023",
   "tradingSymbol": "YASHHV",
@@ -603,10 +621,10 @@ export const UPSTOX_INSTRUMENTS = Object.freeze({
   "joinedBy": "symbol"
  },
  "BUILDPRO": {
-  "key": "NSE_EQ|INE24OJ01011",
+  "key": "NSE_EQ|INE24OJ01029",
   "tradingSymbol": "BUILDPRO",
   "series": "EQ",
-  "joinedBy": "symbol"
+  "joinedBy": "symbol+isin+successor"
  },
  "CAMPUS": {
   "key": "NSE_EQ|INE278Y01022",
@@ -822,7 +840,7 @@ export const UPSTOX_INSTRUMENTS = Object.freeze({
   "key": "NSE_EQ|INE757A01017",
   "tradingSymbol": "COSMOFIRST",
   "series": "EQ",
-  "joinedBy": "symbol+isin"
+  "joinedBy": "symbol"
  },
  "CPPLUS": {
   "key": "NSE_EQ|INE819V01029",
@@ -1121,6 +1139,12 @@ export const UPSTOX_INSTRUMENTS = Object.freeze({
  "FIEMIND": {
   "key": "NSE_EQ|INE737H01014",
   "tradingSymbol": "FIEMIND",
+  "series": "EQ",
+  "joinedBy": "isin"
+ },
+ "FINCABLES": {
+  "key": "NSE_EQ|INE235A01022",
+  "tradingSymbol": "FINCABLES",
   "series": "EQ",
   "joinedBy": "isin"
  },
@@ -1839,10 +1863,10 @@ export const UPSTOX_INSTRUMENTS = Object.freeze({
   "joinedBy": "isin"
  },
  "JSWDULUX": {
-  "key": "NSE_EQ|INE133A01011",
+  "key": "NSE_EQ|INE133A01029",
   "tradingSymbol": "JSWDULUX",
   "series": "EQ",
-  "joinedBy": "isin"
+  "joinedBy": "isin+successor"
  },
  "JSWENERGY": {
   "key": "NSE_EQ|INE121E01018",
@@ -2522,6 +2546,12 @@ export const UPSTOX_INSTRUMENTS = Object.freeze({
   "series": "EQ",
   "joinedBy": "symbol"
  },
+ "PARACABLES": {
+  "key": "NSE_EQ|INE074B01023",
+  "tradingSymbol": "PARACABLES",
+  "series": "EQ",
+  "joinedBy": "isin"
+ },
  "PARADEEP": {
   "key": "NSE_EQ|INE088F01024",
   "tradingSymbol": "PARADEEP",
@@ -2822,6 +2852,12 @@ export const UPSTOX_INSTRUMENTS = Object.freeze({
   "series": "EQ",
   "joinedBy": "isin"
  },
+ "RPOWER": {
+  "key": "NSE_EQ|INE614G01033",
+  "tradingSymbol": "RPOWER",
+  "series": "EQ",
+  "joinedBy": "symbol+isin"
+ },
  "RRKABEL": {
   "key": "NSE_EQ|INE777K01022",
   "tradingSymbol": "RRKABEL",
@@ -2934,7 +2970,7 @@ export const UPSTOX_INSTRUMENTS = Object.freeze({
   "key": "NSE_EQ|INE385F01024",
   "tradingSymbol": "SGMART",
   "series": "EQ",
-  "joinedBy": "symbol"
+  "joinedBy": "symbol+isin"
  },
  "SHADOWFAX": {
   "key": "NSE_EQ|INE12UN01015",
@@ -2951,12 +2987,6 @@ export const UPSTOX_INSTRUMENTS = Object.freeze({
  "SHAKTIPUMP": {
   "key": "NSE_EQ|INE908D01010",
   "tradingSymbol": "SHAKTIPUMP",
-  "series": "EQ",
-  "joinedBy": "symbol"
- },
- "SHANKARA": {
-  "key": "NSE_EQ|INE274V01019",
-  "tradingSymbol": "SHANKARA",
   "series": "EQ",
   "joinedBy": "symbol"
  },
@@ -3098,6 +3128,12 @@ export const UPSTOX_INSTRUMENTS = Object.freeze({
   "series": "EQ",
   "joinedBy": "isin"
  },
+ "STLNETWORK": {
+  "key": "NSE_EQ|INE1VXE01018",
+  "tradingSymbol": "STLNETWORK",
+  "series": "EQ",
+  "joinedBy": "symbol+isin"
+ },
  "STLTECH": {
   "key": "NSE_EQ|INE089C01029",
   "tradingSymbol": "STLTECH",
@@ -3170,11 +3206,11 @@ export const UPSTOX_INSTRUMENTS = Object.freeze({
   "series": "EQ",
   "joinedBy": "isin"
  },
- "SURYAROSNI": {
-  "key": "NSE_EQ|INE335A01020",
-  "tradingSymbol": "SURYAROSNI",
+ "SURANAT&P": {
+  "key": "NSE_EQ|INE130B01031",
+  "tradingSymbol": "SURANAT&P",
   "series": "EQ",
-  "joinedBy": "symbol"
+  "joinedBy": "symbol+isin"
  },
  "SWIGGY": {
   "key": "NSE_EQ|INE00H001014",
@@ -3446,6 +3482,12 @@ export const UPSTOX_INSTRUMENTS = Object.freeze({
   "series": "EQ",
   "joinedBy": "isin"
  },
+ "UNIVCABLES": {
+  "key": "NSE_EQ|INE279A01012",
+  "tradingSymbol": "UNIVCABLES",
+  "series": "EQ",
+  "joinedBy": "symbol+isin"
+ },
  "UPL": {
   "key": "NSE_EQ|INE628A01036",
   "tradingSymbol": "UPL",
@@ -3524,9 +3566,21 @@ export const UPSTOX_INSTRUMENTS = Object.freeze({
   "series": "EQ",
   "joinedBy": "isin"
  },
+ "VINDHYATEL": {
+  "key": "NSE_EQ|INE707A01012",
+  "tradingSymbol": "VINDHYATEL",
+  "series": "EQ",
+  "joinedBy": "symbol+isin"
+ },
  "VIPIND": {
   "key": "NSE_EQ|INE054A01027",
   "tradingSymbol": "VIPIND",
+  "series": "EQ",
+  "joinedBy": "symbol"
+ },
+ "VISHNU": {
+  "key": "NSE_EQ|INE270I01022",
+  "tradingSymbol": "VISHNU",
   "series": "EQ",
   "joinedBy": "symbol"
  },
@@ -3714,6 +3768,7 @@ export const UPSTOX_SECURITY_SYMBOLS = Object.freeze({
  "apar-industries": "APARINDS",
  "apl-apollo-tubes": "APLAPOLLO",
  "apollo-hospitals-enterprise": "APOLLOHOSP",
+ "apollo-pipes": "APOLLOPIPE",
  "apollo-tyres": "APOLLOTYRE",
  "arvind-fashions": "ARVINDFASN",
  "ashok-leyland": "ASHOKLEY",
@@ -3747,6 +3802,7 @@ export const UPSTOX_SECURITY_SYMBOLS = Object.freeze({
  "belrise-industries": "BELRISE",
  "beml": "BEML",
  "beml-land-assets": "BLAL",
+ "bhagyanagar-india-limited-eq-new-rv": "BHAGYANGR",
  "bharat-dynamics": "BDL",
  "bharat-electronics": "BEL",
  "bharat-forge": "BHARATFORG",
@@ -3813,7 +3869,7 @@ export const UPSTOX_SECURITY_SYMBOLS = Object.freeze({
  "container-corporation-of-india": "CONCOR",
  "coromandel-international": "COROMANDEL",
  "corona-remedies": "CORONA",
- "cosmo-films": "COSMOFIRST",
+ "cosmo-first": "COSMOFIRST",
  "craftsman-automation": "CRAFTSMAN",
  "creative-newtech": "CNL",
  "credit-access-grameen": "CREDITACC",
@@ -3865,6 +3921,7 @@ export const UPSTOX_SECURITY_SYMBOLS = Object.freeze({
  "fedbank-financial-services": "FEDFINA",
  "federal-bank": "FEDERALBNK",
  "fiem-industries": "FIEMIND",
+ "finolex-cables-limited-new": "FINCABLES",
  "firstsource-solutions": "FSL",
  "five-star-business-finance": "FIVESTAR",
  "fortis-healthcare": "FORTIS",
@@ -3912,7 +3969,7 @@ export const UPSTOX_SECURITY_SYMBOLS = Object.freeze({
  "hdfc-asset-management": "HDFCAMC",
  "hdfc-bank": "HDFCBANK",
  "hdfc-life-insurance": "HDFCLIFE",
- "heg": "HEGAM",
+ "heg-advanced-materials": "HEGAM",
  "hero-motocorp": "HEROMOTOCO",
  "hexaware-technologies": "HEXT",
  "hi-tech-pipes": "HITECH",
@@ -4102,6 +4159,7 @@ export const UPSTOX_SECURITY_SYMBOLS = Object.freeze({
  "page-industries": "PAGEIND",
  "panacea-biotec": "PANACEABIO",
  "paradeep-phosphates": "PARADEEP",
+ "paramount-communications-limited-neweqrs": "PARACABLES",
  "paras-defence-and-space-technologies": "PARAS",
  "parth-electricals-and-engineering": "PARTH",
  "patanjali-foods": "PATANJALI",
@@ -4122,6 +4180,7 @@ export const UPSTOX_SECURITY_SYMBOLS = Object.freeze({
  "pokarna": "POKARNA",
  "poly-medicure": "POLYMED",
  "polyplex": "POLYPLEX",
+ "poojaa-precision-engineering": "BSE:PPEL",
  "poonawalla-fincorp": "POONAWALLA",
  "power-finance": "PFC",
  "power-grid-corporation-of-india": "POWERGRID",
@@ -4150,6 +4209,7 @@ export const UPSTOX_SECURITY_SYMBOLS = Object.freeze({
  "redington": "REDINGTON",
  "redtape": "REDTAPE",
  "reliance-industries": "RELIANCE",
+ "reliance-power-limited-eq": "RPOWER",
  "rhi-magnesita-india": "RHIM",
  "rites": "RITES",
  "rr-kabel": "RRKABEL",
@@ -4177,7 +4237,6 @@ export const UPSTOX_SECURITY_SYMBOLS = Object.freeze({
  "shadowfax-technologies": "SHADOWFAX",
  "shaily-engineering-plastics": "SHAILY",
  "shakti-pumps-india": "SHAKTIPUMP",
- "shankara-building-products": "SHANKARA",
  "shankara-buildpro": "BUILDPRO",
  "sharda-cropchem": "SHARDACROP",
  "sharda-motor-industries": "SHARDAMOTR",
@@ -4204,6 +4263,7 @@ export const UPSTOX_SECURITY_SYMBOLS = Object.freeze({
  "star-health-and-allied-insurance": "STARHEALTH",
  "state-bank-of-india": "SBIN",
  "sterlite-technologies": "STLTECH",
+ "stl-networks": "STLNETWORK",
  "stove-kraft": "STOVEKRAFT",
  "subros": "SUBROS",
  "sudarshan-chemical-industries": "SUDARSCHEM",
@@ -4215,7 +4275,7 @@ export const UPSTOX_SECURITY_SYMBOLS = Object.freeze({
  "sundaram-finance": "SUNDARMFIN",
  "suprajit-engineering": "SUPRAJIT",
  "supreme-industries": "SUPREMEIND",
- "surya-roshni": "SURYAROSNI",
+ "surana-telecom-and-power-limited-eq-new-fv": "SURANAT&P",
  "swiggy": "SWIGGY",
  "syrma-sgs-technology": "SYRMA",
  "tamilnadu-newsprint-and-papers": "TNPL",
@@ -4269,6 +4329,7 @@ export const UPSTOX_SECURITY_SYMBOLS = Object.freeze({
  "union-bank-of-india": "UNIONBANK",
  "united-breweries": "UBL",
  "united-spirits": "UNITDSPR",
+ "universal-cables": "UNIVCABLES",
  "upl": "UPL",
  "usha-martin": "USHAMART",
  "uti-asset-management": "UTIAMC",
@@ -4285,8 +4346,10 @@ export const UPSTOX_SECURITY_SYMBOLS = Object.freeze({
  "vedanta-power": "VEDPOWER",
  "vesuvius-india": "VESUVIUS",
  "vijaya-diagnostic-centre": "VIJAYA",
+ "vindhya-telelinks": "VINDHYATEL",
  "vip-industries": "VIPIND",
  "vishal-mega-mart": "VMM",
+ "vishnu-chemicals": "VISHNU",
  "viyash-scientific": "VIYASH",
  "vodafone-idea": "IDEA",
  "voltamp-transformers": "VOLTAMP",
@@ -4399,6 +4462,7 @@ export const UPSTOX_ISIN_SYMBOLS = Object.freeze({
  "INE070I01018": "INSECTICID",
  "INE073K01018": "SONACOMS",
  "INE074A01025": "PRAJIND",
+ "INE074B01023": "PARACABLES",
  "INE075A01022": "WIPRO",
  "INE079A01024": "AMBUJACEM",
  "INE079J01017": "GATEWAY",
@@ -4495,13 +4559,15 @@ export const UPSTOX_ISIN_SYMBOLS = Object.freeze({
  "INE121E01018": "JSWENERGY",
  "INE121J01017": "INDUSTOWER",
  "INE123W01016": "SBILIFE",
+ "INE126J01016": "APOLLOPIPE",
  "INE127D01025": "HDFCAMC",
  "INE128S01021": "FIVESTAR",
  "INE129A01019": "GAIL",
  "INE12E301017": "GCHOTELS",
  "INE12F801023": "KISSHT",
  "INE12UN01015": "SHADOWFAX",
- "INE133A01011": "JSWDULUX",
+ "INE130B01031": "SURANAT&P",
+ "INE133A01029": "JSWDULUX",
  "INE133Y01011": "IFGLEXPOR",
  "INE134E01011": "PFC",
  "INE136B01020": "CYIENT",
@@ -4555,6 +4621,7 @@ export const UPSTOX_ISIN_SYMBOLS = Object.freeze({
  "INE1JAR25012": "KRT",
  "INE1NPP01017": "ENRIN",
  "INE1TAE01010": "TMCV",
+ "INE1VXE01018": "STLNETWORK",
  "INE200A01026": "GVT&D",
  "INE200M01039": "VBL",
  "INE201A01024": "MANALIPETC",
@@ -4589,6 +4656,7 @@ export const UPSTOX_ISIN_SYMBOLS = Object.freeze({
  "INE232A01011": "SHREDIGCEM",
  "INE233A01035": "GODREJIND",
  "INE233B01017": "BLUEDART",
+ "INE235A01022": "FINCABLES",
  "INE237A01036": "KOTAKBANK",
  "INE238A01034": "AXISBANK",
  "INE239A01024": "NESTLEIND",
@@ -4596,7 +4664,7 @@ export const UPSTOX_ISIN_SYMBOLS = Object.freeze({
  "INE245A01021": "TATAPOWER",
  "INE246B01019": "RAMCOSYS",
  "INE249Z01020": "MAZDOCK",
- "INE24OJ01011": "BUILDPRO",
+ "INE24OJ01029": "BUILDPRO",
  "INE255Z01027": "E2E",
  "INE256A01028": "ZEEL",
  "INE257A01026": "BHEL",
@@ -4608,18 +4676,20 @@ export const UPSTOX_ISIN_SYMBOLS = Object.freeze({
  "INE267A01025": "HINDZINC",
  "INE269A01021": "SONATSOFTW",
  "INE269B01029": "LMW",
+ "INE270I01022": "VISHNU",
  "INE271C01023": "DLF",
  "INE274F01020": "WESTLIFE",
  "INE274J01014": "OIL",
- "INE274V01019": "SHANKARA",
  "INE274Y01021": "AJAXENGG",
  "INE277B01014": "PUNJABCHEM",
  "INE278H01035": "SANDHAR",
  "INE278Y01022": "CAMPUS",
+ "INE279A01012": "UNIVCABLES",
  "INE280A01028": "TITAN",
  "INE284S01014": "SJS",
  "INE285K01026": "TECHNOE",
  "INE287B01021": "SUBROS",
+ "INE288301026": "BSE:PPEL",
  "INE289B01019": "GICHSGFIN",
  "INE290S01011": "CARTRADE",
  "INE291A01017": "GRWRHITECH",
@@ -4643,7 +4713,6 @@ export const UPSTOX_ISIN_SYMBOLS = Object.freeze({
  "INE324D01010": "LGEINDIA",
  "INE325A01013": "TIMKEN",
  "INE326A01037": "LUPIN",
- "INE335A01020": "SURYAROSNI",
  "INE337A01034": "LGBBROSLTD",
  "INE338I01027": "MOTILALOFS",
  "INE342J01019": "ZFCVINDIA",
@@ -4695,6 +4764,7 @@ export const UPSTOX_ISIN_SYMBOLS = Object.freeze({
  "INE456Z01021": "MEDIASSIST",
  "INE457A01014": "MAHABANK",
  "INE457L01029": "PGEL",
+ "INE458B01036": "BHAGYANGR",
  "INE459N01021": "MANIPALHOS",
  "INE463V01026": "ANANDRATHI",
  "INE465A01025": "BHARATFORG",
@@ -4769,6 +4839,7 @@ export const UPSTOX_ISIN_SYMBOLS = Object.freeze({
  "INE602A01031": "PCBL",
  "INE603J01030": "PIIND",
  "INE608A01012": "PSB",
+ "INE614G01033": "RPOWER",
  "INE615H01020": "TITAGARH",
  "INE615I01010": "GLOBUSSPR",
  "INE618R01015": "SGFIN",
@@ -4815,6 +4886,7 @@ export const UPSTOX_ISIN_SYMBOLS = Object.freeze({
  "INE700A01033": "JUBLPHARMA",
  "INE702C01027": "APLAPOLLO",
  "INE703B01027": "RATNAMANI",
+ "INE707A01012": "VINDHYATEL",
  "INE716A01013": "WHIRLPOOL",
  "INE721A01047": "SHRIRAMFIN",
  "INE721I01024": "BSE:NSE",
@@ -4923,4 +4995,4 @@ export const UPSTOX_ISIN_SYMBOLS = Object.freeze({
  "INE999A01023": "KSB",
  "INF732E01037": "LIQUIDBEES"
 });
-export const UPSTOX_INSTRUMENT_COVERAGE = Object.freeze({"asked":611,"mapped":611,"unmapped":[]});
+export const UPSTOX_INSTRUMENT_COVERAGE = Object.freeze({"asked":620,"mapped":620,"unmapped":[]});
