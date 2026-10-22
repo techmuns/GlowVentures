@@ -6,7 +6,8 @@ export declare const UPSTOX_INSTRUMENTS: Readonly<Record<string, {
   key: string;
   tradingSymbol: string;
   series: string;
-  joinedBy: "symbol" | "symbol+isin" | "isin" | "name";
+  /** How the listing was matched; `+successor` where a split retired the statement's ISIN (Stage 10he). */
+  joinedBy: `${"symbol" | "symbol+isin" | "isin" | "name"}${"" | "+successor"}`;
 }>>;
 
 export declare const UPSTOX_SECURITY_SYMBOLS: Readonly<Record<string, string>>;

@@ -1,5 +1,5 @@
 import type { Account, Position } from "./types";
-import { applyQuotes, symbolFor, quoteSymbolFor, type QuoteFeed } from "./quotes";
+import { applyQuotes, listingIsinFor, symbolFor, quoteSymbolFor, type QuoteFeed } from "./quotes";
 import { requestDeadline } from "./requestDeadline";
 import { isCounted } from "./analytics";
 import { fifoReturnPct } from "../../shared/fifo.mjs";
@@ -35,8 +35,8 @@ export const marketDay = (iso: string) => {
 /** Exact identifiers only. A conflicting ISIN is evidence against a ticker match. */
 export function actionsFor(p: Position, feed: ActionFeed | null): ResearchAction[] {
   if (!feed) return [];
-  const symbol = symbolFor(p);
-  return feed.rows.filter((r) => (p.isin && r.isin === p.isin) || (symbol && r.ticker === symbol))
+  const symbol = symbolFor(p), isin = listingIsinFor(p);
+  return feed.rows.filter((r) => (isin && r.isin === isin) || (symbol && r.ticker === symbol))
     .sort((a, b) => (a.exDate || "9999").localeCompare(b.exDate || "9999") || a.id.localeCompare(b.id));
 }
 
@@ -122,7 +122,7 @@ export function projectActions(p: Position & { quantity: number }, statementDate
   if ((p.realizedLotsAfter ?? 0) > 0) qi.push("Sales are recorded after this statement; a newer holding balance is required");
   if (!feed) { di.push("Corporate-action feed unavailable"); return result; }
   if (!statementDate || !through || through < statementDate) di.push("No comparable dated valuation");
-  if (feed.symbols && !feed.symbols.includes(symbolFor(p) || "") && !feed.isins.includes(p.isin || "")) di.push("Security outside the saved feed's coverage");
+  if (feed.symbols && !feed.symbols.includes(symbolFor(p) || "") && !feed.isins.includes(listingIsinFor(p) || "")) di.push("Security outside the saved feed's coverage");
   if (statementDate < feed.requestedFrom) di.push("Statement predates the available event history");
   const lag = captureLagDays(feed, through);
   if (lag > 0) di.push(COVERAGE_GAP);

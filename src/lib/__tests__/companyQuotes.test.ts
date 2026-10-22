@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import { cashInstruments, instrumentIndex, resolveInstrument, type Listing } from "../../../shared/upstoxInstrumentLookup.mjs";
 import { UPSTOX_INSTRUMENTS, UPSTOX_ISIN_SYMBOLS } from "../../../shared/upstoxInstruments.mjs";
 import { BOOK_POSITIONS } from "../../data/glowData";
-import { applyQuotes, holdingQuoteSymbolFor, moveSymbolFor, quoteSymbolFor, symbolFor, type QuoteFeed } from "../quotes";
+import { applyQuotes, holdingQuoteSymbolFor, listingIsinFor, moveSymbolFor, quoteSymbolFor, symbolFor, type QuoteFeed } from "../quotes";
+import { UPSTOX_SECURITY_SYMBOLS } from "../../../shared/upstoxInstruments.mjs";
 import { applyFundNavs } from "../fundNavs";
 
 const listing = (segment: string, isin: string, symbol: string, name = "Example Limited", series = "EQ"): Listing => ({
@@ -75,4 +76,24 @@ const privateLine = BOOK_POSITIONS.find((p) => p.review && p.marketSide === "pri
 assert.ok(privateLine, "the book carries a private review line with units");
 assert.equal(applyQuotes([{ ...privateLine, isin: "INE721I01024" }], nseFeed)[0].live, false,
   "a private review line is never priced, even when its ISIN resolves");
+// Stage 10he: a face-value split retires an ISIN. Shankara Buildpro's SVAN
+// statements (30 Sep) print INE24OJ01011; after the 8 Oct split only
+// INE24OJ01029 is listed, and the held name still reaches BUILDPRO.
+const buildpro = BOOK_POSITIONS.filter((p) => p.securityKey === "shankara-buildpro");
+assert.ok(buildpro.length > 0 && buildpro.every((p) => p.isin === "INE24OJ01011" && p.symbol === "BUILDPRO"));
+assert.equal(UPSTOX_INSTRUMENTS.BUILDPRO.key, "NSE_EQ|INE24OJ01029");
+assert.ok(UPSTOX_INSTRUMENTS.BUILDPRO.joinedBy.endsWith("+successor"));
+assert.equal(UPSTOX_ISIN_SYMBOLS["INE24OJ01011"], undefined, "the retired ISIN is not a listed ISIN");
+assert.ok(buildpro.every((p) => quoteSymbolFor(p) === "BUILDPRO"), "the held name still reaches its quote");
+assert.equal(UPSTOX_INSTRUMENTS.JSWDULUX.key, "NSE_EQ|INE133A01029");
+assert.equal(UPSTOX_SECURITY_SYMBOLS["jsw-dulux"], "JSWDULUX", "the fund-disclosed company keeps its quote");
+// …and a statement that prints neither ISIN nor NSE symbol reaches its BSE SME
+// listing through a cited alias, and is identified by that listing's ISIN.
+const poojaa = BOOK_POSITIONS.filter((p) => p.securityKey === "poojaa-precision-engineering");
+assert.ok(poojaa.length > 0 && poojaa.every((p) => !p.isin && !symbolFor(p)));
+assert.ok(poojaa.every((p) => quoteSymbolFor(p) === "BSE:PPEL" && moveSymbolFor(p) === "BSE:PPEL"));
+assert.equal(UPSTOX_INSTRUMENTS["BSE:PPEL"].key, "BSE_EQ|INE288301026");
+assert.ok(poojaa.every((p) => listingIsinFor(p) === "INE288301026"));
+assert.equal(listingIsinFor(yash), "INE00GK01023", "a statement's own ISIN always wins");
+assert.equal(listingIsinFor({ securityKey: "not-a-listed-company" }), null);
 console.log("Company CMP: exact NSE/BSE identities, fund-only companies, conflicts and valuation overlay passed");

@@ -325,3 +325,11 @@
 
 - Group headings use a warm band; expanded rows use opaque blue stripes, with deeper shades for nested levels and a left-edge guide. Both themes keep readable secondary text, a separate child hover and the existing gain/loss colours.
 - Shared tree tables and custom holdings, trade and sector detail tables use the same palette. Row-depth markers stay attached when columns move; the existing zebra check recognises these intentional hierarchy colours.
+
+### Stage 10he — THE UPSTOX INSTRUMENT MAP REFRESHED; SPLITS THAT RETIRED AN ISIN
+
+- `npm run build-upstox-instruments` re-run against the 22 Oct masters, last done 7 Oct. Ten held names gain an exact quote identity: APOLLOPIPE, BHAGYANGR, FINCABLES, PARACABLES, RPOWER, STLNETWORK, SURANAT&P, UNIVCABLES, VINDHYATEL, VISHNU. SHANKARA and SURYAROSNI drop out because SVAN exited both; `heg` and `cosmo-films` are now asked for as `heg-advanced-materials` and `cosmo-first`.
+- A plain rebuild would have dropped two names a face-value split gave a new ISIN, which the statements still print. `ISIN_SUCCESSORS` (same issuer and class enforced, used only once the old ISIN has no listing): Shankara Buildpro INE24OJ01011 → INE24OJ01029 (₹10 → ₹2, ex 8 Oct, in the saved capture), held in both SVAN mandates; JSW Dulux INE133A01011 → INE133A01029 (1:10, record date 22 Oct), disclosed by funds. `joinedBy` records `+successor`.
+- Poojaa Precision (Goldstandard, both mandates) listed on BSE SME on 4 Aug 2026 as `BSE:PPEL` (`INE288301026`). Upstox abbreviates the name, so a cited alias resolves it. Its statement prints neither ISIN nor NSE symbol, so the corporate-action capture could never be asked about it. `listingIsinFor` gives the gate and the evidence request the listing's ISIN where a statement prints none.
+- Still unresolved, correctly: HEG Graphite (demerged, not yet listed), NICCO Corporation, Sterlite Electric and Sterlite Grid (10 shares each, no listing).
+- Tests: `companyQuotes` (successor ISINs, Poojaa's alias and listing ISIN), `liveWithheld` (Poojaa covered by its listing ISIN, still held back by a capture not asked about it).

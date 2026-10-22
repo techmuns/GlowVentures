@@ -15,7 +15,7 @@ import nseSymbols from "@/data/nseSymbols.json";
 import type { Position } from "./types";
 import { fifoReturnPct } from "../../shared/fifo.mjs";
 import { requestDeadline } from "./requestDeadline";
-import { UPSTOX_ISIN_SYMBOLS, UPSTOX_SECURITY_SYMBOLS } from "../../shared/upstoxInstruments.mjs";
+import { UPSTOX_INSTRUMENTS, UPSTOX_ISIN_SYMBOLS, UPSTOX_SECURITY_SYMBOLS } from "../../shared/upstoxInstruments.mjs";
 
 const KEY_TO_SYMBOL = nseSymbols as Record<string, string>;
 
@@ -37,6 +37,21 @@ export function quoteSymbolFor(p: { securityKey: string; symbol?: string | null;
 
 export function quoteSymbolsFor(positions: readonly { securityKey: string; symbol?: string | null; isin?: string | null }[]): string[] {
   return [...new Set(positions.map(quoteSymbolFor).filter((s): s is string => !!s))];
+}
+
+/**
+ * THE ISIN A HOLDING IS IDENTIFIED BY FOR CORPORATE-ACTION EVIDENCE (Stage
+ * 10he): the statement's own, else the ISIN of the listing its quote key
+ * resolves to in the committed instrument map. Goldstandard's statement prints
+ * Poojaa Precision with neither an ISIN nor an NSE symbol, so the capture could
+ * never be asked about it and the gate held its BSE quote back as "outside the
+ * feed's coverage" for ever.
+ */
+export function listingIsinFor(p: { securityKey: string; symbol?: string | null; isin?: string | null }): string | null {
+  if (p.isin) return p.isin;
+  const sym = quoteSymbolFor(p);
+  const key = sym ? UPSTOX_INSTRUMENTS[sym]?.key : undefined;
+  return key?.split("|")[1] ?? null;
 }
 
 /**

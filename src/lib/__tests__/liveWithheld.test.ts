@@ -135,6 +135,27 @@ ok("Yash Highvoltage rolls on the review's June sales: its BSE quote marks 116,4
     "without a quote the statement's own per-share value marks the rolled count");
 });
 
+// Stage 10he: Goldstandard's statement prints Poojaa Precision with neither an
+// ISIN nor an NSE symbol, so the capture could never be asked about it and its
+// BSE quote was held back as "outside the feed's coverage". Asked about by its
+// listing's ISIN, it goes live; a capture that was not asked still holds it.
+ok("Poojaa Precision is covered by its listing's ISIN, and goes live on its BSE quote", () => {
+  const p = BOOK_POSITIONS.find((x) => x.securityKey === "poojaa-precision-engineering")!;
+  const capture = (isins: string[]) => normalizeActionFeed({
+    version: 1, capturedAt: "2026-10-21T10:00:00Z", requestedFrom: "2023-10-22", requestedTo: "2027-10-21",
+    rowCount: 1, rows: [elsewhere],
+    sources: { nse: { capturedAt: "2026-10-21T10:00:00Z" }, screener: { capturedAt: "2026-10-21T09:00:00Z" } },
+  }, ["GATE"], isins);
+  const mark = p.marketValue / p.quantity!;
+  const q: QuoteFeed = { ...quotes("GATE", "2026-10-21T09:00:00Z"), asOf: "2026-10-21T10:00:00Z",
+    quotes: { "BSE:PPEL": { ...quotes().quotes.GATE, price: mark * 1.02, prevClose: mark, tradedAt: "2026-10-21T09:00:00Z" } } };
+  const asked = applyCorporateActionQuotes([p], BOOK_ACCOUNTS as Account[], q, capture(["INE288301026"]));
+  assert.equal(liveWithheldReason(p, asked.returns), null);
+  assert.equal(asked.positions[0].live, true);
+  const notAsked = applyCorporateActionQuotes([p], BOOK_ACCOUNTS as Account[], q, capture([]));
+  assert.ok(/outside the saved feed's coverage/.test(liveWithheldReason(p, notAsked.returns) ?? ""));
+});
+
 // The capture below is verified through 23 Sep (its sources' own dates). A
 // share event is announced well ahead of its ex-date, so a capture a few days
 // behind the quote cannot hide one (`SHARE_EVENT_LEAD_DAYS`): the price goes
