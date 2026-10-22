@@ -49,7 +49,6 @@ import { AbsentCell, AbsentSection, AbsentValue, DASH } from "@/components/Absen
 import { costedFigures, VACUOUS_COST_REASON } from "@/lib/clubbedFigures";
 import { NavVsIndex } from "@/components/NavVsIndex";
 import { valuationDates, valuationNote, dateSpan } from "@/components/BasisPill";
-import { BENCHMARKS, benchmarkByKey } from "@/lib/benchmarks";
 import { DailyMovers } from "@/components/DailyMovers";
 import PortfolioReturns from "@/components/PortfolioReturns";
 import { SectorComposition } from "@/pages/SectorComposition";
@@ -254,15 +253,6 @@ export function MorningCIO() {
   // the tab's badge is how a reader on any of the other panels learns something
   // has fired. A HOOK, so it sits up here with the others, above the early return.
   const alerts = usePriceAlerts();
-  /**
-   * THE THIRD TAB NAMES THE BENCHMARK THE CHART BEHIND IT DRAWS. The NAV card
-   * lets the reader pick one (`?bench=`, read by `NavVsIndex` off the same
-   * param), and a tab still reading "Nifty 500" over a chart of the Sensex is a
-   * label not describing its panel. The default is unchanged, so the tab reads
-   * exactly what it always did until a reader picks another.
-   */
-  const [benchKey] = useViewParam(BENCHMARKS, {}, "bench");
-  const navTabLabel = `NAV vs ${benchmarkByKey(benchKey).label}`;
   // A HOOK, so it is declared here rather than beside the rows it arranges:
   // this component returns early on an unloaded book, and a hook after that is
   // a different bug from the one being fixed.
@@ -1405,7 +1395,7 @@ export function MorningCIO() {
                     ? "bg-champagne-500 text-ink-950 shadow-glow"
                     : "text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"
                 }`}>
-                {v.key === "nav" ? navTabLabel : v.label}
+                {v.label}
                 {/* HOW MANY ALERTS HAVE FIRED, on the tab itself — shown only
                     when some have, so a quiet day adds nothing to the header. */}
                 {v.key === "alerts" && alerts.counts.reached > 0 && (
