@@ -267,7 +267,14 @@
 - `capitalBridge` over the attribution total's own units: value at start + money added − money taken out + gain = value at end, per account and in total, plus the purchase cost of what those accounts hold now. The gain is split only where a record splits it: the account's statement P&L over exactly these dates whose lines make the gain within ₹1 (accrued income outside a record that closes without it), or a fund folio's dated unit record (no redemption in the period realises nothing; a scheme redeemed only inside it realises its FIFO gain; any switch, undated dividend or unattributable redemption leaves it unsplit). Fund and purchase-cost records carry no separate charges (inside the NAV / prices), shown as — with that reason. Everything else is one named "Not split" part. FYTD: 14 of 17 accounts split (5 statement, 9 fund record); Green Lantern ×2 and Motilal 90414963315 not split.
 - Checks: `capitalBridge.test.ts` (new), period-return, attribution and market-return suites for the yearly XIRR; `check-selected-attribution` strikes the bridge on every period and type and the card against the tab's period figure; `check-market-returns` asserts XIRR ≠ Absolute under a year and a reload makes no history request; check:pages' benchmark invariants read XIRR as per year.
 
-### Stage 10gv — THE STATEMENT LIBRARY OPENS THE ORIGINAL FILE
+### Stage 10gv — THREE CLEAR TABS FOR MARKET RETURN COVERAGE
+
+- The market-return popup opens on Return Overview, with short coverage, date and weighting explanations. All Securities Considered and Missing Values have live counts, searchable complete holding lists, and one entry per security/account rather than combining different owners or mandates.
+- Every entry uses the attribution table’s existing classification and the account registry’s exact fund/mandate, owner, provider, account and report date. Missing entries state the specific missing price, NAV, identity, valuation or source response and the next step in plain language. Pending histories stay named until they finish loading.
+- Structured gap reasons preserve the original diagnostics and calculations. A holding without a usable current value is explicitly left out rather than disappearing from the coverage reconciliation. Fund wording clearly distinguishes NAV changes from income paid out or reinvested.
+- Focused tests check membership and missing-data wording. Required browser coverage checks tab keyboard controls, complete/disjoint holding lists, fund and mandate context, searches, retry, focus restoration, reopening and all three tabs on mobile.
+
+### Stage 10gx — THE STATEMENT LIBRARY OPENS THE ORIGINAL FILE
 
 *"publish the original statement files to the hosted site behind the password gate so the preview can show the real PDF and spreadsheet layout"* — the family, 22 Oct 2026.
 
