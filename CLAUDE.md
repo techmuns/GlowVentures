@@ -549,7 +549,7 @@ And:
   behind the edge gate; Stage 10gx). Keep it green.
 - `build:pdf-assets` runs before build/dev and copies PDF.js fonts, character
   maps and decoders behind the same gate. The lazy in-app PDF renderer replaces
-  the native plugin, which Chrome blocks in sandboxed dashboard embeds (Stage 10hb).
+  the native plugin, which Chrome blocks in sandboxed dashboard embeds (Stage 10hc).
 - `npm run dev` / `preview` — local server; checks expect a preview on :4173.
 - `npm run inventory` · `extract` (no options; `GLOW_PDF_PASSWORDS`;
   `GLOW_OCR` off / new / unset for scans;

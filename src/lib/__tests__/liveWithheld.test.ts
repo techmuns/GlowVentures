@@ -105,6 +105,36 @@ ok("…and a buyback beside sales the account records after the statement is sti
   assert.ok(/Sales are recorded after this statement/.test(liveWithheldReason(p, returns) ?? ""));
 });
 
+// Stage 10hb: "Review's 116,462" — the family, 22 Oct 2026. Yash Highvoltage's
+// ICICI NSDL statement (31 Mar) holds 138,462 and the review sells 22,000 in
+// June with its own 30 Jun closing at 116,462. The BSE quote marks that count;
+// the sale cash is unverified, so no return is struck.
+ok("Yash Highvoltage rolls on the review's June sales: its BSE quote marks 116,462 shares, and no return is struck", () => {
+  const y = BOOK_POSITIONS.find((x) => x.securityKey === "yash-highvoltage")!;
+  assert.equal(y.quantity, 138462, "the statement basis keeps the 31 Mar snapshot");
+  assert.equal(y.rolledForward?.source, "review");
+  assert.equal(y.rolledForward?.quantity, 116462);
+  assert.ok(y.rolledForward?.hprUnavailableReason);
+  const f = normalizeActionFeed({
+    version: 1, capturedAt: "2026-09-23T10:00:00Z", requestedFrom: "2023-09-24", requestedTo: "2027-09-23",
+    rowCount: 1, rows: [elsewhere],
+    sources: { nse: { capturedAt: "2026-09-23T10:00:00Z" }, screener: { capturedAt: "2026-09-23T09:00:00Z" } },
+  }, ["GATE"], ["INE00GK01023"]);
+  const q: QuoteFeed = { ...quotes(), quotes: { "BSE:YASHHV": { ...quotes().quotes.GATE, price: 950, prevClose: 940 } } };
+  const out = applyCorporateActionQuotes([y], BOOK_ACCOUNTS as Account[], q, f);
+  const live = out.positions[0];
+  assert.equal(liveWithheldReason(y, out.returns), null, "the recorded sales are inside the roll");
+  assert.equal(live.live, true);
+  assert.equal(live.quantity, 116462);
+  assert.equal(live.marketValue, 116462 * 950);
+  assert.equal(live.dayChange, 116462 * 10);
+  assert.equal(live.returnPct, null, "unverified sale cash leaves the return absent");
+  const offline = applyCorporateActionQuotes([y], BOOK_ACCOUNTS as Account[], null, f).positions[0];
+  assert.equal(offline.quantity, 116462);
+  assert.ok(Math.abs(offline.marketValue - 116462 * (y.marketValue / 138462)) < 0.01,
+    "without a quote the statement's own per-share value marks the rolled count");
+});
+
 // The capture below is verified through 23 Sep (its sources' own dates). A
 // share event is announced well ahead of its ex-date, so a capture a few days
 // behind the quote cannot hide one (`SHARE_EVENT_LEAD_DAYS`): the price goes

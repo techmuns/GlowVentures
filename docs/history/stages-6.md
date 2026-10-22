@@ -307,7 +307,14 @@
 
 - Renamed the Morning CIO tab and its search result to “Our Book vs Benchmark”. The existing tab link and benchmark calculations stay the same.
 
-### Stage 10hb — PDFs OPEN INSIDE THE EMBEDDED DASHBOARD
+### Stage 10hb — BSE QUOTES FOR YASH HIGHVOLTAGE AND NSE; YASH ROLLED ON THE REVIEW
+
+- *"use the BSE symbols for them to fetch live prices"* (the family, 22 Oct 2026), on the two Direct Equity names the movers card dropped as "No exchange symbol". Yash Highvoltage already had a BSE identity (`BSE:YASHHV`, `BSE_EQ|INE00GK01023`, scrip 544310) and was priced live on every other page; the movers models read day moves by NSE symbol alone. `moveSymbolFor` (NSE symbol, else the exchange-qualified quote key) now feeds `dailyMovers`, `insideMovers` and the card's wait list. The AIF & PMS card gains five mandate names the same way (Manali Petrochemical, Sasken, CreditAccess Grameen, Krishca, Punjab Chemicals), all resolved by exact ISIN.
+- NSE listed on BSE on 24 Sep 2026. Upstox's BSE master carries its own ISIN as `BSE_EQ|INE721I01024` (trading symbol NSE, scrip 544937). `build-upstox-instruments` now resolves a review line the family placed on the listed side, and `applyQuotes` prices such a line only through its exact-ISIN listing. This reverses the 13 Oct note that no exchange price is published for NSE; the statement basis keeps the review's ₹41.5 Cr. Only NSE's three map entries were added: a full rebuild today also drops BUILDPRO, SHANKARA, SURYAROSNI, JSWDULUX and HEG because Upstox's masters moved, which is its own change.
+- Yash's rupee impact was withheld for three review sales after its 31 Mar statement. The family chose the review's count (*"Review's 116,462"*). `rollReviewRows` rolls a statement holding on the review's dated buys and sales only where the review's own later Closing holds what they leave, and `build-book` publishes it as `rolledForward` (`source: "review"`) where the account's own tape gives none: Yash, 138,462 → 116,462 through 30 Jun, cost held ₹84.11 L. The June sale cash is unverified, so realised gain and HPR stay absent (`hprUnavailableReason`). `rolledPosition` (and `check-pages`' mirror) now marks a no-price statement row at its own value per unit.
+- Tests: `companyQuotes` (NSE identity, live price, private review lines stay unpriced), `liveWithheld` (Yash's roll), `dailyMovers` (a BSE-only listing ranks), `insideMovers` (scope re-derived with the same key rule).
+
+### Stage 10hc — PDFs OPEN INSIDE THE EMBEDDED DASHBOARD
 
 - Reproduced the reported statement failing with `net::ERR_BLOCKED_BY_CLIENT` and a `chrome-error://chromewebdata/` child frame. Chrome disables its native PDF plugin beneath a sandboxed ancestor, including the dashboard embed.
 - Original PDFs now render through a lazy, self-hosted PDF.js worker inside the app, with page navigation, fit-width/zoom, bundle starting page, password entry and retry, and a useful load failure. Original bytes and encryption stay unchanged; passwords stay in memory. Download, New tab and Text as read remain available.

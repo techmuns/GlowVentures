@@ -9368,6 +9368,16 @@ export const BOOK_POSITIONS: Position[] = [
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "realizedLotsAfter": 3,
+    "rolledForward": {
+      "through": "2026-06-30",
+      "quantity": 116462,
+      "costBasis": 8411217.34,
+      "realizedPnL": null,
+      "costOfUnitsSold": 1588902.66,
+      "trades": 3,
+      "source": "review",
+      "hprUnavailableReason": "Sale proceeds are unverified on review row(s) 435, 436, 437; original lots establish remaining cost only"
+    },
     "returnPct": 1154.450666592001,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -9394,6 +9404,22 @@ export const BOOK_POSITIONS: Position[] = [
       "costOfUnitsSold": 0,
       "dividendReceived": null,
       "salesAfter": 3,
+      "reviewRoll": {
+        "through": "2026-06-30",
+        "quantity": 116462,
+        "costBasis": 8411217.34,
+        "realizedPnL": null,
+        "costOfUnitsSold": 1588902.66,
+        "trades": 3,
+        "source": "review",
+        "hprUnavailableReason": "Sale proceeds are unverified on review row(s) 435, 436, 437; original lots establish remaining cost only",
+        "rows": [
+          435,
+          436,
+          437,
+          438
+        ]
+      },
       "evidence": [
         {
           "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
@@ -12002,7 +12028,7 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2023-08",
       "text": "Dec 2022 – Aug 2023"
     },
-    "reviewNote": "Valued at ₹25,93,75,000 on the family's consolidated review (MOPWM, 30 Jun 2026), Direct Equity - Unlisted row 69. 1,25,000 shares on Ajay's ICICI Bank NSDL statement and 75,000 on Ankita's Motilal Oswal demat; the review's ₹12.085 Cr cost split by shares, which is this book's judgement — the review prints one cost for the 2,00,000. Now a listed company: the family confirmed NSE has listed; the review's value is kept and no exchange price is published to this book (confirmed 2026-10-13)."
+    "reviewNote": "Valued at ₹25,93,75,000 on the family's consolidated review (MOPWM, 30 Jun 2026), Direct Equity - Unlisted row 69. 1,25,000 shares on Ajay's ICICI Bank NSDL statement and 75,000 on Ankita's Motilal Oswal demat; the review's ₹12.085 Cr cost split by shares, which is this book's judgement — the review prints one cost for the 2,00,000. Now a listed company: the family confirmed NSE has listed; the statement basis keeps the review's value, and since 22 Oct 2026 the live price is its BSE quote (BSE: NSE, matched by ISIN INE721I01024) (confirmed 2026-10-13)."
   },
   {
     "securityKey": "oilmax-energy",
@@ -12840,7 +12866,7 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2023-08",
       "text": "Dec 2022 – Aug 2023"
     },
-    "reviewNote": "Valued at ₹15,56,25,000 on the family's consolidated review (MOPWM, 30 Jun 2026), Direct Equity - Unlisted row 69. 1,25,000 shares on Ajay's ICICI Bank NSDL statement and 75,000 on Ankita's Motilal Oswal demat; the review's ₹12.085 Cr cost split by shares, which is this book's judgement — the review prints one cost for the 2,00,000. Now a listed company: the family confirmed NSE has listed; the review's value is kept and no exchange price is published to this book (confirmed 2026-10-13)."
+    "reviewNote": "Valued at ₹15,56,25,000 on the family's consolidated review (MOPWM, 30 Jun 2026), Direct Equity - Unlisted row 69. 1,25,000 shares on Ajay's ICICI Bank NSDL statement and 75,000 on Ankita's Motilal Oswal demat; the review's ₹12.085 Cr cost split by shares, which is this book's judgement — the review prints one cost for the 2,00,000. Now a listed company: the family confirmed NSE has listed; the statement basis keeps the review's value, and since 22 Oct 2026 the live price is its BSE quote (BSE: NSE, matched by ISIN INE721I01024) (confirmed 2026-10-13)."
   },
   {
     "securityKey": "pvc-ii-class-a1",
@@ -20747,6 +20773,22 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "costOfUnitsSold": 0,
     "dividendReceived": null,
     "salesAfter": 3,
+    "reviewRoll": {
+      "through": "2026-06-30",
+      "quantity": 116462,
+      "costBasis": 8411217.34,
+      "realizedPnL": null,
+      "costOfUnitsSold": 1588902.66,
+      "trades": 3,
+      "source": "review",
+      "hprUnavailableReason": "Sale proceeds are unverified on review row(s) 435, 436, 437; original lots establish remaining cost only",
+      "rows": [
+        435,
+        436,
+        437,
+        438
+      ]
+    },
     "evidence": [
       {
         "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",

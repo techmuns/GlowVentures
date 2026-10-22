@@ -40,7 +40,7 @@ import { AT_COST_BUCKET, MANDATE_BUCKET, currentHoldings, holdingBucket } from "
 import { deriveFundDisclosures, type ArchiveDoc } from "@/lib/ledgerModel";
 import { familyValue } from "@/lib/lookthrough";
 import { insideMovers } from "@/lib/insideMovers";
-import { applyQuotes, symbolFor, symbolForKey, type Quote, type QuoteFeed } from "@/lib/quotes";
+import { applyQuotes, quoteSymbolFor, symbolFor, symbolForKey, type Quote, type QuoteFeed } from "@/lib/quotes";
 import { securityKeyOf } from "@/lib/securityKey";
 import type { FundDisclosureData } from "@/lib/fundDisclosures";
 import type { ActionFeed } from "@/lib/corporateActions";
@@ -88,6 +88,12 @@ const feedOf = (quotes: Record<string, Quote>, asOf = ASOF): QuoteFeed => ({
   quotes, asOf, missing: [], pending: [], fresh: Object.keys(quotes).length, stale: 0,
 });
 
+/**
+ * The key a mandate holding is read under: its NSE symbol, else its
+ * exchange-qualified quote key (a BSE-only listing, Stage 10hb).
+ */
+const ownKey = (p: Position) => symbolFor(p) || quoteSymbolFor(p);
+
 /** The symbols this card asks about, derived WITHOUT the model under test. */
 function scopeOf(positions: Position[], data: FundDisclosureData) {
   const held = currentHoldings(positions);
@@ -95,7 +101,7 @@ function scopeOf(positions: Position[], data: FundDisclosureData) {
   const mandate = held.filter((p) => bucket(p) === MANDATE_BUCKET);
   const aif = held.filter((p) => bucket(p) === "AIF");
   const own = new Map<string, string>();
-  for (const p of mandate) { const s = symbolFor(p); if (s && !own.has(p.securityKey)) own.set(p.securityKey, s); }
+  for (const p of mandate) { const s = ownKey(p); if (s && !own.has(p.securityKey)) own.set(p.securityKey, s); }
   const symbolOf = (k: string) => own.get(k) ?? symbolForKey(k);
   const disclosing = data.funds.filter((f) => aif.some((p) => f.fundKeys.includes(p.securityKey)));
   const lineKeys = new Set(disclosing.flatMap((f) => f.lines.map((l) => l.securityKey)));
@@ -104,13 +110,13 @@ function scopeOf(positions: Position[], data: FundDisclosureData) {
     if (p.currentPrice != null && p.currentPrice > 0 && !marks.has(p.securityKey)) marks.set(p.securityKey, p.currentPrice);
   }
   return { held, mandate, aif, disclosing, lineKeys, symbolOf, marks,
-    symbols: [...new Set([...mandate.map((p) => symbolFor(p)), ...[...lineKeys].map(symbolOf)]
+    symbols: [...new Set([...mandate.map(ownKey), ...[...lineKeys].map(symbolOf)]
       .filter((s): s is string => Boolean(s)))] };
 }
 
 const scope = scopeOf(LIVE_POSITIONS, disclosures);
 const quotes: Record<string, Quote> = {};
-for (const [key, sym] of [...scope.mandate.map((p) => [p.securityKey, symbolFor(p)] as const),
+for (const [key, sym] of [...scope.mandate.map((p) => [p.securityKey, ownKey(p)] as const),
   ...[...scope.lineKeys].map((k) => [k, scope.symbolOf(k)] as const)]) {
   if (!sym || quotes[sym]) continue;
   const mark = scope.marks.get(key) ?? 100;

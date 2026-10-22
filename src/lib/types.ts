@@ -201,6 +201,12 @@ export type RecoveredHoldingCost = {
   salesAfter?: number;
   /** Purchase lots reconcile, but a recorded sale has no verified proceeds. */
   hprUnavailableReason?: string;
+  /**
+   * The review's dated trades past `asOf`, rolled to its own closing (Stage
+   * 10hb) — `build-book` publishes it as `Position.rolledForward`, or names
+   * `reason` where the rows do not tie.
+   */
+  reviewRoll?: (NonNullable<Position["rolledForward"]> & { rows: number[] }) | { reason: string };
   evidence: { path: string; sheet: string; rows: number[] }[];
   notes: string[];
 };
@@ -297,6 +303,12 @@ export type Position = {
    * lots witness it. Cost, realised and the cost of units sold are null where a
    * sale is not yet settled by a lot. Read by the LIVE layer only; the statement
    * basis keeps the snapshot.
+   *
+   * `source: "review"` (Stage 10hb) is the same roll off the family's
+   * consolidated review, where the account has no tape and the family chose its
+   * dated trades: published only where the review's own closing holds what they
+   * leave. `hprUnavailableReason` withholds the return where its sale cash is
+   * unverified.
    */
   rolledForward?: {
     through: string;
@@ -305,6 +317,8 @@ export type Position = {
     realizedPnL: number | null;
     costOfUnitsSold: number | null;
     trades: number;
+    source?: "review";
+    hprUnavailableReason?: string;
   };
   /**
    * (unrealised + realised) ÷ (cost of units held + cost of units sold), in
