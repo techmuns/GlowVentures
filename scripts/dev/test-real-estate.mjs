@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { validateProperty, propertyFigures, propertyTotal, hasPin, propertyShare } from "../../shared/realEstate.mjs";
+import { validateProperty, propertyFigures, propertyTotal, hasPin, propertyShare, propertyLabel, wholePropertyFigures } from "../../shared/realEstate.mjs";
 import { onRequest } from "../../functions/api/real-estate.js";
 import { property, memoryStore } from "./real-estate-fixtures.mjs";
 import { handlePropertyGeocode } from "../../functions/api/property-geocode.js";
@@ -27,14 +27,35 @@ check("no property does not become a measured zero", () => assert.deepEqual(prop
 check("a zero coordinate is a valid pin", () => assert.equal(hasPin(property({ latitude: 0, longitude: 0 })), true));
 check("a missing pin is never a city-center estimate", () => assert.equal(hasPin(property({ latitude: null, longitude: null })), false));
 const invalid = [
-  { name: "" }, { city: "" }, { address: "" }, { country: "" }, { value: -1 }, { value: Infinity }, { value: "100" }, { value: undefined }, { cost: NaN }, { valuationDate: null },
+  { value: -1 }, { value: Infinity }, { value: "100" }, { cost: NaN },
   { valuationDate: "2026-02-30" }, { purchasedOn: "2026-13-01" }, { leaseEnd: "01/02/2026" }, { latitude: 91 }, { longitude: -181 }, { latitude: null }, { area: 0 }, { areaUnit: "bigha" },
-  { owners: [] }, { owners: [{ name: "a", ownerId: null, share: 101 }] }, { owners: [{ name: "a", ownerId: null, share: 0 }] }, { owners: [{ name: "a", ownerId: null, share: 60 }, { name: "b", ownerId: null, share: 50 }] },
-  { owners: [{ name: "a", ownerId: "test-a", share: 50 }, { name: "a", ownerId: "test-a", share: 50 }] }, { type: "Unknown" }, { notes: "x".repeat(2001) }, { status: "Vacant", monthlyRent: 1 }, { id: "../invalid" },
+  { owners: [{ name: "a", ownerId: null, share: 101 }] },
+  { type: "Unknown" }, { notes: "x".repeat(2001) }, { id: "../invalid" },
 ];
 for (const [i, patch] of invalid.entries()) check(`invalid record ${i + 1} refused`, () => assert.ok(validateProperty(property(patch)).error));
 check("a property offered for sale can still earn rent", () => assert.ok(validateProperty(property({ status: "For sale" })).property));
 check("blank monetary fields remain blank", () => assert.equal(validateProperty(property({ cost: null })).property.cost, null));
+const minimal = validateProperty({ id: "test-unfinished" }).property;
+check("all visible fields may be absent", () => { assert.ok(minimal); assert.equal(minimal.name, ""); assert.equal(minimal.value, null); assert.equal(minimal.monthlyRent, null); assert.deepEqual(minimal.owners, []); });
+check("an unnamed record has a clickable display label", () => assert.equal(propertyLabel(minimal), "Untitled property"));
+check("an address labels an otherwise unnamed property", () => assert.equal(propertyLabel({ ...minimal, address: "Test address" }), "Test address"));
+check("a value needs no valuation date or ownership", () => assert.equal(validateProperty({ id: "test-value-only", value: 5000000 }).property.value, 5000000));
+const unfinishedOwner = validateProperty(property({ owners: [{ name: "Test owner", ownerId: "test-a", share: null }] })).property;
+check("an owner's share can be added later", () => assert.equal(unfinishedOwner.owners[0].share, null));
+check("missing ownership is unknown rather than zero or full ownership", () => { assert.equal(propertyShare(unfinishedOwner), null); assert.equal(propertyFigures(unfinishedOwner).value, null); assert.equal(propertyFigures(unfinishedOwner).yield, 4); });
+check("whole-property details keep entered figures without inventing ownership", () => assert.equal(wholePropertyFigures(unfinishedOwner).value, 15000000));
+const duplicate = validateProperty(property({ owners: [{ name: "Test owner", ownerId: "test-a", share: 100 }, { name: "Test owner", ownerId: "test-a", share: 100 }] })).property;
+check("identical duplicate owners save once and never double count", () => { assert.equal(duplicate.owners.length, 1); assert.equal(propertyFigures(duplicate).value, 15000000); });
+const conflicting = validateProperty(property({ owners: [{ name: "Test owner", ownerId: "test-a", share: 60 }, { name: "Test owner", ownerId: "test-a", share: 40 }] })).property;
+check("different entries for one owner stay editable without inflating totals", () => { assert.equal(conflicting.owners.length, 2); assert.equal(propertyShare(conflicting), null); });
+const overallocated = validateProperty(property({ owners: [{ name: "Test A", ownerId: "test-a", share: 70 }, { name: "Test B", ownerId: "test-b", share: 60 }] })).property;
+check("unfinished shares above 100% save but do not enter family totals", () => { assert.ok(overallocated); assert.equal(propertyFigures(overallocated).value, null); });
+check("unknown and measured zero shares stay distinct", () => { assert.equal(propertyShare(minimal), null); assert.equal(propertyShare(property({ owners: [{ name: "Test A", ownerId: "test-a", share: 0 }] })), 0); });
+assert.equal((await call({ op: "save", property: { id: "test-progressive" } })).status, 200);
+assert.equal((await call()).body.properties.find(p => p.id === "test-progressive").name, "");
+assert.equal((await call({ op: "save", property: { id: "test-progressive", name: "Test later details", value: 5000000, owners: [{ name: "Test owner", share: null }] } })).status, 200);
+assert.equal((await call()).body.properties.find(p => p.id === "test-progressive").value, 5000000);
+await call({ op: "delete", id: "test-progressive" });
 check("an empty store reads successfully", () => {});
 assert.deepEqual((await call()).body, { ok: true, properties: [] });
 for (const id of ["test-apartment", "test-land", "test-office"]) assert.equal((await call({ op: "save", property: property({ id }) })).status, 200);
