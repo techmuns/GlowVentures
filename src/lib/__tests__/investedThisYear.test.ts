@@ -27,6 +27,11 @@ const tape=sources();tape.trades={[key]:[{date:'2026-04-02',side:'buy',quantity:
 const traded=p({costBasis:2000,tradeRecord:{from:'2026-04-01',to:'2026-10-21',buys:2,sells:1,unaccounted:0,held:{first:'2026-05-01',last:'2026-05-01',lots:1},reason:null}});
 assert.deepEqual(purchaseLots(traded,tape),[{date:'2026-05-01',quantity:10,cost:2000}],'sales consume older buys; sold units do not remain in the cohort');
 assert.equal(purchaseLots({...traded,tradeRecord:{...traded.tradeRecord!,unaccounted:3,held:null}},tape),null,'a tape with unknown opening units is refused');
+assert.equal(purchaseLots({...traded,costBasis:1998},tape)?.[0].cost,2000,'settled purchase cash retains charges rather than being forced to remaining book cost');
+const fund=sources();fund.tranches={[key]:{accountId:'account',securityKey:'stock',units:10,basis:'fifo',moves:[
+  {accountId:'account',date:'2025-10-01',direction:'in',label:'Remaining purchase',amount:600,invested:600,units:6,security:'Example Fund',securityKey:'stock'},
+  {accountId:'account',date:'2026-05-01',direction:'in',label:'Remaining purchase',amount:400,invested:400,units:4,security:'Example Fund',securityKey:'stock'}]}};
+assert.equal(investedThisYear([p({assetClass:'Mutual Fund'})],accounts,fund,'2026-04-01','2026-10-22','absolute').cost,400,'fund allotments split old and new units under the same gate');
 const futureValue=investedThisYear([p({priceAsOf:'2026-03-31'})],accounts,s,'2026-04-01','2026-10-22','absolute');assert.equal(futureValue.missing.length,1,'a valuation before purchase cannot measure its return');
 const b=p({securityKey:'other',marketValue:500,costBasis:1000});
 const weightedSources=sources({[key]:[{date:'2026-04-02',quantity:10,cost:1000}],'account|other':[{date:'2026-04-02',quantity:10,cost:1000}]});
