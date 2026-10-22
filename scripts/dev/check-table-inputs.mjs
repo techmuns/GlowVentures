@@ -5,6 +5,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { build } from 'esbuild';
+import { installReadModelRoutes } from './read-model-api.mjs';
 import { chromium } from 'playwright-core';
 import ExcelJS from 'exceljs';
 import { validateProperty } from '../../shared/realEstate.mjs';
@@ -49,7 +50,7 @@ async function visit(route) { await page.goto(base + route); await page.locator(
 async function download(name, selector) {
   const id = selector ? await page.locator(selector).first().getAttribute('data-table-export-id') : null;
   const button = id ? page.locator(`[data-export-for="${id}"]`) : page.locator('[data-export-excel]').first();
-  const downloading = page.waitForEvent('download', { timeout: 60000 }); await button.click();
+  const downloading = page.waitForEvent('download', { timeout: 180000 }); await button.click();
   const file = path.join(out, name); await (await downloading).saveAs(file);
   const book = new ExcelJS.Workbook(); await book.xlsx.readFile(file); return { file, book };
 }
@@ -131,6 +132,12 @@ try {
   check('The monitor exports its custom hierarchy in full', monitor.book.getWorksheet('Table').rowCount > monitorRows);
   await upload(monitor.file); await page.getByText('No number changes found.').waitFor();
   check('A complete nested export uploads unchanged without false edits', commits === 4);
+  await installReadModelRoutes(page);
+  await visit('/monitor');
+  const allSecurities = await download('all-securities.xlsx', '[data-monitor-table="holdings"]');
+  await upload(allSecurities.file); await page.getByText('No number changes found.').waitFor();
+  check('The full All Securities workbook uploads unchanged', commits === 4);
+  console.log(`All Securities Excel: ${(await fs.stat(allSecurities.file)).size} bytes, ${allSecurities.book.getWorksheet('Table').rowCount} rows`);
   await visit('/sectors');
   const sectors = await download('sectors.xlsx', '[data-sector-table]');
   check('Nested tables travel in their own detail worksheets', sectors.book.worksheets.some(s => /^Detail /.test(s.name)));
