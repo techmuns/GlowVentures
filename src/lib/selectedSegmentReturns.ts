@@ -159,7 +159,7 @@ export function returnGapText(reason: string, start: string | null): string {
   if (/no positive purchase cost|nothing was paid in|money at work.*not positive/i.test(reason)) return 'There is no positive invested amount to calculate a return. Check the purchase costs and payments.';
   if (/return for the whole account/i.test(reason)) return 'Only the whole account’s return is available. We need separate values and dated payments for each holding.';
   if (/sale proceeds|sale amounts?.*unverified|unverified.*sale/i.test(reason))
-    return 'The sale amount is missing or unverified. We need the sale statement showing the amount received.';
+    return 'The sale amount is missing or unverified. We need a sale statement showing what was sold and the amount received.';
   if (/purchase or sale/i.test(reason)) return 'Purchase or sale details are incomplete. We need the amounts paid and received.';
   if (/live price.*purchase.cost.*statement valuation/i.test(reason))
     return 'The purchase cost and statement value need checking. We need a purchase record and a recent valuation statement.';
