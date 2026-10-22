@@ -273,11 +273,8 @@ export function MorningCIO() {
   // date against the same valuation.
   const today = useMemo(() => new Date(), []);
   /**
-   * THE RETURNS TAB'S PRICE HISTORIES, LOADED BEFORE IT IS OPENED (Stage 10gu).
-   * Once the page is idle, whichever panel is showing, the public histories
-   * the Returns tab's market return needs start loading into this browser's
-   * copy (`useMarketReturns`), so opening the tab draws the figure rather than
-   * starting ~350 fetches. Histories already kept and still fresh are skipped.
+   * Shared public histories fill the headline assumptions as they arrive and
+   * are reused when Returns opens. Fresh histories already kept are skipped.
    */
   const returnHoldings = useMemo(() => currentHoldings(consolidated), [consolidated]);
   const returnHistories = useMarketHistories(returnHoldings);

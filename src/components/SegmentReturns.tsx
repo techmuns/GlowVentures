@@ -36,7 +36,8 @@ export default function SegmentReturns({ selection: recordedSelection, period }:
   const [axis, setAxis] = useViewParam(SEGMENT_VIEWS, {}, 'seg');
   const view = useTableView('cio-attribution', COLS), exp = useExpanded();
   const money = (n: number, sign = false) => fmtFromBase(n, { compact: true, sign });
-  // Dated returns close at statement values. Today's quote must never be backdated.
+  // Statement returns keep their dates; labelled assumptions use historical
+  // closing prices. Today's intraday quote is never backdated.
   const positions = consolidated;
   const statementPositions = useMemo(() => dedupedPositions(statementPortfolio?.positions ?? []), [statementPortfolio]);
   const calculationCurrent = useMemo(() => currentHoldings(statementPositions), [statementPositions]);
@@ -104,7 +105,7 @@ export default function SegmentReturns({ selection: recordedSelection, period }:
     </Card>
   </div>;
   if (!a) return null;
-  const reason = (l: SelectedLine) => l.measured?.reason ?? (l.missing.length ? returnGapText(l.missing[0].reason, selection.start)
+  const reason = (l: SelectedLine) => l.measured?.reason ?? (l.missing.length ? l.missing[0].plainReason ? l.missing[0].reason : returnGapText(l.missing[0].reason, selection.start)
     : 'No complete value and money record is available for these dates.');
   const rows = sortRows(a.rows, view.sort, { seg: r => r.label, holdings: r => r.positions.length, value: r => r.value,
     weight: r => r.value, deployed: r => r.invested, gain: r => r.gain, market: r => marketOf(r.positions).pct, ret: r => r.returnPct, contrib: r => r.contribution,

@@ -20,7 +20,7 @@ export function statementReturnInputs(statement: Portfolio): AccountInput[] {
   }).map(i => ({ ...i, outside: nothingToMeasure(statement, statement.accounts.find(a => a.accountId === i.accountId)!) }));
 }
 
-/** Headlines may show the verified subset, but never close it with uncovered money. */
+/** The available subset, plus explicit user-authorised holding assumptions where supplied. */
 export function availableCardReturns(statement: Portfolio, display: readonly Position[], inputs: AccountInput[], today: Date, assumptions?: AssumedReturnBook) {
   const current = currentHoldings(display), recorded = dedupedPositions(statement.positions);
   const calculationCurrent = currentHoldings(recorded), exited = exitedRows(recorded);

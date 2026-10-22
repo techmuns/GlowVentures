@@ -6,7 +6,8 @@ import { measureInception, measureWindow, type AccountWindow, type InceptionRow,
 import { segmentOf, type SegmentAxis, type SectorLookup } from './segmentReturns';
 import type { HoldingAssumption } from './assumedHoldingReturns';
 
-export type ReturnGap = { accountId: string; label: string; owner?: string; reason: string; value?: number; securityKey?: string };
+export type ReturnGap = { accountId: string; label: string; owner?: string; reason: string; value?: number; securityKey?: string;
+  plainReason?: boolean; detail?: string };
 export type ReturnUnit = { key: string; accountId: string; label: string; positions: readonly Position[];
   gain: number; invested: number; close: number; from: string | null; to: string;
   assumption?: HoldingAssumption;
@@ -116,7 +117,7 @@ export function selectedSegmentReturns(current: readonly Position[], exited: rea
     const detail = selection.assumptionGaps?.find(x => x.accountId === g.accountId && (!g.securityKey || x.securityKey === g.securityKey));
     // Only replace a holding-specific gap. Whole-account gaps must still name
     // all of their uncovered holdings rather than borrow one stock's reason.
-    return detail && g.securityKey ? { ...g, reason: detail.reason } : g;
+    return detail && g.securityKey ? { ...g, reason: detail.reason, plainReason: detail.plainReason, detail: detail.detail } : g;
   });
   const measure = (us: ReturnUnit[]): Measured | null => {
     if (!us.length) return null;

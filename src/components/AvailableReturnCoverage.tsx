@@ -26,7 +26,7 @@ export function AvailableReturnCoverage({ line: l, selection, accounts, money, f
   const gaps = [...l.missing].sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
   const count = new Set(l.units.map(u => u.accountId)).size;
   const assumed = l.units.filter(u => u.assumption);
-  const reason = (line: SelectedLine) => line.measured?.reason ?? (line.missing.length ? returnGapText(line.missing[0].reason, selection.start)
+  const reason = (line: SelectedLine) => line.measured?.reason ?? (line.missing.length ? line.missing[0].plainReason ? line.missing[0].reason : returnGapText(line.missing[0].reason, selection.start)
     : 'No complete value and money record is available for these dates.');
   return (
       <div data-attribution-coverage className="space-y-3 whitespace-normal font-normal text-left">
@@ -79,8 +79,8 @@ export function AvailableReturnCoverage({ line: l, selection, accounts, money, f
                 const suffix = source ? ` · ${source.owner} · ${source.provider} · account ${source.accountNo}` : '';
                 return suffix && g.label.endsWith(suffix) ? g.label.slice(0, -suffix.length) : g.label;
               })()}</p>
-              <p className="text-xs text-slate-400">{(() => { const source = accounts.find(a => a.accountId === g.accountId); return source ? `${source.owner} · ${source.provider} · account ${source.accountNo} · statement ${fmtDate(source.asOf)} · ` : ''; })()}{g.value != null ? `${money(g.value)} · ` : ''}{returnGapText(g.reason, selection.start)}</p>
-              <details className="mt-1 text-xs text-slate-400"><summary className="cursor-pointer">Statement detail</summary><p className="mt-1">{g.reason}</p></details>
+              <p className="text-xs text-slate-400">{(() => { const source = accounts.find(a => a.accountId === g.accountId); return source ? `${source.owner} · ${source.provider} · account ${source.accountNo} · statement ${fmtDate(source.asOf)} · ` : ''; })()}{g.value != null ? `${money(g.value)} · ` : ''}{g.plainReason ? g.reason : returnGapText(g.reason, selection.start)}</p>
+              <details className="mt-1 text-xs text-slate-400"><summary className="cursor-pointer">Statement detail</summary><p className="mt-1">{g.detail ?? g.reason}</p></details>
             </li>)}</ul>
           </> : <p className="mt-1">{l.units.length ? 'All available records for this row are included. Records missing elsewhere are listed in the total’s info card.' : reason(l)}</p>}
         </div>

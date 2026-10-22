@@ -45,10 +45,13 @@ export function assumedHoldingReturns(positions: readonly Position[], accounts: 
   for (const p of positions) {
     const a = accountMap.get(p.accountId), k = marketHoldingKey(p);
     const label = `${p.security} · ${a?.owner ?? 'Owner unavailable'} · ${a?.provider ?? 'Provider unavailable'} · account ${a?.accountNo ?? 'unknown'}`;
-    const gap = (reason: string) => gaps.push({ accountId: p.accountId, securityKey: p.securityKey, label, reason, value: p.marketValue });
+    const gap = (reason: string, detail?: string) => gaps.push({ accountId: p.accountId, securityKey: p.securityKey, label, reason, detail, plainReason: true, value: p.marketValue });
     if (!a) { gap('The holding’s owner and account must be identified.'); continue; }
     const instrument = b.instruments.get(p.securityKey);
-    if (!instrument || p.marketSide === 'private' || p.valuedAtCost || p.assetClass === 'Cash' || p.assetClass === 'AIF') {
+    if (p.marketSide === 'private' || p.valuedAtCost || p.assetClass === 'AIF') {
+      gap('A dated valuation from the company or fund is needed. Assuming it is still held cannot supply its value.'); continue;
+    }
+    if (!instrument || p.assetClass === 'Cash') {
       gap('A published market price or fund NAV is needed. Assuming it is still held cannot supply a missing valuation.'); continue;
     }
     const anchor = holdingAssumptionAnchor(p, a, b);
@@ -69,7 +72,7 @@ export function assumedHoldingReturns(positions: readonly Position[], accounts: 
     }
     const h = b.histories[instrument.key];
     if (!h) { pending++; gap('Prices are still loading. No new statement is needed yet.'); continue; }
-    if (!h.ok) { gap(`Historical prices are unavailable. ${h.reason}`); continue; }
+    if (!h.ok) { gap('Historical prices could not load. Retry the price history; no new statement is needed yet.', h.reason); continue; }
     const opening = close(h, requestedStart), closing = close(h, end);
     if (!opening || !closing || closing.date <= opening.date) {
       gap(`A published closing price is needed near ${requestedStart} and ${end}. Available history: ${h.first} → ${h.last}.`); continue;
@@ -88,7 +91,7 @@ export function assumedHoldingReturns(positions: readonly Position[], accounts: 
       const projected = projectActions({ ...anchor.position, quantity }, anchor.date, basisThrough, b.actions);
       const incomePlan = basisThrough === closing.date ? projected : projectActions({ ...anchor.position, quantity }, anchor.date, closing.date, b.actions);
       if (projected.quantityIssues.length || incomePlan.incomeIssues.length || incomePlan.quantityIssues.length) {
-        gap(`Share changes and dividends need checking: ${[...projected.quantityIssues, ...incomePlan.quantityIssues, ...incomePlan.incomeIssues].join('; ')}.`); continue;
+        gap('Share splits and dividends still need checking for these dates.', [...new Set([...projected.quantityIssues, ...incomePlan.quantityIssues, ...incomePlan.incomeIssues])].join('; ')); continue;
       }
       const shareEvents = projected.lines.filter(l => l.status === 'adjusted');
       const priceEvents = h.splits?.filter(s => s.date > anchor.date && s.date <= basisThrough);
