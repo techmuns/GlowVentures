@@ -81,7 +81,7 @@ try {
  const missingKeys=await dialog.locator('[data-market-gap]').evaluateAll(els=>els.map(el=>el.dataset.marketHoldingKey));
  assert.equal(new Set([...includedKeys,...missingKeys]).size,holdingCount,'no overlap or omitted holding');
  assert.ok(await dialog.locator('[data-market-gap]').evaluateAll(els=>els.every(el=>el.querySelector('[data-market-through]')?.textContent.trim()&&el.querySelector('[data-market-category]')?.textContent.trim()&&el.querySelector('[data-market-missing-data]')?.textContent.trim()&&el.querySelector('[data-market-needed]')?.textContent.trim())));
- const aif=dialog.locator('[data-market-gap]').filter({has:dialog.locator('[data-market-category]').filter({hasText:/^AIF$/})}).first();
+ const aif=dialog.locator('[data-market-gap]').filter({has:page.locator('[data-market-category]').filter({hasText:/^AIF$/})}).first();
  assert.equal(await aif.locator('[data-market-through]').innerText(),await aif.getByRole('heading').innerText());
  assert.match(await aif.locator('[data-market-needed]').innerText(),/fund manager.*NAV/);
  await dialog.getByRole('textbox',{name:'Search missing holdings'}).fill('Karur');
