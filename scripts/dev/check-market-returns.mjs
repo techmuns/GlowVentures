@@ -42,7 +42,8 @@ try {
    await page.waitForFunction(({ period,type }) => { const d=document.querySelector('[data-segment-returns]')?.dataset; return d?.segPeriod===period && d?.segType===type; }, {period,type});
    const from = await table.getAttribute('data-seg-start'), to = '2026-10-21';
    const days = (Date.parse(to)-Date.parse(from))/864e5;
-   const raw = price(to)/price(from), expected = ((type!=='absolute' && days>=365 ? Math.pow(raw,365/days) : raw)-1)*100;
+   // XIRR is per year at any length; CAGR from a year; Absolute never (Stage 10gu).
+   const raw = price(to)/price(from), expected = ((type==='xirr' || (type==='cagr' && days>=365) ? Math.pow(raw,365/days) : raw)-1)*100;
    const actual = Number(await summary.getAttribute('data-market-total'));
    assert.ok(Number.isFinite(actual) && Math.abs(actual-expected)<1e-7, `${period}/${type}: ${actual} vs ${expected}`);
    const footer = table.locator('[data-seg-total] [data-seg-cell="market"]');
@@ -52,6 +53,10 @@ try {
  }
  assert.equal(requests, initialRequests, 'changing the period reuses public history instead of refetching it');
  assert.ok(new Set(results.filter(r=>r.type==='absolute').map(r=>r.actual)).size===6);
+ for (const period of ['fytd','mtd','ytd']) {
+  const of = type => results.find(r => r.period===period && r.type===type).actual;
+  assert.ok(Math.abs(of('xirr')-of('absolute'))>0.01, `${period}: the return type moves the figure`);
+ }
  await summary.getByRole('button', { name: 'What is included in total market return?', exact: true }).click();
  const dialog = page.getByRole('dialog'); await dialog.waitFor();
  assert.match(await dialog.innerText(), /What is missing/);
@@ -84,11 +89,18 @@ try {
  await page.waitForFunction(()=>document.querySelector('[data-sector-attribution]')?.dataset.status==='ready');
  assert.ok(await table.locator('[data-sa-cell="market"][data-market-return]:not([data-market-return=""])').count()>5);
  await page.screenshot({path:`${out}/sector-market-returns.png`});
+ // Stage 10gu: every history is now kept in this browser, so the next visit draws the figure without fetching any.
+ const covered = Number(await summary.getAttribute('data-market-covered')), kept = requests;
+ await page.reload();
+ await page.waitForFunction(n => Number(document.querySelector('[data-market-summary]')?.dataset.marketCovered) === n
+   && document.querySelector('[data-market-summary]')?.dataset.marketPending === '0', covered);
+ await page.waitForTimeout(1000);
+ assert.equal(requests, kept, 'a reload draws the kept histories instead of refetching them');
  await page.setViewportSize({width:390,height:844});
  await summary.getByRole('button', {name:'What is included in total market return?',exact:true}).click(); await dialog.waitFor();
  assert.ok(await dialog.evaluate(el=>{const r=el.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth+1&&el.scrollWidth<=el.clientWidth+1;}));
  await page.screenshot({path:`${out}/mobile-coverage.png`});
  assert.deepEqual(errors,[]);
  await fs.writeFile(`${out}/browser-results.json`,JSON.stringify(results,null,2));
- console.log('Historical market return: all six periods, three return types, totals, sources, retry, sector regrouping and mobile passed.',results);
+ console.log('Historical market return: all six periods, three return types, totals, sources, retry, sector regrouping, kept histories and mobile passed.',results);
 } catch(error) { await page?.screenshot({path:`${out}/failure.png`}).catch(()=>{});throw error; } finally {await browser.close();}

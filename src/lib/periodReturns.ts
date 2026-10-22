@@ -69,7 +69,7 @@ export const PERIODS: readonly { key: PeriodKey; label: string; title: string }[
  */
 export const RETURN_TYPES: readonly { key: ReturnType; label: string; short: string; title: string }[] = [
   { key: "xirr", label: "XIRR", short: "Yearly rate, timing every rupee in and out",
-    title: "XIRR (money-weighted return): the yearly rate that accounts for when each rupee went in and came out. The standard measure for SIPs, top-ups and redemptions. Over less than a year it is shown for the period, never stretched to a year." },
+    title: "XIRR (money-weighted return): the yearly rate that accounts for when each rupee went in and came out. The standard measure for SIPs, top-ups and redemptions. It is always a rate per year: over less than a year the period's result is annualised, which magnifies it, and the return over the period itself is shown beside it. Absolute return shows the period without annualising." },
   { key: "absolute", label: "Absolute return", short: "Total gain ÷ money at work, not per year",
     title: "Absolute return (Modified Dietz): total gain over the period as a percentage of the money at work — the opening value plus each amount added or taken out, counted for the share of the period it was invested. Not annualised. Since investment it is the simple return: gain over what was paid in." },
   { key: "cagr", label: "CAGR", short: "Yearly growth rate · needs a year or more",
@@ -310,8 +310,22 @@ export function windowFlows(rows: AccountWindow[]): DatedFlow[] {
 
 const pct = (x: number) => `${x >= 0 ? "+" : ""}${x.toFixed(2)}%`;
 
+/**
+ * ── XIRR IS A RATE PER YEAR (Stage 10gu) ────────────────────────────────────
+ *
+ * *"when I'm changing XIRR to absolute and vice versa, the return is not
+ * changing"* — the family, 22 Oct 2026. Under a year XIRR was restated over
+ * the period, (1 + r)^(days/365) − 1, which for one set of dated flows is
+ * within a few basis points of Modified Dietz, so the selector looked dead.
+ * The Returns tab now states XIRR as what its label says — a yearly rate — and
+ * keeps the period figure in `working.periodPct` for the face beside it.
+ * `periodXirr` restates it over the period instead: the headline cards'
+ * "return this financial year, not annualised" keep that reading.
+ */
+export type MeasureOptions = { periodXirr?: boolean };
+
 /** One measure over a set of account windows. `money` formats a rupee figure. */
-export function measureWindow(rows: AccountWindow[], type: ReturnType, money: (n: number) => string): Measured {
+export function measureWindow(rows: AccountWindow[], type: ReturnType, money: (n: number) => string, opts: MeasureOptions = {}): Measured {
   if (!rows.length) return { shown: false, reason: "no account can be measured over this window", formula: FORMULAS[type] };
   const from = rows.map((r) => r.openDate).sort()[0];
   const to = rows.map((r) => r.closeDate).sort().at(-1)!;
@@ -332,9 +346,12 @@ export function measureWindow(rows: AccountWindow[], type: ReturnType, money: (n
     const r = xirr(working.flows);
     if (r == null) return finish({ shown: false, reason: xirrAmbiguity(working.flows) ?? "these dated flows do not yield a money-weighted rate", formula });
     working.annualPct = r * 100;
+    const w = (Math.pow(1 + r, D / 365) - 1) * 100;
+    working.periodPct = w;
     if (D >= 365) return finish({ shown: true, pct: r * 100, basis: "annual", formula,
       worked: `Opening ${money(V0)} on ${from}, ${money(cin)} in and ${money(cout)} out on their dates, closing ${money(V1)} on ${to} → ${pct(r * 100)} a year over ${D} days.` });
-    const w = (Math.pow(1 + r, D / 365) - 1) * 100;
+    if (!opts.periodXirr) return finish({ shown: true, pct: r * 100, basis: "annual", formula,
+      worked: `Opening ${money(V0)} on ${from}, ${money(cin)} in and ${money(cout)} out on their dates, closing ${money(V1)} on ${to} → ${pct(r * 100)} a year, annualised from ${D} days. Over the ${D} days themselves: (1 + ${pct(r * 100)})^(${D}/365) − 1 = ${pct(w)}.` });
     return finish({ shown: true, pct: w, basis: "window", formula,
       worked: `${D} days is under a year, so the rate is not annualised: (1 + ${pct(r * 100)})^(${D}/365) − 1 = ${pct(w)} over the period.` });
   }
@@ -390,7 +407,7 @@ export function measureWindow(rows: AccountWindow[], type: ReturnType, money: (n
 }
 
 export const FORMULAS: Record<ReturnType, string> = {
-  xirr: "Σ CFₜ ÷ (1 + r)^((t − t₀)/365) = 0 — the opening value as money in, every top-up and withdrawal on its date, the closing value as money out. Under a year: (1 + r)^(days/365) − 1.",
+  xirr: "Σ CFₜ ÷ (1 + r)^((t − t₀)/365) = 0 — the opening value as money in, every top-up and withdrawal on its date, the closing value as money out. r is a yearly rate; over the period itself: (1 + r)^(days/365) − 1.",
   absolute: "Modified Dietz: (V₁ − V₀ − C) ÷ (V₀ + Σ Cᵢ × days the amount was invested ÷ days in the period)",
   cagr: "Annualised Modified Dietz: ((1 + gain ÷ money at work weighted by days held)^(365 ÷ days) − 1) × 100 — over a year or more",
 };
@@ -582,7 +599,7 @@ export type InceptionRow = {
   flows: Flow[];
 };
 
-export function measureInception(rows: InceptionRow[], type: ReturnType, money: (n: number) => string): Measured {
+export function measureInception(rows: InceptionRow[], type: ReturnType, money: (n: number) => string, opts: MeasureOptions = {}): Measured {
   const formula = INCEPTION_FORMULAS[type];
   if (!rows.length) return { shown: false, reason: "no account publishes a complete dated capital record and a value to close on", formula };
   const paid = rows.reduce((s, r) => s + r.paidIn, 0);
@@ -613,9 +630,10 @@ export function measureInception(rows: InceptionRow[], type: ReturnType, money: 
     const x = xirr(flows);
     if (x == null) return finish({ shown: false, reason: xirrAmbiguity(flows) ?? "these dated flows do not yield a money-weighted rate", formula });
     working.annualPct = x * 100;
-    if (D >= 365) return finish({ shown: true, pct: x * 100, basis: "annual", formula,
-      worked: `${money(paid)} in and ${money(out)} out on their own dates since ${from}, each account closing on its own value date (last ${to}), ${money(val)} in all → ${pct(x * 100)} a year.` });
     const w = (Math.pow(1 + x, D / 365) - 1) * 100;
+    working.periodPct = w;
+    if (D >= 365 || !opts.periodXirr) return finish({ shown: true, pct: x * 100, basis: "annual", formula,
+      worked: `${money(paid)} in and ${money(out)} out on their own dates since ${from}, each account closing on its own value date (last ${to}), ${money(val)} in all → ${pct(x * 100)} a year${D < 365 ? `, annualised from ${D} days (${pct(w)} over the period itself)` : ""}.` });
     return finish({ shown: true, pct: w, basis: "window", formula,
       worked: `${D} days is under a year, so the rate is not annualised: ${pct(w)} over the period.` });
   }
@@ -630,7 +648,7 @@ export function measureInception(rows: InceptionRow[], type: ReturnType, money: 
 }
 
 export const INCEPTION_FORMULAS: Record<ReturnType, string> = {
-  xirr: "Σ CFₜ ÷ (1 + r)^((t − t₀)/365) = 0 — every purchase and redemption on its date, each account's value as money out on its own value date",
+  xirr: "Σ CFₜ ÷ (1 + r)^((t − t₀)/365) = 0 — every purchase and redemption on its date, each account's value as money out on its own value date; r is a yearly rate",
   absolute: "(Value today + taken out − paid in) ÷ paid in",
   cagr: "(Value today ÷ paid in)^(365 ÷ days since the purchase) − 1 — one purchase only",
 };

@@ -21,6 +21,7 @@ const DIR = fs.mkdtempSync(path.join(ROOT, "node_modules", ".glow-test-"));
 
 const SUITES = [
   ["historical market returns", "src/lib/__tests__/marketReturns.test.ts"],
+  ["capital bridge", "src/lib/__tests__/capitalBridge.test.ts"],
   ["historical market feed", "src/lib/__tests__/marketHistoryFunction.test.ts"],
   ["custody audit source rows", "src/lib/__tests__/custodyAudit.test.ts"],
   ["available headline returns", "src/lib/__tests__/availableCardReturns.test.ts"],

@@ -190,7 +190,8 @@ export default function PortfolioReturns() {
     if (!c1 || c1.date <= c0.date) return { ...base, pct: null, reason: `No ${b.label} close inside the window`, span: null, ...pmeFields };
     const r = c1.value / c0.value - 1;
     const d = daysBetween(c0.date, c1.date);
-    const pct = (annualise && d >= 365 ? Math.pow(1 + r, 365 / d) - 1 : r) * 100;
+    // XIRR is a yearly rate at any length (Stage 10gu), so its index is too.
+    const pct = (annualise && (rtype === "xirr" || d >= 365) ? Math.pow(1 + r, 365 / d) - 1 : r) * 100;
     return { ...base, pct, reason: null, span: { from: c0.date, to: c1.date, v0: c0.value, v1: c1.value, days: d }, ...pmeFields };
   });
   const gapOf = (r: BenchRow) => (portfolioPct != null && r.pme != null ? portfolioPct - r.pme : null);

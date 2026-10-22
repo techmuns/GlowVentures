@@ -60,7 +60,9 @@ try {
  assert.match(await historyCard.innerText(), /not annualised/);
  const fytdCard = page.locator('[data-tile-slot="fytd"] [data-card-coverage]');
  assert.ok(Math.abs(Number(await fytdCard.getAttribute('data-card-gain')) - Number(await table.getAttribute('data-seg-total-gain'))) < .001);
- assert.ok(Math.abs(Number(await fytdCard.getAttribute('data-card-return')) - Number(await table.getAttribute('data-seg-total-ret'))) < 1e-8);
+ // The card reads XIRR over the period; the tab states it per year with the same period figure beside it (Stage 10gu).
+ assert.ok(Math.abs(Number(await fytdCard.getAttribute('data-card-return')) - Number(await table.getAttribute('data-seg-total-period-ret'))) < 1e-8);
+ assert.ok(Number(await table.getAttribute('data-seg-total-ret')) > Number(await fytdCard.getAttribute('data-card-return')), 'a gain over 6 months is a larger rate per year');
  await page.screenshot({ path: `${out}/headline-cards.png` });
  // Saved choices use the same covered inputs as the default cards.
  for (const id of ['return']) {
@@ -90,9 +92,36 @@ try {
    // Chromium and Node can round the XIRR root a few binary digits apart.
    assert.ok(expectedReturn == null ? rawReturn === '' : rawReturn !== '' && Math.abs(Number(rawReturn) - expectedReturn) < 1e-8, `${period}/${type} return: ${rawReturn} vs ${expectedReturn}`);
    assert.equal(await table.getAttribute('data-seg-start'), start);
+   // The capital bridge is the total's own figure, and start + added − taken out + gain = end.
+   const bridge = page.locator('[data-capital-bridge]'), bd = await bridge.evaluate(el => ({ ...el.dataset }));
+   if (expectedGain == null) assert.equal(bd.bridgeMode, '');
+   else {
+    assert.ok(Math.abs(Number(bd.bridgeGain) - expectedGain) < 0.001, `${period}/${type} bridge gain ${bd.bridgeGain}`);
+    assert.ok(Math.abs(Number(bd.bridgeOpening) + Number(bd.bridgeAdded) - Number(bd.bridgeTaken) + Number(bd.bridgeGain) - Number(bd.bridgeClosing)) < 0.01);
+    const part = k => bd[k] === '' ? 0 : Number(bd[k]);
+    assert.ok(Math.abs(part('bridgeRealised') + part('bridgeUnrealised') + part('bridgeIncome') - part('bridgeCharges') + Number(bd.bridgeUnsplit) - Number(bd.bridgeGain)) < 0.01);
+   }
    results.push({ period, type, gain: rawGain, return: rawReturn });
   }
+  // The selector moves the figure: XIRR is per year, Absolute is the period (Stage 10gu).
+  const byType = results.filter(r => r.period === period && r.return !== '');
+  const x = byType.find(r => r.type === 'xirr'), a = byType.find(r => r.type === 'absolute');
+  if (x && a && win.days < 365) assert.ok(Math.abs(Number(x.return) - Number(a.return)) > 0.01, `${period}: XIRR ${x.return} vs Absolute ${a.return}`);
  }
+ // FYTD's bridge splits most accounts' gain from their own records and names the rest.
+ await page.locator('[data-returns-period="fytd"]').click();
+ await page.locator('[data-returns-type-select]').selectOption('xirr');
+ await page.waitForFunction(() => document.querySelector('[data-segment-returns]')?.dataset.segPeriod === 'fytd');
+ const bridge = page.locator('[data-capital-bridge]');
+ assert.equal(await bridge.getAttribute('data-bridge-mode'), 'window');
+ assert.ok(Number(await bridge.getAttribute('data-bridge-split-accounts')) >= 10);
+ await bridge.locator('[data-bridge-accounts-table] summary').click();
+ assert.equal(await bridge.locator('tr[data-bridge-row]').count(), Number(await bridge.getAttribute('data-bridge-accounts')));
+ await bridge.getByRole('button', { name: 'What is included in the capital bridge?', exact: true }).click();
+ const bridgeDialog = page.getByRole('dialog'); await bridgeDialog.waitFor();
+ assert.match(await bridgeDialog.innerText(), /Statement's own profit and loss/); assert.match(await bridgeDialog.innerText(), /Fund's dated unit record/);
+ await page.screenshot({ path: `${out}/capital-bridge.png` });
+ await page.keyboard.press('Escape');
  await page.locator('[data-returns-period="fytd"]').click();
  await page.locator('[data-returns-type-select]').selectOption('xirr');
  const total = table.locator('[data-seg-total]');

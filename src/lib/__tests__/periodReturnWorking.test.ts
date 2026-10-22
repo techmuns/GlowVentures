@@ -94,6 +94,25 @@ assert.equal(window.included.length, 1);
 assert.equal(window.excluded[0].reason, "missing dated capital record");
 near(measureWindow(window.included, "absolute", money).pct!, 10);
 
+// ── Stage 10gu: XIRR is a rate per year at any length, so the selector moves
+// the figure; `periodXirr` restates it over the period for the headline cards.
+{
+  const half: AccountWindow = { accountId: "h", label: "Half year", owner: "Owner", openDate: "2026-03-31", openValue: 100,
+    openedInWindow: false, closeDate: "2026-09-30", closeValue: 112, flows: [], capitalIn: 0, capitalOut: 0, gain: 12 };
+  const yearly = measureWindow([half], "xirr", money), period = measureWindow([half], "xirr", money, { periodXirr: true });
+  const abs = measureWindow([half], "absolute", money);
+  assert.equal(yearly.basis, "annual"); assert.equal(period.basis, "window"); assert.equal(abs.basis, "window");
+  near(yearly.pct!, (1.12 ** (365 / 183) - 1) * 100, 1e-6);
+  near(yearly.working!.periodPct!, 12, 1e-6); near(period.pct!, 12, 1e-6); near(abs.pct!, 12, 1e-9);
+  assert.ok(yearly.pct! - abs.pct! > 10, "XIRR and Absolute differ under a year");
+  assert.match(yearly.worked!, /annualised from 183 days/);
+  const incHalf: InceptionRow = { accountId: "h", label: "Half", owner: "O", first: "2026-03-31", valueAsOf: "2026-09-30",
+    paidIn: 100, takenOut: 0, value: 112, flows: [{ date: "2026-03-31", amount: -100 }] };
+  const iy = measureInception([incHalf], "xirr", money), ip = measureInception([incHalf], "xirr", money, { periodXirr: true });
+  assert.equal(iy.basis, "annual"); near(iy.pct!, iy.working!.annualPct!); near(iy.working!.periodPct!, 12, 1e-6);
+  assert.equal(ip.basis, "window"); near(ip.pct!, 12, 1e-6);
+}
+
 // ── D4 (Stage 10fz): an opening mark more than a week old is not this window's opening.
 {
   const acct = (id: string, mark: string) => ({ accountId: id, label: id, owner: "Owner",
@@ -124,7 +143,11 @@ near(measureWindow(window.included, "absolute", money).pct!, 10);
     assert.equal(r.closeDate, p.asOf.toISOString().slice(0, 10), `${p.accountNo} closes on its record's date`);
     near(r.closeValue, p.terminalValue, 0.01);
   }
-  const x = measureWindow(fytd.included, "xirr", money);
+  // The tile reads XIRR over the period (`periodXirr`); the Returns tab's
+  // default states the same rate per year (Stage 10gu).
+  const x = measureWindow(fytd.included, "xirr", money, { periodXirr: true });
+  const yearly = measureWindow(fytd.included, "xirr", money);
+  assert.equal(yearly.basis, "annual"); near(yearly.pct!, x.working!.annualPct!); near(yearly.working!.periodPct!, x.pct!);
   // The only difference is the opening's date — the close of 31 Mar here, the
   // record's 1 Apr row on the tile — one day over 189.
   // Whole or absent (Stage 10fc): the book-level rate is withheld while any

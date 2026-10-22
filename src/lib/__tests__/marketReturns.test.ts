@@ -14,7 +14,7 @@ assert.equal(full.gaps[0].reason, 'Public price history is missing.');
 assert.match(full.gaps[0].needed, /Public prices.*selected dates.*Recorded return/);
 assert.doesNotMatch(full.gaps[0].reason + full.gaps[0].needed, /purchase (date|cost)/, 'missing public prices must not be called missing purchase records');
 for (const type of ['xirr', 'cagr'] as const) { const m = run(undefined, undefined, type); near(m.pct, (Math.sqrt(1.17)-1)*100); assert.equal(m.annual, true); }
-// Smaller periods use their actual endpoints and never amplify a short return into a yearly rate.
+// Smaller periods use their actual endpoints; a missing nearby price is never substituted.
 const one = run('2025-10-21'); assert.notEqual(one.pct, full.pct);
 for (const type of ['xirr', 'cagr'] as const) { const m = run('2026-10-01', '2026-10-21', type); assert.equal(m.pct, null); assert.equal(m.annual, false); }
 const weekend = run('2024-10-22', '2026-10-22'); near(weekend.pct, 17); assert.equal(weekend.from, '2024-10-21'); assert.equal(weekend.to, '2026-10-21');
@@ -41,4 +41,12 @@ const big = marketReturnSummary(full.units.slice(0, 1), 'absolute', full.from, f
 const small = marketReturnSummary(full.units.slice(1), 'absolute', full.from, full.to);
 near((big.pct! * big.value + small.pct! * small.value) / full.value, full.pct!);
 assert.equal(marketReturnSummary([], 'absolute', null, null).pct, null);
+// Stage 10gu: under a year XIRR is the yearly rate, Absolute the period, CAGR the period until a year.
+const halfT = ['2026-03-31', '2026-09-30'], half = { big: history('BIG', [100, 110], halfT), small: history('SMALL', [100, 110], halfT) };
+const halfAbs = marketReturns(ps, instruments, half, '2026-03-31', '2026-09-30', 'absolute');
+const halfX = marketReturns(ps, instruments, half, '2026-03-31', '2026-09-30', 'xirr');
+const halfC = marketReturns(ps, instruments, half, '2026-03-31', '2026-09-30', 'cagr');
+near(halfAbs.pct, 10); assert.equal(halfAbs.annual, false);
+near(halfX.pct, (1.1 ** (365 / 183) - 1) * 100); assert.equal(halfX.annual, true); near(halfX.periodPct, 10);
+near(halfC.pct, 10); assert.equal(halfC.annual, false);
 console.log('Market returns: current value weights, period changes, annualisation, shared dates, gaps and no future-price substitution passed.');

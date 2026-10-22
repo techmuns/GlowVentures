@@ -20383,7 +20383,9 @@ const CIO_RETURNS = [
     const d = r.typeDesc;
     return !!d && d.key === wantT && d.text.length > 10 && d.text.length <= 60 && d.hover.length > d.text.length;
   }],
-  ["...the benchmark comparison window ends on or before the closing date asked for, opens on or before the opening date asked for, and a return under a year is never annualised", (t, ctx) => {
+  // Stage 10gu: XIRR is a rate per year at any length (the family, 22 Oct
+  // 2026); Absolute is never annualised and CAGR only from a year.
+  ["...the benchmark comparison window ends on or before the closing date asked for, opens on or before the opening date asked for, XIRR is per year at any length, and Absolute or CAGR under a year is never annualised", (t, ctx) => {
     const r = ctx?.returnsDom;
     if (!r) return false;
     if (!r.measuredFrom || !r.measuredTo) return r.pct === "" || r.pct == null ? { notChecked: "nothing measurable in this window" } : false;
@@ -20395,7 +20397,8 @@ const CIO_RETURNS = [
     // than the close asked for, and never after its own close.
     const inside = (!to || r.measuredTo <= to) && (!from || r.measuredFrom <= from) && (!to || r.measuredFrom < to);
     const annualised = r.basis === "annual";
-    return r.measuredFrom < r.measuredTo && days > 0 && inside && !(days < 365 && annualised);
+    const xirr = (/[?&]rtype=([a-z]+)/.exec(ctx.path ?? "")?.[1] ?? "xirr") === "xirr";
+    return r.measuredFrom < r.measuredTo && days > 0 && inside && (xirr ? annualised : !(days < 365 && annualised));
   }],
 ];
 
@@ -20465,7 +20468,9 @@ const CIO_RETURNS_LIVE = [
       const fx = BENCH_FIXTURE.find((x) => x[0] === b.key);
       const raw = benchFixtureReturn(fx[2], b.from, b.to);
       const d = (Date.parse(b.to) - Date.parse(b.from)) / 86400000;
-      const want = r.basis === "annual" && d >= 365 ? (Math.pow(1 + raw / 100, 365 / d) - 1) * 100 : raw;
+      // XIRR's index is per year at any length, like the portfolio's (Stage 10gu).
+      const xirr = (/[?&]rtype=([a-z]+)/.exec(ctx.path ?? "")?.[1] ?? "xirr") === "xirr";
+      const want = r.basis === "annual" && (xirr || d >= 365) ? (Math.pow(1 + raw / 100, 365 / d) - 1) * 100 : raw;
       /*
        * THE GAP IS LIKE FOR LIKE (Stage 10fz, P5). The portfolio is money-
        * weighted, so its gap is struck against the index on the SAME dated

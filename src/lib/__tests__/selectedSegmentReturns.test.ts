@@ -24,6 +24,14 @@ for (const type of ['absolute', 'xirr', 'cagr'] as const) {
 const abs = selectedSegmentReturns(ps, [], [acct('a'), acct('b')], 'category', sel);
 const irr = selectedSegmentReturns(ps, [], [acct('a'), acct('b')], 'category', { ...sel, type: 'xirr' });
 assert.notEqual(abs.total.returnPct, irr.total.returnPct, 'return type changes actual calculation');
+// Stage 10gu: under a year XIRR is per year with the period figure beside it; the headline cards restate it over the period.
+const halfW: AccountWindow = { ...w, openDate: '2025-07-01', closeDate: '2026-01-01', openValue: 200, closeValue: 230, flows: [], capitalIn: 0, gain: 30 };
+const halfX = selectedSegmentReturns(ps, [], [acct('a'), acct('b')], 'category', { ...sel, type: 'xirr', windows: [halfW] });
+const halfP = selectedSegmentReturns(ps, [], [acct('a'), acct('b')], 'category', { ...sel, type: 'xirr', periodXirr: true, windows: [halfW] });
+const halfA = selectedSegmentReturns(ps, [], [acct('a'), acct('b')], 'category', { ...sel, type: 'absolute', windows: [halfW] });
+near(halfX.total.returnPct, (1.15 ** (365 / 184) - 1) * 100, 1e-6); near(halfX.total.periodPct, 15, 1e-6);
+near(halfP.total.returnPct, 15, 1e-6); near(halfP.total.periodPct, 15, 1e-6); near(halfA.total.returnPct, 15, 1e-9);
+assert.notEqual(halfX.total.returnPct, halfA.total.returnPct, 'XIRR and Absolute differ under a year');
 const short = selectedSegmentReturns(ps, [], [acct('a'), acct('b')], 'category', { ...sel, type: 'cagr', windows: [{ ...w, openDate: '2025-12-01' }] });
 assert.equal(short.total.returnPct, null); near(short.total.gain, 50); assert.match(short.total.measured!.reason!, /at least 365 days/);
 const split = selectedSegmentReturns([pos(), pos({ securityKey: 'two' })], [], [acct('a')], 'security', { ...sel, excluded: [] });

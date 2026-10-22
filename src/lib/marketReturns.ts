@@ -15,12 +15,24 @@ function closeBefore(h: MarketHistory, date: string) {
   }
   return null;
 }
+/**
+ * Each history's date → close lookup, built once per history (Stage 10gu). It
+ * was rebuilt for every history on every arrival, so ~350 arrivals rebuilt
+ * ~350 multi-year tables each time.
+ */
+const priceMaps = new WeakMap<MarketHistory, Map<string, number>>();
+function pricesOf(h: MarketHistory) {
+  let prices = priceMaps.get(h);
+  if (!prices) { prices = new Map(h.t.map((date, i) => [date, h.v[i]])); priceMaps.set(h, prices); }
+  return prices;
+}
 export function marketReturnSummary(units: readonly MarketUnit[], type: ReturnType, start: string | null, end: string | null) {
   const value = units.reduce((s, u) => s + u.position.marketValue, 0);
   const days = start && end ? (day(end) - day(start)) / 864e5 : 0;
   const periodPct = value > 0 ? units.reduce((s, u) => s + u.position.marketValue * u.periodPct, 0) / value : null;
   // Weight the period growth first, then annualise the portfolio's growth.
-  const annual = type !== 'absolute' && days >= 365;
+  // XIRR is a yearly rate at any length (Stage 10gu); CAGR only from a year.
+  const annual = type === 'xirr' ? days > 0 : type === 'cagr' && days >= 365;
   const pct = periodPct == null ? null : annual ? (Math.pow(1 + periodPct / 100, 365 / days) - 1) * 100 : periodPct;
   return { pct, periodPct, value, count: units.length, annual, days, from: start, to: end };
 }
@@ -31,7 +43,6 @@ export function marketReturns(positions: readonly Position[], instruments: Reado
   const from = inception ? historiesInUse.map(h => h.first).sort().at(-1) ?? null : start;
   const units: MarketUnit[] = [], gaps: MarketGap[] = []; let pending = 0;
   const candidates: { position: Position; history: MarketHistory; prices: Map<string, number> }[] = [];
-  const priceMaps = new Map<MarketHistory, Map<string, number>>();
   const gap = (position: Position, reason: string, needed: string, detail?: string) => gaps.push({ position, reason, needed, detail });
   for (const p of positions) {
     if (!(p.marketValue > 0)) continue;
@@ -49,9 +60,7 @@ export function marketReturns(positions: readonly Position[], instruments: Reado
     if (!from || !end || !(day(end) > day(from))) { gap(p, 'The selected dates are invalid.', 'Choose a start date before the end date.'); continue; }
     if (!closeBefore(h, from)) { gap(p, `A price near ${fmtDate(from)} is missing.`, `Choose a later start date. Available history starts ${fmtDate(h.first)}.`); continue; }
     if (!closeBefore(h, end)) { gap(p, `A price near ${fmtDate(end)} is missing.`, `Choose an earlier end date, or retry later. The latest price is from ${fmtDate(h.last)}.`); continue; }
-    let prices = priceMaps.get(h);
-    if (!prices) { prices = new Map(h.t.map((date, i) => [date, h.v[i]])); priceMaps.set(h, prices); }
-    candidates.push({ position: p, history: h, prices });
+    candidates.push({ position: p, history: h, prices: pricesOf(h) });
   }
   // One pair of actual trading dates for the whole basket, including funds
   // whose daily NAV is published later than an exchange's closing price.

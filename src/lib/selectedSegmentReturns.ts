@@ -12,9 +12,13 @@ export type ReturnUnit = { key: string; accountId: string; label: string; positi
   window?: AccountWindow; inception?: InceptionRow };
 export type SelectedLine = { key: string; label: string; positions: readonly Position[]; value: number;
   units: ReturnUnit[]; missing: ReturnGap[]; measured: Measured | null; gain: number | null;
-  invested: number | null; returnPct: number | null; contribution: number | null; children: SelectedLine[] };
+  invested: number | null; returnPct: number | null;
+  /** The return over the measured period itself, not annualised — beside a yearly XIRR or CAGR. */
+  periodPct: number | null; contribution: number | null; children: SelectedLine[] };
 export type ReturnSelection = { inception: boolean; type: ReturnType; start: string | null; end: string | null;
-  windows: AccountWindow[]; inceptionRows: InceptionRow[]; excluded: ReturnGap[]; outside?: ReturnGap[] };
+  windows: AccountWindow[]; inceptionRows: InceptionRow[]; excluded: ReturnGap[]; outside?: ReturnGap[];
+  /** State XIRR over the period rather than per year — the headline cards' reading (Stage 10gu). */
+  periodXirr?: boolean };
 export const UNSPLIT_RETURNS = '__account_returns';
 
 const carries = (p: Position) => p.marketValue !== 0 || (p.costBasis ?? 0) !== 0
@@ -97,8 +101,9 @@ export function selectedSegmentReturns(current: readonly Position[], exited: rea
         formula: 'Gain divided by the purchase cost of units held and sold, or money paid into a whole managed account.',
         reason: base > 0 ? undefined : 'There is no positive purchase cost to divide the gain by.' };
     }
-    return selection.inception ? measureInception(us.map(u => u.inception!), selection.type, String)
-      : measureWindow(us.map(u => u.window!), selection.type, String);
+    const opts = { periodXirr: selection.periodXirr };
+    return selection.inception ? measureInception(us.map(u => u.inception!), selection.type, String, opts)
+      : measureWindow(us.map(u => u.window!), selection.type, String, opts);
   };
   const totalMeasured = measure(units);
   const denominator = selection.type !== 'absolute' ? null : absoluteInception
@@ -108,6 +113,8 @@ export function selectedSegmentReturns(current: readonly Position[], exited: rea
     return { key, label, positions: ps, value: ps.reduce((s, p) => s + p.marketValue, 0), units: us, missing: gaps, measured, gain,
       invested: us.length ? us.reduce((s, u) => s + u.invested, 0) : null,
       returnPct: measured?.shown && measured.pct != null && Number.isFinite(measured.pct) ? measured.pct : null,
+      periodPct: !measured?.shown ? null : measured.basis !== 'annual' ? measured.pct ?? null
+        : measured.working?.periodPct ?? (measured.working?.growthRatio != null ? (measured.working.growthRatio - 1) * 100 : null),
       contribution: gain != null && denominator != null && denominator > 0 ? gain / denominator * 100 : null, children: [] };
   };
   const groups = new Map<string, Position[]>();

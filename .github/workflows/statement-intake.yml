@@ -12,7 +12,7 @@ name: Statement intake
 # event. `scripts/ingest/intake-uploads.mjs` files each new statement under
 # source/uploads-<date>/<provider>/, runs inventory → extract → build-symbols →
 # build-book and every required gate, then opens a codex PR. Later runs monitor
-# CI/reviewer feedback and the automatic deployment; only verified live files
+# data-only validation, CI and the automatic deployment; only verified live files
 # leave the inbox. A statement the
 # pipeline cannot read in full stays in the inbox, held, with the reason; the
 # Statement Library shows it and offers Retry.
@@ -30,6 +30,12 @@ on:
   repository_dispatch:
     types: [statement-intake]
   workflow_dispatch:
+  # Resume verified data as soon as its CI completes. The schedule remains a
+  # recovery path, rather than adding a polling delay to every clean upload.
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: ["codex/statement-delivery-*"]
   schedule:
     - cron: "*/20 * * * *"
 
@@ -46,6 +52,9 @@ concurrency:
 
 jobs:
   intake:
+    # Privileged workflow_run jobs always use trusted main code and only accept
+    # same-repository delivery branches; fork CI cannot wake this worker.
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
