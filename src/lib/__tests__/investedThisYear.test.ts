@@ -37,7 +37,10 @@ const b=p({securityKey:'other',marketValue:500,costBasis:1000});
 const weightedSources=sources({[key]:[{date:'2026-04-02',quantity:10,cost:1000}],'account|other':[{date:'2026-04-02',quantity:10,cost:1000}]});
 const weighted=investedThisYear([p(),b],accounts,weightedSources,'2026-04-01','2026-10-22','absolute');
 assert.equal(weighted.pct,25,'1500/2000 × +50% + 500/2000 × −50% = +25%, using portfolio values');
-const annual=investedThisYear([p()],accounts,weightedSources,'2026-04-01','2026-10-22','xirr');assert.ok(annual.pct!>50 && annual.annual);
+// Stage 10hk: every purchase this year is under a year old, so XIRR shows the
+// purchase-to-value return, never a rate per year; debt alone is annualised.
+const annual=investedThisYear([p()],accounts,weightedSources,'2026-04-01','2026-10-22','xirr');assert.equal(annual.pct,50);assert.equal(annual.annual,false,'under a year XIRR retains the period figure');
+const debtYear=investedThisYear([p({assetClass:'Bond'})],accounts,weightedSources,'2026-04-01','2026-10-22','xirr');assert.ok(debtYear.pct!>50 && debtYear.annual,'debt is annualised under a year');
 const cagr=investedThisYear([p()],accounts,weightedSources,'2026-04-01','2026-10-22','cagr');assert.equal(cagr.pct,50);assert.equal(cagr.annual,false,'under a year CAGR retains the period figure');
 const realSources={lots:BOOK_HOLDING_LOTS,trades:BOOK_HOLDING_TRADES,tranches:BOOK_POSITION_TRANCHES,dates:(p:Position)=>investedOnOf([p])};
 const held=currentHoldings(dedupedPositions(BOOK_POSITIONS));

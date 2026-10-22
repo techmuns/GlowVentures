@@ -10,7 +10,9 @@ export function AvailableReturnCoverage({ line: l, selection, accounts, money, f
   money: (n: number, sign?: boolean) => string; field: 'gain' | 'return';
   notes?: { label: string; reason: string }[];
 }) {
-  const type = RETURN_TYPES.find(t => t.key === selection.type)!;
+  // The measure the figure IS: under a year, the absolute return in place of an XIRR or CAGR (Stage 10hk).
+  const shownAs = l.measured?.shownAs ?? selection.type;
+  const type = RETURN_TYPES.find(t => t.key === shownAs)!;
   const dates = selection.start && selection.end ? `${fmtDate(selection.start)} → ${fmtDate(selection.end)}` : 'available history';
   const coveredPositions = new Set(l.units.flatMap(u => u.positions.map(p => `${p.accountId}|${p.securityKey}`)));
   const coveredValue = l.positions.filter(p => coveredPositions.has(`${p.accountId}|${p.securityKey}`)).reduce((s, p) => s + p.marketValue, 0);
@@ -66,10 +68,10 @@ export function AvailableReturnCoverage({ line: l, selection, accounts, money, f
           <p>{l.positions.length > 0 && <>The covered holdings are worth <strong>{money(coveredValue)}</strong> out of {money(l.value)} in total current holdings. </>}
             The closing values used total <strong>{money(closing)}</strong>. {assumed.length ? 'Labelled assumptions use recorded quantities and published prices; the rest use statements on their own dates.' : 'Each statement is used on its own date.'}</p>
           <p>{field === 'gain' ? 'Gain is the change in value after allowing for money added and taken out. For a purchase-cost record, it includes recorded sale gains and income.'
-            : selection.type === 'xirr' ? (l.measured?.basis === 'annual'
-              ? `The return allows for when money went in and came back, and is stated per year.${l.measured.working && l.measured.working.days < 365 && l.periodPct != null ? ` This period is ${l.measured.working.days} days, so its result is annualised; over the period itself it is ${l.periodPct >= 0 ? '+' : ''}${l.periodPct.toFixed(2)}%.` : ''}`
-              : 'The return allows for when money went in and came back. A period shorter than a year is shown as a return for that period.')
-            : selection.type === 'cagr' ? 'This is a yearly growth rate. It needs at least a year of measured history; since investment it also needs one purchase.'
+            : shownAs !== selection.type ? `The money was at work for under a year, so this is the absolute return, not ${selection.type === 'xirr' ? 'an XIRR' : 'a CAGR'}: a return under a year is never annualised (debt excepted). `
+              + (selection.inception ? 'The gain is divided by the money paid in.' : 'The gain is divided by the money at work. Money added later counts only for the days it was invested.')
+            : selection.type === 'xirr' ? `The return allows for when money went in and came back, and is stated per year.${l.measured?.working && l.measured.working.days < 365 && l.periodPct != null ? ` This period is ${l.measured.working.days} days and is annualised only because it is debt; over the period itself it is ${l.periodPct >= 0 ? '+' : ''}${l.periodPct.toFixed(2)}%.` : ''}`
+            : selection.type === 'cagr' ? 'This is a yearly growth rate over a year or more of measured history; since investment it also needs one purchase.'
             : selection.inception ? 'The gain is divided by the purchase cost of the holdings and units sold, or the money paid into a whole managed account.'
             : 'The gain is divided by the money at work. Money added later counts only for the days it was invested.'}</p>
         </>}

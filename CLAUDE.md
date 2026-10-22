@@ -112,8 +112,10 @@ one renders `—` with the reason.
   hover's worked arithmetic must carry every term the figure does.
 - **One measure per question, named on its face.** HPR is cumulative. CAGR only
   for ONE purchase held a year or more (staggered money → XIRR). XIRR solves the
-  dated external flows plus the terminal value on its own valuation date; never
-  annualise under a year. A period return with dated flows is Modified Dietz or
+  dated external flows plus the terminal value on its own valuation date. Under a
+  year every measure shows the absolute return, named so — an XIRR or CAGR picked
+  included, a hover included; only debt is annualised under a year
+  (`mayAnnualise`, Stage 10hk). A period return with dated flows is Modified Dietz or
   TWR, never gain ÷ (opening + all capital in). Compare a money-weighted figure
   only with a money-weighted benchmark (PME).
 - **Every surface for one question reads the same selected record** (the

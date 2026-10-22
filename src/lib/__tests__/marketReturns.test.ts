@@ -32,12 +32,14 @@ const big = marketReturnSummary(full.units.slice(0, 1), 'absolute', full.from, f
 const small = marketReturnSummary(full.units.slice(1), 'absolute', full.from, full.to);
 near((big.pct! * big.value + small.pct! * small.value) / full.value, full.pct!);
 assert.equal(marketReturnSummary([], 'absolute', null, null).pct, null);
-// Stage 10gu: under a year XIRR is the yearly rate, Absolute the period, CAGR the period until a year.
+// Stage 10hk: under a year every measure is the period's own return — XIRR and
+// CAGR from a year only; debt alone is annualised under a year.
 const halfT = ['2026-03-31', '2026-09-30'], half = { big: history('BIG', [100, 110], halfT), small: history('SMALL', [100, 110], halfT) };
-const halfAbs = marketReturns(ps, instruments, half, '2026-03-31', '2026-09-30', 'absolute');
-const halfX = marketReturns(ps, instruments, half, '2026-03-31', '2026-09-30', 'xirr');
-const halfC = marketReturns(ps, instruments, half, '2026-03-31', '2026-09-30', 'cagr');
-near(halfAbs.pct, 10); assert.equal(halfAbs.annual, false);
-near(halfX.pct, (1.1 ** (365 / 183) - 1) * 100); assert.equal(halfX.annual, true); near(halfX.periodPct, 10);
-near(halfC.pct, 10); assert.equal(halfC.annual, false);
+for (const type of ['absolute', 'xirr', 'cagr'] as const) {
+  const m = marketReturns(ps, instruments, half, '2026-03-31', '2026-09-30', type);
+  near(m.pct, 10); assert.equal(m.annual, false, `${type} under a year`); near(m.periodPct, 10);
+}
+const halfDebt = marketReturnSummary(marketReturns(ps, instruments, half, '2026-03-31', '2026-09-30', 'xirr').units
+  .map((u) => ({ ...u, position: { ...u.position, assetClass: 'Bond' as const } })), 'xirr', '2026-03-31', '2026-09-30');
+near(halfDebt.pct, (1.1 ** (365 / 183) - 1) * 100); assert.equal(halfDebt.annual, true);
 console.log('Market returns: current value weights, period changes, annualisation, shared dates, gaps and no future-price substitution passed.');

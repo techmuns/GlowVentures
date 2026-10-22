@@ -48,6 +48,7 @@
 import { xirr, xirrAmbiguity, type DatedFlow } from "@/lib/xirr";
 import type { Account, AccountReturnCoverage, CashFlow, Position } from "@/lib/types";
 import { capitalWindow, type CapitalGroup } from "@/lib/tranches";
+import { mayAnnualise } from "@/lib/analytics";
 
 export type PeriodKey = "mtd" | "ytd" | "fytd" | "y1" | "y2" | "y3" | "inception" | "custom" | "invested-year";
 export type ReturnType = "xirr" | "absolute" | "cagr";
@@ -69,12 +70,12 @@ export const PERIODS: readonly { key: PeriodKey; label: string; title: string }[
  * ask, Stage 10eb). `short` is drawn under the selector; `title` is its hover.
  */
 export const RETURN_TYPES: readonly { key: ReturnType; label: string; short: string; title: string }[] = [
-  { key: "xirr", label: "XIRR", short: "Yearly rate, timing every rupee in and out",
-    title: "XIRR (money-weighted return): the yearly rate that accounts for when each rupee went in and came out. The standard measure for SIPs, top-ups and redemptions. It is always a rate per year: over less than a year the period's result is annualised, which magnifies it, and the return over the period itself is shown beside it. Absolute return shows the period without annualising." },
+  { key: "xirr", label: "XIRR", short: "Yearly rate from a year · absolute under a year",
+    title: "XIRR (money-weighted return): the yearly rate that accounts for when each rupee went in and came out. The standard measure for SIPs, top-ups and redemptions. Over a year or more it is a rate per year. Under a year an equity return is never annualised: the absolute return is shown instead, and says so. Debt alone is annualised under a year." },
   { key: "absolute", label: "Absolute return", short: "Total gain ÷ money at work, not per year",
     title: "Absolute return (Modified Dietz): total gain over the period as a percentage of the money at work — the opening value plus each amount added or taken out, counted for the share of the period it was invested. Not annualised. Since investment it is the simple return: gain over what was paid in." },
-  { key: "cagr", label: "CAGR", short: "Yearly growth rate · needs a year or more",
-    title: "CAGR (annualised Modified Dietz): the period's Modified Dietz return — gain over the money at work, each dated amount counted for the days it was invested — stated as a yearly compound rate. One period, not a chain of statement intervals. Only over a year or more." },
+  { key: "cagr", label: "CAGR", short: "Yearly growth rate from a year · absolute under a year",
+    title: "CAGR (annualised Modified Dietz): the period's Modified Dietz return — gain over the money at work, each dated amount counted for the days it was invested — stated as a yearly compound rate. One period, not a chain of statement intervals. Only over a year or more: under a year the absolute return is shown instead, and says so. Debt alone is annualised under a year." },
 ] as const;
 
 /** One account's statement valuation on one date. */
@@ -147,6 +148,12 @@ export type Measured = {
   pct?: number;
   /** "annual", "window" (not annualised), or "cumulative". */
   basis?: "annual" | "window" | "cumulative";
+  /**
+   * THE MEASURE ACTUALLY SHOWN, where it is not the one asked for: an XIRR or a
+   * CAGR asked of under a year shows the absolute return (Stage 10hk), and every
+   * face that names the measure names this one.
+   */
+  shownAs?: ReturnType;
   reason?: string;
   formula: string;
   worked?: string;
@@ -312,18 +319,27 @@ export function windowFlows(rows: AccountWindow[]): DatedFlow[] {
 const pct = (x: number) => `${x >= 0 ? "+" : ""}${x.toFixed(2)}%`;
 
 /**
- * ── XIRR IS A RATE PER YEAR (Stage 10gu) ────────────────────────────────────
+ * ── UNDER A YEAR, EVERY MEASURE IS THE ABSOLUTE RETURN (Stage 10hk) ─────────
  *
- * *"when I'm changing XIRR to absolute and vice versa, the return is not
- * changing"* — the family, 22 Oct 2026. Under a year XIRR was restated over
- * the period, (1 + r)^(days/365) − 1, which for one set of dated flows is
- * within a few basis points of Modified Dietz, so the selector looked dead.
- * The Returns tab now states XIRR as what its label says — a yearly rate — and
- * keeps the period figure in `working.periodPct` for the face beside it.
- * `periodXirr` restates it over the period instead: the headline cards'
- * "return this financial year, not annualised" keep that reading.
+ * Stage 10gu made XIRR a yearly rate at any length, so FYTD read "XIRR 43.25%
+ * p.a." on 20.79% earned, and a holding bought months ago compounded onto a
+ * year. The family's rule replaces it: *"whatever investments are being held
+ * for less than a year need to show only absolute return, even if we have
+ * selected XIRR or CAGR … debt investments are to be annualized."* So where the
+ * money has been at work for under a year, an XIRR or CAGR asked for shows the
+ * absolute return — the very figure the Absolute selection shows — with
+ * `shownAs: "absolute"` so every face names it. A year or more, XIRR is a rate
+ * per year and CAGR compounds. `debt` (every account in the rows is debt)
+ * annualises at any length.
  */
-export type MeasureOptions = { periodXirr?: boolean };
+export type MeasureOptions = { debt?: boolean };
+
+/** The absolute return in place of an XIRR or CAGR asked of under a year, named for what it is. */
+function absoluteUnderAYear(a: Measured, type: ReturnType, days: number): Measured {
+  if (!a.shown) return a;
+  return { ...a, shownAs: "absolute",
+    worked: `${days} days is under a year, so this is the absolute return, not ${type === "xirr" ? "an XIRR" : "a CAGR"} — a return under a year is never annualised. ${a.worked ?? ""}`.trim() };
+}
 
 /** One measure over a set of account windows. `money` formats a rupee figure. */
 export function measureWindow(rows: AccountWindow[], type: ReturnType, money: (n: number) => string, opts: MeasureOptions = {}): Measured {
@@ -342,6 +358,17 @@ export function measureWindow(rows: AccountWindow[], type: ReturnType, money: (n
   const working: ReturnWorking = { from, to, days: D, inception: false,
     opening: V0, capitalIn: cin, capitalOut: cout, closing: V1, gain, flows: windowFlows(rows) };
   const finish = (value: Measured): Measured => ({ ...value, working });
+  // THE DAYS THE MONEY WAS AT WORK — from the first opening value or purchase,
+  // which is where every measure below starts (see the Modified Dietz note).
+  const atWork = [
+    ...rows.filter((r) => r.openValue !== 0).map((r) => r.openDate),
+    ...rows.flatMap((r) => r.flows.filter((f) => f.amount < 0).map((f) => f.date)),
+  ].sort()[0];
+  const lateStart = atWork != null && atWork > from;
+  const heldDays = lateStart ? daysBetween(atWork, to) : D;
+  if (type !== "absolute" && !mayAnnualise(heldDays, opts.debt === true)) {
+    return absoluteUnderAYear(measureWindow(rows, "absolute", money, opts), type, heldDays);
+  }
 
   if (type === "xirr") {
     const r = xirr(working.flows);
@@ -349,12 +376,8 @@ export function measureWindow(rows: AccountWindow[], type: ReturnType, money: (n
     working.annualPct = r * 100;
     const w = (Math.pow(1 + r, D / 365) - 1) * 100;
     working.periodPct = w;
-    if (D >= 365) return finish({ shown: true, pct: r * 100, basis: "annual", formula,
-      worked: `Opening ${money(V0)} on ${from}, ${money(cin)} in and ${money(cout)} out on their dates, closing ${money(V1)} on ${to} → ${pct(r * 100)} a year over ${D} days.` });
-    if (!opts.periodXirr) return finish({ shown: true, pct: r * 100, basis: "annual", formula,
-      worked: `Opening ${money(V0)} on ${from}, ${money(cin)} in and ${money(cout)} out on their dates, closing ${money(V1)} on ${to} → ${pct(r * 100)} a year, annualised from ${D} days. Over the ${D} days themselves: (1 + ${pct(r * 100)})^(${D}/365) − 1 = ${pct(w)}.` });
-    return finish({ shown: true, pct: w, basis: "window", formula,
-      worked: `${D} days is under a year, so the rate is not annualised: (1 + ${pct(r * 100)})^(${D}/365) − 1 = ${pct(w)} over the period.` });
+    return finish({ shown: true, pct: r * 100, basis: "annual", formula,
+      worked: `Opening ${money(V0)} on ${from}, ${money(cin)} in and ${money(cout)} out on their dates, closing ${money(V1)} on ${to} → ${pct(r * 100)} a year over ${D} days${heldDays < 365 ? " — debt, so it is annualised under a year" : ""}.` });
   }
   /**
    * ── ABSOLUTE RETURN IS MODIFIED DIETZ OVER A DATED WINDOW (Stage 10fz) ────
@@ -376,12 +399,7 @@ export function measureWindow(rows: AccountWindow[], type: ReturnType, money: (n
    * value starts its period on its first flow (the GIPS convention), so the
    * day weights run from there.
    */
-  const atWork = [
-    ...rows.filter((r) => r.openValue !== 0).map((r) => r.openDate),
-    ...rows.flatMap((r) => r.flows.filter((f) => f.amount < 0).map((f) => f.date)),
-  ].sort()[0];
-  const lateStart = atWork != null && atWork > from;
-  if (lateStart) { working.from = atWork; working.days = daysBetween(atWork, to); }
+  if (lateStart) { working.from = atWork; working.days = heldDays; }
   const Dd = working.days;
   if (!(Dd > 0)) return finish({ shown: false, reason: `money was first at work on ${atWork}, the day the window closes, so it was at work for no days`, formula });
   const since = lateStart ? ` from ${atWork}, when money was first at work` : "";
@@ -401,10 +419,10 @@ export function measureWindow(rows: AccountWindow[], type: ReturnType, money: (n
   if (!(denom > 0)) return finish({ shown: false, reason: "the money at work over this period is not positive", formula });
   const p = (gain / denom) * 100;
   working.periodPct = p;
-  if (Dd < 365) return finish({ shown: false, reason: `CAGR is a yearly growth rate. This app shows it only for measured periods of at least 365 days. This period has ${Dd} days${since}. For a shorter period, select Absolute return or XIRR`, formula });
+  if (!(1 + p / 100 > 0)) return finish({ shown: false, reason: "a total loss has no compound rate", formula });
   const g = (Math.pow(1 + p / 100, 365 / Dd) - 1) * 100;
   return finish({ shown: true, pct: g, basis: "annual", formula,
-    worked: `Modified Dietz period return ${pct(p)} across ${Dd} days${since}, annualised: (1 + ${pct(p)})^(365/${Dd}) − 1 = ${pct(g)} a year.` });
+    worked: `Modified Dietz period return ${pct(p)} across ${Dd} days${since}, annualised: (1 + ${pct(p)})^(365/${Dd}) − 1 = ${pct(g)} a year${Dd < 365 ? " — debt, so it is annualised under a year" : ""}.` });
 }
 
 export const FORMULAS: Record<ReturnType, string> = {
@@ -620,6 +638,10 @@ export function measureInception(rows: InceptionRow[], type: ReturnType, money: 
   const working: ReturnWorking = { from, to, days: D, inception: true,
     opening: 0, capitalIn: paid, capitalOut: out, closing: val, gain, flows };
   const finish = (value: Measured): Measured => ({ ...value, working });
+  // Under a year since the first purchase, every measure is the absolute return (Stage 10hk).
+  if (type !== "absolute" && !mayAnnualise(D, opts.debt === true)) {
+    return absoluteUnderAYear(measureInception(rows, "absolute", money, opts), type, D);
+  }
   if (type === "absolute") {
     working.base = paid;
     if (!(paid > 0)) return finish({ shown: false, reason: "nothing was paid in", formula });
@@ -633,16 +655,14 @@ export function measureInception(rows: InceptionRow[], type: ReturnType, money: 
     working.annualPct = x * 100;
     const w = (Math.pow(1 + x, D / 365) - 1) * 100;
     working.periodPct = w;
-    if (D >= 365 || !opts.periodXirr) return finish({ shown: true, pct: x * 100, basis: "annual", formula,
-      worked: `${money(paid)} in and ${money(out)} out on their own dates since ${from}, each account closing on its own value date (last ${to}), ${money(val)} in all → ${pct(x * 100)} a year${D < 365 ? `, annualised from ${D} days (${pct(w)} over the period itself)` : ""}.` });
-    return finish({ shown: true, pct: w, basis: "window", formula,
-      worked: `${D} days is under a year, so the rate is not annualised: ${pct(w)} over the period.` });
+    return finish({ shown: true, pct: x * 100, basis: "annual", formula,
+      worked: `${money(paid)} in and ${money(out)} out on their own dates since ${from}, each account closing on its own value date (last ${to}), ${money(val)} in all → ${pct(x * 100)} a year${D < 365 ? `, annualised from ${D} days because it is debt (${pct(w)} over the period itself)` : ""}.` });
   }
   const buys = rows.flatMap((r) => r.flows.filter((f) => f.amount < 0));
   if (buys.length !== 1 || rows.some((r) => r.flows.some((f) => f.amount > 0))) {
     return finish({ shown: false, reason: "the capital went in over several dated purchases, which one compound rate from a single start cannot describe — XIRR is its measure", formula });
   }
-  if (D < 365) return finish({ shown: false, reason: `CAGR is a yearly growth rate. This app shows it only for measured periods of at least 365 days. This period has ${D} days. For a shorter period, select Absolute return or XIRR`, formula });
+  if (!(D > 0) || !(paid > 0) || !(val > 0)) return finish({ shown: false, reason: "no days or no positive value to compound over", formula });
   working.growthRatio = val / paid;
   const g = (Math.pow(val / paid, 365 / D) - 1) * 100;
   return finish({ shown: true, pct: g, basis: "annual", formula, worked: `(${money(val)} ÷ ${money(paid)})^(365/${D}) − 1 = ${pct(g)} a year.` });

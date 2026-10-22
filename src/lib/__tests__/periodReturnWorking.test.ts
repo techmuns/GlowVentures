@@ -52,11 +52,19 @@ const expectedBase = 200 + 200 * daysBetween("2025-07-03", "2026-01-01") / 365 -
 near(pooled.working!.base!, expectedBase);
 near(pooled.pct!, (row.gain - 30) / expectedBase * 100);
 
+// Stage 10hk: a CAGR asked of under a year shows the absolute return, named so.
 const short = { ...row, closeDate: "2025-10-01" };
 const shortCagr = measureWindow([short], "cagr", money);
-assert.equal(shortCagr.shown, false);
+assert.equal(shortCagr.shown, true);
+assert.equal(shortCagr.shownAs, "absolute");
+assert.equal(shortCagr.basis, "window");
 assert.equal(shortCagr.working!.days, 273);
-assert.match(shortCagr.reason!, /This app.*at least 365 days/);
+near(shortCagr.pct!, measureWindow([short], "absolute", money).pct!, 1e-12);
+assert.match(shortCagr.worked!, /273 days is under a year, so this is the absolute return, not a CAGR/);
+// ...and debt alone is compounded to a year under a year.
+const shortDebt = measureWindow([short], "cagr", money, { debt: true });
+assert.equal(shortDebt.basis, "annual"); assert.equal(shortDebt.shownAs, undefined);
+near(shortDebt.pct!, ((1 + shortDebt.working!.periodPct! / 100) ** (365 / 273) - 1) * 100);
 assert.equal(measureWindow([], "absolute", money).working, undefined);
 
 const inception: InceptionRow = { accountId: "a", label: "Account A", owner: "Owner", first: "2024-01-01", valueAsOf: "2026-01-01",
@@ -94,23 +102,33 @@ assert.equal(window.included.length, 1);
 assert.equal(window.excluded[0].reason, "missing dated capital record");
 near(measureWindow(window.included, "absolute", money).pct!, 10);
 
-// ── Stage 10gu: XIRR is a rate per year at any length, so the selector moves
-// the figure; `periodXirr` restates it over the period for the headline cards.
+// ── Stage 10hk: under a year an XIRR or CAGR asked for is the absolute return —
+// the very figure Absolute shows — named so; a year or more is a rate per year;
+// debt alone is annualised under a year.
 {
   const half: AccountWindow = { accountId: "h", label: "Half year", owner: "Owner", openDate: "2026-03-31", openValue: 100,
     openedInWindow: false, closeDate: "2026-09-30", closeValue: 112, flows: [], capitalIn: 0, capitalOut: 0, gain: 12 };
-  const yearly = measureWindow([half], "xirr", money), period = measureWindow([half], "xirr", money, { periodXirr: true });
   const abs = measureWindow([half], "absolute", money);
-  assert.equal(yearly.basis, "annual"); assert.equal(period.basis, "window"); assert.equal(abs.basis, "window");
-  near(yearly.pct!, (1.12 ** (365 / 183) - 1) * 100, 1e-6);
-  near(yearly.working!.periodPct!, 12, 1e-6); near(period.pct!, 12, 1e-6); near(abs.pct!, 12, 1e-9);
-  assert.ok(yearly.pct! - abs.pct! > 10, "XIRR and Absolute differ under a year");
-  assert.match(yearly.worked!, /annualised from 183 days/);
+  assert.equal(abs.basis, "window"); assert.equal(abs.shownAs, undefined); near(abs.pct!, 12, 1e-9);
+  for (const t of ["xirr", "cagr"] as const) {
+    const m = measureWindow([half], t, money);
+    assert.equal(m.shownAs, "absolute", `${t} under a year`); assert.equal(m.basis, "window");
+    near(m.pct!, abs.pct!, 1e-12);
+    assert.match(m.worked!, /183 days is under a year/);
+  }
+  const debt = measureWindow([half], "xirr", money, { debt: true });
+  assert.equal(debt.basis, "annual"); assert.equal(debt.shownAs, undefined);
+  near(debt.pct!, (1.12 ** (365 / 183) - 1) * 100, 1e-6); near(debt.working!.periodPct!, 12, 1e-6);
+  const year = measureWindow([{ ...half, closeDate: "2027-03-31" }], "xirr", money);
+  assert.equal(year.basis, "annual"); assert.equal(year.shownAs, undefined); near(year.pct!, 12, 1e-6);
   const incHalf: InceptionRow = { accountId: "h", label: "Half", owner: "O", first: "2026-03-31", valueAsOf: "2026-09-30",
     paidIn: 100, takenOut: 0, value: 112, flows: [{ date: "2026-03-31", amount: -100 }] };
-  const iy = measureInception([incHalf], "xirr", money), ip = measureInception([incHalf], "xirr", money, { periodXirr: true });
-  assert.equal(iy.basis, "annual"); near(iy.pct!, iy.working!.annualPct!); near(iy.working!.periodPct!, 12, 1e-6);
-  assert.equal(ip.basis, "window"); near(ip.pct!, 12, 1e-6);
+  for (const t of ["xirr", "cagr"] as const) {
+    const m = measureInception([incHalf], t, money);
+    assert.equal(m.shownAs, "absolute"); assert.equal(m.basis, "cumulative"); near(m.pct!, 12, 1e-9);
+  }
+  const iDebt = measureInception([incHalf], "xirr", money, { debt: true });
+  assert.equal(iDebt.basis, "annual"); near(iDebt.pct!, iDebt.working!.annualPct!); near(iDebt.working!.periodPct!, 12, 1e-6);
 }
 
 // ── D4 (Stage 10fz): an opening mark more than a week old is not this window's opening.
@@ -143,11 +161,14 @@ near(measureWindow(window.included, "absolute", money).pct!, 10);
     assert.equal(r.closeDate, p.asOf.toISOString().slice(0, 10), `${p.accountNo} closes on its record's date`);
     near(r.closeValue, p.terminalValue, 0.01);
   }
-  // The tile reads XIRR over the period (`periodXirr`); the Returns tab's
-  // default states the same rate per year (Stage 10gu).
-  const x = measureWindow(fytd.included, "xirr", money, { periodXirr: true });
-  const yearly = measureWindow(fytd.included, "xirr", money);
-  assert.equal(yearly.basis, "annual"); near(yearly.pct!, x.working!.annualPct!); near(yearly.working!.periodPct!, x.pct!);
+  // FYTD is under a year, so its XIRR is the absolute return (Stage 10hk). The
+  // money-weighted rate over the same record — struck here as it would be for
+  // debt — still ties to the tile's pooled return to date.
+  const x = measureWindow(fytd.included, "xirr", money);
+  const abs = measureWindow(fytd.included, "absolute", money);
+  assert.equal(x.shownAs, "absolute"); near(x.pct!, abs.pct!, 1e-12);
+  const mw = measureWindow(fytd.included, "xirr", money, { debt: true });
+  assert.equal(mw.basis, "annual");
   // The only difference is the opening's date — the close of 31 Mar here, the
   // record's 1 Apr row on the tile — one day over 189.
   // Whole or absent (Stage 10fc): the book-level rate is withheld while any
@@ -156,7 +177,7 @@ near(measureWindow(window.included, "absolute", money).pct!, 10);
   if (!tile.whole) assert.equal(tile.toDatePct, null, "a partial pool strikes no book-level rate");
   const measuredSet = { ...statement, accounts: BOOK_ACCOUNTS.filter((a) => tile.parts.some((p) => p.accountId === a.accountId)) } as unknown as Portfolio;
   const pooled = measuredAccountsReturn(measuredSet, measuredSet.accounts);
-  assert.ok(Math.abs(x.pct! - pooled.toDatePct!) < 0.05, `FYTD ${x.pct} vs the same accounts pooled ${pooled.toDatePct}`);
+  assert.ok(Math.abs(mw.working!.periodPct! - pooled.toDatePct!) < 0.05, `FYTD ${mw.working!.periodPct} vs the same accounts pooled ${pooled.toDatePct}`);
   const gl = fytd.included.find((r) => r.accountId === "green-lantern-capital-llp-510854")!;
   assert.equal(gl.closeDate, BOOK_ACCOUNT_RETURN_RECORDS[gl.accountId].record!.asOf, "Green Lantern closes on its verified record, not its 27 Jul holdings");
   const am = fytd.excluded.find((e) => e.accountId === "motilal-oswal-active-momentum-fund-904168868444")!;
@@ -170,10 +191,10 @@ near(measureWindow(window.included, "absolute", money).pct!, 10);
   const helios = y1.included.find((r) => r.accountId === "helios-mutual-fund-10355977");
   assert.ok(helios?.openedInWindow, "Helios opens at nil inside 1Y on its own evidence");
   // D2: Absolute return over the same accounts is Modified Dietz, the CAGR's own denominator.
-  const abs = measureWindow(fytd.included, "absolute", money);
   const cagr = measureWindow(fytd.included, "cagr", money);
   near(abs.pct!, cagr.working!.periodPct!);
-  assert.ok(Math.abs(abs.pct! - x.pct!) < 1, `Modified Dietz ${abs.pct} sits beside XIRR ${x.pct}, not at half of it`);
+  assert.equal(cagr.shownAs, "absolute");
+  assert.ok(Math.abs(abs.pct! - mw.working!.periodPct!) < 1, `Modified Dietz ${abs.pct} sits beside the money-weighted ${mw.working!.periodPct}, not at half of it`);
   // D4 on the book: October MTD opens on no August mark.
   const mtd = windowReturns(inputs, periodStart("mtd", end)!, end);
   assert.ok(mtd.included.every((r) => daysBetween(r.openDate, mtd.start) <= OPENING_MARK_TOLERANCE_DAYS));

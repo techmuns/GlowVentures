@@ -1,7 +1,7 @@
 import type { Account, HoldingTrade, Position, PositionTranches } from './types';
 import type { InvestedOn } from './investedOn';
 import { daysBetween, type ReturnType } from './periodReturns';
-import { valueDateOf } from './analytics';
+import { valueDateOf, isDebtHolding, mayAnnualise } from './analytics';
 import { xirr } from './xirr';
 
 export type PurchaseLot = { date: string; quantity: number | null; cost: number };
@@ -96,11 +96,14 @@ export function investedThisYear(positions: readonly Position[], accounts: reado
     const value=p.marketValue*fraction, cost=sum(selected,l=>l.cost), gain=value-cost, periodPct=gain/cost*100;
     const first=selected[0].date, last=selected.at(-1)!.date, days=daysBetween(first,valuedOn);
     let pct: number|null=periodPct, annual=false, returnMissing: string|null=null;
-    if (type==='xirr') {
+    // Under a year — every purchase this year is — the purchase-to-value
+    // return stands for XIRR and CAGR alike; only debt is annualised (Stage 10hk).
+    const annualisable = mayAnnualise(days,isDebtHolding(p));
+    if (type==='xirr' && annualisable) {
       const result = xirr([...selected.map(l=>({date:new Date(`${l.date}T00:00:00Z`),amount:-l.cost})),{date:new Date(`${valuedOn}T00:00:00Z`),amount:value}]);
       pct=days>0 && result!=null && Number.isFinite(result) ? result*100 : null; annual=pct!=null;
       if (pct==null) returnMissing='A yearly return needs a value on a later day than the purchase.';
-    } else if (type==='cagr' && days>=365) {
+    } else if (type==='cagr' && annualisable && days>0) {
       if (new Set(selected.map(l=>l.date)).size===1 && value>0) {pct=(Math.pow(value/cost,365/days)-1)*100;annual=true;}
       else {pct=null;returnMissing='CAGR needs one purchase date. Choose Absolute return or XIRR for several purchases.';}
     }

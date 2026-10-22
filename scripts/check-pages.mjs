@@ -3822,12 +3822,15 @@ const PM_RETURN_BOOK = (() => {
       else if (gap) auto = "HPR";
       else if (!oneEntry || (payouts === "measured" && paidOut > 0)) auto = complete && window != null && window >= 365 && rate != null ? "XIRR" : "HPR";
       else auto = payouts === "nil" && window != null && window >= 365 && 1 + hpr / 100 > 0 ? "CAGR" : "HPR";
-      // AND WHAT THE XIRR COLUMN MAY SHOW: the rate where the record is
-      // complete and spans a year; the holding-period return, TAGGED, where one
-      // entry and nothing back sits under a year; otherwise a dash.
-      const xirr = !complete || rate == null ? { shown: false }
-        : window >= 365 ? { shown: true, tag: null, pct: rate }
-        : oneEntry && paidOut === 0 && hpr != null ? { shown: true, tag: "HPR", pct: hpr }
+      // AND WHAT THE XIRR COLUMN MAY SHOW (Stage 10hk): under a year the
+      // holding-period return, TAGGED, whatever the calls or payouts — a debt
+      // fund alone keeps its rate; from a year, the rate where the record is
+      // complete; otherwise a dash.
+      const debtFund = g.every((p) => p.assetClass === "Bond" || p.reviewTaxonomy?.assetClass === "Debt");
+      const xirr = !gap && first != null && window != null && window < 365 && !debtFund
+          ? (hpr != null ? { shown: true, tag: "HPR", pct: hpr } : { shown: false })
+        : !complete || rate == null ? { shown: false }
+        : window >= 365 || debtFund ? { shown: true, tag: null, pct: rate }
         : { shown: false };
       funds.push({ key, security: g[0].security, mv, cost, soldCost, hpr, hprHeld, auto, xirr, complete, rate, rateNoPayouts, window, tranches, paidOut, flows });
     }
@@ -10213,17 +10216,20 @@ const PERF_MW = [
     // With no consolidated rate there is nothing beside it to name the capital on.
     return rowsOk && (!B.whole ? d.cons.pct === "" : Math.abs(Number(d.cons.undated) - total) <= 1 && /dated in none of them/i.test(d.cons.returnTitle ?? ""));
   }],
-  ["a rate over less than a year is named an extrapolation (XA-14, XA-29)", (t, ctx) => {
+  // Stage 10hk: a rate over less than a year is not stated at all, a hover
+  // included — the hover says why, and carries no "p.a." figure.
+  ["a rate over less than a year is never stated, only why (XA-14, XA-29, Stage 10hk)", (t, ctx) => {
     const d = ctx?.perfDom;
     if (!d || !d.cons) return FAST ? { notChecked: "the probe did not run" } : false;
     const B = PERF_BOOK;
     if (!B) return false;
+    const unstated = (s) => /under a year, and a return under a year is never annualised/i.test(s ?? "") && !/p\.a\./i.test(s ?? "");
     const sub = d.xirr.filter((r) => r.pct !== "" && Number(r.days) < 365);
     if (!sub.length) return { notChecked: "no measured account's window is under a year" };
-    const rowsOk = sub.every((r) => /an extrapolation, not a rate earned/i.test(r.returnTitle ?? ""));
+    const rowsOk = sub.every((r) => unstated(r.headReturnTitle ?? r.returnTitle));
     // With no consolidated rate (an account unmeasured), there is none to extrapolate.
-    const consOk = !B.whole ? d.cons.pct === "" : Number(d.cons.days) >= 365 || /an extrapolation, not a rate earned/i.test(d.cons.returnTitle ?? "");
-    const tileOk = !B.whole || (!!d.tileTitle && (Number(d.cons.days) >= 365 || /an extrapolation, not a rate earned/i.test(d.tileTitle)));
+    const consOk = !B.whole ? d.cons.pct === "" : Number(d.cons.days) >= 365 || unstated(d.cons.headReturnTitle ?? d.cons.returnTitle);
+    const tileOk = !B.whole || (!!d.tileTitle && (Number(d.cons.days) >= 365 || /never annualised/i.test(d.tileTitle)));
     return rowsOk && consOk && tileOk && !/>\s*100% p\.a\./i.test(t) && !/reads >100%/i.test(`${t} ${d.tileTitle}`);
   }],
   ["the money-weighted tile's hover names the pool's own close range and the statements' value, never the book's newest date", (t, ctx) => {
@@ -18108,7 +18114,9 @@ const PM_RETURN_ROUTE_CHECKS = [
     const bookFunds = PM_C_BOOK ? PM_C_BOOK.funds.valued + PM_C_BOOK.funds.atCost + PM_C_BOOK.funds.noNav : null;
     if (bookFunds == null) return false; // the checker could not state its own expectation
     if (of !== drawn || of !== bookFunds || covers !== PM_RETURN_BOOK.pooledCovers) return false;
-    if (PM_RETURN_BOOK.pooled == null || PM_RETURN_BOOK.pooledWindow < 365) return !/%/.test(foot.text);
+    if (PM_RETURN_BOOK.pooled == null) return !/%/.test(foot.text);
+    // Under a year the pool shows its holding-period return, tagged (Stage 10hk).
+    if (PM_RETURN_BOOK.pooledWindow < 365) return /HPR/.test(foot.text);
     return Math.abs(pctOfCell(foot.text) - PM_RETURN_BOOK.pooled) <= 0.06
       // A total over part of a table says which part, on its face.
       && (covers === of || foot.text.includes(`${covers} of ${of}`))
@@ -20403,9 +20411,10 @@ const CIO_RETURNS = [
     const d = r.typeDesc;
     return !!d && d.key === wantT && d.text.length > 10 && d.text.length <= 60 && d.hover.length > d.text.length;
   }],
-  // Stage 10gu: XIRR is a rate per year at any length (the family, 22 Oct
-  // 2026); Absolute is never annualised and CAGR only from a year.
-  ["...the benchmark comparison window ends on or before the closing date asked for, opens on or before the opening date asked for, XIRR is per year at any length, and Absolute or CAGR under a year is never annualised", (t, ctx) => {
+  // Stage 10hk (replacing 10gu's XIRR-per-year-at-any-length): under a year no
+  // measure is annualised — an XIRR or CAGR asked for shows the absolute return
+  // and names it; from a year XIRR is per year. The whole book is never all debt.
+  ["...the benchmark comparison window ends on or before the closing date asked for, opens on or before the opening date asked for, and under a year no return is annualised — an XIRR or CAGR asked for is shown as the absolute return", (t, ctx) => {
     const r = ctx?.returnsDom;
     if (!r) return false;
     if (!r.measuredFrom || !r.measuredTo) return r.pct === "" || r.pct == null ? { notChecked: "nothing measurable in this window" } : false;
@@ -20417,8 +20426,14 @@ const CIO_RETURNS = [
     // than the close asked for, and never after its own close.
     const inside = (!to || r.measuredTo <= to) && (!from || r.measuredFrom <= from) && (!to || r.measuredFrom < to);
     const annualised = r.basis === "annual";
-    const xirr = (/[?&]rtype=([a-z]+)/.exec(ctx.path ?? "")?.[1] ?? "xirr") === "xirr";
-    return r.measuredFrom < r.measuredTo && days > 0 && inside && (xirr ? annualised : !(days < 365 && annualised));
+    const type = /[?&]rtype=([a-z]+)/.exec(ctx.path ?? "")?.[1] ?? "xirr";
+    const shown = r.pct !== "" && r.pct != null;
+    // From a year the window can still hold money at work for under one (every
+    // account funded inside it), which is shown as absolute too.
+    const rule = days < 365
+      ? !annualised && (!shown || type === "absolute" || r.shownAs === "absolute")
+      : type === "xirr" ? annualised || r.shownAs === "absolute" : type === "absolute" ? !annualised : true;
+    return r.measuredFrom < r.measuredTo && days > 0 && inside && rule;
   }],
 ];
 
@@ -20488,9 +20503,8 @@ const CIO_RETURNS_LIVE = [
       const fx = BENCH_FIXTURE.find((x) => x[0] === b.key);
       const raw = benchFixtureReturn(fx[2], b.from, b.to);
       const d = (Date.parse(b.to) - Date.parse(b.from)) / 86400000;
-      // XIRR's index is per year at any length, like the portfolio's (Stage 10gu).
-      const xirr = (/[?&]rtype=([a-z]+)/.exec(ctx.path ?? "")?.[1] ?? "xirr") === "xirr";
-      const want = r.basis === "annual" && (xirr || d >= 365) ? (Math.pow(1 + raw / 100, 365 / d) - 1) * 100 : raw;
+      // An index is per year only where the portfolio's figure is and its own span reaches a year (Stage 10hk).
+      const want = r.basis === "annual" && d >= 365 ? (Math.pow(1 + raw / 100, 365 / d) - 1) * 100 : raw;
       /*
        * THE GAP IS LIKE FOR LIKE (Stage 10fz, P5). The portfolio is money-
        * weighted, so its gap is struck against the index on the SAME dated
@@ -20542,10 +20556,12 @@ const CIO_SEGMENTS = [
     return Math.abs(r.rows.reduce((s, x) => s + x.value, 0) - r.total.value) <= 1
       && (r.total.gain == null || Math.abs(r.rows.reduce((s, x) => s + (x.gain ?? 0), 0) - r.total.gain) <= 1);
   }],
-  ["only Absolute return has additive contributions; XIRR and CAGR are never added", (t, ctx) => {
+  // An XIRR or CAGR asked of under a year IS the absolute return (Stage 10hk),
+  // so its contributions add up exactly as Absolute's do.
+  ["only an absolute total has additive contributions; an annual XIRR or CAGR is never added", (t, ctx) => {
     const r = ctx?.segDom;
     if (!r) return false;
-    if (r.type !== "absolute") return r.rows.every(x => x.contrib == null);
+    if (r.type !== "absolute" && r.total.shownAs !== "absolute") return r.rows.every(x => x.contrib == null);
     if (r.total.ret == null) return r.rows.every(x => x.contrib == null);
     return r.total.deployed > 0 && r.rows.every(x => x.gain == null ? x.contrib == null : Math.abs(x.contrib - x.gain / r.total.deployed * 100) < 1e-6)
       && Math.abs(r.rows.reduce((s, x) => s + (x.contrib ?? 0), 0) - r.total.ret) < 1e-6;
@@ -24366,13 +24382,21 @@ const INVARIANTS = {
      * CAGR IS REFUSED WHERE THE MONEY WENT IN OVER SEVERAL DATES, and says the
      * money-weighted rate is XIRR. A single-start compound rate over a
      * staggered account treats every rupee as invested on the first date,
-     * which overstates the time the later money has been at work.
+     * which overstates the time the later money has been at work. Under a year
+     * the row shows its HPR, tagged, on every measure instead (Stage 10hk).
      */
-    ["…CAGR is refused on a staggered account, naming XIRR as its measure", (t, ctx) => {
+    ["…CAGR is refused on a staggered account held a year or more, naming XIRR as its measure — under a year it is the HPR", (t, ctx) => {
       const staggered = (ctx.mineRows ?? []).filter((r) => r.contributions > 1 && r.returns.some((x) => x.pct != null));
       if (!staggered.length) return false;
+      const daysOf = (r) => {
+        const g = CAPITAL_GROUPS?.rowCapital(r.key, r.accountId);
+        const first = g?.boughtFirst || null, to = g?.close ?? null;
+        return first && to ? Math.round((Date.parse(to) - Date.parse(first)) / 864e5) : null;
+      };
       return staggered.every((r) => {
         const c = r.returns.find((x) => x.measure === "cagr");
+        const days = daysOf(r);
+        if (days != null && days < 365) return !!c && (c.pct == null || c.tag === "HPR");
         return c && c.pct == null && /XIRR/.test(c.reason ?? "");
       });
     }],
@@ -40535,6 +40559,7 @@ for (const theme of THEMES) {
             titles: [...tr.querySelectorAll("[title]")].map((x) => x.getAttribute("title") ?? "").join(" | "),
           })),
           basis: pct?.getAttribute("data-returns-basis") ?? null,
+          shownAs: pct?.getAttribute("data-returns-shown-as") ?? null,
         };
       });
       // Stages 10ez, 10fd — the Returns tab's attribution section, off its own handles.
@@ -40553,7 +40578,8 @@ for (const theme of THEMES) {
           coverage: root.querySelector("[data-attribution-total-coverage]")?.textContent ?? "",
           totalInfo: root.querySelectorAll("[data-seg-total] [data-return-info]").length,
           options: [...root.querySelectorAll("[data-seg-axis-option]")].map((b) => ({ key: b.getAttribute("data-seg-axis-option"), active: b.getAttribute("aria-selected") === "true" })),
-          total: { value: num(root, "data-seg-total-value"), gain: num(root, "data-seg-total-gain"), deployed: num(root, "data-seg-total-deployed"), ret: num(root, "data-seg-total-ret") },
+          total: { value: num(root, "data-seg-total-value"), gain: num(root, "data-seg-total-gain"), deployed: num(root, "data-seg-total-deployed"), ret: num(root, "data-seg-total-ret"),
+            shownAs: root.querySelector('[data-seg-total] [data-seg-cell="ret"]')?.getAttribute("data-seg-shown-as") ?? null },
           rows: [...root.querySelectorAll("tr[data-seg-row]")].map((tr) => {
             const g = tr.querySelector('[data-seg-cell="gain"]');
             return {
@@ -41244,6 +41270,12 @@ for (const theme of THEMES) {
             flows: txt(c[1]), mvText: txt(c[2]), mvReason: c[2]?.querySelector("[title]")?.getAttribute("title") ?? null,
             terminal: txt(c[3]), returnText: txt(c[4]),
             returnTitle: c[4]?.querySelector("span[title]")?.getAttribute("title") ?? null,
+            // The return cell found by its header, not its position (an Invested
+            // on column now sits before it), for the Stage 10hk hover check.
+            headReturnTitle: (() => {
+              const i = [...(tr.closest("table")?.querySelectorAll("thead th") ?? [])].findIndex((th) => /^return/i.test(txt(th)));
+              return i >= 0 ? c[i]?.querySelector("span[title]")?.getAttribute("title") ?? null : null;
+            })(),
             undated: tr.querySelector("[data-xirr-undated]")?.getAttribute("data-xirr-undated") ?? null,
             undatedTitle: tr.querySelector("[data-xirr-undated]")?.getAttribute("title") ?? null,
           };
@@ -41260,6 +41292,7 @@ for (const theme of THEMES) {
             last: cons.getAttribute("data-last"), pct: cons.getAttribute("data-pct"), toDate: cons.getAttribute("data-todate"),
             days: cons.getAttribute("data-days"), text: txt(cons), terminal: txt(cons.cells[3]),
             returnTitle: consRet?.getAttribute("title") ?? null, undated: consRet?.getAttribute("data-xirr-undated") ?? null,
+            headReturnTitle: cons.querySelector("[data-xirr-undated]")?.getAttribute("title") ?? null,
           } : null,
           partialMarkers: document.querySelectorAll("[data-partial-valuation]").length,
           tileTitle: [...document.querySelectorAll("[title]")].map((e) => e.getAttribute("title"))

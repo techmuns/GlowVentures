@@ -142,6 +142,7 @@ let failed = 0;
 const ONLY = (process.env.ONLY ?? "").split(",").map((s) => s.trim()).filter(Boolean);
 SUITES.push(["table Excel exports", "src/lib/__tests__/tableExcel.test.ts"]);
 SUITES.push(["table number corrections and Excel uploads", "src/lib/__tests__/tableInputs.test.ts"]);
+SUITES.push(["under a year absolute", "src/lib/__tests__/underAYear.test.ts"]);
 for (const [name, rel] of SUITES) {
   if (ONLY.length && !ONLY.includes(name)) continue;
   const out = path.join(DIR, path.basename(rel).replace(/\.ts$/, ".mjs"));

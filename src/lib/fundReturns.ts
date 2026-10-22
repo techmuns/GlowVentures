@@ -49,7 +49,7 @@
 import type { Commitment, FundPayout, Position, ReviewFlow } from "./types";
 import type { AccountIndex } from "./accounts";
 import {
-  daysBetween, YEAR_DAYS, returnMeasureDef, isValuedAtCost, AT_COST_RETURN,
+  daysBetween, YEAR_DAYS, returnMeasureDef, isValuedAtCost, AT_COST_RETURN, mayAnnualise,
   type MeasuredReturn, type ReturnMeasure,
 } from "./analytics";
 import { pooledXirr, moneyWeightedReturn } from "./bucketXirr";
@@ -488,7 +488,16 @@ export type FundReturnInput = Pick<FundRow, "returnPct" | "cost"> & {
    * `AT_COST_RETURN`, ahead of any reason that names a different cause.
    */
   atCost?: boolean;
+  /**
+   * Every holding behind the fund is debt (`allDebt`, Stage 10hk) — the one case
+   * annualised under a year. Unset is not debt: under a year the HPR stands.
+   */
+  debt?: boolean;
 };
+
+/** Days from the first call or purchase to the valuation, where both are dated. */
+const daysHeld = (d: FundDated): number | null => d.firstCall && d.valuedAt ? daysBetween(d.firstCall, d.valuedAt) : null;
+const DEBT_UNDER_A_YEAR = " Debt, so it is annualised although the money has been in for under a year.";
 
 /**
  * WHAT A FALLBACK TO THE HOLDING-PERIOD RETURN IS STRUCK ON, said once (PM-C1).
@@ -580,6 +589,15 @@ export function fundMeasuredReturn(
   if (measure === "cagr") {
     if (hpr == null) return { shown: false, tag, reason: noHpr };
     if (!d || d.gap) return { shown: false, tag, reason: `annualising needs to know when the money went in, and ${d?.gap ?? "no dated contribution for this fund is in the book"}` };
+    // UNDER A YEAR, THE ABSOLUTE RETURN (Stage 10hk) — however many calls, folios
+    // or payouts: money in for under a year is never stated per year.
+    const held = daysHeld(d);
+    if (held != null && !mayAnnualise(held, f.debt === true)) {
+      return {
+        shown: true, pct: hpr, tag: "HPR",
+        note: `Paid in ${held} days before the ${date(d.valuedAt!)} valuation — under a year, so this is not an annual rate but ${HPR_IS}.`,
+      };
+    }
     if (d.tranches > 1) {
       return {
         shown: false, tag,
@@ -599,17 +617,17 @@ export function fundMeasuredReturn(
       return { shown: false, tag, reason: `the fund has paid back ${money(d.paidOut)}, which an annualised return on its value alone would leave out — XIRR counts it` };
     }
     const days = daysBetween(d.firstCall!, d.valuedAt!);
-    if (days < YEAR_DAYS) {
+    if (!(days > 0)) {
       return {
         shown: true, pct: hpr, tag: "HPR",
-        note: `Paid in ${days} days before the ${date(d.valuedAt!)} valuation — under a year, so this is not an annual rate but ${HPR_IS}.`,
+        note: `Paid in on the ${date(d.valuedAt!)} valuation date, so there are no days to annualise over: this is ${HPR_IS}.`,
       };
     }
     const growth = 1 + hpr / 100;
     if (growth <= 0) return { shown: false, tag, reason: "this fund is worth nothing against its cost, so it has no compound rate — only a total loss" };
     return {
       shown: true, pct: (Math.pow(growth, YEAR_DAYS / days) - 1) * 100, tag,
-      note: `Annualised over the ${days} days from ${d.calls.length === 1 ? `the one ${callWord(d)}` : `the ${d.calls.length} ${callWord(d)}s, all`} on ${date(d.firstCall!)} to the ${date(d.valuedAt!)} valuation.`,
+      note: `Annualised over the ${days} days from ${d.calls.length === 1 ? `the one ${callWord(d)}` : `the ${d.calls.length} ${callWord(d)}s, all`} on ${date(d.firstCall!)} to the ${date(d.valuedAt!)} valuation.${days < YEAR_DAYS ? DEBT_UNDER_A_YEAR : ""}`,
     };
   }
 
@@ -651,9 +669,9 @@ export function fundMeasuredReturn(
     };
   }
   const days = daysBetween(d.firstCall!, d.valuedAt!);
-  if (days >= YEAR_DAYS && d.payouts === "nil") {
+  if (mayAnnualise(days, f.debt === true) && d.payouts === "nil") {
     const c = fundMeasuredReturn(f, d, "cagr", money, date);
-    if (c.shown) return { ...c, note: `${sentence(oneDateCalls(d))} and nothing paid back, held ${days} days — so the methodology annualises it. ${c.note ?? ""}`.trim() };
+    if (c.shown && c.tag !== "HPR") return { ...c, note: `${sentence(oneDateCalls(d))} and nothing paid back, held ${days} days — so the methodology annualises it. ${c.note ?? ""}`.trim() };
   }
   return {
     shown: true, pct: hpr, tag: "HPR",
@@ -667,6 +685,23 @@ export function fundMeasuredReturn(
 function xirrOf(f: FundReturnInput, d: FundDated | undefined, money: Money, date: DateFmt): MeasuredReturn {
   const tag = "XIRR";
   if (!d || d.gap) return { shown: false, tag, reason: `a money-weighted return needs every dated cash flow, and ${d?.gap ?? "no dated contribution for this fund is in the book"}` };
+  // UNDER A YEAR, THE ABSOLUTE RETURN (Stage 10hk), never an annual rate and
+  // never a dash: money in for under a year shows its holding-period return on
+  // every measure. With every call on one date, every folio valued on one date
+  // and nothing paid back, the money-weighted return over the window IS that
+  // figure, exactly; otherwise it is the HPR, and the hover says what it counts.
+  const held = daysHeld(d);
+  if (held != null && !mayAnnualise(held, f.debt === true)) {
+    if (f.returnPct == null) {
+      return { shown: false, tag, reason: `the money went in ${held} days before the valuation — under a year, so this shows the holding-period return, and no cost is on record to strike one` };
+    }
+    return {
+      shown: true, pct: f.returnPct, tag: "HPR",
+      note: oneEntry(d) && d.paidOut === 0
+        ? `The money went in ${held} days before the valuation — under a year, so an annual rate would be a projection. With ${d.calls.length === 1 ? `one ${callWord(d)}` : `every ${callWord(d)} on one date`} and nothing paid back, the money-weighted return over that window equals ${HPR_IS}.`
+        : `The money went in ${held} days before the ${date(d.valuedAt!)} valuation — under a year, so this is not an annual rate but ${HPR_IS}.`,
+    };
+  }
   if (d.payouts === "unknown") {
     return {
       shown: false, tag,
@@ -682,26 +717,22 @@ function xirrOf(f: FundReturnInput, d: FundDated | undefined, money: Money, date
   const afterLine = after > 0
     ? ` ${money(after)} paid after the valuation is inside that value, so it is not counted again.`
     : "";
-  if (pooled.annualised) {
+  // A year or more — or debt, annualised at any length (Stage 10hk).
+  if (pooled.annualised || (f.debt === true && pooled.annualPct != null)) {
     return {
-      shown: true, pct: pooled.pct, tag,
-      note: `Money-weighted across ${flowsLine} — annualised over the ${pooled.windowDays} days since the first ${callWord(d)}.${afterLine}${d.unitNote ? ` ${sentence(d.unitNote)}.` : ""}`,
+      shown: true, pct: pooled.annualised ? pooled.pct : pooled.annualPct!, tag,
+      note: `Money-weighted across ${flowsLine} — annualised over the ${pooled.windowDays} days since the first ${callWord(d)}.${pooled.annualised ? "" : DEBT_UNDER_A_YEAR}${afterLine}${d.unitNote ? ` ${sentence(d.unitNote)}.` : ""}`,
     };
   }
-  // UNDER A YEAR. With every call on one date, every folio valued on one date
-  // and nothing paid back, the money-weighted return over the window IS the
-  // holding-period return — the same figure, exactly — so it is shown and
-  // tagged for what it is. Anything else under a year has no honest single
-  // name here and is refused rather than dressed as an XIRR.
-  if (oneEntry(d) && d.paidOut === 0 && f.returnPct != null) {
-    return {
-      shown: true, pct: f.returnPct, tag: "HPR",
-      note: `The money went in ${pooled.windowDays} days before the valuation — under a year, so an annual rate would be a projection. With ${d.calls.length === 1 ? `one ${callWord(d)}` : `every ${callWord(d)} on one date`} and nothing paid back, the money-weighted return over that window equals ${HPR_IS}.`,
-    };
+  // The flows' own span is under a year where the call-to-valuation span above
+  // was not: still no annual rate — the absolute return, as everywhere else.
+  if (f.returnPct != null) {
+    return { shown: true, pct: f.returnPct, tag: "HPR",
+      note: `The dated flows span ${pooled.windowDays} days — under a year, so this is not an annual rate but ${HPR_IS}.` };
   }
   return {
     shown: false, tag,
-    reason: `the dated flows span ${pooled.windowDays} days — under a year, so an annual rate would be a projection of a part-year; the holding-period return is in the HPR column`,
+    reason: `the dated flows span ${pooled.windowDays} days — under a year, so an annual rate would be a projection of a part-year, and no cost is on record to strike the holding-period return`,
   };
 }
 

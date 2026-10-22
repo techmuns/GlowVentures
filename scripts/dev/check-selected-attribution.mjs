@@ -60,9 +60,9 @@ try {
  assert.match(await historyCard.innerText(), /not annualised/);
  const fytdCard = page.locator('[data-tile-slot="fytd"] [data-card-coverage]');
  assert.ok(Math.abs(Number(await fytdCard.getAttribute('data-card-gain')) - Number(await table.getAttribute('data-seg-total-gain'))) < .001);
- // The card reads XIRR over the period; the tab states it per year with the same period figure beside it (Stage 10gu).
+ // FYTD is under a year: the card and the tab's XIRR are both the absolute return, never a rate per year (Stage 10hk).
  assert.ok(Math.abs(Number(await fytdCard.getAttribute('data-card-return')) - Number(await table.getAttribute('data-seg-total-period-ret'))) < 1e-8);
- assert.ok(Number(await table.getAttribute('data-seg-total-ret')) > Number(await fytdCard.getAttribute('data-card-return')), 'a gain over 6 months is a larger rate per year');
+ assert.ok(Math.abs(Number(await table.getAttribute('data-seg-total-ret')) - Number(await fytdCard.getAttribute('data-card-return'))) < 1e-8, 'under a year the XIRR shown is the absolute return');
  await page.screenshot({ path: `${out}/headline-cards.png` });
  // Saved choices use the same covered inputs as the default cards.
  for (const id of ['return']) {
@@ -103,10 +103,12 @@ try {
    }
    results.push({ period, type, gain: rawGain, return: rawReturn });
   }
-  // The selector moves the figure: XIRR is per year, Absolute is the period (Stage 10gu).
+  // Under a year XIRR and CAGR are the absolute return; from a year XIRR is per year (Stage 10hk).
   const byType = results.filter(r => r.period === period && r.return !== '');
-  const x = byType.find(r => r.type === 'xirr'), a = byType.find(r => r.type === 'absolute');
-  if (x && a && win.days < 365) assert.ok(Math.abs(Number(x.return) - Number(a.return)) > 0.01, `${period}: XIRR ${x.return} vs Absolute ${a.return}`);
+  const x = byType.find(r => r.type === 'xirr'), a = byType.find(r => r.type === 'absolute'), c = byType.find(r => r.type === 'cagr');
+  const underYear = b.measureWindow(win.included, 'xirr', String).shownAs === 'absolute';
+  if (x && a && underYear) assert.ok(Math.abs(Number(x.return) - Number(a.return)) < 1e-8 && (!c || Math.abs(Number(c.return) - Number(a.return)) < 1e-8), `${period}: XIRR ${x.return} and CAGR ${c?.return} are Absolute ${a.return} under a year`);
+  if (x && a && !underYear) assert.ok(Math.abs(Number(x.return) - Number(a.return)) > 0.01, `${period}: XIRR ${x.return} vs Absolute ${a.return}`);
  }
  // FYTD's bridge splits most accounts' gain from their own records and names the rest.
  await page.locator('[data-returns-period="fytd"]').click();

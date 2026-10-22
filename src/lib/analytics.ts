@@ -8,6 +8,10 @@ import { accountIndex, custodyLabelOf, ownerOf } from "./accounts";
 // Straight from the shared read rather than through `./aifCategory`, which
 // imports `isMandateHeld` from here: the one sentence is all this file needs.
 import { MARKET_SIDE_UNPLACED } from "../../shared/aifCategory.mjs";
+// A cycle (`familyTaxonomy` imports `isCashEquivalent` from here), safe because
+// neither module calls the other while it loads: `isDebtHolding` reads the
+// family's classes only when a return is struck.
+import { familyAssetClass } from "./familyTaxonomy";
 
 export const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
 
@@ -1238,6 +1242,24 @@ export function startupTotals(s: StartupInvestment[]) {
 /** India's long-term threshold, and the shortest window that may be annualised. */
 export const YEAR_DAYS = 365;
 
+/**
+ * ── UNDER A YEAR, A RETURN IS ABSOLUTE; ONLY DEBT IS ANNUALISED (Stage 10hk) ──
+ *
+ *   *"Never annualise equity returns for periods under one year — Karur Vysya
+ *   Bank showed ~54%, which looked annualised over a holding of under a year.
+ *   … whatever investments are being held for less than a year need to show
+ *   only absolute return, even if we have selected XIRR or CAGR return …
+ *   debt investments are to be annualized."* — the family, 22 Oct 2026.
+ *
+ * So a holding, account or period under 365 days shows its ABSOLUTE return on
+ * every measure, tagged as absolute, and a CAGR or XIRR picked for it shows that
+ * figure rather than a rate per year or a dash. A year or more may be stated per
+ * year. Debt is the one exception: a debt return may be annualised at any
+ * length. Every return surface asks this one question.
+ */
+export const mayAnnualise = (days: number | null | undefined, debt: boolean): boolean =>
+  debt || (days != null && days >= YEAR_DAYS);
+
 export type ReturnMode = "absolute" | "cagr";
 
 export type HoldingReturn =
@@ -1424,7 +1446,7 @@ export function clubbedPurchase(
   return { heldSince, purchaseDates, costOfUnitsSold };
 }
 
-export function holdingReturn(p: Holdable, mode: ReturnMode, asOf: string): HoldingReturn {
+export function holdingReturn(p: Holdable, mode: ReturnMode, asOf: string, debt = false): HoldingReturn {
   const pct = p.returnPct;
   if (p.hprUnavailableReason) return { kind: "absent", reason: p.hprUnavailableReason };
   const end = windowEnd(p, asOf);
@@ -1444,7 +1466,9 @@ export function holdingReturn(p: Holdable, mode: ReturnMode, asOf: string): Hold
   }
   // THE GUARD, stated positively: under a year the absolute figure stands, and
   // is labelled absolute so the column never passes one basis off as the other.
-  if (heldDays < YEAR_DAYS) return { kind: "absolute", pct, heldDays };
+  // Debt alone may be annualised under a year (Stage 10hk).
+  if (!mayAnnualise(heldDays, debt)) return { kind: "absolute", pct, heldDays };
+  if (!(heldDays > 0)) return { kind: "absolute", pct, heldDays };
   // (1 + r)^(365/days) − 1, on the return already struck against cost. A cost
   // at or below zero has no compound rate and is refused upstream by `returnPct`.
   const years = heldDays / YEAR_DAYS;
@@ -1596,7 +1620,7 @@ export type ReturnMeasureDef = {
 /** The picker's options, in reading order — `auto` first, as the default. */
 export const RETURN_MEASURES: ReturnMeasureDef[] = [
   { key: "auto", label: "By methodology", tag: "AUTO",
-    hint: "Equity held under a year, or bought on several dates: holding-period return. One purchase held a year or more: CAGR. Fixed income, and an account funded over several dated payments: XIRR. Each cell says which one it is." },
+    hint: "Held under a year, or bought on several dates: holding-period return. One purchase held a year or more: CAGR. Fixed income, and an account funded over several dated payments: XIRR. Only debt is annualised under a year. Each cell says which one it is." },
   // The measure KEY stays "absolute" — the URL is `?ret=absolute`, and the
   // internal ReturnMode and HoldingReturn kind are "absolute" too, so the whole
   // not-annualised basis shares one identifier. Only the reader-facing label and
@@ -1605,9 +1629,9 @@ export const RETURN_MEASURES: ReturnMeasureDef[] = [
   { key: "absolute", label: "Holding Period Return", tag: "HPR",
     hint: "FIFO return on deployed capital, not annualised. Individual-share returns exclude separately paid dividends; dividend-inclusive period returns are on Corporate actions & dividends." },
   { key: "cagr", label: "CAGR — annualised", tag: "CAGR",
-    hint: "The return on cost annualised — struck only where the money went in on one dated payment at least a year ago; a shorter window stays the holding-period return, and money that went in over several dates is XIRR's." },
+    hint: "The return on cost annualised — struck only where the money went in on one dated payment at least a year ago; under a year the holding-period return shows instead (debt alone is annualised), and money that went in over several dates a year or more ago is XIRR's." },
   { key: "xirr", label: "XIRR — money-weighted", tag: "XIRR",
-    hint: "A money-weighted return across every cash flow. It needs each payment's date and amount — which the statements carry for a whole account, and for a holding whose every unit its account's dated trades or lot register account for — so it shows on those rows, and is absent, with the reason, everywhere else." },
+    hint: "A money-weighted return across every cash flow. It needs each payment's date and amount — which the statements carry for a whole account, and for a holding whose every unit its account's dated trades or lot register account for — so it shows on those rows, and is absent, with the reason, everywhere else. Under a year the holding-period return shows instead, never an annual rate (debt alone is annualised)." },
   { key: "ytd", label: "Year to date", tag: "YTD",
     hint: "The holding's own return since 1 January — measurable only where it was opened during the year, because otherwise its value on 1 January is missing." },
   { key: "calendar", label: "Calendar year", tag: "CY",
@@ -1631,6 +1655,33 @@ export const isReturnMeasure = (k: string): k is ReturnMeasure => MEASURE_BY_KEY
 export const isFixedIncome = (assetClass: string | null | undefined) => assetClass === "Bond";
 
 /**
+ * DEBT, FOR THE ANNUALISING RULE (Stage 10hk): a bond, or a holding the family's
+ * own review files as Debt (`familyAssetClass` — Neo Infra Income, K M Global
+ * Credit). Their liquid and arbitrage funds are the family's Cash, not Debt
+ * (their instruction), so they stay absolute under a year like everything else.
+ * A row with no security to classify is not debt: the rule's safe side.
+ */
+export type DebtTestable = {
+  assetClass: string | null | undefined;
+  securityKey?: string | null;
+  accountId?: string | null;
+  reviewTaxonomy?: Position["reviewTaxonomy"] | null;
+};
+export function isDebtHolding(p: DebtTestable): boolean {
+  if (isFixedIncome(p.assetClass)) return true;
+  if (!p.securityKey) return false;
+  return familyAssetClass({
+    assetClass: (p.assetClass ?? null) as Position["assetClass"] | null,
+    securityKey: p.securityKey, accountId: p.accountId ?? "", reviewTaxonomy: p.reviewTaxonomy ?? undefined,
+  }, false)?.value === "Debt";
+}
+/** A set of holdings is debt only where every one that holds money is. */
+export const allDebt = (ps: readonly (DebtTestable & { marketValue?: number | null })[]): boolean => {
+  const held = ps.filter((p) => (p.marketValue ?? 0) !== 0);
+  return held.length > 0 && held.every(isDebtHolding);
+};
+
+/**
  * What a return cell needs to decide its own measure.
  * `heldSince` licenses annualisation; `assetClass` routes fixed income to XIRR;
  * `costNA` is the depository case — a value but no cost, so no return at all.
@@ -1641,6 +1692,15 @@ export type ReturnInput = {
   returnPct: number | null;
   heldSince: string | null;
   assetClass: string | null | undefined;
+  /**
+   * WHAT `isDebtHolding` READS, where the row carries it — or `debt` itself,
+   * where the caller has already decided (Stage 10hk). Debt alone may be
+   * annualised under a year; a row neither names is not debt.
+   */
+  securityKey?: string | null;
+  accountId?: string | null;
+  reviewTaxonomy?: Position["reviewTaxonomy"] | null;
+  debt?: boolean;
   costNA?: boolean;
   /**
    * THE ROW'S OWN COST AND VALUE, where the caller has them — what tells a NIL
@@ -1761,25 +1821,30 @@ function capitalSubYear(returnPct: number, cap: Extract<RowCapital, { dated: tru
     note: `The money has been in for ${cap.days} days — under a year — so this is the holding-period return, not an annual rate.` };
 }
 
-/** One dated payment a year or more ago: the holding-period return compounded over the days since it. */
-function capitalCompound(returnPct: number, cap: Extract<RowCapital, { dated: true }>, tag: "CAGR"): MeasuredReturn {
-  if (cap.days < YEAR_DAYS) return capitalSubYear(returnPct, cap);
+/** Said where debt is annualised over less than a year (Stage 10hk), so the rate never reads as a year's measurement. */
+const DEBT_UNDER_A_YEAR = " Debt, so it is annualised although the money has been in for under a year.";
+
+/** One dated payment a year or more ago (or debt): the holding-period return compounded over the days since it. */
+function capitalCompound(returnPct: number, cap: Extract<RowCapital, { dated: true }>, tag: "CAGR", debt = false): MeasuredReturn {
+  if (!mayAnnualise(cap.days, debt) || !(cap.days > 0)) return capitalSubYear(returnPct, cap);
   const growth = 1 + returnPct / 100;
   if (growth <= 0) return { shown: true, pct: returnPct, tag: "HPR", note: "A total loss has no compound rate, so this is the holding-period return." };
   return { shown: true, pct: (Math.pow(growth, YEAR_DAYS / cap.days) - 1) * 100, tag,
-    note: `One payment on ${cap.since}, compounded over the ${cap.days} days to ${cap.to}.` };
+    note: `One payment on ${cap.since}, compounded over the ${cap.days} days to ${cap.to}.${cap.days < YEAR_DAYS ? DEBT_UNDER_A_YEAR : ""}` };
 }
 
 /**
  * The money-weighted rate over a row's dated capital — or, under a year, its
  * holding-period return, tagged HPR (Stage 10g(ii)'s guard: a sub-year window
- * compounded onto a year is how this book once printed +99.0%).
+ * compounded onto a year is how this book once printed +99.0%). Debt alone keeps
+ * its rate under a year (Stage 10hk).
  */
-function capitalXirrOf(p: ReturnInput, cap: Extract<RowCapital, { dated: true }>, noCost: boolean): MeasuredReturn {
-  if (cap.days < YEAR_DAYS) {
+function capitalXirrOf(p: ReturnInput, cap: Extract<RowCapital, { dated: true }>, noCost: boolean, debt = false): MeasuredReturn {
+  if (!mayAnnualise(cap.days, debt)) {
     return noCost ? { shown: false, tag: "XIRR", reason: noCostReasonOf(p) } : capitalSubYear(p.returnPct as number, cap);
   }
   if (cap.annualPct == null) return { shown: false, tag: "XIRR", reason: "these dated payments and this value do not solve to a rate" };
+  const debtNote = cap.days < YEAR_DAYS ? DEBT_UNDER_A_YEAR : "";
   // A ROW OF HOLDINGS (Stage 10fw): its money is each holding's own dated
   // purchases, sales and dividends, and the note says whose record dates them.
   if (cap.holdings) {
@@ -1787,12 +1852,12 @@ function capitalXirrOf(p: ReturnInput, cap: Extract<RowCapital, { dated: true }>
     return { shown: true, pct: cap.annualPct, tag: "XIRR",
       note: `Money-weighted over ${cap.flows} dated ${cap.flows === 1 ? "purchase" : "purchases and sales"} and the dividends paid on them, as ${by} ${cap.holdings.trades + cap.holdings.lots === 1 ? "dates" : "date"} them`
         + (cap.accounts > 1 ? `, across ${cap.accounts} holdings each closing on its own statement's value and date` : ", and the value on the statement's own date")
-        + `, from ${cap.since} to ${cap.to} (${cap.days} days).` };
+        + `, from ${cap.since} to ${cap.to} (${cap.days} days).${debtNote}` };
   }
   return { shown: true, pct: cap.annualPct, tag: "XIRR",
     note: `Money-weighted over ${cap.flows} dated ${cap.flows === 1 ? "payment" : "payments"}`
       + (cap.accounts > 1 ? ` across ${cap.accounts} accounts, each closing on its own statement's value and date` : ", and the value on the statement's own date")
-      + `, from ${cap.since} to ${cap.to} (${cap.days} days) — the same record the Transactions card solves over.` };
+      + `, from ${cap.since} to ${cap.to} (${cap.days} days) — the same record the Transactions card solves over.${debtNote}` };
 }
 
 /**
@@ -1828,8 +1893,15 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
     return { shown: true, pct: p.returnPct as number, tag: "HPR" };
   }
 
+  const debt = p.debt ?? isDebtHolding(p);
   const cap = p.capital;
   if (measure === "cagr" && cap?.dated) {
+    // UNDER A YEAR, THE ABSOLUTE RETURN (Stage 10hk) — ahead of the refusal
+    // below: money in for under a year shows its holding-period return on
+    // every measure, however many dates it went in on.
+    if (!mayAnnualise(cap.days, debt)) {
+      return noCost ? { shown: false, tag: "CAGR", reason: noCostReasonOf(p) } : capitalSubYear(p.returnPct as number, cap);
+    }
     // SEVERAL DATED PAYMENTS: a single-start compound rate would treat every
     // rupee as invested on the first date. The Transactions card refuses the
     // same account the same way, so the two pages cannot disagree about it.
@@ -1838,7 +1910,7 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
         reason: "the money went in and came out over several dates, so a single-start compound rate would treat all of it as invested on the first date — the money-weighted rate for this row is XIRR" };
     }
     if (noCost) return { shown: false, tag: "CAGR", reason: noCostReasonOf(p) };
-    return capitalCompound(p.returnPct as number, cap, "CAGR");
+    return capitalCompound(p.returnPct as number, cap, "CAGR", debt);
   }
 
   /**
@@ -1854,24 +1926,26 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
   }
 
   if (measure === "cagr") {
-    const r = holdingReturn(p, "cagr", asOf);
+    const r = holdingReturn(p, "cagr", asOf, debt);
     if (r.kind === "absent") return { shown: false, tag: "CAGR", reason: r.reason };
-    // NOT ONE PURCHASE (Stage 10fz): refused on the CAGR measure whatever the
-    // window, exactly as an account funded over several dated payments is
+    // The guard fired: under a year, so the ABSOLUTE figure stands, marked —
+    // for a holding bought in lots too (Stage 10hk): its OLDEST unit is under a
+    // year old, so every unit is.
+    if (r.kind === "absolute") {
+      return { shown: true, pct: r.pct, tag: "HPR",
+        note: r.heldDays === null
+          ? "Held for an unreported period, so this is the total return on cost, not an annual rate."
+          : `Held ${r.heldDays} days — under a year, so this is the total return on cost, not an annual rate.` };
+    }
+    // NOT ONE PURCHASE (Stage 10fz): refused on the CAGR measure from a year,
+    // exactly as an account funded over several dated payments is
     // (`cap.flows > 1` above). The gate is HERE, on the holding's own measure,
     // and not in `holdingReturn`: that is the arithmetic of one dated purchase,
     // which a capital tranche (`tranches.ts`) is by construction.
     const gap = singlePurchaseGap(p);
     if (gap) return { shown: false, tag: "CAGR", reason: gap };
-    if (r.kind === "cagr") {
-      return { shown: true, pct: r.pct, tag: "CAGR",
-        note: `Annualised over the ${r.heldDays} days from ${r.since}, the oldest unit still held, to its valuation on ${windowEnd(p, asOf)}.` };
-    }
-    // The guard fired: under a year, so the ABSOLUTE figure stands, marked.
-    return { shown: true, pct: r.pct, tag: "HPR",
-      note: r.heldDays === null
-        ? "Held for an unreported period, so this is the total return on cost, not an annual rate."
-        : `Held ${r.heldDays} days — under a year, so this is the total return on cost, not an annual rate.` };
+    return { shown: true, pct: r.pct, tag: "CAGR",
+      note: `Annualised over the ${r.heldDays} days from ${r.since}, the oldest unit still held, to its valuation on ${windowEnd(p, asOf)}.${r.heldDays < YEAR_DAYS ? DEBT_UNDER_A_YEAR : ""}` };
   }
 
   if (measure === "ytd") {
@@ -1884,8 +1958,18 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
 
   if (measure === "xirr") {
     if (cap && !cap.dated) return { shown: false, tag: "XIRR", reason: cap.reason };
-    if (!cap) return { shown: false, tag: "XIRR", reason: NO_HOLDING_XIRR };
-    return capitalXirrOf(p, cap, noCost);
+    if (!cap) {
+      // A HOLDING KNOWN TO BE HELD UNDER A YEAR shows its absolute return under
+      // XIRR too (Stage 10hk): no cash-flow record is needed to say a part-year
+      // is not annualised, and a dash would hide the one figure the rule allows.
+      const r = noCost || debt ? null : holdingReturn(p, "cagr", asOf);
+      if (r?.kind === "absolute" && r.heldDays !== null) {
+        return { shown: true, pct: r.pct, tag: "HPR",
+          note: `Held ${r.heldDays} days — under a year, so this is the total return on cost, not an annual rate.` };
+      }
+      return { shown: false, tag: "XIRR", reason: NO_HOLDING_XIRR };
+    }
+    return capitalXirrOf(p, cap, noCost, debt);
   }
 
   if (measure === "calendar") {
@@ -1902,13 +1986,13 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
    * single payment. The HPR itself is this row's own FIFO figure, unchanged.
    */
   if (cap?.dated) {
-    if (cap.days < YEAR_DAYS) return capitalSubYear(p.returnPct as number, cap);
+    if (!mayAnnualise(cap.days, debt)) return capitalSubYear(p.returnPct as number, cap);
     if (cap.flows > 1) {
-      const x = capitalXirrOf(p, cap, false);
+      const x = capitalXirrOf(p, cap, false, debt);
       return x.shown ? x : { shown: true, pct: p.returnPct as number, tag: "HPR",
         note: `Several dated payments call for XIRR, and ${x.reason} — so this is the holding-period return.` };
     }
-    return capitalCompound(p.returnPct as number, cap, "CAGR");
+    return capitalCompound(p.returnPct as number, cap, "CAGR", debt);
   }
   /**
    * A ROW THAT IS WHOLE ACCOUNTS WITH NO DATED RECORD (MH-09, MH-18, DL-8).
@@ -1935,15 +2019,17 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
   // total return on cost, tagged so the two bases never read as one.
   // A holding bought in lots, or partly sold, is held a year by its OLDEST
   // unit only: its return stays the HPR, with the cause (Stage 10fz).
-  const gap = heldDays !== null && heldDays >= YEAR_DAYS && end !== null ? singlePurchaseGap(p) : null;
+  // Debt alone is annualised under a year (Stage 10hk).
+  const annualisable = heldDays !== null && mayAnnualise(heldDays, debt);
+  const gap = annualisable && end !== null ? singlePurchaseGap(p) : null;
   if (gap) {
     return { shown: true, pct: p.returnPct as number, tag: "HPR",
       note: `Total return on cost, not annualised: the oldest unit has been held ${heldDays} days, but ${gap.replace(/; its Holding Period Return is the total return on cost$/, "")}.` };
   }
-  if (heldDays !== null && heldDays >= YEAR_DAYS) {
-    const r = holdingReturn(p, "cagr", asOf);
+  if (annualisable) {
+    const r = holdingReturn(p, "cagr", asOf, debt);
     if (r.kind === "cagr") {
-      return { shown: true, pct: r.pct, tag: "CAGR", note: `Held ${r.heldDays} days, so the return on cost is annualised.` };
+      return { shown: true, pct: r.pct, tag: "CAGR", note: `Held ${r.heldDays} days, so the return on cost is annualised.${r.heldDays < YEAR_DAYS ? DEBT_UNDER_A_YEAR : ""}` };
     }
     // A total loss has no compound rate — fall through to the absolute figure.
   }

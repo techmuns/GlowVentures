@@ -44,6 +44,7 @@ import type { AccountReturnCoverage, CapitalMove, Commitment, Position, Position
 import { BOOK_ACCOUNT_RETURN_RECORDS } from "../data/glowData";
 import {
   holdingReturn, sumOrNull, RETURN_MEASURES, isValuedAtCost, commonValueDate, AT_COST_RETURN,
+  allDebt, mayAnnualise,
   type HoldingReturn, type ReturnMode, type ReturnMeasure, type MeasuredReturn,
 } from "./analytics";
 import { xirrPct } from "./bucketXirr";
@@ -466,6 +467,12 @@ export type CapitalGroup = {
    * value is real money and still shown; no gain or return is struck on it.
    */
   atCost: boolean;
+  /**
+   * EVERY HOLDING BEHIND THE ROW IS DEBT (`allDebt`, Stage 10hk) — the one case
+   * whose return may be annualised under a year. Absent or false everywhere
+   * else, which keeps a sub-year return absolute.
+   */
+  debt?: boolean;
   /**
    * ── APPRECIATION — value today plus what came back, less what went in ────
    *
@@ -1241,6 +1248,7 @@ export function capitalRollup(
       closeValue: newer ? newer.value : value,
       closeAsOf: newer ? newer.asOf : valueAsOf,
       atCost: own.some(isValuedAtCost),
+      debt: allDebt(own),
       appreciation, realised, unrealised,
       appreciationReason, realisedNote, unrealisedNote,
       flows,
@@ -1372,19 +1380,22 @@ export function capitalReturn(g: CapitalGroup, measure: ReturnMeasure, today: st
     return { shown: false, tag: "YTD",
       reason: "this account was funded before 1 January, and a year-to-date return needs its value on that date — no statement here is dated then" };
   }
-  const sub = w != null && w.days < YEAR;
+  // Under a year the absolute return stands on every measure; debt alone is
+  // annualised under a year (Stage 10hk).
+  const sub = w != null && (!mayAnnualise(w.days, g.debt === true) || !(w.days > 0));
   const subNote = w ? `The money has been in for ${w.days} days — under a year — so this is the holding-period return, not an annual rate.` : "";
+  const debtNote = w != null && w.days < YEAR ? " Debt, so it is annualised although the money has been in for under a year." : "";
   if (measure === "cagr") {
+    if (sub) return hprNote(subNote);
     if (multiFlow(g)) {
       return { shown: false, tag: "CAGR",
         reason: "the money went in and came out over several dates, so a single-start compound rate would treat all of it as invested on the first date — the money-weighted rate for this account is XIRR" };
     }
     if (!w) return { shown: false, tag: "CAGR", reason: noReturn };
-    if (sub) return hprNote(subNote);
     const growth = 1 + hpr / 100;
     if (growth <= 0) return { shown: false, tag: "CAGR", reason: "this account is worth nothing against what was paid, so it has no compound rate — only a total loss" };
     return { shown: true, pct: (Math.pow(growth, YEAR / w.days) - 1) * 100, tag: "CAGR",
-      note: `One purchase, compounded over the ${w.days} days since ${w.from}.` };
+      note: `One purchase, compounded over the ${w.days} days since ${w.from}.${debtNote}` };
   }
   const xirrOrWhy = (): MeasuredReturn => {
     if (g.undatedOut != null) {
@@ -1395,7 +1406,7 @@ export function capitalReturn(g: CapitalGroup, measure: ReturnMeasure, today: st
     const x = capitalXirr(g);
     if (x == null) return { shown: false, tag: "XIRR", reason: "these dated flows do not yield a money-weighted rate" };
     return { shown: true, pct: x, tag: "XIRR",
-      note: `Money-weighted over ${(g.flows ?? []).length} dated ${(g.flows ?? []).length === 1 ? "flow" : "flows"} and the value on ${w?.to}, across ${w?.days} days.` };
+      note: `Money-weighted over ${(g.flows ?? []).length} dated ${(g.flows ?? []).length === 1 ? "flow" : "flows"} and the value on ${w?.to}, across ${w?.days} days.${debtNote}` };
   };
   if (measure === "xirr") return xirrOrWhy();
 
@@ -1408,7 +1419,7 @@ export function capitalReturn(g: CapitalGroup, measure: ReturnMeasure, today: st
   const growth = 1 + hpr / 100;
   if (growth <= 0) return hprNote("A total loss has no compound rate, so this is the holding-period return.");
   return { shown: true, pct: (Math.pow(growth, YEAR / w.days) - 1) * 100, tag: "CAGR",
-    note: `One purchase held ${w.days} days, so the return is annualised.` };
+    note: `One purchase held ${w.days} days, so the return is annualised.${debtNote}` };
 }
 
 /**
@@ -1467,19 +1478,22 @@ export function clubCapitalReturn(caps: CapitalGroup[], measure: ReturnMeasure, 
     return { shown: false, tag: "YTD",
       reason: "at least one of these accounts was funded before 1 January, and a year-to-date return needs its value on that date — no statement here is dated then" };
   }
-  const sub = days != null && days < YEAR;
+  // Under a year the absolute return stands on every measure; only a line
+  // whose every account is debt is annualised under a year (Stage 10hk).
+  const sub = days != null && (!mayAnnualise(days, caps.every((g) => g.debt === true)) || !(days > 0));
   const subNote = days != null ? `The money has been in for ${days} days — under a year — so this is the holding-period return, not an annual rate.` : "";
+  const debtNote = days != null && days < YEAR ? " Debt, so it is annualised although the money has been in for under a year." : "";
   const flowDates = new Set(caps.flatMap((g) => (g.flows ?? []).map((f) => f.date)));
   const multi = flowDates.size > 1 || caps.some((g) => g.undatedOut != null);
   if (measure === "cagr") {
+    if (sub) return hprNote(subNote);
     if (multi) return { shown: false, tag: "CAGR",
       reason: "the money went in and came out over several dates across these accounts, so a single-start compound rate would treat all of it as invested on the first date — the money-weighted rate for this line is XIRR" };
     if (days == null) return { shown: false, tag: "CAGR", reason: "these accounts carry no purchase date to measure a year from" };
-    if (sub) return hprNote(subNote);
     const growth = 1 + hpr / 100;
     if (growth <= 0) return { shown: false, tag: "CAGR", reason: "these accounts are worth nothing against what was paid, so they have no compound rate — only a total loss" };
     return { shown: true, pct: (Math.pow(growth, YEAR / days) - 1) * 100, tag: "CAGR",
-      note: `One purchase date across the ${n} accounts, compounded over the ${days} days since ${from}.` };
+      note: `One purchase date across the ${n} accounts, compounded over the ${days} days since ${from}.${debtNote}` };
   }
   const xirrOrWhy = (): MeasuredReturn => {
     if (caps.some((g) => g.undatedOut != null)) return { shown: false, tag: "XIRR",
@@ -1497,7 +1511,7 @@ export function clubCapitalReturn(caps: CapitalGroup[], measure: ReturnMeasure, 
     const x = xirrPct(flows);
     if (x == null) return { shown: false, tag: "XIRR", reason: "these dated flows do not yield a money-weighted rate" };
     return { shown: true, pct: x, tag: "XIRR",
-      note: `Money-weighted over the ${n} accounts' ${flows.length} dated flows, each account closing on its own value date, from ${from} to ${to}.` };
+      note: `Money-weighted over the ${n} accounts' ${flows.length} dated flows, each account closing on its own value date, from ${from} to ${to}.${debtNote}` };
   };
   if (measure === "xirr") return xirrOrWhy();
 
@@ -1510,7 +1524,7 @@ export function clubCapitalReturn(caps: CapitalGroup[], measure: ReturnMeasure, 
   const growth = 1 + hpr / 100;
   if (growth <= 0) return hprNote("A total loss has no compound rate, so this is the holding-period return.");
   return { shown: true, pct: (Math.pow(growth, YEAR / days) - 1) * 100, tag: "CAGR",
-    note: `One purchase date across the ${n} accounts, held ${days} days, so the return is annualised.` };
+    note: `One purchase date across the ${n} accounts, held ${days} days, so the return is annualised.${debtNote}` };
 }
 
 /** How many rows a measure answers, for the column header — counted, never claimed. */

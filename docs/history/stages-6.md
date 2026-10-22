@@ -367,3 +367,24 @@
 - The record gains what the rules need, all optional: dated improvements (each indexed from its own year; the Cost column now adds them, so appreciation does too), the previous owner's cost and acquisition date for an inherited or gifted property (the value on inheritance is not a tax cost), the value on 1 Apr 2001 for a property held since before then (used where higher; improvements before that date do not count), and rural agricultural land (not a capital asset: a computed ₹0). The editor's cost field is now "Purchase cost".
 - Page: Est. tax on sale (with its rate: 12.5%, 20% indexed, Mixed, No gain) and Value after tax columns and tiles (Value after tax joins the default strip), optional Holding and Indexed cost columns, footer totals with coverage, and a "Capital gains tax if sold today" section in property details with each owner's 12.5% and 20%-indexed figures. A short-term gain shows — (slab rate on total income, not carried), and so does a property whose acquisition, cost, purchase date or previous owner's cost is not entered. Surcharge, selling costs and reinvestment exemptions are named in the hover and not applied.
 - Tests: `test:real-estate` now also runs `test-property-tax.mjs` (21 checks: the index table, holding boundary, per-owner routes, pre-2001, inheritance, reform cutoff, missing inputs, validation, registry residence); `check-real-estate.mjs` enters an inherited property's previous owner's cost and an improvement and reads the tax and after-tax cells.
+
+### Stage 10hk — UNDER A YEAR, EVERY RETURN IS ABSOLUTE; ONLY DEBT IS ANNUALISED
+
+*"Never annualise equity returns for periods under one year - Karur Vysya Bank showed ~54%, which looked annualised over a holding of under a year … whatever investments are being held for less than a year need to show only absolute return, even if we have selected XIRR or CAGR return … debt investments are to be annualized."* — the family, 22 Oct 2026.
+- One rule, `mayAnnualise(days, debt)` in `analytics.ts`: a year or more, or debt. Debt is `isDebtHolding`: a Bond, or the family's own Debt class (`familyAssetClass`: Neo Infra Income, K M Global Credit). Liquid and arbitrage funds are their Cash, so they stay absolute. Stage 10gu's "XIRR is a yearly rate at any length" is withdrawn: FYTD read XIRR 43.25% p.a. on 20.79% earned, and now shows 20.79% for XIRR, CAGR and Absolute alike.
+- Every engine asks it, and under a year shows the absolute figure, named, rather than a rate or a dash:
+  - `measuredReturn` (Monitor, mandates, stock page, Excel): CAGR on a lotted holding, CAGR on staggered dated capital, and XIRR on a holding dated under a year now show the HPR.
+  - `capitalReturn` / `clubCapitalReturn` (Transactions, with `CapitalGroup.debt`).
+  - `fundMeasuredReturn` and Private Market's pooled rows.
+  - `measureWindow` / `measureInception`: Returns tab, attribution by category, asset class, basket and sector, headline cards. `Measured.shownAs: "absolute"` carries this to every face; `periodXirr` is gone.
+  - `marketReturnSummary` and the benchmark indices.
+  - `investedThisYear`: its XIRR read 75.23% p.a. in total (Poojaa Precision +1,540% p.a.) and now reads 3.84%.
+- Karur Vysya has no dated purchase. Its ~54% was the Returns tab's market-return column annualising a part-year price move, which is fixed above.
+- The review's printed "scheme / index XIRR" columns show the review's absolute return, tagged ABS, unless the row's first investment (the review's range, else the statements' dates) is a year before 30 Jun 2026. Example: MPS +228.34% "XIRR" now reads +4.18% ABS.
+- Hovers too: Performance no longer prints a sub-year "p.a." figure.
+- `/api/macro` Max annualises only from a year. `moneyWeightedReturn` puts no figure on an unknown window. The price table's Max* asterisk follows its span.
+- Checks:
+  - New suite `underAYear.test.ts` (test:family).
+  - Updated suites: period-return, attribution, market-return and invested-this-year.
+  - `check-pages`: the Returns-tab and Performance invariants.
+  - CI scripts: `check-market-returns` and `check-selected-attribution` now require XIRR = CAGR = Absolute under a year.

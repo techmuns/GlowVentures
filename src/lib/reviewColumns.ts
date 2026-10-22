@@ -3,8 +3,12 @@ import { familyBasket } from "@/lib/familyTaxonomy";
 import type { Position } from "@/lib/types";
 import type { Accessor } from "@/lib/tableView";
 import { investmentDateOf } from "@/lib/investedOn";
+import { allDebt, daysBetween, YEAR_DAYS } from "@/lib/analytics";
+import { fmtDate } from "@/lib/format";
 
-export type ReviewField = { value: string | number | null; source: string; note?: string; sortValue?: string; precision?: string; from?: string; to?: string };
+export type ReviewField = { value: string | number | null; source: string; note?: string; sortValue?: string; precision?: string; from?: string; to?: string;
+  /** Set where the cell shows a different measure from its column's — `ABS` for an absolute return in an XIRR column (Stage 10hk). */
+  tag?: string };
 type ReviewRecord = Record<string, ReviewField>;
 export type ReviewColumnData = {
   asOf: string; workbook: string;
@@ -72,7 +76,48 @@ function productRecord(scope: ReviewScope, p?: Position): ReviewRecord | undefin
   return common || source ? { ...common, ...source } : undefined;
 }
 
+/**
+ * ── THE REVIEW'S XIRR IS A RATE PER YEAR, SO IT NEEDS A YEAR (Stage 10hk) ──
+ *
+ * The adviser prints an XIRR for every product, however recently it was bought:
+ * MPS, first bought in June 2026, read +228.34% "XIRR" on a +4.18% return. An
+ * equity return under a year is shown as absolute only, so these fields show
+ * the review's own absolute return in their place, tagged, unless the row's
+ * first investment — the review's own date range, else the statements' dated
+ * purchases — is a year or more before the review's date. Debt keeps its rate.
+ */
+const YEARLY_FIELDS: Readonly<Record<string, { absolute: string; label: string }>> = {
+  schemeXirr: { absolute: "schemeAbsolute", label: "scheme XIRR" },
+  benchmarkXirr: { absolute: "benchmarkAbsolute", label: "index XIRR" },
+};
+
+/** The latest day a first investment stated to this precision could fall on. */
+function latestDayOf(from: string | null | undefined): string | null {
+  if (!from) return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(from)) return from;
+  const month = /^(\d{4})-(\d{2})$/.exec(from);
+  if (month) return new Date(Date.UTC(+month[1], +month[2], 0)).toISOString().slice(0, 10);
+  return /^\d{4}$/.test(from) ? `${from}-12-31` : null;
+}
+
 export function reviewField(scope: ReviewScope | undefined, field: string): ReviewField {
+  const found = sourceField(scope, field);
+  const yearly = YEARLY_FIELDS[field];
+  if (!yearly || found.value == null || !scope) return found;
+  if (scope.positions?.length && allDebt(scope.positions)) return found;
+  const started = latestDayOf(sourceField(scope, "investmentRange").from) ?? latestDayOf(investmentDateOf(scope)?.first);
+  const asOf = REVIEW_COLUMN_DATA.asOf;
+  if (started && daysBetween(started, asOf) >= YEAR_DAYS) return found;
+  const why = started
+    ? `First invested by ${fmtDate(started)}, under a year before the review's ${fmtDate(asOf)} date`
+    : "Neither the review nor the statements date this row's first investment, so a year of holding cannot be shown";
+  const absolute = sourceField(scope, yearly.absolute);
+  if (absolute.value == null) return { value: null, source: "", note: `${why}, and an equity return under a year is never annualised — the review prints no absolute return for it either.` };
+  return { ...absolute, tag: "ABS",
+    note: `${why}, so the review's absolute return is shown in place of its ${yearly.label} — an equity return under a year is never annualised.` };
+}
+
+function sourceField(scope: ReviewScope | undefined, field: string): ReviewField {
   const missing: ReviewField = { value: null, source: "", note: "This row has no exact matching record for this field in the Motilal June review." };
   if (!scope) return missing;
   if (scope.familySubset && !INSTRUMENT_FIELDS.has(field)) return { ...missing, note: "The June review reports this field for the whole family. It cannot be apportioned to the selected members; choose Whole family to see it." };

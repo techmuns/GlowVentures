@@ -123,9 +123,11 @@ export function MoneyWeightedCalculation({ flows, annualPct, days, annualised, r
         <li>No return can be calculated from these records yet.</li>
       </> : <>
         <li>Gain: <strong className="tabular">{shortMoney(returned)} − {shortMoney(paid)} = {shortMoney(working.gain)}</strong>.</li>
-        <li>Try a yearly rate until dated money in and back match. At <strong>{fmtNum(annualPct!, 6)}%</strong>, both equal <strong>{shortMoney(working.paidAtStart)}</strong> on {fmtDate(working.start)}.</li>
+        {/* Under a year the solver's rate is a step of the arithmetic, never a
+            return: it is named as such (Stage 10hk). */}
+        <li>Try a {annualised ? "yearly rate" : "solver rate r"} until dated money in and back match. At <strong>{fmtNum(annualPct!, 6)}%</strong>{annualised ? "" : " — an intermediate step, not a yearly return, since the period is under a year —"}, both equal <strong>{shortMoney(working.paidAtStart)}</strong> on {fmtDate(working.start)}.</li>
         <li data-return-conversion>
-          <span className="block tabular">Yearly growth: 1 + {fmtNum(annualPct!, 6)} ÷ 100 = {working.yearFactor.toFixed(6)}.</span>
+          <span className="block tabular">{annualised ? "Yearly growth" : "Solver factor"}: 1 + {fmtNum(annualPct!, 6)} ÷ 100 = {working.yearFactor.toFixed(6)}.</span>
           {!annualised && <span className="mt-1 block tabular">{fmtNum(days!)}-day growth: {working.yearFactor.toFixed(6)}<sup>({days}/365)</sup> = {working.growthFactor.toFixed(6)}.</span>}
           <span className="mt-1 block tabular">({working.growthFactor.toFixed(6)} − 1) × 100 = {fmtPct(working.pct, { decimals: 4 })} → <strong>{result}</strong>{annualised ? " per year" : ""}.</span>
         </li>
