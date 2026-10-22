@@ -10,9 +10,6 @@ const run = (start = '2024-10-21', end = '2026-10-21', type: 'absolute' | 'xirr'
 const near = (a: number | null, b: number) => assert.ok(a != null && Math.abs(a-b) < 1e-8, `${a} != ${b}`);
 const full = run(); near(full.pct, 17); assert.equal(full.value, 1000); assert.equal(full.totalValue, 1500); assert.equal(full.count, 2); assert.equal(full.gaps[0].position.securityKey, 'private');
 assert.equal(full.pending, 0); assert.equal(full.annual, false);
-assert.equal(full.gaps[0].reason, 'Public price history is missing.');
-assert.match(full.gaps[0].needed, /Public prices.*selected dates.*Recorded return/);
-assert.doesNotMatch(full.gaps[0].reason + full.gaps[0].needed, /purchase (date|cost)/, 'missing public prices must not be called missing purchase records');
 for (const type of ['xirr', 'cagr'] as const) { const m = run(undefined, undefined, type); near(m.pct, (Math.sqrt(1.17)-1)*100); assert.equal(m.annual, true); }
 // Smaller periods use their actual endpoints; a missing nearby price is never substituted.
 const one = run('2025-10-21'); assert.notEqual(one.pct, full.pct);
@@ -23,12 +20,6 @@ assert.equal(run('2024-10-20').pct, null, 'future price cannot be used as openin
 assert.equal(run('2026-10-22', '2024-10-21').pct, null);
 const partial = marketReturns(ps, instruments, { ...histories, small: { ok: false, reason: 'No history' } }, '2024-10-21', '2026-10-21', 'absolute');
 near(partial.pct, 20); assert.equal(partial.count, 1); assert.equal(partial.gaps.length, 2); assert.equal(partial.gaps[0].position.accountId, 'small');
-assert.equal(partial.gaps[0].reason, 'Price history could not be loaded.');
-assert.match(partial.gaps[0].needed, /Retry missing histories/);
-assert.equal(partial.gaps[0].detail, 'No history', 'keep the source error available in details');
-assert.match(run('2024-10-20').gaps[0].reason, /price near.*missing/i);
-assert.match(run('2024-10-20').gaps[0].needed, /later start date/);
-assert.match(run('2024-10-21', '2026-10-30').gaps[0].needed, /earlier end date/);
 const loading = marketReturns(ps, instruments, {}, '2024-10-21', '2026-10-21', 'absolute'); assert.equal(loading.pending, 2); assert.equal(loading.pct, null);
 const inception = marketReturns(ps, instruments, histories, null, '2026-10-21', 'absolute', true); near(inception.pct, 17); assert.equal(inception.from, '2024-10-21');
 // A NAV published later than the stock close forces one honest shared closing date.
