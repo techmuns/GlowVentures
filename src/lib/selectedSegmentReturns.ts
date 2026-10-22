@@ -158,19 +158,28 @@ export function selectedSegmentReturns(current: readonly Position[], exited: rea
 
 /** Source-specific, plain wording for the table's missing-record cards. */
 export function returnGapText(reason: string, start: string | null): string {
+  if (/at least 365 days/i.test(reason)) return 'CAGR needs at least one year of history. Choose a longer period, or select Absolute return or XIRR.';
+  if (/several dated purchases/i.test(reason)) return 'There were several purchases on different dates. Select XIRR to include them.';
+  if (/different money.weighted rates/i.test(reason)) return 'These records give more than one possible XIRR. Select Absolute return instead.';
+  if (/do not yield a money.weighted rate/i.test(reason)) return 'These amounts and dates do not give a valid XIRR. Check the payment dates, amounts and closing value.';
+  if (/spans no days|at work for no days/i.test(reason)) return 'There is no time between the starting and closing values. Choose a longer period.';
+  if (/no positive purchase cost|nothing was paid in|money at work.*not positive/i.test(reason)) return 'There is no positive invested amount to calculate a return. Check the purchase costs and payments.';
+  if (/return for the whole account/i.test(reason)) return 'Only the whole account’s return is available. We need separate values and dated payments for each holding.';
   if (/sale proceeds|sale amounts?.*unverified|unverified.*sale/i.test(reason))
-    return 'The amount received from selling units has not been verified. We need the sale statement showing what was sold and how much money came back.';
-  if (/purchase or sale/.test(reason)) return 'The purchase or sale record is incomplete. We need all purchase costs and sale amounts before this holding can be included.';
+    return 'The sale amount is missing or unverified. We need a sale statement showing what was sold and the amount received.';
+  if (/purchase or sale/i.test(reason)) return 'Purchase or sale details are incomplete. We need the amounts paid and received.';
   if (/live price.*purchase.cost.*statement valuation/i.test(reason))
-    return 'We have a current price. We still need a verified purchase-cost record and a statement value to calculate this holding’s gain.';
-  if (/Only the purchase|purchase cost/.test(reason)) return reason;
+    return 'The purchase cost and statement value need checking. We need a purchase record and a recent valuation statement.';
+  if (/Only the purchase|held at.*cost/i.test(reason)) return 'We only have the purchase cost. We need a later value to calculate the gain.';
+  if (/purchase cost/i.test(reason)) return 'The purchase cost is missing or unverified. We need a purchase statement showing the amount paid.';
+  if (/purchase date.*(?:missing|unavailable|unverified)|(?:missing|unavailable|unverified).*purchase date/i.test(reason)) return 'The purchase date is missing or unverified. We need a purchase statement showing the date.';
   if (/nil throughout|held nothing|no invested capital|balance is nil/i.test(reason)) return 'This account had no money invested during the selected dates. Its current holdings are outside this period.';
-  if (/review values.*one date/i.test(reason)) return 'The review shows a value for only one day. We need its value at the start and end of this period, plus dated money added or taken out.';
+  if (/review values.*one date/i.test(reason)) return 'We need the value at the start and end of this period, plus dated money added and taken out.';
   if (/no statement values it on or before|record opens on|days earlier|no.*opening|opening value|opening valuation/i.test(reason))
-    return `We need a statement showing what this account was worth at the start${start ? ` (${start})` : ''}, plus dated money added and taken out through a later statement.`;
-  if (/no statement values it after|before any statement values it after|no statement.*values|no valuation|held at.*cost/i.test(reason))
+    return `We need a statement showing what this was worth at the start${start ? ` (${start})` : ''}, plus dated money added and taken out.`;
+  if (/no statement values it after|before any statement values it after|no statement.*values|no valuation/i.test(reason))
     return `We need a later statement showing what this investment is worth.`;
   if (/capital|dated|flow|purchase|payment|units|reconcil/i.test(reason))
-    return `We need a complete list of money added and taken out, with dates, matching the statement value.`;
+    return 'Payment details are incomplete. We need all money added and taken out, with dates, matching the statement value.';
   return reason;
 }

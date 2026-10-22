@@ -54,9 +54,10 @@
     "build-fund-navs": "node scripts/build-fund-navs.mjs",
     "build-upstox-instruments": "node scripts/build-upstox-instruments.mjs",
     "build:views": "node scripts/build-read-models.mjs",
-    "prebuild": "npm run build:views",
-    "predev": "npm run build:views",
-    "pretest:family": "npm run build:views"
+    "build:statement-files": "node scripts/build-statement-files.mjs",
+    "prebuild": "npm run build:views && npm run build:statement-files",
+    "predev": "npm run build:views && npm run build:statement-files",
+    "pretest:family": "npm run build:views && npm run build:statement-files"
   },
   "dependencies": {
     "exceljs": "^4.4.0",
