@@ -1332,7 +1332,7 @@ export function PrivateMarket() {
   );
   /** The editor, as a row under the one that opened it — never a floating panel the table's scroll could clip. */
   const callEditorRow = (rowId: string, fund: string, fundName: string) => openCall === rowId && (
-    <tr key={`${rowId}-editor`} className="bg-ink-900/60" data-pm-call-editor={fund}>
+    <tr key={`${rowId}-editor`} data-table-depth="1" data-pm-call-editor={fund}>
       <td colSpan={bookView.order.length} className="px-3 pb-3 pt-1">
         <CallEditor fund={fund} fundName={fundName} state={entered.state} money={money}
           onSave={entered.save} onDelete={entered.remove} onClose={() => setOpenCall(null)} />

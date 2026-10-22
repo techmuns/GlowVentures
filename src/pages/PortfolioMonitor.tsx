@@ -5712,7 +5712,7 @@ function TxnSectionHead({ axis, sectionKey, count, values, colSpan, money }: {
   colSpan: number; money: (v: number) => string;
 }) {
   return (
-    <tr className="bg-ink-900/50" data-section={sectionKey} data-axis={axis}
+    <tr className="tree-section-row bg-ink-900/50" data-section={sectionKey} data-axis={axis}
       data-subtotal={values.find((v) => v.noun === "in")?.value ?? ""}
       data-subtotal-bought={values.find((v) => v.noun === "bought")?.value ?? ""}>
       <td colSpan={colSpan} className="px-3 py-1.5">
@@ -5986,7 +5986,7 @@ function DealtInside({ group, rowKey, open, toggle, sort, money }: {
                   data-staggered-side={ins.staggered ? staggeredSide(ins) : undefined}
                   data-side-line={ins.side ?? undefined} data-instrument-key={ins.securityKey}
                   data-buys={ins.buys} data-sells={ins.sells}
-                  data-days={ins.days} className="cursor-pointer hover:bg-ink-700/40" onClick={() => toggle(iKey)}>
+                  data-days={ins.days} data-table-depth="1" className="cursor-pointer hover:bg-ink-700/40" onClick={() => toggle(iKey)}>
                   <td className="py-1.5 pl-3 pr-3">
                     <div className="flex items-center gap-1.5">
                       <ChevronRight className={`h-3 w-3 shrink-0 text-slate-600 transition-transform ${iOpen ? "rotate-90" : ""}`} />
@@ -6032,7 +6032,7 @@ function DealtInside({ group, rowKey, open, toggle, sort, money }: {
                      price ride with the date, because no header here means
                      either. Drawn across the columns by position instead, a
                      buy's per-share price printed under "Bought". */
-                  <Tr view={dv} data-row="tranche" key={`${iKey}::${i}`} className="bg-ink-900/50"
+                  <Tr view={dv} data-row="tranche" key={`${iKey}::${i}`} data-table-depth="2"
                     data-tranche-date={t.date} data-tranche-acct={acctKey(t.provider, t.accountNo)}>
                     <td className="py-1 pl-9 pr-3 whitespace-nowrap">
                       <span className="mono text-slate-400">{fmtDate(t.date)}</span>
@@ -7065,7 +7065,7 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
                           </td>
                         </Tr>
                         {isOpen && (
-                          <tr className="bg-ink-900/50" data-dated-panel={r.key}>
+                          <tr data-table-depth="1" data-dated-panel={r.key}>
                             <td colSpan={COLS} className="px-3 pb-3 pt-1">
                               {cap && (
                                 <>

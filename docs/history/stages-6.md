@@ -320,3 +320,8 @@
 - Reconciled surviving lots, fund allotments and the verified FIFO trade tape split older units from this year’s units. The settled purchase cash retains its charges rather than being scaled to a statement’s book cost. A product review range or PMS funding date never dates an underlying security. Unknown dates, unmatched units/costs and missing post-purchase valuations are named in the info popup.
 - The summary weights each included holding’s return by the value of its selected units. The searchable table names category, exact fund/mandate, owner/account, acquisition dates, cost, value date, gain and weight. XIRR uses each holding’s dated buys and closing value before weighting; under-year CAGR retains the period figure.
 - Tests cover fiscal boundaries, mixed-age purchases, FIFO sales, source and valuation refusals, portfolio weights, complete coverage reconciliation, toolbar behavior, search, type changes, reload and mobile.
+
+### Stage 10hd — DISTINCT BACKGROUNDS FOR EXPANDED TABLE ROWS
+
+- Group headings use a warm band; expanded rows use opaque blue stripes, with deeper shades for nested levels and a left-edge guide. Both themes keep readable secondary text, a separate child hover and the existing gain/loss colours.
+- Shared tree tables and custom holdings, trade and sector detail tables use the same palette. Row-depth markers stay attached when columns move; the existing zebra check recognises these intentional hierarchy colours.

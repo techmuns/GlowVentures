@@ -37,10 +37,10 @@ import { ChevronRight, ChevronsDownUp, ChevronsUpDown } from "lucide-react";
 
 /** The row classes. Light mode remaps every one of these (see `index.css`). */
 export const TREE_ROW = {
-  section: "bg-ink-900/60 border-y border-ink-700",
+  section: "tree-section-row bg-ink-900/60 border-y border-ink-700",
   parent: "cursor-pointer hover:bg-ink-700/40",
-  child: "bg-ink-900/40 text-[12.5px] hover:bg-ink-700/30",
-  adjust: "bg-ink-900/40 text-[12px] italic",
+  child: "tree-child-row text-[12.5px] hover:bg-ink-700/30",
+  adjust: "tree-child-row text-[12px] italic",
   total: "bg-ink-800/60",
 } as const;
 
@@ -66,8 +66,8 @@ export type TreeDensity = "regular" | "dense";
 export const TREE_ROW_DENSE = {
   section: TREE_ROW.section,
   parent: TREE_ROW.parent,
-  child: "bg-ink-900/40 text-[11.5px] hover:bg-ink-700/30",
-  adjust: "bg-ink-900/40 text-[11px] italic",
+  child: "tree-child-row text-[11.5px] hover:bg-ink-700/30",
+  adjust: "tree-child-row text-[11px] italic",
   total: TREE_ROW.total,
 } as const;
 export const TREE_CELL_DENSE = {
@@ -208,7 +208,7 @@ export function TreeNameCell({ depth, title, sub, hint, open, onToggle, toggleLa
       </div>
     );
     return (
-      <td className={`relative ${g.child[d]} ${className}`} title={hint}>
+      <td data-tree-depth={depth} className={`relative ${g.child[d]} ${className}`} title={hint}>
         {through.map((wasLast, i) => !wasLast && (
           <span key={i} aria-hidden className={`absolute ${g.guide[i]} top-0 bottom-0 border-l border-ink-600`} />
         ))}
@@ -232,7 +232,7 @@ export function TreeNameCell({ depth, title, sub, hint, open, onToggle, toggleLa
   const gap = density === "dense" ? "gap-1.5" : "gap-2";
   const hole = density === "dense" ? "h-4 w-4" : "h-5 w-5";
   return (
-    <td className={`${g.parent} ${className}`} title={hint}>
+    <td data-tree-depth={depth} className={`${g.parent} ${className}`} title={hint}>
       <div className={`flex items-start ${gap}`}>
         {onToggle
           ? <TreeChevron density={density} open={!!open} onToggle={onToggle} label={toggleLabel ?? (open ? "Close" : "Open")} {...(toggleData ?? {})} />

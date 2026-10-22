@@ -39070,6 +39070,7 @@ for (const theme of THEMES) {
         const vis = (el) => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
         const STATE = new Set(["hover", "focus", "focus-within", "focus-visible", "active", "group-hover", "peer-hover", "disabled", "group-focus"]);
         const ownBg = (tr) => {
+          if (tr.matches(".tree-child-row") || tr.closest("tr[data-table-depth]")) return true;
           if (tr.style && (tr.style.backgroundColor || tr.style.background)) return true;
           const cls = typeof tr.className === "string" ? tr.className : "";
           return cls.split(/\s+/).some((tok) => {
