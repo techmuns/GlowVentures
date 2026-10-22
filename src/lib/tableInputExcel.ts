@@ -80,7 +80,10 @@ export async function readInputWorkbook(bytes: ArrayBuffer, current: InputRecord
   if (!meta || meta.rowCount > 2000) throw new Error("Upload the original dashboard Excel file, with its format unchanged.");
   let manifest: Manifest;
   try { let text = ""; meta.eachRow(r => { text += r.getCell(1).text; }); manifest = JSON.parse(text); } catch { throw new Error("The file's format has changed. Download a fresh Excel file."); }
-  if (manifest!.version !== 1 || !Array.isArray(manifest.sheets) || manifest.sheets.length > 1000 || manifest.sheets.some(s => !Array.isArray(s.cells) || s.cells.length > 200000)) throw new Error("The file's format has changed. Download a fresh Excel file.");
+  if (!manifest! || manifest.version !== 1 || !Array.isArray(manifest.sheets) || manifest.sheets.length > 1000 || manifest.sheets.some(s => !s || typeof s.name !== "string"
+    || !Number.isInteger(s.rows) || s.rows < 0 || s.rows > 1048576 || !Number.isInteger(s.columns) || s.columns < 1 || s.columns > 16384
+    || !Array.isArray(s.merges) || !s.merges.every(m => typeof m === "string") || !Array.isArray(s.cells) || s.cells.length > 200000
+    || s.cells.some(c => !c || typeof c.address !== "string" || (c.input && (typeof c.input.id !== "string" || typeof c.input.field !== "string" || typeof c.input.source !== "string" || typeof c.input.version !== "string"))))) throw new Error("The file's format has changed. Download a fresh Excel file.");
   if (book.worksheets.length !== manifest.sheets.length + 2) throw new Error("Keep the same worksheets. Download a fresh Excel file.");
   const changes = new Map<string, InputChange>();
   for (const expected of manifest.sheets) {

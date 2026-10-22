@@ -54,7 +54,7 @@ export function EnteredNumbersNotice() {
   const stale = state.saved.length - active;
   if (!active && !stale) return null;
   return <div className="mb-3 rounded border border-champagne-400/30 bg-champagne-400/10 px-3 py-2 text-xs text-slate-300" data-entered-numbers>
-    {active > 0 && `${active} user-entered number${active === 1 ? " is" : "s are"} applied. Original statements are kept separately.`}
+    {active > 0 && `${active} user-entered number${active === 1 ? " is" : "s are"} saved in the working portfolio. Original statements are kept separately.`}
     {stale > 0 && ` ${stale} older correction${stale === 1 ? " was" : "s were"} set aside because the source changed. Check All inputs.`}
     {state.status === "error" && ` ${state.error}`}
   </div>;

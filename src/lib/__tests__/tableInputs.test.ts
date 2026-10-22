@@ -118,6 +118,7 @@ for (const [modify, message] of [
   [(b: ExcelJS.Workbook) => { b.getWorksheet("Holding inputs")!.getCell("D2").value = { formula: "1+1", result: 2 }; }, /Formulas/],
   [(b: ExcelJS.Workbook) => { b.getWorksheet("Holding inputs")!.spliceRows(2, 1); }, /rows and columns/],
   [(b: ExcelJS.Workbook) => { b.getWorksheet("Holding inputs")!.getCell("D2").value = "100 rupees"; }, /Enter a number/],
+  [(b: ExcelJS.Workbook) => { b.getWorksheet("_Glow")!.getCell("A1").value = "null"; }, /format has changed/],
 ] as const) {
   const b = createTableWorkbook(snapshot); modify(b);
   await assert.rejects(async () => readInputWorkbook(await bytes(b), source), message);
