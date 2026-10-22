@@ -51,6 +51,7 @@ import crypto from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { listEntries, readEntry, isMacMetadata } from "./lib/unzip.mjs";
+import { restoreStatementPasswords } from '../lib/statementPasswords.mjs';
 import { checkStatementBytes } from "../../shared/statementBytes.mjs";
 import { verify as verifyPublication, readArchive, readBaseline } from "./verify-publication.mjs";
 import { digest, documentRevision, archiveRevision } from "./lib/publication.mjs";
@@ -60,6 +61,7 @@ import {
 } from "../../shared/statementInbox.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
+await restoreStatementPasswords();
 const rel = (p) => path.relative(ROOT, p).split(path.sep).join("/");
 const abs = (r) => path.join(ROOT, ...r.split("/"));
 
@@ -76,7 +78,7 @@ const CACHE = path.join(ROOT, ".cache");
 const INBOX_DIR = path.join(CACHE, "statement-inbox");
 const WORK = path.join(CACHE, "intake");
 /** Everything a landing may change — and nothing else. Regenerated, never text-merged. */
-const GENERATED = ["source", "docs", "public/audit", "src/data", "CLAUDE.md"];
+const GENERATED = ["source", "docs", "public/audit", "public/statement-previews", "src/data", "CLAUDE.md"];
 const BOT = ["-c", "user.name=glow-intake[bot]", "-c", "user.email=glow-intake[bot]@users.noreply.github.com"];
 /** Tries at landing on a `main` that keeps moving; each starts from the new tip. */
 const ATTEMPTS = 3;
@@ -359,6 +361,7 @@ function readEverything() {
   // figure checked by the page; every statement already archived — a scan
   // included — reads back byte for byte, so the only change is what was uploaded.
   if (!npm("extract", [], { GLOW_OCR: "new" }).ok) return "`npm run extract` failed";
+  if (!npm("build:statement-files").ok) return "`npm run build:statement-files` failed";
   refreshSymbols();
   if (!npm("build-book").ok) return "`npm run build-book` failed";
   return null;
@@ -475,7 +478,11 @@ function land(live, verdicts, already) {
   const id = digest(receipt);
   fs.mkdirSync(abs('public/audit/deliveries'), { recursive: true });
   fs.writeFileSync(abs(`public/audit/deliveries/${id}.json`), JSON.stringify({ ...receipt, id }) + '\n');
-  git(["add", "-A", "--", ...GENERATED]);
+  git(["add", "-A", "--", ...GENERATED.filter(p => p !== 'public/statement-previews')]);
+  // A failed/held upload may have left a generated preview in an earlier round.
+  // Only previews for this verified delivery belong in its data-only commit.
+  const previews = versions.map(d => `public/statement-previews/${d.sha256}.bin`).filter(p => fs.existsSync(abs(p)));
+  if (previews.length) git(['add', '--', ...new Set(previews)]);
   const list = live.map((p) => `- ${p.landing}${verdicts.get(p)?.providers?.length ? ` → ${verdicts.get(p).providers.join(", ")}` : ""}`);
   const passed = ["accounts-table", "build", "test:ingest", "test:family"].filter((s) => !already.includes(s));
   const message = [

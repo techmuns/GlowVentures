@@ -32,12 +32,26 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { createHash } from "node:crypto";
 import { extractZip } from "./ingest/lib/unzip.mjs";
+import { passwordsFromEnv } from "./ingest/lib/layout.mjs";
+import { previewKey, unlockPdf } from "./lib/statementPreviewPdf.mjs";
+import { describePreview, previewKeyBytes, sealPreview } from "../shared/statementPreviewCrypto.mjs";
+import { restoreStatementPasswords } from "./lib/statementPasswords.mjs";
 
 const ROOT = process.cwd();
 const SOURCE_DIR = path.join(ROOT, "source");
 const EXTRACT_DIR = path.join(SOURCE_DIR, "_extracted");
 const OUT = path.join(ROOT, "public", "statement-files");
+// Persist encrypted derivatives with the repository, never plaintext PDFs.
+// A build without the intake's secret still opens every previously unlocked file.
+// Names bind each preview to the SHA-256 of the exact original, never a filename.
+const PREVIEWS = path.join(ROOT, "public", "statement-previews");
+await restoreStatementPasswords();
+const passwords = passwordsFromEnv();
+const dashboardPassword = process.env.GLOW_DASHBOARD_PASSWORD;
+const dashboardHash = /const PASSWORD_HASH = "([a-f0-9]{64})"/.exec(fs.readFileSync(path.join(ROOT, 'functions/_middleware.js'), 'utf8'))?.[1];
+let encryptionKey;
 const INDEX = "index.json";
 // The inventory's own bound on ZIPs inside ZIPs (scripts/ingest/inventory.mjs).
 const MAX_ZIP_DEPTH = 6;
@@ -119,6 +133,34 @@ async function needsPassword(buf) {
   }
 }
 
+async function unlockedPreview(bytes) {
+  const file = previewKey(bytes);
+  const target = path.join(PREVIEWS, file.replace(/\.pdf$/, '.bin'));
+  let sealed;
+  if (fs.existsSync(target)) sealed = fs.readFileSync(target);
+  if (!sealed || describePreview(sealed).dashboardHash !== dashboardHash) {
+    if (!dashboardPassword) {
+      if (sealed) throw new Error('Dashboard password changed: regenerate encrypted statement previews before deploying');
+      return undefined;
+    }
+    const suppliedHash = createHash('sha256').update(`glow-ventures-family-office::pw::v1\n${dashboardPassword}`).digest('hex');
+    if (suppliedHash !== dashboardHash) throw new Error('Preview encryption needs the current dashboard password');
+    const preview = await unlockPdf(bytes, passwords);
+    if (!preview) return undefined;
+    // Fail closed: never publish a derivative that still requires a password.
+    if (await needsPassword(preview)) throw new Error("Statement preview is still password-protected");
+    encryptionKey ??= await previewKeyBytes(dashboardPassword);
+    sealed = await sealPreview(preview, encryptionKey, file.slice(0, -4), dashboardHash);
+    fs.mkdirSync(PREVIEWS, { recursive: true });
+    fs.writeFileSync(target, sealed);
+  }
+  const metadata = describePreview(sealed);
+  if (metadata.dashboardHash !== dashboardHash) {
+    throw new Error("Dashboard password changed: regenerate encrypted statement previews before deploying");
+  }
+  return { file, bytes: metadata.bytes };
+}
+
 // Several statements can be cut from one bundled PDF (`lib/bundle.mjs`); each
 // part's pages.json keeps the page numbers it had in the file, so the preview
 // opens that file at the part's own first page.
@@ -153,10 +195,12 @@ for (const e of manifest) {
   try { same = fs.statSync(target).size === bytes.length && fs.readFileSync(target).equals(bytes); } catch { /* not there yet */ }
   if (!same) { fs.writeFileSync(target, bytes); changed++; }
   written.add(name);
+  const encrypted = ext === "pdf" && await needsPassword(bytes);
   files[e.docKey] = {
     file: name,
     bytes: bytes.length,
-    encrypted: ext === "pdf" && await needsPassword(bytes),
+    encrypted,
+    ...(encrypted ? { preview: await unlockedPreview(bytes) } : {}),
     part: partOf(e),
   };
 }

@@ -5,18 +5,22 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { chromium } from 'playwright-core';
 import { makeMultiPagePdf } from '../ingest/__tests__/fixtures/makePdf.mjs';
+import { previewKey, unlockPdf } from '../lib/statementPreviewPdf.mjs';
 const base = process.env.BASE || 'http://127.0.0.1:4173';
 if (!/^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?\/?$/.test(base)) throw Error('Use a local BASE for this fixture test.');
 const out = path.resolve('.cache/pdf-preview-check'); await fs.mkdir(out, {recursive:true});
 const plain = Buffer.from(makeMultiPagePdf([[[60,700,'Preview page one']],[[60,700,'Preview page two']]], {fontSize:24}));
 // Synthetic two-page PDF, generated with pypdf, encrypted with 'preview-test'.
 const locked = await fs.readFile(new URL('./fixtures/preview-password.pdf', import.meta.url));
-const keys = ['preview-plain', 'preview-locked', 'preview-part', 'preview-bad'];
+const unlocked = await unlockPdf(locked, ['preview-test']);
+const unlockedName = previewKey(locked);
+const keys = ['preview-plain', 'preview-locked', 'preview-part', 'preview-bad', 'preview-auto'];
 const manifest = keys.map(key => ({docKey:key, fileKey:key, provider:'Preview test',
   accountNo:null, owner:null, ownerId:null, familyGroup:null, strategy:null, asOf:null,
   reportType:'holdings', sourcePath:`source/${key}.pdf`, pages:2, status:'ok', warnings:0, sheets:[], label:key, fy:''}));
 const index = {files:Object.fromEntries(keys.map(key => [key, {file:key+'.pdf', bytes:plain.length,
-  encrypted:key === 'preview-locked', part:key === 'preview-part' ? {from:2,to:2} : null}])), missing:{}};
+  encrypted:key === 'preview-locked' || key === 'preview-auto', part:key === 'preview-part' ? {from:2,to:2} : null,
+  ...(key === 'preview-auto' ? {preview:{file:unlockedName,bytes:unlocked.length}} : {})}])), missing:{}};
 const browser = await chromium.launch({executablePath:process.env.CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless:true});
 const context = await browser.newContext({viewport:{width:1512,height:982}});
 const page = await context.newPage(); const errors = []; const assetFailures = [];
@@ -26,10 +30,11 @@ page.on('console', m => {if (m.type() === 'error') diagnostics.push(m.text())});
 page.on('requestfailed', r => diagnostics.push({url:r.url(),failure:r.failure()}));
 page.on('response', r => {if (/\/pdf-assets\/|pdf\.worker/.test(r.url()) && !r.ok()) assetFailures.push(r.url())});
 await page.route('**/api/**', r => r.fulfill({status:503,json:{ok:false}}));
+await page.route('**/api/statement-previews/*.pdf', r => r.fulfill({contentType:'application/pdf',body:unlocked}));
 await page.route('**/audit/manifest.json', r => r.fulfill({json:manifest}));
 await page.route('**/audit/preview-*/pages.json', r => r.fulfill({json:{pages:[{page:1,text:'Preview page one'},{page:2,text:'Preview page two'}]}}));
 await page.route('**/statement-files/index.json', r => r.fulfill({json:index}));
-await page.route('**/statement-files/preview-*.pdf', r => r.fulfill({contentType:'application/pdf',body:r.request().url().includes('preview-locked') ? locked : r.request().url().includes('preview-bad') ? Buffer.from('not a PDF') : plain}));
+await page.route('**/statement-files/preview-*.pdf', r => r.fulfill({contentType:'application/pdf',body:/preview-(locked|auto)/.test(r.request().url()) ? locked : r.request().url().includes('preview-bad') ? Buffer.from('not a PDF') : plain}));
 const address = key => `${base}/statements?provider=Preview%20test&file=${key}`;
 // Keep local navigation on one loopback origin: recent Chrome also blocks
 // local-network frame navigation across origins. Sandbox still denies the PDF
@@ -65,6 +70,16 @@ try {
   await frame.getByRole('tab',{name:'Original file',exact:true}).click(); await ink(1);
   await open('preview-part'); await ink(2);
   assert.equal(await frame.getByLabel('PDF page',{exact:true}).inputValue(),'2');
+  await open('preview-auto'); await ink(1);
+  assert.equal(await frame.getByLabel('Statement password',{exact:true}).count(),0);
+  assert.ok((await frame.locator('[data-preview-download]').getAttribute('href')).endsWith('/statement-files/preview-auto.pdf'));
+  assert.ok((await frame.getByRole('link',{name:'New tab',exact:true}).getAttribute('href')).endsWith('/api/statement-previews/' + unlockedName));
+  await frame.getByRole('tab',{name:'Text as read',exact:true}).click();
+  await frame.locator('[data-preview-page="1"]').waitFor();
+  await frame.getByRole('tab',{name:'Original file',exact:true}).click(); await ink(1);
+  await open('preview-plain'); await ink(1);
+  await open('preview-auto'); await ink(1);
+  assert.equal(await frame.getByLabel('Statement password',{exact:true}).count(),0);
   await open('preview-locked');
   await frame.getByLabel('Statement password',{exact:true}).fill('wrong');
   await frame.getByRole('button',{name:'Open PDF',exact:true}).click();
@@ -83,8 +98,8 @@ try {
   await page.setViewportSize({width:430,height:932}); await ink(1);
   assert.deepEqual(errors,[]); assert.deepEqual(assetFailures,[]);
   await page.screenshot({path:path.join(out,'sandboxed-preview.png')});
-  await fs.writeFile(path.join(out,'results.json'),JSON.stringify({sandboxedEmbed:true,visibleInk:true,pages:true,zoom:true,bundleStart:true,passwordRetry:true,cancellation:true,invalidFile:true,mobile:true,errors,assetFailures},null,2));
-  console.log('PASS: sandboxed PDF renders original pages, zoom, bundle start, password retry, cancellation, invalid-file fallback and mobile layout.');
+  await fs.writeFile(path.join(out,'results.json'),JSON.stringify({sandboxedEmbed:true,visibleInk:true,pages:true,zoom:true,bundleStart:true,automaticUnlock:true,reopenWithoutPassword:true,originalDownload:true,passwordRetry:true,cancellation:true,invalidFile:true,mobile:true,errors,assetFailures},null,2));
+  console.log('PASS: sandboxed PDF renders original pages, saved-password previews survive reopening, original downloads remain intact; zoom, bundle start, password retry, cancellation, invalid-file fallback and mobile layout pass.');
 } catch (e) {
   await fs.writeFile(path.join(out,'failure.json'),JSON.stringify({errors,assetFailures,diagnostics,frames:page.frames().map(f=>f.url())},null,2));
   await page.screenshot({path:path.join(out,'failure.png')}).catch(()=>{}); throw e;
