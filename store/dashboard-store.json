@@ -5,6 +5,10 @@
    "value": "{\"id\":\"10d7a3e7-45fd-4152-9154-1f55b3461f47\",\"name\":\"ABC\",\"address\":\"J 1900\",\"city\":\"Worly\",\"state\":\"Maharashtra\",\"country\":\"India\",\"pincode\":\"400030\",\"tenant\":\"NA\",\"notes\":\"NA\",\"type\":\"Apartment\",\"status\":\"Self-used\",\"areaUnit\":\"sq ft\",\"titleStatus\":\"Not checked\",\"areaBasis\":\"Carpet\",\"cost\":5000000,\"value\":5000000,\"monthlyRent\":0,\"monthlyCosts\":null,\"debt\":null,\"area\":5000,\"purchasedOn\":\"2026-10-22\",\"valuationDate\":\"2026-10-22\",\"leaseEnd\":null,\"owners\":[{\"ownerId\":\"ankita-jaisinghani\",\"name\":\"Ankita Jaisinghani\",\"share\":100}],\"latitude\":19.0023215,\"longitude\":72.8274455,\"updatedAt\":\"2026-10-22T04:35:32.930Z\"}",
    "metadata": null
   },
+  "real-estate:2305c6fb-fa3c-42cd-8d5c-857460910c42": {
+   "value": "{\"id\":\"2305c6fb-fa3c-42cd-8d5c-857460910c42\",\"name\":\"XYZ\",\"address\":\"mars\",\"city\":\"reb\",\"state\":\"fsav\",\"country\":\"India\",\"pincode\":\"\",\"tenant\":\"\",\"notes\":\"\",\"type\":\"Villa / house\",\"status\":\"Under construction\",\"acquisition\":\"\",\"areaUnit\":\"sq ft\",\"titleStatus\":\"Not checked\",\"areaBasis\":\"\",\"cost\":null,\"value\":null,\"monthlyRent\":null,\"monthlyCosts\":null,\"debt\":null,\"area\":null,\"purchasedOn\":null,\"valuationDate\":null,\"leaseEnd\":null,\"owners\":[{\"ownerId\":\"bharat-jaisinghani\",\"name\":\"Bharat Jaisinghani\",\"share\":null}],\"latitude\":null,\"longitude\":null,\"updatedAt\":\"2026-10-22T11:22:51.539Z\"}",
+   "metadata": null
+  },
   "tile-set:cio": {
    "value": "{\"page\":\"cio\",\"ids\":[\"value\",\"gain\",\"annualised\"],\"updatedAt\":\"2026-10-22T06:13:42.908Z\"}",
    "metadata": {
