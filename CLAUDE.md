@@ -179,7 +179,8 @@ One line per area; the history files explain each in depth.
   `benchmarks.ts` (seven indices, name-checked), `indexSectors.ts` (their sector
   weights off NSE's factsheets, through `resolveSector`; Stage 10fe), `indices.ts`, `periodReturns.ts`
   (Morning CIO Returns tab), `segmentReturns.ts` (its attribution section:
-  FIFO gain and contribution by any axis, tied to the Gain / Loss tile),
+  FIFO gain and contribution by any axis, tied to the Gain / Loss tile; its
+  Sector axis is `sectorRollup.ts`, Sector Composition's own sectors and sets, Stage 10gs),
   `returnMeasures.ts`, `returnColumns.ts`.
 - `src/lib/fundNavs.ts` (AMFI NAV overlay; never sets `live`; depository cash and
   fund rows on the live basis only), `depositoryShares.ts`, `recordedHoldings.ts`,
