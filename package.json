@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "test:real-estate": "node scripts/dev/test-real-estate.mjs",
+    "test:real-estate": "node scripts/dev/test-real-estate.mjs && node scripts/dev/test-property-tax.mjs",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",

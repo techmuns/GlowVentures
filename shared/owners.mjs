@@ -79,7 +79,16 @@ export function panHolderType(pan) {
  * @property {string[]} aliases    every spelling seen in a statement
  * @property {string[]} [pans]     every PAN observed for this holder, verbatim
  * @property {string} [kind]       "individual" | "trust" — from the PAN, not assumed
+ * @property {string} [residence]  "resident" — only where a statement prints it
+ * @property {string} [residenceEvidence]  the statement and the words that print it
  */
+
+// Tax residence decides who may cap a property's long-term gain at the
+// 20%-with-indexation tax (resident individuals and HUFs; Real Estate, Stage
+// 10hj). Each family member's own Motilal Oswal demat statement prints its
+// account type as `Individual-Resident`; the trusts carry no residence because
+// the option is not theirs whatever it is.
+const residentBy = clientId => `Motilal Oswal demat ${clientId}, 31 Jul 2026: "A/C Type: Individual-Resident"`;
 
 /** @type {CanonicalOwner[]} */
 export const OWNERS = [
@@ -87,6 +96,8 @@ export const OWNERS = [
     ownerId: "ajay-jaisinghani",
     displayName: "Ajay Jaisinghani",
     kind: "individual",
+    residence: "resident",
+    residenceEvidence: residentBy("1201090012539150"),
     pans: ["AACPJ2099J"],
     aliases: [
       "Mr. AJAY T JAISINGHANI",
@@ -99,6 +110,8 @@ export const OWNERS = [
     ownerId: "ankita-jaisinghani",
     displayName: "Ankita Jaisinghani",
     kind: "individual",
+    residence: "resident",
+    residenceEvidence: residentBy("1201090012838316"),
     pans: ["AKQPK9422Q"],
     aliases: [
       // As printed: Goldstandard/Aristos gives the full name, Green Lantern the short one.
@@ -111,6 +124,8 @@ export const OWNERS = [
     ownerId: "bharat-jaisinghani",
     displayName: "Bharat Jaisinghani",
     kind: "individual",
+    residence: "resident",
+    residenceEvidence: residentBy("1201090012838320"),
     /**
      * NO PAN HERE ON PURPOSE. His is also the password on six encrypted
      * statements in this drop, and a password does not go in a tracked file. The
@@ -140,6 +155,8 @@ export const OWNERS = [
     ownerId: "aarti-jaisinghani",
     displayName: "Aarti Jaisinghani",
     kind: "individual",
+    residence: "resident",
+    residenceEvidence: residentBy("1201090012838335"),
     pans: ["AFIPJ4151N"],
     aliases: [
       "Aarti Ajay Jaisinghani",

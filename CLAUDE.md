@@ -182,6 +182,11 @@ One line per area; the history files explain each in depth.
   `investedOn.ts` (a holding's Invested on and its dated trades, every holdings
   table; built off `Position.tradeRecord` / `BOOK_HOLDING_TRADES` from
   `scripts/lib/holdingTrades.mjs`; Stage 10fm).
+- `shared/realEstate.mjs` + `shared/propertyTax.mjs` — Real Estate's record (entered on
+  the page, kept in the shared store) and the capital gains tax on selling a
+  property today: the Cost Inflation Index table, the 2024 rules, per owner,
+  residence from `shared/owners.mjs`. **Add each year's CII when CBDT notifies
+  it (July)**; until then the indexed figure shows — (Stage 10hj).
 - `src/lib/bookNav.ts` + `bookNavBook.ts` — the whole book's NAV series (every
   investment, its latest valuation plus capital since; the NAV card and the
   drawdown read it as `navHistory`; Stage 10ge).

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { validateProperty, type Property } from "../../shared/realEstate.mjs";
 export * from "../../shared/realEstate.mjs";
+export * from "../../shared/propertyTax.mjs";
 export const PROPERTY_ENDPOINT = "/api/real-estate";
 type Reply = { ok: true; properties?: Property[]; property?: Property; deleted?: string } | { ok: false; message: string };
 async function request(body?: unknown, signal?: AbortSignal): Promise<Reply> {

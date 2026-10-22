@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useRef, useMemo, useState, type FormEvent } from "react";
 import { Plus, X } from "lucide-react";
 import { TextField, SelectField, CheckField } from "@/components/FormBits";
-import { PROPERTY_TYPES, PROPERTY_STATUSES, AREA_UNITS, TITLE_STATUSES, ACQUISITION_TYPES, EARMARK_MARKER_ONLY, costLabel, receivedWithoutPurchase, validateProperty, type Property, type PropertyEarmark, type PropertyOwner } from "@/lib/realEstate";
+import { PROPERTY_TYPES, PROPERTY_STATUSES, AREA_UNITS, TITLE_STATUSES, ACQUISITION_TYPES, EARMARK_MARKER_ONLY, MAX_IMPROVEMENTS, INDEX_BASE_DATE, costLabel, receivedWithoutPurchase, validateProperty, type Property, type PropertyEarmark, type PropertyOwner } from "@/lib/realEstate";
 import { findPropertyAddress, type AddressMatch } from "@/lib/propertyMaps";
 const PropertyMap = lazy(() => import("./PropertyMap"));
 const options = (values: string[]) => values.map(value => ({ value, label: value }));
@@ -11,6 +11,7 @@ export function emptyProperty(): Property {
   return { id: crypto.randomUUID(), name: "", type: "", address: "", city: "", state: "", country: "India", pincode: "",
     owners: [{ ownerId: null, name: "", share: null }], area: null, areaUnit: "sq ft", areaBasis: "",
     cost: null, value: null, monthlyRent: null, monthlyCosts: null, debt: null,
+    improvements: [], priorCost: null, priorAcquiredOn: null, fmv2001: null, ruralAgricultural: false,
     purchasedOn: null, valuationDate: null, leaseEnd: null, acquisition: "", status: "", tenant: "", titleStatus: "Not checked", notes: "", earmark: null, latitude: null, longitude: null };
 }
 export function PropertyEditor({ property, members, onSave, onCancel }: {
@@ -18,7 +19,8 @@ export function PropertyEditor({ property, members, onSave, onCancel }: {
   onSave: (p: Property) => Promise<{ ok: boolean; message?: string }>; onCancel: () => void;
 }) {
   const [draft, setDraft] = useState(property);
-  const [numbers, setNumbers] = useState(() => Object.fromEntries(["area", "cost", "value", "monthlyRent", "monthlyCosts", "debt", "latitude", "longitude"].map(key => [key, str(property[key as "area"])])));
+  const [numbers, setNumbers] = useState(() => Object.fromEntries(["area", "cost", "value", "monthlyRent", "monthlyCosts", "debt", "priorCost", "fmv2001", "latitude", "longitude"].map(key => [key, str(property[key as "area"])])));
+  const [improvements, setImprovements] = useState(() => property.improvements.map(i => ({ on: i.on ?? "", amount: str(i.amount) })));
   const [shares, setShares] = useState(() => property.owners.map(o => str(o.share)));
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -73,13 +75,17 @@ export function PropertyEditor({ property, members, onSave, onCancel }: {
     event.preventDefault();
     searchId.current++; setFinding(false);
     const candidate = { ...draft, ...Object.fromEntries(Object.entries(numbers).map(([key, value]) => [key, optionalNumber(value)])),
-      owners: draft.owners.map((o, i) => ({ ...o, share: optionalNumber(shares[i]) })) };
+      owners: draft.owners.map((o, i) => ({ ...o, share: optionalNumber(shares[i]) })),
+      improvements: improvements.map(i => ({ on: i.on || null, amount: optionalNumber(i.amount) })) };
     const checked = validateProperty(candidate);
     if (!checked.property) { setError(checked.error); return; }
     setBusy(true); setError("");
     const reply = await onSave(checked.property);
     if (!reply.ok) { setError(reply.message || "Property could not be saved."); setBusy(false); }
   };
+  // Held since before 1 Apr 2001, by the family or the previous owner: the value on that date may replace the cost.
+  const heldFrom = receivedWithoutPurchase(draft) ? draft.priorAcquiredOn : draft.purchasedOn;
+  const heldBefore2001 = heldFrom !== null && heldFrom < INDEX_BASE_DATE;
   const ownerChange = (index: number, patch: Partial<PropertyOwner>) => set("owners", draft.owners.map((o, i) => i === index ? { ...o, ...patch } : o));
   const memberId = (name: string) => members.find(m => m.label.toLowerCase() === name.trim().toLowerCase())?.ownerId ?? null;
   const earmarkChange = (patch: Partial<PropertyEarmark>) => { lastEarmark.current = { ...lastEarmark.current, ...patch }; set("earmark", lastEarmark.current); };
@@ -133,13 +139,28 @@ export function PropertyEditor({ property, members, onSave, onCancel }: {
         <h3 className="h-section mb-3">Value & income · INR · whole property</h3>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {receivedWithoutPurchase(draft) ? numberField("cost", `${costLabel(draft)} (₹)`, "There is no purchase cost. Leave blank if the value on that date is not known; appreciation then shows as —.")
-            : numberField("cost", "Total cost (₹)", "Include stamp duty, registration and improvements.")}
+            : numberField("cost", "Purchase cost (₹)", "Include stamp duty and registration. Add later improvements under Tax basis, with their dates.")}
           {numberField("value", "Current value (₹)")}
           <TextField label="Valuation date" value={draft.valuationDate ?? ""} type="date" onChange={v => set("valuationDate", v || null)} />
           {numberField("monthlyRent", "Monthly rent (₹)")}
           {numberField("monthlyCosts", "Monthly costs (₹)", "Maintenance, property tax and other recurring costs; enter the monthly equivalent.")}
           {numberField("debt", "Loan outstanding (₹)", "Enter 0 if there is no loan.")}
         </div>
+      </div>
+      <div className="border-t border-ink-700 pt-4" data-tax-basis>
+        <h3 className="h-section mb-3" title="What capital gains tax on a sale needs beyond the cost: each improvement indexes from its own year; an inherited or gifted property carries the previous owner's cost and date.">Tax basis</h3>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {receivedWithoutPurchase(draft) && numberField("priorCost", "Previous owner's cost (₹)", "What the previous owner paid. Tax on a sale uses it, not the value on the date of inheritance or gift.")}
+          {receivedWithoutPurchase(draft) && <TextField label="Previous owner acquired on" value={draft.priorAcquiredOn ?? ""} type="date" onChange={v => set("priorAcquiredOn", v || null)} hint="The holding period and indexation run from this date." />}
+          {(heldBefore2001 || numbers.fmv2001 !== "") && numberField("fmv2001", "Value on 1 Apr 2001 (₹)", "Fair market value on 1 Apr 2001, for a property held since before then. Where it is higher than the cost, tax uses it.")}
+          {(draft.type === "Land" || draft.type === "Farmhouse" || draft.ruralAgricultural) && <CheckField label="Rural agricultural land" checked={draft.ruralAgricultural} onChange={v => set("ruralAgricultural", v)} hint="Rural agricultural land is not a capital asset: its sale carries no capital gains tax." />}
+        </div>
+        <div className="mt-3 flex items-center gap-3"><span className="label-xs">Improvements</span><button type="button" className="btn-ghost text-xs" disabled={improvements.length >= MAX_IMPROVEMENTS} onClick={() => setImprovements(rows => [...rows, { on: "", amount: "" }])}><Plus className="h-3 w-3" />Add improvement</button></div>
+        <div className="mt-2 space-y-2">{improvements.map((row, i) => <div className="flex items-end gap-3" key={i}>
+          <div className="w-44"><TextField label={`Improvement ${i + 1} date`} value={row.on} type="date" onChange={v => setImprovements(rows => rows.map((r, j) => i === j ? { ...r, on: v } : r))} /></div>
+          <div className="w-48"><TextField label={`Improvement ${i + 1} amount (₹)`} value={row.amount} placeholder="Not entered" onChange={v => setImprovements(rows => rows.map((r, j) => i === j ? { ...r, amount: v } : r))} /></div>
+          <button type="button" className="btn-ghost mb-0.5" aria-label={`Remove improvement ${i + 1}`} onClick={() => setImprovements(rows => rows.filter((_, j) => i !== j))}><X className="h-4 w-4" /></button>
+        </div>)}</div>
       </div>
       <details className="border-t border-ink-700 pt-4" open={draft.status === "Rented" ? true : undefined}>
         <summary className="h-section cursor-pointer">Lease & title</summary>
