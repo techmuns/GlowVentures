@@ -63,7 +63,10 @@ function computeReturns(times, closes, lastMs, last) {
     y3: cagr(at(lastMs - 3 * YEAR), 3),
     y5: cagr(at(lastMs - 5 * YEAR), 5),
     y10: cagr(at(lastMs - 10 * YEAR), 10),
-    max: first >= 0 && maxYears > 0.05 ? ((last / closes[first]) ** (1 / maxYears) - 1) * 100 : null,
+    // Annualised only over a year or more; a shorter history is its cumulative move (Stage 10hk).
+    max: first >= 0 && maxYears > 0
+      ? (maxYears >= 1 ? ((last / closes[first]) ** (1 / maxYears) - 1) * 100 : (last / closes[first] - 1) * 100)
+      : null,
   };
 }
 

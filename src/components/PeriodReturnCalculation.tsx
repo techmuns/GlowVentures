@@ -5,7 +5,7 @@ import { fmtDate } from "@/lib/format";
 import { FORMULAS, INCEPTION_FORMULAS, type Measured, type ReturnType } from "@/lib/periodReturns";
 
 /** Reads intermediate values from the selected card's calculation; never solves a second return. */
-export function PeriodReturnCalculation({ measured, type, inception, result, context, accounts, excluded, money, shortMoney, stepMoney }: {
+export function PeriodReturnCalculation({ measured, type: asked, inception, result, context, accounts, excluded, money, shortMoney, stepMoney }: {
   measured: Measured | null; type: ReturnType; inception: boolean; result: ReactNode; context: ReactNode;
   accounts: { label: string; from: string; to: string; openedInWindow?: boolean }[];
   excluded: { label: string; reason: string }[];
@@ -13,6 +13,8 @@ export function PeriodReturnCalculation({ measured, type, inception, result, con
   shortMoney: (n: number | null | undefined) => string;
   stepMoney: (n: number | null | undefined) => string;
 }) {
+  // The working shown is the measure the figure IS: under a year, the absolute return (Stage 10hk).
+  const type = measured?.shownAs ?? asked;
   const w = measured?.working;
   const available = !!(measured?.shown && measured.pct != null && w);
   const formula = measured?.formula ?? (inception ? INCEPTION_FORMULAS : FORMULAS)[type];
@@ -73,9 +75,7 @@ export function PeriodReturnCalculation({ measured, type, inception, result, con
       <ol data-return-steps className="list-decimal space-y-3 pl-5">
         {!available || !w ? <>
           <li>{measured?.reason ?? "Pick a window whose opening date is before its closing date."}</li>
-          <li>{type === "cagr" && measured?.reason?.includes("at least 365 days")
-            ? "A 1Y, 2Y, 3Y or longer custom period can show CAGR if enough valuation and cash-flow history is available."
-            : "This return is unavailable for the selected dates. The missing records are listed under Show more."}</li>
+          <li>This return is unavailable for the selected dates. The missing records are listed under Show more.</li>
         </> : <>
           <li>Gain / loss: <span className="block tabular">{stepMoney(w.closing)} − {stepMoney(w.opening)} − {stepMoney(w.capitalIn)} + {stepMoney(w.capitalOut)} = <strong>{stepMoney(w.gain)}</strong>.</span></li>
           {/* A dated window's Absolute return is Modified Dietz (Stage 10fz), so it

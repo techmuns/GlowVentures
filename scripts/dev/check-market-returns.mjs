@@ -46,8 +46,8 @@ try {
    await page.waitForFunction(({ period,type }) => { const d=document.querySelector('[data-segment-returns]')?.dataset; return d?.segPeriod===period && d?.segType===type; }, {period,type});
    const from = await table.getAttribute('data-seg-start'), to = '2026-10-21';
    const days = (Date.parse(to)-Date.parse(from))/864e5;
-   // XIRR is per year at any length; CAGR from a year; Absolute never (Stage 10gu).
-   const raw = price(to)/price(from), expected = ((type==='xirr' || (type==='cagr' && days>=365) ? Math.pow(raw,365/days) : raw)-1)*100;
+   // XIRR and CAGR per year from a year only; under a year every type is the period's own move (Stage 10hk).
+   const raw = price(to)/price(from), expected = ((type!=='absolute' && days>=365 ? Math.pow(raw,365/days) : raw)-1)*100;
    const actual = Number(await summary.getAttribute('data-market-total'));
    assert.ok(Number.isFinite(actual) && Math.abs(actual-expected)<1e-7, `${period}/${type}: ${actual} vs ${expected}`);
    const footer = table.locator('[data-seg-total] [data-seg-cell="market"]');
@@ -57,10 +57,11 @@ try {
  }
  assert.equal(requests, initialRequests, 'changing the period reuses public history instead of refetching it');
  assert.ok(new Set(results.filter(r=>r.type==='absolute').map(r=>r.actual)).size===6);
+ const of = (period, type) => results.find(r => r.period===period && r.type===type).actual;
  for (const period of ['fytd','mtd','ytd']) {
-  const of = type => results.find(r => r.period===period && r.type===type).actual;
-  assert.ok(Math.abs(of('xirr')-of('absolute'))>0.01, `${period}: the return type moves the figure`);
+  assert.ok(Math.abs(of(period,'xirr')-of(period,'absolute'))<1e-9 && Math.abs(of(period,'cagr')-of(period,'absolute'))<1e-9, `${period}: under a year every type is the absolute return`);
  }
+ for (const period of ['y2','y3']) assert.ok(Math.abs(of(period,'xirr')-of(period,'absolute'))>0.01, `${period}: from a year XIRR is per year`);
  await summary.getByRole('button', { name: 'What is included in total market return?', exact: true }).click();
  const dialog = page.getByRole('dialog'); await dialog.waitFor();
  assert.equal(await dialog.getByRole('tab').count(),3);
@@ -172,7 +173,8 @@ try {
  await page.getByRole('textbox',{name:'Search this year’s investments',exact:true}).fill('');
  await page.locator('[data-returns-type-select]').selectOption('xirr');
  await page.waitForFunction(()=>document.querySelector('[data-invested-year]')?.dataset.yearType==='xirr');
- assert.ok(Math.abs(Number(await yearly.getAttribute('data-year-return'))-counts.pct)>.01);
+ // Every purchase this year is under a year old, so XIRR shows the same absolute return (Stage 10hk).
+ assert.ok(Math.abs(Number(await yearly.getAttribute('data-year-return'))-counts.pct)<1e-9, 'this year\'s purchases are never annualised');
  await page.reload();await yearly.waitFor();assert.equal(await yearly.getAttribute('data-year-type'),'xirr');
  await page.setViewportSize({width:1440,height:1000});
  await page.locator('[data-returns-type-select]').selectOption('absolute');

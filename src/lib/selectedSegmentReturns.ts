@@ -2,6 +2,7 @@
 import type { Account, Position } from './types';
 import { accountIndex } from './accounts';
 import { fifoTotals } from './fifo';
+import { allDebt } from './analytics';
 import { measureInception, measureWindow, type AccountWindow, type InceptionRow, type Measured, type ReturnType } from './periodReturns';
 import { segmentOf, type SegmentAxis, type SectorLookup } from './segmentReturns';
 import type { HoldingAssumption } from './assumedHoldingReturns';
@@ -20,9 +21,7 @@ export type SelectedLine = { key: string; label: string; positions: readonly Pos
   periodPct: number | null; contribution: number | null; children: SelectedLine[] };
 export type ReturnSelection = { inception: boolean; type: ReturnType; start: string | null; end: string | null;
   windows: AccountWindow[]; inceptionRows: InceptionRow[]; excluded: ReturnGap[]; outside?: ReturnGap[];
-  assumedUnits?: ReturnUnit[]; assumptionGaps?: ReturnGap[];
-  /** State XIRR over the period rather than per year — the headline cards' reading (Stage 10gu). */
-  periodXirr?: boolean };
+  assumedUnits?: ReturnUnit[]; assumptionGaps?: ReturnGap[] };
 export const UNSPLIT_RETURNS = '__account_returns';
 
 const carries = (p: Position) => p.marketValue !== 0 || (p.costBasis ?? 0) !== 0
@@ -127,12 +126,16 @@ export function selectedSegmentReturns(current: readonly Position[], exited: rea
         formula: 'Gain divided by the purchase cost of units held and sold, or money paid into a whole managed account.',
         reason: base > 0 ? undefined : 'There is no positive purchase cost to divide the gain by.' };
     }
-    const opts = { periodXirr: selection.periodXirr };
+    // Only a line whose every holding is debt is annualised under a year (Stage 10hk).
+    const opts = { debt: allDebt(us.flatMap(u => u.positions)) };
     return selection.inception ? measureInception(us.map(u => u.inception!), selection.type, String, opts)
       : measureWindow(us.map(u => u.window!), selection.type, String, opts);
   };
   const totalMeasured = measure(units);
-  const denominator = selection.type !== 'absolute' ? null : absoluteInception
+  // Contributions add up only on an absolute total — asked for, or shown in place
+  // of an XIRR or CAGR under a year (Stage 10hk), over the same money base.
+  const absoluteTotal = selection.type === 'absolute' || totalMeasured?.shownAs === 'absolute';
+  const denominator = !absoluteTotal ? null : absoluteInception
     ? units.reduce((s, u) => s + u.invested, 0) : totalMeasured?.working?.base ?? null;
   const line = (key: string, label: string, ps: readonly Position[], us: ReturnUnit[], gaps: ReturnGap[]): SelectedLine => {
     const measured = measure(us), gain = us.length ? us.reduce((s, u) => s + u.gain, 0) : null;
@@ -184,7 +187,6 @@ export function selectedSegmentReturns(current: readonly Position[], exited: rea
 
 /** Source-specific, plain wording for the table's missing-record cards. */
 export function returnGapText(reason: string, start: string | null): string {
-  if (/at least 365 days/i.test(reason)) return 'CAGR needs at least one year of history. Choose a longer period, or select Absolute return or XIRR.';
   if (/several dated purchases/i.test(reason)) return 'There were several purchases on different dates. Select XIRR to include them.';
   if (/different money.weighted rates/i.test(reason)) return 'These records give more than one possible XIRR. Select Absolute return instead.';
   if (/do not yield a money.weighted rate/i.test(reason)) return 'These amounts and dates do not give a valid XIRR. Check the payment dates, amounts and closing value.';

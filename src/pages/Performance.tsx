@@ -332,12 +332,12 @@ export function Performance() {
     : firstClose === lastClose
       ? `over ${windowStart} → ${lastClose} (${daysTo(lastClose)} days)`
       : `over ${windowStart} → ${firstClose}–${lastClose} (${daysTo(firstClose)}–${daysTo(lastClose)} days) — each account closes on its own report date`;
-  // A sub-year annualised rate is an extrapolation, rather than a return earned.
+  // A sub-year annualised rate is an extrapolation, rather than a return earned,
+  // and is not stated anywhere, a hover included (Stage 10hk).
   const annualisedNote = (pct: number | null, days: number | null) => {
     if (pct == null) return undefined;
-    const rate = `${fmtPct(pct, { sign: true, decimals: 1 })} p.a.`;
-    if (days != null && days >= 365) return `${rate}, annualised over ${days} days.`;
-    return `${rate} only if ${days != null ? `this ${days}-day window` : "this window"} were compounded over a whole year — an extrapolation, not a rate earned.`;
+    if (days != null && days >= 365) return `Annualised XIRR: ${fmtPct(pct, { sign: true, decimals: 1 })} p.a. over ${days} days.`;
+    return `Annualised XIRR: not stated — ${days != null ? `this ${days}-day window` : "this window"} is under a year, and a return under a year is never annualised.`;
   };
   const bridgeTotals = bridgeTotalsOf(accounts);
   // The headline is the money-weighted return actually EARNED to date, not the
@@ -446,7 +446,7 @@ export function Performance() {
             // the book's newest date, which is no pooled account's.
             title={`${xirrMissing.length
               ? `Over the ${measurable.length} of ${accounts.length} accounts whose statements carry an opening portfolio value, each closed against the value its own statement strikes on its own date — ${money(measuredMV)} in all, ${closeRange ?? "on no date"}. ${xirrMissing.length === 1 ? "Account" : "Accounts"} ${xirrMissing.join(", ")} ${xirrMissing.length === 1 ? "is" : "are"} excluded on both sides — counting ${xirrMissing.length === 1 ? "its value without its" : "their value without their"} opening stake would overstate this figure.`
-              : `Over all ${measurable.length} accounts' dated flows, each closed against the value its own statement strikes on its own date — ${money(measuredMV)} in all, ${closeRange ?? "on no date"}.`} This is the money-weighted return actually earned over the window${consWindowDays ? ` (${consWindowDays} days)` : ""}, and it stays off a yearly scale on the tile: the annualised XIRR is ${annualisedNote(consolidatedXirr, consWindowDays) ?? "not struck."}`}
+              : `Over all ${measurable.length} accounts' dated flows, each closed against the value its own statement strikes on its own date — ${money(measuredMV)} in all, ${closeRange ?? "on no date"}.`} This is the money-weighted return actually earned over the window${consWindowDays ? ` (${consWindowDays} days)` : ""}, and it stays off a yearly scale on the tile. ${annualisedNote(consolidatedXirr, consWindowDays) ?? "No annualised XIRR is struck."}`}
             icon={<Percent className="h-4 w-4" />} />
         )}
 

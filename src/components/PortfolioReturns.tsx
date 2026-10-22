@@ -54,8 +54,8 @@ const RETURN_VIEWS = [
 ] as const;
 const PURCHASE_TYPE_HELP: Record<ReturnType,{short:string;title:string}> = {
   absolute:{short:'Purchase-to-value returns, portfolio weighted',title:'Each holding’s gain divided by the cost of its selected units, then weighted by the latest value of those units. Not annualised.'},
-  xirr:{short:'Yearly holding returns, portfolio weighted',title:'Each holding’s XIRR uses the selected units’ dated purchase cash and latest value. The yearly holding returns are weighted by their latest included values.'},
-  cagr:{short:'Under a year: showing holding-period returns',title:'These purchases are less than a year old, so their purchase-to-value returns are shown without annualising, weighted by included values.'},
+  xirr:{short:'Under a year: showing absolute returns',title:'These purchases are less than a year old, so their purchase-to-value returns are shown without annualising, weighted by included values. Only debt is annualised under a year.'},
+  cagr:{short:'Under a year: showing absolute returns',title:'These purchases are less than a year old, so their purchase-to-value returns are shown without annualising, weighted by included values. Only debt is annualised under a year.'},
 };
 
 export default function PortfolioReturns() {
@@ -143,7 +143,9 @@ export default function PortfolioReturns() {
   const measuredFrom = !whole ? null : period === "inception" ? inception.rows.map((r) => r.first).sort()[0] ?? null : win?.measuredFrom ?? null;
   const measuredTo = !whole ? null : period === "inception" ? inception.rows.map((r) => r.valueAsOf).sort().at(-1) ?? null : win?.measuredTo ?? null;
   const days = measuredFrom && measuredTo ? daysBetween(measuredFrom, measuredTo) : null;
-  const typeLabel = RETURN_TYPES.find((r) => r.key === rtype)!.label;
+  // The measure the figure IS: an XIRR or CAGR asked of under a year shows the
+  // absolute return (Stage 10hk), and the tiles name that, not the selection.
+  const typeLabel = RETURN_TYPES.find((r) => r.key === (measured?.shownAs ?? rtype))!.label;
   // ── Benchmarks over the same measured window ─────────────────────────────
   const [hist, setHist] = useState<Record<string, PriceResult | undefined>>({});
   useEffect(() => {
@@ -199,8 +201,9 @@ export default function PortfolioReturns() {
     if (!c1 || c1.date <= c0.date) return { ...base, pct: null, reason: `No ${b.label} close inside the window`, span: null, ...pmeFields };
     const r = c1.value / c0.value - 1;
     const d = daysBetween(c0.date, c1.date);
-    // XIRR is a yearly rate at any length (Stage 10gu), so its index is too.
-    const pct = (annualise && (rtype === "xirr" || d >= 365) ? Math.pow(1 + r, 365 / d) - 1 : r) * 100;
+    // An index is equity: stated per year only where the portfolio's figure is
+    // and its own span reaches a year (Stage 10hk).
+    const pct = (annualise && d >= 365 ? Math.pow(1 + r, 365 / d) - 1 : r) * 100;
     return { ...base, pct, reason: null, span: { from: c0.date, to: c1.date, v0: c0.value, v1: c1.value, days: d }, ...pmeFields };
   });
   const gapOf = (r: BenchRow) => (portfolioPct != null && r.pme != null ? portfolioPct - r.pme : null);
@@ -308,6 +311,7 @@ export default function PortfolioReturns() {
           <div className="grid grid-cols-2 gap-2 md:grid-cols-4" data-returns-bench-table>
             <div className="ret-stat border-champagne-400" data-returns-bench-portfolio
               data-returns-pct={portfolioPct?.toFixed(4) ?? ""} data-returns-basis={measured?.shown ? measured.basis : ""}
+              data-returns-shown-as={measured?.shown ? (measured.shownAs ?? rtype) : ""}
               data-returns-excluded={excluded.length}>
               <div className="flex items-center gap-1.5 text-[12px] font-semibold text-slate-100">
                 <span className="h-2 w-2 rounded-full bg-champagne-400" aria-hidden />Portfolio · {typeLabel}

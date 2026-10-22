@@ -107,10 +107,11 @@ export type MoneyWeighted = {
 
 export function moneyWeightedReturn(annualPct: number | null, windowDays: number | null): MoneyWeighted {
   if (annualPct == null) return { pct: null, annualised: false, windowDays, annualPct: null };
-  // No measurable window means there is nothing to de-annualise against; the
-  // solver's own output is all there is, and it is annual by construction.
+  // No measurable window means nothing proves a year was held, so no figure is
+  // put on screen — an annual rate over an unknown span could be a part-year's
+  // compounded (Stage 10hk).
   if (windowDays == null || windowDays <= 0) {
-    return { pct: annualPct, annualised: true, windowDays: null, annualPct };
+    return { pct: null, annualised: false, windowDays: null, annualPct };
   }
   if (windowDays >= MIN_ANNUALISE_DAYS) {
     return { pct: annualPct, annualised: true, windowDays, annualPct };

@@ -10,9 +10,9 @@ export function ReviewColumnCell({ id, scope }: { id: string; scope?: ReviewScop
     : column?.format === "currency" ? fmtFromBase(value, { compact: true })
     : column?.format === "percent" ? `${(value * 100).toFixed(2)}%`
     : value.toLocaleString("en-IN");
-  return <td data-col-cell={id} data-review-source={field.source || undefined} data-review-value={value ?? undefined}
+  return <td data-col-cell={id} data-review-source={field.source || undefined} data-review-value={value ?? undefined} data-review-tag={field.tag}
     title={[field.source, field.note, REVIEW_NOTE].filter(Boolean).join(" · ")}
     className={`px-3 py-2 text-xs ${column?.format === "text" ? "max-w-xs text-left" : "whitespace-nowrap text-right mono"} ${value == null ? "text-slate-600" : "text-slate-300"}`}>
-    {content}
+    {field.tag && <span className="ret-tag mr-0.5">{field.tag}</span>}{content}
   </td>;
 }

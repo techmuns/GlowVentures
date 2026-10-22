@@ -24,16 +24,25 @@ for (const type of ['absolute', 'xirr', 'cagr'] as const) {
 const abs = selectedSegmentReturns(ps, [], [acct('a'), acct('b')], 'category', sel);
 const irr = selectedSegmentReturns(ps, [], [acct('a'), acct('b')], 'category', { ...sel, type: 'xirr' });
 assert.notEqual(abs.total.returnPct, irr.total.returnPct, 'return type changes actual calculation');
-// Stage 10gu: under a year XIRR is per year with the period figure beside it; the headline cards restate it over the period.
+// Stage 10hk: under a year XIRR and CAGR show the absolute return, named so, and
+// its contributions add up as Absolute's do; a line of debt keeps its yearly rate.
 const halfW: AccountWindow = { ...w, openDate: '2025-07-01', closeDate: '2026-01-01', openValue: 200, closeValue: 230, flows: [], capitalIn: 0, gain: 30 };
-const halfX = selectedSegmentReturns(ps, [], [acct('a'), acct('b')], 'category', { ...sel, type: 'xirr', windows: [halfW] });
-const halfP = selectedSegmentReturns(ps, [], [acct('a'), acct('b')], 'category', { ...sel, type: 'xirr', periodXirr: true, windows: [halfW] });
 const halfA = selectedSegmentReturns(ps, [], [acct('a'), acct('b')], 'category', { ...sel, type: 'absolute', windows: [halfW] });
-near(halfX.total.returnPct, (1.15 ** (365 / 184) - 1) * 100, 1e-6); near(halfX.total.periodPct, 15, 1e-6);
-near(halfP.total.returnPct, 15, 1e-6); near(halfP.total.periodPct, 15, 1e-6); near(halfA.total.returnPct, 15, 1e-9);
-assert.notEqual(halfX.total.returnPct, halfA.total.returnPct, 'XIRR and Absolute differ under a year');
-const short = selectedSegmentReturns(ps, [], [acct('a'), acct('b')], 'category', { ...sel, type: 'cagr', windows: [{ ...w, openDate: '2025-12-01' }] });
-assert.equal(short.total.returnPct, null); near(short.total.gain, 50); assert.match(short.total.measured!.reason!, /at least 365 days/);
+near(halfA.total.returnPct, 15, 1e-9);
+for (const type of ['xirr', 'cagr'] as const) {
+  const half = selectedSegmentReturns(ps, [], [acct('a'), acct('b')], 'category', { ...sel, type, windows: [halfW] });
+  near(half.total.returnPct, 15, 1e-9); near(half.total.periodPct, 15, 1e-9);
+  assert.equal(half.total.measured!.shownAs, 'absolute', `${type} under a year is the absolute return`);
+  near(half.total.contribution, halfA.total.contribution!, 1e-12);
+}
+const debtPs = [pos({ assetClass: 'Bond' }), pos({ accountId: 'b', securityKey: 'two', marketValue: 300 })];
+const halfDebt = selectedSegmentReturns(debtPs, [], [acct('a'), acct('b')], 'category', { ...sel, type: 'xirr', windows: [halfW] });
+near(halfDebt.total.returnPct, (1.15 ** (365 / 184) - 1) * 100, 1e-6); near(halfDebt.total.periodPct, 15, 1e-6);
+assert.equal(halfDebt.total.measured!.shownAs, undefined);
+const shortW = { ...w, openDate: '2025-12-01' };
+const short = selectedSegmentReturns(ps, [], [acct('a'), acct('b')], 'category', { ...sel, type: 'cagr', windows: [shortW] });
+near(short.total.returnPct, measureWindow([shortW], 'absolute', String).pct!, 1e-12); near(short.total.gain, 50);
+assert.equal(short.total.measured!.shownAs, 'absolute');
 const split = selectedSegmentReturns([pos(), pos({ securityKey: 'two' })], [], [acct('a')], 'security', { ...sel, excluded: [] });
 assert.equal(split.rows.filter(r => r.key !== UNSPLIT_RETURNS).every(r => r.gain == null), true);
 near(split.rows.find(r => r.key === UNSPLIT_RETURNS)!.gain, 50);
@@ -92,7 +101,6 @@ assert.match(returnGapText('The purchase date is unavailable.', null), /purchase
 assert.doesNotMatch(returnGapText('Only the purchase cost is recorded.', null), /purchase cost is missing/, 'cost-only records need a later value, not another cost');
 assert.match(returnGapText('Only the purchase cost is recorded.', null), /later value/);
 assert.match(returnGapText('This statement gives a return for the whole account. It does not give separate opening values and money movements for these holdings.', null), /separate values and dated payments for each holding/);
-assert.match(returnGapText('CAGR is a yearly growth rate. This app shows it only for measured periods of at least 365 days.', null), /longer period.*Absolute return or XIRR/);
 
 // A return-bearing exit cannot disappear from an account's segment decision.
 const mixedExit = selectedSegmentReturns([pos()], [exit], [acct('a')], 'security', { ...sel, excluded: [] });

@@ -311,8 +311,15 @@ ok("the book still carries a report date for the window to close against", !!BOO
     const cagr = returnCoverage(BOOK_POSITIONS, "cagr", ASOF);
     ok("auto annualises exactly the rows CAGR does", auto.cagr === cagr.cagr, `${auto.cagr} vs ${cagr.cagr}`);
   }
-  // XIRR and CALENDAR are absent on EVERY row — this book cannot strike either.
-  ok("XIRR is absent on every position", returnCoverage(BOOK_POSITIONS, "xirr", ASOF).shown === 0);
+  // XIRR is never struck on a position, and CALENDAR is absent on every row. A
+  // position dated under a year shows its HPR under XIRR (Stage 10hk) — exactly
+  // its return on cost, tagged — and nothing else does.
+  {
+    const x = returnCoverage(BOOK_POSITIONS, "xirr", ASOF);
+    const shown = BOOK_POSITIONS.map((p) => [p, measuredReturn(p, "xirr", ASOF)] as const).filter(([, r]) => r.shown);
+    ok("XIRR is never struck on a position; only a sub-year holding's HPR shows", x.xirr === 0
+       && shown.every(([p, r]) => r.shown && r.tag === "HPR" && r.pct === p.returnPct && !!p.heldSince), `${shown.length} HPR`);
+  }
   ok("calendar year is absent on every position", returnCoverage(BOOK_POSITIONS, "calendar", ASOF).shown === 0);
 }
 
@@ -454,9 +461,14 @@ console.log("\n── 9. one purchase, held throughout ──");
   const lotted = dated.filter((p) => singlePurchaseGap(p) !== null);
   ok("the book carries dated holdings bought in lots or partly sold (load-bearing)", lotted.length > 0, `${lotted.length} of ${dated.length}`);
   ok("every dated holding carries a purchase count (package A's gate)", dated.every((p) => typeof p.purchaseDates === "number"));
+  // ...from a year. Under a year every unit is under a year old, so the HPR
+  // stands on the CAGR measure too (Stage 10hk).
+  const heldDaysOf = (p: (typeof dated)[number]) => Math.round((Date.parse(asOfOf(p.accountId)!) - Date.parse(p.heldSince!)) / 86_400_000);
   for (const p of lotted) {
     const r = measuredReturn({ ...p, valuedAt: asOfOf(p.accountId) }, "cagr", BOOK_SUMMARY.asOf);
-    ok(`${p.security}: ${p.purchaseDates} purchase dates${(p.costOfUnitsSold ?? 0) > 0 ? ", units sold" : ""} — no CAGR`, !r.shown, r.shown ? `${r.tag} ${r.pct.toFixed(2)}` : "");
+    const sub = heldDaysOf(p) < YEAR_DAYS;
+    ok(`${p.security}: ${p.purchaseDates} purchase dates${(p.costOfUnitsSold ?? 0) > 0 ? ", units sold" : ""} — ${sub ? "under a year, its HPR" : "no CAGR"}`,
+       sub ? r.shown && r.tag === "HPR" && r.pct === p.returnPct : !r.shown, r.shown ? `${r.tag} ${r.pct.toFixed(2)}` : "");
   }
   const eureka = dated.find((p) => p.securityKey === "eureka-forbes");
   ok("Eureka Forbes (V.E.C 128004, three lots) shows its HPR on auto, never the −25.50% CAGR",
@@ -469,7 +481,8 @@ console.log("\n── 9. one purchase, held throughout ──");
      `${singles.length}`);
   // The column header counts them apart from "no purchase date".
   const cov = returnCoverage(dated.map((p) => ({ ...p, valuedAt: asOfOf(p.accountId) })), "cagr", BOOK_SUMMARY.asOf);
-  ok("CAGR coverage counts the staggered / sold holdings apart", cov.lotted === lotted.length, `${cov.lotted} vs ${lotted.length}`);
+  const lottedYear = lotted.filter((p) => heldDaysOf(p) >= YEAR_DAYS).length;
+  ok("CAGR coverage counts the staggered / sold holdings held a year or more apart", cov.lotted === lottedYear && lottedYear > 0, `${cov.lotted} vs ${lottedYear}`);
   ok("...and the header's hover names them", /bought on several dates or partly sold/.test(returnColumnMeta("cagr", cov, BOOK_SUMMARY.asOf).title));
 
   // NO_HOLDING_XIRR no longer claims the statements cover the current period

@@ -26,7 +26,7 @@ import { ownerDisplayName } from "@/lib/owners";
 import { stockHref } from "@/lib/auditFormulas";
 import {
   sum, sumOrNull, consolidatedMarketValue, returnMeasureDef, isPrivateClass, dedupedPositions,
-  isValuedAtCost, AT_COST_RETURN, AT_COST_BUCKET,
+  isValuedAtCost, AT_COST_RETURN, AT_COST_BUCKET, allDebt, isDebtHolding,
   type MeasuredReturn, type ReturnMeasure,
 } from "@/lib/analytics";
 import { BOOK_CORPORATE_ACTIONS, BOOK_CAPITAL_MOVES, BOOK_SHARE_MOVEMENTS, BOOK_REVIEW_FLOWS, BOOK_REVIEW_WRITTEN_OFF, BOOK_REVIEW_SUPERSEDED } from "@/data/glowData";
@@ -1400,7 +1400,8 @@ export function PrivateMarket() {
         : (measure: ReturnMeasure) => fundMeasuredReturn(
           // A fund every line of which is held at cost (Stage 10dh) refuses
           // every measure with that reason, ahead of any other.
-          { ...g, atCost: g.holdings > 0 && g.atCostHoldings === g.holdings },
+          { ...g, atCost: g.holdings > 0 && g.atCostHoldings === g.holdings,
+            debt: allDebt(g.folios.flatMap((f) => (f.position ? [f.position] : []))) },
           fundDated.get(g.securityKey ?? ""), measure, moneyN, fmtDate);
     }
     // A MEMBER WHO HOLDS ONE FUND IS THAT FOLIO (PM-C10): the row's figures are
@@ -1414,7 +1415,8 @@ export function PrivateMarket() {
     ? `an income-only folio holds no units of its own to strike a return on — the ${accName(f.viewOf)} line carries them, and the fund row carries the return`
     : NO_VALUE_RETURN)
     : (measure: ReturnMeasure) => fundMeasuredReturn(
-      { returnPct: folioFigures(f).returnPct, cost: f.cost, atCost: !!f.position && isValuedAtCost(f.position) },
+      { returnPct: folioFigures(f).returnPct, cost: f.cost, atCost: !!f.position && isValuedAtCost(f.position),
+        debt: !!f.position && isDebtHolding(f.position) },
       folioDated.get(f.key), measure, moneyN, fmtDate));
   /**
    * A SET OF FOLIOS — a family member's row, a section band, the total.
@@ -1491,8 +1493,14 @@ export function PrivateMarket() {
         }
         const pooled = pooledFundXirr(pooledIn.map((r) => r.d!));
         if (!pooled || pooled.pct == null) return { shown: false, tag, pool, reason: "the pooled flows do not solve to a rate" };
+        // UNDER A YEAR, THE ABSOLUTE RETURN (Stage 10hk): the pool's holding-period
+        // return, never an annual rate and never a dash where one is struck.
         if (!pooled.annualised) {
-          return { shown: false, tag, pool, reason: `the pooled flows span ${pooled.windowDays} days — under a year, so an annual rate would be a projection; the holding-period return is under HPR` };
+          if (fig.returnPct != null) {
+            return { shown: true, pct: fig.returnPct, tag: "HPR", pool,
+              note: `The pooled flows span ${pooled.windowDays} days — under a year, so this is not an annual rate but the holding-period return. ${aggHprNote(held, (n) => money(n))}${wo}` };
+          }
+          return { shown: false, tag, pool, reason: `the pooled flows span ${pooled.windowDays} days — under a year, so this shows the holding-period return, and the cost here does not cover the value to strike one` };
         }
         const left = [
           ...pooledOut.map((r) => `${r.name} — ${r.d?.gap ?? "its payout record is not carried"}`),

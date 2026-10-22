@@ -55,6 +55,13 @@ export function ReturnsTable({ ticker, name }: {
   }, [ticker]);
 
   const live = data && data.ok ? data : null;
+  // A horizon is annualised only where its own span reaches a year: Max on a
+  // listing under a year old is its cumulative move, with no asterisk (Stage 10hk).
+  const annualisedCol = (c: (typeof HORIZON_COLS)[number]) => {
+    if (!c.annualised) return false;
+    const s = live?.spans[c.key];
+    return !s || Date.parse(s[1]) - Date.parse(s[0]) >= 365 * 864e5;
+  };
 
   // A synthetic meta so the shared chart component can render this the same way
   // it renders a macro series — one chart implementation, not two.
@@ -155,8 +162,8 @@ export function ReturnsTable({ ticker, name }: {
             <tr className="border-b border-ink-700">
               {HORIZON_COLS.map((c) => (
                 <th key={c.key} className="label-xs px-3 py-2 text-right font-medium"
-                  title={c.annualised ? `${c.label} compound annual growth rate` : `${c.label} return`}>
-                  {c.label}{c.annualised ? "*" : ""}
+                  title={annualisedCol(c) ? `${c.label} compound annual growth rate` : `${c.label} return`}>
+                  {c.label}{annualisedCol(c) ? "*" : ""}
                 </th>
               ))}
               <th className="label-xs px-3 py-2 text-right font-medium">52W High</th>

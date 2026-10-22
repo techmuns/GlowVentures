@@ -1,5 +1,6 @@
 import type { Position } from './types';
 import type { ReturnType } from './periodReturns';
+import { allDebt, mayAnnualise } from './analytics';
 export type MarketHistory = { ok: true; version?: number; symbol: string; isin: string | null; name: string; source: string; basis: 'adjusted-close' | 'nav'; first: string; last: string; t: string[]; v: number[];
   /** Split-adjusted closes (NAV for funds), distinct from the total-return index v. */
   c?: (number | null)[]; splits?: { date: string; factor: number }[] };
@@ -31,9 +32,10 @@ export function marketReturnSummary(units: readonly MarketUnit[], type: ReturnTy
   const value = units.reduce((s, u) => s + u.position.marketValue, 0);
   const days = start && end ? (day(end) - day(start)) / 864e5 : 0;
   const periodPct = value > 0 ? units.reduce((s, u) => s + u.position.marketValue * u.periodPct, 0) / value : null;
-  // Weight the period growth first, then annualise the portfolio's growth.
-  // XIRR is a yearly rate at any length (Stage 10gu); CAGR only from a year.
-  const annual = type === 'xirr' ? days > 0 : type === 'cagr' && days >= 365;
+  // Weight the period growth first, then annualise the portfolio's growth —
+  // XIRR and CAGR only from a year; under a year the period return stands,
+  // unless every holding is debt (Stage 10hk).
+  const annual = type !== 'absolute' && days > 0 && mayAnnualise(days, allDebt(units.map(u => u.position)));
   const pct = periodPct == null ? null : annual ? (Math.pow(1 + periodPct / 100, 365 / days) - 1) * 100 : periodPct;
   return { pct, periodPct, value, count: units.length, annual, days, from: start, to: end };
 }
