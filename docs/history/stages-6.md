@@ -297,7 +297,13 @@
 - `ExportableTable` takes an optional `controlsHost`: the control is drawn there (portal) instead of in a caption, and names its table (`data-export-for` ↔ `data-table-export-id`). `scripts/dev/table-excel.mjs` finds each table's one control either way (`exportControls`), so `assertTableExportControls` and the download/retry checks cover both placements. The two tables use `manualEditor` with `EditColumns` placed in the header.
 - Checked locally: export from the header downloads the complete table on both views; `check-selected-attribution`, `check-market-returns` and check:pages `cio-returns*` show no new findings.
 
-### Stage 10gz — RETURNS ON THIS YEAR’S PURCHASES
+### Stage 10gz — SAVE PROPERTY DETAILS NOW, COMPLETE THEM LATER
+
+- Every property field is optional, including name, address, owner/share and valuation date. Empty records save as Untitled property in the table, map and details, remain visible without an assigned member, and can be reopened to add details. New records no longer assume an apartment, vacant status or zero rent; changing status preserves entered rent.
+- Identical owner rows save once instead of blocking Save or doubling ownership. Partial or conflicting ownership stays editable; unknown shares remain unknown in family totals. Details show entered whole-property figures, so incomplete ownership does not hide the saved amounts there.
+- Record/API and local browser checks cover empty save/reload/edit, value without date or owner, duplicate-owner saving, missing shares, later additions, existing address search/dragging and unchanged valid share calculations. Production checks are read-only.
+
+### Stage 10ha — RETURNS ON THIS YEAR’S PURCHASES
 
 - Morning CIO Returns adds Invested this year beside the time presets. It selects the current Indian financial year from 1 April, measures current units from their own acquisition dates, and defaults to Absolute return. The existing periods retain their calculations. This purchase cohort uses current holdings only; sold units, dividends and payouts are explicitly outside the figure.
 - Reconciled surviving lots, fund allotments and the verified FIFO trade tape split older units from this year’s units. The settled purchase cash retains its charges rather than being scaled to a statement’s book cost. A product review range or PMS funding date never dates an underlying security. Unknown dates, unmatched units/costs and missing post-purchase valuations are named in the info popup.
