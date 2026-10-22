@@ -43,11 +43,11 @@ export default function InvestedThisYearReturns({start,end,type}:{start:string;e
       <p className="text-xs text-slate-400">{result.older.length} holdings have no verified purchases still held from this year and are left out.</p>
     </div>
   </ReturnCalculationInfo>;
-  return <div className="space-y-3" data-invested-year data-year-start={start} data-year-end={end} data-year-type={type} data-year-included={result.included.length} data-year-missing={result.missing.length} data-year-older={result.older.length} data-year-total={positions.length} data-year-return={result.pct??''} data-year-gain={result.gain}>
+  return <div className="w-full min-w-0 space-y-3 [overflow-wrap:anywhere]" data-invested-year data-year-start={start} data-year-end={end} data-year-type={type} data-year-included={result.included.length} data-year-missing={result.missing.length} data-year-older={result.older.length} data-year-total={positions.length} data-year-return={result.pct??''} data-year-gain={result.gain}>
     <div className="card p-4">
       <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="font-semibold">Invested this year · {fmtDate(start)} → {fmtDate(end)}</h2>{info}</div>
       <p className="mt-1 text-xs text-slate-400">This financial year’s purchases still held. Price gains start on each purchase date; older units, sold units and dividends are excluded.</p>
-      <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4">
         <div><p className="text-xs text-slate-400">Portfolio-weighted price return{result.annual?' · yearly':''}</p><strong className={`text-xl tabular ${changeColor(result.pct)}`}>{percent(result.pct)}{result.annual?' p.a.':''}</strong>{result.annual&&<p className="mt-1 text-xs text-slate-400">{percent(result.periodPct)} over the holding periods</p>}</div>
         <div><p className="text-xs text-slate-400">Paid for included units</p><strong className="text-xl tabular">{result.included.length?money(result.cost):'Unavailable'}</strong></div>
         <div><p className="text-xs text-slate-400">Latest value</p><strong className="text-xl tabular">{result.included.length?money(result.value):'Unavailable'}</strong></div>
