@@ -21,7 +21,8 @@ review is unavailable, a clean statement delivery still publishes automatically.
 
 The intake monitor independently checks the exact commit against its recorded main
 base, permits only statement files and named generated artifacts, verifies the
-immutable upload/document checksums (including nested ZIP leaves), and reruns the
+immutable upload/document checksums (including nested ZIP leaves and retained
+historical sources), and reruns the
 identity, date, coverage and reconciliation assessment using trusted code. Passing
 required CI then permits automatic PR merge without a reviewer callback. Missing,
 unclear or conflicting data is held with its original bytes. Application code or

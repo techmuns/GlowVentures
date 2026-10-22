@@ -305,7 +305,7 @@ function storedZip(name, bytes) {
   end.writeUInt32LE(0x06054b50); end.writeUInt16LE(1, 8); end.writeUInt16LE(1, 10); end.writeUInt32LE(central.length + label.length, 12); end.writeUInt32LE(local.length + label.length + bytes.length, 16);
   return Buffer.concat([local, label, bytes, central, label, end]);
 }
-function automaticFixture({ changeDocument = d => d, mutate = () => {}, changeReceipt = r => r, zip = false } = {}) {
+function automaticFixture({ changeDocument = d => d, mutate = () => {}, changeReceipt = r => r, zip = false, relinkHistory = false, historyZip = false } = {}) {
   const directory = fs.mkdtempSync(path.join(ROOT, '.cache/automatic-publication-'));
   const runGit = (args, options = {}) => {
     const r = spawnSync('git', args, { cwd: directory, encoding: 'utf8', ...options });
@@ -318,16 +318,19 @@ function automaticFixture({ changeDocument = d => d, mutate = () => {}, changeRe
     for (const d of documents) put(`public/audit/${d.docKey}/document.json`, JSON.stringify(d));
   };
   runGit(['init', '-b', 'codex/automatic-fixture']); runGit(['config', 'user.name', 'Publication Test']); runGit(['config', 'user.email', 'test@example.invalid']);
-  const baseline = doc(); archive([baseline]); put('source/test.pdf', '%PDF-original'); put('src/data/glowData.ts', 'original book');
+  const baseline = doc(historyZip ? { sourcePath: 'source/_extracted/history/statement.pdf' } : {});
+  archive([baseline]); put(historyZip ? 'source/history.zip' : 'source/test.pdf', historyZip ? storedZip('statement.pdf', Buffer.from('%PDF-original')) : '%PDF-original'); put('src/data/glowData.ts', 'original book');
   put('CLAUDE.md', 'Policy stays unchanged\n\n| Provider | Account | Owner | As of | Market value |\n| --- | --- | --- | --- | ---: |\n| old | account | owner | date | value |\n');
   runGit(['add', '-A']); runGit(['commit', '-m', 'Verified baseline']);
   const baseCommit = runGit(['rev-parse', 'HEAD']).trim();
   const uploadPath = zip ? 'source/uploads-test/statements.zip' : 'source/uploads-test/statement.pdf';
   const sourcePath = zip ? 'source/_extracted/uploads-test/statements/inner/statement.pdf' : uploadPath;
   const bytes = zip ? storedZip('inner.zip', storedZip('statement.pdf', Buffer.from('%PDF-new-statement'))) : Buffer.from('%PDF-new-statement');
-  const candidate = changeDocument(later({ sourcePath })); archive([baseline, candidate]); put(uploadPath, bytes); put('src/data/glowData.ts', 'generated candidate');
-  let receipt = { schemaVersion: 1, baseCommit, archiveRevision: archiveRevision([baseline, candidate]),
+  const candidate = changeDocument(later({ sourcePath })), historical = relinkHistory ? { ...baseline, stitches: [{ source: candidate.docKey }] } : baseline;
+  archive([historical, candidate]); put(uploadPath, bytes); put('src/data/glowData.ts', 'generated candidate');
+  let receipt = { schemaVersion: 1, baseCommit, archiveRevision: archiveRevision([historical, candidate]),
     files: [{ path: uploadPath, sha256: digest(bytes) }], documents: [{ document: candidate.docKey, revision: documentRevision(candidate), sourcePath, sha256: digest('%PDF-new-statement') }] };
+  if (relinkHistory) receipt.documents.push({ document: historical.docKey, revision: documentRevision(historical), sourcePath: historical.sourcePath, sha256: digest('%PDF-original') });
   receipt = changeReceipt(receipt);
   const id = digest(receipt); put(`public/audit/deliveries/${id}.json`, JSON.stringify({ ...receipt, id }));
   mutate({ directory, put, runGit }); runGit(['add', '-A']); runGit(['commit', '-m', 'Verified data delivery']);
@@ -374,7 +377,14 @@ test('automatic publication holds missing, unclear and conflicting financial rec
 test('automatic publication verifies nested ZIP leaf bytes at their exact inventory paths', () => {
   const { file, check } = automaticFixture({ zip: true }); assert.equal(check(file).documents, 1);
   const wrong = automaticFixture({ zip: true, changeDocument: d => ({ ...d, sourcePath: d.sourcePath.replace('/inner/', '/wrong-account/') }) });
-  assert.throws(() => wrong.check(wrong.file), /no uploaded source evidence/);
+  assert.throws(() => wrong.check(wrong.file), /no retained or uploaded source evidence/);
+});
+test('a new delivery may update historical document links while retaining exact earlier source bytes', () => {
+  for (const historyZip of [false, true]) {
+    const { file, check } = automaticFixture({ relinkHistory: true, historyZip }); assert.equal(check(file).documents, 2);
+  }
+  const wrong = automaticFixture({ relinkHistory: true, changeReceipt: r => ({ ...r, documents: r.documents.map(d => d.sourcePath === 'source/test.pdf' ? { ...d, sha256: 'different-history' } : d) }) });
+  assert.throws(() => wrong.check(wrong.file), /document rows or versions/);
 });
 test('automatic publication rejects code, policy, symlinks and unreceipted or altered bytes', () => {
   for (const [options, error] of [

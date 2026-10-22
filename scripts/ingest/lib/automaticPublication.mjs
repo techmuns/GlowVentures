@@ -77,9 +77,22 @@ export function verifyAutomaticPublication(file, { runGit = git, fetchHead = tru
     baselineReport: reconcile(structuredClone(baseline)), report: reconcile(structuredClone(candidate)) });
   if (assessment.decision !== 'verified' || assessment.candidateRevision !== receipt.archiveRevision) throw new Error(`Statement data needs review: ${assessment.issues.map(i => i.code).join(', ') || assessment.decision}`);
   const sources = expandedSources(receipt.files, read), byKey = new Map(candidate.map(d => [d.docKey, d]));
+  // A new statement can deterministically update an older document's stitching
+  // or twin links. Those records retain their immutable earlier source bytes.
+  const retained = runGit(['ls-tree', '-r', '--name-only', '-z', file.baseCommit, '--', 'source']).split('\0').filter(Boolean);
+  const readRetained = p => runGit(['show', `${file.baseCommit}:${p}`], { encoding: null });
+  const sourceBytes = p => {
+    if (sources.has(p)) return sources.get(p);
+    if (retained.includes(p) && statementPath(p)) return readRetained(p);
+    for (const zip of retained.filter(f => /\.zip$/i.test(f) && p.startsWith(f.replace(/^source\//, 'source/_extracted/').replace(/\.zip$/i, '') + '/'))) {
+      const bytes = readRetained(zip);
+      for (const [name, data] of expandedSources([{ path: zip, sha256: digest(bytes) }], () => bytes)) sources.set(name, data);
+    }
+    return sources.get(p);
+  };
   const expected = assessment.changed.map(key => {
-    const d = byKey.get(key), bytes = sources.get(d.sourcePath);
-    if (!bytes) throw new Error(`Changed document has no uploaded source evidence: ${key}`);
+    const d = byKey.get(key), bytes = sourceBytes(d.sourcePath);
+    if (!bytes) throw new Error(`Changed document has no retained or uploaded source evidence: ${key}`);
     return { document: key, revision: documentRevision(d), sourcePath: d.sourcePath, sha256: digest(bytes) };
   });
   const sorted = values => [...values].sort((a, b) => a.document.localeCompare(b.document));
