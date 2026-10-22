@@ -12,7 +12,7 @@ export function applyTableInputs(book: Portfolio | null, saved: readonly SavedIn
   const positions = book.positions.map(original => {
     const input = by.get(positionInputId(original)), cap = by.get(privateCapitalId(original));
     const fields = Object.keys(input?.versions ?? {});
-    const hasCap = cap && Object.keys(cap.versions).length > 0;
+    const hasCap = cap && Object.keys(cap.versions).length > 0 && Object.values(cap.values).some(value => value !== null);
     if (!fields.length && !hasCap) return original;
     const p = { ...original, enteredNumbers: fields, enteredCapital: hasCap ? cap.values : undefined };
     for (const field of fields) Object.assign(p, { [field]: input!.values[field] });

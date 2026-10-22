@@ -120,7 +120,7 @@ export function ExportableTable({ children, exportName, controlsHost, ...props }
   </>;
   return <><table {...props} ref={table} data-table-export data-table-export-id={exportId}>
     {controlsHost === undefined ? <caption className="p-2 text-left print:hidden" data-table-export-controls>
-      <div className="sticky left-0 flex w-fit flex-wrap items-center gap-2">{controls}</div>
+      <div className="sticky left-0 flex w-fit max-w-[calc(100vw-5rem)] flex-wrap items-center gap-2">{controls}</div>
     </caption> : controlsHost && createPortal(<span className="inline-flex flex-wrap items-center gap-2 print:hidden" data-table-export-controls>{controls}</span>, controlsHost)}
     <TableEditing.Provider value={editing}><TableExportAllRows.Provider value={snapshotRows}>{typeof children === "function" ? children(snapshotRows) : children}</TableExportAllRows.Provider></TableEditing.Provider>
   </table>{dialog && <TableInputDialog close={() => setDialog(null)} recordIds={dialogIds} changes={Array.isArray(dialog) ? dialog : undefined} complete={() => setMessage("Excel changes saved and synced.")} />}</>;

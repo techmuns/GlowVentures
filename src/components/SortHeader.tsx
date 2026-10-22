@@ -3,6 +3,7 @@ import { Children, ReactNode, cloneElement, isValidElement, useContext, useRef }
 import { TableNumberInput, useTableEditing } from "./TableNumberInput";
 import { useTableInputs } from "@/lib/tableInputStore";
 import { capitalInputId, fieldForColumn, positionInputId, privateCapitalId } from "@/lib/tableInputs";
+import { usePortfolio } from "@/context/PortfolioContext";
 import { ChevronUp, ChevronDown, ChevronsUpDown, GripVertical } from "lucide-react";
 import { useTableView, type TableView } from "@/lib/tableView";
 import { pressColumn } from "@/lib/columnDrag";
@@ -10,6 +11,7 @@ import { AutoEditColumns, columnText } from "./EditColumns";
 import { reviewColumn, REVIEW_NOTE, type ReviewScope } from "@/lib/reviewColumns";
 import { ReviewColumnCell } from "./ReviewColumnCell";
 import { InvestmentDateCell } from "./InvestedOnCell";
+const INPUT_TABLES = new Set(["pm-book", "monitor", "mandate-holdings", "strategy-holdings", "strategy-holders", "holdings-behind", "family-holdings"]);
 
 /**
  * ── ONE HEADER CELL FOR EVERY TABLE IN THE APP ──────────────────────────────
@@ -178,6 +180,7 @@ export function Tr({ view, children, reviewScope, inputRecordId, ...rest }: { vi
   const exporting = useContext(TableExportAllRows);
   const editing = useTableEditing();
   const inputs = useTableInputs();
+  const { displayCurrency } = usePortfolio();
   const order = exporting ? view.availableOrder : view.order;
   const row = useRef<HTMLTableRowElement>(null);
   const cells = Children.toArray(children).filter((c) => isValidElement(c) || c === 0 || !!c);
@@ -215,22 +218,28 @@ export function Tr({ view, children, reviewScope, inputRecordId, ...rest }: { vi
   const renderCell = (column: string) => {
     const original = byCol.get(column);
     if (header || !isValidElement<Record<string, unknown>>(original) || original.type !== "td") return original;
+    // Explicitly audited source-table contracts. A dated ledger can also have
+    // a column called "value" or "units"; its historical rows must never edit
+    // today's holding just because their column names happen to match.
+    if (!inputRecordId && !INPUT_TABLES.has(view.storageKey)) return original;
+    const inputColumn = column === "invested" && view.storageKey !== "pm-book" ? "cost" : column;
     const holding = inputs.catalog.find(r => r.id === holdingId);
     const capital = inputs.catalog.find(r => r.id === capitalId);
-    const record = holding && fieldForColumn(holding, column) ? holding : capital;
-    const field = record && fieldForColumn(record, column);
+    const record = holding && fieldForColumn(holding, inputColumn) ? holding : capital;
+    const field = record && fieldForColumn(record, inputColumn);
     if (!record || !field) return original;
     // Live prices are not statement inputs. Their source mark remains editable
     // on the input sheet, without relabelling the live export as a source value.
     const sourceMatchesDisplay = record.kind !== "holding" || !position
-      || (position as unknown as Record<string, unknown>)[field] === record.values[field];
-    const exportable = sourceMatchesDisplay && !(record.kind === "holding" && field === "marketValue" && (position?.live || position?.priceEvidence)) && !(record.kind === "property" && field !== "area");
+      || ((position as unknown as Record<string, unknown>)[field] ?? null) === record.values[field];
+    const unit = record.fields.find(f => f.key === field)?.unit;
+    const exportable = sourceMatchesDisplay && (unit || displayCurrency === "INR") && !(record.kind === "holding" && field === "marketValue" && (position?.live || position?.priceEvidence)) && !(record.kind === "property" && field !== "area");
     const value = record.values[field];
     return cloneElement(original, {
       "data-input-record": record.id, "data-input-field": field,
       "data-input-export": exportable ? JSON.stringify({ id: record.id, field, source: record.source, version: record.versions[field] ?? "", value }) : undefined,
       ...(exporting && exportable ? { "data-export-value": value ?? "", "data-export-type": value == null ? "text" : "number", "data-export-format": record.fields.find(f => f.key === field)?.unit ? "#,##0.########" : '"₹"#,##0.00' } : {}),
-      ...(editing && !exporting ? { children: <TableNumberInput key={`${record.id}:${field}:${record.versions[field] ?? ""}:${value}`} record={record} field={field} /> } : {}),
+      ...(editing ? { children: <>{exporting && original.props.children as ReactNode}<div hidden={exporting} data-export-ignore><TableNumberInput key={`${record.id}:${field}:${record.versions[field] ?? ""}:${value}`} record={record} field={field} /></div></> } : {}),
       ...(!editing && !exporting && record.versions[field] ? { children: <>{original.props.children as ReactNode}<span data-export-ignore className="ml-1 text-[9px] font-normal text-emerald-600" title={`User-entered number · ${record.versions[field].slice(0, 10)}. The original statement is kept separately.`}>Edited</span></> } : {}),
     });
   };

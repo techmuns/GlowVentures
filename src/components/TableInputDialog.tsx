@@ -29,12 +29,14 @@ export function TableInputDialog({ close, changes, complete, recordIds }: { clos
     try { await saveTableInputs(changes!); complete?.(); close(); } catch (e) { setError((e as Error).message); setBusy(false); }
   };
   const matching = state.catalog.filter(r => (!recordIds?.length || recordIds.includes(r.id)) && `${r.label} ${r.account}`.toLowerCase().includes(query.toLowerCase()));
+  const older = state.saved.filter(s => { const r = state.catalog.find(r => r.id === s.id); return (!recordIds?.length || recordIds.includes(s.id)) && (!r || r.source !== s.source); });
   return createPortal(<div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4" onClick={e => { if (e.target === e.currentTarget && !busy) close(); }}>
     <div ref={panel} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="table-input-title" className="flex max-h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-xl border border-ink-600 bg-ink-900 p-5 text-slate-200 shadow-xl">
       <div className="flex items-start justify-between gap-4"><h2 id="table-input-title" className="text-lg font-semibold">{changes ? "Review Excel changes" : "Edit investment numbers"}</h2><button type="button" disabled={busy} onClick={close} aria-label="Close number editor" className="rounded ring-focus"><X className="h-5 w-5" /></button></div>
       <p className="my-2 text-sm text-slate-400">All money is in rupees (INR). Keep the format; only fill in or correct numbers. Yellow cells are missing data. Totals and returns are calculated.</p>
       {error && <p role="alert" className="my-2 text-sm text-loss">{error}</p>}
       {state.status !== "ready" && <p role="alert" className="my-2 text-sm text-loss">{state.status === "loading" ? "Loading saved numbers…" : state.error}</p>}
+      {!changes && older.length > 0 && <details className="my-2 text-xs text-amber-600"><summary>{older.length} older corrections need review</summary><p className="my-1">The source has changed. These older values are not applied. Re-enter a value on the current row if it is still correct.</p><ul>{older.map(s => <li key={`${s.id}:${s.field}`}>{state.catalog.find(r => r.id === s.id)?.label ?? s.id} · {s.field}: {s.value?.toLocaleString("en-IN") ?? "Blank"}</li>)}</ul></details>}
       {changes ? <>
         <p className="my-2 text-sm">{changes.length} number{changes.length === 1 ? "" : "s"} will be saved for everyone.</p>
         <ul className="overflow-auto text-sm">{changes.slice(0, 100).map(c => {

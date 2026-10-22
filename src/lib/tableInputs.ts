@@ -72,6 +72,7 @@ export function validateInputChanges(changes: unknown, catalog: InputRecord[]): 
     const r = records.get(change.id), f = r?.fields.find(f => f.key === change.field);
     if (!r || !f) return "An investment or column has changed. Download a fresh Excel file.";
     const key = `${change.id}\n${change.field}`;
+    if (change.reset !== undefined && typeof change.reset !== "boolean") return "The changes could not be read.";
     if (seen.has(key)) return "The file contains duplicate changes for the same number.";
     seen.add(key);
     if (change.source !== r.source || change.version !== (r.versions[change.field] ?? "")) return "These numbers have changed since your download. Download a fresh file before editing.";
