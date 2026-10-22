@@ -302,3 +302,7 @@
 - Every property field is optional, including name, address, owner/share and valuation date. Empty records save as Untitled property in the table, map and details, remain visible without an assigned member, and can be reopened to add details. New records no longer assume an apartment, vacant status or zero rent; changing status preserves entered rent.
 - Identical owner rows save once instead of blocking Save or doubling ownership. Partial or conflicting ownership stays editable; unknown shares remain unknown in family totals. Details show entered whole-property figures, so incomplete ownership does not hide the saved amounts there.
 - Record/API and local browser checks cover empty save/reload/edit, value without date or owner, duplicate-owner saving, missing shares, later additions, existing address search/dragging and unchanged valid share calculations. Production checks are read-only.
+
+### Stage 10ha — OUR BOOK VS BENCHMARK
+
+- Renamed the Morning CIO tab and its search result to “Our Book vs Benchmark”. The existing tab link and benchmark calculations stay the same.

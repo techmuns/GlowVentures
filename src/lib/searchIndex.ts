@@ -450,7 +450,7 @@ const VIEWS: { id: string; label: string; href: string; words: string[]; detail:
     detail: "Morning CIO · each fund's published NAV against the one before it" },
   { id: "view:allocation", label: "Allocation & risk", href: "/cio?tab=allocation", words: ["allocation", "concentration", "split", "capital deployment", "risk"],
     detail: "Morning CIO · how the book is split, what is still to be called, and where it is concentrated" },
-  { id: "view:nav-chart", label: "NAV vs Nifty 500", href: "/cio?tab=nav", words: ["nifty", "nifty 500", "benchmark", "nav chart", "index", "vs nifty"],
+  { id: "view:nav-chart", label: "Our Book vs Benchmark", href: "/cio?tab=nav", words: ["nifty", "nifty 500", "benchmark", "nav chart", "index", "vs nifty"],
     detail: "Morning CIO · the book's dated valuation series against the index" },
   // THE FAMILY'S OWN PRICE ALERTS (Stage 10cq) — every level they set, and
   // which have been reached. The words are the ones the alert boxes use.
