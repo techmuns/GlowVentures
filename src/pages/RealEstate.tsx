@@ -18,7 +18,7 @@ import { fmtNum, fmtPct, fmtDate } from "@/lib/format";
 import { PROPERTY_TYPES, PROPERTY_STATUSES, propertyFigures, wholePropertyFigures, propertyLabel, propertyTotal, hasPin, useProperties, type Property, type PropertyFigures } from "@/lib/realEstate";
 const PropertyMap = lazy(() => import("@/components/PropertyMap"));
 const VIEWS = [{ key: "table", label: "Table", icon: Table2 }, { key: "map", label: "Map", icon: MapIcon }] as const;
-const DEFAULT_TILES = ["value", "cost", "rent", "equity"];
+const DEFAULT_TILES = ["value", "cost", "rent"];
 const COLS = ["name", "type", "location", "owners", "area", "cost", "value", "rent", "yield", "status", "pin", "purchasedOn", "valuationDate", "debt", "equity", "netRent", "tenant", "leaseEnd", "titleStatus"];
 const OPTIONAL = ["purchasedOn", "valuationDate", "debt", "equity", "netRent", "tenant", "leaseEnd", "titleStatus"];
 const LABELS: Record<string, string> = { name: "Property", type: "Type", location: "Location", owners: "Owner / share", area: "Area", cost: "Cost", value: "Current value", rent: "Rent / month", yield: "Gross yield", status: "Status", pin: "Map pin", purchasedOn: "Purchased", valuationDate: "Valued on", debt: "Loan", equity: "Net equity", netRent: "Net rent / month", tenant: "Tenant", leaseEnd: "Lease ends", titleStatus: "Title" };
@@ -76,7 +76,7 @@ export function RealEstate() {
     return { id: id === "netRent" ? "net-rent" : id, label, value: money(total.value, { compact: true }), sub: coverage(total), icon,
       detail: `${shareTitle}${total.known < total.count ? ` Missing: ${filtered.filter(p => propertyFigures(p, scope.owners)[id] === null).map(propertyLabel).join(", ")}.` : ""}` };
   };
-  const metrics = [metric("value", "Property value", <Building2 className="h-4 w-4" />), metric("cost", "Total cost", <Wallet className="h-4 w-4" />), metric("rent", "Monthly rent", <Banknote className="h-4 w-4" />), metric("equity", "Net equity", <Landmark className="h-4 w-4" />), metric("debt", "Loan outstanding", <Landmark className="h-4 w-4" />), metric("netRent", "Net monthly rent", <Banknote className="h-4 w-4" />)];
+  const metrics = [metric("value", "Property value", <Building2 className="h-4 w-4" />), metric("cost", "Total cost", <Wallet className="h-4 w-4" />), metric("rent", "Monthly rent", <Banknote className="h-4 w-4" />), metric("debt", "Loan outstanding", <Landmark className="h-4 w-4" />), metric("netRent", "Net monthly rent", <Banknote className="h-4 w-4" />)];
   const filterSelect = (key: string, value: string, label: string, values: string[]) => <select aria-label={label} value={value} onChange={e => setFilter(key, e.target.value)} className="rounded-md border border-ink-600 bg-ink-800 px-2 py-1 text-xs text-slate-200">
     <option value="">{label}</option>{distinct(value ? [...values, value] : values).map(v => <option key={v} value={v}>{v}</option>)}
   </select>;

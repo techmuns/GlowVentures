@@ -339,3 +339,8 @@
 - Every table has Edit numbers, All inputs and Upload Excel beside the existing export. Single-investment source cells edit inline; full exports expand the tree and include nested tables, source input sheets and yellow missing-value cells. Totals, ratios, live prices and archived statement ledgers stay calculated/read-only.
 - Uploads preview changes, retain stable investment/field identities, reject altered structure, formulas and stale/conflicting edits, and commit the validated batch together to the existing GitHub dashboard store. Zero and unknown remain different. Property edits use the existing property record; holding corrections leave source statements and dated return records intact, with restore and provenance labels.
 - Private investment capital gaps can be filled without assigning them to every holding in a consolidated account. The private-book rollups and Morning CIO capital totals include those entered figures. Property ownership percentages and existing upcoming call amounts use their existing shared records. Drafts survive exports and warn on conflicting refreshes. Focused API, workbook, concurrency and isolated browser round-trip checks cover the shared workflow.
+
+### Stage 10hg — REAL ESTATE TILES DROP NET EQUITY
+
+- The family asked for Net equity to come off the Real Estate tiles. It is no longer a tile option, and the default strip is Property value, Total cost and Monthly rent. A saved layout that named it drops that slot (`SelectableTiles` filters unknown ids).
+- Net equity stays as an optional table column and in property details.
