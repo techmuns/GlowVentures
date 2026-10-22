@@ -68,7 +68,9 @@ try {
  await page.waitForFunction(n=>Number(document.querySelector('[data-market-summary]')?.dataset.marketCovered)>n, before);
  await table.locator('[data-seg-axis-option="sector"]').click();
  await page.waitForFunction(()=>document.querySelector('[data-segment-returns]')?.dataset.segAxis==='sector');
- assert.ok(await table.locator('[data-seg-cell="market"][data-market-return]:not([data-market-return=""])').count()>5);
+ // Stage 10gs: the Sector axis is Sector Composition's sectors, with the market return per sector.
+ await page.waitForFunction(()=>document.querySelector('[data-sector-attribution]')?.dataset.status==='ready');
+ assert.ok(await table.locator('[data-sa-cell="market"][data-market-return]:not([data-market-return=""])').count()>5);
  await page.screenshot({path:`${out}/sector-market-returns.png`});
  // Stage 10gu: every history is now kept in this browser, so the next visit draws the figure without fetching any.
  const covered = Number(await summary.getAttribute('data-market-covered')), kept = requests;

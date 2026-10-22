@@ -4,6 +4,7 @@ import fs from 'node:fs/promises';
 import { build } from 'esbuild';
 import { chromium } from 'playwright-core';
 import { installReadModelRoutes } from './read-model-api.mjs';
+import { GICS_SECTORS, UNCLASSIFIED } from '../../shared/sectors.mjs';
 const base = process.env.BASE || 'http://127.0.0.1:4173';
 assert.ok(['localhost', '127.0.0.1'].includes(new URL(base).hostname));
 const out = '.cache/returns-period';
@@ -132,8 +133,25 @@ try {
  await dialog.waitFor(); assert.match(await dialog.innerText(), /money added and taken out/); await page.keyboard.press('Escape');
  // Regrouping cannot change the measured pool; source-only returns get a named row.
  const gain = await table.getAttribute('data-seg-total-gain');
+ // The Sector axis is Sector Composition's own sectors (Stage 10gs): Consolidated and
+ // Direct Equity, every row a GICS sector, each opening into its contributors.
  await table.locator('[data-seg-axis-option="sector"]').click();
- await page.waitForFunction(() => document.querySelector('[data-segment-returns]')?.dataset.segAxis === 'sector');
+ const sectors = page.locator('[data-sector-attribution]');
+ await page.waitForFunction(() => document.querySelector('[data-sector-attribution]')?.dataset.status === 'ready');
+ assert.deepEqual(await sectors.locator('[data-sector-set-option]').evaluateAll(els => els.map(el => el.dataset.sectorSetOption)), ['consolidated', 'direct']);
+ assert.equal(await table.locator('tr[data-seg-row]').count(), 0);
+ for (const set of ['direct', 'consolidated']) {
+  await sectors.locator(`[data-sector-set-option="${set}"]`).click();
+  await page.waitForFunction(set => document.querySelector('[data-sector-attribution]')?.dataset.sectorSet === set, set);
+  const keys = await sectors.locator('tr[data-sa-row]').evaluateAll(els => els.map(el => el.dataset.saRow));
+  assert.ok(keys.length > 0 && keys.every(k => [...GICS_SECTORS, UNCLASSIFIED].includes(k)), `${set}: ${keys.join()}`);
+  const first = await sectors.locator('tr[data-sa-row]').first().getAttribute('data-sa-row');
+  if (await sectors.locator('tr[data-sa-row]').first().getAttribute('data-sa-open') !== '1') await sectors.locator('[data-sa-toggle]').first().click();
+  assert.ok(await sectors.locator(`tr[data-sa-child="${first}"]`).count() > 0, `${set}: ${first} opens into its contributors`);
+  await page.screenshot({ path: `${out}/sector-attribution-${set}.png` });
+ }
+ await table.locator('[data-seg-axis-option="security"]').click();
+ await page.waitForFunction(() => document.querySelector('[data-segment-returns]')?.dataset.segAxis === 'security');
  assert.equal(await table.getAttribute('data-seg-total-gain'), gain);
  assert.equal(await table.locator('tr[data-seg-row="__account_returns"]').count(), 1);
  await page.locator('[data-returns-period="inception"]').click();
