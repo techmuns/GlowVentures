@@ -1,7 +1,7 @@
 import { useTableExporting } from "@/lib/tableExportSnapshot";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Building2, MapPin, Table2, Map as MapIcon, Plus, Pencil, X, Wallet, Landmark, Banknote, Trash2 } from "lucide-react";
+import { Building2, MapPin, Table2, Map as MapIcon, Plus, Pencil, X, Wallet, Landmark, Banknote, Trash2, TrendingUp } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { DASH, AbsentValue } from "@/components/Absent";
 import { Card } from "@/components/Card";
@@ -15,19 +15,31 @@ import { PropertyEditor, emptyProperty } from "@/components/PropertyEditor";
 import { useTableView, sortRows, type Accessor } from "@/lib/tableView";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { fmtNum, fmtPct, fmtDate } from "@/lib/format";
-import { PROPERTY_TYPES, PROPERTY_STATUSES, propertyFigures, wholePropertyFigures, propertyLabel, propertyTotal, hasPin, useProperties, type Property, type PropertyFigures } from "@/lib/realEstate";
+import { PROPERTY_TYPES, PROPERTY_STATUSES, propertyFigures, wholePropertyFigures, propertyLabel, propertyTotal, hasPin, useProperties, receivedWithoutPurchase, costLabel, acquiredOnLabel, appreciationGap, type Property, type PropertyFigures } from "@/lib/realEstate";
 const PropertyMap = lazy(() => import("@/components/PropertyMap"));
 const VIEWS = [{ key: "table", label: "Table", icon: Table2 }, { key: "map", label: "Map", icon: MapIcon }] as const;
 const DEFAULT_TILES = ["value", "cost", "rent"];
-const COLS = ["name", "type", "location", "owners", "area", "cost", "value", "rent", "yield", "status", "pin", "purchasedOn", "valuationDate", "debt", "equity", "netRent", "tenant", "leaseEnd", "titleStatus"];
-const OPTIONAL = ["purchasedOn", "valuationDate", "debt", "equity", "netRent", "tenant", "leaseEnd", "titleStatus"];
-const LABELS: Record<string, string> = { name: "Property", type: "Type", location: "Location", owners: "Owner / share", area: "Area", cost: "Cost", value: "Current value", rent: "Rent / month", yield: "Gross yield", status: "Status", pin: "Map pin", purchasedOn: "Purchased", valuationDate: "Valued on", debt: "Loan", equity: "Net equity", netRent: "Net rent / month", tenant: "Tenant", leaseEnd: "Lease ends", titleStatus: "Title" };
+const COLS = ["name", "type", "location", "owners", "area", "cost", "value", "gain", "gainPct", "rent", "yield", "status", "pin", "acquisition", "purchasedOn", "valuationDate", "debt", "equity", "netRent", "tenant", "leaseEnd", "titleStatus"];
+const OPTIONAL = ["acquisition", "purchasedOn", "valuationDate", "debt", "equity", "netRent", "tenant", "leaseEnd", "titleStatus"];
+const LABELS: Record<string, string> = { name: "Property", type: "Type", location: "Location", owners: "Owner / share", area: "Area", cost: "Cost", value: "Current value", gain: "Appreciation", gainPct: "Appreciation %", rent: "Rent / month", yield: "Gross yield", status: "Status", pin: "Map pin", acquisition: "Acquisition", purchasedOn: "Acquired on", valuationDate: "Valued on", debt: "Loan", equity: "Net equity", netRent: "Net rent / month", tenant: "Tenant", leaseEnd: "Lease ends", titleStatus: "Title" };
+type Summed = Exclude<keyof PropertyFigures, "share" | "gainPct">;
 const TYPES_COLOR: Record<string, string> = { Land: "#678355", Apartment: "#596da4", "Villa / house": "#aa783b", Commercial: "#925e85", Office: "#477f83", Warehouse: "#797054", Industrial: "#786e9c", Farmhouse: "#41795e", Other: "#737373" };
 const date = (value: string | null) => value ? fmtDate(value) : DASH;
 const location = (p: Property) => [p.city, p.state, p.country === "India" ? "" : p.country].filter(Boolean).join(", ");
 const ownerNames = (p: Property) => p.owners.map(o => `${o.name || "Owner not entered"}${o.share === null ? " · share not entered" : ` ${new Intl.NumberFormat("en-IN", { maximumFractionDigits: 6 }).format(o.share)}%`}`).join(" · ") || DASH;
 const distinct = (values: string[]) => [...new Set(values.filter(Boolean))].sort((a, b) => a.localeCompare(b));
 const shareTitle = "Money follows the selected owners' recorded shares. Area and rent agreements describe the whole property.";
+const shareMissing = "Ownership share not entered or incomplete. Whole-property figures are available in property details.";
+// An absent figure and the few words that say why; the full reason is its hover.
+const gap = (reason: string, short: string) => <span title={reason}><AbsentValue /><span className="mt-1 block font-sans text-[10px] text-slate-500">{short}</span></span>;
+const receivedTag = (p: Property) => p.acquisition === "Inherited" ? "On inheritance" : "On gift";
+// Cost totals that include values on the date of inheritance or gift say how many.
+function receivedNote(list: Property[], owners: ReadonlySet<string> | null) {
+  const received = list.filter(p => receivedWithoutPurchase(p) && propertyFigures(p, owners).cost !== null);
+  if (!received.length) return "";
+  const kinds = new Set(received.map(p => p.acquisition));
+  return `${received.length} at value on ${kinds.size > 1 ? "inheritance or gift" : kinds.has("Inherited") ? "inheritance" : "gift"}`;
+}
 
 export function RealEstate() {
   const exportingTable = useTableExporting();
@@ -52,7 +64,7 @@ export function RealEstate() {
   };
   const scoped = useMemo(() => store.properties.filter(p => !scope.owners || !p.owners.some(o => o.ownerId) || p.owners.some(o => o.ownerId && scope.owners!.has(o.ownerId))), [store.properties, scope.owners]);
   const filtered = useMemo(() => exportingTable ? scoped : scoped.filter(p => (!country || p.country === country) && (!state || p.state === state) && (!city || p.city === city) && (!type || p.type === type) && (!status || p.status === status)
-    && (!q.trim() || [propertyLabel(p), p.address, p.city, p.state, p.country, p.pincode, p.type, p.tenant, ...p.owners.map(o => o.name)].join(" ").toLowerCase().includes(q.trim().toLowerCase()))), [exportingTable, scoped, country, state, city, type, status, q]);
+    && (!q.trim() || [propertyLabel(p), p.address, p.city, p.state, p.country, p.pincode, p.type, p.acquisition, p.tenant, ...p.owners.map(o => o.name)].join(" ").toLowerCase().includes(q.trim().toLowerCase()))), [exportingTable, scoped, country, state, city, type, status, q]);
   const accessors = useMemo<Record<string, Accessor<Property>>>(() => Object.fromEntries(COLS.map(key => [key, (p: Property) => {
     const figures = propertyFigures(p, scope.owners);
     if (key in figures) return figures[key as keyof PropertyFigures];
@@ -70,22 +82,43 @@ export function RealEstate() {
   useEffect(() => { if (activeProperty && !dialog.current?.open) dialog.current?.showModal(); else if (!activeProperty && dialog.current?.open) dialog.current.close(); }, [activeProperty]);
   const open = (p: Property) => { setEditing(false); setRemoving(false); setRemoveError(""); const next = new URLSearchParams(params); next.set("property", p.id); setParams(next); };
   const coverage = (t: ReturnType<typeof propertyTotal>) => t.count && t.known < t.count ? `${t.known} of ${t.count} properties` : `${t.count} ${t.count === 1 ? "property" : "properties"}`;
-  const sum = (key: Exclude<keyof PropertyFigures, "share">) => propertyTotal(filtered, key, scope.owners);
-  const metric = (id: Exclude<keyof PropertyFigures, "share">, label: string, icon: ReactNode): TileMetric => {
+  const sum = (key: Summed) => propertyTotal(filtered, key, scope.owners);
+  const missingName = (p: Property, id: Summed) => (id === "cost" || id === "gain") && receivedWithoutPurchase(p) && p.cost === null ? `${propertyLabel(p)} (${p.acquisition.toLowerCase()}, no cost entered)` : propertyLabel(p);
+  const metric = (id: Summed, label: string, icon: ReactNode): TileMetric => {
     const total = sum(id);
-    return { id: id === "netRent" ? "net-rent" : id, label, value: money(total.value, { compact: true }), sub: coverage(total), icon,
-      detail: `${shareTitle}${total.known < total.count ? ` Missing: ${filtered.filter(p => propertyFigures(p, scope.owners)[id] === null).map(propertyLabel).join(", ")}.` : ""}` };
+    const note = id === "cost" ? receivedNote(filtered, scope.owners) : "";
+    return { id: id === "netRent" ? "net-rent" : id, label, value: money(total.value, { compact: true }), sub: `${coverage(total)}${note ? ` · ${note}` : ""}`, icon,
+      detail: `${shareTitle}${total.known < total.count ? ` Missing: ${filtered.filter(p => propertyFigures(p, scope.owners)[id] === null).map(p => missingName(p, id)).join(", ")}.` : ""}` };
   };
-  const metrics = [metric("value", "Property value", <Building2 className="h-4 w-4" />), metric("cost", "Total cost", <Wallet className="h-4 w-4" />), metric("rent", "Monthly rent", <Banknote className="h-4 w-4" />), metric("debt", "Loan outstanding", <Landmark className="h-4 w-4" />), metric("netRent", "Net monthly rent", <Banknote className="h-4 w-4" />)];
+  const metrics = [metric("value", "Property value", <Building2 className="h-4 w-4" />), metric("cost", "Total cost", <Wallet className="h-4 w-4" />), metric("gain", "Appreciation", <TrendingUp className="h-4 w-4" />), metric("rent", "Monthly rent", <Banknote className="h-4 w-4" />), metric("debt", "Loan outstanding", <Landmark className="h-4 w-4" />), metric("netRent", "Net monthly rent", <Banknote className="h-4 w-4" />)];
   const filterSelect = (key: string, value: string, label: string, values: string[]) => <select aria-label={label} value={value} onChange={e => setFilter(key, e.target.value)} className="rounded-md border border-ink-600 bg-ink-800 px-2 py-1 text-xs text-slate-200">
     <option value="">{label}</option>{distinct(value ? [...values, value] : values).map(v => <option key={v} value={v}>{v}</option>)}
   </select>;
   const empty = store.loading ? "Loading properties…" : store.error && !store.ready ? "Properties unavailable" : scoped.length === 0 ? scope.owners ? "No properties for the selected members" : "No properties added" : "No matching properties";
   const figures = selected ? wholePropertyFigures(selected) : null;
-  const numeric = new Set(["area", "cost", "value", "rent", "yield", "debt", "equity", "netRent"]);
+  const inlineGap = (reason: string, short: string) => <span title={reason}><AbsentValue /> <span className="text-xs text-slate-500">{short}</span></span>;
+  const appreciation = (p: Property, f: PropertyFigures): ReactNode => {
+    const why = appreciationGap(p);
+    if (why) return inlineGap(why.reason, why.short);
+    return <span className={f.gain! > 0 ? "text-gain" : f.gain! < 0 ? "text-loss" : ""}>{money(f.gain, { sign: true })} · {fmtPct(f.gainPct, { sign: true })}{receivedWithoutPurchase(p) && <span className="text-xs text-slate-500"> since {p.acquisition === "Inherited" ? "inheritance" : "gift"}</span>}</span>;
+  };
+  const numeric = new Set(["area", "cost", "value", "gain", "gainPct", "rent", "yield", "debt", "equity", "netRent"]);
   const cell = (p: Property, key: string): ReactNode => {
     const f = propertyFigures(p, scope.owners);
-    if (["cost", "value", "rent", "debt", "equity", "netRent"].includes(key)) return f[key as "cost"] === null ? <span title={f.share === null ? "Ownership share not entered or incomplete. Whole-property figures are available in property details." : key === "equity" ? "Needs current value and loan outstanding" : key === "netRent" ? "Needs monthly rent and monthly costs" : "Not entered"}><AbsentValue /></span> : <span title={`${shareTitle}${p.valuationDate && key === "value" ? ` Valued ${date(p.valuationDate)}.` : ""}`}>{money(f[key as "cost"])}</span>;
+    if (key === "cost" && receivedWithoutPurchase(p) && f.share !== null) return f.cost === null
+      ? gap(`${p.acquisition}, so there is no purchase cost. ${costLabel(p)} not entered.`, `${p.acquisition} · no cost`)
+      : <span title={`${costLabel(p)}, entered in place of a purchase cost. ${shareTitle}`}>{money(f.cost)}<span data-export-ignore className="mt-1 block font-sans text-[10px] text-slate-500">{receivedTag(p)}</span></span>;
+    if (key === "gain" || key === "gainPct") {
+      const why = appreciationGap(p);
+      if (why) return gap(why.reason, why.short);
+      if (key === "gain" && f.gain === null) return <span title={shareMissing}><AbsentValue /></span>;
+      const n = key === "gain" ? f.gain! : f.gainPct!;
+      return <span className={n > 0 ? "text-gain" : n < 0 ? "text-loss" : ""} title={`Current value less ${costLabel(p).toLowerCase()}${key === "gainPct" ? `, as a share of the ${costLabel(p).toLowerCase()}. Whole property.` : `. ${shareTitle}`}`}>
+        {key === "gain" ? money(n, { sign: true }) : fmtPct(n, { sign: true })}
+        {receivedWithoutPurchase(p) && <span data-export-ignore className="mt-1 block font-sans text-[10px] text-slate-500">Since {p.acquisition === "Inherited" ? "inheritance" : "gift"}</span>}
+      </span>;
+    }
+    if (["cost", "value", "rent", "debt", "equity", "netRent"].includes(key)) return f[key as "cost"] === null ? <span title={f.share === null ? shareMissing : key === "equity" ? "Needs current value and loan outstanding" : key === "netRent" ? "Needs monthly rent and monthly costs" : "Not entered"}><AbsentValue /></span> : <span title={`${shareTitle}${p.valuationDate && key === "value" ? ` Valued ${date(p.valuationDate)}.` : ""}`}>{money(f[key as "cost"])}</span>;
     switch (key) {
       case "name": return <div className="flex items-center gap-2"><button type="button" onClick={() => open(p)} className="text-left font-medium text-slate-100 hover:text-champagne-400 underline decoration-ink-600 underline-offset-4">{propertyLabel(p)}</button><button type="button" aria-label={`Edit ${propertyLabel(p)}`} title="Edit property" className="shrink-0 text-slate-500 hover:text-champagne-400" onClick={() => { open(p); setEditing(true); }}><Pencil className="h-3 w-3" /></button></div>;
       case "location": return <span title={[p.address, p.pincode].filter(Boolean).join(", ")}>{location(p) || DASH}</span>;
@@ -123,7 +156,7 @@ export function RealEstate() {
         <tbody>{rows.map(p => <Tr key={p.id} view={table} className="border-b border-ink-700/50" data-property={p.id}>{COLS.map(key => <td key={key} className={`px-3 py-3 ${numeric.has(key) ? "text-right mono tabular whitespace-nowrap" : "text-slate-300"} ${key === "owners" ? "min-w-[10rem] max-w-[15rem] text-xs" : ""}`}>{cell(p, key)}</td>)}</Tr>)}
           {!rows.length && <tr><td colSpan={table.order.length} className="px-5 py-14 text-center text-sm text-slate-500">{empty}{store.ready && !scoped.length && !scope.owners && <button type="button" className="mx-auto mt-3 block text-champagne-400 underline" onClick={() => { setAdding(emptyProperty()); setEditing(true); }}>Add property</button>}</td></tr>}
         </tbody>
-        {!!rows.length && <tfoot><TrFoot view={table} label="Total" className="border-t border-ink-600 bg-ink-800/50 font-semibold" cells={Object.fromEntries(["cost", "value", "rent", "debt", "equity", "netRent"].map(key => { const total = sum(key as "cost"); return [key, <td key={key} className="px-3 py-3 text-right mono tabular whitespace-nowrap" title={shareTitle}>{money(total.value)}{total.known < total.count && <span data-export-ignore className="mt-1 block font-sans text-[10px] font-normal text-slate-500">{coverage(total)}</span>}</td>]; }))} /></tfoot>}
+        {!!rows.length && <tfoot><TrFoot view={table} label="Total" className="border-t border-ink-600 bg-ink-800/50 font-semibold" cells={Object.fromEntries((["cost", "value", "gain", "rent", "debt", "equity", "netRent"] as const).map(key => { const total = sum(key); const note = key === "cost" ? receivedNote(filtered, scope.owners) : ""; return [key, <td key={key} className="px-3 py-3 text-right mono tabular whitespace-nowrap" title={shareTitle}>{key === "gain" ? money(total.value, { sign: true }) : money(total.value)}{(total.known < total.count || note) && <span data-export-ignore className="mt-1 block font-sans text-[10px] font-normal text-slate-500">{[total.known < total.count ? coverage(total) : "", note].filter(Boolean).join(" · ")}</span>}</td>]; }))} /></tfoot>}
       </ExportableTable></div> : <div className="grid lg:grid-cols-[minmax(0,1fr)_19rem]">
         <div className="min-w-0"><Suspense fallback={<div className="p-16 text-sm text-slate-400">Loading map…</div>}><PropertyMap properties={filtered} onSelect={open} /></Suspense>
           <div className="flex flex-wrap gap-x-4 gap-y-1 border-t border-ink-700 px-4 py-2 text-xs text-slate-400">{distinct(filtered.map(p => p.type)).map(t => <span key={t} className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ background: TYPES_COLOR[t] }} />{t}</span>)}<span className="ml-auto">{filtered.filter(hasPin).length} pinned · {filtered.filter(p => !hasPin(p)).length} need a pin</span></div>
@@ -146,7 +179,9 @@ export function RealEstate() {
           <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {([
               ["Address", [selected.address, location(selected), selected.pincode].filter(Boolean).join(", ") || DASH], ["Owner / share", ownerNames(selected)], ["Area", selected.area === null ? DASH : [`${fmtNum(selected.area, 2).replace(/\.00$/, "")} ${selected.areaUnit}`.trim(), selected.areaBasis].filter(Boolean).join(" · ")],
-              ["Current value", money(figures.value)], ["Valued on", date(selected.valuationDate)], ["Cost", money(figures.cost)], ["Purchased", date(selected.purchasedOn)], ["Loan outstanding", money(figures.debt)], ["Net equity", money(figures.equity)],
+              ["Current value", money(figures.value)], ["Valued on", date(selected.valuationDate)], ["Acquisition", selected.acquisition],
+              [costLabel(selected), figures.cost === null && receivedWithoutPurchase(selected) ? inlineGap(`${selected.acquisition}, so there is no purchase cost. ${costLabel(selected)} not entered.`, "Not entered") : money(figures.cost)],
+              [acquiredOnLabel(selected), date(selected.purchasedOn)], ["Appreciation", appreciation(selected, figures)], ["Loan outstanding", money(figures.debt)], ["Net equity", money(figures.equity)],
               ["Monthly rent", money(figures.rent)], ["Monthly costs", money(figures.costs)], ["Net monthly rent", money(figures.netRent)], ["Gross rental yield", fmtPct(figures.yield)], ["Tenant", selected.tenant || "—"], ["Lease ends", date(selected.leaseEnd)], ["Title", selected.titleStatus],
             ] as [string, ReactNode][]).map(([label, value]) => <div key={label}><dt className="label-xs">{label}</dt><dd className="mt-1 text-sm text-slate-200">{value || DASH}</dd></div>)}
           </dl>

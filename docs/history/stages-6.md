@@ -338,3 +338,10 @@
 
 - The family asked for Net equity to come off the Real Estate tiles. It is no longer a tile option, and the default strip is Property value, Total cost and Monthly rent. A saved layout that named it drops that slot (`SelectableTiles` filters unknown ids).
 - Net equity stays as an optional table column and in property details.
+
+### Stage 10hh — INHERITED AND GIFTED PROPERTIES WITHOUT A PURCHASE COST
+
+- A property records how it was acquired: Purchased, Inherited or Gifted (`acquisition`; an older record reads as not entered). For an inherited or gifted one the editor asks for the value on the date of inheritance (or gift) instead of a total cost, may leave it blank, and refuses ₹0, which would show the whole value as appreciation. The date field is relabelled to match.
+- That value is labelled wherever it appears: "On inheritance" under the cost cell, the detail row's own label, and the Total cost tile and footer count how many of their properties it covers.
+- New Appreciation and Appreciation % columns (and an Appreciation tile option). Without a cost, a current value or a cost above ₹0, both show — with the reason (`appreciationGap`), never 0% or 100%; with an inheritance value they read "Since inheritance". The percentage is whole-property, like gross yield.
+- Tests: `test:real-estate` (acquisition, blank and ₹0 inheritance values, labels, older ₹0 costs, shares); `check-real-estate.mjs` adds an inherited property through the editor and reads its cells.
