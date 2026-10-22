@@ -9,6 +9,7 @@ export function createTableWorkbook(snapshot: TableExport): ExcelJS.Workbook {
   book.creator = "Glow Ventures";
   book.title = snapshot.title;
   const targets: { sheet: string; cell: string; input: InputChange }[] = [];
+  const notes: { sheet: string; cell: string; text: string }[] = [];
   const draw = (snapshot: TableExport, name: string) => {
   const sheet = book.addWorksheet(name);
   const occupied = new Set<string>();
@@ -31,7 +32,7 @@ export function createTableWorkbook(snapshot: TableExport): ExcelJS.Workbook {
         : (row.depth ?? 0) >= 3 ? "FFD0DEF0" : row.depth === 2 ? "FFDBE8FA" : row.depth === 1 ? (r % 2 ? "FFE5EEFB" : "FFEDF4FF") : r % 2 === 0 ? "FFF8F7F3" : null;
       if (fill) cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: fill } };
       const note = [source.note, typeof value === "number" && source.value === undefined ? `Displayed: ${source.text}` : null].filter(Boolean).join("\n\n");
-      if (note) cell.note = note;
+      if (note) notes.push({ sheet: sheet.name, cell: cell.address, text: note });
       if (width > 1 || height > 1) {
         sheet.mergeCells(r + 1, c, r + height, c + width - 1);
         for (let rr = r + 1; rr < r + 1 + height; rr++) for (let cc = c; cc < c + width; cc++) occupied.add(`${rr}:${cc}`);
@@ -68,6 +69,31 @@ export function createTableWorkbook(snapshot: TableExport): ExcelJS.Workbook {
     const sheet = book.getWorksheet(name)!, view = sheet.views[0];
     fitExcelWorksheet(sheet, view?.state === "frozen" ? view.ySplit ?? 0 : 0, view?.state === "frozen" ? view.xSplit ?? 0 : 0);
   }
+  // Excel stores each cell comment as a separate VML shape. A fully expanded
+  // book can otherwise inflate hundreds of MB before compression, making an
+  // ordinary download impractical to open/upload. Keep every explanation, but
+  // group repeated text and cell references in a plain worksheet for large tables.
+  const groupedNotes = notes.length > 1000;
+  if (groupedNotes) {
+    const sheet = book.addWorksheet("Cell notes");
+    sheet.addRow(["Worksheet", "Cells", "Explanation"]);
+    const groups = new Map<string, Map<string, string[]>>();
+    for (const note of notes) {
+      if (!groups.has(note.sheet)) groups.set(note.sheet, new Map());
+      const texts = groups.get(note.sheet)!;
+      if (!texts.has(note.text)) texts.set(note.text, []);
+      texts.get(note.text)!.push(note.cell);
+    }
+    for (const [name, texts] of groups) for (const [text, cells] of texts)
+      for (let i = 0; i < cells.length; i += 50) sheet.addRow([name, cells.slice(i, i + 50).join(", "), text]);
+    sheet.autoFilter = `A1:C${sheet.rowCount}`;
+    sheet.getRow(1).eachCell(cell => {
+      cell.font = { name: "Calibri", bold: true, color: { argb: "FFFFFFFF" } };
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF26213E" } };
+    });
+    sheet.eachRow(row => { row.alignment = { vertical: "top", wrapText: true }; });
+    fitExcelWorksheet(sheet, 1, 0, { maxWidths: { 1: 32, 2: 60, 3: 100 } });
+  } else for (const note of notes) book.getWorksheet(note.sheet)!.getCell(note.cell).note = note.text;
   const about = book.addWorksheet("About");
   about.addRows([
     ["Table", snapshot.title], ["Dashboard", snapshot.url], ["Exported at", new Date().toISOString()],
@@ -79,6 +105,7 @@ export function createTableWorkbook(snapshot: TableExport): ExcelJS.Workbook {
   fitExcelWorksheet(about, 0);
   if (snapshot.inputs) addInputWorkbook(book, snapshot.inputs, targets);
   else about.addRow(["Upload Excel", "This download is read-only. Re-export after saved numbers have loaded to edit and sync numbers."]);
+  if (groupedNotes) about.addRow(["Cell explanations", "For this expanded export, explanations are grouped in Cell notes by worksheet and cell address. Editable input cells keep their own notes."]);
   about.addRows(detailNames);
   about.eachRow(row => { row.alignment = { wrapText: true, vertical: "top" }; row.getCell(1).font = { bold: true }; });
   fitExcelWorksheet(about, 0);

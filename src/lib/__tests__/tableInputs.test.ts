@@ -108,7 +108,14 @@ const hierarchy = createTableWorkbook({ title: "Hierarchy", url: snapshot.url, r
 ] });
 assert.equal(hierarchy.getWorksheet("Table")!.getCell("A2").alignment.indent, 2);
 assert.equal((hierarchy.getWorksheet("Table")!.getCell("A2").fill as ExcelJS.FillPattern).fgColor?.argb, "FFDBE8FA");
+const manyNotes = createTableWorkbook({ title: "Large notes", url: snapshot.url, inputs: [target], rows: Array.from({ length: 1002 }, () => ({ kind: "body" as const, cells: [{ text: "—", note: "Missing purchase cost" }] })) });
+assert.ok(manyNotes.getWorksheet("Cell notes"), "large exports avoid a VML shape for every repeated explanation");
+assert.equal(manyNotes.getWorksheet("Table")!.getCell("A1").note, undefined);
+assert.equal(manyNotes.getWorksheet("Cell notes")!.rowCount, 22, "repeated notes retain every reference in bounded groups");
+assert.match(manyNotes.getWorksheet("Cell notes")!.getCell("B22").text, /A1002/);
+assert.equal(manyNotes.getWorksheet("Cell notes")!.getCell("C2").text, "Missing purchase cost");
 const bytes = async (b: ExcelJS.Workbook) => await b.xlsx.writeBuffer() as unknown as ArrayBuffer;
+assert.deepEqual(await readInputWorkbook(await bytes(manyNotes), source), [], "grouped explanation sheets remain an unchanged, valid upload");
 assert.deepEqual(await readInputWorkbook(await bytes(exported), source), [], "an untouched workbook makes no changes");
 exported.getWorksheet("Holding inputs")!.getCell("D2").value = 0;
 assert.deepEqual((await readInputWorkbook(await bytes(exported), source)).map(c => [c.id, c.field, c.value]), [[target.id, "quantity", 0]]);
