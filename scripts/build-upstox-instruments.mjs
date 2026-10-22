@@ -34,7 +34,29 @@ const ALIASES = {
   "pilani-investment-and-industries": ["PILANIINVS", "INE417C01014"],
   "fedbank-financial-services": ["FEDFINA", "INE007N01010"],
   "gujarat-gas": ["GUJENERGY", "INE844O01030"],
+  // BSE SME listing of 4 Aug 2026 (issue reports by 5paisa and Groww give ISIN
+  // INE288301026); Upstox's BSE master abbreviates the name to
+  // "POOJAA PRECISION ENGG. LIMITED", so the statement's spelling never matches.
+  "poojaa-precision-engineering": ["BSE:PPEL", "INE288301026"],
 };
+// AN ISIN A FACE-VALUE SPLIT RETIRED, AND THE ONE THAT REPLACED IT (Stage 10he).
+// A statement or fund filing dated before the split still prints the old ISIN,
+// which no listing carries any more, so the holding lost its quote identity.
+// Used only where the old ISIN has no listing left; each pair must be the same
+// issuer and instrument class (the first nine characters), and the successor
+// must still carry any symbol the statement printed.
+const ISIN_SUCCESSORS = {
+  // Shankara Buildpro: ₹10 → ₹2 sub-division, ex 8 Oct 2026 (NSE, in the saved
+  // corporate-action capture); Upstox lists BUILDPRO under INE24OJ01029 only.
+  INE24OJ01011: "INE24OJ01029",
+  // JSW Dulux: 1:10 sub-division, record date 22 Oct 2026 (the company's
+  // notice, reported by Kotak Neo on 22 Sep 2026); Upstox lists JSWDULUX under
+  // INE133A01029 only.
+  INE133A01011: "INE133A01029",
+};
+for (const [from, to] of Object.entries(ISIN_SUCCESSORS)) {
+  if (from.slice(0, 9) !== to.slice(0, 9)) throw new Error(`build-upstox-instruments: ${from} -> ${to} is not the same issuer and class`);
+}
 const read = (p) => JSON.parse(readFileSync(join(ROOT, p), "utf8"));
 const die = (m) => { throw new Error(`build-upstox-instruments: ${m}`); };
 function bookArray(src, name) {
@@ -73,6 +95,11 @@ async function main() {
   }));
   const index = instrumentIndex(lists.flat());
   const resolve = (e) => {
+    const successor = e.isin && ISIN_SUCCESSORS[e.isin];
+    if (successor && !index.byIsin.has(e.isin)) {
+      const result = resolveInstrument({ ...e, isin: successor }, index);
+      return result.instrument ? { ...result, joinedBy: `${result.joinedBy}+successor` } : result;
+    }
     const alias = ALIASES[e.key];
     if (alias && !e.symbol) {
       if (e.isin && e.isin !== alias[1]) return { reason: "statement ISIN disagrees with the verified listing alias" };

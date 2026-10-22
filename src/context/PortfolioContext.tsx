@@ -17,7 +17,7 @@ import type { Portfolio, Position } from "@/lib/types";
 import { dedupedPositions, publicPrivateSplit, holdingBucket, DIRECT_EQUITY_BUCKET } from "@/lib/analytics";
 import { accountIndex, engagementOf } from "@/lib/accounts";
 import { SUPPORTED_DISPLAY_CURRENCIES, type DisplayCurrency, type FxRate, type FxState, fetchInrPerUsd, readSavedRate, saveRate, resolveFx, rateOf, effectiveCurrency } from "@/lib/fx";
-import { fetchQuotes, symbolsFor, quoteSymbolsFor, quoteSymbolFor, holdingQuoteSymbolFor, applyQuotes, pendingAmong, quoteFeedNames, type QuoteFeed } from "@/lib/quotes";
+import { fetchQuotes, symbolFor, symbolsFor, quoteSymbolsFor, quoteSymbolFor, holdingQuoteSymbolFor, listingIsinFor, applyQuotes, pendingAmong, quoteFeedNames, type QuoteFeed } from "@/lib/quotes";
 import { applyFundNavs, depositoryFundHoldings, partialValuationNotes, unpricedStatementUnits, withPartialValuation } from "@/lib/fundNavs";
 import { depositoryShareHoldings, depositoryShareIsins, depositoryShareSymbols, shareCandidates } from "@/lib/depositoryShares";
 import { applyCorporateActionQuotes, fetchCorporateActions, liveWithheldReason, savedCorporateActions, type ActionFeed, type ActionReturn } from "@/lib/corporateActions";
@@ -423,7 +423,10 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       // cannot pass the corporate-action gate, and would never be a row.
       const latest = await fetchCorporateActions(
         [...symbolsFor(BOOK_POSITIONS), ...depositoryShareSymbols()],
-        [...BOOK_POSITIONS.flatMap((p) => p.isin ? [p.isin] : []), ...depositoryShareIsins()],
+        // A holding whose statement prints neither an ISIN nor an NSE symbol is
+        // asked about by its listing's ISIN (Stage 10he).
+        [...BOOK_POSITIONS.flatMap((p) => { const isin = p.isin || (symbolFor(p) ? null : listingIsinFor(p)); return isin ? [isin] : []; }),
+          ...depositoryShareIsins()],
         controller.signal,
       );
       if (controller.signal.aborted) return;
