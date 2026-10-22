@@ -1,5 +1,7 @@
 import type { Account, Commitment, Position } from "./types";
 
+export const MAX_TABLE_WORKBOOK_BYTES = 64_000_000;
+
 export type InputField = { key: string; label: string; signed?: boolean; unit?: string };
 export const HOLDING_INPUTS: InputField[] = [
   { key: "quantity", label: "Units", unit: "units" }, { key: "costBasis", label: "Cost of units held" },

@@ -4,7 +4,7 @@ import { FileSpreadsheet, Upload, Pencil } from "lucide-react";
 import { TableEditing } from "./TableNumberInput";
 import { TableInputDialog } from "./TableInputDialog";
 import { refreshTableInputs, useTableInputs } from "@/lib/tableInputStore";
-import type { InputChange } from "@/lib/tableInputs";
+import { MAX_TABLE_WORKBOOK_BYTES, type InputChange } from "@/lib/tableInputs";
 import { readTableExport } from "@/lib/tableExport";
 import { prepareTableExport, setTableExporting, useTableExporting } from "@/lib/tableExportSnapshot";
 
@@ -94,7 +94,7 @@ export function ExportableTable({ children, exportName, controlsHost, ...props }
     if (!file || busyRef.current) return;
     busyRef.current = true; setBusy(true); setError(null); setMessage("");
     try {
-      if (!/\.xlsx$/i.test(file.name) || file.size > 12_000_000) throw new Error("Upload the downloaded .xlsx file, under 12 MB.");
+      if (!/\.xlsx$/i.test(file.name) || file.size > MAX_TABLE_WORKBOOK_BYTES) throw new Error("Upload the downloaded .xlsx file, under 64 MB.");
       const { readInputWorkbook } = await import("@/lib/tableInputExcel");
       const changes = await readInputWorkbook(await file.arrayBuffer(), inputStateRef.current.catalog);
       if (changes.length) setDialog(changes); else setMessage("No number changes found.");
