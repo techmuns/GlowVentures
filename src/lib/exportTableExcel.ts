@@ -25,9 +25,11 @@ export function createTableWorkbook(snapshot: TableExport): ExcelJS.Workbook {
       cell.value = source.hyperlink && typeof value === "string" ? { text: value, hyperlink: source.hyperlink } : value;
       if (format) cell.numFmt = format;
       if (source.input) targets.push({ sheet: sheet.name, cell: cell.address, input: source.input });
-      cell.font = { name: "Calibri", size: 11, bold: row.kind !== "body", color: { argb: row.kind === "header" ? "FFFFFFFF" : "FF202438" } };
-      cell.alignment = { vertical: "top", wrapText: true, horizontal: typeof value === "number" ? "right" : "left" };
-      if (row.kind !== "body" || r % 2 === 0) cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: row.kind === "header" ? "FF26213E" : row.kind === "footer" ? "FFF1E5C3" : "FFF8F7F3" } };
+      cell.font = { name: "Calibri", size: 11, bold: row.kind !== "body" || row.section, color: { argb: row.kind === "header" ? "FFFFFFFF" : "FF202438" } };
+      cell.alignment = { vertical: "top", wrapText: true, horizontal: typeof value === "number" ? "right" : "left", ...(source.depth ? { indent: source.depth } : {}) };
+      const fill = row.kind === "header" ? "FF26213E" : row.kind === "footer" || row.section ? "FFF1E5C3"
+        : (row.depth ?? 0) >= 3 ? "FFD0DEF0" : row.depth === 2 ? "FFDBE8FA" : row.depth === 1 ? (r % 2 ? "FFE5EEFB" : "FFEDF4FF") : r % 2 === 0 ? "FFF8F7F3" : null;
+      if (fill) cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: fill } };
       const note = [source.note, typeof value === "number" && source.value === undefined ? `Displayed: ${source.text}` : null].filter(Boolean).join("\n\n");
       if (note) cell.note = note;
       if (width > 1 || height > 1) {

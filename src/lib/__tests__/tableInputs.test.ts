@@ -101,6 +101,12 @@ assert.ok(exported.getWorksheet("Holding inputs")!.getColumn(1).width! <= 48 && 
 const nested = createTableWorkbook({ ...snapshot, rows: [...snapshot.rows, { kind: "body", cells: [{ text: "", colSpan: 3 }] }], nested: [{ context: "Test sector", parentRow: 2, title: "Test sector companies", url: snapshot.url, rows: snapshot.rows }] });
 assert.ok(nested.getWorksheet("Detail 1 Test sector"));
 assert.match(nested.getWorksheet("Table")!.getCell("A3").text, /See Detail 1 Test sector/, "a nested sheet stays attached to its parent row");
+const hierarchy = createTableWorkbook({ title: "Hierarchy", url: snapshot.url, rows: [
+  { kind: "body", section: true, cells: [{ text: "Group" }] },
+  { kind: "body", depth: 2, cells: [{ text: "Child", depth: 2 }] },
+] });
+assert.equal(hierarchy.getWorksheet("Table")!.getCell("A2").alignment.indent, 2);
+assert.equal((hierarchy.getWorksheet("Table")!.getCell("A2").fill as ExcelJS.FillPattern).fgColor?.argb, "FFDBE8FA");
 const bytes = async (b: ExcelJS.Workbook) => await b.xlsx.writeBuffer() as unknown as ArrayBuffer;
 assert.deepEqual(await readInputWorkbook(await bytes(exported), source), [], "an untouched workbook makes no changes");
 exported.getWorksheet("Holding inputs")!.getCell("D2").value = 0;

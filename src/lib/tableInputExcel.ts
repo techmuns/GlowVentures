@@ -50,7 +50,7 @@ export function addInputWorkbook(book: ExcelJS.Workbook, inputs: InputRecord[], 
       cell.protection = { locked: false };
       cell.font = { ...cell.font, name: "Calibri", size: 11, color: { argb: "FF176B45" } };
       cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: missing ? "FFFFE6A3" : "FFE8F4EC" } };
-      cell.note = `Editable ${missing ? "— missing data. " : "— "}Enter ${inputs.find(r => r.id === target.input.id)?.fields.find(f => f.key === target.input.field)?.unit ?? "rupees (INR)"}. Keep the format. Clear an optional number to mark it unknown. User entries are saved separately from statements.`;
+      cell.note = `Editable ${missing ? "— missing data. " : "— "}Enter ${inputs.find(r => r.id === target.input.id)?.fields.find(f => f.key === target.input.field)?.unit ?? "rupees (INR)"}. Keep the format. Clear an optional number to mark it unknown. User entries are saved separately from statements.${target.input.version ? ` User-entered on ${target.input.version.slice(0, 10)}.` : ""}`;
     }
     sheet.eachRow({ includeEmpty: true }, row => row.eachCell({ includeEmpty: true }, cell => {
       if (cell.isMerged && cell.master.address !== cell.address) return;
