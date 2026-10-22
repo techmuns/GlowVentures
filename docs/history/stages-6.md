@@ -252,7 +252,14 @@
 - Value, Weight and Return on cost are Sector Composition's figures (FIFO over the holdings that report a cost, "N of M", details card naming the fund-derived part). Gain and Contribution are since investment; contribution = row gain ÷ the set's capital, so rows add to the total. Market return is the one column that follows the toolbar's dates. A sector opens into its issuers (Consolidated) or holdings (Direct Equity) in the same columns; a company held only inside a fund shows 0 holdings and dashes with the reason.
 - `?sset=direct` selects Direct Equity. check:pages `cio-returns-sector` / `cio-returns-sector-direct` strike `data-sa-*`: sector-only rows, totals and contributions adding, children adding to the opened sector. `check-selected-attribution` keeps its regrouping assertion on the Security axis and walks both sector sets; `check-market-returns` reads the sector panel's market cells.
 
-### Stage 10gt — THREE CLEAR TABS FOR MARKET RETURN COVERAGE
+### Stage 10gt — AUTOMATIC PUBLICATION OF VERIFIED STATEMENTS
+
+- Removed the blanket code-review callback requirement from statement intake. Passing data-only deliveries merge automatically after required CI; missing, unclear or conflicting records remain held with their source bytes. No dashboard layout change.
+- A trusted worker rechecks the exact base/head, generated-file allowlist, immutable receipt, uploaded bytes and document versions, including nested ZIP leaves, and reruns identity/date/coverage/reconciliation checks. Application code and policy edits cannot use this path. Actual unresolved findings and repository protections remain blocking.
+- The complete folder-drop rehearsal now publishes without any reviewer callback, verifies the exact live document versions before clearing bytes, and checks the resulting MF/audit dates and dashboard table families. Added rejection contracts for invalid data, altered evidence and unexpected code changes.
+- Completion of CI on a same-repository statement-delivery branch wakes the trusted main intake worker immediately; fork branches cannot trigger it. The scheduled poll remains a recovery path.
+
+### Stage 10gu — THREE CLEAR TABS FOR MARKET RETURN COVERAGE
 
 - The market-return popup opens on Return Overview, with short coverage, date and weighting explanations. All Securities Considered and Missing Values have live counts, searchable complete holding lists, and one entry per security/account rather than combining different owners or mandates.
 - Every entry uses the attribution table’s existing classification and the account registry’s exact fund/mandate, owner, provider, account and report date. Missing entries state the specific missing price, NAV, identity, valuation or source response and the next step in plain language. Pending histories stay named until they finish loading.

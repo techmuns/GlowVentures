@@ -13,6 +13,14 @@ export function finalizationGate(pr, review, publication) {
   if (!['automated', 'local'].includes(review.kind)) throw new Error('Record the completed review before merging.');
   if (review.feedbackAddressed !== true || pr.unresolvedThreads) throw new Error('Reviewer feedback and unresolved threads must be addressed before merging.');
   if (review.kind === 'local' && !review.automatedUnavailableReason) throw new Error('A local review must name why automated review was unavailable.');
+  publicationGate(pr, publication);
+}
+// Shared CI and repository protection gates. Data-only intake independently
+// verifies the sealed source/archive before calling this; code changes still
+// require the completed review receipt above.
+export function publicationGate(pr, publication) {
+  if (pr.headRefOid !== publication.commit) throw new Error('Checks must cover the exact prepared commit.');
+  if (pr.unresolvedThreads) throw new Error('Reviewer feedback and unresolved threads must be addressed before merging.');
   if (pr.reviewDecision && pr.reviewDecision !== 'APPROVED') throw new Error(`Review gate is ${pr.reviewDecision}.`);
   const latestReviews = new Map();
   for (const r of [...(pr.reviews ?? [])].sort((a, b) => (a.submittedAt ?? '').localeCompare(b.submittedAt ?? ''))) latestReviews.set(r.author?.login ?? 'reviewer', r);

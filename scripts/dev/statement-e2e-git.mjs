@@ -6,6 +6,7 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import assert from 'node:assert/strict';
+import { verifyAutomaticPublication } from '../ingest/lib/automaticPublication.mjs';
 export function localGit(remote) {
   assert.ok(path.isAbsolute(remote) && remote.includes('/.cache/') && remote.endsWith('/local-remote.git'));
   return (args, input, env = {}) => execFileSync('git', ['--git-dir', remote, ...args], {
@@ -84,7 +85,14 @@ export function cli() {
   if (args[1] === 'close') { c.pr.state = 'CLOSED'; writeControl(file, c); return; }
   if (args[1] === 'merge') {
     assert.equal(option('--match-head-commit'), c.pr.headRefOid);
-    assert.ok(c.ciPassed && c.reviewReady, 'Local CI and emulated review gates must complete before merge');
+    assert.ok(c.ciPassed, 'The real candidate checks must complete before merge');
+    const receiptName = git(['diff', '--name-only', c.baseCommit, c.pr.headRefOid, '--', 'public/audit/deliveries']).trim();
+    const receipt = JSON.parse(git(['show', `${c.pr.headRefOid}:${receiptName}`]));
+    const proof = verifyAutomaticPublication({ branch: c.pr.branch, commit: c.pr.headRefOid, baseCommit: c.baseCommit,
+      archiveRevision: receipt.archiveRevision, documentVersions: receipt.documents.map(({ document, revision }) => ({ document, revision })) }, {
+      fetchHead: false, runGit: (args, options = {}) => execFileSync('git', ['--git-dir', c.remote, ...args], { encoding: 'utf8', maxBuffer: 128 << 20, ...options }),
+    });
+    assert.equal(proof.commit, c.pr.headRefOid);
     git(['update-ref', 'refs/heads/' + c.publishedBranch, c.pr.headRefOid, c.baseCommit]);
     c.pr.state = 'MERGED'; c.pr.mergeCommit = { oid: c.pr.headRefOid }; c.merges++;
     writeControl(file, c); return;

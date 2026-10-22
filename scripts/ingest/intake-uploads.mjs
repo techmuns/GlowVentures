@@ -36,7 +36,7 @@
 //   6. Runs the required publication, identity/source-row and financial gates.
 //      A failing baseline never grants a new upload permission to bypass CI.
 //   7. Publishes the complete data tree on codex and opens a PR. Later runs
-//      monitor the exact head's checks/review, merge through that PR when clear,
+//      verify its data-only diff and exact head's checks, merge automatically,
 //      and confirm the existing Pages deployment contains the document versions.
 //      A moved base requires a fresh candidate, never a forced stale publish.
 //   8. Writes each file's outcome back to the inbox log (`landed` with its
@@ -501,7 +501,7 @@ function land(live, verdicts, already) {
     sha = existingRef;
   } else if (!git(['push', '--quiet', REMOTE, `HEAD:refs/heads/${branch}`], { allowFail: true }).ok) return null;
   const body = path.join(WORK, 'publication-pr.md');
-  fs.writeFileSync(body, `${message}\n\nOwner/account/security, changed-format field coverage and reconciliation publication checks passed. Exact source records and upload checksums are retained. Required CI and review must finish before merge.\n\nArchive revision: ${assessment.candidateRevision}\n`);
+  fs.writeFileSync(body, `${message}\n\nOwner/account/security, changed-format field coverage and reconciliation publication checks passed. Exact source records and upload checksums are retained. A verified data-only diff with passing CI publishes automatically; missing, unclear or conflicting records stay held. Repository protections and unresolved review findings still apply.\n\nArchive revision: ${assessment.candidateRevision}\n`);
   const metadata = { status: 'processing', hold: null, reason: 'Your statement is verified and waiting to appear on the dashboard.', commit: sha, branch,
     pullRequest: null, baseCommit: assessment.baseCommit, archiveRevision: assessment.candidateRevision, ciDispatched: false,
     documentVersions: versions.map(({ document, revision }) => ({ document, revision })) };
@@ -518,7 +518,7 @@ function land(live, verdicts, already) {
   let ciDispatched = false;
   try { gh(['workflow', 'run', 'ci.yml', '--ref', branch, '-f', `baseline=${assessment.baseCommit}`]); ciDispatched = true; }
   catch { /* preserve PR metadata; the next monitor retries dispatch */ }
-  return { ...metadata, ciDispatched, publicationDetail: `Awaiting required CI and review: ${url}`, pullRequest: url };
+  return { ...metadata, ciDispatched, publicationDetail: `Awaiting required checks for automatic publication: ${url}`, pullRequest: url };
 }
 
 // ── the run ───────────────────────────────────────────────────────────────────
