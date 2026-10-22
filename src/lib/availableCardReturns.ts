@@ -43,7 +43,7 @@ export function availableCardReturns(statement: Portfolio, display: readonly Pos
   const period = (key: 'fytd' | 'ytd') => {
     const start = periodStart(key, end)!;
     const w = windowReturns(inputs, start, end);
-    return make({ inception: false, type: 'xirr', start, end, windows: w.included, inceptionRows: [], excluded: w.excluded, outside: w.outside });
+    return make({ inception: false, type: 'xirr', periodXirr: true, start, end, windows: w.included, inceptionRows: [], excluded: w.excluded, outside: w.outside });
   };
   // Latest usable history may begin on different dates for different accounts.
   // Measure each from its own verified opening, then pool only those windows.
@@ -56,7 +56,8 @@ export function availableCardReturns(statement: Portfolio, display: readonly Pos
     windows.push(...w.included); excluded.push(...w.excluded); outside.push(...w.outside);
   }
   const start = windows.map(w => w.openDate).sort()[0] ?? null;
-  const history = make({ inception: false, type: 'xirr', start, end, windows, inceptionRows: [], excluded, outside });
+  // The headline cards read XIRR over the period, not per year (Stage 10gu).
+  const history = make({ inception: false, type: 'xirr', periodXirr: true, start, end, windows, inceptionRows: [], excluded, outside });
   return { gain, history, fytd: period('fytd'), ytd: period('ytd') };
 }
 
