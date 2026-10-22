@@ -66,6 +66,9 @@ const fund = {...position,assetClass:'Mutual Fund',security:'Example Growth',sym
 const fundBook = {...b,positions:[fund],actions:null,histories:{example:{...h,basis:'nav' as const,name:'Example Direct Growth',isin:fund.isin!}}};
 assert.equal(assumedHoldingReturns([fund],[account],'2026-09-01','2026-10-22',fundBook).units.length,1,'growth NAVs do not depend on equity events');
 assert.match(assumedHoldingReturns([fund],[account],'2026-09-01','2026-10-22',{...fundBook,histories:{example:{...h,basis:'nav',name:'Example IDCW'}}}).gaps[0].reason,/dated payouts/);
+for (const name of ['Example Growth Opportunities - IDCW','Example Growth Opportunities - Dividend Reinvestment','Example Growth Opportunities - Regular Plan']) {
+ assert.equal(assumedHoldingReturns([fund],[account],'2026-09-01','2026-10-22',{...fundBook,histories:{example:{...h,basis:'nav',name}}}).units.length,0,'a strategy name is not proof of the growth option');
+}
 const latePrice = {...h,last:'2026-10-01',t:['2026-03-31','2026-09-01','2026-10-01'],c:[100,200,210]};
 assert.equal(run({...b,histories:{example:latePrice}}).units.length,0,'an old price cannot pretend to close October 22');
 assert.equal(run({...b,positions:[{...position,quantity:null}]}).units.length,0,'a live display quantity cannot invent a missing source count');

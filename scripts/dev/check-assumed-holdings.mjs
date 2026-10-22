@@ -36,7 +36,7 @@ try {
  await page.route('**/api/market-history?*',r=>{
   const q=new URL(r.request().url()).searchParams, symbol=q.get('symbol'), fund=q.get('fund');
   const splits=book.CAPTURE.rows.filter(x=>x.ticker===symbol&&['split','bonus'].includes(x.type)&&x.factor&&x.exDate<=book.CAPTURE.verifiedThrough).map(x=>({date:x.exDate,factor:x.factor}));
-  return r.fulfill({json:{ok:true,version:2,symbol:fund||symbol+'.NS',isin:q.get('isin'),name:fund?'Example Growth NAV fixture':symbol,source:'Public-price layout fixture',basis:fund?'nav':'adjusted-close',first:dates[0],last:dates.at(-1),t:dates,v:prices,c:prices,splits}});
+  return r.fulfill({json:{ok:true,version:2,symbol:fund||symbol+'.NS',isin:q.get('isin'),name:fund?'Example NAV fixture - Growth':symbol,source:'Public-price layout fixture',basis:fund?'nav':'adjusted-close',first:dates[0],last:dates.at(-1),t:dates,v:prices,c:prices,splits}});
  });
  await page.goto(base+'/cio?tab=returns&rp=custom&rfrom=2026-09-01&rto=2026-10-22&rtype=absolute&seg=security&tiles=value,gain,fytd');
  const panel=page.locator('[data-segment-returns]'); await panel.waitFor();
