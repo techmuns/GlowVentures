@@ -274,7 +274,23 @@
 - Structured gap reasons preserve the original diagnostics and calculations. A holding without a usable current value is explicitly left out rather than disappearing from the coverage reconciliation. Fund wording clearly distinguishes NAV changes from income paid out or reinvested.
 - Focused tests check membership and missing-data wording. Required browser coverage checks tab keyboard controls, complete/disjoint holding lists, fund and mandate context, searches, retry, focus restoration, reopening and all three tabs on mobile.
 
-### Stage 10gw — EXPLICIT ASSUMED HOLDINGS FILL PERIOD RETURN GAPS
+### Stage 10gw — CLEAR MISSING-RETURN MESSAGES
+
+- Recorded-return info boxes show the missing record and what to provide first, in short plain English. Account/source metadata and calculation explanations remain available in collapsed details.
+- The market popup keeps its three coverage tabs. Missing Values puts the specific missing item and next step before account metadata; an unavailable overview points to that tab. NSE names missing public price history and directs statement-based returns to Recorded return.
+- Purchase cost/date, sale proceeds, later valuations, payment history and invalid return windows each have a short message. Focused fixtures and browser checks cover the wording, immediate visibility and NSE example; authenticated previews were checked on desktop and mobile.
+
+### Stage 10gx — THE STATEMENT LIBRARY OPENS THE ORIGINAL FILE
+
+*"publish the original statement files to the hosted site behind the password gate so the preview can show the real PDF and spreadsheet layout"* — the family, 22 Oct 2026.
+
+- `scripts/build-statement-files.mjs` (`build:statement-files`, run by `prebuild`, `predev` and `pretest:family`) copies the file behind every manifest entry to the gitignored `public/statement-files/<docKey>.<ext>` and writes `index.json` (size, password, bundle part, and a `missing` reason for any it cannot find). Pages' SPA fallback answers a missing path with index.html and a 200, so the page reads the index, never the status code. `source/_extracted/` is gitignored, so the committed ZIPs are expanded into a temp dir by the inventory's own rule. On a checkout without the expanded copies, all 425 files (64 MB, largest 1.5 MB) came out byte-identical to the main checkout's. The folder is not `public/statements/`, because `/statements` is the library's route.
+- The preview opens on **Original file**, with **Text as read** one switch away. A PDF opens in the browser's own viewer, and a statement cut from a bundled PDF opens at `#page=<its first page>` and says which pages it is. A workbook is drawn from its own cells by the `xlsx` reader (a lazy chunk), with merged cells, sheet names and the file's number formats. Download and New tab sit beside Data Audit.
+- Two reader traps closed. A text file (CSV, LKP's HTML-table `.xls`) is read `raw`: unparsed, "01/07/2026" became a month-first date serial (7 January) for 1 July. A binary workbook's built-in short date (format 14) is drawn `dd/mm/yyyy`, not the reader's US default.
+- "Password-protected" is a measurement, not a guess. An `/Encrypt` dictionary marked 27 PDFs, but 12 (ICICI's payment advices, the HDFC folios) carry an empty user password and open freely. The build opens each with pdfjs and no password, and labels only the 15 that refuse.
+- `test:family` suite `statement preview`: every document's original is published, at the stated size, named `<docKey>.<format>`, the kind its format says (magic bytes, so never the SPA's index.html), byte for byte with `source/` where the file is committed outside an archive, and each bundled part at its own pages. Merged-cell layout and file sizes are covered too.
+
+### Stage 10gy — EXPLICIT ASSUMED HOLDINGS FILL PERIOD RETURN GAPS
 
 - The family authorised carrying recorded shares/units forward where no later purchase, sale or transfer contradicts the balance. Public prices and checked splits/dividend entitlements fill eligible period values, gains and returns; source records, unknown purchase costs and private marks stay intact.
 - Return attribution, its capital bridge and Morning CIO period/history cards use the same eligible holding calculations and prefer usable statement returns. Every affected figure has an assumed label and an owner-specific clickable info explanation. Excel includes a Holding basis column.

@@ -87,6 +87,12 @@ assert.equal(quoted.total.missing.length, 1); near(quoted.closingValue, 120);
 
 assert.match(returnGapText('Opening valuation and complete dated cash flows are missing', '2026-03-31'), /worth at the start.*money added and taken out/);
 assert.match(returnGapText("the family's review values its lines on one date, so no window can be struck over it", '2026-03-31'), /value at the start and end/);
+assert.match(returnGapText('The purchase cost is missing or has not been verified.', null), /purchase statement showing the amount paid/);
+assert.match(returnGapText('The purchase date is unavailable.', null), /purchase statement showing the date/);
+assert.doesNotMatch(returnGapText('Only the purchase cost is recorded.', null), /purchase cost is missing/, 'cost-only records need a later value, not another cost');
+assert.match(returnGapText('Only the purchase cost is recorded.', null), /later value/);
+assert.match(returnGapText('This statement gives a return for the whole account. It does not give separate opening values and money movements for these holdings.', null), /separate values and dated payments for each holding/);
+assert.match(returnGapText('CAGR is a yearly growth rate. This app shows it only for measured periods of at least 365 days.', null), /longer period.*Absolute return or XIRR/);
 
 // A return-bearing exit cannot disappear from an account's segment decision.
 const mixedExit = selectedSegmentReturns([pos()], [exit], [acct('a')], 'security', { ...sel, excluded: [] });

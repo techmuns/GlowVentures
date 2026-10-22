@@ -105,8 +105,8 @@ export default function SegmentReturns({ selection: recordedSelection, period }:
     </Card>
   </div>;
   if (!a) return null;
-  const reason = (l: SelectedLine) => l.measured?.reason ?? (l.missing.length ? l.missing[0].plainReason ? l.missing[0].reason : returnGapText(l.missing[0].reason, selection.start)
-    : 'No complete value and money record is available for these dates.');
+  const reason = (l: SelectedLine) => !l.measured?.reason && l.missing[0]?.plainReason ? l.missing[0].reason
+    : returnGapText(l.measured?.reason ?? l.missing[0]?.reason ?? 'We need values and dated payments for these dates.', selection.start);
   const rows = sortRows(a.rows, view.sort, { seg: r => r.label, holdings: r => r.positions.length, value: r => r.value,
     weight: r => r.value, deployed: r => r.invested, gain: r => r.gain, market: r => marketOf(r.positions).pct, ret: r => r.returnPct, contrib: r => r.contribution,
     basis: r => r.units.some(u => u.assumption) ? 'Assumed held' : 'Statement records' });

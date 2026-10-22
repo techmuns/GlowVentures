@@ -4,19 +4,81 @@
  * *"we should be able to open and see contents of every file in the dashboard
  * itself, irrespective of the type of file it is"* — the family, 21 Oct 2026.
  *
- * The preview reads `public/audit/<docKey>/pages.json`: the text the ingest
- * pipeline read out of the file, one entry per PDF page or per spreadsheet
- * sheet, which the site already serves behind its edge password gate. It is the
- * record every figure on this site was built from, so what a reader sees in the
- * preview is exactly what the book was read from — and no file is published
- * that the archive does not already carry.
+ * TWO VIEWS OF ONE FILE. The ORIGINAL FILE, as the provider sent it, is
+ * published by `scripts/build-statement-files.mjs` to
+ * `public/statement-files/<docKey>.<ext>` behind the edge password gate (*"publish
+ * the original statement files … so the preview can show the real PDF and
+ * spreadsheet layout"* — the family, 22 Oct 2026); `index.json` there lists what
+ * this build carries. The TEXT AS READ is `public/audit/<docKey>/pages.json`:
+ * the text the ingest pipeline read out of the file, one entry per PDF page or
+ * per spreadsheet sheet — the record every figure on this site was built from.
  *
- * A spreadsheet's sheet arrives as tab-separated rows (the reader writes a cell
- * per tab, a row per line), so it is laid back out as a grid; a PDF page is
- * shown as the text it carries. A document whose file carried no text (a scan,
- * a mail server's removal notice) has none to show, and its own archive record
- * says why — the preview shows that reason, never an empty page.
+ * A spreadsheet's sheet arrives in pages.json as tab-separated rows (the reader
+ * writes a cell per tab, a row per line), so it is laid back out as a grid; a
+ * PDF page is shown as the text it carries. A document whose file carried no
+ * text has none to show, and its own archive record says why — the preview
+ * shows that reason, never an empty page.
  */
+
+/** One published original file, as `public/statement-files/index.json` lists it. */
+export interface PublishedFile {
+  /** The published file name — `<docKey>.<ext>`. */
+  file: string;
+  bytes: number;
+  /** A PDF that opens only with its password; the browser's viewer asks for it. */
+  encrypted: boolean;
+  /** One statement cut from a bundled PDF: the pages of the file it occupies. */
+  part: { from: number; to: number } | null;
+}
+
+/** `public/statement-files/index.json` — what this build published, and why not the rest. */
+export interface StatementFileIndex {
+  files: Record<string, PublishedFile>;
+  missing: Record<string, string>;
+}
+
+/** A file's size the way a file manager shows it. */
+export function fileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+/** One cell of a grid, as shown: its text, the stored value on hover, its alignment. */
+export interface GridCell {
+  text: string;
+  full: string;
+  numeric: boolean;
+}
+
+/** A merged block of cells, top-left to bottom-right inclusive, 0-based. */
+export interface GridMerge {
+  s: { r: number; c: number };
+  e: { r: number; c: number };
+}
+
+/**
+ * Where each merged block starts and which cells it covers — the top-left cell
+ * takes the spans, every other cell under it is not drawn. A block running past
+ * the last row drawn is cut at that row, so a paged sheet never spans into rows
+ * that are not on screen.
+ */
+export function mergeLayout(merges: readonly GridMerge[], rowsDrawn: number) {
+  const spans = new Map<string, { rowSpan: number; colSpan: number }>();
+  const covered = new Set<string>();
+  for (const m of merges) {
+    if (m.s.r >= rowsDrawn) continue;
+    const lastRow = Math.min(m.e.r, rowsDrawn - 1);
+    const rowSpan = lastRow - m.s.r + 1;
+    const colSpan = m.e.c - m.s.c + 1;
+    if (rowSpan === 1 && colSpan === 1) continue;
+    spans.set(`${m.s.r}:${m.s.c}`, { rowSpan, colSpan });
+    for (let r = m.s.r; r <= lastRow; r++) {
+      for (let c = m.s.c; c <= m.e.c; c++) if (r !== m.s.r || c !== m.s.c) covered.add(`${r}:${c}`);
+    }
+  }
+  return { spans, covered };
+}
 
 /** One entry of `pages.json`: a PDF page, or a spreadsheet's sheet. */
 export interface PageText {
