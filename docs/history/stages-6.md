@@ -320,9 +320,3 @@
 - Reconciled surviving lots, fund allotments and the verified FIFO trade tape split older units from this year’s units. The settled purchase cash retains its charges rather than being scaled to a statement’s book cost. A product review range or PMS funding date never dates an underlying security. Unknown dates, unmatched units/costs and missing post-purchase valuations are named in the info popup.
 - The summary weights each included holding’s return by the value of its selected units. The searchable table names category, exact fund/mandate, owner/account, acquisition dates, cost, value date, gain and weight. XIRR uses each holding’s dated buys and closing value before weighting; under-year CAGR retains the period figure.
 - Tests cover fiscal boundaries, mixed-age purchases, FIFO sales, source and valuation refusals, portfolio weights, complete coverage reconciliation, toolbar behavior, search, type changes, reload and mobile.
-
-### Stage 10hd — PDFs OPEN INSIDE THE EMBEDDED DASHBOARD
-
-- Reproduced the reported statement failing with `net::ERR_BLOCKED_BY_CLIENT` and a `chrome-error://chromewebdata/` child frame. Chrome disables its native PDF plugin beneath a sandboxed ancestor, including the dashboard embed.
-- Original PDFs now render through a lazy, self-hosted PDF.js worker inside the app, with page navigation, fit-width/zoom, bundle starting page, password entry and retry, and a useful load failure. Original bytes and encryption stay unchanged; passwords stay in memory. Download, New tab and Text as read remain available.
-- Build/dev prepare the locked dependency's fonts, character maps and decoders locally. The browser regression uses two nested frames with a sandboxed dashboard and asserts visible original-page ink, navigation, zoom, encrypted-password retry, cancellation, invalid-file fallback and mobile rendering. No production records are changed by verification.
