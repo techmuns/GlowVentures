@@ -24,7 +24,9 @@ export function addInputWorkbook(book: ExcelJS.Workbook, inputs: InputRecord[], 
     const sheet = book.addWorksheet(group.name), fields = group.records[0].fields;
     sheet.addRow(["Investment", "Account", "As of", ...fields.map(f => `${f.label}${f.unit ? ` (${f.unit === "area" ? "property's area unit" : f.unit})` : " (INR)"}`)]);
     for (const r of group.records) {
-      const row = sheet.addRow([r.label, r.account, r.asOf, ...fields.map(f => r.values[f.key])]);
+      const date = /^\d{4}-\d{2}-\d{2}$/.test(r.asOf) ? new Date(`${r.asOf}T00:00:00Z`) : r.asOf;
+      const row = sheet.addRow([r.label, r.account, date, ...fields.map(f => r.values[f.key])]);
+      if (date instanceof Date) row.getCell(3).numFmt = "dd-mmm-yyyy";
       fields.forEach((field, i) => {
         const cell = row.getCell(i + 4);
         cell.numFmt = field.unit ? "#,##0.########" : '"₹"#,##0.00';
@@ -33,7 +35,7 @@ export function addInputWorkbook(book: ExcelJS.Workbook, inputs: InputRecord[], 
     }
     sheet.getRow(1).eachCell(c => { c.font = { name: "Calibri", bold: true, color: { argb: "FFFFFFFF" } }; c.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF26213E" } }; });
     sheet.autoFilter = `A1:${sheet.getRow(1).getCell(sheet.columnCount).address}`;
-    fitExcelWorksheet(sheet, 1, 1);
+    fitExcelWorksheet(sheet, 1, 2);
   }
   const targetBy = new Map(targets.map(t => [`${t.sheet}:${t.cell}`, t.input]));
   const manifest: Manifest = { version: 1, sheets: [] };

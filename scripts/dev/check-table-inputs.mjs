@@ -72,7 +72,11 @@ try {
   await visit('/private-market');
   await page.locator('[data-edit-numbers]').first().click();
   const cost = page.locator(`[data-input-record="${holding.id}"][data-input-field="costBasis"]`).first();
-  await cost.locator('input').fill('200000'); await cost.getByRole('button', { name: 'Save', exact: true }).click();
+  await cost.locator('input').fill('200000');
+  const draftExport = await download('unsaved-draft.xlsx');
+  check('Export preserves an unsaved inline draft', await cost.locator('input').inputValue() === '200000');
+  check('Export includes saved inputs rather than unsaved drafts', inputCell(draftExport.book, holding.id, 'costBasis', 'Holding inputs').value === holding.values.costBasis);
+  await cost.getByRole('button', { name: 'Save', exact: true }).click();
   await page.waitForFunction(() => document.querySelector('[data-entered-numbers]')?.textContent?.includes('2 user-entered'));
   check('Inline edits and workbook imports share the same store', (await snapshot()).catalog.find(r => r.id === holding.id).values.costBasis === 200000);
   await page.screenshot({ path: path.join(out, 'inline-private.png'), fullPage: false });
