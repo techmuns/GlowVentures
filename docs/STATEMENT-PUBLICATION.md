@@ -28,6 +28,8 @@ required CI then permits automatic PR merge without a reviewer callback. Missing
 unclear or conflicting data is held with its original bytes. Application code or
 policy changes cannot use this path. Actual unresolved reviewer findings and any
 required repository approval remain blocking; branch protections are never bypassed.
+CI completion on a same-repository delivery branch wakes the trusted main worker;
+the scheduled poll remains a recovery path. Fork CI cannot trigger this privileged job.
 
 ## Handoff from the upload service
 

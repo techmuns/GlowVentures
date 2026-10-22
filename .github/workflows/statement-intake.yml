@@ -30,6 +30,12 @@ on:
   repository_dispatch:
     types: [statement-intake]
   workflow_dispatch:
+  # Resume verified data as soon as its CI completes. The schedule remains a
+  # recovery path, rather than adding a polling delay to every clean upload.
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: ["codex/statement-delivery-*"]
   schedule:
     - cron: "*/20 * * * *"
 
@@ -46,6 +52,9 @@ concurrency:
 
 jobs:
   intake:
+    # Privileged workflow_run jobs always use trusted main code and only accept
+    # same-repository delivery branches; fork CI cannot wake this worker.
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
