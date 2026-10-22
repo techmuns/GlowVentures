@@ -302,3 +302,9 @@
 - Every property field is optional, including name, address, owner/share and valuation date. Empty records save as Untitled property in the table, map and details, remain visible without an assigned member, and can be reopened to add details. New records no longer assume an apartment, vacant status or zero rent; changing status preserves entered rent.
 - Identical owner rows save once instead of blocking Save or doubling ownership. Partial or conflicting ownership stays editable; unknown shares remain unknown in family totals. Details show entered whole-property figures, so incomplete ownership does not hide the saved amounts there.
 - Record/API and local browser checks cover empty save/reload/edit, value without date or owner, duplicate-owner saving, missing shares, later additions, existing address search/dragging and unchanged valid share calculations. Production checks are read-only.
+
+### Stage 10ha — PDFs OPEN INSIDE THE EMBEDDED DASHBOARD
+
+- Reproduced the reported statement failing with `net::ERR_BLOCKED_BY_CLIENT` and a `chrome-error://chromewebdata/` child frame. Chrome disables its native PDF plugin beneath a sandboxed ancestor, including the dashboard embed.
+- Original PDFs now render through a lazy, self-hosted PDF.js worker inside the app, with page navigation, fit-width/zoom, bundle starting page, password entry and retry, and a useful load failure. Original bytes and encryption stay unchanged; passwords stay in memory. Download, New tab and Text as read remain available.
+- Build/dev prepare the locked dependency's fonts, character maps and decoders locally. The browser regression uses two nested frames with a sandboxed dashboard and asserts visible original-page ink, navigation, zoom, encrypted-password retry, cancellation, invalid-file fallback and mobile rendering. No production records are changed by verification.

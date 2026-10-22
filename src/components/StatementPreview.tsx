@@ -1,5 +1,5 @@
 import { ExportableTable } from "@/components/ExportableTable";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { X, ExternalLink, FileText, FileSpreadsheet, Loader2, Download, Lock, Table2 } from "lucide-react";
@@ -15,6 +15,7 @@ import {
 } from "@/lib/statementPreview";
 
 const BASE = import.meta.env.BASE_URL;
+const OriginalPdf = lazy(() => import("./PdfPreview"));
 /** Rows a sheet shows before "Show more" — a broker's tape runs to thousands. */
 const ROW_STEP = 500;
 
@@ -225,19 +226,6 @@ function OriginalSheets({ url, format }: { url: string; format: string }) {
   return <SheetTabs sheets={wb.sheets} />;
 }
 
-/**
- * The original PDF in the browser's own viewer — zoom, search, print and page
- * thumbnails as the reader's browser draws them. A statement cut from a bundled
- * file opens at its own first page. A password-protected PDF asks for its
- * password in the viewer.
- */
-function OriginalPdf({ url, file, title }: { url: string; file: PublishedFile; title: string }) {
-  return (
-    <iframe src={file.part ? `${url}#page=${file.part.from}` : url} title={title} data-preview-pdf
-      className="h-full min-h-0 w-full flex-1 rounded-lg border border-ink-700 bg-ink-800" />
-  );
-}
-
 function Opening({ what }: { what: string }) {
   return (
     <div role="status" className="flex items-center justify-center gap-2 py-16 text-sm text-slate-400">
@@ -369,7 +357,7 @@ const ACTION = "inline-flex shrink-0 items-center gap-1 rounded-md border border
  * THE PREVIEW WINDOW. Opened from a file's row in a Statement Library folder;
  * Escape, the close button or a click outside the window closes it.
  *
- * It opens on the ORIGINAL FILE — a PDF in the browser's own viewer, a workbook
+ * It opens on the ORIGINAL FILE — a PDF drawn inside the app, a workbook
  * drawn from its own cells — with the TEXT AS READ one switch away, so a reader
  * can hold the two side by side. Each view says which it is; a file this build
  * did not publish opens on its text and says why, and a file the pipeline could
@@ -486,7 +474,9 @@ export function StatementPreview({ doc, onClose }: { doc: LibraryDoc; onClose: (
           )}
           {view === "original" && published && (sheet
             ? <OriginalSheets url={published.url} format={doc.format} />
-            : <OriginalPdf url={published.url} file={published.file} title={`${doc.reportLabel} — ${doc.fileName}`} />)}
+            : <Suspense fallback={<Opening what="Opening PDF…" />}>
+                <OriginalPdf key={published.url} url={published.url} file={published.file} title={`${doc.reportLabel} — ${doc.fileName}`} />
+              </Suspense>)}
 
           {view === "text" && loaded.status === "loading" && <Opening what="Opening the file…" />}
           {view === "text" && loaded.status !== "loading" && loaded.status !== "ready" && (
