@@ -79,10 +79,11 @@ try {
   check('Saved capital is visible in the expanded detail row', await savedPaid.evaluate(cell => cell.closest('tr').dataset.pmPaid === '123456' && cell.textContent.includes('₹')));
   await visit('/private-market');
   await page.locator('[data-edit-numbers]').first().click();
-  const cost = page.locator('[data-input-record^="holding:"][data-input-field="costBasis"]').first();
-  const costId = await cost.getAttribute('data-input-record');
+  const costId = await page.locator('[data-input-record^="holding:"][data-input-field="costBasis"]').first().getAttribute('data-input-record');
   holding = catalog.find(r => r.id === costId);
   assert.ok(holding, 'a displayed company has a source cost input');
+  await page.getByPlaceholder('Search companies, funds or brands…').fill(holding.label);
+  const cost = page.locator(`[data-input-record="${holding.id}"][data-input-field="costBasis"]`).first();
   await cost.locator('input').fill('200000');
   const draftExport = await download('unsaved-draft.xlsx');
   check('Export preserves an unsaved inline draft', await cost.locator('input').inputValue() === '200000');
