@@ -274,6 +274,12 @@
 - Structured gap reasons preserve the original diagnostics and calculations. A holding without a usable current value is explicitly left out rather than disappearing from the coverage reconciliation. Fund wording clearly distinguishes NAV changes from income paid out or reinvested.
 - Focused tests check membership and missing-data wording. Required browser coverage checks tab keyboard controls, complete/disjoint holding lists, fund and mandate context, searches, retry, focus restoration, reopening and all three tabs on mobile.
 
+### Stage 10gw — CLEAR MISSING-RETURN MESSAGES
+
+- Recorded-return info boxes show the missing record and what to provide first, in short plain English. Account/source metadata and calculation explanations remain available in collapsed details.
+- The market popup keeps its three coverage tabs. Missing Values puts the specific missing item and next step before account metadata; an unavailable overview points to that tab. NSE names missing public price history and directs statement-based returns to Recorded return.
+- Purchase cost/date, sale proceeds, later valuations, payment history and invalid return windows each have a short message. Focused fixtures and browser checks cover the wording, immediate visibility and NSE example; authenticated previews were checked on desktop and mobile.
+
 ### Stage 10gx — THE STATEMENT LIBRARY OPENS THE ORIGINAL FILE
 
 *"publish the original statement files to the hosted site behind the password gate so the preview can show the real PDF and spreadsheet layout"* — the family, 22 Oct 2026.

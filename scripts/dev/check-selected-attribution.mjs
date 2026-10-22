@@ -41,7 +41,12 @@ try {
   assert.match(await popup.innerText(), /Based on the available records/);
   assert.match(await popup.innerText(), /What is missing/);
   assert.ok(await popup.locator('[data-return-gap]').count() > 0);
-  assert.match(await popup.innerText(), /account .*statement/i);
+  assert.equal(await popup.locator('[data-attribution-method]').getAttribute('open'), null);
+  const firstGap = popup.locator('[data-return-gap]').first();
+  assert.ok(await firstGap.locator('[data-return-gap-reason]').isVisible(), 'missing inputs are shown immediately');
+  await firstGap.locator('summary').click();
+  assert.match(await firstGap.innerText(), /account .*statement/i);
+  await firstGap.locator('summary').click();
   assert.match(await popup.innerText(), /purchase|opening|dated|money/i);
   if (id === 'gain') {
    assert.equal(await popup.locator('[data-return-result]').innerText(), await card.locator('[data-kpi-value]').innerText());
@@ -130,7 +135,7 @@ try {
  await page.screenshot({ path: `${out}/desktop-info.png` });
  await page.keyboard.press('Escape');
  await total.getByRole('button', { name: 'What is included in total gain?', exact: true }).click();
- await dialog.waitFor(); assert.match(await dialog.innerText(), /money added and taken out/); await page.keyboard.press('Escape');
+ await dialog.waitFor(); await dialog.locator('[data-attribution-method] summary').click(); assert.match(await dialog.innerText(), /money added and taken out/); await page.keyboard.press('Escape');
  // Regrouping cannot change the measured pool; source-only returns get a named row.
  const gain = await table.getAttribute('data-seg-total-gain');
  // The Sector axis is Sector Composition's own sectors (Stage 10gs): Consolidated and

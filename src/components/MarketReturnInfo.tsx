@@ -39,13 +39,19 @@ function MarketReturnDetails({ units, gaps, positions, accounts, totalValue, fro
   const missing = gaps.filter(g => matches(g.position, missingSearch)).sort((a,b) => compare(a.position,b.position));
   const loading = waiting.filter(p => matches(p, missingSearch)).sort(compare);
   const tabs = [{ key:'overview', label:'Return Overview' }, { key:'included', label:'All Securities Considered', count:units.length }, { key:'missing', label:'Missing Values', count:missingCount }];
-  const identity = (p: Position) => {
+  const accountDetails = (p: Position) => {
     const c = context(p);
     return <>
-      <div className="flex flex-wrap items-start justify-between gap-2"><h3 className="font-semibold text-slate-100">{p.security}</h3><span className="text-xs text-slate-400" data-market-category>{c.category}</span></div>
       <p className="mt-1 text-xs"><span className="text-slate-400">Held through: </span><strong className="font-medium" data-market-through>{c.heldThrough}</strong> · {c.instrument}</p>
       <p className="mt-1 text-xs text-slate-400" data-market-owner>{c.owner} · {c.provider} · Account {c.account}{c.statementDate && ` · Report ${fmtDate(c.statementDate)}`}</p>
       {p.isin && <p className="mt-1 text-xs text-slate-400">ISIN {p.isin}</p>}
+    </>;
+  };
+  const identity = (p: Position, headingOnly = false) => {
+    const c = context(p);
+    return <>
+      <div className="flex flex-wrap items-start justify-between gap-2"><h3 className="font-semibold text-slate-100">{p.security}</h3><span className="text-xs text-slate-400" data-market-category>{c.category}</span></div>
+      {!headingOnly && accountDetails(p)}
     </>;
   };
   return <div className="whitespace-normal break-words text-left font-normal" data-market-working data-market-details
@@ -60,6 +66,7 @@ function MarketReturnDetails({ units, gaps, positions, accounts, totalValue, fro
     </div>
     <section role="tabpanel" id={`${id}-panel-${tab}`} aria-labelledby={`${id}-tab-${tab}`} tabIndex={0} className="mt-4" data-market-panel={tab}>
       {tab==='overview' && <div className="space-y-3" data-market-overview>
+        {!units.length && !pending && missingCount > 0 && <p className="rounded-lg bg-ink-900 p-3">We can’t calculate this market return yet. Open Missing Values to see what’s needed.</p>}
         <p><strong>{units.length} of {positions.length} holdings</strong> are included. <strong>{missingCount}</strong> are left out{pending>0?`, including ${waiting.length} still loading`:''}.</p>
         <dl className="grid grid-cols-2 gap-3 rounded-lg bg-ink-900 p-3">
           <div><dt className="text-xs text-slate-400">Value included</dt><dd className="font-semibold tabular">{money(covered)}</dd></div>
@@ -89,9 +96,10 @@ function MarketReturnDetails({ units, gaps, positions, accounts, totalValue, fro
         <label className="mt-3 block"><span className="sr-only">Search missing holdings</span><input value={missingSearch} onChange={e=>setMissingSearch(e.target.value)} placeholder="Search security, fund, owner or account" className="ring-focus w-full rounded-lg border border-ink-700 bg-ink-900 px-3 py-2 text-sm" /></label>
         {missingSearch && <p className="mt-2 text-xs text-slate-400">Showing {missing.length+loading.length} of {missingCount} left-out holdings</p>}
         <ul className="mt-3 space-y-3">{missing.map(g=>{ const explanation=marketGapExplanation(g,requestedStart,requestedEnd); return <li key={marketHoldingKey(g.position)} className="rounded-lg border border-ink-700 p-3" data-market-gap data-market-holding-key={marketHoldingKey(g.position)}>
-          {identity(g.position)}<p className="mt-2 text-xs">Current value: <strong>{money(g.position.marketValue)}</strong></p>
+          {identity(g.position, true)}
           <p className="mt-2 text-sm" data-market-missing-data><strong>Missing: </strong>{explanation.missing}</p>
           <p className="mt-1 text-sm" data-market-needed><strong>Needed: </strong>{explanation.needed}</p>
+          <div className="mt-3 border-t border-ink-700 pt-2">{accountDetails(g.position)}<p className="mt-1 text-xs text-slate-400">Current value: <strong>{money(g.position.marketValue)}</strong></p></div>
         </li>})}{loading.map(p=><li key={marketHoldingKey(p)} className="rounded-lg border border-ink-700 p-3" data-market-gap="loading" data-market-holding-key={marketHoldingKey(p)}>
           {identity(p)}<p className="mt-2 text-sm"><strong>Still loading.</strong> Please wait for the price history. No new document is needed yet.</p>
         </li>)}</ul>
