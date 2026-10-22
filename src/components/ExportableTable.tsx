@@ -70,9 +70,9 @@ export function ExportableTable({ children, exportName, controlsHost, ...props }
           const ids = new Set(inputIds());
           // Analytical tables without a source row still offer the same book
           // input sheets, so every table has the same correction workflow.
-          const related = inputState.catalog.filter(r => ids.has(r.id)
+          const related = inputState.catalog.filter(r => ids.has(r.id) || (!!r.parentId && ids.has(r.parentId))
             || (r.kind === "private-capital" && ids.has(r.id.replace(/^private-capital:/, "holding:"))));
-          const calls = related.some(r => r.kind !== "property") ? inputState.catalog.filter(r => r.kind === "call" && !ids.has(r.id)) : [];
+          const calls = related.some(r => r.kind !== "property" && r.kind !== "owner") ? inputState.catalog.filter(r => r.kind === "call" && !ids.has(r.id)) : [];
           snapshot.inputs = related.length ? [...related, ...calls] : inputState.catalog;
         }
       } finally {

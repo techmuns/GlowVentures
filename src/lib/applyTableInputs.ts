@@ -28,7 +28,7 @@ export function applyTableInputs(book: Portfolio | null, saved: readonly SavedIn
       p.returnPct = p.hprUnavailableReason || p.valuedAtCost || p.costBasis == null ? null : fifoReturnPct(p.marketValue, p.costBasis, p.realizedPnL, p.costOfUnitsSold, p.dividendReceived);
       p.live = false; p.priceEvidence = undefined; p.dayChange = null; p.dayChangePct = null;
       // A rolled statement snapshot cannot replace a deliberate correction.
-      p.rolledForward = undefined;
+      if (fields.some(field => field !== "dividendReceived")) p.rolledForward = undefined;
     }
     return p;
   });

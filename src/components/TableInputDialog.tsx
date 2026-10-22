@@ -29,12 +29,12 @@ export function TableInputDialog({ close, changes, complete, recordIds }: { clos
     setBusy(true); setError("");
     try { await saveTableInputs(changes!); complete?.(); close(); } catch (e) { setError((e as Error).message); setBusy(false); }
   };
-  const matching = state.catalog.filter(r => (showAll || !recordIds?.length || recordIds.includes(r.id) || (r.kind === "call" && recordIds.some(id => !id.startsWith("property:")))) && `${r.label} ${r.account}`.toLowerCase().includes(query.toLowerCase()));
+  const matching = state.catalog.filter(r => (showAll || !recordIds?.length || recordIds.includes(r.id) || (!!r.parentId && recordIds.includes(r.parentId)) || (r.kind === "call" && recordIds.some(id => !id.startsWith("property:")))) && `${r.label} ${r.account}`.toLowerCase().includes(query.toLowerCase()));
   const older = state.saved.filter(s => { const r = state.catalog.find(r => r.id === s.id); return (!recordIds?.length || recordIds.includes(s.id)) && (!r || r.source !== s.source); });
   return createPortal(<div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4" onClick={e => { if (e.target === e.currentTarget && !busy) close(); }}>
     <div ref={panel} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="table-input-title" className="flex max-h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-xl border border-ink-600 bg-ink-900 p-5 text-slate-200 shadow-xl">
       <div className="flex items-start justify-between gap-4"><h2 id="table-input-title" className="text-lg font-semibold">{changes ? "Review Excel changes" : "Edit investment numbers"}</h2><button type="button" disabled={busy} onClick={close} aria-label="Close number editor" className="rounded ring-focus"><X className="h-5 w-5" /></button></div>
-      <p className="my-2 text-sm text-slate-400">Use rupees (INR) for the date shown. Keep the format; only fill in or correct numbers. Yellow cells are missing data. Totals and returns are calculated.</p>
+      <p className="my-2 text-sm text-slate-400">Enter amounts in rupees (INR), for the date shown. Keep the format; only fill in or correct numbers. Yellow cells are missing data. Totals and returns are calculated.</p>
       {error && <p role="alert" className="my-2 text-sm text-loss">{error}</p>}
       {state.status !== "ready" && <p role="alert" className="my-2 text-sm text-loss">{state.status === "loading" ? "Loading saved numbers…" : state.error}</p>}
       {!changes && older.length > 0 && <details className="my-2 text-xs text-amber-600"><summary>{older.length} older corrections need review</summary><p className="my-1">The source has changed. These older values are not applied. Re-enter a value on the current row if it is still correct.</p><ul>{older.map(s => <li key={`${s.id}:${s.field}`}>{state.catalog.find(r => r.id === s.id)?.label ?? s.id} · {s.field}: {s.value?.toLocaleString("en-IN") ?? "Blank"}</li>)}</ul></details>}
@@ -42,7 +42,8 @@ export function TableInputDialog({ close, changes, complete, recordIds }: { clos
         <p className="my-2 text-sm">{changes.length} number{changes.length === 1 ? "" : "s"} will be saved for everyone.</p>
         <ul className="overflow-auto text-sm">{changes.slice(0, 100).map(c => {
           const r = state.catalog.find(r => r.id === c.id)!;
-          return <li key={`${c.id}:${c.field}`} className="grid grid-cols-[2fr_1fr_1fr] gap-3 border-t border-ink-700 py-3"><div>{r?.label}<small className="block text-slate-500">{r?.account}</small></div><div>{r?.fields.find(f => f.key === c.field)?.label}</div><div className="text-right"><span className="text-slate-500">{r?.values[c.field]?.toLocaleString("en-IN") ?? "Blank"}</span> → {c.value?.toLocaleString("en-IN") ?? "Blank"}</div></li>;
+          const format = (n: number | null | undefined) => n == null ? "Blank" : r?.fields.find(f => f.key === c.field)?.unit === "%" ? `${(n * 100).toLocaleString("en-IN")}%` : n.toLocaleString("en-IN");
+          return <li key={`${c.id}:${c.field}`} className="grid grid-cols-[2fr_1fr_1fr] gap-3 border-t border-ink-700 py-3"><div>{r?.label}<small className="block text-slate-500">{r?.account}</small></div><div>{r?.fields.find(f => f.key === c.field)?.label}</div><div className="text-right"><span className="text-slate-500">{format(r?.values[c.field])}</span> → {format(c.value)}</div></li>;
         })}{changes.length > 100 && <li className="p-2 text-xs">Showing the first 100 changes.</li>}</ul>
         <button type="button" onClick={() => { void apply(); }} disabled={busy || state.status !== "ready"} className="mt-4 self-end rounded bg-emerald-600 px-4 py-2 text-sm text-white ring-focus disabled:opacity-50">{busy ? "Saving…" : `Save ${changes.length} changes`}</button>
       </> : <>

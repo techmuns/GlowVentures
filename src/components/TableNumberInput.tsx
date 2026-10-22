@@ -10,17 +10,19 @@ export function TableNumberInput({ record, field }: { record: InputRecord; field
   const input = useRef<HTMLInputElement>(null);
   const [base, setBase] = useState({ value: current, version, source: record.source });
   const label = record.fields.find(f => f.key === field)!.label;
-  const [draft, setDraft] = useState(current == null ? "" : String(current));
+  const percent = record.fields.find(f => f.key === field)?.unit === "%";
+  const text = (n: number | null) => n == null ? "" : String(percent ? Number((n * 100).toFixed(10)) : n);
+  const [draft, setDraft] = useState(text(current));
   const [busy, setBusy] = useState(false), [error, setError] = useState("");
-  const text = (n: number | null) => n == null ? "" : String(n);
   const stale = base.version !== version || base.source !== record.source;
   useEffect(() => {
+    if (base.version === version && base.source === record.source && base.value === current) return;
     if (draft === text(base.value)) {
       setBase({ value: current, version, source: record.source }); setDraft(text(current));
     }
   }, [current, version, record.source]);
   const save = async (reset = false) => {
-    const value = draft.trim() === "" ? null : Number(draft.replace(/,/g, ""));
+    const value = draft.trim() === "" ? null : Number(draft.replace(/,/g, "")) / (percent ? 100 : 1);
     if (!reset && value !== null && !Number.isFinite(value)) { setError("Enter a number."); return; }
     setBusy(true); setError("");
     try {
@@ -42,7 +44,7 @@ export function TableNumberInput({ record, field }: { record: InputRecord; field
       <button type="button" disabled={busy || draft === text(base.value)} className="rounded px-1 text-emerald-600 ring-focus disabled:opacity-40" onClick={() => { void save(); }}>{busy ? "Saving…" : "Save"}</button>
       {version && record.kind !== "property" && <button type="button" disabled={busy} className="rounded text-slate-400 ring-focus" onClick={() => { void save(true); }}>Restore original</button>}
     </div>
-    {stale && <p className="mt-1 whitespace-normal text-[10px] text-amber-600">Saved number changed to {current?.toLocaleString("en-IN") ?? "blank"}. <button type="button" className="underline ring-focus" onClick={() => { setBase({ value: current, version, source: record.source }); setDraft(text(current)); setError(""); }}>Use latest</button></p>}
+    {stale && <p className="mt-1 whitespace-normal text-[10px] text-amber-600">Saved data changed. Latest number: {current === null ? "blank" : `${text(current)}${percent ? "%" : ""}`}. <button type="button" className="underline ring-focus" onClick={() => { setBase({ value: current, version, source: record.source }); setDraft(text(current)); setError(""); }}>Use latest</button></p>}
     {error && <p role="alert" className="mt-1 max-w-xs whitespace-normal text-xs text-loss">{error}</p>}
   </div>;
 }

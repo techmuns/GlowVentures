@@ -18,6 +18,7 @@ export function addInputWorkbook(book: ExcelJS.Workbook, inputs: InputRecord[], 
     { name: "Holding inputs", records: inputs.filter(r => r.kind === "holding") },
     { name: "Capital inputs", records: inputs.filter(r => r.kind === "capital" || r.kind === "private-capital") },
     { name: "Property inputs", records: inputs.filter(r => r.kind === "property") },
+    { name: "Ownership inputs", records: inputs.filter(r => r.kind === "owner") },
     { name: "Call inputs", records: inputs.filter(r => r.kind === "call") },
   ];
   for (const group of groups) {
@@ -30,7 +31,7 @@ export function addInputWorkbook(book: ExcelJS.Workbook, inputs: InputRecord[], 
       if (date instanceof Date) row.getCell(3).numFmt = "dd-mmm-yyyy";
       fields.forEach((field, i) => {
         const cell = row.getCell(i + 4);
-        cell.numFmt = field.unit ? "#,##0.########" : '"₹"#,##0.00';
+        cell.numFmt = field.unit === "%" ? "0.0%" : field.unit ? "#,##0.########" : '"₹"#,##0.00';
         targets.push({ sheet: sheet.name, cell: cell.address, input: { id: r.id, field: field.key, value: r.values[field.key], version: r.versions[field.key] ?? "", source: r.source } });
       });
     }
@@ -63,10 +64,11 @@ export function addInputWorkbook(book: ExcelJS.Workbook, inputs: InputRecord[], 
   for (let i = 0; i < text.length; i += 24000) metadata.addRow([text.slice(i, i + 24000)]);
   const about = book.getWorksheet("About")!;
   about.addRows([
-    ["Edit and upload", "Keep the format; only fill in or correct numbers for the date shown. Yellow cells are missing data. Green cells can also be corrected. A holding kept at cost has no verified valuation; its valuation input is blank. Use the Holding inputs, Capital inputs, Property inputs or Call inputs sheets for other fields, then Upload Excel on any table. Call inputs update upcoming calls, separately from amounts already paid."],
+    ["Edit and upload", "Keep the format; only fill in or correct numbers for the date shown. Yellow cells are missing data. Green cells can also be corrected. A holding kept at cost has no verified valuation; its valuation input is blank. Use the Holding inputs, Capital inputs, Property inputs, Ownership inputs or Call inputs sheets for other fields, then Upload Excel on any table. Call inputs update upcoming calls, separately from amounts already paid."],
     ["Calculated cells", "Totals, weights, returns, live prices and statement ledger records are read-only. Correct the investment inputs instead; the dashboard recalculates supported figures. Input sheets use rupees (INR), units and the source record's date. Property inputs are for the whole property."],
     ["Shared changes", "Changes are saved for everyone, separately from the original statements. A file with changed headings, added/deleted rows, formulas or stale edited inputs is refused. If the same number appears twice, change either copy; conflicting edits are refused."],
   ]);
+  about.eachRow(row => { row.alignment = { wrapText: true, vertical: "top" }; row.getCell(1).font = { bold: true }; });
   fitExcelWorksheet(about, 0);
 }
 

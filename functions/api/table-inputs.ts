@@ -2,7 +2,7 @@ import { storeFor, StoreError, type DashboardStore } from "../../shared/dashboar
 import { validateProperty } from "../../shared/realEstate.mjs";
 import { isCall, validateDraft, type StoredCall } from "./capital-calls.js";
 import { BOOK_POSITIONS, BOOK_COMMITMENTS, BOOK_ACCOUNTS } from "../../src/data/glowData";
-import { applySavedInputs, buildInputCatalog, propertyInputRecord, callInputRecord, validateInputChanges, type InputChange, type SavedInput } from "../../src/lib/tableInputs";
+import { applySavedInputs, buildInputCatalog, propertyInputRecord, ownershipInputRecords, callInputRecord, validateInputChanges, type InputChange, type SavedInput } from "../../src/lib/tableInputs";
 
 const PREFIX = "table-input:";
 const sourceCatalog = buildInputCatalog(BOOK_POSITIONS, BOOK_COMMITMENTS, BOOK_ACCOUNTS);
@@ -25,7 +25,7 @@ async function snapshot(store: DashboardStore) {
     return parsed.property ? [{ ...parsed.property, updatedAt: (r.raw as { updatedAt?: string }).updatedAt }] : [];
   });
   const calls = (await records(store, "capital-call:")).map(r => r.raw).filter(isCall);
-  return { saved, properties, calls, catalog: [...applySavedInputs(sourceCatalog, saved), ...properties.map(propertyInputRecord), ...calls.map(callInputRecord)] };
+  return { saved, properties, calls, catalog: [...applySavedInputs(sourceCatalog, saved), ...properties.flatMap(p => [propertyInputRecord(p), ...ownershipInputRecords(p)]), ...calls.map(callInputRecord)] };
 }
 export async function onRequest({ request, env }: { request: Request; env: Record<string, unknown> }) {
   if (!["GET", "POST"].includes(request.method)) return fail(405, "Use GET or POST.");
@@ -53,13 +53,18 @@ export async function onRequest({ request, env }: { request: Request; env: Recor
       const p = propertyUpdates.get(id) ?? { ...old };
       Object.assign(p, { [change.field]: change.value, updatedAt: stamp }); propertyUpdates.set(id, p);
     }
+    for (const change of changes) if (change.id.startsWith("property-owner:")) {
+      const [id, index] = change.id.slice("property-owner:".length).split("|");
+      const old = propertyUpdates.get(id) ?? current.properties.find(p => p.id === id)!;
+      propertyUpdates.set(id, { ...old, updatedAt: stamp, owners: old.owners.map((owner, i) => i === Number(index) ? { ...owner, share: change.value === null ? null : change.value * 100 } : owner) });
+    }
     for (const p of propertyUpdates.values()) { const parsed = validateProperty(p); if (parsed.error) return fail(400, parsed.error); }
     for (const change of changes) if (change.id.startsWith("capital-call:")) {
       const id = change.id.slice(13), old = current.calls.find(c => c.id === id)!;
       const parsed = validateDraft({ ...old, amount: change.value }, new Date(stamp));
       if (parsed.error) return fail(400, parsed.error); callUpdates.set(id, parsed.call!);
     }
-    for (const change of changes) if (!change.id.startsWith("property:") && !change.id.startsWith("capital-call:")) {
+    for (const change of changes) if (!change.id.startsWith("property:") && !change.id.startsWith("property-owner:") && !change.id.startsWith("capital-call:")) {
       const key = `${PREFIX}${change.id}:${change.field}`;
       const old = await store.get(key, "json"); store.expect?.(key, old ? JSON.stringify(old) : null);
       if (change.reset) await store.delete(key);

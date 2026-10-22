@@ -82,7 +82,7 @@ try {
   const other = await onRequest({ request: new Request(`${base}/api/table-inputs`, { method: 'POST', headers: { origin: base, 'content-type': 'application/json' }, body: JSON.stringify({ changes: [{ id: holding.id, field: 'costBasis', value: (holding.values.costBasis ?? 0) + 1, source: latestHolding.source, version: latestHolding.versions.costBasis ?? '' }] }) }), env });
   assert.equal(other.status, 200);
   await page.evaluate(() => window.dispatchEvent(new Event('focus')));
-  await cost.getByText(/Saved number changed/).waitFor();
+  await cost.getByText(/Saved data changed/).waitFor();
   check('An external save preserves the local draft and warns about the conflict', await cost.locator('input').inputValue() === '200000');
   await cost.getByRole('button', { name: 'Use latest' }).click();
   await cost.locator('input').fill('200000');
@@ -110,10 +110,12 @@ try {
   const realEstate = await download('property.xlsx');
   check('Property input sheet uses the whole property amount', inputCell(realEstate.book, `property:${property.id}`, 'value', 'Property inputs').value === 100000);
   inputCell(realEstate.book, `property:${property.id}`, 'value', 'Property inputs').value = 150000;
+  inputCell(realEstate.book, `property-owner:${property.id}|0`, 'share', 'Ownership inputs').value = .75;
   const propertyFile = path.join(out, 'property-edited.xlsx'); await realEstate.book.xlsx.writeFile(propertyFile);
   await upload(propertyFile); await savePreview();
   check('Property Excel upload updates the existing property record', data.get(`real-estate:${property.id}`).value === 150000);
-  await page.locator('[data-real-estate-table]').getByText('₹75,000', { exact: true }).first().waitFor();
+  check('Ownership is imported as a percentage, with names preserved', data.get(`real-estate:${property.id}`).owners[0].share === 75 && data.get(`real-estate:${property.id}`).owners[0].name === 'Test owner');
+  await page.locator('[data-real-estate-table]').getByText('₹1,12,500', { exact: true }).first().waitFor();
   check('Property shares and totals recalculate from whole-property inputs', true);
   await page.setViewportSize({ width: 420, height: 900 });
   await page.locator('[data-all-inputs]').first().click();

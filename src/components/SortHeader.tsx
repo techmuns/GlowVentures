@@ -238,7 +238,7 @@ export function Tr({ view, children, reviewScope, inputRecordId, ...rest }: { vi
     return cloneElement(original, {
       "data-input-record": record.id, "data-input-field": field,
       "data-input-export": exportable ? JSON.stringify({ id: record.id, field, source: record.source, version: record.versions[field] ?? "", value }) : undefined,
-      ...(exporting && exportable ? { "data-export-value": value ?? "", "data-export-type": value == null ? "text" : "number", "data-export-format": record.fields.find(f => f.key === field)?.unit ? "#,##0.########" : '"₹"#,##0.00' } : {}),
+      ...(exporting && exportable ? { "data-export-value": value ?? "", "data-export-type": value == null ? "text" : "number", "data-export-format": unit === "%" ? "0.0%" : unit ? "#,##0.########" : '"₹"#,##0.00' } : {}),
       ...(editing ? { children: <>{exporting && original.props.children as ReactNode}<div hidden={exporting} data-export-ignore><TableNumberInput key={`${record.id}:${field}`} record={record} field={field} /></div></> } : {}),
       ...(!editing && !exporting && record.versions[field] ? { children: <>{original.props.children as ReactNode}<span data-export-ignore className="ml-1 text-[9px] font-normal text-emerald-600" title={`User-entered number · ${record.versions[field].slice(0, 10)}. The original statement is kept separately.`}>Edited</span></> } : {}),
     });
