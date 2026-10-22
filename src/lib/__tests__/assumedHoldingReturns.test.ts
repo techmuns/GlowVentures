@@ -65,6 +65,7 @@ assert.equal(cards.gain.total.gain,null);
 const fund = {...position,assetClass:'Mutual Fund',security:'Example Growth',symbol:undefined} as Position;
 const fundBook = {...b,positions:[fund],actions:null,histories:{example:{...h,basis:'nav' as const,name:'Example Direct Growth',isin:fund.isin!}}};
 assert.equal(assumedHoldingReturns([fund],[account],'2026-09-01','2026-10-22',fundBook).units.length,1,'growth NAVs do not depend on equity events');
+assert.equal(assumedHoldingReturns([fund],[account],'2026-09-01','2026-10-22',{...fundBook,histories:{example:{...h,basis:'nav',name:'Example Dividend Yield Fund - Growth'}}}).units.length,1,'a dividend-yield strategy can still have an explicit growth option');
 assert.match(assumedHoldingReturns([fund],[account],'2026-09-01','2026-10-22',{...fundBook,histories:{example:{...h,basis:'nav',name:'Example IDCW'}}}).gaps[0].reason,/dated payouts/);
 for (const name of ['Example Growth Opportunities - IDCW','Example Growth Opportunities - Dividend Reinvestment','Example Growth Opportunities - Regular Plan']) {
  assert.equal(assumedHoldingReturns([fund],[account],'2026-09-01','2026-10-22',{...fundBook,histories:{example:{...h,basis:'nav',name}}}).units.length,0,'a strategy name is not proof of the growth option');

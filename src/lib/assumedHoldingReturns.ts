@@ -83,7 +83,7 @@ export function assumedHoldingReturns(positions: readonly Position[], accounts: 
       // “Growth Opportunities Fund — IDCW” is a dividend option, despite its
       // strategy name. Require the option suffix, and reject payout wording.
       const growth = /\b(?:growth|accumulation)(?:\s+option)?\s*$/i.test(h.name)
-        && !/\b(?:idcw|dividend|reinvestment|payout)\b/i.test(h.name);
+        && !/\b(?:idcw|reinvestment|payout)\b/i.test(h.name);
       if (!growth) { gap('This fund may pay distributions. Its dated payouts are needed as well as NAVs.'); continue; }
     } else {
       // Close is already split-adjusted to the history's last day. Put source units on
