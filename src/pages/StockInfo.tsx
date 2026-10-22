@@ -777,7 +777,7 @@ export function StockInfo() {
    * day's move is on that tile too since the Change today tile was folded in.
    *
    * The corporate-action layer withholds a quote that DID arrive wherever
-   * pairing it with the statement's share count could be wrong — a buyback,
+   * pairing it with the statement's share count could be wrong — a demerger,
    * sales recorded after the statement, a capture that does not reach the
    * quote's day, or its evidence still loading — and this page said "the price
    * feed returned no quote" over every one of them (DL-9), which sends a reader
