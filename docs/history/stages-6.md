@@ -245,7 +245,14 @@
 - `movesCloseBasis` drops buybacks from the ex-date previous-close guard in `dailyMovers` and `insideMovers`; a buyback does not move the exchange's close.
 - `liveWithheld.test.ts` now uses a demerger for the held-back case and asserts that a buyback goes live, or is held back only for recorded sales. `dailyMovers.test.ts` checks that a buyback's ex-date keeps the day move. `docs/CORPORATE-ACTIONS.md` says the same.
 
-### Stage 10gs — THREE CLEAR TABS FOR MARKET RETURN COVERAGE
+### Stage 10gs — SECTOR ATTRIBUTION AS SECTOR COMPOSITION DRAWS IT
+
+- *"why are AIF and mutual funds showing up as sectors? … show sector return attribution in the same way as we are showing in the sector composition tab … a consolidated view and a direct equity view … and a drop down list of the contributors and holdings in each sector and their returns."* The generic attribution filed every fund, private line and cash row under its class on the Sector axis; the Returns tab's Sector axis now draws `components/SectorAttribution.tsx` instead.
+- One rollup for both panels: `rollSectors`, `emptySector` and the two sets moved verbatim from `pages/SectorComposition.tsx` into `lib/sectorRollup.ts` (`sectorSets`), which Sector Composition now reads too. Consolidated = company shares plus the funds' disclosed holdings (derived); Direct Equity = own demat/broking shares. Rows are GICS sectors and Unclassified only.
+- Value, Weight and Return on cost are Sector Composition's figures (FIFO over the holdings that report a cost, "N of M", details card naming the fund-derived part). Gain and Contribution are since investment; contribution = row gain ÷ the set's capital, so rows add to the total. Market return is the one column that follows the toolbar's dates. A sector opens into its issuers (Consolidated) or holdings (Direct Equity) in the same columns; a company held only inside a fund shows 0 holdings and dashes with the reason.
+- `?sset=direct` selects Direct Equity. check:pages `cio-returns-sector` / `cio-returns-sector-direct` strike `data-sa-*`: sector-only rows, totals and contributions adding, children adding to the opened sector. `check-selected-attribution` keeps its regrouping assertion on the Security axis and walks both sector sets; `check-market-returns` reads the sector panel's market cells.
+
+### Stage 10gt — THREE CLEAR TABS FOR MARKET RETURN COVERAGE
 
 - The market-return popup opens on Return Overview, with short coverage, date and weighting explanations. All Securities Considered and Missing Values have live counts, searchable complete holding lists, and one entry per security/account rather than combining different owners or mandates.
 - Every entry uses the attribution table’s existing classification and the account registry’s exact fund/mandate, owner, provider, account and report date. Missing entries state the specific missing price, NAV, identity, valuation or source response and the next step in plain language. Pending histories stay named until they finish loading.
