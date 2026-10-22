@@ -17,7 +17,16 @@ against the codex ref, while any remaining approval/review gate is respected. Co
 a dedicated repository-scoped app/token for unattended PR CI if the account requires it.
 `GLOW_DASHBOARD_PASSWORD` is used only for authenticated GETs verifying the live revision.
 Without that check the job stays processing and retains its source bytes. If Codex
-review is unavailable, the PR waits for a local review rather than claiming approval.
+review is unavailable, a clean statement delivery still publishes automatically.
+
+The intake monitor independently checks the exact commit against its recorded main
+base, permits only statement files and named generated artifacts, verifies the
+immutable upload/document checksums (including nested ZIP leaves), and reruns the
+identity, date, coverage and reconciliation assessment using trusted code. Passing
+required CI then permits automatic PR merge without a reviewer callback. Missing,
+unclear or conflicting data is held with its original bytes. Application code or
+policy changes cannot use this path. Actual unresolved reviewer findings and any
+required repository approval remain blocking; branch protections are never bypassed.
 
 ## Handoff from the upload service
 
@@ -53,9 +62,13 @@ Run, in order:
 3. `npm run statements:publish -- --seal <job>/seal.json` prepares an immutable commit
    on `codex/statement-delivery-<id>`, without switching/resetting the current checkout
    or changing its index. `--push true` pushes only that branch and creates/reuses its
-   PR. It does not merge before CI and reviewer feedback. The worker needs GitHub
+   PR. It does not merge before CI. The worker needs GitHub
    credentials capable of starting PR CI; the default Actions token may suppress events.
-4. After checking bot feedback and resolving actionable review, write a review receipt
+4. The deployed intake coordinator automatically monitors its checksum-receipted
+   data-only PRs and merges them after the checks above pass. No human or bot approval
+   receipt is needed for that path. For a separately prepared developer delivery,
+   the explicit finalization command remains available: after resolving actionable
+   review, write a review receipt
    with `commit` (the exact PR head), `kind` (`automated` or `local`),
    `feedbackAddressed: true` and, for a local
    review, `automatedUnavailableReason`. Call `npm run statements:finalize --

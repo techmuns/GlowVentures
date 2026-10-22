@@ -5,11 +5,12 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { makeDocument, makeHolding, deriveDocument } from '../lib/document.mjs';
-import { assessPublication, digest, stable, archiveRevision, documentEvidence, positionEvidence } from '../lib/publication.mjs';
+import { assessPublication, digest, stable, archiveRevision, documentRevision, documentEvidence, positionEvidence } from '../lib/publication.mjs';
 import { sourceFiles, duplicateBytes } from '../prepare-delivery.mjs';
 import { checkSeal, commitDelivery } from '../publish-delivery.mjs';
 import { finalizationGate } from '../finalize-delivery.mjs';
-import { completedBotReview, deploymentContains, monitorPublication } from '../lib/intakePublication.mjs';
+import { completedBotReview, unresolvedBotFindings, deploymentContains, monitorPublication } from '../lib/intakePublication.mjs';
+import { verifyAutomaticPublication } from '../lib/automaticPublication.mjs';
 import { git as repositoryGit } from '../verify-publication.mjs';
 import { refreshForPublication, startPublicationRefresh, publicationRefreshBlocked } from '../../../shared/publicationRefresh.mjs';
 import { extractLayout } from '../lib/layout.mjs';
@@ -291,6 +292,97 @@ test('a bot summary must name the exact head and have no unresolved findings', (
   assert.equal(completedBotReview({ headRefOid: 'abc', comments: [comment('abc', 'untrusted-user')] }), null);
   const finding = comment('abc'); finding.body = finding.body.replace('"has_unresolved_findings":false', '"has_unresolved_findings":true');
   assert.equal(completedBotReview({ headRefOid: 'abc', comments: [comment('abc'), finding] }), null);
+  assert.equal(unresolvedBotFindings({ headRefOid: 'abc', comments: [comment('abc'), finding] }), true);
+  assert.equal(unresolvedBotFindings({ headRefOid: 'new', comments: [finding] }), false);
+});
+function storedZip(name, bytes) {
+  const label = Buffer.from(name), local = Buffer.alloc(30), central = Buffer.alloc(46), end = Buffer.alloc(22);
+  local.writeUInt32LE(0x04034b50); local.writeUInt32LE(bytes.length, 18); local.writeUInt32LE(bytes.length, 22); local.writeUInt16LE(label.length, 26);
+  central.writeUInt32LE(0x02014b50); central.writeUInt32LE(bytes.length, 20); central.writeUInt32LE(bytes.length, 24); central.writeUInt16LE(label.length, 28);
+  end.writeUInt32LE(0x06054b50); end.writeUInt16LE(1, 8); end.writeUInt16LE(1, 10); end.writeUInt32LE(central.length + label.length, 12); end.writeUInt32LE(local.length + label.length + bytes.length, 16);
+  return Buffer.concat([local, label, bytes, central, label, end]);
+}
+function automaticFixture({ changeDocument = d => d, mutate = () => {}, changeReceipt = r => r, zip = false } = {}) {
+  const directory = fs.mkdtempSync(path.join(ROOT, '.cache/automatic-publication-'));
+  const runGit = (args, options = {}) => {
+    const r = spawnSync('git', args, { cwd: directory, encoding: 'utf8', ...options });
+    if (r.status) throw new Error(`git ${args[0]} failed: ${r.stderr}`);
+    return r.stdout;
+  };
+  const put = (name, bytes) => { fs.mkdirSync(path.dirname(path.join(directory, name)), { recursive: true }); fs.writeFileSync(path.join(directory, name), bytes); };
+  const archive = documents => {
+    put('public/audit/manifest.json', JSON.stringify(documents));
+    for (const d of documents) put(`public/audit/${d.docKey}/document.json`, JSON.stringify(d));
+  };
+  runGit(['init', '-b', 'codex/automatic-fixture']); runGit(['config', 'user.name', 'Publication Test']); runGit(['config', 'user.email', 'test@example.invalid']);
+  const baseline = doc(); archive([baseline]); put('source/test.pdf', '%PDF-original'); put('src/data/glowData.ts', 'original book');
+  put('CLAUDE.md', 'Policy stays unchanged\n\n| Provider | Account | Owner | As of | Market value |\n| --- | --- | --- | --- | ---: |\n| old | account | owner | date | value |\n');
+  runGit(['add', '-A']); runGit(['commit', '-m', 'Verified baseline']);
+  const baseCommit = runGit(['rev-parse', 'HEAD']).trim();
+  const uploadPath = zip ? 'source/uploads-test/statements.zip' : 'source/uploads-test/statement.pdf';
+  const sourcePath = zip ? 'source/_extracted/uploads-test/statements/inner/statement.pdf' : uploadPath;
+  const bytes = zip ? storedZip('inner.zip', storedZip('statement.pdf', Buffer.from('%PDF-new-statement'))) : Buffer.from('%PDF-new-statement');
+  const candidate = changeDocument(later({ sourcePath })); archive([baseline, candidate]); put(uploadPath, bytes); put('src/data/glowData.ts', 'generated candidate');
+  let receipt = { schemaVersion: 1, baseCommit, archiveRevision: archiveRevision([baseline, candidate]),
+    files: [{ path: uploadPath, sha256: digest(bytes) }], documents: [{ document: candidate.docKey, revision: documentRevision(candidate), sourcePath, sha256: digest('%PDF-new-statement') }] };
+  receipt = changeReceipt(receipt);
+  const id = digest(receipt); put(`public/audit/deliveries/${id}.json`, JSON.stringify({ ...receipt, id }));
+  mutate({ directory, put, runGit }); runGit(['add', '-A']); runGit(['commit', '-m', 'Verified data delivery']);
+  const file = { commit: runGit(['rev-parse', 'HEAD']).trim(), baseCommit, archiveRevision: receipt.archiveRevision,
+    branch: `codex/statement-delivery-${id.slice(0, 16)}`, ciDispatched: true, pullRequest: 'pr1',
+    documentVersions: receipt.documents.map(({ document, revision }) => ({ document, revision })) };
+  return { file, check: f => verifyAutomaticPublication(f, { runGit, fetchHead: false }) };
+}
+test('verified data automatically merges with green CI and no completed reviewer callback', async () => {
+  const { file, check } = automaticFixture(); assert.equal(check(file).documents, 1);
+  const pr = { number: 1, state: 'OPEN', headRefOid: file.commit, reviews: [], comments: [],
+    statusCheckRollup: ['build', 'statements'].map(name => ({ name, status: 'COMPLETED', conclusion: 'SUCCESS' })) };
+  const calls = [];
+  const gh = args => {
+    calls.push(args);
+    if (args[0] === 'repo') return JSON.stringify({ nameWithOwner: 'example/repo' });
+    if (args[0] === 'api') return JSON.stringify({ data: { repository: { pullRequest: { reviewThreads: { nodes: [], pageInfo: {} } } } } });
+    return JSON.stringify(pr);
+  };
+  for (const comments of [[], [{ author: { login: 'chatgpt-codex-connector' }, body: `<!-- codex-review-state:v1 ${JSON.stringify({ code_review: { commit_sha: file.commit, status: 'failed', has_unresolved_findings: false } })} -->` }]]) {
+    pr.comments = comments;
+    assert.equal((await monitorPublication(file, { gh, currentBase: file.baseCommit, verifyData: check })).status, 'processing');
+    assert.equal(calls.at(-1)[1], 'merge'); assert.equal(calls.at(-1).at(-1), file.commit);
+  }
+  const count = calls.filter(c => c[1] === 'merge').length;
+  for (const blocked of [{ reviewDecision: 'REVIEW_REQUIRED' }, { reviews: [{ author: { login: 'reviewer' }, state: 'CHANGES_REQUESTED' }] }, { headRefOid: 'changed-head' }, { statusCheckRollup: [{ name: 'build', status: 'COMPLETED', conclusion: 'FAILURE' }] }]) {
+    const original = structuredClone(pr); Object.assign(pr, blocked);
+    assert.equal((await monitorPublication(file, { gh, currentBase: file.baseCommit, verifyData: check })).status, 'held');
+    Object.keys(pr).forEach(k => delete pr[k]); Object.assign(pr, original);
+  }
+  assert.equal(calls.filter(c => c[1] === 'merge').length, count);
+});
+test('automatic publication holds missing, unclear and conflicting financial records', () => {
+  for (const [changeDocument, error] of [
+    [d => ({ ...d, accountNo: null }), /MISSING_IDENTITY/],
+    [d => ({ ...d, reportType: 'unknown' }), /UNKNOWN_FORMAT/],
+    [d => ({ ...d, owner: 'Ankita Jaisinghani', ownerId: 'ankita-jaisinghani' }), /OWNER_CONFLICT/],
+    [d => ({ ...d, holdings: d.holdings.map(h => ({ ...h, quantity: null })) }), /FIELD_COVERAGE_LOSS/],
+    [d => ({ ...d, holdings: d.holdings.map(h => ({ ...h, purchaseDate: '03\/04\/2026' })) }), /INVALID_DATE/],
+  ]) {
+    const { file, check } = automaticFixture({ changeDocument }); assert.throws(() => check(file), error);
+  }
+});
+test('automatic publication verifies nested ZIP leaf bytes at their exact inventory paths', () => {
+  const { file, check } = automaticFixture({ zip: true }); assert.equal(check(file).documents, 1);
+  const wrong = automaticFixture({ zip: true, changeDocument: d => ({ ...d, sourcePath: d.sourcePath.replace('/inner/', '/wrong-account/') }) });
+  assert.throws(() => wrong.check(wrong.file), /no uploaded source evidence/);
+});
+test('automatic publication rejects code, policy, symlinks and unreceipted or altered bytes', () => {
+  for (const [options, error] of [
+    [{ mutate: ({ put }) => put('src/App.tsx', 'unexpected code') }, /cannot change code/],
+    [{ mutate: ({ put }) => put('CLAUDE.md', 'new instructions') }, /accounts table/],
+    [{ mutate: ({ directory }) => fs.symlinkSync('test.pdf', path.join(directory, 'source/link.pdf')) }, /file mode/],
+    [{ mutate: ({ put }) => put('source/test.pdf', 'overwrite history') }, /overwrite earlier/],
+    [{ mutate: ({ put }) => put('source/extra.pdf', 'unreceipted source') }, /exactly match/],
+    [{ mutate: ({ put }) => put('source/uploads-test/statement.pdf', 'changed bytes') }, /checksum/],
+    [{ changeReceipt: r => ({ ...r, documents: r.documents.map(d => ({ ...d, revision: 'wrong-row' })) }) }, /document rows or versions/],
+  ]) { const { file, check } = automaticFixture(options); assert.throws(() => check(file), error); }
 });
 test('deployment verification requires exact document versions, not just document names or a successful merge', async () => {
   const file = { pullRequest: 'https://github.com/example/repo/pull/1', commit: 'head', baseCommit: 'base',
@@ -305,14 +397,14 @@ test('deployment verification requires exact document versions, not just documen
   const live = await monitorPublication(file, { gh: () => merged, credential: 'test-only-credential', fetchImpl: mockFetch(true) });
   assert.equal(live.status, 'landed'); assert.equal(live.commit, 'merged-sha');
 });
-test('pending uploads keep their PR and raw-file lifecycle separate from CI/review', async () => {
+test('pending uploads retain bytes and never skip missing required checks', async () => {
   const file = { pullRequest: 'pr1', commit: 'head', baseCommit: 'base', documentVersions: [{ document: 'd', revision: 'r' }] };
   const pr = { state: 'OPEN', headRefOid: 'head', statusCheckRollup: [{ name: 'build', status: 'IN_PROGRESS' }] };
   const commands = [];
   const gh = args => { commands.push(args); return JSON.stringify(pr); };
   assert.equal((await monitorPublication(file, { gh, currentBase: 'base' })).status, 'processing');
   pr.statusCheckRollup = [{ name: 'build', status: 'COMPLETED', conclusion: 'SUCCESS' }];
-  assert.equal((await monitorPublication(file, { gh, currentBase: 'base' })).status, 'held', 'Green CI cannot bypass review');
+  assert.equal((await monitorPublication(file, { gh, currentBase: 'base' })).status, 'held', 'A passing build alone cannot bypass statement checks');
   assert.ok(!commands.some(a => a[0] === 'pr' && a[1] === 'merge'));
   const stale = await monitorPublication(file, { gh, currentBase: 'newer' });
   assert.equal(stale.status, 'queued'); assert.equal(stale.pullRequest, null);

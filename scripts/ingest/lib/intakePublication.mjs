@@ -3,7 +3,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { digest } from './publication.mjs';
-import { finalizationGate } from '../finalize-delivery.mjs';
+import { publicationGate } from '../finalize-delivery.mjs';
+import { verifyAutomaticPublication } from './automaticPublication.mjs';
 
 export function completedBotReview(pr) {
   for (const comment of [...(pr.comments ?? [])].reverse()) {
@@ -18,6 +19,15 @@ export function completedBotReview(pr) {
     return null; // never fall back to an older clean summary over new findings
   }
   return null;
+}
+export function unresolvedBotFindings(pr) {
+  for (const comment of [...(pr.comments ?? [])].reverse()) {
+    if (!/^chatgpt-codex-connector(?:\[bot\])?$/.test(comment.author?.login ?? '')) continue;
+    const marker = /codex-review-state:v1 (\{[^\n]+\}) -->/.exec(comment.body ?? '');
+    let review; try { review = JSON.parse(marker?.[1]).code_review; } catch { continue; }
+    if (review?.commit_sha === pr.headRefOid) return review.has_unresolved_findings === true;
+  }
+  return false;
 }
 /**
  * A ZIP that lands with files a mail server removed says which, at every stage
@@ -48,7 +58,7 @@ export async function readDeployedPublication({ credential, baseURL = 'https://g
   if (!pointer || !/^\/views\/[a-f0-9]{20}\/publication\.json$/.test(pointer.manifest)) return null;
   return get(pointer.manifest);
 }
-export async function monitorPublication(file, { gh, currentBase, credential, baseURL, fetchImpl } = {}) {
+export async function monitorPublication(file, { gh, currentBase, credential, baseURL, fetchImpl, verifyData = verifyAutomaticPublication } = {}) {
   const metadata = Object.fromEntries(['pullRequest', 'branch', 'ciDispatched', 'commit', 'baseCommit', 'archiveRevision', 'documentVersions', 'landedAs', 'providers', 'docKeys', 'neverArrived'].map(k => [k, file[k] ?? null]));
   if (!metadata.pullRequest) {
     if (!/^codex\/statement-delivery-[a-f0-9]{16}$/.test(file.branch)) throw new Error('Invalid saved publication branch.');
@@ -56,7 +66,7 @@ export async function monitorPublication(file, { gh, currentBase, credential, ba
     const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
     const body = path.join(root, '.cache', `publication-${digest(file.branch)}.md`);
     fs.mkdirSync(path.dirname(body), { recursive: true });
-    fs.writeFileSync(body, `Resume a verified statement publication. Required source/identity, CI and review gates apply.\n\nArchive revision: ${file.archiveRevision}\n`);
+    fs.writeFileSync(body, `Resume a verified statement publication. Source/identity, generated-file, CI and repository protection gates apply; clean data publishes automatically.\n\nArchive revision: ${file.archiveRevision}\n`);
     metadata.pullRequest = previous[0]?.url ?? gh(['pr', 'create', '--base', 'main', '--head', file.branch, '--title', 'Publish verified statement delivery', '--body-file', body]);
   }
   const pending = detail => ({ ...metadata, status: 'processing', hold: null,
@@ -84,14 +94,18 @@ export async function monitorPublication(file, { gh, currentBase, credential, ba
   }
   if (!pr.statusCheckRollup?.length || pr.statusCheckRollup.some(c => (c.status && c.status !== 'COMPLETED') || c.state === 'PENDING')) return pending(`Publication checks are running: ${url}`);
   if (pr.statusCheckRollup.some(c => !['SUCCESS', 'SKIPPED', 'NEUTRAL'].includes(c.conclusion ?? c.state))) return held(`Required publication checks failed; inspect ${url}.`);
-  const review = completedBotReview(pr);
-  if (!review) return held(`Publication is waiting for completed review of this exact commit. If automated review is unavailable, review the diff locally before merging through the PR; required review gates still apply. ${url}`);
+  if (unresolvedBotFindings(pr)) return held(`Unresolved review findings require attention: ${url}`);
+  try { publicationGate(pr, { commit: file.commit }); }
+  catch (error) { return held(`${error.message} ${url}`); }
   const { nameWithOwner } = JSON.parse(gh(['repo', 'view', '--json', 'nameWithOwner']));
   const [owner, name] = nameWithOwner.split('/');
   const threads = JSON.parse(gh(['api', 'graphql', '-f', 'query=query($owner:String!,$name:String!,$number:Int!){repository(owner:$owner,name:$name){pullRequest(number:$number){reviewThreads(first:100){nodes{isResolved} pageInfo{hasNextPage}}}}}',
     '-f', `owner=${owner}`, '-f', `name=${name}`, '-F', `number=${pr.number}`])).data.repository.pullRequest.reviewThreads;
   pr.unresolvedThreads = threads.pageInfo.hasNextPage || threads.nodes.some(t => !t.isResolved);
-  try { finalizationGate(pr, review, { commit: file.commit }); }
+  try {
+    publicationGate(pr, { commit: file.commit });
+    verifyData(file);
+  }
   catch (error) { return held(`${error.message} ${url}`); }
   gh(['pr', 'merge', url, '--squash', '--match-head-commit', file.commit]);
   return pending('Verified PR merged; waiting for the existing deployment and live data-version check.');

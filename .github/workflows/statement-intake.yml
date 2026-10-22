@@ -12,7 +12,7 @@ name: Statement intake
 # event. `scripts/ingest/intake-uploads.mjs` files each new statement under
 # source/uploads-<date>/<provider>/, runs inventory → extract → build-symbols →
 # build-book and every required gate, then opens a codex PR. Later runs monitor
-# CI/reviewer feedback and the automatic deployment; only verified live files
+# data-only validation, CI and the automatic deployment; only verified live files
 # leave the inbox. A statement the
 # pipeline cannot read in full stays in the inbox, held, with the reason; the
 # Statement Library shows it and offers Retry.
