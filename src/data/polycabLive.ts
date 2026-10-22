@@ -92,15 +92,7 @@ export const POLYCAB_LIVE: PolycabLive = {
   "nseSymbol": "POLYCAB",
   "bookIsin": "INE455K01017",
   "bookShares": 19010140,
-  "identity": {
-    "isin": "INE455K01017",
-    "scripCode": "542652",
-    "securityId": "POLYCAB",
-    "faceValue": 10,
-    "industry": "Cables - Electricals",
-    "group": "A",
-    "index": "BSE 200"
-  },
+  "identity": null,
   "quote": {
     "ltp": 7747,
     "prevClose": 8020,
@@ -203,8 +195,17 @@ export const POLYCAB_LIVE: PolycabLive = {
       "paymentDate": null
     }
   ],
-  "actionsComplete": true,
+  "actionsComplete": false,
   "promoterQuarters": [
+    {
+      "asOf": "2026-09-30",
+      "quarter": "Sep 2026",
+      "holdingPct": 61.44,
+      "pledgePct": null,
+      "pledgeSource": null,
+      "witnesses": 1,
+      "holdingRefused": false
+    },
     {
       "asOf": "2026-06-30",
       "quarter": "Jun 2026",
@@ -303,15 +304,6 @@ export const POLYCAB_LIVE: PolycabLive = {
       "pledgeSource": null,
       "witnesses": 1,
       "holdingRefused": false
-    },
-    {
-      "asOf": "2023-09-30",
-      "quarter": "Sep 2023",
-      "holdingPct": 65.91,
-      "pledgePct": null,
-      "pledgeSource": null,
-      "witnesses": 1,
-      "holdingRefused": false
     }
   ],
   "promoterAgreement": {
@@ -347,10 +339,15 @@ export const POLYCAB_LIVE: PolycabLive = {
   ],
   "notes": [
     {
+      "severity": "fail",
+      "rule": "identity",
+      "detail": "BSE identity refused — HTTP 403. Nothing from the exchange is published this run."
+    },
+    {
       "severity": "info",
       "rule": "promoter-agreement",
       "detail": "6 quarter(s) carried by both witnesses; all agree within 0.05pp."
     }
   ],
-  "retrievedAt": "2026-10-21T18:13:17.298Z"
+  "retrievedAt": "2026-10-22T16:16:45.852Z"
 };
