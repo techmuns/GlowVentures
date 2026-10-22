@@ -303,7 +303,11 @@
 - Identical owner rows save once instead of blocking Save or doubling ownership. Partial or conflicting ownership stays editable; unknown shares remain unknown in family totals. Details show entered whole-property figures, so incomplete ownership does not hide the saved amounts there.
 - Record/API and local browser checks cover empty save/reload/edit, value without date or owner, duplicate-owner saving, missing shares, later additions, existing address search/dragging and unchanged valid share calculations. Production checks are read-only.
 
-### Stage 10ha — PDFs OPEN INSIDE THE EMBEDDED DASHBOARD
+### Stage 10ha — OUR BOOK VS BENCHMARK
+
+- Renamed the Morning CIO tab and its search result to “Our Book vs Benchmark”. The existing tab link and benchmark calculations stay the same.
+
+### Stage 10hb — PDFs OPEN INSIDE THE EMBEDDED DASHBOARD
 
 - Reproduced the reported statement failing with `net::ERR_BLOCKED_BY_CLIENT` and a `chrome-error://chromewebdata/` child frame. Chrome disables its native PDF plugin beneath a sandboxed ancestor, including the dashboard embed.
 - Original PDFs now render through a lazy, self-hosted PDF.js worker inside the app, with page navigation, fit-width/zoom, bundle starting page, password entry and retry, and a useful load failure. Original bytes and encryption stay unchanged; passwords stay in memory. Download, New tab and Text as read remain available.
