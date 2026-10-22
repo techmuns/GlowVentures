@@ -222,7 +222,9 @@ export function Tr({ view, children, reviewScope, inputRecordId, ...rest }: { vi
     if (!record || !field) return original;
     // Live prices are not statement inputs. Their source mark remains editable
     // on the input sheet, without relabelling the live export as a source value.
-    const exportable = !(record.kind === "holding" && field === "marketValue" && position?.live) && !(record.kind === "property" && field !== "area");
+    const sourceMatchesDisplay = record.kind !== "holding" || !position
+      || (position as unknown as Record<string, unknown>)[field] === record.values[field];
+    const exportable = sourceMatchesDisplay && !(record.kind === "holding" && field === "marketValue" && (position?.live || position?.priceEvidence)) && !(record.kind === "property" && field !== "area");
     const value = record.values[field];
     return cloneElement(original, {
       "data-input-record": record.id, "data-input-field": field,

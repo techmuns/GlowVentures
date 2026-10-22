@@ -2,7 +2,7 @@ import type { Account, Commitment, Position } from "./types";
 
 export type InputField = { key: string; label: string; signed?: boolean; unit?: string };
 export const HOLDING_INPUTS: InputField[] = [
-  { key: "quantity", label: "Units", unit: "units" }, { key: "costBasis", label: "Purchase cost" },
+  { key: "quantity", label: "Units", unit: "units" }, { key: "costBasis", label: "Cost of units held" },
   { key: "marketValue", label: "Value" }, { key: "realizedPnL", label: "Realised gain / loss", signed: true },
   { key: "costOfUnitsSold", label: "Cost of units sold" }, { key: "dividendReceived", label: "Dividends / income" },
 ];

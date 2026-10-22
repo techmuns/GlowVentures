@@ -133,6 +133,17 @@ jobs:
           path: .cache/pdf-preview-check
           if-no-files-found: ignore
 
+      - name: Preserve table correction browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: table-correction-browser
+          path: |
+            .cache/table-inputs/browser/*.png
+            .cache/table-inputs/browser/*results.json
+            .cache/table-inputs/browser/failure.json
+          if-no-files-found: ignore
+
       # A regeneration mismatch must fail this required job even though the
       # generated candidate is also built/tested to expose independent defects.
       - name: Require the generated book to be committed

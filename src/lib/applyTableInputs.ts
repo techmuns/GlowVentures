@@ -25,7 +25,7 @@ export function applyTableInputs(book: Portfolio | null, saved: readonly SavedIn
       p.avgCost = p.costBasis != null && p.quantity != null && p.quantity > 0 ? p.costBasis / p.quantity : null;
       p.currentPrice = !p.valuedAtCost && p.quantity != null && p.quantity > 0 ? p.marketValue / p.quantity : null;
       p.unrealizedPnL = p.valuedAtCost || p.costBasis == null ? null : p.marketValue - p.costBasis;
-      p.returnPct = p.valuedAtCost || p.costBasis == null ? null : fifoReturnPct(p.marketValue, p.costBasis, p.realizedPnL, p.costOfUnitsSold, p.dividendReceived);
+      p.returnPct = p.hprUnavailableReason || p.valuedAtCost || p.costBasis == null ? null : fifoReturnPct(p.marketValue, p.costBasis, p.realizedPnL, p.costOfUnitsSold, p.dividendReceived);
       p.live = false; p.priceEvidence = undefined; p.dayChange = null; p.dayChangePct = null;
       // A rolled statement snapshot cannot replace a deliberate correction.
       p.rolledForward = undefined;
