@@ -23,6 +23,10 @@ export type CanonicalOwner = {
   pans?: string[];
   /** From the PAN's fourth character — a trust is not the person it is named after. */
   kind?: PanHolderType;
+  /** Tax residence, only where a statement prints it. */
+  residence?: "resident";
+  /** The statement and the words that print the residence. */
+  residenceEvidence?: string;
 };
 
 export type OwnerMatch = {

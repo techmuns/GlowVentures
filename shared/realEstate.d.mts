@@ -1,3 +1,5 @@
+/** A capital improvement, indexed from its own year for tax. */
+export type PropertyImprovement = { on: string | null; amount: number };
 export type PropertyOwner = { ownerId: string | null; name: string; share: number | null };
 export type Property = {
   id: string; name: string; type: string; address: string; city: string; state: string; country: string; pincode: string;
@@ -6,6 +8,14 @@ export type Property = {
   purchasedOn: string | null; valuationDate: string | null; leaseEnd: string | null;
   /** "Purchased", "Inherited", "Gifted", or "" when not entered. */
   acquisition: string;
+  /** Improvements after acquisition; the Cost figures add them. */
+  improvements: PropertyImprovement[];
+  /** Inherited or gifted: the previous owner's cost and acquisition date, which tax carries over. */
+  priorCost: number | null; priorAcquiredOn: string | null;
+  /** Fair market value on 1 Apr 2001, for a property held since before then. */
+  fmv2001: number | null;
+  /** Rural agricultural land is not a capital asset. */
+  ruralAgricultural: boolean;
   status: string; tenant: string; titleStatus: string; notes: string;
   latitude: number | null; longitude: number | null; updatedAt?: string;
 };
@@ -17,6 +27,8 @@ export const AREA_UNITS: string[];
 export const TITLE_STATUSES: string[];
 export const MONEY_FIELDS: string[];
 export const PROPERTY_ID: RegExp;
+export const MAX_IMPROVEMENTS: number;
+export function totalCost(p: Property): number | null;
 export function validateProperty(raw: unknown): { property: Property; error?: undefined } | { error: string; property?: undefined };
 export function hasPin(p: Property): boolean;
 export function propertyLabel(p: Property): string;

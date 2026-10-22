@@ -1,7 +1,7 @@
 import { useTableExporting } from "@/lib/tableExportSnapshot";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Building2, MapPin, Table2, Map as MapIcon, Plus, Pencil, X, Wallet, Landmark, Banknote, Trash2, TrendingUp } from "lucide-react";
+import { Building2, MapPin, Table2, Map as MapIcon, Plus, Pencil, X, Wallet, Landmark, Banknote, Trash2, TrendingUp, Receipt, Scale } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { DASH, AbsentValue } from "@/components/Absent";
 import { Card } from "@/components/Card";
@@ -15,13 +15,19 @@ import { PropertyEditor, emptyProperty } from "@/components/PropertyEditor";
 import { useTableView, sortRows, type Accessor } from "@/lib/tableView";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { fmtNum, fmtPct, fmtDate } from "@/lib/format";
-import { PROPERTY_TYPES, PROPERTY_STATUSES, propertyFigures, wholePropertyFigures, propertyLabel, propertyTotal, hasPin, useProperties, receivedWithoutPurchase, costLabel, acquiredOnLabel, appreciationGap, type Property, type PropertyFigures } from "@/lib/realEstate";
+import { PROPERTY_TYPES, PROPERTY_STATUSES, propertyFigures, wholePropertyFigures, propertyLabel, propertyTotal, hasPin, useProperties, receivedWithoutPurchase, costLabel, acquiredOnLabel, appreciationGap, propertyGainsTax, financialYear, indexYear, LONG_TERM_RATE, INDEXED_RATE, CESS, type Property, type PropertyFigures, type PropertyGainsTax } from "@/lib/realEstate";
+import { todayIso } from "@/lib/enteredCalls";
 const PropertyMap = lazy(() => import("@/components/PropertyMap"));
 const VIEWS = [{ key: "table", label: "Table", icon: Table2 }, { key: "map", label: "Map", icon: MapIcon }] as const;
-const DEFAULT_TILES = ["value", "cost", "rent"];
-const COLS = ["name", "type", "location", "owners", "area", "cost", "value", "gain", "gainPct", "rent", "yield", "status", "pin", "acquisition", "purchasedOn", "valuationDate", "debt", "equity", "netRent", "tenant", "leaseEnd", "titleStatus"];
-const OPTIONAL = ["acquisition", "purchasedOn", "valuationDate", "debt", "equity", "netRent", "tenant", "leaseEnd", "titleStatus"];
-const LABELS: Record<string, string> = { name: "Property", type: "Type", location: "Location", owners: "Owner / share", area: "Area", cost: "Cost", value: "Current value", gain: "Appreciation", gainPct: "Appreciation %", rent: "Rent / month", yield: "Gross yield", status: "Status", pin: "Map pin", acquisition: "Acquisition", purchasedOn: "Acquired on", valuationDate: "Valued on", debt: "Loan", equity: "Net equity", netRent: "Net rent / month", tenant: "Tenant", leaseEnd: "Lease ends", titleStatus: "Title" };
+const DEFAULT_TILES = ["value", "cost", "rent", "after-tax"];
+const COLS = ["name", "type", "location", "owners", "area", "cost", "value", "gain", "gainPct", "tax", "afterTax", "rent", "yield", "status", "pin", "acquisition", "purchasedOn", "holding", "indexedCost", "valuationDate", "debt", "equity", "netRent", "tenant", "leaseEnd", "titleStatus"];
+const OPTIONAL = ["acquisition", "purchasedOn", "holding", "indexedCost", "valuationDate", "debt", "equity", "netRent", "tenant", "leaseEnd", "titleStatus"];
+const LABELS: Record<string, string> = { name: "Property", type: "Type", location: "Location", owners: "Owner / share", area: "Area", cost: "Cost", value: "Current value", gain: "Appreciation", gainPct: "Appreciation %", tax: "Est. tax on sale", afterTax: "Value after tax", rent: "Rent / month", yield: "Gross yield", status: "Status", pin: "Map pin", acquisition: "Acquisition", purchasedOn: "Acquired on", holding: "Holding", indexedCost: "Indexed cost", valuationDate: "Valued on", debt: "Loan", equity: "Net equity", netRent: "Net rent / month", tenant: "Tenant", leaseEnd: "Lease ends", titleStatus: "Title" };
+type TaxKey = "tax" | "afterTax" | "indexedCost";
+const TAX_KEYS = new Set<string>(["tax", "afterTax", "indexedCost", "holding"]);
+const pctRate = (rate: number) => `${Math.round(rate * 1000) / 10}%`;
+// What every tax figure on this page is, and what it leaves out — the hover on each.
+const TAX_RULES = `Long-term capital gains tax if sold at the current value: held more than 24 months (a previous owner's holding counts for an inheritance or gift). ${pctRate(LONG_TERM_RATE)} without indexation since the Finance (No. 2) Act 2024; a resident individual or HUF selling land or a building acquired before 23 Jul 2024 pays no more than ${pctRate(INDEXED_RATE)} with indexation (Cost Inflation Index). Struck per owner on their share, plus ${pctRate(CESS)} cess. Excludes surcharge (it depends on the owner's total income for the year), selling costs, and reinvestment exemptions.`;
 type Summed = Exclude<keyof PropertyFigures, "share" | "gainPct">;
 const TYPES_COLOR: Record<string, string> = { Land: "#678355", Apartment: "#596da4", "Villa / house": "#aa783b", Commercial: "#925e85", Office: "#477f83", Warehouse: "#797054", Industrial: "#786e9c", Farmhouse: "#41795e", Other: "#737373" };
 const date = (value: string | null) => value ? fmtDate(value) : DASH;
@@ -65,7 +71,13 @@ export function RealEstate() {
   const scoped = useMemo(() => store.properties.filter(p => !scope.owners || !p.owners.some(o => o.ownerId) || p.owners.some(o => o.ownerId && scope.owners!.has(o.ownerId))), [store.properties, scope.owners]);
   const filtered = useMemo(() => exportingTable ? scoped : scoped.filter(p => (!country || p.country === country) && (!state || p.state === state) && (!city || p.city === city) && (!type || p.type === type) && (!status || p.status === status)
     && (!q.trim() || [propertyLabel(p), p.address, p.city, p.state, p.country, p.pincode, p.type, p.acquisition, p.tenant, ...p.owners.map(o => o.name)].join(" ").toLowerCase().includes(q.trim().toLowerCase()))), [exportingTable, scoped, country, state, city, type, status, q]);
+  // A sale today: the date sets the financial year, its index and each holding period.
+  const asOf = useMemo(() => todayIso(), []);
+  const taxes = useMemo(() => new Map(store.properties.map(p => [p.id, propertyGainsTax(p, { asOf, owners: scope.owners })])), [store.properties, scope.owners, asOf]);
+  const taxOf = (p: Property) => taxes.get(p.id) ?? propertyGainsTax(p, { asOf, owners: scope.owners });
+  const taxFigure = (t: PropertyGainsTax, key: TaxKey) => key === "indexedCost" ? (t.indexedCost === null || t.share === null ? null : t.indexedCost * t.share) : t[key];
   const accessors = useMemo<Record<string, Accessor<Property>>>(() => Object.fromEntries(COLS.map(key => [key, (p: Property) => {
+    if (TAX_KEYS.has(key)) { const t = taxes.get(p.id); return !t ? null : key === "holding" ? t.longTermFrom : taxFigure(t, key as TaxKey); }
     const figures = propertyFigures(p, scope.owners);
     if (key in figures) return figures[key as keyof PropertyFigures];
     if (key === "location") return location(p);
@@ -74,7 +86,8 @@ export function RealEstate() {
     // Areas with different units cannot be ranked as if their numbers shared a unit.
     if (key === "area") return p.area === null || !p.areaUnit ? null : p.area * ({ "sq ft": 1, "sq m": 10.7639104167, "sq yd": 9, acre: 43560, hectare: 107639.104167, cent: 435.6, guntha: 1089 }[p.areaUnit] ?? 1);
     return p[key as "name"];
-  }])), [scope.owners]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }])), [scope.owners, taxes]);
   const rows = sortRows(filtered, table.sort, accessors);
   const selected = store.properties.find(p => p.id === params.get("property"));
   const activeProperty = adding ?? selected;
@@ -90,19 +103,35 @@ export function RealEstate() {
     return { id: id === "netRent" ? "net-rent" : id, label, value: money(total.value, { compact: true }), sub: `${coverage(total)}${note ? ` · ${note}` : ""}`, icon,
       detail: `${shareTitle}${total.known < total.count ? ` Missing: ${filtered.filter(p => propertyFigures(p, scope.owners)[id] === null).map(p => missingName(p, id)).join(", ")}.` : ""}` };
   };
-  const metrics = [metric("value", "Property value", <Building2 className="h-4 w-4" />), metric("cost", "Total cost", <Wallet className="h-4 w-4" />), metric("gain", "Appreciation", <TrendingUp className="h-4 w-4" />), metric("rent", "Monthly rent", <Banknote className="h-4 w-4" />), metric("debt", "Loan outstanding", <Landmark className="h-4 w-4" />), metric("netRent", "Net monthly rent", <Banknote className="h-4 w-4" />)];
+  const taxTotal = (key: TaxKey) => {
+    const figures = filtered.map(p => taxFigure(taxOf(p), key)), known = figures.filter((n): n is number => n !== null);
+    return { value: known.length ? known.reduce((s, n) => s + n, 0) : null, known: known.length, count: filtered.length };
+  };
+  const taxMissing = (key: TaxKey) => filtered.filter(p => taxFigure(taxOf(p), key) === null).map(p => `${propertyLabel(p)} (${taxOf(p).gap?.short ?? (key === "indexedCost" ? "not indexed" : "not known")})`).join(", ");
+  const taxMetric = (key: "tax" | "afterTax", label: string, icon: ReactNode): TileMetric => {
+    const total = taxTotal(key);
+    return { id: key === "afterTax" ? "after-tax" : key, label, value: money(total.value, { compact: true }), sub: coverage(total), icon,
+      detail: `If sold on ${fmtDate(asOf)} (FY ${financialYear(asOf)}). ${key === "afterTax" ? "Current value less the estimated tax on its gain. " : ""}${TAX_RULES} ${shareTitle}${total.known < total.count ? ` Missing: ${taxMissing(key)}.` : ""}` };
+  };
+  const metrics = [metric("value", "Property value", <Building2 className="h-4 w-4" />), metric("cost", "Total cost", <Wallet className="h-4 w-4" />), metric("gain", "Appreciation", <TrendingUp className="h-4 w-4" />), taxMetric("tax", "Est. tax on sale", <Receipt className="h-4 w-4" />), taxMetric("afterTax", "Value after tax", <Scale className="h-4 w-4" />), metric("rent", "Monthly rent", <Banknote className="h-4 w-4" />), metric("debt", "Loan outstanding", <Landmark className="h-4 w-4" />), metric("netRent", "Net monthly rent", <Banknote className="h-4 w-4" />)];
   const filterSelect = (key: string, value: string, label: string, values: string[]) => <select aria-label={label} value={value} onChange={e => setFilter(key, e.target.value)} className="rounded-md border border-ink-600 bg-ink-800 px-2 py-1 text-xs text-slate-200">
     <option value="">{label}</option>{distinct(value ? [...values, value] : values).map(v => <option key={v} value={v}>{v}</option>)}
   </select>;
   const empty = store.loading ? "Loading properties…" : store.error && !store.ready ? "Properties unavailable" : scoped.length === 0 ? scope.owners ? "No properties for the selected members" : "No properties added" : "No matching properties";
   const figures = selected ? wholePropertyFigures(selected) : null;
+  // Details show every recorded owner's working, whatever members are selected.
+  const saleTax = selected ? propertyGainsTax(selected, { asOf }) : null;
   const inlineGap = (reason: string, short: string) => <span title={reason}><AbsentValue /> <span className="text-xs text-slate-500">{short}</span></span>;
   const appreciation = (p: Property, f: PropertyFigures): ReactNode => {
     const why = appreciationGap(p);
     if (why) return inlineGap(why.reason, why.short);
     return <span className={f.gain! > 0 ? "text-gain" : f.gain! < 0 ? "text-loss" : ""}>{money(f.gain, { sign: true })} · {fmtPct(f.gainPct, { sign: true })}{receivedWithoutPurchase(p) && <span className="text-xs text-slate-500"> since {p.acquisition === "Inherited" ? "inheritance" : "gift"}</span>}</span>;
   };
-  const numeric = new Set(["area", "cost", "value", "gain", "gainPct", "rent", "yield", "debt", "equity", "netRent"]);
+  const indexWorking = (t: PropertyGainsTax) => t.acquiredOn === null || t.indexedCost === null ? t.indexGap
+    : `${t.basisLabel} ${money(t.basis)} indexed from FY ${indexYear(t.acquiredOn)} (CII ${t.acquisitionIndex}) to FY ${t.fy} (CII ${t.saleIndex})${t.improvementsCounted ? `, plus ${t.improvementsCounted} improvement${t.improvementsCounted === 1 ? "" : "s"} each from its own year` : ""}: ${money(t.indexedCost)} for the whole property.`;
+  const taxWorking = (t: PropertyGainsTax) => `If sold on ${date(t.asOf)} at the current value (FY ${t.fy}). ${t.notCapitalAsset ? "Rural agricultural land is not a capital asset." : t.owners.map(o => `${o.name || "Owner not entered"} (${o.status}): ${o.route === "none" ? "no gain, ₹0"
+    : o.route === "indexed" ? `${pctRate(INDEXED_RATE)} with indexation ${money(o.tax)}, lower than ${pctRate(LONG_TERM_RATE)} without at ${money(o.flatTax)}` : `${pctRate(LONG_TERM_RATE)} without indexation ${money(o.tax)}`}`).join("; ")}. ${TAX_RULES}`;
+  const numeric = new Set(["area", "cost", "value", "gain", "gainPct", "tax", "afterTax", "indexedCost", "rent", "yield", "debt", "equity", "netRent"]);
   const cell = (p: Property, key: string): ReactNode => {
     const f = propertyFigures(p, scope.owners);
     if (key === "cost" && receivedWithoutPurchase(p) && f.share !== null) return f.cost === null
@@ -117,6 +146,19 @@ export function RealEstate() {
         {key === "gain" ? money(n, { sign: true }) : fmtPct(n, { sign: true })}
         {receivedWithoutPurchase(p) && <span data-export-ignore className="mt-1 block font-sans text-[10px] text-slate-500">Since {p.acquisition === "Inherited" ? "inheritance" : "gift"}</span>}
       </span>;
+    }
+    if (TAX_KEYS.has(key)) {
+      const t = taxOf(p), sub = (text: string) => <span data-export-ignore className="mt-1 block font-sans text-[10px] text-slate-500">{text}</span>;
+      if (key === "holding") return t.longTerm === null ? gap(t.gap?.reason ?? "Not known", t.gap?.short ?? "Not known")
+        : <span title={`Counted from ${t.received ? "the previous owner's acquisition" : "the purchase"} on ${date(t.acquiredOn)}. Long-term after more than 24 months.`}>{t.longTerm ? "Long-term" : "Short-term"}{sub(`${t.longTerm ? "Since" : "Long-term from"} ${date(t.longTermFrom)}`)}</span>;
+      if (key === "indexedCost") {
+        if (t.indexedCost === null) return t.cost === null && t.gap ? gap(t.gap.reason, t.gap.short) : t.notCapitalAsset ? gap("Rural agricultural land is not a capital asset.", "Not a capital asset") : gap(t.indexGap, "Not indexed");
+        if (t.share === null) return <span title={shareMissing}><AbsentValue /></span>;
+        return <span title={`${indexWorking(t)} ${t.option?.note ?? ""} ${shareTitle}`}>{money(t.indexedCost * t.share)}{t.option?.open === false && sub("Not used for tax")}</span>;
+      }
+      const n = t[key as "tax" | "afterTax"];
+      if (n === null) return gap(t.gap?.reason ?? "Not known", t.gap?.short ?? "Not known");
+      return <span title={`${taxWorking(t)} ${shareTitle}`}>{money(n)}{key === "tax" && t.route && sub(t.route)}</span>;
     }
     if (["cost", "value", "rent", "debt", "equity", "netRent"].includes(key)) return f[key as "cost"] === null ? <span title={f.share === null ? shareMissing : key === "equity" ? "Needs current value and loan outstanding" : key === "netRent" ? "Needs monthly rent and monthly costs" : "Not entered"}><AbsentValue /></span> : <span title={`${shareTitle}${p.valuationDate && key === "value" ? ` Valued ${date(p.valuationDate)}.` : ""}`}>{money(f[key as "cost"])}</span>;
     switch (key) {
@@ -156,7 +198,8 @@ export function RealEstate() {
         <tbody>{rows.map(p => <Tr key={p.id} view={table} className="border-b border-ink-700/50" data-property={p.id}>{COLS.map(key => <td key={key} className={`px-3 py-3 ${numeric.has(key) ? "text-right mono tabular whitespace-nowrap" : "text-slate-300"} ${key === "owners" ? "min-w-[10rem] max-w-[15rem] text-xs" : ""}`}>{cell(p, key)}</td>)}</Tr>)}
           {!rows.length && <tr><td colSpan={table.order.length} className="px-5 py-14 text-center text-sm text-slate-500">{empty}{store.ready && !scoped.length && !scope.owners && <button type="button" className="mx-auto mt-3 block text-champagne-400 underline" onClick={() => { setAdding(emptyProperty()); setEditing(true); }}>Add property</button>}</td></tr>}
         </tbody>
-        {!!rows.length && <tfoot><TrFoot view={table} label="Total" className="border-t border-ink-600 bg-ink-800/50 font-semibold" cells={Object.fromEntries((["cost", "value", "gain", "rent", "debt", "equity", "netRent"] as const).map(key => { const total = sum(key); const note = key === "cost" ? receivedNote(filtered, scope.owners) : ""; return [key, <td key={key} className="px-3 py-3 text-right mono tabular whitespace-nowrap" title={shareTitle}>{key === "gain" ? money(total.value, { sign: true }) : money(total.value)}{(total.known < total.count || note) && <span data-export-ignore className="mt-1 block font-sans text-[10px] font-normal text-slate-500">{[total.known < total.count ? coverage(total) : "", note].filter(Boolean).join(" · ")}</span>}</td>]; }))} /></tfoot>}
+        {!!rows.length && <tfoot><TrFoot view={table} label="Total" className="border-t border-ink-600 bg-ink-800/50 font-semibold" cells={{ ...Object.fromEntries((["cost", "value", "gain", "rent", "debt", "equity", "netRent"] as const).map(key => { const total = sum(key); const note = key === "cost" ? receivedNote(filtered, scope.owners) : ""; return [key, <td key={key} className="px-3 py-3 text-right mono tabular whitespace-nowrap" title={shareTitle}>{key === "gain" ? money(total.value, { sign: true }) : money(total.value)}{(total.known < total.count || note) && <span data-export-ignore className="mt-1 block font-sans text-[10px] font-normal text-slate-500">{[total.known < total.count ? coverage(total) : "", note].filter(Boolean).join(" · ")}</span>}</td>]; })),
+          ...Object.fromEntries((["tax", "afterTax", "indexedCost"] as const).map(key => { const total = taxTotal(key); return [key, <td key={key} className="px-3 py-3 text-right mono tabular whitespace-nowrap" title={`${key === "indexedCost" ? "Each property's cost for tax, indexed to this year." : TAX_RULES} ${shareTitle}${total.known < total.count ? ` Missing: ${taxMissing(key)}.` : ""}`}>{money(total.value)}{total.known < total.count && <span data-export-ignore className="mt-1 block font-sans text-[10px] font-normal text-slate-500">{coverage(total)}</span>}</td>]; })) }} /></tfoot>}
       </ExportableTable></div> : <div className="grid lg:grid-cols-[minmax(0,1fr)_19rem]">
         <div className="min-w-0"><Suspense fallback={<div className="p-16 text-sm text-slate-400">Loading map…</div>}><PropertyMap properties={filtered} onSelect={open} /></Suspense>
           <div className="flex flex-wrap gap-x-4 gap-y-1 border-t border-ink-700 px-4 py-2 text-xs text-slate-400">{distinct(filtered.map(p => p.type)).map(t => <span key={t} className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ background: TYPES_COLOR[t] }} />{t}</span>)}<span className="ml-auto">{filtered.filter(hasPin).length} pinned · {filtered.filter(p => !hasPin(p)).length} need a pin</span></div>
@@ -185,6 +228,43 @@ export function RealEstate() {
               ["Monthly rent", money(figures.rent)], ["Monthly costs", money(figures.costs)], ["Net monthly rent", money(figures.netRent)], ["Gross rental yield", fmtPct(figures.yield)], ["Tenant", selected.tenant || "—"], ["Lease ends", date(selected.leaseEnd)], ["Title", selected.titleStatus],
             ] as [string, ReactNode][]).map(([label, value]) => <div key={label}><dt className="label-xs">{label}</dt><dd className="mt-1 text-sm text-slate-200">{value || DASH}</dd></div>)}
           </dl>
+          {saleTax && <section className="mt-5 border-t border-ink-700 pt-4" data-property-tax>
+            <div className="mb-3 flex flex-wrap items-baseline gap-x-3 gap-y-1"><h3 className="h-section" title={TAX_RULES}>Capital gains tax if sold today</h3><span className="text-xs text-slate-400" title="Date of the sale this assumes, its financial year and that year's Cost Inflation Index">{fmtDate(asOf)} · FY {saleTax.fy} · CII {saleTax.saleIndex ?? "not notified"}</span></div>
+            {saleTax.notCapitalAsset ? <p className="text-sm text-slate-200" title="Rural agricultural land is not a capital asset, so selling it carries no capital gains tax.">{money(0)} · not a capital asset</p>
+              : saleTax.cost === null ? <p className="text-sm">{inlineGap(saleTax.gap?.reason ?? "Not known", saleTax.gap?.short ?? "Not known")}</p> : <>
+              <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {([
+                  ["Holding", <span title={`Long-term after more than 24 months, counted from ${saleTax.received ? "the previous owner's acquisition" : "the purchase"}.`}>{saleTax.longTerm ? `Long-term since ${date(saleTax.longTermFrom)}` : `Short-term · long-term from ${date(saleTax.longTermFrom)}`}</span>],
+                  [saleTax.basisLabel, <span title={saleTax.received ? "An inherited or gifted property carries the previous owner's cost." : undefined}>{money(saleTax.basis)}</span>],
+                  ["Improvements counted", saleTax.improvements ? <span title={saleTax.improvementsBefore2001 ? `${saleTax.improvementsBefore2001} made before 1 Apr 2001 do not count.` : undefined}>{money((saleTax.cost ?? 0) - (saleTax.basis ?? 0))} · {saleTax.improvementsCounted} of {saleTax.improvements}</span> : "None entered"],
+                  ["Gain without indexation", money(saleTax.gain, { sign: true })],
+                  ["Indexed cost", saleTax.indexedCost === null ? inlineGap(saleTax.indexGap, "Not indexed") : <span title={`${indexWorking(saleTax)} ${saleTax.option?.note ?? ""}`}>{money(saleTax.indexedCost)}</span>],
+                  ["Gain with indexation", saleTax.indexedGain === null ? inlineGap(saleTax.indexGap, "Not indexed") : money(saleTax.indexedGain, { sign: true })],
+                  ["Tax payable", saleTax.tax === null ? inlineGap(saleTax.gap?.reason ?? "Not known", saleTax.gap?.short ?? "Not known") : <span title={taxWorking(saleTax)}>{money(saleTax.tax)}{saleTax.route && <span className="text-xs text-slate-500"> · {saleTax.route}</span>}</span>],
+                  ["Value after tax", saleTax.afterTax === null ? inlineGap(saleTax.gap?.reason ?? "Not known", "Needs the tax") : <span title="Recorded owners' share of the current value, less the tax.">{money(saleTax.afterTax)}</span>],
+                ] as [string, ReactNode][]).map(([label, value]) => <div key={label}><dt className="label-xs">{label}</dt><dd className="mt-1 text-sm text-slate-200">{value}</dd></div>)}
+              </dl>
+              {saleTax.owners.length > 0 && <div className="mt-4 overflow-x-auto"><table className="min-w-full text-[13px]" data-property-tax-owners data-table-static="one row per owner, each the working of the same sale's tax">
+                <thead className="border-b border-ink-700 text-left"><tr className="label-xs">
+                  <th className="px-3 py-2">Owner</th><th className="px-3 py-2 text-right">Share</th><th className="px-3 py-2" title="Resident individuals and HUFs may take the 20%-with-indexation ceiling, recorded from their own statements">Status</th>
+                  <th className="px-3 py-2 text-right">{pctRate(LONG_TERM_RATE)} without indexation</th><th className="px-3 py-2 text-right">{pctRate(INDEXED_RATE)} with indexation</th><th className="px-3 py-2 text-right">Tax payable</th>
+                </tr></thead>
+                <tbody>{saleTax.owners.map((o, i) => {
+                  const shortTerm = !saleTax.longTerm && o.route !== "none";
+                  const rate = (n: number | null, indexed: boolean) => shortTerm ? inlineGap("Short-term: taxed at the owner's slab rate.", "Short-term")
+                    : indexed && saleTax.option?.open === false ? inlineGap(saleTax.option.note, "After 23 Jul 2024")
+                    : indexed && o.eligible === false ? inlineGap(o.holderNote, "Not available")
+                    : n === null ? inlineGap(saleTax.indexGap, "Not indexed") : money(n);
+                  return <tr key={i} className="border-b border-ink-700/50">
+                    <td className="px-3 py-2 text-slate-200">{o.name || "Owner not entered"}</td><td className="px-3 py-2 text-right mono">{fmtPct(o.share * 100)}</td>
+                    <td className="px-3 py-2 text-slate-300" title={o.holderNote}>{o.status}</td>
+                    <td className="px-3 py-2 text-right mono">{rate(o.flatTax, false)}</td><td className="px-3 py-2 text-right mono">{rate(o.indexedTax, true)}</td>
+                    <td className="px-3 py-2 text-right mono">{o.tax === null ? inlineGap(o.gap?.reason ?? "Not known", o.gap?.short ?? "Not known") : <span title={o.note}>{money(o.tax)}</span>}</td>
+                  </tr>;
+                })}</tbody>
+              </table></div>}
+            </>}
+          </section>}
           {selected.notes && <p className="mt-5 whitespace-pre-wrap text-sm text-slate-300">{selected.notes}</p>}
           <div className="mt-5 border-t border-ink-700 pt-4">
             {hasPin(selected) ? <><div className="mb-3 flex items-center justify-between text-xs text-slate-400"><span>Property location</span><a className="text-champagne-400 underline" href={`https://www.google.com/maps/search/?api=1&query=${selected.latitude},${selected.longitude}`} target="_blank" rel="noopener noreferrer">Open in Maps ↗</a></div><Suspense fallback={<div className="p-8">Loading map…</div>}><PropertyMap point={[selected.latitude!, selected.longitude!]} /></Suspense></> : <button type="button" className="btn-ghost" onClick={() => setEditing(true)}><MapPin className="h-4 w-4" />Set map pin</button>}
