@@ -72,7 +72,8 @@ export function ExportableTable({ children, exportName, controlsHost, ...props }
           // input sheets, so every table has the same correction workflow.
           const related = inputState.catalog.filter(r => ids.has(r.id)
             || (r.kind === "private-capital" && ids.has(r.id.replace(/^private-capital:/, "holding:"))));
-          snapshot.inputs = related.length ? related : inputState.catalog;
+          const calls = related.some(r => r.kind !== "property") ? inputState.catalog.filter(r => r.kind === "call" && !ids.has(r.id)) : [];
+          snapshot.inputs = related.length ? [...related, ...calls] : inputState.catalog;
         }
       } finally {
         flushSync(() => { setTableExporting(false); setAllRows(false); });

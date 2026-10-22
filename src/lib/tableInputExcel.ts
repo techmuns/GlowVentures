@@ -18,11 +18,12 @@ export function addInputWorkbook(book: ExcelJS.Workbook, inputs: InputRecord[], 
     { name: "Holding inputs", records: inputs.filter(r => r.kind === "holding") },
     { name: "Capital inputs", records: inputs.filter(r => r.kind === "capital" || r.kind === "private-capital") },
     { name: "Property inputs", records: inputs.filter(r => r.kind === "property") },
+    { name: "Call inputs", records: inputs.filter(r => r.kind === "call") },
   ];
   for (const group of groups) {
     if (!group.records.length) continue;
     const sheet = book.addWorksheet(group.name), fields = group.records[0].fields;
-    sheet.addRow(["Investment", "Account", "As of", ...fields.map(f => `${f.label}${f.unit ? ` (${f.unit === "area" ? "property's area unit" : f.unit})` : " (INR)"}`)]);
+    sheet.addRow(["Investment", "Account", group.name === "Call inputs" ? "Due on" : "As of", ...fields.map(f => `${f.label}${f.unit ? ` (${f.unit === "area" ? "property's area unit" : f.unit})` : " (INR)"}`)]);
     for (const r of group.records) {
       const date = /^\d{4}-\d{2}-\d{2}$/.test(r.asOf) ? new Date(`${r.asOf}T00:00:00Z`) : r.asOf;
       const row = sheet.addRow([r.label, r.account, date, ...fields.map(f => r.values[f.key])]);
@@ -35,7 +36,7 @@ export function addInputWorkbook(book: ExcelJS.Workbook, inputs: InputRecord[], 
     }
     sheet.getRow(1).eachCell(c => { c.font = { name: "Calibri", bold: true, color: { argb: "FFFFFFFF" } }; c.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF26213E" } }; });
     sheet.autoFilter = `A1:${sheet.getRow(1).getCell(sheet.columnCount).address}`;
-    fitExcelWorksheet(sheet, 1, 2);
+    fitExcelWorksheet(sheet, 1, 2, { maxWidths: { 1: 48, 2: 48 } });
   }
   const targetBy = new Map(targets.map(t => [`${t.sheet}:${t.cell}`, t.input]));
   const manifest: Manifest = { version: 1, sheets: [] };
@@ -62,7 +63,7 @@ export function addInputWorkbook(book: ExcelJS.Workbook, inputs: InputRecord[], 
   for (let i = 0; i < text.length; i += 24000) metadata.addRow([text.slice(i, i + 24000)]);
   const about = book.getWorksheet("About")!;
   about.addRows([
-    ["Edit and upload", "Keep the format; only fill in or correct numbers. Yellow cells are missing data. Green cells can also be corrected. Edit individual investment rows, or use the Holding inputs, Capital inputs and Property inputs sheets. Then use Upload Excel on any table."],
+    ["Edit and upload", "Keep the format; only fill in or correct numbers for the date shown. Yellow cells are missing data. Green cells can also be corrected. A holding kept at cost has no verified valuation; its valuation input is blank. Use the Holding inputs, Capital inputs, Property inputs or Call inputs sheets for other fields, then Upload Excel on any table. Call inputs update upcoming calls, separately from amounts already paid."],
     ["Calculated cells", "Totals, weights, returns, live prices and statement ledger records are read-only. Correct the investment inputs instead; the dashboard recalculates supported figures. Input sheets use rupees (INR), units and the source record's date. Property inputs are for the whole property."],
     ["Shared changes", "Changes are saved for everyone, separately from the original statements. A file with changed headings, added/deleted rows, formulas or stale edited inputs is refused. If the same number appears twice, change either copy; conflicting edits are refused."],
   ]);

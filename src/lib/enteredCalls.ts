@@ -233,10 +233,12 @@ export function useEnteredCalls() {
     void load();
     const onFocus = () => { void load(); };
     window.addEventListener("focus", onFocus);
-    return () => { alive.current = false; window.removeEventListener("focus", onFocus); };
+    window.addEventListener("glow:table-inputs-saved", onFocus);
+    return () => { alive.current = false; window.removeEventListener("focus", onFocus); window.removeEventListener("glow:table-inputs-saved", onFocus); };
   }, [load]);
 
   const apply = (reply: Reply) => {
+    if (reply.ok) window.dispatchEvent(new Event("glow:calls-saved"));
     if (reply.ok && alive.current) setState({ status: "ready", calls: reply.calls });
     return reply;
   };

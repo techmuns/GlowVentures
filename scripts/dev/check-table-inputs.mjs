@@ -9,6 +9,7 @@ import { chromium } from 'playwright-core';
 import ExcelJS from 'exceljs';
 import { validateProperty } from '../../shared/realEstate.mjs';
 import { onRequest as propertyRequest } from '../../functions/api/real-estate.js';
+import { onRequest as callRequest } from '../../functions/api/capital-calls.js';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const out = path.join(root, '.cache/table-inputs/browser'); await fs.mkdir(out, { recursive: true });
 const base = process.env.BASE || 'http://127.0.0.1:4173';
@@ -29,17 +30,18 @@ const snapshot = async () => (await onRequest({ request: new Request(`${base}/ap
 const catalog = (await snapshot()).catalog;
 const capital = catalog.find(r => r.kind === 'private-capital');
 const holding = catalog.find(r => r.id === capital.id.replace(/^private-capital:/, 'holding:'));
+data.set('capital-call:test-table-call', { id: 'test-table-call', fund: 'test-round-trip-fund', fundName: 'Test capital call', date: '2026-12-01', amount: 10000, note: 'Isolated test fixture', updatedAt: '2026-10-22T00:00:00Z' });
 const results = [];
 const check = (name, condition) => { assert.ok(condition, name); results.push(name); };
 const browser = await chromium.launch({ executablePath: process.env.CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true });
 const context = await browser.newContext({ viewport: { width: 1500, height: 1050 }, acceptDownloads: true });
 await context.route('**/api/**', route => route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ ok: false, message: 'External feeds unavailable in isolated test' }) }));
-for (const [endpoint, handler] of [['table-inputs', onRequest], ['real-estate', propertyRequest]]) await context.route(`**/api/${endpoint}`, async route => {
+for (const [endpoint, handler] of [['table-inputs', onRequest], ['real-estate', propertyRequest], ['capital-calls', callRequest]]) await context.route(`**/api/${endpoint}`, async route => {
   const request = route.request();
   const response = await handler({ request: new Request(request.url(), { method: request.method(), headers: request.headers(), ...(request.method() === 'POST' ? { body: request.postData() } : {}) }), env });
   await route.fulfill({ status: response.status, headers: Object.fromEntries(response.headers), body: await response.text() });
 });
-for (const [endpoint, key] of [['capital-calls', 'calls'], ['investment-profiles', 'profiles']]) await context.route(`**/api/${endpoint}`, route => route.fulfill({ contentType: 'application/json', body: JSON.stringify({ ok: true, [key]: [] }) }));
+await context.route('**/api/investment-profiles', route => route.fulfill({ contentType: 'application/json', body: JSON.stringify({ ok: true, profiles: [] }) }));
 const page = await context.newPage(), errors = [];
 page.on('pageerror', e => errors.push(e.message));
 async function visit(route) { await page.goto(base + route); await page.locator('[data-edit-numbers]').first().waitFor(); await page.waitForFunction(() => !document.querySelector('[data-edit-numbers]')?.disabled); }
@@ -76,7 +78,18 @@ try {
   const draftExport = await download('unsaved-draft.xlsx');
   check('Export preserves an unsaved inline draft', await cost.locator('input').inputValue() === '200000');
   check('Export includes saved inputs rather than unsaved drafts', inputCell(draftExport.book, holding.id, 'costBasis', 'Holding inputs').value === holding.values.costBasis);
+  const latestHolding = (await snapshot()).catalog.find(r => r.id === holding.id);
+  const other = await onRequest({ request: new Request(`${base}/api/table-inputs`, { method: 'POST', headers: { origin: base, 'content-type': 'application/json' }, body: JSON.stringify({ changes: [{ id: holding.id, field: 'costBasis', value: (holding.values.costBasis ?? 0) + 1, source: latestHolding.source, version: latestHolding.versions.costBasis ?? '' }] }) }), env });
+  assert.equal(other.status, 200);
+  await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+  await cost.getByText(/Saved number changed/).waitFor();
+  check('An external save preserves the local draft and warns about the conflict', await cost.locator('input').inputValue() === '200000');
+  await cost.getByRole('button', { name: 'Use latest' }).click();
+  await cost.locator('input').fill('200000');
+  const saving = page.waitForResponse(response => response.url().endsWith('/api/table-inputs') && response.request().method() === 'POST');
   await cost.getByRole('button', { name: 'Save', exact: true }).click();
+  assert.equal((await saving).status(), 200);
+  await cost.getByRole('button', { name: 'Save', exact: true }).waitFor();
   await page.waitForFunction(() => document.querySelector('[data-entered-numbers]')?.textContent?.includes('2 user-entered'));
   check('Inline edits and workbook imports share the same store', (await snapshot()).catalog.find(r => r.id === holding.id).values.costBasis === 200000);
   await page.screenshot({ path: path.join(out, 'inline-private.png'), fullPage: false });
@@ -87,10 +100,12 @@ try {
   const monitor = await download('monitor.xlsx');
   check('The same correction appears in a different table export', inputCell(monitor.book, capital.id, 'paid', 'Capital inputs').value === 123456);
   check('Nested tables travel in their own detail worksheets', monitor.book.worksheets.some(s => /^Detail /.test(s.name)));
+  await upload(monitor.file); await page.getByText('No number changes found.').waitFor();
+  check('A complete nested export uploads unchanged without false edits', commits === 4);
   inputCell(original.book, capital.id, 'paid', 'Capital inputs').value = 500;
   const stale = path.join(out, 'stale.xlsx'); await original.book.xlsx.writeFile(stale); await upload(stale);
   await page.getByRole('alert').filter({ hasText: 'changed since' }).waitFor();
-  check('Stale uploads are refused without a write', commits === 3);
+  check('Stale uploads are refused without a write', commits === 4);
   await visit('/real-estate');
   const realEstate = await download('property.xlsx');
   check('Property input sheet uses the whole property amount', inputCell(realEstate.book, `property:${property.id}`, 'value', 'Property inputs').value === 100000);

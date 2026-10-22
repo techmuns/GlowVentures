@@ -1,7 +1,8 @@
 import { storeFor, StoreError, type DashboardStore } from "../../shared/dashboardStore.mjs";
 import { validateProperty } from "../../shared/realEstate.mjs";
+import { isCall, validateDraft, type StoredCall } from "./capital-calls.js";
 import { BOOK_POSITIONS, BOOK_COMMITMENTS, BOOK_ACCOUNTS } from "../../src/data/glowData";
-import { applySavedInputs, buildInputCatalog, propertyInputRecord, validateInputChanges, type InputChange, type SavedInput } from "../../src/lib/tableInputs";
+import { applySavedInputs, buildInputCatalog, propertyInputRecord, callInputRecord, validateInputChanges, type InputChange, type SavedInput } from "../../src/lib/tableInputs";
 
 const PREFIX = "table-input:";
 const sourceCatalog = buildInputCatalog(BOOK_POSITIONS, BOOK_COMMITMENTS, BOOK_ACCOUNTS);
@@ -23,7 +24,8 @@ async function snapshot(store: DashboardStore) {
     const parsed = validateProperty(r.raw);
     return parsed.property ? [{ ...parsed.property, updatedAt: (r.raw as { updatedAt?: string }).updatedAt }] : [];
   });
-  return { saved, properties, catalog: [...applySavedInputs(sourceCatalog, saved), ...properties.map(propertyInputRecord)] };
+  const calls = (await records(store, "capital-call:")).map(r => r.raw).filter(isCall);
+  return { saved, properties, calls, catalog: [...applySavedInputs(sourceCatalog, saved), ...properties.map(propertyInputRecord), ...calls.map(callInputRecord)] };
 }
 export async function onRequest({ request, env }: { request: Request; env: Record<string, unknown> }) {
   if (!["GET", "POST"].includes(request.method)) return fail(405, "Use GET or POST.");
@@ -43,6 +45,7 @@ export async function onRequest({ request, env }: { request: Request; env: Recor
     if (error) return fail(409, error);
     const changes = body.changes as InputChange[], stamp = new Date().toISOString();
     const propertyUpdates = new Map<string, typeof current.properties[number]>();
+    const callUpdates = new Map<string, StoredCall>();
     // Validate the ENTIRE batch before staging a single write. One flush is one
     // GitHub commit, so an invalid file cannot save half its corrections.
     for (const change of changes) if (change.id.startsWith("property:")) {
@@ -51,7 +54,12 @@ export async function onRequest({ request, env }: { request: Request; env: Recor
       Object.assign(p, { [change.field]: change.value, updatedAt: stamp }); propertyUpdates.set(id, p);
     }
     for (const p of propertyUpdates.values()) { const parsed = validateProperty(p); if (parsed.error) return fail(400, parsed.error); }
-    for (const change of changes) if (!change.id.startsWith("property:")) {
+    for (const change of changes) if (change.id.startsWith("capital-call:")) {
+      const id = change.id.slice(13), old = current.calls.find(c => c.id === id)!;
+      const parsed = validateDraft({ ...old, amount: change.value }, new Date(stamp));
+      if (parsed.error) return fail(400, parsed.error); callUpdates.set(id, parsed.call!);
+    }
+    for (const change of changes) if (!change.id.startsWith("property:") && !change.id.startsWith("capital-call:")) {
       const key = `${PREFIX}${change.id}:${change.field}`;
       const old = await store.get(key, "json"); store.expect?.(key, old ? JSON.stringify(old) : null);
       if (change.reset) await store.delete(key);
@@ -60,6 +68,10 @@ export async function onRequest({ request, env }: { request: Request; env: Recor
     for (const p of propertyUpdates.values()) {
       const key = `real-estate:${p.id}`, old = await store.get(key, "json");
       store.expect?.(key, old ? JSON.stringify(old) : null); await store.put(key, JSON.stringify(p));
+    }
+    for (const c of callUpdates.values()) {
+      const key = `capital-call:${c.id}`, old = await store.get(key, "json");
+      store.expect?.(key, old ? JSON.stringify(old) : null); await store.put(key, JSON.stringify(c), { metadata: c });
     }
     await store.flush?.();
     return json(200, { ok: true, ...await snapshot(store), count: changes.length });

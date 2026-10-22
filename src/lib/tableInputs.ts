@@ -17,7 +17,7 @@ export const PROPERTY_INPUTS: InputField[] = [
   { key: "debt", label: "Debt" }, { key: "area", label: "Area", unit: "area" },
 ];
 export type InputRecord = {
-  id: string; kind: "holding" | "capital" | "private-capital" | "property";
+  id: string; kind: "holding" | "capital" | "private-capital" | "property" | "call";
   label: string; account: string; asOf: string; source: string;
   fields: InputField[]; values: Record<string, number | null>; versions: Record<string, string>;
 };
@@ -39,7 +39,10 @@ export function buildInputCatalog(positions: readonly Position[], commitments: r
   const records = positions.flatMap(p => {
     const date = p.priceAsOf ?? acc.get(p.accountId)?.asOf ?? "";
     const source = p.statementRecord ?? p.reviewSource ?? p.securityKey;
-    const holding = inputRecord(positionInputId(p), "holding", p.security, accountLabel(p.accountId), date, HOLDING_INPUTS, p, source);
+    // A carrying amount held at cost is not a measured valuation. Leave the
+    // valuation input blank/yellow while the dashboard retains its cost mark.
+    const holding = inputRecord(positionInputId(p), "holding", p.security, accountLabel(p.accountId), date, HOLDING_INPUTS,
+      p.valuedAtCost ? { ...p, marketValue: null } : p, source);
     return p.marketSide === "private" && !caps.has(p.accountId)
       ? [holding, inputRecord(privateCapitalId(p), "private-capital", p.security, accountLabel(p.accountId), date, CAPITAL_INPUTS, {}, source)] : [holding];
   });
@@ -52,6 +55,9 @@ export function buildInputCatalog(positions: readonly Position[], commitments: r
 }
 export function propertyInputRecord(p: { id: string; name?: string; address?: string; valuationDate?: string | null; updatedAt?: string; areaUnit?: string }): InputRecord {
   return inputRecord(`property:${p.id}`, "property", p.name || p.address || "Untitled property", `Whole property · INR · Area: ${p.areaUnit || "unit not recorded"}`, p.valuationDate ?? "", PROPERTY_INPUTS, p, p.updatedAt ?? p);
+}
+export function callInputRecord(c: { id: string; fund: string; fundName: string; date: string; amount: number; updatedAt: string }): InputRecord {
+  return inputRecord(`capital-call:${c.id}`, "call", c.fundName || c.fund, "Upcoming capital call", c.date, [{ key: "amount", label: "Call amount" }], c, c.updatedAt);
 }
 export function applySavedInputs(catalog: InputRecord[], saved: readonly SavedInput[]): InputRecord[] {
   const by = new Map(saved.map(s => [`${s.id}\n${s.field}`, s]));
@@ -79,7 +85,9 @@ export function validateInputChanges(changes: unknown, catalog: InputRecord[]): 
     if (change.value !== null && (typeof change.value !== "number" || !Number.isFinite(change.value) || Math.abs(change.value) > 1e15 || (!f.signed && change.value < 0) || (f.key === "area" && change.value === 0))) return `Enter a valid number for ${r.label}: ${f.label}.`;
     if (r.kind === "holding" && f.key === "marketValue" && change.value === null && !change.reset) return "Value cannot be cleared. Use Restore original to remove a correction.";
     if (r.kind === "capital" && f.key === "committed" && change.value === null && !change.reset) return "Committed cannot be cleared. Use Restore original to remove a correction.";
-    if (change.reset && r.kind === "property") return "Property values can be edited or cleared.";
+    if (change.reset && (r.kind === "property" || r.kind === "call")) return "Edit this entered value directly.";
+    if (r.kind === "call" && (change.value === null || change.value <= 0)) return "Enter a capital call amount greater than zero.";
+    if (r.kind === "call" && change.value! > 1e12) return "That capital call amount is too large. Check the zeros.";
   }
   return null;
 }
@@ -90,6 +98,7 @@ export function fieldForColumn(record: InputRecord, column: string): string | un
   const fields: Record<string, string> = record.kind === "holding"
     ? { units: "quantity", qty: "quantity", quantity: "quantity", cost: "costBasis", costBasis: "costBasis", mv: "marketValue", value: "marketValue", marketValue: "marketValue", realised: "realizedPnL", realized: "realizedPnL", income: "dividendReceived" }
     : record.kind === "property" ? { cost: "cost", value: "value", rent: "monthlyRent", debt: "debt", area: "area" }
+    : record.kind === "call" ? { amount: "amount" }
     : { committed: "committed", called: "called", paid: "paid", uncalled: "undrawn", pending: "pending" };
   return fields[column];
 }

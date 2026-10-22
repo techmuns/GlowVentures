@@ -28,6 +28,7 @@ export function useTableInputs() {
 if (typeof window !== "undefined") {
   window.addEventListener("focus", () => { if (started) void refreshTableInputs(); });
   window.addEventListener("glow:properties-saved", () => { if (started) void refreshTableInputs(); });
+  window.addEventListener("glow:calls-saved", () => { if (started) void refreshTableInputs(); });
 }
 export async function saveTableInputs(changes: InputChange[]) {
   revision++;
@@ -41,4 +42,5 @@ export async function saveTableInputs(changes: InputChange[]) {
   });
   writes = run.catch(() => {}); await run;
   if (failure) throw failure;
+  return state;
 }
