@@ -274,6 +274,35 @@
 - Structured gap reasons preserve the original diagnostics and calculations. A holding without a usable current value is explicitly left out rather than disappearing from the coverage reconciliation. Fund wording clearly distinguishes NAV changes from income paid out or reinvested.
 - Focused tests check membership and missing-data wording. Required browser coverage checks tab keyboard controls, complete/disjoint holding lists, fund and mandate context, searches, retry, focus restoration, reopening and all three tabs on mobile.
 
+### Stage 10gw — CLEAR MISSING-RETURN MESSAGES
+
+- Recorded-return info boxes show the missing record and what to provide first, in short plain English. Account/source metadata and calculation explanations remain available in collapsed details.
+- The market popup keeps its three coverage tabs. Missing Values puts the specific missing item and next step before account metadata; an unavailable overview points to that tab. NSE names missing public price history and directs statement-based returns to Recorded return.
+- Purchase cost/date, sale proceeds, later valuations, payment history and invalid return windows each have a short message. Focused fixtures and browser checks cover the wording, immediate visibility and NSE example; authenticated previews were checked on desktop and mobile.
+
+### Stage 10gx — THE STATEMENT LIBRARY OPENS THE ORIGINAL FILE
+
+*"publish the original statement files to the hosted site behind the password gate so the preview can show the real PDF and spreadsheet layout"* — the family, 22 Oct 2026.
+
+- `scripts/build-statement-files.mjs` (`build:statement-files`, run by `prebuild`, `predev` and `pretest:family`) copies the file behind every manifest entry to the gitignored `public/statement-files/<docKey>.<ext>` and writes `index.json` (size, password, bundle part, and a `missing` reason for any it cannot find). Pages' SPA fallback answers a missing path with index.html and a 200, so the page reads the index, never the status code. `source/_extracted/` is gitignored, so the committed ZIPs are expanded into a temp dir by the inventory's own rule. On a checkout without the expanded copies, all 425 files (64 MB, largest 1.5 MB) came out byte-identical to the main checkout's. The folder is not `public/statements/`, because `/statements` is the library's route.
+- The preview opens on **Original file**, with **Text as read** one switch away. A PDF opens in the browser's own viewer, and a statement cut from a bundled PDF opens at `#page=<its first page>` and says which pages it is. A workbook is drawn from its own cells by the `xlsx` reader (a lazy chunk), with merged cells, sheet names and the file's number formats. Download and New tab sit beside Data Audit.
+- Two reader traps closed. A text file (CSV, LKP's HTML-table `.xls`) is read `raw`: unparsed, "01/07/2026" became a month-first date serial (7 January) for 1 July. A binary workbook's built-in short date (format 14) is drawn `dd/mm/yyyy`, not the reader's US default.
+- "Password-protected" is a measurement, not a guess. An `/Encrypt` dictionary marked 27 PDFs, but 12 (ICICI's payment advices, the HDFC folios) carry an empty user password and open freely. The build opens each with pdfjs and no password, and labels only the 15 that refuse.
+- `test:family` suite `statement preview`: every document's original is published, at the stated size, named `<docKey>.<format>`, the kind its format says (magic bytes, so never the SPA's index.html), byte for byte with `source/` where the file is committed outside an archive, and each bundled part at its own pages. Merged-cell layout and file sizes are covered too.
+
+### Stage 10gy — ATTRIBUTION TABLES START UNDER THEIR TITLE
+
+*"there's a lot of empty space in this area, realign export excel in above empty space so that there is more space to see the below table"* — the family, 22 Oct 2026.
+- The Return attribution card stacked three rows above its table: the title with the axis tabs, an Edit Columns row (`AutoEditColumns`' own toolbar) and the Export Excel caption. Both controls now sit in the card header beside the axis tabs and Expand all, and on the Sector view in the Consolidated / Direct Equity row; the table header starts ~45 px below the card top instead of ~130 px at 1550 px wide.
+- `ExportableTable` takes an optional `controlsHost`: the control is drawn there (portal) instead of in a caption, and names its table (`data-export-for` ↔ `data-table-export-id`). `scripts/dev/table-excel.mjs` finds each table's one control either way (`exportControls`), so `assertTableExportControls` and the download/retry checks cover both placements. The two tables use `manualEditor` with `EditColumns` placed in the header.
+- Checked locally: export from the header downloads the complete table on both views; `check-selected-attribution`, `check-market-returns` and check:pages `cio-returns*` show no new findings.
+
+### Stage 10gz — SAVE PROPERTY DETAILS NOW, COMPLETE THEM LATER
+
+- Every property field is optional, including name, address, owner/share and valuation date. Empty records save as Untitled property in the table, map and details, remain visible without an assigned member, and can be reopened to add details. New records no longer assume an apartment, vacant status or zero rent; changing status preserves entered rent.
+- Identical owner rows save once instead of blocking Save or doubling ownership. Partial or conflicting ownership stays editable; unknown shares remain unknown in family totals. Details show entered whole-property figures, so incomplete ownership does not hide the saved amounts there.
+- Record/API and local browser checks cover empty save/reload/edit, value without date or owner, duplicate-owner saving, missing shares, later additions, existing address search/dragging and unchanged valid share calculations. Production checks are read-only.
+
 ### Stage 10hb — BSE QUOTES FOR YASH HIGHVOLTAGE AND NSE; YASH ROLLED ON THE REVIEW
 
 - *"use the BSE symbols for them to fetch live prices"* (the family, 22 Oct 2026), on the two Direct Equity names the movers card dropped as "No exchange symbol". Yash Highvoltage already had a BSE identity (`BSE:YASHHV`, `BSE_EQ|INE00GK01023`, scrip 544310) and was priced live on every other page; the movers models read day moves by NSE symbol alone. `moveSymbolFor` (NSE symbol, else the exchange-qualified quote key) now feeds `dailyMovers`, `insideMovers` and the card's wait list. The AIF & PMS card gains five mandate names the same way (Manali Petrochemical, Sasken, CreditAccess Grameen, Krishca, Punjab Chemicals), all resolved by exact ISIN.
