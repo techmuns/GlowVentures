@@ -33,8 +33,8 @@ let holding;
 data.set('capital-call:test-table-call', { id: 'test-table-call', fund: 'test-round-trip-fund', fundName: 'Test capital call', date: '2026-12-01', amount: 10000, note: 'Isolated test fixture', updatedAt: '2026-10-22T00:00:00Z' });
 const results = [];
 const check = (name, condition) => { assert.ok(condition, name); results.push(name); console.log(`PASS: ${name}`); };
-const browser = await chromium.launch({ executablePath: process.env.CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true });
-const context = await browser.newContext({ viewport: { width: 1500, height: 1050 }, acceptDownloads: true });
+const context = await chromium.launchPersistentContext(path.join(out, `browser-profile-${process.pid}`), { executablePath: process.env.CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true, viewport: { width: 1500, height: 1050 }, acceptDownloads: true });
+const browser = context;
 await context.route('**/api/**', route => route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ ok: false, message: 'External feeds unavailable in isolated test' }) }));
 for (const [endpoint, handler] of [['table-inputs', onRequest], ['real-estate', propertyRequest], ['capital-calls', callRequest]]) await context.route(`**/api/${endpoint}`, async route => {
   const request = route.request();
