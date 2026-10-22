@@ -1,5 +1,5 @@
 import { ExportableTable } from "@/components/ExportableTable";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { Briefcase, Wallet, TrendingUp, TrendingDown, Percent, Fuel, Coins, Landmark, Layers, Users, Target, Scale, PieChart, Banknote, CalendarDays } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
@@ -57,6 +57,7 @@ import { CHART_COLORS } from "@/lib/chartTheme";
 import { INVESTOR_DEFAULT_TILES } from "@/lib/investorSummary";
 
 import { availableCardReturns, statementReturnInputs, type AvailableCardReturn } from "@/lib/availableCardReturns";
+import { warmMarketHistories } from "@/lib/useMarketReturns";
 
 // Morning CIO — the whole book in one screen: invested / current / return per
 // bucket, plus capital deployment, concentration and book performance. Every
@@ -269,6 +270,20 @@ export function MorningCIO() {
   // One "today" for every XIRR on the page, so every figure closes on the same
   // date against the same valuation.
   const today = useMemo(() => new Date(), []);
+  /**
+   * THE RETURNS TAB'S PRICE HISTORIES, LOADED BEFORE IT IS OPENED (Stage 10gu).
+   * Once the page is idle, whichever panel is showing, the public histories
+   * the Returns tab's market return needs start loading into this browser's
+   * copy (`useMarketReturns`), so opening the tab draws the figure rather than
+   * starting ~350 fetches. Histories already kept and still fresh are skipped.
+   */
+  useEffect(() => {
+    if (!consolidated.length) return;
+    const start = () => warmMarketHistories(currentHoldings(consolidated));
+    const idle = typeof window.requestIdleCallback === "function" ? window.requestIdleCallback(start, { timeout: 4000 }) : null;
+    const timer = idle == null ? setTimeout(start, 1500) : null;
+    return () => { if (idle != null) window.cancelIdleCallback(idle); if (timer) clearTimeout(timer); };
+  }, [consolidated]);
 
   const model = useMemo(() => {
     if (!portfolio) return null;
