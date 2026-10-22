@@ -130,6 +130,7 @@ try {
  assert.ok(await yearly.evaluate(el=>{const r=el.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth+1&&el.scrollWidth<=el.clientWidth+1;}),'the purchase cohort fits a mobile viewport');
  assert.equal(await yearly.getAttribute('data-year-start'),'2026-04-01');
  assert.equal(await yearly.getAttribute('data-year-type'),'absolute');
+ assert.match(await page.locator('[data-returns-type-desc]').innerText(),/Purchase-to-value.*weighted/);
  assert.equal(await page.locator('[data-returns-from]').isDisabled(),true);
  assert.equal(await page.locator('[data-returns-to]').isDisabled(),true);
  const counts=await yearly.evaluate(el=>({included:+el.dataset.yearIncluded,missing:+el.dataset.yearMissing,older:+el.dataset.yearOlder,total:+el.dataset.yearTotal,pct:+el.dataset.yearReturn}));

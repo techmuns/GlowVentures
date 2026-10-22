@@ -52,6 +52,11 @@ const RETURN_VIEWS = [
   { key: "attribution", label: "Return attribution" },
   { key: "benchmarks", label: "Benchmarks" },
 ] as const;
+const PURCHASE_TYPE_HELP: Record<ReturnType,{short:string;title:string}> = {
+  absolute:{short:'Purchase-to-value returns, portfolio weighted',title:'Each holding’s gain divided by the cost of its selected units, then weighted by the latest value of those units. Not annualised.'},
+  xirr:{short:'Yearly holding returns, portfolio weighted',title:'Each holding’s XIRR uses the selected units’ dated purchase cash and latest value. The yearly holding returns are weighted by their latest included values.'},
+  cagr:{short:'Under a year: showing holding-period returns',title:'These purchases are less than a year old, so their purchase-to-value returns are shown without annualising, weighted by included values.'},
+};
 
 export default function PortfolioReturns() {
   const { statementPortfolio, fmtFromBase, scope } = usePortfolio();
@@ -112,6 +117,7 @@ export default function PortfolioReturns() {
   const today = new Date();
   const currentDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
   const investedYear = period === "invested-year";
+  const returnHelp = investedYear ? PURCHASE_TYPE_HELP[rtype] : RETURN_TYPES.find(r=>r.key===rtype)!;
   const end = investedYear ? currentDate : toParam && ISO.test(toParam) ? toParam : currentDate;
   const start = period === "custom"
     ? (fromParam && ISO.test(fromParam) ? fromParam : null)
@@ -225,14 +231,14 @@ export default function PortfolioReturns() {
           ))}
         </div>
         <div className="flex items-center gap-1.5 text-[12px] text-slate-400">
-          <label className="flex items-center gap-1.5" title="Opening date — the window opens on each account's value at the close of this day">
+          <label className="flex items-center gap-1.5" title={investedYear ? 'Purchases on or after the first day of this financial year' : "Opening date — the window opens on each account's value at the close of this day"}>
             <span className="label-xs">From</span>
             <input type="date" className="rounded-md border border-ink-700 bg-ink-800 px-1.5 py-0.5 text-[12px] text-slate-200" data-returns-from
               value={period === "inception" ? (measuredFrom ?? "") : (start ?? "")} disabled={period === "inception" || investedYear}
               onChange={(e) => set({ rp: "custom", rfrom: e.target.value || null })} />
           </label>
           <span className="text-slate-500" aria-hidden>→</span>
-          <label className="flex items-center gap-1.5" title="Market prices close on or before this day. Recorded returns retain each account’s own verified statement date.">
+          <label className="flex items-center gap-1.5" title={investedYear ? 'Purchases through today; each holding shows its actual latest value date' : "Market prices close on or before this day. Recorded returns retain each account’s own verified statement date."}>
             <span className="label-xs">To</span>
             <input type="date" className="rounded-md border border-ink-700 bg-ink-800 px-1.5 py-0.5 text-[12px] text-slate-200" data-returns-to
               value={end ?? ""} max={currentDate} disabled={period === "inception" || investedYear}
@@ -240,18 +246,18 @@ export default function PortfolioReturns() {
           </label>
         </div>
         <label className="ml-auto flex items-center gap-2 text-[12px] text-slate-400" data-returns-types
-          title={RETURN_TYPES.find((r) => r.key === rtype)!.title}>
+          title={returnHelp.title}>
           <span className="label-xs">Return type</span>
           <select className="rounded-md border border-ink-700 bg-ink-800 px-2 py-1 text-[12.5px] font-semibold text-slate-100" data-returns-type-select
             value={rtype} onChange={(e) => set({ rtype: e.target.value === "xirr" && !investedYear ? null : e.target.value })}>
             {RETURN_TYPES.map((r) => (
-              <option key={r.key} value={r.key} title={r.title} data-returns-type={r.key} data-active={rtype === r.key ? "true" : "false"}>
+              <option key={r.key} value={r.key} title={investedYear?PURCHASE_TYPE_HELP[r.key].title:r.title} data-returns-type={r.key} data-active={rtype === r.key ? "true" : "false"}>
                 {r.label}
               </option>
             ))}
           </select>
           <span className="max-w-[16rem] truncate text-[11.5px] text-slate-500" data-returns-type-desc={rtype}>
-            {RETURN_TYPES.find((r) => r.key === rtype)!.short}
+            {returnHelp.short}
           </span>
         </label>
       </div>
