@@ -10,6 +10,7 @@ import { onRequest } from "../../../functions/api/table-inputs";
 import type { Portfolio } from "../types";
 import { validateProperty } from "../../../shared/realEstate.mjs";
 import { tableExportExpansion } from "../tableExportSnapshot";
+import { getTableInputState, publishPropertyChange, publishCallList, refreshTableInputs, saveTableInputs } from "../tableInputStore";
 
 const source = buildInputCatalog(BOOK_POSITIONS, BOOK_COMMITMENTS, BOOK_ACCOUNTS);
 const openRows = new Set(["originally-open"]);
@@ -142,4 +143,35 @@ assert.equal(ownerBook.getWorksheet("Ownership inputs")!.getCell("D2").numFmt, "
 ownerBook.getWorksheet("Ownership inputs")!.getCell("D2").value = .6;
 assert.equal((await request(await readInputWorkbook(await bytes(ownerBook), ownerCatalog))).status, 200);
 assert.equal((record.get(`real-estate:${property.id}`) as typeof property).owners[0].share, 60, "ownership completes the Excel round trip without a factor-of-100 error");
+// Client snapshots must not regress when an older read completes after a save,
+// or disagree between a table, its existing editor and its workbook inputs.
+const originalFetch = globalThis.fetch;
+const globals = globalThis as unknown as { window?: EventTarget & { setTimeout: typeof setTimeout; clearTimeout: typeof clearTimeout } };
+const originalWindow = globals.window;
+globals.window = Object.assign(new EventTarget(), { setTimeout, clearTimeout });
+try {
+  const fixture = (value: number) => ({ ok: true, catalog: [], saved: [], properties: [{ ...property, value }], calls: [call] });
+  globalThis.fetch = async () => Response.json(fixture(100));
+  await refreshTableInputs();
+  assert.equal(getTableInputState().properties[0].value, 100);
+  let resolveOld!: (r: Response) => void;
+  globalThis.fetch = () => new Promise(resolve => { resolveOld = resolve; });
+  const oldRead = refreshTableInputs();
+  publishPropertyChange({ ...property, value: 200 });
+  resolveOld(Response.json(fixture(100))); await oldRead;
+  assert.equal(getTableInputState().properties[0].value, 200, "a stale read cannot undo an acknowledged property edit");
+  assert.equal(getTableInputState().catalog.find(r => r.id === `property:${property.id}`)!.values.value, 200);
+  publishCallList([{ ...call, amount: 400 }]);
+  assert.equal(getTableInputState().catalog.find(r => r.kind === "call")!.values.amount, 400);
+  const pending: ((r: Response) => void)[] = [];
+  globalThis.fetch = () => new Promise(resolve => { pending.push(resolve); });
+  const first = refreshTableInputs(), second = refreshTableInputs();
+  pending[1](Response.json(fixture(350))); await second;
+  pending[0](Response.json(fixture(300))); await first;
+  assert.equal(getTableInputState().properties[0].value, 350, "an older background response never replaces a newer read");
+  globalThis.fetch = async () => Response.json(fixture(500));
+  const savedSnapshot = await saveTableInputs([change(propertyRecord, "value", 500)]);
+  assert.equal(savedSnapshot.properties[0].value, 500);
+  assert.equal(getTableInputState().properties, savedSnapshot.properties, "the save result and table use one property snapshot");
+} finally { globalThis.fetch = originalFetch; if (originalWindow) globals.window = originalWindow; else delete globals.window; }
 console.log("Table input persistence, source rollups and Excel round-trip contracts passed");

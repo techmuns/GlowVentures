@@ -14,8 +14,8 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 const out = path.join(root, '.cache/table-inputs/browser'); await fs.mkdir(out, { recursive: true });
 const base = process.env.BASE || 'http://127.0.0.1:4173';
 assert.match(new URL(base).hostname, /^(127\.0\.0\.1|localhost)$/, 'this write suite only runs locally');
-await build({ entryPoints: [path.join(root, 'functions/api/table-inputs.ts')], bundle: true, platform: 'node', format: 'esm', packages: 'external', alias: { '@': path.join(root, 'src') }, outfile: path.join(out, 'api.mjs') });
-const { onRequest } = await import(path.join(out, 'api.mjs'));
+await build({ stdin: { contents: 'export {onRequest} from "./functions/api/table-inputs"; export {BOOK_ACCOUNTS,BOOK_POSITIONS} from "./src/data/glowData";', resolveDir: root, loader: 'ts' }, bundle: true, platform: 'node', format: 'esm', packages: 'external', alias: { '@': path.join(root, 'src') }, outfile: path.join(out, 'api.mjs') });
+const { onRequest, BOOK_ACCOUNTS, BOOK_POSITIONS } = await import(path.join(out, 'api.mjs'));
 const data = new Map(); let commits = 0;
 const property = { ...validateProperty({ id: 'test-table-excel', name: 'Excel round-trip property', value: 100000, owners: [{ name: 'Test owner', share: 50 }] }).property, updatedAt: '2026-10-22T00:00:00Z' };
 data.set(`real-estate:${property.id}`, property);
@@ -29,7 +29,7 @@ const env = { DASHBOARD_STORE: store };
 const snapshot = async () => (await onRequest({ request: new Request(`${base}/api/table-inputs`), env })).json();
 const catalog = (await snapshot()).catalog;
 const capital = catalog.find(r => r.kind === 'private-capital');
-const holding = catalog.find(r => r.id === capital.id.replace(/^private-capital:/, 'holding:'));
+let holding;
 data.set('capital-call:test-table-call', { id: 'test-table-call', fund: 'test-round-trip-fund', fundName: 'Test capital call', date: '2026-12-01', amount: 10000, note: 'Isolated test fixture', updatedAt: '2026-10-22T00:00:00Z' });
 const results = [];
 const check = (name, condition) => { assert.ok(condition, name); results.push(name); };
@@ -75,7 +75,10 @@ try {
   check('Excel upload persists a missing private capital number', (await snapshot()).catalog.find(r => r.id === capital.id).values.paid === 123456 && commits === 1);
   await visit('/private-market');
   await page.locator('[data-edit-numbers]').first().click();
-  const cost = page.locator(`[data-input-record="${holding.id}"][data-input-field="costBasis"]`).first();
+  const cost = page.locator('[data-input-record^="holding:"][data-input-field="costBasis"]').first();
+  const costId = await cost.getAttribute('data-input-record');
+  holding = catalog.find(r => r.id === costId);
+  assert.ok(holding, 'a displayed company has a source cost input');
   await cost.locator('input').fill('200000');
   const draftExport = await download('unsaved-draft.xlsx');
   check('Export preserves an unsaved inline draft', await cost.locator('input').inputValue() === '200000');
@@ -98,6 +101,19 @@ try {
   await cost.getByRole('button', { name: 'Restore original' }).click();
   await page.waitForFunction(() => document.querySelector('[data-entered-numbers]')?.textContent?.includes('1 user-entered'));
   check('Restore original removes a number correction', (await snapshot()).catalog.find(r => r.id === holding.id).values.costBasis === holding.values.costBasis);
+  const ownerOf = id => BOOK_ACCOUNTS.find(a => a.accountId === id)?.ownerId;
+  const crossMember = [...BOOK_POSITIONS].reverse().find(p => p.assetClass === 'AIF' && p.costBasis > 0 && ownerOf(p.accountId)
+    && BOOK_POSITIONS.filter(q => q.securityKey === p.securityKey && ownerOf(q.accountId) === ownerOf(p.accountId)).length === 1
+    && BOOK_POSITIONS.some(q => q.securityKey === p.securityKey && ownerOf(q.accountId) && ownerOf(q.accountId) !== ownerOf(p.accountId)));
+  assert.ok(crossMember, 'cross-member source fixture exists');
+  const memberQuery = new URLSearchParams({ members: ownerOf(crossMember.accountId), q: crossMember.security.split(/\s+/).slice(0, 2).join(' ') });
+  await visit(`/monitor?${memberQuery}`);
+  await page.locator('[data-edit-numbers]').first().click();
+  const scopedId = `holding:${crossMember.accountId}|${crossMember.securityKey}|${crossMember.memberId ?? ''}`;
+  const scopedCost = page.locator(`[data-input-record="${scopedId}"][data-input-field="costBasis"]`).first();
+  await scopedCost.locator('input').fill('456789');
+  await download('member-scoped-draft.xlsx', '[data-monitor-table="holdings"]');
+  check('A member-scoped draft survives export to the whole expanded book', await scopedCost.locator('input').inputValue() === '456789');
   await visit('/monitor');
   const monitorRows = await page.locator('[data-monitor-table] > tbody > tr').count();
   const monitor = await download('monitor.xlsx', '[data-monitor-table="holdings"]');

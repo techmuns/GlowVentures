@@ -3,6 +3,7 @@ import { Children, ReactNode, cloneElement, isValidElement, useContext, useRef }
 import { TableNumberInput, useTableEditing } from "./TableNumberInput";
 import { useTableInputs } from "@/lib/tableInputStore";
 import { capitalInputId, fieldForColumn, positionInputId, privateCapitalId } from "@/lib/tableInputs";
+import type { InputRecord } from "@/lib/tableInputs";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { ChevronUp, ChevronDown, ChevronsUpDown, GripVertical } from "lucide-react";
 import { useTableView, type TableView } from "@/lib/tableView";
@@ -183,6 +184,8 @@ export function Tr({ view, children, reviewScope, inputRecordId, ...rest }: { vi
   const { displayCurrency } = usePortfolio();
   const order = exporting ? view.availableOrder : view.order;
   const row = useRef<HTMLTableRowElement>(null);
+  const editors = useRef(new Map<string, { record: InputRecord; field: string }>());
+  if (!editing && !exporting) editors.current.clear();
   const cells = Children.toArray(children).filter((c) => isValidElement(c) || c === 0 || !!c);
   const header = cells.some((cell) => isValidElement(cell) && cell.type === SortHeader);
   if (cells.length === view.baseColumns.length) for (const id of view.additionalColumns) {
@@ -230,7 +233,16 @@ export function Tr({ view, children, reviewScope, inputRecordId, ...rest }: { vi
     const capital = inputs.catalog.find(r => r.id === capitalId);
     const record = holding && fieldForColumn(holding, inputColumn) ? holding : capital;
     const field = record && fieldForColumn(record, inputColumn);
-    if (!record || !field) return original;
+    const retained = exporting ? editors.current.get(column) : undefined;
+    // Removing a member filter can turn an editable single-investment row into
+    // a calculated aggregate. Keep its hidden editor mounted during export,
+    // while exporting the actual aggregate as read-only.
+    if (!record || !field) {
+      if (!exporting) editors.current.delete(column);
+      return editing && retained ? cloneElement(original, { children: <>{original.props.children as ReactNode}<div hidden data-export-ignore><TableNumberInput key={`${retained.record.id}:${retained.field}`} record={retained.record} field={retained.field} /></div></> }) : original;
+    }
+    const editor = retained ?? { record, field };
+    if (editing && !exporting) editors.current.set(column, editor);
     // Live prices are not statement inputs. Their source mark remains editable
     // on the input sheet, without relabelling the live export as a source value.
     const sourceMatchesDisplay = record.kind !== "holding" || (!!position
@@ -242,7 +254,7 @@ export function Tr({ view, children, reviewScope, inputRecordId, ...rest }: { vi
       "data-input-record": record.id, "data-input-field": field,
       "data-input-export": exportable ? JSON.stringify({ id: record.id, field, source: record.source, version: record.versions[field] ?? "", value }) : undefined,
       ...(exporting && exportable ? { "data-export-value": value ?? "", "data-export-type": value == null ? "text" : "number", "data-export-format": unit === "%" ? "0.0%" : unit ? "#,##0.########" : '"₹"#,##0.00' } : {}),
-      ...(editing ? { children: <>{exporting && original.props.children as ReactNode}<div hidden={exporting} data-export-ignore><TableNumberInput key={`${record.id}:${field}`} record={record} field={field} /></div></> } : {}),
+      ...(editing ? { children: <>{exporting && original.props.children as ReactNode}<div hidden={exporting} data-export-ignore><TableNumberInput key={`${editor.record.id}:${editor.field}`} record={editor.record} field={editor.field} /></div></> } : {}),
       ...(!editing && !exporting && record.versions[field] ? { children: <>{original.props.children as ReactNode}<span data-export-ignore className="ml-1 text-[9px] font-normal text-emerald-600" title={`User-entered number · ${record.versions[field].slice(0, 10)}. The original statement is kept separately.`}>Edited</span></> } : {}),
     });
   };

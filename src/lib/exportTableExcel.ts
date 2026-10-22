@@ -78,6 +78,7 @@ export function createTableWorkbook(snapshot: TableExport): ExcelJS.Workbook {
   about.eachRow(row => { row.alignment = { wrapText: true, vertical: "top" }; row.getCell(1).font = { bold: true }; });
   fitExcelWorksheet(about, 0);
   if (snapshot.inputs) addInputWorkbook(book, snapshot.inputs, targets);
+  else about.addRow(["Upload Excel", "This download is read-only. Re-export after saved numbers have loaded to edit and sync numbers."]);
   about.addRows(detailNames);
   about.eachRow(row => { row.alignment = { wrapText: true, vertical: "top" }; row.getCell(1).font = { bold: true }; });
   fitExcelWorksheet(about, 0);

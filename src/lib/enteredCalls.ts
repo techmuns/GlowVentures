@@ -35,7 +35,8 @@
 // names its cause in a word (`CAUSE_WORD`) and opens the editor on a click,
 // where the whole reason is — and, for a store nobody has connected, the steps
 // that connect it (`SWITCH_ON_STEPS`).
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { getTableInputState, publishCallList, refreshTableInputs, useTableInputs } from "./tableInputStore";
 
 export type EnteredCall = {
   id: string;
@@ -209,10 +210,12 @@ async function send(body: unknown): Promise<Reply> {
  * store's own answer, so the column never shows a change the store refused.
  */
 export function useEnteredCalls() {
+  const numbers = useTableInputs();
   const [state, setState] = useState<EnteredCallsState>({ status: "loading" });
   const alive = useRef(true);
 
   const load = useCallback(async () => {
+    if (getTableInputState().loaded) { await refreshTableInputs(); return; }
     let reply: Reply;
     try {
       reply = await readReply(await fetch(CALLS_ENDPOINT, { credentials: "same-origin", cache: "no-store" }));
@@ -230,14 +233,15 @@ export function useEnteredCalls() {
 
   useEffect(() => {
     alive.current = true;
+    if (numbers.loaded) return () => { alive.current = false; };
     void load();
     const onFocus = () => { void load(); };
     window.addEventListener("focus", onFocus);
-    window.addEventListener("glow:table-inputs-saved", onFocus);
-    return () => { alive.current = false; window.removeEventListener("focus", onFocus); window.removeEventListener("glow:table-inputs-saved", onFocus); };
-  }, [load]);
+    return () => { alive.current = false; window.removeEventListener("focus", onFocus); };
+  }, [load, numbers.loaded]);
 
   const apply = (reply: Reply) => {
+    if (reply.ok) publishCallList(reply.calls);
     if (reply.ok) window.dispatchEvent(new Event("glow:calls-saved"));
     if (reply.ok && alive.current) setState({ status: "ready", calls: reply.calls });
     return reply;
@@ -246,5 +250,6 @@ export function useEnteredCalls() {
   const save = useCallback(async (call: CallDraft) => apply(await send({ op: "save", call })), []);
   const remove = useCallback(async (id: string) => apply(await send({ op: "delete", id })), []);
 
-  return { state, save, remove, reload: load };
+  const visibleState = useMemo<EnteredCallsState>(() => numbers.loaded ? { status: "ready", calls: numbers.calls } : state, [numbers.loaded, numbers.calls, state]);
+  return { state: visibleState, save, remove, reload: load };
 }

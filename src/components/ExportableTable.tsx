@@ -26,6 +26,8 @@ export function ExportableTable({ children, exportName, controlsHost, ...props }
 }) {
   const exportId = useId();
   const inputState = useTableInputs();
+  const inputStateRef = useRef(inputState);
+  inputStateRef.current = inputState;
   const [editing, setEditing] = useState(false);
   const [dialog, setDialog] = useState<"inputs" | InputChange[] | null>(null);
   const upload = useRef<HTMLInputElement>(null);
@@ -50,6 +52,7 @@ export function ExportableTable({ children, exportName, controlsHost, ...props }
       // Load ExcelJS only on demand. Snapshot the full table synchronously and
       // restore its scroll window before the workbook's asynchronous encoding.
       const { downloadTableExcel } = await import("@/lib/exportTableExcel");
+      if (inputStateRef.current.status === "ready") await refreshTableInputs();
       await prepareTableExport();
       if (!table.current) return;
       const element = table.current;
@@ -66,14 +69,15 @@ export function ExportableTable({ children, exportName, controlsHost, ...props }
         flushSync(() => { setAllRows(true); setTableExporting(true); });
         if (!table.current) throw new Error("Table unavailable for export");
         snapshot = readTableExport(table.current, title);
-        if (inputState.status === "ready") {
+        const currentInputs = inputStateRef.current;
+        if (currentInputs.loaded) {
           const ids = new Set(inputIds());
           // Analytical tables without a source row still offer the same book
           // input sheets, so every table has the same correction workflow.
-          const related = inputState.catalog.filter(r => ids.has(r.id) || (!!r.parentId && ids.has(r.parentId))
+          const related = currentInputs.catalog.filter(r => ids.has(r.id) || (!!r.parentId && ids.has(r.parentId))
             || (r.kind === "private-capital" && ids.has(r.id.replace(/^private-capital:/, "holding:"))));
-          const calls = related.some(r => r.kind !== "property" && r.kind !== "owner") ? inputState.catalog.filter(r => r.kind === "call" && !ids.has(r.id)) : [];
-          snapshot.inputs = related.length ? [...related, ...calls] : inputState.catalog;
+          const calls = related.some(r => r.kind !== "property" && r.kind !== "owner") ? currentInputs.catalog.filter(r => r.kind === "call" && !ids.has(r.id)) : [];
+          snapshot.inputs = related.length ? [...related, ...calls] : currentInputs.catalog;
         }
       } finally {
         flushSync(() => { setTableExporting(false); setAllRows(false); });
@@ -92,13 +96,13 @@ export function ExportableTable({ children, exportName, controlsHost, ...props }
     try {
       if (!/\.xlsx$/i.test(file.name) || file.size > 12_000_000) throw new Error("Upload the downloaded .xlsx file, under 12 MB.");
       const { readInputWorkbook } = await import("@/lib/tableInputExcel");
-      const changes = await readInputWorkbook(await file.arrayBuffer(), inputState.catalog);
+      const changes = await readInputWorkbook(await file.arrayBuffer(), inputStateRef.current.catalog);
       if (changes.length) setDialog(changes); else setMessage("No number changes found.");
     } catch (e) { setError((e as Error).message); }
     finally { busyRef.current = false; setBusy(false); if (upload.current) upload.current.value = ""; }
   };
   const controls = <>
-    <button type="button" onClick={() => { void download(); }} disabled={busy}
+    <button type="button" onClick={() => { void download(); }} disabled={busy || inputState.status === "loading"}
       data-export-excel data-export-for={exportId} aria-describedby={error ? errorId : undefined}
       title="Export all rows regardless of filters and every column, including hidden columns and rows not yet loaded by scrolling"
       className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border border-emerald-600/30 bg-emerald-500/5 px-2.5 py-1.5 text-xs font-medium text-emerald-600 ring-focus hover:bg-emerald-500/10 disabled:opacity-50">

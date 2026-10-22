@@ -77,7 +77,7 @@ export async function readInputWorkbook(bytes: ArrayBuffer, current: InputRecord
   const book = new ExcelJS.Workbook();
   try { await book.xlsx.load(bytes); } catch { throw new Error("This file could not be read. Upload the .xlsx file downloaded from this dashboard."); }
   const meta = book.getWorksheet("_Glow");
-  if (!meta || meta.rowCount > 2000) throw new Error("Upload the original dashboard Excel file, with its format unchanged.");
+  if (!meta || meta.rowCount > 2000) throw new Error("This file cannot be synced. Download a fresh Excel file after saved numbers have loaded.");
   let manifest: Manifest;
   try { let text = ""; meta.eachRow(r => { text += r.getCell(1).text; }); manifest = JSON.parse(text); } catch { throw new Error("The file's format has changed. Download a fresh Excel file."); }
   if (!manifest! || manifest.version !== 1 || !Array.isArray(manifest.sheets) || manifest.sheets.length > 1000 || manifest.sheets.some(s => !s || typeof s.name !== "string"

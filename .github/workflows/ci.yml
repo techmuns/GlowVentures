@@ -142,6 +142,8 @@ jobs:
             .cache/table-inputs/browser/*.png
             .cache/table-inputs/browser/*results.json
             .cache/table-inputs/browser/failure.json
+            .cache/table-inputs/browser/private-original.xlsx
+            .cache/table-inputs/browser/property.xlsx
           if-no-files-found: ignore
 
       # A regeneration mismatch must fail this required job even though the
