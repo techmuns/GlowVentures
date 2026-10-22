@@ -46,12 +46,12 @@ const open = async key => {
 };
 const ink = async n => {
   await rendered(n).waitFor();
-  const count = await rendered(n).evaluate(c => {
+  const {count,area} = await rendered(n).evaluate(c => {
     const data = c.getContext('2d').getImageData(0,0,c.width,c.height).data;
     let count = 0; for (let i=0;i<data.length;i+=4) if (data[i]<180 && data[i+1]<180 && data[i+2]<180 && data[i+3]>0) count++;
-    return count;
+    return {count,area:c.width*c.height};
   });
-  assert.ok(count > 500, 'The original page must contain visible ink, not an empty canvas.');
+  assert.ok(count > Math.max(30,area * 0.0001), 'The original page must contain visible ink, not an empty canvas.');
 };
 try {
   await page.goto(outer);

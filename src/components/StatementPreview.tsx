@@ -405,7 +405,7 @@ export function StatementPreview({ doc, onClose }: { doc: LibraryDoc; onClose: (
         data-preview-view={view} data-preview-original={original.status}
         className="flex h-full max-h-[880px] w-full max-w-5xl flex-col overflow-hidden rounded-xl border border-ink-700 bg-ink-900 shadow-2xl">
 
-        <div className="flex items-start gap-3 border-b border-ink-700 px-4 py-3">
+        <div className="flex flex-wrap items-start gap-3 border-b border-ink-700 px-4 py-3 sm:flex-nowrap">
           <div className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-md border border-champagne-500/30 bg-champagne-500/10 text-champagne-400">
             {sheet ? <FileSpreadsheet className="h-5 w-5" /> : <FileText className="h-5 w-5" />}
           </div>
@@ -437,7 +437,7 @@ export function StatementPreview({ doc, onClose }: { doc: LibraryDoc; onClose: (
             <div className="mono mt-1 truncate text-[11.5px] text-slate-400" title={doc.fileName}>{doc.fileName}</div>
             {meta.length > 0 && <div className="mt-0.5 text-[11px] text-slate-500">{meta.join(" · ")}</div>}
           </div>
-          <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
+          <div className="flex w-full shrink-0 flex-wrap items-center justify-end gap-1.5 sm:w-auto">
             {published && (
               <>
                 <a href={published.url} download={doc.fileName} className={ACTION} title={`Download ${doc.fileName}`} data-preview-download>
