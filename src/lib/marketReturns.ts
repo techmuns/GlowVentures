@@ -4,7 +4,7 @@ export type MarketHistory = { ok: true; symbol: string; isin: string | null; nam
 export type MarketResult = MarketHistory | { ok: false; reason: string };
 export type MarketInstrument = { key: string; query: string };
 export type MarketUnit = { position: Position; periodPct: number; from: string; to: string; history: MarketHistory };
-export type MarketGap = { position: Position; reason: string };
+export type MarketGap = { position: Position; reason: string; code?: 'value' | 'unmatched' | 'source' | 'dates' | 'start' | 'end' | 'shared'; first?: string; last?: string; dates?: string[] };
 export const marketHoldingKey = (p: Pick<Position, 'accountId' | 'securityKey'>) => `${p.accountId}|${p.securityKey}`;
 const day = (s: string) => Date.parse(`${s}T00:00:00Z`);
 /** Never substitute a price after the selected date or a stale previous month. */
@@ -42,17 +42,17 @@ export function marketReturns(positions: readonly Position[], instruments: Reado
   const from = inception ? historiesInUse.map(h => h.first).sort().at(-1) ?? null : start;
   const units: MarketUnit[] = [], gaps: MarketGap[] = []; let pending = 0;
   const candidates: { position: Position; history: MarketHistory; prices: Map<string, number> }[] = [];
-  const gap = (position: Position, reason: string) => gaps.push({ position, reason });
+  const gap = (position: Position, reason: string, code: MarketGap['code'], detail: Partial<Pick<MarketGap, 'first' | 'last' | 'dates'>> = {}) => gaps.push({ position, reason, code, ...detail });
   for (const p of positions) {
-    if (!(p.marketValue > 0)) continue;
+    if (!(p.marketValue > 0)) { gap(p, 'A positive current holding value is needed for its portfolio weight.', 'value'); continue; }
     const instrument = instruments.get(p.securityKey);
-    if (!instrument) { gap(p, 'No verified public stock listing or mutual-fund NAV history is available for this investment. Its recorded return is shown separately where the statements support it.'); continue; }
+    if (!instrument) { gap(p, 'No verified public stock listing or mutual-fund NAV history is available for this investment. Its recorded return is shown separately where the statements support it.', 'unmatched'); continue; }
     const h = histories[instrument.key];
     if (!h) { pending++; continue; }
-    if (!h.ok) { gap(p, h.reason); continue; }
-    if (!from || !end || !(day(end) > day(from))) { gap(p, 'Choose a start date before the end date.'); continue; }
-    if (!closeBefore(h, from)) { gap(p, `Published history begins ${h.first}, or no trading price is available near ${from}. A shorter period may be available.`); continue; }
-    if (!closeBefore(h, end)) { gap(p, `No completed trading price is available near ${end}. Latest published date: ${h.last}.`); continue; }
+    if (!h.ok) { gap(p, h.reason, 'source'); continue; }
+    if (!from || !end || !(day(end) > day(from))) { gap(p, 'Choose a start date before the end date.', 'dates'); continue; }
+    if (!closeBefore(h, from)) { gap(p, `Published history begins ${h.first}, or no trading price is available near ${from}. A shorter period may be available.`, 'start', { first: h.first }); continue; }
+    if (!closeBefore(h, end)) { gap(p, `No completed trading price is available near ${end}. Latest published date: ${h.last}.`, 'end', { last: h.last }); continue; }
     candidates.push({ position: p, history: h, prices: pricesOf(h) });
   }
   // One pair of actual trading dates for the whole basket, including funds
@@ -75,7 +75,7 @@ export function marketReturns(positions: readonly Position[], instruments: Reado
     if (value > bestValue) { bestValue = value; measuredFrom = opening; measuredTo = to; }
   }
   for (const c of candidates) {
-    if (!measuredFrom || !measuredTo || !(c.prices.get(measuredFrom)! > 0) || !(c.prices.get(measuredTo)! > 0)) { gap(c.position, 'A price is missing on the shared calculation dates. Other available holdings are included; retry when this history is published.'); continue; }
+    if (!measuredFrom || !measuredTo || !(c.prices.get(measuredFrom)! > 0) || !(c.prices.get(measuredTo)! > 0)) { gap(c.position, 'A price is missing on the shared calculation dates. Other available holdings are included; retry when this history is published.', 'shared', { dates: [measuredFrom, measuredTo].filter((d): d is string => !!d && !(c.prices.get(d)! > 0)) }); continue; }
     units.push({ position: c.position, periodPct: (c.prices.get(measuredTo)! / c.prices.get(measuredFrom)! - 1) * 100,
       from: measuredFrom, to: measuredTo, history: c.history });
   }
