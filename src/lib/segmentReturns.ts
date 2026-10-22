@@ -67,7 +67,7 @@ export const SEGMENT_VIEWS: readonly { key: SegmentAxis; label: string; title: s
   { key: "category", label: "Category", title: "Direct equity, PMS mandates, AIFs, mutual funds, ETFs, cash — what kind of holding earned the return" },
   { key: "assetClass", label: "Asset class", title: "The family's own asset classes — Equity, Debt, Alternate, Cash — as their consolidated review states them" },
   { key: "basket", label: "Basket", title: "The family's four baskets: Stable Growth, Entrepreneurial Growth, Thematic & Tactical, Liquidity" },
-  { key: "sector", label: "Sector", title: "Company shares by the sector Sector Composition draws; every fund, private line and cash row by its class, since a wrapper has no sector" },
+  { key: "sector", label: "Sector", title: "GICS sectors as Sector Composition draws them: Consolidated looks through the funds to the companies they hold, Direct Equity is the family's own shares" },
   { key: "side", label: "Listed / Private", title: "Listed markets against private capital, placed as everywhere else in the dashboard" },
   { key: "security", label: "All Securities", title: "One row per security, every holding of it clubbed across every account and mandate" },
 ];

@@ -37,7 +37,14 @@ An ambiguous ratio, conflicting same-date events, mismatched ISIN, fractional
 share entitlement, rights issue, demerger, non-equity bonus or other unsupported
 share event withholds the live mark until a statement reconciles it. A quote
 is also withheld where the book records sales after the holding statement:
-the unchanged-holdings assumption is already contradicted there. A quote
+the unchanged-holdings assumption is already contradicted there.
+
+**A buyback is not a share event** (Stage 10gr). The company buys only the
+shares a holder tenders, and a tender is a sale the account's own record
+carries, so a buyback after the statement leaves the carried quantity on the
+same terms as every other holding and is listed as the holder's election. It
+does not move the exchange's previous close either, so its ex-date withholds
+no day move. A quote
 without a trade timestamp cannot license a share adjustment or a post-dividend
 total return. Unverified ex-date previous-close bases do not produce a day move.
 

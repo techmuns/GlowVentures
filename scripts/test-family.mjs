@@ -27,6 +27,7 @@ const SUITES = [
   ["published data lineage", "src/lib/__tests__/publicationViews.test.ts"],
   ["selected attribution periods and coverage", "src/lib/__tests__/selectedSegmentReturns.test.ts"],
   ["sector return coverage identities", "src/lib/__tests__/sectorReturnCoverage.test.ts"],
+  ["one sector rollup for both panels", "src/lib/__tests__/sectorRollup.test.ts"],
   ["chunk recovery", "src/lib/__tests__/chunkRecovery.test.ts"],
   ["recovered purchase costs", "src/lib/__tests__/recoveredCosts.test.ts"],
   ["latest verified account returns", "src/lib/__tests__/latestAccountReturns.test.ts"],
