@@ -39,6 +39,17 @@ export function quoteSymbolsFor(positions: readonly { securityKey: string; symbo
   return [...new Set(positions.map(quoteSymbolFor).filter((s): s is string => !!s))];
 }
 
+/**
+ * THE KEY A HOLDING'S DAY MOVE IS READ UNDER (Stage 10hb): its NSE symbol, else
+ * its exchange-qualified quote key — a BSE-only listing such as `BSE:YASHHV`.
+ * The movers cards read NSE symbols alone, so a share priced live off BSE was
+ * dropped from them as "No exchange symbol" while every other page valued it.
+ * NSE first, so every name that already ranked is read exactly as before.
+ */
+export function moveSymbolFor(p: { securityKey: string; symbol?: string | null; isin?: string | null }): string | null {
+  return symbolFor(p) || quoteSymbolFor(p);
+}
+
 /** A holding may use its own listing quote, never its debt issuer's share price. */
 export function holdingQuoteSymbolFor(p: Pick<Position, "assetClass" | "securityKey" | "symbol" | "isin">): string | null {
   if (p.assetClass === "Equity" || p.assetClass === "ETF") return quoteSymbolFor(p);
@@ -233,7 +244,15 @@ export function applyQuotes(positions: Position[], feed: QuoteFeed | null): Posi
     // are unlisted shares, preference shares and fund units no exchange quotes;
     // a quote that happened to resolve would move a value the review struck. And
     // a line recorded with no unit count has no per-unit price to apply at all.
-    if (p.review || p.quantity === null) return { ...p, live: false };
+    //
+    // EXCEPT A REVIEW LINE THE FAMILY PLACED ON THE LISTED SIDE whose own ISIN
+    // is an exchange listing (Stage 10hb): NSE, listed on BSE on 24 Sep 2026 as
+    // `BSE_EQ|INE721I01024`. *"use the BSE symbols for them to fetch live
+    // prices"* — the family, 22 Oct 2026. Only the exact ISIN admits it, never a
+    // name; the statement basis keeps the review's value.
+    const listedReviewLine = !!p.review && p.marketSide === "listed" && !!p.isin
+      && !!UPSTOX_ISIN_SYMBOLS[p.isin.trim().toUpperCase()];
+    if ((p.review && !listedReviewLine) || p.quantity === null) return { ...p, live: false };
     const sym = holdingQuoteSymbolFor(p);
     const q = sym ? feed.quotes[sym] : undefined;
     if (!q || !(q.price > 0)) return { ...p, live: false };

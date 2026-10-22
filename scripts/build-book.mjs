@@ -5241,6 +5241,18 @@ function build(archived, archiveCount = archived.length) {
   const holdingCostRecovery = recoverHoldingCosts({ root: ROOT, accounts, positions,
     unvalued: unvaluedHoldings, shareMovements, docs, archiveCount });
   for (const p of positions) Object.assign(p, applyRecoveredCost(p, holdingCostRecovery.records));
+  // THE REVIEW'S DATED TRADES PAST A STATEMENT WITH NO TAPE OF ITS OWN (Stage
+  // 10hb) — the live layer's roll, as `rolledForward`, where the account's own
+  // tape gave none. The statement basis keeps the snapshot.
+  for (const p of positions) {
+    const roll = p.recoveredCost?.reviewRoll;
+    if (!roll || p.rolledForward) continue;
+    if (roll.reason) { notes.push(`${p.accountId}: ${p.securityKey} is not rolled forward on the review — ${roll.reason}`); continue; }
+    const { rows: _rows, ...rf } = roll;
+    p.rolledForward = rf;
+    notes.push(`${p.accountId}: ${p.securityKey} rolled forward on the review's dated trades from ${p.quantity} on ${p.recoveredCost.asOf} `
+      + `to ${rf.quantity} on ${rf.through} (${rf.trades} trade(s); witnessed by the review's own closing)${rf.hprUnavailableReason ? "; sale proceeds unverified, so realised gain and HPR stay absent" : ""}`);
+  }
   notes.push(`cost recovery: ${holdingCostRecovery.records.length} exact account/ISIN/quantity records from the saved workbooks; `
     + `${holdingCostRecovery.unresolved.length} recorded security balances still require acquisition or movement evidence. See docs/COST-RECOVERY.md.`);
 
