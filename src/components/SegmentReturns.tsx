@@ -1,4 +1,4 @@
-import { Fragment, useMemo } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { useMarketHistories } from '@/lib/useMarketReturns';
 import { marketReturns, marketReturnSummary, marketHoldingKey } from '@/lib/marketReturns';
 import { MarketReturnInfo } from './MarketReturnInfo';
@@ -8,6 +8,7 @@ import { BOOK_ACCOUNT_BRIDGES, BOOK_CAPITAL_MOVES, BOOK_HOLDING_INCOME } from '@
 import { AvailableReturnCoverage } from '@/components/AvailableReturnCoverage';
 import { Card } from '@/components/Card';
 import { ExportableTable } from '@/components/ExportableTable';
+import { EditColumns } from '@/components/EditColumns';
 import { AbsentCell } from '@/components/Absent';
 import { ReturnCalculationInfo } from '@/components/ReturnCalculation';
 import { SortHeader, Tr, TrFoot } from '@/components/SortHeader';
@@ -31,7 +32,10 @@ const HEAD: Record<string, string> = { category: 'Category', assetClass: 'Asset 
 export default function SegmentReturns({ selection, period }: { selection: ReturnSelection; period: PeriodKey }) {
   const { statementPortfolio, consolidated, fmtFromBase } = usePortfolio();
   const [axis, setAxis] = useViewParam(SEGMENT_VIEWS, {}, 'seg');
-  const view = useTableView('cio-attribution', COLS), exp = useExpanded();
+  // Export Excel and Edit Columns sit in the card header beside the axis tabs,
+  // not in two rows of their own above the table (Stage 10gy).
+  const view = useTableView('cio-attribution', COLS, { manualEditor: true }), exp = useExpanded();
+  const [tools, setTools] = useState<HTMLSpanElement | null>(null);
   const money = (n: number, sign = false) => fmtFromBase(n, { compact: true, sign });
   // Dated returns close at statement values. Today's quote must never be backdated.
   const positions = consolidated;
@@ -143,8 +147,10 @@ export default function SegmentReturns({ selection, period }: { selection: Retur
       right={<div className="flex flex-wrap items-center justify-end gap-2 text-[12px]">
         {axisTabs}
         {openable.length > 0 && <ExpandAllButton allOpen={allOpen} onClick={() => exp.setMany(openable.map(r => r.key), !allOpen)} />}
+        <EditColumns view={view} />
+        <span ref={setTools} className="inline-flex" data-table-tools />
       </div>}>
-      <div className="overflow-x-auto"><ExportableTable className="min-w-full whitespace-nowrap text-[12.5px]" data-seg-table>
+      <div className="overflow-x-auto"><ExportableTable className="min-w-full whitespace-nowrap text-[12.5px]" data-seg-table controlsHost={tools}>
         <thead className="border-b border-ink-700 bg-ink-800"><Tr view={view}>
           <SortHeader col="seg" view={view} align="left" pad="px-4 py-2">{HEAD[axis]}</SortHeader>
           <SortHeader col="holdings" view={view} pad="px-4 py-2">Holdings</SortHeader>
