@@ -20,13 +20,16 @@ try {
  await page.route('**/api/**', r => r.fulfill({ status: 503, json: { status: 'unreachable' } }));
  await page.route(/fonts\.(googleapis|gstatic)\.com/, r => r.abort());
  await installReadModelRoutes(page);
- let requests = 0, retrying = false;
+ let requests = 0, retrying = false, nseSourceFailures = 0;
  await page.route('**/api/market-history?*', r => {
   requests++;
   const q = new URL(r.request().url()).searchParams;
   const symbol = q.get('symbol'), isin = q.get('isin'), fund = q.get('fund');
   // A real holding's first request fails. The retry button must recover it.
   if (symbol === 'KARURVYSYA' && !retrying) return r.fulfill({ json: { ok: false, reason: 'Temporary source failure' } });
+  // NSE is now a verified BSE listing. Explicitly simulate a missing source
+  // history instead of assuming the actual book has no listing for it.
+  if (symbol === 'NSE.BO' && !retrying) { nseSourceFailures++; return r.fulfill({ json: { ok: false, reason: 'The price source returned HTTP 404 for this listing.' } }); }
   return r.fulfill({ json: { ok: true, symbol: fund || symbol+'.NS', isin, name: fund || symbol, source: fund ? 'NAV fixture' : 'Adjusted stock fixture', basis: fund ? 'nav' : 'adjusted-close', first: t[0], last: t.at(-1), t, v } });
  });
  await page.goto(base + '/cio?tab=returns&tiles=value,gain,fytd');
@@ -34,6 +37,7 @@ try {
  await page.waitForFunction(() => document.querySelector('[data-market-summary]')?.dataset.marketPending === '0');
  assert.ok(Number(await summary.getAttribute('data-market-covered')) > 20, 'stock and fund histories resolve from the actual book');
  assert.ok(requests > 10);
+ assert.ok(nseSourceFailures > 0, 'the missing-listing-history fixture was exercised');
  const initialRequests = requests, results = [];
  for (const period of ['fytd','mtd','ytd','y1','y2','y3']) {
   await page.locator(`[data-returns-period="${period}"]`).click();
@@ -91,8 +95,8 @@ try {
  assert.match(await aif.locator('[data-market-needed]').innerText(),/fund manager.*NAV/);
  await dialog.getByRole('textbox',{name:'Search missing holdings'}).fill('National Stock Exchange of India');
  const nse = dialog.locator('[data-market-gap]').first();
- assert.match(await nse.locator('[data-market-missing-data]').innerText(), /Public price history is missing/);
- assert.match(await nse.locator('[data-market-needed]').innerText(), /Recorded return/);
+ assert.match(await nse.locator('[data-market-missing-data]').innerText(), /The price source has no history for this listing/);
+ assert.match(await nse.locator('[data-market-needed]').innerText(), /price history.*exact stock or fund.*selected period/);
  assert.ok(await nse.evaluate(el => Boolean(el.querySelector('[data-market-missing-data]').compareDocumentPosition(el.querySelector('[data-market-owner]')) & Node.DOCUMENT_POSITION_FOLLOWING)), 'the missing data comes before account metadata');
  await dialog.getByRole('textbox',{name:'Search missing holdings'}).fill('Karur');
  assert.ok(await dialog.locator('[data-market-gap]').count()>0);
