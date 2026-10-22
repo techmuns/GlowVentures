@@ -26,9 +26,13 @@ assert.match(run(b,'2026-03-01').gaps[0].reason,/confirmed count on or before/);
 assert.match(run({...b,histories:{}}).gaps[0].reason,/still loading/);
 assert.match(run({...b,histories:{example:{...h,c:undefined}}}).gaps[0].reason,/published closing price/);
 assert.match(run({...b,actions:null}).gaps[0].reason,/need checking/);
-assert.match(run({...b,trades:{'a|example':[{date:'2026-08-01',side:'sell',quantity:2,price:1,amount:2}]}}).gaps[0].reason,/later purchase, sale or transfer/);
+assert.match(run({...b,trades:{'a|example':[{date:'2026-08-01',side:'sell',quantity:2,price:1,amount:2}]}}).gaps[0].reason,/later purchase, sale, withdrawal or transfer/);
 assert.equal(run({...b,trades:{'a|example':[{date:'2026-01-01',side:'sell',quantity:2,price:1,amount:2}]}}).units.length,1,'a sale already inside the source balance does not invalidate it');
 assert.match(run({...b,moves:[{accountId:'a',securityKey:'example',date:'2026-09-10',direction:'out',label:'Transfer',amount:null,invested:null,units:-2,security:null}]}).gaps[0].reason,/transfer/);
+const withdrawal={accountId:'a',securityKey:null,date:'2026-09-10',direction:'out' as const,label:'Distribution',amount:500,invested:500,units:null,security:null};
+assert.match(assumedHoldingReturns([position],[{...account,engagement:'PMS'}],'2026-09-01','2026-10-22',{...b,moves:[withdrawal]}).gaps[0].reason,/withdrawal/,'an unexplained account payout cannot be assumed to leave every share unchanged');
+assert.equal(run({...b,moves:[{...withdrawal,securityKey:'example',label:'Dividend',units:-2}]}).units.length,0,'a dividend label cannot hide a recorded unit disposal');
+assert.equal(run({...b,moves:[{...withdrawal,securityKey:'example',label:'Dividend',units:0}]}).units.length,1,'a named cash dividend changes no shares');
 const otherOwner = {...position,accountId:'other'};
 assert.equal(assumedHoldingReturns([otherOwner],[{...account,accountId:'other'}],'2026-09-01','2026-10-22',{...b,positions:[otherOwner],trades:{'a|example':[{date:'2026-09-10',side:'sell',quantity:10,price:1,amount:10}]}}).units.length,1,'another owner’s sale cannot cancel these shares');
 // A 2-for-1 split changes the units, not the wealth. Dividend amounts stay cash,

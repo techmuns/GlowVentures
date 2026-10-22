@@ -292,7 +292,7 @@
 
 ### Stage 10gy — EXPLICIT ASSUMED HOLDINGS FILL PERIOD RETURN GAPS
 
-- The family authorised carrying recorded shares/units forward where no later purchase, sale or transfer contradicts the balance. Public prices and checked splits/dividend entitlements fill eligible period values, gains and returns; source records, unknown purchase costs and private marks stay intact.
+- The family authorised carrying recorded shares/units forward where no later purchase, sale, withdrawal or transfer contradicts the balance. Public prices and checked splits/dividend entitlements fill eligible period values, gains and returns; source records, unknown purchase costs and private marks stay intact.
 - Return attribution, its capital bridge and Morning CIO period/history cards use the same eligible holding calculations and prefer usable statement returns. Every affected figure has an assumed label and an owner-specific clickable info explanation. Excel includes a Holding basis column.
 - The public history service retains split-only closes separately from its dividend-adjusted return index, includes split events and refreshes older browser cache entries. Source audit and limitations are in `docs/ASSUMED-HOLDING-COVERAGE.md`.
 - Focused checks cover quantity provenance, dated ownership, later sales/transfers, separate owners, price gaps, splits, non-reinvested dividends, double counting, bridge arithmetic and headline parity.

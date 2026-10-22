@@ -91,7 +91,7 @@ every one takes the reason as a required argument.
 
 **Assumed continued ownership (22 October 2026, user-authorised):** where a dated
 share/unit balance exists by the selected opening and no later recorded purchase,
-sale or transfer contradicts it, period calculations may carry those units forward
+sale, withdrawal or transfer contradicts it, period calculations may carry those units forward
 at published historical prices. Label every affected figure as assumed and put
 the short owner-specific explanation behind its info button. Apply checked splits
 and gross dividend entitlements; never treat dividend-adjusted prices as unit

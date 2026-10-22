@@ -1,7 +1,7 @@
 # Assumed continued ownership — 22 October 2026
 
 The family authorised carrying a recorded share/unit balance forward when no later
-purchase, sale or transfer in the supplied records contradicts that balance.
+purchase, sale, withdrawal or transfer in the supplied records contradicts that balance.
 Every calculated figure carries an **assumed** label and an info button:
 
 > No sale appears in the records we have. We assume [owner] still holds these shares.
@@ -47,7 +47,7 @@ Insolation resolves through its BSE listing. No source quantity or event was gue
 - An original purchase cost, purchase date or since-investment profit that is absent.
 - Ownership before the dated quantity record used by the calculation.
 - A private-company mark, an unreported fund NAV, distribution or sale proceeds.
-- A constant quantity where a later recorded trade/transfer contradicts it, an
+- A constant quantity where a later recorded trade, withdrawal or transfer contradicts it, an
   unknown fractional entitlement or an unresolved corporate action.
 
 Growth fund NAVs can be used directly; distribution-paying funds still require

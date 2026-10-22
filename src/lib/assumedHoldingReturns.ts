@@ -65,10 +65,10 @@ export function assumedHoldingReturns(positions: readonly Position[], accounts: 
       && m.periodTo && after(m.periodTo) && (m.reason || m.unclassified || (m.unitsIn ?? 0) > 0 || (m.unitsOut ?? 0) > 0));
     const capital = b.moves.find(m => m.accountId === p.accountId && after(m.date)
       && (m.securityKey === p.securityKey || (!m.securityKey && a.engagement === 'PMS' && m.direction === 'out'))
-      && !/dividend|income|interest|distribution/i.test(m.label));
+      && !(m.securityKey === p.securityKey && !m.units && /dividend|income|interest/i.test(m.label)));
     const trade = trades.find(t => after(t.date));
     if (trade || moved || capital || (anchor.position.realizedLotsAfter ?? 0) > 0) {
-      gap('A later purchase, sale or transfer is recorded. We need a matching share balance before assuming the quantity stayed the same.'); continue;
+      gap('A later purchase, sale, withdrawal or transfer is recorded. We need a matching share balance before assuming the quantity stayed the same.'); continue;
     }
     const h = b.histories[instrument.key];
     if (!h) { pending++; gap('Prices are still loading. No new statement is needed yet.'); continue; }
