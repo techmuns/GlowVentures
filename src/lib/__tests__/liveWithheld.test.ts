@@ -2,7 +2,7 @@
  * WHY A LIVE PRICE IS HELD BACK — the corporate-action gate's own words, read
  * through ONE helper (`liveWithheldReason`), and the cause each refusal names.
  *
- * DL-9: the gate withholds a quote that ARRIVED (a buyback, sales recorded after
+ * DL-9: the gate withholds a quote that ARRIVED (a demerger, sales recorded after
  * the statement, a capture further behind the quote's day than a share event's
  * lead, the evidence still loading), and every page said "the price feed
  * returned no quote".
@@ -10,7 +10,8 @@
  * corporate-actions table said it was "withheld pending share reconciliation".
  *
  * Each expectation below is a fact about the INPUT — a quote present or absent,
- * a sale after the statement, a buyback — never read back out of the module.
+ * a sale after the statement, a demerger or a buyback — never read back out of
+ * the module.
  */
 import assert from "node:assert/strict";
 import { BOOK_ACCOUNTS, BOOK_POSITIONS } from "../../data/glowData";
@@ -71,16 +72,37 @@ ok("sales recorded after the statement: the quote ARRIVED and is held back, in t
   assert.ok(why && /Sales are recorded after this statement/.test(why), String(why));
 });
 
-ok("a buyback after the statement holds the quote back, and the reason is the gate's own open question", () => {
-  const f = feed([raw("buyback", "2026-09-04", "Buyback")]);
+ok("a demerger after the statement holds the quote back, and the reason is the gate's own open question", () => {
+  const f = feed([raw("demerger", "2026-09-04", "Demerger")]);
   const { priced, returns, plan } = run(base, quotes(), f);
   assert.equal(priced.live, false);
   const why = liveWithheldReason(base, returns) ?? "";
-  // A buyback changes the share count by an amount the feed cannot allocate to
-  // this holding, so the gate asks for reconciliation or a newer statement…
+  // A demerger credits new shares the feed cannot allocate to this holding, so
+  // the gate asks for reconciliation or a newer statement…
   assert.ok(/reconciliation|newer holding statement/.test(why), why);
   // …and the helper says exactly what the gate says, not a paraphrase of it.
   assert.equal(why, [...new Set(plan!.quantityIssues)].join(". "));
+});
+
+// Stage 10gr: EMA Partners on the ICICI NSDL demat was ranked "by % move only ·
+// share count unverified" because a buyback after its statement was gated like
+// a share event. A buyback buys only what a holder tenders, and a tender is a
+// sale the account's own record carries.
+ok("a buyback after the statement changes no share count on its own: the quote goes live and the event is listed as the holder's election", () => {
+  const f = feed([raw("buyback", "2026-09-04", "Buyback · Tender Offer")]);
+  const { priced, returns, plan } = run(base, quotes(), f);
+  assert.equal(priced.live, true);
+  assert.equal(priced.quantity, base.quantity, "the statement's quantity stands");
+  assert.equal(liveWithheldReason(base, returns), null);
+  assert.deepEqual(plan!.lines.map((l) => l.status), ["elective"]);
+  assert.ok(/tendered/.test(plan!.lines[0].reason ?? ""), String(plan!.lines[0].reason));
+});
+
+ok("…and a buyback beside sales the account records after the statement is still held back, for those sales", () => {
+  const p = { ...base, realizedLotsAfter: 1 };
+  const { priced, returns } = run(p, quotes(), feed([raw("buyback", "2026-09-04", "Buyback")]));
+  assert.equal(priced.live, false);
+  assert.ok(/Sales are recorded after this statement/.test(liveWithheldReason(p, returns) ?? ""));
 });
 
 // The capture below is verified through 23 Sep (its sources' own dates). A

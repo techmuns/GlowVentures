@@ -37,7 +37,7 @@ import { MANDATE_BUCKET, currentHoldings, holdingBucket, mandateLabel } from "./
 import { accountIndex, engagementOf } from "./accounts";
 import { dailyMovers, latestQuoteSession, quoteSession, symbolMove } from "./dailyMovers";
 import { priceLooksLikeSameSecurity, symbolFor, symbolForKey, type QuoteFeed } from "./quotes";
-import { marketDay, type ActionFeed, type ActionReturn } from "./corporateActions";
+import { marketDay, movesCloseBasis, type ActionFeed, type ActionReturn } from "./corporateActions";
 import { familyValue } from "./lookthrough";
 import { securityLabel } from "./securityLabel";
 import type { FundDisclosureData } from "./fundDisclosures";
@@ -248,7 +248,7 @@ export function insideMovers(args: {
     const day = quoteSession(quotes, symbol) || marketDay(q.observedAt || quotes!.asOf);
     return (actions?.rows ?? []).some((r) =>
       ((isin && r.isin === isin) || (symbol && r.ticker === symbol))
-      && r.type !== "dividend" && (!r.exDate || r.exDate === day));
+      && movesCloseBasis(r.type) && (!r.exDate || r.exDate === day));
   };
   for (const r of mv.rows) {
     if (!omitted.has(r.securityKey) && actionSuspect(r.securityKey)) {

@@ -8,7 +8,7 @@ export type { ActionFeed, ResearchAction } from "../../shared/corporateActions.m
 
 export type ActionLine = {
   action: ResearchAction;
-  status: "in-statement" | "upcoming" | "adjusted" | "declared" | "needs-review";
+  status: "in-statement" | "upcoming" | "adjusted" | "declared" | "elective" | "needs-review";
   quantity: number | null; amount: number | null; reason: string | null;
 };
 export type ActionReturn = {
@@ -41,6 +41,32 @@ export function actionsFor(p: Position, feed: ActionFeed | null): ResearchAction
 }
 
 const COVERAGE_GAP = "Event capture does not cover the valuation date";
+
+/**
+ * ── A BUYBACK IS AN OFFER TO BUY, NOT A SHARE EVENT (Stage 10gr) ────────────
+ *
+ * *"Why in the daily movers for direct equity … only one holding is shown as
+ * percentage move, and why is it saying shares count unverified?"* — the
+ * family, 22 Oct 2026. The one name was EMA Partners on Ajay's ICICI NSDL
+ * demat: a tender-offer buyback went ex on 30 Apr, after the 31 Mar statement,
+ * and the gate filed it beside a demerger or a rights issue — events that
+ * change a holder's shares, or the exchange's price basis, without the holder
+ * doing anything. A buyback does neither. The company buys only the shares a
+ * holder chooses to tender (or sells it on the market), and a tender is a SALE,
+ * which the account's own record carries like any other (`realizedLotsAfter`,
+ * `rolledForward`; ASK's tape prints one as `Buyback Shares`, a disposal). So a
+ * buyback leaves the statement's quantity standing on exactly the terms every
+ * other carried holding stands on — no trades after the statement unless the
+ * account records one — and a recorded sale still withholds the price.
+ */
+export const isHolderElective = (type: ResearchAction["type"]) => type === "buyback";
+const HOLDER_ELECTIVE = "A buyback changes the holding only through shares tendered, which is a sale the account's own record carries";
+
+/**
+ * Whether the exchange's previous close may still be on the pre-event basis on
+ * this event's ex-date. A dividend and a buyback leave the basis alone.
+ */
+export const movesCloseBasis = (type: ResearchAction["type"]) => type !== "dividend" && !isHolderElective(type);
 
 /**
  * HOW FAR BEHIND THE VALUATION DATE A CAPTURE MAY BE AND STILL COVER ITS SHARE
@@ -117,6 +143,7 @@ export function projectActions(p: Position & { quantity: number }, statementDate
     result.lines.push(line);
     if (date && date <= statementDate) { line.status = "in-statement"; continue; }
     if (date && date > through) { line.status = "upcoming"; continue; }
+    if (isHolderElective(action.type)) { line.status = "elective"; line.reason = HOLDER_ELECTIVE; continue; }
     let reason = action.issue;
     if (p.isin && action.isin && p.isin !== action.isin) reason = "ISIN differs; confirm the security or its ISIN change";
     // A same-day split and dividend has an ambiguous per-share basis unless
@@ -148,8 +175,8 @@ export function projectActions(p: Position & { quantity: number }, statementDate
       cash += line.amount;
       line.status = "declared";
     } else {
-      // Rights, buybacks, demergers etc. need choices/allocations this feed
-      // cannot supply. Do not combine a pre-action quantity with a new price.
+      // Rights, demergers etc. need choices/allocations this feed cannot
+      // supply. Do not combine a pre-action quantity with a new price.
       reason ||= "Action requires a newer holding statement";
       qi.push(reason); line.reason = reason;
     }
@@ -315,8 +342,8 @@ function rolledPosition(p: Position, rf: NonNullable<Position["rolledForward"]>)
  * ── WHY THIS POSITION'S LIVE PRICE IS HELD BACK, OR NULL ─────────────────────
  *
  * The corporate-action gate withholds a live quote that DID arrive wherever
- * pairing it with the statement's share count could be wrong: a buyback or a
- * rights issue the feed cannot allocate, sales recorded after the statement,
+ * pairing it with the statement's share count could be wrong: a rights issue
+ * or a demerger the feed cannot allocate, sales recorded after the statement,
  * an event capture that does not reach the quote's day, or the evidence still
  * loading. Every page that shows a price used to infer "the feed returned no
  * quote" instead, which sends a reader to wait for a feed that already

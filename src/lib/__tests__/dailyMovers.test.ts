@@ -36,6 +36,8 @@ assert.equal(priced.rows[0].dayChange, null, "one unverified account cannot yiel
 const plan = applyCorporateActionQuotes([p], BOOK_ACCOUNTS, q, null).returns.get(positionActionKey(p))!;
 plan.lines.push({ action: { ...saved.rows[0], type: "split", exDate: "2026-09-28", factor: 2 }, status: "needs-review", quantity: null, amount: null, reason: null });
 assert.equal(dailyMovers([p], q, new Map([[positionActionKey(p), plan]]), owners).rows.length, 0, "an ex-date split cannot print an unverified -50% price move");
+plan.lines.splice(0, plan.lines.length, { action: { ...saved.rows[0], type: "buyback", exDate: "2026-09-28" }, status: "elective", quantity: null, amount: null, reason: null });
+assert.equal(dailyMovers([p], q, new Map([[positionActionKey(p), plan]]), owners).rows[0]?.dayChange, 1000, "a buyback's ex-date leaves the close basis alone (Stage 10gr)");
 const missingClose = structuredClone(q); missingClose.quotes[symbolFor(p)!].prevClose = null;
 assert.equal(dailyMovers([p], missingClose, new Map(), owners).rows.length, 0);
 assert.equal(dailyMovers([p], null, new Map(), owners).rows.length, 0);

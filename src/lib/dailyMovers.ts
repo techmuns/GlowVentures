@@ -1,6 +1,6 @@
 import type { Position } from "./types";
 import { priceLooksLikeSameSecurity, symbolFor, type Quote, type QuoteFeed } from "./quotes";
-import { marketDay, positionActionKey, type ActionReturn } from "./corporateActions";
+import { marketDay, movesCloseBasis, positionActionKey, type ActionReturn } from "./corporateActions";
 
 export type DailyMover = {
   securityKey: string; security: string; dayChangePct: number;
@@ -85,7 +85,7 @@ export function dailyMovers(
     // An exchange close may still be on the pre-split basis on the ex-date.
     // Missing share counts don't prevent a price ranking; an unknown price
     // basis does, so this guard applies to percentages as well as rupees.
-    if (q && plan?.lines.some(({ action }) => action.type !== "dividend"
+    if (q && plan?.lines.some(({ action }) => movesCloseBasis(action.type)
       && (!action.exDate || action.exDate === (quoteSess || marketDay(q.observedAt || quotes!.asOf))))) reason = "Corporate action: previous-close basis needs verification";
     if (reason || !("pct" in move)) { omitted.set(p.securityKey, reason || "Awaiting a quote"); continue; }
     const pct = move.pct;
