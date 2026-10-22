@@ -677,7 +677,7 @@ html:not(.dark) .hover\:bg-champagne-400:hover { background-image: none; backgro
   background-color: var(--tree-row-alt);
 }
 #root table > tbody > tr:is(.tree-child-row, [data-table-depth]):hover,
-#root :where(tr[data-table-depth] table) > tbody > tr:hover {
+#root tr[data-table-depth] table > tbody > tr:hover {
   background-color: var(--row-child-hover);
 }
 #root table > tbody > tr:is(.tree-child-row, [data-table-depth]) > td:first-child {

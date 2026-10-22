@@ -961,7 +961,7 @@ export function FamilyEntities() {
     visAtCostRows.length > 0 ? `${visAtCostRows.length} ${visAtCostRows.length === 1 ? "is" : "are"} held at cost, with no valuation of ${visAtCostRows.length === 1 ? "its" : "their"} own` : "",
   ].filter(Boolean).join(" and ");
   const filtered = holdings.length !== selRows.length;
-  const holdingRow = (h: Position) => {
+  const holdingRow = (h: Position, nested = false) => {
     const acc = accIdx.get(h.accountId);
     const route = routeOf(h);
     /**
@@ -988,7 +988,7 @@ export function FamilyEntities() {
     const noSector = sectorAbsentWhy(h);
     return (
       <Tr view={holdView} reviewScope={{ positions: [h] }} key={h.securityKey + "@" + h.accountId} className="hover:bg-ink-700/40"
-        data-fe-holding-key={h.securityKey} data-fe-holding-account={h.accountId}>
+        data-fe-holding-key={h.securityKey} data-fe-holding-account={h.accountId} data-table-depth={nested ? "1" : undefined}>
         <td className="px-4 py-2.5 text-slate-100"><StockLink securityKey={h.securityKey} name={h.security} /></td>
         {/* WHO CHOSE THIS ROW. A section heading answers it for a group and stops
             answering it the moment the search box narrows the table, so the route
@@ -1584,7 +1584,7 @@ export function FamilyEntities() {
                                 {/* Indented, not merely shaded: the nesting has to
                                     read in both themes, and a translucent tint over
                                     a white card in light mode does not. */}
-                                <tr data-table-depth="1">
+                                <tr className="bg-ink-900/40">
                                   <td colSpan={holdView.order.length} className="py-1.5 pl-9 pr-4">
                                     <span className="flex flex-wrap items-center gap-2 text-[11.5px]">
                                       <Link to={`/mandate/${encodeURIComponent(mg.accountId)}`}
@@ -1607,11 +1607,11 @@ export function FamilyEntities() {
                                     </span>
                                   </td>
                                 </tr>
-                                {mg.rows.map(holdingRow)}
+                                {mg.rows.map((h) => holdingRow(h, true))}
                               </Fragment>
                             );
                           })
-                        : grp.rows.map(holdingRow)}
+                        : grp.rows.map((h) => holdingRow(h))}
                     </Fragment>
                   ))}
                   {/* …and where the search names a holding the family's own review
