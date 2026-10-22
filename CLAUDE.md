@@ -543,8 +543,10 @@ And:
 
 ## Build
 
-- `npm run build` — `tsc -b && vite build` (builds the read models first). Keep
-  it green.
+- `npm run build` — `tsc -b && vite build` (builds the read models first, and
+  `build:statement-files` copies every statement's original out of `source/` into
+  the gitignored `public/statement-files/` for the Statement Library preview,
+  behind the edge gate; Stage 10gv). Keep it green.
 - `npm run dev` / `preview` — local server; checks expect a preview on :4173.
 - `npm run inventory` · `extract` (no options; `GLOW_PDF_PASSWORDS`;
   `GLOW_OCR` off / new / unset for scans;
