@@ -60,8 +60,8 @@ export default function SegmentReturns({ selection, period }: { selection: Retur
   const type = RETURN_TYPES.find(t => t.key === selection.type)!;
   const periodLabel = PERIODS.find(p => p.key === period)!.label;
   const dates = selection.inception ? 'since investment' : selection.start && selection.end ? `${fmtDate(selection.start)} → ${fmtDate(selection.end)}` : 'choose valid dates';
-  const reason = (l: SelectedLine) => l.measured?.reason ?? (l.missing.length ? returnGapText(l.missing[0].reason, selection.start)
-    : 'No complete value and money record is available for these dates.');
+  const reason = (l: SelectedLine) => returnGapText(l.measured?.reason ?? l.missing[0]?.reason
+    ?? 'We need values and dated payments for these dates.', selection.start);
   const rows = sortRows(a.rows, view.sort, { seg: r => r.label, holdings: r => r.positions.length, value: r => r.value,
     weight: r => r.value, deployed: r => r.invested, gain: r => r.gain, market: r => marketOf(r.positions).pct, ret: r => r.returnPct, contrib: r => r.contribution });
   const openable = a.rows.filter(r => r.children.length > 0);
