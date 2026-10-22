@@ -216,8 +216,37 @@ try {
   assert.match(await cellOf("Test inherited", "Cost"), /On inheritance$/);
   assert.match(await cellOf("Test inherited", "Appreciation %"), /^\+33\.33%\s+Since inheritance$/);
   await page.screenshot({ path: path.join(out, "inherited.png"), fullPage: true });
+  // An earmark: recipient and note on the list, filterable; ownership and value stay with the current owners.
+  const valueBefore = await cellOf("Test office", "Current value");
+  await page.getByRole("button", { name: "Edit Test office", exact: true }).click();
+  await page.getByLabel("Earmarked / to be gifted", { exact: true }).check();
+  await fill("Intended recipient", "Test recipient C"); await fill("Earmark note", "Test note for the gift");
+  await page.getByLabel("Intended recipient", { exact: true }).evaluate(el => el.scrollIntoView({ block: "center" }));
+  await page.getByRole("dialog").screenshot({ path: path.join(out, "earmark-editor.png") });
+  await page.getByRole("button", { name: "Save property", exact: true }).click(); await page.getByRole("button", { name: "Edit property", exact: true }).waitFor();
+  const earmarkedOffice = JSON.parse(store.data.get("real-estate:test-office"));
+  assert.deepEqual(earmarkedOffice.earmark, { recipientId: null, recipient: "Test recipient C", note: "Test note for the gift" });
+  assert.deepEqual(earmarkedOffice.owners, property().owners, "Earmarking moves no ownership.");
+  await page.getByRole("dialog").getByText("To be gifted to Test recipient C", { exact: true }).waitFor();
+  await page.getByRole("dialog").getByText("Test note for the gift", { exact: true }).waitFor();
+  await close();
+  assert.match(await cellOf("Test office", "Earmarked for"), /^Test recipient C\s+To be gifted$/);
+  assert.equal(await cellOf("Test office", "Current value"), valueBefore, "Earmarking leaves the value with the current owners.");
+  assert.equal(await cellOf("Test land", "Earmarked for"), "Not earmarked");
+  const earmarkFilter = page.getByLabel("All earmarks", { exact: true });
+  const shownIds = () => page.locator("tbody [data-property]").evaluateAll(rows => rows.map(r => r.getAttribute("data-property")));
+  await earmarkFilter.selectOption("to:Test recipient C"); assert.deepEqual(await shownIds(), ["test-office"]);
+  await earmarkFilter.selectOption("earmarked"); assert.deepEqual(await shownIds(), ["test-office"]);
+  await page.screenshot({ path: path.join(out, "earmarked.png"), fullPage: true });
+  await earmarkFilter.selectOption("not-earmarked"); assert.equal((await shownIds()).length, 3); assert.ok(!(await shownIds()).includes("test-office"));
+  await page.getByRole("button", { name: "Clear filters", exact: true }).click(); assert.equal((await shownIds()).length, 4);
+  await page.getByRole("button", { name: "Edit Test office", exact: true }).click();
+  await page.getByLabel("Earmarked / to be gifted", { exact: true }).uncheck();
+  await page.getByRole("button", { name: "Save property", exact: true }).click(); await page.getByRole("button", { name: "Edit property", exact: true }).waitFor(); await close();
+  assert.equal(JSON.parse(store.data.get("real-estate:test-office")).earmark, null);
+  assert.equal(await cellOf("Test office", "Earmarked for"), "Not earmarked");
   assert.deepEqual(errors, []);
-  console.log("Real estate browser check passed: address-only search, choices, no match/error, approximate result, drag/save/reload, stale search, create, validate, retry, edit, filter, co-located pins, map editing, delete, light/dark and mobile. Free provider boundary mocked; production records untouched.");
+  console.log("Real estate browser check passed: address-only search, choices, no match/error, approximate result, drag/save/reload, stale search, create, validate, retry, edit, filter, co-located pins, map editing, delete, earmark and its filter, light/dark and mobile. Free provider boundary mocked; production records untouched.");
 } catch (error) {
   await page.screenshot({ path: path.join(out, "failure.png"), fullPage: true }).catch(() => {});
   await fs.writeFile(path.join(out, "failure.txt"), `${error.stack ?? error}\n\n${await page.locator("body").innerText().catch(() => "")}`);
