@@ -23,6 +23,8 @@ import { useSearchParams } from "react-router-dom";
 import { Card } from "@/components/Card";
 import { AbsentCell } from "@/components/Absent";
 import SegmentReturns from "@/components/SegmentReturns";
+import InvestedThisYearReturns from "@/components/InvestedThisYearReturns";
+import { investmentYearStart } from "@/lib/investedThisYear";
 import { useViewParam } from "@/components/ViewToggle";
 import { BENCHMARKS, benchmarkIdentity, benchmarkMismatchReason } from "@/lib/benchmarks";
 import { fetchPriceHistory, priceErrorReason, type PriceHistory, type PriceResult } from "@/lib/prices";
@@ -50,6 +52,11 @@ const RETURN_VIEWS = [
   { key: "attribution", label: "Return attribution" },
   { key: "benchmarks", label: "Benchmarks" },
 ] as const;
+const PURCHASE_TYPE_HELP: Record<ReturnType,{short:string;title:string}> = {
+  absolute:{short:'Purchase-to-value returns, portfolio weighted',title:'Each holding’s gain divided by the cost of its selected units, then weighted by the latest value of those units. Not annualised.'},
+  xirr:{short:'Yearly holding returns, portfolio weighted',title:'Each holding’s XIRR uses the selected units’ dated purchase cash and latest value. The yearly holding returns are weighted by their latest included values.'},
+  cagr:{short:'Under a year: showing holding-period returns',title:'These purchases are less than a year old, so their purchase-to-value returns are shown without annualising, weighted by included values.'},
+};
 
 export default function PortfolioReturns() {
   const { statementPortfolio, fmtFromBase, scope } = usePortfolio();
@@ -59,7 +66,7 @@ export default function PortfolioReturns() {
   const money = (n: number) => fmtFromBase(n, { compact: true });
 
   const period = (PERIODS.find((p) => p.key === params.get("rp"))?.key ?? "fytd") as PeriodKey;
-  const rtype = (RETURN_TYPES.find((r) => r.key === params.get("rtype"))?.key ?? "xirr") as ReturnType;
+  const rtype = (RETURN_TYPES.find((r) => r.key === params.get("rtype"))?.key ?? (period === "invested-year" ? "absolute" : "xirr")) as ReturnType;
   const set = (patch: Record<string, string | null>) => {
     const next = new URLSearchParams(params);
     for (const [k, v] of Object.entries(patch)) v == null ? next.delete(k) : next.set(k, v);
@@ -109,10 +116,12 @@ export default function PortfolioReturns() {
   const fromParam = params.get("rfrom");
   const today = new Date();
   const currentDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-  const end = toParam && ISO.test(toParam) ? toParam : currentDate;
+  const investedYear = period === "invested-year";
+  const returnHelp = investedYear ? PURCHASE_TYPE_HELP[rtype] : RETURN_TYPES.find(r=>r.key===rtype)!;
+  const end = investedYear ? currentDate : toParam && ISO.test(toParam) ? toParam : currentDate;
   const start = period === "custom"
     ? (fromParam && ISO.test(fromParam) ? fromParam : null)
-    : period === "inception" ? null : end ? periodStart(period, end) : null;
+    : investedYear ? investmentYearStart(end) : period === "inception" ? null : end ? periodStart(period, end) : null;
 
   const win = useMemo(() => (start && end && start < end ? windowReturns(inputs, start, end) : null), [inputs, start, end]);
 
@@ -216,45 +225,45 @@ export default function PortfolioReturns() {
         <div className="ret-well flex flex-wrap items-center gap-0.5" data-returns-periods>
           {PERIODS.map((p) => (
             <button key={p.key} type="button" title={p.title} className={btn(period === p.key)} data-returns-period={p.key} aria-pressed={period === p.key}
-              onClick={() => set(p.key === "custom" ? { rp: "custom", rfrom: start ?? fromParam } : { rp: p.key === "fytd" ? null : p.key })}>
+              onClick={() => set(p.key === "invested-year" ? {rp:p.key,rto:null,rtype:"absolute",rview:null} : p.key === "custom" ? { rp: "custom", rfrom: start ?? fromParam } : { rp: p.key === "fytd" ? null : p.key })}>
               {p.label}
             </button>
           ))}
         </div>
         <div className="flex items-center gap-1.5 text-[12px] text-slate-400">
-          <label className="flex items-center gap-1.5" title="Opening date — the window opens on each account's value at the close of this day">
+          <label className="flex items-center gap-1.5" title={investedYear ? 'Purchases on or after the first day of this financial year' : "Opening date — the window opens on each account's value at the close of this day"}>
             <span className="label-xs">From</span>
             <input type="date" className="rounded-md border border-ink-700 bg-ink-800 px-1.5 py-0.5 text-[12px] text-slate-200" data-returns-from
-              value={period === "inception" ? (measuredFrom ?? "") : (start ?? "")} disabled={period === "inception"}
+              value={period === "inception" ? (measuredFrom ?? "") : (start ?? "")} disabled={period === "inception" || investedYear}
               onChange={(e) => set({ rp: "custom", rfrom: e.target.value || null })} />
           </label>
           <span className="text-slate-500" aria-hidden>→</span>
-          <label className="flex items-center gap-1.5" title="Market prices close on or before this day. Recorded returns retain each account’s own verified statement date.">
+          <label className="flex items-center gap-1.5" title={investedYear ? 'Purchases through today; each holding shows its actual latest value date' : "Market prices close on or before this day. Recorded returns retain each account’s own verified statement date."}>
             <span className="label-xs">To</span>
             <input type="date" className="rounded-md border border-ink-700 bg-ink-800 px-1.5 py-0.5 text-[12px] text-slate-200" data-returns-to
-              value={end ?? ""} max={currentDate} disabled={period === "inception"}
+              value={end ?? ""} max={currentDate} disabled={period === "inception" || investedYear}
               onChange={(e) => set({ rto: e.target.value || null })} />
           </label>
         </div>
         <label className="ml-auto flex items-center gap-2 text-[12px] text-slate-400" data-returns-types
-          title={RETURN_TYPES.find((r) => r.key === rtype)!.title}>
+          title={returnHelp.title}>
           <span className="label-xs">Return type</span>
           <select className="rounded-md border border-ink-700 bg-ink-800 px-2 py-1 text-[12.5px] font-semibold text-slate-100" data-returns-type-select
-            value={rtype} onChange={(e) => set({ rtype: e.target.value === "xirr" ? null : e.target.value })}>
+            value={rtype} onChange={(e) => set({ rtype: e.target.value === "xirr" && !investedYear ? null : e.target.value })}>
             {RETURN_TYPES.map((r) => (
-              <option key={r.key} value={r.key} title={r.title} data-returns-type={r.key} data-active={rtype === r.key ? "true" : "false"}>
+              <option key={r.key} value={r.key} title={investedYear?PURCHASE_TYPE_HELP[r.key].title:r.title} data-returns-type={r.key} data-active={rtype === r.key ? "true" : "false"}>
                 {r.label}
               </option>
             ))}
           </select>
           <span className="max-w-[16rem] truncate text-[11.5px] text-slate-500" data-returns-type-desc={rtype}>
-            {RETURN_TYPES.find((r) => r.key === rtype)!.short}
+            {returnHelp.short}
           </span>
         </label>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-auto" data-returns-stack>
-        <div role="tablist" aria-label="Return details" data-returns-tabs
+        {!investedYear && <div role="tablist" aria-label="Return details" data-returns-tabs
           className="inline-flex w-fit shrink-0 items-center gap-0.5 rounded-lg border border-ink-700 bg-ink-800/60 p-0.5">
           {RETURN_VIEWS.map((v, index) => (
             <button key={v.key} type="button" role="tab" id={`${tabsId}-tab-${v.key}`}
@@ -273,22 +282,24 @@ export default function PortfolioReturns() {
               {v.label}
             </button>
           ))}
-        </div>
+        </div>}
 
-        <div role="tabpanel" id={`${tabsId}-panel-attribution`} aria-labelledby={`${tabsId}-tab-attribution`}
+        {investedYear && <InvestedThisYearReturns start={start!} end={end} type={rtype}/>}
+
+        {!investedYear && <div role="tabpanel" id={`${tabsId}-panel-attribution`} aria-labelledby={`${tabsId}-tab-attribution`}
           hidden={view !== "attribution"} tabIndex={0} className="shrink-0" data-returns-panel="attribution">
           <SegmentReturns period={period} selection={{ inception: period === "inception", type: rtype, start, end,
             windows: win?.included ?? [], inceptionRows: inception.rows,
             outside: period === "inception" ? inputs.filter(i => i.outside).map(i => ({ accountId: i.accountId, label: i.label, owner: i.owner, reason: i.outside! })) : win?.outside ?? [],
             excluded: period === "inception" ? inception.skipped : win?.excluded ?? (inputs.filter(i => !i.outside).map(i => ({ accountId: i.accountId, label: i.label, owner: i.owner, reason: "Choose an opening date before the closing date." }))),
           }} />
-        </div>
+        </div>}
 
         {/* ── BENCHMARKS AS TILES, ONE BAR SCALE (Stage 10fp). Three columns
             stretched across the panel left most of a table empty; eight tiles
             in two rows carry the same figures — each index's return, its bar,
             and the portfolio's lead over it — with the portfolio first. ── */}
-        <div role="tabpanel" id={`${tabsId}-panel-benchmarks`} aria-labelledby={`${tabsId}-tab-benchmarks`}
+        {!investedYear && <div role="tabpanel" id={`${tabsId}-panel-benchmarks`} aria-labelledby={`${tabsId}-tab-benchmarks`}
           hidden={view !== "benchmarks"} tabIndex={0} className="shrink-0" data-returns-panel="benchmarks" data-returns-benchmarks
           data-measured-from={measuredFrom ?? ""} data-measured-to={measuredTo ?? ""} data-measured-days={days ?? ""}>
         <Card title="Benchmarks"
@@ -339,7 +350,7 @@ export default function PortfolioReturns() {
             })}
           </div>
         </Card>
-        </div>
+        </div>}
 
       </div>
     </div>

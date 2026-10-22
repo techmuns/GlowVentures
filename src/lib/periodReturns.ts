@@ -49,7 +49,7 @@ import { xirr, xirrAmbiguity, type DatedFlow } from "@/lib/xirr";
 import type { Account, AccountReturnCoverage, CashFlow, Position } from "@/lib/types";
 import { capitalWindow, type CapitalGroup } from "@/lib/tranches";
 
-export type PeriodKey = "mtd" | "ytd" | "fytd" | "y1" | "y2" | "y3" | "inception" | "custom";
+export type PeriodKey = "mtd" | "ytd" | "fytd" | "y1" | "y2" | "y3" | "inception" | "custom" | "invested-year";
 export type ReturnType = "xirr" | "absolute" | "cagr";
 
 export const PERIODS: readonly { key: PeriodKey; label: string; title: string }[] = [
@@ -61,6 +61,7 @@ export const PERIODS: readonly { key: PeriodKey; label: string; title: string }[
   { key: "y3", label: "3Y", title: "Trailing three years" },
   { key: "inception", label: "Since investment", title: "From each account's first purchase, struck on the capital paid in" },
   { key: "custom", label: "Custom", title: "Pick both dates" },
+  { key: "invested-year", label: "Invested this year", title: "Only units bought this financial year (from 1 April) and still held. Returns start on their actual purchase dates." },
 ] as const;
 
 /**
