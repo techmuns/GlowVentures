@@ -1,6 +1,10 @@
 {
  "version": 1,
  "records": {
+  "real-estate:10d7a3e7-45fd-4152-9154-1f55b3461f47": {
+   "value": "{\"id\":\"10d7a3e7-45fd-4152-9154-1f55b3461f47\",\"name\":\"ABC\",\"address\":\"J 1900\",\"city\":\"Worly\",\"state\":\"Maharashtra\",\"country\":\"India\",\"pincode\":\"400030\",\"tenant\":\"NA\",\"notes\":\"NA\",\"type\":\"Apartment\",\"status\":\"Self-used\",\"areaUnit\":\"sq ft\",\"titleStatus\":\"Not checked\",\"areaBasis\":\"Carpet\",\"cost\":5000000,\"value\":5000000,\"monthlyRent\":0,\"monthlyCosts\":null,\"debt\":null,\"area\":5000,\"purchasedOn\":\"2026-10-22\",\"valuationDate\":\"2026-10-22\",\"leaseEnd\":null,\"owners\":[{\"ownerId\":\"ankita-jaisinghani\",\"name\":\"Ankita Jaisinghani\",\"share\":100}],\"latitude\":19.0023215,\"longitude\":72.8274455,\"updatedAt\":\"2026-10-22T04:35:32.930Z\"}",
+   "metadata": null
+  },
   "tile-set:cio": {
    "value": "{\"page\":\"cio\",\"ids\":[\"value\",\"annualised\",\"fytd\",\"mwr\"],\"updatedAt\":\"2026-10-21T18:54:05.679Z\"}",
    "metadata": {
