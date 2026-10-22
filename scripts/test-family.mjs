@@ -21,12 +21,14 @@ const DIR = fs.mkdtempSync(path.join(ROOT, "node_modules", ".glow-test-"));
 
 const SUITES = [
   ["historical market returns", "src/lib/__tests__/marketReturns.test.ts"],
+  ["capital bridge", "src/lib/__tests__/capitalBridge.test.ts"],
   ["historical market feed", "src/lib/__tests__/marketHistoryFunction.test.ts"],
   ["custody audit source rows", "src/lib/__tests__/custodyAudit.test.ts"],
   ["available headline returns", "src/lib/__tests__/availableCardReturns.test.ts"],
   ["published data lineage", "src/lib/__tests__/publicationViews.test.ts"],
   ["selected attribution periods and coverage", "src/lib/__tests__/selectedSegmentReturns.test.ts"],
   ["sector return coverage identities", "src/lib/__tests__/sectorReturnCoverage.test.ts"],
+  ["one sector rollup for both panels", "src/lib/__tests__/sectorRollup.test.ts"],
   ["chunk recovery", "src/lib/__tests__/chunkRecovery.test.ts"],
   ["recovered purchase costs", "src/lib/__tests__/recoveredCosts.test.ts"],
   ["latest verified account returns", "src/lib/__tests__/latestAccountReturns.test.ts"],

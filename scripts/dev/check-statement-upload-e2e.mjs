@@ -1,6 +1,6 @@
 // Complete local rehearsal: real browser drop, Pages upload handler, Git inbox,
 // CLI intake, extraction, reconciliation, builds, publication and browser tables.
-// GitHub CI/reviewer/Pages service boundaries are explicitly emulated locally.
+// GitHub CI/Pages service boundaries are explicitly emulated locally.
 // Never point this at a deployed site or a repository with a network remote.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -135,7 +135,7 @@ try {
   git('add', '-A'); git('commit', '-m', 'Isolated baseline with seven original statements withheld');
   execFileSync('git', ['init', '--bare', remote]); git('remote', 'add', 'origin', remote); git('push', '-u', 'origin', publishedBranch);
   const baseCommit = git('rev-parse', 'HEAD');
-  writeControl(marker, { remote, publishedBranch, baseCommit, dispatches: 0, merges: 0, deployed: false, ciPassed: false, reviewReady: false });
+  writeControl(marker, { remote, publishedBranch, baseCommit, dispatches: 0, merges: 0, deployed: false, ciPassed: false });
   const bin = path.join(output, 'bin'); fs.mkdirSync(bin);
   fs.writeFileSync(path.join(bin, 'gh'), '#!/usr/bin/env node\nimport(' + JSON.stringify(pathToFileURL(path.join(root, 'scripts/dev/statement-e2e-git.mjs')).href) + ').then(m=>m.cli());\n', { mode: 0o700 });
   const offline = path.join(output, 'offline-master.csv'); fs.writeFileSync(offline, 'SYMBOL,NAME OF COMPANY,ISIN NUMBER,SERIES\n');
@@ -215,15 +215,12 @@ try {
   assert.equal(git('diff', '--name-only', '--', 'src/data/glowData.ts', 'src/data/reviewColumns.ts', 'docs/BOOK-REPORT.md', 'public/audit'), '', 'Candidate re-extracts and regenerates byte-identically');
   await npm('build', 'candidate-deployment-build');
   c = readControl(marker); c.ciPassed = true; c.pr.statusCheckRollup = ['build', 'statements'].map(name => ({ name, status: 'COMPLETED', conclusion: 'SUCCESS' })); writeControl(marker, c);
-  await run(process.execPath, ['scripts/ingest/intake-uploads.mjs', '--allow-reset'], 'review-unavailable-holds', workerEnv);
-  assert.ok(inboxLog().batches.flatMap(b => b.files).every(f => f.status === 'held')); rawFilesRemain(); assert.equal(readControl(marker).merges, 0);
-  note('PASS review outage: validated statements and raw bytes remain held; no premature publication');
-  // A fixture for the external reviewer callback, after the real full checks.
-  c = readControl(marker); c.reviewReady = true; c.pr.comments = [{ author: { login: 'chatgpt-codex-connector[bot]' }, body: '<!-- codex-review-state:v1 ' + JSON.stringify({ code_review: { commit_sha: c.pr.headRefOid, status: 'completed', has_any_findings: false, has_unresolved_findings: false } }) + ' -->' }]; writeControl(marker, c);
-  await run(process.execPath, ['scripts/ingest/intake-uploads.mjs', '--allow-reset'], 'reviewed-publication-merge', workerEnv);
+  // No reviewer approval or success callback: clean, proven data must publish.
+  assert.deepEqual(c.pr.comments, []); assert.deepEqual(c.pr.reviews, []);
+  await run(process.execPath, ['scripts/ingest/intake-uploads.mjs', '--allow-reset'], 'automatic-verified-data-merge', workerEnv);
   assert.equal(readControl(marker).merges, 1); rawFilesRemain();
   assert.equal((await (await fetch(baseURL + '/publication.json')).json()).revision, beforeRevision);
-  note('PASS reviewed merge still retains inbox bytes and old served version until the new publication is available');
+  note('PASS automatic merge without reviewer callback retains inbox bytes and old served version until deployment');
   c = readControl(marker); c.deployed = true; writeControl(marker, c);
   await run(process.execPath, ['scripts/ingest/intake-uploads.mjs', '--allow-reset'], 'deployed-version-confirmation', workerEnv);
   assert.ok(inboxLog().batches.flatMap(b => b.files).every(f => f.status === 'landed'));

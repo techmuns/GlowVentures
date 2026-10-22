@@ -2,6 +2,9 @@ import { Fragment, useMemo } from 'react';
 import { useMarketHistories } from '@/lib/useMarketReturns';
 import { marketReturns, marketReturnSummary, marketHoldingKey } from '@/lib/marketReturns';
 import { MarketReturnInfo } from './MarketReturnInfo';
+import { CapitalBridge } from './CapitalBridge';
+import { capitalBridge } from '@/lib/capitalBridge';
+import { BOOK_ACCOUNT_BRIDGES, BOOK_CAPITAL_MOVES, BOOK_HOLDING_INCOME } from '@/data/glowData';
 import { AvailableReturnCoverage } from '@/components/AvailableReturnCoverage';
 import { Card } from '@/components/Card';
 import { ExportableTable } from '@/components/ExportableTable';
@@ -13,10 +16,10 @@ import { useViewParam } from '@/components/ViewToggle';
 import { useTableView, sortRows } from '@/lib/tableView';
 import { usePortfolio } from '@/context/PortfolioContext';
 import { changeColor, fmtDate } from '@/lib/format';
-import { currentHoldings, dedupedPositions, isCompanyShare } from '@/lib/analytics';
-import { companySectorIndex } from '@/lib/lookthrough';
+import { currentHoldings, dedupedPositions } from '@/lib/analytics';
 import { useStockExposure } from '@/lib/useStockExposure';
 import { SEGMENT_VIEWS } from '@/lib/segmentReturns';
+import SectorAttribution from '@/components/SectorAttribution';
 import { exitedRows } from '@/lib/drilldown';
 import { PERIODS, RETURN_TYPES, type PeriodKey } from '@/lib/periodReturns';
 import { selectedSegmentReturns, returnGapText, UNSPLIT_RETURNS, type ReturnSelection, type SelectedLine } from '@/lib/selectedSegmentReturns';
@@ -35,11 +38,19 @@ export default function SegmentReturns({ selection, period }: { selection: Retur
   const statementPositions = useMemo(() => dedupedPositions(statementPortfolio?.positions ?? []), [statementPortfolio]);
   const calculationCurrent = useMemo(() => currentHoldings(statementPositions), [statementPositions]);
   const exposure = useStockExposure(positions, axis === 'sector');
-  const sectors = useMemo(() => axis === 'sector' ? companySectorIndex(positions.filter(isCompanyShare), exposure) : null, [positions, exposure, axis]);
   const current = useMemo(() => currentHoldings(positions), [positions]);
   const exited = useMemo(() => exitedRows(statementPositions), [statementPositions]);
-  const a = useMemo(() => statementPortfolio ? selectedSegmentReturns(current, exited, statementPortfolio.accounts, axis, selection,
-    k => sectors?.get(k)?.sector || null, calculationCurrent) : null, [current, exited, statementPortfolio, axis, selection, sectors, calculationCurrent]);
+  // The Sector axis is Sector Composition's own sectors (`SectorAttribution`, Stage 10gs), never this grouping.
+  const sectorAxis = axis === 'sector';
+  const a = useMemo(() => statementPortfolio && !sectorAxis ? selectedSegmentReturns(current, exited, statementPortfolio.accounts, axis, selection,
+    () => null, calculationCurrent) : null, [current, exited, statementPortfolio, axis, selection, calculationCurrent, sectorAxis]);
+  // The capital bridge is the selected period's total on every axis (Stage 10gu): the table's own total
+  // units, or on the Sector view — which draws no dated total of its own — the same pool grouped by category.
+  const pool = useMemo(() => a ?? (statementPortfolio ? selectedSegmentReturns(current, exited, statementPortfolio.accounts, 'category', selection,
+    () => null, calculationCurrent) : null), [a, current, exited, statementPortfolio, selection, calculationCurrent]);
+  const bridge = useMemo(() => pool && statementPortfolio ? capitalBridge(pool.total.units, { accounts: statementPortfolio.accounts,
+    positions: statementPortfolio.positions, bridges: BOOK_ACCOUNT_BRIDGES, moves: BOOK_CAPITAL_MOVES, income: BOOK_HOLDING_INCOME }) : null,
+  [pool, statementPortfolio]);
   const marketFeed = useMarketHistories(current);
   const market = useMemo(() => marketReturns(current, marketFeed.instruments, marketFeed.histories, selection.start,
     selection.end ?? new Date().toISOString().slice(0, 10), selection.type, selection.inception), [current, marketFeed.instruments, marketFeed.histories, selection]);
@@ -56,10 +67,34 @@ export default function SegmentReturns({ selection, period }: { selection: Retur
     return <MarketReturnInfo label={label} value={m.pct == null ? '—' : pct(m.pct)} units={m.units} gaps={m.gaps} accounts={statementPortfolio?.accounts ?? []}
       totalValue={ps.reduce((s, p) => s + p.marketValue, 0)} from={m.from} to={m.to} annual={m.annual} pending={m.pending} inception={selection.inception} money={money} />;
   };
-  if (!a) return null;
   const type = RETURN_TYPES.find(t => t.key === selection.type)!;
   const periodLabel = PERIODS.find(p => p.key === period)!.label;
   const dates = selection.inception ? 'since investment' : selection.start && selection.end ? `${fmtDate(selection.start)} → ${fmtDate(selection.end)}` : 'choose valid dates';
+  const btn = (on: boolean) => `rounded px-2 py-0.5 text-[11px] font-medium transition-colors ${on ? 'bg-champagne-500 text-ink-950' : 'text-slate-400 hover:bg-ink-700/60 hover:text-slate-200'}`;
+  const axisTabs = <div role="tablist" aria-label="Attribute the return by" className="inline-flex flex-wrap items-center gap-0.5 rounded-md border border-ink-600 bg-ink-800/60 p-0.5">
+    {SEGMENT_VIEWS.map(v => <button key={v.key} type="button" role="tab" aria-selected={axis === v.key} title={v.title} data-seg-axis-option={v.key} onClick={() => setAxis(v.key)} className={btn(axis === v.key)}>{v.label}</button>)}
+  </div>;
+  const title = <>Return attribution · <span className="font-normal text-slate-400" data-seg-basis>{periodLabel} · {type.label} · {dates}</span></>;
+  const marketCard = <div className="card mb-2 flex flex-wrap items-center justify-between gap-3 px-4 py-3" data-market-summary data-market-total={market.pct ?? ''}
+    data-market-period={market.periodPct ?? ''} data-market-covered={market.count} data-market-pending={market.pending} data-market-refreshing={marketFeed.refreshing}>
+    <div><p className="text-[11px] text-slate-400">Portfolio-weighted market return · current holdings</p>
+      <div className="mt-1 flex items-center gap-2"><strong className={`text-xl tabular ${changeColor(market.pct)}`}>{market.pct == null ? market.pending ? 'Loading historical prices…' : 'History unavailable' : `${pct(market.pct)}${market.annual ? ' p.a.' : ''}`}</strong>{marketInfo('Total', current)}
+        {market.annual && market.periodPct != null && <span className="text-xs text-slate-400" title="The same price return over the period itself, not stated per year">· <span className={`tabular ${changeColor(market.periodPct)}`}>{pct(market.periodPct)}</span> over the period</span>}</div>
+      <p className="mt-1 text-xs text-slate-400">{market.count} of {current.length} holdings · {money(market.value)} covered{market.pending > 0 && ` · ${market.pending} loading`}{market.pending === 0 && marketFeed.refreshing > 0 && ' · updating'}{market.from && market.to && ` · ${fmtDate(market.from)} → ${fmtDate(market.to)}`}</p>
+    </div><button type="button" className="btn-secondary text-xs" onClick={marketFeed.retry} data-market-retry>Retry missing histories</button>
+  </div>;
+  const bridgeCard = pool && <CapitalBridge bridge={bridge} total={pool.total} typeLabel={type.label} caption={`${periodLabel} · ${dates}`} money={money} />;
+  if (sectorAxis && statementPortfolio) return <div className="shrink-0" data-segment-returns data-returns-attribution data-seg-axis={axis} data-seg-period={period} data-seg-type={selection.type}
+    data-seg-start={selection.start ?? ''} data-seg-end={selection.end ?? ''} data-status={exposure.status === 'loading' ? 'loading' : 'ready'}>
+    {bridgeCard}
+    {marketCard}
+    <Card pad={false} title={title}
+      subtitle="Sectors as Sector Composition draws them. Market return follows the selected dates; gain, return on cost and contribution are since investment, over the holdings that report a purchase cost."
+      right={<div className="flex flex-wrap items-center justify-end gap-2 text-[12px]">{axisTabs}</div>}>
+      <SectorAttribution consolidated={positions} exposure={exposure} marketOf={marketOf} marketInfo={marketInfo} />
+    </Card>
+  </div>;
+  if (!a) return null;
   const reason = (l: SelectedLine) => l.measured?.reason ?? (l.missing.length ? returnGapText(l.missing[0].reason, selection.start)
     : 'No complete value and money record is available for these dates.');
   const rows = sortRows(a.rows, view.sort, { seg: r => r.label, holdings: r => r.positions.length, value: r => r.value,
@@ -89,30 +124,24 @@ export default function SegmentReturns({ selection, period }: { selection: Retur
       <td key="market" data-seg-cell="market" data-market-return={m.pct ?? ''} className={`${pad} text-right mono ${changeColor(m.pct)}`}><span className="inline-flex items-center justify-end gap-1">
         {m.pct != null ? <>{pct(m.pct)}{m.annual && <span className="text-[10px]">p.a.</span>}</> : m.pending ? <span className="text-slate-400">Loading…</span> : <AbsentCell reason={m.gaps[0]?.reason ?? 'This row has no separately priced current holdings.'} />}
         {l.positions.length > 0 && marketInfo(l.key === 'total' ? 'Total' : l.label, l.positions)}</span></td>,
-      <td key="ret" data-seg-cell="ret" className={`${pad} text-right mono ${changeColor(l.returnPct)}`}><span className="inline-flex items-center justify-end gap-1">
-        {l.returnPct != null ? pct(l.returnPct) : <AbsentCell reason={reason(l)} />}{info(l, 'return')}</span></td>,
+      <td key="ret" data-seg-cell="ret" className={`${pad} text-right mono ${changeColor(l.returnPct)}`}><span className="inline-flex items-center justify-end gap-1"
+        title={l.measured?.basis === 'annual' && l.periodPct != null ? `${pct(l.periodPct)} over the period itself, not stated per year` : undefined}>
+        {l.returnPct != null ? <>{pct(l.returnPct)}{l.measured?.basis === 'annual' && <span className="text-[10px]">p.a.</span>}</> : <AbsentCell reason={reason(l)} />}{info(l, 'return')}</span></td>,
       <td key="contrib" className={`${pad} text-right mono ${changeColor(l.contribution)}`}>{l.contribution != null ? `${l.contribution >= 0 ? '+' : ''}${l.contribution.toFixed(2)} pp` : <AbsentCell reason={contributionReason} />}</td>,
     ];
   };
   const totalCells = cells(a.total, 'parent');
-  const btn = (on: boolean) => `rounded px-2 py-0.5 text-[11px] font-medium transition-colors ${on ? 'bg-champagne-500 text-ink-950' : 'text-slate-400 hover:bg-ink-700/60 hover:text-slate-200'}`;
   return <div className="shrink-0" data-segment-returns data-returns-attribution data-seg-axis={axis} data-seg-period={period} data-seg-type={selection.type}
     data-seg-start={selection.start ?? ''} data-seg-end={selection.end ?? ''} data-seg-covered={a.coveredHoldings}
     data-seg-total-gain={a.total.gain ?? ''} data-seg-total-deployed={a.denominator ?? a.total.invested ?? ''}
-    data-seg-total-value={a.total.value} data-seg-total-ret={a.total.returnPct ?? ''}
-    data-status={axis === 'sector' && exposure.status === 'loading' ? 'loading' : 'ready'}>
-    <div className="card mb-2 flex flex-wrap items-center justify-between gap-3 px-4 py-3" data-market-summary data-market-total={market.pct ?? ''} data-market-covered={market.count} data-market-pending={market.pending}>
-      <div><p className="text-[11px] text-slate-400">Portfolio-weighted market return · current holdings</p>
-        <div className="mt-1 flex items-center gap-2"><strong className={`text-xl tabular ${changeColor(market.pct)}`}>{market.pct == null ? market.pending ? 'Loading historical prices…' : 'History unavailable' : `${pct(market.pct)}${market.annual ? ' p.a.' : ''}`}</strong>{marketInfo('Total', current)}</div>
-        <p className="mt-1 text-xs text-slate-400">{market.count} of {current.length} holdings · {money(market.value)} covered{market.pending > 0 && ` · ${market.pending} loading`}{market.from && market.to && ` · ${fmtDate(market.from)} → ${fmtDate(market.to)}`}</p>
-      </div><button type="button" className="btn-secondary text-xs" onClick={marketFeed.retry} data-market-retry>Retry missing histories</button>
-    </div>
-    <Card pad={false} title={<>Return attribution · <span className="font-normal text-slate-400" data-seg-basis>{periodLabel} · {type.label} · {dates}</span></>}
+    data-seg-total-value={a.total.value} data-seg-total-ret={a.total.returnPct ?? ''} data-seg-total-period-ret={a.total.periodPct ?? ''}
+    data-status="ready">
+    {bridgeCard}
+    {marketCard}
+    <Card pad={false} title={title}
       subtitle="Historical market returns use current portfolio weights. Recorded gain and return cover the available investment records only. Open the info button for the amount covered and the missing records. Value now is the full holding value, including available live prices; return calculations use dated statement values."
       right={<div className="flex flex-wrap items-center justify-end gap-2 text-[12px]">
-        <div role="tablist" aria-label="Attribute the return by" className="inline-flex flex-wrap items-center gap-0.5 rounded-md border border-ink-600 bg-ink-800/60 p-0.5">
-          {SEGMENT_VIEWS.map(v => <button key={v.key} type="button" role="tab" aria-selected={axis === v.key} title={v.title} data-seg-axis-option={v.key} onClick={() => setAxis(v.key)} className={btn(axis === v.key)}>{v.label}</button>)}
-        </div>
+        {axisTabs}
         {openable.length > 0 && <ExpandAllButton allOpen={allOpen} onClick={() => exp.setMany(openable.map(r => r.key), !allOpen)} />}
       </div>}>
       <div className="overflow-x-auto"><ExportableTable className="min-w-full whitespace-nowrap text-[12.5px]" data-seg-table>

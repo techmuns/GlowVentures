@@ -46,7 +46,7 @@ import { SEPARATE_INVESTMENTS } from "../shared/separateInvestments.mjs";
 // names is found in `glowData.ts` by account and ISIN below, and what the card
 // must SAY is struck against the statement's own fact and the family's words.
 import { KEPT_UNVALUED } from "../shared/keptUnvalued.mjs";
-import { resolveSector } from "../shared/sectors.mjs";
+import { resolveSector, GICS_SECTORS, UNCLASSIFIED as UNCLASSIFIED_SECTOR } from "../shared/sectors.mjs";
 import { readRegister, partitionAgainstBook, REGISTER_PATH } from "./lib/registerRead.mjs";
 import * as XLSX from "xlsx";
 
@@ -8063,6 +8063,7 @@ const ROUTES = [
    * land on Returns.
    */
   ["cio-returns-sector", "/cio?tab=returns&seg=sector"],
+  ["cio-returns-sector-direct", "/cio?tab=returns&seg=sector&sset=direct"],
   ["cio-returns-security", "/cio?tab=returns&seg=security"],
   ["cio-attribution-legacy", "/cio?tab=attribution"],
   ["cio-nav", "/cio?tab=nav"],
@@ -20382,7 +20383,9 @@ const CIO_RETURNS = [
     const d = r.typeDesc;
     return !!d && d.key === wantT && d.text.length > 10 && d.text.length <= 60 && d.hover.length > d.text.length;
   }],
-  ["...the benchmark comparison window ends on or before the closing date asked for, opens on or before the opening date asked for, and a return under a year is never annualised", (t, ctx) => {
+  // Stage 10gu: XIRR is a rate per year at any length (the family, 22 Oct
+  // 2026); Absolute is never annualised and CAGR only from a year.
+  ["...the benchmark comparison window ends on or before the closing date asked for, opens on or before the opening date asked for, XIRR is per year at any length, and Absolute or CAGR under a year is never annualised", (t, ctx) => {
     const r = ctx?.returnsDom;
     if (!r) return false;
     if (!r.measuredFrom || !r.measuredTo) return r.pct === "" || r.pct == null ? { notChecked: "nothing measurable in this window" } : false;
@@ -20394,7 +20397,8 @@ const CIO_RETURNS = [
     // than the close asked for, and never after its own close.
     const inside = (!to || r.measuredTo <= to) && (!from || r.measuredFrom <= from) && (!to || r.measuredFrom < to);
     const annualised = r.basis === "annual";
-    return r.measuredFrom < r.measuredTo && days > 0 && inside && !(days < 365 && annualised);
+    const xirr = (/[?&]rtype=([a-z]+)/.exec(ctx.path ?? "")?.[1] ?? "xirr") === "xirr";
+    return r.measuredFrom < r.measuredTo && days > 0 && inside && (xirr ? annualised : !(days < 365 && annualised));
   }],
 ];
 
@@ -20464,7 +20468,9 @@ const CIO_RETURNS_LIVE = [
       const fx = BENCH_FIXTURE.find((x) => x[0] === b.key);
       const raw = benchFixtureReturn(fx[2], b.from, b.to);
       const d = (Date.parse(b.to) - Date.parse(b.from)) / 86400000;
-      const want = r.basis === "annual" && d >= 365 ? (Math.pow(1 + raw / 100, 365 / d) - 1) * 100 : raw;
+      // XIRR's index is per year at any length, like the portfolio's (Stage 10gu).
+      const xirr = (/[?&]rtype=([a-z]+)/.exec(ctx.path ?? "")?.[1] ?? "xirr") === "xirr";
+      const want = r.basis === "annual" && (xirr || d >= 365) ? (Math.pow(1 + raw / 100, 365 / d) - 1) * 100 : raw;
       /*
        * THE GAP IS LIKE FOR LIKE (Stage 10fz, P5). The portfolio is money-
        * weighted, so its gap is struck against the index on the SAME dated
@@ -20528,6 +20534,58 @@ const CIO_SEGMENTS = [
     const r = ctx?.segDom;
     return !!r && r.totalInfo === 2 && /of.*holdings.*covered/.test(r.coverage)
       && r.rows.filter(x => x.gain == null).every(x => x.gainText === "—" && x.gainReason.length > 0);
+  }],
+];
+
+/**
+ * Stage 10gs — THE SECTOR AXIS IS SECTOR COMPOSITION'S SECTORS. *"why are AIF
+ * and mutual funds showing up as sectors? … show sector return attribution in
+ * the same way as we are showing in the sector composition tab. A consolidated
+ * view and a direct equity view … and also a drop down list of the
+ * contributors and holdings in each sector and their returns."* Struck on the
+ * panel's own `data-sa-*` handles: which set is drawn, that every row is a
+ * GICS sector (or the named Unclassified), and the arithmetic a reader does by
+ * adding — values, gains and capital to the total, each contribution its gain
+ * over the set's capital, and a sector's contributors to the sector.
+ */
+const SECTOR_ROW_KEYS = new Set([...GICS_SECTORS, UNCLASSIFIED_SECTOR]);
+const CIO_SECTOR_ATTRIBUTION = [
+  ["the Sector axis offers Consolidated and Direct Equity, draws the one its address asks for, and every row is a sector — never a fund, cash or private class", (t, ctx) => {
+    const r = ctx?.sectorAttr;
+    if (!r || r.status !== "ready") return false;
+    const want = new URLSearchParams((ctx.path ?? "").split("?")[1]).get("sset") ?? "consolidated";
+    return r.options.map((o) => o.key).join() === "consolidated,direct"
+      && r.options.filter((o) => o.active).map((o) => o.key).join() === want && r.set === want
+      && r.rows.length > 0 && r.rows.every((x) => SECTOR_ROW_KEYS.has(x.key)) && r.genericRows === 0;
+  }],
+  ["sector values, gains and capital add to their total, and the total return is its gain over its capital", (t, ctx) => {
+    const r = ctx?.sectorAttr;
+    if (!r || r.total.value == null || !r.rows.length) return false;
+    const add = (k) => r.rows.reduce((s, x) => s + (x[k] ?? 0), 0);
+    if (Math.abs(add("value") - r.total.value) > 1 || add("holdings") !== r.total.holdings) return false;
+    if (r.total.gain == null) return r.rows.every((x) => x.gain == null) && r.total.ret == null;
+    return Math.abs(add("gain") - r.total.gain) <= 1 && Math.abs(add("deployed") - r.total.deployed) <= 1
+      && r.total.deployed > 0 && Math.abs(r.total.ret - r.total.gain / r.total.deployed * 100) < 1e-6;
+  }],
+  ["each contribution is the row's gain over the set's capital, and the contributions add to the total return", (t, ctx) => {
+    const r = ctx?.sectorAttr;
+    if (!r || !r.rows.length) return false;
+    if (r.total.ret == null) return r.rows.every((x) => x.contrib == null);
+    return r.rows.every((x) => x.gain == null ? x.contrib == null : Math.abs(x.contrib - x.gain / r.total.deployed * 100) < 1e-6)
+      && Math.abs(r.rows.reduce((s, x) => s + (x.contrib ?? 0), 0) - r.total.ret) < 1e-6;
+  }],
+  ["a sector opens into its contributors, whose values, gains, contributions and holdings add to the sector's", (t, ctx) => {
+    const o = ctx?.sectorAttr?.opened;
+    if (!o?.parent || !o.children.length) return false;
+    const add = (k) => o.children.reduce((s, x) => s + (x[k] ?? 0), 0);
+    return Math.abs(add("value") - o.parent.value) <= 1 && add("holdings") === o.parent.holdings
+      && Math.abs(add("gain") - (o.parent.gain ?? 0)) <= 1 && Math.abs(add("contrib") - (o.parent.contrib ?? 0)) < 1e-6
+      && o.children.every((x) => x.gain == null ? x.ret == null : x.deployed > 0);
+  }],
+  ["a row with no gain shows a dash with its reason", (t, ctx) => {
+    const r = ctx?.sectorAttr;
+    if (!r) return false;
+    return [...r.rows, ...(r.opened?.children ?? [])].filter((x) => x.gain == null).every((x) => x.gainText === "—" && x.gainReason.length > 0);
   }],
 ];
 
@@ -26964,7 +27022,8 @@ const INVARIANTS = {
   "cio-returns-cagr": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT, ...CIO_SEGMENTS],
   "cio-returns-retired": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT, ...CIO_SEGMENTS],
   "cio-returns-live": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT, ...CIO_RETURNS_LIVE],
-  "cio-returns-sector": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT, ...CIO_SEGMENTS],
+  "cio-returns-sector": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT, ...CIO_SEGMENTS.slice(0, 2), ...CIO_SECTOR_ATTRIBUTION],
+  "cio-returns-sector-direct": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT, ...CIO_SEGMENTS.slice(0, 2), ...CIO_SECTOR_ATTRIBUTION],
   "cio-returns-security": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT, ...CIO_SEGMENTS],
   "cio-attribution-legacy": [...CIO_SHARED, ...CIO_SEGMENTS_LEGACY],
   "cio-nav": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_NAV, ...NAV_BENCH, ...NAV_BENCH_OFFLINE, ...NAV_RECON, ...NAV_BASIS, ...NAV_RANGE_HOVERS],
@@ -40463,7 +40522,7 @@ for (const theme of THEMES) {
         };
       });
       // Stages 10ez, 10fd — the Returns tab's attribution section, off its own handles.
-      if (name === "cio-returns-sector") {
+      if (name === "cio-returns-sector" || name === "cio-returns-sector-direct") {
         await page.waitForSelector('[data-segment-returns]:not([data-status="loading"])', { timeout: 20000 }).catch(() => {});
       }
       const segDom = FAST ? null : await page.evaluate(() => {
@@ -40562,6 +40621,44 @@ for (const theme of THEMES) {
               title: absent?.getAttribute("title") ?? null,
             }];
           })),
+        };
+      });
+      /**
+       * Stage 10gs — THE SECTOR AXIS, AS SECTOR COMPOSITION DRAWS IT. Read after
+       * the layout probe, because it opens the largest sector to read its
+       * contributors, and closes it again on the way out.
+       */
+      const sectorAttr = FAST ? null : await page.evaluate(async () => {
+        const root = document.querySelector("main [data-cio-section=returns] [data-sector-attribution]");
+        if (!root) return null;
+        const num = (el, a) => { const v = el?.getAttribute(a); return v == null || v === "" ? null : Number(v); };
+        const read = (tr) => {
+          const g = tr.querySelector('[data-sa-cell="gain"]');
+          return {
+            key: tr.getAttribute("data-sa-row") ?? tr.getAttribute("data-sa-key"), value: num(tr, "data-sa-value"), gain: num(tr, "data-sa-gain"),
+            deployed: num(tr, "data-sa-deployed"), ret: num(tr, "data-sa-ret"), contrib: num(tr, "data-sa-contrib"), holdings: num(tr, "data-sa-holdings"),
+            gainText: (g?.textContent ?? "").trim(), gainReason: g?.querySelector("[title]")?.getAttribute("title") ?? "",
+          };
+        };
+        let opened = null;
+        const first = root.querySelector("tr[data-sa-row]");
+        if (first) {
+          const key = first.getAttribute("data-sa-row");
+          const toggle = () => root.querySelector(`[data-sa-toggle="${CSS.escape(key)}"]`)?.click();
+          const wasOpen = first.getAttribute("data-sa-open") === "1";
+          if (!wasOpen) { toggle(); await new Promise((r) => setTimeout(r, 400)); }
+          opened = { parent: read(root.querySelector(`tr[data-sa-row="${CSS.escape(key)}"]`)),
+            children: [...root.querySelectorAll(`tr[data-sa-child="${CSS.escape(key)}"]`)].map(read) };
+          if (!wasOpen) { toggle(); await new Promise((r) => setTimeout(r, 200)); }
+        }
+        return {
+          set: root.getAttribute("data-sector-set"), status: root.getAttribute("data-status"),
+          options: [...root.querySelectorAll("[data-sector-set-option]")].map((b) => ({ key: b.getAttribute("data-sector-set-option"), active: b.getAttribute("aria-selected") === "true" })),
+          total: { value: num(root, "data-sa-total-value"), gain: num(root, "data-sa-total-gain"), deployed: num(root, "data-sa-total-deployed"),
+            ret: num(root, "data-sa-total-ret"), holdings: num(root, "data-sa-total-holdings") },
+          rows: [...root.querySelectorAll("tr[data-sa-row]")].map(read),
+          genericRows: root.closest("[data-segment-returns]")?.querySelectorAll("tr[data-seg-row]").length ?? 0,
+          opened,
         };
       });
       /**
@@ -45258,7 +45355,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, sectorVs, sectorSplit, shortWindow, feSectors, accountRows, heldAccountRows, pmFunds, pmReviewRows, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, investorReturn, familyLayout, memberScopeDom, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, returnsDom, segDom, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, quotesServed: QUOTES_SERVED, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, pickTyped: PICK_TYPED[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, mandateSectors, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, monitorMember, monitorFoot, txnT, quoteHold, monitorC, headerTitles, mgrT, costGross, inside }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, sectorVs, sectorSplit, shortWindow, feSectors, accountRows, heldAccountRows, pmFunds, pmReviewRows, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, investorReturn, familyLayout, memberScopeDom, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, returnsDom, segDom, sectorAttr, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, quotesServed: QUOTES_SERVED, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, pickTyped: PICK_TYPED[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, mandateSectors, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, monitorMember, monitorFoot, txnT, quoteHold, monitorC, headerTitles, mgrT, costGross, inside }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);
