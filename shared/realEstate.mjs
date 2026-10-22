@@ -37,13 +37,13 @@ export function validateProperty(raw) {
   const seen = new Set();
   p.owners = [];
   for (const o of owners) {
-    if (!o || typeof o !== "object" || (o.name != null && (typeof o.name !== "string" || o.name.length > 160))
+    if (!o || typeof o !== "object" || Array.isArray(o) || (o.name != null && (typeof o.name !== "string" || o.name.length > 160))
       || (o.share != null && (!number(o.share) || o.share < 0 || o.share > 100))
       || (o.ownerId != null && (typeof o.ownerId !== "string" || !PROPERTY_ID.test(o.ownerId)))) return { error: "Check the owner details and use a share from 0% to 100%, or leave it blank." };
     const name = text(o.name), share = o.share ?? null, ownerId = o.ownerId ?? null;
     if (!name && !ownerId && share === null) continue;
     const identity = ownerId || name.toLowerCase();
-    const key = `${identity}|${share}`;
+    const key = JSON.stringify([identity, name.toLowerCase(), share]);
     // Identical repeated rows describe the same holding, not extra ownership.
     if (identity && seen.has(key)) continue;
     if (identity) seen.add(key);

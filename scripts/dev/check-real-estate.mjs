@@ -64,6 +64,7 @@ try {
   await page.getByRole("button", { name: "Edit property", exact: true }).waitFor();
   assert.equal(JSON.parse(store.data.get(draftKey)).valuationDate, null);
   assert.equal(JSON.parse(store.data.get(draftKey)).value, 5000000);
+  assert.notEqual(await page.locator("dialog dl > div").filter({ has: page.getByText("Current value", { exact: true }) }).locator("dd").innerText(), "—", "Entered whole-property value remains visible before ownership is completed.");
   await page.getByRole("button", { name: "Edit property", exact: true }).click();
   await page.getByRole("button", { name: "Add owner", exact: true }).click();
   await fill("Owner 1", "Test duplicate owner"); await page.getByLabel("Share %", { exact: true }).nth(0).fill("100");
