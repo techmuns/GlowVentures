@@ -155,6 +155,7 @@ export function githubStore({ token, repo, branch, path }, fetchImpl = (...a) =>
 
   let state = null;
   const ops = [];
+  const expectations = new Map();
   const load = async () => (state ??= await read());
   const apply = (records, op) => {
     if (op.kind === "put") records[op.key] = { value: op.value, metadata: op.metadata ?? null };
@@ -162,6 +163,9 @@ export function githubStore({ token, repo, branch, path }, fetchImpl = (...a) =>
   };
 
   return {
+    // Optional optimistic check for a multi-cell Excel import. Other editors
+    // retain their existing last-write-wins behaviour.
+    expect(key, value) { expectations.set(key, value); },
     async list({ prefix }) {
       const { records } = await load();
       const keys = Object.keys(records).filter((k) => k.startsWith(prefix)).sort()
@@ -203,6 +207,9 @@ export function githubStore({ token, repo, branch, path }, fetchImpl = (...a) =>
         }
         // SOMEBODY ELSE SAVED FIRST: read theirs, lay ours over it, try again.
         state = await read();
+        for (const [key, expected] of expectations) {
+          if ((state.records[key]?.value ?? null) !== expected) throw new StoreError("These numbers changed while saving. Download a fresh file.", 409);
+        }
         for (const op of ops) apply(state.records, op);
       }
       throw new StoreError("The store changed under every attempt to save; nothing was lost, try again.", 409);

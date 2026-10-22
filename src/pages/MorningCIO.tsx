@@ -233,7 +233,7 @@ const sectionColor = (axis: GroupAxis, key: string, i: number) => {
 };
 
 export function MorningCIO() {
-  const { consolidated, portfolio, statementPortfolio, fmtFromBase, convertFromBase, displayCurrency, corporateActions, scope: memberScope } = usePortfolio();
+  const { consolidated, portfolio, statementPortfolio, enteredPortfolio, fmtFromBase, convertFromBase, displayCurrency, corporateActions, scope: memberScope } = usePortfolio();
   /**
    * WHICH AXIS THE ALLOCATION CARD IS GROUPED ON. In the URL (`?alloc=`) like
    * every other view in this app, and for the reason the Portfolio Monitor's
@@ -374,11 +374,12 @@ export function MorningCIO() {
      * the page's ₹15.23 Cr, not the ₹15.98 Cr both statements add to. The
      * hovers name what is left out and what it would add.
      */
-    const pbook = privateBookFolios(statementPortfolio ?? portfolio, BOOK_CORPORATE_ACTIONS);
+    const pbook = privateBookFolios(enteredPortfolio ?? statementPortfolio ?? portfolio, BOOK_CORPORATE_ACTIONS);
     const cap = pbook.cap;
     const commitments = cap.onPage;
     const counted = cap.counting.counted;
     const distFig = figuresOf(pbook.folios, true);
+    const enteredCapital = pbook.folios.filter(f => !f.capital && f.counted && f.position?.enteredCapital);
     const fundDeploy = fundTotals([...pm.peFunds, ...pm.preIpoFunds, ...pm.unlistedCompanies, ...pm.debtFunds, ...pm.closedFunds]);
     /**
      * ABSENT STAYS ABSENT (Stage 10fz). These were `sumOrNull([...]) ?? 0`, with
@@ -394,13 +395,13 @@ export function MorningCIO() {
     const deploy: {
       committed: number; drawn: number | null; distributed: number | null; currentValue: number;
       unfunded: number | null; tvpi: number | null; dpi: number | null;
-    } = commitments.length
+    } = commitments.length || enteredCapital.length
       ? {
-        committed: sum(counted.map((c) => c.committed)) + fundDeploy.committed,
-        drawn: sumOrNull([...counted.map((c) => c.drawn), modelTerm(fundDeploy.drawn)]),
+        committed: (distFig.committed ?? 0) + fundDeploy.committed,
+        drawn: sumOrNull([...counted.map((c) => c.drawn), ...enteredCapital.map(f => f.position!.enteredCapital!.paid ?? null), modelTerm(fundDeploy.drawn)]),
         distributed: sumOrNull([distFig.distributed, modelTerm(fundDeploy.distributed)]),
         currentValue: fundDeploy.currentValue,
-        unfunded: sumOrNull([...counted.map((c) => c.undrawn), modelTerm(fundDeploy.unfunded)]),
+        unfunded: sumOrNull([distFig.uncalled, modelTerm(fundDeploy.unfunded)]),
         tvpi: fundDeploy.tvpi,
         dpi: fundDeploy.dpi,
       }

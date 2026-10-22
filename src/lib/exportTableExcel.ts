@@ -1,12 +1,16 @@
 import ExcelJS from "exceljs";
 import { excelCellValue, type TableExport } from "./tableExport";
 import { fitExcelWorksheet } from "./excelLayout";
+import { addInputWorkbook } from "./tableInputExcel";
+import type { InputChange } from "./tableInputs";
 
 export function createTableWorkbook(snapshot: TableExport): ExcelJS.Workbook {
   const book = new ExcelJS.Workbook();
   book.creator = "Glow Ventures";
   book.title = snapshot.title;
-  const sheet = book.addWorksheet("Table");
+  const targets: { sheet: string; cell: string; input: InputChange }[] = [];
+  const draw = (snapshot: TableExport, name: string) => {
+  const sheet = book.addWorksheet(name);
   const occupied = new Set<string>();
   let columns = 1;
   snapshot.rows.forEach((row, r) => {
@@ -20,6 +24,7 @@ export function createTableWorkbook(snapshot: TableExport): ExcelJS.Workbook {
       // A string beginning with =, +, - or @ is still a literal, never a formula.
       cell.value = source.hyperlink && typeof value === "string" ? { text: value, hyperlink: source.hyperlink } : value;
       if (format) cell.numFmt = format;
+      if (source.input) targets.push({ sheet: sheet.name, cell: cell.address, input: source.input });
       cell.font = { name: "Calibri", size: 11, bold: row.kind !== "body", color: { argb: row.kind === "header" ? "FFFFFFFF" : "FF202438" } };
       cell.alignment = { vertical: "top", wrapText: true, horizontal: typeof value === "number" ? "right" : "left" };
       if (row.kind !== "body" || r % 2 === 0) cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: row.kind === "header" ? "FF26213E" : row.kind === "footer" ? "FFF1E5C3" : "FFF8F7F3" } };
@@ -39,15 +44,21 @@ export function createTableWorkbook(snapshot: TableExport): ExcelJS.Workbook {
     sheet.autoFilter = { from: { row: 1, column: 1 }, to: { row: Math.max(1, snapshot.rows.findIndex(row => row.kind === "footer") < 0 ? snapshot.rows.length : snapshot.rows.findIndex(row => row.kind === "footer")), column: columns } };
   }
   fitExcelWorksheet(sheet, headerCount, columns > 1 ? 1 : 0);
+  };
+  draw(snapshot, "Table");
+  let detail = 0;
+  const drawChildren = (table: TableExport) => { for (const nested of table.nested ?? []) { draw(nested, `Detail ${++detail}`); drawChildren(nested); } };
+  drawChildren(snapshot);
   const about = book.addWorksheet("About");
   about.addRows([
     ["Table", snapshot.title], ["Dashboard", snapshot.url], ["Exported at", new Date().toISOString()],
-    ["View", "All rows regardless of search, member and table filters, including rows not yet loaded by scrolling, and every available column, including columns hidden in Edit Columns. The selected table, sort and column arrangement are retained. Display filters do not limit this export."],
+    ["View", "All rows regardless of search, member and table filters, including rows not yet loaded by scrolling, and every available column, including columns hidden in Edit Columns. Expanded detail is included; nested tables have their own Detail sheets. The selected table, sort and column arrangement are retained. Display filters do not limit this export."],
     ["Numbers", "Source values are used where available; other numbers follow the displayed precision. Abbreviated amounts are expanded to currency units. A dash stays a dash; it does not become zero."],
     ["Editable text", "Strategy and Description include saved text. Unsaved drafts are not included."],
   ]);
   about.eachRow(row => { row.alignment = { wrapText: true, vertical: "top" }; row.getCell(1).font = { bold: true }; });
   fitExcelWorksheet(about, 0);
+  if (snapshot.inputs) addInputWorkbook(book, snapshot.inputs, targets);
   return book;
 }
 

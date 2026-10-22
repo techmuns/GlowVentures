@@ -1,4 +1,5 @@
 /** A table snapshot, independent of React, scrolling and workbook generation. */
+import type { InputChange, InputRecord } from "./tableInputs";
 export type TableExportCell = {
   text: string;
   value?: string | number;
@@ -8,9 +9,10 @@ export type TableExportCell = {
   rowSpan?: number;
   note?: string;
   hyperlink?: string;
+  input?: InputChange;
 };
 export type TableExportRow = { cells: TableExportCell[]; kind: "header" | "body" | "footer" };
-export type TableExport = { title: string; url: string; rows: TableExportRow[] };
+export type TableExport = { title: string; url: string; rows: TableExportRow[]; inputs?: InputRecord[]; nested?: TableExport[] };
 
 /** Only whole numeric cells qualify. Dates, identifiers and mixed captions stay text. */
 export function excelCellValue(cell: TableExportCell): { value: string | number; format?: string } {
@@ -65,7 +67,9 @@ export function readTableExport(table: HTMLTableElement, title: string): TableEx
         numeric: row.parentElement?.tagName !== "THEAD" && (cell.classList.contains("mono") || cell.classList.contains("text-right")),
         colSpan: row.cells.length === 1 && cell.colSpan === visibleColumns ? totalColumns : cell.colSpan,
         rowSpan: cell.rowSpan, note: cell.title || undefined,
-        hyperlink: link && /^https?:$/.test(link.protocol) ? link.href : undefined };
+        hyperlink: link && /^https?:$/.test(link.protocol) ? link.href : undefined,
+        input: cell.dataset.inputExport ? JSON.parse(cell.dataset.inputExport) as InputChange : undefined };
     }),
-  })) };
+  })), nested: Array.from(table.querySelectorAll<HTMLTableElement>("table[data-table-export]")).filter(child => child.parentElement?.closest("table") === table)
+    .map((child, i) => readTableExport(child, `${title} — Detail ${i + 1}`)) };
 }

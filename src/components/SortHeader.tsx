@@ -1,5 +1,8 @@
 import { ExportableTable, TableExportAllRows } from "@/components/ExportableTable";
-import { Children, ReactNode, isValidElement, useContext, useRef } from "react";
+import { Children, ReactNode, cloneElement, isValidElement, useContext, useRef } from "react";
+import { TableNumberInput, useTableEditing } from "./TableNumberInput";
+import { useTableInputs } from "@/lib/tableInputStore";
+import { capitalInputId, fieldForColumn, positionInputId, privateCapitalId } from "@/lib/tableInputs";
 import { ChevronUp, ChevronDown, ChevronsUpDown, GripVertical } from "lucide-react";
 import { useTableView, type TableView } from "@/lib/tableView";
 import { pressColumn } from "@/lib/columnDrag";
@@ -171,8 +174,10 @@ export function SortHeader({ col, view, children, align = "right", title, pad = 
  * DECLARED order instead, so the row is right even if it does not follow the
  * drag, and the mismatch is loud in development.
  */
-export function Tr({ view, children, reviewScope, ...rest }: { view: TableView; children: ReactNode; reviewScope?: ReviewScope } & React.HTMLAttributes<HTMLTableRowElement>) {
+export function Tr({ view, children, reviewScope, inputRecordId, ...rest }: { view: TableView; children: ReactNode; reviewScope?: ReviewScope; inputRecordId?: string } & React.HTMLAttributes<HTMLTableRowElement>) {
   const exporting = useContext(TableExportAllRows);
+  const editing = useTableEditing();
+  const inputs = useTableInputs();
   const order = exporting ? view.availableOrder : view.order;
   const row = useRef<HTMLTableRowElement>(null);
   const cells = Children.toArray(children).filter((c) => isValidElement(c) || c === 0 || !!c);
@@ -201,10 +206,36 @@ export function Tr({ view, children, reviewScope, ...rest }: { view: TableView; 
     return <tr {...rest}>{children}</tr>;
   }
   const byCol = new Map(view.columns.map((c, i) => [c, cells[i]]));
+  const positions = reviewScope?.positions ?? [];
+  const position = positions.length === 1 ? positions[0] : undefined;
+  const holdingId = inputRecordId ?? (position ? positionInputId(position) : undefined);
+  const capitalId = position ? (inputs.catalog.some(r => r.id === privateCapitalId(position)) ? privateCapitalId(position) : capitalInputId(position.accountId))
+    : reviewScope?.accountId ? capitalInputId(reviewScope.accountId) : undefined;
+  const recordIds = [...new Set([holdingId, capitalId, ...positions.flatMap(p => [positionInputId(p), capitalInputId(p.accountId), privateCapitalId(p)])].filter((s): s is string => !!s))];
+  const renderCell = (column: string) => {
+    const original = byCol.get(column);
+    if (header || !isValidElement<Record<string, unknown>>(original) || original.type !== "td") return original;
+    const holding = inputs.catalog.find(r => r.id === holdingId);
+    const capital = inputs.catalog.find(r => r.id === capitalId);
+    const record = holding && fieldForColumn(holding, column) ? holding : capital;
+    const field = record && fieldForColumn(record, column);
+    if (!record || !field) return original;
+    // Live prices are not statement inputs. Their source mark remains editable
+    // on the input sheet, without relabelling the live export as a source value.
+    const exportable = !(record.kind === "holding" && field === "marketValue" && position?.live) && !(record.kind === "property" && field !== "area");
+    const value = record.values[field];
+    return cloneElement(original, {
+      "data-input-record": record.id, "data-input-field": field,
+      "data-input-export": exportable ? JSON.stringify({ id: record.id, field, source: record.source, version: record.versions[field] ?? "", value }) : undefined,
+      ...(exporting && exportable ? { "data-export-value": value ?? "", "data-export-type": value == null ? "text" : "number", "data-export-format": record.fields.find(f => f.key === field)?.unit ? "#,##0.########" : '"₹"#,##0.00' } : {}),
+      ...(editing && !exporting ? { children: <TableNumberInput key={`${record.id}:${field}:${record.versions[field] ?? ""}:${value}`} record={record} field={field} /> } : {}),
+    });
+  };
   return <tr ref={row} {...rest}
+    data-input-records={!header && recordIds.length ? JSON.stringify(recordIds) : undefined}
     data-export-visible-columns={header && exporting ? view.order.length : undefined}
     data-export-total-columns={header && exporting ? order.length : undefined}>
-    {header && <AutoEditColumns view={view} row={row} labels={labels} />}{order.map((c) => byCol.get(c))}
+    {header && <AutoEditColumns view={view} row={row} labels={labels} />}{order.map(renderCell)}
   </tr>;
 }
 

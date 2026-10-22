@@ -1173,9 +1173,15 @@ export function figuresOf(folios: BookFolio[], consolidated: boolean): BookFigur
   // printed row, each capital account once with its holding on a consolidated
   // one — see the note at the top of this file.
   const caps = folios.filter((f) => f.capital && (!consolidated || f.capitalCounted))
-    .map((f) => f.capital!);
+    .map((f) => ({ ...f.capital!, committed: f.capital!.committed as number | null }));
+  for (const f of folios) if (!f.capital && f.position?.enteredCapital && (!consolidated || f.counted)) {
+    const c = f.position.enteredCapital;
+    caps.push({ accountId: f.accountId, fund: f.fundName, owner: f.owner, asOf: f.asOf, staleDays: null,
+      committed: c.committed ?? null, called: c.called ?? null, paid: c.paid ?? null, pending: c.pending ?? null,
+      uncalled: c.undrawn ?? null, impliedUncalled: null, uncalledTies: null, calls: [], firstCall: null, lastCall: null });
+  }
   const capitalAlso = consolidated ? folios.filter((f) => f.capital && !f.capitalCounted).length : 0;
-  const of = (g: (c: SchemeCall) => number | null) => caps.filter((c) => g(c) != null).length;
+  const of = (g: (c: typeof caps[number]) => number | null) => caps.filter((c) => g(c) != null).length;
   // THE FOLIOS THAT COULD REPORT A DISTRIBUTION — a capital account, an
   // income-only folio's letters, or the review's dated rows on a line it values
   // (Stage 10fz) — each once on a consolidated row (B-10).
@@ -1197,12 +1203,12 @@ export function figuresOf(folios: BookFolio[], consolidated: boolean): BookFigur
   const carries = folios.filter((f) => !f.viewOf && (!consolidated
     || (f.position != null && f.counted) || (f.capital != null && f.capitalCounted)
     || (f.position == null && f.capital == null)));
-  const withCap = carries.filter((f) => f.capital != null && (!consolidated || f.capitalCounted));
+  const withCap = carries.filter((f) => (f.capital != null && (!consolidated || f.capitalCounted)) || (f.position?.enteredCapital && (!consolidated || f.counted)));
   const capitalCover = consolidated
     ? { with: new Set(withCap.map((f) => f.fundKey)).size, of: new Set(carries.map((f) => f.fundKey)).size, unit: "fund" as const }
     : { with: withCap.length, of: carries.length, unit: "folio" as const };
   return {
-    committed: caps.length ? sum(caps.map((c) => c.committed)) : null,
+    committed: sumOrNull(caps.map((c) => c.committed)),
     called: sumOrNull(caps.map((c) => c.called)),
     paid: sumOrNull(caps.map((c) => c.paid)),
     pending: sumOrNull(caps.map((c) => c.pending)),

@@ -1,5 +1,6 @@
 import { ReactNode, useCallback, useState, type MouseEvent } from "react";
 import { ChevronRight, ChevronsDownUp, ChevronsUpDown } from "lucide-react";
+import { useTableExporting } from "@/lib/tableExportSnapshot";
 
 /**
  * ── THE STANDARD FOR A TABLE WHOSE ROWS OPEN INTO OTHER ROWS ────────────────
@@ -100,8 +101,9 @@ const NAME_GEOMETRY: Record<TreeDensity, { parent: string; child: [string, strin
  * place in a table, not a view of the book.
  */
 export function useExpanded(initial: Iterable<string> = []) {
+  const exporting = useTableExporting();
   const [open, setOpen] = useState<Set<string>>(() => new Set(initial));
-  const isOpen = useCallback((k: string) => open.has(k), [open]);
+  const isOpen = useCallback((k: string) => exporting || open.has(k), [open, exporting]);
   const toggle = useCallback((k: string) => setOpen((p) => {
     const n = new Set(p);
     if (n.has(k)) n.delete(k); else n.add(k);

@@ -1,5 +1,6 @@
 /** The key–value calls the Pages Functions make on the dashboard's shared store. */
 export type DashboardStore = {
+  expect?(key: string, value: string | null): void;
   list(opts: { prefix: string; cursor?: string }): Promise<{
     keys: { name: string; metadata?: unknown }[];
     list_complete: boolean;

@@ -1,4 +1,6 @@
 import { isTableExporting, useTableExporting } from "@/lib/tableExportSnapshot";
+import { useTableInputs } from "@/lib/tableInputStore";
+import { applyTableInputs } from "@/lib/applyTableInputs";
 // Portfolio state hub. Loads the ingested book as the default portfolio so the
 // dashboard is live on open. Display-currency toggle converts all aggregates
 // from the INR base at the display layer.
@@ -188,6 +190,8 @@ export type MemberScope = {
 };
 
 type Ctx = {
+  /** Source marks with explicit, shared family corrections applied. */
+  enteredPortfolio: Portfolio | null;
   /** The book with live prices overlaid where a quote exists. */
   portfolio: Portfolio | null;
   /**
@@ -399,6 +403,8 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   // The book as ingested. Live prices are layered on top in `portfolio` below,
   // so the statement figures stay available and unmutated underneath.
   const [basePortfolio, setPortfolio] = useState<Portfolio | null>(() => defaultPortfolio());
+  const inputState = useTableInputs();
+  const enteredPortfolio = useMemo(() => applyTableInputs(basePortfolio, inputState.saved), [basePortfolio, inputState.saved]);
   const [corporateActions, setCorporateActions] = useState<ActionFeed | null>(null);
   const [corporateActionsStatus, setCorporateActionsStatus] = useState<Ctx["corporateActionsStatus"]>("loading");
   useEffect(() => {
@@ -585,8 +591,8 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   // `statementPortfolio`, so a page that must reconcile has the printed figures
   // available rather than having to un-mix them.
   const corporateActionLayer = useMemo(() => applyCorporateActionQuotes(
-    basePortfolio?.positions ?? [], basePortfolio?.accounts ?? [], quotes, corporateActions,
-  ), [basePortfolio, quotes, corporateActions]);
+    enteredPortfolio?.positions ?? [], enteredPortfolio?.accounts ?? [], quotes, corporateActions,
+  ), [enteredPortfolio, quotes, corporateActions]);
   const portfolio = useMemo<Portfolio | null>(() => {
     if (!basePortfolio) return null;
     /**
@@ -620,8 +626,12 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     // counted on 31 July and a quote from today are two dates, and a split or
     // bonus between them must be projected, or the share is not a row.
     const depositoryShares = depositoryShareHoldings(quotes, corporateActions, undefined, basePortfolio.accounts);
-    const positions = applyFundNavs([...corporateActionLayer.positions,
+    const pricedPositions = applyFundNavs([...corporateActionLayer.positions,
       ...applyQuotes([...LIVE_ONLY_FUNDS], quotes), ...depositoryShares]);
+    // Keep corrected holding numbers deliberate, including manual valuations.
+    // Other holdings continue receiving the normal live quote/NAV overlays.
+    const corrected = new Map((enteredPortfolio?.positions ?? []).filter(p => p.enteredNumbers?.includes("marketValue") || (p.valuedAtCost && p.enteredNumbers?.includes("costBasis"))).map(p => [`${p.accountId}|${p.securityKey}|${p.memberId ?? ""}`, p]));
+    const positions = pricedPositions.map(p => corrected.get(`${p.accountId}|${p.securityKey}|${p.memberId ?? ""}`) ?? p);
     /**
      * AN ACCOUNT SOME OF WHOSE HOLDINGS ARE NOW VALUED NO LONGER "VALUES NOTHING".
      * Its generated `noPositionsReason` is true of the statement basis and false
@@ -658,10 +668,10 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     const { listed: listedValue, private: privateValue, unplaced: unplacedValue } =
       publicPrivateSplit(positions);
     return {
-      ...basePortfolio, positions, accounts, listedValue, privateValue, unplacedValue,
+      ...enteredPortfolio!, positions, accounts, listedValue, privateValue, unplacedValue,
       totalValue: listedValue + privateValue + unplacedValue,
     };
-  }, [basePortfolio, corporateActionLayer, quotes, corporateActions]);
+  }, [basePortfolio, enteredPortfolio, corporateActionLayer, quotes, corporateActions]);
 
   // ── THE MEMBER SCOPE (Stage 10di) ──────────────────────────────────────────
   //
@@ -714,6 +724,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     () => (basePortfolio && scopeOwners ? scopePortfolio(basePortfolio, scopeOwners) : basePortfolio),
     [basePortfolio, scopeOwners],
   );
+  const scopedEntered = useMemo(() => enteredPortfolio && scopeOwners ? scopePortfolio(enteredPortfolio, scopeOwners) : enteredPortfolio, [enteredPortfolio, scopeOwners]);
   const scopeAccountIds = useMemo(
     () => (scopeOwners ? accountIdsFor(BOOK_ACCOUNTS, scopeOwners) : null),
     [scopeOwners],
@@ -794,17 +805,17 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     quotesStatus, quotes, quoteFeeds, quotesPending, pendingFor, requestSymbols, refreshQuotes, corporateActions, corporateActionsStatus, corporateActionLayer]);
   const value = useMemo<Ctx>(
     () => ({
-      ...shared, portfolio: scopedPortfolio, consolidated, statementPortfolio: scopedStatement, basis,
+      ...shared, portfolio: scopedPortfolio, consolidated, statementPortfolio: scopedStatement, enteredPortfolio: scopedEntered, basis,
       livePriced, notLive, liveWithheld, unpriceable, scope,
     }),
-    [shared, scopedPortfolio, consolidated, scopedStatement, basis, livePriced, notLive, liveWithheld, unpriceable, scope],
+    [shared, scopedPortfolio, consolidated, scopedStatement, scopedEntered, basis, livePriced, notLive, liveWithheld, unpriceable, scope],
   );
   const wholeValue = useMemo<Ctx>(
     () => ({
-      ...shared, portfolio, consolidated: wholeConsolidated, statementPortfolio: basePortfolio,
+      ...shared, portfolio, consolidated: wholeConsolidated, statementPortfolio: basePortfolio, enteredPortfolio,
       basis: wholeCounts.livePriced > 0 ? "LIVE" : "STATEMENT", ...wholeCounts, scope: wholeScope,
     }),
-    [shared, portfolio, wholeConsolidated, basePortfolio, wholeCounts, wholeScope],
+    [shared, portfolio, wholeConsolidated, basePortfolio, enteredPortfolio, wholeCounts, wholeScope],
   );
   return (
     <WholeFamilyContext.Provider value={wholeValue}>

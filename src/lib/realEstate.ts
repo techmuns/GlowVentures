@@ -34,7 +34,8 @@ export function useProperties() {
     else setError(reply.message);
   }, []);
   useEffect(() => { void reload(); const focus = () => { void reload(); }; window.addEventListener("focus", focus);
-    return () => { controller.current?.abort(); window.removeEventListener("focus", focus); }; }, [reload]);
+    window.addEventListener("glow:table-inputs-saved", focus);
+    return () => { controller.current?.abort(); window.removeEventListener("focus", focus); window.removeEventListener("glow:table-inputs-saved", focus); }; }, [reload]);
   const mutate = useCallback(async (body: unknown) => {
     revision.current++;
     controller.current?.abort();
@@ -42,6 +43,7 @@ export function useProperties() {
     revision.current++;
     controller.current?.abort();
     if (reply.ok) {
+      window.dispatchEvent(new Event("glow:properties-saved"));
       setProperties(previous => reply.property ? [...previous.filter(p => p.id !== reply.property!.id), reply.property]
         : previous.filter(p => p.id !== reply.deleted));
       setError("");

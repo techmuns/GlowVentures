@@ -5,6 +5,7 @@ import { Navigate, Route, Routes, useLocation, useParams } from "react-router-do
 import { BOOK_POLYCAB } from "@/data/glowData";
 import { Sidebar } from "@/components/Sidebar";
 import { TopBar } from "@/components/TopBar";
+import { EnteredNumbersNotice } from "@/components/TableNumberInput";
 import { IndexStrip } from "@/components/IndexStrip";
 import { ResearchLevelSync } from "@/lib/useResearchSync";
 import { EmptyState } from "@/components/EmptyState";
@@ -145,6 +146,7 @@ export default function App() {
             level went. */}
         <ResearchLevelSync />
         <main className="flex-1 overflow-y-auto px-6 py-6">
+          <EnteredNumbersNotice />
           <Suspense fallback={<div role="status" className="p-4 text-sm text-slate-400">Opening page…</div>}>
           <Routes>
             <Route path="/" element={<RootRedirect />} />
