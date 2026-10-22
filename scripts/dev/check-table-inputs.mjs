@@ -106,15 +106,19 @@ try {
     && BOOK_POSITIONS.filter(q => q.securityKey === p.securityKey && ownerOf(q.accountId) === ownerOf(p.accountId)).length === 1
     && BOOK_POSITIONS.some(q => q.securityKey === p.securityKey && ownerOf(q.accountId) && ownerOf(q.accountId) !== ownerOf(p.accountId)));
   assert.ok(crossMember, 'cross-member source fixture exists');
-  const memberQuery = new URLSearchParams({ members: ownerOf(crossMember.accountId), q: crossMember.security.split(/\s+/).slice(0, 2).join(' ') });
+  const memberQuery = new URLSearchParams({ members: ownerOf(crossMember.accountId), group: 'category' });
   await visit(`/monitor?${memberQuery}`);
+  await page.locator('[data-multiselect-toggle="All holdings"]').click();
+  await page.getByPlaceholder('Search holdings…').fill(crossMember.security);
+  await page.locator('[data-option]').filter({ hasText: crossMember.security }).first().click();
+  await page.keyboard.press('Escape');
   await page.locator('[data-edit-numbers]').first().click();
   const scopedId = `holding:${crossMember.accountId}|${crossMember.securityKey}|${crossMember.memberId ?? ''}`;
   const scopedCost = page.locator(`[data-input-record="${scopedId}"][data-input-field="costBasis"]`).first();
   await scopedCost.locator('input').fill('456789');
   await download('member-scoped-draft.xlsx', '[data-monitor-table="holdings"]');
   check('A member-scoped draft survives export to the whole expanded book', await scopedCost.locator('input').inputValue() === '456789');
-  await visit('/monitor');
+  await visit('/monitor?group=category');
   const monitorRows = await page.locator('[data-monitor-table] > tbody > tr').count();
   const monitor = await download('monitor.xlsx', '[data-monitor-table="holdings"]');
   check('The same correction appears in a different table export', inputCell(monitor.book, capital.id, 'paid', 'Capital inputs').value === 123456);
