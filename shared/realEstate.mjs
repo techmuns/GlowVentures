@@ -4,6 +4,9 @@ export const PROPERTY_TYPES = ["Land", "Apartment", "Villa / house", "Commercial
 export const PROPERTY_STATUSES = ["Rented", "Vacant", "Self-used", "Under construction", "For sale"];
 export const AREA_UNITS = ["sq ft", "sq m", "sq yd", "acre", "hectare", "cent", "guntha"];
 export const TITLE_STATUSES = ["Not checked", "Clear", "Pending registration", "Under review", "Disputed"];
+// An inherited or gifted property has no purchase cost. Its cost is either
+// blank or the value on the date it was received, and is labelled as such.
+export const ACQUISITION_TYPES = ["Purchased", "Inherited", "Gifted"];
 export const MONEY_FIELDS = ["cost", "value", "monthlyRent", "monthlyCosts", "debt"];
 export const PROPERTY_ID = /^[a-zA-Z0-9][a-zA-Z0-9-]{0,79}$/;
 const number = n => typeof n === "number" && Number.isFinite(n);
@@ -17,7 +20,7 @@ export function validateProperty(raw) {
     if (raw[key] != null && (typeof raw[key] !== "string" || raw[key].length > max)) return { error: `Check ${key}; maximum ${max} characters.` };
     p[key] = text(raw[key]);
   }
-  for (const [key, options] of [["type", PROPERTY_TYPES], ["status", PROPERTY_STATUSES], ["areaUnit", AREA_UNITS], ["titleStatus", TITLE_STATUSES], ["areaBasis", ["Plot", "Carpet", "Built-up", "Super built-up"]]]) {
+  for (const [key, options] of [["type", PROPERTY_TYPES], ["status", PROPERTY_STATUSES], ["acquisition", ACQUISITION_TYPES], ["areaUnit", AREA_UNITS], ["titleStatus", TITLE_STATUSES], ["areaBasis", ["Plot", "Carpet", "Built-up", "Super built-up"]]]) {
     const value = raw[key] ?? "";
     if (value !== "" && !options.includes(value)) return { error: `Choose a valid ${key}.` };
     p[key] = value;
@@ -27,6 +30,8 @@ export function validateProperty(raw) {
     if (n !== null && (!number(n) || n < 0 || n > 1e15 || (key === "area" && n === 0))) return { error: `Enter a valid ${key === "monthlyRent" ? "monthly rent" : key}. Leave unknown figures blank.` };
     p[key] = n;
   }
+  // A ₹0 value on the date of inheritance would turn the whole current value into appreciation.
+  if (receivedWithoutPurchase(p) && p.cost === 0) return { error: `Leave the value on the date of ${receivedEvent(p)} blank if it is not known, rather than ₹0.` };
   for (const key of ["purchasedOn", "valuationDate", "leaseEnd"]) {
     const value = raw[key] === "" ? null : raw[key] ?? null;
     if (value !== null && !date(value)) return { error: "Enter valid dates or leave them blank." };
@@ -60,6 +65,19 @@ export function validateProperty(raw) {
 
 export const hasPin = p => number(p.latitude) && number(p.longitude);
 export const propertyLabel = p => p.name || p.address || "Untitled property";
+export const receivedWithoutPurchase = p => p.acquisition === "Inherited" || p.acquisition === "Gifted";
+const receivedEvent = p => p.acquisition === "Inherited" ? "inheritance" : "the gift";
+export const costLabel = p => receivedWithoutPurchase(p) ? `Value on date of ${p.acquisition === "Inherited" ? "inheritance" : "gift"}` : "Cost";
+export const acquiredOnLabel = p => p.acquisition === "Inherited" ? "Inherited on" : p.acquisition === "Gifted" ? "Gifted on" : "Purchased";
+// Why appreciation is not measured, in a few words and in full. Never a 0% or a 100% in its place.
+export function appreciationGap(p) {
+  if (p.value === null) return { short: "No current value", reason: "Needs the current value." };
+  if (p.cost === null) return receivedWithoutPurchase(p)
+    ? { short: `${p.acquisition} · no cost`, reason: `${p.acquisition}, so there is no purchase cost, and the value on the date of ${receivedEvent(p)} has not been entered.` }
+    : { short: "No cost entered", reason: "Needs the cost." };
+  if (p.cost === 0) return { short: "Cost is ₹0", reason: "The cost entered is ₹0, so there is no base to measure appreciation against." };
+  return null;
+}
 export function propertyShare(p, owners = null) {
   const keys = p.owners.map(o => o.ownerId || o.name.toLowerCase());
   if (new Set(keys).size !== keys.length || p.owners.reduce((s, o) => s + (o.share ?? 0), 0) > 100.000001) return null;
@@ -75,7 +93,8 @@ function figuresAtShare(p, share) {
     equity: value === null || debt === null ? null : value - debt,
     netRent: rent === null || costs === null ? null : rent - costs,
     yield: p.value === null || p.value <= 0 || p.monthlyRent === null ? null : p.monthlyRent * 12 / p.value * 100,
-    gain: value === null || cost === null ? null : value - cost };
+    gain: value === null || cost === null || appreciationGap(p) ? null : value - cost,
+    gainPct: appreciationGap(p) ? null : (p.value - p.cost) / p.cost * 100 };
 }
 export const propertyFigures = (p, owners = null) => figuresAtShare(p, propertyShare(p, owners));
 export const wholePropertyFigures = p => figuresAtShare(p, 1);

@@ -185,6 +185,37 @@ try {
   await page.getByRole("dialog").waitFor({ state: "hidden" });
   assert.equal(store.data.has(createdKey), false);
   assert.equal(store.data.size, 3);
+  // An inherited property: no purchase cost, current value only, appreciation absent with its reason.
+  const cellOf = async (name, label) => {
+    const headers = await page.locator("[data-real-estate-table] thead th").allInnerTexts();
+    const i = headers.findIndex(h => h.trim().toLowerCase() === label.toLowerCase());
+    assert.ok(i >= 0, `${label} column is shown`);
+    return (await page.locator("tbody [data-property]").filter({ hasText: name }).locator("td").nth(i).innerText()).trim();
+  };
+  await page.getByRole("button", { name: "Add property", exact: true }).first().click();
+  await fill("Property name", "Test inherited"); await fill("Owner 1", "Test owner A"); await fill("Share %", "100");
+  await page.getByRole("dialog").getByLabel(/^Acquisition/).selectOption("Inherited");
+  assert.equal(await page.getByLabel("Total cost (₹)", { exact: true }).count(), 0, "An inherited property is not asked for a purchase cost.");
+  await page.getByLabel("Date of inheritance", { exact: true }).waitFor();
+  await fill("Value on date of inheritance (₹)", "0"); await fill("Current value (₹)", "20000000");
+  await page.getByRole("button", { name: "Save property", exact: true }).click();
+  await visible("Leave the value on the date of inheritance blank if it is not known, rather than ₹0.");
+  await fill("Value on date of inheritance (₹)", "");
+  await page.getByRole("button", { name: "Save property", exact: true }).click(); await page.getByRole("button", { name: "Edit property", exact: true }).waitFor();
+  assert.equal([...store.data.values()].map(v => JSON.parse(v)).find(p => p.name === "Test inherited").cost, null);
+  await page.getByRole("dialog").getByText("Inherited · no cost", { exact: true }).waitFor();
+  await close();
+  assert.notEqual(await cellOf("Test inherited", "Current value"), "—");
+  for (const label of ["Cost", "Appreciation", "Appreciation %"]) {
+    const text = await cellOf("Test inherited", label);
+    assert.match(text, /^—\s+Inherited · no cost$/, `${label} is absent with its reason`);
+  }
+  await page.getByRole("button", { name: "Edit Test inherited", exact: true }).click();
+  await fill("Value on date of inheritance (₹)", "15000000");
+  await page.getByRole("button", { name: "Save property", exact: true }).click(); await page.getByRole("button", { name: "Edit property", exact: true }).waitFor(); await close();
+  assert.match(await cellOf("Test inherited", "Cost"), /On inheritance$/);
+  assert.match(await cellOf("Test inherited", "Appreciation %"), /^\+33\.33%\s+Since inheritance$/);
+  await page.screenshot({ path: path.join(out, "inherited.png"), fullPage: true });
   assert.deepEqual(errors, []);
   console.log("Real estate browser check passed: address-only search, choices, no match/error, approximate result, drag/save/reload, stale search, create, validate, retry, edit, filter, co-located pins, map editing, delete, light/dark and mobile. Free provider boundary mocked; production records untouched.");
 } catch (error) {

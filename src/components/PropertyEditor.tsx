@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useRef, useMemo, useState, type FormEvent } from "react";
 import { Plus, X } from "lucide-react";
 import { TextField, SelectField } from "@/components/FormBits";
-import { PROPERTY_TYPES, PROPERTY_STATUSES, AREA_UNITS, TITLE_STATUSES, validateProperty, type Property, type PropertyOwner } from "@/lib/realEstate";
+import { PROPERTY_TYPES, PROPERTY_STATUSES, AREA_UNITS, TITLE_STATUSES, ACQUISITION_TYPES, costLabel, receivedWithoutPurchase, validateProperty, type Property, type PropertyOwner } from "@/lib/realEstate";
 import { findPropertyAddress, type AddressMatch } from "@/lib/propertyMaps";
 const PropertyMap = lazy(() => import("./PropertyMap"));
 const options = (values: string[]) => values.map(value => ({ value, label: value }));
@@ -11,7 +11,7 @@ export function emptyProperty(): Property {
   return { id: crypto.randomUUID(), name: "", type: "", address: "", city: "", state: "", country: "India", pincode: "",
     owners: [{ ownerId: null, name: "", share: null }], area: null, areaUnit: "sq ft", areaBasis: "",
     cost: null, value: null, monthlyRent: null, monthlyCosts: null, debt: null,
-    purchasedOn: null, valuationDate: null, leaseEnd: null, status: "", tenant: "", titleStatus: "Not checked", notes: "", latitude: null, longitude: null };
+    purchasedOn: null, valuationDate: null, leaseEnd: null, acquisition: "", status: "", tenant: "", titleStatus: "Not checked", notes: "", latitude: null, longitude: null };
 }
 export function PropertyEditor({ property, members, onSave, onCancel }: {
   property: Property; members: { ownerId: string; label: string }[];
@@ -90,7 +90,8 @@ export function PropertyEditor({ property, members, onSave, onCancel }: {
         <TextField label="State" value={draft.state} onChange={v => set("state", v)} mono={false} />
         <TextField label="Country" value={draft.country} onChange={v => set("country", v)} mono={false} />
         <TextField label="PIN / postal code" value={draft.pincode} onChange={v => set("pincode", v)} />
-        <TextField label="Purchase date" value={draft.purchasedOn ?? ""} type="date" onChange={v => set("purchasedOn", v || null)} />
+        <SelectField label="Acquisition" blank="Not entered" value={draft.acquisition} options={options(ACQUISITION_TYPES)} onChange={v => set("acquisition", v)} />
+        <TextField label={draft.acquisition === "Inherited" ? "Date of inheritance" : draft.acquisition === "Gifted" ? "Date of gift" : "Purchase date"} value={draft.purchasedOn ?? ""} type="date" onChange={v => set("purchasedOn", v || null)} />
         {numberField("area", "Area")}
         <SelectField label="Area unit" blank="Not entered" value={draft.areaUnit} options={options(AREA_UNITS)} onChange={v => set("areaUnit", v)} />
         <SelectField label="Area basis" blank="Not entered" value={draft.areaBasis} options={options(["Plot", "Carpet", "Built-up", "Super built-up"])} onChange={v => set("areaBasis", v)} />
@@ -120,7 +121,8 @@ export function PropertyEditor({ property, members, onSave, onCancel }: {
       <div className="border-t border-ink-700 pt-4">
         <h3 className="h-section mb-3">Value & income · INR · whole property</h3>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {numberField("cost", "Total cost (₹)", "Include stamp duty, registration and improvements.")}
+          {receivedWithoutPurchase(draft) ? numberField("cost", `${costLabel(draft)} (₹)`, "There is no purchase cost. Leave blank if the value on that date is not known; appreciation then shows as —.")
+            : numberField("cost", "Total cost (₹)", "Include stamp duty, registration and improvements.")}
           {numberField("value", "Current value (₹)")}
           <TextField label="Valuation date" value={draft.valuationDate ?? ""} type="date" onChange={v => set("valuationDate", v || null)} />
           {numberField("monthlyRent", "Monthly rent (₹)")}
