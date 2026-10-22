@@ -49,7 +49,6 @@ import { AbsentCell, AbsentSection, AbsentValue, DASH } from "@/components/Absen
 import { costedFigures, VACUOUS_COST_REASON } from "@/lib/clubbedFigures";
 import { NavVsIndex } from "@/components/NavVsIndex";
 import { valuationDates, valuationNote, dateSpan } from "@/components/BasisPill";
-import { BENCHMARKS, benchmarkByKey } from "@/lib/benchmarks";
 import { DailyMovers } from "@/components/DailyMovers";
 import PortfolioReturns from "@/components/PortfolioReturns";
 import { SectorComposition } from "@/pages/SectorComposition";
@@ -187,10 +186,9 @@ const ALLOC_TITLE: Record<GroupAxis, string> = {
  *
  * THE LABELS ARE DELIBERATELY NOT THE CARD HEADINGS THEY OPEN. A tab's text
  * sits in `innerText` on every one of this page's routes, so a label repeating
- * a heading would satisfy a check on a tab that heading is not drawn on. One in
- * particular is BANNED: this page's own roadmap-absence check asserts the words
- * "NAV vs benchmark" never return, because they once named a promised feature —
- * so the third tab is named for the index it actually charts.
+ * a heading would satisfy a check on a tab that heading is not drawn on. The
+ * benchmark tab keeps the family's chosen name, "Our Book vs Benchmark"; its
+ * chart names the selected index.
  */
 const CIO_TABS = [
   // NOT "today" (MNT-11): the funds branch is a published NAV struck on its own
@@ -210,7 +208,7 @@ const CIO_TABS = [
    */
   { key: "sectors", label: "Sector Composition", title: "What the book is exposed to by sector — every issuer their statements report and their funds disclose (Consolidated), or the shares the family bought themselves (Direct Equity), for the members currently selected" },
   { key: "allocation", label: "Allocation & Risk", title: "How the book is split, what is still to be called, and where it is concentrated" },
-  { key: "nav", label: "NAV vs Nifty 500", title: "The book's own dated valuation series against the index, net of capital in and out" },
+  { key: "nav", label: "Our Book vs Benchmark", title: "The book's own dated valuation series against the index, net of capital in and out" },
   /**
    * ...AND A FOURTH, THE FAMILY'S OWN PRICE ALERTS (Stage 10cq). *"in morning
    * CIO can you make an ALL alerts tab where … whenever the alerts which have
@@ -254,15 +252,6 @@ export function MorningCIO() {
   // the tab's badge is how a reader on any of the other panels learns something
   // has fired. A HOOK, so it sits up here with the others, above the early return.
   const alerts = usePriceAlerts();
-  /**
-   * THE THIRD TAB NAMES THE BENCHMARK THE CHART BEHIND IT DRAWS. The NAV card
-   * lets the reader pick one (`?bench=`, read by `NavVsIndex` off the same
-   * param), and a tab still reading "Nifty 500" over a chart of the Sensex is a
-   * label not describing its panel. The default is unchanged, so the tab reads
-   * exactly what it always did until a reader picks another.
-   */
-  const [benchKey] = useViewParam(BENCHMARKS, {}, "bench");
-  const navTabLabel = `NAV vs ${benchmarkByKey(benchKey).label}`;
   // A HOOK, so it is declared here rather than beside the rows it arranges:
   // this component returns early on an unloaded book, and a hook after that is
   // a different bug from the one being fixed.
@@ -1405,7 +1394,7 @@ export function MorningCIO() {
                     ? "bg-champagne-500 text-ink-950 shadow-glow"
                     : "text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"
                 }`}>
-                {v.key === "nav" ? navTabLabel : v.label}
+                {v.label}
                 {/* HOW MANY ALERTS HAVE FIRED, on the tab itself — shown only
                     when some have, so a quiet day adds nothing to the header. */}
                 {v.key === "alerts" && alerts.counts.reached > 0 && (

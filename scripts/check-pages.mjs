@@ -21214,15 +21214,10 @@ const NAV_BENCH = [
       && c.benchKey === want[0]
       && c.titleText === `Portfolio NAV vs ${want[1]}`;
   }],
-  /**
-   * THE TAB NAMES THE INDEX ITS PANEL DRAWS. A tab still reading "NAV vs
-   * Nifty 500" over a chart of the Sensex is a label not describing its panel,
-   * which is the caption failure this page has already paid for twice.
-   */
-  ["Morning CIO's third tab names the benchmark its panel draws", (t, ctx) => {
+  ["Morning CIO's benchmark tab is named Our Book vs Benchmark", (t, ctx) => {
     const tabs = ctx?.cioTabs;
     if (tabs == null) return notChecked("the tab probe did not run on this pass");
-    return tabs.find((x) => x.key === "nav")?.label === `NAV vs ${wantedBenchLabel(ctx)}`;
+    return tabs.find((x) => x.key === "nav")?.label === "Our Book vs Benchmark";
   }],
   /**
    * EVERY OPTION SAYS WHERE ITS LINE COMES FROM, AND WHAT KIND OF INDEX IT IS.

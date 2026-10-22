@@ -303,6 +303,10 @@
 - Identical owner rows save once instead of blocking Save or doubling ownership. Partial or conflicting ownership stays editable; unknown shares remain unknown in family totals. Details show entered whole-property figures, so incomplete ownership does not hide the saved amounts there.
 - Record/API and local browser checks cover empty save/reload/edit, value without date or owner, duplicate-owner saving, missing shares, later additions, existing address search/dragging and unchanged valid share calculations. Production checks are read-only.
 
+### Stage 10ha — OUR BOOK VS BENCHMARK
+
+- Renamed the Morning CIO tab and its search result to “Our Book vs Benchmark”. The existing tab link and benchmark calculations stay the same.
+
 ### Stage 10hb — BSE QUOTES FOR YASH HIGHVOLTAGE AND NSE; YASH ROLLED ON THE REVIEW
 
 - *"use the BSE symbols for them to fetch live prices"* (the family, 22 Oct 2026), on the two Direct Equity names the movers card dropped as "No exchange symbol". Yash Highvoltage already had a BSE identity (`BSE:YASHHV`, `BSE_EQ|INE00GK01023`, scrip 544310) and was priced live on every other page; the movers models read day moves by NSE symbol alone. `moveSymbolFor` (NSE symbol, else the exchange-qualified quote key) now feeds `dailyMovers`, `insideMovers` and the card's wait list. The AIF & PMS card gains five mandate names the same way (Manali Petrochemical, Sasken, CreditAccess Grameen, Krishca, Punjab Chemicals), all resolved by exact ISIN.
