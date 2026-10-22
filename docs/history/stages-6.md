@@ -290,7 +290,14 @@
 - "Password-protected" is a measurement, not a guess. An `/Encrypt` dictionary marked 27 PDFs, but 12 (ICICI's payment advices, the HDFC folios) carry an empty user password and open freely. The build opens each with pdfjs and no password, and labels only the 15 that refuse.
 - `test:family` suite `statement preview`: every document's original is published, at the stated size, named `<docKey>.<format>`, the kind its format says (magic bytes, so never the SPA's index.html), byte for byte with `source/` where the file is committed outside an archive, and each bundled part at its own pages. Merged-cell layout and file sizes are covered too.
 
-### Stage 10gy — EXPLICIT ASSUMED HOLDINGS FILL PERIOD RETURN GAPS
+### Stage 10gy — ATTRIBUTION TABLES START UNDER THEIR TITLE
+
+*"there's a lot of empty space in this area, realign export excel in above empty space so that there is more space to see the below table"* — the family, 22 Oct 2026.
+- The Return attribution card stacked three rows above its table: the title with the axis tabs, an Edit Columns row (`AutoEditColumns`' own toolbar) and the Export Excel caption. Both controls now sit in the card header beside the axis tabs and Expand all, and on the Sector view in the Consolidated / Direct Equity row; the table header starts ~45 px below the card top instead of ~130 px at 1550 px wide.
+- `ExportableTable` takes an optional `controlsHost`: the control is drawn there (portal) instead of in a caption, and names its table (`data-export-for` ↔ `data-table-export-id`). `scripts/dev/table-excel.mjs` finds each table's one control either way (`exportControls`), so `assertTableExportControls` and the download/retry checks cover both placements. The two tables use `manualEditor` with `EditColumns` placed in the header.
+- Checked locally: export from the header downloads the complete table on both views; `check-selected-attribution`, `check-market-returns` and check:pages `cio-returns*` show no new findings.
+
+### Stage 10gz — EXPLICIT ASSUMED HOLDINGS FILL PERIOD RETURN GAPS
 
 - The family authorised carrying recorded shares/units forward where no later purchase, sale, withdrawal or transfer contradicts the balance. Public prices and checked splits/dividend entitlements fill eligible period values, gains and returns; source records, unknown purchase costs and private marks stay intact.
 - Return attribution, its capital bridge and Morning CIO period/history cards use the same eligible holding calculations and prefer usable statement returns. Every affected figure has an assumed label and an owner-specific clickable info explanation. Excel includes a Holding basis column.

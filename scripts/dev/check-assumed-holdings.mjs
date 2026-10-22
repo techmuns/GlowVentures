@@ -5,6 +5,7 @@ import { execFileSync } from 'node:child_process';
 import { build } from 'esbuild';
 import { chromium } from 'playwright-core';
 import ExcelJS from 'exceljs';
+import { exportControls } from './table-excel.mjs';
 const base = process.env.BASE || 'http://127.0.0.1:4173';
 assert.ok(['localhost','127.0.0.1'].includes(new URL(base).hostname) || /^[a-f0-9]{8}\.glowventures-1xw\.pages\.dev$/.test(new URL(base).hostname), 'tests use local or immutable preview only');
 const out = '.cache/assumed-holdings/browser'; await fs.mkdir(out,{recursive:true});
@@ -58,7 +59,7 @@ try {
  assert.ok(Math.abs(Number(bridge.bridgeGain)-Number(await panel.getAttribute('data-seg-total-gain')))<.01);
  // Exported numeric cells remain numeric; provenance survives in its own column.
  const table=panel.locator('table[data-seg-table]');
- const pending=page.waitForEvent('download'); await table.getByRole('button',{name:'Export Excel',exact:true}).click();
+ const pending=page.waitForEvent('download'); await (await exportControls(table)).getByRole('button',{name:'Export Excel',exact:true}).click();
  const download=await pending; const file=out+'/assumed-holdings.xlsx'; await download.saveAs(file);
  const workbook=new ExcelJS.Workbook(); await workbook.xlsx.readFile(file); const sheet=workbook.worksheets[0];
  assert.equal(sheet.views[0].state,'frozen'); assert.ok(sheet.columns.every(c=>c.width>=12));
