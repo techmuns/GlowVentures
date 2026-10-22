@@ -1339,7 +1339,7 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
                           </td>
                         </Tr>
                         {isOpen && (
-                          <tr className="bg-ink-900/50">
+                          <tr data-table-depth="1">
                             <td colSpan={sectorView.order.length} className="px-3 pb-3 pt-1">
                               <div className="overflow-hidden rounded-lg border border-ink-700 bg-ink-800">
                                 <div className="max-h-[320px] overflow-auto">
@@ -1505,7 +1505,7 @@ function Figure({ label, value, children, tone = "text-slate-100" }: {
 /** A group heading inside the transposed comparison — which SET the rows below are on. */
 function CompareGroup({ span, children }: { span: number; children: React.ReactNode }) {
   return (
-    <tr className="bg-ink-900/40" data-compare-group>
+    <tr className="tree-section-row bg-ink-900/40" data-compare-group>
       <td colSpan={span} className="label-xs px-3 pb-1 pt-2.5 text-champagne-400/80">{children}</td>
     </tr>
   );

@@ -1157,7 +1157,7 @@ export function HoldingsBehind() {
                               global mode — per row, opened on demand, rather than
                               a switch that reshapes the whole table. */}
                           {isOpen && g.rows.map((x) => (
-                            <Tr view={view} reviewScope={{ positions: [x] }} key={`${g.key}-${x.accountId}-${x.assetClass}`} className="bg-ink-900/40 text-[12px]">
+                            <Tr view={view} reviewScope={{ positions: [x] }} key={`${g.key}-${x.accountId}-${x.assetClass}`} data-table-depth="1" className="text-[12px]">
                               <td className="py-1.5 pl-10 pr-4 text-slate-400">
                                 {g.kind === "mandate"
                                   ? <Link to={stockHref(x.securityKey)} className="hover:text-champagne-400">{x.security}</Link>

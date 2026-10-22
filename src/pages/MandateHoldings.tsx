@@ -1890,7 +1890,7 @@ function ManagerTrades({ account, owner }: { account: Account; owner?: string })
                         </td>
                       </Tr>
                       {isOpen && ins.tranches.map((t, i) => (
-                        <Tr view={tradeView} key={`${ins.key}::${i}`} data-manager-tranche={ins.key} data-tranche-date={t.date} className="bg-ink-900/40 text-[12px]">
+                        <Tr view={tradeView} key={`${ins.key}::${i}`} data-manager-tranche={ins.key} data-tranche-date={t.date} data-table-depth="1" className="text-[12px]">
                           <td className="px-3 py-1 pl-8 text-slate-400">
                             {fmtDate(t.date)}
                             <span className={`ml-2 rounded px-1 py-0.5 text-[10px] ${t.side === "Buy" ? "bg-sky-500/15 text-sky-300" : "bg-amber-500/15 text-amber-300"}`}>{t.side}</span>

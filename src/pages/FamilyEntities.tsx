@@ -1555,7 +1555,7 @@ export function FamilyEntities() {
                   {groups.map((grp) => (
                     <Fragment key={grp.key}>
                       {showSections && (
-                        <tr className="bg-ink-900/50" data-fe-section={grp.key} data-fe-section-mv={grp.mv} data-fe-section-count={grp.rows.length}>
+                        <tr className="tree-section-row bg-ink-900/50" data-fe-section={grp.key} data-fe-section-mv={grp.mv} data-fe-section-count={grp.rows.length}>
                           <td colSpan={holdView.order.length} className="px-4 py-1.5">
                             <span className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-champagne-500">
                               {bucketLabel(grp.key)}
@@ -1584,7 +1584,7 @@ export function FamilyEntities() {
                                 {/* Indented, not merely shaded: the nesting has to
                                     read in both themes, and a translucent tint over
                                     a white card in light mode does not. */}
-                                <tr className="bg-ink-900/40">
+                                <tr data-table-depth="1">
                                   <td colSpan={holdView.order.length} className="py-1.5 pl-9 pr-4">
                                     <span className="flex flex-wrap items-center gap-2 text-[11.5px]">
                                       <Link to={`/mandate/${encodeURIComponent(mg.accountId)}`}
