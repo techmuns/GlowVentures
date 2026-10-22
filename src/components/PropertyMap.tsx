@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { hasPin, type Property } from "@/lib/realEstate";
+import { hasPin, propertyLabel, type Property } from "@/lib/realEstate";
 import { PROPERTY_COLORS, type PropertyMapProps } from "@/lib/propertyMaps";
 const NO_PROPERTIES: readonly Property[] = [];
 export default function PropertyMap({ properties = NO_PROPERTIES, onSelect, point, onPick }: PropertyMapProps) {
@@ -46,14 +46,14 @@ export default function PropertyMap({ properties = NO_PROPERTIES, onSelect, poin
     }
     for (const group of groups.values()) {
       const p = group[0];
-      const marker = L.marker([p.latitude!, p.longitude!], { title: group.map(p => p.name).join(", "),
+      const marker = L.marker([p.latitude!, p.longitude!], { title: group.map(propertyLabel).join(", "),
         icon: L.divIcon({ className: "property-pin-wrapper", iconSize: [30, 36], iconAnchor: [15, 34],
           html: `<span class="property-pin" style="background:${PROPERTY_COLORS[p.type] ?? PROPERTY_COLORS.Other}"><span>${group.length > 1 ? group.length : ""}</span></span>` }) }).addTo(layer);
       if (group.length === 1) marker.on("click", () => callbacks.current.onSelect?.(p));
       else {
         const list = document.createElement("div"); list.className = "property-pin-list";
         for (const item of group) {
-          const button = document.createElement("button"); button.type = "button"; button.textContent = item.name;
+          const button = document.createElement("button"); button.type = "button"; button.textContent = propertyLabel(item);
           button.addEventListener("click", () => callbacks.current.onSelect?.(item)); list.append(button);
         }
         marker.bindPopup(list);
