@@ -154,6 +154,10 @@ try {
   globalThis.fetch = async () => Response.json(fixture(100));
   await refreshTableInputs();
   assert.equal(getTableInputState().properties[0].value, 100);
+  const unchangedProperties = getTableInputState().properties, unchangedCalls = getTableInputState().calls;
+  await refreshTableInputs();
+  assert.equal(getTableInputState().properties, unchangedProperties, "unchanged refreshes keep property map markers mounted");
+  assert.equal(getTableInputState().calls, unchangedCalls);
   let resolveOld!: (r: Response) => void;
   globalThis.fetch = () => new Promise(resolve => { resolveOld = resolve; });
   const oldRead = refreshTableInputs();

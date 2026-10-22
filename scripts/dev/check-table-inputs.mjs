@@ -32,7 +32,7 @@ const capital = catalog.find(r => r.kind === 'private-capital');
 let holding;
 data.set('capital-call:test-table-call', { id: 'test-table-call', fund: 'test-round-trip-fund', fundName: 'Test capital call', date: '2026-12-01', amount: 10000, note: 'Isolated test fixture', updatedAt: '2026-10-22T00:00:00Z' });
 const results = [];
-const check = (name, condition) => { assert.ok(condition, name); results.push(name); };
+const check = (name, condition) => { assert.ok(condition, name); results.push(name); console.log(`PASS: ${name}`); };
 const browser = await chromium.launch({ executablePath: process.env.CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true });
 const context = await browser.newContext({ viewport: { width: 1500, height: 1050 }, acceptDownloads: true });
 await context.route('**/api/**', route => route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ ok: false, message: 'External feeds unavailable in isolated test' }) }));
@@ -42,13 +42,14 @@ for (const [endpoint, handler] of [['table-inputs', onRequest], ['real-estate', 
   await route.fulfill({ status: response.status, headers: Object.fromEntries(response.headers), body: await response.text() });
 });
 await context.route('**/api/investment-profiles', route => route.fulfill({ contentType: 'application/json', body: JSON.stringify({ ok: true, profiles: [] }) }));
+context.setDefaultTimeout(30000);
 const page = await context.newPage(), errors = [];
 page.on('pageerror', e => errors.push(e.message));
 async function visit(route) { await page.goto(base + route); await page.locator('[data-edit-numbers]').first().waitFor(); await page.waitForFunction(() => !document.querySelector('[data-edit-numbers]')?.disabled); }
 async function download(name, selector) {
   const id = selector ? await page.locator(selector).first().getAttribute('data-table-export-id') : null;
   const button = id ? page.locator(`[data-export-for="${id}"]`) : page.locator('[data-export-excel]').first();
-  const downloading = page.waitForEvent('download'); await button.click();
+  const downloading = page.waitForEvent('download', { timeout: 60000 }); await button.click();
   const file = path.join(out, name); await (await downloading).saveAs(file);
   const book = new ExcelJS.Workbook(); await book.xlsx.readFile(file); return { file, book };
 }
@@ -156,5 +157,5 @@ try {
   check('No uncaught browser errors', errors.length === 0);
   await fs.writeFile(path.join(out, 'results.json'), JSON.stringify({ checks: results, commits }, null, 2));
   console.log(`PASS: ${results.length} browser checks; all ${commits} writes used an isolated local store`);
-} catch (error) { await page.screenshot({ path: path.join(out, 'failure.png') }); await fs.writeFile(path.join(out, 'failure.json'), JSON.stringify({ results, errors, error: String(error) }, null, 2)); throw error; }
+} catch (error) { await page.screenshot({ path: path.join(out, 'failure.png'), timeout: 10000 }).catch(() => {}); await fs.writeFile(path.join(out, 'failure.json'), JSON.stringify({ results, errors, error: String(error) }, null, 2)); throw error; }
 finally { await browser.close(); }

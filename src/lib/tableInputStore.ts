@@ -10,6 +10,8 @@ export const getTableInputState = () => state;
 const listeners = new Set<() => void>();
 const subscribe = (fn: () => void) => { listeners.add(fn); return () => { listeners.delete(fn); }; };
 const emit = () => listeners.forEach(fn => fn());
+// A no-change refresh must not rebuild map markers or close their popups.
+const retainEqual = <T,>(old: T[], next: T[]): T[] => JSON.stringify(old) === JSON.stringify(next) ? old : next;
 let started = false, revision = 0, readTicket = 0, writes = Promise.resolve();
 async function reply(response: Response) {
   if (!response.headers.get("content-type")?.includes("application/json")) throw new Error("Sign in again to see and save corrected numbers.");
@@ -23,7 +25,7 @@ export async function refreshTableInputs() {
   const controller = new AbortController(), timeout = window.setTimeout(() => controller.abort(), 15000);
   try { const result = await reply(await fetch("/api/table-inputs", { credentials: "same-origin", cache: "no-store", signal: controller.signal }));
     if (v !== revision || ticket !== readTicket) return;
-    state = { catalog: result.catalog, saved: result.saved, properties: result.properties, calls: result.calls, loaded: true, status: "ready", error: "" }; emit();
+    state = { catalog: result.catalog, saved: result.saved, properties: retainEqual(state.properties, result.properties), calls: retainEqual(state.calls, result.calls), loaded: true, status: "ready", error: "" }; emit();
   } catch (e) { if (v === revision && ticket === readTicket) { state = { ...state, status: "error", error: e instanceof TypeError || controller.signal.aborted ? "The saved numbers could not be loaded. Check your connection and try again." : (e as Error).message }; emit(); } }
   finally { window.clearTimeout(timeout); }
 }
@@ -57,7 +59,7 @@ export async function saveTableInputs(changes: InputChange[]) {
   const run = writes.then(async () => {
     try {
       const result = await reply(await fetch("/api/table-inputs", { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: JSON.stringify({ changes }) }));
-      revision++; state = { catalog: result.catalog, saved: result.saved, properties: result.properties, calls: result.calls, loaded: true, status: "ready", error: "" }; emit();
+      revision++; state = { catalog: result.catalog, saved: result.saved, properties: retainEqual(state.properties, result.properties), calls: retainEqual(state.calls, result.calls), loaded: true, status: "ready", error: "" }; emit();
       window.dispatchEvent(new Event("glow:table-inputs-saved"));
     } catch (e) { failure = e instanceof TypeError ? new Error("The save could not be confirmed. Refresh to check your numbers before trying again.") : e as Error; }
   });

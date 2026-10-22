@@ -33,7 +33,7 @@ export function useProperties() {
     const reply = await request(undefined, c.signal);
     if (c.signal.aborted || version !== revision.current) return;
     setLoading(false);
-    if (reply.ok) { setProperties(reply.properties!); setReady(true); setError(""); }
+    if (reply.ok) { setProperties(previous => JSON.stringify(previous) === JSON.stringify(reply.properties) ? previous : reply.properties!); setReady(true); setError(""); }
     else setError(reply.message);
   }, []);
   useEffect(() => {
