@@ -379,6 +379,21 @@ test('automatic publication verifies nested ZIP leaf bytes at their exact invent
   const wrong = automaticFixture({ zip: true, changeDocument: d => ({ ...d, sourcePath: d.sourcePath.replace('/inner/', '/wrong-account/') }) });
   assert.throws(() => wrong.check(wrong.file), /no retained or uploaded source evidence/);
 });
+test('automatic delivery accepts encrypted source-bound previews and rejects unrelated or disguised files', async () => {
+  const { sealPreview } = await import('../../../shared/statementPreviewCrypto.mjs');
+  const sealed = await sealPreview(Buffer.from('%PDF-unlocked-copy'), new Uint8Array(32), digest('%PDF-new-statement'), 'b'.repeat(64));
+  const hash = digest('%PDF-new-statement');
+  const good = automaticFixture({ mutate: ({ put }) => put(`public/statement-previews/${hash}.bin`, sealed) });
+  assert.equal(good.check(good.file).documents, 1);
+  for (const [name, bytes, error] of [
+    ['a'.repeat(64) + '.bin', sealed, /bound to a verified source/],
+    [hash + '.bin', '%PDF-never-commit-clear-copies', /Invalid encrypted preview/],
+    [hash + '.js', 'unexpected code', /cannot change code or policy/],
+  ]) {
+    const bad = automaticFixture({ mutate: ({ put }) => put(`public/statement-previews/${name}`, bytes) });
+    assert.throws(() => bad.check(bad.file), error);
+  }
+});
 test('a new delivery may update historical document links while retaining exact earlier source bytes', () => {
   for (const historyZip of [false, true]) {
     const { file, check } = automaticFixture({ relinkHistory: true, historyZip }); assert.equal(check(file).documents, 2);

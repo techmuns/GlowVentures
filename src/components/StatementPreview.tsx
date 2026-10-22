@@ -86,7 +86,7 @@ function usePages(docKey: string): Loaded {
 
 type Original =
   | { status: "loading" }
-  | { status: "ready"; file: PublishedFile; url: string }
+  | { status: "ready"; file: PublishedFile; url: string; previewUrl: string }
   | { status: "missing"; reason: string };
 
 // One index per page load: it lists every file the build published.
@@ -105,7 +105,11 @@ function useOriginal(docKey: string): Original {
     loadIndex()
       .then((index): Original => {
         const file = index.files?.[docKey];
-        if (file) return { status: "ready", file, url: `${BASE}statement-files/${encodeURIComponent(file.file)}` };
+        if (file) {
+          const url = `${BASE}statement-files/${encodeURIComponent(file.file)}`;
+          return { status: "ready", file, url,
+            previewUrl: file.preview ? `${BASE}api/statement-previews/${encodeURIComponent(file.preview.file)}` : url };
+        }
         return { status: "missing", reason: index.missing?.[docKey] ?? "This build did not publish the original file." };
       })
       .catch((e: Error): Original => ({ status: "missing", reason: `The list of published files did not load (${e.message}).` }))
@@ -414,7 +418,7 @@ export function StatementPreview({ doc, onClose }: { doc: LibraryDoc; onClose: (
               <span className="text-sm font-semibold text-slate-100">{doc.reportLabel}</span>
               <Pill>{doc.format}</Pill>
               {published && <Pill>{fileSize(published.file.bytes)}</Pill>}
-              {published?.file.encrypted && (
+              {published?.file.encrypted && !published.file.preview && (
                 <Pill tone="warn" icon={<Lock className="h-3 w-3" />}>
                   <span title="This PDF opens with its account holder's statement password, and the viewer asks for it. Its text, as read, needs none.">
                     Password-protected
@@ -443,7 +447,7 @@ export function StatementPreview({ doc, onClose }: { doc: LibraryDoc; onClose: (
                 <a href={published.url} download={doc.fileName} className={ACTION} title={`Download ${doc.fileName}`} data-preview-download>
                   <Download className="h-3.5 w-3.5" /> Download
                 </a>
-                <a href={published.url} target="_blank" rel="noopener noreferrer" className={ACTION} title="Open the original file in a new tab">
+                <a href={published.previewUrl} target="_blank" rel="noopener noreferrer" className={ACTION} title="Open the file in a new tab">
                   <ExternalLink className="h-3.5 w-3.5" /> New tab
                 </a>
               </>
@@ -475,7 +479,7 @@ export function StatementPreview({ doc, onClose }: { doc: LibraryDoc; onClose: (
           {view === "original" && published && (sheet
             ? <OriginalSheets url={published.url} format={doc.format} />
             : <Suspense fallback={<Opening what="Opening PDF…" />}>
-                <OriginalPdf key={published.url} url={published.url} file={published.file} title={`${doc.reportLabel} — ${doc.fileName}`} />
+                <OriginalPdf key={published.previewUrl} url={published.previewUrl} file={published.file} title={`${doc.reportLabel} — ${doc.fileName}`} />
               </Suspense>)}
 
           {view === "text" && loaded.status === "loading" && <Opening what="Opening the file…" />}

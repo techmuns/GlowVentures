@@ -18,6 +18,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Salted SHA-256 of the dashboard password. Managed by `npm run set-password`.
+import { PREVIEW_COOKIE, SESSION_DOMAIN, previewKeyBytes, keyCookieValue } from '../shared/statementPreviewCrypto.mjs';
 const PASSWORD_HASH = "6da1b78fa68be61bd96cd363385ad72f91460c60c5b95447bfe54309f07dc774";
 
 // Fixed domain-separator folded into the hash (not a secret). Must stay in sync
@@ -34,7 +35,8 @@ async function sha256hex(str) {
 const hashPassword = (pw) => sha256hex(`${PEPPER}\n${pw}`);
 // Session cookie value is derived from the password hash, so rotating the
 // password automatically invalidates every previously issued session cookie.
-const sessionToken = () => sha256hex(`session::v1\n${PASSWORD_HASH}`);
+// v2 asks existing sessions to sign in once to provision the preview key.
+const sessionToken = () => sha256hex(`${SESSION_DOMAIN}\n${PASSWORD_HASH}`);
 
 // Constant-time string compare (avoid leaking match length via early return).
 function timingSafeEqual(a, b) {
@@ -69,6 +71,9 @@ function cookieHeader(value, maxAge) {
   // phase out unpartitioned third-party cookies.
   const parts = [`${COOKIE}=${value}`, "Path=/", "HttpOnly", "Secure", "SameSite=None", "Partitioned", `Max-Age=${maxAge}`];
   return parts.join("; ");
+}
+function previewCookie(value, maxAge) {
+  return `${PREVIEW_COOKIE}=${value}; Path=/api/statement-previews/; HttpOnly; Secure; SameSite=None; Partitioned; Max-Age=${maxAge}`;
 }
 
 const htmlResponse = (body, status = 200, extraHeaders = {}) =>
@@ -151,9 +156,12 @@ export async function onRequest(context) {
 
   // Sign out — clear the cookie and bounce to the login page.
   if (url.pathname === "/__auth/logout") {
+    const headers = new Headers({ Location: '/', 'Cache-Control': 'no-store' });
+    headers.append('Set-Cookie', cookieHeader('', 0));
+    headers.append('Set-Cookie', previewCookie('', 0));
     return new Response(null, {
       status: 302,
-      headers: { Location: "/", "Set-Cookie": cookieHeader("", 0), "Cache-Control": "no-store" },
+      headers,
     });
   }
 
@@ -165,9 +173,12 @@ export async function onRequest(context) {
     try { pw = String((await request.formData()).get("password") ?? ""); } catch { pw = ""; }
     const dest = safeNext(url.searchParams.get("next"));
     if (configured && timingSafeEqual(await hashPassword(pw), PASSWORD_HASH)) {
+      const headers = new Headers({ Location: dest, 'Cache-Control': 'no-store' });
+      headers.append('Set-Cookie', cookieHeader(await sessionToken(), MAX_AGE));
+      headers.append('Set-Cookie', previewCookie(keyCookieValue(await previewKeyBytes(pw)), MAX_AGE));
       return new Response(null, {
         status: 302,
-        headers: { Location: dest, "Set-Cookie": cookieHeader(await sessionToken(), MAX_AGE), "Cache-Control": "no-store" },
+        headers,
       });
     }
     return htmlResponse(loginPage({ error: true, next: dest }), 401);

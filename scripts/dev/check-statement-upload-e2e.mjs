@@ -140,7 +140,8 @@ try {
   fs.writeFileSync(path.join(bin, 'gh'), '#!/usr/bin/env node\nimport(' + JSON.stringify(pathToFileURL(path.join(root, 'scripts/dev/statement-e2e-git.mjs')).href) + ').then(m=>m.cli());\n', { mode: 0o700 });
   const offline = path.join(output, 'offline-master.csv'); fs.writeFileSync(offline, 'SYMBOL,NAME OF COMPANY,ISIN NUMBER,SERIES\n');
   const workerEnv = { PATH: bin + path.delimiter + environment.PATH, GLOW_E2E_CONTROL: marker, GLOW_INTAKE_MAIN: publishedBranch,
-    GLOW_DASHBOARD_PASSWORD: 'local-e2e-only', GLOW_NSE_CSV_MAINBOARD: offline, GLOW_NSE_CSV_SME: offline, GLOW_NSE_CSV_ETF: offline };
+    GLOW_DASHBOARD_PASSWORD: 'local-e2e-only', GLOW_PDF_PASSWORDS: 'synthetic-e2e-password',
+    GLOW_NSE_CSV_MAINBOARD: offline, GLOW_NSE_CSV_SME: offline, GLOW_NSE_CSV_ETF: offline };
   const inboxGit = localGit(remote);
   const inboxLog = () => JSON.parse(inboxGit(['show', 'refs/heads/statement-inbox:inbox.json']));
   const rawFilesRemain = () => {

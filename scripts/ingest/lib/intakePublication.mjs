@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { digest } from './publication.mjs';
 import { publicationGate } from '../finalize-delivery.mjs';
 import { verifyAutomaticPublication } from './automaticPublication.mjs';
+import { SESSION_DOMAIN } from '../../../shared/statementPreviewCrypto.mjs';
 
 export function completedBotReview(pr) {
   for (const comment of [...(pr.comments ?? [])].reverse()) {
@@ -50,7 +51,7 @@ export async function readDeployedPublication({ credential, baseURL = 'https://g
   const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
   const middleware = fs.readFileSync(path.join(root, 'functions/_middleware.js'), 'utf8');
   const pepper = JSON.parse(/const PEPPER = ("[^"\n]+");/.exec(middleware)[1]);
-  const session = digest(`session::v1\n${digest(`${pepper}\n${credential}`)}`);
+  const session = digest(`${SESSION_DOMAIN}\n${digest(`${pepper}\n${credential}`)}`);
   const get = async relative => {
     const response = await fetchImpl(new URL(relative, baseURL).href, { method: 'GET', redirect: 'error',
       headers: { Cookie: `glow_auth=${session}`, 'Cache-Control': 'no-cache' } });

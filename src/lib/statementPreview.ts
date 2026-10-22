@@ -25,8 +25,10 @@ export interface PublishedFile {
   /** The published file name — `<docKey>.<ext>`. */
   file: string;
   bytes: number;
-  /** A PDF that opens only with its password; the in-app viewer asks for it. */
+  /** Whether the untouched original requires a password. */
   encrypted: boolean;
+  /** Passwordless copy, bound to this exact original at build time. No secrets. */
+  preview?: { file: string; bytes: number };
   /** One statement cut from a bundled PDF: the pages of the file it occupies. */
   part: { from: number; to: number } | null;
 }
