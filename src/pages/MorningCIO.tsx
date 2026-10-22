@@ -398,7 +398,7 @@ export function MorningCIO() {
     } = commitments.length || enteredCapital.length
       ? {
         committed: (distFig.committed ?? 0) + fundDeploy.committed,
-        drawn: sumOrNull([...counted.map((c) => c.drawn), ...enteredCapital.map(f => f.position!.enteredCapital!.paid ?? null), modelTerm(fundDeploy.drawn)]),
+        drawn: sumOrNull([distFig.called, modelTerm(fundDeploy.drawn)]),
         distributed: sumOrNull([distFig.distributed, modelTerm(fundDeploy.distributed)]),
         currentValue: fundDeploy.currentValue,
         unfunded: sumOrNull([distFig.uncalled, modelTerm(fundDeploy.unfunded)]),
@@ -422,7 +422,7 @@ export function MorningCIO() {
       const undrawnOf = counted.filter((c) => c.undrawn != null).length + enteredCapital.filter(f => f.position!.enteredCapital!.undrawn != null).length;
       const oldest = dates[0] ?? null;
       const oldestUndrawn = oldest ? sum(counted.filter((c) => c.asOf === oldest).map((c) => c.undrawn ?? 0)) : 0;
-      return { count: counted.length + enteredCapital.length, undrawnOf, first: oldest, last: dates[dates.length - 1] ?? null, oldestUndrawn };
+      return { count: counted.length + enteredCapital.length, calledOf: distFig.calledOf, undrawnOf, first: oldest, last: dates[dates.length - 1] ?? null, oldestUndrawn };
     })();
     // How many private instruments the book actually carries. Zero means the
     // segment is ABSENT, not that it measured nothing — every private figure
@@ -1824,7 +1824,7 @@ export function MorningCIO() {
                     className="block rounded-md transition-colors hover:bg-ink-700/30">
                     <ul className="text-sm">
                       <li className="flex items-center justify-between py-2"><span className="text-slate-400">Fund commitments</span><span className="mono text-slate-100">{money(m.deploy.committed)}</span></li>
-                      <li className="flex items-center justify-between border-t border-ink-700/60 py-2"><span className="text-slate-400">Called / drawn &mdash; capital deployed</span><span className="mono text-slate-100">{m.deploy.drawn === null ? <AbsentCell reason="no capital account in this book prints what was called" /> : money(m.deploy.drawn)}</span></li>
+                      <li className="flex items-center justify-between border-t border-ink-700/60 py-2"><span className="text-slate-400">Called / drawn &mdash; capital deployed</span><span className="mono text-right text-slate-100">{m.deploy.drawn === null ? <AbsentCell reason="no capital account in this book prints what was called" /> : money(m.deploy.drawn)}{m.fundCount === 0 && m.capCoverage.calledOf < m.capCoverage.count && <small className="block text-[10px] text-slate-500">{m.capCoverage.calledOf} of {m.capCoverage.count} records</small>}</span></li>
                       <li className="flex items-center justify-between border-t border-ink-700/60 py-2"><span className="text-slate-400">Undrawn &mdash; uncalled capital</span><span className="mono text-amber-400">{m.deploy.unfunded === null ? <AbsentCell reason="no capital account in this book prints an undrawn figure" /> : money(m.deploy.unfunded)}</span></li>
                       <li className="flex items-center justify-between border-t border-ink-700/60 py-2"><span className="text-slate-400">Distributions received</span><span className="mono text-slate-100" title={m.distAbsent || m.deploy.distributed === null ? "No private-market fund's papers report a distribution" : undefined}>{m.distAbsent || m.deploy.distributed === null ? DASH : money(m.deploy.distributed)}</span></li>
                     </ul>

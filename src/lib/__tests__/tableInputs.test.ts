@@ -78,6 +78,7 @@ assert.equal(position.quantity, 0);
 assert.equal(position.enteredCapital?.paid, 100);
 const folios = privateBookFolios(applied, []).folios.filter(f => f.position === position);
 assert.equal(figuresOf(folios, true).paid, 100, "new capital numbers reach the shared private-book rollup");
+assert.equal(figuresOf(folios, true).called, null, "paid capital never fills a missing called amount");
 assert.equal(figuresOf(folios, true).committed, null, "a partial manual record never invents a commitment");
 assert.equal(applyTableInputs(book, [])!.positions, BOOK_POSITIONS, "removing edits restores source references");
 assert.equal(applySavedInputs(source, [{ ...edits[0], source: "old source" }]).find(r => r.id === target.id)!.values.quantity, null, "a changed source retires an older correction");
