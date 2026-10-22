@@ -36,7 +36,7 @@ import type { Account, Position } from "./types";
 import { MANDATE_BUCKET, currentHoldings, holdingBucket, mandateLabel } from "./analytics";
 import { accountIndex, engagementOf } from "./accounts";
 import { dailyMovers, latestQuoteSession, quoteSession, symbolMove } from "./dailyMovers";
-import { priceLooksLikeSameSecurity, symbolFor, symbolForKey, type QuoteFeed } from "./quotes";
+import { moveSymbolFor, priceLooksLikeSameSecurity, symbolForKey, type QuoteFeed } from "./quotes";
 import { marketDay, movesCloseBasis, type ActionFeed, type ActionReturn } from "./corporateActions";
 import { familyValue } from "./lookthrough";
 import { securityLabel } from "./securityLabel";
@@ -202,7 +202,7 @@ export function insideMovers(args: {
   // that is one figure.
   const symbolByKey = new Map<string, string>();
   for (const p of mandate) {
-    const s = symbolFor(p);
+    const s = moveSymbolFor(p);
     if (s && !symbolByKey.has(p.securityKey)) symbolByKey.set(p.securityKey, s);
   }
   const symbolOf = (key: string) => symbolByKey.get(key) ?? symbolForKey(key);
@@ -220,7 +220,7 @@ export function insideMovers(args: {
   // THE SESSION IS RESOLVED OVER BOTH HALVES, so neither can be struck on a
   // session the other is not on.
   const session = latestQuoteSession(quotes, [
-    ...mandate.map((p) => symbolFor(p)),
+    ...mandate.map((p) => moveSymbolFor(p)),
     ...[...disclosedKeys].map(symbolOf),
   ]);
 
@@ -350,7 +350,7 @@ export function insideMovers(args: {
 
   const includedSymbols = [...rows.keys()].map(symbolOf).filter(Boolean) as string[];
   const scopeSymbols = [...new Set(
-    [...mandate.map((p) => symbolFor(p)), ...[...disclosedKeys].map(symbolOf)]
+    [...mandate.map((p) => moveSymbolFor(p)), ...[...disclosedKeys].map(symbolOf)]
       .filter((s): s is string => Boolean(s)),
   )];
   const observations = includedSymbols.map((s) => {
@@ -392,7 +392,7 @@ export function insideMovers(args: {
       if (!row) {
         return { securityKey: p.securityKey, security, value: p.marketValue, weightPct: null,
           dayChangePct: null, dayChange: null,
-          why: omitted.get(p.securityKey) ?? (symbolFor(p) ? "Awaiting a quote" : "No NSE listing, so no live quote") };
+          why: omitted.get(p.securityKey) ?? (moveSymbolFor(p) ? "Awaiting a quote" : "No exchange listing, so no live quote") };
       }
       const impact = p.live && Number.isFinite(p.dayChange) && Number.isFinite(p.dayChangePct) ? p.dayChange! : null;
       return { securityKey: p.securityKey, security, value: p.marketValue, weightPct: null,

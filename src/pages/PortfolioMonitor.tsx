@@ -4262,7 +4262,10 @@ export function PortfolioMonitor() {
                           // check demanded a return this row correctly refuses.
                           // The value rides here so the checker can add it back.
                           data-cat-atcost={tot.atCostMV || undefined}
-                          data-cat-atcost-n={tot.atCostCount || undefined}>
+                          data-cat-atcost-n={tot.atCostCount || undefined}
+                          // A holding whose sale cash is unverified refuses the
+                          // pooled return whatever the coverage (Stage 10hb).
+                          data-cat-hpr-unverified={tot.fifo.hprUnavailableReason ? "" : undefined}>
                           <td className="py-1.5 pl-[2.1rem] pr-2 text-slate-200">
                             {label} <span className="font-normal text-slate-500">· total</span>
                           </td>

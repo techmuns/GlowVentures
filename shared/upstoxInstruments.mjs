@@ -584,6 +584,12 @@ export const UPSTOX_INSTRUMENTS = Object.freeze({
   "series": "IF",
   "joinedBy": "isin"
  },
+ "BSE:NSE": {
+  "key": "BSE_EQ|INE721I01024",
+  "tradingSymbol": "NSE",
+  "series": "A",
+  "joinedBy": "isin"
+ },
  "BSE:YASHHV": {
   "key": "BSE_EQ|INE00GK01023",
   "tradingSymbol": "YASHHV",
@@ -4060,6 +4066,7 @@ export const UPSTOX_SECURITY_SYMBOLS = Object.freeze({
  "multi-commodity-exchange-of-india": "MCX",
  "muthoot-finance": "MUTHOOTFIN",
  "national-aluminium": "NATIONALUM",
+ "national-stock-exchange-of-india": "BSE:NSE",
  "navin-fluorine-international": "NAVINFLUOR",
  "navneet-education": "NAVNETEDUL",
  "nbcc-india": "NBCC",
@@ -4810,6 +4817,7 @@ export const UPSTOX_ISIN_SYMBOLS = Object.freeze({
  "INE703B01027": "RATNAMANI",
  "INE716A01013": "WHIRLPOOL",
  "INE721A01047": "SHRIRAMFIN",
+ "INE721I01024": "BSE:NSE",
  "INE726G01019": "ICICIPRULI",
  "INE726V01018": "PRICOLLTD",
  "INE732I01021": "ANGELONE",
@@ -4915,4 +4923,4 @@ export const UPSTOX_ISIN_SYMBOLS = Object.freeze({
  "INE999A01023": "KSB",
  "INF732E01037": "LIQUIDBEES"
 });
-export const UPSTOX_INSTRUMENT_COVERAGE = Object.freeze({"asked":610,"mapped":610,"unmapped":[]});
+export const UPSTOX_INSTRUMENT_COVERAGE = Object.freeze({"asked":611,"mapped":611,"unmapped":[]});

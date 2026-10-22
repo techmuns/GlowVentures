@@ -38,6 +38,12 @@ plan.lines.push({ action: { ...saved.rows[0], type: "split", exDate: "2026-09-28
 assert.equal(dailyMovers([p], q, new Map([[positionActionKey(p), plan]]), owners).rows.length, 0, "an ex-date split cannot print an unverified -50% price move");
 plan.lines.splice(0, plan.lines.length, { action: { ...saved.rows[0], type: "buyback", exDate: "2026-09-28" }, status: "elective", quantity: null, amount: null, reason: null });
 assert.equal(dailyMovers([p], q, new Map([[positionActionKey(p), plan]]), owners).rows[0]?.dayChange, 1000, "a buyback's ex-date leaves the close basis alone (Stage 10gr)");
+const bseOnly = { ...p, securityKey: "yash-highvoltage", symbol: null, isin: "INE00GK01023" };
+const bq: QuoteFeed = { ...q, quotes: { "BSE:YASHHV": { ...q.quotes[symbolFor(p)!] } } };
+assert.equal(symbolFor(bseOnly), null);
+const bseRow = dailyMovers([bseOnly], bq, new Map(), owners).rows[0];
+assert.ok(bseRow && Math.abs(bseRow.dayChangePct - 10) < 1e-9 && bseRow.dayChange === 1000,
+  "a BSE-only listing ranks under its exchange-qualified key (Stage 10hb)");
 const missingClose = structuredClone(q); missingClose.quotes[symbolFor(p)!].prevClose = null;
 assert.equal(dailyMovers([p], missingClose, new Map(), owners).rows.length, 0);
 assert.equal(dailyMovers([p], null, new Map(), owners).rows.length, 0);

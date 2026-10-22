@@ -29,7 +29,7 @@ import { mkdirSync, writeFileSync, readFileSync, readdirSync } from "node:fs";
 // The book's own normalisation, so the checker keys a disclosed name exactly as
 // the extractor keyed a position — the same file both sides of the app read.
 import { securityKeyOf, stripDepositoryTail, splitFundClass } from "../shared/securityKey.mjs";
-import { UPSTOX_INSTRUMENTS } from "../shared/upstoxInstruments.mjs";
+import { UPSTOX_INSTRUMENTS, UPSTOX_ISIN_SYMBOLS, UPSTOX_SECURITY_SYMBOLS } from "../shared/upstoxInstruments.mjs";
 // THE FAMILY'S OWN PLACING OF THE FUNDS THEY HOLD, read as DATA — the committed
 // table, never the function that applies it. The ORDER the placing is applied
 // in (family, then private equity, then the SEBI category) is re-expressed
@@ -285,16 +285,20 @@ function withRolledForward(rows) {
     const rf = p.rolledForward;
     if (!rf) return [p];
     if (rf.quantity === 0) return [];
-    const mv = p.currentPrice === null || p.currentPrice === undefined ? p.marketValue : rf.quantity * p.currentPrice;
+    // A statement printing a value and no price marks a unit at that value over
+    // its own units (Stage 10hb, the review's roll of Yash Highvoltage).
+    const mark = p.currentPrice ?? (p.quantity > 0 ? p.marketValue / p.quantity : null);
+    const mv = mark === null ? p.marketValue : rf.quantity * mark;
     const cost = rf.costBasis;
     const unreal = cost === null ? null : mv - cost;
-    const denom = cost === null ? null : cost + (rf.costOfUnitsSold ?? 0);
+    const denom = cost === null || rf.hprUnavailableReason ? null : cost + (rf.costOfUnitsSold ?? 0);
     return [{
       ...p, statedQuantity: p.quantity, quantity: rf.quantity, marketValue: mv, costBasis: cost,
       avgCost: cost === null || !(rf.quantity > 0) ? null : cost / rf.quantity,
       unrealizedPnL: unreal, realizedPnL: rf.realizedPnL, costOfUnitsSold: rf.costOfUnitsSold,
       realizedLotsAfter: 0,
       returnPct: cost === null || !(cost > 0) || !(denom > 0) ? null : ((unreal + (rf.realizedPnL ?? 0) + (p.dividendReceived ?? 0)) / denom) * 100,
+      ...(rf.hprUnavailableReason ? { hprUnavailableReason: rf.hprUnavailableReason } : {}),
     }];
   });
 }
@@ -12357,6 +12361,14 @@ const INSIDE_BOOK = (() => {
  * this file: a check that imports the helper it is checking agrees with it by
  * construction.
  */
+/** Whether the checker's model of the live book carries a holding whose HPR is unverified (Stage 10hb). */
+const HPR_UNVERIFIED_IN_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    return (bookArray(src, "BOOK_POSITIONS") ?? []).some((p) => !!p.hprUnavailableReason);
+  } catch { return false; }
+})();
+
 const DIRECT_EQUITY_SYMBOLS = (() => {
   try {
     const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
@@ -12369,7 +12381,10 @@ const DIRECT_EQUITY_SYMBOLS = (() => {
       const e = engagement.get(p.accountId);
       if (e === "PMS" || p.assetClass !== "Equity") continue;
       if (e !== "Direct" && e !== "Execution") continue;
-      const sym = p.symbol || symbols[p.securityKey];
+      // NSE symbol first, else the committed exchange-qualified key by ISIN or
+      // security key — a BSE-only listing (Stage 10hb) is waited on too.
+      const sym = p.symbol || symbols[p.securityKey]
+        || (p.isin ? UPSTOX_ISIN_SYMBOLS[p.isin.trim().toUpperCase()] : null) || UPSTOX_SECURITY_SYMBOLS[p.securityKey];
       if (sym) out.add(sym);
     }
     // …and the listed shares a transaction-only demat reports (Stage 10cy),
@@ -15259,6 +15274,11 @@ const CATEGORY_TOTALS = [
       // reads as full coverage on a row that correctly refuses a return.
       const atCost = (r.atCost ?? 0) / 1e7;
       if (!Number.isFinite(mv)) return false;
+      // A HOLDING WHOSE SALE CASH IS UNVERIFIED (Stage 10hb, Yash Highvoltage
+      // rolled on the review's June sales): a pooled return is never partial,
+      // so the row refuses one whatever its coverage — and the book must carry
+      // such a holding for the row to claim it.
+      if (r.hprUnverified) { if (ret !== null || !HPR_UNVERIFIED_IN_BOOK) return false; asserted++; continue; }
       // A CATEGORY MEASURED AT NIL IS DECIDABLE, and this book has one: Cash is
       // ₹0 because every statement behind it reports a nil balance. There is
       // nothing to divide, so the return must be refused — and the first draft
@@ -42183,6 +42203,8 @@ for (const theme of THEMES) {
           const acn = tr.getAttribute("data-cat-atcost-n");
           return {
             text, title, capital, costHeld, realised,
+            // A holding whose sale cash is unverified refuses the pooled return (Stage 10hb).
+            hprUnverified: tr.hasAttribute("data-cat-hpr-unverified"),
             atCost: ac == null || ac === "" ? 0 : Number(ac),
             atCostLines: acn == null || acn === "" ? 0 : Number(acn),
           };
