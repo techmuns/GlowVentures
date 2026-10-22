@@ -30,3 +30,6 @@ public/publication.json
 # The original statement files, copied out of source/ by build:statement-files
 # for the Statement Library's preview — source/ is the committed copy.
 public/statement-files/
+
+# PDF.js resources copied from the installed, locked dependency.
+public/pdf-assets/

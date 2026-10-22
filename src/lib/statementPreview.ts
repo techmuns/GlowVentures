@@ -25,7 +25,7 @@ export interface PublishedFile {
   /** The published file name — `<docKey>.<ext>`. */
   file: string;
   bytes: number;
-  /** A PDF that opens only with its password; the browser's viewer asks for it. */
+  /** A PDF that opens only with its password; the in-app viewer asks for it. */
   encrypted: boolean;
   /** One statement cut from a bundled PDF: the pages of the file it occupies. */
   part: { from: number; to: number } | null;
