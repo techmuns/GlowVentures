@@ -145,6 +145,9 @@ try {
  assert.ok(purchases.every(p=>p.first>='2026-04-01' && p.last<='2026-10-22'));
  const weighted=purchases.reduce((n,p)=>n+p.value*p.pct,0)/purchases.reduce((n,p)=>n+p.value,0);
  assert.ok(Math.abs(weighted-counts.pct)<1e-8,'this year’s return uses only the included units and their portfolio weights');
+ await yearly.locator('th[data-col="cost"]').click();
+ const costs=await yearly.locator('[data-year-row]').evaluateAll(els=>els.map(el=>+el.dataset.yearCost));
+ assert.ok(costs.every((n,i)=>i===0||n>=costs[i-1]),'purchase-cost sorting follows the real amounts');
  await yearly.getByRole('button',{name:'What is included in this year’s investments?',exact:true}).click();
  assert.match(await dialog.innerText(),/older purchases/);
  await dialog.getByText(`Dates or values to check (${counts.missing})`,{exact:true}).click();
