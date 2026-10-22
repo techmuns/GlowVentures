@@ -219,6 +219,9 @@ export type RecoveredHoldingCost = {
 export type PolycabHolding = Omit<Position, "marketValue"> & { marketValue: number | null };
 
 export type Position = {
+  /** Explicit family corrections; original statement records remain separate. */
+  enteredNumbers?: string[];
+  enteredCapital?: Record<string, number | null>;
   /** Exact normalized record selected by the builder, before any live overlay. */
   statementRecord?: { document: string; pointer: string };
   /** Price overlays retain their own identity/time and never replace statement evidence. */

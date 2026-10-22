@@ -1,4 +1,4 @@
-import { useTableExportFilter } from "@/lib/tableExportSnapshot";
+import { useTableExportFilter, useTableExportExpansion } from "@/lib/tableExportSnapshot";
 import { ExportableTable } from "@/components/ExportableTable";
 import { Fragment, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
@@ -210,7 +210,8 @@ export function HoldingsBehind() {
   const [qFilter, setQ] = useState("");
   const q = useTableExportFilter(qFilter, "");
   /** Which grouped rows are expanded to their statement lines. */
-  const [open, setOpen] = useState<Set<string>>(() => new Set());
+  const [openState, setOpen] = useState<Set<string>>(() => new Set());
+  const open = useTableExportExpansion(openState);
   // A HOOK, so it sits above this page's early returns.
   const view = useTableView("holdings-behind", HB_COLS, { reviewKind: "holding" });
 

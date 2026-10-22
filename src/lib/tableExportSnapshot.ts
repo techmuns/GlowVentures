@@ -1,4 +1,4 @@
-import { useEffect, useRef, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 
 // A synchronous, read-only render of the current table's complete data. Never
 // write filters/preferences or wait for network work while this is enabled.
@@ -12,6 +12,17 @@ export function setTableExporting(value: boolean) {
 }
 export function useTableExporting() {
   return useSyncExternalStore(subscribe, isTableExporting, () => false);
+}
+
+class ExpandedSnapshot<T> extends Set<T> { has(_key: T) { return true; } }
+/** Custom tree tables also expand during the read-only snapshot. The actual
+ * stored Set never changes, so the user's open rows and drafts survive. */
+export function tableExportExpansion<T>(value: Set<T>, allRows: boolean): Set<T> {
+  return allRows ? new ExpandedSnapshot(value) : value;
+}
+export function useTableExportExpansion<T>(value: Set<T>): Set<T> {
+  const allRows = useTableExporting();
+  return useMemo(() => tableExportExpansion(value, allRows), [value, allRows]);
 }
 
 /** Bypass a display filter for the snapshot without changing its stored value. */

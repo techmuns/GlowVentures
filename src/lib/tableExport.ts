@@ -1,4 +1,5 @@
 /** A table snapshot, independent of React, scrolling and workbook generation. */
+import type { InputChange, InputRecord } from "./tableInputs";
 export type TableExportCell = {
   text: string;
   value?: string | number;
@@ -8,9 +9,11 @@ export type TableExportCell = {
   rowSpan?: number;
   note?: string;
   hyperlink?: string;
+  input?: InputChange;
+  depth?: number;
 };
-export type TableExportRow = { cells: TableExportCell[]; kind: "header" | "body" | "footer" };
-export type TableExport = { title: string; url: string; rows: TableExportRow[] };
+export type TableExportRow = { cells: TableExportCell[]; kind: "header" | "body" | "footer"; depth?: number; section?: boolean };
+export type TableExport = { title: string; url: string; rows: TableExportRow[]; inputs?: InputRecord[]; nested?: TableExport[]; context?: string; parentRow?: number };
 
 /** Only whole numeric cells qualify. Dates, identifiers and mixed captions stay text. */
 export function excelCellValue(cell: TableExportCell): { value: string | number; format?: string } {
@@ -55,6 +58,8 @@ export function readTableExport(table: HTMLTableElement, title: string): TableEx
   const rows = Array.from(table.rows).filter(row => row.closest("table") === table && !row.matches("[data-table-scroll-end], [data-export-ignore]"));
   return { title, url: window.location.href, rows: rows.map(row => ({
     kind: row.parentElement?.tagName === "THEAD" ? "header" : row.parentElement?.tagName === "TFOOT" ? "footer" : "body",
+    section: row.classList.contains("tree-section-row"),
+    depth: Number(row.dataset.tableDepth ?? row.querySelector<HTMLElement>("[data-tree-depth]")?.dataset.treeDepth ?? 0),
     cells: Array.from(row.cells).map(cell => {
       const source = cell.hasAttribute("data-export-value") ? cell : Array.from(cell.querySelectorAll<HTMLElement>("[data-export-value]")).find(element => element.closest("table") === table);
       const raw = source?.getAttribute("data-export-value");
@@ -65,7 +70,16 @@ export function readTableExport(table: HTMLTableElement, title: string): TableEx
         numeric: row.parentElement?.tagName !== "THEAD" && (cell.classList.contains("mono") || cell.classList.contains("text-right")),
         colSpan: row.cells.length === 1 && cell.colSpan === visibleColumns ? totalColumns : cell.colSpan,
         rowSpan: cell.rowSpan, note: cell.title || undefined,
-        hyperlink: link && /^https?:$/.test(link.protocol) ? link.href : undefined };
+        hyperlink: link && /^https?:$/.test(link.protocol) ? link.href : undefined,
+        input: cell.dataset.inputExport ? JSON.parse(cell.dataset.inputExport) as InputChange : undefined,
+        depth: cell.dataset.treeDepth ? Number(cell.dataset.treeDepth) : undefined };
     }),
-  })) };
+  })), nested: Array.from(table.querySelectorAll<HTMLTableElement>("table[data-table-export]")).filter(child => child.parentElement?.closest("table") === table)
+    .map((child, i) => {
+      const panel = child.parentElement?.closest("tr");
+      const parent = panel?.previousElementSibling as HTMLTableRowElement | null;
+      const label = child.dataset.tableExportName || (parent?.cells?.[0] ? textOf(parent.cells[0]).split("\n").map(s => s.trim()).find(Boolean) : "");
+      const context = label?.slice(0, 120) || `Detail ${i + 1}`;
+      return { ...readTableExport(child, `${title} — ${context}`), context, parentRow: panel ? rows.indexOf(panel) : undefined };
+    }) };
 }

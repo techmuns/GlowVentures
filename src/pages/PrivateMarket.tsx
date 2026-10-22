@@ -306,12 +306,10 @@ type RowReturn = MeasuredReturn & {
 };
 
 const folioReviewScope = (f: BookFolio): ReviewScope => ({ positions: f.position ? [f.position] : [], securityKey: f.securityKey ?? undefined, accountId: f.accountId });
-const groupReviewScope = (g: BookGroup): ReviewScope => ({ positions: g.folios.flatMap((f) => f.position ? [f.position] : []), securityKey: g.securityKey ?? undefined });
+const groupReviewScope = (g: BookGroup): ReviewScope => ({ positions: g.folios.flatMap((f) => f.position ? [f.position] : []), securityKey: g.securityKey ?? undefined,
+  accountId: g.folios.length === 1 ? g.folios[0].accountId : undefined });
 const folioFigures = (f: BookFolio): RowFigures => ({
-  committed: f.capital?.committed ?? null,
-  called: f.capital?.called ?? null,
-  paid: f.capital?.paid ?? null,
-  uncalled: f.capital?.uncalled ?? null,
+  ...figuresOf([f], false),
   units: f.units,
   cost: f.cost,
   value: f.value,
@@ -457,7 +455,7 @@ export function PrivateMarket() {
    * at its current value, a live price where a quote has landed and each mutual
    * fund at its published NAV. One figure, one value, on one screen.
    */
-  const { statementPortfolio: portfolio, portfolio: live, fmtFromBase, scope: memberScope } = usePortfolio();
+  const { enteredPortfolio: portfolio, portfolio: live, fmtFromBase, scope: memberScope } = usePortfolio();
   const [q, setQ] = useState("");
   const exportingTable = useTableExporting();
   /**
@@ -582,6 +580,21 @@ export function PrivateMarket() {
     // Money totals over the COUNTED capital accounts; the dated history below is
     // every call as its own statement prints it, a per-account record.
     const cc = callTotals(schemes.filter((s) => countedIds.has(s.accountId)));
+    // Newly supplied capital details belong to their individual investment,
+    // never to the entire consolidated-review account that holds many funds.
+    const manual = pb.folios.filter(f => !f.capital && f.counted && f.position?.enteredCapital).map(f => f.position!.enteredCapital!);
+    if (manual.length) {
+      const add = (base: number | null, key: string) => sumOrNull([base, ...manual.map(c => c[key] ?? null)]);
+      ct.committed = add(ct.committed, "committed"); ct.undrawn = add(ct.undrawn, "undrawn");
+      ct.committedOf += manual.filter(c => c.committed != null).length;
+      ct.undrawnOf += manual.filter(c => c.undrawn != null).length; ct.count += manual.length;
+      cc.called = add(cc.called, "called"); cc.paid = add(cc.paid, "paid"); cc.uncalled = add(cc.uncalled, "undrawn"); cc.dueNow = add(cc.dueNow, "pending");
+      cc.calledOf += manual.filter(c => c.called != null).length; cc.paidOf += manual.filter(c => c.paid != null).length;
+      cc.uncalledOf += manual.filter(c => c.undrawn != null).length; cc.dueNowOf += manual.filter(c => c.pending != null).length;
+      cc.count += manual.length;
+      cc.committed += sum(manual.flatMap(c => c.committed == null ? [] : [c.committed]));
+      cc.committedWhereCalled = sumOrNull([cc.committedWhereCalled, ...manual.map(c => c.called != null ? c.committed ?? null : null)]);
+    }
     // …AND WHAT THE ACCOUNTS LEFT OUT WOULD ADD, so every hover can say it in
     // rupees: "if these are two investments, add ₹X".
     const alsoIds = new Set(counting.alsoReported.map((x) => x.commitment.accountId));
@@ -1968,7 +1981,7 @@ export function PrivateMarket() {
               {inOrder({
                 ...figureCells(fig, "folio", {
                 profileEdit: folioEdit,
-                noCapital: s ? undefined
+                noCapital: s || f.position?.enteredCapital ? undefined
                   : viewOfLine ? "an income-only folio — its documents report earnings and distributions, and no commitment"
                     : noCapitalWhy(g.section, "folio"),
                 noValue: viewOfLine

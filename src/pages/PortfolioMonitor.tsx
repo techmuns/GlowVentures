@@ -1,4 +1,4 @@
-import { useTableExportFilter } from "@/lib/tableExportSnapshot";
+import { useTableExportFilter, useTableExportExpansion } from "@/lib/tableExportSnapshot";
 import { ExportableTable } from "@/components/ExportableTable";
 import { InfiniteTableEnd, useInfiniteTable } from "@/components/InfiniteTableBody";
 import { Fragment, useEffect, useMemo, useState, useCallback, type ReactNode } from "react";
@@ -1040,7 +1040,8 @@ export function PortfolioMonitor() {
   // count cannot drift from the header when a reader moves a column, where the
   // literal it replaced had to be kept in step by hand.
   const COL_COUNT = holdView.order.length;
-  const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
+  const [expandedState, setExpanded] = useState<Set<string>>(() => new Set());
+  const expanded = useTableExportExpansion(expandedState);
   /**
    * ── ONE EXPANDER, AND THE SECOND ONE WENT ──────────────────────────────────
    *
@@ -6159,9 +6160,12 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
    * and "Longest held" came out of it at the family's request.
    */
   const [sort, setSort] = useState<TxnSort>("recent");
-  const [openRow, setOpenRow] = useState<Set<string>>(new Set());
-  const [openClub, setOpenClub] = useState<Set<string>>(new Set());
-  const [openInstrument, setOpenInstrument] = useState<Set<string>>(new Set());
+  const [openRowState, setOpenRow] = useState<Set<string>>(new Set());
+  const [openClubState, setOpenClub] = useState<Set<string>>(new Set());
+  const [openInstrumentState, setOpenInstrument] = useState<Set<string>>(new Set());
+  const openRow = useTableExportExpansion(openRowState);
+  const openClub = useTableExportExpansion(openClubState);
+  const openInstrument = useTableExportExpansion(openInstrumentState);
   const toggle = (set: (f: (s: Set<string>) => Set<string>) => void, key: string) =>
     set((prev) => { const nx = new Set(prev); if (nx.has(key)) nx.delete(key); else nx.add(key); return nx; });
   const [fromFilter, setFrom] = useState("");

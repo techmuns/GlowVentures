@@ -1,4 +1,5 @@
 import { ExportableTable } from "@/components/ExportableTable";
+import { useTableExportExpansion } from "@/lib/tableExportSnapshot";
 import { Fragment, useMemo, useState } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { Check, ChevronRight } from "lucide-react";
@@ -249,7 +250,8 @@ const fmtPts = (d: number) => {
 export function SectorComposition({ embedded = false }: { embedded?: boolean } = {}) {
   const views = embedded ? EMBED_SECTOR_VIEWS : SECTOR_VIEWS;
   const { portfolio, consolidated, fmtFromBase, convertFromBase, displayCurrency, scope: memberScope } = usePortfolio();
-  const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
+  const [expandedState, setExpanded] = useState<Set<string>>(() => new Set());
+  const expanded = useTableExportExpansion(expandedState);
   const [vsKey, setVs] = useViewParam<IndexPick>(INDEX_PICKS, {}, "vs");
   /** The index picked, read — or why it has no weights. `null` while the control is Off. */
   const vsIndex = vsKey === "off" ? null : indexSectors(vsKey);

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { validateProperty, type Property } from "../../shared/realEstate.mjs";
+import { getTableInputState, publishPropertyChange, refreshTableInputs, useTableInputs } from "./tableInputStore";
 export * from "../../shared/realEstate.mjs";
 export * from "../../shared/propertyTax.mjs";
 export const PROPERTY_ENDPOINT = "/api/real-estate";
@@ -18,6 +19,7 @@ async function request(body?: unknown, signal?: AbortSignal): Promise<Reply> {
   } catch { return { ok: false, message: "Property storage is unavailable. Your entries are still here; try again." }; }
 }
 export function useProperties() {
+  const numbers = useTableInputs();
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -25,17 +27,20 @@ export function useProperties() {
   const revision = useRef(0);
   const controller = useRef<AbortController>();
   const reload = useCallback(async () => {
+    if (getTableInputState().loaded) { await refreshTableInputs(); return; }
     controller.current?.abort();
     const c = new AbortController(); controller.current = c;
     const version = revision.current;
     const reply = await request(undefined, c.signal);
     if (c.signal.aborted || version !== revision.current) return;
     setLoading(false);
-    if (reply.ok) { setProperties(reply.properties!); setReady(true); setError(""); }
+    if (reply.ok) { setProperties(previous => JSON.stringify(previous) === JSON.stringify(reply.properties) ? previous : reply.properties!); setReady(true); setError(""); }
     else setError(reply.message);
   }, []);
-  useEffect(() => { void reload(); const focus = () => { void reload(); }; window.addEventListener("focus", focus);
-    return () => { controller.current?.abort(); window.removeEventListener("focus", focus); }; }, [reload]);
+  useEffect(() => {
+    if (numbers.loaded) { controller.current?.abort(); return; }
+    void reload(); const focus = () => { void reload(); }; window.addEventListener("focus", focus);
+    return () => { controller.current?.abort(); window.removeEventListener("focus", focus); }; }, [reload, numbers.loaded]);
   const mutate = useCallback(async (body: unknown) => {
     revision.current++;
     controller.current?.abort();
@@ -43,11 +48,14 @@ export function useProperties() {
     revision.current++;
     controller.current?.abort();
     if (reply.ok) {
+      publishPropertyChange(reply.property, reply.deleted);
+      window.dispatchEvent(new Event("glow:properties-saved"));
       setProperties(previous => reply.property ? [...previous.filter(p => p.id !== reply.property!.id), reply.property]
         : previous.filter(p => p.id !== reply.deleted));
       setError("");
     }
     return reply;
   }, []);
-  return { properties, loading, ready, error, reload, mutate };
+  return { properties: numbers.loaded ? numbers.properties : properties, loading: numbers.loaded ? false : loading,
+    ready: numbers.loaded || ready, error: numbers.loaded ? numbers.status === "error" ? numbers.error : "" : error, reload, mutate };
 }

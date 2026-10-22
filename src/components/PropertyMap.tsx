@@ -18,6 +18,12 @@ export default function PropertyMap({ properties = NO_PROPERTIES, onSelect, poin
     const map = L.map(root.current, { scrollWheelZoom: false, zoomAnimation: false,
       fadeAnimation: false, markerZoomAnimation: false }).setView([22.4, 79], 5, { animate: false });
     instance.current = map;
+    // Leaflet restores window scroll after focusing, but this dashboard scrolls
+    // inside <main>. Focus first without scrolling so the pin cannot move
+    // between a pointer press and release. Keyboard navigation stays enabled.
+    const container = map.getContainer();
+    const focusWithoutScroll = () => container.focus({ preventScroll: true });
+    container.addEventListener("mousedown", focusWithoutScroll, true);
     tiles.current = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a>',
     }).on("tileerror", () => setTilesFailed(true)).addTo(map);
@@ -28,6 +34,7 @@ export default function PropertyMap({ properties = NO_PROPERTIES, onSelect, poin
     }); observer.observe(root.current);
     return () => {
       instance.current = null;
+      container.removeEventListener("mousedown", focusWithoutScroll, true);
       observer.disconnect();
       map.stop();
       map.remove();

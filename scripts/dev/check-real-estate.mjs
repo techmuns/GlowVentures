@@ -13,8 +13,8 @@ if (!/^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?\/?$/.test(base)) throw new Error
 const out = path.resolve(".cache/real-estate-check"); await fs.mkdir(out, { recursive: true });
 const store = memoryStore();
 let failing = false;
-const browser = await chromium.launch({ executablePath: process.env.CHROME || "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", headless: true });
-const context = await browser.newContext({ viewport: { width: 1512, height: 982 } });
+const context = await chromium.launchPersistentContext(path.join(out, `browser-profile-${process.pid}`), { executablePath: process.env.CHROME || "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", headless: true, viewport: { width: 1512, height: 982 } });
+const browser = context;
 const page = await context.newPage();
 const errors = []; page.on("pageerror", error => errors.push(error.stack || error.message));
 const searches = []; let releaseSearch;

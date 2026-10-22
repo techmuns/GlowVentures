@@ -112,6 +112,21 @@ console.log("── the store on its own ──");
 
 console.log("\n── through the Functions ──");
 {
+  const gh = fakeGitHub(), seed = githubStore(opts, gh.fetchImpl);
+  await seed.put("number:a", JSON.stringify({ value: 1 })); await seed.flush();
+  const a = githubStore(opts, gh.fetchImpl), b = githubStore(opts, gh.fetchImpl);
+  const before = await a.get("number:a", "json"); await b.get("number:a", "json");
+  a.expect?.("number:a", JSON.stringify(before));
+  await a.put("number:a", JSON.stringify({ value: 2 })); await a.put("number:b", "{}");
+  await b.put("number:a", JSON.stringify({ value: 3 })); await b.flush();
+  let refused = false; try { await a.flush(); } catch (error) { refused = (error as { status?: number }).status === 409; }
+  ok("a concurrent Excel edit of the same number is refused atomically", refused && !gh.records()?.["number:b"] && JSON.parse(gh.records()!["number:a"].value).value === 3);
+  const c = githubStore(opts, gh.fetchImpl), d = githubStore(opts, gh.fetchImpl);
+  c.expect?.("number:a", JSON.stringify(await c.get("number:a", "json"))); await d.list({ prefix: "number:" });
+  await c.put("number:a", JSON.stringify({ value: 4 })); await d.put("number:c", "{}"); await d.flush(); await c.flush();
+  ok("concurrent edits of different numbers still merge", !!gh.records()?.["number:c"] && JSON.parse(gh.records()!["number:a"].value).value === 4);
+}
+{
   const gh = fakeGitHub();
   const realFetch = globalThis.fetch;
   globalThis.fetch = gh.fetchImpl;

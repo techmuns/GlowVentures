@@ -38,7 +38,7 @@ function wrappedLines(text: string, capacity: number, cell: ExcelJS.Cell): numbe
 }
 
 /** Fit every populated row, then freeze the complete header band. */
-export function fitExcelWorksheet(sheet: ExcelJS.Worksheet, headerRows: number, frozenColumns = 0) {
+export function fitExcelWorksheet(sheet: ExcelJS.Worksheet, headerRows: number, frozenColumns = 0, options?: { maxWidths?: Record<number, number> }) {
   const minWidth = 12, maxWidth = 100;
   const merged = new Map<string, { right: number; bottom: number }>();
   for (const range of sheet.model.merges) {
@@ -55,7 +55,7 @@ export function fitExcelWorksheet(sheet: ExcelJS.Worksheet, headerRows: number, 
     if (span.right !== Number(cell.col)) return; // A merged title must not widen only column A.
     const padding = 3 + (sheet.autoFilter && Number(cell.row) === headerRows ? 2 : 0) + (cell.alignment?.indent ?? 0) * 3;
     const longest = Math.max(0, ...text.split(/\r?\n/).map(line => textWidth(line, cell)));
-    widths[Number(cell.col) - 1] = Math.max(widths[Number(cell.col) - 1], Math.min(maxWidth, longest + padding));
+    widths[Number(cell.col) - 1] = Math.max(widths[Number(cell.col) - 1], Math.min(maxWidth, options?.maxWidths?.[Number(cell.col)] ?? maxWidth, longest + padding));
   }));
   widths.forEach((width, i) => { sheet.getColumn(i + 1).width = Math.ceil(width * 100) / 100; });
   for (const { cell, text, right, bottom } of cells) {
