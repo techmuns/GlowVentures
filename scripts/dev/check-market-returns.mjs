@@ -89,11 +89,18 @@ try {
  const aif=dialog.locator('[data-market-gap]').filter({has:page.locator('[data-market-category]').filter({hasText:/^AIF$/})}).first();
  assert.equal(await aif.locator('[data-market-through]').innerText(),await aif.getByRole('heading').innerText());
  assert.match(await aif.locator('[data-market-needed]').innerText(),/fund manager.*NAV/);
- await dialog.getByRole('textbox',{name:'Search missing holdings'}).fill('National Stock Exchange of India');
- const nse = dialog.locator('[data-market-gap]').first();
- assert.match(await nse.locator('[data-market-missing-data]').innerText(), /Public price history is missing/);
- assert.match(await nse.locator('[data-market-needed]').innerText(), /Recorded return/);
- assert.ok(await nse.evaluate(el => Boolean(el.querySelector('[data-market-missing-data]').compareDocumentPosition(el.querySelector('[data-market-owner]')) & Node.DOCUMENT_POSITION_FOLLOWING)), 'the missing data comes before account metadata');
+ // A listing can acquire a verified history as the book is updated (NSE now
+ // has a BSE identity). Exercise an actual unmatched holding rather than
+ // assuming that a named investment must always stay in the missing list.
+ const publicGap = dialog.locator('[data-market-gap]').filter({has:page.locator('[data-market-missing-data]').filter({hasText:'Public price history is missing.'})}).first();
+ const publicGapName = await publicGap.getByRole('heading').innerText();
+ const publicGapKey = await publicGap.getAttribute('data-market-holding-key');
+ await dialog.getByRole('textbox',{name:'Search missing holdings'}).fill(publicGapName);
+ const searchedGap = dialog.locator('[data-market-gap]').first();
+ assert.equal(await searchedGap.getAttribute('data-market-holding-key'),publicGapKey,'search returns the same unmatched holding');
+ assert.match(await searchedGap.locator('[data-market-missing-data]').innerText(), /Public price history is missing/);
+ assert.match(await searchedGap.locator('[data-market-needed]').innerText(), /Recorded return/);
+ assert.ok(await searchedGap.evaluate(el => Boolean(el.querySelector('[data-market-missing-data]').compareDocumentPosition(el.querySelector('[data-market-owner]')) & Node.DOCUMENT_POSITION_FOLLOWING)), 'the missing data comes before account metadata');
  await dialog.getByRole('textbox',{name:'Search missing holdings'}).fill('Karur');
  assert.ok(await dialog.locator('[data-market-gap]').count()>0);
  assert.match(await dialog.innerText(),/No new statement/);assert.match(await dialog.innerText(),/Account/);
