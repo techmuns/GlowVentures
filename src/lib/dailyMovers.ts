@@ -1,5 +1,5 @@
 import type { Position } from "./types";
-import { priceLooksLikeSameSecurity, symbolFor, type Quote, type QuoteFeed } from "./quotes";
+import { moveSymbolFor, priceLooksLikeSameSecurity, type Quote, type QuoteFeed } from "./quotes";
 import { marketDay, movesCloseBasis, positionActionKey, type ActionReturn } from "./corporateActions";
 
 export type DailyMover = {
@@ -70,15 +70,16 @@ export function dailyMovers(
 ) {
   const latestSession = opts.session !== undefined
     ? opts.session
-    : latestQuoteSession(quotes, scope.map((p) => symbolFor(p)));
+    : latestQuoteSession(quotes, scope.map((p) => moveSymbolFor(p)));
   const rows = new Map<string, DailyMover>();
   const omitted = new Map<string, string>();
   for (const p of scope) {
-    const q = quotes?.quotes[symbolFor(p) || ""];
+    const symbol = moveSymbolFor(p);
+    const q = quotes?.quotes[symbol || ""];
     const plan = returns.get(positionActionKey(p));
-    const move = symbolMove(quotes, symbolFor(p), latestSession);
+    const move = symbolMove(quotes, symbol, latestSession);
     let reason = "reason" in move ? move.reason : null;
-    const quoteSess = quoteSession(quotes, symbolFor(p));
+    const quoteSess = quoteSession(quotes, symbol);
     if (q && ((!p.live && !plan?.liveWithheld) || !priceLooksLikeSameSecurity(q.price, p.currentPrice))) {
       reason = "Quote identity or price needs verification";
     }
@@ -105,9 +106,9 @@ export function dailyMovers(
   // Never claim a complete security when one account's quote/basis was refused.
   for (const key of omitted.keys()) rows.delete(key);
   const included = scope.filter((p) => rows.has(p.securityKey));
-  const session = included.length && included.every((p) => quoteSession(quotes, symbolFor(p)) === latestSession) ? latestSession : null;
+  const session = included.length && included.every((p) => quoteSession(quotes, moveSymbolFor(p)) === latestSession) ? latestSession : null;
   const observations = included.map((p) => {
-    const q = quotes!.quotes[symbolFor(p)!];
+    const q = quotes!.quotes[moveSymbolFor(p)!];
     return q.observedAt ? Date.parse(q.observedAt) : Date.parse(quotes!.asOf) - (q.ageS || 0) * 1000;
   }).filter(Number.isFinite).sort((a, b) => a - b);
   return { rows: [...rows.values()], session, omitted,

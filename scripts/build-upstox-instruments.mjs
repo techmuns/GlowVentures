@@ -120,8 +120,10 @@ async function main() {
 
   // A holding without an NSE symbol (Yash Highvoltage, for example) can still
   // be an exact BSE identity. Never match a warrant/preference share by issuer.
+  // A review line is a private holding with no listing — except one the family
+  // placed on the listed side (NSE, Stage 10hb), matched by its own ISIN.
   for (const p of book.filter(allowed)) {
-    if (p.review || !["Equity", "ETF"].includes(p.assetClass)) continue;
+    if ((p.review && p.marketSide !== "listed") || !["Equity", "ETF"].includes(p.assetClass)) continue;
     const result = resolve({ symbol: p.symbol || bridge[p.securityKey], isin: p.isin, key: p.securityKey });
     if (result.instrument) identity(p.securityKey, add(result));
     else unresolved.push({ key: p.securityKey, name: p.security, reason: result.reason });

@@ -106,6 +106,33 @@ export function replayReviewRows(rows, { isin, asOf, quantity, allowUnpricedSale
     ...(unpricedSales.length?{hprUnavailableReason:`Sale proceeds are unverified on review row(s) ${unpricedSales.join(', ')}; original lots establish remaining cost only`}:{}) };
 }
 
+/**
+ * THE REVIEW'S DATED TRADES PAST A HOLDING STATEMENT (Stage 10hb). *"Review's
+ * 116,462"* — the family, 22 Oct 2026, on Yash Highvoltage: the ICICI NSDL
+ * statement of 31 Mar holds 138,462 and the review sells 22,000 in June. The
+ * roll is published only where every later row is a dated buy or sale with
+ * units and the review's own Closing after the last of them holds exactly what
+ * they leave; FIFO over the whole record then gives the cost still held. A sale
+ * whose cash is unverified leaves realised gain and HPR absent.
+ */
+export function rollReviewRows(rows, { isin, asOf, quantity }) {
+  const later = rows.filter((r) => r.date && r.date > asOf && r.date <= REVIEW_AS_OF && !['Closing','Div / Int'].includes(r.txn));
+  if (!later.length) return null;
+  if (later.some((r) => !['Purchase','Sale'].includes(r.txn) || !finite(r.qty) || r.qty <= 0))
+    return { reason:'a later review row is not a dated purchase or sale with units' };
+  const units = quantity + later.reduce((s,r) => s + (r.txn === 'Purchase' ? r.qty : -r.qty), 0);
+  const last = later.map((r) => r.date).sort().at(-1);
+  const closing = rows.filter((r) => r.txn === 'Closing' && r.date && r.date >= last && r.date <= REVIEW_AS_OF).at(-1);
+  if (!closing) return { reason:`no review Closing on or after ${last} witnesses the later trades` };
+  if (Math.abs(closing.qty - units) > UNIT_TIE) return { reason:`review closing ${closing.qty} disagrees with ${units} left by the later trades` };
+  const fifo = replayReviewRows(rows, { isin, asOf:closing.date, quantity:units, allowUnpricedSales:true });
+  if (fifo.reason) return { reason:fifo.reason };
+  return { through:closing.date, quantity:units, costBasis:fifo.costBasis, realizedPnL:fifo.realizedPnL,
+    costOfUnitsSold:fifo.costOfUnitsSold, trades:later.length, source:'review',
+    ...(fifo.hprUnavailableReason ? { hprUnavailableReason:fifo.hprUnavailableReason } : {}),
+    rows:[...later.map((r) => r.row), closing.row].sort((a,b) => a-b) };
+}
+
 /** A Closing ends one folio block; matching names alone must not pool folios. */
 export function replayReviewFundGroups(rows, args) {
   const groups = []; let current = [];
@@ -176,12 +203,14 @@ export function recoverHoldingCosts({root,accounts,positions,unvalued,shareMovem
     if(later.length||t.lastMovementDate>cutoff) {unresolved.push({...t,owner:a.owner,reason:`${later.length||1} later custodian movements need priced trade/transfer evidence after ${cutoff}`});continue;}
     const result=(fund?replayReviewFundGroups:replayReviewRows)(sourceRows,{isin:t.isin,asOf:cutoff,quantity:t.quantity});
     if(result.reason) {unresolved.push({...t,owner:a.owner,reason:result.reason});continue;}
+    const roll=fund?null:rollReviewRows(sourceRows,{isin:t.isin,asOf:t.asOf,quantity:t.quantity});
     records.push({accountId:t.accountId,isin:t.isin,quantity:t.quantity,asOf:t.asOf,costBasis:result.costBasis,
       ...(result.heldPurchases?{heldPurchases:result.heldPurchases}:{}),
       realizedPnL:result.realizedPnL,costOfUnitsSold:result.costOfUnitsSold,dividendReceived:result.dividendReceived,
       ...(result.hprUnavailableReason?{hprUnavailableReason:result.hprUnavailableReason}:{}),
       ...(sourceRows.some((r)=>r.txn==='Sale'&&r.date>t.asOf)
         ? {salesAfter:sourceRows.filter((r)=>r.txn==='Sale'&&r.date>t.asOf).length} : {}),
+      ...(roll?{reviewRoll:roll}:{}),
       evidence:[{path:REVIEW_WORKBOOK,sheet:'Transactions since inception',rows:result.rows}],notes:result.notes});
   }
   return {records,unresolved,sourceAudit:{archived:archiveCount,documents:docs.length}};
@@ -201,7 +230,7 @@ export function recoveryReport({ records, unresolved, sourceAudit }, accounts) {
   lines.push('', '## Not recovered', '', '| Holder | Account | Security | ISIN | Recorded units | Required evidence |','| --- | --- | --- | --- | ---: | --- |');
   for(const r of unresolved){const a=accountById.get(r.accountId);lines.push(`| ${a?.owner} | ${a?.accountNo} | ${r.security} | ${r.isin} | ${r.quantity} | ${r.reason} |`);}
   lines.push('', '## Source qualifications', '',
-    '- The March ICICI snapshot keeps its March quantity and mark. Yash has later June disposals whose cash signs conflict with their transaction type; the recorded later sales block a live quote on those old units. Newer broker holdings and sale confirmations are still required before rolling that snapshot forward.',
+    '- The March ICICI snapshot keeps its March quantity and mark on the statement basis. Yash has later June disposals whose cash signs conflict with their transaction type. At the family\'s choice (22 Oct 2026) the live layer rolls it forward on those dated units, which tie to the review\'s own 30 Jun closing; the proceeds stay unverified, so realised gain and HPR remain absent until sale confirmations arrive.',
     '- Grand Continent’s split row repeats a purchase amount. It is excluded from cash only because its duplicate and the independent closing-at-cost control agree; the split carries the original lots and their cost.',
     '- The EMA payment register establishes the matched holding’s purchase cost. Separate realised gains and dividends remain unreported; they are not written as measured zero.',
     '- A Closing row terminates one review folio block. A second folio of the same product and owner is never pooled with it; exactly one block must close at the recorded holding quantity.',

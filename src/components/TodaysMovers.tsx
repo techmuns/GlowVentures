@@ -11,7 +11,7 @@ import { fetchIndices, STRIP_INDEX_IDS, type IndexFeed } from "@/lib/indices";
 import { indexSession, istDate } from "@/components/IndexStrip";
 import { fmtPct, fmtNum, changeColor, DASH } from "@/lib/format";
 import { dailyMovers, type DailyMover } from "@/lib/dailyMovers";
-import { symbolCoverage, symbolsFor } from "@/lib/quotes";
+import { moveSymbolFor, symbolCoverage } from "@/lib/quotes";
 import { shareCandidates } from "@/lib/depositoryShares";
 import { liveWithheldReason } from "@/lib/corporateActions";
 
@@ -245,8 +245,10 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
     // holding that is not a row until its price is in. So the card waits on
     // every candidate in its scope, which is exactly the set it asks for first
     // (`PRIORITY_SYMBOLS`). A symbol the feed cannot price is `missing`, never
-    // pending, so this never waits for ever.
-    const scopeSymbols = symbolsFor([...scope, ...shareCandidates().filter(inScope)]);
+    // pending, so this never waits for ever. A BSE-only listing waits under its
+    // exchange-qualified key, the one its move is read under (Stage 10hb).
+    const scopeSymbols = [...new Set([...scope, ...shareCandidates().filter(inScope)]
+      .map(moveSymbolFor).filter((x): x is string => !!x))];
 
     const ranked = rank === "impact" ? impactRows : rows;
     const gainers = ranked.filter((r) => r.dayChangePct > 0);
