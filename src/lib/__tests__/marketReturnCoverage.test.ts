@@ -22,7 +22,7 @@ assert.match(marketGapExplanation({position:p({assetClass:'AIF'}),reason:'',code
 assert.match(marketGapExplanation({position:p({marketSide:'private'}),reason:'',code:'unmatched'},null,null).needed,/valuations/);
 const nse = marketGapExplanation({position:p({security:'National Stock Exchange of India',isin:'INE721I01024',marketSide:'listed'}),reason:'',code:'unmatched'},null,null);
 assert.equal(nse.missing,'Public price history is missing.');
-assert.match(nse.needed,/Public prices.*Recorded return/);
+assert.match(nse.needed,/Public prices.*Return column/);
 assert.doesNotMatch(nse.needed,/confirm.*ISIN|purchase (cost|date)/i,'an existing ISIN and missing public prices must not become missing purchase records');
 assert.match(marketGapExplanation({position:p({assetClass:'Mutual Fund'}),reason:'',code:'unmatched'},null,null).needed,/scheme code and ISIN/);
 assert.match(marketGapExplanation({position:p({assetClass:'Cash'}),reason:'',code:'unmatched'},null,null).missing,/Cash has no traded/);

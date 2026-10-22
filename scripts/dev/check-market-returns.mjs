@@ -30,7 +30,7 @@ try {
   // NSE is now a verified BSE listing. Explicitly simulate a missing source
   // history instead of assuming the actual book has no listing for it.
   if (symbol === 'NSE.BO' && !retrying) { nseSourceFailures++; return r.fulfill({ json: { ok: false, reason: 'The price source returned HTTP 404 for this listing.' } }); }
-  return r.fulfill({ json: { ok: true, symbol: fund || symbol+'.NS', isin, name: fund || symbol, source: fund ? 'NAV fixture' : 'Adjusted stock fixture', basis: fund ? 'nav' : 'adjusted-close', first: t[0], last: t.at(-1), t, v } });
+  return r.fulfill({ json: { ok: true, version: 2, symbol: fund || symbol+'.NS', isin, name: fund || symbol, source: fund ? 'NAV fixture' : 'Adjusted stock fixture', basis: fund ? 'nav' : 'adjusted-close', first: t[0], last: t.at(-1), t, v } });
  });
  await page.goto(base + '/cio?tab=returns&tiles=value,gain,fytd');
  const summary = page.locator('[data-market-summary]'), table = page.locator('[data-segment-returns]');
@@ -65,7 +65,7 @@ try {
  const dialog = page.getByRole('dialog'); await dialog.waitFor();
  assert.equal(await dialog.getByRole('tab').count(),3);
  assert.equal(await dialog.getByRole('tab',{name:'Return Overview',exact:true}).getAttribute('aria-selected'),'true');
- assert.match(await dialog.innerText(),/values today/);assert.match(await dialog.innerText(),/Recorded gain/);
+ assert.match(await dialog.innerText(),/values today/);assert.match(await dialog.innerText(),/Gain \/ loss/);
  const detail=dialog.locator('[data-market-details]');
  const includedCount=Number(await detail.getAttribute('data-market-included-count'));
  const missingCount=Number(await detail.getAttribute('data-market-missing-count'));
@@ -93,6 +93,15 @@ try {
  const aif=dialog.locator('[data-market-gap]').filter({has:page.locator('[data-market-category]').filter({hasText:/^AIF$/})}).first();
  assert.equal(await aif.locator('[data-market-through]').innerText(),await aif.getByRole('heading').innerText());
  assert.match(await aif.locator('[data-market-needed]').innerText(),/fund manager.*NAV/);
+ // Listings can become available (NSE now has its own BSE listing). Exercise
+ // a real missing-price row instead of requiring a named company to stay unlisted.
+ const unpriced = dialog.locator('[data-market-gap]').filter({has:page.locator('[data-market-missing-data]').filter({hasText:'Public price history is missing.'})}).first();
+ const missingName = await unpriced.getByRole('heading').innerText();
+ await dialog.getByRole('textbox',{name:'Search missing holdings'}).fill(missingName);
+ const missingStock = dialog.locator('[data-market-gap]').first();
+ assert.match(await missingStock.locator('[data-market-missing-data]').innerText(), /Public price history is missing/);
+ assert.match(await missingStock.locator('[data-market-needed]').innerText(), /Return column/);
+ assert.ok(await missingStock.evaluate(el => Boolean(el.querySelector('[data-market-missing-data]').compareDocumentPosition(el.querySelector('[data-market-owner]')) & Node.DOCUMENT_POSITION_FOLLOWING)), 'the missing data comes before account metadata');
  await dialog.getByRole('textbox',{name:'Search missing holdings'}).fill('National Stock Exchange of India');
  const nse = dialog.locator('[data-market-gap]').first();
  assert.match(await nse.locator('[data-market-missing-data]').innerText(), /The price source has no history for this listing/);

@@ -4,10 +4,13 @@ import { accountIndex } from './accounts';
 import { fifoTotals } from './fifo';
 import { measureInception, measureWindow, type AccountWindow, type InceptionRow, type Measured, type ReturnType } from './periodReturns';
 import { segmentOf, type SegmentAxis, type SectorLookup } from './segmentReturns';
+import type { HoldingAssumption } from './assumedHoldingReturns';
 
-export type ReturnGap = { accountId: string; label: string; owner?: string; reason: string; value?: number; securityKey?: string };
+export type ReturnGap = { accountId: string; label: string; owner?: string; reason: string; value?: number; securityKey?: string;
+  plainReason?: boolean; detail?: string };
 export type ReturnUnit = { key: string; accountId: string; label: string; positions: readonly Position[];
   gain: number; invested: number; close: number; from: string | null; to: string;
+  assumption?: HoldingAssumption;
   gainParts?: { unrealised: number | null; realised: number | null; income: number | null };
   window?: AccountWindow; inception?: InceptionRow };
 export type SelectedLine = { key: string; label: string; positions: readonly Position[]; value: number;
@@ -17,6 +20,7 @@ export type SelectedLine = { key: string; label: string; positions: readonly Pos
   periodPct: number | null; contribution: number | null; children: SelectedLine[] };
 export type ReturnSelection = { inception: boolean; type: ReturnType; start: string | null; end: string | null;
   windows: AccountWindow[]; inceptionRows: InceptionRow[]; excluded: ReturnGap[]; outside?: ReturnGap[];
+  assumedUnits?: ReturnUnit[]; assumptionGaps?: ReturnGap[];
   /** State XIRR over the period rather than per year — the headline cards' reading (Stage 10gu). */
   periodXirr?: boolean };
 export const UNSPLIT_RETURNS = '__account_returns';
@@ -86,6 +90,22 @@ export function selectedSegmentReturns(current: readonly Position[], exited: rea
   // the statement return book. Every uncovered displayed holding needs an
   // explanation, including accounts called "outside" by that statement book.
   const covered = new Set(units.flatMap(u => u.positions.map(holdingKey)));
+  if (!selection.inception && (selection.assumedUnits || selection.assumptionGaps)) {
+    const measuredAccounts = new Set(units.filter(u => u.key === u.accountId).map(u => u.accountId));
+    for (const u of selection.assumedUnits ?? []) {
+      if (measuredAccounts.has(u.accountId) || u.positions.some(p => covered.has(holdingKey(p)))) continue;
+      units.push(u); u.positions.forEach(p => covered.add(holdingKey(p)));
+    }
+    // An account-level gap becomes specific remaining holdings; filled ones
+    // must not still be listed as missing. Never drop a gap for an unseen account.
+    missing = missing.flatMap(g => {
+      if (g.securityKey) return covered.has(`${g.accountId}|${g.securityKey}`) ? [] : [g];
+      const ps = current.filter(p => p.accountId === g.accountId);
+      if (!ps.length) return [g];
+      return ps.filter(p => !covered.has(holdingKey(p))).map(p => ({ ...g, securityKey: p.securityKey,
+        label: `${p.security} · ${sourceLabel(idx.get(p.accountId))}`, value: p.marketValue }));
+    });
+  }
   for (const p of current) {
     if (covered.has(holdingKey(p)) || missing.some(g => g.accountId === p.accountId && (!g.securityKey || g.securityKey === p.securityKey))) continue;
     const outside = selection.outside?.find(g => g.accountId === p.accountId);
@@ -93,6 +113,12 @@ export function selectedSegmentReturns(current: readonly Position[], exited: rea
     missing.push({ accountId: p.accountId, securityKey: p.securityKey, label: `${p.security} · ${sourceLabel(idx.get(p.accountId))}`, value: p.marketValue,
       reason: outside && nil ? outside.reason : `No verified opening value and complete dated capital record for these dates.${outside ? ` ${outside.reason}` : ''}` });
   }
+  if (!selection.inception) missing = missing.map(g => {
+    const detail = selection.assumptionGaps?.find(x => x.accountId === g.accountId && (!g.securityKey || x.securityKey === g.securityKey));
+    // Only replace a holding-specific gap. Whole-account gaps must still name
+    // all of their uncovered holdings rather than borrow one stock's reason.
+    return detail && g.securityKey ? { ...g, reason: detail.reason, plainReason: detail.plainReason, detail: detail.detail } : g;
+  });
   const measure = (us: ReturnUnit[]): Measured | null => {
     if (!us.length) return null;
     if (absoluteInception) {

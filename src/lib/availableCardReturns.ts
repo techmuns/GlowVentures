@@ -4,6 +4,7 @@ import { exitedRows } from './drilldown';
 import { nothingToMeasure } from './returns';
 import { accountInputs, periodStart, windowReturns, type AccountInput, type AccountWindow } from './periodReturns';
 import { selectedSegmentReturns, type ReturnGap, type ReturnSelection } from './selectedSegmentReturns';
+import { assumedHoldingReturns, type AssumedReturnBook } from './assumedHoldingReturns';
 import {
   BOOK_ACCOUNT_NAV_HISTORY, BOOK_ACCOUNT_CASH_FLOWS, BOOK_NAV_COVERAGE,
   BOOK_UNDATED_CAPITAL, BOOK_CAPITAL_FROM_INCEPTION,
@@ -19,12 +20,16 @@ export function statementReturnInputs(statement: Portfolio): AccountInput[] {
   }).map(i => ({ ...i, outside: nothingToMeasure(statement, statement.accounts.find(a => a.accountId === i.accountId)!) }));
 }
 
-/** Headlines may show the verified subset, but never close it with uncovered money. */
-export function availableCardReturns(statement: Portfolio, display: readonly Position[], inputs: AccountInput[], today: Date) {
+/** The available subset, plus explicit user-authorised holding assumptions where supplied. */
+export function availableCardReturns(statement: Portfolio, display: readonly Position[], inputs: AccountInput[], today: Date, assumptions?: AssumedReturnBook) {
   const current = currentHoldings(display), recorded = dedupedPositions(statement.positions);
   const calculationCurrent = currentHoldings(recorded), exited = exitedRows(recorded);
   const end = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-  const make = (selection: ReturnSelection) => {
+  const make = (selection: ReturnSelection, availableHistory = false) => {
+    if (!selection.inception && assumptions) {
+      const extra = assumedHoldingReturns(current, statement.accounts, availableHistory ? null : selection.start, end, assumptions);
+      selection = { ...selection, assumedUnits: extra.units, assumptionGaps: extra.gaps };
+    }
     const result = selectedSegmentReturns(current, exited, statement.accounts, 'category', selection, () => null, calculationCurrent);
     const coveredAccounts = new Set(result.total.units.map(u => u.accountId)).size;
     const totalAccounts = new Set([...result.total.units, ...result.total.missing].map(u => u.accountId)).size;
@@ -57,7 +62,7 @@ export function availableCardReturns(statement: Portfolio, display: readonly Pos
   }
   const start = windows.map(w => w.openDate).sort()[0] ?? null;
   // The headline cards read XIRR over the period, not per year (Stage 10gu).
-  const history = make({ inception: false, type: 'xirr', periodXirr: true, start, end, windows, inceptionRows: [], excluded, outside });
+  const history = make({ inception: false, type: 'xirr', periodXirr: true, start, end, windows, inceptionRows: [], excluded, outside }, true);
   return { gain, history, fytd: period('fytd'), ytd: period('ytd') };
 }
 
