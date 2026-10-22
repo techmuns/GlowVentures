@@ -53,7 +53,7 @@ function tradeLots(p: Position, sources: PurchaseSources): PurchaseLot[] | null 
 export function purchaseLots(p: Position, sources: PurchaseSources): PurchaseLot[] | null {
   const key = keyOf(p), tranches = sources.tranches[key];
   let costFromTape=false;
-  let lots = sources.lots[key]?.map(l=>({...l})) ?? null;
+  let lots: PurchaseLot[] | null = sources.lots[key]?.map(l=>({...l})) ?? null;
   if (!lots?.length && tranches && (tranches.basis==='fifo' || tranches.moves.every(m=>m.direction==='in'))) {
     lots = tranches.moves.filter(m=>m.direction==='in').map(m=>({date:m.date,quantity:m.units,cost:m.invested ?? m.amount ?? NaN}));
   }
