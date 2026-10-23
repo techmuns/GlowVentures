@@ -200,10 +200,10 @@ export const POLYCAB_LIVE: PolycabLive = {
     {
       "asOf": "2026-09-30",
       "quarter": "Sep 2026",
-      "holdingPct": 61.44,
-      "pledgePct": null,
-      "pledgeSource": null,
-      "witnesses": 1,
+      "holdingPct": 61.43663495030835,
+      "pledgePct": 0,
+      "pledgeSource": "tickertape",
+      "witnesses": 2,
       "holdingRefused": false
     },
     {
@@ -254,10 +254,10 @@ export const POLYCAB_LIVE: PolycabLive = {
     {
       "asOf": "2025-03-31",
       "quarter": "Mar 2025",
-      "holdingPct": 63.04426316271684,
-      "pledgePct": 0,
-      "pledgeSource": "tickertape",
-      "witnesses": 2,
+      "holdingPct": 63.04,
+      "pledgePct": null,
+      "pledgeSource": null,
+      "witnesses": 1,
       "holdingRefused": false
     },
     {
@@ -349,5 +349,5 @@ export const POLYCAB_LIVE: PolycabLive = {
       "detail": "6 quarter(s) carried by both witnesses; all agree within 0.05pp."
     }
   ],
-  "retrievedAt": "2026-10-22T16:16:45.852Z"
+  "retrievedAt": "2026-10-23T16:06:32.375Z"
 };

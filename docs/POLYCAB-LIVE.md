@@ -8,7 +8,7 @@ book total, and it is deliberately NOT a statement about what the family's
 own demat reports — that distinction is the whole design and is set out at
 the top of `scripts/build-polycab-live.mjs`.
 
-Retrieved `2026-10-22T16:16:45.852Z`.
+Retrieved `2026-10-23T16:06:32.375Z`.
 
 ## Identity — the gate everything else passed
 
@@ -44,13 +44,13 @@ row for this scrip) — and is published as such.
 
 | Quarter | As of | Promoter holding (% of total shares) | Pledged (% of the group's holding) | Sources |
 | --- | --- | ---: | ---: | ---: |
-| Sep 2026 | 2026-09-30 | 61.44% | — | 1 |
+| Sep 2026 | 2026-09-30 | 61.44% | 0.00% | 2 |
 | Jun 2026 | 2026-06-30 | 61.46% | 0.00% | 2 |
 | Mar 2026 | 2026-03-31 | 61.50% | 0.00% | 2 |
 | Dec 2025 | 2025-12-31 | 61.50% | 0.00% | 2 |
 | Sep 2025 | 2025-09-30 | 61.52% | 0.00% | 2 |
 | Jun 2025 | 2025-06-30 | 63.01% | 0.00% | 2 |
-| Mar 2025 | 2025-03-31 | 63.04% | 0.00% | 2 |
+| Mar 2025 | 2025-03-31 | 63.04% | — | 1 |
 | Dec 2024 | 2024-12-31 | 63.05% | — | 1 |
 | Sep 2024 | 2024-09-30 | 63.06% | — | 1 |
 | Jun 2024 | 2024-06-30 | 65.02% | — | 1 |
