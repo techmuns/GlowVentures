@@ -1,17 +1,9 @@
 // Formula helpers: the reusable, plain-language definitions the <Auditable>
 // popover renders for a CALCULATED number.
 //
-// THE DATA AUDIT DEEP-LINKS THAT USED TO LIVE HERE ARE GONE, at the family's
-// request — every hyperlink into Data Audit, on every page. `auditHref`,
-// `AUDIT_INDEX`, `LEDGER`, `ledgerHref`, `holdingHref`, `appraisalDocKey` and
-// `privateHref` built those URLs and had no other caller, so they are deleted
-// rather than left exported and unused: a builder nothing calls is the
-// dead-code-that-looks-alive failure this repo keeps naming, and the next
-// session would wire it back up believing it was load-bearing.
-//
-// `FormulaDef.auditHref` went with them, so a formula popover now explains the
-// arithmetic and stops there. The Data Audit PAGE is untouched and still
-// reachable from the nav; only the links pointing INTO it were removed.
+// Document/row provenance is resolved separately by sourceTrace.ts. Keeping
+// it out of formula strings preserves the builder's selected record and lets
+// one calculated figure list several source statements and price inputs.
 
 export type FormulaDef = {
   title: string;      // e.g. "Return"

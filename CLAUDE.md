@@ -554,8 +554,10 @@ And:
 - Tables declare their columns (`useTableView` / `SortHeader` / `Tr`); a table
   that must not be rearranged declares `data-table-static="<reason>"`. Every table
   stripes (`--row-alt`).
-- Deep links into Data Audit are gone; formula popovers stay except on Morning
-  CIO.
+- Holding/account labels and numeric source links open the selected record in
+  Statement Library (26 October instruction). Preserve exact document pointers;
+  calculated totals list contributing sources, and market feeds remain distinct
+  from statement figures. Formula popovers retain the arithmetic and sources.
 
 ## Verifying
 

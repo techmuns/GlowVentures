@@ -13,6 +13,8 @@ import {
   cellText, columnLetters, fileSize, hasText, isSheetFormat, mergeLayout, sheetRows, unreadReason,
   type GridCell, type GridMerge, type PageText, type PublishedFile, type StatementFileIndex,
 } from "@/lib/statementPreview";
+import { sourceRecordAt, sourcePage } from '@/lib/sourceTrace';
+import { readModel } from '@/lib/readModel';
 
 const BASE = import.meta.env.BASE_URL;
 const OriginalPdf = lazy(() => import("./PdfPreview"));
@@ -39,7 +41,7 @@ export function useFilePreview() {
   }, [setParams]);
   const close = useCallback(() => {
     if (pushed.current) { pushed.current = false; navigate(-1); return; }
-    setParams((p) => { p.delete(FILE_PARAM); return p; }, { replace: true });
+    setParams((p) => { for (const key of [FILE_PARAM, 'record', 'field', 'isin', 'security', 'sourceValue', 'sheet', 'rows', 'path']) p.delete(key); return p; }, { replace: true });
   }, [navigate, setParams]);
   return { openKey, open, close };
 }
@@ -263,16 +265,25 @@ const EMPTY_CELL: GridCell = { text: "", full: "", numeric: false };
 
 /** One sheet as a grid: column letters across, row numbers down, merged blocks
  *  drawn as one cell. */
-function SheetGrid({ grid }: { grid: Grid }) {
+function SheetGrid({ grid, sourceSelected }: { grid: Grid; sourceSelected?: boolean }) {
   const { rows, cols, merges } = grid;
   const [shown, setShown] = useState(ROW_STEP);
+  const [params] = useSearchParams();
+  const selectedRows = useMemo(() => new Set(sourceSelected ? (params.get('rows') ?? '').split(',').map(Number).filter(n => Number.isInteger(n) && n > 0 && n <= rows.length) : []), [params, rows.length, sourceSelected]);
+  const host = useRef<HTMLDivElement>(null);
   useEffect(() => setShown(ROW_STEP), [grid]);
+  useEffect(() => {
+    if (!selectedRows.size) return;
+    setShown(n => Math.max(n, ...selectedRows));
+    const frame = requestAnimationFrame(() => host.current?.querySelector('[data-source-row="true"]')?.scrollIntoView({ block: 'center' }));
+    return () => cancelAnimationFrame(frame);
+  }, [grid, selectedRows]);
   if (!rows.length) return <AbsentSection what="This sheet is empty" needs="The file carries this sheet with no cells in it." />;
   const body = (allRows: boolean) => {
     const drawn = allRows ? rows.length : Math.min(shown, rows.length);
     const { spans, covered } = mergeLayout(merges, drawn);
     return rows.slice(0, drawn).map((r, i) => (
-      <tr key={i}>
+      <tr key={i} data-source-row={selectedRows.has(i + 1) ? 'true' : undefined} className={selectedRows.has(i + 1) ? 'bg-champagne-500/10' : undefined}>
         <td className="mono px-2 py-1 text-right text-[10.5px] text-slate-600">{i + 1}</td>
         {Array.from({ length: cols }, (_, c) => {
           if (covered.has(`${i}:${c}`)) return null;
@@ -289,7 +300,7 @@ function SheetGrid({ grid }: { grid: Grid }) {
     ));
   };
   return (
-    <div data-preview-sheet-rows={rows.length}>
+    <div ref={host} data-preview-sheet-rows={rows.length}>
       <div className="overflow-auto rounded-lg border border-ink-700">
         <ExportableTable className="min-w-full border-collapse text-[12px]"
           data-table-static="the file's own sheet, cell for cell as the provider laid it out">
@@ -319,7 +330,9 @@ function SheetGrid({ grid }: { grid: Grid }) {
 
 /** A workbook's sheets, one tab each — a CSV is a workbook of one. */
 function SheetTabs({ sheets }: { sheets: SheetView[] }) {
-  const [at, setAt] = useState(0);
+  const [params] = useSearchParams();
+  const requested = params.get('sheet');
+  const [at, setAt] = useState(() => Math.max(0, sheets.findIndex(s => s.key === requested)));
   if (!sheets.length) return <AbsentSection what="This workbook has no sheets" needs="The file carries no worksheet to show." />;
   const sheet = sheets[Math.min(at, sheets.length - 1)];
   return (
@@ -337,7 +350,7 @@ function SheetTabs({ sheets }: { sheets: SheetView[] }) {
           ))}
         </div>
       )}
-      <SheetGrid grid={sheet.grid} />
+      <SheetGrid grid={sheet.grid} sourceSelected={sheet.key === requested} />
     </div>
   );
 }
@@ -357,6 +370,41 @@ const VIEWS: readonly ViewDef<View>[] = [
 
 const ACTION = "inline-flex shrink-0 items-center gap-1 rounded-md border border-ink-600 bg-ink-800 px-2.5 py-1.5 text-xs font-medium text-slate-300 hover:bg-ink-700";
 
+/** The selected normalized row is shown beside the original, rather than
+ * relying on a rounded figure or guessing another statement by its amount. */
+function SelectedSourceRecord({ docKey }: { docKey: string }) {
+  const [params] = useSearchParams();
+  const pointer = params.get('record'), isin = params.get('isin'), security = params.get('security');
+  const [state, setState] = useState<{ record?: unknown; failed?: boolean }>({});
+  useEffect(() => {
+    if (!pointer) return;
+    let alive = true; setState({});
+    readModel(`canonical/documents/${docKey}.json`).then(doc => {
+      let record = sourceRecordAt(doc, pointer);
+      if (Array.isArray(record)) record = record.filter(r => isin ? r.isin === isin : r.securityKey === security);
+      if (alive) setState({ record, failed: record === undefined || Array.isArray(record) && !record.length });
+    }).catch(() => { if (alive) setState({ failed: true }); });
+    return () => { alive = false; };
+  }, [docKey, pointer, isin, security]);
+  if (!pointer) return null;
+  const records = Array.isArray(state.record) ? state.record : state.record !== undefined ? [state.record] : [];
+  const fields: [string, string][] = [['security', 'Security'], ['isin', 'ISIN'], ['date', 'Date'], ['quantity', pointer === '/transactions' ? 'Units moved' : 'Quantity'], ['totalCost', 'Cost'], ['marketPrice', 'Price / NAV'], ['marketValue', 'Market value'], ['description', 'Description']];
+  return <div className="mx-4 mt-3 max-h-[160px] shrink-0 overflow-auto rounded-md border border-ink-700 px-3 py-2 text-xs" data-selected-source-record={pointer}>
+    <div className="mb-1 font-medium text-slate-200">Source record · {pointer}</div>
+    {state.failed ? <div role="alert" className="text-slate-400">This exact source record could not be opened. The original file remains available below.</div>
+      : state.record === undefined ? <div role="status">Opening source record…</div>
+      : records.map((raw, i) => {
+        if (!raw || typeof raw !== 'object') return <div key={i}>Source value: {String(raw)}</div>;
+        const record = raw as Record<string, unknown>;
+        return <div key={i} className="mb-2 flex flex-wrap gap-x-4 gap-y-1" data-selected-source-index={i}>
+          {fields.filter(([key]) => record[key] != null).map(([key, label]) => <span key={key} data-source-field={key} className={params.get('field') === key ? 'font-semibold text-champagne-400' : 'text-slate-400'}>
+            {label}: <span className="mono">{typeof record[key] === 'number' ? (record[key] as number).toLocaleString('en-IN', { maximumFractionDigits: 8 }) : String(record[key])}</span>
+          </span>)}
+        </div>;
+      })}
+  </div>;
+}
+
 /**
  * THE PREVIEW WINDOW. Opened from a file's row in a Statement Library folder;
  * Escape, the close button or a click outside the window closes it.
@@ -372,6 +420,7 @@ const ACTION = "inline-flex shrink-0 items-center gap-1 rounded-md border border
  * domain is on many statements), which is why no route opens one by default.
  */
 export function StatementPreview({ doc, onClose }: { doc: LibraryDoc; onClose: () => void }) {
+  const [params] = useSearchParams();
   const loaded = usePages(doc.fileKey);
   const original = useOriginal(doc.fileKey);
   const [picked, setPicked] = useState<View | null>(null);
@@ -395,6 +444,7 @@ export function StatementPreview({ doc, onClose }: { doc: LibraryDoc; onClose: (
   }, []);
 
   const count = loaded.status === "ready" ? loaded.pages.length : null;
+  const selectedPage = loaded.status === 'ready' ? sourcePage(loaded.pages, params.get('isin'), params.get('sourceValue')) : undefined;
   const meta = [doc.owner, doc.accountNo, doc.asOf ? fmtDate(doc.asOf) : null, doc.delivery].filter(Boolean);
 
   // Portalled into `#root`, as the chat dialog is: `#root` carries `--app-zoom`,
@@ -465,6 +515,7 @@ export function StatementPreview({ doc, onClose }: { doc: LibraryDoc; onClose: (
           </div>
         </div>
 
+        <SelectedSourceRecord docKey={doc.fileKey} />
         <div className="px-4 pt-3">
           <ViewToggle views={VIEWS} active={view} onChange={setPicked} />
         </div>
@@ -479,7 +530,7 @@ export function StatementPreview({ doc, onClose }: { doc: LibraryDoc; onClose: (
           {view === "original" && published && (sheet
             ? <OriginalSheets url={published.url} format={doc.format} />
             : <Suspense fallback={<Opening what="Opening PDF…" />}>
-                <OriginalPdf key={published.previewUrl} url={published.previewUrl} file={published.file} title={`${doc.reportLabel} — ${doc.fileName}`} />
+                <OriginalPdf key={published.previewUrl} url={published.previewUrl} file={published.file} initialPage={selectedPage} title={`${doc.reportLabel} — ${doc.fileName}`} />
               </Suspense>)}
 
           {view === "text" && loaded.status === "loading" && <Opening what="Opening the file…" />}

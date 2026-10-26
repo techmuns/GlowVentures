@@ -66,6 +66,7 @@ import {
 // from there by type rather than by an omitted button.
 import { sectionsFor, orderSections, TXN_UNSECTIONED, TXN_UNSECTIONED_WHY, type TxnSections } from "@/lib/txnAxis";
 import { Auditable } from "@/components/Auditable";
+import { SourceValue } from '@/components/SourceTrace';
 // THE RETURN-METHODOLOGY PICKER AND ITS COLUMNS ARE SHARED with the Private
 // Market fund table now. Everything that used to be defined here moved verbatim;
 // this page supplies only how one of ITS rows resolves a measure.
@@ -3414,7 +3415,7 @@ export function PortfolioMonitor() {
             className="underline decoration-dotted decoration-slate-500/40 underline-offset-[3px] transition-colors hover:text-champagne-400 hover:decoration-champagne-500">
             {v.vehicle}
           </Link>
-        : <span title={`Account ${v.accountNo}`}>{v.vehicle}</span>;
+        : <SourceValue positions={v.positions} metric="statement"><span title={`Account ${v.accountNo}`}>{v.vehicle}</span></SourceValue>;
       // ON A CLUBBED fund the class is the line's name — and not a link: the
       // row above opens the fund's one page, every class and every member on
       // it. A fund with one class keeps the vehicle as the line's name: the row
@@ -3427,10 +3428,10 @@ export function PortfolioMonitor() {
       // account go under it. The Entity column carries the member too — it
       // closes a row that is wider than the screen, so it is not relied on.
       out.push(childRow(`${r.key}>${fk}`, "venue", 1, {
-        title: asClass ? <span data-venue-class={v.securityKey}>Class {v.cls}</span> : v.owner,
+        title: <SourceValue positions={v.positions} metric="statement">{asClass ? <span data-venue-class={v.securityKey}>Class {v.cls}</span> : v.owner}</SourceValue>,
         // Its share only where there is more than one line to share it
         // between: over one line it is always 100%.
-        sub: <>{asClass ? v.owner : <>{vehicle} · {v.route}</>} · {acct(v.accountNo)}{vs.length > 1 && vs.some((x) => x.marketValue !== 0)
+        sub: <>{asClass ? v.owner : <>{vehicle} · {v.route}</>} · <SourceValue positions={v.positions} metric="statement">{acct(v.accountNo)}</SourceValue>{vs.length > 1 && vs.some((x) => x.marketValue !== 0)
           ? <> · {(v.share * 100).toFixed(1)}% of the {asClass ? "fund" : "holding"}</> : null}</>,
         last: lastLine,
         ...tradesToggle(`${r.key}>${fk}`, v.positions),
@@ -5065,7 +5066,7 @@ export function PortfolioMonitor() {
                     the figure. Same treatment as the Weight cell's own `title`
                     one column over, which explains its denominator the same way.
                   */}
-                <TrFoot view={holdView} className="px-2 py-1.5 text-slate-200"
+                <TrFoot view={holdView} sourcePositions={rows.flatMap(r => r.trancheSet)} className="px-2 py-1.5 text-slate-200"
                   data-footer-total=""
                   // The same two handles the category rows carry, for the same
                   // reason (Stage 10dh): the footer's own return is refused where

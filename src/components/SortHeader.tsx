@@ -12,6 +12,8 @@ import { AutoEditColumns, columnText } from "./EditColumns";
 import { reviewColumn, REVIEW_NOTE, type ReviewScope } from "@/lib/reviewColumns";
 import { ReviewColumnCell } from "./ReviewColumnCell";
 import { InvestmentDateCell } from "./InvestedOnCell";
+import { SourceCell } from './SourceTrace';
+import { metricForColumn, type TracePosition } from '@/lib/sourceTrace';
 const INPUT_TABLES = new Set(["pm-book", "monitor", "mandate-holdings", "strategy-holdings", "strategy-holders", "holdings-behind", "family-holdings"]);
 
 /**
@@ -177,11 +179,11 @@ export function SortHeader({ col, view, children, align = "right", title, pad = 
  * DECLARED order instead, so the row is right even if it does not follow the
  * drag, and the mismatch is loud in development.
  */
-export function Tr({ view, children, reviewScope, inputRecordId, ...rest }: { view: TableView; children: ReactNode; reviewScope?: ReviewScope; inputRecordId?: string } & React.HTMLAttributes<HTMLTableRowElement>) {
+export function Tr({ view, children, reviewScope, sourcePositions, inputRecordId, ...rest }: { view: TableView; children: ReactNode; reviewScope?: ReviewScope; sourcePositions?: readonly TracePosition[]; inputRecordId?: string } & React.HTMLAttributes<HTMLTableRowElement>) {
   const exporting = useContext(TableExportAllRows);
   const editing = useTableEditing();
   const inputs = useTableInputs();
-  const { displayCurrency } = usePortfolio();
+  const { displayCurrency, portfolio } = usePortfolio();
   const order = exporting ? view.availableOrder : view.order;
   const row = useRef<HTMLTableRowElement>(null);
   const editors = useRef(new Map<string, { record: InputRecord; field: string }>());
@@ -221,8 +223,13 @@ export function Tr({ view, children, reviewScope, inputRecordId, ...rest }: { vi
   const capitalId = position ? (inputs.catalog.some(r => r.id === privateCapitalId(position)) ? privateCapitalId(position) : capitalInputId(position.accountId))
     : manualCapital && inputs.catalog.some(r => r.id === manualCapital) ? manualCapital : reviewScope?.accountId ? capitalInputId(reviewScope.accountId) : undefined;
   const recordIds = [...new Set([holdingId, capitalId, ...positions.flatMap(p => [positionInputId(p), capitalInputId(p.accountId), privateCapitalId(p)])].filter((s): s is string => !!s))];
+  const traced = sourcePositions ?? reviewScope?.positions ?? (reviewScope?.accountId || reviewScope?.accountIds
+    ? portfolio?.positions.filter(p => (reviewScope.accountIds ?? [reviewScope.accountId]).includes(p.accountId)
+      && (!reviewScope.securityKey || p.securityKey === reviewScope.securityKey)) ?? [] : []);
   const renderCell = (column: string) => {
-    const original = byCol.get(column);
+    const cell = byCol.get(column), metric = metricForColumn(column);
+    const original = !editing && !exporting && metric && isValidElement<{ children?: ReactNode }>(cell) && cell.type === 'td'
+      ? cloneElement(cell, { children: <SourceCell positions={traced} metric={metric}>{cell.props.children}</SourceCell> }) : cell;
     if (header || !isValidElement<Record<string, unknown>>(original) || original.type !== "td") return original;
     // Explicitly audited source-table contracts. A dated ledger can also have
     // a column called "value" or "units"; its historical rows must never edit
@@ -284,7 +291,7 @@ export function Tr({ view, children, reviewScope, inputRecordId, ...rest }: { vi
  * The caller supplies whole `<td>` elements, because a footer cell's alignment,
  * colour and popover belong to the table that knows what the figure is.
  */
-export function TrFoot({ view, label, labelTitle, cells, className = "", ...rest }: {
+export function TrFoot({ view, label, labelTitle, cells, sourcePositions, className = "", ...rest }: {
   view: TableView;
   /** The label cell's CONTENT — `TrFoot` computes its `colSpan`. */
   label: ReactNode;
@@ -297,6 +304,7 @@ export function TrFoot({ view, label, labelTitle, cells, className = "", ...rest
   labelTitle?: string;
   /** One `<td>` per column that carries a total, keyed by column id. */
   cells: Record<string, ReactNode>;
+  sourcePositions?: readonly TracePosition[];
   className?: string;
 } & React.HTMLAttributes<HTMLTableRowElement>) {
   const exporting = useContext(TableExportAllRows);
@@ -312,7 +320,12 @@ export function TrFoot({ view, label, labelTitle, cells, className = "", ...rest
       {/* A COLUMN WITH NO TOTAL STILL NEEDS ITS CELL, and it takes the row's
           own class: the footer carries a top rule, and an unstyled filler
           breaks that line across the table. */}
-      {order.slice(span).map((c) => cells[c] ?? <td key={c} className={className} />)}
+      {order.slice(span).map((c) => {
+        const cell = cells[c], metric = metricForColumn(c);
+        return !exporting && sourcePositions && metric && isValidElement<{ children?: ReactNode }>(cell) && cell.type === 'td'
+          ? cloneElement(cell, { children: <SourceCell positions={sourcePositions} metric={metric}>{cell.props.children}</SourceCell> })
+          : cell ?? <td key={c} className={className} />;
+      })}
     </tr>
   );
 }

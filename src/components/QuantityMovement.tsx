@@ -1,4 +1,6 @@
 import { ExportableTable } from "@/components/ExportableTable";
+import type { ReactNode } from 'react';
+import { SourceValue } from './SourceTrace';
 /**
  * OPENING, PLUS, MINUS, CLOSING — the family's own table.
  *
@@ -127,6 +129,11 @@ export function QuantityMovement(
     held?: ReadonlySet<string>;
   },
 ) {
+  const source = (m: ShareMovement, field: string, value: number | null, children: ReactNode) => value == null || !m.source ? children
+    : <SourceValue trace={{ metric: 'quantity', title: `${field} units`, derived: false, missing: 0, notes: [], sources: [{
+      document: m.source, pointer: '/transactions', field, value, isin: m.isin, securityKey: m.securityKey,
+      accountId: m.accountId, label: m.security ?? m.securityKey,
+    }] }}>{children}</SourceValue>;
   const view = useTableView("quantity-movement", QTY_COLS);
   const accIdx = new Map(accounts.map((a) => [a.accountId, a]));
   const movements = sortRows(raw, view.sort, {
@@ -211,7 +218,7 @@ export function QuantityMovement(
                       );
                     })()}
                   </td>
-                  <td className="px-4 py-2 text-right mono text-slate-100" data-qty-opening={m.opening ?? ""}>{qty(m.opening)}</td>
+                  <td className="px-4 py-2 text-right mono text-slate-100" data-qty-opening={m.opening ?? ""}>{source(m, 'opening', m.opening, qty(m.opening))}</td>
                   <td className="px-4 py-2 text-right"><Move v={ties ? m.unitsIn : null} sign="+" zero={Z_IN} why={m.reason} /></td>
                   <td className="px-4 py-2 text-right"><Move v={ties ? m.unitsOut : null} sign="−" zero={Z_OUT} why={m.reason} /></td>
                   <td className="px-4 py-2 text-right">
@@ -219,7 +226,7 @@ export function QuantityMovement(
                       : m.corporateAction === 0 ? <span className="text-slate-500" title={Z_CA}>0</span>
                       : <span className="mono text-slate-100" title={T_CA}>{m.corporateAction! > 0 ? "+" : "−"}{qty(Math.abs(m.corporateAction!))}</span>}
                   </td>
-                  <td className="px-4 py-2 text-right mono text-slate-100" data-qty-closing={m.closing ?? ""}>{qty(m.closing)}</td>
+                  <td className="px-4 py-2 text-right mono text-slate-100" data-qty-closing={m.closing ?? ""}>{source(m, 'closing', m.closing, qty(m.closing))}</td>
                   <td className="px-4 py-2 text-right">
                     {(m.encumbranceMoves ?? 0) === 0
                       ? <span className="text-slate-500" title={Z_PLEDGE}>0</span>

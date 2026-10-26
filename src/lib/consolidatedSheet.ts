@@ -20,7 +20,7 @@ import type { Account, Position } from "./types";
 
 export type ConsolidatedCell = string | number | null;
 export type ConsolidatedColumn = { key: string; label: string; format: string; width: number };
-export type ConsolidatedLink = { sheet?: string; find?: string; where?: Record<string, string>; row?: number; file?: string };
+export type ConsolidatedLink = { sheet?: string; find?: string; where?: Record<string, string>; row?: number; file?: string; record?: string; field?: string; isin?: string };
 export type ConsolidatedRow = { values: ConsolidatedCell[]; kind?: "group" | "total"; links?: Record<string, ConsolidatedLink> };
 export type ConsolidatedTab = { name: string; note: string; columns: ConsolidatedColumn[]; rows: ConsolidatedRow[] };
 export type ConsolidatedBook = { client: string; asOf: string; totalValue: number; documents: number; tabs: ConsolidatedTab[] };
@@ -91,7 +91,8 @@ export function buildConsolidatedSheet(docs: ArchiveDoc[], input: { accounts: Ac
     ...(r.acct ? { acct: { sheet: "Accounts", where: { id: String(r.acct) } } } : {}),
     ...(r.sec ? { sec: { sheet: "Securities", where: { id: String(r.sec) } }, name: { sheet: "Securities", where: { id: String(r.sec) } } } : {}),
     ...(r.sec || r.acct ? { fund: { sheet: "Holdings", where: r.sec ? { sec: String(r.sec) } : { acct: String(r.acct) } } } : {}),
-    src: r._source ? { file: String(r._source) } : { sheet: "Column Mapping" },
+    ...(r._source && r.qty != null ? { qty: { file: String(r._source), record: r._pointer ? String(r._pointer) : undefined, field: 'quantity', isin: r._isin ? String(r._isin) : undefined } } : {}),
+    src: r._source ? { file: String(r._source), record: r._pointer ? String(r._pointer) : undefined } : { sheet: "Column Mapping" },
     notes: r._source ? { file: String(r._source) } : { sheet: "Column Mapping" },
   });
   const holdings: RecordRow[] = positions.map((p, i) => {
@@ -125,7 +126,7 @@ export function buildConsolidatedSheet(docs: ArchiveDoc[], input: { accounts: Ac
       income: p.dividendReceived, rgain: p.realizedPnL ?? null, xirr, bench: null, babs: null, bxirr: null, alpha: null,
       shown: xirr != null ? "XIRR" : !p.valuedAtCost && p.returnPct != null ? "Absolute" : null,
       alloc: counted ? ratio(p.marketValue, totalValue) : null, prevmv: null, stmt: p.priceAsOf ?? a?.asOf ?? null,
-      src: notes, lotqty: tranche?.units ?? null, check, _source: source?.docKey ?? null, _counted: counted ? "Y" : "N" };
+      src: notes, lotqty: tranche?.units ?? null, check, _source: source?.docKey ?? null, _pointer: p.statementRecord?.pointer ?? null, _isin: p.isin ?? null, _counted: counted ? "Y" : "N" };
   });
   // Raw custody rows share the account/ISIN/unit reconciliation used by the
   // portfolio. Missing statement prices stay absent and never enter NAV totals.
