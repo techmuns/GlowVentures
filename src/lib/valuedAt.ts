@@ -37,6 +37,8 @@ export type ValuedRow = {
   review?: boolean;
   /** …and a review line held at what was paid, with no valuation at all. */
   valuedAtCost?: boolean;
+  /** Units a sub-division since the statement moved to the NAV's unit (Stage 10hq). */
+  depositoryUnits?: { unitSplit?: { factor: number; exDate: string } };
 };
 
 export type HoldingValuation = {
@@ -81,7 +83,15 @@ export function holdingValuation(
     : by === "statement" ? `statement mark · ${d}`
     : by === "review" ? (allAtCost ? `held at cost · review, ${d}` : `consolidated review · ${d}`)
     : `valued ${d}`;
-  const kept = "Quantity, cost and realised gains stay exactly as the statements print them.";
+  // A sub-division since the statement moved its units to the NAV's unit, so
+  // the quantity is not the one printed, and the sentence must not say it is.
+  const splits = [...new Set(rows.flatMap((r) => {
+    const s = r.depositoryUnits?.unitSplit;
+    return s ? [`×${s.factor} for the scheme's sub-division of ${fmtDate(s.exDate)}`] : [];
+  }))];
+  const kept = splits.length
+    ? `Cost and realised gains stay exactly as recorded; the quantity is the statement's units ${splits.join(" and ")}, the unit this NAV is struck on.`
+    : "Quantity, cost and realised gains stay exactly as the statements print them.";
   // A statement that PRICES its balances on another day says so: ICICI's NSDL
   // statement counts shares at 31 Mar and values them at the 30 Mar close. The
   // value is struck on the pricing day (`at`); the balances' own day is named.

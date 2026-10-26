@@ -1,14 +1,11 @@
 // Unit identity is dated. A NAV under a successor ISIN cannot price the old
 // count until the exchange's conversion has been applied. These are source
 // terms, never portfolio amounts or inferred price-ratio adjustments.
-const sources = [
-  'https://nsearchives.nseindia.com/content/circulars/CML75868.pdf',
-  'https://nsearchives.nseindia.com/content/circulars/CMPT75902.pdf',
-];
-export const FUND_UNIT_ACTIONS = Object.freeze([
-  { oldIsin: 'INF740KA1SW3', newIsin: 'INF740KA1ZP2', exDate: '2026-08-28', factor: 10, sources },
-  { oldIsin: 'INF740KA1RE3', newIsin: 'INF740KA1ZQ0', exDate: '2026-08-28', factor: 10, sources },
-]);
+import { FUND_UNIT_SPLITS } from './fundUnitSplits.mjs';
+export const FUND_UNIT_ACTIONS = Object.freeze(FUND_UNIT_SPLITS.map(s => ({
+  oldIsin: s.isin, newIsin: s.successorIsin, exDate: s.exDate,
+  factor: s.factor, sources: s.sources, source: s.source,
+})));
 
 const day = v => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v)
   && Number.isFinite(Date.parse(v)) && new Date(v).toISOString().slice(0, 10) === v;

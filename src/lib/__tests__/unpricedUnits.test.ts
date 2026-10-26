@@ -132,6 +132,41 @@ ok("each is NAV-priced, carries the NAV's own date, and says which witness put i
   }));
 ok("the movement's price is a witness and nothing more — never the price a row is valued at",
   got.every((p) => p.currentPrice === navBy.get(p.fundUnitAdjustment?.isin ?? I(p) ?? "")?.nav));
+const dspLines = BOOK_UNVALUED_HOLDINGS.filter((u) => I(u) === "INF740KA1SW3" || I(u) === "INF740KA1RE3");
+const dspRows = got.filter((p) => !!p.depositoryUnits?.unitSplit);
+ok("LOAD-BEARING: the book records DSP Gold and Silver ETF units on two Motilal statements, and AMFI's NAV for both is joined across the split",
+  dspLines.length === 3 && ["INF740KA1SW3", "INF740KA1RE3"].every((i) => navBy.get(i)?.usableForValue && navBy.get(i)?.unitSplit?.factor === 10),
+  dspLines.map((u) => `${u.accountId.slice(-6)} ${u.securityKey} ${u.quantity}`).join("; "));
+ok("every DSP line is valued, and nothing else carries a split",
+  dspRows.length === dspLines.length && dspLines.every((u) => dspRows.some((p) => p.accountId === u.accountId && (p.fundUnitAdjustment?.isin ?? I(p)) === I(u))));
+ok("each is the statement's units × 10 at the published NAV, and keeps the statement's own count",
+  dspRows.every((p) => {
+    const u = dspLines.find((l) => l.accountId === p.accountId && I(l) === (p.fundUnitAdjustment?.isin ?? I(p)))!;
+    const s = p.depositoryUnits!.unitSplit!;
+    return s.statementQuantity === u.quantity && p.quantity === (u.quantity as number) * 10
+      && Math.abs(p.marketValue - (u.quantity as number) * 10 * (p.currentPrice as number)) < 0.01;
+  }));
+ok("...priced against the successor ISIN AMFI publishes it under, never the retired one",
+  dspRows.every((p) => p.priceEvidence?.instrument === p.depositoryUnits!.unitSplit!.publishedIsin && p.priceEvidence?.instrument !== (p.fundUnitAdjustment?.isin ?? I(p))));
+ok("...and its recovered cost still reconciles on the statement's units, with the cost per unit on the new one",
+  dspRows.every((p) => !p.recoveredCost
+    || (p.recoveredCost.quantity === p.depositoryUnits!.unitSplit!.statementQuantity
+      && Math.abs((p.avgCost as number) * (p.quantity as number) - (p.costBasis as number)) < 0.01)));
+ok("the sentence names the split, its date and both counts",
+  dspRows.every((p) => {
+    const s = describeDepositoryUnits(p.depositoryUnits!), d = p.depositoryUnits!.unitSplit!;
+    return s.includes(d.exDate) && s.includes(d.publishedIsin)
+      && s.includes(d.statementQuantity.toLocaleString("en-IN")) && s.includes((p.quantity as number).toLocaleString("en-IN"));
+  }));
+if (dspLines.length) {
+  const line = dspLines[0];
+  ok("REFUSED: a line counted on or after the ex-date under the retired ISIN is on neither unit",
+    unpricedStatementUnits([{ ...line, asOf: "2026-08-28" }], [{ ...acc.get(line.accountId)!, asOf: "2026-08-28" }], []).length === 0);
+  ok("REFUSED: an own rate far from the NAV once the split is applied is still a basis break",
+    unpricedStatementUnits([{ ...line, lastMovementRate: (line.lastMovementRate as number) * 10 }], [acc.get(line.accountId)!], []).length === 0);
+  ok("CONTROL: the same line as the book has it passes",
+    unpricedStatementUnits([line], [acc.get(line.accountId)!], []).length === 1);
+}
 ok("each keeps the book's own key for its line, so one scheme stays one key on every page",
   got.every((p) => BOOK_UNVALUED_HOLDINGS.some((u) => u.accountId === p.accountId && u.securityKey === p.securityKey && I(u) === (p.fundUnitAdjustment?.isin ?? I(p)))));
 ok("no row is a position the book already carries in the same account",

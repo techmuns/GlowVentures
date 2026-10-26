@@ -406,7 +406,7 @@ function main() {
 
       let before = prev.byKey.get(w.key) ?? prev.byIsin.get(isin.trim().toUpperCase());
       // Never compare a pre-split NAV with a post-split NAV as a daily loss.
-      if (before && (before.pricingIsin ?? before.isin) !== pricingIsin) before = null;
+      if (before && (before.pricingIsin ?? before.unitSplit?.publishedIsin ?? before.isin) !== pricingIsin) before = null;
       // The previous NAV is whatever THIS FILE held on an earlier date — the
       // source publishes one day, so the change accumulates here or not at all.
       const carry = before && before.date && before.date !== rec.date
@@ -414,11 +414,14 @@ function main() {
         : before && before.prev != null && before.date === rec.date
           ? { prev: before.prev, prevDate: before.prevDate }
           : {};
+      const conversion = w.marks.map(m => fundUnitBasis(isin, m.asOf, rec.date)).find(b => !b.reason && b.actions.length);
       out.push({
         securityKey: w.key,
         security: w.name,
         isin,
         ...(pricingIsin !== isin ? { pricingIsin } : {}),
+        ...(conversion ? { unitSplit: { publishedIsin: pricingIsin, factor: conversion.factor,
+          exDate: conversion.actions[0].exDate, source: conversion.actions.map(a => a.source ?? a.sources.join(', ')).join('; ') } } : {}),
         isinFrom: bookIsin ? "statement" : "look-through",
         // The look-through ANSWERED TOO and agreed (a disagreement is skipped
         // above), so the second tier is exercised even where the statement
@@ -449,6 +452,8 @@ export interface FundNav {
   isin: string;
   /** Dated successor identity where the exchange converted these units. */
   pricingIsin?: string;
+  /** Display/audit terms; quantity conversion is applied by the shared resolver. */
+  unitSplit?: { publishedIsin: string; factor: number; exDate: string; source: string };
   /** Which tier supplied it: the family's own statement, or the look-through. */
   isinFrom: "statement" | "look-through";
   /** The other tier answered as well, with the same ISIN; null where only one answered. */

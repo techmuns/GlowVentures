@@ -488,6 +488,11 @@ function withUnpricedStatementUnits(src, positions) {
     if (!nav || !nav.usableForValue || !(nav.nav > 0)) continue;                                // 3
     const own = acc.get(u.accountId);
     if (!own || !u.asOf) continue;
+    // Stage 10hq: a NAV joined across a sub-division prices the statement's
+    // units times its factor, and only units counted before its ex-date.
+    const split = nav.unitSplit ?? null;
+    if (split && !(u.asOf < split.exDate)) continue;
+    const f = split ? Number(split.factor) : 1;
     const ownRate = rateOf(u);
     let price = ownRate, witnessAccountId = null;
     if (price === null && !etf) {
@@ -500,7 +505,7 @@ function withUnpricedStatementUnits(src, positions) {
       witnessAccountId = pos?.accountId ?? row?.accountId ?? null;
     }
     if (price === null) continue;                                                               // 4
-    const r = nav.nav / price;
+    const r = (nav.nav * f) / price;
     if (!(r > 0.5 && r < 2)) continue;                                                          // 5
     if (positions.some((p) => p.accountId === u.accountId && I(p) === isin)) continue;          // 6
     const owner = ownerOf(u.accountId);
@@ -512,7 +517,7 @@ function withUnpricedStatementUnits(src, positions) {
       symbol: book?.symbol ?? keyToSymbol[u.securityKey] ?? null,
       accountId: u.accountId, sector: book?.sector ?? "Unclassified",
       assetClass: etf ? "ETF" : "Mutual Fund", marketSide: "listed",
-      quantity: qty, marketValue: qty * nav.nav, currentPrice: nav.nav,
+      quantity: qty * f, marketValue: qty * f * nav.nav, currentPrice: nav.nav,
       costBasis: null, costUnavailable: true, unrealizedPnL: null, returnPct: null, avgCost: null,
       navPriced: true, navDate: nav.date,
       depositoryUnits: ownRate !== null
@@ -555,7 +560,8 @@ function withPublishedNavs(positions) {
   } catch { return positions; }   // no store committed — the pages render the same
   return positions.map((p) => {
     const e = by.get(p.securityKey);
-    if (!e || !(e.nav > 0) || !(Number(p.quantity) > 0)) return p;
+    // A NAV joined across a sub-division values only the unpriced units above (Stage 10hq).
+    if (!e || e.unitSplit || !(e.nav > 0) || !(Number(p.quantity) > 0)) return p;
     const marketValue = Number(p.quantity) * e.nav;
     const cost = p.costBasis;
     const costNA = !!p.costUnavailable || !(typeof cost === "number" && cost > 0);
@@ -7415,7 +7421,8 @@ const DRILLDOWN_TOTALS = new Map();
 // does not go unwalked either — the `cio` invariant below fails when the table
 // has more rows than this sweep has addresses for, which is a one-line
 // diagnosis naming the fix rather than a silent gap.
-const BUCKET_SLOTS = [1, 2, 3, 4, 5, 6, 7, 8];
+// Nine since Stage 10hq: valuing DSP Gold and Silver ETF gave the book an ETF row.
+const BUCKET_SLOTS = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
 /**
  * THE MUTUAL FUND WHOSE LOOK-THROUGH IS WALKED — derived, never typed.
@@ -19316,7 +19323,29 @@ const CIO_ALLOC = [
      * for every allocation row, either its three cells reconcile, or its return
      * is an em dash.
      */
-    ["every allocation row's return ties to its own Invested and Current, or is absent", (t) => {
+    ["every allocation row's return ties to its own Invested and Current, or is absent", (t, ctx) => {
+      /**
+       * FIFO KEEPS WHAT WAS ALREADY BOOKED (Stage 10hq). A row whose holdings
+       * sold units or paid income carries that gain, and the cost of the units
+       * sold, on its return cell's handles; its Return is then
+       * (Current − Invested + booked) ÷ (Invested + cost sold), which is the
+       * plain ratio where both are nil. DSP Silver's ₹1.47 Cr realised is the
+       * first on this book large enough to tell the two apart.
+       */
+      const cells = ctx?.allocTable?.cells;
+      if (cells?.length) {
+        const u = (s) => {
+          const m = /₹([\d,.]+)\s*(Cr|L|K)?/.exec(s ?? "");
+          return m ? cr(m[1]) * (m[2] === "L" ? 0.01 : m[2] === "K" ? 0.0001 : 1) : NaN;
+        };
+        const priced = cells.filter((c) => /[+-]\d+\.\d%/.test(c.ret ?? ""));
+        return priced.every((c) => {
+          const inv = u(c.invested), cur = u(c.current), pct = Number(/([+-]\d+\.\d)%/.exec(c.ret)[1]);
+          const booked = c.booked == null ? 0 : Number(c.booked) / 1e7, sold = c.sold == null ? 0 : Number(c.sold) / 1e7;
+          if (!Number.isFinite(inv) || !Number.isFinite(cur) || !inv || !Number.isFinite(booked) || !Number.isFinite(sold)) return false;
+          return Math.abs(((cur - inv + booked) / (inv + sold)) * 100 - pct) <= 1.0;
+        });
+      }
       // THE TOTAL ROW IS NOT A SECTION (B-07): its return is struck over the
       // holdings that report a cost and names that set under it, so it does
       // not divide its own Invested and Current — the invariant after this one
@@ -40273,6 +40302,12 @@ for (const theme of THEMES) {
             // …and Invested with the reason an absent one carries (A-14).
             invested: (r.cells[1]?.innerText ?? "").trim(),
             investedWhy: r.cells[1]?.querySelector("[title]")?.getAttribute("title") ?? r.cells[1]?.getAttribute("title") ?? "",
+            // The Return, and FIFO's two parts outside Invested and Current
+            // where the row carries them (Stage 10hq): booked gain and income,
+            // and the cost of the units sold, in rupees.
+            ret: (r.cells[3]?.innerText ?? "").trim(),
+            booked: r.cells[3]?.querySelector("[data-alloc-booked]")?.getAttribute("data-alloc-booked") ?? null,
+            sold: r.cells[3]?.querySelector("[data-alloc-sold]")?.getAttribute("data-alloc-sold") ?? null,
           })),
           foot: (() => {
             const f = t.querySelector("tfoot tr");

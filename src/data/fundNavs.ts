@@ -15,6 +15,8 @@ export interface FundNav {
   isin: string;
   /** Dated successor identity where the exchange converted these units. */
   pricingIsin?: string;
+  /** Display/audit terms; quantity conversion is applied by the shared resolver. */
+  unitSplit?: { publishedIsin: string; factor: number; exDate: string; source: string };
   /** Which tier supplied it: the family's own statement, or the look-through. */
   isinFrom: "statement" | "look-through";
   /** The other tier answered as well, with the same ISIN; null where only one answered. */
@@ -179,6 +181,12 @@ export const BOOK_FUND_NAVS: FundNav[] = [
   "security": "DSP GOLD ETF",
   "isin": "INF740KA1SW3",
   "pricingIsin": "INF740KA1ZP2",
+  "unitSplit": {
+   "publishedIsin": "INF740KA1ZP2",
+   "factor": 10,
+   "exDate": "2026-08-28",
+   "source": "NSE circular NSE/CML/75868 (21 Aug 2026) and NSE Clearing circular NCL/CMPT/75902 (24 Aug 2026)"
+  },
   "isinFrom": "statement",
   "isinAgreedBy": "look-through",
   "from": "book",
@@ -199,6 +207,12 @@ export const BOOK_FUND_NAVS: FundNav[] = [
   "security": "DSP SILVER ETF",
   "isin": "INF740KA1RE3",
   "pricingIsin": "INF740KA1ZQ0",
+  "unitSplit": {
+   "publishedIsin": "INF740KA1ZQ0",
+   "factor": 10,
+   "exDate": "2026-08-28",
+   "source": "NSE circular NSE/CML/75868 (21 Aug 2026) and NSE Clearing circular NCL/CMPT/75902 (24 Aug 2026)"
+  },
   "isinFrom": "statement",
   "isinAgreedBy": "look-through",
   "from": "book",

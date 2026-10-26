@@ -156,10 +156,14 @@ console.log("\n── one mark or none (A-03) ──");
     if (distinct.size === 1) { single++; if (m.price === null || render(m.price) !== [...distinct][0]) ok("a single mark is shown", false); }
   }
   ok("rows whose lines disagree on a mark print none", split > 0, `${split} split rows (load-bearing), ${single} single`);
+  // DSP Gold's two statements print two different LAST-MOVEMENT prices
+  // (₹141.24, ₹151.10), which were never marks (Stage 10cz). Since Stage 10hq
+  // both lines are valued at AMFI's one NAV across the 1:10 split, so the row
+  // prints that NAV — one mark — and neither statement's price.
   const dsp = [...byKey.entries()].find(([k]) => /dsp-gold/.test(k))?.[1] ?? [];
   const dm = commonMark(dsp, render);
-  ok("DSP Gold's two converted balances share the same published NAV", dsp.length === 2 && dm.price !== null
-    && dsp.every(p => p.navPriced && p.isin === 'INF740KA1ZP2' && p.quantity! > 0),
+  ok("DSP Gold's two lines are priced at AMFI's one NAV, so its row prints that mark and no statement's price",
+    dsp.length === 2 && dm.price !== null && dsp.every((p) => p.navPriced === true && p.currentPrice === dm.price),
     dm.marks.join(" vs "));
 }
 

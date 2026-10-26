@@ -1,8 +1,9 @@
+import { acquisitionIdentity } from "../../../shared/fundUnitActions.mjs";
 import assert from "node:assert/strict";
 import { depositoryFundHoldings, unpricedStatementUnits, applyFundNavs } from "../fundNavs";
 import { fifoTotals, positionFifoReturn, realisedReason } from "../fifo";
 import { bucketBy, isCostedForFifo, measuredReturn, holdingReturn } from "../analytics";
-import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_RECOVERED_COSTS } from "../../data/glowData";
+import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_RECOVERED_COSTS, BOOK_UNVALUED_HOLDINGS } from "../../data/glowData";
 import { shareCandidates, depositoryShareHoldings } from "../depositoryShares";
 import { quoteSymbolFor, type QuoteFeed } from "../quotes";
 import type { ActionFeed } from "../corporateActions";
@@ -86,7 +87,10 @@ console.log("Recovered costs: exact quantities, March cutoff, FIFO sales, live o
 
 // The live-only fund layers need the same lot recovery as the baked holdings.
 const funds=[...depositoryFundHoldings(),...unpricedStatementUnits()];
+// 21, and since Stage 10hq the three DSP Gold / Silver ETF lines valued across
+// their 1:10 split, whose costs reconcile on the statements' own pre-split units.
 assert.equal(funds.filter(p=>p.recoveredCost).length,24);
+assert.equal(funds.filter(p=>p.recoveredCost&&p.depositoryUnits?.unitSplit).length,3);
 const fp=(account:string,isin:string)=>funds.find(p=>p.accountId.endsWith(account)&&p.isin===isin)!;
 for (const [account, first, last, lots] of [['12539150','2025-03-06','2026-03-23',4],['12838316','2025-11-06','2025-11-06',1],['12838320','2025-07-11','2025-07-11',1]] as const) {
   const p = fp(account,'INF109KC1RH9');
@@ -123,7 +127,13 @@ assert.equal(fp('12838316','INF179K01830').costBasis,null,'a different folio bal
 const silver=BOOK_RECOVERED_COSTS.find(r=>r.accountId.endsWith('12838316')&&r.isin==='INF740KA1RE3')!;
 near(silver.costBasis,17222067.17);near(silver.realizedPnL,14667670.15);near(silver.costOfUnitsSold,14981798.27);
 assert.equal(silver.quantity,123000);
-assert.ok(!funds.some(p=>p.accountId===silver.accountId&&p.isin===silver.isin),'recovering cost must not bypass the valuation/unit-basis gate');
+// Since Stage 10hq the basis IS verified — DSP's published 1:10 split of
+// 28 Aug 2026 — so the line is valued, and only on the post-split unit.
+const silverRow=funds.find(p=>p.accountId===silver.accountId&&acquisitionIdentity(p).isin===silver.isin);
+assert.ok(silverRow?.depositoryUnits?.unitSplit?.statementQuantity===silver.quantity&&silverRow.quantity===silver.quantity*10,'valued only on the split-adjusted unit');
+// A line whose own rate breaks that basis is refused, its cost notwithstanding.
+const silverLine=BOOK_UNVALUED_HOLDINGS.find(u=>u.accountId===silver.accountId&&u.isin===silver.isin)!;
+assert.equal(unpricedStatementUnits([{...silverLine,lastMovementRate:silverLine.lastMovementRate!*10}]).length,0,'recovering cost must not bypass the valuation/unit-basis gate');
 
 const aggregateInputs=[liquid,savings].filter(isCostedForFifo);
 assert.equal(aggregateInputs.length,2,'unknown proceeds must not remove a costed holding from the FIFO pool');

@@ -31,7 +31,9 @@ name matches or a factor inferred from a price change.
 
 ## Shared contracts
 
-`shared/fundUnitActions.mjs` follows documented, dated conversions. The NAV
+`shared/fundUnitSplits.mjs` is the single source register (retained from the
+parallel Stage 10hq change); `shared/fundUnitActions.mjs` follows its documented,
+dated conversions. The NAV
 builder and valuation layer use the same terms. It refuses a stale old ISIN on
 or after conversion, ambiguous chains and undated balances. A new statement
 already carrying the successor is not adjusted again.

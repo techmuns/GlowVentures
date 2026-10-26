@@ -190,7 +190,7 @@ changed until the family answers; each is disclosed on screen meanwhile.
 | Ankita's 3P redemption (the ₹21.43 Cr advice matches her units × the redemption NAV to the paisa) | No 3P statement for folio 3000049 in the drop | 3P's statement for folio 3000049 |
 | Baring's units after 29 Apr (her demat shows 252.5 against the fund's 202.5 at 31 Mar) | The latest Baring statement is 31 Mar | Baring's 30 Jun statement |
 | Ajay's main Motilal demat holdings (1201090012539150) | Only its transaction tape is in the drop | Its holding statement |
-| DSP Gold / Silver ETF on a published NAV | NSE moved both to new ISINs; the statements carry the old ones | A current depository statement |
+| DSP Gold / Silver ETF on a published NAV | ~~NSE moved both to new ISINs; the statements carry the old ones~~ Valued since Stage 10hq: the 31 Jul units × 10 (DSP's 1:10 split of 28 Aug, NSE/CML/75868) at the successor ISIN's NAV | A current depository statement, to replace the 31 Jul units |
 
 ## Hand verification against the documents
 

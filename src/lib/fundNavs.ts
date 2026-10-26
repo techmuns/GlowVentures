@@ -483,12 +483,16 @@ export function unpricedStatementUnits(
       positionIrrPct: null,
       navPriced: true,
       navDate: nav.date,
-      depositoryUnits: ownRate !== null
-        ? {
-          asOf: u.asOf, source: u.statementRecord?.document ?? null, kind: "last-movement",
+      depositoryUnits: {
+        ...(basis && basis.factor !== 1 ? { unitSplit: { statementQuantity: qty, factor,
+          exDate: basis.actions[0].exDate, publishedIsin: basis.isin,
+          source: basis.actions.map(a => a.source ?? a.sources.join(', ')).join('; ') } } : {}),
+        ...(ownRate !== null ? {
+          asOf: u.asOf, source: u.statementRecord?.document ?? null, kind: "last-movement" as const,
           lastMovementRate: ownRate, lastMovementDate: u.lastMovementDate ?? null, lastMovementSide: u.lastMovementSide ?? null,
         }
-        : { asOf: u.asOf, source: u.statementRecord?.document ?? null, kind: "no-rate", witnessAccountId },
+        : { asOf: u.asOf, source: u.statementRecord?.document ?? null, kind: "no-rate" as const, witnessAccountId }),
+      },
     });
   }
   return out.map(p => applyRecoveredCost(p, BOOK_RECOVERED_COSTS)).sort((a, b) => b.marketValue - a.marketValue);
@@ -506,6 +510,18 @@ export function unpricedStatementUnits(
  * Monitor's line check reads a depository line by.
  */
 export function describeDepositoryUnits(
+  d: NonNullable<Position["depositoryUnits"]>,
+  accounts: readonly Account[] | ReadonlyMap<string, Account> = BOOK_ACCOUNTS,
+): string {
+  const base = describeUnitsBasis(d, accounts);
+  const s = d.unitSplit;
+  if (!s) return base;
+  const units = (n: number) => n.toLocaleString("en-IN", { maximumFractionDigits: 3 });
+  // Stage 10hq: the count the statement printed, and the one the NAV prices.
+  return `${base}; counted before the scheme's 1:${s.factor} sub-division of ${s.exDate}, when its ISIN became ${s.publishedIsin} (${s.source}), the statement's ${units(s.statementQuantity)} units are ${units(s.statementQuantity * s.factor)} on the published NAV's unit`;
+}
+
+function describeUnitsBasis(
   d: NonNullable<Position["depositoryUnits"]>,
   accounts: readonly Account[] | ReadonlyMap<string, Account> = BOOK_ACCOUNTS,
 ): string {

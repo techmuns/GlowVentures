@@ -592,6 +592,13 @@ export type Position = {
     lastMovementRate?: number | null;
     lastMovementDate?: string | null;
     lastMovementSide?: "receipt" | "delivery" | null;
+    /**
+     * Set where a sub-division since the statement retired its ISIN (Stage
+     * 10hq, `shared/fundUnitSplits.mjs`): the row's `quantity` is the
+     * statement's `statementQuantity` × `factor`, the unit AMFI's NAV is struck
+     * on since `exDate`. The statement's own count is kept here, unchanged.
+     */
+    unitSplit?: { statementQuantity: number; factor: number; exDate: string; publishedIsin: string; source: string };
   };
 };
 
