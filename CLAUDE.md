@@ -271,11 +271,11 @@ extraction mirrors each archive's own path under `source/`.
 | Buoyant Capital | 103473 | Ajay Jaisinghani | 2026-09-30 | ₹48.07 Cr |
 | Carnelian Asset Management and Advisors Pvt Ltd | 3517383 | Ajay Jaisinghani | 2026-09-30 | ₹38.16 Cr |
 | Consolidated review (MOPWM) | MOPWM | Bharat Jaisinghani | 2026-06-30 | ₹37.26 Cr |
-| Helios Mutual Fund | 10355977 | Ajay Jaisinghani | 2026-08-07 | ₹31.00 Cr |
 | Sanshi Fund | 9069671554 | Ankita Jaisinghani | 2026-06-30 | ₹29.42 Cr |
 | Sanshi Fund | 9039671912 | Ajay Jaisinghani | 2026-06-30 | ₹29.35 Cr |
 | Consolidated review (MOPWM) | MOPWM | Ankita Jaisinghani | 2026-06-30 | ₹29.04 Cr |
 | Sanshi Fund | 9069671634 | Ajay Jaisinghani | 2026-06-30 | ₹28.46 Cr |
+| Helios Mutual Fund | 10355977 | Ajay Jaisinghani | 2026-10-26 | ₹28.36 Cr |
 | Buoyant Capital | 103472 | Ankita Jaisinghani | 2026-09-30 | ₹27.00 Cr |
 | Motilal Oswal Founders Fund | 90410016104 | Ajay Jaisinghani | 2026-09-30 | ₹22.07 Cr |
 | Motilal Oswal Active Momentum Fund | 904168868444 | Ankita Jaisinghani | 2026-08-06 | ₹21.42 Cr |
@@ -294,6 +294,7 @@ extraction mirrors each archive's own path under `source/`.
 | V.E.C Assago Capital Management LLP | 128004 | Ankita Jaisinghani | 2026-10-07 | ₹6.11 Cr |
 | Green Lantern Capital LLP | 510854 | Ankita Jaisinghani | 2026-07-27 | ₹5.80 Cr |
 | Neo Infra Income Opportunities Fund | 9039920536 | Ajay Jaisinghani | 2026-06-30 | ₹5.55 Cr |
+| Helios Mutual Fund | 10056128 | Ajay Jaisinghani | 2026-10-26 | ₹4.81 Cr |
 | HDFC Mutual Fund | 15644806 | Ajay Jaisinghani | 2026-10-01 | ₹4.36 Cr |
 | India SME Investments | 175964 | Bharat Jaisinghani | 2026-06-30 | ₹3.19 Cr |
 | India SME Investments | 177302 | Ankita Jaisinghani | 2026-06-30 | ₹3.19 Cr |
@@ -364,8 +365,8 @@ block, which is ring-fenced: out of this column and every total, shown only on
 `/polycab`.
 
 **Consolidated.** `BOOK_SUMMARY` in `glowData.ts` is authoritative; at the time
-of writing: 80 accounts, 459 positions, 9 owners/entities, current value of
-holdings ₹836.91 Cr — listed ₹643.81 Cr, private ₹193.09 Cr, nothing unplaced.
+of writing: 82 accounts, 460 positions, 9 owners/entities, current value of
+holdings ₹839.08 Cr — listed ₹645.98 Cr, private ₹193.09 Cr, nothing unplaced.
 
 **Side of the book**, decided in this order and generated as
 `Position.marketSide`: the family's own fund placing (`FAMILY_MARKET_SIDE`) → a

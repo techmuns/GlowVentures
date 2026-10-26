@@ -13884,6 +13884,80 @@
   ]
  },
  {
+  "docKey": "helios-mutual-fund-10056128-2026-10-26-holdings",
+  "provider": "Helios Mutual Fund",
+  "accountNo": "10056128",
+  "owner": "Ajay T Jaisinghani",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-10-26",
+  "reportType": "holdings",
+  "sourcePath": "source/october-2026-d/Acctstmt_HLS_10056128 (1).pdf",
+  "pages": 2,
+  "sections": [
+   "transactions",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "helios-mutual-fund-10056128-2026-10-26-holdings",
+  "label": "Helios Mutual Fund · 10056128 · holdings",
+  "fy": "2026-10-26",
+  "source": "source/october-2026-d/Acctstmt_HLS_10056128 (1).pdf",
+  "sheets": [
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 4,
+    "cols": 8
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "helios-mutual-fund-10355977-2026-10-26-holdings",
+  "provider": "Helios Mutual Fund",
+  "accountNo": "10355977",
+  "owner": "Ajay T Jaisinghani",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-10-26",
+  "reportType": "holdings",
+  "sourcePath": "source/october-2026-d/Acctstmt_HLS_10355977 (2).pdf",
+  "pages": 2,
+  "sections": [
+   "transactions",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "helios-mutual-fund-10355977-2026-10-26-holdings",
+  "label": "Helios Mutual Fund · 10355977 · holdings",
+  "fy": "2026-10-26",
+  "source": "source/october-2026-d/Acctstmt_HLS_10355977 (2).pdf",
+  "sheets": [
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 2,
+    "cols": 8
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
   "docKey": "green-lantern-capital-llp-510861-2026-09-22-capital-register",
   "provider": "Green Lantern Capital LLP",
   "accountNo": "510861",

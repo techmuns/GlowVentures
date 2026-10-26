@@ -12,11 +12,44 @@ export function unitClosingDate(doc) {
   return date(end) ? end : null;
 }
 
+const SINCE_INCEPTION = /(^|\n)Ledger scope: since inception(\n|$)/;
+const UNPUBLISHED = /not-published|not-reconciled|unsupported-movement/;
+const ledgerEnd = d => d.periodTo ?? d.asOf;
+const sameRow = (a, b) => a.date === b.date && a.kind === b.kind && a.securityKey === b.securityKey
+  && a.units === b.units && a.balance === b.balance && a.amount === b.amount;
+
+/**
+ * A statement requested by date (`From 06-AUG-2026 To …`) that opens after the
+ * FY start cannot witness a nil origin by itself. An earlier since-inception
+ * issue of the same folio can, when its ledger reaches the later window's first
+ * day and the two print the same rows where they overlap (Stage 10hn). The
+ * joined ledger — the earlier issue before the window, the later one from it —
+ * is then since inception, and the walk below still ties every balance.
+ */
+export function stitchSinceInception(doc, earlier) {
+  if (!date(doc.periodFrom) || !doc.cashFlows?.length || earlier.excludedFromBook || earlier.status === 'failed'
+    || earlier.warnings?.some(w => UNPUBLISHED.test(w.code))
+    || !earlier.cashFlows?.length || !SINCE_INCEPTION.test(earlier.cashFlows[0].notes ?? '')
+    || !date(ledgerEnd(earlier)) || ledgerEnd(earlier) < dayBefore(doc.periodFrom)
+    || ledgerEnd(earlier) >= ledgerEnd(doc)) return null;
+  const inWindow = r => r.date >= doc.periodFrom && r.date <= ledgerEnd(earlier);
+  const theirs = earlier.cashFlows.filter(inWindow), ours = doc.cashFlows.filter(inWindow);
+  if (theirs.length !== ours.length || theirs.some((r, i) => !sameRow(r, ours[i]))) return null;
+  const cashFlows = [...earlier.cashFlows.filter(r => r.date < doc.periodFrom), ...doc.cashFlows].map(r => ({ ...r }));
+  const seen = new Set();
+  for (const r of cashFlows) {
+    if (seen.has(r.securityKey)) continue;
+    seen.add(r.securityKey);
+    if (!SINCE_INCEPTION.test(r.notes ?? '')) r.notes = [r.notes, 'Ledger scope: since inception'].filter(Boolean).join('\n');
+  }
+  return { ...doc, periodFrom: null, cashFlows, ledgerSources: [earlier.docKey, doc.docKey] };
+}
+
 /** A complete unit ledger, including its nil origin or explicit opening units. */
 export function unitLedgerReturnRecord(doc, start, historicalNavs = [], allowDormant = false) {
   if (!date(start) || doc.excludedFromBook || doc.status === 'failed'
     || !doc.holdings?.length || !doc.cashFlows?.length
-    || doc.warnings?.some(w => /not-published|not-reconciled|unsupported-movement/.test(w.code))) return null;
+    || doc.warnings?.some(w => UNPUBLISHED.test(w.code))) return null;
   const bySecurity = new Map();
   for (const h of doc.holdings) {
     if (!h.securityKey || !number(h.quantity) || h.quantity < 0 || !number(h.marketValue) || h.marketValue < 0
@@ -47,7 +80,8 @@ export function unitLedgerReturnRecord(doc, start, historicalNavs = [], allowDor
       || Math.abs(rows.reduce((s,r) => s + r.amount,0)) > 1) return null;
   }
   let opening = 0;
-  const openingSources = new Set([doc.docKey]);
+  const ledgerSources = doc.ledgerSources ?? [doc.docKey];
+  const openingSources = new Set(ledgerSources);
   for (const { holding: h, rows } of bySecurity.values()) {
     if (!rows.length) return null;
     // Keep the printed sequence for multiple movements on the same date.
@@ -59,7 +93,7 @@ export function unitLedgerReturnRecord(doc, start, historicalNavs = [], allowDor
     // A first visible purchase after the FY start does not establish that
     // there were no earlier investments and redemptions in that FY.
     if (!explicit && first.date >= start && !(date(doc.periodFrom) && doc.periodFrom <= start)
-      && !/(^|\n)Ledger scope: since inception(\n|$)/.test(first.notes ?? '')) return null;
+      && !SINCE_INCEPTION.test(first.notes ?? '')) return null;
     let balance = explicit ? first.balance : 0, prior = balance;
     for (const row of rows) {
       if (row.kind === 'opening-units') {
@@ -101,6 +135,6 @@ export function unitLedgerReturnRecord(doc, start, historicalNavs = [], allowDor
       ? 'Opening portfolio value: nil, witnessed by complete unit ledger'
       : `Opening portfolio value: verified ${dayBefore(start)} NAV × opening units` },
     ...moves.map(r => ({ date: r.date, amount: r2(-r.amount), description: r.description }))],
-    source: doc.docKey, flowSources: [doc.docKey], openingSources: [...openingSources],
+    source: doc.docKey, flowSources: ledgerSources, openingSources: [...openingSources],
     capitalRecordTo: end };
 }

@@ -1858,9 +1858,20 @@ const LAYOUTS = [
     isin: (text) => (/(INF[0-9A-Z]{9})/.exec(text) ?? [])[1] ?? null,
     folio: (text) => (/Folio No\.?\s*:\s*(\d+)\s*\/\s*(\d+)/i.exec(text) ?? [])[1] ?? null,
     asOf: (text) => toIso((/Account Summary as on\s+(\d{2}-\w{3}-\d{4})/i.exec(text) ?? [])[1]),
+    /**
+     * `(From 06-AUG-2026 To 26-OCT-2026)` — the window a statement requested by
+     * date covers (Stage 10hn). A "Since Inception" issue prints none, and its
+     * scope is noted on the ledger instead.
+     */
+    period: (text) => {
+      const m = /\(\s*From\s+(\d{2}-\w{3}-\d{4})\s+To\s+(\d{2}-\w{3}-\d{4})\s*\)/i.exec(text);
+      return m ? { periodFrom: toIso(m[1]), periodTo: toIso(m[2]) } : null;
+    },
     // CAMS prints the holder on its own line, immediately before the address,
     // with `Joint Holder 2 :` trailing it on the same printed row.
     holder: (text) => (/\n\s*([A-Z][A-Za-z]+(?:\s+[A-Z]\.?[A-Za-z]*){1,3})\s+Joint Holder 2/i.exec(text) ?? [])[1],
+    // `Joint Holder 1 : AARTI AJAY JAISINGHANI` — blank on a single folio.
+    jointHolders: (text) => [...text.matchAll(/Joint Holder [12][ \t]*:[ \t]*([A-Za-z][A-Za-z .'-]*?)[ \t]*$/gim)].map((m) => m[1]),
     /**
      * `06/08/2026 Net Purchase 16.21 309,984,500.77 16.2100 19,123,041.380
      *  19,123,041.380` — NAV, amount, price, units, balance. The Gross Ongoing
@@ -3608,6 +3619,7 @@ export function extract({ grid, meta = {} }) {
     owner, pan,
     accountNo: layout.account?.(text) ?? layout.folio?.(text) ?? null,
     asOf: layout.asOf?.(text) ?? null,
+    ...(layout.period?.(text) ?? {}),
     // These ARE holdings statements — one scheme, its units and its NAV. Left
     // as `unknown` the docKey reads `…-unknown` and precedence has nothing to
     // key on.

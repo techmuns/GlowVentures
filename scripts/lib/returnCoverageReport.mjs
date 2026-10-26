@@ -6,7 +6,7 @@ export function returnCoverageReport(book, docs) {
   const lines = ['# Return source coverage', '',
     `${parts.length} of ${book.accounts.length} accounts have verified opening values, dated external capital and a closing valuation.`, '',
     'Each account ends at its own verified valuation date. The consolidated return must not include an uncovered account’s closing value without its opening stake and cash history.', '',
-    'Latest delivery: September statements received from Glow on 9–13 October 2026 and forwarded on 14 October. Original PDFs/ZIPs remain private under `source/october-2026-c/`.', '',
+    'Latest delivery: two Helios Mutual Fund account statements dated 26 October 2026 (folios 10355977 and 10056128), under `source/october-2026-d/`. Before it, the September statements received from Glow on 9–13 October 2026, under `source/october-2026-c/`. Original PDFs/ZIPs remain private.', '',
     'Historical opening NAVs come from AMFI’s [31 March 2026 published file](https://portal.amfiindia.com/DownloadNAVHistoryReport_Po.aspx?frmdt=31-Mar-2026&todt=31-Mar-2026), joined by exact ISIN. 3P’s opening uses its own 31 March reclassification NAV and reconciled unit balance. These values only establish return openings; they do not alter current statement holdings.', '',
     '| Manager | Account | Holder | Latest received source | Verified return through | Remaining input |',
     '| --- | --- | --- | --- | --- | --- |'];

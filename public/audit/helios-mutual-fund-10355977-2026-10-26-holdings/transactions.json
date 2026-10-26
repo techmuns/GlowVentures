@@ -1,0 +1,25 @@
+{
+ "name": "transactions",
+ "rows": [
+  [
+   "date",
+   "class",
+   "description",
+   "kind",
+   "amount",
+   "net",
+   "units",
+   "balanceUnits"
+  ],
+  [
+   "2026-08-06",
+   "Helios Flexi Cap Fund - Direct Growth",
+   "Purchase",
+   "contribution",
+   310000000,
+   309984500.77,
+   19123041.38,
+   19123041.38
+  ]
+ ]
+}

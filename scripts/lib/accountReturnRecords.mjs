@@ -1,6 +1,6 @@
 // Return endpoints are account valuations, independent of an older security-by-security appraisal.
 // A newer endpoint is published only with an unbroken, reconciled capital record through that day.
-import { unitLedgerReturnRecord, unitClosingDate } from './unitLedgerReturns.mjs';
+import { unitLedgerReturnRecord, unitClosingDate, stitchSinceInception } from './unitLedgerReturns.mjs';
 const number = (v) => typeof v === 'number' && Number.isFinite(v);
 const date = (v) => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v)
   && Number.isFinite(Date.parse(v)) && new Date(v).toISOString().slice(0, 10) === v;
@@ -129,7 +129,11 @@ export function buildAccountReturnRecords({ accounts, accountCashFlows, byAccoun
     if (!newest || !openings.length) {
       const unitDocs = (byAccount.get(`${account.provider}::${account.accountNo}`) ?? [])
         .filter(d => !d.excludedFromBook && ['holdings','portfolio-snap'].includes(d.reportType));
-      const candidates = unitDocs.map(d => unitLedgerReturnRecord(d, periodStart, historicalNavs, true)).filter(Boolean)
+      // A dated issue that cannot witness its own nil origin may borrow it from an
+      // earlier since-inception issue of the same folio (Stage 10hn).
+      const stitched = d => unitDocs.map(e => e === d ? null : stitchSinceInception(d, e))
+        .filter(Boolean).map(s => unitLedgerReturnRecord(s, periodStart, historicalNavs, true)).find(Boolean) ?? null;
+      const candidates = unitDocs.map(d => unitLedgerReturnRecord(d, periodStart, historicalNavs, true) ?? stitched(d)).filter(Boolean)
         .sort((a,b) => b.asOf.localeCompare(a.asOf) || a.source.localeCompare(b.source));
       const record = candidates.find(c => c.flows.some(f => f.amount !== 0)) ?? null;
       const dormant = candidates.find(c => c.value === 0 && c.flows.every(f => f.amount === 0));

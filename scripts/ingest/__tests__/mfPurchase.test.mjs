@@ -76,5 +76,43 @@ withheld("the purchases do not allot the units the Account Summary holds",
 withheld("a dated row of a type this reader does not declare",
   MOMENTUM + "12/08/2026 Switch Out 1,00,000.00 14.2000 7042.254 15238723.705\n", "transaction-type-not-declared");
 
+// A DATED ISSUE (Stage 10hn): the window it prints, its joint holder, and three
+// purchases walked to the Account Summary's units, as folio 10056128 prints them.
+const HELIOS_DATED = `
+Account Statement
+(From 07-AUG-2024 To 26-OCT-2026)
+Folio No. : 10056128 / 71 Statement Date : 26-Oct-2026
+Joint Holder 1 : AARTI AJAY JAISINGHANI
+Ajay T Jaisinghani Joint Holder 2 :
+Account Summary as on 26-OCT-2026 THANK YOU FOR INVESTING WITH HELIOS MUTUAL FUND
+Helios Flexi Cap Fund - Direct Lump sum 23-Oct-2026 14.83 3,245,281.682 46,000,000.00 48,127,527.34
+Growth
+H02 / Helios Flexi Cap Fund - Direct * Growth - INF0R8701046
+Gross Ongoing Purchase 25,000,000.00
+Less: Stamp Duty 1,249.94
+07/08/2024 Net Purchase 13.74 24,998,750.06 13.7400 1,819,414.124 1,819,414.124
+Gross Ongoing Purchase 6,000,000.00
+Less: Stamp Duty 299.99
+16/10/2024 Net Purchase 14.50 5,999,700.01 14.5000 413,772.414 2,233,186.538
+Gross Ongoing Purchase 15,000,000.00
+Less: Stamp Duty 749.96
+10/07/2025 Net Purchase 14.82 14,999,250.04 14.8200 1,012,095.144 3,245,281.682
+06/10/2026 ***Demat To Remat -Accept***
+`;
+{
+  const out = extract({ grid: { pages: [{ text: HELIOS_DATED }] } });
+  ok("dated Helios issue: the printed window is the document's period",
+    out.periodFrom === "2024-08-07" && out.periodTo === "2026-10-26", `${out.periodFrom} → ${out.periodTo}`);
+  ok("…the joint holder is carried, the first holder stays the owner",
+    JSON.stringify(out.jointHolders) === '["AARTI AJAY JAISINGHANI"]' && out.owner === "Ajay T Jaisinghani",
+    `${JSON.stringify(out.jointHolders)} / ${out.owner}`);
+  ok("…all three purchases are read, and no since-inception scope is claimed",
+    out.cashFlows.length === 3 && out.cashFlows.at(-1).balance === 3245281.682
+      && !out.cashFlows.some((f) => /since inception/.test(f.notes ?? "")), JSON.stringify(out.cashFlows.map((f) => f.notes)));
+  const single = extract({ grid: { pages: [{ text: HELIOS }] } });
+  ok("a since-inception issue prints no window and no joint holder",
+    !single.periodFrom && !single.periodTo && (single.jointHolders ?? []).length === 0, JSON.stringify(single.jointHolders));
+}
+
 console.log(`  ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
