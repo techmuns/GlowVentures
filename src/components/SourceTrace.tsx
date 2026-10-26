@@ -8,7 +8,7 @@ import { readModel } from '@/lib/readModel';
 export const SourceTraceContext = createContext<SourceTrace | null>(null);
 export const useSourceTrace = () => useContext(SourceTraceContext);
 const accounts = new Map(BOOK_ACCOUNTS.map(a => [a.accountId, a]));
-const LINK = 'cursor-pointer text-inherit underline decoration-dotted decoration-slate-500/50 underline-offset-[3px] hover:decoration-champagne-500';
+const LINK = 'pointer-events-auto cursor-pointer text-inherit underline decoration-dotted decoration-slate-500/50 underline-offset-[3px] hover:decoration-champagne-500';
 
 export function SourceDetails({ trace }: { trace: SourceTrace }) {
   const [related, setRelated] = useState<SourceTrace['sources']>([]);

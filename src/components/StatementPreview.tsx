@@ -382,6 +382,10 @@ function SelectedSourceRecord({ docKey }: { docKey: string }) {
     readModel(`canonical/documents/${docKey}.json`).then(doc => {
       let record = sourceRecordAt(doc, pointer);
       if (Array.isArray(record)) record = record.filter(r => isin ? r.isin === isin : r.securityKey === security);
+      else if (record && typeof record === 'object') {
+        const r = record as Record<string, unknown>;
+        if (isin && r.isin && r.isin !== isin || security && r.securityKey && r.securityKey !== security) record = undefined;
+      }
       if (alive) setState({ record, failed: record === undefined || Array.isArray(record) && !record.length });
     }).catch(() => { if (alive) setState({ failed: true }); });
     return () => { alive = false; };
