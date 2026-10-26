@@ -212,7 +212,9 @@ console.log("\n── the newest verified close ──");
   ok("Green Lantern 510861 stays on its holdings date: its record's later TDS payouts are not in the rollup",
     gl.closeAsOf === BOOK_ACCOUNTS.find((a) => a.accountId === gl.accountId)!.asOf, String(gl.closeAsOf));
   const helios = byId.get("helios-mutual-fund-10355977")!;
-  ok("an OLDER record never pulls the close back (Helios: record 6 Aug, holdings 7 Aug)", helios.closeAsOf === "2026-08-07", String(helios.closeAsOf));
+  ok("an OLDER record never pulls the close back (Helios: record on the 23 Oct NAV, holdings 26 Oct)",
+    BOOK_ACCOUNT_RETURN_RECORDS[helios.accountId].record?.asOf === "2026-10-23" && helios.closeAsOf === "2026-10-26",
+    `${BOOK_ACCOUNT_RETURN_RECORDS[helios.accountId].record?.asOf} / ${helios.closeAsOf}`);
 }
 
 // ── 7c. YEAR TO DATE IS TODAY'S YEAR (Stage 10fz) ──────────────────────────

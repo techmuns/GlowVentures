@@ -1,16 +1,16 @@
 {
-  "generatedAt": "2026-10-21T18:22:53.459Z",
+  "generatedAt": "2026-10-26T07:24:17.079Z",
   "sourceDir": "source",
   "counts": {
-    "files": 460,
-    "pdfs": 450,
+    "files": 462,
+    "pdfs": 452,
     "nonPdf": 10,
-    "classified": 393,
+    "classified": 395,
     "unclassified": 67,
-    "encrypted": 33,
+    "encrypted": 35,
     "fromArchives": 399,
     "archivesExpanded": 50,
-    "pages": 1965
+    "pages": 1969
   },
   "reportTypes": [
     "holdings",
@@ -9336,6 +9336,46 @@
       "matchedBy": "Goldstandard signature + content keywords"
     },
     {
+      "path": "source/october-2026-d/Acctstmt_HLS_10056128 (1).pdf",
+      "fileName": "Acctstmt_HLS_10056128 (1).pdf",
+      "bytes": 276540,
+      "size": "270.1 KB",
+      "pages": 2,
+      "fromArchive": false,
+      "encrypted": true,
+      "readError": null,
+      "provider": "Helios Mutual Fund",
+      "ownerName": null,
+      "accountNo": "10056128",
+      "asOfDate": "2026-10-26",
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "high",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/october-2026-d/Acctstmt_HLS_10355977 (2).pdf",
+      "fileName": "Acctstmt_HLS_10355977 (2).pdf",
+      "bytes": 276323,
+      "size": "269.8 KB",
+      "pages": 2,
+      "fromArchive": false,
+      "encrypted": true,
+      "readError": null,
+      "provider": "Helios Mutual Fund",
+      "ownerName": null,
+      "accountNo": "10355977",
+      "asOfDate": "2026-10-26",
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "high",
+      "matchedBy": "generic keywords"
+    },
+    {
       "path": "source/october-2026/CAPITAL REGISTER GREEN LANTERN - AJAY.pdf",
       "fileName": "CAPITAL REGISTER GREEN LANTERN - AJAY.pdf",
       "bytes": 128398,
@@ -15476,6 +15516,27 @@
     },
     "Helios Mutual Fund": {
       "accounts": {
+        "10056128": {
+          "owner": null,
+          "strategy": null,
+          "asOfDates": {
+            "2026-10-26": {
+              "reportTypes": {
+                "unknown": [
+                  {
+                    "path": "source/october-2026-d/Acctstmt_HLS_10056128 (1).pdf",
+                    "pages": 2,
+                    "size": "270.1 KB",
+                    "confidence": "high",
+                    "sections": []
+                  }
+                ]
+              },
+              "fileCount": 1
+            }
+          },
+          "fileCount": 1
+        },
         "10355977": {
           "owner": null,
           "strategy": null,
@@ -15493,12 +15554,26 @@
                 ]
               },
               "fileCount": 1
+            },
+            "2026-10-26": {
+              "reportTypes": {
+                "unknown": [
+                  {
+                    "path": "source/october-2026-d/Acctstmt_HLS_10355977 (2).pdf",
+                    "pages": 2,
+                    "size": "269.8 KB",
+                    "confidence": "high",
+                    "sections": []
+                  }
+                ]
+              },
+              "fileCount": 1
             }
           },
-          "fileCount": 1
+          "fileCount": 2
         }
       },
-      "fileCount": 1
+      "fileCount": 3
     },
     "India SME Investments": {
       "accounts": {

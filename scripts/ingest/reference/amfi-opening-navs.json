@@ -46,5 +46,13 @@
     "nav": 33.3376,
     "date": "2026-03-31",
     "source": "https://portal.amfiindia.com/DownloadNAVHistoryReport_Po.aspx?frmdt=31-Mar-2026&todt=31-Mar-2026"
+  },
+  {
+    "isin": "INF0R8701046",
+    "schemeCode": "152135",
+    "scheme": "Helios Flexi Cap Fund - Direct Plan - Growth Option",
+    "nav": 13.33,
+    "date": "2026-03-31",
+    "source": "https://portal.amfiindia.com/DownloadNAVHistoryReport_Po.aspx?frmdt=31-Mar-2026&todt=31-Mar-2026"
   }
 ]
