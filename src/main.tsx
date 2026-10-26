@@ -6,6 +6,9 @@ import "./index.css";
 import { PortfolioProvider } from "./context/PortfolioContext";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { recoverChunkLoad } from "./lib/chunkRecovery";
+import { initializeNavigationEntry } from './lib/navigationMemory';
+
+initializeNavigationEntry();
 
 window.addEventListener("vite:preloadError", (event) => {
   recoverChunkLoad((event as Event & { payload: unknown }).payload);

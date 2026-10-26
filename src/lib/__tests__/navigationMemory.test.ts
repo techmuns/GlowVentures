@@ -1,0 +1,38 @@
+import assert from 'node:assert/strict';
+import { createNavigationMemory, validNavigationState } from '../navigationMemory';
+
+let raw: string | null = null;
+const storage = { getItem: () => raw, setItem: (_key: string, value: string) => { raw = value; } };
+const memory = createNavigationMemory(() => storage, 3);
+const string = (value: unknown) => typeof value === 'string' ? value : null;
+const strings = (value: unknown) => Array.isArray(value) && value.every(s => typeof s === 'string') ? value : null;
+memory.write('cash-entry', '/monitor:section', 'Cash');
+memory.write('cash-entry', '/monitor:expanded', ['kotak']);
+memory.write('all-entry', '/monitor:section', 'All');
+memory.write('fund-entry', '/stock/kotak:view', 'transactions');
+assert.equal(memory.read('cash-entry', '/monitor:section', string), 'Cash');
+assert.equal(memory.read('all-entry', '/monitor:section', string), 'All');
+assert.equal(memory.read('fund-entry', '/monitor:section', string), null);
+assert.deepEqual(memory.read('cash-entry', '/monitor:expanded', strings), ['kotak']);
+const reloaded = createNavigationMemory(() => storage, 3);
+assert.equal(reloaded.read('cash-entry', '/monitor:section', string), 'Cash');
+assert.deepEqual(reloaded.read('cash-entry', '/monitor:expanded', strings), ['kotak']);
+memory.write('next-entry', '/monitor:section', 'ETF');
+assert.equal(memory.read('cash-entry', '/monitor:section', string), null, 'old entries are bounded');
+assert.equal(memory.read('all-entry', '/monitor:section', string), 'All');
+
+raw = 'invalid JSON';
+assert.equal(createNavigationMemory(() => storage).read('x', 'y', string), null);
+raw = JSON.stringify([['bad', [['section', { unexpected: true }]]], ['broken'], null]);
+assert.equal(createNavigationMemory(() => storage).read('bad', 'section', string), null);
+const blocked = createNavigationMemory(() => { throw Error('storage blocked'); });
+blocked.write('entry', 'section', 'Cash');
+assert.equal(blocked.read('entry', 'section', string), 'Cash', 'blocked storage retains this tab\'s navigation');
+assert.equal(validNavigationState('Removed owner', 'All', new Set(['All', 'Ajay'])), 'All');
+assert.equal(validNavigationState('Old section', 'All', new Set(['All', 'Cash'])), 'All');
+assert.equal(validNavigationState('Cash', 'All', new Set(['All', 'Cash'])), 'Cash');
+const picked = new Set(['Kotak', 'Removed fund']);
+assert.deepEqual([...validNavigationState(picked, new Set(), new Set(['Kotak']))], ['Kotak']);
+assert.deepEqual([...validNavigationState(picked, new Set(), new Set())], []);
+assert.equal(validNavigationState(picked, new Set(), undefined), picked, 'pending fund-only options retain their selection');
+console.log('PASS navigation snapshots: distinct history entries, reload, validation, bounded storage and blocked storage');

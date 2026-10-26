@@ -450,3 +450,11 @@
 - Remove the technical normalized "Source record" block above statement previews at the family's request. The original PDF receives the freed space; its yellow source-number highlight, page/zoom controls and return to the same dashboard selection remain intact.
 - Retain source links, canonical provenance, Data Audit and the optional "Text as read" view. The reader no longer fetches a canonical document just to repeat its raw fields above the PDF.
 - Update the existing source-navigation browser regression to require the actual PDF and absence of the technical block, retaining its exact closing-balance highlight and return-navigation checks.
+
+### Stage 10hs — RETURN FROM A FUND TO THE SAME PORTFOLIO MONITOR VIEW
+
+- Keep Monitor's Holdings/Transactions selection, section (including Cash), holding/entity filters, expanded rows and closed sections with their browser history entry. Transaction direction, dates, ordering and expansions use the same presentation memory. Returning from Stock Info restores the entry before painting instead of recreating All; different visits keep separate choices.
+- Preserve each entry's main scroll and named Monitor table scroll, restoring as lazy content becomes available and yielding to reader input. Statement overlays continue to use their origin's entry. Existing table column/order preferences and full-family Excel snapshots remain separate.
+- Store bounded presentation snapshots in tab-local session storage, with an in-memory fallback when storage is blocked. Full document entries receive distinct router-compatible history keys; reload retains its existing key. No portfolio records or financial calculations are changed.
+- Regression checks cover snapshot isolation, reload, invalid/blocked storage, the real Kotak drilldown, Back/Forward, Cash, row expansion, filters, sorting, horizontal/vertical table scroll and a separate ETF visit.
+- Review corrections: the old mount-time expansion reset now runs only for an actual new basis choice, preserving remounts and history traversal. Validate saved entity/section choices and intersect picked holdings with the current book's options before applying them; wait for fund-only options before declaring those selections obsolete. Browser coverage seeds retired choices and retains the valid holding across reload.
