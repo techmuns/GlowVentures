@@ -88,7 +88,7 @@ import { useDatedCapital } from "@/lib/useDatedCapital";
 import { pnlFormula, returnFormula, stockHref } from "@/lib/auditFormulas";
 import { notHeldNote } from "@/components/QuantityMovement";
 import { movementsFor } from "@/lib/shareMovements";
-import { allRecordedLines, recordedLabel, recordedLineFor } from "@/lib/recordedHoldings";
+import { allRecordedLines, recordedLabel, recordedLineFor, carriedBy } from "@/lib/recordedHoldings";
 import type { Position } from "@/lib/types";
 import { investedOnOf, holdingTradesOf, lineUndatedReason, accountInvestedOn, type InvestedOn } from "@/lib/investedOn";
 import { InvestedOnCell } from "@/components/InvestedOnCell";
@@ -1205,8 +1205,18 @@ export function PortfolioMonitor() {
         mv.set(name, (mv.get(name) ?? 0) + e.total);
       }
     }
+    // Search the held inventory even when a price source cannot value a row.
+    for (const l of allRecordedLines()) {
+      if (!inScopeAccount(memberScope.accountIds, l.accountId) || carriedBy(l, positions)) continue;
+      const label = recordedLabel(l.homeKey) ?? l.security;
+      if (!mv.has(label)) mv.set(label, 0);
+    }
     return [...mv.keys()].sort((a, b) => (mv.get(b) ?? 0) - (mv.get(a) ?? 0));
-  }, [positions, bySecurity, exposure]);
+  }, [positions, bySecurity, exposure, memberScope.accountIds]);
+  const pickedUnvalued = allRecordedLines().filter(l => !carriedBy(l, positions)
+    && inScopeAccount(memberScope.accountIds, l.accountId)
+    && selected.has(recordedLabel(l.homeKey) ?? l.security)
+    && (entity === "All" || (accIdx.get(l.accountId)?.ownerId ? ownerDisplayName(accIdx.get(l.accountId)!.ownerId!) : accIdx.get(l.accountId)?.owner) === entity));
   /**
    * THE LABEL A DERIVED ROW IS FILED UNDER — the book's own where the book holds
    * the key, so the row a reader picks and the option they picked it by are the
@@ -3810,6 +3820,19 @@ export function PortfolioMonitor() {
           </select>
         </div>
       </div>
+
+      {view === "holdings" && pickedUnvalued.length > 0 && (
+        <div className="mb-3 rounded-lg border border-ink-700 p-3 text-sm text-slate-400" data-monitor-unvalued>
+          {[...new Set(pickedUnvalued.map(l => l.homeKey))].map(key => {
+            const lines = pickedUnvalued.filter(l => l.homeKey === key);
+            return <div key={key} title={lines.map(l => l.reason).join(". ")}>
+              <Link className="text-champagne-400 underline" to={`/stock/${encodeURIComponent(key)}`}>
+                {recordedLabel(key) ?? lines[0].security}
+              </Link>{" · "}{fmtNum(lines.reduce((n, l) => n + l.quantity, 0))} units held · valuation unavailable
+            </div>;
+          })}
+        </div>
+      )}
 
       {/*
         ── THE SECTIONS ARE TABS, ON A ROW OF THEIR OWN ───────────────────────

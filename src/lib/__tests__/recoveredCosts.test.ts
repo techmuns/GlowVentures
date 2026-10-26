@@ -86,7 +86,7 @@ console.log("Recovered costs: exact quantities, March cutoff, FIFO sales, live o
 
 // The live-only fund layers need the same lot recovery as the baked holdings.
 const funds=[...depositoryFundHoldings(),...unpricedStatementUnits()];
-assert.equal(funds.filter(p=>p.recoveredCost).length,21);
+assert.equal(funds.filter(p=>p.recoveredCost).length,24);
 const fp=(account:string,isin:string)=>funds.find(p=>p.accountId.endsWith(account)&&p.isin===isin)!;
 for (const [account, first, last, lots] of [['12539150','2025-03-06','2026-03-23',4],['12838316','2025-11-06','2025-11-06',1],['12838320','2025-07-11','2025-07-11',1]] as const) {
   const p = fp(account,'INF109KC1RH9');

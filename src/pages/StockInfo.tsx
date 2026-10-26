@@ -43,7 +43,7 @@ import { QuantityMovement } from "@/components/QuantityMovement";
 import { SourceValue } from '@/components/SourceTrace';
 import { CorporateActionReturns } from "@/components/CorporateActionReturns";
 import { PageNav } from "@/components/PageNav";
-import { homeKeyOf, recordedFor, type RecordedLine } from "@/lib/recordedHoldings";
+import { homeKeyOf, recordedFor, recordedInvestmentDateOf, type RecordedLine } from "@/lib/recordedHoldings";
 import { securityLabel } from "@/lib/securityLabel";
 import { useViewParam, type ViewDef } from "@/components/ViewToggle";
 import { movementsFor, unmovedAccountsFor } from "@/lib/shareMovements";
@@ -652,7 +652,8 @@ export function StockInfo() {
   /** The newest closing date the review gives these rows — the date their value is of. */
   const reviewAsOf = reviewAll
     ? drows.map((r) => r.priceAsOf).filter((d): d is string => !!d).sort().pop() ?? null : null;
-  const cost = sumOrNull(drows.map((r) => r.costBasis));
+  const acquisitionRows = recordedOnly ? recorded : drows;
+  const cost = sumOrNull(acquisitionRows.map((r) => r.costBasis));
   const mv = sum(drows.map((r) => r.marketValue));
   const pnl = sumOrNull(drows.map((r) => r.unrealizedPnL));
   // Both stay NULL when no statement reported a cost for this name, so the
@@ -669,7 +670,10 @@ export function StockInfo() {
    * struck over wherever that is not all of them.
    */
   const whole = measuredTotals(rows);
-  const avgCost = whole.avgCost;
+  const costedAcquisitions = acquisitionRows.filter(r => r.costBasis !== null && r.quantity !== null);
+  const acquisitionUnits = costedAcquisitions.reduce((n, r) => n + (r.quantity ?? 0), 0);
+  const avgCost = recordedOnly && acquisitionUnits > 0
+    ? costedAcquisitions.reduce((n, r) => n + (r.costBasis ?? 0), 0) / acquisitionUnits : whole.avgCost;
   /**
    * FIFO — the realised gain on units of this holding already sold stays in
    * its return (`fifoTotals`), over the rows that report a cost, which is the
@@ -1200,7 +1204,7 @@ export function StockInfo() {
     const route = holdingRoute(eng);
     const why = l.reason.charAt(0).toUpperCase() + l.reason.slice(1);
     return (
-      <Tr view={posView} sourcePositions={[l]} key={`rec-${l.accountId}-${l.securityKey}`} data-recorded-row={l.accountId}
+      <Tr view={posView} sourcePositions={[l]} investmentDate={recordedInvestmentDateOf([l])} key={`rec-${l.accountId}-${l.securityKey}`} data-recorded-row={l.accountId}
         data-held-route={heldRouteOf(route)} data-recorded-units={l.quantity} className="hover:bg-ink-700/40">
         <td className="px-4 py-2.5 font-medium text-slate-100"><SourceValue positions={[l]} metric="statement">{ownerOf(accIdx, asRow(l))}</SourceValue></td>
         <td className="max-w-[20rem] whitespace-normal px-4 py-2.5 text-[12px] text-slate-400">
@@ -1212,9 +1216,9 @@ export function StockInfo() {
           </div>
         </td>
         <td className="mono px-4 py-2.5 text-right text-slate-200">{unitsText(l.quantity)}</td>
-        <td className="px-4 py-2.5 text-right"><AbsentCell reason="No statement reports a cost for it." /></td>
+        <td className="px-4 py-2.5 text-right">{l.avgCost === null ? <AbsentCell reason="No reconciled purchase record supplies a cost." /> : price(l.avgCost)}</td>
         <td className="px-4 py-2.5 text-right"><AbsentCell reason={why} /></td>
-        <td className="px-4 py-2.5 text-right"><AbsentCell reason="No statement reports a cost for it." /></td>
+        <td className="px-4 py-2.5 text-right">{l.costBasis === null ? <AbsentCell reason="No reconciled purchase record supplies a cost." /> : money(l.costBasis)}</td>
         <td className="px-4 py-2.5 text-right text-slate-500" title={why} data-recorded-value>not valued</td>
         <td className="px-4 py-2.5 text-right"><AbsentCell reason="Not valued, so no gain can be struck." /></td>
         <td className="px-4 py-2.5 text-right"><AbsentCell reason="Not valued, so no return can be struck." /></td>
@@ -1915,7 +1919,7 @@ export function StockInfo() {
             comparing it with the Quantity tile beside it must be told the two
             cover different units (main's #88). */}
         <Kpi label="Avg cost"
-          value={avgCost === null ? <AbsentValue /> : <SourceValue positions={drows} metric="avgCost"><span className="mono" data-stock-avg-cost={avgCost}>{price(avgCost)}</span></SourceValue>}
+          value={avgCost === null ? <AbsentValue /> : <SourceValue positions={acquisitionRows} metric="avgCost"><span className="mono" data-stock-avg-cost={avgCost}>{price(avgCost)}</span></SourceValue>}
           sub={cost === null ? <span className="text-slate-500">{costWhy}</span>
             // A cost with no unit count to divide it by — the review's records
             // of what was paid (Stage 10dh). The cost is real; the average is not.
@@ -1944,7 +1948,7 @@ export function StockInfo() {
             // HELD AT COST IS NOT "NO COST" (Stage 10dh): the review records the
             // cost and no valuation, so no gain was measured — and never a ₹0.
             ? <span className="text-slate-500" title={AT_COST_PNL} data-stock-at-cost>held at cost · no valuation</span>
-            : pnl === null ? <span className="text-slate-500">{costWhy}</span>
+            : pnl === null ? <span className="text-slate-500">{recordedOnly && cost !== null ? "no current valuation for the held units" : costWhy}</span>
             // A COMPUTED ZERO KEEPS ITS ZERO, AND ITS REASON GOES IN THE TILE.
             // (Measured: the book's cash rows net to ₹0.11 of paise rounding
             // between the printed cost and value, so "no P&L" would overstate it.)

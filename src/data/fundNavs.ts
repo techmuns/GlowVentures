@@ -13,6 +13,8 @@ export interface FundNav {
   security: string;
   /** The identifier the join was made on — exact, never a name match. */
   isin: string;
+  /** Dated successor identity where the exchange converted these units. */
+  pricingIsin?: string;
   /** Which tier supplied it: the family's own statement, or the look-through. */
   isinFrom: "statement" | "look-through";
   /** The other tier answered as well, with the same ISIN; null where only one answered. */
@@ -41,7 +43,7 @@ export interface FundNav {
   /** Null until this file has held two different dates — never a zero. */
   changePct: number | null;
   /**
-   * Whether `quantity × nav` is a figure this book may publish. False where the
+   * Whether `quantity × nav`, after documented unit conversions, may be published. False where the
    * units and the NAV are not the same unit — see the builder's header.
    */
   usableForValue: boolean;
@@ -169,6 +171,46 @@ export const BOOK_FUND_NAVS: FundNav[] = [
   "prev": 156.65,
   "prevDate": "2026-10-22",
   "changePct": -1.477817,
+  "usableForValue": true,
+  "notUsableReason": null
+ },
+ {
+  "securityKey": "dsp-gold-etf",
+  "security": "DSP GOLD ETF",
+  "isin": "INF740KA1SW3",
+  "pricingIsin": "INF740KA1ZP2",
+  "isinFrom": "statement",
+  "isinAgreedBy": "look-through",
+  "from": "book",
+  "schemecode": "151737",
+  "scheme": "DSP Gold ETF",
+  "plan": "",
+  "option": "",
+  "category": "Exchange Traded Funds (ETFs) - Gold ETF",
+  "sebiCategory": "Gold ETF",
+  "nav": 13.6451,
+  "date": "2026-10-23",
+  "changePct": null,
+  "usableForValue": true,
+  "notUsableReason": null
+ },
+ {
+  "securityKey": "dsp-silver-etf",
+  "security": "DSP SILVER ETF",
+  "isin": "INF740KA1RE3",
+  "pricingIsin": "INF740KA1ZQ0",
+  "isinFrom": "statement",
+  "isinAgreedBy": "look-through",
+  "from": "book",
+  "schemecode": "150523",
+  "scheme": "DSP Silver ETF",
+  "plan": "",
+  "option": "",
+  "category": "Exchange Traded Funds (ETFs) - Silver ETF",
+  "sebiCategory": "Silver ETF",
+  "nav": 18.5517,
+  "date": "2026-10-23",
+  "changePct": null,
   "usableForValue": true,
   "notUsableReason": null
  },

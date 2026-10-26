@@ -19,6 +19,7 @@ import {
 } from "../fundNavs";
 import { BOOK_FUND_NAVS } from "@/data/fundNavs";
 import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_UNVALUED_HOLDINGS, BOOK_POLYCAB } from "@/data/glowData";
+import { FUND_UNIT_ACTIONS } from "../../../shared/fundUnitActions.mjs";
 import type { Account, Position, UnvaluedStatementHolding } from "../types";
 import { unvaluedHoldingsOf, unvaluedStatementLinesOf } from "../accounts";
 
@@ -74,12 +75,16 @@ function expected(unvalued: readonly UnvaluedStatementHolding[], accounts: Map<s
       witness = w?.accountId ?? r?.accountId ?? null;
     }
     if (price === null) continue;
-    const ratio = nav.nav / price;
+    const asOf = u.asOf;
+    const actions = FUND_UNIT_ACTIONS.filter(a => a.oldIsin === isin && a.exDate > asOf && a.exDate <= nav.date);
+    if (nav.pricingIsin && (actions.length !== 1 || actions[0].newIsin !== nav.pricingIsin)) continue;
+    const factor = actions.reduce((n,a) => n * a.factor, 1);
+    const ratio = nav.nav * factor / price;
     if (!(ratio > 0.5 && ratio < 2)) continue;
     if (positions.some((p) => p.accountId === u.accountId && I(p) === isin)) continue;
     if (positions.some((p) => I(p) === isin && Math.abs((p.quantity ?? NaN) - (u.quantity as number)) < 0.0005
       && ownerOfId(p.accountId) === ownerOfId(u.accountId))) continue;
-    out.push({ accountId: u.accountId, isin, quantity: u.quantity, nav: nav.nav, witness, ownRate });
+    out.push({ accountId: u.accountId, isin: nav.pricingIsin ?? isin, quantity: u.quantity * factor, nav: nav.nav, witness, ownRate });
   }
   return out;
 }
@@ -126,9 +131,9 @@ ok("each is NAV-priced, carries the NAV's own date, and says which witness put i
       : d?.kind === "no-rate" && d.witnessAccountId === w.witness && !!w.witness && acc.has(w.witness);
   }));
 ok("the movement's price is a witness and nothing more — never the price a row is valued at",
-  got.every((p) => p.currentPrice === navBy.get(I(p) ?? "")?.nav));
+  got.every((p) => p.currentPrice === navBy.get(p.fundUnitAdjustment?.isin ?? I(p) ?? "")?.nav));
 ok("each keeps the book's own key for its line, so one scheme stays one key on every page",
-  got.every((p) => BOOK_UNVALUED_HOLDINGS.some((u) => u.accountId === p.accountId && u.securityKey === p.securityKey && I(u) === I(p))));
+  got.every((p) => BOOK_UNVALUED_HOLDINGS.some((u) => u.accountId === p.accountId && u.securityKey === p.securityKey && I(u) === (p.fundUnitAdjustment?.isin ?? I(p)))));
 ok("no row is a position the book already carries in the same account",
   got.every((p) => !BOOK_POSITIONS.some((b) => b.accountId === p.accountId && I(b) === I(p))));
 const fenced = new Set(BOOK_POLYCAB.map((p) => p.securityKey));
@@ -187,7 +192,7 @@ ok("an owner's accounts are split between the two lists, none in both",
   listed.every((g) => !wholeAccounts.has(g.account.accountId)));
 ok("the lines the live book values at AMFI's NAV say so, and no other line does",
   lineRows.length > 0 && listed.every((g) => g.lines.every((l) =>
-    !!l.valuedLive === got.some((p) => p.accountId === l.row.accountId && I(p) === I(l.row)))));
+    !!l.valuedLive === got.some((p) => p.accountId === l.row.accountId && (p.fundUnitAdjustment?.isin ?? I(p)) === I(l.row)))));
 
 // ── the refusals, on constructed inputs ──────────────────────────────────────
 console.log("── the refusals ──");

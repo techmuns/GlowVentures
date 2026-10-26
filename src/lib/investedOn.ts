@@ -42,6 +42,7 @@ import type { Account, HoldingTrade, Position } from "./types";
 import { reviewField } from "./reviewColumns";
 import savedActions from "../../public/data/corporate-actions.json";
 import { symbolForKey } from "./quotes";
+import { acquisitionIdentity } from "../../shared/fundUnitActions.mjs";
 
 export type InvestedOnSource = "allotments" | "lots" | "trades" | "bonus-trades" | "recovered-lots" | "calls" | "review" | "account";
 
@@ -124,10 +125,11 @@ function lineDates(p: Position): LineDates | null {
   const adjusted = bonusPurchaseDates(p);
   if (adjusted) return adjusted;
   const recovered = p.recoveredCost;
+  const acquisition = acquisitionIdentity(p);
   // The recovery is specific to an account, ISIN, closing date and exact unit
   // balance. Never lend a source record's dates to another position or balance.
-  if (recovered?.heldPurchases && recovered.accountId === p.accountId && recovered.isin === p.isin
-    && p.quantity != null && Math.abs(recovered.quantity - p.quantity) <= .0005) {
+  if (recovered?.heldPurchases && recovered.accountId === acquisition.accountId && recovered.isin === acquisition.isin
+    && acquisition.quantity != null && Math.abs(recovered.quantity - acquisition.quantity) <= .0005) {
     return { dates: [recovered.heldPurchases.first, recovered.heldPurchases.last], source: "recovered-lots" };
   }
   const called = CALL_DATES.get(trancheKey(p.accountId, p.securityKey));

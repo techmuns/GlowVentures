@@ -20,6 +20,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DIR = fs.mkdtempSync(path.join(ROOT, "node_modules", ".glow-test-"));
 
 const SUITES = [
+  ["ETF unit continuity", "src/lib/__tests__/fundUnitActions.test.ts"],
   ["statement source tracing", "src/lib/__tests__/sourceTrace.test.ts"],
   ["assumed holding returns", "src/lib/__tests__/assumedHoldingReturns.test.ts"],
   ["invested this year", "src/lib/__tests__/investedThisYear.test.ts"],

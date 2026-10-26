@@ -20,13 +20,17 @@
  *   4. otherwise its own key.
  * Joined by identifier only, never by a name.
  */
-import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_UNVALUED_HOLDINGS } from "../data/glowData";
+import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_UNVALUED_HOLDINGS, BOOK_RECOVERED_COSTS } from "../data/glowData";
+import { recoveredCostFor } from "../../shared/recoveredCosts.mjs";
+import { acquisitionIdentity } from "../../shared/fundUnitActions.mjs";
+import type { InvestedOn } from "./investedOn";
 import { custodySuccessor } from "../../shared/custodySuccessors.mjs";
 import { bookKeyForShare } from "./depositoryShares";
 import { securityLabel } from "./securityLabel";
-import type { Position, UnvaluedStatementHolding } from "./types";
+import type { Position, UnvaluedStatementHolding, RecoveredHoldingCost } from "./types";
 
-export type RecordedLine = UnvaluedStatementHolding & { quantity: number; homeKey: string };
+export type RecordedLine = UnvaluedStatementHolding & { quantity: number; homeKey: string;
+  costBasis: number | null; avgCost: number | null; recoveredCost?: RecoveredHoldingCost };
 
 const isinOf = (x: { isin?: string | null }) => x.isin?.trim().toUpperCase() || null;
 const OWN_KEY_CLASSES = new Set(["Mutual Fund", "ETF"]);
@@ -51,7 +55,13 @@ export function recordedLines(
     const ownKey = !isin || (u.assetClass !== null && OWN_KEY_CLASSES.has(u.assetClass));
     const homeKey = ownKey ? u.securityKey
       : bookKeyForShare(isin, u.securityKey, positions) ?? twin.get(isin)?.securityKey ?? u.securityKey;
-    return { ...u, quantity: u.quantity as number, homeKey };
+    // Acquisition evidence belongs to a held balance, independently of whether
+    // a price source can value it. Never make a price a prerequisite for cost.
+    const recoveredCost = recoveredCostFor(u, BOOK_RECOVERED_COSTS);
+    return { ...u, quantity: u.quantity as number, homeKey,
+      costBasis: recoveredCost?.costBasis ?? null,
+      avgCost: recoveredCost ? recoveredCost.costBasis / u.quantity! : null,
+      ...(recoveredCost ? { recoveredCost } : {}) };
   });
 }
 
@@ -67,7 +77,15 @@ export function homeKeyOf(key: string, lines: readonly RecordedLine[] = RECORDED
 /** True where a row of `live` already carries the line: same account, same ISIN (or key, with none). */
 export function carriedBy(l: RecordedLine, live: readonly Position[]): boolean {
   const isin = isinOf(l);
-  return live.some((p) => p.accountId === l.accountId && (isin ? isinOf(p) === isin : p.securityKey === l.securityKey));
+  return live.some((p) => p.accountId === l.accountId && (isin ? isinOf(acquisitionIdentity(p)) === isin : p.securityKey === l.securityKey));
+}
+
+/** Known purchases stay available even when valuation is withheld. */
+export function recordedInvestmentDateOf(lines: readonly RecordedLine[]): InvestedOn | null {
+  if (!lines.length || lines.some(l => !l.recoveredCost?.heldPurchases)) return null;
+  const dates = lines.map(l => l.recoveredCost!.heldPurchases!);
+  return { first: dates.map(d => d.first).sort()[0], last: dates.map(d => d.last).sort().at(-1)!,
+    payments: dates.reduce((n, d) => n + d.lots, 0), sources: ['recovered-lots'] };
 }
 
 /** The lines a page stands over that no row of the live book already carries. */

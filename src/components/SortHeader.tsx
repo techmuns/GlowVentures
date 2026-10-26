@@ -179,7 +179,7 @@ export function SortHeader({ col, view, children, align = "right", title, pad = 
  * DECLARED order instead, so the row is right even if it does not follow the
  * drag, and the mismatch is loud in development.
  */
-export function Tr({ view, children, reviewScope, sourcePositions, inputRecordId, ...rest }: { view: TableView; children: ReactNode; reviewScope?: ReviewScope; sourcePositions?: readonly TracePosition[]; inputRecordId?: string } & React.HTMLAttributes<HTMLTableRowElement>) {
+export function Tr({ view, children, reviewScope, sourcePositions, investmentDate, inputRecordId, ...rest }: { view: TableView; children: ReactNode; reviewScope?: ReviewScope; sourcePositions?: readonly TracePosition[]; investmentDate?: import('@/lib/investedOn').InvestedOn | null; inputRecordId?: string } & React.HTMLAttributes<HTMLTableRowElement>) {
   const exporting = useContext(TableExportAllRows);
   const editing = useTableEditing();
   const inputs = useTableInputs();
@@ -194,7 +194,7 @@ export function Tr({ view, children, reviewScope, sourcePositions, inputRecordId
     if (id === "investedOn") {
       cells.push(header
         ? <SortHeader key={id} col={id} view={view} align="left" title="When this row's money was invested, from its own purchase records. A date is shown only when every holding in the row is dated.">Invested on</SortHeader>
-        : <InvestmentDateCell key={id} scope={reviewScope} />);
+        : <InvestmentDateCell key={id} scope={reviewScope} date={investmentDate} />);
       continue;
     }
     const column = reviewColumn(id)!;

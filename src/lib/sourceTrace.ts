@@ -1,10 +1,11 @@
 import type { Position } from './types';
 import { REVIEW_COLUMN_DATA } from '../data/reviewColumns';
+import { acquisitionIdentity, fundUnitBasis } from '../../shared/fundUnitActions.mjs';
 
 export type SourceMetric = 'statement' | 'quantity' | 'marketValue' | 'currentPrice' | 'costBasis' | 'avgCost' | 'unrealizedPnL';
 export type TracePosition = Pick<Position, 'accountId' | 'securityKey' | 'security' | 'isin' | 'statementRecord'>
   & Partial<Pick<Position, 'quantity' | 'marketValue' | 'currentPrice' | 'costBasis' | 'avgCost' | 'unrealizedPnL'
-    | 'depositoryUnits' | 'enteredNumbers' | 'rolledForward' | 'recoveredCost' | 'costBasisSource' | 'priceEvidence' | 'live' | 'navPriced' | 'navDate' | 'symbol' | 'reviewSource' | 'reviewNote'>>;
+    | 'depositoryUnits' | 'enteredNumbers' | 'rolledForward' | 'recoveredCost' | 'costBasisSource' | 'priceEvidence' | 'live' | 'navPriced' | 'navDate' | 'symbol' | 'reviewSource' | 'reviewNote' | 'fundUnitAdjustment'>>;
 export type SourceEvidence = {
   document?: string; path?: string; sheet?: string; rows?: number[]; pointer?: string; field?: string; isin?: string | null; securityKey: string;
   accountId: string; label: string; value?: number | null; note?: string;
@@ -40,7 +41,8 @@ export function holdingSourceTrace(positions: readonly TracePosition[], metric: 
   const sources: SourceEvidence[] = [], notes = new Set<string>();
   let missing = 0, derived = ['avgCost', 'unrealizedPnL'].includes(metric) || positions.length > 1;
   for (const p of positions) {
-    const base = { accountId: p.accountId, securityKey: p.securityKey, isin: p.isin };
+    const original = acquisitionIdentity(p);
+    const base = { accountId: p.accountId, securityKey: p.securityKey, isin: original.isin };
     const record = p.statementRecord;
     const closing = !record ? p.depositoryUnits?.source : undefined;
     const value = metric === 'statement' ? null : p[metric];
@@ -48,7 +50,7 @@ export function holdingSourceTrace(positions: readonly TracePosition[], metric: 
     const field = FIELDS[metric];
     if (record || closing) sources.push({ ...base, document: record?.document ?? closing!,
       pointer: record?.pointer ?? '/transactions', field: closing ? 'closing' : field,
-      value: ['quantity', 'statement'].includes(metric) && !p.enteredNumbers?.includes('quantity') && !p.rolledForward ? p.quantity : undefined, label: p.security,
+      value: ['quantity', 'statement'].includes(metric) && !p.enteredNumbers?.includes('quantity') && !p.rolledForward ? original.quantity : undefined, label: p.security,
       note: closing ? 'Quantity is the closing balance in this account’s transaction statement, rather than the size of a single movement.' : undefined });
     else if (p.reviewSource) {
       sources.push({ ...base, path: REVIEW_COLUMN_DATA.workbook,
@@ -70,6 +72,14 @@ export function holdingSourceTrace(positions: readonly TracePosition[], metric: 
       notes.add('Cost was recovered from reconciled purchase records. Its supporting workbook rows are listed below.');
       for (const e of p.recoveredCost.evidence) sources.push({ ...base, path: e.path, sheet: e.sheet, rows: e.rows, label: e.path,
         note: `${e.sheet} · rows ${e.rows.join(', ')}` });
+    }
+    if (p.fundUnitAdjustment && ['quantity', 'marketValue', 'avgCost', 'unrealizedPnL'].includes(metric)) {
+      const a = p.fundUnitAdjustment;
+      const basis = fundUnitBasis(a.isin, a.asOf, a.through);
+      derived = true;
+      notes.add(`The statement records ${a.quantity} units under ${a.isin}. Documented exchange conversions multiply those units by ${a.factor}, giving ${p.quantity} units under ${p.isin}; total acquisition cost is unchanged.`);
+      for (const url of new Set(basis.actions.flatMap(action => action.sources)))
+        sources.push({ ...base, label: 'Exchange unit-conversion notice', note: url });
     }
     if (p.costBasisSource && ['costBasis', 'avgCost', 'unrealizedPnL'].includes(metric)) {
       derived = true;

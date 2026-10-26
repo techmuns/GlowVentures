@@ -1,8 +1,8 @@
 import { AbsentCell } from "@/components/Absent";
 import { fmtInvestedDate, investedOnTitle, investmentDateOf, investmentDateMissingReason, type InvestedOn, type InvestmentDateScope } from "@/lib/investedOn";
 
-export function InvestmentDateCell({ scope }: { scope?: InvestmentDateScope }) {
-  const d = investmentDateOf(scope);
+export function InvestmentDateCell({ scope, date }: { scope?: InvestmentDateScope; date?: InvestedOn | null }) {
+  const d = date === undefined ? investmentDateOf(scope) : date;
   return <td data-col-cell="investedOn" data-invested-first={d?.first ?? ""} data-invested-last={d?.last ?? ""}
     className="px-3 py-2 text-left mono whitespace-nowrap text-xs text-slate-400">
     <InvestedOnCell d={d} why={d ? "" : investmentDateMissingReason(scope)} />
