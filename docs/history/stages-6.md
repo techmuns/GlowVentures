@@ -388,3 +388,11 @@
   - Updated suites: period-return, attribution, market-return and invested-this-year.
   - `check-pages`: the Returns-tab and Performance invariants.
   - CI scripts: `check-market-returns` and `check-selected-attribution` now require XIRR = CAGR = Absolute under a year.
+
+### Stage 10hl — RETURNS: EQUAL COMPACT SUMMARY BLOCKS
+
+- Investment performance and Market performance share an equal-column, equal-height grid on desktop and stack on small screens. The capital bridge is a compact ledger with a prominent return, a collapsed gain breakdown and the existing account drilldown.
+- Market coverage keeps the original inline holdings, covered value and actual price dates. No coverage progress bar, extra coverage sections or invested-cost summary. Existing source-info dialogs remain available.
+- The Returns picker names the measure the covered total actually displays. Its display-only Absolute return state retains the originally requested calculation for debt-only rows; choosing Absolute explicitly remains available. Stage 10hk's calculation rule and debt exception remain intact.
+- Browser regressions cover picker/figure agreement, equal summary dimensions, the collapsed gain breakdown and inline market coverage alongside the existing period, source and assumption checks.
+- CI exposed the existing property-tax owner table missing the standard export wrapper; it now uses `ExportableTable`, preserving the owner-level tax figures and restoring the export-coverage contract.

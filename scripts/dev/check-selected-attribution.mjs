@@ -82,9 +82,15 @@ try {
   await page.locator(`[data-returns-period="${period}"]`).click();
   const start = b.periodStart(period, end), win = b.windowReturns(inputs, start, end);
   for (const type of ['xirr', 'absolute', 'cagr']) {
-   await page.locator('[data-returns-type-select]').selectOption(type);
-   await page.waitForFunction(({ period, type }) => { const el = document.querySelector('[data-segment-returns]'); return el?.dataset.segPeriod === period && el?.dataset.segType === type; }, { period, type });
    const measured = b.measureWindow(win.included, type, String);
+   await page.locator('[data-returns-type-select]').selectOption(type);
+   await page.waitForFunction(({ period, type, displayed }) => {
+    const el = document.querySelector('[data-segment-returns]'), picker = document.querySelector('[data-returns-type-select]');
+    return el?.dataset.segPeriod === period && el?.dataset.segType === type && picker?.dataset.displayedReturnType === displayed;
+   }, { period, type, displayed: measured.shownAs ?? type });
+   const picker = page.locator('[data-returns-type-select]');
+   assert.equal(await picker.getAttribute('data-requested-return-type'), type, 'debt rows retain the requested calculation');
+   if (measured.shownAs === 'absolute') assert.equal(await picker.locator('option:checked').innerText(), 'Absolute return', 'picker names the displayed measure');
    const expectedGain = win.included.length ? win.gain : null;
    const expectedReturn = measured.shown ? measured.pct : null;
    const rawGain = await table.getAttribute('data-seg-total-gain'), rawReturn = await table.getAttribute('data-seg-total-ret');
@@ -116,6 +122,20 @@ try {
  await page.waitForFunction(() => document.querySelector('[data-segment-returns]')?.dataset.segPeriod === 'fytd');
  const bridge = page.locator('[data-capital-bridge]');
  assert.equal(await bridge.getAttribute('data-bridge-mode'), 'window');
+ await page.waitForFunction(() => document.querySelector('[data-returns-type-select]')?.dataset.displayedReturnType === 'absolute');
+ assert.equal(await page.locator('[data-returns-type-select]').getAttribute('data-requested-return-type'), 'xirr');
+ assert.match(await bridge.locator('[data-bridge-return-label]').innerText(), /Absolute return/);
+ assert.equal(await bridge.locator('[data-bridge-split]').getAttribute('open'), null, 'gain breakdown starts collapsed');
+ const boxes = await page.locator('[data-return-summary-cards] > .card').evaluateAll(els => els.map(el => {
+  const r = el.getBoundingClientRect(); return { width: r.width, height: r.height, top: r.top };
+ }));
+ assert.equal(boxes.length, 2);
+ assert.ok(Math.abs(boxes[0].width - boxes[1].width) < 1 && Math.abs(boxes[0].height - boxes[1].height) < 1 && boxes[0].top === boxes[1].top, 'two equal-sized summary blocks');
+ assert.equal(await page.locator('[data-market-summary] details, [data-market-summary] [role="progressbar"]').count(), 0);
+ assert.match(await page.locator('[data-market-coverage]').innerText(), /holdings · .* covered/);
+ await bridge.locator('[data-bridge-split] summary').click();
+ assert.ok(await bridge.locator('[data-bridge-part="realised"]').isVisible());
+ await bridge.locator('[data-bridge-split] summary').click();
  assert.ok(Number(await bridge.getAttribute('data-bridge-split-accounts')) >= 10);
  await bridge.locator('[data-bridge-accounts-table] summary').click();
  assert.equal(await bridge.locator('tr[data-bridge-row]').count(), Number(await bridge.getAttribute('data-bridge-accounts')));
