@@ -110,7 +110,7 @@
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { fundUnitBasis, fundPricingIsin, fundIdentityDisagrees, heldEtfCoverageGaps } from "../shared/fundUnitActions.mjs";
+import { fundUnitBasis, fundPricingIsin, fundIdentityDisagrees, heldEtfCoverageGaps, FUND_UNIT_ACTIONS } from "../shared/fundUnitActions.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const OUT = join(ROOT, "src/data/fundNavs.ts");
@@ -358,8 +358,8 @@ function main() {
       const bookIsin = w.bookIsin;
       const lt = ltIsin.get(w.key) ?? null;
       w.pricingIsin = bookIsin || lt ? fundPricingIsin(bookIsin ?? lt, newest) : null;
-      // BOTH TIERS MUST AGREE WHERE BOTH ANSWER. A disagreement means one of
-      // them is about a different security, and neither may win silently.
+      // Compare both tiers after documented identity transitions; a current
+      // look-through ISIN can agree with an older custody ISIN.
       if (fundIdentityDisagrees(bookIsin, lt, newest)) {
         skipped.push({ ...w, why: `the statement's ISIN ${bookIsin} and the look-through's ${lt} disagree, so neither is used` });
         continue;
@@ -527,7 +527,9 @@ The statement ISIN stays on the source record. NAV lookup follows only a documen
 exchange conversion; the live count is adjusted from its own statement date.
 Cost and acquisition dates remain tied to the original balance.
 
-${out.filter(e => e.pricingIsin).map(e => `- **${e.security}**: \`${e.isin}\` → \`${e.pricingIsin}\`. Terms: [NSE/CML/75868](https://nsearchives.nseindia.com/content/circulars/CML75868.pdf), [NCL/CMPT/75902](https://nsearchives.nseindia.com/content/circulars/CMPT75902.pdf).`).join("\n") || "_None._"}
+${out.filter(e => e.pricingIsin).map(e => `- **${e.security}**: \`${e.isin}\` → \`${e.pricingIsin}\`.`).join("\n") || "_None._"}
+
+Exchange notices in the shared conversion register: ${[...new Set(FUND_UNIT_ACTIONS.flatMap(a => a.sources))].map(url => `[${new URL(url).pathname.split("/").at(-1)}](${url})`).join(", ")}.
 
 ## Priced from a depository's own units
 

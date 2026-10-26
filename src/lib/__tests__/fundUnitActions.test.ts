@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { FUND_UNIT_ACTIONS, fundUnitBasis, acquisitionIdentity, fundIdentityDisagrees, heldEtfCoverageGaps } from '../../../shared/fundUnitActions.mjs';
+import { FUND_UNIT_ACTIONS, fundUnitBasis, acquisitionIdentity, fundPricingIsin, fundIdentityDisagrees, heldEtfCoverageGaps } from '../../../shared/fundUnitActions.mjs';
 import { recoveredCostFor } from '../../../shared/recoveredCosts.mjs';
 import { BOOK_ACCOUNTS, BOOK_UNVALUED_HOLDINGS, BOOK_POSITIONS, BOOK_RECOVERED_COSTS } from '../../data/glowData';
 import { BOOK_FUND_NAVS } from '../../data/fundNavs';
@@ -31,6 +31,7 @@ assert.ok(fundUnitBasis(oldGold, '2026-10-23', '2026-07-31').reason);
 assert.ok(fundUnitBasis(oldGold, '2026-07-31', '2026-10-23', [...FUND_UNIT_ACTIONS, FUND_UNIT_ACTIONS[0]]).reason);
 const chain = [...FUND_UNIT_ACTIONS, {oldIsin:newGold,newIsin:'INF000000001',exDate:'2026-09-01',factor:2,sources:['test']}];
 assert.equal(fundUnitBasis(oldGold, '2026-07-31', '2026-10-23', chain).factor, 20);
+assert.equal(fundPricingIsin(newGold, '2026-10-23', chain), 'INF000000001', 'an intermediate successor still resolves through its later conversion');
 
 const live = unpricedStatementUnits();
 const cases = [

@@ -71,8 +71,10 @@ The statement ISIN stays on the source record. NAV lookup follows only a documen
 exchange conversion; the live count is adjusted from its own statement date.
 Cost and acquisition dates remain tied to the original balance.
 
-- **DSP GOLD ETF**: `INF740KA1SW3` → `INF740KA1ZP2`. Terms: [NSE/CML/75868](https://nsearchives.nseindia.com/content/circulars/CML75868.pdf), [NCL/CMPT/75902](https://nsearchives.nseindia.com/content/circulars/CMPT75902.pdf).
-- **DSP SILVER ETF**: `INF740KA1RE3` → `INF740KA1ZQ0`. Terms: [NSE/CML/75868](https://nsearchives.nseindia.com/content/circulars/CML75868.pdf), [NCL/CMPT/75902](https://nsearchives.nseindia.com/content/circulars/CMPT75902.pdf).
+- **DSP GOLD ETF**: `INF740KA1SW3` → `INF740KA1ZP2`.
+- **DSP SILVER ETF**: `INF740KA1RE3` → `INF740KA1ZQ0`.
+
+Exchange notices in the shared conversion register: [CML75868.pdf](https://nsearchives.nseindia.com/content/circulars/CML75868.pdf), [CMPT75902.pdf](https://nsearchives.nseindia.com/content/circulars/CMPT75902.pdf).
 
 ## Priced from a depository's own units
 

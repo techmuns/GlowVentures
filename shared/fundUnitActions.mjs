@@ -14,12 +14,12 @@ const day = v => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v)
   && Number.isFinite(Date.parse(v)) && new Date(v).toISOString().slice(0, 10) === v;
 
 /** Walk only documented successor identities, including multi-step changes. */
-export function fundUnitBasis(isin, asOf, through, actions = FUND_UNIT_ACTIONS) {
+function resolveFundUnits(isin, asOf, through, actions, checkSnapshot = true) {
   const applied = [], seen = new Set();
   let current = isin, factor = 1;
   const blocked = reason => ({ isin, factor: 1, actions: [], reason });
   if (!isin || !day(asOf) || !day(through) || through < asOf) return blocked('A dated holding and a later NAV are required');
-  if (actions.some(a => a.newIsin === isin && a.exDate > asOf))
+  if (checkSnapshot && actions.some(a => a.newIsin === isin && a.exDate > asOf))
     return blocked('The successor ISIN did not exist on the holding date');
   while (true) {
     if (seen.has(current)) return blocked('Cyclic fund-unit identity changes');
@@ -37,8 +37,11 @@ export function fundUnitBasis(isin, asOf, through, actions = FUND_UNIT_ACTIONS) 
   }
 }
 
-/** A price lookup may follow identity; a quantity still needs its own date. */
-export const fundPricingIsin = (isin, through) => fundUnitBasis(isin, '1900-01-01', through).isin;
+export const fundUnitBasis = (isin, asOf, through, actions = FUND_UNIT_ACTIONS) => resolveFundUnits(isin, asOf, through, actions);
+
+/** A price lookup follows the entire identity chain without asserting that a
+ * successor already existed at an invented holding date. */
+export const fundPricingIsin = (isin, through, actions = FUND_UNIT_ACTIONS) => resolveFundUnits(isin, '1900-01-01', through, actions, false).isin;
 
 /** Compare identifier tiers only after their documented successor chains. */
 export const fundIdentityDisagrees = (left, right, through) => !!left && !!right
