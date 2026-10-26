@@ -52,6 +52,10 @@ try {
   assert.ok(documents.some(d=>d.includes('1201090012539150')));
   assert.ok(documents.some(d=>d.includes('1201090032387399')));
   await page.screenshot({path:path.join(out,'combined-quantity-sources.png')});
+  await combined.locator('a[data-source-document]').first().click();
+  await page.locator('[data-source-back]').waitFor();
+  assert.ok(await page.locator('[data-statement-preview]').evaluate(el=>parseInt(getComputedStyle(el.parentElement).zIndex)>60), 'statement stays above its source list');
+  await page.locator('[data-source-back]').click();
 
   await gotoStock(motilal);
   await page.locator('button[data-source-metric="marketValue"]').first().click();
@@ -102,6 +106,7 @@ try {
   await page.goForward();
   await page.locator('[data-source-back]').waitFor();
   await page.keyboard.press('Escape');
+  await page.waitForURL(origin);
   assert.equal(page.url(),origin);
   assert.equal(await parent.getAttribute('data-tree-parent'),'open');
   // A filter must narrow provenance as well as the money. Carnelian's one
