@@ -599,8 +599,14 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
     const cap = capitalOf(key);
     if (!cap || !cap.dated || cap.holdings) continue;
     const names = [...new Set(ps.map((p) => displaySecurity(p.security)))];
-    if (names.length !== 1 || byName.get(names[0])!.length !== 1) continue;
-    const row = ROWS.filter((r) => r["Security"] === names[0] && r["Mandate"] === DASH);
+    if (names.length !== 1) continue;
+    // Two keys can print one name — Helios's two folios beside the demat copy of
+    // the same scheme (Stage 10hn). The row is then the one carrying this key's
+    // units, the rule `keyOfRow` below applies.
+    const shared = byName.get(names[0])!.length > 1;
+    const qty = ps.reduce((s, p) => s + (p.quantity ?? 0), 0);
+    const row = ROWS.filter((r) => r["Security"] === names[0] && r["Mandate"] === DASH
+      && (!shared || Math.abs(Number(r["Qty"]) - qty) < 0.01));
     const set = firstOfGroup(ps);
     const hpr = fifoRow(set);
     const want = cap.days < 365 ? { tag: "HPR", pct: hpr as number | null, note: `The money has been in for ${cap.days} days` }

@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-10-26T07:48:17.026Z",
+  "generatedAt": "2026-10-26T07:31:01.344Z",
   "summary": {
-    "documents": 426,
-    "parsed": 422,
+    "documents": 427,
+    "parsed": 423,
     "partial": 0,
     "failed": 4,
-    "rowSumChecks": 383,
+    "rowSumChecks": 387,
     "totalMismatches": 136,
     "totalsMaterial": 1,
     "totalsExplained": 54,
-    "totalsRounding": 159,
+    "totalsRounding": 160,
     "derivedVsPrintedDeltas": 944,
     "derivedMaterial": 8,
     "derivedExplained": 399,
@@ -28,7 +28,7 @@
     "stitchesApplied": 134
   },
   "coverage": {
-    "pdfsFound": 416,
+    "pdfsFound": 417,
     "duplicateSources": [
       {
         "path": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_DividendStatement_India177OT.pdf",
@@ -246,7 +246,7 @@
         "sha256": "7cbc776b8cfe6baacfa8c753d86d46de2fec08fbcbae7b36d8dba58029d627fc"
       }
     ],
-    "parsed": 422,
+    "parsed": 423,
     "partial": 0,
     "failed": 4,
     "byProvider": {
@@ -897,7 +897,7 @@
       },
       "Helios Mutual Fund": {
         "holdings": {
-          "ok": 1,
+          "ok": 3,
           "partial": 0,
           "failed": 0
         }
@@ -905,13 +905,6 @@
       "India SME Investments": {
         "holdings": {
           "ok": 3,
-          "partial": 0,
-          "failed": 0
-        }
-      },
-      "Bandhan Mutual Fund": {
-        "holdings": {
-          "ok": 1,
           "partial": 0,
           "failed": 0
         }
@@ -1012,8 +1005,8 @@
     "partials": []
   },
   "consolidated": {
-    "naive": 138211588526.97,
-    "deduped": 138211588526.97,
+    "naive": 138128246763.6,
+    "deduped": 138128246763.6,
     "doubleCounted": 0
   },
   "rowSumChecks": [
@@ -7166,16 +7159,16 @@
       "accruedIncome": null
     },
     {
-      "docKey": "bandhan-mutual-fund-8652064-2026-10-26-holdings",
-      "provider": "Bandhan Mutual Fund",
-      "accountNo": "8652064",
+      "docKey": "helios-mutual-fund-10056128-2026-10-26-holdings",
+      "provider": "Helios Mutual Fund",
+      "accountNo": "10056128",
       "asOf": "2026-10-26",
       "reportType": "holdings",
       "check": "total market value (incl. cash)",
-      "rowSum": 415063994.38,
-      "printedTotal": 415063994.38,
+      "rowSum": 48127527.34,
+      "printedTotal": 48127527.34,
       "delta": 0,
-      "rowsSummed": 4,
+      "rowsSummed": 1,
       "rowsMissingField": 0,
       "matches": true,
       "severity": "ok",
@@ -7184,16 +7177,87 @@
       "outstandingDividend": null
     },
     {
-      "docKey": "bandhan-mutual-fund-8652064-2026-10-26-holdings",
-      "provider": "Bandhan Mutual Fund",
-      "accountNo": "8652064",
+      "docKey": "helios-mutual-fund-10056128-2026-10-26-holdings",
+      "provider": "Helios Mutual Fund",
+      "accountNo": "10056128",
+      "asOf": "2026-10-26",
+      "reportType": "holdings",
+      "check": "total cost (incl. cash)",
+      "rowSum": 46000000,
+      "printedTotal": 46000000,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null,
+      "outstandingDividend": null
+    },
+    {
+      "docKey": "helios-mutual-fund-10056128-2026-10-26-holdings",
+      "provider": "Helios Mutual Fund",
+      "accountNo": "10056128",
       "asOf": "2026-10-26",
       "reportType": "holdings",
       "check": "% of assets sums to 100",
       "rowSum": 100,
       "printedTotal": 100,
       "delta": 0,
-      "rowsSummed": 4,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "helios-mutual-fund-10355977-2026-10-26-holdings",
+      "provider": "Helios Mutual Fund",
+      "accountNo": "10355977",
+      "asOf": "2026-10-26",
+      "reportType": "holdings",
+      "check": "total market value (incl. cash)",
+      "rowSum": 283594703.67,
+      "printedTotal": 283594703.67,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null,
+      "outstandingDividend": null
+    },
+    {
+      "docKey": "helios-mutual-fund-10355977-2026-10-26-holdings",
+      "provider": "Helios Mutual Fund",
+      "accountNo": "10355977",
+      "asOf": "2026-10-26",
+      "reportType": "holdings",
+      "check": "total cost (incl. cash)",
+      "rowSum": 310000000,
+      "printedTotal": 310000000,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null,
+      "outstandingDividend": null
+    },
+    {
+      "docKey": "helios-mutual-fund-10355977-2026-10-26-holdings",
+      "provider": "Helios Mutual Fund",
+      "accountNo": "10355977",
+      "asOf": "2026-10-26",
+      "reportType": "holdings",
+      "check": "% of assets sums to 100",
+      "rowSum": 100,
+      "printedTotal": 100,
+      "delta": 0,
+      "rowsSummed": 1,
       "rowsMissingField": 0,
       "matches": true,
       "severity": "rounding",
@@ -227595,7 +227659,6 @@
       "Mutual fund folio",
       "Invesco Mutual Fund",
       "Motilal Oswal Mutual Fund",
-      "Bandhan Mutual Fund",
       "360 ONE Alternates Asset Management",
       "360 ONE Private Wealth",
       "Motilal Oswal Financial Services (demat)",

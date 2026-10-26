@@ -197,6 +197,8 @@ jobs:
         run: |
           npm run build-book
           npm run reconcile:review
+          npm run coverage:source
+          npm run check:reads
 
       - name: Preserve regenerated archive and book on a mismatch
         if: always() && steps.archive_snapshot.outcome == 'failure'
@@ -214,6 +216,9 @@ jobs:
             docs/REVIEW-RECONCILIATION.md
             docs/EXTRACTION-REPORT.md
             docs/extraction-report.json
+            docs/INGEST-INVENTORY.md
+            docs/ingest-inventory.json
+            docs/SOURCE-COVERAGE.md
 
       - name: The book is built from that archive
         run: |

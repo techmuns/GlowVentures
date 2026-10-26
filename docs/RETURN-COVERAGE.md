@@ -1,10 +1,10 @@
 # Return source coverage
 
-17 of 82 accounts have verified opening values, dated external capital and a closing valuation.
+18 of 82 accounts have verified opening values, dated external capital and a closing valuation.
 
 Each account ends at its own verified valuation date. The consolidated return must not include an uncovered account’s closing value without its opening stake and cash history.
 
-Latest delivery: September statements received from Glow on 9–13 October 2026 and forwarded on 14 October. Original PDFs/ZIPs remain private under `source/october-2026-c/`.
+Latest delivery: two Helios Mutual Fund account statements dated 26 October 2026 (folios 10355977 and 10056128), under `source/october-2026-d/`. Before it, the September statements received from Glow on 9–13 October 2026, under `source/october-2026-c/`. Original PDFs/ZIPs remain private.
 
 Historical opening NAVs come from AMFI’s [31 March 2026 published file](https://portal.amfiindia.com/DownloadNAVHistoryReport_Po.aspx?frmdt=31-Mar-2026&todt=31-Mar-2026), joined by exact ISIN. 3P’s opening uses its own 31 March reclassification NAV and reconciled unit balance. These values only establish return openings; they do not alter current statement holdings.
 
@@ -22,7 +22,6 @@ Historical opening NAVs come from AMFI’s [31 March 2026 published file](https:
 | ASK Absolute Return Fund | 9039917144 | Ankita Jaisinghani | 2026-03-31 | — | Opening valuation and complete dated cash flows are missing |
 | ASK Investment Managers Limited | 10032723 | Ankita Jaisinghani | 2026-09-08 | — | Opening valuation and complete dated cash flows are missing |
 | ASK Investment Managers Limited | 10034025 | Ajay Jaisinghani | 2026-09-08 | — | Opening valuation and complete dated cash flows are missing |
-| Bandhan Mutual Fund | 8652064 | Ajay Jaisinghani | 2026-10-26 | — | Opening valuation and complete dated cash flows are missing |
 | Baring Private Equity India Fund | AIFM_BPEPF6_0584 | Ankita Jaisinghani | 2026-03-31 | — | Opening valuation and complete dated cash flows are missing |
 | Buoyant Capital | 103472 | Ankita Jaisinghani | 2026-09-30 | — | Opening valuation and complete dated cash flows are missing |
 | Buoyant Capital | 103473 | Ajay Jaisinghani | 2026-09-30 | — | Opening valuation and complete dated cash flows are missing |
@@ -39,7 +38,8 @@ Historical opening NAVs come from AMFI’s [31 March 2026 published file](https:
 | HDFC Mutual Fund | 15725046 | Aarti Jaisinghani | 2026-09-30 | 2026-09-30 | Complete through the selected date |
 | HDFC Mutual Fund | 16002141 | Ankita Jaisinghani | 2026-08-31 | 2026-08-31 | Complete through the selected date |
 | HDFC Mutual Fund | 16180583 | Bharat Jaisinghani | 2026-09-30 | — | Opening valuation and complete dated cash flows are missing |
-| Helios Mutual Fund | 10355977 | Ajay Jaisinghani | 2026-08-07 | 2026-08-06 | Complete through the selected date |
+| Helios Mutual Fund | 10056128 | Ajay Jaisinghani | 2026-10-26 | 2026-10-23 | Complete through the selected date |
+| Helios Mutual Fund | 10355977 | Ajay Jaisinghani | 2026-10-26 | 2026-10-23 | Complete through the selected date |
 | ICICI Bank (NSDL demat) | 49794950 | Ajay Jaisinghani | 2026-03-31 | — | Opening valuation and complete dated cash flows are missing |
 | ICICI Prudential Mutual Fund | 14320536 | Ankita Jaisinghani | 2026-10-01 | — | Opening valuation and complete dated cash flows are missing |
 | ICICI Prudential Mutual Fund | 36378950 | Ajay Jaisinghani | 2026-10-05 | 2026-10-01 | Complete through the selected date |

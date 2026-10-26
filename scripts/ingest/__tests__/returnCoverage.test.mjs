@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { unitLedgerReturnRecord } from '../../lib/unitLedgerReturns.mjs';
+import { unitLedgerReturnRecord, stitchSinceInception } from '../../lib/unitLedgerReturns.mjs';
 import { classify } from '../lib/classify.mjs';
 import { pmsSiblingProvider } from '../lib/pmsSiblingProvider.mjs';
 import { extract } from '../providers/folioLedger.mjs';
@@ -33,6 +33,19 @@ assert.equal(result.flows[1].amount,-1000);
 assert.equal(unitLedgerReturnRecord({...newFolio,periodFrom:'2026-07-01'},'2026-04-01',[]),null,'a later statement can omit earlier FY investments and redemptions');
 assert.equal(unitLedgerReturnRecord({...newFolio,periodFrom:null},'2026-04-01',[]),null,'unknown ledger coverage cannot establish a nil FY opening');
 assert(unitLedgerReturnRecord({...newFolio,periodFrom:null,cashFlows:[{...newFolio.cashFlows[0],notes:'Ledger scope: since inception'}]},'2026-04-01',[]),'an explicitly since-inception ledger proves the nil origin');
+// Stage 10hn: a dated issue opening after the FY start borrows its nil origin from
+// an earlier since-inception issue of the same folio, only where the two agree.
+const inception = {...newFolio,docKey:'aug',asOf:'2026-08-07',periodFrom:null,periodTo:null,
+  holdings:[{...holding,priceAsOn:'2026-08-06'}],cashFlows:[{...newFolio.cashFlows[0],notes:'Ledger scope: since inception'}]};
+const dated = {...newFolio,docKey:'oct',asOf:'2026-10-26',periodFrom:'2026-08-01',periodTo:'2026-10-26',holdings:[{...holding,priceAsOn:'2026-10-23'}]};
+assert.equal(unitLedgerReturnRecord(dated,'2026-04-01',[]),null,'a dated issue alone cannot witness its nil origin');
+result = unitLedgerReturnRecord(stitchSinceInception(dated,inception),'2026-04-01',[]);
+assert.equal(result.asOf,'2026-10-23','the dated issue closes the record');
+assert.equal(result.flows[0].amount,0);
+assert.deepEqual(result.flowSources,['aug','oct'],'both issues are named as the ledger');
+assert.equal(stitchSinceInception(dated,{...inception,cashFlows:[{...inception.cashFlows[0],notes:''}]}),null,'the earlier issue must itself be since inception');
+assert.equal(stitchSinceInception(dated,{...inception,cashFlows:[{...inception.cashFlows[0],units:90,balance:90}]}),null,'the overlap must print the same rows');
+assert.equal(stitchSinceInception({...dated,periodFrom:'2026-08-20',cashFlows:[row('2026-08-20',100,100,1000)]},inception),null,'a gap between the issues refuses');
 assert.equal(unitLedgerReturnRecord({...source,holdings:[{...holding,priceAsOn:'2026-04-30'}],cashFlows:[...source.cashFlows,row('2026-06-01',10,110,100)]},'2026-04-01',navs),null,'later units cannot be valued at an older mark');
 
 const switched = {...redeemed,holdings:[{...holding,quantity:0,marketValue:0},{...holding,securityKey:'second',quantity:0,marketValue:0}],cashFlows:[

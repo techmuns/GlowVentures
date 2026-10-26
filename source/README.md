@@ -29,6 +29,13 @@ three files are byte-identical to the copies here. The email is Nuvama FA's
 forwarded by Bharat on 9 October. Its one attachment is that same Z660 PDF, so it
 is recorded here and not added (Stage 10ew).
 
+`october-2026-d/` holds the client's 26 October CAMS account statements for two
+Helios Mutual Fund folios: 10355977 (Ajay, revalued at the 23 October NAV) and
+10056128 (Ajay with Aarti, new to the book). The client sent 10355977 twice, and
+the two copies are byte-identical, so one is kept. A third file from the same
+message, `Acctstmt_G_8652064 (1).pdf`, is PAN-encrypted. It is not added until a
+run with `GLOW_PDF_PASSWORDS` can read it (Stage 10hn).
+
 **These files never reach the browser.** `source/` sits at the repo root, outside
 `public/`, so nothing here is copied into the build or served by the site. Only
 the derived, reviewed extracts under `public/audit/` ship, and those sit behind
