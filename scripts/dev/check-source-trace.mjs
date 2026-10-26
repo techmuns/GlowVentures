@@ -75,8 +75,16 @@ try {
   const selectedUrl = new URL(await selected.getAttribute('href'),base);
   assert.equal(selectedUrl.searchParams.get('file'),'carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-09-30-appraisal');
   assert.equal(selectedUrl.searchParams.get('record'),'/holdings/0');
+  const workbook = new URLSearchParams({path:'source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx',sheet:'Private Investments',rows:'4'});
+  await page.goto(base+'/statements?'+workbook);
+  const citedSheet = page.getByRole('tab',{name:'Private Investments',exact:true}); await citedSheet.waitFor();
+  assert.equal(await citedSheet.getAttribute('aria-selected'),'true');
+  assert.match(await page.locator('[data-source-row="true"]').innerText(),/^4\s/);
+  await page.getByRole('tab',{name:'Equity',exact:true}).click();
+  assert.equal(await page.locator('[data-source-row="true"]').count(),0,'citation highlights never move to an unrelated worksheet');
+  await page.screenshot({path:path.join(out,'workbook-citation.png')});
   assert.deepEqual(errors,[]);
-  await fs.writeFile(path.join(out,'results.json'),JSON.stringify({exactDematDocument:true,closingPage:5,separateNilFolio:true,aggregateSources:true,feedDistinct:true,monitorLabels:true,filteredMandate:true,errors},null,2));
+  await fs.writeFile(path.join(out,'results.json'),JSON.stringify({exactDematDocument:true,closingPage:5,separateNilFolio:true,aggregateSources:true,feedDistinct:true,monitorLabels:true,filteredMandate:true,workbookSheetAndRow:true,errors},null,2));
   console.log('PASS source links: monitor account labels, exact demat closing page, separate nil folio, combined quantities and feed/statement distinction');
 } catch(e) {
   await fs.writeFile(path.join(out,'failure.json'),JSON.stringify({url:page.url(),errors,text:(await page.locator('body').innerText()).slice(-10000)},null,2));

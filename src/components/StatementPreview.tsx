@@ -10,7 +10,7 @@ import { ViewToggle, type ViewDef } from "@/components/ViewToggle";
 import { fmtDate } from "@/lib/format";
 import type { LibraryDoc } from "@/lib/statementLibrary";
 import {
-  cellText, columnLetters, fileSize, hasText, isSheetFormat, mergeLayout, sheetRows, unreadReason,
+  cellText, columnLetters, fileSize, hasText, isSheetFormat, mergeLayout, sheetRows, unreadReason, sourceSheetIndex,
   type GridCell, type GridMerge, type PageText, type PublishedFile, type StatementFileIndex,
 } from "@/lib/statementPreview";
 import { sourceRecordAt, sourcePage } from '@/lib/sourceTrace';
@@ -229,7 +229,7 @@ function OriginalSheets({ url, format }: { url: string; format: string }) {
       </AbsentSection>
     );
   }
-  return <SheetTabs sheets={wb.sheets} />;
+  return <SheetTabs sheets={wb.sheets} sourceLocation />;
 }
 
 function Opening({ what }: { what: string }) {
@@ -329,14 +329,16 @@ function SheetGrid({ grid, sourceSelected }: { grid: Grid; sourceSelected?: bool
 }
 
 /** A workbook's sheets, one tab each — a CSV is a workbook of one. */
-function SheetTabs({ sheets }: { sheets: SheetView[] }) {
+function SheetTabs({ sheets, sourceLocation = false }: { sheets: SheetView[]; sourceLocation?: boolean }) {
   const [params] = useSearchParams();
   const requested = params.get('sheet');
-  const [at, setAt] = useState(() => Math.max(0, sheets.findIndex(s => s.key === requested)));
+  const requestedAt = sourceLocation ? sourceSheetIndex(sheets.map(s => s.key), requested) : null;
+  const [at, setAt] = useState(() => requestedAt ?? 0);
   if (!sheets.length) return <AbsentSection what="This workbook has no sheets" needs="The file carries no worksheet to show." />;
   const sheet = sheets[Math.min(at, sheets.length - 1)];
   return (
     <div>
+      {sourceLocation && requested && requestedAt === null && <p role="alert" className="mb-2 text-xs text-slate-400" data-prose-ok="unresolved worksheet citation">The cited worksheet could not be uniquely identified. Select a sheet below to inspect the original.</p>}
       {sheets.length > 1 && (
         <div className="mb-3 flex flex-wrap gap-1.5" role="tablist" aria-label="Sheets in this file">
           {sheets.map((s, i) => (
@@ -350,7 +352,7 @@ function SheetTabs({ sheets }: { sheets: SheetView[] }) {
           ))}
         </div>
       )}
-      <SheetGrid grid={sheet.grid} sourceSelected={sheet.key === requested} />
+      <SheetGrid grid={sheet.grid} sourceSelected={at === requestedAt} />
     </div>
   );
 }

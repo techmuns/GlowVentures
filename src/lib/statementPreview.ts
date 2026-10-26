@@ -1,3 +1,13 @@
+/** Exact worksheet identity first; the ingest trims surrounding whitespace.
+ * Preserve that normalization only when it names one original sheet. */
+export function sourceSheetIndex(keys: readonly string[], requested: string | null): number | null {
+  if (!requested) return null;
+  const exact = keys.indexOf(requested);
+  if (exact >= 0) return exact;
+  const matches = keys.flatMap((key, index) => key.trim() === requested.trim() ? [index] : []);
+  return matches.length === 1 ? matches[0] : null;
+}
+
 /**
  * ── A STATEMENT'S CONTENTS, OPENED FROM THE STATEMENT LIBRARY ─────────────────
  *

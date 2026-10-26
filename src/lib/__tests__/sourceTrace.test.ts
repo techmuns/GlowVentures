@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import { BOOK_POSITIONS, BOOK_ACCOUNTS } from '../../data/glowData';
 import { depositoryFundHoldings } from '../fundNavs';
 import { holdingSourceTrace, statementSourceHref, sourceRecordAt, sourcePage } from '../sourceTrace';
+import { sourceSheetIndex } from '../statementPreview';
 
 const bandhan = BOOK_POSITIONS.find(p => p.accountId === 'bandhan-mutual-fund-8652064' && p.isin === 'INF194K01Y60')!;
 const trace = holdingSourceTrace([bandhan], 'quantity');
@@ -60,4 +61,8 @@ assert.equal(sourcePage([{ page: 1, text: 'INF194K01Y60 100000.000' }], 'INF194K
 assert.equal(sourcePage([{ page: 2, text: 'INF000WRONG 2,02,573.963' }], 'INF194K01Y60', '202573.963'), undefined);
 assert.equal(sourcePage([{ page: 2, text: 'INF194K01Y60 1202573.963' }], 'INF194K01Y60', '202573.963'), undefined);
 assert.equal(sourcePage([{ page: 1, text: 'INF194K01Y60 202573.963' }, { page: 2, text: 'INF194K01Y60 202573.963' }], 'INF194K01Y60', '202573.963'), undefined, 'ambiguous page matches abstain');
+assert.equal(sourceSheetIndex(['Portfolio Allocation', 'Private Investments '], 'Private Investments'), 1, 'the ingest-trimmed name selects the original worksheet');
+assert.equal(sourceSheetIndex(['Private Investments', 'Private Investments '], 'Private Investments'), 0, 'exact identity wins');
+assert.equal(sourceSheetIndex([' Private Investments', 'Private Investments '], 'Private Investments'), null, 'ambiguous trimmed names abstain');
+assert.equal(sourceSheetIndex(['Portfolio Allocation'], 'Unknown sheet'), null);
 console.log('PASS exact holding sources, demat/folio isolation, aggregate/price lineage, saved corrections and strict record/page locators');
