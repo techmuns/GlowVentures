@@ -28,21 +28,20 @@ export function CapitalBridge({ bridge: b, total, typeLabel, caption, money }: {
   bridge: Bridge | null; total: SelectedLine; typeLabel: string; caption: string;
   money: (n: number, sign?: boolean) => string;
 }) {
-  if (!b) return <div className="card mb-2 px-4 py-3" data-capital-bridge data-bridge-mode="">
-    <div className="text-[12px] font-semibold text-slate-100">Capital bridge</div>
+  if (!b) return <div className="card min-w-0 p-5" data-capital-bridge data-bridge-mode="">
+    <div className="text-sm font-semibold text-slate-100">Investment performance</div>
     <div className="mt-1 text-[13px]"><AbsentCell reason={total.missing.length ? 'No account has a verified opening value and dated money record for these dates; the info button on the Total row lists what each one needs.' : 'No account holds anything to measure over these dates.'} /></div>
   </div>;
   const dated = (d: string | null) => (d ? fmtDate(d) : '—');
   const assumed = total.units.some(u => u.assumption);
   const accountCount = new Set(total.units.map(u => u.accountId)).size;
-  const days = total.measured?.working?.days ?? null;
   const steps: { key: string; label: string; value: number; sign?: boolean; sub: string; title: string }[] = b.mode === 'window' ? [
-    { key: 'opening', label: 'Value at start', value: b.opening, sub: dated(b.from), title: "Statement values, plus published prices for labelled assumed holdings, on their measured starting dates" },
+    { key: 'opening', label: 'Opening value', value: b.opening, sub: dated(b.from), title: "Statement values, plus published prices for labelled assumed holdings, on their measured starting dates" },
     // A computed zero says why on its face: the dated record shows no movement.
     { key: 'added', label: '+ Money added', value: b.added, sub: b.added === 0 ? 'none in this period' : 'new capital', title: 'Money put into these accounts during the period, on its dates' },
     { key: 'taken', label: assumed ? '− Payouts / taken out' : '− Money taken out', value: b.takenOut, sub: assumed ? 'includes dividend entitlements' : b.takenOut === 0 ? 'none in this period' : 'withdrawals', title: 'Recorded withdrawals and payouts, plus gross dividend entitlements on labelled assumed holdings' },
-    { key: 'gain', label: '+ Gain', value: b.gain, sign: true, sub: 'see the split below', title: 'Value at end − value at start − money added + money taken out' },
-    { key: 'closing', label: '= Value at end', value: b.closing, sub: dated(b.to), title: "Statement values, plus published prices for labelled assumed holdings, on their measured closing dates" },
+    { key: 'gain', label: '+ Gain this period', value: b.gain, sign: true, sub: 'see the gain breakdown', title: 'Value at end − value at start − money added + money taken out' },
+    { key: 'closing', label: 'Closing value', value: b.closing, sub: dated(b.to), title: "Statement values, plus published prices for labelled assumed holdings, on their measured closing dates" },
   ] : b.mode === 'inception' ? [
     { key: 'added', label: 'Money paid in', value: b.added, sub: `since ${dated(b.from)}`, title: 'Every dated purchase or contribution since the first investment' },
     { key: 'taken', label: '− Money taken out', value: b.takenOut, sub: 'redemptions and payouts', title: 'Every dated redemption, withdrawal and payout since the first investment' },
@@ -65,43 +64,40 @@ export function CapitalBridge({ bridge: b, total, typeLabel, caption, money }: {
   ];
   const ret = total.returnPct, period = total.periodPct;
   const annual = total.measured?.basis === 'annual';
-  return <div className="card mb-2 px-4 py-3" data-capital-bridge data-bridge-mode={b.mode} data-bridge-opening={b.opening} data-bridge-added={b.added}
+  return <div className="card min-w-0 p-5" data-capital-bridge data-bridge-mode={b.mode} data-bridge-opening={b.opening} data-bridge-added={b.added}
     data-bridge-taken={b.takenOut} data-bridge-gain={b.gain} data-bridge-closing={b.closing} data-bridge-realised={b.realised ?? ''}
     data-bridge-unrealised={b.unrealised ?? ''} data-bridge-income={b.income ?? ''} data-bridge-charges={b.charges ?? ''} data-bridge-unsplit={b.unsplit}
     data-bridge-accounts={b.rows.length} data-bridge-split-accounts={b.splitCount}>
-    <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
-      <div className="flex items-center gap-2">
-        <span className="text-[12px] font-semibold text-slate-100" title="What the measured accounts started with, the money added and taken out, what they gained, and what they ended with. The same accounts and figures as the table's total.">Capital bridge</span>
-        <span className="text-[11.5px] text-slate-400" data-bridge-caption>{caption} · {accountCount} {accountCount === 1 ? 'account' : 'accounts'}</span>
-        <HoldingAssumptionInfo units={total.units} />
-        <BridgeInfo b={b} money={money} />
-      </div>
-      <div className="text-[12px] text-slate-400" data-bridge-return={ret ?? ''} data-bridge-period-return={period ?? ''}>
-        {typeLabel} · {ret != null ? <strong className={`tabular ${changeColor(ret)}`}>{pct(ret)}{annual && ' p.a.'}</strong> : <AbsentCell reason={total.measured?.reason ?? 'not measured on these dates'} />}
-        {annual && period != null && <span className="ml-1" title={`The same return over the period itself, not stated per year${days != null ? ` — ${days} days` : ''}`}>· <span className={`tabular ${changeColor(period)}`}>{pct(period)}</span> over the period</span>}
-      </div>
+    <div className="flex items-center justify-between gap-3">
+      <h3 className="text-sm font-semibold text-slate-100">Investment performance</h3>
+      <BridgeInfo b={b} money={money} />
     </div>
-    <div className={`mt-2 grid grid-cols-2 gap-2 ${steps.length === 5 ? 'md:grid-cols-5' : 'md:grid-cols-4'}`} data-bridge-steps>
-      {steps.map((s) => <div key={s.key} className="ret-stat" data-bridge-step={s.key} title={s.title}>
-        <div className="text-[11px] font-medium text-slate-400">{s.label}</div>
-        <div className={`mono mt-1 text-[16px] font-semibold ${s.sign ? changeColor(s.value) : 'text-slate-100'}`}>{money(s.value, s.sign)}</div>
-        <div className="text-[11px] text-slate-500">{s.sub}</div>
-      </div>)}
+    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-400" title={caption} data-bridge-caption>
+      {accountCount} {accountCount === 1 ? 'account' : 'accounts'} covered <HoldingAssumptionInfo units={total.units} />
     </div>
-    <div className="mt-2 flex flex-wrap items-center gap-2 text-[12px]" data-bridge-split>
-      <span className="text-slate-400" title="The gain in its parts. Each part comes from the account's own record; nothing is apportioned.">Gain {money(b.gain, true)} =</span>
-      {parts.map((p) => <span key={p.key} className="ret-chip" data-bridge-part={p.key} title={p.title}>
-        {p.label} {p.value != null ? <span className={`mono ${changeColor(p.value)}`}>{money(p.value, true)}</span> : <AbsentCell reason={p.key === 'charges' ? noCharges : noSplit} />}
-      </span>)}
-      {b.unsplitCount > 0 && <span className="ret-chip" data-bridge-part="unsplit"
-        title={`Gain of ${b.unsplitCount} ${b.unsplitCount === 1 ? 'account' : 'accounts'} whose records do not split it over these dates: ${named(b.rows.filter((r) => !r.split))}`}>
-        Not split · {b.unsplitCount} {b.unsplitCount === 1 ? 'account' : 'accounts'} <span className={`mono ${changeColor(b.unsplit)}`}>{money(b.unsplit, true)}</span>
-      </span>}
+    <div className="my-5" data-bridge-return={ret ?? ''} data-bridge-period-return={period ?? ''}>
+      <p className="text-xs text-slate-400" data-bridge-return-label>{typeLabel}{ret != null && (annual ? ' · annualised' : ' · period')}</p>
+      <div className="mt-1" aria-live="polite">{ret != null ? <strong className={`text-3xl font-semibold tabular ${changeColor(ret)}`}>{pct(ret)}{annual && <span className="ml-1 text-xs font-normal text-slate-400">p.a.</span>}</strong> : <AbsentCell reason={total.measured?.reason ?? 'not measured on these dates'} />}</div>
     </div>
-    {b.heldCost && <div className="mt-2 text-[12px] text-slate-400" data-bridge-held-cost={b.heldCost.invested ?? ''}
-      title={`Purchase cost of what these accounts hold now, on each account's latest statement; a whole PMS mandate enters at the capital paid in.${b.heldCost.uncosted ? ` ${b.heldCost.uncosted} holdings worth ${money(b.heldCost.uncostedValue)} carry no purchase cost and are not in it.` : ''}`}>
-      Invested in holdings now · {b.heldCost.invested != null ? <span className="mono text-slate-200">{money(b.heldCost.invested)}</span> : <AbsentCell reason="No holding of these accounts carries a purchase cost" />}
-    </div>}
+    <dl data-bridge-steps>{steps.map((s) => <div key={s.key}
+      className={`flex items-baseline justify-between gap-4 py-2.5 text-[13px] ${s.key === 'closing' ? 'font-semibold text-slate-100' : 'border-b border-ink-700'}`}
+      data-bridge-step={s.key} title={`${s.title} · ${s.sub}`}>
+      <dt className={s.key === 'closing' ? '' : 'text-slate-400'}>{s.label}</dt>
+      <dd className={`shrink-0 tabular ${s.sign ? changeColor(s.value) : 'text-slate-100'}`}>{money(s.value)}</dd>
+    </div>)}</dl>
+    <details className="mt-3" data-bridge-split>
+      <summary className="ring-focus w-fit cursor-pointer rounded text-xs text-slate-300">Gain breakdown</summary>
+      <dl className="mt-2 divide-y divide-ink-700 text-xs">
+        {parts.map((p) => <div key={p.key} className="flex justify-between gap-4 py-2" data-bridge-part={p.key} title={p.title}>
+          <dt className="text-slate-400">{p.label}</dt><dd className="shrink-0 tabular">{p.value != null ? <span className={changeColor(p.value)}>{money(p.value, true)}</span> : <AbsentCell reason={p.key === 'charges' ? noCharges : noSplit} />}</dd>
+        </div>)}
+        {b.unsplitCount > 0 && <div className="flex justify-between gap-4 py-2" data-bridge-part="unsplit"
+          title={`Gain of ${b.unsplitCount} accounts whose records do not split it: ${named(b.rows.filter((r) => !r.split))}`}>
+          <dt className="text-slate-400">Not split · {b.unsplitCount} {b.unsplitCount === 1 ? 'account' : 'accounts'}</dt><dd className={`shrink-0 tabular ${changeColor(b.unsplit)}`}>{money(b.unsplit, true)}</dd>
+        </div>}
+      </dl>
+    </details>
+    <p className="mt-4 border-t border-ink-700 pt-3 text-xs text-slate-400">Valuations: {b.from && `${dated(b.from)} → `}{dated(b.to)}</p>
     <details className="mt-2" data-bridge-accounts-table>
       <summary className="ring-focus w-fit cursor-pointer rounded text-[12px] text-slate-300">By account</summary>
       <div className="mt-2 overflow-x-auto">

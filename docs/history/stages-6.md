@@ -389,7 +389,15 @@
   - `check-pages`: the Returns-tab and Performance invariants.
   - CI scripts: `check-market-returns` and `check-selected-attribution` now require XIRR = CAGR = Absolute under a year.
 
-### Stage 10hl — BANDHAN'S CURRENT FOLIO REPLACES ITS OLDER DEMAT BALANCES
+### Stage 10hl — RETURNS: EQUAL COMPACT SUMMARY BLOCKS
+
+- Investment performance and Market performance share an equal-column, equal-height grid on desktop and stack on small screens. The capital bridge is a compact ledger with a prominent return, a collapsed gain breakdown and the existing account drilldown.
+- Market coverage keeps the original inline holdings, covered value and actual price dates. No coverage progress bar, extra coverage sections or invested-cost summary. Existing source-info dialogs remain available.
+- The Returns picker names the measure the covered total actually displays. Its display-only Absolute return state retains the originally requested calculation for debt-only rows; choosing Absolute explicitly remains available. Stage 10hk's calculation rule and debt exception remain intact.
+- Browser regressions cover picker/figure agreement, equal summary dimensions, the collapsed gain breakdown and inline market coverage alongside the existing period, source and assumption checks.
+- CI exposed the existing property-tax owner table missing the standard export wrapper; it now uses `ExportableTable`, preserving the owner-level tax figures and restoring the export-coverage contract.
+
+### Stage 10hm — BANDHAN'S CURRENT FOLIO REPLACES ITS OLDER DEMAT BALANCES
 
 - Preserve Ashwini's 26 October original statement for Ajay's Bandhan folio 8652064. A checked reader covers all four schemes and every printed movement: Arbitrage has 202,573.963 units / ₹7,724,469.33; Large & Mid Cap has 2,639,320.472 units / ₹407,339,525.05, both valued on 23 October. Liquid and Overnight close to nil. Purchase costs come from the matching account-summary rows, never cumulative purchase cost less redemption proceeds.
 - Read and reconcile the five arbitrage switches and receiving fund entries, fees/stamp duty, running units and printed account total. The partial unit-history openings remain explicit; no missing purchase history or whole-account return is invented.
