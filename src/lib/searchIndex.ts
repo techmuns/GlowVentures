@@ -63,6 +63,7 @@ import { NAV } from "./nav";
 import { printedSpellings, securityLabel } from "./securityLabel";
 import { schemeNamesOf, schemeStem } from "./reviewGaps";
 import { schemeNameFor } from "./schemeLabel";
+import { acquisitionIdentity } from "../../shared/fundUnitActions.mjs";
 import { displaySecurity } from "./format";
 
 export type SearchKind =
@@ -632,7 +633,7 @@ export function buildSearchIndex(input: {
       // prints State Bank of India as `SBI`, and with the two keys joined the
       // label alone left "sbi" finding nothing.
       names: [head.security, ...printedSpellings(key).filter((n) => n !== head.security), key.replace(/-/g, " ")],
-      codes: [head.isin, head.symbol].filter((c): c is string => !!c),
+      codes: [...new Set([head.isin, head.symbol, ...rows.map(p => acquisitionIdentity(p).isin)].filter((c): c is string => !!c))],
       stems: [...new Set(schemeNamesOf(key).map(schemeStem).filter(Boolean))],
       keywords: [head.sector, ...categories].filter((s): s is string => !!s && s !== "Unclassified"),
       weight: Math.abs(mv),

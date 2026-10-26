@@ -43,33 +43,13 @@
  *
  * ── AND THE UNITS AND THE NAV MUST BE ON ONE BASIS ─────────────────────────
  *
- * This is the check that stops a ten-fold error. A published NAV values a
- * holding only as `quantity × NAV`, and that is true only while the book's
- * units and the AMC's NAV unit are the same unit. On this book they are not,
- * twice: DSP Gold is marked ₹151.10 against a NAV of ₹14.7633 and DSP Silver
- * ₹276.82 against ₹22.4561 — a SHARE-COUNT BREAK, the book's units being
- * pre-split and the NAV post-split. Valued naively the family's ₹16.9 Cr of
- * gold reports as ₹1.76 Cr.
- *
- * So a scheme's NAV values a holding only where the ratio against that
- * holding's own statement mark is within a FACTOR OF TWO. That bound is a claim
- * about markets rather than about this dataset — no scheme halves or doubles
- * between two statement dates absent a corporate action — and it separates the
- * real cases by an order of magnitude: the schemes that pass span 0.92 to 1.14,
- * and the two that fail sit at 0.08 and 0.10. The failure mode is deliberately
- * asymmetric: refusing a good scheme costs a refresh and keeps the statement
- * mark, while accepting a broken one prints a figure wrong by 10x.
- *
- * A REFUSED SCHEME STILL CARRIES ITS NAV, marked `usableForValue: false` with
- * the reason. The family asked to SEE the current NAV; what they must not get
- * is a holding value built on a base the book cannot reconcile.
- *
- * A BREAK WITH A SOURCE IS NOT A REFUSAL (Stage 10hq). The DSP break above is
- * DSP's own 1:10 sub-division of 28 Aug 2026, which also moved both ETFs to new
- * ISINs, so AMFI's file no longer carries the ISIN the statements print at all.
- * `shared/fundUnitSplits.mjs` records each such split with NSE's circulars; the
- * scheme is joined through the successor ISIN, and the basis check is struck on
- * the NAV times the split's factor — the unit the book's lines were counted in.
+ * A statement's units and a later NAV must share a unit basis. Follow only
+ * the documented exchange conversions in `shared/fundUnitActions.mjs`, using
+ * each witness's own statement date. Compare the NAV with the converted
+ * per-unit mark, and keep the factor-of-two guard for unexplained differences.
+ * The source ISIN remains on the record; `pricingIsin` names its successor.
+ * A held ETF with no usable valuation path fails publication, so an identity
+ * change cannot silently disappear into a successful daily refresh.
  *
  * ── THE DAY CHANGE ACCUMULATES, BECAUSE THE SOURCE PUBLISHES ONE DAY ───────
  *
@@ -130,7 +110,7 @@
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { fundUnitSplitFor } from "../shared/fundUnitSplits.mjs";
+import { fundUnitBasis, fundPricingIsin, fundIdentityDisagrees, heldEtfCoverageGaps, FUND_UNIT_ACTIONS } from "../shared/fundUnitActions.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const OUT = join(ROOT, "src/data/fundNavs.ts");
@@ -177,6 +157,7 @@ function bookObject(src, name) {
 // ── what the book holds, and which identifiers reach it ─────────────────────
 const glow = readFileSync(join(ROOT, "src/data/glowData.ts"), "utf8");
 const positions = bookArray(glow, "BOOK_POSITIONS") ?? die("no BOOK_POSITIONS");
+const accountDates = new Map((bookArray(glow, "BOOK_ACCOUNTS") ?? []).map(a => [a.accountId, a.asOf]));
 
 /** securityKey → the ISIN the look-through resolved for it, if that ran. */
 const ltIsin = new Map();
@@ -196,7 +177,7 @@ for (const p of positions) {
   const cur = wanted.get(p.securityKey) ?? {
     key: p.securityKey, name: p.security, bookIsin: null, marks: [], assetClass: p.assetClass, from: "book", holds: false };
   if (p.isin && !cur.bookIsin) cur.bookIsin = p.isin;
-  if (typeof p.currentPrice === "number" && Number.isFinite(p.currentPrice)) cur.marks.push(p.currentPrice);
+  if (typeof p.currentPrice === "number" && Number.isFinite(p.currentPrice)) cur.marks.push({ price: p.currentPrice, asOf: p.priceAsOf ?? accountDates.get(p.accountId) });
   // A printed 0.000 is a measured nil (parseNum: null is "not reported"), so
   // only a line that is not at zero units can be said to hold the scheme.
   if (p.quantity !== 0) cur.holds = true;
@@ -236,7 +217,7 @@ for (const u of unvaluedFunds) {
   if (!cur.bookIsin) cur.bookIsin = u.isin;
   cur.holds = true;                                   // filtered to quantity > 0 above
   if (typeof u.lastMovementRate === "number" && Number.isFinite(u.lastMovementRate) && u.lastMovementRate > 0) {
-    cur.marks.push(u.lastMovementRate);
+    cur.marks.push({ price: u.lastMovementRate, asOf: u.asOf });
   }
   wanted.set(u.securityKey, cur);
 }
@@ -291,19 +272,9 @@ for (const w of depositoryOnly) {
     : { key: w.securityKey, name: w.security, bookIsin: w.isin, marks: [], assetClass: null, from: "depository", holds: true });
 }
 
-/**
- * THE DATES THE BOOK'S OWN LINES OF A SECURITY WERE COUNTED ON — what decides
- * which side of a sub-division their units are on (`shared/fundUnitSplits.mjs`).
- */
-const accountAsOf = new Map((bookArray(glow, "BOOK_ACCOUNTS") ?? []).map((a) => [a.accountId, a.asOf ?? null]));
-const lineDatesOf = (key) => [
-  ...positions.filter((p) => p.securityKey === key).map((p) => accountAsOf.get(p.accountId) ?? null),
-  ...unvaluedFunds.filter((u) => u.securityKey === key).map((u) => u.asOf ?? null),
-  ...depositoryOnly.filter((w) => w.securityKey === key).map((w) => w.periodTo ?? null),
-];
-
 // ── the published file ──────────────────────────────────────────────────────
 async function fetchNavAll() {
+  if (process.env.GLOW_NAV_FILE) return readFileSync(process.env.GLOW_NAV_FILE, "utf8");
   const res = await fetch(NAVALL, { redirect: "follow", headers: { "user-agent": "glow-ventures/1.0" } });
   if (!res.ok) die(`AMFI answered ${res.status}`);
   const text = await res.text();
@@ -379,58 +350,45 @@ function main() {
   return fetchNavAll().then((text) => {
     const { by, rows } = indexByIsin(text);
     const prev = previous();
+    const newest = [...by.values()].reduce((d, r) => r.date > d ? r.date : d, "");
     const out = [];
     const skipped = [];
 
     for (const w of [...wanted.values()].sort((a, b) => a.key.localeCompare(b.key))) {
       const bookIsin = w.bookIsin;
       const lt = ltIsin.get(w.key) ?? null;
-      // BOTH TIERS MUST AGREE WHERE BOTH ANSWER. A disagreement means one of
-      // them is about a different security, and neither may win silently.
-      if (bookIsin && lt && bookIsin !== lt) {
+      w.pricingIsin = bookIsin || lt ? fundPricingIsin(bookIsin ?? lt, newest) : null;
+      // Compare both tiers after documented identity transitions; a current
+      // look-through ISIN can agree with an older custody ISIN.
+      if (fundIdentityDisagrees(bookIsin, lt, newest)) {
         skipped.push({ ...w, why: `the statement's ISIN ${bookIsin} and the look-through's ${lt} disagree, so neither is used` });
         continue;
       }
       const isin = bookIsin ?? lt;
       if (!isin) continue;                            // not identifiable; silently not a fund we can reach
-      let rec = by.get(isin);
-      /**
-       * A SUB-DIVISION THAT RETIRED THE STATEMENT'S ISIN (Stage 10hq). AMFI
-       * publishes the scheme under the successor NSE named, on a unit `factor`
-       * times smaller. The book's lines are on the old unit only where every
-       * one of them was counted before the ex-date; a line counted on or after
-       * it under the retired ISIN could be on either, so nothing is joined.
-       */
-      const split = rec ? null : fundUnitSplitFor(isin);
-      if (split) {
-        if (lineDatesOf(w.key).some((d) => !d || d >= split.exDate)) {
-          skipped.push({ ...w, isin, why: `ISIN ${isin} was retired by a 1:${split.factor} sub-division on ${split.exDate} (${split.source}), and a line of it is counted on or after that date, or on no date, so its units cannot be placed on either side of the split` });
-          continue;
-        }
-        rec = by.get(split.successorIsin);
-      }
+      const pricingIsin = fundPricingIsin(isin, newest);
+      const rec = by.get(pricingIsin);
       if (!rec) {
         // Only worth naming where the book thinks this is a fund at all — or
         // where a depository reported units a reader would expect to see valued.
         if (w.assetClass === "Mutual Fund" || w.assetClass === "ETF" || w.from === "depository") {
-          skipped.push({ ...w, isin, why: split
-            ? `neither ISIN ${isin} nor ${split.successorIsin}, which replaced it on ${split.exDate}, is in AMFI's published NAV file`
-            : `ISIN ${isin} is not in AMFI's published NAV file` });
+          skipped.push({ ...w, isin, why: `ISIN ${isin}${pricingIsin !== isin ? ` (successor ${pricingIsin})` : ""} is not in AMFI's published NAV file` });
         }
         continue;
       }
-      // The NAV on the unit the book's lines were counted in.
-      const factor = split?.factor ?? 1;
-      const basisNav = rec.nav * factor;
 
       /**
        * THE BASIS CHECK. Struck against the book's own mark for this holding —
        * the widest one where several statements disagree, so a scheme is
        * refused only when it is out of range on EVERY mark the book carries.
        */
-      const mark = w.marks.length ? w.marks.reduce((a, b) => Math.max(a, b), -Infinity) : null;
-      const lo = w.marks.length ? w.marks.reduce((a, b) => Math.min(a, b), Infinity) : null;
-      const ratios = w.marks.map((m) => basisNav / m);
+      const marks = w.marks.map(m => {
+        const basis = fundUnitBasis(isin, m.asOf, rec.date);
+        return !basis.reason && basis.isin === pricingIsin ? m.price / basis.factor : null;
+      }).filter(m => m !== null);
+      const mark = marks.length ? Math.max(...marks) : null;
+      const lo = marks.length ? Math.min(...marks) : null;
+      const ratios = marks.map(m => rec.nav / m);
       /**
        * A DEPOSITORY-ONLY UNIT HAS NO MARK TO CHECK AGAINST, so its witness is
        * the instrument: an open-ended mutual fund's units do not split, and the
@@ -444,9 +402,11 @@ function main() {
           ? (w.from === "depository"
             ? `no statement marks these units and AMFI files the scheme as ${rec.category ? `"${rec.category}"` : "no category"}; an ETF's units can split, so without a mark there is nothing to show the depository's count and this NAV are the same unit`
             : "no statement in this book marks this holding per unit, so there is nothing to check the NAV's basis against")
-          : `the published NAV of ${rec.nav}${split ? ` (${basisNav} on the unit before the ${split.exDate} sub-division)` : ""} against this book's own mark of ${lo === mark ? mark : `${lo}–${mark}`} is a factor of ${(1 / Math.max(...ratios)).toFixed(1)}, which is a share-count break rather than market movement — the units and the NAV are not the same unit`;
+          : `the published NAV of ${rec.nav} against this book's own mark of ${lo === mark ? mark : `${lo}–${mark}`} is a factor of ${(1 / Math.max(...ratios)).toFixed(1)}, which is a share-count break rather than market movement — the units and the NAV are not the same unit`;
 
-      const before = prev.byKey.get(w.key) ?? prev.byIsin.get(isin.trim().toUpperCase());
+      let before = prev.byKey.get(w.key) ?? prev.byIsin.get(isin.trim().toUpperCase());
+      // Never compare a pre-split NAV with a post-split NAV as a daily loss.
+      if (before && (before.pricingIsin ?? before.unitSplit?.publishedIsin ?? before.isin) !== pricingIsin) before = null;
       // The previous NAV is whatever THIS FILE held on an earlier date — the
       // source publishes one day, so the change accumulates here or not at all.
       const carry = before && before.date && before.date !== rec.date
@@ -454,17 +414,20 @@ function main() {
         : before && before.prev != null && before.date === rec.date
           ? { prev: before.prev, prevDate: before.prevDate }
           : {};
+      const conversion = w.marks.map(m => fundUnitBasis(isin, m.asOf, rec.date)).find(b => !b.reason && b.actions.length);
       out.push({
         securityKey: w.key,
         security: w.name,
         isin,
+        ...(pricingIsin !== isin ? { pricingIsin } : {}),
+        ...(conversion ? { unitSplit: { publishedIsin: pricingIsin, factor: conversion.factor,
+          exDate: conversion.actions[0].exDate, source: conversion.actions.map(a => a.source ?? a.sources.join(', ')).join('; ') } } : {}),
         isinFrom: bookIsin ? "statement" : "look-through",
         // The look-through ANSWERED TOO and agreed (a disagreement is skipped
         // above), so the second tier is exercised even where the statement
         // supplies the ISIN — Active Momentum's, since Stage 10ep read its print.
         isinAgreedBy: bookIsin && lt ? "look-through" : null,
         from: w.from,
-        ...(split ? { unitSplit: { publishedIsin: split.successorIsin, factor: split.factor, exDate: split.exDate, source: split.source } } : {}),
         schemecode: rec.schemecode,
         scheme: rec.scheme,
         plan: rec.plan,
@@ -487,6 +450,10 @@ export interface FundNav {
   security: string;
   /** The identifier the join was made on — exact, never a name match. */
   isin: string;
+  /** Dated successor identity where the exchange converted these units. */
+  pricingIsin?: string;
+  /** Display/audit terms; quantity conversion is applied by the shared resolver. */
+  unitSplit?: { publishedIsin: string; factor: number; exDate: string; source: string };
   /** Which tier supplied it: the family's own statement, or the look-through. */
   isinFrom: "statement" | "look-through";
   /** The other tier answered as well, with the same ISIN; null where only one answered. */
@@ -497,14 +464,6 @@ export interface FundNav {
    * The second has no statement mark anywhere — see the builder's header.
    */
   from: "book" | "depository";
-  /**
-   * Set where a sub-division retired the statement's ISIN
-   * (\`shared/fundUnitSplits.mjs\`): AMFI publishes the scheme under
-   * \`publishedIsin\`, on a unit \`factor\` times smaller than the one the book's
-   * lines were counted in before \`exDate\`. Every NAV figure here is AMFI's, on
-   * the new unit.
-   */
-  unitSplit?: { publishedIsin: string; factor: number; exDate: string; source: string };
   schemecode: string;
   scheme: string;
   plan: string;
@@ -523,7 +482,7 @@ export interface FundNav {
   /** Null until this file has held two different dates — never a zero. */
   changePct: number | null;
   /**
-   * Whether \`quantity × nav\` is a figure this book may publish. False where the
+   * Whether \`quantity × nav\`, after documented unit conversions, may be published. False where the
    * units and the NAV are not the same unit — see the builder's header.
    */
   usableForValue: boolean;
@@ -538,6 +497,11 @@ export const FUND_NAV_AS_OF = ${JSON.stringify(out.reduce((a, e) => (e.date > a 
 `;
 
     const usable = out.filter((e) => e.usableForValue);
+    // A missing listed ETF is an actionable identity/coverage gap, not a
+    // successful refresh. Preserve the last good price table on failure.
+    const etfGaps = heldEtfCoverageGaps([...wanted.values()], out,
+      [...by].map(([isin, r]) => ({ ...r, isin })).concat([...prev.byKey.values()]));
+    if (etfGaps.length) die(`Held ETF valuation coverage missing: ${etfGaps.map(w => w.name).join(", ")}. Verify the exchange identity and unit-conversion evidence; no prices were published.`);
     const doc = `# Fund NAVs — what is priced daily, and what is not
 
 Generated by \`npm run build-fund-navs\`. **Never hand-edited**; the builder is
@@ -560,7 +524,17 @@ ISIN** and never on a name. ${rows.toLocaleString("en-IN")} scheme rows read.
 
 | Security | ISIN | via | SEBI category | NAV | Date | Day |
 | --- | --- | --- | --- | ---: | --- | ---: |
-${usable.filter((e) => e.from === "book").map((e) => `| ${e.security} | \`${e.isin}\`${e.unitSplit ? ` → \`${e.unitSplit.publishedIsin}\` (units ×${e.unitSplit.factor} before ${e.unitSplit.exDate})` : ""} | ${e.isinFrom} | ${e.sebiCategory ?? "—"} | ${e.nav} | ${e.date} | ${e.changePct == null ? "—" : `${e.changePct >= 0 ? "+" : ""}${e.changePct.toFixed(2)}%`} |`).join("\n") || "| — | | | | | | |"}
+${usable.filter((e) => e.from === "book").map((e) => `| ${e.security} | \`${e.isin}\` | ${e.isinFrom} | ${e.sebiCategory ?? "—"} | ${e.nav} | ${e.date} | ${e.changePct == null ? "—" : `${e.changePct >= 0 ? "+" : ""}${e.changePct.toFixed(2)}%`} |`).join("\n") || "| — | | | | | | |"}
+
+## Documented unit conversions
+
+The statement ISIN stays on the source record. NAV lookup follows only a documented
+exchange conversion; the live count is adjusted from its own statement date.
+Cost and acquisition dates remain tied to the original balance.
+
+${out.filter(e => e.pricingIsin).map(e => `- **${e.security}**: \`${e.isin}\` → \`${e.pricingIsin}\`.`).join("\n") || "_None._"}
+
+Exchange notices in the shared conversion register: ${[...new Set(FUND_UNIT_ACTIONS.flatMap(a => a.sources))].map(url => `[${new URL(url).pathname.split("/").at(-1)}](${url})`).join(", ")}.
 
 ## Priced from a depository's own units
 

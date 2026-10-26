@@ -8,6 +8,7 @@
 // to be readable out of the account code. Both come from `Portfolio.accounts`.
 import type { Account, Engagement, Portfolio, Position, UnvaluedStatementHolding } from "./types";
 import { ownerDisplayName } from "./owners";
+import { acquisitionIdentity } from "../../shared/fundUnitActions.mjs";
 
 export type AccountIndex = Map<string, Account>;
 
@@ -218,7 +219,7 @@ export function unvaluedStatementLinesOf(
       valuedLive: positions.find((p) => p.accountId === a.accountId
         && (p.depositoryUnits?.kind === "no-rate" || p.depositoryUnits?.kind === "no-price"
           || p.depositoryUnits?.kind === "last-movement")
-        && !!isin(row) && isin(p) === isin(row)) ?? null,
+        && !!isin(row) && isin(acquisitionIdentity(p)) === isin(row)) ?? null,
     }));
     lines.sort((x, y) => Number(!!y.valuedLive) - Number(!!x.valuedLive) || x.row.security.localeCompare(y.row.security));
     out.push({ account: a, lines, reportedElsewhere: mine.length - lines.length });

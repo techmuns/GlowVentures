@@ -23,11 +23,13 @@ export const FUND_UNIT_SPLITS = Object.freeze([
   {
     isin: 'INF740KA1SW3', successorIsin: 'INF740KA1ZP2', scheme: 'DSP Gold ETF', symbol: 'GOLDADD',
     factor: 10, exDate: '2026-08-28',
+    sources: ['https://nsearchives.nseindia.com/content/circulars/CML75868.pdf', 'https://nsearchives.nseindia.com/content/circulars/CMPT75902.pdf'],
     source: 'NSE circular NSE/CML/75868 (21 Aug 2026) and NSE Clearing circular NCL/CMPT/75902 (24 Aug 2026)',
   },
   {
     isin: 'INF740KA1RE3', successorIsin: 'INF740KA1ZQ0', scheme: 'DSP Silver ETF', symbol: 'SILVERADD',
     factor: 10, exDate: '2026-08-28',
+    sources: ['https://nsearchives.nseindia.com/content/circulars/CML75868.pdf', 'https://nsearchives.nseindia.com/content/circulars/CMPT75902.pdf'],
     source: 'NSE circular NSE/CML/75868 (21 Aug 2026) and NSE Clearing circular NCL/CMPT/75902 (24 Aug 2026)',
   },
 ]);

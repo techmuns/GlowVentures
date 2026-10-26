@@ -1,3 +1,4 @@
+import { acquisitionIdentity } from "../../../shared/fundUnitActions.mjs";
 import assert from "node:assert/strict";
 import { depositoryFundHoldings, unpricedStatementUnits, applyFundNavs } from "../fundNavs";
 import { fifoTotals, positionFifoReturn, realisedReason } from "../fifo";
@@ -128,7 +129,7 @@ near(silver.costBasis,17222067.17);near(silver.realizedPnL,14667670.15);near(sil
 assert.equal(silver.quantity,123000);
 // Since Stage 10hq the basis IS verified — DSP's published 1:10 split of
 // 28 Aug 2026 — so the line is valued, and only on the post-split unit.
-const silverRow=funds.find(p=>p.accountId===silver.accountId&&p.isin===silver.isin);
+const silverRow=funds.find(p=>p.accountId===silver.accountId&&acquisitionIdentity(p).isin===silver.isin);
 assert.ok(silverRow?.depositoryUnits?.unitSplit?.statementQuantity===silver.quantity&&silverRow.quantity===silver.quantity*10,'valued only on the split-adjusted unit');
 // A line whose own rate breaks that basis is refused, its cost notwithstanding.
 const silverLine=BOOK_UNVALUED_HOLDINGS.find(u=>u.accountId===silver.accountId&&u.isin===silver.isin)!;

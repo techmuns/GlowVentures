@@ -547,6 +547,8 @@ export type Position = {
   // never set `live` and never fills the intraday fields.
   navPriced?: boolean;
   navDate?: string;           // AMFI's own publication date for that NAV
+  /** Original custody balance, preserved when a documented split changes the live units and ISIN. */
+  fundUnitAdjustment?: import('../../shared/fundUnitActions.mjs').FundUnitAdjustment;
   /**
    * WHERE THE QUANTITY CAME FROM, when no statement puts a price on it.
    *

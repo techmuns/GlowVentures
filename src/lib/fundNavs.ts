@@ -18,10 +18,10 @@
  *
  * ── THE BASIS RULE IS `applyQuotes`'s, VERBATIM ────────────────────────────
  *
- * Only PRICE-DERIVED fields move — market value, unrealised P&L and the return
- * on cost. Quantity, cost basis, realised gains, dividends, fees and every
- * dated cash flow come from the statements and are never touched, because no
- * published price is evidence about any of them (§6).
+ * Price-derived fields move. Documented exchange conversions may also change
+ * the live quantity and ISIN; their original custody identity/count is retained
+ * in `fundUnitAdjustment`. Total cost, realised gains, dividends and dated
+ * acquisition records remain unchanged.
  *
  * ── AND `live` STAYS FALSE, WHICH IS THE ONE THING NOT COPIED ──────────────
  *
@@ -38,12 +38,10 @@
  *
  * ── A REFUSED SCHEME KEEPS ITS STATEMENT MARK ──────────────────────────────
  *
- * `usableForValue` is false where the book's units and the AMC's NAV unit are
- * not the same unit — a share-count break, which on this book would report
- * ₹16.9 Cr of gold as ₹1.76 Cr. Those holdings are not overlaid at all and
- * keep the mark their statement struck; the builder names each one and the
- * reason. The NAV itself is still available for display, which is what the
- * family asked to see.
+ * `usableForValue` is false where the source units and NAV cannot be put on
+ * one documented basis. Verified conversions are applied from the holding's
+ * own date before multiplication; an unexplained price ratio never creates
+ * a conversion.
  */
 import { BOOK_FUND_NAVS, FUND_NAV_AS_OF, type FundNav } from "@/data/fundNavs";
 import { BOOK_ACCOUNTS, BOOK_CAPITAL_MOVES, BOOK_POSITIONS, BOOK_RECOVERED_COSTS, BOOK_SHARE_MOVEMENTS, BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
@@ -56,6 +54,7 @@ import { fifoReturnPct } from "../../shared/fifo.mjs";
 
 import { applyRecoveredCost } from "../../shared/recoveredCosts.mjs";
 import { custodySuccessor } from "../../shared/custodySuccessors.mjs";
+import { acquisitionIdentity, fundUnitBasis } from "../../shared/fundUnitActions.mjs";
 
 export { FUND_NAV_AS_OF };
 export type { FundNav };
@@ -88,14 +87,16 @@ export function applyFundNavs(positions: Position[]): Position[] {
     if (p.review || p.quantity === null) return p;
     const e = BY_KEY.get(p.securityKey);
     if (!e || !e.usableForValue) return p;      // no NAV, or not on this book's basis
-    // A NAV joined across a sub-division (Stage 10hq) is on a unit the
-    // statement's count may not be; `unpricedStatementUnits` places a line on
-    // one side of the split by its date, and a position keeps its own mark.
-    if (e.unitSplit) return p;
     if (p.priceAsOf && e.date < p.priceAsOf) return p; // a cached NAV cannot roll a newer statement backwards
     if (!(e.nav > 0) || !(p.quantity > 0)) return p;
 
-    const marketValue = p.quantity * e.nav;
+    const original = acquisitionIdentity(p);
+    const asOf = p.fundUnitAdjustment?.asOf ?? p.depositoryUnits?.asOf
+      ?? BOOK_ACCOUNTS.find(a => a.accountId === p.accountId)?.asOf;
+    const basis = e.pricingIsin ? fundUnitBasis(original.isin!, asOf, e.date) : null;
+    if (basis && (basis.reason || basis.isin !== e.pricingIsin)) return p;
+    const quantity = original.quantity! * (basis?.factor ?? 1);
+    const marketValue = quantity * e.nav;
     // `costBasis` is NULL where the statement reported none — a depository
     // prints a value and no cost. Null, not zero: `marketValue − 0` would book
     // the whole position as profit at an infinite return. Identical to the
@@ -105,8 +106,10 @@ export function applyFundNavs(positions: Position[]): Position[] {
     const unrealizedPnL = costNA ? p.unrealizedPnL : marketValue - (cost as number);
     return {
       ...p,
+      ...(basis ? { isin: basis.isin, quantity, avgCost: costNA ? null : (cost as number) / quantity,
+        fundUnitAdjustment: { isin: original.isin!, quantity: original.quantity!, asOf: asOf!, through: e.date, factor: basis.factor } } : {}),
       currentPrice: e.nav,
-      priceEvidence: { kind: "published-nav" as const, source: "AMFI", instrument: e.isin, value: e.nav,
+      priceEvidence: { kind: "published-nav" as const, source: "AMFI", instrument: e.pricingIsin ?? e.isin, value: e.nav,
         effectiveAt: e.date, observedAt: null },
       marketValue,
       unrealizedPnL,
@@ -130,6 +133,7 @@ const BY_ISIN = (() => {
     const k = e.isin.trim().toUpperCase();
     const cur = m.get(k);
     if (!cur || (!cur.usableForValue && e.usableForValue)) m.set(k, e);
+    if (e.pricingIsin) m.set(e.pricingIsin, e);
   }
   return m;
 })();
@@ -340,15 +344,8 @@ export function depositoryCashHoldings(
  * `depositoryFundHoldings` gives a depository's closing units — and only where
  * a WITNESS proves the units are on the NAV's basis. A unit count and a price
  * can be on different bases: the DSP Gold ETF's statement units are ten times
- * the ones its NAV prices. Where that is a sub-division with a source — DSP's
- * 1:10 of 28 Aug 2026, which also retired both ETFs' ISINs (Stage 10hq,
- * `shared/fundUnitSplits.mjs`) — the builder joins the successor's NAV and
- * records the split on it (`FundNav.unitSplit`), and the statement's units are
- * multiplied by its factor before they meet the NAV: the row's quantity is the
- * post-split count, and the statement's own count stays on
- * `depositoryUnits.unitSplit`. A line counted on or after the ex-date under the
- * retired ISIN is not valued. SEVEN GATES, each a reason a recorded balance
- * must NOT become a holding:
+ * the ones its NAV prices. SEVEN GATES, each a reason a recorded balance must
+ * NOT become a holding:
  *
  *   1. the row names an ISIN and units, and is a MUTUAL FUND or an ETF — an
  *      AIF's unit has no NAV AMFI publishes, and a share has no NAV at all;
@@ -423,13 +420,9 @@ export function unpricedStatementUnits(
     if (!nav || !nav.usableForValue || !(nav.nav > 0)) continue;                                 // gate 3
     const own = acc.get(u.accountId);
     if (!own || !u.asOf) continue;
-    // A sub-division since the statement: its units are on the old unit only
-    // where they were counted before the ex-date. Every price below is on the
-    // statement's unit, so the NAV is compared there and the value is struck on
-    // the statement's units times the factor.
-    const split = nav.unitSplit ?? null;
-    if (split && !(u.asOf < split.exDate)) continue;
-    const factor = split?.factor ?? 1;
+    const basis = nav.pricingIsin ? fundUnitBasis(isin, u.asOf, nav.date) : null;
+    if (basis && (basis.reason || basis.isin !== nav.pricingIsin)) continue;
+    const factor = basis?.factor ?? 1;
     // Gate 4 — the witness. The row's own rate first; another row's only for a
     // mutual fund, and only on the same depository's statement of the same day.
     const ownRate = rateOf(u);
@@ -448,7 +441,7 @@ export function unpricedStatementUnits(
       witnessAccountId = pos?.accountId ?? row?.accountId ?? null;
     }
     if (witnessPrice === null) continue;                                                         // gate 4
-    const ratio = (nav.nav * factor) / witnessPrice;
+    const ratio = nav.nav * factor / witnessPrice;
     if (!(ratio > 1 / BASIS_FACTOR && ratio < BASIS_FACTOR)) continue;                           // gate 5
     if (positions.some((p) => p.accountId === u.accountId && isinOf(p) === isin)) continue;      // gate 6
     const owner = ownerOf(u.accountId);
@@ -461,7 +454,8 @@ export function unpricedStatementUnits(
       // The book's ONE name for the key (#76's rule, `securityLabel`), which
       // reads the book's quantity rows as well as its positions.
       security: securityLabel(u.securityKey, u.security),
-      isin: u.isin,
+      isin: basis?.isin ?? u.isin,
+      ...(basis ? { fundUnitAdjustment: { isin, quantity: qty, asOf: u.asOf, through: nav.date, factor } } : {}),
       // A liquid ETF the quote feed prices intraday is priced that way here too,
       // as its siblings on the other demats are; a scheme resolves no symbol.
       symbol: book?.symbol ?? symbolForKey(u.securityKey),
@@ -471,8 +465,7 @@ export function unpricedStatementUnits(
       providerSector: null,
       assetClass: etf ? "ETF" : "Mutual Fund",
       marketSide: "listed",
-      // The statement's count, until the recovered cost is matched on it below.
-      quantity: qty,
+      quantity: qty * factor,
       marketValue: qty * factor * nav.nav,
       costBasis: null,
       costUnavailable: true,
@@ -480,7 +473,7 @@ export function unpricedStatementUnits(
       returnPct: null,
       avgCost: null,
       currentPrice: nav.nav,
-      priceEvidence: { kind: "published-nav" as const, source: "AMFI", instrument: split?.publishedIsin ?? nav.isin, value: nav.nav, effectiveAt: nav.date, observedAt: null },
+      priceEvidence: { kind: "published-nav" as const, source: "AMFI", instrument: nav.pricingIsin ?? nav.isin, value: nav.nav, effectiveAt: nav.date, observedAt: null },
       stCostBasis: null,
       ltCostBasis: null,
       daysToLT: null,
@@ -491,30 +484,18 @@ export function unpricedStatementUnits(
       navPriced: true,
       navDate: nav.date,
       depositoryUnits: {
-        ...(ownRate !== null
-          ? {
-            asOf: u.asOf, source: u.statementRecord?.document ?? null, kind: "last-movement" as const,
-            lastMovementRate: ownRate, lastMovementDate: u.lastMovementDate ?? null, lastMovementSide: u.lastMovementSide ?? null,
-          }
-          : { asOf: u.asOf, source: u.statementRecord?.document ?? null, kind: "no-rate" as const, witnessAccountId }),
-        ...(split ? { unitSplit: { statementQuantity: qty, factor, exDate: split.exDate, publishedIsin: split.publishedIsin, source: split.source } } : {}),
+        ...(basis && basis.factor !== 1 ? { unitSplit: { statementQuantity: qty, factor,
+          exDate: basis.actions[0].exDate, publishedIsin: basis.isin,
+          source: basis.actions.map(a => a.source ?? a.sources.join(', ')).join('; ') } } : {}),
+        ...(ownRate !== null ? {
+          asOf: u.asOf, source: u.statementRecord?.document ?? null, kind: "last-movement" as const,
+          lastMovementRate: ownRate, lastMovementDate: u.lastMovementDate ?? null, lastMovementSide: u.lastMovementSide ?? null,
+        }
+        : { asOf: u.asOf, source: u.statementRecord?.document ?? null, kind: "no-rate" as const, witnessAccountId }),
       },
     });
   }
-  return out.map(p => onPublishedUnit(applyRecoveredCost(p, BOOK_RECOVERED_COSTS))).sort((a, b) => b.marketValue - a.marketValue);
-}
-
-/**
- * THE STATEMENT'S UNITS ON THE NAV'S UNIT, once the cost is attached. A
- * recovered cost is matched on the statement's own count (`recoveredCostFor`
- * reconciles to the unit), so the count moves to the post-split unit only after
- * it, and the cost per unit with it. The cost, the value and the return do not
- * change.
- */
-function onPublishedUnit(p: Position): Position {
-  const s = p.depositoryUnits?.unitSplit;
-  if (!s) return p;
-  return { ...p, quantity: s.statementQuantity * s.factor, avgCost: p.avgCost == null ? p.avgCost : p.avgCost / s.factor };
+  return out.map(p => applyRecoveredCost(p, BOOK_RECOVERED_COSTS)).sort((a, b) => b.marketValue - a.marketValue);
 }
 
 /**
@@ -542,7 +523,7 @@ export function describeDepositoryUnits(
 
 function describeUnitsBasis(
   d: NonNullable<Position["depositoryUnits"]>,
-  accounts: readonly Account[] | ReadonlyMap<string, Account>,
+  accounts: readonly Account[] | ReadonlyMap<string, Account> = BOOK_ACCOUNTS,
 ): string {
   if (d.kind === "last-movement") {
     // The statement's own printed figure, quoted the way the book's own reasons
@@ -712,12 +693,9 @@ export function partialValuationNotes(
   const fundClause = (funds: readonly Position[], units: string, asOf: string) => {
     const cash = funds.filter((r) => isCashEquivalent(r));
     const navDate = funds.map((r) => r.navDate).filter(Boolean).sort().pop() ?? "its publication date";
-    // Units a sub-division since the statement multiplied (Stage 10hq).
-    const splits = [...new Set(funds.flatMap((r) => {
-      const s = r.depositoryUnits?.unitSplit;
-      return s ? [`${r.security}'s ×${s.factor} for its ${s.exDate} sub-division`] : [];
-    }))];
-    return `its ${n(funds.length, "fund")}${cash.length ? ` (${cash.length === funds.length ? (cash.length === 1 ? "a liquid or arbitrage fund" : "all liquid and arbitrage funds") : `${cash.length} of them liquid and arbitrage funds`} the family counts as cash)` : ""} ${funds.length === 1 ? "is" : "are"} valued at ${units} (${asOf})${splits.length ? ` — with ${splits.join(" and ")} —` : ""} × AMFI's published NAV (${navDate})`;
+    const converted = funds.filter(r => r.fundUnitAdjustment && r.fundUnitAdjustment.factor !== 1);
+    if (converted.length) units += `, converted for documented exchange unit splits (${converted.map(r => `${r.security}: ${r.fundUnitAdjustment!.quantity} × ${r.fundUnitAdjustment!.factor} = ${r.quantity} units`).join("; ")})`;
+    return `its ${n(funds.length, "fund")}${cash.length ? ` (${cash.length === funds.length ? (cash.length === 1 ? "a liquid or arbitrage fund" : "all liquid and arbitrage funds") : `${cash.length} of them liquid and arbitrage funds`} the family counts as cash)` : ""} ${funds.length === 1 ? "is" : "are"} valued at ${units} (${asOf}) × AMFI's published NAV (${navDate})`;
   };
   for (const [accountId, rows] of byTape) {
     const balances = depositoryBalancesOf(accountId, rows, positions, movements);
@@ -741,7 +719,7 @@ export function partialValuationNotes(
     // A statement line is VALUED where a live row of this account carries its
     // ISIN, or its key where it prints none.
     const valuedLine = (u: UnvaluedStatementHolding) => rows.some((r) =>
-      (isin(u) ? isin(r) === isin(u) : r.securityKey === u.securityKey));
+      (isin(u) ? isin(acquisitionIdentity(r)) === isin(u) : r.securityKey === u.securityKey));
     const covered = (u: UnvaluedStatementHolding) => !!u.sameUnitsReportedBy || !!custodySuccessor(u, BOOK_ACCOUNTS, positions);
     const elsewhere = lines.filter((u) => covered(u) && !valuedLine(u)).length;
     const open = lines.filter((u) => !covered(u) && !valuedLine(u));

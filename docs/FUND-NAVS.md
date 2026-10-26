@@ -26,8 +26,8 @@ ISIN** and never on a name. 14,412 scheme rows read.
 | Bandhan Liquid Fund-Direct Plan-Growth | `INF194K01I60` | statement | Liquid Fund | 3451.1571 | 2026-10-25 | — |
 | Bandhan Overnight Fund-Direct Plan-Growth | `INF194KB1447` | statement | Overnight Fund | 1478.7935 | 2026-10-25 | — |
 | Bandhan Large & Mid Cap Fund-Direct Plan-Growth | `INF194K01V89` | statement | Large & Mid Cap Fund | 154.335 | 2026-10-23 | -1.48% |
-| DSP GOLD ETF | `INF740KA1SW3` → `INF740KA1ZP2` (units ×10 before 2026-08-28) | statement | Gold ETF | 13.6451 | 2026-10-23 | — |
-| DSP SILVER ETF | `INF740KA1RE3` → `INF740KA1ZQ0` (units ×10 before 2026-08-28) | statement | Silver ETF | 18.5517 | 2026-10-23 | — |
+| DSP GOLD ETF | `INF740KA1SW3` | statement | Gold ETF | 13.6451 | 2026-10-23 | — |
+| DSP SILVER ETF | `INF740KA1RE3` | statement | Silver ETF | 18.5517 | 2026-10-23 | — |
 | HDFC Arbitrage Fund - Direct Plan - Growth Option | `INF179KA1KT6` | statement | Arbitrage Fund | 21.943 | 2026-10-23 | +0.21% |
 | HDFC Arbitrage Fund - Direct Plan - Monthly IDCW # Payout Option | `INF179KA1KS8` | statement | Arbitrage Fund | 11.348 | 2026-10-23 | +0.21% |
 | HDFC BAF D-GROW | `INF179K01WA6` | statement | Dynamic Asset Allocation or Balanced Advantage | 539.444 | 2026-10-23 | -0.71% |
@@ -64,6 +64,17 @@ ISIN** and never on a name. 14,412 scheme rows read.
 | Motilal Oswal Active Momentum Fund - Direct Plan Growth Option | `INF247L01EP5` | statement | Sectoral/ Thematic | 13.5246 | 2026-10-23 | -2.08% |
 | NIP ETNF1D RTLIQBEES | `INF732E01037` | statement | Other ETFs | 1000 | 2026-10-25 | +0.00% |
 | WOC MAAF D-GROW | `INF03VN01761` | statement | Multi Asset Allocation Fund | 16.17 | 2026-10-23 | -0.60% |
+
+## Documented unit conversions
+
+The statement ISIN stays on the source record. NAV lookup follows only a documented
+exchange conversion; the live count is adjusted from its own statement date.
+Cost and acquisition dates remain tied to the original balance.
+
+- **DSP GOLD ETF**: `INF740KA1SW3` → `INF740KA1ZP2`.
+- **DSP SILVER ETF**: `INF740KA1RE3` → `INF740KA1ZQ0`.
+
+Exchange notices in the shared conversion register: [CML75868.pdf](https://nsearchives.nseindia.com/content/circulars/CML75868.pdf), [CMPT75902.pdf](https://nsearchives.nseindia.com/content/circulars/CMPT75902.pdf).
 
 ## Priced from a depository's own units
 

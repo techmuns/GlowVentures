@@ -95,18 +95,10 @@ const wouldBreak = BOOK_POSITIONS.filter((p) => {
   return r < 0.5 || r > 2;
 });
 if (wouldBreak.length === 0) {
-  /**
-   * NOT EXERCISED ON THIS BOOK, AND SAID OUT LOUD RATHER THAN PASSED OVER
-   * NOTHING. `[].every(...)` is true, so the obvious assertion here would
-   * report a working gate on a run where the gate never ran — `golden.mjs`'s
-   * rule, arriving through an empty set.
-   *
-   * Both share-count breaks in this book are the DSP metal ETFs, and AMFI does
-   * not list the ISINs their statements carry, so the join never reaches them
-   * and the band has no subject. The gate stays because the next drop could
-   * bring one that resolves; what cannot be claimed is that this run proved it.
-   */
-  console.log("NOT CHECKED  the basis gate refuses a share-count break — no scheme in this book both RESOLVES and sits outside the band (the two that break it, the DSP metal ETFs, are not in AMFI's file at all)");
+  // A positional book can contain no unconverted break. The separate ETF
+  // continuity suite must still price every held ETF, verify the documented
+  // conversion and preserve its independently reconciled acquisition lots.
+  console.log("No unconverted position lies outside the basis band; the ETF continuity suite verifies documented conversions and rejects missing evidence");
 } else {
   ok("no holding the overlay accepts would be mispriced by a factor of two",
     wouldBreak.every((p) => !fundNavFor(p)?.usableForValue),

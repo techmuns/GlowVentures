@@ -232,7 +232,9 @@ export function applyCorporateActionQuotes(
      * from the statement date, and one that BOUGHT has units with no mark on
      * that date, so it strikes no period return (below).
      */
-    const start = dates.get(p.accountId) || "";
+    // The NAV layer has already converted these units through its price date.
+    // Only later events may change them again when an intraday quote arrives.
+    const start = p.fundUnitAdjustment?.through ?? dates.get(p.accountId) ?? "";
     const end = q ? marketDay(q.tradedAt || quotes!.asOf) : start;
     const plan = projectActions(p, start, end, feed);
     if (rf) {

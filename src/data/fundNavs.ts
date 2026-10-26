@@ -13,6 +13,10 @@ export interface FundNav {
   security: string;
   /** The identifier the join was made on — exact, never a name match. */
   isin: string;
+  /** Dated successor identity where the exchange converted these units. */
+  pricingIsin?: string;
+  /** Display/audit terms; quantity conversion is applied by the shared resolver. */
+  unitSplit?: { publishedIsin: string; factor: number; exDate: string; source: string };
   /** Which tier supplied it: the family's own statement, or the look-through. */
   isinFrom: "statement" | "look-through";
   /** The other tier answered as well, with the same ISIN; null where only one answered. */
@@ -23,14 +27,6 @@ export interface FundNav {
    * The second has no statement mark anywhere — see the builder's header.
    */
   from: "book" | "depository";
-  /**
-   * Set where a sub-division retired the statement's ISIN
-   * (`shared/fundUnitSplits.mjs`): AMFI publishes the scheme under
-   * `publishedIsin`, on a unit `factor` times smaller than the one the book's
-   * lines were counted in before `exDate`. Every NAV figure here is AMFI's, on
-   * the new unit.
-   */
-  unitSplit?: { publishedIsin: string; factor: number; exDate: string; source: string };
   schemecode: string;
   scheme: string;
   plan: string;
@@ -49,7 +45,7 @@ export interface FundNav {
   /** Null until this file has held two different dates — never a zero. */
   changePct: number | null;
   /**
-   * Whether `quantity × nav` is a figure this book may publish. False where the
+   * Whether `quantity × nav`, after documented unit conversions, may be published. False where the
    * units and the NAV are not the same unit — see the builder's header.
    */
   usableForValue: boolean;
@@ -184,15 +180,16 @@ export const BOOK_FUND_NAVS: FundNav[] = [
   "securityKey": "dsp-gold-etf",
   "security": "DSP GOLD ETF",
   "isin": "INF740KA1SW3",
-  "isinFrom": "statement",
-  "isinAgreedBy": "look-through",
-  "from": "book",
+  "pricingIsin": "INF740KA1ZP2",
   "unitSplit": {
    "publishedIsin": "INF740KA1ZP2",
    "factor": 10,
    "exDate": "2026-08-28",
    "source": "NSE circular NSE/CML/75868 (21 Aug 2026) and NSE Clearing circular NCL/CMPT/75902 (24 Aug 2026)"
   },
+  "isinFrom": "statement",
+  "isinAgreedBy": "look-through",
+  "from": "book",
   "schemecode": "151737",
   "scheme": "DSP Gold ETF",
   "plan": "",
@@ -209,15 +206,16 @@ export const BOOK_FUND_NAVS: FundNav[] = [
   "securityKey": "dsp-silver-etf",
   "security": "DSP SILVER ETF",
   "isin": "INF740KA1RE3",
-  "isinFrom": "statement",
-  "isinAgreedBy": "look-through",
-  "from": "book",
+  "pricingIsin": "INF740KA1ZQ0",
   "unitSplit": {
    "publishedIsin": "INF740KA1ZQ0",
    "factor": 10,
    "exDate": "2026-08-28",
    "source": "NSE circular NSE/CML/75868 (21 Aug 2026) and NSE Clearing circular NCL/CMPT/75902 (24 Aug 2026)"
   },
+  "isinFrom": "statement",
+  "isinAgreedBy": "look-through",
+  "from": "book",
   "schemecode": "150523",
   "scheme": "DSP Silver ETF",
   "plan": "",
