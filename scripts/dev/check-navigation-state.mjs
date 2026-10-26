@@ -24,7 +24,7 @@ try {
   await page.goto(base+'/monitor?group=category');
   await cash().click();
   await row().locator('button[aria-expanded]').first().click();
-  await page.locator('[data-monitor-table="holdings"] th[data-col="qty"]').click();
+  await page.locator('[data-monitor-table="holdings"] button[data-col-button="qty"]').click();
   await link().scrollIntoViewIfNeeded();
   const origin = page.url(), entry = await page.evaluate(()=>history.state.key);
   const position = await page.locator('[data-navigation-scroll="monitor-holdings"]').evaluate(el=>{
