@@ -8,10 +8,12 @@ import { TopBar } from "@/components/TopBar";
 import { EnteredNumbersNotice } from "@/components/TableNumberInput";
 import { IndexStrip } from "@/components/IndexStrip";
 import { ResearchLevelSync } from "@/lib/useResearchSync";
+import { sourceBackground } from "@/components/SourceLink";
 import { EmptyState } from "@/components/EmptyState";
 import { PageNav } from "@/components/PageNav";
 import { navEntry } from "@/lib/nav";
 import { usePortfolio, WholeFamily } from "@/context/PortfolioContext";
+const StatementSourcePreview = lazy(() => import("@/components/StatementSourcePreview"));
 const MorningCIO = lazy(() => import("@/pages/MorningCIO").then((m) => ({ default: m.MorningCIO })));
 const Polycab = lazy(() => import("@/pages/Polycab").then((m) => ({ default: m.Polycab })));
 const PortfolioMonitor = lazy(() => import("@/pages/PortfolioMonitor").then((m) => ({ default: m.PortfolioMonitor })));
@@ -117,6 +119,8 @@ function StockRoute() {
 }
 
 export default function App() {
+  const location = useLocation();
+  const background = sourceBackground(location);
   const updated = useSyncExternalStore(subscribeToDeployment, deploymentChanged);
   if (updated && !publicationRefreshBlocked()) return <div role="alert" className="flex h-full items-center justify-center bg-ink-950 p-6 text-slate-200">
     <div className="max-w-md rounded-lg border border-ink-700 bg-ink-900 p-6">
@@ -148,7 +152,7 @@ export default function App() {
         <main className="flex-1 overflow-y-auto px-6 py-6">
           <EnteredNumbersNotice />
           <Suspense fallback={<div role="status" className="p-4 text-sm text-slate-400">Opening page…</div>}>
-          <Routes>
+          <Routes location={background ?? location}>
             <Route path="/" element={<RootRedirect />} />
             <Route path="/upload" element={<DataRefresh />} />
             {/* The family's ring-fenced promoter stock, on its own page — kept OUT
@@ -423,6 +427,9 @@ export default function App() {
           </Routes>
           </Suspense>
         </main>
+        {background && <Suspense fallback={null}><Routes>
+          <Route path="/statements" element={<StatementSourcePreview />} />
+        </Routes></Suspense>}
       </div>
     </div>
   );

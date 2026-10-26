@@ -25,7 +25,19 @@ try {
   await page.locator('[data-selected-source-record="/transactions"]').getByText(/28067435\.434/).last().waitFor();
   await page.locator('canvas[data-pdf-page="5"]').waitFor({timeout:30000});
   assert.equal(await page.getByLabel('PDF page',{exact:true}).inputValue(),'5');
+  const highlight = page.locator('mark[data-pdf-source-value="28067435.434"]');
+  await highlight.waitFor();
+  await highlight.evaluate(el => {
+    const r = el.getBoundingClientRect(), v = el.closest('[data-preview-pdf]').getBoundingClientRect();
+    if (r.top < v.top || r.bottom > v.bottom) throw Error('Exact source number must be scrolled into view');
+    if (getComputedStyle(el).backgroundColor !== 'rgba(255, 230, 0, 0.6)') throw Error('Source marker must be yellow');
+  });
+  assert.equal(await highlight.getAttribute('data-pdf-source-field'), 'closing');
+  await page.getByLabel('PDF zoom',{exact:true}).selectOption('1.5');
+  await highlight.waitFor();
   await page.screenshot({path:path.join(out,'demat-closing-source.png')});
+  await page.locator('[data-source-back]').click();
+  assert.ok(page.url().includes('/stock/'+motilal));
 
   await gotoStock(motilal);
   const nil = page.locator('[data-account-row="motilal-oswal-mutual-fund-90414963315"] a[data-source-metric="quantity"]');
@@ -57,9 +69,41 @@ try {
   const venue = page.locator(`[data-venue-account="${demat}"]`); await venue.waitFor();
   assert.ok(await venue.locator('a[data-source-metric="statement"]').count() >= 2,'owner/provider/account labels are linked');
   assert.equal(new URL(await venue.locator('a[data-source-metric="quantity"]').getAttribute('href'),base).searchParams.get('file'),doc);
-  await venue.locator('a[data-source-metric="statement"]').first().click();
+  // Opening evidence must retain actual DOM state, not reconstruct a default
+  // Monitor. Keep the selected holding, Cash category, expansion and scroll.
+  await page.getByRole('tab',{name:'Cash',exact:true}).click();
+  await venue.locator('a[data-source-metric="quantity"]').scrollIntoViewIfNeeded();
+  const origin = page.url();
+  const snapshot = await page.locator('main').evaluate(el => {
+    const scrolls = [...el.querySelectorAll('*')].filter(e=>e.scrollWidth>e.clientWidth+5 && e.clientWidth>0 && /auto|scroll/.test(getComputedStyle(e).overflowX));
+    for (const scroll of scrolls) scroll.scrollLeft = Math.min(65,scroll.scrollWidth-scroll.clientWidth);
+    window.__sourceReturn = scrolls.map(el=>({el,left:el.scrollLeft,top:el.scrollTop}));
+    return {top:el.scrollTop};
+  });
+  await venue.locator('a[data-source-metric="quantity"]').click();
   await page.locator(`[data-statement-preview="${doc}"]`).waitFor();
   assert.equal(await page.locator('a a, button button, a button, button a').count(),0,'source links never nest interactive controls');
+  await page.locator('[data-source-back]').click();
+  assert.equal(page.url(), origin);
+  assert.ok(await page.evaluate(()=>window.__sourceReturn.every(({el,left,top})=>el.isConnected && Math.abs(el.scrollLeft-left)<=1 && Math.abs(el.scrollTop-top)<=1)), 'same table containers and horizontal/vertical scroll survive');
+  assert.equal(await parent.getAttribute('data-tree-parent'),'open');
+  assert.equal(await page.getByRole('tab',{name:'Cash',exact:true}).getAttribute('aria-selected'),'true');
+  assert.ok(Math.abs(await page.locator('main').evaluate(el=>el.scrollTop)-snapshot.top) <= 1);
+  assert.equal(await page.getByRole('button',{name:'All holdings',exact:true}).count(),0,'holding filter stays selected');
+  await venue.locator('a[data-source-metric="statement"]').first().click();
+  await page.locator('[data-source-back]').waitFor();
+  await page.getByRole('button',{name:'Close preview',exact:true}).click();
+  assert.equal(page.url(),origin);
+  await venue.locator('a[data-source-metric="quantity"]').click();
+  await page.locator('[data-source-back]').waitFor();
+  await page.goBack();
+  assert.equal(page.url(),origin);
+  assert.equal(await parent.getAttribute('data-tree-parent'),'open');
+  await page.goForward();
+  await page.locator('[data-source-back]').waitFor();
+  await page.keyboard.press('Escape');
+  assert.equal(page.url(),origin);
+  assert.equal(await parent.getAttribute('data-tree-parent'),'open');
   // A filter must narrow provenance as well as the money. Carnelian's one
   // selected company must not expose every other holding in the account.
   await page.goto(base+'/monitor');
@@ -84,7 +128,7 @@ try {
   assert.equal(await page.locator('[data-source-row="true"]').count(),0,'citation highlights never move to an unrelated worksheet');
   await page.screenshot({path:path.join(out,'workbook-citation.png')});
   assert.deepEqual(errors,[]);
-  await fs.writeFile(path.join(out,'results.json'),JSON.stringify({exactDematDocument:true,closingPage:5,separateNilFolio:true,aggregateSources:true,feedDistinct:true,monitorLabels:true,filteredMandate:true,workbookSheetAndRow:true,errors},null,2));
+  await fs.writeFile(path.join(out,'results.json'),JSON.stringify({exactDematDocument:true,closingPage:5,separateNilFolio:true,aggregateSources:true,feedDistinct:true,monitorLabels:true,yellowClosingBalance:true,exactReturnState:true,filteredMandate:true,workbookSheetAndRow:true,errors},null,2));
   console.log('PASS source links: monitor account labels, exact demat closing page, separate nil folio, combined quantities and feed/statement distinction');
 } catch(e) {
   await fs.writeFile(path.join(out,'failure.json'),JSON.stringify({url:page.url(),errors,text:(await page.locator('body').innerText()).slice(-10000)},null,2));

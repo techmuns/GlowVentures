@@ -1,6 +1,7 @@
 import { createContext, isValidElement, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
+import { SourceLink } from './SourceLink';
 import { BOOK_ACCOUNTS } from '@/data/glowData';
 import { holdingSourceTrace, statementSourceHref, type SourceMetric, type SourceTrace, type TracePosition } from '@/lib/sourceTrace';
 import { readModel } from '@/lib/readModel';
@@ -34,8 +35,8 @@ export function SourceDetails({ trace }: { trace: SourceTrace }) {
         const date = source.document?.match(/\d{4}-\d{2}-\d{2}/)?.[0];
         const label = [account?.owner, source.document ? account?.provider : source.label, account ? `a/c …${account.accountNo.slice(-6)}` : null, date].filter(Boolean).join(' · ');
         return <li key={i}>
-          {href ? <Link to={href} data-source-document={source.document} data-source-pointer={source.pointer} className={LINK}
-            title={`${source.label}${source.pointer ? ` · ${source.pointer}` : ''}`}>{label || source.label}</Link>
+          {href ? <SourceLink to={href} data-source-document={source.document} data-source-pointer={source.pointer} className={LINK}
+            title={`${source.label}${source.pointer ? ` · ${source.pointer}` : ''}`}>{label || source.label}</SourceLink>
             : <span>{source.label}</span>}
           {typeof source.value === 'number' && <div className="mono mt-0.5 text-slate-300">{source.value.toLocaleString('en-IN', { maximumFractionDigits: 8 })}</div>}
           {source.note && <div className="mt-0.5 text-slate-500">{source.note}</div>}
@@ -66,9 +67,9 @@ export function SourceValue({ positions, metric, children, trace: supplied }: {
   if (!trace.sources.length) return <>{children}</>;
   const only = trace.sources.length === 1 && !trace.derived && !trace.missing ? trace.sources[0] : null;
   const href = only && statementSourceHref(only);
-  if (href) return <Link to={href} className={LINK} onClick={e => e.stopPropagation()}
+  if (href) return <SourceLink to={href} className={LINK} onClick={e => e.stopPropagation()}
     data-source-metric={trace.metric} data-source-document={only!.document} data-source-pointer={only!.pointer}
-    title={`Open the supporting statement in Statement Library · ${only!.pointer ?? only!.sheet ?? ''}`}>{children}</Link>;
+    title={`Open the supporting statement in Statement Library · ${only!.pointer ?? only!.sheet ?? ''}`}>{children}</SourceLink>;
   return <>
     <button ref={button} type="button" className={LINK} aria-expanded={open} aria-label={`Trace ${trace.title.toLowerCase()}`}
       data-source-metric={trace.metric} title={`Trace ${trace.title.toLowerCase()} to its sources`}

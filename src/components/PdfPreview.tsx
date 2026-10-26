@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Loader2, Lock } from "lucide-react";
-import { getDocument, GlobalWorkerOptions, PasswordResponses, type PDFDocumentProxy, type RenderTask } from "pdfjs-dist";
+import { getDocument, GlobalWorkerOptions, PasswordResponses, Util, type PDFDocumentProxy, type RenderTask } from "pdfjs-dist";
 import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import type { PublishedFile } from "@/lib/statementPreview";
+import { pdfSourceMatch, type PdfSourceTarget } from '@/lib/pdfSourceHighlight';
 
 GlobalWorkerOptions.workerSrc = workerUrl;
 const ASSETS = `${import.meta.env.BASE_URL}pdf-assets/`;
@@ -10,7 +11,7 @@ const CONTROL = "rounded-md border border-ink-600 bg-ink-800 px-2 py-1.5 text-xs
 
 /** Draw the original bytes inside the app. Native PDF plugins are blocked by
  * Chrome when ANY ancestor is sandboxed, including the Muns dashboard frame. */
-export default function PdfPreview({ url, file, title, initialPage }: { url: string; file: PublishedFile; title: string; initialPage?: number }) {
+export default function PdfPreview({ url, file, title, initialPage, sourceTarget }: { url: string; file: PublishedFile; title: string; initialPage?: number; sourceTarget?: PdfSourceTarget }) {
   const [pdf, setPdf] = useState<PDFDocumentProxy | null>(null);
   const [status, setStatus] = useState<"loading" | "password" | "ready" | "error">("loading");
   const [error, setError] = useState("");
@@ -21,6 +22,7 @@ export default function PdfPreview({ url, file, title, initialPage }: { url: str
   const [width, setWidth] = useState(0);
   const [drawing, setDrawing] = useState(false);
   const [renderError, setRenderError] = useState("");
+  const [highlightMissing, setHighlightMissing] = useState(false);
   const viewport = useRef<HTMLDivElement>(null);
   const paper = useRef<HTMLDivElement>(null);
 
@@ -67,13 +69,17 @@ export default function PdfPreview({ url, file, title, initialPage }: { url: str
     if (!pdf || !width || !paper.current) return;
     let alive = true;
     let render: RenderTask | undefined;
+    let scrollFrame = 0;
     const host = paper.current;
     const canvas = document.createElement("canvas");
     canvas.className = "mx-auto block bg-white shadow";
     canvas.setAttribute("role", "img");
     canvas.setAttribute("aria-label", `${title}, page ${page} of ${pdf.numPages}`);
-    host.replaceChildren(canvas);
+    const surface = document.createElement('div');
+    surface.className = 'relative mx-auto';
+    surface.append(canvas); host.replaceChildren(surface);
     setDrawing(true); setRenderError("");
+    setHighlightMissing(false);
     void pdf.getPage(page).then(async source => {
       if (!alive) return;
       const size = source.getViewport({ scale: 1 });
@@ -83,14 +89,52 @@ export default function PdfPreview({ url, file, title, initialPage }: { url: str
       const pixels = Math.min(window.devicePixelRatio || 1, 2, Math.sqrt(16_000_000 / (view.width * view.height)));
       canvas.width = Math.ceil(view.width * pixels); canvas.height = Math.ceil(view.height * pixels);
       canvas.style.width = `${view.width}px`; canvas.style.height = `${view.height}px`;
+      surface.style.width = `${view.width}px`; surface.style.height = `${view.height}px`;
       render = source.render({ canvas, viewport: view, transform: [pixels, 0, 0, pixels, 0, 0] });
       await render.promise;
-      if (alive) { canvas.dataset.pdfPage = String(page); setDrawing(false); }
+      if (!alive) return;
+      canvas.dataset.pdfPage = String(page); setDrawing(false);
+      if (sourceTarget && page === initialPage) {
+        const text = await source.getTextContent();
+        if (!alive) return;
+        const items = text.items.filter((item): item is typeof item & { str: string; transform: number[]; width: number; height: number } => 'str' in item);
+        const match = pdfSourceMatch(items, sourceTarget);
+        setHighlightMissing(!match);
+        if (match) {
+          const { item, start, end } = match;
+          const matrix = Util.transform(view.transform, item.transform);
+          const height = Math.hypot(matrix[2], matrix[3]);
+          // PDF.js combines some rows into one text run. Measure the prefix
+          // proportionally, but never mark the entire row for a single number.
+          const measure = document.createElement('canvas').getContext('2d')!;
+          measure.font = `${height}px sans-serif`;
+          const full = measure.measureText(item.str).width || 1;
+          const left = measure.measureText(item.str.slice(0, start)).width / full;
+          const fraction = measure.measureText(item.str.slice(start, end)).width / full;
+          const marker = document.createElement('mark');
+          marker.dataset.pdfSourceValue = sourceTarget.value;
+          marker.dataset.pdfSourceField = sourceTarget.field ?? '';
+          marker.setAttribute('aria-label', `Source value ${sourceTarget.value}`);
+          Object.assign(marker.style, { position: 'absolute', pointerEvents: 'none',
+            left: `${matrix[4] + item.width * scale * left - 2}px`, top: `${matrix[5] - height * 0.9 - 2}px`,
+            width: `${item.width * scale * fraction + 4}px`, height: `${height * 1.15 + 4}px`,
+            background: 'rgba(255, 230, 0, 0.6)', border: '1px solid #d9ac00', borderRadius: '2px', mixBlendMode: 'multiply' });
+          surface.append(marker);
+          scrollFrame = requestAnimationFrame(() => {
+            const scroller = viewport.current;
+            if (!alive || !scroller) return;
+            const r = marker.getBoundingClientRect(), v = scroller.getBoundingClientRect();
+            const ratio = v.height / scroller.clientHeight || 1;
+            scroller.scrollTop += (r.top - v.top - (v.height - r.height) / 2) / ratio;
+            scroller.scrollLeft += (r.left - v.left - (v.width - r.width) / 2) / ratio;
+          });
+        }
+      }
     }).catch(() => {
       if (alive) { setRenderError("This page could not be displayed. Try another page or download the original."); setDrawing(false); }
     });
-    return () => { alive = false; render?.cancel(); };
-  }, [pdf, page, zoom, width, title]);
+    return () => { alive = false; render?.cancel(); cancelAnimationFrame(scrollFrame); };
+  }, [pdf, page, zoom, width, title, initialPage, sourceTarget?.value, sourceTarget?.isin, sourceTarget?.field, sourceTarget?.initialIsin]);
 
   return (
     <section aria-label="PDF preview" data-preview-pdf data-pdf-state={status}
@@ -121,6 +165,7 @@ export default function PdfPreview({ url, file, title, initialPage }: { url: str
             <select aria-label="PDF zoom" className={`${CONTROL} ml-auto`} value={zoom} onChange={e => setZoom(e.target.value)}>
               <option value="fit">Fit width</option><option value="1">100%</option><option value="1.5">150%</option><option value="2">200%</option>
             </select>
+            {highlightMissing && <span role="status" className="text-xs text-slate-400">Exact number could not be uniquely highlighted on this page.</span>}
           </div>
           <div ref={viewport} className="min-h-0 flex-1 overflow-auto p-4">
             {drawing && <p role="status" className="mb-2 text-xs text-slate-400">Loading page…</p>}
