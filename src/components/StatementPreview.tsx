@@ -15,8 +15,7 @@ import {
 } from "@/lib/statementPreview";
 import { usePreviewDialog } from '@/lib/usePreviewDialog';
 import { isinBeforePage } from '@/lib/pdfSourceHighlight';
-import { sourceRecordAt, sourcePage } from '@/lib/sourceTrace';
-import { readModel } from '@/lib/readModel';
+import { sourcePage } from '@/lib/sourceTrace';
 
 const BASE = import.meta.env.BASE_URL;
 const OriginalPdf = lazy(() => import("./PdfPreview"));
@@ -374,45 +373,6 @@ const VIEWS: readonly ViewDef<View>[] = [
 
 const ACTION = "inline-flex shrink-0 items-center gap-1 rounded-md border border-ink-600 bg-ink-800 px-2.5 py-1.5 text-xs font-medium text-slate-300 hover:bg-ink-700";
 
-/** The selected normalized row is shown beside the original, rather than
- * relying on a rounded figure or guessing another statement by its amount. */
-function SelectedSourceRecord({ docKey }: { docKey: string }) {
-  const [params] = useSearchParams();
-  const pointer = params.get('record'), isin = params.get('isin'), security = params.get('security');
-  const [state, setState] = useState<{ record?: unknown; failed?: boolean }>({});
-  useEffect(() => {
-    if (!pointer) return;
-    let alive = true; setState({});
-    readModel(`canonical/documents/${docKey}.json`).then(doc => {
-      let record = sourceRecordAt(doc, pointer);
-      if (Array.isArray(record)) record = record.filter(r => isin ? r.isin === isin : r.securityKey === security);
-      else if (record && typeof record === 'object') {
-        const r = record as Record<string, unknown>;
-        if (isin && r.isin && r.isin !== isin || security && r.securityKey && r.securityKey !== security) record = undefined;
-      }
-      if (alive) setState({ record, failed: record === undefined || Array.isArray(record) && !record.length });
-    }).catch(() => { if (alive) setState({ failed: true }); });
-    return () => { alive = false; };
-  }, [docKey, pointer, isin, security]);
-  if (!pointer) return null;
-  const records = Array.isArray(state.record) ? state.record : state.record !== undefined ? [state.record] : [];
-  const fields: [string, string][] = [['security', 'Security'], ['isin', 'ISIN'], ['date', 'Date'], ['quantity', pointer === '/transactions' ? 'Units moved' : 'Quantity'], ['totalCost', 'Cost'], ['marketPrice', 'Price / NAV'], ['marketValue', 'Market value'], ['description', 'Description']];
-  return <div className="mx-4 mt-3 max-h-[160px] shrink-0 overflow-auto rounded-md border border-ink-700 px-3 py-2 text-xs" data-selected-source-record={pointer}>
-    <div className="mb-1 font-medium text-slate-200">Source record · {pointer}</div>
-    {state.failed ? <div role="alert" className="text-slate-400">This exact source record could not be opened. The original file remains available below.</div>
-      : state.record === undefined ? <div role="status">Opening source record…</div>
-      : records.map((raw, i) => {
-        if (!raw || typeof raw !== 'object') return <div key={i}>Source value: {String(raw)}</div>;
-        const record = raw as Record<string, unknown>;
-        return <div key={i} className="mb-2 flex flex-wrap gap-x-4 gap-y-1" data-selected-source-index={i}>
-          {fields.filter(([key]) => record[key] != null).map(([key, label]) => <span key={key} data-source-field={key} className={params.get('field') === key ? 'font-semibold text-champagne-400' : 'text-slate-400'}>
-            {label}: <span className="mono">{typeof record[key] === 'number' ? (record[key] as number).toLocaleString('en-IN', { maximumFractionDigits: 8 }) : String(record[key])}</span>
-          </span>)}
-        </div>;
-      })}
-  </div>;
-}
-
 /**
  * THE PREVIEW WINDOW. Opened from a file's row in a Statement Library folder;
  * Escape, the close button or a click outside the window closes it.
@@ -516,7 +476,6 @@ export function StatementPreview({ doc, onClose, backLabel }: { doc: LibraryDoc;
           </div>
         </div>
 
-        <SelectedSourceRecord docKey={doc.fileKey} />
         <div className="px-4 pt-3">
           <ViewToggle views={VIEWS} active={view} onChange={setPicked} />
         </div>

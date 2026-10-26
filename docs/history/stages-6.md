@@ -444,3 +444,9 @@
 - `applyFundNavs` and check-pages' `withPublishedNavs` leave a position alone under a split-joined NAV. `investedOn` reconciles recovered lots on the statement's count. The words follow: the price hover (`describeDepositoryUnits`), the account note, the value-date hover (`valuedAt`, which no longer says the quantity is as printed), the fund card's unit note and the quantity source trace (the PDF's own count, with the split named).
 - Tests: `unpricedUnits` (re-derivation with the factor, DSP rows, a post-ex-date line refused), `recoveredCosts` (24 recovered, a cost never values a broken basis), `clubbedFigures` (DSP Gold's two lines now share AMFI's one NAV, so one mark).
 - Morning CIO's allocation gains an ETF row (₹25.1 Cr invested, ₹21.4 Cr current, −8.5%). Its FIFO return carries Silver's ₹1.47 Cr realised, so it no longer equals Current ÷ Invested. The return cell now carries `data-alloc-booked` / `data-alloc-sold`, and check-pages ties each row to (Current − Invested + booked) ÷ (Invested + sold). `BUCKET_SLOTS` goes to nine.
+
+### Stage 10hr — FOCUS THE STATEMENT READER ON THE ORIGINAL PDF
+
+- Remove the technical normalized "Source record" block above statement previews at the family's request. The original PDF receives the freed space; its yellow source-number highlight, page/zoom controls and return to the same dashboard selection remain intact.
+- Retain source links, canonical provenance, Data Audit and the optional "Text as read" view. The reader no longer fetches a canonical document just to repeat its raw fields above the PDF.
+- Update the existing source-navigation browser regression to require the actual PDF and absence of the technical block, retaining its exact closing-balance highlight and return-navigation checks.
