@@ -55,7 +55,7 @@ try {
   await page.getByRole('option',{name:/Kotak Arbitrage Fund/i}).click();
   await page.getByRole('heading',{name:'Portfolio Monitor',exact:true}).click();
   await link().click(); await page.waitForURL(base+'/stock/'+kotak);
-  await page.getByRole('link',{name:'Portfolio Monitor',exact:true}).click();
+  await page.getByRole('navigation',{name:'Breadcrumb',exact:true}).getByRole('link',{name:'Portfolio Monitor',exact:true}).click();
   await page.getByRole('tab',{name:'Category',exact:true}).click();
   await page.getByRole('tab',{name:'ETF',exact:true}).click();
   assert.equal(await page.locator('[data-entity-filter]').inputValue(),'All');
