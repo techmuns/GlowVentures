@@ -50,6 +50,7 @@ import { reconcile, writeReports } from "./reconcile.mjs";
 import { pmsSiblingProvider } from "./lib/pmsSiblingProvider.mjs";
 import { settleStatus } from "./lib/readStatus.mjs";
 import { readDeliveryReceipts, writeDeliveryReceipts } from "./lib/deliveryReceipts.mjs";
+import { keepsHolding } from "./lib/carryIdentity.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 // Overridable so a test run can point at a scratch drop without touching the
@@ -1314,8 +1315,7 @@ function carriedForward(file, how) {
    * byte, so carrying it changes nothing.
    */
   const same = ["provider", "accountNo", "asOf", "reportType"].every((k) => (after[k] ?? null) === (before[k] ?? null));
-  const kept = (before.holdings ?? []).every((h) => (after.holdings ?? []).some((x) =>
-    x.securityKey === h.securityKey && x.quantity === h.quantity && x.marketValue === h.marketValue));
+  const kept = (before.holdings ?? []).every((h) => (after.holdings ?? []).some((x) => keepsHolding(h, x)));
   return same && kept && facts(after) >= facts(before) ? [{ ...produced[0], reread: true }] : carried;
 }
 

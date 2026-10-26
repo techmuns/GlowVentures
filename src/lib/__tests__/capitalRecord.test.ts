@@ -70,7 +70,7 @@ const bandhan = byId.get("bandhan-mutual-fund-8652064");
 ok("Bandhan's nonzero opening holdings keep its partial purchases out of inception capital",
   !BOOK_CAPITAL_FROM_INCEPTION.includes("bandhan-mutual-fund-8652064"));
 ok("Bandhan's current value remains visible while appreciation and XIRR need the earlier purchases",
-  !!bandhan && Math.abs(bandhan.value - 415063994.38) < .01 && bandhan.appreciation === null
+  !!bandhan && typeof bandhan.value === "number" && Math.abs(bandhan.value - 415063994.38) < .01 && bandhan.appreciation === null
     && !!bandhan.appreciationReason && !capitalReturn(bandhan, "xirr").shown);
 
 // ── 2. NOTHING IS CALLED "NET INVESTED" ANY MORE ───────────────────────────

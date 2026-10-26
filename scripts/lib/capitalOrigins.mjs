@@ -53,7 +53,8 @@ export function capitalRecordFromInception(cashFlows) {
   // could certify a folio whose main holdings arrived before this ledger.
   const openings = all.filter((c) => c.kind === "opening-units");
   if (openings.some((c) => !c.date || !c.securityKey || !isNum(c.units) || !isNum(c.balance))) return false;
-  const rows = all.filter((c) => c.date && (CAPITAL_KINDS.has(c.kind) || legIn(c) || c.kind === "opening-units"));
+  const rows = all.filter((c) => c.date && (CAPITAL_KINDS.has(c.kind) || legIn(c)
+    || (c.kind === "opening-units" && Math.abs(c.balance) > UNIT_TIE)));
   const ins = rows.filter((c) => c.kind === "contribution");
   if (!ins.length) return false;
   const evidenced = (c) => isNum(c.balance) || !!c.seriesIssued;
@@ -62,9 +63,7 @@ export function capitalRecordFromInception(cashFlows) {
   for (const c of [...rows].filter((r) => r.securityKey && isNum(r.units) && evidenced(r)).sort((a, b) => a.date.localeCompare(b.date))) {
     if (!first.has(c.securityKey)) first.set(c.securityKey, c);
   }
-  return [...first.values()].every((c) => c.kind === "opening-units"
-    ? Math.abs(c.units) <= UNIT_TIE && Math.abs(c.balance) <= UNIT_TIE
-    : (c.kind === "contribution" || legIn(c)) && (isNum(c.balance)
+  return [...first.values()].every((c) => (c.kind === "contribution" || legIn(c)) && (isNum(c.balance)
       ? Math.abs(Math.abs(c.balance) - Math.abs(c.units)) <= UNIT_TIE
       : c.date === c.seriesIssued));
 }
