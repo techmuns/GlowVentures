@@ -2685,7 +2685,12 @@ export function PortfolioMonitor() {
   // The expanded drill-down rows are per-view: a key expanded under the
   // by-security build has no counterpart under the by-entity one, so a change
   // of basis clears them rather than leaving a stale row open.
-  useEffect(() => { setExpanded(new Set()); }, [holdingsView]);
+  const previousHoldingsView = useRef(holdingsView);
+  useEffect(() => {
+    if (previousHoldingsView.current === holdingsView) return;
+    previousHoldingsView.current = holdingsView;
+    if (navigationAction !== 'POP') setExpanded(new Set());
+  }, [holdingsView, navigationAction, setExpanded]);
   /**
    * ── THE WHOLE-BOOK RETURN SAYS WHICH HOLDINGS IT IS STRUCK OVER, ON ITS FACE
    *    (MH-04, B-07) ───────────────────────────────────────────────────────
