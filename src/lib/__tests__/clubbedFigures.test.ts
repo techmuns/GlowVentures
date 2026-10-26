@@ -158,7 +158,8 @@ console.log("\n── one mark or none (A-03) ──");
   ok("rows whose lines disagree on a mark print none", split > 0, `${split} split rows (load-bearing), ${single} single`);
   const dsp = [...byKey.entries()].find(([k]) => /dsp-gold/.test(k))?.[1] ?? [];
   const dm = commonMark(dsp, render);
-  ok("DSP Gold's two statements disagree, so its row prints no single mark", dsp.length < 2 || dm.price === null,
+  ok("DSP Gold's two converted balances share the same published NAV", dsp.length === 2 && dm.price !== null
+    && dsp.every(p => p.navPriced && p.isin === 'INF740KA1ZP2' && p.quantity! > 0),
     dm.marks.join(" vs "));
 }
 

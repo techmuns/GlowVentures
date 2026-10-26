@@ -27,6 +27,7 @@
 // and from the committed report on the run — never from a fixture, which would
 // prove only that two inventions agree.
 import { readFileSync, existsSync } from "node:fs";
+import { acquisitionIdentity } from "../../../shared/fundUnitActions.mjs";
 import path from "node:path";
 import XLSX from "xlsx";
 import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_SHARE_MOVEMENTS, BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
@@ -369,7 +370,7 @@ const REPORT = readFileSync("docs/REVIEW-RECONCILIATION.md", "utf8");
   // values from a statement's units is a statement's ISIN, so switching a
   // valuation off cannot bring the sentence back for it: the units are still
   // on the statement.
-  const orphan = live.filter((p) => !statementIsins.has(up(p.isin))).map((p) => `${p.security} ${p.isin}`);
+  const orphan = live.filter((p) => !statementIsins.has(up(acquisitionIdentity(p).isin))).map((p) => `${p.security} ${p.isin}`);
   ok("every holding the live book values from a statement's units is on a statement", orphan.length === 0, orphan.join("; "));
   ok("…and the live book values some", live.length > 0, `${live.length}`);
 }
