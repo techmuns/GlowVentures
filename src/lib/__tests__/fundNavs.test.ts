@@ -275,6 +275,11 @@ for (const b of BOOK_POSITIONS) {
 }
 const keyOf = (w: { isin: string | null; securityKey: string }) =>
   bookKeyByIsin.get(w.isin?.trim().toUpperCase() ?? "") ?? w.securityKey;
+// Source-reviewed exception: Bandhan 8652064 acknowledges rematerialisation
+// on 7 October for these two schemes; its 26 October balances now speak.
+const replacedByBandhanFolio = (w: { accountId: string; isin: string | null }) =>
+  w.accountId === "motilal-oswal-financial-services-demat-1201090012539150"
+  && ["INF194K01Y60", "INF194K01V89"].includes(w.isin ?? "");
 const nonCash = blocks.filter((w) => txOnly.has(w.accountId) && w.reason === null && (w.closing ?? 0) > 0
   && w.isin && navByIsin.get(w.isin)?.usableForValue && !isCashEquivalent({ securityKey: keyOf(w) }));
 ok("the same account holds priced funds that are not cash, so the cash gate has something to refuse",
@@ -302,7 +307,7 @@ ok("the fund switch is on, so the non-cash rows below are what the live book add
 ok("the cash rows are exactly the fund rows that are cash equivalents — one builder, two views",
   DEP.length === FUNDS.filter((p) => isCashEquivalent(p)).length
   && DEP.every((p) => FUNDS.some((f) => f.isin === p.isin && f.accountId === p.accountId)));
-const nonCashFunds = nonCash.filter((w) => !isEtfIsin(w.isin));
+const nonCashFunds = nonCash.filter((w) => !isEtfIsin(w.isin) && !replacedByBandhanFolio(w));
 ok("every non-cash fund the cash gate refused is valued here, at AMFI's NAV",
   nonCashFunds.length > 0 && nonCashFunds.every((w) => FUNDS.some((p) => p.isin === w.isin && p.accountId === w.accountId)),
   `${nonCashFunds.length} fund(s), ${crs(FUNDS.filter((p) => !isCashEquivalent(p)).reduce((a, p) => a + p.marketValue, 0))}`);
@@ -352,10 +357,10 @@ const tie = (a: number | null | undefined, b: number) => typeof a === "number" &
 /** Balances on `id` that another account's own statement already reports. */
 const reportedElsewhere = (id: string, valuedIsins: Set<string>) => blocks.filter((w) =>
   w.accountId === id && (w.closing ?? 0) > 0 && !valuedIsins.has((w.isin ?? "").toUpperCase())
-  && BOOK_POSITIONS.some((b) => b.accountId !== id && (
+  && (replacedByBandhanFolio(w) || BOOK_POSITIONS.some((b) => b.accountId !== id && (
     (!!w.isin && b.isin?.toUpperCase() === w.isin.toUpperCase() && tie(b.quantity, w.closing as number))
     || (b.assetClass === "AIF" && ownerOfAcct.get(b.accountId) === ownerOfAcct.get(id)
-      && tie(recordedUnits.get(`${b.accountId}|${b.securityKey}`), w.closing as number)))));
+      && tie(recordedUnits.get(`${b.accountId}|${b.securityKey}`), w.closing as number))))));
 const depAccount = FUNDS[0]?.accountId ?? "";
 const fundIsins = new Set(FUNDS.filter((p) => p.accountId === depAccount).map((p) => (p.isin ?? "").toUpperCase()));
 const elsewhere = reportedElsewhere(depAccount, fundIsins);
