@@ -18,7 +18,7 @@
  * No line on the face reads as a sentence (Stage 10cp): every explanation is a
  * hover on the figure or control it explains.
  */
-import { useEffect, useId, useMemo, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Card } from "@/components/Card";
 import { AbsentCell } from "@/components/Absent";
@@ -72,6 +72,14 @@ export default function PortfolioReturns() {
     for (const [k, v] of Object.entries(patch)) v == null ? next.delete(k) : next.set(k, v);
     setParams(next, { replace: true });
   };
+  const onReturnTypeResolved = useCallback((type: ReturnType) => {
+    setParams(previous => {
+      if (previous.get('rtype') === type) return previous;
+      const next = new URLSearchParams(previous);
+      next.set('rtype', type);
+      return next;
+    }, { replace: true });
+  }, [setParams]);
 
   // ── Every account's valuations and dated flows ───────────────────────────
   const inputs = useMemo<AccountInput[]>(() => {
@@ -291,7 +299,7 @@ export default function PortfolioReturns() {
 
         {!investedYear && <div role="tabpanel" id={`${tabsId}-panel-attribution`} aria-labelledby={`${tabsId}-tab-attribution`}
           hidden={view !== "attribution"} tabIndex={0} className="shrink-0" data-returns-panel="attribution">
-          <SegmentReturns period={period} selection={{ inception: period === "inception", type: rtype, start, end,
+          <SegmentReturns period={period} onReturnTypeResolved={onReturnTypeResolved} selection={{ inception: period === "inception", type: rtype, start, end,
             windows: win?.included ?? [], inceptionRows: inception.rows,
             outside: period === "inception" ? inputs.filter(i => i.outside).map(i => ({ accountId: i.accountId, label: i.label, owner: i.owner, reason: i.outside! })) : win?.outside ?? [],
             excluded: period === "inception" ? inception.skipped : win?.excluded ?? (inputs.filter(i => !i.outside).map(i => ({ accountId: i.accountId, label: i.label, owner: i.owner, reason: "Choose an opening date before the closing date." }))),
