@@ -23,6 +23,14 @@ export interface FundNav {
    * The second has no statement mark anywhere — see the builder's header.
    */
   from: "book" | "depository";
+  /**
+   * Set where a sub-division retired the statement's ISIN
+   * (`shared/fundUnitSplits.mjs`): AMFI publishes the scheme under
+   * `publishedIsin`, on a unit `factor` times smaller than the one the book's
+   * lines were counted in before `exDate`. Every NAV figure here is AMFI's, on
+   * the new unit.
+   */
+  unitSplit?: { publishedIsin: string; factor: number; exDate: string; source: string };
   schemecode: string;
   scheme: string;
   plan: string;
@@ -169,6 +177,56 @@ export const BOOK_FUND_NAVS: FundNav[] = [
   "prev": 156.65,
   "prevDate": "2026-10-22",
   "changePct": -1.477817,
+  "usableForValue": true,
+  "notUsableReason": null
+ },
+ {
+  "securityKey": "dsp-gold-etf",
+  "security": "DSP GOLD ETF",
+  "isin": "INF740KA1SW3",
+  "isinFrom": "statement",
+  "isinAgreedBy": "look-through",
+  "from": "book",
+  "unitSplit": {
+   "publishedIsin": "INF740KA1ZP2",
+   "factor": 10,
+   "exDate": "2026-08-28",
+   "source": "NSE circular NSE/CML/75868 (21 Aug 2026) and NSE Clearing circular NCL/CMPT/75902 (24 Aug 2026)"
+  },
+  "schemecode": "151737",
+  "scheme": "DSP Gold ETF",
+  "plan": "",
+  "option": "",
+  "category": "Exchange Traded Funds (ETFs) - Gold ETF",
+  "sebiCategory": "Gold ETF",
+  "nav": 13.6451,
+  "date": "2026-10-23",
+  "changePct": null,
+  "usableForValue": true,
+  "notUsableReason": null
+ },
+ {
+  "securityKey": "dsp-silver-etf",
+  "security": "DSP SILVER ETF",
+  "isin": "INF740KA1RE3",
+  "isinFrom": "statement",
+  "isinAgreedBy": "look-through",
+  "from": "book",
+  "unitSplit": {
+   "publishedIsin": "INF740KA1ZQ0",
+   "factor": 10,
+   "exDate": "2026-08-28",
+   "source": "NSE circular NSE/CML/75868 (21 Aug 2026) and NSE Clearing circular NCL/CMPT/75902 (24 Aug 2026)"
+  },
+  "schemecode": "150523",
+  "scheme": "DSP Silver ETF",
+  "plan": "",
+  "option": "",
+  "category": "Exchange Traded Funds (ETFs) - Silver ETF",
+  "sebiCategory": "Silver ETF",
+  "nav": 18.5517,
+  "date": "2026-10-23",
+  "changePct": null,
   "usableForValue": true,
   "notUsableReason": null
  },

@@ -61,6 +61,10 @@ function expected(unvalued: readonly UnvaluedStatementHolding[], accounts: Map<s
     if (!nav || !nav.usableForValue || !(nav.nav > 0)) continue;
     const own = accounts.get(u.accountId);
     if (!own || !u.asOf) continue;
+    // Stage 10hq: a NAV joined across a sub-division is on a unit `factor`
+    // times smaller, and meets only units counted before its ex-date.
+    const f = nav.unitSplit ? nav.unitSplit.factor : 1;
+    if (nav.unitSplit && !(u.asOf < nav.unitSplit.exDate)) continue;
     const sameDay = (id: string) => accounts.get(id)?.provider === own.provider && accounts.get(id)?.asOf === u.asOf;
     const ownRate = movedRate(u);
     let price: number | null = ownRate;
@@ -74,12 +78,12 @@ function expected(unvalued: readonly UnvaluedStatementHolding[], accounts: Map<s
       witness = w?.accountId ?? r?.accountId ?? null;
     }
     if (price === null) continue;
-    const ratio = nav.nav / price;
+    const ratio = (nav.nav * f) / price;
     if (!(ratio > 0.5 && ratio < 2)) continue;
     if (positions.some((p) => p.accountId === u.accountId && I(p) === isin)) continue;
     if (positions.some((p) => I(p) === isin && Math.abs((p.quantity ?? NaN) - (u.quantity as number)) < 0.0005
       && ownerOfId(p.accountId) === ownerOfId(u.accountId))) continue;
-    out.push({ accountId: u.accountId, isin, quantity: u.quantity, nav: nav.nav, witness, ownRate });
+    out.push({ accountId: u.accountId, isin, quantity: u.quantity * f, nav: nav.nav, witness, ownRate });
   }
   return out;
 }
@@ -127,6 +131,46 @@ ok("each is NAV-priced, carries the NAV's own date, and says which witness put i
   }));
 ok("the movement's price is a witness and nothing more — never the price a row is valued at",
   got.every((p) => p.currentPrice === navBy.get(I(p) ?? "")?.nav));
+
+// ── a sub-division that retired the statement's ISIN (Stage 10hq) ───────────
+// DSP split its Gold and Silver ETFs 1:10 on 28 Aug 2026 and NSE moved both to
+// new ISINs. The 31 Jul statements print the old ISIN and the pre-split units.
+console.log("── a sub-division since the statement ──");
+const dspLines = BOOK_UNVALUED_HOLDINGS.filter((u) => I(u) === "INF740KA1SW3" || I(u) === "INF740KA1RE3");
+const dspRows = got.filter((p) => !!p.depositoryUnits?.unitSplit);
+ok("LOAD-BEARING: the book records DSP Gold and Silver ETF units on two Motilal statements, and AMFI's NAV for both is joined across the split",
+  dspLines.length === 3 && ["INF740KA1SW3", "INF740KA1RE3"].every((i) => navBy.get(i)?.usableForValue && navBy.get(i)?.unitSplit?.factor === 10),
+  dspLines.map((u) => `${u.accountId.slice(-6)} ${u.securityKey} ${u.quantity}`).join("; "));
+ok("every DSP line is valued, and nothing else carries a split",
+  dspRows.length === dspLines.length && dspLines.every((u) => dspRows.some((p) => p.accountId === u.accountId && I(p) === I(u))));
+ok("each is the statement's units × 10 at the published NAV, and keeps the statement's own count",
+  dspRows.every((p) => {
+    const u = dspLines.find((l) => l.accountId === p.accountId && I(l) === I(p))!;
+    const s = p.depositoryUnits!.unitSplit!;
+    return s.statementQuantity === u.quantity && p.quantity === (u.quantity as number) * 10
+      && Math.abs(p.marketValue - (u.quantity as number) * 10 * (p.currentPrice as number)) < 0.01;
+  }));
+ok("...priced against the successor ISIN AMFI publishes it under, never the retired one",
+  dspRows.every((p) => p.priceEvidence?.instrument === p.depositoryUnits!.unitSplit!.publishedIsin && p.priceEvidence?.instrument !== I(p)));
+ok("...and its recovered cost still reconciles on the statement's units, with the cost per unit on the new one",
+  dspRows.every((p) => !p.recoveredCost
+    || (p.recoveredCost.quantity === p.depositoryUnits!.unitSplit!.statementQuantity
+      && Math.abs((p.avgCost as number) * (p.quantity as number) - (p.costBasis as number)) < 0.01)));
+ok("the sentence names the split, its date and both counts",
+  dspRows.every((p) => {
+    const s = describeDepositoryUnits(p.depositoryUnits!), d = p.depositoryUnits!.unitSplit!;
+    return s.includes(d.exDate) && s.includes(d.publishedIsin)
+      && s.includes(d.statementQuantity.toLocaleString("en-IN")) && s.includes((p.quantity as number).toLocaleString("en-IN"));
+  }));
+if (dspLines.length) {
+  const line = dspLines[0];
+  ok("REFUSED: a line counted on or after the ex-date under the retired ISIN is on neither unit",
+    unpricedStatementUnits([{ ...line, asOf: "2026-08-28" }], [{ ...acc.get(line.accountId)!, asOf: "2026-08-28" }], []).length === 0);
+  ok("REFUSED: an own rate far from the NAV once the split is applied is still a basis break",
+    unpricedStatementUnits([{ ...line, lastMovementRate: (line.lastMovementRate as number) * 10 }], [acc.get(line.accountId)!], []).length === 0);
+  ok("CONTROL: the same line as the book has it passes",
+    unpricedStatementUnits([line], [acc.get(line.accountId)!], []).length === 1);
+}
 ok("each keeps the book's own key for its line, so one scheme stays one key on every page",
   got.every((p) => BOOK_UNVALUED_HOLDINGS.some((u) => u.accountId === p.accountId && u.securityKey === p.securityKey && I(u) === I(p))));
 ok("no row is a position the book already carries in the same account",

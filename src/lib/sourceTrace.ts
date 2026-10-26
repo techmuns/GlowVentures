@@ -46,9 +46,16 @@ export function holdingSourceTrace(positions: readonly TracePosition[], metric: 
     const value = metric === 'statement' ? null : p[metric];
     if (metric !== 'statement' && value == null) continue;
     const field = FIELDS[metric];
+    // A sub-division since the statement (Stage 10hq): the PDF prints the
+    // earlier unit's count, which is the figure the record is matched on.
+    const split = p.depositoryUnits?.unitSplit;
+    if (split && ['quantity', 'marketValue', 'statement'].includes(metric)) {
+      derived = true;
+      notes.add(`Units were multiplied by ${split.factor} for the scheme's sub-division of ${split.exDate} (${split.source}). The statement counts the earlier unit: ${split.statementQuantity.toLocaleString('en-IN')}.`);
+    }
     if (record || closing) sources.push({ ...base, document: record?.document ?? closing!,
       pointer: record?.pointer ?? '/transactions', field: closing ? 'closing' : field,
-      value: ['quantity', 'statement'].includes(metric) && !p.enteredNumbers?.includes('quantity') && !p.rolledForward ? p.quantity : undefined, label: p.security,
+      value: ['quantity', 'statement'].includes(metric) && !p.enteredNumbers?.includes('quantity') && !p.rolledForward ? (split?.statementQuantity ?? p.quantity) : undefined, label: p.security,
       note: closing ? 'Quantity is the closing balance in this account’s transaction statement, rather than the size of a single movement.' : undefined });
     else if (p.reviewSource) {
       sources.push({ ...base, path: REVIEW_COLUMN_DATA.workbook,
