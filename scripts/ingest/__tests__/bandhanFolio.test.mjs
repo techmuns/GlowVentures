@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import { extract } from '../providers/bandhanFolio.mjs';
 import { classify } from '../lib/classify.mjs';
 import { custodySuccessor, verifyCustodyLinks } from '../../../shared/custodySuccessors.mjs';
+import { securityKeyOf } from '../../../shared/securityKey.mjs';
 
 const directory = new URL('../../../public/audit/bandhan-mutual-fund-8652064-2026-10-26-holdings/', import.meta.url);
 const grid = JSON.parse(fs.readFileSync(new URL('pages.json', directory)));
@@ -24,6 +25,8 @@ assert.equal(parsed.cashFlows.filter(f => f.kind === 'contribution').length, 2);
 assert.equal(parsed.holdings.filter(h => h.quantity === 0).length, 2);
 assert.equal(parsed.sections.holdings.rows.length, 5);
 assert.equal(parsed.sections.holdings.rows.find(r => r[1] === arbitrage.isin)[6], 7724469.33);
+assert.equal(securityKeyOf('Bandhan Large & Mid Cap Fund-Direct Plan-Growth'),securityKeyOf('BNDH L&MCF DP GR'));
+assert.equal(securityKeyOf('BANDHAN AMC LTD#BANDHAN MF-BANDHAN LARGE AND MID CAP FUND-DIRECT PL-GROWTH'),securityKeyOf('BNDH L&MCF DP GR'));
 assert.equal(classify({ fileName: 'statement.pdf', text: grid.pages.map(p => p.text).join('\n') }).asOfDate, '2026-10-26');
 for (const [before, after] of [
   ['202,573.963', '202,574.963'], // a movement or closing loses a unit

@@ -66,6 +66,12 @@ console.log("\n── the book's capital record ──");
 ok("the book carries capital rows", G.length > 10, `${G.length} accounts`);
 ok("…and some publish appreciation", G.some((g) => g.appreciation != null));
 ok("…and some withhold it, with a reason", G.some((g) => g.appreciation == null && !!g.appreciationReason));
+const bandhan = byId.get("bandhan-mutual-fund-8652064");
+ok("Bandhan's nonzero opening holdings keep its partial purchases out of inception capital",
+  !BOOK_CAPITAL_FROM_INCEPTION.includes("bandhan-mutual-fund-8652064"));
+ok("Bandhan's current value remains visible while appreciation and XIRR need the earlier purchases",
+  !!bandhan && Math.abs(bandhan.value - 415063994.38) < .01 && bandhan.appreciation === null
+    && !!bandhan.appreciationReason && !capitalReturn(bandhan, "xirr").shown);
 
 // ── 2. NOTHING IS CALLED "NET INVESTED" ANY MORE ───────────────────────────
 ok("no capital row carries a net-invested figure", G.every((g) => !("net" in g)));

@@ -662,6 +662,10 @@ const custody = "motilal-oswal-financial-services-demat-1201090012539150";
 ok("Bandhan's latest arbitrage balance and dated value come from its own statement",
   bandhanFolio?.quantity === 202573.963 && Math.abs((bandhanFolio.marketValue ?? 0) - 7724469.33) < .01 && bandhanFolio.priceAsOf === "2026-10-23");
 ok("the receiving Bandhan scheme is updated too", bandhanLarge?.quantity === 2639320.472);
+ok("every holder's Large & Mid Cap scheme shares one identity with its published NAV",
+  !!bandhanLarge && fundNavFor(bandhanLarge)?.isin === "INF194K01V89"
+  && [...BOOK_POSITIONS, ...BOOK_UNVALUED_HOLDINGS].filter(p => p.isin === "INF194K01V89")
+    .every(p => p.securityKey === bandhanLarge.securityKey));
 ok("the old Bandhan demat balances are not added beside either newer folio holding",
   depositoryFundHoldings().every(p => p.accountId !== custody || !["INF194K01Y60", "INF194K01V89"].includes(p.isin ?? "")));
 ok("the original July custody evidence remains available",
