@@ -41,9 +41,14 @@ try {
 
   await gotoStock(motilal);
   const nil = page.locator('[data-account-row="motilal-oswal-mutual-fund-90414963315"] a[data-source-metric="quantity"]');
-  await nil.waitFor(); assert.equal((await nil.innerText()).trim(),'0'); await nil.click();
+  await nil.waitFor(); assert.equal((await nil.innerText()).trim(),'0');
+  const nilSource = new URL(await nil.getAttribute('href'),base);
+  assert.equal(nilSource.searchParams.get('record'),'/holdings/0');
+  assert.equal(nilSource.searchParams.get('sourceValue'),'0');
+  await nil.click();
   await page.locator('[data-statement-preview="motilal-oswal-mutual-fund-90414963315-2026-09-30-holdings"]').waitFor();
-  await page.locator('[data-statement-preview] canvas[data-pdf-page]').waitFor({timeout:30000});
+  // This folio uses the protected preview API, deliberately blocked above.
+  // Its exact document/record/value must remain linked without a raw-record pane.
   assert.equal(await page.locator('[data-selected-source-record]').count(), 0);
 
   await gotoStock('kotak-arbfd-dp-grow');
