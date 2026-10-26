@@ -4,7 +4,7 @@ import { REVIEW_COLUMN_DATA } from '../data/reviewColumns';
 export type SourceMetric = 'statement' | 'quantity' | 'marketValue' | 'currentPrice' | 'costBasis' | 'avgCost' | 'unrealizedPnL';
 export type TracePosition = Pick<Position, 'accountId' | 'securityKey' | 'security' | 'isin' | 'statementRecord'>
   & Partial<Pick<Position, 'quantity' | 'marketValue' | 'currentPrice' | 'costBasis' | 'avgCost' | 'unrealizedPnL'
-    | 'depositoryUnits' | 'enteredNumbers' | 'rolledForward' | 'recoveredCost' | 'costBasisSource' | 'priceEvidence' | 'live' | 'navPriced' | 'navDate' | 'symbol' | 'reviewSource'>>;
+    | 'depositoryUnits' | 'enteredNumbers' | 'rolledForward' | 'recoveredCost' | 'costBasisSource' | 'priceEvidence' | 'live' | 'navPriced' | 'navDate' | 'symbol' | 'reviewSource' | 'reviewNote'>>;
 export type SourceEvidence = {
   document?: string; path?: string; sheet?: string; rows?: number[]; pointer?: string; field?: string; isin?: string | null; securityKey: string;
   accountId: string; label: string; value?: number | null; note?: string;
@@ -50,9 +50,12 @@ export function holdingSourceTrace(positions: readonly TracePosition[], metric: 
       pointer: record?.pointer ?? '/transactions', field: closing ? 'closing' : field,
       value: ['quantity', 'statement'].includes(metric) && !p.enteredNumbers?.includes('quantity') && !p.rolledForward ? p.quantity : undefined, label: p.security,
       note: closing ? 'Quantity is the closing balance in this account’s transaction statement, rather than the size of a single movement.' : undefined });
-    else if (p.reviewSource) sources.push({ ...base, path: REVIEW_COLUMN_DATA.workbook,
-      sheet: p.reviewSource.sheet, rows: [p.reviewSource.row], label: p.security,
-      note: 'The family review workbook supplies this record.' });
+    else if (p.reviewSource) {
+      sources.push({ ...base, path: REVIEW_COLUMN_DATA.workbook,
+        sheet: p.reviewSource.sheet, rows: [p.reviewSource.row], label: p.security,
+        note: p.reviewNote ?? 'The family review workbook supplies this record.' });
+      if (p.reviewNote && metric !== 'statement') derived = true;
+    }
     else missing++;
     if (p.enteredNumbers?.some(f => f === metric || metric === 'statement' || ['avgCost', 'unrealizedPnL'].includes(metric))) {
       derived = true;

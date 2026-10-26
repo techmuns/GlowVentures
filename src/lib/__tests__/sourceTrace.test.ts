@@ -4,6 +4,9 @@ import { BOOK_POSITIONS, BOOK_ACCOUNTS } from '../../data/glowData';
 import { depositoryFundHoldings } from '../fundNavs';
 import { holdingSourceTrace, statementSourceHref, sourceRecordAt, sourcePage } from '../sourceTrace';
 import { sourceSheetIndex } from '../statementPreview';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { SourceCell } from '../../components/SourceTrace';
 
 const bandhan = BOOK_POSITIONS.find(p => p.accountId === 'bandhan-mutual-fund-8652064' && p.isin === 'INF194K01Y60')!;
 const trace = holdingSourceTrace([bandhan], 'quantity');
@@ -65,4 +68,9 @@ assert.equal(sourceSheetIndex(['Portfolio Allocation', 'Private Investments '], 
 assert.equal(sourceSheetIndex(['Private Investments', 'Private Investments '], 'Private Investments'), 0, 'exact identity wins');
 assert.equal(sourceSheetIndex([' Private Investments', 'Private Investments '], 'Private Investments'), null, 'ambiguous trimmed names abstain');
 assert.equal(sourceSheetIndex(['Portfolio Allocation'], 'Unknown sheet'), null);
+const quoteCell = renderToStaticMarkup(createElement(SourceCell, { positions: [bandhan], metric: 'currentPrice',
+  children: createElement('span', { 'data-cmp-source': 'upstox' }, '₹99') }));
+assert.ok(quoteCell.includes('₹99')); assert.ok(!quoteCell.includes('href='), 'a separately displayed market quote cannot inherit the older statement price source');
+const allocated = holdingSourceTrace([{ ...bandhan, statementRecord: undefined, reviewSource: { sheet: 'Private Investments', block: 'Private Investments', row: 4 }, reviewNote: 'Allocated to this owner by the review record.' }], 'marketValue');
+assert.equal(allocated.derived, true); assert.ok(allocated.sources.some(s => s.note === 'Allocated to this owner by the review record.'));
 console.log('PASS exact holding sources, demat/folio isolation, aggregate/price lineage, saved corrections and strict record/page locators');

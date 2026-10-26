@@ -98,10 +98,18 @@ function hasAction(node: ReactNode): boolean {
   return node.type === Link || typeof node.type === 'string' && ['a', 'button', 'input', 'select'].includes(node.type)
     || !!(node.type as { sourceTraceControl?: boolean }).sourceTraceControl || hasAction(node.props.children);
 }
+function hasDeclaredFeed(node: ReactNode): boolean {
+  if (Array.isArray(node)) return node.some(hasDeclaredFeed);
+  return isValidElement<{ children?: ReactNode; 'data-cmp-source'?: string }>(node)
+    && (!!node.props['data-cmp-source'] || hasDeclaredFeed(node.props.children));
+}
 /** Shared table seam: declared column identity survives sorting and dragging.
  * Never turn an absence, editor, export, or existing action into a nested link. */
 export function SourceCell({ positions, metric, children }: { positions: readonly TracePosition[]; metric: SourceMetric; children: ReactNode }) {
   if (!positions.length || metric !== 'statement' && !hasNumber(children)) return <>{children}</>;
+  // The displayed exchange quote can be newer than the price the corporate-
+  // action gate permits for valuation. Its own feed label is authoritative.
+  if (metric === 'currentPrice' && hasDeclaredFeed(children)) return <>{children}</>;
   const trace = holdingSourceTrace(positions, metric);
   return <SourceTraceContext.Provider value={trace}>
     {hasAction(children) ? children : <SourceValue trace={trace}>{children}</SourceValue>}
