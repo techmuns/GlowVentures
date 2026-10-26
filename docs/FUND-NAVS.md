@@ -8,8 +8,8 @@ ISIN** and never on a name. 14,412 scheme rows read.
 
 | | |
 | --- | ---: |
-| Schemes priced | **43** |
-| …of which identified by the family's own statement | 43 |
+| Schemes priced | **45** |
+| …of which identified by the family's own statement | 45 |
 | …by the look-through's resolved ISIN | 0 |
 | …of the statement's, confirmed by the look-through | 19 |
 | Resolved but **not usable to value a holding** | 3 |
@@ -22,7 +22,10 @@ ISIN** and never on a name. 14,412 scheme rows read.
 | --- | --- | --- | --- | ---: | --- | ---: |
 | ABSL BAL ADV-GROWTH | `INF084M01AB8` | statement | Dynamic Asset Allocation or Balanced Advantage | 108.02 | 2026-10-23 | -1.01% |
 | ABSL LIQF D-GROWTH | `INF209K01VA3` | statement | Liquid Fund | 461.906 | 2026-10-25 | +0.04% |
-| BNDH L&MCF DP GR | `INF194K01V89` | statement | Large & Mid Cap Fund | 154.335 | 2026-10-23 | -1.48% |
+| Bandhan Arbitrage Fund-Direct Plan-Growth | `INF194K01Y60` | statement | Arbitrage Fund | 38.1316 | 2026-10-23 | +0.18% |
+| Bandhan Liquid Fund-Direct Plan-Growth | `INF194K01I60` | statement | Liquid Fund | 3451.1571 | 2026-10-25 | — |
+| Bandhan Overnight Fund-Direct Plan-Growth | `INF194KB1447` | statement | Overnight Fund | 1478.7935 | 2026-10-25 | — |
+| Bandhan Large & Mid Cap Fund-Direct Plan-Growth | `INF194K01V89` | statement | Large & Mid Cap Fund | 154.335 | 2026-10-23 | -1.48% |
 | HDFC Arbitrage Fund - Direct Plan - Growth Option | `INF179KA1KT6` | statement | Arbitrage Fund | 21.943 | 2026-10-23 | +0.21% |
 | HDFC Arbitrage Fund - Direct Plan - Monthly IDCW # Payout Option | `INF179KA1KS8` | statement | Arbitrage Fund | 11.348 | 2026-10-23 | +0.21% |
 | HDFC BAF D-GROW | `INF179K01WA6` | statement | Dynamic Asset Allocation or Balanced Advantage | 539.444 | 2026-10-23 | -0.71% |
@@ -71,7 +74,6 @@ table's.
 
 | Security | ISIN | SEBI category | NAV | Date |
 | --- | --- | --- | ---: | --- |
-| BANDHAN AMC LTD#BANDHAN MF-BANDHAN ARBITRAGE FUND - DIRECT PL - GROWTH | `INF194K01Y60` | Arbitrage Fund | 38.1316 | 2026-10-23 |
 | HDFC Liquid Fund-Direct Plan-Growth Option | `INF179KB1HP9` | Liquid Fund | 5612.8067 | 2026-10-25 |
 | ICICI PRUD AMC LTD#ICICI PRUD MF-ICICI PRUD EQUITY SAVINGS FUND DIRECT CUMULATIVE | `INF109KA11J9` | Equity Savings | 25.14 | 2026-10-23 |
 | Motilal Oswal Arbitrage Fund - Direct Plan Growth | `INF247L01ED1` | Arbitrage Fund | 11.3693 | 2026-10-23 |
