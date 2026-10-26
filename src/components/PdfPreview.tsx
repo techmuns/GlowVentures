@@ -79,7 +79,7 @@ export default function PdfPreview({ url, file, title, initialPage, sourceTarget
     surface.className = 'relative mx-auto';
     surface.append(canvas); host.replaceChildren(surface);
     setDrawing(true); setRenderError("");
-    setHighlightMissing(false);
+    setHighlightMissing(!!sourceTarget && !initialPage);
     void pdf.getPage(page).then(async source => {
       if (!alive) return;
       const size = source.getViewport({ scale: 1 });
@@ -95,8 +95,9 @@ export default function PdfPreview({ url, file, title, initialPage, sourceTarget
       if (!alive) return;
       canvas.dataset.pdfPage = String(page); setDrawing(false);
       if (sourceTarget && page === initialPage) {
-        const text = await source.getTextContent();
+        const text = await source.getTextContent().catch(() => null);
         if (!alive) return;
+        if (!text) { setHighlightMissing(true); return; }
         const items = text.items.filter((item): item is typeof item & { str: string; transform: number[]; width: number; height: number } => 'str' in item);
         const match = pdfSourceMatch(items, sourceTarget);
         setHighlightMissing(!match);
@@ -165,7 +166,7 @@ export default function PdfPreview({ url, file, title, initialPage, sourceTarget
             <select aria-label="PDF zoom" className={`${CONTROL} ml-auto`} value={zoom} onChange={e => setZoom(e.target.value)}>
               <option value="fit">Fit width</option><option value="1">100%</option><option value="1.5">150%</option><option value="2">200%</option>
             </select>
-            {highlightMissing && <span role="status" className="text-xs text-slate-400">Exact number could not be uniquely highlighted on this page.</span>}
+            {highlightMissing && <span role="status" className="text-xs text-slate-400">Exact number could not be uniquely highlighted in this statement.</span>}
           </div>
           <div ref={viewport} className="min-h-0 flex-1 overflow-auto p-4">
             {drawing && <p role="status" className="mb-2 text-xs text-slate-400">Loading page…</p>}

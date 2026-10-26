@@ -13,6 +13,7 @@ import {
   cellText, columnLetters, fileSize, hasText, isSheetFormat, mergeLayout, sheetRows, unreadReason, sourceSheetIndex,
   type GridCell, type GridMerge, type PageText, type PublishedFile, type StatementFileIndex,
 } from "@/lib/statementPreview";
+import { usePreviewDialog } from '@/lib/usePreviewDialog';
 import { isinBeforePage } from '@/lib/pdfSourceHighlight';
 import { sourceRecordAt, sourcePage } from '@/lib/sourceTrace';
 import { readModel } from '@/lib/readModel';
@@ -435,29 +436,11 @@ export function StatementPreview({ doc, onClose, backLabel }: { doc: LibraryDoc;
   const published = original.status === "ready" ? original : null;
   const closeRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
-  const close = useRef(onClose);
-  close.current = onClose;
   const sheet = isSheetFormat(doc.format);
   // The PDF viewer takes the whole window and scrolls itself.
   const fills = view === "original" && !!published && !sheet;
 
-  // Focus moves into the window when it opens and back to the row that opened
-  // it when it closes.
-  useEffect(() => {
-    const opener = document.activeElement as HTMLElement | null;
-    closeRef.current?.focus();
-    const key = (e: KeyboardEvent) => {
-      if (e.key === "Escape") { e.preventDefault(); close.current(); return; }
-      if (e.key !== 'Tab') return;
-      const controls = [...(dialogRef.current?.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex="0"]') ?? [])].filter(el => el.getClientRects().length);
-      const first = controls[0], last = controls[controls.length - 1];
-      if (!first) return;
-      if (e.shiftKey && (document.activeElement === first || !dialogRef.current?.contains(document.activeElement))) { e.preventDefault(); last.focus(); }
-      else if (!e.shiftKey && (document.activeElement === last || !dialogRef.current?.contains(document.activeElement))) { e.preventDefault(); first.focus(); }
-    };
-    document.addEventListener("keydown", key);
-    return () => { document.removeEventListener("keydown", key); opener?.focus?.({ preventScroll: true }); };
-  }, []);
+  usePreviewDialog(onClose, dialogRef, closeRef);
 
   const count = loaded.status === "ready" ? loaded.pages.length : null;
   const selectedPage = loaded.status === 'ready' ? sourcePage(loaded.pages, params.get('isin'), params.get('sourceValue')) : undefined;
@@ -548,9 +531,9 @@ export function StatementPreview({ doc, onClose, backLabel }: { doc: LibraryDoc;
             ? <OriginalSheets url={published.url} format={doc.format} />
             : <Suspense fallback={<Opening what="Opening PDF…" />}>
                 <OriginalPdf key={published.previewUrl} url={published.previewUrl} file={published.file} initialPage={selectedPage}
-                  sourceTarget={selectedPage && params.get('sourceValue') && params.get('isin') ? {
+                  sourceTarget={loaded.status !== 'loading' && params.get('sourceValue') && params.get('isin') ? {
                     value: params.get('sourceValue')!, isin: params.get('isin')!, field: params.get('field'),
-                    initialIsin: loaded.status === 'ready' ? isinBeforePage(loaded.pages, selectedPage) : null,
+                    initialIsin: loaded.status === 'ready' && selectedPage ? isinBeforePage(loaded.pages, selectedPage) : null,
                   } : undefined} title={`${doc.reportLabel} — ${doc.fileName}`} />
               </Suspense>)}
 

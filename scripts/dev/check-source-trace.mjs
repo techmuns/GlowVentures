@@ -109,6 +109,27 @@ try {
   await page.waitForURL(origin);
   assert.equal(page.url(),origin);
   assert.equal(await parent.getAttribute('data-tree-parent'),'open');
+  // Slow and failed manifest reads retain the same keyboard exit and trap.
+  const manifestPattern = '**/audit/manifest.json';
+  let releaseManifest;
+  const pending = new Promise(resolve => { releaseManifest = resolve; });
+  await page.route(manifestPattern, async route => { await pending; await route.fulfill({status:503,body:'unavailable'}); });
+  await venue.locator('a[data-source-metric="quantity"]').click();
+  const loadingDialog = page.getByRole('dialog',{name:'Statement source',exact:true});
+  await loadingDialog.waitFor();
+  await loadingDialog.getByRole('button').waitFor({state:'visible'});
+  await page.waitForFunction(()=>document.activeElement?.closest('[aria-label="Statement source"]'));
+  await page.keyboard.press('Tab');
+  assert.ok(await loadingDialog.evaluate(el=>el.contains(document.activeElement)));
+  await page.keyboard.press('Shift+Tab');
+  assert.ok(await loadingDialog.evaluate(el=>el.contains(document.activeElement)));
+  await page.keyboard.press('Escape'); await page.waitForURL(origin);
+  releaseManifest(); await page.unroute(manifestPattern);
+  await page.route(manifestPattern, route=>route.fulfill({status:503,body:'unavailable'}));
+  await venue.locator('a[data-source-metric="quantity"]').click();
+  await page.getByRole('alert').filter({hasText:'This exact source statement could not be opened.'}).waitFor();
+  await page.keyboard.press('Escape'); await page.waitForURL(origin);
+  await page.unroute(manifestPattern);
   // A filter must narrow provenance as well as the money. Carnelian's one
   // selected company must not expose every other holding in the account.
   await page.goto(base+'/monitor');
@@ -133,7 +154,7 @@ try {
   assert.equal(await page.locator('[data-source-row="true"]').count(),0,'citation highlights never move to an unrelated worksheet');
   await page.screenshot({path:path.join(out,'workbook-citation.png')});
   assert.deepEqual(errors,[]);
-  await fs.writeFile(path.join(out,'results.json'),JSON.stringify({exactDematDocument:true,closingPage:5,separateNilFolio:true,aggregateSources:true,feedDistinct:true,monitorLabels:true,yellowClosingBalance:true,exactReturnState:true,filteredMandate:true,workbookSheetAndRow:true,errors},null,2));
+  await fs.writeFile(path.join(out,'results.json'),JSON.stringify({exactDematDocument:true,closingPage:5,separateNilFolio:true,aggregateSources:true,feedDistinct:true,monitorLabels:true,yellowClosingBalance:true,exactReturnState:true,loadingAndFailedDialog:true,filteredMandate:true,workbookSheetAndRow:true,errors},null,2));
   console.log('PASS source links: monitor account labels, exact demat closing page, separate nil folio, combined quantities and feed/statement distinction');
 } catch(e) {
   await fs.writeFile(path.join(out,'failure.json'),JSON.stringify({url:page.url(),errors,text:(await page.locator('body').innerText()).slice(-10000)},null,2));
