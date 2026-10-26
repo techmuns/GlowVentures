@@ -76,7 +76,7 @@ export function CapitalBridge({ bridge: b, total, typeLabel, caption, money }: {
       {accountCount} {accountCount === 1 ? 'account' : 'accounts'} covered <HoldingAssumptionInfo units={total.units} />
     </div>
     <div className="my-5" data-bridge-return={ret ?? ''} data-bridge-period-return={period ?? ''}>
-      <p className="text-xs text-slate-400" data-bridge-return-label>{typeLabel}{annual ? ' · annualised' : ' · period'}</p>
+      <p className="text-xs text-slate-400" data-bridge-return-label>{typeLabel}{ret != null && (annual ? ' · annualised' : ' · period')}</p>
       <div className="mt-1" aria-live="polite">{ret != null ? <strong className={`text-3xl font-semibold tabular ${changeColor(ret)}`}>{pct(ret)}{annual && <span className="ml-1 text-xs font-normal text-slate-400">p.a.</span>}</strong> : <AbsentCell reason={total.measured?.reason ?? 'not measured on these dates'} />}</div>
     </div>
     <dl data-bridge-steps>{steps.map((s) => <div key={s.key}

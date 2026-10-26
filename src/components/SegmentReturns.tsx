@@ -33,7 +33,7 @@ const pct = (n: number) => `${n >= 0 ? '+' : ''}${n.toFixed(2)}%`;
 const HEAD: Record<string, string> = { category: 'Category', assetClass: 'Asset class', basket: 'Basket', sector: 'Sector / class', side: 'Side', security: 'Security' };
 
 export default function SegmentReturns({ selection: recordedSelection, period, onReturnTypeResolved }: {
-  selection: ReturnSelection; period: PeriodKey; onReturnTypeResolved?: (type: ReturnType) => void;
+  selection: ReturnSelection; period: PeriodKey; onReturnTypeResolved?: (requested: ReturnType, displayed: ReturnType) => void;
 }) {
   const { statementPortfolio, consolidated, fmtFromBase, corporateActions } = usePortfolio();
   const [axis, setAxis] = useViewParam(SEGMENT_VIEWS, {}, 'seg');
@@ -65,11 +65,11 @@ export default function SegmentReturns({ selection: recordedSelection, period, o
   // units, or on the Sector view — which draws no dated total of its own — the same pool grouped by category.
   const pool = useMemo(() => a ?? (statementPortfolio ? selectedSegmentReturns(current, exited, statementPortfolio.accounts, 'category', selection,
     () => null, calculationCurrent) : null), [a, current, exited, statementPortfolio, selection, calculationCurrent]);
-  // Keep the picker on the measure actually displayed by the covered pool.
-  // The under-one-year rule can resolve either yearly choice to Absolute.
+  // Resolve the picker's label without replacing the requested calculation:
+  // a mixed total may be absolute while its debt-only rows remain annualised.
   const shownAs = pool?.total.measured?.shownAs;
   useEffect(() => {
-    if (shownAs && shownAs !== recordedSelection.type) onReturnTypeResolved?.(shownAs);
+    onReturnTypeResolved?.(recordedSelection.type, shownAs ?? recordedSelection.type);
   }, [shownAs, recordedSelection.type, onReturnTypeResolved]);
   const bridge = useMemo(() => pool && statementPortfolio ? capitalBridge(pool.total.units, { accounts: statementPortfolio.accounts,
     positions: statementPortfolio.positions, bridges: BOOK_ACCOUNT_BRIDGES, moves: BOOK_CAPITAL_MOVES, income: BOOK_HOLDING_INCOME }) : null,

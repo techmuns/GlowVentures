@@ -83,10 +83,14 @@ try {
   const start = b.periodStart(period, end), win = b.windowReturns(inputs, start, end);
   for (const type of ['xirr', 'absolute', 'cagr']) {
    const measured = b.measureWindow(win.included, type, String);
-   const effectiveType = measured.shownAs ?? type;
    await page.locator('[data-returns-type-select]').selectOption(type);
-   await page.waitForFunction(({ period, type }) => { const el = document.querySelector('[data-segment-returns]'); return el?.dataset.segPeriod === period && el?.dataset.segType === type; }, { period, type: effectiveType });
-   assert.equal(await page.locator('[data-returns-type-select]').inputValue(), effectiveType, 'picker names the displayed measure');
+   await page.waitForFunction(({ period, type, displayed }) => {
+    const el = document.querySelector('[data-segment-returns]'), picker = document.querySelector('[data-returns-type-select]');
+    return el?.dataset.segPeriod === period && el?.dataset.segType === type && picker?.dataset.displayedReturnType === displayed;
+   }, { period, type, displayed: measured.shownAs ?? type });
+   const picker = page.locator('[data-returns-type-select]');
+   assert.equal(await picker.getAttribute('data-requested-return-type'), type, 'debt rows retain the requested calculation');
+   if (measured.shownAs === 'absolute') assert.equal(await picker.locator('option:checked').innerText(), 'Absolute return', 'picker names the displayed measure');
    const expectedGain = win.included.length ? win.gain : null;
    const expectedReturn = measured.shown ? measured.pct : null;
    const rawGain = await table.getAttribute('data-seg-total-gain'), rawReturn = await table.getAttribute('data-seg-total-ret');
@@ -118,7 +122,8 @@ try {
  await page.waitForFunction(() => document.querySelector('[data-segment-returns]')?.dataset.segPeriod === 'fytd');
  const bridge = page.locator('[data-capital-bridge]');
  assert.equal(await bridge.getAttribute('data-bridge-mode'), 'window');
- await page.waitForFunction(() => document.querySelector('[data-returns-type-select]')?.value === 'absolute');
+ await page.waitForFunction(() => document.querySelector('[data-returns-type-select]')?.dataset.displayedReturnType === 'absolute');
+ assert.equal(await page.locator('[data-returns-type-select]').getAttribute('data-requested-return-type'), 'xirr');
  assert.match(await bridge.locator('[data-bridge-return-label]').innerText(), /Absolute return/);
  assert.equal(await bridge.locator('[data-bridge-split]').getAttribute('open'), null, 'gain breakdown starts collapsed');
  const boxes = await page.locator('[data-return-summary-cards] > .card').evaluateAll(els => els.map(el => {

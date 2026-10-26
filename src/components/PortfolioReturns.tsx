@@ -67,19 +67,16 @@ export default function PortfolioReturns() {
 
   const period = (PERIODS.find((p) => p.key === params.get("rp"))?.key ?? "fytd") as PeriodKey;
   const rtype = (RETURN_TYPES.find((r) => r.key === params.get("rtype"))?.key ?? (period === "invested-year" ? "absolute" : "xirr")) as ReturnType;
+  const [returnTypeResolution, setReturnTypeResolution] = useState<{ requested: ReturnType; displayed: ReturnType } | null>(null);
+  const displayedRtype = period !== 'invested-year' && returnTypeResolution?.requested === rtype ? returnTypeResolution.displayed : rtype;
   const set = (patch: Record<string, string | null>) => {
     const next = new URLSearchParams(params);
     for (const [k, v] of Object.entries(patch)) v == null ? next.delete(k) : next.set(k, v);
     setParams(next, { replace: true });
   };
-  const onReturnTypeResolved = useCallback((type: ReturnType) => {
-    setParams(previous => {
-      if (previous.get('rtype') === type) return previous;
-      const next = new URLSearchParams(previous);
-      next.set('rtype', type);
-      return next;
-    }, { replace: true });
-  }, [setParams]);
+  const onReturnTypeResolved = useCallback((requested: ReturnType, displayed: ReturnType) => {
+    setReturnTypeResolution(previous => previous?.requested === requested && previous.displayed === displayed ? previous : { requested, displayed });
+  }, []);
 
   // ── Every account's valuations and dated flows ───────────────────────────
   const inputs = useMemo<AccountInput[]>(() => {
@@ -125,7 +122,7 @@ export default function PortfolioReturns() {
   const today = new Date();
   const currentDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
   const investedYear = period === "invested-year";
-  const returnHelp = investedYear ? PURCHASE_TYPE_HELP[rtype] : RETURN_TYPES.find(r=>r.key===rtype)!;
+  const returnHelp = investedYear ? PURCHASE_TYPE_HELP[rtype] : RETURN_TYPES.find(r=>r.key===displayedRtype)!;
   const end = investedYear ? currentDate : toParam && ISO.test(toParam) ? toParam : currentDate;
   const start = period === "custom"
     ? (fromParam && ISO.test(fromParam) ? fromParam : null)
@@ -260,14 +257,19 @@ export default function PortfolioReturns() {
           title={returnHelp.title}>
           <span className="label-xs">Return type</span>
           <select className="rounded-md border border-ink-700 bg-ink-800 px-2 py-1 text-[12.5px] font-semibold text-slate-100" data-returns-type-select
-            value={rtype} onChange={(e) => set({ rtype: e.target.value === "xirr" && !investedYear ? null : e.target.value })}>
+            data-requested-return-type={rtype} data-displayed-return-type={displayedRtype}
+            value={displayedRtype !== rtype ? 'period-absolute' : rtype} onChange={(e) => set({ rtype: e.target.value === "xirr" && !investedYear ? null : e.target.value })}>
+            {/* A display-only option keeps all three explicit choices available.
+                Choosing Absolute still changes every row; a short mixed total
+                does not erase the requested XIRR/CAGR on its debt-only rows. */}
+            {displayedRtype !== rtype && <option value="period-absolute" disabled hidden>Absolute return</option>}
             {RETURN_TYPES.map((r) => (
               <option key={r.key} value={r.key} title={investedYear?PURCHASE_TYPE_HELP[r.key].title:r.title} data-returns-type={r.key} data-active={rtype === r.key ? "true" : "false"}>
                 {r.label}
               </option>
             ))}
           </select>
-          <span className="max-w-[16rem] truncate text-[11.5px] text-slate-500" data-returns-type-desc={rtype}>
+          <span className="max-w-[16rem] truncate text-[11.5px] text-slate-500" data-returns-type-desc={displayedRtype}>
             {returnHelp.short}
           </span>
         </label>

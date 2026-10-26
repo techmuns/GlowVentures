@@ -43,13 +43,7 @@ try {
   await page.locator(`[data-returns-period="${period}"]`).click();
   for (const type of ['absolute','xirr','cagr']) {
    await page.locator('[data-returns-type-select]').selectOption(type);
-   await page.waitForFunction(({ period,type }) => {
-    const d=document.querySelector('[data-segment-returns]')?.dataset;
-    const selected=document.querySelector('[data-returns-type-select]')?.value;
-    const label=document.querySelector('[data-bridge-return-label]')?.textContent ?? '';
-    return d?.segPeriod===period && d?.segType===selected && (selected===type || selected==='absolute')
-     && (selected==='absolute' || !label.startsWith('Absolute return'));
-   }, {period,type});
+   await page.waitForFunction(({ period,type }) => { const d=document.querySelector('[data-segment-returns]')?.dataset; return d?.segPeriod===period && d?.segType===type; }, {period,type});
    const from = await table.getAttribute('data-seg-start'), to = '2026-10-21';
    const days = (Date.parse(to)-Date.parse(from))/864e5;
    // XIRR and CAGR per year from a year only; under a year every type is the period's own move (Stage 10hk).

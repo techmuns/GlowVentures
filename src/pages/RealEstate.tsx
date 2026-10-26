@@ -262,7 +262,7 @@ export function RealEstate() {
                   ["Value after tax", saleTax.afterTax === null ? inlineGap(saleTax.gap?.reason ?? "Not known", "Needs the tax") : <span title="Recorded owners' share of the current value, less the tax.">{money(saleTax.afterTax)}</span>],
                 ] as [string, ReactNode][]).map(([label, value]) => <div key={label}><dt className="label-xs">{label}</dt><dd className="mt-1 text-sm text-slate-200">{value}</dd></div>)}
               </dl>
-              {saleTax.owners.length > 0 && <div className="mt-4 overflow-x-auto"><table className="min-w-full text-[13px]" data-property-tax-owners data-table-static="one row per owner, each the working of the same sale's tax">
+              {saleTax.owners.length > 0 && <div className="mt-4 overflow-x-auto"><ExportableTable exportName="Real Estate — Tax by owner" className="min-w-full text-[13px]" data-property-tax-owners data-table-static="one row per owner, each the working of the same sale's tax">
                 <thead className="border-b border-ink-700 text-left"><tr className="label-xs">
                   <th className="px-3 py-2">Owner</th><th className="px-3 py-2 text-right">Share</th><th className="px-3 py-2" title="Resident individuals and HUFs may take the 20%-with-indexation ceiling, recorded from their own statements">Status</th>
                   <th className="px-3 py-2 text-right">{pctRate(LONG_TERM_RATE)} without indexation</th><th className="px-3 py-2 text-right">{pctRate(INDEXED_RATE)} with indexation</th><th className="px-3 py-2 text-right">Tax payable</th>
@@ -280,7 +280,7 @@ export function RealEstate() {
                     <td className="px-3 py-2 text-right mono">{o.tax === null ? inlineGap(o.gap?.reason ?? "Not known", o.gap?.short ?? "Not known") : <span title={o.note}>{money(o.tax)}</span>}</td>
                   </tr>;
                 })}</tbody>
-              </table></div>}
+              </ExportableTable></div>}
             </>}
           </section>}
           {selected.notes && <p className="mt-5 whitespace-pre-wrap text-sm text-slate-300">{selected.notes}</p>}
