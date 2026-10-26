@@ -220,7 +220,7 @@ reported rather than requested.
 | Review line | Custodian / advisor | Review MV | Book | Joined |
 | --- | --- | ---: | --- | --- |
 | DSP Gold ETF | Alternate tab | ₹48.31 Cr | — <br><sub>in the archive, 14,00,000 unit(s), no value published</sub> | exact |
-| Bandhan Large & Mid Cap Fund - Direct Plan - Growth | MOPWM | ₹24.78 Cr | — <br><sub>in the archive, 1,57,041.4 unit(s), no value published</sub> | exact |
+| Bandhan Large & Mid Cap Fund - Direct Plan - Growth | MOPWM | ₹24.78 Cr | ₹40.73 Cr <br><sub>Bandhan Large & Mid Cap Fund-Direct Plan-Growth</sub> | exact |
 | HDFC Balanced Advantage Fund | MOPWM Dir / MOPWM Reg | ₹10.87 Cr | ₹6.99 Cr <br><sub>HDFC Balanced Advantage Fund - Regular Plan - Growth +1 more row(s)</sub> | prefix |
 | DSP Silver ETF | Alternate tab | ₹6.54 Cr | — <br><sub>in the archive, 1,23,000 unit(s), no value published</sub> | exact |
 | Kotak Large & Midcap Fund - Direct- Growth | MOPWM Dir | ₹2.50 Cr | ₹1.08 Cr <br><sub>Kotak Large & Mid Cap Fund - Direct Growth</sub> | same letters, different spacing |
@@ -293,13 +293,13 @@ than a number this book will publish when the statements arrive.
 
 | Provider | Positions | Market value |
 | --- | ---: | ---: |
-| Bandhan Mutual Fund | 4 | ₹41.51 Cr |
 | ICICI Bank (NSDL demat) | 6 | ₹33.37 Cr |
 | Motilal Oswal Active Momentum Fund | 1 | ₹21.42 Cr |
 | HDFC Mutual Fund | 16 | ₹7.01 Cr |
 | Kotak Mahindra Mutual Fund | 7 | ₹1.16 Cr |
 | LKP Securities | 10 | ₹0.99 Cr |
 | ICICI Prudential Mutual Fund | 5 | ₹0.94 Cr |
+| Bandhan Mutual Fund | 3 | ₹0.77 Cr |
 | Aditya Birla Sun Life Mutual Fund | 2 | ₹0.16 Cr |
 | Mirae Asset Mutual Fund | 1 | ₹0.10 Cr |
 | ASK Investment Managers Limited | 2 | ₹0.00 Cr |
@@ -307,7 +307,7 @@ than a number this book will publish when the statements arrive.
 | Invesco Mutual Fund | 5 | ₹0.00 Cr |
 | Motilal Oswal Hedged Equity Multi Factor Strategy | 2 | ₹0.00 Cr |
 | Motilal Oswal Mutual Fund | 3 | ₹0.00 Cr |
-| **Total** | **66** | **₹106.65 Cr** |
+| **Total** | **65** | **₹65.92 Cr** |
 
 A holding here and not in the review is not automatically an error on either side: the
 review is drawn on 30 June 2026 and most statements here are dated after it, so a holding
