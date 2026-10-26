@@ -106,7 +106,9 @@ export function extract({ grid, meta }) {
     engagement: 'Direct', providerEngagement: 'Mutual fund folio — Resident Individual',
     holdings, cashFlows: warnings.length ? [] : flows,
     totals: makeTotals({ totalMarketValue: total ? parseNum(total[2]) : null, positionCount: holdings.length, source: meta.docKey }),
-    sections: { ledger: { name: 'Source unit and cash ledger', rows: [['date','scheme','kind','amount','units','balance'],
+    sections: { holdings: { name: 'Current scheme balances', rows: [['Scheme','ISIN','NAV date','Units','NAV','Cost held','Market value','Demat to remat accepted'],
+      ...holdings.map(h => [h.security,h.isin,h.priceAsOn,h.quantity,h.marketPrice,h.totalCost,h.printed.marketValue,h.custodyRematOn ?? null])] },
+      ledger: { name: 'Source unit and cash ledger', rows: [['date','scheme','kind','amount','units','balance'],
       ...flows.map(f => [f.date, f.security, f.kind, f.amount, f.units, f.balance])] } },
     warnings, status: warnings.length ? 'partial' : 'ok' };
 }

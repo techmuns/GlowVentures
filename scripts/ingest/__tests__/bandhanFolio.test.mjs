@@ -22,6 +22,8 @@ assert.ok(Math.abs(arbitrage.printed.marketValue - 7724469.33) < .01);
 assert.equal(parsed.cashFlows.filter(f => f.kind === 'reclassification' && f.isin === arbitrage.isin).length, 5);
 assert.equal(parsed.cashFlows.filter(f => f.kind === 'contribution').length, 2);
 assert.equal(parsed.holdings.filter(h => h.quantity === 0).length, 2);
+assert.equal(parsed.sections.holdings.rows.length, 5);
+assert.equal(parsed.sections.holdings.rows.find(r => r[1] === arbitrage.isin)[6], 7724469.33);
 assert.equal(classify({ fileName: 'statement.pdf', text: grid.pages.map(p => p.text).join('\n') }).asOfDate, '2026-10-26');
 for (const [before, after] of [
   ['202,573.963', '202,574.963'], // a movement or closing loses a unit

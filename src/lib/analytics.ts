@@ -756,6 +756,10 @@ export const CASH_EQUIVALENT_KEYS: Readonly<Record<string, string>> = {
     "Motilal Oswal Arbitrage Fund - Direct Growth (INF247L01ED1) — AMFI: Hybrid Scheme - Arbitrage Fund; the review's Debt tab, overruled by the family's instruction",
   "bandhan-amc-ltd-bandhan-mf-bandhan-arbitrage-fund-direct-pl-growth":
     "Bandhan Arbitrage Fund - Direct Growth (INF194K01Y60) — AMFI: Hybrid Scheme - Arbitrage Fund; the family's instruction",
+  "bandhan-amc-ltd-bandhan-mf-bandhan-cash-fund-direct-pl-growth":
+    "Bandhan folio 8652064, 26 Oct 2026 — Liquid Fund (INF194K01I60), redeemed to nil; the family's cash-equivalent rule",
+  "bandhan-amc-ltd-bandhan-mf-bandhan-overnight-fund-direct-growth":
+    "Bandhan folio 8652064, 26 Oct 2026 — Overnight Fund (INF194KB1447), redeemed to nil; the family's cash-equivalent rule",
   /**
    * Ankita's ICICI Prudential folio 14320536 (Stage 10ep — first read in the
    * October delivery): both arbitrage schemes are redeemed to a printed 0.000

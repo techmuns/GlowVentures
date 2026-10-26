@@ -666,8 +666,10 @@ ok("the old Bandhan demat balances are not added beside either newer folio holdi
   depositoryFundHoldings().every(p => p.accountId !== custody || !["INF194K01Y60", "INF194K01V89"].includes(p.isin ?? "")));
 ok("the original July custody evidence remains available",
   Object.values(BOOK_SHARE_MOVEMENTS).some(w => w.accountId === custody && w.isin === "INF194K01Y60" && w.closing === 3371575.697));
+const newerStatement = bandhanFolio && { ...bandhanFolio,
+  priceAsOf: new Date(Date.parse(`${fundNavFor(bandhanFolio)?.date}T00:00:00Z`) + 86400000).toISOString().slice(0, 10) };
 ok("the older cached NAV cannot overwrite a newer fund statement",
-  !!bandhanFolio && applyFundNavs([bandhanFolio])[0].marketValue === bandhanFolio.marketValue);
+  !!newerStatement && applyFundNavs([newerStatement])[0].marketValue === newerStatement.marketValue);
 ok("other owners' Bandhan units remain valued", unpricedStatementUnits().some(p => p.isin === "INF194K01V89" && p.accountId !== custody));
 ok("a separate redeemed Motilal folio does not erase Ajay's demat arbitrage",
   depositoryFundHoldings().some(p => p.accountId === custody && p.isin === "INF247L01ED1" && p.quantity === 28067435.434));

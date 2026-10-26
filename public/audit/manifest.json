@@ -13896,6 +13896,7 @@
   "sourcePath": "source/october-2026-d/Bandhan-8652064-2026-10-26.pdf",
   "pages": 4,
   "sections": [
+   "holdings",
    "ledger",
    "pages"
   ],
@@ -13906,6 +13907,12 @@
   "fy": "2026-10-26",
   "source": "source/october-2026-d/Bandhan-8652064-2026-10-26.pdf",
   "sheets": [
+   {
+    "key": "holdings",
+    "name": "Current scheme balances",
+    "rows": 5,
+    "cols": 8
+   },
    {
     "key": "ledger",
     "name": "Source unit and cash ledger",
