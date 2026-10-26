@@ -8,12 +8,12 @@ ISIN** and never on a name. 14,412 scheme rows read.
 
 | | |
 | --- | ---: |
-| Schemes priced | **45** |
-| …of which identified by the family's own statement | 45 |
+| Schemes priced | **47** |
+| …of which identified by the family's own statement | 47 |
 | …by the look-through's resolved ISIN | 0 |
-| …of the statement's, confirmed by the look-through | 19 |
+| …of the statement's, confirmed by the look-through | 21 |
 | Resolved but **not usable to value a holding** | 3 |
-| Named below and not resolved | 3 |
+| Named below and not resolved | 1 |
 | Newest published date | 2026-10-25 |
 
 ## Priced
@@ -26,6 +26,8 @@ ISIN** and never on a name. 14,412 scheme rows read.
 | Bandhan Liquid Fund-Direct Plan-Growth | `INF194K01I60` | statement | Liquid Fund | 3451.1571 | 2026-10-25 | — |
 | Bandhan Overnight Fund-Direct Plan-Growth | `INF194KB1447` | statement | Overnight Fund | 1478.7935 | 2026-10-25 | — |
 | Bandhan Large & Mid Cap Fund-Direct Plan-Growth | `INF194K01V89` | statement | Large & Mid Cap Fund | 154.335 | 2026-10-23 | -1.48% |
+| DSP GOLD ETF | `INF740KA1SW3` → `INF740KA1ZP2` (units ×10 before 2026-08-28) | statement | Gold ETF | 13.6451 | 2026-10-23 | — |
+| DSP SILVER ETF | `INF740KA1RE3` → `INF740KA1ZQ0` (units ×10 before 2026-08-28) | statement | Silver ETF | 18.5517 | 2026-10-23 | — |
 | HDFC Arbitrage Fund - Direct Plan - Growth Option | `INF179KA1KT6` | statement | Arbitrage Fund | 21.943 | 2026-10-23 | +0.21% |
 | HDFC Arbitrage Fund - Direct Plan - Monthly IDCW # Payout Option | `INF179KA1KS8` | statement | Arbitrage Fund | 11.348 | 2026-10-23 | +0.21% |
 | HDFC BAF D-GROW | `INF179K01WA6` | statement | Dynamic Asset Allocation or Balanced Advantage | 539.444 | 2026-10-23 | -0.71% |
@@ -88,6 +90,4 @@ A NAV is shown for these; a holding value is not built on it. Each names why.
 
 ## Not resolved
 
-- **DSP GOLD ETF** — ISIN INF740KA1SW3 is not in AMFI's published NAV file
-- **DSP SILVER ETF** — ISIN INF740KA1RE3 is not in AMFI's published NAV file
 - **NEO CREDIT ALTERNATIVES INVESTMENT TRUST#NEO INFRA INCOME OPPORTUNITIES FUND-CAT II AIF-CLASS A5** — ISIN INF0QS022178 is not in AMFI's published NAV file

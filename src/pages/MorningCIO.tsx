@@ -1328,9 +1328,21 @@ export function MorningCIO() {
      * annualised" on the return, names the holdings reporting no cost, and
      * REFUSES the return on exactly the buckets this cell refuses it on. Its
      * formula card carries the same worked example.
+     *
+     * FIFO'S TWO PARTS OUTSIDE THIS ROW'S INVESTED AND CURRENT, as handles
+     * (Stage 10hq): the gain booked on units sold and the income paid out, and
+     * the cost of the units sold. Where they are material the Return does not
+     * follow from the two cells beside it — DSP Silver's ₹1.47 Cr realised put
+     * the ETF row at −8.5% over ₹25.1 Cr invested and ₹21.4 Cr current — and
+     * the column's header says why. Only where FIFO is struck holding by
+     * holding: a whole mandate's Invested is already its capital.
      */
+    const f = b.investedFifo;
+    const plain = !!f && !f.wholeMandates.length && !f.atCost && f.costHeld != null && f.deployed != null;
     return (
-      <span className={`rounded-md bg-ink-700 px-1.5 py-0.5 text-[11px] font-semibold mono ${changeColor(b.retPct)}`}>
+      <span className={`rounded-md bg-ink-700 px-1.5 py-0.5 text-[11px] font-semibold mono ${changeColor(b.retPct)}`}
+        data-alloc-booked={plain ? (f!.realised ?? 0) + (f!.income ?? 0) : undefined}
+        data-alloc-sold={plain ? f!.deployed! - f!.costHeld! : undefined}>
         {fmtPct(b.retPct, { sign: true, decimals: 1 })}
       </span>
     );
