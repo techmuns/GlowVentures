@@ -1216,7 +1216,9 @@ export function PortfolioMonitor() {
   const pickedUnvalued = allRecordedLines().filter(l => !carriedBy(l, positions)
     && inScopeAccount(memberScope.accountIds, l.accountId)
     && selected.has(recordedLabel(l.homeKey) ?? l.security)
-    && (entity === "All" || (accIdx.get(l.accountId)?.ownerId ? ownerDisplayName(accIdx.get(l.accountId)!.ownerId!) : accIdx.get(l.accountId)?.owner) === entity));
+    && (entity === "All" || (accIdx.get(l.accountId)?.ownerId ? ownerDisplayName(accIdx.get(l.accountId)!.ownerId!) : accIdx.get(l.accountId)?.owner) === entity)
+    && (bucket === "All" || groupKeyFor(groupAxis, accIdx, { ...l, securityKey: l.homeKey }) === bucket)
+    && (sector === "All" || (l.assetClass === "Equity" ? companySectors.get(l.homeKey)?.sector ?? UNCLASSIFIED_SECTOR : UNCLASSIFIED_SECTOR) === sector));
   /**
    * THE LABEL A DERIVED ROW IS FILED UNDER — the book's own where the book holds
    * the key, so the row a reader picks and the option they picked it by are the

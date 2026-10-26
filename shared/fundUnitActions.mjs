@@ -40,6 +40,20 @@ export function fundUnitBasis(isin, asOf, through, actions = FUND_UNIT_ACTIONS) 
 /** A price lookup may follow identity; a quantity still needs its own date. */
 export const fundPricingIsin = (isin, through) => fundUnitBasis(isin, '1900-01-01', through).isin;
 
+/** Compare identifier tiers only after their documented successor chains. */
+export const fundIdentityDisagrees = (left, right, through) => !!left && !!right
+  && fundPricingIsin(left, through) !== fundPricingIsin(right, through);
+
+/** Retain ETF classification from current and last-published scheme metadata,
+ * including balances whose custody tape did not state an asset class. */
+export function heldEtfCoverageGaps(wanted, priced, schemeRecords) {
+  const etfs = new Set(schemeRecords.filter(r => /\bETFs?\b/i.test(r.category ?? ''))
+    .flatMap(r => [r.isin, r.pricingIsin, r.securityKey]).filter(Boolean));
+  const covered = new Set(priced.filter(r => r.usableForValue).map(r => r.securityKey));
+  return wanted.filter(w => w.holds && (w.assetClass === 'ETF' || etfs.has(w.bookIsin) || etfs.has(w.pricingIsin) || etfs.has(w.key))
+    && !covered.has(w.key));
+}
+
 /** Recover lots against the original source balance, even after a verified split. */
 export function acquisitionIdentity(position) {
   const a = position.fundUnitAdjustment;

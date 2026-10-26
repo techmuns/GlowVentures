@@ -33,7 +33,7 @@ try {
       const row=table.locator(`tr[data-account-row$="${suffix}"]`);
       await row.waitFor();
       assert.equal(await row.locator('[data-col-cell="investedOn"]').getAttribute('data-invested-first'),date);
-      assert.doesNotMatch(await row.locator('[data-col-cell="invested"]').innerText(),/^—$/);
+      assert.doesNotMatch(await row.locator('[data-source-metric="costBasis"]').innerText(),/^—$/);
     }
     assert.equal(await table.locator('tr[data-recorded-row]').count(),0,'converted holdings are not repeated as unvalued');
     await page.screenshot({path:path.join(out,key+'.png')});
@@ -56,9 +56,14 @@ try {
   await picker.locator(`[data-option="${recordedLabel(unpriced.homeKey)}"]`).click();
   await page.keyboard.press('Escape');
   await page.locator('[data-monitor-unvalued]').waitFor();
+  const sections=page.locator('[data-section-filter]');
+  await sections.locator('[data-section-tab="ETF"]').click();
+  assert.equal(await page.locator('[data-monitor-unvalued]').count(),0,'unvalued results obey the active section');
+  await sections.locator('[data-section-tab="All"]').click();
+  await page.locator('[data-monitor-unvalued]').waitFor();
   await page.locator(`[data-monitor-unvalued] a[href="/stock/${unpriced.homeKey}"]`).click();
   const row=page.locator(`tr[data-recorded-row="${unpriced.accountId}"]`); await row.waitFor();
-  assert.doesNotMatch(await row.locator('[data-col-cell="invested"]').innerText(),/^—$/);
+  assert.doesNotMatch(await row.locator('[data-source-metric="costBasis"]').innerText(),/^—$/);
   assert.equal(await row.locator('[data-col-cell="investedOn"]').getAttribute('data-invested-first'),unpriced.recoveredCost.heldPurchases.first);
   assert.ok(Number(await page.locator('[data-stock-avg-cost]').getAttribute('data-stock-avg-cost'))>0);
   assert.equal(await page.locator('[data-stock-recorded-value]').count(),1,'known cost does not invent a valuation');

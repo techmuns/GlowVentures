@@ -1,3 +1,4 @@
+import { acquisitionIdentity } from "../../shared/fundUnitActions.mjs";
 // WHAT THE ASSISTANT IS TOLD ABOUT THIS BOOK.
 //
 // The chat box answers questions about the family's money, and a language model
@@ -567,7 +568,7 @@ export function buildDashboardContext(book: ChatBook): ContextBlock[] {
           : typeof u.faceValue === "number" ? "face-value" : "no-rate",
         reportedBy: u.sameUnitsReportedBy ?? null,
         shownLiveNow: fromUnits.some((p) => p.accountId === u.accountId && (
-          u.isin && p.isin ? String(p.isin).toUpperCase() === String(u.isin).toUpperCase() : p.securityKey === u.securityKey)),
+          u.isin && p.isin ? String(acquisitionIdentity(p).isin).toUpperCase() === String(u.isin).toUpperCase() : p.securityKey === u.securityKey)),
       })),
     },
     /**

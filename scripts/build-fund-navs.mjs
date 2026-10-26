@@ -110,7 +110,7 @@
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { fundUnitBasis, fundPricingIsin } from "../shared/fundUnitActions.mjs";
+import { fundUnitBasis, fundPricingIsin, fundIdentityDisagrees, heldEtfCoverageGaps } from "../shared/fundUnitActions.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const OUT = join(ROOT, "src/data/fundNavs.ts");
@@ -357,9 +357,10 @@ function main() {
     for (const w of [...wanted.values()].sort((a, b) => a.key.localeCompare(b.key))) {
       const bookIsin = w.bookIsin;
       const lt = ltIsin.get(w.key) ?? null;
+      w.pricingIsin = bookIsin || lt ? fundPricingIsin(bookIsin ?? lt, newest) : null;
       // BOTH TIERS MUST AGREE WHERE BOTH ANSWER. A disagreement means one of
       // them is about a different security, and neither may win silently.
-      if (bookIsin && lt && bookIsin !== lt) {
+      if (fundIdentityDisagrees(bookIsin, lt, newest)) {
         skipped.push({ ...w, why: `the statement's ISIN ${bookIsin} and the look-through's ${lt} disagree, so neither is used` });
         continue;
       }
@@ -493,8 +494,8 @@ export const FUND_NAV_AS_OF = ${JSON.stringify(out.reduce((a, e) => (e.date > a 
     const usable = out.filter((e) => e.usableForValue);
     // A missing listed ETF is an actionable identity/coverage gap, not a
     // successful refresh. Preserve the last good price table on failure.
-    const etfGaps = [...wanted.values()].filter(w => w.holds && w.assetClass === "ETF"
-      && !usable.some(e => e.securityKey === w.key));
+    const etfGaps = heldEtfCoverageGaps([...wanted.values()], out,
+      [...by].map(([isin, r]) => ({ ...r, isin })).concat([...prev.byKey.values()]));
     if (etfGaps.length) die(`Held ETF valuation coverage missing: ${etfGaps.map(w => w.name).join(", ")}. Verify the exchange identity and unit-conversion evidence; no prices were published.`);
     const doc = `# Fund NAVs — what is priced daily, and what is not
 

@@ -677,6 +677,8 @@ export function partialValuationNotes(
   const fundClause = (funds: readonly Position[], units: string, asOf: string) => {
     const cash = funds.filter((r) => isCashEquivalent(r));
     const navDate = funds.map((r) => r.navDate).filter(Boolean).sort().pop() ?? "its publication date";
+    const converted = funds.filter(r => r.fundUnitAdjustment && r.fundUnitAdjustment.factor !== 1);
+    if (converted.length) units += `, converted for documented exchange unit splits (${converted.map(r => `${r.security}: ${r.fundUnitAdjustment!.quantity} × ${r.fundUnitAdjustment!.factor} = ${r.quantity} units`).join("; ")})`;
     return `its ${n(funds.length, "fund")}${cash.length ? ` (${cash.length === funds.length ? (cash.length === 1 ? "a liquid or arbitrage fund" : "all liquid and arbitrage funds") : `${cash.length} of them liquid and arbitrage funds`} the family counts as cash)` : ""} ${funds.length === 1 ? "is" : "are"} valued at ${units} (${asOf}) × AMFI's published NAV (${navDate})`;
   };
   for (const [accountId, rows] of byTape) {

@@ -25,6 +25,7 @@
 // vs screen, every row vs current holdings, 15 capital accounts vs 11, one row vs one holding) is
 // asserted to EXIST on this book, so a builder that went back would fail.
 import { BOOK_SUMMARY, BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_POLYCAB, BOOK_COMMITMENTS, BOOK_SHARE_MOVEMENTS, BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
+import { acquisitionIdentity } from '../../../shared/fundUnitActions.mjs';
 import { applyFundNavs, depositoryCashHoldings, depositoryFundHoldings, partialValuationNotes, unpricedStatementUnits, withPartialValuation } from "@/lib/fundNavs";
 import { depositoryShareHoldings, shareCandidates } from "@/lib/depositoryShares";
 import { applyCorporateActionQuotes } from "@/lib/corporateActions";
@@ -603,9 +604,12 @@ ok("the context is a non-empty set of named blocks",
   // A line the NAV values but whose whole holding is under the ₹1,000 floor is
   // on no screen (`currentHoldings` drops it everywhere), so the dashboard does
   // NOT show it and must not say it does — the same `speck` rule as above.
-  const unitKey = (u: { accountId: string; quantity: number | null }) => `${u.accountId}|${u.quantity}`;
+  const unitKey = (u: Position) => `${u.accountId}|${acquisitionIdentity(u).quantity}`;
   const liveUnits = new Set(UNPRICED.filter((u) => !speck(u.securityKey)).map(unitKey));
   const speckUnits = new Set(UNPRICED.filter((u) => speck(u.securityKey)).map(unitKey));
+  const converted = UNPRICED.filter(p=>p.fundUnitAdjustment);
+  ok('converted ETF balances are valued in the assistant audit under their original custody counts', converted.length === 3
+    && converted.every(p=>lb.rows.some(r=>r.accountId===p.accountId && r.units===acquisitionIdentity(p).quantity && r.shownLiveNow)));
   ok("...each says whether the dashboard values it now — true of every line a fund's NAV values here",
     !!lb && lb.rows.filter((r) => liveUnits.has(`${r.accountId}|${r.units}`)).every((r) => r.shownLiveNow === true)
       && lb.rows.some((r) => r.shownLiveNow === false),
