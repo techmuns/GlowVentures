@@ -105,6 +105,7 @@ jobs:
           CHROME="$(command -v google-chrome)" node scripts/dev/check-chunk-recovery.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-pdf-preview.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-source-trace.mjs
+          CHROME="$(command -v google-chrome)" node scripts/dev/check-navigation-state.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-etf-unit-continuity.mjs
 
       - name: Preserve return attribution browser evidence
@@ -143,6 +144,14 @@ jobs:
         with:
           name: source-tracing-browser
           path: .cache/source-trace/browser
+          if-no-files-found: ignore
+
+      - name: Preserve navigation state browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: navigation-state-browser
+          path: .cache/navigation-state-check
           if-no-files-found: ignore
 
       - name: Preserve ETF unit continuity browser evidence

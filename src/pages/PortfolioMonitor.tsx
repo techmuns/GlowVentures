@@ -1,7 +1,8 @@
 import { useTableExportFilter, useTableExportExpansion } from "@/lib/tableExportSnapshot";
 import { ExportableTable } from "@/components/ExportableTable";
 import { InfiniteTableEnd, useInfiniteTable } from "@/components/InfiniteTableBody";
-import { Fragment, useEffect, useMemo, useState, useCallback, type ReactNode } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState, useCallback, type ReactNode } from "react";
+import { useNavigationState } from '@/lib/useNavigationState';
 import { statementNoteForSet } from "@/lib/statementNotes";
 import { Link, useSearchParams } from "react-router-dom";
 import { ArrowUpDown, ChevronRight, Layers, ArrowLeftRight, FileSpreadsheet } from "lucide-react";
@@ -787,11 +788,14 @@ export function PortfolioMonitor() {
    */
   const [showParams] = useSearchParams();
   const showParam = showParams.get("show");
-  const [view, setViewState] = useState<"holdings" | "transactions">(
-    showParam === "transactions" ? "transactions" : "holdings");
+  const [view, setViewState] = useNavigationState<"holdings" | "transactions">('view',
+    showParam === "transactions" ? "transactions" : "holdings", ['holdings', 'transactions']);
+  const previousShow = useRef(showParam);
   useEffect(() => {
+    if (previousShow.current === showParam) return;
+    previousShow.current = showParam;
     if (showParam === "transactions" || showParam === "holdings") setViewState(showParam);
-  }, [showParam]);
+  }, [showParam, setViewState]);
   /**
    * BY SECURITY IS THE ONLY VIEW WITH A CONTROL — the switch was removed at the
    * family's request, who read the consolidated table as the one they want.
@@ -843,7 +847,7 @@ export function PortfolioMonitor() {
   const activeAxis: MonitorAxis = view === "holdings" ? groupAxis : txnAxis;
   // These three filters are global — they drive both the Holdings table and the
   // Transactions tape at once. `selected` is a set of security names (empty = all).
-  const [selectedFilter, setSelected] = useState<Set<string>>(new Set());
+  const [selectedFilter, setSelected] = useNavigationState<Set<string>>('selected', () => new Set());
   const selected = useTableExportFilter(selectedFilter, EMPTY_EXPORT_SELECTION);
   /**
    * THE SECTOR DROPDOWN IS GONE AND THE SECTOR FILTER IS NOT — the same
@@ -862,7 +866,7 @@ export function PortfolioMonitor() {
    */
   const [sectorParams] = useSearchParams();
   const sector = useTableExportFilter(sectorParams.get("sector") ?? "All", "All");
-  const [entityFilter, setEntity] = useState("All");
+  const [entityFilter, setEntity] = useNavigationState<string>('entity', 'All');
   const entity = useTableExportFilter(entityFilter, "All");
   // Category filter — Direct Equity / PMS mandates / AIF / Mutual Fund / ETF /
   // Cash were shown in one flat list, so a ₹176 Cr AIF folio sat between two
@@ -870,7 +874,7 @@ export function PortfolioMonitor() {
   // (`holdingBucket`), not to an asset class: what a reader is choosing between
   // here is shares the family bought and mandates it handed to a manager, and
   // those are the same asset class.
-  const [bucketFilter, setBucket] = useState("All");
+  const [bucketFilter, setBucket] = useNavigationState<string>('section', 'All');
   const bucket = useTableExportFilter(bucketFilter, "All");
   /**
    * SWITCHING AXIS CLEARS THE SECTION FILTER, and that is a correctness fix
@@ -1041,7 +1045,7 @@ export function PortfolioMonitor() {
   // count cannot drift from the header when a reader moves a column, where the
   // literal it replaced had to be kept in step by hand.
   const COL_COUNT = holdView.order.length;
-  const [expandedState, setExpanded] = useState<Set<string>>(() => new Set());
+  const [expandedState, setExpanded] = useNavigationState<Set<string>>('expanded', () => new Set());
   const expanded = useTableExportExpansion(expandedState);
   /**
    * ── ONE EXPANDER, AND THE SECOND ONE WENT ──────────────────────────────────
@@ -1059,7 +1063,7 @@ export function PortfolioMonitor() {
    * as well as the section, so closing "AIF" on Category does not close a
    * basket of another name on the next axis.
    */
-  const [closedSections, setClosedSections] = useState<Set<string>>(() => new Set());
+  const [closedSections, setClosedSections] = useNavigationState<Set<string>>('closed-sections', () => new Set());
   const toggleSection = (k: string) =>
     setClosedSections((prev) => { const n = new Set(prev); if (n.has(k)) n.delete(k); else n.add(k); return n; });
   const [exporting, setExporting] = useState(false);
@@ -3891,7 +3895,7 @@ export function PortfolioMonitor() {
 
       {view === "holdings" ? (
         <Card pad={false} className="flex min-h-0 flex-1 flex-col">
-          <div className="min-h-0 flex-1 overflow-auto">
+          <div className="min-h-0 flex-1 overflow-auto" data-navigation-scroll="monitor-holdings">
             {/* `data-lookthrough` says whether the fund look-through has answered,
                 so a check can wait for the store to settle without reading prose —
                 the card that used to carry its three states is rows now. Present
@@ -6176,7 +6180,7 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
    * LABELS are Buys and Sells, which the family asked for, and the tape maps
    * the direction to `Buy`/`Sell` at the point it filters.
    */
-  const [sideFilter, setSide] = useState<CapitalSide>("all");
+  const [sideFilter, setSide] = useNavigationState<CapitalSide>('transactions-side', 'all', ['all', 'in', 'out']);
   const side = useTableExportFilter<CapitalSide>(sideFilter, "all");
   /**
    * HOW THE ROWS ARE ORDERED — recent first, and the reader can change it.
@@ -6186,20 +6190,20 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
    * set to newest first — `src/lib/txnSort.ts` is where the modes are defined,
    * and "Longest held" came out of it at the family's request.
    */
-  const [sort, setSort] = useState<TxnSort>("recent");
-  const [openRowState, setOpenRow] = useState<Set<string>>(new Set());
-  const [openClubState, setOpenClub] = useState<Set<string>>(new Set());
-  const [openInstrumentState, setOpenInstrument] = useState<Set<string>>(new Set());
+  const [sort, setSort] = useNavigationState<TxnSort>('transactions-sort', 'recent', ['recent', 'size']);
+  const [openRowState, setOpenRow] = useNavigationState<Set<string>>('transactions-rows', () => new Set());
+  const [openClubState, setOpenClub] = useNavigationState<Set<string>>('transactions-clubs', () => new Set());
+  const [openInstrumentState, setOpenInstrument] = useNavigationState<Set<string>>('transactions-instruments', () => new Set());
   const openRow = useTableExportExpansion(openRowState);
   const openClub = useTableExportExpansion(openClubState);
   const openInstrument = useTableExportExpansion(openInstrumentState);
   const toggle = (set: (f: (s: Set<string>) => Set<string>) => void, key: string) =>
     set((prev) => { const nx = new Set(prev); if (nx.has(key)) nx.delete(key); else nx.add(key); return nx; });
-  const [fromFilter, setFrom] = useState("");
+  const [fromFilter, setFrom] = useNavigationState<string>('transactions-from', '');
   const from = useTableExportFilter(fromFilter, "");
-  const [toFilter, setTo] = useState("");
+  const [toFilter, setTo] = useNavigationState<string>('transactions-to', '');
   const to = useTableExportFilter(toFilter, "");
-  const [preset, setPreset] = useState("all");
+  const [preset, setPreset] = useNavigationState<string>('transactions-preset', 'all');
 
   useEffect(() => {
     let alive = true;
@@ -6712,7 +6716,7 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
         title={<span data-card-title-hint data-txn-framing
           title="Committed, Purchase and Redemption: the family's own money into and out of each account. Trades: the dealing inside it — a manager's in a mandate, the family's own in a broking account. The two are never added.">Transactions</span>}
         className="flex min-h-0 flex-1 flex-col">
-        <div className="min-h-0 flex-1 overflow-auto">
+        <div className="min-h-0 flex-1 overflow-auto" data-navigation-scroll="monitor-transactions">
           <SortableTable className="min-w-full text-sm" data-dated-table
             storageKey="monitor-dated" columns={datedCols}>
             {(dv) => { const COLS = dv.order.length; return (<>

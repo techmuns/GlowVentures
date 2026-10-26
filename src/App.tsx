@@ -1,4 +1,5 @@
-import { lazy, Suspense, useSyncExternalStore } from "react";
+import { lazy, Suspense, useRef, useSyncExternalStore } from "react";
+import { useNavigationScroll } from '@/lib/useNavigationScroll';
 import { deploymentChanged, subscribeToDeployment } from "@/lib/deploymentVersion";
 import { publicationRefreshBlocked } from "../shared/publicationRefresh.mjs";
 import { Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
@@ -121,6 +122,8 @@ function StockRoute() {
 export default function App() {
   const location = useLocation();
   const background = sourceBackground(location);
+  const mainRef = useRef<HTMLElement>(null);
+  useNavigationScroll(mainRef, background ?? location);
   const updated = useSyncExternalStore(subscribeToDeployment, deploymentChanged);
   if (updated && !publicationRefreshBlocked()) return <div role="alert" className="flex h-full items-center justify-center bg-ink-950 p-6 text-slate-200">
     <div className="max-w-md rounded-lg border border-ink-700 bg-ink-900 p-6">
@@ -149,7 +152,7 @@ export default function App() {
             nothing; the alert card and the All alerts table say where each
             level went. */}
         <ResearchLevelSync />
-        <main className="flex-1 overflow-y-auto px-6 py-6">
+        <main ref={mainRef} className="flex-1 overflow-y-auto px-6 py-6">
           <EnteredNumbersNotice />
           <Suspense fallback={<div role="status" className="p-4 text-sm text-slate-400">Opening page…</div>}>
           <Routes location={background ?? location}>
