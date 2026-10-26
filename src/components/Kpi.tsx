@@ -116,9 +116,9 @@ export function Kpi({ label, labelText, value, second, sub, delta, icon, info, h
         )}
         {(info || icon) && <div className="flex shrink-0 items-center gap-1.5">{info}{icon && <div className="text-slate-500">{icon}</div>}</div>}
       </div>
-      {/* `pointer-events-none` on every wrapper lets a click anywhere fall
-          through to the anchor beneath — there is nothing interactive left in
-          here to protect, now that the figure no longer opens a popover. */}
+      {/* The wrapper passes clicks to a tile target. Explicit source controls
+          take pointer events back on their own boxes, without nesting controls
+          inside the tile's sibling anchor. */}
       <div data-kpi-value className="pointer-events-none relative z-10 mt-2.5 w-fit max-w-full whitespace-nowrap font-display text-[19px] font-bold tracking-tight text-slate-100 tabular">{value}</div>
       {second && (
         <div data-kpi-second className="pointer-events-none relative z-10 mt-1 whitespace-nowrap text-[12.5px] text-slate-300">{second}</div>

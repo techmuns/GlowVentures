@@ -40,6 +40,7 @@ import { UNCLASSIFIED } from "@/lib/sectors";
 import { ReturnsTable } from "@/components/ReturnsTable";
 import { InvestmentTools } from "@/components/InvestmentTools";
 import { QuantityMovement } from "@/components/QuantityMovement";
+import { SourceValue } from '@/components/SourceTrace';
 import { CorporateActionReturns } from "@/components/CorporateActionReturns";
 import { PageNav } from "@/components/PageNav";
 import { homeKeyOf, recordedFor, type RecordedLine } from "@/lib/recordedHoldings";
@@ -1199,9 +1200,9 @@ export function StockInfo() {
     const route = holdingRoute(eng);
     const why = l.reason.charAt(0).toUpperCase() + l.reason.slice(1);
     return (
-      <Tr view={posView} key={`rec-${l.accountId}-${l.securityKey}`} data-recorded-row={l.accountId}
+      <Tr view={posView} sourcePositions={[l]} key={`rec-${l.accountId}-${l.securityKey}`} data-recorded-row={l.accountId}
         data-held-route={heldRouteOf(route)} data-recorded-units={l.quantity} className="hover:bg-ink-700/40">
-        <td className="px-4 py-2.5 font-medium text-slate-100">{ownerOf(accIdx, asRow(l))}</td>
+        <td className="px-4 py-2.5 font-medium text-slate-100"><SourceValue positions={[l]} metric="statement">{ownerOf(accIdx, asRow(l))}</SourceValue></td>
         <td className="max-w-[20rem] whitespace-normal px-4 py-2.5 text-[12px] text-slate-400">
           <div className="min-w-[12rem]">
             <div>{providerOf(accIdx, asRow(l))}</div>
@@ -1233,7 +1234,7 @@ export function StockInfo() {
          strategy sub-line whenever the account prints one. `data-held-route`
          is the route the row is filed under, read the same way. */
       <Tr view={posView} reviewScope={{ positions: [r] }} key={r.accountId} data-account-row={r.accountId} data-held-route={heldRouteOf(route)} className="hover:bg-ink-700/40">
-        <td className="px-4 py-2.5 font-medium text-slate-100">{ownerOf(accIdx, r)}</td>
+        <td className="px-4 py-2.5 font-medium text-slate-100"><SourceValue positions={[r]} metric="statement">{ownerOf(accIdx, r)}</SourceValue></td>
         {/* THE WIDEST TEXT IN THE TABLE MAY WRAP; A FIGURE MAY NOT. The table
             is `whitespace-nowrap` so figures never break, and a provider's
             legal name or a mandate's printed strategy ("V.E.C ASSAGO Small and
@@ -1246,7 +1247,7 @@ export function StockInfo() {
             up the width. */}
         <td className="max-w-[20rem] whitespace-normal px-4 py-2.5 text-[12px] text-slate-400">
           <div className="min-w-[12rem]">
-            <div>{providerOf(accIdx, r)}</div>
+            <div><SourceValue positions={[r]} metric="statement">{providerOf(accIdx, r)}</SourceValue></div>
             {/* The route reads as a phrase — "via manager's mandate" — because
                 the column header no longer supplies the word. `ROUTE_LABEL` is
                 still the one place those four words are chosen. */}
@@ -1511,7 +1512,7 @@ export function StockInfo() {
       return who.length === 1 ? `no cost on the ${who[0]} statement for these rows` : "no statement for these rows reports a cost";
     })();
     return (
-      <TrFoot view={posView} key={key} className="px-4 py-2.5 text-left text-slate-200"
+      <TrFoot view={posView} sourcePositions={ps} key={key} className="px-4 py-2.5 text-left text-slate-200"
         data-held-foot="measured" data-held-foot-value={t.mv}
         /* A TOTAL MUST TIE TO ITS OWN COLUMNS, and this one cannot by
            subtraction where only some units report a cost: Invested and P&L are
@@ -1880,7 +1881,7 @@ export function StockInfo() {
             nobody made. It is absent with its reason; a holding its fund
             redeemed to nil still HAS rows and keeps its measured zero. */}
         <Kpi label="Holding value"
-          value={exited || recordedOnly ? <AbsentValue /> : fmtFromBase(mv, { compact: true })}
+          value={exited || recordedOnly ? <AbsentValue /> : <SourceValue positions={drows} metric="marketValue">{fmtFromBase(mv, { compact: true })}</SourceValue>}
           sub={exited ? <span className="text-slate-500">{unchecked ? "no direct holding" : "no current holding — fully exited"}</span>
             : recordedOnly ? <span className="text-slate-500" title={RECORDED_TIP} data-stock-recorded-value>not valued</span>
             : <span data-stock-valued-at={valuation.at ?? ""} data-stock-valued-by={valuation.by ?? ""} title={valuation.why}>
@@ -1893,11 +1894,11 @@ export function StockInfo() {
             claims nothing. */}
         <Kpi label="Quantity"
           value={exited ? <AbsentValue />
-            : recordedOnly ? <span data-stock-qty={recordedUnits}>{unitsText(recordedUnits)}</span>
+            : recordedOnly ? <SourceValue positions={recorded} metric="quantity"><span data-stock-qty={recordedUnits}>{unitsText(recordedUnits)}</span></SourceValue>
             /* NO COUNT IS NOT ZERO (Stage 10dh): the review records an amount
                paid for most private investments and no unit count. */
             : qty === null ? <span data-stock-qty-absent><AbsentValue /></span>
-            : <span data-stock-qty={qty}>{fmtNum(qty)}</span>}
+            : <SourceValue positions={drows} metric="quantity"><span data-stock-qty={qty}>{fmtNum(qty)}</span></SourceValue>}
           sub={exited ? <span className="text-slate-500">{unchecked ? "no direct holding" : "no current holding"}</span>
             : !recordedOnly && qty === null ? <span className="text-slate-500" title={NO_UNIT_COUNT} data-stock-no-count>no unit count</span>
             : recorded.length > 0
@@ -1914,7 +1915,7 @@ export function StockInfo() {
             comparing it with the Quantity tile beside it must be told the two
             cover different units (main's #88). */}
         <Kpi label="Avg cost"
-          value={avgCost === null ? <AbsentValue /> : <span className="mono" data-stock-avg-cost={avgCost}>{price(avgCost)}</span>}
+          value={avgCost === null ? <AbsentValue /> : <SourceValue positions={drows} metric="avgCost"><span className="mono" data-stock-avg-cost={avgCost}>{price(avgCost)}</span></SourceValue>}
           sub={cost === null ? <span className="text-slate-500">{costWhy}</span>
             // A cost with no unit count to divide it by — the review's records
             // of what was paid (Stage 10dh). The cost is real; the average is not.
@@ -1931,13 +1932,13 @@ export function StockInfo() {
             rest. See `cmpMarks` for what the split is and why the tile refuses
             it rather than picking, and `priceNote` for the five states. */}
         <Kpi label={fundVehicle ? "NAV" : "CMP"}
-          value={<span data-stock-mark={cmpSplit ? "split" : cmp === null ? "none" : "one"}>{cmp ?? <AbsentValue />}</span>}
+          value={<span data-stock-mark={cmpSplit ? "split" : cmp === null ? "none" : "one"}>{cmp == null ? <AbsentValue /> : <SourceValue positions={drows} metric="currentPrice">{cmp}</SourceValue>}</span>}
           delta={live && !cmpSplit ? dayPct : null}
           sub={<span className="text-slate-500" data-stock-mark-note data-statement-note={markNote?.short}
             title={markNote ? `${priceNote.tip} ${markNote.note}` : priceNote.tip}>{priceNote.line}{markNote ? ` · ${markNote.short}` : ""}</span>}
           icon={<Tag className="h-4 w-4" />} />
         <Kpi label="Unrealised P&L"
-          value={pnl === null ? <AbsentValue /> : <span className={changeColor(pnl)}>{fmtFromBase(pnl, { compact: true, sign: true })}</span>}
+          value={pnl === null ? <AbsentValue /> : <SourceValue positions={drows} metric="unrealizedPnL"><span className={changeColor(pnl)}>{fmtFromBase(pnl, { compact: true, sign: true })}</span></SourceValue>}
           delta={ret}
           sub={pnl === null && atCostAll
             // HELD AT COST IS NOT "NO COST" (Stage 10dh): the review records the

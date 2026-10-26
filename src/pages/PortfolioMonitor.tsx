@@ -66,6 +66,7 @@ import {
 // from there by type rather than by an omitted button.
 import { sectionsFor, orderSections, TXN_UNSECTIONED, TXN_UNSECTIONED_WHY, type TxnSections } from "@/lib/txnAxis";
 import { Auditable } from "@/components/Auditable";
+import { SourceValue } from '@/components/SourceTrace';
 // THE RETURN-METHODOLOGY PICKER AND ITS COLUMNS ARE SHARED with the Private
 // Market fund table now. Everything that used to be defined here moved verbatim;
 // this page supplies only how one of ITS rows resolves a measure.
@@ -2724,7 +2725,7 @@ export function PortfolioMonitor() {
   // "nobody measured it".
   type ChildCells = Partial<Record<"qty" | "avgCost" | "invested" | "investedOn" | "cmp" | "day" | "direct" | "pms" | "otherRoute" | "mv"
     | "viaFunds" | "totalExposure" | "weight" | "pnl" | "realised" | "sector" | "entity", ReactNode>>
-    & { ret?: (measure: ReturnMeasure) => ReactNode; reviewScope?: ReviewScope };
+    & { ret?: (measure: ReturnMeasure) => ReactNode; reviewScope?: ReviewScope; sourcePositions?: readonly Position[] };
   const CHILD_NUM = `${TREE_CELL_DENSE.child} text-right mono whitespace-nowrap text-slate-400`;
   /** A child's cells, in the table's DECLARED column order — which is what `<Tr>` permutes from. */
   const childTds = (c: ChildCells) => [
@@ -2852,7 +2853,7 @@ export function PortfolioMonitor() {
     /** A line that opens rows of its own — a fund line into its instruments. */
     toggle?: { open: boolean; label: string };
   }, cells: ChildCells, data: Record<string, string | number | undefined> = {}, adjust = false) => (
-    <Tr view={holdView} reviewScope={cells.reviewScope} key={key}
+    <Tr view={holdView} sourcePositions={cells.sourcePositions} reviewScope={cells.reviewScope} key={key}
       className={`${adjust ? TREE_ROW_DENSE.adjust : TREE_ROW_DENSE.child}${name.toggle ? " cursor-pointer" : ""}`}
       {...(name.toggle ? rowToggle(() => toggleRow(key)) : {})}
       data-tree-child={kind} {...data}>
@@ -3246,6 +3247,7 @@ export function PortfolioMonitor() {
           ...tradesToggle(key, [h.position]),
         }, {
           reviewScope: { securityKey: h.securityKey, accountId: h.accountId },
+          sourcePositions: [h.position],
           qty: h.quantity === null ? <AbsentCell reason={NO_UNIT_COUNT} /> : fmtNum(h.quantity),
           avgCost: h.costNA ? <AbsentCell reason={NO_COST_LINE} />
             : h.avgCost === null ? <AbsentCell reason={h.quantity === null ? NO_UNIT_COUNT : h.quantity === 0 ? "this line holds no units to divide its cost by" : "this provider prints no per-unit cost for the holding"} />
@@ -3300,13 +3302,12 @@ export function PortfolioMonitor() {
         const costWhy = `an unrealised gain is market value less cost, and no statement for account ${l.accountNo} reports a cost for these holdings`;
         const capNote = l.costNA ? "" : investedBasisNote(l.fifo, (v) => fmtFromBase(v, { compact: true }));
         out.push(childRow(`${r.key}>${l.accountId}`, "mandate-account", 1, {
-          title: <span className="font-medium text-slate-200">{l.owner}</span>,
-          // NOT A LINK: the strategy has ONE page, opened from its name above,
-          // and every member's holding is on it — *"Remove the hyperlink from
-          // the Ajay and Ankita Jaisinghani account number."*
+          title: <SourceValue positions={hsOf(l.accountId)} metric="statement"><span className="font-medium text-slate-200">{l.owner}</span></SourceValue>,
+          // The current request links the account to its supporting statements;
+          // the strategy name above retains its own drill-down navigation.
           sub: (
             <>
-              {acct(l.accountNo)}
+              <SourceValue positions={hsOf(l.accountId)} metric="statement">{acct(l.accountNo)}</SourceValue>
               {" · "}
               {l.holdings < l.accountCount
                 ? <span className="text-amber-400/80" title={`${l.holdings} of the account's ${l.accountCount} holdings match the filters — the account itself holds ${fmtFromBase(l.accountMV, { compact: true })}`}>{l.holdings} of {l.accountCount} holdings</span>
@@ -3316,6 +3317,7 @@ export function PortfolioMonitor() {
           last: i === m.accounts.length - 1,
         }, {
           reviewScope: { accountId: l.accountId, isMandate: true },
+          sourcePositions: hsOf(l.accountId),
           qty: <AbsentCell reason={MANDATE_NOT_A_SECURITY} />,
           avgCost: <AbsentCell reason="an average cost per unit needs one security; this account holds many, each with a cost of its own" />,
           invested: l.costNA ? <AbsentCell reason={costWhy} />
@@ -3414,7 +3416,7 @@ export function PortfolioMonitor() {
             className="underline decoration-dotted decoration-slate-500/40 underline-offset-[3px] transition-colors hover:text-champagne-400 hover:decoration-champagne-500">
             {v.vehicle}
           </Link>
-        : <span title={`Account ${v.accountNo}`}>{v.vehicle}</span>;
+        : <SourceValue positions={v.positions} metric="statement"><span title={`Account ${v.accountNo}`}>{v.vehicle}</span></SourceValue>;
       // ON A CLUBBED fund the class is the line's name — and not a link: the
       // row above opens the fund's one page, every class and every member on
       // it. A fund with one class keeps the vehicle as the line's name: the row
@@ -3427,10 +3429,10 @@ export function PortfolioMonitor() {
       // account go under it. The Entity column carries the member too — it
       // closes a row that is wider than the screen, so it is not relied on.
       out.push(childRow(`${r.key}>${fk}`, "venue", 1, {
-        title: asClass ? <span data-venue-class={v.securityKey}>Class {v.cls}</span> : v.owner,
+        title: <SourceValue positions={v.positions} metric="statement">{asClass ? <span data-venue-class={v.securityKey}>Class {v.cls}</span> : v.owner}</SourceValue>,
         // Its share only where there is more than one line to share it
         // between: over one line it is always 100%.
-        sub: <>{asClass ? v.owner : <>{vehicle} · {v.route}</>} · {acct(v.accountNo)}{vs.length > 1 && vs.some((x) => x.marketValue !== 0)
+        sub: <>{asClass ? v.owner : <>{vehicle} · {v.route}</>} · <SourceValue positions={v.positions} metric="statement">{acct(v.accountNo)}</SourceValue>{vs.length > 1 && vs.some((x) => x.marketValue !== 0)
           ? <> · {(v.share * 100).toFixed(1)}% of the {asClass ? "fund" : "holding"}</> : null}</>,
         last: lastLine,
         ...tradesToggle(`${r.key}>${fk}`, v.positions),
@@ -4537,7 +4539,7 @@ export function PortfolioMonitor() {
                           popover inside it, which keep their own meaning: the
                           name still opens the holding's page, a formula still
                           opens its arithmetic. */}
-                      <Tr view={holdView} reviewScope={monitorReviewScope(r)} className={expandable ? TREE_ROW_DENSE.parent : "hover:bg-ink-700/40"}
+                      <Tr view={holdView} sourcePositions={r.mandate ? r.mandate.holdings.map(h => h.position) : r.trancheSet} reviewScope={monitorReviewScope(r)} className={expandable ? TREE_ROW_DENSE.parent : "hover:bg-ink-700/40"}
                         {...(expandable ? rowToggle(() => toggleRow(r.key)) : {})}
                         data-tree-parent={expandable ? (isOpen ? "open" : "closed") : undefined}
                         {...(contributions > 0 ? { "data-tranche-rows": String(contributions) } : {})}
@@ -5065,7 +5067,7 @@ export function PortfolioMonitor() {
                     the figure. Same treatment as the Weight cell's own `title`
                     one column over, which explains its denominator the same way.
                   */}
-                <TrFoot view={holdView} className="px-2 py-1.5 text-slate-200"
+                <TrFoot view={holdView} sourcePositions={rows.flatMap(r => r.trancheSet)} sourceColumns={['qty', 'mv']} className="px-2 py-1.5 text-slate-200"
                   data-footer-total=""
                   // The same two handles the category rows carry, for the same
                   // reason (Stage 10dh): the footer's own return is refused where

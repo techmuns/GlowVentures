@@ -486,7 +486,13 @@ export function StatementLibrary() {
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
-  const openProvider = searchParams.get(PROVIDER_PARAM);
+  const linkedDocument = manifest.find(d => d.docKey === searchParams.get('file') || d.sourcePath === searchParams.get('path'));
+  const openProvider = linkedDocument?.provider ?? searchParams.get(PROVIDER_PARAM);
+  useEffect(() => {
+    if (linkedDocument && searchParams.get('file') !== linkedDocument.docKey) setSearchParams(p => {
+      p.set('file', linkedDocument.docKey); p.delete('path'); return p;
+    }, { replace: true });
+  }, [linkedDocument, searchParams, setSearchParams]);
   const inbox = useStatementInbox();
 
   const alive = useRef(true);

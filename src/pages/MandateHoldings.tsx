@@ -1362,7 +1362,7 @@ function HeldByMany({ kind, name, provider, accounts, fund }: {
             </thead>
             <tbody className="divide-y divide-ink-700/60">
               {holderRows.map((l) => (
-                <Tr view={holdersView} reviewScope={kind === "mandate" ? { accountId: l.account.accountId, isMandate: true } : { positions: l.rows }} key={l.account.accountId} className="hover:bg-ink-700/40"
+                <Tr view={holdersView} sourcePositions={l.rows} reviewScope={kind === "mandate" ? { accountId: l.account.accountId, isMandate: true } : { positions: l.rows }} key={l.account.accountId} className="hover:bg-ink-700/40"
                   data-holder-line={l.account.accountId} data-holder-owner={l.owner} data-holder-mv={l.mv}
                   data-holder-holdings={l.rows.length} data-holder-return={l.fifo.returnPct ?? undefined}>
                   <td className="px-4 py-2.5 font-medium text-slate-100">{l.owner}</td>

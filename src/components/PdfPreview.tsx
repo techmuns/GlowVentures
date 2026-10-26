@@ -10,7 +10,7 @@ const CONTROL = "rounded-md border border-ink-600 bg-ink-800 px-2 py-1.5 text-xs
 
 /** Draw the original bytes inside the app. Native PDF plugins are blocked by
  * Chrome when ANY ancestor is sandboxed, including the Muns dashboard frame. */
-export default function PdfPreview({ url, file, title }: { url: string; file: PublishedFile; title: string }) {
+export default function PdfPreview({ url, file, title, initialPage }: { url: string; file: PublishedFile; title: string; initialPage?: number }) {
   const [pdf, setPdf] = useState<PDFDocumentProxy | null>(null);
   const [status, setStatus] = useState<"loading" | "password" | "ready" | "error">("loading");
   const [error, setError] = useState("");
@@ -49,6 +49,10 @@ export default function PdfPreview({ url, file, title }: { url: string; file: Pu
     });
     return () => { alive = false; unlock.current = null; void task.destroy().catch(() => {}); };
   }, [url, file.part?.from]);
+
+  useEffect(() => {
+    if (pdf && initialPage && initialPage >= 1 && initialPage <= pdf.numPages) setPage(initialPage);
+  }, [pdf, initialPage]);
 
   useEffect(() => {
     const element = viewport.current;

@@ -1013,7 +1013,7 @@ export function HoldingsBehind() {
                               not on a rendered name. `g.key` carries an `S:`/`M:`
                               prefix saying how the row was grouped rather than
                               what it is, which is why this is the security's. */}
-                          <Tr view={view} reviewScope={g.kind === "mandate" ? { accountId: g.rows[0].accountId, isMandate: true } : { positions: g.rows }} className="hover:bg-ink-700/40" data-hb-key={g.rows[0].securityKey}>
+                          <Tr view={view} sourcePositions={g.rows} reviewScope={g.kind === "mandate" ? { accountId: g.rows[0].accountId, isMandate: true } : { positions: g.rows }} className="hover:bg-ink-700/40" data-hb-key={g.rows[0].securityKey}>
                             <td className="px-4 py-2.5">
                               <div className="flex items-center gap-1.5">
                                 {/* THE ROW OPENS THE THING IT NAMES. A mandate
