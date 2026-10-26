@@ -1,16 +1,16 @@
 {
-  "generatedAt": "2026-10-21T18:22:53.459Z",
+  "generatedAt": "2026-10-26T06:51:06.289Z",
   "sourceDir": "source",
   "counts": {
-    "files": 460,
-    "pdfs": 450,
+    "files": 461,
+    "pdfs": 451,
     "nonPdf": 10,
-    "classified": 393,
-    "unclassified": 67,
-    "encrypted": 33,
+    "classified": 400,
+    "unclassified": 61,
+    "encrypted": 34,
     "fromArchives": 399,
     "archivesExpanded": 50,
-    "pages": 1965
+    "pages": 1969
   },
   "reportTypes": [
     "holdings",
@@ -3577,7 +3577,7 @@
       "pages": 5,
       "fromArchive": true,
       "encrypted": true,
-      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
+      "readError": "encrypted — no supplied password opened it",
       "provider": null,
       "ownerName": null,
       "accountNo": null,
@@ -3597,7 +3597,7 @@
       "pages": 3,
       "fromArchive": true,
       "encrypted": true,
-      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
+      "readError": "encrypted — no supplied password opened it",
       "provider": null,
       "ownerName": null,
       "accountNo": null,
@@ -3639,7 +3639,7 @@
       "pages": 3,
       "fromArchive": true,
       "encrypted": true,
-      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
+      "readError": "encrypted — no supplied password opened it",
       "provider": null,
       "ownerName": null,
       "accountNo": null,
@@ -4467,7 +4467,7 @@
       "pages": 2,
       "fromArchive": true,
       "encrypted": true,
-      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
+      "readError": "encrypted — no supplied password opened it",
       "provider": null,
       "ownerName": null,
       "accountNo": null,
@@ -4487,7 +4487,7 @@
       "pages": 4,
       "fromArchive": true,
       "encrypted": true,
-      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
+      "readError": "encrypted — no supplied password opened it",
       "provider": null,
       "ownerName": null,
       "accountNo": null,
@@ -4529,7 +4529,7 @@
       "pages": 4,
       "fromArchive": true,
       "encrypted": true,
-      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
+      "readError": "encrypted — no supplied password opened it",
       "provider": null,
       "ownerName": null,
       "accountNo": null,
@@ -6235,7 +6235,7 @@
       "pages": 2,
       "fromArchive": true,
       "encrypted": true,
-      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
+      "readError": "encrypted — no supplied password opened it",
       "provider": null,
       "ownerName": null,
       "accountNo": null,
@@ -6277,7 +6277,7 @@
       "pages": 5,
       "fromArchive": true,
       "encrypted": true,
-      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
+      "readError": "encrypted — no supplied password opened it",
       "provider": null,
       "ownerName": null,
       "accountNo": null,
@@ -6451,17 +6451,19 @@
       "pages": 6,
       "fromArchive": true,
       "encrypted": true,
-      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
-      "provider": null,
+      "readError": null,
+      "provider": "Motilal Oswal Mutual Fund",
       "ownerName": null,
-      "accountNo": null,
-      "asOfDate": null,
-      "reportType": "unknown",
-      "sections": [],
+      "accountNo": "90414963315",
+      "asOfDate": "2018-01-31",
+      "reportType": "transaction-statement",
+      "sections": [
+        "transaction-statement"
+      ],
       "familyGroup": null,
       "strategy": null,
-      "confidence": "low",
-      "matchedBy": "nothing matched"
+      "confidence": "high",
+      "matchedBy": "generic keywords"
     },
     {
       "path": "source/_extracted/october-2026-c/MOTILAL FOLDER 1./Account Statement for AKQPK9422Q.pdf",
@@ -6559,17 +6561,19 @@
       "pages": 3,
       "fromArchive": true,
       "encrypted": true,
-      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
-      "provider": null,
+      "readError": null,
+      "provider": "Kotak Mahindra Mutual Fund",
       "ownerName": null,
-      "accountNo": null,
-      "asOfDate": null,
-      "reportType": "unknown",
-      "sections": [],
+      "accountNo": "7125255",
+      "asOfDate": "2026-09-30",
+      "reportType": "holdings",
+      "sections": [
+        "holdings"
+      ],
       "familyGroup": null,
       "strategy": null,
-      "confidence": "low",
-      "matchedBy": "nothing matched"
+      "confidence": "high",
+      "matchedBy": "generic keywords"
     },
     {
       "path": "source/_extracted/october-2026-c/MOTILAL FOLDER 1./AJAY JAISINGHANI SOA Motilal AIF.pdf",
@@ -8917,7 +8921,7 @@
       "pages": 3,
       "fromArchive": false,
       "encrypted": true,
-      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
+      "readError": "encrypted — no supplied password opened it",
       "provider": null,
       "ownerName": null,
       "accountNo": null,
@@ -8959,7 +8963,7 @@
       "pages": 2,
       "fromArchive": false,
       "encrypted": true,
-      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
+      "readError": "encrypted — no supplied password opened it",
       "provider": null,
       "ownerName": null,
       "accountNo": null,
@@ -9112,17 +9116,17 @@
       "fromArchive": false,
       "encrypted": false,
       "readError": null,
-      "provider": null,
+      "provider": "HDFC Bank (NSDL demat)",
       "ownerName": null,
-      "accountNo": null,
-      "asOfDate": null,
+      "accountNo": "67786547",
+      "asOfDate": "2026-08-29",
       "reportType": "holdings",
       "sections": [
         "holdings"
       ],
       "familyGroup": null,
       "strategy": null,
-      "confidence": "low",
+      "confidence": "high",
       "matchedBy": "generic keywords"
     },
     {
@@ -9134,17 +9138,17 @@
       "fromArchive": false,
       "encrypted": false,
       "readError": null,
-      "provider": null,
+      "provider": "HDFC Bank (NSDL demat)",
       "ownerName": null,
-      "accountNo": null,
-      "asOfDate": null,
+      "accountNo": "67786137",
+      "asOfDate": "2026-08-29",
       "reportType": "holdings",
       "sections": [
         "holdings"
       ],
       "familyGroup": null,
       "strategy": null,
-      "confidence": "low",
+      "confidence": "high",
       "matchedBy": "generic keywords"
     },
     {
@@ -9336,6 +9340,28 @@
       "matchedBy": "Goldstandard signature + content keywords"
     },
     {
+      "path": "source/october-2026-d/Bandhan-8652064-2026-10-26.pdf",
+      "fileName": "Bandhan-8652064-2026-10-26.pdf",
+      "bytes": 272137,
+      "size": "265.8 KB",
+      "pages": 4,
+      "fromArchive": false,
+      "encrypted": true,
+      "readError": null,
+      "provider": "Bandhan Mutual Fund",
+      "ownerName": null,
+      "accountNo": "8652064",
+      "asOfDate": "2026-10-26",
+      "reportType": "holdings",
+      "sections": [
+        "holdings"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "high",
+      "matchedBy": "Bandhan account statement and folio period"
+    },
+    {
       "path": "source/october-2026/CAPITAL REGISTER GREEN LANTERN - AJAY.pdf",
       "fileName": "CAPITAL REGISTER GREEN LANTERN - AJAY.pdf",
       "bytes": 128398,
@@ -9387,17 +9413,19 @@
       "pages": 2,
       "fromArchive": false,
       "encrypted": true,
-      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
-      "provider": null,
-      "ownerName": null,
-      "accountNo": null,
-      "asOfDate": "2026-04-07",
-      "reportType": "unknown",
-      "sections": [],
+      "readError": null,
+      "provider": "ASK Absolute Return Fund",
+      "ownerName": "AJAY T JAISINGHANI",
+      "accountNo": "9039917111",
+      "asOfDate": "2026-03-31",
+      "reportType": "holdings",
+      "sections": [
+        "holdings"
+      ],
       "familyGroup": null,
       "strategy": null,
-      "confidence": "low",
-      "matchedBy": "nothing matched"
+      "confidence": "high",
+      "matchedBy": "ASK Absolute Return Fund statement of account"
     },
     {
       "path": "source/september-2026/Ankita J - ASK AIF - 9039917144_07042026142545606454.pdf",
@@ -9407,7 +9435,7 @@
       "pages": 2,
       "fromArchive": false,
       "encrypted": true,
-      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
+      "readError": "encrypted — no supplied password opened it",
       "provider": null,
       "ownerName": null,
       "accountNo": null,
@@ -9911,17 +9939,19 @@
       "pages": 2,
       "fromArchive": false,
       "encrypted": true,
-      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
-      "provider": null,
-      "ownerName": null,
-      "accountNo": null,
-      "asOfDate": "2026-04-07",
-      "reportType": "unknown",
-      "sections": [],
+      "readError": null,
+      "provider": "ASK Absolute Return Fund",
+      "ownerName": "AJAY T JAISINGHANI",
+      "accountNo": "9039917111",
+      "asOfDate": "2026-03-31",
+      "reportType": "holdings",
+      "sections": [
+        "holdings"
+      ],
       "familyGroup": null,
       "strategy": null,
-      "confidence": "low",
-      "matchedBy": "nothing matched"
+      "confidence": "high",
+      "matchedBy": "ASK Absolute Return Fund statement of account"
     },
     {
       "path": "source/september-2026/Portfolio Snap Report_BOUYA387.pdf",
@@ -15102,6 +15132,62 @@
       },
       "fileCount": 3
     },
+    "Motilal Oswal Mutual Fund": {
+      "accounts": {
+        "90414963315": {
+          "owner": null,
+          "strategy": null,
+          "asOfDates": {
+            "2018-01-31": {
+              "reportTypes": {
+                "transaction-statement": [
+                  {
+                    "path": "source/_extracted/october-2026-c/MOTILAL FOLDER 1./90414963315.pdf",
+                    "pages": 6,
+                    "size": "194.4 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "transaction-statement"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 1
+            }
+          },
+          "fileCount": 1
+        }
+      },
+      "fileCount": 1
+    },
+    "Kotak Mahindra Mutual Fund": {
+      "accounts": {
+        "7125255": {
+          "owner": null,
+          "strategy": null,
+          "asOfDates": {
+            "2026-09-30": {
+              "reportTypes": {
+                "holdings": [
+                  {
+                    "path": "source/_extracted/october-2026-c/MOTILAL FOLDER 1./Acctstmt_K_7125255 (20).pdf",
+                    "pages": 3,
+                    "size": "819.7 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "holdings"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 1
+            }
+          },
+          "fileCount": 1
+        }
+      },
+      "fileCount": 1
+    },
     "Sanshi Fund": {
       "accounts": {
         "00841000060714": {
@@ -15420,6 +15506,57 @@
       },
       "fileCount": 1
     },
+    "HDFC Bank (NSDL demat)": {
+      "accounts": {
+        "67786137": {
+          "owner": null,
+          "strategy": null,
+          "asOfDates": {
+            "2026-08-29": {
+              "reportTypes": {
+                "holdings": [
+                  {
+                    "path": "source/august-2026-f/HOLDING STATEMENT BHARAT JAISINGHANI FAMILY TRUST 3.pdf",
+                    "pages": 1,
+                    "size": "104.9 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "holdings"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 1
+            }
+          },
+          "fileCount": 1
+        },
+        "67786547": {
+          "owner": null,
+          "strategy": null,
+          "asOfDates": {
+            "2026-08-29": {
+              "reportTypes": {
+                "holdings": [
+                  {
+                    "path": "source/august-2026-f/HOLDING STATEMENT BHARAT JAISINGHANI FAMILY TRUST 2.pdf",
+                    "pages": 1,
+                    "size": "106.0 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "holdings"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 1
+            }
+          },
+          "fileCount": 1
+        }
+      },
+      "fileCount": 2
+    },
     "Family investment register (not a statement)": {
       "accounts": {
         "(unidentified)": {
@@ -15567,6 +15704,71 @@
         }
       },
       "fileCount": 3
+    },
+    "Bandhan Mutual Fund": {
+      "accounts": {
+        "8652064": {
+          "owner": null,
+          "strategy": null,
+          "asOfDates": {
+            "2026-10-26": {
+              "reportTypes": {
+                "holdings": [
+                  {
+                    "path": "source/october-2026-d/Bandhan-8652064-2026-10-26.pdf",
+                    "pages": 4,
+                    "size": "265.8 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "holdings"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 1
+            }
+          },
+          "fileCount": 1
+        }
+      },
+      "fileCount": 1
+    },
+    "ASK Absolute Return Fund": {
+      "accounts": {
+        "9039917111": {
+          "owner": "AJAY T JAISINGHANI",
+          "strategy": null,
+          "asOfDates": {
+            "2026-03-31": {
+              "reportTypes": {
+                "holdings": [
+                  {
+                    "path": "source/september-2026/Aarti J - ASK AIF - 9039917111_07042026142531008678.pdf",
+                    "pages": 2,
+                    "size": "575.4 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "holdings"
+                    ]
+                  },
+                  {
+                    "path": "source/september-2026/ATJ - ASK AIF - 9039917111_07042026142531008678.pdf",
+                    "pages": 2,
+                    "size": "581.5 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "holdings"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 2
+            }
+          },
+          "fileCount": 2
+        }
+      },
+      "fileCount": 2
     },
     "ASK Investment Managers Limited": {
       "accounts": {
@@ -16763,6 +16965,18 @@
       ]
     },
     {
+      "provider": "ASK Absolute Return Fund",
+      "account": "9039917111",
+      "asOf": "2026-03-31",
+      "fileCount": 2,
+      "reportTypes": [
+        "holdings"
+      ],
+      "duplicateTypes": [
+        "holdings"
+      ]
+    },
+    {
       "provider": "Transition Venture Capital",
       "account": "(unidentified)",
       "asOf": "2026-03-31",
@@ -17104,7 +17318,7 @@
       "pages": 5,
       "fromArchive": true,
       "encrypted": true,
-      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
+      "readError": "encrypted — no supplied password opened it",
       "provider": null,
       "ownerName": null,
       "accountNo": null,
@@ -17124,7 +17338,7 @@
       "pages": 3,
       "fromArchive": true,
       "encrypted": true,
-      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
+      "readError": "encrypted — no supplied password opened it",
       "provider": null,
       "ownerName": null,
       "accountNo": null,
@@ -17144,7 +17358,7 @@
       "pages": 3,
       "fromArchive": true,
       "encrypted": true,
-      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
+      "readError": "encrypted — no supplied password opened it",
       "provider": null,
       "ownerName": null,
       "accountNo": null,
@@ -17164,7 +17378,7 @@
       "pages": 2,
       "fromArchive": true,
       "encrypted": true,
-      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
+      "readError": "encrypted — no supplied password opened it",
       "provider": null,
       "ownerName": null,
       "accountNo": null,
@@ -17184,7 +17398,7 @@
       "pages": 4,
       "fromArchive": true,
       "encrypted": true,
-      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
+      "readError": "encrypted — no supplied password opened it",
       "provider": null,
       "ownerName": null,
       "accountNo": null,
@@ -17204,7 +17418,7 @@
       "pages": 4,
       "fromArchive": true,
       "encrypted": true,
-      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
+      "readError": "encrypted — no supplied password opened it",
       "provider": null,
       "ownerName": null,
       "accountNo": null,
@@ -17264,7 +17478,7 @@
       "pages": 2,
       "fromArchive": true,
       "encrypted": true,
-      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
+      "readError": "encrypted — no supplied password opened it",
       "provider": null,
       "ownerName": null,
       "accountNo": null,
@@ -17284,47 +17498,7 @@
       "pages": 5,
       "fromArchive": true,
       "encrypted": true,
-      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
-      "provider": null,
-      "ownerName": null,
-      "accountNo": null,
-      "asOfDate": null,
-      "reportType": "unknown",
-      "sections": [],
-      "familyGroup": null,
-      "strategy": null,
-      "confidence": "low",
-      "matchedBy": "nothing matched"
-    },
-    {
-      "path": "source/_extracted/october-2026-c/MOTILAL FOLDER 1./90414963315.pdf",
-      "fileName": "90414963315.pdf",
-      "bytes": 199109,
-      "size": "194.4 KB",
-      "pages": 6,
-      "fromArchive": true,
-      "encrypted": true,
-      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
-      "provider": null,
-      "ownerName": null,
-      "accountNo": null,
-      "asOfDate": null,
-      "reportType": "unknown",
-      "sections": [],
-      "familyGroup": null,
-      "strategy": null,
-      "confidence": "low",
-      "matchedBy": "nothing matched"
-    },
-    {
-      "path": "source/_extracted/october-2026-c/MOTILAL FOLDER 1./Acctstmt_K_7125255 (20).pdf",
-      "fileName": "Acctstmt_K_7125255 (20).pdf",
-      "bytes": 839392,
-      "size": "819.7 KB",
-      "pages": 3,
-      "fromArchive": true,
-      "encrypted": true,
-      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
+      "readError": "encrypted — no supplied password opened it",
       "provider": null,
       "ownerName": null,
       "accountNo": null,
@@ -17764,7 +17938,7 @@
       "pages": 3,
       "fromArchive": false,
       "encrypted": true,
-      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
+      "readError": "encrypted — no supplied password opened it",
       "provider": null,
       "ownerName": null,
       "accountNo": null,
@@ -17784,7 +17958,7 @@
       "pages": 2,
       "fromArchive": false,
       "encrypted": true,
-      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
+      "readError": "encrypted — no supplied password opened it",
       "provider": null,
       "ownerName": null,
       "accountNo": null,
@@ -17821,70 +17995,6 @@
       "matchedBy": "generic keywords"
     },
     {
-      "path": "source/august-2026-f/HOLDING STATEMENT BHARAT JAISINGHANI FAMILY TRUST 2.pdf",
-      "fileName": "HOLDING STATEMENT BHARAT JAISINGHANI FAMILY TRUST 2.pdf",
-      "bytes": 108560,
-      "size": "106.0 KB",
-      "pages": 1,
-      "fromArchive": false,
-      "encrypted": false,
-      "readError": null,
-      "provider": null,
-      "ownerName": null,
-      "accountNo": null,
-      "asOfDate": null,
-      "reportType": "holdings",
-      "sections": [
-        "holdings"
-      ],
-      "familyGroup": null,
-      "strategy": null,
-      "confidence": "low",
-      "matchedBy": "generic keywords"
-    },
-    {
-      "path": "source/august-2026-f/HOLDING STATEMENT BHARAT JAISINGHANI FAMILY TRUST 3.pdf",
-      "fileName": "HOLDING STATEMENT BHARAT JAISINGHANI FAMILY TRUST 3.pdf",
-      "bytes": 107457,
-      "size": "104.9 KB",
-      "pages": 1,
-      "fromArchive": false,
-      "encrypted": false,
-      "readError": null,
-      "provider": null,
-      "ownerName": null,
-      "accountNo": null,
-      "asOfDate": null,
-      "reportType": "holdings",
-      "sections": [
-        "holdings"
-      ],
-      "familyGroup": null,
-      "strategy": null,
-      "confidence": "low",
-      "matchedBy": "generic keywords"
-    },
-    {
-      "path": "source/september-2026/Aarti J - ASK AIF - 9039917111_07042026142531008678.pdf",
-      "fileName": "Aarti J - ASK AIF - 9039917111_07042026142531008678.pdf",
-      "bytes": 589180,
-      "size": "575.4 KB",
-      "pages": 2,
-      "fromArchive": false,
-      "encrypted": true,
-      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
-      "provider": null,
-      "ownerName": null,
-      "accountNo": null,
-      "asOfDate": "2026-04-07",
-      "reportType": "unknown",
-      "sections": [],
-      "familyGroup": null,
-      "strategy": null,
-      "confidence": "low",
-      "matchedBy": "nothing matched"
-    },
-    {
       "path": "source/september-2026/Ankita J - ASK AIF - 9039917144_07042026142545606454.pdf",
       "fileName": "Ankita J - ASK AIF - 9039917144_07042026142545606454.pdf",
       "bytes": 589457,
@@ -17892,27 +18002,7 @@
       "pages": 2,
       "fromArchive": false,
       "encrypted": true,
-      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
-      "provider": null,
-      "ownerName": null,
-      "accountNo": null,
-      "asOfDate": "2026-04-07",
-      "reportType": "unknown",
-      "sections": [],
-      "familyGroup": null,
-      "strategy": null,
-      "confidence": "low",
-      "matchedBy": "nothing matched"
-    },
-    {
-      "path": "source/september-2026/ATJ - ASK AIF - 9039917111_07042026142531008678.pdf",
-      "fileName": "ATJ - ASK AIF - 9039917111_07042026142531008678.pdf",
-      "bytes": 595412,
-      "size": "581.5 KB",
-      "pages": 2,
-      "fromArchive": false,
-      "encrypted": true,
-      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
+      "readError": "encrypted — no supplied password opened it",
       "provider": null,
       "ownerName": null,
       "accountNo": null,

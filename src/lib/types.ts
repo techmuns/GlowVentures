@@ -224,6 +224,9 @@ export type Position = {
   enteredCapital?: Record<string, number | null>;
   /** Exact normalized record selected by the builder, before any live overlay. */
   statementRecord?: { document: string; pointer: string };
+  /** Verified custody-to-folio continuity; raw older statements stay archived. */
+  custodyPredecessors?: string[];
+  custodyEvidence?: { document: string; pointer: string; effectiveOn: string };
   /** Price overlays retain their own identity/time and never replace statement evidence. */
   priceEvidence?: { kind: "quote" | "published-nav"; source: string | null; instrument: string;
     value: number; effectiveAt: string | null; observedAt: string | null };

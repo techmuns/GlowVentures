@@ -14,18 +14,18 @@ import type {
 } from "@/lib/types";
 
 /** Newest report date across all accounts. Individual accounts can be older. */
-export const BOOK_AS_OF = "2026-10-07";
+export const BOOK_AS_OF = "2026-10-26";
 
 export const BOOK_SUMMARY: BookSummary = {
-  "asOf": "2026-10-07",
-  "listedValue": 6438109112.5,
+  "asOf": "2026-10-26",
+  "listedValue": 6853173106.88,
   "privateValue": 1930944270.36,
   "unplacedValue": 0,
-  "totalValue": 8369053382.86,
-  "positionsCount": 459,
+  "totalValue": 8784117377.24,
+  "positionsCount": 463,
   "entitiesCount": 9,
   "startupsCount": 0,
-  "accountsCount": 81
+  "accountsCount": 82
 };
 
 /** Account registry — one row per (provider, account no). Positions join on accountId. */
@@ -274,6 +274,22 @@ export const BOOK_ACCOUNTS: Account[] = [
       "to": "2026-09-08",
       "source": "ask-investment-managers-limited-10034025-2026-09-08-profit-and-loss"
     }
+  },
+  {
+    "accountId": "bandhan-mutual-fund-8652064",
+    "provider": "Bandhan Mutual Fund",
+    "accountNo": "8652064",
+    "ownerId": "ajay-jaisinghani",
+    "owner": "Ajay Jaisinghani",
+    "strategy": null,
+    "engagement": "Direct",
+    "providerEngagement": "Mutual fund folio — Resident Individual",
+    "members": [],
+    "asOf": "2026-10-26",
+    "inceptionDate": null,
+    "capitalRecordTo": "2026-10-26",
+    "custodian": "Bandhan Mutual Fund",
+    "noPositionsReason": null
   },
   {
     "accountId": "baring-private-equity-india-fund-AIFM_BPEPF6_0584",
@@ -1877,6 +1893,156 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "statementRecord": {
+      "document": "bandhan-mutual-fund-8652064-2026-10-26-holdings",
+      "pointer": "/holdings/1"
+    },
+    "securityKey": "bandhan-amc-ltd-bandhan-mf-bandhan-arbitrage-fund-direct-pl-growth",
+    "security": "Bandhan Arbitrage Fund-Direct Plan-Growth",
+    "symbol": null,
+    "isin": "INF194K01Y60",
+    "accountId": "bandhan-mutual-fund-8652064",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Mutual Fund",
+    "marketSide": "listed",
+    "quantity": 202573.963,
+    "avgCost": 37.3896,
+    "currentPrice": 38.1316,
+    "costBasis": 7574153.25,
+    "marketValue": 7724469.33,
+    "unrealizedPnL": 150316.08,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": 1.98,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-10-23",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null,
+    "custodyPredecessors": [
+      "motilal-oswal-financial-services-demat-1201090012539150"
+    ],
+    "custodyEvidence": {
+      "document": "bandhan-mutual-fund-8652064-2026-10-26-holdings",
+      "pointer": "/holdings/1",
+      "effectiveOn": "2026-10-07"
+    },
+    "avgCostDerived": true
+  },
+  {
+    "statementRecord": {
+      "document": "bandhan-mutual-fund-8652064-2026-10-26-holdings",
+      "pointer": "/holdings/3"
+    },
+    "securityKey": "bandhan-amc-ltd-bandhan-mf-bandhan-cash-fund-direct-pl-growth",
+    "security": "Bandhan Liquid Fund-Direct Plan-Growth",
+    "symbol": null,
+    "isin": "INF194K01I60",
+    "accountId": "bandhan-mutual-fund-8652064",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Mutual Fund",
+    "marketSide": "listed",
+    "quantity": 0,
+    "avgCost": null,
+    "currentPrice": 3451.1571,
+    "costBasis": 0,
+    "marketValue": 0,
+    "unrealizedPnL": 0,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": null,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-10-25",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "statementRecord": {
+      "document": "bandhan-mutual-fund-8652064-2026-10-26-holdings",
+      "pointer": "/holdings/0"
+    },
+    "securityKey": "bandhan-amc-ltd-bandhan-mf-bandhan-large-and-mid-cap-fund-direct-pl-growth",
+    "security": "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
+    "symbol": null,
+    "isin": "INF194K01V89",
+    "accountId": "bandhan-mutual-fund-8652064",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Mutual Fund",
+    "marketSide": "listed",
+    "quantity": 2639320.472,
+    "avgCost": 163.267,
+    "currentPrice": 154.335,
+    "costBasis": 430913833.72,
+    "marketValue": 407339525.05,
+    "unrealizedPnL": -23574308.67,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": -5.47,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-10-23",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null,
+    "custodyPredecessors": [
+      "motilal-oswal-financial-services-demat-1201090012539150"
+    ],
+    "custodyEvidence": {
+      "document": "bandhan-mutual-fund-8652064-2026-10-26-holdings",
+      "pointer": "/holdings/0",
+      "effectiveOn": "2026-10-07"
+    },
+    "avgCostDerived": true
+  },
+  {
+    "statementRecord": {
+      "document": "bandhan-mutual-fund-8652064-2026-10-26-holdings",
+      "pointer": "/holdings/2"
+    },
+    "securityKey": "bandhan-amc-ltd-bandhan-mf-bandhan-overnight-fund-direct-growth",
+    "security": "Bandhan Overnight Fund-Direct Plan-Growth",
+    "symbol": null,
+    "isin": "INF194KB1447",
+    "accountId": "bandhan-mutual-fund-8652064",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Mutual Fund",
+    "marketSide": "listed",
+    "quantity": 0,
+    "avgCost": null,
+    "currentPrice": 1478.7935,
+    "costBasis": 0,
+    "marketValue": 0,
+    "unrealizedPnL": 0,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": null,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-10-25",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -26669,6 +26835,13 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "bookValue": 0.34
     },
     {
+      "accountId": "bandhan-mutual-fund-8652064",
+      "provider": "Bandhan Mutual Fund",
+      "accountNo": "8652064",
+      "date": "2026-10-26",
+      "bookValue": 415063994.38
+    },
+    {
       "accountId": "baring-private-equity-india-fund-AIFM_BPEPF6_0584",
       "provider": "Baring Private Equity India Fund",
       "accountNo": "AIFM_BPEPF6_0584",
@@ -27075,7 +27248,7 @@ export const BOOK_ATTRIBUTION: Attribution = {
   "enteredValue": 169017109.59,
   "exitedValue": 99872612.94,
   "undecomposedValue": -41094574.09,
-  "bookValue": 8369053382.86,
+  "bookValue": 8784117377.24,
   "coveredBookValue": 2471056995.69,
   "accounts": [
     {
@@ -33316,6 +33489,20 @@ export const BOOK_CAPITAL_GAINS: EntityCG[] = [
     "source": "ask-investment-managers-limited-10034025-2026-09-08-capital-gain"
   },
   {
+    "entity": "Ajay Jaisinghani · Bandhan 8652064",
+    "accountId": "bandhan-mutual-fund-8652064",
+    "ownerId": "ajay-jaisinghani",
+    "realisedST": null,
+    "realisedLT": null,
+    "unrealisedST": null,
+    "unrealisedLT": null,
+    "periodFrom": null,
+    "periodTo": null,
+    "lots": 0,
+    "source": null,
+    "absent": "no capital gain statement issued for this account in this drop"
+  },
+  {
     "entity": "Ankita Jaisinghani · Baring AIFM_BPEPF6_0584",
     "accountId": "baring-private-equity-india-fund-AIFM_BPEPF6_0584",
     "ownerId": "ankita-jaisinghani",
@@ -35510,6 +35697,11 @@ export const BOOK_ACCOUNT_RETURN_RECORDS: Record<string, AccountReturnCoverage> 
   },
   "ask-investment-managers-limited-10034025": {
     "latestValuationDate": "2026-09-08",
+    "record": null,
+    "gap": "Opening valuation and complete dated cash flows are missing"
+  },
+  "bandhan-mutual-fund-8652064": {
+    "latestValuationDate": "2026-10-23",
     "record": null,
     "gap": "Opening valuation and complete dated cash flows are missing"
   },
@@ -41874,6 +42066,18 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "bandhan-mutual-fund-8652064",
+    "date": "2026-04-08",
+    "direction": "in",
+    "label": "Net Purchase via Online",
+    "amount": 12275000,
+    "invested": 12274386.28,
+    "charges": 613.72,
+    "units": 3678.266,
+    "security": "Bandhan Liquid Fund-Direct Plan-Growth",
+    "securityKey": "bandhan-amc-ltd-bandhan-mf-bandhan-cash-fund-direct-pl-growth"
+  },
+  {
     "accountId": "green-lantern-capital-llp-510854",
     "date": "2026-04-20",
     "direction": "out",
@@ -42028,6 +42232,18 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": null,
     "security": null,
     "securityKey": null
+  },
+  {
+    "accountId": "bandhan-mutual-fund-8652064",
+    "date": "2026-07-01",
+    "direction": "in",
+    "label": "Net Purchase via Online",
+    "amount": 50000000,
+    "invested": 49997500.12,
+    "charges": 2499.88,
+    "units": 34361.372,
+    "security": "Bandhan Overnight Fund-Direct Plan-Growth",
+    "securityKey": "bandhan-amc-ltd-bandhan-mf-bandhan-overnight-fund-direct-growth"
   },
   {
     "accountId": "carnelian-asset-management-and-advisors-pvt-ltd-3517383",
@@ -42451,6 +42667,7 @@ export const BOOK_CAPITAL_FROM_INCEPTION: string[] = [
   "3p-investment-managers-3000048",
   "ask-absolute-return-fund-9039917111",
   "ask-absolute-return-fund-9039917144",
+  "bandhan-mutual-fund-8652064",
   "baring-private-equity-india-fund-AIFM_BPEPF6_0584",
   "buoyant-capital-103472",
   "buoyant-capital-103473",
@@ -56013,9 +56230,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012539150|bndh-l-and-mcf-dp-gr": {
+  "motilal-oswal-financial-services-demat-1201090012539150|bandhan-amc-ltd-bandhan-mf-bandhan-large-and-mid-cap-fund-direct-pl-growth": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
-    "securityKey": "bndh-l-and-mcf-dp-gr",
+    "securityKey": "bandhan-amc-ltd-bandhan-mf-bandhan-large-and-mid-cap-fund-direct-pl-growth",
     "security": "BANDHAN AMC LTD#BANDHAN MF-BANDHAN LARGE & MID CAP FUND - DIRECT PL - GROWTH",
     "isin": "INF194K01V89",
     "periodFrom": "2026-04-01",

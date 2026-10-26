@@ -41,6 +41,7 @@ import * as aifDistribution from "./providers/aifDistribution.mjs";
 import * as altFunds from "./providers/altFundStatements.mjs";
 import * as mutualFundFolio from "./providers/mutualFundFolio.mjs";
 import * as folioLedger from "./providers/folioLedger.mjs";
+import * as bandhanFolio from "./providers/bandhanFolio.mjs";
 import * as schemePortfolio from "./providers/schemePortfolio.mjs";
 import * as nsdlScan from "./providers/nsdlScan.mjs";
 import { openScan, scanOcrAvailable, SCAN_ENGINE } from "./lib/scan.mjs";
@@ -77,6 +78,7 @@ function loadSymbolMap() {
  * own because its bundle is a genuinely different document.
  */
 const EXTRACTORS = Object.fromEntries([
+  [bandhanFolio.PROVIDER, bandhanFolio],
   ...folioLedger.PROVIDERS.map(name => [name, folioLedger]),
   ...Object.values(pms.PROVIDERS).map((p) => [p.name, pms]),
   [threeSixtyOne.PROVIDER, threeSixtyOne],

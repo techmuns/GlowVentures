@@ -388,3 +388,11 @@
   - Updated suites: period-return, attribution, market-return and invested-this-year.
   - `check-pages`: the Returns-tab and Performance invariants.
   - CI scripts: `check-market-returns` and `check-selected-attribution` now require XIRR = CAGR = Absolute under a year.
+
+### Stage 10hl — BANDHAN'S CURRENT FOLIO REPLACES ITS OLDER DEMAT BALANCES
+
+- Preserve Ashwini's 26 October original statement for Ajay's Bandhan folio 8652064. A checked reader covers all four schemes and every printed movement: Arbitrage has 202,573.963 units / ₹7,724,469.33; Large & Mid Cap has 2,639,320.472 units / ₹407,339,525.05, both valued on 23 October. Liquid and Overnight close to nil. Purchase costs come from the matching account-summary rows, never cumulative purchase cost less redemption proceeds.
+- Read and reconcile the five arbitrage switches and receiving fund entries, fees/stamp duty, running units and printed account total. The partial unit-history openings remain explicit; no missing purchase history or whole-account return is invented.
+- Reviewed custody-to-folio links are verified against the source's 7 October rematerialisation entries, owner and exact ISIN. The newer linked folio replaces older custody balances in both canonical positions and live overlays; custody history stays archived. Wrong owners, schemes, unlinked folios, equal/older records, later custody holdings and ambiguous successors cannot suppress a holding. A later measured zero on the linked folio can replace an old positive balance.
+- Prevent an older cached AMFI NAV from rolling a newer statement valuation backwards. Separate Motilal and Invesco folios remain separate; other family members' Bandhan holdings stay counted.
+- Regression checks cover source reconciliation and refusals, chronology, account/owner/plan isolation, measured-zero successors, retained history and a single current Bandhan balance.

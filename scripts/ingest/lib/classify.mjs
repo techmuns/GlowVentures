@@ -952,6 +952,7 @@ const ISSUER_PROVIDER_RULES = [
   // depository guards. Distributor names and funds held by a demat cannot
   // establish the issuer.
   [/(?=[\s\S]*Account Statement for Folio No\.)(?=[\s\S]*invescomutualfund\.com)/i, "Invesco Mutual Fund"],
+  [/(?=[\s\S]*\bAccount Statement\b)(?=[\s\S]*Folio Number\s*:)(?=[\s\S]*Thank you for investing with Bandhan Mutual Fund)/i, "Bandhan Mutual Fund"],
   [/\bScheme\s+Motilal\s+Oswal\s+Arbitrage\s+Fund[\s\S]{0,100}ISIN No\s*:\s*INF247L01ED1/i, "Motilal Oswal Mutual Fund"],
   [/B153DZ-Aditya\s+Birla\s+Sun\s+Life\s+Liquid\s+Fund/i, "Aditya Birla Sun Life Mutual Fund"],
   // A SCHEME'S OWN MONTHLY DISCLOSURE, by its title, BEFORE the AMC names below.
@@ -1077,6 +1078,13 @@ export function classify({ fileName, text }) {
   if (seeded) return seeded;
 
   const provider = genericProvider(t);
+  if (provider === "Bandhan Mutual Fund") {
+    const period = /From\s+(\d{2}-[A-Z]{3}-\d{4})\s+To\s+(\d{2}-[A-Z]{3}-\d{4})/i.exec(t);
+    return { provider, ownerName: /First Holder Second Holder Third Holder Guardian\n([^\n]+)/.exec(t)?.[1] ?? null,
+      accountNo: /Folio Number\s*:\s*(\d+)/i.exec(t)?.[1] ?? null, asOfDate: toIso(period?.[2]),
+      reportType: "holdings", sections: ["holdings"], familyGroup: null, strategy: null,
+      confidence: "high", matchedBy: "Bandhan account statement and folio period" };
+  }
   // A document nobody issued has no report type, no account and no as-of. See
   // NON_STATEMENT_PROVIDERS: without this the family register came back
   // `capital-call` on account "GoldStandard", and a reader is chosen by report

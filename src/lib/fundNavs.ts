@@ -55,6 +55,7 @@ import type { Account, CapitalMove, Position, ShareMovement, UnvaluedStatementHo
 import { fifoReturnPct } from "../../shared/fifo.mjs";
 
 import { applyRecoveredCost } from "../../shared/recoveredCosts.mjs";
+import { custodySuccessor } from "../../shared/custodySuccessors.mjs";
 
 export { FUND_NAV_AS_OF };
 export type { FundNav };
@@ -87,6 +88,7 @@ export function applyFundNavs(positions: Position[]): Position[] {
     if (p.review || p.quantity === null) return p;
     const e = BY_KEY.get(p.securityKey);
     if (!e || !e.usableForValue) return p;      // no NAV, or not on this book's basis
+    if (p.priceAsOf && e.date < p.priceAsOf) return p; // a cached NAV cannot roll a newer statement backwards
     if (!(e.nav > 0) || !(p.quantity > 0)) return p;
 
     const marketValue = p.quantity * e.nav;
@@ -241,6 +243,7 @@ export function depositoryFundHoldings(
   for (const w of Object.values(movements)) {
     if (!txOnly.has(w.accountId) || withPositions.has(w.accountId)) continue;         // gate 1
     if (w.reason != null || !(typeof w.closing === "number" && w.closing > 0)) continue; // gate 2
+    if (custodySuccessor(w, accounts, positions)) continue;
     const isin = w.isin?.trim().toUpperCase();
     if (!isin) continue;
     const nav = BY_ISIN.get(isin);
@@ -404,6 +407,7 @@ export function unpricedStatementUnits(
     if (!isin || !(typeof qty === "number" && qty > 0)
       || (u.assetClass !== "Mutual Fund" && !etf)) continue;                                      // gate 1
     if (u.sameUnitsReportedBy) continue;                                                         // gate 2
+    if (custodySuccessor(u, accounts, positions)) continue;
     const nav = BY_ISIN.get(isin);
     if (!nav || !nav.usableForValue || !(nav.nav > 0)) continue;                                 // gate 3
     const own = acc.get(u.accountId);
@@ -594,7 +598,7 @@ export function depositoryBalancesOf(
       const i = isin(w);
       const closing = w.closing as number;
       const v = valued.find((p) => p.accountId === accountId && !!i && isin(p) === i) ?? null;
-      const rep = v ? null : positions.find((p) => p.accountId !== accountId && (
+      const rep = v ? null : custodySuccessor(w, accounts, positions) ?? positions.find((p) => p.accountId !== accountId && (
         (!!i && isin(p) === i && p.quantity !== null && tie(p.quantity, closing))
         || (p.assetClass === "AIF" && !!owner && ownerOf.get(p.accountId) === owner
           && tie(recorded.get(`${p.accountId}\u0000${p.securityKey}`) ?? NaN, closing)))) ?? null;
@@ -675,7 +679,7 @@ export function partialValuationNotes(
     if (shares.length) parts.push(`its ${n(shares.length, "listed share")} ${shares.length === 1 ? "is" : "are"} valued at the same closing units × the live quote, and only while the quote feed prices ${shares.length === 1 ? "it" : "them"}`);
     const rest: string[] = [];
     if (notValued) rest.push(`${n(notValued, "other holding")} on that statement ${notValued === 1 ? "has" : "have"} no price this book can use and ${notValued === 1 ? "is" : "are"} not valued`);
-    if (elsewhere) rest.push(`${n(elsewhere, "more balance")} ${elsewhere === 1 ? "is" : "are"} the depository's copy of units a fund's own statement reports, valued there`);
+    if (elsewhere) rest.push(`${n(elsewhere, "more balance")} ${elsewhere === 1 ? "has" : "have"} a matching or newer verified fund record and ${elsewhere === 1 ? "is" : "are"} counted there`);
     notes.set(accountId,
       `this account sent a transaction statement and no holding statement. ${cap(parts.join("; "))}${rest.length ? `; ${rest.join("; ")}` : "; nothing else on that statement is held"}. What would value all of it is the account's own holding statement from its custodian`);
   }
@@ -686,8 +690,9 @@ export function partialValuationNotes(
     // ISIN, or its key where it prints none.
     const valuedLine = (u: UnvaluedStatementHolding) => rows.some((r) =>
       (isin(u) ? isin(r) === isin(u) : r.securityKey === u.securityKey));
-    const elsewhere = lines.filter((u) => u.sameUnitsReportedBy && !valuedLine(u)).length;
-    const open = lines.filter((u) => !u.sameUnitsReportedBy && !valuedLine(u));
+    const covered = (u: UnvaluedStatementHolding) => !!u.sameUnitsReportedBy || !!custodySuccessor(u, accounts, positions);
+    const elsewhere = lines.filter((u) => covered(u) && !valuedLine(u)).length;
+    const open = lines.filter((u) => !covered(u) && !valuedLine(u));
     const waiting = open.filter((u) => quotable.some((q) => q.accountId === accountId
       && (isin(u) ? isin(q) === isin(u) : q.securityKey === u.securityKey))).length;
     const notValued = open.length - waiting;
@@ -701,7 +706,7 @@ export function partialValuationNotes(
     const rest: string[] = [];
     if (waiting) rest.push(`${n(waiting, "more listed share")} ${waiting === 1 ? "is" : "are"} valued the same way once the quote feed prices ${waiting === 1 ? "it" : "them"}, and ${waiting === 1 ? "is" : "are"} not valued until then`);
     if (notValued) rest.push(`${n(notValued, "other holding")} on that statement ${notValued === 1 ? "has" : "have"} no price this book can use and ${notValued === 1 ? "is" : "are"} not valued`);
-    if (elsewhere) rest.push(`${n(elsewhere, "more holding")} ${elsewhere === 1 ? "is" : "are"} the depository's copy of units a fund's own statement reports, valued there`);
+    if (elsewhere) rest.push(`${n(elsewhere, "more holding")} ${elsewhere === 1 ? "has" : "have"} a matching or newer verified fund record and ${elsewhere === 1 ? "is" : "are"} counted there`);
     notes.set(accountId,
       `this account's holding statement of ${asOf} records ${n(lines.length, "holding")} as quantities and values none of them${moved ? ` — beside ${moved === lines.length ? "each" : `${moved} of them`} it prints only the price of the holding's last depository movement, a transaction price` : ""}. ${cap(parts.join("; "))}${rest.length ? `; ${rest.join("; ")}` : "; nothing else on that statement is held"}. What would value all of it on that date is a statement that marks the balance, such as CDSL's monthly Consolidated Account Statement`);
   }

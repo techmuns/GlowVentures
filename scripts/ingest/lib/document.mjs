@@ -166,6 +166,7 @@ export function makeHolding(input) {
      * `Position.priceAsOf`.
      */
     priceAsOn: input.priceAsOn ?? null,
+    ...(input.custodyRematOn ? { custodyRematOn: input.custodyRematOn } : {}),
     /**
      * THE PRICE A DEPOSITORY PRINTS WHERE IT HAS NO PRICE — the face value the
      * security was allotted at. It is NOT a mark and never becomes `marketPrice`,

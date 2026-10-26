@@ -1,0 +1,165 @@
+{
+ "name": "Source unit and cash ledger",
+ "rows": [
+  [
+   "date",
+   "scheme",
+   "kind",
+   "amount",
+   "units",
+   "balance"
+  ],
+  [
+   "2026-08-13",
+   "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
+   "opening-units",
+   null,
+   1996948.986,
+   1996948.986
+  ],
+  [
+   "2026-08-13",
+   "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
+   "reclassification",
+   25008916.88,
+   148980.195,
+   2145929.181
+  ],
+  [
+   "2026-08-20",
+   "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
+   "reclassification",
+   25008117.31,
+   149290.272,
+   2295219.453
+  ],
+  [
+   "2026-08-27",
+   "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
+   "reclassification",
+   24981539.37,
+   148716.991,
+   2443936.444
+  ],
+  [
+   "2026-09-03",
+   "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
+   "reclassification",
+   25053251.46,
+   150235.073,
+   2594171.517
+  ],
+  [
+   "2026-09-21",
+   "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
+   "reclassification",
+   7498894.02,
+   45148.955,
+   2639320.472
+  ],
+  [
+   "2026-08-11",
+   "Bandhan Arbitrage Fund-Direct Plan-Growth",
+   "opening-units",
+   null,
+   3053556.743,
+   3053556.743
+  ],
+  [
+   "2026-08-11",
+   "Bandhan Arbitrage Fund-Direct Plan-Growth",
+   "reclassification",
+   -25008916.88,
+   -664271.746,
+   2389284.997
+  ],
+  [
+   "2026-08-18",
+   "Bandhan Arbitrage Fund-Direct Plan-Growth",
+   "reclassification",
+   -25008117.31,
+   -664079.413,
+   1725205.584
+  ],
+  [
+   "2026-08-25",
+   "Bandhan Arbitrage Fund-Direct Plan-Growth",
+   "reclassification",
+   -24981539.37,
+   -662211.309,
+   1062994.275
+  ],
+  [
+   "2026-09-01",
+   "Bandhan Arbitrage Fund-Direct Plan-Growth",
+   "reclassification",
+   -25053251.46,
+   -662153.429,
+   400840.846
+  ],
+  [
+   "2026-09-17",
+   "Bandhan Arbitrage Fund-Direct Plan-Growth",
+   "reclassification",
+   -7498894.02,
+   -198266.883,
+   202573.963
+  ],
+  [
+   "2026-07-01",
+   "Bandhan Overnight Fund-Direct Plan-Growth",
+   "opening-units",
+   null,
+   0,
+   0
+  ],
+  [
+   "2026-07-01",
+   "Bandhan Overnight Fund-Direct Plan-Growth",
+   "contribution",
+   50000000,
+   34361.372,
+   34361.372
+  ],
+  [
+   "2026-07-07",
+   "Bandhan Overnight Fund-Direct Plan-Growth",
+   "reclassification",
+   -25003485.15,
+   -17169.596,
+   17191.776
+  ],
+  [
+   "2026-07-14",
+   "Bandhan Overnight Fund-Direct Plan-Growth",
+   "reclassification",
+   -25060747.57,
+   -17191.776,
+   0
+  ],
+  [
+   "2026-04-08",
+   "Bandhan Liquid Fund-Direct Plan-Growth",
+   "opening-units",
+   null,
+   0,
+   0
+  ],
+  [
+   "2026-04-08",
+   "Bandhan Liquid Fund-Direct Plan-Growth",
+   "contribution",
+   12275000,
+   3678.266,
+   3678.266
+  ],
+  [
+   "2026-04-16",
+   "Bandhan Liquid Fund-Direct Plan-Growth",
+   "reclassification",
+   -12297210.16,
+   -3678.266,
+   0
+  ]
+ ]
+}

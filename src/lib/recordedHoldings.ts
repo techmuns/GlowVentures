@@ -20,7 +20,8 @@
  *   4. otherwise its own key.
  * Joined by identifier only, never by a name.
  */
-import { BOOK_POSITIONS, BOOK_UNVALUED_HOLDINGS } from "../data/glowData";
+import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_UNVALUED_HOLDINGS } from "../data/glowData";
+import { custodySuccessor } from "../../shared/custodySuccessors.mjs";
 import { bookKeyForShare } from "./depositoryShares";
 import { securityLabel } from "./securityLabel";
 import type { Position, UnvaluedStatementHolding } from "./types";
@@ -35,7 +36,8 @@ export function recordedLines(
   positions: readonly Position[] = BOOK_POSITIONS,
 ): RecordedLine[] {
   // A line another statement reports at the same units is that statement's.
-  const held = unvalued.filter((u) => !u.sameUnitsReportedBy && typeof u.quantity === "number" && u.quantity > 0);
+  const held = unvalued.filter((u) => !u.sameUnitsReportedBy && !custodySuccessor(u, BOOK_ACCOUNTS, positions)
+    && typeof u.quantity === "number" && u.quantity > 0);
   const twin = new Map<string, UnvaluedStatementHolding>();
   for (const u of held) {
     const isin = isinOf(u);

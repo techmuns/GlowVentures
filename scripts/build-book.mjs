@@ -61,6 +61,7 @@ const DEPOSITORY_PROVIDERS = new Set([CDSL_DEMAT_PROVIDER, NSDL_DEMAT_PROVIDER])
 const CUSTODY_PROVIDERS = new Set([...DEPOSITORY_PROVIDERS, HDFC_NSDL_PROVIDER]);
 
 import { reviewBookLayer } from "./lib/reviewBook.mjs";
+import { verifyCustodyLinks, custodySuccessor } from "../shared/custodySuccessors.mjs";
 import { termSplit } from "./lib/holdingPeriod.mjs";
 import { NOT_ATTRIBUTED, NOT_ATTRIBUTED_NAME } from "../shared/reviewHolders.mjs";
 import { REVIEW_AS_OF } from "./lib/reviewPrivateRead.mjs";
@@ -4649,6 +4650,13 @@ function build(archived, archiveCount = archived.length) {
     entityCashFlows[k].sort((a, b) => a.date.localeCompare(b.date) || a.amount - b.amount);
   }
 
+  verifyCustodyLinks(positions, accounts, docs);
+  for (let i = positions.length - 1; i >= 0; i--) {
+    const newer = custodySuccessor(positions[i], accounts, positions);
+    if (!newer) continue;
+    notes.push(`custody succession: ${positions[i].accountId} / ${positions[i].isin} is superseded by ${newer.accountId}; the newer verified folio balance is counted once. Original custody evidence is retained in the archive.`);
+    positions.splice(i, 1);
+  }
   dropDepositoryDuplicates(positions, accounts, notes);
 
   positions.sort((a, b) => a.accountId.localeCompare(b.accountId) || a.securityKey.localeCompare(b.securityKey));

@@ -13884,6 +13884,43 @@
   ]
  },
  {
+  "docKey": "bandhan-mutual-fund-8652064-2026-10-26-holdings",
+  "provider": "Bandhan Mutual Fund",
+  "accountNo": "8652064",
+  "owner": "Ajay Jaisinghani",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-10-26",
+  "reportType": "holdings",
+  "sourcePath": "source/october-2026-d/Bandhan-8652064-2026-10-26.pdf",
+  "pages": 4,
+  "sections": [
+   "ledger",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 1,
+  "fileKey": "bandhan-mutual-fund-8652064-2026-10-26-holdings",
+  "label": "Bandhan Mutual Fund · 8652064 · holdings",
+  "fy": "2026-10-26",
+  "source": "source/october-2026-d/Bandhan-8652064-2026-10-26.pdf",
+  "sheets": [
+   {
+    "key": "ledger",
+    "name": "Source unit and cash ledger",
+    "rows": 20,
+    "cols": 6
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 4,
+    "cols": 2
+   }
+  ]
+ },
+ {
   "docKey": "green-lantern-capital-llp-510861-2026-09-22-capital-register",
   "provider": "Green Lantern Capital LLP",
   "accountNo": "510861",

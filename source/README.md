@@ -3,6 +3,14 @@
 Drop the wealth-platform statements here: ZIPs, loose PDFs, PMS/AIF reports, fact
 sheets, capital-call and distribution notices. Nested ZIPs are fine.
 
+`october-2026-d/Bandhan-8652064-2026-10-26.pdf` is the original encrypted
+statement Ashwini emailed on 26 October at 11:43 IST (subject "Bandhan
+Statement"). It covers Ajay's folio through 26 October, with the two held
+schemes valued on 23 October and the liquid/overnight schemes closed to nil.
+The 7 October rematerialisation entries establish continuity with the earlier
+Motilal demat records; `shared/custodySuccessors.mjs` verifies those specific
+account/scheme links before the older units stop contributing to current totals.
+
 `october-2026-c/` preserves the September statements received from Glow on 9–13
 October and forwarded on 14 October. The LKP archive omits its password note;
 statement bytes are preserved. Its two separate Excel attachments in `LKP EQUITY/`

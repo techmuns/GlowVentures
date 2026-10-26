@@ -1,6 +1,6 @@
 # Return source coverage
 
-17 of 81 accounts have verified opening values, dated external capital and a closing valuation.
+17 of 82 accounts have verified opening values, dated external capital and a closing valuation.
 
 Each account ends at its own verified valuation date. The consolidated return must not include an uncovered account’s closing value without its opening stake and cash history.
 
@@ -22,6 +22,7 @@ Historical opening NAVs come from AMFI’s [31 March 2026 published file](https:
 | ASK Absolute Return Fund | 9039917144 | Ankita Jaisinghani | 2026-03-31 | — | Opening valuation and complete dated cash flows are missing |
 | ASK Investment Managers Limited | 10032723 | Ankita Jaisinghani | 2026-09-08 | — | Opening valuation and complete dated cash flows are missing |
 | ASK Investment Managers Limited | 10034025 | Ajay Jaisinghani | 2026-09-08 | — | Opening valuation and complete dated cash flows are missing |
+| Bandhan Mutual Fund | 8652064 | Ajay Jaisinghani | 2026-10-26 | — | Opening valuation and complete dated cash flows are missing |
 | Baring Private Equity India Fund | AIFM_BPEPF6_0584 | Ankita Jaisinghani | 2026-03-31 | — | Opening valuation and complete dated cash flows are missing |
 | Buoyant Capital | 103472 | Ankita Jaisinghani | 2026-09-30 | — | Opening valuation and complete dated cash flows are missing |
 | Buoyant Capital | 103473 | Ajay Jaisinghani | 2026-09-30 | — | Opening valuation and complete dated cash flows are missing |

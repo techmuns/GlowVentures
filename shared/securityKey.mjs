@@ -274,6 +274,11 @@ export function stripDepositoryTail(name) {
  * one label; merging them is its own change, not a side effect of this one.
  */
 const KEY_ALIASES = Object.freeze({
+  // Exact ISIN matches on Bandhan folio 8652064, received 26 Oct 2026.
+  "bandhan-arbitrage-fund-direct-plan-growth": "bandhan-amc-ltd-bandhan-mf-bandhan-arbitrage-fund-direct-pl-growth",
+  "bandhan-large-and-mid-cap-fund-direct-plan-growth": "bandhan-amc-ltd-bandhan-mf-bandhan-large-and-mid-cap-fund-direct-pl-growth",
+  "bandhan-overnight-fund-direct-plan-growth": "bandhan-amc-ltd-bandhan-mf-bandhan-overnight-fund-direct-growth",
+  "bandhan-liquid-fund-direct-plan-growth": "bandhan-amc-ltd-bandhan-mf-bandhan-cash-fund-direct-pl-growth",
   "sbi": "state-bank-of-india",
   "the-karur-vys": "karur-vysya-bank",
   "crompton-greaves-consumer-elec": "crompton-greaves-consumer-electrical",
