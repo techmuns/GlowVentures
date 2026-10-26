@@ -10,15 +10,15 @@
    "metadata": null
   },
   "tile-set:cio": {
-   "value": "{\"page\":\"cio\",\"ids\":[\"value\",\"gain\",\"annualised\"],\"updatedAt\":\"2026-10-22T06:13:42.908Z\"}",
+   "value": "{\"page\":\"cio\",\"ids\":[\"value\",\"gain\",\"fytd\"],\"updatedAt\":\"2026-10-26T05:37:07.836Z\"}",
    "metadata": {
     "page": "cio",
     "ids": [
      "value",
      "gain",
-     "annualised"
+     "fytd"
     ],
-    "updatedAt": "2026-10-22T06:13:42.908Z"
+    "updatedAt": "2026-10-26T05:37:07.836Z"
    }
   },
   "tile-set:private-market": {
