@@ -1,4 +1,13 @@
 /** Presentation snapshots belong to a browser history entry, never the book. */
+export function validNavigationState<T extends string | Set<string>>(value: T, fallback: T, allowed?: ReadonlySet<string>): T {
+  if (!allowed) return value;
+  if (value instanceof Set) {
+    const kept = [...value].filter(item => allowed.has(item));
+    return kept.length === value.size ? value : new Set(kept) as T;
+  }
+  return typeof value === 'string' && allowed.has(value) ? value : fallback;
+}
+
 export function createNavigationMemory(storage: () => Pick<Storage, 'getItem' | 'setItem'> | null, limit = 80) {
   const key = 'glow:navigation:v1';
   const entries = new Map<string, Map<string, unknown>>();

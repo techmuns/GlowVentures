@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { createNavigationMemory } from '../navigationMemory';
+import { createNavigationMemory, validNavigationState } from '../navigationMemory';
 
 let raw: string | null = null;
 const storage = { getItem: () => raw, setItem: (_key: string, value: string) => { raw = value; } };
@@ -28,4 +28,11 @@ assert.equal(createNavigationMemory(() => storage).read('bad', 'section', string
 const blocked = createNavigationMemory(() => { throw Error('storage blocked'); });
 blocked.write('entry', 'section', 'Cash');
 assert.equal(blocked.read('entry', 'section', string), 'Cash', 'blocked storage retains this tab\'s navigation');
+assert.equal(validNavigationState('Removed owner', 'All', new Set(['All', 'Ajay'])), 'All');
+assert.equal(validNavigationState('Old section', 'All', new Set(['All', 'Cash'])), 'All');
+assert.equal(validNavigationState('Cash', 'All', new Set(['All', 'Cash'])), 'Cash');
+const picked = new Set(['Kotak', 'Removed fund']);
+assert.deepEqual([...validNavigationState(picked, new Set(), new Set(['Kotak']))], ['Kotak']);
+assert.deepEqual([...validNavigationState(picked, new Set(), new Set())], []);
+assert.equal(validNavigationState(picked, new Set(), undefined), picked, 'pending fund-only options retain their selection');
 console.log('PASS navigation snapshots: distinct history entries, reload, validation, bounded storage and blocked storage');

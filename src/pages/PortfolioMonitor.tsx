@@ -743,10 +743,13 @@ const DERIVED_ONLY_WHY = "no statement in this book reports this company as a ho
 const DERIVED_NOTE = "DERIVED, not a position: the AMC disclosed what the fund holds and this is your units' share of it, across every asset class the filing carries — shares, bonds, NCDs and commercial paper alike. It is no part of the book's NAV — the fund's own value already stands for it there — so this column is never summed into a book total.";
 
 const EMPTY_EXPORT_SELECTION = new Set<string>();
+const EMPTY_POSITIONS: Position[] = [];
 
 export function PortfolioMonitor() {
   const wholePortfolio = useWholePortfolio();
   const { portfolio, consolidated, basis, displayCurrency, fmtFromBase, corporateActionReturns, quoteFeed, quotesStatus, requestSymbols, scope: memberScope } = usePortfolio();
+  const positions = portfolio?.positions ?? EMPTY_POSITIONS;
+  const accIdx = useMemo(() => accountIndex(portfolio?.accounts ?? []), [portfolio?.accounts]);
   /**
    * WHY THE LIVE QUOTE ON THESE LINES WAS HELD BACK, OR NULL (DL-9).
    *
@@ -846,10 +849,14 @@ export function PortfolioMonitor() {
   const txnAxis: GroupAxis = groupAxis === SECURITY_AXIS ? "category" : groupAxis;
   /** What the axis control lights up: the raw param on Holdings, the resolved one on Transactions. */
   const activeAxis: MonitorAxis = view === "holdings" ? groupAxis : txnAxis;
+  const entities = useMemo(() => ["All", ...Array.from(new Set(positions.map((p) => ownerOf(accIdx, p)))).sort()], [positions, accIdx]);
+  // Validate saved sections against the current book and the active axis.
+  const buckets = useMemo(
+    () => ["All", ...Array.from(new Set(positions.map((p) => groupKeyFor(activeAxis, accIdx, p))))
+      .sort((a, b) => groupOrdFor(activeAxis)(a) - groupOrdFor(activeAxis)(b))],
+    [positions, accIdx, activeAxis]);
   // These three filters are global — they drive both the Holdings table and the
   // Transactions tape at once. `selected` is a set of security names (empty = all).
-  const [selectedFilter, setSelected] = useNavigationState<Set<string>>('selected', () => new Set());
-  const selected = useTableExportFilter(selectedFilter, EMPTY_EXPORT_SELECTION);
   /**
    * THE SECTOR DROPDOWN IS GONE AND THE SECTOR FILTER IS NOT — the same
    * treatment the Holdings basis switch got when it was removed (Stage 10q).
@@ -867,7 +874,7 @@ export function PortfolioMonitor() {
    */
   const [sectorParams] = useSearchParams();
   const sector = useTableExportFilter(sectorParams.get("sector") ?? "All", "All");
-  const [entityFilter, setEntity] = useNavigationState<string>('entity', 'All');
+  const [entityFilter, setEntity] = useNavigationState<string>('entity', 'All', entities);
   const entity = useTableExportFilter(entityFilter, "All");
   // Category filter — Direct Equity / PMS mandates / AIF / Mutual Fund / ETF /
   // Cash were shown in one flat list, so a ₹176 Cr AIF folio sat between two
@@ -875,7 +882,7 @@ export function PortfolioMonitor() {
   // (`holdingBucket`), not to an asset class: what a reader is choosing between
   // here is shares the family bought and mandates it handed to a manager, and
   // those are the same asset class.
-  const [bucketFilter, setBucket] = useNavigationState<string>('section', 'All');
+  const [bucketFilter, setBucket] = useNavigationState<string>('section', 'All', buckets);
   const bucket = useTableExportFilter(bucketFilter, "All");
   /**
    * SWITCHING AXIS CLEARS THE SECTION FILTER, and that is a correctness fix
@@ -1073,9 +1080,7 @@ export function PortfolioMonitor() {
   // keyed per SECURITY across the whole book, which is why a mandate row could
   // show none of it and the footer could not tie to its own column.
   if (!portfolio) return null;
-  const positions = portfolio.positions;
   // Owner comes from the account registry, never from the account string.
-  const accIdx = useMemo(() => accountIndex(portfolio.accounts), [portfolio.accounts]);
   const owner = (p: Position) => ownerOf(accIdx, p);
   /**
    * ── THE LOOK-THROUGH UNDER AN ENTITY FILTER IS THAT ENTITY'S FUNDS (Stage 10fz) ──
@@ -1117,21 +1122,6 @@ export function PortfolioMonitor() {
    */
   const ownerOfAccount = (accountId: string) => accIdx.get(accountId)?.ownerId
     ? ownerDisplayName(accIdx.get(accountId)!.ownerId) : (accIdx.get(accountId)?.owner ?? accountId);
-  const entities = useMemo(() => ["All", ...Array.from(new Set(positions.map((p) => ownerOf(accIdx, p)))).sort()], [positions, accIdx]);
-  // Buckets present, in a fixed reading order (own → mandates → wrappers → cash).
-  /**
-   * THE FILTER FOLLOWS THE AXIS. Sectioning by basket while the dropdown still
-   * offered "AIF" would leave a reader filtering on a key no section carries —
-   * and because the filter is a plain equality test, that empties the table
-   * SILENTLY. So its options are the groups of whichever axis is active, and
-   * `groupAxis` resets the selection (below) rather than letting a stale key
-   * survive the switch.
-   */
-  const buckets = useMemo(
-    () => ["All", ...Array.from(new Set(positions.map((p) => groupKeyFor(activeAxis, accIdx, p))))
-      .sort((a, b) => groupOrdFor(activeAxis)(a) - groupOrdFor(activeAxis)(b))],
-    [positions, accIdx, activeAxis],
-  );
   /**
    * Each mandate account's OWN totals, struck over every position it holds
    * BEFORE this page's filters. A filtered mandate row prints both figures so a
@@ -1218,6 +1208,11 @@ export function PortfolioMonitor() {
     }
     return [...mv.keys()].sort((a, b) => (mv.get(b) ?? 0) - (mv.get(a) ?? 0));
   }, [positions, bySecurity, exposure, memberScope.accountIds]);
+  // Fund-only names cannot be declared obsolete while their filings are still
+  // loading or unavailable. Other options come directly from this book.
+  const [selectedFilter, setSelected] = useNavigationState<Set<string>>('selected', () => new Set(),
+    !bySecurity || exposure.status === 'ok' ? securityNames : undefined);
+  const selected = useTableExportFilter(selectedFilter, EMPTY_EXPORT_SELECTION);
   const pickedUnvalued = allRecordedLines().filter(l => !carriedBy(l, positions)
     && inScopeAccount(memberScope.accountIds, l.accountId)
     && selected.has(recordedLabel(l.homeKey) ?? l.security)

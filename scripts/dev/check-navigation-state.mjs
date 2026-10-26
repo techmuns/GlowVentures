@@ -27,11 +27,16 @@ try {
   await page.locator('[data-monitor-table="holdings"] button[data-col-button="qty"]').click();
   await link().scrollIntoViewIfNeeded();
   const origin = page.url(), entry = await page.evaluate(()=>history.state.key);
+  await link().click(); await page.waitForURL(base+'/stock/'+kotak);
+  await back(); await page.waitForURL(origin); await assertCash();
+  // Focus first, then use keyboard activation so Playwright's click auto-scroll
+  // cannot change the deliberately chosen horizontal position before leaving.
+  await link().evaluate(el=>el.focus({preventScroll:true}));
   const position = await page.locator('[data-navigation-scroll="monitor-holdings"]').evaluate(el=>{
     el.scrollLeft=45;el.scrollTop=35;return {left:el.scrollLeft,top:el.scrollTop};
   });
   assert.ok(position.left>0 && position.top>0,'exercise both directions of table scrolling');
-  await link().click();
+  await page.keyboard.press('Enter');
   await page.waitForURL(base+'/stock/'+kotak);
   await back(); await page.waitForURL(origin); await assertCash();
   await page.waitForFunction(p=>{
@@ -70,8 +75,25 @@ try {
   assert.equal(await page.locator('[data-entity-filter]').inputValue(),'Ajay Jaisinghani');
   assert.equal(await page.getByRole('button',{name:'All holdings',exact:true}).count(),0);
   await page.screenshot({path:path.join(out,'filtered-return.png')});
+  // A new publication may retire choices stored by an older history entry.
+  const retainedNames = await page.evaluate(()=>{
+    const data=JSON.parse(sessionStorage.getItem('glow:navigation:v1'));
+    const slots=data.find(([id])=>id===history.state.key)[1];
+    const chosen=slots.find(([name])=>name==='/monitor:selected')[1];
+    slots.find(([name])=>name==='/monitor:selected')[1]=[...chosen,'Removed holding'];
+    slots.find(([name])=>name==='/monitor:entity')[1]='Removed owner';
+    slots.find(([name])=>name==='/monitor:section')[1]='Removed section';
+    sessionStorage.setItem('glow:navigation:v1',JSON.stringify(data));return chosen;
+  });
+  await page.reload(); await row().waitFor();
+  assert.equal(await page.getByRole('tab',{name:'All',exact:true}).getAttribute('aria-selected'),'true');
+  assert.equal(await page.locator('[data-entity-filter]').inputValue(),'All');
+  assert.deepEqual(await page.evaluate(()=>{
+    const slots=JSON.parse(sessionStorage.getItem('glow:navigation:v1')).find(([id])=>id===history.state.key)[1];
+    return slots.find(([name])=>name==='/monitor:selected')[1];
+  }),retainedNames,'retain valid holdings and remove retired choices');
   assert.deepEqual(errors,[]);
-  await fs.writeFile(path.join(out,'results.json'),JSON.stringify({fundBackToCash:true,browserBackForward:true,expandedRows:true,sortRetained:true,tableScroll:true,holdingAndEntityFilters:true,independentVisits:true,reloadSameEntry:true,errors},null,2));
+  await fs.writeFile(path.join(out,'results.json'),JSON.stringify({fundBackToCash:true,browserBackForward:true,expandedRows:true,sortRetained:true,tableScroll:true,holdingAndEntityFilters:true,independentVisits:true,reloadSameEntry:true,staleChoicesRemoved:true,errors},null,2));
   console.log('PASS navigation: fund Back returns to Cash, filters/rows/sort/scroll persist, entries stay independent and reload restores');
 } catch(error) {
   await fs.writeFile(path.join(out,'failure.json'),JSON.stringify({message:error.message,url:page.url(),errors,text:(await page.locator('body').innerText()).slice(-12000)},null,2));
