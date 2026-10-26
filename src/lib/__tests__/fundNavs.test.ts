@@ -16,6 +16,7 @@ import {
   applyFundNavs, fundNavFor, FUND_NAV_COUNT,
   depositoryCashHoldings, depositoryFundHoldings, depositoryBalancesOf, partialValuationNotes,
   VALUE_DEPOSITORY_CASH_UNITS, VALUE_DEPOSITORY_FUND_UNITS, isArbitrageFund,
+  unpricedStatementUnits,
 } from "../fundNavs";
 import {
   depositoryShareCandidates, depositoryShareHoldings, unpricedStatementShareCandidates, shareCandidates,
@@ -274,6 +275,11 @@ for (const b of BOOK_POSITIONS) {
 }
 const keyOf = (w: { isin: string | null; securityKey: string }) =>
   bookKeyByIsin.get(w.isin?.trim().toUpperCase() ?? "") ?? w.securityKey;
+// Source-reviewed exception: Bandhan 8652064 acknowledges rematerialisation
+// on 7 October for these two schemes; its 26 October balances now speak.
+const replacedByBandhanFolio = (w: { accountId: string; isin: string | null }) =>
+  w.accountId === "motilal-oswal-financial-services-demat-1201090012539150"
+  && ["INF194K01Y60", "INF194K01V89"].includes(w.isin ?? "");
 const nonCash = blocks.filter((w) => txOnly.has(w.accountId) && w.reason === null && (w.closing ?? 0) > 0
   && w.isin && navByIsin.get(w.isin)?.usableForValue && !isCashEquivalent({ securityKey: keyOf(w) }));
 ok("the same account holds priced funds that are not cash, so the cash gate has something to refuse",
@@ -301,7 +307,7 @@ ok("the fund switch is on, so the non-cash rows below are what the live book add
 ok("the cash rows are exactly the fund rows that are cash equivalents — one builder, two views",
   DEP.length === FUNDS.filter((p) => isCashEquivalent(p)).length
   && DEP.every((p) => FUNDS.some((f) => f.isin === p.isin && f.accountId === p.accountId)));
-const nonCashFunds = nonCash.filter((w) => !isEtfIsin(w.isin));
+const nonCashFunds = nonCash.filter((w) => !isEtfIsin(w.isin) && !replacedByBandhanFolio(w));
 ok("every non-cash fund the cash gate refused is valued here, at AMFI's NAV",
   nonCashFunds.length > 0 && nonCashFunds.every((w) => FUNDS.some((p) => p.isin === w.isin && p.accountId === w.accountId)),
   `${nonCashFunds.length} fund(s), ${crs(FUNDS.filter((p) => !isCashEquivalent(p)).reduce((a, p) => a + p.marketValue, 0))}`);
@@ -351,10 +357,10 @@ const tie = (a: number | null | undefined, b: number) => typeof a === "number" &
 /** Balances on `id` that another account's own statement already reports. */
 const reportedElsewhere = (id: string, valuedIsins: Set<string>) => blocks.filter((w) =>
   w.accountId === id && (w.closing ?? 0) > 0 && !valuedIsins.has((w.isin ?? "").toUpperCase())
-  && BOOK_POSITIONS.some((b) => b.accountId !== id && (
+  && (replacedByBandhanFolio(w) || BOOK_POSITIONS.some((b) => b.accountId !== id && (
     (!!w.isin && b.isin?.toUpperCase() === w.isin.toUpperCase() && tie(b.quantity, w.closing as number))
     || (b.assetClass === "AIF" && ownerOfAcct.get(b.accountId) === ownerOfAcct.get(id)
-      && tie(recordedUnits.get(`${b.accountId}|${b.securityKey}`), w.closing as number)))));
+      && tie(recordedUnits.get(`${b.accountId}|${b.securityKey}`), w.closing as number))))));
 const depAccount = FUNDS[0]?.accountId ?? "";
 const fundIsins = new Set(FUNDS.filter((p) => p.accountId === depAccount).map((p) => (p.isin ?? "").toUpperCase()));
 const elsewhere = reportedElsewhere(depAccount, fundIsins);
@@ -647,6 +653,30 @@ if (!existsSync(REVIEW)) {
     witnessed.length > 0 && witnessed.every((w) => w.nav / w.b.nav >= 0.5 && w.nav / w.b.nav <= 2),
     witnessed.map((w) => `paid ₹${w.b.nav}, published ₹${w.nav}`).join("; "));
 }
+
+// A newer rematerialised folio replaces its old custody balance even though
+// switches changed the units. Another person's units and separate folios stay.
+const bandhanFolio = BOOK_POSITIONS.find(p => p.accountId === "bandhan-mutual-fund-8652064" && p.isin === "INF194K01Y60");
+const bandhanLarge = BOOK_POSITIONS.find(p => p.accountId === "bandhan-mutual-fund-8652064" && p.isin === "INF194K01V89");
+const custody = "motilal-oswal-financial-services-demat-1201090012539150";
+ok("Bandhan's latest arbitrage balance and dated value come from its own statement",
+  bandhanFolio?.quantity === 202573.963 && Math.abs((bandhanFolio.marketValue ?? 0) - 7724469.33) < .01 && bandhanFolio.priceAsOf === "2026-10-23");
+ok("the receiving Bandhan scheme is updated too", bandhanLarge?.quantity === 2639320.472);
+ok("every holder's Large & Mid Cap scheme shares one identity with its published NAV",
+  !!bandhanLarge && fundNavFor(bandhanLarge)?.isin === "INF194K01V89"
+  && [...BOOK_POSITIONS, ...BOOK_UNVALUED_HOLDINGS].filter(p => p.isin === "INF194K01V89")
+    .every(p => p.securityKey === bandhanLarge.securityKey));
+ok("the old Bandhan demat balances are not added beside either newer folio holding",
+  depositoryFundHoldings().every(p => p.accountId !== custody || !["INF194K01Y60", "INF194K01V89"].includes(p.isin ?? "")));
+ok("the original July custody evidence remains available",
+  Object.values(BOOK_SHARE_MOVEMENTS).some(w => w.accountId === custody && w.isin === "INF194K01Y60" && w.closing === 3371575.697));
+const newerStatement = bandhanFolio && { ...bandhanFolio,
+  priceAsOf: new Date(Date.parse(`${fundNavFor(bandhanFolio)?.date}T00:00:00Z`) + 86400000).toISOString().slice(0, 10) };
+ok("the older cached NAV cannot overwrite a newer fund statement",
+  !!newerStatement && applyFundNavs([newerStatement])[0].marketValue === newerStatement.marketValue);
+ok("other owners' Bandhan units remain valued", unpricedStatementUnits().some(p => p.isin === "INF194K01V89" && p.accountId !== custody));
+ok("a separate redeemed Motilal folio does not erase Ajay's demat arbitrage",
+  depositoryFundHoldings().some(p => p.accountId === custody && p.isin === "INF247L01ED1" && p.quantity === 28067435.434));
 
 console.log(`\n${pass} passed, ${fails.length} failed`);
 if (fails.length) { for (const f of fails) console.log(`  FAILED: ${f}`); process.exit(1); }

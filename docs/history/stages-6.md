@@ -397,6 +397,18 @@
 - Browser regressions cover picker/figure agreement, equal summary dimensions, the collapsed gain breakdown and inline market coverage alongside the existing period, source and assumption checks.
 - CI exposed the existing property-tax owner table missing the standard export wrapper; it now uses `ExportableTable`, preserving the owner-level tax figures and restoring the export-coverage contract.
 
+### Stage 10hm — BANDHAN'S CURRENT FOLIO REPLACES ITS OLDER DEMAT BALANCES
+
+- Preserve Ashwini's 26 October original statement for Ajay's Bandhan folio 8652064. A checked reader covers all four schemes and every printed movement: Arbitrage has 202,573.963 units / ₹7,724,469.33; Large & Mid Cap has 2,639,320.472 units / ₹407,339,525.05, both valued on 23 October. Liquid and Overnight close to nil. Purchase costs come from the matching account-summary rows, never cumulative purchase cost less redemption proceeds.
+- Read and reconcile the five arbitrage switches and receiving fund entries, fees/stamp duty, running units and printed account total. The partial unit-history openings remain explicit; no missing purchase history or whole-account return is invented.
+- Reviewed custody-to-folio links are verified against the source's 7 October rematerialisation entries, owner and exact ISIN. The newer linked folio replaces older custody balances in both canonical positions and live overlays; custody history stays archived. Wrong owners, schemes, unlinked folios, equal/older records, later custody holdings and ambiguous successors cannot suppress a holding. A later measured zero on the linked folio can replace an old positive balance.
+- Prevent an older cached AMFI NAV from rolling a newer statement valuation backwards. Separate Motilal and Invesco folios remain separate; other family members' Bandhan holdings stay counted.
+- Data Audit exposes a current-balances sheet with each scheme's ISIN, dated NAV, units, cost and value. Classify the two nil liquid/overnight schemes as cash equivalents and regenerate the review's gap list so the newly received named holding is no longer requested.
+- Review corrections: include explicit opening-unit rows in the per-scheme origin test. The two nonzero Bandhan openings prevent the small nil-origin sleeves from certifying the whole folio's capital history; appreciation and XIRR stay withheld until preceding purchases are supplied. Both full Large & Mid Cap spellings resolve to the existing exact-ISIN key used by the other holders, NAVs and scheme-name indexes, keeping one family holding.
+- Encrypted archive rereads accept reviewed aliases only with the same exact ISIN, units and value. CI retains the regenerated archive and book for diagnosis on a source mismatch, and the mismatch still fails the required job.
+- Regression checks cover source reconciliation and refusals, chronology, account/owner/plan isolation, measured-zero successors, retained history and a single current Bandhan balance.
+- Integrated Stage 10hn's Helios statements and regenerated the combined archive/book, retaining both latest deliveries.
+
 ### Stage 10hn — HELIOS, 26 OCTOBER: TWO FOLIOS, AND THEIR RETURNS CLOSE ON THE NEW NAV
 
 - `source/october-2026-d/`: CAMS account statements of 26 Oct for Helios Flexi Cap Direct Growth. Folio 10355977 (Ajay) is revalued at the 23 Oct NAV of 14.83, ₹31.00 Cr → ₹28.36 Cr. Folio 10056128 (Ajay, with Aarti as joint holder) is new to the book: 32,45,281.682 units, ₹4.60 Cr paid over three purchases since 7 Aug 2024, ₹4.81 Cr today. It is the review's Ajay MOPWM Helios line to the unit; the units were rematerialised out of demat on 6 Oct, and no demat holding in the book carries them. The client sent 10355977 twice (byte-identical), so one copy is kept.

@@ -193,7 +193,8 @@ export const REVIEW_LINE_ISINS: ReadonlyMap<string, readonly string[]> = new Map
   // Opportunities and ICICI Equity Savings the review closes Ajay on 30 June at
   // 48,50,206.378 and 93,20,249.865 units, and the depository closes the demat
   // at exactly those balances on 31 July.
-  ["Bandhan Large & Mid Cap Fund - Direct Plan - Growth", ["INF194K01V89"]],
+  // Bandhan Large & Mid Cap now has its own named folio statement (8652064,
+  // 26 Oct 2026), so it is no longer a gap needing this fallback.
   ["ICICI Pru India Opportunities Fund", ["INF109KC1RH9"]],
   ["ICICI Prudential Equity Savings Fund - Direct Plan", ["INF109KA11J9"]],
   // Kotak Large & Midcap left this table at Stage 10fj: Ajay's Kotak folio

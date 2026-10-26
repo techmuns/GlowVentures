@@ -52,13 +52,6 @@ export const REVIEW_GAPS: ReviewGap[] = [
     "ask": "AMC folio statements or a CAS for the mutual-fund and liquid holdings on the Debt / Cash / Alternate tabs"
   },
   {
-    "name": "Bandhan Large & Mid Cap Fund - Direct Plan - Growth",
-    "aliases": [],
-    "custodian": "MOPWM",
-    "why": "held at Motilal Oswal; the drop carries a holding statement for six of its seven demat accounts — quantities only, the rate being the price of the last movement — and only a transaction tape for Ajay's main demat",
-    "ask": "Motilal Oswal holding statements for the demat and PWM accounts not in the drop"
-  },
-  {
     "name": "Bharat Parenterals Ltd",
     "aliases": [],
     "custodian": "MOPWM",
@@ -258,13 +251,6 @@ export const REVIEW_GAPS: ReviewGap[] = [
   },
   {
     "name": "Sterlite Power Transmission",
-    "aliases": [],
-    "custodian": "HDFC Bank",
-    "why": "held at HDFC Bank — no holding statement for Ajay's HDFC Bank demat is in the drop (Bharat's is a SCAN)",
-    "ask": "HDFC Bank demat holding statements — Ajay's (none in the drop) and Bharat's as a text PDF, not a scan"
-  },
-  {
-    "name": "STLNETWORK",
     "aliases": [],
     "custodian": "HDFC Bank",
     "why": "held at HDFC Bank — no holding statement for Ajay's HDFC Bank demat is in the drop (Bharat's is a SCAN)",

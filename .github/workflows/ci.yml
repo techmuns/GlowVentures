@@ -180,6 +180,8 @@ jobs:
         run: npm run inventory
 
       - name: The archive is exactly what source/ and the readers produce
+        id: archive_snapshot
+        continue-on-error: true
         env:
           GLOW_OCR: "off"
         run: |
@@ -189,6 +191,34 @@ jobs:
             git status --short -- public/audit | head -40
             exit 1
           fi
+
+      - name: Prepare diagnostic book from a regenerated archive
+        if: steps.archive_snapshot.outcome == 'failure'
+        run: |
+          npm run build-book
+          npm run reconcile:review
+          npm run coverage:source
+          npm run check:reads
+
+      - name: Preserve regenerated archive and book on a mismatch
+        if: always() && steps.archive_snapshot.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: regenerated-source-book
+          path: |
+            public/audit/
+            src/data/glowData.ts
+            src/data/reviewColumns.ts
+            src/data/reviewGaps.ts
+            docs/BOOK-REPORT.md
+            docs/COST-RECOVERY.md
+            docs/RETURN-COVERAGE.md
+            docs/REVIEW-RECONCILIATION.md
+            docs/EXTRACTION-REPORT.md
+            docs/extraction-report.json
+            docs/INGEST-INVENTORY.md
+            docs/ingest-inventory.json
+            docs/SOURCE-COVERAGE.md
 
       - name: The book is built from that archive
         run: |
@@ -204,6 +234,12 @@ jobs:
 
       - name: Every statement is read in full and reaches the book
         run: npm run check:reads
+
+      - name: Require the generated source archive to be committed
+        if: always() && steps.archive_snapshot.outcome == 'failure'
+        run: |
+          echo "::error::Commit the verified regenerated archive and book before merging."
+          exit 1
 
   upload-e2e:
     runs-on: ubuntu-latest

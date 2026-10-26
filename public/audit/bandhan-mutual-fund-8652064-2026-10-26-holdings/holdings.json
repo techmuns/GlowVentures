@@ -1,0 +1,55 @@
+{
+ "name": "Current scheme balances",
+ "rows": [
+  [
+   "Scheme",
+   "ISIN",
+   "NAV date",
+   "Units",
+   "NAV",
+   "Cost held",
+   "Market value",
+   "Demat to remat accepted"
+  ],
+  [
+   "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
+   "INF194K01V89",
+   "2026-10-23",
+   2639320.472,
+   154.335,
+   430913833.72,
+   407339525.05,
+   "2026-10-07"
+  ],
+  [
+   "Bandhan Arbitrage Fund-Direct Plan-Growth",
+   "INF194K01Y60",
+   "2026-10-23",
+   202573.963,
+   38.1316,
+   7574153.25,
+   7724469.33,
+   "2026-10-07"
+  ],
+  [
+   "Bandhan Overnight Fund-Direct Plan-Growth",
+   "INF194KB1447",
+   "2026-10-25",
+   0,
+   1478.7935,
+   0,
+   0,
+   null
+  ],
+  [
+   "Bandhan Liquid Fund-Direct Plan-Growth",
+   "INF194K01I60",
+   "2026-10-25",
+   0,
+   3451.1571,
+   0,
+   0,
+   null
+  ]
+ ]
+}
