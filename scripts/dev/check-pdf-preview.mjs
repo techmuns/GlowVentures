@@ -32,7 +32,7 @@ page.on('response', r => {if (/\/pdf-assets\/|pdf\.worker/.test(r.url()) && !r.o
 await page.route('**/api/**', r => r.fulfill({status:503,json:{ok:false}}));
 await page.route('**/api/statement-previews/*.pdf', r => r.fulfill({contentType:'application/pdf',body:unlocked}));
 await page.route('**/audit/manifest.json', r => r.fulfill({json:manifest}));
-await page.route('**/audit/preview-*/pages.json', r => r.fulfill({json:{pages:[{page:1,text:'Preview page one'},{page:2,text:'Preview page two'}]}}));
+await page.route('**/audit/preview-*/pages.json', r => r.fulfill({json:{pages:[{page:1,text:'Preview page one INF247L01ED1 123.45'},{page:2,text:'Preview page two INF247L01ED1 123.45'}]}}));
 await page.route('**/statement-files/index.json', r => r.fulfill({json:index}));
 await page.route('**/statement-files/preview-*.pdf', r => r.fulfill({contentType:'application/pdf',body:/preview-(locked|auto)/.test(r.request().url()) ? locked : r.request().url().includes('preview-bad') ? Buffer.from('not a PDF') : plain}));
 const address = key => `${base}/statements?provider=Preview%20test&file=${key}`;
@@ -68,6 +68,12 @@ try {
   await frame.getByRole('tab',{name:'Text as read',exact:true}).click();
   await frame.locator('[data-preview-page="1"]').getByText('Preview page one').waitFor();
   await frame.getByRole('tab',{name:'Original file',exact:true}).click(); await ink(1);
+  await open('preview-plain');
+  const app = page.frames().find(f => f.parentFrame() && f.url().startsWith(`${base}/statements?`));
+  await app.goto(address('preview-plain')+'&isin=INF247L01ED1&sourceValue=123.45&field=quantity');
+  await ink(1);
+  await frame.getByRole('status').filter({hasText:'Exact number could not be uniquely highlighted'}).waitFor();
+  assert.equal(await frame.locator('mark[data-pdf-source-value]').count(),0,'ambiguous pages do not guess a highlight');
   await open('preview-part'); await ink(2);
   assert.equal(await frame.getByLabel('PDF page',{exact:true}).inputValue(),'2');
   await open('preview-auto'); await ink(1);

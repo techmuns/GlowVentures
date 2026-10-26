@@ -2,7 +2,7 @@ import { ExportableTable } from "@/components/ExportableTable";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { X, ExternalLink, FileText, FileSpreadsheet, Loader2, Download, Lock, Table2 } from "lucide-react";
+import { X, ExternalLink, FileText, FileSpreadsheet, Loader2, Download, Lock, Table2, ArrowLeft } from "lucide-react";
 import type { WorkSheet } from "xlsx";
 import { Pill } from "@/components/Pill";
 import { AbsentSection, DASH } from "@/components/Absent";
@@ -13,6 +13,8 @@ import {
   cellText, columnLetters, fileSize, hasText, isSheetFormat, mergeLayout, sheetRows, unreadReason, sourceSheetIndex,
   type GridCell, type GridMerge, type PageText, type PublishedFile, type StatementFileIndex,
 } from "@/lib/statementPreview";
+import { usePreviewDialog } from '@/lib/usePreviewDialog';
+import { isinBeforePage } from '@/lib/pdfSourceHighlight';
 import { sourceRecordAt, sourcePage } from '@/lib/sourceTrace';
 import { readModel } from '@/lib/readModel';
 
@@ -425,7 +427,7 @@ function SelectedSourceRecord({ docKey }: { docKey: string }) {
  * text, a document may name the ring-fenced holding (the family's own email
  * domain is on many statements), which is why no route opens one by default.
  */
-export function StatementPreview({ doc, onClose }: { doc: LibraryDoc; onClose: () => void }) {
+export function StatementPreview({ doc, onClose, backLabel }: { doc: LibraryDoc; onClose: () => void; backLabel?: string }) {
   const [params] = useSearchParams();
   const loaded = usePages(doc.fileKey);
   const original = useOriginal(doc.fileKey);
@@ -433,21 +435,12 @@ export function StatementPreview({ doc, onClose }: { doc: LibraryDoc; onClose: (
   const view: View = picked ?? (original.status === "missing" ? "text" : "original");
   const published = original.status === "ready" ? original : null;
   const closeRef = useRef<HTMLButtonElement>(null);
-  const close = useRef(onClose);
-  close.current = onClose;
+  const dialogRef = useRef<HTMLDivElement>(null);
   const sheet = isSheetFormat(doc.format);
   // The PDF viewer takes the whole window and scrolls itself.
   const fills = view === "original" && !!published && !sheet;
 
-  // Focus moves into the window when it opens and back to the row that opened
-  // it when it closes.
-  useEffect(() => {
-    const opener = document.activeElement as HTMLElement | null;
-    closeRef.current?.focus();
-    const key = (e: KeyboardEvent) => { if (e.key === "Escape") { e.preventDefault(); close.current(); } };
-    document.addEventListener("keydown", key);
-    return () => { document.removeEventListener("keydown", key); opener?.focus?.(); };
-  }, []);
+  usePreviewDialog(onClose, dialogRef, closeRef);
 
   const count = loaded.status === "ready" ? loaded.pages.length : null;
   const selectedPage = loaded.status === 'ready' ? sourcePage(loaded.pages, params.get('isin'), params.get('sourceValue')) : undefined;
@@ -458,9 +451,10 @@ export function StatementPreview({ doc, onClose }: { doc: LibraryDoc; onClose: (
   // the viewport rather than an ancestor with a filter. Sized as a share of the
   // overlay, never in `vh` (index.css).
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-950/70 p-6 backdrop-blur-xl"
+    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-ink-950/70 p-6 backdrop-blur-xl"
+      onMouseDownCapture={e => e.stopPropagation()}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div role="dialog" aria-modal="true" aria-label={`${doc.reportLabel} — ${doc.fileName}`}
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={`${doc.reportLabel} — ${doc.fileName}`}
         data-statement-preview={doc.fileKey} data-preview-state={loaded.status} data-preview-format={doc.format}
         data-preview-view={view} data-preview-original={original.status}
         className="flex h-full max-h-[880px] w-full max-w-5xl flex-col overflow-hidden rounded-xl border border-ink-700 bg-ink-900 shadow-2xl">
@@ -498,6 +492,7 @@ export function StatementPreview({ doc, onClose }: { doc: LibraryDoc; onClose: (
             {meta.length > 0 && <div className="mt-0.5 text-[11px] text-slate-500">{meta.join(" · ")}</div>}
           </div>
           <div className="flex w-full shrink-0 flex-wrap items-center justify-end gap-1.5 sm:w-auto">
+            {backLabel && <button type="button" onClick={onClose} className={ACTION} data-source-back><ArrowLeft className="h-3.5 w-3.5" />{backLabel}</button>}
             {published && (
               <>
                 <a href={published.url} download={doc.fileName} className={ACTION} title={`Download ${doc.fileName}`} data-preview-download>
@@ -536,7 +531,11 @@ export function StatementPreview({ doc, onClose }: { doc: LibraryDoc; onClose: (
           {view === "original" && published && (sheet
             ? <OriginalSheets url={published.url} format={doc.format} />
             : <Suspense fallback={<Opening what="Opening PDF…" />}>
-                <OriginalPdf key={published.previewUrl} url={published.previewUrl} file={published.file} initialPage={selectedPage} title={`${doc.reportLabel} — ${doc.fileName}`} />
+                <OriginalPdf key={published.previewUrl} url={published.previewUrl} file={published.file} initialPage={selectedPage}
+                  sourceTarget={loaded.status !== 'loading' && params.get('sourceValue') && params.get('isin') ? {
+                    value: params.get('sourceValue')!, isin: params.get('isin')!, field: params.get('field'),
+                    initialIsin: loaded.status === 'ready' && selectedPage ? isinBeforePage(loaded.pages, selectedPage) : null,
+                  } : undefined} title={`${doc.reportLabel} — ${doc.fileName}`} />
               </Suspense>)}
 
           {view === "text" && loaded.status === "loading" && <Opening what="Opening the file…" />}
