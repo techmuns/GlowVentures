@@ -64,6 +64,13 @@
  * the reason. The family asked to SEE the current NAV; what they must not get
  * is a holding value built on a base the book cannot reconcile.
  *
+ * A BREAK WITH A SOURCE IS NOT A REFUSAL (Stage 10hq). The DSP break above is
+ * DSP's own 1:10 sub-division of 28 Aug 2026, which also moved both ETFs to new
+ * ISINs, so AMFI's file no longer carries the ISIN the statements print at all.
+ * `shared/fundUnitSplits.mjs` records each such split with NSE's circulars; the
+ * scheme is joined through the successor ISIN, and the basis check is struck on
+ * the NAV times the split's factor — the unit the book's lines were counted in.
+ *
  * ── THE DAY CHANGE ACCUMULATES, BECAUSE THE SOURCE PUBLISHES ONE DAY ───────
  *
  * NAVAll is a snapshot. So the previous NAV is whatever THIS FILE already held
@@ -123,6 +130,7 @@
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import { fundUnitSplitFor } from "../shared/fundUnitSplits.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const OUT = join(ROOT, "src/data/fundNavs.ts");
@@ -283,6 +291,17 @@ for (const w of depositoryOnly) {
     : { key: w.securityKey, name: w.security, bookIsin: w.isin, marks: [], assetClass: null, from: "depository", holds: true });
 }
 
+/**
+ * THE DATES THE BOOK'S OWN LINES OF A SECURITY WERE COUNTED ON — what decides
+ * which side of a sub-division their units are on (`shared/fundUnitSplits.mjs`).
+ */
+const accountAsOf = new Map((bookArray(glow, "BOOK_ACCOUNTS") ?? []).map((a) => [a.accountId, a.asOf ?? null]));
+const lineDatesOf = (key) => [
+  ...positions.filter((p) => p.securityKey === key).map((p) => accountAsOf.get(p.accountId) ?? null),
+  ...unvaluedFunds.filter((u) => u.securityKey === key).map((u) => u.asOf ?? null),
+  ...depositoryOnly.filter((w) => w.securityKey === key).map((w) => w.periodTo ?? null),
+];
+
 // ── the published file ──────────────────────────────────────────────────────
 async function fetchNavAll() {
   const res = await fetch(NAVALL, { redirect: "follow", headers: { "user-agent": "glow-ventures/1.0" } });
@@ -374,15 +393,35 @@ function main() {
       }
       const isin = bookIsin ?? lt;
       if (!isin) continue;                            // not identifiable; silently not a fund we can reach
-      const rec = by.get(isin);
+      let rec = by.get(isin);
+      /**
+       * A SUB-DIVISION THAT RETIRED THE STATEMENT'S ISIN (Stage 10hq). AMFI
+       * publishes the scheme under the successor NSE named, on a unit `factor`
+       * times smaller. The book's lines are on the old unit only where every
+       * one of them was counted before the ex-date; a line counted on or after
+       * it under the retired ISIN could be on either, so nothing is joined.
+       */
+      const split = rec ? null : fundUnitSplitFor(isin);
+      if (split) {
+        if (lineDatesOf(w.key).some((d) => !d || d >= split.exDate)) {
+          skipped.push({ ...w, isin, why: `ISIN ${isin} was retired by a 1:${split.factor} sub-division on ${split.exDate} (${split.source}), and a line of it is counted on or after that date, or on no date, so its units cannot be placed on either side of the split` });
+          continue;
+        }
+        rec = by.get(split.successorIsin);
+      }
       if (!rec) {
         // Only worth naming where the book thinks this is a fund at all — or
         // where a depository reported units a reader would expect to see valued.
         if (w.assetClass === "Mutual Fund" || w.assetClass === "ETF" || w.from === "depository") {
-          skipped.push({ ...w, isin, why: `ISIN ${isin} is not in AMFI's published NAV file` });
+          skipped.push({ ...w, isin, why: split
+            ? `neither ISIN ${isin} nor ${split.successorIsin}, which replaced it on ${split.exDate}, is in AMFI's published NAV file`
+            : `ISIN ${isin} is not in AMFI's published NAV file` });
         }
         continue;
       }
+      // The NAV on the unit the book's lines were counted in.
+      const factor = split?.factor ?? 1;
+      const basisNav = rec.nav * factor;
 
       /**
        * THE BASIS CHECK. Struck against the book's own mark for this holding —
@@ -391,7 +430,7 @@ function main() {
        */
       const mark = w.marks.length ? w.marks.reduce((a, b) => Math.max(a, b), -Infinity) : null;
       const lo = w.marks.length ? w.marks.reduce((a, b) => Math.min(a, b), Infinity) : null;
-      const ratios = w.marks.map((m) => rec.nav / m);
+      const ratios = w.marks.map((m) => basisNav / m);
       /**
        * A DEPOSITORY-ONLY UNIT HAS NO MARK TO CHECK AGAINST, so its witness is
        * the instrument: an open-ended mutual fund's units do not split, and the
@@ -405,7 +444,7 @@ function main() {
           ? (w.from === "depository"
             ? `no statement marks these units and AMFI files the scheme as ${rec.category ? `"${rec.category}"` : "no category"}; an ETF's units can split, so without a mark there is nothing to show the depository's count and this NAV are the same unit`
             : "no statement in this book marks this holding per unit, so there is nothing to check the NAV's basis against")
-          : `the published NAV of ${rec.nav} against this book's own mark of ${lo === mark ? mark : `${lo}–${mark}`} is a factor of ${(1 / Math.max(...ratios)).toFixed(1)}, which is a share-count break rather than market movement — the units and the NAV are not the same unit`;
+          : `the published NAV of ${rec.nav}${split ? ` (${basisNav} on the unit before the ${split.exDate} sub-division)` : ""} against this book's own mark of ${lo === mark ? mark : `${lo}–${mark}`} is a factor of ${(1 / Math.max(...ratios)).toFixed(1)}, which is a share-count break rather than market movement — the units and the NAV are not the same unit`;
 
       const before = prev.byKey.get(w.key) ?? prev.byIsin.get(isin.trim().toUpperCase());
       // The previous NAV is whatever THIS FILE held on an earlier date — the
@@ -425,6 +464,7 @@ function main() {
         // supplies the ISIN — Active Momentum's, since Stage 10ep read its print.
         isinAgreedBy: bookIsin && lt ? "look-through" : null,
         from: w.from,
+        ...(split ? { unitSplit: { publishedIsin: split.successorIsin, factor: split.factor, exDate: split.exDate, source: split.source } } : {}),
         schemecode: rec.schemecode,
         scheme: rec.scheme,
         plan: rec.plan,
@@ -457,6 +497,14 @@ export interface FundNav {
    * The second has no statement mark anywhere — see the builder's header.
    */
   from: "book" | "depository";
+  /**
+   * Set where a sub-division retired the statement's ISIN
+   * (\`shared/fundUnitSplits.mjs\`): AMFI publishes the scheme under
+   * \`publishedIsin\`, on a unit \`factor\` times smaller than the one the book's
+   * lines were counted in before \`exDate\`. Every NAV figure here is AMFI's, on
+   * the new unit.
+   */
+  unitSplit?: { publishedIsin: string; factor: number; exDate: string; source: string };
   schemecode: string;
   scheme: string;
   plan: string;
@@ -512,7 +560,7 @@ ISIN** and never on a name. ${rows.toLocaleString("en-IN")} scheme rows read.
 
 | Security | ISIN | via | SEBI category | NAV | Date | Day |
 | --- | --- | --- | --- | ---: | --- | ---: |
-${usable.filter((e) => e.from === "book").map((e) => `| ${e.security} | \`${e.isin}\` | ${e.isinFrom} | ${e.sebiCategory ?? "—"} | ${e.nav} | ${e.date} | ${e.changePct == null ? "—" : `${e.changePct >= 0 ? "+" : ""}${e.changePct.toFixed(2)}%`} |`).join("\n") || "| — | | | | | | |"}
+${usable.filter((e) => e.from === "book").map((e) => `| ${e.security} | \`${e.isin}\`${e.unitSplit ? ` → \`${e.unitSplit.publishedIsin}\` (units ×${e.unitSplit.factor} before ${e.unitSplit.exDate})` : ""} | ${e.isinFrom} | ${e.sebiCategory ?? "—"} | ${e.nav} | ${e.date} | ${e.changePct == null ? "—" : `${e.changePct >= 0 ? "+" : ""}${e.changePct.toFixed(2)}%`} |`).join("\n") || "| — | | | | | | |"}
 
 ## Priced from a depository's own units
 

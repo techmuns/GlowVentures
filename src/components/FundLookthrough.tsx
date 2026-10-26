@@ -252,7 +252,11 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
           </div>
           {unitStep && (
             <div className="mt-1 text-[11px] text-amber-300/90" data-lt-unit-note
-              title={`The NAV stepped from ${fmtNum(unitStep.from.nav, 4)} on ${fmtDate(unitStep.from.date)} to ${fmtNum(unitStep.to.nav, 4)} on ${fmtDate(unitStep.to.date)} — ${stepWords(unitStep)} in ${unitStep.days} days, which is a change in the unit rather than a market move. The family's statement of ${fmtDate(countedOn)} is dated before it and counts the earlier unit, so the statement's mark and this NAV are prices of different units and are not compared. Not adjusted — the source publishes no split factor.`}>
+              title={`The NAV stepped from ${fmtNum(unitStep.from.nav, 4)} on ${fmtDate(unitStep.from.date)} to ${fmtNum(unitStep.to.nav, 4)} on ${fmtDate(unitStep.to.date)} — ${stepWords(unitStep)} in ${unitStep.days} days, which is a change in the unit rather than a market move. The family's statement of ${fmtDate(countedOn)} is dated before it and counts the earlier unit, so the statement's mark and this NAV are prices of different units and are not compared. ${pub?.unitSplit
+                // Stage 10hq: the exchange published this change, so the
+                // holding's units are moved by its factor; the store's series is not.
+                ? `The change is the scheme's 1:${pub.unitSplit.factor} sub-division of ${fmtDate(pub.unitSplit.exDate)} (${pub.unitSplit.source}), so the statement's units are multiplied by ${pub.unitSplit.factor} before they meet this NAV. The scheme returns across the step are not adjusted.`
+                : "Not adjusted — the source publishes no split factor."}`}>
               unit changed after your statement of {fmtDate(countedOn)}
             </div>
           )}

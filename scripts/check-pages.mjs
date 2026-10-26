@@ -488,6 +488,11 @@ function withUnpricedStatementUnits(src, positions) {
     if (!nav || !nav.usableForValue || !(nav.nav > 0)) continue;                                // 3
     const own = acc.get(u.accountId);
     if (!own || !u.asOf) continue;
+    // Stage 10hq: a NAV joined across a sub-division prices the statement's
+    // units times its factor, and only units counted before its ex-date.
+    const split = nav.unitSplit ?? null;
+    if (split && !(u.asOf < split.exDate)) continue;
+    const f = split ? Number(split.factor) : 1;
     const ownRate = rateOf(u);
     let price = ownRate, witnessAccountId = null;
     if (price === null && !etf) {
@@ -500,7 +505,7 @@ function withUnpricedStatementUnits(src, positions) {
       witnessAccountId = pos?.accountId ?? row?.accountId ?? null;
     }
     if (price === null) continue;                                                               // 4
-    const r = nav.nav / price;
+    const r = (nav.nav * f) / price;
     if (!(r > 0.5 && r < 2)) continue;                                                          // 5
     if (positions.some((p) => p.accountId === u.accountId && I(p) === isin)) continue;          // 6
     const owner = ownerOf(u.accountId);
@@ -512,7 +517,7 @@ function withUnpricedStatementUnits(src, positions) {
       symbol: book?.symbol ?? keyToSymbol[u.securityKey] ?? null,
       accountId: u.accountId, sector: book?.sector ?? "Unclassified",
       assetClass: etf ? "ETF" : "Mutual Fund", marketSide: "listed",
-      quantity: qty, marketValue: qty * nav.nav, currentPrice: nav.nav,
+      quantity: qty * f, marketValue: qty * f * nav.nav, currentPrice: nav.nav,
       costBasis: null, costUnavailable: true, unrealizedPnL: null, returnPct: null, avgCost: null,
       navPriced: true, navDate: nav.date,
       depositoryUnits: ownRate !== null
@@ -555,7 +560,8 @@ function withPublishedNavs(positions) {
   } catch { return positions; }   // no store committed — the pages render the same
   return positions.map((p) => {
     const e = by.get(p.securityKey);
-    if (!e || !(e.nav > 0) || !(Number(p.quantity) > 0)) return p;
+    // A NAV joined across a sub-division values only the unpriced units above (Stage 10hq).
+    if (!e || e.unitSplit || !(e.nav > 0) || !(Number(p.quantity) > 0)) return p;
     const marketValue = Number(p.quantity) * e.nav;
     const cost = p.costBasis;
     const costNA = !!p.costUnavailable || !(typeof cost === "number" && cost > 0);

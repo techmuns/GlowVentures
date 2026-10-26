@@ -83,6 +83,14 @@ for (const row of savedActions.rows) {
 }
 type LineDates = { dates: string[]; source: InvestedOnSource; payments?: number; adjustments?: string[] };
 
+/**
+ * The units a line's statement counted. A sub-division since the statement
+ * moves the row to the NAV's unit (Stage 10hq, `onPublishedUnit` in
+ * `fundNavs.ts`) and keeps the statement's own count beside it, which is the
+ * count a supplementary record reconciles to.
+ */
+const statementUnits = (p: Position) => p.depositoryUnits?.unitSplit?.statementQuantity ?? p.quantity;
+
 /** No sales, every purchase before the bonus, and an exact independent closing-unit control. */
 function bonusPurchaseDates(p: Position): LineDates | null {
   const r = p.tradeRecord;
@@ -126,8 +134,9 @@ function lineDates(p: Position): LineDates | null {
   const recovered = p.recoveredCost;
   // The recovery is specific to an account, ISIN, closing date and exact unit
   // balance. Never lend a source record's dates to another position or balance.
+  const units = statementUnits(p);
   if (recovered?.heldPurchases && recovered.accountId === p.accountId && recovered.isin === p.isin
-    && p.quantity != null && Math.abs(recovered.quantity - p.quantity) <= .0005) {
+    && units != null && Math.abs(recovered.quantity - units) <= .0005) {
     return { dates: [recovered.heldPurchases.first, recovered.heldPurchases.last], source: "recovered-lots" };
   }
   const called = CALL_DATES.get(trancheKey(p.accountId, p.securityKey));
@@ -171,8 +180,8 @@ const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "
 function reviewedInvestmentDates(ps: readonly Position[]): InvestedOn | null {
   if (!ps.length || ps.some(p => ACCOUNTS.get(p.accountId)?.engagement === "PMS")) return null;
   if (ps.some(p => p.recoveredCost && (p.recoveredCost.accountId !== p.accountId
-    || p.recoveredCost.isin !== p.isin || p.quantity == null
-    || Math.abs(p.recoveredCost.quantity - p.quantity) > .0005))) return null;
+    || p.recoveredCost.isin !== p.isin || statementUnits(p) == null
+    || Math.abs(p.recoveredCost.quantity - statementUnits(p)!) > .0005))) return null;
   const field = reviewField({ positions: ps }, "investmentRange");
   return field.value != null && field.from && field.to
     ? { first: field.from, last: field.to, payments: null, sources: ["review"], reviewSource: field.source }
