@@ -22,8 +22,8 @@ try {
   assert.equal(new URL(await units.getAttribute('href'),base).searchParams.get('file'),doc);
   await units.click();
   await page.locator(`[data-statement-preview="${doc}"]`).waitFor();
-  await page.locator('[data-selected-source-record="/transactions"]').getByText(/28067435\.434/).last().waitFor();
   await page.locator('canvas[data-pdf-page="5"]').waitFor({timeout:30000});
+  assert.equal(await page.locator('[data-selected-source-record]').count(), 0, 'technical source records do not crowd the original PDF');
   assert.equal(await page.getByLabel('PDF page',{exact:true}).inputValue(),'5');
   const highlight = page.locator('mark[data-pdf-source-value="28067435.434"]');
   await highlight.waitFor();
@@ -41,9 +41,15 @@ try {
 
   await gotoStock(motilal);
   const nil = page.locator('[data-account-row="motilal-oswal-mutual-fund-90414963315"] a[data-source-metric="quantity"]');
-  await nil.waitFor(); assert.equal((await nil.innerText()).trim(),'0'); await nil.click();
+  await nil.waitFor(); assert.equal((await nil.innerText()).trim(),'0');
+  const nilSource = new URL(await nil.getAttribute('href'),base);
+  assert.equal(nilSource.searchParams.get('record'),'/holdings/0');
+  assert.equal(nilSource.searchParams.get('sourceValue'),'0');
+  await nil.click();
   await page.locator('[data-statement-preview="motilal-oswal-mutual-fund-90414963315-2026-09-30-holdings"]').waitFor();
-  await page.locator('[data-selected-source-record="/holdings/0"] [data-source-field="quantity"]').getByText('0',{exact:true}).waitFor();
+  // This folio uses the protected preview API, deliberately blocked above.
+  // Its exact document/record/value must remain linked without a raw-record pane.
+  assert.equal(await page.locator('[data-selected-source-record]').count(), 0);
 
   await gotoStock('kotak-arbfd-dp-grow');
   await page.locator('button[data-source-metric="quantity"]').first().click();
