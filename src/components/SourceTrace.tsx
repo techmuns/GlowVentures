@@ -84,6 +84,7 @@ export function SourceValue({ positions, metric, children, trace: supplied }: {
     </div>, document.getElementById('root') ?? document.body)}
   </>;
 }
+SourceValue.sourceTraceControl = true;
 
 function hasNumber(node: ReactNode): boolean {
   if (typeof node === 'number') return Number.isFinite(node);
@@ -100,7 +101,7 @@ function hasAction(node: ReactNode): boolean {
 /** Shared table seam: declared column identity survives sorting and dragging.
  * Never turn an absence, editor, export, or existing action into a nested link. */
 export function SourceCell({ positions, metric, children }: { positions: readonly TracePosition[]; metric: SourceMetric; children: ReactNode }) {
-  if (!positions.length || !hasNumber(children)) return <>{children}</>;
+  if (!positions.length || metric !== 'statement' && !hasNumber(children)) return <>{children}</>;
   const trace = holdingSourceTrace(positions, metric);
   return <SourceTraceContext.Provider value={trace}>
     {hasAction(children) ? children : <SourceValue trace={trace}>{children}</SourceValue>}

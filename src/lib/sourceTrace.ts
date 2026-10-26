@@ -16,6 +16,7 @@ const LABELS: Record<SourceMetric, string> = {
 };
 const FIELDS: Partial<Record<SourceMetric, string>> = { quantity: 'quantity', marketValue: 'marketValue', currentPrice: 'marketPrice', costBasis: 'totalCost' };
 export const metricForColumn = (column: string): SourceMetric | undefined => ({
+  managedBy: 'statement', provider: 'statement', account: 'statement', accountNo: 'statement', entity: 'statement',
   qty: 'quantity', quantity: 'quantity', units: 'quantity', mv: 'marketValue', current: 'marketValue', value: 'marketValue', marketValue: 'marketValue',
   cmp: 'currentPrice', avgCost: 'avgCost', cost: 'costBasis', invested: 'costBasis', pnl: 'unrealizedPnL',
 } as Record<string, SourceMetric>)[column];
