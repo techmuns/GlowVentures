@@ -690,7 +690,7 @@ export function partialValuationNotes(
     // ISIN, or its key where it prints none.
     const valuedLine = (u: UnvaluedStatementHolding) => rows.some((r) =>
       (isin(u) ? isin(r) === isin(u) : r.securityKey === u.securityKey));
-    const covered = (u: UnvaluedStatementHolding) => !!u.sameUnitsReportedBy || !!custodySuccessor(u, accounts, positions);
+    const covered = (u: UnvaluedStatementHolding) => !!u.sameUnitsReportedBy || !!custodySuccessor(u, BOOK_ACCOUNTS, positions);
     const elsewhere = lines.filter((u) => covered(u) && !valuedLine(u)).length;
     const open = lines.filter((u) => !covered(u) && !valuedLine(u));
     const waiting = open.filter((u) => quotable.some((q) => q.accountId === accountId
