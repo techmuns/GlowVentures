@@ -35,6 +35,9 @@ const zero = BOOK_POSITIONS.find(p => p.accountId === 'motilal-oswal-mutual-fund
 assert.equal(holdingSourceTrace([zero], 'quantity').sources[0].value, 0, 'a measured zero remains traceable');
 const aggregate = holdingSourceTrace([demat, zero], 'quantity');
 assert.equal(aggregate.derived, true); assert.equal(aggregate.sources.length, 2);
+const sameFile = holdingSourceTrace([bandhan, BOOK_POSITIONS.find(p => p.accountId === bandhan.accountId && p.isin === 'INF194K01V89')!], 'statement');
+assert.equal(sameFile.sources.length, 1); assert.equal(sameFile.derived, false);
+assert.equal(sameFile.sources[0].pointer, undefined, 'a common account PDF never selects an arbitrary constituent');
 const edited = holdingSourceTrace([{ ...bandhan, quantity: 12, enteredNumbers: ['quantity'] }], 'quantity');
 assert.equal(edited.derived, true); assert.ok(edited.notes.some(n => n.includes('saved family correction')));
 assert.equal(edited.sources[0].value, undefined, 'an edited quantity cannot be presented as a printed PDF value');

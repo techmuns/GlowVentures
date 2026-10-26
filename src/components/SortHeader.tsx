@@ -183,7 +183,7 @@ export function Tr({ view, children, reviewScope, sourcePositions, inputRecordId
   const exporting = useContext(TableExportAllRows);
   const editing = useTableEditing();
   const inputs = useTableInputs();
-  const { displayCurrency, portfolio } = usePortfolio();
+  const { displayCurrency } = usePortfolio();
   const order = exporting ? view.availableOrder : view.order;
   const row = useRef<HTMLTableRowElement>(null);
   const editors = useRef(new Map<string, { record: InputRecord; field: string }>());
@@ -223,11 +223,11 @@ export function Tr({ view, children, reviewScope, sourcePositions, inputRecordId
   const capitalId = position ? (inputs.catalog.some(r => r.id === privateCapitalId(position)) ? privateCapitalId(position) : capitalInputId(position.accountId))
     : manualCapital && inputs.catalog.some(r => r.id === manualCapital) ? manualCapital : reviewScope?.accountId ? capitalInputId(reviewScope.accountId) : undefined;
   const recordIds = [...new Set([holdingId, capitalId, ...positions.flatMap(p => [positionInputId(p), capitalInputId(p.accountId), privateCapitalId(p)])].filter((s): s is string => !!s))];
-  const traced = sourcePositions ?? reviewScope?.positions ?? (reviewScope?.accountId || reviewScope?.accountIds
-    ? portfolio?.positions.filter(p => (reviewScope.accountIds ?? [reviewScope.accountId]).includes(p.accountId)
-      && (!reviewScope.securityKey || p.securityKey === reviewScope.securityKey)) ?? [] : []);
+  // Only the caller knows the set behind a filtered figure. An account id
+  // alone must never widen that set to every holding in the account.
+  const traced = sourcePositions ?? reviewScope?.positions ?? [];
   const renderCell = (column: string) => {
-    const cell = byCol.get(column), metric = metricForColumn(column);
+    const cell = byCol.get(column), metric = reviewScope?.isMandate && ['invested', 'cost', 'pnl'].includes(column) ? undefined : metricForColumn(column);
     const original = !editing && !exporting && metric && isValidElement<{ children?: ReactNode }>(cell) && cell.type === 'td'
       ? cloneElement(cell, { children: <SourceCell positions={traced} metric={metric}>{cell.props.children}</SourceCell> }) : cell;
     if (header || !isValidElement<Record<string, unknown>>(original) || original.type !== "td") return original;
@@ -291,7 +291,7 @@ export function Tr({ view, children, reviewScope, sourcePositions, inputRecordId
  * The caller supplies whole `<td>` elements, because a footer cell's alignment,
  * colour and popover belong to the table that knows what the figure is.
  */
-export function TrFoot({ view, label, labelTitle, cells, sourcePositions, className = "", ...rest }: {
+export function TrFoot({ view, label, labelTitle, cells, sourcePositions, sourceColumns, className = "", ...rest }: {
   view: TableView;
   /** The label cell's CONTENT — `TrFoot` computes its `colSpan`. */
   label: ReactNode;
@@ -305,6 +305,7 @@ export function TrFoot({ view, label, labelTitle, cells, sourcePositions, classN
   /** One `<td>` per column that carries a total, keyed by column id. */
   cells: Record<string, ReactNode>;
   sourcePositions?: readonly TracePosition[];
+  sourceColumns?: readonly string[];
   className?: string;
 } & React.HTMLAttributes<HTMLTableRowElement>) {
   const exporting = useContext(TableExportAllRows);
@@ -321,7 +322,7 @@ export function TrFoot({ view, label, labelTitle, cells, sourcePositions, classN
           own class: the footer carries a top rule, and an unstyled filler
           breaks that line across the table. */}
       {order.slice(span).map((c) => {
-        const cell = cells[c], metric = metricForColumn(c);
+        const cell = cells[c], metric = !sourceColumns || sourceColumns.includes(c) ? metricForColumn(c) : undefined;
         return !exporting && sourcePositions && metric && isValidElement<{ children?: ReactNode }>(cell) && cell.type === 'td'
           ? cloneElement(cell, { children: <SourceCell positions={sourcePositions} metric={metric}>{cell.props.children}</SourceCell> })
           : cell ?? <td key={c} className={className} />;

@@ -82,8 +82,17 @@ export function holdingSourceTrace(positions: readonly TracePosition[], metric: 
   if (metric === 'avgCost') notes.add('Average cost = cost of the units covered ÷ those units. Different unit classes are not added as one unit.');
   if (metric === 'unrealizedPnL') notes.add('Unrealised gain / loss = market value − cost, over the holdings with a measured cost.');
   if (metric === 'marketValue' && derived) notes.add('Market value uses the selected holding records and their own prices; a feed-priced line is units × the published price.');
-  if (positions.length > 1) notes.add('This figure combines multiple holding records. Each contributing record is listed; no single PDF states the combined figure.');
+  if (positions.length > 1 && metric !== 'statement') notes.add('This figure combines multiple holding records. Each contributing record is listed; no single PDF states the combined figure.');
   if (missing) notes.add(`${missing} contributing record${missing === 1 ? ' has' : 's have'} no direct statement pointer. No PDF link has been guessed for ${missing === 1 ? 'it' : 'them'}.`);
+  // An account label can open one common PDF directly, without arbitrarily
+  // selecting its first holding. Numeric figures retain every exact record.
+  if (metric === 'statement' && sources.length > 1) {
+    const byFile = new Map<string, SourceEvidence[]>();
+    for (const s of sources) { const key = JSON.stringify([s.document, s.path, s.sheet, s.accountId]); byFile.set(key, [...(byFile.get(key) ?? []), s]); }
+    sources.splice(0, sources.length, ...[...byFile.values()].map(group => group.length === 1 ? group[0]
+      : { ...group[0], pointer: undefined, field: undefined, value: undefined }));
+    if (sources.length === 1 && !missing && !notes.size) derived = false;
+  }
   const unique = new Map(sources.map(s => [JSON.stringify(s), s]));
   return { metric, title: LABELS[metric], derived, sources: [...unique.values()], notes: [...notes], missing };
 }

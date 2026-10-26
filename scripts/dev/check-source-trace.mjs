@@ -60,8 +60,23 @@ try {
   await venue.locator('a[data-source-metric="statement"]').first().click();
   await page.locator(`[data-statement-preview="${doc}"]`).waitFor();
   assert.equal(await page.locator('a a, button button, a button, button a').count(),0,'source links never nest interactive controls');
+  // A filter must narrow provenance as well as the money. Carnelian's one
+  // selected company must not expose every other holding in the account.
+  await page.goto(base+'/monitor');
+  await page.getByRole('tab',{name:'Category',exact:true}).click();
+  await page.locator('[data-monitor-filters-right] button').first().click();
+  const clear = page.getByRole('button',{name:'Clear all',exact:true});
+  if (await clear.count()) await clear.click();
+  await page.getByPlaceholder('Search holdings…').fill('Aditya Birla Capital');
+  await page.getByRole('option',{name:/Aditya Birla Capital/i}).click();
+  await page.getByRole('heading',{name:'Portfolio Monitor',exact:true}).click();
+  const partial = page.locator('tr[data-mandate]').filter({hasText:/Carnelian/i}).first();
+  const selected = partial.locator('a[data-source-metric="marketValue"]'); await selected.waitFor();
+  const selectedUrl = new URL(await selected.getAttribute('href'),base);
+  assert.equal(selectedUrl.searchParams.get('file'),'carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-09-30-appraisal');
+  assert.equal(selectedUrl.searchParams.get('record'),'/holdings/0');
   assert.deepEqual(errors,[]);
-  await fs.writeFile(path.join(out,'results.json'),JSON.stringify({exactDematDocument:true,closingPage:5,separateNilFolio:true,aggregateSources:true,feedDistinct:true,monitorLabels:true,errors},null,2));
+  await fs.writeFile(path.join(out,'results.json'),JSON.stringify({exactDematDocument:true,closingPage:5,separateNilFolio:true,aggregateSources:true,feedDistinct:true,monitorLabels:true,filteredMandate:true,errors},null,2));
   console.log('PASS source links: monitor account labels, exact demat closing page, separate nil folio, combined quantities and feed/statement distinction');
 } catch(e) {
   await fs.writeFile(path.join(out,'failure.json'),JSON.stringify({url:page.url(),errors,text:(await page.locator('body').innerText()).slice(-10000)},null,2));
