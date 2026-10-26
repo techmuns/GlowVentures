@@ -13,7 +13,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { PageNav } from "@/components/PageNav";
 import { navEntry } from "@/lib/nav";
 import { usePortfolio, WholeFamily } from "@/context/PortfolioContext";
-const StatementSourcePreview = lazy(() => import("@/components/StatementSourcePreview"));
+import StatementSourcePreview from "@/components/StatementSourcePreview";
 const MorningCIO = lazy(() => import("@/pages/MorningCIO").then((m) => ({ default: m.MorningCIO })));
 const Polycab = lazy(() => import("@/pages/Polycab").then((m) => ({ default: m.Polycab })));
 const PortfolioMonitor = lazy(() => import("@/pages/PortfolioMonitor").then((m) => ({ default: m.PortfolioMonitor })));
@@ -427,9 +427,9 @@ export default function App() {
           </Routes>
           </Suspense>
         </main>
-        {background && <Suspense fallback={null}><Routes>
+        {background && <Routes>
           <Route path="/statements" element={<StatementSourcePreview />} />
-        </Routes></Suspense>}
+        </Routes>}
       </div>
     </div>
   );

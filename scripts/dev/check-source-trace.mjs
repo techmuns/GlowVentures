@@ -56,6 +56,21 @@ try {
   await page.locator('[data-source-back]').waitFor();
   assert.ok(await page.locator('[data-statement-preview]').evaluate(el=>parseInt(getComputedStyle(el.parentElement).zIndex)>60), 'statement stays above its source list');
   await page.locator('[data-source-back]').click();
+  await combined.waitFor();
+  const combinedOrigin = page.url();
+  let releaseCombinedManifest;
+  const combinedPending = new Promise(resolve=>{releaseCombinedManifest=resolve;});
+  await page.route('**/audit/manifest.json',async route=>{await combinedPending;await route.fulfill({status:503,body:'unavailable'});});
+  await combined.locator('a[data-source-document]').first().click();
+  await page.getByRole('dialog',{name:'Statement source',exact:true}).waitFor();
+  await page.keyboard.press('Escape');await page.waitForURL(combinedOrigin);
+  await combined.waitFor();
+  releaseCombinedManifest();await page.unroute('**/audit/manifest.json');
+  await page.route('**/audit/manifest.json',route=>route.fulfill({status:503,body:'unavailable'}));
+  await combined.locator('a[data-source-document]').first().click();
+  await page.getByRole('alert').filter({hasText:'This exact source statement could not be opened.'}).waitFor();
+  await page.keyboard.press('Escape');await page.waitForURL(combinedOrigin);
+  await combined.waitFor();await page.unroute('**/audit/manifest.json');
 
   await gotoStock(motilal);
   await page.locator('button[data-source-metric="marketValue"]').first().click();
@@ -154,7 +169,7 @@ try {
   assert.equal(await page.locator('[data-source-row="true"]').count(),0,'citation highlights never move to an unrelated worksheet');
   await page.screenshot({path:path.join(out,'workbook-citation.png')});
   assert.deepEqual(errors,[]);
-  await fs.writeFile(path.join(out,'results.json'),JSON.stringify({exactDematDocument:true,closingPage:5,separateNilFolio:true,aggregateSources:true,feedDistinct:true,monitorLabels:true,yellowClosingBalance:true,exactReturnState:true,loadingAndFailedDialog:true,filteredMandate:true,workbookSheetAndRow:true,errors},null,2));
+  await fs.writeFile(path.join(out,'results.json'),JSON.stringify({exactDematDocument:true,closingPage:5,separateNilFolio:true,aggregateSources:true,feedDistinct:true,monitorLabels:true,yellowClosingBalance:true,exactReturnState:true,loadingAndFailedDialog:true,underlyingSourceListRetained:true,filteredMandate:true,workbookSheetAndRow:true,errors},null,2));
   console.log('PASS source links: monitor account labels, exact demat closing page, separate nil folio, combined quantities and feed/statement distinction');
 } catch(e) {
   await fs.writeFile(path.join(out,'failure.json'),JSON.stringify({url:page.url(),errors,text:(await page.locator('body').innerText()).slice(-10000)},null,2));

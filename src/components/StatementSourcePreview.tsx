@@ -30,7 +30,7 @@ export default function StatementSourcePreview() {
 function PendingSourceDialog({ failed, backLabel, onClose }: { failed: boolean; backLabel: string; onClose: () => void }) {
   const dialog = useRef<HTMLDivElement>(null), back = useRef<HTMLButtonElement>(null);
   usePreviewDialog(onClose, dialog, back);
-  return <div className="fixed inset-0 z-[80] grid place-items-center bg-ink-950/70 p-6">
+  return <div onMouseDownCapture={e => e.stopPropagation()} className="fixed inset-0 z-[80] grid place-items-center bg-ink-950/70 p-6">
     <div ref={dialog} role="dialog" aria-modal="true" aria-label="Statement source" className="rounded-lg border border-ink-700 bg-ink-900 p-6">
       <div role={failed ? 'alert' : 'status'}>{failed ? 'This exact source statement could not be opened.' : 'Opening source statement…'}</div>
       <button ref={back} type="button" onClick={onClose} className="btn-ghost mt-3">{backLabel}</button>

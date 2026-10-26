@@ -452,6 +452,7 @@ export function StatementPreview({ doc, onClose, backLabel }: { doc: LibraryDoc;
   // overlay, never in `vh` (index.css).
   return createPortal(
     <div className="fixed inset-0 z-[80] flex items-center justify-center bg-ink-950/70 p-6 backdrop-blur-xl"
+      onMouseDownCapture={e => e.stopPropagation()}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={`${doc.reportLabel} — ${doc.fileName}`}
         data-statement-preview={doc.fileKey} data-preview-state={loaded.status} data-preview-format={doc.format}
