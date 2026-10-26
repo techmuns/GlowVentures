@@ -1,3 +1,4 @@
+import { useTableExporting } from '@/lib/tableExportSnapshot';
 import { Link, useLocation, type LinkProps, type Location } from 'react-router-dom';
 
 /** Keep the originating route mounted, including its local table state and
@@ -13,7 +14,10 @@ export function sourceBackground(location: Location): Location | undefined {
 
 export function SourceLink({ to, state, ...props }: LinkProps) {
   const location = useLocation();
-  const source = typeof to === 'string' && to.startsWith('/statements?') && location.pathname !== '/statements';
+  const exporting = useTableExporting();
+  const source = !exporting && typeof to === 'string' && to.startsWith('/statements?') && location.pathname !== '/statements';
+  // Full-family workbook snapshots keep their links unfiltered as well as
+  // their figures. Interactive navigation alone carries the member scope.
   // Preserve member scope without the provider's URL-normalising effect
   // replacing this history entry and discarding the background location.
   const members = new URLSearchParams(location.search).get('members');
