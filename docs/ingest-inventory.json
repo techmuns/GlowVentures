@@ -1,16 +1,16 @@
 {
-  "generatedAt": "2026-10-26T07:24:17.079Z",
+  "generatedAt": "2026-10-26T08:13:01.757Z",
   "sourceDir": "source",
   "counts": {
-    "files": 462,
-    "pdfs": 452,
+    "files": 463,
+    "pdfs": 453,
     "nonPdf": 10,
     "classified": 395,
-    "unclassified": 67,
-    "encrypted": 35,
+    "unclassified": 68,
+    "encrypted": 36,
     "fromArchives": 399,
     "archivesExpanded": 50,
-    "pages": 1969
+    "pages": 1973
   },
   "reportTypes": [
     "holdings",
@@ -9376,6 +9376,26 @@
       "matchedBy": "generic keywords"
     },
     {
+      "path": "source/october-2026-d/Bandhan-8652064-2026-10-26.pdf",
+      "fileName": "Bandhan-8652064-2026-10-26.pdf",
+      "bytes": 272137,
+      "size": "265.8 KB",
+      "pages": 4,
+      "fromArchive": false,
+      "encrypted": true,
+      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
+      "provider": null,
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "nothing matched"
+    },
+    {
       "path": "source/october-2026/CAPITAL REGISTER GREEN LANTERN - AJAY.pdf",
       "fileName": "CAPITAL REGISTER GREEN LANTERN - AJAY.pdf",
       "bytes": 128398,
@@ -17938,6 +17958,26 @@
       "strategy": null,
       "confidence": "low",
       "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/october-2026-d/Bandhan-8652064-2026-10-26.pdf",
+      "fileName": "Bandhan-8652064-2026-10-26.pdf",
+      "bytes": 272137,
+      "size": "265.8 KB",
+      "pages": 4,
+      "fromArchive": false,
+      "encrypted": true,
+      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
+      "provider": null,
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "nothing matched"
     },
     {
       "path": "source/september-2026/Aarti J - ASK AIF - 9039917111_07042026142531008678.pdf",

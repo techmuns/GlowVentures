@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-10-26T07:31:01.344Z",
+  "generatedAt": "2026-10-26T08:13:57.169Z",
   "summary": {
-    "documents": 427,
-    "parsed": 423,
+    "documents": 428,
+    "parsed": 424,
     "partial": 0,
     "failed": 4,
-    "rowSumChecks": 387,
+    "rowSumChecks": 389,
     "totalMismatches": 136,
     "totalsMaterial": 1,
     "totalsExplained": 54,
-    "totalsRounding": 160,
+    "totalsRounding": 161,
     "derivedVsPrintedDeltas": 944,
     "derivedMaterial": 8,
     "derivedExplained": 399,
@@ -28,7 +28,7 @@
     "stitchesApplied": 134
   },
   "coverage": {
-    "pdfsFound": 417,
+    "pdfsFound": 418,
     "duplicateSources": [
       {
         "path": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_DividendStatement_India177OT.pdf",
@@ -246,7 +246,7 @@
         "sha256": "7cbc776b8cfe6baacfa8c753d86d46de2fec08fbcbae7b36d8dba58029d627fc"
       }
     ],
-    "parsed": 423,
+    "parsed": 424,
     "partial": 0,
     "failed": 4,
     "byProvider": {
@@ -909,6 +909,13 @@
           "failed": 0
         }
       },
+      "Bandhan Mutual Fund": {
+        "holdings": {
+          "ok": 1,
+          "partial": 0,
+          "failed": 0
+        }
+      },
       "ASK Absolute Return Fund": {
         "holdings": {
           "ok": 3,
@@ -1005,8 +1012,8 @@
     "partials": []
   },
   "consolidated": {
-    "naive": 138128246763.6,
-    "deduped": 138128246763.6,
+    "naive": 138543310757.98,
+    "deduped": 138543310757.98,
     "doubleCounted": 0
   },
   "rowSumChecks": [
@@ -7258,6 +7265,41 @@
       "printedTotal": 100,
       "delta": 0,
       "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "bandhan-mutual-fund-8652064-2026-10-26-holdings",
+      "provider": "Bandhan Mutual Fund",
+      "accountNo": "8652064",
+      "asOf": "2026-10-26",
+      "reportType": "holdings",
+      "check": "total market value (incl. cash)",
+      "rowSum": 415063994.38,
+      "printedTotal": 415063994.38,
+      "delta": 0,
+      "rowsSummed": 4,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null,
+      "outstandingDividend": null
+    },
+    {
+      "docKey": "bandhan-mutual-fund-8652064-2026-10-26-holdings",
+      "provider": "Bandhan Mutual Fund",
+      "accountNo": "8652064",
+      "asOf": "2026-10-26",
+      "reportType": "holdings",
+      "check": "% of assets sums to 100",
+      "rowSum": 100,
+      "printedTotal": 100,
+      "delta": 0,
+      "rowsSummed": 4,
       "rowsMissingField": 0,
       "matches": true,
       "severity": "rounding",
@@ -227659,6 +227701,7 @@
       "Mutual fund folio",
       "Invesco Mutual Fund",
       "Motilal Oswal Mutual Fund",
+      "Bandhan Mutual Fund",
       "360 ONE Alternates Asset Management",
       "360 ONE Private Wealth",
       "Motilal Oswal Financial Services (demat)",

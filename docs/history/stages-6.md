@@ -407,6 +407,7 @@
 - Review corrections: include explicit opening-unit rows in the per-scheme origin test. The two nonzero Bandhan openings prevent the small nil-origin sleeves from certifying the whole folio's capital history; appreciation and XIRR stay withheld until preceding purchases are supplied. Both full Large & Mid Cap spellings resolve to the existing exact-ISIN key used by the other holders, NAVs and scheme-name indexes, keeping one family holding.
 - Encrypted archive rereads accept reviewed aliases only with the same exact ISIN, units and value. CI retains the regenerated archive and book for diagnosis on a source mismatch, and the mismatch still fails the required job.
 - Regression checks cover source reconciliation and refusals, chronology, account/owner/plan isolation, measured-zero successors, retained history and a single current Bandhan balance.
+- Integrated Stage 10hn's Helios statements and regenerated the combined archive/book, retaining both latest deliveries.
 
 ### Stage 10hn — HELIOS, 26 OCTOBER: TWO FOLIOS, AND THEIR RETURNS CLOSE ON THE NEW NAV
 
