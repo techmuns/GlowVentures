@@ -4,7 +4,7 @@ import { InfiniteTableEnd, useInfiniteTable } from "@/components/InfiniteTableBo
 import { Fragment, useEffect, useMemo, useRef, useState, useCallback, type ReactNode } from "react";
 import { useNavigationState } from '@/lib/useNavigationState';
 import { statementNoteForSet } from "@/lib/statementNotes";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigationType, useSearchParams } from "react-router-dom";
 import { ArrowUpDown, ChevronRight, Layers, ArrowLeftRight, FileSpreadsheet } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
@@ -788,14 +788,15 @@ export function PortfolioMonitor() {
    */
   const [showParams] = useSearchParams();
   const showParam = showParams.get("show");
+  const navigationAction = useNavigationType();
   const [view, setViewState] = useNavigationState<"holdings" | "transactions">('view',
     showParam === "transactions" ? "transactions" : "holdings", ['holdings', 'transactions']);
   const previousShow = useRef(showParam);
   useEffect(() => {
     if (previousShow.current === showParam) return;
     previousShow.current = showParam;
-    if (showParam === "transactions" || showParam === "holdings") setViewState(showParam);
-  }, [showParam, setViewState]);
+    if (navigationAction !== 'POP' && (showParam === "transactions" || showParam === "holdings")) setViewState(showParam);
+  }, [showParam, navigationAction, setViewState]);
   /**
    * BY SECURITY IS THE ONLY VIEW WITH A CONTROL — the switch was removed at the
    * family's request, who read the consolidated table as the one they want.

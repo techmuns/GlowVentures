@@ -15,7 +15,8 @@ export function useNavigationState<T extends ViewState>(name: string, initial: T
   });
   let [state, setState] = useState(() => ({ entry, value: read() ?? fallback }));
   if (state.entry !== entry) {
-    state = { entry, value: read() ?? (action === 'POP' ? fallback : state.value) };
+    const reset = typeof initial === 'function' ? initial() : initial;
+    state = { entry, value: read() ?? (action === 'POP' ? reset : state.value) };
     setState(state);
   }
   const value = state.value;

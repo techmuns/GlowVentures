@@ -27,7 +27,7 @@ export function useNavigationScroll(mainRef: RefObject<HTMLElement>, location: L
       if (restoring || isTableExporting()) return;
       latest = snapshot(); navigationMemory.write(entry, '@scroll', latest);
     };
-    const stop = () => { restoring = false; observer.disconnect(); resize.disconnect(); clearTimeout(timeout); };
+    const stop = () => { restoring = false; observer.disconnect(); resize.disconnect(); };
     const restore = () => {
       if (!restoring || isTableExporting()) return;
       const current = ports();
@@ -42,9 +42,7 @@ export function useNavigationScroll(mainRef: RefObject<HTMLElement>, location: L
     };
     const schedule = () => { cancelAnimationFrame(frame); frame = requestAnimationFrame(restore); };
     const observer = new MutationObserver(schedule), resize = new ResizeObserver(schedule);
-    const timeout = window.setTimeout(stop, 5000);
     if (restoring) { observer.observe(main, { childList: true, subtree: true }); resize.observe(main); schedule(); }
-    else clearTimeout(timeout);
     // A reader's input takes precedence over an unfinished asynchronous restore.
     const interact = () => { if (restoring) stop(); save(); };
     main.addEventListener('scroll', save, true);
