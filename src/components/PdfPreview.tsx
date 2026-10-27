@@ -48,7 +48,6 @@ const PdfPage = memo(function PdfPage({ pdf, number, center, width, height, avai
     let alive = true;
     let render: RenderTask | undefined;
     let scrollFrame = 0;
-    let continueFrame = 0;
     const abort = new AbortController();
     const host = paper.current!;
     const canvas = document.createElement("canvas");
@@ -75,7 +74,7 @@ const PdfPage = memo(function PdfPage({ pdf, number, center, width, height, avai
       await queue.run(async () => {
         if (!alive) return;
         render = source.render({ canvas, viewport: view, transform: [pixels, 0, 0, pixels, 0, 0] });
-        render.onContinue = (resume: () => void) => { continueFrame = requestAnimationFrame(() => { if (alive) resume(); }); };
+        // PDF.js already yields drawing chunks with requestAnimationFrame.
         await render.promise;
       }, () => Math.abs(number - (current.current?.page ?? number)), abort.signal);
       if (!alive) return;
@@ -129,7 +128,7 @@ const PdfPage = memo(function PdfPage({ pdf, number, center, width, height, avai
       });
     })().catch(() => { if (alive) { setError(true); setDrawing(false); } });
     return () => {
-      alive = false; abort.abort(); render?.cancel(); cancelAnimationFrame(scrollFrame); cancelAnimationFrame(continueFrame);
+      alive = false; abort.abort(); render?.cancel(); cancelAnimationFrame(scrollFrame);
       if (canvas.parentElement !== host) { canvas.width = 0; canvas.height = 0; }
     };
   }, [nearby, pdf, number, center, availableWidth, zoom, title, viewport, target?.value, target?.isin, target?.field, target?.initialIsin, onHighlightMissing, onSize, onPaint, queue, cache, current, restorePosition]);
