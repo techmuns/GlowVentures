@@ -10,7 +10,9 @@ export function publicationViews({ root = process.cwd(), instantiate, store, bas
     await renderer.initialize();
     const entries = [], prefix = `views/${snapshot.revision}/`;
     const json = (name, value) => {
-      entries.push({ path: prefix + name, mode: '100644', type: 'blob', content: JSON.stringify(value) });
+      const content = JSON.stringify(value);
+      if (Buffer.byteLength(content) > 64 * 1024 * 1024) throw Error(`Publication view exceeds the delivery bound: ${name}`);
+      entries.push({ path: prefix + name, mode: '100644', type: 'blob', content });
     };
     json('bootstrap.json', renderer.snapshot()); json('published.json', renderer.published());
     const names = new Set(['canonical/book.json', 'publication.json', 'audit/manifest.json', 'audit/formats.json',

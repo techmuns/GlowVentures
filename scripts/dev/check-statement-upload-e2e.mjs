@@ -160,8 +160,8 @@ try {
     for (const batch of log.batches) for (const file of batch.files) file.processor = null;
     const blob = inboxGit(['hash-object', '-w', '--stdin'], JSON.stringify(log));
     const head = inboxGit(['rev-parse', 'refs/heads/statement-inbox']);
-    // Preserve every original entry by replacing only the log via the existing
-    // local GitHub tree API below before starting the old worker.
+    // Preserve every original entry by replacing only the log in the isolated
+    // Git tree before starting the old worker.
     const index = path.join(output, 'legacy-claim-index');
     const indexEnv = { GIT_INDEX_FILE: index };
     inboxGit(['read-tree', head], undefined, indexEnv);

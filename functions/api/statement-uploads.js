@@ -22,7 +22,8 @@
 // blob as it arrives; `commit` then files the whole upload — a folder of a
 // month's statements — as ONE commit and starts the intake workflow
 // (`.github/workflows/statement-intake.yml`), which reads every file into the
-// book and lands it on `main` only when every gate passes. The page follows
+// complete verified data version on GitHub. Scans/ZIPs retain the full reader
+// and main/PR gates. The page follows
 // each file's status in the inbox log.
 //
 // ── WHAT THIS IS NOT ────────────────────────────────────────────────────────
@@ -72,8 +73,8 @@ async function start(inbox, payload) {
   try { return await inbox.dispatch(payload); } catch { return false; }
 }
 
-/** Read only this deployment's static source index, never a client assertion or
- * an unverified main commit. An absent/malformed index takes the usual intake path. */
+/** Read a verified publication's source index, with the compiled archive as a
+ * fallback witness. Client assertions and unverified commits cannot prove duplicates. */
 async function publishedDuplicates(context, reader) {
   if (reader) {
     try {
