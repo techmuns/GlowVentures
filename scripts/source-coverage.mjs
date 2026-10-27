@@ -44,6 +44,7 @@ import { fileURLToPath } from "node:url";
 import { listEntries, readEntry, isMacMetadata } from "./ingest/lib/unzip.mjs";
 import { REVIEW_WORKBOOK } from "./lib/reviewPrivateRead.mjs";
 import { REGISTER } from "./lib/recoverHoldingCosts.mjs";
+import { MOPWM_TRANSACTIONS } from "./lib/mopwmTransactions.mjs";
 
 /** Every profile file `build-profiles` read, by md5 — a zip's entry and its expanded copy are one file. */
 const PROFILE_FILES = (() => {
@@ -196,7 +197,7 @@ for (const f of files) {
     // fact from them — and `build-book` reads the licensed rows straight from
     // this path. Named by the path the builder reads, never by a provider match,
     // so a second copy of the workbook is not mistaken for the one it reads.
-    const reviewSource = f === REVIEW_WORKBOOK || f === REGISTER;
+    const reviewSource = f === REVIEW_WORKBOOK || f === REGISTER || f === MOPWM_TRANSACTIONS;
     const heldOut = docs.every((d) => (d.status === "failed")
       && /Family investment register|Consolidated family review/.test(d.provider ?? ""));
     const witness = docs.every((d) => d.twinOf);
@@ -268,15 +269,18 @@ if (count("never-arrived")) {
 say("## Read by `build-book`");
 say();
 say("The consolidated review supplies the private-market lines (Stage 10dh). At the family's");
-say("21 October instruction, its dated equity/fund transactions and the investment register also");
-say("supply missing purchase costs only after exact owner, identity, date and quantity reconciliation.");
-say("Both workbooks are read in full; source rows and rejected balances are in COST-RECOVERY.md.");
+say("21 October instruction, its dated equity/fund transactions, the investment register and MOPWM's");
+say("transaction report (Stage 10hu) also supply missing purchase costs only after exact owner,");
+say("identity, date and quantity reconciliation. Each workbook is read in full; source rows and");
+say("rejected balances are in COST-RECOVERY.md.");
 say("They remain held out of generic statement extraction; this is not an unread or missing file.");
 say();
 say("| File | Where its data goes |");
 say("| --- | --- |");
 for (const r of rows.filter((x) => x.cls === "read-by-build-book")) {
-  say(`| \`${r.f}\` | ${r.f === REGISTER ? "exact payment-register cost evidence; `npm run reconcile:register` checks the rest" : "private-market lines and exact dated equity/fund lot costs; `npm run reconcile:review` checks the rest"} |`);
+  say(`| \`${r.f}\` | ${r.f === REGISTER ? "exact payment-register cost evidence; `npm run reconcile:register` checks the rest"
+    : r.f === MOPWM_TRANSACTIONS ? "exact dated equity/fund lot costs where the review and register leave a holding unrecovered"
+    : "private-market lines and exact dated equity/fund lot costs; `npm run reconcile:review` checks the rest"} |`);
 }
 say();
 

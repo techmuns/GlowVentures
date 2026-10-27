@@ -435,6 +435,14 @@ function extractOne(file, grid, part = null, providerWitness = null) {
  */
 function heldOutByDecision(meta) {
   if (!NON_STATEMENT_PROVIDERS.has(meta?.provider)) return null;
+  if (meta.provider === "Adviser transaction report (not a statement)") return {
+    code: "held-out-by-decision",
+    detail: `${meta.provider} — MOPWM's family-wide record of dated trades, READ PERFECTLY and deliberately not `
+      + "a statement source: no custodian or fund struck it, and it prints no holding, valuation or ISIN. "
+      + "`build-book` reads it for one licensed use, exact cost recovery (`scripts/lib/mopwmTransactions.mjs`, "
+      + "docs/COST-RECOVERY.md): a holding whose statement prints no cost takes the cost of the lots these rows "
+      + "leave only where owner, security, account and every unit reconcile on the statement's own date.",
+  };
   return {
     code: "held-out-by-decision",
     detail: `${meta.provider} — this file is READ PERFECTLY and is deliberately not a source. No institution `

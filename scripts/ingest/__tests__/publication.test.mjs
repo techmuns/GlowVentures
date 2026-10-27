@@ -184,6 +184,17 @@ test('a removal notice where a statement should be publishes nothing, and is not
   const unreadable = notice(3); unreadable.warnings = [{ code: 'no-extractor', detail: 'no reader' }];
   assert.ok(has(assess([doc(), unreadable]), 'READ_GAP'));
 });
+test('a workbook held out by decision publishes nothing; one carrying a fact or another warning is still a statement', () => {
+  const heldOut = (patch = {}) => doc({ docKey: 'adviser-transaction-report-not-a-statement-unknown-unknown-unknown',
+    provider: 'Adviser transaction report (not a statement)', accountNo: null, owner: null, ownerId: null, asOf: null,
+    reportType: 'unknown', status: 'failed', sourcePath: 'source/october-2026-e/report.xlsx', holdings: [],
+    warnings: [{ code: 'held-out-by-decision', detail: 'not a statement' }], ...patch });
+  const result = assess([doc(), heldOut()]);
+  assert.equal(result.decision, 'verified'); assert.deepEqual(result.issues, []);
+  assert.ok(has(assess([doc(), heldOut({ provider: '(unidentified)' })]), 'READ_GAP'), 'only a non-statement provider is held out');
+  assert.ok(has(assess([doc(), heldOut({ warnings: [{ code: 'held-out-by-decision' }, { code: 'no-extractor' }] })]), 'READ_GAP'));
+  assert.ok(has(assess([doc(), heldOut({ holdings: doc().holdings })]), 'UNKNOWN_FORMAT'), 'a fact in it is assessed as a statement');
+});
 test('invalid days cannot date a transaction or investment', () => {
   const next = later(); next.transactions = [{ date: '2026-02-30' }];
   assert.ok(has(assess([doc(), next]), 'INVALID_DATE'));

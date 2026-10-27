@@ -14002,6 +14002,37 @@
   ]
  },
  {
+  "docKey": "adviser-transaction-report-not-a-statement-unknown-unknown-unknown",
+  "provider": "Adviser transaction report (not a statement)",
+  "accountNo": null,
+  "owner": null,
+  "ownerId": null,
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": null,
+  "reportType": "unknown",
+  "sourcePath": "source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx",
+  "pages": 5,
+  "sections": [
+   "pages"
+  ],
+  "status": "failed",
+  "warnings": 1,
+  "failedBecause": "held-out-by-decision",
+  "fileKey": "adviser-transaction-report-not-a-statement-unknown-unknown-unknown",
+  "label": "Adviser transaction report (not a statement) · unknown",
+  "fy": "",
+  "source": "source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 5,
+    "cols": 2
+   }
+  ]
+ },
+ {
   "docKey": "green-lantern-capital-llp-510861-2026-09-22-capital-register",
   "provider": "Green Lantern Capital LLP",
   "accountNo": "510861",

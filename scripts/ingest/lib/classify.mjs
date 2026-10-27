@@ -316,6 +316,13 @@ export const FAMILY_REGISTER_SIGNATURE = /ORG\.?\s*SHARE\s+CERTIFICATE\s+STATUS/
 export const FAMILY_REVIEW_SIGNATURE = /Absolute\s+Gain\s*\/\s*\(Loss\)\s+Including\s+Redeemed\s+Funds/i;
 
 /**
+ * MOPWM's family transaction report (`october-2026-e/`, Stage 10hu): the run of
+ * column headers its Mutual Funds tab prints. An AMC or registrar prints a folio
+ * statement about one folio; this one header spans every folio of every holder.
+ */
+export const ADVISER_TRANSACTIONS_SIGNATURE = /Scheme\s*\/\s*Scrip\s+Name\s+Folio\s+Number\s+Transaction\s+Date\s+Transaction\s+Type\s+Transaction\s+Sub\s+Type/i;
+
+/**
  * EVERY non-statement signature, tested TOGETHER by the house-rule guards.
  *
  * The review workbook was protected only by ISSUER_PROVIDER_RULES, which run
@@ -325,7 +332,7 @@ export const FAMILY_REVIEW_SIGNATURE = /Absolute\s+Gain\s*\/\s*\(Loss\)\s+Includ
  * legal name in one cell is all it would take: the workbook would then be filed
  * as a Green Lantern report. Both documents are guarded on both signatures.
  */
-export const NON_STATEMENT_SIGNATURES = [FAMILY_REGISTER_SIGNATURE, FAMILY_REVIEW_SIGNATURE];
+export const NON_STATEMENT_SIGNATURES = [FAMILY_REGISTER_SIGNATURE, FAMILY_REVIEW_SIGNATURE, ADVISER_TRANSACTIONS_SIGNATURE];
 
 /** True for a document the family or their adviser produced, not an institution. */
 export const isNonStatement = (text) => NON_STATEMENT_SIGNATURES.some((re) => re.test(text));
@@ -349,6 +356,7 @@ export const isNonStatement = (text) => NON_STATEMENT_SIGNATURES.some((re) => re
 export const NON_STATEMENT_PROVIDERS = new Set([
   "Consolidated family review (not a statement)",
   "Family investment register (not a statement)",
+  "Adviser transaction report (not a statement)",
 ]);
 
 /**
@@ -782,6 +790,13 @@ const ISSUER_PROVIDER_RULES = [
    * family-input layer (`src/lib/deals.ts`), never in `glowData.ts`.
    */
   [FAMILY_REGISTER_SIGNATURE, "Family investment register (not a statement)"],
+  /**
+   * AND THE ADVISER'S TRANSACTION REPORT, which names every fund and manager the
+   * family has dealt through Motilal Oswal since 2017 — 3P, ASK, Avendus,
+   * Buoyant, Carnelian, Marathon, Neo Infra, V.E.C — as its own rows. Matched on
+   * any of them it would be filed as that manager's statement.
+   */
+  [ADVISER_TRANSACTIONS_SIGNATURE, "Adviser transaction report (not a statement)"],
   /**
    * A DEMAT STATEMENT IS MATCHED ON ITS DEPOSITORY REGISTRATION, and it comes
    * first because its ROWS are other people's funds.
