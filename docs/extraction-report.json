@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-10-26T08:13:57.169Z",
+  "generatedAt": "2026-10-27T04:50:55.619Z",
   "summary": {
-    "documents": 428,
+    "documents": 429,
     "parsed": 424,
     "partial": 0,
-    "failed": 4,
+    "failed": 5,
     "rowSumChecks": 389,
     "totalMismatches": 136,
     "totalsMaterial": 1,
@@ -28,7 +28,7 @@
     "stitchesApplied": 134
   },
   "coverage": {
-    "pdfsFound": 418,
+    "pdfsFound": 419,
     "duplicateSources": [
       {
         "path": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_DividendStatement_India177OT.pdf",
@@ -248,7 +248,7 @@
     ],
     "parsed": 424,
     "partial": 0,
-    "failed": 4,
+    "failed": 5,
     "byProvider": {
       "Goldstandard Wealth Private Limited": {
         "bank-book": {
@@ -916,6 +916,13 @@
           "failed": 0
         }
       },
+      "Adviser transaction report (not a statement)": {
+        "unknown": {
+          "ok": 0,
+          "partial": 0,
+          "failed": 1
+        }
+      },
       "ASK Absolute Return Fund": {
         "holdings": {
           "ok": 3,
@@ -1006,6 +1013,15 @@
         "reportType": "unknown",
         "reasons": [
           "held-out-by-decision: Family investment register (not a statement) — this file is READ PERFECTLY and is deliberately not a source. No institution issued it, so folding it into the book would end the guarantee that every figure traces to the statement of the institution that struck it. It is NOT a missing reader and must never be given one. The consolidated review is used as an independent cross-check (`npm run reconcile:review`); the investment register has its own generated page at `/register` and its own cross-check (`npm run reconcile:register`), and reaches no portfolio total."
+        ]
+      },
+      {
+        "docKey": "adviser-transaction-report-not-a-statement-unknown-unknown-unknown",
+        "sourcePath": "source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx",
+        "provider": "Adviser transaction report (not a statement)",
+        "reportType": "unknown",
+        "reasons": [
+          "held-out-by-decision: Adviser transaction report (not a statement) — MOPWM's family-wide record of dated trades, READ PERFECTLY and deliberately not a statement source: no custodian or fund struck it, and it prints no holding, valuation or ISIN. `build-book` reads it for one licensed use, exact cost recovery (`scripts/lib/mopwmTransactions.mjs`, docs/COST-RECOVERY.md): a holding whose statement prints no cost takes the cost of the lots these rows leave only where owner, security, account and every unit reconcile on the statement's own date."
         ]
       }
     ],

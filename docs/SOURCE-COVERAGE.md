@@ -12,15 +12,15 @@ if it is not, so a delivery that lands a file nobody reads cannot pass silently.
 | Read | 396 | one or more documents in `public/audit/` |
 | Read via a byte-identical twin | 43 | the pipeline reads each md5 once; the data IS in the archive |
 | Read as a witness | 18 | a spreadsheet export of the PDF beside it — rows archived, figures checked, no facts |
-| Read by `build-book` | 2 | the review supplies private lines and exact lot costs; the register supplies verified payment evidence |
+| Read by `build-book` | 3 | the review supplies private lines and exact lot costs; the register supplies verified payment evidence |
 | Held out by decision | 0 | read perfectly and deliberately not a source |
 | Not a document | 156 | macOS `__MACOSX/._*` resource forks — checked, not assumed |
 | Excluded by policy | 2 | the drop's own password notes |
 | **Never arrived** | **2** | **a mail server's removal notice in place of the statement — ask the sender to re-send it** |
 | **Unread** | **0** | **must be zero** |
-| **Total leaf files** | **619** | |
+| **Total leaf files** | **620** | |
 
-Those files produce **428 documents** in the archive.
+Those files produce **429 documents** in the archive.
 
 ## ⚠ Statements that never arrived
 
@@ -33,15 +33,17 @@ There is nothing in the file to read; the statement has to be re-sent another wa
 ## Read by `build-book`
 
 The consolidated review supplies the private-market lines (Stage 10dh). At the family's
-21 October instruction, its dated equity/fund transactions and the investment register also
-supply missing purchase costs only after exact owner, identity, date and quantity reconciliation.
-Both workbooks are read in full; source rows and rejected balances are in COST-RECOVERY.md.
+21 October instruction, its dated equity/fund transactions, the investment register and MOPWM's
+transaction report (Stage 10hu) also supply missing purchase costs only after exact owner,
+identity, date and quantity reconciliation. Each workbook is read in full; source rows and
+rejected balances are in COST-RECOVERY.md.
 They remain held out of generic statement extraction; this is not an unread or missing file.
 
 | File | Where its data goes |
 | --- | --- |
 | `source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx` | private-market lines and exact dated equity/fund lot costs; `npm run reconcile:review` checks the rest |
 | `source/august-2026-f/NEW INVESTMENT SHEET.xlsx` | exact payment-register cost evidence; `npm run reconcile:register` checks the rest |
+| `source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx` | exact dated equity/fund lot costs where the review and register leave a holding unrecovered |
 
 ## Held out by decision
 

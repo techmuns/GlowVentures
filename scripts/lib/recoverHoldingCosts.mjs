@@ -7,6 +7,7 @@ import { readSpreadsheet } from '../ingest/lib/sheet.mjs';
 import { readTransactions, serialToIso, REVIEW_WORKBOOK, REVIEW_AS_OF } from './reviewPrivateRead.mjs';
 import { fifoLedger, UNIT_TIE } from '../../shared/fifo.mjs';
 import { ownerIdFor } from '../../shared/owners.mjs';
+import { MOPWM_TRANSACTIONS, loadMopwmTransactions, mopwmRowsFor, replayMopwmRows, reportDate } from './mopwmTransactions.mjs';
 
 // Identity aliases, not cost overrides. No amount, quantity or purchase date is
 // maintained here; those must be read from the workbooks on every build.
@@ -162,10 +163,41 @@ function registerEma(root) {
     date:serialToIso(at(r,'INVESTMENT DATE')),evidence:{path:REGISTER,sheet:sheet.name,rows:[row]}};
 }
 
+const NO_RECORD='No quantity-matched owner-specific acquisition record in the saved workbooks';
+
+/**
+ * THE ADVISER'S TRANSACTION REPORT, where the review and the register leave a
+ * holding unrecovered (Stage 10hu). Its rows run to 23 Oct 2026, past every
+ * custody statement here, so they are replayed to the statement's OWN date and
+ * must leave exactly its units; a later sale is counted, never applied. Null
+ * where the report records nothing for this holding.
+ */
+function fromMopwm(report,t,a,prior=NO_RECORD) {
+  const rows=mopwmRowsFor(report,{isin:t.isin,account:a});
+  if(!rows) return null;
+  const m=replayMopwmRows(rows,{isin:t.isin,asOf:t.asOf,quantity:t.quantity});
+  if(m.reason) return {reason:prior===NO_RECORD?`MOPWM transaction report: ${m.reason}`:`${prior}; MOPWM transaction report: ${m.reason}`};
+  return {record:{accountId:t.accountId,isin:t.isin,quantity:t.quantity,asOf:t.asOf,costBasis:m.costBasis,
+    ...(m.heldPurchases?{heldPurchases:m.heldPurchases}:{}),
+    realizedPnL:m.realizedPnL,costOfUnitsSold:m.costOfUnitsSold,dividendReceived:m.dividendReceived,
+    ...(m.salesAfter?{salesAfter:m.salesAfter}:{}),
+    evidence:[{path:MOPWM_TRANSACTIONS,sheet:rows[0].sheet,rows:m.rows}],
+    notes:[`MOPWM transaction report: owner, account and every unit reconcile on ${t.asOf}; it reports no cash dividends`,
+      ...(prior===NO_RECORD?[]:[`the consolidated review does not: ${prior}`]),
+      ...(m.salesAfter?[`${m.salesAfter} sale(s) after ${t.asOf} (rows ${m.salesAfterRows.join(', ')}); a newer holding balance is required`]:[])]}};
+}
+
 export function recoverHoldingCosts({root,accounts,positions,unvalued,shareMovements,docs,archiveCount=docs.length}) {
   const workbook=readSpreadsheet(fs.readFileSync(path.join(root,REVIEW_WORKBOOK)));
   const rows=readTransactions(workbook).rows;
+  const mopwm=loadMopwmTransactions(root);
   const ema=registerEma(root), accountById=new Map(accounts.map((a)=>[a.accountId,a]));
+  /** A record from the transaction report, or the holding left unresolved with the reason. */
+  const settle=(t,a,prior)=>{
+    const m=fromMopwm(mopwm,t,a,prior);
+    if(m?.record) records.push(m.record);
+    else unresolved.push({...t,owner:a.owner,reason:m?.reason??prior});
+  };
   const targets=new Map();
   const add=(p,asOf)=>{
     const allowed=p.assetClass==='Equity'&&p.isin?.startsWith('INE')
@@ -192,7 +224,7 @@ export function recoverHoldingCosts({root,accounts,positions,unvalued,shareMovem
           heldPurchases:{first:ema.date,last:ema.date,lots:1},
           realizedPnL:null,costOfUnitsSold:null,dividendReceived:null,evidence:[ema.evidence],
           notes:['Payment register matches owner and every unit; no complete separate sales/income record is claimed']});
-      } else unresolved.push({...t,owner:a.owner,reason:'No quantity-matched owner-specific acquisition record in the saved workbooks'});
+      } else settle(t,a,NO_RECORD);
       continue;
     }
     const cutoff=t.asOf<REVIEW_AS_OF?t.asOf:REVIEW_AS_OF;
@@ -200,9 +232,9 @@ export function recoverHoldingCosts({root,accounts,positions,unvalued,shareMovem
     // have replaced lots. Pledge/unpledge rows are explicitly balance-neutral.
     const later=docs.filter((d)=>d.provider===a.provider&&d.accountNo===a.accountNo)
       .flatMap((d)=>d.transactions??[]).filter((r)=>r.isin===t.isin&&r.date>cutoff&&r.date<=t.asOf&&r.side!=='encumbrance');
-    if(later.length||t.lastMovementDate>cutoff) {unresolved.push({...t,owner:a.owner,reason:`${later.length||1} later custodian movements need priced trade/transfer evidence after ${cutoff}`});continue;}
+    if(later.length||t.lastMovementDate>cutoff) {settle(t,a,`${later.length||1} later custodian movements need priced trade/transfer evidence after ${cutoff}`);continue;}
     const result=(fund?replayReviewFundGroups:replayReviewRows)(sourceRows,{isin:t.isin,asOf:cutoff,quantity:t.quantity});
-    if(result.reason) {unresolved.push({...t,owner:a.owner,reason:result.reason});continue;}
+    if(result.reason) {settle(t,a,result.reason);continue;}
     const roll=fund?null:rollReviewRows(sourceRows,{isin:t.isin,asOf:t.asOf,quantity:t.quantity});
     records.push({accountId:t.accountId,isin:t.isin,quantity:t.quantity,asOf:t.asOf,costBasis:result.costBasis,
       ...(result.heldPurchases?{heldPurchases:result.heldPurchases}:{}),
@@ -221,7 +253,7 @@ export function recoveryReport({ records, unresolved, sourceAudit }, accounts) {
   const lines=['# Recovered purchase costs and remaining source gaps','',
     'Generated by `npm run build-book`. Recovery is limited to the recorded holding date and quantity; source rows never replace a valuation or advance a holding date.','',
     `**${records.length}** security/account costs reconcile to exact recorded quantities (${records.filter(r=>r.isin.startsWith('INE')).length} equity, ${records.filter(r=>r.isin.startsWith('INF')).length} fund/ETF). The full FIFO engine carries original costs through splits and matches every sale against the oldest remaining lots. Scheme-level mutual-fund lots remain separate from external account capital.`, '',
-    `Source coverage accounts for ${sourceAudit.archived} archived documents. The build reconciles ${sourceAudit.documents} nonduplicate usable archived records plus both supplementary workbooks, statement holdings, transaction-only custody balances and unvalued statement rows. Failed/held-out documents are separately recorded in SOURCE-COVERAGE.md and the client request. Holding-only and transaction-only live fund overlays apply the same exact recovery records.`, '',
+    `Source coverage accounts for ${sourceAudit.archived} archived documents. The build reconciles ${sourceAudit.documents} nonduplicate usable archived records plus the three supplementary workbooks (the consolidated review, the family register and MOPWM's transaction report), statement holdings, transaction-only custody balances and unvalued statement rows. Failed/held-out documents are separately recorded in SOURCE-COVERAGE.md and the client request. Holding-only and transaction-only live fund overlays apply the same exact recovery records.`, '',
     `Full HPR is withheld on ${records.filter(r=>r.hprUnavailableReason).length} recovered-cost record(s) with unverified sale proceeds.`, '',
     '| Holder | Account | ISIN | Units | Cost held (INR) | Realised gain (INR) | Cost sold (INR) | Source |',
     '| --- | --- | --- | ---: | ---: | ---: | ---: | --- |'];
@@ -236,6 +268,8 @@ export function recoveryReport({ records, unresolved, sourceAudit }, accounts) {
     '- A Closing row terminates one review folio block. A second folio of the same product and owner is never pooled with it; exactly one block must close at the recorded holding quantity.',
     '- ICICI Equity Savings: the original purchase and sold units reconcile, so remaining cost is recovered. The sale cash has the wrong sign; realised gain, HPR and pooled HPR remain absent until proceeds are verified.',
     '- Remaining differences include Motilal Arbitrage (0.066 units) and Hope India Trust Kotak Liquid (0.506 units between the dated summary/ledger and the available-unit balance). No rounding or proportional cost allocation closes those gaps.',
+    `- MOPWM's transaction report (generated ${reportDate()}) is tried only where the review and register leave a holding unrecovered. Its rows are replayed to the statement's own date and must leave exactly the recorded units; a fund's rows must be in the folio that is the holding's account, a share's in the Motilal Oswal depository its trades settle in. A split, merger, demerger, bonus or transfer entry refuses the holding, because its original lots are not mapped. The report carries no cash dividends, so none are claimed.`,
+    `- ${records.filter(r=>r.salesAfter&&r.evidence.some(e=>e.path===MOPWM_TRANSACTIONS)).length} holding(s) recovered from the transaction report were sold after their statement date. They stay at the statement's quantity, named as needing a newer holding balance; the report has no closing balance to witness a roll-forward.`,
     '- Existing statement costs take precedence; supplementary records never overwrite them.',
     '- Full HPR includes recorded realised gains and income. It does not claim income or transactions after the evidenced period.',
     '', 'Client request: [exact remaining records](client/PURCHASE-COST-RECORDS-NEEDED.md).','');

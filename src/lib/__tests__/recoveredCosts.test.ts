@@ -13,7 +13,11 @@ import { investedSpanOf } from "../privateBook";
 
 const near = (got: number | null | undefined, want: number) =>
   assert.ok(typeof got === "number" && Math.abs(got - want) < .02, `${got} != ${want}`);
-assert.equal(BOOK_RECOVERED_COSTS.length, 45, "only exact owner/ISIN/quantity matches are recoverable");
+// 45 from the review and register; MOPWM's transaction report (Stage 10hu) adds
+// 20 more where both left a holding unrecovered.
+assert.equal(BOOK_RECOVERED_COSTS.length, 65, "only exact owner/ISIN/quantity matches are recoverable");
+const MOPWM = "source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx";
+assert.equal(BOOK_RECOVERED_COSTS.filter(r => r.evidence.some(e => e.path === MOPWM)).length, 20);
 // Bharat's scanned HDFC Bank NSDL statement (Stage 10gk) prints the 1,01,111
 // Smartworks shares his saved purchase record bought — an exact match, and the
 // only one the scan adds. The row stays quantity-only: a cost values nothing.
@@ -48,16 +52,29 @@ assert.equal(yash.realizedLotsAfter, 3, "known later disposals block live pricin
 
 const candidates = shareCandidates();
 // Twelve: Bharat's Smartworks shares on his HDFC Bank NSDL statement (Stage 10gk) are the twelfth.
-assert.equal(candidates.filter(p => p.recoveredCost).length, 12);
+// Ten more since Stage 10hu: Ankita's nine bank shares and her Kaynes, costed
+// from MOPWM's transaction report.
+assert.equal(candidates.filter(p => p.recoveredCost).length, 22);
 assert.ok(candidates.some(p => p.accountId === "hdfc-bank-nsdl-demat-22025655" && p.isin === "INE0NAZ01010" && p.recoveredCost));
 const infinium = candidates.find(p => p.isin === "INE0MRE01011")!;
 assert.equal(infinium.quantity, 8000); near(infinium.costBasis, 2646660);
 near(infinium.realizedPnL, -88917.69); near(infinium.costOfUnitsSold, 330630);
-for (const isin of ["INE918Z01012", "INE0LGX01024", "INE531F01023", "INE1CDF01017"]) {
+for (const isin of ["INE0LGX01024", "INE531F01023", "INE1CDF01017"]) {
   const p = candidates.find(p => p.isin === isin)!;
   assert.ok(p, `unresolved ${isin} stays recorded`);
-  assert.equal(p.costBasis, null, "later receipts or different quantities need original lots");
+  assert.equal(p.costBasis, null, "a split or demerger entry needs its original lots mapped");
 }
+// Kaynes' 7 July receipt was the shares Ankita already owned: the transaction
+// report's two exchange purchases leave exactly the 4,875 the custodian records.
+const kaynes = candidates.find(p => p.isin === "INE918Z01012")!;
+near(kaynes.costBasis, 11710991);
+assert.deepEqual(kaynes.recoveredCost?.heldPurchases, { first: "2022-11-24", last: "2025-12-09", lots: 2 });
+assert.equal(kaynes.recoveredCost?.evidence[0].path, MOPWM);
+assert.equal(kaynes.dividendReceived, null, "the report carries no cash dividends");
+// Sold on 23 Sep 2026, after the 31 Jul statement: counted, never applied.
+const axis = candidates.find(p => p.isin === "INE238A01034")!;
+assert.equal(axis.quantity, 7300);
+assert.equal(axis.realizedLotsAfter, 1);
 // Prove the recovered lots reach the live table, survive pricing and still
 // include realised FIFO gain. This feed is a test fixture, not a market quote.
 const symbol = quoteSymbolFor(infinium)!;
@@ -89,7 +106,8 @@ console.log("Recovered costs: exact quantities, March cutoff, FIFO sales, live o
 const funds=[...depositoryFundHoldings(),...unpricedStatementUnits()];
 // 21, and since Stage 10hq the three DSP Gold / Silver ETF lines valued across
 // their 1:10 split, whose costs reconcile on the statements' own pre-split units.
-assert.equal(funds.filter(p=>p.recoveredCost).length,24);
+// Seven more since Stage 10hu, costed from MOPWM's transaction report's demat folios.
+assert.equal(funds.filter(p=>p.recoveredCost).length,31);
 assert.equal(funds.filter(p=>p.recoveredCost&&p.depositoryUnits?.unitSplit).length,3);
 const fp=(account:string,isin:string)=>funds.find(p=>p.accountId.endsWith(account)&&p.isin===isin)!;
 for (const [account, first, last, lots] of [['12539150','2025-03-06','2026-03-23',4],['12838316','2025-11-06','2025-11-06',1],['12838320','2025-07-11','2025-07-11',1]] as const) {
@@ -120,7 +138,11 @@ for(const set of [[savings],[liquid,savings]]) {
   assert.equal(bucketBy(set,()=>"all")[0].returnPct,null);
 }
 assert.equal(applyFundNavs([savings])[0].returnPct,null,'a fresh NAV cannot invent missing sale proceeds');
-assert.equal(fp('12539150','INF247L01ED1').costBasis,null,'0.066 units still need a reconciliation');
+// The review's folio closes 0.066 units short; the transaction report's demat
+// folio leaves exactly the custodian's 28,067,435.434 on 31 Jul (Stage 10hu).
+const moArb=fp('12539150','INF247L01ED1');
+near(moArb.costBasis,304201613.1);assert.equal(moArb.recoveredCost?.evidence[0].path,MOPWM);
+assert.equal(moArb.realizedLotsAfter,2,'redeemed on 23 Sep and 1 Oct 2026, after the statement');
 assert.equal(fp('12838316','INF179K01830').costBasis,null,'a different folio balance cannot supply cost');
 
 // Costs can be known while a holding's current unit/price basis is unverified.
