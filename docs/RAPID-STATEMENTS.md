@@ -10,7 +10,7 @@ Recognised text PDFs and Excel statements use the existing coordinate readers,
 saved password vault, reconciliation, publication assessment and canonical book
 builder in a resident Node service. The selected-record proof uses fingerprints
 and holding indexes scoped to one immutable candidate; it never reuses a hash
-after reconciliation or across mutable candidates. All 39 book exports, ledger
+after reconciliation or across mutable candidates. All canonical book exports, ledger
 indexes, consolidated exports, source previews and reporting pages select one
 version before application modules initialize. A read gap or failed persistence
 cannot replace the last verified version.
@@ -85,7 +85,7 @@ their separate explicit-authorization requirement.
 ## Verification
 
 `scripts/dev/benchmark-rapid-statements.mjs` removes the real protected Bandhan
-statement from an isolated baseline, reads its original bytes and checks all 39
+statement from an isolated baseline, reads its original bytes and checks all
 collections against the verified book. It reports cold/warm processing separately
 from upload/network/persistence latency. The CI image replay limits compute to
 one CPU and uses the production Node image.
