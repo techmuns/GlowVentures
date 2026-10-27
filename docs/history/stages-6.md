@@ -469,6 +469,8 @@
 - Keep unresolved sector picks when look-through data is loading or unreachable; only a complete successful result can retire absent choices. The browser tour visits nested research/held-view tabs before leaving their parent, and includes all consolidated workbook subtabs and the Monitor/Ledger mode controls.
 - A deployed-preview check caught PDF scroll anchoring against the temporary loading line. Keep restoration pending through PDF rendering and require stable scrollport geometry across two frames, so removing that line cannot shift the restored source position.
 
+- Latest-main integration: refresh obsolete data-dependent test anchors after the MOPWM cost recovery. Retain a deterministic partial-cost denominator case, explicitly withhold shares with recorded later sales, bound reconciled tiny held costs below the display floor, and verify their full historical sales remain in the canonical return. Production calculations are untouched.
+
 ### Stage 10hu — MOPWM'S FAMILY TRANSACTION REPORT: 20 MORE PURCHASE COSTS
 
 - `source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx`, sent by the client on 27 Oct: MOPWM's family-wide transaction report of 23 Oct, with 26,402 dated rows across Direct Equity, Mutual Funds, PMS_AIF_SP, Fixed Income and Derivative. `lib/sheet.mjs` read it as five empty sheets, because its XML is written `<x:row>`/`<x:c>`. The prefix is now taken from each part's root element; unprefixed workbooks match exactly as before, and the archive is otherwise byte-identical.

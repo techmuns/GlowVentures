@@ -25,7 +25,7 @@ import {
 import { describeDepositoryUnits, depositoryUnitsGist } from "../fundNavs";
 import { BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
 import type { QuoteFeed } from "../quotes";
-import type { ActionFeed } from "../corporateActions";
+import { projectActions, type ActionFeed } from "../corporateActions";
 import { validActionFeed } from "../../../shared/corporateActions.mjs";
 import { isCashEquivalent } from "../analytics";
 import { BOOK_FUND_NAVS } from "@/data/fundNavs";
@@ -469,13 +469,25 @@ ok("a 1:2 split since the statement is projected: twice the units at the quote, 
 const rights = one?.symbol ? depositoryShareHoldings(tradedFeed(one.symbol, 250), withAction("rights", null)) : [];
 ok("an event the capture cannot state the units of — a rights issue — leaves the share no row",
   rights.length === 0, rights.map((p) => p.symbol).join("; "));
-ok("...and every candidate passes the committed capture on a quote two days after it, so the gate is not what leaves this book's shares unvalued",
-  (() => {
-    const quotes: QuoteFeed["quotes"] = {};
-    for (const p of shareCandidates()) if (p.symbol) quotes[p.symbol] = { ...feedOf(p.symbol, 100).quotes[p.symbol], tradedAt: "2026-09-25T09:30:00Z" };
-    const all: QuoteFeed = { ...feedOf("X", 1), quotes };
-    return depositoryShareHoldings(all, CAPTURE).length === shareCandidates().filter((p) => !!p.symbol).length;
-  })());
+{
+  const candidates = shareCandidates().filter(p => !!p.symbol);
+  // The same dated regression quote as the constructed split/rights cases.
+  // Later events in a refreshed capture must not change this historical window.
+  const through = "2026-09-25";
+  const quotes: QuoteFeed["quotes"] = {};
+  for (const p of candidates) quotes[p.symbol!] = { ...feedOf(p.symbol!, 100).quotes[p.symbol!], tradedAt: `${through}T09:30:00Z` };
+  const all: QuoteFeed = { ...feedOf("X", 1), quotes, asOf: `${through}T09:30:00Z` };
+  const valued = depositoryShareHoldings(all, CAPTURE);
+  const eligible = candidates.filter(p => !(p.realizedLotsAfter ?? 0));
+  const soldLater = candidates.filter(p => (p.realizedLotsAfter ?? 0) > 0);
+  ok("the dated regression quote values every candidate without a later recorded sale", valued.length === eligible.length,
+    `${valued.length} valued, ${eligible.length} eligible, ${soldLater.length} with later sales`);
+  ok("a quote never revives an older balance contradicted by later sales", soldLater.length > 0 && soldLater.every(p =>
+    !valued.some(v => v.accountId === p.accountId && v.isin === p.isin)
+    && projectActions(p as Position & { quantity: number }, BOOK_ACCOUNTS.find(a => a.accountId === p.accountId)?.asOf ?? "", through, CAPTURE)
+      .quantityIssues.includes("Sales are recorded after this statement; a newer holding balance is required")));
+}
+
 const notesShare = partialValuationNotes([...FUNDS, ...priced]);
 const withShare = notesShare.get(one?.accountId ?? "") ?? "";
 ok("the account's note names the share and that it is valued only while the quote feed prices it",

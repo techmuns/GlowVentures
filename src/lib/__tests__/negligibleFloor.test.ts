@@ -1,3 +1,4 @@
+import { bookReturnOnCost } from "@/lib/drilldown";
 // THE ₹1,000 FLOOR, CHECKED AGAINST THE GENERATED BOOK.
 //   npm run test:family
 //
@@ -133,25 +134,46 @@ ok("the floor actually drops holdings — a rule matching nothing would pass eve
        || `${stmtDropped.length} row(s): ${stmtDropped.map((p) => `${p.security} ${rs(p.marketValue)}`).join(", ") || "none"}; BOOK_SUMMARY ties`);
 }
 
-// ── 4. IT MOVES MARKET VALUE AND NOTHING ELSE ───────────────────────────────
-// Measured rather than assumed: every row the floor takes reports no cost, no
-// realised gain and no dividend, so Capital invested, Realised P&L and income
-// are untouched. If a future drop brings a costed speck this fails, and it
-// SHOULD — a holding with a cost basis is one the family paid for, and dropping
-// it silently understates what they put in.
+// ── 4. TINY CURRENT COSTS ARE BOUNDED; HISTORICAL GAIN IS RETAINED ────────────
+// New exact FIFO records can cost a fund's tiny residual units. Their held
+// cost must also be below the display floor; a material investment's cost must
+// never disappear just because its current mark is small. Historical sales
+// remain in the canonical return, independently of this display filter.
 {
   // ONE EXCEPTION, AND IT MOVES NOTHING BUT ITSELF: a cash balance whose cost
   // is its own value (ASK's paise above). Dropping it moves Capital invested by
   // exactly what it moves the value, and the gain by nothing — it is not an
-  // investment the family paid for. Any other cost on a dropped row fails.
+  // investment the family paid for. A recovered fund residue is allowed only
+  // with an exact account/ISIN/unit reconciliation and an immaterial held cost.
   const withCost = negligible.filter((p) => p.costBasis != null
     && !(p.assetClass === "Cash" && Math.abs((p.costBasis ?? NaN) - p.marketValue) < 0.005));
-  const cashAtValue = negligible.filter((p) => p.costBasis != null && !withCost.includes(p));
   const withDiv = negligible.filter((p) => p.dividendReceived != null);
-  ok("no dropped holding reports a cost other than a cash balance's own value — so Capital invested cannot move by an investment",
-     withCost.length === 0,
-     withCost.map((p) => p.security).join(", ")
-       || `${cashAtValue.length} cash balance(s) at cost = value, ${rs(sum(cashAtValue.map((p) => p.marketValue)))}`);
+  const recoveredResidues = withCost.filter(p => p.navPriced && p.recoveredCost
+    && p.costBasis! > 0 && p.costBasis! < NEGLIGIBLE_VALUE_FLOOR
+    && p.recoveredCost.accountId === p.accountId && p.recoveredCost.isin === p.isin
+    && Math.abs(p.recoveredCost.quantity - p.quantity!) <= 0.0005
+    && p.recoveredCost.costBasis === p.costBasis);
+  const material = withCost.filter(p => !recoveredResidues.includes(p));
+  ok("no displayed-away holding loses a material or unreconciled investment cost", material.length === 0,
+    material.map(p => p.security).join(", ") || `${recoveredResidues.length} exact FIFO residues; held cost ${rs(sum(recoveredResidues.map(p => p.costBasis!)))}`);
+  const complete = bookReturnOnCost(held, { accounts: BOOK_ACCOUNTS, universe: book }).fifo;
+  const withoutResidues = bookReturnOnCost(held, { accounts: BOOK_ACCOUNTS, universe: book.filter(p => !recoveredResidues.includes(p)) }).fifo;
+  const soldGain = sum(recoveredResidues.map(p => p.realizedPnL ?? 0));
+  const soldCost = sum(recoveredResidues.map(p => p.costOfUnitsSold ?? 0));
+  ok("hidden residual units retain all verified historical realised gain and sold cost in the return", Math.abs(complete.exitedGain - withoutResidues.exitedGain - soldGain) < 0.005
+    && Math.abs(complete.exitedDeployed - withoutResidues.exitedDeployed - soldCost) < 0.005
+    && Math.abs((complete.deployed ?? 0) - (withoutResidues.deployed ?? 0) - soldCost) < 0.005,
+    `${rs(soldGain)} realised on ${rs(soldCost)} sold capital remains in the canonical return`);
+  // Keep the history guard load-bearing even after newer statements redeem
+  // today's real residues completely. This isolated fixture is never UI data.
+  const tinyHistory = { accountId: "fixture-account", securityKey: "fixture-fund-residue", security: "Test fund residue",
+    assetClass: "Mutual Fund", quantity: 1, marketValue: 90, costBasis: 100, costUnavailable: false,
+    realizedPnL: 400, costOfUnitsSold: 900, dividendReceived: null } as (typeof book)[number];
+  const history = bookReturnOnCost([], { accounts: [], universe: [tinyHistory] }).fifo;
+  ok("a hidden tiny balance cannot erase the investment's historical gain or sold capital", history.exitedGain === 400
+    && history.exitedDeployed === 900 && history.realised === 400 && history.deployed === 900);
+  ok("an unrelated unverified sale still leaves the whole realised total unavailable", !withoutResidues.hprUnavailableReason
+    || (complete.hprUnavailableReason === withoutResidues.hprUnavailableReason && complete.realised === null));
   ok("no dropped holding reports a dividend — so income cannot move",
      withDiv.length === 0, withDiv.map((p) => p.security).join(", "));
   /**
@@ -173,7 +195,7 @@ ok("the floor actually drops holdings — a rule matching nothing would pass eve
     for (const lot of doc.capitalGains ?? []) { lotCount++; if (lot.securityKey) realisedKeys.add(lot.securityKey); }
   }
   const clash = [...dropped].filter((k) => realisedKeys.has(k));
-  ok("no dropped holding has a capital-gain lot against it — so Realised P&L cannot move",
+  ok("the hidden residues have no additional original-statement capital-gain lots",
      clash.length === 0, clash.join(", ") || `${realisedKeys.size} securities carry a realised lot, none of them dropped`);
   ok("...and that check can actually fail — the archive does carry realised lots to clash with",
      realisedKeys.size > 0 && lotCount > 0, `${lotCount} lots across ${realisedKeys.size} securities`);
