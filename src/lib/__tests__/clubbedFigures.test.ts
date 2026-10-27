@@ -27,8 +27,10 @@ const eng = new Map(BOOK_ACCOUNTS.map((a) => [a.accountId, a.engagement]));
  * THE BOOK THE MONITOR CLUBS, ON A DAY THE QUOTE FEED ANSWERS. Since Stage 10cz
  * the family's own Motilal demat shares are rows only while a quote prices them
  * (their statement's rate is the last depository movement, never a price), and
- * those uncosted rows are exactly what ICICI Bank's costed Goldstandard lines are
- * clubbed with. On the statement basis alone that case left the book and this
+ * those uncosted rows are what costed lines elsewhere are clubbed with — ICICI
+ * Bank's Goldstandard lines until Ankita's own lot took its cost from MOPWM's
+ * transaction report (Stage 10hu), Insolation Energy's ICICI NSDL lot since.
+ * On the statement basis alone that case left the book and this
  * suite's load-bearing check passed over nothing — so it reads the live book
  * with a STUB feed pricing every recorded share (`liveBook.ts`), as `check:pages`
  * does with its fixture feed. No stubbed price is asserted on.
@@ -70,12 +72,14 @@ for (const [key, ps] of byKey) {
 ok("every consolidated row strikes cost, units, value and gain on one set", true, `${byKey.size} rows`);
 ok("some row really does club a costed line with an uncosted one (load-bearing)", mixed > 0, `${mixed} such rows`);
 
-console.log("\n── the book's own case: ICICI Bank ──");
+// Ajay's 212,000 ICICI NSDL shares carry their recovered cost; his 110,000 in
+// Motilal and Bharat's 91,000 in HDFC do not (their lots run through a split).
+console.log("\n── the book's own case: Insolation Energy ──");
 {
-  const ps = byKey.get("icici-bank") ?? [];
+  const ps = byKey.get("insolation-energy") ?? [];
   const f = costedFigures(ps);
   const allUnits = ps.reduce((s, p) => s + (p.quantity ?? 0), 0);
-  ok("ICICI Bank is held through lines that report a cost and lines that do not",
+  ok("Insolation Energy is held through lines that report a cost and lines that do not",
     ps.some(reportsCost) && ps.some((p) => !reportsCost(p)), `${ps.length} lines`);
   ok("its average cost is cost over the COSTED units, not over every unit",
     f.avgCost !== null && f.cost !== null && Math.abs(f.avgCost - f.cost / allUnits) > 100,
