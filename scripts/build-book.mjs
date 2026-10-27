@@ -66,6 +66,7 @@ import { termSplit } from "./lib/holdingPeriod.mjs";
 import { capitalRecordFromInception } from "./lib/capitalOrigins.mjs";
 import { NOT_ATTRIBUTED, NOT_ATTRIBUTED_NAME } from "../shared/reviewHolders.mjs";
 import { REVIEW_AS_OF } from "./lib/reviewPrivateRead.mjs";
+import { dematAccountsFor } from "./lib/dematAccounts.mjs";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const AUDIT_DIR = process.env.GLOW_AUDIT_DIR ?? path.join(ROOT, "public", "audit");
 const OUT = process.env.GLOW_BOOK_OUT ?? path.join(ROOT, "src", "data", "glowData.ts");
@@ -4818,6 +4819,21 @@ function build(archived, archiveCount = archived.length) {
         : left ? a.noPositionsReason
         : `the private-market holding this statement records is counted under the family's consolidated review (MOPWM, 30 Jun 2026), the source for private-market holdings; the statement's units stay in the archive`;
     }
+  }
+
+  // The demat each account's units sit in, as its own statements print it
+  // (Stage 10ic, `scripts/lib/dematAccounts.mjs`).
+  {
+    const issuesByAccountId = new Map();
+    for (const [, issues] of byAccount) {
+      const id = accountIdOf(issues[0].provider, issues[0].accountNo);
+      issuesByAccountId.set(id, [...(issuesByAccountId.get(id) ?? []), ...issues]);
+    }
+    const pageText = (docKey) => {
+      try { return JSON.parse(fs.readFileSync(path.join(AUDIT_DIR, docKey, "pages.json"), "utf8")).pages.map((p) => p.text).join("\n"); }
+      catch { return null; }
+    };
+    dematAccountsFor(accounts, issuesByAccountId, pageText, notes);
   }
 
   accounts.sort((a, b) => a.accountId.localeCompare(b.accountId));

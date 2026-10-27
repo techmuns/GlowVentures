@@ -41,6 +41,7 @@ import { ReturnsTable } from "@/components/ReturnsTable";
 import { InvestmentTools } from "@/components/InvestmentTools";
 import { QuantityMovement } from "@/components/QuantityMovement";
 import { SourceValue } from '@/components/SourceTrace';
+import { DematLine } from "@/components/DematLine";
 import { CorporateActionReturns } from "@/components/CorporateActionReturns";
 import { PageNav } from "@/components/PageNav";
 import { homeKeyOf, recordedFor, recordedInvestmentDateOf, type RecordedLine } from "@/lib/recordedHoldings";
@@ -1213,6 +1214,7 @@ export function StockInfo() {
             <div className="text-[10px] text-slate-600">
               <span title={`${eng || "engagement not stated"} — ${ROUTE_NOTE[route]}`}>via {ROUTE_LABEL[route]}</span>
             </div>
+            <DematLine account={accIdx.get(l.accountId)} accIdx={accIdx} showAbsent={route === "own" || route === "fund"} />
           </div>
         </td>
         <td className="mono px-4 py-2.5 text-right text-slate-200">{unitsText(l.quantity)}</td>
@@ -1274,6 +1276,9 @@ export function StockInfo() {
                 </>
               )}
             </div>
+            {/* WHICH DEMAT THE UNITS SIT IN (Stage 10ic) — the depository, DP ID,
+                Client ID and holder the account's own statements print. */}
+            <DematLine account={accIdx.get(r.accountId)} accIdx={accIdx} showAbsent={route === "own" || route === "fund"} />
           </div>
         </td>
         <td className="px-4 py-2.5 text-right mono text-slate-300">{r.quantity === null ? <AbsentCell reason={NO_UNIT_COUNT} /> : fmtNum(r.quantity)}</td>
