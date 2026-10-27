@@ -1,0 +1,37 @@
+{
+ "name": "transactions",
+ "rows": [
+  [
+   "date",
+   "description",
+   "kind",
+   "nav",
+   "units",
+   "amount"
+  ],
+  [
+   "2026-10-22",
+   "Capital Contribution",
+   "contribution",
+   "",
+   "",
+   200000000
+  ],
+  [
+   "2026-10-22",
+   "Stamp Duty on allotment @ 0.005%",
+   "expense",
+   "",
+   "",
+   9999.5
+  ],
+  [
+   "2026-10-22",
+   "Net Contribution-Allotment of Units",
+   "contribution",
+   993.7164,
+   201254.604,
+   199990000.5
+  ]
+ ]
+}

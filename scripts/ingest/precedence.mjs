@@ -559,6 +559,8 @@ for (const provider of [
   // wired look identical from the book. (Dated rows need no rule here: build-book
   // unions `cashFlows` across every issue of an account, `datedRowsAcross`.)
   "Motilal Oswal Hedged Equity Multi Factor Strategy",
+  // Franklin Templeton's Category II credit AIF, folio 10387 (Stage 10hx).
+  "Franklin India Credit AIF",
 ]) {
   PRECEDENCE[provider] = {
     holdings: { reportType: "holdings", note: "the fund's own account statement — the only document this issuer sends." },

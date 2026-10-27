@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-10-27T04:50:55.619Z",
+  "generatedAt": "2026-10-27T06:27:21.556Z",
   "summary": {
-    "documents": 429,
-    "parsed": 424,
+    "documents": 430,
+    "parsed": 425,
     "partial": 0,
     "failed": 5,
-    "rowSumChecks": 389,
+    "rowSumChecks": 392,
     "totalMismatches": 136,
     "totalsMaterial": 1,
     "totalsExplained": 54,
-    "totalsRounding": 161,
+    "totalsRounding": 162,
     "derivedVsPrintedDeltas": 944,
     "derivedMaterial": 8,
     "derivedExplained": 399,
@@ -28,7 +28,7 @@
     "stitchesApplied": 134
   },
   "coverage": {
-    "pdfsFound": 419,
+    "pdfsFound": 420,
     "duplicateSources": [
       {
         "path": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_DividendStatement_India177OT.pdf",
@@ -246,7 +246,7 @@
         "sha256": "7cbc776b8cfe6baacfa8c753d86d46de2fec08fbcbae7b36d8dba58029d627fc"
       }
     ],
-    "parsed": 424,
+    "parsed": 425,
     "partial": 0,
     "failed": 5,
     "byProvider": {
@@ -916,6 +916,13 @@
           "failed": 0
         }
       },
+      "Franklin India Credit AIF": {
+        "holdings": {
+          "ok": 1,
+          "partial": 0,
+          "failed": 0
+        }
+      },
       "Adviser transaction report (not a statement)": {
         "unknown": {
           "ok": 0,
@@ -1028,8 +1035,8 @@
     "partials": []
   },
   "consolidated": {
-    "naive": 138543310757.98,
-    "deduped": 138543310757.98,
+    "naive": 138743300758.55,
+    "deduped": 138743300758.55,
     "doubleCounted": 0
   },
   "rowSumChecks": [
@@ -7316,6 +7323,59 @@
       "printedTotal": 100,
       "delta": 0,
       "rowsSummed": 4,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "franklin-india-credit-aif-10387-2026-10-22-holdings",
+      "provider": "Franklin India Credit AIF",
+      "accountNo": "10387",
+      "asOf": "2026-10-22",
+      "reportType": "holdings",
+      "check": "total market value (incl. cash)",
+      "rowSum": 199990000.57,
+      "printedTotal": 199990000.57,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null,
+      "outstandingDividend": null
+    },
+    {
+      "docKey": "franklin-india-credit-aif-10387-2026-10-22-holdings",
+      "provider": "Franklin India Credit AIF",
+      "accountNo": "10387",
+      "asOf": "2026-10-22",
+      "reportType": "holdings",
+      "check": "total cost (incl. cash)",
+      "rowSum": 199990000.5,
+      "printedTotal": 199990000.5,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null,
+      "outstandingDividend": null
+    },
+    {
+      "docKey": "franklin-india-credit-aif-10387-2026-10-22-holdings",
+      "provider": "Franklin India Credit AIF",
+      "accountNo": "10387",
+      "asOf": "2026-10-22",
+      "reportType": "holdings",
+      "check": "% of assets sums to 100",
+      "rowSum": 100,
+      "printedTotal": 100,
+      "delta": 0,
+      "rowsSummed": 1,
       "rowsMissingField": 0,
       "matches": true,
       "severity": "rounding",
@@ -227734,7 +227794,8 @@
       "Carnelian Bharat Amritkaal Fund",
       "Motilal Oswal Delphi Equity Fund",
       "ASK Absolute Return Fund",
-      "Motilal Oswal Hedged Equity Multi Factor Strategy"
+      "Motilal Oswal Hedged Equity Multi Factor Strategy",
+      "Franklin India Credit AIF"
     ]
   },
   "stitches": [

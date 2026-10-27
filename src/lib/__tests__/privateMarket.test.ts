@@ -130,10 +130,12 @@ ok("every private review line is on the private side, and on this page",
 ok("a review line the family declared listed is on the listed side, off this page",
   familyListed.length > 0 && familyListed.every((p) => p.marketSide === "listed" && !scope.rows.includes(p)),
   familyListed.map((p) => `${p.securityKey}=${p.marketSide}`).join(", ") || "none");
-eq("the statement rows the review does not supersede — Neo Infra alone",
-  statementPrivate.map((p) => p.securityKey), ["neo-infra-income-opportunities-fund-i-class-a5"]);
+// Franklin India Credit AIF (Stage 10hx) was bought on 22 Oct, after the 30 June
+// review, so its own statement is its only source.
+eq("the statement rows the review does not supersede — Neo Infra and Franklin",
+  statementPrivate.map((p) => p.securityKey), ["franklin-india-credit-aif-scheme-i-unit-class-db2", "neo-infra-income-opportunities-fund-i-class-a5"]);
 eq("raw private rows = the review's lines + the statement's", scope.rows.length, reviewRows.length + statementPrivate.length);
-eq("raw private rows", scope.rows.length, 88);
+eq("raw private rows", scope.rows.length, 89);
 eq("…of which the review holds at cost", reviewRows.filter(isValuedAtCost).length, 76);
 // NOTHING IS COUNTED ONCE: both pairs the policy used to tag are separate
 // investments on the family's word, so the deduped set is the raw set.
@@ -145,7 +147,7 @@ ok("no private row carries a dedupe group", scope.rows.every((p) => !p.dedupeGro
 const unvaluedEarly = unvaluedAccounts(BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_COMMITMENTS);
 eq("accounts in scope = accounts with a private row + private folios holding nothing", scope.accounts.length,
   new Set(scope.rows.map((p) => p.accountId)).size + unvaluedEarly.filter((u) => u.side === "private").length);
-eq("accounts in scope", scope.accounts.length, 21);
+eq("accounts in scope", scope.accounts.length, 22);
 ok("the review's holder accounts are in scope",
   BOOK_ACCOUNTS.filter((a) => a.reviewHolder).every((a) => scope.accounts.some((s) => s.accountId === a.accountId)));
 // THE FAMILY DECLARED BOTH OF THESE CATEGORY II (`DECLARED_AIF_CATEGORY`), and
@@ -173,7 +175,7 @@ const rawMV = sum(scope.rows.map((p) => p.marketValue));
 near("deduped private value === BOOK_SUMMARY.privateValue", dedupedMV, BOOK_SUMMARY.privateValue);
 near("raw private value = the review's lines + the statement's", rawMV,
   sum(reviewRows.map((p) => p.marketValue)) + sum(statementPrivate.map((p) => p.marketValue)));
-near("raw private value", rawMV, 1930944270.36);
+near("raw private value", rawMV, 1930944270.36 + 199990000.57);
 near("double count = raw − deduped", scope.doubleCounted, rawMV - dedupedMV);
 near("the double count is nil — the family confirmed both pairs separate", scope.doubleCounted, 0);
 ok("…and so is the whole book's: every position is in its consolidated total",
@@ -215,7 +217,7 @@ ok("…and so is the whole book's: every position is in its consolidated total",
 console.log("\n── funds ──");
 const funds = fundRollup(scope.dedupedRows, accIdx, scope.rows);
 eq("one fund row per distinct holding", funds.length, new Set(scope.dedupedRows.map((p) => p.securityKey)).size);
-eq("distinct funds", funds.length, 68);
+eq("distinct funds", funds.length, 69);
 eq("…of which the review holds wholly at cost", funds.filter((f) => f.atCost).length, 61);
 near("fund rollup value ties to the deduped total", sum(funds.map((f) => f.mv)), dedupedMV);
 const costedFunds = funds.filter((f) => f.cost != null);
@@ -231,18 +233,22 @@ const costedFunds = funds.filter((f) => f.cost != null);
 const valuedReview = reviewRows.filter((p) => !isValuedAtCost(p));
 const atCostReview = reviewRows.filter(isValuedAtCost);
 // ₹5 Cr drawn, less the ₹14,16,280 cost of the 14,162.8 units it redeemed.
-near("Neo Infra's cost — its own statement, under FIFO", sumOrNull(statementPrivate.map((p) => p.costBasis)) ?? NaN, 50000000 - 1416280);
+const neo = statementPrivate.filter((p) => /^neo-infra/.test(p.securityKey));
+const franklin = statementPrivate.filter((p) => /^franklin-india-credit-aif/.test(p.securityKey));
+near("Neo Infra's cost — its own statement, under FIFO", sumOrNull(neo.map((p) => p.costBasis)) ?? NaN, 50000000 - 1416280);
+// ₹20 Cr paid in; the statement's ₹19,99,90,000.50 is what bought units after stamp duty.
+near("Franklin's cost — the gross it paid", sumOrNull(franklin.map((p) => p.costBasis)) ?? NaN, 200000000);
 near("cost = what every row reports", sumOrNull(funds.map((f) => f.cost)), sumOrNull(scope.dedupedRows.map((p) => p.costBasis)) ?? NaN);
 // 360 ONE's two lines carry FIFO's cost since Stage 10fz — ₹99,41,987.06 held
 // each, where the review's purchases less sale proceeds read ₹99,21,180.02 —
 // so the valued review lines' cost is ₹41,614.08 above the review's own sum.
-near("cost", sumOrNull(funds.map((f) => f.cost)), 48583720 + (349608469.84 + 2 * 20807.04) + 1406775806.88);
+near("cost", sumOrNull(funds.map((f) => f.cost)), 48583720 + 200000000 + (349608469.84 + 2 * 20807.04) + 1406775806.88);
 near("…the at-cost lines' cost is their value", sum(atCostReview.map((p) => p.costBasis ?? NaN)), sum(atCostReview.map((p) => p.marketValue)));
 ok("an at-cost line carries no P&L, no return and no per-unit mark",
   atCostReview.every((p) => p.unrealizedPnL == null && p.returnPct == null && p.currentPrice == null));
 near("unrealised P&L = value less cost on the valued rows alone", sumOrNull(funds.map((f) => f.pnl)),
   sum([...statementPrivate, ...valuedReview].map((p) => p.marketValue - (p.costBasis as number))));
-near("unrealised P&L", sumOrNull(funds.map((f) => f.pnl)), (55498303.25 - 48583720) + (119061690.39 - 2 * 20807.04));
+near("unrealised P&L", sumOrNull(funds.map((f) => f.pnl)), (55498303.25 - 48583720) + (199990000.57 - 200000000) + (119061690.39 - 2 * 20807.04));
 ok("an at-cost fund shows no P&L and no return", funds.filter((f) => f.atCost).every((f) => f.pnl == null && f.returnPct == null));
 // DERIVED, NOT TYPED. The coverage count is a fact about which holdings are
 // private, and that is exactly what changed — a literal here went stale once
@@ -324,17 +330,18 @@ ok("both family trusts are owners in their own right",
 
 console.log("\n── capital accounts ──");
 const ct = commitmentTotals(BOOK_COMMITMENTS);
-eq("capital accounts", ct.count, 15);
-near("committed", ct.committed, 977285000);
-near("drawn", ct.drawn, 817535000);
+// Sixteen since Stage 10hx: Franklin's ₹20 Cr, committed and drawn in full.
+eq("capital accounts", ct.count, 16);
+near("committed", ct.committed, 977285000 + 200000000);
+near("drawn", ct.drawn, 817535000 + 200000000);
 near("undrawn — AS PRINTED", ct.undrawn, 159750000);
 // BARING'S DISTRIBUTION IS NOW COUNTED, and the ₹37,252 is exactly its printed
 // `Less: Distribution (E)` — read through the payout record, which the reader
 // only publishes where it reproduces that E. The summary reader never read it,
 // and this page said the fund "prints no distribution line", which was false.
 near("distributed", ct.distributed, 4948221 + 37252);
-eq("rows printing an undrawn figure", ct.undrawnOf, 13);
-eq("rows with a distribution total this book reads", ct.distributedOf, 4);
+eq("rows printing an undrawn figure", ct.undrawnOf, 14);
+eq("rows with a distribution total this book reads", ct.distributedOf, 5);
 {
   const baring = BOOK_COMMITMENTS.find((c) => /baring/i.test(c.accountId))!;
   ok("Baring's distribution comes from its payout record, as its printed E",
@@ -348,10 +355,10 @@ eq("rows with a distribution total this book reads", ct.distributedOf, 4);
 console.log("\n── the capital register, scoped to private-market funds ──");
 {
   const cap = capitalScope(BOOK_COMMITMENTS, BOOK_ACCOUNTS);
-  eq("private-market capital accounts on the page", cap.onPage.length, 11);
+  eq("private-market capital accounts on the page", cap.onPage.length, 12);
   eq("capital accounts of public-market funds, named and not counted", cap.elsewhere.length, 4);
   ok("the two sets partition the register", cap.onPage.length + cap.elsewhere.length === BOOK_COMMITMENTS.length);
-  near("committed on the page", commitmentTotals(cap.onPage).committed, 427285000);
+  near("committed on the page", commitmentTotals(cap.onPage).committed, 427285000 + 200000000);
   near("committed elsewhere", sum(cap.elsewhere.map((x) => x.commitment.committed)), 550000000);
   ok("every account left out is placed by the family, on the listed side",
     cap.elsewhere.every((x) => x.side === "listed" && x.basis === "family"),
@@ -377,8 +384,8 @@ ok("undrawn covers FEWER rows than the register holds", ct.undrawnOf < ct.count,
 ok("undrawn is NOT derived from committed − drawn",
   // It happens to coincide today only because those two folios have committed === drawn.
   // Asserting the coverage COUNT is what catches a derivation, since deriving it
-  // would put a figure on all 15.
-  ct.undrawnOf === 13);
+  // would put a figure on all 16.
+  ct.undrawnOf === 14);
 ok("arithmeticHolds is three-valued, not a boolean",
   BOOK_COMMITMENTS.some((c) => c.arithmeticHolds === null) && BOOK_COMMITMENTS.some((c) => c.arithmeticHolds === true),
   "`!c.arithmeticHolds` would accuse a statement that agrees with itself");

@@ -140,9 +140,18 @@ export function buildAccountReturnRecords({ accounts, accountCashFlows, byAccoun
       const newestUnit = unitDocs.map(unitClosingDate).filter(date).sort().at(-1);
       const latestValuationDate = [newestUnit, newest ? closeDate(newest) : null, record?.asOf].filter(date).sort().at(-1) ?? account.asOf;
       const currentDormant = dormant?.asOf === latestValuationDate;
+      // A NEW INVESTMENT VALUED BEFORE ITS MONEY ARRIVED (Stage 10hx): Franklin's
+      // statement allots the 22 Oct contribution at the NAV struck as on 21 Oct,
+      // and that NAV is its only valuation. Nothing is missing; no period has a
+      // valuation after the capital yet. Only a statement whose EVERY dated row
+      // postdates its own valuation says so, so no other account's words move.
+      const early = unitDocs.map(d => ({ at: unitClosingDate(d), rows: (d.cashFlows ?? []).map(f => f.date).filter(date).sort() }))
+        .find(v => date(v.at) && v.rows.length && v.rows[0] > v.at) ?? null;
       records[account.accountId] = { latestValuationDate, record,
         gap: record ? (record.asOf < latestValuationDate ? `Newer ${latestValuationDate} valuation lacks a complete reconciled cash-flow ledger` : null)
-          : currentDormant ? null : (account.noPositionsReason ? 'No complete valued portfolio for a return' : 'Opening valuation and complete dated cash flows are missing'),
+          : currentDormant ? null : account.noPositionsReason ? 'No complete valued portfolio for a return'
+          : early && early.at === latestValuationDate ? `Its capital arrived on ${early.rows[0]}, after its only valuation (the NAV as on ${early.at}); a later valuation measures it`
+          : 'Opening valuation and complete dated cash flows are missing',
         ...(currentDormant && !record ? { notApplicable: `Nil throughout the verified period through ${dormant.asOf}; no invested capital to measure` } : {}) };
       continue;
     }

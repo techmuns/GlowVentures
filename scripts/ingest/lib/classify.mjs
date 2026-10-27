@@ -911,6 +911,9 @@ const ISSUER_PROVIDER_RULES = [
    * under a manager who never wrote it.
    */
   [/Neo\s+Infra\s+Income\s+Opportunities\s+Fund/i, "Neo Infra Income Opportunities Fund"],
+  // The fund's own name, before the generic HDFC rule: its statement prints the
+  // investor's BANK (HDFC Bank), which filed it as an "HDFC" capital call (Stage 10hx).
+  [/Franklin\s+India\s+Credit\s+AIF/i, "Franklin India Credit AIF"],
   [/Baring\s+Private\s+Equity\s+India\s+Fund/i, "Baring Private Equity India Fund"],
   [/CARNELIAN\s+BHARAT\s+AMRITKAAL\s+FUND/i, "Carnelian Bharat Amritkaal Fund"],
   [/Motilal\s+Oswal\s+Wealth\s+Delphi\s+Equity\s+Fund|Delphi\s+Emerging\s+Equity\s+Fund/i, "Motilal Oswal Delphi Equity Fund"],
