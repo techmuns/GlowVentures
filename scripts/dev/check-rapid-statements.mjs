@@ -47,6 +47,7 @@ await restoreStatementPasswords();
 assert.ok(passwordsFromEnv().length && process.env.GLOW_DASHBOARD_PASSWORD, 'Use the existing encrypted vault in a trusted test environment');
 const github = inboxService({ remote, stateFile: control, dispatched: () => { throw Error('A routine new statement must not start the slow workflow'); } });
 const env = { GLOW_GITHUB_TOKEN: 'local-only', GLOW_GITHUB_REPO: 'local/statement-test',
+  GLOW_RAPID_STATEMENTS_ENABLED: 'true',
   GLOW_RAPID_STATEMENTS_TOKEN: 'isolated-test-token-never-used-in-production' };
 const store = runtimeStore({ token: env.GLOW_GITHUB_TOKEN, repo: env.GLOW_GITHUB_REPO, fetchImpl: github });
 const processorConfig = { store, inbox: inboxFor(env, github), initial, references: refs, instantiate, seed: true,

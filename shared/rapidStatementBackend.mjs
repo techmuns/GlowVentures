@@ -1,5 +1,6 @@
 // Server-side only. The browser never receives the processor credential or URL.
-export const rapidStatementsEnabled = env => !!((env?.GLOW_RAPID_STATEMENTS?.fetch || env?.GLOW_RAPID_STATEMENTS_URL) && env?.GLOW_RAPID_STATEMENTS_TOKEN);
+export const rapidStatementsEnabled = env => env?.GLOW_RAPID_STATEMENTS_ENABLED === 'true'
+  && !!((env?.GLOW_RAPID_STATEMENTS?.fetch || env?.GLOW_RAPID_STATEMENTS_URL) && env?.GLOW_RAPID_STATEMENTS_TOKEN);
 export async function rapidStatementRequest(env, pathname, init = {}) {
   if (!rapidStatementsEnabled(env)) return null;
   const headers = new Headers(init.headers); headers.set('Authorization', `Bearer ${env.GLOW_RAPID_STATEMENTS_TOKEN}`);

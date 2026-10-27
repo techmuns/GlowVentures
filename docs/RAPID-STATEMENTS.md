@@ -42,7 +42,8 @@ application refresh; it never runs newer calculation rules over the older book.
 
 Merging this code does **not** provision or activate the processor. The current
 application continues using its established intake until the private service
-binding and credential exist. Initial production deployment, secret setup,
+binding, credential and explicit `GLOW_RAPID_STATEMENTS_ENABLED=true` flag exist.
+Initial production deployment, secret setup,
 publication initialization, binding and automatic service updates require the
 user's explicit approval under the repository's production-action rule.
 
@@ -55,7 +56,8 @@ After approval, use the already configured Cloudflare account and repository:
    and a fresh private `GLOW_RAPID_STATEMENTS_TOKEN` as Worker secrets. Never put
    their values in commands, repository files, artifacts or logs.
 3. Bind the production Pages project's `GLOW_RAPID_STATEMENTS` service to
-   `glow-statement-processor`. Set the same private token on Pages. Keep
+   `glow-statement-processor`. Set the same private token and the explicit
+   `GLOW_RAPID_STATEMENTS_ENABLED=true` flag on Pages. Keep
    `workers_dev` disabled. A URL override is for localhost/staging tests only.
 4. Initialize and check the service read-only through the authenticated dashboard
    endpoint. Confirm reader compatibility, source counts, all canonical totals
@@ -71,6 +73,14 @@ sleeping after 15 minutes without traffic. Visible dashboards keep it warm throu
 their normal freshness checks. It requires Workers Paid and metered container,
 Worker and Durable Object usage; no external LLM or enrichment credits are used.
 See [Cloudflare's current pricing](https://developers.cloudflare.com/containers/platform/pricing/).
+
+After runtime statements have been accepted, disabling the service alone would
+leave the compiled fallback behind those statements. A production rollback must
+keep the last verified runtime version available, or first materialize its full
+archive into the verified main build through the normal PR/checks. During an
+outage the UI identifies its compiled saved-data fallback; it never presents that
+fallback as a successful latest-data refresh. Production rollback actions retain
+their separate explicit-authorization requirement.
 
 ## Verification
 

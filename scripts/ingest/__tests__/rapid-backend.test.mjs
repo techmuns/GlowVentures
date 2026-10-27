@@ -14,7 +14,7 @@ test('a later static copy cannot erase a previously verified financial row', () 
 test('a private service binding preserves the request and never exposes its credential in the URL', async () => {
   let received;
   const token = 'test-only-private-credential-at-least-32-characters';
-  const response = await rapidStatementRequest({ GLOW_RAPID_STATEMENTS_TOKEN: token,
+  const response = await rapidStatementRequest({ GLOW_RAPID_STATEMENTS_ENABLED: 'true', GLOW_RAPID_STATEMENTS_TOKEN: token,
     GLOW_RAPID_STATEMENTS: { fetch: async request => { received = request; return Response.json({ ok: true }); } } },
   '/process', { method: 'POST', headers: new Headers({ 'Content-Type': 'application/json' }), body: '{"batch":"fixture"}' });
   assert.equal(response.status, 200);
@@ -23,6 +23,7 @@ test('a private service binding preserves the request and never exposes its cred
   assert.equal(received.headers.get('Content-Type'), 'application/json');
   assert.equal(await received.text(), '{"batch":"fixture"}');
   assert.equal(rapidStatementsEnabled(undefined), false);
+  assert.equal(rapidStatementsEnabled({ GLOW_RAPID_STATEMENTS_URL: 'https://unused.example', GLOW_RAPID_STATEMENTS_TOKEN: token }), false, 'A configured endpoint alone cannot activate production');
   assert.equal(await rapidStatementRequest({}, '/bootstrap'), null);
 });
 
