@@ -1,3 +1,4 @@
+import { useNavigationState } from "@/lib/useNavigationState";
 import { ExportableTable } from "@/components/ExportableTable";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
@@ -89,9 +90,9 @@ const fundLabel = (f: string) => splitFundClass(f)?.fund ?? f;
 export function InsideMovers({ scopeToggle }: { scopeToggle?: React.ReactNode }) {
   const { portfolio, consolidated, quoteFeed, quotesStatus, pendingFor, requestSymbols, refreshQuotes,
     corporateActions, corporateActionReturns, fmtFromBase } = usePortfolio();
-  const [rank, setRank] = useState<"pct" | "impact">("pct");
+  const [rank, setRank] = useNavigationState<"pct" | "impact">("inside-rank", "pct", ["pct", "impact"]);
   const [view, setView] = useViewParam(INSIDE_VIEWS, {}, "inside");
-  const exp = useExpanded();
+  const exp = useExpanded("inside-movers");
 
   /**
    * THREE STATES, NOT TWO (`NavMovers`' own rule). `undefined` is the store
@@ -377,7 +378,7 @@ export function InsideMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
           </div>
 
           {view === "vehicles" ? (
-            <div className="mt-4 max-h-[520px] overflow-y-auto lg:max-h-none lg:min-h-0 lg:flex-1" data-vehicle-scroll="">
+            <div className="mt-4 max-h-[520px] overflow-y-auto lg:max-h-none lg:min-h-0 lg:flex-1" data-vehicle-scroll="" data-navigation-scroll="insidemovers-1">
               <VehicleTable vehicles={inside.vehicles} exp={exp} fmt={fmtFromBase} />
             </div>
           ) : (
@@ -421,7 +422,7 @@ function InsideList({ title, tone, rows, total, count, unknown, fmt, rank }: {
           No AIF or PMS holding moved this way today
         </p>
       ) : (
-        <div className="mt-3 max-h-[420px] overflow-y-auto lg:max-h-none lg:min-h-[160px] lg:flex-1" data-mover-scroll={tone}>
+        <div className="mt-3 max-h-[420px] overflow-y-auto lg:max-h-none lg:min-h-[160px] lg:flex-1" data-mover-scroll={tone} data-navigation-key={tone} data-navigation-scroll="insidemovers-2">
         <ExportableTable className="w-full text-[12px]">
           <tbody className="divide-y divide-ink-700">
             {rows.map((r) => {
@@ -507,7 +508,7 @@ function VehicleTable({ vehicles, exp, fmt }: {
           <ExpandAllButton allOpen={allOpen} onClick={() => exp.setMany(openable, !allOpen)} />
         </div>
       )}
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto" data-navigation-scroll="insidemovers-3">
         <ExportableTable className="w-full text-[12px]" data-inside-vehicles="" data-table-static="a ranked tree of mandates and funds, banded by how each move is measured">
           <thead>
             <tr className="label-xs text-left">

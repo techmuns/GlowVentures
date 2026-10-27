@@ -460,7 +460,7 @@ export function Polycab() {
             the cost that is not reported, the pledge that is not reported, the
             market price with its day move, and the block at that price. */}
         {view === "holding" && (
-          <div className="mt-3 min-h-0 flex-1 overflow-auto">
+          <div className="mt-3 min-h-0 flex-1 overflow-auto" data-navigation-scroll="polycab-1">
             <ExportableTable className="min-w-full whitespace-nowrap text-[13px]" data-polycab-table="holding">
               <thead className="sticky top-0 z-10 bg-ink-800">
                 <Tr view={holdingView} className="border-b border-ink-700">
@@ -601,7 +601,7 @@ export function Polycab() {
         {/* ── WHAT THE COMPANY DECLARED — every action, with the entitlement ─── */}
         {view === "actions" && (
           <>
-            <div className="mt-3 min-h-0 flex-1 overflow-auto">
+            <div className="mt-3 min-h-0 flex-1 overflow-auto" data-navigation-scroll="polycab-2">
               <ExportableTable className="min-w-full whitespace-nowrap text-[13px]" data-polycab-table="actions" data-polycab-dividends>
                 <thead className="sticky top-0 z-10 bg-ink-800">
                   <Tr view={actionView} className="border-b border-ink-700">
@@ -728,7 +728,7 @@ export function Polycab() {
             figure for a statement about the family's own demat. */}
         {view === "promoter" && (
           <>
-            <div className="mt-3 min-h-0 flex-1 overflow-auto">
+            <div className="mt-3 min-h-0 flex-1 overflow-auto" data-navigation-scroll="polycab-3">
               <ExportableTable className="min-w-full whitespace-nowrap text-[13px]" data-polycab-table="promoter" data-polycab-quarters>
                 <thead className="sticky top-0 z-10 bg-ink-800">
                   <Tr view={quarterView} className="border-b border-ink-700">

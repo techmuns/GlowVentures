@@ -21,6 +21,7 @@ const DIR = fs.mkdtempSync(path.join(ROOT, "node_modules", ".glow-test-"));
 
 const SUITES = [
   ["navigation snapshots", "src/lib/__tests__/navigationMemory.test.ts"],
+  ["archive sheet decoding", "src/lib/__tests__/auditSheet.test.ts"],
   ["ETF unit continuity", "src/lib/__tests__/fundUnitActions.test.ts"],
   ["statement source tracing", "src/lib/__tests__/sourceTrace.test.ts"],
   ["assumed holding returns", "src/lib/__tests__/assumedHoldingReturns.test.ts"],

@@ -1,3 +1,4 @@
+import { useNavigationState } from "@/lib/useNavigationState";
 import { ExportableTable } from "@/components/ExportableTable";
 import { useEffect, useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
@@ -75,7 +76,7 @@ export function NavMovers({ scopeToggle }: { scopeToggle?: React.ReactNode }) {
    * matching what was asked for here, which is a move rather than an impact:
    * *"if there is a drastic moment in the line item … can we capture that"*.
    */
-  const [rank, setRank] = useState<Rank>("pct");
+  const [rank, setRank] = useNavigationState<Rank>("nav-rank", "pct", ["pct", "impact"]);
   const view = useTableView("nav-movers", NAV_MOVER_COLS);
   /** `undefined` = still loading · `null` = the store did not answer. */
   const [schemes, setSchemes] = useState<Map<string, SchemeMatch> | null | undefined>(undefined);
@@ -294,7 +295,7 @@ export function NavMovers({ scopeToggle }: { scopeToggle?: React.ReactNode }) {
         </p>
       </div>
 
-      <div className="mt-4 overflow-auto lg:min-h-[160px] lg:flex-1" data-mover-scroll="nav">
+      <div className="mt-4 overflow-auto lg:min-h-[160px] lg:flex-1" data-mover-scroll="nav" data-navigation-scroll="navmovers-1">
         <ExportableTable className="w-full text-[12px]">
           <thead>
             <Tr view={view} className="border-b border-ink-700">

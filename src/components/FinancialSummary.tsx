@@ -121,7 +121,7 @@ export function FinancialSummary({ markdown, ticker }: { markdown: string; ticke
       subtitle={`Computed from the reported annual P&L — ${pl.periods.filter((p) => !p.ttm).length} year-ends, ${pl.periods[0]?.label} to ${pl.periods.filter((p) => !p.ttm).slice(-1)[0]?.label}.`}
       right={<Pill tone="info">derived</Pill>}
       pad={false}>
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto" data-navigation-scroll="financialsummary-1">
         <ExportableTable className="min-w-full whitespace-nowrap text-[12.5px]">
           <thead className="border-b border-ink-700">
             <Tr view={view}>

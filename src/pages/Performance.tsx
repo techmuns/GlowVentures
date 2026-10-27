@@ -495,7 +495,7 @@ export function Performance() {
             const rows = BRIDGE_ROWS.filter((row) => !row.optional
               || bridges.some((b) => { const v = b[row.key]; return typeof v === "number" && v !== 0; }));
             return (
-              <div key={a.accountId}>
+              <div key={a.accountId} data-navigation-key={a.accountId}>
                 <div className="mb-1.5 flex flex-wrap items-baseline gap-2">
                   <span className="text-[12.5px] font-semibold text-slate-200">{acctLabel(a)}</span>
                   <span className="text-[10.5px] text-slate-500">inception {a.inceptionDate ?? DASH}</span>
@@ -503,7 +503,7 @@ export function Performance() {
                 {!bridges.length ? (
                   <p className="text-[11.5px] text-slate-500">{DASH} no flow block in this account's statements</p>
                 ) : (
-                  <div className="overflow-x-auto">
+                  <div className="overflow-x-auto" data-navigation-scroll="performance-1">
                     {/* Exempt, declared: TRANSPOSED — its rows are the bridge's
                         fixed components and its columns are the statements that
                         publish them. */}
@@ -604,7 +604,7 @@ export function Performance() {
           every other; how the rate is struck is the title's hover. */}
       <Card className="mt-5" title="Money-weighted return to date, per account · not annualised"
         subtitle="From each account's own dated capital movements, closed against the value its own statement strikes on its own date — the return earned to date, not annualised.">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" data-navigation-scroll="performance-2">
           <ExportableTable className="w-full text-[12.5px]">
             <thead className="label-xs border-b border-ink-700">
               <Tr view={xirrView}>

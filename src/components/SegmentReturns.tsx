@@ -1,3 +1,4 @@
+import {  } from "@/lib/useNavigationState";
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import { useMarketHistories } from '@/lib/useMarketReturns';
 import { marketReturns, marketReturnSummary, marketHoldingKey } from '@/lib/marketReturns';
@@ -39,7 +40,7 @@ export default function SegmentReturns({ selection: recordedSelection, period, o
   const [axis, setAxis] = useViewParam(SEGMENT_VIEWS, {}, 'seg');
   // Export Excel and Edit Columns sit in the card header beside the axis tabs,
   // not in two rows of their own above the table (Stage 10gy).
-  const view = useTableView('cio-attribution', COLS, { manualEditor: true }), exp = useExpanded();
+  const view = useTableView('cio-attribution', COLS, { manualEditor: true }), exp = useExpanded("segment-returns");
   const [tools, setTools] = useState<HTMLSpanElement | null>(null);
   const money = (n: number, sign = false) => fmtFromBase(n, { compact: true, sign });
   // Statement returns keep their dates; labelled assumptions use historical
@@ -179,7 +180,7 @@ export default function SegmentReturns({ selection: recordedSelection, period, o
         <EditColumns view={view} />
         <span ref={setTools} className="inline-flex" data-table-tools />
       </div>}>
-      <div className="overflow-x-auto"><ExportableTable className="min-w-full whitespace-nowrap text-[12.5px]" data-seg-table controlsHost={tools}>
+      <div className="overflow-x-auto" data-navigation-scroll="segmentreturns-1"><ExportableTable className="min-w-full whitespace-nowrap text-[12.5px]" data-seg-table controlsHost={tools}>
         <thead className="border-b border-ink-700 bg-ink-800"><Tr view={view}>
           <SortHeader col="seg" view={view} align="left" pad="px-4 py-2">{HEAD[axis]}</SortHeader>
           <SortHeader col="holdings" view={view} pad="px-4 py-2">Holdings</SortHeader>

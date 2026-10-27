@@ -13,7 +13,7 @@ export function HoldingAssumptionInfo({ units }: { units: readonly ReturnUnit[] 
     <ReturnCalculationInfo label="Assumed holding" value={`${assumed.length} ${assumed.length === 1 ? 'holding' : 'holdings'}`}
       intro="Why this number is filled" triggerLabel="Why is this holding assumed?">
       <p data-assumption-explanation>{holdingAssumptionText(owners.length === 1 ? owners[0] : 'each owner')}</p>
-      <details className="mt-3"><summary className="cursor-pointer">Shares and dates</summary>
+      <details className="mt-3" data-navigation-details="holdingassumptioninfo-1"><summary className="cursor-pointer">Shares and dates</summary>
         <ul className="mt-2 space-y-2 text-xs">{assumed.map(u => <li key={u.key}>{u.label}<br />
           {u.assumption!.quantity.toLocaleString('en-IN')} recorded on {fmtDate(u.assumption!.statementDate)} · prices {fmtDate(u.from!)} → {fmtDate(u.to)} · {u.assumption!.source}</li>)}</ul>
       </details>

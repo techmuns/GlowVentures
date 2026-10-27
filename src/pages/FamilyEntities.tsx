@@ -1,6 +1,7 @@
+import { useNavigationState } from "@/lib/useNavigationState";
 import { useTableExportFilter } from "@/lib/tableExportSnapshot";
 import { ExportableTable } from "@/components/ExportableTable";
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useMemo } from "react";
 import {
   BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie,
 } from "recharts";
@@ -178,7 +179,7 @@ const overlapWording = (groups: { owners: string[]; rows: number }[], names: str
 export function FamilyEntities() {
   const { portfolio, statementPortfolio, consolidated, fmtFromBase, displayCurrency, convertFromBase, scope: memberScope } = usePortfolio();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [holdingsQFilter, setHoldingsQ] = useState("");
+  const [holdingsQFilter, setHoldingsQ] = useNavigationState<string>("entity-holdings-search", "");
   const holdingsQ = useTableExportFilter(holdingsQFilter, "");
   const entityView = useTableView("family-entities", ENTITY_COLS, { reviewKind: "entity" });
   const holdView = useTableView("family-holdings", FE_HOLDING_COLS, { reviewKind: "holding" });
@@ -1120,7 +1121,7 @@ export function FamilyEntities() {
                 never to do. The cap matches the pie's own height, so the two
                 cards read as the pair they were meant to be and the page itself
                 stays still. */}
-            <div className="max-h-[600px] overflow-auto" data-family-table>
+            <div className="max-h-[600px] overflow-auto" data-family-table data-navigation-scroll="familyentities-1">
               <ExportableTable className="min-w-full text-sm">
                 <thead className="border-b border-ink-700">
                   <Tr view={entityView}>
@@ -1537,7 +1538,7 @@ export function FamilyEntities() {
           <Card className="mt-5" title={`${scope} — holdings`} pad={false}
             subtitle={`Grouped by how each holding came to be held — what ${scope} chose directly, what a discretionary manager chose under a mandate, and the fund vehicles and cash beside them.`}
             right={<SearchInput value={holdingsQ} onChange={setHoldingsQ} placeholder="Search this entity…" className="w-56" suggestions={Array.from(new Set(selRows.map((x) => x.security))).sort()} />}>
-            <div className="max-h-[520px] overflow-auto">
+            <div className="max-h-[520px] overflow-auto" data-navigation-scroll="familyentities-2">
               <ExportableTable className="min-w-full text-sm">
                 <thead className="sticky top-0 bg-ink-800 border-b border-ink-700">
                   <Tr view={holdView}>
@@ -1708,7 +1709,7 @@ export function FamilyEntities() {
                     {/* The balances nothing values open under the account, each
                         with its units and its reason as the line's hover — the
                         same shape as a valued account's unvalued lines below. */}
-                    <details>
+                    <details data-navigation-details="familyentities-1">
                       <summary className="flex cursor-pointer items-baseline justify-between gap-3">
                         <span className="text-slate-300" title={a.partialValuation ?? undefined} data-unvalued-reason={a.partialValuation ? "" : undefined}>
                           {a.provider}
@@ -1745,7 +1746,7 @@ export function FamilyEntities() {
                     <li key={`lines-${g.account.accountId}`} data-unvalued-lines-account={g.account.accountId}
                       data-unvalued-lines={notValued} data-unvalued-lines-live={live} data-unvalued-lines-live-quote={liveQuote}
                       data-unvalued-lines-elsewhere={g.reportedElsewhere}>
-                      <details>
+                      <details data-navigation-details="familyentities-2">
                         <summary className="flex cursor-pointer items-baseline justify-between gap-3"
                           title={`The ${g.account.provider} statement for ${g.account.accountNo} records ${notValued} holding${notValued === 1 ? "" : "s"} with a quantity and no value, which nothing in this book values.${liveNav ? ` ${liveNav} more ${liveNav === 1 ? "is" : "are"} recorded the same way and valued here at AMFI's published NAV — a sibling statement from the same depository proves the units are on its basis — so ${liveNav === 1 ? "it is" : "they are"} in the figure above and not listed.` : ""}${liveQuote ? ` ${liveQuote} more ${liveQuote === 1 ? "is a listed share" : "are listed shares"} recorded the same way and valued here at the live quote, only while the quote feed prices ${liveQuote === 1 ? "it" : "them"} — so ${liveQuote === 1 ? "it is" : "they are"} in the figure above and not listed.` : ""}${g.reportedElsewhere ? ` ${g.reportedElsewhere} more ${g.reportedElsewhere === 1 ? "is" : "are"} the depository's copy of units a fund's own statement reports, and ${g.reportedElsewhere === 1 ? "is" : "are"} in the table above through that fund.` : ""}`}>
                           <span className="text-slate-300">
