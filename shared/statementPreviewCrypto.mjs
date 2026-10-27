@@ -1,13 +1,14 @@
 // Server/build only. The dashboard password is never embedded in this module.
 // Workerd caps PBKDF2 at 100,000 iterations; use the native supported primitive.
 const encoder = new TextEncoder();
+export const PREVIEW_KDF = Object.freeze({ name: 'PBKDF2', hash: 'SHA-512',
+  salt: 'glow-statement-previews::v1::6dc91cc7728ae4a5', iterations: 100000 });
 export const PREVIEW_COOKIE = 'glow_pdf';
 export const SESSION_DOMAIN = 'session::v2';
 export const MAX_PREVIEW_BYTES = 10 * 1024 * 1024;
 export async function previewKeyBytes(password) {
   const material = await crypto.subtle.importKey('raw', encoder.encode(password), 'PBKDF2', false, ['deriveBits']);
-  return new Uint8Array(await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-512',
-    salt: encoder.encode('glow-statement-previews::v1::6dc91cc7728ae4a5'), iterations: 100000 }, material, 256));
+  return new Uint8Array(await crypto.subtle.deriveBits({ ...PREVIEW_KDF, salt: encoder.encode(PREVIEW_KDF.salt) }, material, 256));
 }
 export const keyCookieValue = key => btoa(String.fromCharCode(...key)).replaceAll('+', '-').replaceAll('/', '_').replace(/=+$/, '');
 export function keyFromCookie(cookie) {

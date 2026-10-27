@@ -6,7 +6,7 @@ import { makeBatch, withBatch, queuedFiles, waitingStatementFiles } from '../../
 
 const id = n => `20261027T10000${n}Z-test`;
 const revision = n => String(n).padStart(20, '0');
-function harness({ refuseSave = false, decision = 'verified', copyInBatch = false } = {}) {
+function harness({ refuseSave = false, decision = 'verified', copyInBatch = false, processorName = 'rapid', dispatchFallback = true } = {}) {
   const book = Object.fromEntries(CANONICAL_BOOK_KEYS.map(k => [k, []]));
   const initial = { schemaVersion: 1, readerRevision: 'a'.repeat(64), revision: revision(0), book,
     documents: [], manifest: [], records: {}, originals: {}, previews: {}, lookthrough: {} };
@@ -14,10 +14,10 @@ function harness({ refuseSave = false, decision = 'verified', copyInBatch = fals
   const versions = new Map([[initial.revision, initial]]), projections = [];
   for (let n = 1; n <= 2; n++) {
     const batch = makeBatch(id(n), [{ name: `statement${n}.pdf`, size: 12, blob: 'b'.repeat(40) }]);
-    batch.files[0].processor = 'rapid'; log = withBatch(log, batch);
+    batch.files[0].processor = processorName; log = withBatch(log, batch);
     if (copyInBatch && n === 1) batch.files.push({ ...batch.files[0], name: 'copy.pdf' });
   }
-  const inbox = { read: async () => ({ log: structuredClone(log) }), commit: async ({ mutate }) => {
+  const inbox = { dispatch: async () => { throw Error('The job must hand work back in the same run'); }, read: async () => ({ log: structuredClone(log) }), commit: async ({ mutate }) => {
     log = mutate(log); return { log, commit: 'c'.repeat(40) };
   } };
   const store = { read: async () => stored ?? { head: null, tree: null, state: null }, load: async () => saved,
@@ -33,7 +33,7 @@ function harness({ refuseSave = false, decision = 'verified', copyInBatch = fals
     .map(name => [name, docs => { projections.push({ name, docs: docs.map(d => d.docKey) }); return docs; }]));
   model.deriveStockLedger = (docs, securityKey) => ({ securityKey, txns: docs });
   const processor = rapidProcessor({ store, inbox, initial, references: {}, passwords: [], dashboardPassword: '',
-    instantiate: () => model, baseAsset: async () => null,
+    instantiate: () => model, baseAsset: async () => null, processorName, dispatchFallback,
     prepare: async ({ baseline, files }) => {
       prepared.push(baseline.map(d => d.docKey));
       if (decision !== 'verified') return { decision, duplicates: [], issues: [{ code: 'READ_GAP' }] };
@@ -94,4 +94,15 @@ test('old source facts remain inspectable but newer rules cannot compute an old 
   assert.deepEqual(await h.processor.asset(old.revision, 'canonical/book.json'), h.initial.book);
   await assert.rejects(h.processor.asset(old.revision, 'ledger/transactions.json'), ReaderVersionChanged);
   assert.equal(h.projections.length, 0);
+});
+
+test('GitHub scans hand their durable claim to the complete reader in the same job', async () => {
+  const h = harness({ decision: 'slow_path', processorName: 'github', dispatchFallback: false });
+  await h.processor.initialize();
+  const receipt = await h.processor.submit(id(1));
+  assert.equal(receipt.files[0].status, 'queued');
+  const file = h.log().batches.find(b => b.id === id(1)).files[0];
+  assert.equal(file.processor, null); assert.equal(file.status, 'queued');
+  assert.equal(waitingStatementFiles(h.log()).length, 1);
+  assert.equal(h.publications(), 0, 'A scan never publishes a guessed fast result');
 });

@@ -59,7 +59,7 @@ function fakeGitHub() {
     const u = new URL(url);
     const method = init?.method ?? "GET";
     const p = decodeURIComponent(u.pathname.replace(`/repos/${REPO}`, ""));
-    if (!String((init?.headers as Record<string, string>)?.authorization ?? "").startsWith("Bearer ")) return reply(401, {});
+    if (!String(new Headers(init?.headers).get("authorization") ?? "").startsWith("Bearer ")) return reply(401, {});
     const raw = init?.body instanceof Blob ? await init.body.text() : (init?.body as string | undefined);
     const body = raw ? JSON.parse(raw) : null;
 

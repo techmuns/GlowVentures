@@ -17,7 +17,7 @@ export function statementAsset(path: string): string {
   return selected ? `${BASE}api/statement-data/${selected.revision}/${path}` : `${BASE}${path}`;
 }
 export function statementPreviewAsset(file: string): string {
-  return selected ? statementAsset(`statement-previews/${encodeURIComponent(file)}`)
+  return selected ? `${BASE}api/statement-previews/${encodeURIComponent(file)}?revision=${selected.revision}`
     : `${BASE}api/statement-previews/${encodeURIComponent(file)}`;
 }
 export function validRuntimeSnapshot(value: unknown): value is Snapshot {
@@ -35,7 +35,8 @@ export async function bootstrapRuntimeBook(): Promise<void> {
       cache: 'no-store', credentials: 'same-origin', signal: AbortSignal.timeout(8_000),
     });
     if (response.status === 204 || !response.headers.get('Content-Type')?.includes('application/json')) {
-      publicationDiscoveryPath = `${BASE}publication.json`; return;
+      publicationDiscoveryPath = response.headers.get('X-Glow-Statement-Storage') === 'github'
+        ? `${BASE}api/statement-data?status=1` : `${BASE}publication.json`; return;
     }
     if (!response.ok) throw Error('Latest statements are unavailable');
     const snapshot: unknown = await response.json();

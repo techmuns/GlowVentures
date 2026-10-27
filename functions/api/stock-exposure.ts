@@ -1,9 +1,9 @@
 import { loadStockExposure, type FundPortfolio, type HeldFund, type Index } from '../../src/lib/lookthrough';
 import { BOOK_POLYCAB } from '../../src/data/glowData';
 import manifest from '../../src/data/readModels.json';
-import { rapidStatementRequest, rapidStatementsEnabled, type RapidEnv } from '../../shared/rapidStatementBackend.mjs';
+import { githubStatementReader, githubStatementsEnabled, type GitHubStatementEnv } from '../../shared/githubStatementBackend.mjs';
 
-type Context = { request: Request; env: RapidEnv & { ASSETS: { fetch(request: Request): Promise<Response> } }; waitUntil(p: Promise<unknown>): void };
+type Context = { request: Request; env: GitHubStatementEnv & { ASSETS: { fetch(request: Request): Promise<Response> } }; waitUntil(p: Promise<unknown>): void };
 const json = (body: unknown, status = 200) => Response.json(body, { status, headers: { 'Cache-Control': 'no-store' } });
 const key = (v: unknown): v is string => typeof v === 'string' && /^[a-z0-9-]{1,200}$/.test(v);
 
@@ -26,7 +26,7 @@ export async function onRequestPost(context: Context) {
     body = JSON.parse(text + decoder.decode());
   } catch { return json({ status: 'invalid' }, 400); }
   if (!body || typeof body !== 'object') return json({ status: 'invalid' }, 400);
-  if (body.revision !== manifest.revision && !rapidStatementsEnabled(context.env)) return json({ status: 'revision_changed' }, 409);
+  if (body.revision !== manifest.revision && !githubStatementsEnabled(context.env)) return json({ status: 'revision_changed' }, 409);
   if (!Array.isArray(body.funds) || body.funds.length > 200 || !body.funds.every((f: HeldFund) => f && key(f.securityKey)
     && typeof f.name === 'string' && f.name.length <= 500 && typeof f.assetClass === 'string' && f.assetClass.length <= 100
     && Number.isFinite(f.marketValue) && f.marketValue >= 0)
@@ -36,11 +36,19 @@ export async function onRequestPost(context: Context) {
   if (body.revision !== manifest.revision) {
     if (typeof body.revision !== 'string' || !/^[a-f0-9]{20}$/.test(body.revision)) return json({ status: 'invalid' }, 400);
     try {
-      const response = await rapidStatementRequest(context.env, `/exposure/${body.revision}`, { method: 'POST',
-        headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-      if (response) return new Response(response.body, { status: response.status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
+      const reader = githubStatementReader(context.env);
+      const [sourceResponse, fenceResponse] = await Promise.all([
+        reader.request(`/views/${body.revision}/lookthrough.json`), reader.request(`/views/${body.revision}/exposure-fence.json`),
+      ]);
+      if (!sourceResponse?.ok || !fenceResponse?.ok) return json({ status: 'unreachable' }, 503);
+      const source = await sourceResponse.json() as { index: Index; portfolios: Record<string, FundPortfolio> };
+      const fence = await fenceResponse.json() as { keys: string[]; isins: string[] };
+      const result = await loadStockExposure(body.funds, new Map(body.identities), {
+        keys: new Set(fence.keys),
+        isins: new Set(fence.isins),
+      }, new Set(body.companyKeys), source);
+      return result.status === 'ok' ? json({ ...result, byKey: [...result.byKey] }) : json(result, 503);
     } catch { return json({ status: 'unreachable' }, 503); }
-    return json({ status: 'revision_changed' }, 409);
   }
   const edgeCache = typeof caches === 'undefined' ? undefined : (caches as CacheStorage & { default: Cache }).default;
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(body)));

@@ -18,7 +18,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Salted SHA-256 of the dashboard password. Managed by `npm run set-password`.
-import { PREVIEW_COOKIE, SESSION_DOMAIN, previewKeyBytes, keyCookieValue } from '../shared/statementPreviewCrypto.mjs';
+import { PREVIEW_KDF, PREVIEW_COOKIE, SESSION_DOMAIN, previewKeyBytes, keyCookieValue } from '../shared/statementPreviewCrypto.mjs';
 const PASSWORD_HASH = "6da1b78fa68be61bd96cd363385ad72f91460c60c5b95447bfe54309f07dc774";
 
 // Fixed domain-separator folded into the hash (not a secret). Must stay in sync
@@ -143,10 +143,27 @@ function loginPage({ error, next }) {
     </div>
     <label for="password">Enter password to continue</label>
     <input id="password" name="password" type="password" autocomplete="current-password" autofocus required />
+    <input name="preview_key" type="hidden" />
     <button type="submit">Unlock dashboard</button>
     ${error ? '<p class="err">Incorrect password — please try again.</p>' : ""}
     <p class="foot">This is a private dashboard. Access is restricted to authorized members of the Glow Ventures Family Office.</p>
   </form>
+  <script>
+  // Keep the existing strong KDF off the free host's per-request CPU budget.
+  // This value provisions previews only; password verification stays server-side.
+  const form = document.querySelector('form');
+  form.addEventListener('submit', async event => {
+    event.preventDefault();
+    const button = form.querySelector('button'); button.disabled = true;
+    try {
+      const encoder = new TextEncoder(), params = ${JSON.stringify(PREVIEW_KDF)};
+      const material = await crypto.subtle.importKey('raw', encoder.encode(form.elements.namedItem('password').value), 'PBKDF2', false, ['deriveBits']);
+      const key = new Uint8Array(await crypto.subtle.deriveBits({ ...params, salt: encoder.encode(params.salt) }, material, 256));
+      form.elements.namedItem('preview_key').value = btoa(String.fromCharCode(...key)).replaceAll('+', '-').replaceAll('/', '_').replace(/=+$/, '');
+    } catch { /* Compatibility fallback uses the existing server-side derivation. */ }
+    form.submit();
+  });
+  </script>
 </body></html>`;
 }
 
@@ -169,13 +186,16 @@ export async function onRequest(context) {
 
   // Handle a login submission.
   if (request.method === "POST" && url.pathname === "/__auth/login") {
-    let pw = "";
-    try { pw = String((await request.formData()).get("password") ?? ""); } catch { pw = ""; }
+    let pw = "", suppliedPreviewKey = "";
+    try { const form = await request.formData(); pw = String(form.get("password") ?? ""); suppliedPreviewKey = String(form.get("preview_key") ?? ""); } catch { pw = ""; }
     const dest = safeNext(url.searchParams.get("next"));
     if (configured && timingSafeEqual(await hashPassword(pw), PASSWORD_HASH)) {
       const headers = new Headers({ Location: dest, 'Cache-Control': 'no-store' });
       headers.append('Set-Cookie', cookieHeader(await sessionToken(), MAX_AGE));
-      headers.append('Set-Cookie', previewCookie(keyCookieValue(await previewKeyBytes(pw)), MAX_AGE));
+      // A supplied key never authenticates: the password check above is mandatory.
+      // A wrong preview key only makes AEAD preview authentication fail.
+      const previewKey = /^[A-Za-z0-9_-]{43}$/.test(suppliedPreviewKey) ? suppliedPreviewKey : keyCookieValue(await previewKeyBytes(pw));
+      headers.append('Set-Cookie', previewCookie(previewKey, MAX_AGE));
       return new Response(null, {
         status: 302,
         headers,

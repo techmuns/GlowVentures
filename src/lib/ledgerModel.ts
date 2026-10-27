@@ -994,14 +994,31 @@ function openLotsOf(docs: ArchiveDoc[]): { doc: ArchiveDoc; lot: ArchiveOpenLot 
   return out;
 }
 
+function stockLedgerInputs(docs: ArchiveDoc[]) {
+  return { transactions: datedRows(docs, AUTHORITATIVE.transactions, "transactions"),
+    gains: datedRows(docs, AUTHORITATIVE.capitalGains, "capitalGains"),
+    aliases: settleSales(docs).aliases, openLots: openLotsOf(docs) };
+}
+
 export function deriveStockLedger(docs: ArchiveDoc[], securityKey: string): StockLedger {
+  return stockLedgerFrom(stockLedgerInputs(docs), securityKey);
+}
+
+/** One complete immutable publication: prepare shared rows/settlement once.
+ * Inputs are local to this call; later or mutable archives never reuse them. */
+export function deriveStockLedgers(docs: ArchiveDoc[], keys: string[]): Record<string, StockLedger> {
+  const inputs = stockLedgerInputs(docs);
+  return Object.fromEntries(keys.map(key => [key, stockLedgerFrom(inputs, key)]));
+}
+
+function stockLedgerFrom(inputs: ReturnType<typeof stockLedgerInputs>, securityKey: string): StockLedger {
   const txns: StockTxn[] = [];
   let name = securityKey;
   let periodFrom: string | null = null, periodTo: string | null = null;
 
-  for (const { doc: d, row: t } of datedRows(docs, AUTHORITATIVE.transactions, "transactions")) {
-    const account = accountLabel(d);
+  for (const { doc: d, row: t } of inputs.transactions) {
     if (t.securityKey !== securityKey || !t.date) continue;
+    const account = accountLabel(d);
     name = securityLabel(t.securityKey, t.security);
     if (d.periodFrom && (!periodFrom || d.periodFrom < periodFrom)) periodFrom = d.periodFrom;
     if (d.periodTo && (!periodTo || d.periodTo > periodTo)) periodTo = d.periodTo;
@@ -1020,15 +1037,15 @@ export function deriveStockLedger(docs: ArchiveDoc[], securityKey: string): Stoc
   const lotDates: string[] = [];
   // A lot belongs to this holding where the settlement says so — its own key,
   // or the key of the sale its account, date and amount settle (A-08, DL-1).
-  const { aliases } = settleSales(docs);
-  for (const { doc: d, row: l } of datedRows(docs, AUTHORITATIVE.capitalGains, "capitalGains")) {
+  const { aliases } = inputs;
+  for (const { doc: d, row: l } of inputs.gains) {
     if (settledSecurityOf(aliases, d.accountNo, l.securityKey) !== securityKey) continue;
     if (name === securityKey) name = securityLabel(l.securityKey, l.security);
     realized = (realized ?? 0) + (l.shortTerm ?? 0) + (l.longTerm ?? 0);
     if (l.purchaseDate) lotDates.push(l.purchaseDate);
   }
   const openLots: StockOpenLot[] = [];
-  for (const { doc: d, lot } of openLotsOf(docs)) {
+  for (const { doc: d, lot } of inputs.openLots) {
     if (lot.securityKey !== securityKey) continue;
     if (name === securityKey) name = securityLabel(securityKey, lot.security);
     openLots.push({

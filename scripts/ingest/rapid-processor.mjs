@@ -10,7 +10,7 @@ import { migrateRapidPublication } from './migrate-rapid-publication.mjs';
 import { immutable } from './lib/immutable.mjs';
 export class ReaderVersionChanged extends Error {}
 
-export function rapidProcessor({ store, inbox, initial, references, instantiate, passwords, dashboardPassword, baseAsset, prepare = prepareRapidStatement, seed = false }) {
+export function rapidProcessor({ store, inbox, initial, references, instantiate, passwords, dashboardPassword, baseAsset, prepare = prepareRapidStatement, seed = false, processorName = 'rapid', recover = true, dispatchFallback = true }) {
   let current = initial, state = null, queue = Promise.resolve(), ready = false;
   const versions = new Map(), models = new Map(), jobs = new Map(), evidenceReaders = new WeakMap();
   const evidenceFor = snap => {
@@ -43,9 +43,9 @@ export function rapidProcessor({ store, inbox, initial, references, instantiate,
       state = await store.publish(state, initial, { id: `baseline-${initial.baseCommit}`, files: [], completedAt: new Date().toISOString() });
     }
     remember(current); modelFor(current); ready = true;
-    if (seed) {
+    if (seed && recover) {
       const { log } = await inbox.read();
-      for (const batch of log.batches) if (batch.files.some(f => f.processor === 'rapid' && ['queued', 'processing'].includes(f.status))) {
+      for (const batch of log.batches) if (batch.files.some(f => f.processor === processorName && ['queued', 'processing'].includes(f.status))) {
         void submit(batch.id).catch(() => {}); // durable inbox recovery after a compute restart
       }
     }
@@ -71,12 +71,12 @@ export function rapidProcessor({ store, inbox, initial, references, instantiate,
     }
     const { log } = await inbox.read();
     const batch = log.batches.find(b => b.id === id);
-    const pending = batch?.files.filter(f => f.processor === 'rapid' && ['queued', 'processing'].includes(f.status)) ?? [];
+    const pending = batch?.files.filter(f => f.processor === processorName && ['queued', 'processing'].includes(f.status)) ?? [];
     if (!pending.length) return null;
     const fullReader = async () => {
       await inbox.commit({ message: `Statements ${id}: full reader`, mutate: log => applyUpdates(log,
         pending.map(f => ({ batch: id, name: f.name, processor: null, status: 'queued', hold: null, reason: null }))) });
-      await inbox.dispatch({ batch: id });
+      if (dispatchFallback) await inbox.dispatch({ batch: id });
       return { id, files: pending.map(f => ({ name: f.name, status: 'queued' })) };
     };
     // Bound resident file memory. Larger folders, ZIPs and scans continue
@@ -166,7 +166,7 @@ export function rapidProcessor({ store, inbox, initial, references, instantiate,
         }
       }).catch(async error => {
         await inbox.commit({ message: `Statements ${id}: processing interrupted`, mutate: log => applyUpdates(log,
-          (log.batches.find(b => b.id === id)?.files ?? []).filter(f => f.processor === 'rapid' && ['queued', 'processing'].includes(f.status))
+          (log.batches.find(b => b.id === id)?.files ?? []).filter(f => f.processor === processorName && ['queued', 'processing'].includes(f.status))
             .map(f => ({ batch: id, name: f.name, status: 'held', hold: 'intake-error', reason: 'Processing was interrupted. Retry this statement.' }))) });
         throw error;
       });
@@ -178,6 +178,7 @@ export function rapidProcessor({ store, inbox, initial, references, instantiate,
   };
   return {
     initialize, submit, version,
+    stockLedgers: () => modelFor(current).deriveStockLedgers(current.documents, stockKeys(current)),
     status: () => ({ ready, revision: current.revision, readerRevision: current.readerRevision, receipts: state?.state?.receipts ?? {} }),
     published: () => ({ manifest: current.manifest, index: { files: current.originals, missing: current.missingOriginals ?? {} } }),
     snapshot: () => ({ schemaVersion: 1, revision: current.revision, readerRevision: current.readerRevision, book: current.book,
@@ -236,6 +237,8 @@ export function rapidProcessor({ store, inbox, initial, references, instantiate,
       const stock = /^ledger\/stocks\/([a-z0-9-]+)\.json$/.exec(name);
       if (stock) return model.deriveStockLedger(snap.documents, stock[1]);
       if (name === 'fund-disclosures.json') return model.deriveFundDisclosures(snap.documents, new Set(snap.book.BOOK_POLYCAB.map(p => p.securityKey)));
+      if (name === 'exposure-fence.json') return { keys: [...new Set(snap.book.BOOK_POLYCAB.map(p => p.securityKey))],
+        isins: [...new Set(snap.book.BOOK_POLYCAB.flatMap(p => p.isin ? [p.isin.trim().toUpperCase()] : []))] };
       if (name === 'lookthrough.json') return snap.lookthrough;
       return null;
     },

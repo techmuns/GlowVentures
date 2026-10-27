@@ -38,7 +38,10 @@ export function inboxService({ remote, stateFile, dispatched }) {
     if (method === 'GET' && p.startsWith('/contents/')) {
       const name = p.slice('/contents/'.length), ref = u.searchParams.get('ref');
       const sha = maybe(['rev-parse', ref + ':' + name]);
-      return sha ? reply(200, { sha, content: execFileSync('git', ['--git-dir', remote, 'cat-file', 'blob', sha], { maxBuffer: 64 << 20 }).toString('base64') }) : reply(404, {});
+      if (!sha) return reply(404, {});
+      const bytes = execFileSync('git', ['--git-dir', remote, 'cat-file', 'blob', sha], { maxBuffer: 64 << 20 });
+      return init.headers?.Accept === 'application/vnd.github.raw+json'
+        ? new Response(bytes) : reply(200, { sha, encoding: 'base64', content: bytes.toString('base64') });
     }
     if (method === 'GET' && /^\/git\/blobs\/[a-f0-9]{40}$/.test(p)) return reply(200, {
       content: execFileSync('git', ['--git-dir', remote, 'cat-file', 'blob', p.split('/').at(-1)], { maxBuffer: 64 << 20 }).toString('base64'), encoding: 'base64',
@@ -63,7 +66,7 @@ export function inboxService({ remote, stateFile, dispatched }) {
     }
     if (method === 'POST' && p === '/dispatches') {
       const c = readControl(stateFile); c.dispatches++; writeControl(stateFile, c);
-      dispatched(); return reply(204, null);
+      dispatched(body.client_payload); return reply(204, null);
     }
     throw new Error('Unexpected local inbox REST call: ' + method + ' ' + p);
   };

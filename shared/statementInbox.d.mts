@@ -13,7 +13,7 @@ export type InboxFile = {
   blob: string;
   status: InboxStatus;
   /** A rapid claim is never also consumed by the legacy scheduled intake. */
-  processor?: 'rapid' | null;
+  processor?: 'rapid' | 'github' | null;
   hold: InboxHold | null;
   /** Held: why. Duplicate: the statement already in `source/` it matches. */
   reason: string | null;

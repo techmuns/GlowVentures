@@ -77,6 +77,27 @@ test('sign-in provisions a protected key cookie; the PDF route authenticates cip
   const login = await onRequest({ request: new Request('https://local.test/__auth/login?next=/statements', {
     method: 'POST', body: new URLSearchParams({ password }) }), next: () => { throw Error('Login must not forward'); } });
   assert.equal(login.status, 302);
+  const derivedKey = keyCookieValue(await previewKeyBytes(password));
+  const derive = crypto.subtle.deriveBits;
+  crypto.subtle.deriveBits = () => { throw Error('Sign-in must not repeat the KDF on the host'); };
+  try {
+    const preparedLogin = await onRequest({ request: new Request('https://local.test/__auth/login', {
+      method: 'POST', body: new URLSearchParams({ password, preview_key: derivedKey }) }) });
+    assert.equal(preparedLogin.status, 302);
+    assert.ok(preparedLogin.headers.getSetCookie().some(c => c.startsWith(PREVIEW_COOKIE + '=' + derivedKey + ';')));
+    const refused = await onRequest({ request: new Request('https://local.test/__auth/login', {
+      method: 'POST', body: new URLSearchParams({ password: 'wrong', preview_key: derivedKey }) }) });
+    assert.equal(refused.status, 401, 'A preview key cannot substitute for the dashboard password');
+  } finally { crypto.subtle.deriveBits = derive; }
+  const gate = await onRequest({ request: new Request('https://local.test/statements') });
+  const script = /<script>([\s\S]*?)<\/script>/.exec(await gate.text())[1];
+  let submit, submitted = false;
+  const fields = { password: { value: password }, preview_key: { value: '' } }, button = { disabled: false };
+  const form = { elements: { namedItem: name => fields[name] }, querySelector: () => button,
+    addEventListener: (_type, callback) => { submit = callback; }, submit: () => { submitted = true; } };
+  new Function('document', script)({ querySelector: () => form });
+  await submit({ preventDefault() {} });
+  assert.equal(submitted, true); assert.equal(fields.preview_key.value, derivedKey, 'The actual login script preserves the existing KDF/key');
   const publication = { statementDocuments: [{ document: 'fixture', revision: 'verified-version' }] };
   assert.deepEqual(await readDeployedPublication({ credential: password, baseURL: 'https://local.test',
     fetchImpl: (url, options) => onRequest({ request: new Request(url, options), next: async () => Response.json(
