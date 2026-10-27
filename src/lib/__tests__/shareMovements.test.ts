@@ -6,7 +6,7 @@
  * would prove only that two inventions agree with each other, and the whole
  * claim here is that the demat statements' own arithmetic reproduces itself.
  */
-import { BOOK_SHARE_MOVEMENTS, BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_UNVALUED_HOLDINGS, BOOK_REVIEW_SUPERSEDED } from "@/data/glowData";
+import { BOOK_SHARE_MOVEMENTS, BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_UNVALUED_HOLDINGS, BOOK_REVIEW_SUPERSEDED, BOOK_CONFIRMED_EXITS } from "@/data/glowData";
 import type { ShareMovement } from "@/lib/types";
 import { movementIdentityHolds, movementNet } from "@/lib/shareMovements";
 import { securityKeyOf } from "@/lib/securityKey";
@@ -109,18 +109,22 @@ ok("...and some join a holding the book carries only as a quantity — the last-
 // only a transaction statement (the tape's closing balance is the only record of
 // it, valued live — Stage 10ce, 10cy), and a depository's copy of AIF units,
 // which stays off the fund's page by design. A window in none of the three is a
-// holding the join missed.
+// holding the join missed — unless it closes at exactly the units of a line the
+// family confirmed exiting (Stage 10ib), which the window still records as the
+// depository printed it on the statement's date.
 const txnOnly = new Set(BOOK_ACCOUNTS.filter((a) => a.transactionsOnly).map((a) => a.accountId));
 const aifIsinsAll = new Set(carriedRows.filter((p) => p.assetClass === "AIF")
   .map((p) => (p.isin ?? "").trim().toUpperCase()).filter(Boolean));
+const exited = new Map(BOOK_CONFIRMED_EXITS.map((x) => [`${x.accountId}|${x.securityKey}`, x.quantity]));
 const rest = all.filter((m) => !held.has(`${m.accountId}|${m.securityKey}`));
 const nilClose = rest.filter((m) => (m.closing ?? 0) === 0);
 const unexplained = rest.filter((m) => !((m.closing ?? 0) === 0 || txnOnly.has(m.accountId)
-  || aifIsinsAll.has((m.isin ?? "").trim().toUpperCase())));
-ok("...and every window that joins nothing closes at nil, sits on an account that sent no holding statement, or is a depository's copy of AIF units",
+  || aifIsinsAll.has((m.isin ?? "").trim().toUpperCase())
+  || (exited.has(`${m.accountId}|${m.securityKey}`) && exited.get(`${m.accountId}|${m.securityKey}`) === m.closing)));
+ok("...and every window that joins nothing closes at nil, sits on an account that sent no holding statement, is a depository's copy of AIF units, or is a confirmed exit's",
   unexplained.length === 0,
   unexplained.length ? unexplained.slice(0, 3).map((m) => `${m.accountId.slice(-16)} ${m.securityKey} closes ${m.closing}`).join(" · ")
-    : `${nilClose.length} nil · ${rest.filter((m) => (m.closing ?? 0) !== 0 && txnOnly.has(m.accountId)).length} on a transaction-only account · ${rest.length - nilClose.length - rest.filter((m) => (m.closing ?? 0) !== 0 && txnOnly.has(m.accountId)).length} AIF copies`);
+    : `${nilClose.length} nil · ${rest.filter((m) => (m.closing ?? 0) !== 0 && txnOnly.has(m.accountId)).length} on a transaction-only account · ${rest.length - nilClose.length - rest.filter((m) => (m.closing ?? 0) !== 0 && txnOnly.has(m.accountId)).length - exited.size} AIF copies · ${exited.size} confirmed exits`);
 ok("...and the nil closes are there — securities an account sold out of during the year, which is the point",
   nilClose.length > 0, `${nilClose.length} window(s)`);
 // A WINDOW THE REVIEW SUPERSEDES GOES WITH ITS LINE, AND IS NAMED (Stage 10dh).

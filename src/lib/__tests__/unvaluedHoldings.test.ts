@@ -17,7 +17,7 @@
 //     precision — so a screen can list the holding once.
 import fs from "node:fs";
 import path from "node:path";
-import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_POLYCAB, BOOK_UNVALUED_HOLDINGS, BOOK_REVIEW_SUPERSEDED } from "@/data/glowData";
+import { BOOK_ACCOUNTS, BOOK_CONFIRMED_EXITS, BOOK_POSITIONS, BOOK_POLYCAB, BOOK_UNVALUED_HOLDINGS, BOOK_REVIEW_SUPERSEDED } from "@/data/glowData";
 // @ts-ignore — precedence.mjs is a plain-JS committed decision table with no
 // declaration file; the suite reads the decision itself, not the builder's use of it.
 import { sourceFor } from "../../../scripts/ingest/precedence.mjs";
@@ -78,7 +78,19 @@ for (const a of BOOK_ACCOUNTS) {
 // line is the holding now. Each superseded row must be one the archive really
 // records, at the units it records, so the supersede list cannot hide a row.
 const supersededId = new Set(BOOK_REVIEW_SUPERSEDED.filter((s) => s.kind === "unvalued").map((s) => `${s.accountId}|${s.securityKey}`));
-const expected = archived.filter((e) => !supersededId.has(`${e.accountId}|${e.securityKey}`));
+// …AND THE FAMILY'S CONFIRMED EXITS (Stage 10ib). A line they confirmed sold,
+// whose later exchange sales the transaction report records to nil, leaves this
+// list and is NAMED in BOOK_CONFIRMED_EXITS with its own units. Each must be one
+// row the archive records, at those units, so the exit list cannot hide a row.
+const exitedId = new Set(BOOK_CONFIRMED_EXITS.map((x) => `${x.accountId}|${x.securityKey}`));
+const exitUnmatched = BOOK_CONFIRMED_EXITS.filter((x) => {
+  const hits = archived.filter((e) => e.accountId === x.accountId && e.securityKey === x.securityKey);
+  return hits.length !== 1 || hits[0].quantity !== x.quantity;
+});
+ok("each confirmed exit is one row an authoritative holdings document records, at its own units", exitUnmatched.length === 0,
+  exitUnmatched.map((x) => `${x.accountId}|${x.securityKey}|${x.quantity}`).join("; ") || `${BOOK_CONFIRMED_EXITS.length} line(s)`);
+ok("…and none of them is still carried as a quantity", BOOK_UNVALUED_HOLDINGS.every((u) => !exitedId.has(`${u.accountId}|${u.securityKey}`)));
+const expected = archived.filter((e) => !supersededId.has(`${e.accountId}|${e.securityKey}`) && !exitedId.has(`${e.accountId}|${e.securityKey}`));
 const supersededArchived = archived.filter((e) => supersededId.has(`${e.accountId}|${e.securityKey}`));
 const supNamed = BOOK_REVIEW_SUPERSEDED.filter((s) => s.kind === "unvalued");
 ok("the review supersedes quantity lines this archive records", supNamed.length > 0, `${supNamed.length} line(s)`);

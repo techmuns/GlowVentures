@@ -8,7 +8,7 @@
 // carry, and the UI renders them as an em dash. See docs/BOOK-REPORT.md for the
 // list and what document would supply each.
 import type {
-  Account, AccountBridge, AccountReturnBlock, AccountReturnCoverage, BookSummary, CapitalMove, CashFlow, Commitment,
+  Account, AccountBridge, AccountReturnBlock, AccountReturnCoverage, BookSummary, CapitalMove, CashFlow, Commitment, ConfirmedExit,
   Attribution, CorporateAction, EntityCG, FundInvestment, HoldingTrade, NavCoverage, NavPoint, Position, PositionTranches,
   PolycabHolding, RealisedByClass, RecoveredHoldingCost, ReviewFlow, ReviewSuperseded, ReviewWrittenOff, ShareMovement, StartupInvestment, UndatedCapital, UnvaluedStatementHolding,
 } from "@/lib/types";
@@ -21804,38 +21804,6 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
-    "isin": "INE090A01021",
-    "quantity": 14500,
-    "asOf": "2026-07-31",
-    "costBasis": 20042266,
-    "heldPurchases": {
-      "first": "2026-07-01",
-      "last": "2026-07-01",
-      "lots": 1
-    },
-    "realizedPnL": 2635663,
-    "costOfUnitsSold": 2459824,
-    "dividendReceived": null,
-    "salesAfter": 1,
-    "evidence": [
-      {
-        "path": "source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx",
-        "sheet": "Direct Equity",
-        "rows": [
-          1217,
-          1218,
-          1219,
-          1220
-        ]
-      }
-    ],
-    "notes": [
-      "MOPWM transaction report: owner, account and every unit reconcile on 2026-07-31; it reports no cash dividends",
-      "1 sale(s) after 2026-07-31 (rows 1221); a newer holding balance is required"
-    ]
-  },
-  {
-    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "isin": "INE095A01012",
     "quantity": 5250,
     "asOf": "2026-07-31",
@@ -21920,38 +21888,6 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     ],
     "notes": [
       "MOPWM transaction report: owner, account and every unit reconcile on 2026-07-31; it reports no cash dividends"
-    ]
-  },
-  {
-    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
-    "isin": "INE238A01034",
-    "quantity": 7300,
-    "asOf": "2026-07-31",
-    "costBasis": 10022979,
-    "heldPurchases": {
-      "first": "2026-07-01",
-      "last": "2026-07-01",
-      "lots": 1
-    },
-    "realizedPnL": 1242717,
-    "costOfUnitsSold": 1495780,
-    "dividendReceived": null,
-    "salesAfter": 1,
-    "evidence": [
-      {
-        "path": "source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx",
-        "sheet": "Direct Equity",
-        "rows": [
-          1123,
-          1124,
-          1125,
-          1126
-        ]
-      }
-    ],
-    "notes": [
-      "MOPWM transaction report: owner, account and every unit reconcile on 2026-07-31; it reports no cash dividends",
-      "1 sale(s) after 2026-07-31 (rows 1127); a newer holding balance is required"
     ]
   },
   {
@@ -23471,27 +23407,6 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
   {
     "statementRecord": {
       "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
-      "pointer": "/holdings/2"
-    },
-    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
-    "ownerId": "ankita-jaisinghani",
-    "securityKey": "axis-bank",
-    "security": "AXIS BANK EQ",
-    "isin": "INE238A01034",
-    "assetClass": "Equity",
-    "quantity": 7300,
-    "faceValue": null,
-    "lastMovementRate": 1368.25,
-    "lastMovementValue": 2133101.75,
-    "lastMovementDate": "2026-07-02",
-    "lastMovementSide": "receipt",
-    "asOf": "2026-07-31",
-    "sameUnitsReportedBy": null,
-    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹1,368.25 a unit, on a receipt of 1,559 unit(s) on 2026-07-02 — not a valuation of the 7,300 unit(s) held, so it carries a quantity and no value"
-  },
-  {
-    "statementRecord": {
-      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
       "pointer": "/holdings/4"
     },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
@@ -23719,27 +23634,6 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹14.18 a unit — not a valuation of the 51,00,984.835 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
-  },
-  {
-    "statementRecord": {
-      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
-      "pointer": "/holdings/19"
-    },
-    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
-    "ownerId": "ankita-jaisinghani",
-    "securityKey": "icici-bank",
-    "security": "ICICI BANK-EQ",
-    "isin": "INE090A01021",
-    "assetClass": "Equity",
-    "quantity": 14500,
-    "faceValue": null,
-    "lastMovementRate": 1379.1,
-    "lastMovementValue": 7365773.1,
-    "lastMovementDate": "2026-07-02",
-    "lastMovementSide": "receipt",
-    "asOf": "2026-07-31",
-    "sameUnitsReportedBy": null,
-    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹1,379.1 a unit, on a receipt of 5,341 unit(s) on 2026-07-02 — not a valuation of the 14,500 unit(s) held, so it carries a quantity and no value"
   },
   {
     "statementRecord": {
@@ -24622,6 +24516,68 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": "buoyant-capital-103473",
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 records 3416657.416 unit(s) at their face value of 100, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
+  }
+];
+
+/**
+ * EXITED, BY THE FAMILY'S CONFIRMATION AND THE ADVISER'S DATED SALES (Stage 10ib) — statement lines
+ * retired from the held book. Each names its statement, the transaction report's sale rows that take
+ * its units to nil, and the family's words (`shared/confirmedExits.mjs`). No price or gain is taken.
+ */
+export const BOOK_CONFIRMED_EXITS: ConfirmedExit[] = [
+  {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/2"
+    },
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "ownerId": "ankita-jaisinghani",
+    "securityKey": "axis-bank",
+    "security": "AXIS BANK EQ",
+    "isin": "INE238A01034",
+    "assetClass": "Equity",
+    "quantity": 7300,
+    "asOf": "2026-07-31",
+    "exitedOn": "2026-09-23",
+    "sale": {
+      "source": "source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx",
+      "reportAsOf": "2026-10-23",
+      "sheet": "Direct Equity",
+      "rows": [
+        1127
+      ],
+      "units": 7300
+    },
+    "confirmed": "2026-10-27",
+    "words": "they have exited all of these three positions from their direct equity portfolio",
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 records 7,300 units; MOPWM's transaction report of 2026-10-23 records them sold in full on the exchange on 2026-09-23 (row 1127), and the family confirmed the exit on 2026-10-27 (\"they have exited all of these three positions from their direct equity portfolio\")"
+  },
+  {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/19"
+    },
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "ownerId": "ankita-jaisinghani",
+    "securityKey": "icici-bank",
+    "security": "ICICI BANK-EQ",
+    "isin": "INE090A01021",
+    "assetClass": "Equity",
+    "quantity": 14500,
+    "asOf": "2026-07-31",
+    "exitedOn": "2026-09-23",
+    "sale": {
+      "source": "source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx",
+      "reportAsOf": "2026-10-23",
+      "sheet": "Direct Equity",
+      "rows": [
+        1221
+      ],
+      "units": 14500
+    },
+    "confirmed": "2026-10-27",
+    "words": "they have exited all of these three positions from their direct equity portfolio",
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 records 14,500 units; MOPWM's transaction report of 2026-10-23 records them sold in full on the exchange on 2026-09-23 (row 1221), and the family confirmed the exit on 2026-10-27 (\"they have exited all of these three positions from their direct equity portfolio\")"
   }
 ];
 
