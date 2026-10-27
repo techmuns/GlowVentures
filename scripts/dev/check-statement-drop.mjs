@@ -171,13 +171,15 @@ try {
     files: [{ name: 'previously-published.pdf', status: 'landed', docKeys: [other.docKey], providers: [other.provider] }] });
   await open('/statements?file=' + encodeURIComponent(linked.docKey));
   await folder().waitFor();
-  await page.locator('[data-xa="statement-upload-log"]').getByRole('button', { name: other.provider, exact: true }).click();
+  // A file link also opens its preview. Invoke the underlying folder action
+  // directly to verify that it clears the source selection in the address.
+  await page.locator('[data-xa="statement-upload-log"]').getByRole('button', { name: other.provider, exact: true }).evaluate(el => el.click());
   await page.locator('[data-open-folder]').filter({ hasText: other.provider }).waitFor();
   assert.equal(new URL(page.url()).searchParams.get('provider'), other.provider);
   assert.equal(new URL(page.url()).searchParams.has('file'), false);
   await open('/statements?path=' + encodeURIComponent(linked.sourcePath));
   await folder().waitFor();
-  await page.getByRole('button', { name: 'All folders', exact: true }).click();
+  await page.getByRole('button', { name: 'All folders', exact: true }).evaluate(el => el.click());
   await page.locator('[data-upload-drop]').waitFor();
   assert.equal(new URL(page.url()).search, '');
   await open();
@@ -225,7 +227,8 @@ try {
   await event(page.locator('main'), 'dragenter', guardData);
   await overlay().waitFor();
   assert.match(await overlay().innerText(), /Opening statement archive/);
-  const blocked = await event(page.locator('main'), 'drop', guardData);
+  assert.equal(await page.locator('main').evaluate((el, data) =>
+    !el.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: data })), guardData), true);
   await overlay().waitFor({ state: 'detached' });
   assert.equal(staged.length, before);
   releaseArchive(); archiveState = 'ready'; archiveHeld = null;
@@ -238,7 +241,8 @@ try {
   await event(page.locator('main'), 'dragenter', guardData);
   await overlay().waitFor();
   assert.match(await overlay().innerText(), /Statement archive unavailable/);
-  await event(page.locator('main'), 'drop', guardData);
+  assert.equal(await page.locator('main').evaluate((el, data) =>
+    !el.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: data })), guardData), true);
   await overlay().waitFor({ state: 'detached' });
   assert.equal(staged.length, before);
   results.push('Loading and failed archives retain a non-uploading document drop guard');
