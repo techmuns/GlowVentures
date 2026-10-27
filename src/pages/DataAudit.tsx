@@ -1,3 +1,6 @@
+import { useNavigationState, useNavigationValue, booleanNavigation } from "@/lib/useNavigationState";
+import { navigationMemory } from "@/lib/navigationMemory";
+import { useLocation } from "react-router-dom";
 import { useTableExportFilter } from "@/lib/tableExportSnapshot";
 import { ExportableTable } from "@/components/ExportableTable";
 import { InfiniteTableEnd, useInfiniteTable } from "@/components/InfiniteTableBody";
@@ -106,18 +109,20 @@ function fmtCell(v: Cell, decimals: number | null = null): { text: string; num: 
 function SourceArchive() {
   const [status, setStatus] = useState<"loading" | "ready" | "restricted">("loading");
   const [manifest, setManifest] = useState<FileMeta[]>([]);
-  const [fileKey, setFileKey] = useState("");
-  const [sheetKey, setSheetKey] = useState("");
+  const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const restored = useMemo(() => navigationMemory.read(location.key, `${location.pathname}:audit-file`, raw => typeof raw === "string" ? raw : null) !== null, [location.key, location.pathname]);
+  const applied = useRef<string>();
+  const [fileKey, setFileKey] = useNavigationState("audit-file", () => searchParams.get("file") ?? "");
+  const [sheetKey, setSheetKey] = useNavigationState("audit-sheet", () => searchParams.get("sheet") ?? "");
   const [sheet, setSheet] = useState<Sheet | null>(null);
   const [sheetLoading, setSheetLoading] = useState(false);
-  const [queryFilter, setQuery] = useState("");
+  const [queryFilter, setQuery] = useNavigationState("audit-search", () => searchParams.get("eq") ?? searchParams.get("find") ?? "");
   const query = useTableExportFilter(queryFilter, "");
-  const [exact, setExact] = useState(false); // deep-link `eq` → whole-cell match instead of substring
+  const [exact, setExact] = useNavigationValue("audit-exact", () => searchParams.has("eq"), booleanNavigation); // deep-link `eq` → whole-cell match instead of substring
   const [formats, setFormats] = useState<SheetFormats | null>(null);
   const cache = useRef<Record<string, Sheet>>({});
-  const [searchParams] = useSearchParams();
-  const pendingFind = useRef<string | null>(null); // a deep-link's `find`/`eq`, applied on next sheet load
-  const pendingExact = useRef<boolean>(false);
+
 
   useEffect(() => {
     let alive = true;
@@ -129,53 +134,31 @@ function SourceArchive() {
       .then((m: FileMeta[]) => {
         if (!alive) return;
         setManifest(m);
-        if (!searchParams.get("file")) {
-          const first = defaultDocument(m);
-          if (first) { setFileKey(first.fileKey); setSheetKey(first.sheets[0].key); }
-        }
         setStatus("ready");
       })
       .catch(() => alive && setStatus("restricted"));
     return () => { alive = false; };
   }, []);
 
-  // Deep-link: ?file=&sheet=&find= opens a specific workbook/sheet and highlights
-  // the rows containing `find` (an ISIN, name…), so a dashboard number can point
-  // straight at its source cells. Runs on first load and on in-app navigation.
+  // Resolve a new deep link once; a historical entry keeps the reader's later choices.
   useEffect(() => {
-    if (status !== "ready" || !manifest.length) return;
-    const eq = searchParams.get("eq");
-    const find = eq ?? searchParams.get("find");
-    const wantFile = searchParams.get("file");
-    // A CONSOLIDATED figure names no single document, because it spans five.
-    // Its link carries only `find`, and the honest response is to open the
-    // archive with that term already in the search box rather than to pick a
-    // document at random and highlight nothing. Returning early here — which is
-    // what used to happen — dropped the term silently.
-    if (!wantFile) {
-      if (find) { pendingFind.current = find; pendingExact.current = eq != null; setQuery(find); setExact(eq != null); }
-      return;
+    if (status !== "ready" || !manifest.length || applied.current === location.key) return;
+    applied.current = location.key;
+    const wantFile = restored ? fileKey : searchParams.get("file") ?? fileKey;
+    const f = manifest.find(x => x.fileKey === wantFile && x.sheets.length);
+    if (wantFile && !f) {
+      console.warn(`[audit] no document "${wantFile}" in the manifest — the link that sent you here is stale.`);
+      setFileKey(wantFile); setSheetKey(""); setSheet(null); return;
     }
-    const f = manifest.find((x) => x.fileKey === wantFile && x.sheets.length);
-    // A file key the manifest does not carry is a BROKEN link, and quietly
-    // leaving the previously-open document on screen is how a reader ends up
-    // reading another account's statement believing it is the one they clicked.
-    if (!f) {
-      if (typeof console !== "undefined") console.warn(`[audit] no document "${wantFile}" in the manifest — the link that sent you here is stale.`);
-      return;
-    }
-    const wantSheet = searchParams.get("sheet");
-    const s = (wantSheet && f.sheets.find((x) => x.key === wantSheet)) || f.sheets[0];
-    pendingFind.current = find;
-    pendingExact.current = eq != null;
-    setFileKey(f.fileKey);
-    setSheetKey(s?.key ?? "");
-  }, [searchParams, status, manifest]);
+    const chosen = f ?? defaultDocument(manifest);
+    if (!chosen) return;
+    const wantSheet = restored ? sheetKey : searchParams.get("sheet") ?? sheetKey;
+    setFileKey(chosen.fileKey);
+    setSheetKey(chosen.sheets.find(x => x.key === wantSheet)?.key ?? chosen.sheets[0]?.key ?? "");
+  }, [status, manifest, searchParams, location.key, restored]);
 
   useEffect(() => {
     if (status !== "ready" || !fileKey || !sheetKey) return;
-    if (pendingFind.current) { setQuery(pendingFind.current); setExact(pendingExact.current); pendingFind.current = null; pendingExact.current = false; }
-    else { setQuery(""); setExact(false); }
     const id = `${fileKey}/${sheetKey}`;
     if (cache.current[id]) { setSheet(cache.current[id]); setSheetLoading(false); return; }
     let alive = true;
@@ -330,7 +313,7 @@ function SourceArchive() {
           const active = f.fileKey === fileKey;
           return (
             <button key={f.fileKey} type="button" disabled={locked}
-              onClick={() => { if (!locked) { setFileKey(f.fileKey); setSheetKey(f.sheets[0]?.key ?? ""); } }}
+              onClick={() => { if (!locked) { setFileKey(f.fileKey); setSheetKey(f.sheets[0]?.key ?? ""); setQuery(""); setExact(false); } }}
               title={locked ? "Nothing could be extracted from this document" : f.source}
               className={`flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-[12px] transition-colors ${
                 active ? "border-champagne-500/40 bg-champagne-500/10 text-champagne-400"
@@ -351,7 +334,7 @@ function SourceArchive() {
           {currentFile.sheets.map((s) => {
             const active = s.key === sheetKey;
             return (
-              <button key={s.key} type="button" onClick={() => setSheetKey(s.key)}
+              <button key={s.key} type="button" onClick={() => { setSheetKey(s.key); setQuery(""); setExact(false); }}
                 className={`rounded-md px-2.5 py-1 text-[12px] transition-colors ${
                   active ? "bg-ink-700 text-slate-100" : "text-slate-400 hover:bg-ink-700/40 hover:text-slate-200"}`}>
                 {s.name} <span className="mono text-[10px] text-slate-500">{s.rows}×{s.cols}</span>
@@ -393,7 +376,7 @@ function SourceArchive() {
 
       {/* Grid */}
       <Card pad={false} className="flex min-h-0 flex-1 flex-col">
-        <div className="min-h-0 flex-1 overflow-auto">
+        <div className="min-h-0 flex-1 overflow-auto" data-navigation-scroll="dataaudit-1">
           {status === "loading" || sheetLoading ? (
             <div className="grid h-40 place-items-center text-sm text-slate-500">Loading…</div>
           ) : !sheet ? (
@@ -499,14 +482,17 @@ function SourceArchive() {
 export function DataAudit() {
   const [params] = useSearchParams();
   const [sourceCount, setSourceCount] = useState<number | null>(null);
-  const [sourcesOpen, setSourcesOpen] = useState(() => params.has("file") || params.has("sources") || params.has("find") || params.has("eq"));
+  const [sourcesOpen, setSourcesOpen, restored] = useNavigationValue("audit-sources-open", () => params.has("file") || params.has("sources") || params.has("find") || params.has("eq"), booleanNavigation);
+  const location = useLocation();
+  const scrolled = useRef<string>();
   const sourcesRef = useRef<HTMLDetailsElement>(null);
   useEffect(() => {
-    if (params.has("file") || params.has("sources") || params.has("find") || params.has("eq")) {
+    if (!restored && sourceCount !== null && scrolled.current !== location.key && (params.has("file") || params.has("sources") || params.has("find") || params.has("eq"))) {
+      scrolled.current = location.key;
       setSourcesOpen(true);
       requestAnimationFrame(() => sourcesRef.current?.scrollIntoView({ block: "start" }));
     }
-  }, [params, sourceCount]);
+  }, [params, sourceCount, restored, location.key]);
   return <div className="flex min-w-0 flex-col">
     <PageHeader eyebrow="Admin" title="Data Audit" subtitle="Glow Ventures consolidated sheet. Updated automatically as new statements are wired into the dashboard."
       right={<BasisPill statement liveText="Consolidated statement data" hint="The consolidated sheet uses the canonical statement and review book, with each account's own date. Live quotes do not change the audit record." />} />

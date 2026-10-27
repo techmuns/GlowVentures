@@ -1,3 +1,4 @@
+import { useNavigationState, useNavigationValue, booleanNavigation } from "@/lib/useNavigationState";
 import { isTableExporting, usePrepareTableExport, useTableExportFilter, useTableExporting } from "@/lib/tableExportSnapshot";
 import { ExportableTable } from "@/components/ExportableTable";
 import { InfiniteTableBody } from "@/components/InfiniteTableBody";
@@ -85,11 +86,11 @@ export function CapitalGains() {
   // ones stayed printed, so two halves of the same table would be on two
   // different measurements with nothing on screen to say which.
   const { statementPortfolio: portfolio, portfolio: livePortfolio, fmtFromBase, scope } = usePortfolio();
-  const [harvestQFilter, setHarvestQ] = useState("");
+  const [harvestQFilter, setHarvestQ] = useNavigationState<string>("harvest-search", "");
   const harvestQ = useTableExportFilter(harvestQFilter, "");
   // The "no capital gain statement" band opens here; above the early return,
   // as every hook must be.
-  const [missingOpen, setMissingOpen] = useState(false);
+  const [missingOpen, setMissingOpen] = useNavigationValue("missing-open", false, booleanNavigation);
   // INDIA'S DATE, NOT UTC'S (Stage 10fz). `toISOString()` is the UTC date, a
   // day behind from 00:00 to 05:30 IST — and on the morning a lot turns
   // long-term the planner would still have called it short-term.
@@ -658,7 +659,7 @@ export function CapitalGains() {
       {byBucket.length > 1 && (
         <Card className="mt-5" title="Realised, by how the holding was run"
           subtitle="The statement windows' total, split — the canonical figure the headline names second" pad={false}>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" data-navigation-scroll="capitalgains-1">
             <ExportableTable className="min-w-full text-sm">
               <thead className="border-b border-ink-700">
                 <Tr view={bucketView}>
@@ -725,7 +726,7 @@ export function CapitalGains() {
       <Card className="mt-5" title="Realised gains by account"
         subtitle="Short- and long-term as the MANAGER split them — a tax determination taken from the statement, not re-derived here"
         pad={false}>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" data-navigation-scroll="capitalgains-2">
           <ExportableTable className="min-w-full text-sm">
             <thead className="border-b border-ink-700">
               <Tr view={acctView}>
@@ -831,7 +832,7 @@ export function CapitalGains() {
                   other statement in the drop carries acquisition dates. A lot-level holding statement switches
                   this on; the calculation is already wired and dormant.`} />
           ) : (
-            <div className="max-h-[440px] overflow-auto">
+            <div className="max-h-[440px] overflow-auto" data-navigation-scroll="capitalgains-3">
               <ExportableTable className="min-w-full text-sm">
                 <thead className="sticky top-0 bg-ink-800 border-b border-ink-700">
                   <Tr view={holdView}>
@@ -891,7 +892,7 @@ export function CapitalGains() {
                 </span>
                 <span className="mono text-[13px] text-loss">{money(harvestTotal, true)}</span>
               </div>
-              <div className="max-h-[380px] overflow-auto">
+              <div className="max-h-[380px] overflow-auto" data-navigation-scroll="capitalgains-4">
                 <ExportableTable className="min-w-full text-sm">
                   <thead className="sticky top-0 bg-ink-800 border-b border-ink-700">
                     <Tr view={harvestView}>

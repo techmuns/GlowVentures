@@ -1,6 +1,7 @@
+import { useNavigationState, useNavigationValue, nullableStringsNavigation } from "@/lib/useNavigationState";
 import { ExportableTable } from "@/components/ExportableTable";
 import { useTableExportExpansion } from "@/lib/tableExportSnapshot";
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useMemo } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { Check, ChevronRight } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
@@ -250,7 +251,7 @@ const fmtPts = (d: number) => {
 export function SectorComposition({ embedded = false }: { embedded?: boolean } = {}) {
   const views = embedded ? EMBED_SECTOR_VIEWS : SECTOR_VIEWS;
   const { portfolio, consolidated, fmtFromBase, convertFromBase, displayCurrency, scope: memberScope } = usePortfolio();
-  const [expandedState, setExpanded] = useState<Set<string>>(() => new Set());
+  const [expandedState, setExpanded] = useNavigationState("sector-expanded", () => new Set<string>());
   const expanded = useTableExportExpansion(expandedState);
   const [vsKey, setVs] = useViewParam<IndexPick>(INDEX_PICKS, {}, "vs");
   /** The index picked, read — or why it has no weights. `null` while the control is Off. */
@@ -276,7 +277,7 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
    * a judgement, and a Compare tab that opened on an empty table would spend
    * its whole right half asking to be filled.
    */
-  const [picked, setPicked] = useState<string[] | null>(null);
+  const [picked, setPicked] = useNavigationValue<string[] | null>("sector-picked", null, nullableStringsNavigation);
   if (!portfolio) return null;
   const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
   /**
@@ -1058,7 +1059,7 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
         data-sector-layout={view}>
         {/* LEFT — the donut and what it is made of. On Compare it is the picker. */}
         <Card className="flex min-h-0 flex-col lg:max-h-full lg:self-start" pad={false}>
-          <div className="min-h-0 flex-1 overflow-auto px-5 py-4" data-sector-left>
+          <div className="min-h-0 flex-1 overflow-auto px-5 py-4" data-sector-left data-navigation-scroll="sectorcomposition-1">
             {/* AN INDEX PICKED: its bars in the donut's place. */}
             {vsChart || donut}
             {view === "compare" ? (
@@ -1102,7 +1103,7 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
           <Card className="flex min-h-0 flex-col lg:max-h-full lg:self-start" pad={false}
             title={<span data-card-title-hint title="Each set's figures side by side.">Compare sectors
               <span className="ml-2 font-normal normal-case tracking-normal text-slate-500" data-compare-picked>{compare.length} of {MAX_COMPARE} picked</span></span>}>
-            <div className="mt-3 min-h-0 flex-1 overflow-auto px-2 pb-3">
+            <div className="mt-3 min-h-0 flex-1 overflow-auto px-2 pb-3" data-navigation-scroll="sectorcomposition-2">
               {compare.length === 0 ? (
                 <p className="px-3 py-10 text-center text-[12.5px] text-slate-500">
                   Pick a sector on the left — or click its wedge — to put it here.
@@ -1201,7 +1202,7 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
             title={<span data-card-title-hint title={consolidatedView
               ? "Click a sector for the issuers in it — what the statements report and what the funds disclose."
               : "Click a sector for its holdings."}>Sector breakdown{vs ? ` vs ${vs.bench.label}` : ""}</span>}>
-            <div className="mt-3 min-h-0 flex-1 overflow-auto">
+            <div className="mt-3 min-h-0 flex-1 overflow-auto" data-navigation-scroll="sectorcomposition-3">
               <ExportableTable className="min-w-full text-[13px]" data-sector-table>
                 <thead className="sticky top-0 z-10 bg-ink-800">
                   <Tr view={sectorView} className="border-b border-ink-700">
@@ -1253,7 +1254,7 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
                     return (
                       <Fragment key={s.key}>
                         <Tr view={sectorView} reviewScope={{ sector: s.key }} className={indexOnlyRow ? "" : "cursor-pointer hover:bg-ink-700/40"}
-                          onClick={indexOnlyRow ? undefined : () => toggle(s.key)} aria-expanded={indexOnlyRow ? undefined : isOpen}
+                          onClick={indexOnlyRow ? undefined : () => toggle(s.key)} data-navigation-expanded={indexOnlyRow ? undefined : ""} aria-expanded={indexOnlyRow ? undefined : isOpen}
                           data-sector-row={s.key} {...(indexOnlyRow ? { "data-sector-index-only": "" } : {})}>
                           <td className="px-3 py-2">
                             {/* THE `title` GOES ON THE EXISTING SPAN, never on a new one
@@ -1344,7 +1345,7 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
                           <tr data-table-depth="1">
                             <td colSpan={sectorView.order.length} className="px-3 pb-3 pt-1">
                               <div className="overflow-hidden rounded-lg border border-ink-700 bg-ink-800">
-                                <div className="max-h-[320px] overflow-auto">
+                                <div className="max-h-[320px] overflow-auto" data-navigation-scroll="sectorcomposition-4">
                                   {consolidatedView ? (
                                     /* ONE ROW PER COMPANY, EVERY ROUTE APART. Direct and PMS are
                                        what the statements report, split by who chose the shares;

@@ -1,3 +1,4 @@
+import { useNavigationState, useNavigationValue, numberNavigation } from "@/lib/useNavigationState";
 import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Loader2, Lock } from "lucide-react";
 import { getDocument, GlobalWorkerOptions, PasswordResponses, Util, type PDFDocumentProxy, type RenderTask } from "pdfjs-dist";
@@ -17,8 +18,8 @@ export default function PdfPreview({ url, file, title, initialPage, sourceTarget
   const [error, setError] = useState("");
   const [password, setPassword] = useState("");
   const unlock = useRef<((password: string) => void) | null>(null);
-  const [page, setPage] = useState(file.part?.from ?? 1);
-  const [zoom, setZoom] = useState("fit");
+  const [page, setPage, restored] = useNavigationValue(`pdf-page:${url}`, initialPage ?? file.part?.from ?? 1, numberNavigation);
+  const [zoom, setZoom] = useNavigationState<string>(`pdf-zoom:${url}`, "fit", ["fit", "1", "1.5", "2"]);
   const [width, setWidth] = useState(0);
   const [drawing, setDrawing] = useState(false);
   const [renderError, setRenderError] = useState("");
@@ -42,7 +43,7 @@ export default function PdfPreview({ url, file, title, initialPage, sourceTarget
     task.promise.then(doc => {
       if (!alive) return;
       unlock.current = null;
-      setPdf(doc); setPage(Math.max(1, Math.min(file.part?.from ?? 1, doc.numPages)));
+      setPdf(doc); setPage(current => Math.max(1, Math.min(current, doc.numPages)));
       setStatus("ready");
     }).catch(() => {
       if (!alive) return;
@@ -53,8 +54,8 @@ export default function PdfPreview({ url, file, title, initialPage, sourceTarget
   }, [url, file.part?.from]);
 
   useEffect(() => {
-    if (pdf && initialPage && initialPage >= 1 && initialPage <= pdf.numPages) setPage(initialPage);
-  }, [pdf, initialPage]);
+    if (!restored && pdf && initialPage && initialPage >= 1 && initialPage <= pdf.numPages) setPage(initialPage);
+  }, [pdf, initialPage, restored]);
 
   useEffect(() => {
     const element = viewport.current;
@@ -123,7 +124,7 @@ export default function PdfPreview({ url, file, title, initialPage, sourceTarget
           surface.append(marker);
           scrollFrame = requestAnimationFrame(() => {
             const scroller = viewport.current;
-            if (!alive || !scroller) return;
+            if (!alive || !scroller || restored) return;
             const r = marker.getBoundingClientRect(), v = scroller.getBoundingClientRect();
             const ratio = v.height / scroller.clientHeight || 1;
             scroller.scrollTop += (r.top - v.top - (v.height - r.height) / 2) / ratio;
@@ -168,7 +169,7 @@ export default function PdfPreview({ url, file, title, initialPage, sourceTarget
             </select>
             {highlightMissing && <span role="status" className="text-xs text-slate-400">Exact number could not be uniquely highlighted in this statement.</span>}
           </div>
-          <div ref={viewport} className="min-h-0 flex-1 overflow-auto p-4">
+          <div ref={viewport} className="min-h-0 flex-1 overflow-auto p-4" data-navigation-scroll="pdfpreview-1">
             {drawing && <p role="status" className="mb-2 text-xs text-slate-400">Loading page…</p>}
             {renderError && <p role="alert" className="mb-2 text-sm text-red-400">{renderError}</p>}
             <div ref={paper} />

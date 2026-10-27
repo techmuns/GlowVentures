@@ -83,7 +83,7 @@ export function InsiderDeals({ ticker, name }: { ticker: string; name: string })
     return <p className="py-3 text-[12.5px] text-slate-500" data-insider-deals="none">No insider transactions disclosed for {name} in the feed&rsquo;s window.</p>;
   }
   return (
-    <div className="max-h-[420px] overflow-auto" data-insider-deals="ok">
+    <div className="max-h-[420px] overflow-auto" data-insider-deals="ok" data-navigation-scroll="insiderdeals-1">
       {/* THE FENCE ON THE FACE, WHERE IT CAME FROM IN THE HOVER (Stage 10cp). */}
       <p className="mb-2 text-[11.5px] text-slate-500" title="Insider trading disclosures from the exchange feed.">Dealing by the company&rsquo;s insiders, not by this family</p>
       <ExportableTable className="min-w-full whitespace-nowrap text-[12.5px]">

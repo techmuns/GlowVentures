@@ -1,4 +1,5 @@
-import { useId, useMemo, useState } from 'react';
+import { useNavigationState } from "@/lib/useNavigationState";
+import { useId, useMemo } from 'react';
 import { ReturnCalculationInfo } from './ReturnCalculation';
 import type { Account, Position } from '@/lib/types';
 import { marketHoldingKey, type MarketGap, type MarketUnit } from '@/lib/marketReturns';
@@ -16,9 +17,9 @@ export function MarketReturnInfo(props: Props) {
     <MarketReturnDetails {...props} />
   </ReturnCalculationInfo>;
 }
-/** Mounted only while the dialog is open, so every new opening starts on Overview. */
-function MarketReturnDetails({ units, gaps, positions, accounts, totalValue, from, to, requestedStart, requestedEnd, annual, pending, inception, money, onRetry }: Props) {
-  const [tab, setTab] = useState('overview'), [includedSearch, setIncludedSearch] = useState(''), [missingSearch, setMissingSearch] = useState('');
+/** Keep this calculation's tab and searches with the originating history entry. */
+function MarketReturnDetails({ label, units, gaps, positions, accounts, totalValue, from, to, requestedStart, requestedEnd, annual, pending, inception, money, onRetry }: Props) {
+  const [tab, setTab] = useNavigationState<string>(`market-info:${label}:tab`, 'overview', ['overview','included','missing']), [includedSearch, setIncludedSearch] = useNavigationState<string>(`market-info:${label}:included`, ''), [missingSearch, setMissingSearch] = useNavigationState<string>(`market-info:${label}:missing`, '');
   const id = useId();
   const accountMap = useMemo(() => new Map(accounts.map(a => [a.accountId, a])), [accounts]);
   const context = (p: Position) => marketHoldingContext(p, accountMap.get(p.accountId));

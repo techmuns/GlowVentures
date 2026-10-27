@@ -174,7 +174,7 @@ export function RatioTable({ ticker, name }: { ticker: string | null; name: stri
           </div>
         )}
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" data-navigation-scroll="ratiotable-1">
           {/* Exempt, declared: the columns are the source's own seven year-ends
                 and the rows are its line items with its own section headings, so
                 sorting would scramble a document and moving a year would break

@@ -1,6 +1,7 @@
+import { useNavigationState } from "@/lib/useNavigationState";
 import { useTableExportFilter } from "@/lib/tableExportSnapshot";
 import { ExportableTable } from "@/components/ExportableTable";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { Card } from "./Card";
@@ -42,7 +43,7 @@ function leadIssue(issues: readonly string[]): string | null {
 
 export function CorporateActionReturns({ securityKey }: { securityKey?: string }) {
   const { statementPortfolio, corporateActions, corporateActionsStatus, corporateActionReturns, fmtFromBase, scope } = usePortfolio();
-  const [searchFilter, setSearch] = useState("");
+  const [searchFilter, setSearch] = useNavigationState<string>("corporate-action-search", "");
   const search = useTableExportFilter(searchFilter, "");
   const view = useTableView("corporate-actions-returns", COLS);
   const rows = useMemo(() => {
@@ -90,7 +91,7 @@ export function CorporateActionReturns({ securityKey }: { securityKey?: string }
 
       </div>}
     </div>
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto" data-navigation-scroll="corporateactionreturns-1">
       <ExportableTable className="w-full text-xs" data-corporate-return-table>
         <thead className="bg-ink-900 text-slate-400"><Tr view={view}>
           {view.columns.map((col) => <SortHeader key={col} view={view} col={col} align="left" title={TITLES[col]}>{LABELS[col]}</SortHeader>)}
@@ -138,7 +139,7 @@ export function CorporateActionReturns({ securityKey }: { securityKey?: string }
                       {open[0]}{open.length > 1 ? ` · +${open.length - 1} more` : ""}.</p>;
                   })()
                 : <span>Calculated on carried statement holdings.</span>}
-              {events.length > 0 && <details className="mt-2"><summary className="cursor-pointer text-champagne-400">{events.length} events · show sources</summary>
+              {events.length > 0 && <details className="mt-2" data-navigation-details="corporateactionreturns-1"><summary className="cursor-pointer text-champagne-400">{events.length} events · show sources</summary>
                 <ul className="mt-2 space-y-3">{events.map((l) => <li key={l.action.id}>
                   <div>{l.action.exDate ? fmtDate(l.action.exDate) : "Undated"} · {l.action.purpose}</div>
                   <div className="text-[11px]">{l.status === "declared" ? `Gross entitlement ${fmtFromBase(l.amount)} · payment not verified`
@@ -148,7 +149,7 @@ export function CorporateActionReturns({ securityKey }: { securityKey?: string }
                 </li>)}</ul>
               </details>}
               {securityKey && r && r.lines.some((l) => l.status === "in-statement") &&
-                <details className="mt-2"><summary className="cursor-pointer">Earlier events · not reapplied</summary>
+                <details className="mt-2" data-navigation-details="corporateactionreturns-2"><summary className="cursor-pointer">Earlier events · not reapplied</summary>
                   <ul className="mt-2 space-y-1">{r.lines.filter((l) => l.status === "in-statement").map((l) =>
                     <li key={l.action.id}>{fmtDate(l.action.exDate!)} · {l.action.purpose} · at or before this statement</li>)}</ul>
                 </details>}

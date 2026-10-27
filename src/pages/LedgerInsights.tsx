@@ -1,3 +1,4 @@
+import { useNavigationState } from "@/lib/useNavigationState";
 import { ExportableTable } from "@/components/ExportableTable";
 import { useTableExportIdentity } from "@/lib/tableExportSnapshot";
 import { InfiniteTableBody } from "@/components/InfiniteTableBody";
@@ -58,7 +59,7 @@ const window = (from: string | null, to: string | null) =>
 
 export function LedgerInsights() {
   const [status, setStatus] = useState<"loading" | "ready" | "unreachable">("loading");
-  const [tab, setTab] = useState<Tab>("transactions");
+  const [tab, setTab] = useNavigationState<Tab>("ledger-tab", "transactions", TABS.map(t => t.key));
   const [txn, setTxn] = useState<TxnData | null>(null);
   const [lots, setLots] = useState<LotData | null>(null);
   const [income, setIncome] = useState<IncomeData | null>(null);
@@ -159,7 +160,7 @@ export function LedgerInsights() {
         ))}
       </div>
 
-      <div className="min-h-0 flex-1 overflow-auto">
+      <div className="min-h-0 flex-1 overflow-auto" data-navigation-scroll="ledgerinsights-1">
         {status === "loading" && <div className="grid h-40 place-items-center text-sm text-slate-500">Reading the archive…</div>}
         {tab === "transactions" && viewTxn && (
           <TransactionsView key={scopeKey} data={viewTxn} sales={scope.owners ? null : sales}
@@ -322,7 +323,7 @@ function TransactionsView({ data, sales, scoped }: {
       )}
 
       <Card pad={false}>
-        <div className="max-h-[560px] overflow-auto">
+        <div className="max-h-[560px] overflow-auto" data-navigation-scroll="ledgerinsights-2">
           <ExportableTable className="min-w-full text-sm">
             <thead className="sticky top-0 border-b border-ink-700 bg-ink-800 text-left">
               <Tr view={txnView}>
@@ -368,7 +369,7 @@ function TransactionsView({ data, sales, scoped }: {
       {sales && sales.rows.length > 0 && (
         <Card title="Sales &amp; exits" subtitle="Per security, over the same window — and whether the name is still held" pad={false}
           right={<Pill tone="info">{sales.exits} exited · {sales.trims} trimmed</Pill>}>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" data-navigation-scroll="ledgerinsights-3">
             <ExportableTable className="min-w-full text-sm">
               <thead className="border-b border-ink-700 text-left">
                 <Tr view={saleView}>
@@ -575,7 +576,7 @@ function GainsView({ data }: { data: LotData | null }) {
           the class label claimed the family had picked their shares. */}
       {byBucket.length > 1 && (
         <Card title="Realised, by how the holding was run" subtitle="The same canonical total, split — the headline nets these together" pad={false}>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" data-navigation-scroll="ledgerinsights-4">
             <ExportableTable className="min-w-full text-sm">
               <thead className="border-b border-ink-700 text-left">
                 <Tr view={bucketView}>
@@ -637,7 +638,7 @@ function GainsView({ data }: { data: LotData | null }) {
       </p>
 
       <Card pad={false}>
-        <div className="max-h-[560px] overflow-auto">
+        <div className="max-h-[560px] overflow-auto" data-navigation-scroll="ledgerinsights-5">
           <ExportableTable className="min-w-full text-sm">
             <thead className="sticky top-0 border-b border-ink-700 bg-ink-800 text-left">
               <Tr view={lotView}>
@@ -733,7 +734,7 @@ function IncomeView({ data }: { data: IncomeData | null }) {
 
       {data.cash.length > 0 && (
         <Card title="Cash dividends" pad={false}>
-          <div className="max-h-[420px] overflow-auto">
+          <div className="max-h-[420px] overflow-auto" data-navigation-scroll="ledgerinsights-6">
             <ExportableTable className="min-w-full text-sm">
               <thead className="sticky top-0 border-b border-ink-700 bg-ink-800 text-left">
                 <Tr view={cashView}>
@@ -770,7 +771,7 @@ function IncomeView({ data }: { data: IncomeData | null }) {
 
       {data.corporate.length > 0 && (
         <Card title="Corporate actions" subtitle="Bonus, split and rights — an entitlement in shares, never an amount" pad={false}>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" data-navigation-scroll="ledgerinsights-7">
             <ExportableTable className="min-w-full text-sm">
               <thead className="border-b border-ink-700 text-left">
                 <Tr view={corpView}>

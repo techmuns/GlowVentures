@@ -1,18 +1,16 @@
-import { useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { useNavigationValue, numberNavigation } from "@/lib/useNavigationState";
+import { useCallback, useContext, useEffect, useLayoutEffect, useRef, type ReactNode } from "react";
 import { TableExportAllRows } from "./ExportableTable";
 import { isTableExporting } from "@/lib/tableExportSnapshot";
 
 /** Sorting, totals and exports use the full collection; scrolling only appends rows. */
 export function useInfiniteTable(total: number, resetKey: string, batchSize = 50) {
-  const [state, setState] = useState({ key: resetKey, limit: batchSize });
-  if (!isTableExporting() && state.key !== resetKey) setState({ key: resetKey, limit: batchSize });
-  const limit = isTableExporting() || state.key === resetKey ? state.limit : batchSize;
-  const shown = Math.min(total, limit);
+  // The window is presentation state as well: restore enough rows before scroll.
+  const [limit, setLimit] = useNavigationValue(`table-window:${resetKey}`, batchSize, numberNavigation);
+  const shown = Math.min(total, Math.max(batchSize, limit));
   const loadMore = useCallback(() => {
-    setState(current => current.key === resetKey
-      ? { ...current, limit: Math.min(total, current.limit + batchSize) }
-      : current);
-  }, [resetKey, total, batchSize]);
+    setLimit(current => Math.min(total, Math.max(batchSize, current) + batchSize));
+  }, [setLimit, total, batchSize]);
   return { total, shown, hasMore: shown < total, loadMore, resetKey };
 }
 

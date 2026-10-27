@@ -36,3 +36,12 @@ assert.deepEqual([...validNavigationState(picked, new Set(), new Set(['Kotak']))
 assert.deepEqual([...validNavigationState(picked, new Set(), new Set())], []);
 assert.equal(validNavigationState(picked, new Set(), undefined), picked, 'pending fund-only options retain their selection');
 console.log('PASS navigation snapshots: distinct history entries, reload, validation, bounded storage and blocked storage');
+
+// Shared codecs reject stale or malformed presentation values without coercion.
+const codecs = await import('../useNavigationState');
+assert.equal(codecs.booleanNavigation.read(false), false);
+assert.equal(codecs.booleanNavigation.read('false'), null);
+assert.equal(codecs.numberNavigation.read(137), 137);
+for (const invalid of [-1, NaN, Infinity, '137', {}]) assert.equal(codecs.numberNavigation.read(invalid), null);
+assert.deepEqual(codecs.nullableStringsNavigation.read(['Energy', 'Financials']), ['Energy', 'Financials']);
+assert.equal(codecs.nullableStringsNavigation.read(['Energy', 42]), null);

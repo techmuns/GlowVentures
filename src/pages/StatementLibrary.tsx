@@ -1,3 +1,4 @@
+import { useNavigationState, useNavigationValue, booleanNavigation, nullableStringNavigation } from "@/lib/useNavigationState";
 import { useTableExportFilter } from "@/lib/tableExportSnapshot";
 import { ExportableTable } from "@/components/ExportableTable";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -70,7 +71,7 @@ function FormatBlock({ format, docs }: { format: string; docs: LibraryDoc[] }) {
       </div>
       {/* Wide on a phone; the table scrolls inside its own container so the page
           body never scrolls sideways (CLAUDE.md, Conventions). */}
-      <div className="overflow-x-auto rounded-lg border border-ink-700">
+      <div className="overflow-x-auto rounded-lg border border-ink-700" data-navigation-scroll="statementlibrary-1">
         <ExportableTable className="min-w-full text-sm"
           data-table-static="one file type inside a provider folder; the Data Audit viewer sorts the rows inside any one document">
           <thead className="border-b border-ink-700 text-left text-[11px] uppercase tracking-wide text-slate-500">
@@ -263,7 +264,7 @@ function UploadLog({ inbox, batches, served, folders, onOpen }: {
   folders: ReadonlySet<string>;
   onOpen: (provider: string) => void;
 }) {
-  const [all, setAll] = useState(false);
+  const [all, setAll] = useNavigationValue("inbox-all", false, booleanNavigation);
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const rows = useMemo(() => batches.flatMap((b) => b.files.map((f) => ({ b, f, v: fileView(f, served) }))), [batches, served]);
@@ -288,7 +289,7 @@ function UploadLog({ inbox, batches, served, folders, onOpen }: {
         {tally("held") > 0 && <Pill tone="warn">{tally("held")} held</Pill>}
       </div>
       {err && <p className="mb-2 text-xs text-loss" role="status" data-prose-ok="why a retry or removal did not go through">{err}</p>}
-      <div className="overflow-x-auto rounded-lg border border-ink-700">
+      <div className="overflow-x-auto rounded-lg border border-ink-700" data-navigation-scroll="statementlibrary-2">
         <ExportableTable className="min-w-full text-sm"
           data-table-static="the inbox's own log, newest upload first — each file's status as the intake run left it">
           <thead className="border-b border-ink-700 text-left text-[11px] uppercase tracking-wide text-slate-500">
@@ -483,8 +484,8 @@ function FolderTile({ folder, selected, onSelect, onOpen }: {
 export function StatementLibrary() {
   const [status, setStatus] = useState<"loading" | "ready" | "restricted">("loading");
   const [manifest, setManifest] = useState<ManifestEntry[]>([]);
-  const [query, setQuery] = useState("");
-  const [selected, setSelected] = useState<string | null>(null);
+  const [query, setQuery] = useNavigationState<string>("library-search", "");
+  const [selected, setSelected] = useNavigationValue<string | null>("library-selection", null, nullableStringNavigation);
   const [searchParams, setSearchParams] = useSearchParams();
   const linkedDocument = manifest.find(d => d.docKey === searchParams.get('file') || d.sourcePath === searchParams.get('path'));
   const openProvider = linkedDocument?.provider ?? searchParams.get(PROVIDER_PARAM);

@@ -1,3 +1,4 @@
+import {  } from "@/lib/useNavigationState";
 /**
  * ── SECTOR ATTRIBUTION, AS SECTOR COMPOSITION DRAWS THE SECTORS (Stage 10gs) ──
  *
@@ -89,7 +90,7 @@ export default function SectorAttribution({ consolidated, exposure, marketOf, ma
   const { portfolio, fmtFromBase } = usePortfolio();
   const [set, setSet] = useViewParam(SETS, {}, 'sset');
   // Edit Columns and Export Excel share the set toggle's row, not rows of their own (Stage 10gy).
-  const view = useTableView('cio-sector-attribution', COLS, { manualEditor: true }), exp = useExpanded();
+  const view = useTableView('cio-sector-attribution', COLS, { manualEditor: true }), exp = useExpanded("sector-attribution");
   const [tools, setTools] = useState<HTMLSpanElement | null>(null);
   if (!portfolio) return null;
   const money = (n: number | null | undefined, sign = false) => fmtFromBase(n, { compact: true, sign });
@@ -187,7 +188,7 @@ export default function SectorAttribution({ consolidated, exposure, marketOf, ma
         <span ref={setTools} className="inline-flex" data-table-tools />
       </div>
     </div>
-    <div className="overflow-x-auto"><ExportableTable className="min-w-full whitespace-nowrap text-[12.5px]" data-sa-table controlsHost={tools}>
+    <div className="overflow-x-auto" data-navigation-scroll="sectorattribution-1"><ExportableTable className="min-w-full whitespace-nowrap text-[12.5px]" data-sa-table controlsHost={tools}>
       <thead className="border-b border-ink-700 bg-ink-800"><Tr view={view}>
         <SortHeader col="sector" view={view} align="left" pad="px-4 py-2">Sector</SortHeader>
         <SortHeader col="holdings" view={view} pad="px-4 py-2" title="Statement holdings behind the row. One stock held in two accounts is two holdings.">Holdings</SortHeader>

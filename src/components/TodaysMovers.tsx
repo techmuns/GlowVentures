@@ -1,3 +1,4 @@
+import { useNavigationState } from "@/lib/useNavigationState";
 import { ExportableTable } from "@/components/ExportableTable";
 import { useEffect, useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
@@ -136,7 +137,7 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
    * of the buttons below is the order they are OFFERED in, so both follow the
    * default rather than being set independently of it.
    */
-  const [rank, setRank] = useState<"pct" | "impact">("pct");
+  const [rank, setRank] = useNavigationState<"pct" | "impact">("today-rank", "pct", ["pct", "impact"]);
   const [indices, setIndices] = useState<IndexFeed | null>(null);
   /**
    * THREE STATES, NOT TWO — the same rule `IndexStrip` already follows.
@@ -599,7 +600,7 @@ function MoverList({ title, tone, rows, total, count, unknown, fmt, rank, noun }
           No priced {noun} holding moved this way today
         </p>
       ) : (
-        <div className="mt-2 max-h-[420px] overflow-y-auto lg:max-h-none lg:min-h-[160px] lg:flex-1" data-mover-scroll={tone}>
+        <div className="mt-2 max-h-[420px] overflow-y-auto lg:max-h-none lg:min-h-[160px] lg:flex-1" data-mover-scroll={tone} data-navigation-scroll="todaysmovers-1">
         <ExportableTable className="w-full text-[12px]">
           <tbody className="divide-y divide-ink-700">
             {rows.map((r) => (

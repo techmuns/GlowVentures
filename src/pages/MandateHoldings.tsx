@@ -1,3 +1,4 @@
+import { useNavigationState } from "@/lib/useNavigationState";
 import { useTableExportFilter, useTableExportExpansion } from "@/lib/tableExportSnapshot";
 import { ExportableTable } from "@/components/ExportableTable";
 import { Fragment, useEffect, useMemo, useState } from "react";
@@ -283,7 +284,7 @@ const TRADE_COLS = ["security", "trades", "bought", "sold", "realized", "period"
 export function MandateHoldings() {
   const { accountId = "" } = useParams();
   const { portfolio, consolidated, statementPortfolio, basis, fmtFromBase, convertFromBase, displayCurrency, quotesStatus, scope } = usePortfolio();
-  const [qFilter, setQ] = useState("");
+  const [qFilter, setQ] = useNavigationState<string>("strategy-search", "");
   const q = useTableExportFilter(qFilter, "");
 
   const accIdx = useMemo(() => accountIndex(portfolio?.accounts ?? []), [portfolio]);
@@ -895,7 +896,7 @@ export function MandateHoldings() {
         subtitle={`As ${account.provider} printed it on ${fmtDate(account.asOf)}. Every constituent of this mandate — the shares the manager chose and the cash it is holding back. Weight is within this mandate, not within the book.`}
         right={<SearchInput value={q} onChange={setQ} placeholder="Filter by name or ISIN…" className="w-56"
           suggestions={rows.map((r) => r.security)} />}>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" data-navigation-scroll="mandateholdings-1">
           <ExportableTable className="min-w-full whitespace-nowrap text-sm">
             <thead className="border-b border-ink-700">
               <Tr view={holdingsView}>
@@ -1124,7 +1125,7 @@ function HeldByMany({ kind, name, provider, accounts, fund }: {
   kind: "mandate" | "fund"; name: string; provider: string | null; accounts: Account[]; fund?: string;
 }) {
   const { portfolio, consolidated, statementPortfolio, basis, fmtFromBase, convertFromBase, displayCurrency, quotesStatus, scope } = usePortfolio();
-  const [qFilter, setQ] = useState("");
+  const [qFilter, setQ] = useNavigationState<string>("strategy-search", "");
   const q = useTableExportFilter(qFilter, "");
   const holdersView = useTableView("strategy-holders", HOLDER_COLS, { investmentDates: true });
   const holdingsView = useTableView("strategy-holdings", GROUP_COLS, { reviewKind: "holding" });
@@ -1343,7 +1344,7 @@ function HeldByMany({ kind, name, provider, accounts, fund }: {
 
       <Card className="mt-5" pad={false} title="Who holds it"
         subtitle="One line per family account, each struck over its own statement. The Total is the sum of the lines; its return is FIFO over every account at once.">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" data-navigation-scroll="mandateholdings-2">
           <ExportableTable className="min-w-full whitespace-nowrap text-sm" data-strategy-holders>
             <thead className="border-b border-ink-700">
               <Tr view={holdersView}>
@@ -1411,7 +1412,7 @@ function HeldByMany({ kind, name, provider, accounts, fund }: {
         subtitle={`Every holding of all ${n} accounts, each on its own member's line with its own quantity, cost and price. Weight is within this ${kind === "mandate" ? "mandate" : "fund"}, not within the book.`}
         right={<SearchInput value={q} onChange={setQ} placeholder="Filter by name, ISIN or member…" className="w-56"
           suggestions={[...new Set(rows.map((r) => r.security))]} />}>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" data-navigation-scroll="mandateholdings-3">
           <ExportableTable className="min-w-full whitespace-nowrap text-sm" data-strategy-holdings>
             <thead className="border-b border-ink-700">
               <Tr view={holdingsView}>
@@ -1634,7 +1635,7 @@ function CapitalIn({ account, owner }: { account: Account; owner?: string }) {
             : group.contributions === 1 ? "one payment" : `${group.contributions} payments`}
         </span>
       }>
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto" data-navigation-scroll="mandateholdings-4">
         <ExportableTable className="min-w-full whitespace-nowrap text-sm" data-capital-table={account.accountId}>
           <thead className="border-b border-ink-700">
             <Tr view={capitalView}>
@@ -1788,7 +1789,7 @@ function ManagerTrades({ account, owner }: { account: Account; owner?: string })
   const { fmtFromBase } = usePortfolio();
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [txns, setTxns] = useState<Txn[]>([]);
-  const [openState, setOpen] = useState<Set<string>>(() => new Set());
+  const [openState, setOpen] = useNavigationState("strategy-transactions-expanded", () => new Set<string>());
   const open = useTableExportExpansion(openState);
   const money = (v: number | null) => (v === null ? null : fmtFromBase(v, { compact: true }));
 
@@ -1834,7 +1835,7 @@ function ManagerTrades({ account, owner }: { account: Account; owner?: string })
           needs={`${account.provider} issues no transaction statement for this account in this drop, so what it bought and sold over the period was never reported here. Its HOLDINGS above are what the statement does carry.`} />
       ) : (
         <>
-          <div className="overflow-x-auto rounded-lg border border-ink-700">
+          <div className="overflow-x-auto rounded-lg border border-ink-700" data-navigation-scroll="mandateholdings-5">
             <ExportableTable className="min-w-full text-[13px]" data-manager-trades>
               <thead className="bg-ink-800">
                 <Tr view={tradeView} className="border-b border-ink-700">
@@ -1851,7 +1852,7 @@ function ManagerTrades({ account, owner }: { account: Account; owner?: string })
                   const isOpen = open.has(ins.key);
                   return (
                     <Fragment key={ins.key}>
-                      <Tr view={tradeView} data-manager-row={ins.key} data-buys={ins.buys} data-sells={ins.sells} className="cursor-pointer hover:bg-ink-700/30"
+                      <Tr view={tradeView} data-navigation-expanded aria-expanded={isOpen} data-manager-row={ins.key} data-buys={ins.buys} data-sells={ins.sells} className="cursor-pointer hover:bg-ink-700/30"
                         onClick={() => setOpen((prev) => { const n = new Set(prev); if (n.has(ins.key)) n.delete(ins.key); else n.add(ins.key); return n; })}>
                         <td className="px-3 py-1.5">
                           <div className="flex items-center gap-1.5">

@@ -5013,7 +5013,7 @@ export function PortfolioMonitor() {
                         </td>
                         <td className="px-2 py-1.5 text-slate-400">
                           {multi ? (
-                            <button type="button" onClick={() => toggleRow(r.key)} aria-expanded={isOpen}
+                            <button type="button" onClick={() => toggleRow(r.key)} data-navigation-expanded aria-expanded={isOpen}
                               title={`Held by: ${r.entities.join(", ")}`}
                               className="pill cursor-pointer whitespace-nowrap transition-colors hover:border-champagne-500/40 hover:text-champagne-400 ring-focus">
                               <ChevronRight className={`h-3 w-3 shrink-0 transition-transform ${isOpen ? "rotate-90" : ""}`} />
@@ -5986,7 +5986,7 @@ function DealtInside({ group, rowKey, open, toggle, sort, money }: {
     return b == null || s == null ? null : b - s;
   };
   return (
-    <div className="overflow-x-auto rounded-lg border border-ink-700 bg-ink-800" data-dealt-panel={rowKey}>
+    <div className="overflow-x-auto rounded-lg border border-ink-700 bg-ink-800" data-dealt-panel={rowKey} data-navigation-scroll="portfoliomonitor-1">
       <SortableTable className="min-w-full text-[12px]" storageKey="monitor-dealt" columns={DEALT_COLS}>
         {(dv) => (<>
         <thead>
@@ -6561,7 +6561,7 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
           data-dated-section={sec.key} data-dated-label={u.label} data-dated-first={u.first} data-dated-last={u.last}
           data-club-paid={t.contributions > 0 ? t.paidIn : undefined} data-club-value={t.value ?? undefined}
           data-club-bought={t.buys > 0 ? t.bought : undefined}
-          data-open={isOpen ? "" : undefined} aria-expanded={isOpen}
+          data-open={isOpen ? "" : undefined} data-navigation-expanded aria-expanded={isOpen}
           className="cursor-pointer hover:bg-ink-700/40" onClick={() => toggle(setOpenClub, u.key)}>
           <td className="px-3 py-2.5">
             <div className="flex items-center gap-1.5">
@@ -7122,7 +7122,7 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
                                     <span className="font-normal text-slate-500">· {cap.provider} · a/c {cap.accountNo}</span>
                                     {cap.committed != null && <span className="font-normal text-slate-500">· committed <span className="mono text-slate-400">{money(cap.committed)}</span>{cap.undrawn != null && <>, <span className="mono text-slate-400">{money(cap.undrawn)}</span> still to call</>}</span>}
                                   </div>
-                                  <div className="overflow-x-auto rounded-lg border border-ink-700 bg-ink-800">
+                                  <div className="overflow-x-auto rounded-lg border border-ink-700 bg-ink-800" data-navigation-scroll="portfoliomonitor-2">
                                     <SortableTable className="min-w-full text-[12px]"
                                       storageKey="monitor-mine-moves" columns={MINE_MOVE_COLS}>
                                       {(mvv) => (<>

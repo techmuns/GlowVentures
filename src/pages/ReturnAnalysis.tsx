@@ -515,7 +515,7 @@ export function ReturnAnalysis() {
             correct: those ARE classes. */}
         <Card className="lg:col-span-2" title="Contribution by sector"
           subtitle="Company shares by sector, funds by class, each as a share of total cost — every share in a company, a manager's mandate included, and every fund wrapper under its own class.">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" data-navigation-scroll="returnanalysis-1">
             <ExportableTable className="w-full text-[12.5px]">
               <thead className="label-xs border-b border-ink-700">
                 <Tr view={sectorView}>
@@ -593,7 +593,7 @@ export function ReturnAnalysis() {
 
       <Card className="mt-5" title="Per account"
         subtitle="Every account, with its best and worst name — the same measure on every account the book carries; a PMS mandate is one account here, and so is the family's own demat.">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" data-navigation-scroll="returnanalysis-2">
           <ExportableTable className="w-full text-[12.5px]">
             <thead className="label-xs border-b border-ink-700">
               <Tr view={accountView}>
@@ -699,7 +699,7 @@ function ContribTable({ rows, money, storageKey }: {
     return <p className="py-6 text-center text-[11.5px] text-slate-500">{DASH} no priced positions in the book</p>;
   }
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto" data-navigation-scroll="returnanalysis-3">
       <ExportableTable className="w-full text-[12.5px]">
         <thead className="label-xs border-b border-ink-700">
           <Tr view={view}>
@@ -753,7 +753,7 @@ function DrawdownTable({ index }: { index: { date: string; index: number }[] }) 
     fromPeak: (r) => r.fromPeak,
   });
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto" data-navigation-scroll="returnanalysis-4">
       <ExportableTable className="min-w-full text-sm">
         <thead className="border-b border-ink-700">
           <Tr view={view}>

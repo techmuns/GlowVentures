@@ -1,3 +1,4 @@
+import { useNavigationState } from "@/lib/useNavigationState";
 import { useEffect, useState } from "react";
 import { ExternalLink, FileText, AlertTriangle } from "lucide-react";
 import { Card } from "@/components/Card";
@@ -62,7 +63,7 @@ const TAB_LABEL: Record<PanelTab, string> = {
 const TAB_ORDER: PanelTab[] = ["financials", "statements", "ratios", "estimates", "documents", "concalls", "insider"];
 
 export function ResearchPanel({ ticker, name }: { ticker: string | null; name: string }) {
-  const [tab, setTab] = useState<PanelTab>("financials");
+  const [tab, setTab] = useNavigationState<PanelTab>("research-tab", "financials", TAB_ORDER);
   const [state, setState] = useState<Research | { failureCode: string; upstreamStatus: number | null; detail: string | null } | null | undefined>(undefined);
   /**
    * The screener document, held for the CASH FLOW tab's unit check.
@@ -210,7 +211,7 @@ export function ResearchPanel({ ticker, name }: { ticker: string | null; name: s
       )}
 
       {isKind(tab) && state && !isResearchError(state) && state.format !== "documents" && tab !== "statements" && (
-        <div className="max-h-[560px] overflow-auto pr-1">
+        <div className="max-h-[560px] overflow-auto pr-1" data-navigation-scroll="researchpanel-1">
           {/* Estimates arrive as a pandas pipe-table rather than prose, so both
               formats go through the same renderer; only the financials need
               re-ordering into reading order. */}
