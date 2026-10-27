@@ -1,3 +1,10 @@
+export type NavigationWindow = { key: string; limit: number };
+export function readNavigationWindow(raw: unknown): NavigationWindow | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const value = raw as NavigationWindow;
+  return typeof value.key === 'string' && Number.isSafeInteger(value.limit) && value.limit > 0 ? value : null;
+}
+
 /** Intersect explicit comparison picks with the available choices, retaining order. */
 export function validNavigationPicks(value: string[] | null, allowed: ReadonlySet<string>, limit: number): string[] | null {
   if (value === null) return null;

@@ -66,3 +66,7 @@ for (const rowAttribute of ['data-sector-row', 'data-corporate-return-row', 'dat
   const second = navigationElements(root, 'scroll');
   for (const [key, element] of first) assert.equal(second.get(key), element, rowAttribute);
 }
+
+const { readNavigationWindow } = await import('../navigationMemory');
+assert.deepEqual(readNavigationWindow({ key: 'sorted/filtered view', limit: 150 }), { key: 'sorted/filtered view', limit: 150 });
+for (const invalid of [null, {}, { key: 'x', limit: 0 }, { key: 'x', limit: 1.2 }, { key: 1, limit: 50 }]) assert.equal(readNavigationWindow(invalid), null);
