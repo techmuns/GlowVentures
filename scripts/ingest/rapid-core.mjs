@@ -43,7 +43,9 @@ export async function prepareRapidStatement({ baseline, files, references, passw
       ? await readPdf(bytes, { passwords, ocr: false })
       : gridFromSpreadsheet(Buffer.from(bytes));
     // Scans and unfamiliar layouts retain the full intake path, including OCR.
-    if (grid.error) return { decision: 'slow_path', reason: 'The statement needs the full reader.' };
+    if (grid.error || (extOf(v.name) === 'pdf' && (grid.inkKind || !grid.pages.some(p => p.text?.trim())))) {
+      return { decision: 'slow_path', reason: 'The statement needs the full reader.' };
+    }
     for (const part of extractDocuments(path.resolve(sourcePrefix, v.name), grid)) {
       const doc = distinguish(part.doc, keys);
       settleStatus(doc);

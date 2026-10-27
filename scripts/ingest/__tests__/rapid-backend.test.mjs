@@ -2,6 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { rapidStatementRequest, rapidStatementsEnabled } from '../../../shared/rapidStatementBackend.mjs';
+import { sameFinancialStatement } from '../lib/publication.mjs';
+
+test('a later static copy cannot erase a previously verified financial row', () => {
+  const before = { docKey: 'fixture', sourcePath: 'source/new.pdf', status: 'ok', warnings: [],
+    cashFlows: [{ date: '2026-10-01', amount: 1, source: 'fixture' }, { date: '2026-10-02', amount: 2, source: 'fixture' }] };
+  assert.equal(sameFinancialStatement(before, { ...before, sourcePath: 'source/later.pdf', warnings: [{ code: 'pdf-encrypted' }], pages: 4 }), true);
+  assert.equal(sameFinancialStatement(before, { ...before, cashFlows: before.cashFlows.slice(0, 1) }), false);
+});
 
 test('a private service binding preserves the request and never exposes its credential in the URL', async () => {
   let received;

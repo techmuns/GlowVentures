@@ -14,6 +14,7 @@ try {
     const context = await browser.newContext();
     let published = compiled;
     await context.route('**/api/**', route => route.fulfill({ json: { ok: false, reason: 'local publication fixture' } }));
+    await context.route('**/api/statement-data**', route => route.fulfill({ status: 204 }));
     await context.route('**/publication.json', route => route.fulfill({ json: { schemaVersion: 1, revision: published } }));
     await context.addInitScript(() => {
       if (location.protocol.startsWith('http')) sessionStorage.setItem('publication-test-loads', String(Number(sessionStorage.getItem('publication-test-loads') || 0) + 1));

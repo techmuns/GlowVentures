@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { rapidProcessor } from '../rapid-processor.mjs';
+import { rapidProcessor, ReaderVersionChanged } from '../rapid-processor.mjs';
 import { CANONICAL_BOOK_KEYS } from '../../../shared/canonicalBookKeys.mjs';
 import { makeBatch, withBatch, queuedFiles, waitingStatementFiles } from '../../../shared/statementInbox.mjs';
 
@@ -41,7 +41,7 @@ function harness({ refuseSave = false, decision = 'verified' } = {}) {
         book, documents: [...baseline, doc], records: [{ name: files[0].name, manifest: { ...doc, sourcePath: `source/${files[0].name}` },
           files: { 'document.json': doc } }], duplicates: [] };
     } });
-  return { processor, initial, log: () => log, saved: () => saved, prepared, publications: () => publications, projections };
+  return { processor, initial, versions, log: () => log, saved: () => saved, prepared, publications: () => publications, projections };
 }
 
 test('a new statement publishes one complete version before Ready; old views stay pinned', async () => {
@@ -77,4 +77,12 @@ test('a read gap saves its review outcome while preserving all published figures
   const receipt = await h.processor.submit(id(1));
   assert.equal(receipt.files[0].status, 'held');
   assert.deepEqual(h.saved(), h.initial);
+});
+test('old source facts remain inspectable but newer rules cannot compute an old reader’s reports', async () => {
+  const h = harness(); await h.processor.initialize();
+  const old = { ...structuredClone(h.initial), revision: revision(9), readerRevision: 'b'.repeat(64) };
+  h.versions.set(old.revision, old);
+  assert.deepEqual(await h.processor.asset(old.revision, 'canonical/book.json'), h.initial.book);
+  await assert.rejects(h.processor.asset(old.revision, 'ledger/transactions.json'), ReaderVersionChanged);
+  assert.equal(h.projections.length, 0);
 });

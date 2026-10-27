@@ -43,6 +43,17 @@ const content = d => {
     ? Object.fromEntries(Object.entries(v).filter(([k]) => !['source', 'dedupeGroup', 'alsoReportedUnder'].includes(k)).map(([k, x]) => [k, replace(x)])) : v;
   return digest(replace(copy));
 };
+/** Economic equality when a previously uploaded original later reaches main.
+ * Physical page spans, read notes and attribution evidence may differ; no
+ * financial row or populated financial field may disappear during migration. */
+export function sameFinancialStatement(left, right) {
+  const facts = doc => {
+    const copy = { ...doc };
+    for (const key of ['warnings', 'pages', 'sourcePages', 'ownerSource', 'accountNoSource']) delete copy[key];
+    return content(copy);
+  };
+  return facts(left) === facts(right);
+}
 
 const carriesFacts = d => RECORD_SECTIONS.some(k => d[k]?.length) || d.flows || d.commitment;
 const unsafeSource = p => typeof p !== 'string' || !p.startsWith('source/') || p.split('/').some(x => !x || x === '..' || x === '.') || /[\\\r\n\0]/.test(p);

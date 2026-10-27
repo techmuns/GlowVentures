@@ -194,7 +194,10 @@ export function rapidProcessor({ store, inbox, initial, references, instantiate,
       if (name === 'canonical/book.json') return snap.book;
       if (name === 'publication.json') return { schemaVersion: 1, readerRevision: snap.readerRevision,
         archiveRevision: snap.archiveRevision, bookRevision: digest(snap.book),
-        statementDocuments: snap.documents.map(d => ({ document: d.docKey, revision: digest(d), evidence: `provenance/documents/${d.docKey}.json` })) };
+        statementDocuments: snap.documents.map(d => ({ document: d.docKey, revision: digest(d), evidence: `provenance/documents/${d.docKey}.json` })),
+        canonical: 'canonical/book.json', positions: 'provenance/positions.json',
+        overlays: { livePrices: 'Quotes and NAVs retain their own provider/time; they do not overwrite the statement evidence.',
+          enteredData: 'Entered capital calls and investment profiles retain their separate dashboard-store history.' } };
       if (name === 'audit/manifest.json') return snap.manifest;
       const audit = /^audit\/([a-z0-9._-]+)\/([a-zA-Z0-9._-]+\.json)$/.exec(name);
       if (audit) {

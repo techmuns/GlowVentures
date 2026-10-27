@@ -11,6 +11,7 @@ const results = [];
 async function open() {
   const context = await browser.newContext();
   await context.route('**/api/**', r => r.fulfill({ json: { ok: false, reason: 'local recovery fixture' } }));
+  await context.route('**/api/statement-data**', route => route.fulfill({ status: 204 }));
   await context.route('https://fonts.**', r => r.abort());
   const page = await context.newPage();
   let documents = 0;
