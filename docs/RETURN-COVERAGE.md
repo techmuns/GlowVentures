@@ -1,10 +1,10 @@
 # Return source coverage
 
-18 of 83 accounts have verified opening values, dated external capital and a closing valuation.
+18 of 84 accounts have verified opening values, dated external capital and a closing valuation.
 
 Each account ends at its own verified valuation date. The consolidated return must not include an uncovered account’s closing value without its opening stake and cash history.
 
-Latest delivery: MOPWM’s family transaction report generated 23 October 2026, under `source/october-2026-e/`. It is an adviser’s record, not a statement, and supplies exact purchase costs only; no return below reads it. Before it, two Helios Mutual Fund account statements dated 26 October 2026 (folios 10355977 and 10056128), under `source/october-2026-d/`. Original PDFs/ZIPs remain private.
+Latest delivery: Franklin India Credit AIF – Scheme I’s statement of account for folio 10387 (23 October 2026; ₹20 Cr paid in on 22 October) and MOPWM’s family transaction report of the same date, under `source/october-2026-e/`. The transaction report is an adviser’s record, not a statement, and supplies exact purchase costs only; no return below reads it. Before it, two Helios Mutual Fund account statements dated 26 October 2026 (folios 10355977 and 10056128), under `source/october-2026-d/`. Original PDFs/ZIPs remain private.
 
 Historical opening NAVs come from AMFI’s [31 March 2026 published file](https://portal.amfiindia.com/DownloadNAVHistoryReport_Po.aspx?frmdt=31-Mar-2026&todt=31-Mar-2026), joined by exact ISIN. 3P’s opening uses its own 31 March reclassification NAV and reconciled unit balance. These values only establish return openings; they do not alter current statement holdings.
 
@@ -28,6 +28,7 @@ Historical opening NAVs come from AMFI’s [31 March 2026 published file](https:
 | Buoyant Capital | 103473 | Ajay Jaisinghani | 2026-09-30 | — | Opening valuation and complete dated cash flows are missing |
 | Carnelian Asset Management and Advisors Pvt Ltd | 3517383 | Ajay Jaisinghani | 2026-10-07 | 2026-10-07 | Complete through the selected date |
 | Carnelian Bharat Amritkaal Fund | 4551 | Ankita Jaisinghani | 2026-07-31 | — | Opening valuation and complete dated cash flows are missing |
+| Franklin India Credit AIF | 10387 | Ajay Jaisinghani | 2026-10-22 | — | Its capital arrived on 2026-10-22, after its only valuation (the NAV as on 2026-10-21); a later valuation measures it |
 | Goldstandard Wealth Private Limited | 100022 | Ankita Jaisinghani | 2026-10-06 | 2026-10-06 | Complete through the selected date |
 | Goldstandard Wealth Private Limited | 100023 | Ajay Jaisinghani | 2026-10-06 | 2026-10-06 | Complete through the selected date |
 | Green Lantern Capital LLP | 510854 | Ankita Jaisinghani | 2026-10-06 | 2026-09-22 | Verified cash-flow coverage ends 2026-09-23; closing valuation is 2026-10-06 |

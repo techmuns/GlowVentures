@@ -247,16 +247,29 @@ const familyEntries = (p: { security: string }, acct: { strategy?: string | null
   // public (Carnelian Bharat Amritkaal, Delphi, Founders Fund ×2) — ₹42.7 Cr
   // committed against ₹55.0 Cr. Struck on `BOOK_COMMITMENTS`, which is the set
   // the family counted, and on each commitment's OWN name and account.
+  //
+  // A SIXTEENTH, OPENED AFTER THEY SAID IT (Stage 10hx): Franklin India Credit
+  // AIF, called and paid on 22 Oct. The family's table does not place it and is
+  // not made to; its side is the next rule's — the SEBI category its own
+  // statement prints, Category II, which is private — until the family says.
+  const FAMILY_SAID = "2026-09-23";
   const byC = BOOK_COMMITMENTS.map((c) => {
     const a = idx.get(c.accountId);
     const e = familyEntries({ security: c.name }, a);
-    return { c, side: e.length ? e[0].side : null };
+    const held = deduped.find((p) => p.accountId === c.accountId && p.assetClass === "AIF");
+    const printed = held ? readAifCategory(held, a).category : null;
+    const opened = (c.calls ?? []).map((k) => k.date).sort()[0] ?? null;
+    return { c, family: e.length ? e[0].side : null, opened, printed,
+      side: e.length ? e[0].side : printed === CATEGORY_I || printed === CATEGORY_II ? "private" : null };
   });
-  const priv = byC.filter((x) => x.side === "private");
-  const pub = byC.filter((x) => x.side === "listed");
-  ok("the book carries fifteen capital accounts", BOOK_COMMITMENTS.length === 15, String(BOOK_COMMITMENTS.length));
-  ok("every capital account is placed by the family's own table", byC.every((x) => x.side !== null),
-    byC.filter((x) => x.side === null).map((x) => x.c.name).join(", "));
+  const priv = byC.filter((x) => x.family === "private");
+  const pub = byC.filter((x) => x.family === "listed");
+  const later = byC.filter((x) => x.family === null);
+  ok("the book carries the family's fifteen capital accounts and one opened after", BOOK_COMMITMENTS.length === 16
+    && later.length === 1, `${BOOK_COMMITMENTS.length}: ${later.map((x) => x.c.name).join(", ")}`);
+  ok("every capital account is placed by the family's own table, or — opened after it — by its own printed category",
+    later.every((x) => x.side !== null && !!x.opened && x.opened > FAMILY_SAID),
+    later.map((x) => `${x.c.name} · ${x.printed} · first call ${x.opened}`).join(", "));
   ok("the family's private-market capital accounts are the eleven they named", priv.length === 11,
     `${priv.length}: ${priv.map((x) => x.c.name.slice(0, 24)).join(", ")}`);
   ok("the family's public-market drawdown funds are the four they named", pub.length === 4,

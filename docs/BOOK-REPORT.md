@@ -7,9 +7,9 @@ Generated — **do not edit by hand**.
 
 | | |
 | --- | ---: |
-| Consolidated market value | 8,80,58,55,107.48 |
-| Positions | 464 |
-| Accounts | 83 |
+| Consolidated market value | 9,00,58,45,108.05 |
+| Positions | 465 |
+| Accounts | 84 |
 | Owners | 9 |
 | Newest as-of | 2026-10-26 |
 
@@ -35,6 +35,7 @@ Generated — **do not edit by hand**.
 | 103473 | Buoyant Capital | Ajay Jaisinghani | Buoyant Opportunities Strategy - Investor | 2026-09-30 | 1 | 48,06,77,231.99 |
 | 3517383 | Carnelian Asset Management and Advisors Pvt Ltd | Ajay Jaisinghani | CARNELIAN BESPOKE PORTFOLIO | 2026-09-30 | 13 | 38,16,29,575.81 |
 | 4551 | Carnelian Bharat Amritkaal Fund | Ankita Jaisinghani | — | 2026-07-31 | 1 | 16,31,15,312.43 |
+| 10387 | Franklin India Credit AIF | Ajay Jaisinghani | Franklin India Credit AIF – Scheme I | 2026-10-22 | 1 | 19,99,90,000.57 |
 | 100022 | Goldstandard Wealth Private Limited | Ankita Jaisinghani | Aristos Equity Portfolio | 2026-10-06 | 33 | 7,67,18,509.44 |
 | 100023 | Goldstandard Wealth Private Limited | Ajay Jaisinghani | Aristos Equity Portfolio | 2026-10-06 | 33 | 18,03,31,134.41 |
 | 510854 | Green Lantern Capital LLP | Ankita Jaisinghani | GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND | 2026-07-27 | 34 | 5,79,66,679.22 |
@@ -211,7 +212,7 @@ The review's dated rows behind the holdings it values (65 rows, `BOOK_REVIEW_FLO
 
 | Owner | Accounts | Positions | Market value |
 | --- | ---: | ---: | ---: |
-| Ajay Jaisinghani | 34 | 229 | 5,32,31,15,877.58 |
+| Ajay Jaisinghani | 35 | 230 | 5,52,31,05,878.15 |
 | Ankita Jaisinghani | 18 | 113 | 1,61,57,84,900.2 |
 | Bharat Jaisinghani | 14 | 96 | 75,26,73,947.27 |
 | Aarti Jaisinghani | 3 | 6 | 97,70,23,814.92 |
@@ -257,17 +258,17 @@ page alone. `BOOK_POLYCAB` is its only reader; remove its key from
 | POLYCAB INDIA LIMITED - EQ | Bharat Jaisinghani | HDFC Bank (NSDL demat) 22025655 | 2026-03-31 | 51,08,911 | — |
 | POLYCAB INDIA LIMITED - EQ | Ajay Jaisinghani | ICICI Bank (NSDL demat) 49794950 | 2026-03-31 | 1,39,01,229 | 1,23,51,24,19,665 |
 
-Together **1,23,51,24,19,665**, excluded from the 8,80,58,55,107.48 consolidated market value above.
+Together **1,23,51,24,19,665**, excluded from the 9,00,58,45,108.05 consolidated market value above.
 
 ## The family's own dated investments
 
 **22** of those account(s) start every class's record at nil — a printed running unit balance that starts from zero on the class's first allotment, or a first allotment on the day the class's own series name says it was issued — which proves their record reaches inception: 3p-investment-managers-3000048, ask-absolute-return-fund-9039917111, ask-absolute-return-fund-9039917144, baring-private-equity-india-fund-AIFM_BPEPF6_0584, buoyant-capital-103472, buoyant-capital-103473, carnelian-bharat-amritkaal-fund-4551, hdfc-mutual-fund-16002141, helios-mutual-fund-10056128, helios-mutual-fund-10355977, icici-prudential-mutual-fund-14320536, icici-prudential-mutual-fund-36378950, icici-prudential-mutual-fund-36379637, invesco-mutual-fund-3041491081, invesco-mutual-fund-3041491145, invesco-mutual-fund-3041794916, kotak-mahindra-mutual-fund-7125255, motilal-oswal-active-momentum-fund-904168868444, motilal-oswal-delphi-equity-fund-9049241536, motilal-oswal-founders-fund-90410016093, motilal-oswal-founders-fund-90410016104, motilal-oswal-hedged-equity-multi-factor-strategy-90410014574.
 
-**124** dated contribution(s) totalling **6,01,35,96,369.29** and **408** withdrawal(s) totalling **1,68,43,11,381.24**, across **43 of 83** account(s).
+**125** dated contribution(s) totalling **6,21,35,96,369.29** and **408** withdrawal(s) totalling **1,68,43,11,381.24**, across **44 of 84** account(s).
 
 These are movements the STATEMENTS type as a contribution or a withdrawal — what the family put in and took out — and not the trades their managers made inside a mandate. The other 40 account(s) publish no dated capital record at all: their subscription happened, and no statement in this drop says when.
 
-A per-contribution breakdown is published for **24** position(s), of which **12** were bought over more than one date. That needs UNITS allotted per contribution, and the allotted units accounting for every unit held — without both, a tranche's value today cannot be struck, and a return on part of a position would read as a return on all of it.
+A per-contribution breakdown is published for **25** position(s), of which **12** were bought over more than one date. That needs UNITS allotted per contribution, and the allotted units accounting for every unit held — without both, a tranche's value today cannot be struck, and a return on part of a position would read as a return on all of it.
 
 | Position | Account | Contributions | Units | Invested |
 | --- | --- | ---: | ---: | ---: |
@@ -277,6 +278,7 @@ A per-contribution breakdown is published for **24** position(s), of which **12*
 | Buoyant Opportunities Strategy — Category III — Class A4 | buoyant-capital-103472 | 5 | 19,18,953.2 | 24,85,00,000 |
 | Buoyant Opportunities Strategy — Category III — Class A4 | buoyant-capital-103473 | 5 | 34,16,657.417 | 46,00,58,861.66 |
 | Carnelian Bharat Amritkaal Fund | carnelian-bharat-amritkaal-fund-4551 | 2 | 1,29,93,094.825 | 15,00,02,925.1 |
+| Franklin India Credit AIF – Scheme I — Unit Class DB2 | franklin-india-credit-aif-10387 | 1 | 2,01,254.604 | 20,00,00,000 |
 | HDFC Balanced Advantage Fund - Regular Plan - Growth | hdfc-mutual-fund-15644806 | 1 | 83,001.863 | 2,50,00,000 |
 | HDFC Balanced Advantage Fund - Regular Plan - Growth | hdfc-mutual-fund-16002141 | 1 | 49,917.632 | 1,50,00,000 |
 | Helios Flexi Cap Fund - Direct Growth | helios-mutual-fund-10056128 | 3 | 32,45,281.682 | 4,60,00,000 |
@@ -298,7 +300,7 @@ A per-contribution breakdown is published for **24** position(s), of which **12*
 
 ## When each holding was bought (Stage 10fm)
 
-Of **408** holdings, **221** carry the date their units were bought: 24 by the fund's own dated allotments, 17 by a lot register, 94 by their account's own dated trades (every unit held matched to a buy, first-in, first-out) and 86 by the family's review's investment dates. A drawdown fund's dated calls date a few more on the page.
+Of **409** holdings, **222** carry the date their units were bought: 25 by the fund's own dated allotments, 17 by a lot register, 94 by their account's own dated trades (every unit held matched to a buy, first-in, first-out) and 86 by the family's review's investment dates. A drawdown fund's dated calls date a few more on the page.
 
 **1028** dated buys and sells sit behind **151** holdings (`BOOK_HOLDING_TRADES`); **94** of the sales also carry the purchase dates of the lots their capital gain statement settles them with.
 
@@ -333,15 +335,15 @@ The rest are undated on the page, each with its reason:
 
 | Sector | Market value | Share |
 | --- | ---: | ---: |
-| Unclassified | 7,40,16,23,803.18 | 84.05% |
-| Financials | 65,23,65,261.42 | 7.41% |
-| Health Care | 18,25,47,786.1 | 2.07% |
-| Consumer Discretionary | 18,07,07,727.82 | 2.05% |
-| Industrials | 14,54,23,477.65 | 1.65% |
-| Information Technology | 9,33,34,638.88 | 1.06% |
-| Cash | 7,83,13,153.38 | 0.89% |
-| Materials | 2,38,08,046.25 | 0.27% |
-| Consumer Staples | 2,24,78,869.8 | 0.26% |
+| Unclassified | 7,60,16,13,803.75 | 84.41% |
+| Financials | 65,23,65,261.42 | 7.24% |
+| Health Care | 18,25,47,786.1 | 2.03% |
+| Consumer Discretionary | 18,07,07,727.82 | 2.01% |
+| Industrials | 14,54,23,477.65 | 1.61% |
+| Information Technology | 9,33,34,638.88 | 1.04% |
+| Cash | 7,83,13,153.38 | 0.87% |
+| Materials | 2,38,08,046.25 | 0.26% |
+| Consumer Staples | 2,24,78,869.8 | 0.25% |
 | Communication Services | 1,05,04,208.2 | 0.12% |
 | Utilities | 91,44,294.8 | 0.10% |
 | Real Estate | 56,03,840 | 0.06% |
@@ -472,6 +474,9 @@ never guessed into the nearest plausible bucket.
 - account 4551: no time-weighted return series in any statement
 - account 4551: no flow block in any statement, so no value bridge
 - account 4551: no external capital movements found, so no money-weighted return series
+- account 10387: no time-weighted return series in any statement
+- account 10387: the holdings value bridge 2026-10-22 → 2026-10-22 is WITHHELD — The report prints no opening value for this window, so its lines cannot be added up to its closing value. It prints no realised gain, unrealised gain, income, profit / loss, fees or expenses line. Not read from this report: gain prior to takeover, other expenses, accrued income and change in accruals.
+- account 10387: no external capital movements found, so no money-weighted return series
 - account Goldstandard Wealth Private Limited::100022: appraisal 2026-07-10 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100022-2026-07-10-appraisal`; its dated rows are still counted
 - account Goldstandard Wealth Private Limited::100022: bank-book 2026-07-10 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100022-2026-07-10-bank-book`; its dated rows are still counted
 - account Goldstandard Wealth Private Limited::100022: capital-register 2026-07-10 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100022-2026-07-10-capital-register`; its dated rows are still counted
@@ -877,20 +882,20 @@ never guessed into the nearest plausible bucket.
 - 2 ring-fenced holding(s) — POLYCAB INDIA LIMITED - EQ, POLYCAB INDIA LIMITED - EQ, 1,23,51,24,19,665 — are carried in the archive and in BOOK_POLYCAB, and OUT of every consolidated total, listed/private split, allocation, sector, entity and holdings table. This is the family's PROMOTER stock, shown only on the Polycab page. Remove the key from RINGFENCED_SECURITY_KEYS in build-book.mjs to fold it back into the book.
 - separate investments, confirmed by the family on 2026-09-28: 360 ONE Special Opportunities Fund — Series 8 — Class A3 (AIF Category II) under Ajay Jaisinghani (37702) and Bharat Jaisinghani (60117) — each counted in full, 2,91,60,825.51 across 2 account(s).
 - separate investments, confirmed by the family on 2026-09-28: Transition Venture Capital Fund I — Class A1 under Bharat Jaisinghani Family Trust 2 (TVC262) and Bharat Jaisinghani Family Trust 3 (TVC263) — each counted in full, 1,93,61,508 across 2 account(s).
-- market side: listed 6,87,49,10,837.12 over 372 holding(s), private 1,93,09,44,270.36 over 88, and 0 over 4 that nothing places on either side. An AIF is placed first by the family's own classification of what the fund invests in (FAMILY_MARKET_SIDE in shared/aifCategory.mjs), then by a fund naming its own discipline as private equity or venture, then by the SEBI category the statements print: Category III trades LISTED securities, Categories I and II are private capital. The three are summed from the positions and none is the remainder of the other two.
+- market side: listed 6,87,49,10,837.12 over 372 holding(s), private 2,13,09,34,270.93 over 89, and 0 over 4 that nothing places on either side. An AIF is placed first by the family's own classification of what the fund invests in (FAMILY_MARKET_SIDE in shared/aifCategory.mjs), then by a fund naming its own discipline as private equity or venture, then by the SEBI category the statements print: Category III trades LISTED securities, Categories I and II are private capital. The three are summed from the positions and none is the remainder of the other two.
 - market side: 23 AIF holding(s) placed by the family's own classification of what the fund invests in; 6 of them, in 3 fund(s), differ from what the printed SEBI category alone would say — India SME Investments Fund II — Class A2 (no category printed → private: private equity in early-growth SMEs); Motilal Oswal Founders Fund Series II — Class G1 (no category printed → listed: listed Indian equities); Motilal Oswal Wealth Delphi Equity Fund (no category printed → listed: Category III equity managers, as a fund of funds). The statement's category is unchanged; only the side is taken from the family.
 - market side: 3 fund(s) print NO SEBI category and the family have not classified them, so they are on neither side and are counted apart rather than defaulted to one: ASK Absolute Return Fund — Class A6 Series 31/01/2025; Motilal Oswal Hedged Equity Multi Factor Strategy — Class B2; Motilal Oswal Hedged Equity Multi Factor Strategy — Class F1. Putting them private would claim they are private capital and putting them listed would claim the opposite, and no document in this archive makes either claim. One line from the family, or a fund's own SEBI registration, settles each one.
 - market side: 1 holding(s) take a SEBI category the FAMILY declared, because no statement for them prints one — Motilal Oswal Wealth Delphi Equity Fund. A declaration only ever fills a category the statements leave empty and never overrides one they print; which side of the book each sits on is the family's own placing, noted above.
 - navHistory: 10 dated point(s) are a manager's own PRINTED OPENING VALUE (a performance summary's or investor report's opening corpus, dated the day before its window) rather than a holdings statement — carnelian-asset-management-and-advisors-pvt-ltd-3517383 2026-03-31; goldstandard-wealth-private-limited-100022 2026-03-31; goldstandard-wealth-private-limited-100023 2026-03-31; green-lantern-capital-llp-510854 2026-03-31; green-lantern-capital-llp-510861 2026-03-31; svan-investment-managers-llp-8710067 2026-04-30; svan-investment-managers-llp-8710090 2026-04-30, 2026-08-31; v-e-c-assago-capital-management-llp-128004 2026-03-31; v-e-c-assago-capital-management-llp-128005 2026-03-31. Where an opening and a holdings statement value one account on the same day (4 case(s)), the holdings statement is used and the two differ by at most 0.074% — the opening corpus can include accrued income the holdings basis carries apart. No attribution is struck across an opening value, because it carries no holding a price or a unit can be read off.
-- navHistory: 24 dated point(s) from 2026-03-31 to 2026-10-26 (209 days), over the 22 account(s) that publish MORE THAN ONE dated valuation (₹275.41 Cr at the last point, each dedupeGroup counted once). 33 account(s) publish exactly one dated valuation and 22 publish none — both are named in the coverage block rather than carried into the series as a flat line, which would drag its return towards a figure nothing measured. The panel is complete from 2026-08-07; before that each link is struck over the accounts valued at BOTH its ends, so an account ARRIVING contributes 0.00% instead of a step. The raw NAV level is only a book NAV from the date the panel completes, and is flagged per point.
+- navHistory: 24 dated point(s) from 2026-03-31 to 2026-10-26 (209 days), over the 22 account(s) that publish MORE THAN ONE dated valuation (₹275.41 Cr at the last point, each dedupeGroup counted once). 34 account(s) publish exactly one dated valuation and 22 publish none — both are named in the coverage block rather than carried into the series as a flat line, which would drag its return towards a figure nothing measured. The panel is complete from 2026-08-07; before that each link is struck over the accounts valued at BOTH its ends, so an account ARRIVING contributes 0.00% instead of a step. The raw NAV level is only a book NAV from the date the panel completes, and is flagged per point.
 - navHistory: the capital moving between each covered account's marks is established by the statements themselves — dated-record: buoyant-capital-103473, carnelian-asset-management-and-advisors-pvt-ltd-3517383, green-lantern-capital-llp-510854, green-lantern-capital-llp-510861, svan-investment-managers-llp-8710067, svan-investment-managers-llp-8710090; printed totals (fact-sheet, performance-history, performance-summary): carnelian-asset-management-and-advisors-pvt-ltd-3517383, goldstandard-wealth-private-limited-100022, goldstandard-wealth-private-limited-100023, v-e-c-assago-capital-management-llp-128004, v-e-c-assago-capital-management-llp-128005; printed totals (fact-sheet): green-lantern-capital-llp-510854, molecule-ventures-llp-7810404; printed totals (investor-report): svan-investment-managers-llp-8710067, svan-investment-managers-llp-8710090; printed totals (performance-summary): carnelian-asset-management-and-advisors-pvt-ltd-3517383, goldstandard-wealth-private-limited-100022, goldstandard-wealth-private-limited-100023, v-e-c-assago-capital-management-llp-128004, v-e-c-assago-capital-management-llp-128005; units-unchanged: 360-one-private-wealth-37702, 360-one-private-wealth-60117, aditya-birla-sun-life-mutual-fund-1038104611, buoyant-capital-103472, buoyant-capital-103473, hdfc-mutual-fund-16180583, helios-mutual-fund-10355977, mirae-asset-mutual-fund-70413280453, motilal-oswal-founders-fund-90410016093, motilal-oswal-founders-fund-90410016104; unproven: aditya-birla-sun-life-mutual-fund-1019265797, buoyant-capital-103472, kotak-mahindra-mutual-fund-4295974. A step no statement settles is netted at nothing and its MOVE is carried as `unreportedFlowValue`.
 - navHistory: aditya-birla-sun-life-mutual-fund-1019265797 2026-07-01 → 2026-08-03 is NOT PROVEN to be performance — no statement prints the capital that moved between these two marks. Its move over the step is named on screen as the part of the return that might be capital.
 - navHistory: aditya-birla-sun-life-mutual-fund-1019265797 2026-08-03 → 2026-10-06 is NOT PROVEN to be performance — no statement prints the capital that moved between these two marks. Its move over the step is named on screen as the part of the return that might be capital.
 - navHistory: buoyant-capital-103472 2026-07-31 → 2026-08-31 is NOT PROVEN to be performance — no statement prints the capital that moved between these two marks. Its move over the step is named on screen as the part of the return that might be capital.
 - navHistory: kotak-mahindra-mutual-fund-4295974 2026-07-01 → 2026-08-03 is NOT PROVEN to be performance — no statement prints the capital that moved between these two marks. Its move over the step is named on screen as the part of the return that might be capital.
 - navHistory: kotak-mahindra-mutual-fund-4295974 2026-08-03 → 2026-10-05 is NOT PROVEN to be performance — no statement prints the capital that moved between these two marks. Its move over the step is named on screen as the part of the return that might be capital.
-- attribution: 22 account(s) publish a valued holdings statement at two or more dates, so 267 holding(s) are priced at both ends of a window. Over 2026-05-31 → 2026-10-26 the covered set runs ₹268.85 Cr → ₹275.41 Cr, of which price ₹-4.83 Cr, trading ₹8.58 Cr, bought in ₹16.90 Cr, sold out ₹9.99 Cr. Largest detractor Helios Flexi Cap Fund - Direct Growth ₹-263.90 L. It covers ₹275.47 Cr of the book's ₹880.59 Cr; every other account publishes one statement, and one statement is a level rather than a change.
-- unrealised short/long-term split is populated on 17 of 464 position(s), across 2 of 83 account(s) (lkp-securities-98245, v-e-c-assago-capital-management-llp-128004): those are the accounts whose broker publishes a LOT REGISTER with dated acquisitions. It is NULL on the rest, because the capital register the managed accounts issue is a capital-account ledger (contributions, withdrawals, TDS transfers) and carries no purchase dates.
+- attribution: 22 account(s) publish a valued holdings statement at two or more dates, so 267 holding(s) are priced at both ends of a window. Over 2026-05-31 → 2026-10-26 the covered set runs ₹268.85 Cr → ₹275.41 Cr, of which price ₹-4.83 Cr, trading ₹8.58 Cr, bought in ₹16.90 Cr, sold out ₹9.99 Cr. Largest detractor Helios Flexi Cap Fund - Direct Growth ₹-263.90 L. It covers ₹275.47 Cr of the book's ₹900.58 Cr; every other account publishes one statement, and one statement is a level rather than a change.
+- unrealised short/long-term split is populated on 17 of 465 position(s), across 2 of 84 account(s) (lkp-securities-98245, v-e-c-assago-capital-management-llp-128004): those are the accounts whose broker publishes a LOT REGISTER with dated acquisitions. It is NULL on the rest, because the capital register the managed accounts issue is a capital-account ledger (contributions, withdrawals, TDS transfers) and carries no purchase dates.
 - realised is NULL, not ₹0, on BELRISE INDUSTRIES LIMITED (lkp-securities-98245): every one of its 1 capital-gain lot(s) was sold after the holding's own statement date, so the record holds no sale of it up to that date — a zero there would read as "sold nothing" where the record simply does not reach the holding.
 - realised is NULL, not ₹0, on CAPRI GLOBAL CAPITAL LIMITED (lkp-securities-98245): every one of its 2 capital-gain lot(s) was sold after the holding's own statement date, so the record holds no sale of it up to that date — a zero there would read as "sold nothing" where the record simply does not reach the holding.
 - realised is NULL, not ₹0, on Electronics Mart India Limited (lkp-securities-98245): every one of its 3 capital-gain lot(s) was sold after the holding's own statement date, so the record holds no sale of it up to that date — a zero there would read as "sold nothing" where the record simply does not reach the holding.
@@ -921,7 +926,7 @@ never guessed into the nearest plausible bucket.
 - FIFO restates the cost of Neo Infra Income Opportunities Fund I — Class A5 (neo-infra-income-opportunities-fund-9039920536): the statement prints 5,00,00,000, the fund's own unit record matched first-in, first-out holds 4,85,83,720 of cost in the units still held, and 14,16,280 of cost was sold for a realised 0. The record carries every unit from its first purchase, and its FIFO balance ties to the printed unit count.
 - no short/long-term split for BELRISE INDUSTRIES LIMITED (lkp-securities-98245): the lot register accounts for 6500 unit(s) against 12500 held, so the lots do not cover the position. Splitting on them would put a tax basis on units the position does not contain, or treat the uncovered cost as long-term when it is simply unknown.
 - no short/long-term split for PRICOL LIMITED (lkp-securities-98245): the lot register accounts for 2875 unit(s) against 650 held, so the lots do not cover the position. Splitting on them would put a tax basis on units the position does not contain, or treat the uncovered cost as long-term when it is simply unknown.
-- value bridge: 37 of 46 column(s) add up to their closing value within the statement's own rounding; 9 withheld, each named above with the lines it could not make add up
+- value bridge: 37 of 47 column(s) add up to their closing value within the statement's own rounding; 10 withheld, each named above with the lines it could not make add up
 - the 2019-07-12 switch from HDFC Liquid Fund - Direct Plan - IDCW # - Daily Reinvest into HDFC Small Cap Fund - Direct Growth Plan in hdfc-mutual-fund-15644806 is not carried: units were redeemed from the old class for cash before it, so which units moved is a lot selection no statement makes
 - the 2019-07-12 switch from HDFC Liquid Fund - Direct Plan - IDCW # - Daily Reinvest into HDFC Small Cap Fund - Direct Growth Plan in hdfc-mutual-fund-16002141 is not carried: the dated contributions into the old class account for 4902.826 unit(s) against the 137.279 it moved
 - the 2019-07-31 switch from HDFC Liquid Fund - Direct Plan - IDCW # - Daily Reinvest into HDFC Small Cap Fund - Direct Growth Plan in hdfc-mutual-fund-15644806 is not carried: units were redeemed from the old class for cash before it, so which units moved is a lot selection no statement makes
@@ -1023,6 +1028,7 @@ never guessed into the nearest plausible bucket.
 - cost carried through the class switch for Buoyant Opportunities Strategy — Category III — Class A4 in buoyant-capital-103472: 248500000 was paid for these units, against the 249410446.32 the statement's cost column prints, which restarts cost at the switch-day NAV. The 910446.32 between them is gain the fund booked as realised when it moved the units — the account's own performance appraisal prints exactly that as Realized Gain (910446.38) — and it is part of this holding's unrealised gain, because no money left the fund.
 - cost carried through the class switch for Buoyant Opportunities Strategy — Category III — Class A4 in buoyant-capital-103473: 460058861.66 was paid for these units, against the 475353990.9 the statement's cost column prints, which restarts cost at the switch-day NAV. The 15295129.24 between them is gain the fund booked as realised when it moved the units — the account's own performance appraisal prints exactly that as Realized Gain (15295129.24) — and it is part of this holding's unrealised gain, because no money left the fund.
 - cost of Carnelian Bharat Amritkaal Fund in carnelian-bharat-amritkaal-fund-4551 is what was paid in, 15,00,02,925.1, as the statement itself prints it: its own cost column counts the 7,499.77 of stamp duty it levied, so nothing is restated
+- cost of Franklin India Credit AIF – Scheme I — Unit Class DB2 in franklin-india-credit-aif-10387 is what was paid in, 20,00,00,000: the statement prints 19,99,90,000.5 — what bought units after 9,999.5 of the stamp duty and charges it prints against the same contributions — and that figure is kept beside it as the check
 - cost of HDFC Balanced Advantage Fund - Regular Plan - Growth in hdfc-mutual-fund-15644806 is what was paid in, 2,50,00,000, as the statement itself prints it: its own cost column counts the 1,249.94 of stamp duty it levied, so nothing is restated
 - cost of HDFC Balanced Advantage Fund - Regular Plan - Growth in hdfc-mutual-fund-16002141 is what was paid in, 1,50,00,000, as the statement itself prints it: its own cost column counts the 749.96 of stamp duty it levied, so nothing is restated
 - cost of Helios Flexi Cap Fund - Direct Growth in helios-mutual-fund-10056128 is what was paid in, 4,60,00,000, as the statement itself prints it: its own cost column counts the 2,299.89 of stamp duty it levied, so nothing is restated
@@ -1039,7 +1045,7 @@ never guessed into the nearest plausible bucket.
 - cost of Sanshi Fund-I (Open Ended AIF CAT-III) — Class A2 in sanshi-fund-9039671912 is what was paid in, 25,00,00,000: the statement prints 24,99,87,500.62 — what bought units after 12,499.38 of the stamp duty and charges it prints against the same contributions — and that figure is kept beside it as the check
 - cost of Sanshi Fund-I (Open Ended AIF CAT-III) — Class E in sanshi-fund-9069671554 is what was paid in, 22,00,00,000: the statement prints 21,99,89,000.54 — what bought units after 10,999.46 of the stamp duty and charges it prints against the same contributions — and that figure is kept beside it as the check
 - cost of Sanshi Fund-I (Open Ended AIF CAT-III) — Class E in sanshi-fund-9069671634 is what was paid in, 20,50,00,000: the statement prints 20,49,89,750.51 — what bought units after 10,249.49 of the stamp duty and charges it prints against the same contributions — and that figure is kept beside it as the check
-- avg cost: 31 position(s) print a total cost and a unit count and no per-unit cost — their Avg cost is that cost over those units (`avgCostDerived`)
+- avg cost: 32 position(s) print a total cost and a unit count and no per-unit cost — their Avg cost is that cost over those units (`avgCostDerived`)
 - FIFO agrees with the class-switch carry on Buoyant Opportunities Strategy — Category III — Class A4 (buoyant-capital-103472): both hold 24,85,00,000 of cost in the units still held, and the unit record shows none sold.
 - FIFO agrees with the class-switch carry on Buoyant Opportunities Strategy — Category III — Class A4 (buoyant-capital-103473): both hold 46,00,58,861.66 of cost in the units still held, and the unit record shows none sold.
 - FIFO and the class-switch carry disagree on HDFC Balanced Advantage Fund - Regular Plan - Growth (hdfc-mutual-fund-15644806): FIFO over the unit record holds 25000000 of cost, and the switch carry did not restate the statement's 25000000. The statement's cost stands; see the switch notes above for why it was not carried.

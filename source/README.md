@@ -43,9 +43,11 @@ Direct Equity, Mutual Funds, PMS_AIF_SP, Fixed Income and Derivative. It is the
 adviser's own record: it has no holding, valuation or ISIN. It is archived as held
 out by decision, and `build-book` reads it for exact purchase-cost recovery only.
 Its Mutual Funds tab also lists 116 rows for nine people the owner registry does not
-know; they are read and attributed to nobody. The same message carried `10387.pdf`, a
-one-page password-protected PDF. It is not added until a run that holds the statement
-passwords can read it.
+know; they are read and attributed to nobody. The same message carried `10387.pdf`: Franklin India Credit AIF – Scheme I's
+statement of account for Ajay's folio 10387, Unit Class DB2 — a ₹20 Cr commitment
+called and paid on 22 October, 201,254.604 units at 993.7164. It is sealed with his
+PAN; a one-off CI run opened it with the saved statement passwords (Stage 10hx), and
+every run since reads its archived page text (`providers/franklinAif.mjs`).
 
 **These files never reach the browser.** `source/` sits at the repo root, outside
 `public/`, so nothing here is copied into the build or served by the site. Only

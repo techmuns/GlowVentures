@@ -14002,28 +14002,41 @@
   ]
  },
  {
-  "docKey": "hdfc-10387-2026-10-21-capital-call",
-  "provider": "HDFC",
+  "docKey": "franklin-india-credit-aif-10387-2026-10-22-holdings",
+  "provider": "Franklin India Credit AIF",
   "accountNo": "10387",
-  "owner": null,
-  "ownerId": null,
+  "owner": "Ajay Jaisinghani",
+  "ownerId": "ajay-jaisinghani",
   "familyGroup": null,
-  "strategy": null,
-  "asOf": "2026-10-21",
-  "reportType": "capital-call",
+  "strategy": "Franklin India Credit AIF – Scheme I",
+  "asOf": "2026-10-22",
+  "reportType": "holdings",
   "sourcePath": "source/october-2026-e/10387.pdf",
   "pages": 1,
   "sections": [
+   "summary",
+   "transactions",
    "pages"
   ],
-  "status": "failed",
-  "warnings": 2,
-  "failedBecause": "no-extractor",
-  "fileKey": "hdfc-10387-2026-10-21-capital-call",
-  "label": "HDFC · 10387 · capital-call",
-  "fy": "2026-10-21",
+  "status": "ok",
+  "warnings": 1,
+  "fileKey": "franklin-india-credit-aif-10387-2026-10-22-holdings",
+  "label": "Franklin India Credit AIF · 10387 · holdings",
+  "fy": "2026-10-22",
   "source": "source/october-2026-e/10387.pdf",
   "sheets": [
+   {
+    "key": "summary",
+    "name": "summary",
+    "rows": 2,
+    "cols": 11
+   },
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 4,
+    "cols": 6
+   },
    {
     "key": "pages",
     "name": "Raw page text",

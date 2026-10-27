@@ -163,9 +163,13 @@ export function extract({ grid, meta }) {
     totals: makeTotals({ totalMarketValue: p.value, totalCost: p.net, positionCount: 1, source }),
     flows: makeFlows({ contribution: p.contributed, corpus: p.value, periodFrom: p.ledger[0]?.date ?? null, periodTo: p.closingDate, source }),
     cashFlows,
-    // Every head of the distributions summary prints 0.00: a measured nil.
+    // Every head of the distributions summary prints 0.00: a measured nil. The
+    // dated call is the ledger's gross `Capital Contribution` row, which
+    // `franklinFails` has already tied to the printed Amount Contributed.
     commitment: { committed: p.commitment, called: p.called, drawn: p.contributed, paid: p.contributed,
-      undrawn: p.uncalled, distributed: 0 },
+      undrawn: p.uncalled, distributed: 0, payouts: [],
+      calls: p.ledger.filter((r) => /^Capital Contribution$/i.test(r.description))
+        .map((r) => ({ date: r.date, label: r.description, amount: r.amount })) },
     sections: {
       summary: {
         name: "summary",

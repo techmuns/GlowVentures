@@ -19,13 +19,13 @@ export const BOOK_AS_OF = "2026-10-26";
 export const BOOK_SUMMARY: BookSummary = {
   "asOf": "2026-10-26",
   "listedValue": 6874910837.12,
-  "privateValue": 1930944270.36,
+  "privateValue": 2130934270.93,
   "unplacedValue": 0,
-  "totalValue": 8805855107.48,
-  "positionsCount": 464,
+  "totalValue": 9005845108.05,
+  "positionsCount": 465,
   "entitiesCount": 9,
   "startupsCount": 0,
-  "accountsCount": 83
+  "accountsCount": 84
 };
 
 /** Account registry — one row per (provider, account no). Positions join on accountId. */
@@ -376,6 +376,22 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": "2026-07-31",
     "custodian": "Carnelian Bharat Amritkaal Fund",
+    "noPositionsReason": null
+  },
+  {
+    "accountId": "franklin-india-credit-aif-10387",
+    "provider": "Franklin India Credit AIF",
+    "accountNo": "10387",
+    "ownerId": "ajay-jaisinghani",
+    "owner": "Ajay Jaisinghani",
+    "strategy": "Franklin India Credit AIF – Scheme I",
+    "engagement": "AIF",
+    "providerEngagement": "Franklin Templeton Category II Alternative Investment Fund Trust; SEBI registration IN/AIF2/24-25/1592",
+    "members": [],
+    "asOf": "2026-10-22",
+    "inceptionDate": null,
+    "capitalRecordTo": "2026-10-22",
+    "custodian": "Franklin India Credit AIF",
     "noPositionsReason": null
   },
   {
@@ -2748,6 +2764,42 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null,
+    "avgCostDerived": true
+  },
+  {
+    "statementRecord": {
+      "document": "franklin-india-credit-aif-10387-2026-10-22-holdings",
+      "pointer": "/holdings/0"
+    },
+    "securityKey": "franklin-india-credit-aif-scheme-i-unit-class-db2",
+    "security": "Franklin India Credit AIF – Scheme I — Unit Class DB2",
+    "symbol": null,
+    "isin": "INF1CLO22066",
+    "accountId": "franklin-india-credit-aif-10387",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "AIF",
+    "marketSide": "private",
+    "quantity": 201254.604,
+    "avgCost": 993.7661,
+    "currentPrice": 993.7164,
+    "costBasis": 200000000,
+    "costBasisSource": "gross-paid",
+    "printedCostBasis": 199990000.5,
+    "marketValue": 199990000.57,
+    "unrealizedPnL": -9999.43,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": 0,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-10-21",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
@@ -27519,6 +27571,13 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "bookValue": 163115312.43
     },
     {
+      "accountId": "franklin-india-credit-aif-10387",
+      "provider": "Franklin India Credit AIF",
+      "accountNo": "10387",
+      "date": "2026-10-22",
+      "bookValue": 199990000.57
+    },
+    {
       "accountId": "hdfc-mutual-fund-15644806",
       "provider": "HDFC Mutual Fund",
       "accountNo": "15644806",
@@ -27911,7 +27970,7 @@ export const BOOK_ATTRIBUTION: Attribution = {
   "enteredValue": 169017109.59,
   "exitedValue": 99872612.94,
   "undecomposedValue": -41094574.09,
-  "bookValue": 8805855107.48,
+  "bookValue": 9005845108.05,
   "coveredBookValue": 2754651699.36,
   "accounts": [
     {
@@ -34277,6 +34336,20 @@ export const BOOK_CAPITAL_GAINS: EntityCG[] = [
     "absent": "no capital gain statement issued for this account in this drop"
   },
   {
+    "entity": "Ajay Jaisinghani · Franklin 10387",
+    "accountId": "franklin-india-credit-aif-10387",
+    "ownerId": "ajay-jaisinghani",
+    "realisedST": null,
+    "realisedLT": null,
+    "unrealisedST": null,
+    "unrealisedLT": null,
+    "periodFrom": null,
+    "periodTo": null,
+    "lots": 0,
+    "source": null,
+    "absent": "no capital gain statement issued for this account in this drop"
+  },
+  {
     "entity": "Ankita Jaisinghani · Goldstandard 100022",
     "accountId": "goldstandard-wealth-private-limited-100022",
     "ownerId": "ankita-jaisinghani",
@@ -36480,6 +36553,11 @@ export const BOOK_ACCOUNT_RETURN_RECORDS: Record<string, AccountReturnCoverage> 
     "latestValuationDate": "2026-07-31",
     "record": null,
     "gap": "Opening valuation and complete dated cash flows are missing"
+  },
+  "franklin-india-credit-aif-10387": {
+    "latestValuationDate": "2026-10-21",
+    "record": null,
+    "gap": "Its capital arrived on 2026-10-22, after its only valuation (the NAV as on 2026-10-21); a later valuation measures it"
   },
   "goldstandard-wealth-private-limited-100022": {
     "latestValuationDate": "2026-10-06",
@@ -43426,6 +43504,18 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": null,
     "security": null,
     "securityKey": null
+  },
+  {
+    "accountId": "franklin-india-credit-aif-10387",
+    "date": "2026-10-22",
+    "direction": "in",
+    "label": "Capital Contribution",
+    "amount": 200000000,
+    "invested": 199990000.5,
+    "charges": 9999.5,
+    "units": 201254.604,
+    "security": "Franklin India Credit AIF – Scheme I — Unit Class DB2",
+    "securityKey": "franklin-india-credit-aif-scheme-i-unit-class-db2"
   }
 ];
 
@@ -43919,6 +44009,25 @@ export const BOOK_POSITION_TRANCHES: Record<string, PositionTranches> = {
       }
     ],
     "units": 12993094.825
+  },
+  "franklin-india-credit-aif-10387|franklin-india-credit-aif-scheme-i-unit-class-db2": {
+    "accountId": "franklin-india-credit-aif-10387",
+    "securityKey": "franklin-india-credit-aif-scheme-i-unit-class-db2",
+    "moves": [
+      {
+        "accountId": "franklin-india-credit-aif-10387",
+        "date": "2026-10-22",
+        "direction": "in",
+        "label": "Capital Contribution",
+        "amount": 200000000,
+        "invested": 200000000,
+        "charges": 9999.5,
+        "units": 201254.604,
+        "security": "Franklin India Credit AIF – Scheme I — Unit Class DB2",
+        "securityKey": "franklin-india-credit-aif-scheme-i-unit-class-db2"
+      }
+    ],
+    "units": 201254.604
   },
   "hdfc-mutual-fund-15644806|hdfc-balanced-advantage-fund-regular-plan-growth": {
     "accountId": "hdfc-mutual-fund-15644806",
@@ -61264,6 +61373,41 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "withheldReason": "The report prints no opening value for this window, so its lines cannot be added up to its closing value. It prints no gain prior to takeover, profit / loss, accrued income or change in accruals line."
     }
   ],
+  "franklin-india-credit-aif-10387": [
+    {
+      "reportType": "holdings",
+      "source": "franklin-india-credit-aif-10387-2026-10-22-holdings",
+      "periodFrom": "2026-10-22",
+      "periodTo": "2026-10-22",
+      "basis": "window",
+      "opening": null,
+      "contribution": 200000000,
+      "withdrawal": null,
+      "netCapitalInOut": null,
+      "realized": null,
+      "unrealized": null,
+      "income": null,
+      "fees": null,
+      "expenses": null,
+      "closing": 199990000.57,
+      "profit": null,
+      "accruedIncome": null,
+      "changeInAccruals": null,
+      "otherExpenses": null,
+      "gainPriorToTakeover": null,
+      "unread": [
+        "accruedIncome",
+        "changeInAccruals",
+        "otherExpenses",
+        "gainPriorToTakeover"
+      ],
+      "ties": false,
+      "openingNil": false,
+      "residual": null,
+      "linesTotal": null,
+      "withheldReason": "The report prints no opening value for this window, so its lines cannot be added up to its closing value. It prints no realised gain, unrealised gain, income, profit / loss, fees or expenses line. Not read from this report: gain prior to takeover, other expenses, accrued income and change in accruals."
+    }
+  ],
   "goldstandard-wealth-private-limited-100022": [
     {
       "reportType": "fact-sheet",
@@ -62677,6 +62821,29 @@ export const BOOK_COMMITMENTS: Commitment[] = [
       }
     ],
     "payouts": null,
+    "arithmeticHolds": true
+  },
+  {
+    "accountId": "franklin-india-credit-aif-10387",
+    "name": "Franklin India Credit AIF – Scheme I",
+    "provider": "Franklin India Credit AIF",
+    "ownerId": "ajay-jaisinghani",
+    "asOf": "2026-10-22",
+    "committed": 200000000,
+    "drawn": 200000000,
+    "undrawn": 0,
+    "distributed": 0,
+    "called": 200000000,
+    "paid": 200000000,
+    "pending": null,
+    "calls": [
+      {
+        "date": "2026-10-22",
+        "label": "Capital Contribution",
+        "amount": 200000000
+      }
+    ],
+    "payouts": [],
     "arithmeticHolds": true
   },
   {
