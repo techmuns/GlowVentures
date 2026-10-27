@@ -1464,31 +1464,6 @@ export type UnvaluedStatementHolding = {
 };
 
 /**
- * A STATEMENT LINE THE FAMILY CONFIRMED THEY HAVE EXITED (Stage 10ib) — retired
- * from `BOOK_UNVALUED_HOLDINGS`, so no page calls it held. `quantity` and `asOf`
- * are what the statement recorded; `exitedOn` is the date MOPWM's transaction
- * report sells the last of those units on the exchange (`sale.rows`). The report
- * is the adviser's record, so no price, proceeds or gain is carried from it.
- */
-export type ConfirmedExit = {
-  statementRecord?: { document: string; pointer: string };
-  accountId: string;
-  ownerId: string;
-  securityKey: string;
-  security: string;
-  isin: string | null;
-  assetClass: AssetClass | null;
-  quantity: number | null;
-  asOf: string | null;
-  exitedOn: string;
-  sale: { source: string; reportAsOf: string; sheet: string; rows: number[]; units: number };
-  /** The date the family confirmed the exit, ISO, and their words (`shared/confirmedExits.mjs`). */
-  confirmed: string;
-  words: string;
-  reason: string;
-};
-
-/**
  * A STATEMENT ROW THE FAMILY'S CONSOLIDATED REVIEW NOW STANDS FOR (Stage 10dh).
  *
  * At the family's instruction the review is the source for private-market

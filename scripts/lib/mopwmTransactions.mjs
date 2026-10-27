@@ -189,33 +189,6 @@ export function replayMopwmRows(rows, { isin, asOf, quantity }) {
 }
 
 /**
- * A HOLDING SOLD TO NIL AFTER ITS STATEMENT — the one use of the report's later
- * sales, and only for a holding the family confirmed exiting
- * (`shared/confirmedExits.mjs`, Stage 10ib). The rows must first reconcile the
- * statement's own units on its own date (`replayMopwmRows`); every row after it
- * must then be a priced exchange trade, and together they must leave exactly
- * nil. The report prints no closing balance, so nothing short of nil is ever
- * applied: a holding partly sold stays at the statement's quantity.
- */
-export function exitAfterStatement(rows, { isin, asOf, quantity }) {
-  const held = replayMopwmRows(rows, { isin, asOf, quantity });
-  if (held.reason) return { reason: `the report does not reconcile the statement's ${quantity} units on ${asOf}: ${held.reason}` };
-  const later = rows.filter((r) => r.date > asOf).sort((a, b) => a.date.localeCompare(b.date) || a.row - b.row);
-  if (!later.length) return { reason: `the report records no trade after ${asOf}` };
-  let units = quantity, sold = 0;
-  for (const r of later) {
-    const e = eventOf(r, isin);
-    if (e.reason) return { reason: e.reason };
-    if (e.event.kind === "sell") sold += e.event.units;
-    units += e.event.kind === "buy" ? e.event.units : -e.event.units;
-    if (units < -UNIT_TIE) return { reason: `row ${r.row} (${r.date}) sells units the holding no longer has` };
-  }
-  if (Math.abs(units) > UNIT_TIE)
-    return { reason: `the report's trades after ${asOf} leave ${Math.round(units * 1000) / 1000} units, not nil` };
-  return { exitedOn: later.at(-1).date, unitsSold: sold, rows: later.map((r) => r.row) };
-}
-
-/**
  * The rows that can speak for one recorded holding: its owner's, under the
  * alias of its ISIN — a fund's in the folio that IS this account, a share's
  * only where the account is the Motilal Oswal depository its trades settle in.

@@ -196,9 +196,10 @@ function fromMopwm(report,t,a,prior=NO_RECORD) {
       ...(m.salesAfter?[`${m.salesAfter} sale(s) after ${t.asOf} (rows ${m.salesAfterRows.join(', ')}); a newer holding balance is required`]:[])]}};
 }
 
-export function recoverHoldingCosts({root,accounts,positions,unvalued,shareMovements,docs,archiveCount=docs.length,mopwm=loadMopwmTransactions(root)}) {
+export function recoverHoldingCosts({root,accounts,positions,unvalued,shareMovements,docs,archiveCount=docs.length}) {
   const workbook=readSpreadsheet(fs.readFileSync(path.join(root,REVIEW_WORKBOOK)));
   const rows=readTransactions(workbook).rows;
+  const mopwm=loadMopwmTransactions(root);
   const ema=registerEma(root), accountById=new Map(accounts.map((a)=>[a.accountId,a]));
   /** A record from the transaction report, or the holding left unresolved with the reason. */
   const settle=(t,a,prior)=>{
@@ -277,7 +278,7 @@ export function recoveryReport({ records, unresolved, sourceAudit }, accounts) {
     '- ICICI Equity Savings: the original purchase and sold units reconcile, so remaining cost is recovered. The sale cash has the wrong sign; realised gain, HPR and pooled HPR remain absent until proceeds are verified.',
     '- Remaining differences include Motilal Arbitrage (0.066 units) and Hope India Trust Kotak Liquid (0.506 units between the dated summary/ledger and the available-unit balance). No rounding or proportional cost allocation closes those gaps.',
     `- MOPWM's transaction report (generated ${reportDate()}) is tried only where the review and register leave a holding unrecovered. Its rows are replayed to the statement's own date and must leave exactly the recorded units; a fund's rows must be in the folio that is the holding's account, a share's in the Motilal Oswal depository its trades settle in. A split, merger, demerger, bonus or transfer entry refuses the holding, because its original lots are not mapped. The report carries no cash dividends, so none are claimed.`,
-    `- ${records.filter(r=>r.salesAfter&&r.evidence.some(e=>e.path===MOPWM_TRANSACTIONS)).length} holding(s) recovered from the transaction report were sold after their statement date. They stay at the statement's quantity, named as needing a newer holding balance; the report has no closing balance to witness a roll-forward. A holding the family confirmed exiting, whose later exchange sales take the statement's units to nil, is retired from the held book before recovery and recovers no cost (\`shared/confirmedExits.mjs\`, Stage 10ib).`,
+    `- ${records.filter(r=>r.salesAfter&&r.evidence.some(e=>e.path===MOPWM_TRANSACTIONS)).length} holding(s) recovered from the transaction report were sold after their statement date. They stay at the statement's quantity, named as needing a newer holding balance; the report has no closing balance to witness a roll-forward.`,
     '- Existing statement costs take precedence; supplementary records never overwrite them.',
     '- Full HPR includes recorded realised gains and income. It does not claim income or transactions after the evidenced period.',
     '', 'Client request: [exact remaining records](client/PURCHASE-COST-RECORDS-NEEDED.md).','');
