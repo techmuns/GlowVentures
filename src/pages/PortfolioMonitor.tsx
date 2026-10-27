@@ -16,8 +16,8 @@ import { useStockExposure } from "@/lib/useStockExposure";
 import { companySectorIndex, type FundExposureRow } from "@/lib/lookthrough";
 import { heldRouteOf, measuredSplit, HELD_ROUTE_NOTE, type MeasuredSplit } from "@/lib/heldThrough";
 import { UNCLASSIFIED as UNCLASSIFIED_SECTOR } from "@/lib/sectors";
-import { symbolFor, symbolForKey, quoteSymbolFor, holdingQuoteSymbolFor, dayMoveOf, dayMoveLeftNote, type DayMoveLeft } from "@/lib/quotes";
-import { latestQuoteSession, quoteSession } from "@/lib/dailyMovers";
+import { symbolFor, symbolForKey, quoteSymbolFor, dayMoveOf, dayMoveLeftNote, type DayMoveLeft } from "@/lib/quotes";
+import { daySessionGate } from "@/lib/dailyMovers";
 import { liveWithheldReason } from "@/lib/corporateActions";
 import { fmtPct, changeColor, fmtNum, fmtDate } from "@/lib/format";
 import {
@@ -1321,13 +1321,7 @@ export function PortfolioMonitor() {
      * same session, struck over the whole live book so a filter cannot move
      * it. A quote with no trade stamp is not refused, exactly as there.
      */
-    const daySession = latestQuoteSession(quoteFeed, base.filter((p) => p.live).map(holdingQuoteSymbolFor));
-    const inDaySession = (p: Position) => {
-      const s = holdingQuoteSymbolFor(p);
-      if (!s || !quoteFeed?.quotes[s]?.tradedAt) return true;
-      const own = quoteSession(quoteFeed, s);
-      return !!own && own === daySession;
-    };
+    const inDaySession = daySessionGate(quoteFeed, base);
     /**
      * WHAT "EVERY HOLDING OF A MANDATE" IS MEASURED AGAINST — the unfiltered
      * book. A filter that drops one share of a mandate drops the mandate back

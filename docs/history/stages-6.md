@@ -493,3 +493,10 @@
 - `providers/franklinAif.mjs` reads text only and spells out the issuer's `ti` ligature (`Ɵ`). Nothing publishes unless every printed figure ties: contributed − stamp duty = net, commitment − called = uncalled, units × NAV = the printed value, the ledger's gross / charge / allotment rows match the summary, and the closing balance equals balance capital. A redemption, repayment or distribution row it has not been taught refuses the statement.
 - In the book: a new account with one holding, worth ₹19.999 Cr. It is private by its printed category. Its cost is the ₹20 Cr gross paid (`grossPaid`), with a ₹20 Cr capital move and tranche on 22 Oct and a commitment fully drawn. Total value ₹880.59 Cr → ₹900.58 Cr.
 - The return record names its actual gap: the capital arrived after the statement's only valuation. That reason is reached only where every dated row postdates the valuation, so no other account's wording changed.
+
+### Stage 10hz — MORNING CIO RETURNS: THE MONITOR'S HOLDING COLUMNS
+
+- *"add invested on date column in this returns section in the morning CIO page, and also add average cost and all of those columns as well … they should be able to select and see them in the morning CIO returns page as well"* (27 Oct).
+- Return attribution (`SegmentReturns`) draws Invested on and Avg cost by default. Qty, CMP, Day, Purchase cost, Unreal. P&L, Realised P&L, Sector, Entities and the June review's holding fields are `optional`, ticked on in Edit Columns. The review's date range is not a column of its own: Invested on already falls back to it.
+- `lib/lineHoldingFigures.ts` strikes them over a line's current holdings with the Monitor's own helpers (`totalQuantity`, `costedFigures`, `commonMark`, `dayMoveOf`, `investedOnOf` / `accountInvestedOn`). Per-unit figures need one security. Money is struck holding by holding, so rows add to the total on every axis. A line that is whole PMS accounts is dated by the accounts, except on All Securities.
+- The money columns are since purchase, not the selected period, and their headers say so. `daySessionGate` (`dailyMovers.ts`) is the Monitor's one-session gate, now shared by both tables.
