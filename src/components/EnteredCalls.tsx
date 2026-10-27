@@ -180,7 +180,7 @@ export function CallEditor({ fund, fundName, state, onSave, onDelete, onClose, m
           family reads this page and the steps are for whoever manages the site;
           a signed-out reader is never shown them. */}
       {state.status === "unavailable" && state.cause === "not-configured" && (
-        <details className="mt-2 rounded-md border border-ink-700/70 px-3 py-2 text-[12px] text-slate-400" data-pm-call-setup>
+        <details className="mt-2 rounded-md border border-ink-700/70 px-3 py-2 text-[12px] text-slate-400" data-pm-call-setup data-navigation-details="enteredcalls-1">
           <summary className="cursor-pointer text-slate-300">How to switch saving on — once, for everyone</summary>
           {/* `data-prose-ok`: A PROCEDURE, NOT A NOTE. These are steps somebody
               opens on purpose to switch the store on, inside a fold that is

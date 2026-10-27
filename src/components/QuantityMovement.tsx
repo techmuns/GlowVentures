@@ -178,7 +178,7 @@ export function QuantityMovement(
         : "What this holding's depository statement says about its quantity."} ${NOT_TRADES}`}
       right={window ? <Pill>{window}</Pill> : undefined}>
       {movements.length > 0 && (
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto" data-navigation-scroll="quantitymovement-1">
         <ExportableTable className="min-w-full whitespace-nowrap text-sm" data-qty-movement>
           <thead className="border-b border-ink-700">
             <Tr view={view}>

@@ -1,3 +1,4 @@
+import { useNavigationState } from "@/lib/useNavigationState";
 import { ExportableTable } from "@/components/ExportableTable";
 import { useEffect, useMemo, useState } from "react";
 import { LineChart as LineIcon, AreaChart as AreaIcon, BarChart3 } from "lucide-react";
@@ -43,8 +44,8 @@ export function ReturnsTable({ ticker, name }: {
   name: string;
 }) {
   const [data, setData] = useState<PriceHistory | { ok: false; reason: string } | null | undefined>(undefined);
-  const [range, setRange] = useState<RangeKey>("5Y");
-  const [chartType, setChartType] = useState<ChartType>("area");
+  const [range, setRange] = useNavigationState<RangeKey>("price-range", "5Y", RANGES.map(r => r.key));
+  const [chartType, setChartType] = useNavigationState<ChartType>("price-chart", "area", CHART_TYPES.map(t => t.key));
 
   useEffect(() => {
     let alive = true;
@@ -147,7 +148,7 @@ export function ReturnsTable({ ticker, name }: {
         ? <SeriesChart series={[{ meta: meta!, points }]} type={chartType} height={260} />
         : <div className="grid h-[260px] place-items-center text-[12px] text-slate-500">Not enough closes in this window to draw a chart.</div>}
 
-      <div className="mt-4 overflow-x-auto">
+      <div className="mt-4 overflow-x-auto" data-navigation-scroll="returnstable-1">
         {/* ── ONE ROW, AND THE COLUMNS ARE A SEQUENCE ──────────────────────
               *"Every single table on the dashboard must have clickable column
                headings to sort the table data."* This one is exempt and says

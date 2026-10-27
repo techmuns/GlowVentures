@@ -85,7 +85,7 @@ export function CapitalBridge({ bridge: b, total, typeLabel, caption, money }: {
       <dt className={s.key === 'closing' ? '' : 'text-slate-400'}>{s.label}</dt>
       <dd className={`shrink-0 tabular ${s.sign ? changeColor(s.value) : 'text-slate-100'}`}>{money(s.value)}</dd>
     </div>)}</dl>
-    <details className="mt-3" data-bridge-split>
+    <details className="mt-3" data-bridge-split data-navigation-details="capitalbridge-1">
       <summary className="ring-focus w-fit cursor-pointer rounded text-xs text-slate-300">Gain breakdown</summary>
       <dl className="mt-2 divide-y divide-ink-700 text-xs">
         {parts.map((p) => <div key={p.key} className="flex justify-between gap-4 py-2" data-bridge-part={p.key} title={p.title}>
@@ -98,9 +98,9 @@ export function CapitalBridge({ bridge: b, total, typeLabel, caption, money }: {
       </dl>
     </details>
     <p className="mt-4 border-t border-ink-700 pt-3 text-xs text-slate-400">Valuations: {b.from && `${dated(b.from)} → `}{dated(b.to)}</p>
-    <details className="mt-2" data-bridge-accounts-table>
+    <details className="mt-2" data-bridge-accounts-table data-navigation-details="capitalbridge-2">
       <summary className="ring-focus w-fit cursor-pointer rounded text-[12px] text-slate-300">By account</summary>
-      <div className="mt-2 overflow-x-auto">
+      <div className="mt-2 overflow-x-auto" data-navigation-scroll="capitalbridge-1">
         <ExportableTable className="min-w-full whitespace-nowrap text-[12px]" exportName="capital-bridge"
           data-table-static="A bridge reads left to right: start, money in and out, the gain's parts, end">
           <thead className="border-b border-ink-700 bg-ink-800"><tr className="text-slate-400">

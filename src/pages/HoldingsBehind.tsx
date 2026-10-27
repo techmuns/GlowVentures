@@ -1,6 +1,7 @@
+import { useNavigationState } from "@/lib/useNavigationState";
 import { useTableExportFilter, useTableExportExpansion } from "@/lib/tableExportSnapshot";
 import { ExportableTable } from "@/components/ExportableTable";
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { Card } from "@/components/Card";
@@ -207,10 +208,10 @@ const HB_COLS = ["unit", "heldIn", "invested", "value", "weight", "costShare", "
 export function HoldingsBehind() {
   const { portfolio, consolidated, statementPortfolio, fmtFromBase, scope: memberScope } = usePortfolio();
   const [params] = useSearchParams();
-  const [qFilter, setQ] = useState("");
+  const [qFilter, setQ] = useNavigationState<string>("holdings-search", "");
   const q = useTableExportFilter(qFilter, "");
   /** Which grouped rows are expanded to their statement lines. */
-  const [openState, setOpen] = useState<Set<string>>(() => new Set());
+  const [openState, setOpen] = useNavigationState("holdings-expanded", () => new Set<string>());
   const open = useTableExportExpansion(openState);
   // A HOOK, so it sits above this page's early returns.
   const view = useTableView("holdings-behind", HB_COLS, { reviewKind: "holding" });
@@ -948,7 +949,7 @@ export function HoldingsBehind() {
                 <AbsentFromBook query={q} className="mx-auto mt-3 max-w-2xl" />
               </div>
             )}
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto" data-navigation-scroll="holdingsbehind-1">
                 <ExportableTable className="min-w-full whitespace-nowrap text-sm">
                   <thead className="border-b border-ink-700">
                     <Tr view={view}>
@@ -1034,7 +1035,7 @@ export function HoldingsBehind() {
                                       if (next.has(g.key)) next.delete(g.key); else next.add(g.key);
                                       return next;
                                     })}
-                                    aria-expanded={isOpen}
+                                    data-navigation-expanded aria-expanded={isOpen}
                                     title={`${isOpen ? "Hide" : "Show"} the ${g.rows.length} statement lines this row is summed from`}
                                     className="rounded p-0.5 text-slate-500 transition-colors hover:bg-ink-700 hover:text-slate-200">
                                     {isOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
@@ -1257,7 +1258,7 @@ export function HoldingsBehind() {
               family asked for the notes around the tables to go.
             */}
             {unvalued.length > 0 && (
-              <details className="group border-t border-ink-700/60 px-5 pt-4" data-testid="aif-unvalued">
+              <details className="group border-t border-ink-700/60 px-5 pt-4" data-testid="aif-unvalued" data-navigation-details="holdingsbehind-1">
                 <summary className="cursor-pointer list-none text-[11.5px] text-slate-400 [&::-webkit-details-marker]:hidden"
                   title={`${fmtNum(unvalued.length)} AIF ${unvalued.length === 1 ? "folio reports" : "folios report"} units and the capital drawn against a commitment and no NAV anywhere, so no position stands for ${unvalued.length === 1 ? "it" : "them"} in the table above and ${unvalued.length === 1 ? "its" : "their"} money is in none of its totals. Drawn capital is what was paid, never what the stake is worth.`}>
                   <span className="inline-flex items-center gap-1.5">
@@ -1300,7 +1301,7 @@ export function HoldingsBehind() {
               the page without opening anything.
             */}
             {atCost.length > 0 && (
-              <details className="group border-t border-ink-700/60 px-5 pt-4" data-testid="aif-at-cost">
+              <details className="group border-t border-ink-700/60 px-5 pt-4" data-testid="aif-at-cost" data-navigation-details="holdingsbehind-2">
                 <summary className="cursor-pointer list-none text-[11.5px] text-slate-400 [&::-webkit-details-marker]:hidden"
                   title={`${fmtNum(atCost.length)} AIF ${atCost.length === 1 ? "fund is" : "funds are"} recorded by the family's own consolidated review at what was paid for ${atCost.length === 1 ? "it" : "them"} and at no valuation, so ${atCost.length === 1 ? "it is" : "they are"} drawn on the ${bucketLabel(AT_COST_BUCKET)} row rather than here and ${atCost.length === 1 ? "its" : "their"} cost is in none of this table's totals. Every Category I AIF this family owns is among them.`}>
                   <span className="inline-flex items-center gap-1.5">

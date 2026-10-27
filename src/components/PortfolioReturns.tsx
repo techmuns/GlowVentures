@@ -275,7 +275,7 @@ export default function PortfolioReturns() {
         </label>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-auto" data-returns-stack>
+      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-auto" data-returns-stack data-navigation-scroll="portfolioreturns-1">
         {!investedYear && <div role="tablist" aria-label="Return details" data-returns-tabs
           className="inline-flex w-fit shrink-0 items-center gap-0.5 rounded-lg border border-ink-700 bg-ink-800/60 p-0.5">
           {RETURN_VIEWS.map((v, index) => (
