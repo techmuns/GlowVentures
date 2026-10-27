@@ -203,7 +203,9 @@ try {
     try { element.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: data })); }
     finally { Object.defineProperty(DataTransferItem.prototype, 'webkitGetAsEntry', descriptor); }
   }, payload);
-  await page.getByRole('status').filter({ hasText: '7 statement files saved' }).waitFor({ timeout: 30_000 });
+  await page.waitForFunction(count => document.querySelectorAll('tr[data-upload-status="queued"]').length === count, fixtureFiles.length, { timeout: 30_000 });
+  for (const file of fixtureFiles) assert.equal(await page.locator('tr[data-upload-status="queued"]').getByText(file.name, { exact: true }).count(), 1);
+  assert.equal(await page.locator('[data-xa="statement-upload-log"]').count(), 0, 'Progress belongs to the statement table');
   assert.ok(workerPromise); await workerPromise; workerPromise = null;
   let c = readControl(marker); assert.ok(c.pr && c.ciRequested); assert.equal(c.pr.state, 'OPEN'); assert.equal(c.merges, 0);
   assert.ok(inboxLog().batches.flatMap(b => b.files).every(f => f.status === 'processing'));
@@ -295,9 +297,11 @@ try {
     element.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: data }));
   }, { name, bytes: bytes.toString('base64') });
   await dropFile(fixtureFiles[0].name, fixtureFiles[0].bytes);
-  await page.getByRole('status').filter({ hasText: '1 statement file saved' }).waitFor();
+  await page.locator('tr[data-upload-status="queued"]').getByText(fixtureFiles[0].name, { exact: true }).waitFor();
   await workerPromise; workerPromise = null;
   assert.equal(inboxLog().batches.flatMap(b => b.files).filter(f => f.status === 'duplicate').length, 1);
+  await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+  await page.locator('tr[data-upload-status="duplicate"] [data-upload-complete]').waitFor();
   assert.equal(readControl(marker).merges, 1);
   const inboxBeforeRefusal = inboxGit(['rev-parse', 'refs/heads/statement-inbox']);
   await dropFile('not-a-statement.pdf', Buffer.from('<!DOCTYPE html><html><body>Local test attachment, not a statement</body></html>'));
