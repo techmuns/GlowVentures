@@ -70,3 +70,7 @@ for (const rowAttribute of ['data-sector-row', 'data-corporate-return-row', 'dat
 const { readNavigationWindow } = await import('../navigationMemory');
 assert.deepEqual(readNavigationWindow({ key: 'sorted/filtered view', limit: 150 }), { key: 'sorted/filtered view', limit: 150 });
 for (const invalid of [null, {}, { key: 'x', limit: 0 }, { key: 'x', limit: 1.2 }, { key: 1, limit: 50 }]) assert.equal(readNavigationWindow(invalid), null);
+
+const deferredPicks = ['fund-only sector', 'Energy'];
+assert.equal(validNavigationPicks(deferredPicks, new Set(['Energy']), 4, false), deferredPicks, 'an unavailable option universe never erases saved picks');
+assert.deepEqual(validNavigationPicks(deferredPicks, new Set(['Energy']), 4, true), ['Energy'], 'a complete source can retire missing picks');

@@ -189,7 +189,7 @@ export function ResearchPanel({ ticker, name }: { ticker: string | null; name: s
             {/* A 200 with nothing in it is more likely a shape we don't recognise
                 than a company with no concalls, so the payload is shown rather
                 than swallowed. */}
-            {state.raw && <pre className="mt-3 max-h-40 overflow-auto rounded border border-ink-700 bg-ink-900 p-2.5 text-[11px] text-slate-500">{state.raw}</pre>}
+            {state.raw && <pre data-navigation-scroll="research-raw-response" className="mt-3 max-h-40 overflow-auto rounded border border-ink-700 bg-ink-900 p-2.5 text-[11px] text-slate-500">{state.raw}</pre>}
           </div>
         )
       )}

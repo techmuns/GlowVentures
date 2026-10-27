@@ -603,9 +603,9 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
   // ── The comparison: the four largest real sectors until the reader picks. ──
   const defaultPick = consSectors.filter((s) => s.key !== UNCLASSIFIED).slice(0, MAX_COMPARE).map((s) => s.key);
   const availablePicks = new Set([...consSectors, ...directSectors].map(s => s.key));
-  const picked = validNavigationPicks(pickedState, availablePicks, MAX_COMPARE);
-  if (!isTableExporting() && exposure.status !== "loading" && picked !== pickedState) setPicked(picked);
-  const compare = picked ?? defaultPick;
+  const picked = validNavigationPicks(pickedState, availablePicks, MAX_COMPARE, exposure.status === "ok");
+  if (!isTableExporting() && picked !== pickedState) setPicked(picked);
+  const compare = (picked ?? defaultPick).filter(key => availablePicks.has(key));
   const togglePick = (key: string) => setPicked((prev) => {
     const cur = validNavigationPicks(prev, availablePicks, MAX_COMPARE) ?? defaultPick;
     return cur.includes(key)

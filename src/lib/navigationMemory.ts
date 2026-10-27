@@ -6,8 +6,8 @@ export function readNavigationWindow(raw: unknown): NavigationWindow | null {
 }
 
 /** Intersect explicit comparison picks with the available choices, retaining order. */
-export function validNavigationPicks(value: string[] | null, allowed: ReadonlySet<string>, limit: number): string[] | null {
-  if (value === null) return null;
+export function validNavigationPicks(value: string[] | null, allowed: ReadonlySet<string>, limit: number, complete = true): string[] | null {
+  if (value === null || !complete) return value;
   const kept = [...new Set(value)].filter(key => allowed.has(key)).slice(0, limit);
   return kept.length === value.length && kept.every((key, i) => key === value[i]) ? value : kept;
 }

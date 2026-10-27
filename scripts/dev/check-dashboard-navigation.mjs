@@ -17,7 +17,7 @@ async function settled(){
  await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
 }
 const fingerprint=()=>page.locator('main').evaluate(main=>({
- tabs:[...main.querySelectorAll('[role="tab"][aria-selected="true"], [aria-current="page"]')].map(e=>e.textContent.trim()),
+ tabs:[...main.querySelectorAll('[role="tab"][aria-selected="true"], [data-navigation-tabs] button[aria-pressed="true"], [aria-current="page"]')].map(e=>e.textContent.trim()),
  inputs:[...main.querySelectorAll('input:not([type="file"]):not([type="password"]),select')].filter(e=>e.getClientRects().length).map(e=>[e.getAttribute('placeholder')??e.getAttribute('aria-label')??e.tagName,e.value]),
  windows:[...main.querySelectorAll('[data-table-scroll-end]')].map(e=>[e.getAttribute('data-loaded-rows'),e.getAttribute('data-total-rows')]),
  expanded:[...main.querySelectorAll('[data-navigation-expanded][aria-expanded]')].map(e=>[e.getAttribute('aria-label')??e.textContent.trim(),e.getAttribute('aria-expanded')]),
@@ -65,23 +65,27 @@ try{
  const only=process.env.ONLY?.split(',');
  for(const route of routes.filter(r=>!only||only.includes(new URL(r,base).pathname))){
   await page.goto(base+route);await settled();
-  const tabNames=()=>page.locator('main button[role="tab"]').evaluateAll(els=>els.filter(e=>e.getClientRects().length).map(e=>e.textContent.trim()));
-  const tabs=await tabNames(), visited=new Set();
+  const groupSelector='main [role="tablist"], main [data-navigation-tabs], main nav[aria-label="Consolidated sheet subtabs"]';
+  const controls=()=>page.locator(groupSelector).evaluateAll(groups=>groups.flatMap((group,index)=>[...group.querySelectorAll('button')]
+    .filter(e=>e.getClientRects().length&&!e.disabled&&e.getAttribute('aria-disabled')!=='true')
+    .map(e=>({group:index,role:e.getAttribute('role')??'button',name:e.textContent.trim().replace(/\s+/g,' ')}))));
   await roundTrip(route+' default');
-  for(const name of tabs){
-   if(visited.has(name))continue;visited.add(name);
-   const tab=page.getByRole('tab',{name,exact:true});
-   if(await tab.count()!==1||!await tab.isVisible())continue;
+  async function exercise(control,trail){
+   const tab=page.locator(groupSelector).nth(control.group).getByRole(control.role,{name:control.name,exact:true});
+   assert.equal(await tab.count(),1,trail+' has one control');
    await tab.click();await settled();
-   assert.equal(await tab.getAttribute('aria-selected'),'true');
-   // Open a native disclosure and a tree row where this tab offers them.
+   assert.ok(await tab.getAttribute('aria-selected')==='true'||await tab.getAttribute('aria-pressed')==='true'||await tab.getAttribute('aria-current')==='page',trail+' is selected');
    const detail=page.locator('main details[data-navigation-details]:not([open]) > summary').first();
    if(await detail.count()&&await detail.isVisible())await detail.click();
    const expand=page.locator('main [data-navigation-expanded][aria-expanded="false"]').first();
    if(await expand.count()&&await expand.isVisible())await expand.click();
-   await settled();await roundTrip(route+' tab '+name);
-   for(const nested of await tabNames())if(!visited.has(nested)&&!tabs.includes(nested))tabs.push(nested);
+   await settled();await roundTrip(trail);
+   // Visit this tab's children while their parent is still selected.
+   const children=(await controls()).filter(c=>c.group===control.group+1);
+   for(const child of children)await exercise(child,trail+' / '+child.name);
   }
+  for(const control of (await controls()).filter(c=>c.group===0))await exercise(control,route+' tab '+control.name);
+
  }
  if(!process.env.ONLY||process.env.ONLY.split(',').includes('/monitor')){
  await page.goto(base+'/monitor');await settled();

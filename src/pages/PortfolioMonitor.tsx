@@ -3654,7 +3654,7 @@ export function PortfolioMonitor() {
           its `<BasisPill>`. */}
       <PageHeader eyebrow="Daily" title="Portfolio Monitor"
         beside={
-          <div className="inline-flex w-fit items-center gap-0.5 rounded-lg border border-ink-700 bg-ink-800/60 p-0.5">
+          <div data-navigation-tabs="Monitor view" className="inline-flex w-fit items-center gap-0.5 rounded-lg border border-ink-700 bg-ink-800/60 p-0.5">
             {(["holdings", "transactions"] as const).map((m) => (
               <button key={m} type="button" onClick={() => setView(m)}
                 data-monitor-view={m} aria-pressed={view === m}

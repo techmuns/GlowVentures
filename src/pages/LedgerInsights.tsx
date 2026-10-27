@@ -54,7 +54,7 @@ const TABS: { key: Tab; label: string; icon: typeof TrendingUp }[] = [
   { key: "income", label: "Income & Corporate Actions", icon: Coins },
 ];
 
-const window = (from: string | null, to: string | null) =>
+const ledgerWindow = (from: string | null, to: string | null) =>
   from && to ? `${fmtDate(from)} → ${fmtDate(to)}` : from ? `from ${fmtDate(from)}` : to ? `to ${fmtDate(to)}` : null;
 
 export function LedgerInsights() {
@@ -139,19 +139,19 @@ export function LedgerInsights() {
               29 Aug, the two trusts' NSDL holding statements, which carry no
               trade — so "as of 29 Aug" dated a tape that ends on 13 Aug. The
               window the transaction statements cover is what dates it. */}
-          {txn && window(txn.periodFrom, txn.periodTo) ? (
+          {txn && ledgerWindow(txn.periodFrom, txn.periodTo) ? (
             <Pill tone="info">
               <span data-xa="ledger-window" data-from={txn.periodFrom ?? ""} data-to={txn.periodTo ?? ""}
                 title={`The window the transaction statements cover — every trade on this page falls in it. The archive's newest statement of any kind is dated ${fmtDate(txn.asOf)}, and it dates no trade.`}>
-                tape {window(txn.periodFrom, txn.periodTo)}
+                tape {ledgerWindow(txn.periodFrom, txn.periodTo)}
               </span>
             </Pill>
           ) : null}
         </span>} />
 
-      <div className="mb-4 flex flex-wrap gap-2">
+      <div data-navigation-tabs="Ledger view" className="mb-4 flex flex-wrap gap-2">
         {TABS.map(({ key, label, icon: Icon }) => (
-          <button key={key} type="button" onClick={() => setTab(key)}
+          <button key={key} type="button" aria-pressed={tab === key} onClick={() => setTab(key)}
             className={`flex items-center gap-2 rounded-md border px-3 py-2 text-sm transition-colors ${
               tab === key ? "border-champagne-500/40 bg-champagne-500/10 text-champagne-400"
               : "border-ink-700 bg-ink-800 text-slate-300 hover:bg-ink-700/60"}`}>
@@ -215,7 +215,7 @@ function TransactionsView({ data, sales, scoped }: {
     status: (r) => (r.exited ? "Exited" : "Trimmed"),
   });
   const { fmtFromBase } = usePortfolio();
-  const win = window(data.periodFrom, data.periodTo);
+  const win = ledgerWindow(data.periodFrom, data.periodTo);
   /**
    * `Txn.amount` is `number | null` — a trade whose statement prints no
    * settlement, net or gross reported nothing, which is not the same as a trade
