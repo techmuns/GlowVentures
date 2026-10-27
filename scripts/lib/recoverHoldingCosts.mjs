@@ -164,6 +164,8 @@ function registerEma(root) {
 }
 
 const NO_RECORD='No quantity-matched owner-specific acquisition record in the saved workbooks';
+/** `NEGLIGIBLE_VALUE_FLOOR` in src/lib/analytics.ts: the dashboard drops a holding below it. */
+const SPECK_FLOOR=1000;
 
 /**
  * THE ADVISER'S TRANSACTION REPORT, where the review and the register leave a
@@ -171,11 +173,18 @@ const NO_RECORD='No quantity-matched owner-specific acquisition record in the sa
  * custody statement here, so they are replayed to the statement's OWN date and
  * must leave exactly its units; a later sale is counted, never applied. Null
  * where the report records nothing for this holding.
+ *
+ * A RESIDUE BELOW THE FLOOR TAKES NO COST (Stage 10hw). The floor drops it from
+ * every table, and a dropped row that reports a cost leaves Capital invested
+ * short by what it paid (`negligibleFloor.test.ts`). Bharat's 0.43 / 0.048 ICICI
+ * index units and Ankita's 0.003 Mirae left ₹109, ₹3 and ₹0.15 of cost.
  */
 function fromMopwm(report,t,a,prior=NO_RECORD) {
   const rows=mopwmRowsFor(report,{isin:t.isin,account:a});
   if(!rows) return null;
-  const m=replayMopwmRows(rows,{isin:t.isin,asOf:t.asOf,quantity:t.quantity});
+  const replayed=replayMopwmRows(rows,{isin:t.isin,asOf:t.asOf,quantity:t.quantity});
+  const m=replayed.reason||replayed.costBasis>=SPECK_FLOOR ? replayed
+    : {reason:`its lots leave ₹${replayed.costBasis} of cost, a residue below the ₹1,000 holdings floor, which carries no cost`};
   if(m.reason) return {reason:prior===NO_RECORD?`MOPWM transaction report: ${m.reason}`:`${prior}; MOPWM transaction report: ${m.reason}`};
   return {record:{accountId:t.accountId,isin:t.isin,quantity:t.quantity,asOf:t.asOf,costBasis:m.costBasis,
     ...(m.heldPurchases?{heldPurchases:m.heldPurchases}:{}),

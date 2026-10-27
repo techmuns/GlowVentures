@@ -22259,36 +22259,6 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "notes": []
   },
   {
-    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
-    "isin": "INF769K01AX2",
-    "quantity": 0.003,
-    "asOf": "2026-07-31",
-    "costBasis": 0.15,
-    "heldPurchases": {
-      "first": "2020-03-11",
-      "last": "2020-03-11",
-      "lots": 1
-    },
-    "realizedPnL": 590549.97,
-    "costOfUnitsSold": 2499999.83,
-    "dividendReceived": null,
-    "salesAfter": 1,
-    "evidence": [
-      {
-        "path": "source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx",
-        "sheet": "Mutual Funds",
-        "rows": [
-          23710,
-          23780
-        ]
-      }
-    ],
-    "notes": [
-      "MOPWM transaction report: owner, account and every unit reconcile on 2026-07-31; it reports no cash dividends",
-      "1 sale(s) after 2026-07-31 (rows 23781); a newer holding balance is required"
-    ]
-  },
-  {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
     "isin": "INE013P01021",
     "quantity": 48000,
@@ -22456,75 +22426,6 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       }
     ],
     "notes": []
-  },
-  {
-    "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
-    "isin": "INF109K012M7",
-    "quantity": 0.43,
-    "asOf": "2026-07-31",
-    "costBasis": 109.39,
-    "heldPurchases": {
-      "first": "2024-10-29",
-      "last": "2024-10-29",
-      "lots": 1
-    },
-    "realizedPnL": 44210.8,
-    "costOfUnitsSold": 32005391.99,
-    "dividendReceived": null,
-    "salesAfter": 1,
-    "evidence": [
-      {
-        "path": "source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx",
-        "sheet": "Mutual Funds",
-        "rows": [
-          16360,
-          16361,
-          16362,
-          16363,
-          16364,
-          16365,
-          16366
-        ]
-      }
-    ],
-    "notes": [
-      "MOPWM transaction report: owner, account and every unit reconcile on 2026-07-31; it reports no cash dividends",
-      "1 sale(s) after 2026-07-31 (rows 16367); a newer holding balance is required"
-    ]
-  },
-  {
-    "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
-    "isin": "INF109K01Y80",
-    "quantity": 0.048,
-    "asOf": "2026-07-31",
-    "costBasis": 3.13,
-    "heldPurchases": {
-      "first": "2024-10-29",
-      "last": "2024-10-29",
-      "lots": 1
-    },
-    "realizedPnL": -3729547.68,
-    "costOfUnitsSold": 32005498.06,
-    "dividendReceived": null,
-    "evidence": [
-      {
-        "path": "source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx",
-        "sheet": "Mutual Funds",
-        "rows": [
-          16368,
-          16369,
-          16370,
-          16371,
-          16372,
-          16373,
-          16374,
-          16375
-        ]
-      }
-    ],
-    "notes": [
-      "MOPWM transaction report: owner, account and every unit reconcile on 2026-07-31; it reports no cash dividends"
-    ]
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
