@@ -277,7 +277,7 @@ async function run() {
   ok("a waiting job never claims analysis has started", fileView(queued, new Set()).label === "Preparing analysis" && !fileView(queued, new Set()).title.includes("being analysed now"));
   ok("analysis is named only after the worker starts", fileView(reading, new Set()).label === "Analysing" && fileView(reading, new Set()).title.includes("being analysed now"));
   ok("an exact duplicate is a completed green outcome", fileView(duplicate, new Set()).tone === "gain" && !fileView(duplicate, new Set()).title.includes("source/"));
-  const manifest = [{ docKey: "exact", sourcePath: "source/october/original.pdf" }, { docKey: "same-name-elsewhere", sourcePath: "source/august/original.pdf" }] as Parameters<typeof uploadDocumentKeys>[1];
+  const manifest = [{ docKey: "exact", sourcePath: "source/october/original.pdf" }, { docKey: "same-name-elsewhere", sourcePath: "source/august/original.pdf" }];
   ok("duplicate receipts decorate only the exact original document", uploadDocumentKeys(duplicate, manifest).join() === "exact");
   ok("an unrecognised duplicate receipt never guesses from its filename", uploadDocumentKeys({ ...duplicate, reason: "original.pdf" }, manifest).length === 0);
   ok("customer status copy contains no infrastructure details", [queued, reading, landed, duplicate, sealed].every(f => !/GitHub|commit|source\/|redeploy|intake run/.test(fileView(f, new Set()).title)));

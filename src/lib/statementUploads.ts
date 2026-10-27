@@ -184,7 +184,7 @@ const HOLD_REASON: Record<string, string> = {
 };
 
 /** An exact receipt/source-path match, never a guessed filename or holder. */
-export function uploadDocumentKeys(f: InboxFile, manifest: readonly ManifestEntry[]): string[] {
+export function uploadDocumentKeys(f: InboxFile, manifest: readonly Pick<ManifestEntry, "docKey" | "sourcePath">[]): string[] {
   if (f.docKeys?.length) return f.docKeys;
   const prefix = "Already in the library — byte-identical to ";
   if (f.status !== "duplicate" || !f.reason?.startsWith(prefix)) return [];

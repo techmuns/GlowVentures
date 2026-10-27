@@ -14,7 +14,7 @@ import { AbsentSection, DASH } from "@/components/Absent";
 import { fmtDate, fmtDateTime } from "@/lib/format";
 import { buildLibrary, type ManifestEntry, type ProviderFolder, type LibraryDoc } from "@/lib/statementLibrary";
 import {
-  useStatementInbox, fromDrop, fromInput, planUpload, fileView, uploadDocumentKeys, CAUSE_WORD,
+  useStatementInbox, fromDrop, fromInput, planUpload, fileView, uploadDocumentKeys,
   type PickedFile, type InboxFile, type FileView,
 } from "@/lib/statementUploads";
 import { MAX_FILE_BYTES } from "../../shared/statementInbox.mjs";
@@ -132,7 +132,9 @@ function FormatBlock({ format, docs, uploads = [], inbox, onOpen }: {
             <td className="px-4 py-3 text-slate-500">{DASH}</td>
             <td className="px-4 py-3"><UploadStatus row={row} /></td>
             <td className="px-4 py-3 text-xs text-slate-500">
-              {onOpen ? row.providers.map(provider => <button key={provider} type="button" onClick={() => onOpen(provider)} className="mr-2 text-accent-400 hover:underline">{provider}</button>) : fmtDateTime(row.uploadedAt)}
+              {onOpen ? row.providers.map(provider => completed(row) && row.fileKeys.length
+                ? <button key={provider} type="button" onClick={() => onOpen(provider)} className="mr-2 text-accent-400 hover:underline">{provider}</button>
+                : <span key={provider}>{provider}</span>) : fmtDateTime(row.uploadedAt)}
             </td>
           </tr>)}
           {orderedDocs.map(d => {
@@ -298,8 +300,9 @@ function UploadPanel({ inbox, provider, archiveStatus }: {
         <div className="flex items-start gap-3">
           <div className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-md border border-amber-500/30 bg-amber-500/10 text-amber-400"><UploadCloud className="h-5 w-5" /></div>
           <div className="min-w-0">
-            <div className="text-sm font-medium text-slate-200">Uploading statements — {CAUSE_WORD[state.cause]}</div>
+            <div className="text-sm font-medium text-slate-200">Statement uploads unavailable</div>
             <p className="mt-1 text-xs text-slate-400" data-prose-ok="why uploading is not available">{state.reason}</p>
+            <button type="button" onClick={() => void inbox.reload()} className="mt-2 text-xs text-accent-400 hover:underline">Try again</button>
 
           </div>
         </div>
@@ -549,7 +552,7 @@ export function StatementLibrary() {
   return (
     <div className="mx-auto max-w-5xl" data-statement-library>
       <PageHeader eyebrow="Admin" title="Statement Library" trail={trail}
-        subtitle="The source statements that feed this book, in a folder per provider. Upload statements for automatic analysis and filing."
+        subtitle="Upload statements for automatic analysis and filing."
         right={status === "ready" && !openProvider ? (
           <div className="flex items-center gap-2">
             <Pill>{library.totalProviders} providers</Pill>
