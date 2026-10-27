@@ -1,5 +1,5 @@
 import type { Position } from "./types";
-import { moveSymbolFor, priceLooksLikeSameSecurity, type Quote, type QuoteFeed } from "./quotes";
+import { holdingQuoteSymbolFor, moveSymbolFor, priceLooksLikeSameSecurity, type Quote, type QuoteFeed } from "./quotes";
 import { marketDay, movesCloseBasis, positionActionKey, type ActionReturn } from "./corporateActions";
 
 export type DailyMover = {
@@ -25,6 +25,23 @@ export function latestQuoteSession(
   quotes: QuoteFeed | null, symbols: Iterable<string | null>,
 ): string | null {
   return [...symbols].map((s) => quoteSession(quotes, s)).filter(Boolean).sort().slice(-1)[0] ?? null;
+}
+
+/**
+ * ONE TRADING SESSION FOR EVERY DAY FIGURE ON A TABLE (Stage 10fz): a quote
+ * stamped on an older session than the newest among `book`'s live holdings
+ * carries another day's move, and adding it in would sum two days. A quote
+ * with no trade stamp is not refused. Portfolio Monitor's holdings and Morning
+ * CIO's attribution read this one gate.
+ */
+export function daySessionGate(quotes: QuoteFeed | null, book: readonly Position[]): (p: Position) => boolean {
+  const session = latestQuoteSession(quotes, book.filter((p) => p.live).map(holdingQuoteSymbolFor));
+  return (p) => {
+    const s = holdingQuoteSymbolFor(p);
+    if (!s || !quotes?.quotes[s]?.tradedAt) return true;
+    const own = quoteSession(quotes, s);
+    return !!own && own === session;
+  };
 }
 
 /**

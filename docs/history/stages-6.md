@@ -516,6 +516,13 @@
 - The seam runs before cost recovery, so recovered costs go 62 → 60. Ankita's SBI (27,750, also sold on 23 Sep) is unchanged: it is not on the family's list. Market values and `BOOK_SUMMARY` are unchanged, because unvalued lines are in no total.
 - Tests: `confirmedExits.test.ts` (family) checks that none of the three is a line, a live candidate, a recorded line or a Direct Equity position on any basis, including under a feed that prices all three; that HDFC's window closes at nil; and that the PMS ICICI stays a mandate holding. `mopwmTransactions.test.mjs` covers the witness and every refusal.
 
+### Stage 10hz — MORNING CIO RETURNS: THE MONITOR'S HOLDING COLUMNS
+
+- *"add invested on date column in this returns section in the morning CIO page, and also add average cost and all of those columns as well … they should be able to select and see them in the morning CIO returns page as well"* (27 Oct).
+- Return attribution (`SegmentReturns`) draws Invested on and Avg cost by default. Qty, CMP, Day, Purchase cost, Unreal. P&L, Realised P&L, Sector, Entities and the June review's holding fields are `optional`, ticked on in Edit Columns. The review's date range is not a column of its own: Invested on already falls back to it.
+- `lib/lineHoldingFigures.ts` strikes them over a line's current holdings with the Monitor's own helpers (`totalQuantity`, `costedFigures`, `commonMark`, `dayMoveOf`, `investedOnOf` / `accountInvestedOn`). Per-unit figures need one security. Money is struck holding by holding, so rows add to the total on every axis. A line that is whole PMS accounts is dated by the accounts, except on All Securities.
+- The money columns are since purchase, not the selected period, and their headers say so. `daySessionGate` (`dailyMovers.ts`) is the Monitor's one-session gate, now shared by both tables.
+
 ### Stage 10ic — WHICH DEMAT HOLDS A FUND POSITION, ON THE DRILL-DOWN
 
 - Asked on the call: a fund position in the family's own name read "via own account" on its drill-down and never said which demat holds the units. `Account.demat` (generated, `scripts/lib/dematAccounts.mjs`) now carries the depository, DP ID and Client ID each account's own statements print, read off the archived page text in five declared layouts: NSDL/CDSL header pairs, the CDSL 16-digit BO ID (DP ID ‖ Client ID), Motilal Oswal's and 3P's demat tables, and NSDL's `DP: NAME [IN……]` header. A DP ID must have NSDL's `IN`+6 or CDSL's 8-digit shape; a depository's own statement must tie its Client ID / BO ID to the account number. The newest statement that names one is the record; an older disagreeing one would be noted, and none disagrees.

@@ -137,6 +137,7 @@ const SUITES = [
   ["concentration by investment", "src/lib/__tests__/concentration.test.ts"],
   ["lot terms and the hold-to-LTCG planner", "src/lib/__tests__/ltDate.test.ts"],
   ["invested on", "src/lib/__tests__/investedOn.test.ts"],
+  ["Monitor holding columns on the attribution", "src/lib/__tests__/lineHoldingFigures.test.ts"],
   ["holding flows", "src/lib/__tests__/holdingFlows.test.ts"],
   ["whole-book NAV series", "src/lib/__tests__/bookNav.test.ts"],
 ];
