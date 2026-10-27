@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { timingSafeEqual } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { rapidProcessor } from './rapid-processor.mjs';
+import { rapidProcessor, ReaderVersionChanged } from './rapid-processor.mjs';
 import { runtimeStore } from './runtime-store.mjs';
 import { prepareRuntimeModel } from './runtime-model.mjs';
 import { prepareBookReferences } from '../build-book.mjs';
@@ -55,7 +55,10 @@ export function serveRapidStatements({ processor, token, port = 8788, host = '12
         return send(200, value);
       }
       return send(404, { error: 'Not found' });
-    } catch { return send(503, { error: 'The statement processor could not complete this request' }); }
+    } catch (error) {
+      if (error instanceof ReaderVersionChanged) return send(409, { status: 'revision_changed' });
+      return send(503, { error: 'The statement processor could not complete this request' });
+    }
   });
   server.listen(port, host);
   return server;

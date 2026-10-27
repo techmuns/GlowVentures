@@ -1400,6 +1400,26 @@ export function archiveRecord(doc, grid) {
     } };
 }
 
+/** Same exact-witness backfills for offline and resident processing. */
+export function backfillStatementDocuments(docs, grids = new Map()) {
+  for (let i = 0; i < docs.length; i++) {
+    const doc = docs[i];
+    if (doc.status !== 'failed') continue;
+    const grid = grids.get(doc);
+    if (!grid) continue;
+    const provider = pmsSiblingProvider(doc, grid.pages.map(p => p.text).join('\n'), docs);
+    if (!provider) continue;
+    const recovered = extractOne(path.join(ROOT, doc.sourcePath), grid, null, provider);
+    grids.delete(doc); grids.set(recovered, grid); docs[i] = recovered;
+  }
+  backfillAccountNumbers(docs);
+  backfillSoleAccount(docs);
+  backfillOwners(docs);
+  const scanNamed = nameScannedHoldings(docs);
+  const renamed = backfillSecurityNames(docs);
+  return { scanNamed, renamed };
+}
+
 async function main() {
   fs.mkdirSync(SOURCE_DIR, { recursive: true });
   fs.mkdirSync(DOCS_DIR, { recursive: true });
@@ -1522,21 +1542,8 @@ async function main() {
     console.log(produced.length > 1 ? `${produced.length} reports — ${summary}` : summary);
   }
 
-  for (let i = 0; i < docs.length; i++) {
-    const doc = docs[i];
-    if (doc.status !== 'failed') continue;
-    const grid = grids.get(doc);
-    const provider = pmsSiblingProvider(doc, grid.pages.map(p => p.text).join('\n'), docs);
-    if (!provider) continue;
-    const recovered = extractOne(path.join(ROOT, doc.sourcePath), grid, null, provider);
-    grids.delete(doc); grids.set(recovered, grid); docs[i] = recovered;
-  }
-  backfillAccountNumbers(docs);
-  backfillSoleAccount(docs);
-  backfillOwners(docs);
-  const scanNamed = nameScannedHoldings(docs);
+  const { scanNamed, renamed } = backfillStatementDocuments(docs, grids);
   if (scanNamed) console.log(`  ${scanNamed} scanned holding(s) named as another statement prints their ISIN.`);
-  const renamed = backfillSecurityNames(docs);
   if (renamed) console.log(`  ${renamed} clipped security name(s) resolved to their fuller form via ISIN.`);
   ensureUniqueDocKeys(docs);
 

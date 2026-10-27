@@ -1,7 +1,7 @@
 import { loadStockExposure, type FundPortfolio, type HeldFund, type Index } from '../../src/lib/lookthrough';
 import { BOOK_POLYCAB } from '../../src/data/glowData';
 import manifest from '../../src/data/readModels.json';
-import { rapidStatementRequest, type RapidEnv } from '../../shared/rapidStatementBackend.mjs';
+import { rapidStatementRequest, rapidStatementsEnabled, type RapidEnv } from '../../shared/rapidStatementBackend.mjs';
 
 type Context = { request: Request; env: RapidEnv & { ASSETS: { fetch(request: Request): Promise<Response> } }; waitUntil(p: Promise<unknown>): void };
 const json = (body: unknown, status = 200) => Response.json(body, { status, headers: { 'Cache-Control': 'no-store' } });
@@ -26,6 +26,7 @@ export async function onRequestPost(context: Context) {
     body = JSON.parse(text + decoder.decode());
   } catch { return json({ status: 'invalid' }, 400); }
   if (!body || typeof body !== 'object') return json({ status: 'invalid' }, 400);
+  if (body.revision !== manifest.revision && !rapidStatementsEnabled(context.env)) return json({ status: 'revision_changed' }, 409);
   if (!Array.isArray(body.funds) || body.funds.length > 200 || !body.funds.every((f: HeldFund) => f && key(f.securityKey)
     && typeof f.name === 'string' && f.name.length <= 500 && typeof f.assetClass === 'string' && f.assetClass.length <= 100
     && Number.isFinite(f.marketValue) && f.marketValue >= 0)

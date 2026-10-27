@@ -8,7 +8,7 @@ type Snapshot = { schemaVersion: 1; revision: string; readerRevision: string;
 let selected: Snapshot | null = null;
 export let selectedReadModels = baseline;
 export let bootstrapWarning = false;
-export let publicationDiscoveryPath = `${BASE}publication.json`;
+export let publicationDiscoveryPath = `${BASE}api/statement-data?status=1`;
 export const hasRuntimeBook = () => selected !== null;
 export function runtimeBookValue<T>(key: string, fallback: T): T {
   return selected ? selected.book[key] as T : fallback;
@@ -34,7 +34,9 @@ export async function bootstrapRuntimeBook(): Promise<void> {
     const response = await fetch(`${BASE}api/statement-data`, {
       cache: 'no-store', credentials: 'same-origin', signal: AbortSignal.timeout(8_000),
     });
-    if (response.status === 204 || !response.headers.get('Content-Type')?.includes('application/json')) return;
+    if (response.status === 204 || !response.headers.get('Content-Type')?.includes('application/json')) {
+      publicationDiscoveryPath = `${BASE}publication.json`; return;
+    }
     if (!response.ok) throw Error('Latest statements are unavailable');
     const snapshot: unknown = await response.json();
     if (!validRuntimeSnapshot(snapshot)) throw Error('Incompatible or incomplete statement version');

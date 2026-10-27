@@ -7,3 +7,6 @@ public/views
 public/statement-files
 public/pdf-assets
 *.local
+.env*
+.dev.vars*
+**/.wrangler

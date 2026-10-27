@@ -28,8 +28,9 @@ export class StatementProcessor extends DurableObject {
       while (Date.now() < deadline) {
         try {
           const health = await port.fetch('http://processor/__health');
-          if (health.ok) return port.fetch(request);
+          const healthy = health.ok;
           await health.body?.cancel();
+          if (healthy) return port.fetch(request);
         } catch { /* The private port is not ready during a cold start. */ }
         await new Promise(resolve => setTimeout(resolve, 100));
       }

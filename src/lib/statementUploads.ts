@@ -200,8 +200,10 @@ export function uploadDocumentKeys(f: InboxFile, manifest: readonly Pick<Manifes
 export function fileView(f: InboxFile, served: ReadonlySet<string>): FileView {
   switch (f.status) {
     case "queued":
+      if (f.processor === 'rapid') return { key: 'queued', label: 'Processing', tone: 'info', title: 'Reading and checking your statement.' };
       return { key: "queued", label: "Preparing analysis", tone: "info", title: "Statement uploaded to your family office dashboard. Analysis will start automatically." };
     case "processing":
+      if (f.processor === 'rapid') return { key: 'reading', label: 'Processing', tone: 'info', title: 'Reading and checking your statement.' };
       return { key: "reading", label: "Analysing", tone: "info", title: "Statement uploaded to your family office dashboard — being analysed now." };
     case "landed": {
       const keys = f.docKeys ?? [];

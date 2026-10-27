@@ -7,6 +7,9 @@ dist
 *.tsbuildinfo
 vite.config.js
 vite.config.d.ts
+scripts/dev/runtime-book-plugin.js
+scripts/dev/runtime-book-plugin.d.ts
+**/.wrangler/
 
 # Raw statements live in source/ and ARE committed (they are the book's provenance),
 # but the expanded copies are derived — regenerate with `npm run inventory`.

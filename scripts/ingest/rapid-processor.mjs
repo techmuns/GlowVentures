@@ -7,6 +7,8 @@ import { unlockPdf, previewKey } from '../lib/statementPreviewPdf.mjs';
 import { describePreview, previewKeyBytes, sealPreview } from '../../shared/statementPreviewCrypto.mjs';
 import { VersionConflict } from './runtime-store.mjs';
 import { migrateRapidPublication } from './migrate-rapid-publication.mjs';
+import { immutable } from './lib/immutable.mjs';
+export class ReaderVersionChanged extends Error {}
 
 export function rapidProcessor({ store, inbox, initial, references, instantiate, passwords, dashboardPassword, baseAsset, prepare = prepareRapidStatement, seed = false }) {
   let current = initial, state = null, queue = Promise.resolve(), ready = false;
@@ -16,11 +18,13 @@ export function rapidProcessor({ store, inbox, initial, references, instantiate,
     return evidenceReaders.get(snap);
   };
   const remember = snapshot => {
+    immutable(snapshot);
     versions.set(snapshot.revision, snapshot);
     while (versions.size > 2) { const oldest = versions.keys().next().value; versions.delete(oldest); models.delete(oldest); }
     return snapshot;
   };
   const modelFor = snapshot => {
+    if (snapshot.readerRevision !== initial.readerRevision) throw new ReaderVersionChanged('Reload before requesting projections from a newer reader');
     let value = models.get(snapshot.revision);
     if (!value) { value = instantiate(snapshot.book); models.set(snapshot.revision, value); }
     return value;
@@ -54,8 +58,11 @@ export function rapidProcessor({ store, inbox, initial, references, instantiate,
     const started = performance.now();
     // The repository is authoritative after a crash, never the resident cache.
     state = await store.read();
-    if (state.state?.revision !== current.revision && state.state) current = await store.load(state.state);
-    if (current.readerRevision !== initial.readerRevision) throw Error('A newer reader must handle this publication');
+    if (state.state?.revision !== current.revision && state.state) {
+      const next = await store.load(state.state);
+      if (next.readerRevision !== initial.readerRevision) throw new ReaderVersionChanged('A newer reader must handle this publication');
+      current = next;
+    }
     if (state.state?.receipts?.[id]?.files.every(f => ['landed', 'duplicate'].includes(f.status))) {
       const receipt = state.state.receipts[id];
       await inbox.commit({ message: `Statements ${id}: restore completed status`, mutate: log => applyUpdates(log,
@@ -115,7 +122,9 @@ export function rapidProcessor({ store, inbox, initial, references, instantiate,
           const filename = previewKey(file.bytes), hash = filename.slice(0, -4);
           const dashboardHash = createHash('sha256').update(`glow-ventures-family-office::pw::v1\n${dashboardPassword}`).digest('hex');
           const sealed = await sealPreview(pdf, await previewKeyBytes(dashboardPassword), hash, dashboardHash);
-          previews[filename] = Buffer.from(sealed).toString('base64');
+          // Keep large encrypted derivatives out of the JSON snapshot. Git
+          // stores each blob once and the publication commits its address.
+          previews[filename] = { blob: await store.putBlob(sealed), bytes: sealed.length };
           preview = { file: filename, bytes: describePreview(sealed).bytes };
         }
         for (const record of associated) originals[record.manifest.docKey] = {
@@ -126,6 +135,7 @@ export function rapidProcessor({ store, inbox, initial, references, instantiate,
             to: record.files['document.json'].sourcePages.to } : null,
         };
       }
+      immutable(candidate.book); immutable(candidate.documents);
       const model = instantiate(candidate.book);
       // Validate the core reporting projections before publishing, while stock
       // ledgers are derived lazily against this same immutable book.
@@ -180,7 +190,7 @@ export function rapidProcessor({ store, inbox, initial, references, instantiate,
       return result.status === 'ok' ? { ...result, byKey: [...result.byKey] } : result;
     },
     async asset(revision, name) {
-      const snap = await version(revision), model = modelFor(snap);
+      const snap = await version(revision);
       if (name === 'canonical/book.json') return snap.book;
       if (name === 'publication.json') return { schemaVersion: 1, readerRevision: snap.readerRevision,
         archiveRevision: snap.archiveRevision, bookRevision: digest(snap.book),
@@ -199,14 +209,18 @@ export function rapidProcessor({ store, inbox, initial, references, instantiate,
         return item?.blob ? { bytes: await store.blob(item.blob), type: original[1].endsWith('.pdf') ? 'application/pdf' : 'application/octet-stream' } : null;
       }
       const preview = /^statement-previews\/([a-f0-9]{64}\.pdf)$/.exec(name);
-      if (preview) return snap.previews[preview[1]] ? { bytes: Buffer.from(snap.previews[preview[1]], 'base64'), type: 'application/octet-stream' }
+      if (preview) return snap.previews[preview[1]] ? { bytes: await store.blob(snap.previews[preview[1]].blob), type: 'application/octet-stream' }
         : baseAsset(snap.baseCommit, `statement-previews/${preview[1].replace(/\.pdf$/, '.bin')}`, true);
       const doc = /^(canonical|provenance)\/documents\/([a-z0-9._-]+)\.json$/.exec(name);
       if (doc) {
         const d = snap.documents.find(d => d.docKey === doc[2]);
-        return !d ? null : doc[1] === 'canonical' ? d : documentEvidence(d, { readerRevision: snap.readerRevision,
-          sourceSha256: snap.originals[d.docKey]?.sha256 ?? null });
+        if (!d || doc[1] === 'canonical') return d ?? null;
+        if (snap.readerRevision !== initial.readerRevision) throw new ReaderVersionChanged('Document projections require their matching reader');
+        return documentEvidence(d, { readerRevision: snap.readerRevision, sourceSha256: snap.originals[d.docKey]?.sha256 ?? null });
       }
+      // Old canonical facts and source bytes remain readable. Derived reports
+      // must never apply the new reader's rules to an older version's book.
+      const model = modelFor(snap);
       if (name === 'provenance/positions.json') return snap.book.BOOK_POSITIONS.map(p => ({ ...evidenceFor(snap)(p),
         investmentDate: { value: model.investedOnOf([p]), inputs: { accountId: p.accountId, memberId: p.memberId ?? null,
           securityKey: p.securityKey, heldSince: p.heldSince ?? null, heldPurchases: p.recoveredCost?.heldPurchases ?? null,

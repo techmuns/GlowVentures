@@ -174,6 +174,8 @@ try {
           } }, github);
         res.writeHead(response.status, Object.fromEntries(response.headers)); res.end(Buffer.from(await response.arrayBuffer())); return;
       }
+      // This rehearsal exercises the legacy path with the rapid service off.
+      if (url.pathname === '/api/statement-data') { res.writeHead(204); res.end(); return; }
       if (url.pathname.startsWith('/api/')) { res.writeHead(503, { 'content-type': 'application/json' }); res.end('{"status":"unreachable"}'); return; }
       const served = readControl(marker).deployed ? path.join(workspace, 'dist') : servedInitial;
       let file = path.resolve(served, '.' + decodeURIComponent(url.pathname)); assert.ok(file === served || file.startsWith(served + path.sep));

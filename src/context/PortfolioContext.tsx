@@ -11,7 +11,7 @@ import { applyTableInputs } from "@/lib/applyTableInputs";
 // family's holdings had been measured at zero.
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { startPublicationRefresh } from "../../shared/publicationRefresh.mjs";
-import { selectedReadModels as readModels, publicationDiscoveryPath, hasRuntimeBook } from "@/lib/runtimeBook";
+import { selectedReadModels as readModels, publicationDiscoveryPath, hasRuntimeBook, bootstrapWarning } from "@/lib/runtimeBook";
 import { subscribeToDeployment } from "@/lib/deploymentVersion";
 import type { Portfolio, Position } from "@/lib/types";
 import { dedupedPositions, publicPrivateSplit, holdingBucket, DIRECT_EQUITY_BUCKET } from "@/lib/analytics";
@@ -689,7 +689,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const publicationRefresh = useRef<ReturnType<typeof startPublicationRefresh> | null>(null);
   useEffect(() => {
-    const controller = startPublicationRefresh({ revision: readModels.revision, path: publicationDiscoveryPath, intervalMs: hasRuntimeBook() ? 5_000 : 30_000 });
+    const controller = startPublicationRefresh({ revision: bootstrapWarning ? '0'.repeat(20) : readModels.revision, path: publicationDiscoveryPath, intervalMs: hasRuntimeBook() || bootstrapWarning ? 5_000 : 30_000 });
     const unsubscribe = subscribeToDeployment(() => { void controller.check(); });
     publicationRefresh.current = controller;
     return () => { unsubscribe(); controller.stop(); publicationRefresh.current = null; };

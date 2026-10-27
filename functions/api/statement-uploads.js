@@ -93,6 +93,12 @@ function startRapid(context, inbox, batch) {
 /** Read only this deployment's static source index, never a client assertion or
  * an unverified main commit. An absent/malformed index takes the usual intake path. */
 async function publishedDuplicates(context) {
+  if (rapidStatementsEnabled(context.env)) {
+    try {
+      const response = await rapidStatementRequest(context.env, '/published');
+      if (response?.ok) { const data = await response.json(); return publishedStatementDuplicates(data.manifest, data.index); }
+    } catch { /* The compiled archive remains a verified duplicate witness. */ }
+  }
   if (!context.env.ASSETS?.fetch) return new Map();
   try {
     const read = async path => {

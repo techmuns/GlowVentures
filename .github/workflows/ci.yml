@@ -28,7 +28,11 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Publication and atomic processor contracts
-        run: node --test scripts/ingest/__tests__/publication.test.mjs scripts/ingest/__tests__/rapid-processor.test.mjs
+        run: node --test scripts/ingest/__tests__/publication.test.mjs scripts/ingest/__tests__/rapid-processor.test.mjs scripts/ingest/__tests__/rapid-backend.test.mjs
+      - name: Validate the private Worker configuration and generated bindings
+        run: |
+          node scripts/dev/prepare-rapid-config.mjs
+          npx --yes wrangler@4.119.0 types .cache/rapid-statement-publications/worker-env.d.ts --config .cache/rapid-statement-publications/wrangler.json
       - name: Real protected statement through the warm engine
         env:
           GLOW_PDF_PASSWORDS: ${{ secrets.GLOW_PDF_PASSWORDS }}

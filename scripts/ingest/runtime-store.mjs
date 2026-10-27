@@ -23,7 +23,13 @@ export function runtimeStore({ token, repo = 'techmuns/GlowVentures', branch = '
     if (actual !== sha) throw Error('Statement blob checksum mismatch');
     return bytes;
   };
-  const put = async bytes => (await call('POST', '/git/blobs', { encoding: 'base64', content: Buffer.from(bytes).toString('base64') })).sha;
+  const put = async value => {
+    const bytes = Buffer.from(value), expected = createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');
+    const result = await call('POST', '/git/blobs', { encoding: 'base64', content: bytes.toString('base64') });
+    if (result.sha !== expected) throw Error('Repository did not confirm the exact uploaded bytes');
+    return result.sha;
+  };
+  const unpack = bytes => JSON.parse(gunzipSync(bytes, { maxOutputLength: 512 * 1024 * 1024 }));
   async function read() {
     const ref = await call('GET', `/git/ref/heads/${enc(branch)}`, null, true);
     if (!ref) return { head: null, tree: null, state: null };
@@ -34,8 +40,8 @@ export function runtimeStore({ token, repo = 'techmuns/GlowVentures', branch = '
     return { head, tree: commit.tree.sha, state: JSON.parse(Buffer.from(file.content || (await call('GET', `/git/blobs/${file.sha}`)).content, 'base64')) };
   }
   return {
-    read, blob,
-    async load(state) { return JSON.parse(gunzipSync(await blob(state.artifact))); },
+    read, blob, putBlob: put,
+    async load(state) { return unpack(await blob(state.artifact)); },
     async publish(previous, snapshot, receipt) {
       const artifact = await put(gzipSync(JSON.stringify(snapshot), { level: 1 }));
       const state = { schemaVersion: 1, revision: snapshot.revision, readerRevision: snapshot.readerRevision,
@@ -50,6 +56,10 @@ export function runtimeStore({ token, repo = 'techmuns/GlowVentures', branch = '
         if (!file.sourcePath.startsWith('source/') || /[\\\r\n\0]/.test(file.sourcePath)
           || file.sourcePath.split('/').some(p => !p || p === '.' || p === '..')) throw Error('Unsafe original source path');
         entries.push({ path: file.sourcePath, mode: '100644', type: 'blob', sha: file.blob });
+      }
+      for (const [name, preview] of Object.entries(snapshot.previews ?? {})) {
+        if (!/^[a-f0-9]{64}\.pdf$/.test(name) || !/^[a-f0-9]{40}$/.test(preview.blob)) throw Error('Invalid protected preview address');
+        entries.push({ path: `statement-previews/${name.replace(/\.pdf$/, '.bin')}`, mode: '100644', type: 'blob', sha: preview.blob });
       }
       const tree = await call('POST', '/git/trees', { ...(previous.tree ? { base_tree: previous.tree } : {}), tree: entries });
       const commit = await call('POST', '/git/commits', { message: `Verified statements ${snapshot.revision} [skip ci]`,
@@ -67,7 +77,7 @@ export function runtimeStore({ token, repo = 'techmuns/GlowVentures', branch = '
     async loadVersion(revision) {
       if (!/^[a-f0-9]{20}$/.test(revision)) throw Error('Invalid statement version');
       const file = await call('GET', `/contents/versions/${revision}.json.gz?ref=${enc(branch)}`);
-      return JSON.parse(gunzipSync(await blob(file.sha)));
+      return unpack(await blob(file.sha));
     },
   };
 }

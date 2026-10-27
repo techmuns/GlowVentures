@@ -3,7 +3,7 @@
 import path from 'node:path';
 import { performance } from 'node:perf_hooks';
 import { extractLayout } from './lib/layout.mjs';
-import { extractDocuments, gridFromSpreadsheet, archiveRecord } from './extract.mjs';
+import { extractDocuments, gridFromSpreadsheet, archiveRecord, backfillStatementDocuments } from './extract.mjs';
 import { settleStatus } from './lib/readStatus.mjs';
 import { reconcile } from './reconcile.mjs';
 import { assessPublication, archiveRevision, digest, holdingKey, positionEvidenceReader } from './lib/publication.mjs';
@@ -51,10 +51,24 @@ export async function prepareRapidStatement({ baseline, files, references, passw
     }
   }
   timings.readMs = performance.now() - start;
-  // No backfill guesses: the existing publication gate demands a printed
-  // holder/account and complete records. A gap keeps the verified book intact.
+  // Reuse the offline reader's exact-witness backfills. The publication gate
+  // still refuses sole-known-account assumptions and unresolved identities.
   const original = baseline.map(withoutSections);
-  let candidate = [...structuredClone(original), ...produced.map(p => withoutSections(p.doc))];
+  const completed = [...structuredClone(original), ...produced.map(p => p.doc)];
+  const grids = new Map(produced.map(p => [p.doc, p.grid]));
+  backfillStatementDocuments(completed, grids);
+  // Provider recovery can replace a new document object; retain its grid and
+  // original upload name, then distinguish any key changed by a backfill.
+  for (let i = 0; i < produced.length; i++) {
+    const doc = completed[original.length + i];
+    produced[i].grid = grids.get(doc) ?? produced[i].grid;
+    produced[i].doc = doc;
+  }
+  const finalKeys = new Set(original.map(d => d.docKey));
+  for (const part of produced) { part.doc = distinguish(part.doc, finalKeys); settleStatus(part.doc); }
+  // Historical records are witnesses here, never silently reinterpreted without
+  // rereading their source files. Only the new documents receive the backfills.
+  let candidate = [...structuredClone(original), ...produced.map(p => p.doc)].map(withoutSections);
   const t = performance.now();
   const beforeReport = reconcile(structuredClone(original), { symbolMap: references.symbols });
   let report = reconcile(candidate, { symbolMap: references.symbols });

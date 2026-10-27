@@ -22,8 +22,10 @@ import { onRequest as uploadRequest } from '../../functions/api/statement-upload
 import { onRequestGet as bootstrapRequest } from '../../functions/api/statement-data.js';
 import { onRequestGet as dataRequest } from '../../functions/api/statement-data/[[path]].js';
 import { PREVIEW_COOKIE, previewKeyBytes, keyCookieValue } from '../../shared/statementPreviewCrypto.mjs';
+import { extractLayout } from '../ingest/lib/layout.mjs';
 
-const root = process.cwd(), output = path.join(root, '.cache/rapid-statement-publications/browser');
+const root = process.cwd(), output = path.resolve(process.env.GLOW_RAPID_TEST_OUTPUT ?? path.join(root, '.cache/rapid-statement-publications/browser'));
+assert.ok(output.startsWith(path.join(root, '.cache') + path.sep));
 fs.mkdirSync(output, { recursive: true });
 const remote = path.join(output, 'local-remote.git');
 assert.ok(!fs.existsSync(remote), 'Preserve prior evidence; use another scratch output for a new rehearsal');
@@ -98,12 +100,14 @@ try {
   await page.goto(baseURL + '/stock/' + position.securityKey); await page.locator('main h1').waitFor();
   assert.equal(await page.locator(`tr[data-account-row="${position.accountId}"]`).count(), 0, 'This statement is genuinely absent before the drop');
   await page.goto(baseURL + '/statements'); await page.locator('[data-upload-state="ready"]').waitFor(); await page.bringToFront();
+  await page.getByPlaceholder('Filter by provider or file type…').fill('Bandhan');
   const start = performance.now();
   await page.locator('[data-upload-drop]').evaluate((element, base64) => {
     const data = new DataTransfer(); data.items.add(new File([Uint8Array.from(atob(base64), c => c.charCodeAt(0))], 'new-protected-statement.pdf', { type: 'application/pdf' }));
     element.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: data }));
   }, bytes.toString('base64'));
   await page.locator('tr[data-upload-status="in-library"]').waitFor({ timeout: 30_000 });
+  assert.equal(await page.getByPlaceholder('Filter by provider or file type…').inputValue(), 'Bandhan', 'Search state survives the automatic publication refresh');
   const readyMs = performance.now() - start; publishedAt = processor.status().revision;
   await page.screenshot({ path: path.join(output, 'ready.png'), fullPage: true });
   assert.equal(readControl(control).dispatches, 0);
@@ -115,21 +119,35 @@ try {
     assert.equal(digest(actual), digest(JSON.stringify(fullBook[name])), name);
   }
   // Compare the reporting projections against the fully verified original book.
-  const expectedModel = instantiate(fullBook), actualModel = instantiate(snapshot.book), latest = (await store.load((await store.read()).state)).documents;
+  const restorePath = text => text.replace(/source\/uploads-rapid-[^/]+\/new-protected-statement.pdf/g, source.sourcePath);
+  const expectedModel = instantiate(fullBook), actualModel = instantiate(JSON.parse(restorePath(JSON.stringify(snapshot.book))));
+  // The export's source list follows archive order. Compare the same ordering
+  // and restore only this renamed fixture's source path; no financial field is removed.
+  const ordered = docs => JSON.parse(restorePath(JSON.stringify(docs))).sort((a, b) => a.docKey < b.docKey ? -1 : a.docKey > b.docKey ? 1 : 0);
+  const latest = ordered((await store.load((await store.read()).state)).documents), expectedDocs = ordered(all);
   for (const name of ['deriveTransactions', 'deriveRealisedLots', 'deriveIncome', 'deriveSales', 'buildConsolidatedSheet']) {
-    const actual = JSON.stringify(actualModel[name](latest)).replace(/source\/uploads-rapid-[^/]+\/new-protected-statement.pdf/g, source.sourcePath);
-    assert.equal(digest(actual), digest(JSON.stringify(expectedModel[name](all))), name);
+    const actual = JSON.stringify(actualModel[name](latest)), expected = JSON.stringify(expectedModel[name](expectedDocs));
+    if (digest(actual) !== digest(expected)) {
+      fs.writeFileSync(path.join(output, `${name}-actual.json`), actual);
+      fs.writeFileSync(path.join(output, `${name}-expected.json`), expected);
+    }
+    assert.equal(digest(actual), digest(expected), name);
   }
   const provenance = await processor.asset(snapshot.revision, `provenance/documents/${key}.json`);
   assert.equal(provenance.source.sha256, digest(bytes));
   const original = processor.published().index.files[key];
   const pdf = await fetch(`${baseURL}/api/statement-data/${snapshot.revision}/statement-files/${original.file}`);
   assert.equal(digest(Buffer.from(await pdf.arrayBuffer())), digest(bytes));
+  assert.ok(original.preview, 'The saved vault also prepares a protected preview');
+  const preview = await context.request.get(`${baseURL}/api/statement-data/${snapshot.revision}/statement-previews/${original.preview.file}`);
+  assert.equal(preview.status(), 200);
+  const opened = await extractLayout(new Uint8Array(await preview.body()), { passwords: [], ocr: false });
+  assert.equal(opened.error, null); assert.equal(opened.numPages, 4);
   const raw = execFileSync('git', ['--git-dir', remote, 'show', 'statement-publications:' + provenance.source.path]);
   assert.equal(digest(raw), digest(bytes), 'The original is durable at its recorded GitHub source path');
   const routes = ['/stock/' + position.securityKey, '/mandate/' + position.accountId, '/cio', '/monitor', '/private-market', '/family', '/sectors', '/returns', '/capital-gains', '/ledger', '/audit?file=' + key, '/statements'];
   for (const route of routes) {
-    await page.goto(baseURL + route); await page.locator('main h1').waitFor();
+    await page.goto(baseURL + route); await page.locator('main h1').first().waitFor();
     if (route.startsWith('/stock/')) await page.locator(`tr[data-account-row="${position.accountId}"]`).waitFor();
   }
   assert.equal(processor.status().revision, publishedAt, 'Navigating never manufactures another publication');
