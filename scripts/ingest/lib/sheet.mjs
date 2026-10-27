@@ -239,13 +239,28 @@ function colIndex(ref) {
   return n - 1;
 }
 
+/**
+ * THE NAMESPACE PREFIX A PART'S ELEMENTS ARE WRITTEN WITH — "" for the usual
+ * default namespace, `x:` for Motilal Oswal's family transaction report, whose
+ * generator writes `<x:row>`, `<x:c>` and `<x:v>` throughout. Every pattern
+ * below read none of those, so that workbook came back as five sheets with no
+ * name and no rows — a readable file reported as empty. The prefix is taken
+ * from the part's own root element and used verbatim, so a part written
+ * without one is matched by exactly the patterns it always was.
+ */
+function prefixOf(xml, root) {
+  const p = (new RegExp(`<([A-Za-z_][\\w.-]*:)?${root}\\b`).exec(xml) || [])[1] ?? "";
+  return p.replace(/[.]/g, "\\.");
+}
+
 function sharedStrings(xml) {
   if (!xml) return [];
+  const p = prefixOf(xml, "sst");
   // A shared string is one <si> which may hold SEVERAL <t> runs (rich text). The
   // runs are concatenated: taking only the first truncates "Crompton Greaves
   // Consumer Electricals Limited" to whatever the first formatting run held.
-  return [...xml.matchAll(/<si>([\s\S]*?)<\/si>/g)].map((m) =>
-    [...m[1].matchAll(/<t[^>]*>([\s\S]*?)<\/t>/g)].map((t) => unescapeHtml(t[1])).join("").replace(/\s+/g, " ").trim(),
+  return [...xml.matchAll(new RegExp(`<${p}si>([\\s\\S]*?)<\\/${p}si>`, "g"))].map((m) =>
+    [...m[1].matchAll(new RegExp(`<${p}t[^>]*>([\\s\\S]*?)<\\/${p}t>`, "g"))].map((t) => unescapeHtml(t[1])).join("").replace(/\s+/g, " ").trim(),
   );
 }
 
@@ -260,7 +275,8 @@ export function readXlsx(buf) {
 
   const strings = sharedStrings(read("xl/sharedStrings.xml"));
   const workbook = read("xl/workbook.xml") ?? "";
-  const names = [...workbook.matchAll(/<sheet[^>]*name="([^"]*)"/g)].map((m) => unescapeHtml(m[1]));
+  const wp = prefixOf(workbook, "workbook");
+  const names = [...workbook.matchAll(new RegExp(`<${wp}sheet[^>]*name="([^"]*)"`, "g"))].map((m) => unescapeHtml(m[1]));
 
   const sheetFiles = [...byName.keys()]
     .filter((n) => /^xl\/worksheets\/sheet\d+\.xml$/.test(n))
@@ -271,7 +287,11 @@ export function readXlsx(buf) {
     const xml = read(file);
     if (!xml) return;
     const rows = [];
-    for (const rowMatch of xml.matchAll(/<row[^>]*>([\s\S]*?)<\/row>/g)) {
+    const p = prefixOf(xml, "worksheet");
+    const cellRe = new RegExp(`<${p}c([^>]*?)(?:\\/>|>([\\s\\S]*?)<\\/${p}c>)`, "g");
+    const valueRe = new RegExp(`<${p}v>([\\s\\S]*?)<\\/${p}v>`);
+    const textRe = new RegExp(`<${p}t[^>]*>([\\s\\S]*?)<\\/${p}t>`, "g");
+    for (const rowMatch of xml.matchAll(new RegExp(`<${p}row[^>]*>([\\s\\S]*?)<\\/${p}row>`, "g"))) {
       const cells = [];
       // BOTH cell forms, and the self-closing one FIRST.
       //
@@ -281,7 +301,7 @@ export function readXlsx(buf) {
       // on the row shifts one left. In this workbook that put the shared-string
       // INDEX where the instrument name belongs and slid the ISIN into the
       // quantity column. Nothing errored; the grid just came out wrong.
-      for (const c of rowMatch[1].matchAll(/<c([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g)) {
+      for (const c of rowMatch[1].matchAll(cellRe)) {
         const attrs = c[1];
         const body = c[2] ?? "";
         const ref = (/\br="([A-Z]+\d+)"/.exec(attrs) || [])[1] || "";
@@ -289,13 +309,13 @@ export function readXlsx(buf) {
         const at = ref ? colIndex(ref) : cells.length;
         let value = "";
         if (type === "s") {
-          const i = Number((/<v>([\s\S]*?)<\/v>/.exec(body) || [])[1]);
+          const i = Number((valueRe.exec(body) || [])[1]);
           value = Number.isInteger(i) ? (strings[i] ?? "") : "";
         } else if (type === "inlineStr" || type === "str") {
-          value = [...body.matchAll(/<t[^>]*>([\s\S]*?)<\/t>/g)].map((t) => unescapeHtml(t[1])).join("")
-            || unescapeHtml((/<v>([\s\S]*?)<\/v>/.exec(body) || [])[1] ?? "");
+          value = [...body.matchAll(textRe)].map((t) => unescapeHtml(t[1])).join("")
+            || unescapeHtml((valueRe.exec(body) || [])[1] ?? "");
         } else {
-          value = unescapeHtml((/<v>([\s\S]*?)<\/v>/.exec(body) || [])[1] ?? "");
+          value = unescapeHtml((valueRe.exec(body) || [])[1] ?? "");
         }
         // Cells are ADDRESSED, not sequential: a row that skips B and C emits
         // A then D. Padding by the reference keeps every value under its own

@@ -6,6 +6,7 @@ import { assertNormalized } from './document.mjs';
 import { resolveOwner } from '../../../shared/owners.mjs';
 import { readGaps } from './readStatus.mjs';
 import { sourceFor } from '../precedence.mjs';
+import { NON_STATEMENT_PROVIDERS } from './classify.mjs';
 
 export const RECORD_SECTIONS = ['holdings', 'transactions', 'capitalGains', 'cashFlows', 'income', 'expenses', 'returns'];
 export const stable = value => JSON.stringify(canonical(value));
@@ -53,6 +54,16 @@ const unsafeSource = p => typeof p !== 'string' || !p.startsWith('source/') || p
  */
 export const neverArrived = d => d.status === 'failed' && !carriesFacts(d)
   && (d.warnings ?? []).some(w => w?.code === 'attachment-removed');
+/**
+ * A DOCUMENT HELD OUT BY DECISION (Stage 10hu): the consolidated review, the
+ * family register, MOPWM's transaction report — `NON_STATEMENT_PROVIDERS`. It is
+ * archived with its reason and no fact, no account and no owner, so publishing
+ * it publishes nothing to check; `check:reads` accepts it on the same terms. A
+ * document that carries anything else is still assessed as a statement.
+ */
+export const heldOutByDecision = d => d.status === 'failed' && !carriesFacts(d)
+  && NON_STATEMENT_PROVIDERS.has(d.provider) && !d.accountNo && !d.ownerId
+  && (d.warnings ?? []).length > 0 && d.warnings.every(w => w?.code === 'held-out-by-decision');
 
 /** No fuzzy owner, account or security matching is allowed at this boundary. */
 export function assessPublication({ baseline, documents, baselineReport = {}, report = {}, expected = {} }) {
@@ -87,7 +98,7 @@ export function assessPublication({ baseline, documents, baselineReport = {}, re
   for (const d of changed) {
     try { assertNormalized(d); stable(d); } catch (error) { add('INVALID_DOCUMENT', d, error.message); continue; }
     if (unsafeSource(d.sourcePath)) add('UNSAFE_SOURCE_PATH', d, 'Statement evidence must refer to a source file inside the repository.');
-    if (neverArrived(d)) continue;
+    if (neverArrived(d) || heldOutByDecision(d)) continue;
     if (d.status !== 'ok' || readGaps(d).length) add('READ_GAP', d, 'The reader must account for the whole statement before publication.');
     if (d.reportType === 'unknown') add('UNKNOWN_FORMAT', d, 'No verified reader recognizes this statement format.');
     if (d.asOf && !validDate(d.asOf)) add('INVALID_DATE', d, 'Statement date is not an actual ISO calendar day.', '/asOf');

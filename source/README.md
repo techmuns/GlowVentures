@@ -36,6 +36,17 @@ the two copies are byte-identical, so one is kept. A third file from the same
 message, `Acctstmt_G_8652064 (1).pdf`, is PAN-encrypted. It is not added until a
 run with `GLOW_PDF_PASSWORDS` can read it (Stage 10hn).
 
+`october-2026-e/` holds `ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx`, Motilal
+Oswal Private Wealth's family-wide transaction report, generated 23 October and sent
+by the client on 27 October (Stage 10hu). Its five tabs carry 26,402 dated rows:
+Direct Equity, Mutual Funds, PMS_AIF_SP, Fixed Income and Derivative. It is the
+adviser's own record: it has no holding, valuation or ISIN. It is archived as held
+out by decision, and `build-book` reads it for exact purchase-cost recovery only.
+Its Mutual Funds tab also lists 116 rows for nine people the owner registry does not
+know; they are read and attributed to nobody. The same message carried `10387.pdf`, a
+one-page password-protected PDF. It is not added until a run that holds the statement
+passwords can read it.
+
 **These files never reach the browser.** `source/` sits at the repo root, outside
 `public/`, so nothing here is copied into the build or served by the site. Only
 the derived, reviewed extracts under `public/audit/` ship, and those sit behind
