@@ -9,7 +9,7 @@ import {
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
-import { StatementPreview, useFilePreview } from "@/components/StatementPreview";
+import { StatementPreview, useFilePreview, prepareStatementPreview } from "@/components/StatementPreview";
 import { AbsentSection, DASH } from "@/components/Absent";
 import { fmtDate, fmtDateTime } from "@/lib/format";
 import { buildLibrary, type ManifestEntry, type ProviderFolder, type LibraryDoc } from "@/lib/statementLibrary";
@@ -61,6 +61,15 @@ function StatusPill({ status }: { status: LibraryDoc["status"] }) {
 function FormatBlock({ format, docs }: { format: string; docs: LibraryDoc[] }) {
   const preview = useFilePreview();
   const previewing = preview.openKey ? docs.find((d) => d.fileKey === preview.openKey) : undefined;
+  useEffect(() => {
+    if (format !== 'PDF') return;
+    if ('requestIdleCallback' in window) {
+      const idle = window.requestIdleCallback(prepareStatementPreview, { timeout: 1000 });
+      return () => window.cancelIdleCallback(idle);
+    }
+    const timer = setTimeout(prepareStatementPreview, 200);
+    return () => clearTimeout(timer);
+  }, [format]);
   return (
     <div data-format-block={format}>
       <div className="mb-2 flex items-center gap-2">
@@ -86,6 +95,8 @@ function FormatBlock({ format, docs }: { format: string; docs: LibraryDoc[] }) {
           <tbody className="divide-y divide-ink-700/70">
             {docs.map((d) => (
               <tr key={d.fileKey} className="cursor-pointer hover:bg-ink-700/40" onClick={() => preview.open(d.fileKey)}
+                onPointerEnter={format === 'PDF' ? prepareStatementPreview : undefined}
+                onFocus={format === 'PDF' ? prepareStatementPreview : undefined}
                 data-preview-row={d.fileKey}>
                 <td className="px-4 py-3 text-slate-200">
                   <span className="inline-flex items-center gap-1.5">

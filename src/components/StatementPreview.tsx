@@ -16,9 +16,15 @@ import {
 import { usePreviewDialog } from '@/lib/usePreviewDialog';
 import { isinBeforePage } from '@/lib/pdfSourceHighlight';
 import { sourcePage } from '@/lib/sourceTrace';
+import { loadPdfPreview, preloadPdfPreview } from '@/lib/pdfPreviewLoader';
 
 const BASE = import.meta.env.BASE_URL;
-const OriginalPdf = lazy(() => import("./PdfPreview"));
+const OriginalPdf = lazy(loadPdfPreview);
+
+export function prepareStatementPreview() {
+  preloadPdfPreview();
+  void loadIndex().catch(() => {});
+}
 /** Rows a sheet shows before "Show more" — a broker's tape runs to thousands. */
 const ROW_STEP = 500;
 

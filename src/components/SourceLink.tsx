@@ -1,5 +1,6 @@
 import { useTableExporting } from '@/lib/tableExportSnapshot';
 import { Link, useLocation, type LinkProps, type Location } from 'react-router-dom';
+import { preloadPdfPreview } from '@/lib/pdfPreviewLoader';
 
 /** Keep the originating route mounted, including its local table state and
  * scroll containers. Browser Back, Escape and the preview's Back all pop the
@@ -12,7 +13,7 @@ export function sourceBackground(location: Location): Location | undefined {
   return candidate;
 }
 
-export function SourceLink({ to, state, ...props }: LinkProps) {
+export function SourceLink({ to, state, onPointerEnter, onFocus, ...props }: LinkProps) {
   const location = useLocation();
   const exporting = useTableExporting();
   const source = !exporting && typeof to === 'string' && to.startsWith('/statements?') && location.pathname !== '/statements';
@@ -26,7 +27,9 @@ export function SourceLink({ to, state, ...props }: LinkProps) {
     const params = new URLSearchParams(search); params.set('members', members);
     to = `${pathname}?${params}`;
   }
-  return <Link {...props} to={to} state={source ? { ...state, sourceBackground: location } : state} />;
+  return <Link {...props} to={to} state={source ? { ...state, sourceBackground: location } : state}
+    onPointerEnter={event => { if (source) preloadPdfPreview(); onPointerEnter?.(event); }}
+    onFocus={event => { if (source) preloadPdfPreview(); onFocus?.(event); }} />;
 }
 
 SourceLink.sourceTraceControl = true;

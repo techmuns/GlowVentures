@@ -12,19 +12,33 @@ const out = path.resolve('.cache/pdf-preview-check'); await fs.mkdir(out, {recur
 const pageCount = 12;
 const labels = Array.from({length:pageCount}, (_,i) => `Preview page ${['one','two'][i] || i+1}${i === 7 ? ' INF247L01ED1 987.65' : ''}`);
 const plain = Buffer.from(makeMultiPagePdf(labels.map(text => [[60,700,text]]), {fontSize:24}));
+const longPageCount = 235;
+const longLabels = Array.from({length:longPageCount},(_,i)=>`Long statement page ${i+1}`);
+const longPdf = Buffer.from(makeMultiPagePdf(longLabels.map(text=>[[60,700,text]]),{fontSize:24}));
 // Synthetic two-page PDF, generated with pypdf, encrypted with 'preview-test'.
 const locked = await fs.readFile(new URL('./fixtures/preview-password.pdf', import.meta.url));
 const unlocked = await unlockPdf(locked, ['preview-test']);
 const unlockedName = previewKey(locked);
-const keys = ['preview-plain', 'preview-locked', 'preview-part', 'preview-bad', 'preview-auto'];
+const keys = ['preview-plain', 'preview-locked', 'preview-part', 'preview-bad', 'preview-auto', 'preview-long'];
 const manifest = keys.map(key => ({docKey:key, fileKey:key, provider:'Preview test',
   accountNo:null, owner:null, ownerId:null, familyGroup:null, strategy:null, asOf:null,
-  reportType:'holdings', sourcePath:`source/${key}.pdf`, pages:pageCount, status:'ok', warnings:0, sheets:[], label:key, fy:''}));
+  reportType:'holdings', sourcePath:`source/${key}.pdf`, pages:key==='preview-long'?longPageCount:pageCount, status:'ok', warnings:0, sheets:[], label:key, fy:''}));
 const index = {files:Object.fromEntries(keys.map(key => [key, {file:key+'.pdf', bytes:plain.length,
   encrypted:key === 'preview-locked' || key === 'preview-auto', part:key === 'preview-part' ? {from:2,to:2} : null,
   ...(key === 'preview-auto' ? {preview:{file:unlockedName,bytes:unlocked.length}} : {})}])), missing:{}};
 const browser = await chromium.launch({executablePath:process.env.CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless:true});
 const context = await browser.newContext({viewport:{width:1512,height:982}});
+await context.addInitScript(()=>{
+  window.__pdfWorkers = 0; window.__pdfPageRequests = [];
+  const OriginalWorker = window.Worker;
+  window.Worker = class extends OriginalWorker {
+    constructor(...args) { super(...args); window.__pdfWorkers++; }
+    postMessage(message,...args) {
+      if(message?.action==='GetPage')window.__pdfPageRequests.push(message.data?.pageIndex);
+      return super.postMessage(message,...args);
+    }
+  };
+});
 const page = await context.newPage(); const errors = []; const assetFailures = [];
 const diagnostics = [];
 page.on('pageerror', e => errors.push(e.message));
@@ -34,9 +48,13 @@ page.on('response', r => {if (/\/pdf-assets\/|pdf\.worker/.test(r.url()) && !r.o
 await page.route('**/api/**', r => r.fulfill({status:503,json:{ok:false}}));
 await page.route('**/api/statement-previews/*.pdf', r => r.fulfill({contentType:'application/pdf',body:unlocked}));
 await page.route('**/audit/manifest.json', r => r.fulfill({json:manifest}));
-await page.route('**/audit/preview-*/pages.json', r => r.fulfill({json:{pages:labels.map((text,i)=>({page:i+1,text:i<2 ? `${text} INF247L01ED1 123.45` : text}))}}));
+await page.route('**/audit/preview-*/pages.json', r => r.fulfill({json:{pages:(r.request().url().includes('preview-long')?longLabels:labels).map((text,i)=>({page:i+1,text:i<2 ? `${text} INF247L01ED1 123.45` : text}))}}));
 await page.route('**/statement-files/index.json', r => r.fulfill({json:index}));
-await page.route('**/statement-files/preview-*.pdf', r => r.fulfill({contentType:'application/pdf',body:/preview-(locked|auto)/.test(r.request().url()) ? locked : r.request().url().includes('preview-bad') ? Buffer.from('not a PDF') : plain}));
+let plainRequests = 0;
+await page.route('**/statement-files/preview-*.pdf', r => {
+  const url=r.request().url();if(url.includes('preview-plain.pdf'))plainRequests++;
+  return r.fulfill({contentType:'application/pdf',body:/preview-(locked|auto)/.test(url) ? locked : url.includes('preview-bad') ? Buffer.from('not a PDF') : url.includes('preview-long') ? longPdf : plain});
+});
 const address = key => `${base}/statements?provider=Preview%20test&file=${key}`;
 // Keep local navigation on one loopback origin: recent Chrome also blocks
 // local-network frame navigation across origins. Sandbox still denies the PDF
@@ -95,9 +113,19 @@ try {
   assert.ok(await frame.locator('canvas[data-pdf-page]').count()<6,'distant page canvases are released');
   await frame.getByRole('button',{name:'Previous PDF page'}).click(); await currentPage(pageCount-1); await ink(pageCount-1);
   await frame.getByLabel('PDF page',{exact:true}).fill('1'); await ink(1);
+  const workersBefore = await appFrame().evaluate(()=>window.__pdfWorkers);
+  const downloadsBefore = plainRequests;
   await frame.getByRole('tab',{name:'Text as read',exact:true}).click();
   await frame.locator('[data-preview-page="1"]').getByText('Preview page one').waitFor();
   await frame.getByRole('tab',{name:'Original file',exact:true}).click(); await ink(1);
+  assert.equal(await appFrame().evaluate(()=>window.__pdfWorkers),workersBefore,'reopening reuses the initialized PDF worker');
+  assert.equal(plainRequests,downloadsBefore,'reopening uses the bounded in-memory PDF bytes');
+  await open('preview-long');await ink(1);
+  assert.equal(await frame.locator('[data-pdf-paper]').count(),longPageCount);
+  const requestedPages=await appFrame().evaluate(()=>window.__pdfPageRequests.length);
+  assert.ok(requestedPages<=6,`first paint must not load all ${longPageCount} page descriptions (${requestedPages} requested)`);
+  await scrollTo(longPageCount);await rendered(1).waitFor({state:'detached'});
+  assert.ok(await frame.locator('canvas[data-pdf-page]').count()<6);
   await open('preview-plain');
   const app = page.frames().find(f => f.parentFrame() && f.url().startsWith(`${base}/statements?`));
   await app.goto(address('preview-plain')+'&isin=INF247L01ED1&sourceValue=123.45&field=quantity');
@@ -152,7 +180,7 @@ try {
   await scrollTo(pageCount); await scrollTo(1);
   assert.deepEqual(errors,[]); assert.deepEqual(assetFailures,[]);
   await page.screenshot({path:path.join(out,'sandboxed-preview.png')});
-  await fs.writeFile(path.join(out,'results.json'),JSON.stringify({sandboxedEmbed:true,visibleInk:true,continuousScroll:true,adjacentPages:true,scrollTracksPage:true,boundedCanvases:true,pageJump:true,sourceHighlight:true,resizeAnchor:true,zoom:true,bundleStart:true,automaticUnlock:true,reopenWithoutPassword:true,originalDownload:true,passwordRetry:true,cancellation:true,invalidFile:true,mobile:true,errors,assetFailures},null,2));
+  await fs.writeFile(path.join(out,'results.json'),JSON.stringify({sandboxedEmbed:true,visibleInk:true,continuousScroll:true,adjacentPages:true,scrollTracksPage:true,boundedCanvases:true,pageJump:true,sourceHighlight:true,resizeAnchor:true,zoom:true,bundleStart:true,automaticUnlock:true,reopenWithoutPassword:true,originalDownload:true,passwordRetry:true,cancellation:true,invalidFile:true,mobile:true,lazyLongDocument:true,workerReused:true,pdfBytesReused:true,firstPaintPageRequests:requestedPages,errors,assetFailures},null,2));
   console.log('PASS: continuous PDF scrolling, adjacent pages, current-page tracking, bounded canvases, page jumps, source highlight, resize, zoom, sandbox, saved passwords, original downloads, cancellation and mobile layout.');
 } catch (e) {
   await fs.writeFile(path.join(out,'failure.json'),JSON.stringify({errors,assetFailures,diagnostics,frames:page.frames().map(f=>f.url())},null,2));
