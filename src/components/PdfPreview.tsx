@@ -5,7 +5,7 @@ import { getDocument, GlobalWorkerOptions, PasswordResponses, Util, type PDFDocu
 import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import type { PublishedFile } from "@/lib/statementPreview";
 import { pdfSourceMatch, type PdfSourceTarget } from '@/lib/pdfSourceHighlight';
-import { cachedPdfBytes, preparePdfPreview, rememberPdfBytes, PdfCanvasCache, PdfRenderQueue } from '@/lib/pdfPreviewRuntime';
+import { cachedPdfBytes, pdfPageSizes, preparePdfPreview, rememberPdfBytes, rememberPdfSize, PdfCanvasCache, PdfRenderQueue } from '@/lib/pdfPreviewRuntime';
 export { preparePdfPreview } from '@/lib/pdfPreviewRuntime';
 
 GlobalWorkerOptions.workerSrc = workerUrl;
@@ -172,12 +172,13 @@ export default function PdfPreview({ url, file, title, initialPage, sourceTarget
     });
   }, [pages, width, zoom]);
   const onSize = useCallback((number: number, width: number, height: number) => {
+    rememberPdfSize(url, number, width, height);
     setPages(previous => {
       const old = previous[number - 1];
       if (!old || (old.width === width && old.height === height)) return previous;
       const next = previous.slice(); next[number - 1] = { width, height }; return next;
     });
-  }, []);
+  }, [url]);
   const onPaint = useCallback(() => {
     if (pdf) void rememberPdfBytes(url, pdf, file.bytes);
   }, [pdf, url, file.bytes]);
@@ -213,7 +214,8 @@ export default function PdfPreview({ url, file, title, initialPage, sourceTarget
       const size = first.getViewport({ scale: 1 });
       if (!alive) return;
       unlock.current = null;
-      setPdf(doc); setPages(Array.from({ length: doc.numPages }, () => ({ width: size.width, height: size.height })));
+      const known = pdfPageSizes(url, { width: size.width, height: size.height });
+      setPdf(doc); setPages(Array.from({ length: doc.numPages }, (_, index) => known.pages.get(index + 1) ?? known.fallback));
       setPage(current => Math.max(1, Math.min(current, doc.numPages)));
       setStatus("ready");
     }).catch(() => {

@@ -15,6 +15,21 @@ export function preparePdfPreview() {
 const bytes = new Map<string, { data: Uint8Array; saved: number }>();
 const remembering = new Set<string>();
 const MAX_BYTES = 16 * 1024 * 1024;
+type PageSize = { width: number; height: number };
+const sizes = new Map<string, { fallback: PageSize; pages: Map<number, PageSize> }>();
+/** Reuse only the small geometry records across history navigation, so mixed
+ * page sizes do not change the coordinate system of a saved reading position. */
+export function pdfPageSizes(url: string, fallback: PageSize = { width: 612, height: 792 }) {
+  const known = sizes.get(url) ?? { fallback, pages: new Map<number, PageSize>() };
+  sizes.delete(url); sizes.set(url, known);
+  while (sizes.size > 8) sizes.delete(sizes.keys().next().value!);
+  return known;
+}
+export function rememberPdfSize(url: string, number: number, width: number, height: number) {
+  const known = pdfPageSizes(url);
+  known.pages.set(number, { width, height });
+  while (known.pages.size > 1024) known.pages.delete(known.pages.keys().next().value!);
+}
 export function cachedPdfBytes(url: string) {
   for (const [key, item] of bytes) if (Date.now() - item.saved > 60_000) bytes.delete(key);
   const item = bytes.get(url);
