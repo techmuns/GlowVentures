@@ -37,15 +37,15 @@ export async function onRequestPost(context: Context) {
     if (typeof body.revision !== 'string' || !/^[a-f0-9]{20}$/.test(body.revision)) return json({ status: 'invalid' }, 400);
     try {
       const reader = githubStatementReader(context.env);
-      const [sourceResponse, bookResponse] = await Promise.all([
-        reader.request(`/views/${body.revision}/lookthrough.json`), reader.request(`/views/${body.revision}/canonical/book.json`),
+      const [sourceResponse, fenceResponse] = await Promise.all([
+        reader.request(`/views/${body.revision}/lookthrough.json`), reader.request(`/views/${body.revision}/exposure-fence.json`),
       ]);
-      if (!sourceResponse?.ok || !bookResponse?.ok) return json({ status: 'unreachable' }, 503);
+      if (!sourceResponse?.ok || !fenceResponse?.ok) return json({ status: 'unreachable' }, 503);
       const source = await sourceResponse.json() as { index: Index; portfolios: Record<string, FundPortfolio> };
-      const book = await bookResponse.json() as { BOOK_POLYCAB: typeof BOOK_POLYCAB };
+      const fence = await fenceResponse.json() as { keys: string[]; isins: string[] };
       const result = await loadStockExposure(body.funds, new Map(body.identities), {
-        keys: new Set(book.BOOK_POLYCAB.map(p => p.securityKey)),
-        isins: new Set(book.BOOK_POLYCAB.flatMap(p => p.isin ? [p.isin.trim().toUpperCase()] : [])),
+        keys: new Set(fence.keys),
+        isins: new Set(fence.isins),
       }, new Set(body.companyKeys), source);
       return result.status === 'ok' ? json({ ...result, byKey: [...result.byKey] }) : json(result, 503);
     } catch { return json({ status: 'unreachable' }, 503); }
