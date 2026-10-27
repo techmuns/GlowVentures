@@ -19,6 +19,7 @@
 // function running (a local preview), no answer, an error — because they send a
 // reader to different places. Only `not-configured` shows the set-up steps.
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { ManifestEntry } from "./statementLibrary";
 import {
   checkUpload, isJunkPath, MAX_BATCH_FILES,
   type InboxBatch, type InboxFile,
@@ -38,7 +39,7 @@ export const UPLOADS_ENDPOINT = "/api/statement-uploads";
 export const REASONS = {
   signedOut: "You have been signed out. Sign in again to upload statements.",
   noFunction: "The upload service is not running here, so statements cannot be uploaded from this copy of the site.",
-  notConfigured: "Uploading is not switched on yet — the site has no GitHub token to save statements with.",
+  notConfigured: "Statement uploads are unavailable. Please try again later.",
   noAnswer: "The upload service did not answer. Nothing was lost; try again in a moment.",
 } as const;
 
@@ -49,21 +50,6 @@ export const CAUSE_WORD: Record<StoreCause, string> = {
   "no-answer": "Not answering",
   error: "Not available",
 };
-
-/**
- * ── HOW TO SWITCH IT ON, ONCE ───────────────────────────────────────────────
- *
- * The upload writes with the same GitHub token as the dashboard store
- * (`GLOW_GITHUB_TOKEN`); a site that already saves capital calls has it. A
- * token committed to the repository would be a token anyone could use, so the
- * steps are named here rather than left in a code comment. Shown ONLY for
- * `not-configured`.
- */
-export const SWITCH_ON_STEPS = [
-  "On GitHub, open Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token. Resource owner: techmuns; Repository access: Only select repositories → GlowVentures; Repository permissions → Contents: Read and write.",
-  "In the site's hosting settings (Workers & Pages → this site's Pages project → Settings → Variables and Secrets → Add), add a Secret named GLOW_GITHUB_TOKEN with that token, for Production and Preview.",
-  "Redeploy the site (Deployments → latest deployment → Retry deployment), then reload this page.",
-] as const;
 
 type Failure = { ok: false; reason: string; cause: StoreCause };
 type Answer = { ok: true; body: Record<string, unknown> } | Failure;
@@ -84,6 +70,7 @@ export async function readAnswer(r: Response): Promise<Answer> {
   try { j = await r.json(); } catch { j = null; }
   if (j?.ok === true) return { ok: true, body: j };
   if (j?.code === "NOT_CONFIGURED") return { ok: false, reason: REASONS.notConfigured, cause: "not-configured" };
+  if (j?.code === "STORE_ERROR") return { ok: false, reason: "The upload could not complete. Please try again.", cause: "error" };
   return { ok: false, reason: typeof j?.message === "string" && j.message ? j.message : `The upload service answered HTTP ${r.status}.`, cause: "error" };
 }
 
@@ -180,13 +167,30 @@ export type FileView = {
 };
 
 const HOLD_LABEL: Record<string, string> = {
-  "needs-reader": "Needs a reader",
+  "needs-reader": "Unsupported format",
   "needs-password": "Needs password",
   unreadable: "Unreadable",
   "not-a-statement": "Not a statement",
-  "check-failed": "Check failed",
-  "intake-error": "Not read",
+  "check-failed": "Needs attention",
+  "intake-error": "Try again",
 };
+const HOLD_REASON: Record<string, string> = {
+  "needs-reader": "Try a PDF or Excel statement exported by your provider.",
+  "needs-password": "Upload an unlocked copy of this statement.",
+  unreadable: "We could not read this file. Try a fresh download.",
+  "not-a-statement": "Upload the original statement downloaded from your provider.",
+  "check-failed": "This statement needs a data check before it can be added. Your existing data is unchanged.",
+  "intake-error": "Analysis could not finish. Try again.",
+};
+
+/** An exact receipt/source-path match, never a guessed filename or holder. */
+export function uploadDocumentKeys(f: InboxFile, manifest: readonly ManifestEntry[]): string[] {
+  if (f.docKeys?.length) return f.docKeys;
+  const prefix = "Already in the library — byte-identical to ";
+  if (f.status !== "duplicate" || !f.reason?.startsWith(prefix)) return [];
+  const source = f.reason.slice(prefix.length).replace(/\.$/, "");
+  return manifest.filter(d => d.sourcePath === source).map(d => d.docKey);
+}
 
 /**
  * One file's status as the page shows it. A landed file is `in-library` only
@@ -196,21 +200,20 @@ const HOLD_LABEL: Record<string, string> = {
 export function fileView(f: InboxFile, served: ReadonlySet<string>): FileView {
   switch (f.status) {
     case "queued":
-      return { key: "queued", label: "Queued", tone: "info", title: "Saved to GitHub. Waiting for the intake run to read it into the book." };
+      return { key: "queued", label: "Preparing analysis", tone: "info", title: "Statement uploaded to your family office dashboard. Analysis will start automatically." };
     case "processing":
-      return { key: "reading", label: "Reading", tone: "info", title: "Being read into the book now. It lands only if every check passes." };
+      return { key: "reading", label: "Analysing", tone: "info", title: "Statement uploaded to your family office dashboard — being analysed now." };
     case "landed": {
       const keys = f.docKeys ?? [];
       const live = keys.length > 0 && keys.every((k) => served.has(k));
-      const commit = f.commit ? ` in commit ${f.commit.slice(0, 7)}` : "";
       return live
-        ? { key: "in-library", label: "In library", tone: "gain", title: `Read in full and filed${commit}.` }
-        : { key: "publishing", label: "Publishing", tone: "info", title: `Read in full and landed${commit}. The site is redeploying; it shows in its folder when the new version is live.` };
+        ? { key: "in-library", label: "Ready", tone: "gain", title: "Statement analysed and added to your family office dashboard." }
+        : { key: "publishing", label: "Updating dashboard", tone: "info", title: "Analysis complete. Your statement will appear here automatically when the update is ready." };
     }
     case "duplicate":
-      return { key: "duplicate", label: "Already here", tone: "default", title: f.reason ?? "Byte-identical to a statement already in the library." };
+      return { key: "duplicate", label: "Already in library", tone: "gain", title: "This statement is already in your library. No duplicate was added." };
     default:
-      return { key: "held", label: HOLD_LABEL[f.hold ?? ""] ?? "Not read", tone: f.hold === "needs-password" ? "warn" : "loss", title: f.reason ?? "Not read into the book." };
+      return { key: "held", label: HOLD_LABEL[f.hold ?? ""] ?? "Needs attention", tone: f.hold === "needs-password" ? "warn" : "loss", title: HOLD_REASON[f.hold ?? ""] ?? "We could not finish analysing this statement. Please try again." };
   }
 }
 
@@ -224,6 +227,15 @@ export type UploadOutcome =
 
 const POLL_MS = 15_000;
 const SEND_AT_ONCE = 3;
+export type SendingStatement = { id: string; name: string; provider?: string; uploadedAt: string };
+const LOCATION_KEY = "glow.statement-upload-folders";
+const savedLocations = (): Record<string, string> => {
+  try {
+    const value: unknown = JSON.parse(sessionStorage.getItem(LOCATION_KEY) ?? "{}");
+    return value && typeof value === "object" && !Array.isArray(value)
+      ? Object.fromEntries(Object.entries(value).filter(([, v]) => typeof v === "string")) : {};
+  } catch { return {}; }
+};
 
 /**
  * The inbox, kept fresh: read on arrival, on focus, and every few seconds while
@@ -232,6 +244,9 @@ const SEND_AT_ONCE = 3;
  */
 export function useStatementInbox() {
   const [state, setState] = useState<InboxState>({ status: "loading" });
+  const [sending, setSending] = useState<SendingStatement[]>([]);
+  // Presentation context only: analysis still decides the actual issuer.
+  const [locations, setLocations] = useState(savedLocations);
   const alive = useRef(true);
 
   const accept = useCallback((a: Answer) => {
@@ -268,40 +283,53 @@ export function useStatementInbox() {
    * ticks as each file is stored. A file GitHub refuses is reported by name and
    * the rest are still filed.
    */
-  const upload = useCallback(async (files: UploadPlan["accepted"], progress?: (done: number, of: number) => void): Promise<UploadOutcome> => {
-    const staged: { name: string; size: number; blob: string }[] = [];
-    const failed: { name: string; why: string }[] = [];
-    let done = 0;
-    // Not configured / signed out / no service: every file would fail the same way.
-    const halt: { on: Failure | null } = { on: null };
-    const queue = [...files];
-    const worker = async () => {
-      for (let next = queue.shift(); next && !halt.on; next = queue.shift()) {
-        const form = new FormData();
-        form.append("name", next.name);
-        form.append("file", next.file, next.file.name);
-        const a = await send({ method: "POST", body: form });
-        if (a.ok) {
-          const s = a.body.staged as { name?: string; size?: number; blob?: string } | undefined;
-          if (s?.blob && s.name) staged.push({ name: s.name, size: s.size ?? next.file.size, blob: s.blob });
-          else failed.push({ name: next.name, why: "The service stored nothing for it." });
-        } else if (a.cause === "error") {
-          failed.push({ name: next.name, why: a.reason });
-        } else {
-          halt.on = a;
+  const upload = useCallback(async (files: UploadPlan["accepted"], progress?: (done: number, of: number) => void, provider?: string): Promise<UploadOutcome> => {
+    const ticket = crypto.randomUUID();
+    const temporary = files.map((f, i) => ({ id: `${ticket}/${i}`, name: f.name, provider, uploadedAt: new Date().toISOString() }));
+    setSending(previous => [...temporary, ...previous]);
+    try {
+      const staged: { name: string; size: number; blob: string }[] = [];
+      const failed: { name: string; why: string }[] = [];
+      let done = 0;
+      // Not configured / signed out / no service: every file would fail the same way.
+      const halt: { on: Failure | null } = { on: null };
+      const queue = [...files];
+      const worker = async () => {
+        for (let next = queue.shift(); next && !halt.on; next = queue.shift()) {
+          const form = new FormData();
+          form.append("name", next.name);
+          form.append("file", next.file, next.file.name);
+          const a = await send({ method: "POST", body: form });
+          if (a.ok) {
+            const s = a.body.staged as { name?: string; size?: number; blob?: string } | undefined;
+            if (s?.blob && s.name) staged.push({ name: s.name, size: s.size ?? next.file.size, blob: s.blob });
+            else failed.push({ name: next.name, why: "The service stored nothing for it." });
+          } else if (a.cause === "error") {
+            failed.push({ name: next.name, why: a.reason });
+          } else {
+            halt.on = a;
+          }
+          progress?.(++done, files.length);
         }
-        progress?.(++done, files.length);
-      }
-    };
-    await Promise.all(Array.from({ length: Math.min(SEND_AT_ONCE, files.length) }, worker));
-    if (halt.on) return halt.on;
-    if (!staged.length) return { ok: true, saved: 0, failed, started: false };
-    // Files sent at once arrive in any order; the batch keeps the order they were picked in.
-    const order = new Map(files.map((f, i) => [f.name, i]));
-    staged.sort((a, b) => (order.get(a.name) ?? 0) - (order.get(b.name) ?? 0));
-    const c = accept(await postJson({ op: "commit", files: staged }));
-    if (!c.ok) return c;
-    return { ok: true, saved: staged.length, failed, started: c.body.started === true };
+      };
+      await Promise.all(Array.from({ length: Math.min(SEND_AT_ONCE, files.length) }, worker));
+      if (halt.on) return halt.on;
+      if (!staged.length) return { ok: true, saved: 0, failed, started: false };
+      // Files sent at once arrive in any order; the batch keeps the order they were picked in.
+      const order = new Map(files.map((f, i) => [f.name, i]));
+      staged.sort((a, b) => (order.get(a.name) ?? 0) - (order.get(b.name) ?? 0));
+      const c = accept(await postJson({ op: "commit", files: staged }));
+      if (!c.ok) return c;
+      const batch = isBatch(c.body.batch) ? c.body.batch : batchesOf(c.body).find(b => b.files.some(f => staged.some(s => s.blob === f.blob && s.name === f.name)));
+      if (batch && provider && alive.current) setLocations(previous => {
+        const next = { ...previous, [batch.id]: provider };
+        try { sessionStorage.setItem(LOCATION_KEY, JSON.stringify(next)); } catch { /* Private browsing can refuse storage. */ }
+        return next;
+      });
+      return { ok: true, saved: staged.length, failed, started: c.body.started === true };
+    } finally {
+      if (alive.current) setSending(previous => previous.filter(f => !f.id.startsWith(ticket + "/")));
+    }
   }, [accept]);
 
   /** Put a batch's held files back in the queue. */
@@ -310,5 +338,5 @@ export function useStatementInbox() {
   /** Take one queued or held file out of the inbox. */
   const remove = useCallback(async (batch: string, name: string) => accept(await postJson({ op: "remove", batch, name })), [accept]);
 
-  return { state, upload, retry, remove, reload: load };
+  return { state, sending, locations, upload, retry, remove, reload: load };
 }

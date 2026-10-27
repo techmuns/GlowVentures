@@ -23,7 +23,7 @@ import {
   applyUpdates, requeue, withoutFile, uniqueNames, serializeLog, parseLog, emptyLog, inboxPath,
   INBOX_DEFAULTS, MAX_FILE_BYTES, MAX_SETTLED_BATCHES, type InboxLog,
 } from "../../../shared/statementInbox.mjs";
-import { readAnswer, planUpload, fileView, inFlight, REASONS, type PickedFile } from "@/lib/statementUploads";
+import { readAnswer, planUpload, fileView, inFlight, uploadDocumentKeys, REASONS, type PickedFile } from "@/lib/statementUploads";
 
 let fails = 0;
 const ok = (name: string, pass: boolean, detail = "") => {
@@ -270,7 +270,17 @@ async function run() {
   ok("a landed file is in the library only once the site serves its documents",
     fileView(landed, new Set(["k1", "k2"])).key === "in-library" && fileView(landed, new Set(["k1"])).key === "publishing");
   const sealed = { ...landed, status: "held" as const, hold: "needs-password" as const, reason: "Sealed" };
-  ok("a held file says what it needs", fileView(sealed, new Set()).label === "Needs password" && fileView(sealed, new Set()).title === "Sealed");
+  ok("a held file says what it needs", fileView(sealed, new Set()).label === "Needs password" && fileView(sealed, new Set()).title.includes("unlocked copy"));
+  const queued = { ...landed, status: "queued" as const };
+  const reading = { ...landed, status: "processing" as const };
+  const duplicate = { ...landed, status: "duplicate" as const, docKeys: null, reason: "Already in the library — byte-identical to source/october/original.pdf." };
+  ok("a waiting job never claims analysis has started", fileView(queued, new Set()).label === "Preparing analysis" && !fileView(queued, new Set()).title.includes("being analysed now"));
+  ok("analysis is named only after the worker starts", fileView(reading, new Set()).label === "Analysing" && fileView(reading, new Set()).title.includes("being analysed now"));
+  ok("an exact duplicate is a completed green outcome", fileView(duplicate, new Set()).tone === "gain" && !fileView(duplicate, new Set()).title.includes("source/"));
+  const manifest = [{ docKey: "exact", sourcePath: "source/october/original.pdf" }, { docKey: "same-name-elsewhere", sourcePath: "source/august/original.pdf" }] as Parameters<typeof uploadDocumentKeys>[1];
+  ok("duplicate receipts decorate only the exact original document", uploadDocumentKeys(duplicate, manifest).join() === "exact");
+  ok("an unrecognised duplicate receipt never guesses from its filename", uploadDocumentKeys({ ...duplicate, reason: "original.pdf" }, manifest).length === 0);
+  ok("customer status copy contains no infrastructure details", [queued, reading, landed, duplicate, sealed].every(f => !/GitHub|commit|source\/|redeploy|intake run/.test(fileView(f, new Set()).title)));
   ok("the page keeps polling while anything is queued or being read",
     inFlight([makeBatch("20261021T000000Z-y", [{ name: "a.pdf", size: 1, blob: "0".repeat(40) }])]) && !inFlight([{ id: "x", uploadedAt: "", files: [landed] }]));
 

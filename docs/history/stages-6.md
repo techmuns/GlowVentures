@@ -493,3 +493,10 @@
 - `providers/franklinAif.mjs` reads text only and spells out the issuer's `ti` ligature (`Ɵ`). Nothing publishes unless every printed figure ties: contributed − stamp duty = net, commitment − called = uncalled, units × NAV = the printed value, the ledger's gross / charge / allotment rows match the summary, and the closing balance equals balance capital. A redemption, repayment or distribution row it has not been taught refuses the statement.
 - In the book: a new account with one holding, worth ₹19.999 Cr. It is private by its printed category. Its cost is the ₹20 Cr gross paid (`grossPaid`), with a ₹20 Cr capital move and tranche on 22 Oct and a commitment fully drawn. Total value ₹880.59 Cr → ₹900.58 Cr.
 - The return record names its actual gap: the capital arrived after the statement's only valuation. That reason is reached only where every dated row postdates the valuation, so no other account's wording changed.
+
+### Stage 10ia — STATEMENT UPLOAD PROGRESS IN THE STATEMENT TABLE
+
+- Replace the separate upload log with pending rows at the top of the existing statement table: Uploading, Preparing analysis, Analysing, Updating dashboard, then a green tick. The progress bar is indeterminate until the actual result is known; queued work never claims analysis has started.
+- Completed uploads decorate and promote their actual source rows. Exact duplicate receipts match the full original source path, retain one document, and show Already in library. Unmatched receipts never guess a holder, account, date or source.
+- Remove GitHub, commits, deployment paths and setup instructions from customer upload messages. Failures retain a clear next action; processing and publication rules are unchanged. Folder context persists for the browser session until analysis identifies the real issuer.
+- Add browser coverage for local sending rows, stage transitions, completion without a duplicate row, duplicate handoff, useful failures and folder isolation; retain file-drop/cancellation/availability regressions.

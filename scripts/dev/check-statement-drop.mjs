@@ -110,6 +110,8 @@ try {
     }
   }, fixture);
   await page.locator('[data-publication-busy="true"]').waitFor();
+  assert.equal(await folder().locator('tbody tr').first().getAttribute('data-upload-status'), 'uploading');
+  await folder().locator('[data-upload-status="uploading"] [role="progressbar"]').waitFor();
   await event(cell, 'dragenter', data);
   await overlay().waitFor();
   assert.match(await overlay().innerText(), /Please wait/);
@@ -171,9 +173,10 @@ try {
     files: [{ name: 'previously-published.pdf', status: 'landed', docKeys: [other.docKey], providers: [other.provider] }] });
   await open('/statements?file=' + encodeURIComponent(linked.docKey));
   await folder().waitFor();
-  // A file link also opens its preview. Invoke the underlying folder action
-  // directly to verify that it clears the source selection in the address.
-  await page.locator('[data-xa="statement-upload-log"]').getByRole('button', { name: other.provider, exact: true }).evaluate(el => el.click());
+  // Completed files from other providers no longer clutter this folder.
+  assert.equal(await folder().getByText('previously-published.pdf', { exact: true }).count(), 0);
+  await page.getByRole('button', { name: 'All folders', exact: true }).evaluate(el => el.click());
+  await page.locator('[data-format-block="Recent statements"]').getByRole('button', { name: other.provider, exact: true }).click();
   await page.locator('[data-open-folder]').filter({ hasText: other.provider }).waitFor();
   assert.equal(new URL(page.url()).searchParams.get('provider'), other.provider);
   assert.equal(new URL(page.url()).searchParams.has('file'), false);
@@ -183,7 +186,38 @@ try {
   await page.locator('[data-upload-drop]').waitFor();
   assert.equal(new URL(page.url()).search, '');
   await open();
-  results.push('Upload-log folder links and All folders clear source selections instead of getting trapped by file/path links');
+  results.push('Inline recent-statement folder links and All folders clear source selections; other providers do not clutter a folder');
+
+  // The real statement table owns each stage, with no invented percentage or
+  // extra document once an upload has reached the served archive.
+  const progressFile = batches.find(b => b.files.some(f => f.name === 'local-helios.pdf')).files[0];
+  const refresh = async () => { await page.evaluate(() => window.dispatchEvent(new Event('focus'))); };
+  await folder().getByText('Preparing analysis', { exact: true }).first().waitFor();
+  assert.equal(await page.locator('[data-xa="statement-upload-log"]').count(), 0);
+  assert.equal(await folder().locator('[role="progressbar"]').first().getAttribute('aria-valuenow'), null);
+  assert.ok(!/saved to GitHub|Queued|1 reading/.test(await page.locator('main').innerText()));
+  await page.screenshot({ path: path.join(output, 'inline-preparing.png') });
+  progressFile.status = 'processing'; await refresh();
+  await folder().getByText('Analysing', { exact: true }).waitFor();
+  await page.screenshot({ path: path.join(output, 'inline-analysing.png') });
+  progressFile.status = 'landed'; progressFile.docKeys = [linked.docKey]; progressFile.providers = [linked.provider]; await refresh();
+  const ready = folder().locator('[data-preview-row]').filter({ has: page.locator('[data-upload-complete]') });
+  await ready.waitFor();
+  assert.equal(await folder().getByText('local-helios.pdf', { exact: true }).count(), 0);
+  assert.equal(await folder().locator('tbody tr').first().getAttribute('data-upload-status'), 'queued');
+  assert.equal(await ready.getAttribute('data-preview-row'), linked.fileKey);
+  await page.screenshot({ path: path.join(output, 'inline-ready.png') });
+  progressFile.status = 'duplicate'; progressFile.docKeys = null; progressFile.providers = null;
+  progressFile.reason = 'Already in the library — byte-identical to ' + linked.sourcePath + '.'; await refresh();
+  await ready.getByText('Already in library', { exact: true }).waitFor();
+  assert.equal(await folder().locator('[data-preview-row]').count(), manifest.filter(d => d.provider === linked.provider).length);
+  const heldFile = batches.find(b => b.files.some(f => f.name === 'chooser.pdf')).files[0];
+  heldFile.status = 'held'; heldFile.hold = 'needs-password'; heldFile.reason = 'Internal diagnostic: GitHub workflow failed'; await refresh();
+  await folder().getByText('Needs password', { exact: true }).waitFor();
+  await folder().getByRole('button', { name: 'Try again', exact: true }).waitFor();
+  assert.ok(!/GitHub|Internal diagnostic/.test(await folder().innerText()));
+  assert.equal(await folder().locator('[data-upload-status="held"] [data-upload-complete]').count(), 0);
+  results.push('Files progress inside the original table; real analysis state, green completion, exact duplicate handoff, actionable failure and no infrastructure copy');
 
   const themeData = await fileData('theme-check.pdf');
   await page.evaluate(() => document.documentElement.classList.add('dark'));
