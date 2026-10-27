@@ -204,7 +204,7 @@ try {
     finally { Object.defineProperty(DataTransferItem.prototype, 'webkitGetAsEntry', descriptor); }
   }, payload);
   await page.waitForFunction(count => document.querySelectorAll('tr[data-upload-status="queued"]').length === count, fixtureFiles.length, { timeout: 30_000 });
-  for (const file of fixtureFiles) assert.equal(await page.locator('tr[data-upload-status="queued"]').getByText(file.name, { exact: true }).count(), 1);
+  for (const file of fixtureFiles) assert.equal(await page.locator('tr[data-upload-status="queued"]').getByText(cleanUploadPath(file.name), { exact: true }).count(), 1);
   assert.equal(await page.locator('[data-xa="statement-upload-log"]').count(), 0, 'Progress belongs to the statement table');
   assert.ok(workerPromise); await workerPromise; workerPromise = null;
   let c = readControl(marker); assert.ok(c.pr && c.ciRequested); assert.equal(c.pr.state, 'OPEN'); assert.equal(c.merges, 0);
