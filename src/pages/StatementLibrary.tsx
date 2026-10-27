@@ -1,12 +1,11 @@
-import { useNavigationState, useNavigationValue, booleanNavigation, nullableStringNavigation } from "@/lib/useNavigationState";
-import { useTableExportFilter } from "@/lib/tableExportSnapshot";
+import { useNavigationState, useNavigationValue, nullableStringNavigation } from "@/lib/useNavigationState";
 import { ExportableTable } from "@/components/ExportableTable";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useSearchParams } from "react-router-dom";
 import {
-  Folder, FolderUp, ChevronLeft, Search, ShieldAlert, ExternalLink, FileText, FileSpreadsheet, UploadCloud, Trash2,
-  Loader2, RotateCcw,
+  Folder, FolderUp, ChevronLeft, Search, ShieldAlert, ExternalLink, FileText, FileSpreadsheet, UploadCloud,
+  Loader2, CircleCheck,
 } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
@@ -16,8 +15,8 @@ import { AbsentSection, DASH } from "@/components/Absent";
 import { fmtDate, fmtDateTime } from "@/lib/format";
 import { buildLibrary, type ManifestEntry, type ProviderFolder, type LibraryDoc } from "@/lib/statementLibrary";
 import {
-  useStatementInbox, fromDrop, fromInput, planUpload, fileView, SWITCH_ON_STEPS, CAUSE_WORD,
-  type PickedFile, type InboxBatch,
+  useStatementInbox, fromDrop, fromInput, planUpload, fileView, uploadDocumentKeys,
+  type PickedFile, type InboxFile, type FileView,
 } from "@/lib/statementUploads";
 import { MAX_FILE_BYTES } from "../../shared/statementInbox.mjs";
 
@@ -57,66 +56,108 @@ function StatusPill({ status }: { status: LibraryDoc["status"] }) {
   return <Pill tone={tone} className="capitalize"><span title={why}>{status}</span></Pill>;
 }
 
-/** One format's files inside an open folder — "all the files of the same
- *  format", in one labelled block, as a desktop folder groups a file type.
- *  A row opens that file's contents in a preview window. */
-function FormatBlock({ format, docs }: { format: string; docs: LibraryDoc[] }) {
+type UploadRow = {
+  id: string; name: string; uploadedAt: string; batch?: string; file?: InboxFile;
+  providers: string[]; destination?: string; fileKeys: string[];
+  view: Omit<FileView, "key"> & { key: FileView["key"] | "uploading" };
+  document?: ManifestEntry;
+};
+
+function UploadStatus({ row }: { row: UploadRow }) {
+  const done = row.view.key === "in-library" || row.view.key === "duplicate";
+  const moving = !done && row.view.key !== "held";
+  return <div title={row.view.title} role="status" className={`min-w-[155px] text-xs ${done ? "text-gain" : moving ? "text-accent-400" : "text-loss"}`}>
+    <span className="inline-flex items-center gap-1.5">
+      {done ? <CircleCheck className="h-4 w-4" data-upload-complete /> : moving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ShieldAlert className="h-4 w-4" />}
+      {row.view.label}
+    </span>
+    {moving && <div className="statement-upload-track mt-1.5" role="progressbar" aria-label={`${row.name}: ${row.view.title}`} />}
+  </div>;
+}
+
+function UploadActions({ row, inbox }: { row: UploadRow; inbox: ReturnType<typeof useStatementInbox> }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const act = async (remove = false) => {
+    if (!row.batch || busy) return;
+    setBusy(true); setError(null);
+    const result = remove ? await inbox.remove(row.batch, row.name) : await inbox.retry(row.batch);
+    if (!result.ok) setError(result.reason);
+    setBusy(false);
+  };
+  return <>
+    {row.view.key === "held" && <p className="mt-1 text-xs text-slate-500">{row.view.title}</p>}
+    {(row.file?.status === "held" || row.file?.status === "queued") && <span className="mt-1 inline-flex items-center gap-3 text-xs">
+      {row.file.status === "held" && <button type="button" disabled={busy} onClick={() => void act()} data-upload-retry className="text-accent-400 hover:underline disabled:opacity-50">Try again</button>}
+      <button type="button" disabled={busy} onClick={() => void act(true)} className="text-slate-500 hover:underline disabled:opacity-50">Remove</button>
+    </span>}
+    {error && <p className="mt-1 text-xs text-loss" role="alert">{error}</p>}
+  </>;
+}
+
+/** Pending files occupy the same table; completed uploads decorate their actual
+ * archive rows instead of becoming a second document. */
+function FormatBlock({ format, docs, uploads = [], inbox, onOpen }: {
+  format: string; docs: LibraryDoc[]; uploads?: UploadRow[];
+  inbox: ReturnType<typeof useStatementInbox>; onOpen?: (provider: string) => void;
+}) {
   const preview = useFilePreview();
-  const previewing = preview.openKey ? docs.find((d) => d.fileKey === preview.openKey) : undefined;
-  return (
-    <div data-format-block={format}>
-      <div className="mb-2 flex items-center gap-2">
-        {fileIcon(format)}
-        <span className="text-xs font-semibold uppercase tracking-wide text-slate-300">{format}</span>
-        <Pill>{docs.length} {docs.length === 1 ? "file" : "files"}</Pill>
-      </div>
-      {/* Wide on a phone; the table scrolls inside its own container so the page
-          body never scrolls sideways (CLAUDE.md, Conventions). */}
-      <div className="overflow-x-auto rounded-lg border border-ink-700" data-navigation-scroll="statementlibrary-1">
-        <ExportableTable className="min-w-full text-sm"
-          data-table-static="one file type inside a provider folder; the Data Audit viewer sorts the rows inside any one document">
-          <thead className="border-b border-ink-700 text-left text-[11px] uppercase tracking-wide text-slate-500">
-            <tr>
-              <th className="px-4 py-2.5 font-medium">Document</th>
-              <th className="px-4 py-2.5 font-medium">Owner / entity</th>
-              <th className="px-4 py-2.5 font-medium">Account</th>
-              <th className="px-4 py-2.5 font-medium">As of</th>
-              <th className="px-4 py-2.5 font-medium">Status</th>
-              <th className="px-4 py-2.5 font-medium">Arrived in</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-ink-700/70">
-            {docs.map((d) => (
-              <tr key={d.fileKey} className="cursor-pointer hover:bg-ink-700/40" onClick={() => preview.open(d.fileKey)}
-                data-preview-row={d.fileKey}>
-                <td className="px-4 py-3 text-slate-200">
-                  <span className="inline-flex items-center gap-1.5">
-                    <button type="button" onClick={(e) => { e.stopPropagation(); preview.open(d.fileKey); }}
-                      className="text-left hover:text-accent-400 hover:underline" title={`Open ${d.fileName}`}>
-                      {d.reportLabel}
-                    </button>
-                    {d.hasSheets && (
-                      <Link to={`/audit?file=${encodeURIComponent(d.fileKey)}`} onClick={(e) => e.stopPropagation()}
-                        className="text-slate-500 hover:text-accent-400"
-                        title="Open this document in Data Audit">
-                        <ExternalLink className="h-3.5 w-3.5" />
-                      </Link>
-                    )}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-slate-400">{d.owner ?? <span className="text-slate-600" title="This document names no holder">{DASH}</span>}</td>
-                <td className="px-4 py-3 mono text-slate-400">{d.accountNo ?? <span className="text-slate-600">{DASH}</span>}</td>
-                <td className="px-4 py-3 text-slate-400">{d.asOf ? fmtDate(d.asOf) : <span className="text-slate-600" title="No as-of date on this document">{DASH}</span>}</td>
-                <td className="px-4 py-3"><StatusPill status={d.status} /></td>
-                <td className="px-4 py-3 text-slate-500" title={`Source file: ${d.fileName}`}>{d.delivery}</td>
-              </tr>
-            ))}
-          </tbody>
-        </ExportableTable>
-      </div>
-      {previewing && <StatementPreview doc={previewing} onClose={preview.close} />}
+  const previewing = preview.openKey ? docs.find(d => d.fileKey === preview.openKey) : undefined;
+  const completed = (row: UploadRow) => row.view.key === "in-library" || row.view.key === "duplicate";
+  const receiptFor = (doc: LibraryDoc) => uploads.find(row => completed(row) && row.fileKeys.includes(doc.fileKey));
+  const orderedDocs = [...docs].sort((a, b) => (receiptFor(b)?.uploadedAt ?? "").localeCompare(receiptFor(a)?.uploadedAt ?? ""));
+  const receipts = uploads.filter(row => !completed(row) || !row.fileKeys.some(key => docs.some(d => d.fileKey === key)));
+  return <div data-format-block={format}>
+    <div className="mb-2 flex items-center gap-2">
+      {fileIcon(format)}
+      <span className="text-xs font-semibold uppercase tracking-wide text-slate-300">{format}</span>
+      {docs.length > 0 && <Pill>{docs.length} {docs.length === 1 ? "file" : "files"}</Pill>}
     </div>
-  );
+    <div className="overflow-x-auto rounded-lg border border-ink-700" data-navigation-scroll={`statement-library-${format}`}>
+      <ExportableTable className="min-w-full text-sm" data-table-static="statement files, with uploads at the top until their archive rows are ready">
+        <thead className="border-b border-ink-700 text-left text-[11px] uppercase tracking-wide text-slate-500"><tr>
+          <th className="px-4 py-2.5 font-medium">Document</th>
+          <th className="px-4 py-2.5 font-medium">Owner / entity</th>
+          <th className="px-4 py-2.5 font-medium">Account</th>
+          <th className="px-4 py-2.5 font-medium">As of</th>
+          <th className="px-4 py-2.5 font-medium">Status</th>
+          <th className="px-4 py-2.5 font-medium">{onOpen ? "Folder" : "Arrived in"}</th>
+        </tr></thead>
+        <tbody className="divide-y divide-ink-700/70">
+          {receipts.map(row => <tr key={row.id} data-upload-status={row.view.key} data-upload-row={row.id}>
+            <td className="min-w-[230px] px-4 py-3 text-slate-200">
+              <span className="inline-flex items-center gap-1.5" title={row.name}>{fileIcon(row.name.split(".").pop()?.toUpperCase() ?? "")}<span className="break-words">{row.name.split("/").pop()}</span></span>
+              <UploadActions row={row} inbox={inbox} />
+            </td>
+            <td className="px-4 py-3 text-slate-500">{row.document?.owner ?? DASH}</td>
+            <td className="px-4 py-3 text-slate-500">{row.document?.accountNo ?? DASH}</td>
+            <td className="px-4 py-3 text-slate-500">{row.document?.asOf ? fmtDate(row.document.asOf) : DASH}</td>
+            <td className="px-4 py-3"><UploadStatus row={row} /></td>
+            <td className="px-4 py-3 text-xs text-slate-500">
+              {onOpen ? row.providers.map(provider => completed(row) && row.fileKeys.length
+                ? <button key={provider} type="button" onClick={() => onOpen(provider)} className="mr-2 text-accent-400 hover:underline">{provider}</button>
+                : <span key={provider}>{provider}</span>) : fmtDateTime(row.uploadedAt)}
+            </td>
+          </tr>)}
+          {orderedDocs.map(d => {
+            const receipt = receiptFor(d);
+            return <tr key={d.fileKey} className={`cursor-pointer hover:bg-ink-700/40 ${receipt ? "bg-emerald-500/5" : ""}`} onClick={() => preview.open(d.fileKey)} data-preview-row={d.fileKey} data-upload-status={receipt?.view.key}>
+              <td className="px-4 py-3 text-slate-200"><span className="inline-flex items-center gap-1.5">
+                <button type="button" onClick={e => { e.stopPropagation(); preview.open(d.fileKey); }} className="text-left hover:text-accent-400 hover:underline" title={`Open ${d.fileName}`}>{d.reportLabel}</button>
+                {d.hasSheets && <Link to={`/audit?file=${encodeURIComponent(d.fileKey)}`} onClick={e => e.stopPropagation()} className="text-slate-500 hover:text-accent-400" title="Open this document in Data Audit"><ExternalLink className="h-3.5 w-3.5" /></Link>}
+              </span></td>
+              <td className="px-4 py-3 text-slate-400">{d.owner ?? DASH}</td>
+              <td className="px-4 py-3 mono text-slate-400">{d.accountNo ?? DASH}</td>
+              <td className="px-4 py-3 text-slate-400">{d.asOf ? fmtDate(d.asOf) : DASH}</td>
+              <td className="px-4 py-3">{receipt ? <UploadStatus row={receipt} /> : <StatusPill status={d.status} />}</td>
+              <td className="px-4 py-3 text-slate-500" title={`Source file: ${d.fileName}`}>{d.delivery}</td>
+            </tr>;
+          })}
+        </tbody>
+      </ExportableTable>
+    </div>
+    {previewing && <StatementPreview doc={previewing} onClose={preview.close} />}
+  </div>;
 }
 
 /** What the file chooser offers — the types the ingest pipeline reads. */
@@ -164,19 +205,13 @@ function UploadPanel({ inbox, provider, archiveStatus }: {
         return;
       }
       setProgress({ done: 0, of: plan.accepted.length });
-      const r = await upload(plan.accepted, (done, of) => setProgress({ done, of }));
+      const r = await upload(plan.accepted, (done, of) => setProgress({ done, of }), provider);
       if (!r.ok) { setMsg({ tone: "err", text: r.reason }); return; }
       const notSent = [...plan.skipped, ...r.failed.map((f) => ({ path: f.name, why: f.why }))];
       const tail = notSent.length ? ` ${notSent.length} not uploaded — hover for why.` : "";
       const title = notSent.map((s) => `${s.path}: ${s.why}`).join("\n") || undefined;
       if (!r.saved) { setMsg({ tone: "err", text: `Nothing was saved.${tail}`, title }); return; }
-      const n = `${r.saved} statement file${r.saved === 1 ? "" : "s"}`;
-      setMsg({
-        tone: notSent.length ? "err" : "ok", title,
-        text: r.started
-          ? `${n} saved to GitHub — being read into the dashboard now.${tail}`
-          : `${n} saved to GitHub — the next scheduled intake run reads ${r.saved === 1 ? "it" : "them"} in, within about 20 minutes.${tail}`,
-      });
+      setMsg(notSent.length ? { tone: "err", title, text: `${notSent.length} file${notSent.length === 1 ? " was" : "s were"} not uploaded. Choose the files again to retry.` } : null);
     } catch {
       setMsg({ tone: "err", text: "The files could not be read or uploaded. Try again, or use Files to select them." });
     } finally {
@@ -184,7 +219,7 @@ function UploadPanel({ inbox, provider, archiveStatus }: {
       setCollecting(false);
       setProgress(null);
     }
-  }, [canUpload, upload]);
+  }, [canUpload, upload, provider]);
 
   useEffect(() => {
     let depth = 0;
@@ -267,13 +302,10 @@ function UploadPanel({ inbox, provider, archiveStatus }: {
         <div className="flex items-start gap-3">
           <div className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-md border border-amber-500/30 bg-amber-500/10 text-amber-400"><UploadCloud className="h-5 w-5" /></div>
           <div className="min-w-0">
-            <div className="text-sm font-medium text-slate-200">Uploading statements — {CAUSE_WORD[state.cause]}</div>
+            <div className="text-sm font-medium text-slate-200">Statement uploads unavailable</div>
             <p className="mt-1 text-xs text-slate-400" data-prose-ok="why uploading is not available">{state.reason}</p>
-            {state.cause === "not-configured" && (
-              <ol className="mt-2 list-decimal space-y-1 pl-4 text-[11.5px] text-slate-500" data-prose-ok="the one-time steps to switch uploading on">
-                {SWITCH_ON_STEPS.map((s, i) => <li key={i}>{s}</li>)}
-              </ol>
-            )}
+            <button type="button" onClick={() => void inbox.reload()} className="mt-2 text-xs text-accent-400 hover:underline">Try again</button>
+
           </div>
         </div>
       </Card>
@@ -313,7 +345,7 @@ function UploadPanel({ inbox, provider, archiveStatus }: {
           {progress ? `Uploading ${progress.done} of ${progress.of}…` : collecting ? "Reading files…" : "Drop statements or whole folders anywhere on this page"}
         </span>
         <span className="text-[11px] text-slate-500"
-          title="Each statement is saved to GitHub, read into the dashboard, and filed in the folder of the provider that issued it.">
+          title="Each statement is analysed and added to its provider folder automatically.">
           PDF, Excel or ZIP · up to {MAX_MB} MB each
         </span>
       </button>}
@@ -334,140 +366,14 @@ function UploadPanel({ inbox, provider, archiveStatus }: {
   );
 }
 
-const LOG_ROWS = 25;
-
-/**
- * EVERY UPLOAD AND WHAT BECAME OF IT — queued, being read, in its folder,
- * already here, or held with the reason the pipeline gave. A held file is not
- * a holding: it feeds nothing until a reader exists and it is retried.
- */
-function UploadLog({ inbox, batches, served, folders, onOpen }: {
-  inbox: ReturnType<typeof useStatementInbox>;
-  batches: InboxBatch[];
-  served: ReadonlySet<string>;
-  folders: ReadonlySet<string>;
-  onOpen: (provider: string) => void;
-}) {
-  const [all, setAll] = useNavigationValue("inbox-all", false, booleanNavigation);
-  const [busy, setBusy] = useState<string | null>(null);
-  const [err, setErr] = useState<string | null>(null);
-  const rows = useMemo(() => batches.flatMap((b) => b.files.map((f) => ({ b, f, v: fileView(f, served) }))), [batches, served]);
-  const exportAll = useTableExportFilter(all, true);
-  const shown = exportAll ? rows : rows.slice(0, LOG_ROWS);
-  if (!rows.length) return null;
-  const tally = (k: string) => rows.filter((r) => r.v.key === k).length;
-  const act = async (id: string, run: () => Promise<{ ok: true } | { ok: false; reason: string }>) => {
-    setBusy(id); setErr(null);
-    const r = await run();
-    if (!r.ok) setErr(r.reason);
-    setBusy(null);
-  };
-
-  return (
-    <div data-xa="statement-upload-log" data-upload-rows={rows.length}>
-    <Card className="mb-5">
-      <div className="mb-2 flex flex-wrap items-center gap-2">
-        <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">Uploads</span>
-        {tally("reading") + tally("queued") > 0 && <Pill tone="info">{tally("reading") + tally("queued")} reading</Pill>}
-        {tally("publishing") > 0 && <Pill tone="info">{tally("publishing")} publishing</Pill>}
-        {tally("held") > 0 && <Pill tone="warn">{tally("held")} held</Pill>}
-      </div>
-      {err && <p className="mb-2 text-xs text-loss" role="status" data-prose-ok="why a retry or removal did not go through">{err}</p>}
-      <div className="overflow-x-auto rounded-lg border border-ink-700" data-navigation-scroll="statementlibrary-2">
-        <ExportableTable className="min-w-full text-sm"
-          data-table-static="the inbox's own log, newest upload first — each file's status as the intake run left it">
-          <thead className="border-b border-ink-700 text-left text-[11px] uppercase tracking-wide text-slate-500">
-            <tr>
-              <th className="px-4 py-2.5 font-medium">File</th>
-              <th className="px-4 py-2.5 font-medium">Uploaded</th>
-              <th className="px-4 py-2.5 font-medium">Status</th>
-              <th className="px-4 py-2.5 font-medium">Folder</th>
-              <th className="px-4 py-2.5 font-medium">Detail</th>
-              <th className="px-4 py-2.5 font-medium" />
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-ink-700/70">
-            {shown.map(({ b, f, v }) => {
-              const id = `${b.id}/${f.name}`;
-              return (
-                <tr key={id} className="hover:bg-ink-700/40" data-upload-status={v.key}>
-                  <td className="min-w-[220px] px-4 py-3 text-slate-200">
-                    <span className="inline-flex items-center gap-1.5" title={f.name}>
-                      {fileIcon((f.name.split(".").pop() ?? "").toUpperCase())}
-                      <span className="break-words">{f.name.split("/").pop()}</span>
-                    </span>
-                  </td>
-                  <td className="whitespace-nowrap px-4 py-3 text-slate-400">{fmtDateTime(b.uploadedAt)}</td>
-                  <td className="whitespace-nowrap px-4 py-3">
-                    <Pill tone={v.tone} icon={v.key === "reading" || v.key === "publishing" ? <Loader2 className="h-3 w-3 animate-spin" /> : undefined}>
-                      <span title={v.title}>{v.label}</span>
-                    </Pill>
-                  </td>
-                  <td className="px-4 py-3 text-slate-400">
-                    {f.status === "landed" && f.providers?.length
-                      ? f.providers.map((p, i) => (
-                        <span key={p}>
-                          {i > 0 && ", "}
-                          {folders.has(p) && v.key === "in-library"
-                            ? <button type="button" onClick={() => onOpen(p)} className="text-left text-accent-400 hover:underline">{p}</button>
-                            : p}
-                        </span>
-                      ))
-                      : <span className="text-slate-600">{DASH}</span>}
-                  </td>
-                  <td className="min-w-[200px] max-w-[320px] px-4 py-3 text-xs text-slate-500">
-                    {f.status === "held" || f.status === "duplicate" || (f.status === "landed" && f.reason)
-                      ? <span className={`line-clamp-2 ${f.status === "landed" ? "text-amber-400" : ""}`} title={f.reason ?? undefined}>{f.reason}</span>
-                      : f.status === "landed" && f.landedAs?.length
-                        ? <span className="mono line-clamp-2 break-all" title={f.landedAs.join("\n")}>{f.landedAs.join(", ")}</span>
-                        : <span className="text-slate-600">{DASH}</span>}
-                  </td>
-                  <td className="whitespace-nowrap px-3 py-3 text-right">
-                    <span className="inline-flex items-center gap-1">
-                      {f.run && (
-                        <a href={f.run} target="_blank" rel="noreferrer" aria-label="Intake run log"
-                          className="grid h-6 w-6 place-items-center rounded text-slate-500 hover:bg-ink-700 hover:text-accent-400" title="Open the intake run's log on GitHub">
-                          <ExternalLink className="h-3.5 w-3.5" />
-                        </a>
-                      )}
-                      {f.status === "held" && (
-                        <button type="button" disabled={busy !== null} data-upload-retry aria-label="Retry"
-                          onClick={() => act(id, () => inbox.retry(b.id))}
-                          className="grid h-6 w-6 place-items-center rounded border border-ink-600 text-slate-400 hover:bg-ink-700 hover:text-slate-200 disabled:opacity-50"
-                          title="Retry — read this upload's held files again, after their reader is written or the password is set">
-                          {busy === id ? <Loader2 className="h-3 w-3 animate-spin" /> : <RotateCcw className="h-3 w-3" />}
-                        </button>
-                      )}
-                      {(f.status === "held" || f.status === "queued") && (
-                        <button type="button" disabled={busy !== null} aria-label="Remove"
-                          onClick={() => act(`${id}#rm`, () => inbox.remove(b.id, f.name))}
-                          className="grid h-6 w-6 place-items-center rounded border border-ink-600 text-slate-400 hover:bg-ink-700 hover:text-loss disabled:opacity-50"
-                          title="Remove — take this file out of the inbox">
-                          {busy === `${id}#rm` ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
-                        </button>
-                      )}
-                    </span>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </ExportableTable>
-      </div>
-      {rows.length > LOG_ROWS && (
-        <button type="button" onClick={() => setAll((x) => !x)} className="mt-2 text-xs text-accent-400 hover:underline">
-          {all ? "Show the latest only" : `Show all ${rows.length}`}
-        </button>
-      )}
-    </Card>
-    </div>
-  );
-}
-
-
 /** The opened folder: a header strip naming the provider, then one block per
  *  file format it holds. */
-function OpenFolder({ folder, onBack }: { folder: ProviderFolder; onBack: () => void }) {
+function uploadsForFormat(format: string, docs: LibraryDoc[], allDocs: LibraryDoc[], uploads: UploadRow[]) {
+  return uploads.filter(row => row.fileKeys.some(key => docs.some(d => d.fileKey === key)) ||
+    (!row.fileKeys.some(key => allDocs.some(d => d.fileKey === key)) && row.name.split(".").pop()?.toUpperCase() === format));
+}
+
+function OpenFolder({ folder, onBack, uploads, inbox }: { folder: ProviderFolder; onBack: () => void; uploads: UploadRow[]; inbox: ReturnType<typeof useStatementInbox> }) {
   const dateRange = folder.asOfFrom
     ? folder.asOfFrom === folder.asOfTo
       ? fmtDate(folder.asOfFrom)
@@ -481,8 +387,18 @@ function OpenFolder({ folder, onBack }: { folder: ProviderFolder; onBack: () => 
       const list = map.get(d.format);
       if (list) list.push(d); else map.set(d.format, [d]);
     }
-    return [...map.entries()].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]));
-  }, [folder]);
+    for (const row of uploads) {
+      if (row.fileKeys.some(key => folder.docs.some(d => d.fileKey === key))) continue;
+      const format = row.name.split(".").pop()?.toUpperCase() ?? "Files";
+      if (!map.has(format)) map.set(format, []);
+    }
+    const uploadRank = ([format, docs]: [string, LibraryDoc[]]) => {
+      const relevant = new Set(uploadsForFormat(format, docs, folder.docs, uploads));
+      const first = uploads.findIndex(row => relevant.has(row));
+      return first < 0 ? Number.MAX_SAFE_INTEGER : first;
+    };
+    return [...map.entries()].sort((a, b) => uploadRank(a) - uploadRank(b) || b[1].length - a[1].length || a[0].localeCompare(b[0]));
+  }, [folder, uploads]);
 
   return (
     <div data-open-folder={folder.provider}>
@@ -523,7 +439,7 @@ function OpenFolder({ folder, onBack }: { folder: ProviderFolder; onBack: () => 
       </Card>
 
       <div className="space-y-5">
-        {byFormat.map(([format, docs]) => <FormatBlock key={format} format={format} docs={docs} />)}
+        {byFormat.map(([format, docs]) => <FormatBlock key={format} format={format} docs={docs} inbox={inbox} uploads={uploadsForFormat(format, docs, folder.docs, uploads)} />)}
       </div>
     </div>
   );
@@ -603,8 +519,21 @@ export function StatementLibrary() {
   const library = useMemo(() => buildLibrary(manifest), [manifest]);
   /** The documents this copy of the site serves — a landed upload is in its folder once its are here. */
   const served = useMemo(() => new Set(manifest.map((e) => e.docKey)), [manifest]);
-  const folderNames = useMemo(() => new Set(library.folders.map((f) => f.provider)), [library]);
   const batches = inbox.state.status === "ready" ? inbox.state.batches : [];
+  const uploads: UploadRow[] = [
+    ...inbox.sending.map(f => ({ ...f, providers: [], destination: f.provider, fileKeys: [], view: { key: "uploading" as const, label: "Uploading", tone: "info" as const, title: "Uploading your statement to your family office dashboard." } })),
+    ...batches.flatMap(batch => batch.files.map(file => {
+      const keys = uploadDocumentKeys(file, manifest);
+      const documents = manifest.filter(d => keys.includes(d.docKey));
+      const view = file.status === "duplicate" && documents.some(d => d.status !== "ok")
+        ? { key: "held" as const, label: "Needs attention", tone: "warn" as const, title: "An existing copy could not be fully analysed. Upload a fresh, unlocked statement." }
+        : fileView(file, served);
+      return { id: `${batch.id}/${file.name}`, name: file.name, uploadedAt: batch.uploadedAt, batch: batch.id, file,
+        providers: file.providers?.length ? file.providers : [...new Set(documents.map(d => d.provider))],
+        destination: inbox.locations[batch.id], fileKeys: documents.map(d => d.fileKey), view,
+        document: (view.key === "in-library" || view.key === "duplicate") && documents.length === 1 ? documents[0] : undefined };
+    })),
+  ];
   // A landed upload is live once the redeploy from its commit is: until then
   // the archive is read again every so often, so it appears in its folder
   // without a reload.
@@ -639,7 +568,7 @@ export function StatementLibrary() {
   return (
     <div className="mx-auto max-w-5xl" data-statement-library>
       <PageHeader eyebrow="Admin" title="Statement Library" trail={trail}
-        subtitle="The source statements that feed this book, in a folder per provider. Upload files or whole folders here: each statement is saved to GitHub, read into the book and filed in its provider's folder."
+        subtitle="Upload statements for automatic analysis and filing."
         right={status === "ready" && !openProvider ? (
           <div className="flex items-center gap-2">
             <Pill>{library.totalProviders} providers</Pill>
@@ -656,22 +585,22 @@ export function StatementLibrary() {
           <div className="flex items-start gap-3">
             <div className="mt-0.5 grid h-10 w-10 place-items-center rounded-md border border-amber-500/30 bg-amber-500/10 text-amber-400"><ShieldAlert className="h-5 w-5" /></div>
             <div>
-              <div className="text-sm font-medium text-slate-200">The statement archive is password-protected</div>
+              <div className="text-sm font-medium text-slate-200">Statement library unavailable</div>
               <p className="mt-1 text-xs text-slate-400" data-prose-ok="why the archive did not load">
-                The archive under <span className="mono text-slate-300">public/audit/</span> sits behind the site's edge
-                password gate and could not be fetched. Sign in to the dashboard to browse the library.
+                We couldn’t open your statements. Try again, or sign in to the dashboard again.
               </p>
+              <button type="button" onClick={() => { setStatus("loading"); void loadManifest(true); }} className="mt-2 text-xs text-accent-400 hover:underline">Try again</button>
             </div>
           </div>
         </Card>
       )}
 
       <UploadPanel inbox={inbox} provider={current?.provider} archiveStatus={status} />
-      {status === "ready" && <UploadLog inbox={inbox} batches={batches} served={served} folders={folderNames} onOpen={open} />}
+
 
       {status === "ready" && (openProvider
         ? (current
-          ? <OpenFolder folder={current} onBack={back} />
+          ? <OpenFolder folder={current} onBack={back} inbox={inbox} uploads={uploads.filter(row => row.providers.length ? row.providers.includes(current.provider) : !row.destination || row.destination === current.provider)} />
           : (
             <>
               <button type="button" onClick={back}
@@ -686,6 +615,7 @@ export function StatementLibrary() {
           ))
         : (
           <>
+            {uploads.length > 0 && <div className="mb-5"><FormatBlock format="Recent statements" docs={[]} uploads={uploads} inbox={inbox} onOpen={open} /></div>}
             <div className="mb-5 flex flex-wrap items-center gap-3">
               <div className="relative flex-1 min-w-[220px]">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />

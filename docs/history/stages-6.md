@@ -509,6 +509,14 @@
 - In the book: a new account with one holding, worth ₹19.999 Cr. It is private by its printed category. Its cost is the ₹20 Cr gross paid (`grossPaid`), with a ₹20 Cr capital move and tranche on 22 Oct and a commitment fully drawn. Total value ₹880.59 Cr → ₹900.58 Cr.
 - The return record names its actual gap: the capital arrived after the statement's only valuation. That reason is reached only where every dated row postdates the valuation, so no other account's wording changed.
 
+### Stage 10ia — STATEMENT UPLOAD PROGRESS IN THE STATEMENT TABLE
+
+- Replace the separate upload log with pending rows at the top of the existing statement table: Uploading, Preparing analysis, Analysing, Updating dashboard, then a green tick. The progress bar is indeterminate until the actual result is known; queued work never claims analysis has started.
+- Completed uploads decorate and promote their actual source rows. Exact duplicate receipts match the full original source path, retain one document, and show Already in library. Unmatched receipts never guess a holder, account, date or source.
+- Remove GitHub, commits, deployment paths and setup instructions from customer upload messages. Failures retain a clear next action; processing and publication rules are unchanged. Folder context persists for the browser session until analysis identifies the real issuer.
+- Add browser coverage for local sending rows, stage transitions, completion without a duplicate row, duplicate handoff, useful failures and folder isolation; retain file-drop/cancellation/availability regressions.
+- Reject pre-mutation background responses so they cannot erase a just-acknowledged upload or resurrect an old status. The browser regression reproduces the disappearing-row defect before the fix. Order format groups by upload order, including identical timestamps, so a new file type stays at the top.
+
 ### Stage 10ib — HDFC BANK, ICICI BANK AND AXIS BANK OUT OF DIRECT EQUITY
 
 - The family, 27 Oct: *"they have exited all of these three positions from their direct equity portfolio"*. Audited across every statement and the MOPWM report. **HDFC Bank** is held on no statement: Ankita's 18,750 Motilal shares were delivered out on 22 Jul (her 31 Jul window closes at nil), and the Marathon and older MOPWM lots were sold in 2020–2025. **ICICI Bank 14,500 and Axis Bank 7,300** on Ankita's Motilal demat 1201090012838316 were still on its 31 Jul statement (live-valued in Direct Equity until 10hu, a "held, not valued" line since); the MOPWM report sells both in full on the exchange on 23 Sep (rows 1221, 1127). **ICICI Bank in the Aristos PMS** (Goldstandard, 5,000 + 2,000) is the mandate's, on its 6 Oct statement, and stays.
