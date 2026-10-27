@@ -6,7 +6,7 @@ import { makeBatch, withBatch, queuedFiles, waitingStatementFiles } from '../../
 
 const id = n => `20261027T10000${n}Z-test`;
 const revision = n => String(n).padStart(20, '0');
-function harness({ refuseSave = false, decision = 'verified' } = {}) {
+function harness({ refuseSave = false, decision = 'verified', copyInBatch = false } = {}) {
   const book = Object.fromEntries(CANONICAL_BOOK_KEYS.map(k => [k, []]));
   const initial = { schemaVersion: 1, readerRevision: 'a'.repeat(64), revision: revision(0), book,
     documents: [], manifest: [], records: {}, originals: {}, previews: {}, lookthrough: {} };
@@ -15,6 +15,7 @@ function harness({ refuseSave = false, decision = 'verified' } = {}) {
   for (let n = 1; n <= 2; n++) {
     const batch = makeBatch(id(n), [{ name: `statement${n}.pdf`, size: 12, blob: 'b'.repeat(40) }]);
     batch.files[0].processor = 'rapid'; log = withBatch(log, batch);
+    if (copyInBatch && n === 1) batch.files.push({ ...batch.files[0], name: 'copy.pdf' });
   }
   const inbox = { read: async () => ({ log: structuredClone(log) }), commit: async ({ mutate }) => {
     log = mutate(log); return { log, commit: 'c'.repeat(40) };
@@ -39,7 +40,7 @@ function harness({ refuseSave = false, decision = 'verified' } = {}) {
       const doc = { docKey: files[0].name.replace('.pdf', ''), provider: 'Fixture', warnings: [], holdings: [], sourcePages: null };
       return { decision: 'verified', revision: revision(baseline.length + 1), readerRevision: initial.readerRevision,
         book, documents: [...baseline, doc], records: [{ name: files[0].name, manifest: { ...doc, sourcePath: `source/${files[0].name}` },
-          files: { 'document.json': doc } }], duplicates: [] };
+          files: { 'document.json': doc } }], duplicates: copyInBatch ? [{ document: 'statement1-2', sameAs: doc.docKey, name: 'copy.pdf' }] : [] };
     } });
   return { processor, initial, versions, log: () => log, saved: () => saved, prepared, publications: () => publications, projections };
 }
@@ -64,6 +65,14 @@ test('concurrent uploads serialize against the latest complete version; repeat r
   assert.deepEqual(h.prepared, [[], ['statement1']]);
   assert.equal(h.saved().documents.length, 2);
   await h.processor.submit(id(1)); assert.equal(h.publications(), 2);
+});
+test('two copies in one new batch share the newly published document and provider', async () => {
+  const h = harness({ copyInBatch: true }); await h.processor.initialize();
+  const receipt = await h.processor.submit(id(1));
+  assert.equal(receipt.files[0].status, 'landed'); assert.equal(receipt.files[1].status, 'duplicate');
+  assert.deepEqual(receipt.files[1].docKeys, receipt.files[0].docKeys);
+  assert.deepEqual(receipt.files[1].providers, ['Fixture']);
+  assert.equal(h.saved().documents.length, 1);
 });
 test('a repository failure leaves every financial collection on the old version and offers Retry', async () => {
   const h = harness({ refuseSave: true }); await h.processor.initialize();

@@ -98,7 +98,8 @@ export function rapidProcessor({ store, inbox, initial, references, instantiate,
     const receipt = { id, completedAt: now, files: pending.map(f => {
       const records = verified ? candidate.records.filter(r => r.name === f.name) : [];
       const duplicateKeys = candidate.duplicates?.filter(d => d.name === f.name).map(d => d.sameAs) ?? [];
-      const sourceDocs = records.length ? records.map(r => r.manifest) : duplicateKeys.map(k => current.documents.find(d => d.docKey === k)).filter(Boolean);
+      const publishedDocuments = verified ? candidate.documents : current.documents;
+      const sourceDocs = records.length ? records.map(r => r.manifest) : duplicateKeys.map(k => publishedDocuments.find(d => d.docKey === k)).filter(Boolean);
       return { name: f.name, status: records.length ? 'landed' : duplicate || (verified && duplicateKeys.length) ? 'duplicate' : 'held',
         docKeys: sourceDocs.map(d => d.docKey), providers: [...new Set(sourceDocs.map(d => d.provider))],
         landedAs: records.map(r => r.manifest.sourcePath), updatedAt: now,

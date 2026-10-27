@@ -43,6 +43,12 @@ for (let n = 0; n < 3; n++) {
   }
   results.push(result.timings);
 }
+const mixed = await prepareRapidStatement({ ...options, files: [...options.files, { ...options.files[0], name: 'copy.pdf' }] });
+assert.equal(mixed.decision, 'verified', JSON.stringify(mixed.issues));
+assert.equal(mixed.documents.length, archive.length); assert.equal(mixed.records.length, 1);
+assert.equal(mixed.duplicates.length, 1); assert.equal(mixed.duplicates[0].name, 'copy.pdf');
+const mixedBook = JSON.stringify(mixed.book).replaceAll('source/uploads-rapid-local-replay/new-bandhan.pdf', source.sourcePath);
+assert.equal(digest(mixedBook), digest(JSON.stringify(canonicalBookValues(built))), 'Copies in the same new upload cannot double-count the statement');
 const report = { checkedAt: new Date().toISOString(), preparedMs, replay: 'protected PDF absent from baseline',
   baselineDocuments: baseline.length, publishedDocuments: archive.length, canonicalCollectionsChecked: Object.keys(expected).length,
   results, memoryBytes: process.memoryUsage(), productionUploadsPerformed: 0 };
