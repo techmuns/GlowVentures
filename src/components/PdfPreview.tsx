@@ -29,6 +29,7 @@ const PdfPage = memo(function PdfPage({ pdf, number, center, width, height, avai
   const painted = useRef<{ key: string; canvas: HTMLCanvasElement }>();
   const markerRef = useRef<HTMLElement>();
   const matched = useRef('');
+  const matchFound = useRef(false);
 
   useEffect(() => {
     const observer = new IntersectionObserver(([entry]) => setNearby(entry.isIntersecting), {
@@ -41,7 +42,8 @@ const PdfPage = memo(function PdfPage({ pdf, number, center, width, height, avai
   useEffect(() => {
     if (!nearby || !availableWidth || !center || Math.abs(number - center) > 1) return;
     const key = JSON.stringify([availableWidth, zoom, target]);
-    if (painted.current?.key === key && painted.current.canvas.parentElement === paper.current && (!target || matched.current === key)) {
+    if (painted.current?.key === key && painted.current.canvas.parentElement === paper.current
+      && (!target || (matched.current === key && (!matchFound.current || markerRef.current?.isConnected)))) {
       cache.touch(number);
       return;
     }
@@ -50,6 +52,8 @@ const PdfPage = memo(function PdfPage({ pdf, number, center, width, height, avai
     let scrollFrame = 0;
     const abort = new AbortController();
     const host = paper.current!;
+    // Do not leave an old source marker at stale coordinates during zoom.
+    markerRef.current?.remove();
     const canvas = document.createElement("canvas");
     canvas.className = "block bg-white";
     canvas.setAttribute("role", "img");
@@ -91,6 +95,7 @@ const PdfPage = memo(function PdfPage({ pdf, number, center, width, height, avai
       if (!text) { onHighlightMissing(true); return; }
       const items = text.items.filter((item): item is typeof item & { str: string; transform: number[]; width: number; height: number } => 'str' in item);
       const match = pdfSourceMatch(items, target);
+      matchFound.current = !!match;
       onHighlightMissing(!match);
       if (!match) return;
       const { item, start, end } = match;
