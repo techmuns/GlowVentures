@@ -60,6 +60,40 @@ try {
   assert.equal(await page.getByLabel('PDF page',{exact:true}).inputValue(),'6');
   await page.locator('[data-source-back]').click();
 
+  // This real holding statement prints the units in both Free Balance and
+  // Total Holding. The citation must mark the latter on the exact ISIN row.
+  const trust = 'motilal-oswal-financial-services-demat-1201090032387399';
+  const holdingsDoc = trust+'-2026-07-31-holdings';
+  for (const [stock, value, expectedY] of [
+    ['icici-liqf-d-growth', '46654.378', 0.268],
+    ['inves-arbf-d-grow', '1092470.994', 0.294],
+    ['kotak-arbfd-dp-grow', '613293.929', 0.320],
+  ]) {
+    await gotoStock(stock);
+    const quantity = page.locator(`[data-account-row="${trust}"] a[data-source-metric="quantity"]`);
+    await quantity.waitFor();
+    const source = new URL(await quantity.getAttribute('href'), base);
+    assert.equal(source.searchParams.get('file'), holdingsDoc);
+    assert.equal(source.searchParams.get('sourceValue'), value);
+    assert.equal(source.searchParams.get('field'), 'quantity');
+    await quantity.click();
+    await page.locator(`[data-statement-preview="${holdingsDoc}"] canvas[data-pdf-page="1"]`).waitFor({timeout:30000});
+    const mark = page.locator(`mark[data-pdf-source-value="${value}"]`);
+    await mark.waitFor(); assert.equal(await mark.count(), 1);
+    await mark.evaluate((el, y) => {
+      const r = el.getBoundingClientRect(), paper = el.closest('[data-pdf-paper]').getBoundingClientRect();
+      const x = (r.left-paper.left)/paper.width, top = (r.top-paper.top)/paper.height;
+      // Independent coordinates from the printed PDF: Free Balance is at 33%
+      // of page width; Total Holding is at 73%, with three distinct rows.
+      if (x < 0.70 || x > 0.79 || Math.abs(top-y) > 0.012) throw Error('Highlight must select the exact ISIN row in Total Holding');
+      if (getComputedStyle(el).backgroundColor !== 'rgba(255, 230, 0, 0.6)') throw Error('Source marker must be yellow');
+    }, expectedY);
+    assert.equal(await page.getByText('Exact number could not be uniquely highlighted in this statement.',{exact:true}).count(), 0);
+    if (stock === 'icici-liqf-d-growth') await page.screenshot({path:path.join(out,'icici-liquid-total-holding.png')});
+    await page.locator('[data-source-back]').click();
+    assert.ok(page.url().includes('/stock/'+stock));
+  }
+
   await gotoStock(motilal);
   const nil = page.locator('[data-account-row="motilal-oswal-mutual-fund-90414963315"] a[data-source-metric="quantity"]');
   await nil.waitFor(); assert.equal((await nil.innerText()).trim(),'0');
@@ -196,8 +230,8 @@ try {
   assert.equal(await page.locator('[data-source-row="true"]').count(),0,'citation highlights never move to an unrelated worksheet');
   await page.screenshot({path:path.join(out,'workbook-citation.png')});
   assert.deepEqual(errors,[]);
-  await fs.writeFile(path.join(out,'results.json'),JSON.stringify({exactDematDocument:true,closingPage:5,separateNilFolio:true,aggregateSources:true,feedDistinct:true,monitorLabels:true,yellowClosingBalance:true,exactReturnState:true,loadingAndFailedDialog:true,underlyingSourceListRetained:true,filteredMandate:true,workbookSheetAndRow:true,errors},null,2));
-  console.log('PASS source links: monitor account labels, exact demat closing page, separate nil folio, combined quantities and feed/statement distinction');
+  await fs.writeFile(path.join(out,'results.json'),JSON.stringify({exactDematDocument:true,closingPage:5,separateNilFolio:true,aggregateSources:true,feedDistinct:true,monitorLabels:true,yellowClosingBalance:true,yellowTotalHoldingColumn:true,exactReturnState:true,loadingAndFailedDialog:true,underlyingSourceListRetained:true,filteredMandate:true,workbookSheetAndRow:true,errors},null,2));
+  console.log('PASS source links: monitor account labels, exact demat closing page, ICICI/Invesco/Kotak Total Holding highlights, separate nil folio, combined quantities and feed/statement distinction');
 } catch(e) {
   await fs.writeFile(path.join(out,'failure.json'),JSON.stringify({url:page.url(),errors,text:(await page.locator('body').innerText()).slice(-10000)},null,2));
   await page.screenshot({path:path.join(out,'failure.png')}).catch(()=>{}); throw e;
