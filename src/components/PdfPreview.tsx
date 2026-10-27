@@ -1,10 +1,12 @@
 import { useNavigationState, useNavigationValue, numberNavigation } from "@/lib/useNavigationState";
-import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react";
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { ChevronLeft, ChevronRight, Loader2, Lock } from "lucide-react";
-import { getDocument, GlobalWorkerOptions, PasswordResponses, Util, type PDFDocumentProxy, type PDFPageProxy, type RenderTask } from "pdfjs-dist";
+import { getDocument, GlobalWorkerOptions, PasswordResponses, Util, type PDFDocumentProxy, type RenderTask } from "pdfjs-dist";
 import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import type { PublishedFile } from "@/lib/statementPreview";
 import { pdfSourceMatch, type PdfSourceTarget } from '@/lib/pdfSourceHighlight';
+import { cachedPdfBytes, pdfPageSizes, preparePdfPreview, rememberPdfBytes, rememberPdfSize, PdfCanvasCache, PdfRenderQueue } from '@/lib/pdfPreviewRuntime';
+export { preparePdfPreview } from '@/lib/pdfPreviewRuntime';
 
 GlobalWorkerOptions.workerSrc = workerUrl;
 const ASSETS = `${import.meta.env.BASE_URL}pdf-assets/`;
@@ -12,18 +14,22 @@ const CONTROL = "rounded-md border border-ink-600 bg-ink-800 px-2 py-1.5 text-xs
 
 /** Keep every page's place in the document, but only allocate canvases near the
  * viewport. Scrolling a long statement must not retain hundreds of bitmaps. */
-function PdfPage({ source, count, scale, title, viewport, target, onHighlightMissing, restorePosition }: {
-  source: PDFPageProxy; count: number; scale: number; title: string;
+const PdfPage = memo(function PdfPage({ pdf, number, center, width, height, availableWidth, zoom, title, viewport, target, onHighlightMissing, onSize, onPaint, queue, cache, current, restorePosition }: {
+  pdf: PDFDocumentProxy; number: number; width: number; height: number; availableWidth: number; zoom: string; title: string;
   viewport: RefObject<HTMLDivElement>; target?: PdfSourceTarget;
-  onHighlightMissing: (missing: boolean) => void;
-  restorePosition: boolean;
+  onHighlightMissing: (missing: boolean) => void; onSize: (number: number, width: number, height: number) => void;
+  onPaint: () => void; queue: PdfRenderQueue; cache: PdfCanvasCache; current: RefObject<{ page: number; fraction: number }>;
+  center: number; restorePosition: boolean;
 }) {
   const paper = useRef<HTMLDivElement>(null);
   const focused = useRef("");
   const [nearby, setNearby] = useState(false);
   const [drawing, setDrawing] = useState(true);
   const [error, setError] = useState(false);
-  const view = source.getViewport({ scale });
+  const painted = useRef<{ key: string; canvas: HTMLCanvasElement }>();
+  const markerRef = useRef<HTMLElement>();
+  const matched = useRef('');
+  const matchFound = useRef(false);
 
   useEffect(() => {
     const observer = new IntersectionObserver(([entry]) => setNearby(entry.isIntersecting), {
@@ -34,34 +40,62 @@ function PdfPage({ source, count, scale, title, viewport, target, onHighlightMis
   }, [viewport]);
 
   useEffect(() => {
-    if (!nearby) return;
+    if (!nearby || !availableWidth || !center || Math.abs(number - center) > 1) return;
+    const key = JSON.stringify([availableWidth, zoom, target]);
+    if (painted.current?.key === key && painted.current.canvas.parentElement === paper.current
+      && (!target || (matched.current === key && (!matchFound.current || markerRef.current?.isConnected)))) {
+      cache.touch(number);
+      return;
+    }
     let alive = true;
     let render: RenderTask | undefined;
     let scrollFrame = 0;
+    const abort = new AbortController();
     const host = paper.current!;
+    // Do not leave an old source marker at stale coordinates during zoom.
+    markerRef.current?.remove();
     const canvas = document.createElement("canvas");
     canvas.className = "block bg-white";
     canvas.setAttribute("role", "img");
-    canvas.setAttribute("aria-label", `${title}, page ${source.pageNumber} of ${count}`);
-    host.append(canvas);
-    setDrawing(true); setError(false);
-    const view = source.getViewport({ scale });
-    // Bound each backing canvas on large/zoomed pages and Retina screens.
-    const pixels = Math.min(window.devicePixelRatio || 1, 2, Math.sqrt(16_000_000 / (view.width * view.height)));
-    canvas.width = Math.ceil(view.width * pixels); canvas.height = Math.ceil(view.height * pixels);
-    canvas.style.width = `${view.width}px`; canvas.style.height = `${view.height}px`;
-    let marker: HTMLElement | undefined;
+    canvas.setAttribute("aria-label", `${title}, page ${number} of ${pdf.numPages}`);
+    setDrawing(!painted.current?.canvas.isConnected); setError(false);
     void (async () => {
-      render = source.render({ canvas, viewport: view, transform: [pixels, 0, 0, pixels, 0, 0] });
-      await render.promise;
+      const source = await pdf.getPage(number);
       if (!alive) return;
-      canvas.dataset.pdfPage = String(source.pageNumber); setDrawing(false);
+      const size = source.getViewport({ scale: 1 });
+      onSize(number, size.width, size.height);
+      const scale = zoom === 'fit' ? Math.max(0.1, (availableWidth - 32) / size.width) : Number(zoom);
+      const view = source.getViewport({ scale });
+      // Keep the old bitmap visible while zooming; replace it atomically once
+      // the new canvas is fully painted, rather than flashing an empty page.
+      if (painted.current?.canvas.isConnected) {
+        painted.current.canvas.style.width = `${view.width}px`;
+        painted.current.canvas.style.height = `${view.height}px`;
+      }
+      const pixels = Math.min(window.devicePixelRatio || 1, 2, Math.sqrt(16_000_000 / (view.width * view.height)));
+      canvas.width = Math.ceil(view.width * pixels); canvas.height = Math.ceil(view.height * pixels);
+      canvas.style.width = `${view.width}px`; canvas.style.height = `${view.height}px`;
+      await queue.run(async () => {
+        if (!alive) return;
+        render = source.render({ canvas, viewport: view, transform: [pixels, 0, 0, pixels, 0, 0] });
+        // PDF.js already yields drawing chunks with requestAnimationFrame.
+        await render.promise;
+      }, () => Math.abs(number - (current.current?.page ?? number)), abort.signal);
+      if (!alive) return;
+      markerRef.current?.remove();
+      if (!cache.keep(number, canvas, current.current?.page ?? number)) return;
+      canvas.dataset.pdfPage = String(number);
+      host.append(canvas);
+      painted.current = { key, canvas };
+      setDrawing(false); onPaint();
       if (!target) return;
       const text = await source.getTextContent().catch(() => null);
       if (!alive) return;
+      matched.current = key;
       if (!text) { onHighlightMissing(true); return; }
       const items = text.items.filter((item): item is typeof item & { str: string; transform: number[]; width: number; height: number } => 'str' in item);
       const match = pdfSourceMatch(items, target);
+      matchFound.current = !!match;
       onHighlightMissing(!match);
       if (!match) return;
       const { item, start, end } = match;
@@ -73,7 +107,7 @@ function PdfPage({ source, count, scale, title, viewport, target, onHighlightMis
       const full = measure.measureText(item.str).width || 1;
       const left = measure.measureText(item.str.slice(0, start)).width / full;
       const fraction = measure.measureText(item.str.slice(start, end)).width / full;
-      marker = document.createElement('mark');
+      const marker = document.createElement('mark');
       marker.dataset.pdfSourceValue = target.value;
       marker.dataset.pdfSourceField = target.field ?? '';
       marker.setAttribute('aria-label', `Source value ${target.value}`);
@@ -82,6 +116,7 @@ function PdfPage({ source, count, scale, title, viewport, target, onHighlightMis
         width: `${item.width * scale * fraction + 4}px`, height: `${height * 1.15 + 4}px`,
         background: 'rgba(255, 230, 0, 0.6)', border: '1px solid #d9ac00', borderRadius: '2px', mixBlendMode: 'multiply' });
       host.append(marker);
+      markerRef.current = marker;
       const focusKey = JSON.stringify([scale, target]);
       // Returning to a highlighted page by scrolling should not pull the user
       // back to its number. Recenter only on a new citation or zoom level.
@@ -98,17 +133,17 @@ function PdfPage({ source, count, scale, title, viewport, target, onHighlightMis
       });
     })().catch(() => { if (alive) { setError(true); setDrawing(false); } });
     return () => {
-      alive = false; render?.cancel(); cancelAnimationFrame(scrollFrame);
-      marker?.remove(); canvas.remove(); canvas.width = 0; canvas.height = 0;
+      alive = false; abort.abort(); render?.cancel(); cancelAnimationFrame(scrollFrame);
+      if (canvas.parentElement !== host) { canvas.width = 0; canvas.height = 0; }
     };
-  }, [nearby, source, count, scale, title, viewport, target?.value, target?.isin, target?.field, target?.initialIsin, onHighlightMissing, restorePosition]);
+  }, [nearby, pdf, number, center, availableWidth, zoom, title, viewport, target?.value, target?.isin, target?.field, target?.initialIsin, onHighlightMissing, onSize, onPaint, queue, cache, current, restorePosition]);
 
-  return <div ref={paper} data-pdf-paper={source.pageNumber} className="relative mx-auto bg-white shadow"
-    style={{ width: view.width, height: view.height }}>
-    {error ? <p role="alert" className="absolute left-3 top-3 text-sm text-red-700">Page {source.pageNumber} could not be displayed. Download the original to view it.</p>
-      : drawing && <p role="status" className="absolute left-3 top-3 text-xs text-slate-600">Loading page {source.pageNumber}…</p>}
+  return <div ref={paper} data-pdf-paper={number} className="relative mx-auto bg-white shadow"
+    style={{ width, height, contain: 'layout paint' }}>
+    {error ? <p role="alert" className="absolute left-3 top-3 text-sm text-red-700">Page {number} could not be displayed. Download the original to view it.</p>
+      : nearby && drawing && <p role="status" className="absolute left-3 top-3 text-xs text-slate-600">Loading page {number}…</p>}
   </div>;
-}
+});
 
 /** Draw the original bytes inside the app. Native PDF plugins are blocked by
  * Chrome when ANY ancestor is sandboxed, including the Muns dashboard frame. */
@@ -121,25 +156,52 @@ export default function PdfPreview({ url, file, title, initialPage, sourceTarget
   const [page, setPage, restored] = useNavigationValue(`pdf-page:${url}`, initialPage ?? file.part?.from ?? 1, numberNavigation);
   const [zoom, setZoom] = useNavigationState<string>(`pdf-zoom:${url}`, "fit", ["fit", "1", "1.5", "2"]);
   const [width, setWidth] = useState(0);
-  const [pages, setPages] = useState<PDFPageProxy[]>([]);
+  const [pages, setPages] = useState<{ width: number; height: number }[]>([]);
   const [highlightMissing, setHighlightMissing] = useState(false);
   const viewport = useRef<HTMLDivElement>(null);
   const anchor = useRef({ page, fraction: 0 });
   const scrollFrame = useRef(0);
+  const viewportHeight = useRef(0);
+  const requestedPage = useRef(initialPage ?? file.part?.from ?? 1);
+  requestedPage.current = restored ? page : initialPage ?? file.part?.from ?? 1;
+  const cache = useMemo(() => new PdfCanvasCache(), [pdf]);
+  const queue = useMemo(() => new PdfRenderQueue(), [pdf]);
+  const layout = useMemo(() => {
+    let top = 16;
+    return pages.map(size => {
+      const scale = zoom === 'fit' ? Math.max(0.1, (width - 32) / size.width) : Number(zoom);
+      const item = { top, width: size.width * scale, height: size.height * scale };
+      top += item.height + 16;
+      return item;
+    });
+  }, [pages, width, zoom]);
+  const onSize = useCallback((number: number, width: number, height: number) => {
+    rememberPdfSize(url, number, width, height);
+    setPages(previous => {
+      const old = previous[number - 1];
+      if (!old || (old.width === width && old.height === height)) return previous;
+      const next = previous.slice(); next[number - 1] = { width, height }; return next;
+    });
+  }, [url]);
+  const onPaint = useCallback(() => {
+    if (pdf) void rememberPdfBytes(url, pdf, file.bytes);
+  }, [pdf, url, file.bytes]);
+  useEffect(() => () => cache.clear(), [cache]);
 
   const jumpToPage = (number: number) => {
     const scroller = viewport.current;
-    const paper = scroller?.querySelector<HTMLElement>(`[data-pdf-paper="${number}"]`);
+    const paper = layout[number - 1];
     if (!scroller || !paper) return;
     anchor.current = { page: number, fraction: 0 };
-    scroller.scrollTop = paper.offsetTop - 16;
-    setPage(number);
+    scroller.scrollTop = paper.top - 16;
+    cache.trim(number); queue.wake(); setPage(number);
   };
 
   useEffect(() => {
     let alive = true;
     setStatus("loading"); setPdf(null); setPages([]); setError(""); setPassword("");
-    const task = getDocument({ url, withCredentials: true,
+    const data = cachedPdfBytes(url);
+    const task = getDocument({ ...(data ? { data } : { url }), worker: preparePdfPreview(), withCredentials: true,
       cMapUrl: `${ASSETS}cmaps/`, standardFontDataUrl: `${ASSETS}standard_fonts/`,
       wasmUrl: `${ASSETS}wasm/`, iccUrl: `${ASSETS}iccs/`, verbosity: 0 });
     task.onPassword = (update: (value: string) => void, reason: number) => {
@@ -150,12 +212,15 @@ export default function PdfPreview({ url, file, title, initialPage, sourceTarget
       setStatus("password");
     };
     task.promise.then(async doc => {
-      // Resolve page dimensions before jumping so mixed page sizes cannot move
-      // the selected page as earlier pages finish loading.
-      const sources = await Promise.all(Array.from({ length: doc.numPages }, (_, i) => doc.getPage(i + 1)));
+      // Paint the requested page immediately. Distant pages use lightweight
+      // size placeholders and resolve their actual dimensions only nearby.
+      const first = await doc.getPage(Math.max(1, Math.min(requestedPage.current, doc.numPages)));
+      const size = first.getViewport({ scale: 1 });
       if (!alive) return;
       unlock.current = null;
-      setPdf(doc); setPages(sources); setPage(current => Math.max(1, Math.min(current, doc.numPages)));
+      const known = pdfPageSizes(url, { width: size.width, height: size.height });
+      setPdf(doc); setPages(Array.from({ length: doc.numPages }, (_, index) => known.pages.get(index + 1) ?? known.fallback));
+      setPage(current => Math.max(1, Math.min(current, doc.numPages)));
       setStatus("ready");
     }).catch(() => {
       if (!alive) return;
@@ -168,19 +233,21 @@ export default function PdfPreview({ url, file, title, initialPage, sourceTarget
   useEffect(() => {
     const element = viewport.current;
     if (!element) return;
-    const observer = new ResizeObserver(() => setWidth(element.clientWidth));
+    const measure = () => { viewportHeight.current = element.clientHeight; setWidth(element.clientWidth); };
+    const observer = new ResizeObserver(measure);
     observer.observe(element);
-    setWidth(element.clientWidth);
+    measure();
     return () => observer.disconnect();
   }, [status]);
 
   useLayoutEffect(() => {
     if (!pdf || !width) return;
+    cancelAnimationFrame(scrollFrame.current);
     const scroller = viewport.current!;
     const saved = anchor.current;
-    const paper = scroller.querySelector<HTMLElement>(`[data-pdf-paper="${saved.page}"]`);
-    if (paper) scroller.scrollTop = paper.offsetTop - 16 + saved.fraction * paper.offsetHeight;
-  }, [pdf, width, zoom]);
+    const paper = layout[saved.page - 1];
+    if (paper) scroller.scrollTop = paper.top - 16 + saved.fraction * paper.height;
+  }, [pdf, layout, width]);
 
   useLayoutEffect(() => {
     if (restored || !pdf || !width) return;
@@ -199,17 +266,25 @@ export default function PdfPreview({ url, file, title, initialPage, sourceTarget
     scrollFrame.current = requestAnimationFrame(() => {
       const scroller = viewport.current;
       if (!scroller) return;
-      let current: HTMLElement | undefined;
-      let largest = -1;
-      for (const paper of scroller.querySelectorAll<HTMLElement>('[data-pdf-paper]')) {
-        const visible = Math.min(paper.offsetTop + paper.offsetHeight, scroller.scrollTop + scroller.clientHeight)
-          - Math.max(paper.offsetTop, scroller.scrollTop);
-        if (visible > largest) { current = paper; largest = visible; }
+      const top = scroller.scrollTop, bottom = top + viewportHeight.current;
+      // Binary search cached geometry; no per-frame DOM scan or layout reads.
+      let low = 0, high = layout.length - 1;
+      while (low < high) {
+        const mid = (low + high + 1) >>> 1;
+        if (layout[mid].top <= top) low = mid; else high = mid - 1;
       }
-      if (!current) return;
-      const number = Number(current.dataset.pdfPaper);
-      anchor.current = { page: number, fraction: (scroller.scrollTop - current.offsetTop + 16) / current.offsetHeight };
-      setPage(number);
+      let index = low, largest = -1;
+      for (let i = low; i < layout.length && layout[i].top < bottom; i++) {
+        const paper = layout[i];
+        const visible = Math.min(paper.top + paper.height, bottom) - Math.max(paper.top, top);
+        if (visible > largest) { index = i; largest = visible; }
+      }
+      const paper = layout[index];
+      if (!paper) return;
+      const number = index + 1;
+      const changed = number !== anchor.current.page;
+      anchor.current = { page: number, fraction: (top - paper.top + 16) / paper.height };
+      if (changed) { cache.trim(number); queue.wake(); setPage(number); }
     });
   };
 
@@ -247,13 +322,12 @@ export default function PdfPreview({ url, file, title, initialPage, sourceTarget
           <div ref={viewport} data-pdf-scroll data-navigation-scroll="pdfpreview-1" onScroll={trackPage} tabIndex={0} aria-label="PDF document pages"
             className="relative min-h-0 flex-1 overflow-auto p-4" style={{ overflowAnchor: "none" }}>
             <div className="grid w-max min-w-full gap-4">
-              {pages.map(source => {
-                const size = source.getViewport({ scale: 1 });
-                const scale = zoom === "fit" ? Math.max(0.1, (width - 32) / size.width) : Number(zoom);
-                return <PdfPage key={source.pageNumber} source={source} count={pdf.numPages} scale={scale}
-                  title={title} viewport={viewport} target={source.pageNumber === initialPage ? sourceTarget : undefined}
-                  onHighlightMissing={setHighlightMissing} restorePosition={restored} />;
-              })}
+              {layout.map((paper, index) => <PdfPage key={index} pdf={pdf} number={index + 1}
+                center={Math.abs(index + 1 - page) <= 2 ? page : 0}
+                width={paper.width} height={paper.height} availableWidth={width} zoom={zoom}
+                title={title} viewport={viewport} target={index + 1 === initialPage ? sourceTarget : undefined}
+                onHighlightMissing={setHighlightMissing} onSize={onSize} onPaint={onPaint}
+                queue={queue} cache={cache} current={anchor} restorePosition={restored} />)}
             </div>
           </div>
         </>}

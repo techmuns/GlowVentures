@@ -158,6 +158,9 @@ for (const [name, rel] of SUITES) {
      // The financial-table suite reads its fixture off disk at run time, so the
      // bundle must not try to inline `node:fs` and friends.
      "--packages=external",
+     // Source links preload this browser-only chunk on pointer/focus intent.
+     // Keep it lazy in Node too: its Vite worker URL cannot be imported by Node.
+     `--external:${path.join(ROOT, "src/components/PdfPreview")}`,
      `--alias:@=${path.join(ROOT, "src")}`, "--log-level=error"],
     { encoding: "utf8", stdio: ["ignore", "inherit", "inherit"] },
   );

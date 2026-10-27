@@ -79,6 +79,7 @@ jobs:
       - name: Asset response contracts
         run: |
           node scripts/dev/check-asset-middleware.mjs
+          node scripts/dev/test-pdf-preview-runtime.mjs
           node --test scripts/dev/test-statement-previews.mjs
 
       - name: Infinite scrolling and table request budgets

@@ -10,7 +10,7 @@ import {
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
-import { StatementPreview, useFilePreview } from "@/components/StatementPreview";
+import { StatementPreview, useFilePreview, prepareStatementPreview } from "@/components/StatementPreview";
 import { AbsentSection, DASH } from "@/components/Absent";
 import { fmtDate, fmtDateTime } from "@/lib/format";
 import { buildLibrary, type ManifestEntry, type ProviderFolder, type LibraryDoc } from "@/lib/statementLibrary";
@@ -102,6 +102,15 @@ function FormatBlock({ format, docs, uploads = [], inbox, onOpen }: {
   inbox: ReturnType<typeof useStatementInbox>; onOpen?: (provider: string) => void;
 }) {
   const preview = useFilePreview();
+  useEffect(() => {
+    if (format !== 'PDF') return;
+    if ('requestIdleCallback' in window) {
+      const idle = window.requestIdleCallback(prepareStatementPreview, { timeout: 1000 });
+      return () => window.cancelIdleCallback(idle);
+    }
+    const timer = setTimeout(prepareStatementPreview, 200);
+    return () => clearTimeout(timer);
+  }, [format]);
   const previewing = preview.openKey ? docs.find(d => d.fileKey === preview.openKey) : undefined;
   const completed = (row: UploadRow) => row.view.key === "in-library" || row.view.key === "duplicate";
   const receiptFor = (doc: LibraryDoc) => uploads.find(row => completed(row) && row.fileKeys.includes(doc.fileKey));
@@ -141,7 +150,10 @@ function FormatBlock({ format, docs, uploads = [], inbox, onOpen }: {
           </tr>)}
           {orderedDocs.map(d => {
             const receipt = receiptFor(d);
-            return <tr key={d.fileKey} className={`cursor-pointer hover:bg-ink-700/40 ${receipt ? "bg-emerald-500/5" : ""}`} onClick={() => preview.open(d.fileKey)} data-preview-row={d.fileKey} data-upload-status={receipt?.view.key}>
+            return <tr key={d.fileKey} className={`cursor-pointer hover:bg-ink-700/40 ${receipt ? "bg-emerald-500/5" : ""}`} onClick={() => preview.open(d.fileKey)}
+              onPointerEnter={format === 'PDF' ? prepareStatementPreview : undefined}
+              onFocus={format === 'PDF' ? prepareStatementPreview : undefined}
+              data-preview-row={d.fileKey} data-upload-status={receipt?.view.key}>
               <td className="px-4 py-3 text-slate-200"><span className="inline-flex items-center gap-1.5">
                 <button type="button" onClick={e => { e.stopPropagation(); preview.open(d.fileKey); }} className="text-left hover:text-accent-400 hover:underline" title={`Open ${d.fileName}`}>{d.reportLabel}</button>
                 {d.hasSheets && <Link to={`/audit?file=${encodeURIComponent(d.fileKey)}`} onClick={e => e.stopPropagation()} className="text-slate-500 hover:text-accent-400" title="Open this document in Data Audit"><ExternalLink className="h-3.5 w-3.5" /></Link>}
