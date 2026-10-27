@@ -5110,7 +5110,7 @@ export function PortfolioMonitor() {
                               ? `only the ${fmtFromBase(smallDropped.shareValue)} of it that is company shares (${smallDropped.shareCount} holding${smallDropped.shareCount === 1 ? "" : "s"}), because the rest are funds, which are not rows here`
                               : "none of it, because every one of them is a fund, which is not a row here"}`
                           : ", which is what this figure and every total beside it leave out"}. Nothing is missing: the book still carries them and the statements still report them.`
-                        : `Total · ${rows.length} rows. No holding in this book falls under the ${fmtFromBase(NEGLIGIBLE_VALUE_FLOOR)} floor.`)
+                        : `Total · ${rows.length} rows. No holding is excluded by the ${fmtFromBase(NEGLIGIBLE_VALUE_FLOOR)} display floor.`)
                     + (dupGap > 0
                         ? ` The rows above are each member's statement as printed, so they add to ${money(rawMV)}; this total counts a holding two members both report once, at ${money(totMV)} — a ${money(dupGap)} overlap.`
                         : "")}

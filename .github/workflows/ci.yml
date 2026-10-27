@@ -91,6 +91,7 @@ jobs:
             if curl --silent --fail http://127.0.0.1:4173/ > /dev/null; then break; fi
             sleep 1
           done
+          CHROME="$(command -v google-chrome)" node scripts/dev/check-statement-drop.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-selected-attribution.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-market-returns.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-assumed-holdings.mjs
@@ -106,7 +107,6 @@ jobs:
           CHROME="$(command -v google-chrome)" node scripts/dev/check-pdf-preview.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-source-trace.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-navigation-state.mjs
-          CHROME="$(command -v google-chrome)" node scripts/dev/check-statement-drop.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-etf-unit-continuity.mjs
 
       - name: Preserve return attribution browser evidence

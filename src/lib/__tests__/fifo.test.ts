@@ -172,9 +172,13 @@ const acct = (accountId: string, engagement: Account["engagement"], capital?: Ac
 
   // A sub-₹1,000 speck elsewhere in the account is on no holdings table, so its
   // absence from the set must not stop the rest counting as whole.
-  const speck = pos({ accountId: "m", securityKey: "speck", marketValue: 500, costBasis: 400, assetClass: "Equity" });
+  const speck = pos({ accountId: "m", securityKey: "speck", marketValue: 500, costBasis: null, assetClass: "Equity" });
   const withSpeck = fifoTotals(universe, { accounts, universe: [...universe, speck] });
   ok("B3 a speck the floor drops does not break a mandate's wholeness", withSpeck.wholeMandates.join() === "m");
+  const costedResidue = { ...speck, costBasis: 400 };
+  const missingCosted = fifoTotals(universe, { accounts, universe: [...universe, costedResidue] });
+  ok("B3 a costed residual is a real omitted investment and prevents claiming the whole mandate",
+    missingCosted.wholeMandates.length === 0);
 
   // Without the accounts or the universe nothing is struck whole.
   ok("B4 no accounts → nothing whole", fifoTotals(universe, { universe }).wholeMandates.length === 0);
