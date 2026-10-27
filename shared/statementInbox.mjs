@@ -194,12 +194,12 @@ export function uniqueNames(files) {
 /** Every file still waiting for an intake run, oldest batch first. */
 export function queuedFiles(log) {
   return [...log.batches].sort((a, b) => a.id.localeCompare(b.id))
-    .flatMap((b) => b.files.filter((f) => f.status === "queued" && f.processor !== 'rapid').map((f) => ({ batch: b.id, file: f })));
+    .flatMap((b) => b.files.filter((f) => f.status === "queued" && !['rapid', 'github'].includes(f.processor)).map((f) => ({ batch: b.id, file: f })));
 }
 /** Legacy recovery must not take work claimed by the resident processor. */
 export function waitingStatementFiles(log) {
   return [...log.batches].sort((a, b) => a.id.localeCompare(b.id)).flatMap(b => b.files
-    .filter(f => f.processor !== 'rapid' && (f.status === 'queued' || f.status === 'processing' || (f.status === 'held' && f.pullRequest)))
+    .filter(f => !['rapid', 'github'].includes(f.processor) && (f.status === 'queued' || f.status === 'processing' || (f.status === 'held' && f.pullRequest)))
     .map(file => ({ batch: b.id, file })));
 }
 
@@ -374,7 +374,7 @@ export function githubInbox({ token, repo, branch }, fetchImpl = (...a) => fetch
         ];
         const tree = expect(await call("POST", "/git/trees", { ...(s.tree ? { base_tree: s.tree } : {}), tree: entries }), [201], "saving the upload");
         const commit = expect(await call("POST", "/git/commits", {
-          message: `${message} [skip ci]`, tree: tree.sha, parents: s.head ? [s.head] : [],
+          message: `[CF-Pages-Skip] ${message} [skip ci]`, tree: tree.sha, parents: s.head ? [s.head] : [],
         }), [201], "saving the upload");
         const ref = s.head
           ? await call("PATCH", `/git/refs/heads/${enc(branch)}`, { sha: commit.sha, force: false })

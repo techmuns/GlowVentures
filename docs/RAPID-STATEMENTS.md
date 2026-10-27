@@ -1,99 +1,90 @@
-# Rapid statement processing
+# GitHub statement processing
 
-The existing upload UI is retained: a statement enters the table with a progress
-indicator and becomes **Ready** only after its complete data version is durable.
-Exact duplicates remain a no-op. No production statement is uploaded by the tests.
+Statement processing and storage use GitHub only. The existing free Cloudflare
+Pages host and authenticated delivery Functions stay in place. No container,
+Worker service, Durable Object, R2, D1, paid plan, external AI API or new hosting
+resource is required. The repository's standard public-repository GitHub Actions
+runners are used; larger runners are not selected.
 
-## Processing and consistency
+The table shows Processing, then a green Ready tick after the complete version
+is saved. Exact published duplicates finish in the upload response without an
+Actions run or a financial change. A failure retains the last verified data and
+an actionable retry/review state.
 
-Recognised text PDFs and Excel statements use the existing coordinate readers,
-saved password vault, reconciliation, publication assessment and canonical book
-builder in a resident Node service. The selected-record proof uses fingerprints
-and holding indexes scoped to one immutable candidate; it never reuses a hash
-after reconciliation or across mutable candidates. All canonical book exports, ledger
-indexes, consolidated exports, source previews and reporting pages select one
-version before application modules initialize. A read gap or failed persistence
-cannot replace the last verified version.
+## One complete data version
 
-Originals and compressed version snapshots remain in GitHub on the
-`statement-publications` branch. Its ref promotion atomically selects a complete
-snapshot and receipt. Old versions and original bytes remain in Git history.
-Cloudflare holds disposable compute caches; it stores no canonical application
-data in R2, KV or Durable Object storage. Concurrent uploads serialize, competing
-ref writes reprepare against the newer version, and a compute restart resumes
-its existing durable inbox claims. The legacy intake cannot claim rapid work.
+`statement-intake.yml` starts on the upload's existing repository dispatch. Its
+routine job runs the coordinate PDF/Excel readers, saved password vault,
+exact-witness backfills, reconciliation, publication assessment and canonical
+book builder. It prepares all canonical collections, normalized documents,
+source provenance, audit files, ledger and consolidated exports, stock ledgers,
+fund disclosures, look-through data, original bytes and encrypted previews.
 
-ZIPs, scans and batches over 50 MiB automatically use the existing full intake
-path. Unrecognised or inconsistent records require review. These cases cannot
-honestly be promised a universal two-second completion time. The progress UI
-must retain their real state.
+The job writes a single Git pack on `statement-publications`, with a separate
+Git index that never changes main or the checkout. A non-force ref update
+publishes all files and `current.json` together. A conflicting publication is
+reprepared against the newer complete version. Old versions remain readable.
+Data-only commits start with `[CF-Pages-Skip]` and include `[skip ci]`, avoiding
+a Pages rebuild and another CI/deployment cycle for each upload.
 
-A new code deployment merges its verified static archive with the previously
-published runtime statements, reconciles that union and rebuilds all collections.
-Conflicts retain the saved publication for review. The private service's image
-must track main: the gated `Statement processor` workflow provides that update
-after initial activation. A client rejects an incomplete or incompatible runtime
-snapshot as a whole and clearly identifies its saved-data fallback.
-An old session can still inspect its canonical facts and source bytes after a
-reader change. A derived report that needs the old reader requests a safe whole
-application refresh; it never runs newer calculation rules over the older book.
+The existing authenticated Pages Functions only read these prepared GitHub
+files. They neither parse statements nor build the financial book. They use the
+existing `GLOW_GITHUB_TOKEN`/repository configuration; no new service credentials
+or bindings are needed. Git packs compress the published objects. Prepared view bytes stream through
+the gateway with a size bound, avoiding base64 decoding or book parsing there. The saved preview key
+remains HttpOnly and scoped to `/api/statement-previews/`; revision-pinned
+preview URLs use that same path.
 
-## Activation gate
+The browser selects every canonical collection before financial modules load.
+Every report and source request pins the same immutable revision. An open page
+also discovers the first GitHub publication when the initial archive was served
+from compiled assets; it does not require a new application deployment.
 
-Merging this code does **not** provision or activate the processor. The current
-application continues using its established intake until the private service
-binding, credential and explicit `GLOW_RAPID_STATEMENTS_ENABLED=true` flag exist.
-Initial production deployment, secret setup,
-publication initialization, binding and automatic service updates require the
-user's explicit approval under the repository's production-action rule.
+## Timing and recovery
 
-After approval, use the already configured Cloudflare account and repository:
+Removing application build, full CI and site deployment from routine ingestion
+removes substantial avoidable waiting. Processing time and job time are reported
+separately. GitHub runner queue time, dependency startup, network transfer and
+first publication preparation are additional time: this design does **not**
+promise every new upload completes in a few seconds. Free GitHub Actions does
+not provide an instant-start runner guarantee.
 
-1. Run `node scripts/dev/prepare-rapid-config.mjs` at the verified main commit.
-   It only prepares ignored configuration; it never deploys or writes secrets.
-2. Authenticate with Wrangler and deploy the prepared private Worker/container.
-   Provision its existing repository writer, existing dashboard vault credential
-   and a fresh private `GLOW_RAPID_STATEMENTS_TOKEN` as Worker secrets. Never put
-   their values in commands, repository files, artifacts or logs.
-3. Bind the production Pages project's `GLOW_RAPID_STATEMENTS` service to
-   `glow-statement-processor`. Set the same private token and the explicit
-   `GLOW_RAPID_STATEMENTS_ENABLED=true` flag on Pages. Keep
-   `workers_dev` disabled. A URL override is for localhost/staging tests only.
-4. Initialize and check the service read-only through the authenticated dashboard
-   endpoint. Confirm reader compatibility, source counts, all canonical totals
-   and selected-source proofs. Verify an existing browser session upgrades.
-   Do not upload, replay or retry a production statement without exact approval.
-5. Configure the deployment workflow's Cloudflare account/token secrets and set
-   repository variable `GLOW_RAPID_STATEMENTS_ACTIVE=true` to authorize subsequent
-   main deployments. Keep the Worker dashboard credential synchronized when the
-   existing vault/dashboard password is rotated.
+ZIPs, scans and batches above 50 MiB continue through the existing full reader,
+including its source verification, PR checks and automatic deployment. Unknown
+layouts or inconsistent financial records remain held. Speed never bypasses a
+read or reconciliation gap.
 
-The proposed compute limit is one `standard-2` instance (one CPU, 6 GiB memory),
-sleeping after 15 minutes without traffic. Visible dashboards keep it warm through
-their normal freshness checks. It requires Workers Paid and metered container,
-Worker and Durable Object usage; no external LLM or enrichment credits are used.
-See [Cloudflare's current pricing](https://developers.cloudflare.com/containers/platform/pricing/).
+The existing 20-minute schedule recovers interrupted queued/processing claims.
+One workflow concurrency group serializes routine and full-reader work. Durable
+publication receipts restore completed status after an interrupted inbox update.
+New code on main revalidates the union of its static archive and prior GitHub
+statements; a conflicting static copy cannot silently erase a financial row.
+The job migrates an existing publication after successful main CI. It never
+initializes an empty publication branch merely because code was merged.
 
-After runtime statements have been accepted, disabling the service alone would
-leave the compiled fallback behind those statements. A production rollback must
-keep the last verified runtime version available, or first materialize its full
-archive into the verified main build through the normal PR/checks. During an
-outage the UI identifies its compiled saved-data fallback; it never presents that
-fallback as a successful latest-data refresh. Production rollback actions retain
-their separate explicit-authorization requirement.
+If a GitHub version and the compiled reader are temporarily incompatible, the
+browser clearly identifies its compiled fallback; it never applies newer
+calculation rules to an old book. Earlier materialized reports remain available
+at their immutable addresses.
 
-## Verification
+## Verification and operating boundary
 
-`scripts/dev/benchmark-rapid-statements.mjs` removes the real protected Bandhan
-statement from an isolated baseline, reads its original bytes and checks all
-collections against the verified book. It reports cold/warm processing separately
-from upload/network/persistence latency. The CI image replay limits compute to
-one CPU and uses the production Node image.
+`scripts/dev/benchmark-rapid-statements.mjs` reads the real protected Bandhan PDF
+against an isolated baseline that lacks it and compares every book collection.
+`scripts/dev/check-rapid-statements.mjs` drops it through a real browser and
+upload handler, simulates immediate GitHub scheduling, runs the real job engine,
+pushes a real Git pack to an isolated local repository, then reads all prepared
+views through the real delivery gateway. It checks all canonical collections,
+five reporting projections, 12 routes, source bytes, protected previews with the
+real cookie path, duplicate no-ops and migration across a code update.
+GitHub scheduling/production latency is excluded from this rehearsal.
 
-`scripts/dev/check-rapid-statements.mjs` exercises a real browser drop through
-the Pages handler, readers, private HTTP processor, Git blobs and atomic refs in
-an isolated local bare repository. It checks complete financial collections,
-reporting projections, source bytes/provenance, 12 routes, duplicate no-ops and a
-code-deployment migration. Screenshots and reports stay under the checkout's
-ignored `.cache/rapid-statement-publications/`. GitHub network and production
-hosting latency are not established by this rehearsal.
+All generated evidence is inside the checkout's ignored `.cache/`. Tests do not
+upload statements, initialize data, retry jobs or deploy services in production.
+Merging uses the existing automatic Pages deployment. Other production actions
+retain the repository's exact-action authorization requirement.
+
+GitHub documents free standard runners for public repositories in its
+[Actions billing guide](https://docs.github.com/en/actions/concepts/billing-and-usage).
+Cloudflare documents the required skip **prefix** in its
+[Pages GitHub integration guide](https://developers.cloudflare.com/pages/configuration/git-integration/github-integration/).

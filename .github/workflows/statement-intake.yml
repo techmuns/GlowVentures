@@ -1,31 +1,8 @@
 name: Statement intake
 
-# Statements uploaded on the dashboard's Statement Library, read into the book.
-#
-# *"After uploading the file/folder it will automatically be saved in github and
-# all the data will be processed to be wired into the dashboard end to end
-# without any errors, and also the file will automatically be arranged in its
-# correct respective folder in statement library."* — the family, 21 Oct 2026.
-#
-# An upload lands on the `statement-inbox` branch (functions/api/statement-
-# uploads.js), which then STARTS this run through GitHub's repository-dispatch
-# event. `scripts/ingest/intake-uploads.mjs` files each new statement under
-# source/uploads-<date>/<provider>/, runs inventory → extract → build-symbols →
-# build-book and every required gate, then opens a codex PR. Later runs monitor
-# data-only validation, CI and the automatic deployment; only verified live files
-# leave the inbox. A statement the
-# pipeline cannot read in full stays in the inbox, held, with the reason; the
-# Statement Library shows it and offers Retry.
-#
-# THE SCHEDULE IS A BACKSTOP. A dispatch GitHub refuses (a token without the
-# right) or a run that died leaves files waiting; the next scheduled run reads
-# them. It costs one `git fetch` when nothing is waiting.
-#
-# SEALED STATEMENTS. Mutual-fund folios and several others are PDFs encrypted
-# with the holder's PAN. The run reads them only with the repository secret
-# GLOW_PDF_PASSWORDS (Settings → Secrets and variables → Actions) — never a
-# committed file. Without it such an upload is held as "needs password", not
-# landed unread.
+# Standard public-repository GitHub runners only. Routine PDF/Excel statements
+# publish complete, immutable data views to statement-publications. Data commits
+# skip Pages builds. Scans/ZIPs retain the existing full reader and PR gates.
 on:
   repository_dispatch:
     types: [statement-intake]
@@ -35,7 +12,7 @@ on:
   workflow_run:
     workflows: [CI]
     types: [completed]
-    branches: ["codex/statement-delivery-*"]
+    branches: [main, "codex/statement-delivery-*"]
   schedule:
     - cron: "*/20 * * * *"
 
@@ -54,7 +31,7 @@ jobs:
   intake:
     # Privileged workflow_run jobs always use trusted main code and only accept
     # same-repository delivery branches; fork CI cannot wake this worker.
-    if: github.event_name != 'workflow_run' || github.event.workflow_run.head_repository.full_name == github.repository
+    if: github.event_name != 'workflow_run' || (github.event.workflow_run.head_repository.full_name == github.repository && github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
@@ -65,18 +42,37 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
 
-      - name: Anything waiting?
-        id: inbox
-        run: node scripts/ingest/intake-uploads.mjs --check
+      - name: GitHub publication work waiting?
+        id: github_inbox
+        env:
+          GLOW_GITHUB_TOKEN: ${{ secrets.GLOW_INTAKE_TOKEN || github.token }}
+        run: node scripts/ingest/github-statements.mjs --check
 
-      - if: steps.inbox.outputs.waiting != '0'
-        run: npm ci
+      - if: steps.github_inbox.outputs.waiting != '0' || steps.github_inbox.outputs.legacy != '0'
+        run: npm ci --prefer-offline --no-audit --no-fund
 
-      - name: Read the uploads into the book, and land what passes
-        if: steps.inbox.outputs.waiting != '0'
+      - name: Read and publish routine statements without rebuilding the app
+        if: steps.github_inbox.outputs.waiting != '0'
+        env:
+          GLOW_GITHUB_TOKEN: ${{ secrets.GLOW_INTAKE_TOKEN || github.token }}
+          GLOW_PDF_PASSWORDS: ${{ secrets.GLOW_PDF_PASSWORDS }}
+          GLOW_DASHBOARD_PASSWORD: ${{ secrets.GLOW_DASHBOARD_PASSWORD }}
+        run: node scripts/ingest/github-statements.mjs
+
+      # Check the small inbox log without downloading historical originals.
+      # This includes scans/ZIPs handed back by the routine reader in this job.
+      - name: Full-reader work remaining?
+        id: full_reader
+        if: steps.github_inbox.outputs.waiting != '0' || steps.github_inbox.outputs.legacy != '0'
+        env:
+          GLOW_GITHUB_TOKEN: ${{ secrets.GLOW_INTAKE_TOKEN || github.token }}
+        run: node scripts/ingest/github-statements.mjs --check
+
+      - name: Read the remaining uploads through the full publication gates
+        if: steps.full_reader.outputs.legacy != '' && steps.full_reader.outputs.legacy != '0'
         env:
           GH_TOKEN: ${{ secrets.GLOW_INTAKE_TOKEN || github.token }}
           GLOW_PDF_PASSWORDS: ${{ secrets.GLOW_PDF_PASSWORDS }}

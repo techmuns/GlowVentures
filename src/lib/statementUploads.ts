@@ -200,10 +200,10 @@ export function uploadDocumentKeys(f: InboxFile, manifest: readonly Pick<Manifes
 export function fileView(f: InboxFile, served: ReadonlySet<string>): FileView {
   switch (f.status) {
     case "queued":
-      if (f.processor === 'rapid') return { key: 'queued', label: 'Processing', tone: 'info', title: 'Reading and checking your statement.' };
+      if (['rapid', 'github'].includes(f.processor ?? '')) return { key: 'queued', label: 'Processing', tone: 'info', title: 'Reading and checking your statement.' };
       return { key: "queued", label: "Preparing analysis", tone: "info", title: "Statement uploaded to your family office dashboard. Analysis will start automatically." };
     case "processing":
-      if (f.processor === 'rapid') return { key: 'reading', label: 'Processing', tone: 'info', title: 'Reading and checking your statement.' };
+      if (['rapid', 'github'].includes(f.processor ?? '')) return { key: 'reading', label: 'Processing', tone: 'info', title: 'Reading and checking your statement.' };
       return { key: "reading", label: "Analysing", tone: "info", title: "Statement uploaded to your family office dashboard — being analysed now." };
     case "landed": {
       const keys = f.docKeys ?? [];
@@ -268,7 +268,7 @@ export function useStatementInbox() {
     // that fails says the service is unavailable.
     setState((prev) => a.ok ? { status: "ready", batches: batchesOf(a.body) }
       : prev.status === "ready" ? prev : { status: "unavailable", reason: a.reason, cause: a.cause });
-    if (a.ok && batchesOf(a.body).some(b => b.files.some(f => f.processor === 'rapid' && ['landed', 'duplicate'].includes(f.status)))) {
+    if (a.ok && batchesOf(a.body).some(b => b.files.some(f => ['rapid', 'github'].includes(f.processor ?? '') && ['landed', 'duplicate'].includes(f.status)))) {
       window.dispatchEvent(new Event('glow:statements-updated'));
     }
   }, []);
@@ -284,7 +284,7 @@ export function useStatementInbox() {
   const moving = state.status === "ready" && inFlight(state.batches);
   useEffect(() => {
     if (!moving) return;
-    const rapid = state.status === 'ready' && state.batches.some(b => b.files.some(f => f.processor === 'rapid' && ['queued', 'processing'].includes(f.status)));
+    const rapid = state.status === 'ready' && state.batches.some(b => b.files.some(f => ['rapid', 'github'].includes(f.processor ?? '') && ['queued', 'processing'].includes(f.status)));
     const t = window.setInterval(() => { void load(); }, rapid ? 2_000 : POLL_MS);
     return () => window.clearInterval(t);
   }, [moving, load]);

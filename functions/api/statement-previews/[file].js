@@ -1,8 +1,9 @@
+import { githubStatementReader } from '../../../shared/githubStatementBackend.mjs';
 import { keyFromCookie, openPreview, MAX_PREVIEW_BYTES } from '../../../shared/statementPreviewCrypto.mjs';
 
 const headers = { 'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff' };
 const failure = (status, message) => new Response(message, { status, headers });
-export async function onRequest(context) {
+export async function onRequest(context, fetchImpl) {
   if (!['GET', 'HEAD'].includes(context.request.method)) return failure(405, 'Method not allowed');
   const match = /^([a-f0-9]{64})\.pdf$/.exec(context.params.file);
   if (!match) return failure(404, 'Preview not found');
@@ -10,8 +11,12 @@ export async function onRequest(context) {
   if (!key) return failure(401, 'Sign into the dashboard again to open saved previews.');
   try {
     const url = new URL(`/statement-previews/${match[1]}.bin`, context.request.url);
-    const asset = await context.env.ASSETS.fetch(new Request(url));
-    if (!asset.ok || !asset.body) return failure(404, 'Preview not found');
+    const revision = new URL(context.request.url).searchParams.get('revision');
+    if (revision !== null && !/^[a-f0-9]{20}$/.test(revision)) return failure(404, 'Preview not found');
+    const asset = revision
+      ? await githubStatementReader(context.env, fetchImpl).request(`/views/${revision}/statement-previews/${match[1]}.pdf`)
+      : await context.env.ASSETS.fetch(new Request(url));
+    if (!asset?.ok || !asset.body) return failure(404, 'Preview not found');
     // AES-GCM must authenticate the complete file before returning any bytes.
     const reader = asset.body.getReader(), chunks = []; let size = 0;
     try {

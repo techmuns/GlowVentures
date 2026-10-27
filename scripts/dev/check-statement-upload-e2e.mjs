@@ -153,6 +153,22 @@ try {
   };
   const startWorker = () => {
     assert.equal(workerPromise, null, 'Only one real intake worker is active');
+    // Rehearse recovery of claims written by the previous uploader. The new
+    // GitHub job/browser path has its own protected-PDF rehearsal. This explicit
+    // local boundary keeps the complete legacy PR/deployment gates exercised.
+    const log = inboxLog();
+    for (const batch of log.batches) for (const file of batch.files) file.processor = null;
+    const blob = inboxGit(['hash-object', '-w', '--stdin'], JSON.stringify(log));
+    const head = inboxGit(['rev-parse', 'refs/heads/statement-inbox']);
+    // Preserve every original entry by replacing only the log via the existing
+    // local GitHub tree API below before starting the old worker.
+    const index = path.join(output, 'legacy-claim-index');
+    const indexEnv = { GIT_INDEX_FILE: index };
+    inboxGit(['read-tree', head], undefined, indexEnv);
+    inboxGit(['update-index', '--add', '--cacheinfo', '100644', blob, 'inbox.json'], undefined, indexEnv);
+    const nextTree = inboxGit(['write-tree'], undefined, indexEnv);
+    const commit = inboxGit(['commit-tree', nextTree, '-p', head], 'Local legacy-claim recovery fixture');
+    inboxGit(['update-ref', 'refs/heads/statement-inbox', commit, head]);
     workerPromise = run(process.execPath, ['scripts/ingest/intake-uploads.mjs', '--allow-reset'], 'real-intake-' + (sequence + 1), { ...workerEnv, GLOW_BASE_URL: baseURL });
     workerPromise.catch(() => {});
   };
@@ -174,7 +190,7 @@ try {
           } }, github);
         res.writeHead(response.status, Object.fromEntries(response.headers)); res.end(Buffer.from(await response.arrayBuffer())); return;
       }
-      // This rehearsal exercises the legacy path with the rapid service off.
+      // This rehearsal follows historical claims through the retained full reader.
       if (url.pathname === '/api/statement-data') { res.writeHead(204); res.end(); return; }
       if (url.pathname.startsWith('/api/')) { res.writeHead(503, { 'content-type': 'application/json' }); res.end('{"status":"unreachable"}'); return; }
       const served = readControl(marker).deployed ? path.join(workspace, 'dist') : servedInitial;

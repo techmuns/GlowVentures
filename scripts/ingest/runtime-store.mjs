@@ -1,10 +1,36 @@
-// Canonical publications and originals remain in GitHub. The compute service
-// keeps only disposable caches. A compare-and-swap promotes one whole version.
+// Canonical publications, read models and originals remain in GitHub.
+// A compare-and-swap promotes one complete version.
 import { gzipSync, gunzipSync } from 'node:zlib';
 import { createHash } from 'node:crypto';
 
 export class VersionConflict extends Error {}
-export function runtimeStore({ token, repo = 'techmuns/GlowVentures', branch = 'statement-publications', fetchImpl = fetch }) {
+export async function publicationTree(previous, snapshot, receipt, put, materialize) {
+  const artifact = await put(gzipSync(JSON.stringify(snapshot), { level: 1 }));
+  const state = { schemaVersion: 1, ...(materialize ? { storage: 'github-actions-v1' } : {}), revision: snapshot.revision, readerRevision: snapshot.readerRevision,
+    baseCommit: snapshot.baseCommit, artifact, receipts: { ...(previous.state?.receipts ?? {}), [receipt.id]: receipt } };
+  let settled = 0;
+  state.receipts = Object.fromEntries(Object.entries(state.receipts).sort(([, a], [, b]) => b.completedAt.localeCompare(a.completedAt))
+    .filter(([, r]) => r.files.some(f => f.status === 'held') || ++settled <= 100));
+  const entries = [{ path: `versions/${snapshot.revision}.json.gz`, mode: '100644', type: 'blob', sha: artifact },
+    { path: 'current.json', mode: '100644', type: 'blob', content: JSON.stringify(state) }];
+  // Raw originals use the same paths recorded in the normalized evidence.
+  const originals = new Map();
+  for (const file of Object.values(snapshot.originals)) if (file.sourcePath) {
+    if (!file.sourcePath.startsWith('source/') || /[\\\r\n\0]/.test(file.sourcePath)
+      || file.sourcePath.split('/').some(p => !p || p === '.' || p === '..')) throw Error('Unsafe original source path');
+    if (originals.has(file.sourcePath) && originals.get(file.sourcePath) !== file.blob) throw Error('Conflicting original source bytes');
+    originals.set(file.sourcePath, file.blob);
+  }
+  for (const [path, sha] of originals) entries.push({ path, mode: '100644', type: 'blob', sha });
+  for (const [name, preview] of Object.entries(snapshot.previews ?? {})) {
+    if (!/^[a-f0-9]{64}\.pdf$/.test(name) || !/^[a-f0-9]{40}$/.test(preview.blob)) throw Error('Invalid protected preview address');
+    entries.push({ path: `statement-previews/${name.replace(/\.pdf$/, '.bin')}`, mode: '100644', type: 'blob', sha: preview.blob });
+  }
+  if (materialize) entries.push(...await materialize(snapshot));
+  return { state, entries };
+}
+
+export function runtimeStore({ token, repo = 'techmuns/GlowVentures', branch = 'statement-publications', fetchImpl = fetch, materialize }) {
   const base = `https://api.github.com/repos/${repo}`, enc = s => s.split('/').map(encodeURIComponent).join('/');
   async function call(method, endpoint, body, allow404 = false) {
     const response = await fetchImpl(base + endpoint, { method, headers: {
@@ -43,29 +69,9 @@ export function runtimeStore({ token, repo = 'techmuns/GlowVentures', branch = '
     read, blob, putBlob: put,
     async load(state) { return unpack(await blob(state.artifact)); },
     async publish(previous, snapshot, receipt) {
-      const artifact = await put(gzipSync(JSON.stringify(snapshot), { level: 1 }));
-      const state = { schemaVersion: 1, revision: snapshot.revision, readerRevision: snapshot.readerRevision,
-        artifact, receipts: { ...(previous.state?.receipts ?? {}), [receipt.id]: receipt } };
-      let settled = 0;
-      state.receipts = Object.fromEntries(Object.entries(state.receipts).sort(([, a], [, b]) => b.completedAt.localeCompare(a.completedAt))
-        .filter(([, r]) => r.files.some(f => f.status === 'held') || ++settled <= 100));
-      const entries = [{ path: `versions/${snapshot.revision}.json.gz`, mode: '100644', type: 'blob', sha: artifact },
-        { path: 'current.json', mode: '100644', type: 'blob', content: JSON.stringify(state) }];
-      // Raw originals use the same paths recorded in the normalized evidence.
-      const originals = new Map();
-      for (const file of Object.values(snapshot.originals)) if (file.sourcePath) {
-        if (!file.sourcePath.startsWith('source/') || /[\\\r\n\0]/.test(file.sourcePath)
-          || file.sourcePath.split('/').some(p => !p || p === '.' || p === '..')) throw Error('Unsafe original source path');
-        if (originals.has(file.sourcePath) && originals.get(file.sourcePath) !== file.blob) throw Error('Conflicting original source bytes');
-        originals.set(file.sourcePath, file.blob);
-      }
-      for (const [path, sha] of originals) entries.push({ path, mode: '100644', type: 'blob', sha });
-      for (const [name, preview] of Object.entries(snapshot.previews ?? {})) {
-        if (!/^[a-f0-9]{64}\.pdf$/.test(name) || !/^[a-f0-9]{40}$/.test(preview.blob)) throw Error('Invalid protected preview address');
-        entries.push({ path: `statement-previews/${name.replace(/\.pdf$/, '.bin')}`, mode: '100644', type: 'blob', sha: preview.blob });
-      }
+      const { state, entries } = await publicationTree(previous, snapshot, receipt, put, materialize);
       const tree = await call('POST', '/git/trees', { ...(previous.tree ? { base_tree: previous.tree } : {}), tree: entries });
-      const commit = await call('POST', '/git/commits', { message: `Verified statements ${snapshot.revision} [skip ci]`,
+      const commit = await call('POST', '/git/commits', { message: `[CF-Pages-Skip] Verified statements ${snapshot.revision} [skip ci]`,
         tree: tree.sha, parents: previous.head ? [previous.head] : [] });
       // No force and no automatic replay of a stale financial candidate.
       try {

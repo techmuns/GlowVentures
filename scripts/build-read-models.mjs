@@ -1,3 +1,4 @@
+import { readerRevisionFor } from './ingest/reader-revision.mjs';
 // Build-server read models. Source absence is a build failure, never a silently
 // partial ledger. URLs are derived from output content, so book revisions cannot mix.
 import fs from 'node:fs/promises';
@@ -17,17 +18,7 @@ const put = (name, value) => outputs.set(name, JSON.stringify(value));
 // These are backend audit endpoints served by the existing password gate. The
 // canonical book, lineage and all reporting projections share ONE revision.
 const canonicalBook = Object.fromEntries(Object.entries(model).filter(([key]) => key.startsWith('BOOK_')));
-const pipelineFiles = [];
-async function pipelineTree(dir) {
-  for (const entry of (await fs.readdir(path.join(root, dir), { withFileTypes: true })).sort((a, b) => a.name.localeCompare(b.name))) {
-    const name = `${dir}/${entry.name}`;
-    if (entry.isDirectory()) { if (!['__tests__', 'reference'].includes(entry.name)) await pipelineTree(name); }
-    else if (entry.isFile() && /\.(mjs|ts)$/.test(name)) pipelineFiles.push([name, digest(await fs.readFile(path.join(root, name), 'utf8'))]);
-  }
-}
-await pipelineTree('scripts/ingest'); await pipelineTree('scripts/lib'); await pipelineTree('shared'); await pipelineTree('src/lib');
-pipelineFiles.push(['scripts/build-book.mjs', digest(await fs.readFile(path.join(root, 'scripts/build-book.mjs'), 'utf8'))]);
-const readerRevision = digest(pipelineFiles);
+const readerRevision = await readerRevisionFor(root);
 const rawSources = new Map();
 try {
   for (const file of (await fs.readdir(path.join(root, 'public/audit/deliveries'))).sort()) {

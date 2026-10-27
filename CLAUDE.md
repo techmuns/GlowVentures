@@ -221,8 +221,10 @@ One line per area; the history files explain each in depth.
 - `src/lib/statementUploads.ts` + `functions/api/statement-uploads.js` — the
   Statement Library's one upload (files or folders): each file a blob on the
   repo's `statement-inbox` branch (`shared/statementInbox.mjs`), read into the
-  book by `scripts/ingest/intake-uploads.mjs`, verified against the Git baseline
-  and published through a codex PR after CI/review. Exact document versions must
+  book by `scripts/ingest/github-statements.mjs`: routine PDFs/Excel publish a
+  complete verified data version on `statement-publications` without an app
+  rebuild. Scans/ZIPs use `scripts/ingest/intake-uploads.mjs` and its codex PR
+  after CI/review. See `docs/RAPID-STATEMENTS.md`. Exact document versions must
   be verified live before its inbox bytes are cleared. Never push/reset main or
   waive a failing baseline gate. See `docs/STATEMENT-PUBLICATION.md` (Stage 10gg).
 - `scripts/ingest/lib/publication.mjs` — the matching, format/field coverage and
