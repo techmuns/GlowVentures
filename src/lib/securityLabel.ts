@@ -54,7 +54,7 @@
  * `docs/BOOK-REPORT.md` names. This changes what a row is CALLED, never which
  * row a position is in.
  */
-import { BOOK_POSITIONS, BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
+import { BOOK_CONFIRMED_EXITS, BOOK_POSITIONS, BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
 import { holdingLabel } from "./schemeLabel";
 import { displayDepositoryName, displaySecurity } from "./format";
 
@@ -84,6 +84,9 @@ const PRINTED: readonly { securityKey: string; security: string; marketValue: nu
   // furniture after the dash survived `displaySecurity` and won rule 2 as the
   // longest spelling — so the one name for ESDS carried `- Eq New Fv Rs .1/`.
   ...BOOK_UNVALUED_HOLDINGS.map((u) => ({ securityKey: u.securityKey, security: displayDepositoryName(u.security), marketValue: 0 })),
+  // A line the family confirmed exiting (Stage 10ib) is no longer held, but its
+  // statement printed the name all the same: the company's page keeps it.
+  ...BOOK_CONFIRMED_EXITS.map((x) => ({ securityKey: x.securityKey, security: displayDepositoryName(x.security), marketValue: 0 })),
 ];
 
 const CANONICAL: ReadonlyMap<string, string> = (() => {

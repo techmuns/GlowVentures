@@ -5,8 +5,9 @@
 import assert from "node:assert/strict";
 import { classify } from "../lib/classify.mjs";
 import {
-  MOPWM_TRANSACTIONS, dmyToIso, loadMopwmTransactions, mopwmRowsFor, replayMopwmRows, reportDate,
+  MOPWM_TRANSACTIONS, dmyToIso, exitAfterStatement, loadMopwmTransactions, mopwmRowsFor, replayMopwmRows, reportDate,
 } from "../../lib/mopwmTransactions.mjs";
+import { retireConfirmedExits } from "../../lib/confirmedExits.mjs";
 import { readSpreadsheet } from "../lib/sheet.mjs";
 import fs from "node:fs";
 
@@ -88,4 +89,44 @@ assert.equal(k.salesAfter, 1, "redeemed in full on 23 Sep 2026, after the 31 Jul
 assert.match(replayMopwmRows(mopwmRowsFor(report, { isin: "INE1CDF01017", account: ajay }), { isin: "INE1CDF01017", asOf: "2026-07-31", quantity: 281000 }).reason,
   /DMERG entry/, "Vedanta Aluminium's demerger lot is not a trade");
 
-console.log("mopwmTransactions: prefixed workbook read in full, owners, classification, FIFO replay and identity gates passed");
+// ── a confirmed exit is applied only to nil, on exchange trades (Stage 10ib) ─
+const sold = exitAfterStatement(trades, { isin, asOf: "2026-07-31", quantity: 5 });
+assert.deepEqual(sold, { exitedOn: "2026-09-23", unitsSold: 5, rows: [4] });
+assert.match(exitAfterStatement(trades, { isin, asOf: "2026-07-31", quantity: 6 }).reason, /does not reconcile the statement's 6 units/);
+assert.match(exitAfterStatement(trades.slice(0, 3), { isin, asOf: "2026-07-31", quantity: 5 }).reason, /no trade after 2026-07-31/);
+assert.match(exitAfterStatement([...trades.slice(0, 3), eq(4, "2026-09-23", "SELL", 3, 1200)], { isin, asOf: "2026-07-31", quantity: 5 }).reason,
+  /leave 2 units, not nil/, "a partial sale never moves the statement's quantity");
+assert.match(exitAfterStatement([...trades.slice(0, 3), eq(4, "2026-09-23", "SELL", 5, 2000, "OFFMKT/1")], { isin, asOf: "2026-07-31", quantity: 5 }).reason,
+  /OFFMKT entry, not a trade/, "an off-market transfer is not a sale");
+assert.match(exitAfterStatement([...trades.slice(0, 3), eq(4, "2026-09-23", "SELL", 6, 2400)], { isin, asOf: "2026-07-31", quantity: 5 }).reason,
+  /sells units the holding no longer has/);
+assert.deepEqual(exitAfterStatement([...trades, eq(5, "2026-10-01", "PURCHASE", 2, 800), eq(6, "2026-10-02", "SELL", 2, 900)],
+  { isin, asOf: "2026-07-31", quantity: 5 }).rows, [4, 5, 6], "a round trip after the exit still ends at nil");
+// Ankita's two bank shares on her Motilal demat: the report's own rows.
+for (const [bank, qty, row] of [["INE238A01034", 7300, 1127], ["INE090A01021", 14500, 1221]]) {
+  const e = exitAfterStatement(mopwmRowsFor(report, { isin: bank, account: demat }), { isin: bank, asOf: "2026-07-31", quantity: qty });
+  assert.deepEqual(e, { exitedOn: "2026-09-23", unitsSold: qty, rows: [row] }, `${bank} sold in full on 23 Sep 2026`);
+}
+
+// The seam refuses rather than guesses.
+const acct = { accountId: "m", provider: demat.provider, accountNo: demat.accountNo, ownerId: demat.ownerId };
+const line = (o = {}) => ({ accountId: "m", ownerId: demat.ownerId, securityKey: "axis-bank", security: "AXIS BANK EQ",
+  isin: "INE238A01034", assetClass: "Equity", quantity: 7300, asOf: "2026-07-31", ...o });
+const decision = { ...demat, isin: "INE238A01034", confirmed: "2026-10-27", words: "exited" };
+const retire = (o) => { const notes = []; const unvalued = o.unvalued ?? [line()];
+  const out = retireConfirmedExits({ accounts: [acct], positions: [], report, notes, exits: [decision], ...o, unvalued });
+  return { out, unvalued, notes }; };
+const ok = retire({});
+assert.equal(ok.unvalued.length, 0, "the witnessed line leaves the held book");
+assert.deepEqual([ok.out[0].exitedOn, ok.out[0].sale.rows, ok.out[0].quantity], ["2026-09-23", [1127], 7300]);
+assert.match(ok.notes[0], /^confirmed exit: AXIS BANK EQ/);
+assert.throws(() => retire({ unvalued: [line({ quantity: 7301 })] }), /not witnessed — the report does not reconcile/);
+assert.throws(() => retire({ unvalued: [line(), line()] }), /reaches 2 lines/);
+assert.throws(() => retire({ positions: [{ accountId: "m", isin: "INE238A01034" }] }), /valued holding/);
+assert.throws(() => retire({ accounts: [{ ...acct, ownerId: "ajay-jaisinghani" }] }), /is ankita-jaisinghani's/);
+assert.throws(() => retire({ accounts: [] }), /carries 0 times/);
+const gone = retire({ unvalued: [] });
+assert.deepEqual([gone.out, gone.notes.length], [[], 1]);
+assert.match(gone.notes[0], /reaches no line/, "a newer statement without the line: named, nothing retired");
+
+console.log("mopwmTransactions: prefixed workbook read in full, owners, classification, FIFO replay, identity gates and confirmed exits passed");
