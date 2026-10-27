@@ -1,0 +1,48 @@
+name: Read sealed statement 10387 (temporary)
+
+# TEMPORARY — deleted before this branch merges (Stage 10hv). Reads
+# source/october-2026-e/10387.pdf, which is password-protected, with the saved
+# statement passwords (restored in memory from the vault by
+# GLOW_DASHBOARD_PASSWORD, exactly as the statement intake does), and commits
+# the regenerated archive, book and encrypted preview back to this branch.
+on:
+  push:
+    branches: [feat/statement-10387]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: regen-sealed-10387
+  cancel-in-progress: false
+
+jobs:
+  regen:
+    if: "!contains(github.event.head_commit.message, '[regen]')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+
+      - name: Read source/ with the saved statement passwords
+        id: read
+        env:
+          GLOW_DASHBOARD_PASSWORD: ${{ secrets.GLOW_DASHBOARD_PASSWORD }}
+          GLOW_OCR: "off"
+        run: node scripts/regen-sealed.tmp.mjs
+
+      - name: Commit the regenerated archive back
+        if: always()
+        run: |
+          git config user.name "glow-regen[bot]"
+          git config user.email "glow-regen[bot]@users.noreply.github.com"
+          git add -A public/audit public/statement-previews docs src/data
+          if git diff --cached --quiet; then echo "nothing regenerated"; exit 0; fi
+          git commit -m "Regenerate the archive with the saved statement passwords [regen]"
+          git push
