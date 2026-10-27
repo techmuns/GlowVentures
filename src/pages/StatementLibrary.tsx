@@ -1,6 +1,7 @@
 import { useTableExportFilter } from "@/lib/tableExportSnapshot";
 import { ExportableTable } from "@/components/ExportableTable";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Link, useSearchParams } from "react-router-dom";
 import {
   Folder, FolderUp, ChevronLeft, Search, ShieldAlert, ExternalLink, FileText, FileSpreadsheet, UploadCloud, Trash2,
@@ -122,14 +123,13 @@ const ACCEPT = ".pdf,.xlsx,.xls,.zip";
 const MAX_MB = Math.round(MAX_FILE_BYTES / (1024 * 1024));
 
 /**
- * ONE UPLOAD FOR THE WHOLE LIBRARY. *"instead of giving file upload option
- * inside each folder, give a universal file/folder upload option on the main
- * statement library page"* — the family, 21 Oct 2026. Files, a folder, or a
- * drop of either: each statement is saved to GitHub and the intake run reads
- * it into the book and files it under the provider it is FROM, so nobody has
- * to know which folder a statement belongs in before uploading it.
+ * One upload for the whole library, including an open provider folder. File
+ * drags anywhere in this document use the same intake as the file/folder
+ * choosers. The statement's own provider still determines where it is filed.
  */
-function UploadPanel({ inbox }: { inbox: ReturnType<typeof useStatementInbox> }) {
+function UploadPanel({ inbox, provider, archiveStatus }: {
+  inbox: ReturnType<typeof useStatementInbox>; provider?: string; archiveStatus: "loading" | "ready" | "restricted";
+}) {
   const { state, upload } = inbox;
   const filesRef = useRef<HTMLInputElement>(null);
   const folderRef = useRef<HTMLInputElement | null>(null);
@@ -137,42 +137,130 @@ function UploadPanel({ inbox }: { inbox: ReturnType<typeof useStatementInbox> })
   const [progress, setProgress] = useState<{ done: number; of: number } | null>(null);
   const [collecting, setCollecting] = useState(false);
   const [msg, setMsg] = useState<{ tone: "err" | "ok"; text: string; title?: string } | null>(null);
+  // Lock synchronously: a second drop can arrive before React paints progress.
+  const receiving = useRef(false);
+  const canUpload = archiveStatus === "ready" && state.status === "ready";
 
-  const send = async (picked: PickedFile[]) => {
-    if (!picked.length || progress) return;
-    const plan = planUpload(picked);
-    const skippedTitle = plan.skipped.map((s) => `${s.path}: ${s.why}`).join("\n") || undefined;
+  const pick = useCallback(async (read: () => PickedFile[] | Promise<PickedFile[]>) => {
+    if (receiving.current || !canUpload) return;
+    receiving.current = true;
+    setCollecting(true);
     setMsg(null);
-    if (!plan.accepted.length) {
+    try {
+      // Read entries inside the original drop event, before the browser protects
+      // its DataTransfer. Directory traversal can then finish asynchronously.
+      const picked = await read();
+      if (!picked.length) return;
+      const plan = planUpload(picked);
+      const skippedTitle = plan.skipped.map((s) => `${s.path}: ${s.why}`).join("\n") || undefined;
+      if (!plan.accepted.length) {
+        setMsg({
+          tone: "err", title: skippedTitle,
+          text: plan.skipped.length
+            ? `Nothing to upload — ${plan.skipped.length === 1 ? plan.skipped[0].why : `none of the ${plan.skipped.length} files is a statement file (PDF, Excel or ZIP).`}`
+            : "Nothing to upload — the folder holds only system files.",
+        });
+        return;
+      }
+      setProgress({ done: 0, of: plan.accepted.length });
+      const r = await upload(plan.accepted, (done, of) => setProgress({ done, of }));
+      if (!r.ok) { setMsg({ tone: "err", text: r.reason }); return; }
+      const notSent = [...plan.skipped, ...r.failed.map((f) => ({ path: f.name, why: f.why }))];
+      const tail = notSent.length ? ` ${notSent.length} not uploaded — hover for why.` : "";
+      const title = notSent.map((s) => `${s.path}: ${s.why}`).join("\n") || undefined;
+      if (!r.saved) { setMsg({ tone: "err", text: `Nothing was saved.${tail}`, title }); return; }
+      const n = `${r.saved} statement file${r.saved === 1 ? "" : "s"}`;
       setMsg({
-        tone: "err", title: skippedTitle,
-        text: plan.skipped.length
-          ? `Nothing to upload — ${plan.skipped.length === 1 ? plan.skipped[0].why : `none of the ${plan.skipped.length} files is a statement file (PDF, Excel or ZIP).`}`
-          : "Nothing to upload — the folder holds only system files.",
+        tone: notSent.length ? "err" : "ok", title,
+        text: r.started
+          ? `${n} saved to GitHub — being read into the dashboard now.${tail}`
+          : `${n} saved to GitHub — the next scheduled intake run reads ${r.saved === 1 ? "it" : "them"} in, within about 20 minutes.${tail}`,
       });
-      return;
+    } catch {
+      setMsg({ tone: "err", text: "The files could not be read or uploaded. Try again, or use Files to select them." });
+    } finally {
+      receiving.current = false;
+      setCollecting(false);
+      setProgress(null);
     }
-    setProgress({ done: 0, of: plan.accepted.length });
-    const r = await upload(plan.accepted, (done, of) => setProgress({ done, of }));
-    setProgress(null);
-    if (!r.ok) { setMsg({ tone: "err", text: r.reason }); return; }
-    const notSent = [...plan.skipped, ...r.failed.map((f) => ({ path: f.name, why: f.why }))];
-    const tail = notSent.length ? ` ${notSent.length} not uploaded — hover for why.` : "";
-    const title = notSent.map((s) => `${s.path}: ${s.why}`).join("\n") || undefined;
-    if (!r.saved) { setMsg({ tone: "err", text: `Nothing was saved.${tail}`, title }); return; }
-    const n = `${r.saved} statement file${r.saved === 1 ? "" : "s"}`;
-    setMsg({
-      tone: notSent.length ? "err" : "ok", title,
-      text: r.started
-        ? `${n} saved to GitHub — being read into the dashboard now.${tail}`
-        : `${n} saved to GitHub — the next scheduled intake run reads ${r.saved === 1 ? "it" : "them"} in, within about 20 minutes.${tail}`,
-    });
-  };
+  }, [canUpload, upload]);
+
+  useEffect(() => {
+    let depth = 0;
+    const files = (e: DragEvent) => !!e.dataTransfer && (
+      Array.from(e.dataTransfer.types).includes("Files") ||
+      Array.from(e.dataTransfer.items).some((item) => item.kind === "file")
+    );
+    const reset = () => { depth = 0; setDrag(false); };
+    const enter = (e: DragEvent) => {
+      if (!files(e)) return;
+      e.preventDefault();
+      depth++;
+      setDrag(true);
+    };
+    const over = (e: DragEvent) => {
+      if (!files(e)) return;
+      e.preventDefault();
+      e.dataTransfer!.dropEffect = canUpload && !receiving.current ? "copy" : "none";
+      setDrag(true);
+    };
+    const leave = () => { if (--depth <= 0) reset(); };
+    const drop = (e: DragEvent) => {
+      if (!files(e)) return;
+      e.preventDefault();
+      // This is the only file-drop owner, including over a table or the box.
+      e.stopPropagation();
+      reset();
+      const data = e.dataTransfer!;
+      void pick(() => fromDrop(data));
+    };
+    const key = (e: KeyboardEvent) => { if (e.key === "Escape") reset(); };
+    const hidden = () => { if (document.hidden) reset(); };
+    document.addEventListener("dragenter", enter, true);
+    document.addEventListener("dragover", over, true);
+    document.addEventListener("dragleave", leave, true);
+    document.addEventListener("drop", drop, true);
+    document.addEventListener("dragend", reset, true);
+    document.addEventListener("keydown", key, true);
+    document.addEventListener("visibilitychange", hidden);
+    window.addEventListener("blur", reset);
+    return () => {
+      document.removeEventListener("dragenter", enter, true);
+      document.removeEventListener("dragover", over, true);
+      document.removeEventListener("dragleave", leave, true);
+      document.removeEventListener("drop", drop, true);
+      document.removeEventListener("dragend", reset, true);
+      document.removeEventListener("keydown", key, true);
+      document.removeEventListener("visibilitychange", hidden);
+      window.removeEventListener("blur", reset);
+    };
+  }, [pick, canUpload]);
+
+  const busy = !!progress || collecting || state.status === "loading";
+  // Outside the zoomed #root: the overlay must cover the actual iframe viewport.
+  // Pointer events pass through, so child transitions cannot flicker the target.
+  const overlay = drag && createPortal(
+    <div className="statement-drop-overlay" data-statement-drop-overlay role="status" aria-live="polite">
+      <div className="statement-drop-frame">
+        <div className="statement-drop-message">
+          <UploadCloud className="h-10 w-10" />
+          <strong>{archiveStatus === "restricted" ? "Statement archive unavailable" : archiveStatus === "loading" ? "Opening statement archive…" : state.status === "unavailable" ? "Uploads unavailable" : state.status === "loading" ? "Checking upload access…" : busy ? "Please wait for the current upload" : "Drop statements here"}</strong>
+          <span>{provider ?? "Statement Library"}</span>
+          <small>{archiveStatus === "restricted" ? "Reload the dashboard to open the archive before uploading." : state.status === "unavailable" ? state.reason : `PDF, Excel or ZIP · up to ${MAX_MB} MB each`}</small>
+        </div>
+      </div>
+    </div>, document.body,
+  );
+
+  // Keep the drop guard mounted even while the archive is opening or failed.
+  // Those states accept no uploads, but must never navigate to a dropped PDF.
+  if (archiveStatus !== "ready") return <>{overlay}</>;
 
   // The service is not reachable — say which cause, and for a site with no
   // token give the one-time set-up steps rather than a drop zone that drops.
   if (state.status === "unavailable") {
     return (
+      <>{overlay}
       <div data-xa="statement-upload" data-upload-state={state.cause}>
       <Card className="mb-5">
         <div className="flex items-start gap-3">
@@ -189,16 +277,18 @@ function UploadPanel({ inbox }: { inbox: ReturnType<typeof useStatementInbox> })
         </div>
       </Card>
       </div>
+      </>
     );
   }
 
-  const busy = !!progress || collecting || state.status === "loading";
   return (
+    <>{overlay}
     <div data-xa="statement-upload" data-upload-state={state.status} data-publication-busy={!!progress || collecting ? "true" : undefined}>
     <Card className="mb-5">
-      <div className="mb-3 flex flex-wrap items-center gap-2">
+      <div className={`${provider ? "" : "mb-3"} flex flex-wrap items-center gap-2`}>
         <UploadCloud className="h-4 w-4 text-champagne-400" />
         <span className="text-sm font-semibold text-slate-200">Upload statements</span>
+        {provider && <span className="text-xs text-slate-400">{progress ? `Uploading ${progress.done} of ${progress.of}…` : collecting ? "Reading files…" : "Drop files anywhere in this folder"}</span>}
         <div className="ml-auto flex items-center gap-2">
           <button type="button" disabled={busy} onClick={() => filesRef.current?.click()}
             className="inline-flex items-center gap-1.5 rounded-md border border-ink-600 bg-ink-800 px-3 py-1.5 text-xs font-medium text-slate-300 hover:bg-ink-700 disabled:opacity-50">
@@ -211,34 +301,27 @@ function UploadPanel({ inbox }: { inbox: ReturnType<typeof useStatementInbox> })
         </div>
       </div>
 
-      <button type="button" disabled={busy}
+      {!provider && <button type="button" disabled={busy}
         onClick={() => filesRef.current?.click()}
-        onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
-        onDragLeave={() => setDrag(false)}
-        onDrop={(e) => {
-          e.preventDefault(); setDrag(false); if (busy) return; setCollecting(true);
-          void fromDrop(e.dataTransfer).then(send).finally(() => setCollecting(false));
-        }}
         data-upload-drop
-        className={`flex w-full flex-col items-center justify-center gap-1.5 rounded-lg border-2 border-dashed px-4 py-7 text-center transition-colors disabled:cursor-wait
-          ${drag ? "border-champagne-500/60 bg-champagne-500/10" : "border-ink-600 hover:border-ink-500 hover:bg-ink-700/30"}`}>
+        className="flex w-full flex-col items-center justify-center gap-1.5 rounded-lg border-2 border-dashed border-ink-600 px-4 py-7 text-center transition-colors hover:border-ink-500 hover:bg-ink-700/30 disabled:cursor-wait">
         {progress
           ? <Loader2 className="h-6 w-6 animate-spin text-champagne-400" />
           : <UploadCloud className="h-6 w-6 text-slate-500" />}
         <span className="text-sm text-slate-300">
-          {progress ? `Uploading ${progress.done} of ${progress.of}…` : "Drop statements or whole folders here"}
+          {progress ? `Uploading ${progress.done} of ${progress.of}…` : collecting ? "Reading files…" : "Drop statements or whole folders anywhere on this page"}
         </span>
         <span className="text-[11px] text-slate-500"
           title="Each statement is saved to GitHub, read into the dashboard, and filed in the folder of the provider that issued it.">
           PDF, Excel or ZIP · up to {MAX_MB} MB each
         </span>
-      </button>
+      </button>}
       <input ref={filesRef} type="file" multiple accept={ACCEPT} className="hidden"
-        onChange={(e) => { void send(fromInput(e.target.files ?? [])); e.target.value = ""; }} />
+        onChange={(e) => { const picked = fromInput(e.target.files ?? []); void pick(() => picked); e.target.value = ""; }} />
       {/* `webkitdirectory` is not in React's attribute types; set on the element. */}
       <input ref={(el) => { folderRef.current = el; el?.setAttribute("webkitdirectory", ""); el?.setAttribute("directory", ""); }}
         type="file" multiple className="hidden"
-        onChange={(e) => { void send(fromInput(e.target.files ?? [])); e.target.value = ""; }} />
+        onChange={(e) => { const picked = fromInput(e.target.files ?? []); void pick(() => picked); e.target.value = ""; }} />
 
       {msg && (
         <p className={`mt-2 text-xs ${msg.tone === "err" ? "text-loss" : "text-gain"}`} role="status" title={msg.title}
@@ -246,6 +329,7 @@ function UploadPanel({ inbox }: { inbox: ReturnType<typeof useStatementInbox> })
       )}
     </Card>
     </div>
+    </>
   );
 }
 
@@ -539,8 +623,12 @@ export function StatementLibrary() {
       f.provider.toLowerCase().includes(q) || f.reportTypes.some((t) => t.label.toLowerCase().includes(q)));
   }, [library, query]);
 
-  const open = (provider: string) => setSearchParams((p) => { p.set(PROVIDER_PARAM, provider); return p; });
-  const back = () => setSearchParams((p) => { p.delete(PROVIDER_PARAM); return p; });
+  const open = (provider: string) => setSearchParams((p) => {
+    p.delete("file"); p.delete("path"); p.set(PROVIDER_PARAM, provider); return p;
+  });
+  const back = () => setSearchParams((p) => {
+    p.delete("file"); p.delete("path"); p.delete(PROVIDER_PARAM); return p;
+  });
 
   const current = openProvider ? library.folders.find((f) => f.provider === openProvider) : null;
   const trail = openProvider
@@ -577,6 +665,9 @@ export function StatementLibrary() {
         </Card>
       )}
 
+      <UploadPanel inbox={inbox} provider={current?.provider} archiveStatus={status} />
+      {status === "ready" && <UploadLog inbox={inbox} batches={batches} served={served} folders={folderNames} onOpen={open} />}
+
       {status === "ready" && (openProvider
         ? (current
           ? <OpenFolder folder={current} onBack={back} />
@@ -594,9 +685,6 @@ export function StatementLibrary() {
           ))
         : (
           <>
-            <UploadPanel inbox={inbox} />
-            <UploadLog inbox={inbox} batches={batches} served={served} folders={folderNames} onOpen={open} />
-
             <div className="mb-5 flex flex-wrap items-center gap-3">
               <div className="relative flex-1 min-w-[220px]">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />

@@ -47,6 +47,10 @@ const ok = (name: string, pass: boolean, detail = "") => {
   else console.log(`ok   ${name}${detail ? ` — ${detail}` : ""}`);
 };
 const rs = (n: number) => `₹${n.toFixed(2)}`;
+// These shapes test the value threshold, independently of whichever purchase
+// cost a later source recovers for the first real holding in the book.
+const costless = { ...BOOK_POSITIONS[0], costBasis: null, costUnavailable: true,
+  realizedPnL: null, costOfUnitsSold: null, dividendReceived: null };
 
 /**
  * THE BOOK THE FLOOR IS APPLIED TO ON A PAGE, WHICH SINCE Stage 10cz IS NOT
@@ -224,13 +228,13 @@ ok("the floor actually drops holdings — a rule matching nothing would pass eve
   // taken from the book rather than invented — standing alone as a security.
   // Under `Math.abs` it is kept; under a plain `value < FLOOR` it is dropped and
   // the mandate holding it silently gains that much.
-  const payable = [{ ...BOOK_POSITIONS[0], securityKey: "constructed-lone-payable", dedupeGroup: undefined, marketValue: -84556.96 }];
+  const payable = [{ ...costless, securityKey: "constructed-lone-payable", dedupeGroup: undefined, marketValue: -84556.96 }];
   ok("a security whose whole value is a large NEGATIVE balance is KEPT — a payable is not a speck",
      !negligibleKeys(payable).has("constructed-lone-payable"), "−₹84,556.96 stands");
   // ...and the other half of `Math.abs`: a genuinely tiny payable IS a speck,
   // for the same reason a tiny holding is. Without this the guard could be
   // "fixed" by refusing every negative, which is a different rule.
-  const tinyPayable = [{ ...BOOK_POSITIONS[0], securityKey: "constructed-tiny-payable", dedupeGroup: undefined, marketValue: -54 }];
+  const tinyPayable = [{ ...costless, securityKey: "constructed-tiny-payable", dedupeGroup: undefined, marketValue: -54 }];
   ok("...while a security whose whole value is −₹54 still goes — the floor is the magnitude, not the sign",
      negligibleKeys(tinyPayable).has("constructed-tiny-payable"), "−₹54 is as irrelevant as +₹54");
 }
@@ -262,7 +266,7 @@ ok("the floor actually drops holdings — a rule matching nothing would pass eve
   // The constructed case: one holding, three rows, each under the floor and the
   // holding well over it. Per-row this returns the key; per-security it must not.
   const lots = [0, 1, 2].map((i) => ({
-    ...BOOK_POSITIONS[0], securityKey: "constructed-many-small-lots",
+    ...costless, securityKey: "constructed-many-small-lots",
     accountId: `acct-${i}`, dedupeGroup: undefined, marketValue: 900,
   }));
   ok("a holding split into lots each under the floor is NOT dropped — the floor is struck on the holding",
@@ -273,6 +277,20 @@ ok("the floor actually drops holdings — a rule matching nothing would pass eve
   const specks = lots.map((l) => ({ ...l, securityKey: "constructed-real-speck", marketValue: 18 }));
   ok("...while a holding that really is under the floor across all its lots still goes",
      negligibleKeys(specks).has("constructed-real-speck"), "3 × ₹18 = ₹54");
+}
+
+// A new statement can fill a cost gap on the very same tiny unit balance.
+// It must then retain the investment and any sale/income history on every row
+// of that security, rather than hiding capital to satisfy a display threshold.
+{
+  const tiny = { ...costless, dedupeGroup: undefined, securityKey: "constructed-economic-history", marketValue: 54 };
+  for (const history of [{ costBasis: 100 }, { costBasis: 0 }, { realizedPnL: 9000 }, { costOfUnitsSold: 250000 }, { dividendReceived: 500 }]) {
+    const rows = [{ ...tiny, ...history }, { ...tiny, accountId: "second-account", marketValue: 1 }];
+    ok(`a tiny holding retains its ${Object.keys(history)[0]} and both accounts`,
+      currentHoldings(rows).length === 2 && negligibleKeys(rows).size === 0);
+  }
+  ok("without investment history the same tiny balance still follows the requested floor",
+    negligibleKeys([tiny]).has(tiny.securityKey));
 }
 
 // ── 7. THE VERDICT DOES NOT DEPEND ON WHO ASKS ──────────────────────────────

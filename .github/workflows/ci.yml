@@ -91,6 +91,7 @@ jobs:
             if curl --silent --fail http://127.0.0.1:4173/ > /dev/null; then break; fi
             sleep 1
           done
+          CHROME="$(command -v google-chrome)" node scripts/dev/check-statement-drop.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-selected-attribution.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-market-returns.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-assumed-holdings.mjs
@@ -152,6 +153,14 @@ jobs:
         with:
           name: navigation-state-browser
           path: .cache/navigation-state-check
+          if-no-files-found: ignore
+
+      - name: Preserve statement drag-and-drop browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: statement-drop-browser
+          path: .cache/statement-drop-check
           if-no-files-found: ignore
 
       - name: Preserve ETF unit continuity browser evidence

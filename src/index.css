@@ -2,6 +2,26 @@
 @tailwind components;
 @tailwind utilities;
 
+/* File drags cover the library's viewport, including an open provider folder. */
+.statement-drop-overlay {
+  position: fixed; inset: 0; z-index: 1000; pointer-events: none;
+  padding: 12px; background: rgb(59 130 246 / 0.18);
+}
+.statement-drop-frame {
+  display: grid; place-items: center; width: 100%; height: 100%; padding: 20px;
+  border: 3px solid #3b82f6; border-radius: 14px;
+}
+.statement-drop-message {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  max-width: 100%; padding: 28px 36px; border: 1px solid #93c5fd; border-radius: 16px;
+  background: #eff6ff; color: #1e40af; text-align: center;
+  box-shadow: 0 12px 40px rgb(30 64 175 / 0.18); overflow-wrap: anywhere;
+}
+.statement-drop-message strong { font-size: 20px; }
+.statement-drop-message small { font-size: 12px; }
+html.dark .statement-drop-overlay { background: rgb(59 130 246 / 0.22); }
+html.dark .statement-drop-message { background: #172554; color: #dbeafe; border-color: #60a5fa; }
+
 .property-map { height: 520px; width: 100%; z-index: 0; background: #eeeae1; }
 .property-map-picker { height: 340px; cursor: crosshair; }
 .property-pin-wrapper { background: transparent; border: 0; }

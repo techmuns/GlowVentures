@@ -469,6 +469,16 @@
 - `10387.pdf`, from the same message, is a one-page password-protected PDF. It is not added until a run holding the statement passwords can read it.
 - Tests: `mopwmTransactions.test.mjs` (the prefixed workbook in full, owners, classification, FIFO, corporate-action and identity refusals, a later sale counted); `recoveredCosts.test.ts` counts 65 / 22 / 31 and pins Kaynes and Motilal Arbitrage.
 
+### Stage 10hv — FULL-PAGE STATEMENT DROPS AND RETAINED FINANCIAL HISTORY
+
+- Accept file and folder drags across the Statement Library viewport, including inside a provider folder, with a blue overlay naming the current folder. Keep Files/Folder controls and upload results available there. The existing intake still classifies each statement by its actual issuing provider.
+- Use one document-level file-drop handler and a synchronous busy lock; nested tables cannot submit a second copy or open a dropped PDF over the dashboard. Clear the overlay on exit, cancellation, blur and navigation. Preserve ordinary text and table-column drags.
+- Add local browser coverage for whole-viewport geometry at the app's zoom, nested drag transitions, repeated drops, paged directory traversal, exact fixture bytes, validation, the file chooser, service failure, light/dark themes and narrow screens. Preserve its evidence in CI; no production uploads are part of the checks.
+- Automated review corrections: keep the non-uploading drop guard mounted while the manifest loads or fails, and clear source-document parameters when opening an upload's provider or returning to All folders. Browser cases cover both edge paths.
+- The Stage 10hu MOPWM cost records exposed two tiny residual fund balances with real purchase and sale history being hidden by the value floor (before Stage 10hw withheld those cost records upstream). Preserve a whole security when any deduped line carries investment cost or nonzero realised/sold-cost/income history; keep the existing paid-out cash-at-value exception and the ₹1,000 threshold for uncosted specks. No source or generated book record is changed.
+- The original regression reproduced six failures when restoring the old floor. Stage 10hw subsequently withheld those tiny recovered costs upstream; preserve that source-data change and its updated mixed-cost and corporate-action checks. Constructed cost/sale/income cases independently retain the display guard against future statements that establish investment history.
+- Independently rederive the financial-history exception in the chat, Excel and page-check reference models. A costed residual now prevents claiming a complete PMS mandate when it is omitted; a genuinely uncosted speck still does not. The targeted context, Excel and FIFO suites pass; preview checks retain both affected fund records in Portfolio Monitor and Family & Entities.
+
 ### Stage 10hw — MAIN GREEN AGAIN AFTER 10HU
 
 - #251 merged with CI still running, and CI failed. Three family checks printed `FAIL` lines that the local scan missed (it grepped only for `AssertionError`); the upload rehearsal failed with them, because its intake run holds an upload on any new `test:family` failure.

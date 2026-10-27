@@ -369,12 +369,12 @@ export const isRedeemedToNil = (p: { assetClass: string; quantity: number | null
  *
  * ── WHAT IT MOVES, MEASURED RATHER THAN ASSUMED ─────────────────────────────
  *
- * Every one of the six carries `costBasis: null`, no realised gain and no
- * dividend, so Capital invested, Realised P&L and income are untouched and only
- * MARKET VALUE moves — by ₹848.24, which is invisible at the one-decimal-crore
- * precision every surface prints. It is not invisible to the suites that tie a
- * rendered figure to `BOOK_SUMMARY` to the rupee, and those carry it as a named
- * term rather than a widened tolerance, which is what keeps the drop measurable.
+ * The floor may move market value, never hide an investment's purchase cost,
+ * realised gain, sold cost or income. A later source can establish those on a
+ * tiny residual balance, so any such history protects the whole security from
+ * this display filter. Paid-out cash at its own value remains the exception.
+ * Suites tie the removed value to the book as a named term rather than a
+ * widened tolerance; every source record stays retained regardless of display.
  */
 export const NEGLIGIBLE_VALUE_FLOOR = 1000;
 
@@ -389,8 +389,18 @@ export const NEGLIGIBLE_VALUE_FLOOR = 1000;
  */
 export function negligibleKeys<T extends NegligibleInput>(positions: readonly T[]): Set<string> {
   const byKey = new Map<string, number>();
+  const financialHistory = new Set<string>();
   for (const p of dedupedPositions(positions as unknown as Position[])) {
     byKey.set(p.securityKey, (byKey.get(p.securityKey) ?? 0) + p.marketValue);
+    // The display floor may remove an uncosted speck, never the family's
+    // invested capital or economic history. A tiny remaining balance can be
+    // what is left after substantial sales. Paid-out cash at its own value is
+    // the existing exception: removing it moves no investment gain.
+    const cashAtValue = p.assetClass === "Cash" && p.costBasis != null && Math.abs(p.costBasis - p.marketValue) < 0.005;
+    if ((p.costBasis != null && !cashAtValue) ||
+      [p.realizedPnL, p.costOfUnitsSold, p.dividendReceived].some(v => typeof v === "number" && v !== 0)) {
+      financialHistory.add(p.securityKey);
+    }
   }
   const out = new Set<string>();
   for (const [key, value] of byKey) {
@@ -424,7 +434,7 @@ export function negligibleKeys<T extends NegligibleInput>(positions: readonly T[
      * session simplifying it to `Math.abs(value) < FLOOR` will find the suite's
      * partition and cost checks failing by name.
      */
-    if (value !== 0 && Math.abs(value) < NEGLIGIBLE_VALUE_FLOOR) out.add(key);
+    if (value !== 0 && Math.abs(value) < NEGLIGIBLE_VALUE_FLOOR && !financialHistory.has(key)) out.add(key);
   }
   return out;
 }
@@ -432,6 +442,8 @@ export function negligibleKeys<T extends NegligibleInput>(positions: readonly T[
 type NegligibleInput = {
   assetClass: string; quantity: number | null; currentPrice: number | null;
   securityKey: string; marketValue: number; dedupeGroup?: string;
+  costBasis?: number | null; realizedPnL?: number | null;
+  costOfUnitsSold?: number | null; dividendReceived?: number | null;
 };
 
 /**

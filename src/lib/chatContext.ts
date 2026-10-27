@@ -281,8 +281,8 @@ export function buildDashboardContext(book: ChatBook): ContextBlock[] {
       countsExclude: {
         closedPositions: dropped.closed.length,
         belowFloor: { positions: dropped.negligible.length, valueRupees: Math.round(sum(dropped.negligible.map((p) => p.marketValue)) * 100) / 100, floorRupees: NEGLIGIBLE_VALUE_FLOOR },
-        note: "The counts are the holdings the dashboard lists: a position redeemed to nil units and a holding worth"
-          + ` under ₹${NEGLIGIBLE_VALUE_FLOOR.toLocaleString("en-IN")} in total are left out, at the family's instruction.`,
+        note: "The counts are the holdings the dashboard lists: positions redeemed to nil units and small balances"
+          + ` under ₹${NEGLIGIBLE_VALUE_FLOOR.toLocaleString("en-IN")} without investment cost or sale/income history are left out, at the family's instruction.`,
       },
       accounts: accounts.length,
       owners,
