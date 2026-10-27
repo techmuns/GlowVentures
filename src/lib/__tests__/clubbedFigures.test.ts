@@ -27,8 +27,10 @@ const eng = new Map(BOOK_ACCOUNTS.map((a) => [a.accountId, a.engagement]));
  * THE BOOK THE MONITOR CLUBS, ON A DAY THE QUOTE FEED ANSWERS. Since Stage 10cz
  * the family's own Motilal demat shares are rows only while a quote prices them
  * (their statement's rate is the last depository movement, never a price), and
- * those uncosted rows are exactly what ICICI Bank's costed Goldstandard lines are
- * clubbed with. On the statement basis alone that case left the book and this
+ * those uncosted rows are what costed lines elsewhere are clubbed with — ICICI
+ * Bank's Goldstandard lines until Ankita's own lot took its cost from MOPWM's
+ * transaction report (Stage 10hu), Insolation Energy's ICICI NSDL lot since.
+ * On the statement basis alone that case left the book and this
  * suite's load-bearing check passed over nothing — so it reads the live book
  * with a STUB feed pricing every recorded share (`liveBook.ts`), as `check:pages`
  * does with its fixture feed. No stubbed price is asserted on.
@@ -70,21 +72,22 @@ for (const [key, ps] of byKey) {
 ok("every consolidated row strikes cost, units, value and gain on one set", true, `${byKey.size} rows`);
 ok("some row really does club a costed line with an uncosted one (load-bearing)", mixed > 0, `${mixed} such rows`);
 
-console.log("\n── a partly-costed row stays load-bearing as source coverage improves ──");
+// Ajay's 212,000 ICICI NSDL shares carry their recovered cost; his 110,000 in
+// Motilal and Bharat's 91,000 in HDFC do not (their lots run through a split).
+console.log("\n── the book's own case: Insolation Energy ──");
 {
-  // ICICI Bank now has a recovered cost on both lines. Keep the original
-  // denominator/gain regression deterministic; the complete current book is
-  // still checked independently above, including its remaining mixed rows.
-  const ps = [
-    { costBasis: 1000, costUnavailable: false, quantity: 100, marketValue: 1200 },
-    { costBasis: null, costUnavailable: true, quantity: 200, marketValue: 2400 },
-  ];
+  const ps = byKey.get("insolation-energy") ?? [];
   const f = costedFigures(ps);
-  const allUnits = ps.reduce((n, p) => n + p.quantity, 0);
-  ok("average cost divides by the units with a measured cost", near(f.avgCost, 10, 1e-9)
-    && !near(f.avgCost, f.cost! / allUnits, 1e-9));
-  ok("unrealised gain covers the costed value alone", near(f.unrealised, 200, 1e-9)
-    && f.value - f.cost! === 2600 && f.uncosted.value === 2400);
+  const allUnits = ps.reduce((s, p) => s + (p.quantity ?? 0), 0);
+  ok("Insolation Energy is held through lines that report a cost and lines that do not",
+    ps.some(reportsCost) && ps.some((p) => !reportsCost(p)), `${ps.length} lines`);
+  ok("its average cost is cost over the COSTED units, not over every unit",
+    f.avgCost !== null && f.cost !== null && Math.abs(f.avgCost - f.cost / allUnits) > 100,
+    `₹${f.avgCost?.toFixed(2)} vs the old ₹${f.cost !== null ? (f.cost / allUnits).toFixed(2) : "—"}`);
+  const oldPnl = f.cost === null ? null : f.value - f.cost;
+  ok("its unrealised gain is the costed shares' value less their cost, not every share's value",
+    f.unrealised !== null && oldPnl !== null && Math.abs(oldPnl - f.unrealised) > 1e6,
+    `₹${Math.round(f.unrealised ?? 0).toLocaleString("en-IN")} vs the old ₹${Math.round(oldPnl ?? 0).toLocaleString("en-IN")}`);
 }
 
 console.log("\n── a section whose only costed lines are nil balances has no cost total (A-14) ──");
