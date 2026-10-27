@@ -458,3 +458,9 @@
 - Store bounded presentation snapshots in tab-local session storage, with an in-memory fallback when storage is blocked. Full document entries receive distinct router-compatible history keys; reload retains its existing key. No portfolio records or financial calculations are changed.
 - Regression checks cover snapshot isolation, reload, invalid/blocked storage, the real Kotak drilldown, Back/Forward, Cash, row expansion, filters, sorting, horizontal/vertical table scroll and a separate ETF visit.
 - Review corrections: the old mount-time expansion reset now runs only for an actual new basis choice, preserving remounts and history traversal. Validate saved entity/section choices and intersect picked holdings with the current book's options before applying them; wait for fund-only options before declaring those selections obsolete. Browser coverage seeds retired choices and retains the valid holding across reload.
+
+### Stage 10ht — DROP STATEMENTS ANYWHERE IN THE LIBRARY
+
+- Accept file and folder drags across the Statement Library viewport, including inside a provider folder, with a blue overlay naming the current folder. Keep Files/Folder controls and upload results available there. The existing intake still classifies each statement by its actual issuing provider.
+- Use one document-level file-drop handler and a synchronous busy lock; nested tables cannot submit a second copy or open a dropped PDF over the dashboard. Clear the overlay on exit, cancellation, blur and navigation. Preserve ordinary text and table-column drags.
+- Add local browser coverage for whole-viewport geometry at the app's zoom, nested drag transitions, repeated drops, paged directory traversal, exact fixture bytes, validation, the file chooser, service failure, light/dark themes and narrow screens. Preserve its evidence in CI; no production uploads are part of the checks.
