@@ -17,7 +17,7 @@
 //
 // The same causes the dashboard store names — no token yet, signed out, no
 // function running (a local preview), no answer, an error — because they send a
-// reader to different places. Only `not-configured` shows the set-up steps.
+// reader to different next actions. Operator setup stays outside the customer UI.
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ManifestEntry } from "./statementLibrary";
 import {

@@ -15,10 +15,11 @@ const near = (got: number | null | undefined, want: number) =>
   assert.ok(typeof got === "number" && Math.abs(got - want) < .02, `${got} != ${want}`);
 // 45 from the review and register; MOPWM's transaction report (Stage 10hu) adds
 // 17 more where both left a holding unrecovered — not the three residues below the
-// ₹1,000 floor, which carry no cost (Stage 10hw).
-assert.equal(BOOK_RECOVERED_COSTS.length, 62, "only exact owner/ISIN/quantity matches are recoverable");
+// ₹1,000 floor, which carry no cost (Stage 10hw), and not Ankita's Axis Bank and
+// ICICI Bank, which the family confirmed exiting (Stage 10ib) and recover nothing.
+assert.equal(BOOK_RECOVERED_COSTS.length, 60, "only exact owner/ISIN/quantity matches are recoverable");
 const MOPWM = "source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx";
-assert.equal(BOOK_RECOVERED_COSTS.filter(r => r.evidence.some(e => e.path === MOPWM)).length, 17);
+assert.equal(BOOK_RECOVERED_COSTS.filter(r => r.evidence.some(e => e.path === MOPWM)).length, 15);
 // Bharat's scanned HDFC Bank NSDL statement (Stage 10gk) prints the 1,01,111
 // Smartworks shares his saved purchase record bought — an exact match, and the
 // only one the scan adds. The row stays quantity-only: a cost values nothing.
@@ -54,8 +55,9 @@ assert.equal(yash.realizedLotsAfter, 3, "known later disposals block live pricin
 const candidates = shareCandidates();
 // Twelve: Bharat's Smartworks shares on his HDFC Bank NSDL statement (Stage 10gk) are the twelfth.
 // Ten more since Stage 10hu: Ankita's nine bank shares and her Kaynes, costed
-// from MOPWM's transaction report.
-assert.equal(candidates.filter(p => p.recoveredCost).length, 22);
+// from MOPWM's transaction report — eight since Stage 10ib retired her Axis Bank
+// and ICICI Bank.
+assert.equal(candidates.filter(p => p.recoveredCost).length, 20);
 assert.ok(candidates.some(p => p.accountId === "hdfc-bank-nsdl-demat-22025655" && p.isin === "INE0NAZ01010" && p.recoveredCost));
 const infinium = candidates.find(p => p.isin === "INE0MRE01011")!;
 assert.equal(infinium.quantity, 8000); near(infinium.costBasis, 2646660);
@@ -72,10 +74,12 @@ near(kaynes.costBasis, 11710991);
 assert.deepEqual(kaynes.recoveredCost?.heldPurchases, { first: "2022-11-24", last: "2025-12-09", lots: 2 });
 assert.equal(kaynes.recoveredCost?.evidence[0].path, MOPWM);
 assert.equal(kaynes.dividendReceived, null, "the report carries no cash dividends");
-// Sold on 23 Sep 2026, after the 31 Jul statement: counted, never applied.
-const axis = candidates.find(p => p.isin === "INE238A01034")!;
-assert.equal(axis.quantity, 7300);
-assert.equal(axis.realizedLotsAfter, 1);
+// Sold on 23 Sep 2026, after the 31 Jul statement: counted, never applied —
+// unless the family confirm the exit, which retires the line (Stage 10ib).
+const sbi = candidates.find(p => p.isin === "INE062A01020")!;
+assert.equal(sbi.quantity, 27750);
+assert.equal(sbi.realizedLotsAfter, 1);
+assert.equal(candidates.some(p => p.isin === "INE238A01034"), false, "Axis Bank: confirmed exited, not a candidate");
 // Prove the recovered lots reach the live table, survive pricing and still
 // include realised FIFO gain. This feed is a test fixture, not a market quote.
 const symbol = quoteSymbolFor(infinium)!;
