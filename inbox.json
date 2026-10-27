@@ -1,0 +1,25 @@
+{
+ "version": 1,
+ "batches": [
+  {
+   "id": "20261027T071006Z-ff954d61",
+   "uploadedAt": "2026-10-27T07:10:06.307Z",
+   "files": [
+    {
+     "name": "Acctstmt_HLS_10355977 (2) (1).pdf",
+     "size": 276323,
+     "blob": "013160b41dd8a0e79315c2c680bd68ee17dd285f",
+     "status": "queued",
+     "hold": null,
+     "reason": null,
+     "landedAs": null,
+     "providers": null,
+     "docKeys": null,
+     "commit": null,
+     "run": null,
+     "updatedAt": "2026-10-27T07:10:06.307Z"
+    }
+   ]
+  }
+ ]
+}
