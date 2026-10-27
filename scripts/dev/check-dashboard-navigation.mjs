@@ -22,6 +22,7 @@ const fingerprint=()=>page.locator('main').evaluate(main=>({
  windows:[...main.querySelectorAll('[data-table-scroll-end]')].map(e=>[e.getAttribute('data-loaded-rows'),e.getAttribute('data-total-rows')]),
  expanded:[...main.querySelectorAll('[data-navigation-expanded][aria-expanded]')].map(e=>[e.getAttribute('aria-label')??e.textContent.trim(),e.getAttribute('aria-expanded')]),
  details:[...main.querySelectorAll('details[data-navigation-details]')].map(e=>[e.dataset.navigationDetails,e.open]),
+ sheets:[...main.querySelectorAll('[data-audit-sheet][aria-pressed="true"]')].map(e=>e.dataset.auditSheet),
  scroll:[['main',main],...[...main.querySelectorAll('[data-navigation-scroll]')].filter(e=>e.getClientRects().length).map(e=>[e.dataset.navigationScroll,e])].map(([id,e])=>[id,Math.round(e.scrollTop),Math.round(e.scrollLeft)]),
 }));
 async function roundTrip(label,depth=137){
@@ -115,7 +116,8 @@ try{
  const manifest=await (await page.request.get(base+'/audit/manifest.json')).json();
  const workbook=manifest.find(f=>f.sheets.length>1);assert.ok(workbook,'an archive workbook has multiple sheets');
  await page.locator(`[data-xa="audit-chip"][data-file="${workbook.fileKey}"]`).click();await settled();
- await page.locator('[data-audit-sheet]').last().click();await settled();
+ await page.locator('[data-audit-sheet="pages"]').click();await settled();
+ await page.locator('[data-navigation-scroll="dataaudit-1"] tbody tr').first().waitFor();
  const auditSearch=page.getByPlaceholder('Search this sheet…',{exact:true}).last();await auditSearch.fill('ISIN');await settled();
  await roundTrip('Data Audit workbook/sheet/search');
  }

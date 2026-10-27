@@ -13,6 +13,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { ConsolidatedSheet } from "@/components/ConsolidatedSheet";
+import { decodeAuditSheet, type AuditCell as Cell, type AuditSheet as Sheet } from "@/lib/auditSheet";
 
 // The Data Audit archive lives in public/audit/ and is served at /audit/* in dev,
 // preview and production. On the hosted site those requests sit behind the edge
@@ -22,8 +23,6 @@ type FileMeta = {
   fileKey: string; label: string; fy: string; source: string; reportType: string;
   status: "ok" | "partial" | "failed" | "encrypted"; sheets: SheetMeta[];
 };
-type Cell = string | number | null;
-type Sheet = { name: string; rows: Cell[][] };
 
 /**
  * A chip names WHICH document it opens — the provider, the account, the report
@@ -168,7 +167,7 @@ function SourceArchive() {
     setSheetLoading(true); setSheet(null);
     fetch(`${BASE}audit/${fileKey}/${sheetKey}.json`, { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
-      .then((s: Sheet) => { if (!alive) return; cache.current[id] = s; setSheet(s); })
+      .then((raw: unknown) => { if (!alive) return; const s = decodeAuditSheet(raw); cache.current[id] = s; setSheet(s); })
       .catch(() => alive && setSheet(null))
       .finally(() => alive && setSheetLoading(false));
     return () => { alive = false; };
@@ -337,7 +336,7 @@ function SourceArchive() {
           {currentFile.sheets.map((s) => {
             const active = s.key === sheetKey;
             return (
-              <button key={s.key} type="button" data-audit-sheet={s.key} onClick={() => { setSheetKey(s.key); setQuery(""); setExact(false); }}
+              <button key={s.key} type="button" data-audit-sheet={s.key} aria-pressed={active} onClick={() => { setSheetKey(s.key); setQuery(""); setExact(false); }}
                 className={`rounded-md px-2.5 py-1 text-[12px] transition-colors ${
                   active ? "bg-ink-700 text-slate-100" : "text-slate-400 hover:bg-ink-700/40 hover:text-slate-200"}`}>
                 {s.name} <span className="mono text-[10px] text-slate-500">{s.rows}×{s.cols}</span>
