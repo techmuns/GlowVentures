@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { validateProperty, type Property } from "../../shared/realEstate.mjs";
-import { getTableInputState, publishPropertyChange, refreshTableInputs, useTableInputs } from "./tableInputStore";
+import { getTableInputState, publishPropertyChange, publishPropertyChanges, refreshTableInputs, useTableInputs } from "./tableInputStore";
 export * from "../../shared/realEstate.mjs";
 export * from "../../shared/propertyTax.mjs";
 export const PROPERTY_ENDPOINT = "/api/real-estate";
@@ -58,4 +58,14 @@ export function useProperties() {
   }, []);
   return { properties: numbers.loaded ? numbers.properties : properties, loading: numbers.loaded ? false : loading,
     ready: numbers.loaded || ready, error: numbers.loaded ? numbers.status === "error" ? numbers.error : "" : error, reload, mutate };
+}
+/** Saves an upload's rows together: the server stores every property or none. */
+export async function saveProperties(items: { property: Property; base: string | null }[]): Promise<{ ok: true; properties: Property[] } | { ok: false; message: string }> {
+  const reply = await request({ op: "saveMany", properties: items });
+  if (!reply.ok) return reply;
+  if (!Array.isArray(reply.properties) || reply.properties.some(p => !validateProperty(p).property)) return { ok: false, message: "The properties were saved but could not be read back. Refresh the page to see them." };
+  // The same snapshot the single editor publishes into, so the table, tiles and map show the rows at once.
+  publishPropertyChanges(reply.properties);
+  window.dispatchEvent(new Event("glow:properties-saved"));
+  return { ok: true, properties: reply.properties };
 }

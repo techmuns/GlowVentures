@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useRef, useMemo, useState, type FormEvent } from "react";
 import { Plus, X } from "lucide-react";
 import { TextField, SelectField, CheckField } from "@/components/FormBits";
-import { PROPERTY_TYPES, PROPERTY_STATUSES, AREA_UNITS, TITLE_STATUSES, ACQUISITION_TYPES, EARMARK_MARKER_ONLY, MAX_IMPROVEMENTS, INDEX_BASE_DATE, costLabel, receivedWithoutPurchase, validateProperty, type Property, type PropertyEarmark, type PropertyOwner } from "@/lib/realEstate";
+import { PROPERTY_TYPES, PROPERTY_STATUSES, AREA_UNITS, AREA_BASES, TITLE_STATUSES, ACQUISITION_TYPES, EARMARK_MARKER_ONLY, MAX_IMPROVEMENTS, INDEX_BASE_DATE, costLabel, receivedWithoutPurchase, validateProperty, type Property, type PropertyEarmark, type PropertyOwner } from "@/lib/realEstate";
 import { findPropertyAddress, type AddressMatch } from "@/lib/propertyMaps";
 const PropertyMap = lazy(() => import("./PropertyMap"));
 const options = (values: string[]) => values.map(value => ({ value, label: value }));
@@ -10,7 +10,7 @@ const str = (value: number | null) => value === null ? "" : String(value);
 export function emptyProperty(): Property {
   return { id: crypto.randomUUID(), name: "", type: "", address: "", city: "", state: "", country: "India", pincode: "",
     owners: [{ ownerId: null, name: "", share: null }], area: null, areaUnit: "sq ft", areaBasis: "",
-    cost: null, value: null, monthlyRent: null, monthlyCosts: null, debt: null,
+    cost: null, value: null, monthlyRent: null, monthlyCosts: null, debt: null, monthlyEmi: null,
     improvements: [], priorCost: null, priorAcquiredOn: null, fmv2001: null, ruralAgricultural: false,
     purchasedOn: null, valuationDate: null, leaseEnd: null, acquisition: "", status: "", tenant: "", titleStatus: "Not checked", notes: "", earmark: null, latitude: null, longitude: null };
 }
@@ -19,7 +19,7 @@ export function PropertyEditor({ property, members, onSave, onCancel }: {
   onSave: (p: Property) => Promise<{ ok: boolean; message?: string }>; onCancel: () => void;
 }) {
   const [draft, setDraft] = useState(property);
-  const [numbers, setNumbers] = useState(() => Object.fromEntries(["area", "cost", "value", "monthlyRent", "monthlyCosts", "debt", "priorCost", "fmv2001", "latitude", "longitude"].map(key => [key, str(property[key as "area"])])));
+  const [numbers, setNumbers] = useState(() => Object.fromEntries(["area", "cost", "value", "monthlyRent", "monthlyCosts", "debt", "monthlyEmi", "priorCost", "fmv2001", "latitude", "longitude"].map(key => [key, str(property[key as "area"])])));
   const [improvements, setImprovements] = useState(() => property.improvements.map(i => ({ on: i.on ?? "", amount: str(i.amount) })));
   const [shares, setShares] = useState(() => property.owners.map(o => str(o.share)));
   const [error, setError] = useState("");
@@ -104,7 +104,7 @@ export function PropertyEditor({ property, members, onSave, onCancel }: {
         <TextField label={draft.acquisition === "Inherited" ? "Date of inheritance" : draft.acquisition === "Gifted" ? "Date of gift" : "Purchase date"} value={draft.purchasedOn ?? ""} type="date" onChange={v => set("purchasedOn", v || null)} />
         {numberField("area", "Area")}
         <SelectField label="Area unit" blank="Not entered" value={draft.areaUnit} options={options(AREA_UNITS)} onChange={v => set("areaUnit", v)} />
-        <SelectField label="Area basis" blank="Not entered" value={draft.areaBasis} options={options(["Plot", "Carpet", "Built-up", "Super built-up"])} onChange={v => set("areaBasis", v)} />
+        <SelectField label="Area basis" blank="Not entered" value={draft.areaBasis} options={options(AREA_BASES)} onChange={v => set("areaBasis", v)} />
       </div>
       <div className="border-t border-ink-700 pt-4">
         <div className="flex flex-wrap items-center gap-3">
@@ -145,6 +145,7 @@ export function PropertyEditor({ property, members, onSave, onCancel }: {
           {numberField("monthlyRent", "Monthly rent (₹)")}
           {numberField("monthlyCosts", "Monthly costs (₹)", "Maintenance, property tax and other recurring costs; enter the monthly equivalent.")}
           {numberField("debt", "Loan outstanding (₹)", "Enter 0 if there is no loan.")}
+          {numberField("monthlyEmi", "EMI / month (₹)", "The loan's monthly instalment. Enter 0 if there is no loan.")}
         </div>
       </div>
       <div className="border-t border-ink-700 pt-4" data-tax-basis>
