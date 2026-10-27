@@ -74,7 +74,7 @@ const PdfPage = memo(function PdfPage({ pdf, number, center, width, height, avai
       await queue.run(async () => {
         if (!alive) return;
         render = source.render({ canvas, viewport: view, transform: [pixels, 0, 0, pixels, 0, 0] });
-        render.onContinue = resume => { continueFrame = requestAnimationFrame(() => { if (alive) resume(); }); };
+        render.onContinue = (resume: () => void) => { continueFrame = requestAnimationFrame(() => { if (alive) resume(); }); };
         await render.promise;
       }, () => Math.abs(number - (current.current?.page ?? number)), abort.signal);
       if (!alive) return;
@@ -234,6 +234,7 @@ export default function PdfPreview({ url, file, title, initialPage, sourceTarget
 
   useLayoutEffect(() => {
     if (!pdf || !width) return;
+    cancelAnimationFrame(scrollFrame.current);
     const scroller = viewport.current!;
     const saved = anchor.current;
     const paper = layout[saved.page - 1];
