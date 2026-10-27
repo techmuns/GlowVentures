@@ -178,6 +178,7 @@ export function rapidProcessor({ store, inbox, initial, references, instantiate,
   };
   return {
     initialize, submit, version,
+    stockLedgers: () => modelFor(current).deriveStockLedgers(current.documents, stockKeys(current)),
     status: () => ({ ready, revision: current.revision, readerRevision: current.readerRevision, receipts: state?.state?.receipts ?? {} }),
     published: () => ({ manifest: current.manifest, index: { files: current.originals, missing: current.missingOriginals ?? {} } }),
     snapshot: () => ({ schemaVersion: 1, revision: current.revision, readerRevision: current.readerRevision, book: current.book,

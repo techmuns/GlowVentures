@@ -180,6 +180,10 @@ try {
     routes, publication: publishedAt, errors, productionUploadsPerformed: 0,
     boundaries: 'GitHub REST and ref promotion use an isolated local bare Git repository; GitHub job engine, generated data views, read gateway, upload handler and browser are real; GitHub scheduling latency is excluded', requests }, null, 2));
   console.log(JSON.stringify({ status: 'passed', readyMs, routes: routes.length }));
+} catch (error) {
+  fs.writeFileSync(path.join(output, 'failure.json'), JSON.stringify({ message: error.message, errors, requests,
+    state: processor.status(), inbox: (await inboxFor(env, github).read()).log }, null, 2));
+  throw error;
 } finally {
   await browser?.close(); await Promise.allSettled([...background]);
   await new Promise(resolve => gateway.close(resolve));

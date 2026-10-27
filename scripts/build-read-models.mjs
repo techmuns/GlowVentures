@@ -57,9 +57,9 @@ put('ledger/sales.json', model.deriveSales(docs));
 put('consolidated/book.json', model.buildConsolidatedSheet(docs));
 const keys = new Set([...model.BOOK_POSITIONS.map(p => p.securityKey), ...docs.flatMap(d => ['transactions','capitalGains','holdings','income'].flatMap(k => (d[k] || []).map(r => r.securityKey)))]);
 const stockKeys = [...keys].filter(Boolean).sort();
-for (const key of stockKeys) {
+for (const [key, ledger] of Object.entries(model.deriveStockLedgers(docs, stockKeys))) {
   if (!/^[a-z0-9-]+$/.test(key)) throw new Error(`Invalid security key: ${key}`);
-  put(`ledger/stocks/${key}.json`, model.deriveStockLedger(docs, key));
+  put(`ledger/stocks/${key}.json`, ledger);
 }
 // A FUND'S OWN PORTFOLIO, FROM THE STATEMENTS — deliberately its own model and
 // not folded into `lookthrough.json`. That one is the AMCs' monthly filings for

@@ -18,7 +18,7 @@ export function publicationViews({ root = process.cwd(), instantiate, store, bas
     const names = new Set(['canonical/book.json', 'publication.json', 'audit/manifest.json', 'audit/formats.json',
       'statement-files/index.json', 'provenance/positions.json', 'ledger/transactions.json', 'ledger/lots.json',
       'ledger/income.json', 'ledger/sales.json', 'consolidated/book.json', 'fund-disclosures.json', 'lookthrough.json']);
-    for (const key of renderer.snapshot().stockKeys) names.add(`ledger/stocks/${key}.json`);
+    for (const [key, ledger] of Object.entries(renderer.stockLedgers())) json(`ledger/stocks/${key}.json`, ledger);
     for (const doc of snapshot.documents) {
       names.add(`canonical/documents/${doc.docKey}.json`); names.add(`provenance/documents/${doc.docKey}.json`);
       const auditFiles = new Set(['document.json', ...Object.keys(snapshot.records[doc.docKey]?.files ?? {})]);
