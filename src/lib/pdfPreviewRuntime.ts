@@ -75,6 +75,7 @@ export class PdfRenderQueue {
     const start = () => {
       this.scheduled = false;
       this.cancelScheduled = undefined;
+      if (this.running) return;
       this.jobs.sort((a, b) => a.priority() - b.priority());
       const job = this.jobs.shift();
       if (!job) return;
@@ -82,7 +83,7 @@ export class PdfRenderQueue {
       this.running = true;
       void job.run().then(job.resolve, job.reject).finally(() => { this.running = false; this.wake(); });
     };
-    if (foreground) queueMicrotask(start);
+    if (foreground) { this.cancelScheduled = undefined; queueMicrotask(start); }
     else if ('requestIdleCallback' in window) {
       const idle = window.requestIdleCallback(start, { timeout: 100 });
       this.cancelScheduled = () => window.cancelIdleCallback(idle);
