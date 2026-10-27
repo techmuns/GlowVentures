@@ -88,8 +88,8 @@ export class PdfRenderQueue {
       const idle = window.requestIdleCallback(start, { timeout: 100 });
       this.cancelScheduled = () => window.cancelIdleCallback(idle);
     } else {
-      const timer = window.setTimeout(start, 32);
-      this.cancelScheduled = () => window.clearTimeout(timer);
+      const timer = setTimeout(start, 32);
+      this.cancelScheduled = () => clearTimeout(timer);
     }
   }
 }

@@ -33,6 +33,9 @@ const canceled=queue.run(job('canceled'),()=>0,abort.signal);
 await tick();
 for(const callback of idle.values())callback();idle.clear();await canceled;
 assert.ok(!order.includes('canceled'),'a canceled page never allocates a rendering task');
+delete window.requestIdleCallback;delete window.cancelIdleCallback;
+await new runtime.PdfRenderQueue().run(async()=>order.push('fallback'),()=>1,signal);
+assert.equal(order.at(-1),'fallback','browsers without requestIdleCallback still render prefetched pages');
 
 const cache=new runtime.PdfCanvasCache(),canvases=[];
 for(let page=1;page<=5;page++){
