@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState, type DragEvent } from "react";
 import { Download, FileSpreadsheet, Upload, X } from "lucide-react";
-import { ExportableTable } from "@/components/ExportableTable";
 import { saveProperties, type Property } from "@/lib/realEstate";
 import { buildPropertyWorkbook, readPropertyWorkbook, planPropertyUpload, MAX_FILE_BYTES, MAX_UPLOAD_ROWS, type UploadPlan, type PlanRow } from "../../shared/propertySheet.mjs";
 // ExcelJS is large; it loads when a template is downloaded or a file is read.
@@ -11,6 +10,8 @@ const ACTION: Record<PlanRow["action"], { label: string; tone: string }> = {
   unchanged: { label: "Unchanged", tone: "text-slate-500" }, error: { label: "Problem", tone: "text-loss" },
 };
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
+// Row · Property · Result, with Details beside them on a wide screen and below them on a narrow one.
+const ROW_GRID = "grid-cols-[2.5rem_minmax(0,1fr)_5.5rem] gap-x-3 gap-y-1 px-3 sm:grid-cols-[2.5rem_minmax(8rem,14rem)_5.5rem_minmax(0,1fr)]";
 
 /** Bulk entry: a template with the Add Property form's fields, and an upload that checks every row before saving any. */
 export function PropertyBulkEntry({ shown, all, members, ready, onSaved }: {
@@ -91,19 +92,20 @@ export function PropertyBulkEntry({ shown, all, members, ready, onSaved }: {
           {plan.notes.length > 0 && <ul className="mt-2 space-y-1 text-xs text-slate-500">{plan.notes.map(n => <li key={n}>{n}</li>)}</ul>}
           {!plan.ready && (plan.counts.error > 0 || plan.fileErrors.length > 0) && <p role="alert" data-prose-ok="an upload with a problem row saves nothing; the reader must know to fix the file" className="mt-3 text-sm text-loss">Nothing is saved until every row reads cleanly. Fix the rows marked Problem in the file and upload it again.</p>}
           {!plan.ready && !plan.counts.error && !plan.fileErrors.length && plan.rows.length > 0 && <p role="status" data-prose-ok="explains why Save is unavailable" className="mt-3 text-sm text-slate-400">Every row matches what is already saved.</p>}
-          {plan.rows.length > 0 && <div className="mt-3 overflow-x-auto"><ExportableTable exportName="Real Estate — Upload review" className="min-w-full text-[13px]" data-table-static="upload review rows follow the file's order">
-            <thead className="border-b border-ink-700 text-left"><tr>{["Row", "Property", "Result", "Details"].map(h => <th key={h} className={`label-xs px-3 py-2 ${h === "Details" ? "min-w-[18rem]" : ""}`}>{h}</th>)}</tr></thead>
-            <tbody>{plan.rows.map(r => <tr key={r.row} data-bulk-row={r.row} data-bulk-action={r.action} className="border-b border-ink-700/50 align-top">
-              <td className="px-3 py-2 mono tabular text-slate-400">{r.row}</td>
-              <td className="px-3 py-2 text-slate-100">{r.label}</td>
-              <td className={`px-3 py-2 whitespace-nowrap ${ACTION[r.action].tone}`}>{ACTION[r.action].label}</td>
-              <td className="px-3 py-2 text-xs">
+          {/* A list, like the table-input review: a table here would carry the page's Export / Edit numbers / Upload Excel controls. Rows follow the file's order. */}
+          {plan.rows.length > 0 && <ul aria-label="Rows in the file" className="mt-3 text-[13px]">
+            <li aria-hidden className={`${ROW_GRID} label-xs hidden border-b border-ink-700 py-2 sm:grid`}><span>Row</span><span>Property</span><span>Result</span><span>Details</span></li>
+            {plan.rows.map(r => <li key={r.row} data-bulk-row={r.row} data-bulk-action={r.action} className={`${ROW_GRID} grid border-b border-ink-700/50 py-2 even:bg-[var(--row-alt)]`}>
+              <span className="mono tabular text-slate-400"><span className="sr-only">Row </span>{r.row}</span>
+              <span className="min-w-0 break-words text-slate-100">{r.label}</span>
+              <span className={`whitespace-nowrap ${ACTION[r.action].tone}`}>{ACTION[r.action].label}</span>
+              <div className="col-span-3 min-w-0 break-words text-xs sm:col-span-1">
                 {r.errors.map(e => <p key={e} className="text-loss">{e}</p>)}
                 {r.changes.map(c => <p key={c.field} className="text-slate-300">{c.field}: <span className="text-slate-500">{c.before}</span> → {c.after}</p>)}
                 {r.notes.map(n => <p key={n} className="text-slate-500">{n}</p>)}
-              </td>
-            </tr>)}</tbody>
-          </ExportableTable></div>}
+              </div>
+            </li>)}
+          </ul>}
           <div className="sticky bottom-0 mt-4 flex flex-wrap items-center justify-end gap-2 border-t border-ink-700 bg-ink-900 py-3">
             <button type="button" className="btn-ghost" disabled={busy === "saving"} onClick={() => { setPlan(null); setFile(""); }}>Discard</button>
             {plan.ready && <button type="button" className="btn-primary" disabled={!!busy} onClick={() => void save()}>{busy === "saving" ? "Saving…" : `Save ${plural(saving, "property", "properties")}`}</button>}
