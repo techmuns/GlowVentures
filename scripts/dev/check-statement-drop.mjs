@@ -161,7 +161,7 @@ try {
 
 
   assert.equal(staged[0].bytes, fixture);
-  assert.match(await page.locator('[data-xa="statement-upload-log"]').innerText(), /local-helios.pdf/);
+  assert.match(await folder().innerText(), /local-helios.pdf/);
   assert.equal(new URL(page.url()).searchParams.get('provider'), 'Helios Mutual Fund');
   results.push('A table-cell drop uploads the exact bytes once; concurrent drops are blocked and status stays in the folder');
 
