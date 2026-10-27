@@ -291,7 +291,7 @@ async function run() {
   ok("a mismatched size cannot fast-complete", recognisePublishedDuplicates({ batches: [wrongSize] }, matches).batches[0].files[0].status === "queued");
   assetsFail = true;
   const fallback = await jsonBody(await postJson(fast, { op: "commit", files: [copied] }, assets));
-  ok("unavailable static evidence falls back to normal analysis", fallback.batches[0].files[0].status === "queued" && fast.dispatches() === 2);
+  ok("unavailable static evidence falls back to normal analysis", fallback.batches.find((b: { id: string }) => b.id === fallback.batch).files[0].status === "queued" && fast.dispatches() === 2);
 
   // ── 8. THE CLIENT ─────────────────────────────────────────────────────────
   console.log("── the client ──");
