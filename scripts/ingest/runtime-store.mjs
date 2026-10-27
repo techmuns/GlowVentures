@@ -52,11 +52,14 @@ export function runtimeStore({ token, repo = 'techmuns/GlowVentures', branch = '
       const entries = [{ path: `versions/${snapshot.revision}.json.gz`, mode: '100644', type: 'blob', sha: artifact },
         { path: 'current.json', mode: '100644', type: 'blob', content: JSON.stringify(state) }];
       // Raw originals use the same paths recorded in the normalized evidence.
+      const originals = new Map();
       for (const file of Object.values(snapshot.originals)) if (file.sourcePath) {
         if (!file.sourcePath.startsWith('source/') || /[\\\r\n\0]/.test(file.sourcePath)
           || file.sourcePath.split('/').some(p => !p || p === '.' || p === '..')) throw Error('Unsafe original source path');
-        entries.push({ path: file.sourcePath, mode: '100644', type: 'blob', sha: file.blob });
+        if (originals.has(file.sourcePath) && originals.get(file.sourcePath) !== file.blob) throw Error('Conflicting original source bytes');
+        originals.set(file.sourcePath, file.blob);
       }
+      for (const [path, sha] of originals) entries.push({ path, mode: '100644', type: 'blob', sha });
       for (const [name, preview] of Object.entries(snapshot.previews ?? {})) {
         if (!/^[a-f0-9]{64}\.pdf$/.test(name) || !/^[a-f0-9]{40}$/.test(preview.blob)) throw Error('Invalid protected preview address');
         entries.push({ path: `statement-previews/${name.replace(/\.pdf$/, '.bin')}`, mode: '100644', type: 'blob', sha: preview.blob });
