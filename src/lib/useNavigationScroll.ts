@@ -43,7 +43,8 @@ export function useNavigationScroll(mainRef: RefObject<HTMLElement>, location: L
     const snapshot = () => [...ports()].map(([id, el]) => ({ id, top: el.scrollTop, left: el.scrollLeft }));
     if (!saved && previousPath.current !== location.pathname) main.scrollTop = 0;
     previousPath.current = location.pathname;
-    let latest = saved ?? snapshot(), restoring = !!saved, frame = 0;
+    let latest = saved ?? snapshot(), restoring = !!saved, frame = 0, stableFrames = 0, geometry = "";
+    const observed = new WeakSet<HTMLElement>();
     const save = () => {
       if (restoring || isTableExporting()) return;
       latest = snapshot(); navigationMemory.write(entry, slot, latest);
@@ -52,18 +53,25 @@ export function useNavigationScroll(mainRef: RefObject<HTMLElement>, location: L
     const restore = () => {
       if (!restoring || isTableExporting()) return;
       const current = ports();
-      let complete = true;
+      let complete = !main.querySelector("[data-navigation-pending]");
+      for (const el of current.values()) {
+        if (!observed.has(el)) { observed.add(el); resize.observe(el); }
+      }
       for (const point of latest) {
         const el = current.get(point.id);
         if (!el) { complete = false; continue; }
         el.scrollTop = point.top; el.scrollLeft = point.left;
         if (Math.abs(el.scrollTop - point.top) > 1 || Math.abs(el.scrollLeft - point.left) > 1) complete = false;
       }
-      if (complete) stop();
+      const nextGeometry = JSON.stringify([...current].map(([id, el]) => [id, el.scrollHeight, el.scrollWidth, el.clientHeight, el.clientWidth]));
+      stableFrames = complete ? (geometry === nextGeometry ? stableFrames + 1 : 1) : 0;
+      geometry = nextGeometry;
+      if (stableFrames >= 2) stop();
+      else if (complete) schedule();
     };
     const schedule = () => { cancelAnimationFrame(frame); frame = requestAnimationFrame(() => { hydrateDetails(); restore(); }); };
     const observer = new MutationObserver(schedule), resize = new ResizeObserver(schedule);
-    observer.observe(main, { childList: true, subtree: true }); resize.observe(main); schedule();
+    observer.observe(main, { childList: true, subtree: true, attributes: true, attributeFilter: ["data-navigation-pending"] }); resize.observe(main); schedule();
     main.addEventListener('toggle', disclosureChanged, true);
     // A reader's input takes precedence over an unfinished asynchronous restore.
     const interact = () => { if (restoring) stop(); save(); };

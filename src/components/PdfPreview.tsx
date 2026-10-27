@@ -139,7 +139,7 @@ export default function PdfPreview({ url, file, title, initialPage, sourceTarget
   }, [pdf, page, zoom, width, title, initialPage, sourceTarget?.value, sourceTarget?.isin, sourceTarget?.field, sourceTarget?.initialIsin]);
 
   return (
-    <section aria-label="PDF preview" data-preview-pdf data-pdf-state={status}
+    <section aria-label="PDF preview" data-preview-pdf data-pdf-state={status} data-navigation-pending={status === "loading" || drawing || !pdf || !width ? "" : undefined}
       className="mt-3 flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-ink-700 bg-ink-800">
       {status === "password" ? (
         <form className="m-auto flex w-full max-w-sm flex-col gap-3 p-6" onSubmit={e => {
