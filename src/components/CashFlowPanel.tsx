@@ -115,7 +115,7 @@ export function CashFlowPanel({
             <h4 className="text-[13px] font-medium text-slate-200">Cash flow statement</h4>
             <Pill tone="info">{rows.length} of {CASH_FLOW_LINES.length} lines reported</Pill>
           </div>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" data-navigation-scroll="cashflowpanel-1">
             {/* Exempt, declared — see `ReturnsTable`: the columns are the
                   statement's own periods and the rows its own lines. */}
               <ExportableTable className="min-w-full whitespace-nowrap text-[12.5px]"

@@ -150,7 +150,7 @@ export function AllAlerts() {
           </p>
         </div>
       ) : (
-        <div className="mt-3 overflow-x-auto">
+        <div className="mt-3 overflow-x-auto" data-navigation-scroll="allalerts-1">
           <ExportableTable className="w-full text-sm" data-table="all-alerts">
             <thead className="border-b border-ink-700/70">
               <Tr view={view}>

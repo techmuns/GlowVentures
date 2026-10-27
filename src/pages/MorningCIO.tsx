@@ -1450,7 +1450,7 @@ export function MorningCIO() {
           `min-h-0` is what makes `flex-1` shrink rather than grow the column
           past the window — without it the panel is as tall as its content and
           the page scrolls again, which is the whole of what was asked. */}
-      <div className={`mt-5 min-h-0 overflow-y-auto ${tab === "returns" ? "flex-none lg:flex-1" : "flex-1"}`} data-cio-panel={tab}>
+      <div className={`mt-5 min-h-0 overflow-y-auto ${tab === "returns" ? "flex-none lg:flex-1" : "flex-1"}`} data-cio-panel={tab} data-navigation-scroll="morningcio-1">
 
         {/* DAILY MOVERS — the first thing the family asked for, and the first
             card under the strip for that reason. It is the only figure on this
@@ -1599,7 +1599,7 @@ export function MorningCIO() {
                 title: `Open the ${b.count} ${b.count === 1 ? "holding" : "holdings"} behind ${sectionLabel(b.key)}`,
                 staticTitle: "This row comes from the fund-of-funds model, which carries fund-level records and no per-holding rows — there is no holdings list to open.",
               }))} />
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto" data-navigation-scroll="morningcio-2">
                 {/* `data-alloc-table` / `data-alloc-axis` are the STRUCTURAL handle
                     this table is asserted through. `check:pages` used to find it
                     by matching the words "ASSET CLASS" in its header, which is a

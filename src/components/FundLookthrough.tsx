@@ -1,3 +1,4 @@
+import { useNavigationState } from "@/lib/useNavigationState";
 import { useTableExportFilter } from "@/lib/tableExportSnapshot";
 import { ExportableTable } from "@/components/ExportableTable";
 import { useEffect, useMemo, useState } from "react";
@@ -95,7 +96,7 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
 }) {
   const { fmtFromBase } = usePortfolio();
   const [state, setState] = useState<LookthroughState>({ status: "loading" });
-  const [qFilter, setQ] = useState("");
+  const [qFilter, setQ] = useNavigationState<string>(`fund-lookthrough-search:${securityKey}:${part}`, "");
   const q = useTableExportFilter(qFilter, "");
 
   useEffect(() => {
@@ -322,7 +323,7 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
               </span>
             )}
           </div>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" data-navigation-scroll="fundlookthrough-1">
             {/* Exempt, declared — the same class as `ReturnsTable`: one row,
                 so there is nothing to sort, and the columns are the source's
                 own period sequence, so moving one would break it. */}
@@ -421,7 +422,7 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
       ) : (<>
         {shown.length === 0 && <AbsentSection what="Nothing matches that filter"
           needs={`The scheme discloses ${rows.length} holdings; none of their names, sectors, ratings, classes or ISINs contains "${q.trim()}".`} />}
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" data-navigation-scroll="fundlookthrough-2">
           <ExportableTable className="min-w-full whitespace-nowrap text-sm">
             <thead className="border-b border-ink-700">
               <Tr view={view}>

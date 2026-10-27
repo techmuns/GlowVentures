@@ -145,7 +145,18 @@ try {
   await open('preview-bad'); await frame.getByRole('alert').filter({hasText:/could not be opened/}).waitFor();
   await frame.getByRole('tab',{name:'Text as read',exact:true}).click(); await frame.locator('[data-preview-page="1"]').waitFor();
   await open('preview-plain'); await ink(1);
-  await page.setViewportSize({width:430,height:932}); await ink(1);
+  await page.setViewportSize({width:430,height:932});
+  // Resizing the outer frame returns before the inner reader redraws. Do not
+  // accept the old desktop canvas as proof that mobile layout has settled.
+  await appFrame().waitForFunction(() => {
+    const scroller = document.querySelector('[data-pdf-scroll]');
+    const paper = scroller?.querySelector('[data-pdf-paper="1"]');
+    const canvas = paper?.querySelector('canvas[data-pdf-page="1"]');
+    return scroller && paper && canvas
+      && Math.abs(paper.getBoundingClientRect().width - (scroller.clientWidth - 32)) < 1
+      && Math.abs(canvas.getBoundingClientRect().width - paper.getBoundingClientRect().width) < 1;
+  });
+  await ink(1);
   await scrollTo(2);
   await frame.getByLabel('PDF zoom',{exact:true}).selectOption('2'); await currentPage(2); await ink(2);
   await frame.getByLabel('PDF zoom',{exact:true}).selectOption('fit'); await currentPage(2); await ink(2);

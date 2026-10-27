@@ -36,7 +36,7 @@ export function PeriodReturnCalculation({ measured, type: asked, inception, resu
           ["Closing value", w.closing], ["Gain / loss", w.gain], ...(w.base != null ? [["Money used to divide the gain", w.base]] : [])].map(([label, amount]) =>
           <div className="contents" key={label}><dt className="text-slate-400">{label}</dt><dd className="text-right tabular">{money(amount as number)}</dd></div>)}
       </dl>
-      {type !== "xirr" && <div className="overflow-x-auto">
+      {type !== "xirr" && <div className="overflow-x-auto" data-navigation-scroll="periodreturncalculation-1">
         <p className="font-medium text-slate-100">{w.weighted ? "How the money at work is calculated" : "Amounts and dates used"}</p>
         <p className="my-2 text-xs text-slate-400">{w.weighted
           ? `Each amount × days remaining ÷ ${w.days} days. Money invested adds to the total; withdrawals and closing values subtract. Each account closes on its own valuation date.`
@@ -92,7 +92,7 @@ export function PeriodReturnCalculation({ measured, type: asked, inception, resu
         </>}
       </ol>
       {available && measured?.pct != null && Math.abs(measured.pct) < 0.005 && <p className="text-xs text-slate-400" data-return-rounding>This is a small {measured.pct < 0 ? "loss" : measured.pct > 0 ? "gain" : "change"}. {precisePct}% rounds to {result} at two decimal places.</p>}
-      <details data-return-more><summary className="ring-focus cursor-pointer rounded text-slate-300">Show more</summary><div className="mt-4 space-y-4">{more}</div></details>
+      <details data-return-more data-navigation-details="periodreturncalculation-1"><summary className="ring-focus cursor-pointer rounded text-slate-300">Show more</summary><div className="mt-4 space-y-4">{more}</div></details>
     </>}
   </>;
 }
