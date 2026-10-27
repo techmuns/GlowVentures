@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-10-27T06:01:43.402Z",
+  "generatedAt": "2026-10-27T04:50:55.619Z",
   "summary": {
-    "documents": 430,
+    "documents": 429,
     "parsed": 424,
     "partial": 0,
-    "failed": 6,
+    "failed": 5,
     "rowSumChecks": 389,
     "totalMismatches": 136,
     "totalsMaterial": 1,
@@ -28,7 +28,7 @@
     "stitchesApplied": 134
   },
   "coverage": {
-    "pdfsFound": 420,
+    "pdfsFound": 419,
     "duplicateSources": [
       {
         "path": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_DividendStatement_India177OT.pdf",
@@ -248,7 +248,7 @@
     ],
     "parsed": 424,
     "partial": 0,
-    "failed": 6,
+    "failed": 5,
     "byProvider": {
       "Goldstandard Wealth Private Limited": {
         "bank-book": {
@@ -916,13 +916,6 @@
           "failed": 0
         }
       },
-      "HDFC": {
-        "capital-call": {
-          "ok": 0,
-          "partial": 0,
-          "failed": 1
-        }
-      },
       "Adviser transaction report (not a statement)": {
         "unknown": {
           "ok": 0,
@@ -1020,16 +1013,6 @@
         "reportType": "unknown",
         "reasons": [
           "held-out-by-decision: Family investment register (not a statement) — this file is READ PERFECTLY and is deliberately not a source. No institution issued it, so folding it into the book would end the guarantee that every figure traces to the statement of the institution that struck it. It is NOT a missing reader and must never be given one. The consolidated review is used as an independent cross-check (`npm run reconcile:review`); the investment register has its own generated page at `/register` and its own cross-check (`npm run reconcile:register`), and reaches no portfolio total."
-        ]
-      },
-      {
-        "docKey": "hdfc-10387-2026-10-21-capital-call",
-        "sourcePath": "source/october-2026-e/10387.pdf",
-        "provider": "HDFC",
-        "reportType": "capital-call",
-        "reasons": [
-          "no-extractor: no extractor for provider \"HDFC\" / reportType capital-call",
-          "pdf-encrypted: opened with GLOW_PDF_PASSWORDS entry #3"
         ]
       },
       {
@@ -227678,16 +227661,7 @@
       }
     ],
     "ownerNamesUnmatched": [],
-    "reportTypesWithoutExtractor": [
-      {
-        "provider": "HDFC",
-        "reportType": "capital-call",
-        "reason": "no-extractor",
-        "docs": [
-          "hdfc-10387-2026-10-21-capital-call"
-        ]
-      }
-    ],
+    "reportTypesWithoutExtractor": [],
     "knownOwners": [
       {
         "ownerId": "ajay-jaisinghani",
