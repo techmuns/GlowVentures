@@ -391,9 +391,12 @@ function OpenFolder({ folder, onBack, uploads, inbox }: { folder: ProviderFolder
       const format = row.name.split(".").pop()?.toUpperCase() ?? "Files";
       if (!map.has(format)) map.set(format, []);
     }
-    const newest = ([format, docs]: [string, LibraryDoc[]]) => uploadsForFormat(format, docs, folder.docs, uploads)
-      .reduce((at, row) => row.uploadedAt > at ? row.uploadedAt : at, "");
-    return [...map.entries()].sort((a, b) => newest(b).localeCompare(newest(a)) || b[1].length - a[1].length || a[0].localeCompare(b[0]));
+    const uploadRank = ([format, docs]: [string, LibraryDoc[]]) => {
+      const relevant = new Set(uploadsForFormat(format, docs, folder.docs, uploads));
+      const first = uploads.findIndex(row => relevant.has(row));
+      return first < 0 ? Number.MAX_SAFE_INTEGER : first;
+    };
+    return [...map.entries()].sort((a, b) => uploadRank(a) - uploadRank(b) || b[1].length - a[1].length || a[0].localeCompare(b[0]));
   }, [folder, uploads]);
 
   return (

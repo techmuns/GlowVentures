@@ -248,15 +248,20 @@ export function useStatementInbox() {
   // Presentation context only: analysis still decides the actual issuer.
   const [locations, setLocations] = useState(savedLocations);
   const alive = useRef(true);
+  const requestVersion = useRef(0);
 
   const accept = useCallback((a: Answer) => {
-    if (a.ok && alive.current) setState({ status: "ready", batches: batchesOf(a.body) });
+    if (a.ok) {
+      requestVersion.current++;
+      if (alive.current) setState({ status: "ready", batches: batchesOf(a.body) });
+    }
     return a;
   }, []);
 
   const load = useCallback(async () => {
+    const version = ++requestVersion.current;
     const a = await send();
-    if (!alive.current) return;
+    if (!alive.current || version !== requestVersion.current) return;
     // A refresh that fails keeps what was already shown — only a FIRST load
     // that fails says the service is unavailable.
     setState((prev) => a.ok ? { status: "ready", batches: batchesOf(a.body) }

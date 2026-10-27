@@ -16,6 +16,7 @@ const context = await browser.newContext({ viewport: { width: 1440, height: 1000
 const batches = [], staged = [], committed = [], errors = [], results = [];
 let unavailable = false, release = null, held = null;
 let archiveState = 'ready', archiveHeld = null, releaseArchive = null;
+let readHeld = null, releaseRead = null, sawRead = null;
 const fixture = '%PDF-1.4\nSynthetic drag-and-drop fixture, no financial records.\n';
 await context.route('**/*', async route => {
   const request = route.request(), url = new URL(request.url());
@@ -25,6 +26,11 @@ await context.route('**/*', async route => {
     if (archiveState === 'restricted') return route.fulfill({ status: 503, body: 'Local archive failure' });
   }
   if (url.pathname === '/api/statement-uploads') {
+    if (request.method() === 'GET' && readHeld) {
+      const snapshot = structuredClone(batches), gate = readHeld; readHeld = null;
+      sawRead?.(); await gate;
+      return route.fulfill({ json: { ok: true, batches: snapshot } });
+    }
     if (request.method() === 'GET') return route.fulfill({
       status: unavailable ? 503 : 200,
       json: unavailable ? { ok: false, message: 'Local test: uploads unavailable' } : { ok: true, batches },
@@ -106,6 +112,12 @@ try {
   assert.equal(await overlay().count(), 0);
   results.push('Escape, leaving the window and ending the drag clear the overlay; text drags are ignored');
 
+  // A focus refresh started before a successful upload must not erase it
+  // when the older GET finally answers with an empty inbox.
+  const readStarted = new Promise(resolve => { sawRead = resolve; });
+  readHeld = new Promise(resolve => { releaseRead = resolve; });
+  await page.evaluate(() => window.dispatchEvent(new Event('focus'))); await readStarted;
+
   // Two drops in the same browser turn exercise the synchronous upload lock.
   held = new Promise(resolve => { release = resolve; });
   await cell.evaluate((el, fixture) => {
@@ -125,6 +137,12 @@ try {
   await waitForCommit(1);
   assert.equal(staged.length, 1);
   assert.equal(committed.length, 1);
+  const oldRead = page.waitForResponse(r => new URL(r.url()).pathname === '/api/statement-uploads' && r.request().method() === 'GET');
+  releaseRead(); await oldRead;
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  assert.equal(await folder().locator('[data-upload-status="queued"]').count(), 1, 'A late pre-upload response cannot erase the acknowledged file');
+  results.push('Late background responses cannot erase an acknowledged upload or stop its progress updates');
+
   // The real statement table owns each stage, with no invented percentage or
   // extra document once an upload has reached the served archive.
   const progressFile = batches.find(b => b.files.some(f => f.name === 'local-helios.pdf')).files[0];
@@ -306,6 +324,7 @@ try {
   throw error;
 } finally {
   release?.();
+  releaseRead?.();
   releaseArchive?.();
   await browser.close();
 }
