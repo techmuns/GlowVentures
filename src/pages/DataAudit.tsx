@@ -337,7 +337,7 @@ function SourceArchive() {
           {currentFile.sheets.map((s) => {
             const active = s.key === sheetKey;
             return (
-              <button key={s.key} type="button" onClick={() => { setSheetKey(s.key); setQuery(""); setExact(false); }}
+              <button key={s.key} type="button" data-audit-sheet={s.key} onClick={() => { setSheetKey(s.key); setQuery(""); setExact(false); }}
                 className={`rounded-md px-2.5 py-1 text-[12px] transition-colors ${
                   active ? "bg-ink-700 text-slate-100" : "text-slate-400 hover:bg-ink-700/40 hover:text-slate-200"}`}>
                 {s.name} <span className="mono text-[10px] text-slate-500">{s.rows}×{s.cols}</span>

@@ -60,7 +60,7 @@ try{
   links.push(...await page.locator('main a[href]').evaluateAll(els=>els.map(e=>e.getAttribute('href'))));
  }
  const dynamic=['/stock/','/mandate/','/fund/'].map(prefix=>links.find(h=>h.startsWith(prefix))).filter(Boolean);
- const routes=['/cio','/monitor','/private-market','/real-estate','/polycab','/family','/sectors','/capital-gains','/performance','/returns','/corporate-actions','/ledger','/audit','/statements','/upload','/holdings?category=Cash',...dynamic];
+ const routes=['/cio','/monitor','/private-market','/real-estate','/polycab','/family','/sectors','/capital-gains','/performance','/returns','/corporate-actions','/ledger','/audit','/statements','/upload','/holdings?of=bucket&key=Cash',...dynamic];
  assert.equal(dynamic.length,3,'Stock, mandate and fund detail routes are covered');
  const only=process.env.ONLY?.split(',');
  for(const route of routes.filter(r=>!only||only.includes(new URL(r,base).pathname))){
@@ -100,6 +100,9 @@ try{
   ['/capital-gains','Search security…','Kotak'],
   ['/statements','Search folders','motilal'],
   ['/family?entity=Ajay%20Jaisinghani','Search this entity…','Kotak'],
+  ['/holdings?of=bucket&key=Cash','Holdings search','arbitrage'],
+  [dynamic.find(r=>r.startsWith('/mandate/')),'Mandate search','a'],
+  [dynamic.find(r=>r.startsWith('/fund/')),'Fund search','trust'],
  ].filter(([route])=>!process.env.ONLY||process.env.ONLY.split(',').includes(new URL(route,base).pathname))){
   await page.goto(base+route);await settled();
   const search=page.locator('main input[placeholder]').filter({visible:true}).first();
@@ -109,7 +112,10 @@ try{
  if(!process.env.ONLY||process.env.ONLY.split(',').includes('/audit')){
  await page.goto(base+'/audit?sources=1');await settled();
  const chips=page.locator('[data-xa="audit-chip"]');await chips.last().waitFor();
- await chips.nth(1).click();await settled();
+ const manifest=await (await page.request.get(base+'/audit/manifest.json')).json();
+ const workbook=manifest.find(f=>f.sheets.length>1);assert.ok(workbook,'an archive workbook has multiple sheets');
+ await page.locator(`[data-xa="audit-chip"][data-file="${workbook.fileKey}"]`).click();await settled();
+ await page.locator('[data-audit-sheet]').last().click();await settled();
  const auditSearch=page.getByPlaceholder('Search this sheet…',{exact:true}).last();await auditSearch.fill('ISIN');await settled();
  await roundTrip('Data Audit workbook/sheet/search');
  }
