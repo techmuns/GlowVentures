@@ -469,12 +469,19 @@ ok("a 1:2 split since the statement is projected: twice the units at the quote, 
 const rights = one?.symbol ? depositoryShareHoldings(tradedFeed(one.symbol, 250), withAction("rights", null)) : [];
 ok("an event the capture cannot state the units of — a rights issue — leaves the share no row",
   rights.length === 0, rights.map((p) => p.symbol).join("; "));
-ok("...and every candidate passes the committed capture on a quote two days after it, so the gate is not what leaves this book's shares unvalued",
+ok("...and candidates without later recorded sales pass the committed capture on a quote two days after it",
   (() => {
     const quotes: QuoteFeed["quotes"] = {};
     for (const p of shareCandidates()) if (p.symbol) quotes[p.symbol] = { ...feedOf(p.symbol, 100).quotes[p.symbol], tradedAt: "2026-09-25T09:30:00Z" };
     const all: QuoteFeed = { ...feedOf("X", 1), quotes };
-    return depositoryShareHoldings(all, CAPTURE).length === shareCandidates().filter((p) => !!p.symbol).length;
+    const eligible = shareCandidates().filter((p) => !!p.symbol && !(p.realizedLotsAfter && p.realizedLotsAfter > 0));
+    const valued = depositoryShareHoldings(all, CAPTURE);
+    return valued.length === eligible.length && valued.every(p => eligible.some(e => e.accountId === p.accountId && e.isin === p.isin));
+  })());
+ok("a candidate with a later recorded sale stays unvalued until a newer balance witnesses its remaining units",
+  (() => {
+    const sold = shareCandidates().filter(p => p.symbol && (p.realizedLotsAfter ?? 0) > 0);
+    return sold.length > 0 && sold.every(p => depositoryShareHoldings(feedOf(p.symbol!, 100), CAPTURE, [p]).length === 0);
   })());
 const notesShare = partialValuationNotes([...FUNDS, ...priced]);
 const withShare = notesShare.get(one?.accountId ?? "") ?? "";

@@ -27,8 +27,8 @@ const eng = new Map(BOOK_ACCOUNTS.map((a) => [a.accountId, a.engagement]));
  * THE BOOK THE MONITOR CLUBS, ON A DAY THE QUOTE FEED ANSWERS. Since Stage 10cz
  * the family's own Motilal demat shares are rows only while a quote prices them
  * (their statement's rate is the last depository movement, never a price), and
- * those uncosted rows are exactly what ICICI Bank's costed Goldstandard lines are
- * clubbed with. On the statement basis alone that case left the book and this
+ * those rows can be clubbed with costed managed lines. New sources can fill a
+ * previously unknown cost, as they now do for ICICI Bank. On the statement basis alone that case left the book and this
  * suite's load-bearing check passed over nothing — so it reads the live book
  * with a STUB feed pricing every recorded share (`liveBook.ts`), as `check:pages`
  * does with its fixture feed. No stubbed price is asserted on.
@@ -70,19 +70,25 @@ for (const [key, ps] of byKey) {
 ok("every consolidated row strikes cost, units, value and gain on one set", true, `${byKey.size} rows`);
 ok("some row really does club a costed line with an uncosted one (load-bearing)", mixed > 0, `${mixed} such rows`);
 
-console.log("\n── the book's own case: ICICI Bank ──");
+console.log("\n── a stable mixed-cost row, even when later statements fill a cost gap ──");
 {
-  const ps = byKey.get("icici-bank") ?? [];
+  // ICICI Bank's formerly missing cost now reconciles. Keep the regression
+  // independent of that source gap; the full real-book checks above remain.
+  const base = current[0];
+  const ps: Position[] = [
+    { ...base, quantity: 100, costBasis: 10000, costUnavailable: false, marketValue: 15000, valuedAtCost: false },
+    { ...base, quantity: 200, costBasis: null, costUnavailable: true, marketValue: 30000, valuedAtCost: false },
+  ];
   const f = costedFigures(ps);
   const allUnits = ps.reduce((s, p) => s + (p.quantity ?? 0), 0);
-  ok("ICICI Bank is held through lines that report a cost and lines that do not",
+  ok("the constructed holding clubs a measured cost with an unknown cost",
     ps.some(reportsCost) && ps.some((p) => !reportsCost(p)), `${ps.length} lines`);
   ok("its average cost is cost over the COSTED units, not over every unit",
-    f.avgCost !== null && f.cost !== null && Math.abs(f.avgCost - f.cost / allUnits) > 100,
+    f.avgCost === 100 && f.cost === 10000 && Math.abs(f.avgCost - f.cost / allUnits) > 1,
     `₹${f.avgCost?.toFixed(2)} vs the old ₹${f.cost !== null ? (f.cost / allUnits).toFixed(2) : "—"}`);
   const oldPnl = f.cost === null ? null : f.value - f.cost;
   ok("its unrealised gain is the costed shares' value less their cost, not every share's value",
-    f.unrealised !== null && oldPnl !== null && Math.abs(oldPnl - f.unrealised) > 1e6,
+    f.unrealised === 5000 && oldPnl === 35000,
     `₹${Math.round(f.unrealised ?? 0).toLocaleString("en-IN")} vs the old ₹${Math.round(oldPnl ?? 0).toLocaleString("en-IN")}`);
 }
 

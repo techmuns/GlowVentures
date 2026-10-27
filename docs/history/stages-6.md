@@ -459,13 +459,6 @@
 - Regression checks cover snapshot isolation, reload, invalid/blocked storage, the real Kotak drilldown, Back/Forward, Cash, row expansion, filters, sorting, horizontal/vertical table scroll and a separate ETF visit.
 - Review corrections: the old mount-time expansion reset now runs only for an actual new basis choice, preserving remounts and history traversal. Validate saved entity/section choices and intersect picked holdings with the current book's options before applying them; wait for fund-only options before declaring those selections obsolete. Browser coverage seeds retired choices and retains the valid holding across reload.
 
-### Stage 10ht — DROP STATEMENTS ANYWHERE IN THE LIBRARY
-
-- Accept file and folder drags across the Statement Library viewport, including inside a provider folder, with a blue overlay naming the current folder. Keep Files/Folder controls and upload results available there. The existing intake still classifies each statement by its actual issuing provider.
-- Use one document-level file-drop handler and a synchronous busy lock; nested tables cannot submit a second copy or open a dropped PDF over the dashboard. Clear the overlay on exit, cancellation, blur and navigation. Preserve ordinary text and table-column drags.
-- Add local browser coverage for whole-viewport geometry at the app's zoom, nested drag transitions, repeated drops, paged directory traversal, exact fixture bytes, validation, the file chooser, service failure, light/dark themes and narrow screens. Preserve its evidence in CI; no production uploads are part of the checks.
-- Automated review corrections: keep the non-uploading drop guard mounted while the manifest loads or fails, and clear source-document parameters when opening an upload's provider or returning to All folders. Browser cases cover both edge paths.
-
 ### Stage 10hu — MOPWM'S FAMILY TRANSACTION REPORT: 20 MORE PURCHASE COSTS
 
 - `source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx`, sent by the client on 27 Oct: MOPWM's family-wide transaction report of 23 Oct, with 26,402 dated rows across Direct Equity, Mutual Funds, PMS_AIF_SP, Fixed Income and Derivative. `lib/sheet.mjs` read it as five empty sheets, because its XML is written `<x:row>`/`<x:c>`. The prefix is now taken from each part's root element; unprefixed workbooks match exactly as before, and the archive is otherwise byte-identical.
@@ -475,3 +468,12 @@
 - 12 of them were sold after their 31 Jul custody statements (Axis, ICICI Bank and SBI on 23 Sep; the arbitrage and liquid funds in Sep/Oct). They carry `salesAfter`, so the holding names its later sales and needs a newer balance. They are not rolled forward: the report prints no closing balance to witness one. `docs/client/PURCHASE-COST-RECORDS-NEEDED.md` drops the recovered asks and requests the current Motilal demat holdings.
 - `10387.pdf`, from the same message, is a one-page password-protected PDF. It is not added until a run holding the statement passwords can read it.
 - Tests: `mopwmTransactions.test.mjs` (the prefixed workbook in full, owners, classification, FIFO, corporate-action and identity refusals, a later sale counted); `recoveredCosts.test.ts` counts 65 / 22 / 31 and pins Kaynes and Motilal Arbitrage.
+
+### Stage 10hv — FULL-PAGE STATEMENT DROPS AND RETAINED FINANCIAL HISTORY
+
+- Accept file and folder drags across the Statement Library viewport, including inside a provider folder, with a blue overlay naming the current folder. Keep Files/Folder controls and upload results available there. The existing intake still classifies each statement by its actual issuing provider.
+- Use one document-level file-drop handler and a synchronous busy lock; nested tables cannot submit a second copy or open a dropped PDF over the dashboard. Clear the overlay on exit, cancellation, blur and navigation. Preserve ordinary text and table-column drags.
+- Add local browser coverage for whole-viewport geometry at the app's zoom, nested drag transitions, repeated drops, paged directory traversal, exact fixture bytes, validation, the file chooser, service failure, light/dark themes and narrow screens. Preserve its evidence in CI; no production uploads are part of the checks.
+- Automated review corrections: keep the non-uploading drop guard mounted while the manifest loads or fails, and clear source-document parameters when opening an upload's provider or returning to All folders. Browser cases cover both edge paths.
+- The newly merged MOPWM cost records exposed two tiny residual fund balances with real purchase and sale history being hidden by the value floor. Preserve a whole security when any deduped line carries investment cost or nonzero realised/sold-cost/income history; keep the existing paid-out cash-at-value exception and the ₹1,000 threshold for uncosted specks. No source or generated book record is changed.
+- Keep the mixed-cost regression on explicit measured/unknown fixtures now that ICICI Bank's cost gap has closed. Corporate-action coverage tests separately retain candidates with no later recorded sale and refuse those needing a newer balance. The targeted suites pass; restoring the old floor reproduces six failures, including the real residual balances.
