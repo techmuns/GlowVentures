@@ -20598,6 +20598,16 @@ const CIO_SEGMENTS = [
     return r.total.deployed > 0 && r.rows.every(x => x.gain == null ? x.contrib == null : Math.abs(x.contrib - x.gain / r.total.deployed * 100) < 1e-6)
       && Math.abs(r.rows.reduce((s, x) => s + (x.contrib ?? 0), 0) - r.total.ret) < 1e-6;
   }],
+  // Stage 10hz — the Monitor's Invested on and Avg cost are drawn by default:
+  // each a figure or a dash with its reason, and a cost per unit only on a row
+  // that is one security.
+  ["attribution draws Invested on and Avg cost, each a figure or a dash with its reason, a cost per unit only for one security", (t, ctx) => {
+    const r = ctx?.segDom;
+    if (!r || !r.rows.length) return false;
+    return r.rows.every(x => x.investedOn !== undefined && x.avgCost !== undefined && x.securities != null
+      && (x.investedOn ? /^\d{4}-\d{2}/.test(x.investedOn) : x.investedOnTitle.length > 0)
+      && (x.avgCost != null ? x.avgCost > 0 && x.securities === 1 : x.avgCostText === "—" && x.avgCostTitle.length > 0));
+  }],
   ["missing gains remain dashes with reasons and totals expose two coverage info buttons", (t, ctx) => {
     const r = ctx?.segDom;
     return !!r && r.totalInfo === 2 && /of.*holdings.*covered/.test(r.coverage)
@@ -40620,9 +40630,13 @@ for (const theme of THEMES) {
             shownAs: root.querySelector('[data-seg-total] [data-seg-cell="ret"]')?.getAttribute("data-seg-shown-as") ?? null },
           rows: [...root.querySelectorAll("tr[data-seg-row]")].map((tr) => {
             const g = tr.querySelector('[data-seg-cell="gain"]');
+            const on = tr.querySelector('[data-seg-cell="investedOn"]'), avg = tr.querySelector('[data-seg-cell="avgCost"]');
             return {
               key: tr.getAttribute("data-seg-row"), value: num(tr, "data-seg-value"), gain: num(tr, "data-seg-gain"), contrib: num(tr, "data-seg-contrib"),
               gainText: (g?.textContent ?? "").trim(), gainReason: g?.querySelector("[title]")?.getAttribute("title") ?? "",
+              securities: num(tr, "data-seg-securities"),
+              investedOn: on ? on.getAttribute("data-invested-first") || null : undefined, investedOnTitle: on?.querySelector("[title]")?.getAttribute("title") ?? "",
+              avgCost: avg ? num(avg, "data-avg-cost") : undefined, avgCostText: (avg?.textContent ?? "").trim(), avgCostTitle: avg?.querySelector("[title]")?.getAttribute("title") ?? "",
             };
           }),
           remainder: rem ? { gain: num(rem, "data-seg-remainder"), contrib: num(rem, "data-seg-contrib") } : null,
