@@ -127,7 +127,9 @@ const MAX_MB = Math.round(MAX_FILE_BYTES / (1024 * 1024));
  * drags anywhere in this document use the same intake as the file/folder
  * choosers. The statement's own provider still determines where it is filed.
  */
-function UploadPanel({ inbox, provider }: { inbox: ReturnType<typeof useStatementInbox>; provider?: string }) {
+function UploadPanel({ inbox, provider, archiveStatus }: {
+  inbox: ReturnType<typeof useStatementInbox>; provider?: string; archiveStatus: "loading" | "ready" | "restricted";
+}) {
   const { state, upload } = inbox;
   const filesRef = useRef<HTMLInputElement>(null);
   const folderRef = useRef<HTMLInputElement | null>(null);
@@ -137,9 +139,10 @@ function UploadPanel({ inbox, provider }: { inbox: ReturnType<typeof useStatemen
   const [msg, setMsg] = useState<{ tone: "err" | "ok"; text: string; title?: string } | null>(null);
   // Lock synchronously: a second drop can arrive before React paints progress.
   const receiving = useRef(false);
+  const canUpload = archiveStatus === "ready" && state.status === "ready";
 
   const pick = useCallback(async (read: () => PickedFile[] | Promise<PickedFile[]>) => {
-    if (receiving.current || state.status !== "ready") return;
+    if (receiving.current || !canUpload) return;
     receiving.current = true;
     setCollecting(true);
     setMsg(null);
@@ -180,7 +183,7 @@ function UploadPanel({ inbox, provider }: { inbox: ReturnType<typeof useStatemen
       setCollecting(false);
       setProgress(null);
     }
-  }, [state.status, upload]);
+  }, [canUpload, upload]);
 
   useEffect(() => {
     let depth = 0;
@@ -198,7 +201,7 @@ function UploadPanel({ inbox, provider }: { inbox: ReturnType<typeof useStatemen
     const over = (e: DragEvent) => {
       if (!files(e)) return;
       e.preventDefault();
-      e.dataTransfer!.dropEffect = state.status === "ready" && !receiving.current ? "copy" : "none";
+      e.dataTransfer!.dropEffect = canUpload && !receiving.current ? "copy" : "none";
       setDrag(true);
     };
     const leave = () => { if (--depth <= 0) reset(); };
@@ -231,7 +234,7 @@ function UploadPanel({ inbox, provider }: { inbox: ReturnType<typeof useStatemen
       document.removeEventListener("visibilitychange", hidden);
       window.removeEventListener("blur", reset);
     };
-  }, [pick, state.status]);
+  }, [pick, canUpload]);
 
   const busy = !!progress || collecting || state.status === "loading";
   // Outside the zoomed #root: the overlay must cover the actual iframe viewport.
@@ -241,13 +244,17 @@ function UploadPanel({ inbox, provider }: { inbox: ReturnType<typeof useStatemen
       <div className="statement-drop-frame">
         <div className="statement-drop-message">
           <UploadCloud className="h-10 w-10" />
-          <strong>{state.status === "unavailable" ? "Uploads unavailable" : state.status === "loading" ? "Checking upload access…" : busy ? "Please wait for the current upload" : "Drop statements here"}</strong>
+          <strong>{archiveStatus === "restricted" ? "Statement archive unavailable" : archiveStatus === "loading" ? "Opening statement archive…" : state.status === "unavailable" ? "Uploads unavailable" : state.status === "loading" ? "Checking upload access…" : busy ? "Please wait for the current upload" : "Drop statements here"}</strong>
           <span>{provider ?? "Statement Library"}</span>
-          <small>{state.status === "unavailable" ? state.reason : `PDF, Excel or ZIP · up to ${MAX_MB} MB each`}</small>
+          <small>{archiveStatus === "restricted" ? "Reload the dashboard to open the archive before uploading." : state.status === "unavailable" ? state.reason : `PDF, Excel or ZIP · up to ${MAX_MB} MB each`}</small>
         </div>
       </div>
     </div>, document.body,
   );
+
+  // Keep the drop guard mounted even while the archive is opening or failed.
+  // Those states accept no uploads, but must never navigate to a dropped PDF.
+  if (archiveStatus !== "ready") return <>{overlay}</>;
 
   // The service is not reachable — say which cause, and for a site with no
   // token give the one-time set-up steps rather than a drop zone that drops.
@@ -616,8 +623,12 @@ export function StatementLibrary() {
       f.provider.toLowerCase().includes(q) || f.reportTypes.some((t) => t.label.toLowerCase().includes(q)));
   }, [library, query]);
 
-  const open = (provider: string) => setSearchParams((p) => { p.set(PROVIDER_PARAM, provider); return p; });
-  const back = () => setSearchParams((p) => { p.delete(PROVIDER_PARAM); return p; });
+  const open = (provider: string) => setSearchParams((p) => {
+    p.delete("file"); p.delete("path"); p.set(PROVIDER_PARAM, provider); return p;
+  });
+  const back = () => setSearchParams((p) => {
+    p.delete("file"); p.delete("path"); p.delete(PROVIDER_PARAM); return p;
+  });
 
   const current = openProvider ? library.folders.find((f) => f.provider === openProvider) : null;
   const trail = openProvider
@@ -654,10 +665,8 @@ export function StatementLibrary() {
         </Card>
       )}
 
-      {status === "ready" && <>
-        <UploadPanel inbox={inbox} provider={current?.provider} />
-        <UploadLog inbox={inbox} batches={batches} served={served} folders={folderNames} onOpen={open} />
-      </>}
+      <UploadPanel inbox={inbox} provider={current?.provider} archiveStatus={status} />
+      {status === "ready" && <UploadLog inbox={inbox} batches={batches} served={served} folders={folderNames} onOpen={open} />}
 
       {status === "ready" && (openProvider
         ? (current

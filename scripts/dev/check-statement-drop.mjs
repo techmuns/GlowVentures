@@ -15,10 +15,15 @@ const browser = await chromium.launch({
 const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
 const batches = [], staged = [], committed = [], errors = [], results = [];
 let unavailable = false, release = null, held = null;
+let archiveState = 'ready', archiveHeld = null, releaseArchive = null;
 const fixture = '%PDF-1.4\nSynthetic drag-and-drop fixture, no financial records.\n';
 await context.route('**/*', async route => {
   const request = route.request(), url = new URL(request.url());
   if (url.origin !== new URL(base).origin) return route.abort();
+  if (url.pathname === '/audit/manifest.json') {
+    if (archiveState === 'loading') await archiveHeld;
+    if (archiveState === 'restricted') return route.fulfill({ status: 503, body: 'Local archive failure' });
+  }
   if (url.pathname === '/api/statement-uploads') {
     if (request.method() === 'GET') return route.fulfill({
       status: unavailable ? 503 : 200,
@@ -158,6 +163,26 @@ try {
   assert.equal(committed.length, 4);
   results.push('Unsupported files show a reason without a request; the file chooser still uploads');
 
+  const manifest = JSON.parse(await fs.readFile('public/audit/manifest.json', 'utf8'));
+  const linked = manifest.find(doc => doc.provider === 'Helios Mutual Fund');
+  const other = manifest.find(doc => doc.provider && doc.provider !== linked.provider && doc.status === 'ok');
+  assert.ok(linked && other);
+  batches.unshift({ id: '20261027T050000Z-navigation', uploadedAt: '2026-10-27T05:00:00Z',
+    files: [{ name: 'previously-published.pdf', status: 'landed', docKeys: [other.docKey], providers: [other.provider] }] });
+  await open('/statements?file=' + encodeURIComponent(linked.docKey));
+  await folder().waitFor();
+  await page.locator('[data-xa="statement-upload-log"]').getByRole('button', { name: other.provider, exact: true }).click();
+  await page.locator('[data-open-folder]').filter({ hasText: other.provider }).waitFor();
+  assert.equal(new URL(page.url()).searchParams.get('provider'), other.provider);
+  assert.equal(new URL(page.url()).searchParams.has('file'), false);
+  await open('/statements?path=' + encodeURIComponent(linked.sourcePath));
+  await folder().waitFor();
+  await page.getByRole('button', { name: 'All folders', exact: true }).click();
+  await page.locator('[data-upload-drop]').waitFor();
+  assert.equal(new URL(page.url()).search, '');
+  await open();
+  results.push('Upload-log folder links and All folders clear source selections instead of getting trapped by file/path links');
+
   const themeData = await fileData('theme-check.pdf');
   await page.evaluate(() => document.documentElement.classList.add('dark'));
   await event(folder(), 'dragenter', themeData);
@@ -191,9 +216,36 @@ try {
   assert.equal(staged.length, before);
   results.push('Unavailable uploads are named, submit nothing and still prevent dropped-file navigation');
 
+  unavailable = false;
+  archiveState = 'loading';
+  archiveHeld = new Promise(resolve => { releaseArchive = resolve; });
+  await page.goto(base + '/statements?provider=Helios+Mutual+Fund');
+  await page.getByRole('status').filter({ hasText: 'Opening the statement archive' }).waitFor();
+  let guardData = await fileData('archive-not-ready.pdf');
+  await event(page.locator('main'), 'dragenter', guardData);
+  await overlay().waitFor();
+  assert.match(await overlay().innerText(), /Opening statement archive/);
+  const blocked = await event(page.locator('main'), 'drop', guardData);
+  await overlay().waitFor({ state: 'detached' });
+  assert.equal(staged.length, before);
+  releaseArchive(); archiveState = 'ready'; archiveHeld = null;
+  await page.locator('[data-upload-state="ready"]').waitFor();
+  await folder().waitFor();
+  archiveState = 'restricted';
+  await page.reload();
+  await page.getByText('The statement archive is password-protected', { exact: true }).waitFor();
+  guardData = await fileData('archive-unavailable.pdf');
+  await event(page.locator('main'), 'dragenter', guardData);
+  await overlay().waitFor();
+  assert.match(await overlay().innerText(), /Statement archive unavailable/);
+  await event(page.locator('main'), 'drop', guardData);
+  await overlay().waitFor({ state: 'detached' });
+  assert.equal(staged.length, before);
+  results.push('Loading and failed archives retain a non-uploading document drop guard');
+
   await page.getByRole('link', { name: 'Portfolio Monitor', exact: true }).click();
   await page.getByRole('heading', { name: 'Portfolio Monitor', exact: true }).waitFor();
-  await event(page.locator('main'), 'dragenter', unavailableData);
+  await event(page.locator('main'), 'dragenter', guardData);
   assert.equal(await overlay().count(), 0, 'Library listeners are removed after leaving the page');
   assert.deepEqual(errors, []);
   results.push('Navigating away removes the library drop handlers; no browser runtime errors');
@@ -205,5 +257,6 @@ try {
   throw error;
 } finally {
   release?.();
+  releaseArchive?.();
   await browser.close();
 }
