@@ -158,7 +158,7 @@ try {
   await event(folder(), 'drop', rejected);
   await page.getByRole('status').filter({ hasText: 'Nothing to upload' }).waitFor();
   assert.equal(committed.length, 3);
-  await page.locator('input[type="file"][accept]').setInputFiles({ name: 'chooser.pdf', mimeType: 'application/pdf', buffer: Buffer.from(fixture) });
+  await page.locator('[data-xa="statement-upload"] input[type="file"][accept]').setInputFiles({ name: 'chooser.pdf', mimeType: 'application/pdf', buffer: Buffer.from(fixture) });
   await waitForCommit(5);
   assert.equal(committed.length, 4);
   results.push('Unsupported files show a reason without a request; the file chooser still uploads');
