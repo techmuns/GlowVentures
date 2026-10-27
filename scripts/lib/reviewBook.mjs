@@ -13,7 +13,7 @@
 // Transactions tab, a superseded row that is not in the book exactly once.
 // `build-book` splices the result in after the ring-fence and nowhere else.
 
-import { loadReviewPrivate, REVIEW_AS_OF } from "./reviewPrivateRead.mjs";
+import { loadReviewPrivate, readReviewPrivate, REVIEW_AS_OF } from "./reviewPrivateRead.mjs";
 import { REVIEW_PRIVATE_JOIN, REFUSED, DISPLAY_NAME } from "../../shared/reviewPrivateJoin.mjs";
 import {
   PRIVATE_INVESTMENT_HOLDERS, PRIVATE_INVESTMENT_ELSEWHERE, VALUED_HOLDERS, SUPERSEDED,
@@ -105,9 +105,9 @@ export function measuredFromRows(dated, valuedOn) {
   return { fifo: { costHeld: r2(led.costHeld), realised: r2(led.realisedGain), costSold: r2(led.costSold) }, income, lateIncome, why: null };
 }
 
-export function reviewBookLayer({ root = ".", positions, unvalued }) {
+export function reviewBookLayer({ root = ".", positions, unvalued, reviewWorkbook }) {
   const listedNames = REVIEW_PRIVATE_JOIN.filter((j) => j.listed).map((j) => j.listed);
-  const r = loadReviewPrivate(root, { listedNames });
+  const r = reviewWorkbook ? readReviewPrivate(reviewWorkbook, { listedNames }) : loadReviewPrivate(root, { listedNames });
   const notes = [];
 
   // ── 1. Which statement rows the review replaces ────────────────────────────

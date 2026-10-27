@@ -17,6 +17,27 @@ on:
         type: string
 
 jobs:
+  rapid-statements:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Real protected statement through the warm engine
+        env:
+          GLOW_PDF_PASSWORDS: ${{ secrets.GLOW_PDF_PASSWORDS }}
+          GLOW_DASHBOARD_PASSWORD: ${{ secrets.GLOW_DASHBOARD_PASSWORD }}
+        run: node scripts/dev/benchmark-rapid-statements.mjs
+      - name: Preserve speed and complete-book evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rapid-statement-publications
+          path: .cache/rapid-statement-publications/*.json
+          if-no-files-found: ignore
   build:
     runs-on: ubuntu-latest
     steps:
