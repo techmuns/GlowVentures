@@ -66,7 +66,8 @@ test('the Pages gateway discovers first GitHub data without a deployment and kee
 });
 
 test('atomic Git pack publication leaves the checkout untouched, preserves history and refuses races', async () => {
-  const root = process.cwd(), output = fs.mkdtempSync(path.join(root, '.cache/github-publisher-test-'));
+  const root = process.cwd(); fs.mkdirSync(path.join(root, '.cache'), { recursive: true });
+  const output = fs.mkdtempSync(path.join(root, '.cache/github-publisher-test-'));
   const remote = path.join(output, 'local-remote.git'), publisher = path.join(output, 'publisher.git'), control = path.join(output, 'control.json');
   for (const dir of [remote, publisher]) execFileSync('git', ['init', '--bare', dir], { stdio: 'ignore' });
   writeControl(control, { dispatches: 0 });
@@ -112,7 +113,11 @@ test('the full reader cannot claim GitHub processing work', () => {
 
 test('an existing compiled browser keeps polling GitHub when no data publication exists yet', async () => {
   const { build } = await import('esbuild');
-  const bundle = await build({ entryPoints: ['src/lib/runtimeBook.ts'], bundle: true, write: false, format: 'esm', platform: 'node', logLevel: 'error' });
+  const bundle = await build({ entryPoints: ['src/lib/runtimeBook.ts'], bundle: true, write: false, format: 'esm', platform: 'node', logLevel: 'error',
+    plugins: [{ name: 'compiled-baseline-fixture', setup(builder) {
+      builder.onResolve({ filter: /readModels\.json$/ }, () => ({ path: 'baseline', namespace: 'fixture' }));
+      builder.onLoad({ filter: /.*/, namespace: 'fixture' }, () => ({ loader: 'json', contents: JSON.stringify({ revision: 'a'.repeat(20), readerRevision: reader, stockKeys: [], emptyLedger: { txns: [] } }) }));
+    } }] });
   const browser = await import('data:text/javascript;base64,' + Buffer.from(bundle.outputFiles[0].text).toString('base64'));
   const originalFetch = globalThis.fetch;
   try {
