@@ -70,7 +70,7 @@ export function SectorReturnDetails({ sector, positions, accounts, returnPct, re
       <p className="mt-1 text-xs text-slate-400">This is your share of stocks inside funds. The fund disclosures used here do not say what each stock cost, so this part is excluded from the stock return. It is separate from the {positions.length} account {plural(positions.length)} above.</p>
     </section>}
 
-    <details data-sector-return-more>
+    <details data-sector-return-more data-navigation-details="sectorreturndetails-1">
       <summary className="ring-focus cursor-pointer rounded text-slate-300">How the return is calculated</summary>
       <div className="mt-3 space-y-3 text-xs text-slate-400">
         <p>We add the gain or loss on shares still held, recorded gains or losses on shares sold, and recorded dividends. We divide this by what was paid for the shares still held and those already sold. Sales use the oldest purchases first (FIFO).</p>
@@ -80,7 +80,7 @@ export function SectorReturnDetails({ sector, positions, accounts, returnPct, re
         </dl>
         {returnPct !== null && <p data-sector-return-formula>({money(fifo.gain)} ÷ {money(fifo.deployed)}) × 100 = {result}</p>}
         <p>{live ? "Current values use live prices; purchase costs come from the records." : "Current values and purchase costs come from the recorded statements."} This is a total return, not a yearly rate. Only recorded sales and dividends are included.</p>
-        {included.length > 0 && <details>
+        {included.length > 0 && <details data-navigation-details="sectorreturndetails-2">
           <summary className="ring-focus cursor-pointer rounded text-slate-300">View the {included.length} included {plural(included.length)}</summary>
           <ul className="mt-2 space-y-3" data-sector-return-included>{included.map((p, i) => <li key={i} className="rounded border border-ink-600 p-3">{identity(sectorReturnHolding(p, accounts))}</li>)}</ul>
         </details>}

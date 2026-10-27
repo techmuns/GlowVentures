@@ -1,4 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { navigationMemory } from "@/lib/navigationMemory";
+import { useNavigationValue, booleanNavigation } from "@/lib/useNavigationState";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { X } from "lucide-react";
 import { Card } from "@/components/Card";
@@ -61,14 +63,15 @@ export function InvestmentTools({ securityKey, name }: { securityKey: string; na
   const now = usePriceNow(securityKey);
   const [draft, setDraft] = useState<Record<string, string>>({});
   const [invalid, setInvalid] = useState<Record<string, boolean>>({});
-  const [moreOpen, setMoreOpen] = useState(() => moreFieldsSet(readEntry(securityKey)) > 0);
+  const [moreOpen, setMoreOpen] = useNavigationValue(`investment-more:${securityKey}`, () => moreFieldsSet(readEntry(securityKey)) > 0, booleanNavigation);
   const card = useRef<HTMLDivElement>(null);
-  const { hash } = useLocation();
+  const location = useLocation();
+  const { hash } = location;
+  const returning = useMemo(() => navigationMemory.read(location.key, "@scroll", raw => Array.isArray(raw) ? true : null) === true, [location.key]);
 
   useEffect(() => {
     setDraft({});
     setInvalid({});
-    setMoreOpen(moreFieldsSet(readEntry(securityKey)) > 0);
   }, [securityKey]);
 
   /**
@@ -77,11 +80,11 @@ export function InvestmentTools({ securityKey, name }: { securityKey: string; na
    * first paint and push it down; the second pass lands it where it ends up.
    */
   useEffect(() => {
-    if (hash !== "#alerts") return;
+    if (returning || hash !== "#alerts") return;
     const go = () => card.current?.scrollIntoView({ block: "start" });
     const timers = [60, 700].map((ms) => window.setTimeout(go, ms));
     return () => timers.forEach((t) => window.clearTimeout(t));
-  }, [hash, securityKey]);
+  }, [hash, securityKey, returning]);
 
   const perUnit = (n: number) => fmtCurrency(convertFromBase(n), displayCurrency);
 

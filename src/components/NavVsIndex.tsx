@@ -1,3 +1,4 @@
+import { useNavigationState, useNavigationValue, booleanNavigation } from "@/lib/useNavigationState";
 import { useEffect, useMemo, useState } from "react";
 import {
   LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer,
@@ -122,7 +123,7 @@ export function NavVsIndex() {
    */
   const [indexState, setIndexState] = useState<"loading" | "ok" | "down" | "mismatch">("loading");
   const [reportedName, setReportedName] = useState<string | null>(null);
-  const [showRaw, setShowRaw] = useState(true);
+  const [showRaw, setShowRaw] = useNavigationValue("nav-raw", true, booleanNavigation);
   /**
    * HOW FAR BACK THE CHART LOOKS. Defaults to 1Y rather than the book's own five
    * weeks: the family asked for a larger period, and a year of the index around
@@ -130,7 +131,7 @@ export function NavVsIndex() {
    * the same seven points. The measured stretch is SHADED at every range, so a
    * reader can always see which part of the axis carries a comparison.
    */
-  const [range, setRange] = useState<NavRangeKey>("1Y");
+  const [range, setRange] = useNavigationState<NavRangeKey>("nav-range", "1Y", NAV_RANGES.map(r => r.key));
 
   useEffect(() => {
     let alive = true;
@@ -896,7 +897,7 @@ function SeriesCoverage({ stats, cov, unitName, nameOf, fmt, recon, whyOf, unval
   return (
     <details className="mt-3 rounded-lg border border-ink-700 bg-ink-900/40 px-3 py-2" data-testid="nav-excluded"
       data-in-return={stats.inReturn.length} data-holding={stats.holding.length}
-      data-joined={stats.joinedLater.length} data-at-cost={stats.atCost.length} data-unvalued={unvalued.length}>
+      data-joined={stats.joinedLater.length} data-at-cost={stats.atCost.length} data-unvalued={unvalued.length} data-navigation-details="navvsindex-1">
       {/* THE SPLIT IS THE SUMMARY'S HOVER (Stage 10cp): what joins later, what
           is held at cost, and what carries no valued holding send a reader to
           three different places, so a reader who never opens the details can

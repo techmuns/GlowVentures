@@ -1,3 +1,6 @@
+import { useNavigationState, useNavigationValue, numberNavigation, nullableStringNavigation } from "@/lib/useNavigationState";
+import { useNavigationScroll } from "@/lib/useNavigationScroll";
+import { useLocation } from "react-router-dom";
 import { ExportableTable } from "@/components/ExportableTable";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -272,19 +275,18 @@ const EMPTY_CELL: GridCell = { text: "", full: "", numeric: false };
 
 /** One sheet as a grid: column letters across, row numbers down, merged blocks
  *  drawn as one cell. */
-function SheetGrid({ grid, sourceSelected }: { grid: Grid; sourceSelected?: boolean }) {
+function SheetGrid({ grid, sourceSelected, sheetKey }: { grid: Grid; sourceSelected?: boolean; sheetKey: string }) {
   const { rows, cols, merges } = grid;
-  const [shown, setShown] = useState(ROW_STEP);
   const [params] = useSearchParams();
+  const [shown, setShown, restored] = useNavigationValue(`preview-rows:${params.get("file")}:${sheetKey}`, ROW_STEP, numberNavigation);
   const selectedRows = useMemo(() => new Set(sourceSelected ? (params.get('rows') ?? '').split(',').map(Number).filter(n => Number.isInteger(n) && n > 0 && n <= rows.length) : []), [params, rows.length, sourceSelected]);
   const host = useRef<HTMLDivElement>(null);
-  useEffect(() => setShown(ROW_STEP), [grid]);
   useEffect(() => {
-    if (!selectedRows.size) return;
+    if (restored || !selectedRows.size) return;
     setShown(n => Math.max(n, ...selectedRows));
     const frame = requestAnimationFrame(() => host.current?.querySelector('[data-source-row="true"]')?.scrollIntoView({ block: 'center' }));
     return () => cancelAnimationFrame(frame);
-  }, [grid, selectedRows]);
+  }, [grid, selectedRows, restored]);
   if (!rows.length) return <AbsentSection what="This sheet is empty" needs="The file carries this sheet with no cells in it." />;
   const body = (allRows: boolean) => {
     const drawn = allRows ? rows.length : Math.min(shown, rows.length);
@@ -308,7 +310,7 @@ function SheetGrid({ grid, sourceSelected }: { grid: Grid; sourceSelected?: bool
   };
   return (
     <div ref={host} data-preview-sheet-rows={rows.length}>
-      <div className="overflow-auto rounded-lg border border-ink-700">
+      <div className="overflow-auto rounded-lg border border-ink-700" data-navigation-scroll="statementpreview-1">
         <ExportableTable className="min-w-full border-collapse text-[12px]"
           data-table-static="the file's own sheet, cell for cell as the provider laid it out">
           {allRows => <>
@@ -340,7 +342,8 @@ function SheetTabs({ sheets, sourceLocation = false }: { sheets: SheetView[]; so
   const [params] = useSearchParams();
   const requested = params.get('sheet');
   const requestedAt = sourceLocation ? sourceSheetIndex(sheets.map(s => s.key), requested) : null;
-  const [at, setAt] = useState(() => requestedAt ?? 0);
+  const [sheetKey, setSheetKey] = useNavigationState<string>(`preview-sheet:${params.get("file")}:${sourceLocation}`, () => sheets[requestedAt ?? 0]?.key ?? "", sheets.map(s => s.key));
+  const at = Math.max(0, sheets.findIndex(s => s.key === sheetKey));
   if (!sheets.length) return <AbsentSection what="This workbook has no sheets" needs="The file carries no worksheet to show." />;
   const sheet = sheets[Math.min(at, sheets.length - 1)];
   return (
@@ -349,7 +352,7 @@ function SheetTabs({ sheets, sourceLocation = false }: { sheets: SheetView[]; so
       {sheets.length > 1 && (
         <div className="mb-3 flex flex-wrap gap-1.5" role="tablist" aria-label="Sheets in this file">
           {sheets.map((s, i) => (
-            <button key={s.key} type="button" role="tab" aria-selected={i === at} onClick={() => setAt(i)}
+            <button key={s.key} type="button" role="tab" aria-selected={i === at} onClick={() => setSheetKey(s.key)}
               data-preview-sheet-tab={s.key}
               className={`rounded-md border px-3 py-1 text-xs font-medium ${i === at
                 ? "border-champagne-500/50 bg-champagne-500/10 text-champagne-400"
@@ -359,7 +362,7 @@ function SheetTabs({ sheets, sourceLocation = false }: { sheets: SheetView[]; so
           ))}
         </div>
       )}
-      <SheetGrid grid={sheet.grid} sourceSelected={at === requestedAt} />
+      <SheetGrid key={sheet.key} sheetKey={sheet.key} grid={sheet.grid} sourceSelected={at === requestedAt} />
     </div>
   );
 }
@@ -397,11 +400,13 @@ export function StatementPreview({ doc, onClose, backLabel }: { doc: LibraryDoc;
   const [params] = useSearchParams();
   const loaded = usePages(doc.fileKey);
   const original = useOriginal(doc.fileKey);
-  const [picked, setPicked] = useState<View | null>(null);
-  const view: View = picked ?? (original.status === "missing" ? "text" : "original");
+  const [picked, setPicked] = useNavigationValue<string | null>(`preview-view:${doc.fileKey}`, null, nullableStringNavigation);
+  const view: View = (picked === "original" || picked === "text") ? picked : (original.status === "missing" ? "text" : "original");
   const published = original.status === "ready" ? original : null;
   const closeRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
+  const location = useLocation();
+  useNavigationScroll(dialogRef, location, `preview-scroll:${doc.fileKey}`);
   const sheet = isSheetFormat(doc.format);
   // The PDF viewer takes the whole window and scrolls itself.
   const fills = view === "original" && !!published && !sheet;
@@ -483,7 +488,7 @@ export function StatementPreview({ doc, onClose, backLabel }: { doc: LibraryDoc;
           <ViewToggle views={VIEWS} active={view} onChange={setPicked} />
         </div>
 
-        <div className={`min-h-0 flex-1 px-4 pb-4 ${fills ? "flex flex-col" : "overflow-auto"}`}>
+        <div className={`min-h-0 flex-1 px-4 pb-4 ${fills ? "flex flex-col" : "overflow-auto"}`} data-navigation-scroll="statementpreview-2">
           {view === "original" && original.status === "loading" && <Opening what="Opening the file…" />}
           {view === "original" && original.status === "missing" && (
             <AbsentSection what="The original file is not in this build" needs={original.reason}>

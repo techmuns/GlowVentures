@@ -1,6 +1,7 @@
+import { useNavigationState, useNavigationValue, nullableStringNavigation } from "@/lib/useNavigationState";
 import { useTableExportFilter, useTableExporting } from "@/lib/tableExportSnapshot";
 import { ExportableTable } from "@/components/ExportableTable";
-import { Fragment, useMemo, useState, type ReactNode } from "react";
+import { Fragment, useMemo, type ReactNode } from "react";
 import { Handshake, Landmark, Wallet, TrendingUp, Fuel, Coins, Banknote, HelpCircle, CalendarClock, Layers, Users, ArrowUpRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { PageHeader } from "@/components/PageHeader";
@@ -456,7 +457,7 @@ export function PrivateMarket() {
    * fund at its published NAV. One figure, one value, on one screen.
    */
   const { enteredPortfolio: portfolio, portfolio: live, fmtFromBase, scope: memberScope } = usePortfolio();
-  const [q, setQ] = useState("");
+  const [q, setQ] = useNavigationState<string>("private-search", "");
   const exportingTable = useTableExporting();
   /**
    * WHICH TAB. In the URL like every other view in this app, so a tab is a link
@@ -468,9 +469,9 @@ export function PrivateMarket() {
   const show = useTableExportFilter(showFilter, "both");
   const shown = SHOW_SECTIONS[show];
   /** Open fund / member rows, keyed `<grouping>:<key>` so the two tabs keep their own. */
-  const rows = useExpanded();
+  const rows = useExpanded("private-rows");
   /** Open sections — the private funds start open, the marked one closed. */
-  const sections = useExpanded(BOOK_SECTIONS.filter((s) => SECTION_COPY[s].defaultOpen));
+  const sections = useExpanded("private-sections", BOOK_SECTIONS.filter((s) => SECTION_COPY[s].defaultOpen));
   /**
    * WHICH RETURN(S) THE TABLE SHOWS — the Monitor's own picker (Stage 10bw):
    * every measure by default, the reader's pick remembered for this page, and a
@@ -493,7 +494,7 @@ export function PrivateMarket() {
    * one runs on some renders and not others.
    */
   const entered = useEnteredCalls();
-  const [openCall, setOpenCall] = useState<string | null>(null);
+  const [openCall, setOpenCall] = useNavigationValue<string | null>("private-open-call", null, nullableStringNavigation);
   const today = todayIso();
   /**
    * ── THE STRATEGY AND DESCRIPTION THE FAMILY TYPES (Stage 10ev) ───────────
@@ -2316,7 +2317,7 @@ export function PrivateMarket() {
         }>
 
         {(view === "funds" || view === "brands") && (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" data-navigation-scroll="privatemarket-1">
             <ExportableTable exportName={`Private Market — ${view === "brands" ? "By brand" : "By legal name"}`} className="min-w-full text-[13px]" data-pm-table={view}>
               {allRows => <>
               <thead className="border-b border-ink-700">
@@ -2413,7 +2414,7 @@ export function PrivateMarket() {
         )}
 
         {view === "transactions" && (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" data-navigation-scroll="privatemarket-2">
             <ExportableTable exportName="Private Market — Transactions" className="min-w-full text-[13px]" data-pm-table="transactions">
               <thead className="border-b border-ink-700">
                 <Tr view={callView}>

@@ -36,3 +36,41 @@ assert.deepEqual([...validNavigationState(picked, new Set(), new Set(['Kotak']))
 assert.deepEqual([...validNavigationState(picked, new Set(), new Set())], []);
 assert.equal(validNavigationState(picked, new Set(), undefined), picked, 'pending fund-only options retain their selection');
 console.log('PASS navigation snapshots: distinct history entries, reload, validation, bounded storage and blocked storage');
+
+// Shared codecs reject stale or malformed presentation values without coercion.
+const codecs = await import('../useNavigationState');
+assert.equal(codecs.booleanNavigation.read(false), false);
+assert.equal(codecs.booleanNavigation.read('false'), null);
+assert.equal(codecs.numberNavigation.read(137), 137);
+for (const invalid of [-1, NaN, Infinity, '137', {}]) assert.equal(codecs.numberNavigation.read(invalid), null);
+assert.deepEqual(codecs.nullableStringsNavigation.read(['Energy', 'Financials']), ['Energy', 'Financials']);
+assert.equal(codecs.nullableStringsNavigation.read(['Energy', 42]), null);
+
+const { validNavigationPicks } = await import('../navigationMemory');
+assert.deepEqual(validNavigationPicks(['old', 'Energy', 'Finance', 'removed'], new Set(['Energy', 'Finance']), 4), ['Energy', 'Finance']);
+assert.deepEqual(validNavigationPicks(['old'], new Set(['Energy']), 4), []);
+assert.equal(validNavigationPicks(null, new Set(['Energy']), 4), null, 'automatic default remains automatic');
+assert.deepEqual(validNavigationPicks(['Energy', 'Energy', 'Finance'], new Set(['Energy', 'Finance']), 1), ['Energy']);
+const { navigationElements } = await import('../navigationDom');
+// Reordering siblings must keep each disclosure/scrollport attached to its holding.
+function rowPort(rowAttribute: string, key: string) {
+  const parent = { attributes: [{ name: rowAttribute, value: key }], parentElement: null };
+  return { attributes: [], parentElement: parent, getAttribute: () => 'repeated-source-site' } as unknown as HTMLElement;
+}
+for (const rowAttribute of ['data-sector-row', 'data-corporate-return-row', 'data-pm-group', 'data-unvalued-account']) {
+  const a = rowPort(rowAttribute, 'alpha'), b = rowPort(rowAttribute, 'beta');
+  let children = [a, b];
+  const root = { querySelectorAll: () => children } as unknown as HTMLElement;
+  const first = navigationElements(root, 'scroll');
+  children = [b, a];
+  const second = navigationElements(root, 'scroll');
+  for (const [key, element] of first) assert.equal(second.get(key), element, rowAttribute);
+}
+
+const { readNavigationWindow } = await import('../navigationMemory');
+assert.deepEqual(readNavigationWindow({ key: 'sorted/filtered view', limit: 150 }), { key: 'sorted/filtered view', limit: 150 });
+for (const invalid of [null, {}, { key: 'x', limit: 0 }, { key: 'x', limit: 1.2 }, { key: 1, limit: 50 }]) assert.equal(readNavigationWindow(invalid), null);
+
+const deferredPicks = ['fund-only sector', 'Energy'];
+assert.equal(validNavigationPicks(deferredPicks, new Set(['Energy']), 4, false), deferredPicks, 'an unavailable option universe never erases saved picks');
+assert.deepEqual(validNavigationPicks(deferredPicks, new Set(['Energy']), 4, true), ['Energy'], 'a complete source can retire missing picks');

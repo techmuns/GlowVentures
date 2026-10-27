@@ -1,18 +1,24 @@
-import { useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { useNavigationValue, type NavigationCodec } from "@/lib/useNavigationState";
+import { useCallback, useContext, useEffect, useLayoutEffect, useRef, type ReactNode } from "react";
+import { readNavigationWindow, type NavigationWindow } from "@/lib/navigationMemory";
 import { TableExportAllRows } from "./ExportableTable";
-import { isTableExporting } from "@/lib/tableExportSnapshot";
+import { isTableExporting, useTableExportIdentity } from "@/lib/tableExportSnapshot";
+
+const windowCodec: NavigationCodec<NavigationWindow> = { read: readNavigationWindow, write: value => value };
 
 /** Sorting, totals and exports use the full collection; scrolling only appends rows. */
-export function useInfiniteTable(total: number, resetKey: string, batchSize = 50) {
-  const [state, setState] = useState({ key: resetKey, limit: batchSize });
-  if (!isTableExporting() && state.key !== resetKey) setState({ key: resetKey, limit: batchSize });
-  const limit = isTableExporting() || state.key === resetKey ? state.limit : batchSize;
-  const shown = Math.min(total, limit);
+export function useInfiniteTable(navigationKey: string, total: number, resetKey: string, batchSize = 50) {
+  // The window is presentation state as well: restore enough rows before scroll.
+  const displayKey = useTableExportIdentity(resetKey);
+  // One bounded slot per table and entry; changing a filter replaces its window.
+  const [state, setState] = useNavigationValue(`table-window:${navigationKey}`, () => ({ key: displayKey, limit: batchSize }), windowCodec);
+  if (state.key !== displayKey) setState({ key: displayKey, limit: batchSize });
+  const limit = state.key === displayKey ? state.limit : batchSize;
+  const shown = Math.min(total, Math.max(batchSize, limit));
   const loadMore = useCallback(() => {
-    setState(current => current.key === resetKey
-      ? { ...current, limit: Math.min(total, current.limit + batchSize) }
-      : current);
-  }, [resetKey, total, batchSize]);
+    setState(current => current.key === displayKey
+      ? { ...current, limit: Math.min(total, Math.max(batchSize, current.limit) + batchSize) } : current);
+  }, [setState, total, batchSize, displayKey]);
   return { total, shown, hasMore: shown < total, loadMore, resetKey };
 }
 
@@ -62,12 +68,12 @@ export function InfiniteTableEnd({ scroll, columns }: { scroll: ReturnType<typeo
   </tr>;
 }
 
-export function InfiniteTableBody<T>({ rows, children, columns, resetKey, batchSize = 50, className, empty }: {
-  rows: readonly T[]; children: (row: T, index: number) => ReactNode;
+export function InfiniteTableBody<T>({ navigationKey, rows, children, columns, resetKey, batchSize = 50, className, empty }: {
+  navigationKey: string; rows: readonly T[]; children: (row: T, index: number) => ReactNode;
   columns: number; resetKey: string; batchSize?: number; className?: string; empty?: ReactNode;
 }) {
   const allRows = useContext(TableExportAllRows);
-  const scroll = useInfiniteTable(rows.length, resetKey, batchSize);
+  const scroll = useInfiniteTable(navigationKey, rows.length, resetKey, batchSize);
   return <tbody className={className} data-infinite-rows={rows.length}>
     {rows.length ? rows.slice(0, allRows ? rows.length : scroll.shown).map(children) : empty}
     <InfiniteTableEnd scroll={scroll} columns={columns} />
