@@ -42,6 +42,7 @@ export class PdfRenderQueue {
   private jobs: { run: () => Promise<void>; priority: () => number; resolve: () => void; reject: (error: unknown) => void; signal: AbortSignal }[] = [];
   private running = false;
   private scheduled = false;
+  private cancelScheduled: (() => void) | undefined;
   run(run: () => Promise<void>, priority: () => number, signal: AbortSignal) {
     return new Promise<void>((resolve, reject) => {
       this.jobs.push({ run, priority, signal, resolve, reject });
@@ -49,10 +50,16 @@ export class PdfRenderQueue {
     });
   }
   wake() {
-    if (this.running || this.scheduled || !this.jobs.length) return;
+    if (this.running || !this.jobs.length) return;
+    const foreground = this.jobs.some(job => !job.signal.aborted && job.priority() === 0);
+    if (this.scheduled) {
+      if (!foreground || !this.cancelScheduled) return;
+      this.cancelScheduled(); this.scheduled = false;
+    }
     this.scheduled = true;
     const start = () => {
       this.scheduled = false;
+      this.cancelScheduled = undefined;
       this.jobs.sort((a, b) => a.priority() - b.priority());
       const job = this.jobs.shift();
       if (!job) return;
@@ -60,9 +67,14 @@ export class PdfRenderQueue {
       this.running = true;
       void job.run().then(job.resolve, job.reject).finally(() => { this.running = false; this.wake(); });
     };
-    if (this.jobs.some(job => !job.signal.aborted && job.priority() === 0)) queueMicrotask(start);
-    else if ('requestIdleCallback' in window) window.requestIdleCallback(start, { timeout: 100 });
-    else setTimeout(start, 32);
+    if (foreground) queueMicrotask(start);
+    else if ('requestIdleCallback' in window) {
+      const idle = window.requestIdleCallback(start, { timeout: 100 });
+      this.cancelScheduled = () => window.cancelIdleCallback(idle);
+    } else {
+      const timer = window.setTimeout(start, 32);
+      this.cancelScheduled = () => window.clearTimeout(timer);
+    }
   }
 }
 
@@ -78,6 +90,7 @@ export class PdfCanvasCache {
     this.drop(page);
     this.entries.set(page, canvas);
     this.trim(center);
+    return this.entries.get(page) === canvas;
   }
   drop(page: number) {
     const canvas = this.entries.get(page);

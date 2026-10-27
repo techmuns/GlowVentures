@@ -15,11 +15,14 @@ const plain = Buffer.from(makeMultiPagePdf(labels.map(text => [[60,700,text]]), 
 const longPageCount = 235;
 const longLabels = Array.from({length:longPageCount},(_,i)=>`Long statement page ${i+1}`);
 const longPdf = Buffer.from(makeMultiPagePdf(longLabels.map(text=>[[60,700,text]]),{fontSize:24}));
+const mixedPdf = Buffer.from(makeMultiPagePdf([1,2,3].map(n=>[[60,500,`Mixed size page ${n}`]]),{
+  fontSize:24,mediaBoxes:[[0,0,612,792],[0,0,792,612],[0,0,420,1000]],
+}));
 // Synthetic two-page PDF, generated with pypdf, encrypted with 'preview-test'.
 const locked = await fs.readFile(new URL('./fixtures/preview-password.pdf', import.meta.url));
 const unlocked = await unlockPdf(locked, ['preview-test']);
 const unlockedName = previewKey(locked);
-const keys = ['preview-plain', 'preview-locked', 'preview-part', 'preview-bad', 'preview-auto', 'preview-long'];
+const keys = ['preview-plain', 'preview-locked', 'preview-part', 'preview-bad', 'preview-auto', 'preview-long', 'preview-mixed'];
 const manifest = keys.map(key => ({docKey:key, fileKey:key, provider:'Preview test',
   accountNo:null, owner:null, ownerId:null, familyGroup:null, strategy:null, asOf:null,
   reportType:'holdings', sourcePath:`source/${key}.pdf`, pages:key==='preview-long'?longPageCount:pageCount, status:'ok', warnings:0, sheets:[], label:key, fy:''}));
@@ -53,7 +56,7 @@ await page.route('**/statement-files/index.json', r => r.fulfill({json:index}));
 let plainRequests = 0;
 await page.route('**/statement-files/preview-*.pdf', r => {
   const url=r.request().url();if(url.includes('preview-plain.pdf'))plainRequests++;
-  return r.fulfill({contentType:'application/pdf',body:/preview-(locked|auto)/.test(url) ? locked : url.includes('preview-bad') ? Buffer.from('not a PDF') : url.includes('preview-long') ? longPdf : plain});
+  return r.fulfill({contentType:'application/pdf',body:/preview-(locked|auto)/.test(url) ? locked : url.includes('preview-bad') ? Buffer.from('not a PDF') : url.includes('preview-long') ? longPdf : url.includes('preview-mixed') ? mixedPdf : plain});
 });
 const address = key => `${base}/statements?provider=Preview%20test&file=${key}`;
 // Keep local navigation on one loopback origin: recent Chrome also blocks
@@ -126,6 +129,13 @@ try {
   assert.ok(requestedPages<=6,`first paint must not load all ${longPageCount} page descriptions (${requestedPages} requested)`);
   await scrollTo(longPageCount);await rendered(1).waitFor({state:'detached'});
   assert.ok(await frame.locator('canvas[data-pdf-page]').count()<6);
+  await open('preview-mixed');await ink(1);await scrollTo(2);
+  const landscape=await rendered(2).evaluate(c=>parseFloat(c.style.width)/parseFloat(c.style.height));
+  assert.ok(Math.abs(landscape-792/612)<0.001,'lazy page sizing retains the actual landscape aspect ratio');
+  await frame.getByLabel('PDF page',{exact:true}).fill('3');await currentPage(3);await ink(3);
+  const portrait=await rendered(3).evaluate(c=>parseFloat(c.style.width)/parseFloat(c.style.height));
+  assert.ok(Math.abs(portrait-420/1000)<0.001,'a page jump retains the actual tall-page aspect ratio');
+  await scrollTo(2);await scrollTo(1);
   await open('preview-plain');
   const app = page.frames().find(f => f.parentFrame() && f.url().startsWith(`${base}/statements?`));
   await app.goto(address('preview-plain')+'&isin=INF247L01ED1&sourceValue=123.45&field=quantity');

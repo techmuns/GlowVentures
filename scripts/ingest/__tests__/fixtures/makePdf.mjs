@@ -36,8 +36,9 @@ export function makeMultiPagePdf(pages, opts = {}) {
 
   pages.forEach((spans, i) => {
     const [pid, cid] = pageObjs[i];
+    const pageBox = opts.mediaBoxes?.[i] ?? box;
     objs.set(pid, Buffer.from(
-      `<< /Type /Page /Parent 2 0 R /MediaBox [${box.join(" ")}] /Contents ${cid} 0 R ` +
+      `<< /Type /Page /Parent 2 0 R /MediaBox [${pageBox.join(" ")}] /Contents ${cid} 0 R ` +
       `/Resources << /Font << /F1 ${fontId} 0 R >> >> >>`));
     const ops = [`BT /F1 ${fontSize} Tf`];
     for (const [x, y, text] of spans) {

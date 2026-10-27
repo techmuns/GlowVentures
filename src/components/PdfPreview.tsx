@@ -79,7 +79,7 @@ const PdfPage = memo(function PdfPage({ pdf, number, center, width, height, avai
       }, () => Math.abs(number - (current.current?.page ?? number)), abort.signal);
       if (!alive) return;
       markerRef.current?.remove();
-      cache.keep(number, canvas, current.current?.page ?? number);
+      if (!cache.keep(number, canvas, current.current?.page ?? number)) return;
       canvas.dataset.pdfPage = String(number);
       host.append(canvas);
       painted.current = { key, canvas };
