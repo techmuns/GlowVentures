@@ -469,13 +469,6 @@
 - `10387.pdf`, from the same message, is a one-page password-protected PDF. It is not added until a run holding the statement passwords can read it.
 - Tests: `mopwmTransactions.test.mjs` (the prefixed workbook in full, owners, classification, FIFO, corporate-action and identity refusals, a later sale counted); `recoveredCosts.test.ts` counts 65 / 22 / 31 and pins Kaynes and Motilal Arbitrage.
 
-### Stage 10hw — MAIN GREEN AGAIN AFTER 10HU
-
-- #251 merged with CI still running, and CI failed. Three family checks printed `FAIL` lines that the local scan missed (it grepped only for `AssertionError`); the upload rehearsal failed with them, because its intake run holds an upload on any new `test:family` failure.
-- `negligibleFloor`: Bharat's 0.43 / 0.048 ICICI index units and Ankita's 0.003 Mirae took ₹109, ₹3 and ₹0.15 of cost from MOPWM's report, and the floor drops them, so Capital invested would be short by what they paid. A transaction-report record now needs at least ₹1,000 of cost held (`SPECK_FLOOR`, the `NEGLIGIBLE_VALUE_FLOOR`); the three are named in COST-RECOVERY.md instead. 65 → 62 recovered costs.
-- `clubbedFigures`: ICICI Bank no longer clubs a costed line with an uncosted one, because Ankita's lot is costed now. The book's own case is Insolation Energy: Ajay's costed ICICI NSDL lot beside his Motilal lot and Bharat's HDFC lot, both uncosted.
-- `fundNavs`: every share candidate passes the live gate except those with a sale recorded after their statement (Ankita's Axis Bank, ICICI Bank and SBI), which it withholds by design. The check now says so and requires that exception to have a subject.
-
 ### Stage 10hv — FULL-PAGE STATEMENT DROPS AND RETAINED FINANCIAL HISTORY
 
 - Accept file and folder drags across the Statement Library viewport, including inside a provider folder, with a blue overlay naming the current folder. Keep Files/Folder controls and upload results available there. The existing intake still classifies each statement by its actual issuing provider.
@@ -485,3 +478,10 @@
 - The Stage 10hu MOPWM cost records exposed two tiny residual fund balances with real purchase and sale history being hidden by the value floor (before Stage 10hw withheld those cost records upstream). Preserve a whole security when any deduped line carries investment cost or nonzero realised/sold-cost/income history; keep the existing paid-out cash-at-value exception and the ₹1,000 threshold for uncosted specks. No source or generated book record is changed.
 - The original regression reproduced six failures when restoring the old floor. Stage 10hw subsequently withheld those tiny recovered costs upstream; preserve that source-data change and its updated mixed-cost and corporate-action checks. Constructed cost/sale/income cases independently retain the display guard against future statements that establish investment history.
 - Independently rederive the financial-history exception in the chat, Excel and page-check reference models. A costed residual now prevents claiming a complete PMS mandate when it is omitted; a genuinely uncosted speck still does not. The targeted context, Excel and FIFO suites pass; preview checks retain both affected fund records in Portfolio Monitor and Family & Entities.
+
+### Stage 10hw — MAIN GREEN AGAIN AFTER 10HU
+
+- #251 merged with CI still running, and CI failed. Three family checks printed `FAIL` lines that the local scan missed (it grepped only for `AssertionError`); the upload rehearsal failed with them, because its intake run holds an upload on any new `test:family` failure.
+- `negligibleFloor`: Bharat's 0.43 / 0.048 ICICI index units and Ankita's 0.003 Mirae took ₹109, ₹3 and ₹0.15 of cost from MOPWM's report, and the floor drops them, so Capital invested would be short by what they paid. A transaction-report record now needs at least ₹1,000 of cost held (`SPECK_FLOOR`, the `NEGLIGIBLE_VALUE_FLOOR`); the three are named in COST-RECOVERY.md instead. 65 → 62 recovered costs.
+- `clubbedFigures`: ICICI Bank no longer clubs a costed line with an uncosted one, because Ankita's lot is costed now. The book's own case is Insolation Energy: Ajay's costed ICICI NSDL lot beside his Motilal lot and Bharat's HDFC lot, both uncosted.
+- `fundNavs`: every share candidate passes the live gate except those with a sale recorded after their statement (Ankita's Axis Bank, ICICI Bank and SBI), which it withholds by design. The check now says so and requires that exception to have a subject.
