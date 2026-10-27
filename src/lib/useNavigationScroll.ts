@@ -71,7 +71,9 @@ export function useNavigationScroll(mainRef: RefObject<HTMLElement>, location: L
     };
     const schedule = () => { cancelAnimationFrame(frame); frame = requestAnimationFrame(() => { hydrateDetails(); restore(); }); };
     const observer = new MutationObserver(schedule), resize = new ResizeObserver(schedule);
-    observer.observe(main, { childList: true, subtree: true, attributes: true, attributeFilter: ["data-navigation-pending"] }); resize.observe(main); schedule();
+    // Text-only feed updates can widen a table without resizing its viewport.
+    // Retry a clamped scroll when React updates those existing text nodes too.
+    observer.observe(main, { childList: true, characterData: true, subtree: true, attributes: true, attributeFilter: ["data-navigation-pending"] }); resize.observe(main); schedule();
     main.addEventListener('toggle', disclosureChanged, true);
     // A reader's input takes precedence over an unfinished asynchronous restore.
     const interact = () => { if (restoring) stop(); save(); };

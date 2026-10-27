@@ -469,6 +469,7 @@
 - Keep unresolved sector picks when look-through data is loading or unreachable; only a complete successful result can retire absent choices. The browser tour visits nested research/held-view tabs before leaving their parent, and includes all consolidated workbook subtabs and the Monitor/Ledger mode controls.
 - A deployed-preview check caught PDF scroll anchoring against the temporary loading line. Keep restoration pending through PDF rendering and require stable scrollport geometry across two frames, so removing that line cannot shift the restored source position.
 - The full navigation tour exposed a pre-existing crash in the archive's Raw page text tab. Decode its page/text records into a searchable grid, preserve the source page numbers and text, and reject malformed extraction payloads through the existing fallback. The browser regression now explicitly restores that tab and its search.
+- A delayed Polycab quote changes only its heading text, widening the table without resizing the scrollport. Observe text-node mutations so a temporarily clamped horizontal position is retried. The browser tour deliberately delays that reply; the focused case reproduces the reset before the fix and passes afterwards.
 
 - Latest-main integration: preserve Stage 10hw's source-data policy and accompanying regression fixes verbatim. Its purchase-cost and valuation checks supersede the temporary fixture adjustments made while this branch awaited CI. This change adds no financial calculation or source-data changes.
 

@@ -10,7 +10,12 @@ const out=path.resolve('.cache/dashboard-navigation');await fs.mkdir(out,{recurs
 const browser=await chromium.launch({executablePath:process.env.CHROME??'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true});
 const page=await browser.newPage({viewport:{width:1512,height:1000}}), errors=[], cases=[];
 page.on('pageerror',e=>errors.push(e.message));
-await page.route('**/api/**',r=>r.fulfill({status:503,json:{ok:false}}));
+await page.route('**/api/**',async r=>{
+ // Polycab's asynchronous price-basis heading widens the table by changing an
+ // existing text node. Hold its reply until the initial restore has clamped.
+ if(new URL(r.request().url()).pathname==='/api/polycab')await new Promise(resolve=>setTimeout(resolve,800));
+ return r.fulfill({status:503,json:{ok:false}});
+});
 async function settled(){
  await page.locator('main h1').first().waitFor({timeout:30000});
  await page.waitForLoadState('networkidle');
