@@ -1994,7 +1994,7 @@ export function StockInfo() {
           `min-h-0` is what makes `flex-1` shrink rather than grow the column
           past the window — without it the panel is as tall as its content and
           the page scrolls again, which is the whole of what was asked. */}
-      <div className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto" data-stock-panel={tab}>
+      <div className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto" data-stock-panel={tab} data-navigation-scroll="stockinfo-1">
 
         {tab === "position" && (
           <div data-stock-section="position">
@@ -2024,7 +2024,7 @@ export function StockInfo() {
                   : "How this name is held — the owning entity, who chose the position, and the platform that runs the account"}
                 right={heldTabs || undefined}
                 pad={false}>
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto" data-navigation-scroll="stockinfo-2">
                   <ExportableTable className="min-w-full whitespace-nowrap text-sm" data-held-table={heldTab}>
                     <thead className="border-b border-ink-700">
                       <Tr view={posView}>
@@ -2235,7 +2235,7 @@ export function StockInfo() {
             {!resolving && (!fundOnly || led === undefined || led === null || led.txns.length > 0) && (
             <Card className="mt-5" title="Transaction history" subtitle='Every dated buy & sell from the ledger — the "Transaction Info" drill-down' pad={false}
               right={led && led.txns.length ? <Pill>{led.txns.length} rows · {led.txns.filter((t) => t.side === "Sell").length} sells</Pill> : undefined}>
-              <div className="max-h-[460px] overflow-auto">
+              <div className="max-h-[460px] overflow-auto" data-navigation-scroll="stockinfo-3">
                 {led === undefined ? (
                   <div className="grid h-32 place-items-center text-sm text-slate-500">Loading transactions…</div>
                 ) : led == null ? (

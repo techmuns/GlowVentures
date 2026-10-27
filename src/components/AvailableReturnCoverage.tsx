@@ -41,7 +41,7 @@ export function AvailableReturnCoverage({ line: l, selection, accounts, money, f
         {field === 'return' && l.returnPct == null && (l.units.length > 0 || !l.missing.length) && <p className="rounded-lg bg-ink-900 p-3">{reason(l)}</p>}
         {notes.length > 0 && <div><p className="font-semibold text-slate-100">Newer records still need checking</p>
           <p>These accounts still use their last checked statement.</p>
-          <ul className="mt-2 space-y-2">{notes.map((n, i) => <li key={i}><strong>{n.label}</strong><p>{returnGapText(n.reason, selection.start)}</p><details><summary>Statement detail</summary>{n.reason}</details></li>)}</ul>
+          <ul className="mt-2 space-y-2">{notes.map((n, i) => <li key={i}><strong>{n.label}</strong><p>{returnGapText(n.reason, selection.start)}</p><details data-navigation-details="availablereturncoverage-1"><summary>Statement detail</summary>{n.reason}</details></li>)}</ul>
         </div>}
         <div data-attribution-missing>
           <p className="font-semibold text-slate-100">What is missing?</p>
@@ -54,14 +54,14 @@ export function AvailableReturnCoverage({ line: l, selection, accounts, money, f
                 return suffix && g.label.endsWith(suffix) ? g.label.slice(0, -suffix.length) : g.label;
               })()}</p>
               <p className="mt-1" data-return-gap-reason>{g.plainReason ? g.reason : returnGapText(g.reason, selection.start)}</p>
-              <details className="mt-2 text-xs text-slate-400"><summary className="cursor-pointer">Account and statement details</summary>
+              <details className="mt-2 text-xs text-slate-400" data-navigation-details="availablereturncoverage-2"><summary className="cursor-pointer">Account and statement details</summary>
                 <p className="mt-1">{(() => { const source = accounts.find(a => a.accountId === g.accountId); return source ? `${source.owner} · ${source.provider} · account ${source.accountNo} · statement ${fmtDate(source.asOf)}` : g.accountId; })()}{g.value != null ? ` · ${money(g.value)}` : ''}</p>
                 <p className="mt-1">{g.detail ?? g.reason}</p>
               </details>
             </li>)}</ul>
           </> : <p className="mt-1">{l.units.length ? 'All available records for this row are included. Records missing elsewhere are listed in the total’s info card.' : reason(l)}</p>}
         </div>
-        {l.units.length > 0 && <details data-attribution-method><summary className="ring-focus cursor-pointer rounded text-slate-200">How it’s calculated</summary>
+        {l.units.length > 0 && <details data-attribution-method data-navigation-details="availablereturncoverage-3"><summary className="ring-focus cursor-pointer rounded text-slate-200">How it’s calculated</summary>
           <div className="mt-3 space-y-3">
         <p>{selection.inception ? 'Since the first investment' : `Selected period: ${dates}`} · {type.label}{l.measured?.basis === 'annual' ? ' · per year' : ' · not annualised'}</p>
         {l.units.length > 0 && <>
@@ -75,7 +75,7 @@ export function AvailableReturnCoverage({ line: l, selection, accounts, money, f
             : selection.inception ? 'The gain is divided by the purchase cost of the holdings and units sold, or the money paid into a whole managed account.'
             : 'The gain is divided by the money at work. Money added later counts only for the days it was invested.'}</p>
         </>}
-        {gainParts.length > 0 && <details data-gain-parts>
+        {gainParts.length > 0 && <details data-gain-parts data-navigation-details="availablereturncoverage-4">
           <summary className="ring-focus cursor-pointer rounded text-slate-200">See how the gain adds up</summary>
           <p className="mt-2">Add these recorded amounts to get the gain. Managed-account gains include money already paid back, which is outside the closing value.</p>
           <dl className="mt-2 grid grid-cols-2 gap-3">{gainParts.map(([label, amount]) => <div className="contents" key={label}>
@@ -93,7 +93,7 @@ export function AvailableReturnCoverage({ line: l, selection, accounts, money, f
         </dl>}
           </div>
         </details>}
-        {l.units.length > 0 && <details data-attribution-included><summary className="ring-focus cursor-pointer rounded text-slate-200">View included accounts and dates</summary>
+        {l.units.length > 0 && <details data-attribution-included data-navigation-details="availablereturncoverage-5"><summary className="ring-focus cursor-pointer rounded text-slate-200">View included accounts and dates</summary>
           <ul className="mt-3 space-y-3 text-xs">{l.units.map(u => <li key={u.key}><p className="text-slate-100">{u.label}</p>
             <p>{u.from ? fmtDate(u.from) : 'Purchase-cost record'} → {u.to ? fmtDate(u.to) : 'Date unavailable'} · closing value {money(u.close)} · gain {money(u.gain, true)}{u.assumption ? ' · assumed holding' : ''}</p></li>)}</ul>
         </details>}

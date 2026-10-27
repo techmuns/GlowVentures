@@ -20,7 +20,7 @@ function Inline({ text }: { text: string }) {
 function Table({ b }: { b: Extract<Block, { kind: "table" }> }) {
   const hasHead = b.head.some((h) => h !== "");
   return (
-    <div className="my-3 overflow-x-auto rounded-lg border border-ink-700">
+    <div className="my-3 overflow-x-auto rounded-lg border border-ink-700" data-navigation-scroll="markdown-1">
       {/* ── AN UPSTREAM DOCUMENT'S OWN TABLE ─────────────────────────────
           Exempt, declared. These are screener.in's rendered financial tables:
           the columns are year-ends in chronological order and the rows are a

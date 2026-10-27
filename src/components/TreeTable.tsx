@@ -1,4 +1,5 @@
-import { ReactNode, useCallback, useState, type MouseEvent } from "react";
+import { useNavigationState } from "@/lib/useNavigationState";
+import { ReactNode, useCallback, type MouseEvent } from "react";
 import { ChevronRight, ChevronsDownUp, ChevronsUpDown } from "lucide-react";
 import { useTableExporting } from "@/lib/tableExportSnapshot";
 
@@ -100,9 +101,9 @@ const NAME_GEOMETRY: Record<TreeDensity, { parent: string; child: [string, strin
  * WHICH ROWS ARE OPEN — component state rather than the URL: it is a reader's
  * place in a table, not a view of the book.
  */
-export function useExpanded(initial: Iterable<string> = []) {
+export function useExpanded(name: string, initial: Iterable<string> = []) {
   const exporting = useTableExporting();
-  const [open, setOpen] = useState<Set<string>>(() => new Set(initial));
+  const [open, setOpen] = useNavigationState(`expanded:${name}`, () => new Set(initial));
   const isOpen = useCallback((k: string) => exporting || open.has(k), [open, exporting]);
   const toggle = useCallback((k: string) => setOpen((p) => {
     const n = new Set(p);
@@ -147,7 +148,7 @@ export function TreeChevron({ open, onToggle, label, density = "regular", ...dat
 } & Record<`data-${string}`, string | number | undefined>) {
   const box = density === "dense" ? "h-4 w-4" : "mt-px h-5 w-5";
   return (
-    <button type="button" onClick={onToggle} aria-expanded={open} aria-label={label} title={label}
+    <button type="button" onClick={onToggle} data-navigation-expanded aria-expanded={open} aria-label={label} title={label}
       {...data}
       className={`inline-flex ${box} shrink-0 items-center justify-center rounded text-slate-500 ring-focus transition-colors hover:bg-ink-700/60 hover:text-champagne-400`}>
       <ChevronRight className={`h-3.5 w-3.5 transition-transform ${open ? "rotate-90" : ""}`} />

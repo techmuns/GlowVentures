@@ -1,3 +1,4 @@
+import { useNavigationState, useNavigationValue, numberNavigation } from "@/lib/useNavigationState";
 import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react";
 import { ChevronLeft, ChevronRight, Loader2, Lock } from "lucide-react";
 import { getDocument, GlobalWorkerOptions, PasswordResponses, Util, type PDFDocumentProxy, type PDFPageProxy, type RenderTask } from "pdfjs-dist";
@@ -11,10 +12,11 @@ const CONTROL = "rounded-md border border-ink-600 bg-ink-800 px-2 py-1.5 text-xs
 
 /** Keep every page's place in the document, but only allocate canvases near the
  * viewport. Scrolling a long statement must not retain hundreds of bitmaps. */
-function PdfPage({ source, count, scale, title, viewport, target, onHighlightMissing }: {
+function PdfPage({ source, count, scale, title, viewport, target, onHighlightMissing, restorePosition }: {
   source: PDFPageProxy; count: number; scale: number; title: string;
   viewport: RefObject<HTMLDivElement>; target?: PdfSourceTarget;
   onHighlightMissing: (missing: boolean) => void;
+  restorePosition: boolean;
 }) {
   const paper = useRef<HTMLDivElement>(null);
   const focused = useRef("");
@@ -83,7 +85,7 @@ function PdfPage({ source, count, scale, title, viewport, target, onHighlightMis
       const focusKey = JSON.stringify([scale, target]);
       // Returning to a highlighted page by scrolling should not pull the user
       // back to its number. Recenter only on a new citation or zoom level.
-      if (focused.current === focusKey) return;
+      if (restorePosition || focused.current === focusKey) return;
       scrollFrame = requestAnimationFrame(() => {
         const scroller = viewport.current;
         if (!alive || !scroller || !marker) return;
@@ -99,7 +101,7 @@ function PdfPage({ source, count, scale, title, viewport, target, onHighlightMis
       alive = false; render?.cancel(); cancelAnimationFrame(scrollFrame);
       marker?.remove(); canvas.remove(); canvas.width = 0; canvas.height = 0;
     };
-  }, [nearby, source, count, scale, title, viewport, target?.value, target?.isin, target?.field, target?.initialIsin, onHighlightMissing]);
+  }, [nearby, source, count, scale, title, viewport, target?.value, target?.isin, target?.field, target?.initialIsin, onHighlightMissing, restorePosition]);
 
   return <div ref={paper} data-pdf-paper={source.pageNumber} className="relative mx-auto bg-white shadow"
     style={{ width: view.width, height: view.height }}>
@@ -116,13 +118,13 @@ export default function PdfPreview({ url, file, title, initialPage, sourceTarget
   const [error, setError] = useState("");
   const [password, setPassword] = useState("");
   const unlock = useRef<((password: string) => void) | null>(null);
-  const [page, setPage] = useState(file.part?.from ?? 1);
-  const [zoom, setZoom] = useState("fit");
+  const [page, setPage, restored] = useNavigationValue(`pdf-page:${url}`, initialPage ?? file.part?.from ?? 1, numberNavigation);
+  const [zoom, setZoom] = useNavigationState<string>(`pdf-zoom:${url}`, "fit", ["fit", "1", "1.5", "2"]);
   const [width, setWidth] = useState(0);
   const [pages, setPages] = useState<PDFPageProxy[]>([]);
   const [highlightMissing, setHighlightMissing] = useState(false);
   const viewport = useRef<HTMLDivElement>(null);
-  const anchor = useRef({ page: file.part?.from ?? 1, fraction: 0 });
+  const anchor = useRef({ page, fraction: 0 });
   const scrollFrame = useRef(0);
 
   const jumpToPage = (number: number) => {
@@ -153,7 +155,7 @@ export default function PdfPreview({ url, file, title, initialPage, sourceTarget
       const sources = await Promise.all(Array.from({ length: doc.numPages }, (_, i) => doc.getPage(i + 1)));
       if (!alive) return;
       unlock.current = null;
-      setPdf(doc); setPages(sources);
+      setPdf(doc); setPages(sources); setPage(current => Math.max(1, Math.min(current, doc.numPages)));
       setStatus("ready");
     }).catch(() => {
       if (!alive) return;
@@ -181,10 +183,10 @@ export default function PdfPreview({ url, file, title, initialPage, sourceTarget
   }, [pdf, width, zoom]);
 
   useLayoutEffect(() => {
-    if (!pdf || !width) return;
+    if (restored || !pdf || !width) return;
     jumpToPage(Math.max(1, Math.min(initialPage ?? file.part?.from ?? 1, pdf.numPages)));
     // Width changes preserve the reading position via the anchor above.
-  }, [pdf, !!width, initialPage, file.part?.from]);
+  }, [pdf, !!width, initialPage, file.part?.from, restored, sourceTarget?.value, sourceTarget?.isin]);
 
   useEffect(() => {
     setHighlightMissing(!!sourceTarget && !initialPage);
@@ -212,7 +214,7 @@ export default function PdfPreview({ url, file, title, initialPage, sourceTarget
   };
 
   return (
-    <section aria-label="PDF preview" data-preview-pdf data-pdf-state={status}
+    <section aria-label="PDF preview" data-preview-pdf data-pdf-state={status} data-navigation-pending={status === "loading" || !pdf || !width ? "" : undefined}
       className="mt-3 flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-ink-700 bg-ink-800">
       {status === "password" ? (
         <form className="m-auto flex w-full max-w-sm flex-col gap-3 p-6" onSubmit={e => {
@@ -242,7 +244,7 @@ export default function PdfPreview({ url, file, title, initialPage, sourceTarget
             </select>
             {highlightMissing && <span role="status" className="text-xs text-slate-400">Exact number could not be uniquely highlighted in this statement.</span>}
           </div>
-          <div ref={viewport} data-pdf-scroll onScroll={trackPage} tabIndex={0} aria-label="PDF document pages"
+          <div ref={viewport} data-pdf-scroll data-navigation-scroll="pdfpreview-1" onScroll={trackPage} tabIndex={0} aria-label="PDF document pages"
             className="relative min-h-0 flex-1 overflow-auto p-4" style={{ overflowAnchor: "none" }}>
             <div className="grid w-max min-w-full gap-4">
               {pages.map(source => {
@@ -250,7 +252,7 @@ export default function PdfPreview({ url, file, title, initialPage, sourceTarget
                 const scale = zoom === "fit" ? Math.max(0.1, (width - 32) / size.width) : Number(zoom);
                 return <PdfPage key={source.pageNumber} source={source} count={pdf.numPages} scale={scale}
                   title={title} viewport={viewport} target={source.pageNumber === initialPage ? sourceTarget : undefined}
-                  onHighlightMissing={setHighlightMissing} />;
+                  onHighlightMissing={setHighlightMissing} restorePosition={restored} />;
               })}
             </div>
           </div>

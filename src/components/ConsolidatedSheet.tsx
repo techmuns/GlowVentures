@@ -90,11 +90,11 @@ export function ConsolidatedSheet({ onSources, onLoaded }: { onSources: () => vo
     </div>
     <p data-prose-ok="consolidated template units, valuation basis and missing-input coverage" className="mb-3 max-w-5xl text-xs leading-relaxed text-slate-400">{sheet.note}</p>
     <Card pad={false}>
-      <div className="max-h-[65vh] overflow-auto">
+      <div className="max-h-[65vh] overflow-auto" data-navigation-scroll="consolidatedsheet-1">
         <ExportableTable exportName={`Consolidated — ${sheet.name}`} className="w-full border-separate border-spacing-0 text-xs" data-table-static="the consolidated workbook format preserves its summary hierarchy and register column order">
           <thead className="sticky top-0 z-20"><tr>{sheet.columns.map((c, i) => <th key={c.key} className={`border-b border-r border-ink-700 bg-ink-800 px-3 py-3 text-left font-semibold text-slate-200 ${i === 0 ? "sticky left-0 z-30" : ""}`}
             style={{ minWidth: Math.min(220, Math.max(100, c.width * 7)), maxWidth: 340 }}><span className="block">{c.label}</span></th>)}</tr></thead>
-          <InfiniteTableBody rows={filtered} columns={sheet.columns.length} resetKey={JSON.stringify([sheet.name, query, scope])}>{({ row, index }) => <tr key={index} data-consolidated-row={index} className={row.kind ? "font-semibold" : "hover:bg-ink-700/30"}>
+          <InfiniteTableBody navigationKey="consolidatedsheet-filtered" rows={filtered} columns={sheet.columns.length} resetKey={JSON.stringify([sheet.name, query, scope])}>{({ row, index }) => <tr key={index} data-consolidated-row={index} className={row.kind ? "font-semibold" : "hover:bg-ink-700/30"}>
             {row.values.map((value, i) => {
               const c = sheet.columns[i], link = row.links?.[c.key];
               const text = display(value, c);

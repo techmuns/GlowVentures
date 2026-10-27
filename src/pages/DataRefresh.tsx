@@ -380,7 +380,7 @@ export function DataRefresh() {
         {portfolio.accounts.length === 0 ? (
           <p className="text-sm text-slate-500">No accounts registered yet — the registry is built from the statement headers during ingest.</p>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" data-navigation-scroll="datarefresh-1">
             <ExportableTable className="min-w-full text-sm">
               <thead className="border-b border-ink-700">
                 <Tr view={view}>
