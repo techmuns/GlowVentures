@@ -1,0 +1,12 @@
+export declare const PREVIEW_KDF: Readonly<{ name: 'PBKDF2'; hash: 'SHA-512'; salt: string; iterations: number }>;
+export declare const PREVIEW_COOKIE: string;
+export declare const SESSION_DOMAIN: string;
+export declare const MAX_PREVIEW_BYTES: number;
+export declare function previewKeyBytes(password: string): Promise<Uint8Array>;
+export declare function keyCookieValue(key: Uint8Array): string;
+export declare function keyFromCookie(cookie: string | null): Uint8Array | null;
+export declare function describePreview(bytes: Uint8Array): { bytes: number; dashboardHash: string };
+export declare function sealPrivateBytes(bytes: Uint8Array, key: Uint8Array, sourceHash: string, dashboardHash: string): Promise<Uint8Array>;
+export declare function openPrivateBytes(bytes: Uint8Array, key: Uint8Array, sourceHash: string): Promise<Uint8Array>;
+export declare const sealPreview: typeof sealPrivateBytes;
+export declare const openPreview: typeof openPrivateBytes;

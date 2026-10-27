@@ -20,6 +20,9 @@ book builder. It prepares all canonical collections, normalized documents,
 source provenance, audit files, ledger and consolidated exports, stock ledgers,
 fund disclosures, look-through data, original bytes and encrypted previews.
 
+Stock ledgers share prepared archive rows and settlement within one publication;
+no mutable archive or later version reuses those inputs.
+
 The job writes a single Git pack on `statement-publications`, with a separate
 Git index that never changes main or the checkout. A non-force ref update
 publishes all files and `current.json` together. A conflicting publication is
@@ -33,7 +36,11 @@ existing `GLOW_GITHUB_TOKEN`/repository configuration; no new service credential
 or bindings are needed. Git packs compress the published objects. Prepared view bytes stream through
 the gateway with a size bound, avoiding base64 decoding or book parsing there. The saved preview key
 remains HttpOnly and scoped to `/api/statement-previews/`; revision-pinned
-preview URLs use that same path.
+preview URLs use that same path. The login form derives the existing strong
+preview key with browser WebCrypto; the server still verifies the dashboard
+password before issuing either HttpOnly cookie. This avoids repeating the
+100,000-iteration KDF on the free host. The encryption format and keys remain
+compatible, and older clients retain the server-side derivation fallback.
 
 The browser selects every canonical collection before financial modules load.
 Every report and source request pins the same immutable revision. An open page

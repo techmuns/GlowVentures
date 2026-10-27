@@ -116,6 +116,7 @@ try {
   await page.locator('tr[data-upload-status="in-library"]').waitFor({ timeout: 30_000 });
   assert.equal(await page.getByPlaceholder('Filter by provider or file type…').inputValue(), 'Bandhan', 'Search state survives the automatic publication refresh');
   const readyMs = performance.now() - start; publishedAt = processor.status().revision;
+  fs.writeFileSync(path.join(output, 'upload-timing.json'), JSON.stringify({ readyMs, queue: 'simulated immediate start', publishedAt }));
   await page.screenshot({ path: path.join(output, 'ready.png'), fullPage: true });
   assert.equal(readControl(control).dispatches, 1);
   const snapshot = processor.snapshot();
@@ -173,7 +174,8 @@ try {
   assert.equal(digest(processor.snapshot().book), digest(snapshot.book), 'A code deployment retains the new statement and every financial collection');
   assert.notEqual(processor.status().revision, beforeDuplicate);
   assert.equal((await processor.asset(beforeDuplicate, 'audit/manifest.json')).length, all.length, 'Old sessions retain their immutable version after restart');
-  await page.goto(baseURL + '/stock/' + position.securityKey); await page.locator(`tr[data-account-row="${position.accountId}"]`).waitFor();
+  const migratedPage = await context.newPage();
+  await migratedPage.goto(baseURL + '/stock/' + position.securityKey); await migratedPage.locator(`tr[data-account-row="${position.accountId}"]`).waitFor();
   assert.deepEqual(errors, []);
   fs.writeFileSync(path.join(output, 'result.json'), JSON.stringify({ status: 'passed', readyMs, baselineDocuments: baseline.length,
     publishedDocuments: documents.length, canonicalCollectionsChecked: Object.keys(fullBook).length, reportingProjectionsChecked: 5,
@@ -182,6 +184,7 @@ try {
   console.log(JSON.stringify({ status: 'passed', readyMs, routes: routes.length }));
 } catch (error) {
   fs.writeFileSync(path.join(output, 'failure.json'), JSON.stringify({ message: error.message, errors, requests,
+    browser: browser ? await Promise.all(browser.contexts().flatMap(c => c.pages()).map(async p => ({ url: p.url(), body: await p.locator('body').innerText().catch(() => '') }))) : [],
     state: processor.status(), inbox: (await inboxFor(env, github).read()).log }, null, 2));
   throw error;
 } finally {
