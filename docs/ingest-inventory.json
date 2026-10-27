@@ -1,16 +1,16 @@
 {
-  "generatedAt": "2026-10-26T08:13:01.757Z",
+  "generatedAt": "2026-10-27T04:50:09.579Z",
   "sourceDir": "source",
   "counts": {
-    "files": 463,
-    "pdfs": 453,
+    "files": 464,
+    "pdfs": 454,
     "nonPdf": 10,
-    "classified": 395,
+    "classified": 396,
     "unclassified": 68,
     "encrypted": 36,
     "fromArchives": 399,
     "archivesExpanded": 50,
-    "pages": 1973
+    "pages": 1978
   },
   "reportTypes": [
     "holdings",
@@ -9396,6 +9396,26 @@
       "matchedBy": "nothing matched"
     },
     {
+      "path": "source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx",
+      "fileName": "ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx",
+      "bytes": 1076026,
+      "size": "1.0 MB",
+      "pages": 5,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Adviser transaction report (not a statement)",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "high",
+      "matchedBy": "non-statement signature"
+    },
+    {
       "path": "source/october-2026/CAPITAL REGISTER GREEN LANTERN - AJAY.pdf",
       "fileName": "CAPITAL REGISTER GREEN LANTERN - AJAY.pdf",
       "bytes": 128398,
@@ -15662,6 +15682,32 @@
         }
       },
       "fileCount": 3
+    },
+    "Adviser transaction report (not a statement)": {
+      "accounts": {
+        "(unidentified)": {
+          "owner": null,
+          "strategy": null,
+          "asOfDates": {
+            "(unidentified)": {
+              "reportTypes": {
+                "unknown": [
+                  {
+                    "path": "source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx",
+                    "pages": 5,
+                    "size": "1.0 MB",
+                    "confidence": "high",
+                    "sections": []
+                  }
+                ]
+              },
+              "fileCount": 1
+            }
+          },
+          "fileCount": 1
+        }
+      },
+      "fileCount": 1
     },
     "ASK Investment Managers Limited": {
       "accounts": {

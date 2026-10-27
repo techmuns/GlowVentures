@@ -256,8 +256,9 @@ read by OCR and published only because the page checks every row (Stage 10gk).
 Two LKP workbooks in `october-2026-c/` never arrived — the mail server replaced
 each with a removal notice — and stay listed as never arrived until LKP re-sends
 them. The adviser's consolidated review
-workbook and the family's investment register are read and **held out by
-decision** as statement sources. A monthly drop reissues the same filenames, so
+workbook, the family's investment register and MOPWM's family transaction
+report (`october-2026-e/`, Stage 10hu) are read and **held out by decision** as
+statement sources. A monthly drop reissues the same filenames, so
 extraction mirrors each archive's own path under `source/`.
 
 **Accounts.** One row per account, regenerated from `BOOK_POSITIONS` by
@@ -407,7 +408,9 @@ Never derive one side from the others.
   throw rather than guess. At the family's 21 October instruction,
   `scripts/lib/recoverHoldingCosts.mjs` also reads its dated equity and fund transactions
   and the investment register to fill missing costs only after exact
-  owner/ISIN/date/quantity reconciliation. It never replaces a statement's
+  owner/ISIN/date/quantity reconciliation; MOPWM's transaction report
+  (`scripts/lib/mopwmTransactions.mjs`, Stage 10hu) is tried only where both
+  leave a holding unrecovered, replayed to the statement's own date. It never replaces a statement's
   quantity, valuation, date or existing cost. Every join and unresolved balance
   is in `docs/COST-RECOVERY.md`. Closing rows keep fund folios separate; a known
   cost with unverified sale proceeds carries `hprUnavailableReason`, withholding
@@ -494,7 +497,7 @@ All steps are idempotent; `glowData.ts` regenerates byte-identically.
   the fix is the sender re-sending it. The upload refuses one outright
   (`shared/statementBytes.mjs`); inside a ZIP the intake lands the other files.
 - **Every file feeds the dashboard** (the family, 21 Oct 2026), except the held-
-  out review/register by decision; `acceptedUnread.mjs` is empty. Hope India
+  out review/register/transaction report by decision; `acceptedUnread.mjs` is empty. Hope India
   Trust is its own entity in the book (`shared/owners.mjs`), not a person's.
 
 ## The live layer
