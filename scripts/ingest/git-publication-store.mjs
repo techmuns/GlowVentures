@@ -15,7 +15,7 @@ export function gitPublicationStore({ root = process.cwd(), remote = 'origin', g
     cwd: root, input, env: { ...process.env, ...extraEnv }, maxBuffer: 128 * 1024 * 1024, stdio: ['pipe', 'pipe', 'pipe'],
   });
   const api = runtimeStore({ branch, ...options });
-  const putBlob = async value => git(['hash-object', '-w', '--stdin'], Buffer.from(value)).toString().trim();
+  const putBlob = async value => git(['-c', 'core.compression=1', 'hash-object', '-w', '--stdin'], Buffer.from(value)).toString().trim();
   const blob = async sha => {
     if (!/^[a-f0-9]{40}$/.test(sha)) throw Error('Invalid statement blob');
     try { return git(['cat-file', 'blob', sha]); } catch {
@@ -24,7 +24,12 @@ export function gitPublicationStore({ root = process.cwd(), remote = 'origin', g
       return bytes;
     }
   };
-  return { ...api, putBlob, blob,
+  const putFiles = async files => {
+    if (files.some(file => /[\r\n\0]/.test(file))) throw Error('Unsafe original filename');
+    const hashes = files.length ? git(['-c', 'core.compression=1', 'hash-object', '-w', '--stdin-paths'], files.join('\n') + '\n').toString().trim().split('\n') : [];
+    return new Map(files.map((file, i) => [file, hashes[i]]));
+  };
+  return { ...api, putBlob, putFiles, blob,
     async publish(previous, snapshot, receipt) {
       const { state, entries } = await publicationTree(previous, snapshot, receipt, putBlob, materialize);
       const index = path.join(scratch, 'index'), env = { GIT_INDEX_FILE: index };
@@ -39,7 +44,7 @@ export function gitPublicationStore({ root = process.cwd(), remote = 'origin', g
       const files = content.map((e, i) => {
         const filename = path.join(scratch, `content-${i}`); fs.writeFileSync(filename, e.content); return filename;
       });
-      const hashes = files.length ? git(['hash-object', '-w', '--stdin-paths'], files.join('\n') + '\n').toString().trim().split('\n') : [];
+      const hashes = files.length ? git(['-c', 'core.compression=1', 'hash-object', '-w', '--stdin-paths'], files.join('\n') + '\n').toString().trim().split('\n') : [];
       content.forEach((entry, i) => { entry.sha = hashes[i]; });
       const unique = new Map();
       for (const entry of entries) {
@@ -53,7 +58,7 @@ export function gitPublicationStore({ root = process.cwd(), remote = 'origin', g
       const head = git(['-c', 'user.name=Glow statement intake', '-c', 'user.email=glow-statement-intake@users.noreply.github.com',
         'commit-tree', tree, ...(previous.head ? ['-p', previous.head] : [])],
         `[CF-Pages-Skip] Verified statements ${snapshot.revision} [skip ci]\n`).toString().trim();
-      try { git(['push', remote, `${head}:refs/heads/${branch}`]); }
+      try { git(['-c', 'pack.compression=1', 'push', remote, `${head}:refs/heads/${branch}`]); }
       catch {
         if ((await api.read()).head !== previous.head) throw new VersionConflict('A newer publication must be included before retrying');
         throw Error('GitHub did not accept the statement publication');

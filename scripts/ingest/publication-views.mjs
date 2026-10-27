@@ -34,24 +34,24 @@ export function publicationViews({ root = process.cwd(), instantiate, store, bas
       }
       json(name, value);
     }
-    const raw = async (name, sha, filename) => {
-      // Baseline ZIP members may never have been separate Git blobs. Store the
-      // exact generated original/preview once in the same publication pack.
-      if (filename) {
-        const actual = await store.putBlob(fs.readFileSync(filename));
-        if (sha && actual !== sha) throw Error('Original bytes differ from their publication index');
-        sha = actual;
-      }
-      if (!sha) throw Error('Publication has no source bytes');
-      entries.push({ path: prefix + name, mode: '100644', type: 'blob', sha });
-    };
+    const originals = [];
+    const raw = (name, sha, filename) => originals.push({ name, sha, filename });
     for (const original of Object.values(snapshot.originals)) {
-      await raw(`statement-files/${original.file}`, original.blob,
+      raw(`statement-files/${original.file}`, original.blob,
         original.sourcePath ? null : path.join(root, 'public/statement-files', original.file));
     }
     const previews = new Set(Object.values(snapshot.originals).flatMap(f => f.preview ? [f.preview.file] : []));
-    for (const file of previews) await raw(`statement-previews/${file}`, snapshot.previews[file]?.blob,
+    for (const file of previews) raw(`statement-previews/${file}`, snapshot.previews[file]?.blob,
       snapshot.previews[file] ? null : path.join(root, 'public/statement-previews', file.replace(/\.pdf$/, '.bin')));
+    // One Git invocation imports all baseline ZIP members and previews, rather
+    // than launching a process for each original on every statement upload.
+    const files = [...new Set(originals.map(f => f.filename).filter(Boolean))];
+    const hashes = store.putFiles ? await store.putFiles(files) : new Map(await Promise.all(files.map(async file => [file, await store.putBlob(fs.readFileSync(file))])));
+    for (const { name, sha, filename } of originals) {
+      const actual = filename ? hashes.get(filename) : sha;
+      if (!actual || (sha && sha !== actual)) throw Error('Original bytes differ from their publication index');
+      entries.push({ path: prefix + name, mode: '100644', type: 'blob', sha: actual });
+    }
     return entries;
   };
 }
