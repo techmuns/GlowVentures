@@ -1,3 +1,17 @@
+export type NavigationWindow = { key: string; limit: number };
+export function readNavigationWindow(raw: unknown): NavigationWindow | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const value = raw as NavigationWindow;
+  return typeof value.key === 'string' && Number.isSafeInteger(value.limit) && value.limit > 0 ? value : null;
+}
+
+/** Intersect explicit comparison picks with the available choices, retaining order. */
+export function validNavigationPicks(value: string[] | null, allowed: ReadonlySet<string>, limit: number, complete = true): string[] | null {
+  if (value === null || !complete) return value;
+  const kept = [...new Set(value)].filter(key => allowed.has(key)).slice(0, limit);
+  return kept.length === value.length && kept.every((key, i) => key === value[i]) ? value : kept;
+}
+
 /** Presentation snapshots belong to a browser history entry, never the book. */
 export function validNavigationState<T extends string | Set<string>>(value: T, fallback: T, allowed?: ReadonlySet<string>): T {
   if (!allowed) return value;

@@ -1,3 +1,4 @@
+import { useNavigationState, useNavigationValue, nullableStringNavigation } from "@/lib/useNavigationState";
 import { ExportableTable } from "@/components/ExportableTable";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -112,7 +113,7 @@ function FormatBlock({ format, docs, uploads = [], inbox, onOpen }: {
       <span className="text-xs font-semibold uppercase tracking-wide text-slate-300">{format}</span>
       {docs.length > 0 && <Pill>{docs.length} {docs.length === 1 ? "file" : "files"}</Pill>}
     </div>
-    <div className="overflow-x-auto rounded-lg border border-ink-700">
+    <div className="overflow-x-auto rounded-lg border border-ink-700" data-navigation-scroll={`statement-library-${format}`}>
       <ExportableTable className="min-w-full text-sm" data-table-static="statement files, with uploads at the top until their archive rows are ready">
         <thead className="border-b border-ink-700 text-left text-[11px] uppercase tracking-wide text-slate-500"><tr>
           <th className="px-4 py-2.5 font-medium">Document</th>
@@ -483,8 +484,8 @@ function FolderTile({ folder, selected, onSelect, onOpen }: {
 export function StatementLibrary() {
   const [status, setStatus] = useState<"loading" | "ready" | "restricted">("loading");
   const [manifest, setManifest] = useState<ManifestEntry[]>([]);
-  const [query, setQuery] = useState("");
-  const [selected, setSelected] = useState<string | null>(null);
+  const [query, setQuery] = useNavigationState<string>("library-search", "");
+  const [selected, setSelected] = useNavigationValue<string | null>("library-selection", null, nullableStringNavigation);
   const [searchParams, setSearchParams] = useSearchParams();
   const linkedDocument = manifest.find(d => d.docKey === searchParams.get('file') || d.sourcePath === searchParams.get('path'));
   const openProvider = linkedDocument?.provider ?? searchParams.get(PROVIDER_PARAM);

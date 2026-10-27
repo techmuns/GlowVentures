@@ -1,3 +1,4 @@
+import { useNavigationState } from "@/lib/useNavigationState";
 import { ExportableTable } from "@/components/ExportableTable";
 import { useTableExportIdentity } from "@/lib/tableExportSnapshot";
 import { InfiniteTableBody } from "@/components/InfiniteTableBody";
@@ -53,12 +54,12 @@ const TABS: { key: Tab; label: string; icon: typeof TrendingUp }[] = [
   { key: "income", label: "Income & Corporate Actions", icon: Coins },
 ];
 
-const window = (from: string | null, to: string | null) =>
+const ledgerWindow = (from: string | null, to: string | null) =>
   from && to ? `${fmtDate(from)} → ${fmtDate(to)}` : from ? `from ${fmtDate(from)}` : to ? `to ${fmtDate(to)}` : null;
 
 export function LedgerInsights() {
   const [status, setStatus] = useState<"loading" | "ready" | "unreachable">("loading");
-  const [tab, setTab] = useState<Tab>("transactions");
+  const [tab, setTab] = useNavigationState<Tab>("ledger-tab", "transactions", TABS.map(t => t.key));
   const [txn, setTxn] = useState<TxnData | null>(null);
   const [lots, setLots] = useState<LotData | null>(null);
   const [income, setIncome] = useState<IncomeData | null>(null);
@@ -138,19 +139,19 @@ export function LedgerInsights() {
               29 Aug, the two trusts' NSDL holding statements, which carry no
               trade — so "as of 29 Aug" dated a tape that ends on 13 Aug. The
               window the transaction statements cover is what dates it. */}
-          {txn && window(txn.periodFrom, txn.periodTo) ? (
+          {txn && ledgerWindow(txn.periodFrom, txn.periodTo) ? (
             <Pill tone="info">
               <span data-xa="ledger-window" data-from={txn.periodFrom ?? ""} data-to={txn.periodTo ?? ""}
                 title={`The window the transaction statements cover — every trade on this page falls in it. The archive's newest statement of any kind is dated ${fmtDate(txn.asOf)}, and it dates no trade.`}>
-                tape {window(txn.periodFrom, txn.periodTo)}
+                tape {ledgerWindow(txn.periodFrom, txn.periodTo)}
               </span>
             </Pill>
           ) : null}
         </span>} />
 
-      <div className="mb-4 flex flex-wrap gap-2">
+      <div data-navigation-tabs="Ledger view" className="mb-4 flex flex-wrap gap-2">
         {TABS.map(({ key, label, icon: Icon }) => (
-          <button key={key} type="button" onClick={() => setTab(key)}
+          <button key={key} type="button" aria-pressed={tab === key} onClick={() => setTab(key)}
             className={`flex items-center gap-2 rounded-md border px-3 py-2 text-sm transition-colors ${
               tab === key ? "border-champagne-500/40 bg-champagne-500/10 text-champagne-400"
               : "border-ink-700 bg-ink-800 text-slate-300 hover:bg-ink-700/60"}`}>
@@ -159,7 +160,7 @@ export function LedgerInsights() {
         ))}
       </div>
 
-      <div className="min-h-0 flex-1 overflow-auto">
+      <div className="min-h-0 flex-1 overflow-auto" data-navigation-scroll="ledgerinsights-1">
         {status === "loading" && <div className="grid h-40 place-items-center text-sm text-slate-500">Reading the archive…</div>}
         {tab === "transactions" && viewTxn && (
           <TransactionsView key={scopeKey} data={viewTxn} sales={scope.owners ? null : sales}
@@ -214,7 +215,7 @@ function TransactionsView({ data, sales, scoped }: {
     status: (r) => (r.exited ? "Exited" : "Trimmed"),
   });
   const { fmtFromBase } = usePortfolio();
-  const win = window(data.periodFrom, data.periodTo);
+  const win = ledgerWindow(data.periodFrom, data.periodTo);
   /**
    * `Txn.amount` is `number | null` — a trade whose statement prints no
    * settlement, net or gross reported nothing, which is not the same as a trade
@@ -322,7 +323,7 @@ function TransactionsView({ data, sales, scoped }: {
       )}
 
       <Card pad={false}>
-        <div className="max-h-[560px] overflow-auto">
+        <div className="max-h-[560px] overflow-auto" data-navigation-scroll="ledgerinsights-2">
           <ExportableTable className="min-w-full text-sm">
             <thead className="sticky top-0 border-b border-ink-700 bg-ink-800 text-left">
               <Tr view={txnView}>
@@ -336,7 +337,7 @@ function TransactionsView({ data, sales, scoped }: {
                 <SortHeader col="realised" view={txnView}>Realised</SortHeader>
               </Tr>
             </thead>
-            <InfiniteTableBody rows={txnRows} columns={txnView.order.length} resetKey={JSON.stringify(txnView.sort)} className="divide-y divide-ink-700/70">
+            <InfiniteTableBody navigationKey="ledgerinsights-txnRows" rows={txnRows} columns={txnView.order.length} resetKey={JSON.stringify(txnView.sort)} className="divide-y divide-ink-700/70">
               {(t, i) => (
                 <Tr view={txnView} key={`${t.date}-${t.securityKey}-${i}`} className="hover:bg-ink-700/40">
                   <td className="px-4 py-2 mono text-slate-400 whitespace-nowrap">{fmtDate(t.date)}</td>
@@ -368,7 +369,7 @@ function TransactionsView({ data, sales, scoped }: {
       {sales && sales.rows.length > 0 && (
         <Card title="Sales &amp; exits" subtitle="Per security, over the same window — and whether the name is still held" pad={false}
           right={<Pill tone="info">{sales.exits} exited · {sales.trims} trimmed</Pill>}>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" data-navigation-scroll="ledgerinsights-3">
             <ExportableTable className="min-w-full text-sm">
               <thead className="border-b border-ink-700 text-left">
                 <Tr view={saleView}>
@@ -380,7 +381,7 @@ function TransactionsView({ data, sales, scoped }: {
                   <SortHeader col="status" view={saleView} align="left">Status</SortHeader>
                 </Tr>
               </thead>
-              <InfiniteTableBody rows={saleRows} columns={saleView.order.length} resetKey={JSON.stringify(saleView.sort)} className="divide-y divide-ink-700/70">
+              <InfiniteTableBody navigationKey="ledgerinsights-saleRows" rows={saleRows} columns={saleView.order.length} resetKey={JSON.stringify(saleView.sort)} className="divide-y divide-ink-700/70">
                 {(r) => (
                   <Tr view={saleView} key={r.securityKey} className="hover:bg-ink-700/40">
                     <td className="px-4 py-2 text-slate-100"><StockLink securityKey={r.securityKey} name={r.security} /></td>
@@ -575,7 +576,7 @@ function GainsView({ data }: { data: LotData | null }) {
           the class label claimed the family had picked their shares. */}
       {byBucket.length > 1 && (
         <Card title="Realised, by how the holding was run" subtitle="The same canonical total, split — the headline nets these together" pad={false}>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" data-navigation-scroll="ledgerinsights-4">
             <ExportableTable className="min-w-full text-sm">
               <thead className="border-b border-ink-700 text-left">
                 <Tr view={bucketView}>
@@ -637,7 +638,7 @@ function GainsView({ data }: { data: LotData | null }) {
       </p>
 
       <Card pad={false}>
-        <div className="max-h-[560px] overflow-auto">
+        <div className="max-h-[560px] overflow-auto" data-navigation-scroll="ledgerinsights-5">
           <ExportableTable className="min-w-full text-sm">
             <thead className="sticky top-0 border-b border-ink-700 bg-ink-800 text-left">
               <Tr view={lotView}>
@@ -652,7 +653,7 @@ function GainsView({ data }: { data: LotData | null }) {
                 <SortHeader col="gain" view={lotView}>Gain</SortHeader>
               </Tr>
             </thead>
-            <InfiniteTableBody rows={lotRows} columns={lotView.order.length} resetKey={JSON.stringify(lotView.sort)} className="divide-y divide-ink-700/70">
+            <InfiniteTableBody navigationKey="ledgerinsights-lotRows" rows={lotRows} columns={lotView.order.length} resetKey={JSON.stringify(lotView.sort)} className="divide-y divide-ink-700/70">
               {(l, i) => (
                 <Tr view={lotView} key={`${l.securityKey}-${l.saleDate}-${i}`} className="hover:bg-ink-700/40">
                   <td className="px-4 py-2 text-slate-100"><StockLink securityKey={l.securityKey} name={l.security} /></td>
@@ -733,7 +734,7 @@ function IncomeView({ data }: { data: IncomeData | null }) {
 
       {data.cash.length > 0 && (
         <Card title="Cash dividends" pad={false}>
-          <div className="max-h-[420px] overflow-auto">
+          <div className="max-h-[420px] overflow-auto" data-navigation-scroll="ledgerinsights-6">
             <ExportableTable className="min-w-full text-sm">
               <thead className="sticky top-0 border-b border-ink-700 bg-ink-800 text-left">
                 <Tr view={cashView}>
@@ -746,7 +747,7 @@ function IncomeView({ data }: { data: IncomeData | null }) {
                   <SortHeader col="net" view={cashView}>Net</SortHeader>
                 </Tr>
               </thead>
-              <InfiniteTableBody rows={cashRows} columns={cashView.order.length} resetKey={JSON.stringify(cashView.sort)} className="divide-y divide-ink-700/70">
+              <InfiniteTableBody navigationKey="ledgerinsights-cashRows" rows={cashRows} columns={cashView.order.length} resetKey={JSON.stringify(cashView.sort)} className="divide-y divide-ink-700/70">
                 {(r, i) => (
                   <Tr view={cashView} key={`${r.securityKey}-${r.date}-${i}`} className="hover:bg-ink-700/40">
                     <td className="px-4 py-2 text-slate-100"><StockLink securityKey={r.securityKey} name={r.security} /></td>
@@ -770,7 +771,7 @@ function IncomeView({ data }: { data: IncomeData | null }) {
 
       {data.corporate.length > 0 && (
         <Card title="Corporate actions" subtitle="Bonus, split and rights — an entitlement in shares, never an amount" pad={false}>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" data-navigation-scroll="ledgerinsights-7">
             <ExportableTable className="min-w-full text-sm">
               <thead className="border-b border-ink-700 text-left">
                 <Tr view={corpView}>
@@ -782,7 +783,7 @@ function IncomeView({ data }: { data: IncomeData | null }) {
                   <SortHeader col="entitlement" view={corpView} align="left">Entitlement</SortHeader>
                 </Tr>
               </thead>
-              <InfiniteTableBody rows={corpRows} columns={corpView.order.length} resetKey={JSON.stringify(corpView.sort)} className="divide-y divide-ink-700/70">
+              <InfiniteTableBody navigationKey="ledgerinsights-corpRows" rows={corpRows} columns={corpView.order.length} resetKey={JSON.stringify(corpView.sort)} className="divide-y divide-ink-700/70">
                 {(r, i) => (
                   <Tr view={corpView} key={`${r.securityKey}-${r.date}-${i}`} className="hover:bg-ink-700/40">
                     <td className="px-4 py-2 text-slate-100"><StockLink securityKey={r.securityKey} name={r.security} /></td>
