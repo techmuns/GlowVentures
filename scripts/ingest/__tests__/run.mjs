@@ -14,6 +14,8 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const SUITES = [
   { name: "bandhan", file: "bandhanFolio.test.mjs", required: true },
   { name: "capitalOrigins", file: "capitalOrigins.test.mjs", required: true },
+  // The demat each account's statements name (Stage 10ic, scripts/lib/dematAccounts.mjs).
+  { name: "dematAccounts", file: "dematAccounts.test.mjs", required: true },
   { name: "coverage", file: "returnCoverage.test.mjs", required: true },
   { name: "latestReturns", file: "accountReturnRecords.test.mjs", required: true },
   { name: "parseNum", file: "parseNum.test.mjs", required: true },

@@ -37,6 +37,8 @@ import { buildAccountReturnRecords } from "./lib/accountReturnRecords.mjs";
 import { returnCoverageReport } from "./lib/returnCoverageReport.mjs";
 import { recoverHoldingCosts, recoveryReport } from "./lib/recoverHoldingCosts.mjs";
 import { applyRecoveredCost } from "../shared/recoveredCosts.mjs";
+import { loadMopwmTransactions } from "./lib/mopwmTransactions.mjs";
+import { retireConfirmedExits } from "./lib/confirmedExits.mjs";
 
 /**
  * THE DEPOSITORY ACCOUNTS, BOTH OF THEM.
@@ -66,6 +68,7 @@ import { termSplit } from "./lib/holdingPeriod.mjs";
 import { capitalRecordFromInception } from "./lib/capitalOrigins.mjs";
 import { NOT_ATTRIBUTED, NOT_ATTRIBUTED_NAME } from "../shared/reviewHolders.mjs";
 import { REVIEW_AS_OF } from "./lib/reviewPrivateRead.mjs";
+import { dematAccountsFor } from "./lib/dematAccounts.mjs";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const AUDIT_DIR = process.env.GLOW_AUDIT_DIR ?? path.join(ROOT, "public", "audit");
 const OUT = process.env.GLOW_BOOK_OUT ?? path.join(ROOT, "src", "data", "glowData.ts");
@@ -4820,6 +4823,21 @@ function build(archived, archiveCount = archived.length) {
     }
   }
 
+  // The demat each account's units sit in, as its own statements print it
+  // (Stage 10ic, `scripts/lib/dematAccounts.mjs`).
+  {
+    const issuesByAccountId = new Map();
+    for (const [, issues] of byAccount) {
+      const id = accountIdOf(issues[0].provider, issues[0].accountNo);
+      issuesByAccountId.set(id, [...(issuesByAccountId.get(id) ?? []), ...issues]);
+    }
+    const pageText = (docKey) => {
+      try { return JSON.parse(fs.readFileSync(path.join(AUDIT_DIR, docKey, "pages.json"), "utf8")).pages.map((p) => p.text).join("\n"); }
+      catch { return null; }
+    };
+    dematAccountsFor(accounts, issuesByAccountId, pageText, notes);
+  }
+
   accounts.sort((a, b) => a.accountId.localeCompare(b.accountId));
   capitalGains.sort((a, b) => a.accountId.localeCompare(b.accountId));
 
@@ -5188,8 +5206,15 @@ function build(archived, archiveCount = archived.length) {
     delete shareMovements[keys[0]];
   }
 
+  // THE FAMILY'S CONFIRMED EXITS (Stage 10ib, `shared/confirmedExits.mjs`):
+  // a quantity-only line they say they have sold leaves the held book where
+  // MOPWM's dated exchange sales take the statement's own units to nil. After
+  // the movement windows, which stay what the depository printed; before cost
+  // recovery, so no purchase cost is recovered for a holding no longer held.
+  const mopwm = loadMopwmTransactions(ROOT);
+  const confirmedExits = retireConfirmedExits({ accounts, positions, unvalued: unvaluedHoldings, report: mopwm, notes });
   const holdingCostRecovery = recoverHoldingCosts({ root: ROOT, accounts, positions,
-    unvalued: unvaluedHoldings, shareMovements, docs, archiveCount });
+    unvalued: unvaluedHoldings, shareMovements, docs, archiveCount, mopwm });
   for (const p of positions) Object.assign(p, applyRecoveredCost(p, holdingCostRecovery.records));
   // THE REVIEW'S DATED TRADES PAST A STATEMENT WITH NO TAPE OF ITS OWN (Stage
   // 10hb) — the live layer's roll, as `rolledForward`, where the account's own
@@ -5224,7 +5249,7 @@ function build(archived, archiveCount = archived.length) {
       .map((k) => [k, holdingLots[k]])),
     capitalFromInception: [...capitalFromInception].sort(),
     navHistory, accountNavHistory, navCoverage, undatedCapital, attribution,
-    excludedAccounts, bankAccounts, unvaluedHoldings, separateInvestments,
+    excludedAccounts, bankAccounts, unvaluedHoldings, confirmedExits, separateInvestments,
     reviewSuperseded: review?.superseded ?? [], reviewWrittenOff: review?.writtenOff ?? [], reviewFlows: review?.flows ?? [],
     // Sorted deterministically: classified first (biggest book first), the
     // unclassified remainder last. Insertion order would make the emitted file
@@ -5300,7 +5325,7 @@ function emit(book) {
   L.push("// carry, and the UI renders them as an em dash. See docs/BOOK-REPORT.md for the");
   L.push("// list and what document would supply each.");
   L.push("import type {");
-  L.push("  Account, AccountBridge, AccountReturnBlock, AccountReturnCoverage, BookSummary, CapitalMove, CashFlow, Commitment,");
+  L.push("  Account, AccountBridge, AccountReturnBlock, AccountReturnCoverage, BookSummary, CapitalMove, CashFlow, Commitment, ConfirmedExit,");
   L.push("  Attribution, CorporateAction, EntityCG, FundInvestment, HoldingTrade, NavCoverage, NavPoint, Position, PositionTranches,");
   L.push("  PolycabHolding, RealisedByClass, RecoveredHoldingCost, ReviewFlow, ReviewSuperseded, ReviewWrittenOff, ShareMovement, StartupInvestment, UndatedCapital, UnvaluedStatementHolding,");
   L.push('} from "@/lib/types";');
@@ -5330,6 +5355,13 @@ function emit(book) {
   L.push(" * names the same owner's fund account whose own statement reports the identical units.");
   L.push(" */");
   L.push(`export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = ${j(book.unvaluedHoldings)};`);
+  L.push("");
+  L.push("/**");
+  L.push(" * EXITED, BY THE FAMILY'S CONFIRMATION AND THE ADVISER'S DATED SALES (Stage 10ib) — statement lines");
+  L.push(" * retired from the held book. Each names its statement, the transaction report's sale rows that take");
+  L.push(" * its units to nil, and the family's words (`shared/confirmedExits.mjs`). No price or gain is taken.");
+  L.push(" */");
+  L.push(`export const BOOK_CONFIRMED_EXITS: ConfirmedExit[] = ${j(book.confirmedExits)};`);
   L.push("");
   L.push("/** Statement rows the family's consolidated review replaces (Stage 10dh): each names the review line now counted. */");
   L.push(`export const BOOK_REVIEW_SUPERSEDED: ReviewSuperseded[] = ${j(book.reviewSuperseded)};`);

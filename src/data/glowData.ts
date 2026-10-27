@@ -8,7 +8,7 @@
 // carry, and the UI renders them as an em dash. See docs/BOOK-REPORT.md for the
 // list and what document would supply each.
 import type {
-  Account, AccountBridge, AccountReturnBlock, AccountReturnCoverage, BookSummary, CapitalMove, CashFlow, Commitment,
+  Account, AccountBridge, AccountReturnBlock, AccountReturnCoverage, BookSummary, CapitalMove, CashFlow, Commitment, ConfirmedExit,
   Attribution, CorporateAction, EntityCG, FundInvestment, HoldingTrade, NavCoverage, NavPoint, Position, PositionTranches,
   PolycabHolding, RealisedByClass, RecoveredHoldingCost, ReviewFlow, ReviewSuperseded, ReviewWrittenOff, ShareMovement, StartupInvestment, UndatedCapital, UnvaluedStatementHolding,
 } from "@/lib/types";
@@ -44,7 +44,11 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": null,
     "custodian": "360 ONE Alternates Asset Management",
-    "noPositionsReason": "no statement for this account carries a valuation; its documents report income and distributions only. Where these units are marked, another account holds them."
+    "noPositionsReason": "no statement for this account carries a valuation; its documents report income and distributions only. Where these units are marked, another account holds them.",
+    "demat": {
+      "printed": null,
+      "reason": "none of the 2 statements read for 360 ONE Alternates Asset Management 1000632 prints a DP ID and Client ID"
+    }
   },
   {
     "accountId": "360-one-alternates-asset-management-1000633",
@@ -60,7 +64,11 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": null,
     "custodian": "360 ONE Alternates Asset Management",
-    "noPositionsReason": "no statement for this account carries a valuation; its documents report income and distributions only. Where these units are marked, another account holds them."
+    "noPositionsReason": "no statement for this account carries a valuation; its documents report income and distributions only. Where these units are marked, another account holds them.",
+    "demat": {
+      "printed": null,
+      "reason": "none of the 3 statements read for 360 ONE Alternates Asset Management 1000633 prints a DP ID and Client ID"
+    }
   },
   {
     "accountId": "360-one-private-wealth-37702",
@@ -89,7 +97,11 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": null,
     "custodian": "360 ONE Private Wealth",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": null,
+      "reason": "none of the 4 statements read for 360 ONE Private Wealth 37702 prints a DP ID and Client ID"
+    }
   },
   {
     "accountId": "360-one-private-wealth-60066",
@@ -118,7 +130,11 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": null,
     "custodian": "360 ONE Private Wealth",
-    "noPositionsReason": "this account's holdings statement of 2026-09-30 prints a nil portfolio — no holding rows and a total of nil. That is a measurement, not a missing statement"
+    "noPositionsReason": "this account's holdings statement of 2026-09-30 prints a nil portfolio — no holding rows and a total of nil. That is a measurement, not a missing statement",
+    "demat": {
+      "printed": null,
+      "reason": "the statement read for 360 ONE Private Wealth 60066 prints no DP ID or Client ID"
+    }
   },
   {
     "accountId": "360-one-private-wealth-60117",
@@ -147,7 +163,11 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": null,
     "custodian": "360 ONE Private Wealth",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": null,
+      "reason": "none of the 3 statements read for 360 ONE Private Wealth 60117 prints a DP ID and Client ID"
+    }
   },
   {
     "accountId": "3p-investment-managers-3000048",
@@ -163,7 +183,20 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": "2026-07-31",
     "custodian": "3P Investment Managers",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": {
+        "depository": "CDSL",
+        "dpId": "12010900",
+        "clientId": "37359311",
+        "participant": "Motilal Oswal Financial Services",
+        "accountId": "motilal-oswal-financial-services-demat-1201090037359311",
+        "asOf": "2026-07-31",
+        "documents": [
+          "3p-investment-managers-3000048-2026-07-31-holdings"
+        ]
+      }
+    }
   },
   {
     "accountId": "aditya-birla-sun-life-mutual-fund-1019265797",
@@ -179,7 +212,11 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": null,
     "custodian": "Aditya Birla Sun Life Mutual Fund",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": null,
+      "reason": "none of the 3 statements read for Aditya Birla Sun Life Mutual Fund 1019265797 prints a DP ID and Client ID"
+    }
   },
   {
     "accountId": "aditya-birla-sun-life-mutual-fund-1038104611",
@@ -195,7 +232,11 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": null,
     "custodian": "Aditya Birla Sun Life Mutual Fund",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": null,
+      "reason": "none of the 2 statements read for Aditya Birla Sun Life Mutual Fund 1038104611 prints a DP ID and Client ID"
+    }
   },
   {
     "accountId": "ask-absolute-return-fund-9039917111",
@@ -211,7 +252,21 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": "2026-03-31",
     "custodian": "ASK Absolute Return Fund",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": {
+        "depository": "CDSL",
+        "dpId": "12010900",
+        "clientId": "12539150",
+        "participant": "Motilal Oswal Financial Services",
+        "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
+        "asOf": "2026-03-31",
+        "documents": [
+          "ask-absolute-return-fund-9039917111-2026-03-31-holdings",
+          "ask-absolute-return-fund-9039917111-2026-03-31-holdings-2"
+        ]
+      }
+    }
   },
   {
     "accountId": "ask-absolute-return-fund-9039917144",
@@ -227,7 +282,20 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": "2026-03-31",
     "custodian": "ASK Absolute Return Fund",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": {
+        "depository": "CDSL",
+        "dpId": "12010900",
+        "clientId": "12838316",
+        "participant": "Motilal Oswal Financial Services",
+        "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+        "asOf": "2026-03-31",
+        "documents": [
+          "ask-absolute-return-fund-9039917144-2026-03-31-holdings"
+        ]
+      }
+    }
   },
   {
     "accountId": "ask-investment-managers-limited-10032723",
@@ -250,6 +318,10 @@ export const BOOK_ACCOUNTS: Account[] = [
       "from": "2019-07-26",
       "to": "2026-09-08",
       "source": "ask-investment-managers-limited-10032723-2026-09-08-profit-and-loss"
+    },
+    "demat": {
+      "printed": null,
+      "reason": "none of the 6 statements read for ASK Investment Managers Limited 10032723 prints a DP ID and Client ID"
     }
   },
   {
@@ -273,6 +345,10 @@ export const BOOK_ACCOUNTS: Account[] = [
       "from": "2019-09-06",
       "to": "2026-09-08",
       "source": "ask-investment-managers-limited-10034025-2026-09-08-profit-and-loss"
+    },
+    "demat": {
+      "printed": null,
+      "reason": "none of the 6 statements read for ASK Investment Managers Limited 10034025 prints a DP ID and Client ID"
     }
   },
   {
@@ -289,7 +365,11 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": "2026-10-26",
     "custodian": "Bandhan Mutual Fund",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": null,
+      "reason": "the statement read for Bandhan Mutual Fund 8652064 prints no DP ID or Client ID"
+    }
   },
   {
     "accountId": "baring-private-equity-india-fund-AIFM_BPEPF6_0584",
@@ -305,7 +385,20 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": "2026-03-31",
     "custodian": "Baring Private Equity India Fund",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": {
+        "depository": "CDSL",
+        "dpId": "12010900",
+        "clientId": "12838316",
+        "participant": "Motilal Oswal Financial Services",
+        "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+        "asOf": "2026-03-31",
+        "documents": [
+          "baring-private-equity-india-fund-aifm-bpepf6-0584-2026-03-31-holdings"
+        ]
+      }
+    }
   },
   {
     "accountId": "buoyant-capital-103472",
@@ -321,7 +414,11 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": "2024-06-01",
     "capitalRecordTo": "2026-09-30",
     "custodian": "Buoyant Capital",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": null,
+      "reason": "none of the 8 statements read for Buoyant Capital 103472 prints a DP ID and Client ID"
+    }
   },
   {
     "accountId": "buoyant-capital-103473",
@@ -337,7 +434,11 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": "2024-06-01",
     "capitalRecordTo": "2026-09-30",
     "custodian": "Buoyant Capital",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": null,
+      "reason": "none of the 10 statements read for Buoyant Capital 103473 prints a DP ID and Client ID"
+    }
   },
   {
     "accountId": "carnelian-asset-management-and-advisors-pvt-ltd-3517383",
@@ -360,6 +461,10 @@ export const BOOK_ACCOUNTS: Account[] = [
       "from": "2025-01-06",
       "to": "2026-09-30",
       "source": "capital-record"
+    },
+    "demat": {
+      "printed": null,
+      "reason": "none of the 35 statements read for Carnelian Asset Management and Advisors Pvt Ltd 3517383 prints a DP ID and Client ID"
     }
   },
   {
@@ -376,7 +481,20 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": "2026-07-31",
     "custodian": "Carnelian Bharat Amritkaal Fund",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": {
+        "depository": "CDSL",
+        "dpId": "12010900",
+        "clientId": "12838316",
+        "participant": "Motilal Oswal Financial Services",
+        "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+        "asOf": "2026-07-31",
+        "documents": [
+          "carnelian-bharat-amritkaal-fund-4551-2026-07-31-holdings"
+        ]
+      }
+    }
   },
   {
     "accountId": "franklin-india-credit-aif-10387",
@@ -392,7 +510,11 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": "2026-10-22",
     "custodian": "Franklin India Credit AIF",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": null,
+      "reason": "the statement read for Franklin India Credit AIF 10387 prints no DP ID or Client ID"
+    }
   },
   {
     "accountId": "goldstandard-wealth-private-limited-100022",
@@ -415,6 +537,10 @@ export const BOOK_ACCOUNTS: Account[] = [
       "from": "2025-12-26",
       "to": "2026-10-06",
       "source": "goldstandard-wealth-private-limited-100022-2026-10-06-fact-sheet"
+    },
+    "demat": {
+      "printed": null,
+      "reason": "none of the 36 statements read for Goldstandard Wealth Private Limited 100022 prints a DP ID and Client ID"
     }
   },
   {
@@ -438,6 +564,10 @@ export const BOOK_ACCOUNTS: Account[] = [
       "from": "2025-12-26",
       "to": "2026-10-06",
       "source": "goldstandard-wealth-private-limited-100023-2026-10-06-fact-sheet"
+    },
+    "demat": {
+      "printed": null,
+      "reason": "none of the 37 statements read for Goldstandard Wealth Private Limited 100023 prints a DP ID and Client ID"
     }
   },
   {
@@ -461,6 +591,10 @@ export const BOOK_ACCOUNTS: Account[] = [
       "from": "2025-01-13",
       "to": "2026-07-27",
       "source": "green-lantern-capital-llp-510854-2026-07-27-fact-sheet"
+    },
+    "demat": {
+      "printed": null,
+      "reason": "none of the 24 statements read for Green Lantern Capital LLP 510854 prints a DP ID and Client ID"
     }
   },
   {
@@ -484,6 +618,10 @@ export const BOOK_ACCOUNTS: Account[] = [
       "from": "2025-01-16",
       "to": "2026-07-27",
       "source": "green-lantern-capital-llp-510861-2026-07-27-fact-sheet"
+    },
+    "demat": {
+      "printed": null,
+      "reason": "none of the 28 statements read for Green Lantern Capital LLP 510861 prints a DP ID and Client ID"
     }
   },
   {
@@ -500,7 +638,20 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": null,
     "custodian": "HDFC Bank (NSDL demat)",
-    "noPositionsReason": "this custody account's statement of 2026-03-31 values nothing: it prints 38 holding(s) as quantities and carries no rate or value column at all. The units are in the archive. What values them on that date is a statement that marks the balance, such as the depository's Consolidated Account Statement. 12 of these are private-market holdings, counted under the family's consolidated review (MOPWM, 30 Jun 2026) instead"
+    "noPositionsReason": "this custody account's statement of 2026-03-31 values nothing: it prints 38 holding(s) as quantities and carries no rate or value column at all. The units are in the archive. What values them on that date is a statement that marks the balance, such as the depository's Consolidated Account Statement. 12 of these are private-market holdings, counted under the family's consolidated review (MOPWM, 30 Jun 2026) instead",
+    "demat": {
+      "printed": {
+        "depository": "NSDL",
+        "dpId": "IN301151",
+        "clientId": "22025655",
+        "participant": "HDFC Bank",
+        "accountId": "hdfc-bank-nsdl-demat-22025655",
+        "asOf": "2026-03-31",
+        "documents": [
+          "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings"
+        ]
+      }
+    }
   },
   {
     "accountId": "hdfc-bank-nsdl-demat-67786137",
@@ -516,7 +667,20 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": null,
     "custodian": "HDFC Bank (NSDL demat)",
-    "noPositionsReason": "the private-market holding this statement records is counted under the family's consolidated review (MOPWM, 30 Jun 2026), the source for private-market holdings; the statement's units stay in the archive"
+    "noPositionsReason": "the private-market holding this statement records is counted under the family's consolidated review (MOPWM, 30 Jun 2026), the source for private-market holdings; the statement's units stay in the archive",
+    "demat": {
+      "printed": {
+        "depository": "NSDL",
+        "dpId": "IN301549",
+        "clientId": "67786137",
+        "participant": "HDFC Bank",
+        "accountId": "hdfc-bank-nsdl-demat-67786137",
+        "asOf": "2026-08-29",
+        "documents": [
+          "hdfc-bank-nsdl-demat-67786137-2026-08-29-holdings"
+        ]
+      }
+    }
   },
   {
     "accountId": "hdfc-bank-nsdl-demat-67786547",
@@ -532,7 +696,20 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": null,
     "custodian": "HDFC Bank (NSDL demat)",
-    "noPositionsReason": "the private-market holding this statement records is counted under the family's consolidated review (MOPWM, 30 Jun 2026), the source for private-market holdings; the statement's units stay in the archive"
+    "noPositionsReason": "the private-market holding this statement records is counted under the family's consolidated review (MOPWM, 30 Jun 2026), the source for private-market holdings; the statement's units stay in the archive",
+    "demat": {
+      "printed": {
+        "depository": "NSDL",
+        "dpId": "IN301549",
+        "clientId": "67786547",
+        "participant": "HDFC Bank",
+        "accountId": "hdfc-bank-nsdl-demat-67786547",
+        "asOf": "2026-08-29",
+        "documents": [
+          "hdfc-bank-nsdl-demat-67786547-2026-08-29-holdings"
+        ]
+      }
+    }
   },
   {
     "accountId": "hdfc-mutual-fund-15644806",
@@ -548,7 +725,11 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": "2026-08-31",
     "custodian": "HDFC Mutual Fund",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": null,
+      "reason": "the statement read for HDFC Mutual Fund 15644806 prints no DP ID or Client ID"
+    }
   },
   {
     "accountId": "hdfc-mutual-fund-15725046",
@@ -564,7 +745,11 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": "2026-09-30",
     "custodian": "HDFC Mutual Fund",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": null,
+      "reason": "the statement read for HDFC Mutual Fund 15725046 prints no DP ID or Client ID"
+    }
   },
   {
     "accountId": "hdfc-mutual-fund-16002141",
@@ -580,7 +765,11 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": "2026-08-31",
     "custodian": "HDFC Mutual Fund",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": null,
+      "reason": "the statement read for HDFC Mutual Fund 16002141 prints no DP ID or Client ID"
+    }
   },
   {
     "accountId": "hdfc-mutual-fund-16180583",
@@ -596,7 +785,11 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": null,
     "custodian": "HDFC Mutual Fund",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": null,
+      "reason": "none of the 3 statements read for HDFC Mutual Fund 16180583 prints a DP ID and Client ID"
+    }
   },
   {
     "accountId": "helios-mutual-fund-10056128",
@@ -612,7 +805,11 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": "2026-10-26",
     "custodian": "Helios Mutual Fund",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": null,
+      "reason": "the statement read for Helios Mutual Fund 10056128 prints no DP ID or Client ID"
+    }
   },
   {
     "accountId": "helios-mutual-fund-10355977",
@@ -628,7 +825,11 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": "2026-10-26",
     "custodian": "Helios Mutual Fund",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": null,
+      "reason": "none of the 2 statements read for Helios Mutual Fund 10355977 prints a DP ID and Client ID"
+    }
   },
   {
     "accountId": "icici-bank-nsdl-demat-49794950",
@@ -644,7 +845,20 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": null,
     "custodian": "ICICI Bank (NSDL demat)",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": {
+        "depository": "NSDL",
+        "dpId": "IN302902",
+        "clientId": "49794950",
+        "participant": "ICICI Bank",
+        "accountId": "icici-bank-nsdl-demat-49794950",
+        "asOf": "2026-03-31",
+        "documents": [
+          "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
+        ]
+      }
+    }
   },
   {
     "accountId": "icici-prudential-mutual-fund-14320536",
@@ -660,7 +874,11 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": "2026-10-01",
     "custodian": "ICICI Prudential Mutual Fund",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": null,
+      "reason": "the statement read for ICICI Prudential Mutual Fund 14320536 prints no DP ID or Client ID"
+    }
   },
   {
     "accountId": "icici-prudential-mutual-fund-36378950",
@@ -676,7 +894,11 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": "2026-10-05",
     "custodian": "ICICI Prudential Mutual Fund",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": null,
+      "reason": "the statement read for ICICI Prudential Mutual Fund 36378950 prints no DP ID or Client ID"
+    }
   },
   {
     "accountId": "icici-prudential-mutual-fund-36379637",
@@ -692,7 +914,11 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": "2026-10-05",
     "custodian": "ICICI Prudential Mutual Fund",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": null,
+      "reason": "the statement read for ICICI Prudential Mutual Fund 36379637 prints no DP ID or Client ID"
+    }
   },
   {
     "accountId": "india-sme-investments-175962",
@@ -708,7 +934,11 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": null,
     "custodian": "India SME Investments",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": null,
+      "reason": "the statement read for India SME Investments 175962 prints no DP ID or Client ID"
+    }
   },
   {
     "accountId": "india-sme-investments-175964",
@@ -724,7 +954,11 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": null,
     "custodian": "India SME Investments",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": null,
+      "reason": "the statement read for India SME Investments 175964 prints no DP ID or Client ID"
+    }
   },
   {
     "accountId": "india-sme-investments-177302",
@@ -740,7 +974,11 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": null,
     "custodian": "India SME Investments",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": null,
+      "reason": "the statement read for India SME Investments 177302 prints no DP ID or Client ID"
+    }
   },
   {
     "accountId": "invesco-mutual-fund-3041491081",
@@ -756,7 +994,11 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": "2026-09-30",
     "custodian": "Invesco Mutual Fund",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": null,
+      "reason": "the statement read for Invesco Mutual Fund 3041491081 prints no DP ID or Client ID"
+    }
   },
   {
     "accountId": "invesco-mutual-fund-3041491145",
@@ -772,7 +1014,11 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": "2026-09-30",
     "custodian": "Invesco Mutual Fund",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": null,
+      "reason": "the statement read for Invesco Mutual Fund 3041491145 prints no DP ID or Client ID"
+    }
   },
   {
     "accountId": "invesco-mutual-fund-3041794916",
@@ -788,7 +1034,11 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": "2026-09-30",
     "custodian": "Invesco Mutual Fund",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": null,
+      "reason": "the statement read for Invesco Mutual Fund 3041794916 prints no DP ID or Client ID"
+    }
   },
   {
     "accountId": "kotak-mahindra-mutual-fund-4295974",
@@ -804,7 +1054,11 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": null,
     "custodian": "Kotak Mahindra Mutual Fund",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": null,
+      "reason": "none of the 3 statements read for Kotak Mahindra Mutual Fund 4295974 prints a DP ID and Client ID"
+    }
   },
   {
     "accountId": "kotak-mahindra-mutual-fund-7125255",
@@ -820,7 +1074,11 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": "2026-09-30",
     "custodian": "Kotak Mahindra Mutual Fund",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": null,
+      "reason": "the statement read for Kotak Mahindra Mutual Fund 7125255 prints no DP ID or Client ID"
+    }
   },
   {
     "accountId": "lkp-securities-98245",
@@ -836,7 +1094,21 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": null,
     "custodian": "LKP Securities",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": {
+        "depository": "CDSL",
+        "dpId": "12030000",
+        "clientId": "00739979",
+        "participant": "LKP Securities",
+        "accountId": "lkp-securities-98245",
+        "asOf": "2026-07-02",
+        "documents": [
+          "lkp-securities-98245-2026-07-02-demat-statement",
+          "lkp-securities-98245-2026-03-31-holdings"
+        ]
+      }
+    }
   },
   {
     "accountId": "marathon-trends-advisory-pvt-ltd-5110758",
@@ -853,7 +1125,11 @@ export const BOOK_ACCOUNTS: Account[] = [
     "capitalRecordTo": null,
     "custodian": "Marathon Trends Advisory Pvt Ltd",
     "noPositionsReason": "this manager's statements in the drop — its capital-gain, dividend-statement, income-expense, transaction-statement statement(s) — include no holding statement, so nothing here states what this account holds or what it is worth at 2026-09-09; its transaction statement's last trade is dated 2025-07-22. What would fill it is the manager's own holding statement for this account",
-    "capital": null
+    "capital": null,
+    "demat": {
+      "printed": null,
+      "reason": "none of the 4 statements read for Marathon Trends Advisory Pvt Ltd 5110758 prints a DP ID and Client ID"
+    }
   },
   {
     "accountId": "marathon-trends-advisory-pvt-ltd-5110837",
@@ -870,7 +1146,11 @@ export const BOOK_ACCOUNTS: Account[] = [
     "capitalRecordTo": null,
     "custodian": "Marathon Trends Advisory Pvt Ltd",
     "noPositionsReason": "this manager's statements in the drop — its capital-gain, dividend-statement, income-expense, transaction-statement statement(s) — include no holding statement, so nothing here states what this account holds or what it is worth at 2026-09-09; its transaction statement's last trade is dated 2025-07-23. What would fill it is the manager's own holding statement for this account",
-    "capital": null
+    "capital": null,
+    "demat": {
+      "printed": null,
+      "reason": "none of the 4 statements read for Marathon Trends Advisory Pvt Ltd 5110837 prints a DP ID and Client ID"
+    }
   },
   {
     "accountId": "mirae-asset-mutual-fund-70413280453",
@@ -886,7 +1166,11 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": null,
     "custodian": "Mirae Asset Mutual Fund",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": null,
+      "reason": "none of the 3 statements read for Mirae Asset Mutual Fund 70413280453 prints a DP ID and Client ID"
+    }
   },
   {
     "accountId": "molecule-ventures-llp-7810404",
@@ -909,6 +1193,10 @@ export const BOOK_ACCOUNTS: Account[] = [
       "from": "2024-10-24",
       "to": "2026-07-31",
       "source": "molecule-ventures-llp-7810404-2026-07-31-fact-sheet"
+    },
+    "demat": {
+      "printed": null,
+      "reason": "none of the 12 statements read for Molecule Ventures LLP 7810404 prints a DP ID and Client ID"
     }
   },
   {
@@ -925,7 +1213,11 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": "2026-08-06",
     "custodian": "Motilal Oswal Active Momentum Fund",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": null,
+      "reason": "the statement read for Motilal Oswal Active Momentum Fund 904168868444 prints no DP ID or Client ID"
+    }
   },
   {
     "accountId": "motilal-oswal-delphi-equity-fund-9049241536",
@@ -941,7 +1233,20 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": "2026-06-30",
     "custodian": "Motilal Oswal Delphi Equity Fund",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": {
+        "depository": "CDSL",
+        "dpId": "12010900",
+        "clientId": "12539150",
+        "participant": "Motilal Oswal Financial Services",
+        "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
+        "asOf": "2026-06-30",
+        "documents": [
+          "motilal-oswal-delphi-equity-fund-9049241536-2026-06-30-holdings"
+        ]
+      }
+    }
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
@@ -958,7 +1263,20 @@ export const BOOK_ACCOUNTS: Account[] = [
     "capitalRecordTo": null,
     "custodian": "Motilal Oswal Financial Services (demat)",
     "noPositionsReason": "no HOLDING statement for this account is in the drop — only its demat-transactions statement(s). The tape's closing balances are in the archive as quantities at 2026-07-31 and carry no rate, so nothing here can be valued. What would fill it is that account's own holding statement from its custodian",
-    "transactionsOnly": true
+    "transactionsOnly": true,
+    "demat": {
+      "printed": {
+        "depository": "CDSL",
+        "dpId": "12010900",
+        "clientId": "12539150",
+        "participant": "Motilal Oswal Financial Services",
+        "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
+        "asOf": "2026-07-31",
+        "documents": [
+          "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions"
+        ]
+      }
+    }
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
@@ -974,7 +1292,21 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": null,
     "custodian": "Motilal Oswal Financial Services (demat)",
-    "noPositionsReason": "this custody account's statement of 2026-07-31 values nothing: it prints 41 holding(s) as quantities, 23 of them with the price of their last depository movement — a transaction price, not a valuation of the balance; 6 at the face value they were allotted at; 12 with no rate at all. The units are in the archive. What values them on that date is a statement that marks the balance, such as CDSL's monthly Consolidated Account Statement. 10 of these are private-market holdings, counted under the family's consolidated review (MOPWM, 30 Jun 2026) instead"
+    "noPositionsReason": "this custody account's statement of 2026-07-31 values nothing: it prints 41 holding(s) as quantities, 23 of them with the price of their last depository movement — a transaction price, not a valuation of the balance; 6 at the face value they were allotted at; 12 with no rate at all. The units are in the archive. What values them on that date is a statement that marks the balance, such as CDSL's monthly Consolidated Account Statement. 10 of these are private-market holdings, counted under the family's consolidated review (MOPWM, 30 Jun 2026) instead",
+    "demat": {
+      "printed": {
+        "depository": "CDSL",
+        "dpId": "12010900",
+        "clientId": "12838316",
+        "participant": "Motilal Oswal Financial Services",
+        "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+        "asOf": "2026-07-31",
+        "documents": [
+          "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-demat-transactions",
+          "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings"
+        ]
+      }
+    }
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
@@ -990,7 +1322,21 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": null,
     "custodian": "Motilal Oswal Financial Services (demat)",
-    "noPositionsReason": "this custody account's statement of 2026-07-31 values nothing: it prints 14 holding(s) as quantities, 14 of them with the price of their last depository movement — a transaction price, not a valuation of the balance. The units are in the archive. What values them on that date is a statement that marks the balance, such as CDSL's monthly Consolidated Account Statement"
+    "noPositionsReason": "this custody account's statement of 2026-07-31 values nothing: it prints 14 holding(s) as quantities, 14 of them with the price of their last depository movement — a transaction price, not a valuation of the balance. The units are in the archive. What values them on that date is a statement that marks the balance, such as CDSL's monthly Consolidated Account Statement",
+    "demat": {
+      "printed": {
+        "depository": "CDSL",
+        "dpId": "12010900",
+        "clientId": "12838320",
+        "participant": "Motilal Oswal Financial Services",
+        "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
+        "asOf": "2026-07-31",
+        "documents": [
+          "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-demat-transactions",
+          "motilal-oswal-financial-services-demat-1201090012838320-2026-07-31-holdings"
+        ]
+      }
+    }
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838335",
@@ -1006,7 +1352,21 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": null,
     "custodian": "Motilal Oswal Financial Services (demat)",
-    "noPositionsReason": "this custody account's statement of 2026-07-31 values nothing: it prints 7 holding(s) as quantities, 6 of them with the price of their last depository movement — a transaction price, not a valuation of the balance; 1 with no rate at all. The units are in the archive. What values them on that date is a statement that marks the balance, such as CDSL's monthly Consolidated Account Statement"
+    "noPositionsReason": "this custody account's statement of 2026-07-31 values nothing: it prints 7 holding(s) as quantities, 6 of them with the price of their last depository movement — a transaction price, not a valuation of the balance; 1 with no rate at all. The units are in the archive. What values them on that date is a statement that marks the balance, such as CDSL's monthly Consolidated Account Statement",
+    "demat": {
+      "printed": {
+        "depository": "CDSL",
+        "dpId": "12010900",
+        "clientId": "12838335",
+        "participant": "Motilal Oswal Financial Services",
+        "accountId": "motilal-oswal-financial-services-demat-1201090012838335",
+        "asOf": "2026-07-31",
+        "documents": [
+          "motilal-oswal-financial-services-demat-1201090012838335-2026-07-31-demat-transactions",
+          "motilal-oswal-financial-services-demat-1201090012838335-2026-07-31-holdings"
+        ]
+      }
+    }
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090032387399",
@@ -1022,7 +1382,21 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": null,
     "custodian": "Motilal Oswal Financial Services (demat)",
-    "noPositionsReason": "this custody account's statement of 2026-07-31 values nothing: it prints 3 holding(s) as quantities, 3 of them with the price of their last depository movement — a transaction price, not a valuation of the balance. The units are in the archive. What values them on that date is a statement that marks the balance, such as CDSL's monthly Consolidated Account Statement"
+    "noPositionsReason": "this custody account's statement of 2026-07-31 values nothing: it prints 3 holding(s) as quantities, 3 of them with the price of their last depository movement — a transaction price, not a valuation of the balance. The units are in the archive. What values them on that date is a statement that marks the balance, such as CDSL's monthly Consolidated Account Statement",
+    "demat": {
+      "printed": {
+        "depository": "CDSL",
+        "dpId": "12010900",
+        "clientId": "32387399",
+        "participant": "Motilal Oswal Financial Services",
+        "accountId": "motilal-oswal-financial-services-demat-1201090032387399",
+        "asOf": "2026-07-31",
+        "documents": [
+          "motilal-oswal-financial-services-demat-1201090032387399-2026-07-31-demat-transactions",
+          "motilal-oswal-financial-services-demat-1201090032387399-2026-07-31-holdings"
+        ]
+      }
+    }
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090037359311",
@@ -1038,7 +1412,21 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": null,
     "custodian": "Motilal Oswal Financial Services (demat)",
-    "noPositionsReason": "this custody account values nothing: its statement of 2026-07-31 carries 2 holding(s) whose only price is the FACE VALUE the security was allotted at, which is not a mark anybody struck. The units are in the archive; multiplying by a face value would put a valuation nobody made into the book"
+    "noPositionsReason": "this custody account values nothing: its statement of 2026-07-31 carries 2 holding(s) whose only price is the FACE VALUE the security was allotted at, which is not a mark anybody struck. The units are in the archive; multiplying by a face value would put a valuation nobody made into the book",
+    "demat": {
+      "printed": {
+        "depository": "CDSL",
+        "dpId": "12010900",
+        "clientId": "37359311",
+        "participant": "Motilal Oswal Financial Services",
+        "accountId": "motilal-oswal-financial-services-demat-1201090037359311",
+        "asOf": "2026-07-31",
+        "documents": [
+          "motilal-oswal-financial-services-demat-1201090037359311-2026-07-31-demat-transactions",
+          "motilal-oswal-financial-services-demat-1201090037359311-2026-07-31-holdings"
+        ]
+      }
+    }
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090037436848",
@@ -1054,7 +1442,20 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": null,
     "custodian": "Motilal Oswal Financial Services (demat)",
-    "noPositionsReason": "every holding on this account's holdings statement of 2026-07-31 has been redeemed — the balance is nil, and that is a measurement"
+    "noPositionsReason": "every holding on this account's holdings statement of 2026-07-31 has been redeemed — the balance is nil, and that is a measurement",
+    "demat": {
+      "printed": {
+        "depository": "CDSL",
+        "dpId": "12010900",
+        "clientId": "37436848",
+        "participant": "Motilal Oswal Financial Services",
+        "accountId": "motilal-oswal-financial-services-demat-1201090037436848",
+        "asOf": "2026-07-31",
+        "documents": [
+          "motilal-oswal-financial-services-demat-1201090037436848-2026-07-31-holdings"
+        ]
+      }
+    }
   },
   {
     "accountId": "motilal-oswal-founders-fund-90410016093",
@@ -1070,7 +1471,21 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": "2026-09-30",
     "custodian": "Motilal Oswal Founders Fund",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": {
+        "depository": "CDSL",
+        "dpId": "12010900",
+        "clientId": "12838316",
+        "participant": "Motilal Oswal Financial Services",
+        "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+        "asOf": "2026-09-30",
+        "documents": [
+          "motilal-oswal-founders-fund-90410016093-2026-09-30-holdings",
+          "motilal-oswal-founders-fund-90410016093-2026-07-31-holdings"
+        ]
+      }
+    }
   },
   {
     "accountId": "motilal-oswal-founders-fund-90410016104",
@@ -1086,7 +1501,22 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": "2026-09-30",
     "custodian": "Motilal Oswal Founders Fund",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": {
+        "depository": "CDSL",
+        "dpId": "12010900",
+        "clientId": "12539150",
+        "participant": "Motilal Oswal Financial Services",
+        "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
+        "asOf": "2026-09-30",
+        "documents": [
+          "motilal-oswal-founders-fund-90410016104-2026-09-30-holdings",
+          "motilal-oswal-founders-fund-90410016104-2026-07-31-holdings",
+          "motilal-oswal-founders-fund-90410016104-2026-07-31-holdings-2"
+        ]
+      }
+    }
   },
   {
     "accountId": "motilal-oswal-hedged-equity-multi-factor-strategy-90410014574",
@@ -1102,7 +1532,20 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": "2026-07-31",
     "custodian": "Motilal Oswal Hedged Equity Multi Factor Strategy",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": {
+        "depository": "CDSL",
+        "dpId": "12010900",
+        "clientId": "12539150",
+        "participant": "Motilal Oswal Financial Services",
+        "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
+        "asOf": "2026-07-31",
+        "documents": [
+          "motilal-oswal-hedged-equity-multi-factor-strategy-90410014574-2026-07-31-holdings"
+        ]
+      }
+    }
   },
   {
     "accountId": "motilal-oswal-mutual-fund-90414963315",
@@ -1118,7 +1561,11 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": "2026-09-30",
     "custodian": "Motilal Oswal Mutual Fund",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": null,
+      "reason": "the statement read for Motilal Oswal Mutual Fund 90414963315 prints no DP ID or Client ID"
+    }
   },
   {
     "accountId": "neo-infra-income-opportunities-fund-9039920536",
@@ -1134,7 +1581,11 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": "2026-06-30",
     "custodian": "Neo Infra Income Opportunities Fund",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": null,
+      "reason": "the statement read for Neo Infra Income Opportunities Fund 9039920536 prints no DP ID or Client ID"
+    }
   },
   {
     "accountId": "review-ajay-jaisinghani",
@@ -1252,7 +1703,11 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": "2026-06-30",
     "custodian": "Sanshi Fund",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": null,
+      "reason": "the statement read for Sanshi Fund 9039671821 prints no DP ID or Client ID"
+    }
   },
   {
     "accountId": "sanshi-fund-9039671854",
@@ -1268,7 +1723,11 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": "2026-06-30",
     "custodian": "Sanshi Fund",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": null,
+      "reason": "the statement read for Sanshi Fund 9039671854 prints no DP ID or Client ID"
+    }
   },
   {
     "accountId": "sanshi-fund-9039671912",
@@ -1284,7 +1743,11 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": "2026-06-30",
     "custodian": "Sanshi Fund",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": null,
+      "reason": "the statement read for Sanshi Fund 9039671912 prints no DP ID or Client ID"
+    }
   },
   {
     "accountId": "sanshi-fund-9069671554",
@@ -1300,7 +1763,11 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": "2026-06-30",
     "custodian": "Sanshi Fund",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": null,
+      "reason": "the statement read for Sanshi Fund 9069671554 prints no DP ID or Client ID"
+    }
   },
   {
     "accountId": "sanshi-fund-9069671634",
@@ -1316,7 +1783,11 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": "2026-06-30",
     "custodian": "Sanshi Fund",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": null,
+      "reason": "the statement read for Sanshi Fund 9069671634 prints no DP ID or Client ID"
+    }
   },
   {
     "accountId": "sky-capital-rising-titans-fund-SKY003",
@@ -1332,7 +1803,24 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": null,
     "custodian": "Sky Capital Rising Titans Fund",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": {
+        "depository": "NSDL",
+        "dpId": "IN301151",
+        "clientId": "22025655",
+        "participant": "HDFC Bank",
+        "accountId": "hdfc-bank-nsdl-demat-22025655",
+        "asOf": "2026-08-31",
+        "documents": [
+          "sky-capital-rising-titans-fund-sky003-2026-08-31-holdings",
+          "sky-capital-rising-titans-fund-sky003-2026-07-31-holdings",
+          "sky-capital-rising-titans-fund-sky003-2026-06-30-holdings",
+          "sky-capital-rising-titans-fund-sky003-2026-05-31-holdings",
+          "sky-capital-rising-titans-fund-sky003-2026-04-30-holdings"
+        ]
+      }
+    }
   },
   {
     "accountId": "sky-capital-rising-titans-fund-SKY022",
@@ -1348,7 +1836,24 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": null,
     "custodian": "Sky Capital Rising Titans Fund",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": {
+        "depository": "NSDL",
+        "dpId": "IN302902",
+        "clientId": "49794950",
+        "participant": "ICICI Bank",
+        "accountId": "icici-bank-nsdl-demat-49794950",
+        "asOf": "2026-08-31",
+        "documents": [
+          "sky-capital-rising-titans-fund-sky022-2026-08-31-holdings",
+          "sky-capital-rising-titans-fund-sky022-2026-07-31-holdings",
+          "sky-capital-rising-titans-fund-sky022-2026-06-30-holdings",
+          "sky-capital-rising-titans-fund-sky022-2026-05-31-holdings",
+          "sky-capital-rising-titans-fund-sky022-2026-04-30-holdings"
+        ]
+      }
+    }
   },
   {
     "accountId": "sky-capital-rising-titans-fund-SKY023",
@@ -1364,7 +1869,24 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": null,
     "custodian": "Sky Capital Rising Titans Fund",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": {
+        "depository": "CDSL",
+        "dpId": "12010900",
+        "clientId": "42155971",
+        "participant": "Motilal Oswal Financial Services",
+        "accountId": null,
+        "asOf": "2026-08-31",
+        "documents": [
+          "sky-capital-rising-titans-fund-sky023-2026-08-31-holdings",
+          "sky-capital-rising-titans-fund-sky023-2026-07-31-holdings",
+          "sky-capital-rising-titans-fund-sky023-2026-06-30-holdings",
+          "sky-capital-rising-titans-fund-sky023-2026-05-31-holdings",
+          "sky-capital-rising-titans-fund-sky023-2026-04-30-holdings"
+        ]
+      }
+    }
   },
   {
     "accountId": "sky-capital-rising-titans-fund-SKY024",
@@ -1380,7 +1902,24 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": null,
     "custodian": "Sky Capital Rising Titans Fund",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": {
+        "depository": "CDSL",
+        "dpId": "12010900",
+        "clientId": "42155967",
+        "participant": "Motilal Oswal Financial Services",
+        "accountId": null,
+        "asOf": "2026-08-31",
+        "documents": [
+          "sky-capital-rising-titans-fund-sky024-2026-08-31-holdings",
+          "sky-capital-rising-titans-fund-sky024-2026-07-31-holdings",
+          "sky-capital-rising-titans-fund-sky024-2026-06-30-holdings",
+          "sky-capital-rising-titans-fund-sky024-2026-05-31-holdings",
+          "sky-capital-rising-titans-fund-sky024-2026-04-30-holdings"
+        ]
+      }
+    }
   },
   {
     "accountId": "svan-investment-managers-llp-8710067",
@@ -1397,7 +1936,11 @@ export const BOOK_ACCOUNTS: Account[] = [
     "capitalRecordTo": "2026-07-31",
     "custodian": "SVAN Investment Managers LLP",
     "noPositionsReason": null,
-    "capital": null
+    "capital": null,
+    "demat": {
+      "printed": null,
+      "reason": "none of the 10 statements read for SVAN Investment Managers LLP 8710067 prints a DP ID and Client ID"
+    }
   },
   {
     "accountId": "svan-investment-managers-llp-8710090",
@@ -1420,6 +1963,10 @@ export const BOOK_ACCOUNTS: Account[] = [
       "from": "2024-12-03",
       "to": "2026-09-30",
       "source": "capital-record"
+    },
+    "demat": {
+      "printed": null,
+      "reason": "none of the 11 statements read for SVAN Investment Managers LLP 8710090 prints a DP ID and Client ID"
     }
   },
   {
@@ -1436,7 +1983,11 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": "2026-03-31",
     "custodian": "Transition Venture Capital",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": null,
+      "reason": "the statement read for Transition Venture Capital TVC262 prints no DP ID or Client ID"
+    }
   },
   {
     "accountId": "transition-venture-capital-TVC263",
@@ -1452,7 +2003,11 @@ export const BOOK_ACCOUNTS: Account[] = [
     "inceptionDate": null,
     "capitalRecordTo": "2026-03-31",
     "custodian": "Transition Venture Capital",
-    "noPositionsReason": null
+    "noPositionsReason": null,
+    "demat": {
+      "printed": null,
+      "reason": "the statement read for Transition Venture Capital TVC263 prints no DP ID or Client ID"
+    }
   },
   {
     "accountId": "v-e-c-assago-capital-management-llp-128004",
@@ -1475,6 +2030,10 @@ export const BOOK_ACCOUNTS: Account[] = [
       "from": "2025-07-29",
       "to": "2026-10-07",
       "source": "v-e-c-assago-capital-management-llp-128004-2026-10-07-fact-sheet"
+    },
+    "demat": {
+      "printed": null,
+      "reason": "none of the 39 statements read for V.E.C Assago Capital Management LLP 128004 prints a DP ID and Client ID"
     }
   },
   {
@@ -1498,6 +2057,10 @@ export const BOOK_ACCOUNTS: Account[] = [
       "from": "2025-07-30",
       "to": "2026-08-13",
       "source": "v-e-c-assago-capital-management-llp-128005-2026-08-13-fact-sheet"
+    },
+    "demat": {
+      "printed": null,
+      "reason": "none of the 24 statements read for V.E.C Assago Capital Management LLP 128005 prints a DP ID and Client ID"
     }
   }
 ];
@@ -21804,38 +22367,6 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
-    "isin": "INE090A01021",
-    "quantity": 14500,
-    "asOf": "2026-07-31",
-    "costBasis": 20042266,
-    "heldPurchases": {
-      "first": "2026-07-01",
-      "last": "2026-07-01",
-      "lots": 1
-    },
-    "realizedPnL": 2635663,
-    "costOfUnitsSold": 2459824,
-    "dividendReceived": null,
-    "salesAfter": 1,
-    "evidence": [
-      {
-        "path": "source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx",
-        "sheet": "Direct Equity",
-        "rows": [
-          1217,
-          1218,
-          1219,
-          1220
-        ]
-      }
-    ],
-    "notes": [
-      "MOPWM transaction report: owner, account and every unit reconcile on 2026-07-31; it reports no cash dividends",
-      "1 sale(s) after 2026-07-31 (rows 1221); a newer holding balance is required"
-    ]
-  },
-  {
-    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "isin": "INE095A01012",
     "quantity": 5250,
     "asOf": "2026-07-31",
@@ -21920,38 +22451,6 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     ],
     "notes": [
       "MOPWM transaction report: owner, account and every unit reconcile on 2026-07-31; it reports no cash dividends"
-    ]
-  },
-  {
-    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
-    "isin": "INE238A01034",
-    "quantity": 7300,
-    "asOf": "2026-07-31",
-    "costBasis": 10022979,
-    "heldPurchases": {
-      "first": "2026-07-01",
-      "last": "2026-07-01",
-      "lots": 1
-    },
-    "realizedPnL": 1242717,
-    "costOfUnitsSold": 1495780,
-    "dividendReceived": null,
-    "salesAfter": 1,
-    "evidence": [
-      {
-        "path": "source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx",
-        "sheet": "Direct Equity",
-        "rows": [
-          1123,
-          1124,
-          1125,
-          1126
-        ]
-      }
-    ],
-    "notes": [
-      "MOPWM transaction report: owner, account and every unit reconcile on 2026-07-31; it reports no cash dividends",
-      "1 sale(s) after 2026-07-31 (rows 1127); a newer holding balance is required"
     ]
   },
   {
@@ -23471,27 +23970,6 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
   {
     "statementRecord": {
       "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
-      "pointer": "/holdings/2"
-    },
-    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
-    "ownerId": "ankita-jaisinghani",
-    "securityKey": "axis-bank",
-    "security": "AXIS BANK EQ",
-    "isin": "INE238A01034",
-    "assetClass": "Equity",
-    "quantity": 7300,
-    "faceValue": null,
-    "lastMovementRate": 1368.25,
-    "lastMovementValue": 2133101.75,
-    "lastMovementDate": "2026-07-02",
-    "lastMovementSide": "receipt",
-    "asOf": "2026-07-31",
-    "sameUnitsReportedBy": null,
-    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹1,368.25 a unit, on a receipt of 1,559 unit(s) on 2026-07-02 — not a valuation of the 7,300 unit(s) held, so it carries a quantity and no value"
-  },
-  {
-    "statementRecord": {
-      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
       "pointer": "/holdings/4"
     },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
@@ -23719,27 +24197,6 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": null,
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement, ₹14.18 a unit — not a valuation of the 51,00,984.835 unit(s) held. This account's transaction statement, from 2026-04-01, does not move it, so that price is older still. It carries a quantity and no value"
-  },
-  {
-    "statementRecord": {
-      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
-      "pointer": "/holdings/19"
-    },
-    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
-    "ownerId": "ankita-jaisinghani",
-    "securityKey": "icici-bank",
-    "security": "ICICI BANK-EQ",
-    "isin": "INE090A01021",
-    "assetClass": "Equity",
-    "quantity": 14500,
-    "faceValue": null,
-    "lastMovementRate": 1379.1,
-    "lastMovementValue": 7365773.1,
-    "lastMovementDate": "2026-07-02",
-    "lastMovementSide": "receipt",
-    "asOf": "2026-07-31",
-    "sameUnitsReportedBy": null,
-    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints the price of this holding's last depository movement — ₹1,379.1 a unit, on a receipt of 5,341 unit(s) on 2026-07-02 — not a valuation of the 14,500 unit(s) held, so it carries a quantity and no value"
   },
   {
     "statementRecord": {
@@ -24622,6 +25079,68 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "asOf": "2026-07-31",
     "sameUnitsReportedBy": "buoyant-capital-103473",
     "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 records 3416657.416 unit(s) at their face value of 100, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
+  }
+];
+
+/**
+ * EXITED, BY THE FAMILY'S CONFIRMATION AND THE ADVISER'S DATED SALES (Stage 10ib) — statement lines
+ * retired from the held book. Each names its statement, the transaction report's sale rows that take
+ * its units to nil, and the family's words (`shared/confirmedExits.mjs`). No price or gain is taken.
+ */
+export const BOOK_CONFIRMED_EXITS: ConfirmedExit[] = [
+  {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/2"
+    },
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "ownerId": "ankita-jaisinghani",
+    "securityKey": "axis-bank",
+    "security": "AXIS BANK EQ",
+    "isin": "INE238A01034",
+    "assetClass": "Equity",
+    "quantity": 7300,
+    "asOf": "2026-07-31",
+    "exitedOn": "2026-09-23",
+    "sale": {
+      "source": "source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx",
+      "reportAsOf": "2026-10-23",
+      "sheet": "Direct Equity",
+      "rows": [
+        1127
+      ],
+      "units": 7300
+    },
+    "confirmed": "2026-10-27",
+    "words": "they have exited all of these three positions from their direct equity portfolio",
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 records 7,300 units; MOPWM's transaction report of 2026-10-23 records them sold in full on the exchange on 2026-09-23 (row 1127), and the family confirmed the exit on 2026-10-27 (\"they have exited all of these three positions from their direct equity portfolio\")"
+  },
+  {
+    "statementRecord": {
+      "document": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+      "pointer": "/holdings/19"
+    },
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "ownerId": "ankita-jaisinghani",
+    "securityKey": "icici-bank",
+    "security": "ICICI BANK-EQ",
+    "isin": "INE090A01021",
+    "assetClass": "Equity",
+    "quantity": 14500,
+    "asOf": "2026-07-31",
+    "exitedOn": "2026-09-23",
+    "sale": {
+      "source": "source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx",
+      "reportAsOf": "2026-10-23",
+      "sheet": "Direct Equity",
+      "rows": [
+        1221
+      ],
+      "units": 14500
+    },
+    "confirmed": "2026-10-27",
+    "words": "they have exited all of these three positions from their direct equity portfolio",
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 records 14,500 units; MOPWM's transaction report of 2026-10-23 records them sold in full on the exchange on 2026-09-23 (row 1221), and the family confirmed the exit on 2026-10-27 (\"they have exited all of these three positions from their direct equity portfolio\")"
   }
 ];
 

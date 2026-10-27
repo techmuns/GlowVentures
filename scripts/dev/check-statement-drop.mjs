@@ -16,6 +16,7 @@ const context = await browser.newContext({ viewport: { width: 1440, height: 1000
 const batches = [], staged = [], committed = [], errors = [], results = [];
 let unavailable = false, release = null, held = null;
 let archiveState = 'ready', archiveHeld = null, releaseArchive = null;
+let readHeld = null, releaseRead = null, sawRead = null;
 const fixture = '%PDF-1.4\nSynthetic drag-and-drop fixture, no financial records.\n';
 await context.route('**/*', async route => {
   const request = route.request(), url = new URL(request.url());
@@ -25,6 +26,11 @@ await context.route('**/*', async route => {
     if (archiveState === 'restricted') return route.fulfill({ status: 503, body: 'Local archive failure' });
   }
   if (url.pathname === '/api/statement-uploads') {
+    if (request.method() === 'GET' && readHeld) {
+      const snapshot = structuredClone(batches), gate = readHeld; readHeld = null;
+      sawRead?.(); await gate;
+      return route.fulfill({ json: { ok: true, batches: snapshot } });
+    }
     if (request.method() === 'GET') return route.fulfill({
       status: unavailable ? 503 : 200,
       json: unavailable ? { ok: false, message: 'Local test: uploads unavailable' } : { ok: true, batches },
@@ -67,6 +73,11 @@ const waitForCommit = count => page.waitForFunction(count =>
 try {
   await open();
   await folder().waitFor();
+  const manifest = JSON.parse(await fs.readFile('public/audit/manifest.json', 'utf8'));
+  const linked = manifest.find(doc => doc.provider === 'Helios Mutual Fund');
+  const other = manifest.find(doc => doc.provider && doc.provider !== linked.provider && doc.status === 'ok');
+  assert.ok(linked && other);
+
   assert.equal(await page.getByRole('button', { name: 'Files', exact: true }).count(), 1);
   const data = await fileData('local-helios.pdf');
   const cell = folder().locator('tbody tr').first().locator('td').first();
@@ -101,6 +112,12 @@ try {
   assert.equal(await overlay().count(), 0);
   results.push('Escape, leaving the window and ending the drag clear the overlay; text drags are ignored');
 
+  // A focus refresh started before a successful upload must not erase it
+  // when the older GET finally answers with an empty inbox.
+  const readStarted = new Promise(resolve => { sawRead = resolve; });
+  readHeld = new Promise(resolve => { releaseRead = resolve; });
+  await page.evaluate(() => window.dispatchEvent(new Event('focus'))); await readStarted;
+
   // Two drops in the same browser turn exercise the synchronous upload lock.
   held = new Promise(resolve => { release = resolve; });
   await cell.evaluate((el, fixture) => {
@@ -110,6 +127,8 @@ try {
     }
   }, fixture);
   await page.locator('[data-publication-busy="true"]').waitFor();
+  assert.equal(await folder().locator('tbody tr').first().getAttribute('data-upload-status'), 'uploading');
+  await folder().locator('[data-upload-status="uploading"] [role="progressbar"]').waitFor();
   await event(cell, 'dragenter', data);
   await overlay().waitFor();
   assert.match(await overlay().innerText(), /Please wait/);
@@ -118,8 +137,49 @@ try {
   await waitForCommit(1);
   assert.equal(staged.length, 1);
   assert.equal(committed.length, 1);
+  const oldRead = page.waitForResponse(r => new URL(r.url()).pathname === '/api/statement-uploads' && r.request().method() === 'GET');
+  releaseRead(); await oldRead;
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  assert.equal(await folder().locator('[data-upload-status="queued"]').count(), 1, 'A late pre-upload response cannot erase the acknowledged file');
+  results.push('Late background responses cannot erase an acknowledged upload or stop its progress updates');
+
+  // The real statement table owns each stage, with no invented percentage or
+  // extra document once an upload has reached the served archive.
+  const progressFile = batches.find(b => b.files.some(f => f.name === 'local-helios.pdf')).files[0];
+  const refresh = async () => { await page.evaluate(() => window.dispatchEvent(new Event('focus'))); };
+  await folder().getByText('Preparing analysis', { exact: true }).first().waitFor();
+  assert.equal(await page.locator('[data-xa="statement-upload-log"]').count(), 0);
+  assert.equal(await folder().locator('[role="progressbar"]').first().getAttribute('aria-valuenow'), null);
+  assert.ok(!/saved to GitHub|Queued|1 reading/.test(await page.locator('main').innerText()));
+  await page.screenshot({ path: path.join(output, 'inline-preparing.png') });
+  progressFile.status = 'processing'; await refresh();
+  await folder().getByText('Analysing', { exact: true }).waitFor();
+  await page.screenshot({ path: path.join(output, 'inline-analysing.png') });
+  progressFile.status = 'landed'; progressFile.docKeys = [linked.docKey]; progressFile.providers = [linked.provider]; await refresh();
+  const ready = folder().locator('[data-preview-row]').filter({ has: page.locator('[data-upload-complete]') });
+  await ready.waitFor();
+  assert.equal(await folder().getByText('local-helios.pdf', { exact: true }).count(), 0);
+  assert.equal(await folder().locator('tbody tr').first().getAttribute('data-upload-status'), 'in-library');
+  assert.equal(await ready.getAttribute('data-preview-row'), linked.fileKey);
+  await page.screenshot({ path: path.join(output, 'inline-ready.png') });
+  progressFile.status = 'duplicate'; progressFile.docKeys = null; progressFile.providers = null;
+  progressFile.reason = 'Already in the library — byte-identical to ' + linked.sourcePath + '.'; await refresh();
+  await ready.getByText('Already in library', { exact: true }).waitFor();
+  assert.equal(await folder().locator('[data-preview-row]').count(), manifest.filter(d => d.provider === linked.provider).length);
+  const heldFile = progressFile;
+  heldFile.status = 'held'; heldFile.hold = 'needs-password'; heldFile.reason = 'Internal diagnostic: GitHub workflow failed'; await refresh();
+  await folder().getByText('Needs password', { exact: true }).waitFor();
+  await folder().getByRole('button', { name: 'Try again', exact: true }).waitFor();
+  assert.ok(!/GitHub|Internal diagnostic/.test(await folder().innerText()));
+  assert.equal(await folder().locator('[data-upload-status="held"] [data-upload-complete]').count(), 0);
+  results.push('Files progress inside the original table; real analysis state, green completion, exact duplicate handoff, actionable failure and no infrastructure copy');
+
+  Object.assign(progressFile, { status: 'queued', hold: null, reason: null, docKeys: null, providers: null });
+  await refresh(); await folder().getByText('Preparing analysis', { exact: true }).waitFor();
+
+
   assert.equal(staged[0].bytes, fixture);
-  assert.match(await page.locator('[data-xa="statement-upload-log"]').innerText(), /local-helios.pdf/);
+  assert.match(await folder().innerText(), /local-helios.pdf/);
   assert.equal(new URL(page.url()).searchParams.get('provider'), 'Helios Mutual Fund');
   results.push('A table-cell drop uploads the exact bytes once; concurrent drops are blocked and status stays in the folder');
 
@@ -163,17 +223,14 @@ try {
   assert.equal(committed.length, 4);
   results.push('Unsupported files show a reason without a request; the file chooser still uploads');
 
-  const manifest = JSON.parse(await fs.readFile('public/audit/manifest.json', 'utf8'));
-  const linked = manifest.find(doc => doc.provider === 'Helios Mutual Fund');
-  const other = manifest.find(doc => doc.provider && doc.provider !== linked.provider && doc.status === 'ok');
-  assert.ok(linked && other);
   batches.unshift({ id: '20261027T050000Z-navigation', uploadedAt: '2026-10-27T05:00:00Z',
     files: [{ name: 'previously-published.pdf', status: 'landed', docKeys: [other.docKey], providers: [other.provider] }] });
   await open('/statements?file=' + encodeURIComponent(linked.docKey));
   await folder().waitFor();
-  // A file link also opens its preview. Invoke the underlying folder action
-  // directly to verify that it clears the source selection in the address.
-  await page.locator('[data-xa="statement-upload-log"]').getByRole('button', { name: other.provider, exact: true }).evaluate(el => el.click());
+  // Completed files from other providers no longer clutter this folder.
+  assert.equal(await folder().getByText('previously-published.pdf', { exact: true }).count(), 0);
+  await page.getByRole('button', { name: 'All folders', exact: true }).evaluate(el => el.click());
+  await page.locator('[data-format-block="Recent statements"]').getByRole('button', { name: other.provider, exact: true }).click();
   await page.locator('[data-open-folder]').filter({ hasText: other.provider }).waitFor();
   assert.equal(new URL(page.url()).searchParams.get('provider'), other.provider);
   assert.equal(new URL(page.url()).searchParams.has('file'), false);
@@ -183,7 +240,13 @@ try {
   await page.locator('[data-upload-drop]').waitFor();
   assert.equal(new URL(page.url()).search, '');
   await open();
-  results.push('Upload-log folder links and All folders clear source selections instead of getting trapped by file/path links');
+  results.push('Inline recent-statement folder links and All folders clear source selections; other providers do not clutter a folder');
+
+  const excel = await fileData('new-format.xlsx');
+  await event(folder(), 'drop', excel);
+  await folder().locator('[data-upload-status="queued"]').filter({ hasText: 'new-format.xlsx' }).waitFor();
+  assert.equal(await folder().locator('[data-format-block]').first().getAttribute('data-format-block'), 'XLSX');
+  results.push('A newly dropped file type appears at the top instead of below existing format groups');
 
   const themeData = await fileData('theme-check.pdf');
   await page.evaluate(() => document.documentElement.classList.add('dark'));
@@ -236,7 +299,7 @@ try {
   await folder().waitFor();
   archiveState = 'restricted';
   await page.reload();
-  await page.getByText('The statement archive is password-protected', { exact: true }).waitFor();
+  await page.getByText('Statement library unavailable', { exact: true }).waitFor();
   guardData = await fileData('archive-unavailable.pdf');
   await event(page.locator('main'), 'dragenter', guardData);
   await overlay().waitFor();
@@ -261,6 +324,7 @@ try {
   throw error;
 } finally {
   release?.();
+  releaseRead?.();
   releaseArchive?.();
   await browser.close();
 }
