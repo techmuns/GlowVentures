@@ -67,6 +67,11 @@ const waitForCommit = count => page.waitForFunction(count =>
 try {
   await open();
   await folder().waitFor();
+  const manifest = JSON.parse(await fs.readFile('public/audit/manifest.json', 'utf8'));
+  const linked = manifest.find(doc => doc.provider === 'Helios Mutual Fund');
+  const other = manifest.find(doc => doc.provider && doc.provider !== linked.provider && doc.status === 'ok');
+  assert.ok(linked && other);
+
   assert.equal(await page.getByRole('button', { name: 'Files', exact: true }).count(), 1);
   const data = await fileData('local-helios.pdf');
   const cell = folder().locator('tbody tr').first().locator('td').first();
@@ -120,6 +125,41 @@ try {
   await waitForCommit(1);
   assert.equal(staged.length, 1);
   assert.equal(committed.length, 1);
+  // The real statement table owns each stage, with no invented percentage or
+  // extra document once an upload has reached the served archive.
+  const progressFile = batches.find(b => b.files.some(f => f.name === 'local-helios.pdf')).files[0];
+  const refresh = async () => { await page.evaluate(() => window.dispatchEvent(new Event('focus'))); };
+  await folder().getByText('Preparing analysis', { exact: true }).first().waitFor();
+  assert.equal(await page.locator('[data-xa="statement-upload-log"]').count(), 0);
+  assert.equal(await folder().locator('[role="progressbar"]').first().getAttribute('aria-valuenow'), null);
+  assert.ok(!/saved to GitHub|Queued|1 reading/.test(await page.locator('main').innerText()));
+  await page.screenshot({ path: path.join(output, 'inline-preparing.png') });
+  progressFile.status = 'processing'; await refresh();
+  await folder().getByText('Analysing', { exact: true }).waitFor();
+  await page.screenshot({ path: path.join(output, 'inline-analysing.png') });
+  progressFile.status = 'landed'; progressFile.docKeys = [linked.docKey]; progressFile.providers = [linked.provider]; await refresh();
+  const ready = folder().locator('[data-preview-row]').filter({ has: page.locator('[data-upload-complete]') });
+  await ready.waitFor();
+  assert.equal(await folder().getByText('local-helios.pdf', { exact: true }).count(), 0);
+  assert.equal(await folder().locator('tbody tr').first().getAttribute('data-upload-status'), 'in-library');
+  assert.equal(await ready.getAttribute('data-preview-row'), linked.fileKey);
+  await page.screenshot({ path: path.join(output, 'inline-ready.png') });
+  progressFile.status = 'duplicate'; progressFile.docKeys = null; progressFile.providers = null;
+  progressFile.reason = 'Already in the library — byte-identical to ' + linked.sourcePath + '.'; await refresh();
+  await ready.getByText('Already in library', { exact: true }).waitFor();
+  assert.equal(await folder().locator('[data-preview-row]').count(), manifest.filter(d => d.provider === linked.provider).length);
+  const heldFile = progressFile;
+  heldFile.status = 'held'; heldFile.hold = 'needs-password'; heldFile.reason = 'Internal diagnostic: GitHub workflow failed'; await refresh();
+  await folder().getByText('Needs password', { exact: true }).waitFor();
+  await folder().getByRole('button', { name: 'Try again', exact: true }).waitFor();
+  assert.ok(!/GitHub|Internal diagnostic/.test(await folder().innerText()));
+  assert.equal(await folder().locator('[data-upload-status="held"] [data-upload-complete]').count(), 0);
+  results.push('Files progress inside the original table; real analysis state, green completion, exact duplicate handoff, actionable failure and no infrastructure copy');
+
+  Object.assign(progressFile, { status: 'queued', hold: null, reason: null, docKeys: null, providers: null });
+  await refresh(); await folder().getByText('Preparing analysis', { exact: true }).waitFor();
+
+
   assert.equal(staged[0].bytes, fixture);
   assert.match(await page.locator('[data-xa="statement-upload-log"]').innerText(), /local-helios.pdf/);
   assert.equal(new URL(page.url()).searchParams.get('provider'), 'Helios Mutual Fund');
@@ -165,10 +205,6 @@ try {
   assert.equal(committed.length, 4);
   results.push('Unsupported files show a reason without a request; the file chooser still uploads');
 
-  const manifest = JSON.parse(await fs.readFile('public/audit/manifest.json', 'utf8'));
-  const linked = manifest.find(doc => doc.provider === 'Helios Mutual Fund');
-  const other = manifest.find(doc => doc.provider && doc.provider !== linked.provider && doc.status === 'ok');
-  assert.ok(linked && other);
   batches.unshift({ id: '20261027T050000Z-navigation', uploadedAt: '2026-10-27T05:00:00Z',
     files: [{ name: 'previously-published.pdf', status: 'landed', docKeys: [other.docKey], providers: [other.provider] }] });
   await open('/statements?file=' + encodeURIComponent(linked.docKey));
@@ -188,36 +224,11 @@ try {
   await open();
   results.push('Inline recent-statement folder links and All folders clear source selections; other providers do not clutter a folder');
 
-  // The real statement table owns each stage, with no invented percentage or
-  // extra document once an upload has reached the served archive.
-  const progressFile = batches.find(b => b.files.some(f => f.name === 'local-helios.pdf')).files[0];
-  const refresh = async () => { await page.evaluate(() => window.dispatchEvent(new Event('focus'))); };
-  await folder().getByText('Preparing analysis', { exact: true }).first().waitFor();
-  assert.equal(await page.locator('[data-xa="statement-upload-log"]').count(), 0);
-  assert.equal(await folder().locator('[role="progressbar"]').first().getAttribute('aria-valuenow'), null);
-  assert.ok(!/saved to GitHub|Queued|1 reading/.test(await page.locator('main').innerText()));
-  await page.screenshot({ path: path.join(output, 'inline-preparing.png') });
-  progressFile.status = 'processing'; await refresh();
-  await folder().getByText('Analysing', { exact: true }).waitFor();
-  await page.screenshot({ path: path.join(output, 'inline-analysing.png') });
-  progressFile.status = 'landed'; progressFile.docKeys = [linked.docKey]; progressFile.providers = [linked.provider]; await refresh();
-  const ready = folder().locator('[data-preview-row]').filter({ has: page.locator('[data-upload-complete]') });
-  await ready.waitFor();
-  assert.equal(await folder().getByText('local-helios.pdf', { exact: true }).count(), 0);
-  assert.equal(await folder().locator('tbody tr').first().getAttribute('data-upload-status'), 'queued');
-  assert.equal(await ready.getAttribute('data-preview-row'), linked.fileKey);
-  await page.screenshot({ path: path.join(output, 'inline-ready.png') });
-  progressFile.status = 'duplicate'; progressFile.docKeys = null; progressFile.providers = null;
-  progressFile.reason = 'Already in the library — byte-identical to ' + linked.sourcePath + '.'; await refresh();
-  await ready.getByText('Already in library', { exact: true }).waitFor();
-  assert.equal(await folder().locator('[data-preview-row]').count(), manifest.filter(d => d.provider === linked.provider).length);
-  const heldFile = batches.find(b => b.files.some(f => f.name === 'chooser.pdf')).files[0];
-  heldFile.status = 'held'; heldFile.hold = 'needs-password'; heldFile.reason = 'Internal diagnostic: GitHub workflow failed'; await refresh();
-  await folder().getByText('Needs password', { exact: true }).waitFor();
-  await folder().getByRole('button', { name: 'Try again', exact: true }).waitFor();
-  assert.ok(!/GitHub|Internal diagnostic/.test(await folder().innerText()));
-  assert.equal(await folder().locator('[data-upload-status="held"] [data-upload-complete]').count(), 0);
-  results.push('Files progress inside the original table; real analysis state, green completion, exact duplicate handoff, actionable failure and no infrastructure copy');
+  const excel = await fileData('new-format.xlsx');
+  await event(folder(), 'drop', excel);
+  await folder().locator('[data-upload-status="queued"]').filter({ hasText: 'new-format.xlsx' }).waitFor();
+  assert.equal(await folder().locator('[data-format-block]').first().getAttribute('data-format-block'), 'XLSX');
+  results.push('A newly dropped file type appears at the top instead of below existing format groups');
 
   const themeData = await fileData('theme-check.pdf');
   await page.evaluate(() => document.documentElement.classList.add('dark'));

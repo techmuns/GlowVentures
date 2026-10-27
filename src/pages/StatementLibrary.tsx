@@ -59,6 +59,7 @@ type UploadRow = {
   id: string; name: string; uploadedAt: string; batch?: string; file?: InboxFile;
   providers: string[]; destination?: string; fileKeys: string[];
   view: Omit<FileView, "key"> & { key: FileView["key"] | "uploading" };
+  document?: ManifestEntry;
 };
 
 function UploadStatus({ row }: { row: UploadRow }) {
@@ -127,9 +128,9 @@ function FormatBlock({ format, docs, uploads = [], inbox, onOpen }: {
               <span className="inline-flex items-center gap-1.5" title={row.name}>{fileIcon(row.name.split(".").pop()?.toUpperCase() ?? "")}<span className="break-words">{row.name.split("/").pop()}</span></span>
               <UploadActions row={row} inbox={inbox} />
             </td>
-            <td className="px-4 py-3 text-slate-500">{DASH}</td>
-            <td className="px-4 py-3 text-slate-500">{DASH}</td>
-            <td className="px-4 py-3 text-slate-500">{DASH}</td>
+            <td className="px-4 py-3 text-slate-500">{row.document?.owner ?? DASH}</td>
+            <td className="px-4 py-3 text-slate-500">{row.document?.accountNo ?? DASH}</td>
+            <td className="px-4 py-3 text-slate-500">{row.document?.asOf ? fmtDate(row.document.asOf) : DASH}</td>
             <td className="px-4 py-3"><UploadStatus row={row} /></td>
             <td className="px-4 py-3 text-xs text-slate-500">
               {onOpen ? row.providers.map(provider => completed(row) && row.fileKeys.length
@@ -366,6 +367,11 @@ function UploadPanel({ inbox, provider, archiveStatus }: {
 
 /** The opened folder: a header strip naming the provider, then one block per
  *  file format it holds. */
+function uploadsForFormat(format: string, docs: LibraryDoc[], allDocs: LibraryDoc[], uploads: UploadRow[]) {
+  return uploads.filter(row => row.fileKeys.some(key => docs.some(d => d.fileKey === key)) ||
+    (!row.fileKeys.some(key => allDocs.some(d => d.fileKey === key)) && row.name.split(".").pop()?.toUpperCase() === format));
+}
+
 function OpenFolder({ folder, onBack, uploads, inbox }: { folder: ProviderFolder; onBack: () => void; uploads: UploadRow[]; inbox: ReturnType<typeof useStatementInbox> }) {
   const dateRange = folder.asOfFrom
     ? folder.asOfFrom === folder.asOfTo
@@ -385,7 +391,9 @@ function OpenFolder({ folder, onBack, uploads, inbox }: { folder: ProviderFolder
       const format = row.name.split(".").pop()?.toUpperCase() ?? "Files";
       if (!map.has(format)) map.set(format, []);
     }
-    return [...map.entries()].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]));
+    const newest = ([format, docs]: [string, LibraryDoc[]]) => uploadsForFormat(format, docs, folder.docs, uploads)
+      .reduce((at, row) => row.uploadedAt > at ? row.uploadedAt : at, "");
+    return [...map.entries()].sort((a, b) => newest(b).localeCompare(newest(a)) || b[1].length - a[1].length || a[0].localeCompare(b[0]));
   }, [folder, uploads]);
 
   return (
@@ -427,7 +435,7 @@ function OpenFolder({ folder, onBack, uploads, inbox }: { folder: ProviderFolder
       </Card>
 
       <div className="space-y-5">
-        {byFormat.map(([format, docs]) => <FormatBlock key={format} format={format} docs={docs} inbox={inbox} uploads={uploads.filter(row => row.fileKeys.some(key => docs.some(d => d.fileKey === key)) || (!row.fileKeys.some(key => folder.docs.some(d => d.fileKey === key)) && row.name.split(".").pop()?.toUpperCase() === format))} />)}
+        {byFormat.map(([format, docs]) => <FormatBlock key={format} format={format} docs={docs} inbox={inbox} uploads={uploadsForFormat(format, docs, folder.docs, uploads)} />)}
       </div>
     </div>
   );
@@ -513,9 +521,13 @@ export function StatementLibrary() {
     ...batches.flatMap(batch => batch.files.map(file => {
       const keys = uploadDocumentKeys(file, manifest);
       const documents = manifest.filter(d => keys.includes(d.docKey));
+      const view = file.status === "duplicate" && documents.some(d => d.status !== "ok")
+        ? { key: "held" as const, label: "Needs attention", tone: "warn" as const, title: "An existing copy could not be fully analysed. Upload a fresh, unlocked statement." }
+        : fileView(file, served);
       return { id: `${batch.id}/${file.name}`, name: file.name, uploadedAt: batch.uploadedAt, batch: batch.id, file,
         providers: file.providers?.length ? file.providers : [...new Set(documents.map(d => d.provider))],
-        destination: inbox.locations[batch.id], fileKeys: documents.map(d => d.fileKey), view: fileView(file, served) };
+        destination: inbox.locations[batch.id], fileKeys: documents.map(d => d.fileKey), view,
+        document: (view.key === "in-library" || view.key === "duplicate") && documents.length === 1 ? documents[0] : undefined };
     })),
   ];
   // A landed upload is live once the redeploy from its commit is: until then
