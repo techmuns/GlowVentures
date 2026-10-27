@@ -8827,6 +8827,10 @@ const ROUTES = [
   // A-17: UNITS A HOLDING STATEMENT RECORDS AND PRINTS NO RATE FOR, valued on the
   // live basis at AMFI's NAV only where a sibling statement proves the basis —
   // the key off the checker's own model of those rows, never typed.
+  // WHICH DEMAT HOLDS THE UNITS (Stage 10ic) — a fund whose statements name the
+  // demat they credit, and a fund held in folios that name none; both off the book.
+  ["stock-demat", () => (DEMAT_BOOK?.credited ? `/stock/${encodeURIComponent(DEMAT_BOOK.credited.key)}` : "/stock/none-resolved-from-the-book")],
+  ["stock-demat-folio", () => (DEMAT_BOOK?.folio ? `/stock/${encodeURIComponent(DEMAT_BOOK.folio.key)}` : "/stock/none-resolved-from-the-book")],
   ["stock-unpriced", () => (UNPRICED_BOOK?.key
     ? `/stock/${encodeURIComponent(UNPRICED_BOOK.key)}` : "/stock/none-resolved-from-the-book")],
   // …AND THE MEMBER WHOSE CARD LISTS THE LINES A VALUED ACCOUNT RECORDS AND
@@ -12899,6 +12903,39 @@ const UNPRICED_BOOK = (() => {
 })();
 
 /**
+ * ── WHICH DEMAT HOLDS A FUND'S UNITS (Stage 10ic) ──────────────────────────
+ *
+ * `Account.demat` as committed: the depository, DP ID and Client ID the
+ * account's statements print, or `printed: null` with the reason. The route
+ * an account's row is filed under is re-expressed off its engagement
+ * (`holdingRoute`), never imported. Two walks are chosen off the book: the
+ * security held in the most accounts whose FUND statement names the demat it
+ * credits (not the depository's own statement), and the security held in the
+ * most own-account folios that name none.
+ */
+const DEMAT_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS");
+    const positions = bookArray(src, "BOOK_POSITIONS");
+    if (!Array.isArray(accounts) || !Array.isArray(positions)) return null;
+    const acc = new Map(accounts.map((a) => [a.accountId, a]));
+    const routeOf = (a) => ({ PMS: "mandate", Direct: "own", Execution: "own", AIF: "fund", Distribution: "fund", Advisory: "fund" })[a?.engagement] ?? "unknown";
+    const pick = (test) => {
+      const n = new Map();
+      for (const p of positions) if (p.marketValue > 0 && test(acc.get(p.accountId))) n.set(p.securityKey, (n.get(p.securityKey) ?? 0) + 1);
+      const [key, count] = [...n].sort((x, y) => y[1] - x[1] || x[0].localeCompare(y[0]))[0] ?? [];
+      return key ? { key, count } : null;
+    };
+    return {
+      acc, routeOf,
+      credited: pick((a) => !!a?.demat?.printed && a.demat.printed.accountId !== a.accountId),
+      folio: pick((a) => !!a?.demat && !a.demat.printed && routeOf(a) === "own"),
+    };
+  } catch { return null; }
+})();
+
+/**
  * THE ROW THE FAMILY FIRST KEPT UNVALUED (FQ-3, 28 Sep 2026) AND THEN ASKED TO
  * INCLUDE (14 Oct 2026, "include this in the dashboard data as well") —
  * Ankita's 94,967 Clean Max shares on Motilal Oswal demat 1201090012838316,
@@ -16823,6 +16860,31 @@ const stockLayoutChecks = () => [
  * box. A missing probe is a FAILURE — this header is on every holding.
  */
 const STOCK_TAB_ORDER = ["position", "activity", "market", "research", "targets"];
+/**
+ * EACH ROW NAMES THE DEMAT ITS ACCOUNT'S STATEMENTS PRINT (Stage 10ic), with
+ * the holder — the owner of the book's own account for that demat, else the
+ * row's — or, on an own-account or fund row whose statements print none, the
+ * dash with the book's reason in its hover. A mandate's row draws neither.
+ */
+const DEMAT_ROWS = ["each row names the demat its account's statements print — depository, DP ID, Client ID and holder — or the dash with its reason", (t, ctx) => {
+  const B = DEMAT_BOOK, rows = ctx?.posTable?.demats;
+  if (!B || !rows?.length) return false;
+  return rows.every((r) => {
+    const a = B.acc.get(r.account);
+    if (!a) return false;
+    if (!a.demat) return r.demat === null;
+    const p = a.demat.printed;
+    if (p) {
+      const holder = (p.accountId && B.acc.get(p.accountId)?.owner) || a.owner;
+      return r.demat === `${p.depository} ${p.dpId} ${p.clientId}` && r.holder === holder
+        && [p.depository, p.dpId, p.clientId, holder].every((w) => r.text.includes(w));
+    }
+    return ["own", "fund"].includes(B.routeOf(a))
+      ? r.demat === "none" && r.text.includes("—") && r.text.includes(a.accountNo) && (r.reason ?? "").includes(a.demat.reason)
+      : r.demat === null;
+  });
+}];
+
 const stockTabChecks = (expected, { fundsOnly = false } = {}) => [
   ["the page offers the same five tabs, in the same order, on every holding",
     (t, ctx) => !!ctx.stockPage && ctx.stockPage.tabs.map((x) => x.key).join() === STOCK_TAB_ORDER.join()],
@@ -20597,6 +20659,16 @@ const CIO_SEGMENTS = [
     if (r.total.ret == null) return r.rows.every(x => x.contrib == null);
     return r.total.deployed > 0 && r.rows.every(x => x.gain == null ? x.contrib == null : Math.abs(x.contrib - x.gain / r.total.deployed * 100) < 1e-6)
       && Math.abs(r.rows.reduce((s, x) => s + (x.contrib ?? 0), 0) - r.total.ret) < 1e-6;
+  }],
+  // Stage 10hz — the Monitor's Invested on and Avg cost are drawn by default:
+  // each a figure or a dash with its reason, and a cost per unit only on a row
+  // that is one security.
+  ["attribution draws Invested on and Avg cost, each a figure or a dash with its reason, a cost per unit only for one security", (t, ctx) => {
+    const r = ctx?.segDom;
+    if (!r || !r.rows.length) return false;
+    return r.rows.every(x => x.investedOn !== undefined && x.avgCost !== undefined && x.securities != null
+      && (x.investedOn ? /^\d{4}-\d{2}/.test(x.investedOn) : x.investedOnTitle.length > 0)
+      && (x.avgCost != null ? x.avgCost > 0 && x.securities === 1 : x.avgCostText === "—" && x.avgCostTitle.length > 0));
   }],
   ["missing gains remain dashes with reasons and totals expose two coverage info buttons", (t, ctx) => {
     const r = ctx?.segDom;
@@ -35489,6 +35561,7 @@ const INVARIANTS = {
   stock: [
     ...stockTabChecks("position"),
     ...stockLayoutChecks(),
+    DEMAT_ROWS,
     // #84 PUT ITS DIVIDEND-INCLUSIVE CARD UNDER THE ACCOUNT TABLE on the old
     // single page. It lives on Price & returns now (asserted on `stock-market`),
     // and a copy left here as well would be the same card on two tabs.
@@ -36957,6 +37030,26 @@ const INVARIANTS = {
    * statement DID price says nothing of the kind; and the price tile's hover
    * names the kind of unpriced units the page carries.
    */
+  "stock-demat": [
+    ...stockTabChecks("position"),
+    DEMAT_ROWS,
+    ["…and every account whose fund statement names the demat it credits shows that demat", (t, ctx) => {
+      const B = DEMAT_BOOK, rows = ctx?.posTable?.demats ?? [];
+      if (!B?.credited) return false;
+      const credited = rows.filter((r) => { const p = B.acc.get(r.account)?.demat?.printed; return !!p && p.accountId !== r.account; });
+      return credited.length === B.credited.count && credited.every((r) => r.demat && r.demat !== "none");
+    }],
+  ],
+  "stock-demat-folio": [
+    ...stockTabChecks("position"),
+    DEMAT_ROWS,
+    ["…and every own-account folio that names no demat shows the dash, not a guessed demat", (t, ctx) => {
+      const B = DEMAT_BOOK, rows = ctx?.posTable?.demats ?? [];
+      if (!B?.folio) return false;
+      const none = rows.filter((r) => r.demat === "none");
+      return none.length === B.folio.count;
+    }],
+  ],
   "stock-unpriced": [
     ...stockTabChecks("position"),
     ["each account whose statement records these units with no rate says so on its mark, naming the statement that prices them", (t, ctx) => {
@@ -40620,9 +40713,13 @@ for (const theme of THEMES) {
             shownAs: root.querySelector('[data-seg-total] [data-seg-cell="ret"]')?.getAttribute("data-seg-shown-as") ?? null },
           rows: [...root.querySelectorAll("tr[data-seg-row]")].map((tr) => {
             const g = tr.querySelector('[data-seg-cell="gain"]');
+            const on = tr.querySelector('[data-seg-cell="investedOn"]'), avg = tr.querySelector('[data-seg-cell="avgCost"]');
             return {
               key: tr.getAttribute("data-seg-row"), value: num(tr, "data-seg-value"), gain: num(tr, "data-seg-gain"), contrib: num(tr, "data-seg-contrib"),
               gainText: (g?.textContent ?? "").trim(), gainReason: g?.querySelector("[title]")?.getAttribute("title") ?? "",
+              securities: num(tr, "data-seg-securities"),
+              investedOn: on ? on.getAttribute("data-invested-first") || null : undefined, investedOnTitle: on?.querySelector("[title]")?.getAttribute("title") ?? "",
+              avgCost: avg ? num(avg, "data-avg-cost") : undefined, avgCostText: (avg?.textContent ?? "").trim(), avgCostTitle: avg?.querySelector("[title]")?.getAttribute("title") ?? "",
             };
           }),
           remainder: rem ? { gain: num(rem, "data-seg-remainder"), contrib: num(rem, "data-seg-contrib") } : null,
@@ -43246,6 +43343,19 @@ for (const theme of THEMES) {
             text: e.innerText.replace(/\s+/g, " ").trim(),
           })),
           returnTitle: t.querySelector('thead th[data-col="return"]')?.getAttribute("title") ?? null,
+          // THE DEMAT EACH ROW'S UNITS SIT IN (Stage 10ic): the handle carries
+          // the book's identity and the text what a reader sees.
+          demats: [...t.querySelectorAll("tr[data-account-row], tr[data-recorded-row]")].map((r) => {
+            const d = r.querySelector("[data-demat]");
+            return {
+              account: r.getAttribute("data-account-row") ?? r.getAttribute("data-recorded-row"),
+              route: r.getAttribute("data-held-route"),
+              demat: d?.getAttribute("data-demat") ?? null,
+              holder: d?.getAttribute("data-demat-holder") ?? null,
+              text: (d?.innerText ?? "").replace(/\s+/g, " ").trim(),
+              reason: d?.querySelector("[title]")?.getAttribute("title") ?? d?.getAttribute("title") ?? null,
+            };
+          }),
           // THE MARK COLUMN, READ STRUCTURALLY. `data-cmp` carries the figure
           // the BOOK holds and the cell text carries what a reader sees, so a
           // cell that stopped rendering its own attribute's value fails on the
