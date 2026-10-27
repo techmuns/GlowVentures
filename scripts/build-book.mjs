@@ -5323,7 +5323,9 @@ const j = (v) => JSON.stringify(v, null, 2);
 
 /** All browser-facing collections, emitted by the same canonical builder. */
 export function canonicalBookValues(book) {
-  return {
+  // Use the emitter's JSON semantics (including -0 -> 0 and absent undefined
+  // fields) before either the server's reporting modules or the browser see it.
+  return JSON.parse(JSON.stringify({
     BOOK_AS_OF: book.summary.asOf,
     BOOK_SUMMARY: book.summary,
     BOOK_ACCOUNTS: book.accounts,
@@ -5363,7 +5365,7 @@ export function canonicalBookValues(book) {
     BOOK_DEBT_FUNDS: [],
     BOOK_CLOSED_FUNDS: [],
     BOOK_STARTUPS: [],
-  };
+  }));
 }
 
 function emit(book) {

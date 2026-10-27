@@ -69,6 +69,7 @@ export async function prepareRapidStatement({ baseline, files, references, passw
     assessment = { ...checked, duplicates: assessment.duplicates };
   }
   timings.validationMs = performance.now() - t;
+  assessment.duplicates = assessment.duplicates.map(d => ({ ...d, name: produced.find(p => p.doc.docKey === d.document)?.name }));
   if (assessment.decision === 'needs_review') return { ...assessment, timings };
   if (assessment.decision === 'unchanged') return { ...assessment, decision: 'duplicate', timings };
   const records = produced.filter(p => candidate.some(d => d.docKey === p.doc.docKey)).map(p => ({ ...archiveRecord(p.doc, p.grid), name: p.name }));

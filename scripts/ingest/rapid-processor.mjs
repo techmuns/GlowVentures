@@ -5,8 +5,9 @@ import { applyUpdates, inboxPath, isBatchId } from '../../shared/statementInbox.
 import { digest, documentEvidence, positionEvidence } from './lib/publication.mjs';
 import { unlockPdf, previewKey } from '../lib/statementPreviewPdf.mjs';
 import { describePreview, previewKeyBytes, sealPreview } from '../../shared/statementPreviewCrypto.mjs';
+import { VersionConflict } from './runtime-store.mjs';
 
-export function rapidProcessor({ store, inbox, initial, references, instantiate, passwords, dashboardPassword, baseAsset }) {
+export function rapidProcessor({ store, inbox, initial, references, instantiate, passwords, dashboardPassword, baseAsset, prepare = prepareRapidStatement }) {
   let current = initial, state = null, queue = Promise.resolve(), ready = false;
   const versions = new Map(), models = new Map(), jobs = new Map();
   const remember = snapshot => {
@@ -36,6 +37,7 @@ export function rapidProcessor({ store, inbox, initial, references, instantiate,
     // The repository is authoritative after a crash, never the resident cache.
     state = await store.read();
     if (state.state?.revision !== current.revision && state.state) current = await store.load(state.state);
+    if (current.readerRevision !== initial.readerRevision) throw Error('A newer reader must handle this publication');
     if (state.state?.receipts?.[id]?.files.every(f => ['landed', 'duplicate'].includes(f.status))) return state.state.receipts[id];
     const { log } = await inbox.read();
     const batch = log.batches.find(b => b.id === id);
@@ -44,13 +46,13 @@ export function rapidProcessor({ store, inbox, initial, references, instantiate,
     await inbox.commit({ message: `Reading statements ${id}`, mutate: log => applyUpdates(log,
       pending.map(f => ({ batch: id, name: f.name, status: 'processing' }))) });
     const files = await Promise.all(pending.map(async f => ({ ...f, bytes: await store.blob(f.blob) })));
-    let candidate = await prepareRapidStatement({ baseline: current.documents, files, references, passwords,
+    let candidate = await prepare({ baseline: current.documents, files, references, passwords,
       sourcePrefix: `source/uploads-rapid-${id}`, readerRevision: initial.readerRevision });
     const verified = candidate.decision === 'verified', duplicate = candidate.decision === 'duplicate';
     const now = new Date().toISOString();
     const receipt = { id, completedAt: now, files: pending.map(f => {
       const records = verified ? candidate.records.filter(r => r.name === f.name) : [];
-      const duplicateKeys = candidate.duplicates?.map(d => d.sameAs) ?? [];
+      const duplicateKeys = candidate.duplicates?.filter(d => d.name === f.name).map(d => d.sameAs) ?? [];
       const sourceDocs = records.length ? records.map(r => r.manifest) : duplicateKeys.map(k => current.documents.find(d => d.docKey === k)).filter(Boolean);
       return { name: f.name, status: records.length ? 'landed' : duplicate || (verified && duplicateKeys.length) ? 'duplicate' : 'held',
         docKeys: sourceDocs.map(d => d.docKey), providers: [...new Set(sourceDocs.map(d => d.provider))],
@@ -103,7 +105,17 @@ export function rapidProcessor({ store, inbox, initial, references, instantiate,
   const submit = id => {
     if (!isBatchId(id)) throw Error('Invalid statement batch');
     if (!jobs.has(id)) {
-      const job = queue.then(() => processBatch(id));
+      const job = queue.then(async () => {
+        for (let attempt = 0; ; attempt++) {
+          try { return await processBatch(id); }
+          catch (error) { if (!(error instanceof VersionConflict) || attempt >= 2) throw error; }
+        }
+      }).catch(async error => {
+        await inbox.commit({ message: `Statements ${id}: processing interrupted`, mutate: log => applyUpdates(log,
+          (log.batches.find(b => b.id === id)?.files ?? []).filter(f => f.processor === 'rapid' && ['queued', 'processing'].includes(f.status))
+            .map(f => ({ batch: id, name: f.name, status: 'held', hold: 'intake-error', reason: 'Processing was interrupted. Retry this statement.' }))) });
+        throw error;
+      });
       queue = job.catch(() => {});
       jobs.set(id, job);
       job.finally(() => jobs.delete(id)).catch(() => {});
