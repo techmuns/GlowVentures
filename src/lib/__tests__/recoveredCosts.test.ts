@@ -14,10 +14,11 @@ import { investedSpanOf } from "../privateBook";
 const near = (got: number | null | undefined, want: number) =>
   assert.ok(typeof got === "number" && Math.abs(got - want) < .02, `${got} != ${want}`);
 // 45 from the review and register; MOPWM's transaction report (Stage 10hu) adds
-// 20 more where both left a holding unrecovered.
-assert.equal(BOOK_RECOVERED_COSTS.length, 65, "only exact owner/ISIN/quantity matches are recoverable");
+// 17 more where both left a holding unrecovered — not the three residues below the
+// ₹1,000 floor, which carry no cost (Stage 10hw).
+assert.equal(BOOK_RECOVERED_COSTS.length, 62, "only exact owner/ISIN/quantity matches are recoverable");
 const MOPWM = "source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx";
-assert.equal(BOOK_RECOVERED_COSTS.filter(r => r.evidence.some(e => e.path === MOPWM)).length, 20);
+assert.equal(BOOK_RECOVERED_COSTS.filter(r => r.evidence.some(e => e.path === MOPWM)).length, 17);
 // Bharat's scanned HDFC Bank NSDL statement (Stage 10gk) prints the 1,01,111
 // Smartworks shares his saved purchase record bought — an exact match, and the
 // only one the scan adds. The row stays quantity-only: a cost values nothing.
@@ -106,8 +107,8 @@ console.log("Recovered costs: exact quantities, March cutoff, FIFO sales, live o
 const funds=[...depositoryFundHoldings(),...unpricedStatementUnits()];
 // 21, and since Stage 10hq the three DSP Gold / Silver ETF lines valued across
 // their 1:10 split, whose costs reconcile on the statements' own pre-split units.
-// Seven more since Stage 10hu, costed from MOPWM's transaction report's demat folios.
-assert.equal(funds.filter(p=>p.recoveredCost).length,31);
+// Five more since Stage 10hu, costed from MOPWM's transaction report's demat folios.
+assert.equal(funds.filter(p=>p.recoveredCost).length,29);
 assert.equal(funds.filter(p=>p.recoveredCost&&p.depositoryUnits?.unitSplit).length,3);
 const fp=(account:string,isin:string)=>funds.find(p=>p.accountId.endsWith(account)&&p.isin===isin)!;
 for (const [account, first, last, lots] of [['12539150','2025-03-06','2026-03-23',4],['12838316','2025-11-06','2025-11-06',1],['12838320','2025-07-11','2025-07-11',1]] as const) {

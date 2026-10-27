@@ -469,13 +469,22 @@ ok("a 1:2 split since the statement is projected: twice the units at the quote, 
 const rights = one?.symbol ? depositoryShareHoldings(tradedFeed(one.symbol, 250), withAction("rights", null)) : [];
 ok("an event the capture cannot state the units of — a rights issue — leaves the share no row",
   rights.length === 0, rights.map((p) => p.symbol).join("; "));
-ok("...and every candidate passes the committed capture on a quote two days after it, so the gate is not what leaves this book's shares unvalued",
-  (() => {
-    const quotes: QuoteFeed["quotes"] = {};
-    for (const p of shareCandidates()) if (p.symbol) quotes[p.symbol] = { ...feedOf(p.symbol, 100).quotes[p.symbol], tradedAt: "2026-09-25T09:30:00Z" };
-    const all: QuoteFeed = { ...feedOf("X", 1), quotes };
-    return depositoryShareHoldings(all, CAPTURE).length === shareCandidates().filter((p) => !!p.symbol).length;
-  })());
+// Except a share whose own record carries a sale after its statement (Stage
+// 10hu: Ankita's Axis Bank, ICICI Bank and SBI, sold 23 Sep per MOPWM's
+// transaction report): the gate withholds those by design, and only those.
+{
+  const quotes: QuoteFeed["quotes"] = {};
+  for (const p of shareCandidates()) if (p.symbol) quotes[p.symbol] = { ...feedOf(p.symbol, 100).quotes[p.symbol], tradedAt: "2026-09-25T09:30:00Z" };
+  const all: QuoteFeed = { ...feedOf("X", 1), quotes };
+  const id = (p: Position) => `${p.accountId}|${p.isin}`;
+  const priced = new Set(depositoryShareHoldings(all, CAPTURE).map(id));
+  const quoted = shareCandidates().filter((p) => !!p.symbol);
+  const soldLater = quoted.filter((p) => (p.realizedLotsAfter ?? 0) > 0);
+  ok("...and every candidate with no later sale passes the committed capture on a quote two days after it, so the gate is not what leaves this book's shares unvalued",
+    quoted.every((p) => priced.has(id(p)) === !soldLater.includes(p)),
+    `${priced.size} priced, ${soldLater.length} withheld for later sales: ${soldLater.map((p) => p.security).join(", ")}`);
+  ok("...and the book has such later sales, so the exception has a subject", soldLater.length > 0);
+}
 const notesShare = partialValuationNotes([...FUNDS, ...priced]);
 const withShare = notesShare.get(one?.accountId ?? "") ?? "";
 ok("the account's note names the share and that it is valued only while the quote feed prices it",
