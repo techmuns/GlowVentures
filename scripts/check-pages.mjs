@@ -755,13 +755,16 @@ function exitsInto(set, exits, whole, acc, current) {
 function smallKeysOf(positions) {
   const seen = new Set();
   const byKey = new Map();
+  const economicKeys = new Set();
   for (const p of positions) {
-    if (FUND_VEHICLE_CLASSES.has(p.assetClass) && p.quantity === 0 && (p.currentPrice != null || p.marketValue === 0)) continue;
     if (p.dedupeGroup) { if (seen.has(p.dedupeGroup)) continue; seen.add(p.dedupeGroup); }
+    if ((p.costBasis != null && !(p.assetClass === "Cash" && Math.abs(p.costBasis - p.marketValue) < 0.005)) ||
+      [p.realizedPnL, p.costOfUnitsSold, p.dividendReceived].some(v => typeof v === "number" && v !== 0)) economicKeys.add(p.securityKey);
+    if (FUND_VEHICLE_CLASSES.has(p.assetClass) && p.quantity === 0 && (p.currentPrice != null || p.marketValue === 0)) continue;
     byKey.set(p.securityKey, (byKey.get(p.securityKey) ?? 0) + p.marketValue);
   }
   const out = new Set();
-  for (const [k, v] of byKey) if (v !== 0 && Math.abs(v) < NEGLIGIBLE_FLOOR) out.add(k);
+  for (const [k, v] of byKey) if (v !== 0 && Math.abs(v) < NEGLIGIBLE_FLOOR && !economicKeys.has(k)) out.add(k);
   return out;
 }
 /**

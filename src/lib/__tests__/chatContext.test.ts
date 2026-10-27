@@ -97,7 +97,12 @@ const closed = (p: Position) => FUNDS.has(p.assetClass) && p.quantity === 0 && (
 const deduped = firstPerGroup(positions);
 const keyValue = new Map<string, number>();
 for (const p of deduped) keyValue.set(p.securityKey, (keyValue.get(p.securityKey) ?? 0) + p.marketValue);
-const speck = (key: string) => { const v = keyValue.get(key) ?? 0; return v !== 0 && Math.abs(v) < 1000; };
+// A low closing value cannot erase measured capital or sale/income history.
+const economicKeys = new Set(deduped.filter(p =>
+  (p.costBasis != null && !(p.assetClass === "Cash" && Math.abs(p.costBasis - p.marketValue) < 0.005)) ||
+  [p.realizedPnL, p.costOfUnitsSold, p.dividendReceived].some(v => typeof v === "number" && v !== 0)
+).map(p => p.securityKey));
+const speck = (key: string) => { const v = keyValue.get(key) ?? 0; return v !== 0 && Math.abs(v) < 1000 && !economicKeys.has(key); };
 const current = deduped.filter((p) => !closed(p) && !speck(p.securityKey));
 const screenTotal = add(deduped.map((p) => p.marketValue));
 const currentTotal = add(current.map((p) => p.marketValue));

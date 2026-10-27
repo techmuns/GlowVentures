@@ -131,7 +131,11 @@ const firstOfGroup = (ps: Position[]) => {
 function current(ps: Position[], mvOf: (p: Position) => number) {
   const byKey = new Map<string, number>();
   for (const p of firstOfGroup(ps)) byKey.set(p.securityKey, (byKey.get(p.securityKey) ?? 0) + mvOf(p));
-  const speck = new Set([...byKey].filter(([, v]) => v !== 0 && Math.abs(v) < 1000).map(([k]) => k));
+  const economicKeys = new Set(firstOfGroup(ps).filter(p =>
+    (p.costBasis != null && !(p.assetClass === "Cash" && Math.abs(p.costBasis - p.marketValue) < 0.005)) ||
+    [p.realizedPnL, p.costOfUnitsSold, p.dividendReceived].some(v => typeof v === "number" && v !== 0)
+  ).map(p => p.securityKey));
+  const speck = new Set([...byKey].filter(([k, v]) => v !== 0 && Math.abs(v) < 1000 && !economicKeys.has(k)).map(([k]) => k));
   return {
     held: ps.filter((p) => !redeemed(p) && !speck.has(p.securityKey)),
     closed: ps.filter(redeemed),
