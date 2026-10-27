@@ -3,6 +3,23 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { rapidStatementRequest, rapidStatementsEnabled } from '../../../shared/rapidStatementBackend.mjs';
 import { sameFinancialStatement } from '../lib/publication.mjs';
+import { onRequestGet as statementData } from '../../../functions/api/statement-data/[[path]].js';
+
+test('the optional Pages catch-all serves bootstrap and status at the bare directory', async () => {
+  for (const path of [[], '', undefined]) {
+    const request = new Request('https://dashboard.test/api/statement-data');
+    assert.equal((await statementData({ env: {}, request, params: { path } })).status, 204);
+  }
+  for (const [query, expected] of [['', '/bootstrap'], ['?status=1', '/current']]) {
+    const env = { GLOW_RAPID_STATEMENTS_ENABLED: 'true', GLOW_RAPID_STATEMENTS_TOKEN: 'test-only-private-credential-at-least-32-characters',
+      GLOW_RAPID_STATEMENTS: { fetch: async request => {
+        assert.equal(new URL(request.url).pathname, expected);
+        return Response.json({ revision: 'a'.repeat(20) });
+      } } };
+    const response = await statementData({ env, request: new Request('https://dashboard.test/api/statement-data' + query), params: { path: [] } });
+    assert.equal(response.status, 200); assert.equal((await response.json()).revision, 'a'.repeat(20));
+  }
+});
 
 test('a later static copy cannot erase a previously verified financial row', () => {
   const before = { docKey: 'fixture', sourcePath: 'source/new.pdf', status: 'ok', warnings: [],

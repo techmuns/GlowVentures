@@ -1,7 +1,10 @@
 import { rapidStatementRequest } from '../../../shared/rapidStatementBackend.mjs';
+import { onRequestGet as bootstrap } from '../statement-data.js';
 import { keyFromCookie, openPreview } from '../../../shared/statementPreviewCrypto.mjs';
 export async function onRequestGet({ env, request, params }) {
   const path = Array.isArray(params.path) ? params.path.join('/') : String(params.path ?? '');
+  // Pages also routes the bare directory through its optional catch-all.
+  if (!path) return bootstrap({ env, request });
   if (!/^[a-f0-9]{20}\/[a-zA-Z0-9._/-]+$/.test(path) || path.split('/').some(p => !p || p === '.' || p === '..')) return new Response(null, { status: 404 });
   try {
     const response = await rapidStatementRequest(env, `/views/${path}`);
