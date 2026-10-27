@@ -17,6 +17,53 @@ on:
         type: string
 
 jobs:
+  rapid-statements:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Publication and atomic processor contracts
+        run: node --test scripts/ingest/__tests__/publication.test.mjs scripts/ingest/__tests__/rapid-processor.test.mjs scripts/ingest/__tests__/rapid-backend.test.mjs
+      - name: Validate the private Worker configuration and generated bindings
+        run: |
+          node scripts/dev/prepare-rapid-config.mjs
+          npx --yes wrangler@4.119.0 types .cache/rapid-statement-publications/worker-env.d.ts --config .cache/rapid-statement-publications/wrangler.json
+      - name: Real protected statement through the warm engine
+        env:
+          GLOW_PDF_PASSWORDS: ${{ secrets.GLOW_PDF_PASSWORDS }}
+          GLOW_DASHBOARD_PASSWORD: ${{ secrets.GLOW_DASHBOARD_PASSWORD }}
+        run: node scripts/dev/benchmark-rapid-statements.mjs
+      - name: Prepare the browser application
+        run: npm run build
+      - name: Real protected drop through Git publication and all dashboard views
+        env:
+          GLOW_PDF_PASSWORDS: ${{ secrets.GLOW_PDF_PASSWORDS }}
+          GLOW_DASHBOARD_PASSWORD: ${{ secrets.GLOW_DASHBOARD_PASSWORD }}
+        run: CHROME="$(command -v google-chrome)" node scripts/dev/check-rapid-statements.mjs
+      - name: Build the private compute image
+        run: docker build --build-arg SOURCE_COMMIT="$GITHUB_SHA" -f services/statement-processor/Dockerfile -t rapid-statement-check .
+      - name: Check the production Node image at one CPU
+        env:
+          GLOW_PDF_PASSWORDS: ${{ secrets.GLOW_PDF_PASSWORDS }}
+          GLOW_DASHBOARD_PASSWORD: ${{ secrets.GLOW_DASHBOARD_PASSWORD }}
+        run: |
+          docker run --name rapid-statement-check --cpus=1 --env GLOW_PDF_PASSWORDS --env GLOW_DASHBOARD_PASSWORD rapid-statement-check node scripts/dev/benchmark-rapid-statements.mjs
+          docker cp rapid-statement-check:/app/.cache/rapid-statement-publications/benchmark.json .cache/rapid-statement-publications/container-benchmark.json
+      - name: Preserve speed and complete-book evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rapid-statement-publications
+          path: |
+            .cache/rapid-statement-publications/*.json
+            .cache/rapid-statement-publications/browser/*.json
+            .cache/rapid-statement-publications/browser/*.png
+          if-no-files-found: ignore
   build:
     runs-on: ubuntu-latest
     steps:

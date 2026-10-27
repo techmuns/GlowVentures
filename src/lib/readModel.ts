@@ -1,10 +1,12 @@
-import manifest from "../data/readModels.json";
+import { selectedReadModels as manifest } from "./runtimeBook";
+import { hasRuntimeBook, statementAsset } from "./runtimeBook";
 import { requestDeadline } from "./requestDeadline";
+import { markDeploymentChanged } from './deploymentVersion';
 
 // Content-addressed URLs keep an open tab on its own deployment's book. Failed
 // reads are evicted so another visit can recover; concurrent cards share a read.
 const reads = new Map<string, Promise<unknown | null>>();
-export const readModelBase = `${import.meta.env?.BASE_URL ?? "/"}views/${manifest.revision}`;
+export const readModelBase = hasRuntimeBook() ? statementAsset("").replace(/\/$/, "") : `${import.meta.env?.BASE_URL ?? "/"}views/${manifest.revision}`;
 export function readModel<T>(path: string): Promise<T | null> {
   let pending = reads.get(path);
   if (!pending) {
@@ -12,6 +14,7 @@ export function readModel<T>(path: string): Promise<T | null> {
       const deadline = requestDeadline(15_000);
       try {
         const response = await fetch(`${readModelBase}/${path}`, { signal: deadline.signal });
+        if (response.status === 409) { markDeploymentChanged(); return null; }
         if (!response.ok) return null;
         return await response.json();
       } catch { return null; }

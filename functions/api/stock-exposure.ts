@@ -1,8 +1,9 @@
 import { loadStockExposure, type FundPortfolio, type HeldFund, type Index } from '../../src/lib/lookthrough';
 import { BOOK_POLYCAB } from '../../src/data/glowData';
 import manifest from '../../src/data/readModels.json';
+import { rapidStatementRequest, rapidStatementsEnabled, type RapidEnv } from '../../shared/rapidStatementBackend.mjs';
 
-type Context = { request: Request; env: { ASSETS: { fetch(request: Request): Promise<Response> } }; waitUntil(p: Promise<unknown>): void };
+type Context = { request: Request; env: RapidEnv & { ASSETS: { fetch(request: Request): Promise<Response> } }; waitUntil(p: Promise<unknown>): void };
 const json = (body: unknown, status = 200) => Response.json(body, { status, headers: { 'Cache-Control': 'no-store' } });
 const key = (v: unknown): v is string => typeof v === 'string' && /^[a-z0-9-]{1,200}$/.test(v);
 
@@ -25,13 +26,22 @@ export async function onRequestPost(context: Context) {
     body = JSON.parse(text + decoder.decode());
   } catch { return json({ status: 'invalid' }, 400); }
   if (!body || typeof body !== 'object') return json({ status: 'invalid' }, 400);
-  if (body.revision !== manifest.revision) return json({ status: 'revision_changed' }, 409);
+  if (body.revision !== manifest.revision && !rapidStatementsEnabled(context.env)) return json({ status: 'revision_changed' }, 409);
   if (!Array.isArray(body.funds) || body.funds.length > 200 || !body.funds.every((f: HeldFund) => f && key(f.securityKey)
     && typeof f.name === 'string' && f.name.length <= 500 && typeof f.assetClass === 'string' && f.assetClass.length <= 100
     && Number.isFinite(f.marketValue) && f.marketValue >= 0)
     || !Array.isArray(body.identities) || body.identities.length > 1000 || !body.identities.every((p: unknown[]) => Array.isArray(p) && p.length === 2 && typeof p[0] === 'string' && /^[A-Z0-9]{12}$/.test(p[0]) && key(p[1]))
     || !Array.isArray(body.companyKeys) || body.companyKeys.length > 1000 || !body.companyKeys.every(key)) return json({ status: 'invalid' }, 400);
   if (new Set(body.funds.map((f: HeldFund) => f.securityKey)).size !== body.funds.length) return json({ status: 'invalid' }, 400);
+  if (body.revision !== manifest.revision) {
+    if (typeof body.revision !== 'string' || !/^[a-f0-9]{20}$/.test(body.revision)) return json({ status: 'invalid' }, 400);
+    try {
+      const response = await rapidStatementRequest(context.env, `/exposure/${body.revision}`, { method: 'POST',
+        headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      if (response) return new Response(response.body, { status: response.status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
+    } catch { return json({ status: 'unreachable' }, 503); }
+    return json({ status: 'revision_changed' }, 409);
+  }
   const edgeCache = typeof caches === 'undefined' ? undefined : (caches as CacheStorage & { default: Cache }).default;
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(body)));
   const hash = [...new Uint8Array(digest)].map(n => n.toString(16).padStart(2, '0')).join('');

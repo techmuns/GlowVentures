@@ -1,29 +1,21 @@
-import React from "react";
-import ReactDOM from "react-dom/client";
-import { BrowserRouter } from "react-router-dom";
-import App from "./App";
 import "./index.css";
-import { PortfolioProvider } from "./context/PortfolioContext";
-import { ErrorBoundary } from "./components/ErrorBoundary";
-import { recoverChunkLoad } from "./lib/chunkRecovery";
+import { bootstrapRuntimeBook } from "./lib/runtimeBook";
+import { recoverChunkLoad } from './lib/chunkRecovery';
 import { initializeNavigationEntry } from './lib/navigationMemory';
 
 initializeNavigationEntry();
-
-window.addEventListener("vite:preloadError", (event) => {
-  recoverChunkLoad((event as Event & { payload: unknown }).payload);
-  // Let a persistent failure reach ErrorBoundary. Preventing the rejection
-  // would turn a failed React.lazy import into an undefined module instead.
+let recovering = false;
+window.addEventListener('vite:preloadError', event => {
+  recovering = recoverChunkLoad((event as Event & { payload: unknown }).payload) || recovering;
 });
 
-ReactDOM.createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
-    <ErrorBoundary>
-      <BrowserRouter>
-        <PortfolioProvider>
-          <App />
-        </PortfolioProvider>
-      </BrowserRouter>
-    </ErrorBoundary>
-  </React.StrictMode>,
-);
+// App and every module-level financial index initialize only after one complete
+// verified version has been selected. A failed load retains the compiled book.
+void bootstrapRuntimeBook().then(() => import("./renderApp")).catch(error => {
+  if (recovering || recoverChunkLoad(error)) return;
+  const root = document.getElementById("root");
+  if (!root) return;
+  root.textContent = "The dashboard could not open. Reload to try again.";
+  const retry = document.createElement("button"); retry.textContent = "Reload";
+  retry.onclick = () => window.location.reload(); root.appendChild(retry);
+});

@@ -27,6 +27,7 @@ const errors = []; page.on("pageerror", error => errors.push(error.stack || erro
 const snapshots = []; // each /api/table-inputs read and whether it succeeded
 await page.route("**/api/**", async route => {
   const r = route.request();
+  if (new URL(r.url()).pathname === '/api/statement-data') return route.fulfill({ status: 204 });
   const handler = { "/api/real-estate": onRequest, "/api/table-inputs": tableInputs }[new URL(r.url()).pathname];
   if (handler) {
     const response = await handler({ request: new Request(r.url(), { method: r.method(), headers: { ...r.headers(), origin: new URL(base).origin }, ...(r.method() === "POST" ? { body: r.postData() } : {}) }), env: { DASHBOARD_STORE: store } });

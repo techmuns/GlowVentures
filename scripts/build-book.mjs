@@ -37,6 +37,7 @@ import { buildAccountReturnRecords } from "./lib/accountReturnRecords.mjs";
 import { returnCoverageReport } from "./lib/returnCoverageReport.mjs";
 import { recoverHoldingCosts, recoveryReport } from "./lib/recoverHoldingCosts.mjs";
 import { applyRecoveredCost } from "../shared/recoveredCosts.mjs";
+import { loadMopwmTransactions } from "./lib/mopwmTransactions.mjs";
 
 /**
  * THE DEPOSITORY ACCOUNTS, BOTH OF THEM.
@@ -67,6 +68,9 @@ import { capitalRecordFromInception } from "./lib/capitalOrigins.mjs";
 import { NOT_ATTRIBUTED, NOT_ATTRIBUTED_NAME } from "../shared/reviewHolders.mjs";
 import { REVIEW_AS_OF } from "./lib/reviewPrivateRead.mjs";
 import { dematAccountsFor } from "./lib/dematAccounts.mjs";
+import { readSpreadsheet } from "./ingest/lib/sheet.mjs";
+import { REVIEW_WORKBOOK } from "./lib/reviewPrivateRead.mjs";
+import { REGISTER } from "./lib/recoverHoldingCosts.mjs";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const AUDIT_DIR = process.env.GLOW_AUDIT_DIR ?? path.join(ROOT, "public", "audit");
 const OUT = process.env.GLOW_BOOK_OUT ?? path.join(ROOT, "src", "data", "glowData.ts");
@@ -2329,7 +2333,10 @@ function bridgeTieOf(b) {
 
 // ── Build ────────────────────────────────────────────────────────────────────
 
-function build(archived, archiveCount = archived.length) {
+function build(archived, archiveCount = archived.length, references = {}) {
+  // Match the CLI's filesystem-key order for every caller. Several historical
+  // accounts use the first complete report as their fallback sample.
+  archived = [...archived].sort((a, b) => a.docKey < b.docKey ? -1 : a.docKey > b.docKey ? 1 : 0);
   const notes = [];
   // AN EXPORT IS A WITNESS, NEVER A DOCUMENT OF THE BOOK. A spreadsheet that
   // sits beside its PDF (`askimpms_…_BankBook178CT.xlsx`, Marathon's `.csv`) is
@@ -2356,7 +2363,7 @@ function build(archived, archiveCount = archived.length) {
     (byAccount.get(k) ?? byAccount.set(k, []).get(k)).push(d);
   }
 
-  const symbols = (() => {
+  const symbols = references.symbols ?? (() => {
     try { return JSON.parse(fs.readFileSync(path.join(ROOT, "src/data/nseSymbols.json"), "utf8")); }
     catch { return {}; }
   })();
@@ -4649,7 +4656,7 @@ function build(archived, archiveCount = archived.length) {
   }
 
   // THE REVIEW'S PRIVATE-MARKET ROWS, IN PLACE OF THE STATEMENT ROWS THEY REPLACE.
-  const review = PRIVATE_MARKET_FROM_REVIEW ? reviewBookLayer({ root: ROOT, positions, unvalued: unvaluedHoldings }) : null;
+  const review = PRIVATE_MARKET_FROM_REVIEW ? reviewBookLayer({ root: ROOT, positions, unvalued: unvaluedHoldings, reviewWorkbook: references.reviewWorkbook }) : null;
   const supersededUnvaluedBy = new Map();
   if (review) {
     const id = (x) => `${x.accountId}|${x.securityKey}`;
@@ -4830,6 +4837,7 @@ function build(archived, archiveCount = archived.length) {
       issuesByAccountId.set(id, [...(issuesByAccountId.get(id) ?? []), ...issues]);
     }
     const pageText = (docKey) => {
+      if (references.pagesByDocument && Object.hasOwn(references.pagesByDocument, docKey)) return references.pagesByDocument[docKey];
       try { return JSON.parse(fs.readFileSync(path.join(AUDIT_DIR, docKey, "pages.json"), "utf8")).pages.map((p) => p.text).join("\n"); }
       catch { return null; }
     };
@@ -5205,7 +5213,8 @@ function build(archived, archiveCount = archived.length) {
   }
 
   const holdingCostRecovery = recoverHoldingCosts({ root: ROOT, accounts, positions,
-    unvalued: unvaluedHoldings, shareMovements, docs, archiveCount });
+    unvalued: unvaluedHoldings, shareMovements, docs, archiveCount, mopwm: references.mopwm,
+    reviewWorkbook: references.reviewWorkbook, registerWorkbook: references.registerWorkbook });
   for (const p of positions) Object.assign(p, applyRecoveredCost(p, holdingCostRecovery.records));
   // THE REVIEW'S DATED TRADES PAST A STATEMENT WITH NO TAPE OF ITS OWN (Stage
   // 10hb) — the live layer's roll, as `rolledForward`, where the account's own
@@ -5225,7 +5234,7 @@ function build(archived, archiveCount = archived.length) {
   return {
     accounts, positions, polycab, owners, capitalGains, accountCashFlows, entityCashFlows,
     accountReturnRecords: buildAccountReturnRecords({ accounts, accountCashFlows, byAccount,
-      historicalNavs: JSON.parse(fs.readFileSync(path.join(ROOT, 'scripts/ingest/reference/amfi-opening-navs.json'), 'utf8')) }),
+      historicalNavs: references.historicalNavs ?? JSON.parse(fs.readFileSync(path.join(ROOT, 'scripts/ingest/reference/amfi-opening-navs.json'), 'utf8')) }),
     capitalMoves, positionTranches, shareMovements, holdingCostRecovery,
     // Keyed on the holdings this book carries, in key order, so the file
     // regenerates byte-identically however the accounts were walked.
@@ -5303,6 +5312,52 @@ function build(archived, archiveCount = archived.length) {
 
 /** Stable JSON: keys in the order given, two-space indent, no trailing spaces. */
 const j = (v) => JSON.stringify(v, null, 2);
+
+/** All browser-facing collections, emitted by the same canonical builder. */
+export function canonicalBookValues(book) {
+  // Use the emitter's JSON semantics (including -0 -> 0 and absent undefined
+  // fields) before either the server's reporting modules or the browser see it.
+  return JSON.parse(JSON.stringify({
+    BOOK_AS_OF: book.summary.asOf,
+    BOOK_SUMMARY: book.summary,
+    BOOK_ACCOUNTS: book.accounts,
+    BOOK_OWNERS: book.owners,
+    BOOK_POSITIONS: book.positions,
+    BOOK_RECOVERED_COSTS: book.holdingCostRecovery.records,
+    BOOK_UNVALUED_HOLDINGS: book.unvaluedHoldings,
+    BOOK_REVIEW_SUPERSEDED: book.reviewSuperseded,
+    BOOK_REVIEW_WRITTEN_OFF: book.reviewWrittenOff,
+    BOOK_REVIEW_FLOWS: book.reviewFlows,
+    BOOK_POLYCAB: book.polycab,
+    BOOK_NAV_HISTORY: book.navHistory,
+    BOOK_ACCOUNT_NAV_HISTORY: book.accountNavHistory,
+    BOOK_NAV_COVERAGE: book.navCoverage,
+    BOOK_UNDATED_CAPITAL: book.undatedCapital,
+    BOOK_ATTRIBUTION: book.attribution,
+    BOOK_CAPITAL_GAINS: book.capitalGains,
+    BOOK_REALISED_BY_CLASS: book.realisedByClass,
+    BOOK_ACCOUNT_CASH_FLOWS: book.accountCashFlows,
+    BOOK_ACCOUNT_RETURN_RECORDS: book.accountReturnRecords,
+    BOOK_CAPITAL_MOVES: book.capitalMoves,
+    BOOK_CAPITAL_FROM_INCEPTION: book.capitalFromInception,
+    BOOK_POSITION_TRANCHES: book.positionTranches,
+    BOOK_HOLDING_TRADES: book.holdingTrades,
+    BOOK_HOLDING_INCOME: book.holdingIncome,
+    BOOK_HOLDING_LOTS: book.holdingLots,
+    BOOK_SHARE_MOVEMENTS: book.shareMovements,
+    BOOK_ENTITY_CASH_FLOWS: book.entityCashFlows,
+    BOOK_ACCOUNT_RETURNS: book.accountReturns,
+    BOOK_ACCOUNT_BRIDGES: book.accountBridges,
+    BOOK_CORPORATE_ACTIONS: book.corporateActions,
+    BOOK_COMMITMENTS: book.commitments,
+    BOOK_PE_FUNDS: [],
+    BOOK_PREIPO_FUNDS: [],
+    BOOK_UNLISTED_COMPANIES: [],
+    BOOK_DEBT_FUNDS: [],
+    BOOK_CLOSED_FUNDS: [],
+    BOOK_STARTUPS: [],
+  }));
+}
 
 function emit(book) {
   const L = [];
@@ -6090,6 +6145,26 @@ function report(book) {
 
 // ── Main ─────────────────────────────────────────────────────────────────────
 
+export { build as buildCanonicalBook, emit as emitCanonicalBook };
+
+/** Immutable source inputs prepared once by a trusted long-lived processor.
+ * The CLI keeps its existing uncached path; neither path changes financial rules. */
+export function prepareBookReferences(root = ROOT, auditDir = AUDIT_DIR) {
+  const manifest = JSON.parse(fs.readFileSync(path.join(auditDir, 'manifest.json'), 'utf8'));
+  const pagesByDocument = Object.fromEntries(manifest.map(d => {
+    try { return [d.docKey, JSON.parse(fs.readFileSync(path.join(auditDir, d.docKey, 'pages.json'), 'utf8')).pages.map(p => p.text).join('\n')]; }
+    catch { return [d.docKey, null]; }
+  }));
+  return {
+    symbols: JSON.parse(fs.readFileSync(path.join(root, 'src/data/nseSymbols.json'), 'utf8')),
+    reviewWorkbook: readSpreadsheet(fs.readFileSync(path.join(root, REVIEW_WORKBOOK))),
+    registerWorkbook: readSpreadsheet(fs.readFileSync(path.join(root, REGISTER))),
+    mopwm: loadMopwmTransactions(root), pagesByDocument,
+    historicalNavs: JSON.parse(fs.readFileSync(path.join(root, 'scripts/ingest/reference/amfi-opening-navs.json'), 'utf8')),
+  };
+}
+
+function main() {
 const archive = loadArchive();
 const docs = archive.filter((d) => d.status !== "failed");
 if (!docs.length) {
@@ -6115,6 +6190,9 @@ if (book.unclassified.length) {
 for (const n of book.notes) console.log(`  ! ${n}`);
 console.log("  src/data/glowData.ts");
 console.log("  docs/BOOK-REPORT.md");
+}
+
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main();
 
 /**
  * A DEPOSITORY ROW WHOSE FUND ALREADY REPORTS ITSELF IS NOT A SECOND HOLDING.

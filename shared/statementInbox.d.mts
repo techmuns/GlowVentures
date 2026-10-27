@@ -12,6 +12,8 @@ export type InboxFile = {
   /** The git blob holding the bytes on the inbox branch. */
   blob: string;
   status: InboxStatus;
+  /** A rapid claim is never also consumed by the legacy scheduled intake. */
+  processor?: 'rapid' | null;
   hold: InboxHold | null;
   /** Held: why. Duplicate: the statement already in `source/` it matches. */
   reason: string | null;
@@ -65,6 +67,7 @@ export declare function withBatch(log: InboxLog, batch: InboxBatch): InboxLog;
 export declare function makeBatch(id: string, files: { name: string; size: number; blob: string }[], now?: Date): InboxBatch;
 export declare function uniqueNames<T extends { name: string }>(files: T[]): T[];
 export declare function queuedFiles(log: InboxLog): { batch: string; file: InboxFile }[];
+export declare function waitingStatementFiles(log: InboxLog): { batch: string; file: InboxFile }[];
 export declare function applyUpdates(log: InboxLog, updates: InboxUpdate[], now?: Date): InboxLog;
 export declare function requeue(log: InboxLog, batchId: string, now?: Date): { log: InboxLog; count: number };
 export declare function withoutFile(log: InboxLog, batchId: string, name: string):

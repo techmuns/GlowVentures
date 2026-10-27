@@ -21,8 +21,8 @@ export const safeKey = key => typeof key === 'string' && /^[a-z0-9][a-z0-9._-]*$
 export const accountKey = d => stable([d.provider, String(d.accountNo ?? '')]);
 export const holdingKey = p => stable([p.accountId, p.memberId ?? null, p.securityKey]);
 export function documentRevision(d) { return digest(d); }
-export function archiveRevision(docs) {
-  return digest(docs.map(d => [d.docKey, documentRevision(d)]).sort((a, b) => a[0].localeCompare(b[0])));
+export function archiveRevision(docs, revisionOf = documentRevision) {
+  return digest(docs.map(d => [d.docKey, revisionOf(d)]).sort((a, b) => a[0].localeCompare(b[0])));
 }
 export function validDate(value) {
   return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)
@@ -43,6 +43,17 @@ const content = d => {
     ? Object.fromEntries(Object.entries(v).filter(([k]) => !['source', 'dedupeGroup', 'alsoReportedUnder'].includes(k)).map(([k, x]) => [k, replace(x)])) : v;
   return digest(replace(copy));
 };
+/** Economic equality when a previously uploaded original later reaches main.
+ * Physical page spans, read notes and attribution evidence may differ; no
+ * financial row or populated financial field may disappear during migration. */
+export function sameFinancialStatement(left, right) {
+  const facts = doc => {
+    const copy = { ...doc };
+    for (const key of ['warnings', 'pages', 'sourcePages', 'ownerSource', 'accountNoSource']) delete copy[key];
+    return content(copy);
+  };
+  return facts(left) === facts(right);
+}
 
 const carriesFacts = d => RECORD_SECTIONS.some(k => d[k]?.length) || d.flows || d.commitment;
 const unsafeSource = p => typeof p !== 'string' || !p.startsWith('source/') || p.split('/').some(x => !x || x === '..' || x === '.') || /[\\\r\n\0]/.test(p);
@@ -67,6 +78,11 @@ export const heldOutByDecision = d => d.status === 'failed' && !carriesFacts(d)
 
 /** No fuzzy owner, account or security matching is allowed at this boundary. */
 export function assessPublication({ baseline, documents, baselineReport = {}, report = {}, expected = {} }) {
+  // Evaluation-scoped caches: documents may mutate during reconciliation, so
+  // no revision is ever cached across candidates or in global state.
+  const revisions = new WeakMap(), contents = new WeakMap();
+  const revisionOf = d => { if (!revisions.has(d)) revisions.set(d, documentRevision(d)); return revisions.get(d); };
+  const contentOf = d => { if (!contents.has(d)) contents.set(d, content(d)); return contents.get(d); };
   const issues = [], duplicates = [];
   const add = (code, d, reason, pointer = '') => issues.push({ code, document: d?.docKey ?? null, pointer, reason });
   const old = new Map(baseline.map(d => [d.docKey, d]));
@@ -76,7 +92,7 @@ export function assessPublication({ baseline, documents, baselineReport = {}, re
     if (byKey.has(d.docKey)) add('DUPLICATE_KEY', d, 'Two documents have the same archive key.');
     byKey.set(d.docKey, d);
   }
-  const changed = documents.filter(d => !old.has(d.docKey) || documentRevision(old.get(d.docKey)) !== documentRevision(d));
+  const changed = documents.filter(d => !old.has(d.docKey) || revisionOf(old.get(d.docKey)) !== revisionOf(d));
   const touched = new Set(changed.map(d => d.docKey));
   // A failed reading that published nothing may give way to another reading of
   // the SAME source file — a reader that now reads it (Stage 10gk). The
@@ -94,7 +110,7 @@ export function assessPublication({ baseline, documents, baselineReport = {}, re
       if (r.isin && r.securityKey) { remember(isinByKey, r.securityKey, r.isin); remember(keyByIsin, r.isin, r.securityKey); }
     }
   }
-  const seenContent = new Map(baseline.map(d => [content(d), d.docKey]));
+  const seenContent = new Map(baseline.map(d => [contentOf(d), d.docKey]));
   for (const d of changed) {
     try { assertNormalized(d); stable(d); } catch (error) { add('INVALID_DOCUMENT', d, error.message); continue; }
     if (unsafeSource(d.sourcePath)) add('UNSAFE_SOURCE_PATH', d, 'Statement evidence must refer to a source file inside the repository.');
@@ -122,11 +138,11 @@ export function assessPublication({ baseline, documents, baselineReport = {}, re
       if (!d.asOf) add('MISSING_DATE', d, 'Financial records require a verified statement date.');
     }
     if (!hasFacts && !d.twinOf && !d.excludedFromBook && d.totals?.marketValue !== 0) add('EMPTY_EXTRACTION', d, 'No financial records or measured empty portfolio were read.');
-    const other = seenContent.get(content(d));
+    const other = seenContent.get(contentOf(d));
     if (other && other !== d.docKey) duplicates.push({ document: d.docKey, sameAs: other });
-    else seenContent.set(content(d), d.docKey);
+    else seenContent.set(contentOf(d), d.docKey);
     const sameIssue = baseline.find(x => x.docKey !== d.docKey && identity(x) === identity(d));
-    if (sameIssue && content(sameIssue) !== content(d)) add('CONFLICTING_ISSUE', d, `A different statement already covers the same account, report and date (${sameIssue.docKey}). A correction requires review.`);
+    if (sameIssue && contentOf(sameIssue) !== contentOf(d)) add('CONFLICTING_ISSUE', d, `A different statement already covers the same account, report and date (${sameIssue.docKey}). A correction requires review.`);
     const previous = baseline.filter(x => accountKey(x) === accountKey(d) && x.reportType === d.reportType && x.asOf && x.asOf <= d.asOf)
       .sort((a, b) => b.asOf.localeCompare(a.asOf))[0];
     for (const section of RECORD_SECTIONS) {
@@ -183,7 +199,7 @@ export function assessPublication({ baseline, documents, baselineReport = {}, re
   }
   if (duplicates.length && duplicates.length !== changed.length) add('MIXED_DUPLICATE_DELIVERY', null, 'Remove repeated documents and reprepare; a mixed delivery must not discard its new statements.');
   const decision = issues.length ? 'needs_review' : duplicates.length ? 'duplicate' : changed.length ? 'verified' : 'unchanged';
-  return { schemaVersion: 1, decision, baselineRevision: archiveRevision(baseline), candidateRevision: archiveRevision(documents),
+  return { schemaVersion: 1, decision, baselineRevision: archiveRevision(baseline, revisionOf), candidateRevision: archiveRevision(documents, revisionOf),
     changed: [...touched].sort(), duplicates, issues };
 }
 
@@ -213,23 +229,41 @@ export function documentEvidence(doc, { readerRevision, sourceSha256 = null } = 
 }
 
 /** Resolves source selection saved by the book builder; never searches by value. */
+/** Index one immutable candidate once. Reconciliation must finish first. */
+export function positionEvidenceReader(documents, accounts) {
+  const documentsByKey = new Map(), accountsByKey = new Map(), revisions = new WeakMap(), relatedByHolding = new Map();
+  const revisionOf = d => { if (!revisions.has(d)) revisions.set(d, documentRevision(d)); return revisions.get(d); };
+  for (const account of accounts) if (!accountsByKey.has(account.accountId)) accountsByKey.set(account.accountId, account);
+  for (const doc of documents) {
+    if (!documentsByKey.has(doc.docKey)) documentsByKey.set(doc.docKey, doc);
+    const account = accountKey(doc);
+    for (const section of RECORD_SECTIONS) for (const [i, row] of (doc[section] ?? []).entries()) {
+      if (typeof row.securityKey !== 'string') continue;
+      const key = stable([account, row.securityKey, row.memberId ?? null]);
+      if (!relatedByHolding.has(key)) relatedByHolding.set(key, []);
+      relatedByHolding.get(key).push({ document: doc.docKey, revision: revisionOf(doc), pointer: `/${section}/${i}` });
+    }
+  }
+  return position => positionEvidencePrepared(position, documentsByKey, accountsByKey, relatedByHolding, revisionOf);
+}
 export function positionEvidence(position, documents, accounts) {
+  return positionEvidenceReader(documents, accounts)(position);
+}
+function positionEvidencePrepared(position, documentsByKey, accountsByKey, relatedByHolding, revisionOf) {
   const locator = position.statementRecord;
   if (!locator) return { identity: holdingKey(position), kind: position.review ? 'review' : 'unresolved',
     reason: position.review ? 'Family review: use its recorded workbook row and supplementary evidence.' : 'No selected statement record was retained by this book version.',
     review: position.reviewSource ?? null, supplementary: position.recoveredCost?.evidence ?? [] };
-  const doc = documents.find(d => d.docKey === locator.document);
+  const doc = documentsByKey.get(locator.document);
   const match = /^\/holdings\/(\d+)$/.exec(locator.pointer);
   const row = match && doc?.holdings?.[Number(match[1])];
   if (!row || row.securityKey !== position.securityKey || (row.memberId ?? null) !== (position.memberId ?? null)) throw new Error(`Wrong statement row for ${holdingKey(position)}`);
-  const account = accounts.find(a => a.accountId === position.accountId);
+  const account = accountsByKey.get(position.accountId);
   if (!account || account.provider !== doc.provider || String(account.accountNo) !== String(doc.accountNo) || account.ownerId !== doc.ownerId) throw new Error(`Wrong statement account for ${holdingKey(position)}`);
   if (row.quantity !== position.quantity || Math.abs(row.marketValue - position.marketValue) > 0.01) throw new Error(`Statement value/quantity changed for ${holdingKey(position)}`);
-  const ref = field => ({ document: doc.docKey, revision: documentRevision(doc), pointer: `${locator.pointer}/${field}` });
-  const related = documents.filter(d => accountKey(d) === accountKey(doc)).flatMap(d => RECORD_SECTIONS.flatMap(section =>
-    (d[section] ?? []).flatMap((r, i) => r.securityKey === position.securityKey && (r.memberId ?? null) === (position.memberId ?? null)
-      ? [{ document: d.docKey, revision: documentRevision(d), pointer: `/${section}/${i}` }] : [])));
-  return { identity: holdingKey(position), kind: 'statement', record: { document: doc.docKey, revision: documentRevision(doc), pointer: locator.pointer },
+  const ref = field => ({ document: doc.docKey, revision: revisionOf(doc), pointer: `${locator.pointer}/${field}` });
+  const related = relatedByHolding.get(stable([accountKey(doc), position.securityKey, position.memberId ?? null])) ?? [];
+  return { identity: holdingKey(position), kind: 'statement', record: { document: doc.docKey, revision: revisionOf(doc), pointer: locator.pointer },
     fields: {
       quantity: { inputs: [ref('quantity')] }, currentPrice: { inputs: [ref('marketPrice')] },
       marketValue: { inputs: [ref('marketValue')] },

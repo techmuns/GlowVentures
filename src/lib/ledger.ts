@@ -1,7 +1,7 @@
 // Prepared on the build server from the complete archive. Each view downloads
 // only its own result; no statement fan-out or reconciliation runs in the browser.
 import { readModel } from "./readModel";
-import manifest from "../data/readModels.json";
+import { selectedReadModels as manifest } from "./runtimeBook";
 import type { TxnData, LotData, IncomeData, SalesData, StockLedger } from "./ledgerModel";
 export type { ManifestEntry, Txn, TxnData, Lot, LotData, IncomeRow, IncomeData, SaleRow, SalesData, StockTxn, StockLedger } from "./ledgerModel";
 

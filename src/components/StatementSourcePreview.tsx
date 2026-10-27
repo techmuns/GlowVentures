@@ -1,3 +1,4 @@
+import { statementAsset } from "@/lib/runtimeBook";
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { buildLibrary, type ManifestEntry } from '@/lib/statementLibrary';
@@ -14,7 +15,7 @@ export default function StatementSourcePreview() {
   const [failed, setFailed] = useState(false);
   useEffect(() => {
     let alive = true;
-    fetch(`${import.meta.env.BASE_URL}audit/manifest.json`, { cache: 'no-store' })
+    fetch(statementAsset(`audit/manifest.json`), { cache: 'no-store' })
       .then(r => { if (!r.ok) throw new Error(); return r.json(); })
       .then(m => { if (alive) setManifest(m); }).catch(() => { if (alive) setFailed(true); });
     return () => { alive = false; };

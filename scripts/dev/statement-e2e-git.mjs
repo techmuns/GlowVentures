@@ -29,8 +29,8 @@ export function inboxService({ remote, stateFile, dispatched }) {
     const method = init.method ?? 'GET';
     const raw = init.body instanceof Blob ? await init.body.text() : init.body;
     const body = raw ? JSON.parse(raw) : null;
-    if (method === 'GET' && p === '/git/ref/heads/statement-inbox') {
-      const sha = maybe(['rev-parse', '--verify', 'refs/heads/statement-inbox']); return sha ? reply(200, { object: { sha } }) : reply(404, {});
+    if (method === 'GET' && /^\/git\/ref\/heads\/(statement-inbox|statement-publications)$/.test(p)) {
+      const sha = maybe(['rev-parse', '--verify', 'refs/heads/' + p.split('/').at(-1)]); return sha ? reply(200, { object: { sha } }) : reply(404, {});
     }
     if (method === 'GET' && p.startsWith('/git/commits/')) {
       const sha = p.split('/').at(-1); return reply(200, { sha, tree: { sha: git(['rev-parse', sha + '^{tree}']) } });
@@ -38,8 +38,11 @@ export function inboxService({ remote, stateFile, dispatched }) {
     if (method === 'GET' && p.startsWith('/contents/')) {
       const name = p.slice('/contents/'.length), ref = u.searchParams.get('ref');
       const sha = maybe(['rev-parse', ref + ':' + name]);
-      return sha ? reply(200, { sha, content: Buffer.from(git(['show', ref + ':' + name])).toString('base64') }) : reply(404, {});
+      return sha ? reply(200, { sha, content: execFileSync('git', ['--git-dir', remote, 'cat-file', 'blob', sha], { maxBuffer: 64 << 20 }).toString('base64') }) : reply(404, {});
     }
+    if (method === 'GET' && /^\/git\/blobs\/[a-f0-9]{40}$/.test(p)) return reply(200, {
+      content: execFileSync('git', ['--git-dir', remote, 'cat-file', 'blob', p.split('/').at(-1)], { maxBuffer: 64 << 20 }).toString('base64'), encoding: 'base64',
+    });
     if (method === 'POST' && p === '/git/blobs') return reply(201, { sha: blob(Buffer.from(body.content, 'base64')) });
     if (method === 'POST' && p === '/git/trees') {
       const index = path.join(path.dirname(remote), 'index-' + randomUUID()), env = { GIT_INDEX_FILE: index };
@@ -51,11 +54,12 @@ export function inboxService({ remote, stateFile, dispatched }) {
       } finally { fs.rmSync(index, { force: true }); }
     }
     if (method === 'POST' && p === '/git/commits') return reply(201, { sha: git(['commit-tree', body.tree, ...body.parents.flatMap(p => ['-p', p])], body.message) });
-    if ((method === 'PATCH' && p === '/git/refs/heads/statement-inbox') || (method === 'POST' && p === '/git/refs')) {
-      if (body.ref) assert.equal(body.ref, 'refs/heads/statement-inbox');
-      const old = maybe(['rev-parse', '--verify', 'refs/heads/statement-inbox']);
+    if ((method === 'PATCH' && /^\/git\/refs\/heads\/(statement-inbox|statement-publications)$/.test(p)) || (method === 'POST' && p === '/git/refs')) {
+      const ref = body.ref ?? 'refs/heads/' + p.split('/').at(-1);
+      assert.ok(/^refs\/heads\/(statement-inbox|statement-publications)$/.test(ref));
+      const old = maybe(['rev-parse', '--verify', ref]);
       if (old && (method === 'POST' || maybe(['merge-base', '--is-ancestor', old, body.sha]) === null)) return reply(422, {});
-      git(['update-ref', 'refs/heads/statement-inbox', body.sha, old ?? '0'.repeat(40)]); return reply(method === 'POST' ? 201 : 200, {});
+      git(['update-ref', ref, body.sha, old ?? '0'.repeat(40)]); return reply(method === 'POST' ? 201 : 200, {});
     }
     if (method === 'POST' && p === '/dispatches') {
       const c = readControl(stateFile); c.dispatches++; writeControl(stateFile, c);

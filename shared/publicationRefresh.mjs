@@ -32,13 +32,15 @@ export function startPublicationRefresh({ revision, path = '/publication.json', 
   const edited = event => {
     syncRoute();
     const target = event.target;
-    if (target?.type !== 'file' && (/^(INPUT|TEXTAREA|SELECT)$/.test(target?.tagName ?? '') || target?.isContentEditable)) dirty = true;
+    if (target?.type !== 'file' && !target?.closest?.('[data-publication-transient="true"]')
+      && (/^(INPUT|TEXTAREA|SELECT)$/.test(target?.tagName ?? '') || target?.isContentEditable)) dirty = true;
   };
   const blocked = () => {
     syncRoute();
     const target = doc.activeElement;
     return dirty || doc.visibilityState === 'hidden' || (typeof doc.hasFocus === 'function' && !doc.hasFocus())
-      || (target?.type !== 'file' && (/^(INPUT|TEXTAREA|SELECT)$/.test(target?.tagName ?? '') || !!target?.isContentEditable))
+      || (target?.type !== 'file' && !target?.closest?.('[data-publication-transient="true"]')
+        && (/^(INPUT|TEXTAREA|SELECT)$/.test(target?.tagName ?? '') || !!target?.isContentEditable))
       || !!doc.querySelector('[data-publication-busy="true"], [data-publication-dirty="true"], [role="dialog"]');
   };
   blockers.set(browser, blocked);
@@ -62,12 +64,13 @@ export function startPublicationRefresh({ revision, path = '/publication.json', 
   const wake = () => { void check(); };
   const timer = browser.setInterval(wake, intervalMs);
   browser.addEventListener('focus', wake);
+  browser.addEventListener('glow:statements-updated', wake);
   doc.addEventListener('visibilitychange', wake);
   doc.addEventListener('input', edited, true); doc.addEventListener('change', edited, true);
   wake();
   return { check, stop: () => {
     active = false; request?.abort(); browser.clearInterval(timer);
-    browser.removeEventListener('focus', wake); doc.removeEventListener('visibilitychange', wake);
+    browser.removeEventListener('focus', wake); browser.removeEventListener('glow:statements-updated', wake); doc.removeEventListener('visibilitychange', wake);
     doc.removeEventListener('input', edited, true); doc.removeEventListener('change', edited, true);
     if (blockers.get(browser) === blocked) blockers.delete(browser);
   } };

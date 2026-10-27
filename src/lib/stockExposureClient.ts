@@ -1,6 +1,6 @@
 import type { HeldFund, StockExposure, StockExposureState } from "./lookthrough";
 import { requestDeadline } from "./requestDeadline";
-import manifest from "../data/readModels.json";
+import { selectedReadModels as manifest } from "./runtimeBook";
 import { markDeploymentChanged } from "./deploymentVersion";
 
 // Tab switches and unrelated quote ticks reuse the exact valuation request.

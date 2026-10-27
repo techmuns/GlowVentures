@@ -273,7 +273,7 @@ const pagesJson = (grid) => ({
  * still read from that part's own pages, since every page of these statements
  * reprints the header.
  */
-function extractDocuments(file, grid) {
+export function extractDocuments(file, grid) {
   const parts = splitBundle(grid);
   if (!parts) return [{ doc: extractOne(file, grid), grid }];
   return parts.map((p) => ({
@@ -303,7 +303,7 @@ function extractDocuments(file, grid) {
  * good HTML table, and diagnosing it as the wrong thing is worse than not
  * reading it — somebody goes looking for a broken download that does not exist.
  */
-function gridFromSpreadsheet(buf) {
+export function gridFromSpreadsheet(buf) {
   /**
    * A WORKBOOK THAT NEVER ARRIVED IS NOT AN UNREADABLE WORKBOOK.
    *
@@ -1345,34 +1345,32 @@ function writeArchive(docs, grids) {
   // cosmetic change — one archive, two readers, no duplication.
   const manifest = [];
   for (const doc of docs) {
+    const record = archiveRecord(doc, grids.get(doc));
     const dir = path.join(AUDIT_DIR, doc.docKey);
     fs.mkdirSync(dir, { recursive: true });
-    const sheets = [];
-    for (const [name, sheet] of Object.entries(doc.sections ?? {})) {
-      fs.writeFileSync(path.join(dir, `${name}.json`), JSON.stringify(sheet, null, 1) + "\n");
-      sheets.push({
-        key: name,
-        name: sheet.name ?? name,
-        rows: sheet.rows?.length ?? 0,
-        cols: sheet.rows?.reduce((m, r) => Math.max(m, r.length), 0) ?? 0,
-      });
+    for (const [name, value] of Object.entries(record.files)) {
+      fs.writeFileSync(path.join(dir, name), JSON.stringify(value, null, 1) + "\n");
     }
-    // Keyed by the DOCUMENT, not by the file: several documents can come out of
-    // one bundle, and each must archive the pages it was actually read from.
-    // Keying by path gave every part of a bundle the whole file's page text, so
-    // the capital-gain document's provenance showed eight pages of a holding
-    // report it had nothing to do with.
-    const grid = grids.get(doc);
-    if (grid) {
-      const pj = pagesJson(grid);
-      fs.writeFileSync(path.join(dir, "pages.json"), JSON.stringify(pj, null, 1) + "\n");
-      // Exposed as a sheet too, so raw per-page text is browsable for provenance.
-      sheets.push({ key: "pages", name: "Raw page text", rows: pj.pages.length, cols: 2 });
-    }
-    // The normalized facts, so the book builder never re-parses a PDF.
-    fs.writeFileSync(path.join(dir, "document.json"), JSON.stringify({ ...doc, sections: undefined }, null, 1) + "\n");
+    manifest.push(record.manifest);
+  }
+  fs.writeFileSync(path.join(AUDIT_DIR, "manifest.json"), JSON.stringify(manifest, null, 1) + "\n");
+  return manifest;
+}
 
-    manifest.push({
+/** One archive record, shared by offline and request-time ingestion. */
+export function archiveRecord(doc, grid) {
+  const files = {}, sheets = [];
+  for (const [name, sheet] of Object.entries(doc.sections ?? {})) {
+    files[`${name}.json`] = sheet;
+    sheets.push({ key: name, name: sheet.name ?? name, rows: sheet.rows?.length ?? 0,
+      cols: sheet.rows?.reduce((m, r) => Math.max(m, r.length), 0) ?? 0 });
+  }
+  if (grid) {
+    files['pages.json'] = pagesJson(grid);
+    sheets.push({ key: 'pages', name: 'Raw page text', rows: grid.pages.length, cols: 2 });
+  }
+  files['document.json'] = { ...doc, sections: undefined };
+  return { files, manifest: {
       // ── document identity (this pipeline) ──
       docKey: doc.docKey,
       provider: doc.provider,
@@ -1399,10 +1397,27 @@ function writeArchive(docs, grids) {
       fy: doc.asOf ?? "",
       source: doc.sourcePath,
       sheets,
-    });
+    } };
+}
+
+/** Same exact-witness backfills for offline and resident processing. */
+export function backfillStatementDocuments(docs, grids = new Map()) {
+  for (let i = 0; i < docs.length; i++) {
+    const doc = docs[i];
+    if (doc.status !== 'failed') continue;
+    const grid = grids.get(doc);
+    if (!grid) continue;
+    const provider = pmsSiblingProvider(doc, grid.pages.map(p => p.text).join('\n'), docs);
+    if (!provider) continue;
+    const recovered = extractOne(path.join(ROOT, doc.sourcePath), grid, null, provider);
+    grids.delete(doc); grids.set(recovered, grid); docs[i] = recovered;
   }
-  fs.writeFileSync(path.join(AUDIT_DIR, "manifest.json"), JSON.stringify(manifest, null, 1) + "\n");
-  return manifest;
+  backfillAccountNumbers(docs);
+  backfillSoleAccount(docs);
+  backfillOwners(docs);
+  const scanNamed = nameScannedHoldings(docs);
+  const renamed = backfillSecurityNames(docs);
+  return { scanNamed, renamed };
 }
 
 async function main() {
@@ -1527,21 +1542,8 @@ async function main() {
     console.log(produced.length > 1 ? `${produced.length} reports — ${summary}` : summary);
   }
 
-  for (let i = 0; i < docs.length; i++) {
-    const doc = docs[i];
-    if (doc.status !== 'failed') continue;
-    const grid = grids.get(doc);
-    const provider = pmsSiblingProvider(doc, grid.pages.map(p => p.text).join('\n'), docs);
-    if (!provider) continue;
-    const recovered = extractOne(path.join(ROOT, doc.sourcePath), grid, null, provider);
-    grids.delete(doc); grids.set(recovered, grid); docs[i] = recovered;
-  }
-  backfillAccountNumbers(docs);
-  backfillSoleAccount(docs);
-  backfillOwners(docs);
-  const scanNamed = nameScannedHoldings(docs);
+  const { scanNamed, renamed } = backfillStatementDocuments(docs, grids);
   if (scanNamed) console.log(`  ${scanNamed} scanned holding(s) named as another statement prints their ISIN.`);
-  const renamed = backfillSecurityNames(docs);
   if (renamed) console.log(`  ${renamed} clipped security name(s) resolved to their fuller form via ISIN.`);
   ensureUniqueDocKeys(docs);
 

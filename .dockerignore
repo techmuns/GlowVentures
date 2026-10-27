@@ -1,0 +1,12 @@
+.git
+.cache
+node_modules
+dist
+source/_extracted
+public/views
+public/statement-files
+public/pdf-assets
+*.local
+.env*
+.dev.vars*
+**/.wrangler

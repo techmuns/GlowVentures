@@ -1,0 +1,47 @@
+import baseline from '../data/readModels.json';
+import { CANONICAL_BOOK_KEYS } from '../../shared/canonicalBookKeys.mjs';
+
+const BASE = import.meta.env?.BASE_URL ?? '/';
+
+type Snapshot = { schemaVersion: 1; revision: string; readerRevision: string;
+  book: Record<string, unknown>; stockKeys: string[]; emptyLedger: typeof baseline.emptyLedger };
+let selected: Snapshot | null = null;
+export let selectedReadModels = baseline;
+export let bootstrapWarning = false;
+export let publicationDiscoveryPath = `${BASE}api/statement-data?status=1`;
+export const hasRuntimeBook = () => selected !== null;
+export function runtimeBookValue<T>(key: string, fallback: T): T {
+  return selected ? selected.book[key] as T : fallback;
+}
+export function statementAsset(path: string): string {
+  return selected ? `${BASE}api/statement-data/${selected.revision}/${path}` : `${BASE}${path}`;
+}
+export function statementPreviewAsset(file: string): string {
+  return selected ? statementAsset(`statement-previews/${encodeURIComponent(file)}`)
+    : `${BASE}api/statement-previews/${encodeURIComponent(file)}`;
+}
+export function validRuntimeSnapshot(value: unknown): value is Snapshot {
+  const s = value as Snapshot;
+  return !!s && s.schemaVersion === 1 && /^[a-f0-9]{20}$/.test(s.revision)
+    && typeof s.readerRevision === 'string' && /^[a-f0-9]{64}$/.test(s.readerRevision)
+    && s.readerRevision === baseline.readerRevision && !!s.book && typeof s.book === 'object'
+    && Object.keys(s.book).sort().join() === [...CANONICAL_BOOK_KEYS].sort().join()
+    && Array.isArray(s.stockKeys) && s.stockKeys.every(k => typeof k === 'string' && /^[a-z0-9-]+$/.test(k))
+    && !!s.emptyLedger && Array.isArray(s.emptyLedger.txns);
+}
+export async function bootstrapRuntimeBook(): Promise<void> {
+  try {
+    const response = await fetch(`${BASE}api/statement-data`, {
+      cache: 'no-store', credentials: 'same-origin', signal: AbortSignal.timeout(8_000),
+    });
+    if (response.status === 204 || !response.headers.get('Content-Type')?.includes('application/json')) {
+      publicationDiscoveryPath = `${BASE}publication.json`; return;
+    }
+    if (!response.ok) throw Error('Latest statements are unavailable');
+    const snapshot: unknown = await response.json();
+    if (!validRuntimeSnapshot(snapshot)) throw Error('Incompatible or incomplete statement version');
+    selected = snapshot;
+    selectedReadModels = { ...baseline, revision: snapshot.revision, stockKeys: snapshot.stockKeys, emptyLedger: snapshot.emptyLedger };
+    publicationDiscoveryPath = `${BASE}api/statement-data?status=1`;
+  } catch { bootstrapWarning = true; }
+}

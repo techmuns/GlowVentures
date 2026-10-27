@@ -57,7 +57,7 @@ import { verify as verifyPublication, readArchive, readBaseline } from "./verify
 import { digest, documentRevision, archiveRevision } from "./lib/publication.mjs";
 import { monitorPublication, neverArrivedNote, withNotice } from "./lib/intakePublication.mjs";
 import {
-  INBOX_DEFAULTS, STATEMENT_EXT, extOf, emptyLog, parseLog, serializeLog, applyUpdates, inboxPath,
+  INBOX_DEFAULTS, STATEMENT_EXT, extOf, emptyLog, parseLog, serializeLog, applyUpdates, inboxPath, waitingStatementFiles,
 } from "../../shared/statementInbox.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -169,8 +169,7 @@ function commitInbox(message, change) {
 }
 
 /** Files to read this run: queued ones, and any a dead run left `processing`. */
-const waitingFiles = (log) => [...log.batches].sort((a, b) => a.id.localeCompare(b.id))
-  .flatMap((b) => b.files.filter((f) => f.status === "queued" || f.status === "processing" || (f.status === "held" && f.pullRequest)).map((f) => ({ batch: b.id, file: f })));
+const waitingFiles = waitingStatementFiles;
 
 // ── main, and what is already in source/ ─────────────────────────────────────
 

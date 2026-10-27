@@ -42,10 +42,11 @@
 
 import {
   inboxFor, checkUpload, newBatchId, makeBatch, withBatch, uniqueNames, inboxPath,
-  requeue, withoutFile, isBatchId, isBlobSha, InboxError, InboxRefusal, MAX_BATCH_FILES, MAX_FILE_BYTES,
+  requeue, withoutFile, isBatchId, isBlobSha, InboxError, InboxRefusal, MAX_BATCH_FILES, MAX_FILE_BYTES, applyUpdates,
 } from "../../shared/statementInbox.mjs";
 import { checkStatementBytes } from "../../shared/statementBytes.mjs";
 import { publishedStatementDuplicates, recognisePublishedDuplicates } from "../../shared/publishedStatementDuplicates.mjs";
+import { rapidStatementsEnabled, rapidStatementRequest, rapidReceiptLog } from '../../shared/rapidStatementBackend.mjs';
 
 const MAX_JSON = 256 * 1024;
 
@@ -71,9 +72,33 @@ async function start(inbox, payload) {
   try { return await inbox.dispatch(payload); } catch { return false; }
 }
 
+function startRapid(context, inbox, batch) {
+  const work = (async () => {
+    try {
+      const response = await rapidStatementRequest(context.env, '/process', { method: 'POST',
+        headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ batch }) });
+      if (!response?.ok) throw Error();
+    } catch {
+      // An uncertain response never starts a second processor. A confirmed
+      // publication receipt overrides this recoverable error on the next read.
+      await inbox.commit({ message: `Statement processing ${batch}: interrupted`, mutate: log => applyUpdates(log,
+        (log.batches.find(b => b.id === batch)?.files ?? []).filter(f => f.processor === 'rapid' && ['queued', 'processing'].includes(f.status))
+          .map(f => ({ batch, name: f.name, status: 'held', hold: 'intake-error', reason: 'Processing was interrupted. Retry this statement.' }))) });
+    }
+  })();
+  if (context.waitUntil) context.waitUntil(work);
+  return work;
+}
+
 /** Read only this deployment's static source index, never a client assertion or
  * an unverified main commit. An absent/malformed index takes the usual intake path. */
 async function publishedDuplicates(context) {
+  if (rapidStatementsEnabled(context.env)) {
+    try {
+      const response = await rapidStatementRequest(context.env, '/published');
+      if (response?.ok) { const data = await response.json(); return publishedStatementDuplicates(data.manifest, data.index); }
+    } catch { /* The compiled archive remains a verified duplicate witness. */ }
+  }
   if (!context.env.ASSETS?.fetch) return new Map();
   try {
     const read = async path => {
@@ -100,7 +125,8 @@ export async function onRequest(context, fetchImpl) {
       const [{ log }, matches] = await Promise.all([inbox.read(), publishedDuplicates(context)]);
       // Read-only reconciliation also releases an older receipt from its wait
       // when these exact bytes are already fully available in this deployment.
-      return json(200, { ok: true, batches: recognisePublishedDuplicates(log, matches).batches });
+      const projected = await rapidReceiptLog(env, recognisePublishedDuplicates(log, matches));
+      return json(200, { ok: true, batches: projected.batches });
     } catch (e) {
       return storeFailed(e, "Try again in a moment.");
     }
@@ -173,6 +199,7 @@ export async function onRequest(context, fetchImpl) {
     const id = newBatchId();
     const matches = await publishedDuplicates(context);
     const batch = recognisePublishedDuplicates({ batches: [makeBatch(id, uniqueNames(files))] }, matches).batches[0];
+    if (rapidStatementsEnabled(env)) for (const file of batch.files) if (file.status === 'queued') file.processor = 'rapid';
     try {
       const { log } = await inbox.commit({
         message: `Statement upload ${id}: ${batch.files.length} file${batch.files.length === 1 ? "" : "s"}`,
@@ -180,7 +207,10 @@ export async function onRequest(context, fetchImpl) {
         mutate: (current) => withBatch(current, batch),
       });
       // Exact published copies need neither an analysis runner nor a new build.
-      const started = batch.files.some(f => f.status === "queued") && await start(inbox, { batch: id });
+      const queued = batch.files.some(f => f.status === 'queued');
+      let started = false;
+      if (queued && rapidStatementsEnabled(env)) { void startRapid(context, inbox, id); started = true; }
+      else if (queued) started = await start(inbox, { batch: id });
       return json(200, { ok: true, batch: id, batches: log.batches, started });
     } catch (e) {
       return storeFailed(e, "Nothing was filed; upload again.");
@@ -201,7 +231,11 @@ export async function onRequest(context, fetchImpl) {
           return r.log;
         },
       });
-      const started = await start(inbox, { batch: body.batch, retry: count });
+      let started;
+      const rapid = log.batches.find(b => b.id === body.batch)?.files.some(f => f.processor === 'rapid' && f.status === 'queued');
+      if (rapid && rapidStatementsEnabled(env)) { void startRapid(context, inbox, body.batch); started = true; }
+      else if (rapid) started = false;
+      else started = await start(inbox, { batch: body.batch, retry: count });
       return json(200, { ok: true, batches: log.batches, started });
     } catch (e) {
       if (e instanceof InboxRefusal) return fail(409, "REFUSED", e.message);

@@ -147,8 +147,7 @@ export function replayReviewFundGroups(rows, args) {
   return replayReviewRows(matches[0],{...args,allowUnpricedSales:true});
 }
 
-function registerEma(root) {
-  const wb=readSpreadsheet(fs.readFileSync(path.join(root,REGISTER)));
+function registerEma(root, wb = readSpreadsheet(fs.readFileSync(path.join(root,REGISTER)))) {
   const sheet=wb.sheets.find((s)=>s.name.trim()==='AJAY SIR - AARTI');
   const header=sheet.rows.findIndex((r)=>r.includes('INVESTMENT NAME'));
   const cols=sheet.rows[header];
@@ -196,11 +195,10 @@ function fromMopwm(report,t,a,prior=NO_RECORD) {
       ...(m.salesAfter?[`${m.salesAfter} sale(s) after ${t.asOf} (rows ${m.salesAfterRows.join(', ')}); a newer holding balance is required`]:[])]}};
 }
 
-export function recoverHoldingCosts({root,accounts,positions,unvalued,shareMovements,docs,archiveCount=docs.length}) {
-  const workbook=readSpreadsheet(fs.readFileSync(path.join(root,REVIEW_WORKBOOK)));
+export function recoverHoldingCosts({root,accounts,positions,unvalued,shareMovements,docs,archiveCount=docs.length,mopwm=loadMopwmTransactions(root),reviewWorkbook,registerWorkbook}) {
+  const workbook=reviewWorkbook ?? readSpreadsheet(fs.readFileSync(path.join(root,REVIEW_WORKBOOK)));
   const rows=readTransactions(workbook).rows;
-  const mopwm=loadMopwmTransactions(root);
-  const ema=registerEma(root), accountById=new Map(accounts.map((a)=>[a.accountId,a]));
+  const ema=registerEma(root,registerWorkbook), accountById=new Map(accounts.map((a)=>[a.accountId,a]));
   /** A record from the transaction report, or the holding left unresolved with the reason. */
   const settle=(t,a,prior)=>{
     const m=fromMopwm(mopwm,t,a,prior);
