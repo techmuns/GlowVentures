@@ -9,15 +9,15 @@
      "name": "bandhan statement.pdf",
      "size": 272137,
      "blob": "71f2b51e1d70c468b9b07fb2f970a8865358c226",
-     "status": "queued",
+     "status": "processing",
      "hold": null,
      "reason": null,
      "landedAs": null,
      "providers": null,
      "docKeys": null,
      "commit": null,
-     "run": null,
-     "updatedAt": "2026-10-27T10:48:54.778Z"
+     "run": "https://github.com/techmuns/GlowVentures/actions/runs/40491389023",
+     "updatedAt": "2026-10-27T10:52:22.485Z"
     }
    ]
   },
