@@ -9,15 +9,15 @@
      "name": "bandhan statement.pdf",
      "size": 272137,
      "blob": "71f2b51e1d70c468b9b07fb2f970a8865358c226",
-     "status": "processing",
+     "status": "duplicate",
      "hold": null,
-     "reason": null,
+     "reason": "Already in the library — byte-identical to source/october-2026-d/Bandhan-8652064-2026-10-26.pdf.",
      "landedAs": null,
      "providers": null,
      "docKeys": null,
      "commit": null,
      "run": "https://github.com/techmuns/GlowVentures/actions/runs/40491389023",
-     "updatedAt": "2026-10-27T10:52:22.485Z"
+     "updatedAt": "2026-10-27T10:52:25.246Z"
     }
    ]
   },
