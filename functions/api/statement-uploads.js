@@ -45,6 +45,7 @@ import {
   requeue, withoutFile, isBatchId, isBlobSha, InboxError, InboxRefusal, MAX_BATCH_FILES, MAX_FILE_BYTES,
 } from "../../shared/statementInbox.mjs";
 import { checkStatementBytes } from "../../shared/statementBytes.mjs";
+import { publishedStatementDuplicates, recognisePublishedDuplicates } from "../../shared/publishedStatementDuplicates.mjs";
 
 const MAX_JSON = 256 * 1024;
 
@@ -70,6 +71,21 @@ async function start(inbox, payload) {
   try { return await inbox.dispatch(payload); } catch { return false; }
 }
 
+/** Read only this deployment's static source index, never a client assertion or
+ * an unverified main commit. An absent/malformed index takes the usual intake path. */
+async function publishedDuplicates(context) {
+  if (!context.env.ASSETS?.fetch) return new Map();
+  try {
+    const read = async path => {
+      const response = await context.env.ASSETS.fetch(new URL(path, context.request.url));
+      if (!response.ok || !response.headers.get("content-type")?.includes("application/json")) throw Error();
+      return response.json();
+    };
+    const [manifest, index] = await Promise.all([read("/audit/manifest.json"), read("/statement-files/index.json")]);
+    return publishedStatementDuplicates(manifest, index);
+  } catch { return new Map(); }
+}
+
 export async function onRequest(context, fetchImpl) {
   const { request, env } = context;
   const inbox = inboxFor(env, fetchImpl);
@@ -81,8 +97,10 @@ export async function onRequest(context, fetchImpl) {
   // ── READ ──────────────────────────────────────────────────────────────────
   if (request.method === "GET") {
     try {
-      const { log } = await inbox.read();
-      return json(200, { ok: true, batches: log.batches });
+      const [{ log }, matches] = await Promise.all([inbox.read(), publishedDuplicates(context)]);
+      // Read-only reconciliation also releases an older receipt from its wait
+      // when these exact bytes are already fully available in this deployment.
+      return json(200, { ok: true, batches: recognisePublishedDuplicates(log, matches).batches });
     } catch (e) {
       return storeFailed(e, "Try again in a moment.");
     }
@@ -153,14 +171,16 @@ export async function onRequest(context, fetchImpl) {
       files.push({ name: v.name, size: f.size, blob: f.blob });
     }
     const id = newBatchId();
-    const batch = makeBatch(id, uniqueNames(files));
+    const matches = await publishedDuplicates(context);
+    const batch = recognisePublishedDuplicates({ batches: [makeBatch(id, uniqueNames(files))] }, matches).batches[0];
     try {
       const { log } = await inbox.commit({
         message: `Statement upload ${id}: ${batch.files.length} file${batch.files.length === 1 ? "" : "s"}`,
-        add: batch.files.map((f) => ({ path: inboxPath(id, f.name), sha: f.blob })),
+        add: batch.files.filter(f => f.status === "queued").map((f) => ({ path: inboxPath(id, f.name), sha: f.blob })),
         mutate: (current) => withBatch(current, batch),
       });
-      const started = await start(inbox, { batch: id });
+      // Exact published copies need neither an analysis runner nor a new build.
+      const started = batch.files.some(f => f.status === "queued") && await start(inbox, { batch: id });
       return json(200, { ok: true, batch: id, batches: log.batches, started });
     } catch (e) {
       return storeFailed(e, "Nothing was filed; upload again.");

@@ -24,6 +24,7 @@ import {
   INBOX_DEFAULTS, MAX_FILE_BYTES, MAX_SETTLED_BATCHES, type InboxLog,
 } from "../../../shared/statementInbox.mjs";
 import { readAnswer, planUpload, fileView, inFlight, uploadDocumentKeys, REASONS, type PickedFile } from "@/lib/statementUploads";
+import { publishedStatementDuplicates, recognisePublishedDuplicates } from "../../../shared/publishedStatementDuplicates.mjs";
 
 let fails = 0;
 const ok = (name: string, pass: boolean, detail = "") => {
@@ -138,8 +139,8 @@ const ENV = { GLOW_GITHUB_TOKEN: "t" };
 const call = (gh: ReturnType<typeof fakeGitHub>, init: RequestInit = {}, env: Record<string, unknown> = ENV) =>
   onRequest({ env, request: new Request(`${SITE}/api/statement-uploads`, { ...init, headers: { origin: SITE, ...(init.headers ?? {}) } }) }, gh.fetchImpl);
 const jsonBody = async (r: Response) => (await r.json()) as Record<string, any>;
-const postJson = (gh: ReturnType<typeof fakeGitHub>, body: unknown) =>
-  call(gh, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+const postJson = (gh: ReturnType<typeof fakeGitHub>, body: unknown, env = ENV) =>
+  call(gh, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }, env);
 const postFile = (gh: ReturnType<typeof fakeGitHub>, name: string, bytes: Uint8Array) => {
   const form = new FormData();
   form.append("name", name);
@@ -254,6 +255,43 @@ async function run() {
     applyUpdates(log, [{ batch: "nope", name: "x.pdf", status: "landed" }]).batches.every((b) => b.files.every((f) => f.name !== "x.pdf")));
   ok("only queued or held files can be removed", !!withoutFile(applyUpdates(log, [{ batch: "20250101T000000Z-open", name: "old.pdf", status: "landed" }]), "20250101T000000Z-open", "old.pdf").error);
   ok("requeue touches held files only", requeue(log, "20250101T000000Z-open").count === 0);
+
+  console.log("── exact published copies never wait for an analysis runner ──");
+  const fast = fakeGitHub();
+  const copied = (await jsonBody(await postFile(fast, "renamed-copy.pdf", new TextEncoder().encode("%PDF-1.4\nKnown original")))).staged;
+  const fresh = (await jsonBody(await postFile(fast, "new.pdf", new TextEncoder().encode("%PDF-1.4\nNew original")))).staged;
+  const ready = { docKey: "known-source", provider: "Actual issuer", status: "ok", sourcePath: "source/old/original.pdf" };
+  const knownIndex = { files: { [ready.docKey]: { blob: copied.blob, bytes: copied.size, file: "known-source.pdf" } } };
+  let published = [ready];
+  let assetsFail = false;
+  const assets = { ...ENV, ASSETS: { fetch: async (url: URL) => {
+    if (assetsFail) return new Response("<!doctype html>Unavailable", { headers: { "content-type": "text/html" } });
+    return Response.json(url.pathname === "/audit/manifest.json" ? published : knownIndex);
+  } } };
+  const instant = await jsonBody(await postJson(fast, { op: "commit", files: [copied] }, assets));
+  const exact = instant.batches[0].files[0];
+  ok("a renamed exact original is complete in the commit response", exact.status === "duplicate" && exact.docKeys.join() === ready.docKey && exact.providers.join() === ready.provider);
+  ok("an existing statement starts no workflow and adds no inbox file", fast.dispatches() === 0 && instant.started === false && !fast.files().has(inboxPath(instant.batch, copied.name)));
+  ok("the duplicate receipt is durable", fast.log().batches[0].files[0].status === "duplicate");
+  const mixed = await jsonBody(await postJson(fast, { op: "commit", files: [copied, fresh] }, assets));
+  const mixedFiles = mixed.batches.find((b: { id: string }) => b.id === mixed.batch).files;
+  ok("a mixed batch queues only genuinely new bytes", mixedFiles[0].status === "duplicate" && mixedFiles[1].status === "queued" && fast.dispatches() === 1 && !fast.files().has(inboxPath(mixed.batch, copied.name)) && !!fast.bytesAt(inboxPath(mixed.batch, fresh.name)));
+  const beforeRead = fast.head()!.sha;
+  const historical = await jsonBody(await call(fast, {}, assets));
+  ok("reading reconciles exact receipts without mutating the inbox", historical.batches[0].files[0].status === "duplicate" && fast.head()!.sha === beforeRead && fast.dispatches() === 1);
+  published = [{ ...ready, status: "partial" }];
+  ok("an incompletely read source is never fast-completed", publishedStatementDuplicates(published, knownIndex).size === 0);
+  published = [ready, { ...ready, docKey: "unread-bundle-part", status: "failed" }];
+  ok("a missing or unread bundle part prevents fast completion", publishedStatementDuplicates(published, knownIndex).size === 0);
+  published = [ready];
+  const matches = publishedStatementDuplicates(published, knownIndex);
+  const candidate = makeBatch("20261027T000000Z-old", [copied]);
+  ok("an old queued receipt recognises the exact published original", recognisePublishedDuplicates({ batches: [candidate] }, matches).batches[0].files[0].status === "duplicate");
+  const wrongSize = { ...candidate, files: [{ ...candidate.files[0], size: copied.size + 1 }] };
+  ok("a mismatched size cannot fast-complete", recognisePublishedDuplicates({ batches: [wrongSize] }, matches).batches[0].files[0].status === "queued");
+  assetsFail = true;
+  const fallback = await jsonBody(await postJson(fast, { op: "commit", files: [copied] }, assets));
+  ok("unavailable static evidence falls back to normal analysis", fallback.batches[0].files[0].status === "queued" && fast.dispatches() === 2);
 
   // ── 8. THE CLIENT ─────────────────────────────────────────────────────────
   console.log("── the client ──");

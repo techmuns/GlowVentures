@@ -163,7 +163,15 @@ try {
       if (url.pathname === '/api/statement-uploads') {
         const chunks = []; for await (const chunk of req) chunks.push(chunk);
         const response = await onRequest({ request: new Request(url, { method: req.method, headers: req.headers,
-          ...(req.method === 'POST' ? { body: Buffer.concat(chunks) } : {}) }), env: { GLOW_GITHUB_TOKEN: 'local-only', GLOW_GITHUB_REPO: 'local/statement-test' } }, github);
+          ...(req.method === 'POST' ? { body: Buffer.concat(chunks) } : {}) }), env: {
+            GLOW_GITHUB_TOKEN: 'local-only', GLOW_GITHUB_REPO: 'local/statement-test',
+            ASSETS: { fetch: async asset => {
+              const dir = readControl(marker).deployed ? path.join(workspace, 'dist') : servedInitial;
+              const file = path.resolve(dir, '.' + new URL(asset).pathname);
+              assert.ok(file.startsWith(dir + path.sep));
+              return fs.existsSync(file) ? new Response(fs.readFileSync(file), { headers: { 'content-type': 'application/json' } }) : new Response('', { status: 404 });
+            } },
+          } }, github);
         res.writeHead(response.status, Object.fromEntries(response.headers)); res.end(Buffer.from(await response.arrayBuffer())); return;
       }
       if (url.pathname.startsWith('/api/')) { res.writeHead(503, { 'content-type': 'application/json' }); res.end('{"status":"unreachable"}'); return; }
@@ -296,19 +304,19 @@ try {
     const data = new DataTransfer(); data.items.add(new File([Uint8Array.from(atob(f.bytes), c => c.charCodeAt(0))], f.name, { type: 'application/pdf' }));
     element.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: data }));
   }, { name, bytes: bytes.toString('base64') });
+  const duplicateStarted = Date.now();
   await dropFile(fixtureFiles[0].name, fixtureFiles[0].bytes);
-  await page.locator('tr[data-upload-status="queued"]').getByText(fixtureFiles[0].name, { exact: true }).waitFor();
-  await workerPromise; workerPromise = null;
-  assert.equal(inboxLog().batches.flatMap(b => b.files).filter(f => f.status === 'duplicate').length, 1);
-  await page.evaluate(() => window.dispatchEvent(new Event('focus')));
   await page.locator('tr[data-upload-status="duplicate"] [data-upload-complete]').waitFor();
+  assert.equal(workerPromise, null, 'An exact published copy never starts an analysis worker');
+  assert.equal(inboxLog().batches.flatMap(b => b.files).filter(f => f.status === 'duplicate').length, 1);
+  note('PASS exact published copy completes immediately without a worker (' + (Date.now() - duplicateStarted) + ' ms locally)');
   assert.equal(readControl(marker).merges, 1);
   const inboxBeforeRefusal = inboxGit(['rev-parse', 'refs/heads/statement-inbox']);
   await dropFile('not-a-statement.pdf', Buffer.from('<!DOCTYPE html><html><body>Local test attachment, not a statement</body></html>'));
   await page.getByRole('status').filter({ hasText: 'Nothing was saved' }).waitFor();
   assert.equal(inboxGit(['rev-parse', 'refs/heads/statement-inbox']), inboxBeforeRefusal);
   assert.equal((await (await fetch(baseURL + '/publication.json')).json()).revision, stableRevision);
-  assert.equal(readControl(marker).dispatches, 2);
+  assert.equal(readControl(marker).dispatches, 1);
   note('PASS direct file drop, byte-duplicate suppression and disguised attachment refusal without changing published data');
   assert.deepEqual(errors, []);
   await browser.close(); browser = null;

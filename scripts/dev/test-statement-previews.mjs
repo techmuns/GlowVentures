@@ -11,6 +11,16 @@ import { restoreStatementPasswords, PASSWORD_VAULT_DOMAIN } from '../lib/stateme
 import { onRequest as previewRequest } from '../../functions/api/statement-previews/[file].js';
 import { readDeployedPublication } from '../ingest/lib/intakePublication.mjs';
 
+test('published content addresses match the exact original bytes, including protected PDFs', () => {
+  const index = JSON.parse(fs.readFileSync('public/statement-files/index.json', 'utf8'));
+  assert.ok(Object.keys(index.files).length);
+  for (const [key, file] of Object.entries(index.files)) {
+    const bytes = fs.readFileSync('public/statement-files/' + file.file);
+    assert.equal(file.blob, createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex'), key);
+    assert.equal(file.bytes, bytes.length, key);
+  }
+});
+
 async function read(bytes, password) {
   const task = getDocument({ data: new Uint8Array(bytes), password, verbosity: 0 });
   try {
