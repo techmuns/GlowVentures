@@ -75,6 +75,10 @@ export const BRAND_NAMES: Readonly<Record<string, BrandName>> = {
     brand: "Neo Infra Income Opportunities Fund I", legal: "Neo Infra Income Opportunities Fund I", basis: "own-name",
     source: ["statement:neo-infra-income-opportunities-fund-9039920536-2026-06-30-holdings"],
   },
+  "franklin-india-credit-aif-scheme-i-unit-class-db2": {
+    brand: "Franklin India Credit AIF – Scheme I", legal: "Franklin India Credit AIF – Scheme I", basis: "own-name",
+    source: ["statement:franklin-india-credit-aif-10387-2026-10-22-holdings"],
+  },
   "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii": {
     brand: "360 ONE Special Opportunities Fund", legal: "360 ONE Special Opportunities Fund", basis: "own-name",
     source: ["statement:360-one-private-wealth-37702-2026-07-31-holdings"],

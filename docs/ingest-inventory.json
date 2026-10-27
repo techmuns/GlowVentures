@@ -1,16 +1,16 @@
 {
-  "generatedAt": "2026-10-27T04:50:09.579Z",
+  "generatedAt": "2026-10-27T06:15:31.938Z",
   "sourceDir": "source",
   "counts": {
-    "files": 464,
-    "pdfs": 454,
+    "files": 465,
+    "pdfs": 455,
     "nonPdf": 10,
     "classified": 396,
-    "unclassified": 68,
-    "encrypted": 36,
+    "unclassified": 69,
+    "encrypted": 37,
     "fromArchives": 399,
     "archivesExpanded": 50,
-    "pages": 1978
+    "pages": 1979
   },
   "reportTypes": [
     "holdings",
@@ -44,6 +44,69 @@
     "unknown"
   ],
   "archives": [
+    {
+      "archive": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani.zip",
+      "extractedTo": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani",
+      "files": 3,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ankita Jaisinghani.zip",
+      "extractedTo": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ankita Jaisinghani",
+      "files": 2,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Bharat Jaisinghani.zip",
+      "extractedTo": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Bharat Jaisinghani",
+      "files": 1,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Ajay T Jaisinghani.zip",
+      "extractedTo": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Ajay T Jaisinghani",
+      "files": 3,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Ankita Jaisinghani.zip",
+      "extractedTo": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Ankita Jaisinghani",
+      "files": 2,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Bharat Jaisinghani.zip",
+      "extractedTo": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Bharat Jaisinghani",
+      "files": 1,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Ajay T Jaisinghani.zip",
+      "extractedTo": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Ajay T Jaisinghani",
+      "files": 3,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Ankita Jaisinghani.zip",
+      "extractedTo": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Ankita Jaisinghani",
+      "files": 2,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Bharat Jaisinghani.zip",
+      "extractedTo": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Bharat Jaisinghani",
+      "files": 1,
+      "skipped": 0,
+      "failed": 0
+    },
     {
       "archive": "source/ARISTOS - AJAY.zip",
       "extractedTo": "source/_extracted/ARISTOS - AJAY",
@@ -328,69 +391,6 @@
       "archive": "source/VEC - ANKITA JAISINGHANI .zip",
       "extractedTo": "source/_extracted/VEC - ANKITA JAISINGHANI ",
       "files": 11,
-      "skipped": 0,
-      "failed": 0
-    },
-    {
-      "archive": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani.zip",
-      "extractedTo": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani",
-      "files": 3,
-      "skipped": 0,
-      "failed": 0
-    },
-    {
-      "archive": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ankita Jaisinghani.zip",
-      "extractedTo": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ankita Jaisinghani",
-      "files": 2,
-      "skipped": 0,
-      "failed": 0
-    },
-    {
-      "archive": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Bharat Jaisinghani.zip",
-      "extractedTo": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Bharat Jaisinghani",
-      "files": 1,
-      "skipped": 0,
-      "failed": 0
-    },
-    {
-      "archive": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Ajay T Jaisinghani.zip",
-      "extractedTo": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Ajay T Jaisinghani",
-      "files": 3,
-      "skipped": 0,
-      "failed": 0
-    },
-    {
-      "archive": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Ankita Jaisinghani.zip",
-      "extractedTo": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Ankita Jaisinghani",
-      "files": 2,
-      "skipped": 0,
-      "failed": 0
-    },
-    {
-      "archive": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Bharat Jaisinghani.zip",
-      "extractedTo": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Bharat Jaisinghani",
-      "files": 1,
-      "skipped": 0,
-      "failed": 0
-    },
-    {
-      "archive": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Ajay T Jaisinghani.zip",
-      "extractedTo": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Ajay T Jaisinghani",
-      "files": 3,
-      "skipped": 0,
-      "failed": 0
-    },
-    {
-      "archive": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Ankita Jaisinghani.zip",
-      "extractedTo": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Ankita Jaisinghani",
-      "files": 2,
-      "skipped": 0,
-      "failed": 0
-    },
-    {
-      "archive": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Bharat Jaisinghani.zip",
-      "extractedTo": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Bharat Jaisinghani",
-      "files": 1,
       "skipped": 0,
       "failed": 0
     }
@@ -9396,6 +9396,26 @@
       "matchedBy": "nothing matched"
     },
     {
+      "path": "source/october-2026-e/10387.pdf",
+      "fileName": "10387.pdf",
+      "bytes": 265378,
+      "size": "259.2 KB",
+      "pages": 1,
+      "fromArchive": false,
+      "encrypted": true,
+      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
+      "provider": null,
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "nothing matched"
+    },
+    {
       "path": "source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx",
       "fileName": "ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx",
       "bytes": 1076026,
@@ -18011,6 +18031,26 @@
       "bytes": 272137,
       "size": "265.8 KB",
       "pages": 4,
+      "fromArchive": false,
+      "encrypted": true,
+      "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",
+      "provider": null,
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": null,
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "low",
+      "matchedBy": "nothing matched"
+    },
+    {
+      "path": "source/october-2026-e/10387.pdf",
+      "fileName": "10387.pdf",
+      "bytes": 265378,
+      "size": "259.2 KB",
+      "pages": 1,
       "fromArchive": false,
       "encrypted": true,
       "readError": "encrypted — set GLOW_PDF_PASSWORDS to read it",

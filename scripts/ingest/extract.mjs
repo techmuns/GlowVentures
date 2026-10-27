@@ -42,6 +42,7 @@ import * as altFunds from "./providers/altFundStatements.mjs";
 import * as mutualFundFolio from "./providers/mutualFundFolio.mjs";
 import * as folioLedger from "./providers/folioLedger.mjs";
 import * as bandhanFolio from "./providers/bandhanFolio.mjs";
+import * as franklinAif from "./providers/franklinAif.mjs";
 import * as schemePortfolio from "./providers/schemePortfolio.mjs";
 import * as nsdlScan from "./providers/nsdlScan.mjs";
 import { openScan, scanOcrAvailable, SCAN_ENGINE } from "./lib/scan.mjs";
@@ -88,6 +89,9 @@ const EXTRACTORS = Object.fromEntries([
   // drawdown capital account.
   [sanshiFund.PROVIDER, sanshiFund],
   [transitionVenture.PROVIDER, transitionVenture],
+  // Franklin's Category II credit AIF, read from its sealed statement's archived
+  // text (Stage 10hx).
+  [franklinAif.PROVIDER, franklinAif],
   // The family's own CDSL demat accounts at Motilal Oswal — SEVEN of them across
   // twelve documents, and the only source in this drop for their direct equity,
   // their gold and silver ETFs and their arbitrage and hybrid funds. Keyed on
