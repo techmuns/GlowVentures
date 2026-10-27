@@ -40,6 +40,15 @@ export function publishPropertyChange(property?: Property, deleted?: string) {
     catalog: [...state.catalog.filter(r => r.id !== parentId && r.parentId !== parentId), ...(property ? [propertyInputRecord(property), ...ownershipInputRecords(property)] : [])] };
   emit();
 }
+/** A bulk upload's saved properties, published as one snapshot change. */
+export function publishPropertyChanges(properties: Property[]) {
+  if (!properties.length) return;
+  revision++;
+  const ids = new Set(properties.map(p => p.id)), parents = new Set(properties.map(p => `property:${p.id}`));
+  state = { ...state, properties: [...state.properties.filter(p => !ids.has(p.id)), ...properties],
+    catalog: [...state.catalog.filter(r => !parents.has(r.id) && !(r.parentId && parents.has(r.parentId))), ...properties.flatMap(p => [propertyInputRecord(p), ...ownershipInputRecords(p)])] };
+  emit();
+}
 export function publishCallList(calls: EnteredCall[]) {
   revision++; state = { ...state, calls, catalog: [...state.catalog.filter(r => r.kind !== "call"), ...calls.map(callInputRecord)] }; emit();
 }

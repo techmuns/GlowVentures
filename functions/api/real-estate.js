@@ -1,9 +1,12 @@
 // Uses the dashboard's existing authenticated GitHub store. Each property is
 // its own key, so editing one property cannot replace another property's record.
-import { storeFor } from "../../shared/dashboardStore.mjs";
-import { PROPERTY_ID, validateProperty } from "../../shared/realEstate.mjs";
+import { storeFor, StoreError } from "../../shared/dashboardStore.mjs";
+import { PROPERTY_ID, validateProperty, propertyLabel } from "../../shared/realEstate.mjs";
+import { MAX_UPLOAD_ROWS } from "../../shared/propertySheet.mjs";
 const PREFIX = "real-estate:";
 const MAX_BODY = 16384;
+// A bulk upload of up to MAX_UPLOAD_ROWS properties; every other request keeps MAX_BODY.
+const MAX_BULK_BODY = 2 * 1024 * 1024;
 const json = (status, body) => new Response(JSON.stringify(body), { status, headers: {
   "content-type": "application/json; charset=utf-8", "cache-control": "no-store", "x-content-type-options": "nosniff",
 } });
@@ -43,15 +46,46 @@ export async function onRequest({ request, env }) {
       const { value, done } = await reader.read();
       if (done) break;
       size += value.byteLength;
-      if (size > MAX_BODY) { await reader.cancel(); return fail(413, "Property details are too long."); }
+      if (size > MAX_BULK_BODY) { await reader.cancel(); return fail(413, "Property details are too long."); }
       chunks.push(value);
     }
   } catch { return fail(400, "The property could not be read."); }
   const bytes = new Uint8Array(size); let offset = 0;
   for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
   let body;
-  try { body = JSON.parse(new TextDecoder().decode(bytes)); } catch { return fail(400, "Invalid property data."); }
+  try { body = JSON.parse(new TextDecoder().decode(bytes)); } catch { return size > MAX_BODY ? fail(413, "Property details are too long.") : fail(400, "Invalid property data."); }
+  if (body?.op !== "saveMany" && size > MAX_BODY) return fail(413, "Property details are too long.");
   try {
+    // A bulk upload saves every property or none. `base` is the saved record's
+    // `updatedAt` the file was read against ("" for a record without one), or
+    // null for a new property, so a file read before someone else's edit, or
+    // uploaded twice, cannot overwrite or duplicate a record.
+    if (body?.op === "saveMany") {
+      const items = body.properties;
+      if (!Array.isArray(items) || !items.length || items.length > MAX_UPLOAD_ROWS) return fail(400, `Send between 1 and ${MAX_UPLOAD_ROWS} properties.`);
+      const invalid = [], stale = [], ready = [], ids = new Set();
+      for (const [i, item] of items.entries()) {
+        const parsed = validateProperty(item?.property);
+        const name = parsed.property ? propertyLabel(parsed.property) : `Property ${i + 1}`;
+        if (parsed.error) { invalid.push(`${name}: ${parsed.error}`); continue; }
+        if (ids.has(parsed.property.id)) { invalid.push(`${name}: listed twice`); continue; }
+        ids.add(parsed.property.id);
+        if (item.base !== null && typeof item.base !== "string") { invalid.push(`${name}: missing its saved version`); continue; }
+        const current = await store.get(`${PREFIX}${parsed.property.id}`, "json");
+        // Held through the commit's retry, so another save landing meanwhile refuses the whole file.
+        store.expect?.(`${PREFIX}${parsed.property.id}`, current ? JSON.stringify(current) : null);
+        if (item.base === null ? current !== null : current === null || (current.updatedAt ?? "") !== item.base)
+          stale.push(`${name} ${item.base === null ? "is already saved" : current === null ? "is no longer on the dashboard" : "was changed on the dashboard after the file was read"}`);
+        ready.push(parsed.property);
+      }
+      const problems = [...invalid, ...stale];
+      if (problems.length) return fail(invalid.length ? 400 : 409, `Nothing was saved. ${problems.slice(0, 5).join("; ")}${problems.length > 5 ? `; and ${problems.length - 5} more` : ""}. Refresh, download the file again and upload it.`);
+      const updatedAt = new Date().toISOString();
+      const properties = ready.map(p => ({ ...p, updatedAt }));
+      for (const p of properties) await store.put(`${PREFIX}${p.id}`, JSON.stringify(p));
+      await store.flush?.();
+      return json(200, { ok: true, properties });
+    }
     if (body?.op === "save") {
       const parsed = validateProperty(body.property);
       if (parsed.error) return fail(400, parsed.error);
@@ -66,5 +100,8 @@ export async function onRequest({ request, env }) {
       return json(200, { ok: true, deleted: body.id });
     }
     return fail(400, "Invalid property request.");
-  } catch { return fail(502, "The property was not saved. Your entries are still here; try again."); }
+  } catch (error) {
+    if (body?.op === "saveMany" && error instanceof StoreError && error.status === 409) return fail(409, "Nothing was saved. A property in the file was changed on the dashboard while saving. Refresh, download the file again and upload it.");
+    return fail(502, "The property was not saved. Your entries are still here; try again.");
+  }
 }

@@ -100,6 +100,7 @@ jobs:
           BASE=http://127.0.0.1:4173 CHROME="$(command -v google-chrome)" node scripts/check-latest-account-returns.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-real-estate.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-table-inputs.mjs
+          CHROME="$(command -v google-chrome)" node scripts/dev/check-real-estate-bulk.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-sector-return-details.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-investment-dates.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-publication-refresh.mjs
@@ -130,7 +131,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: real-estate-browser-check
-          path: .cache/real-estate-check
+          path: |
+            .cache/real-estate-check
+            .cache/real-estate-bulk-check
           if-no-files-found: ignore
 
       - name: Preserve PDF preview browser evidence

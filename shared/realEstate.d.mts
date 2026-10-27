@@ -7,6 +7,8 @@ export type Property = {
   id: string; name: string; type: string; address: string; city: string; state: string; country: string; pincode: string;
   owners: PropertyOwner[]; area: number | null; areaUnit: string; areaBasis: string;
   cost: number | null; value: number | null; monthlyRent: number | null; monthlyCosts: number | null; debt: number | null;
+  /** The loan's monthly instalment (EMI); null when not entered. */
+  monthlyEmi: number | null;
   purchasedOn: string | null; valuationDate: string | null; leaseEnd: string | null;
   /** "Purchased", "Inherited", "Gifted", or "" when not entered. */
   acquisition: string;
@@ -23,12 +25,13 @@ export type Property = {
   earmark: PropertyEarmark | null;
   latitude: number | null; longitude: number | null; updatedAt?: string;
 };
-export type PropertyFigures = { share: number | null; value: number | null; cost: number | null; debt: number | null; rent: number | null; costs: number | null; equity: number | null; netRent: number | null; yield: number | null; gain: number | null; gainPct: number | null };
+export type PropertyFigures = { share: number | null; value: number | null; cost: number | null; debt: number | null; emi: number | null; rent: number | null; costs: number | null; equity: number | null; netRent: number | null; yield: number | null; gain: number | null; gainPct: number | null };
 export const PROPERTY_TYPES: string[];
 export const ACQUISITION_TYPES: string[];
 export const PROPERTY_STATUSES: string[];
 export const AREA_UNITS: string[];
 export const TITLE_STATUSES: string[];
+export const AREA_BASES: string[];
 export const MONEY_FIELDS: string[];
 export const PROPERTY_ID: RegExp;
 export const MAX_IMPROVEMENTS: number;

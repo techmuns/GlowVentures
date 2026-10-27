@@ -16,7 +16,7 @@ export const CAPITAL_INPUTS: InputField[] = [
 export const PROPERTY_INPUTS: InputField[] = [
   { key: "cost", label: "Cost / value when received" }, { key: "value", label: "Value" },
   { key: "monthlyRent", label: "Monthly rent" }, { key: "monthlyCosts", label: "Monthly costs" },
-  { key: "debt", label: "Debt" }, { key: "area", label: "Area", unit: "area" },
+  { key: "debt", label: "Debt" }, { key: "monthlyEmi", label: "EMI / month" }, { key: "area", label: "Area", unit: "area" },
 ];
 export type InputRecord = {
   id: string; kind: "holding" | "capital" | "private-capital" | "property" | "owner" | "call";
@@ -105,7 +105,7 @@ export function validateInputChanges(changes: unknown, catalog: InputRecord[]): 
 export function fieldForColumn(record: InputRecord, column: string): string | undefined {
   const fields: Record<string, string> = record.kind === "holding"
     ? { units: "quantity", qty: "quantity", quantity: "quantity", cost: "costBasis", costBasis: "costBasis", mv: "marketValue", value: "marketValue", marketValue: "marketValue", realised: "realizedPnL", realized: "realizedPnL", income: "dividendReceived" }
-    : record.kind === "property" ? { cost: "cost", value: "value", rent: "monthlyRent", debt: "debt", area: "area" }
+    : record.kind === "property" ? { cost: "cost", value: "value", rent: "monthlyRent", debt: "debt", emi: "monthlyEmi", area: "area" }
     : record.kind === "call" ? { amount: "amount" } : record.kind === "owner" ? { share: "share" }
     : { committed: "committed", called: "called", paid: "paid", uncalled: "undrawn", pending: "pending" };
   return fields[column];
