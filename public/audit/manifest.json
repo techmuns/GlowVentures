@@ -14002,6 +14002,37 @@
   ]
  },
  {
+  "docKey": "hdfc-10387-2026-10-21-capital-call",
+  "provider": "HDFC",
+  "accountNo": "10387",
+  "owner": null,
+  "ownerId": null,
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-10-21",
+  "reportType": "capital-call",
+  "sourcePath": "source/october-2026-e/10387.pdf",
+  "pages": 1,
+  "sections": [
+   "pages"
+  ],
+  "status": "failed",
+  "warnings": 2,
+  "failedBecause": "no-extractor",
+  "fileKey": "hdfc-10387-2026-10-21-capital-call",
+  "label": "HDFC · 10387 · capital-call",
+  "fy": "2026-10-21",
+  "source": "source/october-2026-e/10387.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
   "docKey": "adviser-transaction-report-not-a-statement-unknown-unknown-unknown",
   "provider": "Adviser transaction report (not a statement)",
   "accountNo": null,
