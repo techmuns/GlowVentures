@@ -299,7 +299,7 @@ try {
   await folder().waitFor();
   archiveState = 'restricted';
   await page.reload();
-  await page.getByText('The statement archive is password-protected', { exact: true }).waitFor();
+  await page.getByText('Statement library unavailable', { exact: true }).waitFor();
   guardData = await fileData('archive-unavailable.pdf');
   await event(page.locator('main'), 'dragenter', guardData);
   await overlay().waitFor();

@@ -38,7 +38,7 @@ export const UPLOADS_ENDPOINT = "/api/statement-uploads";
 
 export const REASONS = {
   signedOut: "You have been signed out. Sign in again to upload statements.",
-  noFunction: "The upload service is not running here, so statements cannot be uploaded from this copy of the site.",
+  noFunction: "Statement uploads aren’t available here. Open your family office dashboard and try again.",
   notConfigured: "Statement uploads are unavailable. Please try again later.",
   noAnswer: "The upload service did not answer. Nothing was lost; try again in a moment.",
 } as const;

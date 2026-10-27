@@ -585,11 +585,11 @@ export function StatementLibrary() {
           <div className="flex items-start gap-3">
             <div className="mt-0.5 grid h-10 w-10 place-items-center rounded-md border border-amber-500/30 bg-amber-500/10 text-amber-400"><ShieldAlert className="h-5 w-5" /></div>
             <div>
-              <div className="text-sm font-medium text-slate-200">The statement archive is password-protected</div>
+              <div className="text-sm font-medium text-slate-200">Statement library unavailable</div>
               <p className="mt-1 text-xs text-slate-400" data-prose-ok="why the archive did not load">
-                The archive under <span className="mono text-slate-300">public/audit/</span> sits behind the site's edge
-                password gate and could not be fetched. Sign in to the dashboard to browse the library.
+                We couldn’t open your statements. Try again, or sign in to the dashboard again.
               </p>
+              <button type="button" onClick={() => { setStatus("loading"); void loadManifest(true); }} className="mt-2 text-xs text-accent-400 hover:underline">Try again</button>
             </div>
           </div>
         </Card>
