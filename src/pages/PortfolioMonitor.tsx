@@ -3606,7 +3606,7 @@ export function PortfolioMonitor() {
   const sectionKeys = showBucketSections ? bucketGroups.map((g) => `${groupAxis}|${g.key}`) : [];
   const orderedHoldings = bucketGroups.flatMap((grp) =>
     showBucketSections && closedSections.has(`${groupAxis}|${grp.key}`) ? [] : sortRows(grp.rows, holdView.sort, holdAccessors));
-  const holdingScroll = useInfiniteTable(orderedHoldings.length,
+  const holdingScroll = useInfiniteTable("monitor-holdings", orderedHoldings.length,
     JSON.stringify([groupAxis, holdingsView, entity, sector, bucket, [...selected].sort(), holdView.sort, [...closedSections].sort(), memberScope.owners ? [...memberScope.owners].sort() : null]));
   const visibleHoldings = new Set(orderedHoldings.slice(0, holdingScroll.shown));
   const allOpen = expandableKeys.length > 0
@@ -5986,7 +5986,7 @@ function DealtInside({ group, rowKey, open, toggle, sort, money }: {
     return b == null || s == null ? null : b - s;
   };
   return (
-    <div className="overflow-x-auto rounded-lg border border-ink-700 bg-ink-800" data-dealt-panel={rowKey} data-navigation-scroll="portfoliomonitor-1">
+    <div className="overflow-x-auto rounded-lg border border-ink-700 bg-ink-800" data-dealt-panel={rowKey} data-navigation-key={rowKey} data-navigation-scroll="portfoliomonitor-1">
       <SortableTable className="min-w-full text-[12px]" storageKey="monitor-dealt" columns={DEALT_COLS}>
         {(dv) => (<>
         <thead>
@@ -7101,7 +7101,7 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
                           </td>
                         </Tr>
                         {isOpen && (
-                          <tr data-table-depth="1" data-dated-panel={r.key}>
+                          <tr data-table-depth="1" data-dated-panel={r.key} data-navigation-key={r.key}>
                             <td colSpan={COLS} className="px-3 pb-3 pt-1">
                               {cap && (
                                 <>

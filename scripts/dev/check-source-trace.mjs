@@ -36,8 +36,21 @@ try {
   await page.getByLabel('PDF zoom',{exact:true}).selectOption('1.5');
   await highlight.waitFor();
   await page.screenshot({path:path.join(out,'demat-closing-source.png')});
+  await page.getByText('Loading page…',{exact:true}).waitFor({state:'hidden'});
+  await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+  const pdfPosition = await page.locator('[data-navigation-scroll="pdfpreview-1"]').evaluate(el => ({top:el.scrollTop,left:el.scrollLeft}));
   await page.locator('[data-source-back]').click();
   assert.ok(page.url().includes('/stock/'+motilal));
+  await page.goForward();
+  await page.locator('canvas[data-pdf-page="5"]').waitFor();
+  await page.getByText('Loading page…',{exact:true}).waitFor({state:'hidden'});
+  await page.waitForFunction(expected => {
+    const el = document.querySelector('[data-navigation-scroll="pdfpreview-1"]');
+    return el && Math.abs(el.scrollTop-expected.top)<1 && Math.abs(el.scrollLeft-expected.left)<1;
+  }, pdfPosition);
+  assert.equal(await page.getByLabel('PDF zoom',{exact:true}).inputValue(),'1.5');
+  assert.equal(await page.getByLabel('PDF page',{exact:true}).inputValue(),'5');
+  await page.locator('[data-source-back]').click();
 
   await gotoStock(motilal);
   const nil = page.locator('[data-account-row="motilal-oswal-mutual-fund-90414963315"] a[data-source-metric="quantity"]');

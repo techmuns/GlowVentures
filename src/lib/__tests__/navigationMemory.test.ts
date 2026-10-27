@@ -45,3 +45,24 @@ assert.equal(codecs.numberNavigation.read(137), 137);
 for (const invalid of [-1, NaN, Infinity, '137', {}]) assert.equal(codecs.numberNavigation.read(invalid), null);
 assert.deepEqual(codecs.nullableStringsNavigation.read(['Energy', 'Financials']), ['Energy', 'Financials']);
 assert.equal(codecs.nullableStringsNavigation.read(['Energy', 42]), null);
+
+const { validNavigationPicks } = await import('../navigationMemory');
+assert.deepEqual(validNavigationPicks(['old', 'Energy', 'Finance', 'removed'], new Set(['Energy', 'Finance']), 4), ['Energy', 'Finance']);
+assert.deepEqual(validNavigationPicks(['old'], new Set(['Energy']), 4), []);
+assert.equal(validNavigationPicks(null, new Set(['Energy']), 4), null, 'automatic default remains automatic');
+assert.deepEqual(validNavigationPicks(['Energy', 'Energy', 'Finance'], new Set(['Energy', 'Finance']), 1), ['Energy']);
+const { navigationElements } = await import('../navigationDom');
+// Reordering siblings must keep each disclosure/scrollport attached to its holding.
+function rowPort(rowAttribute: string, key: string) {
+  const parent = { attributes: [{ name: rowAttribute, value: key }], parentElement: null };
+  return { attributes: [], parentElement: parent, getAttribute: () => 'repeated-source-site' } as unknown as HTMLElement;
+}
+for (const rowAttribute of ['data-sector-row', 'data-corporate-return-row', 'data-pm-group', 'data-unvalued-account']) {
+  const a = rowPort(rowAttribute, 'alpha'), b = rowPort(rowAttribute, 'beta');
+  let children = [a, b];
+  const root = { querySelectorAll: () => children } as unknown as HTMLElement;
+  const first = navigationElements(root, 'scroll');
+  children = [b, a];
+  const second = navigationElements(root, 'scroll');
+  for (const [key, element] of first) assert.equal(second.get(key), element, rowAttribute);
+}

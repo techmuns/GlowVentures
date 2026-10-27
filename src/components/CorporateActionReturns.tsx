@@ -96,7 +96,7 @@ export function CorporateActionReturns({ securityKey }: { securityKey?: string }
         <thead className="bg-ink-900 text-slate-400"><Tr view={view}>
           {view.columns.map((col) => <SortHeader key={col} view={view} col={col} align="left" title={TITLES[col]}>{LABELS[col]}</SortHeader>)}
         </Tr></thead>
-        <InfiniteTableBody rows={rows} columns={view.order.length} resetKey={JSON.stringify([search, view.sort, securityKey, scope.owners ? [...scope.owners].sort() : null])}>{({ p, account, result: r }) => {
+        <InfiniteTableBody navigationKey="corporateactionreturns-rows" rows={rows} columns={view.order.length} resetKey={JSON.stringify([search, view.sort, securityKey, scope.owners ? [...scope.owners].sort() : null])}>{({ p, account, result: r }) => {
           const issues = r ? [...r.quantityIssues, ...r.incomeIssues] : [LOADING];
           const lead = leadIssue(issues) ?? LOADING;
           const events = r?.lines.filter((l) => l.status !== "in-statement") ?? [];

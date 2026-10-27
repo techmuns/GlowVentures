@@ -19,7 +19,7 @@ const columns=['investment','bought','cost','value','date','gain','return','weig
 const headings=['Investment / account','Bought this year','Paid','Latest value','Value date','Price gain / loss','Price return','Weight'];
 export default function InvestedThisYearReturns({start,end,type}:{start:string;end:string;type:ReturnType}) {
   const {consolidated,statementPortfolio,fmtFromBase}=usePortfolio();
-  const [search,setSearch]=useNavigationState<string>('invested-search', '');
+  const [search,setSearch]=useNavigationState<string>(`invested-search:${start}:${end}`, '');
   const view=useTableView('cio-year-investments',columns);
   const positions=useMemo(()=>currentHoldings(consolidated),[consolidated]);
   const accounts=statementPortfolio?.accounts??[];

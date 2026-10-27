@@ -337,7 +337,7 @@ function TransactionsView({ data, sales, scoped }: {
                 <SortHeader col="realised" view={txnView}>Realised</SortHeader>
               </Tr>
             </thead>
-            <InfiniteTableBody rows={txnRows} columns={txnView.order.length} resetKey={JSON.stringify(txnView.sort)} className="divide-y divide-ink-700/70">
+            <InfiniteTableBody navigationKey="ledgerinsights-txnRows" rows={txnRows} columns={txnView.order.length} resetKey={JSON.stringify(txnView.sort)} className="divide-y divide-ink-700/70">
               {(t, i) => (
                 <Tr view={txnView} key={`${t.date}-${t.securityKey}-${i}`} className="hover:bg-ink-700/40">
                   <td className="px-4 py-2 mono text-slate-400 whitespace-nowrap">{fmtDate(t.date)}</td>
@@ -381,7 +381,7 @@ function TransactionsView({ data, sales, scoped }: {
                   <SortHeader col="status" view={saleView} align="left">Status</SortHeader>
                 </Tr>
               </thead>
-              <InfiniteTableBody rows={saleRows} columns={saleView.order.length} resetKey={JSON.stringify(saleView.sort)} className="divide-y divide-ink-700/70">
+              <InfiniteTableBody navigationKey="ledgerinsights-saleRows" rows={saleRows} columns={saleView.order.length} resetKey={JSON.stringify(saleView.sort)} className="divide-y divide-ink-700/70">
                 {(r) => (
                   <Tr view={saleView} key={r.securityKey} className="hover:bg-ink-700/40">
                     <td className="px-4 py-2 text-slate-100"><StockLink securityKey={r.securityKey} name={r.security} /></td>
@@ -653,7 +653,7 @@ function GainsView({ data }: { data: LotData | null }) {
                 <SortHeader col="gain" view={lotView}>Gain</SortHeader>
               </Tr>
             </thead>
-            <InfiniteTableBody rows={lotRows} columns={lotView.order.length} resetKey={JSON.stringify(lotView.sort)} className="divide-y divide-ink-700/70">
+            <InfiniteTableBody navigationKey="ledgerinsights-lotRows" rows={lotRows} columns={lotView.order.length} resetKey={JSON.stringify(lotView.sort)} className="divide-y divide-ink-700/70">
               {(l, i) => (
                 <Tr view={lotView} key={`${l.securityKey}-${l.saleDate}-${i}`} className="hover:bg-ink-700/40">
                   <td className="px-4 py-2 text-slate-100"><StockLink securityKey={l.securityKey} name={l.security} /></td>
@@ -747,7 +747,7 @@ function IncomeView({ data }: { data: IncomeData | null }) {
                   <SortHeader col="net" view={cashView}>Net</SortHeader>
                 </Tr>
               </thead>
-              <InfiniteTableBody rows={cashRows} columns={cashView.order.length} resetKey={JSON.stringify(cashView.sort)} className="divide-y divide-ink-700/70">
+              <InfiniteTableBody navigationKey="ledgerinsights-cashRows" rows={cashRows} columns={cashView.order.length} resetKey={JSON.stringify(cashView.sort)} className="divide-y divide-ink-700/70">
                 {(r, i) => (
                   <Tr view={cashView} key={`${r.securityKey}-${r.date}-${i}`} className="hover:bg-ink-700/40">
                     <td className="px-4 py-2 text-slate-100"><StockLink securityKey={r.securityKey} name={r.security} /></td>
@@ -783,7 +783,7 @@ function IncomeView({ data }: { data: IncomeData | null }) {
                   <SortHeader col="entitlement" view={corpView} align="left">Entitlement</SortHeader>
                 </Tr>
               </thead>
-              <InfiniteTableBody rows={corpRows} columns={corpView.order.length} resetKey={JSON.stringify(corpView.sort)} className="divide-y divide-ink-700/70">
+              <InfiniteTableBody navigationKey="ledgerinsights-corpRows" rows={corpRows} columns={corpView.order.length} resetKey={JSON.stringify(corpView.sort)} className="divide-y divide-ink-700/70">
                 {(r, i) => (
                   <Tr view={corpView} key={`${r.securityKey}-${r.date}-${i}`} className="hover:bg-ink-700/40">
                     <td className="px-4 py-2 text-slate-100"><StockLink securityKey={r.securityKey} name={r.security} /></td>

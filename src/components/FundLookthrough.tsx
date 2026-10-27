@@ -96,7 +96,7 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
 }) {
   const { fmtFromBase } = usePortfolio();
   const [state, setState] = useState<LookthroughState>({ status: "loading" });
-  const [qFilter, setQ] = useNavigationState<string>("fund-lookthrough-search", "");
+  const [qFilter, setQ] = useNavigationState<string>(`fund-lookthrough-search:${securityKey}:${part}`, "");
   const q = useTableExportFilter(qFilter, "");
 
   useEffect(() => {

@@ -123,7 +123,6 @@ function SourceArchive() {
   const [formats, setFormats] = useState<SheetFormats | null>(null);
   const cache = useRef<Record<string, Sheet>>({});
 
-
   useEffect(() => {
     let alive = true;
     // Per-column number formats for every sheet, so the grid shows the precision
@@ -144,6 +143,10 @@ function SourceArchive() {
   useEffect(() => {
     if (status !== "ready" || !manifest.length || applied.current === location.key) return;
     applied.current = location.key;
+    if (!restored) {
+      setQuery(searchParams.get("eq") ?? searchParams.get("find") ?? "");
+      setExact(searchParams.has("eq"));
+    }
     const wantFile = restored ? fileKey : searchParams.get("file") ?? fileKey;
     const f = manifest.find(x => x.fileKey === wantFile && x.sheets.length);
     if (wantFile && !f) {
@@ -239,7 +242,7 @@ function SourceArchive() {
       return exact ? s === q : s.includes(q);
     }));
   }, [sheet, query, headerRowIndex, exact]);
-  const scroll = useInfiniteTable(filtered.length, JSON.stringify([fileKey, sheetKey, query, exact]));
+  const scroll = useInfiniteTable("audit-archive", filtered.length, JSON.stringify([fileKey, sheetKey, query, exact]));
   const visible = filtered.slice(0, scroll.shown);
   /**
    * ── A ROW WITH FEWER CELLS THAN ITS HEADER IS NOT PLACED BY POSITION (XA-20)

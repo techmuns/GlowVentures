@@ -1,12 +1,13 @@
 import { useNavigationValue, numberNavigation } from "@/lib/useNavigationState";
 import { useCallback, useContext, useEffect, useLayoutEffect, useRef, type ReactNode } from "react";
 import { TableExportAllRows } from "./ExportableTable";
-import { isTableExporting } from "@/lib/tableExportSnapshot";
+import { isTableExporting, useTableExportIdentity } from "@/lib/tableExportSnapshot";
 
 /** Sorting, totals and exports use the full collection; scrolling only appends rows. */
-export function useInfiniteTable(total: number, resetKey: string, batchSize = 50) {
+export function useInfiniteTable(navigationKey: string, total: number, resetKey: string, batchSize = 50) {
   // The window is presentation state as well: restore enough rows before scroll.
-  const [limit, setLimit] = useNavigationValue(`table-window:${resetKey}`, batchSize, numberNavigation);
+  const displayKey = useTableExportIdentity(resetKey);
+  const [limit, setLimit] = useNavigationValue(`table-window:${navigationKey}:${displayKey}`, batchSize, numberNavigation);
   const shown = Math.min(total, Math.max(batchSize, limit));
   const loadMore = useCallback(() => {
     setLimit(current => Math.min(total, Math.max(batchSize, current) + batchSize));
@@ -60,12 +61,12 @@ export function InfiniteTableEnd({ scroll, columns }: { scroll: ReturnType<typeo
   </tr>;
 }
 
-export function InfiniteTableBody<T>({ rows, children, columns, resetKey, batchSize = 50, className, empty }: {
-  rows: readonly T[]; children: (row: T, index: number) => ReactNode;
+export function InfiniteTableBody<T>({ navigationKey, rows, children, columns, resetKey, batchSize = 50, className, empty }: {
+  navigationKey: string; rows: readonly T[]; children: (row: T, index: number) => ReactNode;
   columns: number; resetKey: string; batchSize?: number; className?: string; empty?: ReactNode;
 }) {
   const allRows = useContext(TableExportAllRows);
-  const scroll = useInfiniteTable(rows.length, resetKey, batchSize);
+  const scroll = useInfiniteTable(navigationKey, rows.length, resetKey, batchSize);
   return <tbody className={className} data-infinite-rows={rows.length}>
     {rows.length ? rows.slice(0, allRows ? rows.length : scroll.shown).map(children) : empty}
     <InfiniteTableEnd scroll={scroll} columns={columns} />

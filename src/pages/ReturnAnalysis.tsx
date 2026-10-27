@@ -699,7 +699,7 @@ function ContribTable({ rows, money, storageKey }: {
     return <p className="py-6 text-center text-[11.5px] text-slate-500">{DASH} no priced positions in the book</p>;
   }
   return (
-    <div className="overflow-x-auto" data-navigation-scroll="returnanalysis-3">
+    <div className="overflow-x-auto" data-navigation-scroll="returnanalysis-3" data-navigation-key={storageKey}>
       <ExportableTable className="w-full text-[12.5px]">
         <thead className="label-xs border-b border-ink-700">
           <Tr view={view}>

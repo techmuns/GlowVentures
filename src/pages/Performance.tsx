@@ -495,7 +495,7 @@ export function Performance() {
             const rows = BRIDGE_ROWS.filter((row) => !row.optional
               || bridges.some((b) => { const v = b[row.key]; return typeof v === "number" && v !== 0; }));
             return (
-              <div key={a.accountId}>
+              <div key={a.accountId} data-navigation-key={a.accountId}>
                 <div className="mb-1.5 flex flex-wrap items-baseline gap-2">
                   <span className="text-[12.5px] font-semibold text-slate-200">{acctLabel(a)}</span>
                   <span className="text-[10.5px] text-slate-500">inception {a.inceptionDate ?? DASH}</span>

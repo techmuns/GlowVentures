@@ -11,7 +11,7 @@ export function navigationElements(root: HTMLElement, attribute: 'scroll' | 'det
     for (const el of elements) {
       const identity: string[] = [];
       for (let parent: HTMLElement | null = el; parent && parent !== root; parent = parent.parentElement) {
-        const key = [...parent.attributes].find(a => /^data-.*(?:key|account|security|entity|owner|fund|mandate|id)$/.test(a.name)
+        const key = [...parent.attributes].find(a => /^data-.*(?:key|row|line|group|section|account|security|entity|owner|fund|mandate|id)$/.test(a.name)
           && !a.name.startsWith('data-table-export') && a.value);
         if (key) identity.unshift(`${key.name}=${key.value}`);
       }

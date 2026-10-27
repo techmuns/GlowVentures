@@ -55,7 +55,7 @@ export default function PdfPreview({ url, file, title, initialPage, sourceTarget
 
   useEffect(() => {
     if (!restored && pdf && initialPage && initialPage >= 1 && initialPage <= pdf.numPages) setPage(initialPage);
-  }, [pdf, initialPage, restored]);
+  }, [pdf, initialPage, restored, sourceTarget?.value, sourceTarget?.isin]);
 
   useEffect(() => {
     const element = viewport.current;

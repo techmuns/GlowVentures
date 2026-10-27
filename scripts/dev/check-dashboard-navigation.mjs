@@ -19,6 +19,7 @@ async function settled(){
 const fingerprint=()=>page.locator('main').evaluate(main=>({
  tabs:[...main.querySelectorAll('[role="tab"][aria-selected="true"], [aria-current="page"]')].map(e=>e.textContent.trim()),
  inputs:[...main.querySelectorAll('input:not([type="file"]):not([type="password"]),select')].filter(e=>e.getClientRects().length).map(e=>[e.getAttribute('placeholder')??e.getAttribute('aria-label')??e.tagName,e.value]),
+ windows:[...main.querySelectorAll('[data-table-scroll-end]')].map(e=>[e.getAttribute('data-loaded-rows'),e.getAttribute('data-total-rows')]),
  expanded:[...main.querySelectorAll('[data-navigation-expanded][aria-expanded]')].map(e=>[e.getAttribute('aria-label')??e.textContent.trim(),e.getAttribute('aria-expanded')]),
  details:[...main.querySelectorAll('details[data-navigation-details]')].map(e=>[e.dataset.navigationDetails,e.open]),
  scroll:[['main',main],...[...main.querySelectorAll('[data-navigation-scroll]')].filter(e=>e.getClientRects().length).map(e=>[e.dataset.navigationScroll,e])].map(([id,e])=>[id,Math.round(e.scrollTop),Math.round(e.scrollLeft)]),

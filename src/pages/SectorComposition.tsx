@@ -1,3 +1,5 @@
+import { validNavigationPicks } from "@/lib/navigationMemory";
+import { isTableExporting } from "@/lib/tableExportSnapshot";
 import { useNavigationState, useNavigationValue, nullableStringsNavigation } from "@/lib/useNavigationState";
 import { ExportableTable } from "@/components/ExportableTable";
 import { useTableExportExpansion } from "@/lib/tableExportSnapshot";
@@ -277,7 +279,7 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
    * a judgement, and a Compare tab that opened on an empty table would spend
    * its whole right half asking to be filled.
    */
-  const [picked, setPicked] = useNavigationValue<string[] | null>("sector-picked", null, nullableStringsNavigation);
+  const [pickedState, setPicked] = useNavigationValue<string[] | null>("sector-picked", null, nullableStringsNavigation);
   if (!portfolio) return null;
   const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
   /**
@@ -600,9 +602,12 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
 
   // ── The comparison: the four largest real sectors until the reader picks. ──
   const defaultPick = consSectors.filter((s) => s.key !== UNCLASSIFIED).slice(0, MAX_COMPARE).map((s) => s.key);
-  const compare = (picked ?? defaultPick).filter((k) => consSectors.some((s) => s.key === k) || directSectors.some((s) => s.key === k));
+  const availablePicks = new Set([...consSectors, ...directSectors].map(s => s.key));
+  const picked = validNavigationPicks(pickedState, availablePicks, MAX_COMPARE);
+  if (!isTableExporting() && exposure.status !== "loading" && picked !== pickedState) setPicked(picked);
+  const compare = picked ?? defaultPick;
   const togglePick = (key: string) => setPicked((prev) => {
-    const cur = prev ?? defaultPick;
+    const cur = validNavigationPicks(prev, availablePicks, MAX_COMPARE) ?? defaultPick;
     return cur.includes(key)
       ? cur.filter((k) => k !== key)
       : cur.length >= MAX_COMPARE ? [...cur.slice(1), key] : [...cur, key];
@@ -1342,7 +1347,7 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
                           </td>
                         </Tr>
                         {isOpen && (
-                          <tr data-table-depth="1">
+                          <tr data-table-depth="1" data-navigation-key={s.key}>
                             <td colSpan={sectorView.order.length} className="px-3 pb-3 pt-1">
                               <div className="overflow-hidden rounded-lg border border-ink-700 bg-ink-800">
                                 <div className="max-h-[320px] overflow-auto" data-navigation-scroll="sectorcomposition-4">

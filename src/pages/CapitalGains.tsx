@@ -842,7 +842,7 @@ export function CapitalGains() {
                     <SortHeader col="saved" view={holdView}>Tax saved</SortHeader>
                   </Tr>
                 </thead>
-                <InfiniteTableBody rows={holdShown} columns={holdView.order.length} resetKey={JSON.stringify([holdView.sort, scope.owners ? [...scope.owners].sort() : null])} className="divide-y divide-ink-700/70">
+                <InfiniteTableBody navigationKey="capitalgains-holdShown" rows={holdShown} columns={holdView.order.length} resetKey={JSON.stringify([holdView.sort, scope.owners ? [...scope.owners].sort() : null])} className="divide-y divide-ink-700/70">
                   {/* ONE ROW PER SHORT-TERM LOT (Stage 10fz): a holding's lots
                       turn long-term on their own dates, and each one's gain is
                       its own units at the mark less its own cost. */}
@@ -904,7 +904,7 @@ export function CapitalGains() {
                       <SortHeader col="term" view={harvestView} sortable={false}>ST / LT</SortHeader>
                     </Tr>
                   </thead>
-                  <InfiniteTableBody rows={harvestShown} columns={harvestView.order.length} resetKey={JSON.stringify([harvestQ, harvestView.sort, scope.owners ? [...scope.owners].sort() : null])} className="divide-y divide-ink-700/70"
+                  <InfiniteTableBody navigationKey="capitalgains-harvestShown" rows={harvestShown} columns={harvestView.order.length} resetKey={JSON.stringify([harvestQ, harvestView.sort, scope.owners ? [...scope.owners].sort() : null])} className="divide-y divide-ink-700/70"
                     empty={<tr><td colSpan={harvestView.order.length} className="py-10 text-center text-sm text-slate-500">No security matches "{harvestQ}".</td></tr>}>
                     {(h) => (
                       <Tr view={harvestView} reviewScope={{ positions: [h] }} key={h.securityKey + "@" + h.accountId} className="hover:bg-ink-700/40">

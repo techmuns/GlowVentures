@@ -422,7 +422,7 @@ function InsideList({ title, tone, rows, total, count, unknown, fmt, rank }: {
           No AIF or PMS holding moved this way today
         </p>
       ) : (
-        <div className="mt-3 max-h-[420px] overflow-y-auto lg:max-h-none lg:min-h-[160px] lg:flex-1" data-mover-scroll={tone} data-navigation-scroll="insidemovers-2">
+        <div className="mt-3 max-h-[420px] overflow-y-auto lg:max-h-none lg:min-h-[160px] lg:flex-1" data-mover-scroll={tone} data-navigation-key={tone} data-navigation-scroll="insidemovers-2">
         <ExportableTable className="w-full text-[12px]">
           <tbody className="divide-y divide-ink-700">
             {rows.map((r) => {

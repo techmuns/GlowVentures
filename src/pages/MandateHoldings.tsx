@@ -1789,7 +1789,7 @@ function ManagerTrades({ account, owner }: { account: Account; owner?: string })
   const { fmtFromBase } = usePortfolio();
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [txns, setTxns] = useState<Txn[]>([]);
-  const [openState, setOpen] = useNavigationState("strategy-transactions-expanded", () => new Set<string>());
+  const [openState, setOpen] = useNavigationState(`strategy-transactions-expanded:${account.accountId}`, () => new Set<string>());
   const open = useTableExportExpansion(openState);
   const money = (v: number | null) => (v === null ? null : fmtFromBase(v, { compact: true }));
 
@@ -1835,7 +1835,7 @@ function ManagerTrades({ account, owner }: { account: Account; owner?: string })
           needs={`${account.provider} issues no transaction statement for this account in this drop, so what it bought and sold over the period was never reported here. Its HOLDINGS above are what the statement does carry.`} />
       ) : (
         <>
-          <div className="overflow-x-auto rounded-lg border border-ink-700" data-navigation-scroll="mandateholdings-5">
+          <div className="overflow-x-auto rounded-lg border border-ink-700" data-navigation-scroll="mandateholdings-5" data-navigation-key={account.accountId}>
             <ExportableTable className="min-w-full text-[13px]" data-manager-trades>
               <thead className="bg-ink-800">
                 <Tr view={tradeView} className="border-b border-ink-700">

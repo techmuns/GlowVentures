@@ -1,3 +1,10 @@
+/** Intersect explicit comparison picks with the available choices, retaining order. */
+export function validNavigationPicks(value: string[] | null, allowed: ReadonlySet<string>, limit: number): string[] | null {
+  if (value === null) return null;
+  const kept = [...new Set(value)].filter(key => allowed.has(key)).slice(0, limit);
+  return kept.length === value.length && kept.every((key, i) => key === value[i]) ? value : kept;
+}
+
 /** Presentation snapshots belong to a browser history entry, never the book. */
 export function validNavigationState<T extends string | Set<string>>(value: T, fallback: T, allowed?: ReadonlySet<string>): T {
   if (!allowed) return value;
