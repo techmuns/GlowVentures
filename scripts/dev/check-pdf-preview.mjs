@@ -123,7 +123,7 @@ try {
   await open('preview-auto'); await ink(1);
   assert.equal(await frame.getByLabel('Statement password',{exact:true}).count(),0);
   assert.ok((await frame.locator('[data-preview-download]').getAttribute('href')).endsWith('/statement-files/preview-auto.pdf'));
-  assert.ok((await frame.getByRole('link',{name:'New tab',exact:true}).getAttribute('href')).endsWith('/api/statement-previews/' + unlockedName));
+  assert.equal(await frame.getByRole('link',{name:'New tab',exact:true}).count(),0);
   await frame.getByRole('tab',{name:'Text as read',exact:true}).click();
   await frame.locator('[data-preview-page="1"]').waitFor();
   await frame.getByRole('tab',{name:'Original file',exact:true}).click(); await ink(1);

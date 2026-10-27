@@ -2,7 +2,7 @@ import { ExportableTable } from "@/components/ExportableTable";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { X, ExternalLink, FileText, FileSpreadsheet, Loader2, Download, Lock, Table2, ArrowLeft } from "lucide-react";
+import { X, FileText, FileSpreadsheet, Loader2, Download, Lock, Table2, ArrowLeft } from "lucide-react";
 import type { WorkSheet } from "xlsx";
 import { Pill } from "@/components/Pill";
 import { AbsentSection, DASH } from "@/components/Absent";
@@ -457,9 +457,6 @@ export function StatementPreview({ doc, onClose, backLabel }: { doc: LibraryDoc;
               <>
                 <a href={published.url} download={doc.fileName} className={ACTION} title={`Download ${doc.fileName}`} data-preview-download>
                   <Download className="h-3.5 w-3.5" /> Download
-                </a>
-                <a href={published.previewUrl} target="_blank" rel="noopener noreferrer" className={ACTION} title="Open the file in a new tab">
-                  <ExternalLink className="h-3.5 w-3.5" /> New tab
                 </a>
               </>
             )}
