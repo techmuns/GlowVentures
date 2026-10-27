@@ -1,3 +1,4 @@
+import { statementAsset } from "@/lib/runtimeBook";
 import { useNavigationState, useNavigationValue, nullableStringNavigation } from "@/lib/useNavigationState";
 import { ExportableTable } from "@/components/ExportableTable";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -511,7 +512,7 @@ export function StatementLibrary() {
   const alive = useRef(true);
   const loadManifest = useCallback(async (first: boolean) => {
     try {
-      const r = await fetch(`${BASE}audit/manifest.json`, { cache: "no-store" });
+      const r = await fetch(statementAsset(`audit/manifest.json`), { cache: "no-store" });
       if (!r.ok) throw new Error(String(r.status));
       const m: ManifestEntry[] = await r.json();
       if (!alive.current) return;

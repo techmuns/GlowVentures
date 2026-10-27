@@ -1,3 +1,4 @@
+import { statementAsset } from "@/lib/runtimeBook";
 // Display precision for the Data Audit grid.
 //
 // Excel stores full binary precision but shows each cell through its number
@@ -27,7 +28,7 @@ let inflight: Promise<SheetFormats> | null = null;
 export function loadSheetFormats(): Promise<SheetFormats> {
   if (cache) return Promise.resolve(cache);
   if (inflight) return inflight;
-  inflight = fetch(`${BASE}audit/formats.json`, { cache: "no-store" })
+  inflight = fetch(statementAsset(`audit/formats.json`), { cache: "no-store" })
     .then((r) => (r.ok ? r.json() : {}))
     .then((j: SheetFormats) => { cache = j ?? {}; return cache; })
     .catch(() => { cache = {}; return cache; });

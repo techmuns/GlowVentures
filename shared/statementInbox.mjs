@@ -194,7 +194,7 @@ export function uniqueNames(files) {
 /** Every file still waiting for an intake run, oldest batch first. */
 export function queuedFiles(log) {
   return [...log.batches].sort((a, b) => a.id.localeCompare(b.id))
-    .flatMap((b) => b.files.filter((f) => f.status === "queued").map((f) => ({ batch: b.id, file: f })));
+    .flatMap((b) => b.files.filter((f) => f.status === "queued" && f.processor !== 'rapid').map((f) => ({ batch: b.id, file: f })));
 }
 
 /**

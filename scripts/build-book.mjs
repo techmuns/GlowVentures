@@ -2335,6 +2335,9 @@ function bridgeTieOf(b) {
 // ── Build ────────────────────────────────────────────────────────────────────
 
 function build(archived, archiveCount = archived.length, references = {}) {
+  // Match the CLI's filesystem-key order for every caller. Several historical
+  // accounts use the first complete report as their fallback sample.
+  archived = [...archived].sort((a, b) => a.docKey < b.docKey ? -1 : a.docKey > b.docKey ? 1 : 0);
   const notes = [];
   // AN EXPORT IS A WITNESS, NEVER A DOCUMENT OF THE BOOK. A spreadsheet that
   // sits beside its PDF (`askimpms_…_BankBook178CT.xlsx`, Marathon's `.csv`) is

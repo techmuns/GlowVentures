@@ -12,6 +12,8 @@ export type InboxFile = {
   /** The git blob holding the bytes on the inbox branch. */
   blob: string;
   status: InboxStatus;
+  /** A rapid claim is never also consumed by the legacy scheduled intake. */
+  processor?: 'rapid';
   hold: InboxHold | null;
   /** Held: why. Duplicate: the statement already in `source/` it matches. */
   reason: string | null;

@@ -1,3 +1,4 @@
+import { statementAsset } from "@/lib/runtimeBook";
 import { useNavigationState, useNavigationValue, booleanNavigation } from "@/lib/useNavigationState";
 import { navigationMemory } from "@/lib/navigationMemory";
 import { useLocation } from "react-router-dom";
@@ -127,7 +128,7 @@ function SourceArchive() {
     // Per-column number formats for every sheet, so the grid shows the precision
     // the workbook shows (see sheetFormats).
     loadSheetFormats().then((f) => { if (alive) setFormats(f); });
-    fetch(`${BASE}audit/manifest.json`, { cache: "no-store" })
+    fetch(statementAsset(`audit/manifest.json`), { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
       .then((m: FileMeta[]) => {
         if (!alive) return;
@@ -165,7 +166,7 @@ function SourceArchive() {
     if (cache.current[id]) { setSheet(cache.current[id]); setSheetLoading(false); return; }
     let alive = true;
     setSheetLoading(true); setSheet(null);
-    fetch(`${BASE}audit/${fileKey}/${sheetKey}.json`, { cache: "no-store" })
+    fetch(statementAsset(`audit/${fileKey}/${sheetKey}.json`), { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
       .then((raw: unknown) => { if (!alive) return; const s = decodeAuditSheet(raw); cache.current[id] = s; setSheet(s); })
       .catch(() => alive && setSheet(null))

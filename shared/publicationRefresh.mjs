@@ -62,12 +62,13 @@ export function startPublicationRefresh({ revision, path = '/publication.json', 
   const wake = () => { void check(); };
   const timer = browser.setInterval(wake, intervalMs);
   browser.addEventListener('focus', wake);
+  browser.addEventListener('glow:statements-updated', wake);
   doc.addEventListener('visibilitychange', wake);
   doc.addEventListener('input', edited, true); doc.addEventListener('change', edited, true);
   wake();
   return { check, stop: () => {
     active = false; request?.abort(); browser.clearInterval(timer);
-    browser.removeEventListener('focus', wake); doc.removeEventListener('visibilitychange', wake);
+    browser.removeEventListener('focus', wake); browser.removeEventListener('glow:statements-updated', wake); doc.removeEventListener('visibilitychange', wake);
     doc.removeEventListener('input', edited, true); doc.removeEventListener('change', edited, true);
     if (blockers.get(browser) === blocked) blockers.delete(browser);
   } };

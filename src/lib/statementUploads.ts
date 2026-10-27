@@ -266,6 +266,9 @@ export function useStatementInbox() {
     // that fails says the service is unavailable.
     setState((prev) => a.ok ? { status: "ready", batches: batchesOf(a.body) }
       : prev.status === "ready" ? prev : { status: "unavailable", reason: a.reason, cause: a.cause });
+    if (a.ok && batchesOf(a.body).some(b => b.files.some(f => f.processor === 'rapid' && ['landed', 'duplicate'].includes(f.status)))) {
+      window.dispatchEvent(new Event('glow:statements-updated'));
+    }
   }, []);
 
   useEffect(() => {
@@ -279,7 +282,8 @@ export function useStatementInbox() {
   const moving = state.status === "ready" && inFlight(state.batches);
   useEffect(() => {
     if (!moving) return;
-    const t = window.setInterval(() => { void load(); }, POLL_MS);
+    const rapid = state.status === 'ready' && state.batches.some(b => b.files.some(f => f.processor === 'rapid' && ['queued', 'processing'].includes(f.status)));
+    const t = window.setInterval(() => { void load(); }, rapid ? 2_000 : POLL_MS);
     return () => window.clearInterval(t);
   }, [moving, load]);
 

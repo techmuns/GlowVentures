@@ -97,7 +97,7 @@ for (const [name, body] of outputs) {
 // companies held only through funds. A missing file for a listed key is an outage.
 const manifestPath = path.join(root, 'src/data/readModels.json');
 const manifestTemporary = `${manifestPath}.${process.pid}.tmp`;
-await fs.writeFile(manifestTemporary, JSON.stringify({ revision, stockKeys, emptyLedger: model.deriveStockLedger(docs, ''), publication: 'publication.json' }) + '\n');
+await fs.writeFile(manifestTemporary, JSON.stringify({ revision, readerRevision, stockKeys, emptyLedger: model.deriveStockLedger(docs, ''), publication: 'publication.json' }) + '\n');
 await fs.rename(manifestTemporary, manifestPath);
 // Stable discovery URL. The immutable revision below it pins an audit/export to
 // one dataset; deployment promotes this pointer with all other Pages assets.

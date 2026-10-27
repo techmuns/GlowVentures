@@ -17,7 +17,7 @@ const references = prepareBookReferences();
 const preparedMs = performance.now() - started;
 const originalSource = fs.readFileSync('src/data/glowData.ts', 'utf8');
 const built = buildCanonicalBook(archive.filter(d => d.status !== 'failed'), archive.length, references);
-assert.equal(emitCanonicalBook(built), originalSource, 'Warm engine reproduces the current book byte for byte');
+assert.equal(digest(emitCanonicalBook(built)), digest(originalSource), 'Warm engine reproduces the current book byte for byte');
 const { code } = await transform(originalSource, { loader: 'ts', format: 'esm' });
 const expected = { ...await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`) };
 assert.deepEqual(canonicalBookValues(built), expected, 'Runtime snapshot includes every canonical export');
@@ -39,7 +39,7 @@ for (let n = 0; n < 3; n++) {
     // Source prefixes necessarily differ in a re-delivery. Compare the facts
     // after replacing only this fixture's original source-path string.
     const actual = JSON.stringify(result.book[name]).replaceAll('source/uploads-rapid-local-replay/new-bandhan.pdf', source.sourcePath);
-    assert.equal(actual, JSON.stringify(expected[name]), name);
+    assert.equal(digest(actual), digest(JSON.stringify(expected[name])), name);
   }
   results.push(result.timings);
 }

@@ -1,3 +1,4 @@
+import { statementAsset } from "@/lib/runtimeBook";
 import { useNavigationState } from "@/lib/useNavigationState";
 import { useTableExportFilter, useTableExportExpansion } from "@/lib/tableExportSnapshot";
 import { ExportableTable } from "@/components/ExportableTable";
@@ -141,7 +142,7 @@ function useHoldingsSources(accounts: readonly Account[]): Map<string, HoldingsS
   const [rows, setRows] = useState<ManifestRow[] | null | undefined>(undefined);
   useEffect(() => {
     let alive = true;
-    fetch(`${import.meta.env.BASE_URL}audit/manifest.json`, { cache: "no-store" })
+    fetch(statementAsset(`audit/manifest.json`), { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
       .then((m: ManifestRow[]) => { if (alive) setRows(Array.isArray(m) ? m : null); })
       .catch(() => { if (alive) setRows(null); });
@@ -172,7 +173,7 @@ function useHoldingsSources(accounts: readonly Account[]): Map<string, HoldingsS
     if (!keys.length) return;
     let alive = true;
     for (const docKey of keys) {
-      fetch(`${import.meta.env.BASE_URL}audit/${docKey}/document.json`, { cache: "no-store" })
+      fetch(statementAsset(`audit/${docKey}/document.json`), { cache: "no-store" })
         .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
         .then((d: { totals?: { totalMarketValue?: number | null } | null;
                     derivedPortfolioTotal?: number | null;

@@ -1,3 +1,4 @@
+import { statementAsset, statementPreviewAsset } from "@/lib/runtimeBook";
 import { useNavigationState, useNavigationValue, numberNavigation, nullableStringNavigation } from "@/lib/useNavigationState";
 import { useNavigationScroll } from "@/lib/useNavigationScroll";
 import { useLocation } from "react-router-dom";
@@ -71,7 +72,7 @@ function usePages(docKey: string): Loaded {
   useEffect(() => {
     let alive = true;
     setState({ status: "loading" });
-    const dir = `${BASE}audit/${encodeURIComponent(docKey)}`;
+    const dir = statementAsset(`audit/${encodeURIComponent(docKey)}`);
     getJson(`${dir}/pages.json`)
       .then(async (j: { pages?: PageText[] }) => {
         const pages = (j.pages ?? []).filter((p) => typeof p.text === "string");
@@ -103,7 +104,7 @@ type Original =
 
 // One index per page load: it lists every file the build published.
 let indexLoad: Promise<StatementFileIndex> | null = null;
-const loadIndex = () => (indexLoad ??= getJson(`${BASE}statement-files/index.json`).catch((e) => {
+const loadIndex = () => (indexLoad ??= getJson(statementAsset(`statement-files/index.json`)).catch((e) => {
   indexLoad = null;
   throw e;
 }));
@@ -118,9 +119,9 @@ function useOriginal(docKey: string): Original {
       .then((index): Original => {
         const file = index.files?.[docKey];
         if (file) {
-          const url = `${BASE}statement-files/${encodeURIComponent(file.file)}`;
+          const url = statementAsset(`statement-files/${encodeURIComponent(file.file)}`);
           return { status: "ready", file, url,
-            previewUrl: file.preview ? `${BASE}api/statement-previews/${encodeURIComponent(file.preview.file)}` : url };
+            previewUrl: file.preview ? statementPreviewAsset(file.preview.file) : url };
         }
         return { status: "missing", reason: index.missing?.[docKey] ?? "This build did not publish the original file." };
       })
