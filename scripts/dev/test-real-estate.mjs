@@ -13,7 +13,7 @@ async function call(body, { origin = site, method = body ? "POST" : "GET", env =
   return { status: response.status, body: await response.json(), headers: response.headers };
 }
 const full = propertyFigures(property());
-check("full property figures, net income and equity", () => assert.deepEqual(full, { share: 1, value: 15000000, cost: 10000000, debt: 3000000, rent: 50000, costs: 5000, equity: 12000000, netRent: 45000, yield: 4, gain: 5000000, gainPct: 50 }));
+check("full property figures, net income and equity", () => assert.deepEqual(full, { share: 1, value: 15000000, cost: 10000000, debt: 3000000, emi: null, rent: 50000, costs: 5000, equity: 12000000, netRent: 45000, yield: 4, gain: 5000000, gainPct: 50 }));
 const inherited = patch => validateProperty(property({ acquisition: "Inherited", cost: null, ...patch })).property;
 check("acquisition types are kept; an older record without one reads as not entered", () => {
   for (const type of ["Purchased", "Inherited", "Gifted"]) assert.equal(validateProperty(property({ acquisition: type })).property.acquisition, type);

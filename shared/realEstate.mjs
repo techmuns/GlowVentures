@@ -4,10 +4,13 @@ export const PROPERTY_TYPES = ["Land", "Apartment", "Villa / house", "Commercial
 export const PROPERTY_STATUSES = ["Rented", "Vacant", "Self-used", "Under construction", "For sale"];
 export const AREA_UNITS = ["sq ft", "sq m", "sq yd", "acre", "hectare", "cent", "guntha"];
 export const TITLE_STATUSES = ["Not checked", "Clear", "Pending registration", "Under review", "Disputed"];
+export const AREA_BASES = ["Plot", "Carpet", "Built-up", "Super built-up"];
 // An inherited or gifted property has no purchase cost. Its cost is either
 // blank or the value on the date it was received, and is labelled as such.
 export const ACQUISITION_TYPES = ["Purchased", "Inherited", "Gifted"];
-export const MONEY_FIELDS = ["cost", "value", "monthlyRent", "monthlyCosts", "debt"];
+// `monthlyEmi` is the loan's monthly instalment: recorded beside the loan, never
+// netted out of rent, because net rent describes the property, not its financing.
+export const MONEY_FIELDS = ["cost", "value", "monthlyRent", "monthlyCosts", "debt", "monthlyEmi"];
 // What capital gains tax on a sale needs beyond the cost (shared/propertyTax.mjs):
 // dated improvements, each indexed from its own year; for an inherited or gifted
 // property the previous owner's cost and acquisition date; the fair market value
@@ -27,14 +30,14 @@ export function validateProperty(raw) {
     if (raw[key] != null && (typeof raw[key] !== "string" || raw[key].length > max)) return { error: `Check ${key}; maximum ${max} characters.` };
     p[key] = text(raw[key]);
   }
-  for (const [key, options] of [["type", PROPERTY_TYPES], ["status", PROPERTY_STATUSES], ["acquisition", ACQUISITION_TYPES], ["areaUnit", AREA_UNITS], ["titleStatus", TITLE_STATUSES], ["areaBasis", ["Plot", "Carpet", "Built-up", "Super built-up"]]]) {
+  for (const [key, options] of [["type", PROPERTY_TYPES], ["status", PROPERTY_STATUSES], ["acquisition", ACQUISITION_TYPES], ["areaUnit", AREA_UNITS], ["titleStatus", TITLE_STATUSES], ["areaBasis", AREA_BASES]]) {
     const value = raw[key] ?? "";
     if (value !== "" && !options.includes(value)) return { error: `Choose a valid ${key}.` };
     p[key] = value;
   }
   for (const key of [...MONEY_FIELDS, "area"]) {
     const n = raw[key] ?? null;
-    if (n !== null && (!number(n) || n < 0 || n > 1e15 || (key === "area" && n === 0))) return { error: `Enter a valid ${key === "monthlyRent" ? "monthly rent" : key}. Leave unknown figures blank.` };
+    if (n !== null && (!number(n) || n < 0 || n > 1e15 || (key === "area" && n === 0))) return { error: `Enter a valid ${{ monthlyRent: "monthly rent", monthlyCosts: "monthly costs", monthlyEmi: "EMI", debt: "loan outstanding" }[key] ?? key}. Leave unknown figures blank.` };
     p[key] = n;
   }
   // A ₹0 value on the date of inheritance would turn the whole current value into appreciation.
@@ -124,10 +127,10 @@ export function propertyShare(p, owners = null) {
 /** The cost with its improvements: what appreciation is measured against. */
 export const totalCost = p => p.cost === null ? null : p.cost + (p.improvements ?? []).reduce((s, i) => s + i.amount, 0);
 function figuresAtShare(p, share) {
-  const scaled = key => p[key] === null || share === null ? null : p[key] * share;
+  const scaled = key => p[key] == null || share === null ? null : p[key] * share;
   const whole = totalCost(p);
-  const value = scaled("value"), cost = whole === null || share === null ? null : whole * share, debt = scaled("debt"), rent = scaled("monthlyRent"), costs = scaled("monthlyCosts");
-  return { share, value, cost, debt, rent, costs,
+  const value = scaled("value"), cost = whole === null || share === null ? null : whole * share, debt = scaled("debt"), emi = scaled("monthlyEmi"), rent = scaled("monthlyRent"), costs = scaled("monthlyCosts");
+  return { share, value, cost, debt, emi, rent, costs,
     equity: value === null || debt === null ? null : value - debt,
     netRent: rent === null || costs === null ? null : rent - costs,
     yield: p.value === null || p.value <= 0 || p.monthlyRent === null ? null : p.monthlyRent * 12 / p.value * 100,

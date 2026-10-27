@@ -189,6 +189,8 @@ One line per area; the history files explain each in depth.
   property today: the Cost Inflation Index table, the 2024 rules, per owner,
   residence from `shared/owners.mjs`. **Add each year's CII when CBDT notifies
   it (July)**; until then the indexed figure shows — (Stage 10hj).
+  `shared/propertySheet.mjs` — its bulk-entry Excel template and upload reader
+  (every form field; a file saves whole or not at all; Stage 10ig).
 - `src/lib/bookNav.ts` + `bookNavBook.ts` — the whole book's NAV series (every
   investment, its latest valuation plus capital since; the NAV card and the
   drawdown read it as `navHistory`; Stage 10ge).
