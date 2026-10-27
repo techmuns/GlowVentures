@@ -468,3 +468,10 @@
 - 12 of them were sold after their 31 Jul custody statements (Axis, ICICI Bank and SBI on 23 Sep; the arbitrage and liquid funds in Sep/Oct). They carry `salesAfter`, so the holding names its later sales and needs a newer balance. They are not rolled forward: the report prints no closing balance to witness one. `docs/client/PURCHASE-COST-RECORDS-NEEDED.md` drops the recovered asks and requests the current Motilal demat holdings.
 - `10387.pdf`, from the same message, is a one-page password-protected PDF. It is not added until a run holding the statement passwords can read it.
 - Tests: `mopwmTransactions.test.mjs` (the prefixed workbook in full, owners, classification, FIFO, corporate-action and identity refusals, a later sale counted); `recoveredCosts.test.ts` counts 65 / 22 / 31 and pins Kaynes and Motilal Arbitrage.
+
+### Stage 10hw — MAIN GREEN AGAIN AFTER 10HU
+
+- #251 merged with CI still running, and CI failed. Three family checks printed `FAIL` lines that the local scan missed (it grepped only for `AssertionError`); the upload rehearsal failed with them, because its intake run holds an upload on any new `test:family` failure.
+- `negligibleFloor`: Bharat's 0.43 / 0.048 ICICI index units and Ankita's 0.003 Mirae took ₹109, ₹3 and ₹0.15 of cost from MOPWM's report, and the floor drops them, so Capital invested would be short by what they paid. A transaction-report record now needs at least ₹1,000 of cost held (`SPECK_FLOOR`, the `NEGLIGIBLE_VALUE_FLOOR`); the three are named in COST-RECOVERY.md instead. 65 → 62 recovered costs.
+- `clubbedFigures`: ICICI Bank no longer clubs a costed line with an uncosted one, because Ankita's lot is costed now. The book's own case is Insolation Energy: Ajay's costed ICICI NSDL lot beside his Motilal lot and Bharat's HDFC lot, both uncosted.
+- `fundNavs`: every share candidate passes the live gate except those with a sale recorded after their statement (Ankita's Axis Bank, ICICI Bank and SBI), which it withholds by design. The check now says so and requires that exception to have a subject.
