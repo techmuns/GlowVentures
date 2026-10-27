@@ -202,6 +202,7 @@ for (const e of manifest) {
     // Same content address returned by GitHub when an upload is staged. It
     // includes the Git object header, so renaming a file cannot change it.
     blob: createHash("sha1").update(`blob ${bytes.length}\0`).update(bytes).digest("hex"),
+    sha256: createHash('sha256').update(bytes).digest('hex'),
     encrypted,
     ...(encrypted ? { preview: await unlockedPreview(bytes) } : {}),
     part: partOf(e),

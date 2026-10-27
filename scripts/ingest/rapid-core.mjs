@@ -6,7 +6,7 @@ import { extractLayout } from './lib/layout.mjs';
 import { extractDocuments, gridFromSpreadsheet, archiveRecord } from './extract.mjs';
 import { settleStatus } from './lib/readStatus.mjs';
 import { reconcile } from './reconcile.mjs';
-import { assessPublication, archiveRevision, digest, holdingKey, positionEvidence } from './lib/publication.mjs';
+import { assessPublication, archiveRevision, digest, holdingKey, positionEvidenceReader } from './lib/publication.mjs';
 import { buildCanonicalBook, canonicalBookValues } from '../build-book.mjs';
 import { checkUpload, extOf } from '../../shared/statementInbox.mjs';
 import { checkStatementBytes } from '../../shared/statementBytes.mjs';
@@ -79,17 +79,18 @@ export async function prepareRapidStatement({ baseline, files, references, passw
   const book = canonicalBookValues(buildCanonicalBook(candidate.filter(d => d.status !== 'failed'), candidate.length, { ...references, pagesByDocument }));
   // The same selected-record checks as statements:verify-book, in memory.
   const identities = new Set();
+  const evidenceForPosition = positionEvidenceReader(candidate, book.BOOK_ACCOUNTS);
   for (const position of book.BOOK_POSITIONS) {
     const key = holdingKey(position);
     if (identities.has(key)) throw Error(`Ambiguous canonical holding: ${key}`);
     identities.add(key);
     if (!position.review && !position.statementRecord) throw Error(`Missing statement record: ${key}`);
-    positionEvidence(position, candidate, book.BOOK_ACCOUNTS);
+    evidenceForPosition(position);
   }
   // Tags produced by reconciliation are part of the archived facts as well.
   for (const record of records) record.files['document.json'] = candidate.find(d => d.docKey === record.manifest.docKey);
   timings.buildMs = performance.now() - buildStart;
-  const archive = archiveRevision(candidate);
+  const archive = assessment.candidateRevision;
   const revision = digest({ readerRevision, archiveRevision: archive, book }).slice(0, 20);
   timings.totalMs = performance.now() - start;
   return { decision: 'verified', schemaVersion: 1, readerRevision, revision, archiveRevision: archive,

@@ -1,15 +1,20 @@
 import { performance } from 'node:perf_hooks';
 import { createHash } from 'node:crypto';
 import { prepareRapidStatement } from './rapid-core.mjs';
-import { applyUpdates, inboxPath, isBatchId } from '../../shared/statementInbox.mjs';
-import { digest, documentEvidence, positionEvidence } from './lib/publication.mjs';
+import { applyUpdates, isBatchId, extOf } from '../../shared/statementInbox.mjs';
+import { digest, documentEvidence, positionEvidenceReader } from './lib/publication.mjs';
 import { unlockPdf, previewKey } from '../lib/statementPreviewPdf.mjs';
 import { describePreview, previewKeyBytes, sealPreview } from '../../shared/statementPreviewCrypto.mjs';
 import { VersionConflict } from './runtime-store.mjs';
+import { migrateRapidPublication } from './migrate-rapid-publication.mjs';
 
-export function rapidProcessor({ store, inbox, initial, references, instantiate, passwords, dashboardPassword, baseAsset, prepare = prepareRapidStatement }) {
+export function rapidProcessor({ store, inbox, initial, references, instantiate, passwords, dashboardPassword, baseAsset, prepare = prepareRapidStatement, seed = false }) {
   let current = initial, state = null, queue = Promise.resolve(), ready = false;
-  const versions = new Map(), models = new Map(), jobs = new Map();
+  const versions = new Map(), models = new Map(), jobs = new Map(), evidenceReaders = new WeakMap();
+  const evidenceFor = snap => {
+    if (!evidenceReaders.has(snap)) evidenceReaders.set(snap, positionEvidenceReader(snap.documents, snap.book.BOOK_ACCOUNTS));
+    return evidenceReaders.get(snap);
+  };
   const remember = snapshot => {
     versions.set(snapshot.revision, snapshot);
     while (versions.size > 2) { const oldest = versions.keys().next().value; versions.delete(oldest); models.delete(oldest); }
@@ -24,9 +29,22 @@ export function rapidProcessor({ store, inbox, initial, references, instantiate,
     state = await store.read();
     if (state.state) {
       current = await store.load(state.state);
-      if (current.readerRevision !== initial.readerRevision) throw Error('The saved statement publication needs a verified reader migration');
+      remember(current);
+      if (current.readerRevision !== initial.readerRevision || current.baseCommit !== initial.baseCommit) {
+        const migrated = migrateRapidPublication(current, initial, references, instantiate);
+        state = await store.publish(state, migrated, { id: `baseline-${initial.baseCommit}`, files: [], completedAt: new Date().toISOString() });
+        current = migrated;
+      }
+    } else if (seed) {
+      state = await store.publish(state, initial, { id: `baseline-${initial.baseCommit}`, files: [], completedAt: new Date().toISOString() });
     }
     remember(current); modelFor(current); ready = true;
+    if (seed) {
+      const { log } = await inbox.read();
+      for (const batch of log.batches) if (batch.files.some(f => f.processor === 'rapid' && ['queued', 'processing'].includes(f.status))) {
+        void submit(batch.id).catch(() => {}); // durable inbox recovery after a compute restart
+      }
+    }
   }
   async function version(revision) {
     return versions.get(revision) ?? remember(await store.loadVersion(revision));
@@ -38,16 +56,36 @@ export function rapidProcessor({ store, inbox, initial, references, instantiate,
     state = await store.read();
     if (state.state?.revision !== current.revision && state.state) current = await store.load(state.state);
     if (current.readerRevision !== initial.readerRevision) throw Error('A newer reader must handle this publication');
-    if (state.state?.receipts?.[id]?.files.every(f => ['landed', 'duplicate'].includes(f.status))) return state.state.receipts[id];
+    if (state.state?.receipts?.[id]?.files.every(f => ['landed', 'duplicate'].includes(f.status))) {
+      const receipt = state.state.receipts[id];
+      await inbox.commit({ message: `Statements ${id}: restore completed status`, mutate: log => applyUpdates(log,
+        receipt.files.map(f => ({ ...f, batch: id }))) });
+      return receipt;
+    }
     const { log } = await inbox.read();
     const batch = log.batches.find(b => b.id === id);
     const pending = batch?.files.filter(f => f.processor === 'rapid' && ['queued', 'processing'].includes(f.status)) ?? [];
     if (!pending.length) return null;
+    const fullReader = async () => {
+      await inbox.commit({ message: `Statements ${id}: full reader`, mutate: log => applyUpdates(log,
+        pending.map(f => ({ batch: id, name: f.name, processor: null, status: 'queued', hold: null, reason: null }))) });
+      await inbox.dispatch({ batch: id });
+      return { id, files: pending.map(f => ({ name: f.name, status: 'queued' })) };
+    };
+    // Bound resident file memory. Larger folders, ZIPs and scans continue
+    // automatically through the existing complete reader, with their history.
+    if (pending.reduce((n, f) => n + f.size, 0) > 50 * 1024 * 1024 || pending.some(f => extOf(f.name) === 'zip')) return fullReader();
     await inbox.commit({ message: `Reading statements ${id}`, mutate: log => applyUpdates(log,
       pending.map(f => ({ batch: id, name: f.name, status: 'processing' }))) });
-    const files = await Promise.all(pending.map(async f => ({ ...f, bytes: await store.blob(f.blob) })));
+    const files = []; let actualBytes = 0;
+    for (const file of pending) {
+      const bytes = await store.blob(file.blob); actualBytes += bytes.length;
+      if (actualBytes > 50 * 1024 * 1024) return fullReader();
+      files.push({ ...file, bytes, size: bytes.length });
+    }
     let candidate = await prepare({ baseline: current.documents, files, references, passwords,
       sourcePrefix: `source/uploads-rapid-${id}`, readerRevision: initial.readerRevision });
+    if (candidate.decision === 'slow_path') return fullReader();
     const verified = candidate.decision === 'verified', duplicate = candidate.decision === 'duplicate';
     const now = new Date().toISOString();
     const receipt = { id, completedAt: now, files: pending.map(f => {
@@ -83,6 +121,7 @@ export function rapidProcessor({ store, inbox, initial, references, instantiate,
         for (const record of associated) originals[record.manifest.docKey] = {
           file: `${record.manifest.docKey}.${file.name.split('.').at(-1).toLowerCase()}`, bytes: file.size,
           encrypted, preview, blob: file.blob, sourcePath: record.manifest.sourcePath,
+          sha256: createHash('sha256').update(file.bytes).digest('hex'),
           part: record.files['document.json'].sourcePages ? { from: record.files['document.json'].sourcePages.from,
             to: record.files['document.json'].sourcePages.to } : null,
         };
@@ -99,6 +138,10 @@ export function rapidProcessor({ store, inbox, initial, references, instantiate,
     const saved = await store.publish(state, candidate, receipt);
     // Only a confirmed GitHub ref promotion can become the active version.
     state = saved; current = remember(candidate); modelFor(current);
+    try {
+      await inbox.commit({ message: `Statements ${id}: completed`, mutate: log => applyUpdates(log,
+        receipt.files.map(f => ({ ...f, batch: id }))) });
+    } catch { /* The durable publication receipt remains authoritative. */ }
     receipt.processingMs = performance.now() - started;
     return receipt;
   }
@@ -125,6 +168,7 @@ export function rapidProcessor({ store, inbox, initial, references, instantiate,
   return {
     initialize, submit, version,
     status: () => ({ ready, revision: current.revision, readerRevision: current.readerRevision, receipts: state?.state?.receipts ?? {} }),
+    published: () => ({ manifest: current.manifest, index: { files: current.originals, missing: current.missingOriginals ?? {} } }),
     snapshot: () => ({ schemaVersion: 1, revision: current.revision, readerRevision: current.readerRevision, book: current.book,
       stockKeys: stockKeys(current), emptyLedger: modelFor(current).deriveStockLedger(current.documents, '') }),
     async exposure(revision, body) {
@@ -160,9 +204,10 @@ export function rapidProcessor({ store, inbox, initial, references, instantiate,
       const doc = /^(canonical|provenance)\/documents\/([a-z0-9._-]+)\.json$/.exec(name);
       if (doc) {
         const d = snap.documents.find(d => d.docKey === doc[2]);
-        return !d ? null : doc[1] === 'canonical' ? d : documentEvidence(d, { readerRevision: snap.readerRevision });
+        return !d ? null : doc[1] === 'canonical' ? d : documentEvidence(d, { readerRevision: snap.readerRevision,
+          sourceSha256: snap.originals[d.docKey]?.sha256 ?? null });
       }
-      if (name === 'provenance/positions.json') return snap.book.BOOK_POSITIONS.map(p => ({ ...positionEvidence(p, snap.documents, snap.book.BOOK_ACCOUNTS),
+      if (name === 'provenance/positions.json') return snap.book.BOOK_POSITIONS.map(p => ({ ...evidenceFor(snap)(p),
         investmentDate: { value: model.investedOnOf([p]), inputs: { accountId: p.accountId, memberId: p.memberId ?? null,
           securityKey: p.securityKey, heldSince: p.heldSince ?? null, heldPurchases: p.recoveredCost?.heldPurchases ?? null,
           supplementary: p.recoveredCost?.evidence ?? [], review: p.reviewSource ?? null,

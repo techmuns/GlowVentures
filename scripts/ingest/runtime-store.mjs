@@ -40,8 +40,17 @@ export function runtimeStore({ token, repo = 'techmuns/GlowVentures', branch = '
       const artifact = await put(gzipSync(JSON.stringify(snapshot), { level: 1 }));
       const state = { schemaVersion: 1, revision: snapshot.revision, readerRevision: snapshot.readerRevision,
         artifact, receipts: { ...(previous.state?.receipts ?? {}), [receipt.id]: receipt } };
+      let settled = 0;
+      state.receipts = Object.fromEntries(Object.entries(state.receipts).sort(([, a], [, b]) => b.completedAt.localeCompare(a.completedAt))
+        .filter(([, r]) => r.files.some(f => f.status === 'held') || ++settled <= 100));
       const entries = [{ path: `versions/${snapshot.revision}.json.gz`, mode: '100644', type: 'blob', sha: artifact },
         { path: 'current.json', mode: '100644', type: 'blob', content: JSON.stringify(state) }];
+      // Raw originals use the same paths recorded in the normalized evidence.
+      for (const file of Object.values(snapshot.originals)) if (file.sourcePath) {
+        if (!file.sourcePath.startsWith('source/') || /[\\\r\n\0]/.test(file.sourcePath)
+          || file.sourcePath.split('/').some(p => !p || p === '.' || p === '..')) throw Error('Unsafe original source path');
+        entries.push({ path: file.sourcePath, mode: '100644', type: 'blob', sha: file.blob });
+      }
       const tree = await call('POST', '/git/trees', { ...(previous.tree ? { base_tree: previous.tree } : {}), tree: entries });
       const commit = await call('POST', '/git/commits', { message: `Verified statements ${snapshot.revision} [skip ci]`,
         tree: tree.sha, parents: previous.head ? [previous.head] : [] });

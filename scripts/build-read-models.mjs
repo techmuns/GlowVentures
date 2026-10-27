@@ -4,7 +4,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { build } from 'esbuild';
-import { archiveRevision, documentEvidence, positionEvidence, safeKey, digest } from './ingest/lib/publication.mjs';
+import { archiveRevision, documentEvidence, positionEvidenceReader, safeKey, digest } from './ingest/lib/publication.mjs';
 const root = process.cwd();
 const compiled = await build({ stdin: { contents: 'export * from "./src/lib/ledgerModel"; export { buildConsolidatedSheet } from "./src/lib/consolidatedSheet"; export { investedOnOf } from "./src/lib/investedOn"; export * from "./src/data/glowData";', resolveDir: root }, bundle: true, write: false, format: 'esm', platform: 'node', alias: { '@': path.join(root, 'src') }, logLevel: 'error' });
 const model = await import(`data:text/javascript;base64,${Buffer.from(compiled.outputFiles[0].text).toString('base64')}`);
@@ -42,7 +42,8 @@ try {
 } catch (error) { if (error.code !== 'ENOENT') throw error; }
 put('canonical/book.json', canonicalBook);
 if (model.BOOK_POSITIONS.some(p => !p.review && !p.statementRecord)) throw new Error('Regenerate the book: a statement position has no selected source record.');
-put('provenance/positions.json', model.BOOK_POSITIONS.map(p => ({ ...positionEvidence(p, docs, model.BOOK_ACCOUNTS),
+const evidenceForPosition = positionEvidenceReader(docs, model.BOOK_ACCOUNTS);
+put('provenance/positions.json', model.BOOK_POSITIONS.map(p => ({ ...evidenceForPosition(p),
   investmentDate: { value: model.investedOnOf([p]), inputs: { accountId: p.accountId, memberId: p.memberId ?? null,
     securityKey: p.securityKey, heldSince: p.heldSince ?? null, heldPurchases: p.recoveredCost?.heldPurchases ?? null,
     supplementary: p.recoveredCost?.evidence ?? [], review: p.reviewSource ?? null,

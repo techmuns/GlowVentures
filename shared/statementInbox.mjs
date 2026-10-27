@@ -196,6 +196,12 @@ export function queuedFiles(log) {
   return [...log.batches].sort((a, b) => a.id.localeCompare(b.id))
     .flatMap((b) => b.files.filter((f) => f.status === "queued" && f.processor !== 'rapid').map((f) => ({ batch: b.id, file: f })));
 }
+/** Legacy recovery must not take work claimed by the resident processor. */
+export function waitingStatementFiles(log) {
+  return [...log.batches].sort((a, b) => a.id.localeCompare(b.id)).flatMap(b => b.files
+    .filter(f => f.processor !== 'rapid' && (f.status === 'queued' || f.status === 'processing' || (f.status === 'held' && f.pullRequest)))
+    .map(file => ({ batch: b.id, file })));
+}
 
 /**
  * Lay updates over the log — `{ batch, name, ...fields }` each, matched on the

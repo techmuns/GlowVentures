@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { rapidProcessor } from '../rapid-processor.mjs';
 import { CANONICAL_BOOK_KEYS } from '../../../shared/canonicalBookKeys.mjs';
-import { applyUpdates, makeBatch, withBatch, queuedFiles } from '../../../shared/statementInbox.mjs';
+import { makeBatch, withBatch, queuedFiles, waitingStatementFiles } from '../../../shared/statementInbox.mjs';
 
 const id = n => `20261027T10000${n}Z-test`;
 const revision = n => String(n).padStart(20, '0');
@@ -56,6 +56,7 @@ test('a new statement publishes one complete version before Ready; old views sta
     assert.ok(h.projections.some(p => p.name === name && p.docs.join() === 'statement1'), name);
   }
   assert.equal(queuedFiles(h.log()).length, 0, 'A claimed file cannot also reach the legacy processor');
+  assert.equal(waitingStatementFiles(h.log()).length, 0, 'Scheduled legacy recovery cannot steal a rapid claim');
 });
 test('concurrent uploads serialize against the latest complete version; repeat requests are idempotent', async () => {
   const h = harness(); await h.processor.initialize();

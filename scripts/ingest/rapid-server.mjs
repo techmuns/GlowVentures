@@ -28,6 +28,7 @@ export function serveRapidStatements({ processor, token, port = 8788, host = '12
       if (!authenticated(request)) return send(401, { error: 'Unauthorized' });
       if (request.method === 'GET' && request.url === '/current') return send(200, { schemaVersion: 1, ...processor.status() });
       if (request.method === 'GET' && request.url === '/bootstrap') return send(200, processor.snapshot());
+      if (request.method === 'GET' && request.url === '/published') return send(200, processor.published());
       if (request.method === 'POST' && request.url === '/process') {
         let text = '';
         for await (const part of request) { text += part; if (Buffer.byteLength(text) > 1024) return send(413, { error: 'Too large' }); }
@@ -62,6 +63,7 @@ export function serveRapidStatements({ processor, token, port = 8788, host = '12
 
 async function main() {
   const env = process.env, root = process.cwd(), read = p => JSON.parse(fs.readFileSync(path.join(root, p)));
+  if (!env.GLOW_PROCESSOR_BASE_COMMIT && fs.existsSync('.processor-commit')) env.GLOW_PROCESSOR_BASE_COMMIT = fs.readFileSync('.processor-commit', 'utf8').trim();
   if (!/^[a-f0-9]{40}$/.test(env.GLOW_PROCESSOR_BASE_COMMIT ?? '')) throw Error('The image must identify its exact base commit');
   if (!env.GLOW_GITHUB_TOKEN || !env.GLOW_DASHBOARD_PASSWORD) throw Error('Processor repository and vault credentials are required');
   await restoreStatementPasswords();
@@ -74,6 +76,7 @@ async function main() {
     previews: {}, lookthrough: read(`public/views/${readModels.revision}/lookthrough.json`) };
   const processor = rapidProcessor({ store: runtimeStore({ token: env.GLOW_GITHUB_TOKEN, repo: env.GLOW_GITHUB_REPO }),
     inbox: inboxFor(env), initial, references: prepareBookReferences(), instantiate: await prepareRuntimeModel(),
+    seed: true,
     passwords: passwordsFromEnv(), dashboardPassword: env.GLOW_DASHBOARD_PASSWORD,
     baseAsset: async (commit, name, binary = false) => {
       if (!/^[a-f0-9]{40}$/.test(commit)) throw Error('Invalid source revision');
