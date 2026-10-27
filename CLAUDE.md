@@ -236,8 +236,7 @@ One line per area; the history files explain each in depth.
   `munsChat.ts` / `components/MunsChat.tsx` (chat paused), `attribution.ts`.
 - `shared/*.mjs` — code shared by the build and the browser: `aifCategory`
   (SEBI category, `FAMILY_MARKET_SIDE`, `DECLARED_AIF_CATEGORY`), `owners`,
-  `separateInvestments`, `keptUnvalued`, `confirmedExits` (lines the family
-  confirmed sold, retired on witnessed sales; Stage 10ib), `reviewHolders`, `reviewPrivateJoin`,
+  `separateInvestments`, `keptUnvalued`, `reviewHolders`, `reviewPrivateJoin`,
   `sectors`, `securityKey`, `nameMatch`, `lotSettlement`, `corporateActions`,
   `polycabSources`, `upstoxQuotes` / `upstoxInstruments`, `seriesReturns`,
   `statementBytes` (an upload's bytes are the format they claim). A new
