@@ -1,7 +1,6 @@
 import { useNavigationState, useNavigationValue, nullableStringNavigation } from "@/lib/useNavigationState";
 import { useTableExportFilter, useTableExporting } from "@/lib/tableExportSnapshot";
 import { ExportableTable } from "@/components/ExportableTable";
-import { CommitmentEntry } from "@/components/CommitmentEntry";
 import { Fragment, useMemo, type ReactNode } from "react";
 import { Handshake, Landmark, Wallet, TrendingUp, Fuel, Coins, Banknote, HelpCircle, CalendarClock, Layers, Users, ArrowUpRight } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -19,6 +18,10 @@ import { useViewParam } from "@/components/ViewToggle";
 import { AbsentCell, AbsentSection, AbsentValue, DASH } from "@/components/Absent";
 import { CallCell, CallEditor } from "@/components/EnteredCalls";
 import { ProfileCellInput, profileTitle } from "@/components/EnteredProfiles";
+import { CapitalCellInput } from "@/components/CapitalCellInput";
+import { CAPITAL_CELL_FIELDS, capitalRecordId } from "@/lib/capitalEntry";
+import { useTableInputs } from "@/lib/tableInputStore";
+import type { InputRecord } from "@/lib/tableInputs";
 import { useEnteredProfiles, withEntered, enteredOf } from "@/lib/enteredProfiles";
 import {
   TREE_ROW, TREE_CELL, useExpanded, rowToggle, TreeNameCell, TreeSectionCell, ExpandAllButton,
@@ -461,6 +464,17 @@ export function PrivateMarket() {
   const [q, setQ] = useNavigationState<string>("private-search", "");
   const exportingTable = useTableExporting();
   /**
+   * THE CAPITAL RECORD EACH ONE-FOLIO ROW TYPES INTO (Stage 10ir) — the record
+   * `<Tr>` tags the same cell with for Edit numbers and Excel, so a figure typed
+   * here, in Excel or in Edit numbers is one saved figure.
+   */
+  const tableInputs = useTableInputs();
+  const inputById = useMemo(() => new Map(tableInputs.catalog.map((r) => [r.id, r])), [tableInputs.catalog]);
+  const capitalRecordOf = (f: BookFolio): InputRecord | undefined => {
+    const id = capitalRecordId(f, (x) => inputById.has(x));
+    return id ? inputById.get(id) : undefined;
+  };
+  /**
    * WHICH TAB. In the URL like every other view in this app, so a tab is a link
    * a reader can send and the sweep can hold each one to the light rather than
    * guessing at a click. `useViewParam` keeps the default param-free.
@@ -646,7 +660,6 @@ export function PrivateMarket() {
     const all = pb.folios;
 
     return {
-      bookFolios: all,
       accIdx, scope, funds, folios, owners, ct, unvalued, commitments,
       schemes, cc, history, counting, alsoCt, alsoCc,
       privMV, privCost, privPnL, privFifo, privAtCost, costedMV, costedCount: costedRows.length, bookMV, rawMV,
@@ -1624,6 +1637,12 @@ export function PrivateMarket() {
      * on a row that is not one investment (a family member), whose cells only read.
      */
     profileEdit?: { keys: string[]; name: string };
+    /**
+     * WHERE COMMITTED, CALLED, PAID IN AND STILL TO CALL TYPE INLINE: the one
+     * folio's capital record and the name its fields are labelled with. Absent
+     * on a row over several folios, whose capital is their sum (Stage 10ir).
+     */
+    capitalEdit?: { record: InputRecord; name: string };
   }): Cells => {
     const p = pad(k);
     const t = tone(k);
@@ -1635,8 +1654,19 @@ export function PrivateMarket() {
         className={`${p} whitespace-nowrap text-right mono ${t} ${extra}`}>{body}</td>
     );
     const absent = (col: string, why: string) => td(col, <AbsentCell reason={why} />);
+    // An export keeps the figure the table prints; on screen a one-folio row's
+    // capital cells are its own boxes, in the profile cells' format.
+    const typing = ctx.capitalEdit && !exportingTable ? ctx.capitalEdit : null;
+    const capInput = (col: string, after?: ReactNode) => (
+      <td key={col} data-col-cell={col} data-cell-editor title={ctx.titles?.[col] ?? ctx.capAlso?.title}
+        className={`${p} min-w-[8.5rem] max-w-[11rem] text-right ${t}`}>
+        <CapitalCellInput record={typing!.record} field={CAPITAL_CELL_FIELDS[col]} rowName={typing!.name} display={(n) => money(n)} />
+        {after}
+      </td>
+    );
     const cap = (col: string, v: number | null | undefined, why: string, of?: [number, number]) =>
-      ctx.noCapital ? absent(col, ctx.noCapital)
+      typing ? capInput(col)
+      : ctx.noCapital ? absent(col, ctx.noCapital)
         : v == null ? absent(col, why)
           : td(col, <>{ctx.capAlso
             ? <span className="text-amber-400" data-pm-capital-also={ctx.capAlso.id}>{money(v)}</span>
@@ -1647,7 +1677,10 @@ export function PrivateMarket() {
         "this statement prints a contribution column and no called line, so what the fund has demanded is not stated — reading the contribution as the call would assert the two are equal",
         [r.calledOf ?? 0, r.capitalAccounts ?? 0]),
       paid: cap("paid", r.paid, "this statement reports no contribution figure", [r.paidOf ?? 0, r.capitalAccounts ?? 0]),
-      uncalled: ctx.noCapital ? absent("uncalled", ctx.noCapital)
+      uncalled: typing ? capInput("uncalled", ctx.ties == null ? undefined : ctx.ties
+          ? <div className="mt-0.5 text-[10px] text-gain" title="checked: committed − called = still to call, to the rupee, on this statement" data-ties="true">✓ ties</div>
+          : <div className="mt-0.5 text-[10px] text-amber-400" title="the statement disagrees with itself: committed − called ≠ the still-to-call it prints" data-ties="false">≠ statement</div>)
+        : ctx.noCapital ? absent("uncalled", ctx.noCapital)
         : r.uncalled == null
           ? absent("uncalled", ctx.implied != null
             ? `this statement prints no uncalled line. Its own committed − called comes to ${fmtNum(ctx.implied, 0)}, shown here as arithmetic rather than as the fund's figure.`
@@ -1889,6 +1922,11 @@ export function PrivateMarket() {
       : { keys: [...new Set(g.folios.map(profileKeyOf))], name: g.label };
     const rowSpansFunds = g.kind !== "owner" && spansFunds(g);
     const fundRowId = `fund:${g.key}`;
+    // A fund row types its capital only where it IS one folio; a member is no investment.
+    const capitalEditOf = (f: BookFolio, name: string) => {
+      const record = capitalRecordOf(f);
+      return record ? { record, name } : undefined;
+    };
     return (
       <Fragment key={key}>
         <Tr view={bookView} reviewScope={groupReviewScope(g)} className={TREE_ROW.parent} {...rowToggle(toggle)}
@@ -1918,6 +1956,7 @@ export function PrivateMarket() {
           {inOrder({
             ...figureCells({ ...g, ret: groupRet(g), profile: groupProfile }, "group", {
             profileEdit: groupEdit,
+            capitalEdit: g.kind !== "owner" && g.folios.length === 1 ? capitalEditOf(g.folios[0], g.label) : undefined,
             noCapital: g.capitalAccounts === 0 ? noCapitalWhy(g.section, g.kind === "owner" ? "member" : "group") : undefined,
             noValue: valueWhy(g.status, g.folios[0]?.reason ?? null),
             nil: g.status === "redeemed" ? valueWhy("redeemed", null) : undefined,
@@ -1992,6 +2031,7 @@ export function PrivateMarket() {
               {inOrder({
                 ...figureCells(fig, "folio", {
                 profileEdit: folioEdit,
+                capitalEdit: capitalEditOf(f, `${f.fundName}, ${f.owner}`),
                 noCapital: s || f.position?.enteredCapital ? undefined
                   : viewOfLine ? "an income-only folio — its documents report earnings and distributions, and no commitment"
                     : noCapitalWhy(g.section, "folio"),
@@ -2320,8 +2360,7 @@ export function PrivateMarket() {
 
         {(view === "funds" || view === "brands") && (
           <div className="overflow-x-auto" data-navigation-scroll="privatemarket-1">
-            <ExportableTable exportName={`Private Market — ${view === "brands" ? "By brand" : "By legal name"}`} className="min-w-full text-[13px]" data-pm-table={view}
-              inputControls={<CommitmentEntry folios={m.bookFolios} />}>
+            <ExportableTable editable exportName={`Private Market — ${view === "brands" ? "By brand" : "By legal name"}`} className="min-w-full text-[13px]" data-pm-table={view}>
               {allRows => <>
               <thead className="border-b border-ink-700">
                 <Tr view={bookView}>
@@ -2418,7 +2457,7 @@ export function PrivateMarket() {
 
         {view === "transactions" && (
           <div className="overflow-x-auto" data-navigation-scroll="privatemarket-2">
-            <ExportableTable exportName="Private Market — Transactions" className="min-w-full text-[13px]" data-pm-table="transactions">
+            <ExportableTable editable exportName="Private Market — Transactions" className="min-w-full text-[13px]" data-pm-table="transactions">
               <thead className="border-b border-ink-700">
                 <Tr view={callView}>
                   <SortHeader col="date" view={callView} align="left">Date</SortHeader>

@@ -13,7 +13,7 @@ export type TableExportCell = {
   depth?: number;
 };
 export type TableExportRow = { cells: TableExportCell[]; kind: "header" | "body" | "footer"; depth?: number; section?: boolean };
-export type TableExport = { title: string; url: string; rows: TableExportRow[]; inputs?: InputRecord[]; nested?: TableExport[]; context?: string; parentRow?: number };
+export type TableExport = { title: string; url: string; rows: TableExportRow[]; inputs?: InputRecord[]; nested?: TableExport[]; context?: string; parentRow?: number; viewOnly?: boolean };
 
 /** Only whole numeric cells qualify. Dates, identifiers and mixed captions stay text. */
 export function excelCellValue(cell: TableExportCell): { value: string | number; format?: string } {

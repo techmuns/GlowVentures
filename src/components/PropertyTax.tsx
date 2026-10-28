@@ -1,89 +1,82 @@
 import type { ReactNode } from "react";
 import { DASH, AbsentValue } from "@/components/Absent";
-import { Card } from "@/components/Card";
-import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
 import { ExportableTable } from "@/components/ExportableTable";
-import { EditColumns } from "@/components/EditColumns";
-import { useTableView, sortRows, type Accessor } from "@/lib/tableView";
+import { ReturnCalculationInfo } from "@/components/ReturnCalculation";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { fmtDate, fmtPct } from "@/lib/format";
-import { propertyLabel, indexYear, LONG_TERM_RATE, INDEXED_RATE, CESS, type Property, type PropertyGainsTax } from "@/lib/realEstate";
+import { indexYear, LONG_TERM_RATE, INDEXED_RATE, CESS, type PropertyGainsTax } from "@/lib/realEstate";
 
+type Money = ReturnType<typeof usePortfolio>["fmtFromBase"];
 const pct = (rate: number) => `${Math.round(rate * 1000) / 10}%`;
+const sharePct = (share: number) => `${new Intl.NumberFormat("en-IN", { maximumFractionDigits: 2 }).format(share * 100)}%`;
 // What every tax figure on the page is, and what it leaves out — the hover on each.
 export const TAX_RULES = `If sold today at the current value. Held more than 2 years: ${pct(LONG_TERM_RATE)} of the gain. Bought before 23 Jul 2024 by a resident individual or HUF: ${pct(INDEXED_RATE)} of the gain after indexation, where that is lower. Plus ${pct(CESS)} cess. Held 2 years or less: the owner's slab rate, not shown. An inherited or gifted property takes the previous owner's cost and dates. Not included: surcharge, selling costs, renovation or extension costs, and reinvestment exemptions.`;
-const COLS = ["name", "holding", "costForTax", "value", "taxableGain", "rate", "tax", "afterTax"];
-const LABELS: Record<string, string> = { name: "Property", holding: "Holding", costForTax: "Cost for tax", value: "Current value", taxableGain: "Taxable gain", rate: "Rate", tax: "Tax on sale", afterTax: "Value after tax" };
-const MONEY = ["costForTax", "value", "taxableGain", "tax", "afterTax"] as const;
-type Money = typeof MONEY[number];
-const sub = (text: string) => <span data-export-ignore className="mt-1 block whitespace-normal font-sans text-[10px] text-slate-500">{text}</span>;
 const date = (iso: string | null) => iso ? fmtDate(iso) : DASH;
 
-/** The working behind the 20% route: the cost scaled by the Cost Inflation Index. */
-export function indexWorking(t: PropertyGainsTax, money: (n: number | null) => string) {
+/** The working behind the 20% route: the cost scaled by the Cost Inflation Index, for the whole property or a share of it. */
+export function indexWorking(t: PropertyGainsTax, money: Money, share?: number) {
   if (!t.indexable) return "Bought on or after 23 Jul 2024, so there is no indexation.";
-  if (t.indexedCost === null || t.acquiredOn === null) return t.indexGap;
-  return `${t.costLabel} ${money(t.cost)} × CII ${t.saleIndex} (FY ${t.fy}) ÷ CII ${t.acquisitionIndex} (FY ${indexYear(t.acquiredOn)}) = ${money(t.indexedCost)} for the whole property.`;
+  if (t.indexedCost === null || t.acquiredOn === null || t.cost === null) return t.indexGap;
+  return `${t.costLabel} ${money(t.cost * (share ?? 1))} × CII ${t.saleIndex} (FY ${t.fy}) ÷ CII ${t.acquisitionIndex} (FY ${indexYear(t.acquiredOn)}) = ${money(t.indexedCost * (share ?? 1))}${share === undefined ? " for the whole property" : ""}`;
 }
-/** Rate as the tax table shows it: the settled rate, "Slab rate" for a short-term gain, or nothing. */
-const rateOf = (t: PropertyGainsTax) => t.route ?? (t.longTerm === false && (t.gain ?? 0) > 0 ? "Slab rate" : null);
 
-/** Every property's tax if sold today, worked out in one table: cost, gain, rate, tax and what is left. */
-export function PropertyTaxCard({ properties, taxOf, asOf, fy, empty, onOpen, onEdit }: {
-  properties: Property[]; taxOf: (p: Property) => PropertyGainsTax; asOf: string; fy: string; empty: string;
-  onOpen: (p: Property) => void; onEdit: (p: Property) => void;
-}) {
+/** The tax on one property's sale as a short sum, for the share the table shows. Each rupee figure adds up to the one in the cell. */
+function TaxSteps({ t, money, onEdit }: { t: PropertyGainsTax; money: Money; onEdit: () => void }) {
+  const whose = t.owners.length > 1 || (t.owners.length === 1 && t.share !== 1) ? ` — ${t.owners.map(o => `${o.name || "Owner not entered"} ${sharePct(o.share)}`).join(", ")}` : "";
+  const when = <p className="text-slate-400">If sold on {fmtDate(t.asOf)} at today's value (FY {t.fy}){whose}.</p>;
+  const steps = (items: ReactNode[]) => <ol data-return-steps className="list-decimal space-y-3 pl-5">{items.map((s, i) => <li key={i}>{s}</li>)}</ol>;
+  const rules = <details data-return-more>
+    <summary className="ring-focus cursor-pointer rounded text-slate-300">The rules</summary>
+    <ul className="mt-3 list-disc space-y-1.5 pl-5 text-slate-300">
+      <li>Gain = current value − cost. An inherited or gifted property takes the previous owner's cost and dates; one held since before 1 Apr 2001 may use its value on that date, where higher.</li>
+      <li>Held 2 years or less: taxed at the owner's slab rate on their total income, which this page does not hold.</li>
+      <li>Held more than 2 years: {pct(LONG_TERM_RATE)} of the gain.</li>
+      <li>Bought before 23 Jul 2024 by a resident individual or HUF: {pct(INDEXED_RATE)} of the gain after indexation (cost × this year's Cost Inflation Index ÷ the purchase year's), where that is lower.</li>
+      <li>Plus {pct(CESS)} cess. Rural agricultural land is not a capital asset, so it carries no tax.</li>
+      <li>Not included: surcharge, selling costs, renovation or extension costs, and reinvestment exemptions.</li>
+    </ul>
+  </details>;
+  if (t.notCapitalAsset) return <>{when}{steps([<>Rural agricultural land is not a capital asset, so its sale carries no capital gains tax: <strong>{money(0)}</strong>.</>])}{rules}</>;
+  if (t.needs.length) return <>{when}{steps([<>The tax cannot be worked out yet. Still to enter: <strong>{t.needs.join(", ")}</strong>.</>,
+    ...(t.received ? [<>An inherited or gifted property is taxed on what the previous owner paid and when they acquired it, not on its value when it was received.</>] : [])])}
+    <button type="button" className="btn-primary" onClick={onEdit}>Enter details</button>{rules}</>;
+  if (t.cost === null || t.gain === null || t.value === null || t.share === null) return <>{when}{steps([t.gap?.reason ?? "The tax cannot be worked out from this record."])}{rules}</>;
+  const value = t.value, share = t.share, whole = t.cost + t.gain;
+  const cost = t.costForTax ?? t.cost * share, gain = value - cost;
+  const label = t.costLabel[0].toLowerCase() + t.costLabel.slice(1);
+  const items: ReactNode[] = [
+    <>Held since <strong>{date(t.acquiredOn)}</strong>{t.received ? ", when the previous owner acquired it" : ""}: {t.longTerm ? "more than 2 years, so the gain is long-term." : `2 years or less, so the gain is short-term. It becomes long-term on ${date(t.longTermFrom)}.`}</>,
+    <>Current value <strong>{money(value)}</strong> − {t.route === "20% indexed" ? <>the indexed cost <strong>{money(cost)}</strong> ({indexWorking(t, money, share)})</>
+      : t.route === "Mixed" ? <>the cost for tax <strong>{money(cost)}</strong>, indexed for the owners who pay {pct(INDEXED_RATE)}</> : <>the {label} <strong>{money(cost)}</strong></>} = taxable gain <strong>{money(gain, { sign: true })}</strong>.</>,
+  ];
+  // A gain taxed at one rate, as gain × rate, plus cess: whole rupees that add up to the tax shown.
+  const sum = (g: number, rate: number, tax: number) => { const base = Math.round(Math.max(0, g) * rate); return <>{money(g)} × {pct(rate)} = {money(base)}, plus {pct(CESS)} cess {money(tax - base)} = <strong>{money(tax)}</strong></>; };
+  if (t.route === "No gain") items.push(<>There is no gain, so there is no tax: <strong>{money(0)}</strong>.</>);
+  else if (!t.longTerm) items.push(<>A short-term gain is taxed at the owner's slab rate on their total income, which this page does not hold, so the tax is not shown.</>);
+  else {
+    const flat = t.owners.reduce((s, o) => s + o.flatTax, 0);
+    const indexed = t.owners.length && t.owners.every(o => o.indexedTax !== null) ? t.owners.reduce((s, o) => s + o.indexedTax!, 0) : null;
+    const noIndex = [...new Set(t.owners.filter(o => o.eligible === false).map(o => o.holderNote))].join(" ") || t.indexGap;
+    items.push(!t.indexable ? <>Bought on or after 23 Jul 2024, so the only rate is {pct(LONG_TERM_RATE)}.</>
+      : <>Bought before 23 Jul 2024, so two rates are worked out and the lower is paid. {pct(LONG_TERM_RATE)} of the gain comes to <strong>{money(flat)}</strong>;
+        {" "}{pct(INDEXED_RATE)} of the gain over the indexed cost{t.indexedCost === null ? "" : ` ${money(t.indexedCost * share)}`} comes to {indexed === null ? <>{DASH} ({noIndex})</> : <strong>{money(indexed)}</strong>}.</>);
+    if (t.tax === null) items.push(<>{t.gap?.reason ?? "The tax cannot be worked out from this record."}</>);
+    else if (t.route === "Mixed") items.push(<>Each owner is taxed on their own share, then the two are added:
+      <ul className="mt-2 list-disc space-y-1 pl-5 tabular">{t.owners.map((o, i) => <li key={i}>{o.name || "Owner not entered"} ({sharePct(o.share)}): {sum(whole * o.share - o.costForTax!, o.route === "indexed" ? INDEXED_RATE : LONG_TERM_RATE, o.tax!)}</li>)}</ul>
+      <span className="mt-2 block">Tax on sale: <strong>{money(t.tax)}</strong>.</span></>);
+    else items.push(<span className="tabular">Tax: {sum(gain, t.route === "20% indexed" ? INDEXED_RATE : LONG_TERM_RATE, t.tax)}.</span>);
+  }
+  if (t.tax !== null && t.afterTax !== null) items.push(<span className="tabular">Value after tax: {money(value)} − {money(t.tax)} = <strong>{money(t.afterTax)}</strong>.</span>);
+  return <>{when}{steps(items)}{rules}</>;
+}
+
+/** A tax figure in the table that opens its own working: the sum behind the tax on a sale, for the share shown. */
+export function PropertyTaxInfo({ label, t, figure, trigger, onEdit }: { label: string; t: PropertyGainsTax; figure: "tax" | "afterTax"; trigger: ReactNode; onEdit: () => void }) {
   const { fmtFromBase: money } = usePortfolio();
-  const table = useTableView("real-estate-tax", COLS, { manualEditor: true });
-  const accessors: Record<string, Accessor<Property>> = {
-    name: propertyLabel, holding: p => taxOf(p).longTermFrom, rate: p => rateOf(taxOf(p)),
-    ...Object.fromEntries(MONEY.map(key => [key, (p: Property) => taxOf(p)[key]])),
-  };
-  const rows = sortRows(properties, table.sort, accessors);
-  const total = (key: Money) => {
-    const known = properties.map(p => taxOf(p)[key]).filter((n): n is number => n !== null);
-    return { value: known.length ? known.reduce((s, n) => s + n, 0) : null, known: known.length, count: properties.length };
-  };
-  const cell = (p: Property, key: string): ReactNode => {
-    const t = taxOf(p);
-    switch (key) {
-      case "name": return <button type="button" aria-label={`Tax working for ${propertyLabel(p)}`} onClick={() => onOpen(p)} className="text-left font-medium text-slate-100 underline decoration-ink-600 underline-offset-4 hover:text-champagne-400">{propertyLabel(p)}</button>;
-      case "holding": return t.longTerm === null ? <span title={t.notCapitalAsset ? "Rural agricultural land is not a capital asset." : t.gap?.reason}><AbsentValue /></span>
-        : <span title={`Counted from ${t.received ? "the previous owner's acquisition" : "the purchase"} on ${date(t.acquiredOn)}. Long-term after more than 2 years.`}>{t.longTerm ? "Long-term" : "Short-term"}{sub(`${t.longTerm ? "Since" : "Long-term from"} ${date(t.longTermFrom)}`)}</span>;
-      case "rate": { const rate = rateOf(t); return rate ? <span title={t.owners.map(o => `${o.name || "Owner not entered"} (${o.status}): ${o.note || o.gap?.reason || ""}`).join(" ") || TAX_RULES}>{rate}</span> : <AbsentValue />; }
-    }
-    const n = t[key as Money];
-    if (n === null) {
-      if (key !== "tax") return <AbsentValue />;
-      // The one cell that says why, and opens the form where the missing input goes.
-      return t.needs.length ? <span title={t.gap?.reason}><AbsentValue /><button type="button" data-export-ignore onClick={() => onEdit(p)} className="mt-1 block whitespace-normal text-right font-sans text-[10px] text-champagne-400 underline">{t.gap?.short}</button></span>
-        : <span title={t.gap?.reason ?? "Not known"}><AbsentValue />{sub(t.gap?.short ?? "Not known")}</span>;
-    }
-    if (key === "costForTax") return <span title={t.route === "20% indexed" || t.route === "Mixed" ? indexWorking(t, money) : undefined}>{money(n)}{sub(t.route === "20% indexed" ? "Indexed" : t.route === "Mixed" ? "Indexed for some owners" : t.costLabel)}</span>;
-    if (key === "taxableGain") return <span className={n > 0 ? "text-gain" : n < 0 ? "text-loss" : ""}>{money(n, { sign: true })}</span>;
-    if (key === "tax") return <span title={`${t.owners.map(o => `${o.name || "Owner not entered"}: ${money(o.tax)}`).join(" · ")}. ${TAX_RULES}`}>{money(n)}</span>;
-    return money(n);
-  };
-  return <Card className="mt-5" pad={false} title={`Tax if sold today${properties.length ? ` · ${properties.length}` : ""}`} subtitle={TAX_RULES}
-    right={<div className="flex flex-wrap items-center justify-end gap-3"><span className="text-xs text-slate-400" title="The sale date this assumes and its financial year">{fmtDate(asOf)} · FY {fy}</span><EditColumns view={table} /></div>}>
-    <div data-prose-ok="the rates every tax figure below applies; the family asked to see the taxation clearly (28 Oct 2026)" data-tax-rates className="flex flex-wrap gap-x-6 gap-y-1 border-b border-ink-700 px-5 pb-3 pt-3 text-xs text-slate-400">
-      <span><b className="mono text-slate-200">{pct(LONG_TERM_RATE)}</b> of the gain · held over 2 years</span>
-      <span><b className="mono text-slate-200">{pct(INDEXED_RATE)}</b> of the gain after indexation, if lower · bought before 23 Jul 2024</span>
-      <span><b className="mono text-slate-200">+{pct(CESS)}</b> cess</span>
-      <span><b className="text-slate-200">Slab rate</b> · held 2 years or less</span>
-    </div>
-    <div className="overflow-x-auto" data-navigation-scroll="realestate-tax"><ExportableTable viewOnly exportName="Real Estate — Tax if sold today" className="min-w-full text-[13px]" data-property-tax-table>
-      <thead className="border-b border-ink-700"><Tr view={table}>{COLS.map(key => <SortHeader key={key} col={key} view={table} align={key === "name" ? "left" : "right"} pad="px-3 py-2"
-        note={key === "tax" ? `incl. ${pct(CESS)} cess` : undefined} className={key === "name" ? "min-w-[12rem]" : ""}>{LABELS[key]}</SortHeader>)}</Tr></thead>
-      <tbody>{rows.map(p => <Tr key={p.id} view={table} className="border-b border-ink-700/50" data-property-tax-row={p.id}>{COLS.map(key => <td key={key} className={`px-3 py-3 ${key === "name" ? "text-slate-300" : "text-right mono tabular whitespace-nowrap"}`}>{cell(p, key)}</td>)}</Tr>)}
-        {!rows.length && <tr><td colSpan={table.order.length} className="px-5 py-10 text-center text-sm text-slate-500">{empty}</td></tr>}
-      </tbody>
-      {!!rows.length && <tfoot><TrFoot view={table} label="Total" className="border-t border-ink-600 bg-ink-800/50 font-semibold" cells={Object.fromEntries(MONEY.map(key => {
-        const t = total(key);
-        return [key, <td key={key} className="px-3 py-3 text-right mono tabular whitespace-nowrap">{key === "taxableGain" ? money(t.value, { sign: true }) : money(t.value)}{t.known < t.count && sub(`${t.known} of ${t.count} properties`)}</td>];
-      }))} /></tfoot>}
-    </ExportableTable></div>
-  </Card>;
+  const n = t[figure], what = figure === "tax" ? "tax on a sale" : "value after tax";
+  return <ReturnCalculationInfo label={label} intro={`How the ${what} is worked out`} value={n === null ? DASH : money(n)} trigger={trigger} triggerLabel={`How is the ${what} of ${label} worked out?`} wide>
+    {close => <TaxSteps t={t} money={money} onEdit={() => { close(); onEdit(); }} />}
+  </ReturnCalculationInfo>;
 }
 
 /** One property's tax if sold today, step by step, for every recorded owner. */
@@ -107,7 +100,7 @@ export function PropertyTaxDetails({ t, onEdit }: { t: PropertyGainsTax; onEdit:
     {t.notCapitalAsset ? <p className="text-sm text-slate-200" title="Rural agricultural land is not a capital asset, so selling it carries no capital gains tax.">{money(0)} · not a capital asset</p>
       : t.cost === null ? <p className="text-sm">{gap(t.gap?.reason ?? "Not known", t.gap?.short ?? "Not known")}{t.needs.length > 0 && <button type="button" className="ml-3 text-xs text-champagne-400 underline" onClick={onEdit}>Enter details</button>}</p> : <>
       <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{steps.map(([label, value, hover]) => <div key={label}><dt className="label-xs">{label}</dt><dd className="mt-1 text-sm text-slate-200" title={hover}>{value}</dd></div>)}</dl>
-      {t.owners.length > 0 && <div className="mt-4 overflow-x-auto" data-navigation-scroll="realestate-4"><ExportableTable viewOnly exportName="Real Estate — Tax by owner" className="min-w-full text-[13px]" data-property-tax-owners data-table-static="one row per owner, each the working of the same sale's tax">
+      {t.owners.length > 0 && <div className="mt-4 overflow-x-auto" data-navigation-scroll="realestate-4"><ExportableTable exportName="Real Estate — Tax by owner" className="min-w-full text-[13px]" data-property-tax-owners data-table-static="one row per owner, each the working of the same sale's tax">
         <thead className="border-b border-ink-700 text-left"><tr className="label-xs">
           <th className="px-3 py-2">Owner</th><th className="px-3 py-2 text-right">Share</th><th className="px-3 py-2" title="Resident individuals and HUFs may take the 20%-with-indexation option, recorded from their own statements">Status</th>
           <th className="px-3 py-2 text-right">At {pct(LONG_TERM_RATE)}</th><th className="px-3 py-2 text-right">At {pct(INDEXED_RATE)} after indexation</th><th className="px-3 py-2 text-right">Tax payable</th>

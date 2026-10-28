@@ -11,18 +11,18 @@ import { prepareTableExport, setTableExporting, useTableExporting } from "@/lib/
 /** Include every row and available column in this table's export snapshot. */
 export const TableExportAllRows = createContext(false);
 
-export function ExportableTable({ children, exportName, controlsHost, viewOnly = false, inputControls, ...props }: Omit<TableHTMLAttributes<HTMLTableElement>, "children"> & {
+export function ExportableTable({ children, exportName, controlsHost, editable = false, ...props }: Omit<TableHTMLAttributes<HTMLTableElement>, "children"> & {
   children: ReactNode | ((allRows: boolean) => ReactNode);
   exportName?: string;
-  /** A table's own number entry, beside Upload Excel (Private Market's Enter commitments, Stage 10io). */
-  inputControls?: ReactNode;
   /**
-   * A table a reader only looks at: Export Excel stays and exports the table
-   * alone, and the number inputs — Edit numbers, All inputs, Upload Excel, the
-   * input sheets in the workbook — are not offered (the Portfolio Library, *"a
-   * view-only view; no Excel uploads"*).
+   * Offer the number inputs — Edit numbers, All inputs, Upload Excel and the
+   * input sheets in the workbook. Only the main tables of Portfolio Monitor,
+   * Private Market and Real Estate take them (Stage 10it: *"this upload or edit
+   * numbers only need to be in portfolio monitor and private market and real
+   * estate no where else"*). Every other table only looks: Export Excel stays
+   * and exports the table alone.
    */
-  viewOnly?: boolean;
+  editable?: boolean;
   /**
    * A toolbar the table's card already draws, to hold the Export Excel control
    * instead of a caption row of its own above the header (Stage 10gy: *"there's
@@ -61,7 +61,7 @@ export function ExportableTable({ children, exportName, controlsHost, viewOnly =
       // Load ExcelJS only on demand. Snapshot the full table synchronously and
       // restore its scroll window before the workbook's asynchronous encoding.
       const { downloadTableExcel } = await import("@/lib/exportTableExcel");
-      if (!viewOnly && inputStateRef.current.status === "ready") await refreshTableInputs();
+      if (editable && inputStateRef.current.status === "ready") await refreshTableInputs();
       await prepareTableExport();
       if (!table.current) return;
       const element = table.current;
@@ -78,9 +78,10 @@ export function ExportableTable({ children, exportName, controlsHost, viewOnly =
         flushSync(() => { setAllRows(true); setTableExporting(true); });
         if (!table.current) throw new Error("Table unavailable for export");
         snapshot = readTableExport(table.current, title);
+        if (!editable) snapshot.viewOnly = true;
         const currentInputs = inputStateRef.current;
         // A view-only table's export is the table alone, never the input sheets.
-        if (!viewOnly && currentInputs.loaded) {
+        if (editable && currentInputs.loaded) {
           const ids = new Set(inputIds());
           // Analytical tables without a source row still offer the same book
           // input sheets, so every table has the same correction workflow.
@@ -112,13 +113,13 @@ export function ExportableTable({ children, exportName, controlsHost, viewOnly =
     finally { busyRef.current = false; setBusy(false); if (upload.current) upload.current.value = ""; }
   };
   const controls = <>
-    <button type="button" onClick={() => { void download(); }} disabled={busy || inputState.status === "loading"}
+    <button type="button" onClick={() => { void download(); }} disabled={busy || (editable && inputState.status === "loading")}
       data-export-excel data-export-for={exportId} aria-describedby={error ? errorId : undefined}
       title="Export all rows regardless of filters and every column, including hidden columns and rows not yet loaded by scrolling"
       className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border border-emerald-600/30 bg-emerald-500/5 px-2.5 py-1.5 text-xs font-medium text-emerald-600 ring-focus hover:bg-emerald-500/10 disabled:opacity-50">
       <FileSpreadsheet className="h-3.5 w-3.5" />{busy ? "Please wait…" : "Export Excel"}
     </button>
-    {!viewOnly && <>
+    {editable && <>
     <button type="button" onClick={() => setEditing(value => !value)} disabled={busy || inputState.status !== "ready"} aria-pressed={editing}
       className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border border-ink-600 px-2.5 py-1.5 text-xs ring-focus disabled:opacity-50" data-edit-numbers>
       <Pencil className="h-3.5 w-3.5" />{editing ? "Done editing" : "Edit numbers"}
@@ -129,7 +130,6 @@ export function ExportableTable({ children, exportName, controlsHost, viewOnly =
       <Upload className="h-3.5 w-3.5" />Upload Excel
     </button>
     <input ref={upload} type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" aria-label="Upload corrected Excel" className="hidden" onChange={e => { void importFile(e.target.files?.[0]); }} />
-    {inputControls}
     <span className="text-[10px] text-slate-500">Keep Excel format; change numbers only.</span>
     {editing && <span className="text-xs text-slate-500">Edit detail rows in INR. For other inputs, use All inputs. Totals update automatically.</span>}
     {inputState.status === "error" && <button type="button" onClick={() => { void refreshTableInputs(); }} className="rounded text-xs text-loss ring-focus" title={inputState.error}>Numbers unavailable · Retry</button>}

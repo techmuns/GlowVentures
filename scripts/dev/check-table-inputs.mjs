@@ -78,7 +78,8 @@ try {
   await page.locator('select[data-pm-show]').selectOption('both');
   await page.getByRole('button', { name: 'Expand all', exact: true }).click();
   const savedPaid = page.locator(`[data-pm-folio-row] [data-input-record="${capital.id}"][data-input-field="paid"]`).first();
-  check('Saved capital is visible in the expanded detail row', await savedPaid.evaluate(cell => cell.closest('tr').dataset.pmPaid === '123456' && cell.textContent.includes('₹')));
+  // The detail row's capital cell is its own box (Stage 10ir): the figure is the box's value.
+  check('Saved capital is visible in the expanded detail row', await savedPaid.evaluate(cell => cell.closest('tr').dataset.pmPaid === '123456' && (cell.querySelector('[data-pm-capital-input]')?.value ?? cell.textContent).includes('₹')));
   await visit('/private-market');
   await page.locator('[data-edit-numbers]').first().click();
   const costId = await page.locator('[data-input-record^="holding:"][data-input-field="costBasis"]').first().getAttribute('data-input-record');
@@ -138,13 +139,21 @@ try {
   await upload(allSecurities.file); await page.getByText('No number changes found.').waitFor();
   check('The full All Securities workbook uploads unchanged', commits === 4);
   console.log(`All Securities Excel: ${(await fs.stat(allSecurities.file)).size} bytes, ${allSecurities.book.getWorksheet('Table').rowCount} rows`);
-  await visit('/sectors');
-  const sectors = await download('sectors.xlsx', '[data-sector-table]');
-  check('Nested tables travel in their own detail worksheets', sectors.book.worksheets.some(s => /^Detail /.test(s.name)));
   inputCell(original.book, capital.id, 'paid', 'Capital inputs').value = 500;
   const stale = path.join(out, 'stale.xlsx'); await original.book.xlsx.writeFile(stale); await upload(stale);
   await page.getByRole('alert').filter({ hasText: 'changed since' }).waitFor();
   check('Stale uploads are refused without a write', commits === 4);
+  // Stage 10it — number inputs only on Portfolio Monitor, Private Market and Real Estate; every other table only exports.
+  await page.goto(base + '/sectors'); await page.locator('[data-sector-table]').waitFor();
+  const sectors = await download('sectors.xlsx', '[data-sector-table]');
+  check('Nested tables travel in their own detail worksheets', sectors.book.worksheets.some(s => /^Detail /.test(s.name)));
+  check('A view-only table exports without input sheets', !sectors.book.getWorksheet('Holding inputs') && !sectors.book.getWorksheet('Capital inputs'));
+  for (const route of ['/sectors', '/cio?tab=allocation']) {
+    if (route !== '/sectors') { await page.goto(base + route); }
+    await page.locator('[data-export-excel]').first().waitFor();
+    check(`${route} offers Export Excel but no Edit numbers, All inputs or Upload Excel`,
+      await page.locator('[data-edit-numbers], [data-all-inputs], [data-upload-excel], input[aria-label="Upload corrected Excel"]').count() === 0);
+  }
   await visit('/real-estate');
   const realEstate = await download('property.xlsx');
   check('Property input sheet uses the whole property amount', inputCell(realEstate.book, `property:${property.id}`, 'value', 'Property inputs').value === 100000);
@@ -156,37 +165,40 @@ try {
   check('Ownership is imported as a percentage, with names preserved', data.get(`real-estate:${property.id}`).owners[0].share === 75 && data.get(`real-estate:${property.id}`).owners[0].name === 'Test owner');
   await page.locator('[data-real-estate-table]').getByText('₹1,12,500', { exact: true }).first().waitFor();
   check('Property shares and totals recalculate from whole-property inputs', true);
-  // Stage 10io — Enter commitments: a folio's Committed and Still to call, typed together and from its own Excel sheet.
+  // Stage 10ir — a folio's Committed, Called, Paid in and Still to call type in their own cells, as Strategy and Description do.
   await visit('/private-market');
-  await page.locator('[data-commitment-entry-open]').first().click();
-  const entry = page.locator('dialog[data-commitment-entry]');
-  await entry.locator('[data-commitment-row]').first().waitFor();
-  const fundRow = entry.locator('[data-commitment-fund][data-commitment-row^="private-capital:"]').first();
-  const fundId = await fundRow.getAttribute('data-commitment-row');
-  await fundRow.locator('[data-commitment-input="committed"]').fill('2.5 Cr');
-  await fundRow.locator('[data-commitment-input="undrawn"]').fill('75 lakh');
-  const commitsBefore = commits;
-  await entry.locator('[data-commitment-save]').click();
-  await entry.getByText('Saved 2 numbers for everyone.').waitFor();
-  const enteredFund = (await snapshot()).catalog.find(r => r.id === fundId);
-  check('Enter commitments saves a fund folio\'s Committed and Still to call in one write', enteredFund.values.committed === 25000000 && enteredFund.values.undrawn === 7500000 && commits === commitsBefore + 1);
-  const sheetDownload = page.waitForEvent('download', { timeout: 60000 }); await entry.locator('[data-commitment-download]').click();
-  const sheetFile = path.join(out, 'commitments.xlsx'); await (await sheetDownload).saveAs(sheetFile);
-  const sheetBook = new ExcelJS.Workbook(); await sheetBook.xlsx.readFile(sheetFile);
-  check('The commitments sheet lists the funds with their saved figures', inputCell(sheetBook, fundId, 'committed', 'Capital inputs').value === 25000000 && !sheetBook.getWorksheet('Holding inputs'));
-  inputCell(sheetBook, fundId, 'undrawn', 'Capital inputs').value = 5000000;
-  const sheetEdited = path.join(out, 'commitments-edited.xlsx'); await sheetBook.xlsx.writeFile(sheetEdited);
-  await entry.locator('input[aria-label="Upload commitments Excel"]').setInputFiles(sheetEdited);
-  await entry.getByText(/^1 number read from/).waitFor();
-  await entry.locator('[data-commitment-save]').click();
-  await entry.getByText('Saved 1 number for everyone.').waitFor();
-  check('A filled commitments sheet uploads through the same checks', (await snapshot()).catalog.find(r => r.id === fundId).values.undrawn === 5000000);
-  await page.keyboard.press('Escape');
   await page.locator('select[data-pm-show]').selectOption('both');
   const expandAll = page.getByRole('button', { name: 'Expand all', exact: true });
   if (await expandAll.count()) await expandAll.click();
-  const folioUncalled = page.locator(`[data-pm-folio-row] [data-input-record="${fundId}"][data-input-field="undrawn"]`).first();
-  check('The table\'s folio row shows the entered Still to call', await folioUncalled.evaluate(cell => cell.closest('tr').dataset.pmUncalled === '5000000' && cell.closest('tr').dataset.pmCommitted === '25000000'));
+  const fundCell = page.locator('[data-pm-folio-row] [data-input-record^="private-capital:"][data-input-field="committed"]:has([data-pm-capital-input])').first();
+  const fundId = await fundCell.getAttribute('data-input-record');
+  const fundRow = page.locator(`[data-pm-folio-row]:has([data-input-record="${fundId}"])`).first();
+  const rowReads = (field, value) => page.waitForFunction(([id, f, v]) => document.querySelector(`[data-pm-folio-row] [data-input-record="${id}"]`)?.closest('tr')?.dataset[f] === v, [fundId, field, value]);
+  const commitsBefore = commits;
+  await fundRow.locator('[data-pm-capital-input="committed"]').fill('2.5 Cr');
+  await fundRow.locator('[data-pm-capital-preview]', { hasText: '₹2,50,00,000' }).waitFor();
+  await fundRow.locator('[data-pm-capital-input="committed"]').press('Enter');
+  await rowReads('pmCommitted', '25000000');
+  check('A folio\'s Committed saves from its own cell as typed (2.5 Cr)', (await snapshot()).catalog.find(r => r.id === fundId).values.committed === 25000000 && commits === commitsBefore + 1);
+  await fundRow.locator('[data-pm-capital-input="undrawn"]').fill('75 lakh');
+  await fundRow.locator('[data-pm-capital-save="undrawn"]').click();
+  await rowReads('pmUncalled', '7500000');
+  check('Still to call saves with its Save button and the row reads it back', (await snapshot()).catalog.find(r => r.id === fundId).values.undrawn === 7500000);
+  await fundRow.locator('[data-pm-capital-input="called"]').fill('lots');
+  await fundRow.locator('[data-pm-capital-save="called"]').click();
+  await fundRow.locator('[data-pm-capital-error]').waitFor();
+  check('Words in a capital cell are refused without a write', commits === commitsBefore + 2);
+  await fundRow.locator('[data-pm-capital-input="called"]').press('Escape');
+  const typedExport = await download('capital-cells.xlsx', 'table[data-pm-table]');
+  check('Export carries the typed figure as an editable input', inputCell(typedExport.book, fundId, 'undrawn', 'Capital inputs').value === 7500000);
+  inputCell(typedExport.book, fundId, 'undrawn', 'Capital inputs').value = 5000000;
+  const typedEdited = path.join(out, 'capital-cells-edited.xlsx'); await typedExport.book.xlsx.writeFile(typedEdited);
+  await upload(typedEdited); await savePreview();
+  await rowReads('pmUncalled', '5000000');
+  check('An Excel upload lands in the same cell', (await snapshot()).catalog.find(r => r.id === fundId).values.undrawn === 5000000);
+  await fundRow.locator('[data-pm-capital-remove="committed"]').click();
+  await page.waitForFunction(id => !document.querySelector(`[data-pm-folio-row] [data-input-record="${id}"]`)?.closest('tr')?.dataset.pmCommitted, fundId);
+  check('Remove typed figure restores the original (blank, never zero)', (await snapshot()).catalog.find(r => r.id === fundId).values.committed === null);
   await page.setViewportSize({ width: 420, height: 900 });
   await page.locator('[data-all-inputs]').first().click();
   await page.getByRole('dialog').waitFor();

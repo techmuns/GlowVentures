@@ -13,6 +13,8 @@ import { AbsentSection, DASH } from "@/components/Absent";
 import { fmtDate } from "@/lib/format";
 import { loadStatementSecurities } from "@/lib/ledger";
 import { buildSecurityLibrary, type ManifestEntry, type SecurityFolder, type LibraryDoc } from "@/lib/statementLibrary";
+import { bucketLabel, UNSTATED_BUCKET } from "@/lib/analytics";
+import { bucketOrd } from "@/lib/groupAxis";
 
 /**
  * ── THE PORTFOLIO LIBRARY: EVERY STATEMENT, ONE FOLDER PER SECURITY ─────────
@@ -31,6 +33,17 @@ import { buildSecurityLibrary, type ManifestEntry, type SecurityFolder, type Lib
 
 /** The open folder lives in the address (`?stock=`), so it is linkable and Back closes it. */
 const STOCK_PARAM = "stock";
+/**
+ * The category tab lives there too (`?category=`): Direct Equity, PMS mandates,
+ * ETF, Mutual Fund, AIF… — the Portfolio Monitor's sections, decided per folder
+ * by `holdingBucket` (`deriveStatementSecurities`). A folder can sit in several.
+ */
+const CATEGORY_PARAM = "category";
+const ALL = "All";
+const CATEGORY_TITLE: Record<string, string> = {
+  [ALL]: "Every security a statement names",
+  [UNSTATED_BUCKET]: "The statements naming these securities print no asset class, so no category is claimed for them",
+};
 
 /** One format's files inside an opened folder — the Statement Library's table, plus the provider. */
 function FormatBlock({ format, docs }: { format: string; docs: LibraryDoc[] }) {
@@ -52,7 +65,7 @@ function FormatBlock({ format, docs }: { format: string; docs: LibraryDoc[] }) {
       <Pill>{docs.length} {docs.length === 1 ? "file" : "files"}</Pill>
     </div>
     <div className="overflow-x-auto rounded-lg border border-ink-700" data-navigation-scroll={`portfolio-library-${format}`}>
-      <ExportableTable viewOnly className="min-w-full text-sm" data-table-static="statement files, newest first, as the Statement Library lists them">
+      <ExportableTable className="min-w-full text-sm" data-table-static="statement files, newest first, as the Statement Library lists them">
         <thead className="border-b border-ink-700 text-left text-[11px] uppercase tracking-wide text-slate-500"><tr>
           <th className="px-4 py-2.5 font-medium">Document</th>
           <th className="px-4 py-2.5 font-medium">Provider</th>
@@ -119,6 +132,7 @@ function OpenFolder({ folder, onBack }: { folder: SecurityFolder; onBack: () => 
               <Link to={`/stock/${encodeURIComponent(folder.securityKey)}`} className="font-display text-base font-semibold text-slate-100 hover:text-accent-400 hover:underline" title="Open this security's page">{folder.name}</Link>
               <Pill tone="info">{folder.docCount} {folder.docCount === 1 ? "file" : "files"}</Pill>
               {folder.formats.map((f) => <Pill key={f}>{f}</Pill>)}
+              {folder.categories.map((c) => <span key={c} data-folder-category={c} title={CATEGORY_TITLE[c]}><Pill tone="core">{bucketLabel(c)}</Pill></span>)}
             </div>
             {/* WHAT THIS FOLDER HOLDS — the report types that name this security.
                 A list of labels, not a sentence (prose convention). */}
@@ -156,6 +170,7 @@ export function PortfolioLibrary() {
   const [selected, setSelected] = useNavigationValue<string | null>("portfolio-library-selection", null, nullableStringNavigation);
   const [searchParams, setSearchParams] = useSearchParams();
   const openKey = searchParams.get(STOCK_PARAM);
+  const categoryParam = searchParams.get(CATEGORY_PARAM) ?? ALL;
 
   // The same archive index the Statement Library reads, and the build server's
   // index of which of its documents name each security. Either failing shows the
@@ -185,16 +200,29 @@ export function PortfolioLibrary() {
 
   const library = useMemo(() => buildSecurityLibrary(manifest, securities), [manifest, securities]);
   const filed = useMemo(() => new Set(library.flatMap((f) => f.docs.map((d) => d.fileKey))).size, [library]);
-  const folders = useMemo(() => {
+  const matching = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return library;
     // A security's name, or a provider whose statements name it — "carnelian"
     // finds every stock a Carnelian statement carries.
     return library.filter((f) => f.name.toLowerCase().includes(q) || f.providers.some((p) => p.toLowerCase().includes(q)));
   }, [library, query]);
+  // Every category any folder sits in, in the Portfolio Monitor's order; the
+  // count beside each is how many of the folders the search leaves are in it.
+  const categories = useMemo(() => [...new Set(library.flatMap((f) => f.categories))]
+    .sort((a, b) => bucketOrd(a) - bucketOrd(b) || a.localeCompare(b)), [library]);
+  const counts = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const f of matching) for (const c of f.categories) m.set(c, (m.get(c) ?? 0) + 1);
+    return m;
+  }, [matching]);
+  // A category the library no longer carries (an old link) shows every folder.
+  const category = categoryParam === ALL || categories.includes(categoryParam) ? categoryParam : ALL;
+  const folders = useMemo(() => category === ALL ? matching : matching.filter((f) => f.categories.includes(category)), [matching, category]);
 
   const open = (key: string) => setSearchParams((p) => { p.delete("file"); p.set(STOCK_PARAM, key); return p; });
   const back = () => setSearchParams((p) => { p.delete("file"); p.delete(STOCK_PARAM); return p; });
+  const pickCategory = (c: string) => setSearchParams((p) => { if (c === ALL) p.delete(CATEGORY_PARAM); else p.set(CATEGORY_PARAM, c); return p; }, { replace: true });
 
   const current = openKey ? library.find((f) => f.securityKey === openKey) : null;
   const trail = openKey
@@ -257,11 +285,34 @@ export function PortfolioLibrary() {
               </div>
             </div>
 
+            {categories.length > 0 && (
+              <div className="mb-4 flex flex-wrap items-center gap-x-1 gap-y-0.5 border-b border-ink-700" role="tablist"
+                aria-label="Show one category" data-category-filter={category}>
+                {[ALL, ...categories].map((c) => {
+                  const on = category === c;
+                  const n = c === ALL ? matching.length : counts.get(c) ?? 0;
+                  return (
+                    <button key={c} type="button" role="tab" aria-selected={on} onClick={() => pickCategory(c)}
+                      data-xa="portfolio-category" data-category={c} data-count={n} data-active={on} title={CATEGORY_TITLE[c]}
+                      className={`-mb-px border-b-2 px-2.5 py-1 text-xs transition-colors ring-focus ${on
+                        ? "border-champagne-500 font-medium text-champagne-400"
+                        : "border-transparent text-slate-400 hover:text-slate-200"}`}>
+                      {c === ALL ? ALL : bucketLabel(c)}
+                      <span className="ml-1 text-[10px] tabular-nums text-slate-500">{n}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
             {folders.length === 0 ? (
               <Card>
-                <AbsentSection what={query.trim() ? `No security matches "${query}"` : "No statement names a security"}
-                  needs={query.trim()
-                    ? "Clear the filter to see every security, or search a stock name or a provider such as Carnelian."
+                <AbsentSection
+                  what={query.trim()
+                    ? `No security matches "${query}"${category === ALL ? "" : ` in ${bucketLabel(category)}`}`
+                    : category === ALL ? "No statement names a security" : `No security in ${bucketLabel(category)}`}
+                  needs={query.trim() || category !== ALL
+                    ? "Clear the search or pick All to see every security, or search a stock name or a provider such as Carnelian."
                     : "Statements are filed here once one carries a holding, trade, realised lot or income line. Upload them in the Statement Library."} />
               </Card>
             ) : (
@@ -269,7 +320,7 @@ export function PortfolioLibrary() {
                 onClick={(e) => { if (e.target === e.currentTarget) setSelected(null); }}>
                 {folders.map((f) => (
                   <FolderTile key={f.securityKey} label={f.name} docCount={f.docCount} formats={f.formats} status={f.status}
-                    data={{ "data-xa": "portfolio-folder", "data-security-folder": f.securityKey, "data-doc-count": f.docCount }}
+                    data={{ "data-xa": "portfolio-folder", "data-security-folder": f.securityKey, "data-doc-count": f.docCount, "data-categories": f.categories.join("|") }}
                     selected={selected === f.securityKey}
                     onSelect={() => setSelected(f.securityKey)}
                     onOpen={() => open(f.securityKey)} />
