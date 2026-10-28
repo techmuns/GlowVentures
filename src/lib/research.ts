@@ -7,6 +7,7 @@
 // how a wrong number gets into a dashboard that promises every figure traces to a
 // source. If a metric belongs in a tile, it should come from a typed feed.
 import { requestDeadline } from "./requestDeadline";
+import { keep, readKept } from "./stockPageStore";
 import { isOutage, outageSentence } from "@/lib/upstreamStatus";
 
 export type ResearchKind = "estimates" | "financials" | "statements" | "concalls" | "documents";
@@ -30,6 +31,8 @@ export type Staleness = {
   servedAt?: string;
   /** Why the live fetch failed, even though this response succeeded. */
   upstreamFailure?: string | null;
+  /** When the data service fetched this copy from its upstream (epoch ms). */
+  fetchedAt?: number;
 };
 
 export type Research = Staleness & (
@@ -40,18 +43,60 @@ export type Research = Staleness & (
 export type ResearchError = { failureCode: string; upstreamStatus: number | null; detail: string | null };
 
 const requests = new Map<string, { at: number; value: Promise<Research | ResearchError> }>();
+/** The answers this page load already received, for a panel that opens after they arrived. */
+const settled = new Map<string, { at: number; value: Research }>();
+const MEMORY_MS = 5 * 60_000;
 export function fetchResearch(kind: ResearchKind, ticker: string): Promise<Research | ResearchError> {
   const key = `${kind}:${ticker.toUpperCase()}`;
   const cached = requests.get(key);
-  if (cached && Date.now() - cached.at < 5 * 60_000) return cached.value;
-  const value = loadResearch(kind, ticker).then((result) => {
+  if (cached && Date.now() - cached.at < MEMORY_MS) return cached.value;
+  const value = loadKeptOrLive(kind, ticker).then((result) => {
     if (isResearchError(result) || result.refreshing) requests.delete(key);
+    else {
+      if (settled.size >= 40) settled.delete(settled.keys().next().value!);
+      settled.set(key, { at: Date.now(), value: result });
+    }
     return result;
   });
   if (requests.size >= 40) requests.delete(requests.keys().next().value!);
   requests.set(key, { at: Date.now(), value });
   return value;
 }
+
+/** The answer this page load already holds, so a panel can draw it on its first paint. */
+export function settledResearch(kind: ResearchKind, ticker: string): Research | undefined {
+  const hit = settled.get(`${kind}:${ticker.toUpperCase()}`);
+  return hit && Date.now() - hit.at < MEMORY_MS ? hit.value : undefined;
+}
+
+/**
+ * KEPT IN THIS BROWSER FOR THE SERVICE'S OWN FRESH WINDOW (Stage 10ik).
+ *
+ * The edge serves a copy as fresh for twelve hours (`FRESH_S` in
+ * `functions/api/research.js`), so a copy the service fetched less than twelve
+ * hours ago is exactly what it would answer with — and is drawn from this
+ * browser (`stockPageStore.ts`) without the round trip. Past that the request
+ * goes to the edge as before, which says on the panel when it serves an older
+ * copy. Only a live (not stale) answer dated by the service is kept.
+ */
+export const KEPT_FRESH_MS = 12 * 3600_000;
+
+async function loadKeptOrLive(kind: ResearchKind, ticker: string): Promise<Research | ResearchError> {
+  const keptKey = `research:${kind}:${ticker.toUpperCase()}`;
+  const kept = await readKept<Research>(keptKey);
+  if (kept && Date.now() - kept.at < KEPT_FRESH_MS) return { ...kept.value, cached: true };
+  const r = await loadResearch(kind, ticker);
+  if (!isResearchError(r) && !r.stale && typeof r.fetchedAt === "number") void keep(keptKey, documentOf(r), r.fetchedAt);
+  return r;
+}
+
+/** The document alone — none of the response's serving state, which belongs to the request that carried it. */
+function documentOf(r: Research): Research {
+  return r.format === "documents"
+    ? { kind: r.kind, label: r.label, format: r.format, documents: r.documents, raw: r.raw, cached: true, fetchedAt: r.fetchedAt }
+    : { kind: r.kind, label: r.label, format: r.format, text: r.text, cached: true, fetchedAt: r.fetchedAt };
+}
+
 async function loadResearch(kind: ResearchKind, ticker: string): Promise<Research | ResearchError> {
   const deadline = requestDeadline(25_000);
   try {

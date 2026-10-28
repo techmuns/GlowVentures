@@ -246,13 +246,22 @@ export async function onRequest(context) {
   if (!KINDS[kind]) return json({ ok: false, failureCode: "BAD_KIND", kinds: Object.keys(KINDS), ...meta }, 400);
   if (!ticker) return json({ ok: false, failureCode: "NO_TICKER", ...meta }, 400);
 
-  const cache = bundleCache(`research/${kind}`, { ttlS: CACHE_TTL_S, version: "v1", request });
+  // ONE CACHE ENTRY PER COMPANY (Stage 10ik). Every company's document sat in
+  // ONE entry per kind, so each request read and parsed every company's tables
+  // to answer for one, and two companies fetched at once each wrote the entry
+  // back without the other's — the stock page now fetches ahead, which made
+  // that race routine. This endpoint answers one ticker per request, so an
+  // entry of its own costs the same two cache calls (`edgeBundleCache.js`).
+  const cache = bundleCache(`research/${kind}/${encodeURIComponent(ticker)}`, { ttlS: CACHE_TTL_S, version: "v2", request });
   const bundle = await cache.read();
   const now = Date.now();
+  // `fetchedAt` is when the copy was fetched upstream, on every answer: the
+  // stock page keeps a copy in the browser only as long as this cache would
+  // still call it fresh (`src/lib/research.ts`).
   if (ageS(bundle, ticker, now) < FRESH_S && bundle[ticker] && bundle[ticker].v) {
     return json({
       ok: true, kind, ticker, label: KINDS[kind].label, cached: true,
-      ...bundle[ticker].v, totalDurationMs: Date.now() - started, cacheStats: cache.stats, ...meta,
+      ...bundle[ticker].v, fetchedAt: bundle[ticker].at, totalDurationMs: Date.now() - started, cacheStats: cache.stats, ...meta,
     });
   }
 
@@ -260,16 +269,11 @@ export async function onRequest(context) {
   if (existing?.v && ageS(bundle, ticker, now) < CACHE_TTL_S) {
     context.waitUntil((async () => {
       const { value } = await fetchOne(kind, ticker, token);
-      if (value) {
-        // Re-read before merging to avoid overwriting another company's refresh.
-        const current = await cache.read();
-        current[ticker] = { v: value, at: Date.now() };
-        await cache.write(current);
-      }
+      if (value) await cache.write({ [ticker]: { v: value, at: Date.now() } });
     })().catch(() => {}));
     return json({ ok: true, kind, ticker, label: KINDS[kind].label, ...existing.v,
       cached: true, stale: true, refreshing: true, ageS: Math.round(ageS(bundle, ticker, now)),
-      servedAt: new Date(existing.at).toISOString(), totalDurationMs: Date.now() - started, ...meta });
+      servedAt: new Date(existing.at).toISOString(), fetchedAt: existing.at, totalDurationMs: Date.now() - started, ...meta });
   }
 
   const { diag, value } = await fetchOne(kind, ticker, token);
@@ -318,6 +322,7 @@ export async function onRequest(context) {
       upstreamFailure: failureCode,
       upstreamStatus: diag.status,
       ...held.v,
+      fetchedAt: held.at,
       totalDurationMs: Date.now() - started,
       cacheStats: cache.stats,
       diagnostics: [diag],
@@ -329,7 +334,7 @@ export async function onRequest(context) {
     ok: !!value,
     failureCode,
     kind, ticker, label: KINDS[kind].label, cached: false, stale: false,
-    ...(value || {}),
+    ...(value ? { ...value, fetchedAt: now } : {}),
     upstreamStatus: diag.status,
     totalDurationMs: Date.now() - started,
     cacheStats: cache.stats,

@@ -570,3 +570,11 @@
 
 - The family asked (28 Oct 2026) for the "Saved for everyone — the dashboard opens this way on any device." line gone from the Real Estate tab.
 - `SelectableTiles` takes `showSavedWhere` (default `true`); Real Estate passes `false`, so its picker and add menus render no `[data-tile-saved-where]`. Private Market and Morning CIO keep the line and its checks.
+
+### Stage 10ik — STOCK PAGE: PRICE & RETURNS AND RESEARCH LOAD AHEAD
+
+- The family asked (28 Oct 2026) for a stock's Price & returns and Research tabs to load much faster. Both fetched only on click, from cold, every visit.
+- `PrefetchStockTabs` in `StockInfo.tsx` asks for the price history and the Financials document as a company page opens; once Research is open, `ResearchPanel` asks for every other sub-tab, the ratio table and insider deals. All go through the shared requests the panels make, so nothing is fetched twice and a click finds its answer ready (`settledPriceHistory`, `settledResearch` draw it on the first paint).
+- `src/lib/stockPageStore.ts` keeps each answer in this browser (IndexedDB) with the time the service fetched it upstream (`fetchedAt`, now on `/api/prices` and `/api/research`), and reuses it only inside the edge cache's own window: 6 h for prices, 12 h for research. Benchmarks do not use it.
+- `/api/research` and the ratio table cache one entry per company (`v2`). The shared entry was read whole for one company and dropped a company whenever two were fetched at once; `stockTabsAhead.test.ts` reproduces that loss on the old code.
+- Measured in the browser with a 3 s mock service: Price & returns 133 ms and Research 93 ms after the click (was 3 s+), each sub-tab under 100 ms, and a later visit makes no price or Financials request.

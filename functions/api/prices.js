@@ -118,6 +118,10 @@ export async function onRequest(context) {
     name: res.meta?.longName ?? res.meta?.shortName ?? null,
     longName: res.meta?.longName ?? null,
     shortName: res.meta?.shortName ?? null,
+    // WHEN THIS COPY WAS FETCHED FROM YAHOO. The edge caches the whole body, so
+    // a cached answer keeps its original time — which is what lets the stock
+    // page keep a copy in the browser no longer than this cache would (Stage 10ik).
+    fetchedAt: Date.now(),
     first: points[0].t,
     last: points[points.length - 1].t,
     count: points.length,

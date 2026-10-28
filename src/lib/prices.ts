@@ -8,6 +8,7 @@
 // window rather than a series — which meant ten upstream calls per company and
 // no chart at any price. One call now answers both.
 import type { Point, HorizonKey } from "./series";
+import { keep, readKept } from "./stockPageStore";
 
 export type PriceHistory = {
   ok: true;
@@ -35,6 +36,8 @@ export type PriceHistory = {
   /** Columnar — dates and closes as parallel arrays. */
   t: string[];
   v: number[];
+  /** When the price service fetched this history from its upstream (epoch ms). */
+  fetchedAt?: number;
 };
 
 export type PriceError = { ok: false; reason: string; symbol?: string };
@@ -50,16 +53,43 @@ export type PriceResult = PriceHistory | PriceError;
  * next caller retries rather than inheriting an outage.
  */
 const inflight = new Map<string, Promise<PriceResult>>();
+/** Every history this page load has already received, for a card that opens after it arrived. */
+const settled = new Map<string, PriceHistory>();
 
-export function fetchPriceHistory(symbol: string): Promise<PriceResult> {
+/**
+ * THE STOCK PAGE KEEPS WHAT IT READ (Stage 10ik). With `keep`, a history the
+ * price service fetched within `KEPT_FRESH_MS` — its own edge cache lifetime,
+ * so never an older copy than the service itself would answer with — is drawn
+ * from this browser (`stockPageStore.ts`) instead of the network, and a fresh
+ * answer is kept for the next visit. Benchmarks do not ask for it: their
+ * identity check is struck on every answer the upstream gives.
+ */
+export const KEPT_FRESH_MS = 6 * 3600_000;
+
+export function fetchPriceHistory(symbol: string, opts: { keep?: boolean } = {}): Promise<PriceResult> {
   const hit = inflight.get(symbol);
   if (hit) return hit;
-  const p = loadPriceHistory(symbol).then((r) => {
+  const p = (opts.keep ? loadKeptOrLive(symbol) : loadPriceHistory(symbol)).then((r) => {
     if (!r.ok) inflight.delete(symbol);
+    else settled.set(symbol, r);
     return r;
   });
   inflight.set(symbol, p);
   return p;
+}
+
+/** The history this page load already holds for `symbol`, so a card can draw it on its first paint. */
+export const settledPriceHistory = (symbol: string): PriceHistory | undefined => settled.get(symbol);
+
+async function loadKeptOrLive(symbol: string): Promise<PriceResult> {
+  const keptKey = `price:${symbol}`;
+  const kept = await readKept<PriceHistory>(keptKey);
+  if (kept?.value.ok && Date.now() - kept.at < KEPT_FRESH_MS) return kept.value;
+  const r = await loadPriceHistory(symbol);
+  // Only an answer dated by the service is kept: without its fetch time a kept
+  // copy's age could not be told, and an undated copy is never served as fresh.
+  if (r.ok && typeof r.fetchedAt === "number") void keep(keptKey, r, r.fetchedAt);
+  return r;
 }
 
 async function loadPriceHistory(symbol: string): Promise<PriceResult> {

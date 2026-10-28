@@ -232,7 +232,10 @@ export async function onRequest(context) {
   if (body.table) {
     const ticker = cleanTicker(String(body.ticker ?? ""));
     if (!ticker) return json({ ok: false, failureCode: "NO_TICKERS", ...meta }, 400);
-    const cache = bundleCache("ratio-table", { ttlS: CACHE_TTL_S, version: "v1", request });
+    // One cache entry per company, as `research.js` keeps (Stage 10ik): a
+    // shared entry was read whole for one company and lost a company whenever
+    // two were fetched at once.
+    const cache = bundleCache(`ratio-table/${encodeURIComponent(ticker)}`, { ttlS: CACHE_TTL_S, version: "v2", request });
     const bundle = await cache.read();
     const now = Date.now();
     if (ageS(bundle, ticker, now) < FRESH_S && bundle[ticker] && bundle[ticker].v) {
@@ -242,11 +245,7 @@ export async function onRequest(context) {
     if (existing?.v && ageS(bundle, ticker, now) < CACHE_TTL_S) {
       context.waitUntil((async () => {
         const { value } = await fetchRatioTable(ticker, token, []);
-        if (value) {
-          const current = await cache.read();
-          current[ticker] = { v: value, at: Date.now() };
-          await cache.write(current);
-        }
+        if (value) await cache.write({ [ticker]: { v: value, at: Date.now() } });
       })().catch(() => {}));
       return json({ ok: true, cached: true, stale: true, refreshing: true, ticker, ...existing.v,
         ageS: Math.round(ageS(bundle, ticker, now)), servedAt: new Date(existing.at).toISOString(), ...meta });

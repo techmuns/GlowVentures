@@ -33,6 +33,8 @@ import { loadStockLedger, type StockLedger } from "@/lib/ledger";
 import { symbolFor, symbolForKey } from "@/lib/quotes";
 import { accountIndex, ownerOf, providerOf, strategyOf, engagementOf } from "@/lib/accounts";
 import { ResearchPanel } from "@/components/ResearchPanel";
+import { fetchPriceHistory } from "@/lib/prices";
+import { fetchResearch } from "@/lib/research";
 import { FundLookthrough } from "@/components/FundLookthrough";
 import { canHaveLookthrough, companySectorIndex } from "@/lib/lookthrough";
 import { useStockExposure } from "@/lib/useStockExposure";
@@ -274,6 +276,26 @@ const SECTOR_FROM: Record<string, string> = {
   disclosure: "from a fund's own SEBI portfolio filing, joined on this company's ISIN — the same classification Sector Composition uses",
   vendor: "from screener.in, joined on the NSE symbol — the same classification Sector Composition uses",
 };
+
+/**
+ * ── PRICE & RETURNS AND RESEARCH ARE ASKED FOR AS THE PAGE OPENS (Stage 10ik) ─
+ *
+ * *"When i dig deep in a stock view make these load much faster price return
+ * and research taking too much time right now"* — the family, 28 Oct 2026.
+ * Both tabs fetched only when clicked, so a reader landing on Position and
+ * stepping across waited on the price service and then the data service, each
+ * from cold. The company's price history and its Financials document (the
+ * sub-tab Research opens on) are requested here instead, through the same
+ * shared requests the two tabs make, so a click finds them in hand or on their
+ * way. Draws nothing; mounted only on a company page with an NSE symbol.
+ */
+function PrefetchStockTabs({ symbol }: { symbol: string }) {
+  useEffect(() => {
+    void fetchPriceHistory(symbol, { keep: true });
+    void fetchResearch("financials", symbol);
+  }, [symbol]);
+  return null;
+}
 
 export function StockInfo() {
   // Keyed by securityKey — this book's providers mostly print a name and nothing
@@ -1989,12 +2011,16 @@ export function StockInfo() {
           hidden: `display:none` keeps a node in the DOM but takes it out of
           `innerText`, so every text-struck check would read what it reads now
           while the page still paid to fetch a price history, a research
-          document and an insider feed nobody opened.
+          document and an insider feed nobody opened. (Since Stage 10ik the
+          price history and the Financials document ARE fetched as the page
+          opens, by `PrefetchStockTabs`, because the family asked for the two
+          tabs to be quick; the panels themselves stay unmounted.)
 
           `min-h-0` is what makes `flex-1` shrink rather than grow the column
           past the window — without it the panel is as tall as its content and
           the page scrolls again, which is the whole of what was asked. */}
       <div className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto" data-stock-panel={tab} data-navigation-scroll="stockinfo-1">
+        {sym && !notACompany && <PrefetchStockTabs symbol={sym} />}
 
         {tab === "position" && (
           <div data-stock-section="position">
