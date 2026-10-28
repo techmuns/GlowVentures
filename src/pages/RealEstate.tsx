@@ -186,7 +186,7 @@ export function RealEstate() {
   return <div>
     <PageHeader eyebrow="Daily" title="Real Estate" right={<div className="flex flex-wrap items-center gap-2"><PropertyBulkEntry shown={scoped} all={store.properties} members={scope.options} ready={store.ready} onSaved={() => void store.reload()} /><button type="button" className="btn-primary" disabled={!store.ready} onClick={() => { setAdding(emptyProperty()); setEditing(true); }}><Plus className="h-4 w-4" />Add property</button></div>} />
     {store.error && <div role="alert" className="mb-4 flex items-center gap-3 rounded-lg border border-ink-600 bg-ink-800 p-3 text-sm text-loss">{store.error}<button type="button" className="btn-ghost" onClick={() => void store.reload()}>Retry</button></div>}
-    <SelectableTiles page="real-estate" storageKey="glow:realEstateTiles:v1" defaults={DEFAULT_TILES} metrics={metrics} />
+    <SelectableTiles page="real-estate" storageKey="glow:realEstateTiles:v1" defaults={DEFAULT_TILES} metrics={metrics} showSavedWhere={false} />
     <Card className="mt-5" pad={false} title={`Properties${store.ready ? ` · ${filtered.length}` : ""}`} right={<div className="flex flex-wrap items-center justify-end gap-2">
       <div role="tablist" aria-label="Property views" className="inline-flex items-center gap-0.5 rounded-lg border border-ink-600/60 bg-ink-900/40 p-0.5">
         {VIEWS.map(({ key, label, icon: Icon }) => <button type="button" role="tab" aria-selected={view === key} key={key} onClick={() => setView(key)} className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium ${view === key ? "bg-champagne-500 text-ink-950 shadow-glow" : "text-slate-400 hover:text-slate-200"}`}><Icon className="h-3.5 w-3.5" />{label}</button>)}
