@@ -34,6 +34,7 @@ import {
   daySaleKey, lotGroupsOf, daySalesOf, settleSales as settleSalesShared, settledSecurityOf,
   type LotGroup, type DaySale,
 } from "../../shared/lotSettlement.mjs";
+import { resolveSector } from "../../shared/sectors.mjs";
 import { BOOK_ACCOUNTS, BOOK_CAPITAL_MOVES, BOOK_CAPITAL_GAINS } from "../data/glowData";
 import { fmtDate } from "./format";
 
@@ -1204,4 +1205,58 @@ export function deriveFundDisclosures(
     }
   }
   return { funds: [...byFund.values()].sort((a, b) => a.fund.localeCompare(b.fund)) };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WHICH STATEMENTS NAME WHICH SECURITY — the Portfolio Library's folders.
+//
+// The Statement Library files each document under the provider that issued it.
+// The Portfolio Library files the same documents under every security they carry
+// a row for — a holding, a trade, a realised lot, a lot still held or an income
+// line — so a reader can open one company and see each statement that names it,
+// whichever manager or depository sent it. Matched on the row's own
+// `securityKey`, never on a name re-derived in the browser.
+//
+// A cash line is not a security: the statement's own Cash class, or a provider
+// sector that resolves to Cash (a fact sheet's "Dividend / Interest
+// receivable"). Bank-book cash flows are not read at all. The ring-fence is
+// applied here, as `deriveFundDisclosures` applies it: a fenced security gets no
+// folder, and the browser never receives its key.
+// ─────────────────────────────────────────────────────────────────────────────
+export type StatementSecurity = { securityKey: string; name: string; documents: string[] };
+export type StatementSecurityData = { securities: StatementSecurity[] };
+
+type SecurityRow = {
+  security?: string | null; securityKey?: string | null; isin?: string | null;
+  assetClass?: string | null; providerSector?: string | null;
+};
+const SECURITY_SECTIONS = ["holdings", "transactions", "capitalGains", "openLots", "income"] as const;
+
+export function deriveStatementSecurities(
+  docs: ArchiveDoc[],
+  fence: { keys: ReadonlySet<string>; isins: ReadonlySet<string> } = { keys: new Set(), isins: new Set() },
+): StatementSecurityData {
+  const byKey = new Map<string, { names: Set<string>; documents: Set<string> }>();
+  for (const d of docs) {
+    for (const section of SECURITY_SECTIONS) {
+      for (const row of (d[section] ?? []) as SecurityRow[]) {
+        const key = row.securityKey;
+        if (!key || key === "unknown" || fence.keys.has(key)) continue;
+        if (row.isin && fence.isins.has(row.isin.trim().toUpperCase())) continue;
+        if (row.assetClass === "Cash" || (row.providerSector && resolveSector(row.providerSector).sector === "Cash")) continue;
+        const entry = byKey.get(key) ?? { names: new Set<string>(), documents: new Set<string>() };
+        if (row.security?.trim()) entry.names.add(row.security.trim());
+        entry.documents.add(d.docKey);
+        byKey.set(key, entry);
+      }
+    }
+  }
+  const securities = [...byKey].map(([securityKey, { names, documents }]) => {
+    // The fullest spelling printed (a depository clips names), then alphabetical,
+    // so a rebuild cannot flip it; `securityLabel` prefers the book's own choice.
+    const printed = [...names].sort((a, b) => b.length - a.length || a.localeCompare(b))[0] ?? securityKey;
+    return { securityKey, name: securityLabel(securityKey, printed), documents: [...documents].sort() };
+  });
+  securities.sort((a, b) => a.name.localeCompare(b.name) || a.securityKey.localeCompare(b.securityKey));
+  return { securities };
 }

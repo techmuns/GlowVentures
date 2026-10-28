@@ -577,3 +577,11 @@
 - Both nested tables (Consolidated issuers, Direct Equity holdings) pass `controlsHost={null}`: no bar, but they stay `data-table-export` so the Sector table's own Export Excel still carries them.
 - Consolidated issuer rows gain a `return` column (`issuerReturn`): FIFO over that issuer's own holdings that report a cost, as `rollSectors` strikes a sector; an issuer held only through funds is `—` with its reason. The hover is `SectorReturnDetails` (`noun="issuer"`); the footer cell is the sector's own return, so it ties to the sector row.
 - `ONLY=sectors check:pages`: the same 9 failures as main, none new.
+
+### Stage 10ik — PORTFOLIO LIBRARY: EVERY STATEMENT, ONE FOLDER PER STOCK
+
+- The family (28 Oct 2026): a Portfolio Library tab under the Statement Library that files the same statements by stock name, view-only (uploads stay in the Statement Library); Admin now reads Statement Library → Portfolio Library → Data Audit (`src/lib/nav.ts`).
+- `/portfolios` (`src/pages/PortfolioLibrary.tsx`) reads the same manifest plus a new read model, `statement-securities.json`: `deriveStatementSecurities` in `ledgerModel.ts` lists, per `securityKey`, every document carrying a holding, trade, realised lot, open lot or income row for it. Cash lines (Cash class, or a provider sector resolving to Cash) are out; the Polycab ring-fence is applied on the build server by key and ISIN. Built by `build:views` and, for published versions, by `rapid-processor.mjs` / `publication-views.mjs`. 494 folders on this book.
+- Grid, status pill and folder tile moved to `src/components/LibraryFolder.tsx` and are shared with the Statement Library. An opened folder lists each format's files with a Provider column linking to that provider's Statement Library folder; rows open the same preview.
+- `ExportableTable` takes `viewOnly`: Export Excel stays, Edit numbers / All inputs / Upload Excel are not offered.
+- `check:pages` routes `portfolios` and `portfolios-folder` re-derive the folders off `public/audit` (`PORTFOLIO_BOOK`): tile set and counts, the largest folder's exact documents, no upload control. `statements-folder`'s "an opened folder carries no upload of its own" fails on main too; left alone.

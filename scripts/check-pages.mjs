@@ -7823,6 +7823,38 @@ const STATEMENT_TOP_PROVIDER = (() => {
   } catch { return null; }
 })();
 
+/**
+ * THE PORTFOLIO LIBRARY'S FOLDERS, RE-DERIVED off the archive itself — never
+ * through `deriveStatementSecurities`, the helper under test: one folder per
+ * security a statement carries a holding, trade, realised lot, open lot or
+ * income row for, cash lines and the ring-fence (`BOOK_POLYCAB`) out, each
+ * counting the statements that name it. `top` is the largest folder, which the
+ * opened-folder route walks. Null on any failure.
+ */
+const PORTFOLIO_BOOK = (() => {
+  try {
+    const m = JSON.parse(readFileSync(new URL("../public/audit/manifest.json", import.meta.url), "utf8"));
+    const fenced = bookArray(readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8"), "BOOK_POLYCAB") ?? [];
+    const fencedKeys = new Set(fenced.map((p) => p.securityKey));
+    const fencedIsins = new Set(fenced.flatMap((p) => (p.isin ? [p.isin.trim().toUpperCase()] : [])));
+    const docsOf = new Map();
+    for (const e of m) {
+      const d = JSON.parse(readFileSync(new URL(`../public/audit/${e.docKey}/document.json`, import.meta.url), "utf8"));
+      for (const section of ["holdings", "transactions", "capitalGains", "openLots", "income"]) {
+        for (const r of d[section] ?? []) {
+          const k = r.securityKey;
+          if (!k || k === "unknown" || fencedKeys.has(k) || (r.isin && fencedIsins.has(r.isin.trim().toUpperCase()))) continue;
+          if (r.assetClass === "Cash" || (r.providerSector && resolveSector(r.providerSector).sector === "Cash")) continue;
+          docsOf.set(k, (docsOf.get(k) ?? new Set()).add(e.fileKey));
+        }
+      }
+    }
+    const counts = new Map([...docsOf].map(([k, s]) => [k, s.size]));
+    const top = [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0]?.[0] ?? null;
+    return { counts, fenced: fencedKeys, top: top ? { key: top, docs: [...docsOf.get(top)].sort() } : null };
+  } catch { return null; }
+})();
+
 const ROUTES = [
   // THE RING-FENCED PROMOTER HOLDING, ON ITS OWN PAGE. Polycab is carried in
   // `BOOK_POLYCAB` and in NO book total, so two things have to be true at once and
@@ -9049,6 +9081,10 @@ const ROUTES = [
   // by format. Addressed by `?provider=`, derived above so it opens on the
   // largest real folder.
   ["statements-folder", () => `/statements?provider=${encodeURIComponent(STATEMENT_TOP_PROVIDER ?? "none-in-the-archive")}`],
+  // THE PORTFOLIO LIBRARY — the same documents, one folder per security, view
+  // only — and its largest folder opened (`PORTFOLIO_BOOK`).
+  ["portfolios", "/portfolios"],
+  ["portfolios-folder", () => `/portfolios?stock=${encodeURIComponent(PORTFOLIO_BOOK?.top?.key ?? "none-in-the-archive")}`],
   ["upload", "/upload"],
   // THE MEMBER SCOPE (Stage 10di). Each address names its members with
   // `?members=`, which is the selector's own source of truth, so a scoped page
@@ -37595,6 +37631,36 @@ const INVARIANTS = {
   "statements-folder": [
     ["an opened folder carries no upload of its own", (t, ctx) =>
       !(ctx?.xa ?? []).some((x) => x.xa === "statement-upload" || x.xa === "statement-upload-log")],
+  ],
+  /**
+   * ── THE PORTFOLIO LIBRARY: ONE FOLDER PER SECURITY, VIEW ONLY ────────────
+   *
+   * *"organizes all statements by portfolio name … folders need to be stock
+   * names … view-only … all the uploads will be done in the statement library
+   * only"* — the family, 28 Oct 2026. Struck on the tiles' and rows' own
+   * handles against `PORTFOLIO_BOOK`, re-derived from the archive above.
+   */
+  portfolios: [
+    ["the Portfolio Library uploads nothing", (t, ctx) =>
+      !(ctx?.xa ?? []).some((x) => x.xa === "statement-upload" || x.xa === "statement-upload-log")
+      && !(ctx?.buttonLabels ?? []).some((b) => /^\s*(files|folder)\s*$/i.test(b))],
+    ["one folder per security a statement names, each counting the statements that name it, and none for the ring-fence", (t, ctx) => {
+      const b = PORTFOLIO_BOOK;
+      if (!b) return { notChecked: "the statement archive could not be read" };
+      const tiles = (ctx?.xa ?? []).filter((x) => x.xa === "portfolio-folder");
+      return tiles.length === b.counts.size && new Set(tiles.map((x) => x.attrs["security-folder"])).size === tiles.length
+        && tiles.every((x) => b.counts.get(x.attrs["security-folder"]) === Number(x.attrs["doc-count"]) && !b.fenced.has(x.attrs["security-folder"]));
+    }],
+  ],
+  "portfolios-folder": [
+    ["an opened security folder lists exactly the statements that name it, and uploads nothing", (t, ctx) => {
+      const top = PORTFOLIO_BOOK?.top;
+      if (!top) return { notChecked: "no statement in the archive names a security" };
+      const rows = (ctx?.xa ?? []).filter((x) => x.xa === "portfolio-doc").map((x) => x.attrs["preview-row"]).sort();
+      return rows.length === top.docs.length && rows.every((r, i) => r === top.docs[i])
+        && !(ctx?.xa ?? []).some((x) => x.xa === "statement-upload")
+        && !(ctx?.buttonLabels ?? []).some((b) => /upload excel|edit numbers/i.test(b));
+    }],
   ],
   audit: [
     ["the consolidated sheet is primary and original documents are a collapsed source footnote", (t, ctx) => {
