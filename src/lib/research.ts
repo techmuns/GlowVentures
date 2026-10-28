@@ -42,35 +42,40 @@ export type Research = Staleness & (
 
 export type ResearchError = { failureCode: string; upstreamStatus: number | null; detail: string | null };
 
-const requests = new Map<string, { at: number; value: Promise<Research | ResearchError> }>();
+const requests = new Map<string, { expires: number; value: Promise<Research | ResearchError> }>();
 /** The answers this page load already received, for a panel that opens after they arrived. */
-const settled = new Map<string, { at: number; value: Research }>();
+const settled = new Map<string, { expires: number; value: Research }>();
 const MEMORY_MS = 5 * 60_000;
 export function fetchResearch(kind: ResearchKind, ticker: string): Promise<Research | ResearchError> {
   const key = `${kind}:${ticker.toUpperCase()}`;
   const cached = requests.get(key);
-  if (cached && Date.now() - cached.at < MEMORY_MS) return cached.value;
-  const value = loadKeptOrLive(kind, ticker).then((result) => {
-    if (isResearchError(result) || result.refreshing) requests.delete(key);
-    else {
-      if (settled.size >= 40) settled.delete(settled.keys().next().value!);
-      settled.set(key, { at: Date.now(), value: result });
+  if (cached && Date.now() < cached.expires) return cached.value;
+  const entry = { expires: Date.now() + MEMORY_MS, value: null as unknown as Promise<Research | ResearchError> };
+  entry.value = loadKeptOrLive(kind, ticker).then((result) => {
+    if (isResearchError(result) || result.refreshing) { if (requests.get(key) === entry) requests.delete(key); return result; }
+    // NEVER PAST THE SERVICE'S OWN FRESH CUTOFF: a fresh copy fetched upstream
+    // eleven hours and fifty-nine minutes ago is held a minute, not five, so it
+    // is never drawn without the staleness note the service would then attach.
+    if (!result.stale && typeof result.fetchedAt === "number") {
+      entry.expires = Math.min(entry.expires, result.fetchedAt + KEPT_FRESH_MS);
     }
+    if (settled.size >= 40) settled.delete(settled.keys().next().value!);
+    settled.set(key, { expires: entry.expires, value: result });
     return result;
   });
   if (requests.size >= 40) requests.delete(requests.keys().next().value!);
-  requests.set(key, { at: Date.now(), value });
-  return value;
+  requests.set(key, entry);
+  return entry.value;
 }
 
 /** The answer this page load already holds, so a panel can draw it on its first paint. */
 export function settledResearch(kind: ResearchKind, ticker: string): Research | undefined {
   const hit = settled.get(`${kind}:${ticker.toUpperCase()}`);
-  return hit && Date.now() - hit.at < MEMORY_MS ? hit.value : undefined;
+  return hit && Date.now() < hit.expires ? hit.value : undefined;
 }
 
 /**
- * KEPT IN THIS BROWSER FOR THE SERVICE'S OWN FRESH WINDOW (Stage 10ik).
+ * KEPT IN THIS BROWSER FOR THE SERVICE'S OWN FRESH WINDOW (Stage 10il).
  *
  * The edge serves a copy as fresh for twelve hours (`FRESH_S` in
  * `functions/api/research.js`), so a copy the service fetched less than twelve

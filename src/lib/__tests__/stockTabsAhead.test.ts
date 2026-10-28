@@ -1,4 +1,4 @@
-// Stage 10ik — the stock page's Price & returns and Research tabs load ahead.
+// Stage 10il — the stock page's Price & returns and Research tabs load ahead.
 import assert from 'node:assert/strict';
 import { onRequest as prices } from '../../../functions/api/prices.js';
 import { onRequest as research } from '../../../functions/api/research.js';
@@ -94,3 +94,17 @@ await getHoldingsInsider(holding);
 assert.equal(insiderCalls, 2, 'a new UTC day asks for insider deals again');
 globalThis.Date = RealDate;
 console.log('PASS a page left open asks again once prices pass six hours and insider deals pass the day');
+
+// 5. A research copy near the service's twelve-hour cutoff is held in memory
+//    only until that cutoff, never the full five minutes after it arrived.
+let researchAsks = 0;
+const nearCutoff = Date.now() - 12 * 3600_000 + 30_000;
+globalThis.fetch = async () => { researchAsks++; return Response.json({ ok: true, kind: 'financials', label: 'Financial tables', format: 'markdown', text: 'Old doc', cached: true, fetchedAt: nearCutoff }); };
+await fetchResearch('financials', 'CUTOFF');
+assert.ok(settledResearch('financials', 'CUTOFF'), 'drawn while inside the fresh window');
+shiftClock(60_000);
+assert.equal(settledResearch('financials', 'CUTOFF'), undefined, 'not drawn once the service would call it stale');
+await fetchResearch('financials', 'CUTOFF');
+assert.equal(researchAsks, 2, 'asked again past the cutoff');
+globalThis.Date = RealDate;
+console.log('PASS research held in memory expires at the service\'s own fresh cutoff');

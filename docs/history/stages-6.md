@@ -578,11 +578,11 @@
 - Consolidated issuer rows gain a `return` column (`issuerReturn`): FIFO over that issuer's own holdings that report a cost, as `rollSectors` strikes a sector; an issuer held only through funds is `—` with its reason. The hover is `SectorReturnDetails` (`noun="issuer"`); the footer cell is the sector's own return, so it ties to the sector row.
 - `ONLY=sectors check:pages`: the same 9 failures as main, none new.
 
-### Stage 10ik — STOCK PAGE: PRICE & RETURNS AND RESEARCH LOAD AHEAD
+### Stage 10il — STOCK PAGE: PRICE & RETURNS AND RESEARCH LOAD AHEAD
 
 - The family asked (28 Oct 2026) for a stock's Price & returns and Research tabs to load much faster. Both fetched only on click, from cold, every visit.
 - `PrefetchStockTabs` in `StockInfo.tsx` asks for the price history and the Financials document as a company page opens; once Research is open, `ResearchPanel` asks for every other sub-tab, the ratio table and insider deals. All go through the shared requests the panels make, so nothing is fetched twice and a click finds its answer ready (`settledPriceHistory`, `settledResearch` draw it on the first paint).
 - `src/lib/stockPageStore.ts` keeps each answer in this browser (IndexedDB) with the time the service fetched it upstream (`fetchedAt`, now on `/api/prices` and `/api/research`), and reuses it only inside the edge cache's own window: 6 h for prices, 12 h for research. Benchmarks do not use it.
 - `/api/research` and the ratio table cache one entry per company (`v2`). The shared entry was read whole for one company and dropped a company whenever two were fetched at once; `stockTabsAhead.test.ts` reproduces that loss on the old code.
-- A page left open keeps nothing longer in memory than in the store: a price history expires with its window, and insider deals are keyed by the UTC day as `/api/insider` keys them (Codex review on #270).
+- A page left open keeps nothing longer in memory than in the store: a price history expires with its window, and insider deals are keyed by the UTC day as `/api/insider` keys them, and research is held no later than the service's twelve-hour cutoff. `/api/prices` is keyed `v3`, so no edge copy without `fetchedAt` is served (Codex review on #270).
 - Measured in the browser with a 3 s mock service: Price & returns 133 ms and Research 93 ms after the click (was 3 s+), each sub-tab under 100 ms, and a later visit makes no price or Financials request.

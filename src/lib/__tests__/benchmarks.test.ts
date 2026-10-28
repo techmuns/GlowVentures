@@ -117,8 +117,8 @@ console.log("\n── /api/prices returns the name the upstream reported ──"
      && body.longName === "S&P BSE SENSEX" && body.shortName === "S&P BSE SENSEX");
   ok("…and the gate accepts the Sensex off that very body", benchmarkIdentity(body, benchmarkByKey("sensex")).ok);
   ok("…and refuses it as any other benchmark", !benchmarkIdentity(body, benchmarkByKey("bse-500")).ok);
-  ok("the edge cache is keyed v2, so a v1 body with no name is never served to the gate",
-     puts.length === 1 && puts[0].includes("/__cache/prices/v2/"), puts.join(", "));
+  ok("the edge cache is keyed v3, so neither a v1 body with no name nor a v2 body with no fetch time is ever served",
+     puts.length === 1 && puts[0].includes("/__cache/prices/v3/"), puts.join(", "));
 }
 
 console.log(fails ? `\n${fails} failed` : "\nall benchmark checks passed");
