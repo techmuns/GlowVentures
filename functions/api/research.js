@@ -246,7 +246,7 @@ export async function onRequest(context) {
   if (!KINDS[kind]) return json({ ok: false, failureCode: "BAD_KIND", kinds: Object.keys(KINDS), ...meta }, 400);
   if (!ticker) return json({ ok: false, failureCode: "NO_TICKER", ...meta }, 400);
 
-  // ONE CACHE ENTRY PER COMPANY (Stage 10il). Every company's document sat in
+  // ONE CACHE ENTRY PER COMPANY (Stage 10im). Every company's document sat in
   // ONE entry per kind, so each request read and parsed every company's tables
   // to answer for one, and two companies fetched at once each wrote the entry
   // back without the other's — the stock page now fetches ahead, which made

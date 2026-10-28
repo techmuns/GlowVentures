@@ -586,7 +586,7 @@
 - `SEGMENT_AXES` / `SEGMENT_VIEWS` put All Securities first, so it is the param-free default; `?seg=category` still lands on Category.
 - Checks: `selectedSegmentReturns.test.ts` (whole-account dashes, per-holding gains with an exit, every period × axis on the archive); `check:pages` `SEG_AXES` order and default, and route `cio-returns-category` with `CIO_SEGMENT_HOLDINGS` (opens a segment and an account; names, values and gains add).
 
-### Stage 10il — STOCK PAGE: PRICE & RETURNS AND RESEARCH LOAD AHEAD
+### Stage 10im — STOCK PAGE: PRICE & RETURNS AND RESEARCH LOAD AHEAD
 
 - The family asked (28 Oct 2026) for a stock's Price & returns and Research tabs to load much faster. Both fetched only on click, from cold, every visit.
 - `PrefetchStockTabs` in `StockInfo.tsx` asks for the price history and the Financials document as a company page opens; once Research is open, `ResearchPanel` asks for every other sub-tab, the ratio table and insider deals. All go through the shared requests the panels make, so nothing is fetched twice and a click finds its answer ready (`settledPriceHistory`, `settledResearch` draw it on the first paint).

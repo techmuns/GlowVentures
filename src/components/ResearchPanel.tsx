@@ -64,7 +64,7 @@ const TAB_LABEL: Record<PanelTab, string> = {
 const TAB_ORDER: PanelTab[] = ["financials", "statements", "ratios", "estimates", "documents", "concalls", "insider"];
 /**
  * HOW LONG THE OPEN SUB-TAB HAS THE NETWORK TO ITSELF before the others are
- * asked for (Stage 10il) — long enough that its own request leaves first.
+ * asked for (Stage 10im) — long enough that its own request leaves first.
  */
 const WARM_AFTER_MS = 600;
 
@@ -92,7 +92,7 @@ export function ResearchPanel({ ticker, name }: { ticker: string | null; name: s
   }, [ticker, tab]);
 
   /**
-   * ── EVERY OTHER SUB-TAB IS ASKED FOR WHILE THIS ONE IS READ (Stage 10il) ──
+   * ── EVERY OTHER SUB-TAB IS ASKED FOR WHILE THIS ONE IS READ (Stage 10im) ──
    *
    * *"make these load much faster … research taking too much time"*. Each
    * sub-tab fetched only when it was clicked, so a reader stepping from

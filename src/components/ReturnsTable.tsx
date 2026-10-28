@@ -43,7 +43,7 @@ export function ReturnsTable({ ticker, name }: {
   /** Display name, for the chart legend. */
   name: string;
 }) {
-  // A history the page already fetched ahead (Stage 10il) is drawn on the first
+  // A history the page already fetched ahead (Stage 10im) is drawn on the first
   // paint, rather than after a frame of "Loading closes…".
   const [data, setData] = useState<PriceHistory | { ok: false; reason: string } | null | undefined>(
     () => (ticker ? settledPriceHistory(ticker) : undefined));

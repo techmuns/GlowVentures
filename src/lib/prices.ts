@@ -57,7 +57,7 @@ const inflight = new Map<string, { value: Promise<PriceResult>; expires: number 
 const settled = new Map<string, { value: PriceHistory; expires: number }>();
 
 /**
- * THE STOCK PAGE KEEPS WHAT IT READ (Stage 10il). With `keep`, a history the
+ * THE STOCK PAGE KEEPS WHAT IT READ (Stage 10im). With `keep`, a history the
  * price service fetched within `KEPT_FRESH_MS` — its own edge cache lifetime,
  * so never an older copy than the service itself would answer with — is drawn
  * from this browser (`stockPageStore.ts`) instead of the network, and a fresh

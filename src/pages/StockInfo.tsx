@@ -278,7 +278,7 @@ const SECTOR_FROM: Record<string, string> = {
 };
 
 /**
- * ── PRICE & RETURNS AND RESEARCH ARE ASKED FOR AS THE PAGE OPENS (Stage 10il) ─
+ * ── PRICE & RETURNS AND RESEARCH ARE ASKED FOR AS THE PAGE OPENS (Stage 10im) ─
  *
  * *"When i dig deep in a stock view make these load much faster price return
  * and research taking too much time right now"* — the family, 28 Oct 2026.
@@ -2011,7 +2011,7 @@ export function StockInfo() {
           hidden: `display:none` keeps a node in the DOM but takes it out of
           `innerText`, so every text-struck check would read what it reads now
           while the page still paid to fetch a price history, a research
-          document and an insider feed nobody opened. (Since Stage 10il the
+          document and an insider feed nobody opened. (Since Stage 10im the
           price history and the Financials document ARE fetched as the page
           opens, by `PrefetchStockTabs`, because the family asked for the two
           tabs to be quick; the panels themselves stay unmounted.)

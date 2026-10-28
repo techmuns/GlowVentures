@@ -232,7 +232,7 @@ export async function onRequest(context) {
   if (body.table) {
     const ticker = cleanTicker(String(body.ticker ?? ""));
     if (!ticker) return json({ ok: false, failureCode: "NO_TICKERS", ...meta }, 400);
-    // One cache entry per company, as `research.js` keeps (Stage 10il): a
+    // One cache entry per company, as `research.js` keeps (Stage 10im): a
     // shared entry was read whole for one company and lost a company whenever
     // two were fetched at once.
     const cache = bundleCache(`ratio-table/${encodeURIComponent(ticker)}`, { ttlS: CACHE_TTL_S, version: "v2", request });
