@@ -678,6 +678,21 @@
 - `build-upstox-instruments` reads the rolls: KRBL and Zota gain NSE identities. Its refresh also picks up NSE's rename of ICICI Pru Life to ICICILIFE, the same ISIN, a look-through company only.
 - Tests: `mopwmTransactions.test.mjs` (each gate, the committed rolls) and `shareRolls.test.ts` (sold, bought, priced at the roll, notes). `fundNavs` / `recoveredCosts` counts move by the five sold candidates (22 → 17 recovered-cost candidates).
 
+### Stage 10ix — SECTOR COMPOSITION: ITS NINE FAILING CHECKS, FIXED AT THEIR CAUSES
+
+- The family (28 Oct 2026): "fix the 9 failing checks on sector composition". `ONLY=sectors check:pages` failed nine invariants on main; three causes, none a wrong figure on the dashboard.
+- **The checker double-counted ₹43 Cr.** Its `withDepositoryFunds` re-expression still valued Ajay's Motilal demat balances of Bandhan Arbitrage (₹12.85 Cr) and Large & Mid Cap (₹30.17 Cr), which the Bandhan folio's 26 Oct statement superseded (rematerialised 7 Oct, Stage 10hm, `shared/custodySuccessors.mjs`). The page was right. `custodySucceeded` re-expresses the rule off the book's `custodyPredecessors` / `custodyEvidence` in both depository re-derivations. That fixed five checks: security axis, book rebuild, FS-13 tiers, FS-15 derived hover, "Not on this page".
+- **The page scrolled 46px.** `EnteredNumbersNotice` sat inside `<main>`, above pages that are `h-full` of it, so any notice (saved edits, or the store unreachable) pushed Sector Composition, Morning CIO and Portfolio Monitor down. It now sits above `<main>`, like the index strip. That fixed the two layout checks, and Morning CIO drops from 8 failures to 1 (DL-11, also on main).
+- **Unclassified's "—" is right.** Yash Highvoltage's cost is known but its sale proceeds are unverified (`hprUnavailableReason`), which withholds the pooled return. The return cell now names such holdings (`data-return-withheld`), and the two return checks accept that dash only where every named key carries the reason in `glowData.ts`.
+- `ONLY=sectors,sectors-direct,sectors-direct-live,sectors-compare` all pass; `monitor` fails exactly as on main.
+
+### Stage 10iy — PORTFOLIO LIBRARY: ONE FOLDER PER SECURITY, BY ISIN
+
+- The family (28 Oct 2026): merge the duplicate folders. The Motilal Oswal CDSL transaction list prints `AXIS BANK LIMITED # NEW EQUITY SHARES…` and `HDFC AMC LTD#HDFC MF-…`, which keyed apart from the holding statements' `Axis Bank` / `HDFC BAF D GROW`, so one security stood as two folders, the depository's under "Not classified".
+- `deriveStatementSecurities` (`src/lib/ledgerModel.ts`) files keys printed with the same ISIN in one folder: the book's own key for that ISIN (`bookKeyForShare`, the join that already files these depository lines under the book's company), else the one key a holding statement prints, else the key most statements name. A key printing two ISINs stays put. The merged keys are the folder's `aliases`, so an old `?stock=` link opens the merged folder. Nothing moves in the archive or the book. Depository transaction names are read with `displayDepositoryName` ("Balaji Amines Limited").
+- On this book: 493 → 437 folders, 56 keys into 51 folders; "Not classified" 62 → 19, each now the only folder for its ISIN. Left apart, because no statement prints a shared ISIN (the fund's own statement prints none): 3P B1 and B2, Buoyant A1 and A4, Neo Infra A5, 360 ONE Special Opportunities A3, Vedanta Iron and Steel.
+- Checks: `portfolios` — every statement's key in exactly one folder, same-ISIN keys together, a folder takes a key no row prints only when it is the book's, each folder counting its statements; `portfolios-folder` — the opened folder lists every statement naming any of its keys; `portfolios-category` re-struck on folder keys. Both new claims fail with the merge switched off.
+
 ### Stage 10iz — THE BOOK LINE VALUES THE DEMATS' LISTED SHARES AT EVERY PUBLISHED CLOSE
 
 *"mark listed demat holdings at historical prices in the book line"* — the family, 28 Oct 2026.

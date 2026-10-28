@@ -301,6 +301,8 @@ export interface StatementSecurityEntry {
   documents: string[];
   /** Its `holdingBucket` sections; absent on a read model published before they were. */
   categories?: string[];
+  /** Other keys printed with the same ISIN, filed in this folder (`deriveStatementSecurities`). */
+  aliases?: string[];
 }
 
 /** One security's folder — the statements that name it, across every provider. */
@@ -309,6 +311,8 @@ export interface SecurityFolder {
   name: string;
   /** The sections it sits in — Direct Equity, PMS mandates, AIF… (`deriveStatementSecurities`). */
   categories: string[];
+  /** Other keys for the same security, by ISIN, whose statements are filed here. */
+  aliases: string[];
   docCount: number;
   formats: string[];
   reportTypes: ReportTypeTally[];
@@ -340,7 +344,7 @@ export function buildSecurityLibrary(
     }).sort(byDateThenType);
     if (!docs.length) continue;
     folders.push({
-      securityKey: s.securityKey, name: s.name, categories: s.categories ?? [], docCount: docs.length,
+      securityKey: s.securityKey, name: s.name, categories: s.categories ?? [], aliases: s.aliases ?? [], docCount: docs.length,
       reportTypes: reportTypesOf(docs), providers: [...new Set(docs.map((d) => d.provider))].sort(),
       ...folderStats(docs), docs,
     });
