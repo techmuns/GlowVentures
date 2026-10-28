@@ -21985,6 +21985,8 @@ const DEFAULT_AXIS = [
  * A MISSING PROBE IS A FAILURE, NOT AN ABSTENTION. These routes exist only to
  * walk this table, so a null probe means the table stopped rendering.
  */
+/** A short laptop window (a 768px screen less the browser's own bars): the held table's pinned totals are read here. */
+const HELD_PIN_H = 640;
 const HELD_TOL = 1;   // a rupee — every figure here is a sum of floats the two sides add in different orders
 const heldNear = (a, b, tol = HELD_TOL) => a !== null && b !== null && Number.isFinite(a) && Number.isFinite(b) && Math.abs(a - b) <= tol;
 const HELD_TAB_KEYS = { all: "all", direct: "direct", managers: "manager", funds: "fund", other: "other" };
@@ -22019,13 +22021,14 @@ const heldChecks = (which, tab) => [
     (t, ctx) => ctx.heldTable?.overflow != null && ctx.heldTable.overflow <= 1],
   /* *"freeze the last rows in the table so that, as I scroll the table, they
      are always visible"* (28 Oct 2026). A tab with no footer has nothing to pin;
-     the claim below decides whether it should have one. */
-  ["the totals stay pinned in view while the rows scroll under them",
+     the claim below decides whether it should have one. The window must really
+     have been short — a resize that did nothing would pass on a tall page. */
+  [`on a ${HELD_PIN_H}px window the totals are pinned and on screen as the page opens, the rows scrolling under them`,
     (t, ctx) => {
       const h = ctx.heldTable;
       if (!h) return false;
       if (!h.feet.length) return h.pin === null;
-      return h.pin?.position === "sticky" && h.pin.scrolls > 1 && h.pin.inView === true;
+      return h.pin?.height === HELD_PIN_H && h.pin.position === "sticky" && h.pin.inView === true;
     }],
   /**
    * ONE RULE FOR EVERY FOOTER LINE: DRAWN ONLY WHERE IT ADDS UP TWO OR MORE
@@ -43550,7 +43553,7 @@ for (const theme of THEMES) {
         if (await page.$("[data-held-tabs]"))
           await page.waitForFunction(() => !/…/.test(document.querySelector('[data-held-tab="funds"]')?.innerText ?? ""),
             null, { timeout: 8000 }).catch(() => {});
-        return page.evaluate(() => {
+        const read = await page.evaluate(() => {
           const t = document.querySelector("table[data-held-table]");
           const txt = (e) => (e?.innerText ?? "").replace(/\s+/g, " ").trim();
           const num = (v) => (v === null || v === undefined || v === "" ? null : Number(v));
@@ -43559,31 +43562,9 @@ for (const theme of THEMES) {
           const cellAt = (tr, i) => (i >= 0 ? tr.cells[i] : null);
           const box = t ? (t.closest("div.overflow-x-auto") ?? t.parentElement) : null;
           const tipOf = (el) => el?.getAttribute("title") ?? el?.querySelector("[title]")?.getAttribute("title") ?? null;
-          /* THE TOTALS STAY IN VIEW WHILE THE ROWS SCROLL (28 Oct 2026). Read as
-             geometry: the scroll box is cut to the header, the footer and a
-             sliver of rows so it must overflow whatever the book holds, then put
-             back at its top. A pinned footer still sits inside the box's bottom
-             edge; an unpinned one is below it, behind the rows it totals. */
-          const pin = (() => {
-            const f = t?.tFoot;
-            if (!f || !box) return null;
-            const was = { max: box.style.maxHeight, top: box.scrollTop };
-            box.style.maxHeight = `${(t.tHead?.offsetHeight ?? 0) + f.offsetHeight + 48}px`;
-            box.scrollTop = 0;
-            const fb = f.getBoundingClientRect(), bb = box.getBoundingClientRect();
-            const out = {
-              position: getComputedStyle(f).position,
-              scrolls: box.scrollHeight - box.clientHeight,
-              inView: fb.top >= bb.top - 1 && fb.bottom <= bb.bottom + 1,
-            };
-            box.style.maxHeight = was.max;
-            box.scrollTop = was.top;
-            return out;
-          })();
           return {
             table: t ? t.getAttribute("data-held-table") : null,
             overflow: box ? box.scrollWidth - box.clientWidth : null,
-            pin,
             heads,
             tabs: [...document.querySelectorAll("[data-held-tab]")].map((b) => ({
               key: b.getAttribute("data-held-tab"),
@@ -43641,6 +43622,35 @@ for (const theme of THEMES) {
             avgTile: !!document.querySelector("[data-stock-avg-cost]"),
           };
         });
+        /* THE TOTALS STAY IN VIEW WHILE THE ROWS SCROLL (28 Oct 2026), read on
+           the REAL nested layout of a short laptop window, not on a box cut by
+           the probe: the panel and the table's own box both at their top, as
+           the page opens. A footer pinned to a box taller than the panel is
+           still below the panel's bottom edge, and that is what this reads.
+           The viewport is restored before anything else is read. */
+        if (!read.feet.length) return { ...read, pin: null };
+        const was = page.viewportSize();
+        await page.setViewportSize({ width: was?.width ?? 1500, height: HELD_PIN_H });
+        await page.waitForTimeout(250);
+        const pin = await page.evaluate(() => {
+          const t = document.querySelector("table[data-held-table]");
+          const f = t?.tFoot, box = t?.closest("div.overflow-x-auto"), panel = document.querySelector("[data-stock-panel]");
+          if (!f || !box || !panel) return null;
+          panel.scrollTop = 0;
+          box.scrollTop = 0;
+          // Against the PANEL, the page's own scroll region: whether the page
+          // around it fits the window is "the page itself does not scroll".
+          const fb = f.getBoundingClientRect(), pb = panel.getBoundingClientRect();
+          return {
+            height: window.innerHeight,
+            position: getComputedStyle(f).position,
+            scrolls: box.scrollHeight - box.clientHeight,
+            inView: fb.top >= pb.top - 1 && fb.bottom <= pb.bottom + 1,
+          };
+        });
+        await page.setViewportSize(was ?? { width: 1500, height: 1000 });
+        await page.waitForTimeout(250);
+        return { ...read, pin };
       })();
       /**
        * THE HOLDING-LEVEL MARK AND THE SENTENCE UNDER IT.
