@@ -41,6 +41,18 @@ await context.addInitScript(()=>{
       return super.postMessage(message,...args);
     }
   };
+  // A busy main thread can deliver several observations of one page in one
+  // callback. Let the check hold deliveries and release them as one batch.
+  const OriginalObserver = window.IntersectionObserver, held = new Set();
+  window.__holdIntersections = false;
+  window.IntersectionObserver = class extends OriginalObserver {
+    constructor(callback, options) {
+      let queue = [];
+      const deliver = () => { const entries = queue; queue = []; if (entries.length) callback(entries, this); };
+      super(entries => { queue.push(...entries); if (window.__holdIntersections) held.add(deliver); else deliver(); }, options);
+    }
+  };
+  window.__releaseIntersections = () => { window.__holdIntersections = false; for (const deliver of held) deliver(); held.clear(); };
 });
 const page = await context.newPage(); const errors = []; const assetFailures = [];
 const diagnostics = [];
@@ -80,14 +92,24 @@ const open = async key => {
   await app.goto(address(key));
   await frame.locator('[data-statement-preview]').waitFor();
 };
-const ink = async n => {
-  await rendered(n).waitFor();
-  const {count,area} = await rendered(n).evaluate(c => {
+// After a resize or zoom the reader keeps the old bitmap until a new canvas is
+// painted, then drops the old one (width 0). Read the page's current canvas in
+// the page on every poll; a handle taken a moment earlier may already be gone.
+const pageInk = ([n, required]) => {
+  const found = document.querySelectorAll(`canvas[data-pdf-page="${n}"]`), c = found[0];
+  const box = c?.getBoundingClientRect();
+  const state = {canvases:found.length, width:c?.width ?? 0, height:c?.height ?? 0, shown:!!(box?.width && box?.height), count:0};
+  if (found.length === 1 && state.width && state.height && state.shown) {
     const data = c.getContext('2d').getImageData(0,0,c.width,c.height).data;
-    let count = 0; for (let i=0;i<data.length;i+=4) if (data[i]<180 && data[i+1]<180 && data[i+2]<180 && data[i+3]>0) count++;
-    return {count,area:c.width*c.height};
-  });
-  assert.ok(count > Math.max(30,area * 0.0001), 'The original page must contain visible ink, not an empty canvas.');
+    for (let i=0;i<data.length;i+=4) if (data[i]<180 && data[i+1]<180 && data[i+2]<180 && data[i+3]>0) state.count++;
+  }
+  return !required || state.count > Math.max(30,state.width * state.height * 0.0001) ? state : false;
+};
+const ink = async n => {
+  await frame.locator('[data-pdf-scroll]').waitFor({state:'attached'});
+  const inked = await appFrame().waitForFunction(pageInk, [n, true], {polling:100, timeout:30_000})
+    .then(() => true, e => { if (e.name !== 'TimeoutError') throw e; return false; });
+  if (!inked) assert.fail(`The original page must contain visible ink, not an empty canvas (page ${n}: ${JSON.stringify(await appFrame().evaluate(pageInk, [n, false]))}).`);
 };
 try {
   await page.goto(outer);
@@ -195,13 +217,25 @@ try {
       && Math.abs(canvas.getBoundingClientRect().width - paper.getBoundingClientRect().width) < 1;
   });
   await ink(1);
+  // CI, 28 Oct 2026: page 2 stayed blank after this resize. The page observer
+  // got "left the range" and "back again" in one batch and the reader kept the
+  // older entry. Send that batch for the first pages; page 3 must still draw.
+  await appFrame().evaluate(async () => {
+    const scroller = document.querySelector('[data-pdf-scroll]'), back = scroller.scrollTop;
+    const frames = n => new Promise(resolve => { const step = () => --n ? requestAnimationFrame(step) : resolve(); requestAnimationFrame(step); });
+    window.__holdIntersections = true;
+    scroller.scrollTop = scroller.scrollHeight; await frames(3);
+    scroller.scrollTop = back; await frames(3);
+    window.__releaseIntersections();
+  });
+  await scrollTo(3);
   await scrollTo(2);
   await frame.getByLabel('PDF zoom',{exact:true}).selectOption('2'); await currentPage(2); await ink(2);
   await frame.getByLabel('PDF zoom',{exact:true}).selectOption('fit'); await currentPage(2); await ink(2);
   await scrollTo(pageCount); await scrollTo(1);
   assert.deepEqual(errors,[]); assert.deepEqual(assetFailures,[]);
   await page.screenshot({path:path.join(out,'sandboxed-preview.png')});
-  await fs.writeFile(path.join(out,'results.json'),JSON.stringify({sandboxedEmbed:true,visibleInk:true,continuousScroll:true,adjacentPages:true,scrollTracksPage:true,boundedCanvases:true,pageJump:true,sourceHighlight:true,resizeAnchor:true,zoom:true,bundleStart:true,automaticUnlock:true,reopenWithoutPassword:true,originalDownload:true,passwordRetry:true,cancellation:true,invalidFile:true,mobile:true,lazyLongDocument:true,workerReused:true,pdfBytesReused:true,firstPaintPageRequests:requestedPages,errors,assetFailures},null,2));
+  await fs.writeFile(path.join(out,'results.json'),JSON.stringify({sandboxedEmbed:true,visibleInk:true,continuousScroll:true,adjacentPages:true,scrollTracksPage:true,boundedCanvases:true,pageJump:true,sourceHighlight:true,resizeAnchor:true,batchedVisibility:true,zoom:true,bundleStart:true,automaticUnlock:true,reopenWithoutPassword:true,originalDownload:true,passwordRetry:true,cancellation:true,invalidFile:true,mobile:true,lazyLongDocument:true,workerReused:true,pdfBytesReused:true,firstPaintPageRequests:requestedPages,errors,assetFailures},null,2));
   console.log('PASS: continuous PDF scrolling, adjacent pages, current-page tracking, bounded canvases, page jumps, source highlight, resize, zoom, sandbox, saved passwords, original downloads, cancellation and mobile layout.');
 } catch (e) {
   await fs.writeFile(path.join(out,'failure.json'),JSON.stringify({errors,assetFailures,diagnostics,frames:page.frames().map(f=>f.url())},null,2));
