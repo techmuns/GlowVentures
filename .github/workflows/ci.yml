@@ -130,6 +130,7 @@ jobs:
           CHROME="$(command -v google-chrome)" node scripts/dev/check-selected-attribution.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-market-returns.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-assumed-holdings.mjs
+          CHROME="$(command -v google-chrome)" node scripts/dev/check-nav-assumed.mjs
           BASE=http://127.0.0.1:4173 CHROME="$(command -v google-chrome)" node scripts/check-return-calculations.mjs
           BASE=http://127.0.0.1:4173 CHROME="$(command -v google-chrome)" node scripts/check-latest-account-returns.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-real-estate.mjs

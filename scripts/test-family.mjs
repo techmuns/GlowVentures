@@ -91,6 +91,7 @@ const SUITES = [
   ["NAV card lines and accounts", "src/lib/__tests__/navCard.test.ts"],
   ["NAV benchmarks", "src/lib/__tests__/benchmarks.test.ts"],
   ["book against every benchmark", "src/lib/__tests__/benchCompare.test.ts"],
+  ["demat shares at published closes in the book line", "src/lib/__tests__/assumedBookNav.test.ts"],
   ["family taxonomy", "src/lib/__tests__/familyTaxonomy.test.ts"],
   ["capital tranches", "src/lib/__tests__/tranches.test.ts"],
   ["capital record", "src/lib/__tests__/capitalRecord.test.ts"],
