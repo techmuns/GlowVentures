@@ -72,7 +72,7 @@ export function PropertyTaxCard({ properties, taxOf, asOf, fy, empty, onOpen, on
       <span><b className="mono text-slate-200">+{pct(CESS)}</b> cess</span>
       <span><b className="text-slate-200">Slab rate</b> · held 2 years or less</span>
     </div>
-    <div className="overflow-x-auto" data-navigation-scroll="realestate-tax"><ExportableTable viewOnly exportName="Real Estate — Tax if sold today" className="min-w-full text-[13px]" data-property-tax-table>
+    <div className="overflow-x-auto" data-navigation-scroll="realestate-tax"><ExportableTable exportName="Real Estate — Tax if sold today" className="min-w-full text-[13px]" data-property-tax-table>
       <thead className="border-b border-ink-700"><Tr view={table}>{COLS.map(key => <SortHeader key={key} col={key} view={table} align={key === "name" ? "left" : "right"} pad="px-3 py-2"
         note={key === "tax" ? `incl. ${pct(CESS)} cess` : undefined} className={key === "name" ? "min-w-[12rem]" : ""}>{LABELS[key]}</SortHeader>)}</Tr></thead>
       <tbody>{rows.map(p => <Tr key={p.id} view={table} className="border-b border-ink-700/50" data-property-tax-row={p.id}>{COLS.map(key => <td key={key} className={`px-3 py-3 ${key === "name" ? "text-slate-300" : "text-right mono tabular whitespace-nowrap"}`}>{cell(p, key)}</td>)}</Tr>)}
@@ -107,7 +107,7 @@ export function PropertyTaxDetails({ t, onEdit }: { t: PropertyGainsTax; onEdit:
     {t.notCapitalAsset ? <p className="text-sm text-slate-200" title="Rural agricultural land is not a capital asset, so selling it carries no capital gains tax.">{money(0)} · not a capital asset</p>
       : t.cost === null ? <p className="text-sm">{gap(t.gap?.reason ?? "Not known", t.gap?.short ?? "Not known")}{t.needs.length > 0 && <button type="button" className="ml-3 text-xs text-champagne-400 underline" onClick={onEdit}>Enter details</button>}</p> : <>
       <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{steps.map(([label, value, hover]) => <div key={label}><dt className="label-xs">{label}</dt><dd className="mt-1 text-sm text-slate-200" title={hover}>{value}</dd></div>)}</dl>
-      {t.owners.length > 0 && <div className="mt-4 overflow-x-auto" data-navigation-scroll="realestate-4"><ExportableTable viewOnly exportName="Real Estate — Tax by owner" className="min-w-full text-[13px]" data-property-tax-owners data-table-static="one row per owner, each the working of the same sale's tax">
+      {t.owners.length > 0 && <div className="mt-4 overflow-x-auto" data-navigation-scroll="realestate-4"><ExportableTable exportName="Real Estate — Tax by owner" className="min-w-full text-[13px]" data-property-tax-owners data-table-static="one row per owner, each the working of the same sale's tax">
         <thead className="border-b border-ink-700 text-left"><tr className="label-xs">
           <th className="px-3 py-2">Owner</th><th className="px-3 py-2 text-right">Share</th><th className="px-3 py-2" title="Resident individuals and HUFs may take the 20%-with-indexation option, recorded from their own statements">Status</th>
           <th className="px-3 py-2 text-right">At {pct(LONG_TERM_RATE)}</th><th className="px-3 py-2 text-right">At {pct(INDEXED_RATE)} after indexation</th><th className="px-3 py-2 text-right">Tax payable</th>
