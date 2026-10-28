@@ -159,7 +159,8 @@ try {
   await page.locator(".property-pin-list").getByRole("button", { name: "Test second apartment", exact: true }).click();
   await page.getByRole("heading", { name: "Test second apartment", exact: true }).waitFor(); await close();
   await page.screenshot({ path: path.join(out, "map.png"), fullPage: true });
-  await page.getByRole("button").filter({ hasText: "Test land" }).click();
+  // The list beside the map; the tax table below carries its own button for the same property.
+  await page.locator('[data-navigation-scroll="realestate-2"]').getByRole("button").filter({ hasText: "Test land" }).click();
   await page.getByRole("button", { name: "Set map pin", exact: true }).click();
   await page.getByRole("button", { name: "Place pin on map", exact: true }).click();
   await picker.click({ position: { x: 210, y: 140 } });
@@ -215,25 +216,45 @@ try {
   await page.getByRole("button", { name: "Save property", exact: true }).click(); await page.getByRole("button", { name: "Edit property", exact: true }).waitFor(); await close();
   assert.match(await cellOf("Test inherited", "Cost"), /On inheritance$/);
   assert.match(await cellOf("Test inherited", "Appreciation %"), /^\+33\.33%\s+Since inheritance$/);
-  // Capital gains tax: the value on inheritance is not a cost for tax, so the previous owner's is asked for.
-  assert.match(await cellOf("Test inherited", "Est. tax on sale"), /^—\s+Previous owner's cost needed$/);
-  await page.getByRole("button", { name: "Edit Test inherited", exact: true }).click();
+  // Capital gains tax: the value on inheritance is not a cost for tax, so the previous owner's cost and date are asked for, together.
+  const needs = /^—\s+Needs previous owner's cost, previous owner's acquisition date$/;
+  assert.match(await cellOf("Test inherited", "Est. tax on sale"), needs);
+  // The tax section on the page names the same inputs, and its button opens the form where they go.
+  const taxRow = name => page.locator("[data-property-tax-table] tbody tr").filter({ hasText: name });
+  const taxCellOf = async (name, label) => {
+    const headers = await page.locator("[data-property-tax-table] thead th").allInnerTexts();
+    const i = headers.findIndex(h => h.trim().split("\n")[0].trim().toLowerCase() === label.toLowerCase());
+    assert.ok(i >= 0, `tax table ${label} column is shown`);
+    return (await taxRow(name).locator("td").nth(i).innerText()).trim();
+  };
+  assert.match(await page.locator("[data-tax-rates]").innerText(), /12\.5%[\s\S]*20%[\s\S]*\+4%[\s\S]*Slab rate/);
+  assert.match(await taxCellOf("Test inherited", "Tax on sale"), needs);
+  await taxRow("Test inherited").getByRole("button", { name: /^Needs previous owner's cost/ }).click();
+  assert.equal(await page.getByRole("button", { name: "Add improvement", exact: true }).count(), 0, "Improvements are no longer asked for.");
   await fill("Date of inheritance", "2010-01-01"); await fill("Previous owner's cost (₹)", "2000000"); await fill("Previous owner acquired on", "2005-06-01");
-  await page.getByRole("button", { name: "Add improvement", exact: true }).click();
-  await fill("Improvement 1 date", "2015-06-01"); await fill("Improvement 1 amount (₹)", "1000000");
   await page.getByRole("button", { name: "Save property", exact: true }).click(); await page.getByRole("button", { name: "Edit property", exact: true }).waitFor();
   const saved = [...store.data.values()].map(v => JSON.parse(v)).find(p => p.name === "Test inherited");
-  assert.deepEqual([saved.priorCost, saved.priorAcquiredOn, saved.improvements], [2000000, "2005-06-01", [{ on: "2015-06-01", amount: 1000000 }]]);
-  // ₹2 Cr less the ₹20 L cost and ₹10 L improvement is a ₹1.7 Cr gain: 12.5% + 4% cess = ₹22.1 L. Indexed it
-  // would be higher, so the tax of an owner who is not a registered member is settled at 12.5%.
-  await page.locator("[data-property-tax]").getByText("₹22,10,000", { exact: true }).first().waitFor();
+  assert.deepEqual([saved.priorCost, saved.priorAcquiredOn, "improvements" in saved], [2000000, "2005-06-01", false]);
+  // ₹2 Cr less the previous owner's ₹20 L is a ₹1.8 Cr gain: 12.5% + 4% cess = ₹23.4 L. Indexed it would be
+  // higher, so the tax of an owner who is not a registered member is settled at 12.5%.
+  await page.locator("[data-property-tax]").getByText("₹23,40,000", { exact: true }).first().waitFor();
   assert.equal(await page.locator("[data-property-tax-owners] tbody tr").count(), 1);
+  await page.locator("[data-property-tax]").screenshot({ path: path.join(out, "tax-details.png") });
   await close();
-  assert.match(await cellOf("Test inherited", "Est. tax on sale"), /^₹22,10,000\s+12\.5%$/);
-  assert.equal(await cellOf("Test inherited", "Value after tax"), "₹1,77,90,000");
-  assert.match(await cellOf("Test inherited", "Cost"), /^₹1,60,00,000/, "The improvement adds to the cost appreciation is measured against.");
-  // A property whose acquisition was never recorded carries no estimate, and says why.
-  assert.match(await cellOf("Test land", "Est. tax on sale"), /^—\s+Acquisition not entered$/);
+  assert.match(await cellOf("Test inherited", "Est. tax on sale"), /^₹23,40,000\s+12\.5%$/);
+  assert.equal(await cellOf("Test inherited", "Value after tax"), "₹1,76,60,000");
+  assert.match(await cellOf("Test inherited", "Cost"), /^₹1,50,00,000/, "Appreciation runs on the value on inheritance entered, nothing added.");
+  // The tax table reads straight across: value − cost for tax = taxable gain; × rate + cess = tax; value − tax = after tax.
+  assert.match(await taxCellOf("Test inherited", "Cost for tax"), /^₹20,00,000\s+Previous owner's cost$/);
+  assert.match(await taxCellOf("Test inherited", "Taxable gain"), /^\+₹1,80,00,000/);
+  assert.equal(await taxCellOf("Test inherited", "Rate"), "12.5%");
+  assert.equal(await taxCellOf("Test inherited", "Tax on sale"), "₹23,40,000");
+  assert.equal(await taxCellOf("Test inherited", "Value after tax"), "₹1,76,60,000");
+  assert.match(await taxCellOf("Test inherited", "Holding"), /^Long-term\s+Since 2 Jun 2007$/);
+  // A blank acquisition is taxed as the purchase its cost and date were entered as; where 20% after indexation would
+  // be lower, an owner who is not a registered member leaves it open, and says why.
+  assert.match(await cellOf("Test land", "Est. tax on sale"), /^—\s+Owner not registered$/);
+  assert.match(await taxCellOf("Test land", "Tax on sale"), /^—\s+Owner not registered$/);
   await page.screenshot({ path: path.join(out, "inherited.png"), fullPage: true });
   // An earmark: recipient and note on the list, filterable; ownership and value stay with the current owners.
   const valueBefore = await cellOf("Test office", "Current value");

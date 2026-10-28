@@ -6,12 +6,12 @@
 // be read exactly is reported with its row and column; it is never guessed.
 // ExcelJS is passed in, so the browser can load it lazily and node can test a
 // real .xlsx round trip.
-import { PROPERTY_TYPES, PROPERTY_STATUSES, AREA_UNITS, AREA_BASES, TITLE_STATUSES, ACQUISITION_TYPES, MAX_IMPROVEMENTS, PROPERTY_ID, validateProperty, propertyLabel, earmarkLabel } from "./realEstate.mjs";
+import { PROPERTY_TYPES, PROPERTY_STATUSES, AREA_UNITS, AREA_BASES, TITLE_STATUSES, ACQUISITION_TYPES, PROPERTY_ID, validateProperty, propertyLabel, earmarkLabel } from "./realEstate.mjs";
 
 export const SHEET = "Properties";
 export const MAX_UPLOAD_ROWS = 250;
 export const MAX_FILE_BYTES = 5 * 1024 * 1024;
-const MIN_OWNER_PAIRS = 4, MIN_IMPROVEMENT_PAIRS = 2;
+const MIN_OWNER_PAIRS = 4;
 
 const FIELDS = [
   { key: "name", header: "Property name", kind: "text", width: 26 },
@@ -35,12 +35,11 @@ const FIELDS = [
   { key: "monthlyCosts", header: "Monthly costs (₹)", kind: "money", width: 15 },
   { key: "debt", header: "Loan outstanding (₹)", kind: "money", width: 17 },
   { key: "monthlyEmi", header: "EMI / month (₹)", kind: "money", width: 15 },
-  // The form's Tax basis section.
+  // The form's Tax on sale section.
   { key: "priorCost", header: "Previous owner's cost (₹)", kind: "money", width: 18 },
   { key: "priorAcquiredOn", header: "Previous owner acquired on", kind: "date", width: 16 },
   { key: "fmv2001", header: "Value on 1 Apr 2001 (₹)", kind: "money", width: 17 },
   { key: "ruralAgricultural", header: "Rural agricultural land", kind: "choice", options: ["Yes", "No"], list: "Yes / No", width: 14, bool: true },
-  { key: "improvements" },
   { key: "tenant", header: "Tenant", kind: "text", width: 20 },
   { key: "leaseEnd", header: "Lease ends", kind: "date", width: 14 },
   { key: "titleStatus", header: "Title status", kind: "choice", options: TITLE_STATUSES, list: "Title status", width: 18 },
@@ -60,16 +59,11 @@ const BOOL_KEYS = new Set(FIELDS.filter(f => f.bool).map(f => f.key));
 const HEADER_OF = Object.fromEntries(FIELDS.filter(f => f.header).map(f => [f.key, f.header]));
 const ownerHeader = (n, share) => `Owner ${n}${share ? " share %" : ""}`;
 
-const improvementHeader = (n, amount) => `Improvement ${n} ${amount ? "amount (₹)" : "date"}`;
-
-/** The template's columns in order: owner / share pairs where the form has Family ownership, date / amount pairs for improvements. */
-export function templateColumns(ownerPairs = MIN_OWNER_PAIRS, improvementPairs = MIN_IMPROVEMENT_PAIRS) {
+/** The template's columns in order: owner / share pairs where the form has Family ownership. */
+export function templateColumns(ownerPairs = MIN_OWNER_PAIRS) {
   return FIELDS.flatMap(f => f.key === "owners" ? Array.from({ length: ownerPairs }, (_, i) => [
     { key: `owner${i + 1}`, owner: i, header: ownerHeader(i + 1), kind: "owner", width: 24 },
     { key: `share${i + 1}`, owner: i, header: ownerHeader(i + 1, true), kind: "share", width: 10 },
-  ]).flat() : f.key === "improvements" ? Array.from({ length: improvementPairs }, (_, i) => [
-    { key: `improvementOn${i + 1}`, improvement: i, header: improvementHeader(i + 1), kind: "date", width: 16 },
-    { key: `improvementAmount${i + 1}`, improvement: i, header: improvementHeader(i + 1, true), kind: "money", width: 18 },
   ]).flat() : [f]);
 }
 
@@ -83,7 +77,7 @@ export function buildPropertyWorkbook(ExcelJS, { properties = [], members = [] }
   const sheet = book.addWorksheet(SHEET, { views: [{ state: "frozen", xSplit: 1, ySplit: 1 }] });
   const guide = book.addWorksheet("How to fill");
   const lists = book.addWorksheet("Lists");
-  const columns = templateColumns(Math.max(MIN_OWNER_PAIRS, ...properties.map(p => p.owners.length)), Math.max(MIN_IMPROVEMENT_PAIRS, ...properties.map(p => p.improvements?.length ?? 0)));
+  const columns = templateColumns(Math.max(MIN_OWNER_PAIRS, ...properties.map(p => p.owners.length)));
   sheet.columns = columns.map(c => ({ key: c.key, width: c.width ?? 14, style: FORMATS[c.kind] || c.format ? { numFmt: FORMATS[c.kind] ?? c.format } : {} }));
   const header = sheet.getRow(1);
   columns.forEach((c, i) => {
@@ -100,7 +94,6 @@ export function buildPropertyWorkbook(ExcelJS, { properties = [], members = [] }
       if (c.key === "earmarked") values[c.key] = p.earmark ? "Yes" : null;
       else if (c.key === "recipient") values[c.key] = p.earmark?.recipient || null;
       else if (c.key === "earmarkNote") values[c.key] = p.earmark?.note || null;
-      else if (c.improvement !== undefined) { const i = p.improvements?.[c.improvement]; values[c.key] = !i ? null : c.kind === "money" ? i.amount : i.on ? new Date(`${i.on}T00:00:00Z`) : null; }
       else if (c.bool) values[c.key] = p[c.key] ? "Yes" : null;
       else if (c.kind === "owner") values[c.key] = p.owners[c.owner]?.name || null;
       else if (c.kind === "share") values[c.key] = p.owners[c.owner]?.share ?? null;
@@ -141,7 +134,7 @@ export function buildPropertyWorkbook(ExcelJS, { properties = [], members = [] }
     "Inherited or gifted: enter the value on the date of inheritance or gift in the cost column, or leave it blank. Never 0.",
     "A new property: leave Property ID blank.",
     "A downloaded property keeps its Property ID and Last saved; do not edit those two cells. Its row replaces the saved property, so a cleared cell clears that field.",
-    `Tax basis, for the estimated tax on a sale: for an inherited or gifted property, the previous owner's cost and acquisition date; for one held since before 1 Apr 2001, its value on that date; each improvement with its date and amount. Add Improvement columns in the same pattern if needed, up to ${MAX_IMPROVEMENTS}.`,
+    "For the estimated tax on a sale: for an inherited or gifted property, the previous owner's cost and acquisition date; for one held since before 1 Apr 2001, its value on that date.",
     "Earmarked / to be gifted: Yes marks the property for a future gift to the intended recipient. It is a marker only; ownership and value stay with the owners.",
     "Removing a row does not delete a property. Delete it on the dashboard.",
     `Upload the file on Real Estate with Bulk entry. Every row is checked first; if any row has a problem, nothing is saved. Up to ${MAX_UPLOAD_ROWS} properties per file.`,
@@ -232,20 +225,15 @@ export async function readPropertyWorkbook(ExcelJS, data) {
   const sheet = book.worksheets.find(ws => normalize(ws.name) === normalize(SHEET));
   if (!sheet) return { fileErrors: [`The file has no "${SHEET}" sheet. Download the template and enter the properties on that sheet.`], notes: [], rows: [] };
   const fileErrors = [], notes = [];
-  const byHeader = new Map(templateColumns(0, 0).map(c => [normalize(c.header), c]));
-  const found = new Map(), owners = new Map(), improvements = new Map(), seen = new Set();
+  const byHeader = new Map(templateColumns(0).map(c => [normalize(c.header), c]));
+  const found = new Map(), owners = new Map(), seen = new Set();
   sheet.getRow(1).eachCell({ includeEmpty: false }, (cell, col) => {
     const raw = cellValue(cell.value), text = normalize(typeof raw === "object" && raw ? "" : raw);
     if (!text) return;
     if (seen.has(text)) { fileErrors.push(`The column "${String(raw).trim()}" appears twice. Keep one.`); return; }
     seen.add(text);
-    const owner = text.match(/^owner (\d+)( share %)?$/), improvement = text.match(/^improvement (\d+) (date|amount \(₹\))$/);
-    if (improvement) {
-      const n = Number(improvement[1]);
-      const pair = improvements.get(n) ?? {};
-      pair[improvement[2] === "date" ? "on" : "amount"] = col;
-      improvements.set(n, pair);
-    } else if (owner) {
+    const owner = text.match(/^owner (\d+)( share %)?$/);
+    if (owner) {
       const n = Number(owner[1]);
       const pair = owners.get(n) ?? {};
       pair[owner[2] ? "share" : "name"] = col;
@@ -253,15 +241,11 @@ export async function readPropertyWorkbook(ExcelJS, data) {
     } else if (byHeader.has(text)) found.set(byHeader.get(text).key, { column: byHeader.get(text), col });
     else notes.push(`The column "${String(raw).trim()}" is not in the template and was ignored.`);
   });
-  const missing = templateColumns(0, 0).filter(c => !found.has(c.key)).map(c => `"${c.header}"`);
+  const missing = templateColumns(0).filter(c => !found.has(c.key)).map(c => `"${c.header}"`);
   if (missing.length) fileErrors.push(`Missing ${missing.length === 1 ? "column" : "columns"} ${missing.join(", ")}. Download the template again rather than renaming or deleting columns.`);
   const pairs = [...owners.entries()].sort((a, b) => a[0] - b[0]);
   for (const [n, pair] of pairs) if (!pair.name || !pair.share) fileErrors.push(`"${ownerHeader(n, !pair.share)}" has no matching "${ownerHeader(n, !!pair.share)}" column.`);
   if (!owners.has(1)) fileErrors.push(`Missing the "${ownerHeader(1)}" and "${ownerHeader(1, true)}" columns.`);
-  const works = [...improvements.entries()].sort((a, b) => a[0] - b[0]);
-  for (const [n, pair] of works) if (!pair.on || !pair.amount) fileErrors.push(`"${improvementHeader(n, !pair.on)}" has no matching "${improvementHeader(n, !!pair.on)}" column.`);
-  if (!improvements.has(1)) fileErrors.push(`Missing the "${improvementHeader(1)}" and "${improvementHeader(1, true)}" columns.`);
-  if (works.length > MAX_IMPROVEMENTS) fileErrors.push(`Keep up to ${MAX_IMPROVEMENTS} improvement column pairs.`);
   if (fileErrors.length) return { fileErrors, notes, rows: [] };
   const rows = [];
   for (let r = 2; r <= sheet.rowCount; r++) {
@@ -280,18 +264,9 @@ export async function readPropertyWorkbook(ExcelJS, data) {
       if (share.error) errors.push(share.error);
       ownerCells.push({ n, name: name.value ?? "", share: share.value ?? null, filled: !!(name.value || share.value != null || name.error || share.error) });
     }
-    const workCells = [];
-    for (const [n, pair] of works) {
-      const onCell = row.getCell(pair.on), amountCell = row.getCell(pair.amount);
-      const on = parseCell({ kind: "date", header: improvementHeader(n) }, onCell.value);
-      const amount = parseCell({ kind: "money", header: improvementHeader(n, true) }, amountCell.value);
-      if (on.error) errors.push(on.error);
-      if (amount.error) errors.push(amount.error);
-      if (on.value || amount.value != null) workCells.push({ n, on: on.value ?? null, amount: amount.value ?? null });
-    }
-    const content = errors.length > 0 || ownerCells.some(o => o.filled) || workCells.length > 0 || [...FIELD_KEYS, ...EARMARK_KEYS].some(k => values[k] !== "" && values[k] !== null);
+    const content = errors.length > 0 || ownerCells.some(o => o.filled) || [...FIELD_KEYS, ...EARMARK_KEYS].some(k => values[k] !== "" && values[k] !== null);
     if (!content && !values.id) continue;
-    rows.push({ row: r, values, owners: ownerCells.filter(o => o.filled), improvements: workCells, errors, content });
+    rows.push({ row: r, values, owners: ownerCells.filter(o => o.filled), errors, content });
   }
   if (rows.length > MAX_UPLOAD_ROWS) return { fileErrors: [`The file has ${rows.length} property rows. Upload at most ${MAX_UPLOAD_ROWS} at a time.`], notes, rows: [] };
   if (!rows.length) fileErrors.push(`The "${SHEET}" sheet has no property rows. Enter one property per row below the headings.`);
@@ -304,7 +279,6 @@ const identity = p => p.name || p.address ? `${normalize(p.name)}|${normalize(p.
 const comparable = p => JSON.stringify(validateProperty({ ...p, updatedAt: undefined }).property ?? null);
 const showValue = (key, v) => typeof v === "boolean" ? (v ? "Yes" : "No") : v === null || v === undefined || v === "" ? "blank"
   : typeof v === "number" ? new Intl.NumberFormat("en-IN", { maximumFractionDigits: 7 }).format(v) : String(v);
-const worksText = list => (list ?? []).map(i => `${i.on ?? "undated"} ${showValue("amount", i.amount)}`).join(", ") || "blank";
 const earmarkText = p => `${earmarkLabel(p)}${p.earmark?.note ? ` · ${p.earmark.note}` : ""}`;
 const ownersText = owners => owners.map(o => `${o.name || "unnamed"}${o.share === null ? "" : ` ${showValue("share", o.share)}%`}`).join(", ") || "blank";
 // validateProperty names a field by its key; the reader names it by its column heading.
@@ -335,7 +309,6 @@ export function planPropertyUpload(read, { existing = [], members = [], newId = 
       return { ownerId: member?.ownerId ?? kept?.ownerId ?? null, name: kept?.name ?? member?.label ?? o.name, share: o.share };
     });
     if (r.values.area != null && !r.values.areaUnit) errors.push("Area unit: choose the unit for the area entered.");
-    for (const w of r.improvements ?? []) if (w.amount === null || w.amount <= 0) errors.push(`${improvementHeader(w.n, true)}: enter the amount above 0, or clear the date.`);
     const recipient = r.values.recipient ?? "", note = r.values.earmarkNote ?? "";
     if (r.values.earmarked !== "Yes" && (recipient || note)) errors.push("Earmarked / to be gifted: choose Yes for the recipient or note entered, or clear them.");
     const member = memberByName.get(normalize(recipient));
@@ -343,8 +316,7 @@ export function planPropertyUpload(read, { existing = [], members = [], newId = 
     if (recipient && !member && !keptRecipient && members.length) notes.push(`${recipient} is not a family member on the dashboard; saved as typed.`);
     const earmark = r.values.earmarked === "Yes" ? { recipientId: member?.ownerId ?? keptRecipient?.recipientId ?? null, recipient: keptRecipient?.recipient ?? member?.label ?? recipient, note } : null;
     // A field the template does not carry keeps its saved value; every template field is the row's.
-    const candidate = { ...(current ?? {}), ...Object.fromEntries(FIELD_KEYS.map(k => [k, BOOL_KEYS.has(k) ? r.values[k] === "Yes" : r.values[k]])), id: current?.id ?? newId(), owners, earmark,
-      improvements: (r.improvements ?? []).map(w => ({ on: w.on, amount: w.amount })) };
+    const candidate = { ...(current ?? {}), ...Object.fromEntries(FIELD_KEYS.map(k => [k, BOOL_KEYS.has(k) ? r.values[k] === "Yes" : r.values[k]])), id: current?.id ?? newId(), owners, earmark };
     delete candidate.updatedAt;
     const checked = validateProperty(candidate);
     if (checked.error && !errors.length) errors.push(readable(checked.error));
@@ -352,7 +324,6 @@ export function planPropertyUpload(read, { existing = [], members = [], newId = 
     const changes = current && property ? [
       ...FIELD_KEYS.filter(k => JSON.stringify(current[k] ?? (BOOL_KEYS.has(k) ? false : null)) !== JSON.stringify(property[k] ?? null)).map(k => ({ field: HEADER_OF[k], before: showValue(k, current[k]), after: showValue(k, property[k]) })),
       ...(JSON.stringify(current.owners) !== JSON.stringify(property.owners) ? [{ field: "Owners", before: ownersText(current.owners), after: ownersText(property.owners) }] : []),
-      ...(JSON.stringify(current.improvements ?? []) !== JSON.stringify(property.improvements ?? []) ? [{ field: "Improvements", before: worksText(current.improvements), after: worksText(property.improvements) }] : []),
       ...(JSON.stringify(current.earmark ?? null) !== JSON.stringify(property.earmark) ? [{ field: "Earmark", before: earmarkText(current), after: earmarkText(property) }] : []),
     ] : [];
     return { row: r.row, isNew: !r.values.id, label: property ? propertyLabel(property) : r.values.name || r.values.address || `Row ${r.row}`,

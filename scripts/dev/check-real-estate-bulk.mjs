@@ -78,7 +78,7 @@ try {
       "Earmarked / to be gifted": "Yes", "Intended recipient": member, "Earmark note": "Test gift note" },
     3: { "Property name": "Test bulk land", "Property type": "Land", "Area": 2, "Area unit": "acre", "Owner 1": "Test trust", "Owner 1 share %": 100, "Current value (₹)": "2 Cr" },
     4: { "Property name": "Test bulk inherited", "Property type": "Villa / house", "Acquisition": "Inherited", "Current value (₹)": 80000000, "Previous owner's cost (₹)": 2500000, "Previous owner acquired on": "01/04/1995",
-      "Value on 1 Apr 2001 (₹)": 6000000, "Improvement 1 date": "15/06/2012", "Improvement 1 amount (₹)": 1500000 },
+      "Value on 1 Apr 2001 (₹)": 6000000 },
   }, "first-try.xlsx");
   let review = await upload(firstTry);
   assert.deepEqual(Object.fromEntries(Object.entries(review).map(([row, r]) => [row, r.action])), { 2: "new", 3: "error", 4: "new" });
@@ -103,7 +103,7 @@ try {
   assert.deepEqual([apartment.earmark.recipient, apartment.earmark.note, !!apartment.earmark.recipientId], [member, "Test gift note", true]);
   const inherited = records().find(p => p.name === "Test bulk inherited");
   assert.equal(inherited.cost, null, "an inherited property without its value on that date keeps cost blank");
-  assert.deepEqual([inherited.priorCost, inherited.priorAcquiredOn, inherited.fmv2001, inherited.improvements], [2500000, "1995-04-01", 6000000, [{ on: "2012-06-15", amount: 1500000 }]]);
+  assert.deepEqual([inherited.priorCost, inherited.priorAcquiredOn, inherited.fmv2001], [2500000, "1995-04-01", 6000000]);
   await page.getByRole("button", { name: "Close bulk entry", exact: true }).click();
   for (const name of ["Test bulk apartment", "Test bulk land", "Test bulk inherited"]) await page.locator("[data-real-estate-table] tbody").getByRole("button", { name, exact: true }).waitFor();
   // Single add / edit stays, and carries the EMI too.
