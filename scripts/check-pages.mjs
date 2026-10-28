@@ -62,23 +62,29 @@ import * as XLSX from "xlsx";
  * `glowData.ts` independently (`NAV_LEVEL_TIE`). Null on any failure, so every
  * claim struck on it FAILS rather than passing over nothing.
  */
-const WHOLE_BOOK_NAV = await (async () => {
+const NAV_BOOK_MODULE = await (async () => {
   try {
     const { build } = await import("esbuild");
     const root = new URL("..", import.meta.url);
     const rootPath = decodeURIComponent(root.pathname).replace(/^\/([A-Za-z]:)/, "$1");
     const out = await build({
-      stdin: { contents: 'export { WHOLE_BOOK_NAV } from "./src/lib/bookNavBook";', resolveDir: rootPath },
+      stdin: { contents: 'export { WHOLE_BOOK_NAV, BOOK_NAV_UNITS } from "./src/lib/bookNavBook";', resolveDir: rootPath },
       bundle: true, write: false, format: "esm", platform: "node",
       alias: { "@": `${rootPath.replace(/\/$/, "")}/src` }, logLevel: "error",
     });
-    const mod = await import(`data:text/javascript;base64,${Buffer.from(out.outputFiles[0].text).toString("base64")}`);
-    return mod.WHOLE_BOOK_NAV ?? null;
+    return await import(`data:text/javascript;base64,${Buffer.from(out.outputFiles[0].text).toString("base64")}`);
   } catch (e) {
     console.error(`the whole-book NAV series could not be built: ${e?.message ?? e}`);
     return null;
   }
 })();
+const WHOLE_BOOK_NAV = NAV_BOOK_MODULE?.WHOLE_BOOK_NAV ?? null;
+/**
+ * THE INVESTMENTS THE SERIES IS STRUCK OVER — the input, not the rule under
+ * test. The days a comparison may start on (Stage 10it) are re-derived from
+ * them below by this file's own arithmetic (`NAV_FAIR_STARTS`).
+ */
+const NAV_UNITS_CK = NAV_BOOK_MODULE?.BOOK_NAV_UNITS ?? null;
 
 
 const BASE = process.env.BASE ?? "http://127.0.0.1:4173";
@@ -219,8 +225,6 @@ const navBasis = (ctx) => ctx?.navChart?.basis ?? null;
 const navBasisMissing = (ctx) =>
   ctx?.navChart ? false : notChecked("the NAV card was not on screen on this run");
 
-/** The book's own return, as the hover's first sentence states it. */
-const NAV_BOOK_RET = /the book ([+-]\d+\.\d+)% net of capital flows/;
 
 const reEsc = (x) => String(x).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
@@ -243,12 +247,6 @@ const BENCH_FIXTURE = [
   ["sensex", "Sensex", "^BSESN", "S&P BSE SENSEX"],
   ["bse-500", "BSE 500", "BSE-500.BO", "S&P BSE 500 INDEX"],
 ];
-/** The benchmark a route's own address asked for — the first when it names none. */
-const wantedBench = (ctx) => {
-  const key = /[?&]bench=([a-z0-9-]+)/.exec(ctx?.path ?? "")?.[1];
-  return BENCH_FIXTURE.find((b) => b[0] === key) ?? BENCH_FIXTURE[0];
-};
-const wantedBenchLabel = (ctx) => wantedBench(ctx)[1];
 
 function bookArray(src, name) {
   const i = src.indexOf(`export const ${name}`);
@@ -9814,6 +9812,24 @@ const NAV_SERIES_BOOK = (() => {
         && Math.abs((p.linkClose ?? 0) - (p.flowIn ?? 0) - p.linkOpen) > p.linkOpen * 1e-10
         ? ((p.linkClose ?? 0) - (p.flowIn ?? 0)) / p.linkOpen : 1)) : null,
       chainByLevel: chainFrom(0, (p, q) => (q.nav > 0 ? (p.nav - (p.flowIn ?? 0)) / q.nav : 1)),
+      // …and over the WHOLE series, the chain the card's book chip states from
+      // the series' first day (Stage 10it: one line, available data).
+      chainAll: chainFrom(0, (p) => ((p.linkOpen ?? 0) > 0
+        && Math.abs((p.linkClose ?? 0) - (p.flowIn ?? 0) - p.linkOpen) > p.linkOpen * 1e-10
+        ? ((p.linkClose ?? 0) - (p.flowIn ?? 0)) / p.linkOpen : 1)),
+      // The chained level at each date, for a window starting part-way.
+      chainAt: (() => {
+        const out = new Map();
+        let x = 100;
+        nav.forEach((p, i) => {
+          if (i > 0 && (p.linkOpen ?? 0) > 0 && Math.abs((p.linkClose ?? 0) - (p.flowIn ?? 0) - p.linkOpen) > p.linkOpen * 1e-10) {
+            x *= ((p.linkClose ?? 0) - (p.flowIn ?? 0)) / p.linkOpen;
+          }
+          out.set(p.date, x);
+        });
+        return out;
+      })(),
+      points: nav,
       seriesPoints: nav.length,
       seriesFrom: nav[0]?.date ?? null,
       seriesTo: nav[nav.length - 1]?.date ?? null,
@@ -9839,6 +9855,59 @@ const NAV_SERIES_BOOK = (() => {
       // The whole-book segment's own points, for the drawdown (XA-17).
       segment: segFrom >= 0 ? nav.slice(segFrom) : [],
     };
+  } catch { return null; }
+})();
+
+/**
+ * ── THE DAYS THE BOOK CAN BE COMPARED FROM, RE-DERIVED (Stage 10it) ──────────
+ *
+ * Each investment is held at its latest valuation until its next, whose whole
+ * move lands on its own date — so a comparison started while an investment is
+ * carried from an older valuation, and valued again later, counts a move from
+ * before the start. A day qualifies when at most 5% of the return's value there
+ * is such an investment and the period to the series' end is 30 days or more;
+ * the series' first day always does. Written here off the series' own units,
+ * never by calling `comparableStarts`.
+ */
+const NAV_FAIR_STARTS = (() => {
+  try {
+    const cov = WHOLE_BOOK_NAV?.coverage, pts = WHOLE_BOOK_NAV?.points;
+    if (!cov?.from || !cov?.to || !pts || !NAV_UNITS_CK) return null;
+    const start = cov.from, end = cov.to;
+    const days = (a, b) => (Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / 86400000;
+    const lastMark = (u, d) => { let m = null; for (const x of u.marks) { if (x.date <= d) m = x; else break; } return m; };
+    const entry = (u) => {
+      if (u.atCost) return null;
+      if (u.origin && u.originDated && u.origin >= start) return u.origin;
+      const pre = lastMark(u, start), post = u.marks.find((m) => m.date > start) ?? null;
+      if (pre && (pre.date === start || !post)) return start;
+      return post?.date ?? null;
+    };
+    const valueAt = (u, d) => {
+      const m = lastMark(u, d);
+      const after = (from) => u.flows.filter((f) => f.date > from && f.date <= d).reduce((a, f) => a + f.amount, 0);
+      if (m) return Math.max(0, m.value + after(m.date));
+      if (u.origin && d >= u.origin) return Math.max(0, u.flows.filter((f) => f.date <= d).reduce((a, f) => a + f.amount, 0));
+      return null;
+    };
+    const out = [start];
+    for (const p of pts) {
+      const d = p.date;
+      if (d <= start || !(p.accountsOnDate > 0) || days(d, end) < 30) continue;
+      let panel = 0, leak = 0;
+      for (const u of NAV_UNITS_CK) {
+        const e = entry(u);
+        if (e == null || d < e) continue;
+        const v = valueAt(u, d);
+        if (v == null) continue;
+        panel += v;
+        let last = lastMark(u, d)?.date ?? null;
+        if (u.origin && u.originDated && u.origin <= d && (!last || u.origin > last)) last = u.origin;
+        if (!(last && days(last, d) <= 7) && u.marks.some((m) => m.date > d)) leak += v;
+      }
+      if (panel > 0 && leak / panel <= 0.05) out.push(d);
+    }
+    return out;
   } catch { return null; }
 })();
 
@@ -20010,21 +20079,21 @@ const NAV_RECON = [
 ];
 
 /**
- * THE NAV CARD'S BASIS HOVER, CLAIM BY CLAIM (MNT-24, MNT-25). The statement
- * book is `glowData.ts`'s own, deduped here, and the current value is the live
- * book `COSTED_BOOK` already carries — never the component's own figure, which
- * is the thing under test.
+ * THE BOOK'S HOVER, CLAIM BY CLAIM (MNT-24, MNT-25). The series' level is
+ * `glowData.ts`'s own statement level, re-derived; the current value is the
+ * live book `COSTED_BOOK` already carries — never the component's own figure,
+ * which is the thing under test. (The helpers they read are defined with the
+ * card's own claims below; they run when the routes do.)
  */
 const NAV_BASIS = [
-  ["the NAV card's share of the book is struck on the statement book, with the current value named apart (MNT-25)", (t, ctx) => {
-    const head = navBasis(ctx);
-    if (head == null) return navBasisMissing(ctx);
-    if (!NAV_RECON_BOOK || !COSTED_BOOK) return false;
-    const m = /the NAV is ₹[\d,.]+\s*(?:Cr|L|K)? against the (₹[\d,.]+\s*(?:Cr|L|K)?) the statements value( \(the current value of holdings, (₹[\d,.]+\s*(?:Cr|L|K)?), is on today's prices\))?/.exec(head);
+  ["the NAV card's share of the book is struck on the series' statement level, with today's prices named apart (MNT-25)", (t, ctx) => {
+    const h = navBookChip(ctx)?.title;
+    if (h == null) return navBasisMissing(ctx);
+    if (!NAV_RECON_BOOK || !COSTED_BOOK || !NAV_SERIES_BOOK) return false;
+    const m = /of the (₹[\d,.]+\s*(?:Cr|L|K)?) NAV on [^(.]+?( \(today's prices value the holdings at (₹[\d,.]+\s*(?:Cr|L|K)?)\))?\./.exec(h);
     if (!m) return false;
-    const stmt = money2cr(m[1]);
-    const book = NAV_RECON_BOOK.once / 1e7, live = COSTED_BOOK.totalValue / 1e7;
-    if (!(Math.abs(stmt - book) <= compactTieCr(book))) return false;
+    const level = NAV_SERIES_BOOK.levelEnd / 1e7, book = NAV_RECON_BOOK.once / 1e7, live = COSTED_BOOK.totalValue / 1e7;
+    if (!(Math.abs(money2cr(m[1]) - level) <= compactTieCr(level))) return false;
     // Load-bearing only where the two books differ, which they do on this one
     // (the published NAVs and the depository's cash funds): a card struck on
     // the live book prints the live figure where the statement one belongs.
@@ -20033,373 +20102,166 @@ const NAV_BASIS = [
     }
     return !!m[2] && Math.abs(money2cr(m[3]) - live) <= compactTieCr(live);
   }],
-  ["the NAV card's panel steps hold each account at its latest mark, never 'valued at both of its ends' (MNT-24)", (t, ctx) => {
-    if (!NAV_SERIES_BOOK) return notChecked("the book's NAV series could not be read on this run");
-    if (NAV_SERIES_BOOK.panelFirst >= NAV_SERIES_BOOK.panelLast) {
-      return notChecked("this book's panel does not grow inside the series");
-    }
-    const why = (ctx?.titles ?? []).find((x) => /The panel grows from/i.test(x));
-    if (!why) return false;
-    return !/valued at both of its ends/i.test(why)
-      && /measured over the investments in the panel at both of its ends — each held at its most recent valuation on or before that date, so a step in which none of them was revalued is flat/.test(why);
+  ["the NAV card holds each investment at its latest valuation, never 'valued at both of its ends' (MNT-24)", (t, ctx) => {
+    const h = navBookChip(ctx)?.title;
+    if (h == null) return navBasisMissing(ctx);
+    return /Each investment is held at its latest valuation until the next/.test(h) && !/valued at both of its ends/i.test(h);
   }],
 ];
 
 /**
- * EACH RANGE SAYS WHAT IT DRAWS (MNT-13): a dated range starts its length
- * before the book's last statement date and runs to the index's own latest
- * close. The dates are re-derived here from `BOOK_NAV_HISTORY` and the
- * ranges' own lengths, never read back off the component.
+ * ── A COMPARISON STARTS ONLY ON A DAY THE BOOK WAS VALUED (Stage 10it) ─────
+ *
+ * The rolling 1M–Max ranges set the book's carried values against an index's
+ * latest move: "6M" from 26 Apr opened the book on its 31 Mar value (nothing
+ * in it was revalued in April) and the index after a ~10% rally. The days on
+ * offer are `NAV_FAIR_STARTS`, re-derived above; a choice is drawn only where
+ * there is more than one, and each names its window.
  */
-const NAV_RANGE_DAYS = { "3M": 91, "6M": 183, "1Y": 365, "3Y": 365 * 3, "5Y": 365 * 5 };
-const NAV_RANGE_HOVERS = [
-  ["each NAV range's hover names the closes it draws, to the index's own latest close (MNT-13)", (t, ctx) => {
-    if (!ctx?.navChart) return navBasisMissing(ctx);
-    if (!NAV_SERIES_BOOK?.seriesTo) return notChecked("the book's NAV series could not be read on this run");
-    const to = NAV_SERIES_BOOK.seriesTo;
-    const rs = ctx.navChart.ranges ?? [];
-    if (rs.filter((r) => r.key in NAV_RANGE_DAYS).length < 3 || rs.some((r) => !r.title)) return false;
-    return rs.every((r) => {
-      if (/closes ending at the book's last statement date/.test(r.title)) return false;
-      if (r.key === "book") {
-        return r.title === "The window the book's line covers — its own first to last statement date — with the index drawn over exactly the same dates.";
-      }
-      if (r.key === "MAX") return /^Every .+ close the price service carries, to its latest\./.test(r.title);
-      if (!(r.key in NAV_RANGE_DAYS)) return false;
-      const d = new Date(`${to}T00:00:00Z`);
-      d.setUTCDate(d.getUTCDate() - NAV_RANGE_DAYS[r.key]);
-      const start = d.toISOString().slice(0, 10);
-      return new RegExp(`^.+ closes from ${start} — ${r.key} before the book's last statement date, ${to} — to the index's own latest close\\.`).test(r.title);
-    });
+const NAV_STARTS = [
+  ["the comparison starts only on a day the book was valued on, opens on the first, and offers every such day", (t, ctx) => {
+    const c = ctx?.navChart;
+    if (!c) return navBasisMissing(ctx);
+    if (!NAV_FAIR_STARTS || !NAV_SERIES_BOOK) return false;
+    const offered = c.starts.join(" ") === NAV_FAIR_STARTS.join(" ");
+    const opened = c.from === NAV_FAIR_STARTS[0] && c.to === NAV_SERIES_BOOK.seriesTo;
+    const tabs = NAV_FAIR_STARTS.length > 1
+      ? c.startTabs.length === NAV_FAIR_STARTS.length && c.startTabs.filter((x) => x.active).length === 1
+        && c.startTabs.every((x) => NAV_FAIR_STARTS.includes(x.date) && / → /.test(x.title))
+      : c.startTabs.length === 0;
+    return offered && opened && tabs && !/\b(?:1M|3M|6M|1Y|3Y|5Y|Max)\b/.test(c.head);
   }],
 ];
+
+/**
+ * ── OUR BOOK VS BENCHMARKS, ONE CHART (Stage 10it) ──────────────────────────
+ *
+ * *"make it more simple to compare on the same graph across all benchmarks no
+ * verbose"* — the family, 28 Oct 2026. The card draws the book and every
+ * benchmark at once, each as its change since ONE first day, all to the book's
+ * latest valuation; it starts only on a day the book was valued on. Each claim
+ * is struck on the chips' and the chart's own `data-*` handles and geometry,
+ * and every figure is re-derived here off the book — never off the component.
+ */
+const navBookChip = (ctx) => ctx?.navChart?.chips?.find((c) => c.key === "book") ?? null;
+const navBookStroke = (c) => (c?.strokes ?? []).findIndex((s) => /--chart-book\b/.test(s));
+const pct1 = (v) => `${v > 0 ? "+" : ""}${v.toFixed(1)}%`;
+/** The chained level on or before a date — a window starting part-way reads the book's carried value. */
+const navChainAt = (d) => {
+  let x = null;
+  for (const [k, v] of NAV_SERIES_BOOK?.chainAt ?? []) { if (k <= d) x = v; else break; }
+  return x;
+};
+const navWindowPoints = (c) => (NAV_SERIES_BOOK?.points ?? []).filter((p) => p.date > c.from && p.date <= c.to);
 
 const CIO_NAV = [
     ["the return attribution card stays removed", (t, ctx) => {
       if (ctx?.attrib == null) return notChecked("the attribution probe did not run on this pass");
       return ctx.attrib.handles === 0;
     }],
-
-    /**
-     * ── THE SERIES ITSELF REACHES BACK PAST THE COMPLETE PANEL ──────────────
-     *
-     * *"fix this portfolio NAV, we are only able to see portfolio NAV for a very
-     * short period of time."* The window went 34 days to 74 because each link is
-     * struck over the accounts valued at both its ends. Asserted on the card's
-     * own subtitle against the book, so a build that reverted to the old start
-     * fails by name rather than merely drawing a shorter line nobody measures.
-     */
+    /** The series reaches back to its own first day, counted off the book. */
     ["the NAV card covers the whole measured span, not only the complete panel", (t, ctx) => {
       const head = navBasis(ctx);
       if (head == null || !NAV_SERIES_BOOK) return navBasisMissing(ctx);
-      if (!NAV_SERIES_BOOK.panelCompleteFrom || NAV_SERIES_BOOK.panelCompleteFrom === NAV_SERIES_BOOK.seriesFrom) {
-        return notChecked("this book's panel is complete at the series' first point");
-      }
       return head.includes(NAV_SERIES_BOOK.seriesFrom)
         && new RegExp(`${NAV_SERIES_BOOK.seriesPoints} dated points`).test(head);
     }],
-
     /**
-     * AND IT SAYS HOW MUCH OF THE BOOK EACH STRETCH OF THE LINE MEASURES.
+     * ── THE BOOK'S FIGURE IS THE LINK-CHAINED RETURN OVER THE WINDOW ─────────
      *
-     * The cost of reaching back is that the early links cover four accounts
-     * where the late ones cover thirteen. A reader comparing this line to an
-     * index needs that, and it is the one thing no figure on the card discloses
-     * on its own.
+     * Struck against the book on a path the page does not take, AND against the
+     * wrong chaining: dividing each point's whole NAV by the previous one counts
+     * every investment that joined and every rupee paid in (+36.6% on this book,
+     * against +5.3% chained over each link's own investments).
      */
-    /**
-     * ── THE BOOK PILL IS THE LINK-CHAINED RETURN, AND NOT THE LEVEL-CHAINED
-     *    ONE ────────────────────────────────────────────────────────────────
-     *
-     * THIS CHECK EXISTS BECAUSE THE SWEEP MISSED THE BUG IT IS FOR. Reverting
-     * `navIndexSeries` to divide each point's whole-panel NAV by the previous
-     * one — which is what it did before the series reached back past the
-     * complete panel — makes the Book pill read +398.76% instead of +5.09%,
-     * because every account that ARRIVED lands in the return. Every existing
-     * invariant on this card stayed green: they check the header's shape, the
-     * chart's geometry and the panel sentence, and not one of them looks at the
-     * MAGNITUDE of the figure. `test:family` catches it; the screen is where a
-     * reader would have believed it.
-     *
-     * Struck against the book, on a path the page does not take, and against
-     * the WRONG chaining too — a pill that matched neither would satisfy an
-     * equality check written only one way round.
-     */
-    ["the book's return is chained over each link's own accounts, not over the growing panel", (t, ctx) => {
-      const head = navBasis(ctx);
-      if (head == null || !NAV_SERIES_BOOK) return navBasisMissing(ctx);
-      // THE BOOK'S FIGURE IS THE HOVER'S FIRST SENTENCE since the Book pill went.
-      const m = NAV_BOOK_RET.exec(head);
-      if (!m) return false;
-      const shown = Number(m[1]);
-      // The pill prints one decimal, so the bound is that precision reproduced.
-      if (Math.abs(shown - NAV_SERIES_BOOK.chainByLink) > 0.05) return false;
-      // …and the two chainings must actually differ on this book, or the check
-      // asserts nothing and must be re-read rather than passing.
-      return Math.abs(NAV_SERIES_BOOK.chainByLevel - NAV_SERIES_BOOK.chainByLink) > 1;
+    ["the book's return is chained over each link's own investments from the window's first day, not over the growing NAV", (t, ctx) => {
+      const c = ctx?.navChart;
+      if (!c) return navBasisMissing(ctx);
+      const book = navBookChip(ctx);
+      if (!book || book.ret == null || !NAV_SERIES_BOOK || !c.from || !c.to) return false;
+      const a = navChainAt(c.from), b = navChainAt(c.to);
+      if (a == null || b == null) return false;
+      const want = (b / a - 1) * 100;
+      return Math.abs(book.ret - want) < 1e-6 && book.text.includes(pct1(want))
+        && Math.abs(NAV_SERIES_BOOK.chainByLevel - NAV_SERIES_BOOK.chainAll) > 1;
     }],
-
     /**
-     * ── THE RAW NAV LINE STOPS WHERE THE PANEL DOES ────────────────────────
-     *
-     * ALSO WRITTEN BECAUSE THE SWEEP MISSED THE BUG. Rebasing the dashed line at
-     * the series' FIRST point instead of at the complete panel draws it climbing
-     * ~440% in six weeks, every rupee of it an account arriving — and it blows
-     * the y-axis domain out so far that both real lines flatten to a straight
-     * edge. Every existing check stayed green: the hover's pair is computed
-     * separately and stays right, and nothing looked at how far the curve
-     * extends.
-     *
-     * A chart claim is checked on the chart. The dashed curve must carry exactly
-     * the complete-panel points and the book's curve the whole series, both
-     * counted off the emitted book — so a build that drew either over the wrong
-     * span fails, in whichever direction.
+     * THE BOOK IS ONE LINE. It was split into a solid stretch from the day every
+     * valued investment is in the return and a lighter one before it — and when
+     * Bandhan's first valuation landed on the series' last day, the solid line
+     * was a single point and the whole chart the lighter one. It opens at 0% on
+     * the window's first day and runs through every dated point after it.
      */
-    ["the raw NAV curve covers only the whole level, and the book's return is solid only over the whole-book segment", (t, ctx) => {
-      const counts = ctx?.navChart?.vertexCounts;
-      if (!counts || !NAV_SERIES_BOOK) return notChecked("the NAV chart was not found on this pass");
-      if (NAV_SERIES_BOOK.completePanelPoints >= NAV_SERIES_BOOK.seriesPoints) {
-        return notChecked("this book's panel is complete at the series' first point");
-      }
-      // recharts emits one command per plotted vertex on a monotone curve. The
-      // stretch still joining shares the junction point with the solid line,
-      // so the two together draw every point of the series once and that one twice.
-      return counts.includes(NAV_SERIES_BOOK.completePanelPoints)
-        && counts.includes(NAV_SERIES_BOOK.earlyPoints)
-        && NAV_SERIES_BOOK.completePanelPoints + NAV_SERIES_BOOK.earlyPoints === NAV_SERIES_BOOK.seriesPoints + 1
-        && counts.includes(NAV_SERIES_BOOK.levelPoints);
+    ["the book is one line, through every dated point of its window", (t, ctx) => {
+      const c = ctx?.navChart;
+      if (!c) return notChecked("the NAV chart was not found on this pass");
+      if (!NAV_SERIES_BOOK || !c.from || !c.to) return false;
+      const i = navBookStroke(c);
+      return i >= 0 && c.strokes.filter((s) => /--chart-book\b/.test(s)).length === 1
+        && c.vertexCounts[i] === 1 + navWindowPoints(c).length;
     }],
-
-    /**
-     * MOVED TO THE SUBTITLE'S HOVER WITH THE PARAGRAPH, AND NOT DROPPED.
-     *
-     * The family asked the block under the title to go; this was the one claim
-     * in it that is about the SHAPE of the measurement rather than about a
-     * figure, so it went into the hover on the basis line rather than onto it.
-     * A hover is weaker than a caption and that is recorded rather than
-     * glossed — what is unchanged is that the panel's two ends and the date it
-     * completes are still named, still derived from the book, and still fail by
-     * name if the series reverts to starting where the panel does.
-     */
-    ["the NAV card names the panel it grows through", (t, ctx) => {
-      if (!NAV_SERIES_BOOK) return notChecked("the book's NAV series could not be read on this run");
-      if (NAV_SERIES_BOOK.panelFirst >= NAV_SERIES_BOOK.panelLast) {
-        return notChecked("this book's panel does not grow inside the series");
-      }
-      const why = (ctx?.titles ?? []).find((x) => /The panel grows from/i.test(x));
-      if (!why) return false;
-      return new RegExp(`${NAV_SERIES_BOOK.panelFirst} to ${NAV_SERIES_BOOK.panelLast} investments`).test(why)
-        && why.includes(NAV_SERIES_BOOK.panelCompleteFrom);
+    /** Available data, named on the book's own chip — Stages 10gh and 10gm's rule for Morning CIO's returns. */
+    ["the book's chip says available data, and its hover names what joined late and what is left out", (t, ctx) => {
+      const book = navBookChip(ctx);
+      if (!book) return navBasisMissing(ctx);
+      if (!NAV_SERIES_BOOK) return false;
+      const h = book.title;
+      const joined = NAV_SERIES_BOOK.joined === 0 || new RegExp(`${NAV_SERIES_BOOK.joined} joined on their first valuation`).test(h);
+      const atCost = NAV_SERIES_BOOK.atCost === 0 || new RegExp(`Left out: ${NAV_SERIES_BOOK.atCost} private lines held at cost`).test(h);
+      return /available data/.test(book.text) && /^Our book:/.test(h)
+        && new RegExp(`Available data: ${NAV_SERIES_BOOK.inReturn} of the ${NAV_SERIES_BOOK.holding} investments holding value`).test(h)
+        && joined && atCost;
     }],
-
-  /**
-   * ── THE DATED NAV SERIES, AND WHAT IT REFUSES TO CLAIM ────────────────────
-   *
-   * These are on `cio` rather than `cio-live` because every one of them is
-   * driven by `BOOK_NAV_HISTORY`, which is baked into the bundle — the series
-   * renders with no feed at all, and only the Nifty 500 comparison line needs
-   * one. Each was verified by reintroducing its bug.
-   */
   ["the NAV card renders a dated series with its date range and its coverage",
     (t, ctx) => {
       const head = navBasis(ctx);
       if (head == null) return navBasisMissing(ctx);
-      // The TITLE names the benchmark this address asked for; the date range
-      // and the coverage are its hover since the basis line was removed.
-      return new RegExp(`Portfolio NAV vs ${reEsc(wantedBenchLabel(ctx))}`).test(t)
+      return /Our book vs benchmarks/.test(t)
         && /\d+ dated points, \d{4}-\d{2}-\d{2} → \d{4}-\d{2}-\d{2}/.test(head)
         && /\d+ of the \d+ investments holding value in the return/.test(head);
     }],
   /**
-   * THE ADJUSTMENT IS LOAD-BEARING, AND THE PAGE PRINTS BOTH FIGURES.
-   *
-   * The covered set's raw NAV runs +9.30% over this window and ₹11.24 Cr of that
-   * is a Fund Deposit into V.E.C 128005 — net of it the book earned +0.54%. A
-   * card that charted the raw NAV would show eight points of outperformance
-   * against an index that moved 1.33%, none of it earned. So: both percentages
-   * must be on screen, and they must DIFFER. A book where they happened to
-   * coincide would pass a check that only looked for one of them, which is why
-   * the gap is asserted rather than the literal — this is `accountXirr.test.ts`'s
-   * "the guard must be load-bearing" rule, on a chart.
-   */
-  ["the NAV card prints the flow-adjusted return AND the unadjusted one, and they differ",
-    (t, ctx) => {
-      /**
-       * BOTH FIGURES SURVIVED THE PARAGRAPH THAT CARRIED THEM. They were one
-       * sentence under the chart until the family asked the paragraphs to go;
-       * the adjusted one is the Book pill in the header and the unadjusted one
-       * is on the raw-NAV toggle's hover, beside the control that draws it.
-       * Read from the TWO PLACES rather than from one line, which is the
-       * stronger claim: a build that lost either half now fails.
-       */
-      const head = navBasis(ctx);
-      if (head == null) return navBasisMissing(ctx);
-      const book = NAV_BOOK_RET.exec(head);
-      /**
-       * THE HOVER CARRIES BOTH ENDS AND NAMES ITS OWN WINDOW.
-       *
-       * This used to require the header's Book pill to EQUAL the hover's
-       * adjusted figure, which held while both covered the same 34 days. They no
-       * longer do: the adjusted line is chain-linked back to 74 days and the raw
-       * one is undefined before the panel completes, so the hover's pair is
-       * struck over the segment the raw line has and the pill over the series.
-       * Requiring them to match would fail a card that is right, and — worse —
-       * would have been satisfied by "fixing" the card to compare 74 days with
-       * 34 and call the extra weeks a deposit.
-       *
-       * So the claim is that both figures survived, that they differ (or the
-       * adjustment is doing nothing and this asserts nothing), and that the
-       * hover SAYS which window its pair is over — because two returns a reader
-       * cannot date are two returns a reader will pair with the pill.
-       */
-      const raw = (ctx?.titles ?? [])
-        .map((x) => /the book's NAV reads\s*([+-]\d+\.\d+)%\s*with the capital left in against\s*([+-]\d+\.\d+)%/.exec(x))
-        .find(Boolean);
-      if (!book || !raw) return false;
-      const named = (ctx?.titles ?? []).some((x) =>
-        /BOTH FIGURES ARE OVER THAT SEGMENT/.test(x) && /Over \d{4}-\d{2}-\d{2} → \d{4}-\d{2}-\d{2}/.test(x));
-      // …and since Stage 10ge both are struck over the whole-book segment the
-      // hover's own return is, so the adjusted half must BE that figure.
-      return named && Math.abs(Number(raw[1]) - Number(raw[2])) > 1
-        && Math.abs(Number(raw[2]) - Number(book[1])) <= 0.011;
-    }],
-  /**
    * ── THE CHART ACTUALLY PAINTS ────────────────────────────────────────────
-   *
-   * The one invariant this card never had, and the one defect it shipped with.
-   * Everything else here reads TEXT, and the text was right the whole time the
-   * plot area was an empty box — a `ResponsiveContainer height="100%"` inside a
-   * `flex-1` holder resolving to zero. Struck on geometry, because no rendered
-   * word changes when it regresses.
-   *
-   * The book's own series is baked into the bundle, so this holds with NO FEED
-   * AT ALL: the walk that serves nothing must still draw the book and the raw
-   * NAV. The index line needs `cio-live`, and is asserted there.
+   * Struck on geometry: the plot area once rendered as an empty box under a
+   * correct caption. The book's series is baked into the bundle, so this holds
+   * with NO FEED AT ALL; the benchmark lines are asserted on the live walks.
    */
   ["the NAV chart paints — a sized plot area with the book's own curve in it",
     (t, ctx) => {
       if (!ctx?.navChart) return { notChecked: "the NAV chart was not found on this pass" };
       const c = ctx.navChart;
       return c.svgHeight > 200 && c.svgWidth > 400
-        // A `<path>` with an empty `d` is what a zero-height chart emits, so the
-        // curve is measured rather than counted.
-        && c.pathLen.filter((n) => n > 20).length >= 2
+        && c.pathLen.filter((n) => n > 20).length >= 1
         && c.yTicks >= 3
-        && c.legend.length >= 2;
+        && c.chips.length === 1 + BENCH_FIXTURE.length;
     }],
-  /**
-   * A REAL TIME AXIS, NOT SEVEN EQUALLY-SPACED LABELS.
-   *
-   * The axis was `type="category"` over the book's own dates, so 10 → 11 August
-   * and 10 → 27 July took the same width and every segment's slope was a fact
-   * about row order. Struck on the TICK LABELS: a time-scaled axis over a year
-   * prints months (`2026-04`), a category axis over seven statement dates can
-   * only ever print those seven. Both shapes are accepted — the axis switches
-   * granularity with the span — and a tick that is not a date fails.
-   */
   ["the NAV chart's x-axis is dated, and its ticks are real dates",
     (t, ctx) => {
       if (!ctx?.navChart) return { notChecked: "the NAV chart was not found on this pass" };
       const ticks = ctx.navChart.xTicks;
       return ticks.length >= 3 && ticks.every((x) => /^\d{4}(-\d{2})?$|^\d{2}-\d{2}$/.test(x));
     }],
-  /**
-   * THE PERIOD CONTROL IS THE FAMILY'S ASK, SO ITS ABSENCE IS A FINDING.
-   *
-   * *"it should show a proper time graph showing larger period return
-   * comparison."* The book's own dated series is five weeks and cannot be
-   * longer; what CAN be lengthened is the index's context around it. A card that
-   * lost the control would go back to showing five weeks and every text check
-   * would stay green — the same shape as the missing facet toggle, and answered
-   * the same way: measured, never abstained from.
-   */
-  ["the NAV chart offers a period longer than the book's own window",
-    (t, ctx) => {
-      if (!ctx?.navChart) return { notChecked: "the NAV chart was not found on this pass" };
-      const keys = ctx.navChart.ranges.map((r) => r.key);
-      return keys.includes("book") && ["1Y", "3Y", "5Y", "MAX"].filter((k) => keys.includes(k)).length >= 3
-        && ctx.navChart.activeRange !== null
-        // ...AND IT DOES NOT OPEN ON THE SHORTEST ONE. Defaulting to the book's
-        // own window would satisfy every check above while showing exactly what
-        // was complained about.
-        && ctx.navChart.activeRange !== "book";
-    }],
-  /**
-   * ...AND THE LONGER WINDOW SAYS, IN WORDS, WHICH STRETCH CARRIES A COMPARISON.
-   *
-   * On the default 1Y view most of the axis is index history the book has no
-   * measurement over, and a reader who is not told reads the whole width as a
-   * comparison — a caption widening a figure it does not narrow, arriving
-   * through a time axis. The sentence renders with no feed at all, so it is
-   * asserted here; the SHADED BAND needs a window wider than the book's own and
-   * is therefore asserted on `cio-live`, where one exists.
-   */
-  ["the card names the book's own window, in its own header",
-    // MOVED WITH THE PARAGRAPHS. "The book's own dated series is N statement
-    // dates over A → B" was the third of the four removed paragraphs and said
-    // what the SUBTITLE already said word for word, so only the subtitle is
-    // left to assert. The range's own index return — the one thing in that
-    // paragraph that was nowhere else — is checked on `cio-live`, where a feed
-    // exists to produce it.
-    (t, ctx) => {
-      const head = navBasis(ctx);
-      if (head == null) return navBasisMissing(ctx);
-      return /\d+ dated points, \d{4}-\d{2}-\d{2} → \d{4}-\d{2}-\d{2}/.test(head);
-    }],
-  /**
-   * ...AND THE REBASE BASIS CAME WITH IT.
-   *
-   * The y-axis reads 84 / 91 / 98 and is a RATIO rather than an amount, so
-   * without this clause those ticks are unitless — which is why it is the one
-   * sentence of the removed block that had to land somewhere rather than go.
-   * It is on the card's own basis line now, beside the window and the coverage.
-   */
-  ["the NAV card states what its axis is rebased to",
-    (t, ctx) => {
-      const head = navBasis(ctx);
-      if (head == null) return navBasisMissing(ctx);
-      return /rebased to 100 at \d{4}-\d{2}-\d{2}/.test(head);
-    }],
-  /**
-   * ── AND THE FOUR REMOVED PARAGRAPHS STAY REMOVED ──────────────────────────
-   *
-   * *"remove the highlighted text from the dashboard ui."* Struck on phrases
-   * only that block ever printed, so a check cannot be satisfied by wording the
-   * card legitimately still carries — and never on a figure, because every
-   * figure that mattered was re-homed rather than dropped and is asserted above
-   * at its new address.
-   */
-  /**
-   * ── …AND SO DOES THE SUBTITLE PARAGRAPH THAT REPLACED THEM ────────────────
-   *
-   * *"remove the highlighted text from the dashboard ui"* — pointed at the
-   * four-sentence block under the title, which is what was left after the first
-   * round moved the rebase basis INTO it. Three of its claims had no second
-   * home and a reader acts on all three, so they are the one-line basis the
-   * three invariants above assert; the METHODOLOGY went to the subtitle’s own
-   * hover, which this asserts, because a claim that is merely deleted and a
-   * claim that moved are two different outcomes and only one of them was asked
-   * for.
-   */
-  ["the NAV card’s methodology moved to the hover rather than going", (t, ctx) => {
-    const why = (ctx?.titles ?? []).find((x) => /most recent (?:mark|valuation)/i.test(x)) ?? "";
-    if (!why) return false;
-    return /counts a holding two accounts both report once/i.test(why);
+  ["the card names its window in its own header", (t, ctx) => {
+    const c = ctx?.navChart;
+    if (!c) return notChecked("the NAV card was not on screen on this run");
+    return /^\d{1,2} \S+ \d{4} → \d{1,2} \S+ \d{4}$/.test(c.window) && c.head.includes(c.window);
+  }],
+  /** The axis is a change since the window's first day, and the basis says so. */
+  ["the NAV card states what its axis is", (t, ctx) => {
+    const head = navBasis(ctx);
+    if (head == null) return navBasisMissing(ctx);
+    const c = ctx.navChart;
+    return /Every line is its change since \d{1,2} \S+ \d{4}, to \d{1,2} \S+ \d{4}/.test(head) && /Not annualised/.test(head)
+      && c.yTickText.length >= 3 && c.yTickText.every((x) => /^[+-]?\d+%$/.test(x));
+  }],
+  ["the NAV card's methodology is on the book's hover rather than gone", (t, ctx) => {
+    const h = navBookChip(ctx)?.title;
+    if (h == null) return navBasisMissing(ctx);
+    return /held at its latest valuation until the next/.test(h) && /a holding two accounts both report is counted once/.test(h);
   }],
   /**
-   * ── …AND THEN THE BASIS LINE AND THE HEADLINE PILLS WENT TOO ──────────────
-   *
-   * *"remove the highlighted texts from the dashboard UI"* — pointed at the
-   * one-line basis that the round above left, AND at the four headline pills:
-   * Book, the benchmark, the not-proven disclosure and the window under them.
-   * Every figure they carried is the title's hover now, and each is asserted
-   * there by the checks above and below. This asserts the removal, struck on
-   * the header's OWN NODE: a `title` is not in `innerText`, so the hover can
-   * never satisfy or trip it, and a pill that came back would render exactly
-   * there.
-   *
-   * The benchmark control IS in the header now, so a benchmark's NAME there
-   * is correct; what must not be there is a RETURN beside one.
+   * The header is the title, the window and the start control — no basis line,
+   * and no return beside a name: the returns are the chips, below it.
    */
   ["the NAV card's header carries no basis line and no headline pills", (t, ctx) => {
     const head = navHead(ctx);
@@ -20410,52 +20272,52 @@ const CIO_NAV = [
       && !/\bBook\s*[+-]\d/.test(head)
       && !/[A-Za-z0-9]\s*[+-]\d+\.\d+%/.test(head)
       && !/not proven/i.test(head)
-      && !/\bover \d{4}-\d{2}-\d{2}/i.test(head)
-      && !ctx?.navChart?.unprovenPill;
+      && !/\bover \d{4}-\d{2}-\d{2}/i.test(head);
   }],
     ["the NAV card's explanatory paragraphs stay removed",
     (t) => !/Both lines are rebased to 100 at/.test(t)
       && !/because money added is not money earned/.test(t)
       && !/market history rather than a comparison/.test(t)
       && !/never the nearest in either\s+direction/.test(t)],
-  ["the NAV card names the external capital it nets out, in rupees",
-    // ON THE CONTROL THAT DRAWS THE OTHER LINE, since the paragraph that said
-    // it went. The SIZE is the load-bearing half — a reader deciding whether to
-    // show the unadjusted NAV has to see how much of the move is deposit — so
-    // it is on the button's face and not in its hover.
-    //
-    // MONEY IN ANY SCALE. `Cr` alone would fail a drop whose only flow was a
-    // few lakh, about a page that was correct — the "a check that cannot read
-    // the figure it asserts on" failure this file already names twice.
-    (t) => /NAV incl\.\s+₹[\d,.]+\s*(?:Cr|L|K)?\s+added/.test(t)],
   /**
-   * A MOVE THAT CANNOT BE SHOWN TO BE PERFORMANCE IS NAMED, WITH ITS ACCOUNTS —
-   * AND WHERE THE STATEMENTS SETTLE EVERY STEP, NOTHING IS.
-   *
-   * This required the paragraph unconditionally, over four accounts said to
-   * publish "no dated capital record", with ₹28.3 Cr beside it: their standing
-   * VALUE, ten times the ₹2.78 Cr they moved, and every one of them settled by
-   * its own statements (A-10). So it enforced the false claim. It is struck on
-   * the book now: the paragraph must name the book's own unproven MOVE and
-   * accounts where there are any, and must be ABSENT where there are none —
-   * which is this archive.
+   * THE CAPITAL THE BOOK'S LINE NETS OUT, IN RUPEES, OVER ITS OWN WINDOW. The
+   * raw-NAV line and its toggle went with the simplification; the size of what
+   * was netted out did not — a reader must still see that money added is not
+   * counted as gain.
+   */
+  ["the book's hover names the capital that went in and came out over its window, in rupees", (t, ctx) => {
+    const h = navBookChip(ctx)?.title;
+    if (h == null) return navBasisMissing(ctx);
+    const c = ctx.navChart;
+    if (!NAV_SERIES_BOOK || !c.from || !c.to) return false;
+    const pts = navWindowPoints(c);
+    const inn = pts.reduce((a, p) => a + Math.max(p.levelFlowIn ?? 0, 0), 0) / 1e7;
+    const out = -pts.reduce((a, p) => a + Math.min(p.levelFlowIn ?? 0, 0), 0) / 1e7;
+    if (inn <= 0 && out <= 0) return !/went in and/.test(h);
+    const m = /Over the period (₹[\d,.]+\s*(?:Cr|L|K)?) went in and (₹[\d,.]+\s*(?:Cr|L|K)?) came out; neither is counted as gain or loss\./.exec(h);
+    if (!m) return false;
+    return Math.abs(money2cr(m[1]) - inn) <= compactTieCr(inn) && Math.abs(money2cr(m[2]) - out) <= compactTieCr(out);
+  }],
+  /**
+   * A MOVE THAT CANNOT BE SHOWN TO BE PERFORMANCE IS NAMED, WITH ITS
+   * INVESTMENTS — over the window's own points — and where the statements
+   * settle every step, nothing is (A-10).
    */
   ["the NAV card names the move whose capital the statements do not settle, and only where there is one",
     (t, ctx) => {
-      const head = navBasis(ctx);
-      if (head == null) return navBasisMissing(ctx);
-      const book = NAV_SERIES_BOOK;
-      if (!book) return false;
-      const why = head.split(/\n\n/).find((x) => /^Not proven to be performance:/.test(x)) ?? "";
-      if (book.unprovenMove <= 0) return why === "" && !/not proven/i.test(head);
-      const m = /^Not proven to be performance: ₹([\d,.]+)\s*(Cr|L|K)? of the move\./.exec(why);
+      const h = navBookChip(ctx)?.title;
+      if (h == null) return navBasisMissing(ctx);
+      const c = ctx.navChart;
+      if (!NAV_SERIES_BOOK || !c.from || !c.to) return false;
+      const move = navWindowPoints(c).reduce((a, p) => a + (p.unreportedFlowValue ?? 0), 0);
+      const why = h.split(/\n\n/).find((x) => /^Not proven to be performance:/.test(x)) ?? "";
+      if (move <= 0) return why === "" && !/not proven/i.test(h);
+      const m = /^Not proven to be performance: ₹([\d,.]+)\s*(Cr|L|K)? of the move, where no record settles the capital between two valuations \((.+)\)\.$/.exec(why);
       if (!m) return false;
       const scale = m[2] === "Cr" ? 1e7 : m[2] === "L" ? 1e5 : m[2] === "K" ? 1e3 : 1;
       const shown = Number(m[1].replace(/,/g, "")) * scale;
-      // One printed decimal of the unit the page chose, and no more.
-      return Math.abs(shown - book.unprovenMove) <= Math.max(0.051 * scale, 1)
-        && book.unprovenAccounts.length > 0
-        && /—\s*\S[^—]*—/.test(why);
+      return Math.abs(shown - move) <= Math.max(0.051 * scale, 1)
+        && NAV_SERIES_BOOK.unprovenAccounts.length > 0 && m[3].trim().length > 0;
     }],
   /**
    * "…OR STATE THE ACCOUNTS THAT CANNOT SUPPLY ONE" — the other half of the ask,
@@ -21386,17 +21248,14 @@ function researchChecks(mode) {
  * a return derived here in closed form from the fixture's own ramp.
  */
 const NAV_BENCH = [
-  ["the NAV card offers every benchmark, in order, with the one this address asked for active", (t, ctx) => {
+  ["the NAV card draws the book's chip and then one per benchmark, in order, each by its own symbol", (t, ctx) => {
     const c = ctx?.navChart;
     if (!c) return notChecked("the NAV card was not on screen on this run");
-    const want = wantedBench(ctx);
-    // A MISSING CONTROL IS A FINDING. The family asked for it by name.
-    return c.bench.length === BENCH_FIXTURE.length
-      && c.bench.every((b, i) => b.key === BENCH_FIXTURE[i][0] && b.symbol === BENCH_FIXTURE[i][2] && b.label === BENCH_FIXTURE[i][1])
-      && c.bench.filter((b) => b.active).length === 1
-      && c.bench.find((b) => b.active)?.key === want[0]
-      && c.benchKey === want[0]
-      && c.titleText === `Portfolio NAV vs ${want[1]}`;
+    const b = c.chips.filter((x) => x.key !== "book");
+    // A MISSING CHIP IS A FINDING. The family asked for every benchmark on one chart.
+    return c.chips[0]?.key === "book" && b.length === BENCH_FIXTURE.length
+      && b.every((x, i) => x.key === BENCH_FIXTURE[i][0] && x.symbol === BENCH_FIXTURE[i][2] && x.text.startsWith(BENCH_FIXTURE[i][1]))
+      && c.titleText === "Our book vs benchmarks";
   }],
   ["Morning CIO's benchmark tab is named Our Book vs Benchmark", (t, ctx) => {
     const tabs = ctx?.cioTabs;
@@ -21404,67 +21263,56 @@ const NAV_BENCH = [
     return tabs.find((x) => x.key === "nav")?.label === "Our Book vs Benchmark";
   }],
   /**
-   * EVERY OPTION SAYS WHERE ITS LINE COMES FROM, AND WHAT KIND OF INDEX IT IS.
-   * The managers' own reports compare against total-return indices; these are
-   * price indices, and a reader setting the book against one must be told —
-   * on every option, not only the one that happens to be active.
+   * EVERY OPTION SAYS WHERE ITS LINE COMES FROM, AND WHAT KIND OF INDEX IT IS
+   * — the managers' own reports compare against total-return indices — on
+   * every chip, whatever state its history is in.
    */
   ["every benchmark's hover says it is live, checked by name, and a price index", (t, ctx) => {
     const c = ctx?.navChart;
     if (!c) return notChecked("the NAV card was not on screen on this run");
-    return c.bench.length > 0 && c.bench.every((b) =>
-      /same live price service as the Nifty 500 line/i.test(b.title)
-      && /checked by the name the service reports/i.test(b.title)
-      && /a price index/i.test(b.title));
+    const b = c.chips.filter((x) => x.key !== "book");
+    return b.length > 0 && b.every((x) =>
+      /same live price service as the Nifty 500 line/i.test(x.title)
+      && /checked by the name the service reports/i.test(x.title)
+      && /a price index/i.test(x.title));
   }],
 ];
 
-/** …and with no price service at all, the card SAYS so rather than drawing a blank. */
+/** …and with no price service at all, each chip SAYS so and the book is still drawn. */
 const NAV_BENCH_OFFLINE = [
-  ["with no price service the chart says the benchmark could not be fetched", (t, ctx) => {
+  ["with no price service every benchmark's chip says its history could not be fetched, and the book is still drawn", (t, ctx) => {
     const c = ctx?.navChart;
     if (!c) return notChecked("the NAV card was not on screen on this run");
-    return c.benchState === "down"
-      && new RegExp(`The ${reEsc(wantedBenchLabel(ctx))} history could not be fetched`).test(t);
+    const b = c.chips.filter((x) => x.key !== "book");
+    return b.length === BENCH_FIXTURE.length
+      && b.every((x) => x.state === "down" && x.ret == null && /—/.test(x.text) && /could not be fetched/.test(x.title))
+      && c.lines === 1 && navBookStroke(c) === 0;
   }],
 ];
 
-/** On a route whose price service answers, the line is the benchmark's OWN. */
+/** On a walk whose price service answers, every line is its benchmark's OWN. */
 const NAV_BENCH_LIVE = [
-  /**
-   * THE CHART ASKED FOR THIS BENCHMARK, AND ONLY THIS ONE. A line cannot say
-   * which symbol it was fetched as — only the request can — so this is the
-   * claim that catches a control wired to nothing, or a card that fetches the
-   * Nifty 500 whatever is selected and relabels it.
-   */
-  ["the chart asked the price service for this benchmark's own symbol, and no other", (t, ctx) => {
+  /** A line cannot say which symbol it was fetched as — only the request can. */
+  ["the chart asked the price service for every benchmark's own symbol", (t, ctx) => {
     const reqs = ctx?.priceRequests;
     if (reqs == null) return notChecked("no price requests were captured on this run");
-    const want = wantedBench(ctx)[2];
-    return reqs.includes(want)
-      && BENCH_FIXTURE.every((b) => b[2] === want || !reqs.includes(b[2]));
+    return BENCH_FIXTURE.every((b) => reqs.includes(b[2]));
   }],
   /**
-   * AND THE RETURN IS THAT SERIES' OWN, derived here in closed form from the
-   * fixture's ramp over the window the hover names — every benchmark has its
-   * own slope, so a return struck on the wrong series cannot match.
+   * EACH RETURN IS ITS SERIES' OWN, FROM THE SAME FIRST DAY TO THE SAME LAST
+   * DAY AS THE BOOK'S — derived here in closed form from the fixture's ramps,
+   * each its own slope, so a return struck on the wrong series cannot match.
    */
-  ["the benchmark's return over the book's window is its own series', to the printed digit", (t, ctx) => {
-    const head = navBasis(ctx);
-    if (head == null) return navBasisMissing(ctx);
-    const want = wantedBench(ctx);
-    // The whole-book segment since Stage 10ge — the only window the book's
-    // return is stated over.
-    const win = /Over the whole book, (\d{4}-\d{2}-\d{2}) → (\d{4}-\d{2}-\d{2}):/.exec(head);
-    const got = new RegExp(String.raw`${reEsc(want[1])} ([+-]\d+\.\d+)% over the same dates`).exec(head);
-    if (!win || !got) return false;
-    const expect = benchFixtureReturn(want[2], win[1], win[2]);
-    // The hover prints two decimals, so the bound is that precision reproduced.
-    if (Math.abs(Number(got[1]) - expect) > 0.0051) return false;
-    // …and on any benchmark but the default, it must NOT be the Nifty 500's —
-    // or this check would pass a card that fetched the default and relabelled it.
-    if (want[2] === BENCH_FIXTURE[0][2]) return true;
-    return Math.abs(Number(got[1]) - benchFixtureReturn(BENCH_FIXTURE[0][2], win[1], win[2])) > 0.02;
+  ["each benchmark's return is its own series' over the book's window, to the printed digit", (t, ctx) => {
+    const c = ctx?.navChart;
+    if (!c) return notChecked("the NAV card was not on screen on this run");
+    if (!c.from || !c.to) return false;
+    const b = c.chips.filter((x) => x.key !== "book");
+    return b.length === BENCH_FIXTURE.length && b.every((x, i) => {
+      if (x.state !== "ok" || x.ret == null) return false;
+      const want = benchFixtureReturn(BENCH_FIXTURE[i][2], c.from, c.to);
+      return Math.abs(x.ret - want) < 1e-6 && x.text.includes(pct1(want));
+    }) && new Set(b.map((x) => x.ret.toFixed(6))).size === b.length;
   }],
 ];
 
@@ -21472,156 +21320,67 @@ const NAV_BENCH_LIVE = [
  * ── A BENCHMARK THAT ANSWERS AS A DIFFERENT INDEX DRAWS NOTHING ────────────
  *
  * Trap 2 in `functions/api/indices.js`, reproduced: the fixture answers
- * `^NSMIDCP` under the name "NIFTY MIDCAP 50". A card with no identity gate
- * draws a clean, correct-looking line about the wrong market; this card must
- * draw the book alone, say what answered, and state no comparison figure.
+ * `^NSMIDCP` under the name "NIFTY MIDCAP 50". Its chip must show no figure
+ * and say what answered, its colour must be on no line, and every other
+ * benchmark must still be drawn.
  */
 const NAV_BENCH_WRONG = [
-  ["a benchmark answered for the wrong index draws no line and says what answered", (t, ctx) => {
+  ["a benchmark answered for the wrong index draws no line, shows no figure and says what answered", (t, ctx) => {
     const c = ctx?.navChart;
     if (!c) return notChecked("the NAV card was not on screen on this run");
-    const want = wantedBench(ctx);
     const reqs = ctx?.priceRequests ?? [];
-    const head = navBasis(ctx) ?? "";
-    return reqs.includes(want[2])
-      && c.benchState === "mismatch"
-      // The book's own curves — its return, the stretch still joining it, and
-      // its NAV — and not one more: the index line has no points.
-      && c.pathLen.filter((n) => n > 20).length === (NAV_SERIES_BOOK && NAV_SERIES_BOOK.earlyPoints > 1 ? 3 : 2)
-      && /NIFTY MIDCAP 50/.test(c.mismatch ?? "") && (c.mismatch ?? "").includes(want[1])
-      && !/over the same dates/.test(head)
-      && new RegExp(`No ${reEsc(want[1])} line is drawn`).test(head);
+    const i = BENCH_FIXTURE.findIndex((b) => b[2] === "^NSMIDCP");
+    const wrong = c.chips.find((x) => x.key === BENCH_FIXTURE[i][0]);
+    const others = c.chips.filter((x) => x.key !== "book" && x.key !== BENCH_FIXTURE[i][0]);
+    return reqs.includes("^NSMIDCP") && wrong?.state === "mismatch" && wrong.ret == null && /—/.test(wrong.text)
+      && /NIFTY MIDCAP 50/.test(wrong.title) && wrong.title.includes(BENCH_FIXTURE[i][1])
+      && others.length === BENCH_FIXTURE.length - 1 && others.every((x) => x.state === "ok")
+      && !c.strokes.includes(`var(--chart-bench-${i + 1})`) && c.lines === 1 + others.length;
   }],
 ];
 
 /**
  * ── THE NAV PANEL WITH A PRICE FEED ──────────────────────────────────────────
  *
- * These five stood in `cio-live` and read the Nifty 500 line, which only exists
- * when `/api/prices` answers. They moved to `/cio?tab=nav` WITH the chart when
- * Morning CIO was split into panels: left on `cio-live` — which walks the movers
- * panel — every one of them would have reported NOT CHECKED against a chart that
- * is correctly not drawn there, and an abstention reads as a clean run. Same move
- * the eleven published-NAV invariants made when the movers card grew its toggle.
+ * Every benchmark's line, measured on the chart: its own daily closes, over
+ * exactly the book's window, and a chip that hides and restores it.
  */
 const CIO_LIVE_NAV = [
+    ["every benchmark is drawn from its own daily closes, not sampled to the book's dates", (t, ctx) => {
+      const c = ctx?.navChart;
+      if (!c) return { notChecked: "the NAV chart was not found on this pass" };
+      const i = navBookStroke(c);
+      if (c.lines !== 1 + BENCH_FIXTURE.length || i < 0) return false;
+      return c.vertexCounts.every((v, k) => k === i || v > c.vertexCounts[i] * 2);
+    }],
     /**
-     * ...AND THE INDEX IS ITS OWN DAILY CURVE, NOT SEVEN SAMPLED POINTS.
-     *
-     * The chart used to align the index to the BOOK'S seven statement dates and
-     * draw a line through those — a plausible-looking curve that is not the
-     * index's path, and over a year of context would have been four segments. On
-     * this fixture the feed carries a settled close per weekday back to January,
-     * so the index curve must have far more vertices than the book's line does.
-     * Struck as a RATIO against the book's own curve rather than a literal, so a
-     * fixture with a different number of closes cannot make it stale.
+     * ...AND NO LINE RUNS PAST THE BOOK'S LATEST VALUATION. The fixture serves
+     * a close for every day up to yesterday — past the book's last point — so a
+     * line that ran on would carry more points than the window's days.
      */
-    ["the Nifty 500 line is drawn from its own daily closes, not sampled to the book's dates",
-      (t, ctx) => {
-        if (!ctx?.navChart) return { notChecked: "the NAV chart was not found on this pass" };
-        const c = ctx.navChart;
-        if (c.lines < 3) return false;
-        const lens = [...c.pathLen].sort((a, b) => b - a);
-        // The longest curve is the index's; the book's two lines are seven
-        // points each. An index sampled to the book's dates would be the same
-        // length as they are.
-        return lens[0] > lens[1] * 4 && c.vertices > 40;
-      }],
-    /**
-     * ...AND THE STRETCH THAT CARRIES A COMPARISON IS SHADED.
-     *
-     * With a feed the chart spans months of index history the book has no
-     * measurement over. The band is the book's own first-to-last statement date,
-     * so it says where the two lines are both real — and it is asserted here
-     * rather than on `cio` because with no feed the chart IS the book's window
-     * and there is correctly nothing to mark.
-     */
-    ["the measured window is shaded once the chart is wider than it",
-      (t, ctx) => {
-        if (!ctx?.navChart) return { notChecked: "the NAV chart was not found on this pass" };
-        const note = /(\d{4}-\d{2}-\d{2}) → (\d{4}-\d{2}-\d{2}) · \d+ index closes/.exec(ctx.navChart.rangeNote ?? "");
-        if (!note) return false;
-        // THE BOOK'S OWN WINDOW, OFF THE SUBTITLE. It was read out of the
-        // paragraph block ("statement dates over A → B") until that block was
-        // removed; the subtitle has always carried the same pair.
-        // …and off the title's hover since the subtitle itself was removed.
-        const book = /dated points, (\d{4}-\d{2}-\d{2}) → (\d{4}-\d{2}-\d{2})/.exec(navBasis(ctx) ?? "");
-        if (!book) return false;
-        // The window really is wider than the book's own — otherwise the band's
-        // absence would be correct and this check would be asserting nothing.
-        return note[1] < book[1] && ctx.navChart.band >= 1;
-      }],
-    /** And with a price history in hand the NAV card draws the comparison. */
-    ["the NAV card draws the benchmark's line and states its return",
-      (t, ctx) => {
-        // The benchmark THIS ADDRESS asked for, off the title's hover — the pill
-        // that printed it went at the family's request. The line must be drawn
-        // too: a return with no curve behind it is a figure about a chart that
-        // is not there.
-        const head = navBasis(ctx);
-        if (head == null) return navBasisMissing(ctx);
-        const label = reEsc(wantedBenchLabel(ctx));
-        return new RegExp(String.raw`${label} [+-]\d+\.\d+% over the same dates`).test(head)
-          && ctx.navChart.benchState === "ok" && ctx.navChart.lines >= 3
-          && ctx.navChart.legend.some((x) => x === wantedBenchLabel(ctx));
-      }],
-    /**
-     * ...AND THE SELECTED PERIOD'S OWN INDEX RETURN SITS WITH THE PERIOD.
-     *
-     * This was the one fact in the removed paragraphs that lived nowhere else:
-     * the index ALONE over a window the book has no measurement across. It is
-     * in the range note now, beside the control that chose the window — and
-     * that placement is the honesty, because set beside the Book pill a reader
-     * would take the two for a pair struck over one period. So it is required
-     * to be in the range note and required NOT to be in the header.
-     */
-    ["the range's own index return is stated with the range, not beside the book's",
-      (t, ctx) => {
-        const head = navHead(ctx);
-        if (head == null) return notChecked("the NAV card's header was not on screen on this run");
-        const note = ctx.navChart.rangeNote ?? "";
-        if (!new RegExp(String.raw`${reEsc(wantedBenchLabel(ctx))} alone over this period\s*[+-]\d+\.\d+%`).test(note)) return false;
-        return !/alone over this period/.test(head);
-      }],
-    /**
-     * ...AND THE COMPARISON IS AGAINST THE ADJUSTED LINE. On this fixture the
-     * index rises ~1.26% and the book's adjusted return is +0.54%, so the book
-     * must read BELOW the index — while the unadjusted NAV (+9.30%) would read
-     * far above it. A card that compared the wrong curve inverts the answer,
-     * which is the whole reason the adjustment exists.
-     */
-    ["the headline compares the flow-adjusted book against the index, not the raw NAV",
-      (t, ctx) => {
-        const head = navBasis(ctx);
-        if (head == null) return navBasisMissing(ctx);
-        const book = NAV_BOOK_RET.exec(head);
-        const idx = new RegExp(String.raw`${reEsc(wantedBenchLabel(ctx))} ([+-]\d+\.\d+)% over the same dates`).exec(head);
-        if (!book || !idx) return false;
-        /**
-         * THE RAW NAV IS ON THE TOGGLE'S HOVER, AND IT NAMES BOTH ENDS.
-         *
-         * This used to close with `Number(book[1]) < Number(idx[1])` — on the
-         * fixture the index rises ~1.26% and the adjusted book +0.54%, so the
-         * book had to read BELOW it. That calibration was struck on the 34-day
-         * complete-panel window and stopped holding the day the series was
-         * chain-linked back to 74 days: the book reads +5.09% over the longer
-         * window and the comparison inverts on a card that is correct. It was
-         * the FIXTURE's outcome standing in for the claim.
-         *
-         * The claim is structural and is asserted as such: the headline must
-         * carry the ADJUSTED figure rather than the raw one, and the hover's own
-         * pair must show the raw above the adjusted — which is what says capital
-         * entered this window and the adjustment is doing work. A card that put
-         * the raw curve in the headline fails the first; a book with no flows in
-         * it fails the second and must be re-read rather than passing.
-         */
-        const pair = (ctx?.titles ?? [])
-          .map((x) => /the book's NAV reads\s*([+-]\d+\.\d+)%\s*with the capital left in against\s*([+-]\d+\.\d+)%/.exec(x))
-          .find(Boolean);
-        if (!pair) return false;
-        const rawPct = Number(pair[1]), adjPct = Number(pair[2]);
-        return Number(book[1]) !== rawPct && rawPct - adjPct > 1 && Number(idx[1]) !== rawPct;
-      }],
+    ["every line stops on the book's latest valuation — no index runs past it", (t, ctx) => {
+      const c = ctx?.navChart;
+      if (!c) return { notChecked: "the NAV chart was not found on this pass" };
+      if (!NAV_SERIES_BOOK || !c.from || !c.to) return false;
+      const days = Math.round((Date.parse(`${c.to}T00:00:00Z`) - Date.parse(`${c.from}T00:00:00Z`)) / 86400000) + 1;
+      const i = navBookStroke(c);
+      return c.to === NAV_SERIES_BOOK.seriesTo && c.vertexCounts.every((v, k) => k === i || v === days);
+    }],
+    /** Colour follows the index, never its position among the visible lines. */
+    ["a hidden benchmark loses its line and keeps its chip and colour, and comes back", (t, ctx) => {
+      const c = ctx?.navChart;
+      if (!c) return { notChecked: "the NAV chart was not found on this pass" };
+      const tg = c.toggle;
+      if (!tg) return /[?&]bench=/.test(ctx?.path ?? "") ? notChecked("the hide control is exercised on /cio?tab=nav alone") : false;
+      const k = BENCH_FIXTURE.findIndex((b) => b[0] === tg.key);
+      const color = `var(--chart-bench-${k + 1})`;
+      const { hidden: h, back: b } = tg;
+      return !!h && !!b && c.strokes.includes(color)
+        && h.lines === c.lines - 1 && !h.strokes.includes(color) && h.chips.find((x) => x.key === tg.key)?.shown === false
+        && h.chips.length === c.chips.length
+        && b.lines === c.lines && b.strokes.includes(color) && b.chips.find((x) => x.key === tg.key)?.shown === true
+        && h.strokes.every((s) => c.strokes.includes(s));
+    }],
 ];
 
 /**
@@ -27247,7 +27006,7 @@ const INVARIANTS = {
   "cio-returns-security": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT, ...CIO_SEGMENTS],
   "cio-returns-category": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT, ...CIO_SEGMENTS, ...CIO_SEGMENT_HOLDINGS],
   "cio-attribution-legacy": [...CIO_SHARED, ...CIO_SEGMENTS_LEGACY],
-  "cio-nav": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_NAV, ...NAV_BENCH, ...NAV_BENCH_OFFLINE, ...NAV_RECON, ...NAV_BASIS, ...NAV_RANGE_HOVERS],
+  "cio-nav": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_NAV, ...NAV_BENCH, ...NAV_BENCH_OFFLINE, ...NAV_RECON, ...NAV_BASIS, ...NAV_STARTS],
   "cio-tiles-saved": CIO_TILES_SAVED,
   "cio-return-metrics": [...CIO_RETURN_RETIREMENT, ...CIO_ALLOC.filter(([description]) => CIO_OPTIONAL_CAPITAL_CHECKS.has(description))],
   ...Object.fromEntries(["annualised", "fytd", "ytd"].map((kind) => [`performance-${kind}`, [
@@ -31705,10 +31464,9 @@ const INVARIANTS = {
   ],
   "cio-nav-live": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_NAV, ...CIO_LIVE_NAV, ...NAV_BENCH, ...NAV_BENCH_LIVE],
   /**
-   * THE SAME PANEL SET AGAINST ANOTHER BENCHMARK, reached by URL like every
-   * other view — and every claim the Nifty 500 route makes about its line is
-   * made here about the Sensex's, because `CIO_LIVE_NAV` reads the benchmark
-   * off the address rather than a literal.
+   * AN OLD ONE-BENCHMARK LINK (`?bench=sensex`) STILL LANDS ON THE CHART THAT
+   * DRAWS EVERY BENCHMARK (Stage 10it) — the card no longer picks one, so the
+   * address must not narrow it to one.
    */
   "cio-nav-bench": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_NAV, ...CIO_LIVE_NAV, ...NAV_BENCH, ...NAV_BENCH_LIVE],
   "cio-nav-bench-wrong": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...NAV_BENCH, ...NAV_BENCH_WRONG],
@@ -37431,7 +37189,7 @@ const INVARIANTS = {
     // THE SAME NAV CARD AS MORNING CIO'S (PERF-3): its lists' footer reconciles
     // to the statement book and the current value step by step, as on `cio-nav`,
     // and its basis hover and range hovers say the same things there.
-    ...NAV_RECON, ...NAV_BASIS, ...NAV_RANGE_HOVERS,
+    ...NAV_RECON, ...NAV_BASIS, ...NAV_STARTS,
     // XA-12: the basis pill reads STATEMENT over a Current Value tile that
     // carries AMFI's published NAV on every fund it prices.
     ...xaNavBasisChecks(),
@@ -41093,75 +40851,74 @@ for (const theme of THEMES) {
        * a curve in it, and an empty `d` is exactly what a chart with no plot area
        * emits.
        */
-      const navChart = FAST ? null : await page.evaluate(() => {
+      const navChartProbe = () => page.evaluate(() => {
         const el = document.querySelector('[data-testid="nav-chart"]');
         if (!el) return null;
         const svg = el.querySelector("svg.recharts-surface");
         const paths = [...el.querySelectorAll(".recharts-line-curve")];
         const card = el.closest(".card");
-        const ranges = [...(card?.querySelectorAll("[data-range]") ?? [])].map((b) => ({
-          key: b.getAttribute("data-range"),
-          active: b.getAttribute("aria-selected") === "true",
-          title: b.getAttribute("title"),
-        }));
+        const legend = card?.querySelector('[data-testid="nav-legend"]');
+        const num = (x) => (x == null || x === "" ? null : Number(x));
         return {
           height: Math.round(el.getBoundingClientRect().height),
           svgHeight: svg ? Math.round(svg.getBoundingClientRect().height) : 0,
           svgWidth: svg ? Math.round(svg.getBoundingClientRect().width) : 0,
           lines: paths.length,
           pathLen: paths.map((e) => (e.getAttribute("d") ?? "").length),
-          // The plotted vertices of the longest curve — a straight line between
-          // two dates and a real daily series both draw a path, and only this
-          // tells them apart.
-          //
-          // COUNTED ON EVERY DRAW COMMAND, INCLUDING `C`. The first draft split
-          // on `[LM]` and read 1 for a 245-point curve: these lines are
-          // `type="monotone"`, so recharts emits one `M` and a cubic bezier per
-          // point thereafter and there is not an `L` in the whole path. A
-          // counter that reads 1 for every curve cannot tell a sampled line from
-          // a daily one, which is the only thing it exists to do.
-          vertices: Math.max(0, ...paths.map((e) => ((e.getAttribute("d") ?? "").match(/[MLC]/g) ?? []).length)),
-          // PER CURVE, not the maximum — the dashed raw-NAV line is only defined
-          // where the panel is complete, and the only way to see that it has
-          // stopped being is to count ITS vertices rather than the longest
-          // curve's. See the invariant that reads it.
+          strokes: paths.map((e) => e.getAttribute("stroke") ?? ""),
+          // PER CURVE, COUNTED ON EVERY DRAW COMMAND (a monotone curve emits
+          // `C`, a linear one `L`): the book's line must carry every dated point
+          // in its window, and an index's its own daily closes.
           vertexCounts: paths.map((e) => ((e.getAttribute("d") ?? "").match(/[MLC]/g) ?? []).length),
           xTicks: [...el.querySelectorAll(".recharts-xAxis .recharts-cartesian-axis-tick-value")]
             .map((e) => (e.textContent ?? "").trim()),
           yTicks: el.querySelectorAll(".recharts-yAxis .recharts-cartesian-axis-tick").length,
-          legend: [...el.querySelectorAll(".recharts-legend-item-text")].map((e) => (e.textContent ?? "").trim()),
-          band: el.querySelectorAll(".recharts-reference-area").length,
-          flowDots: el.querySelectorAll(".recharts-reference-dot").length,
-          ranges,
-          activeRange: ranges.find((r) => r.active)?.key ?? null,
-          rangeNote: (card?.querySelector('[data-testid="nav-range-note"]')?.textContent ?? "").trim(),
-          // THE CARD'S OWN HEADER NODE — `Card` renders title, subtitle and the
-          // `right` slot as the first child, and everything else after it. Taken
-          // as an element because every text boundary tried here turned out to
-          // be something the page is free to print; see `navHead`.
-          head: (card?.firstElementChild?.innerText ?? "").trim(),
-          // THE BASIS, THE COMPARISON AND THE DISCLOSURE — the title's hover
-          // since the subtitle and the headline pills were removed. A `title`
-          // is not in `innerText`, so it is read as the attribute.
-          basis: card?.querySelector('[data-testid="nav-basis"]')?.getAttribute("title") ?? null,
-          titleText: (card?.querySelector('[data-testid="nav-basis"]')?.textContent ?? "").trim(),
-          // The removed not-proven pill's own handle, so its ABSENCE is asserted
-          // rather than inferred from the header's wording.
-          unprovenPill: !!card?.querySelector('[data-testid="nav-unproven"]'),
-          // THE BENCHMARK CONTROL, off its keys rather than its labels, and the
-          // state the chart itself declares for the line it asked for.
-          bench: [...(card?.querySelectorAll("[data-bench]") ?? [])].map((b) => ({
-            key: b.getAttribute("data-bench"),
+          yTickText: [...el.querySelectorAll(".recharts-yAxis .recharts-cartesian-axis-tick-value")].map((e) => (e.textContent ?? "").trim()),
+          // ONE CHIP PER LINE, off its keys — the book's first, then each benchmark.
+          chips: [...(legend?.querySelectorAll("[data-nav-line]") ?? [])].map((b) => ({
+            key: b.getAttribute("data-nav-line"),
             symbol: b.getAttribute("data-bench-symbol"),
-            label: (b.textContent ?? "").trim(),
-            active: b.getAttribute("aria-selected") === "true",
+            state: b.getAttribute("data-bench-state"),
+            ret: num(b.getAttribute("data-nav-ret")),
+            shown: b.tagName === "BUTTON" ? b.getAttribute("aria-pressed") === "true" : true,
+            text: (b.textContent ?? "").replace(/\s+/g, " ").trim(),
             title: b.getAttribute("title") ?? "",
           })),
-          benchState: el.getAttribute("data-bench-state"),
-          benchKey: el.getAttribute("data-bench-key"),
-          mismatch: (card?.querySelector('[data-testid="nav-bench-mismatch"]')?.textContent ?? null),
+          from: legend?.getAttribute("data-nav-from") ?? null,
+          to: legend?.getAttribute("data-nav-to") ?? null,
+          starts: (card?.querySelector('[data-testid="nav-range"]')?.getAttribute("data-nav-starts") ?? "").split(" ").filter(Boolean),
+          startTabs: [...(card?.querySelectorAll("[data-start]") ?? [])].map((b) => ({
+            date: b.getAttribute("data-start"), active: b.getAttribute("aria-selected") === "true", title: b.getAttribute("title") ?? "",
+          })),
+          window: (card?.querySelector('[data-testid="nav-window"]')?.textContent ?? "").trim(),
+          benchOk: num(el.getAttribute("data-bench-ok")),
+          // THE CARD'S OWN HEADER NODE — `Card` renders title and the `right`
+          // slot as its first child. Taken as an element because every text
+          // boundary tried here turned out to be something the page may print.
+          head: (card?.firstElementChild?.innerText ?? "").trim(),
+          basis: card?.querySelector('[data-testid="nav-basis"]')?.getAttribute("title") ?? null,
+          titleText: (card?.querySelector('[data-testid="nav-basis"]')?.textContent ?? "").trim(),
+          bookTitle: card?.querySelector('[data-testid="nav-book-chip"]')?.getAttribute("title") ?? null,
         };
       });
+      const navChart = FAST ? null : await navChartProbe();
+      /**
+       * ── A HIDDEN BENCHMARK LOSES ITS LINE AND KEEPS ITS CHIP (Stage 10it) ──
+       * Clicked on the one walk that draws every benchmark, then clicked back,
+       * so no other claim on the route reads a chart with a line missing.
+       */
+      if (navChart && name === "cio-nav-live") {
+        const key = navChart.chips.find((c) => c.key !== "book" && c.state === "ok")?.key ?? null;
+        if (key) {
+          await page.click(`[data-testid="nav-legend"] [data-nav-line="${key}"]`);
+          await page.waitForTimeout(400);
+          const hidden = await navChartProbe();
+          await page.click(`[data-testid="nav-legend"] [data-nav-line="${key}"]`);
+          await page.waitForTimeout(400);
+          const back = await navChartProbe();
+          navChart.toggle = { key, hidden, back };
+        }
+      }
       /**
        * THE RETURN ATTRIBUTION CARD IS GONE, AND THIS PROBE PROVES IT.
        *

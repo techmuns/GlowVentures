@@ -9,7 +9,7 @@ import {
   BOOK_POSITION_TRANCHES, BOOK_CAPITAL_FROM_INCEPTION, BOOK_ACCOUNT_NAV_HISTORY,
   BOOK_ACCOUNT_RETURN_RECORDS, BOOK_NAV_COVERAGE,
 } from "@/data/glowData";
-import { navUnits, bookNavSeries, type NavUnit, type BookNavSeries } from "./bookNav";
+import { navUnits, bookNavSeries, comparableStarts, type NavUnit, type BookNavSeries } from "./bookNav";
 
 export const BOOK_NAV_UNITS: NavUnit[] = navUnits({
   accounts: BOOK_ACCOUNTS,
@@ -25,3 +25,6 @@ export const BOOK_NAV_UNITS: NavUnit[] = navUnits({
 });
 
 export const WHOLE_BOOK_NAV: BookNavSeries = bookNavSeries(BOOK_NAV_UNITS);
+
+/** The dates a comparison against an index may start on (`comparableStarts`, Stage 10it). */
+export const WHOLE_BOOK_STARTS: string[] = comparableStarts(BOOK_NAV_UNITS, WHOLE_BOOK_NAV);

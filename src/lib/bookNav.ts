@@ -635,3 +635,48 @@ export function bookNavStats(c: BookNavCoverage): BookNavStats {
 export function buildBookNav(input: BookNavInput): BookNavSeries {
   return bookNavSeries(navUnits(input));
 }
+
+/**
+ * ── THE DATES A COMPARISON MAY START ON (Stage 10it) ─────────────────────────
+ *
+ * Each investment is held at its latest valuation until the next one, and the
+ * next one's whole move lands on its own date. So a comparison started on a
+ * date when an investment was last valued weeks earlier, and is valued again
+ * later, carries the move from BEFORE the start into the period: Carnelian's,
+ * Goldstandard's and V.E.C's April–June gains arrive on their 6–10 July
+ * statements, and a period from 27 July would count none of them while one from
+ * 26 April would count all of them against an index that had already risen.
+ *
+ * A date qualifies when at most `maxLeak` of the return's value there is such
+ * an investment — not valued within `withinDays` before the date and valued
+ * again after it — and the period to the series' end is at least `minDays`
+ * long. The series' first day is always offered: it is the base every point is
+ * struck from. Measured on this book, 31 Mar 2026 is the one date that qualifies
+ * (0%; 30 Jun 21%, 30 Sep 11%).
+ */
+export function comparableStarts(
+  units: readonly NavUnit[], series: BookNavSeries,
+  { maxLeak = 0.05, withinDays = 7, minDays = 30 }: { maxLeak?: number; withinDays?: number; minDays?: number } = {},
+): string[] {
+  const start = series.coverage.from, end = series.coverage.to;
+  if (!start || !end) return [];
+  const daysBetween = (a: string, b: string) => (Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / DAY;
+  const out = [start];
+  for (const p of series.points) {
+    const d = p.date;
+    if (d <= start || !(p.accountsOnDate ?? 0) || daysBetween(d, end) < minDays) continue;
+    let panel = 0, leak = 0;
+    for (const u of units) {
+      const from = returnEntry(u, start);
+      const v = from != null && d >= from ? unitValueAt(u, d) : null;
+      if (v == null) continue;
+      panel += v;
+      let last = markOnOrBefore(u, d)?.date ?? null;
+      if (u.origin && u.originDated && u.origin <= d && (!last || u.origin > last)) last = u.origin;
+      const fresh = last != null && daysBetween(last, d) <= withinDays;
+      if (!fresh && u.marks.some((m) => m.date > d)) leak += v;
+    }
+    if (panel > 0 && leak / panel <= maxLeak) out.push(d);
+  }
+  return out;
+}

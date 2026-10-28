@@ -69,6 +69,16 @@ html.dark .statement-drop-message { background: #172554; color: #dbeafe; border-
   --chart-band: rgba(138, 106, 28, 0.07);
   /* The NAV card's stretch still joining the return (Stage 10ge): the book's gold, lighter. */
   --chart-book-early: rgba(138, 106, 28, 0.5);
+  /* The seven benchmarks on the NAV card, one hue each in a fixed order (Stage 10it).
+     Validated as a set with the book's gold: adjacent pairs clear the normal-vision
+     floor, and every line is also named on its chip and in the tooltip. */
+  --chart-bench-1: #2a78d6;
+  --chart-bench-2: #eb6834;
+  --chart-bench-3: #1baf7a;
+  --chart-bench-4: #6250d6;
+  --chart-bench-5: #e87ba4;
+  --chart-bench-6: #008300;
+  --chart-bench-7: #e34948;
   /* The second shade of a striped table row — see `tbody > tr:nth-child(even)`. */
   --row-alt: #f7f4ec;
   /* The highlight a data row takes under the pointer — see the override below the
@@ -106,6 +116,13 @@ html.dark {
   --chart-nav: #64748b;
   --chart-band: rgba(217, 196, 143, 0.07);
   --chart-book-early: rgba(217, 196, 143, 0.5);
+  --chart-bench-1: #3987e5;
+  --chart-bench-2: #d95926;
+  --chart-bench-3: #199e70;
+  --chart-bench-4: #9085e9;
+  --chart-bench-5: #d55181;
+  --chart-bench-6: #008300;
+  --chart-bench-7: #e66767;
   --row-alt: #1a1740;
   /* Brighter than both the card and `--row-alt` (#1a1740), so a hover lifts the
      row rather than darkening into its even-row neighbour. */

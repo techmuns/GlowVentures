@@ -65,38 +65,41 @@ export type Benchmark = {
   expect: readonly string[];
   /** One line on what the index is — the hover's first sentence. */
   about: string;
-  /** `useViewParam` reads `title` for a button's hover. */
+  /** Its line's colour on the NAV card — a theme variable, one per benchmark, fixed to it. */
+  color: string;
+  /** The button's hover. */
   title: string;
 };
 
 const PRICE_BASIS = "A price index — dividends are not in it, so it runs slightly behind the total-return version a manager's own report compares against.";
 const SOURCE = "From the same live price service as the Nifty 500 line, checked by the name the service reports for it.";
 
-function bench(b: Omit<Benchmark, "title">): Benchmark {
-  return { ...b, title: `${b.name} — ${b.about} ${SOURCE} ${PRICE_BASIS}` };
+function bench(b: Omit<Benchmark, "title" | "color">, slot: number): Benchmark {
+  return { ...b, color: `var(--chart-bench-${slot})`, title: `${b.name} — ${b.about} ${SOURCE} ${PRICE_BASIS}` };
 }
 
 /**
- * THE ORDER IS THE CONTROL'S ORDER, AND THE FIRST IS THE DEFAULT. `useViewParam`
- * keeps the first param-free, so `/cio?tab=nav` is still the Nifty 500 chart the
- * family has been reading and every existing link keeps landing on it.
+ * THE ORDER IS THE CONTROL'S ORDER, AND IT FIXES EACH LINE'S COLOUR. The NAV
+ * card draws every benchmark at once (Stage 10it), so a benchmark keeps its
+ * colour slot whichever others are hidden — colour follows the index, never its
+ * position among the visible ones. The first is the default elsewhere.
  */
 export const BENCHMARKS: readonly Benchmark[] = [
   bench({ key: "nifty-500", label: NIFTY_500_LABEL, name: "Nifty 500", symbol: NIFTY_500_SYMBOL, expect: ["nifty500"],
-    about: "the 500 largest NSE-listed companies, about 90% of the market's value — the broadest single index of the market this book invests in." }),
+    about: "the 500 largest NSE-listed companies, about 90% of the market's value — the broadest single index of the market this book invests in." }, 1),
   bench({ key: "nifty-50", label: "Nifty 50", name: "Nifty 50", symbol: "^NSEI", expect: ["nifty50"],
-    about: "the 50 largest NSE-listed companies." }),
+    about: "the 50 largest NSE-listed companies." }, 2),
   bench({ key: "nifty-next-50", label: "Nifty Next 50", name: "Nifty Next 50", symbol: "^NSMIDCP", expect: ["niftynext50"],
-    about: "the 50 companies ranked immediately after the Nifty 50." }),
+    about: "the 50 companies ranked immediately after the Nifty 50." }, 3),
   bench({ key: "nifty-midcap-150", label: "Midcap 150", name: "Nifty Midcap 150", symbol: "NIFTYMIDCAP150.NS", expect: ["niftymidcap150"],
-    about: "the 150 companies ranked 101–250 by market value. Its published history starts in 2019, so the longest ranges draw it from there." }),
+    about: "the 150 companies ranked 101–250 by market value. Its published history starts in 2019, so the longest ranges draw it from there." }, 4),
   bench({ key: "nifty-smallcap-250", label: "Smallcap 250", name: "Nifty Smallcap 250", symbol: "NIFTYSMLCAP250.NS",
     expect: ["niftysmlcap250", "niftysmallcap250"],
-    about: "the 250 companies ranked 251–500 by market value." }),
+    about: "the 250 companies ranked 251–500 by market value." }, 5),
   bench({ key: "sensex", label: "Sensex", name: "S&P BSE Sensex", symbol: "^BSESN", expect: ["spbsesensex", "bsesensex"],
-    about: "30 large BSE-listed companies." }),
+    about: "30 large BSE-listed companies." }, 6),
   bench({ key: "bse-500", label: "BSE 500", name: "S&P BSE 500", symbol: "BSE-500.BO", expect: ["spbse500index", "spbse500", "bse500"],
-    about: "the 500 largest BSE-listed companies — the price version of the benchmark several of this family's managers report against." }),
+    about: "the 500 largest BSE-listed companies — the price version of the benchmark several of this family's managers report against." }, 7),
 ];
 
 export const DEFAULT_BENCHMARK = BENCHMARKS[0];
