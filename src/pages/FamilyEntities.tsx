@@ -23,7 +23,7 @@ import {
 } from "@/lib/analytics";
 import { DIRECT, accountIndex, custodyLabelOf, engagementOf, isDirect, ownerOf, unvaluedHoldingsOf, unvaluedStatementLinesOf } from "@/lib/accounts";
 import { BOOK_ACCOUNTS, BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_UNVALUED_HOLDINGS, BOOK_REVIEW_FLOWS } from "@/data/glowData";
-import { depositoryBalancesOf } from "@/lib/fundNavs";
+import { depositoryBalancesOf, soldSinceStatement } from "@/lib/fundNavs";
 import { shareCandidates } from "@/lib/depositoryShares";
 import { fifoTotals } from "@/lib/fifo";
 import { exitedRows } from "@/lib/drilldown";
@@ -657,7 +657,7 @@ export function FamilyEntities() {
     const balances = depositoryBalancesOf(a.accountId, valued);
     return {
       account: a,
-      notValued: balances.filter((b) => !b.valued && !b.reportedBy).map((b) => {
+      notValued: balances.filter((b) => !b.valued && !b.reportedBy && !b.soldSince).map((b) => {
         const isin = (b.window.isin ?? "").toUpperCase();
         const share = SHARE_CANDIDATES.get(`${a.accountId}|${isin}`);
         return {
@@ -703,7 +703,10 @@ export function FamilyEntities() {
       // Two prices, two sentences: a fund at AMFI's NAV, a listed share at the
       // live quote (Stage 10cy, `no-price`).
       liveQuote: g.lines.filter((l) => l.valuedLive?.depositoryUnits?.kind === "no-price").length,
-      lines: g.lines.filter((l) => !l.valuedLive).map((l) => ({
+      // Sold to nil after the statement on the adviser report's exchange
+      // trades (Stage 10iw): not held, so not listed as held and not valued.
+      sold: g.lines.filter((l) => !l.valuedLive && soldSinceStatement(g.account.accountId, l.row)).length,
+      lines: g.lines.filter((l) => !l.valuedLive && !soldSinceStatement(g.account.accountId, l.row)).map((l) => ({
         ...l,
         // A LISTED share the live quote would value, and the feed has not
         // priced: its reason says the statement's half and this half both.
@@ -1745,10 +1748,10 @@ export function FamilyEntities() {
                   return (
                     <li key={`lines-${g.account.accountId}`} data-unvalued-lines-account={g.account.accountId}
                       data-unvalued-lines={notValued} data-unvalued-lines-live={live} data-unvalued-lines-live-quote={liveQuote}
-                      data-unvalued-lines-elsewhere={g.reportedElsewhere}>
+                      data-unvalued-lines-elsewhere={g.reportedElsewhere} data-unvalued-lines-sold={g.sold}>
                       <details data-navigation-details="familyentities-2">
                         <summary className="flex cursor-pointer items-baseline justify-between gap-3"
-                          title={`The ${g.account.provider} statement for ${g.account.accountNo} records ${notValued} holding${notValued === 1 ? "" : "s"} with a quantity and no value, which nothing in this book values.${liveNav ? ` ${liveNav} more ${liveNav === 1 ? "is" : "are"} recorded the same way and valued here at AMFI's published NAV — a sibling statement from the same depository proves the units are on its basis — so ${liveNav === 1 ? "it is" : "they are"} in the figure above and not listed.` : ""}${liveQuote ? ` ${liveQuote} more ${liveQuote === 1 ? "is a listed share" : "are listed shares"} recorded the same way and valued here at the live quote, only while the quote feed prices ${liveQuote === 1 ? "it" : "them"} — so ${liveQuote === 1 ? "it is" : "they are"} in the figure above and not listed.` : ""}${g.reportedElsewhere ? ` ${g.reportedElsewhere} more ${g.reportedElsewhere === 1 ? "is" : "are"} the depository's copy of units a fund's own statement reports, and ${g.reportedElsewhere === 1 ? "is" : "are"} in the table above through that fund.` : ""}`}>
+                          title={`The ${g.account.provider} statement for ${g.account.accountNo} records ${notValued} holding${notValued === 1 ? "" : "s"} with a quantity and no value, which nothing in this book values.${liveNav ? ` ${liveNav} more ${liveNav === 1 ? "is" : "are"} recorded the same way and valued here at AMFI's published NAV — a sibling statement from the same depository proves the units are on its basis — so ${liveNav === 1 ? "it is" : "they are"} in the figure above and not listed.` : ""}${liveQuote ? ` ${liveQuote} more ${liveQuote === 1 ? "is a listed share" : "are listed shares"} recorded the same way and valued here at the live quote, only while the quote feed prices ${liveQuote === 1 ? "it" : "them"} — so ${liveQuote === 1 ? "it is" : "they are"} in the figure above and not listed.` : ""}${g.reportedElsewhere ? ` ${g.reportedElsewhere} more ${g.reportedElsewhere === 1 ? "is" : "are"} the depository's copy of units a fund's own statement reports, and ${g.reportedElsewhere === 1 ? "is" : "are"} in the table above through that fund.` : ""}${g.sold ? ` ${g.sold} more ${g.sold === 1 ? "was" : "were"} sold to nil after the statement, on exchange trades MOPWM's transaction report records, and ${g.sold === 1 ? "is" : "are"} not held.` : ""}`}>
                           <span className="text-slate-300">
                             {g.account.provider}
                             <span className="text-slate-500"> · {g.account.accountNo}</span>

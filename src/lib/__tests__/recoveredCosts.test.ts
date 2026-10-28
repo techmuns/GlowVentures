@@ -55,7 +55,10 @@ const candidates = shareCandidates();
 // Twelve: Bharat's Smartworks shares on his HDFC Bank NSDL statement (Stage 10gk) are the twelfth.
 // Ten more since Stage 10hu: Ankita's nine bank shares and her Kaynes, costed
 // from MOPWM's transaction report.
-assert.equal(candidates.filter(p => p.recoveredCost).length, 22);
+// 22 until Stage 10iw: Axis, ICICI Bank, SBI, IFB and NLC kept their recovered
+// costs on the statement, and MOPWM's exchange trades sold them to nil, so the
+// live layer carries them as no candidate.
+assert.equal(candidates.filter(p => p.recoveredCost).length, 17);
 assert.ok(candidates.some(p => p.accountId === "hdfc-bank-nsdl-demat-22025655" && p.isin === "INE0NAZ01010" && p.recoveredCost));
 const infinium = candidates.find(p => p.isin === "INE0MRE01011")!;
 assert.equal(infinium.quantity, 8000); near(infinium.costBasis, 2646660);
@@ -72,10 +75,13 @@ near(kaynes.costBasis, 11710991);
 assert.deepEqual(kaynes.recoveredCost?.heldPurchases, { first: "2022-11-24", last: "2025-12-09", lots: 2 });
 assert.equal(kaynes.recoveredCost?.evidence[0].path, MOPWM);
 assert.equal(kaynes.dividendReceived, null, "the report carries no cash dividends");
-// Sold on 23 Sep 2026, after the 31 Jul statement: counted, never applied.
-const axis = candidates.find(p => p.isin === "INE238A01034")!;
-assert.equal(axis.quantity, 7300);
-assert.equal(axis.realizedLotsAfter, 1);
+// Sold on 23 Sep 2026, after the 31 Jul statement: the recovered cost counts
+// the sale and never applies it, and the adviser report's exchange trade
+// (Stage 10iw) sells the live candidate to nil, so it is no candidate at all.
+const axisCost = BOOK_RECOVERED_COSTS.find(r => r.accountId.endsWith("1201090012838316") && r.isin === "INE238A01034")!;
+assert.equal(axisCost.quantity, 7300);
+assert.equal(axisCost.salesAfter, 1);
+assert.equal(candidates.find(p => p.isin === "INE238A01034" && p.accountId.endsWith("1201090012838316")), undefined);
 // Prove the recovered lots reach the live table, survive pricing and still
 // include realised FIFO gain. This feed is a test fixture, not a market quote.
 const symbol = quoteSymbolFor(infinium)!;

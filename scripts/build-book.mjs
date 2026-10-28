@@ -37,7 +37,7 @@ import { buildAccountReturnRecords } from "./lib/accountReturnRecords.mjs";
 import { returnCoverageReport } from "./lib/returnCoverageReport.mjs";
 import { recoverHoldingCosts, recoveryReport } from "./lib/recoverHoldingCosts.mjs";
 import { applyRecoveredCost } from "../shared/recoveredCosts.mjs";
-import { loadMopwmTransactions } from "./lib/mopwmTransactions.mjs";
+import { loadMopwmTransactions, rollMopwmShareTrades, MOTILAL_DEMAT } from "./lib/mopwmTransactions.mjs";
 
 /**
  * THE DEPOSITORY ACCOUNTS, BOTH OF THEM.
@@ -5230,12 +5230,34 @@ function build(archived, archiveCount = archived.length, references = {}) {
   }
   notes.push(`cost recovery: ${holdingCostRecovery.records.length} exact account/ISIN/quantity records from the saved workbooks; `
     + `${holdingCostRecovery.unresolved.length} recorded security balances still require acquisition or movement evidence. See docs/COST-RECOVERY.md.`);
+  // THE ADVISER REPORT'S LATER SHARE TRADES (Stage 10iw) — every equity balance
+  // a Motilal demat statement gives the book, a nil closing included, carried
+  // past its date by the report's NSE/BSE trades. The depository share rows are
+  // live-only, so `BOOK_SHARE_ROLLS` is read there; a statement position of the
+  // same units takes it as `rolledForward`. The statement basis keeps the snapshot.
+  const motilal = new Map(accounts.filter((a) => a.provider === MOTILAL_DEMAT).map((a) => [a.accountId, a]));
+  const shareRolls = rollMopwmShareTrades(references.mopwm ?? loadMopwmTransactions(ROOT), { accounts, records: [
+    ...unvaluedHoldings.filter((u) => motilal.has(u.accountId) && u.isin?.startsWith("INE") && isNum(u.quantity))
+      .map((u) => ({ accountId: u.accountId, isin: u.isin, quantity: u.quantity, asOf: u.asOf })),
+    ...Object.values(shareMovements).filter((w) => motilal.get(w.accountId)?.transactionsOnly && !w.reason && w.isin?.startsWith("INE") && isNum(w.closing))
+      .map((w) => ({ accountId: w.accountId, isin: w.isin, quantity: w.closing, asOf: w.periodTo })),
+  ] });
+  for (const r of shareRolls.rolls) {
+    const p = positions.find((x) => x.accountId === r.accountId && x.isin === r.isin && isNum(x.quantity) && Math.abs(x.quantity - r.statementQuantity) <= 0.0005);
+    if (p && !p.rolledForward) p.rolledForward = { through: r.through, quantity: r.quantity, costBasis: r.costBasis,
+      realizedPnL: r.realizedPnL, costOfUnitsSold: r.costOfUnitsSold, trades: r.trades, source: "adviser-report" };
+    notes.push(`${r.accountId}: ${r.security} (${r.isin}) carried from ${r.statementQuantity} on ${r.asOf} to ${r.quantity} on ${r.through} `
+      + `by ${r.trades} exchange trade(s) on MOPWM's transaction report of ${r.report.asOf}, live basis only (the report's own record holds the statement's units on ${r.asOf})`);
+  }
+  for (const r of shareRolls.refused) {
+    notes.push(`${r.accountId ?? r.ownerId}: the MOPWM transaction report's later trades in ${r.security} are not applied — ${r.reason}`);
+  }
 
   return {
     accounts, positions, polycab, owners, capitalGains, accountCashFlows, entityCashFlows,
     accountReturnRecords: buildAccountReturnRecords({ accounts, accountCashFlows, byAccount,
       historicalNavs: references.historicalNavs ?? JSON.parse(fs.readFileSync(path.join(ROOT, 'scripts/ingest/reference/amfi-opening-navs.json'), 'utf8')) }),
-    capitalMoves, positionTranches, shareMovements, holdingCostRecovery,
+    capitalMoves, positionTranches, shareMovements, shareRolls: shareRolls.rolls, holdingCostRecovery,
     // Keyed on the holdings this book carries, in key order, so the file
     // regenerates byte-identically however the accounts were walked.
     holdingTrades: Object.fromEntries(Object.keys(holdingTrades).sort()
@@ -5345,6 +5367,7 @@ export function canonicalBookValues(book) {
     BOOK_HOLDING_INCOME: book.holdingIncome,
     BOOK_HOLDING_LOTS: book.holdingLots,
     BOOK_SHARE_MOVEMENTS: book.shareMovements,
+    BOOK_SHARE_ROLLS: book.shareRolls,
     BOOK_ENTITY_CASH_FLOWS: book.entityCashFlows,
     BOOK_ACCOUNT_RETURNS: book.accountReturns,
     BOOK_ACCOUNT_BRIDGES: book.accountBridges,
@@ -5373,7 +5396,7 @@ function emit(book) {
   L.push("import type {");
   L.push("  Account, AccountBridge, AccountReturnBlock, AccountReturnCoverage, BookSummary, CapitalMove, CashFlow, Commitment,");
   L.push("  Attribution, CorporateAction, EntityCG, FundInvestment, HoldingTrade, NavCoverage, NavPoint, Position, PositionTranches,");
-  L.push("  PolycabHolding, RealisedByClass, RecoveredHoldingCost, ReviewFlow, ReviewSuperseded, ReviewWrittenOff, ShareMovement, StartupInvestment, UndatedCapital, UnvaluedStatementHolding,");
+  L.push("  PolycabHolding, RealisedByClass, RecoveredHoldingCost, ReviewFlow, ReviewSuperseded, ReviewWrittenOff, ShareMovement, ShareRoll, StartupInvestment, UndatedCapital, UnvaluedStatementHolding,");
   L.push('} from "@/lib/types";');
   L.push("");
   L.push(`/** Newest report date across all accounts. Individual accounts can be older. */`);
@@ -5581,6 +5604,14 @@ function emit(book) {
   L.push(" * the account, and summing one would report the holding twice.");
   L.push(" */");
   L.push(`export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = ${j(book.shareMovements)};`);
+  L.push("");
+  L.push("/**");
+  L.push(" * MOTILAL DEMAT SHARE BALANCES CARRIED PAST THEIR STATEMENTS on the NSE/BSE");
+  L.push(" * trades of MOPWM's transaction report (Stage 10iw, `rollMopwmShareTrades`).");
+  L.push(" * LIVE BASIS ONLY: `depositoryShares.ts` reads them; every statement-basis");
+  L.push(" * figure keeps the statement's own units. No fund row moves a quantity.");
+  L.push(" */");
+  L.push(`export const BOOK_SHARE_ROLLS: ShareRoll[] = ${j(book.shareRolls)};`);
   L.push("");
   L.push("/**");
   L.push(" * The same flows keyed by OWNER — a person's money-weighted return is over");

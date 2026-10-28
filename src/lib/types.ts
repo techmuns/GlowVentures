@@ -348,7 +348,7 @@ export type Position = {
     realizedPnL: number | null;
     costOfUnitsSold: number | null;
     trades: number;
-    source?: "review";
+    source?: "review" | "adviser-report";
     hprUnavailableReason?: string;
   };
   /**
@@ -605,13 +605,17 @@ export type Position = {
    *     never a valuation of the balance. A fund is valued at AMFI's NAV and a
    *     listed share at the live quote; the rate is kept here only as what it
    *     is, and as the witness that a fund's units are on the NAV's basis.
+   *   - `adviser-trades` (Stage 10iw): a listed share the depository's
+   *     statement does not hold, bought after it on exchange trades the
+   *     adviser's transaction report records (`ShareRoll`); valued at the
+   *     live quote only.
    * `describeDepositoryUnits` in `fundNavs.ts` is the one place the sentence is
    * chosen.
    */
   depositoryUnits?: {
     asOf: string | null;
     source: string | null;
-    kind?: "closing-balance" | "no-rate" | "no-price" | "last-movement";
+    kind?: "closing-balance" | "no-rate" | "no-price" | "last-movement" | "adviser-trades";
     witnessAccountId?: string | null;
     /** `last-movement` only: the statement's rate, the date it moved at, and which way. */
     lastMovementRate?: number | null;
@@ -624,6 +628,12 @@ export type Position = {
      * on since `exDate`. The statement's own count is kept here, unchanged.
      */
     unitSplit?: { statementQuantity: number; factor: number; exDate: string; publishedIsin: string; source: string };
+    /**
+     * Set where the adviser's report's later exchange trades carry the units
+     * past the statement (Stage 10iw, `ShareRoll`): the statement's own count,
+     * and the date and number of trades that took it to `rolledForward.quantity`.
+     */
+    rolled?: { statementQuantity: number; through: string; trades: number; reportAsOf: string };
   };
 };
 
@@ -1108,6 +1118,35 @@ export type ShareMovement = {
   reason: string | null;
   /** The document this came from, for the archive. */
   source: string | null;
+};
+
+/**
+ * A MOTILAL DEMAT SHARE BALANCE CARRIED PAST ITS STATEMENT ON THE ADVISER'S
+ * RECORD OF EXCHANGE TRADES (Stage 10iw, `rollMopwmShareTrades`).
+ *
+ * MOPWM's transaction report of 23 Oct 2026 prints each owner's NSE/BSE trades.
+ * Where the report's own history, replayed from its first row, holds exactly the
+ * statement's units on the statement's date, its later exchange trades carry the
+ * balance to `quantity` on `through`. `statementQuantity` is 0 for a share the
+ * statement does not record and the report shows bought after it. Read by the
+ * LIVE layer only (`depositoryShares.ts`); the statement basis keeps the
+ * snapshot. A share with any non-exchange entry (a split, a transfer) is not
+ * rolled.
+ */
+export type ShareRoll = {
+  accountId: string;
+  isin: string;
+  /** The report's own name for the security. */
+  security: string;
+  statementQuantity: number;
+  asOf: string;
+  through: string;
+  quantity: number;
+  costBasis: number;
+  realizedPnL: number;
+  costOfUnitsSold: number;
+  trades: number;
+  report: { path: string; asOf: string; sheet: string; rows: number[] };
 };
 
 /**

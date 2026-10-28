@@ -1532,9 +1532,9 @@ export const UPSTOX_INSTRUMENTS = Object.freeze({
   "series": "EQ",
   "joinedBy": "isin"
  },
- "ICICIPRULI": {
+ "ICICILIFE": {
   "key": "NSE_EQ|INE726G01019",
-  "tradingSymbol": "ICICIPRULI",
+  "tradingSymbol": "ICICILIFE",
   "series": "EQ",
   "joinedBy": "isin"
  },
@@ -2009,6 +2009,12 @@ export const UPSTOX_INSTRUMENTS = Object.freeze({
  "KPRMILL": {
   "key": "NSE_EQ|INE930H01031",
   "tradingSymbol": "KPRMILL",
+  "series": "EQ",
+  "joinedBy": "isin"
+ },
+ "KRBL": {
+  "key": "NSE_EQ|INE001B01026",
+  "tradingSymbol": "KRBL",
   "series": "EQ",
   "joinedBy": "isin"
  },
@@ -3716,6 +3722,12 @@ export const UPSTOX_INSTRUMENTS = Object.freeze({
   "series": "EQ",
   "joinedBy": "symbol"
  },
+ "ZOTA": {
+  "key": "NSE_EQ|INE358U01012",
+  "tradingSymbol": "ZOTA",
+  "series": "EQ",
+  "joinedBy": "isin"
+ },
  "ZYDUSLIFE": {
   "key": "NSE_EQ|INE010B01027",
   "tradingSymbol": "ZYDUSLIFE",
@@ -3987,7 +3999,7 @@ export const UPSTOX_SECURITY_SYMBOLS = Object.freeze({
  "icici-bank": "ICICIBANK",
  "icici-lombard-general-insurance": "ICICIGI",
  "icici-prudential-asset-management": "ICICIAMC",
- "icici-prudential-life-insurance": "ICICIPRULI",
+ "icici-prudential-life-insurance": "ICICILIFE",
  "idbi-bank": "IDBI",
  "idfc-first-bank": "IDFCFIRSTB",
  "ifb-industries": "IFBIND",
@@ -4069,6 +4081,7 @@ export const UPSTOX_SECURITY_SYMBOLS = Object.freeze({
  "kotak-mahindra-bank": "KOTAKBANK",
  "kovai-medical-center-and-hospital": "KOVAI",
  "kpit-technologies": "KPITTECH",
+ "krbl": "KRBL",
  "krishca-strapping-solutions": "KRISHCA",
  "krishna-institute-of-medical-sciences": "KIMS",
  "krn-heat-exchanger-and-refrigeration": "KRN",
@@ -4371,9 +4384,11 @@ export const UPSTOX_SECURITY_SYMBOLS = Object.freeze({
  "zee-entertainment-enterprises": "ZEEL",
  "zensar-technologies": "ZENSARTECH",
  "zf-commercial-vehicle-control-systems-india": "ZFCVINDIA",
+ "zota-health-care": "ZOTA",
  "zydus-lifesciences": "ZYDUSLIFE"
 });
 export const UPSTOX_ISIN_SYMBOLS = Object.freeze({
+ "INE001B01026": "KRBL",
  "INE002A01018": "RELIANCE",
  "INE003A01024": "SIEMENS",
  "INE006I01046": "ASTRAL",
@@ -4725,6 +4740,7 @@ export const UPSTOX_ISIN_SYMBOLS = Object.freeze({
  "INE351F01018": "JPPOWER",
  "INE356A01018": "MPHASIS",
  "INE358A01014": "ABBOTINDIA",
+ "INE358U01012": "ZOTA",
  "INE361B01024": "DIVISLAB",
  "INE364U01010": "ADANIGREEN",
  "INE365Y01019": "BPLPHARMA",
@@ -4890,7 +4906,7 @@ export const UPSTOX_ISIN_SYMBOLS = Object.freeze({
  "INE716A01013": "WHIRLPOOL",
  "INE721A01047": "SHRIRAMFIN",
  "INE721I01024": "BSE:NSE",
- "INE726G01019": "ICICIPRULI",
+ "INE726G01019": "ICICILIFE",
  "INE726V01018": "PRICOLLTD",
  "INE732I01021": "ANGELONE",
  "INE733E01010": "NTPC",
@@ -4995,4 +5011,4 @@ export const UPSTOX_ISIN_SYMBOLS = Object.freeze({
  "INE999A01023": "KSB",
  "INF732E01037": "LIQUIDBEES"
 });
-export const UPSTOX_INSTRUMENT_COVERAGE = Object.freeze({"asked":620,"mapped":620,"unmapped":[]});
+export const UPSTOX_INSTRUMENT_COVERAGE = Object.freeze({"asked":622,"mapped":622,"unmapped":[]});

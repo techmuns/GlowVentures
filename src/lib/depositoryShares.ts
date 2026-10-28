@@ -76,13 +76,14 @@
 // prices it. Their kind is `last-movement`, because the statement DID print a
 // price against them and a page must say what that price was rather than that
 // there was none. The movement's price is never the price a row is valued at.
-import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_SHARE_MOVEMENTS, BOOK_UNVALUED_HOLDINGS, BOOK_RECOVERED_COSTS } from "@/data/glowData";
+import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_SHARE_MOVEMENTS, BOOK_SHARE_ROLLS, BOOK_UNVALUED_HOLDINGS, BOOK_RECOVERED_COSTS } from "@/data/glowData";
 import { applyRecoveredCost } from "../../shared/recoveredCosts.mjs";
 import { symbolFor, symbolForKey, type QuoteFeed } from "./quotes";
 import { applyCorporateActionQuotes, type ActionFeed } from "./corporateActions";
 import { securityLabel } from "./securityLabel";
+import { securityKeyOf } from "./securityKey";
 import { displayDepositoryName } from "./format";
-import type { Account, Position, ShareMovement, UnvaluedStatementHolding } from "./types";
+import type { Account, Position, ShareMovement, ShareRoll, UnvaluedStatementHolding } from "./types";
 import { UPSTOX_INSTRUMENTS } from "../../shared/upstoxInstruments.mjs";
 import { keptUnvaluedFor } from "../../shared/keptUnvalued.mjs";
 
@@ -343,8 +344,94 @@ export function combinedShareCandidates(
   return kept;
 }
 
-const CANDIDATES = combinedShareCandidates([depositoryShareCandidates(), unpricedStatementShareCandidates()])
-  .map((p) => applyRecoveredCost(p, BOOK_RECOVERED_COSTS));
+/**
+ * …CARRIED PAST THE STATEMENT ON THE ADVISER'S RECORD OF EXCHANGE TRADES
+ * (Stage 10iw). *"Apply share trades only"* — the family, 28 Oct 2026, of
+ * MOPWM's transaction report of 23 Oct. `BOOK_SHARE_ROLLS` holds each Motilal
+ * demat share balance the report's NSE/BSE trades carry, only where its own
+ * record replays to the statement's units on the statement's date. A candidate
+ * of those units takes the roll as `rolledForward`, which the corporate-action
+ * gate marks at the rolled units (`rolledPosition`); one the report sold to
+ * nil is not held, so it is no candidate at all. A share the statement does
+ * not record and the report shows bought after it is a candidate of its own
+ * (`adviser-trades`), on gates 3–5 of the depository route: an equity ISIN,
+ * an NSE symbol by identifier, and no other statement of the same owner
+ * holding the same units. Live basis only; the statement basis keeps the
+ * snapshot.
+ */
+export function withShareRolls(
+  candidates: readonly Position[],
+  rolls: readonly ShareRoll[] = BOOK_SHARE_ROLLS,
+  accounts: readonly Account[] = BOOK_ACCOUNTS,
+  positions: readonly Position[] = BOOK_POSITIONS,
+): Position[] {
+  const ownerOf = new Map(accounts.map((a) => [a.accountId, a.ownerId ?? a.owner]));
+  const tie = (a: number, b: number) => Math.abs(a - b) < 0.0005;
+  const rolled = (p: Position, r: ShareRoll): Position => ({
+    ...p,
+    ...(r.quantity > 0 ? { costUnavailable: false } : {}),
+    rolledForward: { through: r.through, quantity: r.quantity, costBasis: r.costBasis, realizedPnL: r.realizedPnL,
+      costOfUnitsSold: r.costOfUnitsSold, trades: r.trades, source: "adviser-report" },
+    depositoryUnits: { ...(p.depositoryUnits ?? { asOf: r.asOf, source: null }),
+      rolled: { statementQuantity: r.statementQuantity, through: r.through, trades: r.trades, reportAsOf: r.report.asOf } },
+  });
+  const used = new Set<ShareRoll>();
+  const out: Position[] = [];
+  for (const p of candidates) {
+    const r = rolls.find((x) => x.accountId === p.accountId && x.isin.toUpperCase() === isinOf(p)
+      && typeof p.quantity === "number" && tie(x.statementQuantity, p.quantity));
+    if (!r) { out.push(p); continue; }
+    used.add(r);
+    if (r.quantity > 0) out.push(rolled(p, r));
+  }
+  for (const r of rolls) {
+    if (used.has(r) || r.statementQuantity !== 0 || !(r.quantity > 0)) continue;
+    const isin = r.isin.toUpperCase();
+    if (!isin.startsWith("INE")) continue;                                              // gate 3
+    const key = securityKeyOf(r.security);
+    const symbol = symbolByIdentifier(isin, key, positions);
+    if (!symbol) continue;                                                              // gate 4
+    const owner = ownerOf.get(r.accountId);
+    if (positions.some((p) => isinOf(p) === isin && p.quantity !== null && tie(p.quantity, r.quantity)
+      && (ownerOf.get(p.accountId) ?? null) === owner)) continue;                       // gate 5
+    const book = bookRowFor(isin, symbol, positions);
+    const securityKey = book?.securityKey ?? key;
+    out.push(rolled({
+      securityKey,
+      security: securityLabel(securityKey, book?.security ?? r.security),
+      isin: r.isin,
+      symbol,
+      accountId: r.accountId,
+      memberId: null,
+      sector: book?.sector ?? "Unclassified",
+      providerSector: null,
+      assetClass: "Equity",
+      marketSide: "listed",
+      // The statement holds none: the units are the roll's, and the row is
+      // priced only once the feed answers (`depositoryShareHoldings`).
+      quantity: 0,
+      marketValue: 0,
+      costBasis: null,
+      costUnavailable: true,
+      unrealizedPnL: null,
+      returnPct: null,
+      avgCost: null,
+      currentPrice: null,
+      stCostBasis: null,
+      ltCostBasis: null,
+      daysToLT: null,
+      heldSince: null,
+      dividendReceived: null,
+      accruedIncome: null,
+      positionIrrPct: null,
+      depositoryUnits: { asOf: r.asOf, source: r.report.path, kind: "adviser-trades" },
+    }, r));
+  }
+  return out;
+}
+
+const CANDIDATES = withShareRolls(combinedShareCandidates([depositoryShareCandidates(), unpricedStatementShareCandidates()])
+  .map((p) => applyRecoveredCost(p, BOOK_RECOVERED_COSTS)));
 
 /** Every share either route could value, priced or not — for a page naming what is not valued. */
 export const shareCandidates = (): readonly Position[] => CANDIDATES;

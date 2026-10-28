@@ -9,11 +9,17 @@
 // LIKE THE CONSOLIDATED REVIEW, IT IS NOT A STATEMENT. No custodian or fund
 // struck it; it is the adviser's own compilation of what it recorded, and it
 // carries no holding, no valuation and no ISIN. `extract.mjs` archives it held
-// out by decision. Its one licensed use is the 21 Oct 2026 cost-recovery
+// out by decision. It has two licensed uses. The 21 Oct 2026 cost-recovery
 // instruction (`recoverHoldingCosts.mjs`): a holding whose statement prints no
 // cost takes the cost of the lots these rows leave ONLY where the owner, the
 // security (an exact alias below), the account and every unit reconcile on the
-// statement's own date. It never changes a quantity, a valuation or a date.
+// statement's own date. And the family's 28 Oct 2026 choice to apply its later
+// SHARE trades (Stage 10iw, `rollMopwmShareTrades`): a Motilal demat share
+// balance is carried past its statement by the report's NSE/BSE trades, on the
+// live basis only, where the same reconciliation holds. No fund row moves a
+// quantity: the 1 Oct 2026 "redemptions" are at least partly
+// rematerialisations and wait for the family's answer. It never changes a
+// valuation or a statement's date.
 //
 // Columns are found by HEADER TEXT, never by position; a holder heading is a row
 // whose only cell is the holder's name. Rows of people the owner registry does
@@ -127,6 +133,10 @@ export const MOPWM_SECURITIES = Object.freeze({
   INE918Z01012: "Kaynes Technology India Ltd", INE976G01028: "RBL Bank Ltd",
   INE1CDF01017: "Vedanta Aluminium Metal Ltd", INE531F01023: "Nuvama Wealth Management Ltd",
   INE0LGX01024: "Insolation Energy Ltd",
+  // Stage 10iw: the shares Ajay's Motilal demat traded after its 31 Jul tape.
+  // ISINs from that tape (IFB, KRBL, NLC) or Upstox's NSE master (Tega, Zota).
+  INE559A01017: "IFB Industries Ltd", INE001B01026: "KRBL Ltd", INE589A01014: "NLC India Ltd",
+  INE011K01018: "Tega Industries Ltd", INE358U01012: "Zota Health Care Ltd",
   INF174K01LC6: "Kotak Arbitrage Direct-G", INF247L01ED1: "Motilal Oswal Arbitrage Direct-G",
   INF194K01V89: "Bandhan Large AND Mid Cap Direct-G", INF194K01Y60: "Bandhan Arbitrage Direct-G",
   INF179K01830: "HDFC Balanced Advantage Reg-G", INF179K01WA6: "HDFC Balanced Advantage Direct-G",
@@ -202,4 +212,103 @@ export function mopwmRowsFor(report, { isin, account }) {
   const rows = report.rows.filter((r) => r.ownerId === account.ownerId && r.security === alias
     && r.sheet === (fund ? "Mutual Funds" : "Direct Equity") && (!fund || r.folio === account.accountNo));
   return rows.length ? rows : null;
+}
+
+export const MOTILAL_DEMAT = "Motilal Oswal Financial Services (demat)";
+
+/**
+ * THE REPORT'S LATER SHARE TRADES, CARRIED ONTO THE MOTILAL DEMATS (Stage 10iw).
+ *
+ * The family chose on 28 Oct 2026 to apply the report's NSE/BSE share trades
+ * dated after each Motilal demat statement, and none of its fund rows. Each
+ * (owner, security) is carried only where:
+ *   1. every row the report holds for it, before and after the statement, is
+ *      an exchange trade with units and an amount that tie (`eventOf`) — a
+ *      split, merger or transfer entry refuses it;
+ *   2. its name is an exact alias of one equity ISIN (`MOPWM_SECURITIES`);
+ *   3. it lands on ONE account: the owner's Motilal demat whose statement
+ *      records that ISIN, or, for a share no statement records, the one demat
+ *      on which the report's own trades already reproduce a recorded balance;
+ *   4. the report replayed from its first row holds EXACTLY the statement's
+ *      units on the statement's date (nil for a share it does not record) —
+ *      the witness that its record of this holding is whole;
+ *   5. no sale takes units the record does not hold.
+ * Cost, realised and the cost of the units sold are FIFO over that whole
+ * record. Everything refused is returned with its reason.
+ *
+ * `records` is every equity balance a Motilal demat statement gives the book:
+ * `{ accountId, isin, quantity, asOf }`, a nil closing included.
+ */
+export function rollMopwmShareTrades(report, { accounts, records }) {
+  const rolls = [], refused = [];
+  const isinOfName = new Map(Object.entries(MOPWM_SECURITIES).filter(([i]) => i.startsWith("INE")).map(([i, n]) => [n, i]));
+  const tie = (a, b) => Math.abs(a - b) <= UNIT_TIE;
+  const byOwner = new Map();
+  for (const r of report.rows) {
+    if (r.sheet !== "Direct Equity" || !r.ownerId) continue;
+    const bySecurity = byOwner.get(r.ownerId) ?? new Map();
+    bySecurity.set(r.security, [...(bySecurity.get(r.security) ?? []), r]);
+    byOwner.set(r.ownerId, bySecurity);
+  }
+  const replay = (rows, isin) => {
+    const events = [];
+    for (const r of rows) {
+      const e = eventOf(r, isin);
+      if (e.reason) return { reason: e.reason };
+      events.push(e.event);
+    }
+    return { ledger: fifoLedger(events) };
+  };
+  for (const [ownerId, bySecurity] of [...byOwner].sort(([a], [b]) => a.localeCompare(b))) {
+    const demats = accounts.filter((a) => a.provider === MOTILAL_DEMAT && a.ownerId === ownerId && a.asOf);
+    if (!demats.length) continue;
+    const latest = demats.map((a) => a.asOf).sort().at(-1);
+    const ordered = (rows) => [...rows].sort((a, b) => a.date.localeCompare(b.date) || a.row - b.row);
+    // Gate 3's witness: the demats on which the report already reproduces a
+    // recorded balance of some security, exactly, on the statement's date.
+    const verified = new Set();
+    for (const [name, rows] of bySecurity) {
+      const isin = isinOfName.get(name);
+      for (const a of demats) {
+        const rec = isin && records.find((x) => x.accountId === a.accountId && x.isin === isin);
+        if (!rec || !(rec.quantity > 0)) continue;
+        const r = replay(ordered(rows).filter((x) => x.date <= a.asOf), isin);
+        if (r.ledger && !r.ledger.shortfalls.length && tie(r.ledger.unitsHeld, rec.quantity)) verified.add(a.accountId);
+      }
+    }
+    for (const [name, all] of [...bySecurity].sort(([a], [b]) => a.localeCompare(b))) {
+      const rows = ordered(all);
+      if (!rows.some((r) => r.date > latest)) continue;
+      const refuse = (reason, accountId = null) => refused.push({ ownerId, security: name, accountId, reason });
+      const isin = isinOfName.get(name);
+      const whole = replay(rows, isin ?? name);
+      if (whole.reason) { refuse(whole.reason); continue; }                                        // gate 1
+      if (!isin) { refuse("no alias pins the report's name to one equity ISIN"); continue; }     // gate 2
+      const held = demats.filter((a) => records.some((x) => x.accountId === a.accountId && x.isin === isin));
+      const account = held.length === 1 ? held[0]
+        : !held.length && verified.size === 1 ? demats.find((a) => verified.has(a.accountId)) : null;
+      if (!account) {                                                                             // gate 3
+        refuse(held.length > 1 ? `${held.length} of the owner's Motilal demats record ${isin}`
+          : `the report's trades reproduce a recorded balance on ${verified.size} of the owner's Motilal demats, not exactly one`);
+        continue;
+      }
+      const statementQuantity = records.find((x) => x.accountId === account.accountId && x.isin === isin)?.quantity ?? 0;
+      const before = replay(rows.filter((r) => r.date <= account.asOf), isin).ledger;
+      const later = rows.filter((r) => r.date > account.asOf);
+      if (before.shortfalls.length || !tie(before.unitsHeld, statementQuantity)) {                // gate 4
+        refuse(`the report holds ${Math.round(before.unitsHeld * 1000) / 1000} on ${account.asOf} where the statement records ${statementQuantity}`, account.accountId);
+        continue;
+      }
+      if (whole.ledger.shortfalls.length) { refuse("a later sale takes units the record does not hold", account.accountId); continue; } // gate 5
+      const quantity = Math.round(whole.ledger.unitsHeld * 1e6) / 1e6;
+      rolls.push({
+        accountId: account.accountId, isin, security: name, statementQuantity, asOf: account.asOf,
+        through: later.at(-1).date, quantity: tie(quantity, 0) ? 0 : quantity,
+        costBasis: r2(whole.ledger.costHeld), realizedPnL: r2(whole.ledger.realisedGain), costOfUnitsSold: r2(whole.ledger.costSold),
+        trades: later.length,
+        report: { path: report.path, asOf: report.asOf, sheet: "Direct Equity", rows: rows.map((r) => r.row) },
+      });
+    }
+  }
+  return { rolls, refused };
 }

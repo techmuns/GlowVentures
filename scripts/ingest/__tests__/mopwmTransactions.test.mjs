@@ -5,7 +5,7 @@
 import assert from "node:assert/strict";
 import { classify } from "../lib/classify.mjs";
 import {
-  MOPWM_TRANSACTIONS, dmyToIso, loadMopwmTransactions, mopwmRowsFor, replayMopwmRows, reportDate,
+  MOPWM_TRANSACTIONS, MOTILAL_DEMAT, dmyToIso, loadMopwmTransactions, mopwmRowsFor, replayMopwmRows, reportDate, rollMopwmShareTrades,
 } from "../../lib/mopwmTransactions.mjs";
 import { readSpreadsheet } from "../lib/sheet.mjs";
 import fs from "node:fs";
@@ -88,4 +88,48 @@ assert.equal(k.salesAfter, 1, "redeemed in full on 23 Sep 2026, after the 31 Jul
 assert.match(replayMopwmRows(mopwmRowsFor(report, { isin: "INE1CDF01017", account: ajay }), { isin: "INE1CDF01017", asOf: "2026-07-31", quantity: 281000 }).reason,
   /DMERG entry/, "Vedanta Aluminium's demerger lot is not a trade");
 
-console.log("mopwmTransactions: prefixed workbook read in full, owners, classification, FIFO replay and identity gates passed");
+// ── the later share trades (Stage 10iw) ──────────────────────────────────────
+{
+  const acct = (n, owner = "o", asOf = "2026-07-31") => ({ accountId: `d${n}`, provider: MOTILAL_DEMAT, ownerId: owner, asOf });
+  const t = (row, date, type, qty, amount, security, ref = "NSE/M/121/D") =>
+    ({ sheet: "Direct Equity", row, date, type, qty, amount, price: amount / qty, ref, ownerId: "o", security });
+  const AX = "Axis Bank Ltd", IC = "ICICI Bank Ltd", KR = "KRBL Ltd";
+  const rows = [t(1, "2021-01-01", "PURCHASE", 10, 1000, AX), t(2, "2026-09-23", "SELL", 10, 1500, AX),
+    t(3, "2026-08-28", "PURCHASE", 5, 500, KR), t(4, "2022-01-01", "PURCHASE", 4, 400, IC), t(5, "2026-09-01", "SELL", 1, 150, IC)];
+  const recs = [{ accountId: "d1", isin: "INE238A01034", quantity: 10, asOf: "2026-07-31" },
+    { accountId: "d1", isin: "INE090A01021", quantity: 4, asOf: "2026-07-31" }];
+  const out = rollMopwmShareTrades({ path: "x", asOf: "2026-10-23", rows }, { accounts: [acct(1)], records: recs });
+  const by = (isin) => out.rolls.find((r) => r.isin === isin);
+  assert.deepEqual([by("INE238A01034").quantity, by("INE238A01034").realizedPnL, by("INE238A01034").through], [0, 500, "2026-09-23"], "sold to nil, FIFO realised");
+  assert.deepEqual([by("INE090A01021").statementQuantity, by("INE090A01021").quantity, by("INE090A01021").costBasis], [4, 3, 300], "a partial sale");
+  assert.deepEqual([by("INE001B01026").statementQuantity, by("INE001B01026").quantity, by("INE001B01026").costBasis, by("INE001B01026").accountId],
+    [0, 5, 500, "d1"], "a share bought since lands on the demat the report already reproduces");
+  const wrongUnits = rollMopwmShareTrades({ path: "x", asOf: "2026-10-23", rows }, { accounts: [acct(1)], records: [{ ...recs[0], quantity: 11 }, recs[1]] });
+  assert.match(wrongUnits.refused.find((r) => r.security === AX).reason, /holds 10 on 2026-07-31 where the statement records 11/, "gate 4: the record must be whole");
+  const split = rollMopwmShareTrades({ path: "x", asOf: "2026-10-23", rows: [...rows, t(6, "2026-09-22", "PURCHASE", 5, 0.01, KR, "SPLIT/22/09/2026/1")] }, { accounts: [acct(1)], records: recs });
+  assert.match(split.refused.find((r) => r.security === KR).reason, /SPLIT entry, not a trade/, "gate 1: exchange trades only");
+  const unknown = rollMopwmShareTrades({ path: "x", asOf: "2026-10-23", rows: [t(1, "2026-09-01", "PURCHASE", 1, 10, "Nobody Ltd")] }, { accounts: [acct(1)], records: [] });
+  assert.match(unknown.refused[0].reason, /no alias/, "gate 2: an exact alias");
+  const twoDemats = rollMopwmShareTrades({ path: "x", asOf: "2026-10-23", rows }, { accounts: [acct(1), acct(2)], records: [...recs, { ...recs[1], accountId: "d2" }] });
+  assert.match(twoDemats.refused.find((r) => r.security === IC).reason, /2 of the owner's Motilal demats record/, "gate 3: one account");
+  assert.match(twoDemats.refused.find((r) => r.security === KR).reason, /reproduce a recorded balance on 2 of the owner's Motilal demats/);
+  const oversold = rollMopwmShareTrades({ path: "x", asOf: "2026-10-23", rows: [...rows, t(7, "2026-10-01", "SELL", 9, 900, IC)] }, { accounts: [acct(1)], records: recs });
+  assert.match(oversold.refused.find((r) => r.security === IC).reason, /takes units the record does not hold/, "gate 5");
+  assert.equal(rollMopwmShareTrades({ path: "x", asOf: "2026-10-23", rows }, { accounts: [{ ...acct(1), provider: "ICICI Bank (NSDL demat)" }], records: recs }).rolls.length, 0,
+    "only a Motilal demat");
+
+  // The real workbook, against the book's own statement records: the eight
+  // rolls the family approved on 28 Oct 2026, and TAAL's split refused.
+  const book = fs.readFileSync("src/data/glowData.ts", "utf8");
+  const committed = JSON.parse(/export const BOOK_SHARE_ROLLS: ShareRoll\[\] = (\[[\s\S]*?\n\]);/.exec(book)[1]);
+  assert.deepEqual(committed.map((r) => [r.accountId.slice(-16), r.isin, r.statementQuantity, r.quantity]), [
+    ["1201090012539150", "INE559A01017", 15772, 0], ["1201090012539150", "INE001B01026", 0, 67500],
+    ["1201090012539150", "INE589A01014", 32000, 0], ["1201090012539150", "INE011K01018", 0, 24250],
+    ["1201090012539150", "INE358U01012", 0, 27500], ["1201090012838316", "INE238A01034", 7300, 0],
+    ["1201090012838316", "INE090A01021", 14500, 0], ["1201090012838316", "INE062A01020", 27750, 0],
+  ], "the committed book carries exactly the reconciled share trades");
+  assert.ok(committed.every((r) => r.report.path === MOPWM_TRANSACTIONS && r.report.asOf === "2026-10-23"));
+  assert.ok(!committed.some((r) => /TAAL/.test(r.security)), "TAAL's 22 Sep split is not an exchange trade");
+}
+
+console.log("mopwmTransactions: prefixed workbook read in full, owners, classification, FIFO replay, identity gates and share rolls passed");

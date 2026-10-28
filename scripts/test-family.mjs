@@ -111,6 +111,7 @@ const SUITES = [
   ["index sectors", "src/lib/__tests__/indexSectors.test.ts"],
   ["monitor sectors", "src/lib/__tests__/monitorSectors.test.ts"],
   ["fund NAVs", "src/lib/__tests__/fundNavs.test.ts"],
+  ["adviser report share rolls", "src/lib/__tests__/shareRolls.test.ts"],
   ["unpriced statement units", "src/lib/__tests__/unpricedUnits.test.ts"],
   ["return attribution", "src/lib/__tests__/attribution.test.ts"],
   ["segment return attribution", "src/lib/__tests__/segmentReturns.test.ts"],

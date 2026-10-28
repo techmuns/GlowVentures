@@ -14,7 +14,7 @@ import path from "node:path";
 import XLSX from "xlsx";
 import {
   applyFundNavs, fundNavFor, FUND_NAV_COUNT,
-  depositoryCashHoldings, depositoryFundHoldings, depositoryBalancesOf, partialValuationNotes,
+  depositoryCashHoldings, depositoryFundHoldings, depositoryBalancesOf, partialValuationNotes, soldSinceStatement,
   VALUE_DEPOSITORY_CASH_UNITS, VALUE_DEPOSITORY_FUND_UNITS, isArbitrageFund,
   unpricedStatementUnits,
 } from "../fundNavs";
@@ -371,8 +371,11 @@ ok("...naming how many of its holdings are NOT valued, so a partial figure canno
   [...notes.entries()].every(([id, n]) => {
     const valuedHere = FUNDS.filter((p) => p.accountId === id);
     const away = reportedElsewhere(id, new Set(valuedHere.map((p) => (p.isin ?? "").toUpperCase()))).length;
-    const rest = held(id) - valuedHere.length - away;
+    // Balances MOPWM's exchange trades sold to nil are not held (Stage 10iw).
+    const sold = blocks.filter((w) => w.accountId === id && (w.closing ?? 0) > 0 && !!soldSinceStatement(id, { isin: w.isin, quantity: w.closing })).length;
+    const rest = held(id) - valuedHere.length - away - sold;
     return (rest === 0 ? !/other holding/.test(n) : n.includes(`${rest} other holding`))
+      && (sold === 0 ? !/sold to nil/.test(n) : n.includes(`${sold} balance`))
       && (away === 0 ? !/more balance/.test(n) : n.includes(`${away} more balance`));
   }), [...notes.values()].join(" | ").slice(0, 400));
 ok("...and names how many of its funds are the family's cash",
@@ -425,7 +428,11 @@ ok("the committed corporate-action capture is on disk and well formed", validAct
 const CAPTURE = CAPTURE_RAW as ActionFeed;
 ok("with no feed, no share is a row — never at a zero or a guessed price",
   depositoryShareHoldings(null, CAPTURE).length === 0);
-const one = CAND[0];
+// A candidate the live layer still carries as the depository counted it, not
+// one MOPWM's exchange trades since sold to nil (Stage 10iw), and the only
+// candidate its symbol prices.
+const one = CAND.find((p) => shareCandidates().some((c) => c.accountId === p.accountId && c.isin === p.isin && !c.rolledForward)
+  && shareCandidates().filter((c) => c.symbol === p.symbol).length === 1)!;
 const feedOf = (sym: string, price: number): QuoteFeed => ({
   quotes: { [sym]: { price, prevClose: price / 1.01, open: null, dayLow: null, dayHigh: null, low52: null, high52: null,
     marketCap: null, volume: null, yearChangePct: null, ageS: 0, source: "upstox" } },
@@ -469,21 +476,28 @@ ok("a 1:2 split since the statement is projected: twice the units at the quote, 
 const rights = one?.symbol ? depositoryShareHoldings(tradedFeed(one.symbol, 250), withAction("rights", null)) : [];
 ok("an event the capture cannot state the units of — a rights issue — leaves the share no row",
   rights.length === 0, rights.map((p) => p.symbol).join("; "));
-// Except a share whose own record carries a sale after its statement (Stage
-// 10hu: Ankita's Axis Bank, ICICI Bank and SBI, sold 23 Sep per MOPWM's
-// transaction report): the gate withholds those by design, and only those.
+// Except a share whose own record carries a sale after its statement: the gate
+// withholds those by design, and only those. Ankita's Axis Bank, ICICI Bank and
+// SBI (Stage 10hu) were the subject; since Stage 10iw MOPWM's exchange trades
+// sell them to nil and they are no candidates at all.
 {
   const quotes: QuoteFeed["quotes"] = {};
   for (const p of shareCandidates()) if (p.symbol) quotes[p.symbol] = { ...feedOf(p.symbol, 100).quotes[p.symbol], tradedAt: "2026-09-25T09:30:00Z" };
   const all: QuoteFeed = { ...feedOf("X", 1), quotes };
   const id = (p: Position) => `${p.accountId}|${p.isin}`;
   const priced = new Set(depositoryShareHoldings(all, CAPTURE).map(id));
-  const quoted = shareCandidates().filter((p) => !!p.symbol);
+  // A share bought since on the adviser report's trades (Stage 10iw) may sit
+  // outside the committed capture, which the live capture is asked to cover.
+  const covered = (p: Position) => !CAPTURE.symbols || CAPTURE.symbols.includes(p.symbol ?? "") || CAPTURE.isins.includes((p.isin ?? "").toUpperCase());
+  ok("...every candidate outside the committed capture is a share bought after its statement",
+    shareCandidates().filter((p) => !!p.symbol && !covered(p)).every((p) => p.depositoryUnits?.kind === "adviser-trades"));
+  const quoted = shareCandidates().filter((p) => !!p.symbol && covered(p));
   const soldLater = quoted.filter((p) => (p.realizedLotsAfter ?? 0) > 0);
   ok("...and every candidate with no later sale passes the committed capture on a quote two days after it, so the gate is not what leaves this book's shares unvalued",
     quoted.every((p) => priced.has(id(p)) === !soldLater.includes(p)),
     `${priced.size} priced, ${soldLater.length} withheld for later sales: ${soldLater.map((p) => p.security).join(", ")}`);
-  ok("...and the book has such later sales, so the exception has a subject", soldLater.length > 0);
+  ok("...and the shares the adviser report sold to nil after their statement are no candidates",
+    ["INE238A01034", "INE090A01021", "INE062A01020"].every((i) => !shareCandidates().some((p) => p.isin === i && p.accountId.endsWith("1201090012838316"))));
 }
 const notesShare = partialValuationNotes([...FUNDS, ...priced]);
 const withShare = notesShare.get(one?.accountId ?? "") ?? "";
@@ -551,7 +565,8 @@ ok("...and the movement's price is never the price a candidate carries",
 ok("...and none carries a price, a cost or a NAV before a feed answers",
   NP.every((p) => p.currentPrice === null && p.costBasis === null && p.costUnavailable === true && !p.navPriced && p.marketValue === 0));
 ok("the page's list of what is not valued reads both routes' candidates",
-  shareCandidates().length === CAND.length + NP.length);
+  shareCandidates().length === [...CAND, ...NP].filter((p) => !soldSinceStatement(p.accountId, p)).length
+    + shareCandidates().filter((p) => p.depositoryUnits?.kind === "adviser-trades").length);
 // Gate 4, on a constructed case: the same units of the same ISIN under the SAME
 // owner in another account is one holding moved, not a second one.
 const ajayMain = "motilal-oswal-financial-services-demat-1201090012539150";
