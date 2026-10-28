@@ -10,7 +10,7 @@
    "metadata": null
   },
   "real-estate:cc6cd8e0-f614-4faf-bcb0-80e794bb388d": {
-   "value": "{\"id\":\"cc6cd8e0-f614-4faf-bcb0-80e794bb388d\",\"name\":\"\",\"address\":\"\",\"city\":\"\",\"state\":\"\",\"country\":\"India\",\"pincode\":\"\",\"tenant\":\"\",\"notes\":\"\",\"type\":\"\",\"status\":\"\",\"acquisition\":\"\",\"areaUnit\":\"sq ft\",\"titleStatus\":\"Not checked\",\"areaBasis\":\"\",\"cost\":100,\"value\":200,\"monthlyRent\":2,\"monthlyCosts\":null,\"debt\":null,\"monthlyEmi\":null,\"area\":null,\"priorCost\":null,\"fmv2001\":null,\"ruralAgricultural\":false,\"improvements\":[],\"purchasedOn\":\"2024-01-28\",\"priorAcquiredOn\":null,\"valuationDate\":\"2026-10-28\",\"leaseEnd\":null,\"owners\":[],\"earmark\":null,\"latitude\":null,\"longitude\":null,\"updatedAt\":\"2026-10-28T07:21:44.202Z\"}",
+   "value": "{\"id\":\"cc6cd8e0-f614-4faf-bcb0-80e794bb388d\",\"name\":\"\",\"address\":\"\",\"city\":\"\",\"state\":\"\",\"country\":\"India\",\"pincode\":\"\",\"tenant\":\"\",\"notes\":\"\",\"type\":\"\",\"status\":\"\",\"acquisition\":\"\",\"areaUnit\":\"sq ft\",\"titleStatus\":\"Not checked\",\"areaBasis\":\"\",\"cost\":100,\"value\":200,\"monthlyRent\":2,\"monthlyCosts\":null,\"debt\":null,\"monthlyEmi\":null,\"area\":null,\"priorCost\":null,\"fmv2001\":null,\"ruralAgricultural\":false,\"improvements\":[],\"purchasedOn\":\"2024-01-28\",\"priorAcquiredOn\":null,\"valuationDate\":\"2026-10-28\",\"leaseEnd\":null,\"owners\":[{\"ownerId\":\"ajay-jaisinghani\",\"name\":\"Ajay Jaisinghani\",\"share\":50},{\"ownerId\":\"ankita-jaisinghani\",\"name\":\"Ankita Jaisinghani\",\"share\":50}],\"earmark\":null,\"latitude\":null,\"longitude\":null,\"updatedAt\":\"2026-10-28T07:23:09.619Z\"}",
    "metadata": null
   },
   "tile-set:cio": {
