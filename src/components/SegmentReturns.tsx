@@ -121,7 +121,7 @@ export default function SegmentReturns({ selection: recordedSelection, period, o
     if (!a) return m;
     const sectorOf = (p: Position) => isCompanyShare(p) ? companySectors.get(p.securityKey)?.sector || UNCLASSIFIED_SECTOR : p.sector;
     const add = (l: SelectedLine) => m.set(l, lineHoldingFigures(l.positions, { wholeAccounts: wholeAccountsOf(l), inSession, sectorOf, ownerOf: p => ownerOf(idx, p) }));
-    for (const r of a.rows) { add(r); r.children.forEach(add); }
+    for (const r of a.rows) { add(r); for (const c of r.children) { add(c); c.children.forEach(add); } }
     add(a.total);
     return m;
   }, [a, companySectors, inSession, idx, wholeAccountsOf]);
@@ -179,15 +179,19 @@ export default function SegmentReturns({ selection: recordedSelection, period, o
     return whole && whole.every(id => idx.get(id)?.engagement === 'PMS') ? { accountIds: whole, isMandate: true } : { positions: l.positions };
   };
   const named = (xs: string[], noun: string) => xs.length === 1 ? xs[0] : xs.length ? `${xs.length} ${noun}` : null;
-  const rows = sortRows(a.rows, view.sort, withReviewAccessors<SelectedLine>({ seg: r => r.label, holdings: r => r.positions.length, value: r => r.value,
+  const accessors = withReviewAccessors<SelectedLine>({ seg: r => r.label, holdings: r => r.positions.length, value: r => r.value,
     weight: r => r.value, deployed: r => r.invested, gain: r => r.gain, market: r => marketOf(r.positions).pct, ret: r => r.returnPct, contrib: r => r.contribution,
     basis: r => r.units.some(u => u.assumption) ? 'Assumed held' : 'Statement records',
     qty: r => fig(r).quantity, avgCost: r => fig(r).avgCost, cmp: r => fig(r).price, day: r => fig(r).day.pct,
     investedOn: r => fig(r).investedOn?.first, cost: r => fig(r).costReason ? null : fig(r).cost.cost,
     pnl: r => fig(r).unrealised, realised: r => fig(r).realised,
-    sector: r => named(fig(r).sectors, 'sectors'), entity: r => named(fig(r).owners, 'entities') }, reviewScopeOf, memberScope.owners !== null));
-  const openable = a.rows.filter(r => r.children.length > 0);
-  const allOpen = openable.length > 0 && openable.every(r => exp.isOpen(r.key));
+    sector: r => named(fig(r).sectors, 'sectors'), entity: r => named(fig(r).owners, 'entities') }, reviewScopeOf, memberScope.owners !== null);
+  const rows = sortRows(a.rows, view.sort, accessors);
+  // An account under a segment opens into its holdings (Stage 10ik); its key names its parent too.
+  const childKey = (r: SelectedLine, c: SelectedLine) => `${r.key}::${c.key}`;
+  const openable = [...a.rows.filter(r => r.children.length > 0).map(r => r.key),
+    ...a.rows.flatMap(r => r.children.filter(c => c.children.length > 0).map(c => childKey(r, c)))];
+  const allOpen = openable.length > 0 && openable.every(k => exp.isOpen(k));
   const totalCaption = `${a.coveredHoldings} of ${current.length} holdings · ${money(a.coveredValue)} covered`;
 
   const info = (l: SelectedLine, field: 'gain' | 'return') => {
@@ -269,7 +273,7 @@ export default function SegmentReturns({ selection: recordedSelection, period, o
       subtitle="Gain and return use available statements plus labelled holding assumptions. Open the info button for shares, dates and missing records. Market return uses current portfolio weights."
       right={<div className="flex flex-wrap items-center justify-end gap-2 text-[12px]">
         {axisTabs}
-        {openable.length > 0 && <ExpandAllButton allOpen={allOpen} onClick={() => exp.setMany(openable.map(r => r.key), !allOpen)} />}
+        {openable.length > 0 && <ExpandAllButton allOpen={allOpen} onClick={() => exp.setMany(openable, !allOpen)} />}
         <EditColumns view={view} />
         <span ref={setTools} className="inline-flex" data-table-tools />
       </div>}>
@@ -304,9 +308,19 @@ export default function SegmentReturns({ selection: recordedSelection, period, o
             <TreeNameCell depth={0} title={r.label} open={r.children.length ? exp.isOpen(r.key) : undefined} onToggle={r.children.length ? () => exp.toggle(r.key) : undefined} toggleData={{ 'data-seg-toggle': r.key }} />
             {cells(r, 'parent')}
           </Tr>
-          {exp.isOpen(r.key) && r.children.map((c, i) => <Tr key={c.key} view={view} className={TREE_ROW.child} data-seg-child={r.key}>
-            <TreeNameCell depth={1} title={c.label} last={i === r.children.length - 1} />{cells(c, 'child')}
-          </Tr>)}
+          {exp.isOpen(r.key) && sortRows(r.children, view.sort, accessors).map((c, i, cs) => { const k = childKey(r, c), open = c.children.length > 0 && exp.isOpen(k);
+            return <Fragment key={c.key}>
+              <Tr view={view} className={TREE_ROW.child} data-seg-child={r.key} data-seg-child-key={c.key} data-seg-open={open ? '1' : '0'}
+                data-seg-value={c.value} data-seg-gain={c.gain ?? ''} data-seg-whole={c.units.some(u => u.key === u.accountId) ? '1' : '0'}
+                {...(c.children.length ? rowToggle(() => exp.toggle(k)) : {})}>
+                <TreeNameCell depth={1} title={c.label} last={i === cs.length - 1} open={c.children.length ? open : undefined}
+                  onToggle={c.children.length ? () => exp.toggle(k) : undefined} toggleData={{ 'data-seg-child-toggle': k }} />{cells(c, 'child')}
+              </Tr>
+              {open && sortRows(c.children, view.sort, accessors).map((h, j, hs) => <Tr key={h.key} view={view} className={TREE_ROW.child}
+                data-seg-holding={h.key} data-seg-holding-of={k} data-seg-value={h.value} data-seg-gain={h.gain ?? ''}>
+                <TreeNameCell depth={2} title={h.label} last={j === hs.length - 1} ancestorLast={i === cs.length - 1} />{cells(h, 'child')}
+              </Tr>)}
+            </Fragment>; })}
         </Fragment>)}</tbody>
         <tfoot className="border-t-2 border-ink-600"><TrFoot view={view} className={`${TREE_ROW.total} px-4 py-2.5 font-semibold`} data-seg-total
           label={<span className="text-slate-100">Total · available data<span data-attribution-total-coverage className="mt-1 block text-[11px] font-normal text-slate-400">{totalCaption}</span></span>}
