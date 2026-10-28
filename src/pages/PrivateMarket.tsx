@@ -2360,7 +2360,7 @@ export function PrivateMarket() {
 
         {(view === "funds" || view === "brands") && (
           <div className="overflow-x-auto" data-navigation-scroll="privatemarket-1">
-            <ExportableTable exportName={`Private Market — ${view === "brands" ? "By brand" : "By legal name"}`} className="min-w-full text-[13px]" data-pm-table={view}>
+            <ExportableTable editable exportName={`Private Market — ${view === "brands" ? "By brand" : "By legal name"}`} className="min-w-full text-[13px]" data-pm-table={view}>
               {allRows => <>
               <thead className="border-b border-ink-700">
                 <Tr view={bookView}>
@@ -2457,7 +2457,7 @@ export function PrivateMarket() {
 
         {view === "transactions" && (
           <div className="overflow-x-auto" data-navigation-scroll="privatemarket-2">
-            <ExportableTable exportName="Private Market — Transactions" className="min-w-full text-[13px]" data-pm-table="transactions">
+            <ExportableTable editable exportName="Private Market — Transactions" className="min-w-full text-[13px]" data-pm-table="transactions">
               <thead className="border-b border-ink-700">
                 <Tr view={callView}>
                   <SortHeader col="date" view={callView} align="left">Date</SortHeader>

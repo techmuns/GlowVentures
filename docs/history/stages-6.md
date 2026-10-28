@@ -647,7 +647,13 @@
 - A cell that cannot be worked out yet opens the same popup, names every input still to enter and offers Enter details, which closes it and opens the form (`ReturnCalculationInfo` children may be a function given `close`).
 - `check-real-estate.mjs` opens the popup for an inherited property and reads each step's figures, the value-after-tax result, the missing-input path and the unregistered-owner reason.
 
-### Stage 10it — PORTFOLIO LIBRARY: FILTER FOLDERS BY CATEGORY
+### Stage 10it — NUMBER INPUTS ONLY ON PORTFOLIO MONITOR, PRIVATE MARKET AND REAL ESTATE
+
+*"This upload or edit numbers only need to be in portfolio monitor and private market and real estate no where else … Morning CIO is a view for the user, not an edit place"* — the family, 28 Oct 2026 (Daily Movers, Return attribution, Sector Composition, Allocation & Risk named).
+- `ExportableTable`'s inputs are now opt-in: `editable` replaces `viewOnly`. Only the Portfolio Monitor holdings table, Private Market's book and Transactions tables and the Real Estate properties table take it. Every other table keeps Export Excel alone, exports the table without input sheets, and its workbook's About sheet names the three pages where numbers are edited. Stage 10hf's "every table" no longer holds.
+- `scripts/dev/check-table-inputs.mjs`: the stale-upload check runs on `/monitor` before leaving it; `/sectors` and `/cio?tab=allocation` assert Export Excel with no Edit numbers, All inputs or Upload Excel, and a view-only export carries no input sheets.
+
+### Stage 10iu — PORTFOLIO LIBRARY: FILTER FOLDERS BY CATEGORY
 
 - The family (28 Oct 2026): filter the Portfolio Library by the Portfolio Monitor's categories — All, Direct Equity, PMS mandates, ETF, Mutual Fund, AIF, Bond, Unlisted, Private investments at cost, Cash.
 - `deriveStatementSecurities` (`src/lib/ledgerModel.ts`) now gives each folder its `categories`, decided by `holdingBucket`: the book's positions for a security it holds, plus every statement row's printed class and its account's engagement (so an exited holding is still placed). A security the book holds at cost is at cost on every row. "Not classified by the statement" / "how it is held is not stated" are kept only when nothing else places a folder. A folder can sit in several (Ather Energy: Direct Equity and PMS mandates).
