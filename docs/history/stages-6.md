@@ -640,7 +640,14 @@
 - Only a row that is ONE folio types: a folio line, or a fund row with a single folio. A row over several folios stays their calculated sum. Its record is the one `<Tr>` tags for Edit numbers and Excel (`capitalRecordId`, `src/lib/capitalEntry.ts`), so a figure typed in place, in Edit numbers or in an uploaded Excel is one saved figure. Exports still print the figure, and Edit numbers still swaps in its own editor. `<Tr>` adds no "Edited" tag to a cell marked `data-cell-editor`.
 - `capitalEntry.test.ts` (89 folios typed into, 2 income-only views read-only; typed figures reach `figuresOf`) and `check-table-inputs.mjs` (type, save, refuse words, export, upload, remove) cover it. `check:pages ONLY=private-market,private-market-tiles` shows main's same seven findings.
 
-### Stage 10is — PORTFOLIO LIBRARY: FILTER FOLDERS BY CATEGORY
+### Stage 10is — REAL ESTATE: THE TAX COLUMNS EXPLAIN THEMSELVES; NO SEPARATE TAX SECTION
+
+*"we did not have to create a separate section for tax, we already show the tax columns in the main table, just make the tax columns on the main table show a pop up section after we click on it to see the explanation of tax calculation on the holdings."* — the family, 28 Oct 2026.
+- The "Tax if sold today" card of Stage 10ip is gone. Est. tax on sale and Value after tax in the Properties table are each a `ReturnCalculationInfo` trigger (`PropertyTaxInfo`, `src/components/PropertyTax.tsx`): the click opens the working for the share the cell shows — holding, current value − cost (indexed where 20% wins) = taxable gain, which rate and why (both rates where bought before 23 Jul 2024), gain × rate + 4% cess = tax, value − tax = value after tax — in whole rupees that add up to the cell. A mixed route shows each owner's sum. The five rules sit under "The rules".
+- A cell that cannot be worked out yet opens the same popup, names every input still to enter and offers Enter details, which closes it and opens the form (`ReturnCalculationInfo` children may be a function given `close`).
+- `check-real-estate.mjs` opens the popup for an inherited property and reads each step's figures, the value-after-tax result, the missing-input path and the unregistered-owner reason.
+
+### Stage 10it — PORTFOLIO LIBRARY: FILTER FOLDERS BY CATEGORY
 
 - The family (28 Oct 2026): filter the Portfolio Library by the Portfolio Monitor's categories — All, Direct Equity, PMS mandates, ETF, Mutual Fund, AIF, Bond, Unlisted, Private investments at cost, Cash.
 - `deriveStatementSecurities` (`src/lib/ledgerModel.ts`) now gives each folder its `categories`, decided by `holdingBucket`: the book's positions for a security it holds, plus every statement row's printed class and its account's engagement (so an exited holding is still placed). A security the book holds at cost is at cost on every row. "Not classified by the statement" / "how it is held is not stated" are kept only when nothing else places a folder. A folder can sit in several (Ather Energy: Direct Equity and PMS mandates).
