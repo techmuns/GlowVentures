@@ -19,6 +19,8 @@ import { accountIndex, ownerOf, engagementOf } from "@/lib/accounts";
 import { useStockExposure } from "@/lib/useStockExposure";
 import { sectorSets, emptySector, type SectorRow } from "@/lib/sectorRollup";
 import { SectorReturnDetails } from "@/components/SectorReturnDetails";
+import { hasSectorReturnCost } from "@/lib/sectorReturnCoverage";
+import { fifoTotals } from "@/lib/fifo";
 import { companySymbol, type CompanyExposure } from "@/lib/lookthrough";
 import { isArbitrageFund } from "@/lib/fundNavs";
 import { UNCLASSIFIED, GICS_SECTORS } from "@/lib/sectors";
@@ -46,9 +48,29 @@ const SECTOR_COLS_VS = ["sector", "value", "weight", "index", "active", "count",
  * measured half split by who chose the shares — the family's own account, a
  * PMS manager — beside the derived fund half, so the three never read as one.
  */
-const SECTOR_COMPANY_COLS = ["company", "direct", "pms", "derived", "total", "share"] as const;
-const SECTOR_COMPANY_COLS_OTHER = ["company", "direct", "pms", "other", "derived", "total", "share"] as const;
+const SECTOR_COMPANY_COLS = ["company", "direct", "pms", "derived", "total", "share", "return"] as const;
+const SECTOR_COMPANY_COLS_OTHER = ["company", "direct", "pms", "other", "derived", "total", "share", "return"] as const;
 const SECTOR_HOLDING_COLS = ["security", "entity", "heldVia", "value", "share", "return"] as const;
+/**
+ * AN ISSUER'S RETURN, STRUCK AS ITS SECTOR'S IS (`rollSectors`): FIFO over the
+ * family's own holdings of it that report a cost, the cell naming that set. The
+ * derived fund half carries no cost, so an issuer held only through funds is
+ * absent with its reason, never a zero.
+ */
+function issuerReturn(e: CompanyExposure): { pct: number | null; why: string | null } {
+  const costed = e.positions.filter(hasSectorReturnCost);
+  const fifo = fifoTotals(costed);
+  const pct = costed.length > 0 && fifo.returnPct !== null ? fifo.returnPct : null;
+  return {
+    pct,
+    why: pct !== null ? null
+      : e.positions.length === 0
+        ? "The family holds this issuer only inside their funds, and a fund's disclosure carries no cost — there is nothing to strike a return against."
+        : costed.length === 0
+          ? "No holding of this issuer reports a cost — a depository statement carries a value and no basis, so there is nothing to strike a return against."
+          : "The holdings of this issuer that report a cost carry no capital deployed to strike a return against.",
+  };
+}
 /** Why an issuer's route cell is empty when a statement does report it — through the other route. */
 const ROUTE_ABSENT: Record<"direct" | "manager" | "other", string> = {
   direct: "No own demat or broking statement reports this issuer — the statements that do are the other accounts on this row.",
@@ -1250,6 +1272,7 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
                       derived: (e) => (e.derived > 0 ? e.derived : null),
                       total: (e) => e.total,
                       share: (e) => e.total,
+                      return: (e) => issuerReturn(e).pct,
                     });
                     /* A sector only the index holds has nothing to open into. */
                     const indexOnlyRow = s.count === 0;
@@ -1377,7 +1400,10 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
                                         </td>
                                       );
                                       return (
-                                    <ExportableTable className="min-w-full text-[12px]" data-sector-companies>
+                                    <ExportableTable className="min-w-full text-[12px]" data-sector-companies
+                                      /* No Export / Edit / Upload bar inside an opened sector (28 Oct 2026): the
+                                         sector table's own Export Excel still carries these rows. */
+                                      controlsHost={null}>
                                       <thead className="sticky top-0 bg-ink-800">
                                         <Tr view={companyView} className="border-b border-ink-700/70">
                                           <SortHeader col="company" view={companyView} align="left" pad="px-3 py-1.5">Issuer</SortHeader>
@@ -1388,6 +1414,7 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
                                             title="DERIVED, not a position: the AMC disclosed what the fund holds and this is the family's units' share of it. It is no part of the book's NAV — the fund's own value already stands for it there.">Via funds · derived</SortHeader>
                                           <SortHeader col="total" view={companyView} pad="px-3 py-1.5">Total exposure</SortHeader>
                                           <SortHeader col="share" view={companyView} pad="px-3 py-1.5">% of sector</SortHeader>
+                                          <SortHeader col="return" view={companyView} pad="px-3 py-1.5">Return</SortHeader>
                                         </Tr>
                                       </thead>
                                       <tbody className="divide-y divide-ink-700/50">
@@ -1414,6 +1441,16 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
                                             <td className="px-3 py-1.5 text-right mono text-slate-400">
                                               {s.mv > 0 ? ((e.total / s.mv) * 100).toFixed(1) : "0.0"}%
                                             </td>
+                                            {(() => {
+                                              const r = issuerReturn(e);
+                                              return (
+                                                <td className={`px-3 py-1.5 text-right mono whitespace-nowrap ${changeColor(r.pct)}`} data-company-return={r.pct ?? ""}>
+                                                  <SectorReturnDetails sector={e.name} noun="issuer" positions={e.positions} accounts={accIdx}
+                                                    returnPct={r.pct} reason={r.why} fundValue={e.derived}
+                                                    live={e.positions.some(p => p.live)} money={money} />
+                                                </td>
+                                              );
+                                            })()}
                                           </Tr>
                                           );
                                         })}
@@ -1434,13 +1471,19 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
                                             </td>,
                                             total: <td key="total" className={`${footCls} font-medium text-slate-100`} data-sector-foot="total">{fmtFromBase(footTotal, { compact: true })}</td>,
                                             share: <td key="share" className={`${footCls} text-slate-400`} data-sector-foot="share">{s.mv > 0 ? ((footTotal / s.mv) * 100).toFixed(1) : "0.0"}%</td>,
+                                            return: <td key="return" className={`${footCls} ${changeColor(s.returnPct)}`} data-sector-foot="return">
+                                              <SectorReturnDetails sector={s.key} positions={s.positions} accounts={accIdx}
+                                                returnPct={s.returnPct} reason={s.returnWhy}
+                                                fundValue={Math.max(0, s.mv - s.costedMV - s.uncostedMV)}
+                                                live={s.positions.some(p => p.live)} money={money} />
+                                            </td>,
                                           }} />
                                       </tfoot>
                                     </ExportableTable>
                                       );
                                     })()
                                   ) : (
-                                    <ExportableTable className="min-w-full text-[12px]">
+                                    <ExportableTable className="min-w-full text-[12px]" controlsHost={null}>
                                       <thead className="sticky top-0 bg-ink-800">
                                         <Tr view={holdingView} className="border-b border-ink-700/70">
                                           <SortHeader col="security" view={holdingView} align="left" pad="px-3 py-1.5">Security</SortHeader>
