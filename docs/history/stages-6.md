@@ -586,6 +586,13 @@
 - `SEGMENT_AXES` / `SEGMENT_VIEWS` put All Securities first, so it is the param-free default; `?seg=category` still lands on Category.
 - Checks: `selectedSegmentReturns.test.ts` (whole-account dashes, per-holding gains with an exit, every period × axis on the archive); `check:pages` `SEG_AXES` order and default, and route `cio-returns-category` with `CIO_SEGMENT_HOLDINGS` (opens a segment and an account; names, values and gains add).
 
+### Stage 10il — HOLDING PAGE: THE TOTALS STAY PINNED WHILE THE ROWS SCROLL
+
+- The family asked (28 Oct 2026) to *"freeze the last rows in the table so that, as I scroll the table, they are always visible"* on a holding's Position by account table.
+- Its `<tfoot>` (`data-held-foot-pinned`) is `sticky bottom-0` on an opaque card surface, inside the table's own scroll box that already pins the header; the Total, Inside your mutual funds and Total exposure lines stay in view with every column.
+- That box alone was 36rem, taller than the panel on a laptop window, so the pinned footer sat below the fold (Codex review). On the Position tab the panel, section and card are now a desktop flex column (`min-h-0`, the Polycab card's shape): the box shrinks to the visible panel before the panel scrolls.
+- `check:pages` (`heldChecks`): the `heldTable` probe's `pin` resizes to a real `HELD_PIN_H` (640px) window, puts the panel and box at their top, and requires the sticky footer inside the panel. It fails on main and on the first, box-only fix (`stock-held`, `stock-held-funds`, `stock-funds-only`) and passes now; the other light-mode findings on those routes and on `stock` are on main too.
+
 ### Stage 10im — STOCK PAGE: PRICE & RETURNS AND RESEARCH LOAD AHEAD
 
 - The family asked (28 Oct 2026) for a stock's Price & returns and Research tabs to load much faster. Both fetched only on click, from cold, every visit.
