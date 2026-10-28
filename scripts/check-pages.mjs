@@ -407,6 +407,38 @@ function fundNavStore() {
  * (`custodyPredecessors`, `custodyEvidence`), never imported: one verified
  * successor of the same owner and ISIN, dated after the balance, or none.
  */
+/**
+ * ── A DEPOSITORY ROW'S COST, RECOVERED FROM THE FAMILY'S OWN RECORDS ─────────
+ *
+ * `PortfolioContext`'s depository rows carry a cost wherever `build-book`
+ * reconciled one from the family's review or register to the exact account,
+ * ISIN and units (`BOOK_RECOVERED_COSTS`, applied by `shared/recoveredCosts.mjs`;
+ * Stage 10hu). A model without it counted 29 of the Monitor's costed holdings
+ * as costless, and every footer and coverage check on the page disagreed with a
+ * page that was right. Re-expressed, never imported: one record of the same
+ * account, ISIN and source units, with a positive cost, or none. Its unverified
+ * sale proceeds (`hprUnavailableReason`) travel with it.
+ */
+function withRecoveredCost(row, sourceQuantity, records) {
+  if (row.costBasis != null || !Array.isArray(records)) return row;
+  const isin = row.isin ? String(row.isin).trim().toUpperCase() : null;
+  const r = records.find((x) => x.accountId === row.accountId && String(x.isin ?? "").trim().toUpperCase() === isin
+    && typeof sourceQuantity === "number" && Math.abs(x.quantity - sourceQuantity) <= 0.0005
+    && Number.isFinite(x.costBasis) && x.costBasis > 0 && x.quantity > 0);
+  if (!r) return row;
+  const realizedPnL = row.realizedPnL ?? r.realizedPnL ?? null;
+  const costOfUnitsSold = row.costOfUnitsSold ?? r.costOfUnitsSold ?? null;
+  const dividendReceived = row.dividendReceived ?? r.dividendReceived ?? null;
+  const unrealizedPnL = row.marketValue > 0 ? row.marketValue - r.costBasis : null;
+  const deployed = r.costBasis + (costOfUnitsSold ?? 0);
+  return { ...row, costBasis: r.costBasis, avgCost: r.costBasis / row.quantity, costUnavailable: false,
+    recoveredCost: r, acquisitionQuantity: sourceQuantity,
+    realizedPnL, costOfUnitsSold, dividendReceived, unrealizedPnL,
+    ...(r.hprUnavailableReason ? { hprUnavailableReason: r.hprUnavailableReason } : {}),
+    returnPct: unrealizedPnL === null || r.hprUnavailableReason ? null
+      : ((unrealizedPnL + (realizedPnL ?? 0) + (dividendReceived ?? 0)) / deployed) * 100 };
+}
+
 function custodySucceeded(holding, accounts, positions) {
   const acc = new Map(accounts.map((a) => [a.accountId, a]));
   const old = acc.get(holding.accountId);
@@ -420,6 +452,7 @@ function custodySucceeded(holding, accounts, positions) {
 
 function withDepositoryFunds(src, positions) {
   const accounts = bookArray(src, "BOOK_ACCOUNTS");
+  const recovered = bookArray(src, "BOOK_RECOVERED_COSTS");
   const movements = bookObject(src, "BOOK_SHARE_MOVEMENTS");
   const store = fundNavStore();
   if (!Array.isArray(accounts) || !movements || !Array.isArray(store) || !CASH_EQ_KEYS) return [];
@@ -443,14 +476,14 @@ function withDepositoryFunds(src, positions) {
     const securityKey = book?.securityKey ?? w.securityKey;
     if (!CASH_EQ_KEYS.has(securityKey) && /\bETFs?\b/i.test(nav.category ?? "")) continue;
     if (positions.some((p) => p.isin?.trim().toUpperCase() === isin && Math.abs(Number(p.quantity) - w.closing) < 0.0005)) continue;
-    out.push({
+    out.push(withRecoveredCost({
       securityKey, security: book?.security ?? w.security ?? securityKey, isin: w.isin,
       accountId: w.accountId, sector: book?.sector ?? "Unclassified",
       assetClass: /\bETFs?\b/i.test(nav.category ?? "") ? "ETF" : (book?.assetClass ?? "Mutual Fund"),
       marketSide: "listed", quantity: w.closing, marketValue: w.closing * nav.nav, currentPrice: nav.nav,
       costBasis: null, costUnavailable: true, unrealizedPnL: null, returnPct: null, avgCost: null,
       navPriced: true, navDate: nav.date, depositoryUnits: { asOf: w.periodTo ?? null, source: w.source ?? null },
-    });
+    }, w.closing, recovered));
   }
   return out;
 }
@@ -484,6 +517,7 @@ function withDepositoryFunds(src, positions) {
  */
 function withUnpricedStatementUnits(src, positions) {
   const unvalued = bookArray(src, "BOOK_UNVALUED_HOLDINGS");
+  const recovered = bookArray(src, "BOOK_RECOVERED_COSTS");
   const accounts = bookArray(src, "BOOK_ACCOUNTS");
   const store = fundNavStore();
   if (!Array.isArray(unvalued) || !Array.isArray(accounts) || !Array.isArray(store)) return [];
@@ -534,7 +568,7 @@ function withUnpricedStatementUnits(src, positions) {
     if (positions.some((p) => I(p) === isin && Math.abs(Number(p.quantity) - qty) < 0.0005
       && ownerOf(p.accountId) === owner)) continue;                                              // 7
     const book = positions.find((p) => p.securityKey === u.securityKey);
-    out.push({
+    out.push(withRecoveredCost({
       securityKey: u.securityKey, security: book?.security ?? u.security ?? u.securityKey, isin: u.isin,
       symbol: book?.symbol ?? keyToSymbol[u.securityKey] ?? null,
       accountId: u.accountId, sector: book?.sector ?? "Unclassified",
@@ -546,7 +580,7 @@ function withUnpricedStatementUnits(src, positions) {
         ? { asOf: u.asOf, source: null, kind: "last-movement", lastMovementRate: ownRate,
           lastMovementDate: u.lastMovementDate ?? null, lastMovementSide: u.lastMovementSide ?? null }
         : { asOf: u.asOf, source: null, kind: "no-rate", witnessAccountId },
-    });
+    }, qty, recovered));
   }
   return out.sort((a, b) => b.marketValue - a.marketValue);
 }
@@ -12893,7 +12927,7 @@ const CASH_INSTRUCTION_BOOK = (() => {
     if (!Array.isArray(positions) || !Array.isArray(accounts) || !Array.isArray(store) || !CASH_EQ_KEYS) return null;
     const engagement = new Map(accounts.map((a) => [a.accountId, a.engagement]));
     const small = smallKeysOf(positions);
-    const closed = (p) => FUND_VEHICLE_CLASSES.has(p.assetClass) && Number(p.quantity) === 0 && p.currentPrice != null;
+    const closed = (p) => FUND_VEHICLE_CLASSES.has(p.assetClass) && Number(p.quantity) === 0 && (p.currentPrice != null || p.marketValue === 0);
     const current = positions.filter((p) => !closed(p) && !small.has(p.securityKey));
     const arbKeys = new Set(), arbIsins = new Set();
     for (const e of store) {
@@ -13202,11 +13236,19 @@ const INVESTED_ON_BOOK = (() => {
       called.add(`${c.accountId}|${money[0].securityKey}`);
       calledAccounts.push(c.accountId);
     }
+    // RECONCILED SURVIVING PURCHASE LOTS (`investedOn.ts`'s "recovered-lots"):
+    // the record's own account, ISIN and units, never lent to another balance —
+    // a rolled-forward line (Yash) holds fewer units than its record and stays undated.
+    const recoveredLots = (p) => {
+      const r = p.recoveredCost;
+      return !!r?.heldPurchases && r.accountId === p.accountId && r.isin === p.isin
+        && Math.abs(r.quantity - (p.acquisitionQuantity ?? p.quantity)) <= 0.0005;
+    };
     const datedLine = (p) => {
       const own = tranches[`${p.accountId}|${p.securityKey}`];
       const ins = (own?.moves ?? []).filter((m) => m.direction === "in");
       return Boolean(ins.length || p.heldSince || called.has(`${p.accountId}|${p.securityKey}`)
-        || p.tradeRecord?.held || p.investedDates);
+        || p.tradeRecord?.held || recoveredLots(p) || p.investedDates);
     };
     // The lines a SECURITY row is built from: current (a closed position and a
     // sub-₹1,000 speck are not rows), each `dedupeGroup` once, and no mandate's.
@@ -13227,7 +13269,16 @@ const INVESTED_ON_BOOK = (() => {
     }
     const dated = new Set();
     for (const [k, xs] of byKey) if (xs.every(datedLine)) dated.add(k);
-    return { keys: [...dated], calledAccounts };
+    // THE REVIEW'S OWN PRODUCT RANGES — the starts of every "Investment date /
+    // range" it records (`src/data/reviewColumns.ts`). The page shows one on a
+    // row nothing else dates, labelled "review" (`reviewedInvestmentDates`), and
+    // it must be one the review actually prints.
+    const reviewStarts = new Set();
+    try {
+      const rv = readFileSync(new URL("../src/data/reviewColumns.ts", import.meta.url), "utf8");
+      for (const m of rv.matchAll(/"investmentRange": \{[^}]*?"from": "([\d-]+)"/g)) reviewStarts.add(m[1]);
+    } catch { /* none — every review-labelled cell then fails */ }
+    return { keys: [...dated], calledAccounts, reviewStarts: [...reviewStarts] };
   } catch { return null; }
 })();
 
@@ -13625,6 +13676,11 @@ const MONITOR_BASIS_BOOK = (() => {
         if (all.length && all.every((p) => keys.has(p.securityKey))) whole.add(id);
       }
       let gain = 0, deployed = 0, realised = null;
+      // UNVERIFIED SALE PROCEEDS WITHHOLD THE SET'S REALISED AND ITS RETURN
+      // (CLAUDE.md, "the review is the source of the private book"): a costed
+      // holding outside a whole mandate, not held at cost, carrying
+      // `hprUnavailableReason` — `fifoTotals`' own gate, written out again.
+      const withheld = new Set();
       const mmv = new Map(), mcost = new Map();
       for (const p of set) {
         if (whole.has(p.accountId)) {
@@ -13633,6 +13689,7 @@ const MONITOR_BASIS_BOOK = (() => {
           continue;
         }
         if (!costed(p)) continue;
+        if (p.hprUnavailableReason && p.valuedAtCost !== true) withheld.add(p.hprUnavailableReason);
         gain += p.marketValue - p.costBasis + (num(p.realizedPnL) ? p.realizedPnL : 0) + (num(p.dividendReceived) ? p.dividendReceived : 0);
         deployed += p.costBasis + (num(p.costOfUnitsSold) ? p.costOfUnitsSold : 0);
         if (num(p.realizedPnL)) realised = (realised ?? 0) + p.realizedPnL;
@@ -13648,7 +13705,8 @@ const MONITOR_BASIS_BOOK = (() => {
       // as excluding exited names) — `exitsInto`, the rule written out once.
       const x = exitsInto(set, exits, whole, acc, current);
       gain += x.gain; deployed += x.deployed;
-      return { pct: deployed > 0 ? (gain / deployed) * 100 : null, realised, whole: whole.size, exits: x };
+      if (withheld.size) return { pct: null, realised: null, whole: whole.size, exits: x, withheld: [...withheld].sort() };
+      return { pct: deployed > 0 ? (gain / deployed) * 100 : null, realised, whole: whole.size, exits: x, withheld: [] };
     };
     const setOf = (xs, exits = []) => {
       const c = xs.filter(costed);
@@ -13659,7 +13717,10 @@ const MONITOR_BASIS_BOOK = (() => {
       return { holdings: xs.length, costedCount: c.length, bookValue: total(xs), costedValue: total(c),
         struckCount: struck.length, struckValue: total(struck), atCost: c.length - struck.length,
         ret: fifo(struck, exits).pct, survivorsRet: fifo(struck).pct, exits: fifo(struck, exits).exits,
-        realised: fifo(xs).realised, whole: fifo(xs).whole };
+        realised: fifo(xs).realised, whole: fifo(xs).whole,
+        // THE REASONS THE SET'S RETURN AND REALISED ARE WITHHELD, from the book —
+        // empty where nothing in it withholds them.
+        withheld: fifo(xs).withheld };
     };
     const companies = ded.filter((p) => p.assetClass === "Equity");
     const stmts = gains.filter((c) => c.realisedST != null || c.realisedLT != null);
@@ -13779,10 +13840,23 @@ const MONITOR_BASIS_BOOK = (() => {
  * footer, set line, face or hover is a FAILURE: these routes draw rows, so a
  * footer that lost a handle is the regression, not a reason to stand down.
  */
+/**
+ * …AND WHERE THE BOOK WITHHOLDS THEM, THE DASH SAYS WHY. A costed holding with
+ * unverified sale proceeds (`hprUnavailableReason` — Yash Highvoltage, the
+ * ICICI Prudential Equity Savings units on Ajay's demat) withholds the realised
+ * and the return of every set it is in, so the footer's two cells are dashes.
+ * Each must carry every reason the BOOK gives (`MONITOR_BASIS_BOOK…withheld`),
+ * so a dash for any other cause — or none — still fails.
+ */
+const withheldNamed = (reasons, cell) => !!cell && cell.face === "—" && reasons.every((r) => (cell.title ?? "").includes(r));
+/** Whether the footer's return dash is the book's withheld one, on the set this axis strikes. */
+const footWithheld = (ctx) => !!ctx?.monitorFoot?.returnWithheld
+  && (MONITOR_BASIS_BOOK?.sets?.[ctx?.axisControl?.active === "security" ? "companies" : "all"]?.withheld?.length ?? 0) > 0;
 const footBasisChecks = (setKey) => [
   [`the footer's whole-book return names the holdings it is struck over — in its hover, only the figure on its face (${setKey})`, (t, ctx) => {
     const b = MONITOR_BASIS_BOOK?.sets?.[setKey];
     const f = ctx?.monitorFoot;
+    if (b?.withheld?.length) return !f?.returnSet && withheldNamed(b.withheld, f?.returnWithheld);
     if (!b || !f?.returnSet) return false;
     // ONLY THE FIGURE ON THE FACE (Stage 10dn). The cell renders the
     // percentage and nothing else; the set sentence rides the attribute and
@@ -13802,6 +13876,7 @@ const footBasisChecks = (setKey) => [
   [`…and the figure is FIFO over exactly those holdings, re-derived from the book (${setKey})`, (t, ctx) => {
     const b = MONITOR_BASIS_BOOK?.sets?.[setKey];
     const f = ctx?.monitorFoot;
+    if (b?.withheld?.length) return b.ret === null && withheldNamed(b.withheld, f?.returnWithheld);
     if (!b || b.ret === null || !f?.returnText) return false;
     const pct = signedPctOf(f.returnText);
     // SINCE INCEPTION, NOT SINCE SURVIVAL (Stage 10fz): where the book's exits
@@ -13820,6 +13895,7 @@ const footBasisChecks = (setKey) => [
     // leaking back onto the cell is the regression.
     if (f.realisedCellText !== null && !/^(—|[+\-−]?₹[\d,.]+\s*(Cr|L|K)?)$/.test(f.realisedCellText)) return false;
     const v = f.realised === null ? null : Number(f.realised);
+    if (b.withheld?.length) return v === null && withheldNamed(b.withheld, f.realisedWithheld);
     if (b.realised === null) return v === null;
     return v !== null && Number.isFinite(v) && Math.abs(v - b.realised) <= 1;
   }],
@@ -13827,6 +13903,8 @@ const footBasisChecks = (setKey) => [
     const b = MONITOR_BASIS_BOOK?.sets?.[setKey];
     const st = MONITOR_BASIS_BOOK?.statements;
     const f = ctx?.monitorFoot;
+    // Withheld, the cell carries no basis to name — its dash names the book's reason.
+    if (b?.withheld?.length) return withheldNamed(b.withheld, f?.realisedWithheld);
     if (!b || !st || !f?.realisedFace || !f?.realisedNote) return false;
     const face = setKey === "companies" ? /^names still held · statement windows$/i.test(f.realisedFace)
       : b.whole ? new RegExp(String.raw`^incl\. ${b.whole} mandates? since inception · excl\. names exited outside (it|them)$`, "i").test(f.realisedFace)
@@ -13855,6 +13933,9 @@ const footBasisChecks = (setKey) => [
     const f = ctx?.monitorFoot;
     const rows = ctx?.monitorMember?.rows;
     if (!f || !rows?.length) return false;
+    const w = MONITOR_BASIS_BOOK?.sets?.[setKey]?.withheld ?? [];
+    if (w.length) return withheldNamed(w, f.realisedWithheld)
+      ? notChecked(`the book withholds this set's realised (${w.join("; ")}), so the rows have no footer figure to add to`) : false;
     const vals = rows.map((r) => (r.realised === null || r.realised === "" ? null : Number(r.realised)));
     const known = vals.filter((v) => v !== null);
     if (f.realised === null) return known.length === 0;
@@ -13868,6 +13949,10 @@ const SECTION_REALISED = [
     if (gate) return gate;
     const ct = ctx.categoryTotals;
     const known = ct.rows.map((r) => r.realised).filter((v) => v !== null);
+    if (ct.footer.realisedWithheld) {
+      const w = MONITOR_BASIS_BOOK?.sets?.all?.withheld ?? [];
+      return w.length ? notChecked(`the book withholds the footer's realised (${w.join("; ")}), so the sections have no figure to add to`) : false;
+    }
     if (ct.footer.realised === null) return known.length === 0;
     return known.every(Number.isFinite) && Math.abs(known.reduce((a, v) => a + v, 0) - ct.footer.realised) <= 1;
   }],
@@ -21583,7 +21668,7 @@ const RETURN_COLUMNS = [
       const onCost = (h) => /^(Return|HPR)$/i.test(h.label);
       for (const h of head) {
         const cell = String(foot[h.headIndex] ?? "").trim();
-        if (onCost(h)) { if (!FOOT_RETURN_CELL.test(cell)) return false; }
+        if (onCost(h)) { if (!FOOT_RETURN_CELL.test(cell) && !(cell === "—" && footWithheld(ctx))) return false; }
         // A DASH, and never a percentage: a rate under a heading that cannot
         // strike one is the whole defect this asserts against.
         else if (cell !== "—") return false;
@@ -32376,9 +32461,16 @@ const INVARIANTS = {
       if (!rows?.length) return { notChecked: "the table was not captured on this run" };
       if (!INVESTED_ON_BOOK) return { notChecked: "the book could not be read" };
       const dated = new Set(INVESTED_ON_BOOK.keys);
+      const reviewStarts = new Set(INVESTED_ON_BOOK.reviewStarts ?? []);
       const undated = rows.filter((r) => r.securityKey && !dated.has(r.securityKey));
       if (!undated.length) return { notChecked: "every holding on screen carries a date" };
-      return undated.every((r) => !/\d/.test(String(r.cells?.[COL.investedOn] ?? "")));
+      // A dash — or the family review's own range for the product, labelled
+      // "review" on its face and starting on a date the review prints.
+      return undated.every((r) => {
+        const cell = String(r.cells?.[COL.investedOn] ?? "");
+        if (!/\d/.test(cell)) return true;
+        return r.investedSources === "review" && /review$/.test(cell.trim()) && reviewStarts.has(r.investedOn ?? "");
+      });
     }],
 
     ["the pick-list is of holdings, not of companies",
@@ -32429,7 +32521,7 @@ const INVARIANTS = {
       return cells.length >= 3
         && cells[cells.length - 1].trim() === ""
         && cells[cells.length - 2].trim() === ""
-        && FOOT_RETURN_CELL.test(cells[cells.length - 3].trim());
+        && (FOOT_RETURN_CELL.test(cells[cells.length - 3].trim()) || (cells[cells.length - 3].trim() === "—" && footWithheld(ctx)));
     }],
     /**
      * ── DENSITY, MEASURED RATHER THAN DESCRIBED ─────────────────────────────
@@ -38087,6 +38179,21 @@ for (const theme of THEMES) {
       // separately enforce bounded default rendering and test page navigation.
       const allTableRows = async () => {
         for (const pick of await page.getByLabel("Rows per page", { exact: true }).all()) await pick.selectOption("all");
+        // A LONG TABLE NOW LOADS 50 ROWS AT A TIME (`InfiniteTableBody`), and a
+        // reader scrolls to see the rest; the "Rows per page" pick above no
+        // longer exists, so without this every check on a long table read its
+        // first 50 rows — the Monitor's Cash and at-cost sections were never
+        // drawn. Pressed in the DOM rather than by a pointer click, which would
+        // scroll the table and move what the geometry checks measure.
+        for (let round = 0; round < 400; round++) {
+          const pressed = await page.evaluate(() => {
+            const more = [...document.querySelectorAll('button[aria-label="Load more table rows"]')];
+            for (const b of more) b.click();
+            return more.length;
+          }).catch(() => 0);
+          if (!pressed) break;
+          await page.waitForTimeout(40);
+        }
       };
       await installReadModelRoutes(page);
       // The web-font CDN is unreachable from this sandbox and blocks `load` for
@@ -41129,6 +41236,7 @@ for (const theme of THEMES) {
           sectorWhy: tr.querySelector("[data-sector]")?.getAttribute("title") ?? null,
           // THE DATE THE ROW'S INVESTED ON CELL DREW (Stage 10fm), off its handle.
           investedOn: tr.querySelector("td[data-invested-on]")?.getAttribute("data-invested-on") ?? null,
+          investedSources: tr.querySelector("td[data-invested-on] [data-invested-sources]")?.getAttribute("data-invested-sources") ?? null,
           /**
            * WHETHER THE ROW'S PRICE SAYS ITS QUOTE WAS HELD BACK (DL-9), off the
            * marker's own handle rather than its words, and which account a
@@ -41220,6 +41328,15 @@ for (const theme of THEMES) {
           realisedFace: basis?.getAttribute("data-realised-face") ?? null,
           realisedNote: basis?.getAttribute("title") ?? null,
           realisedCellText: realisedCell ? (realisedCell.innerText ?? "").replace(/\s+/g, " ").trim() : null,
+          // …AND WHERE THE BOOK WITHHOLDS THEM, the dash and the reason it gives.
+          returnWithheld: (() => {
+            const td = f.querySelector("td[data-footer-return-withheld]");
+            return td ? { face: (td.innerText ?? "").trim(), title: td.querySelector("[title]")?.getAttribute("title") ?? "" } : null;
+          })(),
+          realisedWithheld: (() => {
+            const td = f.querySelector("td[data-realised-withheld]");
+            return td ? { face: (td.innerText ?? "").trim(), title: td.querySelector("[title]")?.getAttribute("title") ?? "" } : null;
+          })(),
           rows: document.querySelectorAll("tbody tr[data-bucket]").length,
         };
       });
@@ -42204,7 +42321,9 @@ for (const theme of THEMES) {
           paid: Number(el.getAttribute("data-cost-gross")),
           printed: el.hasAttribute("data-cost-gross-printed") ? Number(el.getAttribute("data-cost-gross-printed")) : null,
           text: (el.innerText ?? "").trim(),
-          title: el.getAttribute("title") ?? el.querySelector("[title]")?.getAttribute("title") ?? null,
+          // THE FIGURE'S OWN HOVER, not the source-trace button wrapped round it
+          // since the 26 Oct instruction ("Trace … to its sources").
+          title: el.getAttribute("title") ?? (el.querySelector("[title]:not([data-source-metric])") ?? el.querySelector("[title]"))?.getAttribute("title") ?? null,
         })),
         tile: (() => {
           const el = document.querySelector("[data-stock-cost-gross]");
@@ -42217,7 +42336,7 @@ for (const theme of THEMES) {
           paid: Number(el.getAttribute("data-cost-carried")),
           printed: el.hasAttribute("data-cost-printed") ? Number(el.getAttribute("data-cost-printed")) : null,
           text: (el.innerText ?? "").trim(),
-          title: el.getAttribute("title") ?? el.querySelector("[title]")?.getAttribute("title") ?? null,
+          title: el.getAttribute("title") ?? (el.querySelector("[title]:not([data-source-metric])") ?? el.querySelector("[title]"))?.getAttribute("title") ?? null,
         })),
         tile: (() => {
           const el = document.querySelector("[data-stock-cost-carried]");
@@ -42378,6 +42497,7 @@ for (const theme of THEMES) {
           // than at the compact precision their text prints (MH-05).
           const rz = tr.querySelector("td[data-realised]")?.getAttribute("data-realised");
           const realised = rz == null || rz === "" ? null : Number(rz);
+          const realisedWithheld = !!tr.querySelector("td[data-realised-withheld]");
           // ── AND WHAT IS HELD AT COST, OFF THE ROW ITSELF (Stage 10dh) ───────
           //
           // A review line held at cost is value no gain is struck on, so the page
@@ -42388,7 +42508,7 @@ for (const theme of THEMES) {
           const ac = tr.getAttribute("data-cat-atcost");
           const acn = tr.getAttribute("data-cat-atcost-n");
           return {
-            text, title, capital, costHeld, realised,
+            text, title, capital, costHeld, realised, realisedWithheld,
             // A holding whose sale cash is unverified refuses the pooled return (Stage 10hb).
             hprUnverified: tr.hasAttribute("data-cat-hpr-unverified"),
             atCost: ac == null || ac === "" ? 0 : Number(ac),

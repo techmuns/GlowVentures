@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { fetchIndices, indexReason, STRIP_INDEX_IDS, type IndexFeed, type IndexQuote } from "@/lib/indices";
 import { fmtNum, fmtPct, changeColor } from "@/lib/format";
 
@@ -91,7 +91,12 @@ function Cell({ q }: { q: IndexQuote }) {
   );
 }
 
-export function IndexStrip() {
+/**
+ * `aside` sits at the strip's right end, before the feed's own label — the
+ * shell's saved-numbers notice rides here rather than as a band of its own, so
+ * it costs no page any height (Stage 10jb).
+ */
+export function IndexStrip({ aside }: { aside?: ReactNode } = {}) {
   const [feed, setFeed] = useState<IndexFeed | null>(null);
   const [state, setState] = useState<"loading" | "ok" | "down">("loading");
 
@@ -132,8 +137,9 @@ export function IndexStrip() {
         </span>
       )}
       {rows.map((q) => <Cell key={q.id} q={q} />)}
+      {aside && <div className="ml-auto flex min-w-0 shrink items-center pl-4">{aside}</div>}
       {state === "ok" && feed && (
-        <span className="ml-auto shrink-0 pl-4 text-[10px] text-slate-500"
+        <span className={`${aside ? "" : "ml-auto "}shrink-0 pl-4 text-[10px] text-slate-500`}
           title={`${feed.source} · ${feed.resolved} of ${feed.requested} indices resolved · fetched ${new Date(feed.fetchedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`}>
           {(() => {
             const sess = indexSession(feed);

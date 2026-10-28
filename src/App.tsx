@@ -144,8 +144,9 @@ export default function App() {
             page-CONTENT invariant in `check:pages` reads `<main>`, and a strip
             repeated on 40 routes would otherwise have to be excused from each of
             them one at a time. That is the same scoping the Polycab absence check
-            needed for the same reason. */}
-        <IndexStrip />
+            needed for the same reason. The saved-numbers notice rides its right
+            end rather than a band of its own, so it costs no page any height. */}
+        <IndexStrip aside={<EnteredNumbersNotice />} />
         {/* THE FAMILY'S PRICE LEVELS GO TO GLOW CENTRAL RESEARCH FROM HERE
             (Stage 10cq) — mounted once in the shell rather than on a page, so a
             level saved on any page is sent, a page load sends whatever did not
@@ -153,11 +154,6 @@ export default function App() {
             nothing; the alert card and the All alerts table say where each
             level went. */}
         <ResearchLevelSync />
-        {/* ABOVE `<main>`, LIKE THE INDEX STRIP: a page that fills the window
-            (Sector Composition, Morning CIO, Portfolio Monitor) is `h-full` of
-            `<main>`, so a notice inside it pushed every such page down and made
-            it scroll. */}
-        <EnteredNumbersNotice className="mx-6 mt-4" />
         <main ref={mainRef} className="flex-1 overflow-y-auto px-6 py-6">
           <Suspense fallback={<div role="status" className="p-4 text-sm text-slate-400">Opening page…</div>}>
           <Routes location={background ?? location}>

@@ -21,6 +21,39 @@
     "printed": "ABSL LIQF D-GROWTH",
     "joinedBy": "isin"
   },
+  "bandhan-amc-ltd-bandhan-mf-bandhan-arbitrage-fund-direct-pl-growth": {
+    "name": "BANDHAN Arbitrage Fund",
+    "plan": "Direct",
+    "option": null,
+    "amc": null,
+    "isin": "INF194K01Y60",
+    "schemecode": "118474",
+    "amfiName": "BANDHAN Arbitrage Fund",
+    "printed": "Bandhan Arbitrage Fund-Direct Plan-Growth",
+    "joinedBy": "amfi-isin"
+  },
+  "bandhan-amc-ltd-bandhan-mf-bandhan-cash-fund-direct-pl-growth": {
+    "name": "BANDHAN LIQUID Fund",
+    "plan": "Direct",
+    "option": null,
+    "amc": null,
+    "isin": "INF194K01I60",
+    "schemecode": "118364",
+    "amfiName": "BANDHAN LIQUID Fund",
+    "printed": "Bandhan Liquid Fund-Direct Plan-Growth",
+    "joinedBy": "amfi-isin"
+  },
+  "bandhan-amc-ltd-bandhan-mf-bandhan-overnight-fund-direct-growth": {
+    "name": "BANDHAN Overnight Fund",
+    "plan": "Direct",
+    "option": null,
+    "amc": null,
+    "isin": "INF194KB1447",
+    "schemecode": "146191",
+    "amfiName": "BANDHAN Overnight Fund",
+    "printed": "Bandhan Overnight Fund-Direct Plan-Growth",
+    "joinedBy": "amfi-isin"
+  },
   "bndh-l-and-mcf-dp-gr": {
     "name": "Bandhan Large & Mid Cap Fund",
     "plan": "Direct",
@@ -29,7 +62,7 @@
     "isin": "INF194K01V89",
     "schemecode": "2858-D",
     "amfiName": "Bandhan Large & Mid Cap Fund - Direct Plan - Growth",
-    "printed": "BNDH L&MCF DP GR",
+    "printed": "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
     "joinedBy": "isin"
   },
   "dsp-gold-etf": {
@@ -54,6 +87,28 @@
     "printed": "DSP SILVER ETF",
     "joinedBy": "isin"
   },
+  "hdfc-arbitrage-fund-direct-plan-growth-option": {
+    "name": "HDFC Arbitrage Fund",
+    "plan": "Direct",
+    "option": null,
+    "amc": null,
+    "isin": "INF179KA1KT6",
+    "schemecode": "129052",
+    "amfiName": "HDFC Arbitrage Fund",
+    "printed": "HDFC Arbitrage Fund - Direct Plan - Growth Option",
+    "joinedBy": "amfi-isin"
+  },
+  "hdfc-arbitrage-fund-direct-plan-monthly-idcw-payout-option": {
+    "name": "HDFC Arbitrage Fund",
+    "plan": "Direct",
+    "option": "Monthly Idcw",
+    "amc": null,
+    "isin": "INF179KA1KS8",
+    "schemecode": "129054",
+    "amfiName": "HDFC Arbitrage Fund",
+    "printed": "HDFC Arbitrage Fund - Direct Plan - Monthly IDCW # Payout Option",
+    "joinedBy": "amfi-isin"
+  },
   "hdfc-baf-d-grow": {
     "name": "HDFC Balanced Advantage Fund",
     "plan": "Direct",
@@ -76,6 +131,17 @@
     "printed": "HDFC BAF R-GROW",
     "joinedBy": "isin"
   },
+  "hdfc-balanced-advantage-fund-regular-plan-growth": {
+    "name": "HDFC Balanced Advantage Fund",
+    "plan": "Regular",
+    "option": null,
+    "amc": null,
+    "isin": "INF179K01830",
+    "schemecode": "100119",
+    "amfiName": "HDFC Balanced Advantage Fund",
+    "printed": "HDFC Balanced Advantage Fund - Regular Plan - Growth",
+    "joinedBy": "amfi-isin"
+  },
   "hdfc-liquid-fund-direct-plan-growth-option": {
     "name": "HDFC Liquid Fund",
     "plan": "Direct",
@@ -86,6 +152,28 @@
     "amfiName": "HDFC Liquid Fund - Growth Option - Direct Plan",
     "printed": "HDFC Liquid Fund-Direct Plan-Growth Option",
     "joinedBy": "isin"
+  },
+  "hdfc-liquid-fund-direct-plan-idcw-daily-reinvest": {
+    "name": "HDFC Liquid Fund",
+    "plan": "Direct",
+    "option": "Idcw Daily",
+    "amc": null,
+    "isin": "INF179KB1HV7",
+    "schemecode": "119089",
+    "amfiName": "HDFC Liquid Fund",
+    "printed": "HDFC Liquid Fund - Direct Plan - IDCW # - Daily Reinvest",
+    "joinedBy": "amfi-isin"
+  },
+  "hdfc-overnight-fund-direct-plan-growth-option": {
+    "name": "HDFC Overnight Fund",
+    "plan": "Direct",
+    "option": null,
+    "amc": null,
+    "isin": "INF179KB1HT1",
+    "schemecode": "119110",
+    "amfiName": "HDFC Overnight Fund",
+    "printed": "HDFC Overnight Fund - Direct Plan - Growth Option",
+    "joinedBy": "amfi-isin"
   },
   "hdfc-small-cap-fund-direct-growth-plan": {
     "name": "HDFC Small Cap Fund",
@@ -186,6 +274,28 @@
     "printed": "ICICI PRU BAF DP GRW",
     "joinedBy": "isin"
   },
+  "icici-prudential-arbitrage-fund-direct-plan-growth": {
+    "name": "ICICI Prudential Arbitrage Fund",
+    "plan": "Direct",
+    "option": null,
+    "amc": null,
+    "isin": "INF109K016O4",
+    "schemecode": "120364",
+    "amfiName": "ICICI Prudential Arbitrage Fund",
+    "printed": "ICICI Prudential Arbitrage Fund - Direct Plan - Growth",
+    "joinedBy": "amfi-isin"
+  },
+  "icici-prudential-arbitrage-fund-direct-plan-idcw-idcw-reinvestment": {
+    "name": "ICICI Prudential Arbitrage Fund",
+    "plan": "Direct",
+    "option": "Idcw",
+    "amc": null,
+    "isin": "INF109K015O6",
+    "schemecode": "120365",
+    "amfiName": "ICICI Prudential Arbitrage Fund",
+    "printed": "ICICI Prudential Arbitrage Fund - Direct Plan - IDCW # IDCW Reinvestment",
+    "joinedBy": "amfi-isin"
+  },
   "icici-prudential-nifty-100-low-volatility-30-etf-fof-direct-plan-growth": {
     "name": "ICICI Prudential Nifty 100 Low Volatility 30 ETF FOF",
     "plan": null,
@@ -219,6 +329,28 @@
     "printed": "INVES CON R GROWTH",
     "joinedBy": "isin"
   },
+  "invesco-india-arbitrage-fund-direct-plan-growth-af-d1": {
+    "name": "Invesco India Arbitrage Fund",
+    "plan": "Direct",
+    "option": null,
+    "amc": null,
+    "isin": "INF205K01KR8",
+    "schemecode": "120401",
+    "amfiName": "Invesco India Arbitrage Fund",
+    "printed": "Invesco India Arbitrage Fund - Direct Plan Growth (AF-D1)",
+    "joinedBy": "amfi-isin"
+  },
+  "invesco-india-arbitrage-fund-regular-plan-growth-af-gp": {
+    "name": "Invesco India Arbitrage Fund",
+    "plan": "Regular",
+    "option": null,
+    "amc": null,
+    "isin": "INF205K01122",
+    "schemecode": "105603",
+    "amfiName": "Invesco India Arbitrage Fund",
+    "printed": "Invesco India Arbitrage Fund - Regular Plan Growth (AF-GP)",
+    "joinedBy": "amfi-isin"
+  },
   "kotak-arbfd-dp-grow": {
     "name": "Kotak Arbitrage Fund",
     "plan": "Direct",
@@ -228,6 +360,83 @@
     "schemecode": "119771",
     "amfiName": "Kotak Arbitrage Fund",
     "printed": "KOTAK ARBFD DP GROW",
+    "joinedBy": "amfi-isin"
+  },
+  "kotak-flexi-cap-fund-direct-growth": {
+    "name": "Kotak Flexi Cap Fund",
+    "plan": "Direct",
+    "option": null,
+    "amc": null,
+    "isin": "INF174K01LS2",
+    "schemecode": "120166",
+    "amfiName": "Kotak Flexi Cap Fund",
+    "printed": "Kotak Flexi Cap Fund Direct Growth",
+    "joinedBy": "amfi-isin"
+  },
+  "kotak-flexi-cap-fund-regular-growth": {
+    "name": "Kotak Flexi Cap Fund",
+    "plan": "Regular",
+    "option": null,
+    "amc": null,
+    "isin": "INF174K01336",
+    "schemecode": "112090",
+    "amfiName": "Kotak Flexi Cap Fund",
+    "printed": "Kotak Flexi Cap Fund Regular Growth",
+    "joinedBy": "amfi-isin"
+  },
+  "kotak-large-and-mid-cap-fund-direct-growth": {
+    "name": "Kotak Large & Mid Cap Fund",
+    "plan": "Direct",
+    "option": null,
+    "amc": null,
+    "isin": "INF174K01LF9",
+    "schemecode": "120158",
+    "amfiName": "Kotak Large & Mid Cap Fund",
+    "printed": "Kotak Large & Mid Cap Fund - Direct Growth",
+    "joinedBy": "amfi-isin"
+  },
+  "kotak-liquid-fund-direct-plan-daily-idcw": {
+    "name": "Kotak Liquid Fund",
+    "plan": "Direct",
+    "option": "Daily Reinvestment Of Income Distribution Cum Capital Withdrawal Option",
+    "amc": null,
+    "isin": "INF174K01NH1",
+    "schemecode": "119764",
+    "amfiName": "Kotak Liquid Fund",
+    "printed": "Kotak Liquid Fund Direct Plan Daily - IDCW #",
+    "joinedBy": "amfi-isin"
+  },
+  "kotak-liquid-fund-regular-plan-daily-idcw": {
+    "name": "Kotak Liquid Fund",
+    "plan": "Regular",
+    "option": "Daily Reinvestment Of Income Distribution Cum Capital Withdrawal Option",
+    "amc": null,
+    "isin": "INF174K01NL3",
+    "schemecode": "100833",
+    "amfiName": "Kotak Liquid Fund",
+    "printed": "Kotak Liquid Fund Regular Plan Daily - IDCW #",
+    "joinedBy": "amfi-isin"
+  },
+  "kotak-mid-cap-fund-direct-growth": {
+    "name": "Kotak Mid Cap Fund",
+    "plan": "Direct",
+    "option": null,
+    "amc": null,
+    "isin": "INF174K01LT0",
+    "schemecode": "119775",
+    "amfiName": "Kotak Mid Cap Fund",
+    "printed": "Kotak Mid Cap Fund Direct Growth",
+    "joinedBy": "amfi-isin"
+  },
+  "kotak-mid-cap-fund-regular-growth": {
+    "name": "Kotak Mid Cap Fund",
+    "plan": "Regular",
+    "option": null,
+    "amc": null,
+    "isin": "INF174K01DS9",
+    "schemecode": "104908",
+    "amfiName": "Kotak Mid Cap Fund",
+    "printed": "Kotak Mid Cap Fund Regular Growth",
     "joinedBy": "amfi-isin"
   },
   "kotak-mtcf-d-grow": {
@@ -240,6 +449,17 @@
     "amfiName": "Kotak Multicap Fund-Direct Plan-Growth",
     "printed": "KOTAK MTCF D-GROW",
     "joinedBy": "isin"
+  },
+  "mirae-asset-liquid-fund-formerly-mirae-asset-cash-management-fund-direct-plan-mirae-asset-liquid-fund-formerly-mirae-asset-cash-management-fund-direct-plan-growth": {
+    "name": "Mirae Asset Liquid Fund",
+    "plan": "Direct",
+    "option": null,
+    "amc": null,
+    "isin": "INF769K01CM1",
+    "schemecode": "118859",
+    "amfiName": "Mirae Asset Liquid Fund",
+    "printed": "Mirae Asset Liquid Fund ( formerly Mirae Asset Cash Management Fund ) - Direct Plan Mirae Asset Liquid Fund ( formerly Mirae Asset Cash Management Fund ) - Direct Plan Growth",
+    "joinedBy": "amfi-isin"
   },
   "mirae-lcf-d-grow": {
     "name": "Mirae Asset Large Cap Fund",
@@ -262,6 +482,39 @@
     "amfiName": "Motilal Oswal Active Momentum Fund- Direct-Growth",
     "printed": "Motilal Oswal Active Momentum Fund - Direct Plan Growth Option",
     "joinedBy": "name+plan"
+  },
+  "motilal-oswal-arbitrage-fund-direct-plan-growth": {
+    "name": "Motilal Oswal Arbitrage Fund",
+    "plan": "Direct",
+    "option": null,
+    "amc": null,
+    "isin": "INF247L01ED1",
+    "schemecode": "153187",
+    "amfiName": "Motilal Oswal Arbitrage Fund",
+    "printed": "Motilal Oswal Arbitrage Fund - Direct Plan Growth",
+    "joinedBy": "amfi-isin"
+  },
+  "motilal-oswal-liquid-fund-direct-plan-growth": {
+    "name": "Motilal Oswal Liquid Fund",
+    "plan": null,
+    "option": null,
+    "amc": null,
+    "isin": "INF247L01734",
+    "schemecode": "145834",
+    "amfiName": "Motilal Oswal Liquid Fund",
+    "printed": "Motilal Oswal Liquid fund - Direct Plan Growth",
+    "joinedBy": "amfi-isin"
+  },
+  "motilal-oswal-midcap-fund-direct-plan-growth": {
+    "name": "Motilal Oswal Midcap Fund",
+    "plan": null,
+    "option": null,
+    "amc": null,
+    "isin": "INF247L01445",
+    "schemecode": "127042",
+    "amfiName": "Motilal Oswal Midcap Fund",
+    "printed": "Motilal Oswal Midcap Fund - Direct Plan Growth",
+    "joinedBy": "amfi-isin"
   },
   "nip-etnf1d-rtliqbees": {
     "name": "Nippon India ETF Nifty 1D Rate Liquid BeES",

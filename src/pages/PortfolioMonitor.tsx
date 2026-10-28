@@ -883,6 +883,8 @@ export function PortfolioMonitor() {
   // here is shares the family bought and mandates it handed to a manager, and
   // those are the same asset class.
   const [bucketFilter, setBucket] = useNavigationState<string>('section', 'All', buckets);
+  /** The holdings table's Export / Edit / Upload controls, drawn at the right of the section tabs. */
+  const [tableTools, setTableTools] = useState<HTMLSpanElement | null>(null);
   const bucket = useTableExportFilter(bucketFilter, "All");
   /**
    * SWITCHING AXIS CLEARS THE SECTION FILTER, and that is a correctness fix
@@ -3885,6 +3887,11 @@ export function PortfolioMonitor() {
               </button>
             );
           })}
+          {/* THE TABLE'S EXCEL CONTROLS RIDE THIS ROW'S EMPTY RIGHT SIDE (Stage
+              10gy's move, here): as a caption row of their own they pushed the
+              first holding out of the top third of the screen. On the security
+              axis this row is not drawn and the caption comes back. */}
+          {view === "holdings" && <span ref={setTableTools} className="ml-auto inline-flex pb-1" data-table-tools />}
         </div>
       )}
 
@@ -3896,6 +3903,7 @@ export function PortfolioMonitor() {
                 the card that used to carry its three states is rows now. Present
                 on the security axis only, the one axis the store is asked on. */}
             <ExportableTable editable exportName="Portfolio Monitor — Holdings" className="min-w-full text-xs" data-monitor-table="holdings"
+              controlsHost={bySecurity ? undefined : tableTools}
               data-lookthrough={bySecurity ? rowExposure.status : undefined}>
               {allRows => <>
               <thead className="sticky top-0 z-10 bg-ink-800">
@@ -4368,9 +4376,15 @@ export function PortfolioMonitor() {
                               book, so the categories claim each name once and the
                               rows inside a mandate show none of it — the same
                               split the footer already names in the caption. */}
-                          <td className="px-2 py-1.5 text-right mono whitespace-nowrap" data-realised={realised ?? undefined}>{
+                          <td className="px-2 py-1.5 text-right mono whitespace-nowrap" data-realised={realised ?? undefined}
+                            data-realised-withheld={realised === null && tot.fifo.hprUnavailableReason ? "" : undefined}>{
                             realised === null
-                              ? <AbsentCell reason={`no holding in ${label} is covered by a capital gain statement or a dated unit record, so what its sales realised is not reported`} />
+                              /* THE ACTUAL CAUSE: a holding whose sale proceeds are
+                                 unverified withholds the realised of every set it is in
+                                 (CLAUDE.md), which is not the same as no record at all. */
+                              ? <AbsentCell reason={tot.fifo.hprUnavailableReason
+                                  ? `withheld for ${label}: ${tot.fifo.hprUnavailableReason}`
+                                  : `no holding in ${label} is covered by a capital gain statement or a dated unit record, so what its sales realised is not reported`} />
                               : <span className={changeColor(realised)}
                                   title={`Realised on units already sold, over the ${tot.fifo.realisedCovered} of ${tot.fifo.holdings} holdings in ${label} with a record that could carry it${tot.fifo.wholeMandates.length ? `; ${tot.fifo.wholeMandates.length} whole mandate(s) contribute everything they have booked since inception` : ""}.`}>
                                   {fmtFromBase(realised, { compact: true, sign: true })}
@@ -5314,9 +5328,12 @@ export function PortfolioMonitor() {
                         the footer. A holding with no record contributes nothing
                         rather than a zero. */
                     realised: (
-                    <td key="realised" className="px-2 py-1.5 text-right mono whitespace-nowrap" data-realised={totFifo.realised ?? undefined}>{
+                    <td key="realised" className="px-2 py-1.5 text-right mono whitespace-nowrap" data-realised={totFifo.realised ?? undefined}
+                      data-realised-withheld={totFifo.realised === null && totFifo.hprUnavailableReason ? "" : undefined}>{
                       totFifo.realised === null
-                        ? <AbsentCell reason="no holding in this table is covered by a capital gain statement or a dated unit record, so what its sales realised is not reported" />
+                        ? <AbsentCell reason={totFifo.hprUnavailableReason
+                            ? `withheld for the whole table: ${totFifo.hprUnavailableReason}`
+                            : "no holding in this table is covered by a capital gain statement or a dated unit record, so what its sales realised is not reported"} />
                         /* ONLY THE FIGURE ON THE FACE (the family: "Only
                             figures must be there"). Which of the two realised
                             figures this book prints, what it counts and leaves
@@ -5360,7 +5377,7 @@ export function PortfolioMonitor() {
                             : onCost && feedLive ? LIVE_CELL : undefined}
                           {...(onCost && totalRet !== null
                             ? { "data-footer-return-set": `${footStruckLines}/${footCover.lines}`, "data-footer-return-set-text": returnSetLine }
-                            : {})}>
+                            : onCost && totFifoCosted.hprUnavailableReason ? { "data-footer-return-withheld": "" } : {})}>
                           {!onCost
                             ? <AbsentCell reason={`This is the whole book, not a holding: ${AGG_NO_MEASURE[measure]} Its cumulative return shows under HPR — tick Holding Period Return to see it.`} />
                             : totalRet === null

@@ -48,14 +48,24 @@ export function TableNumberInput({ record, field }: { record: InputRecord; field
     {error && <p role="alert" className="mt-1 max-w-xs whitespace-normal text-xs text-loss">{error}</p>}
   </div>;
 }
-export function EnteredNumbersNotice({ className = "mb-3" }: { className?: string }) {
+/**
+ * THE SHELL'S NOTE ON SAVED NUMBERS — one line at the right of the index strip
+ * (`IndexStrip`'s `aside`), its whole sentence in the hover. As a band of its
+ * own above every page it pushed the Portfolio Monitor's first holding out of
+ * the top third of the screen (Stage 10jb).
+ */
+export function EnteredNumbersNotice() {
   const state = useTableInputs();
   const active = state.catalog.reduce((n, r) => n + Object.keys(r.versions).length, 0);
   const stale = state.saved.length - active;
   if (!active && !stale && state.status !== "error") return null;
-  return <div className={`${className} rounded border border-champagne-400/30 bg-champagne-400/10 px-3 py-2 text-xs text-slate-300`} data-entered-numbers>
-    {active > 0 && `${active} user-entered number${active === 1 ? " is" : "s are"} saved in the working portfolio. Original statements are kept separately.`}
-    {stale > 0 && ` ${stale} older correction${stale === 1 ? " was" : "s were"} set aside because the source changed. Check All inputs.`}
-    {state.status === "error" && <span> {state.loaded ? "Saved edits could not be refreshed. Last loaded edits are kept." : "Saved edits are unavailable. Original investment records are shown."} <button type="button" onClick={() => { void refreshTableInputs(); }} className="rounded underline ring-focus" title={state.error}>Retry</button></span>}
-  </div>;
+  const text = [
+    active > 0 ? `${active} user-entered number${active === 1 ? " is" : "s are"} saved in the working portfolio. Original statements are kept separately.` : "",
+    stale > 0 ? `${stale} older correction${stale === 1 ? " was" : "s were"} set aside because the source changed. Check All inputs.` : "",
+    state.status === "error" ? (state.loaded ? "Saved edits could not be refreshed. Last loaded edits are kept." : "Saved edits are unavailable. Original investment records are shown.") : "",
+  ].filter(Boolean).join(" ");
+  return <span className="flex min-w-0 items-center gap-1.5 rounded border border-champagne-400/30 bg-champagne-400/10 px-2 py-0.5 text-[11px] text-slate-300" data-entered-numbers>
+    <span className="min-w-0 truncate" title={text}>{text}</span>
+    {state.status === "error" && <button type="button" onClick={() => { void refreshTableInputs(); }} className="shrink-0 rounded underline ring-focus" title={state.error}>Retry</button>}
+  </span>;
 }

@@ -104,7 +104,13 @@ for (const [k, v] of inBook) {
     // A twin pair is EITHER two plans (two ISINs, and the labels must differ)
     // or one scheme the book keys twice (one ISIN, and the labels SHOULD agree
     // — that is the extractor join `docs/BOOK-REPORT.md` names, surfacing).
-    if (isins.size > 1) ok(`${n}: two plans, two labels`, labels.size === ks.length, [...labels].join(" / "));
+    // …OR BOTH AT ONCE: a plan the book keys twice beside another plan (HDFC
+    // Balanced Advantage, Invesco India Arbitrage). Then each ISIN reads as one
+    // label and each plan as its own — one label per ISIN, never per key.
+    const perIsin = new Map<string, Set<string>>();
+    for (const k of ks) (perIsin.get(MAP[k].isin) ?? perIsin.set(MAP[k].isin, new Set()).get(MAP[k].isin)!).add(holdingLabel(k, ""));
+    if (isins.size > 1) ok(`${n}: two plans, two labels`,
+      labels.size === isins.size && [...perIsin.values()].every((s) => s.size === 1), [...labels].join(" / "));
     else ok(`${n}: one ISIN keyed twice reads as one scheme`, labels.size === 1, [...labels].join(" / "));
   }
 }

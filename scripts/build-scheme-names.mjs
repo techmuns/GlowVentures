@@ -304,7 +304,13 @@ function main() {
     if (index.schemes?.[securityKey]) continue;
     const nav = navByKey.get(securityKey);
     if (!nav) continue;                       // not a scheme AMFI prices — a share, a folio, an AIF
-    if (nav.isinFrom !== "statement" || nav.from !== "book") {
+    // THE STATEMENT'S OWN ISIN, WHEREVER THE UNITS NOW SIT (gate 1 above). An
+    // entry the NAV builder reached through a depository balance (`from:
+    // "depository"`) still joins only on the ISIN the book's own statement
+    // prints, which the agreement test below holds it to — Ajay's Motilal Oswal
+    // Arbitrage units moved from the redeemed folio to the demat, and its
+    // spelled-out plan phrase reached the Monitor's Cash section.
+    if (nav.isinFrom !== "statement") {
       refused.push([securityKey, `AMFI's entry was not reached through this book's own statement ISIN (${nav.isinFrom}, ${nav.from})`]);
       continue;
     }
