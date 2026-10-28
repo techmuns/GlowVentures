@@ -32,6 +32,19 @@
     ],
     "updatedAt": "2026-10-21T11:27:37.941Z"
    }
+  },
+  "tile-set:real-estate": {
+   "value": "{\"page\":\"real-estate\",\"ids\":[\"value\",\"tax\",\"rent\",\"after-tax\"],\"updatedAt\":\"2026-10-28T07:18:15.068Z\"}",
+   "metadata": {
+    "page": "real-estate",
+    "ids": [
+     "value",
+     "tax",
+     "rent",
+     "after-tax"
+    ],
+    "updatedAt": "2026-10-28T07:18:15.068Z"
+   }
   }
  }
 }
