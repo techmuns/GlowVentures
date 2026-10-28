@@ -52,9 +52,9 @@ export type PriceResult = PriceHistory | PriceError;
  * show ranges from two different fetches. A FAILED answer is not kept, so the
  * next caller retries rather than inheriting an outage.
  */
-const inflight = new Map<string, Promise<PriceResult>>();
+const inflight = new Map<string, { value: Promise<PriceResult>; expires: number }>();
 /** Every history this page load has already received, for a card that opens after it arrived. */
-const settled = new Map<string, PriceHistory>();
+const settled = new Map<string, { value: PriceHistory; expires: number }>();
 
 /**
  * THE STOCK PAGE KEEPS WHAT IT READ (Stage 10ik). With `keep`, a history the
@@ -68,18 +68,27 @@ export const KEPT_FRESH_MS = 6 * 3600_000;
 
 export function fetchPriceHistory(symbol: string, opts: { keep?: boolean } = {}): Promise<PriceResult> {
   const hit = inflight.get(symbol);
-  if (hit) return hit;
-  const p = (opts.keep ? loadKeptOrLive(symbol) : loadPriceHistory(symbol)).then((r) => {
-    if (!r.ok) inflight.delete(symbol);
-    else settled.set(symbol, r);
+  if (hit && Date.now() < hit.expires) return hit.value;
+  const entry = { value: null as unknown as Promise<PriceResult>, expires: Infinity };
+  entry.value = (opts.keep ? loadKeptOrLive(symbol) : loadPriceHistory(symbol)).then((r) => {
+    if (!r.ok) { if (inflight.get(symbol) === entry) inflight.delete(symbol); return r; }
+    // THE SAME WINDOW IN MEMORY AS IN THE BROWSER STORE, so a page left open
+    // for a day never draws a history older than the service itself would
+    // answer with. A minute's floor keeps two cards opening together on one
+    // request even where the client's clock runs ahead of the service's.
+    entry.expires = Math.max((r.fetchedAt ?? Date.now()) + KEPT_FRESH_MS, Date.now() + 60_000);
+    settled.set(symbol, { value: r, expires: entry.expires });
     return r;
   });
-  inflight.set(symbol, p);
-  return p;
+  inflight.set(symbol, entry);
+  return entry.value;
 }
 
 /** The history this page load already holds for `symbol`, so a card can draw it on its first paint. */
-export const settledPriceHistory = (symbol: string): PriceHistory | undefined => settled.get(symbol);
+export function settledPriceHistory(symbol: string): PriceHistory | undefined {
+  const hit = settled.get(symbol);
+  return hit && Date.now() < hit.expires ? hit.value : undefined;
+}
 
 async function loadKeptOrLive(symbol: string): Promise<PriceResult> {
   const keptKey = `price:${symbol}`;

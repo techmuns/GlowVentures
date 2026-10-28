@@ -4,6 +4,7 @@ import { onRequest as prices } from '../../../functions/api/prices.js';
 import { onRequest as research } from '../../../functions/api/research.js';
 import { fetchPriceHistory, settledPriceHistory } from '../prices';
 import { fetchResearch, settledResearch } from '../research';
+import { getHoldingsInsider } from '../insider';
 
 const cache = new Map<string, Response>();
 Object.defineProperty(globalThis, 'caches', { configurable: true, value: { default: {
@@ -60,3 +61,36 @@ globalThis.fetch = async () => { throw new Error('offline'); };
 await fetchPriceHistory('NOPE', { keep: true });
 assert.equal(settledPriceHistory('NOPE'), undefined);
 console.log('PASS answers fetched ahead are ready on first paint; failures are retried, never kept');
+
+// 4. A page left open past the window asks again: a history in memory lives no
+//    longer than the kept copy would, and insider deals no longer than the UTC
+//    day the endpoint keys them by.
+const RealDate = Date;
+const shiftClock = (ms: number) => {
+  globalThis.Date = class extends RealDate {
+    constructor(...a: unknown[]) { if (a.length) super(...(a as [number])); else super(RealDate.now() + ms); }
+    static now() { return RealDate.now() + ms; }
+  } as DateConstructor;
+};
+let asked = 0;
+globalThis.fetch = async () => { asked++; return Response.json({ ...first, symbol: 'OPEN.NS', fetchedAt: Date.now() }); };
+await fetchPriceHistory('OPEN', { keep: true });
+await fetchPriceHistory('OPEN', { keep: true });
+assert.equal(asked, 1, 'one request while the history is fresh');
+shiftClock(6 * 3600_000 + 1000);
+assert.equal(settledPriceHistory('OPEN'), undefined, 'a six-hour-old history is not drawn as ready');
+await fetchPriceHistory('OPEN', { keep: true });
+assert.equal(asked, 2, 'a page left open past six hours fetches the history again');
+globalThis.Date = RealDate;
+
+let insiderCalls = 0;
+globalThis.fetch = async () => { insiderCalls++; return Response.json({ ok: true, items: [], count: 0, searched: 1, withData: 0, failed: [] }); };
+const holding = [{ symbol: 'OPEN', name: 'Open Ltd', key: 'OPEN', weight: 0 }];
+await getHoldingsInsider(holding);
+await getHoldingsInsider(holding);
+assert.equal(insiderCalls, 1, 'one insider request within the day');
+shiftClock(86400_000);
+await getHoldingsInsider(holding);
+assert.equal(insiderCalls, 2, 'a new UTC day asks for insider deals again');
+globalThis.Date = RealDate;
+console.log('PASS a page left open asks again once prices pass six hours and insider deals pass the day');
