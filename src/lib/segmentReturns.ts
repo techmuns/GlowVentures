@@ -59,17 +59,18 @@ import { groupKeyFor, groupLabelFor, groupOrdFor, type GroupAxis } from "./group
 import { UNCLASSIFIED } from "./familyTaxonomy";
 import { securityLabel } from "./securityLabel";
 
-export const SEGMENT_AXES = ["category", "assetClass", "basket", "sector", "side", "security"] as const;
+/** All Securities first: the family's first and default tab (Stage 10ik). */
+export const SEGMENT_AXES = ["security", "category", "assetClass", "basket", "sector", "side"] as const;
 export type SegmentAxis = (typeof SEGMENT_AXES)[number];
 
 /** The axes in the order the control draws them; the first is the param-free default. */
 export const SEGMENT_VIEWS: readonly { key: SegmentAxis; label: string; title: string }[] = [
+  { key: "security", label: "All Securities", title: "One row per security, every holding of it clubbed across every account and mandate" },
   { key: "category", label: "Category", title: "Direct equity, PMS mandates, AIFs, mutual funds, ETFs, cash — what kind of holding earned the return" },
   { key: "assetClass", label: "Asset class", title: "The family's own asset classes — Equity, Debt, Alternate, Cash — as their consolidated review states them" },
   { key: "basket", label: "Basket", title: "The family's four baskets: Stable Growth, Entrepreneurial Growth, Thematic & Tactical, Liquidity" },
   { key: "sector", label: "Sector", title: "GICS sectors as Sector Composition draws them: Consolidated looks through the funds to the companies they hold, Direct Equity is the family's own shares" },
   { key: "side", label: "Listed / Private", title: "Listed markets against private capital, placed as everywhere else in the dashboard" },
-  { key: "security", label: "All Securities", title: "One row per security, every holding of it clubbed across every account and mandate" },
 ];
 
 /** A company's sector, as `companySectorIndex` resolves it (statement → fund filing → screener.in). */

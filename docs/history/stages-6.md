@@ -578,7 +578,15 @@
 - Consolidated issuer rows gain a `return` column (`issuerReturn`): FIFO over that issuer's own holdings that report a cost, as `rollSectors` strikes a sector; an issuer held only through funds is `—` with its reason. The hover is `SectorReturnDetails` (`noun="issuer"`); the footer cell is the sector's own return, so it ties to the sector row.
 - `ONLY=sectors check:pages`: the same 9 failures as main, none new.
 
-### Stage 10ik — HOLDING PAGE: THE TOTALS STAY PINNED WHILE THE ROWS SCROLL
+### Stage 10ik — RETURNS: AN ACCOUNT OPENS INTO ITS HOLDINGS; ALL SECURITIES IS THE FIRST TAB
+
+- The family (28 Oct 2026): *"earlier these returns table like Portfolio monitor was actually showing individual names … now it is showing the account holdings"*, and *"put all securities as the first tab"*. Since Stage 10gh a segment opened into accounts only, so no security was named under Category, Asset class, Basket or Listed / Private.
+- `selectedSegmentReturns` gives each account child its holdings (`holdingLines`), one per security key, named by `securityLabel` and sorted by value. A holding takes only units that are its own (assumed holdings, purchase-cost lines, review holder rows); holding units with nothing current behind them are one "Sold or exited holdings" row, so the holdings' gains add to the account's. A whole-account record (`key === accountId`) stays on the account row; each holding is `—` naming it, never a share of its gain. All Securities rows are one security already and do not open further.
+- `SegmentReturns` draws the third level (`data-seg-holding`, `data-seg-holding-of`); account rows carry a chevron, `data-seg-value` / `data-seg-gain` / `data-seg-whole`, and Expand all opens both levels. Children and holdings follow the table's sort.
+- `SEGMENT_AXES` / `SEGMENT_VIEWS` put All Securities first, so it is the param-free default; `?seg=category` still lands on Category.
+- Checks: `selectedSegmentReturns.test.ts` (whole-account dashes, per-holding gains with an exit, every period × axis on the archive); `check:pages` `SEG_AXES` order and default, and route `cio-returns-category` with `CIO_SEGMENT_HOLDINGS` (opens a segment and an account; names, values and gains add).
+
+### Stage 10il — HOLDING PAGE: THE TOTALS STAY PINNED WHILE THE ROWS SCROLL
 
 - The family asked (28 Oct 2026) to *"freeze the last rows in the table so that, as I scroll the table, they are always visible"* on a holding's Position by account table.
 - Its `<tfoot>` (`data-held-foot-pinned`) is `sticky bottom-0` on an opaque card surface, inside the table's own scroll box that already pins the header; the Total, Inside your mutual funds and Total exposure lines stay in view with every column.
