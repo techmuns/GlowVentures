@@ -7,7 +7,13 @@ import { Card } from "@/components/Card";
 import { AbsentSection, AbsentCell } from "@/components/Absent";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { wholeFamilyOnly } from "@/lib/memberScope";
-import { WHOLE_BOOK_NAV, WHOLE_BOOK_STARTS } from "@/lib/bookNavBook";
+import { WHOLE_BOOK_NAV, WHOLE_BOOK_STARTS, BOOK_NAV_UNITS } from "@/lib/bookNavBook";
+import { BOOK_ACCOUNTS, BOOK_POSITIONS } from "@/data/glowData";
+import { shareCandidates } from "@/lib/depositoryShares";
+import { useMarketHistories } from "@/lib/useMarketReturns";
+import { assumedHoldingBook } from "@/lib/assumedHoldingBook";
+import { assumedBookNav, dematHoldings, type DematHolding } from "@/lib/assumedBookNav";
+import { holdingAssumptionText } from "@/lib/assumedHoldingReturns";
 import { bookNavStats, type BookNavCoverage, type BookNavStats, type BookNavUnitCoverage } from "@/lib/bookNav";
 import { accountIndex } from "@/lib/accounts";
 import { ownerDisplayName } from "@/lib/owners";
@@ -97,10 +103,38 @@ type BenchLoad =
   | { state: "mismatch"; reportedName: string | null };
 
 const pctText = (v: number | null | undefined) => fmtPct(v, { sign: true, decimals: 1 });
+/** The reason most demat holdings give for not being valued at published closes — the one that names what to fix. */
+const topReason = (holdings: readonly DematHolding[]): string | null => {
+  const count = new Map<string, number>();
+  for (const h of holdings) if (h.reason && !h.pending) count.set(h.reason, (count.get(h.reason) ?? 0) + 1);
+  return [...count.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+};
+/** `holdingAssumptionText`, for the several owners one line carries. */
+const assumptionText = (owners: readonly string[]) => owners.length <= 1
+  ? holdingAssumptionText(owners[0])
+  : `No sale appears in the records we have. We assume ${owners.slice(0, -1).join(", ")} and ${owners.at(-1)} still hold these shares.`;
 const sumOf = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
 
 export function NavVsIndex() {
-  const { portfolio, statementPortfolio, fmtFromBase, livePriced, scope } = usePortfolio();
+  const { portfolio, statementPortfolio, fmtFromBase, livePriced, scope, corporateActions, corporateActionsStatus } = usePortfolio();
+  /**
+   * ── THE DEMATS' LISTED SHARES AT EACH DAY'S PUBLISHED CLOSE (Stage 10iz) ──
+   * *"mark listed demat holdings at historical prices in the book line."* Their
+   * public histories come through the loader the Returns tab shares, and the
+   * family's assumed-continued-ownership rule decides each holding
+   * (`assumedBookNav`). The line switches to that series only once every demat
+   * history has answered and the split and dividend records are in: a line that
+   * moved as each price landed would move under the reader.
+   */
+  const dematRows = useMemo(() => dematHoldings(BOOK_ACCOUNTS, BOOK_POSITIONS, shareCandidates()), []);
+  const dematFeed = useMarketHistories(dematRows);
+  const assumed = useMemo(() => corporateActionsStatus === "loading" ? null : assumedBookNav({
+    units: BOOK_NAV_UNITS, series: WHOLE_BOOK_NAV, accounts: BOOK_ACCOUNTS, holdings: dematRows,
+    book: assumedHoldingBook({ actions: corporateActions, instruments: dematFeed.instruments, histories: dematFeed.histories }),
+  }), [dematRows, corporateActions, corporateActionsStatus, dematFeed.instruments, dematFeed.histories]);
+  const useAssumed = !!assumed && assumed.pending === 0 && assumed.assumedCount > 0;
+  const series = useAssumed && assumed ? assumed.series : WHOLE_BOOK_NAV;
+  const seriesStarts = useAssumed && assumed ? assumed.starts : WHOLE_BOOK_STARTS;
   /** The comparison's first day — one of the dates the book can be compared from; the first by default. */
   const [startPick, setStart] = useNavigationValue<string | null>("nav-start", null, nullableStringNavigation);
   /** Benchmarks the reader has hidden; every one is drawn until a chip hides it. */
@@ -130,8 +164,9 @@ export function NavVsIndex() {
 
   const model = useMemo(() => {
     if (!portfolio) return null;
-    const book = navIndexSeries(portfolio.navHistory);
-    const cov = WHOLE_BOOK_NAV.coverage;
+    // A MEMBER SCOPE EMPTIES `navHistory`; the card says whole family only below.
+    const book = navIndexSeries(portfolio.navHistory.length ? series.points : []);
+    const cov = series.coverage;
     const stats = bookNavStats(cov);
     const dates = book.map((p) => p.date);
     const bookFrom = dates[0] ?? null;
@@ -139,14 +174,15 @@ export function NavVsIndex() {
     if (!bookFrom || !bookTo || book.length < 2) return { book, cov, stats, dates, bookFrom, bookTo, ready: false as const, stale: [] as BookNavUnitCoverage[] };
 
     // A STORED START THE BOOK NO LONGER OFFERS OPENS ON ITS FIRST DAY.
-    const starts = WHOLE_BOOK_STARTS.filter((d) => d >= bookFrom && d < bookTo);
+    const starts = seriesStarts.filter((d) => d >= bookFrom && d < bookTo);
     const from = startPick && starts.includes(startPick) ? startPick : starts[0] ?? bookFrom;
     const to = bookTo;
 
     const bookLine = changeSince(book.map((p) => ({ t: p.date, v: p.index })), from, to);
     const bookRet = bookLine.length > 1 ? lineReturn(bookLine) : null;
-    // A dot only where something was valued — the series also has a point on
-    // every date capital moved, and a dot on each would read as valuations.
+    // A dot only where a STATEMENT valued something — the series also has a
+    // point on every date capital moved, and on every close a demat is valued
+    // at, and a dot on each would read as statements.
     const valuedOn = new Set(portfolio.navHistory.filter((p) => (p.accountsOnDate ?? 0) > 0).map((p) => p.date));
 
     const benches = BENCHMARKS.map((b) => {
@@ -187,7 +223,7 @@ export function NavVsIndex() {
     const spanDays = (ts(to) - ts(from)) / DAY;
     const { ticks, fmt: tickFmt } = axisTicks(allDates, spanDays);
     return { book, cov, stats, dates, bookFrom, bookTo, ready: true as const, from, to, bookLine, bookRet, benches, rows, ticks, tickFmt, stale, starts };
-  }, [portfolio, loads, startPick, hidden]);
+  }, [portfolio, loads, startPick, hidden, series, seriesStarts]);
 
   if (!model || !portfolio) return null;
   const { stats, cov } = model;
@@ -242,13 +278,16 @@ export function NavVsIndex() {
     priceDelta: portfolio.totalValue - stmtBook.totalValue - depositoryValue,
     quotesLive: livePriced > 0,
     levelEnd: cov.levelEnd,
-    newerMarks: cov.newerMarks,
-    capitalAfter: cov.capitalAfterLastValuation,
+    // The statement series' own steps; the demats' published closes are a step of their own.
+    newerMarks: WHOLE_BOOK_NAV.coverage.newerMarks,
+    capitalAfter: WHOLE_BOOK_NAV.coverage.capitalAfterLastValuation,
+    assumedDelta: useAssumed ? cov.levelEnd - WHOLE_BOOK_NAV.coverage.levelEnd : 0,
     seriesTo: cov.to,
   };
   const stale = model.stale;
   const staleValue = sumOf(stale.map((u) => u.endValue ?? 0));
-  const coverage = <SeriesCoverage stats={stats} cov={cov} unitName={unitName} nameOf={nameOf} fmt={fmtFromBase} recon={recon} whyOf={whyOf} unvalued={unvalued} staleValue={staleValue} />;
+  const coverage = <SeriesCoverage stats={stats} cov={cov} unitName={unitName} nameOf={nameOf} fmt={fmtFromBase} recon={recon} whyOf={whyOf} unvalued={unvalued} staleValue={staleValue}
+    demat={useAssumed && assumed ? assumed.holdings : null} />;
 
   // THE SERIES IS THE WHOLE FAMILY'S, AND A MEMBER SCOPE SAYS SO (Stage 10di).
   if (scope.selected) {
@@ -286,10 +325,30 @@ export function NavVsIndex() {
    */
   const joinedDates = [...new Set(stats.joinedLater.map((u) => u.returnFrom as string))].sort();
   // Over the window's own points, so the hover neither widens nor narrows the line it describes.
-  const inWindow = portfolio.navHistory.filter((p) => p.date > from && p.date <= to);
+  const inWindow = series.points.filter((p) => p.date > from && p.date <= to);
   const unprovenMove = sumOf(inWindow.map((p) => p.unreportedFlowValue ?? 0));
   const moneyIn = sumOf(inWindow.map((p) => Math.max(p.levelFlowIn ?? 0, 0)));
   const moneyOut = sumOf(inWindow.map((p) => Math.min(p.levelFlowIn ?? 0, 0)));
+  /**
+   * THE ASSUMPTION, NAMED BY OWNER (the family's rule, 22 Oct 2026): what was
+   * valued at published closes, from when, whose shares they are, and what
+   * stays at its statement value — or, before the series switches, why not yet.
+   */
+  const dematStatus = dematRows.length === 0 ? "" : useAssumed && assumed
+    ? (() => {
+      const kept = assumed.holdings.filter((h) => h.status === "statement");
+      const out = assumed.holdings.filter((h) => h.status === "left-out");
+      const others = [
+        kept.length ? `${kept.length} stay at their statement values (${c(sumOf(kept.map((h) => h.value)))})` : "",
+        out.length ? `${out.length} no statement values ${out.length === 1 ? "is" : "are"} in neither line` : "",
+      ].filter(Boolean).join(" and ");
+      return `Listed demat shares: ${assumed.assumedCount} holdings, ${c(assumed.assumedValue)} on ${fmtDate(to)}, are valued at each day's published close from their statement dates, with splits applied and gross dividends counted on their ex-dates. ${assumptionText(assumed.owners)}${others ? ` Of the other demat holdings, ${others}, each for its reason in the list below.` : ""}`;
+    })()
+    : `Listed demat shares are at their statement values: ${
+      corporateActionsStatus === "loading" ? "the split and dividend records are still loading."
+        : assumed && assumed.pending > 0 ? `${assumed.pending} published price histories are still loading.`
+          : `no holding could be valued at published closes. ${topReason(assumed?.holdings ?? []) ?? "No published price history could be checked for them."}`}`;
+  const dematSentence = dematStatus;
   const bookHover = [
     "Our book: the change in value net of money added or taken out (time-weighted), from the statements — a deposit is never counted as a gain.",
     moneyIn > 0 || moneyOut < 0
@@ -309,6 +368,7 @@ export function NavVsIndex() {
     unprovenMove > 0
       ? `Not proven to be performance: ${c(unprovenMove)} of the move, where no record settles the capital between two valuations (${stats.unproven.map(unitName).join(", ")}).`
       : "",
+    dematSentence,
     bookRet != null ? `${fmtDate(from)} → ${fmtDate(to)}: ${pctText(bookRet)}, not annualised.` : "",
   ].filter(Boolean).join("\n\n");
 
@@ -365,11 +425,14 @@ export function NavVsIndex() {
       <div className="mb-3 flex flex-wrap items-center gap-1.5" data-testid="nav-legend"
         data-nav-from={from} data-nav-to={to}>
         <span className={`${chipBase} cursor-help border-ink-600 bg-ink-800/60 text-slate-300`}
-          data-nav-line="book" data-nav-ret={bookRet ?? ""} data-testid="nav-book-chip" title={bookHover}>
+          data-nav-line="book" data-nav-ret={bookRet ?? ""} data-testid="nav-book-chip" title={bookHover}
+          data-nav-basis={useAssumed ? "assumed" : "statement"}
+          data-nav-assumed-count={useAssumed && assumed ? assumed.assumedCount : 0}
+          data-nav-assumed-value={useAssumed && assumed ? assumed.assumedValue : 0}>
           <Swatch color={BOOK_COLOR} thick />
           <span className="font-medium">Our book</span>
           <span className={`tabular font-semibold ${changeColor(bookRet)}`}>{pctText(bookRet)}</span>
-          <span className="text-slate-500">available data</span>
+          <span className="text-slate-500">available data{useAssumed && " · assumed holdings"}</span>
         </span>
         {benches.map(({ b, load, ret, lastClose }) => {
           const shown = !hidden.has(b.key);
@@ -478,6 +541,8 @@ type Recon = {
   levelEnd: number;
   newerMarks: number;
   capitalAfter: number;
+  /** The series' end level less the statement series': the demats' shares at published closes (Stage 10iz). */
+  assumedDelta: number;
   seriesTo: string | null;
 };
 
@@ -514,7 +579,7 @@ type Why = { nil: boolean; reason: string | null };
  *   · NO VALUED HOLDING — accounts the series does not stand for at all, each
  *     with its own account's reason.
  */
-function SeriesCoverage({ stats, cov, unitName, nameOf, fmt, recon, whyOf, unvalued, staleValue = 0 }: {
+function SeriesCoverage({ stats, cov, unitName, nameOf, fmt, recon, whyOf, unvalued, staleValue = 0, demat = null }: {
   stats: BookNavStats;
   cov: BookNavCoverage;
   unitName: (u: BookNavUnitCoverage) => string;
@@ -525,6 +590,8 @@ function SeriesCoverage({ stats, cov, unitName, nameOf, fmt, recon, whyOf, unval
   unvalued: { accountId: string; accountNo: string }[];
   /** In the return and last valued more than `STALE_DAYS` before the series' end. */
   staleValue?: number;
+  /** The demats' holdings when the line values their listed shares at published closes (Stage 10iz). */
+  demat?: readonly DematHolding[] | null;
 }) {
   const c = (n: number, sign = false) => fmt(n, { compact: true, sign });
   const sumOf = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
@@ -554,6 +621,7 @@ function SeriesCoverage({ stats, cov, unitName, nameOf, fmt, recon, whyOf, unval
   const seriesSteps = [
     Math.abs(recon.newerMarks) > 1 ? `${c(recon.newerMarks, true)} from valuations newer than the holdings statement the book carries` : null,
     Math.abs(recon.capitalAfter) > 1 ? `${c(recon.capitalAfter, true)} of capital dated after an investment's last valuation` : null,
+    Math.abs(recon.assumedDelta) > 1 ? `${c(recon.assumedDelta, true)} from listed demat shares valued at published closes and assumed still held, in place of their statement values` : null,
   ].filter(Boolean);
   const footHover = [
     `As each statement prints them, the investments sum to ${fmt(recon.perAccount)} — a per-account sum, which does not dedupe.`,
@@ -570,6 +638,8 @@ function SeriesCoverage({ stats, cov, unitName, nameOf, fmt, recon, whyOf, unval
       : `The current value of holdings is that book, ${fmt(recon.current)}.`,
   ].join(" ");
   const outOfReturn = stats.joinedLater.length + stats.atCost.length;
+  const dematAssumed = (demat ?? []).filter((h) => h.status === "assumed");
+  const dematOther = (demat ?? []).filter((h) => h.status !== "assumed");
   const List = ({ id, items, right }: { id: string; items: BookNavUnitCoverage[]; right: (u: BookNavUnitCoverage) => string }) => (
     <ul className="mt-2 space-y-1 text-[11px] text-slate-400" data-testid={id}>
       {byValue(items).map((u) => (
@@ -595,6 +665,7 @@ function SeriesCoverage({ stats, cov, unitName, nameOf, fmt, recon, whyOf, unval
         {" "}· {c(stats.inReturnValue)}
         {outOfReturn > 0 && <> · {stats.joinedLater.length} joined later · {stats.atCost.length} at cost</>}
         {staleValue > 0 && <> · <span data-nav-stale={staleValue}>{c(staleValue)} not revalued in 3 months</span></>}
+        {dematAssumed.length > 0 && <> · <span data-nav-demat-count={dematAssumed.length}>{dematAssumed.length} assumed held</span></>}
       </summary>
       <div className="mt-3 grid gap-4 md:grid-cols-2">
         <div>
@@ -646,9 +717,50 @@ function SeriesCoverage({ stats, cov, unitName, nameOf, fmt, recon, whyOf, unval
           </ul>
         </div>
       </div>
+      {/* ── THE DEMATS' SHARES, EACH NAMED (Stage 10iz) ──────────────────────
+          What the line values at published closes and assumes still held, and
+          what stays at its statement value or out of both series — each with
+          its own reason from the one rule (`assumedHolding`). */}
+      {demat && (
+        <div className="mt-3 grid gap-4 md:grid-cols-2" data-testid="nav-demat">
+          <div>
+            <div className="label-xs" title="No sale appears in the records we have, so each is assumed still held: its statement's share count, carried from the statement date at every published close, with checked splits applied and gross dividends counted on their ex-dates. The value shown is the last close in the window.">
+              {dematAssumed.length} demat holdings at published closes · {c(sumOf(dematAssumed.map((h) => h.value)))}
+            </div>
+            <ul className="mt-2 space-y-1 text-[11px] text-slate-400" data-testid="nav-demat-assumed">
+              {[...dematAssumed].sort((x, y) => y.value - x.value).map((h) => (
+                <li key={`${h.accountId}|${h.securityKey}`} className="flex justify-between gap-3"
+                  data-nav-demat={`${h.accountId}|${h.securityKey}`} data-nav-demat-status={h.status} data-nav-demat-value={h.value}>
+                  <span className="truncate" title={h.accountId}>{h.security} · {h.owner}</span>
+                  <span className="shrink-0 tabular text-slate-500">from {h.from} · {fmt(h.value, { compact: true })}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <div className="label-xs" title="Each of these stays at its statement value, or — where its statement prints no value — out of the line, for the reason on its row.">
+              {dematOther.length} demat holdings not valued this way
+            </div>
+            <ul className="mt-2 space-y-1 text-[11px] text-slate-400" data-testid="nav-demat-other">
+              {[...dematOther].sort((x, y) => y.value - x.value).map((h) => (
+                <li key={`${h.accountId}|${h.securityKey}`} className="flex justify-between gap-3"
+                  data-nav-demat={`${h.accountId}|${h.securityKey}`} data-nav-demat-status={h.status} data-nav-demat-value={h.value}>
+                  <span className="truncate" title={h.accountId}>{h.security} · {h.owner}</span>
+                  {h.status === "statement" ? (
+                    <span className="shrink-0 tabular text-slate-500" title={h.reason ?? undefined}>statement · {fmt(h.value, { compact: true })}</span>
+                  ) : (
+                    <span className="shrink-0 tabular"><AbsentCell reason={h.reason ?? "no published price could value it"} /></span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
       {/* THE FIGURE ON ITS FACE, THE RECONCILIATION IN ITS HOVER (Stage 10cp). */}
       <p className="mt-3 border-t border-ink-700 pt-2 text-[11px] text-slate-500" data-testid="nav-excluded-recon"
         data-per-account={recon.perAccount} data-statement-book={recon.statementBook} data-current={recon.current}
+        data-assumed-delta={recon.assumedDelta}
         data-level-end={recon.levelEnd} data-newer-marks={recon.newerMarks} data-capital-after={recon.capitalAfter}
         data-reported-twice={recon.reportedTwice} data-reported-twice-keys={recon.reportedTwiceKeys.join(" ")}
         title={footHover}>

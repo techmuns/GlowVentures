@@ -9872,8 +9872,9 @@ const NAV_SERIES_BOOK = (() => {
  * move lands on its own date — so a comparison started while an investment is
  * carried from an older valuation, and valued again later, counts a move from
  * before the start. A day qualifies when at most 5% of the return's value there
- * is such an investment and the period to the series' end is 30 days or more;
- * the series' first day always does. Written here off the series' own units,
+ * is such an investment, the period to the series' end is 30 days or more, and
+ * it is 28 days or more after the last day offered; the series' first day
+ * always does. Written here off the series' own units,
  * never by calling `comparableStarts`.
  */
 const NAV_FAIR_STARTS = (() => {
@@ -9900,7 +9901,7 @@ const NAV_FAIR_STARTS = (() => {
     const out = [start];
     for (const p of pts) {
       const d = p.date;
-      if (d <= start || !(p.accountsOnDate > 0) || days(d, end) < 30) continue;
+      if (d <= start || !(p.accountsOnDate > 0) || days(d, end) < 30 || days(out[out.length - 1], d) < 28) continue;
       let panel = 0, leak = 0;
       for (const u of NAV_UNITS_CK) {
         const e = entry(u);
@@ -21311,6 +21312,17 @@ const NAV_BENCH = [
 
 /** …and with no price service at all, each chip SAYS so and the book is still drawn. */
 const NAV_BENCH_OFFLINE = [
+  /**
+   * WITH NO PUBLISHED PRICES THE DEMATS STAY ON THEIR STATEMENTS (Stage 10iz),
+   * and the book's hover says so rather than drawing a line it cannot strike.
+   * The published-price path is `scripts/dev/check-nav-assumed.mjs`.
+   */
+  ["with no price history the book line is the statement series, and its hover says why the demats are not at published closes", (t, ctx) => {
+    const book = navBookChip(ctx);
+    if (!book) return notChecked("the NAV card was not on screen on this run");
+    return book.basis === "statement" && !/assumed/.test(book.text)
+      && /Listed demat shares are at their statement values: /.test(book.title);
+  }],
   ["with no price service every benchmark's chip says its history could not be fetched, and the book is still drawn", (t, ctx) => {
     const c = ctx?.navChart;
     if (!c) return notChecked("the NAV card was not on screen on this run");
@@ -40934,6 +40946,7 @@ for (const theme of THEMES) {
             symbol: b.getAttribute("data-bench-symbol"),
             state: b.getAttribute("data-bench-state"),
             ret: num(b.getAttribute("data-nav-ret")),
+            basis: b.getAttribute("data-nav-basis"),
             shown: b.tagName === "BUTTON" ? b.getAttribute("aria-pressed") === "true" : true,
             text: (b.textContent ?? "").replace(/\s+/g, " ").trim(),
             title: b.getAttribute("title") ?? "",

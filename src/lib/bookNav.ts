@@ -62,9 +62,11 @@ import { isValuedAtCost } from "./analytics";
 /**
  * Where a unit's valuation on a date comes from. `nil` is the day the record's
  * own running unit balance returns to nothing — a full redemption, which is a
- * measured ₹0 however the money was carried before it.
+ * measured ₹0 however the money was carried before it. `assumed` is a demat's
+ * listed shares at a published close, carried forward from their statement
+ * (`assumedBookNav.ts`, Stage 10iz) — never part of the statement series.
  */
-export type NavMarkSource = "statement" | "opening" | "record" | "book" | "review" | "nil";
+export type NavMarkSource = "statement" | "opening" | "record" | "book" | "review" | "nil" | "assumed";
 
 export type NavUnitMark = { date: string; value: number; source: NavMarkSource };
 
@@ -148,7 +150,7 @@ const signedMove = (m: CapitalMove): number | null =>
  * value: the selected return record, then the book's own holdings, then the
  * statement series, then a printed opening.
  */
-const RANK: Record<NavMarkSource, number> = { record: 0, review: 0, book: 1, statement: 2, opening: 3, nil: 4 };
+const RANK: Record<NavMarkSource, number> = { record: 0, review: 0, book: 1, statement: 2, opening: 3, nil: 4, assumed: 5 };
 
 /**
  * THE DAYS A RECORD'S OWN UNITS RUN OUT. Where every move carries its units, a
@@ -649,14 +651,17 @@ export function buildBookNav(input: BookNavInput): BookNavSeries {
  *
  * A date qualifies when at most `maxLeak` of the return's value there is such
  * an investment — not valued within `withinDays` before the date and valued
- * again after it — and the period to the series' end is at least `minDays`
- * long. The series' first day is always offered: it is the base every point is
- * struck from. Measured on this book, 31 Mar 2026 is the one date that qualifies
- * (0%; 30 Jun 21%, 30 Sep 11%).
+ * again after it — the period to the series' end is at least `minDays` long,
+ * and it is at least `minGapDays` after the last day offered: a demat valued at
+ * every close (Stage 10iz) puts a valuation on 1, 2, 6 and 7 April, and each is
+ * the 31 March comparison again, not another period. The series' first day is
+ * always offered: it is the base every point is struck from. Measured on this
+ * book, 31 Mar 2026 is the one date that qualifies (0%; 30 Jun 21%, 30 Sep 11%).
  */
 export function comparableStarts(
   units: readonly NavUnit[], series: BookNavSeries,
-  { maxLeak = 0.05, withinDays = 7, minDays = 30 }: { maxLeak?: number; withinDays?: number; minDays?: number } = {},
+  { maxLeak = 0.05, withinDays = 7, minDays = 30, minGapDays = 28 }:
+    { maxLeak?: number; withinDays?: number; minDays?: number; minGapDays?: number } = {},
 ): string[] {
   const start = series.coverage.from, end = series.coverage.to;
   if (!start || !end) return [];
@@ -665,6 +670,7 @@ export function comparableStarts(
   for (const p of series.points) {
     const d = p.date;
     if (d <= start || !(p.accountsOnDate ?? 0) || daysBetween(d, end) < minDays) continue;
+    if (daysBetween(out[out.length - 1], d) < minGapDays) continue;
     let panel = 0, leak = 0;
     for (const u of units) {
       const from = returnEntry(u, start);
