@@ -1993,11 +1993,17 @@ export function StockInfo() {
 
           `min-h-0` is what makes `flex-1` shrink rather than grow the column
           past the window — without it the panel is as tall as its content and
-          the page scrolls again, which is the whole of what was asked. */}
-      <div className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto" data-stock-panel={tab} data-navigation-scroll="stockinfo-1">
+          the page scrolls again, which is the whole of what was asked.
+
+          ON POSITION THE PANEL IS A COLUMN THE ACCOUNT TABLE SHRINKS INTO
+          (28 Oct 2026, the Polycab card's shape): the table's own scroll box
+          gives up height before the panel scrolls, so on a short window its
+          pinned totals sit inside the visible panel rather than below it. */}
+      <div className={`lg:min-h-0 lg:flex-1 lg:overflow-y-auto ${tab === "position" ? "lg:flex lg:flex-col" : ""}`}
+        data-stock-panel={tab} data-navigation-scroll="stockinfo-1">
 
         {tab === "position" && (
-          <div data-stock-section="position">
+          <div className="lg:flex lg:min-h-0 lg:flex-col" data-stock-section="position">
             {resolving ? resolvingNote : exited ? (
               unchecked ? (
                 <Card className="mt-5" title="Position" subtitle="No statement in this book reports a current holding in this name.">
@@ -2018,13 +2024,13 @@ export function StockInfo() {
                  reader narrows the table without leaving the Position tab. A
                  fund folio or a cash line keeps its one table: "which of my
                  funds hold this" has no meaning for a fund. */
-              <Card className="mt-5" title="Position by account"
+              <Card className="mt-5 lg:flex lg:min-h-0 lg:flex-col" title="Position by account"
                 subtitle={tabsShown
                   ? "Every way the family holds this — in its own accounts, through a PMS manager, and inside the funds it holds"
                   : "How this name is held — the owning entity, who chose the position, and the platform that runs the account"}
                 right={heldTabs || undefined}
                 pad={false}>
-                <div className="overflow-x-auto" data-navigation-scroll="stockinfo-2">
+                <div className="overflow-x-auto lg:min-h-0" data-navigation-scroll="stockinfo-2">
                   <ExportableTable className="min-w-full whitespace-nowrap text-sm" data-held-table={heldTab}>
                     <thead className="border-b border-ink-700">
                       <Tr view={posView}>
@@ -2088,9 +2094,13 @@ export function StockInfo() {
                         A total of one line is the line again — and the strip above
                         already carries the statements' own totals — so a set of
                         one draws its line and nothing under it (the Polycab
-                        table's rule). See `measuredFootShown` for the three. */}
+                        table's rule). See `measuredFootShown` for the three.
+                        PINNED TO THE TABLE'S OWN SCROLL BOX (28 Oct 2026): *"freeze
+                        the last rows … so I can see what is my total and all the
+                        columns"* — the totals stay in view under the sticky header
+                        while the rows scroll between them. */}
                     {(measuredFootShown || derivedFootShown || exposureFootShown) && (
-                      <tfoot className="border-t-2 border-ink-600 font-semibold">
+                      <tfoot className="sticky bottom-0 z-10 border-t-2 border-ink-600 bg-ink-800 font-semibold" data-held-foot-pinned>
                         {heldTab === "all" ? (
                           <>
                             {measuredFootShown && measuredFoot(rows,
