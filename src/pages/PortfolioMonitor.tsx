@@ -3871,7 +3871,8 @@ export function PortfolioMonitor() {
         clicking it.
       */}
       {!(view === "holdings" && bySecurity) && (
-        <div className="mb-2 flex flex-wrap items-center gap-x-1 gap-y-0.5 border-b border-ink-700" role="tablist"
+        <div className="mb-2 flex flex-wrap items-end gap-x-2 border-b border-ink-700">
+        <div className="flex flex-wrap items-center gap-x-1 gap-y-0.5" role="tablist"
           aria-label={`Show one ${GROUP_NOUN[activeAxis].one}`}
           data-section-filter={bucket} data-section-axis={activeAxis}>
           {buckets.map((s) => {
@@ -3887,9 +3888,11 @@ export function PortfolioMonitor() {
               </button>
             );
           })}
+        </div>
           {/* THE TABLE'S EXCEL CONTROLS RIDE THIS ROW'S EMPTY RIGHT SIDE (Stage
               10gy's move, here): as a caption row of their own they pushed the
-              first holding out of the top third of the screen. On the security
+              first holding out of the top third of the screen. Beside the
+              tablist, never in it — a tablist holds tabs only. On the security
               axis this row is not drawn and the caption comes back. */}
           {view === "holdings" && <span ref={setTableTools} className="ml-auto inline-flex pb-1" data-table-tools />}
         </div>
