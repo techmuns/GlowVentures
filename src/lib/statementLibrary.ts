@@ -299,12 +299,16 @@ export interface StatementSecurityEntry {
   securityKey: string;
   name: string;
   documents: string[];
+  /** Its `holdingBucket` sections; absent on a read model published before they were. */
+  categories?: string[];
 }
 
 /** One security's folder — the statements that name it, across every provider. */
 export interface SecurityFolder {
   securityKey: string;
   name: string;
+  /** The sections it sits in — Direct Equity, PMS mandates, AIF… (`deriveStatementSecurities`). */
+  categories: string[];
   docCount: number;
   formats: string[];
   reportTypes: ReportTypeTally[];
@@ -336,7 +340,7 @@ export function buildSecurityLibrary(
     }).sort(byDateThenType);
     if (!docs.length) continue;
     folders.push({
-      securityKey: s.securityKey, name: s.name, docCount: docs.length,
+      securityKey: s.securityKey, name: s.name, categories: s.categories ?? [], docCount: docs.length,
       reportTypes: reportTypesOf(docs), providers: [...new Set(docs.map((d) => d.provider))].sort(),
       ...folderStats(docs), docs,
     });
