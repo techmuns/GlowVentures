@@ -7,11 +7,12 @@ import { FinancialSummary } from "@/components/FinancialSummary";
 import { CashFlowPanel } from "@/components/CashFlowPanel";
 import { Pill } from "@/components/Pill";
 import {
-  fetchResearch, isResearchError, researchReason, researchIsOutage, stalenessNote,
+  fetchResearch, settledResearch, isResearchError, researchReason, researchIsOutage, stalenessNote,
   type Research, type ResearchKind,
 } from "@/lib/research";
+import { getHoldingsInsider } from "@/lib/insider";
 import { outageHeadline } from "@/lib/upstreamStatus";
-import { RatioTable } from "@/components/RatioTable";
+import { RatioTable, fetchRatioTable } from "@/components/RatioTable";
 import { InsiderDeals } from "@/components/InsiderDeals";
 
 // Research from the muns endpoints, shown as the upstream wrote it.
@@ -61,10 +62,16 @@ const TAB_LABEL: Record<PanelTab, string> = {
 };
 /** The order the sub-tabs are offered in: the statements, then the market's view. */
 const TAB_ORDER: PanelTab[] = ["financials", "statements", "ratios", "estimates", "documents", "concalls", "insider"];
+/**
+ * HOW LONG THE OPEN SUB-TAB HAS THE NETWORK TO ITSELF before the others are
+ * asked for (Stage 10in) — long enough that its own request leaves first.
+ */
+const WARM_AFTER_MS = 600;
 
 export function ResearchPanel({ ticker, name }: { ticker: string | null; name: string }) {
   const [tab, setTab] = useNavigationState<PanelTab>("research-tab", "financials", TAB_ORDER);
-  const [state, setState] = useState<Research | { failureCode: string; upstreamStatus: number | null; detail: string | null } | null | undefined>(undefined);
+  const [state, setState] = useState<Research | { failureCode: string; upstreamStatus: number | null; detail: string | null } | null | undefined>(
+    () => (ticker && isKind(tab) ? settledResearch(tab, ticker) : undefined));
   /**
    * The screener document, held for the CASH FLOW tab's unit check.
    *
@@ -79,10 +86,30 @@ export function ResearchPanel({ ticker, name }: { ticker: string | null; name: s
   useEffect(() => {
     if (!ticker || !isKind(tab)) return;
     let alive = true;
-    setState(undefined);
+    setState(settledResearch(tab, ticker));
     fetchResearch(tab, ticker).then((r) => { if (alive) setState(r); });
     return () => { alive = false; };
   }, [ticker, tab]);
+
+  /**
+   * ── EVERY OTHER SUB-TAB IS ASKED FOR WHILE THIS ONE IS READ (Stage 10in) ──
+   *
+   * *"make these load much faster … research taking too much time"*. Each
+   * sub-tab fetched only when it was clicked, so a reader stepping from
+   * Financials to Ratios to Concalls waited on the data service at every step.
+   * Once the open sub-tab's own request has left, the rest are requested too —
+   * through the same shared requests their panels make, so a click finds its
+   * answer in hand or on its way, and nothing is fetched twice.
+   */
+  useEffect(() => {
+    if (!ticker) return;
+    const timer = setTimeout(() => {
+      for (const k of TAB_ORDER) if (isKind(k)) void fetchResearch(k, ticker);
+      void fetchRatioTable(ticker);
+      void getHoldingsInsider([{ symbol: ticker, name, key: ticker, weight: 0 }]);
+    }, WARM_AFTER_MS);
+    return () => clearTimeout(timer);
+  }, [ticker, name]);
 
   useEffect(() => {
     setScreener(null);

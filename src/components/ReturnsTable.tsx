@@ -7,7 +7,7 @@ import { Pill } from "@/components/Pill";
 import { AbsentSection } from "@/components/Absent";
 import { SeriesChart, type ChartType } from "@/components/SeriesChart";
 import { changeColor } from "@/lib/format";
-import { fetchPriceHistory, toPoints, priceErrorReason, type PriceHistory } from "@/lib/prices";
+import { fetchPriceHistory, settledPriceHistory, toPoints, priceErrorReason, type PriceHistory } from "@/lib/prices";
 import { HORIZON_COLS, RANGES, fmtLevel, fmtReturn, type RangeKey, type SeriesMeta, type Point } from "@/lib/series";
 
 // THE SPEC'S RETURNS TABLE AND PRICE CHART, for one security.
@@ -43,15 +43,18 @@ export function ReturnsTable({ ticker, name }: {
   /** Display name, for the chart legend. */
   name: string;
 }) {
-  const [data, setData] = useState<PriceHistory | { ok: false; reason: string } | null | undefined>(undefined);
+  // A history the page already fetched ahead (Stage 10in) is drawn on the first
+  // paint, rather than after a frame of "Loading closes…".
+  const [data, setData] = useState<PriceHistory | { ok: false; reason: string } | null | undefined>(
+    () => (ticker ? settledPriceHistory(ticker) : undefined));
   const [range, setRange] = useNavigationState<RangeKey>("price-range", "5Y", RANGES.map(r => r.key));
   const [chartType, setChartType] = useNavigationState<ChartType>("price-chart", "area", CHART_TYPES.map(t => t.key));
 
   useEffect(() => {
     let alive = true;
-    setData(undefined);
     if (!ticker) { setData(null); return; }
-    fetchPriceHistory(ticker).then((r) => { if (alive) setData(r); });
+    setData(settledPriceHistory(ticker));
+    fetchPriceHistory(ticker, { keep: true }).then((r) => { if (alive) setData(r); });
     return () => { alive = false; };
   }, [ticker]);
 

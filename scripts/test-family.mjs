@@ -42,6 +42,7 @@ const SUITES = [
   ["latest verified account returns", "src/lib/__tests__/latestAccountReturns.test.ts"],
   ["consolidated sheet", "src/lib/__tests__/consolidatedSheet.test.ts"],
   ["research background cache", "src/lib/__tests__/researchCache.test.ts"],
+  ["stock tabs load ahead", "src/lib/__tests__/stockTabsAhead.test.ts"],
   ["prepared ledger views", "src/lib/__tests__/readModels.test.ts"],
   ["server stock exposure", "src/lib/__tests__/stockExposureFunction.test.ts"],
   ["daily equity movers resilience", "src/lib/__tests__/dailyMovers.test.ts"],

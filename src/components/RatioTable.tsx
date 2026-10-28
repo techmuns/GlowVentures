@@ -40,7 +40,8 @@ type Fetched =
   | { ok: false; failureCode: string; pointer: string | null; upstreamStatus: number | null };
 
 const ratioRequests = new Map<string, { at: number; value: Promise<Fetched> }>();
-function fetchRatioTable(ticker: string): Promise<Fetched> {
+/** Shared with the research card, which asks for it ahead of the Ratios sub-tab (Stage 10in). */
+export function fetchRatioTable(ticker: string): Promise<Fetched> {
   const cached = ratioRequests.get(ticker);
   if (cached && Date.now() - cached.at < 5 * 60_000) return cached.value;
   const value = loadRatioTable(ticker).then((r) => { if (!r.ok || r.refreshing) ratioRequests.delete(ticker); return r; });

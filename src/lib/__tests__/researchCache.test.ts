@@ -7,7 +7,7 @@ const cache = new Map<string, Response>();
 Object.defineProperty(globalThis, 'caches', { configurable: true, value: { default: {
   match: async (r: Request) => cache.get(r.url)?.clone(), put: async (r: Request, value: Response) => { cache.set(r.url, value.clone()); },
 } } });
-const key = 'https://local.test/__cache/research/financials/v1/bundle';
+const key = 'https://local.test/__cache/research/financials/TEST/v2/bundle';
 cache.set(key, Response.json({ TEST: { at: now - 13 * 3600_000, v: { format: 'markdown', text: 'Saved financial evidence' } } }));
 const pending: Promise<unknown>[] = [];
 const ctx = () => ({ request: new Request('https://local.test/api/research', { method: 'POST', body: JSON.stringify({ kind: 'financials', ticker: 'TEST' }) }), env: { MUNS_TOKEN: 'test-only-token' }, waitUntil(p: Promise<unknown>) { pending.push(p); } });
@@ -18,6 +18,7 @@ const response = await Promise.race([onRequest(ctx()), new Promise<never>((_, re
 const saved = await response.json();
 assert.equal(saved.text, 'Saved financial evidence'); assert.equal(saved.refreshing, true); assert.equal(saved.stale, true);
 assert.ok(saved.ageS >= 13 * 3600); assert.match(stalenessNote(saved)!, /while it refreshes/);
+assert.equal(saved.fetchedAt, now - 13 * 3600_000, 'a saved copy carries the time it was fetched upstream');
 release(); await Promise.all(pending);
 assert.equal((await (await onRequest(ctx())).json()).text, 'Updated financial evidence');
 let reads = 0;
@@ -30,7 +31,7 @@ assert.ok(isResearchError(await fetchResearch('financials', 'FAIL')));
 assert.equal(reads, 3, 'failures are not pinned into the session');
 console.log('PASS saved research immediately returned with honest age, background recovery, request sharing and retry after failure');
 
-cache.set('https://local.test/__cache/ratio-table/v1/bundle', Response.json({ TEST: { at: now - 13 * 3600_000, v: { text: 'Saved ratios', sourceUrl: 'https://www.screener.in/company/TEST/' } } }));
+cache.set('https://local.test/__cache/ratio-table/TEST/v2/bundle', Response.json({ TEST: { at: now - 13 * 3600_000, v: { text: 'Saved ratios', sourceUrl: 'https://www.screener.in/company/TEST/' } } }));
 globalThis.fetch = async () => { throw new Error('offline'); };
 const ratio = await ratios({ ...ctx(), request: new Request('https://local.test/api/ratios', { method: 'POST', body: JSON.stringify({ table: true, ticker: 'TEST' }) }) });
 const table = await ratio.json();
