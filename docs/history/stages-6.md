@@ -633,7 +633,14 @@
 - The check's init script can hold observer deliveries and release them as one batch. After the mobile resize it sends "far away, then back" for the first pages and requires page 3 to draw: 4 of 4 runs fail on the old reader (page 3 blank, as in CI) and pass with the fix. Skipping the render call fails `ink(1)` with a blank canvas.
 - Measured locally: the old check failed 2 of 8 runs (`IndexSizeError`); the new one passed 12 of 12 in a row and 12 of 12 more with four runs in parallel.
 
-### Stage 10ir — PORTFOLIO LIBRARY: FILTER FOLDERS BY CATEGORY
+### Stage 10ir — PRIVATE MARKET: CAPITAL CELLS TYPE IN PLACE, LIKE STRATEGY AND DESCRIPTION
+
+- The family (28 Oct 2026), on 10io's dialog: *"remove this enter commitments part, make the other relevant cells still to call, called, paid in, etc individual cells editable just like the description and strategy cells. In the same format"*. The button, dialog and its Excel template (`CommitmentEntry`, `commitmentExcel`, `ExportableTable`'s `inputControls`) are gone.
+- Committed, Called, Paid in and Still to call are now always-open boxes (`src/components/CapitalCellInput.tsx`), in `ProfileCellInput`'s format: the figure as the table prints it, the exact rupees on focus, and Save / Cancel once it changes. Enter saves and Escape cancels. A typed figure shows in champagne with "Remove typed figure". Amounts take `2.5 Cr` / `40 lakh`; blank is not known, never zero. A statement's commitment can be corrected, never blanked.
+- Only a row that is ONE folio types: a folio line, or a fund row with a single folio. A row over several folios stays their calculated sum. Its record is the one `<Tr>` tags for Edit numbers and Excel (`capitalRecordId`, `src/lib/capitalEntry.ts`), so a figure typed in place, in Edit numbers or in an uploaded Excel is one saved figure. Exports still print the figure, and Edit numbers still swaps in its own editor. `<Tr>` adds no "Edited" tag to a cell marked `data-cell-editor`.
+- `capitalEntry.test.ts` (89 folios typed into, 2 income-only views read-only; typed figures reach `figuresOf`) and `check-table-inputs.mjs` (type, save, refuse words, export, upload, remove) cover it. `check:pages ONLY=private-market,private-market-tiles` shows main's same seven findings.
+
+### Stage 10is — PORTFOLIO LIBRARY: FILTER FOLDERS BY CATEGORY
 
 - The family (28 Oct 2026): filter the Portfolio Library by the Portfolio Monitor's categories — All, Direct Equity, PMS mandates, ETF, Mutual Fund, AIF, Bond, Unlisted, Private investments at cost, Cash.
 - `deriveStatementSecurities` (`src/lib/ledgerModel.ts`) now gives each folder its `categories`, decided by `holdingBucket`: the book's positions for a security it holds, plus every statement row's printed class and its account's engagement (so an exited holding is still placed). A security the book holds at cost is at cost on every row. "Not classified by the statement" / "how it is held is not stated" are kept only when nothing else places a folder. A folder can sit in several (Ather Energy: Direct Equity and PMS mandates).
