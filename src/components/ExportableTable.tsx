@@ -11,11 +11,9 @@ import { prepareTableExport, setTableExporting, useTableExporting } from "@/lib/
 /** Include every row and available column in this table's export snapshot. */
 export const TableExportAllRows = createContext(false);
 
-export function ExportableTable({ children, exportName, controlsHost, editable = false, inputControls, ...props }: Omit<TableHTMLAttributes<HTMLTableElement>, "children"> & {
+export function ExportableTable({ children, exportName, controlsHost, editable = false, ...props }: Omit<TableHTMLAttributes<HTMLTableElement>, "children"> & {
   children: ReactNode | ((allRows: boolean) => ReactNode);
   exportName?: string;
-  /** A table's own number entry, beside Upload Excel (Private Market's Enter commitments, Stage 10io). */
-  inputControls?: ReactNode;
   /**
    * Offer the number inputs — Edit numbers, All inputs, Upload Excel and the
    * input sheets in the workbook. Only the main tables of Portfolio Monitor,
@@ -132,7 +130,6 @@ export function ExportableTable({ children, exportName, controlsHost, editable =
       <Upload className="h-3.5 w-3.5" />Upload Excel
     </button>
     <input ref={upload} type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" aria-label="Upload corrected Excel" className="hidden" onChange={e => { void importFile(e.target.files?.[0]); }} />
-    {inputControls}
     <span className="text-[10px] text-slate-500">Keep Excel format; change numbers only.</span>
     {editing && <span className="text-xs text-slate-500">Edit detail rows in INR. For other inputs, use All inputs. Totals update automatically.</span>}
     {inputState.status === "error" && <button type="button" onClick={() => { void refreshTableInputs(); }} className="rounded text-xs text-loss ring-focus" title={inputState.error}>Numbers unavailable · Retry</button>}

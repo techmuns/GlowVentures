@@ -625,6 +625,28 @@
 - Page: a "Tax if sold today" card under Properties, one row per property that reads across — Holding · Cost for tax (indexed where the 20% route wins) · Current value · Taxable gain · Rate · Tax on sale (incl. 4% cess) · Value after tax — with totals and coverage, a one-line rate key (`data-prose-ok`), and a "Needs …" button that opens the form. The optional Holding and Indexed cost columns left the main table; Est. tax on sale and Value after tax stay. The editor's "Tax basis" section is "Tax on sale" and appears only for an inheritance or gift, a pre-2001 holding or land.
 - Tests: `test-property-tax.mjs` (21 checks, each settled figure tied across the row), `test-real-estate-bulk.mjs` and both browser checks updated.
 
+### Stage 10iq — PDF PREVIEW: A PAGE IN VIEW IS ALWAYS DRAWN, AND ITS CHECK STOPS FLAKING
+
+- `check-pdf-preview.mjs` failed three times on 28 Oct 2026 on PRs that did not touch the reader (#266, #271), each passing on re-run. Two were `IndexSizeError` in `ink()`: after a resize or zoom the reader swaps the page's canvas and drops the old one (width 0), and the check read pixels through a handle taken a moment earlier.
+- The third was the reader. Its CI screenshot shows page 2 empty (no canvas, no "Loading") with page 3 drawn. Each page's `IntersectionObserver` callback read only the FIRST entry; a busy main thread can deliver "left the range" and "back again" for one page in one callback (seen in Chrome on demand), so the page kept the stale "not nearby" and was never drawn. `PdfPage` now reads the newest entry.
+- `ink(n)` polls in the page (`waitForFunction`, 100 ms, 30 s) until exactly one `canvas[data-pdf-page=n]` has a non-zero size and the same ink threshold; on timeout it fails naming the last canvas state, so a blank page still fails.
+- The check's init script can hold observer deliveries and release them as one batch. After the mobile resize it sends "far away, then back" for the first pages and requires page 3 to draw: 4 of 4 runs fail on the old reader (page 3 blank, as in CI) and pass with the fix. Skipping the render call fails `ink(1)` with a blank canvas.
+- Measured locally: the old check failed 2 of 8 runs (`IndexSizeError`); the new one passed 12 of 12 in a row and 12 of 12 more with four runs in parallel.
+
+### Stage 10ir — PRIVATE MARKET: CAPITAL CELLS TYPE IN PLACE, LIKE STRATEGY AND DESCRIPTION
+
+- The family (28 Oct 2026), on 10io's dialog: *"remove this enter commitments part, make the other relevant cells still to call, called, paid in, etc individual cells editable just like the description and strategy cells. In the same format"*. The button, dialog and its Excel template (`CommitmentEntry`, `commitmentExcel`, `ExportableTable`'s `inputControls`) are gone.
+- Committed, Called, Paid in and Still to call are now always-open boxes (`src/components/CapitalCellInput.tsx`), in `ProfileCellInput`'s format: the figure as the table prints it, the exact rupees on focus, and Save / Cancel once it changes. Enter saves and Escape cancels. A typed figure shows in champagne with "Remove typed figure". Amounts take `2.5 Cr` / `40 lakh`; blank is not known, never zero. A statement's commitment can be corrected, never blanked.
+- Only a row that is ONE folio types: a folio line, or a fund row with a single folio. A row over several folios stays their calculated sum. Its record is the one `<Tr>` tags for Edit numbers and Excel (`capitalRecordId`, `src/lib/capitalEntry.ts`), so a figure typed in place, in Edit numbers or in an uploaded Excel is one saved figure. Exports still print the figure, and Edit numbers still swaps in its own editor. `<Tr>` adds no "Edited" tag to a cell marked `data-cell-editor`.
+- `capitalEntry.test.ts` (89 folios typed into, 2 income-only views read-only; typed figures reach `figuresOf`) and `check-table-inputs.mjs` (type, save, refuse words, export, upload, remove) cover it. `check:pages ONLY=private-market,private-market-tiles` shows main's same seven findings.
+
+### Stage 10is — REAL ESTATE: THE TAX COLUMNS EXPLAIN THEMSELVES; NO SEPARATE TAX SECTION
+
+*"we did not have to create a separate section for tax, we already show the tax columns in the main table, just make the tax columns on the main table show a pop up section after we click on it to see the explanation of tax calculation on the holdings."* — the family, 28 Oct 2026.
+- The "Tax if sold today" card of Stage 10ip is gone. Est. tax on sale and Value after tax in the Properties table are each a `ReturnCalculationInfo` trigger (`PropertyTaxInfo`, `src/components/PropertyTax.tsx`): the click opens the working for the share the cell shows — holding, current value − cost (indexed where 20% wins) = taxable gain, which rate and why (both rates where bought before 23 Jul 2024), gain × rate + 4% cess = tax, value − tax = value after tax — in whole rupees that add up to the cell. A mixed route shows each owner's sum. The five rules sit under "The rules".
+- A cell that cannot be worked out yet opens the same popup, names every input still to enter and offers Enter details, which closes it and opens the form (`ReturnCalculationInfo` children may be a function given `close`).
+- `check-real-estate.mjs` opens the popup for an inherited property and reads each step's figures, the value-after-tax result, the missing-input path and the unregistered-owner reason.
+
 ### Stage 10it — NUMBER INPUTS ONLY ON PORTFOLIO MONITOR, PRIVATE MARKET AND REAL ESTATE
 
 *"This upload or edit numbers only need to be in portfolio monitor and private market and real estate no where else … Morning CIO is a view for the user, not an edit place"* — the family, 28 Oct 2026 (Daily Movers, Return attribution, Sector Composition, Allocation & Risk named).

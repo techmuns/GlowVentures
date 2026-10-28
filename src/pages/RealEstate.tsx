@@ -13,7 +13,7 @@ import { ExportableTable } from "@/components/ExportableTable";
 import { useViewParam } from "@/components/ViewToggle";
 import { PropertyEditor, emptyProperty } from "@/components/PropertyEditor";
 import { PropertyBulkEntry } from "@/components/PropertyBulkEntry";
-import { PropertyTaxCard, PropertyTaxDetails, TAX_RULES } from "@/components/PropertyTax";
+import { PropertyTaxDetails, PropertyTaxInfo, TAX_RULES } from "@/components/PropertyTax";
 import { useTableView, sortRows, type Accessor } from "@/lib/tableView";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { fmtNum, fmtPct, fmtDate } from "@/lib/format";
@@ -132,7 +132,6 @@ export function RealEstate() {
     if (why) return inlineGap(why.reason, why.short);
     return <span className={f.gain! > 0 ? "text-gain" : f.gain! < 0 ? "text-loss" : ""}>{money(f.gain, { sign: true })} · {fmtPct(f.gainPct, { sign: true })}{receivedWithoutPurchase(p) && <span className="text-xs text-slate-500"> since {p.acquisition === "Inherited" ? "inheritance" : "gift"}</span>}</span>;
   };
-  const taxWorking = (t: PropertyGainsTax) => `${t.notCapitalAsset ? "Rural agricultural land is not a capital asset." : t.owners.map(o => `${o.name || "Owner not entered"} (${o.status}): ${money(o.tax)} at ${o.route === "none" ? "no gain" : o.route === "indexed" ? "20% after indexation" : "12.5%"}`).join("; ")}. ${TAX_RULES}`;
   const numeric = new Set(["area", "cost", "value", "gain", "gainPct", "tax", "afterTax", "rent", "yield", "debt", "emi", "equity", "netRent"]);
   const cell = (p: Property, key: string): ReactNode => {
     const f = propertyFigures(p, scope.owners);
@@ -152,8 +151,10 @@ export function RealEstate() {
     if (TAX_KEYS.has(key)) {
       const t = taxOf(p), sub = (text: string) => <span data-export-ignore className="mt-1 block font-sans text-[10px] text-slate-500">{text}</span>;
       const n = t[key as TaxKey];
-      if (n === null) return gap(t.gap?.reason ?? "Not known", t.gap?.short ?? "Not known");
-      return <span title={`${taxWorking(t)} ${shareTitle}`}>{money(n)}{key === "tax" && t.route && sub(t.route)}</span>;
+      // The figure, or its dash and reason, opens the working behind it.
+      const info = (trigger: ReactNode) => <PropertyTaxInfo label={propertyLabel(p)} t={t} figure={key as TaxKey} trigger={trigger} onEdit={() => { open(p); setEditing(true); }} />;
+      if (n === null) return info(<span className="inline-block text-right"><AbsentValue /><span className="mt-1 block whitespace-normal font-sans text-[10px] text-slate-500">{t.gap?.short ?? "Not known"}</span></span>);
+      return <span data-tax-figure>{info(money(n))}{key === "tax" && t.route && sub(t.route)}</span>;
     }
     if (["cost", "value", "rent", "debt", "emi", "equity", "netRent"].includes(key)) return f[key as "cost"] === null ? <span title={f.share === null ? shareMissing : key === "equity" ? "Needs current value and loan outstanding" : key === "netRent" ? "Needs monthly rent and monthly costs" : "Not entered"}><AbsentValue /></span> : <span title={`${shareTitle}${p.valuationDate && key === "value" ? ` Valued ${date(p.valuationDate)}.` : ""}`}>{money(f[key as "cost"])}</span>;
     switch (key) {
@@ -213,7 +214,6 @@ export function RealEstate() {
         </div>
       </div>}
     </Card>
-    <PropertyTaxCard properties={filtered} taxOf={taxOf} asOf={asOf} fy={financialYear(asOf)} empty={empty} onOpen={open} onEdit={p => { open(p); setEditing(true); }} />
     <dialog ref={dialog} aria-labelledby="property-dialog-title" onCancel={e => { e.preventDefault(); close(); }} onClose={() => { if (activeProperty) close(); }} className="property-dialog card w-[min(62rem,calc(100%-2rem))] max-h-[90vh] overflow-y-auto p-5 text-slate-200 backdrop:bg-black/50" data-navigation-scroll="realestate-3">
       {activeProperty && <><div className="mb-5 flex items-start justify-between gap-4"><h2 id="property-dialog-title" className="font-display text-lg font-bold text-slate-100">{adding ? "Add property" : propertyLabel(activeProperty)}</h2><button type="button" className="btn-ghost" aria-label="Close property" disabled={busy} onClick={close}><X className="h-4 w-4" /></button></div>
         {editing || adding ? <PropertyEditor key={activeProperty.id} property={activeProperty} members={scope.options} onCancel={adding ? close : () => setEditing(false)} onSave={async p => {
