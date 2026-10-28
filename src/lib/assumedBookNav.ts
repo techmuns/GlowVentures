@@ -57,6 +57,8 @@ export type DematHolding = {
   reason: string | null;
   /** Still waiting on its price history. */
   pending: boolean;
+  /** Its price history failed to load — a retry may value it. */
+  retry: boolean;
 };
 
 export type AssumedBookNav = {
@@ -72,6 +74,9 @@ export type AssumedBookNav = {
 };
 
 const sum = (xs: readonly number[]) => xs.reduce((a, b) => a + b, 0);
+
+/** The key suffix of a demat's assumed shares where its other holdings stay an investment of their own. */
+export const ASSUMED_KEY = "|assumed";
 
 /**
  * THE DEMAT ACCOUNTS AND WHAT THEY HOLD. An account the family holds directly or
@@ -128,19 +133,19 @@ export function assumedBookNav(input: {
     const lastReal = existing?.marks.at(-1)?.date ?? null;
     const assumed: { p: Position; r: AssumedHolding }[] = [];
     for (const p of held) {
-      const base = { accountId, securityKey: p.securityKey, security: p.security, owner: a.owner, from: null, income: 0 };
+      const base = { accountId, securityKey: p.securityKey, security: p.security, owner: a.owner, from: null, income: 0, retry: false };
       const kept = p.marketValue !== 0 ? "statement" as const : "left-out" as const;
       if (dup.has(p)) continue;
       const r = assumedHolding(p, a, null, end, input.book);
       if ("gap" in r) {
         if (r.gap.pending) pending++;
-        holdings.push({ ...base, status: kept, value: p.marketValue, reason: r.gap.reason, pending: !!r.gap.pending });
+        holdings.push({ ...base, status: kept, value: p.marketValue, reason: r.gap.reason, pending: !!r.gap.pending, retry: !!r.gap.retry });
         continue;
       }
       // A NEWER VALUATION OF THE ACCOUNT WINS. Units carried from an older
       // statement cannot overwrite a value a later record struck.
       if (lastReal && r.anchor.date < lastReal) {
-        holdings.push({ ...base, status: kept, value: p.marketValue, pending: false,
+        holdings.push({ ...base, status: kept, value: p.marketValue, pending: false, retry: false,
           reason: `The account is valued on ${lastReal}, after the ${r.anchor.date} share count; its own valuation is used.` });
         continue;
       }
@@ -150,12 +155,25 @@ export function assumedBookNav(input: {
 
     // Every assumed share is held from the latest of their statement dates.
     const from = assumed.map((x) => x.r.anchor.date).sort().at(-1) as string;
-    // What the account's statement carries for everything else, as before.
-    const carried = existing ? (existing.marks.at(-1)?.value ?? 0) - sum(assumed.map((x) => x.p.marketValue)) : 0;
+    /**
+     * MONEY THE ACCOUNT RECORDS AFTER ITS STATEMENT KEEPS IT ON THE STATEMENT.
+     * A contribution, withdrawal or recorded payout after `from` would sit in
+     * the account between two closes, and a daily mark of fixed shares has no
+     * place for it: the next close would erase it from the level and the chain
+     * would read it as a loss or a gain. No demat in this book records one; one
+     * that does keeps its statement series until a newer balance arrives.
+     */
+    if (existing?.flows.some((f) => f.date > from && f.date <= end)) {
+      for (const x of assumed) holdings.push({ accountId, securityKey: x.p.securityKey, security: x.p.security, owner: a.owner,
+        status: x.p.marketValue !== 0 ? "statement" : "left-out", from: null, value: x.p.marketValue, income: 0, pending: false, retry: false,
+        reason: "The account records money in or out after its statement. A newer share balance is needed before assuming these shares were unchanged." });
+      continue;
+    }
     const dates = [...new Set([from, ...assumed.flatMap((x) => x.r.history.t.filter((t) => t > from && t <= end))])].sort();
+    // The assumed shares alone, at each close every one of them has.
     const marks: NavUnitMark[] = [];
     for (const d of dates) {
-      let value = carried, priced = true;
+      let value = 0, priced = true;
       for (const x of assumed) {
         const c = publishedClose(x.r.history, d);
         if (!c) { priced = false; break; }
@@ -165,27 +183,43 @@ export function assumedBookNav(input: {
     }
     if (!marks.length) continue;
     // GROSS DIVIDENDS ARE PAID OUT ON THEIR EX-DATES — money leaving the
-    // holding, as every payout in the series is — unless the account's own
-    // record already carries a dividend for that share after the statement.
-    const recordedIncome = (p: Position, after: string) => input.book.moves.some((m) => m.accountId === accountId
-      && m.securityKey === p.securityKey && m.date > after && /dividend|income|interest/i.test(m.label));
-    const income = assumed.flatMap((x) => (recordedIncome(x.p, x.r.anchor.date) ? [] : x.r.incomeDates)
-      .filter((f) => f.date > from && f.date <= end).map((f) => ({ date: f.date, amount: -f.amount })));
+    // holding, as every payout in the series is. The account records none after
+    // its statement (above), so each entitlement is counted once, here.
+    const income = assumed.flatMap((x) => x.r.incomeDates.filter((f) => f.date > from && f.date <= end)
+      .map((f) => ({ date: f.date, amount: -f.amount })));
     for (const x of assumed) {
-      const own = recordedIncome(x.p, x.r.anchor.date) ? [] : x.r.incomeDates.filter((f) => f.date > from && f.date <= end);
+      const own = x.r.incomeDates.filter((f) => f.date > from && f.date <= end);
       holdings.push({ accountId, securityKey: x.p.securityKey, security: x.p.security, owner: a.owner, status: "assumed",
-        from: x.r.anchor.date, value: x.r.quantity * x.r.closing.value, income: sum(own.map((f) => f.amount)), reason: null, pending: false });
+        from: x.r.anchor.date, value: x.r.quantity * x.r.closing.value, income: sum(own.map((f) => f.amount)), reason: null, pending: false, retry: false });
     }
-    const flows = [...(existing?.flows ?? []), ...income].sort((p, q) => (p.date < q.date ? -1 : p.date > q.date ? 1 : 0));
+    const stated = sum(assumed.map((x) => x.p.marketValue));
     // THE ASSUMPTION IS THAT NO CAPITAL MOVED but the dividends counted, so the
     // record is complete through the end — every step between two closes is
     // settled by it, never left unproven.
-    const recordTo = existing?.recordTo && existing.recordTo > end ? existing.recordTo : end;
-    if (existing) {
-      replaced.set(accountId, { ...existing, marks: [...existing.marks.filter((m) => m.date < from), ...marks], flows, recordTo });
+    const shares: NavUnit = { key: accountId, accountId, securityKey: null, marks, flows: income, origin: null, originDated: false,
+      atCost: false, recordTo: end, steps: [], bookValue: stated };
+    if (!existing) { added.push({ ...shares, bookValue: 0 }); continue; }
+    /**
+     * …AND WHAT IT DOES NOT VALUE AT A CLOSE KEEPS ITS OWN STATEMENT DATE. The
+     * account's other holdings stay at their statement values as an investment
+     * of their own, so a share priced every day never makes them look freshly
+     * valued: Ajay's ICICI demat keeps ₹18.5 Cr of listings no published price
+     * reaches at its 31 Mar statement, and the card names it as carried from
+     * then. Where the account was valued BEFORE the shares' statement too, its
+     * earlier value is the whole account's and cannot be split, so the two stay
+     * one investment.
+     */
+    const carried = (existing.marks.at(-1)?.value ?? 0) - stated;
+    if (existing.marks.some((m) => m.date < from)) {
+      replaced.set(accountId, { ...existing, flows: [...existing.flows, ...income].sort((p, q) => (p.date < q.date ? -1 : p.date > q.date ? 1 : 0)),
+        marks: [...existing.marks.filter((m) => m.date < from), ...marks.map((m) => ({ ...m, value: m.value + carried }))],
+        recordTo: existing.recordTo && existing.recordTo > end ? existing.recordTo : end });
+    } else if (Math.abs(carried) >= 1) {
+      replaced.set(accountId, { ...existing, marks: [{ date: from, value: carried, source: existing.marks.at(-1)?.source ?? "book" }],
+        bookValue: existing.bookValue - stated });
+      added.push({ ...shares, key: `${accountId}${ASSUMED_KEY}` });
     } else {
-      added.push({ key: accountId, accountId, securityKey: null, marks, flows, origin: null, originDated: false,
-        atCost: false, recordTo, steps: [], bookValue: 0 });
+      replaced.set(accountId, { ...shares, bookValue: existing.bookValue });
     }
   }
   const units = [...input.units.map((u) => replaced.get(u.key) ?? u), ...added].sort((x, y) => x.key.localeCompare(y.key));

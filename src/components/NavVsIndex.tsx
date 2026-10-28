@@ -12,7 +12,7 @@ import { BOOK_ACCOUNTS, BOOK_POSITIONS } from "@/data/glowData";
 import { shareCandidates } from "@/lib/depositoryShares";
 import { useMarketHistories } from "@/lib/useMarketReturns";
 import { assumedHoldingBook } from "@/lib/assumedHoldingBook";
-import { assumedBookNav, dematHoldings, type DematHolding } from "@/lib/assumedBookNav";
+import { assumedBookNav, dematHoldings, ASSUMED_KEY, type DematHolding } from "@/lib/assumedBookNav";
 import { holdingAssumptionText } from "@/lib/assumedHoldingReturns";
 import { bookNavStats, type BookNavCoverage, type BookNavStats, type BookNavUnitCoverage } from "@/lib/bookNav";
 import { accountIndex } from "@/lib/accounts";
@@ -246,8 +246,9 @@ export function NavVsIndex() {
     const a = accts.get(u.accountId);
     const line = u.securityKey ? lineName.get(`${u.accountId}|${u.securityKey}`) ?? u.securityKey : null;
     if (a?.reviewHolder && line) return `${line} · ${a.ownerId ? ownerDisplayName(a.ownerId) : a.owner}`;
-    // Two folios of one fund under one member read alike without their number.
-    return `${nameOf(u.accountId)}${a?.accountNo ? ` · ${a.accountNo}` : ""}`;
+    // Two folios of one fund under one member read alike without their number,
+    // and a demat's shares at published closes read apart from its other holdings.
+    return `${nameOf(u.accountId)}${a?.accountNo ? ` · ${a.accountNo}` : ""}${u.key.endsWith(ASSUMED_KEY) ? " · listed shares at published closes" : ""}`;
   };
   /** Why an account carries no valuation is its own sentence, routed (MNT-14). */
   const stmtAccts = accountIndex(stmtBook.accounts);
@@ -434,6 +435,15 @@ export function NavVsIndex() {
           <span className={`tabular font-semibold ${changeColor(bookRet)}`}>{pctText(bookRet)}</span>
           <span className="text-slate-500">available data{useAssumed && " · assumed holdings"}</span>
         </span>
+        {/* A PRICE HISTORY THAT FAILED TO LOAD IS RETRIED HERE, never left
+            pinning its shares to the statement for the rest of the visit. */}
+        {assumed && assumed.holdings.some((h) => h.retry) && (
+          <button type="button" data-testid="nav-demat-retry" onClick={() => dematFeed.retry()}
+            title={`${assumed.holdings.filter((h) => h.retry).length} demat price histories could not load; their shares stay at their statement values until they do.`}
+            className={`${chipBase} border-ink-700 bg-ink-800/60 text-slate-400 hover:bg-ink-700/60 hover:text-slate-200`}>
+            Retry demat prices
+          </button>
+        )}
         {benches.map(({ b, load, ret, lastClose }) => {
           const shown = !hidden.has(b.key);
           const why = load.state === "down"

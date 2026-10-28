@@ -71,10 +71,15 @@ const run = (b: AssumedReturnBook = book, units: NavUnit[] = [other, unit]) =>
 {
   const r = run();
   const d = r.series.coverage.units.find((u) => u.key === "d")!;
+  const shares = r.series.coverage.units.find((u) => u.key === "d|assumed")!;
   ok("the demat's assumed share is valued at published closes, its other holding at its statement value",
     r.assumedCount === 2 && r.holdings.find((h) => h.securityKey === "kept")?.status === "statement");
-  // 2,000 carried + 10 × 400 on 30 Sep.
-  ok("…to its last close in the window", near(d.endValue, 2000 + 10 * 400), String(d.endValue));
+  // 10 × 400 on 30 Sep, beside the 2,000 carried.
+  ok("…to its last close in the window", near(shares?.endValue ?? null, 10 * 400) && near(d.endValue, 2000), `${shares?.endValue} + ${d.endValue}`);
+  // REVIEW: a sibling priced every day must not make the carried holding look
+  // freshly valued — it stays an investment of its own, at its statement date.
+  ok("the holding left at its statement value keeps its statement date", d.lastValued === "2026-03-31" && shares.lastValued === "2026-09-30");
+  ok("…and the statement book is unchanged by the split", near(r.series.coverage.statementBook, base.coverage.statementBook));
   const pts = r.series.points;
   const at = (date: string) => pts.find((p) => p.date === date);
   // The statement day is 10 × 300 + 2,000 = 5,000 — never the statement's 7,000.
@@ -118,6 +123,16 @@ const run = (b: AssumedReturnBook = book, units: NavUnit[] = [other, unit]) =>
   const r = run({ ...book, histories: { ...book.histories, loose: { ok: false, reason: "404" } } });
   ok("a quantity-only share with no price is in neither line", r.holdings.find((h) => h.securityKey === "loose")?.status === "left-out"
     && !r.series.coverage.units.some((u) => u.key === "q"));
+  ok("…and a history that failed to load is marked for retry", r.holdings.find((h) => h.securityKey === "loose")?.retry === true);
+}
+{
+  // REVIEW: money the account records after its statement has no place in a
+  // daily mark of fixed shares, so the account stays on its statement.
+  const withFlow: NavUnit = { ...unit, flows: [{ date: "2026-06-01", amount: 1500 }] };
+  const r = run(book, [other, withFlow]);
+  const h = r.holdings.find((x) => x.securityKey === "share");
+  ok("an account recording money after its statement keeps its shares on the statement", h?.status === "statement"
+    && /money in or out after its statement/.test(h.reason ?? "") && !r.series.coverage.units.some((u) => u.key === "d|assumed"));
 }
 
 // ── The real book, on a public-price fixture ─────────────────────────────────
@@ -148,13 +163,15 @@ const run = (b: AssumedReturnBook = book, units: NavUnit[] = [other, unit]) =>
     const own = BOOK_POSITIONS.find((p) => p.accountId === h.accountId && p.securityKey === h.securityKey)?.marketValue ?? 0;
     byAccount.set(h.accountId, (byAccount.get(h.accountId) ?? 0) + h.value - own);
   }
-  const ties = [...byAccount].every(([id, delta]) => {
-    const got = (r.series.coverage.units.find((u) => u.key === id)?.endValue ?? 0) - (stmt.get(id) ?? 0);
-    return Math.abs(got - delta) <= 1;
-  });
+  const endOf = (id: string) => r.series.coverage.units.filter((u) => u.accountId === id).reduce((a, u) => a + (u.endValue ?? 0), 0);
+  const ties = [...byAccount].every(([id, delta]) => Math.abs(endOf(id) - (stmt.get(id) ?? 0) - delta) <= 1);
   ok("each demat's end value moves by exactly what its published closes add", ties);
   ok("…and the investments outside the demats are untouched", WHOLE_BOOK_NAV.coverage.units.every((u) =>
-    byAccount.has(u.key) || Math.abs((r.series.coverage.units.find((x) => x.key === u.key)?.endValue ?? 0) - (u.endValue ?? 0)) <= 1e-6));
+    byAccount.has(u.accountId) || Math.abs((r.series.coverage.units.find((x) => x.key === u.key)?.endValue ?? 0) - (u.endValue ?? 0)) <= 1e-6));
+  // The ICICI demat's listings no price reaches stay at its 31 Mar statement.
+  const carried = r.series.coverage.units.find((u) => u.key === "icici-bank-nsdl-demat-49794950");
+  ok("a demat's holdings left at statement values keep their statement date", !carried || carried.lastValued === "2026-03-31",
+    carried ? `${((carried.endValue ?? 0) / 1e7).toFixed(2)} Cr from ${carried.lastValued}` : "no carried part");
   ok("every holding not valued this way says why", r.holdings.every((h) => h.status === "assumed" ? h.reason === null : !!h.reason));
   ok("the start days still include the series' first", r.starts[0] === WHOLE_BOOK_NAV.coverage.from);
 }

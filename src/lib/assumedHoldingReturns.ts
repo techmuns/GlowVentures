@@ -49,7 +49,7 @@ export type AssumedHolding = {
   closing: { date: string; value: number };
   incomeDates: { date: string; amount: number }[];
 };
-export type AssumedHoldingGap = { reason: string; detail?: string; pending?: boolean };
+export type AssumedHoldingGap = { reason: string; detail?: string; pending?: boolean; retry?: boolean };
 
 /**
  * THE ONE RULE FOR ONE HOLDING (Stage 10iz): every surface that carries a
@@ -58,7 +58,7 @@ export type AssumedHoldingGap = { reason: string; detail?: string; pending?: boo
  * held, refused or still loading for the same reason on both.
  */
 export function assumedHolding(p: Position, a: Account | undefined, start: string | null, end: string, b: AssumedReturnBook): AssumedHolding | { gap: AssumedHoldingGap } {
-  const gap = (reason: string, detail?: string, pending = false) => ({ gap: { reason, detail, pending } });
+  const gap = (reason: string, detail?: string, pending = false, retry = false) => ({ gap: { reason, detail, pending, retry } });
   if (!a) return gap('The holding’s owner and account must be identified.');
   const k = marketHoldingKey(p);
   const instrument = b.instruments.get(p.securityKey);
@@ -86,7 +86,7 @@ export function assumedHolding(p: Position, a: Account | undefined, start: strin
   }
   const h = b.histories[instrument.key];
   if (!h) return gap('Prices are still loading. No new statement is needed yet.', undefined, true);
-  if (!h.ok) return gap('Historical prices could not load. Retry the price history; no new statement is needed yet.', h.reason);
+  if (!h.ok) return gap('Historical prices could not load. Retry the price history; no new statement is needed yet.', h.reason, false, true);
   const opening = publishedClose(h, requestedStart), closing = publishedClose(h, end);
   if (!opening || !closing || closing.date <= opening.date) {
     return gap(`A published closing price is needed near ${requestedStart} and ${end}. Available history: ${h.first} → ${h.last}.`);
