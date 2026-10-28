@@ -1,6 +1,6 @@
 import {
   Sunrise, LineChart, Users, PieChart, Receipt,
-  Activity, Table2, Calculator, Gauge, Handshake, Cable, Library, Building2,
+  Activity, Table2, Calculator, Gauge, Handshake, Cable, Library, Building2, FolderOpen,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -49,13 +49,12 @@ export const NAV: readonly NavEntry[] = [
   { to: "/returns", label: "Return & Drawdown", icon: Gauge, group: EXTRAS },
   { to: "/corporate-actions", label: "Corporate actions & dividends", icon: Receipt, group: EXTRAS },
   { to: "/ledger", label: "Ledger Insights", icon: Calculator, group: EXTRAS },
-  // ── ADMIN CLOSES THE NAV, AND DATA AUDIT IS NOW IN IT ───────────────────
-  // *"move data audit page at the bottom of the left navigation bar just above
-  // upload page selection button rather than at the top"*. It was the only
-  // entry in SETUP, so that heading goes with it by the derivation below — a
-  // group label standing over nothing is the defect this repo already records
-  // twice.
-  { to: "/audit", label: "Data Audit", icon: Table2, group: "Admin" },
+  // ── ADMIN CLOSES THE NAV ─────────────────────────────────────────────────
+  // *"rearrange the admin to put the statement library on the top, then the
+  // portfolio library, and then the data audit"* — the family, 28 Oct 2026.
+  // Data Audit joined Admin at an earlier request (*"move data audit page at the
+  // bottom of the left navigation bar"*), which retired the SETUP heading.
+  //
   // THE SOURCE STATEMENTS, ONE FOLDER PER PROVIDER. Where Data Audit opens one
   // document's cells, this names every statement the book is built from and the
   // file type each provider sends — and is where a new one is uploaded, files or
@@ -65,6 +64,10 @@ export const NAV: readonly NavEntry[] = [
   // UPLOAD HISTORY WAS REMOVED at the family's request (21 Oct 2026); its
   // address forwards here (App.tsx).
   { to: "/statements", label: "Statement Library", icon: Library, group: "Admin" },
+  // THE SAME STATEMENTS, ONE FOLDER PER SECURITY — view only; uploads stay in
+  // the Statement Library.
+  { to: "/portfolios", label: "Portfolio Library", icon: FolderOpen, group: "Admin" },
+  { to: "/audit", label: "Data Audit", icon: Table2, group: "Admin" },
 ];
 
 export const EXTRAS_GROUP = EXTRAS;

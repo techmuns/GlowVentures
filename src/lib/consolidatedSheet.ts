@@ -12,6 +12,7 @@ import { dedupedPositions, holdingBucket, bucketLabel, isMandateHeld } from "./a
 import { basketKeyOf, familyClassKeyOf, BASKET_ORDER, FAMILY_CLASS_ORDER } from "./familyTaxonomy";
 import { ownerDisplayName, ownerById } from "./owners";
 import { securityLabel } from "./securityLabel";
+import { isIncomeBucket } from "./ledgerModel";
 import { buildDatedCapital } from "./datedCapital";
 import { capitalMovesWithCalls } from "./tranches";
 import { fifoTotals } from "./fifo";
@@ -168,8 +169,7 @@ export function buildConsolidatedSheet(docs: ArchiveDoc[], input: { accounts: Ac
   for (const m of movements) if (m.securityKey && !allSecurities.has(m.securityKey)) allSecurities.set(m.securityKey, { name: m.security ?? m.securityKey, isin: null });
   // ASK's printed "Equity Dividend Income" is an account-level income bucket,
   // not an identified security. Preserve it in Transactions without a master link.
-  const incomeBucket = (key: string) => key === "equity-dividend-income";
-  for (const e of [...income.cash, ...income.corporate]) if (!incomeBucket(e.securityKey) && !allSecurities.has(e.securityKey))
+  for (const e of [...income.cash, ...income.corporate]) if (!isIncomeBucket(e.securityKey) && !allSecurities.has(e.securityKey))
     allSecurities.set(e.securityKey, { name: e.security, isin: null });
   register("Securities", [...allSecurities].map(([id, s]) => {
     const ps = positions.filter(p => p.securityKey === id), p = ps[0];
@@ -256,7 +256,7 @@ export function buildConsolidatedSheet(docs: ArchiveDoc[], input: { accounts: Ac
   }
   for (const e of [...income.cash, ...income.corporate]) {
     const a = sourceAccount(e.source), p = positions.find(p => p.accountId === a?.accountId && p.securityKey === e.securityKey);
-    transaction({ date: e.date, acct: a?.accountId ?? null, sec: incomeBucket(e.securityKey) ? null : e.securityKey, ent: a ? ownerDisplayName(a.ownerId) : null, name: e.security,
+    transaction({ date: e.date, acct: a?.accountId ?? null, sec: isIncomeBucket(e.securityKey) ? null : e.securityKey, ent: a ? ownerDisplayName(a.ownerId) : null, name: e.security,
       cat: p ? classify(p).cat : null, ac: p ? classify(p).ac : null, type: e.kind, qty: e.quantity, price: e.ratePerUnit,
       gross: e.net != null && e.tds != null ? e.net + e.tds : null, chg: e.tds, net: e.net, counts: income.cash.includes(e) ? "Income" : "Non-cash",
       notes: `${e.source}; ${e.entitlement ?? ""}`, check: "Reported event", _source: e.source });

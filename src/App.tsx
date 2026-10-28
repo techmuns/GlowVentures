@@ -27,6 +27,7 @@ const Performance = lazy(() => import("@/pages/Performance").then((m) => ({ defa
 const ReturnAnalysis = lazy(() => import("@/pages/ReturnAnalysis").then((m) => ({ default: m.ReturnAnalysis })));
 const DataRefresh = lazy(() => import("@/pages/DataRefresh").then((m) => ({ default: m.DataRefresh })));
 const StatementLibrary = lazy(() => import("@/pages/StatementLibrary").then((m) => ({ default: m.StatementLibrary })));
+const PortfolioLibrary = lazy(() => import("@/pages/PortfolioLibrary").then((m) => ({ default: m.PortfolioLibrary })));
 const DataAudit = lazy(() => import("@/pages/DataAudit").then((m) => ({ default: m.DataAudit })));
 const LedgerInsights = lazy(() => import("@/pages/LedgerInsights").then((m) => ({ default: m.LedgerInsights })));
 const StockInfo = lazy(() => import("@/pages/StockInfo").then((m) => ({ default: m.StockInfo })));
@@ -423,6 +424,10 @@ export default function App() {
                 portfolio, so — like Data Audit — it renders on an empty book too
                 and needs no Gate. */}
             <Route path="/statements" element={<StatementLibrary />} />
+            {/* THE SAME STATEMENTS, ONE FOLDER PER SECURITY — view only. Reads the
+                manifest and the build server's security index, never the
+                portfolio, so it needs no Gate either. */}
+            <Route path="/portfolios" element={<PortfolioLibrary />} />
             {/* Upload History was REMOVED at the family's request (21 Oct 2026).
                 Its address forwards rather than 404s, like `/news`. */}
             <Route path="/history" element={<Navigate to="/statements" replace />} />
