@@ -625,6 +625,14 @@
 - Page: a "Tax if sold today" card under Properties, one row per property that reads across — Holding · Cost for tax (indexed where the 20% route wins) · Current value · Taxable gain · Rate · Tax on sale (incl. 4% cess) · Value after tax — with totals and coverage, a one-line rate key (`data-prose-ok`), and a "Needs …" button that opens the form. The optional Holding and Indexed cost columns left the main table; Est. tax on sale and Value after tax stay. The editor's "Tax basis" section is "Tax on sale" and appears only for an inheritance or gift, a pre-2001 holding or land.
 - Tests: `test-property-tax.mjs` (21 checks, each settled figure tied across the row), `test-real-estate-bulk.mjs` and both browser checks updated.
 
+### Stage 10iq — PDF PREVIEW: A PAGE IN VIEW IS ALWAYS DRAWN, AND ITS CHECK STOPS FLAKING
+
+- `check-pdf-preview.mjs` failed three times on 28 Oct 2026 on PRs that did not touch the reader (#266, #271), each passing on re-run. Two were `IndexSizeError` in `ink()`: after a resize or zoom the reader swaps the page's canvas and drops the old one (width 0), and the check read pixels through a handle taken a moment earlier.
+- The third was the reader. Its CI screenshot shows page 2 empty (no canvas, no "Loading") with page 3 drawn. Each page's `IntersectionObserver` callback read only the FIRST entry; a busy main thread can deliver "left the range" and "back again" for one page in one callback (seen in Chrome on demand), so the page kept the stale "not nearby" and was never drawn. `PdfPage` now reads the newest entry.
+- `ink(n)` polls in the page (`waitForFunction`, 100 ms, 30 s) until exactly one `canvas[data-pdf-page=n]` has a non-zero size and the same ink threshold; on timeout it fails naming the last canvas state, so a blank page still fails.
+- The check's init script can hold observer deliveries and release them as one batch. After the mobile resize it sends "far away, then back" for the first pages and requires page 3 to draw: 4 of 4 runs fail on the old reader (page 3 blank, as in CI) and pass with the fix. Skipping the render call fails `ink(1)` with a blank canvas.
+- Measured locally: the old check failed 2 of 8 runs (`IndexSizeError`); the new one passed 12 of 12 in a row and 12 of 12 more with four runs in parallel.
+
 ### Stage 10ir — PRIVATE MARKET: CAPITAL CELLS TYPE IN PLACE, LIKE STRATEGY AND DESCRIPTION
 
 - The family (28 Oct 2026), on 10io's dialog: *"remove this enter commitments part, make the other relevant cells still to call, called, paid in, etc individual cells editable just like the description and strategy cells. In the same format"*. The button, dialog and its Excel template (`CommitmentEntry`, `commitmentExcel`, `ExportableTable`'s `inputControls`) are gone.
