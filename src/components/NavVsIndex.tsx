@@ -19,7 +19,7 @@ import { BENCHMARKS, benchmarkIdentity, benchmarkMismatchReason, type BenchmarkK
 import { fmtPct, fmtDate, changeColor } from "@/lib/format";
 import { chartTooltipStyle, chartTooltipLabelStyle } from "@/lib/chartTheme";
 
-// ── OUR BOOK AGAINST EVERY BENCHMARK, ON ONE CHART (Stage 10it) ─────────────
+// ── OUR BOOK AGAINST EVERY BENCHMARK, ON ONE CHART (Stage 10iv) ─────────────
 //
 // *"make it more simple to compare on the same graph across all benchmarks no
 // verbose"* — the family, 28 Oct 2026, over a 1Y chart whose book line was the

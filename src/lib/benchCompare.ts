@@ -1,4 +1,4 @@
-// ── THE BOOK AGAINST EVERY BENCHMARK, ON ONE CHART (Stage 10it) ─────────────
+// ── THE BOOK AGAINST EVERY BENCHMARK, ON ONE CHART (Stage 10iv) ─────────────
 //
 // *"make it more simple to compare on the same graph across all benchmarks no
 // verbose"* — the family, 28 Oct 2026.

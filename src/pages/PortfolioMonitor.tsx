@@ -3895,7 +3895,7 @@ export function PortfolioMonitor() {
                 so a check can wait for the store to settle without reading prose —
                 the card that used to carry its three states is rows now. Present
                 on the security axis only, the one axis the store is asked on. */}
-            <ExportableTable exportName="Portfolio Monitor — Holdings" className="min-w-full text-xs" data-monitor-table="holdings"
+            <ExportableTable editable exportName="Portfolio Monitor — Holdings" className="min-w-full text-xs" data-monitor-table="holdings"
               data-lookthrough={bySecurity ? rowExposure.status : undefined}>
               {allRows => <>
               <thead className="sticky top-0 z-10 bg-ink-800">

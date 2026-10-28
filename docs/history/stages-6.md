@@ -647,7 +647,20 @@
 - A cell that cannot be worked out yet opens the same popup, names every input still to enter and offers Enter details, which closes it and opens the form (`ReturnCalculationInfo` children may be a function given `close`).
 - `check-real-estate.mjs` opens the popup for an inherited property and reads each step's figures, the value-after-tax result, the missing-input path and the unregistered-owner reason.
 
-### Stage 10it — OUR BOOK VS BENCHMARK: EVERY BENCHMARK ON ONE CHART, FROM A DAY THE BOOK WAS VALUED
+### Stage 10it — NUMBER INPUTS ONLY ON PORTFOLIO MONITOR, PRIVATE MARKET AND REAL ESTATE
+
+*"This upload or edit numbers only need to be in portfolio monitor and private market and real estate no where else … Morning CIO is a view for the user, not an edit place"* — the family, 28 Oct 2026 (Daily Movers, Return attribution, Sector Composition, Allocation & Risk named).
+- `ExportableTable`'s inputs are now opt-in: `editable` replaces `viewOnly`. Only the Portfolio Monitor holdings table, Private Market's book and Transactions tables and the Real Estate properties table take it. Every other table keeps Export Excel alone, exports the table without input sheets, and its workbook's About sheet names the three pages where numbers are edited. Stage 10hf's "every table" no longer holds.
+- `scripts/dev/check-table-inputs.mjs`: the stale-upload check runs on `/monitor` before leaving it; `/sectors` and `/cio?tab=allocation` assert Export Excel with no Edit numbers, All inputs or Upload Excel, and a view-only export carries no input sheets.
+
+### Stage 10iu — PORTFOLIO LIBRARY: FILTER FOLDERS BY CATEGORY
+
+- The family (28 Oct 2026): filter the Portfolio Library by the Portfolio Monitor's categories — All, Direct Equity, PMS mandates, ETF, Mutual Fund, AIF, Bond, Unlisted, Private investments at cost, Cash.
+- `deriveStatementSecurities` (`src/lib/ledgerModel.ts`) now gives each folder its `categories`, decided by `holdingBucket`: the book's positions for a security it holds, plus every statement row's printed class and its account's engagement (so an exited holding is still placed). A security the book holds at cost is at cost on every row. "Not classified by the statement" / "how it is held is not stated" are kept only when nothing else places a folder. A folder can sit in several (Ather Energy: Direct Equity and PMS mandates).
+- Page: a tab row under the search, in the Monitor's order with a count per tab (counted on the searched set); the tab is in the address (`?category=`), kept when a folder opens and on Back. The opened folder names its categories. On this book: PMS mandates 256, Direct Equity 63, Not classified 62, AIF 36, Mutual Fund 29, Cash 24, at cost 20, Unlisted 12, ETF 2 (no Bond row is named by a statement).
+- Checks: `portfolios` — every folder has a category and each tab counts the folders carrying it; new route `portfolios-category` — the PMS mandates tab shows exactly the folders a PMS account's statement names (re-derived off the archive). Both proven by breaking them.
+
+### Stage 10iv — OUR BOOK VS BENCHMARK: EVERY BENCHMARK ON ONE CHART, FROM A DAY THE BOOK WAS VALUED
 
 *"Can you audit check and fix if this view in all tabs is even correct and taking in all data before showing me how the book is also can you make it more simple to compare on the same graph across all benchmarks no verbose"* — the family, 28 Oct 2026.
 - **Audit.** (1) The solid book line was one point: it began when every valued investment is in the return, and Bandhan 8652064 (₹41.5 Cr, no 31 Mar value, "opening valuation and complete dated cash flows are missing") is first valued on 26 Oct, the series' last day. The chart was the pale "still joining" line end to end; the dashed NAV line and its toggle were a single point; no book return was stated. Main's own `cio-nav` checks were failing on it. (2) Rolling periods set old values against new prices: nothing in the 31 Mar panel was revalued in April, so "6M" from 26 Apr opened the book on 31 Mar values and the Nifty 500 after a ~10% rally (book +5.3% vs −4.3%). 3M and 6M were rebased at 31 Mar, not at their start; 1Y–Max drew months of index with no book; the index ran past the book's last valuation.

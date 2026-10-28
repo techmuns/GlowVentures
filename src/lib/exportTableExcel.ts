@@ -104,7 +104,8 @@ export function createTableWorkbook(snapshot: TableExport): ExcelJS.Workbook {
   about.eachRow(row => { row.alignment = { wrapText: true, vertical: "top" }; row.getCell(1).font = { bold: true }; });
   fitExcelWorksheet(about, 0);
   if (snapshot.inputs) addInputWorkbook(book, snapshot.inputs, targets);
-  else about.addRow(["Upload Excel", "This download is read-only. Re-export after saved numbers have loaded to edit and sync numbers."]);
+  else about.addRow(["Upload Excel", snapshot.viewOnly ? "This download is read-only. Numbers are edited on Portfolio Monitor, Private Market and Real Estate."
+    : "This download is read-only. Re-export after saved numbers have loaded to edit and sync numbers."]);
   if (groupedNotes) about.addRow(["Cell explanations", "For this expanded export, explanations are grouped in Cell notes by worksheet and cell address. Editable input cells keep their own notes."]);
   about.addRows(detailNames);
   about.eachRow(row => { row.alignment = { wrapText: true, vertical: "top" }; row.getCell(1).font = { bold: true }; });

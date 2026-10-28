@@ -80,7 +80,7 @@ function bench(b: Omit<Benchmark, "title" | "color">, slot: number): Benchmark {
 
 /**
  * THE ORDER IS THE CONTROL'S ORDER, AND IT FIXES EACH LINE'S COLOUR. The NAV
- * card draws every benchmark at once (Stage 10it), so a benchmark keeps its
+ * card draws every benchmark at once (Stage 10iv), so a benchmark keeps its
  * colour slot whichever others are hidden — colour follows the index, never its
  * position among the visible ones. The first is the default elsewhere.
  */

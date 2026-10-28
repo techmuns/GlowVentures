@@ -190,7 +190,7 @@ const ALLOC_TITLE: Record<GroupAxis, string> = {
  * sits in `innerText` on every one of this page's routes, so a label repeating
  * a heading would satisfy a check on a tab that heading is not drawn on. The
  * benchmark tab keeps the family's chosen name, "Our Book vs Benchmark"; its
- * chart draws every benchmark at once (Stage 10it).
+ * chart draws every benchmark at once (Stage 10iv).
  */
 const CIO_TABS = [
   // NOT "today" (MNT-11): the funds branch is a published NAV struck on its own

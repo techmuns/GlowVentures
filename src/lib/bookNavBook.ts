@@ -26,5 +26,5 @@ export const BOOK_NAV_UNITS: NavUnit[] = navUnits({
 
 export const WHOLE_BOOK_NAV: BookNavSeries = bookNavSeries(BOOK_NAV_UNITS);
 
-/** The dates a comparison against an index may start on (`comparableStarts`, Stage 10it). */
+/** The dates a comparison against an index may start on (`comparableStarts`, Stage 10iv). */
 export const WHOLE_BOOK_STARTS: string[] = comparableStarts(BOOK_NAV_UNITS, WHOLE_BOOK_NAV);

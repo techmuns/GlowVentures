@@ -637,7 +637,7 @@ export function buildBookNav(input: BookNavInput): BookNavSeries {
 }
 
 /**
- * ── THE DATES A COMPARISON MAY START ON (Stage 10it) ─────────────────────────
+ * ── THE DATES A COMPARISON MAY START ON (Stage 10iv) ─────────────────────────
  *
  * Each investment is held at its latest valuation until the next one, and the
  * next one's whole move lands on its own date. So a comparison started on a
