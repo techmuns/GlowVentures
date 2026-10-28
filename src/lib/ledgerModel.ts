@@ -1231,6 +1231,12 @@ type SecurityRow = {
   assetClass?: string | null; providerSector?: string | null;
 };
 const SECURITY_SECTIONS = ["holdings", "transactions", "capitalGains", "openLots", "income"] as const;
+/**
+ * ASK's printed "Equity Dividend Income" is an account-level income bucket, not
+ * an identified security: no folder, and no line in the consolidated sheet's
+ * security master (`consolidatedSheet.ts`).
+ */
+export const isIncomeBucket = (key: string): boolean => key === "equity-dividend-income";
 
 export function deriveStatementSecurities(
   docs: ArchiveDoc[],
@@ -1241,7 +1247,7 @@ export function deriveStatementSecurities(
     for (const section of SECURITY_SECTIONS) {
       for (const row of (d[section] ?? []) as SecurityRow[]) {
         const key = row.securityKey;
-        if (!key || key === "unknown" || fence.keys.has(key)) continue;
+        if (!key || key === "unknown" || isIncomeBucket(key) || fence.keys.has(key)) continue;
         if (row.isin && fence.isins.has(row.isin.trim().toUpperCase())) continue;
         if (row.assetClass === "Cash" || (row.providerSector && resolveSector(row.providerSector).sector === "Cash")) continue;
         const entry = byKey.get(key) ?? { names: new Set<string>(), documents: new Set<string>() };

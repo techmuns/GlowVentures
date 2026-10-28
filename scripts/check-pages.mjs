@@ -7843,7 +7843,8 @@ const PORTFOLIO_BOOK = (() => {
       for (const section of ["holdings", "transactions", "capitalGains", "openLots", "income"]) {
         for (const r of d[section] ?? []) {
           const k = r.securityKey;
-          if (!k || k === "unknown" || fencedKeys.has(k) || (r.isin && fencedIsins.has(r.isin.trim().toUpperCase()))) continue;
+          // ASK's "Equity Dividend Income" is an account's income bucket, not a security.
+          if (!k || k === "unknown" || k === "equity-dividend-income" || fencedKeys.has(k) || (r.isin && fencedIsins.has(r.isin.trim().toUpperCase()))) continue;
           if (r.assetClass === "Cash" || (r.providerSector && resolveSector(r.providerSector).sector === "Cash")) continue;
           docsOf.set(k, (docsOf.get(k) ?? new Set()).add(e.fileKey));
         }
