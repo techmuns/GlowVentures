@@ -44,6 +44,8 @@ export interface ManifestEntry {
 /** One document inside a provider folder, flattened for display. */
 export interface LibraryDoc {
   fileKey: string;
+  /** The issuing provider — the Statement Library's folder for this document. */
+  provider: string;
   reportType: string;
   reportLabel: string;
   owner: string | null;
@@ -190,6 +192,53 @@ function sortKey(provider: string): string {
   return `${demoted ? "1" : "0"}${lower}`;
 }
 
+/** One manifest row as the library shows it. */
+function libraryDoc(e: ManifestEntry): LibraryDoc {
+  return {
+    fileKey: e.fileKey,
+    provider: e.provider || "(unidentified)",
+    reportType: e.reportType,
+    reportLabel: reportLabel(e.reportType),
+    owner: e.familyGroup || e.owner || null,
+    accountNo: e.accountNo || null,
+    asOf: e.asOf || null,
+    format: formatOf(e.sourcePath),
+    status: displayStatus(e),
+    warnings: e.warnings ?? 0,
+    delivery: deliveryOf(e.sourcePath),
+    fileName: basenameOf(e.sourcePath),
+    hasSheets: Array.isArray(e.sheets) && e.sheets.length > 0,
+  };
+}
+
+/** Newest first, then by report type — every folder's document order. */
+const byDateThenType = (a: LibraryDoc, b: LibraryDoc) =>
+  (b.asOf ?? "").localeCompare(a.asOf ?? "") || a.reportLabel.localeCompare(b.reportLabel);
+
+/** What a folder of documents holds: formats, owners, accounts, date range and status counts. */
+function folderStats(docs: readonly LibraryDoc[]) {
+  const formats = new Set<string>();
+  const owners = new Set<string>();
+  const accounts = new Set<string>();
+  const status = { ok: 0, partial: 0, failed: 0, encrypted: 0, "held-out": 0, "never-arrived": 0 };
+  let asOfFrom: string | null = null;
+  let asOfTo: string | null = null;
+  for (const d of docs) {
+    formats.add(d.format);
+    if (d.owner) owners.add(d.owner);
+    if (d.accountNo) accounts.add(d.accountNo);
+    status[d.status] += 1;
+    if (d.asOf) {
+      if (asOfFrom == null || d.asOf < asOfFrom) asOfFrom = d.asOf;
+      if (asOfTo == null || d.asOf > asOfTo) asOfTo = d.asOf;
+    }
+  }
+  return {
+    formats: [...formats].sort(), owners: [...owners].sort(), accounts: [...accounts].sort(),
+    asOfFrom, asOfTo, status,
+  };
+}
+
 /**
  * Group the manifest into one folder per provider. Deterministic: providers are
  * ordered alphabetically (placeholders last), documents inside each by date
@@ -201,21 +250,8 @@ export function buildLibrary(manifest: readonly ManifestEntry[]): LibraryIndex {
   const allDeliveries = new Set<string>();
 
   for (const e of manifest) {
-    const provider = e.provider || "(unidentified)";
-    const doc: LibraryDoc = {
-      fileKey: e.fileKey,
-      reportType: e.reportType,
-      reportLabel: reportLabel(e.reportType),
-      owner: e.familyGroup || e.owner || null,
-      accountNo: e.accountNo || null,
-      asOf: e.asOf || null,
-      format: formatOf(e.sourcePath),
-      status: displayStatus(e),
-      warnings: e.warnings ?? 0,
-      delivery: deliveryOf(e.sourcePath),
-      fileName: basenameOf(e.sourcePath),
-      hasSheets: Array.isArray(e.sheets) && e.sheets.length > 0,
-    };
+    const doc = libraryDoc(e);
+    const provider = doc.provider;
     allFormats.add(doc.format);
     allDeliveries.add(doc.delivery);
     const list = byProvider.get(provider);
@@ -225,44 +261,8 @@ export function buildLibrary(manifest: readonly ManifestEntry[]): LibraryIndex {
 
   const folders: ProviderFolder[] = [];
   for (const [provider, docs] of byProvider) {
-    docs.sort((a, b) => (b.asOf ?? "").localeCompare(a.asOf ?? "") || a.reportLabel.localeCompare(b.reportLabel));
-
-    const typeCounts = new Map<string, number>();
-    const formats = new Set<string>();
-    const owners = new Set<string>();
-    const accounts = new Set<string>();
-    const status = { ok: 0, partial: 0, failed: 0, encrypted: 0, "held-out": 0, "never-arrived": 0 };
-    let asOfFrom: string | null = null;
-    let asOfTo: string | null = null;
-
-    for (const d of docs) {
-      typeCounts.set(d.reportType, (typeCounts.get(d.reportType) ?? 0) + 1);
-      formats.add(d.format);
-      if (d.owner) owners.add(d.owner);
-      if (d.accountNo) accounts.add(d.accountNo);
-      status[d.status] += 1;
-      if (d.asOf) {
-        if (asOfFrom == null || d.asOf < asOfFrom) asOfFrom = d.asOf;
-        if (asOfTo == null || d.asOf > asOfTo) asOfTo = d.asOf;
-      }
-    }
-
-    const reportTypes = [...typeCounts.entries()]
-      .map(([type, count]) => ({ type, label: reportLabel(type), count }))
-      .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
-
-    folders.push({
-      provider,
-      docCount: docs.length,
-      formats: [...formats].sort(),
-      reportTypes,
-      owners: [...owners].sort(),
-      accounts: [...accounts].sort(),
-      asOfFrom,
-      asOfTo,
-      status,
-      docs,
-    });
+    docs.sort(byDateThenType);
+    folders.push({ provider, docCount: docs.length, reportTypes: reportTypesOf(docs), ...folderStats(docs), docs });
   }
 
   folders.sort((a, b) => sortKey(a.provider).localeCompare(sortKey(b.provider)));
@@ -274,4 +274,72 @@ export function buildLibrary(manifest: readonly ManifestEntry[]): LibraryIndex {
     formats: [...allFormats].sort(),
     deliveries: [...allDeliveries].sort(),
   };
+}
+
+/** The report types a set of documents holds, each with its count, most frequent first. */
+function reportTypesOf(docs: readonly LibraryDoc[]): ReportTypeTally[] {
+  const typeCounts = new Map<string, number>();
+  for (const d of docs) typeCounts.set(d.reportType, (typeCounts.get(d.reportType) ?? 0) + 1);
+  return [...typeCounts.entries()]
+    .map(([type, count]) => ({ type, label: reportLabel(type), count }))
+    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
+}
+
+// ── THE PORTFOLIO LIBRARY: THE SAME DOCUMENTS, ONE FOLDER PER SECURITY ──────
+//
+// *"organizes all statements by portfolio name … folders need to be stock
+// names"* — the family, 28 Oct 2026. Each folder is one security; inside it,
+// every statement that carries a row for it (`deriveStatementSecurities` in
+// `ledgerModel.ts`, prepared on the build server). A statement naming several
+// securities sits in each of their folders. Read-only: uploads stay on the
+// Statement Library.
+
+/** One `statement-securities.json` entry: a security and the documents naming it. */
+export interface StatementSecurityEntry {
+  securityKey: string;
+  name: string;
+  documents: string[];
+}
+
+/** One security's folder — the statements that name it, across every provider. */
+export interface SecurityFolder {
+  securityKey: string;
+  name: string;
+  docCount: number;
+  formats: string[];
+  reportTypes: ReportTypeTally[];
+  /** The providers whose statements name this security. */
+  providers: string[];
+  owners: string[];
+  accounts: string[];
+  asOfFrom: string | null;
+  asOfTo: string | null;
+  status: Record<LibraryDoc["status"], number>;
+  docs: LibraryDoc[];
+}
+
+/**
+ * Join the security index to the manifest by document key. A key the manifest
+ * does not carry is skipped rather than drawn as a row with no document behind
+ * it; a security left with no document gets no folder.
+ */
+export function buildSecurityLibrary(
+  manifest: readonly ManifestEntry[],
+  securities: readonly StatementSecurityEntry[],
+): SecurityFolder[] {
+  const byKey = new Map(manifest.map((e) => [e.docKey, e]));
+  const folders: SecurityFolder[] = [];
+  for (const s of securities) {
+    const docs = s.documents.flatMap((key) => {
+      const e = byKey.get(key);
+      return e ? [libraryDoc(e)] : [];
+    }).sort(byDateThenType);
+    if (!docs.length) continue;
+    folders.push({
+      securityKey: s.securityKey, name: s.name, docCount: docs.length,
+      reportTypes: reportTypesOf(docs), providers: [...new Set(docs.map((d) => d.provider))].sort(),
+      ...folderStats(docs), docs,
+    });
+  }
+  return folders.sort((a, b) => a.name.localeCompare(b.name) || a.securityKey.localeCompare(b.securityKey));
 }

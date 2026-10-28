@@ -5,13 +5,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useSearchParams } from "react-router-dom";
 import {
-  Folder, FolderUp, ChevronLeft, Search, ShieldAlert, ExternalLink, FileText, FileSpreadsheet, UploadCloud,
+  Folder, FolderUp, ChevronLeft, Search, ShieldAlert, ExternalLink, FileText, UploadCloud,
   Loader2, CircleCheck,
 } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { StatementPreview, useFilePreview, prepareStatementPreview } from "@/components/StatementPreview";
+import { FolderTile, StatusPill, statementFileIcon as fileIcon } from "@/components/LibraryFolder";
 import { AbsentSection, DASH } from "@/components/Absent";
 import { fmtDate, fmtDateTime } from "@/lib/format";
 import { buildLibrary, type ManifestEntry, type ProviderFolder, type LibraryDoc } from "@/lib/statementLibrary";
@@ -33,29 +34,6 @@ const BASE = import.meta.env.BASE_URL;
  *  "Statement Library" segment reopens the grid — the same "state in the URL"
  *  this app uses for drill-downs and member scope. */
 const PROVIDER_PARAM = "provider";
-
-const fileIcon = (format: string) =>
-  format === "XLSX" || format === "XLS" || format === "CSV"
-    ? <FileSpreadsheet className="h-4 w-4 shrink-0 text-emerald-400/80" />
-    : <FileText className="h-4 w-4 shrink-0 text-slate-500" />;
-
-/** A statement's ingest status, shown as a toned pill so a reader can scan it. */
-function StatusPill({ status }: { status: LibraryDoc["status"] }) {
-  if (status === "ok") return <span className="text-[11px] text-slate-500" title="Read in full">Read</span>;
-  if (status === "held-out") {
-    return <Pill tone="default"><span title="Read in full and deliberately not a statement source: no institution issued it, so no book figure is taken from it">Held out</span></Pill>;
-  }
-  if (status === "never-arrived") {
-    return <Pill tone="warn"><span title="A mail server removed this attachment in transit and left a short notice under its name — the statement itself never arrived. Ask the sender to re-send it (a download link, or zipped) and upload it here.">Never arrived</span></Pill>;
-  }
-  const tone = status === "partial" ? "warn" : status === "encrypted" ? "info" : "loss";
-  const why = status === "partial"
-    ? "Some sections of this document could not be read — see Data Audit for what it carried"
-    : status === "encrypted"
-      ? "Sealed — opens with the account's password during ingest"
-      : "This document could not be read; it feeds no figure";
-  return <Pill tone={tone} className="capitalize"><span title={why}>{status}</span></Pill>;
-}
 
 type UploadRow = {
   id: string; name: string; uploadedAt: string; batch?: string; file?: InboxFile;
@@ -458,42 +436,6 @@ function OpenFolder({ folder, onBack, uploads, inbox }: { folder: ProviderFolder
   );
 }
 
-/** One folder on the grid — a desktop-style icon that opens on double-click
- *  (and on Enter / Space when focused); a single click selects it. */
-function FolderTile({ folder, selected, onSelect, onOpen }: {
-  folder: ProviderFolder; selected: boolean; onSelect: () => void; onOpen: () => void;
-}) {
-  const missing = folder.status["never-arrived"];
-  const flagged = folder.status.partial + folder.status.failed + missing;
-  return (
-    <button type="button"
-      onClick={onSelect}
-      onDoubleClick={onOpen}
-      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onOpen(); } }}
-      title={`${folder.provider} — ${folder.docCount} ${folder.docCount === 1 ? "file" : "files"}. Double-click to open.`}
-      data-provider-folder={folder.provider} data-doc-count={folder.docCount}
-      className={`group flex flex-col items-center gap-2 rounded-lg border p-4 text-center transition-colors
-        ${selected ? "border-champagne-500/50 bg-champagne-500/10" : "border-transparent hover:border-ink-600 hover:bg-ink-700/40"}`}>
-      <div className="relative">
-        <Folder className="h-12 w-12 text-champagne-400/90 group-hover:text-champagne-300" strokeWidth={1.25} />
-        {flagged > 0 && (
-          <span className="absolute -right-1 -top-0.5 h-2.5 w-2.5 rounded-full bg-amber-400 ring-2 ring-[var(--row-alt)]"
-            title={missing
-              ? `${missing} statement${missing === 1 ? "" : "s"} never arrived (a mail server removed the attachment)${flagged > missing ? `; ${flagged - missing} more did not fully read` : ""}`
-              : `${flagged} document${flagged === 1 ? "" : "s"} did not fully read`} />
-        )}
-      </div>
-      <div className="min-w-0">
-        <div className="line-clamp-2 text-[12.5px] font-medium leading-tight text-slate-200">{folder.provider}</div>
-        <div className="mt-1 text-[11px] text-slate-500">
-          {folder.docCount} {folder.docCount === 1 ? "file" : "files"}
-          <span className="text-slate-600"> · {folder.formats.join(", ")}</span>
-        </div>
-      </div>
-    </button>
-  );
-}
-
 export function StatementLibrary() {
   const [status, setStatus] = useState<"loading" | "ready" | "restricted">("loading");
   const [manifest, setManifest] = useState<ManifestEntry[]>([]);
@@ -647,7 +589,8 @@ export function StatementLibrary() {
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
                 onClick={(e) => { if (e.target === e.currentTarget) setSelected(null); }}>
                 {folders.map((f) => (
-                  <FolderTile key={f.provider} folder={f}
+                  <FolderTile key={f.provider} label={f.provider} docCount={f.docCount} formats={f.formats} status={f.status}
+                    data={{ "data-provider-folder": f.provider, "data-doc-count": f.docCount }}
                     selected={selected === f.provider}
                     onSelect={() => setSelected(f.provider)}
                     onOpen={() => open(f.provider)} />

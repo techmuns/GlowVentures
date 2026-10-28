@@ -422,6 +422,7 @@ const PAGE_WORDS: Record<string, string[]> = {
   "/ledger": ["ledger", "dividends", "dividend", "income", "lots", "realised by trade"],
   "/audit": ["audit", "statements", "documents", "source", "pdf", "archive", "extraction"],
   "/statements": ["statement library", "upload", "uploads", "upload statements", "add statements", "folders", "providers"],
+  "/portfolios": ["portfolio library", "statements by stock", "stock folders", "statements by security", "documents by stock"],
 };
 
 /** Tabs and views INSIDE a page — each reachable by its own address. */

@@ -237,6 +237,9 @@ export function rapidProcessor({ store, inbox, initial, references, instantiate,
       const stock = /^ledger\/stocks\/([a-z0-9-]+)\.json$/.exec(name);
       if (stock) return model.deriveStockLedger(snap.documents, stock[1]);
       if (name === 'fund-disclosures.json') return model.deriveFundDisclosures(snap.documents, new Set(snap.book.BOOK_POLYCAB.map(p => p.securityKey)));
+      if (name === 'statement-securities.json') return model.deriveStatementSecurities(snap.documents, {
+        keys: new Set(snap.book.BOOK_POLYCAB.map(p => p.securityKey)),
+        isins: new Set(snap.book.BOOK_POLYCAB.flatMap(p => p.isin ? [p.isin.trim().toUpperCase()] : [])) });
       if (name === 'exposure-fence.json') return { keys: [...new Set(snap.book.BOOK_POLYCAB.map(p => p.securityKey))],
         isins: [...new Set(snap.book.BOOK_POLYCAB.flatMap(p => p.isin ? [p.isin.trim().toUpperCase()] : []))] };
       if (name === 'lookthrough.json') return snap.lookthrough;
@@ -246,5 +249,5 @@ export function rapidProcessor({ store, inbox, initial, references, instantiate,
 }
 function stockKeys(snapshot) {
   return [...new Set([...snapshot.book.BOOK_POSITIONS.map(p => p.securityKey), ...snapshot.documents.flatMap(d =>
-    ['transactions', 'capitalGains', 'holdings', 'income'].flatMap(k => (d[k] ?? []).map(r => r.securityKey)))])].filter(Boolean).sort();
+    ['transactions', 'capitalGains', 'holdings', 'income', 'openLots'].flatMap(k => (d[k] ?? []).map(r => r.securityKey)))])].filter(Boolean).sort();
 }

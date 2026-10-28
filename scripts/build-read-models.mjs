@@ -55,7 +55,7 @@ put('ledger/lots.json', model.deriveRealisedLots(docs));
 put('ledger/income.json', model.deriveIncome(docs));
 put('ledger/sales.json', model.deriveSales(docs));
 put('consolidated/book.json', model.buildConsolidatedSheet(docs));
-const keys = new Set([...model.BOOK_POSITIONS.map(p => p.securityKey), ...docs.flatMap(d => ['transactions','capitalGains','holdings','income'].flatMap(k => (d[k] || []).map(r => r.securityKey)))]);
+const keys = new Set([...model.BOOK_POSITIONS.map(p => p.securityKey), ...docs.flatMap(d => ['transactions','capitalGains','holdings','income','openLots'].flatMap(k => (d[k] || []).map(r => r.securityKey)))]);
 const stockKeys = [...keys].filter(Boolean).sort();
 for (const [key, ledger] of Object.entries(model.deriveStockLedgers(docs, stockKeys))) {
   if (!/^[a-z0-9-]+$/.test(key)) throw new Error(`Invalid security key: ${key}`);
@@ -72,6 +72,10 @@ for (const [key, ledger] of Object.entries(model.deriveStockLedgers(docs, stockK
 // does the same for the look-through, and for the same reason: the fence is a
 // decision about the BOOK, and `ledgerModel` is about the archive.
 put('fund-disclosures.json', model.deriveFundDisclosures(docs, new Set(model.BOOK_POLYCAB.map(p => p.securityKey))));
+// THE PORTFOLIO LIBRARY'S FOLDERS: every statement that names each security,
+// behind the same ring-fence (`deriveStatementSecurities`).
+put('statement-securities.json', model.deriveStatementSecurities(docs, { keys: new Set(model.BOOK_POLYCAB.map(p => p.securityKey)),
+  isins: new Set(model.BOOK_POLYCAB.flatMap(p => p.isin ? [p.isin.trim().toUpperCase()] : [])) }));
 const index = await read('lookthrough/index.json');
 const portfolios = Object.fromEntries(await Promise.all([...new Set(Object.values(index.schemes || {}).map(s => s.schemecode))].sort().map(async code => [code, await read(`lookthrough/${code}.json`)])));
 put('lookthrough.json', { index, portfolios });
