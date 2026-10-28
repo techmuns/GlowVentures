@@ -139,13 +139,21 @@ try {
   await upload(allSecurities.file); await page.getByText('No number changes found.').waitFor();
   check('The full All Securities workbook uploads unchanged', commits === 4);
   console.log(`All Securities Excel: ${(await fs.stat(allSecurities.file)).size} bytes, ${allSecurities.book.getWorksheet('Table').rowCount} rows`);
-  await visit('/sectors');
-  const sectors = await download('sectors.xlsx', '[data-sector-table]');
-  check('Nested tables travel in their own detail worksheets', sectors.book.worksheets.some(s => /^Detail /.test(s.name)));
   inputCell(original.book, capital.id, 'paid', 'Capital inputs').value = 500;
   const stale = path.join(out, 'stale.xlsx'); await original.book.xlsx.writeFile(stale); await upload(stale);
   await page.getByRole('alert').filter({ hasText: 'changed since' }).waitFor();
   check('Stale uploads are refused without a write', commits === 4);
+  // Stage 10it — number inputs only on Portfolio Monitor, Private Market and Real Estate; every other table only exports.
+  await page.goto(base + '/sectors'); await page.locator('[data-sector-table]').waitFor();
+  const sectors = await download('sectors.xlsx', '[data-sector-table]');
+  check('Nested tables travel in their own detail worksheets', sectors.book.worksheets.some(s => /^Detail /.test(s.name)));
+  check('A view-only table exports without input sheets', !sectors.book.getWorksheet('Holding inputs') && !sectors.book.getWorksheet('Capital inputs'));
+  for (const route of ['/sectors', '/cio?tab=allocation']) {
+    if (route !== '/sectors') { await page.goto(base + route); }
+    await page.locator('[data-export-excel]').first().waitFor();
+    check(`${route} offers Export Excel but no Edit numbers, All inputs or Upload Excel`,
+      await page.locator('[data-edit-numbers], [data-all-inputs], [data-upload-excel], input[aria-label="Upload corrected Excel"]').count() === 0);
+  }
   await visit('/real-estate');
   const realEstate = await download('property.xlsx');
   check('Property input sheet uses the whole property amount', inputCell(realEstate.book, `property:${property.id}`, 'value', 'Property inputs').value === 100000);

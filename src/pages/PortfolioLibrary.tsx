@@ -52,7 +52,7 @@ function FormatBlock({ format, docs }: { format: string; docs: LibraryDoc[] }) {
       <Pill>{docs.length} {docs.length === 1 ? "file" : "files"}</Pill>
     </div>
     <div className="overflow-x-auto rounded-lg border border-ink-700" data-navigation-scroll={`portfolio-library-${format}`}>
-      <ExportableTable viewOnly className="min-w-full text-sm" data-table-static="statement files, newest first, as the Statement Library lists them">
+      <ExportableTable className="min-w-full text-sm" data-table-static="statement files, newest first, as the Statement Library lists them">
         <thead className="border-b border-ink-700 text-left text-[11px] uppercase tracking-wide text-slate-500"><tr>
           <th className="px-4 py-2.5 font-medium">Document</th>
           <th className="px-4 py-2.5 font-medium">Provider</th>
