@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { build } from "esbuild";
 import { cashInstruments, instrumentIndex, resolveInstrument, quoteSymbol } from "../shared/upstoxInstrumentLookup.mjs";
+import { securityKeyOf } from "../shared/securityKey.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const CHECK = process.argv.includes("--check");
@@ -73,7 +74,10 @@ async function main() {
   const start = glow.indexOf("= {", offset), end = glow.indexOf("\n};", start);
   const closing = Object.values(start < 0 || end < 0 ? {} : JSON.parse(glow.slice(start + 2, end + 2)))
     .filter((w) => txOnly.has(w.accountId) && w.reason == null && w.closing > 0);
-  const book = [...positions, ...recorded.filter((u) => u.quantity > 0 && !u.sameUnitsReportedBy), ...closing];
+  // Shares the adviser report's later exchange trades leave held (Stage 10iw).
+  const rolled = (bookArray(glow, "BOOK_SHARE_ROLLS") ?? []).filter((r) => r.quantity > 0)
+    .map((r) => ({ securityKey: securityKeyOf(r.security), security: r.security, isin: r.isin, assetClass: "Equity" }));
+  const book = [...positions, ...recorded.filter((u) => u.quantity > 0 && !u.sameUnitsReportedBy), ...closing, ...rolled];
   const bridge = read("src/data/nseSymbols.json");
   const fenced = bookArray(glow, "BOOK_POLYCAB") ?? [];
   const fencedIsins = new Set(fenced.flatMap((p) => p.isin ? [p.isin] : []));

@@ -11890,7 +11890,25 @@ const DEPOSITORY_SHARE_BOOK = (() => {
       out.push({ securityKey: keyOf(isin, symbol, u.securityKey), isin, symbol, accountId: u.accountId,
         quantity: qty, kind: "no-price" });
     }
-    return out;
+    // Stage 10iw: MOPWM's later exchange trades (`BOOK_SHARE_ROLLS`). A balance
+    // they sold to nil is no row; one they carry is a row at the rolled units;
+    // a share bought since is a row of its own, on the depository route's gates.
+    const rolls = bookArray(src, "BOOK_SHARE_ROLLS") ?? [];
+    const rollOf = (d) => rolls.find((r) => r.accountId === d.accountId && I(r) === d.isin && Math.abs(r.statementQuantity - d.quantity) < 0.0005);
+    const carried = out.filter((d) => rollOf(d)?.quantity !== 0)
+      .map((d) => (rollOf(d) ? { ...d, quantity: rollOf(d).quantity } : d));
+    for (const r of rolls) {
+      const isin = I(r);
+      if (r.statementQuantity !== 0 || !(r.quantity > 0) || !isin?.startsWith("INE")
+        || carried.some((d) => d.accountId === r.accountId && d.isin === isin)) continue;
+      const key = securityKeyOf(r.security);
+      const symbol = symbolOf(isin, key);
+      if (!symbol) continue;
+      if (positions.some((p) => I(p) === isin && Math.abs(Number(p.quantity) - r.quantity) < 0.0005
+        && (ownerOf.get(p.accountId) ?? null) === ownerOf.get(r.accountId))) continue;
+      carried.push({ securityKey: keyOf(isin, symbol, key), isin, symbol, accountId: r.accountId, quantity: r.quantity, kind: "adviser-trades" });
+    }
+    return carried;
   } catch { return null; }
 })();
 /** The depository share rows the live fixture prices — rows on a walk that serves quotes. */
@@ -12943,6 +12961,8 @@ const PARTIAL_BALANCE_BOOK = (() => {
         || (p.assetClass === "AIF" && !!owner && ownerOf.get(p.accountId) === owner
           && tie(recorded.get(`${p.accountId}\u0000${p.securityKey}`) ?? NaN, w.closing))));
       if (rep) { reported++; continue; }
+      // Stage 10iw: a balance MOPWM's later exchange trades sold to nil is not held.
+      if ((bookArray(src, "BOOK_SHARE_ROLLS") ?? []).some((r) => r.accountId === acc && I(r) === i && r.quantity === 0 && tie(r.statementQuantity, w.closing))) continue;
       notValued.push({ key: w.securityKey, units: w.closing });
     }
     return { account: acc, notValued, reported, valued: valued.length };
@@ -12971,6 +12991,7 @@ const UNPRICED_BOOK = (() => {
     const positions = bookArray(src, "BOOK_POSITIONS");
     const accounts = bookArray(src, "BOOK_ACCOUNTS");
     const unvalued = bookArray(src, "BOOK_UNVALUED_HOLDINGS");
+    const rolls = bookArray(src, "BOOK_SHARE_ROLLS") ?? [];
     if (!Array.isArray(positions) || !Array.isArray(accounts) || !Array.isArray(unvalued)) return null;
     const acc = new Map(accounts.map((a) => [a.accountId, a]));
     const I = (x) => (x?.isin ? String(x.isin).trim().toUpperCase() : null);
@@ -12995,7 +13016,10 @@ const UNPRICED_BOOK = (() => {
       const liveKinds = new Set(["no-rate", "no-price", "last-movement"]);
       const live = (u) => !!I(u) && positions.some((p) => p.accountId === a.accountId
         && liveKinds.has(p.depositoryUnits?.kind) && I(p) === I(u));
-      const listed = own.filter((u) => !live(u));
+      // Stage 10iw: a line MOPWM's later exchange trades sold to nil is not held.
+      const sold = (u) => rolls.some((r) => r.accountId === a.accountId && I(r) === I(u) && r.quantity === 0
+        && Math.abs(r.statementQuantity - Number(u.quantity)) < 0.0005);
+      const listed = own.filter((u) => !live(u) && !sold(u));
       if (!listed.length) continue;
       byOwner.set(a.owner, [...(byOwner.get(a.owner) ?? []), {
         account: a.accountId, keys: listed.map((u) => u.securityKey).sort(),

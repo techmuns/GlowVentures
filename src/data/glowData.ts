@@ -10,7 +10,7 @@
 import type {
   Account, AccountBridge, AccountReturnBlock, AccountReturnCoverage, BookSummary, CapitalMove, CashFlow, Commitment,
   Attribution, CorporateAction, EntityCG, FundInvestment, HoldingTrade, NavCoverage, NavPoint, Position, PositionTranches,
-  PolycabHolding, RealisedByClass, RecoveredHoldingCost, ReviewFlow, ReviewSuperseded, ReviewWrittenOff, ShareMovement, StartupInvestment, UndatedCapital, UnvaluedStatementHolding,
+  PolycabHolding, RealisedByClass, RecoveredHoldingCost, ReviewFlow, ReviewSuperseded, ReviewWrittenOff, ShareMovement, ShareRoll, StartupInvestment, UndatedCapital, UnvaluedStatementHolding,
 } from "@/lib/types";
 
 /** Newest report date across all accounts. Individual accounts can be older. */
@@ -59213,6 +59213,217 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "source": "motilal-oswal-financial-services-demat-1201090037359311-2026-07-31-demat-transactions"
   }
 };
+
+/**
+ * MOTILAL DEMAT SHARE BALANCES CARRIED PAST THEIR STATEMENTS on the NSE/BSE
+ * trades of MOPWM's transaction report (Stage 10iw, `rollMopwmShareTrades`).
+ * LIVE BASIS ONLY: `depositoryShares.ts` reads them; every statement-basis
+ * figure keeps the statement's own units. No fund row moves a quantity.
+ */
+export const BOOK_SHARE_ROLLS: ShareRoll[] = [
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
+    "isin": "INE559A01017",
+    "security": "IFB Industries Ltd",
+    "statementQuantity": 15772,
+    "asOf": "2026-07-31",
+    "through": "2026-09-09",
+    "quantity": 0,
+    "costBasis": 0,
+    "realizedPnL": -26185029,
+    "costOfUnitsSold": 96893060,
+    "trades": 2,
+    "report": {
+      "path": "source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx",
+      "asOf": "2026-10-23",
+      "sheet": "Direct Equity",
+      "rows": [
+        373,
+        374,
+        375,
+        376,
+        377,
+        378,
+        379,
+        380,
+        381,
+        382,
+        383,
+        384,
+        385,
+        386
+      ]
+    }
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
+    "isin": "INE001B01026",
+    "security": "KRBL Ltd",
+    "statementQuantity": 0,
+    "asOf": "2026-07-31",
+    "through": "2026-08-28",
+    "quantity": 67500,
+    "costBasis": 29581583,
+    "realizedPnL": 1543139,
+    "costOfUnitsSold": 30909460,
+    "trades": 2,
+    "report": {
+      "path": "source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx",
+      "asOf": "2026-10-23",
+      "sheet": "Direct Equity",
+      "rows": [
+        507,
+        508,
+        509,
+        510
+      ]
+    }
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
+    "isin": "INE589A01014",
+    "security": "NLC India Ltd",
+    "statementQuantity": 32000,
+    "asOf": "2026-07-31",
+    "through": "2026-09-07",
+    "quantity": 0,
+    "costBasis": 0,
+    "realizedPnL": -1341334,
+    "costOfUnitsSold": 10034019,
+    "trades": 1,
+    "report": {
+      "path": "source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx",
+      "asOf": "2026-10-23",
+      "sheet": "Direct Equity",
+      "rows": [
+        625,
+        626
+      ]
+    }
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
+    "isin": "INE011K01018",
+    "security": "Tega Industries Ltd",
+    "statementQuantity": 0,
+    "asOf": "2026-07-31",
+    "through": "2026-10-08",
+    "quantity": 24250,
+    "costBasis": 49656216,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "trades": 4,
+    "report": {
+      "path": "source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx",
+      "asOf": "2026-10-23",
+      "sheet": "Direct Equity",
+      "rows": [
+        863,
+        864,
+        865,
+        866
+      ]
+    }
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
+    "isin": "INE358U01012",
+    "security": "Zota Health Care Ltd",
+    "statementQuantity": 0,
+    "asOf": "2026-07-31",
+    "through": "2026-08-28",
+    "quantity": 27500,
+    "costBasis": 29990246,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "trades": 1,
+    "report": {
+      "path": "source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx",
+      "asOf": "2026-10-23",
+      "sheet": "Direct Equity",
+      "rows": [
+        958
+      ]
+    }
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "isin": "INE238A01034",
+    "security": "Axis Bank Ltd",
+    "statementQuantity": 7300,
+    "asOf": "2026-07-31",
+    "through": "2026-09-23",
+    "quantity": 0,
+    "costBasis": 0,
+    "realizedPnL": 291887,
+    "costOfUnitsSold": 11518759,
+    "trades": 1,
+    "report": {
+      "path": "source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx",
+      "asOf": "2026-10-23",
+      "sheet": "Direct Equity",
+      "rows": [
+        1123,
+        1124,
+        1125,
+        1126,
+        1127
+      ]
+    }
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "isin": "INE090A01021",
+    "security": "ICICI Bank Ltd",
+    "statementQuantity": 14500,
+    "asOf": "2026-07-31",
+    "through": "2026-09-23",
+    "quantity": 0,
+    "costBasis": 0,
+    "realizedPnL": 1991300,
+    "costOfUnitsSold": 22502090,
+    "trades": 1,
+    "report": {
+      "path": "source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx",
+      "asOf": "2026-10-23",
+      "sheet": "Direct Equity",
+      "rows": [
+        1217,
+        1218,
+        1219,
+        1220,
+        1221
+      ]
+    }
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "isin": "INE062A01020",
+    "security": "State Bank of India",
+    "statementQuantity": 27750,
+    "asOf": "2026-07-31",
+    "through": "2026-09-23",
+    "quantity": 0,
+    "costBasis": 0,
+    "realizedPnL": 2954256,
+    "costOfUnitsSold": 32869113,
+    "trades": 1,
+    "report": {
+      "path": "source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx",
+      "asOf": "2026-10-23",
+      "sheet": "Direct Equity",
+      "rows": [
+        1359,
+        1360,
+        1361,
+        1362,
+        1363,
+        1364,
+        1365
+      ]
+    }
+  }
+];
 
 /**
  * The same flows keyed by OWNER — a person's money-weighted return is over

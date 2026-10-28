@@ -44,12 +44,12 @@
  * a conversion.
  */
 import { BOOK_FUND_NAVS, FUND_NAV_AS_OF, type FundNav } from "@/data/fundNavs";
-import { BOOK_ACCOUNTS, BOOK_CAPITAL_MOVES, BOOK_POSITIONS, BOOK_RECOVERED_COSTS, BOOK_SHARE_MOVEMENTS, BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
+import { BOOK_ACCOUNTS, BOOK_CAPITAL_MOVES, BOOK_POSITIONS, BOOK_RECOVERED_COSTS, BOOK_SHARE_MOVEMENTS, BOOK_SHARE_ROLLS, BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
 import { isCashEquivalent } from "./analytics";
 import { composeSchemeLabel, holdingLabel, schemeNameFor } from "./schemeLabel";
 import { securityLabel } from "./securityLabel";
 import { symbolForKey } from "./quotes";
-import type { Account, CapitalMove, Position, ShareMovement, UnvaluedStatementHolding } from "./types";
+import type { Account, CapitalMove, Position, ShareMovement, ShareRoll, UnvaluedStatementHolding } from "./types";
 import { fifoReturnPct } from "../../shared/fifo.mjs";
 
 import { applyRecoveredCost } from "../../shared/recoveredCosts.mjs";
@@ -513,10 +513,13 @@ export function describeDepositoryUnits(
   d: NonNullable<Position["depositoryUnits"]>,
   accounts: readonly Account[] | ReadonlyMap<string, Account> = BOOK_ACCOUNTS,
 ): string {
-  const base = describeUnitsBasis(d, accounts);
+  const units = (n: number) => n.toLocaleString("en-IN", { maximumFractionDigits: 3 });
+  const r = d.rolled;
+  // Stage 10iw: the report's later exchange trades carry the statement's count.
+  const base = describeUnitsBasis(d, accounts) + (!r || d.kind === "adviser-trades" ? ""
+    : `; carried from those ${units(r.statementQuantity)} units to ${r.through} by ${r.trades} exchange trade${r.trades === 1 ? "" : "s"} on MOPWM's transaction report of ${r.reportAsOf}`);
   const s = d.unitSplit;
   if (!s) return base;
-  const units = (n: number) => n.toLocaleString("en-IN", { maximumFractionDigits: 3 });
   // Stage 10hq: the count the statement printed, and the one the NAV prices.
   return `${base}; counted before the scheme's 1:${s.factor} sub-division of ${s.exDate}, when its ISIN became ${s.publishedIsin} (${s.source}), the statement's ${units(s.statementQuantity)} units are ${units(s.statementQuantity * s.factor)} on the published NAV's unit`;
 }
@@ -525,6 +528,10 @@ function describeUnitsBasis(
   d: NonNullable<Position["depositoryUnits"]>,
   accounts: readonly Account[] | ReadonlyMap<string, Account> = BOOK_ACCOUNTS,
 ): string {
+  if (d.kind === "adviser-trades") {
+    const r = d.rolled;
+    return `shares the depository's statement of ${d.asOf ?? "its date"} does not hold, bought after it on ${r ? `${r.trades} exchange trade${r.trades === 1 ? "" : "s"} to ${r.through}` : "exchange trades"} that MOPWM's transaction report${r ? ` of ${r.reportAsOf}` : ""} records`;
+  }
   if (d.kind === "last-movement") {
     // The statement's own printed figure, quoted the way the book's own reasons
     // quote it (`BOOK_UNVALUED_HOLDINGS`), so the two can be read side by side.
@@ -566,8 +573,9 @@ export function depositoryUnitsGist(rows: readonly Pick<Position, "depositoryUni
     "last-movement": "holdings a depository's holding statement records beside the price of their last depository movement — a transaction price, not a valuation",
     "no-rate": "units a depository's holding statement records and prints no rate for",
     "no-price": "shares a depository's holding statement records with no usable price",
+    "adviser-trades": "shares bought after a depository's statement, on exchange trades MOPWM's transaction report records",
   } as const;
-  const present = (["closing-balance", "last-movement", "no-rate", "no-price"] as const).filter((k) => kinds.has(k)).map((k) => phrase[k]);
+  const present = (["closing-balance", "last-movement", "no-rate", "no-price", "adviser-trades"] as const).filter((k) => kinds.has(k)).map((k) => phrase[k]);
   if (present.length <= 1) return present[0] ?? phrase["closing-balance"];
   return `either ${present.slice(0, -1).join(", ")}, or ${present[present.length - 1]}`;
 }
@@ -597,7 +605,25 @@ export type DepositoryBalance = {
   valued: Position | null;
   /** The book position that already reports these very units, where one does. */
   reportedBy: Position | null;
+  /** The adviser report's exchange trades that sold this balance to nil after the statement (Stage 10iw). */
+  soldSince: ShareRoll | null;
 };
+
+/**
+ * A STATEMENT BALANCE THE ADVISER'S REPORT SOLD TO NIL (Stage 10iw): the roll
+ * of exactly these units on this account that leaves none. Such a balance is
+ * not held on the live basis, so it is neither valued nor "not valued".
+ */
+export function soldSinceStatement(
+  accountId: string,
+  holding: { isin?: string | null; quantity: number | null },
+  rolls: readonly ShareRoll[] = BOOK_SHARE_ROLLS,
+): ShareRoll | null {
+  const isin = holding.isin?.trim().toUpperCase();
+  if (!isin || typeof holding.quantity !== "number") return null;
+  return rolls.find((r) => r.accountId === accountId && r.isin.toUpperCase() === isin && r.quantity === 0
+    && Math.abs(r.statementQuantity - (holding.quantity as number)) < 0.0005) ?? null;
+}
 
 export function depositoryBalancesOf(
   accountId: string,
@@ -630,7 +656,8 @@ export function depositoryBalancesOf(
         (!!i && isin(p) === i && p.quantity !== null && tie(p.quantity, closing))
         || (p.assetClass === "AIF" && !!owner && ownerOf.get(p.accountId) === owner
           && tie(recorded.get(`${p.accountId}\u0000${p.securityKey}`) ?? NaN, closing)))) ?? null;
-      return { window: w, valued: v, reportedBy: rep };
+      const sold = v ? null : soldSinceStatement(accountId, { isin: i, quantity: closing });
+      return { window: w, valued: v, reportedBy: sold ? null : rep, soldSince: sold };
     })
     .sort((a, b) => Number(!!b.valued) - Number(!!a.valued) || Number(!!a.reportedBy) - Number(!!b.reportedBy)
       || (a.window.security ?? a.window.securityKey).localeCompare(b.window.security ?? b.window.securityKey));
@@ -672,12 +699,16 @@ export function partialValuationNotes(
   const byTape = new Map<string, Position[]>();
   const byStatement = new Map<string, Position[]>();
   const statementValued = new Set(positions.map((p) => p.accountId));
+  const txOnlyAccounts = new Set(BOOK_ACCOUNTS.filter((a) => a.transactionsOnly).map((a) => a.accountId));
   for (const p of valued) {
     const kind = p.depositoryUnits?.kind ?? "closing-balance";
     // Every sentence in the first branch is about an account that sent a
     // transaction statement and NO holding statement; a row of another kind is
     // not that account, and the note would say something false about it.
-    const into = kind === "closing-balance" ? byTape
+    // A share bought since on the adviser report's trades (Stage 10iw) belongs
+    // to whichever kind of account its statement is.
+    const tape = kind === "closing-balance" || (kind === "adviser-trades" && txOnlyAccounts.has(p.accountId));
+    const into = tape ? byTape
       // …and the second is about an account whose holding statement values
       // NONE of what it records. One the statement basis values keeps its own
       // registry entry: nothing there says "values nothing".
@@ -697,19 +728,33 @@ export function partialValuationNotes(
     if (converted.length) units += `, converted for documented exchange unit splits (${converted.map(r => `${r.security}: ${r.fundUnitAdjustment!.quantity} × ${r.fundUnitAdjustment!.factor} = ${r.quantity} units`).join("; ")})`;
     return `its ${n(funds.length, "fund")}${cash.length ? ` (${cash.length === funds.length ? (cash.length === 1 ? "a liquid or arbitrage fund" : "all liquid and arbitrage funds") : `${cash.length} of them liquid and arbitrage funds`} the family counts as cash)` : ""} ${funds.length === 1 ? "is" : "are"} valued at ${units} (${asOf}) × AMFI's published NAV (${navDate})`;
   };
+  // Stage 10iw: units the adviser report's later exchange trades carry, and
+  // statement balances those trades sold to nil.
+  const report = (rs: readonly { report: { asOf: string } }[]) => [...new Set(rs.map((r) => r.report.asOf))].sort().join(", ");
+  const rolledClause = (rows: readonly Position[]) => {
+    const asOf = [...new Set(rows.map((r) => r.depositoryUnits!.rolled!.reportAsOf))].sort().join(", ");
+    return `${n(rows.length, "listed share")} ${rows.length === 1 ? "is" : "are"} valued at the units the later exchange trades on MOPWM's transaction report of ${asOf} carry ${rows.length === 1 ? "it" : "them"} to × the live quote, and only while the quote feed prices ${rows.length === 1 ? "it" : "them"}`;
+  };
+  const soldClause = (rolls: readonly ShareRoll[], noun: string) =>
+    `${n(rolls.length, noun)} on that statement ${rolls.length === 1 ? "was" : "were"} sold to nil after it, on exchange trades MOPWM's transaction report of ${report(rolls)} records, and ${rolls.length === 1 ? "is" : "are"} not held`;
   for (const [accountId, rows] of byTape) {
     const balances = depositoryBalancesOf(accountId, rows, positions, movements);
     const funds = rows.filter((r) => r.navPriced);
     const shares = rows.filter((r) => !r.navPriced);
-    const notValued = balances.filter((b) => !b.valued && !b.reportedBy).length;
+    const notValued = balances.filter((b) => !b.valued && !b.reportedBy && !b.soldSince).length;
+    const sold = balances.filter((b) => b.soldSince);
     const elsewhere = balances.filter((b) => b.reportedBy).length;
     const asOf = rows.map((r) => r.depositoryUnits?.asOf).filter(Boolean).sort().pop() ?? "its statement date";
     const parts: string[] = [];
     if (funds.length) parts.push(fundClause(funds, "the depository's own closing units", asOf));
-    if (shares.length) parts.push(`its ${n(shares.length, "listed share")} ${shares.length === 1 ? "is" : "are"} valued at the same closing units × the live quote, and only while the quote feed prices ${shares.length === 1 ? "it" : "them"}`);
+    const closingShares = shares.filter((r) => !r.depositoryUnits?.rolled);
+    if (closingShares.length) parts.push(`its ${n(closingShares.length, "listed share")} ${closingShares.length === 1 ? "is" : "are"} valued at the same closing units × the live quote, and only while the quote feed prices ${closingShares.length === 1 ? "it" : "them"}`);
+    const rolledShares = shares.filter((r) => r.depositoryUnits?.rolled);
+    if (rolledShares.length) parts.push(rolledClause(rolledShares));
     const rest: string[] = [];
     if (notValued) rest.push(`${n(notValued, "other holding")} on that statement ${notValued === 1 ? "has" : "have"} no price this book can use and ${notValued === 1 ? "is" : "are"} not valued`);
     if (elsewhere) rest.push(`${n(elsewhere, "more balance")} ${elsewhere === 1 ? "has" : "have"} a matching or newer verified fund record and ${elsewhere === 1 ? "is" : "are"} counted there`);
+    if (sold.length) rest.push(soldClause(sold.map((b) => b.soldSince!), "balance"));
     notes.set(accountId,
       `this account sent a transaction statement and no holding statement. ${cap(parts.join("; "))}${rest.length ? `; ${rest.join("; ")}` : "; nothing else on that statement is held"}. What would value all of it is the account's own holding statement from its custodian`);
   }
@@ -722,7 +767,8 @@ export function partialValuationNotes(
       (isin(u) ? isin(acquisitionIdentity(r)) === isin(u) : r.securityKey === u.securityKey));
     const covered = (u: UnvaluedStatementHolding) => !!u.sameUnitsReportedBy || !!custodySuccessor(u, BOOK_ACCOUNTS, positions);
     const elsewhere = lines.filter((u) => covered(u) && !valuedLine(u)).length;
-    const open = lines.filter((u) => !covered(u) && !valuedLine(u));
+    const soldLines = lines.flatMap((u) => covered(u) || valuedLine(u) ? [] : [soldSinceStatement(accountId, u)].filter((r): r is ShareRoll => !!r));
+    const open = lines.filter((u) => !covered(u) && !valuedLine(u) && !soldSinceStatement(accountId, u));
     const waiting = open.filter((u) => quotable.some((q) => q.accountId === accountId
       && (isin(u) ? isin(q) === isin(u) : q.securityKey === u.securityKey))).length;
     const notValued = open.length - waiting;
@@ -732,11 +778,15 @@ export function partialValuationNotes(
     const moved = lines.filter((u) => typeof u.lastMovementRate === "number" && u.lastMovementRate > 0).length;
     const parts: string[] = [];
     if (funds.length) parts.push(fundClause(funds, "the statement's own units", asOf));
-    if (shares.length) parts.push(`its ${n(shares.length, "listed share")} ${shares.length === 1 ? "is" : "are"} valued at the statement's units × the live quote, and only while the quote feed prices ${shares.length === 1 ? "it" : "them"}`);
+    const statementShares = shares.filter((r) => !r.depositoryUnits?.rolled);
+    if (statementShares.length) parts.push(`its ${n(statementShares.length, "listed share")} ${statementShares.length === 1 ? "is" : "are"} valued at the statement's units × the live quote, and only while the quote feed prices ${statementShares.length === 1 ? "it" : "them"}`);
+    const rolledShares = shares.filter((r) => r.depositoryUnits?.rolled);
+    if (rolledShares.length) parts.push(rolledClause(rolledShares));
     const rest: string[] = [];
     if (waiting) rest.push(`${n(waiting, "more listed share")} ${waiting === 1 ? "is" : "are"} valued the same way once the quote feed prices ${waiting === 1 ? "it" : "them"}, and ${waiting === 1 ? "is" : "are"} not valued until then`);
     if (notValued) rest.push(`${n(notValued, "other holding")} on that statement ${notValued === 1 ? "has" : "have"} no price this book can use and ${notValued === 1 ? "is" : "are"} not valued`);
     if (elsewhere) rest.push(`${n(elsewhere, "more holding")} ${elsewhere === 1 ? "has" : "have"} a matching or newer verified fund record and ${elsewhere === 1 ? "is" : "are"} counted there`);
+    if (soldLines.length) rest.push(soldClause(soldLines, "holding"));
     notes.set(accountId,
       `this account's holding statement of ${asOf} records ${n(lines.length, "holding")} as quantities and values none of them${moved ? ` — beside ${moved === lines.length ? "each" : `${moved} of them`} it prints only the price of the holding's last depository movement, a transaction price` : ""}. ${cap(parts.join("; "))}${rest.length ? `; ${rest.join("; ")}` : "; nothing else on that statement is held"}. What would value all of it on that date is a statement that marks the balance, such as CDSL's monthly Consolidated Account Statement`);
   }

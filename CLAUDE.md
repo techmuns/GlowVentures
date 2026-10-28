@@ -427,6 +427,10 @@ Never derive one side from the others.
   (`AT_COST_BUCKET`, `AT_COST_RETURN`).
 - **The Motilal CDSL "rate" is the last movement's price**, not a mark or a cost
   (Stage 10cz); those rows are quantities on the statement basis.
+- **MOPWM's transaction report moves Motilal demat SHARES only** (Stage 10iw):
+  its later NSE/BSE trades roll those balances forward on the live basis
+  (`BOOK_SHARE_ROLLS`). Its fund rows move no quantity until the family answers
+  about the 1 Oct 2026 "redemptions".
 - **Encrypted statements** open with `GLOW_PDF_PASSWORDS` from the environment.
   Passwords are PANs — **never commit them** or put them in any tracked file.
   `build:statement-files` uses those passwords only at build time to save
