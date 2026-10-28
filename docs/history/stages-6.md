@@ -570,3 +570,10 @@
 
 - The family asked (28 Oct 2026) for the "Saved for everyone — the dashboard opens this way on any device." line gone from the Real Estate tab.
 - `SelectableTiles` takes `showSavedWhere` (default `true`); Real Estate passes `false`, so its picker and add menus render no `[data-tile-saved-where]`. Private Market and Morning CIO keep the line and its checks.
+
+### Stage 10ij — SECTOR COMPOSITION: AN OPENED SECTOR HAS NO EXCEL BAR, AND ITS ISSUERS CARRY A RETURN
+
+- The family (28 Oct 2026): the Export Excel / Edit numbers / Upload Excel bar inside an opened sector "doesn't make sense", and the issuer table should show Return next to % of sector.
+- Both nested tables (Consolidated issuers, Direct Equity holdings) pass `controlsHost={null}`: no bar, but they stay `data-table-export` so the Sector table's own Export Excel still carries them.
+- Consolidated issuer rows gain a `return` column (`issuerReturn`): FIFO over that issuer's own holdings that report a cost, as `rollSectors` strikes a sector; an issuer held only through funds is `—` with its reason. The hover is `SectorReturnDetails` (`noun="issuer"`); the footer cell is the sector's own return, so it ties to the sector row.
+- `ONLY=sectors check:pages`: the same 9 failures as main, none new.

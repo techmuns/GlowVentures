@@ -6,10 +6,12 @@ import { fmtDate, fmtPct } from "@/lib/format";
 import type { AccountIndex } from "@/lib/accounts";
 import type { Position } from "@/lib/types";
 
-export function SectorReturnDetails({ sector, positions, accounts, returnPct, reason, fundValue, live, money }: {
+export function SectorReturnDetails({ sector, positions, accounts, returnPct, reason, fundValue, live, money, noun = "sector" }: {
   sector: string; positions: Position[]; accounts: AccountIndex;
   returnPct: number | null; reason: string | null; fundValue: number; live?: boolean;
   money: (n: number | null | undefined) => string;
+  /** What the figure is struck over — a sector row, or one issuer inside an opened sector. */
+  noun?: "sector" | "issuer";
 }) {
   const included = positions.filter(hasSectorReturnCost);
   const excluded = positions.filter(p => !hasSectorReturnCost(p)).map(p => sectorReturnHolding(p, accounts));
@@ -33,14 +35,14 @@ export function SectorReturnDetails({ sector, positions, accounts, returnPct, re
       {included.length < positions.length && <span className="ml-1 text-[10.5px] text-slate-500" data-return-coverage>{included.length} of {positions.length}</span>}</>}>
     <div data-sector-return-details data-sector={sector}>
       <p className="font-medium text-slate-100" data-sector-return-summary>
-        {positions.length === 0 ? "This sector is held only through funds."
+        {positions.length === 0 ? `This ${noun} is held only through funds.`
           : returnPct !== null
             ? `This return uses ${included.length} of ${positions.length} ${plural(positions.length)}.`
             : `Purchase cost is available for ${included.length} of ${positions.length} ${plural(positions.length)}.`}
       </p>
       <p className="mt-1 text-slate-400">{excluded.length
         ? `${excluded.length} ${plural(excluded.length)} ${excluded.length === 1 ? "is" : "are"} left out because ${excluded.length === 1 ? "its" : "their"} purchase cost is missing or unverified.`
-        : positions.length ? "No holdings are left out for missing purchase cost." : "There are no stock holdings in your accounts in this sector."}</p>
+        : positions.length ? "No holdings are left out for missing purchase cost." : `There are no stock holdings in your accounts in this ${noun}.`}</p>
       <p className="mt-2 text-xs text-slate-400">One stock held in two accounts counts as two holdings.</p>
     </div>
 
