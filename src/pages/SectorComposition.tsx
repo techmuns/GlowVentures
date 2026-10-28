@@ -1351,7 +1351,13 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
                             /* THE SET A RETURN IS STRUCK OVER, carried on the cell, so
                                `check:pages` can hold the figure to its coverage. */
                             data-costed={s.costed} data-holdings={s.holdings}
-                            data-costed-mv={Math.round(s.costedMV)} data-uncosted-mv={Math.round(s.uncostedMV)} data-mv={Math.round(s.mv)}>
+                            data-costed-mv={Math.round(s.costedMV)} data-uncosted-mv={Math.round(s.uncostedMV)} data-mv={Math.round(s.mv)}
+                            /* WHICH COSTED HOLDINGS WITHHOLD THE RETURN — a known cost whose sale
+                               proceeds are unverified withholds the pooled figure (CLAUDE.md), so
+                               a check can tell that dash from a refused one. */
+                            data-return-withheld={s.returnPct === null
+                              ? s.positions.filter((p) => hasSectorReturnCost(p) && p.hprUnavailableReason).map((p) => p.securityKey).join(",")
+                              : ""}>
                             {indexOnlyRow ? <AbsentCell reason={s.returnWhy ?? "No holdings in this sector"} />
                               : <SectorReturnDetails sector={s.key} positions={s.positions} accounts={accIdx}
                                   returnPct={s.returnPct} reason={s.returnWhy}

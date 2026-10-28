@@ -395,6 +395,29 @@ function fundNavStore() {
  * no book position of the same ISIN and the same units. It deliberately does
  * not read the page's switches, so turning one off fails a check by name.
  */
+/**
+ * ── A NEWER FOLIO STATEMENT REPLACES THE DEMAT BALANCE IT SUCCEEDED (Stage 10hm) ──
+ *
+ * Ajay's two Bandhan schemes left his Motilal demat for his Bandhan folio on
+ * 7 Oct, and the folio's 26 Oct statement reports them; the demat's 31 Jul
+ * closing balance of the same units is the OLDER record of the same holding.
+ * `PortfolioContext` drops it (`shared/custodySuccessors.mjs`), and a model that
+ * kept it counted ₹43 Cr twice — failing five Sector Composition checks against
+ * a page that was right. Re-expressed off the committed links the book writes
+ * (`custodyPredecessors`, `custodyEvidence`), never imported: one verified
+ * successor of the same owner and ISIN, dated after the balance, or none.
+ */
+function custodySucceeded(holding, accounts, positions) {
+  const acc = new Map(accounts.map((a) => [a.accountId, a]));
+  const old = acc.get(holding.accountId);
+  const asOf = holding.asOf ?? holding.periodTo ?? old?.asOf;
+  if (!old?.ownerId || !asOf || !holding.isin) return false;
+  return positions.filter((p) => p.accountId !== holding.accountId && p.isin === holding.isin
+    && (p.custodyPredecessors ?? []).includes(holding.accountId) && p.custodyEvidence && p.statementRecord
+    && asOf < p.custodyEvidence.effectiveOn && Number.isFinite(p.quantity) && p.quantity >= 0
+    && acc.get(p.accountId)?.ownerId === old.ownerId && acc.get(p.accountId)?.asOf > asOf).length === 1;
+}
+
 function withDepositoryFunds(src, positions) {
   const accounts = bookArray(src, "BOOK_ACCOUNTS");
   const movements = bookObject(src, "BOOK_SHARE_MOVEMENTS");
@@ -412,6 +435,7 @@ function withDepositoryFunds(src, positions) {
   for (const w of Object.values(movements)) {
     if (!txOnly.has(w.accountId) || withPositions.has(w.accountId)) continue;
     if (w.reason != null || !(typeof w.closing === "number" && w.closing > 0)) continue;
+    if (custodySucceeded(w, accounts, positions)) continue;
     const isin = w.isin?.trim().toUpperCase();
     const nav = isin ? navByIsin.get(isin) : null;
     if (!nav || !nav.usableForValue || !(nav.nav > 0)) continue;
@@ -481,7 +505,7 @@ function withUnpricedStatementUnits(src, positions) {
     const qty = Number(u.quantity);
     const etf = u.assetClass === "ETF";
     if (!isin || !(qty > 0) || (u.assetClass !== "Mutual Fund" && !etf)) continue;              // 1
-    if (u.sameUnitsReportedBy) continue;                                                        // 2
+    if (u.sameUnitsReportedBy || custodySucceeded(u, accounts, positions)) continue;            // 2
     const nav = navByIsin.get(isin);
     if (!nav || !nav.usableForValue || !(nav.nav > 0)) continue;                                // 3
     const own = acc.get(u.accountId);
@@ -22658,6 +22682,22 @@ const INSIDE_CARD = INSIDE_BOOK ? [
  * never imported.
  */
 const SIGNED_PCT = /^[+\-\u2212]\d+\.\d+%$/;
+/**
+ * …AND A DASH OVER COSTED HOLDINGS IS RIGHT WHERE ONE OF THEM HAS UNVERIFIED
+ * SALE PROCEEDS. Since the 21 Oct cost recovery a known cost whose sale proceeds
+ * are unverified carries `hprUnavailableReason`, and that withholds the pooled
+ * return (CLAUDE.md, "the review is the source of the private book") — the
+ * Unclassified sector's Yash Highvoltage line is one. The page names those
+ * holdings on the cell (`data-return-withheld`); every one must carry the
+ * reason in `glowData.ts`, so a page cannot dash a sector the book does not.
+ */
+const HPR_WITHHELD_KEYS = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    return new Set((bookArray(src, "BOOK_POSITIONS") ?? []).filter((p) => p.hprUnavailableReason).map((p) => p.securityKey));
+  } catch { return null; }
+})();
+const returnWithheld = (r) => !!HPR_WITHHELD_KEYS && r.withheld?.length > 0 && r.withheld.every((k) => HPR_WITHHELD_KEYS.has(k));
 const sectorReturnChecks = (view) => [
   [`${view}: every sector's return is FIFO over the holdings that report a cost, and names that set`, (_t, ctx) => {
     const rs = ctx?.sectorLayout?.returns;
@@ -22667,7 +22707,7 @@ const sectorReturnChecks = (view) => [
       if (![costed, holdings, uncosted, mv, costedMv].every(Number.isFinite)) return false;
       if (costed > holdings || uncosted < 0 || costedMv < 0 || costedMv + uncosted > mv + 1) return false;
       if (view === "direct" && holdings !== count) return false;
-      if (costed === 0) return r.text.startsWith("—") && r.figure === null && r.details;
+      if (costed === 0 || (r.figure === null && returnWithheld(r))) return r.text.startsWith("—") && r.figure === null && r.details;
       if (!SIGNED_PCT.test(r.figure ?? "")) return false;
       if (!r.details || !(r.title ?? "").includes(`return and missing holding details`)) return false;
       return costed < holdings ? r.coverage === `${costed} of ${holdings}` : r.coverage === null;
@@ -22678,8 +22718,8 @@ const sectorReturnChecks = (view) => [
   [`${view}: the Return column carries a figure, not a column of dashes`, (_t, ctx) => {
     const rs = ctx?.sectorLayout?.returns;
     if (!rs || !rs.length) return false;
-    const costedRows = rs.filter((r) => r.costed > 0);
-    if (!costedRows.length) return { notChecked: "no sector on this view holds a costed holding" };
+    const costedRows = rs.filter((r) => r.costed > 0 && !returnWithheld(r));
+    if (!costedRows.length) return { notChecked: "no sector on this view holds a costed holding whose return the book does not withhold" };
     return costedRows.every((r) => SIGNED_PCT.test(r.figure ?? ""));
   }],
 ];
@@ -44012,6 +44052,7 @@ for (const theme of THEMES) {
               details: !!c?.querySelector('button[aria-haspopup="dialog"]'),
               costed: n("data-costed"), holdings: n("data-holdings"), uncosted: n("data-uncosted-mv"), mv: n("data-mv"),
               costedMv: n("data-costed-mv"),
+              withheld: (c?.getAttribute("data-return-withheld") ?? "").split(",").filter(Boolean),
               figure: (c?.querySelector("[data-return-figure]")?.innerText ?? "").trim() || null,
               coverage: (c?.querySelector("[data-return-coverage]")?.innerText ?? "").trim() || null,
               count: Number((r.querySelector('[data-cell="count"]')?.innerText ?? "").trim()),

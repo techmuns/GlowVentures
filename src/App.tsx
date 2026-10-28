@@ -153,8 +153,12 @@ export default function App() {
             nothing; the alert card and the All alerts table say where each
             level went. */}
         <ResearchLevelSync />
+        {/* ABOVE `<main>`, LIKE THE INDEX STRIP: a page that fills the window
+            (Sector Composition, Morning CIO, Portfolio Monitor) is `h-full` of
+            `<main>`, so a notice inside it pushed every such page down and made
+            it scroll. */}
+        <EnteredNumbersNotice className="mx-6 mt-4" />
         <main ref={mainRef} className="flex-1 overflow-y-auto px-6 py-6">
-          <EnteredNumbersNotice />
           <Suspense fallback={<div role="status" className="p-4 text-sm text-slate-400">Opening page…</div>}>
           <Routes location={background ?? location}>
             <Route path="/" element={<RootRedirect />} />
