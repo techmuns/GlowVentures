@@ -32,7 +32,9 @@ const PdfPage = memo(function PdfPage({ pdf, number, center, width, height, avai
   const matchFound = useRef(false);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(([entry]) => setNearby(entry.isIntersecting), {
+    // A busy main thread can deliver several entries for this page at once
+    // (left the range, came back). Only the newest describes it now.
+    const observer = new IntersectionObserver(entries => setNearby(entries[entries.length - 1].isIntersecting), {
       root: viewport.current, rootMargin: "100% 0px",
     });
     observer.observe(paper.current!);
