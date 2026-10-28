@@ -586,7 +586,14 @@
 - `SEGMENT_AXES` / `SEGMENT_VIEWS` put All Securities first, so it is the param-free default; `?seg=category` still lands on Category.
 - Checks: `selectedSegmentReturns.test.ts` (whole-account dashes, per-holding gains with an exit, every period × axis on the archive); `check:pages` `SEG_AXES` order and default, and route `cio-returns-category` with `CIO_SEGMENT_HOLDINGS` (opens a segment and an account; names, values and gains add).
 
-### Stage 10il — PORTFOLIO LIBRARY: EVERY STATEMENT, ONE FOLDER PER STOCK
+### Stage 10il — HOLDING PAGE: THE TOTALS STAY PINNED WHILE THE ROWS SCROLL
+
+- The family asked (28 Oct 2026) to *"freeze the last rows in the table so that, as I scroll the table, they are always visible"* on a holding's Position by account table.
+- Its `<tfoot>` (`data-held-foot-pinned`) is `sticky bottom-0` on an opaque card surface, inside the table's own scroll box that already pins the header; the Total, Inside your mutual funds and Total exposure lines stay in view with every column.
+- That box alone was 36rem, taller than the panel on a laptop window, so the pinned footer sat below the fold (Codex review). On the Position tab the panel, section and card are now a desktop flex column (`min-h-0`, the Polycab card's shape): the box shrinks to the visible panel before the panel scrolls.
+- `check:pages` (`heldChecks`): the `heldTable` probe's `pin` resizes to a real `HELD_PIN_H` (640px) window, puts the panel and box at their top, and requires the sticky footer inside the panel. It fails on main and on the first, box-only fix (`stock-held`, `stock-held-funds`, `stock-funds-only`) and passes now; the other light-mode findings on those routes and on `stock` are on main too.
+
+### Stage 10im — PORTFOLIO LIBRARY: EVERY STATEMENT, ONE FOLDER PER STOCK
 
 - The family (28 Oct 2026): a Portfolio Library tab under the Statement Library that files the same statements by stock name, view-only (uploads stay in the Statement Library); Admin now reads Statement Library → Portfolio Library → Data Audit (`src/lib/nav.ts`).
 - `/portfolios` (`src/pages/PortfolioLibrary.tsx`) reads the same manifest plus a new read model, `statement-securities.json`: `deriveStatementSecurities` in `ledgerModel.ts` lists, per `securityKey`, every document carrying a holding, trade, realised lot, open lot or income row for it. Cash lines (Cash class, or a provider sector resolving to Cash) are out; the Polycab ring-fence is applied on the build server by key and ISIN. Built by `build:views` and, for published versions, by `rapid-processor.mjs` / `publication-views.mjs`. 494 folders on this book.
