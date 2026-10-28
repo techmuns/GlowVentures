@@ -4063,7 +4063,11 @@ export function PortfolioMonitor() {
                             : undefined}
                           open={secOpen} onToggle={() => toggleSection(secKey)}
                           toggleData={{ "data-section-toggle": grp.key }}
-                          sub={<>
+                          /* A LINE THAT MUST BE SEEN: on the family's own axes the Cash
+                             band counts its liquid and arbitrage funds AND credits the
+                             value the cash instruction placed there, and the two run
+                             past a cell's one long name (Stage 10jb). */
+                          sub={<div data-prose-ok={grp.cashRuleMV > 0 ? "the Cash band's counts and the value the family's cash instruction placed in it, both asked for on the heading" : undefined}>
                             {/* The count is of HOLDINGS, not of rows: ten mandate
                                 rows stand for 281 of them, and a heading reading
                                 "10 holdings" over ₹138.7 Cr would retire 271
@@ -4174,7 +4178,7 @@ export function PortfolioMonitor() {
                                 · {fmtFromBase(grp.cashRuleMV, { compact: true })} by the family&rsquo;s cash instruction
                               </span></>
                             )}
-                          </>} />
+                          </div>} />
                       </tr>
                     )}
                     {/*

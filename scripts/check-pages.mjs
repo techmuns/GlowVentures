@@ -13763,6 +13763,17 @@ const MONITOR_BASIS_BOOK = (() => {
       const rows = allShares.filter((p) => p.securityKey === k);
       const book = rows.find((p) => !!p.sector && p.sector !== "Unclassified");
       if (book) { sector.set(k, { sector: book.sector, from: "book" }); continue; }
+      // …THEN THE INDUSTRY EVERY FUND FILING AGREES ON — the middle of the three
+      // tiers (`placeOf` in SECURITY_AXIS_BOOK writes the same order out). With
+      // two tiers only, a company the funds place and screener.in does not
+      // (Kajaria Ceramics) read Unclassified here and Consumer Discretionary
+      // on the page that was right.
+      const agreed = new Set();
+      for (const s of SECURITY_AXIS_BOOK?.derivedByKey?.get(k)?.fundSector?.values() ?? []) {
+        const hit = resolveSector(s);
+        if (hit?.matchedBy) agreed.add(hit.sector);
+      }
+      if (agreed.size === 1) { sector.set(k, { sector: [...agreed][0], from: "disclosure" }); continue; }
       const symbol = rows.find((p) => !!p.symbol)?.symbol ?? SYM[k] ?? null;
       const g = symbol ? VENDOR[symbol]?.gics : null;
       sector.set(k, g && g !== "Unclassified" ? { sector: g, from: "vendor" } : { sector: "Unclassified", from: null, symbol });
