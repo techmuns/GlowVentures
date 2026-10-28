@@ -35,7 +35,8 @@ import {
   type LotGroup, type DaySale,
 } from "../../shared/lotSettlement.mjs";
 import { resolveSector } from "../../shared/sectors.mjs";
-import { BOOK_ACCOUNTS, BOOK_CAPITAL_MOVES, BOOK_CAPITAL_GAINS } from "../data/glowData";
+import { BOOK_ACCOUNTS, BOOK_CAPITAL_MOVES, BOOK_CAPITAL_GAINS, BOOK_POSITIONS } from "../data/glowData";
+import { holdingBucket, UNSTATED_BUCKET, UNROUTED_EQUITY_BUCKET } from "./analytics";
 import { fmtDate } from "./format";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -142,6 +143,8 @@ export type ArchiveDoc = ManifestEntry & {
   openLots?: ArchiveOpenLot[];
   /** Set on a spreadsheet beside a PDF: a witness of that PDF, never a document of the book. */
   twinOf?: string | null;
+  /** How the statement's account is run (PMS, Direct, AIF…), as the reader recorded it. */
+  engagement?: string | null;
 };
 type ArchiveOpenLot = {
   security: string; securityKey: string | null;
@@ -1222,8 +1225,18 @@ export function deriveFundDisclosures(
 // receivable"). Bank-book cash flows are not read at all. The ring-fence is
 // applied here, as `deriveFundDisclosures` applies it: a fenced security gets no
 // folder, and the browser never receives its key.
+//
+// EACH FOLDER CARRIES ITS CATEGORIES — Direct Equity, PMS mandates, ETF, Mutual
+// Fund, AIF, Unlisted, held at cost, Cash — so the library filters on the same
+// sections the Portfolio Monitor draws. `holdingBucket` decides every one: for a
+// security the book holds, on each of its positions and their accounts; for each
+// statement row, on the class it prints and the engagement of the account it
+// belongs to, which is how an exited holding is still placed. A security the
+// book holds at cost is at cost on every row that names it. The two "not
+// stated" sections (no class printed, no route stated) are kept only for a
+// security nothing else places; a folder can sit in several categories.
 // ─────────────────────────────────────────────────────────────────────────────
-export type StatementSecurity = { securityKey: string; name: string; documents: string[] };
+export type StatementSecurity = { securityKey: string; name: string; documents: string[]; categories: string[] };
 export type StatementSecurityData = { securities: StatementSecurity[] };
 
 type SecurityRow = {
@@ -1238,11 +1251,27 @@ const SECURITY_SECTIONS = ["holdings", "transactions", "capitalGains", "openLots
  */
 export const isIncomeBucket = (key: string): boolean => key === "equity-dividend-income";
 
+/** The book's side of a folder's categories: its positions and the accounts they sit in. */
+export type CategoryBook = {
+  positions: readonly { accountId: string; securityKey: string; assetClass: string | null; valuedAtCost?: boolean }[];
+  accounts: readonly { accountId: string; engagement?: string | null }[];
+};
+const NOT_STATED = new Set([UNSTATED_BUCKET, UNROUTED_EQUITY_BUCKET]);
+
 export function deriveStatementSecurities(
   docs: ArchiveDoc[],
   fence: { keys: ReadonlySet<string>; isins: ReadonlySet<string> } = { keys: new Set(), isins: new Set() },
+  book: CategoryBook = { positions: BOOK_POSITIONS, accounts: BOOK_ACCOUNTS },
 ): StatementSecurityData {
-  const byKey = new Map<string, { names: Set<string>; documents: Set<string> }>();
+  const engagementOf = new Map(book.accounts.map((a) => [a.accountId, a.engagement || null]));
+  const atCost = new Set(book.positions.filter((p) => p.valuedAtCost === true).map((p) => p.securityKey));
+  const heldAs = new Map<string, Set<string>>();
+  for (const p of book.positions) {
+    const set = heldAs.get(p.securityKey) ?? new Set<string>();
+    set.add(holdingBucket(p, engagementOf.get(p.accountId)));
+    heldAs.set(p.securityKey, set);
+  }
+  const byKey = new Map<string, { names: Set<string>; documents: Set<string>; categories: Set<string> }>();
   for (const d of docs) {
     for (const section of SECURITY_SECTIONS) {
       for (const row of (d[section] ?? []) as SecurityRow[]) {
@@ -1250,18 +1279,21 @@ export function deriveStatementSecurities(
         if (!key || key === "unknown" || isIncomeBucket(key) || fence.keys.has(key)) continue;
         if (row.isin && fence.isins.has(row.isin.trim().toUpperCase())) continue;
         if (row.assetClass === "Cash" || (row.providerSector && resolveSector(row.providerSector).sector === "Cash")) continue;
-        const entry = byKey.get(key) ?? { names: new Set<string>(), documents: new Set<string>() };
+        const entry = byKey.get(key) ?? { names: new Set<string>(), documents: new Set<string>(), categories: new Set(heldAs.get(key)) };
         if (row.security?.trim()) entry.names.add(row.security.trim());
         entry.documents.add(d.docKey);
+        entry.categories.add(holdingBucket({ assetClass: row.assetClass ?? null, securityKey: key, valuedAtCost: atCost.has(key) }, d.engagement));
         byKey.set(key, entry);
       }
     }
   }
-  const securities = [...byKey].map(([securityKey, { names, documents }]) => {
+  const securities = [...byKey].map(([securityKey, { names, documents, categories }]) => {
     // The fullest spelling printed (a depository clips names), then alphabetical,
     // so a rebuild cannot flip it; `securityLabel` prefers the book's own choice.
     const printed = [...names].sort((a, b) => b.length - a.length || a.localeCompare(b))[0] ?? securityKey;
-    return { securityKey, name: securityLabel(securityKey, printed), documents: [...documents].sort() };
+    const stated = [...categories].filter((c) => !NOT_STATED.has(c));
+    return { securityKey, name: securityLabel(securityKey, printed), documents: [...documents].sort(),
+      categories: (stated.length ? stated : [...categories]).sort() };
   });
   securities.sort((a, b) => a.name.localeCompare(b.name) || a.securityKey.localeCompare(b.securityKey));
   return { securities };

@@ -7829,7 +7829,9 @@ const STATEMENT_TOP_PROVIDER = (() => {
  * security a statement carries a holding, trade, realised lot, open lot or
  * income row for, cash lines and the ring-fence (`BOOK_POLYCAB`) out, each
  * counting the statements that name it. `top` is the largest folder, which the
- * opened-folder route walks. Null on any failure.
+ * opened-folder route walks. `mandate` is the folders the PMS mandates tab must
+ * show: a security a row of a PMS account's statement names (a mandate takes
+ * its whole account, so nothing else decides it). Null on any failure.
  */
 const PORTFOLIO_BOOK = (() => {
   try {
@@ -7838,6 +7840,7 @@ const PORTFOLIO_BOOK = (() => {
     const fencedKeys = new Set(fenced.map((p) => p.securityKey));
     const fencedIsins = new Set(fenced.flatMap((p) => (p.isin ? [p.isin.trim().toUpperCase()] : [])));
     const docsOf = new Map();
+    const mandate = new Set();
     for (const e of m) {
       const d = JSON.parse(readFileSync(new URL(`../public/audit/${e.docKey}/document.json`, import.meta.url), "utf8"));
       for (const section of ["holdings", "transactions", "capitalGains", "openLots", "income"]) {
@@ -7847,12 +7850,13 @@ const PORTFOLIO_BOOK = (() => {
           if (!k || k === "unknown" || k === "equity-dividend-income" || fencedKeys.has(k) || (r.isin && fencedIsins.has(r.isin.trim().toUpperCase()))) continue;
           if (r.assetClass === "Cash" || (r.providerSector && resolveSector(r.providerSector).sector === "Cash")) continue;
           docsOf.set(k, (docsOf.get(k) ?? new Set()).add(e.fileKey));
+          if (d.engagement === "PMS") mandate.add(k);
         }
       }
     }
     const counts = new Map([...docsOf].map(([k, s]) => [k, s.size]));
     const top = [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0]?.[0] ?? null;
-    return { counts, fenced: fencedKeys, top: top ? { key: top, docs: [...docsOf.get(top)].sort() } : null };
+    return { counts, fenced: fencedKeys, mandate, top: top ? { key: top, docs: [...docsOf.get(top)].sort() } : null };
   } catch { return null; }
 })();
 
@@ -9087,6 +9091,9 @@ const ROUTES = [
   // only — and its largest folder opened (`PORTFOLIO_BOOK`).
   ["portfolios", "/portfolios"],
   ["portfolios-folder", () => `/portfolios?stock=${encodeURIComponent(PORTFOLIO_BOOK?.top?.key ?? "none-in-the-archive")}`],
+  // ...AND ONE CATEGORY TAB PICKED, by its address: PMS mandates, the one tab
+  // the archive alone decides (`PORTFOLIO_BOOK.mandate`).
+  ["portfolios-category", "/portfolios?category=PMS%20mandates"],
   ["upload", "/upload"],
   // THE MEMBER SCOPE (Stage 10di). Each address names its members with
   // `?members=`, which is the selector's own source of truth, so a scoped page
@@ -37692,6 +37699,29 @@ const INVARIANTS = {
       const tiles = (ctx?.xa ?? []).filter((x) => x.xa === "portfolio-folder");
       return tiles.length === b.counts.size && new Set(tiles.map((x) => x.attrs["security-folder"])).size === tiles.length
         && tiles.every((x) => b.counts.get(x.attrs["security-folder"]) === Number(x.attrs["doc-count"]) && !b.fenced.has(x.attrs["security-folder"]));
+    }],
+    /**
+     * THE CATEGORY TABS COUNT THE FOLDERS THEY SHOW. Every folder sits in at
+     * least one category, All counts every folder, and each tab's count is the
+     * number of folders carrying it — a folder in two categories counts in both.
+     */
+    ["every folder has a category, and each category tab counts the folders in it", (t, ctx) => {
+      const tiles = (ctx?.xa ?? []).filter((x) => x.xa === "portfolio-folder");
+      const tabs = (ctx?.xa ?? []).filter((x) => x.xa === "portfolio-category");
+      if (!tiles.length || tabs.length < 2) return false;
+      const cats = tiles.map((x) => (x.attrs.categories ?? "").split("|").filter(Boolean));
+      return cats.every((c) => c.length > 0) && tabs.every((tab) => Number(tab.attrs.count) === (tab.attrs.category === "All"
+        ? tiles.length : cats.filter((c) => c.includes(tab.attrs.category)).length));
+    }],
+  ],
+  "portfolios-category": [
+    ["the PMS mandates tab shows exactly the securities a PMS statement names", (t, ctx) => {
+      const b = PORTFOLIO_BOOK;
+      if (!b) return { notChecked: "the statement archive could not be read" };
+      const tab = (ctx?.xa ?? []).find((x) => x.xa === "portfolio-category" && x.attrs.category === "PMS mandates");
+      const tiles = (ctx?.xa ?? []).filter((x) => x.xa === "portfolio-folder").map((x) => x.attrs["security-folder"]);
+      return tab?.attrs.active === "true" && tiles.length === b.mandate.size && Number(tab.attrs.count) === b.mandate.size
+        && tiles.every((k) => b.mandate.has(k));
     }],
   ],
   "portfolios-folder": [
