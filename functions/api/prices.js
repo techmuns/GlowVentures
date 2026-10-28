@@ -52,7 +52,7 @@ export async function onRequest(context) {
   // v2: the body carries the instrument's NAME now (see below), and an entry
   // cached under v1 would hand a benchmark a history with no name to check —
   // which it correctly refuses, so a stale v1 hit would blank a working line.
-  // v3: the body carries `fetchedAt` (Stage 10im); a v2 entry has none, and the
+  // v3: the body carries `fetchedAt` (Stage 10in); a v2 entry has none, and the
   // stock page would take its arrival for its fetch and keep it six hours more.
   const key = new Request(`${url.origin}/__cache/prices/v3/${encodeURIComponent(yahooSymbol)}`);
   const hit = await cache.match(key);
@@ -122,7 +122,7 @@ export async function onRequest(context) {
     shortName: res.meta?.shortName ?? null,
     // WHEN THIS COPY WAS FETCHED FROM YAHOO. The edge caches the whole body, so
     // a cached answer keeps its original time — which is what lets the stock
-    // page keep a copy in the browser no longer than this cache would (Stage 10im).
+    // page keep a copy in the browser no longer than this cache would (Stage 10in).
     fetchedAt: Date.now(),
     first: points[0].t,
     last: points[points.length - 1].t,

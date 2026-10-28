@@ -41,7 +41,7 @@ const _cache = new Map<string, Promise<InsiderResponse>>();
 export function getHoldingsInsider(holdings: AnnHolding[], force = false): Promise<InsiderResponse> {
   // KEYED BY THE UTC DAY, as `/api/insider` keys its own cache, so a dashboard
   // left open into a new day asks again rather than reusing yesterday's
-  // disclosures — the stock page's research card asks ahead since Stage 10im.
+  // disclosures — the stock page's research card asks ahead since Stage 10in.
   const day = new Date().toISOString().slice(0, 10);
   for (const k of _cache.keys()) if (!k.startsWith(`${day}|`)) _cache.delete(k);
   const key = `${day}|${holdings.map((h) => h.symbol).join("|")}`;

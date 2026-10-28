@@ -593,7 +593,7 @@
 - That box alone was 36rem, taller than the panel on a laptop window, so the pinned footer sat below the fold (Codex review). On the Position tab the panel, section and card are now a desktop flex column (`min-h-0`, the Polycab card's shape): the box shrinks to the visible panel before the panel scrolls.
 - `check:pages` (`heldChecks`): the `heldTable` probe's `pin` resizes to a real `HELD_PIN_H` (640px) window, puts the panel and box at their top, and requires the sticky footer inside the panel. It fails on main and on the first, box-only fix (`stock-held`, `stock-held-funds`, `stock-funds-only`) and passes now; the other light-mode findings on those routes and on `stock` are on main too.
 
-### Stage 10im — STOCK PAGE: PRICE & RETURNS AND RESEARCH LOAD AHEAD
+### Stage 10in — STOCK PAGE: PRICE & RETURNS AND RESEARCH LOAD AHEAD
 
 - The family asked (28 Oct 2026) for a stock's Price & returns and Research tabs to load much faster. Both fetched only on click, from cold, every visit.
 - `PrefetchStockTabs` in `StockInfo.tsx` asks for the price history and the Financials document as a company page opens; once Research is open, `ResearchPanel` asks for every other sub-tab, the ratio table and insider deals. All go through the shared requests the panels make, so nothing is fetched twice and a click finds its answer ready (`settledPriceHistory`, `settledResearch` draw it on the first paint).

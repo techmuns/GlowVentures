@@ -75,7 +75,7 @@ export function settledResearch(kind: ResearchKind, ticker: string): Research | 
 }
 
 /**
- * KEPT IN THIS BROWSER FOR THE SERVICE'S OWN FRESH WINDOW (Stage 10im).
+ * KEPT IN THIS BROWSER FOR THE SERVICE'S OWN FRESH WINDOW (Stage 10in).
  *
  * The edge serves a copy as fresh for twelve hours (`FRESH_S` in
  * `functions/api/research.js`), so a copy the service fetched less than twelve

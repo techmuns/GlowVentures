@@ -1,5 +1,5 @@
 /**
- * ── A COMPANY'S PRICE HISTORY AND RESEARCH, KEPT IN THIS BROWSER (Stage 10im) ─
+ * ── A COMPANY'S PRICE HISTORY AND RESEARCH, KEPT IN THIS BROWSER (Stage 10in) ─
  *
  * *"When i dig deep in a stock view make these load much faster price return
  * and research taking too much time right now"* — the family, 28 Oct 2026.

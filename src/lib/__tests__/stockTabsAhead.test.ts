@@ -1,4 +1,4 @@
-// Stage 10im — the stock page's Price & returns and Research tabs load ahead.
+// Stage 10in — the stock page's Price & returns and Research tabs load ahead.
 import assert from 'node:assert/strict';
 import { onRequest as prices } from '../../../functions/api/prices.js';
 import { onRequest as research } from '../../../functions/api/research.js';
