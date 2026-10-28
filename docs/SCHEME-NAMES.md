@@ -8,18 +8,26 @@ family's statement prints (`src/data/fundNavs.ts`; joined by `amfi-isin` below).
 Nothing here is matched on a resemblance, and nothing reaches `glowData.ts`: it is
 the label a reader sees, and `securityKeyOf` is not routed through it.
 
-**26 schemes resolve** — 21 through the look-through store and 5 through AMFI's own file — and 26 of them print differently from the name their own statement carried.
+**49 schemes resolve** — 21 through the look-through store and 28 through AMFI's own file — and 49 of them print differently from the name their own statement carried.
 
 | What the statement printed | What a reader sees | Plan | AMC | ISIN | Joined by |
 | --- | --- | --- | --- | --- | --- |
 | ABSL BAL ADV-GROWTH | Aditya Birla Sun Life Balanced Advantage Fund | Regular | Aditya Birla Sun Life Mutual Fund | INF084M01AB8 | isin |
 | ABSL LIQF D-GROWTH | Aditya Birla Sun Life Liquid Fund | Direct | Aditya Birla Sun Life Mutual Fund | INF209K01VA3 | isin |
-| BNDH L&MCF DP GR | Bandhan Large & Mid Cap Fund | Direct | Bandhan Mutual Fund | INF194K01V89 | isin |
+| Bandhan Arbitrage Fund-Direct Plan-Growth | BANDHAN Arbitrage Fund | Direct | — | INF194K01Y60 | amfi-isin |
+| Bandhan Liquid Fund-Direct Plan-Growth | BANDHAN LIQUID Fund | Direct | — | INF194K01I60 | amfi-isin |
+| Bandhan Overnight Fund-Direct Plan-Growth | BANDHAN Overnight Fund | Direct | — | INF194KB1447 | amfi-isin |
+| Bandhan Large & Mid Cap Fund-Direct Plan-Growth | Bandhan Large & Mid Cap Fund | Direct | Bandhan Mutual Fund | INF194K01V89 | isin |
 | DSP GOLD ETF | DSP Gold ETF | — | DSP Mutual Fund | INF740KA1SW3 | isin |
 | DSP SILVER ETF | DSP Silver ETF | — | DSP Mutual Fund | INF740KA1RE3 | isin |
+| HDFC Arbitrage Fund - Direct Plan - Growth Option | HDFC Arbitrage Fund | Direct | — | INF179KA1KT6 | amfi-isin |
+| HDFC Arbitrage Fund - Direct Plan - Monthly IDCW # Payout Option | HDFC Arbitrage Fund | Direct · Monthly Idcw | — | INF179KA1KS8 | amfi-isin |
 | HDFC BAF D-GROW | HDFC Balanced Advantage Fund | Direct | HDFC Mutual Fund | INF179K01WA6 | isin |
 | HDFC BAF R-GROW | HDFC Balanced Advantage Fund | Regular | HDFC Mutual Fund | INF179K01830 | isin |
+| HDFC Balanced Advantage Fund - Regular Plan - Growth | HDFC Balanced Advantage Fund | Regular | — | INF179K01830 | amfi-isin |
 | HDFC Liquid Fund-Direct Plan-Growth Option | HDFC Liquid Fund | Direct | HDFC Mutual Fund | INF179KB1HP9 | isin |
+| HDFC Liquid Fund - Direct Plan - IDCW # - Daily Reinvest | HDFC Liquid Fund | Direct · Idcw Daily | — | INF179KB1HV7 | amfi-isin |
+| HDFC Overnight Fund - Direct Plan - Growth Option | HDFC Overnight Fund | Direct | — | INF179KB1HT1 | amfi-isin |
 | HDFC Small Cap Fund - Direct Growth Plan | HDFC Small Cap Fund | Direct | HDFC Mutual Fund | INF179KA1RW5 | isin |
 | HELIOS FCF D-GROW | Helios Flexi Cap Fund | Direct | Helios Mutual Fund | INF0R8701046 | isin |
 | Helios Flexi Cap Fund - Direct Growth | Helios Flexi Cap Fund | Direct | Helios Mutual Fund | INF0R8701046 | isin |
@@ -29,13 +37,28 @@ the label a reader sees, and `securityKeyOf` is not routed through it.
 | ICICI NFT NX 50 R GR | ICICI Prudential Nifty Next 50 Index Fund | Regular | ICICI Prudential Mutual Fund | INF109K01IF1 | isin |
 | ICICI NIFT50IND DP G | ICICI Prudential Nifty 50 Index Fund | Direct | ICICI Prudential Mutual Fund | INF109K012M7 | isin |
 | ICICI PRU BAF DP GRW | ICICI Prudential Balanced Advantage Fund | Direct | ICICI Prudential Mutual Fund | INF109K012B0 | isin |
+| ICICI Prudential Arbitrage Fund - Direct Plan - Growth | ICICI Prudential Arbitrage Fund | Direct | — | INF109K016O4 | amfi-isin |
+| ICICI Prudential Arbitrage Fund - Direct Plan - IDCW # IDCW Reinvestment | ICICI Prudential Arbitrage Fund | Direct · Idcw | — | INF109K015O6 | amfi-isin |
 | ICICI Prudential Nifty 100 Low Volatility 30 ETF FOF Direct Plan Growth | ICICI Prudential Nifty 100 Low Volatility 30 ETF FOF | — | — | INF109KC1P81 | amfi-isin |
 | INVES ARBF D-GROW | Invesco India Arbitrage Fund | Direct | — | INF205K01KR8 | amfi-isin |
 | INVES CON R GROWTH | Invesco India Contra Fund | Regular | Invesco Mutual Fund | INF205K01189 | isin |
+| Invesco India Arbitrage Fund - Direct Plan Growth (AF-D1) | Invesco India Arbitrage Fund | Direct | — | INF205K01KR8 | amfi-isin |
+| Invesco India Arbitrage Fund - Regular Plan Growth (AF-GP) | Invesco India Arbitrage Fund | Regular | — | INF205K01122 | amfi-isin |
 | KOTAK ARBFD DP GROW | Kotak Arbitrage Fund | Direct | — | INF174K01LC6 | amfi-isin |
+| Kotak Flexi Cap Fund Direct Growth | Kotak Flexi Cap Fund | Direct | — | INF174K01LS2 | amfi-isin |
+| Kotak Flexi Cap Fund Regular Growth | Kotak Flexi Cap Fund | Regular | — | INF174K01336 | amfi-isin |
+| Kotak Large & Mid Cap Fund - Direct Growth | Kotak Large & Mid Cap Fund | Direct | — | INF174K01LF9 | amfi-isin |
+| Kotak Liquid Fund Direct Plan Daily - IDCW # | Kotak Liquid Fund | Direct · Daily Reinvestment Of Income Distribution Cum Capital Withdrawal Option | — | INF174K01NH1 | amfi-isin |
+| Kotak Liquid Fund Regular Plan Daily - IDCW # | Kotak Liquid Fund | Regular · Daily Reinvestment Of Income Distribution Cum Capital Withdrawal Option | — | INF174K01NL3 | amfi-isin |
+| Kotak Mid Cap Fund Direct Growth | Kotak Mid Cap Fund | Direct | — | INF174K01LT0 | amfi-isin |
+| Kotak Mid Cap Fund Regular Growth | Kotak Mid Cap Fund | Regular | — | INF174K01DS9 | amfi-isin |
 | KOTAK MTCF D-GROW | Kotak Multicap Fund | Direct | Kotak Mahindra Mutual Fund | INF174KA1HV3 | isin |
+| Mirae Asset Liquid Fund ( formerly Mirae Asset Cash Management Fund ) - Direct Plan Mirae Asset Liquid Fund ( formerly Mirae Asset Cash Management Fund ) - Direct Plan Growth | Mirae Asset Liquid Fund | Direct | — | INF769K01CM1 | amfi-isin |
 | MIRAE LCF D-GROW | Mirae Asset Large Cap Fund | Direct | — | INF769K01AX2 | amfi-isin |
 | Motilal Oswal Active Momentum Fund - Direct Plan Growth Option | Motilal Oswal Active Momentum Fund | Direct | Motilal Oswal Mutual Fund | INF247L01EP5 | name+plan |
+| Motilal Oswal Arbitrage Fund - Direct Plan Growth | Motilal Oswal Arbitrage Fund | Direct | — | INF247L01ED1 | amfi-isin |
+| Motilal Oswal Liquid fund - Direct Plan Growth | Motilal Oswal Liquid Fund | — | — | INF247L01734 | amfi-isin |
+| Motilal Oswal Midcap Fund - Direct Plan Growth | Motilal Oswal Midcap Fund | — | — | INF247L01445 | amfi-isin |
 | NIP ETNF1D RTLIQBEES | Nippon India ETF Nifty 1D Rate Liquid BeES | — | — | INF732E01037 | amfi-isin |
 | WOC MAAF D-GROW | WhiteOak Capital Multi Asset Allocation Fund | Direct | WhiteOak Capital Mutual Fund | INF03VN01761 | isin |
 

@@ -112,25 +112,30 @@ export function ExportableTable({ children, exportName, controlsHost, editable =
     } catch (e) { setError((e as Error).message); }
     finally { busyRef.current = false; setBusy(false); if (upload.current) upload.current.value = ""; }
   };
+  // In a host toolbar the buttons take that row's height, never more (Stage 10jb).
+  const pad = controlsHost === undefined ? "py-1.5" : "py-1";
   const controls = <>
     <button type="button" onClick={() => { void download(); }} disabled={busy || (editable && inputState.status === "loading")}
       data-export-excel data-export-for={exportId} aria-describedby={error ? errorId : undefined}
       title="Export all rows regardless of filters and every column, including hidden columns and rows not yet loaded by scrolling"
-      className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border border-emerald-600/30 bg-emerald-500/5 px-2.5 py-1.5 text-xs font-medium text-emerald-600 ring-focus hover:bg-emerald-500/10 disabled:opacity-50">
+      className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border border-emerald-600/30 bg-emerald-500/5 px-2.5 ${pad} text-xs font-medium text-emerald-600 ring-focus hover:bg-emerald-500/10 disabled:opacity-50`}>
       <FileSpreadsheet className="h-3.5 w-3.5" />{busy ? "Please wait…" : "Export Excel"}
     </button>
     {editable && <>
     <button type="button" onClick={() => setEditing(value => !value)} disabled={busy || inputState.status !== "ready"} aria-pressed={editing}
-      className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border border-ink-600 px-2.5 py-1.5 text-xs ring-focus disabled:opacity-50" data-edit-numbers>
+      className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border border-ink-600 px-2.5 ${pad} text-xs ring-focus disabled:opacity-50`} data-edit-numbers>
       <Pencil className="h-3.5 w-3.5" />{editing ? "Done editing" : "Edit numbers"}
     </button>
     <button type="button" onClick={() => { setDialogIds(inputIds()); setDialog("inputs"); }} disabled={busy} className="rounded px-1 text-xs text-slate-400 ring-focus" data-all-inputs>All inputs</button>
+    {/* What to keep when editing the file is the button's hover, not a line on
+        the face (Conventions: no explainer lines) — the line widened every
+        table's toolbar past the row it shares on the Portfolio Monitor. */}
     <button type="button" onClick={() => upload.current?.click()} disabled={busy || inputState.status !== "ready"}
-      className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border border-ink-600 px-2.5 py-1.5 text-xs ring-focus disabled:opacity-50" data-upload-excel>
+      title="Upload the exported Excel after correcting it. Keep the Excel format; change numbers only."
+      className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border border-ink-600 px-2.5 ${pad} text-xs ring-focus disabled:opacity-50`} data-upload-excel>
       <Upload className="h-3.5 w-3.5" />Upload Excel
     </button>
     <input ref={upload} type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" aria-label="Upload corrected Excel" className="hidden" onChange={e => { void importFile(e.target.files?.[0]); }} />
-    <span className="text-[10px] text-slate-500">Keep Excel format; change numbers only.</span>
     {editing && <span className="text-xs text-slate-500">Edit detail rows in INR. For other inputs, use All inputs. Totals update automatically.</span>}
     {inputState.status === "error" && <button type="button" onClick={() => { void refreshTableInputs(); }} className="rounded text-xs text-loss ring-focus" title={inputState.error}>Numbers unavailable · Retry</button>}
     </>}
