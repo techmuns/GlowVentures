@@ -8,7 +8,8 @@ import { xirrWorking } from "@/lib/xirrWorking";
 
 /** The result is the tile's own rendered value, never a second calculation. */
 export function ReturnCalculationInfo({ label, value, children, trigger, triggerLabel, intro, wide = false }: {
-  label: string; value: ReactNode; children: ReactNode;
+  /** The working; a function receives `close`, for a step that leads elsewhere (Real Estate's Enter details). */
+  label: string; value: ReactNode; children: ReactNode | ((close: () => void) => ReactNode);
   trigger?: ReactNode; triggerLabel?: string; intro?: string; wide?: boolean;
 }) {
   const [open, setOpen] = useState(false);
@@ -64,7 +65,7 @@ export function ReturnCalculationInfo({ label, value, children, trigger, trigger
           </button>
         </div>
         <div data-return-result className="mt-4 text-3xl font-bold tabular text-slate-100">{value}</div>
-        <div className="mt-4 space-y-4 text-sm leading-relaxed">{children}</div>
+        <div className="mt-4 space-y-4 text-sm leading-relaxed">{typeof children === "function" ? children(() => setOpen(false)) : children}</div>
       </div>
     </dialog>, document.body)}
   </>;
