@@ -1,6 +1,7 @@
 import { useNavigationState, useNavigationValue, nullableStringNavigation } from "@/lib/useNavigationState";
 import { useTableExportFilter, useTableExporting } from "@/lib/tableExportSnapshot";
 import { ExportableTable } from "@/components/ExportableTable";
+import { CommitmentEntry } from "@/components/CommitmentEntry";
 import { Fragment, useMemo, type ReactNode } from "react";
 import { Handshake, Landmark, Wallet, TrendingUp, Fuel, Coins, Banknote, HelpCircle, CalendarClock, Layers, Users, ArrowUpRight } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -645,6 +646,7 @@ export function PrivateMarket() {
     const all = pb.folios;
 
     return {
+      bookFolios: all,
       accIdx, scope, funds, folios, owners, ct, unvalued, commitments,
       schemes, cc, history, counting, alsoCt, alsoCc,
       privMV, privCost, privPnL, privFifo, privAtCost, costedMV, costedCount: costedRows.length, bookMV, rawMV,
@@ -2318,7 +2320,8 @@ export function PrivateMarket() {
 
         {(view === "funds" || view === "brands") && (
           <div className="overflow-x-auto" data-navigation-scroll="privatemarket-1">
-            <ExportableTable exportName={`Private Market — ${view === "brands" ? "By brand" : "By legal name"}`} className="min-w-full text-[13px]" data-pm-table={view}>
+            <ExportableTable exportName={`Private Market — ${view === "brands" ? "By brand" : "By legal name"}`} className="min-w-full text-[13px]" data-pm-table={view}
+              inputControls={<CommitmentEntry folios={m.bookFolios} />}>
               {allRows => <>
               <thead className="border-b border-ink-700">
                 <Tr view={bookView}>
