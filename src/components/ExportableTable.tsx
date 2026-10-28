@@ -15,9 +15,10 @@ export function ExportableTable({ children, exportName, controlsHost, viewOnly =
   children: ReactNode | ((allRows: boolean) => ReactNode);
   exportName?: string;
   /**
-   * A table a reader only looks at: Export Excel stays, and the number inputs —
-   * Edit numbers, All inputs, Upload Excel — are not offered (the Portfolio
-   * Library, *"a view-only view; no Excel uploads"*).
+   * A table a reader only looks at: Export Excel stays and exports the table
+   * alone, and the number inputs — Edit numbers, All inputs, Upload Excel, the
+   * input sheets in the workbook — are not offered (the Portfolio Library, *"a
+   * view-only view; no Excel uploads"*).
    */
   viewOnly?: boolean;
   /**
@@ -58,7 +59,7 @@ export function ExportableTable({ children, exportName, controlsHost, viewOnly =
       // Load ExcelJS only on demand. Snapshot the full table synchronously and
       // restore its scroll window before the workbook's asynchronous encoding.
       const { downloadTableExcel } = await import("@/lib/exportTableExcel");
-      if (inputStateRef.current.status === "ready") await refreshTableInputs();
+      if (!viewOnly && inputStateRef.current.status === "ready") await refreshTableInputs();
       await prepareTableExport();
       if (!table.current) return;
       const element = table.current;
@@ -76,7 +77,8 @@ export function ExportableTable({ children, exportName, controlsHost, viewOnly =
         if (!table.current) throw new Error("Table unavailable for export");
         snapshot = readTableExport(table.current, title);
         const currentInputs = inputStateRef.current;
-        if (currentInputs.loaded) {
+        // A view-only table's export is the table alone, never the input sheets.
+        if (!viewOnly && currentInputs.loaded) {
           const ids = new Set(inputIds());
           // Analytical tables without a source row still offer the same book
           // input sheets, so every table has the same correction workflow.

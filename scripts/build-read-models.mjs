@@ -55,7 +55,7 @@ put('ledger/lots.json', model.deriveRealisedLots(docs));
 put('ledger/income.json', model.deriveIncome(docs));
 put('ledger/sales.json', model.deriveSales(docs));
 put('consolidated/book.json', model.buildConsolidatedSheet(docs));
-const keys = new Set([...model.BOOK_POSITIONS.map(p => p.securityKey), ...docs.flatMap(d => ['transactions','capitalGains','holdings','income'].flatMap(k => (d[k] || []).map(r => r.securityKey)))]);
+const keys = new Set([...model.BOOK_POSITIONS.map(p => p.securityKey), ...docs.flatMap(d => ['transactions','capitalGains','holdings','income','openLots'].flatMap(k => (d[k] || []).map(r => r.securityKey)))]);
 const stockKeys = [...keys].filter(Boolean).sort();
 for (const [key, ledger] of Object.entries(model.deriveStockLedgers(docs, stockKeys))) {
   if (!/^[a-z0-9-]+$/.test(key)) throw new Error(`Invalid security key: ${key}`);

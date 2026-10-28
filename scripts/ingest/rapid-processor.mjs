@@ -249,5 +249,5 @@ export function rapidProcessor({ store, inbox, initial, references, instantiate,
 }
 function stockKeys(snapshot) {
   return [...new Set([...snapshot.book.BOOK_POSITIONS.map(p => p.securityKey), ...snapshot.documents.flatMap(d =>
-    ['transactions', 'capitalGains', 'holdings', 'income'].flatMap(k => (d[k] ?? []).map(r => r.securityKey)))])].filter(Boolean).sort();
+    ['transactions', 'capitalGains', 'holdings', 'income', 'openLots'].flatMap(k => (d[k] ?? []).map(r => r.securityKey)))])].filter(Boolean).sort();
 }
