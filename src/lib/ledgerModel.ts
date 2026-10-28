@@ -37,7 +37,9 @@ import {
 import { resolveSector } from "../../shared/sectors.mjs";
 import { BOOK_ACCOUNTS, BOOK_CAPITAL_MOVES, BOOK_CAPITAL_GAINS, BOOK_POSITIONS } from "../data/glowData";
 import { holdingBucket, UNSTATED_BUCKET, UNROUTED_EQUITY_BUCKET } from "./analytics";
-import { fmtDate } from "./format";
+import { bookKeyForShare } from "./depositoryShares";
+import type { Position } from "./types";
+import { fmtDate, displayDepositoryName } from "./format";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The archive: manifest + one normalised document per statement.
@@ -1235,8 +1237,18 @@ export function deriveFundDisclosures(
 // book holds at cost is at cost on every row that names it. The two "not
 // stated" sections (no class printed, no route stated) are kept only for a
 // security nothing else places; a folder can sit in several categories.
+//
+// ONE FOLDER PER SECURITY, BY ITS ISIN. A depository's transaction list prints
+// `AXIS BANK LIMITED # NEW EQUITY SHARES…` and `HDFC AMC LTD#HDFC MF-…`, which
+// key apart from the holding statements' `Axis Bank` and `HDFC BAF D GROW`, so
+// one company stood as two folders. Keys printed with the same ISIN are one
+// security and file together: under the book's own key for it (`bookKeyForShare`,
+// the join that already files these depository lines under the book's company),
+// else the one key a holding statement prints, else the key most statements
+// name. The keys filed in are the folder's `aliases`; nothing is moved in the
+// archive or the book.
 // ─────────────────────────────────────────────────────────────────────────────
-export type StatementSecurity = { securityKey: string; name: string; documents: string[]; categories: string[] };
+export type StatementSecurity = { securityKey: string; name: string; documents: string[]; categories: string[]; aliases: string[] };
 export type StatementSecurityData = { securities: StatementSecurity[] };
 
 type SecurityRow = {
@@ -1253,10 +1265,43 @@ export const isIncomeBucket = (key: string): boolean => key === "equity-dividend
 
 /** The book's side of a folder's categories: its positions and the accounts they sit in. */
 export type CategoryBook = {
-  positions: readonly { accountId: string; securityKey: string; assetClass: string | null; valuedAtCost?: boolean }[];
+  positions: readonly Position[];
   accounts: readonly { accountId: string; engagement?: string | null }[];
 };
 const NOT_STATED = new Set([UNSTATED_BUCKET, UNROUTED_EQUITY_BUCKET]);
+
+/**
+ * Which folder each key files under, where another key is the same security by
+ * ISIN. A key printed with two ISINs is not one security and stays where it is.
+ */
+function sameSecurityFolders(
+  isinsOf: ReadonlyMap<string, ReadonlySet<string>>,
+  docsOf: ReadonlyMap<string, ReadonlySet<string>>,
+  held: ReadonlySet<string>,
+  positions: readonly Position[],
+  fenced: ReadonlySet<string>,
+): Map<string, string> {
+  const keysOf = new Map<string, string[]>();
+  for (const [key, isins] of isinsOf) {
+    if (isins.size !== 1) continue;
+    const isin = [...isins][0];
+    keysOf.set(isin, [...(keysOf.get(isin) ?? []), key]);
+  }
+  const into = new Map<string, string>();
+  for (const [isin, keys] of keysOf) {
+    keys.sort();
+    const inBook = [...new Set(keys.map((k) => bookKeyForShare(isin, k, positions)).filter((k): k is string => !!k))];
+    const holders = keys.filter((k) => held.has(k));
+    const target = inBook.length === 1 ? inBook[0]
+      : holders.length === 1 ? holders[0]
+      : [...keys].sort((a, b) => docsOf.get(b)!.size - docsOf.get(a)!.size || a.length - b.length || a.localeCompare(b))[0];
+    if (fenced.has(target)) continue;
+    for (const k of keys) if (k !== target) into.set(k, target);
+  }
+  // A target that is itself filed elsewhere passes its keys on.
+  const resolve = (k: string) => { let t = k; for (let i = 0; i < 4 && into.has(t); i++) t = into.get(t)!; return t; };
+  return new Map([...into.keys()].map((k) => [k, resolve(k)]));
+}
 
 export function deriveStatementSecurities(
   docs: ArchiveDoc[],
@@ -1271,29 +1316,51 @@ export function deriveStatementSecurities(
     set.add(holdingBucket(p, engagementOf.get(p.accountId)));
     heldAs.set(p.securityKey, set);
   }
-  const byKey = new Map<string, { names: Set<string>; documents: Set<string>; categories: Set<string> }>();
+  // Every row a folder can hold, and the ISINs, statements and holding rows each key carries.
+  const rows: { key: string; d: ArchiveDoc; row: SecurityRow }[] = [];
+  const isinsOf = new Map<string, Set<string>>();
+  const docsOf = new Map<string, Set<string>>();
+  const held = new Set<string>();
   for (const d of docs) {
     for (const section of SECURITY_SECTIONS) {
       for (const row of (d[section] ?? []) as SecurityRow[]) {
         const key = row.securityKey;
         if (!key || key === "unknown" || isIncomeBucket(key) || fence.keys.has(key)) continue;
-        if (row.isin && fence.isins.has(row.isin.trim().toUpperCase())) continue;
+        const isin = row.isin?.trim().toUpperCase();
+        if (isin && fence.isins.has(isin)) continue;
         if (row.assetClass === "Cash" || (row.providerSector && resolveSector(row.providerSector).sector === "Cash")) continue;
-        const entry = byKey.get(key) ?? { names: new Set<string>(), documents: new Set<string>(), categories: new Set(heldAs.get(key)) };
-        if (row.security?.trim()) entry.names.add(row.security.trim());
-        entry.documents.add(d.docKey);
-        entry.categories.add(holdingBucket({ assetClass: row.assetClass ?? null, securityKey: key, valuedAtCost: atCost.has(key) }, d.engagement));
-        byKey.set(key, entry);
+        rows.push({ key, d, row });
+        if (isin) isinsOf.set(key, (isinsOf.get(key) ?? new Set<string>()).add(isin));
+        docsOf.set(key, (docsOf.get(key) ?? new Set<string>()).add(d.docKey));
+        if (section === "holdings") held.add(key);
       }
     }
   }
-  const securities = [...byKey].map(([securityKey, { names, documents, categories }]) => {
-    // The fullest spelling printed (a depository clips names), then alphabetical,
-    // so a rebuild cannot flip it; `securityLabel` prefers the book's own choice.
-    const printed = [...names].sort((a, b) => b.length - a.length || a.localeCompare(b))[0] ?? securityKey;
+  const into = sameSecurityFolders(isinsOf, docsOf, held, book.positions, fence.keys);
+  type Folder = { names: Set<string>; borrowed: Set<string>; aliases: Set<string>; documents: Set<string>; categories: Set<string> };
+  const byKey = new Map<string, Folder>();
+  for (const { key, d, row } of rows) {
+    const folder = into.get(key) ?? key;
+    const entry = byKey.get(folder) ?? { names: new Set<string>(), borrowed: new Set<string>(), aliases: new Set<string>(),
+      documents: new Set<string>(), categories: new Set(heldAs.get(folder)) };
+    // A depository transaction list's `ISSUER#INSTRUMENT`, read as the company or scheme.
+    const printed = row.security?.trim() && (d.reportType === "demat-transactions" ? displayDepositoryName(row.security.trim()) : row.security.trim());
+    if (printed) (folder === key ? entry.names : entry.borrowed).add(printed);
+    if (folder !== key) entry.aliases.add(key);
+    entry.documents.add(d.docKey);
+    entry.categories.add(holdingBucket({ assetClass: row.assetClass ?? null, securityKey: folder, valuedAtCost: atCost.has(folder) }, d.engagement));
+    byKey.set(folder, entry);
+  }
+  const fullest = (names: Set<string>) => [...names].sort((a, b) => b.length - a.length || a.localeCompare(b))[0];
+  const securities = [...byKey].map(([securityKey, { names, borrowed, aliases, documents, categories }]) => {
+    // The fullest spelling printed under the folder's own key (a depository
+    // clips names), then alphabetical, so a rebuild cannot flip it; another
+    // key's spelling only where its own printed none. `securityLabel` prefers
+    // the book's own choice.
+    const printed = fullest(names) ?? fullest(borrowed) ?? securityKey;
     const stated = [...categories].filter((c) => !NOT_STATED.has(c));
     return { securityKey, name: securityLabel(securityKey, printed), documents: [...documents].sort(),
-      categories: (stated.length ? stated : [...categories]).sort() };
+      categories: (stated.length ? stated : [...categories]).sort(), aliases: [...aliases].sort() };
   });
   securities.sort((a, b) => a.name.localeCompare(b.name) || a.securityKey.localeCompare(b.securityKey));
   return { securities };
