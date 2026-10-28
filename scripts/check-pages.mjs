@@ -22017,6 +22017,16 @@ const heldChecks = (which, tab) => [
     }],
   ["the table fits its card, whichever tab is open",
     (t, ctx) => ctx.heldTable?.overflow != null && ctx.heldTable.overflow <= 1],
+  /* *"freeze the last rows in the table so that, as I scroll the table, they
+     are always visible"* (28 Oct 2026). A tab with no footer has nothing to pin;
+     the claim below decides whether it should have one. */
+  ["the totals stay pinned in view while the rows scroll under them",
+    (t, ctx) => {
+      const h = ctx.heldTable;
+      if (!h) return false;
+      if (!h.feet.length) return h.pin === null;
+      return h.pin?.position === "sticky" && h.pin.scrolls > 1 && h.pin.inView === true;
+    }],
   /**
    * ONE RULE FOR EVERY FOOTER LINE: DRAWN ONLY WHERE IT ADDS UP TWO OR MORE
    * LINES. A total of one line is the line again (the Polycab table's rule,
@@ -43549,9 +43559,31 @@ for (const theme of THEMES) {
           const cellAt = (tr, i) => (i >= 0 ? tr.cells[i] : null);
           const box = t ? (t.closest("div.overflow-x-auto") ?? t.parentElement) : null;
           const tipOf = (el) => el?.getAttribute("title") ?? el?.querySelector("[title]")?.getAttribute("title") ?? null;
+          /* THE TOTALS STAY IN VIEW WHILE THE ROWS SCROLL (28 Oct 2026). Read as
+             geometry: the scroll box is cut to the header, the footer and a
+             sliver of rows so it must overflow whatever the book holds, then put
+             back at its top. A pinned footer still sits inside the box's bottom
+             edge; an unpinned one is below it, behind the rows it totals. */
+          const pin = (() => {
+            const f = t?.tFoot;
+            if (!f || !box) return null;
+            const was = { max: box.style.maxHeight, top: box.scrollTop };
+            box.style.maxHeight = `${(t.tHead?.offsetHeight ?? 0) + f.offsetHeight + 48}px`;
+            box.scrollTop = 0;
+            const fb = f.getBoundingClientRect(), bb = box.getBoundingClientRect();
+            const out = {
+              position: getComputedStyle(f).position,
+              scrolls: box.scrollHeight - box.clientHeight,
+              inView: fb.top >= bb.top - 1 && fb.bottom <= bb.bottom + 1,
+            };
+            box.style.maxHeight = was.max;
+            box.scrollTop = was.top;
+            return out;
+          })();
           return {
             table: t ? t.getAttribute("data-held-table") : null,
             overflow: box ? box.scrollWidth - box.clientWidth : null,
+            pin,
             heads,
             tabs: [...document.querySelectorAll("[data-held-tab]")].map((b) => ({
               key: b.getAttribute("data-held-tab"),

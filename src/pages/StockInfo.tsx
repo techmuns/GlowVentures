@@ -2088,9 +2088,13 @@ export function StockInfo() {
                         A total of one line is the line again — and the strip above
                         already carries the statements' own totals — so a set of
                         one draws its line and nothing under it (the Polycab
-                        table's rule). See `measuredFootShown` for the three. */}
+                        table's rule). See `measuredFootShown` for the three.
+                        PINNED TO THE TABLE'S OWN SCROLL BOX (28 Oct 2026): *"freeze
+                        the last rows … so I can see what is my total and all the
+                        columns"* — the totals stay in view under the sticky header
+                        while the rows scroll between them. */}
                     {(measuredFootShown || derivedFootShown || exposureFootShown) && (
-                      <tfoot className="border-t-2 border-ink-600 font-semibold">
+                      <tfoot className="sticky bottom-0 z-10 border-t-2 border-ink-600 bg-ink-800 font-semibold" data-held-foot-pinned>
                         {heldTab === "all" ? (
                           <>
                             {measuredFootShown && measuredFoot(rows,
