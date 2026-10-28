@@ -1035,7 +1035,9 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
   );
 
   return (
-    <div className="flex h-full flex-col">
+    /* WINDOW-HIGH ONLY FROM `lg`. At every width it held a phone's two stacked
+       cards to the window and squeezed the sector table to 21 px of rows. */
+    <div className="flex flex-col lg:h-full">
       {embedded ? (
         /* Embedded in Morning CIO: no PageHeader — the panel already sits under
            that page's own headline, crumb and KPI strip — just the set toggle,
@@ -1082,7 +1084,7 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
           scroll and the table's headings stay pinned — the Portfolio Monitor's
           shape. Below `lg` the two stack and the page scrolls, which is right on
           a phone. */}
-      <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,5fr)] lg:grid-rows-[minmax(0,1fr)]"
+      <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,5fr)] lg:grid-rows-[minmax(0,1fr)]"
         data-sector-layout={view}>
         {/* LEFT — the donut and what it is made of. On Compare it is the picker. */}
         <Card className="flex min-h-0 flex-col lg:max-h-full lg:self-start" pad={false}>

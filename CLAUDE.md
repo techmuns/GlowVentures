@@ -193,7 +193,9 @@ One line per area; the history files explain each in depth.
   (every form field; a file saves whole or not at all; Stage 10ig).
 - `src/lib/bookNav.ts` + `bookNavBook.ts` — the whole book's NAV series (every
   investment, its latest valuation plus capital since; the NAV card and the
-  drawdown read it as `navHistory`; Stage 10ge).
+  drawdown read it as `navHistory`; Stage 10ge). `assumedBookNav.ts` — the NAV
+  card's line with the demats' listed shares at every published close, assumed
+  held from their statements (`assumedHolding`, the Returns tab's one rule; Stage 10iz).
 - `src/lib/navSeries.ts`, `benchCompare.ts` (the NAV card's one start, one end for the book and
   every benchmark; it starts only on `comparableStarts` in `bookNav.ts`, Stage 10iv),
   `attribution.ts` (no caller; kept, tested),
