@@ -104,7 +104,7 @@ export type TileMetric = {
  * "the reader picked these" and "the reader picked nothing that still exists"
  * are different facts, and only the first should ever empty a strip.
  */
-export function SelectableTiles({ metrics, defaults, storageKey, page, param = "tiles", max, variant = "stat" }: {
+export function SelectableTiles({ metrics, defaults, storageKey, page, param = "tiles", max, variant = "stat", showSavedWhere = true }: {
   metrics: readonly TileMetric[];
   /** The set shown before anybody chooses. Must all be in `metrics`. */
   defaults: readonly string[];
@@ -130,6 +130,8 @@ export function SelectableTiles({ metrics, defaults, storageKey, page, param = "
    * metric never navigates.
    */
   variant?: "stat" | "kpi";
+  /** Whether the picker menu names where the choice is saved. Real Estate asked for it gone. */
+  showSavedWhere?: boolean;
 }) {
   const [params, setParams] = useSearchParams();
   const byId = useMemo(() => new Map(metrics.map((m) => [m.id, m])), [metrics]);
@@ -270,7 +272,7 @@ export function SelectableTiles({ metrics, defaults, storageKey, page, param = "
   const showAdd = ids.length < cap && spare.length > 0;
 
   /** Where the choice is kept, in words — shown inside the picker, never on the strip. */
-  const savedWhere = store.status === "shared" ? SAVED_FOR_EVERYONE
+  const savedWhere = !showSavedWhere ? "" : store.status === "shared" ? SAVED_FOR_EVERYONE
     : store.status === "local" ? store.reason
     : "Saved in this browser — checking the shared store…";
 
@@ -421,9 +423,9 @@ function AddTile({ spare, onPick, savedWhere }: {
               </button>
             ))}
           </div>
-          <p data-tile-saved-where className="mt-1 border-t border-ink-700 px-2 pb-1 pt-1.5 text-[11.5px] leading-snug text-slate-400">
+          {savedWhere && <p data-tile-saved-where className="mt-1 border-t border-ink-700 px-2 pb-1 pt-1.5 text-[11.5px] leading-snug text-slate-400">
             {savedWhere}
-          </p>
+          </p>}
         </div>
       )}
     </div>
@@ -511,9 +513,9 @@ function MetricPicker({ slot, metrics, current, onPick, onOpenChange, savedWhere
           </div>
           {/* WHERE THE CHOICE GOES, ONCE, IN THE MENU THAT MAKES IT — never on
               the strip, which the family asked to keep to a figure and a line. */}
-          <p data-tile-saved-where className="mt-1 border-t border-ink-700 px-2.5 pb-1 pt-1.5 text-[11.5px] leading-snug text-slate-400">
+          {savedWhere && <p data-tile-saved-where className="mt-1 border-t border-ink-700 px-2.5 pb-1 pt-1.5 text-[11.5px] leading-snug text-slate-400">
             {savedWhere}
-          </p>
+          </p>}
         </div>
       )}
     </div>

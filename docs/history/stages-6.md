@@ -565,3 +565,8 @@
 - Local/CI verification uses an isolated Git remote and a real protected PDF absent from its baseline, complete collection/report comparisons, browser routes, original bytes, preview, duplicate and code-migration checks. No agent uploads, data initialization or manual service deployment occurs in production.
 - CI exposed redundant per-stock archive/settlement preparation. Batch those inputs within one publication, preserving the scalar ledger calculation and existing financial regression checks. Keep code-update browser verification on a clean page while the original page independently discovers the new version.
 - Production sign-in returned a free-host resource-limit error during verification. Derive the same 100,000-iteration preview key in browser WebCrypto, then verify the password on the server before provisioning cookies. Preserve ciphertext, saved keys, HttpOnly/path isolation and old-client fallback; tests prove a supplied key cannot authenticate and the server skips the expensive KDF for the current form.
+
+### Stage 10ii — REAL ESTATE: NO "SAVED FOR EVERYONE" LINE IN THE TILE PICKER
+
+- The family asked (28 Oct 2026) for the "Saved for everyone — the dashboard opens this way on any device." line gone from the Real Estate tab.
+- `SelectableTiles` takes `showSavedWhere` (default `true`); Real Estate passes `false`, so its picker and add menus render no `[data-tile-saved-where]`. Private Market and Morning CIO keep the line and its checks.
