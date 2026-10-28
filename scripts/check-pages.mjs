@@ -8114,6 +8114,7 @@ const ROUTES = [
   ["cio-returns-sector", "/cio?tab=returns&seg=sector"],
   ["cio-returns-sector-direct", "/cio?tab=returns&seg=sector&sset=direct"],
   ["cio-returns-security", "/cio?tab=returns&seg=security"],
+  ["cio-returns-category", "/cio?tab=returns&seg=category"],
   ["cio-attribution-legacy", "/cio?tab=attribution"],
   ["cio-nav", "/cio?tab=nav"],
   /**
@@ -20666,14 +20667,15 @@ const CIO_RETURNS_LIVE = [
  * gain over the book's capital deployed, the contributions to the book's
  * return, and the total to the Gain / Loss tile on the same page.
  */
-const SEG_AXES = ["category", "assetClass", "basket", "sector", "side", "security"];
+// All Securities is the first tab and the param-free default (Stage 10ik).
+const SEG_AXES = ["security", "category", "assetClass", "basket", "sector", "side"];
 const CIO_SEGMENTS = [
   ["the Returns tab carries attribution inside its own subtab panel", (t, ctx) => !!ctx?.segDom && ctx?.returnsDom?.attributionInPanel === true],
   ["attribution offers every axis and follows the requested period and measure", (t, ctx) => {
     const r = ctx?.segDom;
     if (!r) return false;
     const params = new URLSearchParams((ctx.path ?? "").split("?")[1]);
-    const axis = params.get("seg") ?? "category";
+    const axis = params.get("seg") ?? "security";
     const requestedType = params.get("rtype");
     const type = ["xirr", "absolute", "cagr"].includes(requestedType) ? requestedType : "xirr";
     return r.options.map(o => o.key).join() === SEG_AXES.join()
@@ -20710,6 +20712,31 @@ const CIO_SEGMENTS = [
     const r = ctx?.segDom;
     return !!r && r.totalInfo === 2 && /of.*holdings.*covered/.test(r.coverage)
       && r.rows.filter(x => x.gain == null).every(x => x.gainText === "—" && x.gainReason.length > 0);
+  }],
+];
+
+/**
+ * Stage 10ik — *"earlier these returns table like Portfolio monitor was actually
+ * showing individual names … now it is showing the account holdings."* Under a
+ * segment, an account opens into its holdings by name. Their values add to the
+ * account's; a holding gain is shown only from a record of that holding alone,
+ * so a whole-account record leaves every holding a dash with its reason, and
+ * otherwise the holdings' gains add to the account's.
+ */
+const CIO_SEGMENT_HOLDINGS = [
+  ["an account under a segment opens into its holdings by name, whose values add to the account's", (t, ctx) => {
+    const h = ctx?.segDom?.holdings;
+    if (!h || !h.rows.length || h.account.value == null) return false;
+    return h.rows.every((x) => x.name.length > 0 && !/· account /.test(x.name))
+      && Math.abs(h.rows.reduce((s, x) => s + (x.value ?? 0), 0) - h.account.value) <= 1;
+  }],
+  ["a holding's gain is its own record's or a dash with its reason; a whole-account gain is never shared out", (t, ctx) => {
+    const h = ctx?.segDom?.holdings;
+    if (!h || !h.rows.length) return false;
+    const dashes = h.rows.filter((x) => x.gain == null).every((x) => x.gainText === "—" && x.gainReason.length > 0);
+    if (h.account.whole) return dashes && h.rows.every((x) => x.gain == null);
+    return dashes && (h.account.gain == null ? h.rows.every((x) => x.gain == null)
+      : Math.abs(h.rows.reduce((s, x) => s + (x.gain ?? 0), 0) - h.account.gain) <= 1);
   }],
 ];
 
@@ -27204,6 +27231,7 @@ const INVARIANTS = {
   "cio-returns-sector": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT, ...CIO_SEGMENTS.slice(0, 2), ...CIO_SECTOR_ATTRIBUTION],
   "cio-returns-sector-direct": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT, ...CIO_SEGMENTS.slice(0, 2), ...CIO_SECTOR_ATTRIBUTION],
   "cio-returns-security": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT, ...CIO_SEGMENTS],
+  "cio-returns-category": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT, ...CIO_SEGMENTS, ...CIO_SEGMENT_HOLDINGS],
   "cio-attribution-legacy": [...CIO_SHARED, ...CIO_SEGMENTS_LEGACY],
   "cio-nav": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_NAV, ...NAV_BENCH, ...NAV_BENCH_OFFLINE, ...NAV_RECON, ...NAV_BASIS, ...NAV_RANGE_HOVERS],
   "cio-tiles-saved": CIO_TILES_SAVED,
@@ -40763,12 +40791,41 @@ for (const theme of THEMES) {
       if (name === "cio-returns-sector" || name === "cio-returns-sector-direct") {
         await page.waitForSelector('[data-segment-returns]:not([data-status="loading"])', { timeout: 20000 }).catch(() => {});
       }
-      const segDom = FAST ? null : await page.evaluate(() => {
+      const segDom = FAST ? null : await page.evaluate(async () => {
         const root = document.querySelector("main [data-cio-section=returns] [data-segment-returns]");
         if (!root) return null;
         const num = (el, a) => { const v = el?.getAttribute(a); return v == null || v === "" ? null : Number(v); };
         const rem = root.querySelector("tr[data-seg-remainder]");
+        // Stage 10ik — an account under a segment opens into its holdings: open the
+        // first segment and the first account in it that opens, read, and close both.
+        const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+        const nameOf = (tr) => (tr?.querySelector("[data-tree-depth]")?.textContent ?? "").trim();
+        let holdings = null;
+        for (const parent of [...root.querySelectorAll("tr[data-seg-row]")]) {
+          const key = parent.getAttribute("data-seg-row");
+          const toggle = root.querySelector(`[data-seg-toggle="${CSS.escape(key)}"]`);
+          if (!toggle) continue;
+          const wasOpen = parent.getAttribute("data-seg-open") === "1";
+          if (!wasOpen) { toggle.click(); await wait(300); }
+          const child = [...root.querySelectorAll(`tr[data-seg-child="${CSS.escape(key)}"]`)].find((tr) => tr.querySelector("[data-seg-child-toggle]"));
+          if (child) {
+            const ck = child.querySelector("[data-seg-child-toggle]").getAttribute("data-seg-child-toggle");
+            const childOpen = child.getAttribute("data-seg-open") === "1";
+            if (!childOpen) { child.querySelector("[data-seg-child-toggle]").click(); await wait(300); }
+            const acct = root.querySelector(`tr[data-seg-child="${CSS.escape(key)}"][data-seg-child-key="${CSS.escape(child.getAttribute("data-seg-child-key"))}"]`);
+            holdings = { account: { name: nameOf(acct), value: num(acct, "data-seg-value"), gain: num(acct, "data-seg-gain"), whole: acct?.getAttribute("data-seg-whole") === "1" },
+              rows: [...root.querySelectorAll(`tr[data-seg-holding-of="${CSS.escape(ck)}"]`)].map((tr) => {
+                const g = tr.querySelector('[data-seg-cell="gain"]');
+                return { name: nameOf(tr), value: num(tr, "data-seg-value"), gain: num(tr, "data-seg-gain"),
+                  gainText: (g?.textContent ?? "").trim(), gainReason: g?.querySelector("[title]")?.getAttribute("title") ?? "" };
+              }) };
+            if (!childOpen) { root.querySelector(`[data-seg-child-toggle="${CSS.escape(ck)}"]`)?.click(); await wait(200); }
+          }
+          if (!wasOpen) { root.querySelector(`[data-seg-toggle="${CSS.escape(key)}"]`)?.click(); await wait(200); }
+          if (holdings) break;
+        }
         return {
+          holdings,
           axis: root.getAttribute("data-seg-axis"),
           period: root.getAttribute("data-seg-period"), type: root.getAttribute("data-seg-type"),
           basis: root.querySelector("[data-seg-basis]")?.textContent ?? "",

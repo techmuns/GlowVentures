@@ -3,6 +3,7 @@ import type { Account, Position } from './types';
 import { accountIndex } from './accounts';
 import { fifoTotals } from './fifo';
 import { allDebt } from './analytics';
+import { securityLabel } from './securityLabel';
 import { measureInception, measureWindow, type AccountWindow, type InceptionRow, type Measured, type ReturnType } from './periodReturns';
 import { segmentOf, type SegmentAxis, type SectorLookup } from './segmentReturns';
 import type { HoldingAssumption } from './assumedHoldingReturns';
@@ -23,6 +24,8 @@ export type ReturnSelection = { inception: boolean; type: ReturnType; start: str
   windows: AccountWindow[]; inceptionRows: InceptionRow[]; excluded: ReturnGap[]; outside?: ReturnGap[];
   assumedUnits?: ReturnUnit[]; assumptionGaps?: ReturnGap[] };
 export const UNSPLIT_RETURNS = '__account_returns';
+/** The holding row, under an account, for holding records with nothing current behind them. */
+export const EXITED_HOLDINGS = '__exited_holdings';
 
 const carries = (p: Position) => p.marketValue !== 0 || (p.costBasis ?? 0) !== 0
   || (p.costOfUnitsSold ?? 0) !== 0 || (p.realizedPnL ?? 0) !== 0 || (p.dividendReceived ?? 0) !== 0;
@@ -146,6 +149,28 @@ export function selectedSegmentReturns(current: readonly Position[], exited: rea
         : measured.working?.periodPct ?? (measured.working?.growthRatio != null ? (measured.working.growthRatio - 1) * 100 : null),
       contribution: gain != null && denominator != null && denominator > 0 ? gain / denominator * 100 : null, children: [] };
   };
+  // AN ACCOUNT OPENS INTO ITS HOLDINGS (Stage 10ik). A holding carries a return
+  // only from a record of that holding alone (an assumed holding, a purchase-cost
+  // line, a review holder row); a whole-account record stays on the account row,
+  // and its holdings say so rather than share out a gain no record splits.
+  const accountWide = (u: ReturnUnit) => u.key === u.accountId;
+  const holdingLines = (account: SelectedLine): SelectedLine[] => {
+    const bySecurity = new Map<string, Position[]>();
+    for (const p of account.positions) bySecurity.set(p.securityKey, [...(bySecurity.get(p.securityKey) ?? []), p]);
+    const whole = account.units.some(accountWide), placed = new Set<ReturnUnit>();
+    const out = [...bySecurity].map(([securityKey, ps]) => {
+      const us = account.units.filter(u => !accountWide(u) && u.positions.some(p => p.securityKey === securityKey));
+      us.forEach(u => placed.add(u));
+      const gaps = account.missing.filter(g => !g.securityKey || g.securityKey === securityKey);
+      if (!us.length && whole) gaps.push({ accountId: ps[0].accountId, label: account.label, securityKey,
+        reason: 'This statement gives a return for the whole account. It does not give separate opening values and money movements for these holdings. Its gain is on the account row.' });
+      return line(`${account.key}|${securityKey}`, securityLabel(securityKey, ps[0].security), ps, us, gaps);
+    }).sort((x, y) => y.value - x.value);
+    // A holding record with nothing current behind it (a sale, an exit) still earned its gain.
+    const rest = account.units.filter(u => !accountWide(u) && !placed.has(u));
+    if (rest.length) out.push(line(`${account.key}|${EXITED_HOLDINGS}`, 'Sold or exited holdings', [], rest, []));
+    return out;
+  };
   const groups = new Map<string, Position[]>();
   for (const p of current) { const k = seg.key(p); groups.set(k, [...(groups.get(k) ?? []), p]); }
   const allocated = new Map<string, ReturnUnit[]>(), unsplit: ReturnUnit[] = [];
@@ -167,9 +192,12 @@ export function selectedSegmentReturns(current: readonly Position[], exited: rea
     for (const u of unsplit.filter(u => accountIds.has(u.accountId))) gaps.push({ accountId: u.accountId, label: u.label,
       reason: 'This statement gives a return for the whole account. It does not give separate opening values and money movements for these holdings. Its gain is included in “Account returns without a holding split”.' });
     const r = line(key, seg.label(key, ps[0] ?? us[0]?.positions[0]), ps, us, gaps);
-    // One account per child keeps the source of each calculated return visible.
+    // One account per child keeps the source of each calculated return visible;
+    // on every axis but All Securities, whose rows are already one security, it opens into its holdings.
     for (const id of new Set([...ps.map(p => p.accountId), ...us.map(u => u.accountId)])) {
-      r.children.push(line(id, sourceLabel(idx.get(id)), ps.filter(p => p.accountId === id), us.filter(u => u.accountId === id), gaps.filter(g => g.accountId === id)));
+      const child = line(id, sourceLabel(idx.get(id)), ps.filter(p => p.accountId === id), us.filter(u => u.accountId === id), gaps.filter(g => g.accountId === id));
+      if (axis !== 'security') child.children = holdingLines(child);
+      r.children.push(child);
     }
     return r;
   });

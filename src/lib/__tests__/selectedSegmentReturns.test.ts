@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { selectedSegmentReturns, sinceInvestmentUnits, returnGapText, UNSPLIT_RETURNS, type ReturnSelection } from '../selectedSegmentReturns';
+import { selectedSegmentReturns, sinceInvestmentUnits, returnGapText, UNSPLIT_RETURNS, EXITED_HOLDINGS, type ReturnSelection, type SelectedLine } from '../selectedSegmentReturns';
 import { accountInputs, windowReturns, periodStart, measureWindow, type AccountWindow } from '../periodReturns';
 import { currentHoldings, dedupedPositions } from '../analytics';
 import { exitedRows } from '../drilldown';
@@ -62,6 +62,35 @@ assert.equal(inc.rows.find(r => r.key === 'bad')!.missing.length, 1);
 // An entire managed account includes all its holdings and exits exactly once.
 const managed = sinceInvestmentUnits([pos(), pos({ securityKey: 'two', marketValue: 80 })], [exit], [acct('a', { engagement: 'PMS', capital: { contributed: 150, withdrawn: 20 } as Account['capital'] })]);
 assert.equal(managed.units.length, 1); near(managed.units[0].gain, 70); near(managed.units[0].invested, 150);
+// Stage 10ik: an account under a segment opens into its holdings. Their values add
+// to the account's; a holding gain comes only from a record of that holding alone,
+// so under a whole-account record every holding is a dash naming the account's
+// return, and otherwise the holdings' gains (exits included) add to the account's.
+function addsUp(account: SelectedLine, axis: string) {
+  if (axis === 'security') { assert.equal(account.children.length, 0, 'All Securities rows are already one security'); return; }
+  if (!account.positions.length) return;
+  const hs = account.children;
+  assert.ok(hs.length > 0, `${account.label} opens into its holdings`);
+  near(hs.reduce((s, h) => s + h.value, 0), account.value, 1);
+  if (account.units.some(u => u.key === u.accountId)) {
+    assert.ok(hs.every(h => h.gain == null && h.missing.length > 0), `${account.label}: a whole-account gain is never shared out`);
+  } else if (account.gain != null) near(hs.reduce((s, h) => s + (h.gain ?? 0), 0), account.gain, 1);
+}
+const wholeSplit = selectedSegmentReturns([pos(), pos({ securityKey: 'two', security: 'Two', marketValue: 80 })], [], [acct('a')], 'category', { ...sel, excluded: [] });
+const wholeAccount = wholeSplit.rows[0].children[0];
+near(wholeAccount.gain, 50);
+assert.deepEqual(wholeAccount.children.map(h => h.label), ['One', 'Two']);
+assert.ok(wholeAccount.children.every(h => h.gain == null && /whole account/.test(returnGapText(h.missing[0].reason, null))));
+addsUp(wholeAccount, 'category');
+const perHolding = selectedSegmentReturns([pos(), bad, noCost, atCost], [exit], [acct('a')], 'category', { ...sel, inception: true, windows: [] });
+const perAccount = perHolding.rows[0].children[0];
+addsUp(perAccount, 'category');
+near(perAccount.children.find(h => h.label === 'One')!.gain, 20);
+near(perAccount.children.find(h => h.key.endsWith(EXITED_HOLDINGS))!.gain, 10);
+assert.ok(perAccount.children.find(h => h.label === 'Bad sale')!.missing.some(g => /sale/.test(g.reason)), 'a holding names its own gap');
+assert.equal(selectedSegmentReturns([pos(), bad], [exit], [acct('a')], 'security', { ...sel, inception: true, windows: [] })
+  .rows.flatMap(r => r.children).every(c => c.children.length === 0), true);
+
 // Actual archive: every toolbar period reselects the records, every axis ties out.
 const current = currentHoldings(dedupedPositions(BOOK_POSITIONS));
 const left = exitedRows(dedupedPositions(BOOK_POSITIONS));
@@ -83,6 +112,7 @@ for (const period of ['fytd', 'mtd', 'ytd', 'y1', 'y2', 'y3'] as const) {
    near(a.rows.reduce((s,r) => s + r.value, 0), a.total.value, 1);
    if (a.total.gain != null) near(a.rows.reduce((s,r) => s + (r.gain ?? 0), 0), a.total.gain, 1);
    if (a.total.returnPct != null) near(a.rows.reduce((s,r) => s + (r.contribution ?? 0), 0), a.total.returnPct);
+   for (const c of a.rows.flatMap(r => r.children)) addsUp(c, axis);
  }
 }
 assert.ok(new Set(snapshots.map(s => s.gain)).size >= 3, 'actual archive changes with the selected period');
