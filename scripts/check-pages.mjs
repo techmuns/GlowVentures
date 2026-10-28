@@ -7851,18 +7851,26 @@ const STATEMENT_TOP_PROVIDER = (() => {
  * security a statement carries a holding, trade, realised lot, open lot or
  * income row for, cash lines and the ring-fence (`BOOK_POLYCAB`) out, each
  * counting the statements that name it. `top` is the largest folder, which the
- * opened-folder route walks. `mandate` is the folders the PMS mandates tab must
+ * opened-folder route walks. `mandate` is the keys the PMS mandates tab must
  * show: a security a row of a PMS account's statement names (a mandate takes
- * its whole account, so nothing else decides it). Null on any failure.
+ * its whole account, so nothing else decides it). `isinKeys` is, per ISIN, the
+ * keys printing that ISIN and no other — one security, so one folder.
+ * `bookKeys` is every key the book's positions carry, the only key a folder may
+ * take that no statement row prints. Null on any failure.
  */
 const PORTFOLIO_BOOK = (() => {
   try {
     const m = JSON.parse(readFileSync(new URL("../public/audit/manifest.json", import.meta.url), "utf8"));
-    const fenced = bookArray(readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8"), "BOOK_POLYCAB") ?? [];
+    const glow = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const fenced = bookArray(glow, "BOOK_POLYCAB") ?? [];
+    // The positions as generated — `bookArray` overlays the live rows on this one.
+    const at = glow.indexOf("= [", glow.indexOf("export const BOOK_POSITIONS"));
+    const bookKeys = new Set(JSON.parse(glow.slice(at + 2, glow.indexOf(";\n", at))).map((p) => p.securityKey));
     const fencedKeys = new Set(fenced.map((p) => p.securityKey));
     const fencedIsins = new Set(fenced.flatMap((p) => (p.isin ? [p.isin.trim().toUpperCase()] : [])));
     const docsOf = new Map();
     const mandate = new Set();
+    const isinsOf = new Map();
     for (const e of m) {
       const d = JSON.parse(readFileSync(new URL(`../public/audit/${e.docKey}/document.json`, import.meta.url), "utf8"));
       for (const section of ["holdings", "transactions", "capitalGains", "openLots", "income"]) {
@@ -7873,12 +7881,15 @@ const PORTFOLIO_BOOK = (() => {
           if (r.assetClass === "Cash" || (r.providerSector && resolveSector(r.providerSector).sector === "Cash")) continue;
           docsOf.set(k, (docsOf.get(k) ?? new Set()).add(e.fileKey));
           if (d.engagement === "PMS") mandate.add(k);
+          if (r.isin) isinsOf.set(k, (isinsOf.get(k) ?? new Set()).add(r.isin.trim().toUpperCase()));
         }
       }
     }
     const counts = new Map([...docsOf].map(([k, s]) => [k, s.size]));
     const top = [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0]?.[0] ?? null;
-    return { counts, fenced: fencedKeys, mandate, top: top ? { key: top, docs: [...docsOf.get(top)].sort() } : null };
+    const isinKeys = new Map();
+    for (const [k, s] of isinsOf) if (s.size === 1) { const i = [...s][0]; isinKeys.set(i, [...(isinKeys.get(i) ?? []), k]); }
+    return { counts, docsOf, fenced: fencedKeys, mandate, isinKeys, bookKeys, top: top ? { key: top, docs: [...docsOf.get(top)].sort() } : null };
   } catch { return null; }
 })();
 
@@ -37515,12 +37526,30 @@ const INVARIANTS = {
     ["the Portfolio Library uploads nothing", (t, ctx) =>
       !(ctx?.xa ?? []).some((x) => x.xa === "statement-upload" || x.xa === "statement-upload-log")
       && !(ctx?.buttonLabels ?? []).some((b) => /^\s*(files|folder)\s*$/i.test(b))],
-    ["one folder per security a statement names, each counting the statements that name it, and none for the ring-fence", (t, ctx) => {
+    /**
+     * ONE FOLDER PER SECURITY: every key a statement names sits in exactly one
+     * folder, keys printing the same ISIN sit in the same one, a folder takes a
+     * key no row prints only where it is the book's own, and each folder counts
+     * the statements naming any of its keys. Struck on the tiles'
+     * `data-folder-keys`, so it holds whichever key a merged folder keeps.
+     */
+    ["one folder per security a statement names — by ISIN — each counting the statements that name it, and none for the ring-fence", (t, ctx) => {
       const b = PORTFOLIO_BOOK;
       if (!b) return { notChecked: "the statement archive could not be read" };
       const tiles = (ctx?.xa ?? []).filter((x) => x.xa === "portfolio-folder");
-      return tiles.length === b.counts.size && new Set(tiles.map((x) => x.attrs["security-folder"])).size === tiles.length
-        && tiles.every((x) => b.counts.get(x.attrs["security-folder"]) === Number(x.attrs["doc-count"]) && !b.fenced.has(x.attrs["security-folder"]));
+      const home = new Map();
+      for (const [i, x] of tiles.entries()) {
+        const keys = (x.attrs["folder-keys"] ?? "").split("|").filter(Boolean);
+        if (keys[0] !== x.attrs["security-folder"] || b.fenced.has(keys[0])) return false;
+        for (const k of keys) {
+          if (!b.counts.has(k)) { if (k !== keys[0] || !b.bookKeys.has(k)) return false; continue; }
+          if (home.has(k)) return false;
+          home.set(k, i);
+        }
+        const files = new Set(keys.flatMap((k) => [...(b.docsOf.get(k) ?? [])]));
+        if (files.size !== Number(x.attrs["doc-count"])) return false;
+      }
+      return home.size === b.counts.size && [...b.isinKeys.values()].every((keys) => new Set(keys.map((k) => home.get(k))).size === 1);
     }],
     /**
      * THE CATEGORY TABS COUNT THE FOLDERS THEY SHOW. Every folder sits in at
@@ -37537,21 +37566,26 @@ const INVARIANTS = {
     }],
   ],
   "portfolios-category": [
-    ["the PMS mandates tab shows exactly the securities a PMS statement names", (t, ctx) => {
+    ["the PMS mandates tab shows exactly the folders holding a security a PMS statement names", (t, ctx) => {
       const b = PORTFOLIO_BOOK;
       if (!b) return { notChecked: "the statement archive could not be read" };
       const tab = (ctx?.xa ?? []).find((x) => x.xa === "portfolio-category" && x.attrs.category === "PMS mandates");
-      const tiles = (ctx?.xa ?? []).filter((x) => x.xa === "portfolio-folder").map((x) => x.attrs["security-folder"]);
-      return tab?.attrs.active === "true" && tiles.length === b.mandate.size && Number(tab.attrs.count) === b.mandate.size
-        && tiles.every((k) => b.mandate.has(k));
+      const tiles = (ctx?.xa ?? []).filter((x) => x.xa === "portfolio-folder").map((x) => (x.attrs["folder-keys"] ?? "").split("|"));
+      const shown = new Set(tiles.flat());
+      return tab?.attrs.active === "true" && tiles.length > 0 && Number(tab.attrs.count) === tiles.length
+        && tiles.every((keys) => keys.some((k) => b.mandate.has(k))) && [...b.mandate].every((k) => shown.has(k));
     }],
   ],
   "portfolios-folder": [
-    ["an opened security folder lists exactly the statements that name it, and uploads nothing", (t, ctx) => {
-      const top = PORTFOLIO_BOOK?.top;
+    ["an opened security folder lists exactly the statements that name it or a key of the same ISIN, and uploads nothing", (t, ctx) => {
+      const b = PORTFOLIO_BOOK, top = b?.top;
       if (!top) return { notChecked: "no statement in the archive names a security" };
+      const keys = (xaEl(ctx, "portfolio-open")?.attrs["folder-keys"] ?? "").split("|").filter(Boolean);
+      const twins = [...b.isinKeys.values()].find((ks) => ks.includes(top.key)) ?? [top.key];
+      const want = [...new Set(keys.flatMap((k) => [...(b.docsOf.get(k) ?? [])]))].sort();
       const rows = (ctx?.xa ?? []).filter((x) => x.xa === "portfolio-doc").map((x) => x.attrs["preview-row"]).sort();
-      return rows.length === top.docs.length && rows.every((r, i) => r === top.docs[i])
+      return twins.every((k) => keys.includes(k)) && top.docs.every((d) => want.includes(d))
+        && rows.length === want.length && rows.every((r, i) => r === want[i])
         && !(ctx?.xa ?? []).some((x) => x.xa === "statement-upload")
         && !(ctx?.buttonLabels ?? []).some((b) => /upload excel|edit numbers/i.test(b));
     }],

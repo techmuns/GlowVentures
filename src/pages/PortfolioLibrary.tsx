@@ -116,7 +116,7 @@ function OpenFolder({ folder, onBack }: { folder: SecurityFolder; onBack: () => 
   }, [folder]);
 
   return (
-    <div data-open-security={folder.securityKey}>
+    <div data-open-security={folder.securityKey} data-xa="portfolio-open" data-folder-keys={[folder.securityKey, ...folder.aliases].join("|")}>
       <button type="button" onClick={onBack}
         className="mb-3 inline-flex items-center gap-1 rounded-md border border-ink-600 bg-ink-800 px-3 py-1.5 text-xs font-medium text-slate-300 hover:bg-ink-700">
         <ChevronLeft className="h-3.5 w-3.5" /> All folders
@@ -224,7 +224,8 @@ export function PortfolioLibrary() {
   const back = () => setSearchParams((p) => { p.delete("file"); p.delete(STOCK_PARAM); return p; });
   const pickCategory = (c: string) => setSearchParams((p) => { if (c === ALL) p.delete(CATEGORY_PARAM); else p.set(CATEGORY_PARAM, c); return p; }, { replace: true });
 
-  const current = openKey ? library.find((f) => f.securityKey === openKey) : null;
+  // A key filed into another folder (same ISIN) opens that folder, so an older link still lands.
+  const current = openKey ? library.find((f) => f.securityKey === openKey) ?? library.find((f) => f.aliases.includes(openKey)) : null;
   const trail = openKey
     ? [{ label: "Admin" }, { label: "Portfolio Library", to: "/portfolios" }, { label: current?.name ?? openKey }]
     : undefined;
@@ -320,7 +321,7 @@ export function PortfolioLibrary() {
                 onClick={(e) => { if (e.target === e.currentTarget) setSelected(null); }}>
                 {folders.map((f) => (
                   <FolderTile key={f.securityKey} label={f.name} docCount={f.docCount} formats={f.formats} status={f.status}
-                    data={{ "data-xa": "portfolio-folder", "data-security-folder": f.securityKey, "data-doc-count": f.docCount, "data-categories": f.categories.join("|") }}
+                    data={{ "data-xa": "portfolio-folder", "data-security-folder": f.securityKey, "data-doc-count": f.docCount, "data-categories": f.categories.join("|"), "data-folder-keys": [f.securityKey, ...f.aliases].join("|") }}
                     selected={selected === f.securityKey}
                     onSelect={() => setSelected(f.securityKey)}
                     onOpen={() => open(f.securityKey)} />
