@@ -12,11 +12,9 @@ export const ACQUISITION_TYPES = ["Purchased", "Inherited", "Gifted"];
 // netted out of rent, because net rent describes the property, not its financing.
 export const MONEY_FIELDS = ["cost", "value", "monthlyRent", "monthlyCosts", "debt", "monthlyEmi"];
 // What capital gains tax on a sale needs beyond the cost (shared/propertyTax.mjs):
-// dated improvements, each indexed from its own year; for an inherited or gifted
-// property the previous owner's cost and acquisition date; the fair market value
-// on 1 Apr 2001 for a property held since before then; and whether the land is
-// rural agricultural land, which is not a capital asset.
-export const MAX_IMPROVEMENTS = 20;
+// for an inherited or gifted property the previous owner's cost and acquisition
+// date; the fair market value on 1 Apr 2001 for a property held since before then;
+// and whether the land is rural agricultural land, which is not a capital asset.
 const TAX_MONEY = { priorCost: "previous owner's cost", fmv2001: "value on 1 Apr 2001" };
 export const PROPERTY_ID = /^[a-zA-Z0-9][a-zA-Z0-9-]{0,79}$/;
 const number = n => typeof n === "number" && Number.isFinite(n);
@@ -48,17 +46,6 @@ export function validateProperty(raw) {
     p[key] = n;
   }
   p.ruralAgricultural = raw.ruralAgricultural === true;
-  const improvements = raw.improvements ?? [];
-  if (!Array.isArray(improvements) || improvements.length > MAX_IMPROVEMENTS) return { error: `Keep up to ${MAX_IMPROVEMENTS} improvements per property.` };
-  p.improvements = [];
-  for (const i of improvements) {
-    if (!i || typeof i !== "object" || Array.isArray(i)) return { error: "Check the improvement details." };
-    const on = i.on === "" ? null : i.on ?? null, amount = i.amount ?? null;
-    if (on === null && amount === null) continue;
-    if (on !== null && !date(on)) return { error: "Enter valid improvement dates or leave them blank." };
-    if (amount === null || !number(amount) || amount <= 0 || amount > 1e15) return { error: "Enter each improvement's amount, or remove the row." };
-    p.improvements.push({ on, amount });
-  }
   for (const key of ["purchasedOn", "priorAcquiredOn", "valuationDate", "leaseEnd"]) {
     const value = raw[key] === "" ? null : raw[key] ?? null;
     if (value !== null && !date(value)) return { error: "Enter valid dates or leave them blank." };
@@ -124,18 +111,15 @@ export function propertyShare(p, owners = null) {
   if (selected.some(o => !o.name || o.share === null)) return null;
   return selected.reduce((s, o) => s + o.share, 0) / 100;
 }
-/** The cost with its improvements: what appreciation is measured against. */
-export const totalCost = p => p.cost === null ? null : p.cost + (p.improvements ?? []).reduce((s, i) => s + i.amount, 0);
 function figuresAtShare(p, share) {
   const scaled = key => p[key] == null || share === null ? null : p[key] * share;
-  const whole = totalCost(p);
-  const value = scaled("value"), cost = whole === null || share === null ? null : whole * share, debt = scaled("debt"), emi = scaled("monthlyEmi"), rent = scaled("monthlyRent"), costs = scaled("monthlyCosts");
+  const value = scaled("value"), cost = scaled("cost"), debt = scaled("debt"), emi = scaled("monthlyEmi"), rent = scaled("monthlyRent"), costs = scaled("monthlyCosts");
   return { share, value, cost, debt, emi, rent, costs,
     equity: value === null || debt === null ? null : value - debt,
     netRent: rent === null || costs === null ? null : rent - costs,
     yield: p.value === null || p.value <= 0 || p.monthlyRent === null ? null : p.monthlyRent * 12 / p.value * 100,
     gain: value === null || cost === null || appreciationGap(p) ? null : value - cost,
-    gainPct: appreciationGap(p) ? null : (p.value - whole) / whole * 100 };
+    gainPct: appreciationGap(p) ? null : (p.value - p.cost) / p.cost * 100 };
 }
 export const propertyFigures = (p, owners = null) => figuresAtShare(p, propertyShare(p, owners));
 export const wholePropertyFigures = p => figuresAtShare(p, 1);

@@ -35,8 +35,9 @@ await check("the template carries every field of the Add Property form, with dro
   const headers = templateColumns().map(c => c.header);
   for (const h of ["Property name", "Property type", "Status", "Address / survey no.", "City / district", "State", "Country", "PIN / postal code", "Acquisition", "Purchase / inheritance / gift date",
     "Area", "Area unit", "Area basis", "Owner 1", "Owner 1 share %", "Owner 4", "Owner 4 share %", "Purchase cost (₹) / value on date of inheritance or gift", "Current value (₹)", "Valuation date",
-    "Monthly rent (₹)", "Monthly costs (₹)", "Loan outstanding (₹)", "EMI / month (₹)", "Previous owner's cost (₹)", "Previous owner acquired on", "Value on 1 Apr 2001 (₹)", "Rural agricultural land", "Improvement 1 date", "Improvement 1 amount (₹)", "Improvement 2 date", "Improvement 2 amount (₹)", "Tenant", "Lease ends", "Title status", "Earmarked / to be gifted", "Intended recipient", "Earmark note", "Notes", "Map latitude", "Map longitude", "Property ID (blank for a new property)", "Last saved (do not edit)"])
+    "Monthly rent (₹)", "Monthly costs (₹)", "Loan outstanding (₹)", "EMI / month (₹)", "Previous owner's cost (₹)", "Previous owner acquired on", "Value on 1 Apr 2001 (₹)", "Rural agricultural land", "Tenant", "Lease ends", "Title status", "Earmarked / to be gifted", "Intended recipient", "Earmark note", "Notes", "Map latitude", "Map longitude", "Property ID (blank for a new property)", "Last saved (do not edit)"])
     assert.ok(headers.includes(h), `template column "${h}"`);
+  assert.ok(!headers.some(h => /improvement/i.test(h)), "improvements are no longer asked for");
   const book = new ExcelJS.Workbook();
   await book.xlsx.load(await buildPropertyWorkbook(ExcelJS, { members }).xlsx.writeBuffer());
   assert.deepEqual(book.worksheets.map(w => w.name), ["Properties", "How to fill", "Lists"]);
@@ -141,21 +142,17 @@ await check("the earmark reads like the form: Yes, a recipient matched to a memb
   assert.equal(cleared.rows[0].property.earmark, null);
   assert.deepEqual(cleared.rows[0].changes, [{ field: "Earmark", before: "To be gifted to Test owner B · Test note", after: "Not earmarked" }]);
 });
-await check("the tax basis reads like the form: previous owner, 1 Apr 2001 value, rural land and dated improvements", async () => {
+await check("the tax fields read like the form: previous owner, 1 Apr 2001 value and rural land", async () => {
   const p = await plan(await edited([], ({ set }) => {
     set(2, "Property name", "Test gifted plot"); set(2, "Property type", "Land"); set(2, "Acquisition", "Gifted"); set(2, "Previous owner's cost (₹)", 400000); set(2, "Previous owner acquired on", "01/06/1998");
-    set(2, "Value on 1 Apr 2001 (₹)", "6,00,000"); set(2, "Rural agricultural land", "yes"); set(2, "Improvement 1 date", "10/01/2015"); set(2, "Improvement 1 amount (₹)", 250000); set(2, "Improvement 2 amount (₹)", 50000);
-    set(3, "Property name", "Test bad improvement"); set(3, "Improvement 1 date", "10/01/2015");
+    set(2, "Value on 1 Apr 2001 (₹)", "6,00,000"); set(2, "Rural agricultural land", "yes");
   }));
   const plot = p.rows[0].property;
   assert.deepEqual([plot.priorCost, plot.priorAcquiredOn, plot.fmv2001, plot.ruralAgricultural], [400000, "1998-06-01", 600000, true]);
-  assert.deepEqual(plot.improvements, [{ on: "2015-01-10", amount: 250000 }, { on: null, amount: 50000 }], "an undated improvement is kept, as the form keeps it");
-  assert.match(p.rows[1].errors.join(), /Improvement 1 amount \(₹\): enter the amount above 0, or clear the date/);
-  const existing = [saved({ improvements: [{ on: "2019-05-01", amount: 100000 }, { on: "2021-05-01", amount: 200000 }, { on: "2023-05-01", amount: 300000 }], ruralAgricultural: false })];
+  assert.equal("improvements" in plot, false);
+  const existing = [saved({ priorCost: 400000, ruralAgricultural: false })];
   const same = await plan(await edited(existing, () => {}), existing);
-  assert.equal(same.rows[0].action, "unchanged", "three improvements download as three column pairs and read back unchanged");
-  const changed = await plan(await edited(existing, ({ set }) => set(2, "Improvement 3 amount (₹)", 350000)), existing);
-  assert.deepEqual(changed.rows[0].changes.map(c => c.field), ["Improvements"]);
+  assert.equal(same.rows[0].action, "unchanged", "a saved property downloads and reads back unchanged");
 });
 await check("an owner who is not a family member is kept as typed, with a note", async () => {
   const p = await plan(await edited([], ({ set }) => { set(2, "Property name", "Test held by trust"); set(2, "Owner 1", "Test trust"); set(2, "Owner 1 share %", 100); }));
