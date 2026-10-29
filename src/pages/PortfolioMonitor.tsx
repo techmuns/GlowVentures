@@ -4307,7 +4307,7 @@ export function PortfolioMonitor() {
                             tot.atCostMV > 1 ? `${fmtFromBase(tot.atCostMV, { compact: true })} of it is private investments held at cost, with no valuation to strike a gain on` : "",
                             leftOutMV > 1 ? `${fmtFromBase(leftOutMV, { compact: true })} of it is ${leftOutNames}, whose sale proceeds are unverified` : ""]
                             .filter(Boolean).join(", and ")
-                          + `, so a return on cost would divide one set of holdings by another and describe neither column beside it. The ${tot.costedCount - tot.atCostCount} holdings with a cost and a valuation show their own return on their own rows.`);
+                          + `, so a return on cost would divide one set of holdings by another and describe neither column beside it. The ${tot.costedCount - tot.atCostCount - tot.leftOut.length} holdings with a cost, a valuation and verified proceeds show their own return on their own rows.`);
                       const realised = tot.fifo.realised;
                       /**
                        * THE SECTION'S INVESTED IS THE SUM OF ITS ROWS', and a
@@ -4430,6 +4430,8 @@ export function PortfolioMonitor() {
                                  (CLAUDE.md), which is not the same as no record at all. */
                               ? <AbsentCell reason={tot.fifo.hprUnavailableReason
                                   ? `withheld for ${label}: ${tot.fifo.hprUnavailableReason}`
+                                  : tot.leftOut.length
+                                  ? `Leaves out ${leftOutNames}: their sale proceeds are unverified. No other holding in ${label} is covered by a capital gain statement or a dated unit record.`
                                   : `no holding in ${label} is covered by a capital gain statement or a dated unit record, so what its sales realised is not reported`} />
                               : <span className={changeColor(realised)}
                                   data-realised-left-out={tot.leftOut.length || undefined}
@@ -5381,7 +5383,7 @@ export function PortfolioMonitor() {
                       totFifo.realised === null
                         ? <AbsentCell reason={totFifo.hprUnavailableReason
                             ? `withheld for the whole table: ${totFifo.hprUnavailableReason}`
-                            : "no holding in this table is covered by a capital gain statement or a dated unit record, so what its sales realised is not reported"} />
+                            : [leftOutNote, "No other holding in this table is covered by a capital gain statement or a dated unit record, so what its sales realised is not reported."].filter(Boolean).join(" ")} />
                         /* ONLY THE FIGURE ON THE FACE (the family: "Only
                             figures must be there"). Which of the two realised
                             figures this book prints, what it counts and leaves
@@ -5430,7 +5432,8 @@ export function PortfolioMonitor() {
                           {!onCost
                             ? <AbsentCell reason={`This is the whole book, not a holding: ${AGG_NO_MEASURE[measure]} Its cumulative return shows under HPR — tick Holding Period Return to see it.`} />
                             : totalRet === null
-                            ? <AbsentCell reason={totFifoCosted.hprUnavailableReason ?? (footStruckLines === 0 && footCover.atCost.lines > 0
+                            ? <AbsentCell reason={totFifoCosted.hprUnavailableReason ?? (returnLines === 0 && leftOut.length > 0 ? leftOutNote
+                                : footStruckLines === 0 && footCover.atCost.lines > 0
                                 ? `every holding in this table that reports a cost is ${AT_COST_RETURN}`
                                 : "no holding in this table reports a cost, so there is nothing to strike a return over — each costed holding shows its own on its row")} />
                             : feedLive ? fmtPct(totalRet, { sign: true })
