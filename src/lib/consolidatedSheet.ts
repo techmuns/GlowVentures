@@ -153,14 +153,23 @@ export function buildConsolidatedSheet(docs: ArchiveDoc[], input: { accounts: Ac
         : t.realizedBasis === "lot" || t.realizedBasis === "sibling" ? " Realised gain is on this sale's tax-lot rows." : t.realizedNote ? ` Realised gain: ${t.realizedNote}.` : ""}`,
       check: a ? "OK" : "Account join missing", src: raw?.d.docKey ?? null, _source: raw?.d.docKey ?? null });
   }
+  // An account-level capital record (a fund's payout, a call) belongs to the
+  // account's one holding where it holds exactly one. Never a PMS mandate's:
+  // its capital is the whole account's, whatever single line is left in it.
+  const soleSecurity = (acct: string) => {
+    const keys = new Set(positions.filter(p => p.accountId === acct).map(p => p.securityKey));
+    return keys.size === 1 && !isMandateHeld(accountById.get(acct)?.engagement) ? [...keys][0] : null;
+  };
   for (const mv of movements) {
-    const a = accountById.get(mv.accountId), m = mapping(mv.accountId, mv.securityKey, a?.engagement ?? null);
-    transactions.push({ date: mv.date, ...accountCols(a), acct: mv.accountId, sec: mv.securityKey,
-      name: mv.securityKey ? securityLabel(mv.securityKey, mv.security ?? mv.securityKey) : mv.security ?? a?.strategy ?? a?.provider ?? null, ...m,
+    const a = accountById.get(mv.accountId), sec = mv.securityKey ?? soleSecurity(mv.accountId), m = mapping(mv.accountId, sec, a?.engagement ?? null);
+    const held = sec ? positionOf(mv.accountId, sec) : undefined;
+    transactions.push({ date: mv.date, ...accountCols(a), acct: mv.accountId, sec,
+      name: sec ? securityLabel(sec, mv.security ?? held?.security ?? sec) : mv.security ?? a?.strategy ?? a?.provider ?? null, ...m,
       record: "Capital flow", type: mv.label,
       counts: mv.payoutKind === "income" || mv.payoutKind === "equalisation" ? "Income" : mv.direction === "in" ? "Investment" : "Divestment",
       qty: mv.units, gross: mv.amount, chg: mv.charges ?? null, net: mv.amount == null ? null : mv.amount * (mv.direction === "in" ? -1 : 1),
-      notes: mv.fromReview ? reviewNote : mv.fromCall ? "Reconciled call schedule; this is a call, not proof of payment" : "External capital record",
+      notes: [mv.fromReview ? reviewNote : mv.fromCall ? "Reconciled call schedule; this is a call, not proof of payment" : "External capital record",
+        !mv.securityKey && sec ? "Account-level record; the account holds only this security" : null].filter(Boolean).join("; "),
       src: mv.fromReview ? reviewNote : null, check: mv.amount == null ? "Amount not reported" : "OK" });
   }
   for (const e of [...income.cash, ...income.corporate]) {

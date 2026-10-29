@@ -88,6 +88,13 @@ sheet(TRANSACTIONS).rows.forEach((r, i) => {
 });
 assert.ok(column(TRANSACTIONS, "gf").some(v => typeof v === "number") && column(TRANSACTIONS, "taxlt").some(v => typeof v === "number"),
   "source-stated FMV and taxable long-term gain are kept, not discarded");
+// An account-level capital record joins the account's one holding (never a PMS mandate's).
+for (let j = 0; j < sheet(TRANSACTIONS).rows.length; j++) {
+  if (value(TRANSACTIONS, j, "record") !== "Capital flow" || value(TRANSACTIONS, j, "sec")) continue;
+  const acct = value(TRANSACTIONS, j, "acct") as string, held = new Set(BOOK_POSITIONS.filter(p => p.accountId === acct).map(p => p.securityKey));
+  const pms = BOOK_ACCOUNTS.find(a => a.accountId === acct)?.engagement === "PMS";
+  assert.ok(held.size !== 1 || pms, `${acct}: an account-level record of a one-holding account joins that holding`);
+}
 // Each holding's count of records ties to the Transactions tab.
 for (let i = 0; i < sheet(CONSOLIDATED_VIEW).rows.length; i++) {
   const acct = value(CONSOLIDATED_VIEW, i, "acct"), sec = value(CONSOLIDATED_VIEW, i, "sec"), n = value(CONSOLIDATED_VIEW, i, "txns");
