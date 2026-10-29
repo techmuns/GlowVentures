@@ -424,7 +424,8 @@ Never derive one side from the others.
   quantity, valuation, date or existing cost. Every join and unresolved balance
   is in `docs/COST-RECOVERY.md`. Closing rows keep fund folios separate; a known
   cost with unverified sale proceeds carries `hprUnavailableReason`, withholding
-  realised gain and individual/pooled HPR. Other review figures remain a cross-check
+  its realised gain and HPR; the Portfolio Monitor's pooled return and Realised
+  totals leave such a holding out and name it in the hover (Stage 10jc). Other review figures remain a cross-check
   (`npm run reconcile:review`). At-cost lines carry no gain or return
   (`AT_COST_BUCKET`, `AT_COST_RETURN`).
 - **The Motilal CDSL "rate" is the last movement's price**, not a mark or a cost

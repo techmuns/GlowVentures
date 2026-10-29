@@ -10970,7 +10970,15 @@ const txnTTableChecks = () => [
        */
       const g = CAPITAL_GROUPS.rowCapital(r.mineKey, r.mine);
       const cell = r.cells.investedOn?.text ?? "";
-      if (!g?.boughtFirst || r.boughtFirst !== g.boughtFirst || r.boughtLast !== g.boughtLast) return false;
+      if (!g) return false;
+      // A RECORD WITH NO PURCHASE IN IT — a folio whose statements cover only its
+      // redemption (Motilal Oswal Mutual Fund 90414963315, redeemed to nil) —
+      // has no purchase to date: a dash, never its later outflow's date.
+      if (!g.boughtFirst) {
+        if (g.lastAny) later += 1;
+        return !r.boughtFirst && !/\d/.test(cell);
+      }
+      if (r.boughtFirst !== g.boughtFirst || r.boughtLast !== g.boughtLast) return false;
       if (!dmyRe(g.boughtFirst).test(cell) || !dmyRe(g.boughtLast).test(cell)) return false;
       if (g.lastAny && g.lastAny > g.boughtLast) { later += 1; if (dmyRe(g.lastAny).test(cell)) return false; }
       return true;
@@ -13677,11 +13685,6 @@ const MONITOR_BASIS_BOOK = (() => {
         if (all.length && all.every((p) => keys.has(p.securityKey))) whole.add(id);
       }
       let gain = 0, deployed = 0, realised = null;
-      // UNVERIFIED SALE PROCEEDS WITHHOLD THE SET'S REALISED AND ITS RETURN
-      // (CLAUDE.md, "the review is the source of the private book"): a costed
-      // holding outside a whole mandate, not held at cost, carrying
-      // `hprUnavailableReason` — `fifoTotals`' own gate, written out again.
-      const withheld = new Set();
       const mmv = new Map(), mcost = new Map();
       for (const p of set) {
         if (whole.has(p.accountId)) {
@@ -13690,7 +13693,6 @@ const MONITOR_BASIS_BOOK = (() => {
           continue;
         }
         if (!costed(p)) continue;
-        if (p.hprUnavailableReason && p.valuedAtCost !== true) withheld.add(p.hprUnavailableReason);
         gain += p.marketValue - p.costBasis + (num(p.realizedPnL) ? p.realizedPnL : 0) + (num(p.dividendReceived) ? p.dividendReceived : 0);
         deployed += p.costBasis + (num(p.costOfUnitsSold) ? p.costOfUnitsSold : 0);
         if (num(p.realizedPnL)) realised = (realised ?? 0) + p.realizedPnL;
@@ -13706,8 +13708,7 @@ const MONITOR_BASIS_BOOK = (() => {
       // as excluding exited names) — `exitsInto`, the rule written out once.
       const x = exitsInto(set, exits, whole, acc, current);
       gain += x.gain; deployed += x.deployed;
-      if (withheld.size) return { pct: null, realised: null, whole: whole.size, exits: x, withheld: [...withheld].sort() };
-      return { pct: deployed > 0 ? (gain / deployed) * 100 : null, realised, whole: whole.size, exits: x, withheld: [] };
+      return { pct: deployed > 0 ? (gain / deployed) * 100 : null, realised, whole: whole.size, exits: x };
     };
     const setOf = (xs, exits = []) => {
       const c = xs.filter(costed);
@@ -13715,13 +13716,21 @@ const MONITOR_BASIS_BOOK = (() => {
       // the family's consolidated review holds at cost is in Invested (`c`) and
       // in no gain — the page's `strikesGain`, written out here.
       const struck = c.filter((p) => p.valuedAtCost !== true);
+      // UNVERIFIED SALE PROCEEDS ARE LEFT OUT OF THE RETURN AND THE REALISED,
+      // AND NAMED (Stage 10jc): a costed holding outside a mandate, not held at
+      // cost, carrying `hprUnavailableReason`. Its gain is in Unrealised, its
+      // cost in Invested — both known — and in neither pooled figure.
+      const unverified = (p) => !!p.hprUnavailableReason && p.valuedAtCost !== true && costed(p)
+        && acc.get(p.accountId)?.engagement !== "PMS";
+      const leftOut = struck.filter(unverified);
+      const onReturn = struck.filter((p) => !unverified(p));
+      const verified = xs.filter((p) => !unverified(p));
       return { holdings: xs.length, costedCount: c.length, bookValue: total(xs), costedValue: total(c),
         struckCount: struck.length, struckValue: total(struck), atCost: c.length - struck.length,
-        ret: fifo(struck, exits).pct, survivorsRet: fifo(struck).pct, exits: fifo(struck, exits).exits,
-        realised: fifo(xs).realised, whole: fifo(xs).whole,
-        // THE REASONS THE SET'S RETURN AND REALISED ARE WITHHELD, from the book —
-        // empty where nothing in it withholds them.
-        withheld: fifo(xs).withheld };
+        returnCount: onReturn.length, returnValue: total(onReturn),
+        leftOut: { count: leftOut.length, value: total(leftOut), reasons: [...new Set(leftOut.map((p) => p.hprUnavailableReason))] },
+        ret: fifo(onReturn, exits).pct, survivorsRet: fifo(onReturn).pct, exits: fifo(onReturn, exits).exits,
+        realised: fifo(verified).realised, whole: fifo(verified).whole };
     };
     const companies = ded.filter((p) => p.assetClass === "Equity");
     const stmts = gains.filter((c) => c.realisedST != null || c.realisedLT != null);
@@ -13852,23 +13861,12 @@ const MONITOR_BASIS_BOOK = (() => {
  * footer, set line, face or hover is a FAILURE: these routes draw rows, so a
  * footer that lost a handle is the regression, not a reason to stand down.
  */
-/**
- * …AND WHERE THE BOOK WITHHOLDS THEM, THE DASH SAYS WHY. A costed holding with
- * unverified sale proceeds (`hprUnavailableReason` — Yash Highvoltage, the
- * ICICI Prudential Equity Savings units on Ajay's demat) withholds the realised
- * and the return of every set it is in, so the footer's two cells are dashes.
- * Each must carry every reason the BOOK gives (`MONITOR_BASIS_BOOK…withheld`),
- * so a dash for any other cause — or none — still fails.
- */
-const withheldNamed = (reasons, cell) => !!cell && cell.face === "—" && reasons.every((r) => (cell.title ?? "").includes(r));
-/** Whether the footer's return dash is the book's withheld one, on the set this axis strikes. */
-const footWithheld = (ctx) => !!ctx?.monitorFoot?.returnWithheld
-  && (MONITOR_BASIS_BOOK?.sets?.[ctx?.axisControl?.active === "security" ? "companies" : "all"]?.withheld?.length ?? 0) > 0;
+/** …and the holdings it leaves out for unverified sale proceeds, every reason named in the hover (Stage 10jc). */
+const namesLeftOut = (b, title) => (b?.leftOut?.reasons ?? []).every((r) => String(title ?? "").includes(r));
 const footBasisChecks = (setKey) => [
   [`the footer's whole-book return names the holdings it is struck over — in its hover, only the figure on its face (${setKey})`, (t, ctx) => {
     const b = MONITOR_BASIS_BOOK?.sets?.[setKey];
     const f = ctx?.monitorFoot;
-    if (b?.withheld?.length) return !f?.returnSet && withheldNamed(b.withheld, f?.returnWithheld);
     if (!b || !f?.returnSet) return false;
     // ONLY THE FIGURE ON THE FACE (Stage 10dn). The cell renders the
     // percentage and nothing else; the set sentence rides the attribute and
@@ -13876,19 +13874,18 @@ const footBasisChecks = (setKey) => [
     if (!/^[+\-−]?[\d,.]+%$/.test(f.returnSet.face)) return false;
     if (!f.returnSet.title.includes(f.returnSet.text)) return false;
     const [c, n] = String(f.returnSet.counts ?? "").split("/").map(Number);
-    if (c !== b.struckCount || n !== b.holdings) return false;
+    if (c !== b.returnCount || n !== b.holdings || !namesLeftOut(b, f.returnSet.title)) return false;
     if (c === n) return /^every one of the [\d,]+ holdings? reports? a cost$/i.test(f.returnSet.text);
     const m = /^on the ₹([\d,.]+)\s*(Cr|L|K)? of ₹([\d,.]+)\s*(Cr|L|K)? valued against a cost\s*[·,]\s*([\d,]+) of ([\d,]+) holdings$/i
       .exec(f.returnSet.text);
     if (!m) return false;
-    return Math.abs(crU(m[1], m[2]) - b.struckValue / 1e7) <= 0.06
+    return Math.abs(crU(m[1], m[2]) - b.returnValue / 1e7) <= 0.06
       && Math.abs(crU(m[3], m[4]) - b.bookValue / 1e7) <= 0.06
-      && cr(m[5]) === b.struckCount && cr(m[6]) === b.holdings;
+      && cr(m[5]) === b.returnCount && cr(m[6]) === b.holdings;
   }],
   [`…and the figure is FIFO over exactly those holdings, re-derived from the book (${setKey})`, (t, ctx) => {
     const b = MONITOR_BASIS_BOOK?.sets?.[setKey];
     const f = ctx?.monitorFoot;
-    if (b?.withheld?.length) return b.ret === null && withheldNamed(b.withheld, f?.returnWithheld);
     if (!b || b.ret === null || !f?.returnText) return false;
     const pct = signedPctOf(f.returnText);
     // SINCE INCEPTION, NOT SINCE SURVIVAL (Stage 10fz): where the book's exits
@@ -13907,7 +13904,6 @@ const footBasisChecks = (setKey) => [
     // leaking back onto the cell is the regression.
     if (f.realisedCellText !== null && !/^(—|[+\-−]?₹[\d,.]+\s*(Cr|L|K)?)$/.test(f.realisedCellText)) return false;
     const v = f.realised === null ? null : Number(f.realised);
-    if (b.withheld?.length) return v === null && withheldNamed(b.withheld, f.realisedWithheld);
     if (b.realised === null) return v === null;
     return v !== null && Number.isFinite(v) && Math.abs(v - b.realised) <= 1;
   }],
@@ -13915,9 +13911,7 @@ const footBasisChecks = (setKey) => [
     const b = MONITOR_BASIS_BOOK?.sets?.[setKey];
     const st = MONITOR_BASIS_BOOK?.statements;
     const f = ctx?.monitorFoot;
-    // Withheld, the cell carries no basis to name — its dash names the book's reason.
-    if (b?.withheld?.length) return withheldNamed(b.withheld, f?.realisedWithheld);
-    if (!b || !st || !f?.realisedFace || !f?.realisedNote) return false;
+    if (!b || !st || !f?.realisedFace || !f?.realisedNote || !namesLeftOut(b, f.realisedNote)) return false;
     const face = setKey === "companies" ? /^names still held · statement windows$/i.test(f.realisedFace)
       : b.whole ? new RegExp(String.raw`^incl\. ${b.whole} mandates? since inception · excl\. names exited outside (it|them)$`, "i").test(f.realisedFace)
       : /^each record's own window · excl\. names exited$/i.test(f.realisedFace);
@@ -13945,9 +13939,6 @@ const footBasisChecks = (setKey) => [
     const f = ctx?.monitorFoot;
     const rows = ctx?.monitorMember?.rows;
     if (!f || !rows?.length) return false;
-    const w = MONITOR_BASIS_BOOK?.sets?.[setKey]?.withheld ?? [];
-    if (w.length) return withheldNamed(w, f.realisedWithheld)
-      ? notChecked(`the book withholds this set's realised (${w.join("; ")}), so the rows have no footer figure to add to`) : false;
     const vals = rows.map((r) => (r.realised === null || r.realised === "" ? null : Number(r.realised)));
     const known = vals.filter((v) => v !== null);
     if (f.realised === null) return known.length === 0;
@@ -13961,10 +13952,6 @@ const SECTION_REALISED = [
     if (gate) return gate;
     const ct = ctx.categoryTotals;
     const known = ct.rows.map((r) => r.realised).filter((v) => v !== null);
-    if (ct.footer.realisedWithheld) {
-      const w = MONITOR_BASIS_BOOK?.sets?.all?.withheld ?? [];
-      return w.length ? notChecked(`the book withholds the footer's realised (${w.join("; ")}), so the sections have no figure to add to`) : false;
-    }
     if (ct.footer.realised === null) return known.length === 0;
     return known.every(Number.isFinite) && Math.abs(known.reduce((a, v) => a + v, 0) - ct.footer.realised) <= 1;
   }],
@@ -18026,11 +18013,19 @@ const PM_TABLE_CHECKS = [
  * and runs 14px over at 1440. Below 1500 a wide table scrolls inside its
  * own container, by the standard every table here follows.
  */
-const PM_FIT_CHECK = ["the table fits its card at this width — no column is cut off", (t, ctx) => {
+/*
+ * …AND SINCE THE FAMILY ADDED COLUMNS, IT SCROLLS INSIDE ITS CARD (Stage 10jc).
+ * Strategy and Description (Stage 10eo) and a column per return measure took the
+ * table to 19 columns — ~2,230px against a 1,440px card at 1500 — and no width
+ * fits that without dropping a column the family asked for. So the claim is now
+ * the Conventions' own: every column is REACHABLE — the table fits, or its card
+ * scrolls it sideways — and the page itself never scrolls sideways.
+ */
+const PM_FIT_CHECK = ["no column is cut off — the table fits its card, or scrolls inside it, never the page", (t, ctx) => {
   const f = ctx?.pmView?.fit;
   if (!f) return false;
   if (f.viewport < 1500) return { notChecked: "below 1500px a wide table scrolls inside its own container" };
-  return f.scroll <= f.client + 1;
+  return f.pageScroll <= 1 && (f.scroll <= f.client + 1 || /auto|scroll/.test(f.overflowX ?? ""));
 }];
 
 /**
@@ -21691,7 +21686,7 @@ const RETURN_COLUMNS = [
       const onCost = (h) => /^(Return|HPR)$/i.test(h.label);
       for (const h of head) {
         const cell = String(foot[h.headIndex] ?? "").trim();
-        if (onCost(h)) { if (!FOOT_RETURN_CELL.test(cell) && !(cell === "—" && footWithheld(ctx))) return false; }
+        if (onCost(h)) { if (!FOOT_RETURN_CELL.test(cell)) return false; }
         // A DASH, and never a percentage: a rate under a heading that cannot
         // strike one is the whole defect this asserts against.
         else if (cell !== "—") return false;
@@ -32544,7 +32539,7 @@ const INVARIANTS = {
       return cells.length >= 3
         && cells[cells.length - 1].trim() === ""
         && cells[cells.length - 2].trim() === ""
-        && (FOOT_RETURN_CELL.test(cells[cells.length - 3].trim()) || (cells[cells.length - 3].trim() === "—" && footWithheld(ctx)));
+        && FOOT_RETURN_CELL.test(cells[cells.length - 3].trim());
     }],
     /**
      * ── DENSITY, MEASURED RATHER THAN DESCRIBED ─────────────────────────────
@@ -41352,15 +41347,6 @@ for (const theme of THEMES) {
           realisedFace: basis?.getAttribute("data-realised-face") ?? null,
           realisedNote: basis?.getAttribute("title") ?? null,
           realisedCellText: realisedCell ? (realisedCell.innerText ?? "").replace(/\s+/g, " ").trim() : null,
-          // …AND WHERE THE BOOK WITHHOLDS THEM, the dash and the reason it gives.
-          returnWithheld: (() => {
-            const td = f.querySelector("td[data-footer-return-withheld]");
-            return td ? { face: (td.innerText ?? "").trim(), title: td.querySelector("[title]")?.getAttribute("title") ?? "" } : null;
-          })(),
-          realisedWithheld: (() => {
-            const td = f.querySelector("td[data-realised-withheld]");
-            return td ? { face: (td.innerText ?? "").trim(), title: td.querySelector("[title]")?.getAttribute("title") ?? "" } : null;
-          })(),
           rows: document.querySelectorAll("tbody tr[data-bucket]").length,
         };
       });
@@ -42521,7 +42507,6 @@ for (const theme of THEMES) {
           // than at the compact precision their text prints (MH-05).
           const rz = tr.querySelector("td[data-realised]")?.getAttribute("data-realised");
           const realised = rz == null || rz === "" ? null : Number(rz);
-          const realisedWithheld = !!tr.querySelector("td[data-realised-withheld]");
           // ── AND WHAT IS HELD AT COST, OFF THE ROW ITSELF (Stage 10dh) ───────
           //
           // A review line held at cost is value no gain is struck on, so the page
@@ -42532,7 +42517,7 @@ for (const theme of THEMES) {
           const ac = tr.getAttribute("data-cat-atcost");
           const acn = tr.getAttribute("data-cat-atcost-n");
           return {
-            text, title, capital, costHeld, realised, realisedWithheld,
+            text, title, capital, costHeld, realised,
             // A holding whose sale cash is unverified refuses the pooled return (Stage 10hb).
             hprUnverified: tr.hasAttribute("data-cat-hpr-unverified"),
             atCost: ac == null || ac === "" ? 0 : Number(ac),
@@ -43088,7 +43073,9 @@ for (const theme of THEMES) {
           nested: table ? table.querySelectorAll("table").length : 0,
           legacy: document.querySelectorAll("main tr[data-scheme], main [data-pm-folio-panel]").length,
           heads,
-          fit: wrap ? { scroll: wrap.scrollWidth, client: wrap.clientWidth, viewport: window.innerWidth } : null,
+          fit: wrap ? { scroll: wrap.scrollWidth, client: wrap.clientWidth, viewport: window.innerWidth,
+            overflowX: getComputedStyle(wrap).overflowX,
+            pageScroll: document.documentElement.scrollWidth - document.documentElement.clientWidth } : null,
           sections: rows("tr[data-pm-section]").map((e) => ({
             id: e.getAttribute("data-pm-section"), open: e.getAttribute("data-pm-section-open") === "true",
             // The band's own sentence, in its first cell's hover.
