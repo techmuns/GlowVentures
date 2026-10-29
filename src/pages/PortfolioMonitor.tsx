@@ -668,6 +668,12 @@ type BucketTotals = {
   /** The section's FIFO totals — its return and its realised, struck on its own positions. */
   fifo: FifoTotals;
   /**
+   * Its holdings whose sale proceeds are unverified (`hprUnavailableReason`):
+   * left out of `fifo` and named, never a reason to blank the whole section
+   * (Stage 10jc).
+   */
+  leftOut: Position[];
+  /**
    * The section's only costed lines are nil balances while the rest carries
    * value — `cost` and `pnl` are null and the cells say why (A-14). The Cash
    * section is the case: two nil sleeves reporting a cost of ₹0 beside ₹14.2 Cr
@@ -1308,7 +1314,7 @@ export function PortfolioMonitor() {
    * Transactions under Sells (MH-17).
    */
 
-  const { rows, totMV, totCost, totPnL, totFifo, totFifoCosted, footCover, rawMV, weightBase, weightCount, bucketTotals, smallDropped, realisedFacts, dupCost, dupPnl, markDates } = useMemo(() => {
+  const { rows, totMV, totCost, totPnL, totFifo, totFifoCosted, leftOut, footCover, rawMV, weightBase, weightCount, bucketTotals, smallDropped, realisedFacts, dupCost, dupPnl, markDates } = useMemo(() => {
     // Closed positions first, so nothing downstream has to remember to exclude
     // them: the filters, the weight base, the footer and every section subtotal
     // are struck over what the family actually holds.
@@ -2076,7 +2082,7 @@ export function PortfolioMonitor() {
     for (const x of db) {
       const k = groupKeyFor(groupAxis, accIdx, x);
       let t = bucketTotals.get(k);
-      if (!t) bucketTotals.set(k, (t = { mv: 0, cost: null, pnl: null, costedMV: 0, costedCount: 0, atCostMV: 0, atCostCount: 0, heldCount: 0, names: new Set<string>(), fifo: fifoTotals([]), vacuous: false, dupCost: 0, dupPnl: 0 }));
+      if (!t) bucketTotals.set(k, (t = { mv: 0, cost: null, pnl: null, costedMV: 0, costedCount: 0, atCostMV: 0, atCostCount: 0, heldCount: 0, names: new Set<string>(), fifo: fifoTotals([]), leftOut: [], vacuous: false, dupCost: 0, dupPnl: 0 }));
       t.mv += x.marketValue;
       t.heldCount += 1;
       t.names.add(x.securityKey);
@@ -2089,11 +2095,29 @@ export function PortfolioMonitor() {
       if (x.costBasis != null && isValuedAtCost(x)) { t.atCostMV += x.marketValue; t.atCostCount += 1; }
       if (x.unrealizedPnL != null) t.pnl = (t.pnl ?? 0) + x.unrealizedPnL;
     }
+    /**
+     * ── A HOLDING WHOSE SALE PROCEEDS ARE UNVERIFIED IS LEFT OUT, AND NAMED ──
+     *
+     *   *"show the return for all other holdings and name the two it leaves
+     *    out. very subtly like we always do"* — the family, 29 Oct 2026.
+     *
+     * A known cost with unverified sale proceeds (`hprUnavailableReason` —
+     * Yash Highvoltage, the ICICI Prudential Equity Savings units) withholds its
+     * OWN realised and return. Pooled in, it blanked every total it was in —
+     * the whole family's return and realised read "—". Each pooled figure is now
+     * struck over the other holdings, the left-out ones named in its hover. A
+     * mandate's lines are struck on the mandate's capital and never left out.
+     * Invested and Unrealised keep them: their cost and value are known.
+     */
+    const proceedsUnverified = (x: Position) => !!x.hprUnavailableReason && strikesGain(x)
+      && engagementOf(accIdx, x) !== "PMS";
+    const verifiedOnly = (xs: Position[]) => xs.filter((x) => !proceedsUnverified(x));
     // Each section's FIFO totals, over exactly the positions its totals row sums
     // — and the one test for a cost total over nothing (`costedFigures`, A-14).
     for (const [k, t] of bucketTotals) {
       const inSection = db.filter((x) => groupKeyFor(groupAxis, accIdx, x) === k);
-      t.fifo = fifoTotals(inSection, fifoOpts);
+      t.fifo = fifoTotals(verifiedOnly(inSection), fifoOpts);
+      t.leftOut = inSection.filter(proceedsUnverified);
       if (costedFigures(inSection).vacuous) { t.vacuous = true; t.cost = null; t.pnl = null; }
     }
     /**
@@ -2116,7 +2140,7 @@ export function PortfolioMonitor() {
     // The footer on the same rule: a filter that leaves only a section like Cash
     // in view must not print Invested ₹0 over what no statement costs.
     const footCover = costedFigures(db);
-    const totFifo = fifoTotals(db, fifoOpts);
+    const totFifo = fifoTotals(verifiedOnly(db), fifoOpts);
     /**
      * WHAT THE FOOTER'S REALISED COUNTS AND LEAVES OUT, measured on the same set
      * (MH-05). The statements' own total is struck over the accounts of the
@@ -2206,7 +2230,8 @@ export function PortfolioMonitor() {
       // filters (`inScope`), so a Direct Equity footer is not credited a
       // redeemed AIF. The Realised cell keeps `totFifo`, which says it
       // excludes exited names.
-      totFifoCosted: fifoTotals(db.filter(strikesGain), { ...fifoOpts, exited: exitedRows(positions).filter(inScope) }),
+      totFifoCosted: fifoTotals(verifiedOnly(db.filter(strikesGain)), { ...fifoOpts, exited: exitedRows(positions).filter(inScope) }),
+      leftOut: db.filter(proceedsUnverified),
       rawMV: sum(out.map((r) => r.marketValue)),
       costedMV: sum(costed.map((x) => x.marketValue)),
       costedCount: costed.length,
@@ -2701,9 +2726,18 @@ export function PortfolioMonitor() {
   // The words Morning CIO's tile and `/holdings` print for the same set
   // (`costedSetLabel`): a return covers the holdings with a cost AND a
   // valuation — never a depository row, and never a line held at cost.
-  const returnSetLine = (footCover.uncosted.lines === 0 || footCover.uncosted.value === 0) && footCover.atCost.lines === 0
+  //
+  // …LESS THE HOLDINGS WHOSE SALE PROCEEDS ARE UNVERIFIED (Stage 10jc): left
+  // out of the return and the realised, and named in both hovers — the figure
+  // alone on the face, as every partial set on this page.
+  const leftOutValue = sum(leftOut.map((x) => x.marketValue));
+  const returnLines = footStruckLines - leftOut.length;
+  const leftOutNote = leftOut.length
+    ? `Leaves out ${[...new Set(leftOut.map((x) => labelByKey.get(x.securityKey) ?? x.security))].join(" and ")} (${money(leftOutValue)}). ${[...new Set(leftOut.map((x) => x.hprUnavailableReason))].join(". ")}. Their gain counts in neither the return nor the realised until those proceeds are verified.`
+    : "";
+  const returnSetLine = (footCover.uncosted.lines === 0 || footCover.uncosted.value === 0) && footCover.atCost.lines === 0 && leftOut.length === 0
     ? `every one of the ${footCover.lines} ${footCover.lines === 1 ? "holding reports" : "holdings reports"} a cost`
-    : `on the ${money(footStruckValue)} of ${money(footCover.value)} valued against a cost · ${footStruckLines} of ${footCover.lines} holdings`;
+    : `on the ${money(footStruckValue - leftOutValue)} of ${money(footCover.value)} valued against a cost · ${returnLines} of ${footCover.lines} holdings`;
   // ── WHAT A ROW OPENS INTO: ROWS OF THIS TABLE, IN ITS COLUMNS ─────────────
   //
   //   *"i hope the ui design upgrades you are doing and making it much amazing
@@ -4238,7 +4272,11 @@ export function PortfolioMonitor() {
                       const label = groupLabelFor(groupAxis)(grp.key);
                       // A line held at cost is value no gain is struck on, like a
                       // holding that reports no cost: both count against the return.
-                      const covered = costCoversSet(tot.mv, uncostedMV + tot.atCostMV);
+                      // …and so is a holding whose sale proceeds are unverified,
+                      // left out of the section's FIFO and named (Stage 10jc).
+                      const leftOutMV = sum(tot.leftOut.map((x) => x.marketValue));
+                      const leftOutNames = [...new Set(tot.leftOut.map((x) => labelByKey.get(x.securityKey) ?? x.security))].join(" and ");
+                      const covered = costCoversSet(tot.mv, uncostedMV + tot.atCostMV + leftOutMV);
                       // Every costed line here is held at cost (the review's own
                       // section, or a family-axis row made only of such lines).
                       const allAtCost = tot.atCostCount > 0 && tot.atCostCount === tot.costedCount;
@@ -4266,9 +4304,10 @@ export function PortfolioMonitor() {
                         : tot.pnl === null ? `no holding in ${label} reports an unrealised gain, so there is no numerator to divide`
                         : tot.cost <= 0 ? `${label} reports a cost of zero, and a return on cost has nothing to divide by`
                         : [uncostedMV > 1 ? `${fmtFromBase(uncostedMV, { compact: true })} of this category's ${fmtFromBase(tot.mv, { compact: true })} is held in accounts that report no cost` : "",
-                            tot.atCostMV > 1 ? `${fmtFromBase(tot.atCostMV, { compact: true })} of it is private investments held at cost, with no valuation to strike a gain on` : ""]
+                            tot.atCostMV > 1 ? `${fmtFromBase(tot.atCostMV, { compact: true })} of it is private investments held at cost, with no valuation to strike a gain on` : "",
+                            leftOutMV > 1 ? `${fmtFromBase(leftOutMV, { compact: true })} of it is ${leftOutNames}, whose sale proceeds are unverified` : ""]
                             .filter(Boolean).join(", and ")
-                          + `, so a return on cost would divide one set of holdings by another and describe neither column beside it. The ${tot.costedCount - tot.atCostCount} holdings with a cost and a valuation show their own return on their own rows.`);
+                          + `, so a return on cost would divide one set of holdings by another and describe neither column beside it. The ${tot.costedCount - tot.atCostCount - tot.leftOut.length} holdings with a cost, a valuation and verified proceeds show their own return on their own rows.`);
                       const realised = tot.fifo.realised;
                       /**
                        * THE SECTION'S INVESTED IS THE SUM OF ITS ROWS', and a
@@ -4307,7 +4346,7 @@ export function PortfolioMonitor() {
                           data-cat-atcost-n={tot.atCostCount || undefined}
                           // A holding whose sale cash is unverified refuses the
                           // pooled return whatever the coverage (Stage 10hb).
-                          data-cat-hpr-unverified={tot.fifo.hprUnavailableReason ? "" : undefined}>
+                          data-cat-hpr-unverified={tot.fifo.hprUnavailableReason || tot.leftOut.length ? "" : undefined}>
                           <td className="py-1.5 pl-[2.1rem] pr-2 text-slate-200">
                             {label} <span className="font-normal text-slate-500">· total</span>
                           </td>
@@ -4391,9 +4430,12 @@ export function PortfolioMonitor() {
                                  (CLAUDE.md), which is not the same as no record at all. */
                               ? <AbsentCell reason={tot.fifo.hprUnavailableReason
                                   ? `withheld for ${label}: ${tot.fifo.hprUnavailableReason}`
+                                  : tot.leftOut.length
+                                  ? `Leaves out ${leftOutNames}: their sale proceeds are unverified. No other holding in ${label} is covered by a capital gain statement or a dated unit record.`
                                   : `no holding in ${label} is covered by a capital gain statement or a dated unit record, so what its sales realised is not reported`} />
                               : <span className={changeColor(realised)}
-                                  title={`Realised on units already sold, over the ${tot.fifo.realisedCovered} of ${tot.fifo.holdings} holdings in ${label} with a record that could carry it${tot.fifo.wholeMandates.length ? `; ${tot.fifo.wholeMandates.length} whole mandate(s) contribute everything they have booked since inception` : ""}.`}>
+                                  data-realised-left-out={tot.leftOut.length || undefined}
+                                  title={`Realised on units already sold, over the ${tot.fifo.realisedCovered} of ${tot.fifo.holdings} holdings in ${label} with a record that could carry it${tot.fifo.wholeMandates.length ? `; ${tot.fifo.wholeMandates.length} whole mandate(s) contribute everything they have booked since inception` : ""}.${tot.leftOut.length ? ` Leaves out ${leftOutNames}: their sale proceeds are unverified, so their realised is not counted until they are.` : ""}`}>
                                   {fmtFromBase(realised, { compact: true, sign: true })}
                                 </span>
                           }</td>
@@ -5336,11 +5378,12 @@ export function PortfolioMonitor() {
                         rather than a zero. */
                     realised: (
                     <td key="realised" className="px-2 py-1.5 text-right mono whitespace-nowrap" data-realised={totFifo.realised ?? undefined}
-                      data-realised-withheld={totFifo.realised === null && totFifo.hprUnavailableReason ? "" : undefined}>{
+                      data-realised-withheld={totFifo.realised === null && totFifo.hprUnavailableReason ? "" : undefined}
+                      data-realised-left-out={leftOut.length || undefined}>{
                       totFifo.realised === null
                         ? <AbsentCell reason={totFifo.hprUnavailableReason
                             ? `withheld for the whole table: ${totFifo.hprUnavailableReason}`
-                            : "no holding in this table is covered by a capital gain statement or a dated unit record, so what its sales realised is not reported"} />
+                            : [leftOutNote, "No other holding in this table is covered by a capital gain statement or a dated unit record, so what its sales realised is not reported."].filter(Boolean).join(" ")} />
                         /* ONLY THE FIGURE ON THE FACE (the family: "Only
                             figures must be there"). Which of the two realised
                             figures this book prints, what it counts and leaves
@@ -5348,7 +5391,7 @@ export function PortfolioMonitor() {
                             the short basis tag rides the hover and the
                             `data-realised-face` attribute so the check still
                             reads it. */
-                        : <span className={changeColor(totFifo.realised)} title={`${realisedBasis.face}. ${realisedBasis.note}`} data-realised-basis data-realised-face={realisedBasis.face}>
+                        : <span className={changeColor(totFifo.realised)} title={[`${realisedBasis.face}. ${realisedBasis.note}`, leftOutNote].filter(Boolean).join(" ")} data-realised-basis data-realised-face={realisedBasis.face}>
                             {fmtFromBase(totFifo.realised, { compact: true, sign: true })}
                           </span>
                     }</td>
@@ -5380,19 +5423,21 @@ export function PortfolioMonitor() {
                           title={onCost && totalRet !== null
                             // THE BASIS, EXITS INCLUDED (Stage 10fz): `fifoBasisNote` names
                             // what the exited holdings and mandates put in the figure.
-                            ? [returnSetLine, fifoBasisNote(totFifoCosted, money) ? `${fifoBasisNote(totFifoCosted, money)}.` : "", feedLive ? LIVE_CELL : ""].filter(Boolean).join(" ")
+                            ? [returnSetLine, leftOutNote, fifoBasisNote(totFifoCosted, money) ? `${fifoBasisNote(totFifoCosted, money)}.` : "", feedLive ? LIVE_CELL : ""].filter(Boolean).join(" ")
                             : onCost && feedLive ? LIVE_CELL : undefined}
                           {...(onCost && totalRet !== null
-                            ? { "data-footer-return-set": `${footStruckLines}/${footCover.lines}`, "data-footer-return-set-text": returnSetLine }
+                            ? { "data-footer-return-set": `${returnLines}/${footCover.lines}`, "data-footer-return-set-text": returnSetLine,
+                                "data-footer-return-left-out": leftOut.length || undefined }
                             : onCost && totFifoCosted.hprUnavailableReason ? { "data-footer-return-withheld": "" } : {})}>
                           {!onCost
                             ? <AbsentCell reason={`This is the whole book, not a holding: ${AGG_NO_MEASURE[measure]} Its cumulative return shows under HPR — tick Holding Period Return to see it.`} />
                             : totalRet === null
-                            ? <AbsentCell reason={totFifoCosted.hprUnavailableReason ?? (footStruckLines === 0 && footCover.atCost.lines > 0
+                            ? <AbsentCell reason={totFifoCosted.hprUnavailableReason ?? (returnLines === 0 && leftOut.length > 0 ? leftOutNote
+                                : footStruckLines === 0 && footCover.atCost.lines > 0
                                 ? `every holding in this table that reports a cost is ${AT_COST_RETURN}`
                                 : "no holding in this table reports a cost, so there is nothing to strike a return over — each costed holding shows its own on its row")} />
                             : feedLive ? fmtPct(totalRet, { sign: true })
-                            : <Auditable formula={{ title: "Total return (FIFO)", excel: "= (Σ unrealised + Σ realised) ÷ Σ capital deployed × 100", plain: "Everything the holdings in this table have produced — the unrealised gain on what is held and the realised gain on what was already sold, matched first-in, first-out — over every rupee that bought a unit of them. A whole mandate is struck on its capital since inception.", worked: `= (${money(totFifoCosted.unrealised ?? 0, true)} + ${money(totFifoCosted.realised ?? 0, true)}${totFifoCosted.income !== null ? ` + ${money(totFifoCosted.income, true)} dividends` : ""}) ÷ ${money(totFifoCosted.deployed ?? 0)} × 100 = ${fmtPct(totalRet, { sign: true })}${exitedNote(totFifoCosted, money) ? ` · ${exitedNote(totFifoCosted, money)}` : ""}${totFifo.uncosted ? ` · over the holdings that report a cost; ${totFifo.uncosted} worth ${money(totFifo.uncostedValue)} report none and are in no part of it` : ""}${totFifo.atCost ? ` · ${atCostNote(totFifo, money)}` : ""}` }}>{fmtPct(totalRet, { sign: true })}</Auditable>}
+                            : <Auditable formula={{ title: "Total return (FIFO)", excel: "= (Σ unrealised + Σ realised) ÷ Σ capital deployed × 100", plain: "Everything the holdings in this table have produced — the unrealised gain on what is held and the realised gain on what was already sold, matched first-in, first-out — over every rupee that bought a unit of them. A whole mandate is struck on its capital since inception.", worked: `= (${money(totFifoCosted.unrealised ?? 0, true)} + ${money(totFifoCosted.realised ?? 0, true)}${totFifoCosted.income !== null ? ` + ${money(totFifoCosted.income, true)} dividends` : ""}) ÷ ${money(totFifoCosted.deployed ?? 0)} × 100 = ${fmtPct(totalRet, { sign: true })}${exitedNote(totFifoCosted, money) ? ` · ${exitedNote(totFifoCosted, money)}` : ""}${totFifo.uncosted ? ` · over the holdings that report a cost; ${totFifo.uncosted} worth ${money(totFifo.uncostedValue)} report none and are in no part of it` : ""}${totFifo.atCost ? ` · ${atCostNote(totFifo, money)}` : ""}${leftOutNote ? ` · ${leftOutNote}` : ""}` }}>{fmtPct(totalRet, { sign: true })}</Auditable>}
                         </td>
                       )];
                     })),
