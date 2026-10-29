@@ -21,7 +21,7 @@ try {
     });
     const page = await context.newPage(), errors = [];
     page.on('pageerror', error => errors.push(error.message));
-    const initial = `${base}/audit?members=ajay-jaisinghani&consolidated=Holdings&proof=keep#holding`;
+    const initial = `${base}/audit?members=ajay-jaisinghani&consolidated=Consolidated%20View&proof=keep#holding`;
     await page.goto(initial);
     await page.locator('[data-consolidated="ready"]').waitFor();
     await page.bringToFront();

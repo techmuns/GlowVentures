@@ -33,7 +33,7 @@ export function ConsolidatedSheet({ onSources, onLoaded }: { onSources: () => vo
     });
     return () => { alive = false; };
   }, [retry, onLoaded]);
-  const sheet = book?.tabs.find(t => t.name === params.get("consolidated")) ?? book?.tabs.find(t => t.name === "Portfolio Allocation");
+  const sheet = book?.tabs.find(t => t.name === params.get("consolidated")) ?? book?.tabs[0];
   const query = useTableExportFilter(params.get("q") ?? "", "");
   const scopeFilter = useMemo(() => {
     try { const parsed = JSON.parse(params.get("scope") ?? "{}"); return parsed && typeof parsed === "object" && !Array.isArray(parsed)
@@ -91,8 +91,8 @@ export function ConsolidatedSheet({ onSources, onLoaded }: { onSources: () => vo
     <p data-prose-ok="consolidated template units, valuation basis and missing-input coverage" className="mb-3 max-w-5xl text-xs leading-relaxed text-slate-400">{sheet.note}</p>
     <Card pad={false}>
       <div className="max-h-[65vh] overflow-auto" data-navigation-scroll="consolidatedsheet-1">
-        <ExportableTable exportName={`Consolidated — ${sheet.name}`} className="w-full border-separate border-spacing-0 text-xs" data-table-static="the consolidated workbook format preserves its summary hierarchy and register column order">
-          <thead className="sticky top-0 z-20"><tr>{sheet.columns.map((c, i) => <th key={c.key} className={`border-b border-r border-ink-700 bg-ink-800 px-3 py-3 text-left font-semibold text-slate-200 ${i === 0 ? "sticky left-0 z-30" : ""}`}
+        <ExportableTable exportName={`Consolidated — ${sheet.name}`} className="w-full border-separate border-spacing-0 text-xs" data-table-static="the consolidated workbook keeps one fixed column order so the Excel download and the page read the same">
+          <thead className="sticky top-0 z-20"><tr>{sheet.columns.map((c, i) => <th key={c.key} data-col-key={c.key} className={`border-b border-r border-ink-700 bg-ink-800 px-3 py-3 text-left font-semibold text-slate-200 ${i === 0 ? "sticky left-0 z-30" : ""}`}
             style={{ minWidth: Math.min(220, Math.max(100, c.width * 7)), maxWidth: 340 }}><span className="block">{c.label}</span></th>)}</tr></thead>
           <InfiniteTableBody navigationKey="consolidatedsheet-filtered" rows={filtered} columns={sheet.columns.length} resetKey={JSON.stringify([sheet.name, query, scope])}>{({ row, index }) => <tr key={index} data-consolidated-row={index} className={row.kind ? "font-semibold" : "hover:bg-ink-700/30"}>
             {row.values.map((value, i) => {
@@ -102,15 +102,16 @@ export function ConsolidatedSheet({ onSources, onLoaded }: { onSources: () => vo
                 isin: link.isin, value: link.field === 'quantity' && typeof value === 'number' ? value : undefined,
                 accountId: '', securityKey: '', label: text })
                 : link?.file !== undefined ? '/audit?sources=1' : link?.sheet ? `/audit?consolidated=${encodeURIComponent(link.sheet)}${link.find ? `&q=${encodeURIComponent(link.find)}` : ""}${link.where ? `&scope=${encodeURIComponent(JSON.stringify(link.where))}` : ""}` : null;
-              return <td key={c.key} data-export-value={value == null ? "—" : value} data-export-type={typeof value === "number" ? "number" : "text"} data-export-format={c.format} title={value == null ? "Not reported or unsupported by the available source record. See the sheet note and Checks." : String(value)}
+              return <td key={c.key} data-export-value={value == null ? "—" : value} data-export-type={typeof value === "number" ? "number" : "text"} data-export-format={c.format} title={value == null ? "Not reported or unsupported by the available source record. See the sheet note and the row's Notes." : String(value)}
                 className={`border-b border-r border-ink-700/50 px-3 py-2.5 align-top ${typeof value === "number" ? "text-right mono whitespace-nowrap" : "text-left"} ${i === 0 ? "sticky left-0 z-10" : ""} ${row.kind === "group" ? "bg-champagne-500/10 text-champagne-400" : row.kind === "total" ? "bg-ink-700 text-slate-100" : "bg-ink-900 text-slate-300"}`} style={{ maxWidth: 340 }}>
-                {target && value != null ? <SourceLink to={target} className="text-champagne-400 underline decoration-champagne-500/40 underline-offset-2 hover:decoration-champagne-400">{text}</SourceLink> : text}
+                {target && value != null ? <SourceLink to={target} className="text-champagne-400 underline decoration-champagne-500/40 underline-offset-2 hover:decoration-champagne-400">{text}</SourceLink>
+                  : typeof value === "string" && value.length > 120 ? <span className="line-clamp-3">{text}</span> : text}
               </td>;
             })}</tr>}</InfiniteTableBody>
         </ExportableTable>
         {!filtered.length && <p className="p-6 text-sm text-slate-500">No matching rows.</p>}
       </div>
     </Card>
-    <div className="mt-2 flex items-center gap-3 text-xs text-slate-500"><span>{filtered.length.toLocaleString("en-IN")} {query ? "matching " : ""}rows · all 17 subtabs included in Excel</span></div>
+    <div className="mt-2 flex items-center gap-3 text-xs text-slate-500"><span>{filtered.length.toLocaleString("en-IN")} {query ? "matching " : ""}rows · {book.tabs.length === 2 ? "both tabs" : `all ${book.tabs.length} tabs`} included in Excel</span></div>
   </section>;
 }
