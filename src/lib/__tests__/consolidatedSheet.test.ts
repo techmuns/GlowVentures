@@ -139,7 +139,16 @@ const mvCol = idx(CONSOLIDATED_VIEW, "mv") + 1, stmtCol = idx(CONSOLIDATED_VIEW,
 assert.equal(typeof cv.getCell(6, mvCol).value, "number", "market values remain typed INR numbers");
 assert.match(cv.getCell(6, mvCol).numFmt, /^#,##0\.00/);
 assert.ok(cv.getCell(6, stmtCol).value instanceof Date, "Excel dates remain typed dates");
-assert.match((cv.getCell(withTxns + 6, txnCol).value as ExcelJS.CellHyperlinkValue).hyperlink, /^#'Transactions'!A\d+$/);
+// A linked count stays a typed number (Excel's HYPERLINK result), so it sorts and sums.
+const linkedCount = cv.getCell(withTxns + 6, txnCol).value as ExcelJS.CellFormulaValue;
+assert.match(linkedCount.formula, /^HYPERLINK\("#'Transactions'!A\d+",\d+\)$/);
+assert.equal(linkedCount.result, value(CONSOLIDATED_VIEW, withTxns, "txns"));
+assert.equal(typeof linkedCount.result, "number");
+// Unvalued custody units are classified wherever the statement names the instrument.
+for (let i = 0; i < sheet(CONSOLIDATED_VIEW).rows.length; i++)
+  if (String(value(CONSOLIDATED_VIEW, i, "hid")).startsWith("U") && value(CONSOLIDATED_VIEW, i, "instrument") != null)
+    for (const k of ["ac", "cat", "basket"]) assert.ok(value(CONSOLIDATED_VIEW, i, k) != null, `custody row ${i} carries its ${k}`);
+assert.ok(column(TRANSACTIONS, "taxcost").some(v => typeof v === "number"), "the statement's tax-effective cost is kept on its sold lots");
 const tx = reopened.getWorksheet(TRANSACTIONS)!;
 assert.ok(tx.getCell(6, 1).value instanceof Date);
 assert.equal(consolidatedExcelTarget(book, { sheet: CONSOLIDATED_VIEW, where: { acct: "unreported-account" } }), null, "a missing target is not redirected to an unrelated row");

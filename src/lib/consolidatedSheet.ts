@@ -98,7 +98,7 @@ const TXN_COLUMNS: ConsolidatedColumn[] = [
   money("net", "Net cash flow to family (₹)"),
   date("pdate", "Lot purchase date"), money("pamt", "Lot purchase amount (₹)"), date("sdate", "Lot sale date"), money("samt", "Lot sale amount (₹)"),
   col("days", "Days held", COUNT, 9), col("term", "Term", "", 8), money("rgain", "Realised gain (₹)"), money("st", "Short-term gain (₹)"), money("lt", "Long-term gain (₹)"),
-  col("gf", "FMV on 31-Jan-2018 (₹ per unit)", RATE, 14), money("taxlt", "Taxable long-term gain (₹)"), col("fy", "Financial year", "", 10),
+  col("gf", "FMV on 31-Jan-2018 (₹ per unit)", RATE, 14), money("taxcost", "Tax-effective cost (₹)"), money("taxlt", "Taxable long-term gain (₹)"), col("fy", "Financial year", "", 10),
   col("src", "Source document", "", 30), col("notes", "Notes", "", 44), col("check", "Row check", "", 18), col("tid", "Row ID", "", 8),
 ];
 
@@ -186,7 +186,7 @@ export function buildConsolidatedSheet(docs: ArchiveDoc[], input: { accounts: Ac
       qty: l.quantity, price: original?.saleRate ?? ratio(l.saleAmount, l.quantity),
       pdate: l.purchaseDate, pamt: l.purchaseAmount, sdate: l.saleDate, samt: l.saleAmount, days: l.daysHeld, term: l.term,
       rgain: l.shortTerm != null || l.longTerm != null ? l.gain : null, st: l.shortTerm, lt: l.longTerm,
-      gf: tax?.priceOn31Jan2018 ?? null, taxlt: tax?.effectiveLongTerm ?? null, fy: fiscalYear(l.saleDate),
+      gf: tax?.priceOn31Jan2018 ?? null, taxcost: tax?.effectiveCost ?? null, taxlt: tax?.effectiveLongTerm ?? null, fy: fiscalYear(l.saleDate),
       notes: "Realised FIFO lot as the capital gain statement prints it. Carries no cash flow: the sale's money is on its trade row.",
       src: l.source, check: a ? "Reported realised lot" : "Account join missing", _source: l.source });
   }
@@ -300,8 +300,10 @@ export function buildConsolidatedSheet(docs: ArchiveDoc[], input: { accounts: Ac
   for (const u of custody) {
     const a = accountById.get(u.accountId), cost = u.cost;
     const evidence = cost?.evidence.map(e => `${e.path}, ${e.sheet}, rows ${e.rows.join(", ")}`).join("; ");
+    // Classified as a valued holding is, wherever the statement names the instrument.
+    const c = u.assetClass ? classify({ accountId: u.accountId, securityKey: u.securityKey, assetClass: u.assetClass }) : {};
     view.push({ hid: `U${view.length + 1}`, name: securityLabel(u.securityKey, u.security), printed: u.security, sec: u.securityKey, isin: u.isin,
-      ...accountMeta(a), qty: u.quantity, stmt: u.asOf,
+      ...accountMeta(a), ...c, instrument: u.assetClass, qty: u.quantity, stmt: u.asOf,
       first: cost?.heldPurchases?.first ?? null, last: cost?.heldPurchases?.last ?? null,
       cost: cost?.costBasis ?? null, avg: cost ? cost.costBasis / cost.quantity : null,
       rgain: cost?.realizedPnL ?? null, income: cost?.dividendReceived ?? null, basis: "No statement value",

@@ -59,7 +59,11 @@ export function createConsolidatedWorkbook(book: ConsolidatedBook, dashboardUrl:
           const target = link.file !== undefined
             ? new URL(`/audit?${link.file ? `file=${encodeURIComponent(link.file)}` : "sources=1"}`, dashboardUrl).href
             : consolidatedExcelTarget(book, link);
-          if (target) { cell.value = { text: String(value), hyperlink: target }; cell.font = { name: "Calibri", size: 10, color: { argb: "FF175C99" }, underline: true }; }
+          // A linked number stays a number: HYPERLINK's result is the value, so
+          // the column still sorts and sums. Excel caps the link at 255 chars.
+          const linked: ExcelJS.CellValue = !target ? null : typeof value !== "number" ? { text: String(value), hyperlink: target }
+            : target.length <= 255 ? { formula: `HYPERLINK("${target.replace(/"/g, '""')}",${value})`, result: value } : null;
+          if (linked) { cell.value = linked; cell.font = { name: "Calibri", size: 10, color: { argb: "FF175C99" }, underline: true }; }
         }
         cell.alignment = { vertical: "top", wrapText: typeof value === "string", horizontal: typeof value === "number" ? "right" : "left" };
         if (!cell.font) cell.font = { name: "Calibri", size: 10 };
