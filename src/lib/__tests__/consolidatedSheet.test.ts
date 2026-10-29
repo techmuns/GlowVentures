@@ -95,6 +95,14 @@ for (let j = 0; j < sheet(TRANSACTIONS).rows.length; j++) {
   const pms = BOOK_ACCOUNTS.find(a => a.accountId === acct)?.engagement === "PMS";
   assert.ok(held.size !== 1 || pms, `${acct}: an account-level record of a one-holding account joins that holding`);
 }
+// An exited security's lots are classified from the class its statements state.
+{
+  const exited = deriveRealisedLots(docs).lots.filter(l => l.assetClass && !BOOK_POSITIONS.some(p => p.securityKey === l.securityKey));
+  const rows = sheet(TRANSACTIONS).rows.map((_, j) => j).filter(j => value(TRANSACTIONS, j, "record") === "Tax lot — sold"
+    && exited.some(l => l.securityKey === value(TRANSACTIONS, j, "sec")) && value(TRANSACTIONS, j, "acct"));
+  if (exited.length) assert.ok(rows.length, "the archive has exited sold lots to check");
+  for (const j of rows) for (const k of ["ac", "cat", "basket"]) assert.ok(value(TRANSACTIONS, j, k) != null, `exited lot row ${j} carries its ${k}`);
+}
 // Each holding's count of records ties to the Transactions tab.
 for (let i = 0; i < sheet(CONSOLIDATED_VIEW).rows.length; i++) {
   const acct = value(CONSOLIDATED_VIEW, i, "acct"), sec = value(CONSOLIDATED_VIEW, i, "sec"), n = value(CONSOLIDATED_VIEW, i, "txns");

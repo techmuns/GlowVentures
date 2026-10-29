@@ -28,7 +28,7 @@ import {
   BOOK_COMMITMENTS, BOOK_CAPITAL_MOVES, BOOK_POSITION_TRANCHES,
   BOOK_CAPITAL_FROM_INCEPTION, BOOK_REVIEW_FLOWS, BOOK_REVIEW_WRITTEN_OFF, BOOK_SHARE_MOVEMENTS, BOOK_RECOVERED_COSTS, BOOK_POLYCAB,
 } from "../data/glowData";
-import { dedupedPositions, holdingBucket, bucketLabel, isMandateHeld } from "./analytics";
+import { dedupedPositions, holdingBucket, bucketLabel, isMandateHeld, MANDATE_BUCKET } from "./analytics";
 import { basketKeyOf, familyClassKeyOf } from "./familyTaxonomy";
 import { ownerDisplayName, ownerById } from "./owners";
 import { securityLabel } from "./securityLabel";
@@ -38,7 +38,7 @@ import { buildDatedCapital } from "./datedCapital";
 import { capitalMovesWithCalls } from "./tranches";
 import { fifoTotals } from "./fifo";
 import { deriveTransactions, deriveRealisedLots, deriveIncome, type ArchiveDoc } from "./ledgerModel";
-import type { Account, Position } from "./types";
+import { isAssetClass, type Account, type Position } from "./types";
 
 export type ConsolidatedCell = string | number | null;
 export type ConsolidatedColumn = { key: string; label: string; format: string; width: number };
@@ -124,8 +124,13 @@ export function buildConsolidatedSheet(docs: ArchiveDoc[], input: { accounts: Ac
   // What a dated record files under: its holding's mapping where the book holds
   // it, otherwise only what the statement itself named.
   const mapping = (acct: string | null | undefined, sec: string | null | undefined, stated: string | null = null) => {
-    const p = positionOf(acct, sec), c = p ? classify(p) : null;
-    return { ac: c?.ac ?? null, cat: c?.cat ?? stated, basket: c?.basket ?? null, sector: p?.sector ?? null, isin: p?.isin ?? null };
+    // An exited security has no holding left, so it is classified as one would
+    // be from the class its own statements stated, in its own account.
+    const p = positionOf(acct, sec);
+    const c = p ? classify(p) : acct && sec && isAssetClass(stated) ? classify({ accountId: acct, securityKey: sec, assetClass: stated }) : null;
+    // A mandate's every record is the mandate's, whatever it is in (`holdingBucket`).
+    const mandate = acct && isMandateHeld(accountById.get(acct)?.engagement) ? MANDATE_BUCKET : null;
+    return { ac: c?.ac ?? null, cat: c?.cat ?? mandate ?? stated, basket: c?.basket ?? null, sector: p?.sector ?? null, isin: p?.isin ?? null };
   };
   const accountCols = (a: Account | undefined) => ({ acct: a?.accountId ?? null, ent: a ? ownerDisplayName(a.ownerId) : null, provider: a?.provider ?? null });
   const txns = deriveTransactions(docs), realised = deriveRealisedLots(docs), income = deriveIncome(docs);
