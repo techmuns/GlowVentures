@@ -271,6 +271,10 @@ try {
   assert.equal(new URL(watching.url()).searchParams.get('members'), 'ajay-jaisinghani');
   assert.equal(await watching.locator('tr[data-account-row="hdfc-mutual-fund-15644806"] [data-col-cell="investedOn"]').getAttribute('data-invested-first'), '2022-08-03');
   await page.goto(baseURL + '/statements'); await page.locator('[data-upload-state="ready"]').waitFor();
+  // Recent statements keeps this tab's open/closed choice; open it if it is closed.
+  const recent = page.locator('[data-recent-statements-toggle]');
+  await recent.waitFor();
+  if (await recent.getAttribute('aria-expanded') === 'false') await recent.click();
   await page.waitForFunction(() => document.querySelectorAll('[data-upload-status="in-library"]').length === 7);
   for (const f of inboxLog().batches.flatMap(b => b.files)) {
     const uploaded = page.locator('tr[data-upload-status="in-library"]').filter({ has: page.getByText(path.basename(f.name), { exact: true }) });

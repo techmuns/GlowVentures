@@ -192,6 +192,10 @@ try {
   await event(page.locator('aside'), 'drop', rootData);
   await waitForCommit(2);
   assert.equal(committed.length, 2, 'The root view and the sidebar use the same upload owner');
+  // The drop opened Recent statements; it stays open through the reload a new publication makes.
+  await page.locator('[data-recent-statements-toggle][aria-expanded="true"]').waitFor();
+  await page.reload(); await page.locator('[data-upload-state="ready"]').waitFor();
+  await page.locator('[data-format-block="Recent statements"] [data-upload-status="queued"]').first().waitFor({ timeout: 5_000 });
 
   // Folder traversal is paged and nested, like a native Chrome directory drop.
   await open();
@@ -230,6 +234,9 @@ try {
   // Completed files from other providers no longer clutter this folder.
   assert.equal(await folder().getByText('previously-published.pdf', { exact: true }).count(), 0);
   await page.getByRole('button', { name: 'All folders', exact: true }).evaluate(el => el.click());
+  // Recent statements is a closed tab on the main page until it is opened.
+  assert.equal(await page.locator('[data-format-block="Recent statements"]').count(), 0);
+  await page.locator('[data-recent-statements-toggle][aria-expanded="false"]').click();
   await page.locator('[data-format-block="Recent statements"]').getByRole('button', { name: other.provider, exact: true }).click();
   await page.locator('[data-open-folder]').filter({ hasText: other.provider }).waitFor();
   assert.equal(new URL(page.url()).searchParams.get('provider'), other.provider);
