@@ -1,5 +1,5 @@
 import { statementAsset } from "@/lib/runtimeBook";
-import { useNavigationState, useNavigationValue, nullableStringNavigation } from "@/lib/useNavigationState";
+import { useNavigationState, useNavigationValue, nullableStringNavigation, booleanNavigation } from "@/lib/useNavigationState";
 import { ExportableTable } from "@/components/ExportableTable";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -468,7 +468,8 @@ export function StatementLibrary() {
   }, [linkedDocument, searchParams, setSearchParams]);
   const inbox = useStatementInbox();
   // Closed until asked for; a file dropped on this page opens it, so its progress is in view.
-  const [recentOpen, setRecentOpen] = useState(false);
+  // Kept in the history entry, so the reload a new publication makes leaves it open.
+  const [recentOpen, setRecentOpen] = useNavigationValue("library-recent-open", false, booleanNavigation);
   const newestSend = inbox.sending[0]?.id;
   useEffect(() => { if (newestSend) setRecentOpen(true); }, [newestSend]);
 

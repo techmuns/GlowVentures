@@ -192,6 +192,10 @@ try {
   await event(page.locator('aside'), 'drop', rootData);
   await waitForCommit(2);
   assert.equal(committed.length, 2, 'The root view and the sidebar use the same upload owner');
+  // The drop opened Recent statements; it stays open through the reload a new publication makes.
+  await page.locator('[data-recent-statements-toggle][aria-expanded="true"]').waitFor();
+  await page.reload(); await page.locator('[data-upload-state="ready"]').waitFor();
+  await page.locator('[data-format-block="Recent statements"] [data-upload-status="queued"]').first().waitFor({ timeout: 5_000 });
 
   // Folder traversal is paged and nested, like a native Chrome directory drop.
   await open();
