@@ -15,24 +15,20 @@ It combines the two example formats:
 
 The workbook holds **demo data only**: a fictional family, fictional
 securities and fictional figures. Nothing from either client's file is in it.
-The dashboard's **Data Audit → Consolidated Sheet** now uses this format with
-Glow Ventures' actual data. `src/data/consolidatedTemplate.json` records the
-visible register columns from this template; fictional demo data is never used.
-`src/lib/consolidatedSheet.ts` projects the canonical book and reconciled archive
-into all 17 tabs during `npm run build:views` (also run before dev, build and tests).
-Newly wired statements therefore update the same sheet on the next deployment.
-The sheet is a view of the canonical book, not a separately edited data store.
+The dashboard's **Data Audit → Consolidated Sheet** no longer uses this 17-tab
+format (Stage 10je). At the family's request (29 Oct 2026) it is two tabs, built
+by `src/lib/consolidatedSheet.ts` from the canonical book and reconciled archive
+during `npm run build:views`:
 
-Data Audit opens on Portfolio Allocation. Original statement tables are retained
-in the collapsed **Sources** footnote; existing source deep links open it directly.
-Summary links lead to detail tabs, and **Download Excel** exports all 17 tabs with
-typed values, dates and internal navigation. Excel is a dated snapshot of the
-displayed revision. Registers use full INR; summary views use ₹ Crore.
+- **Consolidated View** — one row per holding, the security first, with every
+  mapping the dashboard carries as a column (owner, account, provider, asset
+  class, category, basket, sector, cost, value, unrealised / realised / income,
+  FIFO return, XIRR, fund commitment, source document).
+- **Transactions** — every dated record, newest first: trades, capital flows,
+  income, corporate actions, and the capital-gain statements' tax lots.
 
-Unavailable period snapshots, benchmark returns, current tax-lot inputs and basket
-targets stay blank, with coverage explained in the sheet notes and Checks.
-Realised lots retain any source-stated grandfathering FMV and effective tax cost.
-Statement dates, at-cost holdings and unvalued units remain explicit.
+**Download Excel** exports the same two tabs. This demo workbook and its
+generator are kept for reference only.
 
 ## How it is laid out
 

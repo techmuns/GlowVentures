@@ -20,7 +20,7 @@ export function createConsolidatedWorkbook(book: ConsolidatedBook, dashboardUrl:
   workbook.creator = "Glow Ventures";
   workbook.subject = "Consolidated statement data";
   for (const tab of book.tabs) {
-    const sheet = workbook.addWorksheet(tab.name, { properties: { tabColor: { argb: tab.name === "Start Here" ? "FF17304C" : "FFC3A44D" } } });
+    const sheet = workbook.addWorksheet(tab.name, { properties: { tabColor: { argb: tab === book.tabs[0] ? "FF17304C" : "FFC3A44D" } } });
     const width = Math.max(2, tab.columns.length);
     sheet.mergeCells(1, 1, 1, width);
     sheet.getCell(1, 1).value = `${tab.name} — ${book.client}`;
@@ -33,8 +33,10 @@ export function createConsolidatedWorkbook(book: ConsolidatedBook, dashboardUrl:
     sheet.getCell(3, 1).value = tab.note;
     sheet.getCell(3, 1).alignment = { wrapText: true, vertical: "top" };
     sheet.getRow(3).height = 45;
-    sheet.getCell(4, 1).value = { text: "Start Here", hyperlink: "#'Start Here'!A1" };
-    sheet.getCell(4, 2).value = { text: "Dashboard sources", hyperlink: new URL("/audit?sources=1", dashboardUrl).href };
+    // Row 4 opens the workbook's other tabs, then the dashboard's source archive.
+    const others = book.tabs.filter(t => t !== tab);
+    others.forEach((t, i) => { sheet.getCell(4, i + 1).value = { text: t.name, hyperlink: `#'${t.name.replace(/'/g, "''")}'!A1` }; });
+    sheet.getCell(4, others.length + 1).value = { text: "Dashboard sources", hyperlink: new URL("/audit?sources=1", dashboardUrl).href };
     sheet.getRow(4).font = { color: { argb: "FF175C99" }, underline: true };
     for (let c = 0; c < tab.columns.length; c++) {
       const column = tab.columns[c];
@@ -57,7 +59,11 @@ export function createConsolidatedWorkbook(book: ConsolidatedBook, dashboardUrl:
           const target = link.file !== undefined
             ? new URL(`/audit?${link.file ? `file=${encodeURIComponent(link.file)}` : "sources=1"}`, dashboardUrl).href
             : consolidatedExcelTarget(book, link);
-          if (target) { cell.value = { text: String(value), hyperlink: target }; cell.font = { name: "Calibri", size: 10, color: { argb: "FF175C99" }, underline: true }; }
+          // A linked number stays a number: HYPERLINK's result is the value, so
+          // the column still sorts and sums. Excel caps the link at 255 chars.
+          const linked: ExcelJS.CellValue = !target ? null : typeof value !== "number" ? { text: String(value), hyperlink: target }
+            : target.length <= 255 ? { formula: `HYPERLINK("${target.replace(/"/g, '""')}",${value})`, result: value } : null;
+          if (linked) { cell.value = linked; cell.font = { name: "Calibri", size: 10, color: { argb: "FF175C99" }, underline: true }; }
         }
         cell.alignment = { vertical: "top", wrapText: typeof value === "string", horizontal: typeof value === "number" ? "right" : "left" };
         if (!cell.font) cell.font = { name: "Calibri", size: 10 };

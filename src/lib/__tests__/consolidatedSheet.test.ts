@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import ExcelJS from "exceljs";
-import { buildConsolidatedSheet, type ConsolidatedBook } from "../consolidatedSheet";
+import { buildConsolidatedSheet, CONSOLIDATED_VIEW, TRANSACTIONS, type ConsolidatedBook } from "../consolidatedSheet";
 import { createConsolidatedWorkbook, consolidatedExcelTarget } from "../exportConsolidatedExcel";
-import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_AS_OF, BOOK_SUMMARY, BOOK_COMMITMENTS, BOOK_RECOVERED_COSTS } from "../../data/glowData";
+import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_AS_OF, BOOK_SUMMARY, BOOK_COMMITMENTS, BOOK_RECOVERED_COSTS, BOOK_POLYCAB } from "../../data/glowData";
 import { deriveTransactions, deriveRealisedLots, type ArchiveDoc } from "../ledgerModel";
 import revision from "../../data/readModels.json";
 
@@ -11,128 +11,160 @@ const manifest = JSON.parse(readFileSync("public/audit/manifest.json", "utf8"));
 const docs: ArchiveDoc[] = manifest.map((d: { docKey: string }) => JSON.parse(readFileSync(`public/audit/${d.docKey}/document.json`, "utf8")));
 const book = buildConsolidatedSheet(docs);
 assert.deepEqual(JSON.parse(readFileSync(`public/views/${revision.revision}/consolidated/book.json`, "utf8")), JSON.parse(JSON.stringify(book)), "build output is the complete deterministic projection");
-const sheet = (name: string, b = book) => b.tabs.find(t => t.name === name)!;
-const value = (name: string, row: number, key: string, b = book) => { const t = sheet(name, b); return t.rows[row].values[t.columns.findIndex(c => c.key === key)]; };
-const sumColumn = (name: string, key: string, b = book) => sheet(name, b).rows.reduce((s, r) => {
-  const v = r.values[sheet(name, b).columns.findIndex(c => c.key === key)]; return s + (typeof v === "number" ? v : 0);
-}, 0);
+const sheet = (name: string, b: ConsolidatedBook = book) => b.tabs.find(t => t.name === name)!;
+const idx = (name: string, key: string, b = book) => { const i = sheet(name, b).columns.findIndex(c => c.key === key); assert.ok(i >= 0, `${name} has a ${key} column`); return i; };
+const value = (name: string, row: number, key: string, b = book) => sheet(name, b).rows[row].values[idx(name, key, b)];
+const column = (name: string, key: string, b = book) => sheet(name, b).rows.map(r => r.values[idx(name, key, b)]);
 const near = (a: number, b: number) => assert.ok(Math.abs(a - b) < 0.01, `${a} != ${b}`);
-assert.equal(book.tabs.length, 17);
+
+// TWO TABS (Stage 10je): one row per holding, and every dated record.
+assert.deepEqual(book.tabs.map(t => t.name), [CONSOLIDATED_VIEW, TRANSACTIONS]);
 assert.equal(book.client, "Glow Ventures");
 assert.equal(book.documents, manifest.length);
-assert.equal(sheet("Accounts").rows.length, BOOK_ACCOUNTS.length);
-near(book.totalValue, BOOK_SUMMARY.totalValue);
-near(value("Portfolio Allocation", sheet("Portfolio Allocation").rows.length - 1, "value") as number * 1e7, BOOK_SUMMARY.totalValue);
-near(sumColumn("Basket Detail", "mv") * 1e7, BOOK_SUMMARY.totalValue);
-near(value("Basket Allocation", sheet("Basket Allocation").rows.length - 1, "value") as number * 1e7, BOOK_SUMMARY.totalValue);
-assert.equal(sheet("Tax Lots").rows.filter(r => String(r.values[0]).startsWith("R")).length, deriveRealisedLots(docs).lots.length);
-assert.ok(sheet("Tax Lots").rows.some((_, i) => typeof value("Tax Lots", i, "gf") === "number" && typeof value("Tax Lots", i, "rtcost") === "number"), "source-stated FMV and effective tax cost are filled, not discarded");
-assert.ok(sheet("Tax Summary").rows.some((_, i) => typeof value("Tax Summary", i, "tlt") === "number"), "reported effective long-term gains reach the tax summary");
-assert.equal(sheet("Transactions").rows.filter(r => r.values[sheet("Transactions").columns.findIndex(c => c.key === "counts")] === "Internal trade").length, deriveTransactions(docs).txns.length, "own fund allotments are not repeated as internal trades");
-assert.ok(sheet("Holdings").rows.some(r => String(r.values[0]).startsWith("U") && r.values[sheet("Holdings").columns.findIndex(c => c.key === "mv")] === null));
-assert.ok(sheet("Holdings").rows.some(r => r.values[sheet("Holdings").columns.findIndex(c => c.key === "basis")] === "At cost" && r.values[sheet("Holdings").columns.findIndex(c => c.key === "ugain")] === null));
-for (const key of ["opening", "marketGain", "return"]) assert.ok(sheet("Period Change").rows.every((_, i) => value("Period Change", i, key) === null));
-for (const key of ["target", "gap"]) assert.ok(sheet("Basket Allocation").rows.every((_, i) => value("Basket Allocation", i, key) === null));
-assert.ok(!JSON.stringify(book).includes("Malhotra"), "fictional client data never enters the projection");
+assert.equal(sheet(CONSOLIDATED_VIEW).columns[0].label, "Security", "the security is the first column");
+assert.ok(sheet(CONSOLIDATED_VIEW).columns.length >= 50, "every mapping the dashboard carries is a column");
+for (const key of ["ent", "acct", "provider", "ac", "cat", "basket", "sector", "side", "qty", "cost", "mv", "ugain", "rgain", "income", "tgain", "absret", "xirr", "comm", "src"])
+  idx(CONSOLIDATED_VIEW, key);
 assert.ok(book.tabs.every(t => t.rows.every(r => r.values.length === t.columns.length)));
-const scopedAif = sheet("Portfolio Allocation").rows.find(r => r.values[0] === "AIF" && r.links?.category?.where?.ac === "Debt");
-assert.ok(scopedAif, "a category link retains its parent asset class");
-const debtAifTarget = consolidatedExcelTarget(book, scopedAif.links!.category)!;
-const targetRow = Number(/A(\d+)$/.exec(debtAifTarget)![1]) - 6;
-assert.equal(value("Holdings", targetRow, "ac"), "Debt");
-assert.equal(value("Holdings", targetRow, "cat"), "AIF");
-const firstHolding = sheet("Holdings").rows[0];
-assert.deepEqual(firstHolding.links!.acct.where, { id: value("Holdings", 0, "acct") });
-assert.deepEqual(firstHolding.links!.ent.where, { name: value("Holdings", 0, "ent") });
-const entityTarget = consolidatedExcelTarget(book, firstHolding.links!.ent)!;
-assert.equal(value("Entities", Number(/A(\d+)$/.exec(entityTarget)![1]) - 6, "name"), value("Holdings", 0, "ent"));
+
+// The view ties to the canonical book: the counted rows' value is the family total.
+near(book.totalValue, BOOK_SUMMARY.totalValue);
+const counted = sheet(CONSOLIDATED_VIEW).rows.filter((_, i) => value(CONSOLIDATED_VIEW, i, "counted") === "Y");
+near(counted.reduce((s, r) => s + (r.values[idx(CONSOLIDATED_VIEW, "mv")] as number), 0), BOOK_SUMMARY.totalValue);
+near(counted.reduce((s, r) => s + ((r.values[idx(CONSOLIDATED_VIEW, "alloc")] as number) ?? 0), 0), 1);
+assert.equal(column(CONSOLIDATED_VIEW, "sec").filter((k, i) => k && String(value(CONSOLIDATED_VIEW, i, "hid")).startsWith("H")).length, BOOK_POSITIONS.length, "every book position has its row");
+const viewAccounts = new Set(column(CONSOLIDATED_VIEW, "acct"));
+for (const a of BOOK_ACCOUNTS) assert.ok(viewAccounts.has(a.accountId), `account ${a.accountId} is in the view, a holding row or a named no-holding row`);
+assert.ok(sheet(CONSOLIDATED_VIEW).rows.some((_, i) => String(value(CONSOLIDATED_VIEW, i, "hid")).startsWith("U") && value(CONSOLIDATED_VIEW, i, "mv") === null),
+  "unvalued custody units stay absent, never ₹0");
+assert.ok(sheet(CONSOLIDATED_VIEW).rows.some((_, i) => value(CONSOLIDATED_VIEW, i, "basis") === "At cost" && value(CONSOLIDATED_VIEW, i, "ugain") === null));
+// A holding's total gain is its FIFO terms, and its return is that gain over capital deployed.
+for (let i = 0; i < sheet(CONSOLIDATED_VIEW).rows.length; i++) {
+  const g = value(CONSOLIDATED_VIEW, i, "tgain"), d = value(CONSOLIDATED_VIEW, i, "deployed"), r = value(CONSOLIDATED_VIEW, i, "absret");
+  if (typeof g === "number" && typeof d === "number" && d > 0 && typeof r === "number") assert.ok(Math.abs(g / d - r) < 0.0005, `row ${i}: ${g} / ${d} ≠ ${r}`);
+}
+// A commitment rides the one holding row of its account, never repeated.
+assert.equal(column(CONSOLIDATED_VIEW, "comm").filter(v => v != null).length, BOOK_COMMITMENTS.length);
+// STAGE 10fz — TVPI counts only the distributions paid by the valuation date.
+for (const c of BOOK_COMMITMENTS.filter(c => (c.distributed ?? 0) > 0 && c.payouts)) {
+  const i = sheet(CONSOLIDATED_VIEW).rows.findIndex((_, i) => value(CONSOLIDATED_VIEW, i, "acct") === c.accountId && value(CONSOLIDATED_VIEW, i, "comm") != null);
+  const tvpi = value(CONSOLIDATED_VIEW, i, "tvpi"), mv = value(CONSOLIDATED_VIEW, i, "mv");
+  if (typeof tvpi !== "number" || typeof mv !== "number") continue;
+  const after = c.payouts!.filter(x => x.inPrintedTotal && x.kind !== "equalisation" && c.asOf != null && x.date > c.asOf);
+  near(tvpi, (mv + c.distributed! - after.reduce((s, x) => s + x.gross, 0)) / c.paid!);
+  if (after.length) assert.match(String(value(CONSOLIDATED_VIEW, i, "notes")), /not the \d+ paid after it/);
+}
+// The ring-fence holds: Polycab is named on no row of either tab.
+for (const p of BOOK_POLYCAB) assert.ok(!JSON.stringify(book).includes(p.securityKey), `${p.securityKey} stays on /polycab only`);
+assert.ok(!/polycab/i.test(JSON.stringify(book)));
+assert.ok(!JSON.stringify(book).includes("Malhotra"), "fictional client data never enters the projection");
 assert.ok(!JSON.stringify(book).match(/#REF!|#DIV\/0!|NaN|Infinity/));
 
 // A custody statement need not price its units for the exact account's
-// reconciled purchase cost and dates to appear in the audit register.
+// reconciled purchase cost and dates to appear in the view.
 for (const [suffix, first, last] of [["12539150", "2025-03-06", "2026-03-23"], ["12838316", "2025-11-06", "2025-11-06"], ["12838320", "2025-07-11", "2025-07-11"]]) {
   const record = BOOK_RECOVERED_COSTS.find(r => r.accountId.endsWith(suffix) && r.isin === "INF109KC1RH9")!;
-  const i = sheet("Holdings").rows.findIndex((_, i) => value("Holdings", i, "acct") === record.accountId && value("Holdings", i, "sec") === "icici-ioppf-d-grw");
-  assert.ok(i >= 0, "Every verified custody balance has its own audit row");
-  assert.equal(value("Holdings", i, "qty"), record.quantity);
-  assert.equal(value("Holdings", i, "cost"), record.costBasis);
-  assert.equal(value("Holdings", i, "rgain"), record.realizedPnL);
-  assert.equal(value("Holdings", i, "income"), record.dividendReceived);
-  assert.equal(value("Holdings", i, "first"), first); assert.equal(value("Holdings", i, "last"), last);
-  for (const field of ["price", "mv", "ugain", "absret", "xirr"]) assert.equal(value("Holdings", i, field), null);
-  assert.ok(sheet("Holdings").rows[i].links?.src?.file, "The row opens its actual custody source");
+  const i = sheet(CONSOLIDATED_VIEW).rows.findIndex((_, i) => value(CONSOLIDATED_VIEW, i, "acct") === record.accountId && value(CONSOLIDATED_VIEW, i, "sec") === "icici-ioppf-d-grw");
+  assert.ok(i >= 0, "Every verified custody balance has its own row");
+  assert.equal(value(CONSOLIDATED_VIEW, i, "qty"), record.quantity);
+  assert.equal(value(CONSOLIDATED_VIEW, i, "cost"), record.costBasis);
+  assert.equal(value(CONSOLIDATED_VIEW, i, "rgain"), record.realizedPnL);
+  assert.equal(value(CONSOLIDATED_VIEW, i, "income"), record.dividendReceived);
+  assert.equal(value(CONSOLIDATED_VIEW, i, "first"), first); assert.equal(value(CONSOLIDATED_VIEW, i, "last"), last);
+  for (const field of ["price", "mv", "ugain", "absret", "xirr"]) assert.equal(value(CONSOLIDATED_VIEW, i, field), null);
+  assert.ok(sheet(CONSOLIDATED_VIEW).rows[i].links?.src?.file, "The row opens its actual custody source");
+}
+
+// TRANSACTIONS: every record, newest first, nothing counted twice.
+const dates = column(TRANSACTIONS, "date").map(d => String(d ?? ""));
+assert.ok(dates.every((d, i) => i === 0 || d <= dates[i - 1]), "newest first");
+const record = column(TRANSACTIONS, "record");
+assert.equal(record.filter(r => r === "Trade").length, deriveTransactions(docs).txns.length, "every trade; own fund allotments are not repeated as trades");
+assert.equal(record.filter(r => r === "Tax lot — sold").length, deriveRealisedLots(docs).lots.length, "every realised lot");
+sheet(TRANSACTIONS).rows.forEach((r, i) => {
+  const lot = String(record[i]).startsWith("Tax lot");
+  if (lot) for (const k of ["net", "gross"]) assert.equal(r.values[idx(TRANSACTIONS, k)], null, `a tax lot carries no ${k}: its cash is on the trade row`);
+  if (record[i] === "Trade") assert.equal(r.values[idx(TRANSACTIONS, "rgain")], null, "a trade's realised gain is on its tax-lot rows, counted once");
+});
+assert.ok(column(TRANSACTIONS, "gf").some(v => typeof v === "number") && column(TRANSACTIONS, "taxlt").some(v => typeof v === "number"),
+  "source-stated FMV and taxable long-term gain are kept, not discarded");
+// An account-level capital record joins the account's one holding (never a PMS mandate's).
+for (let j = 0; j < sheet(TRANSACTIONS).rows.length; j++) {
+  if (value(TRANSACTIONS, j, "record") !== "Capital flow" || value(TRANSACTIONS, j, "sec")) continue;
+  const acct = value(TRANSACTIONS, j, "acct") as string, held = new Set(BOOK_POSITIONS.filter(p => p.accountId === acct).map(p => p.securityKey));
+  const pms = BOOK_ACCOUNTS.find(a => a.accountId === acct)?.engagement === "PMS";
+  assert.ok(held.size !== 1 || pms, `${acct}: an account-level record of a one-holding account joins that holding`);
+}
+// An exited security's lots are classified from the class its statements state.
+{
+  const exited = deriveRealisedLots(docs).lots.filter(l => l.assetClass && !BOOK_POSITIONS.some(p => p.securityKey === l.securityKey));
+  const rows = sheet(TRANSACTIONS).rows.map((_, j) => j).filter(j => value(TRANSACTIONS, j, "record") === "Tax lot — sold"
+    && exited.some(l => l.securityKey === value(TRANSACTIONS, j, "sec")) && value(TRANSACTIONS, j, "acct"));
+  if (exited.length) assert.ok(rows.length, "the archive has exited sold lots to check");
+  for (const j of rows) for (const k of ["ac", "cat", "basket"]) assert.ok(value(TRANSACTIONS, j, k) != null, `exited lot row ${j} carries its ${k}`);
+}
+// Each holding's count of records ties to the Transactions tab.
+for (let i = 0; i < sheet(CONSOLIDATED_VIEW).rows.length; i++) {
+  const acct = value(CONSOLIDATED_VIEW, i, "acct"), sec = value(CONSOLIDATED_VIEW, i, "sec"), n = value(CONSOLIDATED_VIEW, i, "txns");
+  if (!acct || !sec || typeof n !== "number") continue;
+  assert.equal(n, sheet(TRANSACTIONS).rows.filter((_, j) => value(TRANSACTIONS, j, "acct") === acct && value(TRANSACTIONS, j, "sec") === sec).length);
 }
 
 for (const t of book.tabs) for (const r of t.rows) for (const link of Object.values(r.links ?? {})) {
-  if (link.sheet) assert.ok(sheet(link.sheet), `missing linked subtab ${link.sheet}`);
-  if (link.sheet === "Securities" && link.where?.id) assert.ok(sheet("Securities").rows.some(r => r.values[0] === link.where!.id), `missing security master ${link.where.id}`);
+  if (link.sheet) assert.ok(sheet(link.sheet), `missing linked tab ${link.sheet}`);
+  if (link.sheet) assert.ok(consolidatedExcelTarget(book, link), `the ${link.sheet} link lands on a row: ${JSON.stringify(link.where)}`);
   if (link.file) assert.ok(manifest.some((m: { docKey: string }) => m.docKey === link.file), `missing source ${link.file}`);
 }
-assert.ok(!sheet("Securities").rows.some(r => r.values[0] === "equity-dividend-income"), "a printed account income bucket is not a financial security");
+const withTxns = sheet(CONSOLIDATED_VIEW).rows.findIndex(r => r.links?.txns);
+const txnTarget = consolidatedExcelTarget(book, sheet(CONSOLIDATED_VIEW).rows[withTxns].links!.txns)!;
+const txnRow = Number(/A(\d+)$/.exec(txnTarget)![1]) - 6;
+assert.equal(value(TRANSACTIONS, txnRow, "acct"), value(CONSOLIDATED_VIEW, withTxns, "acct"));
+assert.equal(value(TRANSACTIONS, txnRow, "sec"), value(CONSOLIDATED_VIEW, withTxns, "sec"));
 
-// Future ingestion: a new valued holding changes the same summaries and masters,
+// Future ingestion: a new valued holding changes the same view and total,
 // and duplicate reporting does not increase the family total a second time.
 const fresh = { ...BOOK_POSITIONS[0], accountId: BOOK_ACCOUNTS[0].accountId, securityKey: "newly-wired-regression", security: "Newly wired regression",
   quantity: 2, costBasis: 100, marketValue: 120, unrealizedPnL: 20, avgCost: 50, currentPrice: 60, realizedPnL: null, valuedAtCost: false, dedupeGroup: "new-regression" };
 const updated = buildConsolidatedSheet(docs, { accounts: BOOK_ACCOUNTS, positions: [...BOOK_POSITIONS, fresh, { ...fresh }], asOf: BOOK_AS_OF });
 near(updated.totalValue - book.totalValue, 120);
-assert.ok(sheet("Securities", updated).rows.some(r => r.values[0] === fresh.securityKey));
-assert.equal(sheet("Holdings", updated).rows.filter(r => r.values[2] === fresh.securityKey).length, 2);
-near(value("Portfolio Allocation", sheet("Portfolio Allocation", updated).rows.length - 1, "value", updated) as number * 1e7, updated.totalValue);
+const freshRows = sheet(CONSOLIDATED_VIEW, updated).rows.filter(r => r.values[idx(CONSOLIDATED_VIEW, "sec", updated)] === fresh.securityKey);
+assert.equal(freshRows.length, 2);
+assert.deepEqual(freshRows.map(r => r.values[idx(CONSOLIDATED_VIEW, "counted", updated)]), ["Y", "N"]);
+assert.equal(freshRows[1].values[idx(CONSOLIDATED_VIEW, "dup", updated)], BOOK_ACCOUNTS[0].accountId, "the uncounted twin names the row it is counted on");
 const doc = { ...docs[0], docKey: "new-source-regression" };
 assert.equal(buildConsolidatedSheet([...docs, doc]).documents, book.documents + 1, "new source enters the same build automatically");
 
+// The Excel download is the same two tabs, typed.
 const wb = createConsolidatedWorkbook(book, "https://glowventures-1xw.pages.dev");
 const reopened = new ExcelJS.Workbook();
 await reopened.xlsx.load(await wb.xlsx.writeBuffer());
-assert.deepEqual(reopened.worksheets.map(s => s.name), book.tabs.map(t => t.name));
+assert.deepEqual(reopened.worksheets.map(s => s.name), [CONSOLIDATED_VIEW, TRANSACTIONS]);
 for (const t of book.tabs) {
   const s = reopened.getWorksheet(t.name)!;
   assert.equal(s.rowCount, t.rows.length + 5);
   assert.equal(s.getCell(5, 1).value, t.columns[0].label);
-  assert.equal((s.getCell(4, 1).value as ExcelJS.CellHyperlinkValue).hyperlink, "#'Start Here'!A1");
+  assert.equal((s.getCell(4, 1).value as ExcelJS.CellHyperlinkValue).hyperlink, `#'${book.tabs.find(o => o !== t)!.name}'!A1`, "row 4 opens the other tab");
   assert.ok(s.views[0].state === "frozen");
   assert.equal(s.views[0].ySplit, 5, `${t.name}: the header below the title block stays frozen`);
   assert.equal(s.views[0].topLeftCell, "B6");
   for (let c = 1; c <= t.columns.length; c++) assert.ok(s.getColumn(c).width! >= 12, `${t.name}: column ${c} has a fitted width`);
 }
-const pa = reopened.getWorksheet("Portfolio Allocation")!;
-near(pa.getCell(sheet("Portfolio Allocation").rows.length + 5, 4).value as number * 1e7, BOOK_SUMMARY.totalValue);
-assert.equal(pa.getCell(6, 4).numFmt, "#,##0.00");
-assert.match((pa.getCell(6, 1).value as ExcelJS.CellHyperlinkValue).hyperlink, /^#'Holdings'!A\d+$/);
-assert.equal(consolidatedExcelTarget(book, { sheet: "Accounts", find: BOOK_ACCOUNTS[0].accountId }), "#'Accounts'!A6");
-assert.equal(consolidatedExcelTarget(book, { sheet: "Accounts", where: { id: "unreported-account" } }), null, "a missing target is not redirected to an unrelated row");
-const hs = reopened.getWorksheet("Holdings")!;
-const dateCol = sheet("Holdings").columns.findIndex(c => c.key === "stmt") + 1;
-assert.ok(hs.getCell(6, dateCol).value instanceof Date, "Excel dates remain typed dates");
-assert.equal(typeof hs.getCell(6, 18).value, "number", "holding market values remain typed INR numbers");
-assert.match((hs.getCell(6, 2).value as ExcelJS.CellHyperlinkValue).hyperlink, /^#'Accounts'!A\d+$/);
-// STAGE 10fz — TVPI counts only the distributions paid by the valuation date.
-// Neo's printed distributed includes a payout dated after the 30 Jun NAV it is
-// added to; re-derived off the commitment's own dated payouts.
-for (const c of BOOK_COMMITMENTS.filter(c => (c.distributed ?? 0) > 0 && c.payouts)) {
-  const row = sheet("Commitments").rows.find(r => r.values[sheet("Commitments").columns.findIndex(k => k.key === "acct")] === c.accountId)!;
-  const get = (k: string) => row.values[sheet("Commitments").columns.findIndex(x => x.key === k)];
-  const after = c.payouts!.filter(x => x.inPrintedTotal && x.kind !== "equalisation" && c.asOf != null && x.date > c.asOf);
-  const value = get("value");
-  if (typeof get("tvpi") !== "number" || typeof value !== "number") continue;
-  near(get("tvpi") as number, (value + c.distributed! - after.reduce((s, x) => s + x.gross, 0)) / c.paid!);
-  if (after.length) assert.ok(Math.abs((get("tvpi") as number) - (value + c.distributed!) / c.paid!) > 0.005, `${c.name}: TVPI leaves out the payouts dated after ${c.asOf}`);
-  if (after.length) assert.match(String(get("notes")), /not the \d+ paid after it/);
-}
-// STAGE 10fz — the XIRR column is ONE pooled money-weighted rate, never an
-// average of the rows' rates: it lies between the rates it pools, and on a row
-// that pools rates which differ it is not their value-weighted mean.
-{
-  const hsh = sheet("Holdings"), hx = hsh.columns.findIndex(c => c.key === "xirr"), hmv = hsh.columns.findIndex(c => c.key === "mv"), hck = hsh.columns.findIndex(c => c.key === "check");
-  const rates = hsh.rows.filter(r => !/^Duplicate/.test(String(r.values[hck] ?? ""))).map(r => ({ x: r.values[hx], mv: r.values[hmv] })).filter((r): r is { x: number; mv: number } => typeof r.x === "number" && typeof r.mv === "number");
-  const tot = value("Portfolio Allocation", sheet("Portfolio Allocation").rows.length - 1, "xirr");
-  if (rates.length > 1 && typeof tot === "number") {
-    const lo = Math.min(...rates.map(r => r.x)), hi = Math.max(...rates.map(r => r.x));
-    assert.ok(tot >= lo - 1e-9 && tot <= hi + 1e-9, `the pooled XIRR ${tot} lies between the rates it pools [${lo}, ${hi}]`);
-    const avg = rates.reduce((s, r) => s + r.x * r.mv, 0) / rates.reduce((s, r) => s + r.mv, 0);
-    assert.ok(Math.abs(tot - avg) > 1e-6, "the Total XIRR is pooled, not the value-weighted average of holding XIRRs");
-  }
-  assert.match(sheet("Portfolio Allocation").note, /XIRR is pooled/);
-}
-console.log(`PASS consolidated sheet: ${book.tabs.length} subtabs, ${book.documents} sources, ₹${book.totalValue}; future wiring, missing values, dedupe, typed Excel roundtrip and hyperlinks`);
+const cv = reopened.getWorksheet(CONSOLIDATED_VIEW)!;
+const mvCol = idx(CONSOLIDATED_VIEW, "mv") + 1, stmtCol = idx(CONSOLIDATED_VIEW, "stmt") + 1, txnCol = idx(CONSOLIDATED_VIEW, "txns") + 1;
+assert.equal(typeof cv.getCell(6, mvCol).value, "number", "market values remain typed INR numbers");
+assert.match(cv.getCell(6, mvCol).numFmt, /^#,##0\.00/);
+assert.ok(cv.getCell(6, stmtCol).value instanceof Date, "Excel dates remain typed dates");
+// A linked count stays a typed number (Excel's HYPERLINK result), so it sorts and sums.
+const linkedCount = cv.getCell(withTxns + 6, txnCol).value as ExcelJS.CellFormulaValue;
+assert.match(linkedCount.formula, /^HYPERLINK\("#'Transactions'!A\d+",\d+\)$/);
+assert.equal(linkedCount.result, value(CONSOLIDATED_VIEW, withTxns, "txns"));
+assert.equal(typeof linkedCount.result, "number");
+// Unvalued custody units are classified wherever the statement names the instrument.
+for (let i = 0; i < sheet(CONSOLIDATED_VIEW).rows.length; i++)
+  if (String(value(CONSOLIDATED_VIEW, i, "hid")).startsWith("U") && value(CONSOLIDATED_VIEW, i, "instrument") != null)
+    for (const k of ["ac", "cat", "basket"]) assert.ok(value(CONSOLIDATED_VIEW, i, k) != null, `custody row ${i} carries its ${k}`);
+assert.ok(column(TRANSACTIONS, "taxcost").some(v => typeof v === "number"), "the statement's tax-effective cost is kept on its sold lots");
+const tx = reopened.getWorksheet(TRANSACTIONS)!;
+assert.ok(tx.getCell(6, 1).value instanceof Date);
+assert.equal(consolidatedExcelTarget(book, { sheet: CONSOLIDATED_VIEW, where: { acct: "unreported-account" } }), null, "a missing target is not redirected to an unrelated row");
+console.log(`PASS consolidated sheet: ${book.tabs.map(t => `${t.name} ${t.rows.length} rows × ${t.columns.length} columns`).join(", ")}; ${book.documents} sources, ₹${book.totalValue}; ties to the book, newest-first ledger, nothing counted twice, typed Excel roundtrip and hyperlinks`);

@@ -301,12 +301,11 @@ try {
   await page.screenshot({ path: path.join(output, 'after-mf-rows.png'), fullPage: true });
   // Data Audit must expose the same account, security, quantity and date, even
   // when its statement correctly has no valuation for custody-only units.
-  const auditColumns = JSON.parse(fs.readFileSync(path.join(workspace, 'src/data/consolidatedTemplate.json'))).Holdings;
-  const column = key => auditColumns.findIndex(c => c.key === key);
   for (const e of expected) {
-    await page.goto(baseURL + '/audit?consolidated=Holdings&scope=' + encodeURIComponent(JSON.stringify({ acct: e.accountId, sec: e.securityKey })));
+    await page.goto(baseURL + '/audit?consolidated=' + encodeURIComponent('Consolidated View') + '&scope=' + encodeURIComponent(JSON.stringify({ acct: e.accountId, sec: e.securityKey })));
     await page.locator('[data-consolidated="ready"]').waitFor();
-    assert.deepEqual((await page.locator('[data-consolidated="ready"] thead th').allTextContents()).map(s => s.trim()), auditColumns.map(c => c.label));
+    const auditColumns = await page.locator('[data-consolidated="ready"] thead th').evaluateAll(ths => ths.map(th => th.getAttribute('data-col-key')));
+    const column = key => auditColumns.indexOf(key);
     const rows = await page.locator('[data-consolidated-row]').evaluateAll(rows => rows.map(r => [...r.cells].map(c => c.getAttribute('data-export-value'))));
     const values = rows.find(r => r[column('acct')] === e.accountId && r[column('sec')] === e.securityKey);
     assert.ok(values, 'Data Audit has the exact account/security row: ' + e.accountId);

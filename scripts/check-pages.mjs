@@ -37701,8 +37701,12 @@ const INVARIANTS = {
     }],
   ],
   audit: [
-    ["the consolidated sheet is primary and original documents are a collapsed source footnote", (t, ctx) => {
-      return xaEl(ctx, "consolidated-sheet")?.attrs.tabs === "17"
+    /**
+     * TWO TABS (Stage 10je): the family asked for a Consolidated View (one row
+     * per holding, every mapping a column) and a Transactions tab, nothing else.
+     */
+    ["the consolidated sheet is two tabs and original documents are a collapsed source footnote", (t, ctx) => {
+      return xaEl(ctx, "consolidated-sheet")?.attrs.tabs === "2"
         && xaEl(ctx, "audit-sources")?.attrs.open === "false"
         && !(ctx?.xa ?? []).some(x => x.xa === "audit-chip");
     }],

@@ -21,31 +21,29 @@ try {
   assert.equal(await page.locator('details[data-audit-sources]').getAttribute("open"), null);
   assert.equal(requests.filter(p => p.startsWith("/audit/")).length, 0, "summary loads without fetching the original statement archive");
   const tabs = page.getByRole("navigation", { name: "Consolidated sheet subtabs" });
-  assert.equal(await tabs.getByRole("button").count(), 17);
+  assert.equal(await tabs.getByRole("button").count(), 2);
+  assert.equal((await page.locator('[data-consolidated="ready"] thead th').first().innerText()).trim(), "Security", "the security is the first column");
   await page.screenshot({ path: "docs/page-check/consolidated-light.png", fullPage: true });
-  const firstLink = page.locator('[data-consolidated-row="0"] td').first().getByRole("link");
-  await firstLink.click();
-  assert.equal(new URL(page.url()).searchParams.get("consolidated"), "Holdings");
-  assert.ok(new URL(page.url()).searchParams.get("scope"));
-  await page.getByLabel("Search consolidated sheet").fill("");
-  await page.locator('[data-consolidated-row]').first().locator('td').nth(1).getByRole("link").click();
-  assert.equal(new URL(page.url()).searchParams.get("consolidated"), "Accounts");
-  assert.equal(await page.locator('[data-consolidated-row]').count(), 1, "account hyperlink opens only its account row");
+  // A holding's "Transactions on file" opens exactly its records on the second tab.
+  const view = book.tabs[0], txnsAt = view.columns.findIndex(c => c.key === "txns");
+  const linked = view.rows.findIndex(r => r.links?.txns);
+  await page.locator(`[data-consolidated-row="${linked}"] td`).nth(txnsAt).getByRole("link").click();
+  assert.equal(new URL(page.url()).searchParams.get("consolidated"), "Transactions");
+  assert.equal(await page.locator('[data-consolidated-row]').count(), view.rows[linked].values[txnsAt], "the link opens only that holding's records");
   for (const name of await tabs.getByRole("button").allTextContents()) {
     await tabs.getByRole("button", { name, exact: true }).click();
     await page.getByRole("heading", { name, exact: true }).waitFor();
     assert.ok(await page.locator('[data-consolidated-row]').count(), `${name} is populated`);
   }
-  await tabs.getByRole("button", { name: "Portfolio Allocation", exact: true }).click();
+  await tabs.getByRole("button", { name: "Consolidated View", exact: true }).click();
   const downloaded = page.waitForEvent("download");
   await page.getByRole("button", { name: "Download Excel", exact: true }).click();
   const download = await downloaded;
   const path = await download.path();
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.readFile(path);
-  assert.equal(workbook.worksheets.length, 17);
-  assert.equal(workbook.getWorksheet("Accounts").rowCount, book.tabs.find(t => t.name === "Accounts").rows.length + 5);
-  assert.ok(workbook.getWorksheet("Holdings").getCell("B6").value.hyperlink.startsWith("#'Accounts'!"));
+  assert.deepEqual(workbook.worksheets.map(s => s.name), ["Consolidated View", "Transactions"]);
+  for (const t of book.tabs) assert.equal(workbook.getWorksheet(t.name).rowCount, t.rows.length + 5);
   await page.locator('details[data-audit-sources] > summary').click();
   await page.locator('[data-xa="audit-chip"]').first().waitFor();
   assert.equal(await page.locator('[data-xa="audit-chip"]').count(), manifest.length);
@@ -62,5 +60,5 @@ try {
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `no page overflow at ${width}`);
   }
   assert.deepEqual(errors, []);
-  console.log("PASS consolidated browser: 17 subtabs, summary/detail hyperlinks, collapsed source footnote, original source deep links, Excel download, both themes and responsive containment");
+  console.log("PASS consolidated browser: 2 tabs, holding-to-transactions hyperlinks, collapsed source footnote, original source deep links, Excel download, both themes and responsive containment");
 } finally { await browser.close(); }
