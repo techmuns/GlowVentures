@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useSearchParams } from "react-router-dom";
 import {
-  Folder, FolderUp, ChevronLeft, Search, ShieldAlert, ExternalLink, FileText, UploadCloud,
+  Folder, FolderUp, ChevronDown, ChevronLeft, Search, ShieldAlert, ExternalLink, FileText, UploadCloud,
   Loader2, CircleCheck,
 } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
@@ -76,9 +76,9 @@ function UploadActions({ row, inbox }: { row: UploadRow; inbox: ReturnType<typeo
 
 /** Pending files occupy the same table; completed uploads decorate their actual
  * archive rows instead of becoming a second document. */
-function FormatBlock({ format, docs, uploads = [], inbox, onOpen }: {
+function FormatBlock({ format, docs, uploads = [], inbox, onOpen, heading = true }: {
   format: string; docs: LibraryDoc[]; uploads?: UploadRow[];
-  inbox: ReturnType<typeof useStatementInbox>; onOpen?: (provider: string) => void;
+  inbox: ReturnType<typeof useStatementInbox>; onOpen?: (provider: string) => void; heading?: boolean;
 }) {
   const preview = useFilePreview();
   useEffect(() => {
@@ -96,11 +96,11 @@ function FormatBlock({ format, docs, uploads = [], inbox, onOpen }: {
   const orderedDocs = [...docs].sort((a, b) => (receiptFor(b)?.uploadedAt ?? "").localeCompare(receiptFor(a)?.uploadedAt ?? ""));
   const receipts = uploads.filter(row => !completed(row) || !row.fileKeys.some(key => docs.some(d => d.fileKey === key)));
   return <div data-format-block={format}>
-    <div className="mb-2 flex items-center gap-2">
+    {heading && <div className="mb-2 flex items-center gap-2">
       {fileIcon(format)}
       <span className="text-xs font-semibold uppercase tracking-wide text-slate-300">{format}</span>
       {docs.length > 0 && <Pill>{docs.length} {docs.length === 1 ? "file" : "files"}</Pill>}
-    </div>
+    </div>}
     <div className="overflow-x-auto rounded-lg border border-ink-700" data-navigation-scroll={`statement-library-${format}`}>
       <ExportableTable className="min-w-full text-sm" data-table-static="statement files, with uploads at the top until their archive rows are ready">
         <thead className="border-b border-ink-700 text-left text-[11px] uppercase tracking-wide text-slate-500"><tr>
@@ -149,6 +149,23 @@ function FormatBlock({ format, docs, uploads = [], inbox, onOpen }: {
     </div>
     {previewing && <StatementPreview doc={previewing} onClose={preview.close} />}
   </div>;
+}
+
+/** The main page's recent uploads, folded into one small button beside the
+ *  filter (the family, 29 Oct 2026: "these cant be hovering on top always").
+ *  Its pills say what is still moving or held while it is closed. */
+function RecentToggle({ uploads, open, onToggle }: { uploads: UploadRow[]; open: boolean; onToggle: () => void }) {
+  const held = uploads.filter(row => row.view.key === "held").length;
+  const moving = uploads.filter(row => !["in-library", "duplicate", "held"].includes(row.view.key)).length;
+  return <button type="button" onClick={onToggle} aria-expanded={open} aria-controls="recent-statements" data-recent-statements-toggle
+    className="inline-flex items-center gap-2 rounded-md border border-ink-600 bg-ink-800 px-3 py-2 text-sm text-slate-300 hover:bg-ink-700">
+    <FileText className="h-4 w-4 text-slate-400" />
+    Recent statements
+    <Pill>{uploads.length}</Pill>
+    {moving > 0 && <Pill tone="info">{moving} in progress</Pill>}
+    {held > 0 && <Pill tone="warn">{held} {held === 1 ? "needs" : "need"} attention</Pill>}
+    <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${open ? "rotate-180" : ""}`} />
+  </button>;
 }
 
 /** What the file chooser offers — the types the ingest pipeline reads. */
@@ -450,6 +467,10 @@ export function StatementLibrary() {
     }, { replace: true });
   }, [linkedDocument, searchParams, setSearchParams]);
   const inbox = useStatementInbox();
+  // Closed until asked for; a file dropped on this page opens it, so its progress is in view.
+  const [recentOpen, setRecentOpen] = useState(false);
+  const newestSend = inbox.sending[0]?.id;
+  useEffect(() => { if (newestSend) setRecentOpen(true); }, [newestSend]);
 
   const alive = useRef(true);
   const loadManifest = useCallback(async (first: boolean) => {
@@ -570,7 +591,6 @@ export function StatementLibrary() {
           ))
         : (
           <>
-            {uploads.length > 0 && <div className="mb-5"><FormatBlock format="Recent statements" docs={[]} uploads={uploads} inbox={inbox} onOpen={open} /></div>}
             <div className="mb-5 flex flex-wrap items-center gap-3">
               <div className="relative flex-1 min-w-[220px]">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
@@ -578,7 +598,9 @@ export function StatementLibrary() {
                   placeholder="Filter by provider or file type…"
                   className="w-full rounded-md border border-ink-600 bg-ink-800 py-2 pl-9 pr-3 text-sm text-slate-200 placeholder:text-slate-500 focus:border-accent-500/50 focus:outline-none" />
               </div>
+              {uploads.length > 0 && <RecentToggle uploads={uploads} open={recentOpen} onToggle={() => setRecentOpen(o => !o)} />}
             </div>
+            {uploads.length > 0 && recentOpen && <div id="recent-statements" className="mb-5"><FormatBlock format="Recent statements" docs={[]} uploads={uploads} inbox={inbox} onOpen={open} heading={false} /></div>}
 
             {folders.length === 0 ? (
               <Card>

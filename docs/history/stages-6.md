@@ -728,3 +728,10 @@
 - Transactions' "Purchased on" check: a capital record with no purchase in it (Motilal Oswal MF 90414963315, a redemption only) owes a dash, never its outflow's date. The page was right.
 - Private Market's fit check: 19 columns (Strategy, Description, a column per return measure) no longer fit 1,440px. The claim is now the Conventions' own: the table fits or scrolls inside its card, and the page never scrolls sideways.
 - `ONLY=monitor,monitor-entity,monitor-security,monitor-txns,private-market` all pass. Morning CIO's Gain / Loss card (+17.2%, 342 holdings) is struck on the statement basis, without the 29 depository fund rows the Monitor's live book costs, so the two still differ.
+
+### Stage 10jd — STATEMENT LIBRARY: RECENT STATEMENTS IS A SMALL TAB, CLOSED UNTIL ASKED FOR
+
+- The family (29 Oct 2026), on the Recent statements table above the folders: *"these cant be hovering on top always it needs to be a drop down or a small tab"*.
+- The main page's recent uploads are one button beside the filter (`data-recent-statements-toggle`, `aria-expanded`): the count, plus "in progress" / "needs attention" pills while closed. Clicking it opens the same table under the filter row, without its duplicate heading (`FormatBlock`'s `heading`).
+- It opens itself only when a file is dropped on this page (a new `inbox.sending` row), so a fresh upload's progress stays in view. An opened folder's own upload rows are unchanged.
+- `check-statement-drop.mjs` asserts it is closed on arrival and opens it before following a folder link; `check-statement-upload-e2e.mjs` opens it before counting landed rows. `check-statement-drop` and `ONLY=statements` pass; `statements-folder`'s "carries no upload of its own" is red on main too (the one upload panel now sits over every folder) and is left as found.
