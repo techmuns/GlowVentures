@@ -1296,8 +1296,6 @@ export function capitalRollup(
 //         That is what XIRR is for, and the refusal says so.
 //   YTD   measurable only where the first purchase is inside the current year,
 //         so there is no 1 January value to be missing.
-//   CY    needs a valuation at both ends of a past year, which no statement here
-//         is dated early enough to carry.
 //   AUTO  the family's rule: under a year, HPR; a year or more, CAGR for a
 //         single purchase and XIRR where there were several dated flows.
 
@@ -1364,10 +1362,6 @@ export function capitalReturn(g: CapitalGroup, measure: ReturnMeasure, today: st
   if (measure === "absolute") {
     return { shown: true, pct: hpr, tag: "HPR",
       note: "Appreciation divided by the purchase amount — what was made on what was paid, not annualised." };
-  }
-  if (measure === "calendar") {
-    return { shown: false, tag: "CY",
-      reason: "a calendar-year return needs this account's value at the start and end of that year, and no statement here values it at a past year-end" };
   }
   if (measure === "ytd") {
     const yearStart = `${today.slice(0, 4)}-01-01`;
@@ -1460,10 +1454,6 @@ export function clubCapitalReturn(caps: CapitalGroup[], measure: ReturnMeasure, 
 
   if (measure === "absolute") {
     return hprNote(`Appreciation across the ${n} accounts divided by what they paid in together — not annualised.`);
-  }
-  if (measure === "calendar") {
-    return { shown: false, tag: "CY",
-      reason: "a calendar-year return needs these accounts' value at the start and end of that year, and no statement here values them at a past year-end" };
   }
   if (measure === "ytd") {
     const yearStart = `${today.slice(0, 4)}-01-01`;

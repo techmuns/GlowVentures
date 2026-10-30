@@ -86,7 +86,6 @@ export const AGG_NO_MEASURE: Partial<Record<ReturnMeasure, string>> = {
   cagr: "annualising needs one purchase date and this holds many, bought over years, so a CAGR here would compound a window nothing was held over.",
   xirr: "a money-weighted return needs every dated cash flow of the thing it measures, and no statement reports those per category.",
   ytd: "a year-to-date figure needs this category's value on 1 January, and the earliest statement in this book is dated after the year began.",
-  calendar: "a calendar-year return needs its value at both ends of that year, and this book is not dated early enough to carry either.",
 };
 
 /**
@@ -122,7 +121,6 @@ export const AGG_NO_MEASURE: Partial<Record<ReturnMeasure, string>> = {
  */
 export function returnColumnMeta(measure: ReturnMeasure, cov: ReturnCoverage, asOf: string):
   { note: string; title: string } {
-  const year = asOf.slice(0, 4);
   switch (measure) {
     case "cagr":
       return {
@@ -144,15 +142,22 @@ export function returnColumnMeta(measure: ReturnMeasure, cov: ReturnCoverage, as
           + (cov.lotted > 0 ? ` ${cov.lotted} ${cov.lotted === 1 ? "holding was" : "holdings were"} bought on several dates or partly sold, so the oldest unit's date does not start one purchase and a single-start compound rate would misstate ${cov.lotted === 1 ? "it" : "them"}; ${cov.lotted === 1 ? "its" : "their"} Holding Period Return stands.` : "")
           + (cov.absent - cov.staggered - cov.lotted > 0 ? ` ${cov.absent - cov.staggered - cov.lotted} report no purchase date the window could close over — the managed accounts publish a capital-account ledger rather than a lot register, and the depository holdings report no cost.` : ""),
       };
-    case "ytd":
+    case "ytd": {
+      // FROM THE FIRST DATE WE HAVE (Stage 10jf): a row with no 1 January
+      // value is measured from its first dated value this year, tagged with it.
+      const full = cov.shown - cov.partYear;
       return {
         note: `${cov.shown} of ${cov.total}`,
         title: "YTD is the holding's own return this year, not the share's market move. "
-          + (cov.shown > 0
-              ? `It is measurable on ${cov.shown} of ${cov.total} rows — the holdings opened during the year, whose whole return since purchase IS their year to date. `
-              : "No row can be measured on this drop. ")
-          + `The other ${cov.absent} were already held on 1 January, and a year-to-date figure needs their value on that date: the earliest statement in this book is dated after the year began, so there is no opening value to measure from. One holdings statement per account dated on or before 1 January fills it.`,
+          + (full > 0 ? `${full} ${full === 1 ? "row is a full year to date" : "rows are a full year to date"} — opened during the year, so the whole return since purchase is the year to date. ` : "")
+          + (cov.partYear > 0
+              ? `${cov.partYear} ${cov.partYear === 1 ? "row is" : "rows are"} measured from the first date this year with a dated value, and tagged with that date: no statement here values a holding on 1 January, so it is not a full year to date, and it is not annualised. A whole account reads its verified return record (opening value and dated money, Modified Dietz); a listed share or growth fund is carried from its statement's own balance at published closing prices, assumed still held. `
+              : "")
+          + (cov.absent > 0
+              ? `The other ${cov.absent} have neither a value on 1 January nor a dated value later this year to start from; each dash names what is missing.`
+              : ""),
       };
+    }
     case "xirr": {
       // THE COUNT IS OF RATES, not of cells shown: a whole account whose
       // payments span under a year is SHOWN here as its holding-period return,
@@ -168,11 +173,6 @@ export function returnColumnMeta(measure: ReturnMeasure, cov: ReturnCoverage, as
           + (cov.absent > 0 ? ` The other ${cov.absent} are holdings whose dated trades do not account for every unit they hold, or accounts whose payments are not all on record — each cell says which. The per-account money-weighted return, where one can be struck, is on Performance.` : ""),
       };
     }
-    case "calendar":
-      return {
-        note: `${cov.shown} of ${cov.total}`,
-        title: `A calendar-year return needs the holding's value at the start and end of that year, and the book's earliest statement is dated in ${year}, after the current year began — so it is absent on all ${cov.total} rows.`,
-      };
     default:
       return {
         note: `${cov.shown} of ${cov.total}`,

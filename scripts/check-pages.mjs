@@ -4643,6 +4643,58 @@ const YTD_MEASURABLE = (() => {
 })();
 
 /**
+ * ── A WHOLE ACCOUNT'S YTD FROM THE FIRST DATE WE HAVE, OFF ITS RECORD (Stage 10jf) ──
+ *
+ * The Monitor's YTD column measures a row with no 1 January value from its
+ * first dated value this year. On a row of whole accounts that is Modified
+ * Dietz over each account's verified return record — opening on the close of
+ * the day before its opening row, its dated flows, closing on the record's own
+ * value — RE-EXPRESSED here off `BOOK_ACCOUNT_RETURN_RECORDS` rather than
+ * imported, so a page that pooled the wrong accounts, opened on another date or
+ * weighted the money otherwise fails. `null` from `solve` where an account's
+ * record is not this simple shape (a nil origin, a capital record that stops
+ * before its valuation): those cells are counted as not re-solved, never passed.
+ */
+const YTD_RECORD_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const recs = bookObject(src, "BOOK_ACCOUNT_RETURN_RECORDS");
+    if (!recs) return null;
+    const ms = (d) => Date.parse(`${d}T00:00:00Z`);
+    const days = (a, b) => Math.round((ms(b) - ms(a)) / 864e5);
+    const before = (d) => new Date(ms(d) - 864e5).toISOString().slice(0, 10);
+    const windowOf = (id) => {
+      const r = recs[id]?.record;
+      if (!r) return null;
+      const open = r.flows.find((f) => /^opening portfolio value/i.test(f.description ?? ""));
+      if (!open || !(open.amount < 0)) return null;
+      if (r.capitalRecordTo && r.capitalRecordTo < r.asOf) return null;
+      const openDate = before(open.date);
+      return { openDate, openValue: -open.amount, closeDate: r.asOf, closeValue: r.value,
+        flows: r.flows.filter((f) => f !== open && f.date > openDate && f.date <= r.asOf) };
+    };
+    return {
+      solve(ids) {
+        const ws = ids.map(windowOf);
+        if (!ws.length || ws.some((w) => !w)) return null;
+        const from = ws.map((w) => w.openDate).sort()[0], to = ws.map((w) => w.closeDate).sort().at(-1);
+        const D = days(from, to);
+        if (!(D > 0)) return null;
+        let gain = 0, base = 0;
+        const weigh = (date, investorAmount) => { base += -investorAmount * Math.min(days(date, to), D) / D; };
+        for (const w of ws) {
+          gain += w.closeValue - w.openValue;
+          weigh(w.openDate, -w.openValue);
+          for (const f of w.flows) { gain += f.amount; weigh(f.date, f.amount); }
+          weigh(w.closeDate, w.closeValue);
+        }
+        return base > 0 ? { pct: gain / base * 100, from, to } : null;
+      },
+    };
+  } catch { return null; }
+})();
+
+/**
  * HOW MANY ACCOUNTS THE FAMILY IS RECORDED AS HAVING FUNDED, off `glowData.ts`.
  *
  * Anchored on the book rather than on the page, because the page's own caption
@@ -11452,7 +11504,7 @@ const collapseReturns = (cols, into) => {
 const FRESH_READER_PICK = ["a fresh reader opens on every return measure, by default, with nothing in the address asking for it", (t, ctx) => {
   const rs = ctx?.returnSelect;
   if (!rs) return false;   // the handle is gone — the picker is, too
-  return rs.active.join(",") === "absolute,cagr,xirr,ytd,calendar" && rs.source === "default"
+  return rs.active.join(",") === "absolute,cagr,xirr,ytd" && rs.source === "default"
     && !addressAsksForReturns(ctx.url);
 }];
 /**
@@ -18280,7 +18332,8 @@ const PM_RETURN_CHECKS = [
     // never a reason to abstain.
     const rs = ctx?.returnSelect;
     if (!rs) return false;
-    return ["auto", "absolute", "cagr", "xirr", "ytd", "calendar"].every((k) => rs.offers.includes(k));
+    // CY is gone (Stage 10jf): it was a dash on every row.
+    return ["auto", "absolute", "cagr", "xirr", "ytd"].every((k) => rs.offers.includes(k)) && !rs.offers.includes("calendar");
   }],
   ["every fund row carries one return cell per picked measure, in the picker's order", (t, ctx) => {
     const pr = ctx?.pmReturn, rs = ctx?.returnSelect;
@@ -18459,9 +18512,9 @@ const PM_RETURN_ROUTE_CHECKS = [
       && (covers === of || foot.text.includes(`${covers} of ${of}`))
       && (covers === of || /Not in it:/.test(foot.titles));
   }],
-  ["the CAGR, YTD and CY footers are refused with the whole book's own reason", (t, ctx) => {
+  ["the CAGR and YTD footers are refused with the whole book's own reason", (t, ctx) => {
     const foot = ctx?.pmReturn?.foot ?? [];
-    const want = ["cagr", "ytd", "calendar"];
+    const want = ["cagr", "ytd"];
     const cells = want.map((m) => foot.find((x) => x.measure === m));
     if (cells.some((c) => !c)) return false;
     return cells.every((c) => !/%/.test(c.text) && /whole private book/i.test(c.titles));
@@ -24470,11 +24523,11 @@ const INVARIANTS = {
     ...txnMergedChecks(),
     ...CAPITAL_RETURN_CHECKS,
     FRESH_READER_PICK,
-    ["the return picker is on the Transactions view, offering every measure, with all five ticked", (t, ctx) => {
+    ["the return picker is on the Transactions view, offering every measure, with all four ticked", (t, ctx) => {
       const rs = ctx?.returnSelect;
       if (!rs) return false;   // the handle is gone — the picker is, too
-      const five = ["absolute", "cagr", "xirr", "ytd", "calendar"];
-      return five.every((m) => rs.offers.includes(m) && rs.active.includes(m)) && rs.offers.includes("auto");
+      const four = ["absolute", "cagr", "xirr", "ytd"];
+      return four.every((m) => rs.offers.includes(m) && rs.active.includes(m)) && rs.offers.includes("auto");
     }],
     /**
      * ...AND EACH GETS A COLUMN OF ITS OWN, headed with its own name — the
@@ -24483,26 +24536,20 @@ const INVARIANTS = {
     ["…and the transactions table draws one return column per measure, headed with its own name", (t, ctx) => {
       const heads = (ctx.mineHead ?? []).map((c) => c.text.split("\n")[0].trim().toUpperCase());
       if (!heads.length) return false;
-      return ["HPR", "CAGR", "XIRR", "YTD", "CY"].every((h) => heads.includes(h)) && !heads.includes("RETURN");
+      return ["HPR", "CAGR", "XIRR", "YTD"].every((h) => heads.includes(h)) && !heads.includes("RETURN") && !heads.includes("CY");
     }],
     ["…and every capital row carries a cell in each of them, in order", (t, ctx) => {
       if (!ctx.mineRows?.length) return false;
-      const want = ["absolute", "cagr", "xirr", "ytd", "calendar"];
-      return ctx.mineRows.every((r) => r.returns.length === 5 && r.returns.every((x, i) => x.measure === want[i]));
+      const want = ["absolute", "cagr", "xirr", "ytd"];
+      return ctx.mineRows.every((r) => r.returns.length === want.length && r.returns.every((x, i) => x.measure === want[i]));
     }],
     /**
-     * CY IS ABSENT ON EVERY ROW, WITH ITS REASON — no statement values an
-     * account at a past year-end — and never a figure borrowed from another
-     * measure.
+     * NO CALENDAR-YEAR COLUMN (Stage 10jf). It was a dash on every row — no
+     * statement values an account at a past year-end — and the family asked
+     * for it gone rather than left blank.
      */
-    ["…a calendar-year return is absent on every row and names why", (t, ctx) =>
-      (ctx.mineRows ?? []).length > 0 && ctx.mineRows.every((r) => {
-        const cy = r.returns.find((x) => x.measure === "calendar");
-        // The year-end reason where appreciation is struck; where it is itself
-        // withheld the cell names THAT cause instead, which is the prior one.
-        return cy && cy.pct == null && (cy.reason ?? "").length > 20;
-      })
-      && ctx.mineRows.some((r) => /year-end|start and end/i.test(r.returns.find((x) => x.measure === "calendar")?.reason ?? ""))],
+    ["…and no row carries a calendar-year cell", (t, ctx) =>
+      (ctx.mineRows ?? []).length > 0 && ctx.mineRows.every((r) => !r.returns.some((x) => x.measure === "calendar"))],
     /**
      * CAGR IS REFUSED WHERE THE MONEY WENT IN OVER SEVERAL DATES, and says the
      * money-weighted rate is XIRR. A single-start compound rate over a
@@ -25157,10 +25204,10 @@ const INVARIANTS = {
     ["a fresh reader opens on every return measure, one column each, in the picker's order, with nothing saved", (t, ctx) => {
       const I = ctx.remember?.initial;
       if (!I?.cols?.length) return false;
-      const five = ["absolute", "cagr", "xirr", "ytd", "calendar"];
+      const four = ["absolute", "cagr", "xirr", "ytd"];
       const at = I.cols.indexOf("ret:absolute");
-      return I.active.join(",") === five.join(",") && I.source === "default" && !/[?&]ret=/.test(I.url)
-        && at > 0 && five.every((m, k) => I.cols[at + k] === `ret:${m}`) && !I.cols.includes("ret:auto")
+      return I.active.join(",") === four.join(",") && I.source === "default" && !/[?&]ret=/.test(I.url)
+        && at > 0 && four.every((m, k) => I.cols[at + k] === `ret:${m}`) && !I.cols.includes("ret:auto") && !I.cols.includes("ret:calendar")
         && I.savedOrder === null && I.savedPick === null;
     }],
     ["a column moved on Category stays where it was put, and is saved", (t, ctx) => {
@@ -30330,10 +30377,10 @@ const INVARIANTS = {
     ...PM_RETURN_CHECKS.filter(([d]) => !/^the methodology picks/.test(d)),
     ...PM_RETURN_ROUTE_CHECKS,
     FRESH_READER_PICK,
-    ["the picker shows the five measures ticked, and not the methodology", (t, ctx) => {
+    ["the picker shows every measure ticked, and not the methodology", (t, ctx) => {
       const rs = ctx?.returnSelect;
       if (!rs) return false;
-      return rs.active.join(",") === "absolute,cagr,xirr,ytd,calendar";
+      return rs.active.join(",") === "absolute,cagr,xirr,ytd";
     }],
   ],
   /**
@@ -32590,8 +32637,8 @@ const INVARIANTS = {
     ["the return-measure picker offers the methodology and every measure, and opens on the reader's saved pick", (t, ctx) => {
       const rs = ctx?.returnSelect;
       if (!rs) return { notChecked: "the return-measure picker was not on screen on this run" };
-      const want = ["auto", "absolute", "cagr", "xirr", "ytd", "calendar"];
-      return want.every((k) => rs.offers.includes(k)) && rs.active.length === 1 && rs.active[0] === "auto"
+      const want = ["auto", "absolute", "cagr", "xirr", "ytd"];
+      return want.every((k) => rs.offers.includes(k)) && !rs.offers.includes("calendar") && rs.active.length === 1 && rs.active[0] === "auto"
         && rs.source === "saved" && !addressAsksForReturns(ctx.url);
     }],
     /**
@@ -33751,9 +33798,44 @@ const INVARIANTS = {
       if (mine.length !== cells.length) return false;
       // Each is either a signed % or a dash, never a fabricated +0.00%.
       const shapeOk = mine.every((c) => /—/.test(c.text) || /[+-]\d+(\.\d+)?%/.test(c.text));
-      const drawn = mine.filter((c) => /[+-]\d+(\.\d+)?%/.test(c.text)).length;
+      // A FULL year to date — no later start on the cell (Stage 10jf).
+      const drawn = mine.filter((c) => /[+-]\d+(\.\d+)?%/.test(c.text) && !c.ytdFrom).length;
       if (YTD_MEASURABLE === null) return { notChecked: "could not read heldSince out of the generated book" };
       return shapeOk && drawn === YTD_MEASURABLE;
+    }],
+    /**
+     * ── …AND FROM THE FIRST DATE WE HAVE, SAID ON THE CELL (Stage 10jf) ──────
+     *
+     *   *"for YTD atleast for this year lets show from the date we have"*
+     *
+     * A row with no 1 January value is measured from its first dated value this
+     * year. The start rides on the cell as its tag ("from 31 Mar"), inside this
+     * year and before the window closes — so it never reads as a full year to
+     * date — and the column is not a column of dashes: the book's verified
+     * account records open on 31 March.
+     */
+    ["a YTD from a later date names that date on the cell, inside this year", (t, ctx) => {
+      const mine = (ctx?.returnCells ?? []).filter((c) => c.measure === "ytd");
+      if (!mine.length) return { notChecked: "no return cells captured on this run" };
+      const part = mine.filter((c) => c.ytdFrom);
+      const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const tagOf = (d) => `from ${Number(d.slice(8, 10))} ${MON[Number(d.slice(5, 7)) - 1]}`;
+      return part.length > 0 && part.every((c) => c.tag === tagOf(c.ytdFrom) && c.text.startsWith(c.tag)
+        && c.ytdFrom.slice(0, 4) === c.ytdTo?.slice(0, 4) && c.ytdFrom > `${c.ytdFrom.slice(0, 4)}-01-01` && c.ytdFrom < c.ytdTo
+        && /not annualised/.test(c.note ?? "") && /[+-]\d+(\.\d+)?%/.test(c.text));
+    }],
+    ["…and on a row of whole accounts it re-solves off their verified return records", (t, ctx) => {
+      const mine = (ctx?.returnCells ?? []).filter((c) => c.measure === "ytd" && c.ytdFrom && c.ytdAssumed === "false" && c.ytdAccounts.length);
+      if (!mine.length) return false;   // the book's verified records open on 31 March — a build that drew none lost them
+      if (!YTD_RECORD_BOOK) return false;
+      let solved = 0;
+      for (const c of mine) {
+        const r = YTD_RECORD_BOOK.solve(c.ytdAccounts);
+        if (!r) continue;
+        if (r.from !== c.ytdFrom || r.to !== c.ytdTo || Math.abs(signedPctOf(c.text) - r.pct) > 0.006) return false;
+        solved++;
+      }
+      return solved > 0;
     }],
     /**
      * …AND WHAT IT CANNOT MEASURE IS SAID ON THE COLUMN, NOT UNDER THE TABLE.
@@ -44605,6 +44687,11 @@ for (const theme of THEMES) {
             // back. The row's own handles ride along for the converse claim.
             capital: td.getAttribute("data-capital"),
             capitalAccounts: (td.getAttribute("data-capital-accounts") || "").split(" ").filter(Boolean),
+            // A YTD FROM THE FIRST DATE WE HAVE (Stage 10jf): its window and pooled accounts.
+            ytdFrom: td.getAttribute("data-ytd-from"),
+            ytdTo: td.getAttribute("data-ytd-to"),
+            ytdAccounts: (td.getAttribute("data-ytd-accounts") || "").split(" ").filter(Boolean),
+            ytdAssumed: td.getAttribute("data-ytd-assumed"),
             rowKeys: (td.getAttribute("data-row-keys") || "").split(" ").filter(Boolean),
             rowKey: td.closest("tr")?.getAttribute("data-security-key") ?? null,
             mandate: !!td.closest("tr")?.hasAttribute("data-mandate"),

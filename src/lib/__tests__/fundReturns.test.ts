@@ -53,7 +53,7 @@ const scope = privateScope(currentHoldings(BOOK_POSITIONS), BOOK_ACCOUNTS);
 const onPage = capitalScope(BOOK_COMMITMENTS, BOOK_ACCOUNTS).onPage;
 const funds = fundRollup(scope.dedupedRows, idx, scope.rows);
 const dated = fundDatedRecords(scope.dedupedRows, onPage, BOOK_REVIEW_FLOWS, idx, money, date);
-const MEASURES = ["auto", "absolute", "cagr", "xirr", "ytd", "calendar"] as const;
+const MEASURES = ["auto", "absolute", "cagr", "xirr", "ytd"] as const;
 const resolve = (key: string, m: typeof MEASURES[number]) => {
   const f = funds.find((x) => x.securityKey === key)!;
   return fundMeasuredReturn(f, dated.get(key), m, money, date);
@@ -424,7 +424,7 @@ console.log("── every reason and note is well formed ──");
     if (/\bundefined\b|\bnull\b|\bNaN\b/.test(text)) bad.push(`${f.securityKey}/${m}: ${text.slice(0, 80)}`);
   }
   ok("no reason or note is empty or carries a missing field", bad.length === 0, bad.slice(0, 3).join(" | "));
-  ok("every refused aggregate measure has its own reason", (["cagr", "ytd", "calendar"] as const).every((m) => (PM_AGG_NO_MEASURE[m] ?? "").length > 20));
+  ok("every refused aggregate measure has its own reason", (["cagr", "ytd"] as const).every((m) => (PM_AGG_NO_MEASURE[m] ?? "").length > 20));
   ok("the picker's hints cover every measure", MEASURES.every((m) => (PM_RETURN_HINTS[m] ?? "").length > 20));
   ok("the XIRR hint no longer says the statements lack dated flows", !/do not carry|not carry per holding/i.test(PM_RETURN_HINTS.xirr ?? ""));
 }
