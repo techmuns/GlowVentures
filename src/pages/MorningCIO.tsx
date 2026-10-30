@@ -6,6 +6,7 @@ import { Card } from "@/components/Card";
 import { AllocationChart } from "@/components/AllocationViews";
 import { Pill } from "@/components/Pill";
 import { SelectableTiles, type TileMetric } from "@/components/SelectableTiles";
+import { CardBenchmarkInfo, CardBenchmarkLine } from "@/components/CardBenchmark";
 import { AvailableReturnCoverage } from "@/components/AvailableReturnCoverage";
 import { StockLink } from "@/components/StockLink";
 import { Link } from "react-router-dom";
@@ -1051,9 +1052,12 @@ export function MorningCIO() {
    */
   const POSITIONS_WHAT = `Open every holding in the book. ${fmtNum(m.p.length)} is the count of current holdings with each one two statements both report counted once${m.rawLines !== m.p.length ? ` — ${fmtNum(m.rawLines)} statement lines, ${fmtNum(m.rawLines - m.p.length)} of them a second report of a holding already counted` : ""}; the page lists them grouped one row per name and per mandate.`;
   const NAMES_WHAT = `Open every holding in the book. ${fmtNum(m.distinctNames)} is the count of distinct securities across every account; the page lists them grouped one row per name and per mandate, so a mandate's names are one row there.`;
-  const coverageInfo = (r: AvailableCardReturn, field: 'gain' | 'return') => <AvailableReturnCoverage
-    line={r.total} selection={r.selection} accounts={(statementPortfolio ?? portfolio).accounts}
-    money={(n, sign = false) => fmtFromBase(n, { compact: true, sign })} field={field} notes={r.notes} />;
+  const returnAccounts = (statementPortfolio ?? portfolio).accounts;
+  const benchLine = (r: AvailableCardReturn) => <CardBenchmarkLine card={r} accounts={returnAccounts} money={money} />;
+  const coverageInfo = (r: AvailableCardReturn, field: 'gain' | 'return') => <>
+    <CardBenchmarkInfo card={r} accounts={returnAccounts} money={money} />
+    <AvailableReturnCoverage line={r.total} selection={r.selection} accounts={returnAccounts}
+      money={(n, sign = false) => fmtFromBase(n, { compact: true, sign })} field={field} notes={r.notes} /></>;
   const coveredCaption = (r: AvailableCardReturn) => <span data-card-coverage
     data-card-gain={r.total.gain ?? ''} data-card-return={r.total.returnPct ?? ''}
     data-card-covered={r.coveredHoldings} data-card-holdings={r.totalHoldings}
@@ -1115,7 +1119,7 @@ export function MorningCIO() {
       href: returnsHref('inception'),
       hrefTitle: 'Recorded gain since investment for the available data. Open Return attribution for the same verified holdings. The info button lists the holdings left out and the records they need.',
       value: since.total.gain == null ? <AbsentValue /> : <span className={changeColor(since.total.gain)}>{money(since.total.gain, true)}</span>,
-      second: since.total.returnPct == null ? undefined : <>Return on capital {pct1(since.total.returnPct)}</>,
+      second: since.total.returnPct == null ? undefined : <>Return on capital {pct1(since.total.returnPct)}{benchLine(since)}</>,
       calculation: coverageInfo(since, 'gain'),
       sub: since.total.gain == null ? absentWhy('No verified purchase cost and value') : coveredCaption(since),
     },
@@ -1125,7 +1129,7 @@ export function MorningCIO() {
       hrefTitle: `Return over available verified records, ${history.from ?? 'unknown'} to ${history.to ?? 'unknown'}. Each account uses its own recorded dates. The info button lists every included account and missing record. Open Returns to choose a common period.`,
       value: historyValue,
       calculation: coverageInfo(history, 'return'),
-      second: <span className="whitespace-normal">{measuredDates(history)} · {historyAnnual ? 'yearly rate' : 'not annualised'}</span>,
+      second: <span className="whitespace-normal">{measuredDates(history)} · {historyAnnual ? 'yearly rate' : 'not annualised'}{benchLine(history)}</span>,
       sub: coveredCaption(history),
     },
     ...(['fytd', 'ytd'] as const).map((period): TileMetric => {
@@ -1135,7 +1139,7 @@ export function MorningCIO() {
         icon: <CalendarDays className="h-4 w-4" />, href: returnsHref(period),
         hrefTitle: `Return for available data from ${r.selection.start} through ${r.to ?? 'the latest verified statement'}. The info button explains coverage and missing records. Open the same period in Return attribution.`,
         value: pct1(r.total.returnPct), calculation: coverageInfo(r, 'return'),
-        second: <span className="whitespace-normal">{period.toUpperCase()} · {measuredDates(r)}{r.total.gain != null && <> · {money(r.total.gain, true)}</>}</span>,
+        second: <span className="whitespace-normal">{period.toUpperCase()} · {measuredDates(r)}{r.total.gain != null && <> · {money(r.total.gain, true)}</>}{benchLine(r)}</span>,
         sub: coveredCaption(r),
       };
     }),
@@ -1143,7 +1147,7 @@ export function MorningCIO() {
       id: "return", label: "Consolidated return", icon: <Percent className="h-4 w-4" />,
       calculation: capitalCalculation, href: returnsHref('inception'),
       hrefTitle: 'Return on recorded capital since investment for the available data. The info button lists the holdings left out and the records they need. Open Return attribution for the same verified holdings.',
-      value: pct1(since.total.returnPct), sub: coveredCaption(since),
+      value: pct1(since.total.returnPct), second: benchLine(since), sub: coveredCaption(since),
     },
     /* Uncalled capital and Distributions are COMMITMENT facts. With no
        commitment in the book they have no denominator — "₹0 undrawn" would
