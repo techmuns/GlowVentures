@@ -764,6 +764,15 @@
 - All seven histories still load on open, because every chip states its return.
 - `check:pages`: the probe reads the first paint as `navChart.defaults`, adds one chip (`navChart.added`), turns the rest on for the per-line claims, then restores the default. Two new invariants hold the first paint and the click.
 
+### Stage 10jh — NA WHERE A RETURN CANNOT APPLY, A DASH WHERE A RECORD IS MISSING
+
+*"for holdings for which we cannot show holding CAGR or XIRR, because … they are held under 1 year, so you can just show NA … but for others we suppose have missing data, so it would be clear to distinguish between them."* — the family, 30 Oct 2026.
+- `MeasuredReturn` gains `na`; `NotApplicableCell` (`Absent.tsx`) draws it, with the reason as its hover.
+- NA: CAGR and XIRR under a year (hover names the held days and the HPR); CAGR bought on several dates or partly sold; a total loss's CAGR; CY on a holding opened this year; every measure on a fund-only company or a nil line.
+- Still a dash: no dated record, no cost, no 1 January or year-end value, an uncounted purchase record, an unverified sale, an at-cost line.
+- Supersedes Stage 10hk on the Monitor and the stock page only: under a year the CAGR and XIRR cells no longer repeat the HPR, which has its own column. `auto`, Excel, Private Market, Transactions and the Returns tab keep 10hk.
+- `returnCoverage` counts `na`, `subYear` and `otherNa`; `staggered` counts only rows CAGR refuses for it. Headers state the split and what NA means.
+
 ### Stage 10ji — MORNING CIO: EVERY RETURN TILE AGAINST THE INDEX, ON THE SAME MONEY
 
 - *"Versus benchmark return over the same period using the same methodology."* The Consolidated return, Gain / loss, financial-year, calendar-year and history tiles each carry a `vs Nifty 500` line with the lead in percentage points. The info card lists all seven benchmarks. `src/lib/cardBenchmark.ts`, `components/CardBenchmark.tsx`.

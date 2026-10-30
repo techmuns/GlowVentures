@@ -379,13 +379,13 @@ console.log("\n── the family's rule on a dated row ──");
   const short = dated({ days: 120, since: "2026-03-01" });
   for (const m of ["xirr", "cagr", "auto"] as const) {
     const r = measuredReturn(row(short, 20), m, AS_OF);
-    ok(`a four-month window is never annualised (${m})`, m === "cagr" && !r.shown
-      ? true   // several dated payments: CAGR refuses before it reaches the window
-      : r.shown && r.tag === "HPR" && r.pct === 20, JSON.stringify(r));
+    ok(`a four-month window is never annualised (${m})`, m === "auto"
+      ? r.shown && r.tag === "HPR" && r.pct === 20
+      : !r.shown && !!r.na && /under a year/.test(r.reason), JSON.stringify(r));
   }
   const shortOne = dated({ flows: 1, days: 120, since: "2026-03-01" });
   const sc = measuredReturn(row(shortOne, 20), "cagr", AS_OF);
-  ok("one payment four months ago: the CAGR column shows the HPR, tagged", sc.shown && sc.tag === "HPR" && sc.pct === 20);
+  ok("one payment four months ago: the CAGR column is NA", !sc.shown && !!sc.na && /\+20\.00%/.test(sc.reason));
 
   const unsolved = dated({ annualPct: null });
   const ux = measuredReturn(row(unsolved), "xirr", AS_OF);
@@ -402,7 +402,7 @@ console.log("\n── the family's rule on a dated row ──");
   ok("a sub-year dated row that reports no cost is absent, never zero", !noCost.shown);
 
   const cov = returnCoverage([row(dated()), row(dated()), row(short, 20), row(undefined)], "xirr", AS_OF);
-  ok("the XIRR column counts RATES, not cells shown", cov.xirr === 2 && cov.shown === 3 && cov.absent === 1,
+  ok("the XIRR column counts RATES, and a sub-year row as NA", cov.xirr === 2 && cov.shown === 2 && cov.absent === 2 && cov.na === 1 && cov.subYear === 1,
     JSON.stringify(cov));
   const cc = returnCoverage([row(dated()), row(one, 21), row(undefined)], "cagr", AS_OF);
   ok("the CAGR column counts the several-payment rows apart from the undated ones", cc.staggered === 1 && cc.cagr === 1,
