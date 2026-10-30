@@ -136,7 +136,7 @@ try {
   await gotoStock(motilal);
   await page.locator('button[data-source-metric="marketValue"]').first().click();
   const market = page.getByRole('dialog',{name:'Market value sources'});
-  await market.getByText('AMFI',{exact:true}).waitFor(); assert.match(await market.innerText(), /Published NAV/);
+  await market.getByText('AMFI',{exact:true}).waitFor(); assert.match(await market.innerText(), /published price \(NAV\)/);
 
   await page.goto(base+'/monitor');
   await page.getByRole('tab',{name:'Category',exact:true}).click();

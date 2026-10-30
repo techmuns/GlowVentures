@@ -809,4 +809,4 @@
 - A family-review record now leads with what a reader asks: worth (₹ Cr/L), shares, date, what was paid, and only the lines that change how to read it (cost shared out by shares, one member's part, no named holder, now listed, a newer statement differs). `reviewFacts` in `src/lib/sourceTrace.ts` reads them off the holding and the note `reviewBook.mjs` writes; `ReviewPlain` in `SourceTrace.tsx` prints them.
 - The full review note is kept, one click away under "Full detail"; Data Audit, Excel and Private Market still carry it whole. The record's label names the review, not an account number.
 - The popup's other notes (correction, rolled-forward units, recovered cost, feed price, totals) are short sentences; a caption still names its narrowing (gain only where the cost is known).
-- `sourceTrace.test.ts` holds the NSE record's facts, its rendered line and a line held at cost.
+- `sourceTrace.test.ts` holds the NSE record's facts, its rendered line and a line held at cost; `check-source-trace.mjs` looks for the feed note's new words, "published price (NAV)".
