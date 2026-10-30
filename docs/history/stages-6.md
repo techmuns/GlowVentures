@@ -826,3 +826,11 @@
 - The row of seven chips is one Benchmarks list: tick several, and it stays open until a click outside or Escape. Each option carries its colour and return; the row beside it names only the lines drawn.
 - The retry button is gone. A failed demat price history is named on the book's hover, and a page reload fetches it again (failures are kept in memory only, never stored). Automatic retry was not added.
 - `check:pages`: a new invariant holds the closed list as the row's one control, and that it stays open across picks. The probe ticks options through the list; the closed panel stays in the DOM, so each option's keys read without opening it. `check-nav-assumed.mjs` now asserts the hover instead of the button.
+
+### Stage 10jp — ALL SECURITIES: EVERY HOLDING IS A ROW
+
+- *"if we are holding a company or an investment and we are able to search it in the universal search bar, then it should be available in all the different segments."* Franklin India Credit AIF (₹20 Cr, Stage 10hx) was searchable and on no row of All Securities, because that axis drew company shares alone. This reverses Stage 10aj's "AIF itself shouldn't show up as a security". The same rule hid every fund, AIF, private line and cash row.
+- On Category, Asset class and Basket it was already a row. On Asset class and Basket it sits in "Not classified in the family's review", the last section, because the 30 June review predates the 22 Oct purchase. No class is guessed; a later review, or the family, fills it.
+- `Market value` (was `Direct + PMS`) now adds every holding: Direct + PMS + Other accounts, and its footer is the book, tying to the other three axes. Invested, unrealised and return read the same set as Category.
+- **No double count:** a fund or cash row has `—` for Total exposure, with the reason, because what a fund holds is already in the Via funds of the companies inside it. Private lines have no look-through and are counted. Weight is total exposure over the book, or a fund's own value, so a company inside a fund sits in two rows' weights and the column has no total.
+- Realised on this axis stays holding by holding (`holdingByHolding`), so the footer adds to its column; the return is struck on whole mandates, as everywhere else. `pickedNotRows` and its "Show it on Category" line are gone. Invariant: "every current holding is a row", off `glowData.ts`.

@@ -523,7 +523,8 @@ export type RealisedBasisFacts = {
   /** Sales dated after a holding's own statement: the units are still in that statement's holding. */
   after: { sales: number; holdings: number };
   /** The table's rows are companies (the security axis): a company sold out entirely is no row at all. */
-  companiesOnly: boolean;
+  /** The rows carry their own records, so no mandate is struck whole (the security axis). */
+  holdingByHolding: boolean;
   /** Holdings outside the whole mandates that carry a realised record of their own. */
   recorded: number;
 };
@@ -535,7 +536,7 @@ export function realisedBasisNote(
   const others = f.recorded > 0;
   // THE FACE: which of the book's realised figures this is, in a few words —
   // what it counts, and that what the family has sold out of is not in it.
-  const face = f.companiesOnly ? "names still held · statement windows"
+  const face = f.holdingByHolding ? "names still held · statement windows"
     : n ? `incl. ${n} mandate${n === 1 ? "" : "s"} since inception · excl. names exited outside ${n === 1 ? "it" : "them"}`
     : "each record's own window · excl. names exited";
   const win = f.statements && f.statements.from && f.statements.to
@@ -551,7 +552,7 @@ export function realisedBasisNote(
     parts.push(`The capital gain statements themselves report ${money(f.statements.total)} across ${f.statements.accounts} account${f.statements.accounts === 1 ? "" : "s"}${win ? ` for ${win}` : ""}: the tax figure Capital Gains and the Ledger print, which counts every lot in those windows, companies since sold out included${n ? ", and none of a mandate's income or fees" : ""}`);
   }
   const out: string[] = [];
-  out.push(f.companiesOnly ? "a company sold out entirely, which is no row here"
+  out.push(f.holdingByHolding ? "a holding sold out entirely, which is no row here"
     : n ? "a company sold out entirely outside those mandates, which is no row here"
     : "a holding sold out entirely, which is no row here");
   if (f.closed.names.length) out.push(`${f.closed.names.join(", ")} — redeemed in full, so no row here (${money(f.closed.realised)} realised, on its own page and in Transactions)`);

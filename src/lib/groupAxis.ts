@@ -172,7 +172,7 @@ export const SECURITY_SECTION = "All securities";
  * Category too. Only the Holdings table's opening view changed.
  */
 export const MONITOR_GROUP_VIEWS: readonly { key: MonitorAxis; label: string; title: string }[] = [
-  { key: SECURITY_AXIS, label: "All Securities", title: "One row per security, ranked by exposure — every holding of a name clubbed across every vehicle that holds it, whether the family bought it directly or a discretionary manager chose it. Open a row to see through what means it is held." },
+  { key: SECURITY_AXIS, label: "All Securities", title: "One row per holding, ranked by exposure — companies, funds, AIFs, private lines and cash alike, every holding of a name clubbed across every vehicle that holds it. Open a row to see through what means it is held." },
   ...GROUP_VIEWS,
 ];
 
