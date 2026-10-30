@@ -4620,14 +4620,6 @@ const REVIEW_GAP_BOOK = (() => {
  * — they would fabricate together. This is the independent side, the same shape
  * as the Polycab reconciliations below: two paths to one figure.
  */
-const YTD_OVERLAY_FUNDS = (() => {
-  const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
-  const pos = bookArray(src, "BOOK_POSITIONS") ?? [];
-  const yearStart = `${(/"asOf":\s*"(\d{4})-/.exec(src) ?? [])[1]}-01-01`;
-  const onBook = new Set(pos.map((p) => `${p.accountId}|${p.isin}`));
-  return new Set((bookArray(src, "BOOK_RECOVERED_COSTS") ?? []).filter((r) => r.isin?.startsWith("INF") && !onBook.has(`${r.accountId}|${r.isin}`)
-    && r.cashRecord?.length && !r.salesAfter && !r.hprUnavailableReason && r.heldPurchases?.first >= yearStart).map((r) => r.isin)).size;
-})();
 const YTD_MEASURABLE = (() => {
   try {
     const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
@@ -4643,10 +4635,12 @@ const YTD_MEASURABLE = (() => {
       g.push(p); bySec.set(p.securityKey, g);
     }
     let n = 0;
-    for (const g of bySec.values()) {
+    for (const all of bySec.values()) {
+      // A line holding nothing draws no part of the row (`currentHoldings`).
+      const g = all.filter((p) => p.marketValue > 0);
       // A line its recovered record dates opens on that record's oldest lot still held (Stage 10jf).
       const start = (p) => p.heldSince ?? (!p.tradeRecord && !p.live && !p.rolledForward && p.recoveredCost?.cashRecord?.length && !p.recoveredCost.salesAfter && !p.recoveredCost.hprUnavailableReason ? p.recoveredCost.heldPurchases?.first : null);
-      if (g.every((p) => start(p)) && g.every((p) => start(p) >= yearStart) && g.some((p) => p.returnPct !== null)) n++;
+      if (g.length && g.every((p) => start(p)) && g.every((p) => start(p) >= yearStart) && g.some((p) => p.returnPct !== null)) n++;
     }
     return n;
   } catch { return null; }
@@ -33774,9 +33768,7 @@ const INVARIANTS = {
       const shapeOk = mine.every((c) => /—/.test(c.text) || /[+-]\d+(\.\d+)?%/.test(c.text));
       const drawn = mine.filter((c) => /[+-]\d+(\.\d+)?%/.test(c.text)).length;
       if (YTD_MEASURABLE === null) return { notChecked: "could not read heldSince out of the generated book" };
-      // Every row the statement book measures, and at most one more per fund
-      // only the NAV overlay values and a recovered record opens this year.
-      return shapeOk && drawn >= YTD_MEASURABLE && drawn <= YTD_MEASURABLE + YTD_OVERLAY_FUNDS;
+      return shapeOk && drawn === YTD_MEASURABLE;
     }],
     /**
      * …AND WHAT IT CANNOT MEASURE IS SAID ON THE COLUMN, NOT UNDER THE TABLE.
