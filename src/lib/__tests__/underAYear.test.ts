@@ -41,7 +41,7 @@ const holding = (o: Partial<ReturnInput> = {}): ReturnInput => ({
   purchaseDates: 1, costOfUnitsSold: null, costBasis: 100, marketValue: 127.74, ...o,
 });
 const AS_OF = "2026-10-06";
-// CAGR and XIRR are NA under a year, naming the HPR (Stage 10jg); the methodology view prints it.
+// CAGR and XIRR are NA under a year, naming the HPR (Stage 10jh); the methodology view prints it.
 for (const measure of ["cagr", "xirr"] as const) {
   const r = measuredReturn(holding(), measure, AS_OF);
   assert.ok(!r.shown && r.na, `${measure} under a year is NA`);

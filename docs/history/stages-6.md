@@ -756,7 +756,15 @@
 - Still dashes, for want of source data: 95 share rows have an undated line, because most managers' trade records start on 1 Apr 2026 (Green Lantern's in Jan 2025) and their statements print no lots. YTD and CY need a value on 1 Jan or 31 Dec, which no statement in the book carries.
 - Tests: `holdingFlows.test.ts` section 6 ties each record's cash to its FIFO cost and gain, and holds every refusal.
 
-### Stage 10jg — NA WHERE A RETURN CANNOT APPLY, A DASH WHERE A RECORD IS MISSING
+### Stage 10jg — OUR BOOK VS BENCHMARKS: THE BOOK AND THE NIFTY 500 UNTIL A CHIP ADDS ANOTHER
+
+*"NAV chart: show only the book and Nifty 500 by default; other indices added by clicking"* — the family, 30 Oct 2026.
+- `NavVsIndex` drew all seven benchmarks on first paint. It now draws the book and the Nifty 500 (`DEFAULT_SHOWN`); every other benchmark keeps its chip, colour and return, dimmed and unpressed, and a click adds its line. Morning CIO and Performance share the card, so both open this way.
+- The state is the list shown (`nav-shown`), not the list hidden; an empty list is the book alone, which is why it no longer collapses to `null`.
+- All seven histories still load on open, because every chip states its return.
+- `check:pages`: the probe reads the first paint as `navChart.defaults`, adds one chip (`navChart.added`), turns the rest on for the per-line claims, then restores the default. Two new invariants hold the first paint and the click.
+
+### Stage 10jh — NA WHERE A RETURN CANNOT APPLY, A DASH WHERE A RECORD IS MISSING
 
 *"for holdings for which we cannot show holding CAGR or XIRR, because … they are held under 1 year, so you can just show NA … but for others we suppose have missing data, so it would be clear to distinguish between them."* — the family, 30 Oct 2026.
 - `MeasuredReturn` gains `na`; `NotApplicableCell` (`Absent.tsx`) draws it, with the reason as its hover.

@@ -123,7 +123,7 @@ export const AGG_NO_MEASURE: Partial<Record<ReturnMeasure, string>> = {
 export function returnColumnMeta(measure: ReturnMeasure, cov: ReturnCoverage, asOf: string, fundOnlyRows = 0):
   { note: string; title: string } {
   const base = holdingColumnMeta(measure, cov, asOf);
-  // NA AND THE DASH ARE DIFFERENT ANSWERS (Stage 10jg), and the header says which is which.
+  // NA AND THE DASH ARE DIFFERENT ANSWERS (Stage 10jh), and the header says which is which.
   const meta = { ...base, title: `${base.title} NA means this return cannot apply to that holding; a dash means a record is missing.` };
   return fundOnlyRows > 0
     ? { ...meta, title: `${meta.title} Counted over the ${cov.total} rows the statements report: the other ${fundOnlyRows} are companies the family reaches only through funds, which have no cost or value of the family's own.` }

@@ -462,7 +462,7 @@ console.log("\n── 9. one purchase, held throughout ──");
   ok("the book carries dated holdings bought in lots or partly sold (load-bearing)", lotted.length > 0, `${lotted.length} of ${dated.length}`);
   ok("every dated holding carries a purchase count (package A's gate)", dated.every((p) => typeof p.purchaseDates === "number"));
   // ...from a year. Under a year every unit is under a year old, so the CAGR is
-  // NA for that cause rather than for its lots (Stage 10hk, 10jg).
+  // NA for that cause rather than for its lots (Stage 10hk, 10jh).
   const heldDaysOf = (p: (typeof dated)[number]) => Math.round((Date.parse(asOfOf(p.accountId)!) - Date.parse(p.heldSince!)) / 86_400_000);
   for (const p of lotted) {
     const r = measuredReturn({ ...p, valuedAt: asOfOf(p.accountId) }, "cagr", BOOK_SUMMARY.asOf);

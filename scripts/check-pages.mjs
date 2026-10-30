@@ -20310,9 +20310,11 @@ const NAV_STARTS = [
  * ── OUR BOOK VS BENCHMARKS, ONE CHART (Stage 10iv) ──────────────────────────
  *
  * *"make it more simple to compare on the same graph across all benchmarks no
- * verbose"* — the family, 28 Oct 2026. The card draws the book and every
- * benchmark at once, each as its change since ONE first day, all to the book's
- * latest valuation; it starts only on a day the book was valued on. Each claim
+ * verbose"* — the family, 28 Oct 2026. The card draws the book and any benchmark
+ * (Stage 10jg: the Nifty 500 alone until a chip adds another), each as its change
+ * since ONE first day, all to the book's latest valuation; it starts only on a
+ * day the book was valued on. The probe clicks every chip on, so these claims
+ * read the whole chart and `navChart.defaults` reads the first paint. Each claim
  * is struck on the chips' and the chart's own `data-*` handles and geometry,
  * and every figure is re-derived here off the book — never off the component.
  */
@@ -21430,6 +21432,18 @@ const NAV_BENCH = [
       && b.every((x, i) => x.key === BENCH_FIXTURE[i][0] && x.symbol === BENCH_FIXTURE[i][2] && x.text.startsWith(BENCH_FIXTURE[i][1]))
       && c.titleText === "Our book vs benchmarks";
   }],
+  /**
+   * *"show only the book and Nifty 500 by default; other indices added by
+   * clicking"* — the family, 30 Oct 2026 (Stage 10jg). Struck on the first paint,
+   * before the probe clicks anything; every other chip stays on offer, unpressed.
+   */
+  ["the NAV card opens with only the book and the Nifty 500 on, and every other benchmark's chip off", (t, ctx) => {
+    const d = ctx?.navChart?.defaults;
+    if (!d) return notChecked("the NAV card was not on screen on this run");
+    const on = d.chips.filter((x) => x.shown).map((x) => x.key);
+    return on.length === 2 && on[0] === "book" && on[1] === BENCH_FIXTURE[0][0] && BENCH_FIXTURE[0][1] === "Nifty 500"
+      && d.chips.length === 1 + BENCH_FIXTURE.length;
+  }],
   ["Morning CIO's benchmark tab is named Our Book vs Benchmark", (t, ctx) => {
     const tabs = ctx?.cioTabs;
     if (tabs == null) return notChecked("the tab probe did not run on this pass");
@@ -21549,6 +21563,18 @@ const CIO_LIVE_NAV = [
       const days = Math.round((Date.parse(`${c.to}T00:00:00Z`) - Date.parse(`${c.from}T00:00:00Z`)) / 86400000) + 1;
       const i = navBookStroke(c);
       return c.to === NAV_SERIES_BOOK.seriesTo && c.vertexCounts.every((v, k) => k === i || v === days);
+    }],
+    /** The first paint is two lines; one click on an off chip adds that index's line alone. */
+    ["the chart opens on the book and the Nifty 500, and clicking another benchmark adds its line", (t, ctx) => {
+      const c = ctx?.navChart;
+      if (!c) return { notChecked: "the NAV chart was not found on this pass" };
+      const d = c.defaults, a = c.added;
+      if (!d || !a) return false;
+      const k = BENCH_FIXTURE.findIndex((b) => b[0] === a.key);
+      const color = `var(--chart-bench-${k + 1})`;
+      return d.lines === 2 && navBookStroke(d) >= 0 && d.strokes.includes("var(--chart-bench-1)")
+        && k > 0 && !d.strokes.includes(color)
+        && a.chart.lines === 3 && a.chart.strokes.includes(color) && a.chart.chips.find((x) => x.key === a.key)?.shown === true;
     }],
     /** Colour follows the index, never its position among the visible lines. */
     ["a hidden benchmark loses its line and keeps its chip and colour, and comes back", (t, ctx) => {
@@ -33723,7 +33749,7 @@ const INVARIANTS = {
     }],
     // ...and the guard is VISIBLY firing: a sub-year row is marked, never
     // silently annualised. Empty is not a pass — this book holds such rows.
-    // The marker is NA now (Stage 10jg), naming the held days and the HPR, and the
+    // The marker is NA now (Stage 10jh), naming the held days and the HPR, and the
     // caption says "held under a year".
     ["a holding held under a year is marked as holding-period rather than annualised",
       (t, ctx) => {
@@ -41175,7 +41201,23 @@ for (const theme of THEMES) {
           bookTitle: card?.querySelector('[data-testid="nav-book-chip"]')?.getAttribute("title") ?? null,
         };
       });
-      const navChart = FAST ? null : await navChartProbe();
+      /**
+       * ── THE FIRST PAINT, THEN THE WHOLE CHART (Stage 10jg) ─────────────────
+       * The card opens on the book and the Nifty 500. Every chip that is off is
+       * clicked on, the first one read by itself, so the claims about each line
+       * read a chart that has them all; `defaults` keeps the first paint, and the
+       * chips go back off below, so the screenshot shows what a reader opens.
+       */
+      const navDefaults = FAST ? null : await navChartProbe();
+      const navOff = (navDefaults?.chips ?? []).filter((c) => !c.shown).map((c) => c.key);
+      const navChip = (key) => page.click(`[data-testid="nav-legend"] [data-nav-line="${key}"]`);
+      let navAdded = null;
+      for (const key of navOff) {
+        await navChip(key);
+        if (!navAdded) { await page.waitForTimeout(400); navAdded = { key, chart: await navChartProbe() }; }
+      }
+      if (navOff.length) await page.waitForTimeout(400);
+      const navChart = navDefaults ? { ...(await navChartProbe()), defaults: navDefaults, added: navAdded } : null;
       /**
        * ── A HIDDEN BENCHMARK LOSES ITS LINE AND KEEPS ITS CHIP (Stage 10iv) ──
        * Clicked on the one walk that draws every benchmark, then clicked back,
@@ -41193,6 +41235,7 @@ for (const theme of THEMES) {
           navChart.toggle = { key, hidden, back };
         }
       }
+      for (const key of navOff) await navChip(key);
       /**
        * THE RETURN ATTRIBUTION CARD IS GONE, AND THIS PROBE PROVES IT.
        *

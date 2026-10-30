@@ -1796,7 +1796,7 @@ export type MeasuredReturn =
   | { shown: true; pct: number; tag: string; note?: string }
   /**
    * No figure, with the reason a reader needs in order to act on it. `na` where
-   * no document could supply one, drawn NA rather than a dash (Stage 10jg).
+   * no document could supply one, drawn NA rather than a dash (Stage 10jh).
    */
   | { shown: false; tag: string; reason: string; na?: boolean };
 
@@ -1837,7 +1837,7 @@ export const noCalendarReason = (asOf: string) =>
   `a calendar-year return needs the holding's value at the start and end of that year, and the earliest statement in this book is dated in ${asOf.slice(0, 4)}, after the current year began — there is no earlier window to measure from.`;
 
 /**
- * UNDER A YEAR, A CAGR OR AN XIRR DOES NOT EXIST (Stage 10jg): NA, naming the
+ * UNDER A YEAR, A CAGR OR AN XIRR DOES NOT EXIST (Stage 10jh): NA, naming the
  * figure that does. `auto` still prints that figure; its measure resolves per row.
  */
 const UNDER_A_YEAR_NA = "Not applicable: held";
@@ -1933,7 +1933,7 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
   const debt = p.debt ?? isDebtHolding(p);
   const cap = p.capital;
   if (measure === "cagr" && cap?.dated) {
-    // UNDER A YEAR, NO ANNUAL RATE (Stage 10hk, 10jg) — ahead of the refusal
+    // UNDER A YEAR, NO ANNUAL RATE (Stage 10hk, 10jh) — ahead of the refusal
     // below: however many dates the money went in on.
     if (!mayAnnualise(cap.days, debt)) {
       return noCost ? { shown: false, tag: "CAGR", reason: noCostReasonOf(p) } : underAYearNa("CAGR", cap.days, p.returnPct as number);
@@ -1991,7 +1991,7 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
     if (cap && !cap.dated) return { shown: false, tag: "XIRR", reason: cap.reason };
     if (!cap) {
       // A HOLDING KNOWN TO BE HELD UNDER A YEAR has no XIRR whatever its record
-      // (Stage 10hk, 10jg): no cash-flow record is needed to say a part-year is
+      // (Stage 10hk, 10jh): no cash-flow record is needed to say a part-year is
       // not annualised, so this is NA and not a missing record's dash.
       const r = noCost || debt ? null : holdingReturn(p, "cagr", asOf);
       if (r?.kind === "absolute" && r.heldDays !== null) return underAYearNa("XIRR", r.heldDays, r.pct);

@@ -86,7 +86,7 @@ export function AbsentCell({ reason }: { reason?: string }) {
 }
 
 /**
- * A FIGURE THAT CANNOT EXIST, AS AGAINST ONE WE DO NOT HAVE (Stage 10jg).
+ * A FIGURE THAT CANNOT EXIST, AS AGAINST ONE WE DO NOT HAVE (Stage 10jh).
  *
  *   *"it would be clear that for that particular holding … it is not logically
  *    possible to show CAGR or XIRR, but for others we suppose have missing data,
