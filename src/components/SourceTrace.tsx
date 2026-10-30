@@ -3,13 +3,39 @@ import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { SourceLink } from './SourceLink';
 import { BOOK_ACCOUNTS } from '@/data/glowData';
-import { holdingSourceTrace, statementSourceHref, type SourceMetric, type SourceTrace, type TracePosition } from '@/lib/sourceTrace';
+import { holdingSourceTrace, statementSourceHref, type ReviewFacts, type SourceMetric, type SourceTrace, type TracePosition } from '@/lib/sourceTrace';
 import { readModel } from '@/lib/readModel';
 
 export const SourceTraceContext = createContext<SourceTrace | null>(null);
 export const useSourceTrace = () => useContext(SourceTraceContext);
 const accounts = new Map(BOOK_ACCOUNTS.map(a => [a.accountId, a]));
 const LINK = 'pointer-events-auto cursor-pointer text-inherit underline decoration-dotted decoration-slate-500/50 underline-offset-[3px] hover:decoration-champagne-500';
+
+/** Rupees the way the family reads them: crore, lakh, else the whole amount. */
+const inr = (n: number) => Math.abs(n) >= 1e7 ? `₹${(n / 1e7).toFixed(2)} Cr`
+  : Math.abs(n) >= 1e5 ? `₹${(n / 1e5).toFixed(2)} L` : `₹${Math.round(n).toLocaleString('en-IN')}`;
+
+/**
+ * A FAMILY-REVIEW RECORD IN PLAIN WORDS (Stage 10jn): what it was worth and
+ * when, what was paid, and the one or two things that change how to read it.
+ * The review's full audit note stays one click away.
+ */
+function ReviewPlain({ facts: f }: { facts: ReviewFacts }) {
+  const units = f.units ? ` for ${f.units.toLocaleString('en-IN')} ${f.unitWord}` : '';
+  const lines = [
+    f.atCost
+      ? `${f.cost != null ? `Paid ${inr(f.cost)}${units}` : 'The amount paid'}, as recorded in the family's MOPWM review. It has no current value yet, so no gain is shown.`
+      : `Worth ${f.value != null ? inr(f.value) : 'the review\'s value'}${units}${f.asOf ? ` on ${f.asOf}` : ''}, in the family's MOPWM review.${f.cost != null ? ` Paid ${inr(f.cost)}.` : ''}`,
+    f.splitByShares && 'The review gives one cost for all the family\'s shares, so it is shared out by the number of shares each person holds.',
+    f.shared && 'Several family members share this investment; this is one person\'s part.',
+    f.noHolder && 'No document says which family member holds it.',
+    f.listed && 'It is now listed on the stock exchange, so the live view uses today\'s market price.',
+    f.differs && 'A newer statement shows a different figure (see Full detail).',
+  ].filter((x): x is string => !!x);
+  return <div className="mt-1 space-y-1 text-slate-300" data-review-plain data-prose-ok="a review record in plain words">
+    {lines.map((line) => <p key={line}>{line}</p>)}
+  </div>;
+}
 
 export function SourceDetails({ trace }: { trace: SourceTrace }) {
   const [related, setRelated] = useState<SourceTrace['sources']>([]);
@@ -33,13 +59,21 @@ export function SourceDetails({ trace }: { trace: SourceTrace }) {
       {[...trace.sources, ...related].map((source, i) => {
         const href = statementSourceHref(source), account = accounts.get(source.accountId);
         const date = source.document?.match(/\d{4}-\d{2}-\d{2}/)?.[0];
-        const label = [account?.owner, source.document ? account?.provider : source.label, account ? `a/c …${account.accountNo.slice(-6)}` : null, date].filter(Boolean).join(' · ');
+        // A review record names the review, not an account number nobody uses.
+        const label = [account?.owner, source.document ? account?.provider : source.label,
+          source.review ? 'family review (MOPWM)' : account ? `a/c …${account.accountNo.slice(-6)}` : null, date].filter(Boolean).join(' · ');
         return <li key={i}>
           {href ? <SourceLink to={href} data-source-document={source.document} data-source-pointer={source.pointer} className={LINK}
             title={`${source.label}${source.pointer ? ` · ${source.pointer}` : ''}`}>{label || source.label}</SourceLink>
             : <span>{source.label}</span>}
           {typeof source.value === 'number' && <div className="mono mt-0.5 text-slate-300">{source.value.toLocaleString('en-IN', { maximumFractionDigits: 8 })}</div>}
-          {source.note && <div className="mt-0.5 text-slate-500">{source.note}</div>}
+          {source.review ? <>
+            <ReviewPlain facts={source.review} />
+            {source.note && <details className="mt-1 text-slate-500" data-review-detail>
+              <summary className="cursor-pointer select-none">Full detail</summary>
+              <div className="mt-0.5">{source.note}</div>
+            </details>}
+          </> : source.note && <div className="mt-0.5 text-slate-500">{source.note}</div>}
         </li>;
       })}
     </ul>

@@ -8,7 +8,8 @@ import { sourceBackground } from '../../components/SourceLink';
 import { sourceSheetIndex } from '../statementPreview';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { SourceCell } from '../../components/SourceTrace';
+import { MemoryRouter } from 'react-router-dom';
+import { SourceCell, SourceDetails } from '../../components/SourceTrace';
 
 const bandhan = BOOK_POSITIONS.find(p => p.accountId === 'bandhan-mutual-fund-8652064' && p.isin === 'INF194K01Y60')!;
 const trace = holdingSourceTrace([bandhan], 'quantity');
@@ -75,6 +76,19 @@ const quoteCell = renderToStaticMarkup(createElement(SourceCell, { positions: [b
 assert.ok(quoteCell.includes('₹99')); assert.ok(!quoteCell.includes('href='), 'a separately displayed market quote cannot inherit the older statement price source');
 const allocated = holdingSourceTrace([{ ...bandhan, statementRecord: undefined, reviewSource: { sheet: 'Private Investments', block: 'Private Investments', row: 4 }, reviewNote: 'Allocated to this owner by the review record.' }], 'marketValue');
 assert.equal(allocated.derived, true); assert.ok(allocated.sources.some(s => s.note === 'Allocated to this owner by the review record.'));
+// A review record in plain words (Stage 10jn): its value, date, cost and
+// shares off the holding and the review's own note; the full note is kept.
+const nse = BOOK_POSITIONS.find(p => p.reviewNote?.includes('Now a listed company') && /split by shares/.test(p.reviewNote) && p.quantity === 125000)!;
+const nseReview = holdingSourceTrace([nse], 'quantity').sources.find(s => s.review)!;
+assert.equal(nseReview.note, nse.reviewNote, 'the full audit note stays under Full detail');
+assert.deepEqual(nseReview.review, { value: 259375000, cost: nse.costBasis, units: 125000, unitWord: 'shares', asOf: '30 Jun 2026',
+  atCost: false, splitByShares: true, shared: false, noHolder: false, listed: true, differs: false });
+const plain = renderToStaticMarkup(createElement(MemoryRouter, null, createElement(SourceDetails, { trace: holdingSourceTrace([nse], 'quantity') })));
+assert.ok(plain.includes('Worth ₹25.94 Cr for 1,25,000 shares on 30 Jun 2026'), plain);
+assert.ok(plain.includes('family review (MOPWM)') && !plain.includes('a/c …'), 'a review record names the review, not an account number');
+const atCostLine = BOOK_POSITIONS.find(p => p.valuedAtCost && p.reviewNote?.startsWith('Held at cost') && /of the line\./.test(p.reviewNote))!;
+const atCostFacts = holdingSourceTrace([atCostLine], 'costBasis').sources.find(s => s.review)!.review!;
+assert.ok(atCostFacts.atCost && atCostFacts.value === null && atCostFacts.shared && atCostFacts.asOf === '30 Jun 2026', 'a line held at cost carries no value');
 console.log('PASS exact holding sources, demat/folio isolation, aggregate/price lineage, saved corrections and strict record/page locators');
 
 // Printed balances, not arbitrary equal numbers: duplicate running balances
