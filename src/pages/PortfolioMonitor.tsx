@@ -72,7 +72,8 @@ import { SourceValue } from '@/components/SourceTrace';
 // Market fund table now. Everything that used to be defined here moved verbatim;
 // this page supplies only how one of ITS rows resolves a measure.
 import { ReturnMeasureSelect, useReturnMeasures } from "@/components/ReturnMeasureSelect";
-import { withReturnCols, returnAccessorsFor, AGG_NO_MEASURE, returnColumnMeta } from "@/lib/returnColumns";
+import { withReturnCols, returnAccessorsFor, AGG_NO_MEASURE, returnColumnMeta, returnGapLabel } from "@/lib/returnColumns";
+import { datedButUnvalued } from "@/lib/holdingFlows";
 import { useDatedCapital } from "@/lib/useDatedCapital";
 // `weightFormula` is deliberately NOT imported, and the REASON has changed under
 // this comment — which is why it is being restated rather than left standing.
@@ -1080,17 +1081,38 @@ export function PortfolioMonitor() {
   const wantYtd = returnMeasures.includes("ytd");
   const ytdHeld = useMemo(() => (wantYtd ? currentHoldings(positions) : EMPTY_POSITIONS), [wantYtd, positions]);
   const ytdHistories = useMarketHistories(ytdHeld);
+  /**
+   * THE PRICES ARE READ ONCE EVERY HISTORY HAS ANSWERED, not as each arrives:
+   * hundreds land in batches, and redrawing the whole table on every batch
+   * (629 rows on All Securities) held the page for a minute. Until then a row
+   * that needs them says the prices are loading.
+   */
+  const ytdInstrumentKey = useMemo(() => [...new Set([...ytdHistories.instruments.values()].map((i) => i.key))].sort().join("|"), [ytdHistories.instruments]);
+  const ytdSettled = useMemo(() => [...ytdHistories.instruments.values()].every((i) => !!ytdHistories.histories[i.key]),
+    [ytdHistories.instruments, ytdHistories.histories]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const ytdPrices = useMemo(() => (ytdSettled ? ytdHistories.histories : null), [ytdSettled, ytdInstrumentKey]);
+  const ytdInputs = useMemo(() => {
+    const statement = statementPortfolio ?? portfolio;
+    return wantYtd && statement ? statementReturnInputs(statement) : [];
+  }, [wantYtd, statementPortfolio, portfolio]);
   const ytdEnd = useMemo(() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; }, []);
   const ytd = useMemo(() => {
-    const statement = statementPortfolio ?? portfolio;
-    if (!wantYtd || !portfolio || !statement) return null;
-    return ytdBook({ inputs: statementReturnInputs(statement), held: ytdHeld, accounts: portfolio.accounts, end: ytdEnd,
-      assumptions: assumedHoldingBook({ actions: corporateActions, instruments: ytdHistories.instruments, histories: ytdHistories.histories }),
+    if (!wantYtd || !portfolio) return null;
+    return ytdBook({ inputs: ytdInputs, held: ytdHeld, accounts: portfolio.accounts, end: ytdEnd,
+      assumptions: ytdPrices ? assumedHoldingBook({ actions: corporateActions, instruments: ytdHistories.instruments, histories: ytdPrices }) : null,
       money: (n) => fmtFromBase(n, { compact: true }) });
-  }, [wantYtd, portfolio, statementPortfolio, ytdHeld, ytdEnd, corporateActions, ytdHistories.instruments, ytdHistories.histories, fmtFromBase]);
-  /** The row's input with its YTD from the first date we have, where the YTD measure asks. */
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wantYtd, portfolio, ytdInputs, ytdHeld, ytdEnd, corporateActions, ytdPrices, fmtFromBase]);
+  /**
+   * The row's input with what its own lines add: its YTD from the first date we
+   * have, where the YTD measure asks, and — on CAGR and XIRR — whether its money
+   * is all dated but only a live price or a NAV values it (Stage 10jh).
+   */
   const withYtd = useCallback(<T extends ReturnInput>(input: T, ps: readonly Position[] | null | undefined, m: ReturnMeasure): T =>
-    m === "ytd" && ytd && ps?.length ? { ...input, ytdFrom: ytd.of(ps) } : input, [ytd]);
+    m === "ytd" && ytd && ps?.length ? { ...input, ytdFrom: ytd.of(ps) }
+    : (m === "cagr" || m === "xirr") && ps?.length && datedButUnvalued(ps) ? { ...input, needsStatementValue: true }
+    : input, [ytd]);
   const holdAccessors = useMemo(
     // `portfolio` is not narrowed until the guard below and a hook cannot sit
     // after one; these accessors are only ever called from `sortRows` under it,
@@ -2855,7 +2877,7 @@ export function PortfolioMonitor() {
         {off && <span className="ret-tag mr-0.5">{res.tag}</span>}
         {res.shown
           ? <span className={changeColor(res.pct)} title={res.note}>{fmtPct(res.pct, { sign: true })}</span>
-          : <AbsentCell reason={res.reason} />}
+          : <AbsentCell reason={res.reason} label={returnGapLabel(res.reason)} />}
       </span>
     );
   };
@@ -5057,7 +5079,7 @@ export function PortfolioMonitor() {
                           // Tag "HPR" is always the raw return on cost (res.pct === returnPct),
                           // so its audit popover ties to the workbook; CAGR/other are derived.
                           const value = !res.shown
-                            ? <AbsentCell reason={res.reason} />
+                            ? <AbsentCell reason={res.reason} label={returnGapLabel(res.reason)} />
                             : res.tag === "HPR" && !r.live
                               ? <Auditable formula={returnFormula(pnlValue, r.costBasis, r.returnPct, money, r.fifo ? { realised: r.fifo.realised, deployed: r.fifo.deployed, income: r.fifo.income,
                                   capital: m && r.fifo.wholeMandates.length ? { value: r.fifo.marketValue, contributed: r.fifo.wholeContributed, withdrawn: r.fifo.wholeWithdrawn } : null } : undefined)}><span className={changeColor(res.pct)} title={res.note}>{fmtPct(res.pct, { sign: true })}</span></Auditable>

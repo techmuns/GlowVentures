@@ -71,6 +71,21 @@ function recoveredRecordOf(p: Position): RecoveredHoldingCost["cashRecord"] | nu
   return r.cashRecord;
 }
 
+/**
+ * EVERY LINE'S MONEY IS DATED BY ITS RECOVERED RECORD, BUT A LINE IS VALUED
+ * ONLY AT A LIVE PRICE OR A PUBLISHED NAV (Stage 10jh) — the rows `holdingFlowsOf`
+ * leaves undated because no statement values them. Their blank rate names that,
+ * not a missing purchase date they do not lack.
+ */
+const RECORDED = new WeakMap<Position, boolean>();
+const recorded = (p: Position) => {
+  let r = RECORDED.get(p);
+  if (r === undefined) { r = !!recoveredRecordOf(p); RECORDED.set(p, r); }
+  return r;
+};
+export const datedButUnvalued = (ps: readonly Position[]): boolean =>
+  ps.length > 0 && ps.some((p) => !!p.live || !!p.priceEvidence) && ps.every(recorded);
+
 /** The holding's dividends inside a window — or the first one no statement dates. */
 function incomeIn(key: string, from: string, to: string): { rows: { date: string; amount: number }[]; undated: boolean } {
   const all = BOOK_HOLDING_INCOME[key] ?? [];

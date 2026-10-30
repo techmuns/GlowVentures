@@ -1757,6 +1757,12 @@ export type ReturnInput = {
    * no full year to date stands, tagged with its start date.
    */
   ytdFrom?: YtdFrom | null;
+  /**
+   * EVERY RUPEE DATED, NO STATEMENT VALUE (Stage 10jh): its recovered record
+   * dates each purchase and sale, but only a live price or a published NAV
+   * values it (`datedButUnvalued`), so CAGR and XIRR name that.
+   */
+  needsStatementValue?: boolean;
 };
 
 /**
@@ -1827,6 +1833,8 @@ const noCostReasonOf = (p: ReturnInput): string => p.hprUnavailableReason ?? p.f
  * (MH-09, MH-18), in one wording.
  */
 const wholeAccountsOf = (n: number): string => n === 1 ? "This row is one whole account" : `This row is ${n} whole accounts`;
+const NEEDS_STATEMENT_VALUE =
+  "its purchases and sales are all dated (the family's review, register or adviser's report), but no statement values the units it holds now — its value here is a live price or a published NAV, and an annual rate closes only on a statement's own value and date. A holdings statement that values it fills this.";
 const DERIVED_ONLY_RETURN =
   "no statement in this book reports this company as a holding — the family reaches it only through funds whose filings name it — so there is no cost or value of the family's own to strike a return on";
 /**
@@ -1957,6 +1965,7 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
       reason: `${wholeAccountsOf(cap.accountIds.length)}, and an account is not annualised on a purchase date: its annual rate is a money-weighted XIRR over the family's dated payments, and ${cap.reason.replace(/\.$/, "")}` };
   }
 
+  if (measure === "cagr" && p.needsStatementValue && !cap) return { shown: false, tag: "CAGR", reason: NEEDS_STATEMENT_VALUE };
   if (measure === "cagr") {
     const r = holdingReturn(p, "cagr", asOf, debt);
     if (r.kind === "absent") return { shown: false, tag: "CAGR", reason: r.reason };
@@ -2007,7 +2016,7 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
         return { shown: true, pct: r.pct, tag: "HPR",
           note: `Held ${r.heldDays} days — under a year, so this is the total return on cost, not an annual rate.` };
       }
-      return { shown: false, tag: "XIRR", reason: NO_HOLDING_XIRR };
+      return { shown: false, tag: "XIRR", reason: p.needsStatementValue ? NEEDS_STATEMENT_VALUE : NO_HOLDING_XIRR };
     }
     return capitalXirrOf(p, cap, noCost, debt);
   }

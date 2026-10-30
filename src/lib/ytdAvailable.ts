@@ -98,7 +98,8 @@ export function ytdBook({ inputs, held, accounts, end, assumptions, money }: {
     const hit = holdingMemo.get(p);
     if (hit) return hit;
     let found: Found;
-    if (!assumptions) found = { reason: 'published prices are not loaded on this page' };
+    // Null while the page's price histories are still answering.
+    if (!assumptions) found = { reason: 'Prices are still loading. No new statement is needed yet.', pending: true };
     else {
       const a = accounts.find((x) => x.accountId === p.accountId);
       const anchor = a ? holdingAssumptionAnchor(p, a, assumptions) : null;

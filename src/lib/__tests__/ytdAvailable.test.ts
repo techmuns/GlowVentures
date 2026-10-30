@@ -38,7 +38,7 @@ assert.ok(opened.shown && opened.tag === 'YTD' && opened.pct === 12.5);
 // PART OF AN ACCOUNT is never handed the account's return: with no published
 // prices to carry its units, it is a dash naming why.
 const part = ytdBook({ inputs: [input], held: [...held, pos({ securityKey: 'z', security: 'Share Z' })], accounts, end: '2026-10-30', assumptions: null, money }).of([held[0]]);
-assert.ok(!part.shown && /published prices/i.test(part.reason));
+assert.ok(!part.shown && /prices are still loading/i.test(part.reason) && part.pending === true);
 const dash = measuredReturn({ returnPct: 32, heldSince: null, assetClass: 'Equity', ytdFrom: part }, 'ytd', '2026-09-30');
 assert.ok(!dash.shown && /1 January/.test(dash.reason) && /From a later date this year/.test(dash.reason));
 
