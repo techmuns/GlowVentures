@@ -140,6 +140,7 @@ jobs:
           CHROME="$(command -v google-chrome)" node scripts/dev/check-investment-dates.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-publication-refresh.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-data-performance.mjs
+          CHROME="$(command -v google-chrome)" node scripts/dev/check-consolidated-sheet.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-chunk-recovery.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-pdf-preview.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-source-trace.mjs
