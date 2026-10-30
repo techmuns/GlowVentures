@@ -34,3 +34,18 @@ document repeats one long section verbatim and it is printed once, because one
 requirement carrying two tick states would make the checklist unusable; and the
 two investment-tracking tables are stored by Word one word per line, so they are
 reassembled into the columns the spec actually lists.
+
+## The client task list
+
+`Glow_Checklist_Updated_29_October.xlsx` is the running task list for both
+dashboards, kept in the team's own format: date, task number, task, dashboard,
+the client's words verbatim, what has to be done, and status.
+
+- **Tasks 22-Oct-2026** — the 22 October call (#310–#367) and, below it, the
+  29 October call (#368–#399).
+- **Real Checklist** — every task from 27 August to 19 October.
+- **Screenr** — the screener sheet.
+
+New calls are added below the last row of the newest sheet, continuing the
+numbering. Status values: DONE, WIP, NOT DONE, or WAITING FOR <name> when the
+next step is the client's or a third party's.
