@@ -781,6 +781,11 @@
 - Price indices on statement dates; no live quote enters. No feed, a wrong-name answer or an index younger than the money renders `—` with the reason. The Nifty 500 loads with the tile; the other six load when the info card opens.
 - `closeOnOrBefore` moved from `PortfolioReturns` to `lib/prices.ts`. Test `cardBenchmark.test.ts`; invariant on `cio`.
 
+### Stage 10jk — MORNING CIO: THE TILE'S BENCHMARK LINE SHOWS ONE PORTFOLIO FIGURE
+
+- *"Just simply write vs Nifty 500… why there are two no. for portfolio return being shown."* A since-investment tile whose comparison covers part of its money now reads `vs Nifty 500 +1.6%`, without "₹579.3 Cr dated +15.8%".
+- Its lead goes too: +14.2 pp is off +15.8%, so it would not tie to the +17.2% above it. A tile compared on all its money keeps the lead. The hover says the figure is on the dated money; the info card keeps the book's figure on that money and the leads.
+
 ### Stage 10jj — OUR BOOK VS BENCHMARKS: ONE DROPDOWN, NO RETRY BUTTON
 
 *"remove the 'retry demat prices button', just give a simple benchmark dropdown list selector, to select multiple benchmarks"* — the family, 30 Oct 2026.

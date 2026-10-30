@@ -18743,16 +18743,18 @@ const CIO_SHARED = [
    * A RETURN TILE SETS THE INDEX BESIDE IT (Stage 10ji). The lead is the two
    * figures' own difference, an index figure is only ever on a feed's answer
    * (this walk's `/api/prices` may 404, and then there is none), and a narrowed
-   * comparison covers no more money than the tile invested.
+   * comparison covers no more money than the tile invested. A narrowed one
+   * shows no lead (Stage 10jk): it is off a book figure the tile does not show.
    */
   ["a return tile carries the index on the same money, its lead the two figures' difference (Stage 10ji)", (t, ctx) => {
     if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
     const tiles = ctx.kpiTiles.filter((x) => ["return", "gain", "annualised", "fytd", "ytd"].includes(x.slot) && x.coverage?.cardReturn);
     if (!tiles.length) return { notChecked: "no return tile with a measured return is on this strip" };
-    return tiles.every(({ bench: b }) => {
+    return tiles.every(({ bench: b, benchLead }) => {
       if (b?.cardBench !== "nifty-500") return false;
       if (Number(b.cardBenchDated) > Number(b.cardBenchTotal) + 1) return false;
-      if (b.cardBenchIndex === "") return b.cardBenchGap === "";
+      if (b.cardBenchIndex === "") return b.cardBenchGap === "" && !benchLead;
+      if (benchLead === Number(b.cardBenchDated) < Number(b.cardBenchTotal) - 1) return false;
       return Math.abs(Number(b.cardBenchBook) - Number(b.cardBenchIndex) - Number(b.cardBenchGap)) < 1e-6;
     });
   }],
@@ -33779,7 +33781,7 @@ const INVARIANTS = {
     }],
     // ...and the guard is VISIBLY firing: a sub-year row is marked, never
     // silently annualised. Empty is not a pass — this book holds such rows.
-    // The marker is NA now (Stage 10jh), naming the held days and the HPR, and the
+    // The marker is NA now (Stage 10jj), naming the held days and the HPR, and the
     // caption says "held under a year".
     ["a holding held under a year is marked as holding-period rather than annualised",
       (t, ctx) => {
@@ -40451,6 +40453,7 @@ for (const theme of THEMES) {
           second: (c.querySelector("[data-kpi-second]")?.textContent ?? "").replace(/\s+/g, " ").trim() || null,
           coverage: c.querySelector('[data-card-coverage]') ? { ...c.querySelector('[data-card-coverage]').dataset } : null,
           bench: c.querySelector('[data-card-bench]') ? { ...c.querySelector('[data-card-bench]').dataset } : null,
+          benchLead: !!c.querySelector('[data-card-bench-lead]'),
           returnInfo: c.querySelectorAll('[data-return-info]').length,
           sub: (c.querySelector("[data-kpi-sub]")?.textContent ?? "").replace(/\s+/g, " ").trim() || null,
           // THE TILE'S OWN FIGURE, off its own handle — what a value check
