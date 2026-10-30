@@ -819,3 +819,10 @@
 - Recovered records carry `unitRecord` (units after each dated row, built by `recoverHoldingCosts` / `replayMopwmRows`). `recordedYearWindow` in `ytdAvailable.ts` opens YTD on 1 January's units at 31 December's close, counts this year's purchases and sales on their dates (and dividend entitlements where the record dates none), and carries the units from the statement at published closes; it falls back to the old path on any gap (split before the statement, unvouched dividend).
 - CAGR left the picker and the default columns (`PICKER_KEYS`); a saved pick drops it; `?ret=cagr` still opens its column for the checks. CLAUDE.md records the rule beside the 22 Oct one.
 - Checks: cells carry `data-capital-close`; `HOLDING_FLOWS_BOOK.solve(keys, closes)` re-solves with the page's market closes (a demat line by account and acquisition ISIN). Picker, default and Transactions checks expect no CAGR; `monitor-remember` ticks XIRR. Red as on main: `monitor-xirr` (360 ONE row), `monitor-txn-returns` (2), `stock` width, `stock-unpriced`.
+
+### Stage 10jj — OUR BOOK VS BENCHMARKS: ONE DROPDOWN, NO RETRY BUTTON
+
+*"remove the 'retry demat prices button', just give a simple benchmark dropdown list selector, to select multiple benchmarks"* — the family, 30 Oct 2026.
+- The row of seven chips is one Benchmarks list: tick several, and it stays open until a click outside or Escape. Each option carries its colour and return; the row beside it names only the lines drawn.
+- The retry button is gone. A failed demat price history is named on the book's hover, and a page reload fetches it again (failures are kept in memory only, never stored). Automatic retry was not added.
+- `check:pages`: a new invariant holds the closed list as the row's one control, and that it stays open across picks. The probe ticks options through the list; the closed panel stays in the DOM, so each option's keys read without opening it. `check-nav-assumed.mjs` now asserts the hover instead of the button.

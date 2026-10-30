@@ -20428,9 +20428,9 @@ const NAV_STARTS = [
  *
  * *"make it more simple to compare on the same graph across all benchmarks no
  * verbose"* — the family, 28 Oct 2026. The card draws the book and any benchmark
- * (Stage 10jg: the Nifty 500 alone until a chip adds another), each as its change
- * since ONE first day, all to the book's latest valuation; it starts only on a
- * day the book was valued on. The probe clicks every chip on, so these claims
+ * (Stage 10jg: the Nifty 500 alone until the Benchmarks list adds another), each as
+ * its change since ONE first day, all to the book's latest valuation; it starts only
+ * on a day the book was valued on. The probe ticks every option, so these claims
  * read the whole chart and `navChart.defaults` reads the first paint. Each claim
  * is struck on the chips' and the chart's own `data-*` handles and geometry,
  * and every figure is re-derived here off the book — never off the component.
@@ -21554,7 +21554,20 @@ const NAV_BENCH = [
    * clicking"* — the family, 30 Oct 2026 (Stage 10jg). Struck on the first paint,
    * before the probe clicks anything; every other chip stays on offer, unpressed.
    */
-  ["the NAV card opens with only the book and the Nifty 500 on, and every other benchmark's chip off", (t, ctx) => {
+  /**
+   * *"just give me a simple benchmark dropdown list selector, to select multiple
+   * benchmarks"* — the family, 30 Oct 2026 (Stage 10jj). Closed, the row has one
+   * control and names only the drawn lines; the list stays open across picks.
+   */
+  ["the NAV card's one control is a closed Benchmarks list, the row naming only the lines drawn, and it stays open to pick several", (t, ctx) => {
+    const c = ctx?.navChart, d = c?.defaults;
+    if (!d) return notChecked("the NAV card was not on screen on this run");
+    return d.pickerExpanded === false && d.legendButtons === 1 && d.optionsVisible === 0
+      && d.picked.join() === BENCH_FIXTURE[0][0]
+      && c.added?.chart.pickerExpanded === true && c.added.chart.optionsVisible === BENCH_FIXTURE.length
+      && c.added.chart.picked.join() === [BENCH_FIXTURE[0][0], c.added.key].join();
+  }],
+  ["the NAV card opens with only the book and the Nifty 500 on, and every other benchmark's option off", (t, ctx) => {
     const d = ctx?.navChart?.defaults;
     if (!d) return notChecked("the NAV card was not on screen on this run");
     const on = d.chips.filter((x) => x.shown).map((x) => x.key);
@@ -41342,10 +41355,14 @@ for (const theme of THEMES) {
             state: b.getAttribute("data-bench-state"),
             ret: num(b.getAttribute("data-nav-ret")),
             basis: b.getAttribute("data-nav-basis"),
-            shown: b.tagName === "BUTTON" ? b.getAttribute("aria-pressed") === "true" : true,
+            shown: b.tagName === "BUTTON" ? b.getAttribute("aria-selected") === "true" : true,
             text: (b.textContent ?? "").replace(/\s+/g, " ").trim(),
             title: b.getAttribute("title") ?? "",
           })),
+          pickerExpanded: legend?.querySelector("[data-nav-picker]")?.getAttribute("aria-expanded") === "true",
+          legendButtons: [...(legend?.querySelectorAll("button") ?? [])].filter((b) => b.getClientRects().length > 0 && !b.hasAttribute("data-nav-line")).length,
+          optionsVisible: [...(legend?.querySelectorAll("[data-bench]") ?? [])].filter((b) => b.getClientRects().length > 0).length,
+          picked: [...(legend?.querySelectorAll("[data-nav-selected]") ?? [])].map((b) => b.getAttribute("data-nav-selected")),
           from: legend?.getAttribute("data-nav-from") ?? null,
           to: legend?.getAttribute("data-nav-to") ?? null,
           starts: (card?.querySelector('[data-testid="nav-range"]')?.getAttribute("data-nav-starts") ?? "").split(" ").filter(Boolean),
@@ -41365,14 +41382,22 @@ for (const theme of THEMES) {
       });
       /**
        * ── THE FIRST PAINT, THEN THE WHOLE CHART (Stage 10jg) ─────────────────
-       * The card opens on the book and the Nifty 500. Every chip that is off is
-       * clicked on, the first one read by itself, so the claims about each line
-       * read a chart that has them all; `defaults` keeps the first paint, and the
-       * chips go back off below, so the screenshot shows what a reader opens.
+       * The card opens on the book and the Nifty 500. Every option that is off is
+       * ticked in the Benchmarks list, the first one read by itself, so the claims
+       * about each line read a chart that has them all; `defaults` keeps the first
+       * paint, and the options go back off below, so the screenshot shows what a
+       * reader opens.
        */
       const navDefaults = FAST ? null : await navChartProbe();
       const navOff = (navDefaults?.chips ?? []).filter((c) => !c.shown).map((c) => c.key);
-      const navChip = (key) => page.click(`[data-testid="nav-legend"] [data-nav-line="${key}"]`);
+      const navPicker = (open) => page.evaluate((want) => {
+        const b = document.querySelector("[data-nav-picker]");
+        if (b && (b.getAttribute("aria-expanded") === "true") !== want) b.click();
+      }, open);
+      const navChip = async (key) => {
+        await navPicker(true);
+        await page.click(`[data-testid="nav-legend"] [data-nav-line="${key}"]`);
+      };
       let navAdded = null;
       for (const key of navOff) {
         await navChip(key);
@@ -41388,16 +41413,17 @@ for (const theme of THEMES) {
       if (navChart && name === "cio-nav-live") {
         const key = navChart.chips.find((c) => c.key !== "book" && c.state === "ok")?.key ?? null;
         if (key) {
-          await page.click(`[data-testid="nav-legend"] [data-nav-line="${key}"]`);
+          await navChip(key);
           await page.waitForTimeout(400);
           const hidden = await navChartProbe();
-          await page.click(`[data-testid="nav-legend"] [data-nav-line="${key}"]`);
+          await navChip(key);
           await page.waitForTimeout(400);
           const back = await navChartProbe();
           navChart.toggle = { key, hidden, back };
         }
       }
       for (const key of navOff) await navChip(key);
+      await navPicker(false);
       /**
        * THE RETURN ATTRIBUTION CARD IS GONE, AND THIS PROBE PROVES IT.
        *
