@@ -52,8 +52,13 @@ import { chartTooltipStyle, chartTooltipLabelStyle } from "@/lib/chartTheme";
 //    read +5.3% against the Nifty 500's −4.3%. 1Y–Max drew months of index
 //    before the book has any value. A period now starts only on a date the book
 //    was valued on (`comparableStarts`): today, 31 Mar 2026 alone.
-//  · Every benchmark is drawn at once, each in its fixed colour, with its return
-//    over the same dates on its chip; a chip hides or shows its line.
+//  · Every benchmark has a chip, in its fixed colour, with its return over the
+//    same dates; a chip adds or removes its line. *"show only the book and Nifty
+//    500 by default; other indices added by clicking"* — the family, 30 Oct 2026
+//    (Stage 10jg), over a chart of eight lines.
+
+/** The benchmarks drawn until the reader changes them. */
+const DEFAULT_SHOWN: readonly BenchmarkKey[] = ["nifty-500"];
 
 const BOOK_COLOR = "var(--chart-book, #d9c48f)";
 const GRID_COLOR = "var(--chart-grid, #2b2668)";
@@ -137,9 +142,9 @@ export function NavVsIndex() {
   const seriesStarts = useAssumed && assumed ? assumed.starts : WHOLE_BOOK_STARTS;
   /** The comparison's first day — one of the dates the book can be compared from; the first by default. */
   const [startPick, setStart] = useNavigationValue<string | null>("nav-start", null, nullableStringNavigation);
-  /** Benchmarks the reader has hidden; every one is drawn until a chip hides it. */
-  const [hiddenList, setHidden] = useNavigationValue<string[] | null>("nav-hidden", null, nullableStringsNavigation);
-  const hidden = useMemo(() => new Set(hiddenList ?? []), [hiddenList]);
+  /** The benchmarks on the chart: `DEFAULT_SHOWN` until a chip changes them; an empty list is the book alone. */
+  const [shownList, setShown] = useNavigationValue<string[] | null>("nav-shown", null, nullableStringsNavigation);
+  const shownKeys = useMemo(() => new Set<string>(shownList ?? DEFAULT_SHOWN), [shownList]);
   const [loads, setLoads] = useState<Record<BenchmarkKey, BenchLoad>>(
     () => Object.fromEntries(BENCHMARKS.map((b) => [b.key, { state: "loading" }])) as Record<BenchmarkKey, BenchLoad>);
 
@@ -197,7 +202,7 @@ export function NavVsIndex() {
     // every line.
     const drawn = [
       { key: "book", line: bookLine },
-      ...benches.filter((x) => !hidden.has(x.b.key)).map((x) => ({ key: x.b.key as string, line: x.line })),
+      ...benches.filter((x) => shownKeys.has(x.b.key)).map((x) => ({ key: x.b.key as string, line: x.line })),
     ];
     const allDates = [...new Set(drawn.flatMap((d) => d.line.map((p) => p.t)))].sort();
     const at = drawn.map((d) => ({ key: d.key, by: new Map(d.line.map((p) => [p.t, p.v])), sorted: d.line }));
@@ -223,7 +228,7 @@ export function NavVsIndex() {
     const spanDays = (ts(to) - ts(from)) / DAY;
     const { ticks, fmt: tickFmt } = axisTicks(allDates, spanDays);
     return { book, cov, stats, dates, bookFrom, bookTo, ready: true as const, from, to, bookLine, bookRet, benches, rows, ticks, tickFmt, stale, starts };
-  }, [portfolio, loads, startPick, hidden, series, seriesStarts]);
+  }, [portfolio, loads, startPick, shownKeys, series, seriesStarts]);
 
   if (!model || !portfolio) return null;
   const { stats, cov } = model;
@@ -377,13 +382,13 @@ export function NavVsIndex() {
     `Every line is its change since ${fmtDate(from)}, to ${fmtDate(to)} — the book's latest valuation — so every figure covers the same dates. Not annualised.`,
     `A comparison starts only on a day the book was valued: a later start would carry gains from before it into the period${starts.length > 1 ? "" : `, and today ${fmtDate(from)} is the one such day`}.`,
     `${stats.inReturn.length} of the ${stats.holding.length} investments holding value in the return; ${model.dates.length} dated points, ${model.bookFrom} → ${model.bookTo}.`,
-    "Benchmarks are price indices (dividends are not in them), from the live price service, each checked by the name the service reports. Click one to hide or show it.",
+    "Benchmarks are price indices (dividends are not in them), from the live price service, each checked by the name the service reports. Click one to add it to the chart or take it off.",
   ].join("\n\n");
 
-  const toggle = (key: string) => setHidden((cur) => {
-    const set = new Set(cur ?? []);
+  const toggle = (key: string) => setShown((cur) => {
+    const set = new Set<string>(cur ?? DEFAULT_SHOWN);
     if (set.has(key)) set.delete(key); else set.add(key);
-    return set.size ? [...set] : null;
+    return [...set];
   });
   const chipBase = "inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs transition-colors";
   const Swatch = ({ color, thick }: { color: string; thick?: boolean }) => (
@@ -420,8 +425,8 @@ export function NavVsIndex() {
       }>
 
       {/* ── ONE CHIP PER LINE: its colour, its name, its return over the window ──
-          The book's chip leads and cannot be hidden; a benchmark's chip hides or
-          shows its line. Keyed `data-nav-line` / `data-bench`, so a claim about
+          The book's chip leads and cannot be hidden; a benchmark's chip adds or
+          removes its line. Keyed `data-nav-line` / `data-bench`, so a claim about
           what the card offers is struck on keys, never on labels. */}
       <div className="mb-3 flex flex-wrap items-center gap-1.5" data-testid="nav-legend"
         data-nav-from={from} data-nav-to={to}>
@@ -445,7 +450,7 @@ export function NavVsIndex() {
           </button>
         )}
         {benches.map(({ b, load, ret, lastClose }) => {
-          const shown = !hidden.has(b.key);
+          const shown = shownKeys.has(b.key);
           const why = load.state === "down"
             ? `The ${b.name} history could not be fetched — the price service did not answer. It runs on the deployed site, not in local preview.`
             : load.state === "mismatch" ? benchmarkMismatchReason(b, load.reportedName)
@@ -486,7 +491,7 @@ export function NavVsIndex() {
               if (!row) return null;
               const items = [
                 { key: "book", label: "Our book", color: BOOK_COLOR },
-                ...benches.filter((x) => !hidden.has(x.b.key) && x.line.length).map((x) => ({ key: x.b.key as string, label: x.b.label, color: x.b.color })),
+                ...benches.filter((x) => shownKeys.has(x.b.key) && x.line.length).map((x) => ({ key: x.b.key as string, label: x.b.label, color: x.b.color })),
               ].map((x) => ({ ...x, v: row[`carry:${x.key}`] as number | null }))
                 .filter((x) => x.v != null)
                 .sort((a, b) => (b.v as number) - (a.v as number));
@@ -502,7 +507,7 @@ export function NavVsIndex() {
                 </div>
               );
             }} />
-            {benches.filter((x) => !hidden.has(x.b.key) && x.line.length).map(({ b }) => (
+            {benches.filter((x) => shownKeys.has(x.b.key) && x.line.length).map(({ b }) => (
               <Line key={b.key} type="linear" dataKey={b.key} stroke={b.color} strokeWidth={1.5} dot={false}
                 name={b.label} connectNulls isAnimationActive={false} />
             ))}
