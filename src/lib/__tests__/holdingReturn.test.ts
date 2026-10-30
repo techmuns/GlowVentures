@@ -205,7 +205,7 @@ ok("the book still carries a report date for the window to close against", !!BOO
   ok("the picker offers auto + the four concrete measures, auto first",
      RETURN_MEASURES[0].key === "auto"
      && ["auto", "absolute", "cagr", "xirr", "ytd"].every((k) => RETURN_MEASURES.some((m) => m.key === k)));
-  // CY IS GONE (Stage 10jf): no statement here values a holding at a past
+  // CY IS GONE (Stage 10jg): no statement here values a holding at a past
   // year-end, so the column was a dash on every row.
   ok("the picker no longer offers a calendar-year return", !RETURN_MEASURES.some((m) => (m.key as string) === "calendar" || m.tag === "CY"));
 

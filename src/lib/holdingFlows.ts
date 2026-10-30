@@ -29,15 +29,21 @@
  *  - LOTS: a lot register accounts for every unit held (`heldSince`'s gate),
  *    and no unit of the holding was sold — the register dates only what is still
  *    held, so money that came back would be missing from the rate.
+ *  - RECOVERED (Stage 10jf): a supplementary record that reconciles to this
+ *    account, ISIN and every unit held (`Position.recoveredCost`) dates each
+ *    purchase, sale and receipt. Only on a line its statement values: a value
+ *    only a live quote gives would close the record on a date no statement
+ *    reached, and a holding with later sales needs a newer balance first.
  *
  * Anything short of that dates part of the money, and a rate over part of it
  * is the partial return this book refuses (Stage 10fc). A holding with no dated
  * record at all returns null: the caller keeps its own per-holding answer.
  */
 import { BOOK_HOLDING_INCOME, BOOK_HOLDING_LOTS, BOOK_HOLDING_TRADES } from "@/data/glowData";
-import type { Position } from "./types";
+import { acquisitionIdentity } from "../../shared/fundUnitActions.mjs";
+import type { Position, RecoveredHoldingCost } from "./types";
 
-export type HoldingFlowBasis = "trades" | "lots";
+export type HoldingFlowBasis = "trades" | "lots" | "recovered";
 
 export type HoldingFlows =
   | {
@@ -55,6 +61,15 @@ export type HoldingFlows =
   | { dated: false; reason: string };
 
 const keyOf = (p: Pick<Position, "accountId" | "securityKey">) => `${p.accountId}|${p.securityKey}`;
+
+/** The recovered record that is exactly this line's — the gate `investedOn` dates it through. */
+function recoveredRecordOf(p: Position): RecoveredHoldingCost["cashRecord"] | null {
+  const r = p.recoveredCost;
+  if (!r?.cashRecord?.length || r.hprUnavailableReason || r.salesAfter || p.rolledForward) return null;
+  const id = acquisitionIdentity(p);
+  if (r.accountId !== id.accountId || r.isin !== id.isin || id.quantity == null || Math.abs(r.quantity - id.quantity) > .0005) return null;
+  return r.cashRecord;
+}
 
 /** The holding's dividends inside a window — or the first one no statement dates. */
 function incomeIn(key: string, from: string, to: string): { rows: { date: string; amount: number }[]; undated: boolean } {
@@ -103,6 +118,17 @@ export function holdingFlowsOf(p: Position, asOf: string | null): HoldingFlows |
       close: p.marketValue > 0 ? { date: asOf, value: p.marketValue } : null,
     };
   }
+  const record = recoveredRecordOf(p);
+  if (record && asOf && !p.live && !p.priceEvidence) {
+    const trades = record.filter((x) => x.side !== "income");
+    return {
+      dated: true, basis: "recovered",
+      flows: record.map((x) => ({ date: x.date, amount: x.side === "buy" ? -x.amount : x.amount })),
+      payments: trades.length,
+      since: trades.find((x) => x.side === "buy")?.date ?? trades[0].date,
+      close: p.marketValue > 0 ? { date: asOf, value: p.marketValue } : null,
+    };
+  }
   return null;
 }
 
@@ -120,10 +146,21 @@ export function holdingFlowsOf(p: Position, asOf: string | null): HoldingFlows |
  */
 export type HoldingPeriod = { nilSince: string; openedOn: string };
 
+/** A recovered record runs from a nil balance, so no date opens its nil span. */
+const NIL_BEFORE_THE_RECORD = "0001-01-01";
+
 export function holdingPeriodOf(ps: readonly Position[]): HoldingPeriod | null {
   let nilSince: string | null = null, openedOn: string | null = null;
   for (const p of ps) {
     const r = p.tradeRecord;
+    // A recovered replay left no shortfall and closes on exactly the units held,
+    // so the holding is on record as holding nothing before its first row.
+    const held = !r && recoveredRecordOf(p) ? p.recoveredCost!.heldPurchases : null;
+    if (held) {
+      if (nilSince === null) nilSince = NIL_BEFORE_THE_RECORD;
+      if (openedOn === null || held.first < openedOn) openedOn = held.first;
+      continue;
+    }
     if (!r || r.unaccounted !== 0 || !(p.quantity && p.quantity > 0)) return null;
     let qty = 0, nil = r.from, opened: string | null = null;
     for (const t of (BOOK_HOLDING_TRADES[keyOf(p)] ?? []).filter((x) => x.date >= r.from && x.date <= r.to)) {

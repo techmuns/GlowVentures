@@ -220,6 +220,12 @@ export type RecoveredHoldingCost = {
   accountId: string; isin: string; quantity: number; asOf: string;
   /** Original acquisition dates of the FIFO lots still held, after the exact unit reconciliation. */
   heldPurchases?: { first: string; last: string; lots: number };
+  /**
+   * Every priced purchase and sale behind this holding, and its dated income,
+   * oldest first (Stage 10jf) — what `holdingFlowsOf` solves a money-weighted
+   * return over. Absent where a sale's proceeds are unverified.
+   */
+  cashRecord?: { date: string; side: "buy" | "sell" | "income"; amount: number }[];
   costBasis: number; realizedPnL: number | null; costOfUnitsSold: number | null;
   dividendReceived: number | null;
   /** Later review sale rows invalidate live pricing of the old snapshot. */

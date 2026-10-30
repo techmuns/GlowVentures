@@ -207,7 +207,7 @@ One line per area; the history files explain each in depth.
   its Portfolio Monitor holding columns are `lineHoldingFigures.ts`, Stage 10hz),
   `capitalBridge.ts` (the tab's start → money in/out → gain → end bridge, gain split
   only by a statement P&L or fund unit record; Stage 10gu), `ytdAvailable.ts` (the
-  Monitor's YTD from the first dated value this year, on those records; Stage 10jf), `useMarketReturns.ts` +
+  Monitor's YTD from the first dated value this year, on those records; Stage 10jg), `useMarketReturns.ts` +
   `marketHistoryStore.ts` (public histories kept in the browser, warmed by Morning CIO),
   `returnMeasures.ts`, `returnColumns.ts`.
 - `src/lib/fundNavs.ts` (AMFI NAV overlay; never sets `live`; depository cash and

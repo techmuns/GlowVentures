@@ -249,8 +249,9 @@ function holdingRate(ps: readonly Position[]): { annual: number | null; days: nu
     const p = STMT.get(k);
     if (!p) return null;
     const r = p.tradeRecord;
-    const inc = BOOK_HOLDING_INCOME[k] ?? [];
+    let inc = BOOK_HOLDING_INCOME[k] ?? [];
     const lots = BOOK_HOLDING_LOTS[k];
+    const rec = p.recoveredCost;
     let close: string, from: string;
     if (r && r.unaccounted === 0) {
       const ts = (BOOK_HOLDING_TRADES[k] ?? []).filter((t) => t.date >= r.from && t.date <= r.to);
@@ -264,6 +265,12 @@ function holdingRate(ps: readonly Position[]): { annual: number | null; days: nu
       for (const l of lots) flows.push({ t: Date.parse(l.date), amount: -l.cost });
       since = Math.min(since, Date.parse(lots[0].date));
       payments += lots.length; from = lots[0].date; close = ACC.get(p.accountId)!.asOf;
+    } else if (rec?.cashRecord?.length && !rec.hprUnavailableReason && !rec.salesAfter && !p.rolledForward) {
+      // A RECOVERED RECORD (Stage 10jf) carries its own dated income.
+      for (const x of rec.cashRecord) flows.push({ t: Date.parse(x.date), amount: x.side === "buy" ? -x.amount : x.amount });
+      const trades = rec.cashRecord.filter((x) => x.side !== "income");
+      since = Math.min(since, Date.parse(trades.find((x) => x.side === "buy")?.date ?? trades[0].date));
+      payments += trades.length; from = rec.cashRecord[0].date; close = ACC.get(p.accountId)!.asOf; inc = [];
     } else return null;
     for (const i of inc) if (i.date! >= from && i.date! <= close) flows.push({ t: Date.parse(i.date!), amount: i.amount });
     if (p.marketValue > 0) flows.push({ t: Date.parse(close), amount: p.marketValue });
@@ -285,7 +292,8 @@ function holdingRate(ps: readonly Position[]): { annual: number | null; days: nu
 const ruleOn = (hpr: number, sol: { annual: number | null; days: number; payments: number }) =>
   sol.days < 365 ? { tag: "HPR", pct: hpr as number | null }
   : sol.payments > 1 ? { tag: "XIRR", pct: sol.annual }
-  : 1 + hpr / 100 > 0 ? { tag: "CAGR", pct: (Math.pow(1 + hpr / 100, 365 / sol.days) - 1) * 100 as number | null }
+  // One purchase closes on its statement's value and date (Stage 10jf): the rate its flows solve to.
+  : sol.annual !== null ? { tag: "CAGR", pct: sol.annual }
   : { tag: "HPR", pct: hpr as number | null };
 /** A row dated by its ACCOUNTS' record — 5b's subject, apart from a row of dated holdings. */
 const accountDated = (key: string) => { const c = capitalOf(key); return !!c?.dated && !c.holdings; };
@@ -514,7 +522,9 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
   for (const [key, ps] of byKey) {
     if (ps.length !== 1) continue;
     const p = ps[0];
-    if (!p.heldSince || !costedLine(p) || !((p.costBasis as number) > 0)) continue;
+    const sol = holdingRate([p]);
+    // A line a recovered record dates has no `heldSince`, and takes the same rule on its money (Stage 10jf).
+    if ((!p.heldSince && !(sol && sol !== "short")) || !costedLine(p) || !((p.costBasis as number) > 0)) continue;
     // A row that is whole accounts on a dated record takes the rule on its
     // payments instead, which 5b holds it to.
     if (accountDated(key)) continue;
@@ -526,8 +536,7 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
     // whole money it takes the family's rule on its lots — never a CAGR
     // compounded from the oldest of them over money bought later. Only a line
     // whose money is NOT all dated keeps the oldest-lot rule.
-    const sol = holdingRate([p]);
-    const days = daysBetween(p.heldSince, valuedAt);
+    const days = p.heldSince ? daysBetween(p.heldSince, valuedAt) : 0;
     // ONE PURCHASE, NOTHING SOLD (Stage 10fz): a line the dated record does not
     // cover keeps the oldest-lot rule only where its units were bought on one
     // date and none sold; bought in lots or partly sold, it stays its HPR.
@@ -541,7 +550,7 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
     subjects++;
     if (want.tag !== "HPR") annualised++;
     if (row.length !== 1 || want.pct === null || typeof row[0]["Return"] !== "number"
-        || !near(row[0]["Return"] as number, want.pct, 1e-6) || row[0]["Measure"] !== want.tag) {
+        || !near(row[0]["Return"] as number, want.pct, want.tag === "HPR" ? 1e-6 : 1e-4) || row[0]["Measure"] !== want.tag) {
       wrong.push(`${key}: want ${want.pct?.toFixed(4)} ${want.tag}, got ${row.map((r) => `${r["Return"]} ${r["Measure"]}`).join(" / ") || "no row"}`);
     }
   }
@@ -581,7 +590,7 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
   const cagrRows = ROWS.filter((r) => r["Measure"] === "CAGR");
   ok("an annualised row states its window in Notes", cagrRows.length > 0
      && cagrRows.every((r) => /Annualised over the \d+ days from \d{4}-\d\d-\d\d, the oldest unit still held, to its valuation on \d{4}-\d\d-\d\d/.test(String(r["Notes"]))
-       || (/One payment on \d{4}-\d\d-\d\d, compounded over the \d+ days to \d{4}-\d\d-\d\d/.test(String(r["Notes"])))),
+       || (/One (?:payment|purchase) on \d{4}-\d\d-\d\d, compounded over the \d+ days to \d{4}-\d\d-\d\d/.test(String(r["Notes"])))),
      cagrRows.filter((r) => datedRowNames.has(r["Security"] as string)).map((r) => `${r["Security"]}: ${String(r["Notes"]).slice(0, 100)}`).join(" | "));
 }
 

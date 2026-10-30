@@ -119,8 +119,15 @@ export const AGG_NO_MEASURE: Partial<Record<ReturnMeasure, string>> = {
  * `auto` gets neither: its measure resolves per row, so there is no column-wide
  * count to state and the tag on every cell is what names it.
  */
-export function returnColumnMeta(measure: ReturnMeasure, cov: ReturnCoverage, asOf: string):
+export function returnColumnMeta(measure: ReturnMeasure, cov: ReturnCoverage, asOf: string, fundOnlyRows = 0):
   { note: string; title: string } {
+  const meta = holdingColumnMeta(measure, cov);
+  return fundOnlyRows > 0
+    ? { ...meta, title: `${meta.title} Counted over the ${cov.total} rows the statements report: the other ${fundOnlyRows} are companies the family reaches only through funds, which have no cost or value of the family's own.` }
+    : meta;
+}
+
+function holdingColumnMeta(measure: ReturnMeasure, cov: ReturnCoverage): { note: string; title: string } {
   switch (measure) {
     case "cagr":
       return {
@@ -143,7 +150,7 @@ export function returnColumnMeta(measure: ReturnMeasure, cov: ReturnCoverage, as
           + (cov.absent - cov.staggered - cov.lotted > 0 ? ` ${cov.absent - cov.staggered - cov.lotted} report no purchase date the window could close over — the managed accounts publish a capital-account ledger rather than a lot register, and the depository holdings report no cost.` : ""),
       };
     case "ytd": {
-      // FROM THE FIRST DATE WE HAVE (Stage 10jf): a row with no 1 January
+      // FROM THE FIRST DATE WE HAVE (Stage 10jg): a row with no 1 January
       // value is measured from its first dated value this year, tagged with it.
       const full = cov.shown - cov.partYear;
       return {

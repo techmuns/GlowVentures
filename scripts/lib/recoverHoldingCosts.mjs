@@ -47,19 +47,24 @@ export const REVIEW_FUNDS = Object.freeze({
 const r2 = (v) => Math.round(v * 100) / 100;
 const finite = (v) => typeof v === 'number' && Number.isFinite(v);
 export const REGISTER = 'source/august-2026-f/NEW INVESTMENT SHEET.xlsx';
+/** The priced purchases and sales of a replay, with its dated income, oldest first. Noncash switches move no money. */
+const cashRecordOf = (events, income = []) => [
+  ...events.filter((e) => e.kind === 'buy' || e.kind === 'sell').map((e) => ({ date:e.date, side:e.kind, amount:r2(e.amount) })),
+  ...income,
+].sort((a,b) => a.date.localeCompare(b.date));
 
 /** Replay already identified source rows; a shortfall never creates a free lot. */
 export function replayReviewRows(rows, { isin, asOf, quantity, allowUnpricedSales = false }) {
   if (rows.some((r) => !r.date)) return { reason:'a source transaction has no acquisition/disposal date' };
   const selected = rows.filter((r) => r.date && r.date <= asOf)
     .sort((a,b) => a.date.localeCompare(b.date) || a.row - b.row);
-  const events = [], notes = [], unpricedSales = [];
+  const events = [], notes = [], unpricedSales = [], incomeRows = [];
   let balance = 0, income = 0, sawIncome = false;
   for (const r of selected) {
     if (r.txn === 'Closing') continue;
     if (r.txn === 'Div / Int') {
       if (!finite(r.value) || r.value < 0) return { reason: `income row ${r.row} has no valid receipt` };
-      income += r.value; sawIncome = true; continue;
+      income += r.value; sawIncome = true; if (r.value > 0) incomeRows.push({ date:r.date, side:'income', amount:r2(r.value) }); continue;
     }
     if (!finite(r.qty) || r.qty <= 0) return { reason: `row ${r.row} has no positive unit count` };
     if (r.txn === 'Bonus / Split') {
@@ -103,6 +108,10 @@ export function replayReviewRows(rows, { isin, asOf, quantity, allowUnpricedSale
   const heldDates = held.map(l => l.date).sort();
   return { costBasis:r2(ledger.costHeld), realizedPnL:unpricedSales.length?null:r2(ledger.realisedGain), costOfUnitsSold:r2(ledger.costSold),
     ...(heldDates.length ? {heldPurchases:{first:heldDates[0],last:heldDates.at(-1),lots:held.length}} : {}),
+    // EVERY RUPEE ON ITS OWN DAY (Stage 10jf), which is what a money-weighted
+    // return reads. Withheld where a sale's cash is unverified: that sale's
+    // "zero" above is a placeholder, never money.
+    ...(unpricedSales.length?{}:{cashRecord:cashRecordOf(events,incomeRows)}),
     dividendReceived:sawIncome?r2(income):null, rows:selected.map((r)=>r.row), notes,
     ...(unpricedSales.length?{hprUnavailableReason:`Sale proceeds are unverified on review row(s) ${unpricedSales.join(', ')}; original lots establish remaining cost only`}:{}) };
 }
@@ -187,6 +196,7 @@ function fromMopwm(report,t,a,prior=NO_RECORD) {
   if(m.reason) return {reason:prior===NO_RECORD?`MOPWM transaction report: ${m.reason}`:`${prior}; MOPWM transaction report: ${m.reason}`};
   return {record:{accountId:t.accountId,isin:t.isin,quantity:t.quantity,asOf:t.asOf,costBasis:m.costBasis,
     ...(m.heldPurchases?{heldPurchases:m.heldPurchases}:{}),
+    ...(m.cashRecord?{cashRecord:m.cashRecord}:{}),
     realizedPnL:m.realizedPnL,costOfUnitsSold:m.costOfUnitsSold,dividendReceived:m.dividendReceived,
     ...(m.salesAfter?{salesAfter:m.salesAfter}:{}),
     evidence:[{path:MOPWM_TRANSACTIONS,sheet:rows[0].sheet,rows:m.rows}],
@@ -229,6 +239,7 @@ export function recoverHoldingCosts({root,accounts,positions,unvalued,shareMovem
       if(t.isin===ema.isin&&a.ownerId===ema.ownerId&&t.asOf>=ema.date&&Math.abs(t.quantity-ema.quantity)<=UNIT_TIE) {
         records.push({accountId:t.accountId,isin:t.isin,quantity:t.quantity,asOf:t.asOf,costBasis:r2(ema.costBasis),
           heldPurchases:{first:ema.date,last:ema.date,lots:1},
+          cashRecord:[{date:ema.date,side:'buy',amount:r2(ema.costBasis)}],
           realizedPnL:null,costOfUnitsSold:null,dividendReceived:null,evidence:[ema.evidence],
           notes:['Payment register matches owner and every unit; no complete separate sales/income record is claimed']});
       } else settle(t,a,NO_RECORD);
@@ -245,6 +256,7 @@ export function recoverHoldingCosts({root,accounts,positions,unvalued,shareMovem
     const roll=fund?null:rollReviewRows(sourceRows,{isin:t.isin,asOf:t.asOf,quantity:t.quantity});
     records.push({accountId:t.accountId,isin:t.isin,quantity:t.quantity,asOf:t.asOf,costBasis:result.costBasis,
       ...(result.heldPurchases?{heldPurchases:result.heldPurchases}:{}),
+      ...(result.cashRecord?{cashRecord:result.cashRecord}:{}),
       realizedPnL:result.realizedPnL,costOfUnitsSold:result.costOfUnitsSold,dividendReceived:result.dividendReceived,
       ...(result.hprUnavailableReason?{hprUnavailableReason:result.hprUnavailableReason}:{}),
       ...(sourceRows.some((r)=>r.txn==='Sale'&&r.date>t.asOf)

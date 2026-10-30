@@ -756,7 +756,7 @@ const EMPTY_EXPORT_SELECTION = new Set<string>();
 const EMPTY_POSITIONS: Position[] = [];
 /**
  * THE HOLDINGS A ROW STANDS FOR, for its YTD from the first date we have
- * (Stage 10jf): a mandate's every account line, else its own deduped set.
+ * (Stage 10jg): a mandate's every account line, else its own deduped set.
  * Kept per row object, so one row resolves once however often it is sorted.
  */
 const ROW_POSITIONS = new WeakMap<Row, readonly Position[]>();
@@ -1067,7 +1067,7 @@ export function PortfolioMonitor() {
    * figure it prints rather than on `returnPct` for all of them.
    */
   /**
-   * ── YTD FROM THE FIRST DATE WE HAVE (Stage 10jf) ──────────────────────────
+   * ── YTD FROM THE FIRST DATE WE HAVE (Stage 10jg) ──────────────────────────
    *
    *   *"for YTD atleast for this year lets show from the date we have"*
    *
@@ -4077,7 +4077,11 @@ export function PortfolioMonitor() {
                     const def = returnMeasureDef(measure);
                     const auto = measure === "auto";
                     const meta = auto ? null
-                      : returnColumnMeta(measure, returnCoverage(measure === "ytd" ? rows.map((r) => withYtd(r, rowPositionsOf(r), measure)) : rows, measure, portfolio.asOf), portfolio.asOf);
+                      // OVER THE ROWS THE STATEMENTS REPORT, as the date column's
+                      // footer counts (Stage 10jf): a company reached only through a
+                      // fund is no holding of the family's and can never have a return.
+                      // YTD reads each row's first dated value this year (Stage 10jg).
+                      : returnColumnMeta(measure, returnCoverage(measure === "ytd" ? measuredRows.map((r) => withYtd(r, rowPositionsOf(r), measure)) : measuredRows, measure, portfolio.asOf), portfolio.asOf, rows.length - measuredRows.length);
                     return (
                       <SortHeader key={measure} col={`ret:${measure}`} view={holdView} pad="px-2 py-1.5"
                         title={auto ? undefined : def.hint}
@@ -5079,7 +5083,7 @@ export function PortfolioMonitor() {
                             <td key={measure} data-return-cell={measure} data-return-tag={offMeasure ? res.tag : undefined}
                               data-return-valued-at={r.valuedAt ?? undefined}
                               data-return-note={res.shown ? res.note : undefined}
-                              /* A YTD FROM THE FIRST DATE WE HAVE (Stage 10jf): its window, and the
+                              /* A YTD FROM THE FIRST DATE WE HAVE (Stage 10jg): its window, and the
                                  whole accounts pooled — the sweep re-solves those off the book. */
                               {...(res.shown && res.from && yf?.shown ? {
                                 "data-ytd-from": yf.from, "data-ytd-to": yf.to,

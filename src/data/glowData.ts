@@ -9723,6 +9723,13 @@ export const BOOK_POSITIONS: Position[] = [
         "last": "2026-01-30",
         "lots": 1
       },
+      "cashRecord": [
+        {
+          "date": "2026-01-30",
+          "side": "buy",
+          "amount": 93857991
+        }
+      ],
       "realizedPnL": 0,
       "costOfUnitsSold": 0,
       "dividendReceived": null,
@@ -9784,6 +9791,13 @@ export const BOOK_POSITIONS: Position[] = [
         "last": "2024-08-30",
         "lots": 1
       },
+      "cashRecord": [
+        {
+          "date": "2024-08-30",
+          "side": "buy",
+          "amount": 4642872
+        }
+      ],
       "realizedPnL": null,
       "costOfUnitsSold": null,
       "dividendReceived": null,
@@ -9847,6 +9861,13 @@ export const BOOK_POSITIONS: Position[] = [
         "last": "2025-07-07",
         "lots": 1
       },
+      "cashRecord": [
+        {
+          "date": "2025-07-07",
+          "side": "buy",
+          "amount": 176878881
+        }
+      ],
       "realizedPnL": 0,
       "costOfUnitsSold": 0,
       "dividendReceived": null,
@@ -9909,6 +9930,18 @@ export const BOOK_POSITIONS: Position[] = [
         "last": "2024-03-27",
         "lots": 2
       },
+      "cashRecord": [
+        {
+          "date": "2024-02-14",
+          "side": "buy",
+          "amount": 6321000
+        },
+        {
+          "date": "2024-03-27",
+          "side": "buy",
+          "amount": 9956250
+        }
+      ],
       "realizedPnL": 0,
       "costOfUnitsSold": 0,
       "dividendReceived": null,
@@ -9974,6 +10007,13 @@ export const BOOK_POSITIONS: Position[] = [
         "last": "2024-12-11",
         "lots": 1
       },
+      "cashRecord": [
+        {
+          "date": "2024-12-11",
+          "side": "buy",
+          "amount": 69684400
+        }
+      ],
       "realizedPnL": 0,
       "costOfUnitsSold": 0,
       "dividendReceived": null,
@@ -10036,6 +10076,18 @@ export const BOOK_POSITIONS: Position[] = [
         "last": "2025-08-21",
         "lots": 2
       },
+      "cashRecord": [
+        {
+          "date": "2024-05-29",
+          "side": "buy",
+          "amount": 50000250
+        },
+        {
+          "date": "2025-08-21",
+          "side": "buy",
+          "amount": 25000100
+        }
+      ],
       "realizedPnL": 0,
       "costOfUnitsSold": 0,
       "dividendReceived": null,
@@ -10098,6 +10150,13 @@ export const BOOK_POSITIONS: Position[] = [
         "last": "2025-04-16",
         "lots": 1
       },
+      "cashRecord": [
+        {
+          "date": "2025-04-16",
+          "side": "buy",
+          "amount": 10030000
+        }
+      ],
       "realizedPnL": 0,
       "costOfUnitsSold": 0,
       "dividendReceived": null,
@@ -10159,6 +10218,13 @@ export const BOOK_POSITIONS: Position[] = [
         "last": "2024-09-20",
         "lots": 1
       },
+      "cashRecord": [
+        {
+          "date": "2024-09-20",
+          "side": "buy",
+          "amount": 84500100
+        }
+      ],
       "realizedPnL": 0,
       "costOfUnitsSold": 0,
       "dividendReceived": null,
@@ -10231,6 +10297,13 @@ export const BOOK_POSITIONS: Position[] = [
         "last": "2024-04-15",
         "lots": 1
       },
+      "cashRecord": [
+        {
+          "date": "2024-04-15",
+          "side": "buy",
+          "amount": 10000120
+        }
+      ],
       "realizedPnL": 0,
       "costOfUnitsSold": 0,
       "dividendReceived": null,
@@ -21575,6 +21648,13 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2024-09-20",
       "lots": 1
     },
+    "cashRecord": [
+      {
+        "date": "2024-09-20",
+        "side": "buy",
+        "amount": 45499950
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -21600,6 +21680,13 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2024-04-15",
       "lots": 1
     },
+    "cashRecord": [
+      {
+        "date": "2024-04-15",
+        "side": "buy",
+        "amount": 10000120
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -21642,6 +21729,18 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2025-08-21",
       "lots": 2
     },
+    "cashRecord": [
+      {
+        "date": "2024-05-29",
+        "side": "buy",
+        "amount": 50000250
+      },
+      {
+        "date": "2025-08-21",
+        "side": "buy",
+        "amount": 25000100
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -21668,6 +21767,13 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2024-12-11",
       "lots": 1
     },
+    "cashRecord": [
+      {
+        "date": "2024-12-11",
+        "side": "buy",
+        "amount": 69684400
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -21694,6 +21800,13 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2024-09-20",
       "lots": 1
     },
+    "cashRecord": [
+      {
+        "date": "2024-09-20",
+        "side": "buy",
+        "amount": 84500100
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -21719,6 +21832,13 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2024-08-30",
       "lots": 1
     },
+    "cashRecord": [
+      {
+        "date": "2024-08-30",
+        "side": "buy",
+        "amount": 4642872
+      }
+    ],
     "realizedPnL": null,
     "costOfUnitsSold": null,
     "dividendReceived": null,
@@ -21746,6 +21866,18 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2024-03-27",
       "lots": 2
     },
+    "cashRecord": [
+      {
+        "date": "2024-02-14",
+        "side": "buy",
+        "amount": 6321000
+      },
+      {
+        "date": "2024-03-27",
+        "side": "buy",
+        "amount": 9956250
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -21775,6 +21907,13 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2025-04-16",
       "lots": 1
     },
+    "cashRecord": [
+      {
+        "date": "2025-04-16",
+        "side": "buy",
+        "amount": 10030000
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -21800,6 +21939,13 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2025-07-07",
       "lots": 1
     },
+    "cashRecord": [
+      {
+        "date": "2025-07-07",
+        "side": "buy",
+        "amount": 176878881
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -21826,6 +21972,13 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2026-01-30",
       "lots": 1
     },
+    "cashRecord": [
+      {
+        "date": "2026-01-30",
+        "side": "buy",
+        "amount": 93857991
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -21851,6 +22004,23 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2024-11-13",
       "lots": 1
     },
+    "cashRecord": [
+      {
+        "date": "2024-11-13",
+        "side": "buy",
+        "amount": 120000610
+      },
+      {
+        "date": "2026-05-18",
+        "side": "sell",
+        "amount": 66036702.25
+      },
+      {
+        "date": "2026-05-27",
+        "side": "sell",
+        "amount": 20698305.5
+      }
+    ],
     "realizedPnL": 23795397.75,
     "costOfUnitsSold": 62939610,
     "dividendReceived": null,
@@ -21879,6 +22049,68 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2025-09-11",
       "lots": 1
     },
+    "cashRecord": [
+      {
+        "date": "2025-09-02",
+        "side": "buy",
+        "amount": 935123.9
+      },
+      {
+        "date": "2025-09-03",
+        "side": "buy",
+        "amount": 8315482.56
+      },
+      {
+        "date": "2025-09-04",
+        "side": "buy",
+        "amount": 42247425
+      },
+      {
+        "date": "2025-09-11",
+        "side": "buy",
+        "amount": 45394952.77
+      },
+      {
+        "date": "2026-03-10",
+        "side": "sell",
+        "amount": 3114368.38
+      },
+      {
+        "date": "2026-03-11",
+        "side": "sell",
+        "amount": 11572343.16
+      },
+      {
+        "date": "2026-03-12",
+        "side": "sell",
+        "amount": 10321311.41
+      },
+      {
+        "date": "2026-03-13",
+        "side": "sell",
+        "amount": 4976010.03
+      },
+      {
+        "date": "2026-03-27",
+        "side": "sell",
+        "amount": 3304471.42
+      },
+      {
+        "date": "2026-05-13",
+        "side": "sell",
+        "amount": 8509377.37
+      },
+      {
+        "date": "2026-05-14",
+        "side": "sell",
+        "amount": 3810123.45
+      },
+      {
+        "date": "2026-05-15",
+        "side": "sell",
+        "amount": 4832418.27
+      }
+    ],
     "realizedPnL": -22586920.91,
     "costOfUnitsSold": 73027344.39,
     "dividendReceived": null,
@@ -21916,6 +22148,13 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2026-06-17",
       "lots": 1
     },
+    "cashRecord": [
+      {
+        "date": "2026-06-17",
+        "side": "buy",
+        "amount": 10034018.55
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -21942,6 +22181,18 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2026-06-18",
       "lots": 2
     },
+    "cashRecord": [
+      {
+        "date": "2026-06-17",
+        "side": "buy",
+        "amount": 5178915.46
+      },
+      {
+        "date": "2026-06-18",
+        "side": "buy",
+        "amount": 3681701.62
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -21997,6 +22248,33 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2026-03-23",
       "lots": 4
     },
+    "cashRecord": [
+      {
+        "date": "2025-03-06",
+        "side": "buy",
+        "amount": 32498375.08
+      },
+      {
+        "date": "2025-07-10",
+        "side": "buy",
+        "amount": 24998750.04
+      },
+      {
+        "date": "2025-11-04",
+        "side": "buy",
+        "amount": 59997000.13
+      },
+      {
+        "date": "2026-03-23",
+        "side": "buy",
+        "amount": 99995000.25
+      },
+      {
+        "date": "2026-06-29",
+        "side": "sell",
+        "amount": 36962218.38
+      }
+    ],
     "realizedPnL": 4463855.58,
     "costOfUnitsSold": 32498362.8,
     "dividendReceived": null,
@@ -22027,6 +22305,93 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2026-07-02",
       "lots": 1
     },
+    "cashRecord": [
+      {
+        "date": "2024-07-02",
+        "side": "buy",
+        "amount": 749962501.86
+      },
+      {
+        "date": "2024-11-25",
+        "side": "sell",
+        "amount": 24989432.98
+      },
+      {
+        "date": "2024-11-27",
+        "side": "sell",
+        "amount": 79980803.41
+      },
+      {
+        "date": "2024-12-30",
+        "side": "sell",
+        "amount": 199943981.36
+      },
+      {
+        "date": "2025-01-14",
+        "side": "sell",
+        "amount": 129941238.31
+      },
+      {
+        "date": "2025-01-30",
+        "side": "sell",
+        "amount": 49979770.58
+      },
+      {
+        "date": "2025-02-06",
+        "side": "sell",
+        "amount": 60012340.45
+      },
+      {
+        "date": "2025-02-12",
+        "side": "sell",
+        "amount": 30008667.72
+      },
+      {
+        "date": "2025-03-03",
+        "side": "sell",
+        "amount": 50023653.46
+      },
+      {
+        "date": "2025-05-29",
+        "side": "buy",
+        "amount": 22555711.68
+      },
+      {
+        "date": "2025-07-02",
+        "side": "buy",
+        "amount": 124993750.31
+      },
+      {
+        "date": "2025-09-01",
+        "side": "sell",
+        "amount": 250036453.77
+      },
+      {
+        "date": "2025-09-09",
+        "side": "sell",
+        "amount": 60544578.83
+      },
+      {
+        "date": "2025-09-29",
+        "side": "buy",
+        "amount": 249987500.61
+      },
+      {
+        "date": "2025-12-29",
+        "side": "sell",
+        "amount": 100069258.5
+      },
+      {
+        "date": "2026-01-13",
+        "side": "sell",
+        "amount": 154668732.17
+      },
+      {
+        "date": "2026-07-02",
+        "side": "buy",
+        "amount": 177991100.44
+      }
+    ],
     "realizedPnL": 42699447.08,
     "costOfUnitsSold": 1147499464.46,
     "dividendReceived": null,
@@ -22072,6 +22437,13 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2026-04-02",
       "lots": 1
     },
+    "cashRecord": [
+      {
+        "date": "2026-04-02",
+        "side": "buy",
+        "amount": 12499374.97
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -22098,6 +22470,43 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2026-05-29",
       "lots": 7
     },
+    "cashRecord": [
+      {
+        "date": "2026-04-17",
+        "side": "buy",
+        "amount": 12274386.27
+      },
+      {
+        "date": "2026-04-23",
+        "side": "buy",
+        "amount": 12499375.04
+      },
+      {
+        "date": "2026-04-30",
+        "side": "buy",
+        "amount": 12499375.04
+      },
+      {
+        "date": "2026-05-07",
+        "side": "buy",
+        "amount": 12499375.03
+      },
+      {
+        "date": "2026-05-14",
+        "side": "buy",
+        "amount": 12499375.04
+      },
+      {
+        "date": "2026-05-21",
+        "side": "buy",
+        "amount": 12499375.02
+      },
+      {
+        "date": "2026-05-29",
+        "side": "buy",
+        "amount": 12499375.04
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -22130,6 +22539,13 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2026-06-05",
       "lots": 1
     },
+    "cashRecord": [
+      {
+        "date": "2026-06-05",
+        "side": "buy",
+        "amount": 12499375.94
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -22156,6 +22572,93 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2026-07-30",
       "lots": 17
     },
+    "cashRecord": [
+      {
+        "date": "2026-04-02",
+        "side": "buy",
+        "amount": 18749062.57
+      },
+      {
+        "date": "2026-04-17",
+        "side": "buy",
+        "amount": 12296595.31
+      },
+      {
+        "date": "2026-04-23",
+        "side": "buy",
+        "amount": 18749062.59
+      },
+      {
+        "date": "2026-04-30",
+        "side": "buy",
+        "amount": 18749062.6
+      },
+      {
+        "date": "2026-05-07",
+        "side": "buy",
+        "amount": 18749062.53
+      },
+      {
+        "date": "2026-05-14",
+        "side": "buy",
+        "amount": 18749062.54
+      },
+      {
+        "date": "2026-05-21",
+        "side": "buy",
+        "amount": 18749062.62
+      },
+      {
+        "date": "2026-05-29",
+        "side": "buy",
+        "amount": 18749062.49
+      },
+      {
+        "date": "2026-06-04",
+        "side": "buy",
+        "amount": 18749062.54
+      },
+      {
+        "date": "2026-06-11",
+        "side": "buy",
+        "amount": 18749062.53
+      },
+      {
+        "date": "2026-06-18",
+        "side": "buy",
+        "amount": 18749062.54
+      },
+      {
+        "date": "2026-06-25",
+        "side": "buy",
+        "amount": 18749062.51
+      },
+      {
+        "date": "2026-07-02",
+        "side": "buy",
+        "amount": 18749062.48
+      },
+      {
+        "date": "2026-07-08",
+        "side": "buy",
+        "amount": 25002235.1
+      },
+      {
+        "date": "2026-07-15",
+        "side": "buy",
+        "amount": 25059494.6
+      },
+      {
+        "date": "2026-07-23",
+        "side": "buy",
+        "amount": 12009400.75
+      },
+      {
+        "date": "2026-07-30",
+        "side": "buy",
+        "amount": 12007886
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -22202,6 +22705,23 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2026-07-02",
       "lots": 1
     },
+    "cashRecord": [
+      {
+        "date": "2026-07-02",
+        "side": "buy",
+        "amount": 149992500.38
+      },
+      {
+        "date": "2026-07-21",
+        "side": "sell",
+        "amount": 12010121.28
+      },
+      {
+        "date": "2026-07-28",
+        "side": "sell",
+        "amount": 12008606.51
+      }
+    ],
     "realizedPnL": 81688.1,
     "costOfUnitsSold": 23937039.69,
     "dividendReceived": null,
@@ -22233,6 +22753,143 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2026-05-20",
       "lots": 2
     },
+    "cashRecord": [
+      {
+        "date": "2025-05-29",
+        "side": "buy",
+        "amount": 5530059.35
+      },
+      {
+        "date": "2025-07-02",
+        "side": "sell",
+        "amount": 5584839.5
+      },
+      {
+        "date": "2025-09-29",
+        "side": "buy",
+        "amount": 699965001.75
+      },
+      {
+        "date": "2026-01-19",
+        "side": "sell",
+        "amount": 26026027.94
+      },
+      {
+        "date": "2026-01-23",
+        "side": "sell",
+        "amount": 25029861.49
+      },
+      {
+        "date": "2026-01-23",
+        "side": "sell",
+        "amount": 20023845.93
+      },
+      {
+        "date": "2026-01-30",
+        "side": "sell",
+        "amount": 15017718.78
+      },
+      {
+        "date": "2026-02-04",
+        "side": "sell",
+        "amount": 79078463.01
+      },
+      {
+        "date": "2026-02-11",
+        "side": "sell",
+        "amount": 7503206.68
+      },
+      {
+        "date": "2026-02-11",
+        "side": "sell",
+        "amount": 3220598.08
+      },
+      {
+        "date": "2026-03-09",
+        "side": "sell",
+        "amount": 9667703.2
+      },
+      {
+        "date": "2026-03-10",
+        "side": "sell",
+        "amount": 56609668.36
+      },
+      {
+        "date": "2026-03-24",
+        "side": "sell",
+        "amount": 25690843.23
+      },
+      {
+        "date": "2026-03-24",
+        "side": "sell",
+        "amount": 20408103.62
+      },
+      {
+        "date": "2026-04-20",
+        "side": "sell",
+        "amount": 15016212
+      },
+      {
+        "date": "2026-04-21",
+        "side": "sell",
+        "amount": 31230949.3
+      },
+      {
+        "date": "2026-04-28",
+        "side": "sell",
+        "amount": 31261009.92
+      },
+      {
+        "date": "2026-05-05",
+        "side": "sell",
+        "amount": 31259926.33
+      },
+      {
+        "date": "2026-05-12",
+        "side": "sell",
+        "amount": 31255386.17
+      },
+      {
+        "date": "2026-05-19",
+        "side": "sell",
+        "amount": 31246604.52
+      },
+      {
+        "date": "2026-05-20",
+        "side": "buy",
+        "amount": 179991000.45
+      },
+      {
+        "date": "2026-05-26",
+        "side": "sell",
+        "amount": 31261606.26
+      },
+      {
+        "date": "2026-06-02",
+        "side": "sell",
+        "amount": 31220025.06
+      },
+      {
+        "date": "2026-06-09",
+        "side": "sell",
+        "amount": 18721747.52
+      },
+      {
+        "date": "2026-06-16",
+        "side": "sell",
+        "amount": 18757606.01
+      },
+      {
+        "date": "2026-06-23",
+        "side": "sell",
+        "amount": 18761810.28
+      },
+      {
+        "date": "2026-06-30",
+        "side": "sell",
+        "amount": 18746289.4
+      }
+    ],
     "realizedPnL": 21315604.14,
     "costOfUnitsSold": 581284448.45,
     "dividendReceived": null,
@@ -22289,6 +22946,13 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2026-07-01",
       "lots": 1
     },
+    "cashRecord": [
+      {
+        "date": "2026-07-01",
+        "side": "buy",
+        "amount": 4899790
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -22316,6 +22980,38 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2026-07-21",
       "lots": 2
     },
+    "cashRecord": [
+      {
+        "date": "2021-04-15",
+        "side": "buy",
+        "amount": 2480834
+      },
+      {
+        "date": "2021-04-19",
+        "side": "sell",
+        "amount": 34905
+      },
+      {
+        "date": "2021-06-11",
+        "side": "buy",
+        "amount": 1209459
+      },
+      {
+        "date": "2024-12-02",
+        "side": "sell",
+        "amount": 8261276
+      },
+      {
+        "date": "2026-07-01",
+        "side": "buy",
+        "amount": 14976800
+      },
+      {
+        "date": "2026-07-21",
+        "side": "buy",
+        "amount": 14202020
+      }
+    ],
     "realizedPnL": 4605888,
     "costOfUnitsSold": 3690293,
     "dividendReceived": null,
@@ -22350,6 +23046,13 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2024-11-06",
       "lots": 1
     },
+    "cashRecord": [
+      {
+        "date": "2024-11-06",
+        "side": "buy",
+        "amount": 5017440
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -22376,6 +23079,28 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2026-07-01",
       "lots": 1
     },
+    "cashRecord": [
+      {
+        "date": "2021-01-22",
+        "side": "buy",
+        "amount": 493984
+      },
+      {
+        "date": "2021-02-17",
+        "side": "buy",
+        "amount": 1965840
+      },
+      {
+        "date": "2024-12-02",
+        "side": "sell",
+        "amount": 5095487
+      },
+      {
+        "date": "2026-07-01",
+        "side": "buy",
+        "amount": 20042266
+      }
+    ],
     "realizedPnL": 2635663,
     "costOfUnitsSold": 2459824,
     "dividendReceived": null,
@@ -22408,6 +23133,23 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2026-07-01",
       "lots": 1
     },
+    "cashRecord": [
+      {
+        "date": "2020-03-24",
+        "side": "buy",
+        "amount": 1474307
+      },
+      {
+        "date": "2021-02-11",
+        "side": "sell",
+        "amount": 4581883
+      },
+      {
+        "date": "2026-07-01",
+        "side": "buy",
+        "amount": 4954749
+      }
+    ],
     "realizedPnL": 3107576,
     "costOfUnitsSold": 1474307,
     "dividendReceived": null,
@@ -22437,6 +23179,43 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2024-11-14",
       "lots": 6
     },
+    "cashRecord": [
+      {
+        "date": "2024-11-06",
+        "side": "buy",
+        "amount": 991890
+      },
+      {
+        "date": "2024-11-08",
+        "side": "buy",
+        "amount": 330650
+      },
+      {
+        "date": "2024-11-11",
+        "side": "buy",
+        "amount": 332150
+      },
+      {
+        "date": "2024-11-12",
+        "side": "buy",
+        "amount": 330650
+      },
+      {
+        "date": "2024-11-13",
+        "side": "buy",
+        "amount": 330650
+      },
+      {
+        "date": "2024-11-14",
+        "side": "buy",
+        "amount": 661300
+      },
+      {
+        "date": "2025-11-21",
+        "side": "sell",
+        "amount": 241712.31
+      }
+    ],
     "realizedPnL": -88917.69,
     "costOfUnitsSold": 330630,
     "dividendReceived": null,
@@ -22469,6 +23248,13 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2026-07-01",
       "lots": 1
     },
+    "cashRecord": [
+      {
+        "date": "2026-07-01",
+        "side": "buy",
+        "amount": 9964104
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -22496,6 +23282,28 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2026-07-01",
       "lots": 1
     },
+    "cashRecord": [
+      {
+        "date": "2020-12-18",
+        "side": "buy",
+        "amount": 998065
+      },
+      {
+        "date": "2021-01-22",
+        "side": "buy",
+        "amount": 497715
+      },
+      {
+        "date": "2024-12-02",
+        "side": "sell",
+        "amount": 2738497
+      },
+      {
+        "date": "2026-07-01",
+        "side": "buy",
+        "amount": 10022979
+      }
+    ],
     "realizedPnL": 1242717,
     "costOfUnitsSold": 1495780,
     "dividendReceived": null,
@@ -22528,6 +23336,38 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2024-11-14",
       "lots": 4
     },
+    "cashRecord": [
+      {
+        "date": "2024-11-06",
+        "side": "buy",
+        "amount": 180558
+      },
+      {
+        "date": "2024-11-07",
+        "side": "buy",
+        "amount": 185218.32
+      },
+      {
+        "date": "2024-11-08",
+        "side": "buy",
+        "amount": 188081.25
+      },
+      {
+        "date": "2024-11-14",
+        "side": "buy",
+        "amount": 376162.5
+      },
+      {
+        "date": "2025-07-24",
+        "side": "sell",
+        "amount": 23704.8
+      },
+      {
+        "date": "2025-09-19",
+        "side": "income",
+        "amount": 603
+      }
+    ],
     "realizedPnL": 1135.05,
     "costOfUnitsSold": 22569.75,
     "dividendReceived": 603,
@@ -22559,6 +23399,13 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2026-07-01",
       "lots": 1
     },
+    "cashRecord": [
+      {
+        "date": "2026-07-01",
+        "side": "buy",
+        "amount": 7512697
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -22586,6 +23433,13 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2026-07-01",
       "lots": 1
     },
+    "cashRecord": [
+      {
+        "date": "2026-07-01",
+        "side": "buy",
+        "amount": 7409337
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -22613,6 +23467,13 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2026-01-30",
       "lots": 1
     },
+    "cashRecord": [
+      {
+        "date": "2026-01-30",
+        "side": "buy",
+        "amount": 93857991
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -22639,6 +23500,18 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2025-12-09",
       "lots": 2
     },
+    "cashRecord": [
+      {
+        "date": "2022-11-24",
+        "side": "buy",
+        "amount": 1823550
+      },
+      {
+        "date": "2025-12-09",
+        "side": "buy",
+        "amount": 9887441
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -22668,6 +23541,13 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2026-07-01",
       "lots": 1
     },
+    "cashRecord": [
+      {
+        "date": "2026-07-01",
+        "side": "buy",
+        "amount": 4889826
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -22695,6 +23575,13 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2025-11-06",
       "lots": 1
     },
+    "cashRecord": [
+      {
+        "date": "2025-11-06",
+        "side": "buy",
+        "amount": 59989168.67
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -22721,6 +23608,23 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2023-09-26",
       "lots": 3
     },
+    "cashRecord": [
+      {
+        "date": "2023-06-05",
+        "side": "buy",
+        "amount": 10004917.55
+      },
+      {
+        "date": "2023-06-23",
+        "side": "buy",
+        "amount": 10006198.77
+      },
+      {
+        "date": "2023-09-26",
+        "side": "buy",
+        "amount": 11643297.57
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -22749,6 +23653,33 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2025-06-04",
       "lots": 5
     },
+    "cashRecord": [
+      {
+        "date": "2024-08-07",
+        "side": "buy",
+        "amount": 9999500.02
+      },
+      {
+        "date": "2024-09-12",
+        "side": "buy",
+        "amount": 4999750.01
+      },
+      {
+        "date": "2024-09-26",
+        "side": "buy",
+        "amount": 5006557.02
+      },
+      {
+        "date": "2024-10-21",
+        "side": "buy",
+        "amount": 9999500.02
+      },
+      {
+        "date": "2025-06-04",
+        "side": "buy",
+        "amount": 42397880.11
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -22779,6 +23710,13 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2025-11-06",
       "lots": 1
     },
+    "cashRecord": [
+      {
+        "date": "2025-11-06",
+        "side": "buy",
+        "amount": 39998000.1
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -22805,6 +23743,13 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2026-04-17",
       "lots": 1
     },
+    "cashRecord": [
+      {
+        "date": "2026-04-17",
+        "side": "buy",
+        "amount": 3926402.01
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -22831,6 +23776,18 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2025-09-30",
       "lots": 1
     },
+    "cashRecord": [
+      {
+        "date": "2025-09-30",
+        "side": "buy",
+        "amount": 32203865.44
+      },
+      {
+        "date": "2026-01-22",
+        "side": "sell",
+        "amount": 29649468.42
+      }
+    ],
     "realizedPnL": 14667670.15,
     "costOfUnitsSold": 14981798.27,
     "dividendReceived": null,
@@ -22858,6 +23815,13 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2026-01-22",
       "lots": 1
     },
+    "cashRecord": [
+      {
+        "date": "2026-01-22",
+        "side": "buy",
+        "amount": 30193698.9
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -22884,6 +23848,18 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2024-11-13",
       "lots": 1
     },
+    "cashRecord": [
+      {
+        "date": "2024-11-13",
+        "side": "buy",
+        "amount": 80000849
+      },
+      {
+        "date": "2026-05-27",
+        "side": "sell",
+        "amount": 21709991.15
+      }
+    ],
     "realizedPnL": 5405142.15,
     "costOfUnitsSold": 16304849,
     "dividendReceived": null,
@@ -22911,6 +23887,38 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2023-08-11",
       "lots": 1
     },
+    "cashRecord": [
+      {
+        "date": "2023-08-11",
+        "side": "buy",
+        "amount": 3971055
+      },
+      {
+        "date": "2023-09-04",
+        "side": "income",
+        "amount": 41250
+      },
+      {
+        "date": "2024-07-26",
+        "side": "income",
+        "amount": 28875
+      },
+      {
+        "date": "2025-07-23",
+        "side": "sell",
+        "amount": 733639.68
+      },
+      {
+        "date": "2025-07-24",
+        "side": "sell",
+        "amount": 39352.32
+      },
+      {
+        "date": "2025-07-30",
+        "side": "sell",
+        "amount": 34138
+      }
+    ],
     "realizedPnL": -299952,
     "costOfUnitsSold": 1107082,
     "dividendReceived": 70125,
@@ -22942,6 +23950,13 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2024-07-24",
       "lots": 1
     },
+    "cashRecord": [
+      {
+        "date": "2024-07-24",
+        "side": "buy",
+        "amount": 16999150.04
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -22968,6 +23983,13 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2023-10-25",
       "lots": 1
     },
+    "cashRecord": [
+      {
+        "date": "2023-10-25",
+        "side": "buy",
+        "amount": 14999250.03
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -22994,6 +24016,43 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2025-10-10",
       "lots": 7
     },
+    "cashRecord": [
+      {
+        "date": "2024-10-16",
+        "side": "buy",
+        "amount": 999950
+      },
+      {
+        "date": "2024-10-25",
+        "side": "buy",
+        "amount": 1999899.99
+      },
+      {
+        "date": "2024-10-28",
+        "side": "buy",
+        "amount": 1999900
+      },
+      {
+        "date": "2024-10-29",
+        "side": "buy",
+        "amount": 3999800.02
+      },
+      {
+        "date": "2025-06-04",
+        "side": "buy",
+        "amount": 8999550.03
+      },
+      {
+        "date": "2025-07-11",
+        "side": "buy",
+        "amount": 14999250.04
+      },
+      {
+        "date": "2025-10-10",
+        "side": "buy",
+        "amount": 1789910.5
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -23026,6 +24085,18 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2024-07-24",
       "lots": 1
     },
+    "cashRecord": [
+      {
+        "date": "2024-07-24",
+        "side": "buy",
+        "amount": 20002803.89
+      },
+      {
+        "date": "2026-06-22",
+        "side": "sell",
+        "amount": 10035850.57
+      }
+    ],
     "realizedPnL": 1223545.74,
     "costOfUnitsSold": 8812304.83,
     "dividendReceived": null,
@@ -23053,6 +24124,13 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2025-07-11",
       "lots": 1
     },
+    "cashRecord": [
+      {
+        "date": "2025-07-11",
+        "side": "buy",
+        "amount": 23555459.68
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -23079,6 +24157,18 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2024-07-24",
       "lots": 1
     },
+    "cashRecord": [
+      {
+        "date": "2024-07-24",
+        "side": "buy",
+        "amount": 15002449.1
+      },
+      {
+        "date": "2026-07-13",
+        "side": "sell",
+        "amount": 15015496.64
+      }
+    ],
     "realizedPnL": 806732.83,
     "costOfUnitsSold": 14208763.81,
     "dividendReceived": null,
@@ -23110,6 +24200,13 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2026-07-01",
       "lots": 1
     },
+    "cashRecord": [
+      {
+        "date": "2026-07-01",
+        "side": "buy",
+        "amount": 119994000.19
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -23139,6 +24236,18 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2026-03-24",
       "lots": 2
     },
+    "cashRecord": [
+      {
+        "date": "2026-03-17",
+        "side": "buy",
+        "amount": 92136804.91
+      },
+      {
+        "date": "2026-03-24",
+        "side": "buy",
+        "amount": 2260040.31
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -23166,6 +24275,13 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2023-08-01",
       "lots": 1
     },
+    "cashRecord": [
+      {
+        "date": "2023-08-01",
+        "side": "buy",
+        "amount": 19999000.07
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -23192,6 +24308,18 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2026-04-09",
       "lots": 1
     },
+    "cashRecord": [
+      {
+        "date": "2026-04-09",
+        "side": "buy",
+        "amount": 21298934.87
+      },
+      {
+        "date": "2026-04-16",
+        "side": "sell",
+        "amount": 12729321.68
+      }
+    ],
     "realizedPnL": 22966.05,
     "costOfUnitsSold": 12706355.62,
     "dividendReceived": null,
@@ -23219,6 +24347,13 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2026-04-17",
       "lots": 1
     },
+    "cashRecord": [
+      {
+        "date": "2026-04-17",
+        "side": "buy",
+        "amount": 12724363.77
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -23245,6 +24380,13 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2026-04-17",
       "lots": 1
     },
+    "cashRecord": [
+      {
+        "date": "2026-04-17",
+        "side": "buy",
+        "amount": 21337476.18
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -23271,6 +24413,18 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2026-01-30",
       "lots": 2
     },
+    "cashRecord": [
+      {
+        "date": "2026-01-29",
+        "side": "buy",
+        "amount": 180651160.23
+      },
+      {
+        "date": "2026-01-30",
+        "side": "buy",
+        "amount": 23031645.41
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -23298,6 +24452,18 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2025-07-01",
       "lots": 1
     },
+    "cashRecord": [
+      {
+        "date": "2025-07-01",
+        "side": "buy",
+        "amount": 29998499.99
+      },
+      {
+        "date": "2025-09-10",
+        "side": "sell",
+        "amount": 11911460.51
+      }
+    ],
     "realizedPnL": 128261.98,
     "costOfUnitsSold": 11783198.53,
     "dividendReceived": null,
@@ -23325,6 +24491,13 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2026-07-01",
       "lots": 1
     },
+    "cashRecord": [
+      {
+        "date": "2026-07-01",
+        "side": "buy",
+        "amount": 26198690.06
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -23354,6 +24527,13 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
       "last": "2025-07-01",
       "lots": 1
     },
+    "cashRecord": [
+      {
+        "date": "2025-07-01",
+        "side": "buy",
+        "amount": 37698115.08
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,

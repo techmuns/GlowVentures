@@ -1752,7 +1752,7 @@ export type ReturnInput = {
    */
   valuedAtCost?: boolean;
   /**
-   * THE ROW'S RETURN FROM ITS FIRST DATED VALUE THIS YEAR (Stage 10jf), where
+   * THE ROW'S RETURN FROM ITS FIRST DATED VALUE THIS YEAR (Stage 10jg), where
    * the caller resolved one (`ytdAvailable.ts`). The YTD measure shows it where
    * no full year to date stands, tagged with its start date.
    */
@@ -1792,14 +1792,14 @@ export type RowCapital =
        * (`holdingFlows.ts`), and this counts how many of its lines each kind of
        * record dates. `accounts` is then the number of lines pooled.
        */
-      holdings?: { trades: number; lots: number };
+      holdings?: { trades: number; lots: number; recovered?: number };
     }
   | { dated: false; accountIds: string[]; reason: string };
 
 export type MeasuredReturn =
   /** A figure to print, and the tag that says which measure it is. */
   | { shown: true; pct: number; tag: string; note?: string;
-      /** A YTD struck from a later date this year — its first day (Stage 10jf). */
+      /** A YTD struck from a later date this year — its first day (Stage 10jg). */
       from?: string }
   /** No figure, with the reason a reader needs in order to act on it. */
   | { shown: false; tag: string; reason: string };
@@ -1852,6 +1852,13 @@ const DEBT_UNDER_A_YEAR = " Debt, so it is annualised although the money has bee
 /** One dated payment a year or more ago (or debt): the holding-period return compounded over the days since it. */
 function capitalCompound(returnPct: number, cap: Extract<RowCapital, { dated: true }>, tag: "CAGR", debt = false): MeasuredReturn {
   if (!mayAnnualise(cap.days, debt) || !(cap.days > 0)) return capitalSubYear(returnPct, cap);
+  // ONE PURCHASE OF A HOLDING (Stage 10jf) closes on its statement's value and
+  // date. The row's own return may be on a live price, which compounded over the
+  // days to the statement date would credit days nobody measured.
+  if (cap.holdings && cap.annualPct != null) {
+    return { shown: true, pct: cap.annualPct, tag,
+      note: `One purchase on ${cap.since}, compounded over the ${cap.days} days to ${cap.to}, the date its statement values it.${cap.days < YEAR_DAYS ? DEBT_UNDER_A_YEAR : ""}` };
+  }
   const growth = 1 + returnPct / 100;
   if (growth <= 0) return { shown: true, pct: returnPct, tag: "HPR", note: "A total loss has no compound rate, so this is the holding-period return." };
   return { shown: true, pct: (Math.pow(growth, YEAR_DAYS / cap.days) - 1) * 100, tag,
@@ -1873,9 +1880,9 @@ function capitalXirrOf(p: ReturnInput, cap: Extract<RowCapital, { dated: true }>
   // A ROW OF HOLDINGS (Stage 10fw): its money is each holding's own dated
   // purchases, sales and dividends, and the note says whose record dates them.
   if (cap.holdings) {
-    const by = [cap.holdings.trades ? "its account's dated trades" : null, cap.holdings.lots ? "its lot register" : null].filter(Boolean).join(" and ");
+    const by = [cap.holdings.trades ? "its account's dated trades" : null, cap.holdings.lots ? "its lot register" : null, cap.holdings.recovered ? "its reconciled purchase record" : null].filter(Boolean).join(" and ");
     return { shown: true, pct: cap.annualPct, tag: "XIRR",
-      note: `Money-weighted over ${cap.flows} dated ${cap.flows === 1 ? "purchase" : "purchases and sales"} and the dividends paid on them, as ${by} ${cap.holdings.trades + cap.holdings.lots === 1 ? "dates" : "date"} them`
+      note: `Money-weighted over ${cap.flows} dated ${cap.flows === 1 ? "purchase" : "purchases and sales"}${cap.holdings.trades + cap.holdings.lots > 0 ? " and the dividends paid on them" : " and any income its record dates"}, as ${by} ${cap.holdings.trades + cap.holdings.lots + (cap.holdings.recovered ?? 0) === 1 ? "dates" : "date"} them`
         + (cap.accounts > 1 ? `, across ${cap.accounts} holdings each closing on its own statement's value and date` : ", and the value on the statement's own date")
         + `, from ${cap.since} to ${cap.to} (${cap.days} days).${debtNote}` };
   }
@@ -1980,7 +1987,7 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
         note: `Opened ${y.since}, during the current year, so its year-to-date return is its whole return since purchase.` };
     }
     /**
-     * …OR FROM THE FIRST DATE WE HAVE THIS YEAR (Stage 10jf): *"for YTD at
+     * …OR FROM THE FIRST DATE WE HAVE THIS YEAR (Stage 10jg): *"for YTD at
      * least for this year lets show from the date we have"*. Tagged with its
      * start date, so it never reads as a full year to date.
      */
@@ -2090,7 +2097,7 @@ export function returnCoverage(rows: ReturnInput[], measure: ReturnMeasure, asOf
     // CAGR for a cause of its own, so a header does not file it under "no date".
     if (!m.shown) { absent++; if (notOnePurchase.has(m.reason)) lotted++; continue; }
     shown++;
-    // A YTD struck from a later date this year (Stage 10jf), counted apart.
+    // A YTD struck from a later date this year (Stage 10jg), counted apart.
     if (m.from) partYear++;
     if (m.tag === "CAGR") cagr++;
     else if (m.tag === "XIRR") xirr++;

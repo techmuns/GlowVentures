@@ -4635,15 +4635,19 @@ const YTD_MEASURABLE = (() => {
       g.push(p); bySec.set(p.securityKey, g);
     }
     let n = 0;
-    for (const g of bySec.values()) {
-      if (g.every((p) => p.heldSince) && g.every((p) => p.heldSince >= yearStart) && g.some((p) => p.returnPct !== null)) n++;
+    for (const all of bySec.values()) {
+      // A line holding nothing draws no part of the row (`currentHoldings`).
+      const g = all.filter((p) => p.marketValue > 0);
+      // A line its recovered record dates opens on that record's oldest lot still held (Stage 10jf).
+      const start = (p) => p.heldSince ?? (!p.tradeRecord && !p.live && !p.rolledForward && p.recoveredCost?.cashRecord?.length && !p.recoveredCost.salesAfter && !p.recoveredCost.hprUnavailableReason ? p.recoveredCost.heldPurchases?.first : null);
+      if (g.length && g.every((p) => start(p)) && g.every((p) => start(p) >= yearStart) && g.some((p) => p.returnPct !== null)) n++;
     }
     return n;
   } catch { return null; }
 })();
 
 /**
- * ── A WHOLE ACCOUNT'S YTD FROM THE FIRST DATE WE HAVE, OFF ITS RECORD (Stage 10jf) ──
+ * ── A WHOLE ACCOUNT'S YTD FROM THE FIRST DATE WE HAVE, OFF ITS RECORD (Stage 10jg) ──
  *
  * The Monitor's YTD column measures a row with no 1 January value from its
  * first dated value this year. On a row of whole accounts that is Modified
@@ -5126,6 +5130,17 @@ const HOLDING_FLOWS_BOOK = (() => {
           ...inc.filter((x) => x.date >= ls[0].date && x.date <= end).map((x) => ({ t: Date.parse(x.date), a: x.amount })),
         ];
         return { flows, since: Date.parse(ls[0].date), close: p.marketValue > 0 ? { t: Date.parse(end), v: p.marketValue } : null, payments: ls.length };
+      }
+      // A RECOVERED RECORD (Stage 10jf): every priced trade and dated receipt, on
+      // the line its statement values, with no unverified or later sale.
+      const rec = p.recoveredCost;
+      if (end && rec?.cashRecord?.length && !rec.hprUnavailableReason && !rec.salesAfter && !p.rolledForward) {
+        const moved = rec.cashRecord.filter((x) => x.side !== "income");
+        return {
+          flows: rec.cashRecord.map((x) => ({ t: Date.parse(x.date), a: x.side === "buy" ? -x.amount : x.amount })),
+          since: Date.parse(moved.find((x) => x.side === "buy")?.date ?? moved[0].date),
+          close: p.marketValue > 0 ? { t: Date.parse(end), v: p.marketValue } : null, payments: moved.length,
+        };
       }
       return null;
     };
@@ -18332,7 +18347,7 @@ const PM_RETURN_CHECKS = [
     // never a reason to abstain.
     const rs = ctx?.returnSelect;
     if (!rs) return false;
-    // CY is gone (Stage 10jf): it was a dash on every row.
+    // CY is gone (Stage 10jg): it was a dash on every row.
     return ["auto", "absolute", "cagr", "xirr", "ytd"].every((k) => rs.offers.includes(k)) && !rs.offers.includes("calendar");
   }],
   ["every fund row carries one return cell per picked measure, in the picker's order", (t, ctx) => {
@@ -24544,7 +24559,7 @@ const INVARIANTS = {
       return ctx.mineRows.every((r) => r.returns.length === want.length && r.returns.every((x, i) => x.measure === want[i]));
     }],
     /**
-     * NO CALENDAR-YEAR COLUMN (Stage 10jf). It was a dash on every row — no
+     * NO CALENDAR-YEAR COLUMN (Stage 10jg). It was a dash on every row — no
      * statement values an account at a past year-end — and the family asked
      * for it gone rather than left blank.
      */
@@ -33676,7 +33691,7 @@ const INVARIANTS = {
         if (!sol || sol === "short") return false;
         if (sol.days < 365) return c.tag === "HPR" || /—/.test(c.text);
         if (sol.payments > 1) return /—/.test(c.text) && /several dates/.test(c.reason ?? "") && /XIRR/.test(c.reason ?? "");
-        return !c.tag && /One payment on/.test(c.note ?? "");
+        return !c.tag && /One (?:payment|purchase) on/.test(c.note ?? "");
       });
     }],
     // The picker is on CAGR, and the CAGR caption explains what it annualises.
@@ -33798,13 +33813,13 @@ const INVARIANTS = {
       if (mine.length !== cells.length) return false;
       // Each is either a signed % or a dash, never a fabricated +0.00%.
       const shapeOk = mine.every((c) => /—/.test(c.text) || /[+-]\d+(\.\d+)?%/.test(c.text));
-      // A FULL year to date — no later start on the cell (Stage 10jf).
+      // A FULL year to date — no later start on the cell (Stage 10jg).
       const drawn = mine.filter((c) => /[+-]\d+(\.\d+)?%/.test(c.text) && !c.ytdFrom).length;
       if (YTD_MEASURABLE === null) return { notChecked: "could not read heldSince out of the generated book" };
       return shapeOk && drawn === YTD_MEASURABLE;
     }],
     /**
-     * ── …AND FROM THE FIRST DATE WE HAVE, SAID ON THE CELL (Stage 10jf) ──────
+     * ── …AND FROM THE FIRST DATE WE HAVE, SAID ON THE CELL (Stage 10jg) ──────
      *
      *   *"for YTD atleast for this year lets show from the date we have"*
      *
@@ -44687,7 +44702,7 @@ for (const theme of THEMES) {
             // back. The row's own handles ride along for the converse claim.
             capital: td.getAttribute("data-capital"),
             capitalAccounts: (td.getAttribute("data-capital-accounts") || "").split(" ").filter(Boolean),
-            // A YTD FROM THE FIRST DATE WE HAVE (Stage 10jf): its window and pooled accounts.
+            // A YTD FROM THE FIRST DATE WE HAVE (Stage 10jg): its window and pooled accounts.
             ytdFrom: td.getAttribute("data-ytd-from"),
             ytdTo: td.getAttribute("data-ytd-to"),
             ytdAccounts: (td.getAttribute("data-ytd-accounts") || "").split(" ").filter(Boolean),

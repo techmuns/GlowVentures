@@ -745,7 +745,18 @@
 - Review fixes: sold tax lots keep the statement's tax-effective cost; unvalued custody rows carry asset class / category / basket wherever the statement names the instrument (`CustodyAuditRow.assetClass`; depository rolls name none and stay blank); a linked number in the Excel (Transactions on file, quantity) is a `HYPERLINK` formula whose result is the number, so it still sorts and sums. An account-level capital record (a fund's payout or call with no security) joins the account's one holding where it holds exactly one, never a PMS mandate's (Neo Infra's 30 payouts). An exited security's records are classified from the class its statements state, in its own account (Bandhan Bank's lots), and a mandate account's every record files under PMS mandates (`holdingBucket`'s rule): uncategorised Transactions rows fall from 2,303 to 7.
 - Checks: `consolidatedSheet.test.ts` rewritten (ties, ordering, no double count, typed Excel roundtrip, links land); `check:pages`' audit invariant expects 2 tabs; `check-consolidated-sheet.mjs` and the upload e2e read the new columns. `ONLY=audit` passes; `audit-short-rows` is red on main too and is left as found.
 
-### Stage 10jf — PORTFOLIO MONITOR: YTD FROM THE FIRST DATE WE HAVE; THE CY COLUMN IS GONE
+### Stage 10jf — RECOVERED LOTS REACH THE RETURN; RETURN COUNTS ARE OF REAL HOLDINGS
+
+*"check why all the return columns are mostly empty, we have received most of the purchased amount and dates data already so why are we not showing returns."* — the family, 30 Oct 2026.
+- All Securities measured on the statement book, 629 rows: 475 are companies reached only through funds, which can never carry a return, and the headers counted them. The other 154 had 153 HPRs, and under CAGR and XIRR 16 XIRR, 32 sub-year HPRs, 106 dashes.
+- A cost-recovery replay kept each lot's date and amount but published only `heldPurchases` (first, last, count), so nine direct shares (₹63.8 Cr) showed dates and a cost and could not take a rate. `RecoveredHoldingCost.cashRecord` now carries every priced purchase, sale and dated receipt. `holdingFlowsOf` reads it as a third basis, behind the same account, ISIN and exact-unit gate as `investedOn`, and `holdingPeriodOf` dates YTD from it. The book gains only that field: no cost, value or HPR moved.
+- Refused: an unverified sale (Yash Highvoltage), later sales needing a newer balance, a rolled-forward line, and a row whose only value is a live quote (the record would close on a date no statement reached).
+- A holding's single purchase now takes the rate its flows solve to, closing on its statement's value and date, on CAGR and `auto` alike. Compounding the row's return mixed a live price with a statement-dated window.
+- Headers count `measuredRows`, as the date column's footer already did: HPR 153 of 154, CAGR 3, XIRR 21, YTD 5. The hover names the fund-only rows.
+- Still dashes, for want of source data: 95 share rows have an undated line, because most managers' trade records start on 1 Apr 2026 (Green Lantern's in Jan 2025) and their statements print no lots. YTD and CY need a value on 1 Jan or 31 Dec, which no statement in the book carries.
+- Tests: `holdingFlows.test.ts` section 6 ties each record's cash to its FIFO cost and gain, and holds every refusal.
+
+### Stage 10jg — PORTFOLIO MONITOR: YTD FROM THE FIRST DATE WE HAVE; THE CY COLUMN IS GONE
 
 - The family (30 Oct 2026): *"for YTD atleast for this year lets show from the date we have"* and *"Remove the CY coloumn all together - best not have it than have it blank"*.
 - **CY removed** from `ReturnMeasure`, the picker and every table (Monitor holdings and transactions, Private Market): no statement values anything at a past year-end, so it was a dash on every row. A saved pick or `?ret=` naming it drops it (`normaliseMeasures`).
