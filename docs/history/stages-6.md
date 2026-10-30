@@ -780,3 +780,8 @@
 - Since-investment tiles are gain ÷ money invested per holding, with no flows of their own. Each unit is dated from `holdingFlowsOf`, then its capital moves, then its allotments, and counts only where the money in ties to what it invested within 1% (`DATED_MONEY_TIE`). The rest leaves BOTH sides and is named in the info card, so the tile shows the book's figure on that money beside the index's. Measured 30 Oct: ₹579 Cr of ₹793 Cr dated, the book +15.8% (tile +17.2%) against Nifty 500 +1.6%; FYTD +17.6% against +9.1%.
 - Price indices on statement dates; no live quote enters. No feed, a wrong-name answer or an index younger than the money renders `—` with the reason. The Nifty 500 loads with the tile; the other six load when the info card opens.
 - `closeOnOrBefore` moved from `PortfolioReturns` to `lib/prices.ts`. Test `cardBenchmark.test.ts`; invariant on `cio`.
+
+### Stage 10jk — MORNING CIO: THE TILE'S BENCHMARK LINE SHOWS ONE PORTFOLIO FIGURE
+
+- *"Just simply write vs Nifty 500… why there are two no. for portfolio return being shown."* A since-investment tile whose comparison covers part of its money now reads `vs Nifty 500 +1.6%`, without "₹579.3 Cr dated +15.8%".
+- Its lead goes too: +14.2 pp is off +15.8%, so it would not tie to the +17.2% above it. A tile compared on all its money keeps the lead. The hover says the figure is on the dated money; the info card keeps the book's figure on that money and the leads.
