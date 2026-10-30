@@ -4002,6 +4002,10 @@ export function PortfolioMonitor() {
                 the card that used to carry its three states is rows now. Present
                 on the security axis only, the one axis the store is asked on. */}
             <ExportableTable editable exportName="Portfolio Monitor — Holdings" className="min-w-full text-xs" data-monitor-table="holdings"
+              // WHILE THE YTD COLUMN'S PRICE HISTORIES ARE STILL ANSWERING (Stage 10jh):
+              // its cells say "Loading prices" until then, and a check that
+              // compares two exports waits for this to clear.
+              data-prices-pending={wantYtd && !ytdSettled ? "true" : undefined}
               controlsHost={bySecurity ? undefined : tableTools}
               data-lookthrough={bySecurity ? rowExposure.status : undefined}>
               {allRows => <>

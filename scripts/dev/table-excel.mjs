@@ -34,6 +34,9 @@ const exportButton = async (table) => (await exportControls(table)).locator('[da
 const exportAlert = async (table) => (await exportControls(table)).locator('[role=alert]');
 
 export async function downloadTableWorkbook(table, label) {
+  // A table whose cells still wait on price histories ("Loading prices") is
+  // exported once they have answered, so two exports compare like with like.
+  await table.page().waitForFunction(() => !document.querySelector('[data-prices-pending="true"]'), null, { timeout: 60000 }).catch(() => {});
   const book = await downloadWorkbook(await exportButton(table), label);
   assert.equal(await (await exportAlert(table)).count(),0);
   assert.ok(book.getWorksheet('About'));
