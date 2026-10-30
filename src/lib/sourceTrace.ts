@@ -5,11 +5,66 @@ import { acquisitionIdentity, fundUnitBasis } from '../../shared/fundUnitActions
 export type SourceMetric = 'statement' | 'quantity' | 'marketValue' | 'currentPrice' | 'costBasis' | 'avgCost' | 'unrealizedPnL';
 export type TracePosition = Pick<Position, 'accountId' | 'securityKey' | 'security' | 'isin' | 'statementRecord'>
   & Partial<Pick<Position, 'quantity' | 'marketValue' | 'currentPrice' | 'costBasis' | 'avgCost' | 'unrealizedPnL'
-    | 'depositoryUnits' | 'enteredNumbers' | 'rolledForward' | 'recoveredCost' | 'costBasisSource' | 'priceEvidence' | 'live' | 'navPriced' | 'navDate' | 'symbol' | 'reviewSource' | 'reviewNote' | 'fundUnitAdjustment'>>;
+    | 'depositoryUnits' | 'enteredNumbers' | 'rolledForward' | 'recoveredCost' | 'costBasisSource' | 'priceEvidence' | 'live' | 'navPriced' | 'navDate' | 'symbol' | 'reviewSource' | 'reviewNote' | 'fundUnitAdjustment'
+    | 'valuedAtCost'>> & { assetClass?: Position['assetClass'] | null };
 export type SourceEvidence = {
   document?: string; path?: string; sheet?: string; rows?: number[]; pointer?: string; field?: string; isin?: string | null; securityKey: string;
   accountId: string; label: string; value?: number | null; note?: string;
+  /** A family-review record in plain words (Stage 10jn); `note` keeps the full detail. */
+  review?: ReviewFacts;
 };
+
+/**
+ * ── A REVIEW RECORD IN PLAIN WORDS (Stage 10jn) ─────────────────────────────
+ *
+ *   *"When i click on it to understand it is so complex can you please make it
+ *    simplest to read layman language"* — the family, 30 Oct 2026.
+ *
+ * The review note is an audit sentence — its row, its tab, how the book
+ * matched it. The popup leads with the facts a reader asks for instead: what it
+ * was worth and when, what was paid, how many shares, and the one or two
+ * things that change how to read it. The full note stays under "Full detail".
+ * Read off the holding and off the note `reviewBook.mjs` writes, never guessed.
+ */
+export type ReviewFacts = {
+  /** The review's own value (null where it records only what was paid). */
+  value: number | null;
+  cost: number | null;
+  units: number | null;
+  unitWord: 'shares' | 'units';
+  asOf: string | null;
+  atCost: boolean;
+  /** One cost for several holders, shared out by shares. */
+  splitByShares: boolean;
+  /** One member's part of a line several members share. */
+  shared: boolean;
+  /** No document names who holds it. */
+  noHolder: boolean;
+  /** Listed since the review: the live view prices it at today's quote. */
+  listed: boolean;
+  /** A newer statement prints a different figure. */
+  differs: boolean;
+};
+const rupees = (s: string) => Number(s.replace(/,/g, ''));
+export function reviewFacts(p: TracePosition): ReviewFacts {
+  const note = p.reviewNote ?? '';
+  const valued = /^Valued at ₹([\d,]+(?:\.\d+)?)/.exec(note);
+  const closing = /its closing of (\d{1,2} \w{3} \d{4})/.exec(note)?.[1] ?? /\(MOPWM, ([^)]+)\)/.exec(note)?.[1] ?? null;
+  const atCost = !!p.valuedAtCost || /^Held at cost/.test(note);
+  return {
+    value: atCost || !valued ? null : rupees(valued[1]),
+    cost: typeof p.costBasis === 'number' ? p.costBasis : null,
+    units: typeof p.quantity === 'number' && p.quantity > 0 ? p.quantity : null,
+    unitWord: p.assetClass === 'Equity' || p.assetClass === 'Unlisted' ? 'shares' : 'units',
+    asOf: closing,
+    atCost,
+    splitByShares: /split by shares/i.test(note),
+    shared: /of the line\./.test(note),
+    noHolder: /names (?:no|its) holder|Not attributed to a member/i.test(note),
+    listed: /Now a listed company/.test(note),
+    differs: /A statement says otherwise/.test(note),
+  };
+}
 export type SourceTrace = { metric: SourceMetric; title: string; derived: boolean; sources: SourceEvidence[]; notes: string[]; missing: number };
 const LABELS: Record<SourceMetric, string> = {
   statement: 'Supporting statement', quantity: 'Quantity held', marketValue: 'Market value', currentPrice: 'Price / NAV',
@@ -55,21 +110,22 @@ export function holdingSourceTrace(positions: readonly TracePosition[], metric: 
     else if (p.reviewSource) {
       sources.push({ ...base, path: REVIEW_COLUMN_DATA.workbook,
         sheet: p.reviewSource.sheet, rows: [p.reviewSource.row], label: p.security,
-        note: p.reviewNote ?? 'The family review workbook supplies this record.' });
+        note: p.reviewNote ?? 'The family review workbook supplies this record.',
+        ...(p.reviewNote ? { review: reviewFacts(p) } : {}) });
       if (p.reviewNote && metric !== 'statement') derived = true;
     }
     else missing++;
     if (p.enteredNumbers?.some(f => f === metric || metric === 'statement' || ['avgCost', 'unrealizedPnL'].includes(metric))) {
       derived = true;
-      notes.add('This includes a saved family correction. The linked statement is the original record; the saved correction is not printed in its PDF.');
+      notes.add('This includes a saved family correction, which the original statement does not show.');
     }
     if (p.rolledForward && p.quantity === p.rolledForward.quantity && ['quantity', 'marketValue', 'statement'].includes(metric)) {
       derived = true;
-      notes.add('Units were rolled forward using later recorded trades. The original holding snapshot is one input, rather than the final unit balance.');
+      notes.add('The number of units includes trades made after the statement date.');
     }
     if (p.recoveredCost && ['costBasis', 'avgCost', 'unrealizedPnL'].includes(metric)) {
       derived = true;
-      notes.add('Cost was recovered from reconciled purchase records. Its supporting workbook rows are listed below.');
+      notes.add('The statement does not show the cost, so it comes from the family\'s purchase records, listed below.');
       for (const e of p.recoveredCost.evidence) sources.push({ ...base, path: e.path, sheet: e.sheet, rows: e.rows, label: e.path,
         note: `${e.sheet} · rows ${e.rows.join(', ')}` });
     }
@@ -83,21 +139,21 @@ export function holdingSourceTrace(positions: readonly TracePosition[], metric: 
     }
     if (p.costBasisSource && ['costBasis', 'avgCost', 'unrealizedPnL'].includes(metric)) {
       derived = true;
-      notes.add(`Cost basis: ${p.costBasisSource.replace(/-/g, ' ')}. The holding statement alone may not print this final cost.`);
+      notes.add(`Where the cost comes from: ${p.costBasisSource.replace(/-/g, ' ')}.`);
     }
     if (['marketValue', 'currentPrice', 'unrealizedPnL'].includes(metric) && (p.priceEvidence || p.live || p.navPriced)) {
       derived = true;
       const e = p.priceEvidence;
       sources.push({ ...base, label: e?.source ?? (p.navPriced ? 'AMFI' : 'Quote feed'),
         value: e?.value ?? p.currentPrice,
-        note: `${e?.kind === 'published-nav' || p.navPriced ? 'Published NAV' : 'Market quote'} · ${e?.instrument ?? p.isin ?? p.symbol ?? p.securityKey} · ${e?.effectiveAt ?? p.navDate ?? 'observation date not supplied'}. This price comes from the feed, rather than the holding statement.` });
+        note: `${e?.kind === 'published-nav' || p.navPriced ? "The fund's published price (NAV)" : 'The latest market price'}${(e?.effectiveAt ?? p.navDate) ? ` on ${e?.effectiveAt ?? p.navDate}` : ''}, not the statement's price. Code: ${e?.instrument ?? p.isin ?? p.symbol ?? p.securityKey}.` });
     }
   }
-  if (metric === 'avgCost') notes.add('Average cost = cost of the units covered ÷ those units. Different unit classes are not added as one unit.');
-  if (metric === 'unrealizedPnL') notes.add('Unrealised gain / loss = market value − cost, over the holdings with a measured cost.');
-  if (metric === 'marketValue' && derived) notes.add('Market value uses the selected holding records and their own prices; a feed-priced line is units × the published price.');
-  if (positions.length > 1 && metric !== 'statement') notes.add('This figure combines multiple holding records. Each contributing record is listed; no single PDF states the combined figure.');
-  if (missing) notes.add(`${missing} contributing record${missing === 1 ? ' has' : 's have'} no direct statement pointer. No PDF link has been guessed for ${missing === 1 ? 'it' : 'them'}.`);
+  if (metric === 'avgCost') notes.add('Average cost = total cost ÷ the number of units it covers.');
+  if (metric === 'unrealizedPnL') notes.add('Gain / loss on paper = today\'s value − what was paid, only for holdings where what was paid is known.');
+  if (metric === 'marketValue' && derived) notes.add('Market value = units × price. A line priced from the market feed uses the published price.');
+  if (positions.length > 1 && metric !== 'statement') notes.add('This adds up the records listed below. No single statement shows this total.');
+  if (missing) notes.add(`${missing} of the records behind this ${missing === 1 ? 'has' : 'have'} no statement to link to.`);
   // An account label can open one common PDF directly, without arbitrarily
   // selecting its first holding. Numeric figures retain every exact record.
   if (metric === 'statement' && sources.length > 1) {
