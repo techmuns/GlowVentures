@@ -41,11 +41,26 @@ export function ConsolidatedSheet({ onSources, onLoaded }: { onSources: () => vo
     catch { return {}; }
   }, [params, sheet]);
   const scope = useTableExportFilter(scopeFilter, EMPTY_SCOPE);
+  const isTransactions = sheet?.name === "Transactions";
+  const from = useTableExportFilter(isTransactions ? params.get("from") ?? "" : "", "");
+  const to = useTableExportFilter(isTransactions ? params.get("to") ?? "" : "", "");
+  const invalidRange = !!from && !!to && from > to;
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return sheet?.rows.map((row, index) => ({ row, index })).filter(({ row }) => Object.entries(scope).every(([key, v]) => row.values[sheet.columns.findIndex(c => c.key === key)] === v)
-      && (!q || row.values.some(v => String(v ?? "").toLowerCase().includes(q)))) ?? [];
-  }, [sheet, query, scope]);
+    const dateColumn = sheet?.columns.findIndex(c => c.key === "date") ?? -1;
+    return sheet?.rows.map((row, index) => ({ row, index })).filter(({ row }) => {
+      const date = row.values[dateColumn];
+      return Object.entries(scope).every(([key, v]) => row.values[sheet.columns.findIndex(c => c.key === key)] === v)
+        && (!(from || to) || (typeof date === "string" && !!date && (!from || date >= from) && (!to || date <= to)))
+        && (!q || row.values.some(v => String(v ?? "").toLowerCase().includes(q)));
+    }) ?? [];
+  }, [sheet, query, scope, from, to]);
+  function setDate(key: "from" | "to", value: string) {
+    const next = new URLSearchParams(params);
+    next.set("consolidated", "Transactions");
+    if (value) next.set(key, value); else next.delete(key);
+    setParams(next, { replace: true });
+  }
   function navigate(link: ConsolidatedLink) {
     const next = new URLSearchParams();
     if (link.file !== undefined) {
@@ -88,13 +103,29 @@ export function ConsolidatedSheet({ onSources, onLoaded }: { onSources: () => vo
         <input aria-label="Search consolidated sheet" value={query} placeholder="Search this sheet…" className="w-64 rounded-md border border-ink-700 bg-ink-800 py-2 pl-8 pr-3 text-sm text-slate-200"
           onChange={e => { const next = new URLSearchParams(params); next.set("consolidated", sheet.name); if (e.target.value) next.set("q", e.target.value); else next.delete("q"); setParams(next, { replace: true }); }} /></div>
     </div>
+    {isTransactions && <fieldset aria-label="Transaction date range" className="mb-3 flex min-w-0 flex-wrap items-center gap-3">
+      <label className="flex items-center gap-2 text-xs text-slate-400">From date
+        <input type="date" value={from} max={to || undefined} onChange={e => setDate("from", e.target.value)}
+          aria-invalid={invalidRange || undefined} aria-describedby={invalidRange ? "transaction-date-error" : undefined}
+          className="h-9 w-40 rounded-md border border-ink-700 bg-ink-800 px-2.5 text-sm text-slate-200 ring-focus" />
+      </label>
+      <label className="flex items-center gap-2 text-xs text-slate-400">To date
+        <input type="date" value={to} min={from || undefined} onChange={e => setDate("to", e.target.value)}
+          aria-invalid={invalidRange || undefined} aria-describedby={invalidRange ? "transaction-date-error" : undefined}
+          className="h-9 w-40 rounded-md border border-ink-700 bg-ink-800 px-2.5 text-sm text-slate-200 ring-focus" />
+      </label>
+      {(from || to) && <button type="button" className="rounded px-2 py-1 text-xs text-champagne-400 ring-focus hover:underline" onClick={() => {
+        const next = new URLSearchParams(params); next.delete("from"); next.delete("to"); setParams(next, { replace: true });
+      }}>Clear dates</button>}
+      {invalidRange && <p id="transaction-date-error" role="alert" className="text-xs text-amber-400">From date must be on or before To date.</p>}
+    </fieldset>}
     <p data-prose-ok="consolidated template units, valuation basis and missing-input coverage" className="mb-3 max-w-5xl text-xs leading-relaxed text-slate-400">{sheet.note}</p>
     <Card pad={false}>
       <div className="max-h-[65vh] overflow-auto" data-navigation-scroll="consolidatedsheet-1">
         <ExportableTable exportName={`Consolidated — ${sheet.name}`} className="w-full border-separate border-spacing-0 text-xs" data-table-static="the consolidated workbook keeps one fixed column order so the Excel download and the page read the same">
           <thead className="sticky top-0 z-20"><tr>{sheet.columns.map((c, i) => <th key={c.key} data-col-key={c.key} className={`border-b border-r border-ink-700 bg-ink-800 px-3 py-3 text-left font-semibold text-slate-200 ${i === 0 ? "sticky left-0 z-30" : ""}`}
             style={{ minWidth: Math.min(220, Math.max(100, c.width * 7)), maxWidth: 340 }}><span className="block">{c.label}</span></th>)}</tr></thead>
-          <InfiniteTableBody navigationKey="consolidatedsheet-filtered" rows={filtered} columns={sheet.columns.length} resetKey={JSON.stringify([sheet.name, query, scope])}>{({ row, index }) => <tr key={index} data-consolidated-row={index} className={row.kind ? "font-semibold" : "hover:bg-ink-700/30"}>
+          <InfiniteTableBody navigationKey="consolidatedsheet-filtered" rows={filtered} columns={sheet.columns.length} resetKey={JSON.stringify([sheet.name, query, scope, from, to])}>{({ row, index }) => <tr key={index} data-consolidated-row={index} className={row.kind ? "font-semibold" : "hover:bg-ink-700/30"}>
             {row.values.map((value, i) => {
               const c = sheet.columns[i], link = row.links?.[c.key];
               const text = display(value, c);
@@ -112,6 +143,6 @@ export function ConsolidatedSheet({ onSources, onLoaded }: { onSources: () => vo
         {!filtered.length && <p className="p-6 text-sm text-slate-500">No matching rows.</p>}
       </div>
     </Card>
-    <div className="mt-2 flex items-center gap-3 text-xs text-slate-500"><span>{filtered.length.toLocaleString("en-IN")} {query ? "matching " : ""}rows · {book.tabs.length === 2 ? "both tabs" : `all ${book.tabs.length} tabs`} included in Excel</span></div>
+    <div className="mt-2 flex items-center gap-3 text-xs text-slate-500"><span role="status">{filtered.length.toLocaleString("en-IN")} {query || from || to || Object.keys(scope).length ? "matching " : ""}rows · {book.tabs.length === 2 ? "both tabs" : `all ${book.tabs.length} tabs`} included in Excel</span></div>
   </section>;
 }
