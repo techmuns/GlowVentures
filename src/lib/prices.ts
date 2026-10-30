@@ -112,6 +112,16 @@ async function loadPriceHistory(symbol: string): Promise<PriceResult> {
   }
 }
 
+/** The latest settled close on or before a date — never a later one. */
+export function closeOnOrBefore(h: PriceHistory, date: string): { date: string; value: number } | null {
+  let lo = 0, hi = h.t.length - 1, at = -1;
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    if (h.t[mid] <= date) { at = mid; lo = mid + 1; } else hi = mid - 1;
+  }
+  return at < 0 ? null : { date: h.t[at], value: h.v[at] };
+}
+
 /** Columnar payload → the `{t,v}` points the chart component takes. */
 export function toPoints(h: PriceHistory): Point[] {
   const out: Point[] = [];

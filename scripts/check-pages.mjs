@@ -18739,6 +18739,23 @@ const CIO_SHARED = [
     const nav = ctx.kpiTiles.find((x) => x.slot === "value");
     return !!nav && /of=book\b/.test(nav.links[0] ?? "");
   }],
+  /**
+   * A RETURN TILE SETS THE INDEX BESIDE IT (Stage 10ji). The lead is the two
+   * figures' own difference, an index figure is only ever on a feed's answer
+   * (this walk's `/api/prices` may 404, and then there is none), and a narrowed
+   * comparison covers no more money than the tile invested.
+   */
+  ["a return tile carries the index on the same money, its lead the two figures' difference (Stage 10ji)", (t, ctx) => {
+    if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
+    const tiles = ctx.kpiTiles.filter((x) => ["return", "gain", "annualised", "fytd", "ytd"].includes(x.slot) && x.coverage?.cardReturn);
+    if (!tiles.length) return { notChecked: "no return tile with a measured return is on this strip" };
+    return tiles.every(({ bench: b }) => {
+      if (b?.cardBench !== "nifty-500") return false;
+      if (Number(b.cardBenchDated) > Number(b.cardBenchTotal) + 1) return false;
+      if (b.cardBenchIndex === "") return b.cardBenchGap === "";
+      return Math.abs(Number(b.cardBenchBook) - Number(b.cardBenchIndex) - Number(b.cardBenchGap)) < 1e-6;
+    });
+  }],
   ["the yearly return has its own tile", (t, ctx) =>
     ctx?.kpiTiles?.some((x) => x.slot === "annualised" && /annualised return|return over available history/i.test(x.label))],
   /**
@@ -21439,7 +21456,7 @@ const NAV_BENCH = [
    */
   /**
    * *"just give me a simple benchmark dropdown list selector, to select multiple
-   * benchmarks"* — the family, 30 Oct 2026 (Stage 10jh). Closed, the row has one
+   * benchmarks"* — the family, 30 Oct 2026 (Stage 10jj). Closed, the row has one
    * control and names only the drawn lines; the list stays open across picks.
    */
   ["the NAV card's one control is a closed Benchmarks list, the row naming only the lines drawn, and it stays open to pick several", (t, ctx) => {
@@ -40432,6 +40449,7 @@ for (const theme of THEMES) {
           // apart from one by its own handle rather than by its words.
           second: (c.querySelector("[data-kpi-second]")?.textContent ?? "").replace(/\s+/g, " ").trim() || null,
           coverage: c.querySelector('[data-card-coverage]') ? { ...c.querySelector('[data-card-coverage]').dataset } : null,
+          bench: c.querySelector('[data-card-bench]') ? { ...c.querySelector('[data-card-bench]').dataset } : null,
           returnInfo: c.querySelectorAll('[data-return-info]').length,
           sub: (c.querySelector("[data-kpi-sub]")?.textContent ?? "").replace(/\s+/g, " ").trim() || null,
           // THE TILE'S OWN FIGURE, off its own handle — what a value check

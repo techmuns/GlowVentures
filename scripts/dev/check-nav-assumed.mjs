@@ -67,7 +67,7 @@ try {
   await page.waitForFunction(() => /at their statement values/.test(document.querySelector('[data-testid="nav-book-chip"]')?.getAttribute('title') ?? ''), null, { timeout: 120000 });
   assert.equal(await page.locator('[data-testid="nav-book-chip"]').getAttribute('data-nav-basis'), 'statement');
   assert.doesNotMatch(await page.locator('[data-testid="nav-book-chip"]').innerText(), /assumed/);
-  // A HISTORY THAT FAILED IS NAMED ON THE BOOK'S HOVER (Stage 10jh: the retry button is gone).
+  // A HISTORY THAT FAILED IS NAMED ON THE BOOK'S HOVER (Stage 10jj: the retry button is gone).
   assert.match(await page.locator('[data-testid="nav-book-chip"]').getAttribute('title'), /\d+ demat price histories could not load/);
   assert.deepEqual(unpriced.errors, []);
   await unpriced.context.close();

@@ -56,7 +56,7 @@ import { chartTooltipStyle, chartTooltipLabelStyle } from "@/lib/chartTheme";
 //  · *"show only the book and Nifty 500 by default; other indices added by
 //    clicking"* — the family, 30 Oct 2026 (Stage 10jg), over a chart of eight
 //    lines. *"just give me a simple benchmark dropdown list selector, to select
-//    multiple benchmarks"* — the same day (Stage 10jh): one Benchmarks list, each
+//    multiple benchmarks"* — the same day (Stage 10jj): one Benchmarks list, each
 //    index in its fixed colour with its return over the same dates; the row beside
 //    it names only the lines on the chart.
 
