@@ -27,7 +27,7 @@ import InvestedThisYearReturns from "@/components/InvestedThisYearReturns";
 import { investmentYearStart } from "@/lib/investedThisYear";
 import { useViewParam } from "@/components/ViewToggle";
 import { BENCHMARKS, benchmarkIdentity, benchmarkMismatchReason } from "@/lib/benchmarks";
-import { fetchPriceHistory, priceErrorReason, type PriceHistory, type PriceResult } from "@/lib/prices";
+import { closeOnOrBefore, fetchPriceHistory, priceErrorReason, type PriceHistory, type PriceResult } from "@/lib/prices";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { fmtDate, DASH, changeColor } from "@/lib/format";
 import { mandateLabel } from "@/lib/analytics";
@@ -377,13 +377,3 @@ type BenchRow = {
   /** The index struck on the portfolio's own dated flows by the selected measure (PME), and why not where it is not. */
   pme: number | null; pmeReason: string | null;
 };
-
-/** The latest settled close on or before a date — never a later one. */
-function closeOnOrBefore(h: PriceHistory, date: string): { date: string; value: number } | null {
-  let lo = 0, hi = h.t.length - 1, at = -1;
-  while (lo <= hi) {
-    const mid = (lo + hi) >> 1;
-    if (h.t[mid] <= date) { at = mid; lo = mid + 1; } else hi = mid - 1;
-  }
-  return at < 0 ? null : { date: h.t[at], value: h.v[at] };
-}

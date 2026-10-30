@@ -199,7 +199,7 @@ One line per area; the history files explain each in depth.
 - `src/lib/navSeries.ts`, `benchCompare.ts` (the NAV card's one start, one end for the book and
   every benchmark; it starts only on `comparableStarts` in `bookNav.ts`, Stage 10iv),
   `attribution.ts` (no caller; kept, tested),
-  `benchmarks.ts` (seven indices, name-checked), `indexSectors.ts` (their sector
+  `benchmarks.ts` (seven indices, name-checked), `cardBenchmark.ts` (a return tile against the index on the same dated money; Stage 10ji), `indexSectors.ts` (their sector
   weights off NSE's factsheets, through `resolveSector`; Stage 10fe), `indices.ts`, `periodReturns.ts`
   (Morning CIO Returns tab), `segmentReturns.ts` (its attribution section:
   FIFO gain and contribution by any axis, tied to the Gain / Loss tile; its
