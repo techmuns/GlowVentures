@@ -33781,7 +33781,7 @@ const INVARIANTS = {
     }],
     // ...and the guard is VISIBLY firing: a sub-year row is marked, never
     // silently annualised. Empty is not a pass — this book holds such rows.
-    // The marker is NA now (Stage 10jj), naming the held days and the HPR, and the
+    // The marker is NA now (Stage 10jh), naming the held days and the HPR, and the
     // caption says "held under a year".
     ["a holding held under a year is marked as holding-period rather than annualised",
       (t, ctx) => {
