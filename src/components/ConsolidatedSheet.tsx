@@ -103,7 +103,7 @@ export function ConsolidatedSheet({ onSources, onLoaded }: { onSources: () => vo
         <input aria-label="Search consolidated sheet" value={query} placeholder="Search this sheet…" className="w-64 rounded-md border border-ink-700 bg-ink-800 py-2 pl-8 pr-3 text-sm text-slate-200"
           onChange={e => { const next = new URLSearchParams(params); next.set("consolidated", sheet.name); if (e.target.value) next.set("q", e.target.value); else next.delete("q"); setParams(next, { replace: true }); }} /></div>
     </div>
-    {isTransactions && <fieldset aria-label="Transaction date range" className="mb-3 flex flex-wrap items-center gap-3">
+    {isTransactions && <fieldset aria-label="Transaction date range" className="mb-3 flex min-w-0 flex-wrap items-center gap-3">
       <label className="flex items-center gap-2 text-xs text-slate-400">From date
         <input type="date" value={from} max={to || undefined} onChange={e => setDate("from", e.target.value)}
           aria-invalid={invalidRange || undefined} aria-describedby={invalidRange ? "transaction-date-error" : undefined}

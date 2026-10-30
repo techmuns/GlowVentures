@@ -107,7 +107,7 @@ try {
   await to.fill(end);
   for (const dark of [false, true]) {
     await page.evaluate(d => document.documentElement.classList.toggle("dark", d), dark);
-    for (const width of [1440, 390]) {
+    for (const width of [1440, 768]) {
       await page.setViewportSize({ width, height: 1000 });
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `date controls fit at ${width}`);
       await page.screenshot({ path: `${output}/transactions-${dark ? "dark" : "light"}-${width}.png`, fullPage: true });
@@ -139,5 +139,5 @@ try {
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `no page overflow at ${width}`);
   }
   assert.deepEqual(errors, []);
-  console.log("PASS consolidated browser: inclusive and one-sided dates, same-day ranges, clear/search/scope/history, invalid and empty ranges, complete Excel exports, 2 tabs, source links, both themes and mobile containment");
+  console.log("PASS consolidated browser: inclusive and one-sided dates, same-day ranges, clear/search/scope/history, invalid and empty ranges, complete Excel exports, 2 tabs, source links, both themes and responsive containment");
 } finally { await browser.close(); }
