@@ -122,7 +122,9 @@ export const AGG_NO_MEASURE: Partial<Record<ReturnMeasure, string>> = {
  */
 export function returnColumnMeta(measure: ReturnMeasure, cov: ReturnCoverage, asOf: string, fundOnlyRows = 0):
   { note: string; title: string } {
-  const meta = holdingColumnMeta(measure, cov, asOf);
+  const base = holdingColumnMeta(measure, cov, asOf);
+  // NA AND THE DASH ARE DIFFERENT ANSWERS (Stage 10jh), and the header says which is which.
+  const meta = { ...base, title: `${base.title} NA means this return cannot apply to that holding; a dash means a record is missing.` };
   return fundOnlyRows > 0
     ? { ...meta, title: `${meta.title} Counted over the ${cov.total} rows the statements report: the other ${fundOnlyRows} are companies the family reaches only through funds, which have no cost or value of the family's own.` }
     : meta;
@@ -138,7 +140,7 @@ function holdingColumnMeta(measure: ReturnMeasure, cov: ReturnCoverage, asOf: st
         // it as annualised would be the very claim the guard exists to refuse.
         note: `${cov.cagr} annualised of ${cov.total}`,
         title: `Annualised where a year can be measured — ${cov.cagr} of ${cov.total} rows.`
-          + (cov.absolute > 0 ? ` ${cov.absolute} ${cov.absolute === 1 ? "row is" : "rows are"} held under a year and show their total return on cost instead, marked HPR, because annualising a part-year would state a rate for a year the holding has not seen.` : "")
+          + (cov.subYear > 0 ? ` ${cov.subYear} ${cov.subYear === 1 ? "row is" : "rows are"} held under a year and show NA, because annualising a part-year would state a rate for a year the holding has not seen.` : "")
           // A WHOLE ACCOUNT FUNDED OVER SEVERAL DATED PAYMENTS is refused here
           // for a different reason from a holding with no date, and has its
           // annual rate one column over — so it is counted apart rather than
@@ -149,7 +151,8 @@ function holdingColumnMeta(measure: ReturnMeasure, cov: ReturnCoverage, asOf: st
           // refused because its start is the oldest unit's, not one purchase's —
           // counted apart for the same reason the staggered accounts are.
           + (cov.lotted > 0 ? ` ${cov.lotted} ${cov.lotted === 1 ? "holding was" : "holdings were"} bought on several dates or partly sold, so the oldest unit's date does not start one purchase and a single-start compound rate would misstate ${cov.lotted === 1 ? "it" : "them"}; ${cov.lotted === 1 ? "its" : "their"} Holding Period Return stands.` : "")
-          + (cov.absent - cov.staggered - cov.lotted > 0 ? ` ${cov.absent - cov.staggered - cov.lotted} report no purchase date the window could close over — the managed accounts publish a capital-account ledger rather than a lot register, and the depository holdings report no cost.` : ""),
+          + (cov.otherNa > 0 ? ` ${cov.otherNa} ${cov.otherNa === 1 ? "is" : "are"} NA for another cause: a line holding nothing, or a total loss.` : "")
+          + (cov.absent - cov.subYear - cov.staggered - cov.lotted - cov.otherNa > 0 ? ` ${cov.absent - cov.subYear - cov.staggered - cov.lotted - cov.otherNa} report no purchase date the window could close over — the managed accounts publish a capital-account ledger rather than a lot register, and the depository holdings report no cost.` : ""),
       };
     case "ytd":
       return {
@@ -161,18 +164,13 @@ function holdingColumnMeta(measure: ReturnMeasure, cov: ReturnCoverage, asOf: st
           + `The other ${cov.absent} were already held on 1 January, and a year-to-date figure needs their value on that date: the earliest statement in this book is dated after the year began, so there is no opening value to measure from. One holdings statement per account dated on or before 1 January fills it.`,
       };
     case "xirr": {
-      // THE COUNT IS OF RATES, not of cells shown: a whole account whose
-      // payments span under a year is SHOWN here as its holding-period return,
-      // tagged HPR, and calling that money-weighted would be the claim the
-      // guard exists to refuse.
-      const fallback = cov.shown - cov.xirr;
       return {
         note: `${cov.xirr} money-weighted of ${cov.total}`,
         title: (cov.xirr > 0
           ? `A money-weighted XIRR on ${cov.xirr} of ${cov.total} rows — each a whole account, or a fund over its whole folios, whose every payment in and out is dated, solved over the same record the Transactions card uses; or a holding whose every unit its account's dated trades or lot register account for, solved over its own purchases, sales and dividends.`
           : `A money-weighted XIRR needs every dated payment behind a row, and no row here is a whole account with every payment on record or a holding whose every purchase is dated.`)
-          + (fallback > 0 ? ` ${fallback} ${fallback === 1 ? "row is" : "rows are"} funded under a year ago and show ${fallback === 1 ? "its" : "their"} holding-period return instead, marked HPR, because annualising a part-year would state a rate for a year the money has not seen.` : "")
-          + (cov.absent > 0 ? ` The other ${cov.absent} are holdings whose dated trades do not account for every unit they hold, or accounts whose payments are not all on record — each cell says which. The per-account money-weighted return, where one can be struck, is on Performance.` : ""),
+          + (cov.subYear > 0 ? ` ${cov.subYear} ${cov.subYear === 1 ? "row is" : "rows are"} NA: funded under a year ago, because annualising a part-year would state a rate for a year the money has not seen.` : "")
+          + (cov.absent - cov.na > 0 ? ` The other ${cov.absent - cov.na} are holdings whose dated trades do not account for every unit they hold, or accounts whose payments are not all on record — each cell says which. The per-account money-weighted return, where one can be struck, is on Performance.` : ""),
       };
     }
     case "calendar":

@@ -94,7 +94,7 @@ import type { Position } from "@/lib/types";
 import { investedOnOf, holdingTradesOf, lineUndatedReason, accountInvestedOn, type InvestedOn } from "@/lib/investedOn";
 import { InvestedOnCell } from "@/components/InvestedOnCell";
 import { holdingPeriodOf, type HoldingPeriod } from "@/lib/holdingFlows";
-import { AbsentCell, AbsentFromBook, AbsentSection, AbsentValue, DASH } from "@/components/Absent";
+import { AbsentCell, NotApplicableCell, AbsentFromBook, AbsentSection, AbsentValue, DASH } from "@/components/Absent";
 import { SortHeader, SortableTable, Tr, TrFoot } from "@/components/SortHeader";
 // THE SAME TABLE STANDARD THE PRIVATE MARKET PAGE READS — a row opens into rows
 // of THIS table, in THESE columns, never into a table drawn inside a cell. See
@@ -2815,7 +2815,7 @@ export function PortfolioMonitor() {
         {off && <span className="ret-tag mr-0.5">{res.tag}</span>}
         {res.shown
           ? <span className={changeColor(res.pct)} title={res.note}>{fmtPct(res.pct, { sign: true })}</span>
-          : <AbsentCell reason={res.reason} />}
+          : res.na ? <NotApplicableCell reason={res.reason} /> : <AbsentCell reason={res.reason} />}
       </span>
     );
   };
@@ -5014,7 +5014,7 @@ export function PortfolioMonitor() {
                           // Tag "HPR" is always the raw return on cost (res.pct === returnPct),
                           // so its audit popover ties to the workbook; CAGR/other are derived.
                           const value = !res.shown
-                            ? <AbsentCell reason={res.reason} />
+                            ? res.na ? <NotApplicableCell reason={res.reason} /> : <AbsentCell reason={res.reason} />
                             : res.tag === "HPR" && !r.live
                               ? <Auditable formula={returnFormula(pnlValue, r.costBasis, r.returnPct, money, r.fifo ? { realised: r.fifo.realised, deployed: r.fifo.deployed, income: r.fifo.income,
                                   capital: m && r.fifo.wholeMandates.length ? { value: r.fifo.marketValue, contributed: r.fifo.wholeContributed, withdrawn: r.fifo.wholeWithdrawn } : null } : undefined)}><span className={changeColor(res.pct)} title={res.note}>{fmtPct(res.pct, { sign: true })}</span></Auditable>
@@ -5038,6 +5038,7 @@ export function PortfolioMonitor() {
                           const offMeasure = measure === "auto" || res.tag !== returnMeasureDef(measure).tag;
                           return (
                             <td key={measure} data-return-cell={measure} data-return-tag={offMeasure ? res.tag : undefined}
+                              data-return-na={!res.shown && res.na ? "" : undefined}
                               data-return-valued-at={r.valuedAt ?? undefined}
                               data-return-note={res.shown ? res.note : undefined}
                               /* WHICH ACCOUNTS THE ROW IS, where it is whole accounts

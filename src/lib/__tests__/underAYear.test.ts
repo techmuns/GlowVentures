@@ -41,14 +41,33 @@ const holding = (o: Partial<ReturnInput> = {}): ReturnInput => ({
   purchaseDates: 1, costOfUnitsSold: null, costBasis: 100, marketValue: 127.74, ...o,
 });
 const AS_OF = "2026-10-06";
-for (const measure of ["cagr", "xirr", "auto"] as const) {
+// CAGR and XIRR are NA under a year, naming the HPR (Stage 10jh); the methodology view prints it.
+for (const measure of ["cagr", "xirr"] as const) {
   const r = measuredReturn(holding(), measure, AS_OF);
-  assert.ok(r.shown, `${measure} shows a figure`);
-  if (r.shown) { assert.equal(r.tag, "HPR", `${measure} under a year is the HPR`); near(r.pct, 27.74); }
+  assert.ok(!r.shown && r.na, `${measure} under a year is NA`);
+  if (!r.shown) assert.match(r.reason, /under a year.*\+27\.74%/);
 }
-// Bought in lots, under a year: its oldest unit is under a year old, so every unit is — HPR, never a dash.
+{
+  const r = measuredReturn(holding(), "auto", AS_OF);
+  assert.ok(r.shown && r.tag === "HPR");
+  if (r.shown) near(r.pct, 27.74);
+}
+// Bought in lots, under a year: its oldest unit is under a year old, so every unit is — NA, never a dash.
 const lots = measuredReturn(holding({ purchaseDates: 3 }), "cagr", AS_OF);
-assert.ok(lots.shown && lots.tag === "HPR");
+assert.ok(!lots.shown && lots.na);
+// NA is what cannot exist; a dash is what a record would fill.
+const noDate = measuredReturn(holding({ heldSince: null }), "xirr", AS_OF);
+assert.ok(!noDate.shown && !noDate.na, "no dated record is a dash");
+const noCostSubYear = measuredReturn(holding({ returnPct: null, costBasis: null }), "cagr", AS_OF);
+assert.ok(!noCostSubYear.shown && !noCostSubYear.na, "a missing cost is a dash");
+const noOpening = measuredReturn(holding({ heldSince: "2025-01-10" }), "ytd", AS_OF);
+assert.ok(!noOpening.shown && !noOpening.na, "a missing 1 January value is a dash");
+const fundOnly = measuredReturn(holding({ measuredNA: true }), "absolute", AS_OF);
+assert.ok(!fundOnly.shown && fundOnly.na, "a company reached only through funds is NA");
+const noYear = measuredReturn(holding(), "calendar", AS_OF);
+assert.ok(!noYear.shown && noYear.na, "opened this year: no calendar year to measure");
+const several = measuredReturn(holding({ heldSince: "2024-01-10", purchaseDates: 3 }), "cagr", AS_OF);
+assert.ok(!several.shown && several.na, "bought on several dates has no single-start CAGR");
 // A year or more: CAGR for one purchase, refused for lots (XIRR's).
 const old = holding({ heldSince: "2025-01-01" });
 const oldCagr = measuredReturn(old, "cagr", AS_OF);
@@ -71,7 +90,8 @@ const capital = (o: Partial<Extract<RowCapital, { dated: true }>> = {}): RowCapi
 });
 for (const measure of ["cagr", "xirr", "auto"] as const) {
   const r = measuredReturn(holding({ heldSince: null, capital: capital() }), measure, AS_OF);
-  assert.ok(r.shown && r.tag === "HPR", `${measure}: staggered money under a year is its HPR, not refused and not ${r.shown ? r.pct : "absent"}`);
+  if (measure === "auto") assert.ok(r.shown && r.tag === "HPR", "auto: staggered money under a year is its HPR");
+  else assert.ok(!r.shown && r.na, `${measure}: staggered money under a year is NA`);
 }
 const longCap = holding({ heldSince: null, capital: capital({ days: 400, since: "2025-09-01" }) });
 assert.equal(measuredReturn(longCap, "cagr", AS_OF).shown, false, "several payments from a year: CAGR refused");

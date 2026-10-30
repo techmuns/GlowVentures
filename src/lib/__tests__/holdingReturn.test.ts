@@ -252,8 +252,8 @@ ok("the book still carries a report date for the window to close against", !!BOO
   // CAGR — annualised at a year or more, absolute under a year, absent with no date.
   ok("CAGR annualises a two-year hold and tags it CAGR",
      (() => { const r = measuredReturn(mr(21, twoYears), "cagr", ASOF); return r.shown && r.tag === "CAGR" && Math.abs(r.pct - 10) <= 0.05; })());
-  ok("CAGR under a year shows the absolute figure, tagged HPR (the guard, visible)",
-     (() => { const r = measuredReturn(mr(40, short), "cagr", ASOF); return r.shown && r.tag === "HPR" && r.pct === 40; })());
+  ok("CAGR under a year is NA, naming the holding-period figure (the guard, visible)",
+     (() => { const r = measuredReturn(mr(40, short), "cagr", ASOF); return !r.shown && !!r.na && /\+40\.00%/.test(r.reason); })());
   ok("CAGR with no purchase date is absent, never silently absolute",
      (() => { const r = measuredReturn(mr(40, null), "cagr", ASOF); return !r.shown && /purchase date/i.test(r.reason); })());
 
@@ -461,14 +461,14 @@ console.log("\n── 9. one purchase, held throughout ──");
   const lotted = dated.filter((p) => singlePurchaseGap(p) !== null);
   ok("the book carries dated holdings bought in lots or partly sold (load-bearing)", lotted.length > 0, `${lotted.length} of ${dated.length}`);
   ok("every dated holding carries a purchase count (package A's gate)", dated.every((p) => typeof p.purchaseDates === "number"));
-  // ...from a year. Under a year every unit is under a year old, so the HPR
-  // stands on the CAGR measure too (Stage 10hk).
+  // ...from a year. Under a year every unit is under a year old, so the CAGR is
+  // NA for that cause rather than for its lots (Stage 10hk, 10jh).
   const heldDaysOf = (p: (typeof dated)[number]) => Math.round((Date.parse(asOfOf(p.accountId)!) - Date.parse(p.heldSince!)) / 86_400_000);
   for (const p of lotted) {
     const r = measuredReturn({ ...p, valuedAt: asOfOf(p.accountId) }, "cagr", BOOK_SUMMARY.asOf);
     const sub = heldDaysOf(p) < YEAR_DAYS;
-    ok(`${p.security}: ${p.purchaseDates} purchase dates${(p.costOfUnitsSold ?? 0) > 0 ? ", units sold" : ""} — ${sub ? "under a year, its HPR" : "no CAGR"}`,
-       sub ? r.shown && r.tag === "HPR" && r.pct === p.returnPct : !r.shown, r.shown ? `${r.tag} ${r.pct.toFixed(2)}` : "");
+    ok(`${p.security}: ${p.purchaseDates} purchase dates${(p.costOfUnitsSold ?? 0) > 0 ? ", units sold" : ""} — ${sub ? "under a year, NA" : "no CAGR"}`,
+       sub ? !r.shown && !!r.na && /under a year/.test(r.reason) : !r.shown, r.shown ? `${r.tag} ${r.pct.toFixed(2)}` : "");
   }
   const eureka = dated.find((p) => p.securityKey === "eureka-forbes");
   ok("Eureka Forbes (V.E.C 128004, three lots) shows its HPR on auto, never the −25.50% CAGR",
