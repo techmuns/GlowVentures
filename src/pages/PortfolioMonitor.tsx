@@ -1079,7 +1079,10 @@ export function PortfolioMonitor() {
    * Returns tab reads (`ytdAvailable.ts`). Loaded only while YTD is on screen.
    */
   const wantYtd = returnMeasures.includes("ytd");
-  const ytdHeld = useMemo(() => (wantYtd ? currentHoldings(positions) : EMPTY_POSITIONS), [wantYtd, positions]);
+  // THE WHOLE FAMILY'S HOLDINGS, whatever the member selector shows: the Excel
+  // snapshot is the whole family's, and its YTD must find their prices loaded.
+  const ytdHeld = useMemo(() => (wantYtd ? currentHoldings((wholePortfolio ?? portfolio)?.positions ?? EMPTY_POSITIONS) : EMPTY_POSITIONS),
+    [wantYtd, wholePortfolio, portfolio]);
   const ytdHistories = useMarketHistories(ytdHeld);
   /**
    * THE PRICES ARE READ ONCE EVERY HISTORY HAS ANSWERED, not as each arrives:
