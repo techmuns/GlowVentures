@@ -202,9 +202,12 @@ ok("the book still carries a report date for the window to close against", !!BOO
   const twoYears = new Date(Date.parse(ASOF) - 730 * 86_400_000).toISOString().slice(0, 10);
 
   // The picker offers every measure, auto first.
-  ok("the picker offers auto + the five concrete measures, auto first",
+  ok("the picker offers auto + the four concrete measures, auto first",
      RETURN_MEASURES[0].key === "auto"
-     && ["auto", "absolute", "cagr", "xirr", "ytd", "calendar"].every((k) => RETURN_MEASURES.some((m) => m.key === k)));
+     && ["auto", "absolute", "cagr", "xirr", "ytd"].every((k) => RETURN_MEASURES.some((m) => m.key === k)));
+  // CY IS GONE (Stage 10jl): no statement here values a holding at a past
+  // year-end, so the column was a dash on every row.
+  ok("the picker no longer offers a calendar-year return", !RETURN_MEASURES.some((m) => (m.key as string) === "calendar" || m.tag === "CY"));
 
   // The former "Absolute — holding period" is the Holding Period Return now: same
   // figure (return on cost, not annualised), reader-facing label and tag renamed
@@ -288,10 +291,6 @@ ok("the book still carries a report date for the window to close against", !!BOO
   ok("YTD is the whole return since purchase for a within-year buy, tagged YTD",
      (() => { const r = measuredReturn(mr(12.5, "2026-03-02"), "ytd", ASOF); return r.shown && r.tag === "YTD" && r.pct === 12.5; })());
 
-  // CALENDAR — no prior-year window in this book at all.
-  ok("a calendar-year return is absent, naming the missing prior-year window",
-     (() => { const r = measuredReturn(mr(40, long), "calendar", ASOF); return !r.shown && r.tag === "CY" && /year/.test(r.reason); })());
-
   // COVERAGE partitions the book for every measure — shown + absent === total.
   for (const m of RETURN_MEASURES) {
     const cov = returnCoverage(BOOK_POSITIONS, m.key, ASOF);
@@ -320,7 +319,6 @@ ok("the book still carries a report date for the window to close against", !!BOO
     ok("XIRR is never struck on a position; only a sub-year holding's HPR shows", x.xirr === 0
        && shown.every(([p, r]) => r.shown && r.tag === "HPR" && r.pct === p.returnPct && !!p.heldSince), `${shown.length} HPR`);
   }
-  ok("calendar year is absent on every position", returnCoverage(BOOK_POSITIONS, "calendar", ASOF).shown === 0);
 }
 
 // ── 8. THE WINDOW ENDS AT THE VALUATION, NOT AT THE BOOK'S NEWEST DATE ──────

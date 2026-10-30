@@ -62,7 +62,7 @@ const CATEGORY = ["security", "qty", "avgCost", "invested", "investedOn", "cmp",
   "weight", "pnl", "realised", "return", "sector", "entity"];
 const SECURITY = ["security", "qty", "avgCost", "invested", "investedOn", "cmp", "day", "mv",
   "viaFunds", "totalExposure", "weight", "pnl", "realised", "return", "sector", "entity"];
-const ALL: ReturnMeasure[] = ["absolute", "cagr", "xirr", "ytd", "calendar"];
+const ALL: ReturnMeasure[] = ["absolute", "cagr", "xirr", "ytd"];
 const cols = (base: string[], m: ReturnMeasure[]) => withReturnCols(base, m) as string[];
 
 /** The rule this replaced: keep only what is drawn, append the rest at the end. */
@@ -118,8 +118,8 @@ const oldRule = (stored: string[], declared: string[]) => {
   const five = cols(CATEGORY, ALL);
   const drawn = visibleOrder(full, five);
   const at = drawn.indexOf("weight");
-  ok("ticking every measure puts the five where the reader put the return column, in the picker's order",
-    same(drawn.slice(at + 1, at + 6), ALL.map((m) => `ret:${m}`)), drawn.join(","));
+  ok("ticking every measure puts them where the reader put the return column, in the picker's order",
+    same(drawn.slice(at + 1, at + 1 + ALL.length), ALL.map((m) => `ret:${m}`)), drawn.join(","));
   ok("…and nothing else moved", same(drawn.filter((c) => !c.startsWith("ret:")), auto.filter((c) => !c.startsWith("ret:"))
     .map((c) => c).sort((a, b) => full.indexOf(a) - full.indexOf(b))));
   // The old rule appended them at the very end, past Sector and Entities.
@@ -181,7 +181,7 @@ const oldRule = (stored: string[], declared: string[]) => {
 
 // ── 6. The return picker: every measure by default, a pick remembered ──────
 {
-  ok("the default is the five measures, in the picker's order", same(DEFAULT_RETURN_MEASURES, ALL));
+  ok("the default is every concrete measure, in the picker's order", same(DEFAULT_RETURN_MEASURES, ALL));
   const def = resolveReturnMeasures(null, null);
   ok("nothing saved and no address → every measure", same(def.measures, ALL) && def.from === "default");
   const saved = resolveReturnMeasures(null, ["auto"]);
@@ -190,7 +190,7 @@ const oldRule = (stored: string[], declared: string[]) => {
   ok("an address wins over a saved pick, in the picker's order", same(addr.measures, ["cagr", "xirr"]) && addr.from === "address");
   ok("?ret=auto names the methodology view", same(resolveReturnMeasures("auto", null).measures, ["auto"]));
   ok("an address naming nothing falls back to the saved pick", same(resolveReturnMeasures("garbage", ["ytd"]).measures, ["ytd"]));
-  ok("a concrete measure beats auto in one list", same(normaliseMeasures(["auto", "calendar", "absolute"]) ?? [], ["absolute", "calendar"]));
+  ok("a concrete measure beats auto in one list", same(normaliseMeasures(["auto", "ytd", "absolute"]) ?? [], ["absolute", "ytd"]));
   ok("an empty list is no pick", normaliseMeasures([]) === null && parseSavedMeasures({ measures: ["cagr"] }) === null);
   ok("each page saves its own pick", returnMeasuresKey("monitor") !== returnMeasuresKey("private-market"));
 }

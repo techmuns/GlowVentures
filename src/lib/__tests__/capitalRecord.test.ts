@@ -100,7 +100,7 @@ for (const g of stated) {
 }
 ok("no return is shown where appreciation is withheld",
   G.filter((g) => g.appreciation == null).every((g) =>
-    (["auto", "absolute", "cagr", "xirr", "ytd", "calendar"] as const).every((m) => !capitalReturn(g, m).shown)));
+    (["auto", "absolute", "cagr", "xirr", "ytd"] as const).every((m) => !capitalReturn(g, m).shown)));
 
 // ── 5. 3P — THE CLIENT'S OWN EXAMPLE ───────────────────────────────────────
 console.log("\n── 3P, redeemed in full ──");

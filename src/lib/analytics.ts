@@ -12,6 +12,7 @@ import { MARKET_SIDE_UNPLACED } from "../../shared/aifCategory.mjs";
 // neither module calls the other while it loads: `isDebtHolding` reads the
 // family's classes only when a return is struck.
 import { familyAssetClass } from "./familyTaxonomy";
+import type { YtdFrom } from "./ytdAvailable";
 
 export const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
 
@@ -1621,7 +1622,7 @@ export function ytdCoverage(positions: Holdable[], asOf: string) {
 //    banned extrapolation — so everywhere else the XIRR measure names why it is
 //    absent rather than reaching for a figure.
 
-export type ReturnMeasure = "auto" | "absolute" | "cagr" | "xirr" | "ytd" | "calendar";
+export type ReturnMeasure = "auto" | "absolute" | "cagr" | "xirr" | "ytd";
 
 export type ReturnMeasureDef = {
   key: ReturnMeasure;
@@ -1650,8 +1651,6 @@ export const RETURN_MEASURES: ReturnMeasureDef[] = [
     hint: "A money-weighted return across every cash flow. It needs each payment's date and amount — which the statements carry for a whole account, and for a holding whose every unit its account's dated trades or lot register account for — so it shows on those rows, and is absent, with the reason, everywhere else. Under a year the holding-period return shows instead, never an annual rate (debt alone is annualised)." },
   { key: "ytd", label: "Year to date", tag: "YTD",
     hint: "The holding's own return since 1 January — measurable only where it was opened during the year, because otherwise its value on 1 January is missing." },
-  { key: "calendar", label: "Calendar year", tag: "CY",
-    hint: "A past calendar year's return — it needs the holding's value at the start and end of that year, which this book is not dated early enough to carry." },
 ];
 
 const MEASURE_BY_KEY = new Map(RETURN_MEASURES.map((m) => [m.key, m]));
@@ -1752,6 +1751,18 @@ export type ReturnInput = {
    * would read as a measurement of a holding that did not move.
    */
   valuedAtCost?: boolean;
+  /**
+   * THE ROW'S RETURN FROM ITS FIRST DATED VALUE THIS YEAR (Stage 10jl), where
+   * the caller resolved one (`ytdAvailable.ts`). The YTD measure shows it where
+   * no full year to date stands, tagged with its start date.
+   */
+  ytdFrom?: YtdFrom | null;
+  /**
+   * EVERY RUPEE DATED, NO STATEMENT VALUE (Stage 10jm): its recovered record
+   * dates each purchase and sale, but only a live price or a published NAV
+   * values it (`datedButUnvalued`), so CAGR and XIRR name that.
+   */
+  needsStatementValue?: boolean;
 };
 
 /**
@@ -1793,7 +1804,9 @@ export type RowCapital =
 
 export type MeasuredReturn =
   /** A figure to print, and the tag that says which measure it is. */
-  | { shown: true; pct: number; tag: string; note?: string }
+  | { shown: true; pct: number; tag: string; note?: string;
+      /** A YTD struck from a later date this year — its first day (Stage 10jl). */
+      from?: string }
   /**
    * No figure, with the reason a reader needs in order to act on it. `na` where
    * no document could supply one, drawn NA rather than a dash (Stage 10jh).
@@ -1801,6 +1814,10 @@ export type MeasuredReturn =
   | { shown: false; tag: string; reason: string; na?: boolean };
 
 const notApplicable = (tag: string, reason: string): MeasuredReturn => ({ shown: false, tag, reason, na: true });
+
+const YTD_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+/** "31 Mar" — the start a part-year YTD cell is tagged with. */
+export const ytdTagDay = (d: string) => `${Number(d.slice(8, 10))} ${YTD_MONTHS[Number(d.slice(5, 7)) - 1] ?? ""}`;
 
 const NO_COST_RETURN =
   "no statement in this book reports a cost for this holding, so it has no return to strike — it is held through a depository account that records what is held and not what it cost";
@@ -1821,6 +1838,8 @@ const noCostReasonOf = (p: ReturnInput): string => p.hprUnavailableReason ?? p.f
  * (MH-09, MH-18), in one wording.
  */
 const wholeAccountsOf = (n: number): string => n === 1 ? "This row is one whole account" : `This row is ${n} whole accounts`;
+const NEEDS_STATEMENT_VALUE =
+  "its purchases and sales are all dated (the family's review, register or adviser's report), but no statement values the units it holds now — its value here is a live price or a published NAV, and an annual rate closes only on a statement's own value and date. A holdings statement that values it fills this.";
 const DERIVED_ONLY_RETURN =
   "no statement in this book reports this company as a holding — the family reaches it only through funds whose filings name it — so there is no cost or value of the family's own to strike a return on";
 /**
@@ -1833,8 +1852,6 @@ const DERIVED_ONLY_RETURN =
  */
 const NO_HOLDING_XIRR =
   "a money-weighted return (XIRR) needs every cash flow for this holding — the date and amount of every purchase and sale of every unit it holds — and no statement in this drop carries them all: its account's dated trades or lot register do not account for every unit it holds, or it has neither. The per-account money-weighted return is on the Performance page.";
-export const noCalendarReason = (asOf: string) =>
-  `a calendar-year return needs the holding's value at the start and end of that year, and the earliest statement in this book is dated in ${asOf.slice(0, 4)}, after the current year began — there is no earlier window to measure from.`;
 
 /**
  * UNDER A YEAR, A CAGR OR AN XIRR DOES NOT EXIST (Stage 10jh): NA, naming the
@@ -1918,7 +1935,7 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
   const noCost = !!p.costNA || p.returnPct === null || p.returnPct === undefined;
   /**
    * A LINE THAT HOLDS NOTHING HAS NO RETURN ON ANY MEASURE (MH-15). With every
-   * measure its own column, the CAGR, XIRR, YTD and CY cells beside its HPR gave
+   * measure its own column, the CAGR, XIRR and YTD cells beside its HPR gave
    * the generic reasons — no cost reported, a cash-flow history missing, no
    * earlier window — about a line whose statement reports a cost of ₹0 and holds
    * nothing. The cause true of this row is the same in every column.
@@ -1960,6 +1977,7 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
       reason: `${wholeAccountsOf(cap.accountIds.length)}, and an account is not annualised on a purchase date: its annual rate is a money-weighted XIRR over the family's dated payments, and ${cap.reason.replace(/\.$/, "")}` };
   }
 
+  if (measure === "cagr" && p.needsStatementValue && !cap) return { shown: false, tag: "CAGR", reason: NEEDS_STATEMENT_VALUE };
   if (measure === "cagr") {
     const r = holdingReturn(p, "cagr", asOf, debt);
     if (r.kind === "absent") return /worth nothing/.test(r.reason) ? notApplicable("CAGR", r.reason) : { shown: false, tag: "CAGR", reason: r.reason };
@@ -1981,10 +1999,18 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
 
   if (measure === "ytd") {
     const y = holdingYtd(p, asOf);
-    return y.kind === "absent"
-      ? { shown: false, tag: "YTD", reason: y.reason }
-      : { shown: true, pct: y.pct, tag: "YTD",
-          note: `Opened ${y.since}, during the current year, so its year-to-date return is its whole return since purchase.` };
+    if (y.kind !== "absent") {
+      return { shown: true, pct: y.pct, tag: "YTD",
+        note: `Opened ${y.since}, during the current year, so its year-to-date return is its whole return since purchase.` };
+    }
+    /**
+     * …OR FROM THE FIRST DATE WE HAVE THIS YEAR (Stage 10jl): *"for YTD at
+     * least for this year lets show from the date we have"*. Tagged with its
+     * start date, so it never reads as a full year to date.
+     */
+    const a = p.ytdFrom;
+    if (a?.shown) return { shown: true, pct: a.pct, tag: a.fullYear ? "YTD" : `from ${ytdTagDay(a.from)}`, note: a.note, from: a.from };
+    return { shown: false, tag: "YTD", reason: a ? `${y.reason.replace(/\.?$/, ".")} From a later date this year: ${a.reason}` : y.reason };
   }
 
   if (measure === "xirr") {
@@ -1995,15 +2021,9 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
       // not annualised, so this is NA and not a missing record's dash.
       const r = noCost || debt ? null : holdingReturn(p, "cagr", asOf);
       if (r?.kind === "absolute" && r.heldDays !== null) return underAYearNa("XIRR", r.heldDays, r.pct);
-      return { shown: false, tag: "XIRR", reason: NO_HOLDING_XIRR };
+      return { shown: false, tag: "XIRR", reason: p.needsStatementValue ? NEEDS_STATEMENT_VALUE : NO_HOLDING_XIRR };
     }
     return capitalXirrOf(p, cap, noCost, debt);
-  }
-
-  if (measure === "calendar") {
-    // OPENED THIS YEAR, it has been through no calendar year at all.
-    if (holdingYtd(p, asOf).kind === "since-open") return notApplicable("CY", "Not applicable: this holding was opened during the current year, so it has been held through no complete calendar year.");
-    return { shown: false, tag: "CY", reason: noCalendarReason(asOf) };
   }
 
   // ── auto: the methodology ──────────────────────────────────────────────────
@@ -2079,7 +2099,7 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
  * than claimed — the same discipline `returnModeCoverage` keeps for the toggle.
  */
 export function returnCoverage(rows: ReturnInput[], measure: ReturnMeasure, asOf: string) {
-  let shown = 0, absent = 0, cagr = 0, absolute = 0, xirr = 0, staggered = 0, lotted = 0, na = 0, subYear = 0, otherNa = 0;
+  let shown = 0, absent = 0, cagr = 0, absolute = 0, xirr = 0, staggered = 0, lotted = 0, na = 0, subYear = 0, otherNa = 0, partYear = 0;
   const notOnePurchase = new Set([SEVERAL_PURCHASES, UNITS_SOLD_SINCE, PURCHASES_NOT_COUNTED]);
   for (const r of rows) {
     const m = measuredReturn(r, measure, asOf);
@@ -2100,11 +2120,13 @@ export function returnCoverage(rows: ReturnInput[], measure: ReturnMeasure, asOf
       continue;
     }
     shown++;
+    // A YTD struck from a later date this year (Stage 10jl), counted apart.
+    if (m.from) partYear++;
     if (m.tag === "CAGR") cagr++;
     else if (m.tag === "XIRR") xirr++;
     else absolute++;   // ABS (absolute, guarded, fixed-income) and YTD alike
   }
-  return { total: rows.length, shown, absent, cagr, absolute, xirr, staggered, lotted, na, subYear, otherNa };
+  return { total: rows.length, shown, absent, cagr, absolute, xirr, staggered, lotted, na, subYear, otherNa, partYear };
 }
 
 /**
