@@ -86,8 +86,37 @@ export const AGG_NO_MEASURE: Partial<Record<ReturnMeasure, string>> = {
   cagr: "annualising needs one purchase date and this holds many, bought over years, so a CAGR here would compound a window nothing was held over.",
   xirr: "a money-weighted return needs every dated cash flow of the thing it measures, and no statement reports those per category.",
   ytd: "a year-to-date figure needs this category's value on 1 January, and the earliest statement in this book is dated after the year began.",
-  calendar: "a calendar-year return needs its value at both ends of that year, and this book is not dated early enough to carry either.",
 };
+
+/**
+ * ── WHY A RETURN CELL IS BLANK, IN A FEW WORDS (Stage 10jm) ─────────────────
+ *
+ *   *"in the blank you can simple write - No buy/sell date"* — the family.
+ *
+ * A dash alone read as a broken feed. The cell now names its cause in a few
+ * words; the full reason stays its hover. Read off the reason `measuredReturn`
+ * gives, most specific cause first.
+ */
+const GAP_LABELS: [RegExp, string][] = [
+  [/prices are still loading/i, "Loading prices"],
+  [/sale proceeds|sale amount|proceeds are unverified/i, "Sale amount missing"],
+  [/no statement values the units it holds now/i, "No dated price"],
+  [/sale after its statement|newer holding statement|later sales/i, "Needs newer statement"],
+  [/different dates/i, "Valued on different dates"],
+  // YTD's own cause leads its cells: the value it would start from is missing.
+  [/1 January/i, "No 1 Jan value"],
+  [/held at cost|only the purchase cost|dated valuation from the company or fund|no statement values (this|it)/i, "No valuation"],
+  [/no statement in this book reports a cost|purchase cost is missing|no cost/i, "No cost"],
+  [/only through funds|derived/i, "Held via funds"],
+  [/holds nothing|nil balance/i, "Holds nothing"],
+  [/total loss/i, "Total loss"],
+  [/several dates|several purchases|bought on several dates|partly sold|money-weighted rate for this row is XIRR/i, "Several buys — see XIRR"],
+  [/do not solve|do not yield/i, "No solution"],
+  [/later trades|does not reach|reaches inception|record ends|before the .* statement|understated|settled amount|carries no date/i, "Dates incomplete"],
+  [/purchase date|when this holding was bought|no dated|every cash flow|dated payments|dated record|dated trades|capital is known only as a total/i, "No buy/sell dates"],
+];
+export const returnGapLabel = (reason: string | null | undefined): string =>
+  GAP_LABELS.find(([re]) => re.test(reason ?? ""))?.[1] ?? "Not available";
 
 /**
  * ── WHAT A RETURN COLUMN COVERS, AND WHY IT COVERS NO MORE ────────────────
@@ -122,16 +151,15 @@ export const AGG_NO_MEASURE: Partial<Record<ReturnMeasure, string>> = {
  */
 export function returnColumnMeta(measure: ReturnMeasure, cov: ReturnCoverage, asOf: string, fundOnlyRows = 0):
   { note: string; title: string } {
-  const base = holdingColumnMeta(measure, cov, asOf);
+  const base = holdingColumnMeta(measure, cov);
   // NA AND THE DASH ARE DIFFERENT ANSWERS (Stage 10jh), and the header says which is which.
-  const meta = { ...base, title: `${base.title} NA means this return cannot apply to that holding; a dash means a record is missing.` };
+  const meta = { ...base, title: `${base.title} NA means this return cannot apply to that holding; a dash means a record is missing, and the words beside it say which.` };
   return fundOnlyRows > 0
     ? { ...meta, title: `${meta.title} Counted over the ${cov.total} rows the statements report: the other ${fundOnlyRows} are companies the family reaches only through funds, which have no cost or value of the family's own.` }
     : meta;
 }
 
-function holdingColumnMeta(measure: ReturnMeasure, cov: ReturnCoverage, asOf: string): { note: string; title: string } {
-  const year = asOf.slice(0, 4);
+function holdingColumnMeta(measure: ReturnMeasure, cov: ReturnCoverage): { note: string; title: string } {
   switch (measure) {
     case "cagr":
       return {
@@ -154,15 +182,22 @@ function holdingColumnMeta(measure: ReturnMeasure, cov: ReturnCoverage, asOf: st
           + (cov.otherNa > 0 ? ` ${cov.otherNa} ${cov.otherNa === 1 ? "is" : "are"} NA for another cause: a line holding nothing, or a total loss.` : "")
           + (cov.absent - cov.subYear - cov.staggered - cov.lotted - cov.otherNa > 0 ? ` ${cov.absent - cov.subYear - cov.staggered - cov.lotted - cov.otherNa} report no purchase date the window could close over — the managed accounts publish a capital-account ledger rather than a lot register, and the depository holdings report no cost.` : ""),
       };
-    case "ytd":
+    case "ytd": {
+      // FROM THE FIRST DATE WE HAVE (Stage 10jl): a row with no 1 January
+      // value is measured from its first dated value this year, tagged with it.
+      const full = cov.shown - cov.partYear;
       return {
         note: `${cov.shown} of ${cov.total}`,
         title: "YTD is the holding's own return this year, not the share's market move. "
-          + (cov.shown > 0
-              ? `It is measurable on ${cov.shown} of ${cov.total} rows — the holdings opened during the year, whose whole return since purchase IS their year to date. `
-              : "No row can be measured on this drop. ")
-          + `The other ${cov.absent} were already held on 1 January, and a year-to-date figure needs their value on that date: the earliest statement in this book is dated after the year began, so there is no opening value to measure from. One holdings statement per account dated on or before 1 January fills it.`,
+          + (full > 0 ? `${full} ${full === 1 ? "row is a full year to date" : "rows are a full year to date"} — opened during the year, so the whole return since purchase is the year to date. ` : "")
+          + (cov.partYear > 0
+              ? `${cov.partYear} ${cov.partYear === 1 ? "row is" : "rows are"} measured from the first date this year with a dated value, and tagged with that date: no statement here values a holding on 1 January, so it is not a full year to date, and it is not annualised. A whole account reads its verified return record (opening value and dated money, Modified Dietz); a listed share or growth fund is carried from its statement's own balance at published closing prices, assumed still held. `
+              : "")
+          + (cov.absent > 0
+              ? `The other ${cov.absent} have neither a value on 1 January nor a dated value later this year to start from; each dash names what is missing.`
+              : ""),
       };
+    }
     case "xirr": {
       return {
         note: `${cov.xirr} money-weighted of ${cov.total}`,
@@ -173,11 +208,6 @@ function holdingColumnMeta(measure: ReturnMeasure, cov: ReturnCoverage, asOf: st
           + (cov.absent - cov.na > 0 ? ` The other ${cov.absent - cov.na} are holdings whose dated trades do not account for every unit they hold, or accounts whose payments are not all on record — each cell says which. The per-account money-weighted return, where one can be struck, is on Performance.` : ""),
       };
     }
-    case "calendar":
-      return {
-        note: `${cov.shown} of ${cov.total}`,
-        title: `A calendar-year return needs the holding's value at the start and end of that year, and the book's earliest statement is dated in ${year}, after the current year began — so it is absent on all ${cov.total} rows.`,
-      };
     default:
       return {
         note: `${cov.shown} of ${cov.total}`,

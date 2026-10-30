@@ -169,7 +169,29 @@ ok("the book dates holdings' money by their trades and by their lots", byTrades.
   ok("a record with an unverified sale dates no return", BOOK_POSITIONS.filter((p) => p.recoveredCost?.hprUnavailableReason).every((p) => flowsOf(p) === null));
   ok("a holding with later sales dates no return until a newer balance arrives", BOOK_POSITIONS.filter((p) => p.recoveredCost?.salesAfter).every((p) => flowsOf(p)?.dated !== true || flowsOf(p)?.dated && (flowsOf(p) as { basis: string }).basis !== "recovered"));
   const one = byRecovered[0];
-  ok("a value only a live quote gives closes no recovered record", flowsOf({ ...one, live: true }) === null);
+  // A LINE NO STATEMENT VALUES CLOSES ON ITS DATED MARKET PRICE (Stage 10jo),
+  // its units assumed still held from their statement; an undated price, or one
+  // older than the statement, closes nothing.
+  ok("a live quote with no date of its own closes no recovered record", flowsOf({ ...one, live: true }) === null);
+  const quoteDay = "2026-10-29", quoted = { ...one, live: true, marketValue: one.marketValue * 1.1,
+    priceEvidence: { kind: "quote" as const, source: "Upstox", instrument: "NSE:X", value: 1, effectiveAt: `${quoteDay}T10:00:00Z`, observedAt: null } };
+  const mf = flowsOf(quoted);
+  ok("a dated market price closes the record on its own date, assumed held from the statement",
+    !!mf?.dated && mf.close?.date === quoteDay && mf.close.value === quoted.marketValue && mf.market?.from === asOfOf(one) && mf.market.kind === "quote",
+    JSON.stringify(mf && mf.dated ? { close: mf.close, market: mf.market } : mf));
+  ok("...and a price dated before the statement closes nothing",
+    flowsOf({ ...quoted, priceEvidence: { ...quoted.priceEvidence, effectiveAt: "2020-01-01" } }) === null);
+  const cap = DC.behind([quoted], BOOK_POSITIONS.filter((x) => x !== one));
+  const owner = ACC.get(one.accountId)!.owner;
+  ok("the row's capital names whose units are assumed held, and the XIRR says so on its face",
+    !!cap?.dated && cap.to === quoteDay && cap.assumed?.owners.join() === owner
+      && (() => { const x = measuredReturn({ ...inputOf(one), capital: cap }, "xirr", quoteDay); return !x.shown || (x.assumed === true && /market price/.test(x.note ?? "") && x.note!.includes(owner)); })(),
+    JSON.stringify(cap));
+  // A LATER SALE ON RECORD: the units cannot be assumed held, so the row keeps
+  // its statement's close, unlabelled.
+  const sold = DC.behind([{ ...quoted, realizedLotsAfter: 1 }], BOOK_POSITIONS.filter((x) => x !== one));
+  ok("a sale recorded after the statement keeps the statement's close, with no assumption",
+    flowsOf({ ...quoted, realizedLotsAfter: 1 }) === null && !!sold?.dated && sold.to === asOfOf(one) && !sold.assumed, JSON.stringify(sold));
   ok("another account's line never takes the record", flowsOf({ ...one, recoveredCost: { ...one.recoveredCost!, accountId: "someone-else" } }) === null);
   const spare = { ...one, recoveredCost: { ...one.recoveredCost!, quantity: one.recoveredCost!.quantity + 1 } };
   ok("a different unit balance never takes the record", flowsOf(spare) === null);

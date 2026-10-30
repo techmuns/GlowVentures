@@ -31,15 +31,17 @@
  *    held, so money that came back would be missing from the rate.
  *  - RECOVERED (Stage 10jf): a supplementary record that reconciles to this
  *    account, ISIN and every unit held (`Position.recoveredCost`) dates each
- *    purchase, sale and receipt. Only on a line its statement values: a value
- *    only a live quote gives would close the record on a date no statement
- *    reached, and a holding with later sales needs a newer balance first.
+ *    purchase, sale and receipt. A holding with later sales needs a newer
+ *    balance first.
+ *
+ * Each closes on its statement's value and date — or, on a line the market
+ * prices, on that price's own date, the units assumed still held (Stage 10jo).
  *
  * Anything short of that dates part of the money, and a rate over part of it
  * is the partial return this book refuses (Stage 10fc). A holding with no dated
  * record at all returns null: the caller keeps its own per-holding answer.
  */
-import { BOOK_HOLDING_INCOME, BOOK_HOLDING_LOTS, BOOK_HOLDING_TRADES } from "@/data/glowData";
+import { BOOK_ACCOUNTS, BOOK_CAPITAL_MOVES, BOOK_HOLDING_INCOME, BOOK_HOLDING_LOTS, BOOK_HOLDING_TRADES, BOOK_SHARE_MOVEMENTS } from "@/data/glowData";
 import { acquisitionIdentity } from "../../shared/fundUnitActions.mjs";
 import type { Position, RecoveredHoldingCost } from "./types";
 
@@ -57,19 +59,41 @@ export type HoldingFlows =
       since: string;
       /** The statement's value on the statement's date; null where the holding is sold out. */
       close: { date: string; value: number } | null;
+      /**
+       * SET WHERE THE MARKET PRICES THE LINE (Stage 10jo): `close` is its live
+       * price or published NAV on that price's own date, and the units are the
+       * statement's of `from`, assumed still held since.
+       */
+      market?: { from: string; kind: "quote" | "published-nav" };
     }
   | { dated: false; reason: string };
 
 const keyOf = (p: Pick<Position, "accountId" | "securityKey">) => `${p.accountId}|${p.securityKey}`;
 
 /** The recovered record that is exactly this line's — the gate `investedOn` dates it through. */
-function recoveredRecordOf(p: Position): RecoveredHoldingCost["cashRecord"] | null {
+export function recordedHoldingOf(p: Position): RecoveredHoldingCost | null {
   const r = p.recoveredCost;
   if (!r?.cashRecord?.length || r.hprUnavailableReason || r.salesAfter || p.rolledForward) return null;
   const id = acquisitionIdentity(p);
   if (r.accountId !== id.accountId || r.isin !== id.isin || id.quantity == null || Math.abs(r.quantity - id.quantity) > .0005) return null;
-  return r.cashRecord;
+  return r;
 }
+const recoveredRecordOf = (p: Position): RecoveredHoldingCost["cashRecord"] | null => recordedHoldingOf(p)?.cashRecord ?? null;
+
+/**
+ * EVERY LINE'S MONEY IS DATED BY ITS RECOVERED RECORD, BUT A LINE IS VALUED
+ * ONLY AT A LIVE PRICE OR A PUBLISHED NAV (Stage 10jm). Since Stage 10jo such a
+ * line closes on that price (`marketCloseOf`); this still names the rows whose
+ * price carries no usable date, not a missing purchase date they do not lack.
+ */
+const RECORDED = new WeakMap<Position, boolean>();
+const recorded = (p: Position) => {
+  let r = RECORDED.get(p);
+  if (r === undefined) { r = !!recoveredRecordOf(p); RECORDED.set(p, r); }
+  return r;
+};
+export const datedButUnvalued = (ps: readonly Position[]): boolean =>
+  ps.length > 0 && ps.some((p) => !!p.live || !!p.priceEvidence) && ps.every(recorded);
 
 /** The holding's dividends inside a window — or the first one no statement dates. */
 function incomeIn(key: string, from: string, to: string): { rows: { date: string; amount: number }[]; undated: boolean } {
@@ -79,13 +103,25 @@ function incomeIn(key: string, from: string, to: string): { rows: { date: string
 }
 
 /**
- * ONE STATEMENT LINE'S DATED MONEY — or null where nothing dates every unit of
- * it. `p` is the STATEMENT line (its value is the statement's), and `asOf` its
- * account's statement date, where a lot-dated line closes.
+ * ONE LINE'S DATED MONEY — or null where nothing dates every unit of it. `asOf`
+ * is its account's statement date, where a lot-dated line closes. A STATEMENT
+ * line closes on the statement's value and date; a line priced by the market
+ * (a live quote or a published NAV) closes on that price's own date, its units
+ * assumed still held since the statement (Stage 10jo) — and null where that
+ * cannot stand, so the caller falls back to the statement's line.
  */
 export function holdingFlowsOf(p: Position, asOf: string | null): HoldingFlows | null {
   const key = keyOf(p);
   const r = p.tradeRecord;
+  /** The close: the statement's, or the market's where the line is priced by it. */
+  const closeAt = (statementDate: string, lastRow: string) => {
+    const m = marketCloseOf(p, statementDate, lastRow);
+    if (m === null) return null;
+    return {
+      close: p.marketValue > 0 ? { date: m?.date ?? statementDate, value: p.marketValue } : null,
+      ...(m ? { market: { from: statementDate, kind: m.kind } } : {}),
+    };
+  };
   if (r && r.unaccounted === 0) {
     const trades = (BOOK_HOLDING_TRADES[key] ?? []).filter((t) => t.date >= r.from && t.date <= r.to);
     if (!trades.length) return null;
@@ -99,10 +135,12 @@ export function holdingFlowsOf(p: Position, asOf: string | null): HoldingFlows |
       ...trades.map((t) => ({ date: t.date, amount: t.side === "buy" ? -(t.amount as number) : (t.amount as number) })),
       ...inc.rows,
     ].sort((a, b) => a.date.localeCompare(b.date));
+    const end = closeAt(r.to, flows.at(-1)!.date);
+    if (!end) return null;
     return {
       dated: true, basis: "trades", flows, payments: trades.length,
       since: trades.find((t) => t.side === "buy")?.date ?? trades[0].date,
-      close: p.marketValue > 0 ? { date: r.to, value: p.marketValue } : null,
+      ...end,
     };
   }
   const lots = BOOK_HOLDING_LOTS[key];
@@ -113,23 +151,70 @@ export function holdingFlowsOf(p: Position, asOf: string | null): HoldingFlows |
     const inc = incomeIn(key, lots[0].date, asOf);
     if (inc.undated) return { dated: false, reason: "a dividend it was paid carries no date on its statement, so its money cannot all be placed on the day it moved" };
     const flows = [...lots.map((l) => ({ date: l.date, amount: -l.cost })), ...inc.rows].sort((a, b) => a.date.localeCompare(b.date));
+    const end = closeAt(asOf, flows.at(-1)!.date);
+    if (!end) return null;
     return {
       dated: true, basis: "lots", flows, payments: lots.length, since: lots[0].date,
-      close: p.marketValue > 0 ? { date: asOf, value: p.marketValue } : null,
+      ...end,
     };
   }
   const record = recoveredRecordOf(p);
-  if (record && asOf && !p.live && !p.priceEvidence) {
+  if (record && asOf) {
+    const end = closeAt(asOf, record.at(-1)!.date);
+    if (!end) return null;
     const trades = record.filter((x) => x.side !== "income");
     return {
       dated: true, basis: "recovered",
       flows: record.map((x) => ({ date: x.date, amount: x.side === "buy" ? -x.amount : x.amount })),
       payments: trades.length,
       since: trades.find((x) => x.side === "buy")?.date ?? trades[0].date,
-      close: p.marketValue > 0 ? { date: asOf, value: p.marketValue } : null,
+      ...end,
     };
   }
   return null;
+}
+
+/**
+ * ── A FULLY DATED HOLDING CLOSES ON ITS MARKET PRICE (Stage 10jo) ───────────
+ *
+ *   *"ok i agree to what you recomend"* — the family, 30 Oct 2026: XIRR ends on
+ *   the latest market price for a listed share or fund whose every purchase and
+ *   sale is dated, labelled as assumed — the price its HPR already reads.
+ *
+ * Undefined where the line is not priced by the market (it closes on its
+ * statement). Otherwise the price's own date — never one before the units'
+ * statement or the record's last row — with the units assumed still held since
+ * the statement (the family's 22 Oct rule): null where the price carries no
+ * date, or where a later purchase, sale, transfer or withdrawal of it is on
+ * record, exactly as `assumedHolding` refuses.
+ */
+function marketCloseOf(p: Position, statementDate: string, lastRow: string): { date: string; kind: "quote" | "published-nav" } | null | undefined {
+  const e = p.priceEvidence;
+  if (p.live !== true && !e && !p.navPriced) return undefined;
+  if (p.rolledForward) return null;
+  const date = (e?.effectiveAt ?? (p.navPriced ? p.navDate : null) ?? e?.observedAt ?? null)?.slice(0, 10) ?? null;
+  if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date) || date < statementDate || date < lastRow || !(p.marketValue > 0)) return null;
+  if (movedAfter(p, statementDate, date)) return null;
+  return { date, kind: e?.kind ?? (p.navPriced ? "published-nav" : "quote") };
+}
+
+const ENGAGEMENT = new Map(BOOK_ACCOUNTS.map((a) => [a.accountId, a.engagement]));
+const MOVEMENTS_BY_ACCOUNT = new Map<string, (typeof BOOK_SHARE_MOVEMENTS)[string][]>();
+for (const m of Object.values(BOOK_SHARE_MOVEMENTS)) (MOVEMENTS_BY_ACCOUNT.get(m.accountId) ?? MOVEMENTS_BY_ACCOUNT.set(m.accountId, []).get(m.accountId)!).push(m);
+const CAPITAL_BY_ACCOUNT = new Map<string, (typeof BOOK_CAPITAL_MOVES)[number][]>();
+for (const m of BOOK_CAPITAL_MOVES) (CAPITAL_BY_ACCOUNT.get(m.accountId) ?? CAPITAL_BY_ACCOUNT.set(m.accountId, []).get(m.accountId)!).push(m);
+
+/** A later purchase, sale, transfer or withdrawal of the line on record — `assumedHolding`'s test. */
+function movedAfter(p: Position, from: string, to: string): boolean {
+  const after = (d: string | null | undefined) => !!d && d > from && d <= to;
+  if ((p.realizedLotsAfter ?? 0) > 0) return true;
+  if ((BOOK_HOLDING_TRADES[keyOf(p)] ?? []).some((t) => after(t.date))) return true;
+  const same = (x: { securityKey?: string | null; isin?: string | null }) => x.securityKey === p.securityKey || (!!p.isin && x.isin === p.isin);
+  if ((MOVEMENTS_BY_ACCOUNT.get(p.accountId) ?? []).some((m) => same(m) && after(m.periodTo)
+    && (!!m.reason || !!m.unclassified || (m.unitsIn ?? 0) > 0 || (m.unitsOut ?? 0) > 0))) return true;
+  return (CAPITAL_BY_ACCOUNT.get(p.accountId) ?? []).some((m) => after(m.date)
+    && (m.securityKey === p.securityKey || (!m.securityKey && ENGAGEMENT.get(p.accountId) === "PMS" && m.direction === "out"))
+    && !(m.securityKey === p.securityKey && !m.units && /dividend|income|interest/i.test(m.label)));
 }
 
 /**

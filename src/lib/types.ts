@@ -226,6 +226,8 @@ export type RecoveredHoldingCost = {
    * return over. Absent where a sale's proceeds are unverified.
    */
   cashRecord?: { date: string; side: "buy" | "sell" | "income"; amount: number }[];
+  /** The units held after each dated row, oldest first (Stage 10jo): what 1 January held. */
+  unitRecord?: { date: string; units: number }[];
   costBasis: number; realizedPnL: number | null; costOfUnitsSold: number | null;
   dividendReceived: number | null;
   /** Later review sale rows invalidate live pricing of the old snapshot. */

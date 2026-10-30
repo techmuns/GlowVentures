@@ -99,6 +99,15 @@ valuations. Prefer a usable statement return, avoid counting an account twice,
 and keep unknown purchase costs, private valuations and earlier ownership absent.
 The canonical statement book, source dates and verified records remain intact.
 
+**Market close for fully dated holdings (30 October 2026, user-authorised; Stage 10jo):**
+a listed share or fund whose every purchase and sale is dated (trades, lot register
+or reconciled purchase record) closes its holding XIRR on its dated market price or
+NAV, under the rule above: labelled "assumed", the owner named in the hover, and
+the statement's close kept wherever a later trade is on record. Its YTD opens on the
+units the record shows on 1 January at 31 December's close. The CAGR column is gone
+from every picker (XIRR covers it); the methodology column still names CAGR for one
+purchase.
+
 ## Calculation standards
 
 *"logical calculations need to be correct as per the industry standards"* — the
@@ -206,7 +215,8 @@ One line per area; the history files explain each in depth.
   Sector axis is `sectorRollup.ts`, Sector Composition's own sectors and sets, Stage 10gs;
   its Portfolio Monitor holding columns are `lineHoldingFigures.ts`, Stage 10hz),
   `capitalBridge.ts` (the tab's start → money in/out → gain → end bridge, gain split
-  only by a statement P&L or fund unit record; Stage 10gu), `useMarketReturns.ts` +
+  only by a statement P&L or fund unit record; Stage 10gu), `ytdAvailable.ts` (the
+  Monitor's YTD from the first dated value this year, on those records; Stage 10jl), `useMarketReturns.ts` +
   `marketHistoryStore.ts` (public histories kept in the browser, warmed by Morning CIO),
   `returnMeasures.ts`, `returnColumns.ts`.
 - `src/lib/fundNavs.ts` (AMFI NAV overlay; never sets `live`; depository cash and

@@ -9730,6 +9730,12 @@ export const BOOK_POSITIONS: Position[] = [
           "amount": 93857991
         }
       ],
+      "unitRecord": [
+        {
+          "date": "2026-01-30",
+          "units": 94967
+        }
+      ],
       "realizedPnL": 0,
       "costOfUnitsSold": 0,
       "dividendReceived": null,
@@ -9796,6 +9802,12 @@ export const BOOK_POSITIONS: Position[] = [
           "date": "2024-08-30",
           "side": "buy",
           "amount": 4642872
+        }
+      ],
+      "unitRecord": [
+        {
+          "date": "2024-08-30",
+          "units": 44643
         }
       ],
       "realizedPnL": null,
@@ -9866,6 +9878,16 @@ export const BOOK_POSITIONS: Position[] = [
           "date": "2025-07-07",
           "side": "buy",
           "amount": 176878881
+        }
+      ],
+      "unitRecord": [
+        {
+          "date": "2025-07-07",
+          "units": 36037
+        },
+        {
+          "date": "2025-07-31",
+          "units": 180185
         }
       ],
       "realizedPnL": 0,
@@ -9942,6 +9964,20 @@ export const BOOK_POSITIONS: Position[] = [
           "amount": 9956250
         }
       ],
+      "unitRecord": [
+        {
+          "date": "2024-02-14",
+          "units": 24500
+        },
+        {
+          "date": "2024-03-27",
+          "units": 58250
+        },
+        {
+          "date": "2024-09-26",
+          "units": 262125
+        }
+      ],
       "realizedPnL": 0,
       "costOfUnitsSold": 0,
       "dividendReceived": null,
@@ -10012,6 +10048,16 @@ export const BOOK_POSITIONS: Position[] = [
           "date": "2024-12-11",
           "side": "buy",
           "amount": 69684400
+        }
+      ],
+      "unitRecord": [
+        {
+          "date": "2024-12-11",
+          "units": 21200
+        },
+        {
+          "date": "2025-01-24",
+          "units": 212000
         }
       ],
       "realizedPnL": 0,
@@ -10088,6 +10134,16 @@ export const BOOK_POSITIONS: Position[] = [
           "amount": 25000100
         }
       ],
+      "unitRecord": [
+        {
+          "date": "2024-05-29",
+          "units": 88889
+        },
+        {
+          "date": "2025-08-21",
+          "units": 116979
+        }
+      ],
       "realizedPnL": 0,
       "costOfUnitsSold": 0,
       "dividendReceived": null,
@@ -10157,6 +10213,12 @@ export const BOOK_POSITIONS: Position[] = [
           "amount": 10030000
         }
       ],
+      "unitRecord": [
+        {
+          "date": "2025-04-16",
+          "units": 59000
+        }
+      ],
       "realizedPnL": 0,
       "costOfUnitsSold": 0,
       "dividendReceived": null,
@@ -10223,6 +10285,12 @@ export const BOOK_POSITIONS: Position[] = [
           "date": "2024-09-20",
           "side": "buy",
           "amount": 84500100
+        }
+      ],
+      "unitRecord": [
+        {
+          "date": "2024-09-20",
+          "units": 187778
         }
       ],
       "realizedPnL": 0,
@@ -10302,6 +10370,12 @@ export const BOOK_POSITIONS: Position[] = [
           "date": "2024-04-15",
           "side": "buy",
           "amount": 10000120
+        }
+      ],
+      "unitRecord": [
+        {
+          "date": "2024-04-15",
+          "units": 138462
         }
       ],
       "realizedPnL": 0,
@@ -21655,6 +21729,12 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "amount": 45499950
       }
     ],
+    "unitRecord": [
+      {
+        "date": "2024-09-20",
+        "units": 101111
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -21685,6 +21765,12 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "date": "2024-04-15",
         "side": "buy",
         "amount": 10000120
+      }
+    ],
+    "unitRecord": [
+      {
+        "date": "2024-04-15",
+        "units": 138462
       }
     ],
     "realizedPnL": 0,
@@ -21741,6 +21827,16 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "amount": 25000100
       }
     ],
+    "unitRecord": [
+      {
+        "date": "2024-05-29",
+        "units": 88889
+      },
+      {
+        "date": "2025-08-21",
+        "units": 116979
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -21772,6 +21868,16 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "date": "2024-12-11",
         "side": "buy",
         "amount": 69684400
+      }
+    ],
+    "unitRecord": [
+      {
+        "date": "2024-12-11",
+        "units": 21200
+      },
+      {
+        "date": "2025-01-24",
+        "units": 212000
       }
     ],
     "realizedPnL": 0,
@@ -21807,6 +21913,12 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "amount": 84500100
       }
     ],
+    "unitRecord": [
+      {
+        "date": "2024-09-20",
+        "units": 187778
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -21837,6 +21949,12 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "date": "2024-08-30",
         "side": "buy",
         "amount": 4642872
+      }
+    ],
+    "unitRecord": [
+      {
+        "date": "2024-08-30",
+        "units": 44643
       }
     ],
     "realizedPnL": null,
@@ -21878,6 +21996,20 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "amount": 9956250
       }
     ],
+    "unitRecord": [
+      {
+        "date": "2024-02-14",
+        "units": 24500
+      },
+      {
+        "date": "2024-03-27",
+        "units": 58250
+      },
+      {
+        "date": "2024-09-26",
+        "units": 262125
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -21914,6 +22046,12 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "amount": 10030000
       }
     ],
+    "unitRecord": [
+      {
+        "date": "2025-04-16",
+        "units": 59000
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -21944,6 +22082,16 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "date": "2025-07-07",
         "side": "buy",
         "amount": 176878881
+      }
+    ],
+    "unitRecord": [
+      {
+        "date": "2025-07-07",
+        "units": 36037
+      },
+      {
+        "date": "2025-07-31",
+        "units": 180185
       }
     ],
     "realizedPnL": 0,
@@ -21977,6 +22125,12 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "date": "2026-01-30",
         "side": "buy",
         "amount": 93857991
+      }
+    ],
+    "unitRecord": [
+      {
+        "date": "2026-01-30",
+        "units": 94967
       }
     ],
     "realizedPnL": 0,
@@ -22019,6 +22173,20 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "date": "2026-05-27",
         "side": "sell",
         "amount": 20698305.5
+      }
+    ],
+    "unitRecord": [
+      {
+        "date": "2024-11-13",
+        "units": 90430
+      },
+      {
+        "date": "2026-05-18",
+        "units": 54698
+      },
+      {
+        "date": "2026-05-27",
+        "units": 43000
       }
     ],
     "realizedPnL": 23795397.75,
@@ -22111,6 +22279,56 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "amount": 4832418.27
       }
     ],
+    "unitRecord": [
+      {
+        "date": "2025-09-02",
+        "units": 610
+      },
+      {
+        "date": "2025-09-03",
+        "units": 5923
+      },
+      {
+        "date": "2025-09-04",
+        "units": 33423
+      },
+      {
+        "date": "2025-09-11",
+        "units": 63423
+      },
+      {
+        "date": "2026-03-10",
+        "units": 60423
+      },
+      {
+        "date": "2026-03-11",
+        "units": 49423
+      },
+      {
+        "date": "2026-03-12",
+        "units": 39423
+      },
+      {
+        "date": "2026-03-13",
+        "units": 34423
+      },
+      {
+        "date": "2026-03-27",
+        "units": 30932
+      },
+      {
+        "date": "2026-05-13",
+        "units": 23405
+      },
+      {
+        "date": "2026-05-14",
+        "units": 20000
+      },
+      {
+        "date": "2026-05-15",
+        "units": 15772
+      }
+    ],
     "realizedPnL": -22586920.91,
     "costOfUnitsSold": 73027344.39,
     "dividendReceived": null,
@@ -22155,6 +22373,12 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "amount": 10034018.55
       }
     ],
+    "unitRecord": [
+      {
+        "date": "2026-06-17",
+        "units": 32000
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -22191,6 +22415,16 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "date": "2026-06-18",
         "side": "buy",
         "amount": 3681701.62
+      }
+    ],
+    "unitRecord": [
+      {
+        "date": "2026-06-17",
+        "units": 2840
+      },
+      {
+        "date": "2026-06-18",
+        "units": 4878
       }
     ],
     "realizedPnL": 0,
@@ -22273,6 +22507,28 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "date": "2026-06-29",
         "side": "sell",
         "amount": 36962218.38
+      }
+    ],
+    "unitRecord": [
+      {
+        "date": "2025-03-06",
+        "units": 933861.353
+      },
+      {
+        "date": "2025-07-10",
+        "units": 1573215.574
+      },
+      {
+        "date": "2025-11-04",
+        "units": 3057922.333
+      },
+      {
+        "date": "2026-03-23",
+        "units": 5784067.378
+      },
+      {
+        "date": "2026-06-29",
+        "units": 4850206.378
       }
     ],
     "realizedPnL": 4463855.58,
@@ -22392,6 +22648,76 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "amount": 177991100.44
       }
     ],
+    "unitRecord": [
+      {
+        "date": "2024-07-02",
+        "units": 20152752.113
+      },
+      {
+        "date": "2024-11-25",
+        "units": 19500467.028
+      },
+      {
+        "date": "2024-11-27",
+        "units": 17413878.834
+      },
+      {
+        "date": "2024-12-30",
+        "units": 12226968.521
+      },
+      {
+        "date": "2025-01-14",
+        "units": 8869157.607
+      },
+      {
+        "date": "2025-01-30",
+        "units": 7582037.607
+      },
+      {
+        "date": "2025-02-06",
+        "units": 6039787.607
+      },
+      {
+        "date": "2025-02-12",
+        "units": 5269277.607
+      },
+      {
+        "date": "2025-03-03",
+        "units": 3989127.607
+      },
+      {
+        "date": "2025-05-29",
+        "units": 4556073.402
+      },
+      {
+        "date": "2025-07-02",
+        "units": 7675691.799
+      },
+      {
+        "date": "2025-09-01",
+        "units": 1494916.799
+      },
+      {
+        "date": "2025-09-09",
+        "units": 0
+      },
+      {
+        "date": "2025-09-29",
+        "units": 6156569.403
+      },
+      {
+        "date": "2025-12-29",
+        "units": 3733209.403
+      },
+      {
+        "date": "2026-01-13",
+        "units": 0
+      },
+      {
+        "date": "2026-07-02",
+        "units": 4165239.582
+      }
+    ],
     "realizedPnL": 42699447.08,
     "costOfUnitsSold": 1147499464.46,
     "dividendReceived": null,
@@ -22442,6 +22768,12 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "date": "2026-04-02",
         "side": "buy",
         "amount": 12499374.97
+      }
+    ],
+    "unitRecord": [
+      {
+        "date": "2026-04-02",
+        "units": 34045.997
       }
     ],
     "realizedPnL": 0,
@@ -22507,6 +22839,36 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "amount": 12499375.04
       }
     ],
+    "unitRecord": [
+      {
+        "date": "2026-04-17",
+        "units": 590967.081
+      },
+      {
+        "date": "2026-04-23",
+        "units": 1192361.184
+      },
+      {
+        "date": "2026-04-30",
+        "units": 1789674.337
+      },
+      {
+        "date": "2026-05-07",
+        "units": 2375317.172
+      },
+      {
+        "date": "2026-05-14",
+        "units": 2977145.62
+      },
+      {
+        "date": "2026-05-21",
+        "units": 3580630.316
+      },
+      {
+        "date": "2026-05-29",
+        "units": 4183009.836
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -22544,6 +22906,12 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "date": "2026-06-05",
         "side": "buy",
         "amount": 12499375.94
+      }
+    ],
+    "unitRecord": [
+      {
+        "date": "2026-06-05",
+        "units": 2282.178
       }
     ],
     "realizedPnL": 0,
@@ -22659,6 +23027,76 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "amount": 12007886
       }
     ],
+    "unitRecord": [
+      {
+        "date": "2026-04-02",
+        "units": 127182.131
+      },
+      {
+        "date": "2026-04-17",
+        "units": 203618.319
+      },
+      {
+        "date": "2026-04-23",
+        "units": 319501.346
+      },
+      {
+        "date": "2026-04-30",
+        "units": 435537.852
+      },
+      {
+        "date": "2026-05-07",
+        "units": 548695.33
+      },
+      {
+        "date": "2026-05-14",
+        "units": 664262.64
+      },
+      {
+        "date": "2026-05-21",
+        "units": 779389.271
+      },
+      {
+        "date": "2026-05-29",
+        "units": 894913.144
+      },
+      {
+        "date": "2026-06-04",
+        "units": 1011544.431
+      },
+      {
+        "date": "2026-06-11",
+        "units": 1131009.345
+      },
+      {
+        "date": "2026-06-18",
+        "units": 1245627.83
+      },
+      {
+        "date": "2026-06-25",
+        "units": 1360101.454
+      },
+      {
+        "date": "2026-07-02",
+        "units": 1473642.679
+      },
+      {
+        "date": "2026-07-08",
+        "units": 1627548.996
+      },
+      {
+        "date": "2026-07-15",
+        "units": 1778597.16
+      },
+      {
+        "date": "2026-07-23",
+        "units": 1852566.713
+      },
+      {
+        "date": "2026-07-30",
+        "units": 1925285.808
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -22720,6 +23158,20 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "date": "2026-07-28",
         "side": "sell",
         "amount": 12008606.51
+      }
+    ],
+    "unitRecord": [
+      {
+        "date": "2026-07-02",
+        "units": 4011814.056
+      },
+      {
+        "date": "2026-07-21",
+        "units": 3691520.24
+      },
+      {
+        "date": "2026-07-28",
+        "units": 3371575.697
       }
     ],
     "realizedPnL": 81688.1,
@@ -22890,6 +23342,104 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "amount": 18746289.4
       }
     ],
+    "unitRecord": [
+      {
+        "date": "2025-05-29",
+        "units": 536534.331
+      },
+      {
+        "date": "2025-07-02",
+        "units": 0
+      },
+      {
+        "date": "2025-09-29",
+        "units": 66265739.066
+      },
+      {
+        "date": "2026-01-19",
+        "units": 63857839.066
+      },
+      {
+        "date": "2026-01-23",
+        "units": 59692409.066
+      },
+      {
+        "date": "2026-01-30",
+        "units": 58305949.066
+      },
+      {
+        "date": "2026-02-04",
+        "units": 51008599.066
+      },
+      {
+        "date": "2026-02-11",
+        "units": 50020494.066
+      },
+      {
+        "date": "2026-03-09",
+        "units": 49133744.066
+      },
+      {
+        "date": "2026-03-10",
+        "units": 43937908.436
+      },
+      {
+        "date": "2026-03-24",
+        "units": 39722993.436
+      },
+      {
+        "date": "2026-04-20",
+        "units": 38358193.436
+      },
+      {
+        "date": "2026-04-21",
+        "units": 35517673.436
+      },
+      {
+        "date": "2026-04-28",
+        "units": 32676073.436
+      },
+      {
+        "date": "2026-05-05",
+        "units": 29837848.436
+      },
+      {
+        "date": "2026-05-12",
+        "units": 27003021.338
+      },
+      {
+        "date": "2026-05-19",
+        "units": 24173456.231
+      },
+      {
+        "date": "2026-05-20",
+        "units": 40481863.676
+      },
+      {
+        "date": "2026-05-26",
+        "units": 37651068.245
+      },
+      {
+        "date": "2026-06-02",
+        "units": 34823244.267
+      },
+      {
+        "date": "2026-06-09",
+        "units": 33131479.328
+      },
+      {
+        "date": "2026-06-16",
+        "units": 31441254.686
+      },
+      {
+        "date": "2026-06-23",
+        "units": 29754071.876
+      },
+      {
+        "date": "2026-06-30",
+        "units": 28067435.434
+      }
+    ],
     "realizedPnL": 21315604.14,
     "costOfUnitsSold": 581284448.45,
     "dividendReceived": null,
@@ -22953,6 +23503,12 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "amount": 4899790
       }
     ],
+    "unitRecord": [
+      {
+        "date": "2026-07-01",
+        "units": 16250
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -23012,6 +23568,32 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "amount": 14202020
       }
     ],
+    "unitRecord": [
+      {
+        "date": "2021-04-15",
+        "units": 7200
+      },
+      {
+        "date": "2021-04-19",
+        "units": 7100
+      },
+      {
+        "date": "2021-06-11",
+        "units": 9900
+      },
+      {
+        "date": "2024-12-02",
+        "units": 0
+      },
+      {
+        "date": "2026-07-01",
+        "units": 14250
+      },
+      {
+        "date": "2026-07-21",
+        "units": 27750
+      }
+    ],
     "realizedPnL": 4605888,
     "costOfUnitsSold": 3690293,
     "dividendReceived": null,
@@ -23051,6 +23633,12 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "date": "2024-11-06",
         "side": "buy",
         "amount": 5017440
+      }
+    ],
+    "unitRecord": [
+      {
+        "date": "2024-11-06",
+        "units": 12000
       }
     ],
     "realizedPnL": 0,
@@ -23101,6 +23689,24 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "amount": 20042266
       }
     ],
+    "unitRecord": [
+      {
+        "date": "2021-01-22",
+        "units": 925
+      },
+      {
+        "date": "2021-02-17",
+        "units": 3925
+      },
+      {
+        "date": "2024-12-02",
+        "units": 0
+      },
+      {
+        "date": "2026-07-01",
+        "units": 14500
+      }
+    ],
     "realizedPnL": 2635663,
     "costOfUnitsSold": 2459824,
     "dividendReceived": null,
@@ -23148,6 +23754,20 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "date": "2026-07-01",
         "side": "buy",
         "amount": 4954749
+      }
+    ],
+    "unitRecord": [
+      {
+        "date": "2020-03-24",
+        "units": 4500
+      },
+      {
+        "date": "2021-02-11",
+        "units": 0
+      },
+      {
+        "date": "2026-07-01",
+        "units": 5250
       }
     ],
     "realizedPnL": 3107576,
@@ -23216,6 +23836,36 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "amount": 241712.31
       }
     ],
+    "unitRecord": [
+      {
+        "date": "2024-11-06",
+        "units": 3000
+      },
+      {
+        "date": "2024-11-08",
+        "units": 4000
+      },
+      {
+        "date": "2024-11-11",
+        "units": 5000
+      },
+      {
+        "date": "2024-11-12",
+        "units": 6000
+      },
+      {
+        "date": "2024-11-13",
+        "units": 7000
+      },
+      {
+        "date": "2024-11-14",
+        "units": 9000
+      },
+      {
+        "date": "2025-11-21",
+        "units": 8000
+      }
+    ],
     "realizedPnL": -88917.69,
     "costOfUnitsSold": 330630,
     "dividendReceived": null,
@@ -23253,6 +23903,12 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "date": "2026-07-01",
         "side": "buy",
         "amount": 9964104
+      }
+    ],
+    "unitRecord": [
+      {
+        "date": "2026-07-01",
+        "units": 30000
       }
     ],
     "realizedPnL": 0,
@@ -23302,6 +23958,24 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "date": "2026-07-01",
         "side": "buy",
         "amount": 10022979
+      }
+    ],
+    "unitRecord": [
+      {
+        "date": "2020-12-18",
+        "units": 1650
+      },
+      {
+        "date": "2021-01-22",
+        "units": 2425
+      },
+      {
+        "date": "2024-12-02",
+        "units": 0
+      },
+      {
+        "date": "2026-07-01",
+        "units": 7300
       }
     ],
     "realizedPnL": 1242717,
@@ -23368,6 +24042,28 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "amount": 603
       }
     ],
+    "unitRecord": [
+      {
+        "date": "2024-11-06",
+        "units": 120
+      },
+      {
+        "date": "2024-11-07",
+        "units": 243
+      },
+      {
+        "date": "2024-11-08",
+        "units": 368
+      },
+      {
+        "date": "2024-11-14",
+        "units": 618
+      },
+      {
+        "date": "2025-07-24",
+        "units": 603
+      }
+    ],
     "realizedPnL": 1135.05,
     "costOfUnitsSold": 22569.75,
     "dividendReceived": 603,
@@ -23406,6 +24102,12 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "amount": 7512697
       }
     ],
+    "unitRecord": [
+      {
+        "date": "2026-07-01",
+        "units": 34500
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -23440,6 +24142,12 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "amount": 7409337
       }
     ],
+    "unitRecord": [
+      {
+        "date": "2026-07-01",
+        "units": 9000
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -23472,6 +24180,12 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "date": "2026-01-30",
         "side": "buy",
         "amount": 93857991
+      }
+    ],
+    "unitRecord": [
+      {
+        "date": "2026-01-30",
+        "units": 94967
       }
     ],
     "realizedPnL": 0,
@@ -23512,6 +24226,16 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "amount": 9887441
       }
     ],
+    "unitRecord": [
+      {
+        "date": "2022-11-24",
+        "units": 2500
+      },
+      {
+        "date": "2025-12-09",
+        "units": 4875
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -23548,6 +24272,12 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "amount": 4889826
       }
     ],
+    "unitRecord": [
+      {
+        "date": "2026-07-01",
+        "units": 13500
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -23580,6 +24310,12 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "date": "2025-11-06",
         "side": "buy",
         "amount": 59989168.67
+      }
+    ],
+    "unitRecord": [
+      {
+        "date": "2025-11-06",
+        "units": 3915742.08
       }
     ],
     "realizedPnL": 0,
@@ -23623,6 +24359,20 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "date": "2023-09-26",
         "side": "buy",
         "amount": 11643297.57
+      }
+    ],
+    "unitRecord": [
+      {
+        "date": "2023-06-05",
+        "units": 126644.526
+      },
+      {
+        "date": "2023-06-23",
+        "units": 252730.7
+      },
+      {
+        "date": "2023-09-26",
+        "units": 393095.951
       }
     ],
     "realizedPnL": 0,
@@ -23680,6 +24430,28 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "amount": 42397880.11
       }
     ],
+    "unitRecord": [
+      {
+        "date": "2024-08-07",
+        "units": 727765.649
+      },
+      {
+        "date": "2024-09-12",
+        "units": 1071391.079
+      },
+      {
+        "date": "2024-09-26",
+        "units": 1411741.658
+      },
+      {
+        "date": "2024-10-21",
+        "units": 2111007.394
+      },
+      {
+        "date": "2025-06-04",
+        "units": 5100984.835
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -23717,6 +24489,12 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "amount": 39998000.1
       }
     ],
+    "unitRecord": [
+      {
+        "date": "2025-11-06",
+        "units": 993739.133
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -23748,6 +24526,12 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "date": "2026-04-17",
         "side": "buy",
         "amount": 3926402.01
+      }
+    ],
+    "unitRecord": [
+      {
+        "date": "2026-04-17",
+        "units": 24406.691
       }
     ],
     "realizedPnL": 0,
@@ -23788,6 +24572,16 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "amount": 29649468.42
       }
     ],
+    "unitRecord": [
+      {
+        "date": "2025-09-30",
+        "units": 230000
+      },
+      {
+        "date": "2026-01-22",
+        "units": 123000
+      }
+    ],
     "realizedPnL": 14667670.15,
     "costOfUnitsSold": 14981798.27,
     "dividendReceived": null,
@@ -23820,6 +24614,12 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "date": "2026-01-22",
         "side": "buy",
         "amount": 30193698.9
+      }
+    ],
+    "unitRecord": [
+      {
+        "date": "2026-01-22",
+        "units": 205000
       }
     ],
     "realizedPnL": 0,
@@ -23858,6 +24658,16 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "date": "2026-05-27",
         "side": "sell",
         "amount": 21709991.15
+      }
+    ],
+    "unitRecord": [
+      {
+        "date": "2024-11-13",
+        "units": 60287
+      },
+      {
+        "date": "2026-05-27",
+        "units": 48000
       }
     ],
     "realizedPnL": 5405142.15,
@@ -23919,6 +24729,24 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "amount": 34138
       }
     ],
+    "unitRecord": [
+      {
+        "date": "2023-08-11",
+        "units": 16500
+      },
+      {
+        "date": "2025-07-23",
+        "units": 12324
+      },
+      {
+        "date": "2025-07-24",
+        "units": 12100
+      },
+      {
+        "date": "2025-07-30",
+        "units": 11900
+      }
+    ],
     "realizedPnL": -299952,
     "costOfUnitsSold": 1107082,
     "dividendReceived": 70125,
@@ -23957,6 +24785,12 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "amount": 16999150.04
       }
     ],
+    "unitRecord": [
+      {
+        "date": "2024-07-24",
+        "units": 1366820.78
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -23988,6 +24822,12 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "date": "2023-10-25",
         "side": "buy",
         "amount": 14999250.03
+      }
+    ],
+    "unitRecord": [
+      {
+        "date": "2023-10-25",
+        "units": 183499.511
       }
     ],
     "realizedPnL": 0,
@@ -24053,6 +24893,36 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "amount": 1789910.5
       }
     ],
+    "unitRecord": [
+      {
+        "date": "2024-10-16",
+        "units": 68962.069
+      },
+      {
+        "date": "2024-10-25",
+        "units": 212943.35
+      },
+      {
+        "date": "2024-10-28",
+        "units": 356202.662
+      },
+      {
+        "date": "2024-10-29",
+        "units": 639876.422
+      },
+      {
+        "date": "2025-06-04",
+        "units": 1274541.445
+      },
+      {
+        "date": "2025-07-11",
+        "units": 2292129.643
+      },
+      {
+        "date": "2025-10-10",
+        "units": 2407981.455
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -24097,6 +24967,16 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "amount": 10035850.57
       }
     ],
+    "unitRecord": [
+      {
+        "date": "2024-07-24",
+        "units": 262503.988
+      },
+      {
+        "date": "2026-06-22",
+        "units": 146856.943
+      }
+    ],
     "realizedPnL": 1223545.74,
     "costOfUnitsSold": 8812304.83,
     "dividendReceived": null,
@@ -24129,6 +25009,12 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "date": "2025-07-11",
         "side": "buy",
         "amount": 23555459.68
+      }
+    ],
+    "unitRecord": [
+      {
+        "date": "2025-07-11",
+        "units": 602441.424
       }
     ],
     "realizedPnL": 0,
@@ -24169,6 +25055,16 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "amount": 15015496.64
       }
     ],
+    "unitRecord": [
+      {
+        "date": "2024-07-24",
+        "units": 27779.278
+      },
+      {
+        "date": "2026-07-13",
+        "units": 1469.627
+      }
+    ],
     "realizedPnL": 806732.83,
     "costOfUnitsSold": 14208763.81,
     "dividendReceived": null,
@@ -24205,6 +25101,12 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "date": "2026-07-01",
         "side": "buy",
         "amount": 119994000.19
+      }
+    ],
+    "unitRecord": [
+      {
+        "date": "2026-07-01",
+        "units": 264720.521
       }
     ],
     "realizedPnL": 0,
@@ -24248,6 +25150,16 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "amount": 2260040.31
       }
     ],
+    "unitRecord": [
+      {
+        "date": "2026-03-17",
+        "units": 175500
+      },
+      {
+        "date": "2026-03-24",
+        "units": 180000
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -24280,6 +25192,12 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "date": "2023-08-01",
         "side": "buy",
         "amount": 19999000.07
+      }
+    ],
+    "unitRecord": [
+      {
+        "date": "2023-08-01",
+        "units": 242412.122
       }
     ],
     "realizedPnL": 0,
@@ -24320,6 +25238,16 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "amount": 12729321.68
       }
     ],
+    "unitRecord": [
+      {
+        "date": "2026-04-09",
+        "units": 52085.887
+      },
+      {
+        "date": "2026-04-16",
+        "units": 21012.887
+      }
+    ],
     "realizedPnL": 22966.05,
     "costOfUnitsSold": 12706355.62,
     "dividendReceived": null,
@@ -24354,6 +25282,12 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "amount": 12724363.77
       }
     ],
+    "unitRecord": [
+      {
+        "date": "2026-04-17",
+        "units": 612631.862
+      }
+    ],
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "dividendReceived": null,
@@ -24385,6 +25319,12 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "date": "2026-04-17",
         "side": "buy",
         "amount": 21337476.18
+      }
+    ],
+    "unitRecord": [
+      {
+        "date": "2026-04-17",
+        "units": 132634.709
       }
     ],
     "realizedPnL": 0,
@@ -24423,6 +25363,16 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "date": "2026-01-30",
         "side": "buy",
         "amount": 23031645.41
+      }
+    ],
+    "unitRecord": [
+      {
+        "date": "2026-01-29",
+        "units": 1056498
+      },
+      {
+        "date": "2026-01-30",
+        "units": 1195000
       }
     ],
     "realizedPnL": 0,
@@ -24464,6 +25414,16 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "amount": 11911460.51
       }
     ],
+    "unitRecord": [
+      {
+        "date": "2025-07-01",
+        "units": 76834.378
+      },
+      {
+        "date": "2025-09-10",
+        "units": 46654.378
+      }
+    ],
     "realizedPnL": 128261.98,
     "costOfUnitsSold": 11783198.53,
     "dividendReceived": null,
@@ -24496,6 +25456,12 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "date": "2026-07-01",
         "side": "buy",
         "amount": 26198690.06
+      }
+    ],
+    "unitRecord": [
+      {
+        "date": "2026-07-01",
+        "units": 613293.929
       }
     ],
     "realizedPnL": 0,
@@ -24532,6 +25498,12 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "date": "2025-07-01",
         "side": "buy",
         "amount": 37698115.08
+      }
+    ],
+    "unitRecord": [
+      {
+        "date": "2025-07-01",
+        "units": 1092470.994
       }
     ],
     "realizedPnL": 0,

@@ -64,8 +64,7 @@ const noOpening = measuredReturn(holding({ heldSince: "2025-01-10" }), "ytd", AS
 assert.ok(!noOpening.shown && !noOpening.na, "a missing 1 January value is a dash");
 const fundOnly = measuredReturn(holding({ measuredNA: true }), "absolute", AS_OF);
 assert.ok(!fundOnly.shown && fundOnly.na, "a company reached only through funds is NA");
-const noYear = measuredReturn(holding(), "calendar", AS_OF);
-assert.ok(!noYear.shown && noYear.na, "opened this year: no calendar year to measure");
+// (No calendar-year measure since Stage 10jl: it was a dash on every row.)
 const several = measuredReturn(holding({ heldSince: "2024-01-10", purchaseDates: 3 }), "cagr", AS_OF);
 assert.ok(!several.shown && several.na, "bought on several dates has no single-start CAGR");
 // A year or more: CAGR for one purchase, refused for lots (XIRR's).
