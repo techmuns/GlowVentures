@@ -1794,8 +1794,13 @@ export type RowCapital =
 export type MeasuredReturn =
   /** A figure to print, and the tag that says which measure it is. */
   | { shown: true; pct: number; tag: string; note?: string }
-  /** No figure, with the reason a reader needs in order to act on it. */
-  | { shown: false; tag: string; reason: string };
+  /**
+   * No figure, with the reason a reader needs in order to act on it. `na` where
+   * no document could supply one, drawn NA rather than a dash (Stage 10jg).
+   */
+  | { shown: false; tag: string; reason: string; na?: boolean };
+
+const notApplicable = (tag: string, reason: string): MeasuredReturn => ({ shown: false, tag, reason, na: true });
 
 const NO_COST_RETURN =
   "no statement in this book reports a cost for this holding, so it has no return to strike — it is held through a depository account that records what is held and not what it cost";
@@ -1831,6 +1836,15 @@ const NO_HOLDING_XIRR =
 export const noCalendarReason = (asOf: string) =>
   `a calendar-year return needs the holding's value at the start and end of that year, and the earliest statement in this book is dated in ${asOf.slice(0, 4)}, after the current year began — there is no earlier window to measure from.`;
 
+/**
+ * UNDER A YEAR, A CAGR OR AN XIRR DOES NOT EXIST (Stage 10jg): NA, naming the
+ * figure that does. `auto` still prints that figure; its measure resolves per row.
+ */
+const UNDER_A_YEAR_NA = "Not applicable: held";
+const SEVERAL_DATES_NO_CAGR = "the money went in and came out over several dates, so a single-start compound rate would treat all of it as invested on the first date — the money-weighted rate for this row is XIRR";
+const underAYearNa = (tag: string, days: number | null, returnPct: number): MeasuredReturn =>
+  notApplicable(tag, `${UNDER_A_YEAR_NA}${days === null ? " for under a year" : ` ${days} days, under a year`}, and a part-year is never annualised. Its Holding Period Return is ${returnPct >= 0 ? "+" : ""}${returnPct.toFixed(2)}%.`);
+
 /** Under a year of dated capital: the holding-period return, marked, never annualised. */
 function capitalSubYear(returnPct: number, cap: Extract<RowCapital, { dated: true }>): MeasuredReturn {
   return { shown: true, pct: returnPct, tag: "HPR",
@@ -1864,7 +1878,7 @@ function capitalCompound(returnPct: number, cap: Extract<RowCapital, { dated: tr
  */
 function capitalXirrOf(p: ReturnInput, cap: Extract<RowCapital, { dated: true }>, noCost: boolean, debt = false): MeasuredReturn {
   if (!mayAnnualise(cap.days, debt)) {
-    return noCost ? { shown: false, tag: "XIRR", reason: noCostReasonOf(p) } : capitalSubYear(p.returnPct as number, cap);
+    return noCost ? { shown: false, tag: "XIRR", reason: noCostReasonOf(p) } : underAYearNa("XIRR", cap.days, p.returnPct as number);
   }
   if (cap.annualPct == null) return { shown: false, tag: "XIRR", reason: "these dated payments and this value do not solve to a rate" };
   const debtNote = cap.days < YEAR_DAYS ? DEBT_UNDER_A_YEAR : "";
@@ -1899,7 +1913,7 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
   // compounds that HPR, and its XIRR spends the same sales, so an unverified HPR
   // refuses every measure there. Only a whole account's own record stands apart.
   if (unavailable && (measure === "absolute" || !p.capital?.dated || p.capital.holdings)) return { shown: false, tag: returnMeasureDef(measure).tag, reason: unavailable };
-  if (p.measuredNA) return { shown: false, tag: returnMeasureDef(measure).tag, reason: DERIVED_ONLY_RETURN };
+  if (p.measuredNA) return notApplicable(returnMeasureDef(measure).tag, DERIVED_ONLY_RETURN);
   if (p.valuedAtCost) return { shown: false, tag: returnMeasureDef(measure).tag, reason: AT_COST_RETURN };
   const noCost = !!p.costNA || p.returnPct === null || p.returnPct === undefined;
   /**
@@ -1909,7 +1923,7 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
    * earlier window — about a line whose statement reports a cost of ₹0 and holds
    * nothing. The cause true of this row is the same in every column.
    */
-  if (noCost && isNilLine(p)) return { shown: false, tag: returnMeasureDef(measure).tag, reason: NIL_LINE_RETURN };
+  if (noCost && isNilLine(p)) return notApplicable(returnMeasureDef(measure).tag, NIL_LINE_RETURN);
 
   if (measure === "absolute") {
     if (noCost) return { shown: false, tag: "HPR", reason: noCostReasonOf(p) };
@@ -1919,18 +1933,16 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
   const debt = p.debt ?? isDebtHolding(p);
   const cap = p.capital;
   if (measure === "cagr" && cap?.dated) {
-    // UNDER A YEAR, THE ABSOLUTE RETURN (Stage 10hk) — ahead of the refusal
-    // below: money in for under a year shows its holding-period return on
-    // every measure, however many dates it went in on.
+    // UNDER A YEAR, NO ANNUAL RATE (Stage 10hk, 10jg) — ahead of the refusal
+    // below: however many dates the money went in on.
     if (!mayAnnualise(cap.days, debt)) {
-      return noCost ? { shown: false, tag: "CAGR", reason: noCostReasonOf(p) } : capitalSubYear(p.returnPct as number, cap);
+      return noCost ? { shown: false, tag: "CAGR", reason: noCostReasonOf(p) } : underAYearNa("CAGR", cap.days, p.returnPct as number);
     }
     // SEVERAL DATED PAYMENTS: a single-start compound rate would treat every
     // rupee as invested on the first date. The Transactions card refuses the
     // same account the same way, so the two pages cannot disagree about it.
     if (cap.flows > 1) {
-      return { shown: false, tag: "CAGR",
-        reason: "the money went in and came out over several dates, so a single-start compound rate would treat all of it as invested on the first date — the money-weighted rate for this row is XIRR" };
+      return notApplicable("CAGR", SEVERAL_DATES_NO_CAGR);
     }
     if (noCost) return { shown: false, tag: "CAGR", reason: noCostReasonOf(p) };
     return capitalCompound(p.returnPct as number, cap, "CAGR", debt);
@@ -1950,23 +1962,19 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
 
   if (measure === "cagr") {
     const r = holdingReturn(p, "cagr", asOf, debt);
-    if (r.kind === "absent") return { shown: false, tag: "CAGR", reason: r.reason };
-    // The guard fired: under a year, so the ABSOLUTE figure stands, marked —
-    // for a holding bought in lots too (Stage 10hk): its OLDEST unit is under a
-    // year old, so every unit is.
-    if (r.kind === "absolute") {
-      return { shown: true, pct: r.pct, tag: "HPR",
-        note: r.heldDays === null
-          ? "Held for an unreported period, so this is the total return on cost, not an annual rate."
-          : `Held ${r.heldDays} days — under a year, so this is the total return on cost, not an annual rate.` };
-    }
+    if (r.kind === "absent") return /worth nothing/.test(r.reason) ? notApplicable("CAGR", r.reason) : { shown: false, tag: "CAGR", reason: r.reason };
+    // The guard fired: under a year, so no annual rate — for a holding bought in
+    // lots too (Stage 10hk): its OLDEST unit is under a year old, so every unit is.
+    if (r.kind === "absolute") return underAYearNa("CAGR", r.heldDays, r.pct);
     // NOT ONE PURCHASE (Stage 10fz): refused on the CAGR measure from a year,
     // exactly as an account funded over several dated payments is
     // (`cap.flows > 1` above). The gate is HERE, on the holding's own measure,
     // and not in `holdingReturn`: that is the arithmetic of one dated purchase,
     // which a capital tranche (`tranches.ts`) is by construction.
     const gap = singlePurchaseGap(p);
-    if (gap) return { shown: false, tag: "CAGR", reason: gap };
+    // Bought on several dates or partly sold is what the holding IS; an uncounted
+    // purchase record is what the book lacks.
+    if (gap) return gap === PURCHASES_NOT_COUNTED ? { shown: false, tag: "CAGR", reason: gap } : notApplicable("CAGR", gap);
     return { shown: true, pct: r.pct, tag: "CAGR",
       note: `Annualised over the ${r.heldDays} days from ${r.since}, the oldest unit still held, to its valuation on ${windowEnd(p, asOf)}.${r.heldDays < YEAR_DAYS ? DEBT_UNDER_A_YEAR : ""}` };
   }
@@ -1982,20 +1990,19 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
   if (measure === "xirr") {
     if (cap && !cap.dated) return { shown: false, tag: "XIRR", reason: cap.reason };
     if (!cap) {
-      // A HOLDING KNOWN TO BE HELD UNDER A YEAR shows its absolute return under
-      // XIRR too (Stage 10hk): no cash-flow record is needed to say a part-year
-      // is not annualised, and a dash would hide the one figure the rule allows.
+      // A HOLDING KNOWN TO BE HELD UNDER A YEAR has no XIRR whatever its record
+      // (Stage 10hk, 10jg): no cash-flow record is needed to say a part-year is
+      // not annualised, so this is NA and not a missing record's dash.
       const r = noCost || debt ? null : holdingReturn(p, "cagr", asOf);
-      if (r?.kind === "absolute" && r.heldDays !== null) {
-        return { shown: true, pct: r.pct, tag: "HPR",
-          note: `Held ${r.heldDays} days — under a year, so this is the total return on cost, not an annual rate.` };
-      }
+      if (r?.kind === "absolute" && r.heldDays !== null) return underAYearNa("XIRR", r.heldDays, r.pct);
       return { shown: false, tag: "XIRR", reason: NO_HOLDING_XIRR };
     }
     return capitalXirrOf(p, cap, noCost, debt);
   }
 
   if (measure === "calendar") {
+    // OPENED THIS YEAR, it has been through no calendar year at all.
+    if (holdingYtd(p, asOf).kind === "since-open") return notApplicable("CY", "Not applicable: this holding was opened during the current year, so it has been held through no complete calendar year.");
     return { shown: false, tag: "CY", reason: noCalendarReason(asOf) };
   }
 
@@ -2072,23 +2079,32 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
  * than claimed — the same discipline `returnModeCoverage` keeps for the toggle.
  */
 export function returnCoverage(rows: ReturnInput[], measure: ReturnMeasure, asOf: string) {
-  let shown = 0, absent = 0, cagr = 0, absolute = 0, xirr = 0, staggered = 0, lotted = 0;
+  let shown = 0, absent = 0, cagr = 0, absolute = 0, xirr = 0, staggered = 0, lotted = 0, na = 0, subYear = 0, otherNa = 0;
   const notOnePurchase = new Set([SEVERAL_PURCHASES, UNITS_SOLD_SINCE, PURCHASES_NOT_COUNTED]);
   for (const r of rows) {
+    const m = measuredReturn(r, measure, asOf);
     // A row that is whole accounts funded over several dated payments — the
     // case CAGR refuses and XIRR answers — counted so a header can say where
-    // those rows' annual rate is rather than filing them under "no date".
-    if (r.capital?.dated && r.capital.flows > 1) staggered++;
-    const m = measuredReturn(r, measure, asOf);
+    // those rows' annual rate is rather than filing them under "no date". Under
+    // a year it is counted there instead: that, not its dates, is why it has none.
+    const several = !m.shown && m.reason === SEVERAL_DATES_NO_CAGR;
+    if (several) staggered++;
     // A dated holding bought in lots or partly sold (Stage 10fz): refused by
     // CAGR for a cause of its own, so a header does not file it under "no date".
-    if (!m.shown) { absent++; if (notOnePurchase.has(m.reason)) lotted++; continue; }
+    if (!m.shown) {
+      absent++;
+      if (m.na) na++;
+      if (notOnePurchase.has(m.reason)) lotted++;
+      else if (m.na && m.reason.startsWith(UNDER_A_YEAR_NA)) subYear++;
+      else if (m.na && !several) otherNa++;
+      continue;
+    }
     shown++;
     if (m.tag === "CAGR") cagr++;
     else if (m.tag === "XIRR") xirr++;
     else absolute++;   // ABS (absolute, guarded, fixed-income) and YTD alike
   }
-  return { total: rows.length, shown, absent, cagr, absolute, xirr, staggered, lotted };
+  return { total: rows.length, shown, absent, cagr, absolute, xirr, staggered, lotted, na, subYear, otherNa };
 }
 
 /**

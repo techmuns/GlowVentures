@@ -33642,8 +33642,8 @@ const INVARIANTS = {
       }
       return solved.every(({ c, sol }) => {
         if (!sol || sol === "short") return false;
-        if (sol.days < 365) return c.tag === "HPR" || /—/.test(c.text);
-        if (sol.payments > 1) return /—/.test(c.text) && /several dates/.test(c.reason ?? "") && /XIRR/.test(c.reason ?? "");
+        if (sol.days < 365) return c.na || /—/.test(c.text);
+        if (sol.payments > 1) return c.na && /several dates/.test(c.reason ?? "") && /XIRR/.test(c.reason ?? "");
         return !c.tag && /One (?:payment|purchase) on/.test(c.note ?? "");
       });
     }],
@@ -33712,27 +33712,28 @@ const INVARIANTS = {
       // refused a CAGR too — the oldest unit's date starts no one purchase — and
       // is counted in its own sentence, still part of the partition.
       const lots = Number(/(\d+) holdings? (?:was|were) bought on several dates or partly sold/.exec(why)?.[1] ?? 0);
+      const otherNa = Number(/(\d+) (?:is|are) NA for another cause/.exec(why)?.[1] ?? 0);
       // ...AND THE HEADER'S SHORT NOTE AGREES WITH IT. Both come from ONE
       // coverage object (`returnColumnMeta`), so a build that let them drift has
       // started deriving the visible count separately from the sentence a reader
       // opens to check it.
       const short = /(\d+) annualised of (\d+)/.exec(h.note ?? "");
-      return cagr + guarded + absent + staggered + lots === total && total > 0
+      return cagr + guarded + absent + staggered + lots + otherNa === total && total > 0
         && !!short && Number(short[1]) === cagr && Number(short[2]) === total;
     }],
     // ...and the guard is VISIBLY firing: a sub-year row is marked, never
     // silently annualised. Empty is not a pass — this book holds such rows.
-    // The marker is the HPR tag now (the cell shows the total return on cost,
-    // tagged HPR) and the caption says "held under a year".
+    // The marker is NA now (Stage 10jg), naming the held days and the HPR, and the
+    // caption says "held under a year".
     ["a holding held under a year is marked as holding-period rather than annualised",
       (t, ctx) => {
         const h = (ctx?.returnHead ?? []).find((x) => /^CAGR$/i.test(x.label));
         if (!h) return { notChecked: "the CAGR column was not on screen on this run" };
         // THE GUARD IS VISIBLY FIRING, and on the CELLS rather than on prose: a
-        // sub-year row in the CAGR column shows its total return on cost tagged
-        // HPR. Empty is not a pass — this book holds such rows.
-        const tagged = (ctx?.returnCells ?? []).filter((c) => c.measure === "cagr" && c.tag === "HPR");
-        return /held under a year/.test(h.noteTitle ?? "") && tagged.length > 0;
+        // sub-year row in the CAGR column is NA and its hover says why. No figure
+        // stands in it, and empty is not a pass — this book holds such rows.
+        const na = (ctx?.returnCells ?? []).filter((c) => c.measure === "cagr" && c.na && /under a year/.test(c.reason ?? ""));
+        return /held under a year/.test(h.noteTitle ?? "") && na.length > 0 && na.every((c) => /^NA$/.test(c.text.trim()));
       }],
   ],
   /**
@@ -44610,6 +44611,7 @@ for (const theme of THEMES) {
             // Where this row's window ENDS, and what the figure says of it.
             valuedAt: td.getAttribute("data-return-valued-at"),
             note: td.getAttribute("data-return-note"),
+            na: td.hasAttribute("data-return-na"),
             // [C] the reason an ABSENT return names (MH-15, MSX-12): a title is
             // not in innerText, so it is read where it is.
             reason: td.querySelector("[title]")?.getAttribute("title") ?? null,

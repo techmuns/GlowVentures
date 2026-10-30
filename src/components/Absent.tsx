@@ -86,6 +86,24 @@ export function AbsentCell({ reason }: { reason?: string }) {
 }
 
 /**
+ * A FIGURE THAT CANNOT EXIST, AS AGAINST ONE WE DO NOT HAVE (Stage 10jg).
+ *
+ *   *"it would be clear that for that particular holding … it is not logically
+ *    possible to show CAGR or XIRR, but for others we suppose have missing data,
+ *    so it would be clear to distinguish between them."*
+ *
+ * `AbsentCell`'s dash says a document would fill it. This says none could: a
+ * holding under a year has no annual rate whatever arrives.
+ */
+export function NotApplicableCell({ reason }: { reason: string }) {
+  return (
+    <span className="text-slate-500" title={reason} data-not-applicable="">
+      NA
+    </span>
+  );
+}
+
+/**
  * A NAME THE FAMILY HOLDS THAT NO STATEMENT REPORTS — the whole-holding form of
  * everything above.
  *

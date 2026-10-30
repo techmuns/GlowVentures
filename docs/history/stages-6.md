@@ -755,3 +755,12 @@
 - Headers count `measuredRows`, as the date column's footer already did: HPR 153 of 154, CAGR 3, XIRR 21, YTD 5. The hover names the fund-only rows.
 - Still dashes, for want of source data: 95 share rows have an undated line, because most managers' trade records start on 1 Apr 2026 (Green Lantern's in Jan 2025) and their statements print no lots. YTD and CY need a value on 1 Jan or 31 Dec, which no statement in the book carries.
 - Tests: `holdingFlows.test.ts` section 6 ties each record's cash to its FIFO cost and gain, and holds every refusal.
+
+### Stage 10jg — NA WHERE A RETURN CANNOT APPLY, A DASH WHERE A RECORD IS MISSING
+
+*"for holdings for which we cannot show holding CAGR or XIRR, because … they are held under 1 year, so you can just show NA … but for others we suppose have missing data, so it would be clear to distinguish between them."* — the family, 30 Oct 2026.
+- `MeasuredReturn` gains `na`; `NotApplicableCell` (`Absent.tsx`) draws it, with the reason as its hover.
+- NA: CAGR and XIRR under a year (hover names the held days and the HPR); CAGR bought on several dates or partly sold; a total loss's CAGR; CY on a holding opened this year; every measure on a fund-only company or a nil line.
+- Still a dash: no dated record, no cost, no 1 January or year-end value, an uncounted purchase record, an unverified sale, an at-cost line.
+- Supersedes Stage 10hk on the Monitor and the stock page only: under a year the CAGR and XIRR cells no longer repeat the HPR, which has its own column. `auto`, Excel, Private Market, Transactions and the Returns tab keep 10hk.
+- `returnCoverage` counts `na`, `subYear` and `otherNa`; `staggered` counts only rows CAGR refuses for it. Headers state the split and what NA means.
