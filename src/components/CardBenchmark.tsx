@@ -44,12 +44,12 @@ export function CardBenchmarkLine({ card, accounts, money }: { card: AvailableCa
   const partial = !!c.coverage && c.coverage.undated.length > 0;
   return <span data-card-bench={DEFAULT_BENCHMARK.key} data-card-bench-book={c.book ?? ""} data-card-bench-index={c.index ?? ""} data-card-bench-gap={c.gap ?? ""}
     data-card-bench-dated={c.coverage?.datedInvested ?? ""} data-card-bench-total={c.coverage?.totalInvested ?? ""}
-    title={c.index == null ? c.reason ?? undefined : `${HOW}${partial ? ` Over the ${money(c.coverage!.datedInvested)} of ${money(c.coverage!.totalInvested)} invested with every purchase dated; the rest is in neither figure.` : ""}`}
+    title={c.index == null ? c.reason ?? undefined : `${HOW}${partial ? ` Struck on the ${money(c.coverage!.datedInvested)} of ${money(c.coverage!.totalInvested)} invested with every purchase dated, so it is not on the same money as the figure above; the info button has the comparison.` : ""}`}
     className="pointer-events-auto mt-0.5 block whitespace-normal">
-    {partial && c.book != null && <>{money(c.coverage!.datedInvested)} dated <span className={`mono ${changeColor(c.book)}`}>{pct(c.book)}</span>{" "}</>}
     vs {DEFAULT_BENCHMARK.label} {c.index == null ? <AbsentCell reason={c.reason ?? undefined} /> : <>
       <span className={`mono ${changeColor(c.index)}`}>{pct(c.index)}</span>{c.annual && " p.a."}
-      {c.gap != null && <> · <span className={`mono font-semibold ${changeColor(c.gap)}`}>{lead(c.gap)}</span></>}
+      {/* A narrowed comparison's lead is off a book figure the tile does not show, so it would not tie to the figure above it. */}
+      {c.gap != null && !partial && <> · <span data-card-bench-lead className={`mono whitespace-nowrap font-semibold ${changeColor(c.gap)}`}>{lead(c.gap)}</span></>}
     </>}
   </span>;
 }
