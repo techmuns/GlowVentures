@@ -25,7 +25,7 @@ import {
   arrangeColumns, visibleOrder, moveColumn, nudgeColumn, parseStoredView, visibleSort, storedView, selectedColumns, investmentDateColumns, mergeColumnAliases,
 } from "../tableView";
 import {
-  DEFAULT_RETURN_MEASURES, normaliseMeasures, resolveReturnMeasures, parseSavedMeasures, returnMeasuresKey,
+  DEFAULT_RETURN_MEASURES, PICKER_KEYS, normaliseMeasures, resolveReturnMeasures, parseSavedMeasures, returnMeasuresKey,
 } from "../returnMeasures";
 import { readMemory, writeMemory, subscribeMemory, resetMemoryForTests } from "../viewMemory";
 import { withReturnCols } from "../returnColumns";
@@ -62,7 +62,8 @@ const CATEGORY = ["security", "qty", "avgCost", "invested", "investedOn", "cmp",
   "weight", "pnl", "realised", "return", "sector", "entity"];
 const SECURITY = ["security", "qty", "avgCost", "invested", "investedOn", "cmp", "day", "mv",
   "viaFunds", "totalExposure", "weight", "pnl", "realised", "return", "sector", "entity"];
-const ALL: ReturnMeasure[] = ["absolute", "cagr", "xirr", "ytd"];
+// CAGR is no column (Stage 10jo): XIRR covers it.
+const ALL: ReturnMeasure[] = ["absolute", "xirr", "ytd"];
 const cols = (base: string[], m: ReturnMeasure[]) => withReturnCols(base, m) as string[];
 
 /** The rule this replaced: keep only what is drawn, append the rest at the end. */
@@ -192,6 +193,9 @@ const oldRule = (stored: string[], declared: string[]) => {
   ok("an address naming nothing falls back to the saved pick", same(resolveReturnMeasures("garbage", ["ytd"]).measures, ["ytd"]));
   ok("a concrete measure beats auto in one list", same(normaliseMeasures(["auto", "ytd", "absolute"]) ?? [], ["absolute", "ytd"]));
   ok("an empty list is no pick", normaliseMeasures([]) === null && parseSavedMeasures({ measures: ["cagr"] }) === null);
+  ok("a saved CAGR column is dropped (Stage 10jo)", same(parseSavedMeasures(["absolute", "cagr", "xirr"]) ?? [], ["absolute", "xirr"])
+    && parseSavedMeasures(["cagr"]) === null);
+  ok("the picker no longer offers CAGR", !PICKER_KEYS.includes("cagr") && PICKER_KEYS.includes("auto") && PICKER_KEYS.includes("xirr"));
   ok("each page saves its own pick", returnMeasuresKey("monitor") !== returnMeasuresKey("private-market"));
 }
 

@@ -193,6 +193,11 @@ export function replayMopwmRows(rows, { isin, asOf, quantity }) {
     ...(heldDates.length ? { heldPurchases: { first: heldDates[0], last: heldDates.at(-1), lots: heldDates.length } } : {}),
     // Every trade on its own day (Stage 10jf); the report carries no dividends.
     cashRecord: events.map((e) => ({ date: e.date, side: e.kind, amount: r2(e.amount) })),
+    // The units held after each day's trades (Stage 10jo): what 1 January held.
+    unitRecord: [...events.reduce((m, e) => {
+      const units = (m.size ? [...m.values()].at(-1) : 0) + (e.kind === "buy" ? e.units : -e.units);
+      m.delete(e.date); return m.set(e.date, Math.round(units * 1e6) / 1e6);
+    }, new Map()).entries()].map(([date, units]) => ({ date, units })),
     // The report carries no cash dividends: unreported, never a measured zero.
     dividendReceived: null,
     rows: ordered.filter((r) => r.date <= asOf).map((r) => r.row),

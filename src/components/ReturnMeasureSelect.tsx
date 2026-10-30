@@ -4,7 +4,7 @@ import { ChevronDown, Check } from "lucide-react";
 import { RETURN_MEASURES, returnMeasureDef, type ReturnMeasure } from "@/lib/analytics";
 import { useMemory, writeMemory } from "@/lib/viewMemory";
 import {
-  MEASURE_KEYS, DEFAULT_RETURN_MEASURES, normaliseMeasures, resolveReturnMeasures, returnMeasuresKey, parseSavedMeasures,
+  MEASURE_KEYS, PICKER_KEYS, DEFAULT_RETURN_MEASURES, normaliseMeasures, resolveReturnMeasures, returnMeasuresKey, parseSavedMeasures,
 } from "@/lib/returnMeasures";
 
 // ── THE RETURN-METHODOLOGY PICKER, SHARED ───────────────────────────────────
@@ -102,7 +102,7 @@ export function ReturnMeasureSelect({ measures, onChange, hints, source }: {
     : `${measures.length} return types`;
   return (
     <div ref={wrapRef} className="relative"
-      data-return-measures={MEASURE_KEYS.join(",")} data-return-active={measures.join(",")}
+      data-return-measures={PICKER_KEYS.join(",")} data-return-active={measures.join(",")}
       data-return-source={source ?? ""}>
       <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-haspopup="listbox"
         title="Which return to show — the methodology, or pick one or more explicitly. Every cell is labelled with the return it is showing."
@@ -123,7 +123,7 @@ export function ReturnMeasureSelect({ measures, onChange, hints, source }: {
         <div className="absolute right-0 z-50 mt-1 w-[min(22rem,92vw)] overflow-hidden rounded-lg border border-ink-700 bg-ink-800 shadow-xl shadow-black/40" role="listbox" aria-multiselectable="true">
           <div className="border-b border-ink-700 px-3 py-1.5 text-[11px] text-slate-500">Pick the return to show. Each cell is labelled with it.</div>
           <ul className="max-h-80 overflow-auto py-1">
-            {RETURN_MEASURES.map((m) => {
+            {RETURN_MEASURES.filter((m) => PICKER_KEYS.includes(m.key)).map((m) => {
               const on = ticked(m.key);
               return (
                 <li key={m.key} role="option" aria-selected={on} data-return-option={m.key}

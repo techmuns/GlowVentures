@@ -2878,6 +2878,7 @@ export function PortfolioMonitor() {
     return (
       <span data-child-return-tag={off ? res.tag : undefined}>
         {off && <span className="ret-tag mr-0.5">{res.tag}</span>}
+        {res.shown && res.assumed && <AssumedMark note={res.note} />}
         {res.shown
           ? <span className={changeColor(res.pct)} title={res.note}>{fmtPct(res.pct, { sign: true })}</span>
           : res.na ? <NotApplicableCell reason={res.reason} /> : <AbsentCell reason={res.reason} label={returnGapLabel(res.reason)} />}
@@ -5128,10 +5129,13 @@ export function PortfolioMonitor() {
                                 "data-capital": r.capital.dated ? (r.capital.holdings ? "holding" : "dated") : "undated",
                                 "data-capital-accounts": r.capital.accountIds.join(" "),
                                 "data-row-keys": r.realizedKeys.join(" "),
+                                // Lines closed at their market price (Stage 10jo): the sweep re-solves with them.
+                                ...(r.capital.dated && r.capital.closes?.length ? { "data-capital-close": JSON.stringify(r.capital.closes) } : {}),
                               } : {})}
                               className="px-2 py-1.5 text-right mono whitespace-nowrap"
                               title={r.live && !r.costNA ? mixedBasisNote : undefined}>
                               {offMeasure && <span className="ret-tag mr-0.5">{res.tag}</span>}
+                              {res.shown && res.assumed && <AssumedMark note={res.note} />}
                               {value}
                             </td>
                           );
@@ -5702,6 +5706,16 @@ export function PortfolioMonitor() {
  * the pricing day alone it would read "its statement as of 30 Mar" about a
  * statement of 31 Mar; dated by the balance day, a price a day older than said.
  */
+/**
+ * A RETURN ON UNITS ASSUMED STILL HELD, labelled on its face (Stage 10jo) — the
+ * family's 22 Oct rule: the figure says "assumed", and its hover says whose
+ * units and from which statement.
+ */
+function AssumedMark({ note }: { note?: string }) {
+  // Spaced, so a tag beside it still reads as its own word.
+  return <span className="mr-0.5 text-[10px] font-normal text-slate-400" data-return-assumed title={note}>{" assumed "}</span>;
+}
+
 function statementMarkNote(lead: string, valuedAt: string, ps: readonly Position[], accIdx: AccountIndex): string {
   const drawn = [...new Set(ps
     .filter((x) => !x.live && !x.navPriced && x.priceAsOf && x.priceAsOf !== accIdx.get(x.accountId)?.asOf)

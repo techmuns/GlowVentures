@@ -100,7 +100,7 @@ export const AGG_NO_MEASURE: Partial<Record<ReturnMeasure, string>> = {
 const GAP_LABELS: [RegExp, string][] = [
   [/prices are still loading/i, "Loading prices"],
   [/sale proceeds|sale amount|proceeds are unverified/i, "Sale amount missing"],
-  [/no statement values the units it holds now/i, "No statement value"],
+  [/no statement values the units it holds now/i, "No dated price"],
   [/sale after its statement|newer holding statement|later sales/i, "Needs newer statement"],
   [/different dates/i, "Valued on different dates"],
   // YTD's own cause leads its cells: the value it would start from is missing.

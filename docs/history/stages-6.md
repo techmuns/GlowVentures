@@ -810,3 +810,12 @@
 - The full review note is kept, one click away under "Full detail"; Data Audit, Excel and Private Market still carry it whole. The record's label names the review, not an account number.
 - The popup's other notes (correction, rolled-forward units, recovered cost, feed price, totals) are short sentences; a caption still names its narrowing (gain only where the cost is known).
 - `sourceTrace.test.ts` holds the NSE record's facts, its rendered line and a line held at cost; `check-source-trace.mjs` looks for the feed note's new words, "published price (NAV)".
+
+### Stage 10jo — XIRR TO THE MARKET PRICE, A TRUE YTD, AND NO CAGR COLUMN
+
+*"ok i agree to what you recomend — do it and push to main"* — the family, 30 Oct 2026, on: XIRR blank on Onesource Special though every buy and sale is dated (HPR +25.34%, XIRR ≈ 13.6% to today's price).
+
+- `holdingFlowsOf` closes a fully dated line (trades, lots or recovered record) on its dated market price or NAV when the line is priced by the market; null where the price has no date, predates the statement, or a later trade, movement or withdrawal is on record (`movedAfter`, `assumedHolding`'s test) — `datedCapital` then falls back to the statement line. `RowCapital.assumed` names the owners and statement dates; the cell shows "assumed" (`AssumedMark`, also on the company page) and the hover says whose units. Demat fund units at AMFI NAV (DSP, Helios, ICICI, ABSL, WhiteOak) now carry an XIRR instead of "No statement value".
+- Recovered records carry `unitRecord` (units after each dated row, built by `recoverHoldingCosts` / `replayMopwmRows`). `recordedYearWindow` in `ytdAvailable.ts` opens YTD on 1 January's units at 31 December's close, counts this year's purchases and sales on their dates (and dividend entitlements where the record dates none), and carries the units from the statement at published closes; it falls back to the old path on any gap (split before the statement, unvouched dividend).
+- CAGR left the picker and the default columns (`PICKER_KEYS`); a saved pick drops it; `?ret=cagr` still opens its column for the checks. CLAUDE.md records the rule beside the 22 Oct one.
+- Checks: cells carry `data-capital-close`; `HOLDING_FLOWS_BOOK.solve(keys, closes)` re-solves with the page's market closes (a demat line by account and acquisition ISIN). Picker, default and Transactions checks expect no CAGR; `monitor-remember` ticks XIRR. Red as on main: `monitor-xirr` (360 ONE row), `monitor-txn-returns` (2), `stock` width, `stock-unpriced`.
