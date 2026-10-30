@@ -1752,13 +1752,13 @@ export type ReturnInput = {
    */
   valuedAtCost?: boolean;
   /**
-   * THE ROW'S RETURN FROM ITS FIRST DATED VALUE THIS YEAR (Stage 10jg), where
+   * THE ROW'S RETURN FROM ITS FIRST DATED VALUE THIS YEAR (Stage 10jh), where
    * the caller resolved one (`ytdAvailable.ts`). The YTD measure shows it where
    * no full year to date stands, tagged with its start date.
    */
   ytdFrom?: YtdFrom | null;
   /**
-   * EVERY RUPEE DATED, NO STATEMENT VALUE (Stage 10jh): its recovered record
+   * EVERY RUPEE DATED, NO STATEMENT VALUE (Stage 10ji): its recovered record
    * dates each purchase and sale, but only a live price or a published NAV
    * values it (`datedButUnvalued`), so CAGR and XIRR name that.
    */
@@ -1805,7 +1805,7 @@ export type RowCapital =
 export type MeasuredReturn =
   /** A figure to print, and the tag that says which measure it is. */
   | { shown: true; pct: number; tag: string; note?: string;
-      /** A YTD struck from a later date this year — its first day (Stage 10jg). */
+      /** A YTD struck from a later date this year — its first day (Stage 10jh). */
       from?: string }
   /** No figure, with the reason a reader needs in order to act on it. */
   | { shown: false; tag: string; reason: string };
@@ -1996,7 +1996,7 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
         note: `Opened ${y.since}, during the current year, so its year-to-date return is its whole return since purchase.` };
     }
     /**
-     * …OR FROM THE FIRST DATE WE HAVE THIS YEAR (Stage 10jg): *"for YTD at
+     * …OR FROM THE FIRST DATE WE HAVE THIS YEAR (Stage 10jh): *"for YTD at
      * least for this year lets show from the date we have"*. Tagged with its
      * start date, so it never reads as a full year to date.
      */
@@ -2106,7 +2106,7 @@ export function returnCoverage(rows: ReturnInput[], measure: ReturnMeasure, asOf
     // CAGR for a cause of its own, so a header does not file it under "no date".
     if (!m.shown) { absent++; if (notOnePurchase.has(m.reason)) lotted++; continue; }
     shown++;
-    // A YTD struck from a later date this year (Stage 10jg), counted apart.
+    // A YTD struck from a later date this year (Stage 10jh), counted apart.
     if (m.from) partYear++;
     if (m.tag === "CAGR") cagr++;
     else if (m.tag === "XIRR") xirr++;

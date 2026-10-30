@@ -756,7 +756,15 @@
 - Still dashes, for want of source data: 95 share rows have an undated line, because most managers' trade records start on 1 Apr 2026 (Green Lantern's in Jan 2025) and their statements print no lots. YTD and CY need a value on 1 Jan or 31 Dec, which no statement in the book carries.
 - Tests: `holdingFlows.test.ts` section 6 ties each record's cash to its FIFO cost and gain, and holds every refusal.
 
-### Stage 10jg — PORTFOLIO MONITOR: YTD FROM THE FIRST DATE WE HAVE; THE CY COLUMN IS GONE
+### Stage 10jg — OUR BOOK VS BENCHMARKS: THE BOOK AND THE NIFTY 500 UNTIL A CHIP ADDS ANOTHER
+
+*"NAV chart: show only the book and Nifty 500 by default; other indices added by clicking"* — the family, 30 Oct 2026.
+- `NavVsIndex` drew all seven benchmarks on first paint. It now draws the book and the Nifty 500 (`DEFAULT_SHOWN`); every other benchmark keeps its chip, colour and return, dimmed and unpressed, and a click adds its line. Morning CIO and Performance share the card, so both open this way.
+- The state is the list shown (`nav-shown`), not the list hidden; an empty list is the book alone, which is why it no longer collapses to `null`.
+- All seven histories still load on open, because every chip states its return.
+- `check:pages`: the probe reads the first paint as `navChart.defaults`, adds one chip (`navChart.added`), turns the rest on for the per-line claims, then restores the default. Two new invariants hold the first paint and the click.
+
+### Stage 10jh — PORTFOLIO MONITOR: YTD FROM THE FIRST DATE WE HAVE; THE CY COLUMN IS GONE
 
 - The family (30 Oct 2026): *"for YTD atleast for this year lets show from the date we have"* and *"Remove the CY coloumn all together - best not have it than have it blank"*.
 - **CY removed** from `ReturnMeasure`, the picker and every table (Monitor holdings and transactions, Private Market): no statement values anything at a past year-end, so it was a dash on every row. A saved pick or `?ret=` naming it drops it (`normaliseMeasures`).
@@ -764,11 +772,10 @@
 - On this book the Category view's YTD reads 11 of 124 rows on statement records alone (PMS mandates and fund folios from 31 Mar, plus Stage 10jf's recovered openings); listed shares and funds add more once published prices load. The prices are read once every history has answered: redrawing All Securities' 629 rows per arriving batch held the page for a minute.
 - Checks: `ytdAvailable.test.ts` (test:family; whole/part account, full year, refused record, parts valued apart, archive). `check:pages` `monitor-ytd` counts only untagged cells against `YTD_MEASURABLE`, asserts each part-year tag and window, and re-solves whole-account cells off `BOOK_ACCOUNT_RETURN_RECORDS` (`YTD_RECORD_BOOK`). CY assertions on `monitor-txn-returns`, `monitor-remember`, `private-market-returns` and `monitor` now assert it is absent. `monitor-xirr` (2) and `monitor-txn-returns` (2) invariants are red on main too and are left as found.
 
-### Stage 10jh — PORTFOLIO MONITOR: A BLANK RETURN CELL SAYS WHY ON ITS FACE
+### Stage 10ji — PORTFOLIO MONITOR: A BLANK RETURN CELL SAYS WHY ON ITS FACE
 
 - The family (30 Oct 2026): *"in the blank you can simple write - No buy/sell date"*, asking why direct equity's XIRR was empty when the Data Audit holds the dated records. Stage 10jf (merged alongside) carries those records into the rate. This stage names what is still missing.
 - `AbsentCell` takes an optional `label`. The Monitor's return cells (rows and lines) print a few words after the dash from `returnGapLabel` (`returnColumns.ts`), most specific cause first: "No buy/sell dates", "Sale amount missing", "Needs newer statement", "No statement value", "Several buys — see XIRR", "No 1 Jan value", "No valuation", "No cost", "Dates incomplete", "Valued on different dates". The full reason stays the hover. Category totals keep the bare dash and their own reason.
 - **"No statement value"** (`datedButUnvalued`, `ReturnInput.needsStatementValue`): every line's money is dated by its recovered record, but only a live price or a published NAV values it. Stage 10jf refuses a rate there, so CAGR and XIRR say so, rather than claiming a purchase date the row does not lack. 8 rows on statement marks (Motilal demat fund units at AMFI's NAV).
 - While the YTD column's price histories are still answering, the holdings table carries `data-prices-pending="true"` (its cells say "Loading prices"). `table-excel.mjs`' `downloadTableWorkbook` waits for it to clear, so `check-data-performance`'s two-export comparison no longer races the prices (CI's `build` failed on exactly that).
 - Checks: `RETURN_COLUMNS` asserts every blank holding cell carries its label. `moneyCell` / `pctCell` and the MH-15 / MH-09 claims read a labelled dash as absent. `monitor-xirr-security`'s count excludes fund-only rows, as Stage 10jf's header does (red on main since #293).
-

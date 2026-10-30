@@ -78,7 +78,7 @@ export function AbsentSection({ what, needs, children }: {
  * prevents.
  */
 export function AbsentCell({ reason, label }: { reason?: string;
-  /** A few words naming the cause on the cell itself (Stage 10jh); the full reason stays the hover. */
+  /** A few words naming the cause on the cell itself (Stage 10ji); the full reason stays the hover. */
   label?: string }) {
   return (
     <span className="text-slate-500" title={reason}>

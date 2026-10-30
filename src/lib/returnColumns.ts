@@ -89,7 +89,7 @@ export const AGG_NO_MEASURE: Partial<Record<ReturnMeasure, string>> = {
 };
 
 /**
- * ── WHY A RETURN CELL IS BLANK, IN A FEW WORDS (Stage 10jh) ─────────────────
+ * ── WHY A RETURN CELL IS BLANK, IN A FEW WORDS (Stage 10ji) ─────────────────
  *
  *   *"in the blank you can simple write - No buy/sell date"* — the family.
  *
@@ -180,7 +180,7 @@ function holdingColumnMeta(measure: ReturnMeasure, cov: ReturnCoverage): { note:
           + (cov.absent - cov.staggered - cov.lotted > 0 ? ` ${cov.absent - cov.staggered - cov.lotted} report no purchase date the window could close over — the managed accounts publish a capital-account ledger rather than a lot register, and the depository holdings report no cost.` : ""),
       };
     case "ytd": {
-      // FROM THE FIRST DATE WE HAVE (Stage 10jg): a row with no 1 January
+      // FROM THE FIRST DATE WE HAVE (Stage 10jh): a row with no 1 January
       // value is measured from its first dated value this year, tagged with it.
       const full = cov.shown - cov.partYear;
       return {
