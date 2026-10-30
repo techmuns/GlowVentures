@@ -191,6 +191,8 @@ export function replayMopwmRows(rows, { isin, asOf, quantity }) {
   return {
     costBasis: r2(ledger.costHeld), realizedPnL: r2(ledger.realisedGain), costOfUnitsSold: r2(ledger.costSold),
     ...(heldDates.length ? { heldPurchases: { first: heldDates[0], last: heldDates.at(-1), lots: heldDates.length } } : {}),
+    // Every trade on its own day (Stage 10jf); the report carries no dividends.
+    cashRecord: events.map((e) => ({ date: e.date, side: e.kind, amount: r2(e.amount) })),
     // The report carries no cash dividends: unreported, never a measured zero.
     dividendReceived: null,
     rows: ordered.filter((r) => r.date <= asOf).map((r) => r.row),

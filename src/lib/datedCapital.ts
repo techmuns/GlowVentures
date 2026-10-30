@@ -170,12 +170,12 @@ export function buildDatedCapital(input: {
         reason: lines.length === 1 ? short.reason : `one of the ${lines.length} holdings behind this row is not dated in full — ${short.reason}` };
     }
     const flows: DatedFlow[] = [];
-    let since: string | null = null, to: string | null = null, n = 0, trades = 0, lots = 0;
+    let since: string | null = null, to: string | null = null, n = 0, trades = 0, lots = 0, recovered = 0;
     for (const x of fl) {
       if (!x || !x.dated) continue;
       for (const f of x.flows) flows.push({ date: new Date(f.date), amount: f.amount });
       n += x.payments;
-      if (x.basis === "trades") trades++; else lots++;
+      if (x.basis === "trades") trades++; else if (x.basis === "lots") lots++; else recovered++;
       if (since === null || x.since < since) since = x.since;
       const close = x.close?.date ?? x.flows.at(-1)!.date;
       if (x.close) flows.push({ date: new Date(x.close.date), amount: x.close.value });
@@ -184,7 +184,7 @@ export function buildDatedCapital(input: {
     if (since === null || to === null) return null;
     return {
       dated: true, accountIds: accts, accounts: lines.length, flows: n, since, to,
-      days: dayDiff(since, to), annualPct: xirrPct(flows), holdings: { trades, lots },
+      days: dayDiff(since, to), annualPct: xirrPct(flows), holdings: { trades, lots, recovered },
     };
   };
 

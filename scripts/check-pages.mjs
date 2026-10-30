@@ -4620,6 +4620,14 @@ const REVIEW_GAP_BOOK = (() => {
  * — they would fabricate together. This is the independent side, the same shape
  * as the Polycab reconciliations below: two paths to one figure.
  */
+const YTD_OVERLAY_FUNDS = (() => {
+  const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+  const pos = bookArray(src, "BOOK_POSITIONS") ?? [];
+  const yearStart = `${(/"asOf":\s*"(\d{4})-/.exec(src) ?? [])[1]}-01-01`;
+  const onBook = new Set(pos.map((p) => `${p.accountId}|${p.isin}`));
+  return new Set((bookArray(src, "BOOK_RECOVERED_COSTS") ?? []).filter((r) => r.isin?.startsWith("INF") && !onBook.has(`${r.accountId}|${r.isin}`)
+    && r.cashRecord?.length && !r.salesAfter && !r.hprUnavailableReason && r.heldPurchases?.first >= yearStart).map((r) => r.isin)).size;
+})();
 const YTD_MEASURABLE = (() => {
   try {
     const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
@@ -4636,7 +4644,9 @@ const YTD_MEASURABLE = (() => {
     }
     let n = 0;
     for (const g of bySec.values()) {
-      if (g.every((p) => p.heldSince) && g.every((p) => p.heldSince >= yearStart) && g.some((p) => p.returnPct !== null)) n++;
+      // A line its recovered record dates opens on that record's oldest lot still held (Stage 10jf).
+      const start = (p) => p.heldSince ?? (!p.tradeRecord && !p.live && !p.rolledForward && p.recoveredCost?.cashRecord?.length && !p.recoveredCost.salesAfter && !p.recoveredCost.hprUnavailableReason ? p.recoveredCost.heldPurchases?.first : null);
+      if (g.every((p) => start(p)) && g.every((p) => start(p) >= yearStart) && g.some((p) => p.returnPct !== null)) n++;
     }
     return n;
   } catch { return null; }
@@ -5074,6 +5084,17 @@ const HOLDING_FLOWS_BOOK = (() => {
           ...inc.filter((x) => x.date >= ls[0].date && x.date <= end).map((x) => ({ t: Date.parse(x.date), a: x.amount })),
         ];
         return { flows, since: Date.parse(ls[0].date), close: p.marketValue > 0 ? { t: Date.parse(end), v: p.marketValue } : null, payments: ls.length };
+      }
+      // A RECOVERED RECORD (Stage 10jf): every priced trade and dated receipt, on
+      // the line its statement values, with no unverified or later sale.
+      const rec = p.recoveredCost;
+      if (end && rec?.cashRecord?.length && !rec.hprUnavailableReason && !rec.salesAfter && !p.rolledForward) {
+        const moved = rec.cashRecord.filter((x) => x.side !== "income");
+        return {
+          flows: rec.cashRecord.map((x) => ({ t: Date.parse(x.date), a: x.side === "buy" ? -x.amount : x.amount })),
+          since: Date.parse(moved.find((x) => x.side === "buy")?.date ?? moved[0].date),
+          close: p.marketValue > 0 ? { t: Date.parse(end), v: p.marketValue } : null, payments: moved.length,
+        };
       }
       return null;
     };
@@ -33629,7 +33650,7 @@ const INVARIANTS = {
         if (!sol || sol === "short") return false;
         if (sol.days < 365) return c.tag === "HPR" || /—/.test(c.text);
         if (sol.payments > 1) return /—/.test(c.text) && /several dates/.test(c.reason ?? "") && /XIRR/.test(c.reason ?? "");
-        return !c.tag && /One payment on/.test(c.note ?? "");
+        return !c.tag && /One (?:payment|purchase) on/.test(c.note ?? "");
       });
     }],
     // The picker is on CAGR, and the CAGR caption explains what it annualises.
@@ -33753,7 +33774,9 @@ const INVARIANTS = {
       const shapeOk = mine.every((c) => /—/.test(c.text) || /[+-]\d+(\.\d+)?%/.test(c.text));
       const drawn = mine.filter((c) => /[+-]\d+(\.\d+)?%/.test(c.text)).length;
       if (YTD_MEASURABLE === null) return { notChecked: "could not read heldSince out of the generated book" };
-      return shapeOk && drawn === YTD_MEASURABLE;
+      // Every row the statement book measures, and at most one more per fund
+      // only the NAV overlay values and a recovered record opens this year.
+      return shapeOk && drawn >= YTD_MEASURABLE && drawn <= YTD_MEASURABLE + YTD_OVERLAY_FUNDS;
     }],
     /**
      * …AND WHAT IT CANNOT MEASURE IS SAID ON THE COLUMN, NOT UNDER THE TABLE.
