@@ -119,7 +119,7 @@ export function ConsolidatedSheet({ onSources, onLoaded }: { onSources: () => vo
       }}>Clear dates</button>}
       {invalidRange && <p id="transaction-date-error" role="alert" className="text-xs text-amber-400">From date must be on or before To date.</p>}
     </fieldset>}
-    <p data-prose-ok="consolidated template units, valuation basis and missing-input coverage" className="mb-3 max-w-5xl text-xs leading-relaxed text-slate-400">{sheet.note}</p>
+    {!isTransactions && <p data-prose-ok="consolidated template units, valuation basis and missing-input coverage" className="mb-3 max-w-5xl text-xs leading-relaxed text-slate-400">{sheet.note}</p>}
     <Card pad={false}>
       <div className="max-h-[65vh] overflow-auto" data-navigation-scroll="consolidatedsheet-1">
         <ExportableTable exportName={`Consolidated — ${sheet.name}`} className="w-full border-separate border-spacing-0 text-xs" data-table-static="the consolidated workbook keeps one fixed column order so the Excel download and the page read the same">
@@ -133,7 +133,7 @@ export function ConsolidatedSheet({ onSources, onLoaded }: { onSources: () => vo
                 isin: link.isin, value: link.field === 'quantity' && typeof value === 'number' ? value : undefined,
                 accountId: '', securityKey: '', label: text })
                 : link?.file !== undefined ? '/audit?sources=1' : link?.sheet ? `/audit?consolidated=${encodeURIComponent(link.sheet)}${link.find ? `&q=${encodeURIComponent(link.find)}` : ""}${link.where ? `&scope=${encodeURIComponent(JSON.stringify(link.where))}` : ""}` : null;
-              return <td key={c.key} data-export-value={value == null ? "—" : value} data-export-type={typeof value === "number" ? "number" : "text"} data-export-format={c.format} title={value == null ? "Not reported or unsupported by the available source record. See the sheet note and the row's Notes." : String(value)}
+              return <td key={c.key} data-export-value={value == null ? "—" : value} data-export-type={typeof value === "number" ? "number" : "text"} data-export-format={c.format} title={value == null ? "Not reported or unsupported by the available source record. See the row's Notes." : String(value)}
                 className={`border-b border-r border-ink-700/50 px-3 py-2.5 align-top ${typeof value === "number" ? "text-right mono whitespace-nowrap" : "text-left"} ${i === 0 ? "sticky left-0 z-10" : ""} ${row.kind === "group" ? "bg-champagne-500/10 text-champagne-400" : row.kind === "total" ? "bg-ink-700 text-slate-100" : "bg-ink-900 text-slate-300"}`} style={{ maxWidth: 340 }}>
                 {target && value != null ? <SourceLink to={target} className="text-champagne-400 underline decoration-champagne-500/40 underline-offset-2 hover:decoration-champagne-400">{text}</SourceLink>
                   : typeof value === "string" && value.length > 120 ? <span className="line-clamp-3">{text}</span> : text}
