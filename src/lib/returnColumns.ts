@@ -120,8 +120,15 @@ export const AGG_NO_MEASURE: Partial<Record<ReturnMeasure, string>> = {
  * `auto` gets neither: its measure resolves per row, so there is no column-wide
  * count to state and the tag on every cell is what names it.
  */
-export function returnColumnMeta(measure: ReturnMeasure, cov: ReturnCoverage, asOf: string):
+export function returnColumnMeta(measure: ReturnMeasure, cov: ReturnCoverage, asOf: string, fundOnlyRows = 0):
   { note: string; title: string } {
+  const meta = holdingColumnMeta(measure, cov, asOf);
+  return fundOnlyRows > 0
+    ? { ...meta, title: `${meta.title} Counted over the ${cov.total} rows the statements report: the other ${fundOnlyRows} are companies the family reaches only through funds, which have no cost or value of the family's own.` }
+    : meta;
+}
+
+function holdingColumnMeta(measure: ReturnMeasure, cov: ReturnCoverage, asOf: string): { note: string; title: string } {
   const year = asOf.slice(0, 4);
   switch (measure) {
     case "cagr":

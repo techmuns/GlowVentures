@@ -4037,7 +4037,10 @@ export function PortfolioMonitor() {
                     const def = returnMeasureDef(measure);
                     const auto = measure === "auto";
                     const meta = auto ? null
-                      : returnColumnMeta(measure, returnCoverage(rows, measure, portfolio.asOf), portfolio.asOf);
+                      // OVER THE ROWS THE STATEMENTS REPORT, as the date column's
+                      // footer counts (Stage 10jf): a company reached only through a
+                      // fund is no holding of the family's and can never have a return.
+                      : returnColumnMeta(measure, returnCoverage(measuredRows, measure, portfolio.asOf), portfolio.asOf, rows.length - measuredRows.length);
                     return (
                       <SortHeader key={measure} col={`ret:${measure}`} view={holdView} pad="px-2 py-1.5"
                         title={auto ? undefined : def.hint}

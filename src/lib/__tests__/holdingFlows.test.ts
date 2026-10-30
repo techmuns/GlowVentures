@@ -12,7 +12,7 @@
 // against the cost the lot register prints, and each rate against the family's
 // rule — several payments XIRR, one compounded from its own day, under a year
 // the holding-period return.
-import { BOOK_ACCOUNTS, BOOK_CAPITAL_FROM_INCEPTION, BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_HOLDING_INCOME, BOOK_HOLDING_LOTS, BOOK_HOLDING_TRADES, BOOK_POSITIONS, BOOK_POSITION_TRANCHES, BOOK_REVIEW_FLOWS } from "@/data/glowData";
+import { BOOK_ACCOUNTS, BOOK_CAPITAL_FROM_INCEPTION, BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_HOLDING_INCOME, BOOK_HOLDING_LOTS, BOOK_HOLDING_TRADES, BOOK_POSITIONS, BOOK_POSITION_TRANCHES, BOOK_RECOVERED_COSTS, BOOK_REVIEW_FLOWS } from "@/data/glowData";
 import { holdingFlowsOf, holdingPeriodOf } from "@/lib/holdingFlows";
 import { buildDatedCapital } from "@/lib/datedCapital";
 import { holdingReturn, measuredReturn, type ReturnInput } from "@/lib/analytics";
@@ -38,6 +38,7 @@ const AS_OF = BOOK_ACCOUNTS.map((a) => a.asOf).sort().at(-1)!;
 const dated = BOOK_POSITIONS.filter((p) => flowsOf(p)?.dated);
 const byTrades = dated.filter((p) => { const f = flowsOf(p); return f?.dated && f.basis === "trades"; });
 const byLots = dated.filter((p) => { const f = flowsOf(p); return f?.dated && f.basis === "lots"; });
+const byRecovered = dated.filter((p) => { const f = flowsOf(p); return f?.dated && f.basis === "recovered"; });
 ok("the book dates holdings' money by their trades and by their lots", byTrades.length > 50 && byLots.length > 0,
   `${byTrades.length} by trades, ${byLots.length} by lots`);
 
@@ -51,6 +52,7 @@ ok("the book dates holdings' money by their trades and by their lots", byTrades.
     const f = flowsOf(p);
     if (!f?.dated) return true;
     const key = `${p.accountId}|${p.securityKey}`;
+    if (f.basis === "recovered") return false; // struck in its own section below
     const principal = f.basis === "lots"
       ? -(BOOK_HOLDING_LOTS[key] ?? []).reduce((a, l) => a + l.cost, 0)
       : (BOOK_HOLDING_TRADES[key] ?? []).filter((t) => t.date >= p.tradeRecord!.from && t.date <= p.tradeRecord!.to)
@@ -99,8 +101,9 @@ ok("the book dates holdings' money by their trades and by their lots", byTrades.
       if (c.shown || !/several dates/.test(c.reason)) wrong.push(`${p.securityKey}: several payments compounded as CAGR`);
       xirr++;
     } else {
-      const want = (Math.pow(1 + p.returnPct / 100, 365 / cap.days) - 1) * 100;
-      if (!(auto.shown && auto.tag === "CAGR" && Math.abs(auto.pct - want) < 1e-9)) wrong.push(`${p.securityKey}: one payment, not compounded from its own day`);
+      // One purchase closes on the statement's value and date, so its rate is the one its flows solve to.
+      const want = cap.annualPct as number;
+      if (!(auto.shown && auto.tag === "CAGR" && Math.abs(auto.pct - want) < 1e-9 && c.shown && c.pct === auto.pct)) wrong.push(`${p.securityKey}: one payment, not compounded from its own day`);
       cagr++;
     }
   }
@@ -145,6 +148,39 @@ ok("the book dates holdings' money by their trades and by their lots", byTrades.
     opened.filter((p) => p.returnPct !== null).every((p) => { const r = measuredReturn({ ...inputOf(p), heldSince: null }, "ytd", AS_OF); return r.shown && r.pct === p.returnPct; }));
   ok("a held one's YTD is a dash naming the date its units were first bought",
     held.filter((p) => !p.heldSince).every((p) => { const r = measuredReturn(inputOf(p), "ytd", AS_OF); return !r.shown && /already held on 1 January/.test(r.reason); }));
+}
+
+// ── 6. RECOVERED LOTS REACH THE RETURN (Stage 10jf) ─────────────────────────
+{
+  ok("the book dates holdings' money by their recovered purchase records", byRecovered.length >= 7, `${byRecovered.length} lines`);
+  // Each record's cash, struck against the FIFO figures it did not produce:
+  // bought less the cost of what was sold is the cost still held, and sold less
+  // that same cost is the realised gain.
+  const untied = BOOK_RECOVERED_COSTS.filter((r) => {
+    if (!r.cashRecord) return false;
+    const sum = (side: string) => r.cashRecord!.filter((x) => x.side === side).reduce((a, x) => a + x.amount, 0);
+    const soldCost = r.costOfUnitsSold ?? 0;
+    return Math.abs(sum("buy") - soldCost - r.costBasis) > 1
+      || (r.realizedPnL != null && Math.abs(sum("sell") - soldCost - r.realizedPnL) > 1);
+  });
+  ok("every recovered record's dated cash ties to the cost and gain its FIFO printed", untied.length === 0, untied.map((r) => r.isin).join(", "));
+  const notDated = BOOK_RECOVERED_COSTS.filter((r) => !r.cashRecord && !r.hprUnavailableReason);
+  ok("only a sale with unverified proceeds leaves a record without dated cash", notDated.length === 0, notDated.map((r) => r.isin).join(", "));
+  ok("a record with an unverified sale dates no return", BOOK_POSITIONS.filter((p) => p.recoveredCost?.hprUnavailableReason).every((p) => flowsOf(p) === null));
+  ok("a holding with later sales dates no return until a newer balance arrives", BOOK_POSITIONS.filter((p) => p.recoveredCost?.salesAfter).every((p) => flowsOf(p)?.dated !== true || flowsOf(p)?.dated && (flowsOf(p) as { basis: string }).basis !== "recovered"));
+  const one = byRecovered[0];
+  ok("a value only a live quote gives closes no recovered record", flowsOf({ ...one, live: true }) === null);
+  ok("another account's line never takes the record", flowsOf({ ...one, recoveredCost: { ...one.recoveredCost!, accountId: "someone-else" } }) === null);
+  const spare = { ...one, recoveredCost: { ...one.recoveredCost!, quantity: one.recoveredCost!.quantity + 1 } };
+  ok("a different unit balance never takes the record", flowsOf(spare) === null);
+  const sinceFirst = byRecovered.every((p) => (flowsOf(p) as { since: string }).since <= p.recoveredCost!.heldPurchases!.first);
+  ok("its flows start no later than the oldest lot still held", sinceFirst);
+  const thisYear = byRecovered.filter((p) => p.recoveredCost!.heldPurchases!.first >= `${(asOfOf(p) ?? AS_OF).slice(0, 4)}-01-01` && p.returnPct !== null);
+  ok("a holding the record shows opened this year has its return as YTD",
+    thisYear.length > 0 && thisYear.every((p) => { const r = measuredReturn(inputOf(p), "ytd", AS_OF); return r.shown && r.pct === p.returnPct; }),
+    thisYear.map((p) => p.securityKey).join(", "));
+  const older = byRecovered.filter((p) => p.recoveredCost!.heldPurchases!.first < `${(asOfOf(p) ?? AS_OF).slice(0, 4)}-01-01`);
+  ok("...and one it shows held on 1 January stays a dash", older.length > 0 && older.every((p) => !measuredReturn(inputOf(p), "ytd", AS_OF).shown));
 }
 
 if (fails) { console.log(`\n${fails} failed`); process.exit(1); }
