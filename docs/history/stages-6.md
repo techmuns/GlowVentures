@@ -763,3 +763,10 @@
 - The state is the list shown (`nav-shown`), not the list hidden; an empty list is the book alone, which is why it no longer collapses to `null`.
 - All seven histories still load on open, because every chip states its return.
 - `check:pages`: the probe reads the first paint as `navChart.defaults`, adds one chip (`navChart.added`), turns the rest on for the per-line claims, then restores the default. Two new invariants hold the first paint and the click.
+
+### Stage 10jh — OUR BOOK VS BENCHMARKS: ONE DROPDOWN, NO RETRY BUTTON
+
+*"remove the 'retry demat prices button', just give a simple benchmark dropdown list selector, to select multiple benchmarks"* — the family, 30 Oct 2026.
+- The row of seven chips is one Benchmarks list: tick several, and it stays open until a click outside or Escape. Each option carries its colour and return; the row beside it names only the lines drawn.
+- The retry button is gone. A failed demat price history is named on the book's hover, and a page reload fetches it again (failures are kept in memory only, never stored). Automatic retry was not added.
+- `check:pages`: a new invariant holds the closed list as the row's one control, and that it stays open across picks. The probe ticks options through the list; the closed panel stays in the DOM, so each option's keys read without opening it. `check-nav-assumed.mjs` now asserts the hover instead of the button.

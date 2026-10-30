@@ -1,5 +1,6 @@
 import { useNavigationValue, nullableStringNavigation, nullableStringsNavigation } from "@/lib/useNavigationState";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Check, ChevronDown } from "lucide-react";
 import {
   LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine,
 } from "recharts";
@@ -52,10 +53,12 @@ import { chartTooltipStyle, chartTooltipLabelStyle } from "@/lib/chartTheme";
 //    read +5.3% against the Nifty 500's −4.3%. 1Y–Max drew months of index
 //    before the book has any value. A period now starts only on a date the book
 //    was valued on (`comparableStarts`): today, 31 Mar 2026 alone.
-//  · Every benchmark has a chip, in its fixed colour, with its return over the
-//    same dates; a chip adds or removes its line. *"show only the book and Nifty
-//    500 by default; other indices added by clicking"* — the family, 30 Oct 2026
-//    (Stage 10jg), over a chart of eight lines.
+//  · *"show only the book and Nifty 500 by default; other indices added by
+//    clicking"* — the family, 30 Oct 2026 (Stage 10jg), over a chart of eight
+//    lines. *"just give me a simple benchmark dropdown list selector, to select
+//    multiple benchmarks"* — the same day (Stage 10jh): one Benchmarks list, each
+//    index in its fixed colour with its return over the same dates; the row beside
+//    it names only the lines on the chart.
 
 /** The benchmarks drawn until the reader changes them. */
 const DEFAULT_SHOWN: readonly BenchmarkKey[] = ["nifty-500"];
@@ -145,6 +148,16 @@ export function NavVsIndex() {
   /** The benchmarks on the chart: `DEFAULT_SHOWN` until a chip changes them; an empty list is the book alone. */
   const [shownList, setShown] = useNavigationValue<string[] | null>("nav-shown", null, nullableStringsNavigation);
   const shownKeys = useMemo(() => new Set<string>(shownList ?? DEFAULT_SHOWN), [shownList]);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const picker = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!pickerOpen) return;
+    const down = (e: MouseEvent) => { if (picker.current && !picker.current.contains(e.target as Node)) setPickerOpen(false); };
+    const key = (e: KeyboardEvent) => { if (e.key === "Escape") setPickerOpen(false); };
+    document.addEventListener("mousedown", down);
+    document.addEventListener("keydown", key);
+    return () => { document.removeEventListener("mousedown", down); document.removeEventListener("keydown", key); };
+  }, [pickerOpen]);
   const [loads, setLoads] = useState<Record<BenchmarkKey, BenchLoad>>(
     () => Object.fromEntries(BENCHMARKS.map((b) => [b.key, { state: "loading" }])) as Record<BenchmarkKey, BenchLoad>);
 
@@ -354,7 +367,10 @@ export function NavVsIndex() {
       corporateActionsStatus === "loading" ? "the split and dividend records are still loading."
         : assumed && assumed.pending > 0 ? `${assumed.pending} published price histories are still loading.`
           : `no holding could be valued at published closes. ${topReason(assumed?.holdings ?? []) ?? "No published price history could be checked for them."}`}`;
-  const dematSentence = dematStatus;
+  // A HISTORY THAT FAILED IS NAMED ON THE LINE IT LEAVES AT ITS STATEMENT VALUE; opening the page again asks again.
+  const failedHistories = assumed?.holdings.filter((h) => h.retry).length ?? 0;
+  const dematSentence = [dematStatus, failedHistories > 0
+    ? `${failedHistories} demat price histories could not load; their shares stay at their statement values until a reload fetches them.` : ""].filter(Boolean).join(" ");
   const bookHover = [
     "Our book: the change in value net of money added or taken out (time-weighted), from the statements — a deposit is never counted as a gain.",
     moneyIn > 0 || moneyOut < 0
@@ -382,7 +398,7 @@ export function NavVsIndex() {
     `Every line is its change since ${fmtDate(from)}, to ${fmtDate(to)} — the book's latest valuation — so every figure covers the same dates. Not annualised.`,
     `A comparison starts only on a day the book was valued: a later start would carry gains from before it into the period${starts.length > 1 ? "" : `, and today ${fmtDate(from)} is the one such day`}.`,
     `${stats.inReturn.length} of the ${stats.holding.length} investments holding value in the return; ${model.dates.length} dated points, ${model.bookFrom} → ${model.bookTo}.`,
-    "Benchmarks are price indices (dividends are not in them), from the live price service, each checked by the name the service reports. Click one to add it to the chart or take it off.",
+    "Benchmarks are price indices (dividends are not in them), from the live price service, each checked by the name the service reports. Pick any of them from the Benchmarks list.",
   ].join("\n\n");
 
   const toggle = (key: string) => setShown((cur) => {
@@ -390,6 +406,14 @@ export function NavVsIndex() {
     if (set.has(key)) set.delete(key); else set.add(key);
     return [...set];
   });
+  const benchHover = (b: (typeof BENCHMARKS)[number], load: BenchLoad, ret: number | null, lastClose: string | null) => {
+    const why = load.state === "down"
+      ? `The ${b.name} history could not be fetched — the price service did not answer. It runs on the deployed site, not in local preview.`
+      : load.state === "mismatch" ? benchmarkMismatchReason(b, load.reportedName)
+        : load.state === "loading" ? `Loading the ${b.name} history.` : null;
+    const vsBook = ret != null && bookRet != null ? bookRet - ret : null;
+    return why ? `${why}\n\n${b.title}` : `${b.title}\n\n${fmtDate(from)} → ${fmtDate(lastClose ?? to)}: ${pctText(ret)}${vsBook != null ? `; our book ${vsBook >= 0 ? "+" : "−"}${Math.abs(vsBook).toFixed(1)} points against it` : ""}.`;
+  };
   const chipBase = "inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs transition-colors";
   const Swatch = ({ color, thick }: { color: string; thick?: boolean }) => (
     <span aria-hidden className={`inline-block w-3 rounded-full ${thick ? "h-[3px]" : "h-[2px]"}`} style={{ background: color }} />
@@ -424,10 +448,10 @@ export function NavVsIndex() {
         </div>
       }>
 
-      {/* ── ONE CHIP PER LINE: its colour, its name, its return over the window ──
-          The book's chip leads and cannot be hidden; a benchmark's chip adds or
-          removes its line. Keyed `data-nav-line` / `data-bench`, so a claim about
-          what the card offers is struck on keys, never on labels. */}
+      {/* ── THE LINES ON THE CHART, THEN THE LIST THAT PICKS THEM ─────────────────
+          The book leads and is always drawn. Each option is keyed `data-nav-line` /
+          `data-bench`, and the closed list stays in the DOM, so a claim about what
+          the card offers is struck on keys, never on labels. */}
       <div className="mb-3 flex flex-wrap items-center gap-1.5" data-testid="nav-legend"
         data-nav-from={from} data-nav-to={to}>
         <span className={`${chipBase} cursor-help border-ink-600 bg-ink-800/60 text-slate-300`}
@@ -440,36 +464,46 @@ export function NavVsIndex() {
           <span className={`tabular font-semibold ${changeColor(bookRet)}`}>{pctText(bookRet)}</span>
           <span className="text-slate-500">available data{useAssumed && " · assumed holdings"}</span>
         </span>
-        {/* A PRICE HISTORY THAT FAILED TO LOAD IS RETRIED HERE, never left
-            pinning its shares to the statement for the rest of the visit. */}
-        {assumed && assumed.holdings.some((h) => h.retry) && (
-          <button type="button" data-testid="nav-demat-retry" onClick={() => dematFeed.retry()}
-            title={`${assumed.holdings.filter((h) => h.retry).length} demat price histories could not load; their shares stay at their statement values until they do.`}
-            className={`${chipBase} border-ink-700 bg-ink-800/60 text-slate-400 hover:bg-ink-700/60 hover:text-slate-200`}>
-            Retry demat prices
+        {benches.filter((x) => shownKeys.has(x.b.key)).map(({ b, load, ret, lastClose }) => (
+          <span key={b.key} data-nav-selected={b.key} title={benchHover(b, load, ret, lastClose)}
+            className={`${chipBase} cursor-help border-ink-700 bg-ink-800/60 text-slate-300`}>
+            <Swatch color={b.color} />
+            <span>{b.label}</span>
+            <span className={`tabular font-semibold ${changeColor(ret)}`}>{load.state === "loading" ? "…" : pctText(ret)}</span>
+          </span>
+        ))}
+        <div ref={picker} className="relative ml-auto">
+          <button type="button" data-nav-picker aria-haspopup="listbox" aria-expanded={pickerOpen}
+            onClick={() => setPickerOpen((o) => !o)}
+            className={`${chipBase} border-ink-600 bg-ink-800/60 font-medium text-slate-200 ring-focus hover:bg-ink-700/60`}>
+            Benchmarks
+            <span className="tabular text-slate-500">{shownKeys.size}</span>
+            <ChevronDown className={`h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform ${pickerOpen ? "rotate-180" : ""}`} />
           </button>
-        )}
-        {benches.map(({ b, load, ret, lastClose }) => {
-          const shown = shownKeys.has(b.key);
-          const why = load.state === "down"
-            ? `The ${b.name} history could not be fetched — the price service did not answer. It runs on the deployed site, not in local preview.`
-            : load.state === "mismatch" ? benchmarkMismatchReason(b, load.reportedName)
-              : load.state === "loading" ? `Loading the ${b.name} history.` : null;
-          const vsBook = ret != null && bookRet != null ? bookRet - ret : null;
-          return (
-            <button key={b.key} type="button" aria-pressed={shown} onClick={() => toggle(b.key)}
-              data-nav-line={b.key} data-bench={b.key} data-bench-symbol={b.symbol} data-bench-state={load.state}
-              data-nav-ret={ret ?? ""}
-              title={why ? `${why}\n\n${b.title}` : `${b.title}\n\n${fmtDate(from)} → ${fmtDate(lastClose ?? to)}: ${pctText(ret)}${vsBook != null ? `; our book ${vsBook >= 0 ? "+" : "−"}${Math.abs(vsBook).toFixed(1)} points against it` : ""}.`}
-              className={`${chipBase} border-ink-700 bg-ink-800/60 hover:bg-ink-700/60 ${shown ? "text-slate-300" : "text-slate-400 opacity-50"}`}>
-              <Swatch color={b.color} />
-              <span>{b.label}</span>
-              <span className={`tabular font-semibold ${changeColor(ret)}`}>
-                {load.state === "loading" ? "…" : pctText(ret)}
-              </span>
-            </button>
-          );
-        })}
+          <div hidden={!pickerOpen} data-nav-picker-panel
+            className="absolute right-0 z-50 mt-1 w-[min(17rem,92vw)] overflow-hidden rounded-lg border border-ink-700 bg-ink-800 shadow-xl shadow-black/40">
+            <ul role="listbox" aria-multiselectable="true" aria-label="Benchmarks" className="py-1">
+              {benches.map(({ b, load, ret, lastClose }) => {
+                const on = shownKeys.has(b.key);
+                return (
+                  <li key={b.key}>
+                    <button type="button" role="option" aria-selected={on} onClick={() => toggle(b.key)}
+                      data-nav-line={b.key} data-bench={b.key} data-bench-symbol={b.symbol} data-bench-state={load.state}
+                      data-nav-ret={ret ?? ""} title={benchHover(b, load, ret, lastClose)}
+                      className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs hover:bg-ink-700/60 ${on ? "text-slate-100" : "text-slate-300"}`}>
+                      <span className={`grid h-4 w-4 shrink-0 place-items-center rounded border ${on ? "border-champagne-500 bg-champagne-500/20 text-champagne-400" : "border-ink-600 text-transparent"}`}>
+                        <Check className="h-3 w-3" />
+                      </span>
+                      <Swatch color={b.color} />
+                      <span className="truncate">{b.label}</span>
+                      <span className={`ml-auto shrink-0 tabular font-semibold ${changeColor(ret)}`}>{load.state === "loading" ? "…" : pctText(ret)}</span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        </div>
       </div>
 
       {/* A DEFINITE HEIGHT: `ResponsiveContainer height="100%"` inside a flex

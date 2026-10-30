@@ -67,14 +67,9 @@ try {
   await page.waitForFunction(() => /at their statement values/.test(document.querySelector('[data-testid="nav-book-chip"]')?.getAttribute('title') ?? ''), null, { timeout: 120000 });
   assert.equal(await page.locator('[data-testid="nav-book-chip"]').getAttribute('data-nav-basis'), 'statement');
   assert.doesNotMatch(await page.locator('[data-testid="nav-book-chip"]').innerText(), /assumed/);
-  // A HISTORY THAT FAILED IS RETRIED FROM THE CARD, never pinned for the visit.
-  const retry = page.locator('[data-testid="nav-demat-retry"]');
-  await retry.waitFor();
-  let asked = 0; page.on('request', (r) => { if (r.url().includes('/api/market-history')) asked++; });
-  await retry.click();
-  await page.waitForTimeout(1500);
-  assert.ok(asked > 0, 'the retry asks the price service again');
+  // A HISTORY THAT FAILED IS NAMED ON THE BOOK'S HOVER (Stage 10jh: the retry button is gone).
+  assert.match(await page.locator('[data-testid="nav-book-chip"]').getAttribute('title'), /\d+ demat price histories could not load/);
   assert.deepEqual(unpriced.errors, []);
   await unpriced.context.close();
-  console.log('NAV card demat shares: published closes, owner assumption, fold and footer tie, statement fallback and retry passed.', { count });
+  console.log('NAV card demat shares: published closes, owner assumption, fold and footer tie, statement fallback and failed histories passed.', { count });
 } catch (error) { await page?.screenshot({ path: out + '/failure.png' }).catch(() => {}); throw error; } finally { await browser.close(); }
