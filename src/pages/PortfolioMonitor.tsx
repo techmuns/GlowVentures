@@ -95,7 +95,7 @@ import type { Position } from "@/lib/types";
 import { investedOnOf, holdingTradesOf, lineUndatedReason, accountInvestedOn, type InvestedOn } from "@/lib/investedOn";
 import { InvestedOnCell } from "@/components/InvestedOnCell";
 import { holdingPeriodOf, type HoldingPeriod } from "@/lib/holdingFlows";
-import { AbsentCell, AbsentFromBook, AbsentSection, AbsentValue, DASH } from "@/components/Absent";
+import { AbsentCell, NotApplicableCell, AbsentFromBook, AbsentSection, AbsentValue, DASH } from "@/components/Absent";
 import { SortHeader, SortableTable, Tr, TrFoot } from "@/components/SortHeader";
 // THE SAME TABLE STANDARD THE PRIVATE MARKET PAGE READS — a row opens into rows
 // of THIS table, in THESE columns, never into a table drawn inside a cell. See
@@ -757,7 +757,7 @@ const EMPTY_EXPORT_SELECTION = new Set<string>();
 const EMPTY_POSITIONS: Position[] = [];
 /**
  * THE HOLDINGS A ROW STANDS FOR, for its YTD from the first date we have
- * (Stage 10jh): a mandate's every account line, else its own deduped set.
+ * (Stage 10jl): a mandate's every account line, else its own deduped set.
  * Kept per row object, so one row resolves once however often it is sorted.
  */
 const ROW_POSITIONS = new WeakMap<Row, readonly Position[]>();
@@ -1068,7 +1068,7 @@ export function PortfolioMonitor() {
    * figure it prints rather than on `returnPct` for all of them.
    */
   /**
-   * ── YTD FROM THE FIRST DATE WE HAVE (Stage 10jh) ──────────────────────────
+   * ── YTD FROM THE FIRST DATE WE HAVE (Stage 10jl) ──────────────────────────
    *
    *   *"for YTD atleast for this year lets show from the date we have"*
    *
@@ -1110,7 +1110,7 @@ export function PortfolioMonitor() {
   /**
    * The row's input with what its own lines add: its YTD from the first date we
    * have, where the YTD measure asks, and — on CAGR and XIRR — whether its money
-   * is all dated but only a live price or a NAV values it (Stage 10ji).
+   * is all dated but only a live price or a NAV values it (Stage 10jm).
    */
   const withYtd = useCallback(<T extends ReturnInput>(input: T, ps: readonly Position[] | null | undefined, m: ReturnMeasure): T =>
     m === "ytd" && ytd && ps?.length ? { ...input, ytdFrom: ytd.of(ps) }
@@ -2880,7 +2880,7 @@ export function PortfolioMonitor() {
         {off && <span className="ret-tag mr-0.5">{res.tag}</span>}
         {res.shown
           ? <span className={changeColor(res.pct)} title={res.note}>{fmtPct(res.pct, { sign: true })}</span>
-          : <AbsentCell reason={res.reason} label={returnGapLabel(res.reason)} />}
+          : res.na ? <NotApplicableCell reason={res.reason} /> : <AbsentCell reason={res.reason} label={returnGapLabel(res.reason)} />}
       </span>
     );
   };
@@ -4005,7 +4005,7 @@ export function PortfolioMonitor() {
                 the card that used to carry its three states is rows now. Present
                 on the security axis only, the one axis the store is asked on. */}
             <ExportableTable editable exportName="Portfolio Monitor — Holdings" className="min-w-full text-xs" data-monitor-table="holdings"
-              // WHILE THE YTD COLUMN'S PRICE HISTORIES ARE STILL ANSWERING (Stage 10ji):
+              // WHILE THE YTD COLUMN'S PRICE HISTORIES ARE STILL ANSWERING (Stage 10jm):
               // its cells say "Loading prices" until then, and a check that
               // compares two exports waits for this to clear.
               data-prices-pending={wantYtd && !ytdSettled ? "true" : undefined}
@@ -4109,7 +4109,7 @@ export function PortfolioMonitor() {
                       // OVER THE ROWS THE STATEMENTS REPORT, as the date column's
                       // footer counts (Stage 10jf): a company reached only through a
                       // fund is no holding of the family's and can never have a return.
-                      // YTD reads each row's first dated value this year (Stage 10jh).
+                      // YTD reads each row's first dated value this year (Stage 10jl).
                       : returnColumnMeta(measure, returnCoverage(measure === "ytd" ? measuredRows.map((r) => withYtd(r, rowPositionsOf(r), measure)) : measuredRows, measure, portfolio.asOf), portfolio.asOf, rows.length - measuredRows.length);
                     return (
                       <SortHeader key={measure} col={`ret:${measure}`} view={holdView} pad="px-2 py-1.5"
@@ -5086,7 +5086,7 @@ export function PortfolioMonitor() {
                           // Tag "HPR" is always the raw return on cost (res.pct === returnPct),
                           // so its audit popover ties to the workbook; CAGR/other are derived.
                           const value = !res.shown
-                            ? <AbsentCell reason={res.reason} label={returnGapLabel(res.reason)} />
+                            ? res.na ? <NotApplicableCell reason={res.reason} /> : <AbsentCell reason={res.reason} label={returnGapLabel(res.reason)} />
                             : res.tag === "HPR" && !r.live
                               ? <Auditable formula={returnFormula(pnlValue, r.costBasis, r.returnPct, money, r.fifo ? { realised: r.fifo.realised, deployed: r.fifo.deployed, income: r.fifo.income,
                                   capital: m && r.fifo.wholeMandates.length ? { value: r.fifo.marketValue, contributed: r.fifo.wholeContributed, withdrawn: r.fifo.wholeWithdrawn } : null } : undefined)}><span className={changeColor(res.pct)} title={res.note}>{fmtPct(res.pct, { sign: true })}</span></Auditable>
@@ -5110,9 +5110,10 @@ export function PortfolioMonitor() {
                           const offMeasure = measure === "auto" || res.tag !== returnMeasureDef(measure).tag;
                           return (
                             <td key={measure} data-return-cell={measure} data-return-tag={offMeasure ? res.tag : undefined}
+                              data-return-na={!res.shown && res.na ? "" : undefined}
                               data-return-valued-at={r.valuedAt ?? undefined}
                               data-return-note={res.shown ? res.note : undefined}
-                              /* A YTD FROM THE FIRST DATE WE HAVE (Stage 10jh): its window, and the
+                              /* A YTD FROM THE FIRST DATE WE HAVE (Stage 10jl): its window, and the
                                  whole accounts pooled — the sweep re-solves those off the book. */
                               {...(res.shown && res.from && yf?.shown ? {
                                 "data-ytd-from": yf.from, "data-ytd-to": yf.to,

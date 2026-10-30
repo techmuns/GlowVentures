@@ -23,7 +23,7 @@ import { liveWithheldReason } from "@/lib/corporateActions";
 import { realisedTile } from "@/lib/stockRealised";
 import { holdingValuation } from "@/lib/valuedAt";
 import { isinAbsentWords } from "@/lib/schemeMatch";
-import { AbsentValue, AbsentCell, AbsentSection } from "@/components/Absent";
+import { AbsentValue, AbsentCell, NotApplicableCell, AbsentSection } from "@/components/Absent";
 import { depositoryUnitsGist, describeDepositoryUnits, fundNavFor, isArbitrageFund } from "@/lib/fundNavs";
 import { carriedCostOf, carriedCostNote, grossPaidOf, grossPaidNote } from "@/lib/tranches";
 import { BOOK_POSITION_TRANCHES } from "@/data/glowData";
@@ -111,7 +111,7 @@ function ReturnCells({ p, valuedAt, capital }: { p: Position; valuedAt: string |
         <span className="ret-tag mr-0.5">HPR</span>
         {hpr.shown
           ? <span className={changeColor(hpr.pct)} title={hpr.note}>{fmtPct(hpr.pct, { sign: true, decimals: 1 })}</span>
-          : <AbsentCell reason={hpr.reason} />}
+          : hpr.na ? <NotApplicableCell reason={hpr.reason} /> : <AbsentCell reason={hpr.reason} />}
       </span>
       {annual && (
         <div className="whitespace-nowrap">

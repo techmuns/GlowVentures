@@ -73,7 +73,7 @@ function recoveredRecordOf(p: Position): RecoveredHoldingCost["cashRecord"] | nu
 
 /**
  * EVERY LINE'S MONEY IS DATED BY ITS RECOVERED RECORD, BUT A LINE IS VALUED
- * ONLY AT A LIVE PRICE OR A PUBLISHED NAV (Stage 10ji) — the rows `holdingFlowsOf`
+ * ONLY AT A LIVE PRICE OR A PUBLISHED NAV (Stage 10jm) — the rows `holdingFlowsOf`
  * leaves undated because no statement values them. Their blank rate names that,
  * not a missing purchase date they do not lack.
  */

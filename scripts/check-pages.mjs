@@ -4647,7 +4647,7 @@ const YTD_MEASURABLE = (() => {
 })();
 
 /**
- * ── A WHOLE ACCOUNT'S YTD FROM THE FIRST DATE WE HAVE, OFF ITS RECORD (Stage 10jh) ──
+ * ── A WHOLE ACCOUNT'S YTD FROM THE FIRST DATE WE HAVE, OFF ITS RECORD (Stage 10jl) ──
  *
  * The Monitor's YTD column measures a row with no 1 January value from its
  * first dated value this year. On a row of whole accounts that is Modified
@@ -14197,7 +14197,7 @@ const ROW_REASONS_C = [
     if (!nil.size) return { notChecked: "no line in this book holds nothing at a cost of ₹0" };
     const mine = cells.filter((c) => !c.mandate && nil.has(c.key));
     // The cell prints its measure's tag before the dash ("AUTO—") and, since
-    // Stage 10ji, its cause in a few words after it — so: a dash and no figure.
+    // Stage 10jm, its cause in a few words after it — so: a dash and no figure.
     return mine.length > 0 && mine.every((c) => /—/.test(c.text) && !/\d%/.test(c.text)
       && /this line holds nothing: its statement reports a nil balance at a cost of ₹0/i.test(c.reason ?? ""));
   }],
@@ -15492,7 +15492,7 @@ const COL_STOCK = { name: 0, qty: 1, avgCost: 2, invested: 3, investedOn: 4, cmp
  */
 const moneyCell = (s) => {
   const t = String(s ?? "").trim();
-  // An absent cell may name its cause after the dash ("— No cost", Stage 10ji).
+  // An absent cell may name its cause after the dash ("— No cost", Stage 10jm).
   if (t === "" || /^—/.test(t)) return null;
   // `[+\-−]`, with the hyphen ESCAPED. Unescaped it is a RANGE from "+" (U+002B)
   // to "−" (U+2212), which swallows every digit and the rupee sign with them:
@@ -18349,7 +18349,7 @@ const PM_RETURN_CHECKS = [
     // never a reason to abstain.
     const rs = ctx?.returnSelect;
     if (!rs) return false;
-    // CY is gone (Stage 10jh): it was a dash on every row.
+    // CY is gone (Stage 10jl): it was a dash on every row.
     return ["auto", "absolute", "cagr", "xirr", "ytd"].every((k) => rs.offers.includes(k)) && !rs.offers.includes("calendar");
   }],
   ["every fund row carries one return cell per picked measure, in the picker's order", (t, ctx) => {
@@ -18793,6 +18793,25 @@ const CIO_SHARED = [
     if (!BOOK_HAS_BOTH_HALVES()) return notChecked("this book reports only one of the two halves");
     const nav = ctx.kpiTiles.find((x) => x.slot === "value");
     return !!nav && /of=book\b/.test(nav.links[0] ?? "");
+  }],
+  /**
+   * A RETURN TILE SETS THE INDEX BESIDE IT (Stage 10ji). The lead is the two
+   * figures' own difference, an index figure is only ever on a feed's answer
+   * (this walk's `/api/prices` may 404, and then there is none), and a narrowed
+   * comparison covers no more money than the tile invested. A narrowed one
+   * shows no lead (Stage 10jk): it is off a book figure the tile does not show.
+   */
+  ["a return tile carries the index on the same money, its lead the two figures' difference (Stage 10ji)", (t, ctx) => {
+    if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
+    const tiles = ctx.kpiTiles.filter((x) => ["return", "gain", "annualised", "fytd", "ytd"].includes(x.slot) && x.coverage?.cardReturn);
+    if (!tiles.length) return { notChecked: "no return tile with a measured return is on this strip" };
+    return tiles.every(({ bench: b, benchLead }) => {
+      if (b?.cardBench !== "nifty-500") return false;
+      if (Number(b.cardBenchDated) > Number(b.cardBenchTotal) + 1) return false;
+      if (b.cardBenchIndex === "") return b.cardBenchGap === "" && !benchLead;
+      if (benchLead === Number(b.cardBenchDated) < Number(b.cardBenchTotal) - 1) return false;
+      return Math.abs(Number(b.cardBenchBook) - Number(b.cardBenchIndex) - Number(b.cardBenchGap)) < 1e-6;
+    });
   }],
   ["the yearly return has its own tile", (t, ctx) =>
     ctx?.kpiTiles?.some((x) => x.slot === "annualised" && /annualised return|return over available history/i.test(x.label))],
@@ -21704,7 +21723,7 @@ const RETURN_COLUMNS = [
       return cells.every((c) => (c.tag ? new RegExp(`\\b${c.tag}\\b`).test(c.text) : true));
     }],
     /**
-     * ── A BLANK RETURN CELL SAYS WHY ON ITS FACE (Stage 10ji) ───────────────
+     * ── A BLANK RETURN CELL SAYS WHY ON ITS FACE (Stage 10jm) ───────────────
      *
      *   *"in the blank you can simple write - No buy/sell date"*
      *
@@ -24602,7 +24621,7 @@ const INVARIANTS = {
       return ctx.mineRows.every((r) => r.returns.length === want.length && r.returns.every((x, i) => x.measure === want[i]));
     }],
     /**
-     * NO CALENDAR-YEAR COLUMN (Stage 10jh). It was a dash on every row — no
+     * NO CALENDAR-YEAR COLUMN (Stage 10jl). It was a dash on every row — no
      * statement values an account at a past year-end — and the family asked
      * for it gone rather than left blank.
      */
@@ -33732,8 +33751,8 @@ const INVARIANTS = {
       }
       return solved.every(({ c, sol }) => {
         if (!sol || sol === "short") return false;
-        if (sol.days < 365) return c.tag === "HPR" || /—/.test(c.text);
-        if (sol.payments > 1) return /—/.test(c.text) && /several dates/.test(c.reason ?? "") && /XIRR/.test(c.reason ?? "");
+        if (sol.days < 365) return c.na || /—/.test(c.text);
+        if (sol.payments > 1) return c.na && /several dates/.test(c.reason ?? "") && /XIRR/.test(c.reason ?? "");
         return !c.tag && /One (?:payment|purchase) on/.test(c.note ?? "");
       });
     }],
@@ -33802,27 +33821,28 @@ const INVARIANTS = {
       // refused a CAGR too — the oldest unit's date starts no one purchase — and
       // is counted in its own sentence, still part of the partition.
       const lots = Number(/(\d+) holdings? (?:was|were) bought on several dates or partly sold/.exec(why)?.[1] ?? 0);
+      const otherNa = Number(/(\d+) (?:is|are) NA for another cause/.exec(why)?.[1] ?? 0);
       // ...AND THE HEADER'S SHORT NOTE AGREES WITH IT. Both come from ONE
       // coverage object (`returnColumnMeta`), so a build that let them drift has
       // started deriving the visible count separately from the sentence a reader
       // opens to check it.
       const short = /(\d+) annualised of (\d+)/.exec(h.note ?? "");
-      return cagr + guarded + absent + staggered + lots === total && total > 0
+      return cagr + guarded + absent + staggered + lots + otherNa === total && total > 0
         && !!short && Number(short[1]) === cagr && Number(short[2]) === total;
     }],
     // ...and the guard is VISIBLY firing: a sub-year row is marked, never
     // silently annualised. Empty is not a pass — this book holds such rows.
-    // The marker is the HPR tag now (the cell shows the total return on cost,
-    // tagged HPR) and the caption says "held under a year".
+    // The marker is NA now (Stage 10jh), naming the held days and the HPR, and the
+    // caption says "held under a year".
     ["a holding held under a year is marked as holding-period rather than annualised",
       (t, ctx) => {
         const h = (ctx?.returnHead ?? []).find((x) => /^CAGR$/i.test(x.label));
         if (!h) return { notChecked: "the CAGR column was not on screen on this run" };
         // THE GUARD IS VISIBLY FIRING, and on the CELLS rather than on prose: a
-        // sub-year row in the CAGR column shows its total return on cost tagged
-        // HPR. Empty is not a pass — this book holds such rows.
-        const tagged = (ctx?.returnCells ?? []).filter((c) => c.measure === "cagr" && c.tag === "HPR");
-        return /held under a year/.test(h.noteTitle ?? "") && tagged.length > 0;
+        // sub-year row in the CAGR column is NA and its hover says why. No figure
+        // stands in it, and empty is not a pass — this book holds such rows.
+        const na = (ctx?.returnCells ?? []).filter((c) => c.measure === "cagr" && c.na && /under a year/.test(c.reason ?? ""));
+        return /held under a year/.test(h.noteTitle ?? "") && na.length > 0 && na.every((c) => /^NA$/.test(c.text.trim()));
       }],
   ],
   /**
@@ -33856,13 +33876,13 @@ const INVARIANTS = {
       if (mine.length !== cells.length) return false;
       // Each is either a signed % or a dash, never a fabricated +0.00%.
       const shapeOk = mine.every((c) => /—/.test(c.text) || /[+-]\d+(\.\d+)?%/.test(c.text));
-      // A FULL year to date — no later start on the cell (Stage 10jh).
+      // A FULL year to date — no later start on the cell (Stage 10jl).
       const drawn = mine.filter((c) => /[+-]\d+(\.\d+)?%/.test(c.text) && !c.ytdFrom).length;
       if (YTD_MEASURABLE === null) return { notChecked: "could not read heldSince out of the generated book" };
       return shapeOk && drawn === YTD_MEASURABLE;
     }],
     /**
-     * ── …AND FROM THE FIRST DATE WE HAVE, SAID ON THE CELL (Stage 10jh) ──────
+     * ── …AND FROM THE FIRST DATE WE HAVE, SAID ON THE CELL (Stage 10jl) ──────
      *
      *   *"for YTD atleast for this year lets show from the date we have"*
      *
@@ -33972,7 +33992,9 @@ const INVARIANTS = {
         if (c.capital !== "dated") {
           // A holding inside an account, or accounts with no complete dated
           // record: a dash, never a figure.
-          if (!Number.isNaN(v) || !/—/.test(c.text)) return false;
+          // NA where the rate cannot apply (under a year, Stage 10jh), a dash
+          // where a record is missing: never a figure.
+          if (!Number.isNaN(v) || !(/—/.test(c.text) || /^NA\b/.test(c.text))) return false;
           continue;
         }
         const units = rowUnits(B, c);
@@ -40520,6 +40542,8 @@ for (const theme of THEMES) {
           // apart from one by its own handle rather than by its words.
           second: (c.querySelector("[data-kpi-second]")?.textContent ?? "").replace(/\s+/g, " ").trim() || null,
           coverage: c.querySelector('[data-card-coverage]') ? { ...c.querySelector('[data-card-coverage]').dataset } : null,
+          bench: c.querySelector('[data-card-bench]') ? { ...c.querySelector('[data-card-bench]').dataset } : null,
+          benchLead: !!c.querySelector('[data-card-bench-lead]'),
           returnInfo: c.querySelectorAll('[data-return-info]').length,
           sub: (c.querySelector("[data-kpi-sub]")?.textContent ?? "").replace(/\s+/g, " ").trim() || null,
           // THE TILE'S OWN FIGURE, off its own handle — what a value check
@@ -44751,11 +44775,12 @@ for (const theme of THEMES) {
             // still has to say for itself now that the header names the rest.
             tag: td.getAttribute("data-return-tag"),
             text: (td.innerText ?? "").replace(/\s+/g, " ").trim(),
-            // The few words a blank cell names its cause in (Stage 10ji).
+            // The few words a blank cell names its cause in (Stage 10jm).
             absentLabel: td.querySelector("[data-absent-label]")?.textContent?.trim() ?? null,
             // Where this row's window ENDS, and what the figure says of it.
             valuedAt: td.getAttribute("data-return-valued-at"),
             note: td.getAttribute("data-return-note"),
+            na: td.hasAttribute("data-return-na"),
             // [C] the reason an ABSENT return names (MH-15, MSX-12): a title is
             // not in innerText, so it is read where it is.
             reason: td.querySelector("[title]")?.getAttribute("title") ?? null,
@@ -44766,7 +44791,7 @@ for (const theme of THEMES) {
             // back. The row's own handles ride along for the converse claim.
             capital: td.getAttribute("data-capital"),
             capitalAccounts: (td.getAttribute("data-capital-accounts") || "").split(" ").filter(Boolean),
-            // A YTD FROM THE FIRST DATE WE HAVE (Stage 10jh): its window and pooled accounts.
+            // A YTD FROM THE FIRST DATE WE HAVE (Stage 10jl): its window and pooled accounts.
             ytdFrom: td.getAttribute("data-ytd-from"),
             ytdTo: td.getAttribute("data-ytd-to"),
             ytdAccounts: (td.getAttribute("data-ytd-accounts") || "").split(" ").filter(Boolean),

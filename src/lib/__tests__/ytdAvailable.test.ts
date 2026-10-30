@@ -1,4 +1,4 @@
-// YTD FROM THE FIRST DATE WE HAVE (Stage 10jh).   npm run test:family (ONLY="ytd from the first date")
+// YTD FROM THE FIRST DATE WE HAVE (Stage 10jl).   npm run test:family (ONLY="ytd from the first date")
 import assert from 'node:assert/strict';
 import { ytdBook } from '../ytdAvailable';
 import { measuredReturn } from '../analytics';
