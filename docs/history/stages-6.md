@@ -785,3 +785,11 @@
 
 - *"Just simply write vs Nifty 500… why there are two no. for portfolio return being shown."* A since-investment tile whose comparison covers part of its money now reads `vs Nifty 500 +1.6%`, without "₹579.3 Cr dated +15.8%".
 - Its lead goes too: +14.2 pp is off +15.8%, so it would not tie to the +17.2% above it. A tile compared on all its money keeps the lead. The hover says the figure is on the dated money; the info card keeps the book's figure on that money and the leads.
+
+### Stage 10jm — ALL SECURITIES: EVERY HOLDING IS A ROW
+
+- *"if we are holding a company or an investment and we are able to search it in the universal search bar, then it should be available in all the different segments."* Franklin India Credit AIF (₹20 Cr, Stage 10hx) was searchable and on no row of All Securities, because that axis drew company shares alone. This reverses Stage 10aj's "AIF itself shouldn't show up as a security". The same rule hid every fund, AIF, private line and cash row.
+- On Category, Asset class and Basket it was already a row. On Asset class and Basket it sits in "Not classified in the family's review", the last section, because the 30 June review predates the 22 Oct purchase. No class is guessed; a later review, or the family, fills it.
+- `Market value` (was `Direct + PMS`) now adds every holding: Direct + PMS + Other accounts, and its footer is the book, tying to the other three axes. Invested, unrealised and return read the same set as Category.
+- **No double count:** a fund or cash row has `—` for Total exposure, with the reason, because what a fund holds is already in the Via funds of the companies inside it. Private lines have no look-through and are counted. Weight is total exposure over the book, or a fund's own value, so a company inside a fund sits in two rows' weights and the column has no total.
+- Realised on this axis stays holding by holding (`holdingByHolding`), so the footer adds to its column; the return is struck on whole mandates, as everywhere else. `pickedNotRows` and its "Show it on Category" line are gone. Invariant: "every current holding is a row", off `glowData.ts`.

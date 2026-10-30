@@ -4,7 +4,7 @@
 # Stage 10cm: *"Make this view as All Securities and make it first in portfolio
 # monitor and default open and put the all holding and all entities selectors to
 # the right end of after return selector."* `check:pages` holds the default, the
-# filter row's order and right end, the pick-list's panel, the picked-fund line,
+# filter row's order and right end, the pick-list's panel, a picked fund's row,
 # the empty footer and the "in full" link; `check:family` drives the axis
 # control. (There were three such links until Stage 10ci took two of their
 # sentences away.) A check nobody has watched fail is a check nobody knows can fail, so
@@ -126,12 +126,9 @@ run_case "the pick-list's panel opens rightward from the row's end" nofamily \
 run_case "the panel claims right alignment and is drawn from the left" nofamily \
   sub src/components/MultiSelectFilter.tsx '${align === "right" ? "right-0" : "left-0"}' 'left-0'
 
-# ── 7 ── the family's defect: a picked fund draws the generic empty line again
-notice_gone() {
-  sub src/pages/PortfolioMonitor.tsx '{pickedNotRows.length > 0 && (' '{pickedNotRows.length > 99999 && (' \
-  && sub src/pages/PortfolioMonitor.tsx '{rows.length === 0 && pickedNotRows.length === 0 && <tr>' '{rows.length === 0 && <tr>'
-}
-run_case "a picked fund reads 'No positions match your filters' again" nofamily notice_gone
+# ── 7 ── the family's defect: a fund the search finds is no row here (Stage 10jm)
+run_case "a fund stops being a row on All Securities" nofamily \
+  sub src/pages/PortfolioMonitor.tsx 'if (bySecurity) { rest.push(p); continue; }' 'if (bySecurity) { if (isCompanyShare(p)) rest.push(p); continue; }'
 
 # ── 8 ── a footer summed over no rows
 run_case "the ₹0 footer is drawn over an empty table again" nofamily \
@@ -139,31 +136,6 @@ run_case "the ₹0 footer is drawn over an empty table again" nofamily \
               <tfoot' '              {rows.length >= 0 && (
               <tfoot'
 
-# ── 9 ── the button that fixes it does nothing
-run_case "'Show it on Category' does nothing" nofamily \
-  sub src/pages/PortfolioMonitor.tsx 'data-show-on-category onClick={() => setGroupAxis("category")}' 'data-show-on-category onClick={() => {}}'
-
-# ── 10 ── …or moves the axis and throws the pick away
-run_case "'Show it on Category' clears the pick" nofamily \
-  sub src/pages/PortfolioMonitor.tsx 'data-show-on-category onClick={() => setGroupAxis("category")}' \
-    'data-show-on-category onClick={() => { setSelected(new Set()); setGroupAxis("category"); }}'
-
 # ── 11 ── an "in full" link back at the bare /monitor, which is All Securities now
 run_case "a mandate page's 'carries this account in full' opens All Securities" nofamily \
   sub src/pages/MandateHoldings.tsx '<Link to="/monitor?group=category" data-monitor-in-full' '<Link to="/monitor" data-monitor-in-full'
-
-# ── 12 ── the line promises Category for a CLOSED fund too, which Category does not draw
-run_case "a closed fund picked on All Securities is promised on Category" nofamily \
-  sub src/pages/PortfolioMonitor.tsx 'for (const p of currentHoldings(positions)) {' 'for (const p of positions) {'
-
-# ── 13 ── the line keeps its words and loses its hover — the half of the reason
-# that moved there when every table note became one short line (Stage 10ci)
-run_case "the picked-fund line loses its hover" nofamily \
-  sub src/pages/PortfolioMonitor.tsx '                        title={"All Securities has one row per company' \
-    '                        data-x={"All Securities has one row per company'
-
-# ── 14 ── the long sentence back — 182 characters with Sanshi's name, past the
-# 180 a table cell may hold since Stage 10ci
-run_case "the picked-fund line grows back past one short line" nofamily \
-  sub src/pages/PortfolioMonitor.tsx '                        All Securities.{" "}' \
-    '                        All Securities, which lists companies whichever vehicle holds them.{" "}'
