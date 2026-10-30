@@ -72,7 +72,8 @@ import { SourceValue } from '@/components/SourceTrace';
 // Market fund table now. Everything that used to be defined here moved verbatim;
 // this page supplies only how one of ITS rows resolves a measure.
 import { ReturnMeasureSelect, useReturnMeasures } from "@/components/ReturnMeasureSelect";
-import { withReturnCols, returnAccessorsFor, AGG_NO_MEASURE, returnColumnMeta } from "@/lib/returnColumns";
+import { withReturnCols, returnAccessorsFor, AGG_NO_MEASURE, returnColumnMeta, returnGapLabel } from "@/lib/returnColumns";
+import { datedButUnvalued } from "@/lib/holdingFlows";
 import { useDatedCapital } from "@/lib/useDatedCapital";
 // `weightFormula` is deliberately NOT imported, and the REASON has changed under
 // this comment — which is why it is being restated rather than left standing.
@@ -105,6 +106,10 @@ import {
 import { useTableView, sortRows, type TableView } from "@/lib/tableView";
 import { withReviewAccessors, type ReviewScope } from "@/lib/reviewColumns";
 import { EditColumns } from "@/components/EditColumns";
+import { useMarketHistories } from "@/lib/useMarketReturns";
+import { assumedHoldingBook } from "@/lib/assumedHoldingBook";
+import { statementReturnInputs } from "@/lib/availableCardReturns";
+import { ytdBook } from "@/lib/ytdAvailable";
 
 /**
  * ── THROUGH WHAT MEANS A NAME IS HELD — one entry per ACCOUNT ───────────────
@@ -519,7 +524,7 @@ type Row = {
    */
   viaFunds?: number;
   /**
-   * Unset on a fund vehicle or a cash row (Stage 10jm): its units are in
+   * Unset on a fund vehicle or a cash row (Stage 10jp): its units are in
    * `marketValue`, and what a fund holds is already in the Via funds of the
    * companies inside it, so adding the fund too would count that money twice.
    */
@@ -755,10 +760,21 @@ const DERIVED_NOTE = "DERIVED, not a position: the AMC disclosed what the fund h
 
 const EMPTY_EXPORT_SELECTION = new Set<string>();
 const EMPTY_POSITIONS: Position[] = [];
+/**
+ * THE HOLDINGS A ROW STANDS FOR, for its YTD from the first date we have
+ * (Stage 10jl): a mandate's every account line, else its own deduped set.
+ * Kept per row object, so one row resolves once however often it is sorted.
+ */
+const ROW_POSITIONS = new WeakMap<Row, readonly Position[]>();
+const rowPositionsOf = (r: Row): readonly Position[] => {
+  let ps = ROW_POSITIONS.get(r);
+  if (!ps) { ps = r.mandate ? r.mandate.accounts.flatMap((l) => l.positions) : r.trancheSet; ROW_POSITIONS.set(r, ps); }
+  return ps;
+};
 
 export function PortfolioMonitor() {
   const wholePortfolio = useWholePortfolio();
-  const { portfolio, consolidated, basis, displayCurrency, fmtFromBase, corporateActionReturns, quoteFeed, quotesStatus, requestSymbols, scope: memberScope } = usePortfolio();
+  const { portfolio, statementPortfolio, consolidated, basis, displayCurrency, fmtFromBase, corporateActions, corporateActionReturns, quoteFeed, quotesStatus, requestSymbols, scope: memberScope } = usePortfolio();
   const positions = portfolio?.positions ?? EMPTY_POSITIONS;
   const accIdx = useMemo(() => accountIndex(portfolio?.accounts ?? []), [portfolio?.accounts]);
   /**
@@ -1056,12 +1072,61 @@ export function PortfolioMonitor() {
    * AND THE ACCESSORS GAIN ONE PER MEASURE, so each return column sorts on the
    * figure it prints rather than on `returnPct` for all of them.
    */
+  /**
+   * ── YTD FROM THE FIRST DATE WE HAVE (Stage 10jl) ──────────────────────────
+   *
+   *   *"for YTD atleast for this year lets show from the date we have"*
+   *
+   * No statement values a holding on 1 January, so a row with no full year to
+   * date is measured from its first dated value this year — a whole account on
+   * its verified return record, a listed share or growth fund carried from its
+   * statement's balance at published closes — on the records Morning CIO's
+   * Returns tab reads (`ytdAvailable.ts`). Loaded only while YTD is on screen.
+   */
+  const wantYtd = returnMeasures.includes("ytd");
+  // THE WHOLE FAMILY'S HOLDINGS, whatever the member selector shows: the Excel
+  // snapshot is the whole family's, and its YTD must find their prices loaded.
+  const ytdHeld = useMemo(() => (wantYtd ? currentHoldings((wholePortfolio ?? portfolio)?.positions ?? EMPTY_POSITIONS) : EMPTY_POSITIONS),
+    [wantYtd, wholePortfolio, portfolio]);
+  const ytdHistories = useMarketHistories(ytdHeld);
+  /**
+   * THE PRICES ARE READ ONCE EVERY HISTORY HAS ANSWERED, not as each arrives:
+   * hundreds land in batches, and redrawing the whole table on every batch
+   * (629 rows on All Securities) held the page for a minute. Until then a row
+   * that needs them says the prices are loading.
+   */
+  const ytdInstrumentKey = useMemo(() => [...new Set([...ytdHistories.instruments.values()].map((i) => i.key))].sort().join("|"), [ytdHistories.instruments]);
+  const ytdSettled = useMemo(() => [...ytdHistories.instruments.values()].every((i) => !!ytdHistories.histories[i.key]),
+    [ytdHistories.instruments, ytdHistories.histories]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const ytdPrices = useMemo(() => (ytdSettled ? ytdHistories.histories : null), [ytdSettled, ytdInstrumentKey]);
+  const ytdInputs = useMemo(() => {
+    const statement = statementPortfolio ?? portfolio;
+    return wantYtd && statement ? statementReturnInputs(statement) : [];
+  }, [wantYtd, statementPortfolio, portfolio]);
+  const ytdEnd = useMemo(() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; }, []);
+  const ytd = useMemo(() => {
+    if (!wantYtd || !portfolio) return null;
+    return ytdBook({ inputs: ytdInputs, held: ytdHeld, accounts: portfolio.accounts, end: ytdEnd,
+      assumptions: ytdPrices ? assumedHoldingBook({ actions: corporateActions, instruments: ytdHistories.instruments, histories: ytdPrices }) : null,
+      money: (n) => fmtFromBase(n, { compact: true }) });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wantYtd, portfolio, ytdInputs, ytdHeld, ytdEnd, corporateActions, ytdPrices, fmtFromBase]);
+  /**
+   * The row's input with what its own lines add: its YTD from the first date we
+   * have, where the YTD measure asks, and — on CAGR and XIRR — whether its money
+   * is all dated but only a live price or a NAV values it (Stage 10jm).
+   */
+  const withYtd = useCallback(<T extends ReturnInput>(input: T, ps: readonly Position[] | null | undefined, m: ReturnMeasure): T =>
+    m === "ytd" && ytd && ps?.length ? { ...input, ytdFrom: ytd.of(ps) }
+    : (m === "cagr" || m === "xirr") && ps?.length && datedButUnvalued(ps) ? { ...input, needsStatementValue: true }
+    : input, [ytd]);
   const holdAccessors = useMemo(
     // `portfolio` is not narrowed until the guard below and a hook cannot sit
     // after one; these accessors are only ever called from `sortRows` under it,
     // so the fallback is unreachable rather than a default date standing in.
-    () => withReviewAccessors<Row>({ ...MONITOR_ACCESSORS, ...returnAccessorsFor<Row>(returnMeasures, (r, m) => measuredReturn(r, m, portfolio?.asOf ?? "")) }, monitorReviewScope, memberScope.owners !== null),
-    [returnMeasures, portfolio?.asOf, memberScope.owners]);
+    () => withReviewAccessors<Row>({ ...MONITOR_ACCESSORS, ...returnAccessorsFor<Row>(returnMeasures, (r, m) => measuredReturn(withYtd(r, rowPositionsOf(r), m), m, portfolio?.asOf ?? "")) }, monitorReviewScope, memberScope.owners !== null),
+    [returnMeasures, portfolio?.asOf, memberScope.owners, withYtd]);
   // ORDER-INDEPENDENT BY CONSTRUCTION: a span struck on the view's own column
   // count cannot drift from the header when a reader moves a column, where the
   // literal it replaced had to be kept in step by hand.
@@ -1367,7 +1432,7 @@ export function PortfolioMonitor() {
     // the family asked for.
     if (selected.size > 0) base = base.filter((p) => selected.has(p.security));
     // A footer ties to the column above it, and every holding is a row on every
-    // axis, so every axis's footer is struck over the same set (Stage 10jm).
+    // axis, so every axis's footer is struck over the same set (Stage 10jp).
     const footerSet = base;
     const totalMV = consolidatedMarketValue(footerSet);
 
@@ -1392,7 +1457,7 @@ export function PortfolioMonitor() {
       // stays empty there, so `mandateRows` below is [] and nothing is hidden
       // inside a roll-up.
       //
-      // AND ON THAT AXIS EVERY HOLDING IS A ROW (Stage 10jm):
+      // AND ON THAT AXIS EVERY HOLDING IS A ROW (Stage 10jp):
       //
       //   "if we are holding a company or an investment and we are able to
       //    search it in the universal search bar, then it should be available
@@ -2476,7 +2541,7 @@ export function PortfolioMonitor() {
      * nor cash. Since the family's review became the source for private-market
      * lines the book carries unlisted companies' stakes and a private-credit
      * line. Their own money has no look-through to double, so Total exposure
-     * counts it (Stage 10jm); it keeps a bucket because without one the parts
+     * counts it (Stage 10jp); it keeps a bucket because without one the parts
      * below stopped adding to the book by ₹194 Cr. Sector Composition's
      * "not on this page" card names the same set by the same rule.
      */
@@ -2764,15 +2829,16 @@ export function PortfolioMonitor() {
    * a line and on the row above it, and the tag rule is the one the row cells
    * use: tagged wherever the figure is not the measure the column promises.
    */
-  const childReturn = (input: ReturnInput, measure: ReturnMeasure) => {
-    const res = measuredReturn(input, measure, portfolio.asOf);
+  const childReturn = (input: ReturnInput, measure: ReturnMeasure, ps?: readonly Position[]) => {
+    const res = measuredReturn(withYtd(input, ps, measure), measure, portfolio.asOf);
     const off = measure === "auto" || res.tag !== returnMeasureDef(measure).tag;
     return (
       <span data-child-return-tag={off ? res.tag : undefined}>
         {off && <span className="ret-tag mr-0.5">{res.tag}</span>}
+        {res.shown && res.assumed && <AssumedMark note={res.note} />}
         {res.shown
           ? <span className={changeColor(res.pct)} title={res.note}>{fmtPct(res.pct, { sign: true })}</span>
-          : res.na ? <NotApplicableCell reason={res.reason} /> : <AbsentCell reason={res.reason} />}
+          : res.na ? <NotApplicableCell reason={res.reason} /> : <AbsentCell reason={res.reason} label={returnGapLabel(res.reason)} />}
       </span>
     );
   };
@@ -3286,7 +3352,7 @@ export function PortfolioMonitor() {
           ret: (measure) => childReturn({ hprUnavailableReason: h.position.hprUnavailableReason, returnPct: h.returnPct, heldSince: h.heldSince, valuedAt: h.valuedAt, assetClass: h.assetClass, costNA: h.costNA, costBasis: h.costBasis, marketValue: h.marketValue,
             purchaseDates: h.purchaseDates, costOfUnitsSold: h.costOfUnitsSold,
             // ITS OWN DATED MONEY, where its trades or lots date every unit (Stage 10fw).
-            capital: datedCap?.behind([h.position], holdingsUniverse) ?? undefined, opened: h.opened }, measure),
+            capital: datedCap?.behind([h.position], holdingsUniverse) ?? undefined, opened: h.opened }, measure, [h.position]),
           sector: isFundVehicle(h) ? <AbsentCell reason={fundSectorWhy(h.assetClass)} /> : sectorCell(h.sector, h.securityKey, [], true),
         }, { "data-constituent": h.securityKey || h.security, "data-constituent-account": h.accountId, "data-constituent-mv": h.marketValue });
       // ONE ACCOUNT: the row IS that account, so its shares hang straight from it.
@@ -3343,7 +3409,7 @@ export function PortfolioMonitor() {
                 title={`Everything account ${l.accountNo} has booked since it opened — every sale its manager made, and its income less its fees.`}>
                 {fmtFromBase(l.realised, { compact: true, sign: true })}
               </span>,
-          ret: (measure) => childReturn({ fifo: l.fifo, returnPct: l.returnPct, heldSince: null, valuedAt: l.valuedAt, assetClass: "", costNA: l.costNA, costBasis: l.costBasis, marketValue: l.marketValue, capital: l.capital ?? null }, measure),
+          ret: (measure) => childReturn({ fifo: l.fifo, returnPct: l.returnPct, heldSince: null, valuedAt: l.valuedAt, assetClass: "", costNA: l.costNA, costBasis: l.costBasis, marketValue: l.marketValue, capital: l.capital ?? null }, measure, l.positions),
           sector: <AbsentCell reason="a mandate spans many sectors and is not one holding; each share under this line carries its own" />,
           entity: <span className="text-[12px]">{l.owner}</span>,
         }, {
@@ -3499,7 +3565,7 @@ export function PortfolioMonitor() {
         // pooling both, each at the rate its own fact sheet prints.
         ret: (measure) => childReturn({ hprUnavailableReason: v.positions.find(p => p.hprUnavailableReason)?.hprUnavailableReason, returnPct: v.returnPct, heldSince: v.heldSince, valuedAt: v.valuedAt, assetClass: v.assetClass, costNA: v.costNA, costBasis: v.costBasis, marketValue: v.marketValue, opened: v.opened,
           purchaseDates: v.purchaseDates, costOfUnitsSold: v.costOfUnitsSold,
-          valuedAtCost: v.valuedAtCost, capital: datedCap?.behind(v.positions, holdingsUniverse) ?? undefined }, measure),
+          valuedAtCost: v.valuedAtCost, capital: datedCap?.behind(v.positions, holdingsUniverse) ?? undefined }, measure, v.positions),
         entity: v.owner,
       }, {
         "data-venue": v.route, "data-venue-class": v.cls ?? "", "data-venue-share": v.share,
@@ -3897,6 +3963,10 @@ export function PortfolioMonitor() {
                 the card that used to carry its three states is rows now. Present
                 on the security axis only, the one axis the store is asked on. */}
             <ExportableTable editable exportName="Portfolio Monitor — Holdings" className="min-w-full text-xs" data-monitor-table="holdings"
+              // WHILE THE YTD COLUMN'S PRICE HISTORIES ARE STILL ANSWERING (Stage 10jm):
+              // its cells say "Loading prices" until then, and a check that
+              // compares two exports waits for this to clear.
+              data-prices-pending={wantYtd && !ytdSettled ? "true" : undefined}
               controlsHost={bySecurity ? undefined : tableTools}
               data-lookthrough={bySecurity ? rowExposure.status : undefined}>
               {allRows => <>
@@ -3997,7 +4067,8 @@ export function PortfolioMonitor() {
                       // OVER THE ROWS THE STATEMENTS REPORT, as the date column's
                       // footer counts (Stage 10jf): a company reached only through a
                       // fund is no holding of the family's and can never have a return.
-                      : returnColumnMeta(measure, returnCoverage(measuredRows, measure, portfolio.asOf), portfolio.asOf, rows.length - measuredRows.length);
+                      // YTD reads each row's first dated value this year (Stage 10jl).
+                      : returnColumnMeta(measure, returnCoverage(measure === "ytd" ? measuredRows.map((r) => withYtd(r, rowPositionsOf(r), measure)) : measuredRows, measure, portfolio.asOf), portfolio.asOf, rows.length - measuredRows.length);
                     return (
                       <SortHeader key={measure} col={`ret:${measure}`} view={holdView} pad="px-2 py-1.5"
                         title={auto ? undefined : def.hint}
@@ -4973,11 +5044,13 @@ export function PortfolioMonitor() {
                           cell there is nothing left to stack anyway.
                         */}
                         {returnMeasures.map((measure) => {
-                          const res = measuredReturn(r, measure, portfolio.asOf);
+                          const input = withYtd(r, rowPositionsOf(r), measure);
+                          const res = measuredReturn(input, measure, portfolio.asOf);
+                          const yf = (input as ReturnInput).ytdFrom;
                           // Tag "HPR" is always the raw return on cost (res.pct === returnPct),
                           // so its audit popover ties to the workbook; CAGR/other are derived.
                           const value = !res.shown
-                            ? res.na ? <NotApplicableCell reason={res.reason} /> : <AbsentCell reason={res.reason} />
+                            ? res.na ? <NotApplicableCell reason={res.reason} /> : <AbsentCell reason={res.reason} label={returnGapLabel(res.reason)} />
                             : res.tag === "HPR" && !r.live
                               ? <Auditable formula={returnFormula(pnlValue, r.costBasis, r.returnPct, money, r.fifo ? { realised: r.fifo.realised, deployed: r.fifo.deployed, income: r.fifo.income,
                                   capital: m && r.fifo.wholeMandates.length ? { value: r.fifo.marketValue, contributed: r.fifo.wholeContributed, withdrawn: r.fifo.wholeWithdrawn } : null } : undefined)}><span className={changeColor(res.pct)} title={res.note}>{fmtPct(res.pct, { sign: true })}</span></Auditable>
@@ -5004,6 +5077,12 @@ export function PortfolioMonitor() {
                               data-return-na={!res.shown && res.na ? "" : undefined}
                               data-return-valued-at={r.valuedAt ?? undefined}
                               data-return-note={res.shown ? res.note : undefined}
+                              /* A YTD FROM THE FIRST DATE WE HAVE (Stage 10jl): its window, and the
+                                 whole accounts pooled — the sweep re-solves those off the book. */
+                              {...(res.shown && res.from && yf?.shown ? {
+                                "data-ytd-from": yf.from, "data-ytd-to": yf.to,
+                                "data-ytd-accounts": yf.accounts.join(" "), "data-ytd-assumed": yf.assumed ? "true" : "false",
+                              } : {})}
                               /* WHICH ACCOUNTS THE ROW IS, where it is whole accounts
                                  (`datedCapital.ts`) — the sweep re-solves the rate over
                                  them from the book, and holds each to being whole in
@@ -5013,10 +5092,13 @@ export function PortfolioMonitor() {
                                 "data-capital": r.capital.dated ? (r.capital.holdings ? "holding" : "dated") : "undated",
                                 "data-capital-accounts": r.capital.accountIds.join(" "),
                                 "data-row-keys": r.realizedKeys.join(" "),
+                                // Lines closed at their market price (Stage 10jo): the sweep re-solves with them.
+                                ...(r.capital.dated && r.capital.closes?.length ? { "data-capital-close": JSON.stringify(r.capital.closes) } : {}),
                               } : {})}
                               className="px-2 py-1.5 text-right mono whitespace-nowrap"
                               title={r.live && !r.costNA ? mixedBasisNote : undefined}>
                               {offMeasure && <span className="ret-tag mr-0.5">{res.tag}</span>}
+                              {res.shown && res.assumed && <AssumedMark note={res.note} />}
                               {value}
                             </td>
                           );
@@ -5539,6 +5621,16 @@ export function PortfolioMonitor() {
  * the pricing day alone it would read "its statement as of 30 Mar" about a
  * statement of 31 Mar; dated by the balance day, a price a day older than said.
  */
+/**
+ * A RETURN ON UNITS ASSUMED STILL HELD, labelled on its face (Stage 10jo) — the
+ * family's 22 Oct rule: the figure says "assumed", and its hover says whose
+ * units and from which statement.
+ */
+function AssumedMark({ note }: { note?: string }) {
+  // Spaced, so a tag beside it still reads as its own word.
+  return <span className="mr-0.5 text-[10px] font-normal text-slate-400" data-return-assumed title={note}>{" assumed "}</span>;
+}
+
 function statementMarkNote(lead: string, valuedAt: string, ps: readonly Position[], accIdx: AccountIndex): string {
   const drawn = [...new Set(ps
     .filter((x) => !x.live && !x.navPriced && x.priceAsOf && x.priceAsOf !== accIdx.get(x.accountId)?.asOf)
@@ -5847,7 +5939,6 @@ const TXN_MEASURE_HINT: Record<ReturnMeasure, string> = {
   cagr: "The capital paid in, compounded: ONE purchase annualised over the years since it was made, against what came back and what the account is worth. An account funded over several dates has no single start to compound from — its rate is the XIRR.",
   xirr: "A money-weighted rate on the capital paid in, solved over each dated purchase and redemption and the account's value on its own statement date.",
   ytd: "The return on the capital paid in since 1 January — measurable only where the first purchase is inside the current year, so there was nothing to value then.",
-  calendar: "A past calendar year's return on the capital paid in — it needs the account's value at the start and end of that year, and no statement here values an account at a past year-end.",
 };
 
 /** The column note and hover for one return measure on this table — counted, never claimed. */
@@ -5868,9 +5959,6 @@ function txnReturnColumnMeta(measure: ReturnMeasure, cov: ReturnType<typeof capi
     case "ytd":
       return { note: `${cov.shown} of ${cov.total}`,
         title: "YTD needs the account's value on 1 January. It is measurable only where the first purchase is inside the current year, so there was nothing to value then." + tail };
-    case "calendar":
-      return { note: `${cov.shown} of ${cov.total}`,
-        title: "A calendar-year return needs the account's value at the start and end of that year, and no statement here values an account at a past year-end." + tail };
     default:
       return { note: `${cov.shown} of ${cov.total}`,
         title: `Holding Period Return is appreciation divided by the purchase amount — what was made on what was paid, not annualised. Shown on ${cov.shown} of ${cov.total} rows.` + tail };

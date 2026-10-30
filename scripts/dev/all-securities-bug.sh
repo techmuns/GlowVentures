@@ -126,7 +126,7 @@ run_case "the pick-list's panel opens rightward from the row's end" nofamily \
 run_case "the panel claims right alignment and is drawn from the left" nofamily \
   sub src/components/MultiSelectFilter.tsx '${align === "right" ? "right-0" : "left-0"}' 'left-0'
 
-# ── 7 ── the family's defect: a fund the search finds is no row here (Stage 10jm)
+# ── 7 ── the family's defect: a fund the search finds is no row here (Stage 10jp)
 run_case "a fund stops being a row on All Securities" nofamily \
   sub src/pages/PortfolioMonitor.tsx 'if (bySecurity) { rest.push(p); continue; }' 'if (bySecurity) { if (isCompanyShare(p)) rest.push(p); continue; }'
 

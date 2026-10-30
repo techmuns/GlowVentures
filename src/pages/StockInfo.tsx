@@ -116,12 +116,15 @@ function ReturnCells({ p, valuedAt, capital }: { p: Position; valuedAt: string |
       {annual && (
         <div className="whitespace-nowrap">
           <span className="ret-tag mr-0.5">CAGR</span>
+          {annual.assumed && <span className="mr-0.5 text-[10px] font-normal text-slate-400" data-return-assumed title={annual.note}>{" assumed "}</span>}
           <span className={changeColor(annual.pct)} title={annual.note}>{fmtPct(annual.pct, { sign: true, decimals: 1 })}</span>
         </div>
       )}
       {money && (
         <div className="whitespace-nowrap" data-stock-xirr={money.pct}>
           <span className="ret-tag mr-0.5">XIRR</span>
+          {/* Units assumed still held, at the market price (Stage 10jo). */}
+          {money.assumed && <span className="mr-0.5 text-[10px] font-normal text-slate-400" data-return-assumed title={money.note}>{" assumed "}</span>}
           <span className={changeColor(money.pct)} title={money.note}>{fmtPct(money.pct, { sign: true, decimals: 1 })}</span>
         </div>
       )}
@@ -1366,7 +1369,8 @@ export function StockInfo() {
         {/* WHICH RETURN, stated in the cell. `measuredReturn` is the one place
             the methodology lives (Stage 10af). */}
         <td className="px-4 py-2.5 text-right mono" data-stock-return
-          data-capital={rowCap ? (rowCap.dated ? (rowCap.holdings ? "holding" : "dated") : "undated") : undefined}>
+          data-capital={rowCap ? (rowCap.dated ? (rowCap.holdings ? "holding" : "dated") : "undated") : undefined}
+          data-capital-close={rowCap?.dated && rowCap.closes?.length ? JSON.stringify(rowCap.closes) : undefined}>
           <ReturnCells p={r} valuedAt={valueDateOf(r, accIdx.get(r.accountId)?.asOf, nowMs)} capital={rowCap} />
         </td>
       </Tr>

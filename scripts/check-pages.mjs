@@ -1300,7 +1300,7 @@ const SECURITY_AXIS_BOOK = (() => {
     }
 
     /**
-     * EVERY CURRENT HOLDING IS A ROW (Stage 10jm): one per security, a fund's
+     * EVERY CURRENT HOLDING IS A ROW (Stage 10jp): one per security, a fund's
      * unit classes clubbed where the book's every class is held. A fund or cash
      * row ranks on its own value and has no Total exposure; anything else is its
      * value plus what the funds disclose of it.
@@ -1378,7 +1378,7 @@ const SECURITY_AXIS_BOOK = (() => {
       smallDroppedValue: smallValue,
       smallDroppedKeys: [...smallKeys],
       measured, measuredCr: measured / 1e7,
-      // Every holding by route, off each account's own engagement (Stage 10fa, 10jm).
+      // Every holding by route, off each account's own engagement (Stage 10fa, 10jp).
       directCr: sum(ded.filter((p) => ["Direct", "Execution"].includes(acc.get(p.accountId)?.engagement)).map((p) => p.marketValue)) / 1e7,
       pmsCr: sum(ded.filter((p) => acc.get(p.accountId)?.engagement === "PMS").map((p) => p.marketValue)) / 1e7,
       otherRouteCr: sum(ded.filter((p) => !["Direct", "Execution", "PMS"].includes(acc.get(p.accountId)?.engagement)).map((p) => p.marketValue)) / 1e7,
@@ -4678,6 +4678,58 @@ const YTD_MEASURABLE = (() => {
 })();
 
 /**
+ * ── A WHOLE ACCOUNT'S YTD FROM THE FIRST DATE WE HAVE, OFF ITS RECORD (Stage 10jl) ──
+ *
+ * The Monitor's YTD column measures a row with no 1 January value from its
+ * first dated value this year. On a row of whole accounts that is Modified
+ * Dietz over each account's verified return record — opening on the close of
+ * the day before its opening row, its dated flows, closing on the record's own
+ * value — RE-EXPRESSED here off `BOOK_ACCOUNT_RETURN_RECORDS` rather than
+ * imported, so a page that pooled the wrong accounts, opened on another date or
+ * weighted the money otherwise fails. `null` from `solve` where an account's
+ * record is not this simple shape (a nil origin, a capital record that stops
+ * before its valuation): those cells are counted as not re-solved, never passed.
+ */
+const YTD_RECORD_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const recs = bookObject(src, "BOOK_ACCOUNT_RETURN_RECORDS");
+    if (!recs) return null;
+    const ms = (d) => Date.parse(`${d}T00:00:00Z`);
+    const days = (a, b) => Math.round((ms(b) - ms(a)) / 864e5);
+    const before = (d) => new Date(ms(d) - 864e5).toISOString().slice(0, 10);
+    const windowOf = (id) => {
+      const r = recs[id]?.record;
+      if (!r) return null;
+      const open = r.flows.find((f) => /^opening portfolio value/i.test(f.description ?? ""));
+      if (!open || !(open.amount < 0)) return null;
+      if (r.capitalRecordTo && r.capitalRecordTo < r.asOf) return null;
+      const openDate = before(open.date);
+      return { openDate, openValue: -open.amount, closeDate: r.asOf, closeValue: r.value,
+        flows: r.flows.filter((f) => f !== open && f.date > openDate && f.date <= r.asOf) };
+    };
+    return {
+      solve(ids) {
+        const ws = ids.map(windowOf);
+        if (!ws.length || ws.some((w) => !w)) return null;
+        const from = ws.map((w) => w.openDate).sort()[0], to = ws.map((w) => w.closeDate).sort().at(-1);
+        const D = days(from, to);
+        if (!(D > 0)) return null;
+        let gain = 0, base = 0;
+        const weigh = (date, investorAmount) => { base += -investorAmount * Math.min(days(date, to), D) / D; };
+        for (const w of ws) {
+          gain += w.closeValue - w.openValue;
+          weigh(w.openDate, -w.openValue);
+          for (const f of w.flows) { gain += f.amount; weigh(f.date, f.amount); }
+          weigh(w.closeDate, w.closeValue);
+        }
+        return base > 0 ? { pct: gain / base * 100, from, to } : null;
+      },
+    };
+  } catch { return null; }
+})();
+
+/**
  * HOW MANY ACCOUNTS THE FAMILY IS RECORDED AS HAVING FUNDED, off `glowData.ts`.
  *
  * Anchored on the book rather than on the page, because the page's own caption
@@ -5084,9 +5136,34 @@ const HOLDING_FLOWS_BOOK = (() => {
     const lots = bookObject(src, "BOOK_HOLDING_LOTS") ?? {};
     const asOf = new Map(accounts.map((a) => [a.accountId, a.asOf]));
     const stmt = new Map(positions.map((p) => [`${p.accountId}|${p.securityKey}`, p]));
-    const lineOf = (k) => {
+    const recovered = bookArray(src, "BOOK_RECOVERED_COSTS") ?? [];
+    /**
+     * A LINE CLOSED AT ITS MARKET PRICE (Stage 10jo). The page names the price's
+     * date and the value it gives (`data-capital-close`), because the price is
+     * the feed's, not the book's; everything else — the record, its flows, the
+     * statement date the close may not precede — is restated here. A line no
+     * statement carries (a demat's quantity-only shares or fund units) is found
+     * by its account and ISIN in the recovered records.
+     */
+    const closeOf = (m, statementDate) => {
+      if (!m) return undefined;
+      return m.date >= statementDate && m.from === statementDate && m.value > 0 ? { t: Date.parse(m.date), v: m.value } : false;
+    };
+    const lineOf = (k, m) => {
       const p = stmt.get(k);
-      if (!p) return null;
+      if (!p) {
+        const [accountId] = k.split("|");
+        const rec = m?.isin ? recovered.find((x) => x.accountId === accountId && x.isin === m.isin) : null;
+        const end = asOf.get(accountId);
+        if (!rec || !end || !rec.cashRecord?.length || rec.hprUnavailableReason || rec.salesAfter || rec.asOf !== m.from) return null;
+        const close = closeOf(m, rec.asOf);
+        if (!close) return null;
+        const moved = rec.cashRecord.filter((x) => x.side !== "income");
+        return {
+          flows: rec.cashRecord.map((x) => ({ t: Date.parse(x.date), a: x.side === "buy" ? -x.amount : x.amount })),
+          since: Date.parse(moved.find((x) => x.side === "buy")?.date ?? moved[0].date), close, payments: moved.length,
+        };
+      }
       const r = p.tradeRecord;
       const inc = income[k] ?? [];
       if (r && r.unaccounted === 0) {
@@ -5098,7 +5175,9 @@ const HOLDING_FLOWS_BOOK = (() => {
           ...inc.filter((x) => x.date >= r.from && x.date <= r.to).map((x) => ({ t: Date.parse(x.date), a: x.amount })),
         ];
         const first = ts.find((t) => t.side === "buy")?.date ?? ts[0].date;
-        return { flows, since: Date.parse(first), close: p.marketValue > 0 ? { t: Date.parse(r.to), v: p.marketValue } : null, payments: ts.length };
+        const mc = closeOf(m, r.to);
+        if (mc === false) return null;
+        return { flows, since: Date.parse(first), close: mc ?? (p.marketValue > 0 ? { t: Date.parse(r.to), v: p.marketValue } : null), payments: ts.length };
       }
       const ls = lots[k];
       const end = asOf.get(p.accountId);
@@ -5108,24 +5187,32 @@ const HOLDING_FLOWS_BOOK = (() => {
           ...ls.map((l) => ({ t: Date.parse(l.date), a: -l.cost })),
           ...inc.filter((x) => x.date >= ls[0].date && x.date <= end).map((x) => ({ t: Date.parse(x.date), a: x.amount })),
         ];
-        return { flows, since: Date.parse(ls[0].date), close: p.marketValue > 0 ? { t: Date.parse(end), v: p.marketValue } : null, payments: ls.length };
+        const mc = closeOf(m, end);
+        if (mc === false) return null;
+        return { flows, since: Date.parse(ls[0].date), close: mc ?? (p.marketValue > 0 ? { t: Date.parse(end), v: p.marketValue } : null), payments: ls.length };
       }
       // A RECOVERED RECORD (Stage 10jf): every priced trade and dated receipt, on
       // the line its statement values, with no unverified or later sale.
       const rec = p.recoveredCost;
       if (end && rec?.cashRecord?.length && !rec.hprUnavailableReason && !rec.salesAfter && !p.rolledForward) {
         const moved = rec.cashRecord.filter((x) => x.side !== "income");
+        const mc = closeOf(m, end);
+        if (mc === false) return null;
         return {
           flows: rec.cashRecord.map((x) => ({ t: Date.parse(x.date), a: x.side === "buy" ? -x.amount : x.amount })),
           since: Date.parse(moved.find((x) => x.side === "buy")?.date ?? moved[0].date),
-          close: p.marketValue > 0 ? { t: Date.parse(end), v: p.marketValue } : null, payments: moved.length,
+          close: mc ?? (p.marketValue > 0 ? { t: Date.parse(end), v: p.marketValue } : null), payments: moved.length,
         };
       }
       return null;
     };
-    /** Null where a line has no dated record; "short" where one is short of a figure; else the pooled rate. */
-    const solve = (keys) => {
-      const ls = keys.map(lineOf);
+    /**
+     * Null where a line has no dated record; "short" where one is short of a
+     * figure; else the pooled rate. `closes` are the page's market closes.
+     */
+    const solve = (keys, closes) => {
+      const byKey = new Map((closes ?? []).map((c) => [c.key, c]));
+      const ls = keys.map((k) => lineOf(k, byKey.get(k)));
       if (!ls.length || ls.some((x) => x === null)) return null;
       if (ls.some((x) => x === "short")) return "short";
       const flows = [];
@@ -5302,9 +5389,12 @@ const holdingLinesOf = (B, c, securityAxis) => {
   if (c.mandate) return null;
   const keys = new Set(c.rowKeys.length ? c.rowKeys : c.rowKey ? [c.rowKey] : []);
   if (!keys.size) return null;
-  return B.consolidated(keys).filter(B.carries)
+  const lines = B.consolidated(keys).filter(B.carries)
     .filter((p) => securityAxis || B.acc.get(p.accountId)?.engagement !== "PMS")
     .map((p) => `${p.accountId}|${p.securityKey}`);
+  // A line no statement carries — a demat's quantity-only shares or fund units —
+  // is on the row only through its market close (Stage 10jo).
+  return [...lines, ...(c.capitalClose ?? []).map((x) => x.key).filter((k) => keys.has(k.split("|").slice(1).join("|")) && !lines.includes(k))];
 };
 
 const rowUnits = (B, c) => {
@@ -11498,7 +11588,8 @@ const collapseReturns = (cols, into) => {
 const FRESH_READER_PICK = ["a fresh reader opens on every return measure, by default, with nothing in the address asking for it", (t, ctx) => {
   const rs = ctx?.returnSelect;
   if (!rs) return false;   // the handle is gone — the picker is, too
-  return rs.active.join(",") === "absolute,cagr,xirr,ytd,calendar" && rs.source === "default"
+  // No CAGR column since Stage 10jo: XIRR covers it.
+  return rs.active.join(",") === "absolute,xirr,ytd" && rs.source === "default"
     && !addressAsksForReturns(ctx.url);
 }];
 /**
@@ -13633,7 +13724,7 @@ const MEMBER_REALISED_BOOK = (() => {
     const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
     const owner = new Map(accounts.map((a) => [a.accountId, a.owner]));
     const small = smallKeysOf(positions);
-    // Every holding is a row on this axis (Stage 10jm). The one sale whose
+    // Every holding is a row on this axis (Stage 10jp). The one sale whose
     // proceeds are unverified is in no footer (`verifiedOnly`, Stage 10jc).
     const pms = new Set(accounts.filter((a) => a.engagement === "PMS").map((a) => a.accountId));
     const seen = new Set();
@@ -13888,7 +13979,7 @@ const MONITOR_BASIS_BOOK = (() => {
       sets: {
         all: setOf(ded, exitedAll),
         // The same holdings; on this axis a mandate's realised is its rows' own,
-        // so its footer strikes no mandate whole (Stage 10jm).
+        // so its footer strikes no mandate whole (Stage 10jp).
         security: (() => {
           const s = setOf(ded, exitedAll);
           const kept = ded.filter((p) => !(p.hprUnavailableReason && p.valuedAtCost !== true && costed(p) && acc.get(p.accountId)?.engagement !== "PMS"));
@@ -14193,8 +14284,9 @@ const ROW_REASONS_C = [
     if (!nil || !cells) return false;
     if (!nil.size) return { notChecked: "no line in this book holds nothing at a cost of ₹0" };
     const mine = cells.filter((c) => !c.mandate && nil.has(c.key));
-    // The cell prints its measure's tag beside the dash ("AUTO—"), so the dash is read at its end.
-    return mine.length > 0 && mine.every((c) => /—$/.test(c.text)
+    // The cell prints its measure's tag before the dash ("AUTO—") and, since
+    // Stage 10jm, its cause in a few words after it — so: a dash and no figure.
+    return mine.length > 0 && mine.every((c) => /—/.test(c.text) && !/\d%/.test(c.text)
       && /this line holds nothing: its statement reports a nil balance at a cost of ₹0/i.test(c.reason ?? ""));
   }],
   /**
@@ -14227,7 +14319,7 @@ const ROW_REASONS_C = [
     const cagr = mine.filter((c) => c.measure === "cagr");
     return auto.length + cagr.length > 0
       && auto.every((c) => said(c.note))
-      && cagr.every((c) => /—$/.test(c.text) && said(c.reason))
+      && cagr.every((c) => /—/.test(c.text) && !/\d%/.test(c.text) && said(c.reason))
       && undated.every((c) => !promise(c.note) && !promise(c.reason));
   }],
   ["[C] a holding's realised names its capital gain statement's window, and it is the book's (DL-10)", (t, ctx) => {
@@ -15482,7 +15574,8 @@ const COL_STOCK = { name: 0, qty: 1, avgCost: 2, invested: 3, investedOn: 4, cmp
  */
 const moneyCell = (s) => {
   const t = String(s ?? "").trim();
-  if (t === "—" || t === "") return null;
+  // An absent cell may name its cause after the dash ("— No cost", Stage 10jm).
+  if (t === "" || /^—/.test(t)) return null;
   // `[+\-−]`, with the hyphen ESCAPED. Unescaped it is a RANGE from "+" (U+002B)
   // to "−" (U+2212), which swallows every digit and the rupee sign with them:
   // `pctCell` read "13.4%" as 3.4 and "100.0%" as 0, and a weight column summing
@@ -15493,7 +15586,7 @@ const moneyCell = (s) => {
 /** A percentage cell, same three outcomes. */
 const pctCell = (s) => {
   const t = String(s ?? "").trim();
-  if (t === "—" || t === "") return null;
+  if (t === "" || /^—/.test(t)) return null;
   const m = /^([+\-−]?)(\d+(?:\.\d+)?)%/.exec(t);
   return m ? Number(m[2]) * (m[1] === "-" || m[1] === "−" ? -1 : 1) : NaN;
 };
@@ -17139,8 +17232,11 @@ const stockLayoutChecks = () => [
         const units = set.length ? B.wholeOf(set) : null;
         // A LINE THAT IS NOT A WHOLE ACCOUNT is dated by its own trades or lots
         // where the book dates every unit of it (Stage 10fw).
-        const hsol = !units && set.length && HOLDING_FLOWS_BOOK
-          ? HOLDING_FLOWS_BOOK.solve(set.filter(B.carries).map((p) => `${p.accountId}|${p.securityKey}`)) : null;
+        // A demat line no statement carries is on the page through its market
+        // close alone (Stage 10jo): re-solved with it.
+        const closeKeys = (r.capitalClose ?? []).map((x) => x.key).filter((k) => k === `${r.account}|${key}`);
+        const hsol = !units && (set.length || closeKeys.length) && HOLDING_FLOWS_BOOK
+          ? HOLDING_FLOWS_BOOK.solve(set.length ? set.filter(B.carries).map((p) => `${p.accountId}|${p.securityKey}`) : closeKeys, r.capitalClose) : null;
         const want = units ? (units.every((u) => B.rated.has(u)) ? "dated" : "undated")
           : hsol === null ? null : hsol === "short" ? "undated" : "holding";
         if ((r.capital ?? null) !== want) return false;
@@ -18338,7 +18434,8 @@ const PM_RETURN_CHECKS = [
     // never a reason to abstain.
     const rs = ctx?.returnSelect;
     if (!rs) return false;
-    return ["auto", "absolute", "cagr", "xirr", "ytd", "calendar"].every((k) => rs.offers.includes(k));
+    // CY is gone (Stage 10jl): it was a dash on every row. CAGR too (Stage 10jo): XIRR covers it.
+    return ["auto", "absolute", "xirr", "ytd"].every((k) => rs.offers.includes(k)) && !rs.offers.includes("calendar") && !rs.offers.includes("cagr");
   }],
   ["every fund row carries one return cell per picked measure, in the picker's order", (t, ctx) => {
     const pr = ctx?.pmReturn, rs = ctx?.returnSelect;
@@ -18517,12 +18614,12 @@ const PM_RETURN_ROUTE_CHECKS = [
       && (covers === of || foot.text.includes(`${covers} of ${of}`))
       && (covers === of || /Not in it:/.test(foot.titles));
   }],
-  ["the CAGR, YTD and CY footers are refused with the whole book's own reason", (t, ctx) => {
+  // No CAGR column since Stage 10jo (XIRR covers it), so no CAGR footer either.
+  ["the YTD footer is refused with the whole book's own reason, and there is no CAGR footer", (t, ctx) => {
     const foot = ctx?.pmReturn?.foot ?? [];
-    const want = ["cagr", "ytd", "calendar"];
-    const cells = want.map((m) => foot.find((x) => x.measure === m));
-    if (cells.some((c) => !c)) return false;
-    return cells.every((c) => !/%/.test(c.text) && /whole private book/i.test(c.titles));
+    const c = foot.find((x) => x.measure === "ytd");
+    if (!c || foot.some((x) => x.measure === "cagr")) return false;
+    return !/%/.test(c.text) && /whole private book/i.test(c.titles);
   }],
   ["the HPR footer is FIFO over the whole private book — the gain on units held and redeemed, over the capital deployed in both", (t, ctx) => {
     const foot = ctx?.pmReturn?.foot?.find((x) => x.measure === "absolute");
@@ -18542,10 +18639,11 @@ const PM_RETURN_ROUTE_CHECKS = [
    * fund under CAGR or XIRR shows its holding-period return, tagged — and
    * counting it as "annualised" would state a coverage the column does not have.
    */
-  ["the CAGR and XIRR headers count only the cells on their own measure", (t, ctx) => {
+  ["the XIRR header counts only the cells on its own measure", (t, ctx) => {
     const pr = ctx?.pmReturn, head = ctx?.returnHead ?? [];
     if (!pr) return false;
-    for (const [m, label, word] of [["cagr", "CAGR", "annualised"], ["xirr", "XIRR", "money-weighted"]]) {
+    // No CAGR column since Stage 10jo: XIRR covers it.
+    for (const [m, label, word] of [["xirr", "XIRR", "money-weighted"]]) {
       const h = head.find((x) => x.label.toUpperCase().startsWith(label));
       /**
        * THE COUNT IS THE HEADING'S HOVER NOW, not a line under it. *"its obvious
@@ -20373,9 +20471,9 @@ const NAV_STARTS = [
  *
  * *"make it more simple to compare on the same graph across all benchmarks no
  * verbose"* — the family, 28 Oct 2026. The card draws the book and any benchmark
- * (Stage 10jg: the Nifty 500 alone until a chip adds another), each as its change
- * since ONE first day, all to the book's latest valuation; it starts only on a
- * day the book was valued on. The probe clicks every chip on, so these claims
+ * (Stage 10jg: the Nifty 500 alone until the Benchmarks list adds another), each as
+ * its change since ONE first day, all to the book's latest valuation; it starts only
+ * on a day the book was valued on. The probe ticks every option, so these claims
  * read the whole chart and `navChart.defaults` reads the first paint. Each claim
  * is struck on the chips' and the chart's own `data-*` handles and geometry,
  * and every figure is re-derived here off the book — never off the component.
@@ -21499,7 +21597,20 @@ const NAV_BENCH = [
    * clicking"* — the family, 30 Oct 2026 (Stage 10jg). Struck on the first paint,
    * before the probe clicks anything; every other chip stays on offer, unpressed.
    */
-  ["the NAV card opens with only the book and the Nifty 500 on, and every other benchmark's chip off", (t, ctx) => {
+  /**
+   * *"just give me a simple benchmark dropdown list selector, to select multiple
+   * benchmarks"* — the family, 30 Oct 2026 (Stage 10jj). Closed, the row has one
+   * control and names only the drawn lines; the list stays open across picks.
+   */
+  ["the NAV card's one control is a closed Benchmarks list, the row naming only the lines drawn, and it stays open to pick several", (t, ctx) => {
+    const c = ctx?.navChart, d = c?.defaults;
+    if (!d) return notChecked("the NAV card was not on screen on this run");
+    return d.pickerExpanded === false && d.legendButtons === 1 && d.optionsVisible === 0
+      && d.picked.join() === BENCH_FIXTURE[0][0]
+      && c.added?.chart.pickerExpanded === true && c.added.chart.optionsVisible === BENCH_FIXTURE.length
+      && c.added.chart.picked.join() === [BENCH_FIXTURE[0][0], c.added.key].join();
+  }],
+  ["the NAV card opens with only the book and the Nifty 500 on, and every other benchmark's option off", (t, ctx) => {
     const d = ctx?.navChart?.defaults;
     if (!d) return notChecked("the NAV card was not on screen on this run");
     const on = d.chips.filter((x) => x.shown).map((x) => x.key);
@@ -21709,6 +21820,21 @@ const RETURN_COLUMNS = [
        * are NOT tagged, which is the half that keeps the column readable.
        */
       return cells.every((c) => (c.tag ? new RegExp(`\\b${c.tag}\\b`).test(c.text) : true));
+    }],
+    /**
+     * ── A BLANK RETURN CELL SAYS WHY ON ITS FACE (Stage 10jm) ───────────────
+     *
+     *   *"in the blank you can simple write - No buy/sell date"*
+     *
+     * A bare dash read as a broken feed. Every holding's blank return cell
+     * names its cause in a few words beside the dash; the full reason stays
+     * its hover. Struck on the cell's own handle, never on the wording.
+     */
+    ["every blank return cell names its cause in a few words beside the dash", (t, ctx) => {
+      const cells = ctx?.returnCells;
+      if (!cells?.length) return { notChecked: "no return cells captured on this run" };
+      const blank = cells.filter((c) => /^—/.test(c.text) && !/is a category, not a holding/.test(c.reason ?? ""));
+      return blank.every((c) => !!c.absentLabel && c.absentLabel.split(/\s+/).length <= 5 && !!c.reason);
     }],
     /**
      * ── ONE COLUMN PER PICKED RETURN, ADDED AND REMOVED WITH THE SELECTION ──
@@ -24573,11 +24699,11 @@ const INVARIANTS = {
     ...txnMergedChecks(),
     ...CAPITAL_RETURN_CHECKS,
     FRESH_READER_PICK,
-    ["the return picker is on the Transactions view, offering every measure, with all five ticked", (t, ctx) => {
+    ["the return picker is on the Transactions view, offering every measure, with all three ticked and no CAGR", (t, ctx) => {
       const rs = ctx?.returnSelect;
       if (!rs) return false;   // the handle is gone — the picker is, too
-      const five = ["absolute", "cagr", "xirr", "ytd", "calendar"];
-      return five.every((m) => rs.offers.includes(m) && rs.active.includes(m)) && rs.offers.includes("auto");
+      const all = ["absolute", "xirr", "ytd"];
+      return all.every((m) => rs.offers.includes(m) && rs.active.includes(m)) && rs.offers.includes("auto") && !rs.offers.includes("cagr");
     }],
     /**
      * ...AND EACH GETS A COLUMN OF ITS OWN, headed with its own name — the
@@ -24586,47 +24712,32 @@ const INVARIANTS = {
     ["…and the transactions table draws one return column per measure, headed with its own name", (t, ctx) => {
       const heads = (ctx.mineHead ?? []).map((c) => c.text.split("\n")[0].trim().toUpperCase());
       if (!heads.length) return false;
-      return ["HPR", "CAGR", "XIRR", "YTD", "CY"].every((h) => heads.includes(h)) && !heads.includes("RETURN");
+      return ["HPR", "XIRR", "YTD"].every((h) => heads.includes(h)) && !heads.includes("RETURN") && !heads.includes("CY") && !heads.includes("CAGR");
     }],
     ["…and every capital row carries a cell in each of them, in order", (t, ctx) => {
       if (!ctx.mineRows?.length) return false;
-      const want = ["absolute", "cagr", "xirr", "ytd", "calendar"];
-      return ctx.mineRows.every((r) => r.returns.length === 5 && r.returns.every((x, i) => x.measure === want[i]));
+      const want = ["absolute", "xirr", "ytd"];
+      return ctx.mineRows.every((r) => r.returns.length === want.length && r.returns.every((x, i) => x.measure === want[i]));
     }],
     /**
-     * CY IS ABSENT ON EVERY ROW, WITH ITS REASON — no statement values an
-     * account at a past year-end — and never a figure borrowed from another
-     * measure.
+     * NO CALENDAR-YEAR COLUMN (Stage 10jl). It was a dash on every row — no
+     * statement values an account at a past year-end — and the family asked
+     * for it gone rather than left blank.
      */
-    ["…a calendar-year return is absent on every row and names why", (t, ctx) =>
-      (ctx.mineRows ?? []).length > 0 && ctx.mineRows.every((r) => {
-        const cy = r.returns.find((x) => x.measure === "calendar");
-        // The year-end reason where appreciation is struck; where it is itself
-        // withheld the cell names THAT cause instead, which is the prior one.
-        return cy && cy.pct == null && (cy.reason ?? "").length > 20;
-      })
-      && ctx.mineRows.some((r) => /year-end|start and end/i.test(r.returns.find((x) => x.measure === "calendar")?.reason ?? ""))],
+    ["…and no row carries a calendar-year cell", (t, ctx) =>
+      (ctx.mineRows ?? []).length > 0 && ctx.mineRows.every((r) => !r.returns.some((x) => x.measure === "calendar"))],
     /**
-     * CAGR IS REFUSED WHERE THE MONEY WENT IN OVER SEVERAL DATES, and says the
-     * money-weighted rate is XIRR. A single-start compound rate over a
-     * staggered account treats every rupee as invested on the first date,
-     * which overstates the time the later money has been at work. Under a year
-     * the row shows its HPR, tagged, on every measure instead (Stage 10hk).
+     * A STAGGERED ACCOUNT'S ANNUAL RATE IS XIRR'S, AND NO CAGR COLUMN OFFERS A
+     * SINGLE-START ONE (Stage 10jo). A single-start compound rate over money
+     * that went in over several dates treats every rupee as invested on the
+     * first; the family dropped the CAGR column because XIRR covers it. Each
+     * staggered row keeps its XIRR cell.
      */
-    ["…CAGR is refused on a staggered account held a year or more, naming XIRR as its measure — under a year it is the HPR", (t, ctx) => {
+    ["…a staggered account's annual rate is XIRR's — no row carries a CAGR cell", (t, ctx) => {
       const staggered = (ctx.mineRows ?? []).filter((r) => r.contributions > 1 && r.returns.some((x) => x.pct != null));
       if (!staggered.length) return false;
-      const daysOf = (r) => {
-        const g = CAPITAL_GROUPS?.rowCapital(r.key, r.accountId);
-        const first = g?.boughtFirst || null, to = g?.close ?? null;
-        return first && to ? Math.round((Date.parse(to) - Date.parse(first)) / 864e5) : null;
-      };
-      return staggered.every((r) => {
-        const c = r.returns.find((x) => x.measure === "cagr");
-        const days = daysOf(r);
-        if (days != null && days < 365) return !!c && (c.pct == null || c.tag === "HPR");
-        return c && c.pct == null && /XIRR/.test(c.reason ?? "");
-      });
+      return (ctx.mineRows ?? []).every((r) => !r.returns.some((x) => x.measure === "cagr"))
+        && staggered.every((r) => r.returns.some((x) => x.measure === "xirr"));
     }],
     /**
      * ...AND NOTHING IS ANNUALISED OVER LESS THAN A YEAR. A CAGR or XIRR
@@ -25021,7 +25132,7 @@ const INVARIANTS = {
   ],
 
   /**
-   * ── A FUND PICKED ON ALL SECURITIES IS ITS OWN ROW (Stage 10jm) ─────────────
+   * ── A FUND PICKED ON ALL SECURITIES IS ITS OWN ROW (Stage 10jp) ─────────────
    *
    * Every holding is a row on this axis now, so the sentence that used to name
    * a picked fund and send the reader to Category has nothing left to say. A
@@ -25218,10 +25329,11 @@ const INVARIANTS = {
     ["a fresh reader opens on every return measure, one column each, in the picker's order, with nothing saved", (t, ctx) => {
       const I = ctx.remember?.initial;
       if (!I?.cols?.length) return false;
-      const five = ["absolute", "cagr", "xirr", "ytd", "calendar"];
+      // No CAGR column (Stage 10jo): XIRR covers it.
+      const all = ["absolute", "xirr", "ytd"];
       const at = I.cols.indexOf("ret:absolute");
-      return I.active.join(",") === five.join(",") && I.source === "default" && !/[?&]ret=/.test(I.url)
-        && at > 0 && five.every((m, k) => I.cols[at + k] === `ret:${m}`) && !I.cols.includes("ret:auto")
+      return I.active.join(",") === all.join(",") && I.source === "default" && !/[?&]ret=/.test(I.url)
+        && at > 0 && all.every((m, k) => I.cols[at + k] === `ret:${m}`) && !I.cols.includes("ret:auto") && !I.cols.includes("ret:calendar") && !I.cols.includes("ret:cagr")
         && I.savedOrder === null && I.savedPick === null;
     }],
     ["a column moved on Category stays where it was put, and is saved", (t, ctx) => {
@@ -25282,8 +25394,8 @@ const INVARIANTS = {
     ["a measure ticked later takes the returns' place, not the far right", (t, ctx) => {
       const R = ctx.remember;
       if (!R?.cagr || !R.s3) return false;
-      return /remembered/i.test(R.cagrKept ?? "") && R.cagr.active.join() === "cagr" && R.cagr.source === "saved"
-        && !/[?&]ret=/.test(R.cagr.url) && sameCols(R.cagr.cols, collapseReturns(R.s3.cols, "ret:cagr"));
+      return /remembered/i.test(R.cagrKept ?? "") && R.cagr.active.join() === "xirr" && R.cagr.source === "saved"
+        && !/[?&]ret=/.test(R.cagr.url) && sameCols(R.cagr.cols, collapseReturns(R.s3.cols, "ret:xirr"));
     }],
     /**
      * ANOTHER BROWSER TAB shares this browser's memory: it opens the table as
@@ -30391,10 +30503,11 @@ const INVARIANTS = {
     ...PM_RETURN_CHECKS.filter(([d]) => !/^the methodology picks/.test(d)),
     ...PM_RETURN_ROUTE_CHECKS,
     FRESH_READER_PICK,
-    ["the picker shows the five measures ticked, and not the methodology", (t, ctx) => {
+    ["the picker shows every measure ticked, and not the methodology", (t, ctx) => {
       const rs = ctx?.returnSelect;
       if (!rs) return false;
-      return rs.active.join(",") === "absolute,cagr,xirr,ytd,calendar";
+      // No CAGR since Stage 10jo: XIRR covers it.
+      return rs.active.join(",") === "absolute,xirr,ytd";
     }],
   ],
   /**
@@ -32651,8 +32764,9 @@ const INVARIANTS = {
     ["the return-measure picker offers the methodology and every measure, and opens on the reader's saved pick", (t, ctx) => {
       const rs = ctx?.returnSelect;
       if (!rs) return { notChecked: "the return-measure picker was not on screen on this run" };
-      const want = ["auto", "absolute", "cagr", "xirr", "ytd", "calendar"];
-      return want.every((k) => rs.offers.includes(k)) && rs.active.length === 1 && rs.active[0] === "auto"
+      // No CAGR among them since Stage 10jo: XIRR covers it.
+      const want = ["auto", "absolute", "xirr", "ytd"];
+      return want.every((k) => rs.offers.includes(k)) && !rs.offers.includes("calendar") && !rs.offers.includes("cagr") && rs.active.length === 1 && rs.active[0] === "auto"
         && rs.source === "saved" && !addressAsksForReturns(ctx.url);
     }],
     /**
@@ -33667,10 +33781,10 @@ const INVARIANTS = {
       if (!B || !H) return false;
       const securityAxis = !/group=(category|assetClass|basket)/.test(String(ctx?.path ?? ""));
       const cells = (ctx?.returnCells ?? []).filter((c) => c.measure === "cagr" && c.capital === "holding");
-      const solved = cells.map((c) => ({ c, sol: H.solve(holdingLinesOf(B, c, securityAxis) ?? []) }));
+      const solved = cells.map((c) => ({ c, sol: H.solve(holdingLinesOf(B, c, securityAxis) ?? [], c.capitalClose) }));
       if (!solved.length) {
         const any = (ctx?.returnCells ?? []).some((c) => c.measure === "cagr" && !c.mandate
-          && (() => { const l = holdingLinesOf(B, c, securityAxis); return l?.length && H.solve(l) && H.solve(l) !== "short"; })());
+          && (() => { const l = holdingLinesOf(B, c, securityAxis); return l?.length && H.solve(l, c.capitalClose) && H.solve(l, c.capitalClose) !== "short"; })());
         return any ? false : { notChecked: "no row on screen is holdings the book dates in full" };
       }
       return solved.every(({ c, sol }) => {
@@ -33800,9 +33914,44 @@ const INVARIANTS = {
       if (mine.length !== cells.length) return false;
       // Each is either a signed % or a dash, never a fabricated +0.00%.
       const shapeOk = mine.every((c) => /—/.test(c.text) || /[+-]\d+(\.\d+)?%/.test(c.text));
-      const drawn = mine.filter((c) => /[+-]\d+(\.\d+)?%/.test(c.text)).length;
+      // A FULL year to date — no later start on the cell (Stage 10jl).
+      const drawn = mine.filter((c) => /[+-]\d+(\.\d+)?%/.test(c.text) && !c.ytdFrom).length;
       if (YTD_MEASURABLE === null) return { notChecked: "could not read heldSince out of the generated book" };
       return shapeOk && drawn === YTD_MEASURABLE;
+    }],
+    /**
+     * ── …AND FROM THE FIRST DATE WE HAVE, SAID ON THE CELL (Stage 10jl) ──────
+     *
+     *   *"for YTD atleast for this year lets show from the date we have"*
+     *
+     * A row with no 1 January value is measured from its first dated value this
+     * year. The start rides on the cell as its tag ("from 31 Mar"), inside this
+     * year and before the window closes — so it never reads as a full year to
+     * date — and the column is not a column of dashes: the book's verified
+     * account records open on 31 March.
+     */
+    ["a YTD from a later date names that date on the cell, inside this year", (t, ctx) => {
+      const mine = (ctx?.returnCells ?? []).filter((c) => c.measure === "ytd");
+      if (!mine.length) return { notChecked: "no return cells captured on this run" };
+      const part = mine.filter((c) => c.ytdFrom);
+      const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const tagOf = (d) => `from ${Number(d.slice(8, 10))} ${MON[Number(d.slice(5, 7)) - 1]}`;
+      return part.length > 0 && part.every((c) => c.tag === tagOf(c.ytdFrom) && c.text.startsWith(c.tag)
+        && c.ytdFrom.slice(0, 4) === c.ytdTo?.slice(0, 4) && c.ytdFrom > `${c.ytdFrom.slice(0, 4)}-01-01` && c.ytdFrom < c.ytdTo
+        && /not annualised/.test(c.note ?? "") && /[+-]\d+(\.\d+)?%/.test(c.text));
+    }],
+    ["…and on a row of whole accounts it re-solves off their verified return records", (t, ctx) => {
+      const mine = (ctx?.returnCells ?? []).filter((c) => c.measure === "ytd" && c.ytdFrom && c.ytdAssumed === "false" && c.ytdAccounts.length);
+      if (!mine.length) return false;   // the book's verified records open on 31 March — a build that drew none lost them
+      if (!YTD_RECORD_BOOK) return false;
+      let solved = 0;
+      for (const c of mine) {
+        const r = YTD_RECORD_BOOK.solve(c.ytdAccounts);
+        if (!r) continue;
+        if (r.from !== c.ytdFrom || r.to !== c.ytdTo || Math.abs(signedPctOf(c.text) - r.pct) > 0.006) return false;
+        solved++;
+      }
+      return solved > 0;
     }],
     /**
      * …AND WHAT IT CANNOT MEASURE IS SAID ON THE COLUMN, NOT UNDER THE TABLE.
@@ -33870,7 +34019,7 @@ const INVARIANTS = {
         if (c.capital === "holding") {
           const H = HOLDING_FLOWS_BOOK;
           const lines = holdingLinesOf(B, c, securityAxis);
-          const sol = H && lines?.length ? H.solve(lines) : null;
+          const sol = H && lines?.length ? H.solve(lines, c.capitalClose) : null;
           if (!sol || sol === "short") return false;
           if (sol.days < 365) { if (!Number.isNaN(v) && c.tag !== "HPR") return false; continue; }
           if (sol.annual === null) { if (!Number.isNaN(v)) return false; continue; }
@@ -33881,7 +34030,9 @@ const INVARIANTS = {
         if (c.capital !== "dated") {
           // A holding inside an account, or accounts with no complete dated
           // record: a dash, never a figure.
-          if (!Number.isNaN(v) || !/—/.test(c.text)) return false;
+          // NA where the rate cannot apply (under a year, Stage 10jh), a dash
+          // where a record is missing: never a figure.
+          if (!Number.isNaN(v) || !(/—/.test(c.text) || /^NA\b/.test(c.text))) return false;
           continue;
         }
         const units = rowUnits(B, c);
@@ -33927,7 +34078,7 @@ const INVARIANTS = {
           // dates every line of it in full (Stage 10fw) — "holding" — short of a
           // figure where one line's record is — "undated" — and nothing else.
           const lines = holdingLinesOf(B, c, securityAxis);
-          const sol = HOLDING_FLOWS_BOOK && lines?.length ? HOLDING_FLOWS_BOOK.solve(lines) : null;
+          const sol = HOLDING_FLOWS_BOOK && lines?.length ? HOLDING_FLOWS_BOOK.solve(lines, c.capitalClose) : null;
           const want = sol === null ? null : sol === "short" ? "undated" : "holding";
           if ((c.capital ?? null) !== want) return false;
           continue;
@@ -33950,7 +34101,9 @@ const INVARIANTS = {
     ["the XIRR column counts the rows that carry one, names why the rest do not, and points to Performance", (t, ctx) => {
       const h = (ctx?.returnHead ?? []).find((x) => /^XIRR$/i.test(x.label));
       if (!h) return { notChecked: "the XIRR column was not on screen on this run" };
-      const cells = (ctx?.returnCells ?? []).filter((c) => c.measure === "xirr");
+      // OVER THE ROWS THE STATEMENTS REPORT (Stage 10jf): a company the family
+      // reaches only through funds is no holding of its own and is not counted.
+      const cells = (ctx?.returnCells ?? []).filter((c) => c.measure === "xirr" && !/reaches it only through funds/.test(c.reason ?? ""));
       if (!cells.length) return false;
       const rates = cells.filter((c) => (c.capital === "dated" || c.capital === "holding") && !c.tag && !Number.isNaN(signedPctOf(c.text))).length;
       const short = /(\d+) money-weighted of (\d+)/.exec(h.note ?? "");
@@ -40117,8 +40270,9 @@ for (const theme of THEMES) {
         await page.reload({ waitUntil: "load" }).catch(() => {});
         await settle();
         R.reloaded = await snap();
-        // A measure ticked afterwards takes the returns' place.
-        R.cagrKept = await pick("cagr");
+        // A measure ticked afterwards takes the returns' place. XIRR, since
+        // the picker offers no CAGR (Stage 10jo).
+        R.cagrKept = await pick("xirr");
         R.cagr = await snap();
         // ANOTHER BROWSER TAB. It shares this browser's memory, so it opens the
         // table as this one left it, and a column moved there moves here too —
@@ -41186,10 +41340,14 @@ for (const theme of THEMES) {
             state: b.getAttribute("data-bench-state"),
             ret: num(b.getAttribute("data-nav-ret")),
             basis: b.getAttribute("data-nav-basis"),
-            shown: b.tagName === "BUTTON" ? b.getAttribute("aria-pressed") === "true" : true,
+            shown: b.tagName === "BUTTON" ? b.getAttribute("aria-selected") === "true" : true,
             text: (b.textContent ?? "").replace(/\s+/g, " ").trim(),
             title: b.getAttribute("title") ?? "",
           })),
+          pickerExpanded: legend?.querySelector("[data-nav-picker]")?.getAttribute("aria-expanded") === "true",
+          legendButtons: [...(legend?.querySelectorAll("button") ?? [])].filter((b) => b.getClientRects().length > 0 && !b.hasAttribute("data-nav-line")).length,
+          optionsVisible: [...(legend?.querySelectorAll("[data-bench]") ?? [])].filter((b) => b.getClientRects().length > 0).length,
+          picked: [...(legend?.querySelectorAll("[data-nav-selected]") ?? [])].map((b) => b.getAttribute("data-nav-selected")),
           from: legend?.getAttribute("data-nav-from") ?? null,
           to: legend?.getAttribute("data-nav-to") ?? null,
           starts: (card?.querySelector('[data-testid="nav-range"]')?.getAttribute("data-nav-starts") ?? "").split(" ").filter(Boolean),
@@ -41209,14 +41367,22 @@ for (const theme of THEMES) {
       });
       /**
        * ── THE FIRST PAINT, THEN THE WHOLE CHART (Stage 10jg) ─────────────────
-       * The card opens on the book and the Nifty 500. Every chip that is off is
-       * clicked on, the first one read by itself, so the claims about each line
-       * read a chart that has them all; `defaults` keeps the first paint, and the
-       * chips go back off below, so the screenshot shows what a reader opens.
+       * The card opens on the book and the Nifty 500. Every option that is off is
+       * ticked in the Benchmarks list, the first one read by itself, so the claims
+       * about each line read a chart that has them all; `defaults` keeps the first
+       * paint, and the options go back off below, so the screenshot shows what a
+       * reader opens.
        */
       const navDefaults = FAST ? null : await navChartProbe();
       const navOff = (navDefaults?.chips ?? []).filter((c) => !c.shown).map((c) => c.key);
-      const navChip = (key) => page.click(`[data-testid="nav-legend"] [data-nav-line="${key}"]`);
+      const navPicker = (open) => page.evaluate((want) => {
+        const b = document.querySelector("[data-nav-picker]");
+        if (b && (b.getAttribute("aria-expanded") === "true") !== want) b.click();
+      }, open);
+      const navChip = async (key) => {
+        await navPicker(true);
+        await page.click(`[data-testid="nav-legend"] [data-nav-line="${key}"]`);
+      };
       let navAdded = null;
       for (const key of navOff) {
         await navChip(key);
@@ -41232,16 +41398,17 @@ for (const theme of THEMES) {
       if (navChart && name === "cio-nav-live") {
         const key = navChart.chips.find((c) => c.key !== "book" && c.state === "ok")?.key ?? null;
         if (key) {
-          await page.click(`[data-testid="nav-legend"] [data-nav-line="${key}"]`);
+          await navChip(key);
           await page.waitForTimeout(400);
           const hidden = await navChartProbe();
-          await page.click(`[data-testid="nav-legend"] [data-nav-line="${key}"]`);
+          await navChip(key);
           await page.waitForTimeout(400);
           const back = await navChartProbe();
           navChart.toggle = { key, hidden, back };
         }
       }
       for (const key of navOff) await navChip(key);
+      await navPicker(false);
       /**
        * THE RETURN ATTRIBUTION CARD IS GONE, AND THIS PROBE PROVES IT.
        *
@@ -43560,6 +43727,7 @@ for (const theme of THEMES) {
           stockReturns: [...t.querySelectorAll("td[data-stock-return]")].map((e) => ({
             account: e.closest("tr")?.getAttribute("data-account-row") ?? null,
             capital: e.getAttribute("data-capital"),
+            capitalClose: (() => { try { return JSON.parse(e.getAttribute("data-capital-close") || "null"); } catch { return null; } })(),
             xirr: e.querySelector("[data-stock-xirr]")?.getAttribute("data-stock-xirr") ?? null,
             xirrText: (e.querySelector("[data-stock-xirr]")?.innerText ?? "").replace(/\s+/g, " ").trim(),
             text: e.innerText.replace(/\s+/g, " ").trim(),
@@ -44657,6 +44825,8 @@ for (const theme of THEMES) {
             // still has to say for itself now that the header names the rest.
             tag: td.getAttribute("data-return-tag"),
             text: (td.innerText ?? "").replace(/\s+/g, " ").trim(),
+            // The few words a blank cell names its cause in (Stage 10jm).
+            absentLabel: td.querySelector("[data-absent-label]")?.textContent?.trim() ?? null,
             // Where this row's window ENDS, and what the figure says of it.
             valuedAt: td.getAttribute("data-return-valued-at"),
             note: td.getAttribute("data-return-note"),
@@ -44671,6 +44841,13 @@ for (const theme of THEMES) {
             // back. The row's own handles ride along for the converse claim.
             capital: td.getAttribute("data-capital"),
             capitalAccounts: (td.getAttribute("data-capital-accounts") || "").split(" ").filter(Boolean),
+            // Lines closed at their market price (Stage 10jo), re-solved with them.
+            capitalClose: (() => { try { return JSON.parse(td.getAttribute("data-capital-close") || "null"); } catch { return null; } })(),
+            // A YTD FROM THE FIRST DATE WE HAVE (Stage 10jl): its window and pooled accounts.
+            ytdFrom: td.getAttribute("data-ytd-from"),
+            ytdTo: td.getAttribute("data-ytd-to"),
+            ytdAccounts: (td.getAttribute("data-ytd-accounts") || "").split(" ").filter(Boolean),
+            ytdAssumed: td.getAttribute("data-ytd-assumed"),
             rowKeys: (td.getAttribute("data-row-keys") || "").split(" ").filter(Boolean),
             rowKey: td.closest("tr")?.getAttribute("data-security-key") ?? null,
             mandate: !!td.closest("tr")?.hasAttribute("data-mandate"),

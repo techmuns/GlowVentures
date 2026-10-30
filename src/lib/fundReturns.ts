@@ -579,13 +579,6 @@ export function fundMeasuredReturn(
     return { shown: true, pct: hpr, tag, note: `${hprBasis}${paidNote}` };
   }
 
-  if (measure === "calendar") {
-    return {
-      shown: false, tag,
-      reason: `a calendar-year return needs the fund's value at the start and at the end of that year, and no statement in this book values it at a year end — the only valuation here is dated ${d?.valuedAt ? date(d.valuedAt) : "this year"}`,
-    };
-  }
-
   if (measure === "cagr") {
     if (hpr == null) return { shown: false, tag, reason: noHpr };
     if (!d || d.gap) return { shown: false, tag, reason: `annualising needs to know when the money went in, and ${d?.gap ?? "no dated contribution for this fund is in the book"}` };
@@ -768,13 +761,12 @@ export function fundReturnColumnMeta(measure: ReturnMeasure, cells: MeasuredRetu
 /**
  * WHY THE FUND TABLE'S FOOTER HAS NO SUCH RETURN, per measure. The footer is
  * the whole private book: it has a cumulative return on cost (under HPR and the
- * methodology) and a pooled money-weighted one (under XIRR), and neither a
- * single purchase date nor a year-end valuation.
+ * methodology) and a pooled money-weighted one (under XIRR), and no single
+ * purchase date.
  */
 export const PM_AGG_NO_MEASURE: Partial<Record<ReturnMeasure, string>> = {
   cagr: "a compound annual rate needs one date the money went in, and a row that spans several holdings has one per holding — compounding from any single date would credit some of the money with time it was not invested. The pooled XIRR is under XIRR.",
   ytd: "a year-to-date return needs the book's value on 1 January, and no statement here values a fund on that date.",
-  calendar: "a calendar-year return needs a valuation at both ends of the year, and no statement here values a fund at a year end.",
 };
 
 /**
@@ -788,5 +780,4 @@ export const PM_RETURN_HINTS: Partial<Record<ReturnMeasure, string>> = {
   cagr: "The return on cost annualised — only for a holding paid for in one call or purchase at least a year ago that has paid nothing back. One paid for over several dates is money-weighted instead.",
   xirr: "Money-weighted across every dated call or purchase, every dated payout or sale, and the value on its statement's or the review's date — a fund's own capital account, or the family's consolidated review, dates every one.",
   ytd: "The fund's own return since 1 January — measurable only where it was entered during the year, because no statement here values a fund on 1 January.",
-  calendar: "A past calendar year's return — it needs a valuation at both ends of that year, which no statement in this book carries.",
 };

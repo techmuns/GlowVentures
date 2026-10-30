@@ -786,7 +786,48 @@
 - *"Just simply write vs Nifty 500… why there are two no. for portfolio return being shown."* A since-investment tile whose comparison covers part of its money now reads `vs Nifty 500 +1.6%`, without "₹579.3 Cr dated +15.8%".
 - Its lead goes too: +14.2 pp is off +15.8%, so it would not tie to the +17.2% above it. A tile compared on all its money keeps the lead. The hover says the figure is on the dated money; the info card keeps the book's figure on that money and the leads.
 
-### Stage 10jm — ALL SECURITIES: EVERY HOLDING IS A ROW
+### Stage 10jl — PORTFOLIO MONITOR: YTD FROM THE FIRST DATE WE HAVE; THE CY COLUMN IS GONE
+
+- The family (30 Oct 2026): *"for YTD atleast for this year lets show from the date we have"* and *"Remove the CY coloumn all together - best not have it than have it blank"*.
+- **CY removed** from `ReturnMeasure`, the picker and every table (Monitor holdings and transactions, Private Market): no statement values anything at a past year-end, so it was a dash on every row. A saved pick or `?ret=` naming it drops it (`normaliseMeasures`).
+- **YTD** keeps the full year to date where a holding was opened this year (`holdingYtd`). Otherwise `ytdAvailable.ts` measures the row from its first dated value this year on the Returns tab's records: a whole account on its verified return record (`statementReturnInputs` → `windowReturns`, Modified Dietz), else each listed share or growth fund carried from its statement balance at published closes (`assumedHolding`, labelled assumed). Never both for one account. The cell is tagged with the start ("from 31 Mar"), not annualised; its note names the dates and the arithmetic. Parts last valued more than a week apart are not pooled (V.E.C's 13 Aug and 7 Oct accounts would read +53.1% against +38.2% and +42.1%); each child line carries its own. Price histories load only while YTD is on screen.
+- On this book the Category view's YTD reads 11 of 124 rows on statement records alone (PMS mandates and fund folios from 31 Mar, plus Stage 10jf's recovered openings); listed shares and funds add more once published prices load. The prices are read once every history has answered: redrawing All Securities' 629 rows per arriving batch held the page for a minute.
+- Checks: `ytdAvailable.test.ts` (test:family; whole/part account, full year, refused record, parts valued apart, archive). `check:pages` `monitor-ytd` counts only untagged cells against `YTD_MEASURABLE`, asserts each part-year tag and window, and re-solves whole-account cells off `BOOK_ACCOUNT_RETURN_RECORDS` (`YTD_RECORD_BOOK`). CY assertions on `monitor-txn-returns`, `monitor-remember`, `private-market-returns` and `monitor` now assert it is absent. `monitor-xirr` (2) and `monitor-txn-returns` (2) invariants are red on main too and are left as found.
+
+### Stage 10jm — PORTFOLIO MONITOR: A BLANK RETURN CELL SAYS WHY ON ITS FACE
+
+- The family (30 Oct 2026): *"in the blank you can simple write - No buy/sell date"*, asking why direct equity's XIRR was empty when the Data Audit holds the dated records. Stage 10jf (merged alongside) carries those records into the rate. This stage names what is still missing.
+- `AbsentCell` takes an optional `label`. The Monitor's return cells (rows and lines) print a few words after the dash from `returnGapLabel` (`returnColumns.ts`), most specific cause first: "No buy/sell dates", "Sale amount missing", "Needs newer statement", "No statement value", "Several buys — see XIRR", "No 1 Jan value", "No valuation", "No cost", "Dates incomplete", "Valued on different dates". The full reason stays the hover. Category totals keep the bare dash and their own reason.
+- **"No statement value"** (`datedButUnvalued`, `ReturnInput.needsStatementValue`): every line's money is dated by its recovered record, but only a live price or a published NAV values it. Stage 10jf refuses a rate there, so CAGR and XIRR say so, rather than claiming a purchase date the row does not lack. 8 rows on statement marks (Motilal demat fund units at AMFI's NAV).
+- While the YTD column's price histories are still answering, the holdings table carries `data-prices-pending="true"` (its cells say "Loading prices"). `table-excel.mjs`' `downloadTableWorkbook` waits for it to clear, so `check-data-performance`'s two-export comparison no longer races the prices (CI's `build` failed on exactly that). The prices are loaded for the whole family's holdings whatever the member selector shows, because the Excel snapshot is the whole family's: loaded for one member, its other rows exported as "Loading prices".
+- Checks: `RETURN_COLUMNS` asserts every blank holding cell carries its label. `moneyCell` / `pctCell` and the MH-15 / MH-09 claims read a labelled dash as absent. `monitor-xirr-security`'s count excludes fund-only rows, as Stage 10jf's header does (red on main since #293), and its "an XIRR stands only on…" claim accepts Stage 10jh's NA beside the dash. NA cells keep Stage 10jh's `NotApplicableCell`; only a dash carries a label.
+
+### Stage 10jn — SOURCES POPUP: A REVIEW RECORD IN PLAIN WORDS
+
+*"When i click on it to understand it is so complex can you please make it simplest to read layman language"* — the family, 30 Oct 2026, on National Stock Exchange's "Quantity held · Sources".
+
+- A family-review record now leads with what a reader asks: worth (₹ Cr/L), shares, date, what was paid, and only the lines that change how to read it (cost shared out by shares, one member's part, no named holder, now listed, a newer statement differs). `reviewFacts` in `src/lib/sourceTrace.ts` reads them off the holding and the note `reviewBook.mjs` writes; `ReviewPlain` in `SourceTrace.tsx` prints them.
+- The full review note is kept, one click away under "Full detail"; Data Audit, Excel and Private Market still carry it whole. The record's label names the review, not an account number.
+- The popup's other notes (correction, rolled-forward units, recovered cost, feed price, totals) are short sentences; a caption still names its narrowing (gain only where the cost is known).
+- `sourceTrace.test.ts` holds the NSE record's facts, its rendered line and a line held at cost; `check-source-trace.mjs` looks for the feed note's new words, "published price (NAV)".
+
+### Stage 10jo — XIRR TO THE MARKET PRICE, A TRUE YTD, AND NO CAGR COLUMN
+
+*"ok i agree to what you recomend — do it and push to main"* — the family, 30 Oct 2026, on: XIRR blank on Onesource Special though every buy and sale is dated (HPR +25.34%, XIRR ≈ 13.6% to today's price).
+
+- `holdingFlowsOf` closes a fully dated line (trades, lots or recovered record) on its dated market price or NAV when the line is priced by the market; null where the price has no date, predates the statement, or a later trade, movement or withdrawal is on record (`movedAfter`, `assumedHolding`'s test) — `datedCapital` then falls back to the statement line. `RowCapital.assumed` names the owners and statement dates; the cell shows "assumed" (`AssumedMark`, also on the company page) and the hover says whose units. Demat fund units at AMFI NAV (DSP, Helios, ICICI, ABSL, WhiteOak) now carry an XIRR instead of "No statement value".
+- Recovered records carry `unitRecord` (units after each dated row, built by `recoverHoldingCosts` / `replayMopwmRows`). `recordedYearWindow` in `ytdAvailable.ts` opens YTD on 1 January's units at 31 December's close, counts this year's purchases and sales on their dates (and dividend entitlements where the record dates none), and carries the units from the statement at published closes; it falls back to the old path on any gap (split before the statement, unvouched dividend).
+- CAGR left the picker and the default columns (`PICKER_KEYS`); a saved pick drops it; `?ret=cagr` still opens its column for the checks. CLAUDE.md records the rule beside the 22 Oct one.
+- Checks: cells carry `data-capital-close`; `HOLDING_FLOWS_BOOK.solve(keys, closes)` re-solves with the page's market closes (a demat line by account and acquisition ISIN). Picker, default and Transactions checks expect no CAGR; `monitor-remember` ticks XIRR. Red as on main: `monitor-xirr` (360 ONE row), `monitor-txn-returns` (2), `stock` width, `stock-unpriced`.
+
+### Stage 10jj — OUR BOOK VS BENCHMARKS: ONE DROPDOWN, NO RETRY BUTTON
+
+*"remove the 'retry demat prices button', just give a simple benchmark dropdown list selector, to select multiple benchmarks"* — the family, 30 Oct 2026.
+- The row of seven chips is one Benchmarks list: tick several, and it stays open until a click outside or Escape. Each option carries its colour and return; the row beside it names only the lines drawn.
+- The retry button is gone. A failed demat price history is named on the book's hover, and a page reload fetches it again (failures are kept in memory only, never stored). Automatic retry was not added.
+- `check:pages`: a new invariant holds the closed list as the row's one control, and that it stays open across picks. The probe ticks options through the list; the closed panel stays in the DOM, so each option's keys read without opening it. `check-nav-assumed.mjs` now asserts the hover instead of the button.
+
+### Stage 10jp — ALL SECURITIES: EVERY HOLDING IS A ROW
 
 - *"if we are holding a company or an investment and we are able to search it in the universal search bar, then it should be available in all the different segments."* Franklin India Credit AIF (₹20 Cr, Stage 10hx) was searchable and on no row of All Securities, because that axis drew company shares alone. This reverses Stage 10aj's "AIF itself shouldn't show up as a security". The same rule hid every fund, AIF, private line and cash row.
 - On Category, Asset class and Basket it was already a row. On Asset class and Basket it sits in "Not classified in the family's review", the last section, because the 30 June review predates the 22 Oct purchase. No class is guessed; a later review, or the family, fills it.

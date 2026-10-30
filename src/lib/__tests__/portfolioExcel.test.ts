@@ -246,7 +246,8 @@ function holdingRate(ps: readonly Position[]): { annual: number | null; days: nu
   let since = Infinity, to = -Infinity, payments = 0;
   for (const x of ps) {
     const k = `${x.accountId}|${x.securityKey}`;
-    const p = STMT.get(k);
+    // A demat's fund units no statement carries are dated by their own record (Stage 10jo).
+    const p = STMT.get(k) ?? (x.recoveredCost ? x : undefined);
     if (!p) return null;
     const r = p.tradeRecord;
     let inc = BOOK_HOLDING_INCOME[k] ?? [];
@@ -273,8 +274,13 @@ function holdingRate(ps: readonly Position[]): { annual: number | null; days: nu
       payments += trades.length; from = rec.cashRecord[0].date; close = ACC.get(p.accountId)!.asOf; inc = [];
     } else return null;
     for (const i of inc) if (i.date! >= from && i.date! <= close) flows.push({ t: Date.parse(i.date!), amount: i.amount });
-    if (p.marketValue > 0) flows.push({ t: Date.parse(close), amount: p.marketValue });
-    to = Math.max(to, p.marketValue > 0 ? Date.parse(close) : Math.max(...flows.map((fl) => fl.t)));
+    // A LINE THE PAGE PRICES AT A NAV closes on the NAV's own date (Stage 10jo),
+    // its units assumed held since the statement; a statement line on its own.
+    const navDay = (x.priceEvidence?.effectiveAt ?? (x.navPriced ? x.navDate : null))?.slice(0, 10) ?? null;
+    const at = navDay && navDay >= close && !x.rolledForward ? navDay : close;
+    const value = at === close ? p.marketValue : x.marketValue;
+    if (value > 0) flows.push({ t: Date.parse(at), amount: value });
+    to = Math.max(to, value > 0 ? Date.parse(at) : Math.max(...flows.map((fl) => fl.t)));
   }
   const t0 = Math.min(...flows.map((fl) => fl.t));
   const npv = (rate: number) => flows.reduce((a, fl) => a + fl.amount / Math.pow(1 + rate, (fl.t - t0) / (365 * 86_400_000)), 0);
@@ -574,7 +580,13 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
     .flatMap(([, ps]) => ps.map((p) => displaySecurity(p.security))));
   const sheetCagr = ROWS.filter((r) => (r["Measure"] === "CAGR" || r["Measure"] === "XIRR") && r["Mandate"] === DASH
     && !datedRowNames.has(r["Security"] as string)).length;
-  eq("exactly those direct rows are annualised, and no other", sheetCagr, annualised);
+  // …AND A ROW OF SEVERAL LINES EVERY ONE OF WHICH IS DATED (Stage 10jo: a
+  // demat's fund units at their NAV) is annualised on its pooled money, a year
+  // or more — the rate the XIRR claim below re-solves.
+  const multi = [...byKey].filter(([key, ps]) => ps.length > 1 && !accountDated(key)
+    && !datedRowNames.has(displaySecurity(ps[0].security))
+    && (() => { const sol = holdingRate(firstOfGroup(ps)); return !!sol && sol !== "short" && sol.days >= 365 && sol.annual !== null; })()).length;
+  eq("exactly those direct rows are annualised, and no other", sheetCagr, annualised + multi);
   // INSIDE A MANDATE the same rule binds, on the line's OWN dated money: its
   // account's trades where they date every unit (Stage 10fw), or its lot
   // register. A mandate line nothing dates in full must never annualise.
@@ -650,7 +662,11 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
     const sol = holdingRate(firstOfGroup(ps));
     if (!sol || sol === "short" || sol.days < 365 || sol.payments < 2 || sol.annual === null) continue;
     holdingXirrs++;
-    const row = ROWS.filter((r) => r["Security"] === displaySecurity(ps[0].security) && r["Mandate"] === DASH);
+    // A name two rows share (a demat's units and an AMC's folio, both "Helios
+    // Flexi Cap Fund · Direct") is told apart by the units each holds.
+    const units = firstOfGroup(ps).reduce((t, p) => t + (p.quantity ?? 0), 0);
+    const named = ROWS.filter((r) => r["Security"] === displaySecurity(ps[0].security) && r["Mandate"] === DASH);
+    const row = named.length > 1 ? named.filter((r) => Math.abs(Number(r["Qty"]) - units) < 0.01) : named;
     if (row.length !== 1 || row[0]["Measure"] !== "XIRR" || !near(row[0]["Return"] as number, sol.annual, 1e-4)) holdingWrong.push(key);
   }
   for (const p of NAV_SET.held.filter(isPms)) {

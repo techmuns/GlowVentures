@@ -55,6 +55,8 @@
  * account closes at the value its own statement prints, on that statement's
  * date. A live quote moves a mandate row's value today, and closing today's
  * value on a month-old date would credit the rate with days nobody measured.
+ * A HOLDING whose every purchase and sale is dated closes on its market price's
+ * own date instead, its units assumed held (Stage 10jo, `holdingFlowsOf`).
  */
 import type { Account, AccountReturnCoverage, CapitalMove, Commitment, Position, PositionTranches, ReviewFlow } from "./types";
 import type { RowCapital } from "./analytics";
@@ -62,6 +64,7 @@ import { capitalClose, capitalMovesWithCalls, capitalRollup, type CapitalGroup }
 import { xirrPct } from "./bucketXirr";
 import type { DatedFlow } from "./xirr";
 import { holdingFlowsOf } from "./holdingFlows";
+import { acquisitionIdentity } from "../../shared/fundUnitActions.mjs";
 
 export type DatedCapital = {
   /**
@@ -154,15 +157,22 @@ export function buildDatedCapital(input: {
    * as dated as an account's (`holdingFlows.ts`). Pooled the same way, each
    * line closing on its own statement's value and date. EVERY LINE OR NONE: one
    * line no record dates leaves the row on the per-holding answer, and one whose
-   * record is short of a figure says which.
+   * record is short of a figure says which. A line the market prices closes
+   * on that dated price, its units assumed held (Stage 10jo).
    */
   const stmt = new Map(input.positions.map((p) => [`${p.accountId}|${p.securityKey}`, p]));
   const asOfOf = new Map(input.accounts.map((a) => [a.accountId, a.asOf ?? null]));
+  const ownerOf = new Map(input.accounts.map((a) => [a.accountId, a.owner]));
   const holdingsBehind = (set: readonly Position[]): RowCapital | null => {
     const lines = set.filter(carries);
     if (!lines.length) return null;
     const accts = [...new Set(lines.map((p) => p.accountId))].sort();
-    const fl = lines.map((p) => holdingFlowsOf(stmt.get(`${p.accountId}|${p.securityKey}`) ?? p, asOfOf.get(p.accountId) ?? null));
+    // The line as shown first — priced by the market, it closes on that price
+    // (Stage 10jo) — and its statement's line where that cannot stand.
+    const fl = lines.map((p) => {
+      const asOf = asOfOf.get(p.accountId) ?? null, s = stmt.get(`${p.accountId}|${p.securityKey}`);
+      return holdingFlowsOf(p, asOf) ?? (s && s !== p ? holdingFlowsOf(s, asOf) : null);
+    });
     if (fl.some((x) => x === null)) return null;
     const short = fl.find((x) => x && !x.dated);
     if (short && !short.dated) {
@@ -171,8 +181,16 @@ export function buildDatedCapital(input: {
     }
     const flows: DatedFlow[] = [];
     let since: string | null = null, to: string | null = null, n = 0, trades = 0, lots = 0, recovered = 0;
-    for (const x of fl) {
+    // Lines closed at a market price, their units assumed held (Stage 10jo).
+    const owners = new Set<string>(), from = new Set<string>();
+    const closes: NonNullable<Extract<RowCapital, { dated: true }>["closes"]> = [];
+    for (const [i, x] of fl.entries()) {
       if (!x || !x.dated) continue;
+      if (x.market) {
+        owners.add(ownerOf.get(lines[i].accountId) ?? "the owner"); from.add(x.market.from);
+        // The ISIN the units were bought under — a documented unit conversion keeps its record there.
+        if (x.close) closes.push({ key: `${lines[i].accountId}|${lines[i].securityKey}`, isin: acquisitionIdentity(lines[i]).isin ?? null, from: x.market.from, ...x.close });
+      }
       for (const f of x.flows) flows.push({ date: new Date(f.date), amount: f.amount });
       n += x.payments;
       if (x.basis === "trades") trades++; else if (x.basis === "lots") lots++; else recovered++;
@@ -185,6 +203,7 @@ export function buildDatedCapital(input: {
     return {
       dated: true, accountIds: accts, accounts: lines.length, flows: n, since, to,
       days: dayDiff(since, to), annualPct: xirrPct(flows), holdings: { trades, lots, recovered },
+      ...(owners.size ? { assumed: { owners: [...owners].sort(), from: [...from].sort() }, closes } : {}),
     };
   };
 

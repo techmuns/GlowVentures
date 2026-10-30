@@ -119,7 +119,6 @@ export function ConsolidatedSheet({ onSources, onLoaded }: { onSources: () => vo
       }}>Clear dates</button>}
       {invalidRange && <p id="transaction-date-error" role="alert" className="text-xs text-amber-400">From date must be on or before To date.</p>}
     </fieldset>}
-    {!isTransactions && <p data-prose-ok="consolidated template units, valuation basis and missing-input coverage" className="mb-3 max-w-5xl text-xs leading-relaxed text-slate-400">{sheet.note}</p>}
     <Card pad={false}>
       <div className="max-h-[65vh] overflow-auto" data-navigation-scroll="consolidatedsheet-1">
         <ExportableTable exportName={`Consolidated — ${sheet.name}`} className="w-full border-separate border-spacing-0 text-xs" data-table-static="the consolidated workbook keeps one fixed column order so the Excel download and the page read the same">
