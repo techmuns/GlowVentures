@@ -5105,9 +5105,34 @@ const HOLDING_FLOWS_BOOK = (() => {
     const lots = bookObject(src, "BOOK_HOLDING_LOTS") ?? {};
     const asOf = new Map(accounts.map((a) => [a.accountId, a.asOf]));
     const stmt = new Map(positions.map((p) => [`${p.accountId}|${p.securityKey}`, p]));
-    const lineOf = (k) => {
+    const recovered = bookArray(src, "BOOK_RECOVERED_COSTS") ?? [];
+    /**
+     * A LINE CLOSED AT ITS MARKET PRICE (Stage 10jo). The page names the price's
+     * date and the value it gives (`data-capital-close`), because the price is
+     * the feed's, not the book's; everything else — the record, its flows, the
+     * statement date the close may not precede — is restated here. A line no
+     * statement carries (a demat's quantity-only shares or fund units) is found
+     * by its account and ISIN in the recovered records.
+     */
+    const closeOf = (m, statementDate) => {
+      if (!m) return undefined;
+      return m.date >= statementDate && m.from === statementDate && m.value > 0 ? { t: Date.parse(m.date), v: m.value } : false;
+    };
+    const lineOf = (k, m) => {
       const p = stmt.get(k);
-      if (!p) return null;
+      if (!p) {
+        const [accountId] = k.split("|");
+        const rec = m?.isin ? recovered.find((x) => x.accountId === accountId && x.isin === m.isin) : null;
+        const end = asOf.get(accountId);
+        if (!rec || !end || !rec.cashRecord?.length || rec.hprUnavailableReason || rec.salesAfter || rec.asOf !== m.from) return null;
+        const close = closeOf(m, rec.asOf);
+        if (!close) return null;
+        const moved = rec.cashRecord.filter((x) => x.side !== "income");
+        return {
+          flows: rec.cashRecord.map((x) => ({ t: Date.parse(x.date), a: x.side === "buy" ? -x.amount : x.amount })),
+          since: Date.parse(moved.find((x) => x.side === "buy")?.date ?? moved[0].date), close, payments: moved.length,
+        };
+      }
       const r = p.tradeRecord;
       const inc = income[k] ?? [];
       if (r && r.unaccounted === 0) {
@@ -5119,7 +5144,9 @@ const HOLDING_FLOWS_BOOK = (() => {
           ...inc.filter((x) => x.date >= r.from && x.date <= r.to).map((x) => ({ t: Date.parse(x.date), a: x.amount })),
         ];
         const first = ts.find((t) => t.side === "buy")?.date ?? ts[0].date;
-        return { flows, since: Date.parse(first), close: p.marketValue > 0 ? { t: Date.parse(r.to), v: p.marketValue } : null, payments: ts.length };
+        const mc = closeOf(m, r.to);
+        if (mc === false) return null;
+        return { flows, since: Date.parse(first), close: mc ?? (p.marketValue > 0 ? { t: Date.parse(r.to), v: p.marketValue } : null), payments: ts.length };
       }
       const ls = lots[k];
       const end = asOf.get(p.accountId);
@@ -5129,24 +5156,32 @@ const HOLDING_FLOWS_BOOK = (() => {
           ...ls.map((l) => ({ t: Date.parse(l.date), a: -l.cost })),
           ...inc.filter((x) => x.date >= ls[0].date && x.date <= end).map((x) => ({ t: Date.parse(x.date), a: x.amount })),
         ];
-        return { flows, since: Date.parse(ls[0].date), close: p.marketValue > 0 ? { t: Date.parse(end), v: p.marketValue } : null, payments: ls.length };
+        const mc = closeOf(m, end);
+        if (mc === false) return null;
+        return { flows, since: Date.parse(ls[0].date), close: mc ?? (p.marketValue > 0 ? { t: Date.parse(end), v: p.marketValue } : null), payments: ls.length };
       }
       // A RECOVERED RECORD (Stage 10jf): every priced trade and dated receipt, on
       // the line its statement values, with no unverified or later sale.
       const rec = p.recoveredCost;
       if (end && rec?.cashRecord?.length && !rec.hprUnavailableReason && !rec.salesAfter && !p.rolledForward) {
         const moved = rec.cashRecord.filter((x) => x.side !== "income");
+        const mc = closeOf(m, end);
+        if (mc === false) return null;
         return {
           flows: rec.cashRecord.map((x) => ({ t: Date.parse(x.date), a: x.side === "buy" ? -x.amount : x.amount })),
           since: Date.parse(moved.find((x) => x.side === "buy")?.date ?? moved[0].date),
-          close: p.marketValue > 0 ? { t: Date.parse(end), v: p.marketValue } : null, payments: moved.length,
+          close: mc ?? (p.marketValue > 0 ? { t: Date.parse(end), v: p.marketValue } : null), payments: moved.length,
         };
       }
       return null;
     };
-    /** Null where a line has no dated record; "short" where one is short of a figure; else the pooled rate. */
-    const solve = (keys) => {
-      const ls = keys.map(lineOf);
+    /**
+     * Null where a line has no dated record; "short" where one is short of a
+     * figure; else the pooled rate. `closes` are the page's market closes.
+     */
+    const solve = (keys, closes) => {
+      const byKey = new Map((closes ?? []).map((c) => [c.key, c]));
+      const ls = keys.map((k) => lineOf(k, byKey.get(k)));
       if (!ls.length || ls.some((x) => x === null)) return null;
       if (ls.some((x) => x === "short")) return "short";
       const flows = [];
@@ -5323,9 +5358,12 @@ const holdingLinesOf = (B, c, securityAxis) => {
   if (c.mandate) return null;
   const keys = new Set(c.rowKeys.length ? c.rowKeys : c.rowKey ? [c.rowKey] : []);
   if (!keys.size) return null;
-  return B.consolidated(keys).filter(B.carries)
+  const lines = B.consolidated(keys).filter(B.carries)
     .filter((p) => securityAxis || B.acc.get(p.accountId)?.engagement !== "PMS")
     .map((p) => `${p.accountId}|${p.securityKey}`);
+  // A line no statement carries — a demat's quantity-only shares or fund units —
+  // is on the row only through its market close (Stage 10jo).
+  return [...lines, ...(c.capitalClose ?? []).map((x) => x.key).filter((k) => keys.has(k.split("|").slice(1).join("|")) && !lines.includes(k))];
 };
 
 const rowUnits = (B, c) => {
@@ -11519,7 +11557,8 @@ const collapseReturns = (cols, into) => {
 const FRESH_READER_PICK = ["a fresh reader opens on every return measure, by default, with nothing in the address asking for it", (t, ctx) => {
   const rs = ctx?.returnSelect;
   if (!rs) return false;   // the handle is gone — the picker is, too
-  return rs.active.join(",") === "absolute,cagr,xirr,ytd" && rs.source === "default"
+  // No CAGR column since Stage 10jo: XIRR covers it.
+  return rs.active.join(",") === "absolute,xirr,ytd" && rs.source === "default"
     && !addressAsksForReturns(ctx.url);
 }];
 /**
@@ -17150,8 +17189,11 @@ const stockLayoutChecks = () => [
         const units = set.length ? B.wholeOf(set) : null;
         // A LINE THAT IS NOT A WHOLE ACCOUNT is dated by its own trades or lots
         // where the book dates every unit of it (Stage 10fw).
-        const hsol = !units && set.length && HOLDING_FLOWS_BOOK
-          ? HOLDING_FLOWS_BOOK.solve(set.filter(B.carries).map((p) => `${p.accountId}|${p.securityKey}`)) : null;
+        // A demat line no statement carries is on the page through its market
+        // close alone (Stage 10jo): re-solved with it.
+        const closeKeys = (r.capitalClose ?? []).map((x) => x.key).filter((k) => k === `${r.account}|${key}`);
+        const hsol = !units && (set.length || closeKeys.length) && HOLDING_FLOWS_BOOK
+          ? HOLDING_FLOWS_BOOK.solve(set.length ? set.filter(B.carries).map((p) => `${p.accountId}|${p.securityKey}`) : closeKeys, r.capitalClose) : null;
         const want = units ? (units.every((u) => B.rated.has(u)) ? "dated" : "undated")
           : hsol === null ? null : hsol === "short" ? "undated" : "holding";
         if ((r.capital ?? null) !== want) return false;
@@ -18349,8 +18391,8 @@ const PM_RETURN_CHECKS = [
     // never a reason to abstain.
     const rs = ctx?.returnSelect;
     if (!rs) return false;
-    // CY is gone (Stage 10jl): it was a dash on every row.
-    return ["auto", "absolute", "cagr", "xirr", "ytd"].every((k) => rs.offers.includes(k)) && !rs.offers.includes("calendar");
+    // CY is gone (Stage 10jl): it was a dash on every row. CAGR too (Stage 10jo): XIRR covers it.
+    return ["auto", "absolute", "xirr", "ytd"].every((k) => rs.offers.includes(k)) && !rs.offers.includes("calendar") && !rs.offers.includes("cagr");
   }],
   ["every fund row carries one return cell per picked measure, in the picker's order", (t, ctx) => {
     const pr = ctx?.pmReturn, rs = ctx?.returnSelect;
@@ -18529,12 +18571,12 @@ const PM_RETURN_ROUTE_CHECKS = [
       && (covers === of || foot.text.includes(`${covers} of ${of}`))
       && (covers === of || /Not in it:/.test(foot.titles));
   }],
-  ["the CAGR and YTD footers are refused with the whole book's own reason", (t, ctx) => {
+  // No CAGR column since Stage 10jo (XIRR covers it), so no CAGR footer either.
+  ["the YTD footer is refused with the whole book's own reason, and there is no CAGR footer", (t, ctx) => {
     const foot = ctx?.pmReturn?.foot ?? [];
-    const want = ["cagr", "ytd"];
-    const cells = want.map((m) => foot.find((x) => x.measure === m));
-    if (cells.some((c) => !c)) return false;
-    return cells.every((c) => !/%/.test(c.text) && /whole private book/i.test(c.titles));
+    const c = foot.find((x) => x.measure === "ytd");
+    if (!c || foot.some((x) => x.measure === "cagr")) return false;
+    return !/%/.test(c.text) && /whole private book/i.test(c.titles);
   }],
   ["the HPR footer is FIFO over the whole private book — the gain on units held and redeemed, over the capital deployed in both", (t, ctx) => {
     const foot = ctx?.pmReturn?.foot?.find((x) => x.measure === "absolute");
@@ -18554,10 +18596,11 @@ const PM_RETURN_ROUTE_CHECKS = [
    * fund under CAGR or XIRR shows its holding-period return, tagged — and
    * counting it as "annualised" would state a coverage the column does not have.
    */
-  ["the CAGR and XIRR headers count only the cells on their own measure", (t, ctx) => {
+  ["the XIRR header counts only the cells on its own measure", (t, ctx) => {
     const pr = ctx?.pmReturn, head = ctx?.returnHead ?? [];
     if (!pr) return false;
-    for (const [m, label, word] of [["cagr", "CAGR", "annualised"], ["xirr", "XIRR", "money-weighted"]]) {
+    // No CAGR column since Stage 10jo: XIRR covers it.
+    for (const [m, label, word] of [["xirr", "XIRR", "money-weighted"]]) {
       const h = head.find((x) => x.label.toUpperCase().startsWith(label));
       /**
        * THE COUNT IS THE HEADING'S HOVER NOW, not a line under it. *"its obvious
@@ -24600,11 +24643,11 @@ const INVARIANTS = {
     ...txnMergedChecks(),
     ...CAPITAL_RETURN_CHECKS,
     FRESH_READER_PICK,
-    ["the return picker is on the Transactions view, offering every measure, with all four ticked", (t, ctx) => {
+    ["the return picker is on the Transactions view, offering every measure, with all three ticked and no CAGR", (t, ctx) => {
       const rs = ctx?.returnSelect;
       if (!rs) return false;   // the handle is gone — the picker is, too
-      const four = ["absolute", "cagr", "xirr", "ytd"];
-      return four.every((m) => rs.offers.includes(m) && rs.active.includes(m)) && rs.offers.includes("auto");
+      const all = ["absolute", "xirr", "ytd"];
+      return all.every((m) => rs.offers.includes(m) && rs.active.includes(m)) && rs.offers.includes("auto") && !rs.offers.includes("cagr");
     }],
     /**
      * ...AND EACH GETS A COLUMN OF ITS OWN, headed with its own name — the
@@ -24613,11 +24656,11 @@ const INVARIANTS = {
     ["…and the transactions table draws one return column per measure, headed with its own name", (t, ctx) => {
       const heads = (ctx.mineHead ?? []).map((c) => c.text.split("\n")[0].trim().toUpperCase());
       if (!heads.length) return false;
-      return ["HPR", "CAGR", "XIRR", "YTD"].every((h) => heads.includes(h)) && !heads.includes("RETURN") && !heads.includes("CY");
+      return ["HPR", "XIRR", "YTD"].every((h) => heads.includes(h)) && !heads.includes("RETURN") && !heads.includes("CY") && !heads.includes("CAGR");
     }],
     ["…and every capital row carries a cell in each of them, in order", (t, ctx) => {
       if (!ctx.mineRows?.length) return false;
-      const want = ["absolute", "cagr", "xirr", "ytd"];
+      const want = ["absolute", "xirr", "ytd"];
       return ctx.mineRows.every((r) => r.returns.length === want.length && r.returns.every((x, i) => x.measure === want[i]));
     }],
     /**
@@ -24628,26 +24671,17 @@ const INVARIANTS = {
     ["…and no row carries a calendar-year cell", (t, ctx) =>
       (ctx.mineRows ?? []).length > 0 && ctx.mineRows.every((r) => !r.returns.some((x) => x.measure === "calendar"))],
     /**
-     * CAGR IS REFUSED WHERE THE MONEY WENT IN OVER SEVERAL DATES, and says the
-     * money-weighted rate is XIRR. A single-start compound rate over a
-     * staggered account treats every rupee as invested on the first date,
-     * which overstates the time the later money has been at work. Under a year
-     * the row shows its HPR, tagged, on every measure instead (Stage 10hk).
+     * A STAGGERED ACCOUNT'S ANNUAL RATE IS XIRR'S, AND NO CAGR COLUMN OFFERS A
+     * SINGLE-START ONE (Stage 10jo). A single-start compound rate over money
+     * that went in over several dates treats every rupee as invested on the
+     * first; the family dropped the CAGR column because XIRR covers it. Each
+     * staggered row keeps its XIRR cell.
      */
-    ["…CAGR is refused on a staggered account held a year or more, naming XIRR as its measure — under a year it is the HPR", (t, ctx) => {
+    ["…a staggered account's annual rate is XIRR's — no row carries a CAGR cell", (t, ctx) => {
       const staggered = (ctx.mineRows ?? []).filter((r) => r.contributions > 1 && r.returns.some((x) => x.pct != null));
       if (!staggered.length) return false;
-      const daysOf = (r) => {
-        const g = CAPITAL_GROUPS?.rowCapital(r.key, r.accountId);
-        const first = g?.boughtFirst || null, to = g?.close ?? null;
-        return first && to ? Math.round((Date.parse(to) - Date.parse(first)) / 864e5) : null;
-      };
-      return staggered.every((r) => {
-        const c = r.returns.find((x) => x.measure === "cagr");
-        const days = daysOf(r);
-        if (days != null && days < 365) return !!c && (c.pct == null || c.tag === "HPR");
-        return c && c.pct == null && /XIRR/.test(c.reason ?? "");
-      });
+      return (ctx.mineRows ?? []).every((r) => !r.returns.some((x) => x.measure === "cagr"))
+        && staggered.every((r) => r.returns.some((x) => x.measure === "xirr"));
     }],
     /**
      * ...AND NOTHING IS ANNUALISED OVER LESS THAN A YEAR. A CAGR or XIRR
@@ -25281,10 +25315,11 @@ const INVARIANTS = {
     ["a fresh reader opens on every return measure, one column each, in the picker's order, with nothing saved", (t, ctx) => {
       const I = ctx.remember?.initial;
       if (!I?.cols?.length) return false;
-      const four = ["absolute", "cagr", "xirr", "ytd"];
+      // No CAGR column (Stage 10jo): XIRR covers it.
+      const all = ["absolute", "xirr", "ytd"];
       const at = I.cols.indexOf("ret:absolute");
-      return I.active.join(",") === four.join(",") && I.source === "default" && !/[?&]ret=/.test(I.url)
-        && at > 0 && four.every((m, k) => I.cols[at + k] === `ret:${m}`) && !I.cols.includes("ret:auto") && !I.cols.includes("ret:calendar")
+      return I.active.join(",") === all.join(",") && I.source === "default" && !/[?&]ret=/.test(I.url)
+        && at > 0 && all.every((m, k) => I.cols[at + k] === `ret:${m}`) && !I.cols.includes("ret:auto") && !I.cols.includes("ret:calendar") && !I.cols.includes("ret:cagr")
         && I.savedOrder === null && I.savedPick === null;
     }],
     ["a column moved on Category stays where it was put, and is saved", (t, ctx) => {
@@ -25345,8 +25380,8 @@ const INVARIANTS = {
     ["a measure ticked later takes the returns' place, not the far right", (t, ctx) => {
       const R = ctx.remember;
       if (!R?.cagr || !R.s3) return false;
-      return /remembered/i.test(R.cagrKept ?? "") && R.cagr.active.join() === "cagr" && R.cagr.source === "saved"
-        && !/[?&]ret=/.test(R.cagr.url) && sameCols(R.cagr.cols, collapseReturns(R.s3.cols, "ret:cagr"));
+      return /remembered/i.test(R.cagrKept ?? "") && R.cagr.active.join() === "xirr" && R.cagr.source === "saved"
+        && !/[?&]ret=/.test(R.cagr.url) && sameCols(R.cagr.cols, collapseReturns(R.s3.cols, "ret:xirr"));
     }],
     /**
      * ANOTHER BROWSER TAB shares this browser's memory: it opens the table as
@@ -30457,7 +30492,8 @@ const INVARIANTS = {
     ["the picker shows every measure ticked, and not the methodology", (t, ctx) => {
       const rs = ctx?.returnSelect;
       if (!rs) return false;
-      return rs.active.join(",") === "absolute,cagr,xirr,ytd";
+      // No CAGR since Stage 10jo: XIRR covers it.
+      return rs.active.join(",") === "absolute,xirr,ytd";
     }],
   ],
   /**
@@ -32714,8 +32750,9 @@ const INVARIANTS = {
     ["the return-measure picker offers the methodology and every measure, and opens on the reader's saved pick", (t, ctx) => {
       const rs = ctx?.returnSelect;
       if (!rs) return { notChecked: "the return-measure picker was not on screen on this run" };
-      const want = ["auto", "absolute", "cagr", "xirr", "ytd"];
-      return want.every((k) => rs.offers.includes(k)) && !rs.offers.includes("calendar") && rs.active.length === 1 && rs.active[0] === "auto"
+      // No CAGR among them since Stage 10jo: XIRR covers it.
+      const want = ["auto", "absolute", "xirr", "ytd"];
+      return want.every((k) => rs.offers.includes(k)) && !rs.offers.includes("calendar") && !rs.offers.includes("cagr") && rs.active.length === 1 && rs.active[0] === "auto"
         && rs.source === "saved" && !addressAsksForReturns(ctx.url);
     }],
     /**
@@ -33743,10 +33780,10 @@ const INVARIANTS = {
       if (!B || !H) return false;
       const securityAxis = !/group=(category|assetClass|basket)/.test(String(ctx?.path ?? ""));
       const cells = (ctx?.returnCells ?? []).filter((c) => c.measure === "cagr" && c.capital === "holding");
-      const solved = cells.map((c) => ({ c, sol: H.solve(holdingLinesOf(B, c, securityAxis) ?? []) }));
+      const solved = cells.map((c) => ({ c, sol: H.solve(holdingLinesOf(B, c, securityAxis) ?? [], c.capitalClose) }));
       if (!solved.length) {
         const any = (ctx?.returnCells ?? []).some((c) => c.measure === "cagr" && !c.mandate
-          && (() => { const l = holdingLinesOf(B, c, securityAxis); return l?.length && H.solve(l) && H.solve(l) !== "short"; })());
+          && (() => { const l = holdingLinesOf(B, c, securityAxis); return l?.length && H.solve(l, c.capitalClose) && H.solve(l, c.capitalClose) !== "short"; })());
         return any ? false : { notChecked: "no row on screen is holdings the book dates in full" };
       }
       return solved.every(({ c, sol }) => {
@@ -33981,7 +34018,7 @@ const INVARIANTS = {
         if (c.capital === "holding") {
           const H = HOLDING_FLOWS_BOOK;
           const lines = holdingLinesOf(B, c, securityAxis);
-          const sol = H && lines?.length ? H.solve(lines) : null;
+          const sol = H && lines?.length ? H.solve(lines, c.capitalClose) : null;
           if (!sol || sol === "short") return false;
           if (sol.days < 365) { if (!Number.isNaN(v) && c.tag !== "HPR") return false; continue; }
           if (sol.annual === null) { if (!Number.isNaN(v)) return false; continue; }
@@ -34040,7 +34077,7 @@ const INVARIANTS = {
           // dates every line of it in full (Stage 10fw) — "holding" — short of a
           // figure where one line's record is — "undated" — and nothing else.
           const lines = holdingLinesOf(B, c, securityAxis);
-          const sol = HOLDING_FLOWS_BOOK && lines?.length ? HOLDING_FLOWS_BOOK.solve(lines) : null;
+          const sol = HOLDING_FLOWS_BOOK && lines?.length ? HOLDING_FLOWS_BOOK.solve(lines, c.capitalClose) : null;
           const want = sol === null ? null : sol === "short" ? "undated" : "holding";
           if ((c.capital ?? null) !== want) return false;
           continue;
@@ -40235,8 +40272,9 @@ for (const theme of THEMES) {
         await page.reload({ waitUntil: "load" }).catch(() => {});
         await settle();
         R.reloaded = await snap();
-        // A measure ticked afterwards takes the returns' place.
-        R.cagrKept = await pick("cagr");
+        // A measure ticked afterwards takes the returns' place. XIRR, since
+        // the picker offers no CAGR (Stage 10jo).
+        R.cagrKept = await pick("xirr");
         R.cagr = await snap();
         // ANOTHER BROWSER TAB. It shares this browser's memory, so it opens the
         // table as this one left it, and a column moved there moves here too —
@@ -43678,6 +43716,7 @@ for (const theme of THEMES) {
           stockReturns: [...t.querySelectorAll("td[data-stock-return]")].map((e) => ({
             account: e.closest("tr")?.getAttribute("data-account-row") ?? null,
             capital: e.getAttribute("data-capital"),
+            capitalClose: (() => { try { return JSON.parse(e.getAttribute("data-capital-close") || "null"); } catch { return null; } })(),
             xirr: e.querySelector("[data-stock-xirr]")?.getAttribute("data-stock-xirr") ?? null,
             xirrText: (e.querySelector("[data-stock-xirr]")?.innerText ?? "").replace(/\s+/g, " ").trim(),
             text: e.innerText.replace(/\s+/g, " ").trim(),
@@ -44791,6 +44830,8 @@ for (const theme of THEMES) {
             // back. The row's own handles ride along for the converse claim.
             capital: td.getAttribute("data-capital"),
             capitalAccounts: (td.getAttribute("data-capital-accounts") || "").split(" ").filter(Boolean),
+            // Lines closed at their market price (Stage 10jo), re-solved with them.
+            capitalClose: (() => { try { return JSON.parse(td.getAttribute("data-capital-close") || "null"); } catch { return null; } })(),
             // A YTD FROM THE FIRST DATE WE HAVE (Stage 10jl): its window and pooled accounts.
             ytdFrom: td.getAttribute("data-ytd-from"),
             ytdTo: td.getAttribute("data-ytd-to"),

@@ -53,12 +53,20 @@ const cashRecordOf = (events, income = []) => [
   ...income,
 ].sort((a,b) => a.date.localeCompare(b.date));
 
+/**
+ * THE UNITS HELD AFTER EACH DATED ROW, oldest first (Stage 10jo) — a split or
+ * bonus included — so a year-to-date return can read what was held on
+ * 1 January. One entry per date: the balance after that day's last row.
+ */
+const unitRecordOf = (steps) => [...new Map(steps.map((x) => [x.date, Math.round(x.units * 1e6) / 1e6])).entries()]
+  .map(([date, units]) => ({ date, units }));
+
 /** Replay already identified source rows; a shortfall never creates a free lot. */
 export function replayReviewRows(rows, { isin, asOf, quantity, allowUnpricedSales = false }) {
   if (rows.some((r) => !r.date)) return { reason:'a source transaction has no acquisition/disposal date' };
   const selected = rows.filter((r) => r.date && r.date <= asOf)
     .sort((a,b) => a.date.localeCompare(b.date) || a.row - b.row);
-  const events = [], notes = [], unpricedSales = [], incomeRows = [];
+  const events = [], notes = [], unpricedSales = [], incomeRows = [], steps = [];
   let balance = 0, income = 0, sawIncome = false;
   for (const r of selected) {
     if (r.txn === 'Closing') continue;
@@ -81,7 +89,7 @@ export function replayReviewRows(rows, { isin, asOf, quantity, allowUnpricedSale
         notes.push(`row ${r.row}: duplicated purchase amount excluded from the noncash split; Closing independently equals purchase cost`);
       }
       events.push({ date:r.date, kind:'switch', from:isin, to:isin, units:balance, unitsIn:balance+r.qty });
-      balance += r.qty; continue;
+      balance += r.qty; steps.push({ date:r.date, units:balance }); continue;
     }
     const buy = r.txn === 'Purchase', sell = r.txn === 'Sale';
     const unpricedSale = sell && allowUnpricedSales && (!finite(r.value) || r.value <= 0);
@@ -95,6 +103,7 @@ export function replayReviewRows(rows, { isin, asOf, quantity, allowUnpricedSale
     if (unpricedSale) unpricedSales.push(r.row);
     events.push({date:r.date,kind:buy?'buy':'sell',cls:isin,units:r.qty,amount:unpricedSale?0:Math.abs(r.value)});
     balance += buy ? r.qty : -r.qty;
+    steps.push({ date:r.date, units:balance });
   }
   if (!events.length) return { reason:'no purchase lots in the saved record' };
   const ledger = fifoLedger(events);
@@ -111,7 +120,7 @@ export function replayReviewRows(rows, { isin, asOf, quantity, allowUnpricedSale
     // EVERY RUPEE ON ITS OWN DAY (Stage 10jf), which is what a money-weighted
     // return reads. Withheld where a sale's cash is unverified: that sale's
     // "zero" above is a placeholder, never money.
-    ...(unpricedSales.length?{}:{cashRecord:cashRecordOf(events,incomeRows)}),
+    ...(unpricedSales.length?{}:{cashRecord:cashRecordOf(events,incomeRows),unitRecord:unitRecordOf(steps)}),
     dividendReceived:sawIncome?r2(income):null, rows:selected.map((r)=>r.row), notes,
     ...(unpricedSales.length?{hprUnavailableReason:`Sale proceeds are unverified on review row(s) ${unpricedSales.join(', ')}; original lots establish remaining cost only`}:{}) };
 }
@@ -197,6 +206,7 @@ function fromMopwm(report,t,a,prior=NO_RECORD) {
   return {record:{accountId:t.accountId,isin:t.isin,quantity:t.quantity,asOf:t.asOf,costBasis:m.costBasis,
     ...(m.heldPurchases?{heldPurchases:m.heldPurchases}:{}),
     ...(m.cashRecord?{cashRecord:m.cashRecord}:{}),
+    ...(m.unitRecord?{unitRecord:m.unitRecord}:{}),
     realizedPnL:m.realizedPnL,costOfUnitsSold:m.costOfUnitsSold,dividendReceived:m.dividendReceived,
     ...(m.salesAfter?{salesAfter:m.salesAfter}:{}),
     evidence:[{path:MOPWM_TRANSACTIONS,sheet:rows[0].sheet,rows:m.rows}],
@@ -240,6 +250,7 @@ export function recoverHoldingCosts({root,accounts,positions,unvalued,shareMovem
         records.push({accountId:t.accountId,isin:t.isin,quantity:t.quantity,asOf:t.asOf,costBasis:r2(ema.costBasis),
           heldPurchases:{first:ema.date,last:ema.date,lots:1},
           cashRecord:[{date:ema.date,side:'buy',amount:r2(ema.costBasis)}],
+          unitRecord:[{date:ema.date,units:ema.quantity}],
           realizedPnL:null,costOfUnitsSold:null,dividendReceived:null,evidence:[ema.evidence],
           notes:['Payment register matches owner and every unit; no complete separate sales/income record is claimed']});
       } else settle(t,a,NO_RECORD);
@@ -257,6 +268,7 @@ export function recoverHoldingCosts({root,accounts,positions,unvalued,shareMovem
     records.push({accountId:t.accountId,isin:t.isin,quantity:t.quantity,asOf:t.asOf,costBasis:result.costBasis,
       ...(result.heldPurchases?{heldPurchases:result.heldPurchases}:{}),
       ...(result.cashRecord?{cashRecord:result.cashRecord}:{}),
+      ...(result.unitRecord?{unitRecord:result.unitRecord}:{}),
       realizedPnL:result.realizedPnL,costOfUnitsSold:result.costOfUnitsSold,dividendReceived:result.dividendReceived,
       ...(result.hprUnavailableReason?{hprUnavailableReason:result.hprUnavailableReason}:{}),
       ...(sourceRows.some((r)=>r.txn==='Sale'&&r.date>t.asOf)

@@ -1799,6 +1799,14 @@ export type RowCapital =
        * record dates. `accounts` is then the number of lines pooled.
        */
       holdings?: { trades: number; lots: number; recovered?: number };
+      /**
+       * SET WHERE A LINE CLOSES ON ITS MARKET PRICE (Stage 10jo): no statement
+       * values its units, so the rate ends on that price's date and the units
+       * of its `from` statement are assumed still held by `owners`.
+       */
+      assumed?: { owners: string[]; from: string[] };
+      /** Each line closed at its market price: what the checks re-solve the rate with (Stage 10jo). */
+      closes?: { key: string; isin: string | null; from: string; date: string; value: number }[];
     }
   | { dated: false; accountIds: string[]; reason: string };
 
@@ -1806,7 +1814,9 @@ export type MeasuredReturn =
   /** A figure to print, and the tag that says which measure it is. */
   | { shown: true; pct: number; tag: string; note?: string;
       /** A YTD struck from a later date this year — its first day (Stage 10jl). */
-      from?: string }
+      from?: string;
+      /** Units carried at a market price, assumed still held — labelled on the cell (Stage 10jo). */
+      assumed?: boolean }
   /**
    * No figure, with the reason a reader needs in order to act on it. `na` where
    * no document could supply one, drawn NA rather than a dash (Stage 10jh).
@@ -1839,7 +1849,7 @@ const noCostReasonOf = (p: ReturnInput): string => p.hprUnavailableReason ?? p.f
  */
 const wholeAccountsOf = (n: number): string => n === 1 ? "This row is one whole account" : `This row is ${n} whole accounts`;
 const NEEDS_STATEMENT_VALUE =
-  "its purchases and sales are all dated (the family's review, register or adviser's report), but no statement values the units it holds now — its value here is a live price or a published NAV, and an annual rate closes only on a statement's own value and date. A holdings statement that values it fills this.";
+  "its purchases and sales are all dated (the family's review, register or adviser's report), but no statement values the units it holds now, and its market price carries no date on or after their statement — so there is no dated value to close an annual rate on. A dated price or a holdings statement that values it fills this.";
 const DERIVED_ONLY_RETURN =
   "no statement in this book reports this company as a holding — the family reaches it only through funds whose filings name it — so there is no cost or value of the family's own to strike a return on";
 /**
@@ -1868,6 +1878,13 @@ function capitalSubYear(returnPct: number, cap: Extract<RowCapital, { dated: tru
     note: `The money has been in for ${cap.days} days — under a year — so this is the holding-period return, not an annual rate.` };
 }
 
+/**
+ * WHAT A MARKET CLOSE ASSUMES, on the figure's own hover (Stage 10jo): the
+ * statement the units are from, and whose they are assumed still to be.
+ */
+const assumedNote = (cap: Extract<RowCapital, { dated: true }>): string => !cap.assumed ? ""
+  : ` Valued at the market price on ${cap.to}; the number of units is from the ${cap.assumed.from.join(" and ")} statement. No sale appears in the records we have. We assume ${cap.assumed.owners.join(" and ")} still ${cap.assumed.owners.length > 1 ? "hold" : "holds"} them.`;
+
 /** Said where debt is annualised over less than a year (Stage 10hk), so the rate never reads as a year's measurement. */
 const DEBT_UNDER_A_YEAR = " Debt, so it is annualised although the money has been in for under a year.";
 
@@ -1878,8 +1895,8 @@ function capitalCompound(returnPct: number, cap: Extract<RowCapital, { dated: tr
   // date. The row's own return may be on a live price, which compounded over the
   // days to the statement date would credit days nobody measured.
   if (cap.holdings && cap.annualPct != null) {
-    return { shown: true, pct: cap.annualPct, tag,
-      note: `One purchase on ${cap.since}, compounded over the ${cap.days} days to ${cap.to}, the date its statement values it.${cap.days < YEAR_DAYS ? DEBT_UNDER_A_YEAR : ""}` };
+    return { shown: true, pct: cap.annualPct, tag, ...(cap.assumed ? { assumed: true } : {}),
+      note: `One purchase on ${cap.since}, compounded over the ${cap.days} days to ${cap.to}, ${cap.assumed ? "the date of its market price" : "the date its statement values it"}.${cap.days < YEAR_DAYS ? DEBT_UNDER_A_YEAR : ""}${assumedNote(cap)}` };
   }
   const growth = 1 + returnPct / 100;
   if (growth <= 0) return { shown: true, pct: returnPct, tag: "HPR", note: "A total loss has no compound rate, so this is the holding-period return." };
@@ -1902,11 +1919,16 @@ function capitalXirrOf(p: ReturnInput, cap: Extract<RowCapital, { dated: true }>
   // A ROW OF HOLDINGS (Stage 10fw): its money is each holding's own dated
   // purchases, sales and dividends, and the note says whose record dates them.
   if (cap.holdings) {
-    const by = [cap.holdings.trades ? "its account's dated trades" : null, cap.holdings.lots ? "its lot register" : null, cap.holdings.recovered ? "its reconciled purchase record" : null].filter(Boolean).join(" and ");
-    return { shown: true, pct: cap.annualPct, tag: "XIRR",
-      note: `Money-weighted over ${cap.flows} dated ${cap.flows === 1 ? "purchase" : "purchases and sales"}${cap.holdings.trades + cap.holdings.lots > 0 ? " and the dividends paid on them" : " and any income its record dates"}, as ${by} ${cap.holdings.trades + cap.holdings.lots + (cap.holdings.recovered ?? 0) === 1 ? "dates" : "date"} them`
-        + (cap.accounts > 1 ? `, across ${cap.accounts} holdings each closing on its own statement's value and date` : ", and the value on the statement's own date")
-        + `, from ${cap.since} to ${cap.to} (${cap.days} days).${debtNote}` };
+    const many = cap.accounts > 1;
+    const by = [cap.holdings.trades ? (many ? "their accounts' dated trades" : "its account's dated trades") : null,
+      cap.holdings.lots ? (many ? "their lot registers" : "its lot register") : null,
+      cap.holdings.recovered ? (many ? "their reconciled purchase records" : "its reconciled purchase record") : null].filter(Boolean).join(" and ");
+    return { shown: true, pct: cap.annualPct, tag: "XIRR", ...(cap.assumed ? { assumed: true } : {}),
+      note: `Money-weighted over ${cap.flows} dated ${cap.flows === 1 ? "purchase" : "purchases and sales"}${cap.holdings.trades + cap.holdings.lots > 0 ? " and the dividends paid on them" : " and any income its record dates"}, as ${by} ${many || cap.holdings.trades > 0 || / and /.test(by) ? "date" : "dates"} them`
+        + (cap.assumed
+          ? (cap.accounts > 1 ? `, across ${cap.accounts} holdings each closing on its own value and date` : "") + `, closing at the market price on ${cap.to}`
+          : cap.accounts > 1 ? `, across ${cap.accounts} holdings each closing on its own statement's value and date` : ", and the value on the statement's own date")
+        + `, from ${cap.since} to ${cap.to} (${cap.days} days).${debtNote}${assumedNote(cap)}` };
   }
   return { shown: true, pct: cap.annualPct, tag: "XIRR",
     note: `Money-weighted over ${cap.flows} dated ${cap.flows === 1 ? "payment" : "payments"}`
@@ -2009,7 +2031,7 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
      * start date, so it never reads as a full year to date.
      */
     const a = p.ytdFrom;
-    if (a?.shown) return { shown: true, pct: a.pct, tag: a.fullYear ? "YTD" : `from ${ytdTagDay(a.from)}`, note: a.note, from: a.from };
+    if (a?.shown) return { shown: true, pct: a.pct, tag: a.fullYear ? "YTD" : `from ${ytdTagDay(a.from)}`, note: a.note, from: a.from, ...(a.assumed ? { assumed: true } : {}) };
     return { shown: false, tag: "YTD", reason: a ? `${y.reason.replace(/\.?$/, ".")} From a later date this year: ${a.reason}` : y.reason };
   }
 

@@ -68,4 +68,37 @@ const vec = ['v-e-c-assago-capital-management-llp-128005', 'v-e-c-assago-capital
 const vecRow = real.of(BOOK_POSITIONS.filter((p) => vec.includes(p.accountId)));
 assert.ok(!vecRow.shown && /different dates/.test(vecRow.reason), vecRow.shown ? `${vecRow.pct}` : vecRow.reason);
 for (const v of vec) { const one = real.of(BOOK_POSITIONS.filter((p) => p.accountId === v)); assert.ok(one.shown && one.from === '2026-03-31'); }
-console.log('ok   ytd from the first date we have — whole accounts, part accounts, a full year, a refused record, parts valued apart and the archive');
+
+// A FULL YEAR TO DATE FROM THE PURCHASE RECORD (Stage 10jo): the units held on
+// 1 January at 31 December's close, this year's sales on their dates, and the
+// units carried from the statement at published closes, assumed still held.
+{
+  const acct = { accountId: 'd', accountNo: '222', owner: 'Owner D', provider: 'Demat', asOf: '2026-07-31', engagement: 'Direct' } as Account;
+  const record = { accountId: 'd', isin: 'INE000000009', quantity: 43, asOf: '2026-07-31', costBasis: 4300, realizedPnL: 900, costOfUnitsSold: 4700, dividendReceived: null,
+    heldPurchases: { first: '2024-11-13', last: '2024-11-13', lots: 1 },
+    cashRecord: [{ date: '2024-11-13', side: 'buy' as const, amount: 9000 }, { date: '2026-05-18', side: 'sell' as const, amount: 4200 }, { date: '2026-05-27', side: 'sell' as const, amount: 1560 }],
+    unitRecord: [{ date: '2024-11-13', units: 90 }, { date: '2026-05-18', units: 55 }, { date: '2026-05-27', units: 43 }],
+    evidence: [], notes: [] };
+  const held = { accountId: 'd', securityKey: 'example-d', security: 'Example D', isin: 'INE000000009', symbol: 'EXD', assetClass: 'Equity', marketSide: 'listed',
+    quantity: 43, marketValue: 43 * 150, costBasis: 4300, live: true, recoveredCost: record } as unknown as Position;
+  const feed = { version: 1, capturedAt: '2026-10-29T00:00:00Z', requestedFrom: '2023-01-01', requestedTo: '2027-01-01', verifiedThrough: '2026-10-29', symbols: ['EXD'], isins: [], sourceUrl: 'fixture', rows: [] };
+  const hist = { ok: true as const, version: 2, symbol: 'EXD.NS', isin: null, name: 'Example D', source: 'Public price fixture', basis: 'adjusted-close' as const,
+    first: '2025-12-31', last: '2026-10-29', t: ['2025-12-31', '2026-07-31', '2026-10-29'], v: [1, 1, 1], c: [100, 140, 150], splits: [] };
+  const assumptions = { positions: [held], unvalued: [{ accountId: 'd', securityKey: 'example-d', isin: 'INE000000009', quantity: 43, asOf: '2026-07-31' }],
+    trades: {}, movements: {}, moves: [], actions: feed, instruments: new Map([['example-d', { key: 'example-d', query: 'symbol=EXD' }]]), histories: { 'example-d': hist } } as never;
+  const y = ytdBook({ inputs: [], held: [held], accounts: [acct], end: '2026-10-30', assumptions, money }).of([held]);
+  assert.ok(y.shown, y.shown ? '' : y.reason);
+  if (y.shown) {
+    assert.equal(y.from, '2025-12-31'); assert.equal(y.to, '2026-10-29'); assert.ok(y.fullYear && y.assumed);
+    const D = 302, V0 = 90 * 100, V1 = 43 * 150, out1 = 4200, out2 = 1560;   // 31 Dec → 29 Oct; sales on days 138 and 147
+    near(y.pct, (V1 - V0 + out1 + out2) / (V0 - out1 * (D - 138) / D - out2 * (D - 147) / D) * 100);
+    assert.match(y.note, /reconciled purchase record/); assert.match(y.note, /Owner D still holds/);
+    const tag = measuredReturn({ returnPct: 30, heldSince: '2024-11-13', assetClass: 'Equity', ytdFrom: y }, 'ytd', '2026-10-30');
+    assert.ok(tag.shown && tag.tag === 'YTD' && tag.assumed === true, 'a full year to date, labelled assumed');
+  }
+  // A split this year before the statement leaves the record's units on another basis: the old path.
+  const split = ytdBook({ inputs: [], held: [held], accounts: [acct], end: '2026-10-30', money,
+    assumptions: { ...(assumptions as object), histories: { 'example-d': { ...hist, splits: [{ date: '2026-03-01', factor: 2 }] } } } as never }).of([held]);
+  assert.ok(!split.shown || split.from !== '2025-12-31', 'no 1 January start across an unchecked split');
+}
+console.log('ok   ytd from the first date we have — whole accounts, part accounts, a full year, a refused record, parts valued apart, the purchase record and the archive');
