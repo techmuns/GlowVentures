@@ -756,14 +756,6 @@
 - Still dashes, for want of source data: 95 share rows have an undated line, because most managers' trade records start on 1 Apr 2026 (Green Lantern's in Jan 2025) and their statements print no lots. YTD and CY need a value on 1 Jan or 31 Dec, which no statement in the book carries.
 - Tests: `holdingFlows.test.ts` section 6 ties each record's cash to its FIFO cost and gain, and holds every refusal.
 
-### Stage 10ji — MORNING CIO: EVERY RETURN TILE AGAINST THE INDEX, ON THE SAME MONEY
-
-- *"Versus benchmark return over the same period using the same methodology."* The Consolidated return, Gain / loss, financial-year, calendar-year and history tiles each carry a `vs Nifty 500` line with the lead in percentage points. The info card lists all seven benchmarks. `src/lib/cardBenchmark.ts`, `components/CardBenchmark.tsx`.
-- Each rupee behind the tile buys the index on its own date and closes on its record's own date. Period tiles strike `measureWindow` over `pmeWindowRows` of the tile's own windows, so type, under-a-year rule and debt rule are the tile's.
-- Since-investment tiles are gain ÷ money invested per holding, with no flows of their own. Each unit is dated from `holdingFlowsOf`, then its capital moves, then its allotments, and counts only where the money in ties to what it invested within 1% (`DATED_MONEY_TIE`). The rest leaves BOTH sides and is named in the info card, so the tile shows the book's figure on that money beside the index's. Measured 30 Oct: ₹579 Cr of ₹793 Cr dated, the book +15.8% (tile +17.2%) against Nifty 500 +1.6%; FYTD +17.6% against +9.1%.
-- Price indices on statement dates; no live quote enters. No feed, a wrong-name answer or an index younger than the money renders `—` with the reason. The Nifty 500 loads with the tile; the other six load when the info card opens.
-- `closeOnOrBefore` moved from `PortfolioReturns` to `lib/prices.ts`. Test `cardBenchmark.test.ts`; invariant on `cio`.
-
 ### Stage 10jg — OUR BOOK VS BENCHMARKS: THE BOOK AND THE NIFTY 500 UNTIL A CHIP ADDS ANOTHER
 
 *"NAV chart: show only the book and Nifty 500 by default; other indices added by clicking"* — the family, 30 Oct 2026.
@@ -771,3 +763,11 @@
 - The state is the list shown (`nav-shown`), not the list hidden; an empty list is the book alone, which is why it no longer collapses to `null`.
 - All seven histories still load on open, because every chip states its return.
 - `check:pages`: the probe reads the first paint as `navChart.defaults`, adds one chip (`navChart.added`), turns the rest on for the per-line claims, then restores the default. Two new invariants hold the first paint and the click.
+
+### Stage 10ji — MORNING CIO: EVERY RETURN TILE AGAINST THE INDEX, ON THE SAME MONEY
+
+- *"Versus benchmark return over the same period using the same methodology."* The Consolidated return, Gain / loss, financial-year, calendar-year and history tiles each carry a `vs Nifty 500` line with the lead in percentage points. The info card lists all seven benchmarks. `src/lib/cardBenchmark.ts`, `components/CardBenchmark.tsx`.
+- Each rupee behind the tile buys the index on its own date and closes on its record's own date. Period tiles strike `measureWindow` over `pmeWindowRows` of the tile's own windows, so type, under-a-year rule and debt rule are the tile's.
+- Since-investment tiles are gain ÷ money invested per holding, with no flows of their own. Each unit is dated from `holdingFlowsOf`, then its capital moves, then its allotments, and counts only where the money in ties to what it invested within 1% (`DATED_MONEY_TIE`). The rest leaves BOTH sides and is named in the info card, so the tile shows the book's figure on that money beside the index's. Measured 30 Oct: ₹579 Cr of ₹793 Cr dated, the book +15.8% (tile +17.2%) against Nifty 500 +1.6%; FYTD +17.6% against +9.1%.
+- Price indices on statement dates; no live quote enters. No feed, a wrong-name answer or an index younger than the money renders `—` with the reason. The Nifty 500 loads with the tile; the other six load when the info card opens.
+- `closeOnOrBefore` moved from `PortfolioReturns` to `lib/prices.ts`. Test `cardBenchmark.test.ts`; invariant on `cio`.
