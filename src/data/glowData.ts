@@ -14,18 +14,18 @@ import type {
 } from "@/lib/types";
 
 /** Newest report date across all accounts. Individual accounts can be older. */
-export const BOOK_AS_OF = "2026-10-26";
+export const BOOK_AS_OF = "2026-10-29";
 
 export const BOOK_SUMMARY: BookSummary = {
-  "asOf": "2026-10-26",
+  "asOf": "2026-10-29",
   "listedValue": 6874910837.12,
-  "privateValue": 2130934270.93,
+  "privateValue": 2765890203.68,
   "unplacedValue": 0,
-  "totalValue": 9005845108.05,
-  "positionsCount": 465,
-  "entitiesCount": 9,
+  "totalValue": 9640801040.8,
+  "positionsCount": 469,
+  "entitiesCount": 11,
   "startupsCount": 0,
-  "accountsCount": 84
+  "accountsCount": 86
 };
 
 /** Account registry — one row per (provider, account no). Positions join on accountId. */
@@ -649,6 +649,64 @@ export const BOOK_ACCOUNTS: Account[] = [
         "asOf": "2026-03-31",
         "documents": [
           "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings"
+        ]
+      }
+    }
+  },
+  {
+    "accountId": "hdfc-bank-nsdl-demat-67776424",
+    "provider": "HDFC Bank (NSDL demat)",
+    "accountNo": "67776424",
+    "ownerId": "glowsphere-llp",
+    "owner": "Glowsphere LLP",
+    "strategy": null,
+    "engagement": "Direct",
+    "providerEngagement": "NSDL depository account at IN301549 — Free Balance",
+    "members": [],
+    "asOf": "2026-10-29",
+    "inceptionDate": null,
+    "capitalRecordTo": "2026-10-29",
+    "custodian": "HDFC Bank (NSDL demat)",
+    "noPositionsReason": null,
+    "demat": {
+      "printed": {
+        "depository": "NSDL",
+        "dpId": "IN301549",
+        "clientId": "67776424",
+        "participant": "HDFC Bank",
+        "accountId": "hdfc-bank-nsdl-demat-67776424",
+        "asOf": "2026-10-29",
+        "documents": [
+          "hdfc-bank-nsdl-demat-67776424-2026-10-29-holdings"
+        ]
+      }
+    }
+  },
+  {
+    "accountId": "hdfc-bank-nsdl-demat-67776432",
+    "provider": "HDFC Bank (NSDL demat)",
+    "accountNo": "67776432",
+    "ownerId": "glowterra-llp",
+    "owner": "Glowterra LLP",
+    "strategy": null,
+    "engagement": "Direct",
+    "providerEngagement": "NSDL depository account at IN301549 — Free Balance",
+    "members": [],
+    "asOf": "2026-10-29",
+    "inceptionDate": null,
+    "capitalRecordTo": "2026-10-29",
+    "custodian": "HDFC Bank (NSDL demat)",
+    "noPositionsReason": null,
+    "demat": {
+      "printed": {
+        "depository": "NSDL",
+        "dpId": "IN301549",
+        "clientId": "67776432",
+        "participant": "HDFC Bank",
+        "accountId": "hdfc-bank-nsdl-demat-67776432",
+        "asOf": "2026-10-29",
+        "documents": [
+          "hdfc-bank-nsdl-demat-67776432-2026-10-29-holdings"
         ]
       }
     }
@@ -2098,6 +2156,14 @@ export const BOOK_OWNERS = [
   {
     "ownerId": "hope-india-trust",
     "displayName": "Hope India Trust"
+  },
+  {
+    "ownerId": "glowterra-llp",
+    "displayName": "Glowterra LLP"
+  },
+  {
+    "ownerId": "glowsphere-llp",
+    "displayName": "Glowsphere LLP"
   },
   {
     "ownerId": "not-attributed",
@@ -9062,6 +9128,146 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 4128,
     "dividendReceived": 4128,
     "dividendFrom": "2026-04-01",
+    "positionIrrPct": null
+  },
+  {
+    "statementRecord": {
+      "document": "hdfc-bank-nsdl-demat-67776424-2026-10-29-holdings",
+      "pointer": "/holdings/0"
+    },
+    "securityKey": "nzuri-pune-knowledge-park",
+    "security": "NZURI PUNE KNOWLEDGE PARK PRIVATE LIMITED",
+    "symbol": null,
+    "isin": "INE0TBU01016",
+    "accountId": "hdfc-bank-nsdl-demat-67776424",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Unlisted",
+    "marketSide": "private",
+    "quantity": 4507042,
+    "avgCost": 16.6952,
+    "currentPrice": null,
+    "costBasis": 75245856,
+    "costBasisSource": "family-advice",
+    "valuedAtCost": true,
+    "advisedNote": "Units from the HDFC Bank NSDL statement of 2026-10-29, whose rate is face value. Bought 2026-10-01 for what the family's note delivered with the HDFC Bank NSDL holding statements of 29 Oct 2026 records: \"INVESTMENT - 4507042 EQUITY SHARES AT THE RATE OF 17.75 INR\". The amount invested is ₹47,54,139.5 below those units at ₹17.75; the note does not say why.",
+    "marketValue": 75245856,
+    "unrealizedPnL": null,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": null,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "statementRecord": {
+      "document": "hdfc-bank-nsdl-demat-67776424-2026-10-29-holdings",
+      "pointer": "/holdings/1"
+    },
+    "securityKey": "nzuri-pune-knowledge-park-private-limited-pref-24sp46",
+    "security": "NZURI PUNE KNOWLEDGE PARK PRIVATE LIMITED - PREF 24SP46",
+    "symbol": null,
+    "isin": "INE0TBU03020",
+    "accountId": "hdfc-bank-nsdl-demat-67776424",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Unlisted",
+    "marketSide": "private",
+    "quantity": 4704225,
+    "avgCost": 17.75,
+    "currentPrice": null,
+    "costBasis": 83499993.75,
+    "costBasisSource": "family-advice",
+    "valuedAtCost": true,
+    "advisedNote": "Units from the HDFC Bank NSDL statement of 2026-10-29, whose rate is face value. Bought 2026-09-25 for what the family's note delivered with the HDFC Bank NSDL holding statements of 29 Oct 2026 records: \"INVESTMENT - 47,04,225 PREFERENCE SHARES AT THE RATE OF 17.75 INR\".",
+    "marketValue": 83499993.75,
+    "unrealizedPnL": null,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": null,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "statementRecord": {
+      "document": "hdfc-bank-nsdl-demat-67776432-2026-10-29-holdings",
+      "pointer": "/holdings/0"
+    },
+    "securityKey": "nzuri-pune-knowledge-park",
+    "security": "NZURI PUNE KNOWLEDGE PARK PRIVATE LIMITED",
+    "symbol": null,
+    "isin": "INE0TBU01016",
+    "accountId": "hdfc-bank-nsdl-demat-67776432",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Unlisted",
+    "marketSide": "private",
+    "quantity": 13521127,
+    "avgCost": 16.6931,
+    "currentPrice": null,
+    "costBasis": 225710084,
+    "costBasisSource": "family-advice",
+    "valuedAtCost": true,
+    "advisedNote": "Units from the HDFC Bank NSDL statement of 2026-10-29, whose rate is face value. Bought 2026-10-01 for what the family's note delivered with the HDFC Bank NSDL holding statements of 29 Oct 2026 records: \"INVESTMENT - 13521127 EQUITY SHARES OF INR 17.75 PER SHARE\". The amount invested is ₹1,42,89,920.25 below those units at ₹17.75; the note does not say why.",
+    "marketValue": 225710084,
+    "unrealizedPnL": null,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": null,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "statementRecord": {
+      "document": "hdfc-bank-nsdl-demat-67776432-2026-10-29-holdings",
+      "pointer": "/holdings/1"
+    },
+    "securityKey": "nzuri-pune-knowledge-park-private-limited-pref-24sp46",
+    "security": "NZURI PUNE KNOWLEDGE PARK PRIVATE LIMITED - PREF 24SP46",
+    "symbol": null,
+    "isin": "INE0TBU03020",
+    "accountId": "hdfc-bank-nsdl-demat-67776432",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Unlisted",
+    "marketSide": "private",
+    "quantity": 14112676,
+    "avgCost": 17.75,
+    "currentPrice": null,
+    "costBasis": 250499999,
+    "costBasisSource": "family-advice",
+    "valuedAtCost": true,
+    "advisedNote": "Units from the HDFC Bank NSDL statement of 2026-10-29, whose rate is face value. Bought 2026-09-25 for what the family's note delivered with the HDFC Bank NSDL holding statements of 29 Oct 2026 records: \"INVESTMENT - 14112676 PREFERENCE SHARES OF 17.75 INR EACH\".",
+    "marketValue": 250499999,
+    "unrealizedPnL": null,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": null,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "accruedIncome": null,
+    "dividendReceived": null,
     "positionIrrPct": null
   },
   {
@@ -30293,6 +30499,20 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "bookValue": 199990000.57
     },
     {
+      "accountId": "hdfc-bank-nsdl-demat-67776424",
+      "provider": "HDFC Bank (NSDL demat)",
+      "accountNo": "67776424",
+      "date": "2026-10-29",
+      "bookValue": 158745849.75
+    },
+    {
+      "accountId": "hdfc-bank-nsdl-demat-67776432",
+      "provider": "HDFC Bank (NSDL demat)",
+      "accountNo": "67776432",
+      "date": "2026-10-29",
+      "bookValue": 476210083
+    },
+    {
       "accountId": "hdfc-mutual-fund-15644806",
       "provider": "HDFC Mutual Fund",
       "accountNo": "15644806",
@@ -30685,7 +30905,7 @@ export const BOOK_ATTRIBUTION: Attribution = {
   "enteredValue": 169017109.59,
   "exitedValue": 99872612.94,
   "undecomposedValue": -41094574.09,
-  "bookValue": 9005845108.05,
+  "bookValue": 9640801040.8,
   "coveredBookValue": 2754651699.36,
   "accounts": [
     {
@@ -37149,6 +37369,34 @@ export const BOOK_CAPITAL_GAINS: EntityCG[] = [
     "absent": "no capital gain statement issued for this account in this drop"
   },
   {
+    "entity": "Glowsphere LLP · HDFC 67776424",
+    "accountId": "hdfc-bank-nsdl-demat-67776424",
+    "ownerId": "glowsphere-llp",
+    "realisedST": null,
+    "realisedLT": null,
+    "unrealisedST": null,
+    "unrealisedLT": null,
+    "periodFrom": null,
+    "periodTo": null,
+    "lots": 0,
+    "source": null,
+    "absent": "no capital gain statement issued for this account in this drop"
+  },
+  {
+    "entity": "Glowterra LLP · HDFC 67776432",
+    "accountId": "hdfc-bank-nsdl-demat-67776432",
+    "ownerId": "glowterra-llp",
+    "realisedST": null,
+    "realisedLT": null,
+    "unrealisedST": null,
+    "unrealisedLT": null,
+    "periodFrom": null,
+    "periodTo": null,
+    "lots": 0,
+    "source": null,
+    "absent": "no capital gain statement issued for this account in this drop"
+  },
+  {
     "entity": "Bharat Jaisinghani Family Trust 3 · HDFC 67786137",
     "accountId": "hdfc-bank-nsdl-demat-67786137",
     "ownerId": "bharat-jaisinghani-family-trust-3",
@@ -39663,6 +39911,16 @@ export const BOOK_ACCOUNT_RETURN_RECORDS: Record<string, AccountReturnCoverage> 
     "latestValuationDate": "2026-03-31",
     "record": null,
     "gap": "No complete valued portfolio for a return"
+  },
+  "hdfc-bank-nsdl-demat-67776424": {
+    "latestValuationDate": "2026-10-29",
+    "record": null,
+    "gap": "Held at what was paid: no valuation yet to measure a return against"
+  },
+  "hdfc-bank-nsdl-demat-67776432": {
+    "latestValuationDate": "2026-10-29",
+    "record": null,
+    "gap": "Held at what was paid: no valuation yet to measure a return against"
   },
   "hdfc-bank-nsdl-demat-67786137": {
     "latestValuationDate": "2026-08-29",
@@ -46177,6 +46435,30 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "hdfc-bank-nsdl-demat-67776424",
+    "date": "2026-09-25",
+    "direction": "in",
+    "label": "INVESTMENT - 47,04,225 PREFERENCE SHARES AT THE RATE OF 17.75 INR",
+    "amount": 83499993.75,
+    "invested": 83499993.75,
+    "charges": null,
+    "units": 4704225,
+    "security": "NZURI PUNE KNOWLEDGE PARK PRIVATE LIMITED - PREF 24SP46",
+    "securityKey": "nzuri-pune-knowledge-park-private-limited-pref-24sp46"
+  },
+  {
+    "accountId": "hdfc-bank-nsdl-demat-67776432",
+    "date": "2026-09-25",
+    "direction": "in",
+    "label": "INVESTMENT - 14112676 PREFERENCE SHARES OF 17.75 INR EACH",
+    "amount": 250499999,
+    "invested": 250499999,
+    "charges": null,
+    "units": 14112676,
+    "security": "NZURI PUNE KNOWLEDGE PARK PRIVATE LIMITED - PREF 24SP46",
+    "securityKey": "nzuri-pune-knowledge-park-private-limited-pref-24sp46"
+  },
+  {
     "accountId": "carnelian-asset-management-and-advisors-pvt-ltd-3517383",
     "date": "2026-09-29",
     "direction": "out",
@@ -46197,6 +46479,30 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": null,
     "security": null,
     "securityKey": null
+  },
+  {
+    "accountId": "hdfc-bank-nsdl-demat-67776424",
+    "date": "2026-10-01",
+    "direction": "in",
+    "label": "INVESTMENT - 4507042 EQUITY SHARES AT THE RATE OF 17.75 INR",
+    "amount": 75245856,
+    "invested": 75245856,
+    "charges": null,
+    "units": 4507042,
+    "security": "NZURI PUNE KNOWLEDGE PARK PRIVATE LIMITED",
+    "securityKey": "nzuri-pune-knowledge-park"
+  },
+  {
+    "accountId": "hdfc-bank-nsdl-demat-67776432",
+    "date": "2026-10-01",
+    "direction": "in",
+    "label": "INVESTMENT - 13521127 EQUITY SHARES OF INR 17.75 PER SHARE",
+    "amount": 225710084,
+    "invested": 225710084,
+    "charges": null,
+    "units": 13521127,
+    "security": "NZURI PUNE KNOWLEDGE PARK PRIVATE LIMITED",
+    "securityKey": "nzuri-pune-knowledge-park"
   },
   {
     "accountId": "v-e-c-assago-capital-management-llp-128004",
@@ -46743,6 +47049,82 @@ export const BOOK_POSITION_TRANCHES: Record<string, PositionTranches> = {
       }
     ],
     "units": 201254.604
+  },
+  "hdfc-bank-nsdl-demat-67776424|nzuri-pune-knowledge-park": {
+    "accountId": "hdfc-bank-nsdl-demat-67776424",
+    "securityKey": "nzuri-pune-knowledge-park",
+    "moves": [
+      {
+        "accountId": "hdfc-bank-nsdl-demat-67776424",
+        "date": "2026-10-01",
+        "direction": "in",
+        "label": "INVESTMENT - 4507042 EQUITY SHARES AT THE RATE OF 17.75 INR",
+        "amount": 75245856,
+        "invested": 75245856,
+        "charges": null,
+        "units": 4507042,
+        "security": "NZURI PUNE KNOWLEDGE PARK PRIVATE LIMITED",
+        "securityKey": "nzuri-pune-knowledge-park"
+      }
+    ],
+    "units": 4507042
+  },
+  "hdfc-bank-nsdl-demat-67776424|nzuri-pune-knowledge-park-private-limited-pref-24sp46": {
+    "accountId": "hdfc-bank-nsdl-demat-67776424",
+    "securityKey": "nzuri-pune-knowledge-park-private-limited-pref-24sp46",
+    "moves": [
+      {
+        "accountId": "hdfc-bank-nsdl-demat-67776424",
+        "date": "2026-09-25",
+        "direction": "in",
+        "label": "INVESTMENT - 47,04,225 PREFERENCE SHARES AT THE RATE OF 17.75 INR",
+        "amount": 83499993.75,
+        "invested": 83499993.75,
+        "charges": null,
+        "units": 4704225,
+        "security": "NZURI PUNE KNOWLEDGE PARK PRIVATE LIMITED - PREF 24SP46",
+        "securityKey": "nzuri-pune-knowledge-park-private-limited-pref-24sp46"
+      }
+    ],
+    "units": 4704225
+  },
+  "hdfc-bank-nsdl-demat-67776432|nzuri-pune-knowledge-park": {
+    "accountId": "hdfc-bank-nsdl-demat-67776432",
+    "securityKey": "nzuri-pune-knowledge-park",
+    "moves": [
+      {
+        "accountId": "hdfc-bank-nsdl-demat-67776432",
+        "date": "2026-10-01",
+        "direction": "in",
+        "label": "INVESTMENT - 13521127 EQUITY SHARES OF INR 17.75 PER SHARE",
+        "amount": 225710084,
+        "invested": 225710084,
+        "charges": null,
+        "units": 13521127,
+        "security": "NZURI PUNE KNOWLEDGE PARK PRIVATE LIMITED",
+        "securityKey": "nzuri-pune-knowledge-park"
+      }
+    ],
+    "units": 13521127
+  },
+  "hdfc-bank-nsdl-demat-67776432|nzuri-pune-knowledge-park-private-limited-pref-24sp46": {
+    "accountId": "hdfc-bank-nsdl-demat-67776432",
+    "securityKey": "nzuri-pune-knowledge-park-private-limited-pref-24sp46",
+    "moves": [
+      {
+        "accountId": "hdfc-bank-nsdl-demat-67776432",
+        "date": "2026-09-25",
+        "direction": "in",
+        "label": "INVESTMENT - 14112676 PREFERENCE SHARES OF 17.75 INR EACH",
+        "amount": 250499999,
+        "invested": 250499999,
+        "charges": null,
+        "units": 14112676,
+        "security": "NZURI PUNE KNOWLEDGE PARK PRIVATE LIMITED - PREF 24SP46",
+        "securityKey": "nzuri-pune-knowledge-park-private-limited-pref-24sp46"
+      }
+    ],
+    "units": 14112676
   },
   "hdfc-mutual-fund-15644806|hdfc-balanced-advantage-fund-regular-plan-growth": {
     "accountId": "hdfc-mutual-fund-15644806",

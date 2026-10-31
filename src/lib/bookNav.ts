@@ -264,10 +264,14 @@ export function navUnits(input: BookNavInput): NavUnit[] {
     // the review's line: its statement's own series is the holding the review's
     // line replaced in the book (Stage 10dh), and mixing the two would value one
     // document's money against the other's.
-    if (a.reviewHolder || (own.length > 0 && own.every((p) => p.review))) {
+    // A line the family advised is held at what was paid in the same way, and an
+    // account of them runs line by line: no account value exists to measure it on.
+    const advised = own.length > 0 && own.every((p) => p.costBasisSource === "family-advice");
+    if (a.reviewHolder || advised || (own.length > 0 && own.every((p) => p.review))) {
+      const byLine = a.reviewHolder || advised;
       for (const p of own) {
-        const mine = a.reviewHolder ? moves.filter((m) => m.securityKey === p.securityKey) : moves;
-        units.push(lineUnit(a, p, mine, a.reviewHolder ? `${a.accountId}|${p.securityKey}` : a.accountId));
+        const mine = byLine ? moves.filter((m) => m.securityKey === p.securityKey) : moves;
+        units.push(lineUnit(a, p, mine, byLine ? `${a.accountId}|${p.securityKey}` : a.accountId));
       }
       continue;
     }

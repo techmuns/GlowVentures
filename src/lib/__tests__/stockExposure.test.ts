@@ -189,9 +189,9 @@ console.log(`     measured ${CR(measured)} + derived ${CR(ex.total)} + opaque ${
  */
 ok("the sixth bucket has a subject: taken out, the partition breaks",
   other > 1e7 && Math.abs(buckets - other - BOOK_NAV) > 1, CR(other));
-ok("...and every row in it is a line the family's review carries",
-  otherRows.every((p) => p.review === true),
-  otherRows.filter((p) => p.review !== true).map((p) => p.security).join(", "));
+ok("...and every row in it is a line the family's review or written note carries",
+  otherRows.every((p) => p.review === true || p.costBasisSource === "family-advice"),
+  otherRows.filter((p) => p.review !== true && p.costBasisSource !== "family-advice").map((p) => p.security).join(", "));
 ok("...where the floor's term is specks and redeemed nils, never money",
   floorOut.closed.every((p) => p.marketValue === 0)
     && floored < NEGLIGIBLE_VALUE_FLOOR * new Set(floorOut.negligible.map((p) => p.securityKey)).size,

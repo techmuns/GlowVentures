@@ -16,6 +16,8 @@ const SUITES = [
   { name: "capitalOrigins", file: "capitalOrigins.test.mjs", required: true },
   // The demat each account's statements name (Stage 10ic, scripts/lib/dematAccounts.mjs).
   { name: "dematAccounts", file: "dematAccounts.test.mjs", required: true },
+  // The LLP holding statements and the family's note on them (Stage 10jq).
+  { name: "llpStatements", file: "llpStatements.test.mjs", required: true },
   { name: "coverage", file: "returnCoverage.test.mjs", required: true },
   { name: "latestReturns", file: "accountReturnRecords.test.mjs", required: true },
   { name: "parseNum", file: "parseNum.test.mjs", required: true },

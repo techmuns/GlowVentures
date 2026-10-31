@@ -30,6 +30,7 @@ import { AIF_UNITS, PROVIDER as CDSL_DEMAT_PROVIDER } from "./ingest/providers/m
 import { reclassificationsFrom, carryLotsThroughSwitches, carryCostThroughSwitches, UNIT_TIE } from "./lib/classSwitch.mjs";
 import { tradeWindows, windowThrough, oneCopyPerTrade, holdingTradeRows, holdingTradeRecord } from "./lib/holdingTrades.mjs";
 import { PROVIDER as NSDL_DEMAT_PROVIDER } from "./ingest/providers/nsdlDemat.mjs";
+import { applyFamilyAdvice } from "./ingest/reference/familyAdvisedInvestments.mjs";
 import { PROVIDER as HDFC_NSDL_PROVIDER } from "./ingest/providers/hdfcNsdl.mjs";
 import { SEPARATE_INVESTMENTS } from "../shared/separateInvestments.mjs";
 import { KEPT_UNVALUED, keptUnvaluedFor, keptUnvaluedReason } from "../shared/keptUnvalued.mjs";
@@ -2348,7 +2349,12 @@ function build(archived, archiveCount = archived.length, references = {}) {
   // counted" — about a document with no rows to count. It is set aside here,
   // where the archive is read, and said once.
   const witnesses = archived.filter((d) => d.twinOf);
-  const docs = archived.filter((d) => !d.twinOf);
+  const docs = archived.filter((d) => !d.twinOf).map((d) => {
+    // The family's written advice on the LLP statements: cost, date and an at-cost value.
+    const advised = applyFamilyAdvice(d);
+    notes.push(...advised.notes);
+    return advised.doc;
+  });
   if (witnesses.length) {
     const byProvider = new Map();
     for (const w of witnesses) byProvider.set(w.provider, (byProvider.get(w.provider) ?? 0) + 1);
@@ -3888,7 +3894,7 @@ function build(archived, archiveCount = archived.length, references = {}) {
         quantity: h.quantity,
         // A FIFO cost restates what one unit cost too (Stage 10fz): the statement's
         // own unit cost is of the cost it printed, not of the units still held.
-        avgCost: costBasisSource === "fifo" && isNum(costBasis) && h.quantity > 0
+        avgCost: (costBasisSource === "fifo" || h.valuedAtCost) && isNum(costBasis) && h.quantity > 0
           ? Math.round((costBasis / h.quantity) * 1e4) / 1e4 : h.unitCost,
         currentPrice: h.marketPrice,
         costBasis,
@@ -3903,14 +3909,15 @@ function build(archived, archiveCount = archived.length, references = {}) {
          * what was PAID, charge included (`grossPaidCost`, set after the
          * tranches, VD-24).
          */
-        costBasisSource,
+        costBasisSource: h.valuedAtCost ? "family-advice" : costBasisSource,
+        ...(h.valuedAtCost ? { valuedAtCost: true, advisedNote: h.advisedNote } : {}),
         /** The statement's own cost, kept beside a cost this book carried — a CHECK, never a source. */
         printedCostBasis,
         marketValue,
         // Derived from whatever cost we ended up with, so a joined cost yields a
         // gain on the same basis. Both stay null when there is no cost at all —
         // a market value with no basis under it is not a profit of its own size.
-        unrealizedPnL: isNum(marketValue) && isNum(costBasis) ? r2(marketValue - costBasis) : h.gainLoss,
+        unrealizedPnL: h.valuedAtCost ? null : isNum(marketValue) && isNum(costBasis) ? r2(marketValue - costBasis) : h.gainLoss,
         realizedPnL,
         costOfUnitsSold,
         realizedLotsAfter: realizedLotsAfter || undefined,
@@ -3923,7 +3930,7 @@ function build(archived, archiveCount = archived.length, references = {}) {
          * bought a unit of it. Where nothing was sold or paid it is the
          * familiar unrealised ÷ cost, to the paisa.
          */
-        returnPct: isNum(marketValue) && isNum(costBasis)
+        returnPct: h.valuedAtCost ? null : isNum(marketValue) && isNum(costBasis)
           ? r2(fifoReturnPct(marketValue, costBasis, realizedPnL, costOfUnitsSold, dividendByKey.get(h.securityKey) ?? null))
           : h.pctGainLoss,
         stCostBasis,

@@ -17,6 +17,7 @@ import { AbsentSection } from "@/components/Absent";
 const KIND_NOTE: Record<MemberKind, string> = {
   member: "",
   trust: "trust",
+  llp: "LLP",
   unattributed: "review lines no member is named on",
 };
 
@@ -83,7 +84,7 @@ export function MemberScopeSelect() {
                     <Check className="h-3 w-3" />
                   </span>
                   <span className="truncate">{o.label}</span>
-                  {o.kind !== "member" && <span className="ml-auto shrink-0 text-[11px] text-slate-500">{o.kind === "trust" ? "trust" : "unattributed"}</span>}
+                  {o.kind !== "member" && <span className="ml-auto shrink-0 text-[11px] text-slate-500">{o.kind === "trust" ? "trust" : o.kind === "llp" ? "LLP" : "unattributed"}</span>}
                 </li>
               );
             })}

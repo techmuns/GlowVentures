@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-10-27T06:27:21.556Z",
+  "generatedAt": "2026-10-31T06:54:42.322Z",
   "summary": {
-    "documents": 430,
-    "parsed": 425,
+    "documents": 432,
+    "parsed": 427,
     "partial": 0,
     "failed": 5,
     "rowSumChecks": 392,
@@ -28,7 +28,7 @@
     "stitchesApplied": 134
   },
   "coverage": {
-    "pdfsFound": 420,
+    "pdfsFound": 422,
     "duplicateSources": [
       {
         "path": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_DividendStatement_India177OT.pdf",
@@ -246,7 +246,7 @@
         "sha256": "7cbc776b8cfe6baacfa8c753d86d46de2fec08fbcbae7b36d8dba58029d627fc"
       }
     ],
-    "parsed": 425,
+    "parsed": 427,
     "partial": 0,
     "failed": 5,
     "byProvider": {
@@ -876,7 +876,7 @@
       },
       "HDFC Bank (NSDL demat)": {
         "holdings": {
-          "ok": 3,
+          "ok": 5,
           "partial": 0,
           "failed": 0
         }
@@ -227754,6 +227754,14 @@
       {
         "ownerId": "hope-india-trust",
         "displayName": "Hope India Trust"
+      },
+      {
+        "ownerId": "glowterra-llp",
+        "displayName": "Glowterra LLP"
+      },
+      {
+        "ownerId": "glowsphere-llp",
+        "displayName": "Glowsphere LLP"
       }
     ],
     "providersWithPrecedence": [

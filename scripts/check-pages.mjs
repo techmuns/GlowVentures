@@ -2638,7 +2638,7 @@ const SIDE_BOOK = (() => {
        */
       // THE DATE A LINE IS STRUCK ON (C-01): the review's own date for a line it
       // values (Zepto at 31 Jul 2025), else its statement's — the page's rule.
-      privateAsOfMax: [...new Set(current(positions.filter((p) => sideOf(p) === "private"))
+      privateAsOfMax: [...new Set(current(positions.filter((p) => sideOf(p) === "private" && p.valuedAtCost !== true))
         .map((p) => p.priceAsOf ?? acc.get(p.accountId)?.asOf).filter(Boolean))].sort().at(-1) ?? null,
       bookAsOfMax: [...new Set(accounts.map((a) => a.asOf).filter(Boolean))].sort().at(-1) ?? null,
       /**

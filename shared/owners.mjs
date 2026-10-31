@@ -241,6 +241,29 @@ export const OWNERS = [
     pans: [],
     aliases: ["Hope India Trust"],
   },
+  {
+    /**
+     * TWO LLPs THE FAMILY INCORPORATED, each its own entity (the family's note
+     * with the 29 Oct 2026 holding statements) and never folded into a partner.
+     * The note names the partners and no profit share, so `partners` is a fact
+     * about the firm and no rupee of it is attributed to either person. `kind` is
+     * what a firm's PAN would say; no statement prints either PAN.
+     */
+    ownerId: "glowterra-llp",
+    displayName: "Glowterra LLP",
+    kind: "firm",
+    partners: ["ajay-jaisinghani", "aarti-jaisinghani"],
+    pans: [],
+    aliases: ["Glowterra LLP"],
+  },
+  {
+    ownerId: "glowsphere-llp",
+    displayName: "Glowsphere LLP",
+    kind: "firm",
+    partners: ["bharat-jaisinghani", "ankita-jaisinghani"],
+    pans: [],
+    aliases: ["Glowsphere LLP"],
+  },
 ];
 
 // Honorifics and suffixes that carry no identity. Stripped from both ends.

@@ -5,7 +5,7 @@ import { acquisitionIdentity, fundUnitBasis } from '../../shared/fundUnitActions
 export type SourceMetric = 'statement' | 'quantity' | 'marketValue' | 'currentPrice' | 'costBasis' | 'avgCost' | 'unrealizedPnL';
 export type TracePosition = Pick<Position, 'accountId' | 'securityKey' | 'security' | 'isin' | 'statementRecord'>
   & Partial<Pick<Position, 'quantity' | 'marketValue' | 'currentPrice' | 'costBasis' | 'avgCost' | 'unrealizedPnL'
-    | 'depositoryUnits' | 'enteredNumbers' | 'rolledForward' | 'recoveredCost' | 'costBasisSource' | 'priceEvidence' | 'live' | 'navPriced' | 'navDate' | 'symbol' | 'reviewSource' | 'reviewNote' | 'fundUnitAdjustment'
+    | 'depositoryUnits' | 'enteredNumbers' | 'rolledForward' | 'recoveredCost' | 'costBasisSource' | 'advisedNote' | 'priceEvidence' | 'live' | 'navPriced' | 'navDate' | 'symbol' | 'reviewSource' | 'reviewNote' | 'fundUnitAdjustment'
     | 'valuedAtCost'>> & { assetClass?: Position['assetClass'] | null };
 export type SourceEvidence = {
   document?: string; path?: string; sheet?: string; rows?: number[]; pointer?: string; field?: string; isin?: string | null; securityKey: string;
@@ -137,6 +137,7 @@ export function holdingSourceTrace(positions: readonly TracePosition[], metric: 
       for (const url of new Set(basis.actions.flatMap(action => action.sources)))
         sources.push({ ...base, label: 'Exchange unit-conversion notice', note: url });
     }
+    if (p.advisedNote) notes.add(p.advisedNote);
     if (p.costBasisSource && ['costBasis', 'avgCost', 'unrealizedPnL'].includes(metric)) {
       derived = true;
       notes.add(`Where the cost comes from: ${p.costBasisSource.replace(/-/g, ' ')}.`);

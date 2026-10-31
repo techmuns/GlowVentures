@@ -430,7 +430,7 @@ export function exitedNote(
  */
 export function atCostNote(t: Pick<FifoTotals, "atCost" | "atCostValue">, money: (n: number) => string): string {
   if (!(t.atCost > 0)) return "";
-  return `${t.atCost === 1 ? "1 private investment" : `${t.atCost} private investments`} held at cost (${money(t.atCostValue)}) ${t.atCost === 1 ? "is" : "are"} in Invested and in the value, and in no gain: the family's consolidated review records what was paid and no valuation`;
+  return `${t.atCost === 1 ? "1 private investment" : `${t.atCost} private investments`} held at cost (${money(t.atCostValue)}) ${t.atCost === 1 ? "is" : "are"} in Invested and in the value, and in no gain: the family's consolidated review or written note records what was paid and no valuation`;
 }
 
 /**

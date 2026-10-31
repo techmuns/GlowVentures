@@ -24,7 +24,7 @@ import { publicPrivateSplit } from "@/lib/analytics";
 /** The address parameter that carries a scope: `?members=ajay-jaisinghani,…`. */
 export const MEMBERS_PARAM = "members";
 
-export type MemberKind = "member" | "trust" | "unattributed";
+export type MemberKind = "member" | "trust" | "llp" | "unattributed";
 
 export type MemberOption = {
   ownerId: string;
@@ -35,7 +35,7 @@ export type MemberOption = {
 };
 
 const kindOf = (ownerId: string, label: string): MemberKind =>
-  ownerId === "not-attributed" ? "unattributed" : /\btrust\b/i.test(label) ? "trust" : "member";
+  ownerId === "not-attributed" ? "unattributed" : /\btrust\b/i.test(label) ? "trust" : /llp/i.test(label) ? "llp" : "member";
 
 /**
  * The owners a reader can pick, in the order the BOOK lists them (`BOOK_OWNERS`:

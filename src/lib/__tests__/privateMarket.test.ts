@@ -131,11 +131,13 @@ ok("a review line the family declared listed is on the listed side, off this pag
   familyListed.length > 0 && familyListed.every((p) => p.marketSide === "listed" && !scope.rows.includes(p)),
   familyListed.map((p) => `${p.securityKey}=${p.marketSide}`).join(", ") || "none");
 // Franklin India Credit AIF (Stage 10hx) was bought on 22 Oct, after the 30 June
-// review, so its own statement is its only source.
-eq("the statement rows the review does not supersede — Neo Infra and Franklin",
-  statementPrivate.map((p) => p.securityKey), ["franklin-india-credit-aif-scheme-i-unit-class-db2", "neo-infra-income-opportunities-fund-i-class-a5"]);
+// review, so its own statement is its only source; the LLPs' Nzuri lines (Stage 10jq)
+// likewise, two lines an LLP.
+eq("the statement rows the review does not supersede — Neo Infra, Franklin and the LLPs' Nzuri",
+  statementPrivate.map((p) => p.securityKey), ["franklin-india-credit-aif-scheme-i-unit-class-db2", "nzuri-pune-knowledge-park", "nzuri-pune-knowledge-park-private-limited-pref-24sp46",
+    "nzuri-pune-knowledge-park", "nzuri-pune-knowledge-park-private-limited-pref-24sp46", "neo-infra-income-opportunities-fund-i-class-a5"]);
 eq("raw private rows = the review's lines + the statement's", scope.rows.length, reviewRows.length + statementPrivate.length);
-eq("raw private rows", scope.rows.length, 89);
+eq("raw private rows", scope.rows.length, 93);
 eq("…of which the review holds at cost", reviewRows.filter(isValuedAtCost).length, 76);
 // NOTHING IS COUNTED ONCE: both pairs the policy used to tag are separate
 // investments on the family's word, so the deduped set is the raw set.
@@ -147,7 +149,7 @@ ok("no private row carries a dedupe group", scope.rows.every((p) => !p.dedupeGro
 const unvaluedEarly = unvaluedAccounts(BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_COMMITMENTS);
 eq("accounts in scope = accounts with a private row + private folios holding nothing", scope.accounts.length,
   new Set(scope.rows.map((p) => p.accountId)).size + unvaluedEarly.filter((u) => u.side === "private").length);
-eq("accounts in scope", scope.accounts.length, 22);
+eq("accounts in scope", scope.accounts.length, 24);
 ok("the review's holder accounts are in scope",
   BOOK_ACCOUNTS.filter((a) => a.reviewHolder).every((a) => scope.accounts.some((s) => s.accountId === a.accountId)));
 // THE FAMILY DECLARED BOTH OF THESE CATEGORY II (`DECLARED_AIF_CATEGORY`), and
@@ -175,7 +177,7 @@ const rawMV = sum(scope.rows.map((p) => p.marketValue));
 near("deduped private value === BOOK_SUMMARY.privateValue", dedupedMV, BOOK_SUMMARY.privateValue);
 near("raw private value = the review's lines + the statement's", rawMV,
   sum(reviewRows.map((p) => p.marketValue)) + sum(statementPrivate.map((p) => p.marketValue)));
-near("raw private value", rawMV, 1930944270.36 + 199990000.57);
+near("raw private value", rawMV, 1930944270.36 + 199990000.57 + 158745849.75 + 476210083);
 near("double count = raw − deduped", scope.doubleCounted, rawMV - dedupedMV);
 near("the double count is nil — the family confirmed both pairs separate", scope.doubleCounted, 0);
 ok("…and so is the whole book's: every position is in its consolidated total",
@@ -217,8 +219,8 @@ ok("…and so is the whole book's: every position is in its consolidated total",
 console.log("\n── funds ──");
 const funds = fundRollup(scope.dedupedRows, accIdx, scope.rows);
 eq("one fund row per distinct holding", funds.length, new Set(scope.dedupedRows.map((p) => p.securityKey)).size);
-eq("distinct funds", funds.length, 69);
-eq("…of which the review holds wholly at cost", funds.filter((f) => f.atCost).length, 61);
+eq("distinct funds", funds.length, 71);
+eq("…of which the review holds wholly at cost", funds.filter((f) => f.atCost).length, 63);
 near("fund rollup value ties to the deduped total", sum(funds.map((f) => f.mv)), dedupedMV);
 const costedFunds = funds.filter((f) => f.cost != null);
 // COST IS WHAT THE UNITS STILL HELD COST, under FIFO (Stage 10ca): Neo Infra
@@ -242,7 +244,7 @@ near("cost = what every row reports", sumOrNull(funds.map((f) => f.cost)), sumOr
 // 360 ONE's two lines carry FIFO's cost since Stage 10fz — ₹99,41,987.06 held
 // each, where the review's purchases less sale proceeds read ₹99,21,180.02 —
 // so the valued review lines' cost is ₹41,614.08 above the review's own sum.
-near("cost", sumOrNull(funds.map((f) => f.cost)), 48583720 + 200000000 + (349608469.84 + 2 * 20807.04) + 1406775806.88);
+near("cost", sumOrNull(funds.map((f) => f.cost)), 48583720 + 200000000 + (349608469.84 + 2 * 20807.04) + 1406775806.88 + 158745849.75 + 476210083);
 near("…the at-cost lines' cost is their value", sum(atCostReview.map((p) => p.costBasis ?? NaN)), sum(atCostReview.map((p) => p.marketValue)));
 ok("an at-cost line carries no P&L, no return and no per-unit mark",
   atCostReview.every((p) => p.unrealizedPnL == null && p.returnPct == null && p.currentPrice == null));
@@ -310,7 +312,7 @@ ok("its two statements carry DIFFERENT marks, each kept as printed",
 
 console.log("\n── owners (per-owner: NOT deduped) ──");
 const owners = ownerRollup(scope.rows, accIdx);
-eq("owners holding a private position", owners.length, 6);
+eq("owners holding a private position", owners.length, 8);
 // THE REVIEW'S LINES NO DOCUMENT NAMES A HOLDER FOR are a holder of their own,
 // named in words — the book's own owner list carries the name, and a page that
 // printed the id would be printing a key at the family.

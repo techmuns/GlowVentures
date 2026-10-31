@@ -160,11 +160,14 @@ const listed = new Set(RECORD.map((m) => m.accountId));
 // generated book, which is what every page reads; the review's rows are then held
 // to the archive below rather than trusted.
 const REVIEWED = new Set(BOOK_REVIEW_FLOWS.map((f) => f.accountId));
+// The LLPs' capital is dated by the family's written note, which is not a statement
+// in the archive (`applyFamilyAdvice`, Stage 10jq).
+const ADVISED = new Set(BOOK_POSITIONS.filter((p) => p.costBasisSource === "family-advice").map((p) => p.accountId));
 const missing = [...expected].filter((a) => !listed.has(a)).sort();
-const extra = [...listed].filter((a) => !expected.has(a) && !REVIEWED.has(a)).sort();
+const extra = [...listed].filter((a) => !expected.has(a) && !REVIEWED.has(a) && !ADVISED.has(a)).sort();
 ok("every account with a dated capital record in the archive is on the record", missing.length === 0,
   missing.join(", ") || `${expected.size} account(s)`);
-ok("…and no account is there without one — a statement or the family's review dates every one", extra.length === 0,
+ok("…and no account is there without one — a statement, the family's review or their written note dates every one", extra.length === 0,
   extra.join(", ") || `none · ${[...REVIEWED].filter((a) => !expected.has(a)).length} dated by the review alone`);
 ok("a register holding nothing but withdrawals, for an account with no other dated capital, is NOT listed",
   withdrawalsOnly.every((a) => !listed.has(a)),

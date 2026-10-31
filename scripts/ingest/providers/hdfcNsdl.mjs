@@ -208,6 +208,16 @@ export function extract({ grid, meta = {} }) {
     return readNative({ grid, text, meta, accountNo, owner, asOf, warnings });
   }
 
+  /**
+   * THE SAME STATEMENT WITH ITS TEXT LAYER INTACT (the LLP statements, printed
+   * from the branch portal). Its wrapped name straddles the row its figures sit
+   * on, so it gets the coordinates; the OCR path below never sees this page.
+   */
+  if (grid?.textSource !== "ocr" && /Holding\s+Statement\s+as\s+on/i.test(text)
+    && (grid?.pages ?? []).some((p) => (p.rows ?? []).some((r) => itemsOfRow(r).some((c) => /^Company\s*Name$/i.test(c.text))))) {
+    return readPrintedStatement({ grid, text, source, accountNo, owner, asOf, warnings });
+  }
+
   // ── the holding rows ──────────────────────────────────────────────────────
   // One row per ISIN. The layout is ISIN | Company Name | Scrip Type | Balance |
   // Market Rate | Market Value | Status, and the reader keys on the ISIN rather
@@ -338,6 +348,96 @@ export function extract({ grid, meta = {} }) {
     holdings,
     status: holdings.length ? "ok" : "partial",
     warnings,
+  };
+}
+
+// ── THE PRINTED STATEMENT ──────────────────────────────────────────────────
+//
+//   Sr. No. | ISIN | Company Name | Scrip Type | Balance | Market Rate | Market Value | Status
+//
+// One record per ISIN row, which carries the three figures. The name and scrip
+// type wrap ABOVE and BELOW that row, centred on it, so each stray line belongs to
+// the nearest ISIN row, split into name and scrip at the `Scrip` heading's x. As on
+// the other two paths, each row's balance × rate must be its value and the rows
+// must reproduce the printed total, or nothing is read.
+function readPrintedStatement({ grid, text, source, accountNo, owner, asOf, warnings }) {
+  /**
+   * THIS PRINT GROUPS `1352,11,270.000`: lakhs in twos, and no comma above a crore.
+   * `parseNum` rightly reads a four-digit group as two figures stuck together, so
+   * the shape is checked here, on a page whose own total witnesses every figure.
+   */
+  const figure = (v) => (/^\d+(?:,\d{2})*,\d{3}\.\d+$|^\d+\.\d+$/.test(v ?? "") ? Number(v.replace(/,/g, "")) : null);
+  const fail = (code, detail) => {
+    warn(warnings, code, detail);
+    return { accountNo, owner, asOf, holdings: [], status: "failed", warnings };
+  };
+  const records = [];
+  for (const [pi, page] of (grid?.pages ?? []).entries()) {
+    const rows = (page.rows ?? []).map((r) => ({ y: r.y, items: itemsOfRow(r) }));
+    const scripX = rows.flatMap((r) => r.items).find((c) => /^Scrip$/i.test(c.text))?.x ?? null;
+    const headerAt = rows.findIndex((r) => r.items.some((c) => /^Company\s*Name$/i.test(c.text)));
+    const stopAt = rows.findIndex((r) => r.items.some((c) => /Total\s+Valuation/i.test(c.text)));
+    if (scripX == null || headerAt < 0 || stopAt < headerAt) continue;
+    const table = rows.slice(headerAt + 1, stopAt).filter((r) => !r.items.some((c) => /^(Type|Rate)$/i.test(c.text)));
+    const own = table.filter((r) => r.items.some((c) => ISIN_ITEM.test(c.text)))
+      .map((r) => ({ page: pi + 1, y: r.y, isin: r.items.find((c) => ISIN_ITEM.test(c.text)).text, name: [], scrip: [], figures: [], status: null }));
+    for (const r of table) {
+      const rec = own.reduce((best, c) => (!best || Math.abs(c.y - r.y) < Math.abs(best.y - r.y) ? c : best), null);
+      if (!rec) return fail("figure-without-isin", `page ${pi + 1} prints a table line above any ISIN. Nothing is read.`);
+      for (const c of r.items) {
+        if (ISIN_ITEM.test(c.text) || /^\d{1,3}$/.test(c.text)) continue;
+        if (FIGURE_ITEM.test(c.text)) rec.figures.push(c.text);
+        else if (/^(Free|Pledged?|Locked|Blocked)\b/i.test(c.text)) rec.status = c.text;
+        else if (c.x >= scripX) rec.scrip.push({ y: r.y, text: c.text });
+        else rec.name.push({ y: r.y, text: c.text });
+      }
+    }
+    records.push(...own);
+  }
+  if (!records.length) return fail("no-holding-rows", "no table row on this statement carried an ISIN. Nothing is read.");
+
+  const byReading = (parts) => join([...parts].sort((a, b) => b.y - a.y).map((p) => p.text));
+  const holdings = [];
+  const unpriced = [];
+  let rowSum = 0;
+  for (const r of records) {
+    const company = byReading(r.name);
+    const scrip = byReading(r.scrip);
+    if (!company || r.figures.length !== 3) {
+      return fail("row-incomplete", `${r.isin} on page ${r.page} does not print a name and exactly a balance, a rate `
+        + `and a value (read: "${company}", ${r.figures.join(", ") || "no figures"}). Nothing is read.`);
+    }
+    const [qty, rate, value] = r.figures.map(figure);
+    if (qty == null || rate == null || value == null || Math.abs(qty * rate - value) > 0.005 * qty + 0.01) {
+      return fail("row-value-is-not-balance-times-rate", `${company} (${r.isin}) prints ${r.figures.join(", ")}, `
+        + "which is not its balance at its rate. Nothing is read.");
+    }
+    rowSum += value;
+    const name = isOrdinaryEquity(scrip) || !scrip ? company : `${company} - ${scrip}`;
+    const face = faceValueBasis({ isin: r.isin, name: join([company, scrip]), quantity: qty, value });
+    if (face) unpriced.push(`${name} (${qty} at ${face.price.toFixed(4)})`);
+    holdings.push(makeHolding({
+      security: name, isin: r.isin, assetClass: assetClassOf(r.isin, join([company, scrip])), quantity: qty,
+      marketPrice: face ? null : rate, marketValue: face ? null : value, faceValue: face ? face.price : null, source,
+    }));
+  }
+  const printedTotal = figure((/Total\s+Valuation\s*\(Rs\.?\)\s*:?\s*([\d,]+\.\d{2})/i.exec(text) ?? [])[1]);
+  if (printedTotal == null) return fail("no-printed-total", "the statement's own `Total Valuation (Rs.)` was not found. Nothing is emitted.");
+  if (Math.abs(rowSum - printedTotal) > 0.01) {
+    return fail("rows-do-not-sum-to-printed-total", `the ${records.length} row(s) read sum to ${rowSum.toFixed(2)} against `
+      + `the printed Total Valuation of ${printedTotal.toFixed(2)}. Nothing is emitted.`);
+  }
+  if (unpriced.length) {
+    warn(warnings, "value-is-face-value-par",
+      `${unpriced.length} holding(s) carry units and NO market value: the implied price is exactly a face-value `
+      + `denomination with no paise, on a name that declares none. Rows: ${unpriced.join("; ")}.`);
+  }
+  const dpId = (/DP\s*ID\s*(IN\d{6})/i.exec(text) ?? [])[1] ?? null;
+  const acType = (/Account\s*Type\s*:?\s*([A-Za-z ]+?)\s*(?:\n|ISIN)/i.exec(text) ?? [])[1]?.trim() ?? null;
+  return {
+    accountNo, owner, asOf, engagement: "Direct",
+    providerEngagement: `NSDL depository account at ${dpId ?? "DP not read"} — ${acType || "type not read"}`,
+    holdings, status: "ok", warnings,
   };
 }
 

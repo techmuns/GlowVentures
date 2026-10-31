@@ -631,16 +631,16 @@ export const AT_COST_BUCKET = "Private investments at cost";
 export const isValuedAtCost = (p: { valuedAtCost?: boolean }): boolean => p.valuedAtCost === true;
 /** The reason a return is absent on a line held at cost, in one wording for every surface. */
 export const AT_COST_RETURN =
-  "held at cost: the family's consolidated review records what was paid and no valuation, so there is no gain to strike a return on";
+  "held at cost: the family's consolidated review or written note records what was paid and no valuation, so there is no gain to strike a return on";
 /** Why a line held at cost shows no gain — its value is its cost, never a measured ₹0. */
 export const AT_COST_PNL =
-  "held at cost: the family's consolidated review records what was paid and no valuation, so its value is its cost and there is no gain to show — a ₹0 would read as a measured holding that did not move";
+  "held at cost: the family's consolidated review or written note records what was paid and no valuation, so its value is its cost and there is no gain to show — a ₹0 would read as a measured holding that did not move";
 /** Why a review line, or a row holding one, has no unit count. */
 export const NO_UNIT_COUNT =
   "the family's consolidated review records what was paid for this private investment and no unit count — a count here would be a figure no document states";
 /** Why a line held at cost has no per-unit mark. */
 export const AT_COST_MARK =
-  "held at cost: the family's consolidated review records what was paid and no valuation, so there is no price per unit to show";
+  "held at cost: the family's consolidated review or written note records what was paid and no valuation, so there is no price per unit to show";
 /** Why a review line it DOES value has no per-unit mark: the review values it as a total. */
 export const REVIEW_NO_MARK =
   "the family's consolidated review values this holding as a total and prints no price per unit, so there is no price to show";

@@ -218,7 +218,7 @@ ok("…and is the last first-valuation arrival",
 
 // AT COST: the review's at-cost lines, all of them, none in the return.
 const atCostBook = BOOK_POSITIONS.filter((p) => isValuedAtCost(p) && p.marketValue !== 0).reduce((t, p) => t + p.marketValue, 0);
-near("every line the review holds at cost is out of the return, at its cost", st.atCostValue, atCostBook, 1);
+near("every line held at cost is out of the return, at its cost", st.atCostValue, atCostBook, 1);
 ok("no investment is ever negative", BOOK_NAV_UNITS.every((u) => pts.every((p) => (unitValueAt(u, p.date) ?? 0) >= -1)));
 // In the complete segment no unit arrives, so each link's close is the whole panel.
 const seg = pts.filter((p) => p.panelComplete);

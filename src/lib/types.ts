@@ -390,7 +390,9 @@ export type Position = {
    * the statement's net stays beside it as `printedCostBasis`. See
    * `grossPaidCost` in `scripts/build-book.mjs`.
    */
-  costBasisSource?: "opening-position" | "carried-through-switch" | "fifo" | "gross-paid" | "review" | "supplementary-record";
+  costBasisSource?: "opening-position" | "carried-through-switch" | "fifo" | "gross-paid" | "review" | "supplementary-record" | "family-advice";
+  /** What a line the family advised in writing rests on (`applyFamilyAdvice`), for its Sources popup. */
+  advisedNote?: string;
   /** Source rows reconciled to this exact owner/account/ISIN/unit balance. */
   recoveredCost?: RecoveredHoldingCost;
   /** Cost is known, but full realised gain and HPR cannot be measured. */
