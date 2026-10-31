@@ -14077,6 +14077,66 @@
   ]
  },
  {
+  "docKey": "hdfc-bank-nsdl-demat-67776432-2026-10-29-holdings",
+  "provider": "HDFC Bank (NSDL demat)",
+  "accountNo": "67776432",
+  "owner": "GLOWTERRA LLP",
+  "ownerId": "glowterra-llp",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-10-29",
+  "reportType": "holdings",
+  "sourcePath": "source/october-2026-f/Glowterra.pdf",
+  "pages": 1,
+  "sections": [
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 1,
+  "fileKey": "hdfc-bank-nsdl-demat-67776432-2026-10-29-holdings",
+  "label": "HDFC Bank (NSDL demat) · 67776432 · holdings",
+  "fy": "2026-10-29",
+  "source": "source/october-2026-f/Glowterra.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "hdfc-bank-nsdl-demat-67776424-2026-10-29-holdings",
+  "provider": "HDFC Bank (NSDL demat)",
+  "accountNo": "67776424",
+  "owner": "GLOWSPHERE LLP",
+  "ownerId": "glowsphere-llp",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-10-29",
+  "reportType": "holdings",
+  "sourcePath": "source/october-2026-f/LLP.pdf",
+  "pages": 1,
+  "sections": [
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 1,
+  "fileKey": "hdfc-bank-nsdl-demat-67776424-2026-10-29-holdings",
+  "label": "HDFC Bank (NSDL demat) · 67776424 · holdings",
+  "fy": "2026-10-29",
+  "source": "source/october-2026-f/LLP.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
   "docKey": "green-lantern-capital-llp-510861-2026-09-22-capital-register",
   "provider": "Green Lantern Capital LLP",
   "accountNo": "510861",

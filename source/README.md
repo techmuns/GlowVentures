@@ -49,6 +49,8 @@ called and paid on 22 October, 201,254.604 units at 993.7164. It is sealed with 
 PAN; a one-off CI run opened it with the saved statement passwords (Stage 10hx), and
 every run since reads its archived page text (`providers/franklinAif.mjs`).
 
+`october-2026-f/` holds the two HDFC Bank NSDL holding statements of 29 October for the newly incorporated Glowterra LLP (`Glowterra.pdf`) and Glowsphere LLP (`LLP.pdf`). The family's covering note, with the dates and amounts of those investments, is word for word in `scripts/ingest/reference/familyAdvisedInvestments.mjs` (Stage 10jq).
+
 **These files never reach the browser.** `source/` sits at the repo root, outside
 `public/`, so nothing here is copied into the build or served by the site. Only
 the derived, reviewed extracts under `public/audit/` ship, and those sit behind

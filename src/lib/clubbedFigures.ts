@@ -135,7 +135,7 @@ export function costedFigures(
  */
 export function costCoverNote(f: CostedFigures, money: (n: number) => string, unitsFmt: (n: number) => string): string {
   const atCost = f.atCost.lines > 0
-    ? `${f.atCost.lines === 1 ? "1 line" : `${f.atCost.lines} lines`} worth ${money(f.atCost.value)} ${f.atCost.lines === 1 ? "is" : "are"} held at cost — the family's consolidated review records what was paid and no valuation — so ${f.atCost.lines === 1 ? "it is" : "they are"} in the cost and in no gain.`
+    ? `${f.atCost.lines === 1 ? "1 line" : `${f.atCost.lines} lines`} worth ${money(f.atCost.value)} ${f.atCost.lines === 1 ? "is" : "are"} held at cost — the family's consolidated review or written note records what was paid and no valuation — so ${f.atCost.lines === 1 ? "it is" : "they are"} in the cost and in no gain.`
     : "";
   if (f.complete || f.cost === null) return atCost;
   // Where a line carries no unit count, the cover is stated in value alone.

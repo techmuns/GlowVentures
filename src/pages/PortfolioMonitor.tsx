@@ -2449,7 +2449,7 @@ export function PortfolioMonitor() {
   const footStruckLines = footCostedLines - footCover.atCost.lines;
   const footStruckValue = footCover.costedValue - footCover.atCost.value;
   const atCostFootNote = footCover.atCost.lines > 0
-    ? `${footCover.atCost.lines === 1 ? "1 holding" : `${footCover.atCost.lines} holdings`} worth ${money(footCover.atCost.value)} ${footCover.atCost.lines === 1 ? "is a private investment" : "are private investments"} held at cost — the family's consolidated review records what was paid and no valuation — so ${footCover.atCost.lines === 1 ? "it is" : "they are"} in Invested and in no gain or return.`
+    ? `${footCover.atCost.lines === 1 ? "1 holding" : `${footCover.atCost.lines} holdings`} worth ${money(footCover.atCost.value)} ${footCover.atCost.lines === 1 ? "is a private investment" : "are private investments"} held at cost — the family's consolidated review or written note records what was paid and no valuation — so ${footCover.atCost.lines === 1 ? "it is" : "they are"} in Invested and in no gain or return.`
     : "";
   const investedFootNote = [
     footCover.complete ? ""
@@ -4352,7 +4352,7 @@ export function PortfolioMonitor() {
                       // The lines held at cost, said where they are: in Invested,
                       // in no gain (Stage 10dh).
                       const atCostCover = tot.atCostCount > 0
-                        ? `${tot.atCostCount === 1 ? "1 holding" : `${tot.atCostCount} holdings`} worth ${fmtFromBase(tot.atCostMV, { compact: true })} ${tot.atCostCount === 1 ? "is a private investment" : "are private investments"} held at cost — the family's consolidated review records what was paid and no valuation — so ${tot.atCostCount === 1 ? "it is" : "they are"} in Invested and in no gain.`
+                        ? `${tot.atCostCount === 1 ? "1 holding" : `${tot.atCostCount} holdings`} worth ${fmtFromBase(tot.atCostMV, { compact: true })} ${tot.atCostCount === 1 ? "is a private investment" : "are private investments"} held at cost — the family's consolidated review or written note records what was paid and no valuation — so ${tot.atCostCount === 1 ? "it is" : "they are"} in Invested and in no gain.`
                         : "";
                       return (
                         /* A `<Tr>` RATHER THAN A `<TrFoot>`, because this row
@@ -4974,7 +4974,7 @@ export function PortfolioMonitor() {
                             // never a ₹0, which reads as a holding that did not
                             // move (Stage 10dh).
                             : r.unrealizedPnL === null ? <AbsentCell reason={r.valuedAtCost ? AT_COST_PNL
-                              : "every line here that reports a cost is held at cost — the family's consolidated review records what was paid and no valuation — and the rest report no cost, so there is no gain to strike"} />
+                              : "every line here that reports a cost is held at cost — the family's consolidated review or written note records what was paid and no valuation — and the rest report no cost, so there is no gain to strike"} />
                             : r.live ? <span data-pnl-costed-value={pnlValue}>{fmtFromBase(r.unrealizedPnL, { compact: true, sign: true })}{coverPartial && <span className="ml-1 text-[10px] text-amber-400/80">◦</span>}</span>
                             : <span data-pnl-costed-value={pnlValue} title={coverNote || undefined}><Auditable formula={{
                                 ...pnlFormula(pnlValue, r.costBasis, r.unrealizedPnL, money),

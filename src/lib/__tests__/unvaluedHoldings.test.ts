@@ -78,7 +78,9 @@ for (const a of BOOK_ACCOUNTS) {
 // line is the holding now. Each superseded row must be one the archive really
 // records, at the units it records, so the supersede list cannot hide a row.
 const supersededId = new Set(BOOK_REVIEW_SUPERSEDED.filter((s) => s.kind === "unvalued").map((s) => `${s.accountId}|${s.securityKey}`));
-const expected = archived.filter((e) => !supersededId.has(`${e.accountId}|${e.securityKey}`));
+// The LLPs' quantity rows are held at what the family's written note says was paid (Stage 10jq).
+const advisedId = new Set(BOOK_POSITIONS.filter((p) => p.costBasisSource === "family-advice").map((p) => `${p.accountId}|${p.securityKey}`));
+const expected = archived.filter((e) => !supersededId.has(`${e.accountId}|${e.securityKey}`) && !advisedId.has(`${e.accountId}|${e.securityKey}`));
 const supersededArchived = archived.filter((e) => supersededId.has(`${e.accountId}|${e.securityKey}`));
 const supNamed = BOOK_REVIEW_SUPERSEDED.filter((s) => s.kind === "unvalued");
 ok("the review supersedes quantity lines this archive records", supNamed.length > 0, `${supNamed.length} line(s)`);

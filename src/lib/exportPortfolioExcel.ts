@@ -868,7 +868,7 @@ function buildHoldings(wb: ExcelJS.Workbook, positions: Position[], accounts: Ac
   r++;
   const atCostClause = atCostRows.length > 0
     ? ` ${atCostRows.length} row${atCostRows.length === 1 ? " is" : "s are"} held at cost (${fmtCr(atCostMV, 2)}): the family's`
-      + ` consolidated review records what was paid and no valuation, so ${atCostRows.length === 1 ? "its" : "their"} value is`
+      + ` consolidated review or written note records what was paid and no valuation, so ${atCostRows.length === 1 ? "its" : "their"} value is`
       + ` ${atCostRows.length === 1 ? "its" : "their"} cost and ${atCostRows.length === 1 ? "it carries" : "they carry"} no gain — left out of`
       + ` the P&L rather than counted as a gain of zero.`
     : ``;

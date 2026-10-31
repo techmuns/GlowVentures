@@ -1113,7 +1113,7 @@ export function PrivateMarket() {
        */
       detail: m.unvaluedNoNav.length
         ? `${m.unvaluedNoNav.length} folios in funds that publish no NAV at all. Real money, not in Market value, and never added to a value on this page.`
-        : "No private fund here publishes no NAV at all: a fund's own statement values one, or the family's consolidated review records what was paid for it.",
+        : "No private fund here publishes no NAV at all: a fund's own statement values one, or the family's consolidated review or written note records what was paid for it.",
     },
     /* *"what is distributions?"* — the label is the client's own word and the
         short line under it is the answer. */
@@ -1168,7 +1168,7 @@ export function PrivateMarket() {
             + " — so each is absent rather than nil."
           : "",
         m.realised.atCost.atCost
-          ? `${m.realised.atCost.atCost === 1 ? "1 private investment" : `${m.realised.atCost.atCost} private investments`} held at cost (${money(m.realised.atCost.atCostValue)}) ${m.realised.atCost.atCost === 1 ? "is" : "are"} in neither count: the family's consolidated review records what was paid and reports no sale.`
+          ? `${m.realised.atCost.atCost === 1 ? "1 private investment" : `${m.realised.atCost.atCost} private investments`} held at cost (${money(m.realised.atCost.atCostValue)}) ${m.realised.atCost.atCost === 1 ? "is" : "are"} in neither count: the family's consolidated review or written note records what was paid and reports no sale.`
           : "",
         "Income a fund pays out is not a realised gain here; it is under Distributions.",
       ].filter(Boolean).join(" "),
@@ -2144,7 +2144,7 @@ export function PrivateMarket() {
         // what was paid into these and no valuation, so each is in the value at
         // its cost and in no gain — a return struck on a cost standing in for a
         // value would be a measured 0% nobody measured.
-        ? `The family's consolidated review records what was paid into these private investments and no valuation, so the ${money(s.value)} here is their cost: it is in the value and in Invested, and in no gain or return. These are the investments the Portfolio Monitor lists under ${AT_COST_BUCKET}.`
+        ? `The family's consolidated review or written note records what was paid into these private investments and no valuation, so the ${money(s.value)} here is their cost: it is in the value and in Invested, and in no gain or return. These are the investments the Portfolio Monitor lists under ${AT_COST_BUCKET}.`
         : `The statements carry no value, so the ${money(s.paid)} paid in here is in no value total on this page — missing data, never a zero.`;
     return (
       <Fragment key={id}>

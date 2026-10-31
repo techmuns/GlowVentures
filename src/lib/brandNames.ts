@@ -75,6 +75,14 @@ export const BRAND_NAMES: Readonly<Record<string, BrandName>> = {
     brand: "Neo Infra Income Opportunities Fund I", legal: "Neo Infra Income Opportunities Fund I", basis: "own-name",
     source: ["statement:neo-infra-income-opportunities-fund-9039920536-2026-06-30-holdings"],
   },
+  "nzuri-pune-knowledge-park": {
+    brand: "Nzuri Pune Knowledge Park", legal: "Nzuri Pune Knowledge Park Private Limited", basis: "own-name",
+    source: ["statement:hdfc-bank-nsdl-demat-67776432-2026-10-29-holdings", "statement:hdfc-bank-nsdl-demat-67776424-2026-10-29-holdings"],
+  },
+  "nzuri-pune-knowledge-park-private-limited-pref-24sp46": {
+    brand: "Nzuri Pune Knowledge Park", legal: "Nzuri Pune Knowledge Park Private Limited", basis: "own-name",
+    source: ["statement:hdfc-bank-nsdl-demat-67776432-2026-10-29-holdings", "statement:hdfc-bank-nsdl-demat-67776424-2026-10-29-holdings"],
+  },
   "franklin-india-credit-aif-scheme-i-unit-class-db2": {
     brand: "Franklin India Credit AIF – Scheme I", legal: "Franklin India Credit AIF – Scheme I", basis: "own-name",
     source: ["statement:franklin-india-credit-aif-10387-2026-10-22-holdings"],

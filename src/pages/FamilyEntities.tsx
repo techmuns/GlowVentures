@@ -30,7 +30,7 @@ import { exitedRows } from "@/lib/drilldown";
 import { companySectorIndex } from "@/lib/lookthrough";
 import { useStockExposure } from "@/lib/useStockExposure";
 import { UNCLASSIFIED } from "@/lib/sectors";
-import { ownerDisplayName } from "@/lib/owners";
+import { allOwners, ownerDisplayName } from "@/lib/owners";
 import { BasisPill } from "@/components/BasisPill";
 import { AbsentCell, AbsentFromBook, AbsentSection, DASH } from "@/components/Absent";
 import { ownerMeasuredReturn, measuredAccountsReturn, entityYtdPct } from "@/lib/returns";
@@ -65,6 +65,12 @@ const CAPITAL_RECORD_ACCOUNTS = new Set(
  * kinds its lines actually are — and names none where any line's reason is one
  * this list does not recognise, rather than a list that is not true of it.
  */
+/** A firm's partners, for its row's hover. Who they are, never whose money: no profit share is on record. */
+const partnersOf = (name: string): string | null => {
+  const partners = allOwners().find((o) => o.displayName === name)?.partners;
+  return partners?.length ? `Partners: ${partners.map(ownerDisplayName).join(", ")}` : null;
+};
+
 const UNVALUED_KINDS: readonly [RegExp, string][] = [
   [/^this fund publishes no NAV/i, "a fund that publishes no NAV"],
   [/^this custody account values nothing/i, "units a custodian records at face value"],
@@ -1262,7 +1268,7 @@ export function FamilyEntities() {
                      */
                     const noGainWhy = (atCost: string, noCost: string): string => {
                       if (e.atCostCount > 0 && e.withoutCost > 0)
-                        return `none of this entity's ${e.count} holdings can carry one: ${e.atCostCount} are held at cost — the family's consolidated review records what was paid and no valuation — and ${e.withoutCost} report no cost at all`;
+                        return `none of this entity's ${e.count} holdings can carry one: ${e.atCostCount} are held at cost — the family's consolidated review or written note records what was paid and no valuation — and ${e.withoutCost} report no cost at all`;
                       if (e.atCostCount > 0) return `every one of this entity's ${e.atCostCount} holdings is ${atCost}`;
                       return noCost;
                     };
@@ -1273,7 +1279,7 @@ export function FamilyEntities() {
                             A hover is weaker than a column; what makes the trade
                             affordable is that this row is ALREADY a click target
                             into the per-holding answer. */}
-                        <td className="px-4 py-2.5 font-medium text-slate-100" title={custodyNote(e.key)}>{e.key}</td>
+                        <td className="px-4 py-2.5 font-medium text-slate-100" title={[partnersOf(e.key), custodyNote(e.key)].filter(Boolean).join(" · ")} data-entity-partners={partnersOf(e.key) ?? undefined}>{e.key}</td>
                         {/* A money figure is ONE TOKEN however narrow its column
                             gets: at two thirds of the width `₹349.5 Cr` broke
                             across two lines. The Entity name legitimately wraps

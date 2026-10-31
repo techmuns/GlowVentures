@@ -901,7 +901,7 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
   const atCostWrong = atCostRows.filter((r) => {
     const n = String(r["Notes"]);
     return r["Unreal. P&L (₹)"] !== DASH || r["Return"] !== DASH || r["CMP (₹)"] !== DASH
-      || !/consolidated review \(MOPWM\)/.test(n) || !/held at cost/.test(n)
+      || ((byName.get(String(r["Security"])) ?? []).every((p) => p.review) && !/consolidated review \(MOPWM\)/.test(n)) || !/held at cost/.test(n)
       || /no statement behind this holding reports what it cost/.test(n);
   });
   ok("a row the review holds at cost says so — the review, at cost, no gain, no mark — and never that no cost is reported",

@@ -150,6 +150,7 @@ export function buildAccountReturnRecords({ accounts, accountCashFlows, byAccoun
       records[account.accountId] = { latestValuationDate, record,
         gap: record ? (record.asOf < latestValuationDate ? `Newer ${latestValuationDate} valuation lacks a complete reconciled cash-flow ledger` : null)
           : currentDormant ? null : account.noPositionsReason ? 'No complete valued portfolio for a return'
+          : docs.some((d) => d.holdings?.length && d.holdings.every((h) => h.valuedAtCost)) ? 'Held at what was paid: no valuation yet to measure a return against'
           : early && early.at === latestValuationDate ? `Its capital arrived on ${early.rows[0]}, after its only valuation (the NAV as on ${early.at}); a later valuation measures it`
           : 'Opening valuation and complete dated cash flows are missing',
         ...(currentDormant && !record ? { notApplicable: `Nil throughout the verified period through ${dormant.asOf}; no invested capital to measure` } : {}) };

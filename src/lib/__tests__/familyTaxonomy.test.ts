@@ -18,7 +18,7 @@ import { shareCandidates } from "../depositoryShares";
 import path from "node:path";
 import fs from "node:fs";
 import XLSX from "xlsx";
-import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_SUMMARY, BOOK_SHARE_MOVEMENTS } from "@/data/glowData";
+import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_SUMMARY, BOOK_SHARE_MOVEMENTS, BOOK_POSITION_TRANCHES } from "@/data/glowData";
 import { BOOK_FUND_NAVS } from "@/data/fundNavs";
 import { depositoryCashHoldings, depositoryFundHoldings, isArbitrageFund, unpricedStatementUnits } from "@/lib/fundNavs";
 import { accountIndex, engagementOf } from "@/lib/accounts";
@@ -159,7 +159,13 @@ for (const [axis, key] of [["basket", basketKeyOf], ["asset class", familyClassK
 {
   const deduped = dedupedPositions(BOOK_POSITIONS);
   const un = deduped.filter((p) => basketKeyOf(p, isM(p)) === UNCLASSIFIED);
-  const unMV = un.reduce((s, p) => s + p.marketValue, 0);
+  // A holding bought wholly after the 30 June review cannot be in it (Franklin, the
+  // LLPs' Nzuri): that is the calendar, not a stale review, so it is left out here.
+  const sinceReview = (p: (typeof un)[number]) => {
+    const moves = BOOK_POSITION_TRANCHES[`${p.accountId}|${p.securityKey}`]?.moves ?? [];
+    return moves.length > 0 && moves.every((m) => m.date > "2026-06-30");
+  };
+  const unMV = un.filter((p) => !sinceReview(p)).reduce((s, p) => s + p.marketValue, 0);
   ok("the family's review covers the great majority of the book by value",
      unMV / BOOK_SUMMARY.totalValue < 0.1,
      `${cr(unMV)} unclassified of ${cr(BOOK_SUMMARY.totalValue)} — ${(unMV / BOOK_SUMMARY.totalValue * 100).toFixed(1)}%`);

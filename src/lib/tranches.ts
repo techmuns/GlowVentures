@@ -609,7 +609,7 @@ function reviewShortfall(own: readonly Position[], all: readonly CapitalMove[], 
   if (!own.length) return "the family's consolidated review dates purchases for this line but carries no holding of it in the book, so there is no value to measure them against";
   if (own.every(isValuedAtCost)) return AT_COST_RETURN;
   if (own.some(isValuedAtCost)) {
-    return "part of this is held at cost: the family's consolidated review records what was paid for it and no valuation, so a return over the whole would blend a gain nobody measured";
+    return "part of this is held at cost: the family's consolidated review or written note records what was paid for it and no valuation, so a return over the whole would blend a gain nobody measured";
   }
   if (!valueAsOf) {
     return "the holdings behind this row are valued on different dates, so there is no one date to close a return on";

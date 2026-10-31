@@ -260,13 +260,15 @@ function positionEvidencePrepared(position, documentsByKey, accountsByKey, relat
   if (!row || row.securityKey !== position.securityKey || (row.memberId ?? null) !== (position.memberId ?? null)) throw new Error(`Wrong statement row for ${holdingKey(position)}`);
   const account = accountsByKey.get(position.accountId);
   if (!account || account.provider !== doc.provider || String(account.accountNo) !== String(doc.accountNo) || account.ownerId !== doc.ownerId) throw new Error(`Wrong statement account for ${holdingKey(position)}`);
-  if (row.quantity !== position.quantity || Math.abs(row.marketValue - position.marketValue) > 0.01) throw new Error(`Statement value/quantity changed for ${holdingKey(position)}`);
+  // A line the family advised is held at what was paid: the statement witnesses its units, not its value.
+  const atAdvisedCost = position.costBasisSource === 'family-advice' && position.valuedAtCost === true;
+  if (row.quantity !== position.quantity || (!atAdvisedCost && Math.abs(row.marketValue - position.marketValue) > 0.01)) throw new Error(`Statement value/quantity changed for ${holdingKey(position)}`);
   const ref = field => ({ document: doc.docKey, revision: revisionOf(doc), pointer: `${locator.pointer}/${field}` });
   const related = relatedByHolding.get(stable([accountKey(doc), position.securityKey, position.memberId ?? null])) ?? [];
   return { identity: holdingKey(position), kind: 'statement', record: { document: doc.docKey, revision: revisionOf(doc), pointer: locator.pointer },
     fields: {
       quantity: { inputs: [ref('quantity')] }, currentPrice: { inputs: [ref('marketPrice')] },
-      marketValue: { inputs: [ref('marketValue')] },
+      marketValue: atAdvisedCost ? { inputs: [], method: 'family-advice' } : { inputs: [ref('marketValue')] },
       costBasis: { inputs: position.costBasisSource ? [] : [ref('totalCost')], method: position.costBasisSource ?? 'statement',
         statementComparison: ref('totalCost'), supportingRecords: related, supplementary: position.recoveredCost?.evidence ?? [] },
       unrealizedPnL: { formula: 'round(marketValue - costBasis, 2)', inputs: ['marketValue', 'costBasis'] },

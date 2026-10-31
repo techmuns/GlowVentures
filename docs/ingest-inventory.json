@@ -1,16 +1,16 @@
 {
-  "generatedAt": "2026-10-27T06:15:31.938Z",
+  "generatedAt": "2026-10-31T06:45:29.659Z",
   "sourceDir": "source",
   "counts": {
-    "files": 465,
-    "pdfs": 455,
+    "files": 467,
+    "pdfs": 457,
     "nonPdf": 10,
-    "classified": 396,
+    "classified": 398,
     "unclassified": 69,
     "encrypted": 37,
     "fromArchives": 399,
     "archivesExpanded": 50,
-    "pages": 1979
+    "pages": 1981
   },
   "reportTypes": [
     "holdings",
@@ -44,69 +44,6 @@
     "unknown"
   ],
   "archives": [
-    {
-      "archive": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani.zip",
-      "extractedTo": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani",
-      "files": 3,
-      "skipped": 0,
-      "failed": 0
-    },
-    {
-      "archive": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ankita Jaisinghani.zip",
-      "extractedTo": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ankita Jaisinghani",
-      "files": 2,
-      "skipped": 0,
-      "failed": 0
-    },
-    {
-      "archive": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Bharat Jaisinghani.zip",
-      "extractedTo": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Bharat Jaisinghani",
-      "files": 1,
-      "skipped": 0,
-      "failed": 0
-    },
-    {
-      "archive": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Ajay T Jaisinghani.zip",
-      "extractedTo": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Ajay T Jaisinghani",
-      "files": 3,
-      "skipped": 0,
-      "failed": 0
-    },
-    {
-      "archive": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Ankita Jaisinghani.zip",
-      "extractedTo": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Ankita Jaisinghani",
-      "files": 2,
-      "skipped": 0,
-      "failed": 0
-    },
-    {
-      "archive": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Bharat Jaisinghani.zip",
-      "extractedTo": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Bharat Jaisinghani",
-      "files": 1,
-      "skipped": 0,
-      "failed": 0
-    },
-    {
-      "archive": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Ajay T Jaisinghani.zip",
-      "extractedTo": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Ajay T Jaisinghani",
-      "files": 3,
-      "skipped": 0,
-      "failed": 0
-    },
-    {
-      "archive": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Ankita Jaisinghani.zip",
-      "extractedTo": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Ankita Jaisinghani",
-      "files": 2,
-      "skipped": 0,
-      "failed": 0
-    },
-    {
-      "archive": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Bharat Jaisinghani.zip",
-      "extractedTo": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Bharat Jaisinghani",
-      "files": 1,
-      "skipped": 0,
-      "failed": 0
-    },
     {
       "archive": "source/ARISTOS - AJAY.zip",
       "extractedTo": "source/_extracted/ARISTOS - AJAY",
@@ -391,6 +328,69 @@
       "archive": "source/VEC - ANKITA JAISINGHANI .zip",
       "extractedTo": "source/_extracted/VEC - ANKITA JAISINGHANI ",
       "files": 11,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani.zip",
+      "extractedTo": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani",
+      "files": 3,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ankita Jaisinghani.zip",
+      "extractedTo": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ankita Jaisinghani",
+      "files": 2,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Bharat Jaisinghani.zip",
+      "extractedTo": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Bharat Jaisinghani",
+      "files": 1,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Ajay T Jaisinghani.zip",
+      "extractedTo": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Ajay T Jaisinghani",
+      "files": 3,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Ankita Jaisinghani.zip",
+      "extractedTo": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Ankita Jaisinghani",
+      "files": 2,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Bharat Jaisinghani.zip",
+      "extractedTo": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Bharat Jaisinghani",
+      "files": 1,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Ajay T Jaisinghani.zip",
+      "extractedTo": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Ajay T Jaisinghani",
+      "files": 3,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Ankita Jaisinghani.zip",
+      "extractedTo": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Ankita Jaisinghani",
+      "files": 2,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Bharat Jaisinghani.zip",
+      "extractedTo": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Bharat Jaisinghani",
+      "files": 1,
       "skipped": 0,
       "failed": 0
     }
@@ -9436,6 +9436,50 @@
       "matchedBy": "non-statement signature"
     },
     {
+      "path": "source/october-2026-f/Glowterra.pdf",
+      "fileName": "Glowterra.pdf",
+      "bytes": 114438,
+      "size": "111.8 KB",
+      "pages": 1,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": "HDFC Bank (NSDL demat)",
+      "ownerName": null,
+      "accountNo": "67776432",
+      "asOfDate": "2026-10-29",
+      "reportType": "holdings",
+      "sections": [
+        "holdings"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "high",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/october-2026-f/LLP.pdf",
+      "fileName": "LLP.pdf",
+      "bytes": 113396,
+      "size": "110.7 KB",
+      "pages": 1,
+      "fromArchive": false,
+      "encrypted": false,
+      "readError": null,
+      "provider": "HDFC Bank (NSDL demat)",
+      "ownerName": null,
+      "accountNo": "67776424",
+      "asOfDate": "2026-10-29",
+      "reportType": "holdings",
+      "sections": [
+        "holdings"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "high",
+      "matchedBy": "generic keywords"
+    },
+    {
       "path": "source/october-2026/CAPITAL REGISTER GREEN LANTERN - AJAY.pdf",
       "fileName": "CAPITAL REGISTER GREEN LANTERN - AJAY.pdf",
       "bytes": 128398,
@@ -15728,6 +15772,57 @@
         }
       },
       "fileCount": 1
+    },
+    "HDFC Bank (NSDL demat)": {
+      "accounts": {
+        "67776424": {
+          "owner": null,
+          "strategy": null,
+          "asOfDates": {
+            "2026-10-29": {
+              "reportTypes": {
+                "holdings": [
+                  {
+                    "path": "source/october-2026-f/LLP.pdf",
+                    "pages": 1,
+                    "size": "110.7 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "holdings"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 1
+            }
+          },
+          "fileCount": 1
+        },
+        "67776432": {
+          "owner": null,
+          "strategy": null,
+          "asOfDates": {
+            "2026-10-29": {
+              "reportTypes": {
+                "holdings": [
+                  {
+                    "path": "source/october-2026-f/Glowterra.pdf",
+                    "pages": 1,
+                    "size": "111.8 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "holdings"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 1
+            }
+          },
+          "fileCount": 1
+        }
+      },
+      "fileCount": 2
     },
     "ASK Investment Managers Limited": {
       "accounts": {
