@@ -14,18 +14,18 @@ ISIN** and never on a name. 14,441 scheme rows read.
 | …of the statement's, confirmed by the look-through | 21 |
 | Resolved but **not usable to value a holding** | 3 |
 | Named below and not resolved | 1 |
-| Newest published date | 2026-10-31 |
+| Newest published date | 2026-11-01 |
 
 ## Priced
 
 | Security | ISIN | via | SEBI category | NAV | Date | Day |
 | --- | --- | --- | --- | ---: | --- | ---: |
 | ABSL BAL ADV-GROWTH | `INF084M01AB8` | statement | Dynamic Asset Allocation or Balanced Advantage | 110.21 | 2026-10-30 | -0.19% |
-| ABSL LIQF D-GROWTH | `INF209K01VA3` | statement | Liquid Fund | 462.3853 | 2026-10-30 | +0.02% |
-| Bandhan Arbitrage Fund-Direct Plan-Growth | `INF194K01Y60` | statement | Arbitrage Fund | 38.1219 | 2026-10-30 | +0.17% |
-| Bandhan Liquid Fund-Direct Plan-Growth | `INF194K01I60` | statement | Liquid Fund | 3454.5975 | 2026-10-30 | +0.02% |
-| Bandhan Overnight Fund-Direct Plan-Growth | `INF194KB1447` | statement | Overnight Fund | 1479.9389 | 2026-10-30 | +0.02% |
-| Bandhan Large & Mid Cap Fund-Direct Plan-Growth | `INF194K01V89` | statement | Large & Mid Cap Fund | 157.078 | 2026-10-30 | -0.52% |
+| ABSL LIQF D-GROWTH | `INF209K01VA3` | statement | Liquid Fund | 462.568 | 2026-11-01 | +0.04% |
+| Bandhan Arbitrage Fund-Direct Plan-Growth | `INF194K01Y60` | statement | Arbitrage Fund | 38.1239 | 2026-10-31 | +0.01% |
+| Bandhan Liquid Fund-Direct Plan-Growth | `INF194K01I60` | statement | Liquid Fund | 3455.8869 | 2026-11-01 | +0.04% |
+| Bandhan Overnight Fund-Direct Plan-Growth | `INF194KB1447` | statement | Overnight Fund | 1480.3938 | 2026-11-01 | +0.03% |
+| Bandhan Large & Mid Cap Fund-Direct Plan-Growth | `INF194K01V89` | statement | Large & Mid Cap Fund | 157.077 | 2026-10-31 | -0.00% |
 | DSP GOLD ETF | `INF740KA1SW3` | statement | Gold ETF | 13.5302 | 2026-10-30 | -1.24% |
 | DSP SILVER ETF | `INF740KA1RE3` | statement | Silver ETF | 17.4322 | 2026-10-30 | -4.17% |
 | HDFC Arbitrage Fund - Direct Plan - Growth Option | `INF179KA1KT6` | statement | Arbitrage Fund | 21.933 | 2026-10-30 | +0.16% |
@@ -33,13 +33,13 @@ ISIN** and never on a name. 14,441 scheme rows read.
 | HDFC BAF D-GROW | `INF179K01WA6` | statement | Dynamic Asset Allocation or Balanced Advantage | 546.24 | 2026-10-30 | -0.08% |
 | HDFC BAF R-GROW | `INF179K01830` | statement | Dynamic Asset Allocation or Balanced Advantage | 501.73 | 2026-10-30 | -0.08% |
 | HDFC Balanced Advantage Fund - Regular Plan - Growth | `INF179K01830` | statement | Dynamic Asset Allocation or Balanced Advantage | 501.73 | 2026-10-30 | -0.08% |
-| HDFC Liquid Fund - Direct Plan - IDCW # - Daily Reinvest | `INF179KB1HV7` | statement | Liquid Fund | 1019.82 | 2026-10-30 | +0.00% |
-| HDFC Overnight Fund - Direct Plan - Growth Option | `INF179KB1HT1` | statement | Overnight Fund | 4113.4453 | 2026-10-31 | +0.03% |
+| HDFC Liquid Fund - Direct Plan - IDCW # - Daily Reinvest | `INF179KB1HV7` | statement | Liquid Fund | 1019.82 | 2026-11-01 | +0.00% |
+| HDFC Overnight Fund - Direct Plan - Growth Option | `INF179KB1HT1` | statement | Overnight Fund | 4114.0701 | 2026-11-01 | +0.02% |
 | HDFC Small Cap Fund - Direct Growth Plan | `INF179KA1RW5` | statement | Small Cap Fund | 148.615 | 2026-10-30 | -1.82% |
 | HELIOS FCF D-GROW | `INF0R8701046` | statement | Flexi Cap Fund | 15.41 | 2026-10-30 | -0.32% |
 | Helios Flexi Cap Fund - Direct Growth | `INF0R8701046` | statement | Flexi Cap Fund | 15.41 | 2026-10-30 | -0.32% |
 | ICICI IOPPF D-GRW | `INF109KC1RH9` | statement | Sectoral/ Thematic | 38.02 | 2026-10-30 | +0.05% |
-| ICICI LIQF D-GROWTH | `INF109K01Q49` | statement | Liquid Fund | 423.3766 | 2026-10-30 | +0.02% |
+| ICICI LIQF D-GROWTH | `INF109K01Q49` | statement | Liquid Fund | 423.5363 | 2026-11-01 | +0.04% |
 | ICICI NFT NT 50 DP G | `INF109K01Y80` | statement | Index Funds | 63.0251 | 2026-10-30 | -0.61% |
 | ICICI NFT NX 50 R GR | `INF109K01IF1` | statement | Index Funds | 59.5146 | 2026-10-30 | -0.61% |
 | ICICI NIFT50IND DP G | `INF109K012M7` | statement | Index Funds | 244.0674 | 2026-10-30 | +0.51% |
@@ -55,14 +55,14 @@ ISIN** and never on a name. 14,441 scheme rows read.
 | Kotak Flexi Cap Fund Direct Growth | `INF174K01LS2` | statement | Flexi Cap Fund | 91.733 | 2026-10-30 | +0.05% |
 | Kotak Flexi Cap Fund Regular Growth | `INF174K01336` | statement | Flexi Cap Fund | 80.56 | 2026-10-30 | +0.05% |
 | Kotak Large & Mid Cap Fund - Direct Growth | `INF174K01LF9` | statement | Large & Mid Cap Fund | 382.264 | 2026-10-30 | -0.31% |
-| Kotak Liquid Fund Direct Plan Daily - IDCW # | `INF174K01NH1` | statement | Liquid Fund | 1223.0451 | 2026-10-31 | +0.02% |
-| Kotak Liquid Fund Regular Plan Daily - IDCW # | `INF174K01NL3` | statement | Liquid Fund | 1283.787 | 2026-10-31 | +0.02% |
+| Kotak Liquid Fund Direct Plan Daily - IDCW # | `INF174K01NH1` | statement | Liquid Fund | 1222.81 | 2026-11-01 | -0.02% |
+| Kotak Liquid Fund Regular Plan Daily - IDCW # | `INF174K01NL3` | statement | Liquid Fund | 1283.5466 | 2026-11-01 | -0.02% |
 | Kotak Mid Cap Fund Direct Growth | `INF174K01LT0` | statement | Mid Cap Fund | 155.011 | 2026-10-30 | -0.86% |
 | Kotak Mid Cap Fund Regular Growth | `INF174K01DS9` | statement | Mid Cap Fund | 132.21 | 2026-10-30 | -0.86% |
 | KOTAK MTCF D-GROW | `INF174KA1HV3` | statement | Multi Cap Fund | 20.324 | 2026-10-30 | -0.93% |
-| Mirae Asset Liquid Fund ( formerly Mirae Asset Cash Management Fund ) - Direct Plan Mirae Asset Liquid Fund ( formerly Mirae Asset Cash Management Fund ) - Direct Plan Growth | `INF769K01CM1` | statement | Liquid Fund | 3020.3177 | 2026-10-30 | +0.02% |
+| Mirae Asset Liquid Fund ( formerly Mirae Asset Cash Management Fund ) - Direct Plan Mirae Asset Liquid Fund ( formerly Mirae Asset Cash Management Fund ) - Direct Plan Growth | `INF769K01CM1` | statement | Liquid Fund | 3021.4683 | 2026-11-01 | +0.04% |
 | Motilal Oswal Active Momentum Fund - Direct Plan Growth Option | `INF247L01EP5` | statement | Sectoral/ Thematic | 13.848 | 2026-10-30 | -1.92% |
-| NIP ETNF1D RTLIQBEES | `INF732E01037` | statement | Other ETFs | 1000 | 2026-10-30 | +0.00% |
+| NIP ETNF1D RTLIQBEES | `INF732E01037` | statement | Other ETFs | 1000 | 2026-11-01 | +0.00% |
 | WOC MAAF D-GROW | `INF03VN01761` | statement | Multi Asset Allocation Fund | 16.281 | 2026-10-30 | -0.13% |
 
 ## Documented unit conversions
@@ -87,7 +87,7 @@ table's.
 
 | Security | ISIN | SEBI category | NAV | Date |
 | --- | --- | --- | ---: | --- |
-| HDFC Liquid Fund-Direct Plan-Growth Option | `INF179KB1HP9` | Liquid Fund | 5619.3907 | 2026-10-31 |
+| HDFC Liquid Fund-Direct Plan-Growth Option | `INF179KB1HP9` | Liquid Fund | 5620.4317 | 2026-11-01 |
 | ICICI PRUD AMC LTD#ICICI PRUD MF-ICICI PRUD EQUITY SAVINGS FUND DIRECT CUMULATIVE | `INF109KA11J9` | Equity Savings | 25.22 | 2026-10-30 |
 | Motilal Oswal Arbitrage Fund - Direct Plan Growth | `INF247L01ED1` | Arbitrage Fund | 11.3664 | 2026-10-30 |
 
@@ -96,7 +96,7 @@ table's.
 A NAV is shown for these; a holding value is not built on it. Each names why.
 
 - **MIRAE LCF D-GROW** (`INF769K01AX2`) — NAV 121.46 on 2026-10-30. no statement in this book marks this holding per unit, so there is nothing to check the NAV's basis against
-- **Motilal Oswal Liquid fund - Direct Plan Growth** (`INF247L01734`) — NAV 15.051 on 2026-10-30. no statement in this book marks this holding per unit, so there is nothing to check the NAV's basis against
+- **Motilal Oswal Liquid fund - Direct Plan Growth** (`INF247L01734`) — NAV 15.0566 on 2026-11-01. no statement in this book marks this holding per unit, so there is nothing to check the NAV's basis against
 - **Motilal Oswal Midcap Fund - Direct Plan Growth** (`INF247L01445`) — NAV 111.4372 on 2026-10-30. no statement in this book marks this holding per unit, so there is nothing to check the NAV's basis against
 
 ## Not resolved
