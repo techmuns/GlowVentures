@@ -35,48 +35,48 @@ sector weights a run can read, and no third-party figure is substituted.
 | Media, Entertainment & Publication | 0.13 | Communication Services |
 | Diversified | 0.02 | **Unclassified** — no single GICS sector |
 
-## Nifty 50 — 2026-09-30
+## Nifty 50 — 2026-10-30
 
-50 constituents · Free Float Market Capitalization · [factsheet](https://www.niftyindices.com/Factsheet/ind_nifty50.pdf) · weights sum to 99.99
-
-| Factsheet sector | Weight (%) | GICS sector |
-| --- | ---: | --- |
-| Financial Services | 37.45 | Financials |
-| Oil, Gas & Consumable Fuels | 9.39 | Energy |
-| Information Technology | 7.52 | Information Technology |
-| Automobile and Auto Components | 6.65 | Consumer Discretionary |
-| Fast Moving Consumer Goods | 5.50 | Consumer Staples |
-| Telecommunication | 5.10 | Communication Services |
-| Metals & Mining | 4.86 | Materials |
-| Healthcare | 4.74 | Health Care |
-| Construction | 4.20 | Industrials |
-| Consumer Services | 3.05 | Consumer Discretionary |
-| Consumer Durables | 2.85 | Consumer Discretionary |
-| Power | 2.59 | Utilities |
-| Services | 2.42 | Industrials |
-| Construction Materials | 2.34 | Materials |
-| Capital Goods | 1.33 | Industrials |
-
-## Nifty Next 50 — 2026-09-30
-
-50 constituents · methodology not printed · [factsheet](https://www.niftyindices.com/Factsheet/ind_next50.pdf) · weights sum to 100.01
+50 constituents · Free Float Market Capitalization · [factsheet](https://www.niftyindices.com/Factsheet/ind_nifty50.pdf) · weights sum to 100.00
 
 | Factsheet sector | Weight (%) | GICS sector |
 | --- | ---: | --- |
-| Capital Goods | 20.25 | Industrials |
-| Financial Services | 17.65 | Financials |
-| Automobile and Auto Components | 9.76 | Consumer Discretionary |
+| Financial Services | 37.13 | Financials |
+| Oil, Gas & Consumable Fuels | 9.00 | Energy |
+| Information Technology | 8.80 | Information Technology |
+| Automobile and Auto Components | 6.28 | Consumer Discretionary |
+| Telecommunication | 5.63 | Communication Services |
+| Fast Moving Consumer Goods | 5.36 | Consumer Staples |
+| Healthcare | 4.68 | Health Care |
+| Metals & Mining | 4.45 | Materials |
+| Construction | 4.25 | Industrials |
+| Consumer Services | 3.28 | Consumer Discretionary |
+| Consumer Durables | 2.70 | Consumer Discretionary |
+| Power | 2.53 | Utilities |
+| Services | 2.39 | Industrials |
+| Construction Materials | 2.28 | Materials |
+| Capital Goods | 1.24 | Industrials |
+
+## Nifty Next 50 — 2026-10-30
+
+50 constituents · methodology not printed · [factsheet](https://www.niftyindices.com/Factsheet/ind_next50.pdf) · weights sum to 100.00
+
+| Factsheet sector | Weight (%) | GICS sector |
+| --- | ---: | --- |
+| Capital Goods | 19.71 | Industrials |
+| Financial Services | 18.04 | Financials |
+| Automobile and Auto Components | 9.95 | Consumer Discretionary |
 | Power | 9.46 | Utilities |
-| Healthcare | 8.91 | Health Care |
-| Metals & Mining | 7.57 | Materials |
-| Oil, Gas & Consumable Fuels | 6.44 | Energy |
-| Fast Moving Consumer Goods | 6.15 | Consumer Staples |
-| Chemicals | 3.83 | Materials (prefix) |
-| Information Technology | 3.30 | Information Technology |
-| Consumer Services | 2.51 | Consumer Discretionary |
-| Realty | 1.77 | Real Estate |
-| Telecommunication | 1.46 | Communication Services |
-| Construction Materials | 0.95 | Materials |
+| Healthcare | 9.41 | Health Care |
+| Metals & Mining | 7.00 | Materials |
+| Oil, Gas & Consumable Fuels | 6.37 | Energy |
+| Fast Moving Consumer Goods | 5.95 | Consumer Staples |
+| Information Technology | 3.92 | Information Technology |
+| Chemicals | 3.85 | Materials (prefix) |
+| Consumer Services | 2.18 | Consumer Discretionary |
+| Realty | 1.87 | Real Estate |
+| Telecommunication | 1.37 | Communication Services |
+| Construction Materials | 0.92 | Materials |
 
 ## Nifty Midcap 150 — 2026-09-30
 
