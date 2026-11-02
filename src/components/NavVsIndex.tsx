@@ -5,7 +5,7 @@ import {
   LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine,
 } from "recharts";
 import { Card } from "@/components/Card";
-import { AbsentSection, AbsentCell } from "@/components/Absent";
+import { AbsentSection } from "@/components/Absent";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { wholeFamilyOnly } from "@/lib/memberScope";
 import { WHOLE_BOOK_NAV, WHOLE_BOOK_STARTS, BOOK_NAV_UNITS } from "@/lib/bookNavBook";
@@ -15,10 +15,10 @@ import { useMarketHistories } from "@/lib/useMarketReturns";
 import { assumedHoldingBook } from "@/lib/assumedHoldingBook";
 import { assumedBookNav, dematHoldings, ASSUMED_KEY, type DematHolding } from "@/lib/assumedBookNav";
 import { holdingAssumptionText } from "@/lib/assumedHoldingReturns";
-import { bookNavStats, type BookNavCoverage, type BookNavStats, type BookNavUnitCoverage } from "@/lib/bookNav";
+import { bookNavStats, type BookNavUnitCoverage } from "@/lib/bookNav";
 import { accountIndex } from "@/lib/accounts";
 import { ownerDisplayName } from "@/lib/owners";
-import { navIndexSeries, isMeasuredNilAccount } from "@/lib/navSeries";
+import { navIndexSeries } from "@/lib/navSeries";
 import { changeSince, lineReturn } from "@/lib/benchCompare";
 import { fetchPriceHistory, toPoints } from "@/lib/prices";
 import type { Point } from "@/lib/series";
@@ -66,6 +66,8 @@ import { chartTooltipStyle, chartTooltipLabelStyle } from "@/lib/chartTheme";
 //    with its colour's dot and a ✕, and each line ends in a dot of its colour.
 //    The dots that marked statement dates moved to the tooltip, so the only dots
 //    on the plot are the line ends.
+//  · The "In the return: …" fold under the chart is gone, at the family's ask of
+//    2 Nov 2026 (Stage 10jz). What the line covers stays on the book pill's hover.
 
 /** The benchmarks drawn until the reader changes them. */
 const DEFAULT_SHOWN: readonly BenchmarkKey[] = ["nifty-500"];
@@ -134,7 +136,7 @@ const assumptionText = (owners: readonly string[]) => owners.length <= 1
 const sumOf = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
 
 export function NavVsIndex() {
-  const { portfolio, statementPortfolio, fmtFromBase, livePriced, scope, corporateActions, corporateActionsStatus } = usePortfolio();
+  const { portfolio, statementPortfolio, fmtFromBase, scope, corporateActions, corporateActionsStatus } = usePortfolio();
   /**
    * ── THE DEMATS' LISTED SHARES AT EACH DAY'S PUBLISHED CLOSE (Stage 10iz) ──
    * *"mark listed demat holdings at historical prices in the book line."* Their
@@ -281,45 +283,8 @@ export function NavVsIndex() {
     // and a demat's shares at published closes read apart from its other holdings.
     return `${nameOf(u.accountId)}${a?.accountNo ? ` · ${a.accountNo}` : ""}${u.key.endsWith(ASSUMED_KEY) ? " · listed shares at published closes" : ""}`;
   };
-  /** Why an account carries no valuation is its own sentence, routed (MNT-14). */
-  const stmtAccts = accountIndex(stmtBook.accounts);
-  const whyOf = (id: string): Why => {
-    const live = accts.get(id);
-    const stmt = stmtAccts.get(id) ?? live;
-    return {
-      nil: isMeasuredNilAccount(stmt),
-      reason: live?.partialValuation ?? stmt?.noPositionsReason ?? null,
-    };
-  };
-  // The accounts no investment in the series stands for, off the registry.
-  const inSeries = new Set(stats.holding.map((u) => u.accountId));
-  const unvalued = stmtBook.accounts
-    .filter((a) => !inSeries.has(a.accountId))
-    .filter((a) => !stmtBook.positions.some((p) => p.accountId === a.accountId && Math.abs(p.marketValue) >= 1000))
-    .map((a) => ({ accountId: a.accountId, accountNo: a.accountNo }));
-  const depositoryRows = portfolio.positions.filter((p) => p.depositoryUnits);
-  const depositoryValue = sumOf(depositoryRows.map((p) => p.marketValue));
-  const recon: Recon = {
-    perAccount: sumOf(stmtBook.positions.map((p) => p.marketValue)),
-    statementBook: stmtBook.totalValue,
-    doubleCounted: sumOf(stmtBook.positions.map((p) => p.marketValue)) - stmtBook.totalValue,
-    ...reportedTwiceOf(stmtBook.positions),
-    current: portfolio.totalValue,
-    depositoryValue,
-    depositoryCount: depositoryRows.length,
-    priceDelta: portfolio.totalValue - stmtBook.totalValue - depositoryValue,
-    quotesLive: livePriced > 0,
-    levelEnd: cov.levelEnd,
-    // The statement series' own steps; the demats' published closes are a step of their own.
-    newerMarks: WHOLE_BOOK_NAV.coverage.newerMarks,
-    capitalAfter: WHOLE_BOOK_NAV.coverage.capitalAfterLastValuation,
-    assumedDelta: useAssumed ? cov.levelEnd - WHOLE_BOOK_NAV.coverage.levelEnd : 0,
-    seriesTo: cov.to,
-  };
   const stale = model.stale;
   const staleValue = sumOf(stale.map((u) => u.endValue ?? 0));
-  const coverage = <SeriesCoverage stats={stats} cov={cov} unitName={unitName} nameOf={nameOf} fmt={fmtFromBase} recon={recon} whyOf={whyOf} unvalued={unvalued} staleValue={staleValue}
-    demat={useAssumed && assumed ? assumed.holdings : null} />;
 
   // THE SERIES IS THE WHOLE FAMILY'S, AND A MEMBER SCOPE SAYS SO (Stage 10di).
   if (scope.selected) {
@@ -338,7 +303,6 @@ export function NavVsIndex() {
         <AbsentSection
           what="Nothing in this book is valued on two dates"
           needs={`A NAV series needs the book valued at two or more dates. ${stats.holding.length} investment(s) hold value and none of them carries a second dated valuation or a dated payment inside the window, so there is nothing to chain. The next monthly reissue of any statement already in the archive starts one.`} />
-        {coverage}
       </Card>
     );
   }
@@ -374,7 +338,7 @@ export function NavVsIndex() {
         kept.length ? `${kept.length} stay at their statement values (${c(sumOf(kept.map((h) => h.value)))})` : "",
         out.length ? `${out.length} no statement values ${out.length === 1 ? "is" : "are"} in neither line` : "",
       ].filter(Boolean).join(" and ");
-      return `Listed demat shares: ${assumed.assumedCount} holdings, ${c(assumed.assumedValue)} on ${fmtDate(to)}, are valued at each day's published close from their statement dates, with splits applied and gross dividends counted on their ex-dates. ${assumptionText(assumed.owners)}${others ? ` Of the other demat holdings, ${others}, each for its reason in the list below.` : ""}`;
+      return `Listed demat shares: ${assumed.assumedCount} holdings, ${c(assumed.assumedValue)} on ${fmtDate(to)}, are valued at each day's published close from their statement dates, with splits applied and gross dividends counted on their ex-dates. ${assumptionText(assumed.owners)}${others ? ` Of the other demat holdings, ${others}.` : ""}`;
     })()
     : `Listed demat shares are at their statement values: ${
       corporateActionsStatus === "loading" ? "the split and dividend records are still loading."
@@ -585,264 +549,6 @@ export function NavVsIndex() {
         )}
       </div>
 
-      {coverage}
     </Card>
-  );
-}
-
-/** The statement book set against the series' NAV and the current value, one step at a time (MNT-4). */
-type Recon = {
-  /** Σ of the statement positions as printed, not deduped. */
-  perAccount: number;
-  /** The consolidated statement book: each holding two accounts both report counted once. */
-  statementBook: number;
-  /** Σ of the statement positions as printed less that book — the double count. */
-  doubleCounted: number;
-  /**
-   * THE SAME GAP FROM ITS CAUSE: every row of a `dedupeGroup` after its first,
-   * and the holdings they are. The subtraction above says how much; this says
-   * which holdings, so the hover can name them rather than infer them — and
-   * where the two disagree by more than a rupee, both are printed.
-   */
-  reportedTwice: number;
-  reportedTwiceKeys: string[];
-  /** The current value of holdings the top bar shows. */
-  current: number;
-  /** Cash-equivalent funds valued from a depository's own units — no statement marks them. */
-  depositoryValue: number;
-  depositoryCount: number;
-  /** What published NAVs and live quotes add to the statement marks. */
-  priceDelta: number;
-  quotesLive: boolean;
-  /** The series' NAV at its last point, and the two named steps from the statement book to it. */
-  levelEnd: number;
-  newerMarks: number;
-  capitalAfter: number;
-  /** The series' end level less the statement series': the demats' shares at published closes (Stage 10iz). */
-  assumedDelta: number;
-  seriesTo: string | null;
-};
-
-/** Every row of a `dedupeGroup` after its first: what a per-account sum counts twice. */
-function reportedTwiceOf(positions: { dedupeGroup?: string | null; securityKey: string; marketValue: number }[]) {
-  const seen = new Set<string>();
-  const keys = new Set<string>();
-  let reportedTwice = 0;
-  for (const p of positions) {
-    if (!p.dedupeGroup) continue;
-    if (seen.has(p.dedupeGroup)) { reportedTwice += p.marketValue; keys.add(p.securityKey); }
-    else seen.add(p.dedupeGroup);
-  }
-  return { reportedTwice, reportedTwiceKeys: [...keys].sort() };
-}
-
-/** An unvalued account's own reason, and whether its statement struck a nil balance. */
-type Why = { nil: boolean; reason: string | null };
-
-/**
- * ── WHAT THE SERIES HOLDS, WHAT IT CANNOT, AND HOW IT TIES (Stage 10ge) ──────
- *
- * The family's own ask ("or state the accounts that cannot supply one") is
- * answered by name, now over the whole book's investments rather than over the
- * accounts a statement values twice. Four lists, each sending a reader to a
- * different place:
- *
- *   · JOIN THE RETURN LATER — bought before the window opened and first valued
- *     inside it; what fills the gap is that investment's 31 March valuation.
- *   · HELD AT COST — in the NAV at what was paid, never in the return; what
- *     fills it is a valuation of the line.
- *   · NOT REVALUED IN THE WINDOW — in the return at a valuation from its first
- *     day, carried flat because no later statement restates it.
- *   · NO VALUED HOLDING — accounts the series does not stand for at all, each
- *     with its own account's reason.
- */
-function SeriesCoverage({ stats, cov, unitName, nameOf, fmt, recon, whyOf, unvalued, staleValue = 0, demat = null }: {
-  stats: BookNavStats;
-  cov: BookNavCoverage;
-  unitName: (u: BookNavUnitCoverage) => string;
-  nameOf: (id: string) => string;
-  fmt: (n: number | null | undefined, o?: { compact?: boolean; sign?: boolean }) => string;
-  recon: Recon;
-  whyOf: (id: string) => Why;
-  unvalued: { accountId: string; accountNo: string }[];
-  /** In the return and last valued more than `STALE_DAYS` before the series' end. */
-  staleValue?: number;
-  /** The demats' holdings when the line values their listed shares at published closes (Stage 10iz). */
-  demat?: readonly DematHolding[] | null;
-}) {
-  const c = (n: number, sign = false) => fmt(n, { compact: true, sign });
-  const sumOf = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
-  const nils = unvalued.filter((u) => whyOf(u.accountId).nil).length;
-  const byValue = (xs: BookNavUnitCoverage[]) => [...xs].sort((a, b) => (b.endValue ?? 0) - (a.endValue ?? 0));
-  /**
-   * THE FOOTER RECONCILES, STEP BY STEP, AND THE STEPS ARE COMPUTED (MNT-4).
-   *
-   * From the statements as printed, to the consolidated statement book, to the
-   * series' own NAV at its last point — which may carry a valuation newer than
-   * the holdings statement the book reads, and capital dated after a valuation —
-   * and separately to the current value on today's prices. Each step is printed
-   * with its own figure, and the sign is the arithmetic's.
-   */
-  const dedupeTies = Math.abs(recon.perAccount - (recon.statementBook + recon.doubleCounted)) <= 1;
-  const nTwice = recon.reportedTwiceKeys.length;
-  const holdingsTwice = `${nTwice} holding${nTwice === 1 ? "" : "s"}, each on two accounts' statements`;
-  const causeTies = Math.abs(recon.doubleCounted - recon.reportedTwice) <= 1;
-  const liveSteps = [
-    Math.abs(recon.priceDelta) > 1
-      ? `${c(recon.priceDelta, true)} from ${recon.quotesLive ? "AMFI's published NAVs and live quotes" : "AMFI's published NAVs"} over the statement marks`
-      : null,
-    recon.depositoryValue > 1
-      ? `${c(recon.depositoryValue)} of ${recon.depositoryCount} cash-equivalent fund${recon.depositoryCount === 1 ? "" : "s"} valued from a depository's own closing units at AMFI's NAV — holdings no statement marks`
-      : null,
-  ].filter(Boolean);
-  const seriesSteps = [
-    Math.abs(recon.newerMarks) > 1 ? `${c(recon.newerMarks, true)} from valuations newer than the holdings statement the book carries` : null,
-    Math.abs(recon.capitalAfter) > 1 ? `${c(recon.capitalAfter, true)} of capital dated after an investment's last valuation` : null,
-    Math.abs(recon.assumedDelta) > 1 ? `${c(recon.assumedDelta, true)} from listed demat shares valued at published closes and assumed still held, in place of their statement values` : null,
-  ].filter(Boolean);
-  const footHover = [
-    `As each statement prints them, the investments sum to ${fmt(recon.perAccount)} — a per-account sum, which does not dedupe.`,
-    dedupeTies && causeTies
-      ? nTwice === 0
-        ? `No holding is reported by two accounts, so that sum and the consolidated statement book agree, ${fmt(recon.statementBook)}.`
-        : `Counting once the ${fmt(recon.doubleCounted)} that two accounts both report gives the consolidated statement book, ${fmt(recon.statementBook)}; that is ${holdingsTwice}.`
-      : `The consolidated statement book is ${fmt(recon.statementBook)}; the per-account sum differs from it by ${fmt(recon.perAccount - recon.statementBook, { sign: true })}, and ${fmt(recon.reportedTwice)} of that is ${holdingsTwice}.`,
-    seriesSteps.length
-      ? `The series' NAV at ${recon.seriesTo}, ${fmt(recon.levelEnd)}, is that book plus ${seriesSteps.join(", and ")}.`
-      : `The series' NAV at ${recon.seriesTo} is that book, ${fmt(recon.levelEnd)}.`,
-    liveSteps.length
-      ? `The current value of holdings, ${fmt(recon.current)}, is that book plus ${liveSteps.join(", and ")}.`
-      : `The current value of holdings is that book, ${fmt(recon.current)}.`,
-  ].join(" ");
-  const outOfReturn = stats.joinedLater.length + stats.atCost.length;
-  const dematAssumed = (demat ?? []).filter((h) => h.status === "assumed");
-  const dematOther = (demat ?? []).filter((h) => h.status !== "assumed");
-  const List = ({ id, items, right }: { id: string; items: BookNavUnitCoverage[]; right: (u: BookNavUnitCoverage) => string }) => (
-    <ul className="mt-2 space-y-1 text-[11px] text-slate-400" data-testid={id}>
-      {byValue(items).map((u) => (
-        <li key={u.key} className="flex justify-between gap-3" data-nav-unit={u.key}>
-          <span className="truncate" title={u.key}>{unitName(u)}</span>
-          <span className="shrink-0 tabular text-slate-500">{right(u)}</span>
-        </li>
-      ))}
-    </ul>
-  );
-  return (
-    <details className="mt-3 rounded-lg border border-ink-700 bg-ink-900/40 px-3 py-2" data-testid="nav-excluded"
-      data-in-return={stats.inReturn.length} data-holding={stats.holding.length}
-      data-joined={stats.joinedLater.length} data-at-cost={stats.atCost.length} data-unvalued={unvalued.length} data-navigation-details="navvsindex-1">
-      {/* THE SPLIT IS THE SUMMARY'S HOVER (Stage 10cp): what joins later, what
-          is held at cost, and what carries no valued holding send a reader to
-          three different places, so a reader who never opens the details can
-          still read all three off the summary. */}
-      <summary className="cursor-pointer text-[11.5px] text-slate-400"
-        data-prose-ok="the book line's coverage as figures: what is in it, what joined late, what is at cost and what is carried at an old valuation"
-        title={`${stats.inReturn.length} of the ${stats.holding.length} investments holding value are in the return at ${cov.to}, ${c(stats.inReturnValue)}. ${stats.joinedLater.length} of those joined it on a first valuation inside the window; ${stats.atCost.length} private lines, ${c(stats.atCostValue)}, are held at cost and are in the NAV only; ${unvalued.length} accounts carry no valued holding. Open to see each one named.`}>
-        In the return: <strong className="text-slate-300">{stats.inReturn.length} of {stats.holding.length} investments</strong>
-        {" "}· {c(stats.inReturnValue)}
-        {outOfReturn > 0 && <> · {stats.joinedLater.length} joined later · {stats.atCost.length} at cost</>}
-        {staleValue > 0 && <> · <span data-nav-stale={staleValue}>{c(staleValue)} not revalued in 3 months</span></>}
-        {dematAssumed.length > 0 && <> · <span data-nav-demat-count={dematAssumed.length}>{dematAssumed.length} assumed held</span></>}
-      </summary>
-      <div className="mt-3 grid gap-4 md:grid-cols-2">
-        <div>
-          <div className="label-xs" title={`Each was bought before ${cov.from} and is first valued inside the window, so its value on ${cov.from} is nowhere in the archive: it joins the return on that valuation and contributes nothing before it. Its ${cov.from} valuation is what would bring it in from the first day.`}>
-            {stats.joinedLater.length} join the return on a first valuation
-          </div>
-          <List id="nav-joined-list" items={stats.joinedLater} right={(u) => `${u.returnFrom} · ${fmt(u.endValue, { compact: true })}`} />
-          {stats.notRevalued.length > 0 && (
-            <>
-              <div className="label-xs mt-3" title={`In the return from ${cov.from} at a valuation on or before that day, and valued by no later statement — so each is carried flat at it, as every investment is between two valuations. A newer statement for any of them moves the line.`}>
-                {stats.notRevalued.length} not revalued since {cov.from}
-              </div>
-              <List id="nav-stale-list" items={stats.notRevalued} right={(u) => `${u.lastValued} · ${fmt(u.endValue, { compact: true })}`} />
-            </>
-          )}
-        </div>
-        <div>
-          <div className="label-xs" title="The family's consolidated review holds these at what was paid and values none of them, so each is in the NAV at its cost and never in the return — a return over a cost would count a line nobody valued as 0%.">
-            {stats.atCost.length} held at cost · {c(stats.atCostValue)}
-          </div>
-          <List id="nav-atcost-list" items={stats.atCost} right={(u) => fmt(u.endValue, { compact: true })} />
-          {/* ONE SENTENCE THAT IS TRUE OF ALL OF THEM (MNT-14), in the label's
-              hover. Each row carries its own account's reason, and a redeemed
-              account shows the nil its own statement struck — a measured zero
-              and an absent measurement must never look the same (§2). */}
-          <div className="label-xs mt-3" data-nav-unvalued-why
-            title={`None of these carries a valued holding, so the series stands for none of them — each row names its own account's reason${nils > 0 ? `, and ${nils === 1 ? "a redeemed account shows" : `the ${nils} redeemed accounts show`} the nil balance ${nils === 1 ? "its" : "their"} statement struck` : ""}.`}>
-            {unvalued.length} carry no valued holding
-          </div>
-          <ul className="mt-2 space-y-1 text-[11px] text-slate-400" data-testid="nav-unvalued-list">
-            {unvalued.map((u) => {
-              const why = whyOf(u.accountId);
-              return (
-                <li key={u.accountId} className="flex justify-between gap-3"
-                  data-nav-unvalued={u.accountId} data-nav-nil={why.nil ? "1" : "0"}>
-                  <span className="truncate" title={u.accountId}>{nameOf(u.accountId)} · {u.accountNo}</span>
-                  {why.nil ? (
-                    <span className="shrink-0 tabular text-slate-400" title={why.reason ?? undefined}>
-                      {fmt(0)} · redeemed
-                    </span>
-                  ) : (
-                    <span className="shrink-0 tabular">
-                      <AbsentCell reason={why.reason ?? "no statement in this drop values this account, so the series cannot stand for it"} />
-                    </span>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      </div>
-      {/* ── THE DEMATS' SHARES, EACH NAMED (Stage 10iz) ──────────────────────
-          What the line values at published closes and assumes still held, and
-          what stays at its statement value or out of both series — each with
-          its own reason from the one rule (`assumedHolding`). */}
-      {demat && (
-        <div className="mt-3 grid gap-4 md:grid-cols-2" data-testid="nav-demat">
-          <div>
-            <div className="label-xs" title="No sale appears in the records we have, so each is assumed still held: its statement's share count, carried from the statement date at every published close, with checked splits applied and gross dividends counted on their ex-dates. The value shown is the last close in the window.">
-              {dematAssumed.length} demat holdings at published closes · {c(sumOf(dematAssumed.map((h) => h.value)))}
-            </div>
-            <ul className="mt-2 space-y-1 text-[11px] text-slate-400" data-testid="nav-demat-assumed">
-              {[...dematAssumed].sort((x, y) => y.value - x.value).map((h) => (
-                <li key={`${h.accountId}|${h.securityKey}`} className="flex justify-between gap-3"
-                  data-nav-demat={`${h.accountId}|${h.securityKey}`} data-nav-demat-status={h.status} data-nav-demat-value={h.value}>
-                  <span className="truncate" title={h.accountId}>{h.security} · {h.owner}</span>
-                  <span className="shrink-0 tabular text-slate-500">from {h.from} · {fmt(h.value, { compact: true })}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <div className="label-xs" title="Each of these stays at its statement value, or — where its statement prints no value — out of the line, for the reason on its row.">
-              {dematOther.length} demat holdings not valued this way
-            </div>
-            <ul className="mt-2 space-y-1 text-[11px] text-slate-400" data-testid="nav-demat-other">
-              {[...dematOther].sort((x, y) => y.value - x.value).map((h) => (
-                <li key={`${h.accountId}|${h.securityKey}`} className="flex justify-between gap-3"
-                  data-nav-demat={`${h.accountId}|${h.securityKey}`} data-nav-demat-status={h.status} data-nav-demat-value={h.value}>
-                  <span className="truncate" title={h.accountId}>{h.security} · {h.owner}</span>
-                  {h.status === "statement" ? (
-                    <span className="shrink-0 tabular text-slate-500" title={h.reason ?? undefined}>statement · {fmt(h.value, { compact: true })}</span>
-                  ) : (
-                    <span className="shrink-0 tabular"><AbsentCell reason={h.reason ?? "no published price could value it"} /></span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      )}
-      {/* THE FIGURE ON ITS FACE, THE RECONCILIATION IN ITS HOVER (Stage 10cp). */}
-      <p className="mt-3 border-t border-ink-700 pt-2 text-[11px] text-slate-500" data-testid="nav-excluded-recon"
-        data-per-account={recon.perAccount} data-statement-book={recon.statementBook} data-current={recon.current}
-        data-assumed-delta={recon.assumedDelta}
-        data-level-end={recon.levelEnd} data-newer-marks={recon.newerMarks} data-capital-after={recon.capitalAfter}
-        data-reported-twice={recon.reportedTwice} data-reported-twice-keys={recon.reportedTwiceKeys.join(" ")}
-        title={footHover}>
-        NAV at {recon.seriesTo} · {c(recon.levelEnd)} · statements · {c(sumOf([recon.statementBook]))}
-      </p>
-    </details>
   );
 }

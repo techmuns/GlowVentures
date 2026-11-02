@@ -891,3 +891,10 @@
 - `CASH_EQUIVALENT_KEYS` gains Kotak Arbitrage (Regular) and Kotak Overnight (Direct). The dead-key check waits on them until the upload lands.
 - Kajaria Ceramics joins the screener tier: the new Kotak funds' filings place it, and the premise is that filings never decide a held company's sector.
 - Where a folio now reports a demat's exact units, the folio values them. `fundNavs` and `recoveredCosts` count those demat rows as reported elsewhere instead of expecting a row.
+
+### Stage 10jz — THE "IN THE RETURN" FOLD UNDER THE BENCHMARK CHART IS GONE
+
+- *"remove the highlighted section from the UI"* — the family, 2 Nov 2026, over "In the return: 58 of 138 investments · ₹805 Cr · …" under Our book vs benchmarks, on both routes that draw the card (Morning CIO, Performance).
+- `SeriesCoverage` is deleted, so the lists it opened into (joined later, at cost, not revalued, no valued holding, demat holdings) and its reconciling footer (MNT-4) are off the card. The book pill's hover still gives the counts, the rupee coverage and the stale and unproven names. No figure changed.
+- This narrows the "the rest are named" rule on this card by the family's decision: individual investments are no longer listed here.
+- `check:pages`: the partition and MNT-4 claims are retired for one that the fold stays removed, the hovers still count the coverage, and the series stands for every account holding value. `check-nav-assumed.mjs` keeps its hover checks.
