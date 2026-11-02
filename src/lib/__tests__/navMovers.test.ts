@@ -111,13 +111,20 @@ near("the aggregate percentage is value-weighted, not an average",
 
 // AND IT IS NOT THE MEAN OF THE ROWS' PERCENTAGES, which is the wrong figure a
 // naive aggregate produces — it weights a ₹107 residual the same as a ₹42 Cr
-// position. Asserted as an INEQUALITY so it cannot pass by accident on a book
-// where the two happen to coincide.
+// position. CONSTRUCTED, because the day's real rows cannot say so: on a date
+// when AMFI has published one of the book's schemes so far, the mean of one row
+// IS the weighted figure (Stage 10jt).
 {
-  const dayRows = m.rows.filter((r) => r.inDayFigure);
-  const mean = dayRows.reduce((a, r) => a + r.changePct, 0) / dayRows.length;
-  ok("the aggregate is not the unweighted mean of the rows",
-    Math.abs(mean - m.changePct!) > 1e-6, `mean ${mean.toFixed(4)}% vs weighted ${m.changePct!.toFixed(4)}%`);
+  const [small, large] = rows.filter((p, n) => m.rows.some((r) => r.securityKey === p.securityKey)
+    && rows.findIndex((q) => q.securityKey === p.securityKey) === n);
+  if (small && large) {
+    const amfi = (k: string) => {
+      const c = k === small.securityKey ? 10 : k === large.securityKey ? 1 : null;
+      return c === null ? null : { schemecode: k, scheme: k, plan: "Direct", nav: 100 + c, date: "2026-10-20", prev: 100, prevDate: "2026-10-19", changePct: c };
+    };
+    const two = navMoverModel([{ ...small, navPriced: false, marketValue: 1000 }, { ...large, navPriced: false, marketValue: 9000 }], accts, null, amfi);
+    near("the aggregate of ₹1,000 up 10% and ₹9,000 up 1% is 1.9%, not their 5.5% mean", two.changePct, 1.9, 1e-9);
+  } else ok("two schemes to construct the aggregate from", false);
 }
 
 // ── THE PARTITION ───────────────────────────────────────────────────────────
