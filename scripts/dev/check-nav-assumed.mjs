@@ -47,17 +47,8 @@ try {
   const hover = await chip.getAttribute('title');
   assert.match(hover, /No sale appears in the records we have\. We assume .+ still hold these shares\./);
   assert.match(hover, /valued at each day's published close from their statement dates/);
-  await page.locator('[data-testid="nav-excluded"] summary').click();
-  const listed = await page.locator('[data-testid="nav-demat-assumed"] li').count();
-  assert.equal(listed, count, 'every assumed holding is named in the fold');
-  const others = await page.locator('[data-testid="nav-demat-other"] li').evaluateAll((li) => li.map((x) => x.getAttribute('data-nav-demat-status')));
-  assert.ok(others.every((s) => s === 'statement' || s === 'left-out'));
-  // THE FOOTER TIES: the series' end level is the statement book plus its named steps.
-  const r = await page.locator('[data-testid="nav-excluded-recon"]').evaluate((el) => ({ ...el.dataset }));
-  const n = (k) => Number(r[k]);
-  assert.ok(Math.abs(n('assumedDelta')) > 1, 'the published closes move the level');
-  assert.ok(Math.abs(n('levelEnd') - (n('statementBook') + n('newerMarks') + n('capitalAfter') + n('assumedDelta'))) <= 1, 'the level ties to its named steps');
-  assert.match(await page.locator('[data-testid="nav-excluded-recon"]').getAttribute('title'), /from listed demat shares valued at published closes and assumed still held/);
+  // THE FOLD UNDER THE CHART IS GONE (Stage 10jz); the hover says what the line covers.
+  assert.equal(await page.locator('[data-testid="nav-excluded"]').count(), 0);
   await page.screenshot({ path: out + '/assumed.png', fullPage: false });
   assert.deepEqual(priced.errors, []);
   await priced.context.close();
@@ -71,5 +62,5 @@ try {
   assert.match(await page.locator('[data-testid="nav-book-chip"]').getAttribute('title'), /\d+ demat price histories could not load/);
   assert.deepEqual(unpriced.errors, []);
   await unpriced.context.close();
-  console.log('NAV card demat shares: published closes, owner assumption, fold and footer tie, statement fallback and failed histories passed.', { count });
+  console.log('NAV card demat shares: published closes, owner assumption, statement fallback and failed histories passed.', { count });
 } catch (error) { await page?.screenshot({ path: out + '/failure.png' }).catch(() => {}); throw error; } finally { await browser.close(); }

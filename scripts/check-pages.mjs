@@ -59,7 +59,7 @@ import * as XLSX from "xlsx";
  * struck on — the chained return, the level, the panel, the coverage — is
  * then re-derived off those points by this file's own arithmetic, never by
  * `navIndexSeries` or the component, and the level is tied back to
- * `glowData.ts` independently (`NAV_LEVEL_TIE`). Null on any failure, so every
+ * `glowData.ts` independently. Null on any failure, so every
  * claim struck on it FAILS rather than passing over nothing.
  */
 const NAV_BOOK_MODULE = await (async () => {
@@ -20291,87 +20291,6 @@ const NAV_HOLDING_ACCOUNTS = (() => {
     return [...new Set(ps.filter((x) => Math.abs(x.marketValue) >= 1000).map((x) => x.accountId))].sort();
   } catch { return null; }
 })();
-const NAV_LEVEL_TIE = (() => {
-  try {
-    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
-    const accounts = bookArray(src, "BOOK_ACCOUNTS");
-    const ps = statementBookPositions(src);
-    const recs = bookObject(src, "BOOK_ACCOUNT_RETURN_RECORDS") ?? {};
-    const hist = bookObject(src, "BOOK_ACCOUNT_NAV_HISTORY") ?? {};
-    if (!accounts || !ps) return null;
-    let newer = 0;
-    for (const a of accounts) {
-      const own = ps.filter((x) => x.accountId === a.accountId);
-      if (a.reviewHolder || !own.length || own.every((x) => x.review)) continue;
-      const book = own.reduce((t, x) => t + x.marketValue, 0);
-      const rec = recs[a.accountId]?.record ?? null;
-      const cands = [];
-      if (a.asOf) cands.push({ date: a.asOf, value: book, rank: 1 });
-      if (rec) cands.push({ date: rec.asOf, value: rec.value, rank: 0 });
-      for (const h of hist[a.accountId] ?? []) cands.push({ date: h.date, value: h.nav, rank: 2 });
-      cands.sort((x, y) => (x.date < y.date ? 1 : x.date > y.date ? -1 : x.rank - y.rank));
-      if (cands.length) newer += cands[0].value - book;
-    }
-    return { newer };
-  } catch { return null; }
-})();
-const NAV_RECON = [
-  ["the NAV card's lists, its statement book and the current value reconcile step by step (MNT-4)", (t, ctx) => {
-    if (!NAV_RECON_BOOK || !COSTED_BOOK) return false;
-    const h = (ctx?.titles ?? []).find((x) => /^As each statement prints them, the investments sum to ₹/.test(x));
-    if (!h) return false;
-    // The gap between a statement sum and the current value, named as the
-    // double count, is the defect itself.
-    if (/above the current value/i.test(h)) return false;
-    const rupees = (x) => (x == null ? NaN : Number(String(x).replace(/[₹,\s]/g, "")));
-    const per = rupees(/the investments sum to (₹[\d,.]+)/.exec(h)?.[1]);
-    const cur = rupees(/The current value of holdings, (₹[\d,.]+),/.exec(h)?.[1]);
-    const keys = (ctx?.navListRows?.twiceKeys ?? "").split(" ").filter(Boolean);
-    let doubled, book;
-    if (NAV_RECON_BOOK.keys.length) {
-      const m = /Counting once the (₹[\d,.]+) that two accounts both report gives the consolidated statement book, (₹[\d,.]+); that is (\d+) holdings?, each on two accounts' statements\./.exec(h);
-      if (!m || !Number.isFinite(per) || !Number.isFinite(cur)) return false;
-      doubled = rupees(m[1]); book = rupees(m[2]);
-      // …AND THE GAP IS NAMED FROM ITS CAUSE: the holdings the footer says two
-      // accounts both report are exactly the book's own reported-twice
-      // holdings, and the hover counts them. A footer that inferred the gap by
-      // subtraction and named nobody satisfied every figure above.
-      if (Number(m[3]) !== NAV_RECON_BOOK.keys.length || keys.join(" ") !== NAV_RECON_BOOK.keys.join(" ")) return false;
-    } else {
-      // …AND WHERE THE BOOK COUNTS NO HOLDING ONCE — since *"both are separate
-      // investments"* (28 Sep 2026) it counts none — the lists ARE the
-      // statement book, the footer says so in those words, and names no
-      // holding as reported twice. Struck on the book, so a footer still
-      // subtracting the family's pair fails rather than abstaining.
-      const m = /No holding is reported by two accounts, so that sum and the consolidated statement book agree, (₹[\d,.]+)\./.exec(h);
-      if (!m || !Number.isFinite(per) || !Number.isFinite(cur)) return false;
-      doubled = 0; book = rupees(m[1]);
-      if (keys.length || /two accounts both report|each on two accounts' statements/i.test(h)) return false;
-    }
-    // The steps from the book to the current value, each as its figure prints.
-    const nav = /that book plus ([+−-]?₹[\d,.]+\s*(?:Cr|L|K)?) from AMFI/.exec(h)?.[1];
-    const dep = /(₹[\d,.]+\s*(?:Cr|L|K)?) of \d+ cash-equivalent funds?/.exec(h)?.[1];
-    const steps = [nav, dep].filter(Boolean);
-    const tie = steps.reduce((a, x) => a + compactTieCr(Math.abs(money2cr(x))), 0) + 1e-6;
-    // THE SERIES' OWN NAV, from the same book in named steps (Stage 10ge): the
-    // level at its last point, and the newer valuations re-derived here off the
-    // records and the statement series rather than read off the series.
-    const lv = /The series' NAV at \d{4}-\d{2}-\d{2}, (₹[\d,.]+), is that book(?: plus ([+−-]?₹[\d,.]+\s*(?:Cr|L|K)?) from valuations newer than the holdings statement the book carries)?/.exec(h);
-    if (!lv || !NAV_LEVEL_TIE || !NAV_SERIES_BOOK) return false;
-    const levelEnd = rupees(lv[1]);
-    const newer = lv[2] ? signedCr(lv[2]) * 1e7 : 0;
-    const levelTies = Math.abs(levelEnd - NAV_SERIES_BOOK.levelEnd) <= 1
-      && Math.abs(newer - NAV_LEVEL_TIE.newer) <= compactTieCr(Math.abs(NAV_LEVEL_TIE.newer) / 1e7) * 1e7 + 1
-      && Math.abs(levelEnd - (NAV_RECON_BOOK.once + NAV_LEVEL_TIE.newer)) <= 1;
-    return levelTies
-      && Math.abs(per - NAV_RECON_BOOK.raw) <= 0.01
-      && Math.abs(doubled - NAV_RECON_BOOK.doubled) <= 0.01
-      && Math.abs(book - NAV_RECON_BOOK.once) <= 0.01
-      && Math.abs(cur - COSTED_BOOK.totalValue) <= 1
-      && Math.abs(book / 1e7 + steps.reduce((a, x) => a + signedCr(x), 0) - cur / 1e7) <= tie;
-  }],
-];
-
 /**
  * THE BOOK'S HOVER, CLAIM BY CLAIM (MNT-24, MNT-25). The series' level is
  * `glowData.ts`'s own statement level, re-derived; the current value is the
@@ -20623,34 +20542,26 @@ const CIO_NAV = [
    * the partition catches it.
    */
   /**
-   * ── EVERY INVESTMENT IS NAMED, AND THE LISTS PARTITION THE BOOK (Stage 10ge)
-   *
-   * The whole-book series holds every investment carrying value: in the return,
-   * or held at cost and in the NAV only. The hover's count, the summary's, the
-   * book's own and the rows must all agree — and every account holding value in
-   * `glowData.ts`, re-derived here off the statement positions, must be one of
-   * the series' investments. A filter that dropped an account would keep
-   * printing plausible counts; only the re-derivation catches it.
+   * ── THE FOLD UNDER THE CHART IS GONE (the family, 2 Nov 2026; Stage 10jz) ────
+   * The hover and the basis still count what the line covers, every investment
+   * holding value is in the return or held at cost, and every account holding
+   * value in `glowData.ts`, re-derived off the statement positions, is one of the
+   * series' investments: a filter that dropped an account would keep printing
+   * plausible counts.
    */
-  ["the series' coverage names every investment, and its lists partition the book",
+  ["the coverage fold stays removed, the hovers still count what the line covers, and the series stands for every account holding value",
     (t, ctx) => {
       const card = navBasis(ctx);
       if (card == null) return navBasisMissing(ctx);
       if (!NAV_SERIES_BOOK || !NAV_HOLDING_ACCOUNTS) return false;
+      if (ctx.navChart?.coverageFold !== 0 || /In the return:/.test(t)) return false;
       const cov = /(\d+) of the (\d+) investments holding value in the return/.exec(card);
-      const sum = /In the return:\s*(\d+) of (\d+) investments/.exec(t);
-      const joined = /(\d+) join the return on a first valuation/i.exec(t);
-      const atCost = /(\d+) held at cost/i.exec(t);
-      const none = /(\d+) carry no valued holding/i.exec(t);
-      if (!cov || !sum || !joined || !atCost || !none) return false;
-      if (cov[1] !== sum[1] || cov[2] !== sum[2]) return false;
-      if (Number(sum[1]) !== NAV_SERIES_BOOK.inReturn || Number(sum[2]) !== NAV_SERIES_BOOK.holding) return false;
-      // Every investment holding value is in the return or held at cost.
-      if (Number(sum[1]) + Number(atCost[1]) !== Number(sum[2])) return false;
-      if (Number(joined[1]) !== NAV_SERIES_BOOK.joined || Number(atCost[1]) !== NAV_SERIES_BOOK.atCost) return false;
-      const r = ctx.navListRows;
-      if (!r || r.joined !== Number(joined[1]) || r.atCost !== Number(atCost[1]) || r.unvalued !== Number(none[1])) return false;
-      return NAV_HOLDING_ACCOUNTS.every((id) => NAV_SERIES_BOOK.holdingAccounts.includes(id));
+      const h = navBookChip(ctx)?.title ?? "";
+      if (!cov || Number(cov[1]) !== NAV_SERIES_BOOK.inReturn || Number(cov[2]) !== NAV_SERIES_BOOK.holding) return false;
+      return new RegExp(`Available data: ${cov[1]} of the ${cov[2]} investments holding value`).test(h)
+        && NAV_SERIES_BOOK.inReturn + NAV_SERIES_BOOK.atCost === NAV_SERIES_BOOK.holding
+        && !/in the list below/.test(h)
+        && NAV_HOLDING_ACCOUNTS.every((id) => NAV_SERIES_BOOK.holdingAccounts.includes(id));
     }],
   /**
    * WITH NO FEED, THE MOVERS CARD SAYS SO AND PRINTS NO DAY CHANGE.
@@ -27401,7 +27312,7 @@ const INVARIANTS = {
   "cio-returns-security": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT, ...CIO_SEGMENTS],
   "cio-returns-category": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT, ...CIO_SEGMENTS, ...CIO_SEGMENT_HOLDINGS],
   "cio-attribution-legacy": [...CIO_SHARED, ...CIO_SEGMENTS_LEGACY],
-  "cio-nav": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_NAV, ...NAV_BENCH, ...NAV_BENCH_OFFLINE, ...NAV_RECON, ...NAV_BASIS, ...NAV_STARTS],
+  "cio-nav": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_NAV, ...NAV_BENCH, ...NAV_BENCH_OFFLINE, ...NAV_BASIS, ...NAV_STARTS],
   "cio-tiles-saved": CIO_TILES_SAVED,
   "cio-return-metrics": [...CIO_RETURN_RETIREMENT, ...CIO_ALLOC.filter(([description]) => CIO_OPTIONAL_CAPITAL_CHECKS.has(description))],
   ...Object.fromEntries(["annualised", "fytd", "ytd"].map((kind) => [`performance-${kind}`, [
@@ -37630,10 +37541,9 @@ const INVARIANTS = {
   ],
   "performance-live": [...PERF_MW_LIVE, ...PERF_MW, ...WITHHELD_PILL],
   performance: [
-    // THE SAME NAV CARD AS MORNING CIO'S (PERF-3): its lists' footer reconciles
-    // to the statement book and the current value step by step, as on `cio-nav`,
-    // and its basis hover and range hovers say the same things there.
-    ...NAV_RECON, ...NAV_BASIS, ...NAV_STARTS,
+    // THE SAME NAV CARD AS MORNING CIO'S (PERF-3): its basis hover and range
+    // hovers say the same things there.
+    ...NAV_BASIS, ...NAV_STARTS,
     // XA-12: the basis pill reads STATEMENT over a Current Value tile that
     // carries AMFI's published NAV on every fund it prices.
     ...xaNavBasisChecks(),
@@ -41333,17 +41243,6 @@ for (const theme of THEMES) {
           } : null,
         };
       });
-      const navListRows = FAST ? null : await page.evaluate(() => ({
-        single: document.querySelectorAll('[data-testid="nav-single-list"] li').length,
-        unvalued: document.querySelectorAll('[data-testid="nav-unvalued-list"] li').length,
-        // The whole-book series' lists (Stage 10ge).
-        joined: document.querySelectorAll('[data-testid="nav-joined-list"] li').length,
-        atCost: document.querySelectorAll('[data-testid="nav-atcost-list"] li').length,
-        stale: document.querySelectorAll('[data-testid="nav-stale-list"] li').length,
-        units: [...document.querySelectorAll('[data-testid="nav-excluded"] [data-nav-unit]')].map((e) => e.getAttribute("data-nav-unit")),
-        // The holdings the lists' footer names as reported twice (MNT-4).
-        twiceKeys: document.querySelector('[data-testid="nav-excluded-recon"]')?.getAttribute("data-reported-twice-keys") ?? null,
-      }));
       /**
        * ── THE NAV CHART, MEASURED — BECAUSE ITS TEXT WAS ALWAYS RIGHT ──────
        *
@@ -41415,6 +41314,7 @@ for (const theme of THEMES) {
           head: (card?.firstElementChild?.innerText ?? "").trim(),
           basis: card?.querySelector('[data-testid="nav-basis"]')?.getAttribute("title") ?? null,
           titleText: (card?.querySelector('[data-testid="nav-basis"]')?.textContent ?? "").trim(),
+          coverageFold: card?.querySelectorAll('[data-testid="nav-excluded"]').length ?? null,
           bookTitle: card?.querySelector('[data-testid="nav-book-chip"]')?.getAttribute("title") ?? null,
           // WHERE EACH LINE ENDS AND THE DOT ON IT (Stage 10jw), off the curve's own path.
           curveEnds: paths.map((e) => {
@@ -46064,7 +45964,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, sectorVs, sectorSplit, shortWindow, feSectors, accountRows, heldAccountRows, pmFunds, pmReviewRows, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, investorReturn, familyLayout, memberScopeDom, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, returnsDom, segDom, sectorAttr, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, quotesServed: QUOTES_SERVED, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, pickTyped: PICK_TYPED[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, mandateSectors, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, monitorMember, monitorFoot, txnT, quoteHold, monitorC, headerTitles, mgrT, costGross, inside }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, sectorVs, sectorSplit, shortWindow, feSectors, accountRows, heldAccountRows, pmFunds, pmReviewRows, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, investorReturn, familyLayout, memberScopeDom, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, returnsDom, segDom, sectorAttr, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, quotesServed: QUOTES_SERVED, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, pickTyped: PICK_TYPED[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, mandateSectors, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, monitorMember, monitorFoot, txnT, quoteHold, monitorC, headerTitles, mgrT, costGross, inside }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);
