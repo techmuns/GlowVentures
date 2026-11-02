@@ -280,6 +280,9 @@ const KEY_ALIASES = Object.freeze({
   "bandhan-amc-ltd-bandhan-mf-bandhan-large-and-mid-cap-fund-direct-pl-growth": "bndh-l-and-mcf-dp-gr",
   "bandhan-overnight-fund-direct-plan-growth": "bandhan-amc-ltd-bandhan-mf-bandhan-overnight-fund-direct-growth",
   "bandhan-liquid-fund-direct-plan-growth": "bandhan-amc-ltd-bandhan-mf-bandhan-cash-fund-direct-pl-growth",
+  // Exact ISIN matches on the Kotak folios received 2 Nov 2026 (INF174K01LC6, INF174KA1HV3).
+  "kotak-arbitrage-fund-direct-plan-growth": "kotak-arbfd-dp-grow",
+  "kotak-multi-cap-fund-direct-plan-growth": "kotak-mtcf-d-grow",
   "sbi": "state-bank-of-india",
   "the-karur-vys": "karur-vysya-bank",
   "crompton-greaves-consumer-elec": "crompton-greaves-consumer-electrical",

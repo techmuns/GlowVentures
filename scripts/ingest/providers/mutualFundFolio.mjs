@@ -1163,7 +1163,9 @@ function schemeLedgerFlows(lines, holdings, warnings) {
   const switches = pairSwitches(schemes);
   if (switches.unpaired) {
     const o = switches.unpaired;
-    return fail(`${o.s.security}: the ${o.r.date} switch-out of ${-o.r.amount} reaches no switch-in this statement prints`);
+    const near = schemes.flatMap((s) => s.rows.filter((r) => r.kind === "switch-in" && r.date >= o.r.date && daysBetween(o.r.date, r.date) <= 30)
+      .map((r) => `${s.security} ${r.date} gross ${r.gross} net ${r.amount}`));
+    return fail(`${o.s.security}: the ${o.r.date} switch-out of ${-o.r.amount} (${o.r.type}) reaches no switch-in this statement prints; switch-ins within 30 days: ${near.join("; ") || "none"}`);
   }
   const partner = new Map();
   for (const p of switches.pairs) { partner.set(p.out.r, p.in); partner.set(p.in.r, p.out); }

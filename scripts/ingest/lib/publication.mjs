@@ -76,6 +76,25 @@ export const heldOutByDecision = d => d.status === 'failed' && !carriesFacts(d)
   && NON_STATEMENT_PROVIDERS.has(d.provider) && !d.accountNo && !d.ownerId
   && (d.warnings ?? []).length > 0 && d.warnings.every(w => w?.code === 'held-out-by-decision');
 
+/**
+ * WHAT A RE-READ MAY CHANGE WITHOUT THE STATEMENT CHANGING: `pdf-encrypted` names
+ * the position of the password that opened the file in the saved list, which
+ * says nothing about the statement. The full reader re-opens every sealed file,
+ * so a reordered list would present each of them as changed and re-assess old,
+ * accepted documents against an unrelated upload.
+ */
+const readingOf = d => digest({ ...d, warnings: (d.warnings ?? []).map(w => w?.code === 'pdf-encrypted' ? { code: w.code } : w) });
+/**
+ * An AMC's own folio statement printing a fund ISIN beside a scheme name is the
+ * issuer naming its own scheme. Its spelling can differ from the depository's
+ * abbreviation (`KOTAK MTCF D-GROW`) or from the name before a rename, so the
+ * pairing is not a misfiled security when another account holds it. Inside one
+ * account a new name would split that account's cost and flows, so it still needs
+ * `KEY_ALIASES`. The book report names every such pair until an alias closes it.
+ */
+const issuerNamesFund = (d, r) => / Mutual Fund$/.test(d.provider ?? '') && d.reportType === 'holdings'
+  && r.assetClass === 'Mutual Fund' && /^INF/.test(r.isin);
+
 /** No fuzzy owner, account or security matching is allowed at this boundary. */
 export function assessPublication({ baseline, documents, baselineReport = {}, report = {}, expected = {} }) {
   // Evaluation-scoped caches: documents may mutate during reconciliation, so
@@ -92,7 +111,7 @@ export function assessPublication({ baseline, documents, baselineReport = {}, re
     if (byKey.has(d.docKey)) add('DUPLICATE_KEY', d, 'Two documents have the same archive key.');
     byKey.set(d.docKey, d);
   }
-  const changed = documents.filter(d => !old.has(d.docKey) || revisionOf(old.get(d.docKey)) !== revisionOf(d));
+  const changed = documents.filter(d => !old.has(d.docKey) || readingOf(old.get(d.docKey)) !== readingOf(d));
   const touched = new Set(changed.map(d => d.docKey));
   // A failed reading that published nothing may give way to another reading of
   // the SAME source file — a reader that now reads it (Stage 10gk). The
@@ -102,12 +121,12 @@ export function assessPublication({ baseline, documents, baselineReport = {}, re
     add('ARCHIVE_LOSS', d, 'A delivery cannot remove an earlier statement.');
   }
 
-  const ownerByAccount = new Map(), isinByKey = new Map(), keyByIsin = new Map();
+  const ownerByAccount = new Map(), isinByKey = new Map(), keyByIsin = new Map(), accountsByIsin = new Map();
   const remember = (map, key, value) => { if (nonempty(value)) (map.get(key) ?? map.set(key, new Set()).get(key)).add(value); };
   for (const d of baseline) {
     remember(ownerByAccount, accountKey(d), d.ownerId);
     for (const section of RECORD_SECTIONS) for (const r of d[section] ?? []) {
-      if (r.isin && r.securityKey) { remember(isinByKey, r.securityKey, r.isin); remember(keyByIsin, r.isin, r.securityKey); }
+      if (r.isin && r.securityKey) { remember(isinByKey, r.securityKey, r.isin); remember(keyByIsin, r.isin, r.securityKey); remember(accountsByIsin, r.isin, accountKey(d)); }
     }
   }
   const seenContent = new Map(baseline.map(d => [contentOf(d), d.docKey]));
@@ -170,8 +189,8 @@ export function assessPublication({ baseline, documents, baselineReport = {}, re
           // under one of its keys is not a new split (Stage 10gk).
           const isins = isinByKey.get(r.securityKey), keys = keyByIsin.get(r.isin);
           if (isins?.size && !isins.has(r.isin)) add('SECURITY_CONFLICT', d, 'One security key carries conflicting ISINs.', ptr);
-          if (keys?.size && !keys.has(r.securityKey)) add('SECURITY_SPLIT', d, 'One ISIN is being filed under different security keys.', ptr);
-          remember(isinByKey, r.securityKey, r.isin); remember(keyByIsin, r.isin, r.securityKey);
+          if (keys?.size && !keys.has(r.securityKey) && (accountsByIsin.get(r.isin)?.has(accountKey(d)) || !issuerNamesFund(d, r))) add('SECURITY_SPLIT', d, 'One ISIN is being filed under different security keys.', ptr);
+          remember(isinByKey, r.securityKey, r.isin); remember(keyByIsin, r.isin, r.securityKey); remember(accountsByIsin, r.isin, accountKey(d));
         }
         if (section === 'holdings') {
           const key = stable([r.memberId, r.securityKey]);
