@@ -9,15 +9,15 @@
      "name": "kotak statement apr 25 to nov 26 (ankita,ajay,aarti,bharat) (2).zip",
      "size": 2773153,
      "blob": "65f2477bd296a6fd5b8f7be2b1f99bac32386a39",
-     "status": "processing",
-     "hold": null,
-     "reason": null,
+     "status": "held",
+     "hold": "check-failed",
+     "reason": "Publication held (needs_review): READ_GAP: The reader must account for the whole statement before publication. · SECURITY_SPLIT: One ISIN is being filed under different security keys. · SECURITY_SPLIT: One ISIN is being filed under different security keys.",
      "landedAs": null,
      "providers": null,
      "docKeys": null,
      "commit": null,
      "run": "https://github.com/techmuns/GlowVentures/actions/runs/41412339962",
-     "updatedAt": "2026-11-02T08:21:00.478Z"
+     "updatedAt": "2026-11-02T08:26:36.099Z"
     }
    ]
   },
