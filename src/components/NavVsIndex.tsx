@@ -1,6 +1,6 @@
 import { useNavigationValue, nullableStringNavigation, nullableStringsNavigation } from "@/lib/useNavigationState";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Check, ChevronDown } from "lucide-react";
+import { Check, ChevronDown, LineChart as LineChartIcon, X } from "lucide-react";
 import {
   LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine,
 } from "recharts";
@@ -59,6 +59,13 @@ import { chartTooltipStyle, chartTooltipLabelStyle } from "@/lib/chartTheme";
 //    multiple benchmarks"* — the same day (Stage 10jj): one Benchmarks list, each
 //    index in its fixed colour with its return over the same dates; the row beside
 //    it names only the lines on the chart.
+//  · *"make the UI of our book vs benchmark similar to the google finance UI ...
+//    Keep the benchmark selector on the top left area of the graph chart and a
+//    visible dot of the color of lines on the graph"* — the family, 2 Nov 2026
+//    (Stage 10jw). The selector leads the row above the plot, each line is a pill
+//    with its colour's dot and a ✕, and each line ends in a dot of its colour.
+//    The dots that marked statement dates moved to the tooltip, so the only dots
+//    on the plot are the line ends.
 
 /** The benchmarks drawn until the reader changes them. */
 const DEFAULT_SHOWN: readonly BenchmarkKey[] = ["nifty-500"];
@@ -78,12 +85,12 @@ const iso = (t: number) => new Date(t).toISOString().slice(0, 10);
  * one year shortened to the year print "2023 2023 2024".
  */
 function axisTicks(dates: string[], spanDays: number): { ticks: number[]; fmt: (t: number) => string } {
-  const period = spanDays > 365 * 2.5 ? "year" : spanDays > 200 ? "quarter" : spanDays > 75 ? "month" : "day";
+  const period = spanDays > 365 * 2.5 ? "year" : spanDays > 400 ? "quarter" : spanDays > 75 ? "month" : "day";
   const fmt = period === "year"
     ? (t: number) => iso(t).slice(0, 4)
-    : period === "day"
-      ? (t: number) => iso(t).slice(5)
-      : (t: number) => iso(t).slice(0, 7);
+    : (t: number) => new Date(t).toLocaleDateString("en-US", period === "day"
+      ? { month: "short", day: "numeric", timeZone: "UTC" }
+      : { month: "short", year: "numeric", timeZone: "UTC" });
   const keyOf = (d: string) =>
     period === "year" ? d.slice(0, 4)
       : period === "quarter" ? `${d.slice(0, 4)}Q${Math.floor(Number(d.slice(5, 7)) / 3.01) + 1}`
@@ -96,7 +103,10 @@ function axisTicks(dates: string[], spanDays: number): { ticks: number[]; fmt: (
     if (k !== last) { firsts.push(d); last = k; }
   }
   const stride = Math.max(1, Math.ceil(firsts.length / 10));
-  return { ticks: firsts.filter((_, i) => i % stride === 0).map(ts), fmt };
+  const all = firsts.filter((_, i) => i % stride === 0).map(ts);
+  // A window opening on a period's last day would print two labels side by side.
+  const minGap = spanDays * DAY * 0.04;
+  return { ticks: all.filter((t, i) => i === all.length - 1 || all[i + 1] - t > minGap), fmt };
 }
 
 /**
@@ -234,13 +244,16 @@ export function NavVsIndex() {
     // HOW FRESH THE BOOK'S LINE IS: every investment is held at its latest
     // valuation until the next, so value last valued long before the line's end
     // is carried, not measured, over that stretch.
+    // THE ROW EACH LINE ENDS ON, for the dot of its colour there.
+    const ends: Record<string, number> = Object.fromEntries(drawn.map((d) =>
+      [d.key, rows.reduce((last, r, i) => (r[d.key] != null ? i : last), -1)]));
     const staleCut = iso(ts(to) - STALE_DAYS * DAY);
     const stale = stats.inReturn
       .filter((u) => u.lastValued != null && u.lastValued < staleCut && (u.endValue ?? 0) > 0)
       .sort((a, b) => (b.endValue ?? 0) - (a.endValue ?? 0));
     const spanDays = (ts(to) - ts(from)) / DAY;
     const { ticks, fmt: tickFmt } = axisTicks(allDates, spanDays);
-    return { book, cov, stats, dates, bookFrom, bookTo, ready: true as const, from, to, bookLine, bookRet, benches, rows, ticks, tickFmt, stale, starts };
+    return { book, cov, stats, dates, bookFrom, bookTo, ready: true as const, from, to, bookLine, bookRet, benches, rows, ends, ticks, tickFmt, stale, starts };
   }, [portfolio, loads, startPick, shownKeys, series, seriesStarts]);
 
   if (!model || !portfolio) return null;
@@ -330,7 +343,7 @@ export function NavVsIndex() {
     );
   }
 
-  const { from, to, bookRet, benches, rows, ticks, tickFmt, starts } = model;
+  const { from, to, bookRet, benches, rows, ends, ticks, tickFmt, starts } = model;
   const c = (n: number | null | undefined) => fmtFromBase(n, { compact: true });
   const lastNav = model.book[model.book.length - 1].nav;
   const statementBook = stmtBook.totalValue;
@@ -414,10 +427,20 @@ export function NavVsIndex() {
     const vsBook = ret != null && bookRet != null ? bookRet - ret : null;
     return why ? `${why}\n\n${b.title}` : `${b.title}\n\n${fmtDate(from)} → ${fmtDate(lastClose ?? to)}: ${pctText(ret)}${vsBook != null ? `; our book ${vsBook >= 0 ? "+" : "−"}${Math.abs(vsBook).toFixed(1)} points against it` : ""}.`;
   };
-  const chipBase = "inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs transition-colors";
-  const Swatch = ({ color, thick }: { color: string; thick?: boolean }) => (
-    <span aria-hidden className={`inline-block w-3 rounded-full ${thick ? "h-[3px]" : "h-[2px]"}`} style={{ background: color }} />
+  const pillBase = "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs transition-colors";
+  const LineDot = ({ color }: { color: string }) => (
+    <span aria-hidden data-nav-dot className="inline-block h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: color }} />
   );
+  /** A dot of the line's colour on its last point, and nothing on any other. */
+  const endDot = (key: string, color: string) => (p: { cx?: number; cy?: number; index?: number }) =>
+    p.index === ends[key] && p.cx != null && p.cy != null
+      ? (
+        <g key={`e${key}`} data-nav-end={key}>
+          <circle cx={p.cx} cy={p.cy} r={8} fill={color} fillOpacity={0.2} />
+          <circle cx={p.cx} cy={p.cy} r={5} fill={color} data-nav-end-dot />
+        </g>
+      )
+      : <g key={`d${key}${p.index}`} />;
 
   return (
     <Card className="flex flex-col"
@@ -428,133 +451,138 @@ export function NavVsIndex() {
       }
       right={
         <div className="flex flex-wrap items-center justify-end gap-2" data-testid="nav-range" data-nav-starts={starts.join(" ")}>
-          {starts.length > 1 && (
-            <div role="tablist" aria-label="Compare from"
-              className="inline-flex flex-wrap items-center gap-0.5 rounded-lg border border-ink-700 bg-ink-800/60 p-0.5">
-              {[...starts].reverse().map((d) => (
-                <button key={d} type="button" role="tab" aria-selected={from === d} data-start={d}
-                  onClick={() => setStart(d)} title={`${fmtDate(d)} → ${fmtDate(to)}`}
-                  className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
-                    from === d ? "bg-champagne-500 text-ink-950" : "text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"
-                  }`}>
-                  Since {fmtDate(d)}
-                </button>
-              ))}
-            </div>
-          )}
           <span className="text-[11px] text-slate-500 tabular" data-testid="nav-window">
             {fmtDate(from)} → {fmtDate(to)}
           </span>
         </div>
       }>
 
-      {/* ── THE LINES ON THE CHART, THEN THE LIST THAT PICKS THEM ─────────────────
-          The book leads and is always drawn. Each option is keyed `data-nav-line` /
-          `data-bench`, and the closed list stays in the DOM, so a claim about what
-          the card offers is struck on keys, never on labels. */}
-      <div className="mb-3 flex flex-wrap items-center gap-1.5" data-testid="nav-legend"
-        data-nav-from={from} data-nav-to={to}>
-        <span className={`${chipBase} cursor-help border-ink-600 bg-ink-800/60 text-slate-300`}
-          data-nav-line="book" data-nav-ret={bookRet ?? ""} data-testid="nav-book-chip" title={bookHover}
-          data-nav-basis={useAssumed ? "assumed" : "statement"}
-          data-nav-assumed-count={useAssumed && assumed ? assumed.assumedCount : 0}
-          data-nav-assumed-value={useAssumed && assumed ? assumed.assumedValue : 0}>
-          <Swatch color={BOOK_COLOR} thick />
-          <span className="font-medium">Our book</span>
-          <span className={`tabular font-semibold ${changeColor(bookRet)}`}>{pctText(bookRet)}</span>
-          <span className="text-slate-500">available data{useAssumed && " · assumed holdings"}</span>
-        </span>
-        {benches.filter((x) => shownKeys.has(x.b.key)).map(({ b, load, ret, lastClose }) => (
-          <span key={b.key} data-nav-selected={b.key} title={benchHover(b, load, ret, lastClose)}
-            className={`${chipBase} cursor-help border-ink-700 bg-ink-800/60 text-slate-300`}>
-            <Swatch color={b.color} />
-            <span>{b.label}</span>
-            <span className={`tabular font-semibold ${changeColor(ret)}`}>{load.state === "loading" ? "…" : pctText(ret)}</span>
-          </span>
-        ))}
-        <div ref={picker} className="relative ml-auto">
-          <button type="button" data-nav-picker aria-haspopup="listbox" aria-expanded={pickerOpen}
-            onClick={() => setPickerOpen((o) => !o)}
-            className={`${chipBase} border-ink-600 bg-ink-800/60 font-medium text-slate-200 ring-focus hover:bg-ink-700/60`}>
-            Benchmarks
-            <span className="tabular text-slate-500">{shownKeys.size}</span>
-            <ChevronDown className={`h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform ${pickerOpen ? "rotate-180" : ""}`} />
-          </button>
-          <div hidden={!pickerOpen} data-nav-picker-panel
-            className="absolute right-0 z-50 mt-1 w-[min(17rem,92vw)] overflow-hidden rounded-lg border border-ink-700 bg-ink-800 shadow-xl shadow-black/40">
-            <ul role="listbox" aria-multiselectable="true" aria-label="Benchmarks" className="py-1">
-              {benches.map(({ b, load, ret, lastClose }) => {
-                const on = shownKeys.has(b.key);
-                return (
-                  <li key={b.key}>
-                    <button type="button" role="option" aria-selected={on} onClick={() => toggle(b.key)}
-                      data-nav-line={b.key} data-bench={b.key} data-bench-symbol={b.symbol} data-bench-state={load.state}
-                      data-nav-ret={ret ?? ""} title={benchHover(b, load, ret, lastClose)}
-                      className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs hover:bg-ink-700/60 ${on ? "text-slate-100" : "text-slate-300"}`}>
-                      <span className={`grid h-4 w-4 shrink-0 place-items-center rounded border ${on ? "border-champagne-500 bg-champagne-500/20 text-champagne-400" : "border-ink-600 text-transparent"}`}>
-                        <Check className="h-3 w-3" />
-                      </span>
-                      <Swatch color={b.color} />
-                      <span className="truncate">{b.label}</span>
-                      <span className={`ml-auto shrink-0 tabular font-semibold ${changeColor(ret)}`}>{load.state === "loading" ? "…" : pctText(ret)}</span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
+      <div className="rounded-xl border border-ink-700 bg-ink-900/40 p-3">
+        {/* ── THE LIST THAT PICKS THE LINES, THEN THE LINES ON THE CHART ──────────
+            The selector leads, top left of the plot; the book is always drawn. Each
+            option is keyed `data-nav-line` / `data-bench`, and the closed list stays
+            in the DOM, so a claim about what the card offers is struck on keys,
+            never on labels. */}
+        <div className="mb-3 flex flex-wrap items-center gap-2" data-testid="nav-legend"
+          data-nav-from={from} data-nav-to={to}>
+          <div ref={picker} className="relative">
+            <button type="button" data-nav-picker aria-haspopup="listbox" aria-expanded={pickerOpen}
+              onClick={() => setPickerOpen((o) => !o)}
+              className={`${pillBase} border-transparent font-medium text-slate-200 ring-focus hover:bg-ink-700/60`}>
+              <LineChartIcon className="h-4 w-4 shrink-0 text-slate-400" />
+              Benchmarks
+              <span className="tabular text-slate-500">{shownKeys.size}</span>
+              <ChevronDown className={`h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform ${pickerOpen ? "rotate-180" : ""}`} />
+            </button>
+            <div hidden={!pickerOpen} data-nav-picker-panel
+              className="absolute left-0 z-50 mt-1 w-[min(17rem,92vw)] overflow-hidden rounded-lg border border-ink-700 bg-ink-800 shadow-xl shadow-black/40">
+              <ul role="listbox" aria-multiselectable="true" aria-label="Benchmarks" className="py-1">
+                {benches.map(({ b, load, ret, lastClose }) => {
+                  const on = shownKeys.has(b.key);
+                  return (
+                    <li key={b.key}>
+                      <button type="button" role="option" aria-selected={on} onClick={() => toggle(b.key)}
+                        data-nav-line={b.key} data-bench={b.key} data-bench-symbol={b.symbol} data-bench-state={load.state}
+                        data-nav-ret={ret ?? ""} title={benchHover(b, load, ret, lastClose)}
+                        className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs hover:bg-ink-700/60 ${on ? "text-slate-100" : "text-slate-300"}`}>
+                        <span className={`grid h-4 w-4 shrink-0 place-items-center rounded border ${on ? "border-champagne-500 bg-champagne-500/20 text-champagne-400" : "border-ink-600 text-transparent"}`}>
+                          <Check className="h-3 w-3" />
+                        </span>
+                        <LineDot color={b.color} />
+                        <span className="truncate">{b.label}</span>
+                        <span className={`ml-auto shrink-0 tabular font-semibold ${changeColor(ret)}`}>{load.state === "loading" ? "…" : pctText(ret)}</span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
           </div>
+          <span className={`${pillBase} cursor-help border-ink-600 text-slate-300`}
+            data-nav-line="book" data-nav-ret={bookRet ?? ""} data-testid="nav-book-chip" title={bookHover}
+            data-nav-basis={useAssumed ? "assumed" : "statement"}
+            data-nav-assumed-count={useAssumed && assumed ? assumed.assumedCount : 0}
+            data-nav-assumed-value={useAssumed && assumed ? assumed.assumedValue : 0}>
+            <LineDot color={BOOK_COLOR} />
+            <span className="font-medium">Our book</span>
+            <span className={`tabular font-semibold ${changeColor(bookRet)}`}>{pctText(bookRet)}</span>
+            <span className="text-slate-500">available data{useAssumed && " · assumed holdings"}</span>
+          </span>
+          {benches.filter((x) => shownKeys.has(x.b.key)).map(({ b, load, ret, lastClose }) => (
+            <span key={b.key} data-nav-selected={b.key} title={benchHover(b, load, ret, lastClose)}
+              className={`${pillBase} cursor-help border-ink-600 pr-1.5 text-slate-300`}>
+              <LineDot color={b.color} />
+              <span className="font-medium">{b.label}</span>
+              <span className={`tabular font-semibold ${changeColor(ret)}`}>{load.state === "loading" ? "…" : pctText(ret)}</span>
+              <button type="button" data-nav-remove={b.key} aria-label={`Remove ${b.label}`} title={`Remove ${b.label}`}
+                onClick={() => toggle(b.key)}
+                className="grid h-5 w-5 place-items-center rounded-full text-slate-400 ring-focus hover:bg-ink-700/60 hover:text-slate-200">
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </span>
+          ))}
         </div>
-      </div>
 
-      {/* A DEFINITE HEIGHT: `ResponsiveContainer height="100%"` inside a flex
-          item measured 0 and drew no SVG at all (see the `nav-chart` probe). */}
-      <div className="h-[22rem]" data-testid="nav-chart" data-nav-from={from} data-nav-to={to}
-        data-bench-ok={benches.filter((x) => x.load.state === "ok").length}>
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={rows} margin={{ top: 8, right: 12, left: 4, bottom: 0 }}>
-            <CartesianGrid stroke={GRID_COLOR} strokeDasharray="2 4" vertical={false} />
-            <XAxis dataKey="t" type="number" scale="time" domain={["dataMin", "dataMax"]}
-              ticks={ticks} tickFormatter={tickFmt} minTickGap={16}
-              stroke={AXIS_COLOR} fontSize={11} />
-            {/* PER CENT SINCE THE PERIOD'S FIRST DAY — a change, never an amount. */}
-            <YAxis stroke={AXIS_COLOR} fontSize={11} width={48} domain={["auto", "auto"]}
-              tickFormatter={(v: number) => `${v > 0 ? "+" : ""}${v.toFixed(0)}%`} />
-            <ReferenceLine y={0} stroke={AXIS_COLOR} strokeDasharray="3 3" strokeOpacity={0.6} />
-            <Tooltip content={({ active: on, payload }) => {
-              const row = on ? (payload?.[0]?.payload as Record<string, number | string | null> | undefined) : undefined;
-              if (!row) return null;
-              const items = [
-                { key: "book", label: "Our book", color: BOOK_COLOR },
-                ...benches.filter((x) => shownKeys.has(x.b.key) && x.line.length).map((x) => ({ key: x.b.key as string, label: x.b.label, color: x.b.color })),
-              ].map((x) => ({ ...x, v: row[`carry:${x.key}`] as number | null }))
-                .filter((x) => x.v != null)
-                .sort((a, b) => (b.v as number) - (a.v as number));
-              return (
-                <div style={{ ...chartTooltipStyle, padding: "8px 10px" }}>
-                  <div style={chartTooltipLabelStyle}>{fmtDate(String(row.date))}</div>
-                  {items.map((x) => (
-                    <div key={x.key} className="mt-1 flex items-center justify-between gap-4">
-                      <span className="flex items-center gap-1.5"><Swatch color={x.color} thick={x.key === "book"} />{x.label}</span>
-                      <span className="tabular font-semibold">{pctText(x.v)}</span>
-                    </div>
-                  ))}
-                </div>
-              );
-            }} />
-            {benches.filter((x) => shownKeys.has(x.b.key) && x.line.length).map(({ b }) => (
-              <Line key={b.key} type="linear" dataKey={b.key} stroke={b.color} strokeWidth={1.5} dot={false}
-                name={b.label} connectNulls isAnimationActive={false} />
+        {/* A DEFINITE HEIGHT: `ResponsiveContainer height="100%"` inside a flex
+            item measured 0 and drew no SVG at all (see the `nav-chart` probe). */}
+        <div className="h-[22rem]" data-testid="nav-chart" data-nav-from={from} data-nav-to={to}
+          data-bench-ok={benches.filter((x) => x.load.state === "ok").length}>
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={rows} margin={{ top: 12, right: 16, left: 0, bottom: 0 }}>
+              <CartesianGrid stroke={GRID_COLOR} horizontal={false} />
+              <XAxis dataKey="t" type="number" scale="time" domain={["dataMin", "dataMax"]}
+                ticks={ticks} tickFormatter={tickFmt} minTickGap={16}
+                axisLine={false} tickLine={false} tick={{ fill: AXIS_COLOR }} tickMargin={8} fontSize={11} />
+              {/* PER CENT SINCE THE PERIOD'S FIRST DAY — a change, never an amount. */}
+              <YAxis axisLine={false} tickLine={false} tick={{ fill: AXIS_COLOR }} fontSize={11} width={44} domain={["auto", "auto"]}
+                tickFormatter={(v: number) => `${v.toFixed(0)}%`} />
+              <ReferenceLine y={0} stroke={AXIS_COLOR} strokeDasharray="1 4" />
+              <Tooltip cursor={{ stroke: AXIS_COLOR, strokeWidth: 1 }} content={({ active: on, payload }) => {
+                const row = on ? (payload?.[0]?.payload as Record<string, number | string | boolean | null> | undefined) : undefined;
+                if (!row) return null;
+                const items = [
+                  { key: "book", label: "Our book", color: BOOK_COLOR },
+                  ...benches.filter((x) => shownKeys.has(x.b.key) && x.line.length).map((x) => ({ key: x.b.key as string, label: x.b.label, color: x.b.color })),
+                ].map((x) => ({ ...x, v: row[`carry:${x.key}`] as number | null }))
+                  .filter((x) => x.v != null)
+                  .sort((a, b) => (b.v as number) - (a.v as number));
+                return (
+                  <div style={{ ...chartTooltipStyle, padding: "8px 10px" }}>
+                    <div style={chartTooltipLabelStyle}>{fmtDate(String(row.date))}</div>
+                    {items.map((x) => (
+                      <div key={x.key} className="mt-1 flex items-center justify-between gap-4">
+                        <span className="flex items-center gap-1.5"><LineDot color={x.color} />{x.label}</span>
+                        <span className="tabular font-semibold">{pctText(x.v)}</span>
+                      </div>
+                    ))}
+                    {row.valued && <div className="mt-1 opacity-70" data-nav-valued-note>Statement valuation on this date</div>}
+                  </div>
+                );
+              }} />
+              {benches.filter((x) => shownKeys.has(x.b.key) && x.line.length).map(({ b }) => (
+                <Line key={b.key} type="linear" dataKey={b.key} stroke={b.color} strokeWidth={2} dot={endDot(b.key, b.color)}
+                  activeDot={{ r: 4, fill: b.color, stroke: "none" }} name={b.label} connectNulls isAnimationActive={false} />
+              ))}
+              {/* DRAWN LAST SO IT SITS ON TOP — the card's subject. */}
+              <Line type="linear" dataKey="book" stroke={BOOK_COLOR} strokeWidth={2} dot={endDot("book", BOOK_COLOR)}
+                activeDot={{ r: 4, fill: BOOK_COLOR, stroke: "none" }} name="Our book" connectNulls isAnimationActive={false} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+
+        {starts.length > 1 && (
+          <div role="tablist" aria-label="Compare from" className="mt-3 flex flex-wrap items-center gap-1 border-t border-ink-700 pt-3">
+            {[...starts].reverse().map((d) => (
+              <button key={d} type="button" role="tab" aria-selected={from === d} data-start={d}
+                onClick={() => setStart(d)} title={`${fmtDate(d)} → ${fmtDate(to)}`}
+                className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                  from === d ? "bg-ink-700/60 text-slate-100" : "text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"
+                }`}>
+                Since {fmtDate(d)}
+              </button>
             ))}
-            {/* DRAWN LAST SO IT SITS ON TOP — the card's subject. A dot only where
-                something was valued. */}
-            <Line type="linear" dataKey="book" stroke={BOOK_COLOR} strokeWidth={2.6}
-              dot={(p: { cx?: number; cy?: number; payload?: Record<string, unknown>; index?: number }) =>
-                p.payload?.valued && p.payload?.book != null && p.cx != null && p.cy != null
-                  ? <circle key={`d${p.index}`} cx={p.cx} cy={p.cy} r={2.5} fill={BOOK_COLOR} stroke={BOOK_COLOR} />
-                  : <g key={`d${p.index}`} />}
-              name="Our book" connectNulls isAnimationActive={false} />
-          </LineChart>
-        </ResponsiveContainer>
+          </div>
+        )}
       </div>
 
       {coverage}
