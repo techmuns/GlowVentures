@@ -112,6 +112,32 @@ try {
     await table(key).waitFor();
     assert.ok((await order(key)).includes(field) === !before.includes(field));
   }
+  // The sorted column is marked down its whole length, follows a move, and clears.
+  await page.goto(BASE + "/monitor", { waitUntil: "domcontentloaded" });
+  await table("monitor").waitFor();
+  const sortMarks = () => table("monitor").evaluate((t) => {
+    const heads = [...t.tHead.rows[0].cells].map((c) => c.dataset.col);
+    const columns = new Set(); let unmarked = 0;
+    for (const body of t.tBodies) for (const row of body.rows) {
+      if (row.cells.length !== heads.length) continue;
+      const hit = [...row.cells].findIndex((c) => c.hasAttribute("data-sorted-col"));
+      if (hit < 0) unmarked += 1; else columns.add(heads[hit]);
+    }
+    return { head: [...t.querySelectorAll("th[data-sorted-col]")].map((c) => c.dataset.col), columns: [...columns], unmarked };
+  });
+  const whole = { head: ["mv"], columns: ["mv"], unmarked: 0 };
+  const mvButton = table("monitor").locator('[data-col-button="mv"]');
+  for (let i = 0; i < 3 && await table("monitor").locator('[data-col="mv"]').getAttribute("aria-sort") !== "descending"; i += 1) await mvButton.click();
+  assert.deepEqual(await sortMarks(), whole, "The sorted column is not marked on every row");
+  assert.notEqual(await table("monitor").locator("th[data-sorted-col]").evaluate((c) => getComputedStyle(c).backgroundImage), "none", "The sorted column carries no tint");
+  await table("monitor").locator('[data-col-grip="mv"]').focus();
+  await page.keyboard.press("ArrowLeft");
+  assert.deepEqual(await sortMarks(), whole, "The mark did not follow the moved column");
+  await page.keyboard.press("ArrowRight");
+  await mvButton.click();
+  await mvButton.click();
+  const cleared = await sortMarks();
+  assert.deepEqual([cleared.head, cleared.columns], [[], []], "The mark outlived the sort");
   await page.goto(BASE + "/monitor?members=ajay-jaisinghani", { waitUntil: "domcontentloaded" });
   await table("monitor").waitFor();
   const scopedDates = table("monitor").locator('[data-col-cell="review:investmentRange"]');

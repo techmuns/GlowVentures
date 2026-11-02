@@ -8,6 +8,7 @@ import { usePortfolio } from "@/context/PortfolioContext";
 import { ChevronUp, ChevronDown, ChevronsUpDown, GripVertical } from "lucide-react";
 import { useTableView, type TableView } from "@/lib/tableView";
 import { pressColumn } from "@/lib/columnDrag";
+import { useSortedColumn } from "@/lib/sortedColumn";
 import { AutoEditColumns, columnText } from "./EditColumns";
 import { reviewColumn, REVIEW_NOTE, type ReviewScope } from "@/lib/reviewColumns";
 import { ReviewColumnCell } from "./ReviewColumnCell";
@@ -83,9 +84,12 @@ export function SortHeader({ col, view, children, align = "right", title, pad = 
   const Icon = active ? (dir === "asc" ? ChevronUp : ChevronDown) : ChevronsUpDown;
   const movable = col !== view.fixed;
   const alignCls = align === "left" ? "text-left" : align === "center" ? "text-center" : "text-right";
+  const cell = useRef<HTMLTableCellElement>(null);
+  useSortedColumn(cell, active);
 
   return (
     <th
+      ref={cell}
       colSpan={colSpan}
       data-col={col}
       data-col-sort={active ? dir : undefined}

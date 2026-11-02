@@ -223,7 +223,7 @@ One line per area; the history files explain each in depth.
   fund rows on the live basis only), `depositoryShares.ts`, `recordedHoldings.ts`,
   `corporateActions.ts`, `dailyMovers.ts`, `quotes.ts`, `quoteCache.ts`,
   `upstreamStatus.ts` (the cause picks the headline).
-- `src/lib/tableView.ts` + `components/SortHeader.tsx` + `columnDrag.ts` +
+- `src/lib/tableView.ts` + `components/SortHeader.tsx` + `sortedColumn.ts` + `columnDrag.ts` +
   `viewMemory.ts` — every table sorts, every column but the first drags, the
   arrangement is remembered. `components/TreeTable.tsx` — rows open into rows of
   the same table, never a table in a cell.

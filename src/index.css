@@ -81,6 +81,9 @@ html.dark .statement-drop-message { background: #172554; color: #dbeafe; border-
   --chart-bench-7: #e34948;
   /* The second shade of a striped table row — see `tbody > tr:nth-child(even)`. */
   --row-alt: #f7f4ec;
+  /* The column a table is sorted by — Windows' own selection blue. */
+  --sorted-col-fill: rgb(0 120 215 / 0.2);
+  --sorted-col-edge: #0078d7;
   /* The highlight a data row takes under the pointer — see the override below the
      zebra rule. OPAQUE and distinctly warmer/darker than both the card (#f4f2ec,
      odd rows) and `--row-alt` (even rows), so a hovered row never reads as a zebra
@@ -124,6 +127,8 @@ html.dark {
   --chart-bench-6: #008300;
   --chart-bench-7: #e66767;
   --row-alt: #1a1740;
+  --sorted-col-fill: rgb(0 120 215 / 0.32);
+  --sorted-col-edge: #3a9bea;
   /* Brighter than both the card and `--row-alt` (#1a1740), so a hover lifts the
      row rather than darkening into its even-row neighbour. */
   --row-hover: #2d2862;
@@ -791,6 +796,38 @@ html #root table:has(> tfoot) > tbody:last-of-type > tr:last-child > :is(th, td)
 #root [data-movers-lists] table {
   --table-grid-width: calc(1px / var(--app-zoom));
   --table-grid: var(--table-grid-thin);
+}
+/* THE COLUMN THE TABLE IS SORTED BY (`src/lib/sortedColumn.ts`). The fill is a
+   background IMAGE so it lies over whatever the cell already shows: a stripe, a
+   hovered row, a pinned column's opaque surface. The heavier edge recolours the
+   grid lines either side and adds 1px inside them as a shadow, so turning a sort
+   on moves no column. !important: a tree row's first cell carries its depth
+   guide as a box-shadow, and that rule is the more specific. */
+html #root table tr > :is(th, td)[data-sorted-col] {
+  --sorted-col-line: calc(1px / var(--app-zoom));
+  background-image: linear-gradient(var(--sorted-col-fill), var(--sorted-col-fill));
+  border-left-color: var(--sorted-col-edge);
+  border-right-color: var(--sorted-col-edge);
+  box-shadow:
+    inset var(--sorted-col-line) 0 var(--sorted-col-edge),
+    inset calc(-1 * var(--sorted-col-line)) 0 var(--sorted-col-edge) !important;
+}
+html #root table tr > :is(th, td)[data-sorted-col-before] {
+  border-right-color: var(--sorted-col-edge);
+}
+html #root table tr > :is(th, td)[data-sorted-col="top"] {
+  border-top-color: var(--sorted-col-edge);
+  box-shadow:
+    inset var(--sorted-col-line) 0 var(--sorted-col-edge),
+    inset calc(-1 * var(--sorted-col-line)) 0 var(--sorted-col-edge),
+    inset 0 var(--sorted-col-line) var(--sorted-col-edge) !important;
+}
+html #root table tr > :is(th, td)[data-sorted-col="bottom"] {
+  border-bottom-color: var(--sorted-col-edge);
+  box-shadow:
+    inset var(--sorted-col-line) 0 var(--sorted-col-edge),
+    inset calc(-1 * var(--sorted-col-line)) 0 var(--sorted-col-edge),
+    inset 0 calc(-1 * var(--sorted-col-line)) var(--sorted-col-edge) !important;
 }
 
 /* EXPORT EXCEL IS GREEN, AS GCR'S IS — as a tint with deep-green type, for the
