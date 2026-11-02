@@ -844,3 +844,9 @@
 - `shared/owners.mjs` gains both as `kind: "firm"` with `partners`, which names people and attributes no money: no profit share is on record. The member picker labels them LLP; the Family & Entities row's hover names the partners.
 - At-cost wording across surfaces said only "the family's consolidated review"; it now reads "consolidated review or written note". An account held entirely at cost names that as its return gap (`accountReturnRecords.mjs`).
 - Test: `llpStatements.test.mjs` (both statements, the join, the refusal, the equity shortfall).
+
+### Stage 10jr — ALL SECURITIES IS COMPANIES AGAIN; FRANKLIN IS DEBT ON ASSET CLASS
+
+- *"we need to reverse the all securities change ... We do not need to show every single holding in the all securities."* PR #302 (Stage 10jp) is reverted whole: All Securities draws company shares and look-through names, as under Stage 10aj, with its columns, footers, the "Show it on Category" line and their checks restored.
+- *"in asset class you can show it under as debt, and in basket you can show it as not classified."* `FAMILY_SAID_CLASS` files Franklin India Credit AIF under Debt, with a source of its own (`family`), since no review row can be cited. Its basket stays "Not classified in the family's review"; Category keeps it under AIF.
+- Being Debt, it now takes `isDebtHolding`'s rule, which allows a rate under a year. Its XIRR cell moves from NA to `—` No solution, because the statement's only valuation (21 Oct) predates the capital (22 Oct). The next statement gives it a figure.

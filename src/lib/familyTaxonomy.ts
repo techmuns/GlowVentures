@@ -163,6 +163,8 @@ export const UNCLASSIFIED_WHY =
  *   `cash-rule` — their instruction that ARBITRAGE AND LIQUID FUNDS ARE CASH,
  *                 wherever the review files one elsewhere or does not name it.
  *   `derived`   — our own asset class already answered it beyond doubt.
+ *   `family`    — the family's own word on a holding the review cannot name,
+ *                 because it was bought after it (`FAMILY_SAID_CLASS`).
  *
  * TWO RULES, TWO SOURCES, and that is not pedantry. Both are the family
  * speaking, and on screen a section heading prints how much of it a rule
@@ -171,7 +173,7 @@ export const UNCLASSIFIED_WHY =
  * to Thematic & Tactical", which is a sentence about the wrong rule, under the
  * wrong basket, attached to the largest figure in the section.
  */
-export type TaxonomySource = "review" | "rule" | "cash-rule" | "derived";
+export type TaxonomySource = "review" | "rule" | "cash-rule" | "derived" | "family";
 
 export type TaxonomyEntry = {
   assetClass: FamilyAssetClass;
@@ -469,6 +471,20 @@ const classByDerivation = (p: Classifiable): FamilyAssetClass | null =>
 export type Resolved<T> = { value: T; source: TaxonomySource; reviewProduct: string | null };
 
 /**
+ * THE FAMILY'S ASSET CLASS FOR A HOLDING THE 30 JUNE REVIEW PREDATES (Stage 10jr).
+ *
+ *   "in asset class you can show it under as debt, and in basket you can show
+ *    it as not classified."
+ *
+ * Asset class only, so no `FAMILY_TAXONOMY` entry: that map carries a basket too
+ * and cites a workbook row, and this holding has neither. A later review naming
+ * it takes over, because the map is read first.
+ */
+export const FAMILY_SAID_CLASS: Readonly<Record<string, FamilyAssetClass>> = {
+  "sec:franklin-india-credit-aif-scheme-i-unit-class-db2": "Debt",
+};
+
+/**
  * ── CASH ON THE FAMILY'S OWN AXES TOO, BECAUSE THEY SAID "EVERYWHERE" ──────
  *
  *   "Wherever we have cash as asset class or category … arbitrage funds are
@@ -531,6 +547,8 @@ export function familyAssetClass(p: Classifiable, isMandate: boolean): Resolved<
   }
   if (hit) return { value: hit.assetClass, source: "review", reviewProduct: hit.reviewProduct };
   if (p.reviewTaxonomy) return { value: p.reviewTaxonomy.assetClass, source: "review", reviewProduct: null };
+  const said = FAMILY_SAID_CLASS[productKeyOf(p, isMandate)];
+  if (said) return { value: said, source: "family", reviewProduct: null };
   const derived = classByDerivation(p);
   return derived ? { value: derived, source: "derived", reviewProduct: null } : null;
 }
@@ -561,8 +579,8 @@ export function taxonomyCoverage(
   rows: readonly { position: Position; isMandate: boolean; marketValue: number }[],
   axis: "basket" | "assetClass",
 ) {
-  const count = { review: 0, rule: 0, "cash-rule": 0, derived: 0, none: 0 };
-  const value = { review: 0, rule: 0, "cash-rule": 0, derived: 0, none: 0 };
+  const count = { review: 0, rule: 0, "cash-rule": 0, derived: 0, family: 0, none: 0 };
+  const value = { review: 0, rule: 0, "cash-rule": 0, derived: 0, family: 0, none: 0 };
   for (const r of rows) {
     const res = axis === "basket" ? familyBasket(r.position, r.isMandate) : familyAssetClass(r.position, r.isMandate);
     const k: TaxonomySource | "none" = res?.source ?? "none";

@@ -16460,8 +16460,10 @@ const DROPPED_BOOK = (() => {
     if (ti < 0 || te < 0) return null;
     const TAX = new Map([...tsrc.slice(ti, te).matchAll(/"([a-z]+:[^"]+)":\s*\{\s*assetClass:\s*"([^"]+)",\s*basket:\s*"([^"]+)"/g)]
       .map((m) => [m[1], { assetClass: m[2], basket: m[3] }]));
+    const si = tsrc.indexOf("export const FAMILY_SAID_CLASS"), se = tsrc.indexOf("\n};", si);
+    const SAID = new Map([...tsrc.slice(si, se).matchAll(/"([a-z]+:[^"]+)":\s*"([^"]+)"/g)].map((m) => [m[1], m[2]]));
     const um = /export const UNCLASSIFIED = "([^"]+)"/.exec(tsrc);
-    if (!TAX.size || !um) return null;
+    if (!TAX.size || !SAID.size || !um) return null;
     const UNCLASSIFIED = um[1];
     const acc = new Map(accounts.map((a) => [a.accountId, a]));
     const eng = (p) => acc.get(p.accountId)?.engagement;
@@ -16485,6 +16487,8 @@ const DROPPED_BOOK = (() => {
         if (!mandate(p) && cashEq(p)) return "Cash";
         const h = hit(p);
         if (h) return h.assetClass;
+        const said = SAID.get(mandate(p) ? `mandate:${p.accountId}` : `sec:${p.securityKey}`);
+        if (said) return said;
         return p.assetClass === "Equity" ? "Equity" : p.assetClass === "Cash" ? "Cash" : UNCLASSIFIED;
       },
     };
