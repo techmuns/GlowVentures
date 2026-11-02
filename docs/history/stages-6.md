@@ -856,3 +856,6 @@
 - *"we need to reverse the all securities change ... We do not need to show every single holding in the all securities."* PR #302 (Stage 10jp) is reverted whole: All Securities draws company shares and look-through names, as under Stage 10aj, with its columns, footers, the "Show it on Category" line and their checks restored.
 - *"in asset class you can show it under as debt, and in basket you can show it as not classified."* `FAMILY_SAID_CLASS` files Franklin India Credit AIF under Debt, with a source of its own (`family`), since no review row can be cited. Its basket stays "Not classified in the family's review"; Category keeps it under AIF.
 - Being Debt, it now takes `isDebtHolding`'s rule, which allows a rate under a year. Its XIRR cell moves from NA to `—` No solution, because the statement's only valuation (21 Oct) predates the capital (22 Oct). The next statement gives it a figure.
+
+### Stage 10jt — THE SORTED COLUMN, LIGHTER AND THINNER
+- *"use some lighter color shade and thinned borders"*: Stage 10jr's fill goes from 20% to 9% of the selection blue (32% to 16% in the dark theme), and the edge from a 3px `#0078d7` to the grid's own width in `#7ab8ea` (`#2f6fa8` dark). The inset shadows are gone, so a tree row's first cell keeps its depth guide when sorted.
