@@ -9,15 +9,21 @@
      "name": "ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx",
      "size": 1076026,
      "blob": "8fe4848c47cfe61a3f76feb2e1a09c134b9ad398",
-     "status": "processing",
+     "status": "landed",
      "hold": null,
      "reason": null,
-     "landedAs": null,
-     "providers": null,
-     "docKeys": null,
+     "landedAs": [
+      "source/uploads-rapid-20261102T104439Z-09e3eddf/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx"
+     ],
+     "providers": [
+      "Adviser transaction report (not a statement)"
+     ],
+     "docKeys": [
+      "adviser-transaction-report-not-a-statement-unknown-unknown-unknown-2"
+     ],
      "commit": null,
      "run": null,
-     "updatedAt": "2026-11-02T10:45:14.360Z",
+     "updatedAt": "2026-11-02T10:45:28.354Z",
      "processor": "github"
     }
    ]
