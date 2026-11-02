@@ -2,6 +2,26 @@
  "version": 1,
  "batches": [
   {
+   "id": "20261102T082024Z-1747c71a",
+   "uploadedAt": "2026-11-02T08:20:24.482Z",
+   "files": [
+    {
+     "name": "kotak statement apr 25 to nov 26 (ankita,ajay,aarti,bharat) (2).zip",
+     "size": 2773153,
+     "blob": "65f2477bd296a6fd5b8f7be2b1f99bac32386a39",
+     "status": "queued",
+     "hold": null,
+     "reason": null,
+     "landedAs": null,
+     "providers": null,
+     "docKeys": null,
+     "commit": null,
+     "run": null,
+     "updatedAt": "2026-11-02T08:20:24.482Z"
+    }
+   ]
+  },
+  {
    "id": "20261027T104854Z-33d3aa94",
    "uploadedAt": "2026-10-27T10:48:54.778Z",
    "files": [
