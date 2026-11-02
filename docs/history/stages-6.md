@@ -844,3 +844,9 @@
 - `shared/owners.mjs` gains both as `kind: "firm"` with `partners`, which names people and attributes no money: no profit share is on record. The member picker labels them LLP; the Family & Entities row's hover names the partners.
 - At-cost wording across surfaces said only "the family's consolidated review"; it now reads "consolidated review or written note". An account held entirely at cost names that as its return gap (`accountReturnRecords.mjs`).
 - Test: `llpStatements.test.mjs` (both statements, the join, the refusal, the equity shortfall).
+
+### Stage 10jr — THE COLUMN A TABLE IS SORTED BY IS HIGHLIGHTED, TOP TO BOTTOM
+- *"that particular column must be highlighted in light blue shade … same blue color when we select anything … on the Windows"*: heading, every row and the total take Windows' selection blue, `#0078d7` at 20% (32% in the dark theme), with a 3px edge in the full colour.
+- One seam: `SortHeader` calls `useSortedColumn` (`src/lib/sortedColumn.ts`), so every table with sortable headings gets it. It marks cells from the DOM because many cells are components that take no extra props, and a `MutationObserver` follows rows arriving, rows opening and a column being moved.
+- The fill is a background image over the cell's own surface (stripes, hover and pinned cells stay). The edge recolours the grid lines and adds 1px of inset shadow, so a sort moves no column. A cell spanning past the column (footer label, opened panel) is left unmarked; a nested table keeps its own mark.
+- `check:columns` gains the rule, proven by disabling the hook. That script's older `/monitor` picker loop fails before it (`review:investmentRange` is gone from the picker); left alone, it is not in CI.
