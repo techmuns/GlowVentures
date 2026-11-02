@@ -850,3 +850,9 @@
 - One seam: `SortHeader` calls `useSortedColumn` (`src/lib/sortedColumn.ts`), so every table with sortable headings gets it. It marks cells from the DOM because many cells are components that take no extra props, and a `MutationObserver` follows rows arriving, rows opening and a column being moved.
 - The fill is a background image over the cell's own surface (stripes, hover and pinned cells stay). The edge recolours the grid lines and adds 1px of inset shadow, so a sort moves no column. A cell spanning past the column (footer label, opened panel) is left unmarked; a nested table keeps its own mark.
 - `check:columns` gains the rule, proven by disabling the hook. That script's older `/monitor` picker loop fails before it (`review:investmentRange` is gone from the picker); left alone, it is not in CI.
+
+### Stage 10js — ALL SECURITIES IS COMPANIES AGAIN; FRANKLIN IS DEBT ON ASSET CLASS
+
+- *"we need to reverse the all securities change ... We do not need to show every single holding in the all securities."* PR #302 (Stage 10jp) is reverted whole: All Securities draws company shares and look-through names, as under Stage 10aj, with its columns, footers, the "Show it on Category" line and their checks restored.
+- *"in asset class you can show it under as debt, and in basket you can show it as not classified."* `FAMILY_SAID_CLASS` files Franklin India Credit AIF under Debt, with a source of its own (`family`), since no review row can be cited. Its basket stays "Not classified in the family's review"; Category keeps it under AIF.
+- Being Debt, it now takes `isDebtHolding`'s rule, which allows a rate under a year. Its XIRR cell moves from NA to `—` No solution, because the statement's only valuation (21 Oct) predates the capital (22 Oct). The next statement gives it a figure.

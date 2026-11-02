@@ -153,6 +153,16 @@ for (const [axis, key] of [["basket", basketKeyOf], ["asset class", familyClassK
      ambiguous.map(([k, v]) => `${k} → ${[...v].join("/")}`).join("; "));
 }
 
+// ── THE FAMILY'S WORD ON FRANKLIN: DEBT, AND NO BASKET (Stage 10js) ──────────
+{
+  const franklin = BOOK_POSITIONS.filter((p) => p.securityKey === "franklin-india-credit-aif-scheme-i-unit-class-db2");
+  ok("Franklin India Credit AIF is held", franklin.length > 0);
+  ok("...its asset class is Debt, on the family's word and not the review's",
+     franklin.every((p) => familyAssetClass(p, isM(p))?.value === "Debt" && familyAssetClass(p, isM(p))?.source === "family"));
+  ok("...and its basket stays not classified",
+     franklin.every((p) => basketKeyOf(p, isM(p)) === UNCLASSIFIED));
+}
+
 // ── 8. THE UNCLASSIFIED REMAINDER IS SMALL AND NAMED ────────────────────────
 // Not a literal: a relation. If a future drop pushes it far up, that is a real
 // finding about a stale review rather than a test to relax.
