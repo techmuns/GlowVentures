@@ -471,7 +471,7 @@ const classByDerivation = (p: Classifiable): FamilyAssetClass | null =>
 export type Resolved<T> = { value: T; source: TaxonomySource; reviewProduct: string | null };
 
 /**
- * THE FAMILY'S ASSET CLASS FOR A HOLDING THE 30 JUNE REVIEW PREDATES (Stage 10jr).
+ * THE FAMILY'S ASSET CLASS FOR A HOLDING THE 30 JUNE REVIEW PREDATES (Stage 10js).
  *
  *   "in asset class you can show it under as debt, and in basket you can show
  *    it as not classified."

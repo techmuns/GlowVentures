@@ -153,7 +153,7 @@ for (const [axis, key] of [["basket", basketKeyOf], ["asset class", familyClassK
      ambiguous.map(([k, v]) => `${k} → ${[...v].join("/")}`).join("; "));
 }
 
-// ── THE FAMILY'S WORD ON FRANKLIN: DEBT, AND NO BASKET (Stage 10jr) ──────────
+// ── THE FAMILY'S WORD ON FRANKLIN: DEBT, AND NO BASKET (Stage 10js) ──────────
 {
   const franklin = BOOK_POSITIONS.filter((p) => p.securityKey === "franklin-india-credit-aif-scheme-i-unit-class-db2");
   ok("Franklin India Credit AIF is held", franklin.length > 0);
