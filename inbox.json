@@ -36,15 +36,15 @@
      "name": "kotak statement apr 25 to nov 26 (ankita,ajay,aarti,bharat) (2).zip",
      "size": 2773153,
      "blob": "65f2477bd296a6fd5b8f7be2b1f99bac32386a39",
-     "status": "held",
-     "hold": "check-failed",
-     "reason": "`npm run test:family` fails with these statements and passes without them. The run log names the failing check: https://github.com/techmuns/GlowVentures/actions/runs/41437051362",
+     "status": "queued",
+     "hold": null,
+     "reason": null,
      "landedAs": null,
      "providers": null,
      "docKeys": null,
      "commit": null,
-     "run": "https://github.com/techmuns/GlowVentures/actions/runs/41437051362",
-     "updatedAt": "2026-11-02T11:38:35.598Z"
+     "run": null,
+     "updatedAt": "2026-11-02T11:46:31.969Z"
     }
    ]
   },
