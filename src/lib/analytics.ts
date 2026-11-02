@@ -823,6 +823,10 @@ export const CASH_EQUIVALENT_KEYS: Readonly<Record<string, string>> = {
     "ABSL folio 1019265797, CAMS listing of 6 Oct 2026 — \"Aditya Birla Sun Life Liquid Fund - Daily IDCW-Direct Plan\"; the family's cash-equivalent rule",
   "absl-liquid-fund-direct-growth":
     "ABSL folio 1038104611 — \"Aditya Birla Sun Life Liquid Fund - Growth-Direct Plan\" (portfolio summary: ABSL Liquid Fund - Direct-Growth); the family's cash-equivalent rule",
+  "kotak-arbitrage-fund-growth-regular-plan":
+    "Kotak folios of 2 Nov 2026 (INF174K01302) — Arbitrage Fund, Regular Plan, redeemed to nil; the family's instruction",
+  "kotak-overnight-fund-direct-growth":
+    "Kotak folio of 2 Nov 2026 (INF174KA1BF9) — Overnight Fund; the family's cash-equivalent rule",
   "kotak-liquid-fund-direct-plan-daily-idcw":
     "Kotak folio 4295974 (INF174K01NH1) — Kotak Liquid Fund Direct Plan Daily IDCW; the family's cash-equivalent rule",
   "kotak-liquid-fund-regular-plan-daily-idcw":

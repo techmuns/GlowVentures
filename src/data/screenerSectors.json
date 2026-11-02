@@ -655,6 +655,14 @@
     "screenerIndustry": "Household Products",
     "joinedBy": "nse-symbol"
   },
+  "KAJARIACER": {
+    "gics": "Consumer Discretionary",
+    "screenerSector": "Consumer Durables",
+    "screenerSectorCode": "IN02/IN0202",
+    "screenerBroadSector": "Consumer Discretionary",
+    "screenerIndustry": "Ceramics",
+    "joinedBy": "nse-symbol"
+  },
   "KALYANKJIL": {
     "gics": "Consumer Discretionary",
     "screenerSector": "Consumer Durables",

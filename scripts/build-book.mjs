@@ -3728,7 +3728,7 @@ function build(archived, archiveCount = archived.length, references = {}) {
       if (fifoCls && (fifoCls.lots.length || fifoCls.realised.length)) {
         const short = fundFifo.ledger.shortfalls.filter((x) => x.cls === h.securityKey);
         const ties = isNum(h.quantity) && Math.abs(fifoCls.unitsHeld - h.quantity) <= printedUnitTie(h.quantity);
-        if (!short.length && ties && !fifoCls.realised.length) {
+        if (!short.length && ties && !fifoCls.realised.length && isNum(costBasis)) {
           /**
            * NO UNIT LEFT THIS HOLDING — only a class switch moved it. Nothing was
            * sold, so the realised half is a MEASURED zero over a record that runs
@@ -3736,7 +3736,8 @@ function build(archived, archiveCount = archived.length, references = {}) {
            * which carries each contribution through the switch at the fund's own
            * ratio; FIFO's own figure is kept to check that carry against, because
            * two implementations writing one cost is how two screens come to
-           * disagree about it.
+           * disagree about it. A statement that prints no cost has nothing to
+           * carry, so its record's FIFO cost stands in the branch below.
            */
           realizedPnL = 0;
           costOfUnitsSold = 0;
