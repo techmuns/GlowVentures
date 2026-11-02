@@ -113,7 +113,7 @@ near("the aggregate percentage is value-weighted, not an average",
 // naive aggregate produces — it weights a ₹107 residual the same as a ₹42 Cr
 // position. CONSTRUCTED, because the day's real rows cannot say so: on a date
 // when AMFI has published one of the book's schemes so far, the mean of one row
-// IS the weighted figure (Stage 10jt).
+// IS the weighted figure (Stage 10ju).
 {
   const [small, large] = rows.filter((p, n) => m.rows.some((r) => r.securityKey === p.securityKey)
     && rows.findIndex((q) => q.securityKey === p.securityKey) === n);
