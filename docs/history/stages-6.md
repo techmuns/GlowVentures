@@ -864,3 +864,8 @@
 
 - Main's CI went red in `build` and, through the family suite in its intake rehearsal, in `upload-e2e`. The test required the day's mean and weighted move to differ, and they coincide on a date when the day figure rests on one scheme. The card's figure was right.
 - The test is now constructed: ₹1,000 up 10% and ₹9,000 up 1% must aggregate to 1.9%, not their 5.5% mean.
+
+### Stage 10jv — A HELD UPLOAD SAYS WHY IN FULL
+
+- Kotak's four-folio ZIP was held with `READ_GAP` and `SECURITY_SPLIT`, but the reason kept only the first three findings and the run log printed no warning text, so the failure could not be diagnosed from a run whose PDFs only CI can open.
+- The inbox reason now names every kind of finding with its count. The run log carries every finding, each changed document's read gaps, and its ISIN-to-key pairs.

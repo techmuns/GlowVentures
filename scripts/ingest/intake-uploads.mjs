@@ -54,7 +54,8 @@ import { listEntries, readEntry, isMacMetadata } from "./lib/unzip.mjs";
 import { restoreStatementPasswords } from '../lib/statementPasswords.mjs';
 import { checkStatementBytes } from "../../shared/statementBytes.mjs";
 import { verify as verifyPublication, readArchive, readBaseline } from "./verify-publication.mjs";
-import { digest, documentRevision, archiveRevision } from "./lib/publication.mjs";
+import { digest, documentRevision, archiveRevision, RECORD_SECTIONS } from "./lib/publication.mjs";
+import { readGaps } from "./lib/readStatus.mjs";
 import { monitorPublication, neverArrivedNote, withNotice } from "./lib/intakePublication.mjs";
 import {
   INBOX_DEFAULTS, STATEMENT_EXT, extOf, emptyLog, parseLog, serializeLog, applyUpdates, inboxPath, waitingStatementFiles,
@@ -368,13 +369,35 @@ function readEverything() {
 
 const SEALED = /password|encrypt|sealed/i;
 
+/** One line per kind of finding, with its count: three repeats must not hide a fourth kind. */
+function heldSummary(issues) {
+  const kinds = new Map();
+  for (const i of issues) kinds.set(i.code, { reason: i.reason, count: (kinds.get(i.code)?.count ?? 0) + 1 });
+  return [...kinds].map(([code, k]) => `${code}${k.count > 1 ? ` ×${k.count}` : ""}: ${k.reason}`).join(" · ");
+}
+
+/** The whole verdict in the run log: every finding and each changed document's read gaps. */
+function logHeldPublication(publication) {
+  say(`
+Publication held (${publication.decision}) — ${publication.issues.length} finding(s):`);
+  for (const i of publication.issues) say(`  ${i.code} ${i.document ?? ""}${i.pointer ?? ""}: ${i.reason}`);
+  const changed = new Set(publication.changed);
+  for (const d of readArchive(abs("public/audit"))) {
+    if (!changed.has(d.docKey)) continue;
+    for (const w of readGaps(d)) say(`  read gap ${d.docKey} [${w.code}]: ${w.detail ?? ""}`);
+    const pairs = new Set(RECORD_SECTIONS.flatMap(section => (d[section] ?? []).filter(r => r.isin && r.securityKey).map(r => `${r.isin} ${r.securityKey}`)));
+    for (const pair of pairs) say(`  security ${d.docKey}: ${pair}`);
+  }
+}
+
 /** Each placed upload's verdict, from the archive, coverage:source and check:reads. */
 function judge(live, baseline) {
   const manifest = JSON.parse(fs.readFileSync(abs("public/audit/manifest.json"), "utf8"));
   const publication = verifyPublication({ baseRef: `${REMOTE}/${MAIN}` });
-  if (!['verified', 'unchanged'].includes(publication.decision)) return {
-    all: `Publication held (${publication.decision}): ${publication.issues.map(i => `${i.code}: ${i.reason}`).slice(0, 3).join(' · ') || 'Repeated normalized documents must not add rows.'}`,
-  };
+  if (!['verified', 'unchanged'].includes(publication.decision)) {
+    logHeldPublication(publication);
+    return { all: `Publication held (${publication.decision}): ${heldSummary(publication.issues) || 'Repeated normalized documents must not add rows.'}` };
+  }
   const cov = npm("coverage:source");
   const lines = cov.out.split(/\r?\n/);
   const at = lines.findIndex((l) => /FILE\(S\) UNREAD:/.test(l));
