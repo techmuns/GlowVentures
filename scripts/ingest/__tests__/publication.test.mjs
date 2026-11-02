@@ -107,6 +107,26 @@ test('a pairing the verified book already carries does not block a row filed und
   const third = later(); third.holdings[0].securityKey = 'a-third-name';
   assert.ok(has(assess([...baseline, third], baseline), 'SECURITY_SPLIT'));
 });
+test('an AMC folio may name a fund another account holds under a different key, never inside one account', () => {
+  const fund = (overrides) => { const d = doc(overrides); d.holdings[0].assetClass = 'Mutual Fund'; return d; };
+  const depository = fund({ docKey: 'demat-9-2026-07-31', provider: 'Motilal Oswal Financial Services (demat)', accountNo: '9' });
+  depository.holdings[0].securityKey = 'example-fd-gr';
+  const folio = fund({ docKey: 'hdfc-456-2026-11-02', accountNo: '456', asOf: '2026-11-02' });
+  assert.equal(assess([depository, folio], [depository]).decision, 'verified');
+  const renamed = fund({ docKey: 'demat-9-2026-11-02', provider: 'Motilal Oswal Financial Services (demat)', accountNo: '9', asOf: '2026-11-02' });
+  assert.ok(has(assess([depository, renamed], [depository]), 'SECURITY_SPLIT'), 'a depository row is not the issuer');
+  const sameAccount = fund({ docKey: 'hdfc-456-2026-11-03', accountNo: '456', asOf: '2026-11-03' });
+  sameAccount.holdings[0].securityKey = 'a-second-name';
+  assert.ok(has(assess([folio, sameAccount], [folio]), 'SECURITY_SPLIT'));
+});
+test('a sealed statement re-opened with a reordered password list is not a change', () => {
+  const sealed = n => { const d = doc({ docKey: 'sealed-1-2026-10-01', accountNo: '1', holdings: [], totals: {} }); d.warnings = [{ code: 'pdf-encrypted', detail: `opened with GLOW_PDF_PASSWORDS entry #${n}` }]; return d; };
+  const result = assess([sealed(2)], [sealed(5)]);
+  assert.equal(result.decision, 'unchanged');
+  assert.deepEqual(result.issues, []);
+  const edited = sealed(2); edited.warnings.push({ code: 'new-gap', detail: 'a gap' });
+  assert.ok(has(assess([edited], [sealed(5)]), 'READ_GAP'), 'any other difference is still a change');
+});
 test('a layout silently dropping a previously populated field is quarantined', () => {
   const next = later(); next.holdings[0].totalCost = null;
   assert.ok(has(assess([doc(), next]), 'FIELD_COVERAGE_LOSS'));
