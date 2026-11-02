@@ -884,3 +884,10 @@
 - `SECURITY_SPLIT` no longer fires on an AMC's own folio statement naming a fund (`INF` ISIN, `Mutual Fund` row) that only other accounts hold under another key. A depository row, or a new name inside one account, still fires.
 - `KEY_ALIASES` closes the two Kotak pairs this delivery added, joined on the exact ISINs (`INF174K01LC6`, `INF174KA1HV3`).
 - Kotak prints a switch-out's target as named at the time ("To Kotak Equity Arbitrage" reached today's Kotak Arbitrage Fund), so the reader withheld three folios' ledgers. A matching name still decides; failing that, one sole switch-in with the same rupees inside the settlement week is the pair, and two or more withhold the ledger as before.
+
+### Stage 10jy — KOTAK'S FOLIOS PASS THE BOOK'S OWN CHECKS
+
+- A statement that prints no cost and whose unit record ties with only a switch now takes its record's FIFO cost. It had nothing for `carryCostThroughSwitches` to carry, so Aarti's Kotak Multi Cap (folio 5372722) would have stayed uncosted by the folio and disagreed with its own tranches.
+- `CASH_EQUIVALENT_KEYS` gains Kotak Arbitrage (Regular) and Kotak Overnight (Direct). The dead-key check waits on them until the upload lands.
+- Kajaria Ceramics joins the screener tier: the new Kotak funds' filings place it, and the premise is that filings never decide a held company's sector.
+- Where a folio now reports a demat's exact units, the folio values them. `fundNavs` and `recoveredCosts` count those demat rows as reported elsewhere instead of expecting a row.

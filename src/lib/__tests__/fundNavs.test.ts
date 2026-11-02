@@ -299,7 +299,9 @@ ok("the fund switch is on, so the non-cash rows below are what the live book add
 ok("the cash rows are exactly the fund rows that are cash equivalents — one builder, two views",
   DEP.length === FUNDS.filter((p) => isCashEquivalent(p)).length
   && DEP.every((p) => FUNDS.some((f) => f.isin === p.isin && f.accountId === p.accountId)));
-const nonCashFunds = nonCash.filter((w) => !isEtfIsin(w.isin) && !replacedByBandhanFolio(w));
+// A balance another account's own statement reports is that account's: gate 5.
+const nonCashFunds = nonCash.filter((w) => !isEtfIsin(w.isin) && !replacedByBandhanFolio(w)
+  && !BOOK_POSITIONS.some((b) => b.isin === w.isin && typeof b.quantity === "number" && Math.abs(b.quantity - (w.closing as number)) < 0.0005));
 ok("every non-cash fund the cash gate refused is valued here, at AMFI's NAV",
   nonCashFunds.length > 0 && nonCashFunds.every((w) => FUNDS.some((p) => p.isin === w.isin && p.accountId === w.accountId)),
   `${nonCashFunds.length} fund(s), ${crs(FUNDS.filter((p) => !isCashEquivalent(p)).reduce((a, p) => a + p.marketValue, 0))}`);

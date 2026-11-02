@@ -114,7 +114,9 @@ const funds=[...depositoryFundHoldings(),...unpricedStatementUnits()];
 // 21, and since Stage 10hq the three DSP Gold / Silver ETF lines valued across
 // their 1:10 split, whose costs reconcile on the statements' own pre-split units.
 // Five more since Stage 10hu, costed from MOPWM's transaction report's demat folios.
-assert.equal(funds.filter(p=>p.recoveredCost).length,29);
+// Less any whose exact units an AMC folio now reports: the folio values those, not the demat.
+const reportedByFolio=BOOK_RECOVERED_COSTS.filter(r=>r.accountId.includes('-demat-')&&BOOK_POSITIONS.some(p=>p.accountId!==r.accountId&&p.isin===r.isin&&p.quantity!=null&&Math.abs(p.quantity-r.quantity)<=.0005));
+assert.equal(funds.filter(p=>p.recoveredCost).length,29-reportedByFolio.filter(r=>/^INF/.test(r.isin)).length);
 assert.equal(funds.filter(p=>p.recoveredCost&&p.depositoryUnits?.unitSplit).length,3);
 const fp=(account:string,isin:string)=>funds.find(p=>p.accountId.endsWith(account)&&p.isin===isin)!;
 for (const [account, first, last, lots] of [['12539150','2025-03-06','2026-03-23',4],['12838316','2025-11-06','2025-11-06',1],['12838320','2025-07-11','2025-07-11',1]] as const) {
