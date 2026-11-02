@@ -859,3 +859,8 @@
 
 ### Stage 10jt — THE SORTED COLUMN, LIGHTER AND THINNER
 - *"use some lighter color shade and thinned borders"*: Stage 10jr's fill goes from 20% to 9% of the selection blue (32% to 16% in the dark theme), and the edge from a 3px `#0078d7` to the grid's own width in `#7ab8ea` (`#2f6fa8` dark). The inset shadows are gone, so a tree row's first cell keeps its depth guide when sorted.
+
+### Stage 10ju — NAV MOVERS' "NOT THE MEAN" TEST NO LONGER READS THE DAY'S DATA
+
+- Main's CI went red in `build` and, through the family suite in its intake rehearsal, in `upload-e2e`. The test required the day's mean and weighted move to differ, and they coincide on a date when the day figure rests on one scheme. The card's figure was right.
+- The test is now constructed: ₹1,000 up 10% and ₹9,000 up 1% must aggregate to 1.9%, not their 5.5% mean.
