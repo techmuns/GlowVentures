@@ -877,3 +877,10 @@
 - Vertical gridlines, a dotted zero, no axis lines, month labels ("Apr 2026"), equal line weights. The start tabs moved under the plot. The app's light and dark themes stay.
 - The dots that marked statement dates on the book line are gone, so the only dots on the plot are line ends; the tooltip says "Statement valuation on this date". No figure changed.
 - `check:pages` strikes the selector's position, each end dot against its own curve's last point and colour, and the ✕ on `cio-nav-live`.
+
+### Stage 10jx — A ZIP IS NOT HELD FOR WHAT IS ALREADY IN THE LIBRARY; A SWITCH PAIRS ACROSS A RENAME
+
+- Every sealed statement's `pdf-encrypted` warning names its password's position in the saved list. The full reader re-opens them all, so the list's order made each one "changed", and old documents (360 ONE's empty earnings statement, ASK's two readings of 31 Mar) blocked an unrelated upload. The gate now ignores that position when deciding what changed; any other difference still counts.
+- `SECURITY_SPLIT` no longer fires on an AMC's own folio statement naming a fund (`INF` ISIN, `Mutual Fund` row) that only other accounts hold under another key. A depository row, or a new name inside one account, still fires.
+- `KEY_ALIASES` closes the two Kotak pairs this delivery added, joined on the exact ISINs (`INF174K01LC6`, `INF174KA1HV3`).
+- Kotak prints a switch-out's target as named at the time ("To Kotak Equity Arbitrage" reached today's Kotak Arbitrage Fund), so the reader withheld three folios' ledgers. A matching name still decides; failing that, one sole switch-in with the same rupees inside the settlement week is the pair, and two or more withhold the ledger as before.

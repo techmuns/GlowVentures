@@ -1089,8 +1089,11 @@ function walkSchemeLedger(name, opening, printed, closingUnits) {
 /**
  * Pair every switch-out with the switch-in it funded: the same rupees (the
  * out-leg's paid amount is the in-leg's gross), credited on or after the
- * switch-out within a settlement week, into a scheme the out-leg's own words
- * name. Returns the pairs, or the switch-out nothing in the statement received.
+ * switch-out within a settlement week. The out-leg's own words pick the scheme
+ * where they can, but they print the name AT THE TIME of the switch (Kotak's
+ * "To Kotak Equity Arbitrage" reached today's "Kotak Arbitrage Fund"), so where
+ * they match nothing, one sole candidate holding those rupees is the pair.
+ * Returns the pairs, or the switch-out nothing received or several could have.
  */
 function pairSwitches(schemes) {
   const legs = schemes.flatMap((s) => s.rows.filter((r) => r.kind === "switch-in" || r.kind === "switch-out")
@@ -1098,15 +1101,21 @@ function pairSwitches(schemes) {
   const ins = legs.filter((x) => x.r.kind === "switch-in");
   const used = new Set();
   const pairs = [];
+  const fits = (o) => ins.filter((x) => !used.has(x) && x.s !== o.s
+    && Math.abs(x.r.gross - -o.r.amount) <= 0.011
+    && x.r.date >= o.r.date && daysBetween(o.r.date, x.r.date) <= 7);
+  const pair = (o, i) => { used.add(i); pairs.push({ out: o, in: i }); };
+  const unnamed = [];
   for (const o of legs.filter((x) => x.r.kind === "switch-out").sort((a, b) => a.r.date.localeCompare(b.r.date))) {
     const to = squash(/\bTo\s+(.+?)(?:\s*,\s*less\b.*)?$/i.exec(o.r.type)?.[1]);
-    const i = ins.find((x) => !used.has(x) && x.s !== o.s
-      && Math.abs(x.r.gross - -o.r.amount) <= 0.011
-      && x.r.date >= o.r.date && daysBetween(o.r.date, x.r.date) <= 7
-      && to.slice(0, 10) === squash(x.s.security).slice(0, 10));
-    if (!i) return { unpaired: o };
-    used.add(i);
-    pairs.push({ out: o, in: i });
+    const named = fits(o).find((x) => to.slice(0, 10) === squash(x.s.security).slice(0, 10));
+    if (named) pair(o, named); else unnamed.push(o);
+  }
+  // After every named pair, so a former name cannot take a named leg's rupees.
+  for (const o of unnamed) {
+    const candidates = fits(o);
+    if (candidates.length !== 1) return { unpaired: o };
+    pair(o, candidates[0]);
   }
   return { pairs, inbound: ins.filter((x) => !used.has(x)) };
 }

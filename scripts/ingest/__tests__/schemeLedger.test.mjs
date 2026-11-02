@@ -110,6 +110,24 @@ for (const [label, text, code] of hdfcMutations) {
   ok(`hdfc, ${label}: the holdings still stand`, holdings.length === 2, JSON.stringify(holdings.map((h) => h.security)));
 }
 
+// ── A switch-out prints the scheme's name at the time; the rupees still pair it ──
+{
+  const former = HDFC.replace("Switch Out - To Sample Equity Fund - Direct Growth", "Switch Out - To Old Scheme Name - Direct Growth");
+  const { flows, warns } = read(former);
+  const legs = flows.filter((f) => f.kind === "reclassification");
+  ok("a former name: the sole switch-in holding those rupees is the pair", legs.length === 2 && !warns.includes("ledger-not-published")
+    && legs.some((f) => f.amount === -10000 && f.settlementDate === "2019-04-08") && legs.some((f) => f.amount === 10000), JSON.stringify(warns));
+  const third = former.replace("Available Units to Redeem : 900.000",
+    "Available Units to Redeem : 900.000\nMarket Value of Balance Units at NAV of 20.000 on 31/08/2026 (INR) : 18,000.00 Total Units Under Lien : 0.000\n"
+    + "3333 / Other Sample Fund - Direct Growth* - INF000A01CC3 UCC : MFX0003\nOpening Balance as on 08/04/2019 0.000\n"
+    + "08/04/2019 Switch-In - From Elsewhere 10.000 10,000.00 10.000 1,000.000 1,000.000\nAvailable Units to Redeem : 1,000.000\n"
+    + "Market Value of Balance Units at NAV of 10.000 on 31/08/2026 (INR) : 10,000.00 Total Units Under Lien : 0.000\n2222 / Sample Equity Fund - Direct Growth* - INF000A01BB2 UCC : MFX0002\nAvailable Units to Redeem : 900.000");
+  const two = read(third);
+  ok("a former name with two switch-ins of those rupees: nothing is guessed", two.flows.length === 0 && two.warns.includes("ledger-not-published"), JSON.stringify(two.warns));
+  const named = read(third.replace("To Old Scheme Name", "To Other Sample Fund"));
+  ok("two candidates and a matching name: the name decides", named.flows.some((f) => f.security === "Other Sample Fund - Direct Growth" && f.kind === "reclassification"), JSON.stringify(named.warns));
+}
+
 // ── Kotak: duty BELOW the row, an IDCW wholly withheld, a notice, a one-legged switch ──
 const KOTAK = `
 For any queries https://info.kotakmf.com/write-to-us
