@@ -8,30 +8,30 @@ through — places it, and is what Sector Composition compares the family's book
 Sensex and BSE 500 are not read: BSE Index Services publishes their constituents' sectors but no
 sector weights a run can read, and no third-party figure is substituted.
 
-## Nifty 500 — 2026-09-30
+## Nifty 500 — 2026-10-30
 
-501 constituents · Free Float Market Capitalization · [factsheet](https://www.niftyindices.com/Factsheet/ind_nifty_500.pdf) · weights sum to 100.01
+501 constituents · Free Float Market Capitalization · [factsheet](https://www.niftyindices.com/Factsheet/ind_nifty_500.pdf) · weights sum to 99.98
 
 | Factsheet sector | Weight (%) | GICS sector |
 | --- | ---: | --- |
-| Financial Services | 30.58 | Financials |
-| Capital Goods | 7.50 | Industrials |
-| Automobile and Auto Components | 7.42 | Consumer Discretionary |
-| Healthcare | 7.31 | Health Care |
-| Oil, Gas & Consumable Fuels | 6.77 | Energy |
-| Information Technology | 6.02 | Information Technology |
-| Fast Moving Consumer Goods | 5.26 | Consumer Staples |
-| Metals & Mining | 4.55 | Materials |
-| Consumer Services | 4.07 | Consumer Discretionary |
-| Telecommunication | 3.69 | Communication Services |
-| Power | 3.41 | Utilities |
-| Consumer Durables | 2.80 | Consumer Discretionary |
-| Construction | 2.72 | Industrials |
-| Services | 2.16 | Industrials |
-| Chemicals | 1.99 | Materials (prefix) |
-| Construction Materials | 1.88 | Materials |
-| Realty | 1.47 | Real Estate |
-| Textiles | 0.26 | Consumer Discretionary (prefix) |
+| Financial Services | 30.55 | Financials |
+| Healthcare | 7.47 | Health Care |
+| Automobile and Auto Components | 7.21 | Consumer Discretionary |
+| Information Technology | 7.06 | Information Technology |
+| Capital Goods | 7.03 | Industrials |
+| Oil, Gas & Consumable Fuels | 6.63 | Energy |
+| Fast Moving Consumer Goods | 5.18 | Consumer Staples |
+| Metals & Mining | 4.19 | Materials |
+| Consumer Services | 4.14 | Consumer Discretionary |
+| Telecommunication | 4.04 | Communication Services |
+| Power | 3.36 | Utilities |
+| Construction | 2.78 | Industrials |
+| Consumer Durables | 2.69 | Consumer Discretionary |
+| Services | 2.12 | Industrials |
+| Chemicals | 1.87 | Materials (prefix) |
+| Construction Materials | 1.84 | Materials |
+| Realty | 1.42 | Real Estate |
+| Textiles | 0.25 | Consumer Discretionary (prefix) |
 | Media, Entertainment & Publication | 0.13 | Communication Services |
 | Diversified | 0.02 | **Unclassified** — no single GICS sector |
 
@@ -78,54 +78,54 @@ sector weights a run can read, and no third-party figure is substituted.
 | Telecommunication | 1.37 | Communication Services |
 | Construction Materials | 0.92 | Materials |
 
-## Nifty Midcap 150 — 2026-09-30
+## Nifty Midcap 150 — 2026-10-30
 
-150 constituents · Free Float Market Capitalization · [factsheet](https://www.niftyindices.com/Factsheet/ind_Nifty_Midcap_150.pdf) · weights sum to 100.01
+150 constituents · Free Float Market Capitalization · [factsheet](https://www.niftyindices.com/Factsheet/ind_Nifty_Midcap_150.pdf) · weights sum to 100.00
 
 | Factsheet sector | Weight (%) | GICS sector |
 | --- | ---: | --- |
-| Financial Services | 26.75 | Financials |
-| Healthcare | 11.20 | Health Care |
-| Capital Goods | 10.82 | Industrials |
-| Consumer Services | 8.43 | Consumer Discretionary |
-| Automobile and Auto Components | 6.27 | Consumer Discretionary |
-| Fast Moving Consumer Goods | 4.69 | Consumer Staples |
-| Information Technology | 4.64 | Information Technology |
-| Consumer Durables | 4.34 | Consumer Discretionary |
-| Realty | 4.33 | Real Estate |
-| Metals & Mining | 3.71 | Materials |
-| Chemicals | 3.51 | Materials (prefix) |
-| Power | 2.46 | Utilities |
-| Oil, Gas & Consumable Fuels | 2.36 | Energy |
-| Telecommunication | 1.93 | Communication Services |
-| Services | 1.72 | Industrials |
-| Construction Materials | 1.59 | Materials |
+| Financial Services | 26.07 | Financials |
+| Healthcare | 11.88 | Health Care |
+| Capital Goods | 10.41 | Industrials |
+| Consumer Services | 8.55 | Consumer Discretionary |
+| Automobile and Auto Components | 6.02 | Consumer Discretionary |
+| Information Technology | 5.47 | Information Technology |
+| Fast Moving Consumer Goods | 4.72 | Consumer Staples |
+| Realty | 4.32 | Real Estate |
+| Consumer Durables | 4.23 | Consumer Discretionary |
+| Metals & Mining | 3.49 | Materials |
+| Chemicals | 3.43 | Materials (prefix) |
+| Power | 2.51 | Utilities |
+| Oil, Gas & Consumable Fuels | 2.41 | Energy |
+| Telecommunication | 2.07 | Communication Services |
+| Services | 1.62 | Industrials |
+| Construction Materials | 1.57 | Materials |
 | Textiles | 0.87 | Consumer Discretionary (prefix) |
-| Construction | 0.28 | Industrials |
-| Diversified | 0.11 | **Unclassified** — no single GICS sector |
+| Construction | 0.26 | Industrials |
+| Diversified | 0.10 | **Unclassified** — no single GICS sector |
 
-## Nifty Smallcap 250 — 2026-09-30
+## Nifty Smallcap 250 — 2026-10-30
 
 251 constituents · Free Float Market Capitalization · [factsheet](https://www.niftyindices.com/Factsheet/ind_Nifty_Smallcap_250.pdf) · weights sum to 100.00
 
 | Factsheet sector | Weight (%) | GICS sector |
 | --- | ---: | --- |
-| Financial Services | 19.46 | Financials |
-| Capital Goods | 16.45 | Industrials |
-| Automobile and Auto Components | 10.57 | Consumer Discretionary |
-| Healthcare | 10.54 | Health Care |
-| Chemicals | 6.53 | Materials (prefix) |
-| Information Technology | 4.45 | Information Technology |
-| Fast Moving Consumer Goods | 4.21 | Consumer Staples |
-| Services | 4.06 | Industrials |
-| Construction | 3.20 | Industrials |
-| Oil, Gas & Consumable Fuels | 2.88 | Energy |
-| Realty | 2.82 | Real Estate |
-| Consumer Durables | 2.82 | Consumer Discretionary |
+| Financial Services | 19.57 | Financials |
+| Capital Goods | 15.77 | Industrials |
+| Healthcare | 11.21 | Health Care |
+| Automobile and Auto Components | 11.08 | Consumer Discretionary |
+| Chemicals | 6.26 | Materials (prefix) |
+| Information Technology | 4.77 | Information Technology |
+| Fast Moving Consumer Goods | 4.27 | Consumer Staples |
+| Services | 4.03 | Industrials |
+| Construction | 3.13 | Industrials |
+| Oil, Gas & Consumable Fuels | 2.77 | Energy |
+| Consumer Durables | 2.77 | Consumer Discretionary |
+| Realty | 2.70 | Real Estate |
 | Telecommunication | 2.70 | Communication Services |
-| Consumer Services | 2.66 | Consumer Discretionary |
-| Power | 2.33 | Utilities |
-| Metals & Mining | 1.32 | Materials |
-| Construction Materials | 1.21 | Materials |
-| Media, Entertainment & Publication | 1.11 | Communication Services |
+| Consumer Services | 2.58 | Consumer Discretionary |
+| Power | 2.26 | Utilities |
+| Media, Entertainment & Publication | 1.21 | Communication Services |
+| Construction Materials | 1.18 | Materials |
+| Metals & Mining | 1.06 | Materials |
 | Textiles | 0.68 | Consumer Discretionary (prefix) |

@@ -5,81 +5,81 @@
       "name": "Nifty 500",
       "publisher": "NSE Indices Limited",
       "url": "https://www.niftyindices.com/Factsheet/ind_nifty_500.pdf",
-      "asOf": "2026-09-30",
+      "asOf": "2026-10-30",
       "constituents": 501,
       "methodology": "Free Float Market Capitalization",
       "sectors": [
         {
           "label": "Financial Services",
-          "weight": 30.58
-        },
-        {
-          "label": "Capital Goods",
-          "weight": 7.5
-        },
-        {
-          "label": "Automobile and Auto Components",
-          "weight": 7.42
+          "weight": 30.55
         },
         {
           "label": "Healthcare",
-          "weight": 7.31
+          "weight": 7.47
         },
         {
-          "label": "Oil, Gas & Consumable Fuels",
-          "weight": 6.77
+          "label": "Automobile and Auto Components",
+          "weight": 7.21
         },
         {
           "label": "Information Technology",
-          "weight": 6.02
+          "weight": 7.06
+        },
+        {
+          "label": "Capital Goods",
+          "weight": 7.03
+        },
+        {
+          "label": "Oil, Gas & Consumable Fuels",
+          "weight": 6.63
         },
         {
           "label": "Fast Moving Consumer Goods",
-          "weight": 5.26
+          "weight": 5.18
         },
         {
           "label": "Metals & Mining",
-          "weight": 4.55
+          "weight": 4.19
         },
         {
           "label": "Consumer Services",
-          "weight": 4.07
+          "weight": 4.14
         },
         {
           "label": "Telecommunication",
-          "weight": 3.69
+          "weight": 4.04
         },
         {
           "label": "Power",
-          "weight": 3.41
-        },
-        {
-          "label": "Consumer Durables",
-          "weight": 2.8
+          "weight": 3.36
         },
         {
           "label": "Construction",
-          "weight": 2.72
+          "weight": 2.78
+        },
+        {
+          "label": "Consumer Durables",
+          "weight": 2.69
         },
         {
           "label": "Services",
-          "weight": 2.16
+          "weight": 2.12
         },
         {
           "label": "Chemicals",
-          "weight": 1.99
+          "weight": 1.87
         },
         {
           "label": "Construction Materials",
-          "weight": 1.88
+          "weight": 1.84
         },
         {
           "label": "Realty",
-          "weight": 1.47
+          "weight": 1.42
         },
         {
           "label": "Textiles",
-          "weight": 0.26
+          "weight": 0.25
         },
         {
           "label": "Media, Entertainment & Publication",
@@ -231,73 +231,73 @@
       "name": "Nifty Midcap 150",
       "publisher": "NSE Indices Limited",
       "url": "https://www.niftyindices.com/Factsheet/ind_Nifty_Midcap_150.pdf",
-      "asOf": "2026-09-30",
+      "asOf": "2026-10-30",
       "constituents": 150,
       "methodology": "Free Float Market Capitalization",
       "sectors": [
         {
           "label": "Financial Services",
-          "weight": 26.75
+          "weight": 26.07
         },
         {
           "label": "Healthcare",
-          "weight": 11.2
+          "weight": 11.88
         },
         {
           "label": "Capital Goods",
-          "weight": 10.82
+          "weight": 10.41
         },
         {
           "label": "Consumer Services",
-          "weight": 8.43
+          "weight": 8.55
         },
         {
           "label": "Automobile and Auto Components",
-          "weight": 6.27
-        },
-        {
-          "label": "Fast Moving Consumer Goods",
-          "weight": 4.69
+          "weight": 6.02
         },
         {
           "label": "Information Technology",
-          "weight": 4.64
+          "weight": 5.47
         },
         {
-          "label": "Consumer Durables",
-          "weight": 4.34
+          "label": "Fast Moving Consumer Goods",
+          "weight": 4.72
         },
         {
           "label": "Realty",
-          "weight": 4.33
+          "weight": 4.32
+        },
+        {
+          "label": "Consumer Durables",
+          "weight": 4.23
         },
         {
           "label": "Metals & Mining",
-          "weight": 3.71
+          "weight": 3.49
         },
         {
           "label": "Chemicals",
-          "weight": 3.51
+          "weight": 3.43
         },
         {
           "label": "Power",
-          "weight": 2.46
+          "weight": 2.51
         },
         {
           "label": "Oil, Gas & Consumable Fuels",
-          "weight": 2.36
+          "weight": 2.41
         },
         {
           "label": "Telecommunication",
-          "weight": 1.93
+          "weight": 2.07
         },
         {
           "label": "Services",
-          "weight": 1.72
+          "weight": 1.62
         },
         {
           "label": "Construction Materials",
-          "weight": 1.59
+          "weight": 1.57
         },
         {
           "label": "Textiles",
@@ -305,11 +305,11 @@
         },
         {
           "label": "Construction",
-          "weight": 0.28
+          "weight": 0.26
         },
         {
           "label": "Diversified",
-          "weight": 0.11
+          "weight": 0.1
         }
       ]
     },
@@ -317,57 +317,57 @@
       "name": "Nifty Smallcap 250",
       "publisher": "NSE Indices Limited",
       "url": "https://www.niftyindices.com/Factsheet/ind_Nifty_Smallcap_250.pdf",
-      "asOf": "2026-09-30",
+      "asOf": "2026-10-30",
       "constituents": 251,
       "methodology": "Free Float Market Capitalization",
       "sectors": [
         {
           "label": "Financial Services",
-          "weight": 19.46
+          "weight": 19.57
         },
         {
           "label": "Capital Goods",
-          "weight": 16.45
-        },
-        {
-          "label": "Automobile and Auto Components",
-          "weight": 10.57
+          "weight": 15.77
         },
         {
           "label": "Healthcare",
-          "weight": 10.54
+          "weight": 11.21
+        },
+        {
+          "label": "Automobile and Auto Components",
+          "weight": 11.08
         },
         {
           "label": "Chemicals",
-          "weight": 6.53
+          "weight": 6.26
         },
         {
           "label": "Information Technology",
-          "weight": 4.45
+          "weight": 4.77
         },
         {
           "label": "Fast Moving Consumer Goods",
-          "weight": 4.21
+          "weight": 4.27
         },
         {
           "label": "Services",
-          "weight": 4.06
+          "weight": 4.03
         },
         {
           "label": "Construction",
-          "weight": 3.2
+          "weight": 3.13
         },
         {
           "label": "Oil, Gas & Consumable Fuels",
-          "weight": 2.88
-        },
-        {
-          "label": "Realty",
-          "weight": 2.82
+          "weight": 2.77
         },
         {
           "label": "Consumer Durables",
-          "weight": 2.82
+          "weight": 2.77
+        },
+        {
+          "label": "Realty",
+          "weight": 2.7
         },
         {
           "label": "Telecommunication",
@@ -375,23 +375,23 @@
         },
         {
           "label": "Consumer Services",
-          "weight": 2.66
+          "weight": 2.58
         },
         {
           "label": "Power",
-          "weight": 2.33
-        },
-        {
-          "label": "Metals & Mining",
-          "weight": 1.32
-        },
-        {
-          "label": "Construction Materials",
-          "weight": 1.21
+          "weight": 2.26
         },
         {
           "label": "Media, Entertainment & Publication",
-          "weight": 1.11
+          "weight": 1.21
+        },
+        {
+          "label": "Construction Materials",
+          "weight": 1.18
+        },
+        {
+          "label": "Metals & Mining",
+          "weight": 1.06
         },
         {
           "label": "Textiles",
