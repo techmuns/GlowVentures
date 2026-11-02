@@ -869,3 +869,11 @@
 
 - Kotak's four-folio ZIP was held with `READ_GAP` and `SECURITY_SPLIT`, but the reason kept only the first three findings and the run log printed no warning text, so the failure could not be diagnosed from a run whose PDFs only CI can open.
 - The inbox reason now names every kind of finding with its count. The run log carries every finding, each changed document's read gaps, and its ISIN-to-key pairs.
+
+### Stage 10jw — OUR BOOK VS BENCHMARKS, LAID OUT LIKE GOOGLE FINANCE
+
+- *"make the UI of our book vs benchmark similar to the google finance UI … Keep the benchmark selector on the top left area of the graph chart and a visible dot of the color of lines on the graph"* — the family, 2 Nov 2026.
+- The Benchmarks list now leads the row at the top left of the plot, followed by a pill per line: a dot of the line's colour, its return, and a ✕ on each benchmark. Every line ends in a dot of its colour.
+- Vertical gridlines, a dotted zero, no axis lines, month labels ("Apr 2026"), equal line weights. The start tabs moved under the plot. The app's light and dark themes stay.
+- The dots that marked statement dates on the book line are gone, so the only dots on the plot are line ends; the tooltip says "Statement valuation on this date". No figure changed.
+- `check:pages` strikes the selector's position, each end dot against its own curve's last point and colour, and the ✕ on `cio-nav-live`.

@@ -20535,7 +20535,7 @@ const CIO_NAV = [
     (t, ctx) => {
       if (!ctx?.navChart) return { notChecked: "the NAV chart was not found on this pass" };
       const ticks = ctx.navChart.xTicks;
-      return ticks.length >= 3 && ticks.every((x) => /^\d{4}(-\d{2})?$|^\d{2}-\d{2}$/.test(x));
+      return ticks.length >= 3 && ticks.every((x) => /^\d{4}$|^[A-Z][a-z]{2} (?:\d{4}|\d{1,2})$/.test(x));
     }],
   ["the card names its window in its own header", (t, ctx) => {
     const c = ctx?.navChart;
@@ -21570,6 +21570,40 @@ const NAV_BENCH = [
       && d.picked.join() === BENCH_FIXTURE[0][0]
       && c.added?.chart.pickerExpanded === true && c.added.chart.optionsVisible === BENCH_FIXTURE.length
       && c.added.chart.picked.join() === [BENCH_FIXTURE[0][0], c.added.key].join();
+  }],
+  /**
+   * *"Keep the benchmark selector on the top left area of the graph chart and a
+   * visible dot of the color of lines on the graph"* — the family, 2 Nov 2026
+   * (Stage 10jw).
+   */
+  ["the Benchmarks selector leads the row at the top left of the plot, above it and before every line's pill", (t, ctx) => {
+    const d = ctx?.navChart?.defaults;
+    if (!d) return notChecked("the NAV card was not on screen on this run");
+    const s = d.selector;
+    return !!s && s.bottom <= s.plotTop && Math.abs(s.left - s.plotLeft) <= 8 && s.left < s.chipLeft;
+  }],
+  ["every line on the NAV chart ends in a visible dot of its own colour, and no other dot is on the plot", (t, ctx) => {
+    const c = ctx?.navChart;
+    if (!c) return notChecked("the NAV card was not on screen on this run");
+    if (c.plotDots !== 2 * c.lines || c.endDots.length !== c.lines) return false;
+    return c.strokes.every((stroke, i) => {
+      const dot = c.endDots.find((d) => d.fill === stroke);
+      const end = c.curveEnds[i];
+      return !!dot && !!end && dot.r >= 4 && Math.abs(dot.cx - end[0]) < 1 && Math.abs(dot.cy - end[1]) < 1;
+    });
+  }],
+  ["every line's pill carries a round dot of its line's colour, and each benchmark's pill a remove control", (t, ctx) => {
+    const c = ctx?.navChart;
+    if (!c) return notChecked("the NAV card was not on screen on this run");
+    return c.chipDots.length === 1 + c.picked.length && c.removeKeys.join() === c.picked.join()
+      && c.chipDots.every((d) => d.round && d.width >= 8)
+      && c.strokes.every((s) => c.chipDots.some((d) => d.color === s));
+  }],
+  ["a benchmark pill's remove control takes its line, its pill and its end dot off the chart", (t, ctx) => {
+    const r = ctx?.navChart?.removed;
+    if (!r) return notChecked("the remove control is only clicked on the walk that draws every benchmark");
+    return !r.chart.picked.includes(r.key) && !r.chart.endDots.some((d) => d.key === r.key)
+      && r.chart.lines === ctx.navChart.lines - 1 && r.chart.endDots.length === r.chart.lines;
   }],
   ["the NAV card opens with only the book and the Nifty 500 on, and every other benchmark's option off", (t, ctx) => {
     const d = ctx?.navChart?.defaults;
@@ -41353,7 +41387,7 @@ for (const theme of THEMES) {
           yTicks: el.querySelectorAll(".recharts-yAxis .recharts-cartesian-axis-tick").length,
           yTickText: [...el.querySelectorAll(".recharts-yAxis .recharts-cartesian-axis-tick-value")].map((e) => (e.textContent ?? "").trim()),
           // ONE CHIP PER LINE, off its keys — the book's first, then each benchmark.
-          chips: [...(legend?.querySelectorAll("[data-nav-line]") ?? [])].map((b) => ({
+          chips: [...(legend?.querySelectorAll("[data-nav-line]") ?? [])].sort((x, y) => (y.getAttribute("data-nav-line") === "book") - (x.getAttribute("data-nav-line") === "book")).map((b) => ({
             key: b.getAttribute("data-nav-line"),
             symbol: b.getAttribute("data-bench-symbol"),
             state: b.getAttribute("data-bench-state"),
@@ -41364,7 +41398,7 @@ for (const theme of THEMES) {
             title: b.getAttribute("title") ?? "",
           })),
           pickerExpanded: legend?.querySelector("[data-nav-picker]")?.getAttribute("aria-expanded") === "true",
-          legendButtons: [...(legend?.querySelectorAll("button") ?? [])].filter((b) => b.getClientRects().length > 0 && !b.hasAttribute("data-nav-line")).length,
+          legendButtons: [...(legend?.querySelectorAll("button") ?? [])].filter((b) => b.getClientRects().length > 0 && !b.hasAttribute("data-nav-line") && !b.hasAttribute("data-nav-remove")).length,
           optionsVisible: [...(legend?.querySelectorAll("[data-bench]") ?? [])].filter((b) => b.getClientRects().length > 0).length,
           picked: [...(legend?.querySelectorAll("[data-nav-selected]") ?? [])].map((b) => b.getAttribute("data-nav-selected")),
           from: legend?.getAttribute("data-nav-from") ?? null,
@@ -41382,6 +41416,27 @@ for (const theme of THEMES) {
           basis: card?.querySelector('[data-testid="nav-basis"]')?.getAttribute("title") ?? null,
           titleText: (card?.querySelector('[data-testid="nav-basis"]')?.textContent ?? "").trim(),
           bookTitle: card?.querySelector('[data-testid="nav-book-chip"]')?.getAttribute("title") ?? null,
+          // WHERE EACH LINE ENDS AND THE DOT ON IT (Stage 10jw), off the curve's own path.
+          curveEnds: paths.map((e) => {
+            const n = (e.getAttribute("d") ?? "").match(/-?\d+(?:\.\d+)?/g) ?? [];
+            return n.length < 2 ? null : [Number(n[n.length - 2]), Number(n[n.length - 1])];
+          }),
+          endDots: [...el.querySelectorAll("[data-nav-end]")].map((g) => {
+            const dot = g.querySelector("[data-nav-end-dot]");
+            return { key: g.getAttribute("data-nav-end"), fill: dot?.getAttribute("fill") ?? "", r: Number(dot?.getAttribute("r") ?? 0),
+              cx: Number(dot?.getAttribute("cx") ?? NaN), cy: Number(dot?.getAttribute("cy") ?? NaN) };
+          }),
+          plotDots: el.querySelectorAll(".recharts-line-dots circle").length,
+          chipDots: [...(legend?.querySelectorAll("[data-nav-line='book'] [data-nav-dot], [data-nav-selected] [data-nav-dot]") ?? [])].map((d) => ({
+            color: d.style.background, round: getComputedStyle(d).borderRadius !== "0px", width: d.getBoundingClientRect().width,
+          })),
+          removeKeys: [...(legend?.querySelectorAll("[data-nav-remove]") ?? [])].map((b) => b.getAttribute("data-nav-remove")),
+          selector: (() => {
+            const p = legend?.querySelector("[data-nav-picker]")?.getBoundingClientRect();
+            const bookChip = legend?.querySelector("[data-nav-line='book']")?.getBoundingClientRect();
+            const plot = svg?.getBoundingClientRect();
+            return p && bookChip && plot ? { left: p.left, bottom: p.bottom, chipLeft: bookChip.left, plotLeft: plot.left, plotTop: plot.top } : null;
+          })(),
         };
       });
       /**
@@ -41424,6 +41479,12 @@ for (const theme of THEMES) {
           await page.waitForTimeout(400);
           const back = await navChartProbe();
           navChart.toggle = { key, hidden, back };
+          // THE PILL'S OWN REMOVE CONTROL TAKES THE SAME LINE OFF (Stage 10jw).
+          await page.click(`[data-nav-remove="${key}"]`);
+          await page.waitForTimeout(400);
+          navChart.removed = { key, chart: await navChartProbe() };
+          await navChip(key);
+          await page.waitForTimeout(400);
         }
       }
       for (const key of navOff) await navChip(key);
