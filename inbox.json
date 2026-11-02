@@ -36,15 +36,15 @@
      "name": "kotak statement apr 25 to nov 26 (ankita,ajay,aarti,bharat) (2).zip",
      "size": 2773153,
      "blob": "65f2477bd296a6fd5b8f7be2b1f99bac32386a39",
-     "status": "queued",
+     "status": "processing",
      "hold": null,
      "reason": null,
      "landedAs": null,
      "providers": null,
      "docKeys": null,
      "commit": null,
-     "run": null,
-     "updatedAt": "2026-11-02T11:27:56.540Z"
+     "run": "https://github.com/techmuns/GlowVentures/actions/runs/41437051362",
+     "updatedAt": "2026-11-02T11:28:44.869Z"
     }
    ]
   },
