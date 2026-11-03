@@ -18,11 +18,11 @@ export const BOOK_AS_OF = "2026-11-03";
 
 export const BOOK_SUMMARY: BookSummary = {
   "asOf": "2026-11-03",
-  "listedValue": 7010469411.58,
+  "listedValue": 7010279384.59,
   "privateValue": 2765890203.68,
   "unplacedValue": 0,
-  "totalValue": 9776359615.26,
-  "positionsCount": 471,
+  "totalValue": 9776169588.27,
+  "positionsCount": 474,
   "entitiesCount": 11,
   "startupsCount": 0,
   "accountsCount": 88
@@ -1280,21 +1280,21 @@ export const BOOK_ACCOUNTS: Account[] = [
     "engagement": "PMS",
     "providerEngagement": "Portfolio Management Service",
     "members": [],
-    "asOf": "2026-07-31",
+    "asOf": "2026-11-02",
     "inceptionDate": "2024-10-24",
     "capitalRecordTo": null,
     "custodian": "Molecule Ventures LLP",
     "noPositionsReason": null,
     "capital": {
       "contributed": 10000000,
-      "withdrawn": 11014,
+      "withdrawn": 12779,
       "from": "2024-10-24",
-      "to": "2026-07-31",
-      "source": "molecule-ventures-llp-7810404-2026-07-31-fact-sheet"
+      "to": "2026-11-02",
+      "source": "molecule-ventures-llp-7810404-2026-11-02-fact-sheet"
     },
     "demat": {
       "printed": null,
-      "reason": "none of the 12 statements read for Molecule Ventures LLP 7810404 prints a DP ID and Client ID"
+      "reason": "none of the 17 statements read for Molecule Ventures LLP 7810404 prints a DP ID and Client ID"
     }
   },
   {
@@ -11884,7 +11884,7 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "molecule-ventures-llp-7810404-2026-07-31-holdings",
+      "document": "molecule-ventures-llp-7810404-2026-11-02-holdings",
       "pointer": "/holdings/0"
     },
     "securityKey": "arvind-fashions",
@@ -11898,34 +11898,38 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 4000,
     "avgCost": 570.7215,
-    "currentPrice": 450,
+    "currentPrice": 364.55,
     "costBasis": 2282886,
-    "marketValue": 1800000,
-    "unrealizedPnL": -482886,
+    "marketValue": 1458200,
+    "unrealizedPnL": -824686,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -21.15,
+    "returnPct": -36.12,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-07-31",
-      "buys": 0,
+      "from": "2024-10-24",
+      "to": "2026-11-02",
+      "buys": 3,
       "sells": 0,
-      "unaccounted": 4000,
-      "held": null,
-      "reason": "none of its 4000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-07-31 and record no buy or sell of it"
+      "unaccounted": 0,
+      "held": {
+        "first": "2024-10-24",
+        "last": "2024-12-11",
+        "lots": 3
+      },
+      "reason": null
     },
-    "accruedIncome": 6400,
+    "accruedIncome": 12800,
     "dividendReceived": null,
-    "positionIrrPct": -12.71
+    "positionIrrPct": -19.92
   },
   {
     "statementRecord": {
-      "document": "molecule-ventures-llp-7810404-2026-07-31-holdings",
-      "pointer": "/holdings/9"
+      "document": "molecule-ventures-llp-7810404-2026-11-02-holdings",
+      "pointer": "/holdings/12"
     },
     "securityKey": "cash",
     "security": "Cash",
@@ -11936,12 +11940,12 @@ export const BOOK_POSITIONS: Position[] = [
     "providerSector": null,
     "assetClass": "Cash",
     "marketSide": "listed",
-    "quantity": 213783.099,
+    "quantity": 108662.158,
     "avgCost": 1,
     "currentPrice": 1,
-    "costBasis": 213783,
-    "marketValue": 213783.1,
-    "unrealizedPnL": 0.1,
+    "costBasis": 108662,
+    "marketValue": 108662.16,
+    "unrealizedPnL": 0.16,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
     "returnPct": 0,
@@ -11955,7 +11959,7 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "molecule-ventures-llp-7810404-2026-07-31-holdings",
+      "document": "molecule-ventures-llp-7810404-2026-11-02-holdings",
       "pointer": "/holdings/1"
     },
     "securityKey": "chemfab-alkalis",
@@ -11969,33 +11973,37 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 1000,
     "avgCost": 1010.7118,
-    "currentPrice": 374.7,
+    "currentPrice": 297.8,
     "costBasis": 1010712,
-    "marketValue": 374700,
-    "unrealizedPnL": -636012,
+    "marketValue": 297800,
+    "unrealizedPnL": -712912,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -62.93,
+    "returnPct": -70.54,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-07-31",
-      "buys": 0,
+      "from": "2024-10-24",
+      "to": "2026-11-02",
+      "buys": 1,
       "sells": 0,
-      "unaccounted": 1000,
-      "held": null,
-      "reason": "none of its 1000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-07-31 and record no buy or sell of it"
+      "unaccounted": 0,
+      "held": {
+        "first": "2024-11-05",
+        "last": "2024-11-05",
+        "lots": 1
+      },
+      "reason": null
     },
-    "accruedIncome": 1250,
+    "accruedIncome": 2500,
     "dividendReceived": null,
-    "positionIrrPct": -43.5
+    "positionIrrPct": -45.69
   },
   {
     "statementRecord": {
-      "document": "molecule-ventures-llp-7810404-2026-07-31-holdings",
+      "document": "molecule-ventures-llp-7810404-2026-11-02-holdings",
       "pointer": "/holdings/2"
     },
     "securityKey": "dcw",
@@ -12009,34 +12017,126 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 3000,
     "avgCost": 73.7653,
-    "currentPrice": 46.19,
+    "currentPrice": 43.29,
     "costBasis": 221296,
-    "marketValue": 138570,
-    "unrealizedPnL": -82726,
+    "marketValue": 129870,
+    "unrealizedPnL": -91426,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -37.38,
+    "returnPct": -41.31,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-07-31",
-      "buys": 0,
+      "from": "2024-10-24",
+      "to": "2026-11-02",
+      "buys": 1,
       "sells": 0,
-      "unaccounted": 3000,
-      "held": null,
-      "reason": "none of its 3000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-07-31 and record no buy or sell of it"
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-05-09",
+        "last": "2025-05-09",
+        "lots": 1
+      },
+      "reason": null
     },
-    "accruedIncome": 600,
+    "accruedIncome": 1200,
     "dividendReceived": null,
-    "positionIrrPct": -31.52
+    "positionIrrPct": -29.78
   },
   {
     "statementRecord": {
-      "document": "molecule-ventures-llp-7810404-2026-07-31-holdings",
+      "document": "molecule-ventures-llp-7810404-2026-11-02-holdings",
       "pointer": "/holdings/3"
+    },
+    "securityKey": "eimco-elecon-india",
+    "security": "Eimco Elecon India Limited",
+    "symbol": "EIMCOELECO",
+    "accountId": "molecule-ventures-llp-7810404",
+    "memberId": null,
+    "sector": "Industrials",
+    "providerSector": "INDUSTRIALS",
+    "assetClass": "Equity",
+    "marketSide": "listed",
+    "quantity": 350,
+    "avgCost": 2318.3105,
+    "currentPrice": 2145.2,
+    "costBasis": 811409,
+    "marketValue": 750820,
+    "unrealizedPnL": -60589,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "returnPct": -7.47,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-10-24",
+      "to": "2026-11-02",
+      "buys": 2,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-10-07",
+        "last": "2026-11-02",
+        "lots": 2
+      },
+      "reason": null
+    },
+    "accruedIncome": 0,
+    "dividendReceived": null,
+    "positionIrrPct": -71.74
+  },
+  {
+    "statementRecord": {
+      "document": "molecule-ventures-llp-7810404-2026-11-02-holdings",
+      "pointer": "/holdings/4"
+    },
+    "securityKey": "elecon-engineering",
+    "security": "Elecon Engineering Company Limited",
+    "symbol": "ELECON",
+    "accountId": "molecule-ventures-llp-7810404",
+    "memberId": null,
+    "sector": "Industrials",
+    "providerSector": "INDUSTRIALS",
+    "assetClass": "Equity",
+    "marketSide": "listed",
+    "quantity": 2000,
+    "avgCost": 457.7012,
+    "currentPrice": 438.25,
+    "costBasis": 915402,
+    "marketValue": 876500,
+    "unrealizedPnL": -38902,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "returnPct": -4.25,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-10-24",
+      "to": "2026-11-02",
+      "buys": 1,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-09-25",
+        "last": "2026-09-25",
+        "lots": 1
+      },
+      "reason": null
+    },
+    "accruedIncome": 1000,
+    "dividendReceived": null,
+    "positionIrrPct": -33.38
+  },
+  {
+    "statementRecord": {
+      "document": "molecule-ventures-llp-7810404-2026-11-02-holdings",
+      "pointer": "/holdings/5"
     },
     "securityKey": "indian-metals-and-ferro-alloys",
     "security": "INDIAN METALS AND FERRO ALLOYS LTD.",
@@ -12047,37 +12147,41 @@ export const BOOK_POSITIONS: Position[] = [
     "providerSector": null,
     "assetClass": "Equity",
     "marketSide": "listed",
-    "quantity": 1500,
-    "avgCost": 658.3674,
-    "currentPrice": 1448.6,
-    "costBasis": 987551,
-    "marketValue": 2172900,
-    "unrealizedPnL": 1185349,
+    "quantity": 1700,
+    "avgCost": 709.8312,
+    "currentPrice": 1102.5,
+    "costBasis": 1206713,
+    "marketValue": 1874250,
+    "unrealizedPnL": 667537,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": 121.17,
+    "returnPct": 56.25,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-07-31",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 1500,
-      "held": null,
-      "reason": "none of its 1500 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-07-31 and record no buy or sell of it"
+      "from": "2024-10-24",
+      "to": "2026-11-02",
+      "buys": 3,
+      "sells": 1,
+      "unaccounted": 0,
+      "held": {
+        "first": "2024-10-24",
+        "last": "2026-10-23",
+        "lots": 3
+      },
+      "reason": null
     },
     "accruedIncome": 48750,
     "dividendReceived": 11250,
     "dividendFrom": "2026-07-01",
-    "positionIrrPct": 72.06
+    "positionIrrPct": 51.89
   },
   {
     "statementRecord": {
-      "document": "molecule-ventures-llp-7810404-2026-07-31-holdings",
-      "pointer": "/holdings/4"
+      "document": "molecule-ventures-llp-7810404-2026-11-02-holdings",
+      "pointer": "/holdings/6"
     },
     "securityKey": "jayaswal-neco-industries",
     "security": "JAYASWAL NECO INDUSTRIES LTD.",
@@ -12090,34 +12194,38 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 23000,
     "avgCost": 74.5155,
-    "currentPrice": 86.03,
+    "currentPrice": 89.86,
     "costBasis": 1713855,
-    "marketValue": 1978690,
-    "unrealizedPnL": 264835,
+    "marketValue": 2066780,
+    "unrealizedPnL": 352925,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": 15.45,
+    "returnPct": 20.59,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-07-31",
-      "buys": 0,
+      "from": "2024-10-24",
+      "to": "2026-11-02",
+      "buys": 9,
       "sells": 0,
-      "unaccounted": 23000,
-      "held": null,
-      "reason": "none of its 23000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-07-31 and record no buy or sell of it"
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-08-22",
+        "last": "2026-03-09",
+        "lots": 9
+      },
+      "reason": null
     },
     "accruedIncome": 0,
     "dividendReceived": null,
-    "positionIrrPct": 25.72
+    "positionIrrPct": 23.56
   },
   {
     "statementRecord": {
-      "document": "molecule-ventures-llp-7810404-2026-07-31-holdings",
-      "pointer": "/holdings/5"
+      "document": "molecule-ventures-llp-7810404-2026-11-02-holdings",
+      "pointer": "/holdings/7"
     },
     "securityKey": "kirloskar-ferrous-industries",
     "security": "KIRLOSKAR FERROUS INDUSTRIES LTD.",
@@ -12130,35 +12238,39 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 2967,
     "avgCost": 602.6133,
-    "currentPrice": 475.65,
+    "currentPrice": 432.7,
     "costBasis": 1787954,
-    "marketValue": 1411253.55,
-    "unrealizedPnL": -376700.45,
+    "marketValue": 1283820.9,
+    "unrealizedPnL": -504133.1,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -20.57,
+    "returnPct": -27.7,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-07-31",
-      "buys": 0,
+      "from": "2024-10-24",
+      "to": "2026-11-02",
+      "buys": 5,
       "sells": 0,
-      "unaccounted": 2967,
-      "held": null,
-      "reason": "none of its 2967 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-07-31 and record no buy or sell of it"
+      "unaccounted": 0,
+      "held": {
+        "first": "2024-10-24",
+        "last": "2024-12-17",
+        "lots": 5
+      },
+      "reason": null
     },
     "accruedIncome": 34120,
     "dividendReceived": 8901,
     "dividendFrom": "2026-07-01",
-    "positionIrrPct": -11.61
+    "positionIrrPct": -14.31
   },
   {
     "statementRecord": {
-      "document": "molecule-ventures-llp-7810404-2026-07-31-holdings",
-      "pointer": "/holdings/6"
+      "document": "molecule-ventures-llp-7810404-2026-11-02-holdings",
+      "pointer": "/holdings/8"
     },
     "securityKey": "manali-petrochemical",
     "security": "MANALI PETROCHEMICAL LTD.",
@@ -12171,34 +12283,38 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 10000,
     "avgCost": 66.6162,
-    "currentPrice": 64.89,
+    "currentPrice": 71.99,
     "costBasis": 666162,
-    "marketValue": 648900,
-    "unrealizedPnL": -17262,
+    "marketValue": 719900,
+    "unrealizedPnL": 53738,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -2.59,
+    "returnPct": 8.07,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-07-31",
-      "buys": 0,
+      "from": "2024-10-24",
+      "to": "2026-11-02",
+      "buys": 1,
       "sells": 0,
-      "unaccounted": 10000,
-      "held": null,
-      "reason": "none of its 10000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-07-31 and record no buy or sell of it"
+      "unaccounted": 0,
+      "held": {
+        "first": "2024-12-11",
+        "last": "2024-12-11",
+        "lots": 1
+      },
+      "reason": null
     },
-    "accruedIncome": 5000,
+    "accruedIncome": 10000,
     "dividendReceived": null,
-    "positionIrrPct": -1.13
+    "positionIrrPct": 4.97
   },
   {
     "statementRecord": {
-      "document": "molecule-ventures-llp-7810404-2026-07-31-holdings",
-      "pointer": "/holdings/7"
+      "document": "molecule-ventures-llp-7810404-2026-11-02-holdings",
+      "pointer": "/holdings/9"
     },
     "securityKey": "sansera-engineering",
     "security": "SANSERA ENGINEERING LIMITED",
@@ -12209,36 +12325,40 @@ export const BOOK_POSITIONS: Position[] = [
     "providerSector": "OTHERS",
     "assetClass": "Equity",
     "marketSide": "listed",
-    "quantity": 800,
-    "avgCost": 1763.4183,
-    "currentPrice": 3346.9,
-    "costBasis": 1410735,
-    "marketValue": 2677520,
-    "unrealizedPnL": 1266785,
+    "quantity": 200,
+    "avgCost": 1876.5943,
+    "currentPrice": 4157.4,
+    "costBasis": 375319,
+    "marketValue": 831480,
+    "unrealizedPnL": 456161,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": 89.8,
+    "returnPct": 121.54,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-07-31",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 800,
-      "held": null,
-      "reason": "none of its 800 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-07-31 and record no buy or sell of it"
+      "from": "2024-10-24",
+      "to": "2026-11-02",
+      "buys": 3,
+      "sells": 4,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-01-07",
+        "last": "2026-02-06",
+        "lots": 2
+      },
+      "reason": null
     },
-    "accruedIncome": 0,
+    "accruedIncome": 800,
     "dividendReceived": null,
-    "positionIrrPct": 211.07
+    "positionIrrPct": 246.33
   },
   {
     "statementRecord": {
-      "document": "molecule-ventures-llp-7810404-2026-07-31-holdings",
-      "pointer": "/holdings/8"
+      "document": "molecule-ventures-llp-7810404-2026-11-02-holdings",
+      "pointer": "/holdings/10"
     },
     "securityKey": "sasken-communication-technologies",
     "security": "SASKEN COMMUNICATION TECHNOLOGIES",
@@ -12249,41 +12369,41 @@ export const BOOK_POSITIONS: Position[] = [
     "providerSector": "INFORMATION TECHNOLOGY",
     "assetClass": "Equity",
     "marketSide": "listed",
-    "quantity": 100,
-    "avgCost": 2292.7984,
-    "currentPrice": 1811.8,
-    "costBasis": 229280,
-    "marketValue": 181180,
-    "unrealizedPnL": -48100,
+    "quantity": 162,
+    "avgCost": 2105.0676,
+    "currentPrice": 1674.3,
+    "costBasis": 341021,
+    "marketValue": 271236.6,
+    "unrealizedPnL": -69784.4,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -20.41,
+    "returnPct": -20.08,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-07-31",
-      "buys": 1,
+      "from": "2024-10-24",
+      "to": "2026-11-02",
+      "buys": 2,
       "sells": 0,
       "unaccounted": 0,
       "held": {
         "first": "2026-06-24",
-        "last": "2026-06-24",
-        "lots": 1
+        "last": "2026-10-26",
+        "lots": 2
       },
       "reason": null
     },
     "accruedIncome": 1300,
     "dividendReceived": 1300,
     "dividendFrom": "2026-07-01",
-    "positionIrrPct": -89.48
+    "positionIrrPct": -61.64
   },
   {
     "statementRecord": {
-      "document": "molecule-ventures-llp-7810404-2026-07-31-holdings",
-      "pointer": "/holdings/10"
+      "document": "molecule-ventures-llp-7810404-2026-11-02-holdings",
+      "pointer": "/holdings/13"
     },
     "securityKey": "tax-deducted-at-source",
     "security": "Tax Deducted at Source",
@@ -12310,6 +12430,50 @@ export const BOOK_POSITIONS: Position[] = [
     "accruedIncome": 0,
     "dividendReceived": null,
     "positionIrrPct": 0
+  },
+  {
+    "statementRecord": {
+      "document": "molecule-ventures-llp-7810404-2026-11-02-holdings",
+      "pointer": "/holdings/11"
+    },
+    "securityKey": "v-mart-retail",
+    "security": "V MART RETAIL LIMITED",
+    "symbol": "VMART",
+    "accountId": "molecule-ventures-llp-7810404",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": "CDGS CONSUMER DIS GOODS / SERVICES",
+    "assetClass": "Equity",
+    "marketSide": "listed",
+    "quantity": 1000,
+    "avgCost": 760.5075,
+    "currentPrice": 738.15,
+    "costBasis": 760508,
+    "marketValue": 738150,
+    "unrealizedPnL": -22358,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "returnPct": -2.94,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-10-24",
+      "to": "2026-11-02",
+      "buys": 1,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-09-25",
+        "last": "2026-09-25",
+        "lots": 1
+      },
+      "reason": null
+    },
+    "accruedIncome": 0,
+    "dividendReceived": null,
+    "positionIrrPct": -24.92
   },
   {
     "statementRecord": {
@@ -29377,15 +29541,28 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "panelComplete": true
   },
   {
+    "period": "2026-11-02",
+    "date": "2026-11-02",
+    "nav": 2802026118.79,
+    "accountsOnDate": 1,
+    "accountsCarried": 22,
+    "flowIn": -1765,
+    "unreportedFlowValue": 0,
+    "linkOpen": 2802216145.78,
+    "linkClose": 2802026118.79,
+    "linkAccounts": 23,
+    "panelComplete": true
+  },
+  {
     "period": "2026-11-03",
     "date": "2026-11-03",
-    "nav": 2820334487.46,
+    "nav": 2820144460.47,
     "accountsOnDate": 2,
     "accountsCarried": 21,
     "flowIn": 0,
     "unreportedFlowValue": 0,
-    "linkOpen": 2802216145.78,
-    "linkClose": 2820334487.46,
+    "linkOpen": 2802026118.79,
+    "linkClose": 2820144460.47,
     "linkAccounts": 23,
     "panelComplete": true
   }
@@ -29708,6 +29885,11 @@ export const BOOK_ACCOUNT_NAV_HISTORY: Record<string, NavPoint[]> = {
       "period": "2026-07-31",
       "date": "2026-07-31",
       "nav": 11597496.65
+    },
+    {
+      "period": "2026-11-02",
+      "date": "2026-11-02",
+      "nav": 11407469.66
     }
   ],
   "motilal-oswal-founders-fund-90410016093": [
@@ -30255,11 +30437,11 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
     },
     {
       "accountId": "molecule-ventures-llp-7810404",
-      "points": 2,
+      "points": 3,
       "first": "2026-06-30",
-      "last": "2026-07-31",
-      "latestValue": 11597496.65,
-      "bookValue": 11597496.65,
+      "last": "2026-11-02",
+      "latestValue": 11407469.66,
+      "bookValue": 11407469.66,
       "flowBasis": "reported",
       "steps": [
         {
@@ -30267,6 +30449,12 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
           "to": "2026-07-31",
           "basis": "printed-totals",
           "net": 0
+        },
+        {
+          "from": "2026-07-31",
+          "to": "2026-11-02",
+          "basis": "printed-totals",
+          "net": -1765
         }
       ]
     },
@@ -30905,14 +31093,14 @@ export const BOOK_ATTRIBUTION: Attribution = {
   "from": "2026-05-31",
   "to": "2026-11-03",
   "openValue": 2736600830.45,
-  "closeValue": 2820334487.46,
-  "priceEffect": -30158293.24,
-  "tradeEffect": 85842027.68,
-  "enteredValue": 169017109.59,
+  "closeValue": 2820144460.47,
+  "priceEffect": -30438535.89,
+  "tradeEffect": 83566773.34,
+  "enteredValue": 171382579.59,
   "exitedValue": 99872612.94,
   "undecomposedValue": -41094574.09,
-  "bookValue": 9776359615.26,
-  "coveredBookValue": 2820897568.38,
+  "bookValue": 9776169588.27,
+  "coveredBookValue": 2820707541.39,
   "accounts": [
     {
       "accountId": "360-one-private-wealth-37702",
@@ -31189,17 +31377,17 @@ export const BOOK_ATTRIBUTION: Attribution = {
     {
       "accountId": "molecule-ventures-llp-7810404",
       "from": "2026-06-30",
-      "to": "2026-07-31",
-      "days": 31,
+      "to": "2026-11-02",
+      "days": 125,
       "openValue": 11248248.66,
-      "closeValue": 11597496.65,
-      "priceEffect": 349927.8,
-      "tradeEffect": -679.81,
-      "enteredValue": 0,
+      "closeValue": 11407469.66,
+      "priceEffect": 69685.15,
+      "tradeEffect": -2275934.15,
+      "enteredValue": 2365470,
       "exitedValue": 0,
       "undecomposedValue": 0,
       "rowsHeld": 11,
-      "rowsEntered": 0,
+      "rowsEntered": 3,
       "rowsExited": 0,
       "rowsUnpriced": 0
     },
@@ -31784,6 +31972,23 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": 24.9415
     },
     {
+      "securityKey": "sansera-engineering",
+      "security": "SANSERA ENGINEERING LIMITED",
+      "accountId": "molecule-ventures-llp-7810404",
+      "from": "2026-06-30",
+      "to": "2026-11-02",
+      "openValue": 2556960,
+      "closeValue": 831480,
+      "openPrice": 3196.2,
+      "closePrice": 4157.4,
+      "openQty": 800,
+      "closeQty": 200,
+      "kind": "held",
+      "priceEffect": 768960,
+      "tradeEffect": -2494440,
+      "returnPct": 30.0732
+    },
+    {
       "securityKey": "mps",
       "security": "MPS Ltd",
       "accountId": "goldstandard-wealth-private-limited-100022",
@@ -32141,23 +32346,6 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": 20.0055
     },
     {
-      "securityKey": "indian-metals-and-ferro-alloys",
-      "security": "INDIAN METALS AND FERRO ALLOYS LTD.",
-      "accountId": "molecule-ventures-llp-7810404",
-      "from": "2026-06-30",
-      "to": "2026-07-31",
-      "openValue": 1899000,
-      "closeValue": 2172900,
-      "openPrice": 1266,
-      "closePrice": 1448.6,
-      "openQty": 1500,
-      "closeQty": 1500,
-      "kind": "held",
-      "priceEffect": 273900,
-      "tradeEffect": 0,
-      "returnPct": 14.4234
-    },
-    {
       "securityKey": "sharda-motor-industries",
       "security": "SHARDA MOTOR INDUSTRIES LIMITED",
       "accountId": "svan-investment-managers-llp-8710090",
@@ -32481,23 +32669,6 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": 4.1794
     },
     {
-      "securityKey": "sansera-engineering",
-      "security": "SANSERA ENGINEERING LIMITED",
-      "accountId": "molecule-ventures-llp-7810404",
-      "from": "2026-06-30",
-      "to": "2026-07-31",
-      "openValue": 2556960,
-      "closeValue": 2677520,
-      "openPrice": 3196.2,
-      "closePrice": 3346.9,
-      "openQty": 800,
-      "closeQty": 800,
-      "kind": "held",
-      "priceEffect": 120560,
-      "tradeEffect": 0,
-      "returnPct": 4.715
-    },
-    {
       "securityKey": "jamna-auto-ind",
       "security": "Jamna Auto Ind Ltd",
       "accountId": "green-lantern-capital-llp-510861",
@@ -32513,6 +32684,23 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "priceEffect": 117728.17,
       "tradeEffect": -1748621.82,
       "returnPct": 3.2648
+    },
+    {
+      "securityKey": "jayaswal-neco-industries",
+      "security": "JAYASWAL NECO INDUSTRIES LTD.",
+      "accountId": "molecule-ventures-llp-7810404",
+      "from": "2026-06-30",
+      "to": "2026-11-02",
+      "openValue": 1953850,
+      "closeValue": 2066780,
+      "openPrice": 84.95,
+      "closePrice": 89.86,
+      "openQty": 23000,
+      "closeQty": 23000,
+      "kind": "held",
+      "priceEffect": 112930,
+      "tradeEffect": 0,
+      "returnPct": 5.7799
     },
     {
       "securityKey": "aarti-drugs",
@@ -32719,6 +32907,23 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": 4.4406
     },
     {
+      "securityKey": "manali-petrochemical",
+      "security": "MANALI PETROCHEMICAL LTD.",
+      "accountId": "molecule-ventures-llp-7810404",
+      "from": "2026-06-30",
+      "to": "2026-11-02",
+      "openValue": 641000,
+      "closeValue": 719900,
+      "openPrice": 64.1,
+      "closePrice": 71.99,
+      "openQty": 10000,
+      "closeQty": 10000,
+      "kind": "held",
+      "priceEffect": 78900,
+      "tradeEffect": 0,
+      "returnPct": 12.3089
+    },
+    {
       "securityKey": "vip-industries",
       "security": "VIP Industries Ltd",
       "accountId": "v-e-c-assago-capital-management-llp-128005",
@@ -32872,23 +33077,6 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": 1.9309
     },
     {
-      "securityKey": "kirloskar-ferrous-industries",
-      "security": "KIRLOSKAR FERROUS INDUSTRIES LTD.",
-      "accountId": "molecule-ventures-llp-7810404",
-      "from": "2026-06-30",
-      "to": "2026-07-31",
-      "openValue": 1371495.75,
-      "closeValue": 1411253.55,
-      "openPrice": 462.25,
-      "closePrice": 475.65,
-      "openQty": 2967,
-      "closeQty": 2967,
-      "kind": "held",
-      "priceEffect": 39757.8,
-      "tradeEffect": 0,
-      "returnPct": 2.8989
-    },
-    {
       "securityKey": "ceat",
       "security": "Ceat Ltd",
       "accountId": "svan-investment-managers-llp-8710067",
@@ -32955,23 +33143,6 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "priceEffect": 27592.5,
       "tradeEffect": 0,
       "returnPct": 1.5034
-    },
-    {
-      "securityKey": "jayaswal-neco-industries",
-      "security": "JAYASWAL NECO INDUSTRIES LTD.",
-      "accountId": "molecule-ventures-llp-7810404",
-      "from": "2026-06-30",
-      "to": "2026-07-31",
-      "openValue": 1953850,
-      "closeValue": 1978690,
-      "openPrice": 84.95,
-      "closePrice": 86.03,
-      "openQty": 23000,
-      "closeQty": 23000,
-      "kind": "held",
-      "priceEffect": 24840,
-      "tradeEffect": 0,
-      "returnPct": 1.2713
     },
     {
       "securityKey": "ceat",
@@ -33059,23 +33230,6 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": 1.5405
     },
     {
-      "securityKey": "manali-petrochemical",
-      "security": "MANALI PETROCHEMICAL LTD.",
-      "accountId": "molecule-ventures-llp-7810404",
-      "from": "2026-06-30",
-      "to": "2026-07-31",
-      "openValue": 641000,
-      "closeValue": 648900,
-      "openPrice": 64.1,
-      "closePrice": 64.89,
-      "openQty": 10000,
-      "closeQty": 10000,
-      "kind": "held",
-      "priceEffect": 7900,
-      "tradeEffect": 0,
-      "returnPct": 1.2324
-    },
-    {
       "securityKey": "rural-electrification",
       "security": "Rural Electrification Corporation Ltd",
       "accountId": "green-lantern-capital-llp-510854",
@@ -33091,23 +33245,6 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "priceEffect": 7598.5,
       "tradeEffect": 0,
       "returnPct": 0.9598
-    },
-    {
-      "securityKey": "chemfab-alkalis",
-      "security": "CHEMFAB ALKALIS LIMITED",
-      "accountId": "molecule-ventures-llp-7810404",
-      "from": "2026-06-30",
-      "to": "2026-07-31",
-      "openValue": 369200,
-      "closeValue": 374700,
-      "openPrice": 369.2,
-      "closePrice": 374.7,
-      "openQty": 1000,
-      "closeQty": 1000,
-      "kind": "held",
-      "priceEffect": 5500,
-      "tradeEffect": 0,
-      "returnPct": 1.4897
     },
     {
       "securityKey": "absl-liquid-fund-direct-growth",
@@ -33284,16 +33421,16 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "security": "Cash",
       "accountId": "molecule-ventures-llp-7810404",
       "from": "2026-06-30",
-      "to": "2026-07-31",
+      "to": "2026-11-02",
       "openValue": 214462.91,
-      "closeValue": 213783.1,
+      "closeValue": 108662.16,
       "openPrice": 1,
       "closePrice": 1,
       "openQty": 214462.907,
-      "closeQty": 213783.099,
+      "closeQty": 108662.158,
       "kind": "held",
       "priceEffect": 0,
-      "tradeEffect": -679.81,
+      "tradeEffect": -105800.75,
       "returnPct": 0
     },
     {
@@ -33301,7 +33438,7 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "security": "Tax Deducted at Source",
       "accountId": "molecule-ventures-llp-7810404",
       "from": "2026-06-30",
-      "to": "2026-07-31",
+      "to": "2026-11-02",
       "openValue": 0,
       "closeValue": 0,
       "openPrice": 1,
@@ -33399,23 +33536,6 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": -0.1256
     },
     {
-      "securityKey": "dcw",
-      "security": "DCW LIMITED",
-      "accountId": "molecule-ventures-llp-7810404",
-      "from": "2026-06-30",
-      "to": "2026-07-31",
-      "openValue": 142320,
-      "closeValue": 138570,
-      "openPrice": 47.44,
-      "closePrice": 46.19,
-      "openQty": 3000,
-      "closeQty": 3000,
-      "kind": "held",
-      "priceEffect": -3750,
-      "tradeEffect": 0,
-      "returnPct": -2.6349
-    },
-    {
       "securityKey": "kovai-medical-center-and-hospital",
       "security": "Kovai Medical Center & Hospital Ltd.",
       "accountId": "goldstandard-wealth-private-limited-100023",
@@ -33448,6 +33568,23 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "priceEffect": -9604.8,
       "tradeEffect": 0,
       "returnPct": -0.3729
+    },
+    {
+      "securityKey": "dcw",
+      "security": "DCW LIMITED",
+      "accountId": "molecule-ventures-llp-7810404",
+      "from": "2026-06-30",
+      "to": "2026-11-02",
+      "openValue": 142320,
+      "closeValue": 129870,
+      "openPrice": 47.44,
+      "closePrice": 43.29,
+      "openQty": 3000,
+      "closeQty": 3000,
+      "kind": "held",
+      "priceEffect": -12450,
+      "tradeEffect": 0,
+      "returnPct": -8.7479
     },
     {
       "securityKey": "wockhardt",
@@ -33586,23 +33723,6 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": -0.6638
     },
     {
-      "securityKey": "sasken-communication-technologies",
-      "security": "SASKEN COMMUNICATION TECHNOLOGIES",
-      "accountId": "molecule-ventures-llp-7810404",
-      "from": "2026-06-30",
-      "to": "2026-07-31",
-      "openValue": 216160,
-      "closeValue": 181180,
-      "openPrice": 2161.6,
-      "closePrice": 1811.8,
-      "openQty": 100,
-      "closeQty": 100,
-      "kind": "held",
-      "priceEffect": -34980,
-      "tradeEffect": 0,
-      "returnPct": -16.1825
-    },
-    {
       "securityKey": "vedanta",
       "security": "Vedanta Ltd",
       "accountId": "green-lantern-capital-llp-510854",
@@ -33703,6 +33823,23 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "priceEffect": -48586.23,
       "tradeEffect": 0,
       "returnPct": -1.2804
+    },
+    {
+      "securityKey": "sasken-communication-technologies",
+      "security": "SASKEN COMMUNICATION TECHNOLOGIES",
+      "accountId": "molecule-ventures-llp-7810404",
+      "from": "2026-06-30",
+      "to": "2026-11-02",
+      "openValue": 216160,
+      "closeValue": 271236.6,
+      "openPrice": 2161.6,
+      "closePrice": 1674.3,
+      "openQty": 100,
+      "closeQty": 162,
+      "kind": "held",
+      "priceEffect": -48730,
+      "tradeEffect": 103806.6,
+      "returnPct": -22.5435
     },
     {
       "securityKey": "ingersollrand-india",
@@ -33858,6 +33995,23 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": -3.9288
     },
     {
+      "securityKey": "chemfab-alkalis",
+      "security": "CHEMFAB ALKALIS LIMITED",
+      "accountId": "molecule-ventures-llp-7810404",
+      "from": "2026-06-30",
+      "to": "2026-11-02",
+      "openValue": 369200,
+      "closeValue": 297800,
+      "openPrice": 369.2,
+      "closePrice": 297.8,
+      "openQty": 1000,
+      "closeQty": 1000,
+      "kind": "held",
+      "priceEffect": -71400,
+      "tradeEffect": 0,
+      "returnPct": -19.3391
+    },
+    {
       "securityKey": "vedanta",
       "security": "Vedanta Ltd",
       "accountId": "green-lantern-capital-llp-510861",
@@ -33926,23 +34080,6 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": -4.446
     },
     {
-      "securityKey": "arvind-fashions",
-      "security": "ARVIND FASHIONS LIMITED",
-      "accountId": "molecule-ventures-llp-7810404",
-      "from": "2026-06-30",
-      "to": "2026-07-31",
-      "openValue": 1883800,
-      "closeValue": 1800000,
-      "openPrice": 470.95,
-      "closePrice": 450,
-      "openQty": 4000,
-      "closeQty": 4000,
-      "kind": "held",
-      "priceEffect": -83800,
-      "tradeEffect": 0,
-      "returnPct": -4.4485
-    },
-    {
       "securityKey": "mastek",
       "security": "Mastek Ltd",
       "accountId": "svan-investment-managers-llp-8710090",
@@ -33975,6 +34112,23 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "priceEffect": -85590,
       "tradeEffect": 0,
       "returnPct": -12.0819
+    },
+    {
+      "securityKey": "kirloskar-ferrous-industries",
+      "security": "KIRLOSKAR FERROUS INDUSTRIES LTD.",
+      "accountId": "molecule-ventures-llp-7810404",
+      "from": "2026-06-30",
+      "to": "2026-11-02",
+      "openValue": 1371495.75,
+      "closeValue": 1283820.9,
+      "openPrice": 462.25,
+      "closePrice": 432.7,
+      "openQty": 2967,
+      "closeQty": 2967,
+      "kind": "held",
+      "priceEffect": -87674.85,
+      "tradeEffect": 0,
+      "returnPct": -6.3926
     },
     {
       "securityKey": "icici-bank",
@@ -34708,6 +34862,23 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": -3.5272
     },
     {
+      "securityKey": "indian-metals-and-ferro-alloys",
+      "security": "INDIAN METALS AND FERRO ALLOYS LTD.",
+      "accountId": "molecule-ventures-llp-7810404",
+      "from": "2026-06-30",
+      "to": "2026-11-02",
+      "openValue": 1899000,
+      "closeValue": 1874250,
+      "openPrice": 1266,
+      "closePrice": 1102.5,
+      "openQty": 1500,
+      "closeQty": 1700,
+      "kind": "held",
+      "priceEffect": -245250,
+      "tradeEffect": 220500,
+      "returnPct": -12.9147
+    },
+    {
       "securityKey": "eureka-forbes",
       "security": "Eureka Forbes Ltd",
       "accountId": "v-e-c-assago-capital-management-llp-128005",
@@ -35182,6 +35353,23 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "priceEffect": -423015.67,
       "tradeEffect": 1598955,
       "returnPct": -16.8902
+    },
+    {
+      "securityKey": "arvind-fashions",
+      "security": "ARVIND FASHIONS LIMITED",
+      "accountId": "molecule-ventures-llp-7810404",
+      "from": "2026-06-30",
+      "to": "2026-11-02",
+      "openValue": 1883800,
+      "closeValue": 1458200,
+      "openPrice": 470.95,
+      "closePrice": 364.55,
+      "openQty": 4000,
+      "closeQty": 4000,
+      "kind": "held",
+      "priceEffect": -425600,
+      "tradeEffect": 0,
+      "returnPct": -22.5926
     },
     {
       "securityKey": "hdfc-asset-management",
@@ -36471,6 +36659,57 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "openQty": 0,
       "closeQty": null,
       "kind": "exited",
+      "priceEffect": null,
+      "tradeEffect": null,
+      "returnPct": null
+    },
+    {
+      "securityKey": "eimco-elecon-india",
+      "security": "Eimco Elecon India Limited",
+      "accountId": "molecule-ventures-llp-7810404",
+      "from": "2026-06-30",
+      "to": "2026-11-02",
+      "openValue": null,
+      "closeValue": 750820,
+      "openPrice": null,
+      "closePrice": 2145.2,
+      "openQty": null,
+      "closeQty": 350,
+      "kind": "entered",
+      "priceEffect": null,
+      "tradeEffect": null,
+      "returnPct": null
+    },
+    {
+      "securityKey": "elecon-engineering",
+      "security": "Elecon Engineering Company Limited",
+      "accountId": "molecule-ventures-llp-7810404",
+      "from": "2026-06-30",
+      "to": "2026-11-02",
+      "openValue": null,
+      "closeValue": 876500,
+      "openPrice": null,
+      "closePrice": 438.25,
+      "openQty": null,
+      "closeQty": 2000,
+      "kind": "entered",
+      "priceEffect": null,
+      "tradeEffect": null,
+      "returnPct": null
+    },
+    {
+      "securityKey": "v-mart-retail",
+      "security": "V MART RETAIL LIMITED",
+      "accountId": "molecule-ventures-llp-7810404",
+      "from": "2026-06-30",
+      "to": "2026-11-02",
+      "openValue": null,
+      "closeValue": 738150,
+      "openPrice": null,
+      "closePrice": 738.15,
+      "openQty": null,
+      "closeQty": 1000,
+      "kind": "entered",
       "priceEffect": null,
       "tradeEffect": null,
       "returnPct": null
@@ -39190,6 +39429,18 @@ export const BOOK_ACCOUNT_CASH_FLOWS: Record<string, CashFlow[]> = {
       "description": "TDS on Payout"
     }
   ],
+  "molecule-ventures-llp-7810404": [
+    {
+      "date": "2026-08-26",
+      "amount": 640,
+      "description": "TDS Trf to Capital A/c"
+    },
+    {
+      "date": "2026-08-26",
+      "amount": 1125,
+      "description": "TDS Trf to Capital A/c"
+    }
+  ],
   "svan-investment-managers-llp-8710067": [
     {
       "date": "2026-06-10",
@@ -40343,7 +40594,7 @@ export const BOOK_ACCOUNT_RETURN_RECORDS: Record<string, AccountReturnCoverage> 
     "gap": "Opening valuation and complete dated cash flows are missing"
   },
   "molecule-ventures-llp-7810404": {
-    "latestValuationDate": "2026-09-30",
+    "latestValuationDate": "2026-11-02",
     "record": null,
     "gap": "Opening valuation and complete dated cash flows are missing"
   },
@@ -55113,7 +55364,235 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
       ]
     }
   ],
+  "molecule-ventures-llp-7810404|arvind-fashions": [
+    {
+      "date": "2024-10-24",
+      "side": "buy",
+      "quantity": 2000,
+      "price": 574.5944,
+      "amount": 1151908.09
+    },
+    {
+      "date": "2024-11-07",
+      "side": "buy",
+      "quantity": 1000,
+      "price": 588.9999,
+      "amount": 590719.65
+    },
+    {
+      "date": "2024-12-11",
+      "side": "buy",
+      "quantity": 1000,
+      "price": 540.9579,
+      "amount": 542537.55
+    }
+  ],
+  "molecule-ventures-llp-7810404|chemfab-alkalis": [
+    {
+      "date": "2024-11-05",
+      "side": "buy",
+      "quantity": 1000,
+      "price": 1008.7751,
+      "amount": 1011720.6
+    }
+  ],
+  "molecule-ventures-llp-7810404|dcw": [
+    {
+      "date": "2025-05-09",
+      "side": "buy",
+      "quantity": 3000,
+      "price": 73.624,
+      "amount": 221516.81
+    }
+  ],
+  "molecule-ventures-llp-7810404|eimco-elecon-india": [
+    {
+      "date": "2026-10-07",
+      "side": "buy",
+      "quantity": 300,
+      "price": 2343.6904,
+      "amount": 704513.3
+    },
+    {
+      "date": "2026-11-02",
+      "side": "buy",
+      "quantity": 50,
+      "price": 2149.8195,
+      "amount": 107705.96
+    }
+  ],
+  "molecule-ventures-llp-7810404|elecon-engineering": [
+    {
+      "date": "2026-09-25",
+      "side": "buy",
+      "quantity": 2000,
+      "price": 456.8241,
+      "amount": 916316.01
+    }
+  ],
+  "molecule-ventures-llp-7810404|indian-metals-and-ferro-alloys": [
+    {
+      "date": "2024-10-24",
+      "side": "buy",
+      "quantity": 2000,
+      "price": 658.3897,
+      "amount": 1320624.3
+    },
+    {
+      "date": "2024-10-25",
+      "side": "buy",
+      "quantity": 500,
+      "price": 654.5379,
+      "amount": 328224.59
+    },
+    {
+      "date": "2025-12-29",
+      "side": "sell",
+      "quantity": 1000,
+      "price": 1445.5182,
+      "amount": 1441514.22
+    },
+    {
+      "date": "2026-10-23",
+      "side": "buy",
+      "quantity": 200,
+      "price": 1093.7103,
+      "amount": 219380.76
+    }
+  ],
+  "molecule-ventures-llp-7810404|jayaswal-neco-industries": [
+    {
+      "date": "2025-08-22",
+      "side": "buy",
+      "quantity": 3000,
+      "price": 62.968,
+      "amount": 189455.42
+    },
+    {
+      "date": "2025-11-06",
+      "side": "buy",
+      "quantity": 7000,
+      "price": 73.1072,
+      "amount": 513244.16
+    },
+    {
+      "date": "2025-11-18",
+      "side": "buy",
+      "quantity": 2000,
+      "price": 75.5764,
+      "amount": 151594.01
+    },
+    {
+      "date": "2026-01-09",
+      "side": "buy",
+      "quantity": 2000,
+      "price": 84.9306,
+      "amount": 170357.03
+    },
+    {
+      "date": "2026-01-20",
+      "side": "buy",
+      "quantity": 500,
+      "price": 76.284,
+      "amount": 38253.36
+    },
+    {
+      "date": "2026-02-06",
+      "side": "buy",
+      "quantity": 2500,
+      "price": 74.9657,
+      "amount": 187961.33
+    },
+    {
+      "date": "2026-02-13",
+      "side": "buy",
+      "quantity": 3000,
+      "price": 77.2757,
+      "amount": 232504.03
+    },
+    {
+      "date": "2026-02-17",
+      "side": "buy",
+      "quantity": 2000,
+      "price": 80.4529,
+      "amount": 161375.42
+    },
+    {
+      "date": "2026-03-09",
+      "side": "buy",
+      "quantity": 1000,
+      "price": 70.615,
+      "amount": 70821.16
+    }
+  ],
+  "molecule-ventures-llp-7810404|kirloskar-ferrous-industries": [
+    {
+      "date": "2024-10-24",
+      "side": "buy",
+      "quantity": 1000,
+      "price": 619.47,
+      "amount": 621268
+    },
+    {
+      "date": "2024-10-25",
+      "side": "buy",
+      "quantity": 1000,
+      "price": 577.44,
+      "amount": 579118.85
+    },
+    {
+      "date": "2024-10-28",
+      "side": "buy",
+      "quantity": 267,
+      "price": 601,
+      "amount": 160935.02
+    },
+    {
+      "date": "2024-11-27",
+      "side": "buy",
+      "quantity": 500,
+      "price": 594.95,
+      "amount": 298342.2
+    },
+    {
+      "date": "2024-12-17",
+      "side": "buy",
+      "quantity": 200,
+      "price": 648.48,
+      "amount": 130074.08
+    }
+  ],
+  "molecule-ventures-llp-7810404|manali-petrochemical": [
+    {
+      "date": "2024-12-11",
+      "side": "buy",
+      "quantity": 10000,
+      "price": 66.5,
+      "amount": 666826.67
+    }
+  ],
   "molecule-ventures-llp-7810404|sansera-engineering": [
+    {
+      "date": "2025-12-30",
+      "side": "buy",
+      "quantity": 500,
+      "price": 1687.2541,
+      "amount": 846090.42
+    },
+    {
+      "date": "2026-01-07",
+      "side": "buy",
+      "quantity": 200,
+      "price": 1898.0455,
+      "amount": 380717.54
+    },
+    {
+      "date": "2026-02-06",
+      "side": "buy",
+      "quantity": 100,
+      "price": 1849.6494,
+      "amount": 185334.88
+    },
     {
       "date": "2026-09-21",
       "side": "sell",
@@ -55150,6 +55629,22 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
       "quantity": 100,
       "price": 2288.4049,
       "amount": 229508.64
+    },
+    {
+      "date": "2026-10-26",
+      "side": "buy",
+      "quantity": 62,
+      "price": 1798.8216,
+      "amount": 111852.63
+    }
+  ],
+  "molecule-ventures-llp-7810404|v-mart-retail": [
+    {
+      "date": "2026-09-25",
+      "side": "buy",
+      "quantity": 1000,
+      "price": 759.0503,
+      "amount": 761266.53
     }
   ],
   "svan-investment-managers-llp-8710067|apollo-pipes": [
@@ -63004,6 +63499,16 @@ export const BOOK_ENTITY_CASH_FLOWS: Record<string, CashFlow[]> = {
     },
     {
       "date": "2026-08-26",
+      "amount": 640,
+      "description": "TDS Trf to Capital A/c"
+    },
+    {
+      "date": "2026-08-26",
+      "amount": 1125,
+      "description": "TDS Trf to Capital A/c"
+    },
+    {
+      "date": "2026-08-26",
       "amount": 5565,
       "description": "TDS on Payout"
     },
@@ -64149,14 +64654,14 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
   "molecule-ventures-llp-7810404": [
     {
       "reportType": "fact-sheet",
-      "source": "molecule-ventures-llp-7810404-2026-09-30-fact-sheet",
+      "source": "molecule-ventures-llp-7810404-2026-11-02-fact-sheet",
       "series": [
         {
           "series": "Portfolio",
           "isBenchmark": false,
-          "mtd": -1.59,
-          "qtd": 8.06,
-          "fytd": 35.55,
+          "mtd": 1.87,
+          "qtd": -6.13,
+          "fytd": 27.25,
           "m1": null,
           "m3": null,
           "m6": null,
@@ -64164,16 +64669,16 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "y3": null,
           "y5": null,
           "y10": null,
-          "si": 10.67,
+          "si": 6.79,
           "siAnnualised": true,
           "feeBasis": "after"
         },
         {
           "series": "BSE 500 TRI",
           "isBenchmark": true,
-          "mtd": -5.57,
-          "qtd": -3.59,
-          "fytd": 8.07,
+          "mtd": 0,
+          "qtd": -0.87,
+          "fytd": 7.13,
           "m1": null,
           "m3": null,
           "m6": null,
@@ -64181,7 +64686,7 @@ export const BOOK_ACCOUNT_RETURNS: Record<string, AccountReturnBlock[]> = {
           "y3": null,
           "y5": null,
           "y10": null,
-          "si": -1.03,
+          "si": -1.41,
           "siAnnualised": true,
           "feeBasis": "after"
         }
@@ -65852,9 +66357,9 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
   "molecule-ventures-llp-7810404": [
     {
       "reportType": "fact-sheet",
-      "source": "molecule-ventures-llp-7810404-2026-09-30-fact-sheet",
+      "source": "molecule-ventures-llp-7810404-2026-11-02-fact-sheet",
       "periodFrom": "2024-10-24",
-      "periodTo": "2026-09-30",
+      "periodTo": "2026-11-02",
       "basis": "since-inception",
       "opening": null,
       "contribution": 10000000,
@@ -65865,8 +66370,8 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "income": null,
       "fees": null,
       "expenses": null,
-      "closing": 12153027,
-      "profit": 2165806,
+      "closing": 11408470,
+      "profit": 1421249,
       "accruedIncome": null,
       "changeInAccruals": null,
       "otherExpenses": null,
@@ -65880,40 +66385,7 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "ties": true,
       "openingNil": true,
       "residual": 0,
-      "linesTotal": 12153027,
-      "withheldReason": null
-    },
-    {
-      "reportType": "fact-sheet",
-      "source": "molecule-ventures-llp-7810404-2026-07-31-fact-sheet",
-      "periodFrom": "2024-10-24",
-      "periodTo": "2026-07-31",
-      "basis": "since-inception",
-      "opening": null,
-      "contribution": 10000000,
-      "withdrawal": 11014,
-      "netCapitalInOut": null,
-      "realized": null,
-      "unrealized": null,
-      "income": null,
-      "fees": null,
-      "expenses": null,
-      "closing": 11618948,
-      "profit": 1629962,
-      "accruedIncome": null,
-      "changeInAccruals": null,
-      "otherExpenses": null,
-      "gainPriorToTakeover": null,
-      "unread": [
-        "accruedIncome",
-        "changeInAccruals",
-        "otherExpenses",
-        "gainPriorToTakeover"
-      ],
-      "ties": true,
-      "openingNil": true,
-      "residual": 0,
-      "linesTotal": 11618948,
+      "linesTotal": 11408470,
       "withheldReason": null
     }
   ],

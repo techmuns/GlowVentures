@@ -1293,6 +1293,13 @@ function readCorporateBenefits(pages, source, warnings) {
  * with the SIGN the balance implies: a deposit and income increase it, a
  * withdrawal and an expense reduce it. The running balance is kept so the
  * reconciler can check the flows against it rather than trusting the sum.
+ *
+ * Its date. A bank book over a window prints "From 01/04/2026 to 06/10/2026";
+ * one run since inception prints no window, only the report date on its own
+ * line under the title (`BANK BOOK` / `02/11/2026` / `Account : 7810404 …`
+ * on Molecule's 2 November book, `06/07/2026` on V.E.C's July ones) — the date
+ * every sibling report of that delivery is struck on. Read from the title block
+ * only, above the account line, and only a line that is that date alone.
  */
 function readBankBook(pages, source, warnings) {
   const t = readAcrossPages(pages, BANK_BOOK_COLUMNS, { minFields: 5, require: ["description", "balance"] });
@@ -1324,7 +1331,14 @@ function readBankBook(pages, source, warnings) {
       balance: parseNum(r.fields.balance),
     }));
   }
-  return out.length ? { cashFlows: out, sheet: toAuditSheet("bank-book", Object.keys(t.columns), t.rows) } : null;
+  const head = pages[0]?.rows ?? [];
+  const acct = head.findIndex((r) => (r.items ?? []).some((it) => /^Account\s*:/i.test(clean(it.text))));
+  let asOf = null;
+  for (const r of head.slice(0, Math.max(acct, 0))) {
+    const items = (r.items ?? []).map((it) => clean(it.text)).filter(Boolean);
+    if (items.length === 1 && DATE_CELL.test(items[0])) { asOf = cellDate(items[0]); break; }
+  }
+  return out.length ? { cashFlows: out, asOf, sheet: toAuditSheet("bank-book", Object.keys(t.columns), t.rows) } : null;
 }
 
 /**
@@ -2906,9 +2920,10 @@ export function extract({ grid, meta }) {
     else warn(warnings, "corporate-benefits-table-not-found", reportType);
   }
 
+  let bankBookAsOf = null;
   if (reportType === "bank-book") {
     const r = readBankBook(pages, source, warnings);
-    if (r) { cashFlows = r.cashFlows; sections.bankBook = r.sheet; }
+    if (r) { cashFlows = r.cashFlows; sections.bankBook = r.sheet; bankBookAsOf = r.asOf; }
     else warn(warnings, "bank-book-table-not-found", reportType);
   }
 
@@ -2958,6 +2973,8 @@ export function extract({ grid, meta }) {
    */
   let checks = null, openLots = [], readWhole = false;
   const extraAsOf = {};
+  // The since-inception bank book's title-block date, where no window dated it.
+  if (bankBookAsOf && !window.periodTo && !id.asOf) extraAsOf.asOf = bankBookAsOf;
   if (reportType === "performance-by-security") {
     const r = readPerformanceBySecurity(pages, warnings);
     if (r) { sections.performanceBySecurity = r.sheet; checks = r.checks; readWhole = true; }

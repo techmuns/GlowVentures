@@ -195,6 +195,19 @@ test('a failed reading gives way to a reading of the same file; dropped without 
   assert.equal(assess([doc(), read], [doc(), unread]).decision, 'verified');
   assert.ok(has(assess([doc(), later()], [doc(), unread]), 'ARCHIVE_LOSS'));
 });
+test('an undated reading gives way to the same file read with its printed date; nothing else does (Stage 10ki)', () => {
+  const undated = doc({ docKey: 'hdfc-123-unknown-holdings', asOf: null, sourcePath: 'source/book.pdf' });
+  const dated = later({ docKey: 'hdfc-123-2026-07-06-holdings', asOf: '2026-07-06', sourcePath: 'source/book.pdf' });
+  assert.equal(assess([doc(), dated], [doc(), undated]).decision, 'verified');
+  assert.ok(has(assess([doc(), later({ docKey: 'hdfc-123-2026-07-06-holdings', asOf: '2026-07-06', sourcePath: 'source/other.pdf' })], [doc(), undated]), 'ARCHIVE_LOSS'));
+  assert.ok(has(assess([doc(), later({ docKey: 'hdfc-456-2026-07-06-holdings', asOf: '2026-07-06', accountNo: '456', sourcePath: 'source/book.pdf' })], [doc(), undated]), 'ARCHIVE_LOSS'));
+});
+test('a cross-report delta within printing precision does not hold a delivery; a larger one does (Stage 10ki)', () => {
+  const delta = (d, severity) => ({ crossReportDeltas: [{ field: 'holding.totalCost', securityKey: 'elecon', delta: d, severity }] });
+  assert.equal(assess([doc(), later()], [doc()], { report: delta(-0.34, 'rounding') }).decision, 'verified');
+  assert.ok(has(assess([doc(), later()], [doc()], { report: delta(-1000.5, 'material') }), 'CROSS_RECORD_CONFLICT'));
+  assert.ok(has(assess([doc(), later()], [doc()], { report: delta(-0.34) }), 'CROSS_RECORD_CONFLICT'), 'an unclassified delta still holds');
+});
 test('a removal notice where a statement should be publishes nothing, and is not a read gap', () => {
   const notice = (n) => doc({ docKey: `notice-${n}`, provider: '(unidentified)', accountNo: null, owner: null, ownerId: null,
     reportType: 'unknown', status: 'failed', sourcePath: `source/lkp/${n}.xls`, holdings: [],

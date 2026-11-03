@@ -67,18 +67,33 @@ const isCash = (h) => h.assetClass === "Cash";
  * and as-of, and only from a report the pipeline actually split out. The
  * outstanding figure is `receivable - received` per row: a dividend already
  * paid is in the bank, not in the mark.
+ *
+ * Where that delivery carries no dividend statement, the same account's
+ * PORTFOLIO APPRAISAL of the same date is the witness: it prints the same
+ * outstanding dividend as its "Accrued Income" line under the security.
+ * Molecule's 2 November delivery: Elecon at 2,000 x 438.25 = 876,500 on the
+ * appraisal with 1,000.00 accrued beneath it, and CURRENT PORTFOLIO's 877,500
+ * (Stage 10ki). Never both: the two would count one dividend twice.
  */
 function outstandingBySecurity(doc, docs) {
   const m = new Map();
+  m.witness = "dividend statement";
+  const same = (d) => d.provider === doc.provider && d.accountNo === doc.accountNo && d.asOf === doc.asOf;
   for (const d of docs) {
-    if (d.reportType !== "dividend-statement") continue;
-    if (d.provider !== doc.provider || d.accountNo !== doc.accountNo || d.asOf !== doc.asOf) continue;
+    if (d.reportType !== "dividend-statement" || !same(d)) continue;
     for (const e of d.income ?? []) {
       if (!e.securityKey) continue;
       const out = (isNum(e.receivable) ? e.receivable : 0) - (isNum(e.received) ? e.received : 0);
       if (out === 0) continue;
       m.set(e.securityKey, round2((m.get(e.securityKey) ?? 0) + out));
     }
+  }
+  if (m.size || docs.some((d) => d.reportType === "dividend-statement" && same(d))) return m;
+  const appraisal = docs.find((d) => d.reportType === "appraisal" && same(d) && d.holdings?.length);
+  m.witness = "portfolio appraisal (accrued income)";
+  for (const h of appraisal?.holdings ?? []) {
+    if (!h.securityKey || !isNum(h.accruedIncome) || h.accruedIncome === 0) continue;
+    m.set(h.securityKey, round2((m.get(h.securityKey) ?? 0) + h.accruedIncome));
   }
   return m;
 }
@@ -117,9 +132,8 @@ function rowSumChecks(doc, docs = []) {
    * market value is price x quantity exactly and must keep failing loudly if it
    * ever stops being.
    */
-  const outstanding = doc.reportType === "holdings"
-    ? round2([...outstandingBySecurity(doc, docs).values()].reduce((t, v) => t + v, 0))
-    : 0;
+  const outstandingRows = doc.reportType === "holdings" ? outstandingBySecurity(doc, docs) : new Map();
+  const outstanding = round2([...outstandingRows.values()].reduce((t, v) => t + v, 0));
 
   /**
    * A SECTION THE REPORT SUBTOTALLED WITHOUT PRINTING ITS ROWS.
@@ -158,7 +172,7 @@ function rowSumChecks(doc, docs = []) {
       cause: explainedByIncome
         ? `printed total is income-inclusive; the market-value column is not. Delta equals the accrued income on this account (${accrued.toLocaleString("en-IN")}).`
         : explainedByOutstanding
-        ? `printed market value folds in the dividend gone ex but not yet received; the derived column is price x quantity. Delta equals the outstanding dividend on this account's own dividend statement (${outstanding.toLocaleString("en-IN")}).`
+        ? `printed market value folds in the dividend gone ex but not yet received; the derived column is price x quantity. Delta equals the outstanding dividend on this account's own ${outstandingRows.witness} (${outstanding.toLocaleString("en-IN")}).`
         : explainedByMissing
           ? `this report subtotals ${missingNames} without printing the per-security rows. Delta equals the declared subtotal (${missingValue.toLocaleString("en-IN")}); those holdings come from another report for this account.`
           : null,
@@ -399,7 +413,7 @@ function derivedVsPrinted(doc, docs = []) {
           : mvBasis
             ? "printed market value folds in the accrued income this row carries; the derived figure is price x quantity. Adding the accrual back reproduces the printed figure to the paisa."
           : divBasis
-            ? "printed market value folds in this row's OUTSTANDING dividend — gone ex, not yet received — which its own dividend statement prints. Adding it back reproduces the printed figure to within the printed price's own last digit."
+            ? `printed market value folds in this row's OUTSTANDING dividend — gone ex, not yet received — which its own ${outstanding.witness} prints. Adding it back reproduces the printed figure to within the printed price's own last digit.`
           : pctPrinted
             ? "printed %Assets is this row's own printed market value over the printed total, both on the outstanding-dividend basis; the derived figure is price x quantity over the derived total. Reproduced exactly at the two places the statement prints."
             : null,
@@ -502,6 +516,11 @@ function crossReportDeltas(docs) {
               a: { reportType: seen[i].reportType, docKey: seen[i].docKey, value: seen[i].h[field] },
               b: { reportType: seen[j].reportType, docKey: seen[j].docKey, value: seen[j].h[field] },
               delta,
+              // The same split as the totals above: CURRENT PORTFOLIO prints a
+              // holding's cost to the rupee and the appraisal keeps the paise,
+              // so Elecon's 915,402 against 915,402.34 is that rounding. A unit
+              // count has no printing precision to round to.
+              severity: field === "quantity" ? "material" : classifyDelta(field, delta),
               authoritative: authoritativeFor(sample.provider, "holding", field),
             });
           }

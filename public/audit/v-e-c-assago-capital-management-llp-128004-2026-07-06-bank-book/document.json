@@ -1,5 +1,5 @@
 {
- "docKey": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book",
+ "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-bank-book",
  "provider": "V.E.C Assago Capital Management LLP",
  "accountNo": "128004",
  "ownerSource": "printed",
@@ -12,7 +12,7 @@
  "engagement": "PMS",
  "providerEngagement": "Portfolio Management Service",
  "members": [],
- "asOf": null,
+ "asOf": "2026-07-06",
  "inceptionDate": null,
  "reportType": "bank-book",
  "sourcePath": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_BankBook178OT.pdf",
@@ -45,7 +45,7 @@
    "debit": null,
    "notes": null,
    "balance": 1010062.09,
-   "source": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book"
+   "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-bank-book"
   },
   {
    "date": "2026-05-20",
@@ -68,7 +68,7 @@
    "debit": null,
    "notes": null,
    "balance": 6056137.6,
-   "source": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book"
+   "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-bank-book"
   },
   {
    "date": "2026-05-20",
@@ -91,7 +91,7 @@
    "debit": null,
    "notes": null,
    "balance": 6051087.6,
-   "source": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book"
+   "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-bank-book"
   },
   {
    "date": "2026-05-25",
@@ -114,7 +114,7 @@
    "debit": null,
    "notes": null,
    "balance": 5050156.59,
-   "source": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book"
+   "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-bank-book"
   },
   {
    "date": "2026-05-25",
@@ -137,7 +137,7 @@
    "debit": null,
    "notes": null,
    "balance": 2548191.41,
-   "source": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book"
+   "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-bank-book"
   },
   {
    "date": "2026-05-25",
@@ -160,7 +160,7 @@
    "debit": null,
    "notes": null,
    "balance": 1046907.75,
-   "source": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book"
+   "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-bank-book"
   },
   {
    "date": "2026-05-25",
@@ -183,7 +183,7 @@
    "debit": null,
    "notes": null,
    "balance": 1045907.75,
-   "source": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book"
+   "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-bank-book"
   },
   {
    "date": "2026-05-25",
@@ -206,7 +206,7 @@
    "debit": null,
    "notes": null,
    "balance": 1043407.75,
-   "source": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book"
+   "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-bank-book"
   },
   {
    "date": "2026-05-25",
@@ -229,7 +229,7 @@
    "debit": null,
    "notes": null,
    "balance": 1041907.75,
-   "source": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book"
+   "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-bank-book"
   },
   {
    "date": "2026-05-27",
@@ -252,7 +252,7 @@
    "debit": null,
    "notes": null,
    "balance": 1039436.75,
-   "source": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book"
+   "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-bank-book"
   },
   {
    "date": "2026-05-15",
@@ -275,7 +275,7 @@
    "debit": null,
    "notes": null,
    "balance": 1064146.75,
-   "source": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book"
+   "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-bank-book"
   },
   {
    "date": "2026-06-02",
@@ -298,7 +298,7 @@
    "debit": null,
    "notes": null,
    "balance": 4583834.35,
-   "source": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book"
+   "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-bank-book"
   },
   {
    "date": "2026-06-02",
@@ -321,7 +321,7 @@
    "debit": null,
    "notes": null,
    "balance": 4580311.83,
-   "source": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book"
+   "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-bank-book"
   },
   {
    "date": "2026-04-30",
@@ -344,7 +344,7 @@
    "debit": null,
    "notes": null,
    "balance": 4519305.35,
-   "source": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book"
+   "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-bank-book"
   },
   {
    "date": "2025-07-31",
@@ -367,7 +367,7 @@
    "debit": null,
    "notes": null,
    "balance": 4513248.66,
-   "source": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book"
+   "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-bank-book"
   },
   {
    "date": "2026-03-31",
@@ -390,7 +390,7 @@
    "debit": null,
    "notes": null,
    "balance": 4456323.45,
-   "source": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book"
+   "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-bank-book"
   },
   {
    "date": "2025-11-30",
@@ -413,7 +413,7 @@
    "debit": null,
    "notes": null,
    "balance": 4393804.25,
-   "source": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book"
+   "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-bank-book"
   },
   {
    "date": "2025-09-30",
@@ -436,7 +436,7 @@
    "debit": null,
    "notes": null,
    "balance": 4330411.02,
-   "source": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book"
+   "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-bank-book"
   },
   {
    "date": "2025-12-31",
@@ -459,7 +459,7 @@
    "debit": null,
    "notes": null,
    "balance": 4267451.87,
-   "source": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book"
+   "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-bank-book"
   },
   {
    "date": "2026-01-31",
@@ -482,7 +482,7 @@
    "debit": null,
    "notes": null,
    "balance": 4208071.69,
-   "source": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book"
+   "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-bank-book"
   },
   {
    "date": "2026-02-28",
@@ -505,7 +505,7 @@
    "debit": null,
    "notes": null,
    "balance": 4154302.98,
-   "source": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book"
+   "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-bank-book"
   },
   {
    "date": "2025-08-31",
@@ -528,7 +528,7 @@
    "debit": null,
    "notes": null,
    "balance": 4091169.38,
-   "source": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book"
+   "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-bank-book"
   },
   {
    "date": "2026-05-31",
@@ -551,7 +551,7 @@
    "debit": null,
    "notes": null,
    "balance": 4018906.52,
-   "source": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book"
+   "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-bank-book"
   },
   {
    "date": "2025-10-31",
@@ -574,7 +574,7 @@
    "debit": null,
    "notes": null,
    "balance": 3952828.33,
-   "source": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book"
+   "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-bank-book"
   },
   {
    "date": "2026-06-15",
@@ -597,7 +597,7 @@
    "debit": null,
    "notes": null,
    "balance": 1951361.45,
-   "source": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book"
+   "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-bank-book"
   },
   {
    "date": "2026-06-15",
@@ -620,7 +620,7 @@
    "debit": null,
    "notes": null,
    "balance": 1948842.45,
-   "source": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book"
+   "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-bank-book"
   },
   {
    "date": "2026-06-15",
@@ -643,7 +643,7 @@
    "debit": null,
    "notes": null,
    "balance": 1946842.45,
-   "source": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book"
+   "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-bank-book"
   },
   {
    "date": "2026-06-03",
@@ -666,7 +666,7 @@
    "debit": null,
    "notes": null,
    "balance": 1972031.95,
-   "source": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book"
+   "source": "v-e-c-assago-capital-management-llp-128004-2026-07-06-bank-book"
   }
  ],
  "transactions": [],

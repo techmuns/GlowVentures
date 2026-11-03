@@ -116,8 +116,13 @@ export function assessPublication({ baseline, documents, baselineReport = {}, re
   // A failed reading that published nothing may give way to another reading of
   // the SAME source file — a reader that now reads it (Stage 10gk). The
   // statement is not removed; only the reading that could not read it is.
+  // So may an UNDATED reading give way to the same source read with the date it
+  // prints: one account and report, now filed under its day, not removed
+  // (V.E.C's July bank books, Stage 10ki). The new reading meets every gate.
   const sources = new Set(documents.map(d => d.sourcePath));
-  for (const d of baseline) if (!byKey.has(d.docKey) && !(d.status === 'failed' && !carriesFacts(d) && sources.has(d.sourcePath))) {
+  const datedNow = d => !d.asOf && documents.some(x => x.sourcePath === d.sourcePath && x.asOf
+    && x.provider === d.provider && String(x.accountNo) === String(d.accountNo) && x.reportType === d.reportType);
+  for (const d of baseline) if (!byKey.has(d.docKey) && !(d.status === 'failed' && !carriesFacts(d) && sources.has(d.sourcePath)) && !datedNow(d)) {
     add('ARCHIVE_LOSS', d, 'A delivery cannot remove an earlier statement.');
   }
 
@@ -212,9 +217,12 @@ export function assessPublication({ baseline, documents, baselineReport = {}, re
       add('RECONCILIATION_FAILED', { docKey: finding.docKey ?? finding.source ?? null }, `${name}: ${stable(finding)}`);
     }
   }
+  // Two reports printing one figure at different precision (to the rupee and to
+  // the paisa) do not conflict: the reconciler classes a delta within the
+  // printing precision `rounding`, and only a larger one holds the delivery.
   for (const name of ['crossReportDeltas', 'duplicateHoldings', 'duplicateAifEarnings']) {
     const accepted = new Set((baselineReport[name] ?? []).map(stable));
-    for (const finding of report[name] ?? []) if (!accepted.has(stable(finding))) add('CROSS_RECORD_CONFLICT', null, `${name}: ${stable(finding)}`);
+    for (const finding of report[name] ?? []) if (finding.severity !== 'rounding' && !accepted.has(stable(finding))) add('CROSS_RECORD_CONFLICT', null, `${name}: ${stable(finding)}`);
   }
   if (duplicates.length && duplicates.length !== changed.length) add('MIXED_DUPLICATE_DELIVERY', null, 'Remove repeated documents and reprepare; a mixed delivery must not discard its new statements.');
   const decision = issues.length ? 'needs_review' : duplicates.length ? 'duplicate' : changed.length ? 'verified' : 'unchanged';

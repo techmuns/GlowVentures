@@ -1,16 +1,16 @@
 {
-  "generatedAt": "2026-11-03T09:13:37.974Z",
+  "generatedAt": "2026-11-03T11:34:07.895Z",
   "sourceDir": "source",
   "counts": {
-    "files": 471,
-    "pdfs": 461,
+    "files": 476,
+    "pdfs": 466,
     "nonPdf": 10,
-    "classified": 402,
+    "classified": 407,
     "unclassified": 69,
     "encrypted": 41,
-    "fromArchives": 399,
-    "archivesExpanded": 50,
-    "pages": 1989
+    "fromArchives": 404,
+    "archivesExpanded": 51,
+    "pages": 2014
   },
   "reportTypes": [
     "holdings",
@@ -44,6 +44,69 @@
     "unknown"
   ],
   "archives": [
+    {
+      "archive": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani.zip",
+      "extractedTo": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani",
+      "files": 3,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ankita Jaisinghani.zip",
+      "extractedTo": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ankita Jaisinghani",
+      "files": 2,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Bharat Jaisinghani.zip",
+      "extractedTo": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Bharat Jaisinghani",
+      "files": 1,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Ajay T Jaisinghani.zip",
+      "extractedTo": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Ajay T Jaisinghani",
+      "files": 3,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Ankita Jaisinghani.zip",
+      "extractedTo": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Ankita Jaisinghani",
+      "files": 2,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Bharat Jaisinghani.zip",
+      "extractedTo": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Bharat Jaisinghani",
+      "files": 1,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Ajay T Jaisinghani.zip",
+      "extractedTo": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Ajay T Jaisinghani",
+      "files": 3,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Ankita Jaisinghani.zip",
+      "extractedTo": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Ankita Jaisinghani",
+      "files": 2,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Bharat Jaisinghani.zip",
+      "extractedTo": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Bharat Jaisinghani",
+      "files": 1,
+      "skipped": 0,
+      "failed": 0
+    },
     {
       "archive": "source/ARISTOS - AJAY.zip",
       "extractedTo": "source/_extracted/ARISTOS - AJAY",
@@ -318,6 +381,13 @@
       "failed": 0
     },
     {
+      "archive": "source/uploads-2026-11-03/Molecule Ventures LLP/Re__Urgent_Request_for_Transaction_Statement,_Bank_Book_&_Portfolio_Appraisal_Report.zip",
+      "extractedTo": "source/_extracted/uploads-2026-11-03/Molecule Ventures LLP/Re__Urgent_Request_for_Transaction_Statement,_Bank_Book_&_Portfolio_Appraisal_Report",
+      "files": 5,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
       "archive": "source/VEC - AJAY JAISINGHANI.zip",
       "extractedTo": "source/_extracted/VEC - AJAY JAISINGHANI",
       "files": 14,
@@ -328,69 +398,6 @@
       "archive": "source/VEC - ANKITA JAISINGHANI .zip",
       "extractedTo": "source/_extracted/VEC - ANKITA JAISINGHANI ",
       "files": 11,
-      "skipped": 0,
-      "failed": 0
-    },
-    {
-      "archive": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani.zip",
-      "extractedTo": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani",
-      "files": 3,
-      "skipped": 0,
-      "failed": 0
-    },
-    {
-      "archive": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ankita Jaisinghani.zip",
-      "extractedTo": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ankita Jaisinghani",
-      "files": 2,
-      "skipped": 0,
-      "failed": 0
-    },
-    {
-      "archive": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Bharat Jaisinghani.zip",
-      "extractedTo": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Bharat Jaisinghani",
-      "files": 1,
-      "skipped": 0,
-      "failed": 0
-    },
-    {
-      "archive": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Ajay T Jaisinghani.zip",
-      "extractedTo": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Ajay T Jaisinghani",
-      "files": 3,
-      "skipped": 0,
-      "failed": 0
-    },
-    {
-      "archive": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Ankita Jaisinghani.zip",
-      "extractedTo": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Ankita Jaisinghani",
-      "files": 2,
-      "skipped": 0,
-      "failed": 0
-    },
-    {
-      "archive": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Bharat Jaisinghani.zip",
-      "extractedTo": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Bharat Jaisinghani",
-      "files": 1,
-      "skipped": 0,
-      "failed": 0
-    },
-    {
-      "archive": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Ajay T Jaisinghani.zip",
-      "extractedTo": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Ajay T Jaisinghani",
-      "files": 3,
-      "skipped": 0,
-      "failed": 0
-    },
-    {
-      "archive": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Ankita Jaisinghani.zip",
-      "extractedTo": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Ankita Jaisinghani",
-      "files": 2,
-      "skipped": 0,
-      "failed": 0
-    },
-    {
-      "archive": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Bharat Jaisinghani.zip",
-      "extractedTo": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Bharat Jaisinghani",
-      "files": 1,
       "skipped": 0,
       "failed": 0
     }
@@ -8252,6 +8259,116 @@
       "matchedBy": "Goldstandard filename"
     },
     {
+      "path": "source/_extracted/uploads-2026-11-03/Molecule Ventures LLP/Re__Urgent_Request_for_Transaction_Statement,_Bank_Book_&_Portfolio_Appraisal_Report/Z595_7810404_BankBook178CT.pdf",
+      "fileName": "Z595_7810404_BankBook178CT.pdf",
+      "bytes": 79209,
+      "size": "77.4 KB",
+      "pages": 17,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Molecule Ventures LLP",
+      "ownerName": "AJAY JAISINGHANI",
+      "accountNo": "7810404",
+      "asOfDate": null,
+      "reportType": "bank-book",
+      "sections": [
+        "bank-book"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/uploads-2026-11-03/Molecule Ventures LLP/Re__Urgent_Request_for_Transaction_Statement,_Bank_Book_&_Portfolio_Appraisal_Report/Z595_7810404_CurrentPortfolio2086CT.pdf",
+      "fileName": "Z595_7810404_CurrentPortfolio2086CT.pdf",
+      "bytes": 51385,
+      "size": "50.2 KB",
+      "pages": 3,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Molecule Ventures LLP",
+      "ownerName": "AJAY JAISINGHANI",
+      "accountNo": "7810404",
+      "asOfDate": "2026-11-02",
+      "reportType": "holdings",
+      "sections": [
+        "holdings"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "high",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/uploads-2026-11-03/Molecule Ventures LLP/Re__Urgent_Request_for_Transaction_Statement,_Bank_Book_&_Portfolio_Appraisal_Report/Z595_7810404_PortfolioAppraisal675CT.pdf",
+      "fileName": "Z595_7810404_PortfolioAppraisal675CT.pdf",
+      "bytes": 36837,
+      "size": "36.0 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Molecule Ventures LLP",
+      "ownerName": "AJAY JAISINGHANI",
+      "accountNo": "7810404",
+      "asOfDate": "2026-11-02",
+      "reportType": "appraisal",
+      "sections": [
+        "appraisal"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "high",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/uploads-2026-11-03/Molecule Ventures LLP/Re__Urgent_Request_for_Transaction_Statement,_Bank_Book_&_Portfolio_Appraisal_Report/Z595_7810404_PortFolioFactSheet6020CT.pdf",
+      "fileName": "Z595_7810404_PortFolioFactSheet6020CT.pdf",
+      "bytes": 81153,
+      "size": "79.3 KB",
+      "pages": 1,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Molecule Ventures LLP",
+      "ownerName": null,
+      "accountNo": null,
+      "asOfDate": "2026-11-02",
+      "reportType": "fact-sheet",
+      "sections": [
+        "fact-sheet"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
+      "path": "source/_extracted/uploads-2026-11-03/Molecule Ventures LLP/Re__Urgent_Request_for_Transaction_Statement,_Bank_Book_&_Portfolio_Appraisal_Report/Z595_7810404_TransactionStatement_India94CT.pdf",
+      "fileName": "Z595_7810404_TransactionStatement_India94CT.pdf",
+      "bytes": 41742,
+      "size": "40.8 KB",
+      "pages": 3,
+      "fromArchive": true,
+      "encrypted": false,
+      "readError": null,
+      "provider": "Molecule Ventures LLP",
+      "ownerName": "AJAY JAISINGHANI",
+      "accountNo": "7810404",
+      "asOfDate": null,
+      "reportType": "transaction-statement",
+      "sections": [
+        "transaction-statement"
+      ],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "medium",
+      "matchedBy": "Goldstandard filename"
+    },
+    {
       "path": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_BankBook178OT (1).pdf",
       "fileName": "VECBES0004_145052_BankBook178OT (1).pdf",
       "bytes": 70737,
@@ -15223,6 +15340,15 @@
                     ]
                   },
                   {
+                    "path": "source/_extracted/uploads-2026-11-03/Molecule Ventures LLP/Re__Urgent_Request_for_Transaction_Statement,_Bank_Book_&_Portfolio_Appraisal_Report/Z595_7810404_TransactionStatement_India94CT.pdf",
+                    "pages": 3,
+                    "size": "40.8 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "transaction-statement"
+                    ]
+                  },
+                  {
                     "path": "source/Molecule_June_2026_392.pdf",
                     "pages": 8,
                     "size": "221.4 KB",
@@ -15231,9 +15357,47 @@
                       "transaction-statement"
                     ]
                   }
+                ],
+                "bank-book": [
+                  {
+                    "path": "source/_extracted/uploads-2026-11-03/Molecule Ventures LLP/Re__Urgent_Request_for_Transaction_Statement,_Bank_Book_&_Portfolio_Appraisal_Report/Z595_7810404_BankBook178CT.pdf",
+                    "pages": 17,
+                    "size": "77.4 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "bank-book"
+                    ]
+                  }
                 ]
               },
-              "fileCount": 3
+              "fileCount": 5
+            },
+            "2026-11-02": {
+              "reportTypes": {
+                "holdings": [
+                  {
+                    "path": "source/_extracted/uploads-2026-11-03/Molecule Ventures LLP/Re__Urgent_Request_for_Transaction_Statement,_Bank_Book_&_Portfolio_Appraisal_Report/Z595_7810404_CurrentPortfolio2086CT.pdf",
+                    "pages": 3,
+                    "size": "50.2 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "holdings"
+                    ]
+                  }
+                ],
+                "appraisal": [
+                  {
+                    "path": "source/_extracted/uploads-2026-11-03/Molecule Ventures LLP/Re__Urgent_Request_for_Transaction_Statement,_Bank_Book_&_Portfolio_Appraisal_Report/Z595_7810404_PortfolioAppraisal675CT.pdf",
+                    "pages": 1,
+                    "size": "36.0 KB",
+                    "confidence": "high",
+                    "sections": [
+                      "appraisal"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 2
             },
             "2026-07-31": {
               "reportTypes": {
@@ -15252,7 +15416,7 @@
               "fileCount": 1
             }
           },
-          "fileCount": 4
+          "fileCount": 8
         },
         "(unidentified)": {
           "owner": null,
@@ -15273,12 +15437,28 @@
                 ]
               },
               "fileCount": 1
+            },
+            "2026-11-02": {
+              "reportTypes": {
+                "fact-sheet": [
+                  {
+                    "path": "source/_extracted/uploads-2026-11-03/Molecule Ventures LLP/Re__Urgent_Request_for_Transaction_Statement,_Bank_Book_&_Portfolio_Appraisal_Report/Z595_7810404_PortFolioFactSheet6020CT.pdf",
+                    "pages": 1,
+                    "size": "79.3 KB",
+                    "confidence": "medium",
+                    "sections": [
+                      "fact-sheet"
+                    ]
+                  }
+                ]
+              },
+              "fileCount": 1
             }
           },
-          "fileCount": 1
+          "fileCount": 2
         }
       },
-      "fileCount": 5
+      "fileCount": 10
     },
     "Invesco Mutual Fund": {
       "accounts": {
@@ -16585,6 +16765,20 @@
       ]
     },
     {
+      "provider": "Molecule Ventures LLP",
+      "account": "7810404",
+      "asOf": "(unidentified)",
+      "fileCount": 5,
+      "reportTypes": [
+        "capital-register",
+        "transaction-statement",
+        "bank-book"
+      ],
+      "duplicateTypes": [
+        "transaction-statement"
+      ]
+    },
+    {
       "provider": "Goldstandard Wealth Private Limited",
       "account": "100022",
       "asOf": "2026-04-01",
@@ -16807,19 +17001,6 @@
       ],
       "duplicateTypes": [
         "holdings"
-      ]
-    },
-    {
-      "provider": "Molecule Ventures LLP",
-      "account": "7810404",
-      "asOf": "(unidentified)",
-      "fileCount": 3,
-      "reportTypes": [
-        "capital-register",
-        "transaction-statement"
-      ],
-      "duplicateTypes": [
-        "transaction-statement"
       ]
     },
     {
@@ -17153,6 +17334,17 @@
       "reportTypes": [
         "appraisal",
         "investor-report"
+      ],
+      "duplicateTypes": []
+    },
+    {
+      "provider": "Molecule Ventures LLP",
+      "account": "7810404",
+      "asOf": "2026-11-02",
+      "fileCount": 2,
+      "reportTypes": [
+        "holdings",
+        "appraisal"
       ],
       "duplicateTypes": []
     },

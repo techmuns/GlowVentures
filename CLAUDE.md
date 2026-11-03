@@ -332,7 +332,7 @@ extraction mirrors each archive's own path under `source/`.
 | 360 ONE Private Wealth | 60117 | Bharat Jaisinghani | 2026-09-30 | ₹1.46 Cr\* |
 | Consolidated review (MOPWM) | MOPWM | Bharat Jaisinghani Family Trust 2 | 2026-06-30 | ₹1.35 Cr |
 | Consolidated review (MOPWM) | MOPWM | Bharat Jaisinghani Family Trust 3 | 2026-06-30 | ₹1.35 Cr |
-| Molecule Ventures LLP | 7810404 | Ajay Jaisinghani | 2026-07-31 | ₹1.16 Cr |
+| Molecule Ventures LLP | 7810404 | Ajay Jaisinghani | 2026-11-02 | ₹1.14 Cr |
 | Kotak Mahindra Mutual Fund | 7125255 | Ajay Jaisinghani | 2026-10-05 | ₹1.08 Cr |
 | LKP Securities | 98245 | Bharat Jaisinghani | 2026-03-31 | ₹0.99 Cr |
 | Transition Venture Capital | TVC262 | Bharat Jaisinghani Family Trust 2 | 2026-03-31 | ₹0.97 Cr\* |
