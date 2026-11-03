@@ -156,6 +156,7 @@ SUITES.push(["table Excel exports", "src/lib/__tests__/tableExcel.test.ts"]);
 SUITES.push(["table number corrections and Excel uploads", "src/lib/__tests__/tableInputs.test.ts"]);
 SUITES.push(["private market capital cells", "src/lib/__tests__/capitalEntry.test.ts"]);
 SUITES.push(["under a year absolute", "src/lib/__tests__/underAYear.test.ts"]);
+SUITES.push(["holdings against their own index", "src/lib/__tests__/holdingBenchmark.test.ts"]);
 for (const [name, rel] of SUITES) {
   if (ONLY.length && !ONLY.includes(name)) continue;
   const out = path.join(DIR, path.basename(rel).replace(/\.ts$/, ".mjs"));

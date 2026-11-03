@@ -53,7 +53,7 @@ const isM = (p: (typeof BOOK_POSITIONS)[number]) =>
   // What the family holds: the book, the live layer's depository rows, and every
   // line a statement records with no usable price (Stage 10cz) — a map entry
   // for one of those is not a typo. Nor is one for a custody row a newer folio
-  // succeeded (Helios on Ankita's and Bharat's demats, Stage 10kd): the
+  // succeeded (Helios on Ankita's and Bharat's demats, Stage 10ke): the
   // Consolidated View still lists it as an audit row, classified by this map.
   const live = new Set([
     ...BOOK_UNVALUED_HOLDINGS.map((u) => `sec:${u.securityKey}`),

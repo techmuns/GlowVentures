@@ -915,7 +915,22 @@
 - The two records it removes are correct. Kotak folios 7111389 (Ajay) and 5372722 (Aarti) report the exact Multi Cap units (INF174KA1HV3) that the Motilal demats 1201090012539150 and 1201090012838335 recorded, and each folio prints a cost or ties one by FIFO. `recoverHoldingCosts` leaves a same-owner balance that another statement costs without a recovered record, and fund gates 5/7 value the folio rather than the demat.
 - `recoveredCosts.test.ts` names the two balances. It takes one off both pinned counts (records and costed live fund rows) for each folio that costs it, and it checks that the record and the demat row go when the folio arrives and stay until then. A scratch book with the two folio positions added reproduced 60 against 62 on the old test and passes on the new one.
 
-### Stage 10kd — HELIOS'S 3 NOVEMBER UPLOADS LAND, AND ONE FILE NO LONGER HOLDS ITS BATCH
+### Stage 10kc — THE SOURCE-TRACE AND NAVIGATION BROWSER CHECKS FOLLOW THE NOTE'S ROW
+
+- CI's `build` job had failed on main since Stage 10ka: `check-source-trace.mjs` waited for a direct quantity link on Ajay's Motilal Arbitrage demat row (1201090012539150). The family's note now sources that row as well, so its quantity and labels open a sources list, and the cell shows the note's 24,73,222 units.
+- The check now opens that list. It finds the note and the statement's own 2,80,67,435.434, then follows the statement link, so the page-5 highlight and the Monitor's return-state walk test the same document as before.
+- `check-navigation-state.mjs` picked "Kotak Arbitrage Fund" from the holdings search. Kotak's folios add the Regular plan, so it now picks the Direct plan the walk links to.
+- All four scripts after `check-source-trace` in that CI step pass against a build carrying Kotak's delivery.
+
+### Stage 10kd — EVERY HOLDING AGAINST ITS OWN INDEX, ON ITS OWN MONEY
+
+*"Map a benchmark to every holding by what it is … if the investment in a portfolio holding is in tranches then we need to show benchmark return also based on tranches investment in the same magnitude and time period."*
+
+- `src/lib/holdingBenchmark.ts` picks one index per Monitor row. A mandate takes the benchmark its manager's report prints (`BOOK_ACCOUNT_RETURNS`: BSE 500 TRI, N50TRI …, price version). A listed share takes AMFI's size class from its 30 Jun 2026 list (`src/data/amfiMarketCap.json`, `npm run build-amfi-market-cap`): large → Nifty 50, mid → Midcap 150, small → Smallcap 250. The ISIN comes from the statement, else from the verified exchange instrument. An SME-platform share is small cap. A main-board listing after the list is ranked on the list's floors by its quote's market value, else the Nifty 500. A fund takes its SEBI category from its name. Unlisted shares and private funds take the Nifty 500. Cash, arbitrage, hybrid and debt lines name the index they would need and show no figure.
+- The index figure sits under the holding's in each return cell (`components/HoldingBenchmark.tsx`, `inline-block`, so the cell's text stays one line). It uses the row's own dated money: `RowCapital.legs` keeps each line's flows and close, and each payment buys the index on its own day. HPR is the index gain over the money paid in. XIRR/CAGR is the index's money-weighted rate over the same flows. YTD from a dated value is the index's move over the same window. A row whose purchases are not all dated shows `—`, and the hover gives the reason. Histories come through `/api/prices` with the name check.
+- Mapped on today's book: 159 shares (14 large, 13 mid, 124 small, 8 unranked/broad), 30 funds/AIFs to an index, 56 unlisted to the Nifty 500, 33 cash/arbitrage/debt/hybrid lines with a named reason.
+
+### Stage 10ke — HELIOS'S 3 NOVEMBER UPLOADS LAND, AND ONE FILE NO LONGER HOLDS ITS BATCH
 
 - The client's four Helios statements (Ajay 10355977 and 10056128, Ankita 10056154, Bharat 10063876; all as of 3 Nov 2026) were held in the statement inbox with "needs a full reading". The rapid reader found a `READ_GAP` on Ankita's and Bharat's folios: `transaction-type-not-declared`.
 - Cause: CAMS prints its job reference (`EISC-…(I)-…--1031`) up the page margin. The layout joined it to the 04/06/2025 Net Purchase row, the anchored row pattern missed, and `mfPurchaseFlows` withheld the whole dated record. It now cuts that reference before matching, as `mutualFundFolio`'s `furnitureFree` already did. A real figure after the balance still withholds.

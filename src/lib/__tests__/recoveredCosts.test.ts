@@ -21,7 +21,7 @@ const near = (got: number | null | undefined, want: number) =>
 // and Aarti's Kotak Multi Cap units on their Motilal demats are the units Kotak
 // folios 7111389 and 5372722 report once that delivery is in the book. Ankita's
 // and Bharat's Helios units are the units Helios folios 10056154 and 10063876
-// report from 3 Nov 2026, rematerialised from those demats (Stage 10kd).
+// report from 3 Nov 2026, rematerialised from those demats (Stage 10ke).
 const ownerOf = (id: string) => BOOK_ACCOUNTS.find(a => a.accountId === id)?.ownerId;
 const FOLIO_COSTED_DEMATS = [["motilal-oswal-financial-services-demat-1201090012539150", "INF174KA1HV3", 4183009.836],
   ["motilal-oswal-financial-services-demat-1201090012838335", "INF174KA1HV3", 612631.862],
@@ -155,7 +155,7 @@ for (const [account, first, last, lots] of [['12539150','2025-03-06','2026-03-23
 }
 // Ankita's Helios units were costed off the review on her demat (₹7,24,03,187.18)
 // until her folio 10056154 reported them on 3 Nov 2026 at its own printed cost
-// (Stage 10kd): the demat row gives way, the folio's figure stands.
+// (Stage 10ke): the demat row gives way, the folio's figure stands.
 assert.equal(funds.some(p=>p.accountId.endsWith('12838316')&&p.isin==='INF0R8701046'),!costedAtFolio.some(([a])=>a.endsWith('12838316')));
 if (costedAtFolio.some(([a])=>a.endsWith('12838316'))) near(BOOK_POSITIONS.find(p=>p.accountId==='helios-mutual-fund-10056154'&&p.isin==='INF0R8701046')!.costBasis!,72400000);
 else near(fp('12838316','INF0R8701046').costBasis,72403187.18);

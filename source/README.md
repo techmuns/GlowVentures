@@ -50,7 +50,7 @@ PAN; a one-off CI run opened it with the saved statement passwords (Stage 10hx),
 every run since reads its archived page text (`providers/franklinAif.mjs`).
 
 `november-2026/` holds the client's four 3 November CAMS account statements for
-Helios Mutual Fund, uploaded on the Statement Library and held there (Stage 10kd):
+Helios Mutual Fund, uploaded on the Statement Library and held there (Stage 10ke):
 Ajay's folios 10355977 and 10056128 (with Aarti), and two folios new to the book,
 Ankita's 10056154 and Bharat's 10063876 (with Ankita). The new folios hold exactly
 the Helios units that Ankita's and Bharat's Motilal demats printed on 31 July,
