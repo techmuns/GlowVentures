@@ -139,7 +139,7 @@
      ],
      "commit": "575048301935c7778a89fe959cd0598c01a2136c",
      "run": "https://github.com/techmuns/GlowVentures/actions/runs/41610958120",
-     "updatedAt": "2026-11-03T09:34:36.845Z",
+     "updatedAt": "2026-11-03T09:34:39.512Z",
      "neverArrived": null,
      "branch": "codex/statement-delivery-ecb403e0dfc2b34b",
      "pullRequest": null,
@@ -164,7 +164,7 @@
        "revision": "9b7171d7444aae04e8ee00e8d85f68c6509829ead8749ab228cf31be9cbb561f"
       }
      ],
-     "publicationDetail": "Publication checks are running: https://github.com/techmuns/GlowVentures/pull/316"
+     "publicationDetail": "PR creation will resume from the saved branch: GitHub publication failed: pull request create failed: GraphQL: GitHub Actions is not permitted to create or approve pull requests (createPullRequest)"
     }
    ]
   },
