@@ -1,0 +1,139 @@
+{
+ "name": "sectors",
+ "rows": [
+  [
+   "rank",
+   "security",
+   "sector",
+   "marketValue",
+   "pctAssets"
+  ],
+  [
+   "CDGS CONSUMER",
+   "738,150",
+   "6.47%"
+  ],
+  [
+   "1",
+   "V MART RETAIL LIMITED",
+   "DIS GOODS /"
+  ],
+  [
+   "SERVICES"
+  ],
+  [
+   "2",
+   "Eimco Elecon India Limited",
+   "INDUSTRIALS",
+   "750,820",
+   "6.58%"
+  ],
+  [
+   "3",
+   "Elecon Engineering Company Limited",
+   "INDUSTRIALS",
+   "876,500",
+   "7.68%"
+  ],
+  [
+   "4",
+   "CHEMFAB ALKALIS LIMITED",
+   "CHEMICALS",
+   "297,800",
+   "2.61%"
+  ],
+  [
+   "5",
+   "ARVIND FASHIONS LIMITED",
+   "OTHERS",
+   "1,458,200",
+   "12.78%"
+  ],
+  [
+   "6",
+   "SANSERA ENGINEERING LIMITED",
+   "OTHERS",
+   "831,480",
+   "7.29%"
+  ],
+  [
+   "SASKEN COMMUNICATION",
+   "INFORMATION",
+   "271,237",
+   "2.38%"
+  ],
+  [
+   "7"
+  ],
+  [
+   "TECHNOLOGIES LTD.",
+   "TECHNOLOGY"
+  ],
+  [
+   "8",
+   "DCW LIMITED",
+   "BASIC MATERIALS",
+   "129,870",
+   "1.14%"
+  ],
+  [
+   "9",
+   "INDIAN METALS AND FERRO ALLOYS LTD. BASIC MATERIALS",
+   "1,874,250",
+   "16.43%"
+  ],
+  [
+   "10",
+   "JAYASWAL NECO INDUSTRIES LTD.",
+   "BASIC MATERIALS",
+   "2,066,780",
+   "18.12%"
+  ],
+  [
+   "11",
+   "KIRLOSKAR FERROUS INDUSTRIES LTD.",
+   "BASIC MATERIALS",
+   "1,283,821",
+   "11.25%"
+  ],
+  [
+   "12",
+   "MANALI PETROCHEMICAL LTD.",
+   "BASIC MATERIALS",
+   "719,900",
+   "6.31%"
+  ],
+  [
+   "Cash and",
+   "108,662",
+   "0.95%"
+  ],
+  [
+   "13",
+   "Cash"
+  ],
+  [
+   "Equivalent"
+  ],
+  [
+   "Dividend / Interest",
+   "1,000",
+   "0.01%"
+  ],
+  [
+   "14",
+   "Dividend / Interest receivable"
+  ],
+  [
+   "receivable"
+  ],
+  [
+   "Total",
+   "11,408,470",
+   "100%"
+  ],
+  [
+   "For further queries related to the portfolio please contact: Nirav Parikh | email:"
+  ]
+ ]
+}

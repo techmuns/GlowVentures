@@ -229,6 +229,31 @@ ok("both sides kept", gl && gl.a.value === 5957554 && gl.b.value === 6744704,
    JSON.stringify(gl));
 ok("precedence named, not applied", gl?.authoritative === "appraisal", String(gl?.authoritative));
 
+// ── 3a. CURRENT PORTFOLIO beside its APPRAISAL, no dividend statement ──────
+// Molecule's 2 November delivery (Stage 10kc): CURRENT PORTFOLIO folds Elecon's
+// 1,000 outstanding dividend into its market value and prints cost to the
+// rupee; the appraisal prints the dividend as accrued income and keeps paise.
+{
+  const elecon = (over) => makeHolding({ security: "Elecon Engineering", assetClass: "Equity", quantity: 2000, marketPrice: 438.25, ...over });
+  const appraisal = mkDoc({ docKey: "m-appraisal", reportType: "appraisal",
+    holdings: [elecon({ totalCost: 915402.34, accruedIncome: 1000 })],
+    totals: makeTotals({ equityMarketValue: 877500 }) });
+  const current = mkDoc({ docKey: "m-current", reportType: "holdings",
+    holdings: [elecon({ totalCost: 915402, printed: { marketValue: 877500 } })],
+    totals: makeTotals({ equityMarketValue: 877500 }) });
+  const rr = reconcile([appraisal, current]);
+  const cp = rr.rowSumChecks.find((c) => c.docKey === "m-current" && c.check === "equity market value");
+  eq("current portfolio row sum is explained by the appraisal's accrual", cp?.severity ?? null, "explained");
+  ok("the cause names the appraisal", /portfolio appraisal/.test(cp?.cause ?? ""), cp?.cause);
+  const cost = rr.crossReportDeltas.find((d) => d.field === "holding.totalCost");
+  eq("cost to the rupee vs to the paisa is rounding", cost?.severity ?? null, "rounding");
+  const off = reconcile([appraisal, mkDoc({ docKey: "m-current", reportType: "holdings",
+    holdings: [elecon({ totalCost: 915402, printed: { marketValue: 879500 } })],
+    totals: makeTotals({ equityMarketValue: 879500 }) })]);
+  eq("a gap the accrual does not explain stays material",
+    off.rowSumChecks.find((c) => c.docKey === "m-current" && c.check === "equity market value")?.severity ?? null, "material");
+}
+
 // ── 3b. Derived-vs-printed deltas are reported ─────────────────────────────
 {
   // The real Goldstandard case: Sundaram Finance is printed at 4.29% of assets

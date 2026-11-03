@@ -11722,14 +11722,199 @@
   ]
  },
  {
-  "docKey": "v-e-c-assago-capital-management-llp-128005-unknown-bank-book",
+  "docKey": "molecule-ventures-llp-7810404-2026-11-02-bank-book",
+  "provider": "Molecule Ventures LLP",
+  "accountNo": "7810404",
+  "owner": "AJAY JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-11-02",
+  "reportType": "bank-book",
+  "sourcePath": "source/_extracted/uploads-2026-11-03/Molecule Ventures LLP/Re__Urgent_Request_for_Transaction_Statement,_Bank_Book_&_Portfolio_Appraisal_Report/Z595_7810404_BankBook178CT.pdf",
+  "pages": 17,
+  "sections": [
+   "bankBook",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "molecule-ventures-llp-7810404-2026-11-02-bank-book",
+  "label": "Molecule Ventures LLP · 7810404 · bank-book",
+  "fy": "2026-11-02",
+  "source": "source/_extracted/uploads-2026-11-03/Molecule Ventures LLP/Re__Urgent_Request_for_Transaction_Statement,_Bank_Book_&_Portfolio_Appraisal_Report/Z595_7810404_BankBook178CT.pdf",
+  "sheets": [
+   {
+    "key": "bankBook",
+    "name": "bank-book",
+    "rows": 307,
+    "cols": 10
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 17,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "molecule-ventures-llp-7810404-2026-11-02-holdings",
+  "provider": "Molecule Ventures LLP",
+  "accountNo": "7810404",
+  "owner": "AJAY JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-11-02",
+  "reportType": "holdings",
+  "sourcePath": "source/_extracted/uploads-2026-11-03/Molecule Ventures LLP/Re__Urgent_Request_for_Transaction_Statement,_Bank_Book_&_Portfolio_Appraisal_Report/Z595_7810404_CurrentPortfolio2086CT.pdf",
+  "pages": 3,
+  "sections": [
+   "currentPortfolio",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "molecule-ventures-llp-7810404-2026-11-02-holdings",
+  "label": "Molecule Ventures LLP · 7810404 · holdings",
+  "fy": "2026-11-02",
+  "source": "source/_extracted/uploads-2026-11-03/Molecule Ventures LLP/Re__Urgent_Request_for_Transaction_Statement,_Bank_Book_&_Portfolio_Appraisal_Report/Z595_7810404_CurrentPortfolio2086CT.pdf",
+  "sheets": [
+   {
+    "key": "currentPortfolio",
+    "name": "current-portfolio",
+    "rows": 31,
+    "cols": 12
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 3,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "molecule-ventures-llp-7810404-2026-11-02-appraisal",
+  "provider": "Molecule Ventures LLP",
+  "accountNo": "7810404",
+  "owner": "AJAY JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-11-02",
+  "reportType": "appraisal",
+  "sourcePath": "source/_extracted/uploads-2026-11-03/Molecule Ventures LLP/Re__Urgent_Request_for_Transaction_Statement,_Bank_Book_&_Portfolio_Appraisal_Report/Z595_7810404_PortfolioAppraisal675CT.pdf",
+  "pages": 1,
+  "sections": [
+   "holdings",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "molecule-ventures-llp-7810404-2026-11-02-appraisal",
+  "label": "Molecule Ventures LLP · 7810404 · appraisal",
+  "fy": "2026-11-02",
+  "source": "source/_extracted/uploads-2026-11-03/Molecule Ventures LLP/Re__Urgent_Request_for_Transaction_Statement,_Bank_Book_&_Portfolio_Appraisal_Report/Z595_7810404_PortfolioAppraisal675CT.pdf",
+  "sheets": [
+   {
+    "key": "holdings",
+    "name": "holdings",
+    "rows": 28,
+    "cols": 9
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "molecule-ventures-llp-7810404-2026-11-02-fact-sheet",
+  "provider": "Molecule Ventures LLP",
+  "accountNo": "7810404",
+  "owner": "AJAY JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": "GROWTH",
+  "asOf": "2026-11-02",
+  "reportType": "fact-sheet",
+  "sourcePath": "source/_extracted/uploads-2026-11-03/Molecule Ventures LLP/Re__Urgent_Request_for_Transaction_Statement,_Bank_Book_&_Portfolio_Appraisal_Report/Z595_7810404_PortFolioFactSheet6020CT.pdf",
+  "pages": 1,
+  "sections": [
+   "sectors",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "molecule-ventures-llp-7810404-2026-11-02-fact-sheet",
+  "label": "Molecule Ventures LLP · 7810404 · fact-sheet",
+  "fy": "2026-11-02",
+  "source": "source/_extracted/uploads-2026-11-03/Molecule Ventures LLP/Re__Urgent_Request_for_Transaction_Statement,_Bank_Book_&_Portfolio_Appraisal_Report/Z595_7810404_PortFolioFactSheet6020CT.pdf",
+  "sheets": [
+   {
+    "key": "sectors",
+    "name": "sectors",
+    "rows": 25,
+    "cols": 5
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "molecule-ventures-llp-7810404-2026-11-02-transaction-statement",
+  "provider": "Molecule Ventures LLP",
+  "accountNo": "7810404",
+  "owner": "AJAY JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-11-02",
+  "reportType": "transaction-statement",
+  "sourcePath": "source/_extracted/uploads-2026-11-03/Molecule Ventures LLP/Re__Urgent_Request_for_Transaction_Statement,_Bank_Book_&_Portfolio_Appraisal_Report/Z595_7810404_TransactionStatement_India94CT.pdf",
+  "pages": 3,
+  "sections": [
+   "transactions",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "molecule-ventures-llp-7810404-2026-11-02-transaction-statement",
+  "label": "Molecule Ventures LLP · 7810404 · transaction-statement",
+  "fy": "2026-11-02",
+  "source": "source/_extracted/uploads-2026-11-03/Molecule Ventures LLP/Re__Urgent_Request_for_Transaction_Statement,_Bank_Book_&_Portfolio_Appraisal_Report/Z595_7810404_TransactionStatement_India94CT.pdf",
+  "sheets": [
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 50,
+    "cols": 10
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 3,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-bank-book",
   "provider": "V.E.C Assago Capital Management LLP",
   "accountNo": "128005",
   "owner": "AJAY JAISINGHANI",
   "ownerId": "ajay-jaisinghani",
   "familyGroup": null,
   "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
-  "asOf": null,
+  "asOf": "2026-07-06",
   "reportType": "bank-book",
   "sourcePath": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_BankBook178OT (1).pdf",
   "pages": 3,
@@ -11739,9 +11924,9 @@
   ],
   "status": "ok",
   "warnings": 0,
-  "fileKey": "v-e-c-assago-capital-management-llp-128005-unknown-bank-book",
+  "fileKey": "v-e-c-assago-capital-management-llp-128005-2026-07-06-bank-book",
   "label": "V.E.C Assago Capital Management LLP · 128005 · bank-book",
-  "fy": "",
+  "fy": "2026-07-06",
   "source": "source/_extracted/VEC - AJAY JAISINGHANI/VECBES0004_145052_BankBook178OT (1).pdf",
   "sheets": [
    {
@@ -12159,14 +12344,14 @@
   ]
  },
  {
-  "docKey": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book",
+  "docKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-bank-book",
   "provider": "V.E.C Assago Capital Management LLP",
   "accountNo": "128004",
   "owner": "ANKITA BHARAT JAISINGHANI",
   "ownerId": "ankita-jaisinghani",
   "familyGroup": null,
   "strategy": "V.E.C ASSAGO Small and Mid-Cap Growth",
-  "asOf": null,
+  "asOf": "2026-07-06",
   "reportType": "bank-book",
   "sourcePath": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_BankBook178OT.pdf",
   "pages": 3,
@@ -12176,9 +12361,9 @@
   ],
   "status": "ok",
   "warnings": 0,
-  "fileKey": "v-e-c-assago-capital-management-llp-128004-unknown-bank-book",
+  "fileKey": "v-e-c-assago-capital-management-llp-128004-2026-07-06-bank-book",
   "label": "V.E.C Assago Capital Management LLP · 128004 · bank-book",
-  "fy": "",
+  "fy": "2026-07-06",
   "source": "source/_extracted/VEC - ANKITA JAISINGHANI /VECBES0003_145038_BankBook178OT.pdf",
   "sheets": [
    {
