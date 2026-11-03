@@ -9,60 +9,60 @@
      "name": "BANDHAN AJAY FROM 2-APR-26 TO 14-OCT-26.pdf",
      "size": 337900,
      "blob": "aa5f145affdb3c4a7408486af87f937dc2df1e46",
-     "status": "held",
-     "hold": "check-failed",
-     "reason": "Publication held (needs_review): READ_GAP ×4: The reader must account for the whole statement before publication. · UNKNOWN_FORMAT ×2: No verified reader recognizes this statement format. · EMPTY_EXTRACTION ×2: No financial records or measured empty portfolio were read. · RECONCILIATION_FAILED: rowSumChecks: {\"accountNo\":\"8652064\",\"accruedIncome\":null,\"asOf\":\"2026-10-14\",\"cause\":null,\"check\":\"total market value (incl. cash)\",\"delta\":-431304376.61,\"docKey\":\"bandhan-mutual-fund-8652064-2026-10-14-holdings\",\"matches\":false,\"outstandingDividend\":null,\"printedTotal\":431304376.61,\"provider\":\"Bandha…",
+     "status": "queued",
+     "hold": null,
+     "reason": null,
      "landedAs": null,
      "providers": null,
      "docKeys": null,
      "commit": null,
-     "run": "https://github.com/techmuns/GlowVentures/actions/runs/41701378416",
-     "updatedAt": "2026-11-03T19:22:05.596Z",
+     "run": null,
+     "updatedAt": "2026-11-03T20:13:21.246Z",
      "processor": null
     },
     {
      "name": "BANDHAN AARTI FROM 8-APR-26 TO 30-SEP-26.pdf",
      "size": 323572,
      "blob": "749e075826414d282bdb90fe492f5e9c229e0169",
-     "status": "held",
-     "hold": "check-failed",
-     "reason": "Publication held (needs_review): READ_GAP ×4: The reader must account for the whole statement before publication. · UNKNOWN_FORMAT ×2: No verified reader recognizes this statement format. · EMPTY_EXTRACTION ×2: No financial records or measured empty portfolio were read. · RECONCILIATION_FAILED: rowSumChecks: {\"accountNo\":\"8652064\",\"accruedIncome\":null,\"asOf\":\"2026-10-14\",\"cause\":null,\"check\":\"total market value (incl. cash)\",\"delta\":-431304376.61,\"docKey\":\"bandhan-mutual-fund-8652064-2026-10-14-holdings\",\"matches\":false,\"outstandingDividend\":null,\"printedTotal\":431304376.61,\"provider\":\"Bandha…",
+     "status": "queued",
+     "hold": null,
+     "reason": null,
      "landedAs": null,
      "providers": null,
      "docKeys": null,
      "commit": null,
-     "run": "https://github.com/techmuns/GlowVentures/actions/runs/41701378416",
-     "updatedAt": "2026-11-03T19:22:05.596Z",
+     "run": null,
+     "updatedAt": "2026-11-03T20:13:21.246Z",
      "processor": null
     },
     {
      "name": "BANDHAN ANKITA FROM 24-JAN-26 TO 30-SEP-26.pdf",
      "size": 323262,
      "blob": "aff8a1422848111356af97ec7ff557c7c8854945",
-     "status": "held",
-     "hold": "check-failed",
-     "reason": "Publication held (needs_review): READ_GAP ×4: The reader must account for the whole statement before publication. · UNKNOWN_FORMAT ×2: No verified reader recognizes this statement format. · EMPTY_EXTRACTION ×2: No financial records or measured empty portfolio were read. · RECONCILIATION_FAILED: rowSumChecks: {\"accountNo\":\"8652064\",\"accruedIncome\":null,\"asOf\":\"2026-10-14\",\"cause\":null,\"check\":\"total market value (incl. cash)\",\"delta\":-431304376.61,\"docKey\":\"bandhan-mutual-fund-8652064-2026-10-14-holdings\",\"matches\":false,\"outstandingDividend\":null,\"printedTotal\":431304376.61,\"provider\":\"Bandha…",
+     "status": "queued",
+     "hold": null,
+     "reason": null,
      "landedAs": null,
      "providers": null,
      "docKeys": null,
      "commit": null,
-     "run": "https://github.com/techmuns/GlowVentures/actions/runs/41701378416",
-     "updatedAt": "2026-11-03T19:22:05.596Z",
+     "run": null,
+     "updatedAt": "2026-11-03T20:13:21.246Z",
      "processor": null
     },
     {
      "name": "BANDHAN ANKITA FROM 7-APR-26 TO 30-SEP-26.pdf",
      "size": 323960,
      "blob": "fd1b70f82a96d039e60ef173b97be0a2ed1bc4d8",
-     "status": "held",
-     "hold": "check-failed",
-     "reason": "Publication held (needs_review): READ_GAP ×4: The reader must account for the whole statement before publication. · UNKNOWN_FORMAT ×2: No verified reader recognizes this statement format. · EMPTY_EXTRACTION ×2: No financial records or measured empty portfolio were read. · RECONCILIATION_FAILED: rowSumChecks: {\"accountNo\":\"8652064\",\"accruedIncome\":null,\"asOf\":\"2026-10-14\",\"cause\":null,\"check\":\"total market value (incl. cash)\",\"delta\":-431304376.61,\"docKey\":\"bandhan-mutual-fund-8652064-2026-10-14-holdings\",\"matches\":false,\"outstandingDividend\":null,\"printedTotal\":431304376.61,\"provider\":\"Bandha…",
+     "status": "queued",
+     "hold": null,
+     "reason": null,
      "landedAs": null,
      "providers": null,
      "docKeys": null,
      "commit": null,
-     "run": "https://github.com/techmuns/GlowVentures/actions/runs/41701378416",
-     "updatedAt": "2026-11-03T19:22:05.596Z",
+     "run": null,
+     "updatedAt": "2026-11-03T20:13:21.246Z",
      "processor": null
     }
    ]
@@ -204,9 +204,9 @@
      "name": "kotak statement apr 25 to nov 26 (ankita,ajay,aarti,bharat) (2).zip",
      "size": 2773153,
      "blob": "65f2477bd296a6fd5b8f7be2b1f99bac32386a39",
-     "status": "processing",
+     "status": "queued",
      "hold": null,
-     "reason": "Your statement is saved. Processing will continue automatically.",
+     "reason": null,
      "landedAs": [
       "source/uploads-2026-11-03/Kotak Mahindra Mutual Fund/kotak statement apr 25 to nov 26 (ankita,ajay,aarti,bharat) (2).zip"
      ],
@@ -219,34 +219,17 @@
       "kotak-mahindra-mutual-fund-7125319-2026-11-02-holdings",
       "kotak-mahindra-mutual-fund-7125555-2026-11-02-holdings"
      ],
-     "commit": "18d1f545247e94b2f5e76cc808fd7cffa6afda0f",
-     "run": "https://github.com/techmuns/GlowVentures/actions/runs/41615314571",
-     "updatedAt": "2026-11-03T19:22:05.596Z",
+     "commit": null,
+     "run": null,
+     "updatedAt": "2026-11-03T20:13:21.247Z",
      "neverArrived": null,
-     "branch": "codex/statement-delivery-5cd73c227f0c9b3e",
+     "branch": null,
      "pullRequest": null,
-     "baseCommit": "9ca99ca29dad6d1b97fb678412c0133408d9612d",
-     "archiveRevision": "c9df81d340dfd92ece0847653961b6ce1d3e7a55d87f912b5afceee213b1fe59",
-     "ciDispatched": false,
-     "documentVersions": [
-      {
-       "document": "kotak-mahindra-mutual-fund-5372722-2026-11-02-holdings",
-       "revision": "73eda93496f8dc9bc2fd448955e06d84bc6732cb9d930ffd5624bf4870d6a641"
-      },
-      {
-       "document": "kotak-mahindra-mutual-fund-7111389-2026-11-02-holdings",
-       "revision": "d7c33c3c16cc19028abc04b6877f69b6c33494e62a34d68f56ddfde35f952c5f"
-      },
-      {
-       "document": "kotak-mahindra-mutual-fund-7125319-2026-11-02-holdings",
-       "revision": "409aa1b7b5fb1d8d716ef6fe57a20935e289da9358db828c5906227539fe8212"
-      },
-      {
-       "document": "kotak-mahindra-mutual-fund-7125555-2026-11-02-holdings",
-       "revision": "9b7171d7444aae04e8ee00e8d85f68c6509829ead8749ab228cf31be9cbb561f"
-      }
-     ],
-     "publicationDetail": "Publication check will retry: GitHub publication failed: pull request create failed: GraphQL: GitHub Actions is not permitted to create or approve pull requests (createPullRequest)"
+     "baseCommit": null,
+     "archiveRevision": null,
+     "ciDispatched": null,
+     "documentVersions": null,
+     "publicationDetail": null
     }
    ]
   },
