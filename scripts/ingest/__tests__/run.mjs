@@ -18,6 +18,7 @@ const SUITES = [
   { name: "dematAccounts", file: "dematAccounts.test.mjs", required: true },
   // The LLP holding statements and the family's note on them (Stage 10jq).
   { name: "llpStatements", file: "llpStatements.test.mjs", required: true },
+  { name: "familyAdvisedBalances", file: "familyAdvisedBalances.test.mjs", required: true },
   { name: "coverage", file: "returnCoverage.test.mjs", required: true },
   { name: "latestReturns", file: "accountReturnRecords.test.mjs", required: true },
   { name: "parseNum", file: "parseNum.test.mjs", required: true },

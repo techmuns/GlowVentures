@@ -644,6 +644,11 @@ export type Position = {
      * and the date and number of trades that took it to `rolledForward.quantity`.
      */
     rolled?: { statementQuantity: number; through: string; trades: number; reportAsOf: string };
+    /**
+     * Set where the family's note of its liquid holdings carries the units to its
+     * own date (Stage 10ka, `AdvisedBalance`): the recorded count and the note's.
+     */
+    advised?: { statementQuantity: number; on: string; amount: number; source: string };
   };
 };
 
@@ -1157,6 +1162,29 @@ export type ShareRoll = {
   costOfUnitsSold: number;
   trades: number;
   report: { path: string; asOf: string; sheet: string; rows: number[] };
+};
+
+/**
+ * A MOTILAL DEMAT FUND BALANCE CARRIED TO THE FAMILY'S NOTE (Stage 10ka) —
+ * `BOOK_ADVISED_BALANCES`. The note prints a rupee value per member and fund;
+ * `quantity` is that value at AMFI's NAV of `on`, accepted only where it ties to
+ * the paisa, and it replaces `recordQuantity` (the statement's count of
+ * `recordAsOf`) on the LIVE basis only.
+ */
+export type AdvisedBalance = {
+  accountId: string;
+  isin: string;
+  /** The note's own name for the fund. */
+  security: string;
+  mode: "demat";
+  recordQuantity: number;
+  recordAsOf: string;
+  recordKind: string;
+  quantity: number;
+  on: string;
+  amount: number;
+  nav: number;
+  source: string;
 };
 
 /**

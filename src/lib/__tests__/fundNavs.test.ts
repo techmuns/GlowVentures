@@ -29,7 +29,7 @@ import type { ActionFeed } from "../corporateActions";
 import { validActionFeed } from "../../../shared/corporateActions.mjs";
 import { isCashEquivalent } from "../analytics";
 import { BOOK_FUND_NAVS } from "@/data/fundNavs";
-import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_SHARE_MOVEMENTS, BOOK_CAPITAL_MOVES } from "@/data/glowData";
+import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_SHARE_MOVEMENTS, BOOK_CAPITAL_MOVES, BOOK_ADVISED_BALANCES } from "@/data/glowData";
 import NSE_SYMBOLS from "@/data/nseSymbols.json";
 import { UPSTOX_INSTRUMENTS } from "../../../shared/upstoxInstruments.mjs";
 import type { Position } from "../types";
@@ -212,9 +212,12 @@ ok("every row is a cash equivalent: the switch values the family's cash and noth
 /** THE UNITS ARE THE DEPOSITORY'S, THE PRICE IS AMFI'S, AND NOTHING ELSE IS. */
 const navByIsin = new Map(BOOK_FUND_NAVS.map((e) => [e.isin, e]));
 const blocks = Object.values(BOOK_SHARE_MOVEMENTS);
+// Stage 10ka: the family's 21 Oct note carries a block's own closing to its count.
+const unitsOf = (w: (typeof blocks)[number]) => BOOK_ADVISED_BALANCES.find((b) => b.accountId === w.accountId
+  && b.isin === w.isin && b.recordQuantity === w.closing)?.quantity ?? w.closing;
 const offUnits = DEP.filter((p) => {
   const w = blocks.filter((b) => b.accountId === p.accountId && b.isin === p.isin);
-  return w.length !== 1 || w[0].reason !== null || w[0].closing !== p.quantity;
+  return w.length !== 1 || w[0].reason !== null || unitsOf(w[0]) !== p.quantity;
 });
 ok("every row's units are the depository's own closing balance, from a block that reconciled",
   offUnits.length === 0, offUnits.map((p) => p.securityKey).join("; "));
@@ -309,7 +312,7 @@ ok("...and no ETF a depository reports is valued unless it is cash — its units
   FUNDS.every((p) => isCashEquivalent(p) || !isEtfIsin(p.isin)));
 const offUnitsF = FUNDS.filter((p) => {
   const w = blocks.filter((b) => b.accountId === p.accountId && b.isin === p.isin);
-  return w.length !== 1 || w[0].reason !== null || w[0].closing !== p.quantity;
+  return w.length !== 1 || w[0].reason !== null || unitsOf(w[0]) !== p.quantity;
 });
 ok("every fund row's units are the depository's own reconciled closing balance",
   offUnitsF.length === 0, offUnitsF.map((p) => p.securityKey).join("; "));
@@ -694,7 +697,12 @@ ok("the older cached NAV cannot overwrite a newer fund statement",
   !!newerStatement && applyFundNavs([newerStatement])[0].marketValue === newerStatement.marketValue);
 ok("other owners' Bandhan units remain valued", unpricedStatementUnits().some(p => p.isin === "INF194K01V89" && p.accountId !== custody));
 ok("a separate redeemed Motilal folio does not erase Ajay's demat arbitrage",
-  depositoryFundHoldings().some(p => p.accountId === custody && p.isin === "INF247L01ED1" && p.quantity === 28067435.434));
+  depositoryFundHoldings().some(p => p.accountId === custody && p.isin === "INF247L01ED1"
+    && p.depositoryUnits?.advised?.statementQuantity === 28067435.434));
+ok("the family's 21 Oct note carries that arbitrage to its own units, named on the row (Stage 10ka)",
+  depositoryFundHoldings().some(p => p.accountId === custody && p.isin === "INF247L01ED1" && p.quantity === 2473221.627
+    && p.depositoryUnits?.advised?.on === "2026-10-21"
+    && /carried from those 2,80,67,435.434 units to 2026-10-21/.test(describeDepositoryUnits(p.depositoryUnits!))));
 
 console.log(`\n${pass} passed, ${fails.length} failed`);
 if (fails.length) { for (const f of fails) console.log(`  FAILED: ${f}`); process.exit(1); }

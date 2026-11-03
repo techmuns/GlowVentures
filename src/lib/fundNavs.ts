@@ -44,12 +44,12 @@
  * a conversion.
  */
 import { BOOK_FUND_NAVS, FUND_NAV_AS_OF, type FundNav } from "@/data/fundNavs";
-import { BOOK_ACCOUNTS, BOOK_CAPITAL_MOVES, BOOK_POSITIONS, BOOK_RECOVERED_COSTS, BOOK_SHARE_MOVEMENTS, BOOK_SHARE_ROLLS, BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
+import { BOOK_ACCOUNTS, BOOK_ADVISED_BALANCES, BOOK_CAPITAL_MOVES, BOOK_POSITIONS, BOOK_RECOVERED_COSTS, BOOK_SHARE_MOVEMENTS, BOOK_SHARE_ROLLS, BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
 import { isCashEquivalent } from "./analytics";
 import { composeSchemeLabel, holdingLabel, schemeNameFor } from "./schemeLabel";
 import { securityLabel } from "./securityLabel";
 import { symbolForKey } from "./quotes";
-import type { Account, CapitalMove, Position, ShareMovement, ShareRoll, UnvaluedStatementHolding } from "./types";
+import type { Account, AdvisedBalance, CapitalMove, Position, ShareMovement, ShareRoll, UnvaluedStatementHolding } from "./types";
 import { fifoReturnPct } from "../../shared/fifo.mjs";
 
 import { applyRecoveredCost } from "../../shared/recoveredCosts.mjs";
@@ -162,6 +162,19 @@ export function isArbitrageFund(p: Pick<Position, "securityKey"> & { isin?: stri
 export const VALUE_DEPOSITORY_CASH_UNITS = true;
 export const VALUE_DEPOSITORY_FUND_UNITS = true;
 
+/**
+ * THE FAMILY'S NOTE OF 21 OCT 2026 (Stage 10ka), where it carries this very
+ * recorded balance: the same account, the same ISIN and the same units the
+ * record holds. The note's units then stand in for the record's on the live
+ * basis; the record's own count is kept on `depositoryUnits.advised`.
+ */
+function advisedFor(advised: readonly AdvisedBalance[], accountId: string, isin: string, recorded: number): AdvisedBalance | null {
+  return advised.find((b) => b.accountId === accountId && b.isin.toUpperCase() === isin
+    && Math.abs(b.recordQuantity - recorded) < 0.0005) ?? null;
+}
+const advisedUnits = (b: AdvisedBalance | null, recorded: number) => b
+  ? { advised: { statementQuantity: recorded, on: b.on, amount: b.amount, source: b.source } } : {};
+
 /** AMFI files the scheme as an ETF — whose units can split, so a count and a NAV may not share a basis. */
 const isEtfNav = (e: FundNav): boolean => /\bETFs?\b/i.test(e.category ?? "");
 
@@ -238,6 +251,7 @@ export function depositoryFundHoldings(
   accounts: readonly Account[] = BOOK_ACCOUNTS,
   positions: readonly Position[] = BOOK_POSITIONS,
   movements: Readonly<Record<string, ShareMovement>> = BOOK_SHARE_MOVEMENTS,
+  advised: readonly AdvisedBalance[] = BOOK_ADVISED_BALANCES,
 ): Position[] {
   if (!VALUE_DEPOSITORY_CASH_UNITS && !VALUE_DEPOSITORY_FUND_UNITS) return [];
   const txOnly = new Set(accounts.filter((a) => a.transactionsOnly === true).map((a) => a.accountId));
@@ -266,6 +280,8 @@ export function depositoryFundHoldings(
     if (positions.some((p) => p.isin?.trim().toUpperCase() === isin
       && p.quantity !== null && Math.abs(p.quantity - closing) < 0.0005)) continue;  // gate 5
     const printed = book?.security ?? w.security ?? securityKey;
+    const note = advisedFor(advised, w.accountId, isin, closing);
+    const units = note?.quantity ?? closing;
     out.push({
       securityKey,
       // The book's ONE name for the key (#76's rule, `securityLabel`) where the
@@ -288,8 +304,8 @@ export function depositoryFundHoldings(
       // on the broker's, and this row sits in a demat.
       assetClass: /\bETFs?\b/i.test(nav.category ?? "") ? "ETF" : (book?.assetClass ?? "Mutual Fund"),
       marketSide: "listed",
-      quantity: closing,
-      marketValue: closing * nav.nav,
+      quantity: units,
+      marketValue: units * nav.nav,
       // A depository holds units and did not buy them: NO cost, never zero.
       costBasis: null,
       costUnavailable: true,
@@ -307,7 +323,7 @@ export function depositoryFundHoldings(
       positionIrrPct: null,
       navPriced: true,
       navDate: nav.date,
-      depositoryUnits: { asOf: w.periodTo ?? null, source: w.source ?? null },
+      depositoryUnits: { asOf: w.periodTo ?? null, source: w.source ?? null, ...advisedUnits(note, closing) },
     });
   }
   return out.map(p => applyRecoveredCost(p, BOOK_RECOVERED_COSTS)).sort((a, b) => b.marketValue - a.marketValue);
@@ -400,6 +416,7 @@ export function unpricedStatementUnits(
   unvalued: readonly UnvaluedStatementHolding[] = BOOK_UNVALUED_HOLDINGS,
   accounts: readonly Account[] = BOOK_ACCOUNTS,
   positions: readonly Position[] = BOOK_POSITIONS,
+  advised: readonly AdvisedBalance[] = BOOK_ADVISED_BALANCES,
 ): Position[] {
   if (!VALUE_UNPRICED_STATEMENT_UNITS) return [];
   const acc = new Map(accounts.map((a) => [a.accountId, a]));
@@ -448,6 +465,9 @@ export function unpricedStatementUnits(
     if (positions.some((p) => isinOf(p) === isin && p.quantity !== null && Math.abs(p.quantity - qty) < 0.0005
       && ownerOf(p.accountId) === owner)) continue;                                               // gate 7
     const book = positions.find((p) => p.securityKey === u.securityKey);
+    // A unit split since the statement re-bases its count; the note's is struck on today's unit already.
+    const note = factor === 1 ? advisedFor(advised, u.accountId, isin, qty) : null;
+    const units = note?.quantity ?? qty * factor;
     out.push({
       securityKey: u.securityKey,
       statementRecord: u.statementRecord,
@@ -465,8 +485,8 @@ export function unpricedStatementUnits(
       providerSector: null,
       assetClass: etf ? "ETF" : "Mutual Fund",
       marketSide: "listed",
-      quantity: qty * factor,
-      marketValue: qty * factor * nav.nav,
+      quantity: units,
+      marketValue: units * nav.nav,
       costBasis: null,
       costUnavailable: true,
       unrealizedPnL: null,
@@ -487,6 +507,7 @@ export function unpricedStatementUnits(
         ...(basis && basis.factor !== 1 ? { unitSplit: { statementQuantity: qty, factor,
           exDate: basis.actions[0].exDate, publishedIsin: basis.isin,
           source: basis.actions.map(a => a.source ?? a.sources.join(', ')).join('; ') } } : {}),
+        ...advisedUnits(note, qty),
         ...(ownRate !== null ? {
           asOf: u.asOf, source: u.statementRecord?.document ?? null, kind: "last-movement" as const,
           lastMovementRate: ownRate, lastMovementDate: u.lastMovementDate ?? null, lastMovementSide: u.lastMovementSide ?? null,
@@ -517,7 +538,9 @@ export function describeDepositoryUnits(
   const r = d.rolled;
   // Stage 10iw: the report's later exchange trades carry the statement's count.
   const base = describeUnitsBasis(d, accounts) + (!r || d.kind === "adviser-trades" ? ""
-    : `; carried from those ${units(r.statementQuantity)} units to ${r.through} by ${r.trades} exchange trade${r.trades === 1 ? "" : "s"} on MOPWM's transaction report of ${r.reportAsOf}`);
+    : `; carried from those ${units(r.statementQuantity)} units to ${r.through} by ${r.trades} exchange trade${r.trades === 1 ? "" : "s"} on MOPWM's transaction report of ${r.reportAsOf}`)
+    // Stage 10ka: the family's note of its liquid holdings carries the count to its own date.
+    + (d.advised ? `; carried from those ${units(d.advised.statementQuantity)} units to ${d.advised.on} by ${d.advised.source} (${printedRupees(d.advised.amount)})` : "");
   const s = d.unitSplit;
   if (!s) return base;
   // Stage 10hq: the count the statement printed, and the one the NAV prices.

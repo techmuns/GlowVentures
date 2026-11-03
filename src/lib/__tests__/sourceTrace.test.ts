@@ -26,13 +26,16 @@ assert.equal(sourceRecordAt(doc, '/__proto__/constructor'), undefined);
 assert.equal(sourceRecordAt(doc, '/holdings/1x'), undefined);
 
 const demat = depositoryFundHoldings().find(p => p.accountId === 'motilal-oswal-financial-services-demat-1201090012539150' && p.isin === 'INF247L01ED1')!;
-assert.ok(demat); assert.equal(demat.quantity, 28067435.434);
+// Stage 10ka: the family's 21 Oct note carries the closing to its own count; the trace keeps the statement's.
+assert.ok(demat); assert.equal(demat.quantity, 2473221.627); assert.equal(demat.depositoryUnits?.advised?.statementQuantity, 28067435.434);
 const closing = holdingSourceTrace([demat], 'quantity');
-assert.equal(closing.sources.length, 1); assert.equal(closing.sources[0].field, 'closing');
+assert.equal(closing.sources.length, 2, 'the statement and the note'); assert.equal(closing.sources[0].field, 'closing');
 assert.equal(closing.sources[0].document, demat.depositoryUnits!.source);
 assert.ok(!closing.sources[0].document!.includes('90414963315'), 'the separate redeemed AMC folio never supplies these demat units');
 const dematPages = JSON.parse(fs.readFileSync(`public/audit/${closing.sources[0].document}/pages.json`, 'utf8')).pages;
-assert.equal(sourcePage(dematPages, demat.isin!, String(demat.quantity)), 5, 'the exact closing balance follows its ISIN header across the page break');
+assert.equal(closing.sources[0].value, 28067435.434, 'the statement source points at the count the statement prints');
+assert.ok(closing.derived && closing.notes.some(n => n.includes("family's note")) && closing.sources.some(s => s.label === "The family's note of their holdings" && s.value === 28118056.68));
+assert.equal(sourcePage(dematPages, demat.isin!, String(closing.sources[0].value)), 5, 'the exact closing balance follows its ISIN header across the page break');
 const valuation = holdingSourceTrace([demat], 'marketValue');
 assert.equal(valuation.derived, true); assert.ok(valuation.sources.some(s => s.label === 'AMFI'));
 assert.ok(valuation.sources.some(s => s.document === demat.depositoryUnits!.source));
@@ -41,7 +44,7 @@ assert.ok(valuation.notes.some(n => n.includes('published price')));
 const zero = BOOK_POSITIONS.find(p => p.accountId === 'motilal-oswal-mutual-fund-90414963315')!;
 assert.equal(holdingSourceTrace([zero], 'quantity').sources[0].value, 0, 'a measured zero remains traceable');
 const aggregate = holdingSourceTrace([demat, zero], 'quantity');
-assert.equal(aggregate.derived, true); assert.equal(aggregate.sources.length, 2);
+assert.equal(aggregate.derived, true); assert.equal(aggregate.sources.length, 3, 'two statements and the note');
 const sameFile = holdingSourceTrace([bandhan, BOOK_POSITIONS.find(p => p.accountId === bandhan.accountId && p.isin === 'INF194K01V89')!], 'statement');
 assert.equal(sameFile.sources.length, 1); assert.equal(sameFile.derived, false);
 assert.equal(sameFile.sources[0].pointer, undefined, 'a common account PDF never selects an arbitrary constituent');

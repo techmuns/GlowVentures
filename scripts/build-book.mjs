@@ -31,6 +31,7 @@ import { reclassificationsFrom, carryLotsThroughSwitches, carryCostThroughSwitch
 import { tradeWindows, windowThrough, oneCopyPerTrade, holdingTradeRows, holdingTradeRecord } from "./lib/holdingTrades.mjs";
 import { PROVIDER as NSDL_DEMAT_PROVIDER } from "./ingest/providers/nsdlDemat.mjs";
 import { applyFamilyAdvice } from "./ingest/reference/familyAdvisedInvestments.mjs";
+import { adviseBalances } from "./ingest/reference/familyAdvisedBalances.mjs";
 import { PROVIDER as HDFC_NSDL_PROVIDER } from "./ingest/providers/hdfcNsdl.mjs";
 import { SEPARATE_INVESTMENTS } from "../shared/separateInvestments.mjs";
 import { KEPT_UNVALUED, keptUnvaluedFor, keptUnvaluedReason } from "../shared/keptUnvalued.mjs";
@@ -5260,12 +5261,22 @@ function build(archived, archiveCount = archived.length, references = {}) {
   for (const r of shareRolls.refused) {
     notes.push(`${r.accountId ?? r.ownerId}: the MOPWM transaction report's later trades in ${r.security} are not applied — ${r.reason}`);
   }
+  // THE FAMILY'S NOTE OF ITS LIQUID HOLDINGS (Stage 10ka) — a Motilal demat fund
+  // balance carried to the note's 21 Oct 2026 units, live basis only
+  // (`BOOK_ADVISED_BALANCES`, read by `fundNavs.ts`). The statement basis keeps the snapshot.
+  const advised = adviseBalances({ accounts, positions, unvalued: unvaluedHoldings, movements: shareMovements });
+  for (const b of advised.balances) {
+    notes.push(`${b.accountId}: ${b.security} (${b.isin}) carried from ${b.recordQuantity} on ${b.recordAsOf} (${b.recordKind}) to ${b.quantity} on ${b.on} `
+      + `by ${b.source} (₹${b.amount.toLocaleString("en-IN")} at ${b.nav}), live basis only`);
+  }
+  for (const c of advised.confirmed) notes.push(`the family's liquid-holdings note confirms ${c}`);
+  for (const r of advised.refused) notes.push(`the family's liquid-holdings note is not applied to ${r}`);
 
   return {
     accounts, positions, polycab, owners, capitalGains, accountCashFlows, entityCashFlows,
     accountReturnRecords: buildAccountReturnRecords({ accounts, accountCashFlows, byAccount,
       historicalNavs: references.historicalNavs ?? JSON.parse(fs.readFileSync(path.join(ROOT, 'scripts/ingest/reference/amfi-opening-navs.json'), 'utf8')) }),
-    capitalMoves, positionTranches, shareMovements, shareRolls: shareRolls.rolls, holdingCostRecovery,
+    capitalMoves, positionTranches, shareMovements, shareRolls: shareRolls.rolls, advisedBalances: advised.balances, holdingCostRecovery,
     // Keyed on the holdings this book carries, in key order, so the file
     // regenerates byte-identically however the accounts were walked.
     holdingTrades: Object.fromEntries(Object.keys(holdingTrades).sort()
@@ -5376,6 +5387,7 @@ export function canonicalBookValues(book) {
     BOOK_HOLDING_LOTS: book.holdingLots,
     BOOK_SHARE_MOVEMENTS: book.shareMovements,
     BOOK_SHARE_ROLLS: book.shareRolls,
+    BOOK_ADVISED_BALANCES: book.advisedBalances,
     BOOK_ENTITY_CASH_FLOWS: book.entityCashFlows,
     BOOK_ACCOUNT_RETURNS: book.accountReturns,
     BOOK_ACCOUNT_BRIDGES: book.accountBridges,
@@ -5402,7 +5414,7 @@ function emit(book) {
   L.push("// carry, and the UI renders them as an em dash. See docs/BOOK-REPORT.md for the");
   L.push("// list and what document would supply each.");
   L.push("import type {");
-  L.push("  Account, AccountBridge, AccountReturnBlock, AccountReturnCoverage, BookSummary, CapitalMove, CashFlow, Commitment,");
+  L.push("  Account, AccountBridge, AdvisedBalance, AccountReturnBlock, AccountReturnCoverage, BookSummary, CapitalMove, CashFlow, Commitment,");
   L.push("  Attribution, CorporateAction, EntityCG, FundInvestment, HoldingTrade, NavCoverage, NavPoint, Position, PositionTranches,");
   L.push("  PolycabHolding, RealisedByClass, RecoveredHoldingCost, ReviewFlow, ReviewSuperseded, ReviewWrittenOff, ShareMovement, ShareRoll, StartupInvestment, UndatedCapital, UnvaluedStatementHolding,");
   L.push('} from "@/lib/types";');
@@ -5620,6 +5632,15 @@ function emit(book) {
   L.push(" * figure keeps the statement's own units. No fund row moves a quantity.");
   L.push(" */");
   L.push(`export const BOOK_SHARE_ROLLS: ShareRoll[] = ${j(book.shareRolls)};`);
+  L.push("");
+  L.push("/**");
+  L.push(" * MOTILAL DEMAT FUND BALANCES CARRIED TO THE FAMILY'S NOTE of 21 Oct 2026");
+  L.push(" * (Stage 10ka, `scripts/ingest/reference/familyAdvisedBalances.mjs`): each line's");
+  L.push(" * units are its rupee value at AMFI's NAV of that day, tied to the paisa.");
+  L.push(" * LIVE BASIS ONLY: `fundNavs.ts` reads them; every statement-basis figure");
+  L.push(" * keeps the statement's own units.");
+  L.push(" */");
+  L.push(`export const BOOK_ADVISED_BALANCES: AdvisedBalance[] = ${j(book.advisedBalances)};`);
   L.push("");
   L.push("/**");
   L.push(" * The same flows keyed by OWNER — a person's money-weighted return is over");
