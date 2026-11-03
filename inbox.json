@@ -91,15 +91,15 @@
      "name": "Re__Urgent_Request_for_Transaction_Statement,_Bank_Book_&_Portfolio_Appraisal_Report.zip",
      "size": 291122,
      "blob": "8098f579acb82640e3ea633739907def7fcd16ef",
-     "status": "held",
-     "hold": "check-failed",
-     "reason": "Publication held (needs_review): MISSING_DATE: Financial records require a verified statement date. · RECONCILIATION_FAILED ×2: rowSumChecks: {\"accountNo\":\"7810404\",\"accruedIncome\":112470,\"asOf\":\"2026-11-02\",\"cause\":null,\"check\":\"total market value (incl. cash)\",\"delta\":-1000.34,\"docKey\":\"molecule-ventures-llp-7810404-2026-11-02-holdings\",\"matches\":false,\"outstandingDividend\":null,\"printedTotal\":11408470,\"provider\":\"Molecule Ventures LLP\",\"reportType\":\"holdings\",\"rowSum\":11407469.66,\"rowsMissingField\":0,\"rowsSummed\":14,\"severity\":\"material\"} · CROSS_RECORD_CONFLICT ×31: crossReportDeltas: {\"a…",
+     "status": "queued",
+     "hold": null,
+     "reason": null,
      "landedAs": null,
      "providers": null,
      "docKeys": null,
      "commit": null,
-     "run": "https://github.com/techmuns/GlowVentures/actions/runs/41602592187",
-     "updatedAt": "2026-11-03T08:26:42.256Z"
+     "run": null,
+     "updatedAt": "2026-11-03T11:41:50.846Z"
     }
    ]
   },
