@@ -945,3 +945,8 @@
 - The family (3 Nov 2026), on Data Audit → Transactions: *"add a column next to it, which we call as transaction type. The transaction type can only be two types, which is buy or sell, for the ease of analysis."*
 - `consolidatedSheet.ts` adds `txntype` ("Transaction type") right after "Type (as printed)", on the page and in the Excel download. Trades take their side. A capital flow that counts as Investment is Buy, and one that counts as Divestment (redemptions, withdrawals, TDS transfers out) is Sell. An open tax lot is Buy and a sold tax lot is Sell.
 - Income (dividends, interest and gain distributions, equalisation) and non-cash corporate actions (bonus, spin-off) are neither, so their cell is blank. The column's `blank` reason is the cell's hover. `consolidatedSheet.test.ts` pins the mapping row by row.
+
+### Stage 10kg — THE TRANSACTION TYPE ADDS INCOME
+
+- The family (3 Nov 2026), after the Stage 10kf column: *"I'm fine with adding an income row."* Dividends, interest and gain distributions, and equalisation received now read **Income** in Transactions' `txntype`. This covers every row that counts as Income, from income records and capital flows alike.
+- A reversal stays Income. Its minus sign is in Gross and Net, so adding the column up nets it out: 188 of the book's 191 negative income rows have an equal positive on the same day. Only non-cash corporate actions (bonus, spin-off) are left blank, and the column's `blank` reason says why.

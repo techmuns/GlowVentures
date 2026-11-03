@@ -94,11 +94,14 @@ const TXN_COLUMNS: ConsolidatedColumn[] = [
   col("ent", "Owner / entity", "", 20), col("acct", "Account ID", "", 24), col("provider", "Platform / provider", "", 22),
   col("ac", "Asset class", "", 12), col("cat", "Category", "", 18), col("basket", "Basket", "", 18), col("sector", "Sector", "", 16),
   col("record", "Record", "", 16), col("type", "Type (as printed)", "", 16),
-  // BUY OR SELL (the family, 3 Nov 2026: "the transaction type can only be two
-  // types, which is buy or sell, for the ease of analysis"). A purchase puts
-  // money into a holding, a sale or withdrawal takes it out; income and a
-  // non-cash corporate action are neither, so their cell stays blank.
-  { ...col("txntype", "Transaction type", "", 11), blank: "Neither a buy nor a sell: income and non-cash corporate actions carry no transaction type." },
+  // BUY, SELL OR INCOME (the family, 3 Nov 2026: "the transaction type can only
+  // be two types, which is buy or sell, for the ease of analysis", then "I'm
+  // fine with adding an income row"). A purchase puts money into a holding, a
+  // sale or withdrawal takes it out, and income (dividends, interest, gain
+  // distributions, equalisation) is cash the holding paid without selling a
+  // unit. A reversal stays Income and carries its minus sign in the amount.
+  // A non-cash corporate action moves no money, so its cell stays blank.
+  { ...col("txntype", "Transaction type", "", 11), blank: "A non-cash corporate action (bonus, spin-off): no money moved, so it is not a buy, a sell or income." },
   col("counts", "Counts as", "", 14),
   col("qty", "Quantity / units", QTY, 14), col("price", "Price (₹ per unit)", RATE, 14), money("gross", "Gross amount (₹)"), money("chg", "Charges / TDS (₹)"),
   money("net", "Net cash flow to family (₹)"),
@@ -177,7 +180,7 @@ export function buildConsolidatedSheet(docs: ArchiveDoc[], input: { accounts: Ac
     transactions.push({ date: mv.date, ...accountCols(a), acct: mv.accountId, sec,
       name: sec ? securityLabel(sec, mv.security ?? held?.security ?? sec) : mv.security ?? a?.strategy ?? a?.provider ?? null, ...m,
       record: "Capital flow", type: mv.label,
-      ...(mv.payoutKind === "income" || mv.payoutKind === "equalisation" ? { txntype: null, counts: "Income" }
+      ...(mv.payoutKind === "income" || mv.payoutKind === "equalisation" ? { txntype: "Income", counts: "Income" }
         : mv.direction === "in" ? { txntype: "Buy", counts: "Investment" } : { txntype: "Sell", counts: "Divestment" }),
       qty: mv.units, gross: mv.amount, chg: mv.charges ?? null, net: mv.amount == null ? null : mv.amount * (mv.direction === "in" ? -1 : 1),
       notes: [mv.fromReview ? reviewNote : mv.fromCall ? "Reconciled call schedule; this is a call, not proof of payment" : "External capital record",
@@ -187,7 +190,7 @@ export function buildConsolidatedSheet(docs: ArchiveDoc[], input: { accounts: Ac
   for (const e of [...income.cash, ...income.corporate]) {
     const a = sourceAccount(e.source), sec = isIncomeBucket(e.securityKey) ? null : e.securityKey, cash = income.cash.includes(e);
     transactions.push({ date: e.date, ...accountCols(a), sec, name: e.security, ...mapping(a?.accountId, sec),
-      record: cash ? "Income" : "Corporate action", type: e.kind, txntype: null, counts: cash ? "Income" : "Non-cash", qty: e.quantity, price: e.ratePerUnit,
+      record: cash ? "Income" : "Corporate action", type: e.kind, txntype: cash ? "Income" : null, counts: cash ? "Income" : "Non-cash", qty: e.quantity, price: e.ratePerUnit,
       gross: e.net != null && e.tds != null ? e.net + e.tds : null, chg: e.tds, net: e.net,
       notes: e.entitlement ?? null, src: e.source, check: "Reported event", _source: e.source });
   }
