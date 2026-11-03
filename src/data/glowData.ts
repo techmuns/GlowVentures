@@ -62752,6 +62752,45 @@ export const BOOK_SHARE_ROLLS: ShareRoll[] = [
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
+    "isin": "INE524T01029",
+    "security": "TAAL Tech Ltd",
+    "statementQuantity": 0,
+    "asOf": "2026-07-31",
+    "through": "2026-09-22",
+    "quantity": 20000,
+    "costBasis": 18009805,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "trades": 4,
+    "shareEvents": [
+      {
+        "type": "split",
+        "exDate": "2026-09-22",
+        "factor": 5
+      }
+    ],
+    "report": {
+      "path": "source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx",
+      "asOf": "2026-10-23",
+      "sheet": "Direct Equity",
+      "rows": [
+        800,
+        801,
+        802,
+        803,
+        804,
+        805,
+        806,
+        807,
+        808,
+        809,
+        810,
+        811
+      ]
+    }
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
     "isin": "INE011K01018",
     "security": "Tega Industries Ltd",
     "statementQuantity": 0,

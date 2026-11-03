@@ -947,7 +947,7 @@ export const UPSTOX_INSTRUMENTS = Object.freeze({
  "DIACABS": {
   "key": "NSE_EQ|INE989C01038",
   "tradingSymbol": "DIACABS",
-  "series": "BE",
+  "series": "EQ",
   "joinedBy": "isin"
  },
  "DIVISLAB": {
@@ -995,7 +995,7 @@ export const UPSTOX_INSTRUMENTS = Object.freeze({
  "E2E": {
   "key": "NSE_EQ|INE255Z01027",
   "tradingSymbol": "E2E",
-  "series": "BE",
+  "series": "EQ",
   "joinedBy": "isin"
  },
  "ECLERX": {
@@ -1025,6 +1025,18 @@ export const UPSTOX_INSTRUMENTS = Object.freeze({
  "EIHOTEL": {
   "key": "NSE_EQ|INE230A01023",
   "tradingSymbol": "EIHOTEL",
+  "series": "EQ",
+  "joinedBy": "symbol"
+ },
+ "EIMCOELECO": {
+  "key": "NSE_EQ|INE158B01016",
+  "tradingSymbol": "EIMCOELECO",
+  "series": "EQ",
+  "joinedBy": "symbol"
+ },
+ "ELECON": {
+  "key": "NSE_EQ|INE205B01031",
+  "tradingSymbol": "ELECON",
   "series": "EQ",
   "joinedBy": "symbol"
  },
@@ -1146,7 +1158,7 @@ export const UPSTOX_INSTRUMENTS = Object.freeze({
   "key": "NSE_EQ|INE235A01022",
   "tradingSymbol": "FINCABLES",
   "series": "EQ",
-  "joinedBy": "isin"
+  "joinedBy": "symbol+isin"
  },
  "FIRSTCRY": {
   "key": "NSE_EQ|INE02RE01045",
@@ -2556,7 +2568,7 @@ export const UPSTOX_INSTRUMENTS = Object.freeze({
   "key": "NSE_EQ|INE074B01023",
   "tradingSymbol": "PARACABLES",
   "series": "EQ",
-  "joinedBy": "isin"
+  "joinedBy": "symbol+isin"
  },
  "PARADEEP": {
   "key": "NSE_EQ|INE088F01024",
@@ -2657,7 +2669,7 @@ export const UPSTOX_INSTRUMENTS = Object.freeze({
  "PILANIINVS": {
   "key": "NSE_EQ|INE417C01014",
   "tradingSymbol": "PILANIINVS",
-  "series": "EQ",
+  "series": "BE",
   "joinedBy": "symbol+isin"
  },
  "PIRAMALFIN": {
@@ -3227,6 +3239,12 @@ export const UPSTOX_INSTRUMENTS = Object.freeze({
  "SYRMA": {
   "key": "NSE_EQ|INE0DYJ01015",
   "tradingSymbol": "SYRMA",
+  "series": "EQ",
+  "joinedBy": "isin"
+ },
+ "TAALTECH": {
+  "key": "NSE_EQ|INE524T01029",
+  "tradingSymbol": "TAALTECH",
   "series": "EQ",
   "joinedBy": "isin"
  },
@@ -3915,6 +3933,8 @@ export const UPSTOX_SECURITY_SYMBOLS = Object.freeze({
  "edelweiss-financial-services": "EDELWEISS",
  "eicher-motors": "EICHERMOT",
  "eih": "EIHOTEL",
+ "eimco-elecon-india": "EIMCOELECO",
+ "elecon-engineering": "ELECON",
  "electronics-mart-india": "EMIL",
  "ema-partners-india": "EMAPARTNER",
  "emami": "EMAMILTD",
@@ -4291,6 +4311,7 @@ export const UPSTOX_SECURITY_SYMBOLS = Object.freeze({
  "surana-telecom-and-power-limited-eq-new-fv": "SURANAT&P",
  "swiggy": "SWIGGY",
  "syrma-sgs-technology": "SYRMA",
+ "taal-tech": "TAALTECH",
  "tamilnadu-newsprint-and-papers": "TNPL",
  "tata-capital": "TATACAP",
  "tata-chemicals": "TATACHEM",
@@ -4605,6 +4626,7 @@ export const UPSTOX_ISIN_SYMBOLS = Object.freeze({
  "INE154A01025": "ITC",
  "INE155A01022": "TMPV",
  "INE158A01026": "HEROMOTOCO",
+ "INE158B01016": "EIMCOELECO",
  "INE159A01016": "GLAXO",
  "INE160A01022": "PNB",
  "INE162A01010": "GIPCL",
@@ -4645,6 +4667,7 @@ export const UPSTOX_ISIN_SYMBOLS = Object.freeze({
  "INE203A01020": "ASTRAZEN",
  "INE203G01027": "IGL",
  "INE205A01025": "VEDL",
+ "INE205B01031": "ELECON",
  "INE205C01021": "POLYMED",
  "INE208A01029": "ASHOKLEY",
  "INE211B01039": "PHOENIXLTD",
@@ -4820,6 +4843,7 @@ export const UPSTOX_ISIN_SYMBOLS = Object.freeze({
  "INE522D01027": "MANAPPURAM",
  "INE522F01014": "COALINDIA",
  "INE524A01029": "GABRIEL",
+ "INE524T01029": "TAALTECH",
  "INE528G01035": "YESBANK",
  "INE530B01024": "IIFL",
  "INE531F01023": "NUVAMA",
@@ -5011,4 +5035,4 @@ export const UPSTOX_ISIN_SYMBOLS = Object.freeze({
  "INE999A01023": "KSB",
  "INF732E01037": "LIQUIDBEES"
 });
-export const UPSTOX_INSTRUMENT_COVERAGE = Object.freeze({"asked":622,"mapped":622,"unmapped":[]});
+export const UPSTOX_INSTRUMENT_COVERAGE = Object.freeze({"asked":625,"mapped":625,"unmapped":[]});

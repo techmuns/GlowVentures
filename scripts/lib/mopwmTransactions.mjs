@@ -137,6 +137,8 @@ export const MOPWM_SECURITIES = Object.freeze({
   // ISINs from that tape (IFB, KRBL, NLC) or Upstox's NSE master (Tega, Zota).
   INE559A01017: "IFB Industries Ltd", INE001B01026: "KRBL Ltd", INE589A01014: "NLC India Ltd",
   INE011K01018: "Tega Industries Ltd", INE358U01012: "Zota Health Care Ltd",
+  // Stage 10kk: bought in September and split 1:5 on 22 Sep; the ISIN NSE trades it under since (Upstox's NSE master).
+  INE524T01029: "TAAL Tech Ltd",
   INF174K01LC6: "Kotak Arbitrage Direct-G", INF247L01ED1: "Motilal Oswal Arbitrage Direct-G",
   INF194K01V89: "Bandhan Large AND Mid Cap Direct-G", INF194K01Y60: "Bandhan Arbitrage Direct-G",
   INF179K01830: "HDFC Balanced Advantage Reg-G", INF179K01WA6: "HDFC Balanced Advantage Direct-G",
@@ -166,6 +168,64 @@ function eventOf(r, isin) {
   if (r.price !== null && Math.abs(r.amount - r.qty * r.price) > Math.max(1, r.amount * 0.0001))
     return { reason: `row ${r.row} (${r.date}): units × price does not tie to the amount` };
   return { event: { date: r.date, kind, cls: isin, units: r.qty, amount: r.amount } };
+}
+
+/** The depository's own split reference (`SPLIT/22/09/2026/712101`). */
+const SPLIT = /^SPLIT\//;
+
+/**
+ * A SHARE SPLIT AS THE REPORT PRINTS IT (Stage 10kk): under one SPLIT reference
+ * and one date, every lot is SOLD out at its own amount and BOUGHT back at the
+ * same amount and a whole multiple of its units — TAAL's 22 Sep 2026 1:5, four
+ * lots. Read as one FIFO switch of the holding into itself, so each lot keeps
+ * its cost and purchase date. Anything that is not exactly that is a reason.
+ */
+export function splitOf(rows, isin) {
+  const [first] = rows;
+  const out = rows.filter((r) => r.type === "SELL"), into = rows.filter((r) => r.type === "PURCHASE");
+  const where = `${first.ref} (${first.date})`;
+  if (rows.some((r) => r.date !== first.date)) return { reason: `${where} spans more than one date` };
+  if (!out.length || out.length !== into.length || out.length + into.length !== rows.length)
+    return { reason: `${where} does not take out and put back the same number of lots` };
+  if (rows.some((r) => !(r.qty > 0) || !(r.amount > 0))) return { reason: `${where} has a lot without positive units and amount` };
+  const units = out.reduce((s, r) => s + r.qty, 0), unitsIn = into.reduce((s, r) => s + r.qty, 0);
+  const factor = Math.round(unitsIn / units);
+  if (!(factor > 1) || Math.abs(unitsIn - units * factor) > UNIT_TIE) return { reason: `${where} is not a whole-number split` };
+  const left = [...into];
+  for (const o of out) {
+    const i = left.findIndex((x) => Math.abs(x.amount - o.amount) <= 1 && Math.abs(x.qty - o.qty * factor) <= UNIT_TIE);
+    if (i < 0) return { reason: `${where}: row ${o.row}'s lot does not come back at its own amount and ${factor}× its units` };
+    left.splice(i, 1);
+  }
+  return { event: { date: first.date, kind: "switch", from: isin, to: isin, units, unitsIn }, split: { type: "split", exDate: first.date, factor } };
+}
+
+/**
+ * Every row of one security as FIFO events, a SPLIT block as one switch that
+ * must take the whole holding the record has at that moment. Returns the
+ * splits it read, or the first reason a row cannot be read.
+ */
+function eventsOf(rows, isin) {
+  const events = [], splits = [], read = new Set();
+  for (const r of rows) {
+    if (read.has(r)) continue;
+    if (r.sheet === "Direct Equity" && SPLIT.test(r.ref ?? "")) {
+      const block = rows.filter((x) => x.ref === r.ref);
+      for (const x of block) read.add(x);
+      const s = splitOf(block, isin);
+      if (s.reason) return { reason: `row ${r.row} (${r.date}): ${s.reason}` };
+      const held = fifoLedger(events).unitsHeld;
+      if (Math.abs(held - s.event.units) > UNIT_TIE)
+        return { reason: `row ${r.row} (${r.date}) splits ${s.event.units} units where the record holds ${Math.round(held * 1000) / 1000}` };
+      events.push(s.event);
+      splits.push(s.split);
+      continue;
+    }
+    const e = eventOf(r, isin);
+    if (e.reason) return { reason: e.reason };
+    events.push(e.event);
+  }
+  return { events, splits };
 }
 
 /**
@@ -230,8 +290,9 @@ export const MOTILAL_DEMAT = "Motilal Oswal Financial Services (demat)";
  * dated after each Motilal demat statement, and none of its fund rows. Each
  * (owner, security) is carried only where:
  *   1. every row the report holds for it, before and after the statement, is
- *      an exchange trade with units and an amount that tie (`eventOf`) — a
- *      split, merger or transfer entry refuses it;
+ *      an exchange trade with units and an amount that tie (`eventOf`), or a
+ *      SPLIT block that restates every lot of the whole holding at its own
+ *      amount (`splitOf`, Stage 10kk) — a merger or transfer entry refuses it;
  *   2. its name is an exact alias of one equity ISIN (`MOPWM_SECURITIES`);
  *   3. it lands on ONE account: the owner's Motilal demat whose statement
  *      records that ISIN, or, for a share no statement records, the one demat
@@ -258,13 +319,8 @@ export function rollMopwmShareTrades(report, { accounts, records }) {
     byOwner.set(r.ownerId, bySecurity);
   }
   const replay = (rows, isin) => {
-    const events = [];
-    for (const r of rows) {
-      const e = eventOf(r, isin);
-      if (e.reason) return { reason: e.reason };
-      events.push(e.event);
-    }
-    return { ledger: fifoLedger(events) };
+    const e = eventsOf(rows, isin);
+    return e.reason ? e : { ledger: fifoLedger(e.events), splits: e.splits };
   };
   for (const [ownerId, bySecurity] of [...byOwner].sort(([a], [b]) => a.localeCompare(b))) {
     const demats = accounts.filter((a) => a.provider === MOTILAL_DEMAT && a.ownerId === ownerId && a.asOf);
@@ -308,11 +364,14 @@ export function rollMopwmShareTrades(report, { accounts, records }) {
       }
       if (whole.ledger.shortfalls.length) { refuse("a later sale takes units the record does not hold", account.accountId); continue; } // gate 5
       const quantity = Math.round(whole.ledger.unitsHeld * 1e6) / 1e6;
+      // A split inside the roll is already in its units; the live gate must not apply it again.
+      const shareEvents = whole.splits.filter((s) => s.exDate > account.asOf);
       rolls.push({
         accountId: account.accountId, isin, security: name, statementQuantity, asOf: account.asOf,
         through: later.at(-1).date, quantity: tie(quantity, 0) ? 0 : quantity,
         costBasis: r2(whole.ledger.costHeld), realizedPnL: r2(whole.ledger.realisedGain), costOfUnitsSold: r2(whole.ledger.costSold),
-        trades: later.length,
+        trades: later.filter((r) => !SPLIT.test(r.ref ?? "")).length,
+        ...(shareEvents.length ? { shareEvents } : {}),
         report: { path: report.path, asOf: report.asOf, sheet: "Direct Equity", rows: rows.map((r) => r.row) },
       });
     }

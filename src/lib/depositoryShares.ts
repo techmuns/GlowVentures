@@ -371,7 +371,8 @@ export function withShareRolls(
     ...p,
     ...(r.quantity > 0 ? { costUnavailable: false } : {}),
     rolledForward: { through: r.through, quantity: r.quantity, costBasis: r.costBasis, realizedPnL: r.realizedPnL,
-      costOfUnitsSold: r.costOfUnitsSold, trades: r.trades, source: "adviser-report" },
+      costOfUnitsSold: r.costOfUnitsSold, trades: r.trades, source: "adviser-report",
+      ...(r.shareEvents?.length ? { shareEvents: r.shareEvents } : {}) },
     depositoryUnits: { ...(p.depositoryUnits ?? { asOf: r.asOf, source: null }),
       rolled: { statementQuantity: r.statementQuantity, through: r.through, trades: r.trades, reportAsOf: r.report.asOf } },
   });

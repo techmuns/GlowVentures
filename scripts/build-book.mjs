@@ -5254,9 +5254,10 @@ function build(archived, archiveCount = archived.length, references = {}) {
   for (const r of shareRolls.rolls) {
     const p = positions.find((x) => x.accountId === r.accountId && x.isin === r.isin && isNum(x.quantity) && Math.abs(x.quantity - r.statementQuantity) <= 0.0005);
     if (p && !p.rolledForward) p.rolledForward = { through: r.through, quantity: r.quantity, costBasis: r.costBasis,
-      realizedPnL: r.realizedPnL, costOfUnitsSold: r.costOfUnitsSold, trades: r.trades, source: "adviser-report" };
+      realizedPnL: r.realizedPnL, costOfUnitsSold: r.costOfUnitsSold, trades: r.trades, source: "adviser-report",
+      ...(r.shareEvents ? { shareEvents: r.shareEvents } : {}) };
     notes.push(`${r.accountId}: ${r.security} (${r.isin}) carried from ${r.statementQuantity} on ${r.asOf} to ${r.quantity} on ${r.through} `
-      + `by ${r.trades} exchange trade(s) on MOPWM's transaction report of ${r.report.asOf}, live basis only (the report's own record holds the statement's units on ${r.asOf})`);
+      + `by ${r.trades} exchange trade(s)${(r.shareEvents ?? []).map((e) => ` and its ${e.factor}-for-1 split of ${e.exDate}`).join("")} on MOPWM's transaction report of ${r.report.asOf}, live basis only (the report's own record holds the statement's units on ${r.asOf})`);
   }
   for (const r of shareRolls.refused) {
     notes.push(`${r.accountId ?? r.ownerId}: the MOPWM transaction report's later trades in ${r.security} are not applied — ${r.reason}`);
