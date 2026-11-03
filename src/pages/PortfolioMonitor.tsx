@@ -25,7 +25,7 @@ import {
   holdingRoute, ROUTE_LABEL,
   mandateLabel, MANDATE_BUCKET,
   measuredReturn, returnCoverage, returnMeasureDef, valueDateOf, commonValueDate, clubbedPurchase,
-  type ReturnMeasure, type ReturnInput, type RowCapital,
+  type ReturnMeasure, type ReturnInput, type RowCapital, type MeasuredReturn,
   costCoversSet, strikesGain, isValuedAtCost, totalQuantity, AT_COST_RETURN, AT_COST_PNL, NO_UNIT_COUNT,
   AT_COST_MARK, REVIEW_NO_MARK, AT_COST_BUCKET,
   currentHoldings, droppedHoldings, NEGLIGIBLE_VALUE_FLOOR, isCashEquivalent, assetClassLabel,
@@ -75,6 +75,9 @@ import { ReturnMeasureSelect, useReturnMeasures } from "@/components/ReturnMeasu
 import { withReturnCols, returnAccessorsFor, AGG_NO_MEASURE, returnColumnMeta, returnGapLabel } from "@/lib/returnColumns";
 import { datedButUnvalued } from "@/lib/holdingFlows";
 import { useDatedCapital } from "@/lib/useDatedCapital";
+import { BenchLine, useBenchmarkLevels } from "@/components/HoldingBenchmark";
+import { indexCompound, indexMove, indexOnSameMoney, rowBenchmark, type HoldingBenchmark, type IndexFigure } from "@/lib/holdingBenchmark";
+import { BENCHMARKS } from "@/lib/benchmarks";
 // `weightFormula` is deliberately NOT imported, and the REASON has changed under
 // this comment — which is why it is being restated rather than left standing.
 //
@@ -761,6 +764,9 @@ const EMPTY_POSITIONS: Position[] = [];
  * Kept per row object, so one row resolves once however often it is sorted.
  */
 const ROW_POSITIONS = new WeakMap<Row, readonly Position[]>();
+/** Every index a row can be compared with — each fetched once, shared with the NAV card (Stage 10kd). */
+const ALL_BENCH_KEYS = BENCHMARKS.map((b) => b.key);
+const ROW_BENCH = new WeakMap<Row, HoldingBenchmark>();
 const rowPositionsOf = (r: Row): readonly Position[] => {
   let ps = ROW_POSITIONS.get(r);
   if (!ps) { ps = r.mandate ? r.mandate.accounts.flatMap((l) => l.positions) : r.trancheSet; ROW_POSITIONS.set(r, ps); }
@@ -1116,6 +1122,31 @@ export function PortfolioMonitor() {
     m === "ytd" && ytd && ps?.length ? { ...input, ytdFrom: ytd.of(ps) }
     : (m === "cagr" || m === "xirr") && ps?.length && datedButUnvalued(ps) ? { ...input, needsStatementValue: true }
     : input, [ytd]);
+  /**
+   * EACH ROW AGAINST ITS OWN INDEX (Stage 10kd): which index (a mandate by its
+   * manager's report, a share by AMFI's size class, a fund by its category) and
+   * that index's return on the row's own dated money, on the cell's measure.
+   */
+  const benchLevels = useBenchmarkLevels(ALL_BENCH_KEYS);
+  const benchOf = useCallback((r: Row): HoldingBenchmark => {
+    let hb = ROW_BENCH.get(r);
+    if (!hb) { hb = rowBenchmark(rowPositionsOf(r), r.mandate ? r.mandate.accounts.map((a) => a.accountId) : null); ROW_BENCH.set(r, hb); }
+    return hb;
+  }, []);
+  const benchFigure = (hb: HoldingBenchmark, res: Extract<MeasuredReturn, { shown: true }>, input: ReturnInput, asOf: string): IndexFigure | null => {
+    if (!hb.bench) return null;
+    const lv = benchLevels(hb.bench.key);
+    if ("reason" in lv) return { shown: false, reason: lv.reason };
+    const yf = input.ytdFrom, cap = input.capital;
+    if (res.from && yf?.shown) return indexMove(yf.from, yf.to, lv.level);
+    const annual = res.tag === "XIRR" || res.tag === "CAGR";
+    const end = input.valuedAt === undefined ? asOf : input.valuedAt;
+    // The rate is solved on the record's own closes; the HPR on the row's value date.
+    if (cap?.dated && cap.legs?.length) return indexOnSameMoney(cap.legs, lv.level, annual, annual ? null : end);
+    if (res.tag === "CAGR" && input.heldSince && end) return indexCompound(input.heldSince, end, lv.level);
+    return { shown: false, reason: cap && !cap.dated ? cap.reason.replace(/\.$/, "")
+      : "the dates and amounts of this holding's purchases are not all on record, so the index cannot be bought with the same money on the same days" };
+  };
   const holdAccessors = useMemo(
     // `portfolio` is not narrowed until the guard below and a hook cannot sit
     // after one; these accessors are only ever called from `sortRows` under it,
@@ -5132,11 +5163,16 @@ export function PortfolioMonitor() {
                                 // Lines closed at their market price (Stage 10jo): the sweep re-solves with them.
                                 ...(r.capital.dated && r.capital.closes?.length ? { "data-capital-close": JSON.stringify(r.capital.closes) } : {}),
                               } : {})}
-                              className="px-2 py-1.5 text-right mono whitespace-nowrap"
+                              /* A shown figure keeps itself on one line and lets the index line under it wrap below. */
+                              className={`px-2 py-1.5 text-right mono ${res.shown ? "" : "whitespace-nowrap"}`}
                               title={r.live && !r.costNA ? mixedBasisNote : undefined}>
-                              {offMeasure && <span className="ret-tag mr-0.5">{res.tag}</span>}
-                              {res.shown && res.assumed && <AssumedMark note={res.note} />}
-                              {value}
+                              <span className="whitespace-nowrap">
+                                {offMeasure && <span className="ret-tag mr-0.5">{res.tag}</span>}
+                                {res.shown && res.assumed && <AssumedMark note={res.note} />}
+                                {value}
+                              </span>
+                              {/* THE ROW'S OWN INDEX, ON THE SAME MONEY AND MEASURE (Stage 10kd). */}
+                              {res.shown && <BenchLine hb={benchOf(r)} fig={benchFigure(benchOf(r), res, input, portfolio.asOf)} holdingPct={res.pct} />}
                             </td>
                           );
                         })}
