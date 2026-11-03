@@ -14,18 +14,18 @@ import type {
 } from "@/lib/types";
 
 /** Newest report date across all accounts. Individual accounts can be older. */
-export const BOOK_AS_OF = "2026-11-02";
+export const BOOK_AS_OF = "2026-11-03";
 
 export const BOOK_SUMMARY: BookSummary = {
-  "asOf": "2026-11-02",
-  "listedValue": 6874720810.13,
+  "asOf": "2026-11-03",
+  "listedValue": 7010279384.59,
   "privateValue": 2765890203.68,
   "unplacedValue": 0,
-  "totalValue": 9640611013.81,
-  "positionsCount": 472,
+  "totalValue": 9776169588.27,
+  "positionsCount": 474,
   "entitiesCount": 11,
   "startupsCount": 0,
-  "accountsCount": 86
+  "accountsCount": 88
 };
 
 /** Account registry — one row per (provider, account no). Positions join on accountId. */
@@ -859,14 +859,54 @@ export const BOOK_ACCOUNTS: Account[] = [
     "engagement": "Direct",
     "providerEngagement": "mutual-fund folio, Direct plan as the statement states",
     "members": [],
-    "asOf": "2026-10-26",
+    "asOf": "2026-11-03",
     "inceptionDate": null,
-    "capitalRecordTo": "2026-10-26",
+    "capitalRecordTo": "2026-11-03",
     "custodian": "Helios Mutual Fund",
     "noPositionsReason": null,
     "demat": {
       "printed": null,
-      "reason": "the statement read for Helios Mutual Fund 10056128 prints no DP ID or Client ID"
+      "reason": "none of the 2 statements read for Helios Mutual Fund 10056128 prints a DP ID and Client ID"
+    }
+  },
+  {
+    "accountId": "helios-mutual-fund-10056154",
+    "provider": "Helios Mutual Fund",
+    "accountNo": "10056154",
+    "ownerId": "ankita-jaisinghani",
+    "owner": "Ankita Jaisinghani",
+    "strategy": null,
+    "engagement": "Direct",
+    "providerEngagement": "mutual-fund folio, Direct plan as the statement states",
+    "members": [],
+    "asOf": "2026-11-03",
+    "inceptionDate": null,
+    "capitalRecordTo": "2026-11-03",
+    "custodian": "Helios Mutual Fund",
+    "noPositionsReason": null,
+    "demat": {
+      "printed": null,
+      "reason": "the statement read for Helios Mutual Fund 10056154 prints no DP ID or Client ID"
+    }
+  },
+  {
+    "accountId": "helios-mutual-fund-10063876",
+    "provider": "Helios Mutual Fund",
+    "accountNo": "10063876",
+    "ownerId": "bharat-jaisinghani",
+    "owner": "Bharat Jaisinghani",
+    "strategy": null,
+    "engagement": "Direct",
+    "providerEngagement": "mutual-fund folio, Direct plan as the statement states",
+    "members": [],
+    "asOf": "2026-11-03",
+    "inceptionDate": null,
+    "capitalRecordTo": "2026-11-03",
+    "custodian": "Helios Mutual Fund",
+    "noPositionsReason": null,
+    "demat": {
+      "printed": null,
+      "reason": "the statement read for Helios Mutual Fund 10063876 prints no DP ID or Client ID"
     }
   },
   {
@@ -879,14 +919,14 @@ export const BOOK_ACCOUNTS: Account[] = [
     "engagement": "Direct",
     "providerEngagement": "mutual-fund folio, Direct plan as the statement states",
     "members": [],
-    "asOf": "2026-10-26",
+    "asOf": "2026-11-03",
     "inceptionDate": null,
-    "capitalRecordTo": "2026-10-26",
+    "capitalRecordTo": "2026-11-03",
     "custodian": "Helios Mutual Fund",
     "noPositionsReason": null,
     "demat": {
       "printed": null,
-      "reason": "none of the 2 statements read for Helios Mutual Fund 10355977 prints a DP ID and Client ID"
+      "reason": "none of the 3 statements read for Helios Mutual Fund 10355977 prints a DP ID and Client ID"
     }
   },
   {
@@ -9817,7 +9857,7 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "helios-mutual-fund-10056128-2026-10-26-holdings",
+      "document": "helios-mutual-fund-10056128-2026-11-03-holdings",
       "pointer": "/holdings/0"
     },
     "securityKey": "helios-flexi-cap-fund-direct-growth",
@@ -9832,18 +9872,18 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 3245281.682,
     "avgCost": 14.1744,
-    "currentPrice": 14.83,
+    "currentPrice": 15.64,
     "costBasis": 46000000,
-    "marketValue": 48127527.34,
-    "unrealizedPnL": 2127527.34,
+    "marketValue": 50756205.51,
+    "unrealizedPnL": 4756205.51,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": 4.63,
+    "returnPct": 10.34,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "priceAsOf": "2026-10-23",
+    "priceAsOf": "2026-11-02",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
@@ -9851,7 +9891,91 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "helios-mutual-fund-10355977-2026-10-26-holdings",
+      "document": "helios-mutual-fund-10056154-2026-11-03-holdings",
+      "pointer": "/holdings/0"
+    },
+    "securityKey": "helios-flexi-cap-fund-direct-growth",
+    "security": "Helios Flexi Cap Fund - Direct Growth",
+    "symbol": null,
+    "isin": "INF0R8701046",
+    "accountId": "helios-mutual-fund-10056154",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Mutual Fund",
+    "marketSide": "listed",
+    "quantity": 5100984.835,
+    "avgCost": 14.1933,
+    "currentPrice": 15.64,
+    "costBasis": 72400000,
+    "marketValue": 79779402.82,
+    "unrealizedPnL": 7379402.82,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": 10.19,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-11-02",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null,
+    "custodyPredecessors": [
+      "motilal-oswal-financial-services-demat-1201090012838316"
+    ],
+    "custodyEvidence": {
+      "document": "helios-mutual-fund-10056154-2026-11-03-holdings",
+      "pointer": "/holdings/0",
+      "effectiveOn": "2026-10-06"
+    },
+    "avgCostDerived": true
+  },
+  {
+    "statementRecord": {
+      "document": "helios-mutual-fund-10063876-2026-11-03-holdings",
+      "pointer": "/holdings/0"
+    },
+    "securityKey": "helios-flexi-cap-fund-direct-growth",
+    "security": "Helios Flexi Cap Fund - Direct Growth",
+    "symbol": null,
+    "isin": "INF0R8701046",
+    "accountId": "helios-mutual-fund-10063876",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Mutual Fund",
+    "marketSide": "listed",
+    "quantity": 2407981.455,
+    "avgCost": 14.4478,
+    "currentPrice": 15.64,
+    "costBasis": 34790000,
+    "marketValue": 37660829.96,
+    "unrealizedPnL": 2870829.96,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": 8.25,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-11-02",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null,
+    "custodyPredecessors": [
+      "motilal-oswal-financial-services-demat-1201090012838320"
+    ],
+    "custodyEvidence": {
+      "document": "helios-mutual-fund-10063876-2026-11-03-holdings",
+      "pointer": "/holdings/0",
+      "effectiveOn": "2026-10-06"
+    },
+    "avgCostDerived": true
+  },
+  {
+    "statementRecord": {
+      "document": "helios-mutual-fund-10355977-2026-11-03-holdings",
       "pointer": "/holdings/0"
     },
     "securityKey": "helios-flexi-cap-fund-direct-growth",
@@ -9866,18 +9990,18 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 19123041.38,
     "avgCost": 16.2108,
-    "currentPrice": 14.83,
+    "currentPrice": 15.64,
     "costBasis": 310000000,
-    "marketValue": 283594703.67,
-    "unrealizedPnL": -26405296.33,
+    "marketValue": 299084367.18,
+    "unrealizedPnL": -10915632.82,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": -8.52,
+    "returnPct": -3.52,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "priceAsOf": "2026-10-23",
+    "priceAsOf": "2026-11-02",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
@@ -24764,85 +24888,6 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
-    "isin": "INF0R8701046",
-    "quantity": 5100984.835,
-    "asOf": "2026-07-31",
-    "costBasis": 72403187.18,
-    "heldPurchases": {
-      "first": "2024-08-07",
-      "last": "2025-06-04",
-      "lots": 5
-    },
-    "cashRecord": [
-      {
-        "date": "2024-08-07",
-        "side": "buy",
-        "amount": 9999500.02
-      },
-      {
-        "date": "2024-09-12",
-        "side": "buy",
-        "amount": 4999750.01
-      },
-      {
-        "date": "2024-09-26",
-        "side": "buy",
-        "amount": 5006557.02
-      },
-      {
-        "date": "2024-10-21",
-        "side": "buy",
-        "amount": 9999500.02
-      },
-      {
-        "date": "2025-06-04",
-        "side": "buy",
-        "amount": 42397880.11
-      }
-    ],
-    "unitRecord": [
-      {
-        "date": "2024-08-07",
-        "units": 727765.649
-      },
-      {
-        "date": "2024-09-12",
-        "units": 1071391.079
-      },
-      {
-        "date": "2024-09-26",
-        "units": 1411741.658
-      },
-      {
-        "date": "2024-10-21",
-        "units": 2111007.394
-      },
-      {
-        "date": "2025-06-04",
-        "units": 5100984.835
-      }
-    ],
-    "realizedPnL": 0,
-    "costOfUnitsSold": 0,
-    "dividendReceived": null,
-    "evidence": [
-      {
-        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
-        "sheet": "Transactions since inception",
-        "rows": [
-          655,
-          656,
-          657,
-          658,
-          659,
-          660
-        ]
-      }
-    ],
-    "notes": []
-  },
-  {
-    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "isin": "INF109KC1RH9",
     "quantity": 993739.133,
     "asOf": "2026-07-31",
@@ -25210,105 +25255,6 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "rows": [
           451,
           452
-        ]
-      }
-    ],
-    "notes": []
-  },
-  {
-    "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
-    "isin": "INF0R8701046",
-    "quantity": 2407981.455,
-    "asOf": "2026-07-31",
-    "costBasis": 34788260.57,
-    "heldPurchases": {
-      "first": "2024-10-16",
-      "last": "2025-10-10",
-      "lots": 7
-    },
-    "cashRecord": [
-      {
-        "date": "2024-10-16",
-        "side": "buy",
-        "amount": 999950
-      },
-      {
-        "date": "2024-10-25",
-        "side": "buy",
-        "amount": 1999899.99
-      },
-      {
-        "date": "2024-10-28",
-        "side": "buy",
-        "amount": 1999900
-      },
-      {
-        "date": "2024-10-29",
-        "side": "buy",
-        "amount": 3999800.02
-      },
-      {
-        "date": "2025-06-04",
-        "side": "buy",
-        "amount": 8999550.03
-      },
-      {
-        "date": "2025-07-11",
-        "side": "buy",
-        "amount": 14999250.04
-      },
-      {
-        "date": "2025-10-10",
-        "side": "buy",
-        "amount": 1789910.5
-      }
-    ],
-    "unitRecord": [
-      {
-        "date": "2024-10-16",
-        "units": 68962.069
-      },
-      {
-        "date": "2024-10-25",
-        "units": 212943.35
-      },
-      {
-        "date": "2024-10-28",
-        "units": 356202.662
-      },
-      {
-        "date": "2024-10-29",
-        "units": 639876.422
-      },
-      {
-        "date": "2025-06-04",
-        "units": 1274541.445
-      },
-      {
-        "date": "2025-07-11",
-        "units": 2292129.643
-      },
-      {
-        "date": "2025-10-10",
-        "units": 2407981.455
-      }
-    ],
-    "realizedPnL": 0,
-    "costOfUnitsSold": 0,
-    "dividendReceived": null,
-    "evidence": [
-      {
-        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
-        "sheet": "Transactions since inception",
-        "rows": [
-          661,
-          662,
-          663,
-          664,
-          665,
-          666,
-          667,
-          668
         ]
       }
     ],
@@ -29462,7 +29408,7 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "linkOpen": 2402928953.22,
     "linkClose": 2402928953.22,
     "linkAccounts": 21,
-    "panelComplete": true
+    "panelComplete": false
   },
   {
     "period": "2026-08-10",
@@ -29475,7 +29421,7 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "linkOpen": 2712913453.99,
     "linkClose": 2708145042.91,
     "linkAccounts": 22,
-    "panelComplete": true
+    "panelComplete": false
   },
   {
     "period": "2026-08-11",
@@ -29488,7 +29434,7 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "linkOpen": 2708145042.91,
     "linkClose": 2717643930.67,
     "linkAccounts": 22,
-    "panelComplete": true
+    "panelComplete": false
   },
   {
     "period": "2026-08-13",
@@ -29501,7 +29447,7 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "linkOpen": 2717643930.67,
     "linkClose": 2827568440.85,
     "linkAccounts": 22,
-    "panelComplete": true
+    "panelComplete": false
   },
   {
     "period": "2026-08-31",
@@ -29514,7 +29460,7 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "linkOpen": 2827568440.85,
     "linkClose": 2847785105.1,
     "linkAccounts": 22,
-    "panelComplete": true
+    "panelComplete": false
   },
   {
     "period": "2026-09-29",
@@ -29527,7 +29473,7 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "linkOpen": 2847785105.1,
     "linkClose": 2812340110.2,
     "linkAccounts": 22,
-    "panelComplete": true
+    "panelComplete": false
   },
   {
     "period": "2026-09-30",
@@ -29540,7 +29486,7 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "linkOpen": 2812340110.2,
     "linkClose": 2791965958.88,
     "linkAccounts": 22,
-    "panelComplete": true
+    "panelComplete": false
   },
   {
     "period": "2026-10-05",
@@ -29553,7 +29499,7 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "linkOpen": 2791965958.88,
     "linkClose": 2791973740.84,
     "linkAccounts": 22,
-    "panelComplete": true
+    "panelComplete": false
   },
   {
     "period": "2026-10-06",
@@ -29566,7 +29512,7 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "linkOpen": 2791973740.84,
     "linkClose": 2780849110.89,
     "linkAccounts": 22,
-    "panelComplete": true
+    "panelComplete": false
   },
   {
     "period": "2026-10-07",
@@ -29579,13 +29525,13 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "linkOpen": 2780849110.89,
     "linkClose": 2780478415.54,
     "linkAccounts": 22,
-    "panelComplete": true
+    "panelComplete": false
   },
   {
     "period": "2026-10-26",
     "date": "2026-10-26",
-    "nav": 2754088618.44,
-    "accountsOnDate": 1,
+    "nav": 2802216145.78,
+    "accountsOnDate": 2,
     "accountsCarried": 21,
     "flowIn": 0,
     "unreportedFlowValue": 0,
@@ -29597,14 +29543,27 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
   {
     "period": "2026-11-02",
     "date": "2026-11-02",
-    "nav": 2753898591.45,
+    "nav": 2802026118.79,
     "accountsOnDate": 1,
-    "accountsCarried": 21,
+    "accountsCarried": 22,
     "flowIn": -1765,
     "unreportedFlowValue": 0,
-    "linkOpen": 2754088618.44,
-    "linkClose": 2753898591.45,
-    "linkAccounts": 22,
+    "linkOpen": 2802216145.78,
+    "linkClose": 2802026118.79,
+    "linkAccounts": 23,
+    "panelComplete": true
+  },
+  {
+    "period": "2026-11-03",
+    "date": "2026-11-03",
+    "nav": 2820144460.47,
+    "accountsOnDate": 2,
+    "accountsCarried": 21,
+    "flowIn": 0,
+    "unreportedFlowValue": 0,
+    "linkOpen": 2802026118.79,
+    "linkClose": 2820144460.47,
+    "linkAccounts": 23,
     "panelComplete": true
   }
 ];
@@ -29853,6 +29812,18 @@ export const BOOK_ACCOUNT_NAV_HISTORY: Record<string, NavPoint[]> = {
       "nav": 0
     }
   ],
+  "helios-mutual-fund-10056128": [
+    {
+      "period": "2026-10-26",
+      "date": "2026-10-26",
+      "nav": 48127527.34
+    },
+    {
+      "period": "2026-11-03",
+      "date": "2026-11-03",
+      "nav": 50756205.51
+    }
+  ],
   "helios-mutual-fund-10355977": [
     {
       "period": "2026-08-07",
@@ -29863,6 +29834,11 @@ export const BOOK_ACCOUNT_NAV_HISTORY: Record<string, NavPoint[]> = {
       "period": "2026-10-26",
       "date": "2026-10-26",
       "nav": 283594703.67
+    },
+    {
+      "period": "2026-11-03",
+      "date": "2026-11-03",
+      "nav": 299084367.18
     }
   ],
   "kotak-mahindra-mutual-fund-4295974": [
@@ -30374,17 +30350,40 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       ]
     },
     {
-      "accountId": "helios-mutual-fund-10355977",
+      "accountId": "helios-mutual-fund-10056128",
       "points": 2,
+      "first": "2026-10-26",
+      "last": "2026-11-03",
+      "latestValue": 50756205.51,
+      "bookValue": 50756205.51,
+      "flowBasis": "units-unchanged",
+      "steps": [
+        {
+          "from": "2026-10-26",
+          "to": "2026-11-03",
+          "basis": "units-unchanged",
+          "net": 0
+        }
+      ]
+    },
+    {
+      "accountId": "helios-mutual-fund-10355977",
+      "points": 3,
       "first": "2026-08-07",
-      "last": "2026-10-26",
-      "latestValue": 283594703.67,
-      "bookValue": 283594703.67,
+      "last": "2026-11-03",
+      "latestValue": 299084367.18,
+      "bookValue": 299084367.18,
       "flowBasis": "units-unchanged",
       "steps": [
         {
           "from": "2026-08-07",
           "to": "2026-10-26",
+          "basis": "units-unchanged",
+          "net": 0
+        },
+        {
+          "from": "2026-10-26",
+          "to": "2026-11-03",
           "basis": "units-unchanged",
           "net": 0
         }
@@ -30722,11 +30721,18 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "bookValue": 26248837.36
     },
     {
-      "accountId": "helios-mutual-fund-10056128",
+      "accountId": "helios-mutual-fund-10056154",
       "provider": "Helios Mutual Fund",
-      "accountNo": "10056128",
-      "date": "2026-10-26",
-      "bookValue": 48127527.34
+      "accountNo": "10056154",
+      "date": "2026-11-03",
+      "bookValue": 79779402.82
+    },
+    {
+      "accountId": "helios-mutual-fund-10063876",
+      "provider": "Helios Mutual Fund",
+      "accountNo": "10063876",
+      "date": "2026-11-03",
+      "bookValue": 37660829.96
     },
     {
       "accountId": "icici-bank-nsdl-demat-49794950",
@@ -31060,8 +31066,8 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
     }
   ],
   "from": "2026-03-31",
-  "to": "2026-11-02",
-  "panelCompleteFrom": "2026-08-07"
+  "to": "2026-11-03",
+  "panelCompleteFrom": "2026-10-26"
 };
 
 /**
@@ -31085,16 +31091,16 @@ export const BOOK_UNDATED_CAPITAL: UndatedCapital[] = [];
  */
 export const BOOK_ATTRIBUTION: Attribution = {
   "from": "2026-05-31",
-  "to": "2026-11-02",
-  "openValue": 2688473303.11,
-  "closeValue": 2753898591.45,
-  "priceEffect": -48556877.56,
+  "to": "2026-11-03",
+  "openValue": 2736600830.45,
+  "closeValue": 2820144460.47,
+  "priceEffect": -30438535.89,
   "tradeEffect": 83566773.34,
   "enteredValue": 171382579.59,
   "exitedValue": 99872612.94,
   "undecomposedValue": -41094574.09,
-  "bookValue": 9640611013.81,
-  "coveredBookValue": 2754461672.37,
+  "bookValue": 9776169588.27,
+  "coveredBookValue": 2820707541.39,
   "accounts": [
     {
       "accountId": "360-one-private-wealth-37702",
@@ -31301,13 +31307,30 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "rowsUnpriced": 0
     },
     {
+      "accountId": "helios-mutual-fund-10056128",
+      "from": "2026-10-26",
+      "to": "2026-11-03",
+      "days": 8,
+      "openValue": 48127527.34,
+      "closeValue": 50756205.51,
+      "priceEffect": 2628678.16,
+      "tradeEffect": 0,
+      "enteredValue": 0,
+      "exitedValue": 0,
+      "undecomposedValue": 0,
+      "rowsHeld": 1,
+      "rowsEntered": 0,
+      "rowsExited": 0,
+      "rowsUnpriced": 0
+    },
+    {
       "accountId": "helios-mutual-fund-10355977",
       "from": "2026-08-07",
-      "to": "2026-10-26",
-      "days": 80,
+      "to": "2026-11-03",
+      "days": 88,
       "openValue": 309984500.77,
-      "closeValue": 283594703.67,
-      "priceEffect": -26389797.1,
+      "closeValue": 299084367.18,
+      "priceEffect": -10900133.59,
       "tradeEffect": 0,
       "enteredValue": 0,
       "exitedValue": 0,
@@ -31539,6 +31562,23 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "priceEffect": 2776050,
       "tradeEffect": 0,
       "returnPct": 7.3595
+    },
+    {
+      "securityKey": "helios-flexi-cap-fund-direct-growth",
+      "security": "Helios Flexi Cap Fund - Direct Growth",
+      "accountId": "helios-mutual-fund-10056128",
+      "from": "2026-10-26",
+      "to": "2026-11-03",
+      "openValue": 48127527.34,
+      "closeValue": 50756205.51,
+      "openPrice": 14.83,
+      "closePrice": 15.64,
+      "openQty": 3245281.682,
+      "closeQty": 3245281.682,
+      "kind": "held",
+      "priceEffect": 2628678.16,
+      "tradeEffect": 0,
+      "returnPct": 5.4619
     },
     {
       "securityKey": "motilal-oswal-founders-fund-series-ii-class-g1",
@@ -35961,6 +36001,23 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": -2.496
     },
     {
+      "securityKey": "helios-flexi-cap-fund-direct-growth",
+      "security": "Helios Flexi Cap Fund - Direct Growth",
+      "accountId": "helios-mutual-fund-10355977",
+      "from": "2026-08-07",
+      "to": "2026-11-03",
+      "openValue": 309984500.77,
+      "closeValue": 299084367.18,
+      "openPrice": 16.21,
+      "closePrice": 15.64,
+      "openQty": 19123041.38,
+      "closeQty": 19123041.38,
+      "kind": "held",
+      "priceEffect": -10900133.59,
+      "tradeEffect": 0,
+      "returnPct": -3.5163
+    },
+    {
       "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4",
       "security": "Buoyant Opportunities Strategy — Category III — Class A4",
       "accountId": "buoyant-capital-103473",
@@ -35993,23 +36050,6 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "priceEffect": -15029278.65,
       "tradeEffect": 0,
       "returnPct": -27.5889
-    },
-    {
-      "securityKey": "helios-flexi-cap-fund-direct-growth",
-      "security": "Helios Flexi Cap Fund - Direct Growth",
-      "accountId": "helios-mutual-fund-10355977",
-      "from": "2026-08-07",
-      "to": "2026-10-26",
-      "openValue": 309984500.77,
-      "closeValue": 283594703.67,
-      "openPrice": 16.21,
-      "closePrice": 14.83,
-      "openQty": 19123041.38,
-      "closeQty": 19123041.38,
-      "kind": "held",
-      "priceEffect": -26389797.1,
-      "tradeEffect": 0,
-      "returnPct": -8.5133
     },
     {
       "securityKey": "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii",
@@ -37723,6 +37763,34 @@ export const BOOK_CAPITAL_GAINS: EntityCG[] = [
     "entity": "Ajay Jaisinghani · Helios 10056128",
     "accountId": "helios-mutual-fund-10056128",
     "ownerId": "ajay-jaisinghani",
+    "realisedST": null,
+    "realisedLT": null,
+    "unrealisedST": null,
+    "unrealisedLT": null,
+    "periodFrom": null,
+    "periodTo": null,
+    "lots": 0,
+    "source": null,
+    "absent": "no capital gain statement issued for this account in this drop"
+  },
+  {
+    "entity": "Ankita Jaisinghani · Helios 10056154",
+    "accountId": "helios-mutual-fund-10056154",
+    "ownerId": "ankita-jaisinghani",
+    "realisedST": null,
+    "realisedLT": null,
+    "unrealisedST": null,
+    "unrealisedLT": null,
+    "periodFrom": null,
+    "periodTo": null,
+    "lots": 0,
+    "source": null,
+    "absent": "no capital gain statement issued for this account in this drop"
+  },
+  {
+    "entity": "Bharat Jaisinghani · Helios 10063876",
+    "accountId": "helios-mutual-fund-10063876",
+    "ownerId": "bharat-jaisinghani",
     "realisedST": null,
     "realisedLT": null,
     "unrealisedST": null,
@@ -40261,10 +40329,10 @@ export const BOOK_ACCOUNT_RETURN_RECORDS: Record<string, AccountReturnCoverage> 
     "gap": "Opening valuation and complete dated cash flows are missing"
   },
   "helios-mutual-fund-10056128": {
-    "latestValuationDate": "2026-10-23",
+    "latestValuationDate": "2026-11-02",
     "record": {
-      "asOf": "2026-10-23",
-      "value": 48127527.34,
+      "asOf": "2026-11-02",
+      "value": 50756205.51,
       "flows": [
         {
           "date": "2026-04-01",
@@ -40272,23 +40340,71 @@ export const BOOK_ACCOUNT_RETURN_RECORDS: Record<string, AccountReturnCoverage> 
           "description": "Opening portfolio value: verified 2026-03-31 NAV × opening units"
         }
       ],
-      "source": "helios-mutual-fund-10056128-2026-10-26-holdings",
+      "source": "helios-mutual-fund-10056128-2026-11-03-holdings",
       "flowSources": [
-        "helios-mutual-fund-10056128-2026-10-26-holdings"
+        "helios-mutual-fund-10056128-2026-11-03-holdings"
       ],
       "openingSources": [
-        "helios-mutual-fund-10056128-2026-10-26-holdings",
+        "helios-mutual-fund-10056128-2026-11-03-holdings",
         "https://portal.amfiindia.com/DownloadNAVHistoryReport_Po.aspx?frmdt=31-Mar-2026&todt=31-Mar-2026"
       ],
-      "capitalRecordTo": "2026-10-23"
+      "capitalRecordTo": "2026-11-02"
+    },
+    "gap": null
+  },
+  "helios-mutual-fund-10056154": {
+    "latestValuationDate": "2026-11-02",
+    "record": {
+      "asOf": "2026-11-02",
+      "value": 79779402.82,
+      "flows": [
+        {
+          "date": "2026-04-01",
+          "amount": -67996127.85,
+          "description": "Opening portfolio value: verified 2026-03-31 NAV × opening units"
+        }
+      ],
+      "source": "helios-mutual-fund-10056154-2026-11-03-holdings",
+      "flowSources": [
+        "helios-mutual-fund-10056154-2026-11-03-holdings"
+      ],
+      "openingSources": [
+        "helios-mutual-fund-10056154-2026-11-03-holdings",
+        "https://portal.amfiindia.com/DownloadNAVHistoryReport_Po.aspx?frmdt=31-Mar-2026&todt=31-Mar-2026"
+      ],
+      "capitalRecordTo": "2026-11-02"
+    },
+    "gap": null
+  },
+  "helios-mutual-fund-10063876": {
+    "latestValuationDate": "2026-11-02",
+    "record": {
+      "asOf": "2026-11-02",
+      "value": 37660829.96,
+      "flows": [
+        {
+          "date": "2026-04-01",
+          "amount": -32098392.8,
+          "description": "Opening portfolio value: verified 2026-03-31 NAV × opening units"
+        }
+      ],
+      "source": "helios-mutual-fund-10063876-2026-11-03-holdings",
+      "flowSources": [
+        "helios-mutual-fund-10063876-2026-11-03-holdings"
+      ],
+      "openingSources": [
+        "helios-mutual-fund-10063876-2026-11-03-holdings",
+        "https://portal.amfiindia.com/DownloadNAVHistoryReport_Po.aspx?frmdt=31-Mar-2026&todt=31-Mar-2026"
+      ],
+      "capitalRecordTo": "2026-11-02"
     },
     "gap": null
   },
   "helios-mutual-fund-10355977": {
-    "latestValuationDate": "2026-10-23",
+    "latestValuationDate": "2026-11-02",
     "record": {
-      "asOf": "2026-10-23",
-      "value": 283594703.67,
+      "asOf": "2026-11-02",
+      "value": 299084367.18,
       "flows": [
         {
           "date": "2026-04-01",
@@ -40301,16 +40417,16 @@ export const BOOK_ACCOUNT_RETURN_RECORDS: Record<string, AccountReturnCoverage> 
           "description": "Purchase"
         }
       ],
-      "source": "helios-mutual-fund-10355977-2026-10-26-holdings",
+      "source": "helios-mutual-fund-10355977-2026-11-03-holdings",
       "flowSources": [
         "helios-mutual-fund-10355977-2026-08-07-holdings",
-        "helios-mutual-fund-10355977-2026-10-26-holdings"
+        "helios-mutual-fund-10355977-2026-11-03-holdings"
       ],
       "openingSources": [
         "helios-mutual-fund-10355977-2026-08-07-holdings",
-        "helios-mutual-fund-10355977-2026-10-26-holdings"
+        "helios-mutual-fund-10355977-2026-11-03-holdings"
       ],
-      "capitalRecordTo": "2026-10-23"
+      "capitalRecordTo": "2026-11-02"
     },
     "gap": null
   },
@@ -43787,6 +43903,18 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": "helios-flexi-cap-fund-direct-growth"
   },
   {
+    "accountId": "helios-mutual-fund-10056154",
+    "date": "2024-08-07",
+    "direction": "in",
+    "label": "Purchase",
+    "amount": 10000000,
+    "invested": 9999500.02,
+    "charges": 499.98,
+    "units": 727765.649,
+    "security": "Helios Flexi Cap Fund - Direct Growth",
+    "securityKey": "helios-flexi-cap-fund-direct-growth"
+  },
+  {
     "accountId": "ask-investment-managers-limited-10032723",
     "date": "2024-08-13",
     "direction": "out",
@@ -43933,6 +44061,18 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": "motilal-oswal-founders-fund-series-ii-class-g1"
   },
   {
+    "accountId": "helios-mutual-fund-10056154",
+    "date": "2024-09-12",
+    "direction": "in",
+    "label": "Purchase",
+    "amount": 5000000,
+    "invested": 4999750.01,
+    "charges": 249.99,
+    "units": 343625.43,
+    "security": "Helios Flexi Cap Fund - Direct Growth",
+    "securityKey": "helios-flexi-cap-fund-direct-growth"
+  },
+  {
     "accountId": "ask-investment-managers-limited-10032723",
     "date": "2024-09-20",
     "direction": "out",
@@ -43988,6 +44128,18 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "helios-mutual-fund-10056154",
+    "date": "2024-09-25",
+    "direction": "in",
+    "label": "Purchase",
+    "amount": 5000000,
+    "invested": 4999750.01,
+    "charges": 249.99,
+    "units": 340350.579,
+    "security": "Helios Flexi Cap Fund - Direct Growth",
+    "securityKey": "helios-flexi-cap-fund-direct-growth"
+  },
+  {
     "accountId": "baring-private-equity-india-fund-AIFM_BPEPF6_0584",
     "date": "2024-10-03",
     "direction": "in",
@@ -44034,6 +44186,18 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": "helios-flexi-cap-fund-direct-growth"
   },
   {
+    "accountId": "helios-mutual-fund-10063876",
+    "date": "2024-10-16",
+    "direction": "in",
+    "label": "Purchase",
+    "amount": 1000000,
+    "invested": 999950,
+    "charges": 50,
+    "units": 68962.069,
+    "security": "Helios Flexi Cap Fund - Direct Growth",
+    "securityKey": "helios-flexi-cap-fund-direct-growth"
+  },
+  {
     "accountId": "motilal-oswal-founders-fund-90410016093",
     "date": "2024-10-16",
     "direction": "in",
@@ -44056,6 +44220,18 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": 8896352.335,
     "security": "Motilal Oswal Founders Fund Series II — Class G1",
     "securityKey": "motilal-oswal-founders-fund-series-ii-class-g1"
+  },
+  {
+    "accountId": "helios-mutual-fund-10056154",
+    "date": "2024-10-21",
+    "direction": "in",
+    "label": "Purchase",
+    "amount": 10000000,
+    "invested": 9999500.02,
+    "charges": 499.98,
+    "units": 699265.736,
+    "security": "Helios Flexi Cap Fund - Direct Growth",
+    "securityKey": "helios-flexi-cap-fund-direct-growth"
   },
   {
     "accountId": "icici-prudential-mutual-fund-36378950",
@@ -44082,6 +44258,18 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": "icici-prudential-nifty-100-low-volatility-30-etf-fof-direct-plan-growth"
   },
   {
+    "accountId": "helios-mutual-fund-10063876",
+    "date": "2024-10-25",
+    "direction": "in",
+    "label": "Purchase",
+    "amount": 2000000,
+    "invested": 1999900,
+    "charges": 100,
+    "units": 143981.281,
+    "security": "Helios Flexi Cap Fund - Direct Growth",
+    "securityKey": "helios-flexi-cap-fund-direct-growth"
+  },
+  {
     "accountId": "ask-investment-managers-limited-10034025",
     "date": "2024-10-28",
     "direction": "out",
@@ -44091,6 +44279,30 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": null,
     "security": null,
     "securityKey": null
+  },
+  {
+    "accountId": "helios-mutual-fund-10063876",
+    "date": "2024-10-28",
+    "direction": "in",
+    "label": "Purchase",
+    "amount": 2000000,
+    "invested": 1999900,
+    "charges": 100,
+    "units": 143259.312,
+    "security": "Helios Flexi Cap Fund - Direct Growth",
+    "securityKey": "helios-flexi-cap-fund-direct-growth"
+  },
+  {
+    "accountId": "helios-mutual-fund-10063876",
+    "date": "2024-10-29",
+    "direction": "in",
+    "label": "Purchase",
+    "amount": 4000000,
+    "invested": 3999800.01,
+    "charges": 199.99,
+    "units": 283673.76,
+    "security": "Helios Flexi Cap Fund - Direct Growth",
+    "securityKey": "helios-flexi-cap-fund-direct-growth"
   },
   {
     "accountId": "ask-investment-managers-limited-10034025",
@@ -44546,6 +44758,30 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "helios-mutual-fund-10056154",
+    "date": "2025-06-04",
+    "direction": "in",
+    "label": "Purchase",
+    "amount": 42400000,
+    "invested": 42397880.11,
+    "charges": 2119.89,
+    "units": 2989977.441,
+    "security": "Helios Flexi Cap Fund - Direct Growth",
+    "securityKey": "helios-flexi-cap-fund-direct-growth"
+  },
+  {
+    "accountId": "helios-mutual-fund-10063876",
+    "date": "2025-06-04",
+    "direction": "in",
+    "label": "Purchase",
+    "amount": 9000000,
+    "invested": 8999550.02,
+    "charges": 449.98,
+    "units": 634665.023,
+    "security": "Helios Flexi Cap Fund - Direct Growth",
+    "securityKey": "helios-flexi-cap-fund-direct-growth"
+  },
+  {
     "accountId": "sanshi-fund-9069671554",
     "date": "2025-06-17",
     "direction": "in",
@@ -44656,6 +44892,18 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "invested": 14999250.04,
     "charges": 749.96,
     "units": 1012095.144,
+    "security": "Helios Flexi Cap Fund - Direct Growth",
+    "securityKey": "helios-flexi-cap-fund-direct-growth"
+  },
+  {
+    "accountId": "helios-mutual-fund-10063876",
+    "date": "2025-07-11",
+    "direction": "in",
+    "label": "Purchase",
+    "amount": 15000000,
+    "invested": 14999250.04,
+    "charges": 749.96,
+    "units": 1017588.198,
     "security": "Helios Flexi Cap Fund - Direct Growth",
     "securityKey": "helios-flexi-cap-fund-direct-growth"
   },
@@ -45297,6 +45545,18 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": null,
     "security": null,
     "securityKey": null
+  },
+  {
+    "accountId": "helios-mutual-fund-10063876",
+    "date": "2025-10-10",
+    "direction": "in",
+    "label": "Purchase",
+    "amount": 1790000,
+    "invested": 1789910.5,
+    "charges": 89.5,
+    "units": 115851.812,
+    "security": "Helios Flexi Cap Fund - Direct Growth",
+    "securityKey": "helios-flexi-cap-fund-direct-growth"
   },
   {
     "accountId": "svan-investment-managers-llp-8710067",
@@ -46808,6 +47068,8 @@ export const BOOK_CAPITAL_FROM_INCEPTION: string[] = [
   "carnelian-bharat-amritkaal-fund-4551",
   "hdfc-mutual-fund-16002141",
   "helios-mutual-fund-10056128",
+  "helios-mutual-fund-10056154",
+  "helios-mutual-fund-10063876",
   "helios-mutual-fund-10355977",
   "icici-prudential-mutual-fund-14320536",
   "icici-prudential-mutual-fund-36378950",
@@ -47457,6 +47719,164 @@ export const BOOK_POSITION_TRANCHES: Record<string, PositionTranches> = {
       }
     ],
     "units": 3245281.682
+  },
+  "helios-mutual-fund-10056154|helios-flexi-cap-fund-direct-growth": {
+    "accountId": "helios-mutual-fund-10056154",
+    "securityKey": "helios-flexi-cap-fund-direct-growth",
+    "moves": [
+      {
+        "accountId": "helios-mutual-fund-10056154",
+        "date": "2024-08-07",
+        "direction": "in",
+        "label": "Purchase",
+        "amount": 10000000,
+        "invested": 10000000,
+        "charges": 499.98,
+        "units": 727765.649,
+        "security": "Helios Flexi Cap Fund - Direct Growth",
+        "securityKey": "helios-flexi-cap-fund-direct-growth"
+      },
+      {
+        "accountId": "helios-mutual-fund-10056154",
+        "date": "2024-09-12",
+        "direction": "in",
+        "label": "Purchase",
+        "amount": 5000000,
+        "invested": 5000000,
+        "charges": 249.99,
+        "units": 343625.43,
+        "security": "Helios Flexi Cap Fund - Direct Growth",
+        "securityKey": "helios-flexi-cap-fund-direct-growth"
+      },
+      {
+        "accountId": "helios-mutual-fund-10056154",
+        "date": "2024-09-25",
+        "direction": "in",
+        "label": "Purchase",
+        "amount": 5000000,
+        "invested": 5000000,
+        "charges": 249.99,
+        "units": 340350.579,
+        "security": "Helios Flexi Cap Fund - Direct Growth",
+        "securityKey": "helios-flexi-cap-fund-direct-growth"
+      },
+      {
+        "accountId": "helios-mutual-fund-10056154",
+        "date": "2024-10-21",
+        "direction": "in",
+        "label": "Purchase",
+        "amount": 10000000,
+        "invested": 10000000,
+        "charges": 499.98,
+        "units": 699265.736,
+        "security": "Helios Flexi Cap Fund - Direct Growth",
+        "securityKey": "helios-flexi-cap-fund-direct-growth"
+      },
+      {
+        "accountId": "helios-mutual-fund-10056154",
+        "date": "2025-06-04",
+        "direction": "in",
+        "label": "Purchase",
+        "amount": 42400000,
+        "invested": 42400000,
+        "charges": 2119.89,
+        "units": 2989977.441,
+        "security": "Helios Flexi Cap Fund - Direct Growth",
+        "securityKey": "helios-flexi-cap-fund-direct-growth"
+      }
+    ],
+    "units": 5100984.835
+  },
+  "helios-mutual-fund-10063876|helios-flexi-cap-fund-direct-growth": {
+    "accountId": "helios-mutual-fund-10063876",
+    "securityKey": "helios-flexi-cap-fund-direct-growth",
+    "moves": [
+      {
+        "accountId": "helios-mutual-fund-10063876",
+        "date": "2024-10-16",
+        "direction": "in",
+        "label": "Purchase",
+        "amount": 1000000,
+        "invested": 1000000,
+        "charges": 50,
+        "units": 68962.069,
+        "security": "Helios Flexi Cap Fund - Direct Growth",
+        "securityKey": "helios-flexi-cap-fund-direct-growth"
+      },
+      {
+        "accountId": "helios-mutual-fund-10063876",
+        "date": "2024-10-25",
+        "direction": "in",
+        "label": "Purchase",
+        "amount": 2000000,
+        "invested": 2000000,
+        "charges": 100,
+        "units": 143981.281,
+        "security": "Helios Flexi Cap Fund - Direct Growth",
+        "securityKey": "helios-flexi-cap-fund-direct-growth"
+      },
+      {
+        "accountId": "helios-mutual-fund-10063876",
+        "date": "2024-10-28",
+        "direction": "in",
+        "label": "Purchase",
+        "amount": 2000000,
+        "invested": 2000000,
+        "charges": 100,
+        "units": 143259.312,
+        "security": "Helios Flexi Cap Fund - Direct Growth",
+        "securityKey": "helios-flexi-cap-fund-direct-growth"
+      },
+      {
+        "accountId": "helios-mutual-fund-10063876",
+        "date": "2024-10-29",
+        "direction": "in",
+        "label": "Purchase",
+        "amount": 4000000,
+        "invested": 4000000,
+        "charges": 199.99,
+        "units": 283673.76,
+        "security": "Helios Flexi Cap Fund - Direct Growth",
+        "securityKey": "helios-flexi-cap-fund-direct-growth"
+      },
+      {
+        "accountId": "helios-mutual-fund-10063876",
+        "date": "2025-06-04",
+        "direction": "in",
+        "label": "Purchase",
+        "amount": 9000000,
+        "invested": 9000000,
+        "charges": 449.98,
+        "units": 634665.023,
+        "security": "Helios Flexi Cap Fund - Direct Growth",
+        "securityKey": "helios-flexi-cap-fund-direct-growth"
+      },
+      {
+        "accountId": "helios-mutual-fund-10063876",
+        "date": "2025-07-11",
+        "direction": "in",
+        "label": "Purchase",
+        "amount": 15000000,
+        "invested": 15000000,
+        "charges": 749.96,
+        "units": 1017588.198,
+        "security": "Helios Flexi Cap Fund - Direct Growth",
+        "securityKey": "helios-flexi-cap-fund-direct-growth"
+      },
+      {
+        "accountId": "helios-mutual-fund-10063876",
+        "date": "2025-10-10",
+        "direction": "in",
+        "label": "Purchase",
+        "amount": 1790000,
+        "invested": 1790000,
+        "charges": 89.5,
+        "units": 115851.812,
+        "security": "Helios Flexi Cap Fund - Direct Growth",
+        "securityKey": "helios-flexi-cap-fund-direct-growth"
+      }
+    ],
+    "units": 2407981.455
   },
   "helios-mutual-fund-10355977|helios-flexi-cap-fund-direct-growth": {
     "accountId": "helios-mutual-fund-10355977",

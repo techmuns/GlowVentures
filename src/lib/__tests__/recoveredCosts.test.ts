@@ -19,16 +19,20 @@ const near = (got: number | null | undefined, want: number) =>
 // Less each demat balance whose exact units the same owner's AMC folio reports at
 // a cost (Stage 10kb): the folio costs it, so it takes no recovered record. Ajay's
 // and Aarti's Kotak Multi Cap units on their Motilal demats are the units Kotak
-// folios 7111389 and 5372722 report once that delivery is in the book.
+// folios 7111389 and 5372722 report once that delivery is in the book. Ankita's
+// and Bharat's Helios units are the units Helios folios 10056154 and 10063876
+// report from 3 Nov 2026, rematerialised from those demats (Stage 10ke).
 const ownerOf = (id: string) => BOOK_ACCOUNTS.find(a => a.accountId === id)?.ownerId;
-const MULTI_CAP_DEMATS = [["motilal-oswal-financial-services-demat-1201090012539150", 4183009.836],
-  ["motilal-oswal-financial-services-demat-1201090012838335", 612631.862]] as const;
-const costedAtFolio = MULTI_CAP_DEMATS.filter(([account, units]) => BOOK_POSITIONS.some(p => p.accountId !== account
-  && p.isin === "INF174KA1HV3" && p.costBasis != null && p.quantity != null && Math.abs(p.quantity - units) <= .0005
+const FOLIO_COSTED_DEMATS = [["motilal-oswal-financial-services-demat-1201090012539150", "INF174KA1HV3", 4183009.836],
+  ["motilal-oswal-financial-services-demat-1201090012838335", "INF174KA1HV3", 612631.862],
+  ["motilal-oswal-financial-services-demat-1201090012838316", "INF0R8701046", 5100984.835],
+  ["motilal-oswal-financial-services-demat-1201090012838320", "INF0R8701046", 2407981.455]] as const;
+const costedAtFolio = FOLIO_COSTED_DEMATS.filter(([account, isin, units]) => BOOK_POSITIONS.some(p => p.accountId !== account
+  && p.isin === isin && p.costBasis != null && p.quantity != null && Math.abs(p.quantity - units) <= .0005
   && ownerOf(p.accountId) === ownerOf(account)));
-for (const [account, units] of MULTI_CAP_DEMATS)
-  assert.equal(BOOK_RECOVERED_COSTS.some(r => r.accountId === account && r.isin === "INF174KA1HV3" && r.quantity === units),
-    !costedAtFolio.some(([a]) => a === account), `${account}: recovered only while no folio of the owner costs the same units`);
+for (const [account, isin, units] of FOLIO_COSTED_DEMATS)
+  assert.equal(BOOK_RECOVERED_COSTS.some(r => r.accountId === account && r.isin === isin && r.quantity === units),
+    !costedAtFolio.some(([a, i]) => a === account && i === isin), `${account}: recovered only while no folio of the owner costs the same units`);
 assert.equal(BOOK_RECOVERED_COSTS.length, 62 - costedAtFolio.length, "only exact owner/ISIN/quantity matches are recoverable");
 const MOPWM = "source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx";
 assert.equal(BOOK_RECOVERED_COSTS.filter(r => r.evidence.some(e => e.path === MOPWM)).length, 17);
@@ -133,8 +137,8 @@ const reportedByFolio=BOOK_RECOVERED_COSTS.filter(r=>r.accountId.includes('-dema
 const carriedByNote=BOOK_RECOVERED_COSTS.filter(r=>BOOK_ADVISED_BALANCES.some(b=>b.accountId===r.accountId&&b.isin===r.isin&&Math.abs(b.recordQuantity-r.quantity)<=.0005&&Math.abs(b.quantity-r.quantity)>.0005));
 // And less the balances a folio costs, whose records are gone (above).
 assert.equal(funds.filter(p=>p.recoveredCost).length,29-reportedByFolio.filter(r=>/^INF/.test(r.isin)).length-carriedByNote.length-costedAtFolio.length);
-for (const [account] of MULTI_CAP_DEMATS)
-  assert.equal(funds.some(p=>p.accountId===account&&p.isin==='INF174KA1HV3'),!costedAtFolio.some(([a])=>a===account),`${account}: the folio values its Multi Cap units, not the demat`);
+for (const [account, isin] of FOLIO_COSTED_DEMATS)
+  assert.equal(funds.some(p=>p.accountId===account&&p.isin===isin),!costedAtFolio.some(([a,i])=>a===account&&i===isin),`${account}: the folio values its ${isin} units, not the demat`);
 assert.ok(funds.every(p=>!p.depositoryUnits?.advised||!p.recoveredCost),"a balance the note carried borrows no lots recorded for other units");
 assert.equal(funds.filter(p=>p.recoveredCost&&p.depositoryUnits?.unitSplit).length,3);
 const fp=(account:string,isin:string)=>funds.find(p=>p.accountId.endsWith(account)&&p.isin===isin)!;
@@ -149,7 +153,12 @@ for (const [account, first, last, lots] of [['12539150','2025-03-06','2026-03-23
   assert.equal(investedOnOf([{...p,accountId:'different-account'}]),null,'another account cannot borrow recovered dates');
   assert.equal(investedOnOf([{...p,isin:'different-isin'}]),null,'another scheme cannot borrow recovered dates');
 }
-near(fp('12838316','INF0R8701046').costBasis,72403187.18);
+// Ankita's Helios units were costed off the review on her demat (₹7,24,03,187.18)
+// until her folio 10056154 reported them on 3 Nov 2026 at its own printed cost
+// (Stage 10ke): the demat row gives way, the folio's figure stands.
+assert.equal(funds.some(p=>p.accountId.endsWith('12838316')&&p.isin==='INF0R8701046'),!costedAtFolio.some(([a])=>a.endsWith('12838316')));
+if (costedAtFolio.some(([a])=>a.endsWith('12838316'))) near(BOOK_POSITIONS.find(p=>p.accountId==='helios-mutual-fund-10056154'&&p.isin==='INF0R8701046')!.costBasis!,72400000);
+else near(fp('12838316','INF0R8701046').costBasis,72403187.18);
 const largeMid=fp('12539150','INF174K01LF9');
 assert.equal(largeMid.quantity,34045.997);near(largeMid.costBasis,12499374.97);
 assert.notEqual(largeMid.quantity,27900.484,'the separate AMC folio must not be pooled into demat lots');

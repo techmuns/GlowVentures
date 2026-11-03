@@ -230,7 +230,7 @@ ok("both sides kept", gl && gl.a.value === 5957554 && gl.b.value === 6744704,
 ok("precedence named, not applied", gl?.authoritative === "appraisal", String(gl?.authoritative));
 
 // ── 3a. CURRENT PORTFOLIO beside its APPRAISAL, no dividend statement ──────
-// Molecule's 2 November delivery (Stage 10kc): CURRENT PORTFOLIO folds Elecon's
+// Molecule's 2 November delivery (Stage 10ki): CURRENT PORTFOLIO folds Elecon's
 // 1,000 outstanding dividend into its market value and prints cost to the
 // rupee; the appraisal prints the dividend as accrued income and keeps paise.
 {

@@ -179,7 +179,7 @@ ok("the source proof exercises independently printed capital totals", steps.some
 // one security — must be settled here, or the page's disclosure would still
 // stand. Judged per window, not per account: Molecule's 2 November statements
 // brought its 26 August TDS transfers inside its record, and its 30 June →
-// 31 July step is still one only its printed totals settle (Stage 10kc).
+// 31 July step is still one only its printed totals settle (Stage 10ki).
 const rescued = BOOK_NAV_COVERAGE.covered.filter((c) => basisOf.get(c.accountId) !== "unreported"
   && steps.some((s) => s.accountId === c.accountId && s.how === "printed"
     && !(BOOK_ACCOUNT_CASH_FLOWS[c.accountId] ?? []).some((f) => !isOpening(f) && f.date > s.a && f.date <= s.b)));

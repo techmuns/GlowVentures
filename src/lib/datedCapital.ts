@@ -59,7 +59,7 @@
  * own date instead, its units assumed held (Stage 10jo, `holdingFlowsOf`).
  */
 import type { Account, AccountReturnCoverage, CapitalMove, Commitment, Position, PositionTranches, ReviewFlow } from "./types";
-import type { RowCapital } from "./analytics";
+import type { CapitalLeg, RowCapital } from "./analytics";
 import { capitalClose, capitalMovesWithCalls, capitalRollup, type CapitalGroup } from "./tranches";
 import { xirrPct } from "./bucketXirr";
 import type { DatedFlow } from "./xirr";
@@ -184,8 +184,10 @@ export function buildDatedCapital(input: {
     // Lines closed at a market price, their units assumed held (Stage 10jo).
     const owners = new Set<string>(), from = new Set<string>();
     const closes: NonNullable<Extract<RowCapital, { dated: true }>["closes"]> = [];
+    const legs: CapitalLeg[] = [];
     for (const [i, x] of fl.entries()) {
       if (!x || !x.dated) continue;
+      legs.push({ flows: x.flows, close: x.close });
       if (x.market) {
         owners.add(ownerOf.get(lines[i].accountId) ?? "the owner"); from.add(x.market.from);
         // The ISIN the units were bought under — a documented unit conversion keeps its record there.
@@ -202,7 +204,7 @@ export function buildDatedCapital(input: {
     if (since === null || to === null) return null;
     return {
       dated: true, accountIds: accts, accounts: lines.length, flows: n, since, to,
-      days: dayDiff(since, to), annualPct: xirrPct(flows), holdings: { trades, lots, recovered },
+      days: dayDiff(since, to), annualPct: xirrPct(flows), holdings: { trades, lots, recovered }, legs,
       ...(owners.size ? { assumed: { owners: [...owners].sort(), from: [...from].sort() }, closes } : {}),
     };
   };
@@ -241,6 +243,7 @@ export function buildDatedCapital(input: {
     // for one account, and `pooledXirr`'s rule for several. A folio redeemed in
     // full closes on its last flow with no terminal value, exactly as there.
     const flows: DatedFlow[] = [];
+    const legs: CapitalLeg[] = [];
     let since: string | null = null, to: string | null = null, n = 0;
     for (const g of gs as CapitalGroup[]) {
       for (const f of g.flows!) {
@@ -253,6 +256,7 @@ export function buildDatedCapital(input: {
       const c = capitalClose(g);
       const close = c.value === 0 ? lastFlow : (c.asOf ?? lastFlow);
       if ((c.value ?? 0) > 0) flows.push({ date: new Date(close), amount: c.value! });
+      legs.push({ flows: g.flows!.map((f) => ({ date: f.date, amount: f.amount })), close: (c.value ?? 0) > 0 ? { date: close, value: c.value! } : null });
       if (to === null || close > to) to = close;
     }
     if (since === null || to === null) {
@@ -267,6 +271,7 @@ export function buildDatedCapital(input: {
       to,
       days: dayDiff(since, to),
       annualPct: xirrPct(flows),
+      legs,
     };
   };
 

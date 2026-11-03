@@ -915,7 +915,48 @@
 - The two records it removes are correct. Kotak folios 7111389 (Ajay) and 5372722 (Aarti) report the exact Multi Cap units (INF174KA1HV3) that the Motilal demats 1201090012539150 and 1201090012838335 recorded, and each folio prints a cost or ties one by FIFO. `recoverHoldingCosts` leaves a same-owner balance that another statement costs without a recovered record, and fund gates 5/7 value the folio rather than the demat.
 - `recoveredCosts.test.ts` names the two balances. It takes one off both pinned counts (records and costed live fund rows) for each folio that costs it, and it checks that the record and the demat row go when the folio arrives and stay until then. A scratch book with the two folio positions added reproduced 60 against 62 on the old test and passes on the new one.
 
-### Stage 10kc — MOLECULE'S 2 NOVEMBER STATEMENTS PASS THE PUBLICATION GATE
+### Stage 10kc — THE SOURCE-TRACE AND NAVIGATION BROWSER CHECKS FOLLOW THE NOTE'S ROW
+
+- CI's `build` job had failed on main since Stage 10ka: `check-source-trace.mjs` waited for a direct quantity link on Ajay's Motilal Arbitrage demat row (1201090012539150). The family's note now sources that row as well, so its quantity and labels open a sources list, and the cell shows the note's 24,73,222 units.
+- The check now opens that list. It finds the note and the statement's own 2,80,67,435.434, then follows the statement link, so the page-5 highlight and the Monitor's return-state walk test the same document as before.
+- `check-navigation-state.mjs` picked "Kotak Arbitrage Fund" from the holdings search. Kotak's folios add the Regular plan, so it now picks the Direct plan the walk links to.
+- All four scripts after `check-source-trace` in that CI step pass against a build carrying Kotak's delivery.
+
+### Stage 10kd — EVERY HOLDING AGAINST ITS OWN INDEX, ON ITS OWN MONEY
+
+*"Map a benchmark to every holding by what it is … if the investment in a portfolio holding is in tranches then we need to show benchmark return also based on tranches investment in the same magnitude and time period."*
+
+- `src/lib/holdingBenchmark.ts` picks one index per Monitor row. A mandate takes the benchmark its manager's report prints (`BOOK_ACCOUNT_RETURNS`: BSE 500 TRI, N50TRI …, price version). A listed share takes AMFI's size class from its 30 Jun 2026 list (`src/data/amfiMarketCap.json`, `npm run build-amfi-market-cap`): large → Nifty 50, mid → Midcap 150, small → Smallcap 250. The ISIN comes from the statement, else from the verified exchange instrument. An SME-platform share is small cap. A main-board listing after the list is ranked on the list's floors by its quote's market value, else the Nifty 500. A fund takes its SEBI category from its name. Unlisted shares and private funds take the Nifty 500. Cash, arbitrage, hybrid and debt lines name the index they would need and show no figure.
+- The index figure sits under the holding's in each return cell (`components/HoldingBenchmark.tsx`, `inline-block`, so the cell's text stays one line). It uses the row's own dated money: `RowCapital.legs` keeps each line's flows and close, and each payment buys the index on its own day. HPR is the index gain over the money paid in. XIRR/CAGR is the index's money-weighted rate over the same flows. YTD from a dated value is the index's move over the same window. A row whose purchases are not all dated shows `—`, and the hover gives the reason. Histories come through `/api/prices` with the name check.
+- Mapped on today's book: 159 shares (14 large, 13 mid, 124 small, 8 unranked/broad), 30 funds/AIFs to an index, 56 unlisted to the Nifty 500, 33 cash/arbitrage/debt/hybrid lines with a named reason.
+
+### Stage 10ke — HELIOS'S 3 NOVEMBER UPLOADS LAND, AND ONE FILE NO LONGER HOLDS ITS BATCH
+
+- The client's four Helios statements (Ajay 10355977 and 10056128, Ankita 10056154, Bharat 10063876; all as of 3 Nov 2026) were held in the statement inbox with "needs a full reading". The rapid reader found a `READ_GAP` on Ankita's and Bharat's folios: `transaction-type-not-declared`.
+- Cause: CAMS prints its job reference (`EISC-…(I)-…--1031`) up the page margin. The layout joined it to the 04/06/2025 Net Purchase row, the anchored row pattern missed, and `mfPurchaseFlows` withheld the whole dated record. It now cuts that reference before matching, as `mutualFundFolio`'s `furnitureFree` already did. A real figure after the balance still withholds.
+- Ajay's two statements were clean but held anyway, because one failing file held the whole batch. `prepareRapidStatement` now sets aside only files whose every finding names them, re-checks the rest, and publishes those. The hold reason names the failed check and the reader's warnings, so `inbox.json` says what to fix.
+- Ankita's and Bharat's folios are new accounts. Each holds exactly the Helios units its owner's Motilal demat printed on 31 Jul, and each statement prints `Demat To Remat -Accept` on 6 Oct. The Helios layout carries that date as `custodyRematOn`, and `CUSTODY_FOLIO_LINKS` links each demat to its folio on it, as Bandhan's are (Stage 10hm). The units count once, and the two review-recovered demat costs step aside for the folio's own (`recoveredCosts.test.ts`, 62 → 60, as Stage 10kb).
+- The four files are in `source/november-2026/`. The book rises ₹13.56 Cr: Ankita ₹7.98 Cr and Bharat ₹3.77 Cr (units that were quantity-only on the demat statements), and Ajay ₹1.81 Cr at the 2 Nov NAV.
+- A fetched NAV older than a statement's own price never replaces it (`applyFundNavs`). Helios's statements price at 2 Nov, after the newest fetched NAV, which is the first time the book hit this rule. `check:pages`' `withPublishedNavs` and `portfolioExcel.test.ts` now re-express it. Without it they showed 7 false findings on `monitor`/`sectors` and a ₹68.7 L footer gap.
+- Tests pinned to the old dates or windows now state their rules instead. `capitalRecord`: an older record never pulls the close back. `periodReturnWorking`: October's MTD is ended by October's last valuation. `navSeries`: the flow adjustment is struck over the like-for-like stretch carrying the most capital (complete-panel now starts at Bandhan's 26 Oct join and holds none). The taxonomy's dead-entry check counts custody audit rows, which keeps `sec:helios-fcf-d-grow` classifying the superseded demat rows in the Consolidated View.
+
+### Stage 10kf — THE TRANSACTIONS TAB SAYS BUY OR SELL
+
+- The family (3 Nov 2026), on Data Audit → Transactions: *"add a column next to it, which we call as transaction type. The transaction type can only be two types, which is buy or sell, for the ease of analysis."*
+- `consolidatedSheet.ts` adds `txntype` ("Transaction type") right after "Type (as printed)", on the page and in the Excel download. Trades take their side. A capital flow that counts as Investment is Buy, and one that counts as Divestment (redemptions, withdrawals, TDS transfers out) is Sell. An open tax lot is Buy and a sold tax lot is Sell.
+- Income (dividends, interest and gain distributions, equalisation) and non-cash corporate actions (bonus, spin-off) are neither, so their cell is blank. The column's `blank` reason is the cell's hover. `consolidatedSheet.test.ts` pins the mapping row by row.
+
+### Stage 10kg — THE TRANSACTION TYPE ADDS INCOME
+
+- The family (3 Nov 2026), after the Stage 10kf column: *"I'm fine with adding an income row."* Dividends, interest and gain distributions, and equalisation received now read **Income** in Transactions' `txntype`. This covers every row that counts as Income, from income records and capital flows alike.
+- A reversal stays Income. Its minus sign is in Gross and Net, so adding the column up nets it out: 188 of the book's 191 negative income rows have an equal positive on the same day. Only non-cash corporate actions (bonus, spin-off) are left blank, and the column's `blank` reason says why.
+
+### Stage 10kh — NO "LATEST STATEMENTS COULD NOT BE LOADED" BANNER
+
+- The family (3 Nov 2026), on the amber strip *"Latest statements could not be loaded. Showing saved data. Retry"*: *"Never show this garbage to the user please remove."*
+- `renderApp.tsx` no longer draws it. Nothing else changes. When `bootstrapRuntimeBook` cannot fetch a published version, or the version does not match this build's reader, the app still opens on its compiled book. `bootstrapWarning` still sets the background refresh to look every 5 s, so a newer version still loads when it arrives.
+
+### Stage 10ki — MOLECULE'S 2 NOVEMBER STATEMENTS PASS THE PUBLICATION GATE
 
 - The client's ZIP `Re__Urgent_Request_for_Transaction_Statement,_Bank_Book_&_Portfolio_Appraisal_Report.zip` (upload `20261103T082041Z-6ce46088`; Molecule 7810404's bank book, current portfolio, appraisal, fact sheet and transaction statement, all struck 2 Nov 2026) was held `needs_review` with 34 findings. Every reader had read it; the gate refused it for three reasons.
 - **MISSING_DATE.** A since-inception BANK BOOK prints no "From … to …" window. It prints only the report date on its own line under the title. `readBankBook` now reads that line from the title block, above `Account :`, and only where nothing else dates the report. V.E.C's two July bank books have the same layout and were archived as `…-unknown-bank-book`. They are now `…-2026-07-06-bank-book`, the date of their July siblings. `assessPublication` lets an undated reading give way to the same source file read with its printed date: same provider, account and report. It is still an archive loss in every other case.

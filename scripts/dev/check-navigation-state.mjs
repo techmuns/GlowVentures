@@ -52,7 +52,8 @@ try {
   await page.locator('[data-entity-filter]').selectOption('Ajay Jaisinghani');
   await page.getByRole('button',{name:'All holdings',exact:true}).click();
   await page.getByPlaceholder('Search holdings…').fill('Kotak Arbitrage');
-  await page.getByRole('option',{name:/Kotak Arbitrage Fund/i}).click();
+  // The Direct plan this walk links to; Kotak's folios (Stage 10kb) add the Regular plan.
+  await page.getByRole('option',{name:/Kotak Arbitrage Fund/i}).filter({hasNotText:/Regular/i}).click();
   await page.getByRole('heading',{name:'Portfolio Monitor',exact:true}).click();
   await link().click(); await page.waitForURL(base+'/stock/'+kotak);
   await page.getByRole('navigation',{name:'Breadcrumb',exact:true}).getByRole('link',{name:'Portfolio Monitor',exact:true}).click();

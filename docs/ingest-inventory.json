@@ -1,16 +1,16 @@
 {
-  "generatedAt": "2026-11-03T08:44:52.153Z",
+  "generatedAt": "2026-11-03T11:34:07.895Z",
   "sourceDir": "source",
   "counts": {
-    "files": 472,
-    "pdfs": 462,
+    "files": 476,
+    "pdfs": 466,
     "nonPdf": 10,
-    "classified": 403,
+    "classified": 407,
     "unclassified": 69,
-    "encrypted": 37,
+    "encrypted": 41,
     "fromArchives": 404,
     "archivesExpanded": 51,
-    "pages": 2006
+    "pages": 2014
   },
   "reportTypes": [
     "holdings",
@@ -44,6 +44,69 @@
     "unknown"
   ],
   "archives": [
+    {
+      "archive": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani.zip",
+      "extractedTo": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani",
+      "files": 3,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ankita Jaisinghani.zip",
+      "extractedTo": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ankita Jaisinghani",
+      "files": 2,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Bharat Jaisinghani.zip",
+      "extractedTo": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Bharat Jaisinghani",
+      "files": 1,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Ajay T Jaisinghani.zip",
+      "extractedTo": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Ajay T Jaisinghani",
+      "files": 3,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Ankita Jaisinghani.zip",
+      "extractedTo": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Ankita Jaisinghani",
+      "files": 2,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Bharat Jaisinghani.zip",
+      "extractedTo": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Bharat Jaisinghani",
+      "files": 1,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Ajay T Jaisinghani.zip",
+      "extractedTo": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Ajay T Jaisinghani",
+      "files": 3,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Ankita Jaisinghani.zip",
+      "extractedTo": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Ankita Jaisinghani",
+      "files": 2,
+      "skipped": 0,
+      "failed": 0
+    },
+    {
+      "archive": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Bharat Jaisinghani.zip",
+      "extractedTo": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Bharat Jaisinghani",
+      "files": 1,
+      "skipped": 0,
+      "failed": 0
+    },
     {
       "archive": "source/ARISTOS - AJAY.zip",
       "extractedTo": "source/_extracted/ARISTOS - AJAY",
@@ -335,69 +398,6 @@
       "archive": "source/VEC - ANKITA JAISINGHANI .zip",
       "extractedTo": "source/_extracted/VEC - ANKITA JAISINGHANI ",
       "files": 11,
-      "skipped": 0,
-      "failed": 0
-    },
-    {
-      "archive": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani.zip",
-      "extractedTo": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ajay T Jaisinghani",
-      "files": 3,
-      "skipped": 0,
-      "failed": 0
-    },
-    {
-      "archive": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ankita Jaisinghani.zip",
-      "extractedTo": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Ankita Jaisinghani",
-      "files": 2,
-      "skipped": 0,
-      "failed": 0
-    },
-    {
-      "archive": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Bharat Jaisinghani.zip",
-      "extractedTo": "source/_extracted/october-2026-b/GREEN LANTERN ICICI/Bharat Jaisinghani",
-      "files": 1,
-      "skipped": 0,
-      "failed": 0
-    },
-    {
-      "archive": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Ajay T Jaisinghani.zip",
-      "extractedTo": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Ajay T Jaisinghani",
-      "files": 3,
-      "skipped": 0,
-      "failed": 0
-    },
-    {
-      "archive": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Ankita Jaisinghani.zip",
-      "extractedTo": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Ankita Jaisinghani",
-      "files": 2,
-      "skipped": 0,
-      "failed": 0
-    },
-    {
-      "archive": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Bharat Jaisinghani.zip",
-      "extractedTo": "source/_extracted/october-2026-c/GREEN LENTER & ICICI/Bharat Jaisinghani",
-      "files": 1,
-      "skipped": 0,
-      "failed": 0
-    },
-    {
-      "archive": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Ajay T Jaisinghani.zip",
-      "extractedTo": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Ajay T Jaisinghani",
-      "files": 3,
-      "skipped": 0,
-      "failed": 0
-    },
-    {
-      "archive": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Ankita Jaisinghani.zip",
-      "extractedTo": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Ankita Jaisinghani",
-      "files": 2,
-      "skipped": 0,
-      "failed": 0
-    },
-    {
-      "archive": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Bharat Jaisinghani.zip",
-      "extractedTo": "source/_extracted/october-2026-c/RE__Request_for_September_2026_Statement_and_Reports/Bharat Jaisinghani",
-      "files": 1,
       "skipped": 0,
       "failed": 0
     }
@@ -9431,6 +9431,86 @@
       "matchedBy": "Goldstandard signature + content keywords"
     },
     {
+      "path": "source/november-2026/HELIOS AJAY ACCOUNT STATEMENT FROM 6-AUG-26 TO 03-NOV-26.pdf",
+      "fileName": "HELIOS AJAY ACCOUNT STATEMENT FROM 6-AUG-26 TO 03-NOV-26.pdf",
+      "bytes": 280671,
+      "size": "274.1 KB",
+      "pages": 2,
+      "fromArchive": false,
+      "encrypted": true,
+      "readError": null,
+      "provider": "Helios Mutual Fund",
+      "ownerName": null,
+      "accountNo": "10355977",
+      "asOfDate": "2026-11-03",
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "high",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/november-2026/HELIOS AJAY ACCOUNT STATEMENT FROM 7-AUG-24 TO 3-NOV-26.pdf",
+      "fileName": "HELIOS AJAY ACCOUNT STATEMENT FROM 7-AUG-24 TO 3-NOV-26.pdf",
+      "bytes": 276985,
+      "size": "270.5 KB",
+      "pages": 2,
+      "fromArchive": false,
+      "encrypted": true,
+      "readError": null,
+      "provider": "Helios Mutual Fund",
+      "ownerName": null,
+      "accountNo": "10056128",
+      "asOfDate": "2026-11-03",
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "high",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/november-2026/HELIOS ANKITA ACCOUNT STATEMENT FROM 7-AUG-26 TO 3-NOV-26.pdf",
+      "fileName": "HELIOS ANKITA ACCOUNT STATEMENT FROM 7-AUG-26 TO 3-NOV-26.pdf",
+      "bytes": 277252,
+      "size": "270.8 KB",
+      "pages": 2,
+      "fromArchive": false,
+      "encrypted": true,
+      "readError": null,
+      "provider": "Helios Mutual Fund",
+      "ownerName": null,
+      "accountNo": "10056154",
+      "asOfDate": "2026-11-03",
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "high",
+      "matchedBy": "generic keywords"
+    },
+    {
+      "path": "source/november-2026/HELIOS BHARAT ACCOUNT STATEMENT FROM 16-OCT-24 TO 23-NOV-26.pdf",
+      "fileName": "HELIOS BHARAT ACCOUNT STATEMENT FROM 16-OCT-24 TO 23-NOV-26.pdf",
+      "bytes": 277513,
+      "size": "271.0 KB",
+      "pages": 2,
+      "fromArchive": false,
+      "encrypted": true,
+      "readError": null,
+      "provider": "Helios Mutual Fund",
+      "ownerName": null,
+      "accountNo": "10063876",
+      "asOfDate": "2026-11-03",
+      "reportType": "unknown",
+      "sections": [],
+      "familyGroup": null,
+      "strategy": null,
+      "confidence": "high",
+      "matchedBy": "generic keywords"
+    },
+    {
       "path": "source/october-2026-c/Z660_17972_BHARAT  JAISINGHANI_1791470505342.pdf",
       "fileName": "Z660_17972_BHARAT  JAISINGHANI_1791470505342.pdf",
       "bytes": 165514,
@@ -15804,6 +15884,20 @@
           "owner": null,
           "strategy": null,
           "asOfDates": {
+            "2026-11-03": {
+              "reportTypes": {
+                "unknown": [
+                  {
+                    "path": "source/november-2026/HELIOS AJAY ACCOUNT STATEMENT FROM 7-AUG-24 TO 3-NOV-26.pdf",
+                    "pages": 2,
+                    "size": "270.5 KB",
+                    "confidence": "high",
+                    "sections": []
+                  }
+                ]
+              },
+              "fileCount": 1
+            },
             "2026-10-26": {
               "reportTypes": {
                 "unknown": [
@@ -15811,6 +15905,48 @@
                     "path": "source/october-2026-d/Acctstmt_HLS_10056128 (1).pdf",
                     "pages": 2,
                     "size": "270.1 KB",
+                    "confidence": "high",
+                    "sections": []
+                  }
+                ]
+              },
+              "fileCount": 1
+            }
+          },
+          "fileCount": 2
+        },
+        "10056154": {
+          "owner": null,
+          "strategy": null,
+          "asOfDates": {
+            "2026-11-03": {
+              "reportTypes": {
+                "unknown": [
+                  {
+                    "path": "source/november-2026/HELIOS ANKITA ACCOUNT STATEMENT FROM 7-AUG-26 TO 3-NOV-26.pdf",
+                    "pages": 2,
+                    "size": "270.8 KB",
+                    "confidence": "high",
+                    "sections": []
+                  }
+                ]
+              },
+              "fileCount": 1
+            }
+          },
+          "fileCount": 1
+        },
+        "10063876": {
+          "owner": null,
+          "strategy": null,
+          "asOfDates": {
+            "2026-11-03": {
+              "reportTypes": {
+                "unknown": [
+                  {
+                    "path": "source/november-2026/HELIOS BHARAT ACCOUNT STATEMENT FROM 16-OCT-24 TO 23-NOV-26.pdf",
+                    "pages": 2,
+                    "size": "271.0 KB",
                     "confidence": "high",
                     "sections": []
                   }
@@ -15839,6 +15975,20 @@
               },
               "fileCount": 1
             },
+            "2026-11-03": {
+              "reportTypes": {
+                "unknown": [
+                  {
+                    "path": "source/november-2026/HELIOS AJAY ACCOUNT STATEMENT FROM 6-AUG-26 TO 03-NOV-26.pdf",
+                    "pages": 2,
+                    "size": "274.1 KB",
+                    "confidence": "high",
+                    "sections": []
+                  }
+                ]
+              },
+              "fileCount": 1
+            },
             "2026-10-26": {
               "reportTypes": {
                 "unknown": [
@@ -15854,10 +16004,10 @@
               "fileCount": 1
             }
           },
-          "fileCount": 2
+          "fileCount": 3
         }
       },
-      "fileCount": 3
+      "fileCount": 7
     },
     "India SME Investments": {
       "accounts": {

@@ -86,6 +86,21 @@ sheet(TRANSACTIONS).rows.forEach((r, i) => {
   if (lot) for (const k of ["net", "gross"]) assert.equal(r.values[idx(TRANSACTIONS, k)], null, `a tax lot carries no ${k}: its cash is on the trade row`);
   if (record[i] === "Trade") assert.equal(r.values[idx(TRANSACTIONS, "rgain")], null, "a trade's realised gain is on its tax-lot rows, counted once");
 });
+// Transaction type is Buy, Sell or Income, beside the printed type; a non-cash
+// corporate action is none of them and stays blank, never guessed.
+assert.equal(idx(TRANSACTIONS, "txntype"), idx(TRANSACTIONS, "type") + 1, "Transaction type sits next to the printed type");
+{
+  const counts = column(TRANSACTIONS, "counts"), type = column(TRANSACTIONS, "type"), txntype = column(TRANSACTIONS, "txntype");
+  const expected = (i: number) => record[i] === "Trade" ? type[i]
+    : record[i] === "Tax lot — sold" ? "Sell" : record[i] === "Tax lot — open" ? "Buy"
+    : record[i] === "Income" ? "Income"
+    : record[i] === "Capital flow" ? (counts[i] === "Investment" ? "Buy" : counts[i] === "Divestment" ? "Sell" : counts[i] === "Income" ? "Income" : null) : null;
+  txntype.forEach((v, i) => {
+    assert.ok(v === "Buy" || v === "Sell" || v === "Income" || (v === null && record[i] === "Corporate action"), `row ${i}: transaction type is Buy, Sell or Income (blank only for a corporate action), not ${v}`);
+    assert.equal(v, expected(i), `row ${i} (${record[i]} · ${type[i]} · ${counts[i]})`);
+  });
+  assert.ok(txntype.includes("Buy") && txntype.includes("Sell") && txntype.includes("Income"));
+}
 assert.ok(column(TRANSACTIONS, "gf").some(v => typeof v === "number") && column(TRANSACTIONS, "taxlt").some(v => typeof v === "number"),
   "source-stated FMV and taxable long-term gain are kept, not discarded");
 // An account-level capital record joins the account's one holding (never a PMS mandate's).

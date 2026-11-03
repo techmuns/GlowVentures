@@ -118,7 +118,7 @@ export function assessPublication({ baseline, documents, baselineReport = {}, re
   // statement is not removed; only the reading that could not read it is.
   // So may an UNDATED reading give way to the same source read with the date it
   // prints: one account and report, now filed under its day, not removed
-  // (V.E.C's July bank books, Stage 10kc). The new reading meets every gate.
+  // (V.E.C's July bank books, Stage 10ki). The new reading meets every gate.
   const sources = new Set(documents.map(d => d.sourcePath));
   const datedNow = d => !d.asOf && documents.some(x => x.sourcePath === d.sourcePath && x.asOf
     && x.provider === d.provider && String(x.accountNo) === String(d.accountNo) && x.reportType === d.reportType);

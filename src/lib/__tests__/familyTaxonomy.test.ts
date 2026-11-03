@@ -18,7 +18,7 @@ import { shareCandidates } from "../depositoryShares";
 import path from "node:path";
 import fs from "node:fs";
 import XLSX from "xlsx";
-import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_SUMMARY, BOOK_SHARE_MOVEMENTS, BOOK_POSITION_TRANCHES } from "@/data/glowData";
+import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_SUMMARY, BOOK_SHARE_MOVEMENTS, BOOK_POSITION_TRANCHES, BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
 import { BOOK_FUND_NAVS } from "@/data/fundNavs";
 import { depositoryCashHoldings, depositoryFundHoldings, isArbitrageFund, unpricedStatementUnits } from "@/lib/fundNavs";
 import { accountIndex, engagementOf } from "@/lib/accounts";
@@ -52,8 +52,11 @@ const isM = (p: (typeof BOOK_POSITIONS)[number]) =>
   // position of the generated book and their entries match a live row.
   // What the family holds: the book, the live layer's depository rows, and every
   // line a statement records with no usable price (Stage 10cz) — a map entry
-  // for one of those is not a typo.
+  // for one of those is not a typo. Nor is one for a custody row a newer folio
+  // succeeded (Helios on Ankita's and Bharat's demats, Stage 10ke): the
+  // Consolidated View still lists it as an audit row, classified by this map.
   const live = new Set([
+    ...BOOK_UNVALUED_HOLDINGS.map((u) => `sec:${u.securityKey}`),
     ...[...BOOK_POSITIONS, ...depositoryFundHoldings(), ...unpricedStatementUnits(), ...shareCandidates()]
       .map((p) => productKeyOf(p, isM(p))),
     ...allRecordedLines().map((l) => `sec:${l.securityKey}`),

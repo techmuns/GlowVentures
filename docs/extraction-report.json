@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-11-03T08:52:22.364Z",
+  "generatedAt": "2026-11-03T11:34:46.666Z",
   "summary": {
-    "documents": 437,
-    "parsed": 432,
+    "documents": 441,
+    "parsed": 436,
     "partial": 0,
     "failed": 5,
-    "rowSumChecks": 403,
+    "rowSumChecks": 415,
     "totalMismatches": 143,
     "totalsMaterial": 1,
     "totalsExplained": 58,
-    "totalsRounding": 167,
+    "totalsRounding": 171,
     "derivedVsPrintedDeltas": 962,
     "derivedMaterial": 8,
     "derivedExplained": 402,
@@ -23,12 +23,12 @@
     "quantityOnlyMatches": 4,
     "confirmedSeparateByFamily": 4,
     "suspectedDuplicateEarnings": 1,
-    "securitiesWithoutSymbol": 35,
+    "securitiesWithoutSymbol": 32,
     "ownerNamesUnmatched": 0,
     "stitchesApplied": 134
   },
   "coverage": {
-    "pdfsFound": 427,
+    "pdfsFound": 431,
     "duplicateSources": [
       {
         "path": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_DividendStatement_India177OT.pdf",
@@ -246,7 +246,7 @@
         "sha256": "7cbc776b8cfe6baacfa8c753d86d46de2fec08fbcbae7b36d8dba58029d627fc"
       }
     ],
-    "parsed": 432,
+    "parsed": 436,
     "partial": 0,
     "failed": 5,
     "byProvider": {
@@ -907,7 +907,7 @@
       },
       "Helios Mutual Fund": {
         "holdings": {
-          "ok": 3,
+          "ok": 7,
           "partial": 0,
           "failed": 0
         }
@@ -1045,8 +1045,8 @@
     "partials": []
   },
   "consolidated": {
-    "naive": 138766115697.87,
-    "deduped": 138766115697.87,
+    "naive": 139233396503.34,
+    "deduped": 139233396503.34,
     "doubleCounted": 0
   },
   "rowSumChecks": [
@@ -7299,6 +7299,218 @@
       "printedTotal": 100,
       "delta": 0,
       "rowsSummed": 11,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "helios-mutual-fund-10355977-2026-11-03-holdings",
+      "provider": "Helios Mutual Fund",
+      "accountNo": "10355977",
+      "asOf": "2026-11-03",
+      "reportType": "holdings",
+      "check": "total market value (incl. cash)",
+      "rowSum": 299084367.18,
+      "printedTotal": 299084367.18,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null,
+      "outstandingDividend": null
+    },
+    {
+      "docKey": "helios-mutual-fund-10355977-2026-11-03-holdings",
+      "provider": "Helios Mutual Fund",
+      "accountNo": "10355977",
+      "asOf": "2026-11-03",
+      "reportType": "holdings",
+      "check": "total cost (incl. cash)",
+      "rowSum": 310000000,
+      "printedTotal": 310000000,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null,
+      "outstandingDividend": null
+    },
+    {
+      "docKey": "helios-mutual-fund-10355977-2026-11-03-holdings",
+      "provider": "Helios Mutual Fund",
+      "accountNo": "10355977",
+      "asOf": "2026-11-03",
+      "reportType": "holdings",
+      "check": "% of assets sums to 100",
+      "rowSum": 100,
+      "printedTotal": 100,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "helios-mutual-fund-10056128-2026-11-03-holdings",
+      "provider": "Helios Mutual Fund",
+      "accountNo": "10056128",
+      "asOf": "2026-11-03",
+      "reportType": "holdings",
+      "check": "total market value (incl. cash)",
+      "rowSum": 50756205.51,
+      "printedTotal": 50756205.51,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null,
+      "outstandingDividend": null
+    },
+    {
+      "docKey": "helios-mutual-fund-10056128-2026-11-03-holdings",
+      "provider": "Helios Mutual Fund",
+      "accountNo": "10056128",
+      "asOf": "2026-11-03",
+      "reportType": "holdings",
+      "check": "total cost (incl. cash)",
+      "rowSum": 46000000,
+      "printedTotal": 46000000,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null,
+      "outstandingDividend": null
+    },
+    {
+      "docKey": "helios-mutual-fund-10056128-2026-11-03-holdings",
+      "provider": "Helios Mutual Fund",
+      "accountNo": "10056128",
+      "asOf": "2026-11-03",
+      "reportType": "holdings",
+      "check": "% of assets sums to 100",
+      "rowSum": 100,
+      "printedTotal": 100,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "helios-mutual-fund-10056154-2026-11-03-holdings",
+      "provider": "Helios Mutual Fund",
+      "accountNo": "10056154",
+      "asOf": "2026-11-03",
+      "reportType": "holdings",
+      "check": "total market value (incl. cash)",
+      "rowSum": 79779402.82,
+      "printedTotal": 79779402.82,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null,
+      "outstandingDividend": null
+    },
+    {
+      "docKey": "helios-mutual-fund-10056154-2026-11-03-holdings",
+      "provider": "Helios Mutual Fund",
+      "accountNo": "10056154",
+      "asOf": "2026-11-03",
+      "reportType": "holdings",
+      "check": "total cost (incl. cash)",
+      "rowSum": 72400000,
+      "printedTotal": 72400000,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null,
+      "outstandingDividend": null
+    },
+    {
+      "docKey": "helios-mutual-fund-10056154-2026-11-03-holdings",
+      "provider": "Helios Mutual Fund",
+      "accountNo": "10056154",
+      "asOf": "2026-11-03",
+      "reportType": "holdings",
+      "check": "% of assets sums to 100",
+      "rowSum": 100,
+      "printedTotal": 100,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "helios-mutual-fund-10063876-2026-11-03-holdings",
+      "provider": "Helios Mutual Fund",
+      "accountNo": "10063876",
+      "asOf": "2026-11-03",
+      "reportType": "holdings",
+      "check": "total market value (incl. cash)",
+      "rowSum": 37660829.96,
+      "printedTotal": 37660829.96,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null,
+      "outstandingDividend": null
+    },
+    {
+      "docKey": "helios-mutual-fund-10063876-2026-11-03-holdings",
+      "provider": "Helios Mutual Fund",
+      "accountNo": "10063876",
+      "asOf": "2026-11-03",
+      "reportType": "holdings",
+      "check": "total cost (incl. cash)",
+      "rowSum": 34790000,
+      "printedTotal": 34790000,
+      "delta": 0,
+      "rowsSummed": 1,
+      "rowsMissingField": 0,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null,
+      "outstandingDividend": null
+    },
+    {
+      "docKey": "helios-mutual-fund-10063876-2026-11-03-holdings",
+      "provider": "Helios Mutual Fund",
+      "accountNo": "10063876",
+      "asOf": "2026-11-03",
+      "reportType": "holdings",
+      "check": "% of assets sums to 100",
+      "rowSum": 100,
+      "printedTotal": 100,
+      "delta": 0,
+      "rowsSummed": 1,
       "rowsMissingField": 0,
       "matches": true,
       "severity": "rounding",
@@ -232116,15 +232328,6 @@
         ]
       },
       {
-        "security": "Eimco Elecon India Limited",
-        "securityKey": "eimco-elecon-india",
-        "docs": [
-          "molecule-ventures-llp-7810404-2026-11-02-holdings",
-          "molecule-ventures-llp-7810404-2026-11-02-appraisal",
-          "molecule-ventures-llp-7810404-2026-11-02-fact-sheet"
-        ]
-      },
-      {
         "security": "BOROSIL RENEWABLES LIMITED - WARRANTS 13AG26",
         "securityKey": "borosil-renewables-limited-warrants-13ag26",
         "docs": [
@@ -232211,22 +232414,8 @@
         ]
       },
       {
-        "security": "FINOLEX CABLES LIMITED NEW EQ RS. 2/",
-        "securityKey": "finolex-cables-limited-new",
-        "docs": [
-          "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings"
-        ]
-      },
-      {
         "security": "NICCO CORPORATION LIMITED EQ NEW FV RS. 2/",
         "securityKey": "nicco",
-        "docs": [
-          "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings"
-        ]
-      },
-      {
-        "security": "PARAMOUNT COMMUNICATIONS LIMITED NEWEQRS.",
-        "securityKey": "paramount-communications-limited-neweqrs",
         "docs": [
           "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings"
         ]

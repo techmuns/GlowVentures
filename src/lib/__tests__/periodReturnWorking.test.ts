@@ -195,8 +195,10 @@ near(measureWindow(window.included, "absolute", money).pct!, 10);
   near(abs.pct!, cagr.working!.periodPct!);
   assert.equal(cagr.shownAs, "absolute");
   assert.ok(Math.abs(abs.pct! - mw.working!.periodPct!) < 1, `Modified Dietz ${abs.pct} sits beside the money-weighted ${mw.working!.periodPct}, not at half of it`);
-  // D4 on the book: October MTD opens on no August mark.
-  const mtd = windowReturns(inputs, periodStart("mtd", end)!, end);
+  // D4 on the book: October MTD opens on no August mark. October's own last
+  // valuation ends it, so a statement dated in November does not move the window.
+  const octEnd = inputs.flatMap((a) => a.valuations.map((v) => v.date)).filter((d) => d <= "2026-10-31").sort().at(-1)!;
+  const mtd = windowReturns(inputs, periodStart("mtd", octEnd)!, octEnd);
   assert.ok(mtd.included.every((r) => daysBetween(r.openDate, mtd.start) <= OPENING_MARK_TOLERANCE_DAYS));
   assert.ok(mtd.excluded.some((e) => e.accountId === "goldstandard-wealth-private-limited-100022" && /dated 2026-08-11/.test(e.reason)));
 }

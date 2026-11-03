@@ -73,7 +73,7 @@ const isCash = (h) => h.assetClass === "Cash";
  * outstanding dividend as its "Accrued Income" line under the security.
  * Molecule's 2 November delivery: Elecon at 2,000 x 438.25 = 876,500 on the
  * appraisal with 1,000.00 accrued beneath it, and CURRENT PORTFOLIO's 877,500
- * (Stage 10kc). Never both: the two would count one dividend twice.
+ * (Stage 10ki). Never both: the two would count one dividend twice.
  */
 function outstandingBySecurity(doc, docs) {
   const m = new Map();

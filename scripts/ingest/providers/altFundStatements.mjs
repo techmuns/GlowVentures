@@ -320,6 +320,14 @@ export function threePFlows(text, warn) {
 const MF_GROSS = /^(?:(\d{2}\/\d{2}\/\d{4})\s+)?Gross(?:\s+Ongoing)?\s+Purchase\s+([\d,]+\.\d+)$/i;
 const MF_STAMP = /^(?:(\d{2}\/\d{2}\/\d{4})\s+)?(?:Less:\s*)?Stamp\s+Duty\s+([\d,]+\.\d+)$/i;
 const MF_DATED_FIGURE = /^\d{2}\/\d{2}\/\d{4}\s+.*\d[\d,]*\.\d+/;
+// CAMS prints its job reference (`EISC-MONIKATALE-16.18.0-031126125658(I)-
+// A1618011--1031`) up the page margin, and the layout joins it to whichever row
+// shares its height. On Ankita's and Bharat's 3 Nov 2026 Helios statements it
+// landed after the 04/06/2025 Net Purchase's balance, the anchored row pattern
+// missed, and the row was counted as an undeclared type that withheld the whole
+// record — the upload was held for a "read gap" the statement does not have.
+// The reference is page furniture, never a figure, so it is cut before matching.
+const MF_PRINT_JOB = /\s+EISC-[A-Z0-9]+-\d+\.\d+\.\d+-\d{12}\([A-Z]\)-[A-Z0-9]+--\d+\s*$/;
 
 /**
  * `net` matches ONE Net Purchase row and returns `{ date, net, nav, units,
@@ -333,7 +341,7 @@ export function mfPurchaseFlows({ net, heldUnits, security }) {
     const rows = [];
     let pendingGross = null, pendingStamp = null, undeclared = 0;
     for (const raw of text.split("\n")) {
-      const line = raw.trim();
+      const line = raw.replace(MF_PRINT_JOB, "").trim();
       let m;
       if ((m = MF_GROSS.exec(line))) { pendingGross = n(m[2]); continue; }
       if ((m = MF_STAMP.exec(line))) { pendingStamp = n(m[2]); continue; }
@@ -1872,6 +1880,17 @@ const LAYOUTS = [
     holder: (text) => (/\n\s*([A-Z][A-Za-z]+(?:\s+[A-Z]\.?[A-Za-z]*){1,3})\s+Joint Holder 2/i.exec(text) ?? [])[1],
     // `Joint Holder 1 : AARTI AJAY JAISINGHANI` — blank on a single folio.
     jointHolders: (text) => [...text.matchAll(/Joint Holder [12][ \t]*:[ \t]*([A-Za-z][A-Za-z .'-]*?)[ \t]*$/gim)].map((m) => m[1]),
+    /**
+     * `06/10/2026 ***Demat To Remat -Accept***` — the day the folio's units left
+     * the family's Motilal demat (Ankita's and Bharat's 3 Nov 2026 statements
+     * hold exactly the units those demats printed on 31 Jul). A folio holds one
+     * scheme, so the date is the holding's; two different dates name none.
+     * `shared/custodySuccessors.mjs` links the demat only on this evidence.
+     */
+    custodyRematOn: (text) => {
+      const dates = new Set([...text.matchAll(/^(\d{2}\/\d{2}\/\d{4})\s+\*{3}\s*Demat To Remat\s*-\s*Accept\s*\*{3}/gim)].map((m) => toIso(m[1])));
+      return dates.size === 1 ? [...dates][0] : null;
+    },
     /**
      * `06/08/2026 Net Purchase 16.21 309,984,500.77 16.2100 19,123,041.380
      *  19,123,041.380` — NAV, amount, price, units, balance. The Gross Ongoing
@@ -3562,6 +3581,7 @@ export function extract({ grid, meta = {} }) {
       // makeHolding files the statement's own figures under `printed.*` itself;
       // `marketValue` here is the PRINTED one, and the book uses units × NAV.
       marketValue: layout.valuesNothing ? null : r.printedValue ?? null,
+      ...(layout.custodyRematOn?.(text) ? { custodyRematOn: layout.custodyRematOn(text) } : {}),
     }));
   }
 

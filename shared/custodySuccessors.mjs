@@ -9,6 +9,19 @@ export const CUSTODY_FOLIO_LINKS = Object.freeze([
     fundAccountId: 'bandhan-mutual-fund-8652064', ownerId: 'ajay-jaisinghani', isin,
     document: 'bandhan-mutual-fund-8652064-2026-10-26-holdings', rematOn: '2026-10-07',
   })),
+  // Helios's 3 November statements acknowledge rematerialisation on 6 October,
+  // and each folio holds exactly the units its owner's Motilal demat printed on
+  // 31 July (Ankita 5,100,984.835; Bharat 2,407,981.455).
+  {
+    custodyAccountId: 'motilal-oswal-financial-services-demat-1201090012838316',
+    fundAccountId: 'helios-mutual-fund-10056154', ownerId: 'ankita-jaisinghani', isin: 'INF0R8701046',
+    document: 'helios-mutual-fund-10056154-2026-11-03-holdings', rematOn: '2026-10-06',
+  },
+  {
+    custodyAccountId: 'motilal-oswal-financial-services-demat-1201090012838320',
+    fundAccountId: 'helios-mutual-fund-10063876', ownerId: 'bharat-jaisinghani', isin: 'INF0R8701046',
+    document: 'helios-mutual-fund-10063876-2026-11-03-holdings', rematOn: '2026-10-06',
+  },
 ]);
 
 export function verifyCustodyLinks(positions, accounts, documents, links = CUSTODY_FOLIO_LINKS) {
