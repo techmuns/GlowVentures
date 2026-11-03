@@ -124,7 +124,7 @@
      "blob": "65f2477bd296a6fd5b8f7be2b1f99bac32386a39",
      "status": "processing",
      "hold": null,
-     "reason": "Your statement is verified and waiting to appear on the dashboard.",
+     "reason": null,
      "landedAs": [
       "source/uploads-2026-11-03/Kotak Mahindra Mutual Fund/kotak statement apr 25 to nov 26 (ankita,ajay,aarti,bharat) (2).zip"
      ],
@@ -138,8 +138,8 @@
       "kotak-mahindra-mutual-fund-7125555-2026-11-02-holdings"
      ],
      "commit": "caa6c13b6f8c9d7d0a7951406f429ff432879651",
-     "run": "https://github.com/techmuns/GlowVentures/actions/runs/41606424165",
-     "updatedAt": "2026-11-03T08:51:59.441Z",
+     "run": "https://github.com/techmuns/GlowVentures/actions/runs/41610781579",
+     "updatedAt": "2026-11-03T09:25:16.911Z",
      "neverArrived": null,
      "branch": "codex/statement-delivery-850a4f183fd3da1d",
      "pullRequest": "https://github.com/techmuns/GlowVentures/pull/316",
