@@ -1,0 +1,35 @@
+{
+ "name": "Current scheme balances",
+ "rows": [
+  [
+   "Scheme",
+   "ISIN",
+   "NAV date",
+   "Units",
+   "NAV",
+   "Cost held",
+   "Market value",
+   "Demat to remat accepted"
+  ],
+  [
+   "Bandhan Overnight Fund-Direct Plan-Growth",
+   "INF194KB1447",
+   "2026-10-13",
+   0,
+   1476.0657,
+   0,
+   0,
+   null
+  ],
+  [
+   "Bandhan Liquid Fund-Direct Plan-Growth",
+   "INF194K01I60",
+   "2026-10-13",
+   0,
+   3447.7813,
+   0,
+   0,
+   null
+  ]
+ ]
+}

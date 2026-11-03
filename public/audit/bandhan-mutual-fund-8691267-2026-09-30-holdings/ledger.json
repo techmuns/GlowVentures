@@ -1,0 +1,29 @@
+{
+ "name": "Source unit and cash ledger",
+ "rows": [
+  [
+   "date",
+   "scheme",
+   "kind",
+   "amount",
+   "units",
+   "balance"
+  ],
+  [
+   "2026-04-17",
+   "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
+   "opening-units",
+   null,
+   0,
+   0
+  ],
+  [
+   "2026-04-17",
+   "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
+   "reclassification",
+   3926598.38,
+   24406.691,
+   24406.691
+  ]
+ ]
+}

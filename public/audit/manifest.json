@@ -9070,9 +9070,9 @@
   ]
  },
  {
-  "docKey": "unknown-unknown-2026-10-06-unknown",
+  "docKey": "unidentified-1802619-2026-10-06-unknown",
   "provider": "(unidentified)",
-  "accountNo": null,
+  "accountNo": "1802619",
   "owner": null,
   "ownerId": null,
   "familyGroup": null,
@@ -9085,10 +9085,10 @@
    "pages"
   ],
   "status": "failed",
-  "warnings": 1,
+  "warnings": 2,
   "failedBecause": "attachment-removed",
-  "fileKey": "unknown-unknown-2026-10-06-unknown",
-  "label": "(unidentified) · unknown",
+  "fileKey": "unidentified-1802619-2026-10-06-unknown",
+  "label": "(unidentified) · 1802619 · unknown",
   "fy": "2026-10-06",
   "source": "source/_extracted/october-2026-c/LKP EQUITY/519_06102026124925.xls",
   "sheets": [
@@ -9101,9 +9101,9 @@
   ]
  },
  {
-  "docKey": "unknown-unknown-2026-10-06-unknown-2",
+  "docKey": "unidentified-1802619-2026-10-06-unknown-2",
   "provider": "(unidentified)",
-  "accountNo": null,
+  "accountNo": "1802619",
   "owner": null,
   "ownerId": null,
   "familyGroup": null,
@@ -9116,10 +9116,10 @@
    "pages"
   ],
   "status": "failed",
-  "warnings": 2,
+  "warnings": 3,
   "failedBecause": "attachment-removed",
-  "fileKey": "unknown-unknown-2026-10-06-unknown-2",
-  "label": "(unidentified) · unknown",
+  "fileKey": "unidentified-1802619-2026-10-06-unknown-2",
+  "label": "(unidentified) · 1802619 · unknown",
   "fy": "2026-10-06",
   "source": "source/_extracted/october-2026-c/LKP EQUITY/666125807_06102026125819.xls",
   "sheets": [
@@ -15621,6 +15621,156 @@
     "key": "pages",
     "name": "Raw page text",
     "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "unidentified-1802619-unknown-unknown",
+  "provider": "(unidentified)",
+  "accountNo": "1802619",
+  "owner": null,
+  "ownerId": null,
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": null,
+  "reportType": "unknown",
+  "sourcePath": "source/uploads-2026-11-04/Bandhan Mutual Fund/BANDHAN AARTI FROM 8-APR-26 TO 30-SEP-26.pdf",
+  "pages": 0,
+  "sections": [
+   "pages"
+  ],
+  "status": "failed",
+  "warnings": 2,
+  "failedBecause": "pdf-read-failed",
+  "fileKey": "unidentified-1802619-unknown-unknown",
+  "label": "(unidentified) · 1802619 · unknown",
+  "fy": "",
+  "source": "source/uploads-2026-11-04/Bandhan Mutual Fund/BANDHAN AARTI FROM 8-APR-26 TO 30-SEP-26.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 0,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "bandhan-mutual-fund-8652064-2026-10-14-holdings",
+  "provider": "Bandhan Mutual Fund",
+  "accountNo": "8652064",
+  "owner": "Ajay Jaisinghani",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-10-14",
+  "reportType": "holdings",
+  "sourcePath": "source/uploads-2026-11-04/Bandhan Mutual Fund/BANDHAN AJAY FROM 2-APR-26 TO 14-OCT-26.pdf",
+  "pages": 4,
+  "sections": [
+   "holdings",
+   "ledger",
+   "pages"
+  ],
+  "status": "partial",
+  "warnings": 6,
+  "fileKey": "bandhan-mutual-fund-8652064-2026-10-14-holdings",
+  "label": "Bandhan Mutual Fund · 8652064 · holdings",
+  "fy": "2026-10-14",
+  "source": "source/uploads-2026-11-04/Bandhan Mutual Fund/BANDHAN AJAY FROM 2-APR-26 TO 14-OCT-26.pdf",
+  "sheets": [
+   {
+    "key": "holdings",
+    "name": "Current scheme balances",
+    "rows": 3,
+    "cols": 8
+   },
+   {
+    "key": "ledger",
+    "name": "Source unit and cash ledger",
+    "rows": 8,
+    "cols": 6
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 4,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "unknown-1802619-2026-09-30-unknown",
+  "provider": "(unidentified)",
+  "accountNo": "1802619",
+  "owner": "Ankita",
+  "ownerId": null,
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-09-30",
+  "reportType": "unknown",
+  "sourcePath": "source/uploads-2026-11-04/Bandhan Mutual Fund/BANDHAN ANKITA FROM 24-JAN-26 TO 30-SEP-26.pdf",
+  "pages": 2,
+  "sections": [
+   "pages"
+  ],
+  "status": "failed",
+  "warnings": 2,
+  "failedBecause": "no-extractor",
+  "fileKey": "unknown-1802619-2026-09-30-unknown",
+  "label": "(unidentified) · 1802619 · unknown",
+  "fy": "2026-09-30",
+  "source": "source/uploads-2026-11-04/Bandhan Mutual Fund/BANDHAN ANKITA FROM 24-JAN-26 TO 30-SEP-26.pdf",
+  "sheets": [
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "bandhan-mutual-fund-8691267-2026-09-30-holdings",
+  "provider": "Bandhan Mutual Fund",
+  "accountNo": "8691267",
+  "owner": "Ankita Jaisinghani",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-09-30",
+  "reportType": "holdings",
+  "sourcePath": "source/uploads-2026-11-04/Bandhan Mutual Fund/BANDHAN ANKITA FROM 7-APR-26 TO 30-SEP-26.pdf",
+  "pages": 2,
+  "sections": [
+   "holdings",
+   "ledger",
+   "pages"
+  ],
+  "status": "partial",
+  "warnings": 3,
+  "fileKey": "bandhan-mutual-fund-8691267-2026-09-30-holdings",
+  "label": "Bandhan Mutual Fund · 8691267 · holdings",
+  "fy": "2026-09-30",
+  "source": "source/uploads-2026-11-04/Bandhan Mutual Fund/BANDHAN ANKITA FROM 7-APR-26 TO 30-SEP-26.pdf",
+  "sheets": [
+   {
+    "key": "holdings",
+    "name": "Current scheme balances",
+    "rows": 2,
+    "cols": 8
+   },
+   {
+    "key": "ledger",
+    "name": "Source unit and cash ledger",
+    "rows": 3,
+    "cols": 6
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
     "cols": 2
    }
   ]

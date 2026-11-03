@@ -1,9 +1,9 @@
 {
- "docKey": "unknown-unknown-2026-10-06-unknown",
+ "docKey": "unidentified-1802619-unknown-unknown",
  "provider": "(unidentified)",
- "accountNo": null,
+ "accountNo": "1802619",
  "ownerSource": null,
- "accountNoSource": null,
+ "accountNoSource": "sole-account",
  "clientCode": null,
  "owner": null,
  "ownerId": null,
@@ -12,16 +12,20 @@
  "engagement": null,
  "providerEngagement": null,
  "members": [],
- "asOf": "2026-10-06",
+ "asOf": null,
  "inceptionDate": null,
  "reportType": "unknown",
- "sourcePath": "source/_extracted/october-2026-c/LKP EQUITY/519_06102026124925.xls",
+ "sourcePath": "source/uploads-2026-11-04/Bandhan Mutual Fund/BANDHAN AARTI FROM 8-APR-26 TO 30-SEP-26.pdf",
  "pages": 0,
  "status": "failed",
  "warnings": [
   {
-   "code": "attachment-removed",
-   "detail": "519_06102026124925.xls NEVER ARRIVED: a mail server removed the attachment in transit and left this 85-byte notice under its name — \"This attachment was removed because it contains data that could pose a security risk.\". There is no statement here to read; ask the sender to re-send it another way (a download link, or zipped), and upload it on the Statement Library."
+   "code": "pdf-read-failed",
+   "detail": "Incorrect Password"
+  },
+  {
+   "code": "account-no-from-sole-account",
+   "detail": "this report prints no client identifier; (unidentified) has exactly one account in this drop (1802619), so there is no other account it could belong to."
   }
  ],
  "holdings": [],

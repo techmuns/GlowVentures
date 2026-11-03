@@ -1,0 +1,25 @@
+{
+ "name": "Current scheme balances",
+ "rows": [
+  [
+   "Scheme",
+   "ISIN",
+   "NAV date",
+   "Units",
+   "NAV",
+   "Cost held",
+   "Market value",
+   "Demat to remat accepted"
+  ],
+  [
+   "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
+   "INF194K01V89",
+   "2026-09-30",
+   24406.691,
+   160.677,
+   3926598.38,
+   3921593.89,
+   null
+  ]
+ ]
+}
