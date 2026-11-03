@@ -70,7 +70,7 @@ assert.equal(ankita.cashFlows.filter(f => f.kind === 'withdrawal').length, 3);
 const notNil = readDoc('bandhan-mutual-fund-8691267-2026-09-30-holdings',
   archived('bandhan-mutual-fund-8691267-2026-09-30-holdings').map(p => ({ ...p, text: p.text.replace('7,029.319 7,029.319', '7,029.319 7,030.319') })));
 assert.equal(notNil.status, 'partial');
-const elssText = archived('unknown-1802619-2026-09-30-unknown');
+const elssText = archived('bandhan-mutual-fund-1802619-2026-09-30-holdings');
 assert.equal(classify({ fileName: 'statement.pdf', text: elssText.map(p => p.text).join('\n') }).provider, 'Bandhan Mutual Fund');
 const elss = readDoc('bandhan-mutual-fund-1802619-2026-09-30-holdings', elssText);
 assert.equal(elss.status, 'ok', JSON.stringify(elss.warnings));
