@@ -140,7 +140,7 @@
      "blob": "65f2477bd296a6fd5b8f7be2b1f99bac32386a39",
      "status": "processing",
      "hold": null,
-     "reason": null,
+     "reason": "Your statement is saved. Processing will continue automatically.",
      "landedAs": [
       "source/uploads-2026-11-03/Kotak Mahindra Mutual Fund/kotak statement apr 25 to nov 26 (ankita,ajay,aarti,bharat) (2).zip"
      ],
@@ -154,8 +154,8 @@
       "kotak-mahindra-mutual-fund-7125555-2026-11-02-holdings"
      ],
      "commit": "18d1f545247e94b2f5e76cc808fd7cffa6afda0f",
-     "run": "https://github.com/techmuns/GlowVentures/actions/runs/41616366006",
-     "updatedAt": "2026-11-03T10:31:30.081Z",
+     "run": "https://github.com/techmuns/GlowVentures/actions/runs/41615314571",
+     "updatedAt": "2026-11-03T10:31:33.575Z",
      "neverArrived": null,
      "branch": "codex/statement-delivery-5cd73c227f0c9b3e",
      "pullRequest": null,
@@ -180,7 +180,7 @@
        "revision": "9b7171d7444aae04e8ee00e8d85f68c6509829ead8749ab228cf31be9cbb561f"
       }
      ],
-     "publicationDetail": "PR creation will resume from the saved branch: GitHub publication failed: pull request create failed: GraphQL: GitHub Actions is not permitted to create or approve pull requests (createPullRequest)"
+     "publicationDetail": "Publication check will retry: GitHub publication failed: pull request create failed: GraphQL: GitHub Actions is not permitted to create or approve pull requests (createPullRequest)"
     }
    ]
   },
