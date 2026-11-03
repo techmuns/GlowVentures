@@ -15,10 +15,23 @@ const demat = 'motilal-oswal-financial-services-demat-1201090012539150';
 const doc = demat+'-2026-07-31-demat-transactions';
 const motilal = 'motilal-oswal-arbitrage-fund-direct-plan-growth';
 const gotoStock = key => page.goto(base+'/stock/'+key);
+// Stage 10ka: the family's 21 Oct note carries this demat's units, so its cell
+// lists two sources — the note and the statement, which still cites its own
+// closing count. The statement link is the one inside that list.
+const quantitySources = page.getByRole('dialog',{name:'Quantity held sources'});
+const dematStatement = async (scope) => {
+  if (!await quantitySources.isVisible()) await scope.locator('button[data-source-metric="quantity"]').click();
+  await quantitySources.waitFor();
+  return quantitySources.locator(`a[data-source-document="${doc}"]`);
+};
 try {
   await gotoStock(motilal);
-  const units = page.locator(`[data-account-row="${demat}"] a[data-source-metric="quantity"]`);
-  await units.waitFor(); assert.match(await units.innerText(), /2,80,67,435/);
+  const row = page.locator(`[data-account-row="${demat}"]`);
+  await row.locator('button[data-source-metric="quantity"]').waitFor();
+  assert.match(await row.locator('button[data-source-metric="quantity"]').innerText(), /^24,73,222$/, "the note's 2,473,221.627 units, whole");
+  const units = await dematStatement(row);
+  assert.match(await quantitySources.innerText(), /family's note/);
+  assert.match(await quantitySources.innerText(), /2,80,67,435\.434/);
   assert.equal(new URL(await units.getAttribute('href'),base).searchParams.get('file'),doc);
   await units.click();
   await page.locator(`[data-statement-preview="${doc}"]`).waitFor();
@@ -147,12 +160,14 @@ try {
   const parent = page.locator(`[data-security-key="${motilal}"][data-tree-parent]`);
   if (await parent.getAttribute('data-tree-parent') !== 'open') await parent.locator('button[aria-expanded]').first().click();
   const venue = page.locator(`[data-venue-account="${demat}"]`); await venue.waitFor();
-  assert.ok(await venue.locator('a[data-source-metric="statement"]').count() >= 2,'owner/provider/account labels are linked');
-  assert.equal(new URL(await venue.locator('a[data-source-metric="quantity"]').getAttribute('href'),base).searchParams.get('file'),doc);
+  // The note also sources this row, so its labels open the same list (Stage 10ka).
+  assert.ok(await venue.locator('button[data-source-metric="statement"]').count() >= 2,'owner/provider/account labels are linked');
+  assert.equal(new URL(await (await dematStatement(venue)).getAttribute('href'),base).searchParams.get('file'),doc);
   // Opening evidence must retain actual DOM state, not reconstruct a default
   // Monitor. Keep the selected holding, Cash category, expansion and scroll.
   await page.getByRole('tab',{name:'Cash',exact:true}).click();
-  await venue.locator('a[data-source-metric="quantity"]').scrollIntoViewIfNeeded();
+  await page.keyboard.press('Escape');
+  await venue.locator('button[data-source-metric="quantity"]').scrollIntoViewIfNeeded();
   const origin = page.url();
   const snapshot = await page.locator('main').evaluate(el => {
     const scrolls = [...el.querySelectorAll('*')].filter(e=>e.scrollWidth>e.clientWidth+5 && e.clientWidth>0 && /auto|scroll/.test(getComputedStyle(e).overflowX));
@@ -160,7 +175,7 @@ try {
     window.__sourceReturn = scrolls.map(el=>({el,left:el.scrollLeft,top:el.scrollTop}));
     return {top:el.scrollTop};
   });
-  await venue.locator('a[data-source-metric="quantity"]').click();
+  await (await dematStatement(venue)).click();
   await page.locator(`[data-statement-preview="${doc}"]`).waitFor();
   assert.equal(await page.locator('a a, button button, a button, button a').count(),0,'source links never nest interactive controls');
   await page.locator('[data-source-back]').click();
@@ -170,11 +185,15 @@ try {
   assert.equal(await page.getByRole('tab',{name:'Cash',exact:true}).getAttribute('aria-selected'),'true');
   assert.ok(Math.abs(await page.locator('main').evaluate(el=>el.scrollTop)-snapshot.top) <= 1);
   assert.equal(await page.getByRole('button',{name:'All holdings',exact:true}).count(),0,'holding filter stays selected');
-  await venue.locator('a[data-source-metric="statement"]').first().click();
+  await page.keyboard.press('Escape');
+  await venue.locator('button[data-source-metric="statement"]').first().click();
+  const labelSources = page.getByRole('dialog',{name:'Supporting statement sources'});
+  await labelSources.locator(`a[data-source-document="${doc}"]`).click();
   await page.locator('[data-source-back]').waitFor();
   await page.getByRole('button',{name:'Close preview',exact:true}).click();
   assert.equal(page.url(),origin);
-  await venue.locator('a[data-source-metric="quantity"]').click();
+  await page.keyboard.press('Escape'); await labelSources.waitFor({state:'hidden'});
+  await (await dematStatement(venue)).click();
   await page.locator('[data-source-back]').waitFor();
   await page.goBack();
   assert.equal(page.url(),origin);
@@ -190,7 +209,7 @@ try {
   let releaseManifest;
   const pending = new Promise(resolve => { releaseManifest = resolve; });
   await page.route(manifestPattern, async route => { await pending; await route.fulfill({status:503,body:'unavailable'}); });
-  await venue.locator('a[data-source-metric="quantity"]').click();
+  await (await dematStatement(venue)).click();
   const loadingDialog = page.getByRole('dialog',{name:'Statement source',exact:true});
   await loadingDialog.waitFor();
   await loadingDialog.getByRole('button').waitFor({state:'visible'});
@@ -202,7 +221,7 @@ try {
   await page.keyboard.press('Escape'); await page.waitForURL(origin);
   releaseManifest(); await page.unroute(manifestPattern);
   await page.route(manifestPattern, route=>route.fulfill({status:503,body:'unavailable'}));
-  await venue.locator('a[data-source-metric="quantity"]').click();
+  await (await dematStatement(venue)).click();
   await page.getByRole('alert').filter({hasText:'This exact source statement could not be opened.'}).waitFor();
   await page.keyboard.press('Escape'); await page.waitForURL(origin);
   await page.unroute(manifestPattern);

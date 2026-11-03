@@ -914,3 +914,10 @@
 - The client's Kotak ZIP (four folio statements, Apr 2025 – Nov 2026; Ajay, Ankita, Aarti, Bharat) was held in the statement inbox: `test:family` failed with it, `only exact owner/ISIN/quantity matches are recoverable`, 60 against 62.
 - The two records it removes are correct. Kotak folios 7111389 (Ajay) and 5372722 (Aarti) report the exact Multi Cap units (INF174KA1HV3) that the Motilal demats 1201090012539150 and 1201090012838335 recorded, and each folio prints a cost or ties one by FIFO. `recoverHoldingCosts` leaves a same-owner balance that another statement costs without a recovered record, and fund gates 5/7 value the folio rather than the demat.
 - `recoveredCosts.test.ts` names the two balances. It takes one off both pinned counts (records and costed live fund rows) for each folio that costs it, and it checks that the record and the demat row go when the folio arrives and stay until then. A scratch book with the two folio positions added reproduced 60 against 62 on the old test and passes on the new one.
+
+### Stage 10kc — THE SOURCE-TRACE AND NAVIGATION BROWSER CHECKS FOLLOW THE NOTE'S ROW
+
+- CI's `build` job had failed on main since Stage 10ka: `check-source-trace.mjs` waited for a direct quantity link on Ajay's Motilal Arbitrage demat row (1201090012539150). The family's note now sources that row as well, so its quantity and labels open a sources list, and the cell shows the note's 24,73,222 units.
+- The check now opens that list. It finds the note and the statement's own 2,80,67,435.434, then follows the statement link, so the page-5 highlight and the Monitor's return-state walk test the same document as before.
+- `check-navigation-state.mjs` picked "Kotak Arbitrage Fund" from the holdings search. Kotak's folios add the Regular plan, so it now picks the Direct plan the walk links to.
+- All four scripts after `check-source-trace` in that CI step pass against a build carrying Kotak's delivery.
