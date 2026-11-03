@@ -21,9 +21,11 @@ const near = (got: number | null | undefined, want: number) =>
 // and Aarti's Kotak Multi Cap units on their Motilal demats are the units Kotak
 // folios 7111389 and 5372722 report once that delivery is in the book. Ankita's
 // and Bharat's Helios units are the units Helios folios 10056154 and 10063876
-// report from 3 Nov 2026, rematerialised from those demats (Stage 10ke).
+// report from 3 Nov 2026, rematerialised from those demats (Stage 10ke). Ankita's
+// Bandhan Large & Mid Cap units are the units her folio 8691267 reports (Stage 10kl).
 const ownerOf = (id: string) => BOOK_ACCOUNTS.find(a => a.accountId === id)?.ownerId;
 const FOLIO_COSTED_DEMATS = [["motilal-oswal-financial-services-demat-1201090012539150", "INF174KA1HV3", 4183009.836],
+  ["motilal-oswal-financial-services-demat-1201090012838316", "INF194K01V89", 24406.691],
   ["motilal-oswal-financial-services-demat-1201090012838335", "INF174KA1HV3", 612631.862],
   ["motilal-oswal-financial-services-demat-1201090012838316", "INF0R8701046", 5100984.835],
   ["motilal-oswal-financial-services-demat-1201090012838320", "INF0R8701046", 2407981.455]] as const;
