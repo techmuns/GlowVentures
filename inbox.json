@@ -91,15 +91,15 @@
      "name": "Re__Urgent_Request_for_Transaction_Statement,_Bank_Book_&_Portfolio_Appraisal_Report.zip",
      "size": 291122,
      "blob": "8098f579acb82640e3ea633739907def7fcd16ef",
-     "status": "processing",
+     "status": "duplicate",
      "hold": null,
-     "reason": null,
+     "reason": "Already in the library — byte-identical to source/uploads-2026-11-03/Molecule Ventures LLP/Re__Urgent_Request_for_Transaction_Statement,_Bank_Book_&_Portfolio_Appraisal_Report.zip.",
      "landedAs": null,
      "providers": null,
      "docKeys": null,
      "commit": null,
      "run": "https://github.com/techmuns/GlowVentures/actions/runs/41629612102",
-     "updatedAt": "2026-11-03T11:42:35.042Z"
+     "updatedAt": "2026-11-03T11:42:41.264Z"
     }
    ]
   },
@@ -140,7 +140,7 @@
      "blob": "65f2477bd296a6fd5b8f7be2b1f99bac32386a39",
      "status": "processing",
      "hold": null,
-     "reason": null,
+     "reason": "Your statement is saved. Processing will continue automatically.",
      "landedAs": [
       "source/uploads-2026-11-03/Kotak Mahindra Mutual Fund/kotak statement apr 25 to nov 26 (ankita,ajay,aarti,bharat) (2).zip"
      ],
@@ -154,8 +154,8 @@
       "kotak-mahindra-mutual-fund-7125555-2026-11-02-holdings"
      ],
      "commit": "18d1f545247e94b2f5e76cc808fd7cffa6afda0f",
-     "run": "https://github.com/techmuns/GlowVentures/actions/runs/41629612102",
-     "updatedAt": "2026-11-03T11:42:35.042Z",
+     "run": "https://github.com/techmuns/GlowVentures/actions/runs/41615314571",
+     "updatedAt": "2026-11-03T11:42:41.264Z",
      "neverArrived": null,
      "branch": "codex/statement-delivery-5cd73c227f0c9b3e",
      "pullRequest": null,
