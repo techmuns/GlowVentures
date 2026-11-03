@@ -9,7 +9,7 @@
      "name": "BANDHAN AJAY FROM 2-APR-26 TO 14-OCT-26.pdf",
      "size": 337900,
      "blob": "aa5f145affdb3c4a7408486af87f937dc2df1e46",
-     "status": "queued",
+     "status": "processing",
      "hold": null,
      "reason": null,
      "landedAs": null,
@@ -17,14 +17,14 @@
      "docKeys": null,
      "commit": null,
      "run": null,
-     "updatedAt": "2026-11-03T19:14:12.555Z",
+     "updatedAt": "2026-11-03T19:15:37.049Z",
      "processor": "github"
     },
     {
      "name": "BANDHAN AARTI FROM 8-APR-26 TO 30-SEP-26.pdf",
      "size": 323572,
      "blob": "749e075826414d282bdb90fe492f5e9c229e0169",
-     "status": "queued",
+     "status": "processing",
      "hold": null,
      "reason": null,
      "landedAs": null,
@@ -32,14 +32,14 @@
      "docKeys": null,
      "commit": null,
      "run": null,
-     "updatedAt": "2026-11-03T19:14:12.555Z",
+     "updatedAt": "2026-11-03T19:15:37.049Z",
      "processor": "github"
     },
     {
      "name": "BANDHAN ANKITA FROM 24-JAN-26 TO 30-SEP-26.pdf",
      "size": 323262,
      "blob": "aff8a1422848111356af97ec7ff557c7c8854945",
-     "status": "queued",
+     "status": "processing",
      "hold": null,
      "reason": null,
      "landedAs": null,
@@ -47,14 +47,14 @@
      "docKeys": null,
      "commit": null,
      "run": null,
-     "updatedAt": "2026-11-03T19:14:12.555Z",
+     "updatedAt": "2026-11-03T19:15:37.049Z",
      "processor": "github"
     },
     {
      "name": "BANDHAN ANKITA FROM 7-APR-26 TO 30-SEP-26.pdf",
      "size": 323960,
      "blob": "fd1b70f82a96d039e60ef173b97be0a2ed1bc4d8",
-     "status": "queued",
+     "status": "processing",
      "hold": null,
      "reason": null,
      "landedAs": null,
@@ -62,7 +62,7 @@
      "docKeys": null,
      "commit": null,
      "run": null,
-     "updatedAt": "2026-11-03T19:14:12.555Z",
+     "updatedAt": "2026-11-03T19:15:37.049Z",
      "processor": "github"
     }
    ]
