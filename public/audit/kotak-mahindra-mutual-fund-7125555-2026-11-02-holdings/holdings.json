@@ -1,0 +1,50 @@
+{
+ "name": "holdings",
+ "rows": [
+  [
+   "isin",
+   "scheme",
+   "units",
+   "nav",
+   "navDate",
+   "invested",
+   "currentValue"
+  ],
+  [
+   "INF174K01LF9",
+   "Kotak Large & Mid Cap Fund - Direct Growth",
+   0,
+   382.264,
+   "2026-10-30",
+   null,
+   0
+  ],
+  [
+   "INF174K01LT0",
+   "Kotak Mid Cap Fund Direct Growth",
+   0,
+   155.011,
+   "2026-10-30",
+   null,
+   0
+  ],
+  [
+   "INF174K01LC6",
+   "Kotak Arbitrage Fund - Direct Plan - Growth",
+   0,
+   43.5996,
+   "2026-10-30",
+   null,
+   0
+  ],
+  [
+   "INF174KA1BF9",
+   "Kotak Overnight Fund Direct - Growth",
+   0,
+   1481.0385,
+   "2026-11-01",
+   null,
+   0
+  ]
+ ]
+}
