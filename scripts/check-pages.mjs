@@ -450,6 +450,17 @@ function custodySucceeded(holding, accounts, positions) {
     && acc.get(p.accountId)?.ownerId === old.ownerId && acc.get(p.accountId)?.asOf > asOf).length === 1;
 }
 
+/**
+ * Stage 10ka: the family's note of 21 Oct 2026 (`BOOK_ADVISED_BALANCES`) carries
+ * a recorded Motilal demat fund balance — same account, ISIN and units — to the
+ * note's own count on the live basis. Null where no line of the note does.
+ */
+function advisedUnits(src, accountId, isin, recorded) {
+  const b = (bookArray(src, "BOOK_ADVISED_BALANCES") ?? []).find((x) => x.accountId === accountId
+    && String(x.isin).toUpperCase() === isin && Math.abs(x.recordQuantity - recorded) < 0.0005);
+  return b ? b.quantity : null;
+}
+
 function withDepositoryFunds(src, positions) {
   const accounts = bookArray(src, "BOOK_ACCOUNTS");
   const recovered = bookArray(src, "BOOK_RECOVERED_COSTS");
@@ -476,14 +487,15 @@ function withDepositoryFunds(src, positions) {
     const securityKey = book?.securityKey ?? w.securityKey;
     if (!CASH_EQ_KEYS.has(securityKey) && /\bETFs?\b/i.test(nav.category ?? "")) continue;
     if (positions.some((p) => p.isin?.trim().toUpperCase() === isin && Math.abs(Number(p.quantity) - w.closing) < 0.0005)) continue;
+    const units = advisedUnits(src, w.accountId, isin, w.closing) ?? w.closing;
     out.push(withRecoveredCost({
       securityKey, security: book?.security ?? w.security ?? securityKey, isin: w.isin,
       accountId: w.accountId, sector: book?.sector ?? "Unclassified",
       assetClass: /\bETFs?\b/i.test(nav.category ?? "") ? "ETF" : (book?.assetClass ?? "Mutual Fund"),
-      marketSide: "listed", quantity: w.closing, marketValue: w.closing * nav.nav, currentPrice: nav.nav,
+      marketSide: "listed", quantity: units, marketValue: units * nav.nav, currentPrice: nav.nav,
       costBasis: null, costUnavailable: true, unrealizedPnL: null, returnPct: null, avgCost: null,
       navPriced: true, navDate: nav.date, depositoryUnits: { asOf: w.periodTo ?? null, source: w.source ?? null },
-    }, w.closing, recovered));
+    }, units, recovered));
   }
   return out;
 }
@@ -568,19 +580,20 @@ function withUnpricedStatementUnits(src, positions) {
     if (positions.some((p) => I(p) === isin && Math.abs(Number(p.quantity) - qty) < 0.0005
       && ownerOf(p.accountId) === owner)) continue;                                              // 7
     const book = positions.find((p) => p.securityKey === u.securityKey);
+    const units = (f === 1 ? advisedUnits(src, u.accountId, isin, qty) : null) ?? qty * f;
     out.push(withRecoveredCost({
       securityKey: u.securityKey, security: book?.security ?? u.security ?? u.securityKey, isin: u.isin,
       symbol: book?.symbol ?? keyToSymbol[u.securityKey] ?? null,
       accountId: u.accountId, sector: book?.sector ?? "Unclassified",
       assetClass: etf ? "ETF" : "Mutual Fund", marketSide: "listed",
-      quantity: qty * f, marketValue: qty * f * nav.nav, currentPrice: nav.nav,
+      quantity: units, marketValue: units * nav.nav, currentPrice: nav.nav,
       costBasis: null, costUnavailable: true, unrealizedPnL: null, returnPct: null, avgCost: null,
       navPriced: true, navDate: nav.date,
       depositoryUnits: ownRate !== null
         ? { asOf: u.asOf, source: null, kind: "last-movement", lastMovementRate: ownRate,
           lastMovementDate: u.lastMovementDate ?? null, lastMovementSide: u.lastMovementSide ?? null }
         : { asOf: u.asOf, source: null, kind: "no-rate", witnessAccountId },
-    }, qty, recovered));
+    }, units === qty * f ? qty : units, recovered));
   }
   return out.sort((a, b) => b.marketValue - a.marketValue);
 }

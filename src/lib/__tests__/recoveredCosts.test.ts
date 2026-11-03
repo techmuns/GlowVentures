@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { depositoryFundHoldings, unpricedStatementUnits, applyFundNavs } from "../fundNavs";
 import { fifoTotals, positionFifoReturn, realisedReason } from "../fifo";
 import { bucketBy, isCostedForFifo, measuredReturn, holdingReturn } from "../analytics";
-import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_RECOVERED_COSTS, BOOK_UNVALUED_HOLDINGS } from "../../data/glowData";
+import { BOOK_ACCOUNTS, BOOK_ADVISED_BALANCES, BOOK_POSITIONS, BOOK_RECOVERED_COSTS, BOOK_UNVALUED_HOLDINGS } from "../../data/glowData";
 import { shareCandidates, depositoryShareHoldings } from "../depositoryShares";
 import { quoteSymbolFor, type QuoteFeed } from "../quotes";
 import type { ActionFeed } from "../corporateActions";
@@ -116,7 +116,10 @@ const funds=[...depositoryFundHoldings(),...unpricedStatementUnits()];
 // Five more since Stage 10hu, costed from MOPWM's transaction report's demat folios.
 // Less any whose exact units an AMC folio now reports: the folio values those, not the demat.
 const reportedByFolio=BOOK_RECOVERED_COSTS.filter(r=>r.accountId.includes('-demat-')&&BOOK_POSITIONS.some(p=>p.accountId!==r.accountId&&p.isin===r.isin&&p.quantity!=null&&Math.abs(p.quantity-r.quantity)<=.0005));
-assert.equal(funds.filter(p=>p.recoveredCost).length,29-reportedByFolio.filter(r=>/^INF/.test(r.isin)).length);
+// Less any the family's 21 Oct note carries to other units (Stage 10ka): lots join on exact units only.
+const carriedByNote=BOOK_RECOVERED_COSTS.filter(r=>BOOK_ADVISED_BALANCES.some(b=>b.accountId===r.accountId&&b.isin===r.isin&&Math.abs(b.recordQuantity-r.quantity)<=.0005&&Math.abs(b.quantity-r.quantity)>.0005));
+assert.equal(funds.filter(p=>p.recoveredCost).length,29-reportedByFolio.filter(r=>/^INF/.test(r.isin)).length-carriedByNote.length);
+assert.ok(funds.every(p=>!p.depositoryUnits?.advised||!p.recoveredCost),"a balance the note carried borrows no lots recorded for other units");
 assert.equal(funds.filter(p=>p.recoveredCost&&p.depositoryUnits?.unitSplit).length,3);
 const fp=(account:string,isin:string)=>funds.find(p=>p.accountId.endsWith(account)&&p.isin===isin)!;
 for (const [account, first, last, lots] of [['12539150','2025-03-06','2026-03-23',4],['12838316','2025-11-06','2025-11-06',1],['12838320','2025-07-11','2025-07-11',1]] as const) {
@@ -149,9 +152,11 @@ for(const set of [[savings],[liquid,savings]]) {
 assert.equal(applyFundNavs([savings])[0].returnPct,null,'a fresh NAV cannot invent missing sale proceeds');
 // The review's folio closes 0.066 units short; the transaction report's demat
 // folio leaves exactly the custodian's 28,067,435.434 on 31 Jul (Stage 10hu).
+// Stage 10ka: the family's 21 Oct note carries the row to 2,473,221.627 units, so that record's lots no longer join it.
+const moArbRecord=BOOK_RECOVERED_COSTS.find(r=>r.accountId.endsWith('12539150')&&r.isin==='INF247L01ED1')!;
+near(moArbRecord.costBasis,304201613.1);assert.equal(moArbRecord.evidence[0].path,MOPWM);assert.equal(moArbRecord.quantity,28067435.434);
 const moArb=fp('12539150','INF247L01ED1');
-near(moArb.costBasis,304201613.1);assert.equal(moArb.recoveredCost?.evidence[0].path,MOPWM);
-assert.equal(moArb.realizedLotsAfter,2,'redeemed on 23 Sep and 1 Oct 2026, after the statement');
+assert.equal(moArb.quantity,2473221.627);assert.equal(moArb.costBasis,null);assert.equal(moArb.recoveredCost,undefined);
 assert.equal(fp('12838316','INF179K01830').costBasis,null,'a different folio balance cannot supply cost');
 
 // Costs can be known while a holding's current unit/price basis is unverified.

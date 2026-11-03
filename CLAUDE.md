@@ -446,6 +446,11 @@ Never derive one side from the others.
   its later NSE/BSE trades roll those balances forward on the live basis
   (`BOOK_SHARE_ROLLS`). Its fund rows move no quantity until the family answers
   about the 1 Oct 2026 "redemptions".
+- **The family's liquid-holdings note of 21 Oct 2026** (Stage 10ka,
+  `scripts/ingest/reference/familyAdvisedBalances.mjs`) carries five Motilal demat
+  fund balances (Ajay's Motilal Arbitrage; Liquid BeES on four demats) to its
+  units on the live basis (`BOOK_ADVISED_BALANCES`); its date is AMFI's NAV that
+  ties two recorded counts to the paisa. The statement basis keeps the snapshot.
 - **Encrypted statements** open with `GLOW_PDF_PASSWORDS` from the environment.
   Passwords are PANs — **never commit them** or put them in any tracked file.
   `build:statement-files` uses those passwords only at build time to save

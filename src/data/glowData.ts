@@ -8,7 +8,7 @@
 // carry, and the UI renders them as an em dash. See docs/BOOK-REPORT.md for the
 // list and what document would supply each.
 import type {
-  Account, AccountBridge, AccountReturnBlock, AccountReturnCoverage, BookSummary, CapitalMove, CashFlow, Commitment,
+  Account, AccountBridge, AdvisedBalance, AccountReturnBlock, AccountReturnCoverage, BookSummary, CapitalMove, CashFlow, Commitment,
   Attribution, CorporateAction, EntityCG, FundInvestment, HoldingTrade, NavCoverage, NavPoint, Position, PositionTranches,
   PolycabHolding, RealisedByClass, RecoveredHoldingCost, ReviewFlow, ReviewSuperseded, ReviewWrittenOff, ShareMovement, ShareRoll, StartupInvestment, UndatedCapital, UnvaluedStatementHolding,
 } from "@/lib/types";
@@ -61956,6 +61956,86 @@ export const BOOK_SHARE_ROLLS: ShareRoll[] = [
         1365
       ]
     }
+  }
+];
+
+/**
+ * MOTILAL DEMAT FUND BALANCES CARRIED TO THE FAMILY'S NOTE of 21 Oct 2026
+ * (Stage 10ka, `scripts/ingest/reference/familyAdvisedBalances.mjs`): each line's
+ * units are its rupee value at AMFI's NAV of that day, tied to the paisa.
+ * LIVE BASIS ONLY: `fundNavs.ts` reads them; every statement-basis figure
+ * keeps the statement's own units.
+ */
+export const BOOK_ADVISED_BALANCES: AdvisedBalance[] = [
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
+    "isin": "INF247L01ED1",
+    "security": "Motilal Oswal Arbitrage Fund Direct Growth",
+    "mode": "demat",
+    "recordQuantity": 28067435.434,
+    "recordAsOf": "2026-07-31",
+    "recordKind": "transaction statement's closing balance",
+    "quantity": 2473221.627,
+    "on": "2026-10-21",
+    "amount": 28118056.68,
+    "nav": 11.369,
+    "source": "the family's note of its demat and physical liquid holdings, valued at AMFI's NAV of 21 Oct 2026"
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
+    "isin": "INF732E01037",
+    "security": "Nippon India ETF Nifty 1D Rate Liquid BeES",
+    "mode": "demat",
+    "recordQuantity": 49.071,
+    "recordAsOf": "2026-07-31",
+    "recordKind": "transaction statement's closing balance",
+    "quantity": 8986.08,
+    "on": "2026-10-21",
+    "amount": 8986080,
+    "nav": 1000,
+    "source": "the family's note of its demat and physical liquid holdings, valued at AMFI's NAV of 21 Oct 2026"
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "isin": "INF732E01037",
+    "security": "Nippon India ETF Nifty 1D Rate Liquid BeES",
+    "mode": "demat",
+    "recordQuantity": 257.411,
+    "recordAsOf": "2026-07-31",
+    "recordKind": "holding statement",
+    "quantity": 25775.416,
+    "on": "2026-10-21",
+    "amount": 25775416,
+    "nav": 1000,
+    "source": "the family's note of its demat and physical liquid holdings, valued at AMFI's NAV of 21 Oct 2026"
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
+    "isin": "INF732E01037",
+    "security": "Nippon India ETF Nifty 1D Rate Liquid BeES",
+    "mode": "demat",
+    "recordQuantity": 3828.05,
+    "recordAsOf": "2026-07-31",
+    "recordKind": "holding statement",
+    "quantity": 3862.532,
+    "on": "2026-10-21",
+    "amount": 3862532,
+    "nav": 1000,
+    "source": "the family's note of its demat and physical liquid holdings, valued at AMFI's NAV of 21 Oct 2026"
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838335",
+    "isin": "INF732E01037",
+    "security": "Nippon India ETF Nifty 1D Rate Liquid BeES",
+    "mode": "demat",
+    "recordQuantity": 7679.495,
+    "recordAsOf": "2026-07-31",
+    "recordKind": "holding statement",
+    "quantity": 7748.67,
+    "on": "2026-10-21",
+    "amount": 7748670,
+    "nav": 1000,
+    "source": "the family's note of its demat and physical liquid holdings, valued at AMFI's NAV of 21 Oct 2026"
   }
 ];
 

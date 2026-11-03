@@ -18,7 +18,7 @@ import {
   unpricedStatementUnits, describeDepositoryUnits, depositoryUnitsGist, VALUE_UNPRICED_STATEMENT_UNITS,
 } from "../fundNavs";
 import { BOOK_FUND_NAVS } from "@/data/fundNavs";
-import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_UNVALUED_HOLDINGS, BOOK_POLYCAB } from "@/data/glowData";
+import { BOOK_ACCOUNTS, BOOK_ADVISED_BALANCES, BOOK_POSITIONS, BOOK_UNVALUED_HOLDINGS, BOOK_POLYCAB } from "@/data/glowData";
 import { FUND_UNIT_ACTIONS } from "../../../shared/fundUnitActions.mjs";
 import type { Account, Position, UnvaluedStatementHolding } from "../types";
 import { unvaluedHoldingsOf, unvaluedStatementLinesOf } from "../accounts";
@@ -84,7 +84,10 @@ function expected(unvalued: readonly UnvaluedStatementHolding[], accounts: Map<s
     if (positions.some((p) => p.accountId === u.accountId && I(p) === isin)) continue;
     if (positions.some((p) => I(p) === isin && Math.abs((p.quantity ?? NaN) - (u.quantity as number)) < 0.0005
       && ownerOfId(p.accountId) === ownerOfId(u.accountId))) continue;
-    out.push({ accountId: u.accountId, isin: nav.pricingIsin ?? isin, quantity: u.quantity * factor, nav: nav.nav, witness, ownRate });
+    // Stage 10ka: the family's 21 Oct note carries this exact recorded balance to its own count.
+    const advised = factor === 1 ? BOOK_ADVISED_BALANCES.find((b) => b.accountId === u.accountId && b.isin === isin
+      && Math.abs(b.recordQuantity - (u.quantity as number)) < 0.0005) : undefined;
+    out.push({ accountId: u.accountId, isin: nav.pricingIsin ?? isin, quantity: advised?.quantity ?? u.quantity * factor, nav: nav.nav, witness, ownRate });
   }
   return out;
 }
@@ -130,6 +133,11 @@ ok("each is NAV-priced, carries the NAV's own date, and says which witness put i
       ? d?.kind === "last-movement" && d.lastMovementRate === w.ownRate
       : d?.kind === "no-rate" && d.witnessAccountId === w.witness && !!w.witness && acc.has(w.witness);
   }));
+ok("the family's 21 Oct note carries the Liquid BeES on the three Motilal holding statements, the statement's count kept beside it (Stage 10ka)",
+  ["1201090012838316", "1201090012838320", "1201090012838335"].every((no) => got.some((p) => p.accountId.endsWith(no)
+    && I(p) === "INF732E01037" && p.depositoryUnits?.advised?.on === "2026-10-21"
+    && BOOK_ADVISED_BALANCES.some((b) => b.accountId === p.accountId && b.quantity === p.quantity
+      && b.recordQuantity === p.depositoryUnits?.advised?.statementQuantity))));
 ok("the movement's price is a witness and nothing more — never the price a row is valued at",
   got.every((p) => p.currentPrice === navBy.get(p.fundUnitAdjustment?.isin ?? I(p) ?? "")?.nav));
 const dspLines = BOOK_UNVALUED_HOLDINGS.filter((u) => I(u) === "INF740KA1SW3" || I(u) === "INF740KA1RE3");

@@ -103,9 +103,12 @@ export function holdingSourceTrace(positions: readonly TracePosition[], metric: 
     const value = metric === 'statement' ? null : p[metric];
     if (metric !== 'statement' && value == null) continue;
     const field = FIELDS[metric];
+    // Stage 10ka: the statement still shows its own, earlier count; the row's units are the family's note's.
+    const advised = p.depositoryUnits?.advised;
     if (record || closing) sources.push({ ...base, document: record?.document ?? closing!,
       pointer: record?.pointer ?? '/transactions', field: closing ? 'closing' : field,
-      value: ['quantity', 'statement'].includes(metric) && !p.enteredNumbers?.includes('quantity') && !p.rolledForward ? original.quantity : undefined, label: p.security,
+      value: ['quantity', 'statement'].includes(metric) && !p.enteredNumbers?.includes('quantity') && !p.rolledForward
+        ? advised?.statementQuantity ?? original.quantity : undefined, label: p.security,
       note: closing ? 'Quantity is the closing balance in this account’s transaction statement, rather than the size of a single movement.' : undefined });
     else if (p.reviewSource) {
       sources.push({ ...base, path: REVIEW_COLUMN_DATA.workbook,
@@ -122,6 +125,12 @@ export function holdingSourceTrace(positions: readonly TracePosition[], metric: 
     if (p.rolledForward && p.quantity === p.rolledForward.quantity && ['quantity', 'marketValue', 'statement'].includes(metric)) {
       derived = true;
       notes.add('The number of units includes trades made after the statement date.');
+    }
+    if (advised && ['quantity', 'marketValue', 'statement'].includes(metric)) {
+      derived = true;
+      notes.add(`The number of units comes from the family's note of their holdings, dated ${advised.on} by the published price it was valued at. The statement below shows the earlier count of ${advised.statementQuantity} units.`);
+      sources.push({ ...base, label: "The family's note of their holdings", value: advised.amount,
+        note: `${advised.source}: ₹${advised.amount.toLocaleString('en-IN')}.` });
     }
     if (p.recoveredCost && ['costBasis', 'avgCost', 'unrealizedPnL'].includes(metric)) {
       derived = true;
