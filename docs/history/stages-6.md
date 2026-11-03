@@ -964,3 +964,9 @@
 - **CROSS_RECORD_CONFLICT ×31.** CURRENT PORTFOLIO prints cost to the rupee and the appraisal to the paisa (915,402 against 915,402.34). Per-holding cross-report deltas now carry `severity` (`classifyDelta`; a unit count is always material), and the gate holds only deltas that are not `rounding`.
 - Book: Molecule 7810404 moves from 31 Jul (₹1.16 Cr) to 2 Nov (₹1.14 Cr), 469 → 472 positions. Its 8 Oct capital register's two TDS transfers (₹1,765) now fall inside the account's window and are listed as dated capital. `navProof`'s load-bearing check (b) had depended on Molecule having no dated flows. It is now judged per window: a printed step with no dated flow inside it. It finds four accounts, not one.
 - Tests: `pipeline` (the appraisal witness, rounding against material, and a gap the accrual does not explain stays material; the first three fail on the old reconcile), `publication` (dated re-reading, rounding-only deltas).
+
+### Stage 10kj — STATEMENT AND PORTFOLIO LIBRARY TABLES FIT THE PAGE
+
+- `/statements` (and `/portfolios`, the same layout) were capped at `max-w-5xl`, leaving wide empty margins, and a filename with no spaces (the Molecule ZIP `Re__Urgent_Request_…_Report.zip`, `ANKITA_JAISINGHANI_FAMILY_…xlsx`) set the Document column's minimum width, so the table scrolled sideways inside its card.
+- Both pages now take the full content width (folder grid gains `xl:grid-cols-6`). The tables are `w-full`; Document (and Arrived in) break anywhere (`[overflow-wrap:anywhere]`); Account and As of never wrap, so a date no longer stacks as "3 / Nov / 2026".
+- Measured in the preview: all 47 folder tables across 44 folders, at 1600 px and 1100 px wide, have `scrollWidth == clientWidth`; with the ZIP name injected, the old cell classes give 1224 against 964 and the new ones fit. The scroll container stays for narrow windows.
