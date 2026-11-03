@@ -1811,8 +1811,18 @@ export type RowCapital =
       assumed?: { owners: string[]; from: string[] };
       /** Each line closed at its market price: what the checks re-solve the rate with (Stage 10jo). */
       closes?: { key: string; isin: string | null; from: string; date: string; value: number }[];
+      /**
+       * THE SAME MONEY, LINE BY LINE (Stage 10kd): each account's or holding's
+       * dated flows (in negative, out positive) and the value it closes on —
+       * what the rate above is solved over, kept apart so a benchmark can buy
+       * the index with each payment on its day and close each line on its date.
+       */
+      legs?: CapitalLeg[];
     }
   | { dated: false; accountIds: string[]; reason: string };
+
+/** One account's or holding's dated money behind a row, and its close (null where sold out). */
+export type CapitalLeg = { flows: { date: string; amount: number }[]; close: { date: string; value: number } | null };
 
 export type MeasuredReturn =
   /** A figure to print, and the tag that says which measure it is. */
