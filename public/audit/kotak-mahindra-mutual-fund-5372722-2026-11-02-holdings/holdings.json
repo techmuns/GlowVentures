@@ -1,0 +1,50 @@
+{
+ "name": "holdings",
+ "rows": [
+  [
+   "isin",
+   "scheme",
+   "units",
+   "nav",
+   "navDate",
+   "invested",
+   "currentValue"
+  ],
+  [
+   "INF174K01LS2",
+   "Kotak Flexi Cap Fund Direct Growth",
+   14523.484,
+   91.733,
+   "2026-10-30",
+   500000,
+   1332282.76
+  ],
+  [
+   "INF174KA1HV3",
+   "Kotak Multi Cap Fund Direct Plan - Growth",
+   612631.862,
+   20.324,
+   "2026-10-30",
+   null,
+   12451129.96
+  ],
+  [
+   "INF174K01302",
+   "Kotak Arbitrage Fund - Growth (Regular Plan)",
+   0,
+   40.4729,
+   "2026-10-30",
+   null,
+   0
+  ],
+  [
+   "INF174K01LC6",
+   "Kotak Arbitrage Fund - Direct Plan - Growth",
+   0,
+   43.5996,
+   "2026-10-30",
+   null,
+   0
+  ]
+ ]
+}
