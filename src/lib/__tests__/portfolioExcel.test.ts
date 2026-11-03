@@ -98,9 +98,16 @@ if (PAGE.length !== RAW.length || PAGE.some((p, i) => p.securityKey !== RAW[i].s
 // ── THE RULES, RE-EXPRESSED FROM THE BOOK ───────────────────────────────────
 const ACC = new Map(BOOK_ACCOUNTS.map((a) => [a.accountId, a]));
 const isPms = (p: Position) => ACC.get(p.accountId)?.engagement === "PMS";
-/** The NAV the page overlays: a usable published NAV times the units held. */
+/**
+ * The NAV the page overlays: a usable published NAV times the units held — never
+ * one older than the statement's own price, which it would roll backwards
+ * (Helios's 3 Nov statements price at 2 Nov, after the newest fetched NAV).
+ */
 const NAV = new Map(BOOK_FUND_NAVS.filter((e) => e.usableForValue && e.nav > 0).map((e) => [e.securityKey, e]));
-const navOf = (p: Position) => (!p.live && !p.review && (p.quantity ?? 0) > 0 ? NAV.get(p.securityKey) ?? null : null);
+const navOf = (p: Position) => {
+  const e = !p.live && !p.review && (p.quantity ?? 0) > 0 ? NAV.get(p.securityKey) ?? null : null;
+  return e && !(p.priceAsOf && e.date < p.priceAsOf) ? e : null;
+};
 const navMV = (p: Position) => { const e = navOf(p); return e ? p.quantity! * e.nav : p.marketValue; };
 /**
  * AMFI's date for a line the page prices at a NAV: the overlay's, or — for a

@@ -13819,6 +13819,154 @@
   ]
  },
  {
+  "docKey": "helios-mutual-fund-10355977-2026-11-03-holdings",
+  "provider": "Helios Mutual Fund",
+  "accountNo": "10355977",
+  "owner": "Ajay T Jaisinghani",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-11-03",
+  "reportType": "holdings",
+  "sourcePath": "source/november-2026/HELIOS AJAY ACCOUNT STATEMENT FROM 6-AUG-26 TO 03-NOV-26.pdf",
+  "pages": 2,
+  "sections": [
+   "transactions",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "helios-mutual-fund-10355977-2026-11-03-holdings",
+  "label": "Helios Mutual Fund · 10355977 · holdings",
+  "fy": "2026-11-03",
+  "source": "source/november-2026/HELIOS AJAY ACCOUNT STATEMENT FROM 6-AUG-26 TO 03-NOV-26.pdf",
+  "sheets": [
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 2,
+    "cols": 8
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "helios-mutual-fund-10056128-2026-11-03-holdings",
+  "provider": "Helios Mutual Fund",
+  "accountNo": "10056128",
+  "owner": "Ajay T Jaisinghani",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-11-03",
+  "reportType": "holdings",
+  "sourcePath": "source/november-2026/HELIOS AJAY ACCOUNT STATEMENT FROM 7-AUG-24 TO 3-NOV-26.pdf",
+  "pages": 2,
+  "sections": [
+   "transactions",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "helios-mutual-fund-10056128-2026-11-03-holdings",
+  "label": "Helios Mutual Fund · 10056128 · holdings",
+  "fy": "2026-11-03",
+  "source": "source/november-2026/HELIOS AJAY ACCOUNT STATEMENT FROM 7-AUG-24 TO 3-NOV-26.pdf",
+  "sheets": [
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 4,
+    "cols": 8
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "helios-mutual-fund-10056154-2026-11-03-holdings",
+  "provider": "Helios Mutual Fund",
+  "accountNo": "10056154",
+  "owner": "Ankita Jaisinghani",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-11-03",
+  "reportType": "holdings",
+  "sourcePath": "source/november-2026/HELIOS ANKITA ACCOUNT STATEMENT FROM 7-AUG-26 TO 3-NOV-26.pdf",
+  "pages": 2,
+  "sections": [
+   "transactions",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "helios-mutual-fund-10056154-2026-11-03-holdings",
+  "label": "Helios Mutual Fund · 10056154 · holdings",
+  "fy": "2026-11-03",
+  "source": "source/november-2026/HELIOS ANKITA ACCOUNT STATEMENT FROM 7-AUG-26 TO 3-NOV-26.pdf",
+  "sheets": [
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 6,
+    "cols": 8
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "helios-mutual-fund-10063876-2026-11-03-holdings",
+  "provider": "Helios Mutual Fund",
+  "accountNo": "10063876",
+  "owner": "Bharat Jaisinghani",
+  "ownerId": "bharat-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-11-03",
+  "reportType": "holdings",
+  "sourcePath": "source/november-2026/HELIOS BHARAT ACCOUNT STATEMENT FROM 16-OCT-24 TO 23-NOV-26.pdf",
+  "pages": 2,
+  "sections": [
+   "transactions",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "helios-mutual-fund-10063876-2026-11-03-holdings",
+  "label": "Helios Mutual Fund · 10063876 · holdings",
+  "fy": "2026-11-03",
+  "source": "source/november-2026/HELIOS BHARAT ACCOUNT STATEMENT FROM 16-OCT-24 TO 23-NOV-26.pdf",
+  "sheets": [
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 8,
+    "cols": 8
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
   "docKey": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
   "provider": "SVAN Investment Managers LLP",
   "accountNo": "8710090",

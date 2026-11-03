@@ -95,16 +95,25 @@ export function rapidProcessor({ store, inbox, initial, references, instantiate,
     if (candidate.decision === 'slow_path') return fullReader();
     const verified = candidate.decision === 'verified', duplicate = candidate.decision === 'duplicate';
     const now = new Date().toISOString();
+    // The checks a held file failed and the reader's warnings, so the inbox
+    // names what to fix rather than only that something failed.
+    const failedChecks = name => {
+      const issues = [...(candidate.held?.find(h => h.name === name)?.issues ?? []), ...(candidate.issues ?? []).filter(i => i.name === name)];
+      const codes = [...new Set(issues.map(i => i.code))], warnings = [...new Set(issues.flatMap(i => i.warnings ?? []))];
+      return [codes.length ? `Failed: ${codes.join(', ')}.` : '', warnings.length ? `Reader warnings: ${warnings.join(', ')}.` : ''].filter(Boolean);
+    };
     const receipt = { id, completedAt: now, files: pending.map(f => {
       const records = verified ? candidate.records.filter(r => r.name === f.name) : [];
       const duplicateKeys = candidate.duplicates?.filter(d => d.name === f.name).map(d => d.sameAs) ?? [];
       const publishedDocuments = verified ? candidate.documents : current.documents;
       const sourceDocs = records.length ? records.map(r => r.manifest) : duplicateKeys.map(k => publishedDocuments.find(d => d.docKey === k)).filter(Boolean);
-      return { name: f.name, status: records.length ? 'landed' : duplicate || (verified && duplicateKeys.length) ? 'duplicate' : 'held',
+      // A file set aside by the reader is held on its own; the rest publish.
+      const passed = (verified || duplicate) && !candidate.held?.some(h => h.name === f.name);
+      return { name: f.name, status: !passed ? 'held' : records.length ? 'landed' : duplicate || (verified && duplicateKeys.length) ? 'duplicate' : 'held',
         docKeys: sourceDocs.map(d => d.docKey), providers: [...new Set(sourceDocs.map(d => d.provider))],
         landedAs: records.map(r => r.manifest.sourcePath), updatedAt: now,
-        hold: verified || duplicate ? null : candidate.decision === 'slow_path' ? 'needs-reader' : 'check-failed',
-        reason: verified || duplicate ? null : 'This statement needs a full reading before it can update the dashboard.' };
+        hold: passed ? null : candidate.decision === 'slow_path' ? 'needs-reader' : 'check-failed',
+        reason: passed ? null : ['This statement needs a full reading before it can update the dashboard.', ...failedChecks(f.name)].join(' ') };
     }) };
     if (verified) {
       const records = { ...current.records };
@@ -144,7 +153,7 @@ export function rapidProcessor({ store, inbox, initial, references, instantiate,
       model.deriveIncome(candidate.documents); model.deriveSales(candidate.documents);
       model.buildConsolidatedSheet(candidate.documents);
       candidate = { ...current, ...candidate, records, manifest, originals, previews };
-      delete candidate.timings; delete candidate.duplicates;
+      delete candidate.timings; delete candidate.duplicates; delete candidate.held;
     } else candidate = current;
     const saved = await store.publish(state, candidate, receipt);
     // Only a confirmed GitHub ref promotion can become the active version.

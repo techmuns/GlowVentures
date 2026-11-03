@@ -161,23 +161,35 @@ ok("the series carries external capital worth adjusting for",
    * and the gap between them would be part window and part capital, which is the
    * caption-widens-a-figure failure arriving inside a test. So the segment is
    * taken first and both are struck on it.
+   *
+   * The segment is a stretch where every step's linked set IS the NAV level at
+   * both ends (no unit joins or leaves), and of those the one carrying the most
+   * external capital. The complete-panel tail stopped serving once the series
+   * ran past a late joiner's first valuation (Bandhan 8652064 on 26 Oct, when
+   * Helios's 3 Nov statements extended it): eight days with no capital in them,
+   * which cannot show the adjustment doing anything.
    */
-  const from = series.findIndex((p) => p.panelComplete);
-  ok("the complete-panel segment has at least two points to compare over",
-    from >= 0 && series.length - from >= 2, `${series.length - from} point(s) from ${series[from]?.date}`);
-  let adj = 100;
-  for (let i = from + 1; i < series.length; i++) {
-    const p = BOOK_NAV_HISTORY[i];
-    const open = p.linkOpen ?? BOOK_NAV_HISTORY[i - 1].nav;
-    const close = p.linkClose ?? p.nav;
-    adj *= (close - (p.flowIn ?? 0)) / open;
+  const H = BOOK_NAV_HISTORY;
+  const likeForLike = (i: number) => H[i].linkOpen != null && H[i].linkClose != null
+    && Math.abs(H[i].linkOpen! - H[i - 1].nav) <= 1 && Math.abs(H[i].linkClose! - H[i].nav) <= 1;
+  let from = -1, to = -1, bestCapital = 0;
+  for (let s = 0; s < H.length - 1; s++) {
+    let capital = 0;
+    for (let e = s + 1; e < H.length && likeForLike(e); e++) {
+      capital += Math.abs(H[e].flowIn ?? 0);
+      if (capital > bestCapital) { bestCapital = capital; from = s; to = e; }
+    }
   }
+  ok("a like-for-like stretch carries external capital to compare over",
+    from >= 0 && bestCapital > 1e5, `${from >= 0 ? `${H[from].date} → ${H[to].date}` : "none"}, ₹${Math.round(bestCapital)}`);
+  let adj = 100;
+  for (let i = from + 1; i <= to; i++) adj *= (H[i].linkClose! - (H[i].flowIn ?? 0)) / H[i].linkOpen!;
   const segAdjusted = adj - 100;
-  const segRaw = (BOOK_NAV_HISTORY[series.length - 1].nav / BOOK_NAV_HISTORY[from].nav - 1) * 100;
+  const segRaw = (H[to].nav / H[from].nav - 1) * 100;
   ok("the flow-adjusted return is materially below the unadjusted NAV move, over the same window",
     segRaw - segAdjusted > 1,
     `adjusted ${segAdjusted.toFixed(2)}% vs unadjusted ${segRaw.toFixed(2)}% over `
-    + `${series[from].date} → ${series[series.length - 1].date} — the difference is money added, not money earned`);
+    + `${H[from]?.date} → ${H[to]?.date} — the difference is money added, not money earned`);
 
   /**
    * …AND THE WHOLE-SERIES INDEX REPRODUCES FROM THE LINKS.

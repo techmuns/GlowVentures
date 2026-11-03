@@ -112,6 +112,24 @@ Less: Stamp Duty 749.96
   const single = extract({ grid: { pages: [{ text: HELIOS }] } });
   ok("a since-inception issue prints no window and no joint holder",
     !single.periodFrom && !single.periodTo && (single.jointHolders ?? []).length === 0, JSON.stringify(single.jointHolders));
+  // The remat line is the evidence `shared/custodySuccessors.mjs` links a demat on.
+  ok("…the holding carries the day its units left the demat",
+    out.holdings[0]?.custodyRematOn === "2026-10-06" && !single.holdings[0]?.custodyRematOn, JSON.stringify(out.holdings[0]));
+}
+
+// CAMS'S PRINT-JOB REFERENCE ON A ROW (3 Nov 2026 uploads): the layout joined
+// `EISC-…` from the page margin to the last Net Purchase, the anchored row
+// missed, and the whole record was withheld as an undeclared type — which held
+// Ankita's and Bharat's uploads as a read gap. The reference is furniture.
+{
+  const stamped = HELIOS_DATED.replace("1,012,095.144 3,245,281.682",
+    "1,012,095.144 3,245,281.682  EISC-MONIKATALE-16.18.0-031126125658(I)-A1618011--1031");
+  const out = extract({ grid: { pages: [{ text: stamped }] } });
+  ok("a print-job reference after a row's balance does not withhold the record",
+    out.status === "ok" && out.cashFlows.length === 3 && out.cashFlows.at(-1).balance === 3245281.682,
+    `${out.status} ${JSON.stringify(out.warnings)}`);
+  withheld("…while a real figure after the balance still does",
+    HELIOS_DATED.replace("1,012,095.144 3,245,281.682", "1,012,095.144 3,245,281.682 12.00"), "transaction-type-not-declared");
 }
 
 console.log(`  ${pass} passed, ${fail} failed`);
