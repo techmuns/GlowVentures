@@ -6,7 +6,7 @@ import { makeBatch, withBatch, queuedFiles, waitingStatementFiles } from '../../
 
 const id = n => `20261027T10000${n}Z-test`;
 const revision = n => String(n).padStart(20, '0');
-function harness({ refuseSave = false, decision = 'verified', copyInBatch = false, processorName = 'rapid', dispatchFallback = true } = {}) {
+function harness({ refuseSave = false, decision = 'verified', copyInBatch = false, heldInBatch = false, processorName = 'rapid', dispatchFallback = true } = {}) {
   const book = Object.fromEntries(CANONICAL_BOOK_KEYS.map(k => [k, []]));
   const initial = { schemaVersion: 1, readerRevision: 'a'.repeat(64), revision: revision(0), book,
     documents: [], manifest: [], records: {}, originals: {}, previews: {}, lookthrough: {} };
@@ -16,6 +16,7 @@ function harness({ refuseSave = false, decision = 'verified', copyInBatch = fals
     const batch = makeBatch(id(n), [{ name: `statement${n}.pdf`, size: 12, blob: 'b'.repeat(40) }]);
     batch.files[0].processor = processorName; log = withBatch(log, batch);
     if (copyInBatch && n === 1) batch.files.push({ ...batch.files[0], name: 'copy.pdf' });
+    if (heldInBatch && n === 1) batch.files.push({ ...batch.files[0], name: 'unread.pdf' });
   }
   const inbox = { dispatch: async () => { throw Error('The job must hand work back in the same run'); }, read: async () => ({ log: structuredClone(log) }), commit: async ({ mutate }) => {
     log = mutate(log); return { log, commit: 'c'.repeat(40) };
@@ -36,11 +37,13 @@ function harness({ refuseSave = false, decision = 'verified', copyInBatch = fals
     instantiate: () => model, baseAsset: async () => null, processorName, dispatchFallback,
     prepare: async ({ baseline, files }) => {
       prepared.push(baseline.map(d => d.docKey));
-      if (decision !== 'verified') return { decision, duplicates: [], issues: [{ code: 'READ_GAP' }] };
+      const gap = { code: 'READ_GAP', name: 'statement1.pdf', warnings: ['transaction-type-not-declared'] };
+      if (decision !== 'verified') return { decision, duplicates: [], issues: [gap] };
       const doc = { docKey: files[0].name.replace('.pdf', ''), provider: 'Fixture', warnings: [], holdings: [], sourcePages: null };
       return { decision: 'verified', revision: revision(baseline.length + 1), readerRevision: initial.readerRevision,
         book, documents: [...baseline, doc], records: [{ name: files[0].name, manifest: { ...doc, sourcePath: `source/${files[0].name}` },
-          files: { 'document.json': doc } }], duplicates: copyInBatch ? [{ document: 'statement1-2', sameAs: doc.docKey, name: 'copy.pdf' }] : [] };
+          files: { 'document.json': doc } }], duplicates: copyInBatch ? [{ document: 'statement1-2', sameAs: doc.docKey, name: 'copy.pdf' }] : [],
+        held: heldInBatch ? [{ name: 'unread.pdf', issues: [{ ...gap, name: 'unread.pdf' }] }] : [] };
     } });
   return { processor, initial, versions, log: () => log, saved: () => saved, prepared, publications: () => publications, projections };
 }
@@ -85,7 +88,18 @@ test('a read gap saves its review outcome while preserving all published figures
   const h = harness({ decision: 'needs_review' }); await h.processor.initialize();
   const receipt = await h.processor.submit(id(1));
   assert.equal(receipt.files[0].status, 'held');
+  assert.match(receipt.files[0].reason, /Failed: READ_GAP. Reader warnings: transaction-type-not-declared./);
   assert.deepEqual(h.saved(), h.initial);
+});
+test('a file the reader sets aside is held on its own while the rest of its batch publishes', async () => {
+  const h = harness({ heldInBatch: true }); await h.processor.initialize();
+  const receipt = await h.processor.submit(id(1));
+  assert.equal(receipt.files[0].status, 'landed');
+  const unread = receipt.files.find(f => f.name === 'unread.pdf');
+  assert.equal(unread.status, 'held'); assert.equal(unread.hold, 'check-failed');
+  assert.match(unread.reason, /READ_GAP/); assert.deepEqual(unread.docKeys, []);
+  assert.equal(h.saved().documents.length, 1);
+  assert.equal(h.saved().held, undefined, 'The hold list is a receipt, never part of the published version');
 });
 test('old source facts remain inspectable but newer rules cannot compute an old reader’s reports', async () => {
   const h = harness(); await h.processor.initialize();

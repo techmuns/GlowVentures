@@ -293,11 +293,11 @@ extraction mirrors each archive's own path under `source/`.
 | Bandhan Mutual Fund | 8652064 | Ajay Jaisinghani | 2026-10-26 | ₹41.51 Cr |
 | Carnelian Asset Management and Advisors Pvt Ltd | 3517383 | Ajay Jaisinghani | 2026-09-30 | ₹38.16 Cr |
 | Consolidated review (MOPWM) | MOPWM | Bharat Jaisinghani | 2026-06-30 | ₹37.26 Cr |
+| Helios Mutual Fund | 10355977 | Ajay Jaisinghani | 2026-11-03 | ₹29.91 Cr |
 | Sanshi Fund | 9069671554 | Ankita Jaisinghani | 2026-06-30 | ₹29.42 Cr |
 | Sanshi Fund | 9039671912 | Ajay Jaisinghani | 2026-06-30 | ₹29.35 Cr |
 | Consolidated review (MOPWM) | MOPWM | Ankita Jaisinghani | 2026-06-30 | ₹29.04 Cr |
 | Sanshi Fund | 9069671634 | Ajay Jaisinghani | 2026-06-30 | ₹28.46 Cr |
-| Helios Mutual Fund | 10355977 | Ajay Jaisinghani | 2026-10-26 | ₹28.36 Cr |
 | Buoyant Capital | 103472 | Ankita Jaisinghani | 2026-09-30 | ₹27.00 Cr |
 | Motilal Oswal Founders Fund | 90410016104 | Ajay Jaisinghani | 2026-09-30 | ₹22.07 Cr |
 | Motilal Oswal Active Momentum Fund | 904168868444 | Ankita Jaisinghani | 2026-08-06 | ₹21.42 Cr |
@@ -313,13 +313,15 @@ extraction mirrors each archive's own path under `source/`.
 | Motilal Oswal Founders Fund | 90410016093 | Ankita Jaisinghani | 2026-09-30 | ₹11.11 Cr |
 | SVAN Investment Managers LLP | 8710090 | Bharat Jaisinghani | 2026-09-30 | ₹10.71 Cr |
 | India SME Investments | 175962 | Ajay Jaisinghani | 2026-06-30 | ₹9.56 Cr |
+| Helios Mutual Fund | 10056154 | Ankita Jaisinghani | 2026-11-03 | ₹7.98 Cr |
 | Goldstandard Wealth Private Limited | 100022 | Ankita Jaisinghani | 2026-10-06 | ₹7.67 Cr |
 | Consolidated review (MOPWM) | MOPWM | Not attributed to a member | 2026-06-30 | ₹7.26 Cr |
 | V.E.C Assago Capital Management LLP | 128004 | Ankita Jaisinghani | 2026-10-07 | ₹6.11 Cr |
 | Green Lantern Capital LLP | 510854 | Ankita Jaisinghani | 2026-07-27 | ₹5.80 Cr |
 | Neo Infra Income Opportunities Fund | 9039920536 | Ajay Jaisinghani | 2026-06-30 | ₹5.55 Cr |
-| Helios Mutual Fund | 10056128 | Ajay Jaisinghani | 2026-10-26 | ₹4.81 Cr |
+| Helios Mutual Fund | 10056128 | Ajay Jaisinghani | 2026-11-03 | ₹5.08 Cr |
 | HDFC Mutual Fund | 15644806 | Ajay Jaisinghani | 2026-10-01 | ₹4.36 Cr |
+| Helios Mutual Fund | 10063876 | Bharat Jaisinghani | 2026-11-03 | ₹3.77 Cr |
 | India SME Investments | 175964 | Bharat Jaisinghani | 2026-06-30 | ₹3.19 Cr |
 | India SME Investments | 177302 | Ankita Jaisinghani | 2026-06-30 | ₹3.19 Cr |
 | HDFC Mutual Fund | 16002141 | Ankita Jaisinghani | 2026-10-01 | ₹2.62 Cr |

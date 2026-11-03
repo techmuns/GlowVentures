@@ -631,6 +631,9 @@ function withPublishedNavs(positions) {
     const e = by.get(p.securityKey);
     // A NAV joined across a sub-division values only the unpriced units above (Stage 10hq).
     if (!e || e.unitSplit || !(e.nav > 0) || !(Number(p.quantity) > 0)) return p;
+    // A fetched NAV older than the statement's own price never rolls it back
+    // (Helios's 3 Nov statements price at 2 Nov, after the newest fetched NAV).
+    if (p.priceAsOf && e.date < p.priceAsOf) return p;
     const marketValue = Number(p.quantity) * e.nav;
     const cost = p.costBasis;
     const costNA = !!p.costUnavailable || !(typeof cost === "number" && cost > 0);

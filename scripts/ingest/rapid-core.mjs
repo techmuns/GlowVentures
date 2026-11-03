@@ -84,10 +84,37 @@ export async function prepareRapidStatement({ baseline, files, references, passw
     const checked = assessPublication({ baseline: original, documents: candidate, baselineReport: beforeReport, report });
     assessment = { ...checked, duplicates: assessment.duplicates };
   }
+  // Every finding that names a document of this upload is attributed to its
+  // file, with the reader's own warning codes, so a hold says what to fix.
+  const producedFor = key => produced.find(p => p.doc.docKey === key);
+  const attribute = issue => {
+    const part = producedFor(issue.document);
+    return part ? { ...issue, name: part.name, warnings: (part.doc.warnings ?? []).map(w => w.code ?? w) } : issue;
+  };
+  assessment.issues = assessment.issues.map(attribute);
+  // One file failing a check holds that file, never the rest of the batch: on
+  // 3 Nov 2026 two clean Helios statements were held behind two that failed.
+  // Only findings that each name an uploaded file can be set aside this way;
+  // any other finding still holds every file.
+  let held = [];
+  if (assessment.decision === 'needs_review' && assessment.issues.every(i => i.name)) {
+    const failing = new Set(assessment.issues.map(i => i.name));
+    const dropped = new Set(produced.filter(p => failing.has(p.name)).map(p => p.doc.docKey));
+    if (produced.some(p => !failing.has(p.name))) {
+      const rest = candidate.filter(d => !dropped.has(d.docKey));
+      const checked = assessPublication({ baseline: original, documents: rest, baselineReport: beforeReport,
+        report: reconcile(rest, { symbolMap: references.symbols }) });
+      if (checked.decision !== 'needs_review') {
+        held = [...failing].map(name => ({ name, issues: assessment.issues.filter(i => i.name === name) }));
+        candidate = rest;
+        assessment = { ...checked, duplicates: assessment.duplicates.filter(d => !dropped.has(d.document)) };
+      }
+    }
+  }
   timings.validationMs = performance.now() - t;
-  assessment.duplicates = assessment.duplicates.map(d => ({ ...d, name: produced.find(p => p.doc.docKey === d.document)?.name }));
+  assessment.duplicates = assessment.duplicates.map(d => ({ ...d, name: producedFor(d.document)?.name }));
   if (assessment.decision === 'needs_review') return { ...assessment, timings };
-  if (assessment.decision === 'unchanged') return { ...assessment, decision: 'duplicate', timings };
+  if (assessment.decision === 'unchanged') return { ...assessment, decision: 'duplicate', held, timings };
   const records = produced.filter(p => candidate.some(d => d.docKey === p.doc.docKey)).map(p => ({ ...archiveRecord(p.doc, p.grid), name: p.name }));
   const pagesByDocument = { ...references.pagesByDocument,
     ...Object.fromEntries(records.map(r => [r.manifest.docKey, r.files['pages.json'].pages.map(p => p.text).join('\n')])) };
@@ -110,5 +137,5 @@ export async function prepareRapidStatement({ baseline, files, references, passw
   const revision = digest({ readerRevision, archiveRevision: archive, book }).slice(0, 20);
   timings.totalMs = performance.now() - start;
   return { decision: 'verified', schemaVersion: 1, readerRevision, revision, archiveRevision: archive,
-    documents: candidate, book, records, duplicates: assessment.duplicates, timings };
+    documents: candidate, book, records, duplicates: assessment.duplicates, held, timings };
 }

@@ -49,6 +49,16 @@ called and paid on 22 October, 201,254.604 units at 993.7164. It is sealed with 
 PAN; a one-off CI run opened it with the saved statement passwords (Stage 10hx), and
 every run since reads its archived page text (`providers/franklinAif.mjs`).
 
+`november-2026/` holds the client's four 3 November CAMS account statements for
+Helios Mutual Fund, uploaded on the Statement Library and held there (Stage 10ke):
+Ajay's folios 10355977 and 10056128 (with Aarti), and two folios new to the book,
+Ankita's 10056154 and Bharat's 10063876 (with Ankita). The new folios hold exactly
+the Helios units that Ankita's and Bharat's Motilal demats printed on 31 July,
+rematerialised on 6 October; `shared/custodySuccessors.mjs` links each demat to its
+folio on that printed evidence, so the units count once. The file names are the
+client's own, including Bharat's "23-NOV-26", which the statement itself prints
+as 3 November.
+
 `october-2026-f/` holds the two HDFC Bank NSDL holding statements of 29 October for the newly incorporated Glowterra LLP (`Glowterra.pdf`) and Glowsphere LLP (`LLP.pdf`). The family's covering note, with the dates and amounts of those investments, is word for word in `scripts/ingest/reference/familyAdvisedInvestments.mjs` (Stage 10jq).
 
 **These files never reach the browser.** `source/` sits at the repo root, outside
