@@ -47,6 +47,42 @@ for (const [before, after] of [
   assert.equal(broken.cashFlows.length, 0, before);
 }
 
+// The 3 Nov uploads: ledgers carried over a page break, a ledger with no
+// opening line, and a 2017 regular-plan folio redeemed to nil (no summary).
+const archived = docKey => JSON.parse(fs.readFileSync(new URL(`../../../public/audit/${docKey}/pages.json`, import.meta.url))).pages;
+const readDoc = (docKey, pages = archived(docKey)) => extract({ grid: { pages }, meta: { docKey } });
+const october14 = readDoc('bandhan-mutual-fund-8652064-2026-10-14-holdings');
+assert.equal(october14.status, 'ok', JSON.stringify(october14.warnings));
+assert.equal(october14.holdings.length, 4);
+assert.equal(october14.totals.totalMarketValue, 431304376.61);
+assert.equal(october14.cashFlows.filter(f => f.kind === 'contribution' && f.isin === 'INF194K01V89').length, 12);
+assert.equal(october14.cashFlows.filter(f => f.kind === 'reclassification' && f.isin === 'INF194K01Y60').length, 8);
+// Without the reprinted heading recognised, a carried ledger has no closing.
+const unjoined = readDoc('bandhan-mutual-fund-8652064-2026-10-14-holdings',
+  archived('bandhan-mutual-fund-8652064-2026-10-14-holdings').map(p => ({ ...p, text: p.text.replaceAll('in INR in INR in INR Units Units', 'in INR') })));
+assert.equal(unjoined.status, 'partial');
+const ankita = readDoc('bandhan-mutual-fund-8691267-2026-09-30-holdings');
+assert.equal(ankita.status, 'ok', JSON.stringify(ankita.warnings));
+assert.deepEqual(ankita.holdings.map(h => [h.isin, h.quantity]), [['INF194K01V89', 24406.691], ['INF194K01I60', 0]]);
+assert.equal(ankita.cashFlows.find(f => f.kind === 'opening-units' && f.isin === 'INF194K01I60').units, 0);
+assert.equal(ankita.cashFlows.filter(f => f.kind === 'withdrawal').length, 3);
+// A first row that does not create the balance is no evidence of a nil opening.
+const notNil = readDoc('bandhan-mutual-fund-8691267-2026-09-30-holdings',
+  archived('bandhan-mutual-fund-8691267-2026-09-30-holdings').map(p => ({ ...p, text: p.text.replace('7,029.319 7,029.319', '7,029.319 7,030.319') })));
+assert.equal(notNil.status, 'partial');
+const elssText = archived('bandhan-mutual-fund-1802619-2026-09-30-holdings');
+assert.equal(classify({ fileName: 'statement.pdf', text: elssText.map(p => p.text).join('\n') }).provider, 'Bandhan Mutual Fund');
+const elss = readDoc('bandhan-mutual-fund-1802619-2026-09-30-holdings', elssText);
+assert.equal(elss.status, 'ok', JSON.stringify(elss.warnings));
+assert.equal(elss.totals.totalMarketValue, 0);
+assert.deepEqual(elss.holdings.map(h => [h.isin, h.quantity, h.printed.marketValue]), [['INF194K01292', 0, 0]]);
+assert.deepEqual(elss.cashFlows.filter(f => f.kind === 'contribution').map(f => [f.date, f.amount, f.expenses]),
+  [['2017-01-24', 100000, 100], ['2018-03-23', 105000, 100], ['2019-03-28', 105000, 100]]);
+assert.equal(elss.cashFlows.find(f => f.kind === 'withdrawal').expenses, 6.15);
+// A nil folio's zero total is only the ledgers' own: a unit left over breaks it.
+const leftover = readDoc('bandhan-mutual-fund-1802619-2026-09-30-holdings', elssText.map(p => ({ ...p, text: p.text.replace('Current Unit Balance : 0.000', 'Current Unit Balance : 1.000') })));
+assert.equal(leftover.status, 'partial');
+
 // A fixture isolates the boundary: same owner/ISIN is NOT continuity evidence.
 const accounts = [
   { accountId: 'custody', ownerId: 'owner', asOf: '2026-07-31' },

@@ -368,6 +368,9 @@ function readEverything() {
 }
 
 const SEALED = /password|encrypt|sealed/i;
+const PR_REFUSED = /not permitted to create or approve pull requests/i;
+const PR_REFUSED_HOLD = "Verified, but GitHub refused to let the intake open its publication pull request. Allow GitHub Actions to create "
+  + "pull requests (Settings → Actions → General) or add a GLOW_INTAKE_TOKEN secret, then Try again.";
 
 /** One line per kind of finding, with its count: three repeats must not hide a fourth kind. */
 function heldSummary(issues) {
@@ -390,14 +393,60 @@ Publication held (${publication.decision}) — ${publication.issues.length} find
   }
 }
 
+const SEALED_HOLD = "Sealed with a password the intake run does not hold. Add the statement passwords to the repository's "
+  + "Actions secrets as GLOW_PDF_PASSWORDS (Settings → Secrets and variables → Actions), then Retry.";
+
+/** Whether an upload's documents include one no supplied password opened. The
+ * manifest says only `pdf-read-failed`; the document's own warning names why. */
+function uploadIsSealed(entries, docs) {
+  return entries.some((e) => e.status === "encrypted"
+    || (e.failedBecause === "pdf-read-failed" && (docs.get(e.docKey)?.warnings ?? []).some((w) => SEALED.test(w.detail ?? ""))));
+}
+
+/**
+ * A held publication, attributed to the uploads behind it: each upload is held
+ * for its OWN documents' findings (a sealed one as needing its password), and
+ * an upload with none is judged again without the others. `null` when a finding
+ * names no document of this run's uploads — then the whole batch is held.
+ */
+function heldPerUpload(live, manifest, publication) {
+  const ownerOf = (docKey) => {
+    const entry = manifest.find((e) => e.docKey === docKey);
+    return entry ? live.find((p) => p.mine(entry.sourcePath)) : undefined;
+  };
+  const byUpload = new Map();
+  for (const issue of publication.issues) {
+    const p = issue.document ? ownerOf(issue.document) : undefined;
+    if (!p) return null;
+    byUpload.set(p, [...(byUpload.get(p) ?? []), issue]);
+  }
+  if (!byUpload.size) return null;
+  const docs = new Map(readArchive(abs("public/audit")).map((d) => [d.docKey, d]));
+  const verdicts = new Map();
+  for (const p of live) {
+    const issues = byUpload.get(p);
+    // Not a landing: `status !== "landed"` is what unplaces a file, and this
+    // round always unplaces the held ones, so the rest are judged once more.
+    if (!issues) { verdicts.set(p, { status: "landed" }); continue; }
+    const entries = manifest.filter((e) => p.mine(e.sourcePath));
+    verdicts.set(p, uploadIsSealed(entries, docs)
+      ? held("needs-password", SEALED_HOLD)
+      : held("check-failed", `Publication held (${publication.decision}): ${heldSummary(issues)}`));
+  }
+  return verdicts;
+}
+
 /** Each placed upload's verdict, from the archive, coverage:source and check:reads. */
 function judge(live, baseline) {
   const manifest = JSON.parse(fs.readFileSync(abs("public/audit/manifest.json"), "utf8"));
   const publication = verifyPublication({ baseRef: `${REMOTE}/${MAIN}` });
   if (!['verified', 'unchanged'].includes(publication.decision)) {
     logHeldPublication(publication);
+    const verdicts = heldPerUpload(live, manifest, publication);
+    if (verdicts) return { verdicts, all: null };
     return { all: `Publication held (${publication.decision}): ${heldSummary(publication.issues) || 'Repeated normalized documents must not add rows.'}` };
   }
+  const docs = new Map(readArchive(abs("public/audit")).map((d) => [d.docKey, d]));
   const cov = npm("coverage:source");
   const lines = cov.out.split(/\r?\n/);
   const at = lines.findIndex((l) => /FILE\(S\) UNREAD:/.test(l));
@@ -411,11 +460,10 @@ function judge(live, baseline) {
     const entries = manifest.filter((e) => p.mine(e.sourcePath));
     const probs = fresh.filter((x) => p.mine(x.file));
     const gaps = unread.filter((f) => p.mine(f));
-    const sealed = entries.filter((e) => e.status === "encrypted").length || probs.some((x) => SEALED.test(x.what));
+    const sealed = uploadIsSealed(entries, docs) || probs.some((x) => SEALED.test(x.what));
     let v;
     if (sealed) {
-      v = held("needs-password", "Sealed with a password the intake run does not hold. Add the statement passwords to the repository's "
-        + "Actions secrets as GLOW_PDF_PASSWORDS (Settings → Secrets and variables → Actions), then Retry.");
+      v = held("needs-password", SEALED_HOLD);
     } else if (probs.length) {
       v = held("needs-reader", `${probs[0].what} — ${probs[0].fix}${probs.length > 1 ? ` (and ${probs.length - 1} more finding(s) in the run log)` : ""}`);
     } else if (gaps.length) {
@@ -688,8 +736,14 @@ async function main() {
         results.set(keyOf(item), await monitorPublication(item.publication, { gh,
           currentBase: git(['rev-parse', `${REMOTE}/${MAIN}`]).out, credential: process.env.GLOW_DASHBOARD_PASSWORD,
           baseURL: process.env.GLOW_BASE_URL }));
-      } catch (error) { results.set(keyOf(item), { ...item.publication, status: 'processing', hold: null,
-        reason: 'Your statement is saved. Processing will continue automatically.', publicationDetail: `Publication check will retry: ${clip(error.message)}` }); }
+      } catch (error) {
+        // A refusal no retry can clear must not read as "processing" forever:
+        // the 2 Nov Kotak delivery sat verified for a day on this one error.
+        results.set(keyOf(item), PR_REFUSED.test(error.message)
+          ? { ...item.publication, status: 'held', hold: 'check-failed', reason: PR_REFUSED_HOLD, publicationDetail: clip(error.message) }
+          : { ...item.publication, status: 'processing', hold: null,
+            reason: 'Your statement is saved. Processing will continue automatically.', publicationDetail: `Publication check will retry: ${clip(error.message)}` });
+      }
     }
     for (const [key, result] of await intake(items.filter(i => !i.publication))) results.set(key, result);
   } catch (e) {

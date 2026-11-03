@@ -970,7 +970,9 @@ const ISSUER_PROVIDER_RULES = [
   // depository guards. Distributor names and funds held by a demat cannot
   // establish the issuer.
   [/(?=[\s\S]*Account Statement for Folio No\.)(?=[\s\S]*invescomutualfund\.com)/i, "Invesco Mutual Fund"],
-  [/(?=[\s\S]*\bAccount Statement\b)(?=[\s\S]*Folio Number\s*:)(?=[\s\S]*Thank you for investing with Bandhan Mutual Fund)/i, "Bandhan Mutual Fund"],
+  // A folio redeemed to nil prints no account summary, so no thank-you line;
+  // its own transaction slip still names the fund house.
+  [/(?=[\s\S]*\bAccount Statement\b)(?=[\s\S]*Folio Number\s*:)(?=[\s\S]*(?:Thank you for investing with Bandhan Mutual Fund|would like to submit following transaction in the scheme Bandhan:))/i, "Bandhan Mutual Fund"],
   [/\bScheme\s+Motilal\s+Oswal\s+Arbitrage\s+Fund[\s\S]{0,100}ISIN No\s*:\s*INF247L01ED1/i, "Motilal Oswal Mutual Fund"],
   [/B153DZ-Aditya\s+Birla\s+Sun\s+Life\s+Liquid\s+Fund/i, "Aditya Birla Sun Life Mutual Fund"],
   // A SCHEME'S OWN MONTHLY DISCLOSURE, by its title, BEFORE the AMC names below.

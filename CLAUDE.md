@@ -313,6 +313,7 @@ extraction mirrors each archive's own path under `source/`.
 | Motilal Oswal Founders Fund | 90410016093 | Ankita Jaisinghani | 2026-09-30 | ₹11.11 Cr |
 | SVAN Investment Managers LLP | 8710090 | Bharat Jaisinghani | 2026-09-30 | ₹10.71 Cr |
 | India SME Investments | 175962 | Ajay Jaisinghani | 2026-06-30 | ₹9.56 Cr |
+| Kotak Mahindra Mutual Fund | 7111389 | Ajay Jaisinghani | 2026-11-02 | ₹8.50 Cr |
 | Helios Mutual Fund | 10056154 | Ankita Jaisinghani | 2026-11-03 | ₹7.98 Cr |
 | Goldstandard Wealth Private Limited | 100022 | Ankita Jaisinghani | 2026-10-06 | ₹7.67 Cr |
 | Consolidated review (MOPWM) | MOPWM | Not attributed to a member | 2026-06-30 | ₹7.26 Cr |
@@ -330,6 +331,7 @@ extraction mirrors each archive's own path under `source/`.
 | Sky Capital Rising Titans Fund | SKY022 | Ajay Jaisinghani | 2026-08-31 | ₹1.50 Cr |
 | 360 ONE Private Wealth | 37702 | Ajay Jaisinghani | 2026-09-30 | ₹1.46 Cr\* |
 | 360 ONE Private Wealth | 60117 | Bharat Jaisinghani | 2026-09-30 | ₹1.46 Cr\* |
+| Kotak Mahindra Mutual Fund | 5372722 | Aarti Jaisinghani | 2026-11-02 | ₹1.38 Cr |
 | Consolidated review (MOPWM) | MOPWM | Bharat Jaisinghani Family Trust 2 | 2026-06-30 | ₹1.35 Cr |
 | Consolidated review (MOPWM) | MOPWM | Bharat Jaisinghani Family Trust 3 | 2026-06-30 | ₹1.35 Cr |
 | Molecule Ventures LLP | 7810404 | Ajay Jaisinghani | 2026-11-02 | ₹1.14 Cr |
@@ -340,6 +342,7 @@ extraction mirrors each archive's own path under `source/`.
 | Sky Capital Rising Titans Fund | SKY023 | Bharat Jaisinghani Family Trust 2 | 2026-08-31 | ₹0.75 Cr |
 | Sky Capital Rising Titans Fund | SKY024 | Bharat Jaisinghani Family Trust 3 | 2026-08-31 | ₹0.75 Cr |
 | ICICI Prudential Mutual Fund | 36378950 | Ajay Jaisinghani | 2026-10-05 | ₹0.56 Cr |
+| Bandhan Mutual Fund | 8691267 | Ankita Jaisinghani | 2026-09-30 | ₹0.39 Cr |
 | ICICI Prudential Mutual Fund | 36379637 | Bharat Jaisinghani | 2026-10-05 | ₹0.38 Cr |
 | Mirae Asset Mutual Fund | 70413280453 | Hope India Trust | 2026-10-06 | ₹0.10 Cr |
 | Aditya Birla Sun Life Mutual Fund | 1038104611 | Hope India Trust | 2026-08-03 | ₹0.08 Cr |
@@ -354,6 +357,7 @@ extraction mirrors each archive's own path under `source/`.
 | 3P Investment Managers | 3000048 | Ajay Jaisinghani | 2026-07-31 | ₹0 (a MEASURED zero — every class redeemed to nil) |
 | ASK Absolute Return Fund | 9039917111 | Ajay Jaisinghani | 2026-03-31 | ₹0 (a MEASURED zero — every series redeemed to nil) |
 | ASK Absolute Return Fund | 9039917144 | Ankita Jaisinghani | 2026-03-31 | ₹0 (a MEASURED zero — every series redeemed to nil) |
+| Bandhan Mutual Fund | 1802619 | Ankita Jaisinghani | 2026-09-30 | ₹0 (a MEASURED zero — every scheme redeemed to nil) |
 | HDFC Bank (NSDL demat) | 22025655 | Bharat Jaisinghani | 2026-03-31 | — (**quantity only** — the statement prints no rate or value, Stage 10gk; 12 of its lines are private and counted under the review, Stage 10dh) |
 | HDFC Bank (NSDL demat) | 67786137 | Bharat Jaisinghani Family Trust 3 | 2026-08-29 | — (**its private holding is counted under the review**, Stage 10dh) |
 | HDFC Bank (NSDL demat) | 67786547 | Bharat Jaisinghani Family Trust 2 | 2026-08-29 | — (**its private holding is counted under the review**, Stage 10dh) |
@@ -362,6 +366,8 @@ extraction mirrors each archive's own path under `source/`.
 | Invesco Mutual Fund | 3041491081 | Bharat Jaisinghani | 2026-09-30 | ₹0 (a MEASURED zero — every scheme redeemed to nil) |
 | Invesco Mutual Fund | 3041491145 | Ajay Jaisinghani | 2026-09-30 | ₹0 (a MEASURED zero — both schemes redeemed to nil) |
 | Invesco Mutual Fund | 3041794916 | Ankita Jaisinghani | 2026-09-30 | ₹0 (a MEASURED zero — both schemes redeemed to nil) |
+| Kotak Mahindra Mutual Fund | 7125319 | Ankita Jaisinghani | 2026-11-02 | ₹0 (a MEASURED zero — both schemes redeemed to nil) |
+| Kotak Mahindra Mutual Fund | 7125555 | Bharat Jaisinghani | 2026-11-02 | ₹0 (a MEASURED zero — every scheme redeemed to nil) |
 | Marathon Trends Advisory Pvt Ltd | 5110758 | Ankita Jaisinghani | 2026-09-09 | — (**no holdings statement** in the drop — its dated statements only) |
 | Marathon Trends Advisory Pvt Ltd | 5110837 | Ajay Jaisinghani | 2026-09-09 | — (**no holdings statement** in the drop — its dated statements only) |
 | Motilal Oswal Financial Services (demat) | 1201090012539150 | Ajay Jaisinghani | 2026-07-31 | — (**transaction statement only**, no holdings) |

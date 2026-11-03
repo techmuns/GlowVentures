@@ -18,14 +18,14 @@ export const BOOK_AS_OF = "2026-11-03";
 
 export const BOOK_SUMMARY: BookSummary = {
   "asOf": "2026-11-03",
-  "listedValue": 7010279384.59,
+  "listedValue": 7112999883.11,
   "privateValue": 2765890203.68,
   "unplacedValue": 0,
-  "totalValue": 9776169588.27,
-  "positionsCount": 474,
+  "totalValue": 9878890086.79,
+  "positionsCount": 492,
   "entitiesCount": 11,
   "startupsCount": 0,
-  "accountsCount": 88
+  "accountsCount": 94
 };
 
 /** Account registry — one row per (provider, account no). Positions join on accountId. */
@@ -352,6 +352,26 @@ export const BOOK_ACCOUNTS: Account[] = [
     }
   },
   {
+    "accountId": "bandhan-mutual-fund-1802619",
+    "provider": "Bandhan Mutual Fund",
+    "accountNo": "1802619",
+    "ownerId": "ankita-jaisinghani",
+    "owner": "Ankita Jaisinghani",
+    "strategy": null,
+    "engagement": "Direct",
+    "providerEngagement": "Mutual fund folio — Resident Individual",
+    "members": [],
+    "asOf": "2026-09-30",
+    "inceptionDate": null,
+    "capitalRecordTo": "2026-09-30",
+    "custodian": "Bandhan Mutual Fund",
+    "noPositionsReason": null,
+    "demat": {
+      "printed": null,
+      "reason": "the statement read for Bandhan Mutual Fund 1802619 prints no DP ID or Client ID"
+    }
+  },
+  {
     "accountId": "bandhan-mutual-fund-8652064",
     "provider": "Bandhan Mutual Fund",
     "accountNo": "8652064",
@@ -368,7 +388,27 @@ export const BOOK_ACCOUNTS: Account[] = [
     "noPositionsReason": null,
     "demat": {
       "printed": null,
-      "reason": "the statement read for Bandhan Mutual Fund 8652064 prints no DP ID or Client ID"
+      "reason": "none of the 2 statements read for Bandhan Mutual Fund 8652064 prints a DP ID and Client ID"
+    }
+  },
+  {
+    "accountId": "bandhan-mutual-fund-8691267",
+    "provider": "Bandhan Mutual Fund",
+    "accountNo": "8691267",
+    "ownerId": "ankita-jaisinghani",
+    "owner": "Ankita Jaisinghani",
+    "strategy": null,
+    "engagement": "Direct",
+    "providerEngagement": "Mutual fund folio — Resident Individual",
+    "members": [],
+    "asOf": "2026-09-30",
+    "inceptionDate": null,
+    "capitalRecordTo": "2026-09-30",
+    "custodian": "Bandhan Mutual Fund",
+    "noPositionsReason": null,
+    "demat": {
+      "printed": null,
+      "reason": "the statement read for Bandhan Mutual Fund 8691267 prints no DP ID or Client ID"
     }
   },
   {
@@ -1159,6 +1199,46 @@ export const BOOK_ACCOUNTS: Account[] = [
     }
   },
   {
+    "accountId": "kotak-mahindra-mutual-fund-5372722",
+    "provider": "Kotak Mahindra Mutual Fund",
+    "accountNo": "5372722",
+    "ownerId": "aarti-jaisinghani",
+    "owner": "Aarti Jaisinghani",
+    "strategy": null,
+    "engagement": "Direct",
+    "providerEngagement": "folio held by a individual",
+    "members": [],
+    "asOf": "2026-11-02",
+    "inceptionDate": null,
+    "capitalRecordTo": "2026-11-02",
+    "custodian": "Kotak Mahindra Mutual Fund",
+    "noPositionsReason": null,
+    "demat": {
+      "printed": null,
+      "reason": "the statement read for Kotak Mahindra Mutual Fund 5372722 prints no DP ID or Client ID"
+    }
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-7111389",
+    "provider": "Kotak Mahindra Mutual Fund",
+    "accountNo": "7111389",
+    "ownerId": "ajay-jaisinghani",
+    "owner": "Ajay Jaisinghani",
+    "strategy": null,
+    "engagement": "Direct",
+    "providerEngagement": "folio held by a individual",
+    "members": [],
+    "asOf": "2026-11-02",
+    "inceptionDate": null,
+    "capitalRecordTo": "2026-11-02",
+    "custodian": "Kotak Mahindra Mutual Fund",
+    "noPositionsReason": null,
+    "demat": {
+      "printed": null,
+      "reason": "the statement read for Kotak Mahindra Mutual Fund 7111389 prints no DP ID or Client ID"
+    }
+  },
+  {
     "accountId": "kotak-mahindra-mutual-fund-7125255",
     "provider": "Kotak Mahindra Mutual Fund",
     "accountNo": "7125255",
@@ -1176,6 +1256,46 @@ export const BOOK_ACCOUNTS: Account[] = [
     "demat": {
       "printed": null,
       "reason": "the statement read for Kotak Mahindra Mutual Fund 7125255 prints no DP ID or Client ID"
+    }
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-7125319",
+    "provider": "Kotak Mahindra Mutual Fund",
+    "accountNo": "7125319",
+    "ownerId": "ankita-jaisinghani",
+    "owner": "Ankita Jaisinghani",
+    "strategy": null,
+    "engagement": "Direct",
+    "providerEngagement": "folio held by a individual",
+    "members": [],
+    "asOf": "2026-11-02",
+    "inceptionDate": null,
+    "capitalRecordTo": "2026-11-02",
+    "custodian": "Kotak Mahindra Mutual Fund",
+    "noPositionsReason": null,
+    "demat": {
+      "printed": null,
+      "reason": "the statement read for Kotak Mahindra Mutual Fund 7125319 prints no DP ID or Client ID"
+    }
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-7125555",
+    "provider": "Kotak Mahindra Mutual Fund",
+    "accountNo": "7125555",
+    "ownerId": "bharat-jaisinghani",
+    "owner": "Bharat Jaisinghani",
+    "strategy": null,
+    "engagement": "Direct",
+    "providerEngagement": "folio held by a individual",
+    "members": [],
+    "asOf": "2026-11-02",
+    "inceptionDate": null,
+    "capitalRecordTo": "2026-11-02",
+    "custodian": "Kotak Mahindra Mutual Fund",
+    "noPositionsReason": null,
+    "demat": {
+      "printed": null,
+      "reason": "the statement read for Kotak Mahindra Mutual Fund 7125555 prints no DP ID or Client ID"
     }
   },
   {
@@ -2600,6 +2720,40 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
+      "document": "bandhan-mutual-fund-1802619-2026-09-30-holdings",
+      "pointer": "/holdings/0"
+    },
+    "securityKey": "bandhan-elss-tax-saver-fund-regular-plan-growth",
+    "security": "Bandhan ELSS - Tax Saver Fund-Regular Plan-Growth",
+    "symbol": null,
+    "isin": "INF194K01292",
+    "accountId": "bandhan-mutual-fund-1802619",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Mutual Fund",
+    "marketSide": "listed",
+    "quantity": 0,
+    "avgCost": null,
+    "currentPrice": 148.249,
+    "costBasis": 0,
+    "costBasisSource": "fifo",
+    "marketValue": 0,
+    "unrealizedPnL": 0,
+    "realizedPnL": 305261.65,
+    "costOfUnitsSold": 310000,
+    "returnPct": 98.47,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-09-30",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "statementRecord": {
       "document": "bandhan-mutual-fund-8652064-2026-10-26-holdings",
       "pointer": "/holdings/1"
     },
@@ -2746,6 +2900,74 @@ export const BOOK_POSITIONS: Position[] = [
       "pointer": "/holdings/0",
       "effectiveOn": "2026-10-07"
     },
+    "avgCostDerived": true
+  },
+  {
+    "statementRecord": {
+      "document": "bandhan-mutual-fund-8691267-2026-09-30-holdings",
+      "pointer": "/holdings/1"
+    },
+    "securityKey": "bandhan-amc-ltd-bandhan-mf-bandhan-cash-fund-direct-pl-growth",
+    "security": "Bandhan Liquid Fund-Direct Plan-Growth",
+    "symbol": null,
+    "isin": "INF194K01I60",
+    "accountId": "bandhan-mutual-fund-8691267",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Mutual Fund",
+    "marketSide": "listed",
+    "quantity": 0,
+    "avgCost": null,
+    "currentPrice": 3439.4313,
+    "costBasis": 0,
+    "costBasisSource": "fifo",
+    "marketValue": 0,
+    "unrealizedPnL": 0,
+    "realizedPnL": 67930.89,
+    "costOfUnitsSold": 19531835.95,
+    "returnPct": 0.35,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-09-30",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "statementRecord": {
+      "document": "bandhan-mutual-fund-8691267-2026-09-30-holdings",
+      "pointer": "/holdings/0"
+    },
+    "securityKey": "bndh-l-and-mcf-dp-gr",
+    "security": "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
+    "symbol": null,
+    "isin": "INF194K01V89",
+    "accountId": "bandhan-mutual-fund-8691267",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Mutual Fund",
+    "marketSide": "listed",
+    "quantity": 24406.691,
+    "avgCost": 160.882,
+    "currentPrice": 160.677,
+    "costBasis": 3926598.38,
+    "marketValue": 3921593.89,
+    "unrealizedPnL": -5004.49,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "returnPct": -0.13,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-09-30",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null,
     "avgCostDerived": true
   },
   {
@@ -11421,6 +11643,310 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
+      "document": "kotak-mahindra-mutual-fund-5372722-2026-11-02-holdings",
+      "pointer": "/holdings/3"
+    },
+    "securityKey": "kotak-arbfd-dp-grow",
+    "security": "Kotak Arbitrage Fund - Direct Plan - Growth",
+    "symbol": null,
+    "isin": "INF174K01LC6",
+    "accountId": "kotak-mahindra-mutual-fund-5372722",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Mutual Fund",
+    "marketSide": "listed",
+    "quantity": 0,
+    "avgCost": null,
+    "currentPrice": 43.5996,
+    "costBasis": 0,
+    "costBasisSource": "fifo",
+    "marketValue": 0,
+    "unrealizedPnL": 0,
+    "realizedPnL": 87635.04,
+    "costOfUnitsSold": 540000,
+    "returnPct": 16.23,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-10-30",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "statementRecord": {
+      "document": "kotak-mahindra-mutual-fund-5372722-2026-11-02-holdings",
+      "pointer": "/holdings/2"
+    },
+    "securityKey": "kotak-arbitrage-fund-growth-regular-plan",
+    "security": "Kotak Arbitrage Fund - Growth (Regular Plan)",
+    "symbol": null,
+    "isin": "INF174K01302",
+    "accountId": "kotak-mahindra-mutual-fund-5372722",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Mutual Fund",
+    "marketSide": "listed",
+    "quantity": 0,
+    "avgCost": null,
+    "currentPrice": 40.4729,
+    "costBasis": 0,
+    "costBasisSource": "fifo",
+    "marketValue": 0,
+    "unrealizedPnL": 0,
+    "realizedPnL": 2522554.12,
+    "costOfUnitsSold": 39026000,
+    "returnPct": 6.46,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-10-30",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "statementRecord": {
+      "document": "kotak-mahindra-mutual-fund-5372722-2026-11-02-holdings",
+      "pointer": "/holdings/0"
+    },
+    "securityKey": "kotak-flexi-cap-fund-direct-growth",
+    "security": "Kotak Flexi Cap Fund Direct Growth",
+    "symbol": null,
+    "isin": "INF174K01LS2",
+    "accountId": "kotak-mahindra-mutual-fund-5372722",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Mutual Fund",
+    "marketSide": "listed",
+    "quantity": 14523.484,
+    "avgCost": 34.427,
+    "currentPrice": 91.733,
+    "costBasis": 500000,
+    "marketValue": 1332282.76,
+    "unrealizedPnL": 832282.76,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "returnPct": 166.46,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-10-30",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null,
+    "avgCostDerived": true
+  },
+  {
+    "statementRecord": {
+      "document": "kotak-mahindra-mutual-fund-5372722-2026-11-02-holdings",
+      "pointer": "/holdings/1"
+    },
+    "securityKey": "kotak-mtcf-d-grow",
+    "security": "Kotak Multi Cap Fund Direct Plan - Growth",
+    "symbol": null,
+    "isin": "INF174KA1HV3",
+    "accountId": "kotak-mahindra-mutual-fund-5372722",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Mutual Fund",
+    "marketSide": "listed",
+    "quantity": 612631.862,
+    "avgCost": 20.771,
+    "currentPrice": 20.324,
+    "costBasis": 12725000,
+    "costBasisSource": "fifo",
+    "marketValue": 12451129.96,
+    "unrealizedPnL": -273870.04,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "returnPct": -2.15,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-10-30",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "statementRecord": {
+      "document": "kotak-mahindra-mutual-fund-7111389-2026-11-02-holdings",
+      "pointer": "/holdings/1"
+    },
+    "securityKey": "kotak-arbfd-dp-grow",
+    "security": "Kotak Arbitrage Fund - Direct Plan - Growth",
+    "symbol": null,
+    "isin": "INF174K01LC6",
+    "accountId": "kotak-mahindra-mutual-fund-7111389",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Mutual Fund",
+    "marketSide": "listed",
+    "quantity": 0,
+    "avgCost": null,
+    "currentPrice": 43.5996,
+    "costBasis": 0,
+    "costBasisSource": "fifo",
+    "marketValue": 0,
+    "unrealizedPnL": 0,
+    "realizedPnL": 7274281.47,
+    "costOfUnitsSold": 428000000,
+    "returnPct": 1.7,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-10-30",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "statementRecord": {
+      "document": "kotak-mahindra-mutual-fund-7111389-2026-11-02-holdings",
+      "pointer": "/holdings/4"
+    },
+    "securityKey": "kotak-arbitrage-fund-growth-regular-plan",
+    "security": "Kotak Arbitrage Fund - Growth (Regular Plan)",
+    "symbol": null,
+    "isin": "INF174K01302",
+    "accountId": "kotak-mahindra-mutual-fund-7111389",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Mutual Fund",
+    "marketSide": "listed",
+    "quantity": 0,
+    "avgCost": null,
+    "currentPrice": 40.4729,
+    "costBasis": 0,
+    "costBasisSource": "fifo",
+    "marketValue": 0,
+    "unrealizedPnL": 0,
+    "realizedPnL": 10841255.39,
+    "costOfUnitsSold": 85000000,
+    "returnPct": 12.75,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-10-30",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "statementRecord": {
+      "document": "kotak-mahindra-mutual-fund-7111389-2026-11-02-holdings",
+      "pointer": "/holdings/2"
+    },
+    "securityKey": "kotak-large-and-mid-cap-fund-regular-growth",
+    "security": "Kotak Large & Mid Cap Fund - Regular Growth",
+    "symbol": null,
+    "isin": "INF174K01187",
+    "accountId": "kotak-mahindra-mutual-fund-7111389",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Mutual Fund",
+    "marketSide": "listed",
+    "quantity": 0,
+    "avgCost": null,
+    "currentPrice": 328.665,
+    "costBasis": null,
+    "marketValue": 0,
+    "unrealizedPnL": null,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": null,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-10-30",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "statementRecord": {
+      "document": "kotak-mahindra-mutual-fund-7111389-2026-11-02-holdings",
+      "pointer": "/holdings/3"
+    },
+    "securityKey": "kotak-mid-cap-fund-direct-growth",
+    "security": "Kotak Mid Cap Fund Direct Growth",
+    "symbol": null,
+    "isin": "INF174K01LT0",
+    "accountId": "kotak-mahindra-mutual-fund-7111389",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Mutual Fund",
+    "marketSide": "listed",
+    "quantity": 0,
+    "avgCost": null,
+    "currentPrice": 155.011,
+    "costBasis": null,
+    "marketValue": 0,
+    "unrealizedPnL": null,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": null,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-10-30",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "statementRecord": {
+      "document": "kotak-mahindra-mutual-fund-7111389-2026-11-02-holdings",
+      "pointer": "/holdings/0"
+    },
+    "securityKey": "kotak-mtcf-d-grow",
+    "security": "Kotak Multi Cap Fund Direct Plan - Growth",
+    "symbol": null,
+    "isin": "INF174KA1HV3",
+    "accountId": "kotak-mahindra-mutual-fund-7111389",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Mutual Fund",
+    "marketSide": "listed",
+    "quantity": 4183009.836,
+    "avgCost": 20.8642,
+    "currentPrice": 20.324,
+    "costBasis": 87275000,
+    "marketValue": 85015491.91,
+    "unrealizedPnL": -2259508.09,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": -2.59,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-10-30",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null,
+    "avgCostDerived": true
+  },
+  {
+    "statementRecord": {
       "document": "kotak-mahindra-mutual-fund-7125255-2026-10-05-holdings",
       "pointer": "/holdings/0"
     },
@@ -11452,6 +11978,205 @@ export const BOOK_POSITIONS: Position[] = [
     "dividendReceived": null,
     "positionIrrPct": null,
     "avgCostDerived": true
+  },
+  {
+    "statementRecord": {
+      "document": "kotak-mahindra-mutual-fund-7125319-2026-11-02-holdings",
+      "pointer": "/holdings/1"
+    },
+    "securityKey": "kotak-arbitrage-fund-growth-regular-plan",
+    "security": "Kotak Arbitrage Fund - Growth (Regular Plan)",
+    "symbol": null,
+    "isin": "INF174K01302",
+    "accountId": "kotak-mahindra-mutual-fund-7125319",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Mutual Fund",
+    "marketSide": "listed",
+    "quantity": 0,
+    "avgCost": null,
+    "currentPrice": 40.4729,
+    "costBasis": 0,
+    "costBasisSource": "fifo",
+    "marketValue": 0,
+    "unrealizedPnL": 0,
+    "realizedPnL": 3497178.19,
+    "costOfUnitsSold": 22000000,
+    "returnPct": 15.9,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-10-30",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "statementRecord": {
+      "document": "kotak-mahindra-mutual-fund-7125319-2026-11-02-holdings",
+      "pointer": "/holdings/0"
+    },
+    "securityKey": "kotak-large-and-mid-cap-fund-regular-growth",
+    "security": "Kotak Large & Mid Cap Fund - Regular Growth",
+    "symbol": null,
+    "isin": "INF174K01187",
+    "accountId": "kotak-mahindra-mutual-fund-7125319",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Mutual Fund",
+    "marketSide": "listed",
+    "quantity": 0,
+    "avgCost": null,
+    "currentPrice": 328.665,
+    "costBasis": null,
+    "marketValue": 0,
+    "unrealizedPnL": null,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": null,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-10-30",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "statementRecord": {
+      "document": "kotak-mahindra-mutual-fund-7125555-2026-11-02-holdings",
+      "pointer": "/holdings/2"
+    },
+    "securityKey": "kotak-arbfd-dp-grow",
+    "security": "Kotak Arbitrage Fund - Direct Plan - Growth",
+    "symbol": null,
+    "isin": "INF174K01LC6",
+    "accountId": "kotak-mahindra-mutual-fund-7125555",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Mutual Fund",
+    "marketSide": "listed",
+    "quantity": 0,
+    "avgCost": null,
+    "currentPrice": 43.5996,
+    "costBasis": null,
+    "marketValue": 0,
+    "unrealizedPnL": null,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": null,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-10-30",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "statementRecord": {
+      "document": "kotak-mahindra-mutual-fund-7125555-2026-11-02-holdings",
+      "pointer": "/holdings/0"
+    },
+    "securityKey": "kotak-large-and-mid-cap-fund-direct-growth",
+    "security": "Kotak Large & Mid Cap Fund - Direct Growth",
+    "symbol": null,
+    "isin": "INF174K01LF9",
+    "accountId": "kotak-mahindra-mutual-fund-7125555",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Mutual Fund",
+    "marketSide": "listed",
+    "quantity": 0,
+    "avgCost": null,
+    "currentPrice": 382.264,
+    "costBasis": null,
+    "marketValue": 0,
+    "unrealizedPnL": null,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": null,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-10-30",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "statementRecord": {
+      "document": "kotak-mahindra-mutual-fund-7125555-2026-11-02-holdings",
+      "pointer": "/holdings/1"
+    },
+    "securityKey": "kotak-mid-cap-fund-direct-growth",
+    "security": "Kotak Mid Cap Fund Direct Growth",
+    "symbol": null,
+    "isin": "INF174K01LT0",
+    "accountId": "kotak-mahindra-mutual-fund-7125555",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Mutual Fund",
+    "marketSide": "listed",
+    "quantity": 0,
+    "avgCost": null,
+    "currentPrice": 155.011,
+    "costBasis": null,
+    "marketValue": 0,
+    "unrealizedPnL": null,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": null,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-10-30",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "statementRecord": {
+      "document": "kotak-mahindra-mutual-fund-7125555-2026-11-02-holdings",
+      "pointer": "/holdings/3"
+    },
+    "securityKey": "kotak-overnight-fund-direct-growth",
+    "security": "Kotak Overnight Fund Direct - Growth",
+    "symbol": null,
+    "isin": "INF174KA1BF9",
+    "accountId": "kotak-mahindra-mutual-fund-7125555",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Mutual Fund",
+    "marketSide": "listed",
+    "quantity": 0,
+    "avgCost": null,
+    "currentPrice": 1481.0385,
+    "costBasis": null,
+    "marketValue": 0,
+    "unrealizedPnL": null,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": null,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-11-01",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
   },
   {
     "statementRecord": {
@@ -23287,105 +24012,6 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
-    "isin": "INF174KA1HV3",
-    "quantity": 4183009.836,
-    "asOf": "2026-07-31",
-    "costBasis": 87270636.48,
-    "heldPurchases": {
-      "first": "2026-04-17",
-      "last": "2026-05-29",
-      "lots": 7
-    },
-    "cashRecord": [
-      {
-        "date": "2026-04-17",
-        "side": "buy",
-        "amount": 12274386.27
-      },
-      {
-        "date": "2026-04-23",
-        "side": "buy",
-        "amount": 12499375.04
-      },
-      {
-        "date": "2026-04-30",
-        "side": "buy",
-        "amount": 12499375.04
-      },
-      {
-        "date": "2026-05-07",
-        "side": "buy",
-        "amount": 12499375.03
-      },
-      {
-        "date": "2026-05-14",
-        "side": "buy",
-        "amount": 12499375.04
-      },
-      {
-        "date": "2026-05-21",
-        "side": "buy",
-        "amount": 12499375.02
-      },
-      {
-        "date": "2026-05-29",
-        "side": "buy",
-        "amount": 12499375.04
-      }
-    ],
-    "unitRecord": [
-      {
-        "date": "2026-04-17",
-        "units": 590967.081
-      },
-      {
-        "date": "2026-04-23",
-        "units": 1192361.184
-      },
-      {
-        "date": "2026-04-30",
-        "units": 1789674.337
-      },
-      {
-        "date": "2026-05-07",
-        "units": 2375317.172
-      },
-      {
-        "date": "2026-05-14",
-        "units": 2977145.62
-      },
-      {
-        "date": "2026-05-21",
-        "units": 3580630.316
-      },
-      {
-        "date": "2026-05-29",
-        "units": 4183009.836
-      }
-    ],
-    "realizedPnL": 0,
-    "costOfUnitsSold": 0,
-    "dividendReceived": null,
-    "evidence": [
-      {
-        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
-        "sheet": "Transactions since inception",
-        "rows": [
-          707,
-          708,
-          709,
-          710,
-          711,
-          712,
-          713,
-          714
-        ]
-      }
-    ],
-    "notes": []
-  },
-  {
-    "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
     "isin": "INF179KB1HP9",
     "quantity": 2282.178,
     "asOf": "2026-07-31",
@@ -24927,45 +25553,6 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
-    "isin": "INF194K01V89",
-    "quantity": 24406.691,
-    "asOf": "2026-07-31",
-    "costBasis": 3926402.01,
-    "heldPurchases": {
-      "first": "2026-04-17",
-      "last": "2026-04-17",
-      "lots": 1
-    },
-    "cashRecord": [
-      {
-        "date": "2026-04-17",
-        "side": "buy",
-        "amount": 3926402.01
-      }
-    ],
-    "unitRecord": [
-      {
-        "date": "2026-04-17",
-        "units": 24406.691
-      }
-    ],
-    "realizedPnL": 0,
-    "costOfUnitsSold": 0,
-    "dividendReceived": null,
-    "evidence": [
-      {
-        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
-        "sheet": "Transactions since inception",
-        "rows": [
-          624,
-          625
-        ]
-      }
-    ],
-    "notes": []
-  },
-  {
-    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "isin": "INF740KA1RE3",
     "quantity": 123000,
     "asOf": "2026-07-31",
@@ -25575,45 +26162,6 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
           126,
           127,
           128
-        ]
-      }
-    ],
-    "notes": []
-  },
-  {
-    "accountId": "motilal-oswal-financial-services-demat-1201090012838335",
-    "isin": "INF174KA1HV3",
-    "quantity": 612631.862,
-    "asOf": "2026-07-31",
-    "costBasis": 12724363.77,
-    "heldPurchases": {
-      "first": "2026-04-17",
-      "last": "2026-04-17",
-      "lots": 1
-    },
-    "cashRecord": [
-      {
-        "date": "2026-04-17",
-        "side": "buy",
-        "amount": 12724363.77
-      }
-    ],
-    "unitRecord": [
-      {
-        "date": "2026-04-17",
-        "units": 612631.862
-      }
-    ],
-    "realizedPnL": 0,
-    "costOfUnitsSold": 0,
-    "dividendReceived": null,
-    "evidence": [
-      {
-        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
-        "sheet": "Transactions since inception",
-        "rows": [
-          705,
-          706
         ]
       }
     ],
@@ -29528,42 +30076,55 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "panelComplete": false
   },
   {
-    "period": "2026-10-26",
-    "date": "2026-10-26",
-    "nav": 2802216145.78,
-    "accountsOnDate": 2,
-    "accountsCarried": 21,
+    "period": "2026-10-14",
+    "date": "2026-10-14",
+    "nav": 3211782792.15,
+    "accountsOnDate": 1,
+    "accountsCarried": 22,
     "flowIn": 0,
     "unreportedFlowValue": 0,
     "linkOpen": 2780478415.54,
-    "linkClose": 2754088618.44,
+    "linkClose": 2780478415.54,
     "linkAccounts": 22,
+    "panelComplete": false
+  },
+  {
+    "period": "2026-10-26",
+    "date": "2026-10-26",
+    "nav": 3217280140.16,
+    "accountsOnDate": 3,
+    "accountsCarried": 21,
+    "flowIn": 0,
+    "unreportedFlowValue": 0,
+    "linkOpen": 3211782792.15,
+    "linkClose": 3169152612.82,
+    "linkAccounts": 23,
     "panelComplete": true
   },
   {
     "period": "2026-11-02",
     "date": "2026-11-02",
-    "nav": 2802026118.79,
+    "nav": 3217090113.17,
     "accountsOnDate": 1,
-    "accountsCarried": 22,
+    "accountsCarried": 23,
     "flowIn": -1765,
     "unreportedFlowValue": 0,
-    "linkOpen": 2802216145.78,
-    "linkClose": 2802026118.79,
-    "linkAccounts": 23,
+    "linkOpen": 3217280140.16,
+    "linkClose": 3217090113.17,
+    "linkAccounts": 24,
     "panelComplete": true
   },
   {
     "period": "2026-11-03",
     "date": "2026-11-03",
-    "nav": 2820144460.47,
+    "nav": 3235208454.85,
     "accountsOnDate": 2,
-    "accountsCarried": 21,
+    "accountsCarried": 22,
     "flowIn": 0,
     "unreportedFlowValue": 0,
-    "linkOpen": 2802026118.79,
-    "linkClose": 2820144460.47,
-    "linkAccounts": 23,
+    "linkOpen": 3217090113.17,
+    "linkClose": 3235208454.85,
+    "linkAccounts": 24,
     "panelComplete": true
   }
 ];
@@ -29639,6 +30200,18 @@ export const BOOK_ACCOUNT_NAV_HISTORY: Record<string, NavPoint[]> = {
       "period": "2026-08-03",
       "date": "2026-08-03",
       "nav": 798563.95
+    }
+  ],
+  "bandhan-mutual-fund-8652064": [
+    {
+      "period": "2026-10-14",
+      "date": "2026-10-14",
+      "nav": 431304376.61
+    },
+    {
+      "period": "2026-10-26",
+      "date": "2026-10-26",
+      "nav": 415063994.38
     }
   ],
   "buoyant-capital-103472": [
@@ -30118,6 +30691,23 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
         {
           "from": "2026-07-01",
           "to": "2026-08-03",
+          "basis": "units-unchanged",
+          "net": 0
+        }
+      ]
+    },
+    {
+      "accountId": "bandhan-mutual-fund-8652064",
+      "points": 2,
+      "first": "2026-10-14",
+      "last": "2026-10-26",
+      "latestValue": 415063994.38,
+      "bookValue": 415063994.38,
+      "flowBasis": "units-unchanged",
+      "steps": [
+        {
+          "from": "2026-10-14",
+          "to": "2026-10-26",
           "basis": "units-unchanged",
           "net": 0
         }
@@ -30658,11 +31248,18 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "bookValue": 0.34
     },
     {
-      "accountId": "bandhan-mutual-fund-8652064",
+      "accountId": "bandhan-mutual-fund-1802619",
       "provider": "Bandhan Mutual Fund",
-      "accountNo": "8652064",
-      "date": "2026-10-26",
-      "bookValue": 415063994.38
+      "accountNo": "1802619",
+      "date": "2026-09-30",
+      "bookValue": 0
+    },
+    {
+      "accountId": "bandhan-mutual-fund-8691267",
+      "provider": "Bandhan Mutual Fund",
+      "accountNo": "8691267",
+      "date": "2026-09-30",
+      "bookValue": 3921593.89
     },
     {
       "accountId": "baring-private-equity-india-fund-AIFM_BPEPF6_0584",
@@ -30805,11 +31402,39 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "bookValue": 0
     },
     {
+      "accountId": "kotak-mahindra-mutual-fund-5372722",
+      "provider": "Kotak Mahindra Mutual Fund",
+      "accountNo": "5372722",
+      "date": "2026-11-02",
+      "bookValue": 13783412.72
+    },
+    {
+      "accountId": "kotak-mahindra-mutual-fund-7111389",
+      "provider": "Kotak Mahindra Mutual Fund",
+      "accountNo": "7111389",
+      "date": "2026-11-02",
+      "bookValue": 85015491.91
+    },
+    {
       "accountId": "kotak-mahindra-mutual-fund-7125255",
       "provider": "Kotak Mahindra Mutual Fund",
       "accountNo": "7125255",
       "date": "2026-10-05",
       "bookValue": 10848796.3
+    },
+    {
+      "accountId": "kotak-mahindra-mutual-fund-7125319",
+      "provider": "Kotak Mahindra Mutual Fund",
+      "accountNo": "7125319",
+      "date": "2026-11-02",
+      "bookValue": 0
+    },
+    {
+      "accountId": "kotak-mahindra-mutual-fund-7125555",
+      "provider": "Kotak Mahindra Mutual Fund",
+      "accountNo": "7125555",
+      "date": "2026-11-02",
+      "bookValue": 0
     },
     {
       "accountId": "lkp-securities-98245",
@@ -31092,15 +31717,15 @@ export const BOOK_UNDATED_CAPITAL: UndatedCapital[] = [];
 export const BOOK_ATTRIBUTION: Attribution = {
   "from": "2026-05-31",
   "to": "2026-11-03",
-  "openValue": 2736600830.45,
-  "closeValue": 2820144460.47,
-  "priceEffect": -30438535.89,
+  "openValue": 3167905207.06,
+  "closeValue": 3235208454.85,
+  "priceEffect": -46678918.13,
   "tradeEffect": 83566773.34,
   "enteredValue": 171382579.59,
   "exitedValue": 99872612.94,
   "undecomposedValue": -41094574.09,
-  "bookValue": 9776169588.27,
-  "coveredBookValue": 2820707541.39,
+  "bookValue": 9878890086.79,
+  "coveredBookValue": 3235771535.77,
   "accounts": [
     {
       "accountId": "360-one-private-wealth-37702",
@@ -31166,6 +31791,23 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "exitedValue": 0,
       "undecomposedValue": 0,
       "rowsHeld": 1,
+      "rowsEntered": 0,
+      "rowsExited": 0,
+      "rowsUnpriced": 0
+    },
+    {
+      "accountId": "bandhan-mutual-fund-8652064",
+      "from": "2026-10-14",
+      "to": "2026-10-26",
+      "days": 12,
+      "openValue": 431304376.61,
+      "closeValue": 415063994.38,
+      "priceEffect": -16240382.24,
+      "tradeEffect": 0,
+      "enteredValue": 0,
+      "exitedValue": 0,
+      "undecomposedValue": 0,
+      "rowsHeld": 4,
       "rowsEntered": 0,
       "rowsExited": 0,
       "rowsUnpriced": 0
@@ -33094,6 +33736,23 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": 0.722
     },
     {
+      "securityKey": "bandhan-amc-ltd-bandhan-mf-bandhan-arbitrage-fund-direct-pl-growth",
+      "security": "Bandhan Arbitrage Fund-Direct Plan-Growth",
+      "accountId": "bandhan-mutual-fund-8652064",
+      "from": "2026-10-14",
+      "to": "2026-10-26",
+      "openValue": 7690801.53,
+      "closeValue": 7724469.33,
+      "openPrice": 37.9654,
+      "closePrice": 38.1316,
+      "openQty": 202573.963,
+      "closeQty": 202573.963,
+      "kind": "held",
+      "priceEffect": 33667.79,
+      "tradeEffect": 0,
+      "returnPct": 0.4378
+    },
+    {
       "securityKey": "punjab-national-bank",
       "security": "Punjab National Bank",
       "accountId": "green-lantern-capital-llp-510861",
@@ -33296,6 +33955,40 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "priceEffect": 35.55,
       "tradeEffect": 0,
       "returnPct": 0.5759
+    },
+    {
+      "securityKey": "bandhan-amc-ltd-bandhan-mf-bandhan-cash-fund-direct-pl-growth",
+      "security": "Bandhan Liquid Fund-Direct Plan-Growth",
+      "accountId": "bandhan-mutual-fund-8652064",
+      "from": "2026-10-14",
+      "to": "2026-10-26",
+      "openValue": 0,
+      "closeValue": 0,
+      "openPrice": 3447.7813,
+      "closePrice": 3451.1571,
+      "openQty": 0,
+      "closeQty": 0,
+      "kind": "held",
+      "priceEffect": 0,
+      "tradeEffect": 0,
+      "returnPct": null
+    },
+    {
+      "securityKey": "bandhan-amc-ltd-bandhan-mf-bandhan-overnight-fund-direct-growth",
+      "security": "Bandhan Overnight Fund-Direct Plan-Growth",
+      "accountId": "bandhan-mutual-fund-8652064",
+      "from": "2026-10-14",
+      "to": "2026-10-26",
+      "openValue": 0,
+      "closeValue": 0,
+      "openPrice": 1476.0657,
+      "closePrice": 1478.7935,
+      "openQty": 0,
+      "closeQty": 0,
+      "kind": "held",
+      "priceEffect": 0,
+      "tradeEffect": 0,
+      "returnPct": null
     },
     {
       "securityKey": "cash",
@@ -36052,6 +36745,23 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": -27.5889
     },
     {
+      "securityKey": "bndh-l-and-mcf-dp-gr",
+      "security": "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
+      "accountId": "bandhan-mutual-fund-8652064",
+      "from": "2026-10-14",
+      "to": "2026-10-26",
+      "openValue": 423613575.08,
+      "closeValue": 407339525.05,
+      "openPrice": 160.501,
+      "closePrice": 154.335,
+      "openQty": 2639320.472,
+      "closeQty": 2639320.472,
+      "kind": "held",
+      "priceEffect": -16274050.03,
+      "tradeEffect": 0,
+      "returnPct": -3.8417
+    },
+    {
       "securityKey": "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii",
       "security": "360 ONE SPECIAL OPPORTUNITIES FUND -SERIES 8 - CLASS A3 (AIF CATEGORY II)[DISTAIF887]",
       "accountId": "360-one-private-wealth-37702",
@@ -37459,9 +38169,37 @@ export const BOOK_CAPITAL_GAINS: EntityCG[] = [
     "source": "ask-investment-managers-limited-10034025-2026-09-08-capital-gain"
   },
   {
+    "entity": "Ankita Jaisinghani · Bandhan 1802619",
+    "accountId": "bandhan-mutual-fund-1802619",
+    "ownerId": "ankita-jaisinghani",
+    "realisedST": null,
+    "realisedLT": null,
+    "unrealisedST": null,
+    "unrealisedLT": null,
+    "periodFrom": null,
+    "periodTo": null,
+    "lots": 0,
+    "source": null,
+    "absent": "no capital gain statement issued for this account in this drop"
+  },
+  {
     "entity": "Ajay Jaisinghani · Bandhan 8652064",
     "accountId": "bandhan-mutual-fund-8652064",
     "ownerId": "ajay-jaisinghani",
+    "realisedST": null,
+    "realisedLT": null,
+    "unrealisedST": null,
+    "unrealisedLT": null,
+    "periodFrom": null,
+    "periodTo": null,
+    "lots": 0,
+    "source": null,
+    "absent": "no capital gain statement issued for this account in this drop"
+  },
+  {
+    "entity": "Ankita Jaisinghani · Bandhan 8691267",
+    "accountId": "bandhan-mutual-fund-8691267",
+    "ownerId": "ankita-jaisinghani",
     "realisedST": null,
     "realisedLT": null,
     "unrealisedST": null,
@@ -37970,9 +38708,65 @@ export const BOOK_CAPITAL_GAINS: EntityCG[] = [
     "absent": "no capital gain statement issued for this account in this drop"
   },
   {
+    "entity": "Aarti Jaisinghani · Kotak 5372722",
+    "accountId": "kotak-mahindra-mutual-fund-5372722",
+    "ownerId": "aarti-jaisinghani",
+    "realisedST": null,
+    "realisedLT": null,
+    "unrealisedST": null,
+    "unrealisedLT": null,
+    "periodFrom": null,
+    "periodTo": null,
+    "lots": 0,
+    "source": null,
+    "absent": "no capital gain statement issued for this account in this drop"
+  },
+  {
+    "entity": "Ajay Jaisinghani · Kotak 7111389",
+    "accountId": "kotak-mahindra-mutual-fund-7111389",
+    "ownerId": "ajay-jaisinghani",
+    "realisedST": null,
+    "realisedLT": null,
+    "unrealisedST": null,
+    "unrealisedLT": null,
+    "periodFrom": null,
+    "periodTo": null,
+    "lots": 0,
+    "source": null,
+    "absent": "no capital gain statement issued for this account in this drop"
+  },
+  {
     "entity": "Ajay Jaisinghani · Kotak 7125255",
     "accountId": "kotak-mahindra-mutual-fund-7125255",
     "ownerId": "ajay-jaisinghani",
+    "realisedST": null,
+    "realisedLT": null,
+    "unrealisedST": null,
+    "unrealisedLT": null,
+    "periodFrom": null,
+    "periodTo": null,
+    "lots": 0,
+    "source": null,
+    "absent": "no capital gain statement issued for this account in this drop"
+  },
+  {
+    "entity": "Ankita Jaisinghani · Kotak 7125319",
+    "accountId": "kotak-mahindra-mutual-fund-7125319",
+    "ownerId": "ankita-jaisinghani",
+    "realisedST": null,
+    "realisedLT": null,
+    "unrealisedST": null,
+    "unrealisedLT": null,
+    "periodFrom": null,
+    "periodTo": null,
+    "lots": 0,
+    "source": null,
+    "absent": "no capital gain statement issued for this account in this drop"
+  },
+  {
+    "entity": "Bharat Jaisinghani · Kotak 7125555",
+    "accountId": "kotak-mahindra-mutual-fund-7125555",
+    "ownerId": "bharat-jaisinghani",
     "realisedST": null,
     "realisedLT": null,
     "unrealisedST": null,
@@ -39766,8 +40560,19 @@ export const BOOK_ACCOUNT_RETURN_RECORDS: Record<string, AccountReturnCoverage> 
     "record": null,
     "gap": "Opening valuation and complete dated cash flows are missing"
   },
+  "bandhan-mutual-fund-1802619": {
+    "latestValuationDate": "2026-09-30",
+    "record": null,
+    "gap": null,
+    "notApplicable": "Nil throughout the verified period through 2026-09-30; no invested capital to measure"
+  },
   "bandhan-mutual-fund-8652064": {
     "latestValuationDate": "2026-10-23",
+    "record": null,
+    "gap": "Opening valuation and complete dated cash flows are missing"
+  },
+  "bandhan-mutual-fund-8691267": {
+    "latestValuationDate": "2026-09-30",
     "record": null,
     "gap": "Opening valuation and complete dated cash flows are missing"
   },
@@ -40549,6 +41354,16 @@ export const BOOK_ACCOUNT_RETURN_RECORDS: Record<string, AccountReturnCoverage> 
     "record": null,
     "gap": "Opening valuation and complete dated cash flows are missing"
   },
+  "kotak-mahindra-mutual-fund-5372722": {
+    "latestValuationDate": "2026-10-30",
+    "record": null,
+    "gap": "Opening valuation and complete dated cash flows are missing"
+  },
+  "kotak-mahindra-mutual-fund-7111389": {
+    "latestValuationDate": "2026-10-30",
+    "record": null,
+    "gap": "Opening valuation and complete dated cash flows are missing"
+  },
   "kotak-mahindra-mutual-fund-7125255": {
     "latestValuationDate": "2026-09-30",
     "record": {
@@ -40572,6 +41387,18 @@ export const BOOK_ACCOUNT_RETURN_RECORDS: Record<string, AccountReturnCoverage> 
       "capitalRecordTo": "2026-09-30"
     },
     "gap": null
+  },
+  "kotak-mahindra-mutual-fund-7125319": {
+    "latestValuationDate": "2026-11-02",
+    "record": null,
+    "gap": null,
+    "notApplicable": "Nil throughout the verified period through 2026-11-02; no invested capital to measure"
+  },
+  "kotak-mahindra-mutual-fund-7125555": {
+    "latestValuationDate": "2026-11-02",
+    "record": null,
+    "gap": null,
+    "notApplicable": "Nil throughout the verified period through 2026-11-02; no invested capital to measure"
   },
   "lkp-securities-98245": {
     "latestValuationDate": "2026-03-31",
@@ -40890,6 +41717,54 @@ export const BOOK_ACCOUNT_RETURN_RECORDS: Record<string, AccountReturnCoverage> 
  * decision, and the capital behind the mandate is the family's.
  */
 export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
+  {
+    "accountId": "bandhan-mutual-fund-1802619",
+    "date": "2017-01-24",
+    "direction": "in",
+    "label": "Purchase Us 80C of IT Act 1961 - EUIN - E030973",
+    "amount": 100000,
+    "invested": 99900,
+    "charges": 100,
+    "units": 2416.54,
+    "security": "Bandhan ELSS - Tax Saver Fund-Regular Plan-Growth",
+    "securityKey": "bandhan-elss-tax-saver-fund-regular-plan-growth"
+  },
+  {
+    "accountId": "bandhan-mutual-fund-1802619",
+    "date": "2018-03-23",
+    "direction": "in",
+    "label": "Purchase Us 80C of IT Act 1961 - EUIN - E030973",
+    "amount": 105000,
+    "invested": 104900,
+    "charges": 100,
+    "units": 1893.358,
+    "security": "Bandhan ELSS - Tax Saver Fund-Regular Plan-Growth",
+    "securityKey": "bandhan-elss-tax-saver-fund-regular-plan-growth"
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-5372722",
+    "date": "2018-07-02",
+    "direction": "in",
+    "label": "Purchase (Continuous Offer)",
+    "amount": 500000,
+    "invested": 500000,
+    "charges": null,
+    "units": 14523.484,
+    "security": "Kotak Flexi Cap Fund Direct Growth",
+    "securityKey": "kotak-flexi-cap-fund-direct-growth"
+  },
+  {
+    "accountId": "bandhan-mutual-fund-1802619",
+    "date": "2019-03-28",
+    "direction": "in",
+    "label": "Purchase Us 80C of IT Act 1961 - EUIN - E030973",
+    "amount": 105000,
+    "invested": 104900,
+    "charges": 100,
+    "units": 1857.953,
+    "security": "Bandhan ELSS - Tax Saver Fund-Regular Plan-Growth",
+    "securityKey": "bandhan-elss-tax-saver-fund-regular-plan-growth"
+  },
   {
     "accountId": "hdfc-mutual-fund-15644806",
     "date": "2019-04-17",
@@ -41339,6 +42214,18 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
   },
   {
+    "accountId": "kotak-mahindra-mutual-fund-7125555",
+    "date": "2020-05-18",
+    "direction": "in",
+    "label": "Switch-In - From Kotak Overnight Fund Direct - Grow - via Internet",
+    "amount": 208333,
+    "invested": 208333,
+    "charges": null,
+    "units": 3022.3630000000003,
+    "security": "Kotak Large & Mid Cap Fund - Direct Growth",
+    "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
+  },
+  {
     "accountId": "kotak-mahindra-mutual-fund-7125255",
     "date": "2020-05-26",
     "direction": "in",
@@ -41351,6 +42238,18 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
   },
   {
+    "accountId": "kotak-mahindra-mutual-fund-7125555",
+    "date": "2020-05-26",
+    "direction": "in",
+    "label": "Switch-In - From Kotak Overnight Fund Direct - Grow - via Internet",
+    "amount": 208334,
+    "invested": 208334,
+    "charges": null,
+    "units": 2922.139,
+    "security": "Kotak Large & Mid Cap Fund - Direct Growth",
+    "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
+  },
+  {
     "accountId": "kotak-mahindra-mutual-fund-7125255",
     "date": "2020-06-01",
     "direction": "in",
@@ -41359,6 +42258,18 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "invested": 112500,
     "charges": null,
     "units": 960.742,
+    "security": "Kotak Large & Mid Cap Fund - Direct Growth",
+    "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-7125555",
+    "date": "2020-06-01",
+    "direction": "in",
+    "label": "Switch-In - From Kotak Overnight Fund Direct - Grow - via Internet",
+    "amount": 208333,
+    "invested": 208333,
+    "charges": null,
+    "units": 2765.1369999999997,
     "security": "Kotak Large & Mid Cap Fund - Direct Growth",
     "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
   },
@@ -41411,6 +42322,18 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
   },
   {
+    "accountId": "kotak-mahindra-mutual-fund-7111389",
+    "date": "2020-07-06",
+    "direction": "in",
+    "label": "Switch-In - From Kotak Overnight Fund Direct - Grow - via Internet",
+    "amount": 141667,
+    "invested": 141659.92,
+    "charges": 7.08,
+    "units": 3542.029,
+    "security": "Kotak Mid Cap Fund Direct Growth",
+    "securityKey": "kotak-mid-cap-fund-direct-growth"
+  },
+  {
     "accountId": "hdfc-mutual-fund-15644806",
     "date": "2020-07-07",
     "direction": "out",
@@ -41434,6 +42357,18 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
   },
   {
+    "accountId": "kotak-mahindra-mutual-fund-7111389",
+    "date": "2020-07-13",
+    "direction": "in",
+    "label": "Switch-In - From Kotak Overnight Fund Direct - Grow - via Internet",
+    "amount": 23958,
+    "invested": 23956.8,
+    "charges": 1.2,
+    "units": 601.99,
+    "security": "Kotak Mid Cap Fund Direct Growth",
+    "securityKey": "kotak-mid-cap-fund-direct-growth"
+  },
+  {
     "accountId": "kotak-mahindra-mutual-fund-7125255",
     "date": "2020-07-14",
     "direction": "in",
@@ -41446,6 +42381,18 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
   },
   {
+    "accountId": "kotak-mahindra-mutual-fund-7111389",
+    "date": "2020-07-20",
+    "direction": "in",
+    "label": "Switch-In - From Kotak Overnight Fund Direct - Grow - via Internet",
+    "amount": 70833,
+    "invested": 70829.46,
+    "charges": 3.54,
+    "units": 1751.34,
+    "security": "Kotak Mid Cap Fund Direct Growth",
+    "securityKey": "kotak-mid-cap-fund-direct-growth"
+  },
+  {
     "accountId": "kotak-mahindra-mutual-fund-7125255",
     "date": "2020-07-21",
     "direction": "in",
@@ -41456,6 +42403,18 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": 1616.258,
     "security": "Kotak Large & Mid Cap Fund - Direct Growth",
     "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-7111389",
+    "date": "2020-07-27",
+    "direction": "in",
+    "label": "Switch-In - From Kotak Overnight Fund Direct - Grow - via Internet",
+    "amount": 70834,
+    "invested": 70830.46,
+    "charges": 3.54,
+    "units": 1752.275,
+    "security": "Kotak Mid Cap Fund Direct Growth",
+    "securityKey": "kotak-mid-cap-fund-direct-growth"
   },
   {
     "accountId": "kotak-mahindra-mutual-fund-7125255",
@@ -41479,6 +42438,18 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": null,
     "security": null,
     "securityKey": null
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-5372722",
+    "date": "2020-09-15",
+    "direction": "in",
+    "label": "Net Purchase",
+    "amount": 540000,
+    "invested": 539973,
+    "charges": 27,
+    "units": 18252.444,
+    "security": "Kotak Arbitrage Fund - Direct Plan - Growth",
+    "securityKey": "kotak-arbfd-dp-grow"
   },
   {
     "accountId": "ask-investment-managers-limited-10034025",
@@ -41569,6 +42540,18 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "kotak-mahindra-mutual-fund-5372722",
+    "date": "2020-12-07",
+    "direction": "in",
+    "label": "Net Purchase",
+    "amount": 636000,
+    "invested": 635968.2,
+    "charges": 31.8,
+    "units": 22160.252,
+    "security": "Kotak Arbitrage Fund - Growth (Regular Plan)",
+    "securityKey": "kotak-arbitrage-fund-growth-regular-plan"
+  },
+  {
     "accountId": "hdfc-mutual-fund-15725046",
     "date": "2020-12-13",
     "direction": "out",
@@ -41600,6 +42583,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": null,
     "security": null,
     "securityKey": null
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-7125555",
+    "date": "2021-01-07",
+    "direction": "out",
+    "label": "Redemption - D-Kredit - HDFC",
+    "amount": 2500000,
+    "invested": null,
+    "units": -2292.877,
+    "security": "Kotak Overnight Fund Direct - Growth",
+    "securityKey": "kotak-overnight-fund-direct-growth"
   },
   {
     "accountId": "hdfc-mutual-fund-15644806",
@@ -41712,6 +42706,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "kotak-mahindra-mutual-fund-7125555",
+    "date": "2021-03-30",
+    "direction": "out",
+    "label": "Redemption - D-Kredit - HDFC",
+    "amount": 2500000,
+    "invested": null,
+    "units": -2277.24,
+    "security": "Kotak Overnight Fund Direct - Growth",
+    "securityKey": "kotak-overnight-fund-direct-growth"
+  },
+  {
     "accountId": "hdfc-mutual-fund-15725046",
     "date": "2021-04-06",
     "direction": "out",
@@ -41765,6 +42770,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": null,
     "security": null,
     "securityKey": null
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-7125555",
+    "date": "2021-04-22",
+    "direction": "out",
+    "label": "Redemption - D-Kredit - HDFC - HDFC_DC",
+    "amount": 3090770.95,
+    "invested": null,
+    "units": -2809.908,
+    "security": "Kotak Overnight Fund Direct - Growth",
+    "securityKey": "kotak-overnight-fund-direct-growth"
   },
   {
     "accountId": "ask-investment-managers-limited-10032723",
@@ -41943,6 +42959,18 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "kotak-mahindra-mutual-fund-5372722",
+    "date": "2021-09-21",
+    "direction": "in",
+    "label": "Net Purchase",
+    "amount": 8390000,
+    "invested": 8389580.52,
+    "charges": 419.48,
+    "units": 283138.114,
+    "security": "Kotak Arbitrage Fund - Growth (Regular Plan)",
+    "securityKey": "kotak-arbitrage-fund-growth-regular-plan"
+  },
+  {
     "accountId": "ask-investment-managers-limited-10032723",
     "date": "2021-09-30",
     "direction": "out",
@@ -42062,6 +43090,28 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": null,
     "security": null,
     "securityKey": null
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-7125555",
+    "date": "2021-12-23",
+    "direction": "out",
+    "label": "*Redemption - D-Kredit - HDFC - HDFC_DC , less STT",
+    "amount": 6300000,
+    "invested": null,
+    "units": -201201.544,
+    "security": "Kotak Arbitrage Fund - Direct Plan - Growth",
+    "securityKey": "kotak-arbfd-dp-grow"
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-7125555",
+    "date": "2022-01-05",
+    "direction": "out",
+    "label": "Redemption - D-Kredit - HDFC - HDFC_DC_10-JAN-2022 , less STT",
+    "amount": 2233108.06,
+    "invested": null,
+    "units": -71216.782,
+    "security": "Kotak Arbitrage Fund - Direct Plan - Growth",
+    "securityKey": "kotak-arbfd-dp-grow"
   },
   {
     "accountId": "ask-investment-managers-limited-10032723",
@@ -42394,6 +43444,30 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "kotak-mahindra-mutual-fund-7111389",
+    "date": "2022-07-13",
+    "direction": "in",
+    "label": "Net Purchase",
+    "amount": 70000000,
+    "invested": 69996500.17,
+    "charges": 3499.83,
+    "units": 2293027.543,
+    "security": "Kotak Arbitrage Fund - Growth (Regular Plan)",
+    "securityKey": "kotak-arbitrage-fund-growth-regular-plan"
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-7125319",
+    "date": "2022-07-15",
+    "direction": "in",
+    "label": "Net Purchase",
+    "amount": 17000000,
+    "invested": 16999150.04,
+    "charges": 849.96,
+    "units": 556670.226,
+    "security": "Kotak Arbitrage Fund - Growth (Regular Plan)",
+    "securityKey": "kotak-arbitrage-fund-growth-regular-plan"
+  },
+  {
     "accountId": "ask-investment-managers-limited-10032723",
     "date": "2022-07-22",
     "direction": "out",
@@ -42414,6 +43488,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": null,
     "security": null,
     "securityKey": null
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-7111389",
+    "date": "2022-07-25",
+    "direction": "out",
+    "label": "*Redemption - D-Kredit - HDFC , less STT",
+    "amount": 58000000,
+    "invested": null,
+    "units": -1902438.049,
+    "security": "Kotak Arbitrage Fund - Growth (Regular Plan)",
+    "securityKey": "kotak-arbitrage-fund-growth-regular-plan"
   },
   {
     "accountId": "ask-investment-managers-limited-10032723",
@@ -42458,6 +43543,18 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": null,
     "security": null,
     "securityKey": null
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-7125319",
+    "date": "2022-08-01",
+    "direction": "in",
+    "label": "Net Purchase",
+    "amount": 5000000,
+    "invested": 4999750.01,
+    "charges": 249.99,
+    "units": 25125.129,
+    "security": "Kotak Large & Mid Cap Fund - Regular Growth",
+    "securityKey": "kotak-large-and-mid-cap-fund-regular-growth"
   },
   {
     "accountId": "ask-investment-managers-limited-10032723",
@@ -42528,6 +43625,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "kotak-mahindra-mutual-fund-7111389",
+    "date": "2022-08-16",
+    "direction": "out",
+    "label": "Redemption - D-Kredit - HDFC , less STT",
+    "amount": 11956488.84,
+    "invested": null,
+    "units": -390589.494,
+    "security": "Kotak Arbitrage Fund - Growth (Regular Plan)",
+    "securityKey": "kotak-arbitrage-fund-growth-regular-plan"
+  },
+  {
     "accountId": "ask-investment-managers-limited-10032723",
     "date": "2022-08-17",
     "direction": "out",
@@ -42550,6 +43658,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "kotak-mahindra-mutual-fund-7125319",
+    "date": "2022-08-17",
+    "direction": "out",
+    "label": "*Redemption - HDFCR52022082290206393 , less STT",
+    "amount": 9200000,
+    "invested": null,
+    "units": -300473.96,
+    "security": "Kotak Arbitrage Fund - Growth (Regular Plan)",
+    "securityKey": "kotak-arbitrage-fund-growth-regular-plan"
+  },
+  {
     "accountId": "ask-investment-managers-limited-10032723",
     "date": "2022-08-24",
     "direction": "out",
@@ -42570,6 +43689,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": null,
     "security": null,
     "securityKey": null
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-7125319",
+    "date": "2022-09-20",
+    "direction": "out",
+    "label": "Redemption - HDFCR52022092397778611 , less STT",
+    "amount": 7885181.06,
+    "invested": null,
+    "units": -256196.266,
+    "security": "Kotak Arbitrage Fund - Growth (Regular Plan)",
+    "securityKey": "kotak-arbitrage-fund-growth-regular-plan"
   },
   {
     "accountId": "ask-investment-managers-limited-10032723",
@@ -42614,6 +43744,18 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": null,
     "security": null,
     "securityKey": null
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-7111389",
+    "date": "2022-09-22",
+    "direction": "in",
+    "label": "Net Purchase",
+    "amount": 15000000,
+    "invested": 14999250.04,
+    "charges": 749.96,
+    "units": 72119.06,
+    "security": "Kotak Large & Mid Cap Fund - Regular Growth",
+    "securityKey": "kotak-large-and-mid-cap-fund-regular-growth"
   },
   {
     "accountId": "ask-investment-managers-limited-10034025",
@@ -42746,6 +43888,18 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": null,
     "security": null,
     "securityKey": null
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-5372722",
+    "date": "2022-11-18",
+    "direction": "in",
+    "label": "Net Purchase",
+    "amount": 30000000,
+    "invested": 29998500.07,
+    "charges": 1499.93,
+    "units": 967702.916,
+    "security": "Kotak Arbitrage Fund - Growth (Regular Plan)",
+    "securityKey": "kotak-arbitrage-fund-growth-regular-plan"
   },
   {
     "accountId": "ask-investment-managers-limited-10032723",
@@ -43012,6 +44166,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "bandhan-mutual-fund-1802619",
+    "date": "2023-04-21",
+    "direction": "out",
+    "label": "Redemption - Electronic Payment -via Bandhan MFOnline -",
+    "amount": 615261.65,
+    "invested": null,
+    "units": -6167.851,
+    "security": "Bandhan ELSS - Tax Saver Fund-Regular Plan-Growth",
+    "securityKey": "bandhan-elss-tax-saver-fund-regular-plan-growth"
+  },
+  {
     "accountId": "3p-investment-managers-3000048",
     "date": "2023-05-04",
     "direction": "in",
@@ -43110,6 +44275,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": -495609.566,
     "security": "HDFC Arbitrage Fund - Direct Plan - Growth Option",
     "securityKey": "hdfc-arbitrage-fund-direct-plan-growth-option"
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-5372722",
+    "date": "2023-07-25",
+    "direction": "out",
+    "label": "Redemption - BSE-REDEMPTION , less STT",
+    "amount": 41366349.64,
+    "invested": null,
+    "units": -1269861.444,
+    "security": "Kotak Arbitrage Fund - Growth (Regular Plan)",
+    "securityKey": "kotak-arbitrage-fund-growth-regular-plan"
   },
   {
     "accountId": "ask-investment-managers-limited-10032723",
@@ -43729,6 +44905,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": null,
     "security": null,
     "securityKey": null
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-7111389",
+    "date": "2024-05-29",
+    "direction": "out",
+    "label": "Redemption - D-Kredit - HDFC - HDFC_31-MAY-2024 , less STT",
+    "amount": 3897413.68,
+    "invested": null,
+    "units": -28998.472,
+    "security": "Kotak Mid Cap Fund Direct Growth",
+    "securityKey": "kotak-mid-cap-fund-direct-growth"
   },
   {
     "accountId": "3p-investment-managers-3000048",
@@ -44736,6 +45923,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": "hdfc-small-cap-fund-direct-growth-plan"
   },
   {
+    "accountId": "kotak-mahindra-mutual-fund-7125555",
+    "date": "2025-05-28",
+    "direction": "out",
+    "label": "Redemption - Electronic Payment - 1083768201 , less STT",
+    "amount": 4789309.46,
+    "invested": null,
+    "units": -12573.891,
+    "security": "Kotak Large & Mid Cap Fund - Direct Growth",
+    "securityKey": "kotak-large-and-mid-cap-fund-direct-growth"
+  },
+  {
     "accountId": "green-lantern-capital-llp-510854",
     "date": "2025-06-02",
     "direction": "out",
@@ -44896,6 +46094,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": "helios-flexi-cap-fund-direct-growth"
   },
   {
+    "accountId": "kotak-mahindra-mutual-fund-7125319",
+    "date": "2025-07-10",
+    "direction": "out",
+    "label": "Redemption - HDFCR52025071490348518 , less STT",
+    "amount": 8411997.13,
+    "invested": null,
+    "units": -223990.064,
+    "security": "Kotak Arbitrage Fund - Growth (Regular Plan)",
+    "securityKey": "kotak-arbitrage-fund-growth-regular-plan"
+  },
+  {
     "accountId": "helios-mutual-fund-10063876",
     "date": "2025-07-11",
     "direction": "in",
@@ -44906,6 +46115,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": 1017588.198,
     "security": "Helios Flexi Cap Fund - Direct Growth",
     "securityKey": "helios-flexi-cap-fund-direct-growth"
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-7125555",
+    "date": "2025-07-11",
+    "direction": "out",
+    "label": "Redemption - Electronic Payment - 1149130013 , less STT",
+    "amount": 2140106.97,
+    "invested": null,
+    "units": -13681.061,
+    "security": "Kotak Mid Cap Fund Direct Growth",
+    "securityKey": "kotak-mid-cap-fund-direct-growth"
   },
   {
     "accountId": "3p-investment-managers-3000048",
@@ -45278,6 +46498,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "kotak-mahindra-mutual-fund-5372722",
+    "date": "2025-09-09",
+    "direction": "out",
+    "label": "Redemption - Electronic Payment , less STT",
+    "amount": 809839.52,
+    "invested": null,
+    "units": -21392.282,
+    "security": "Kotak Arbitrage Fund - Growth (Regular Plan)",
+    "securityKey": "kotak-arbitrage-fund-growth-regular-plan"
+  },
+  {
     "accountId": "svan-investment-managers-llp-8710067",
     "date": "2025-09-09",
     "direction": "out",
@@ -45476,6 +46707,18 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": null,
     "security": null,
     "securityKey": null
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-7111389",
+    "date": "2025-09-29",
+    "direction": "in",
+    "label": "Net Purchase",
+    "amount": 250000000,
+    "invested": 249987500.62,
+    "charges": 12499.38,
+    "units": 6156569.403,
+    "security": "Kotak Arbitrage Fund - Direct Plan - Growth",
+    "securityKey": "kotak-arbfd-dp-grow"
   },
   {
     "accountId": "ask-absolute-return-fund-9039917144",
@@ -46022,6 +47265,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "kotak-mahindra-mutual-fund-7111389",
+    "date": "2025-12-29",
+    "direction": "out",
+    "label": "Redemption - Electronic Payment , less STT",
+    "amount": 100068257.81,
+    "invested": null,
+    "units": -2423360,
+    "security": "Kotak Arbitrage Fund - Direct Plan - Growth",
+    "securityKey": "kotak-arbfd-dp-grow"
+  },
+  {
     "accountId": "carnelian-asset-management-and-advisors-pvt-ltd-3517383",
     "date": "2025-12-31",
     "direction": "in",
@@ -46067,6 +47321,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": -14162.8,
     "security": "Neo Infra Income Opportunities Fund I — Class A5",
     "securityKey": "neo-infra-income-opportunities-fund-i-class-a5"
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-7111389",
+    "date": "2026-01-13",
+    "direction": "out",
+    "label": "Redemption - Electronic Payment , less STT",
+    "amount": 154667185.48,
+    "invested": null,
+    "units": -3733209.403,
+    "security": "Kotak Arbitrage Fund - Direct Plan - Growth",
+    "securityKey": "kotak-arbfd-dp-grow"
   },
   {
     "accountId": "invesco-mutual-fund-3041491145",
@@ -46379,6 +47644,18 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": "buoyant-opportunities-strategy-category-iii-class-a1"
   },
   {
+    "accountId": "bandhan-mutual-fund-8652064",
+    "date": "2026-04-02",
+    "direction": "in",
+    "label": "Net Purchase via Online",
+    "amount": 18750000,
+    "invested": 18749062.55,
+    "charges": 937.45,
+    "units": 127182.131,
+    "security": "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
+    "securityKey": "bndh-l-and-mcf-dp-gr"
+  },
+  {
     "accountId": "green-lantern-capital-llp-510854",
     "date": "2026-04-02",
     "direction": "out",
@@ -46401,6 +47678,18 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "bandhan-mutual-fund-8691267",
+    "date": "2026-04-07",
+    "direction": "in",
+    "label": "Net Purchase via Online",
+    "amount": 23450000,
+    "invested": 23448827.56,
+    "charges": 1172.44,
+    "units": 7029.319,
+    "security": "Bandhan Liquid Fund-Direct Plan-Growth",
+    "securityKey": "bandhan-amc-ltd-bandhan-mf-bandhan-cash-fund-direct-pl-growth"
+  },
+  {
     "accountId": "bandhan-mutual-fund-8652064",
     "date": "2026-04-08",
     "direction": "in",
@@ -46409,6 +47698,29 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "invested": 12274386.28,
     "charges": 613.72,
     "units": 3678.266,
+    "security": "Bandhan Liquid Fund-Direct Plan-Growth",
+    "securityKey": "bandhan-amc-ltd-bandhan-mf-bandhan-cash-fund-direct-pl-growth"
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-5372722",
+    "date": "2026-04-17",
+    "direction": "in",
+    "label": "Net Purchase",
+    "amount": 12725000,
+    "invested": 12724363.78,
+    "charges": 636.22,
+    "units": 612631.862,
+    "security": "Kotak Multi Cap Fund Direct Plan - Growth",
+    "securityKey": "kotak-mtcf-d-grow"
+  },
+  {
+    "accountId": "bandhan-mutual-fund-8691267",
+    "date": "2026-04-20",
+    "direction": "out",
+    "label": "Redemption - Electronic Payment",
+    "amount": 1101393.21,
+    "invested": null,
+    "units": -329.25,
     "security": "Bandhan Liquid Fund-Direct Plan-Growth",
     "securityKey": "bandhan-amc-ltd-bandhan-mf-bandhan-cash-fund-direct-pl-growth"
   },
@@ -46447,6 +47759,136 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": "neo-infra-income-opportunities-fund-i-class-a5"
   },
   {
+    "accountId": "bandhan-mutual-fund-8652064",
+    "date": "2026-04-23",
+    "direction": "in",
+    "label": "Net Purchase via Online",
+    "amount": 18750000,
+    "invested": 18749062.55,
+    "charges": 937.45,
+    "units": 115883.027,
+    "security": "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
+    "securityKey": "bndh-l-and-mcf-dp-gr"
+  },
+  {
+    "accountId": "bandhan-mutual-fund-8691267",
+    "date": "2026-04-26",
+    "direction": "out",
+    "label": "Redemption - Electronic Payment",
+    "amount": 14007960.2,
+    "invested": null,
+    "units": -4184.3,
+    "security": "Bandhan Liquid Fund-Direct Plan-Growth",
+    "securityKey": "bandhan-amc-ltd-bandhan-mf-bandhan-cash-fund-direct-pl-growth"
+  },
+  {
+    "accountId": "bandhan-mutual-fund-8691267",
+    "date": "2026-04-27",
+    "direction": "out",
+    "label": "Redemption - Electronic Payment",
+    "amount": 4490413.43,
+    "invested": null,
+    "units": -1341.269,
+    "security": "Bandhan Liquid Fund-Direct Plan-Growth",
+    "securityKey": "bandhan-amc-ltd-bandhan-mf-bandhan-cash-fund-direct-pl-growth"
+  },
+  {
+    "accountId": "bandhan-mutual-fund-8652064",
+    "date": "2026-04-30",
+    "direction": "in",
+    "label": "Net Purchase via Online",
+    "amount": 18750000,
+    "invested": 18749062.55,
+    "charges": 937.45,
+    "units": 116036.506,
+    "security": "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
+    "securityKey": "bndh-l-and-mcf-dp-gr"
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-7111389",
+    "date": "2026-04-30",
+    "direction": "in",
+    "label": "Net Purchase",
+    "amount": 12500000,
+    "invested": 12499375.03,
+    "charges": 624.97,
+    "units": 597313.153,
+    "security": "Kotak Multi Cap Fund Direct Plan - Growth",
+    "securityKey": "kotak-mtcf-d-grow"
+  },
+  {
+    "accountId": "bandhan-mutual-fund-8652064",
+    "date": "2026-05-07",
+    "direction": "in",
+    "label": "Net Purchase via Online",
+    "amount": 18750000,
+    "invested": 18749062.55,
+    "charges": 937.45,
+    "units": 113157.478,
+    "security": "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
+    "securityKey": "bndh-l-and-mcf-dp-gr"
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-7111389",
+    "date": "2026-05-07",
+    "direction": "in",
+    "label": "Net Purchase",
+    "amount": 12500000,
+    "invested": 12499375.03,
+    "charges": 624.97,
+    "units": 585642.835,
+    "security": "Kotak Multi Cap Fund Direct Plan - Growth",
+    "securityKey": "kotak-mtcf-d-grow"
+  },
+  {
+    "accountId": "bandhan-mutual-fund-8652064",
+    "date": "2026-05-14",
+    "direction": "in",
+    "label": "Net Purchase via Online",
+    "amount": 18750000,
+    "invested": 18749062.55,
+    "charges": 937.45,
+    "units": 115567.31,
+    "security": "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
+    "securityKey": "bndh-l-and-mcf-dp-gr"
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-7111389",
+    "date": "2026-05-14",
+    "direction": "in",
+    "label": "Net Purchase",
+    "amount": 12500000,
+    "invested": 12499375.03,
+    "charges": 624.97,
+    "units": 601828.448,
+    "security": "Kotak Multi Cap Fund Direct Plan - Growth",
+    "securityKey": "kotak-mtcf-d-grow"
+  },
+  {
+    "accountId": "bandhan-mutual-fund-8652064",
+    "date": "2026-05-21",
+    "direction": "in",
+    "label": "Net Purchase via Online",
+    "amount": 18750000,
+    "invested": 18749062.55,
+    "charges": 937.45,
+    "units": 115126.631,
+    "security": "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
+    "securityKey": "bndh-l-and-mcf-dp-gr"
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-7111389",
+    "date": "2026-05-21",
+    "direction": "in",
+    "label": "Net Purchase",
+    "amount": 12500000,
+    "invested": 12499375.03,
+    "charges": 624.97,
+    "units": 603484.696,
+    "security": "Kotak Multi Cap Fund Direct Plan - Growth",
+    "securityKey": "kotak-mtcf-d-grow"
+  },
+  {
     "accountId": "v-e-c-assago-capital-management-llp-128004",
     "date": "2026-05-27",
     "direction": "out",
@@ -46456,6 +47898,30 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": null,
     "security": null,
     "securityKey": null
+  },
+  {
+    "accountId": "bandhan-mutual-fund-8652064",
+    "date": "2026-05-29",
+    "direction": "in",
+    "label": "Net Purchase via Online",
+    "amount": 18750000,
+    "invested": 18749062.55,
+    "charges": 937.45,
+    "units": 115523.873,
+    "security": "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
+    "securityKey": "bndh-l-and-mcf-dp-gr"
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-7111389",
+    "date": "2026-05-29",
+    "direction": "in",
+    "label": "Net Purchase",
+    "amount": 12500000,
+    "invested": 12499375.03,
+    "charges": 624.97,
+    "units": 602379.52,
+    "security": "Kotak Multi Cap Fund Direct Plan - Growth",
+    "securityKey": "kotak-mtcf-d-grow"
   },
   {
     "accountId": "buoyant-capital-103473",
@@ -46468,6 +47934,18 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": 1796901.6155,
     "security": "Buoyant Opportunities Strategy — Category III — Class A4",
     "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4"
+  },
+  {
+    "accountId": "bandhan-mutual-fund-8652064",
+    "date": "2026-06-04",
+    "direction": "in",
+    "label": "Net Purchase via Online",
+    "amount": 18750000,
+    "invested": 18749062.55,
+    "charges": 937.45,
+    "units": 116631.287,
+    "security": "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
+    "securityKey": "bndh-l-and-mcf-dp-gr"
   },
   {
     "accountId": "green-lantern-capital-llp-510854",
@@ -46525,6 +48003,18 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "bandhan-mutual-fund-8652064",
+    "date": "2026-06-11",
+    "direction": "in",
+    "label": "Net Purchase via Online",
+    "amount": 18750000,
+    "invested": 18749062.55,
+    "charges": 937.45,
+    "units": 119464.914,
+    "security": "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
+    "securityKey": "bndh-l-and-mcf-dp-gr"
+  },
+  {
     "accountId": "v-e-c-assago-capital-management-llp-128004",
     "date": "2026-06-15",
     "direction": "out",
@@ -46545,6 +48035,30 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": null,
     "security": null,
     "securityKey": null
+  },
+  {
+    "accountId": "bandhan-mutual-fund-8652064",
+    "date": "2026-06-18",
+    "direction": "in",
+    "label": "Net Purchase via Online",
+    "amount": 18750000,
+    "invested": 18749062.55,
+    "charges": 937.45,
+    "units": 114618.485,
+    "security": "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
+    "securityKey": "bndh-l-and-mcf-dp-gr"
+  },
+  {
+    "accountId": "bandhan-mutual-fund-8652064",
+    "date": "2026-06-25",
+    "direction": "in",
+    "label": "Net Purchase via Online",
+    "amount": 18750000,
+    "invested": 18749062.55,
+    "charges": 937.45,
+    "units": 114473.624,
+    "security": "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
+    "securityKey": "bndh-l-and-mcf-dp-gr"
   },
   {
     "accountId": "green-lantern-capital-llp-510854",
@@ -46579,6 +48093,30 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": 34361.372,
     "security": "Bandhan Overnight Fund-Direct Plan-Growth",
     "securityKey": "bandhan-amc-ltd-bandhan-mf-bandhan-overnight-fund-direct-growth"
+  },
+  {
+    "accountId": "bandhan-mutual-fund-8652064",
+    "date": "2026-07-02",
+    "direction": "in",
+    "label": "Net Purchase via Online",
+    "amount": 168750000,
+    "invested": 168741562.92,
+    "charges": 8437.08,
+    "units": 4125355.281,
+    "security": "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
+    "securityKey": "bndh-l-and-mcf-dp-gr"
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-7111389",
+    "date": "2026-07-02",
+    "direction": "in",
+    "label": "Net Purchase",
+    "amount": 178000000,
+    "invested": 177991100.44,
+    "charges": 8899.56,
+    "units": 4165239.582,
+    "security": "Kotak Arbitrage Fund - Direct Plan - Growth",
+    "securityKey": "kotak-arbfd-dp-grow"
   },
   {
     "accountId": "carnelian-asset-management-and-advisors-pvt-ltd-3517383",
@@ -46924,6 +48462,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": "invesco-india-arbitrage-fund-regular-plan-growth-af-gp"
   },
   {
+    "accountId": "kotak-mahindra-mutual-fund-7111389",
+    "date": "2026-09-23",
+    "direction": "out",
+    "label": "Redemption - Electronic Payment - FULL_PREPAID , less STT",
+    "amount": 206423604.73,
+    "invested": null,
+    "units": -4808179.677,
+    "security": "Kotak Arbitrage Fund - Direct Plan - Growth",
+    "securityKey": "kotak-arbfd-dp-grow"
+  },
+  {
     "accountId": "motilal-oswal-mutual-fund-90414963315",
     "date": "2026-09-23",
     "direction": "out",
@@ -47062,6 +48611,9 @@ export const BOOK_CAPITAL_FROM_INCEPTION: string[] = [
   "3p-investment-managers-3000048",
   "ask-absolute-return-fund-9039917111",
   "ask-absolute-return-fund-9039917144",
+  "bandhan-mutual-fund-1802619",
+  "bandhan-mutual-fund-8652064",
+  "bandhan-mutual-fund-8691267",
   "baring-private-equity-india-fund-AIFM_BPEPF6_0584",
   "buoyant-capital-103472",
   "buoyant-capital-103473",
@@ -47077,7 +48629,9 @@ export const BOOK_CAPITAL_FROM_INCEPTION: string[] = [
   "invesco-mutual-fund-3041491081",
   "invesco-mutual-fund-3041491145",
   "invesco-mutual-fund-3041794916",
+  "kotak-mahindra-mutual-fund-5372722",
   "kotak-mahindra-mutual-fund-7125255",
+  "kotak-mahindra-mutual-fund-7125319",
   "motilal-oswal-active-momentum-fund-904168868444",
   "motilal-oswal-delphi-equity-fund-9049241536",
   "motilal-oswal-founders-fund-90410016093",
@@ -47218,6 +48772,25 @@ export const BOOK_POSITION_TRANCHES: Record<string, PositionTranches> = {
       }
     ],
     "units": 48.183,
+    "basis": "fifo"
+  },
+  "kotak-mahindra-mutual-fund-5372722|kotak-mtcf-d-grow": {
+    "accountId": "kotak-mahindra-mutual-fund-5372722",
+    "securityKey": "kotak-mtcf-d-grow",
+    "moves": [
+      {
+        "accountId": "kotak-mahindra-mutual-fund-5372722",
+        "date": "2026-04-17",
+        "direction": "in",
+        "label": "Net Purchase",
+        "amount": 12725000,
+        "invested": 12725000,
+        "units": 612631.862,
+        "security": "Kotak Multi Cap Fund Direct Plan - Growth",
+        "securityKey": "kotak-mtcf-d-grow"
+      }
+    ],
+    "units": 612631.862,
     "basis": "fifo"
   },
   "neo-infra-income-opportunities-fund-9039920536|neo-infra-income-opportunities-fund-i-class-a5": {
@@ -47934,6 +49507,25 @@ export const BOOK_POSITION_TRANCHES: Record<string, PositionTranches> = {
       }
     ],
     "units": 218612.507
+  },
+  "kotak-mahindra-mutual-fund-5372722|kotak-flexi-cap-fund-direct-growth": {
+    "accountId": "kotak-mahindra-mutual-fund-5372722",
+    "securityKey": "kotak-flexi-cap-fund-direct-growth",
+    "moves": [
+      {
+        "accountId": "kotak-mahindra-mutual-fund-5372722",
+        "date": "2018-07-02",
+        "direction": "in",
+        "label": "Purchase (Continuous Offer)",
+        "amount": 500000,
+        "invested": 500000,
+        "charges": null,
+        "units": 14523.484,
+        "security": "Kotak Flexi Cap Fund Direct Growth",
+        "securityKey": "kotak-flexi-cap-fund-direct-growth"
+      }
+    ],
+    "units": 14523.484
   },
   "kotak-mahindra-mutual-fund-7125255|kotak-large-and-mid-cap-fund-direct-growth": {
     "accountId": "kotak-mahindra-mutual-fund-7125255",

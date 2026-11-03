@@ -6,12 +6,18 @@ export const PROVIDER = 'Bandhan Mutual Fund';
 const number = String.raw`\(?[\d,]+\.\d+\)?`;
 const row = new RegExp(String.raw`^(\d{2}/\d{2}/\d{4})\s*(.*?)\s*(${number})\s+(${number})\s+(${number})\s+(${number})\s+(${number})$`);
 const roundUnits = n => Math.round(n * 1000) / 1000;
+// Page furniture is never data, and the registrar's margin stamp (`EISC-…--NNNN`)
+// lands inside whatever line it overprints. Left in, a footer sat between a
+// switch-out and its STT line on a page break (Ajay, 14 Oct 2026).
+const FURNITURE = /^(?:Page \d+ of \d+|\.\.\. continued on next page|GET INSTANT PORTFOLIO VALUATION\b.*)$/i;
+const COLUMNS_END = /\bin INR in INR in INR Units Units$/i;
 
 // The account summary supplies the cost of units STILL held. The separate
 // "Cost of Redemption and Switch Out" is not a remaining-cost calculation.
 // Read every scheme ledger, including nil schemes absent from that summary.
 export function extract({ grid, meta }) {
-  const lines = grid.pages.flatMap(p => p.text.split('\n').map(l => l.trim()).filter(Boolean));
+  const lines = grid.pages.flatMap(p => p.text.split('\n')
+    .map(l => l.replace(/\s*EISC-\S+--\d+/g, '').trim()).filter(l => l && !FURNITURE.test(l)));
   const text = lines.join('\n');
   const warnings = [], holdings = [], flows = [], blocks = [];
   const fail = detail => warnings.push({ code: 'bandhan-ledger-not-reconciled', detail });
@@ -19,13 +25,18 @@ export function extract({ grid, meta }) {
   const owner = /First Holder Second Holder Third Holder Guardian\n([^\n]+)/.exec(text)?.[1] ?? null;
   const period = /From\s+(\d{2}-[A-Z]{3}-\d{4})\s+To\s+(\d{2}-[A-Z]{3}-\d{4})/i.exec(text);
   const periodFrom = toIso(period?.[1]), periodTo = toIso(period?.[2]);
-  let block = null;
+  // A ledger carried onto the next page reprints its scheme heading and column
+  // header; that is the same scheme resuming, not a new one.
+  let block = null, resuming = false;
   for (const line of lines) {
     const head = /^(Bandhan .+?)\s+SCHEME CODE\s*:\s*([A-Z0-9]+)/i.exec(line);
-    if (head) {
-      block = { name: head[1].replace(/\s*\(\s*Formerly Known.*$/i, '').trim(), lines: [] };
+    if (head && head[2] === block?.code) resuming = true;
+    else if (head) {
+      block = { name: head[1].replace(/\s*\(\s*Formerly Known.*$/i, '').trim(), code: head[2], lines: [] };
       blocks.push(block);
-    } else if (block) block.lines.push(line);
+      resuming = false;
+    } else if (resuming) resuming = !COLUMNS_END.test(line);
+    else if (block) block.lines.push(line);
   }
   const summaryEnd = lines.findIndex(l => /SCHEME CODE\s*:/.test(l));
   const summary = lines.slice(0, summaryEnd).join('\n');
@@ -33,7 +44,14 @@ export function extract({ grid, meta }) {
     const content = b.lines.join('\n');
     const id = /ISIN NO\s*:\s*(IN[EF][A-Z0-9]{9})\s+NAV as on\s+(\S+)\s*:\s*([\d,.]+)/i.exec(content);
     const close = /Current Unit Balance\s*:\s*([\d,.]+)\s+Market Value as on\s+(\S+)\s*:\s*([\d,.]+)\s+Available Units for Redemption\s*:\s*([\d,.]+)/i.exec(content);
-    const opening = /Opening Balance as on\s+(\S+)\s+([\d,.]+)/i.exec(content);
+    let opening = /Opening Balance as on\s+(\S+)\s+([\d,.]+)/i.exec(content);
+    if (!opening) {
+      // A ledger that begins with the purchase creating it prints no opening
+      // line (Ankita's Liquid fund, 7 Apr 2026). Only when that first row's
+      // running balance IS its units did the scheme open at nil.
+      const first = b.lines.map(l => row.exec(l)).find(Boolean);
+      if (first && parseNum(first[6]) > 0 && parseNum(first[6]) === parseNum(first[7])) opening = [null, first[1], '0.000'];
+    }
     if (!id || !close || !opening) { fail(`${b.name}: missing identity, opening or closing`); continue; }
     const isin = id[1], nav = parseNum(id[3]), quantity = parseNum(close[1]), value = parseNum(close[3]);
     const navDate = toIso(id[2]);
@@ -51,13 +69,13 @@ export function extract({ grid, meta }) {
       if (!m) {
         const note = `${line} ${b.lines[i + 1] ?? ''}`;
         if (/\*\*\*Demat To Remat -Accept\*\*\*/i.test(note)) { remat = toIso(line.slice(0, 10)); continue; }
-        if (/\*\*\*Address Updated/.test(note)) continue;
+        if (/\*\*\*(?:Address Updated|Registration of Nominee)/.test(note)) continue;
         fail(`${b.name}: unread dated movement`); continue;
       }
       const type = (m[2] || b.lines[i + 1] || '').trim();
       const date = toIso(m[1]);
       const kind = /^Switch (?:In|Out)\b/i.test(type) ? 'reclassification'
-        : /^Net Purchase\b/i.test(type) ? 'contribution' : /^Redemption\b/i.test(type) ? 'withdrawal' : null;
+        : /^(?:Net )?Purchase\b/i.test(type) ? 'contribution' : /^Redemption\b/i.test(type) ? 'withdrawal' : null;
       const price = parseNum(m[5]), amount = parseNum(m[4]), units = parseNum(m[6]), after = parseNum(m[7]);
       if (!kind || !date || date < toIso(opening[1]) || date > periodTo || units === 0
         || ((/Switch Out|Redemption/i.test(type)) !== (units < 0))
@@ -65,7 +83,8 @@ export function extract({ grid, meta }) {
         fail(`${b.name}: unrecognised movement or inconsistent signs`); continue;
       }
       const following = b.lines.slice(i + 1, i + 4).join(' ');
-      const stamp = /Gross Amount:\s*Rs\.([\d,.]+)\/-; Stamp Duty charges Levied\s+([\d,.]+)/i.exec(following);
+      // A regular-plan purchase through a distributor levies a transaction charge instead (2017).
+      const stamp = /Gross Amount:\s*Rs\.([\d,.]+)\/-; (?:Stamp Duty|Transaction) charges Levied\s+([\d,.]+)/i.exec(following);
       const stt = /\*\*\* STT Paid \*\*\*\s+\(([\d,.]+)\)/i.exec(following);
       const charges = units > 0 ? (stamp ? parseNum(stamp[2]) : null) : (stt ? parseNum(stt[1]) : null);
       const cash = units > 0 && stamp ? parseNum(stamp[1]) : amount;
@@ -100,12 +119,17 @@ export function extract({ grid, meta }) {
     if (into.length === 1) out.settlementDate = into[0].date;
   }
   const total = /Total\s*:\s*([\d,.]+)\s+([\d,.]+)/.exec(summary);
-  if (!folio || !owner || !periodTo || holdings.length !== blocks.length || !total
-    || Math.abs(holdings.reduce((s, h) => s + h.printed.marketValue, 0) - parseNum(total?.[2])) > .011) fail('Account identity, coverage or printed total does not reconcile');
+  // A folio with nothing left prints no account summary (Ankita's 2017 ELSS
+  // folio): its total is then the nil closing value every ledger prints.
+  const nilFolio = !total && !/Account Summary/i.test(summary) && holdings.length > 0
+    && holdings.every(h => h.quantity === 0 && h.printed.marketValue === 0);
+  const printedTotal = total ? parseNum(total[2]) : nilFolio ? 0 : null;
+  if (!folio || !owner || !periodTo || holdings.length !== blocks.length || printedTotal === null
+    || Math.abs(holdings.reduce((s, h) => s + h.printed.marketValue, 0) - printedTotal) > .011) fail('Account identity, coverage or printed total does not reconcile');
   return { provider: PROVIDER, reportType: 'holdings', accountNo: folio, owner, asOf: periodTo, periodFrom, periodTo,
     engagement: 'Direct', providerEngagement: 'Mutual fund folio — Resident Individual',
     holdings, cashFlows: warnings.length ? [] : flows,
-    totals: makeTotals({ totalMarketValue: total ? parseNum(total[2]) : null, positionCount: holdings.length, source: meta.docKey }),
+    totals: makeTotals({ totalMarketValue: printedTotal, positionCount: holdings.length, source: meta.docKey }),
     sections: { holdings: { name: 'Current scheme balances', rows: [['Scheme','ISIN','NAV date','Units','NAV','Cost held','Market value','Demat to remat accepted'],
       ...holdings.map(h => [h.security,h.isin,h.priceAsOn,h.quantity,h.marketPrice,h.totalCost,h.printed.marketValue,h.custodyRematOn ?? null])] },
       ledger: { name: 'Source unit and cash ledger', rows: [['date','scheme','kind','amount','units','balance'],

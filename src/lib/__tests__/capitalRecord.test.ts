@@ -67,11 +67,13 @@ ok("the book carries capital rows", G.length > 10, `${G.length} accounts`);
 ok("…and some publish appreciation", G.some((g) => g.appreciation != null));
 ok("…and some withhold it, with a reason", G.some((g) => g.appreciation == null && !!g.appreciationReason));
 const bandhan = byId.get("bandhan-mutual-fund-8652064");
-ok("Bandhan's nonzero opening holdings keep its partial purchases out of inception capital",
-  !BOOK_CAPITAL_FROM_INCEPTION.includes("bandhan-mutual-fund-8652064"));
-ok("Bandhan's current value remains visible while appreciation and XIRR need the earlier purchases",
-  !!bandhan && typeof bandhan.value === "number" && Math.abs(bandhan.value - 415063994.38) < .01 && bandhan.appreciation === null
-    && !!bandhan.appreciationReason && !capitalReturn(bandhan, "xirr").shown);
+// Its 14 Oct statement opens every scheme at nil from 2 Apr 2026 (Stage 10kl),
+// so the purchases the 26 Oct statement's nonzero openings left out are now dated.
+ok("Bandhan's nil openings put its whole purchase record into inception capital",
+  BOOK_CAPITAL_FROM_INCEPTION.includes("bandhan-mutual-fund-8652064"));
+ok("Bandhan's appreciation is its value less the ₹43.73 Cr it paid in",
+  !!bandhan && typeof bandhan.value === "number" && Math.abs(bandhan.value - 415063994.38) < .01
+    && Math.abs(bandhan.paidIn - 437275000) < .01 && Math.abs(bandhan.appreciation! - (415063994.38 - 437275000)) < .01);
 
 // ── 2. NOTHING IS CALLED "NET INVESTED" ANY MORE ───────────────────────────
 ok("no capital row carries a net-invested figure", G.every((g) => !("net" in g)));

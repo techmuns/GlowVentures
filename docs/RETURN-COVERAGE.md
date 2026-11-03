@@ -1,6 +1,6 @@
 # Return source coverage
 
-20 of 88 accounts have verified opening values, dated external capital and a closing valuation.
+20 of 94 accounts have verified opening values, dated external capital and a closing valuation.
 
 Each account ends at its own verified valuation date. The consolidated return must not include an uncovered account’s closing value without its opening stake and cash history.
 
@@ -22,7 +22,9 @@ Historical opening NAVs come from AMFI’s [31 March 2026 published file](https:
 | ASK Absolute Return Fund | 9039917144 | Ankita Jaisinghani | 2026-03-31 | — | Opening valuation and complete dated cash flows are missing |
 | ASK Investment Managers Limited | 10032723 | Ankita Jaisinghani | 2026-09-08 | — | Opening valuation and complete dated cash flows are missing |
 | ASK Investment Managers Limited | 10034025 | Ajay Jaisinghani | 2026-09-08 | — | Opening valuation and complete dated cash flows are missing |
+| Bandhan Mutual Fund | 1802619 | Ankita Jaisinghani | 2026-09-30 | — | Nil throughout the verified period through 2026-09-30; no invested capital to measure |
 | Bandhan Mutual Fund | 8652064 | Ajay Jaisinghani | 2026-10-26 | — | Opening valuation and complete dated cash flows are missing |
+| Bandhan Mutual Fund | 8691267 | Ankita Jaisinghani | 2026-09-30 | — | Opening valuation and complete dated cash flows are missing |
 | Baring Private Equity India Fund | AIFM_BPEPF6_0584 | Ankita Jaisinghani | 2026-03-31 | — | Opening valuation and complete dated cash flows are missing |
 | Buoyant Capital | 103472 | Ankita Jaisinghani | 2026-09-30 | — | Opening valuation and complete dated cash flows are missing |
 | Buoyant Capital | 103473 | Ajay Jaisinghani | 2026-09-30 | — | Opening valuation and complete dated cash flows are missing |
@@ -57,7 +59,11 @@ Historical opening NAVs come from AMFI’s [31 March 2026 published file](https:
 | Invesco Mutual Fund | 3041491145 | Ajay Jaisinghani | 2026-09-30 | 2026-09-30 | Complete through the selected date |
 | Invesco Mutual Fund | 3041794916 | Ankita Jaisinghani | 2026-09-30 | — | Nil throughout the verified period through 2026-09-30; no invested capital to measure |
 | Kotak Mahindra Mutual Fund | 4295974 | Hope India Trust | 2026-09-30 | — | Opening valuation and complete dated cash flows are missing |
+| Kotak Mahindra Mutual Fund | 5372722 | Aarti Jaisinghani | 2026-11-02 | — | Opening valuation and complete dated cash flows are missing |
+| Kotak Mahindra Mutual Fund | 7111389 | Ajay Jaisinghani | 2026-11-02 | — | Opening valuation and complete dated cash flows are missing |
 | Kotak Mahindra Mutual Fund | 7125255 | Ajay Jaisinghani | 2026-09-30 | 2026-09-30 | Complete through the selected date |
+| Kotak Mahindra Mutual Fund | 7125319 | Ankita Jaisinghani | 2026-11-02 | — | Nil throughout the verified period through 2026-11-02; no invested capital to measure |
+| Kotak Mahindra Mutual Fund | 7125555 | Bharat Jaisinghani | 2026-11-02 | — | Nil throughout the verified period through 2026-11-02; no invested capital to measure |
 | LKP Securities | 98245 | Bharat Jaisinghani | 2026-08-04 | — | Opening valuation and complete dated cash flows are missing |
 | Marathon Trends Advisory Pvt Ltd | 5110758 | Ankita Jaisinghani | 2026-09-09 | — | this manager's statements in the drop — its capital-gain, dividend-statement, income-expense, transaction-statement statement(s) — include no holding statement, so nothing here states what this account holds or what it is worth at 2026-09-09; its transaction statement's last trade is dated 2025-07-22. What would fill it is the manager's own holding statement for this account |
 | Marathon Trends Advisory Pvt Ltd | 5110837 | Ajay Jaisinghani | 2026-09-09 | — | this manager's statements in the drop — its capital-gain, dividend-statement, income-expense, transaction-statement statement(s) — include no holding statement, so nothing here states what this account holds or what it is worth at 2026-09-09; its transaction statement's last trade is dated 2025-07-23. What would fill it is the manager's own holding statement for this account |
