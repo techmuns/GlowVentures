@@ -65,7 +65,7 @@ function FormatBlock({ format, docs }: { format: string; docs: LibraryDoc[] }) {
       <Pill>{docs.length} {docs.length === 1 ? "file" : "files"}</Pill>
     </div>
     <div className="overflow-x-auto rounded-lg border border-ink-700" data-navigation-scroll={`portfolio-library-${format}`}>
-      <ExportableTable className="min-w-full text-sm" data-table-static="statement files, newest first, as the Statement Library lists them">
+      <ExportableTable className="w-full text-sm" data-table-static="statement files, newest first, as the Statement Library lists them">
         <thead className="border-b border-ink-700 text-left text-[11px] uppercase tracking-wide text-slate-500"><tr>
           <th className="px-4 py-2.5 font-medium">Document</th>
           <th className="px-4 py-2.5 font-medium">Provider</th>
@@ -79,7 +79,7 @@ function FormatBlock({ format, docs }: { format: string; docs: LibraryDoc[] }) {
             onPointerEnter={format === "PDF" ? prepareStatementPreview : undefined}
             onFocus={format === "PDF" ? prepareStatementPreview : undefined}
             data-preview-row={d.fileKey} data-xa="portfolio-doc">
-            <td className="px-4 py-3 text-slate-200"><span className="inline-flex items-center gap-1.5">
+            <td className="px-4 py-3 text-slate-200 [overflow-wrap:anywhere]"><span className="inline-flex items-center gap-1.5">
               <button type="button" onClick={(e) => { e.stopPropagation(); preview.open(d.fileKey); }} className="text-left hover:text-accent-400 hover:underline" title={`Open ${d.fileName}`}>{d.reportLabel}</button>
               {d.hasSheets && <Link to={`/audit?file=${encodeURIComponent(d.fileKey)}`} onClick={(e) => e.stopPropagation()} className="text-slate-500 hover:text-accent-400" title="Open this document in Data Audit"><ExternalLink className="h-3.5 w-3.5" /></Link>}
             </span></td>
@@ -87,8 +87,8 @@ function FormatBlock({ format, docs }: { format: string; docs: LibraryDoc[] }) {
               <Link to={`/statements?provider=${encodeURIComponent(d.provider)}`} onClick={(e) => e.stopPropagation()} className="hover:text-accent-400 hover:underline" title="Open this provider's folder in the Statement Library">{d.provider}</Link>
             </td>
             <td className="px-4 py-3 text-slate-400">{d.owner ?? DASH}</td>
-            <td className="px-4 py-3 mono text-slate-400">{d.accountNo ?? DASH}</td>
-            <td className="px-4 py-3 text-slate-400">{d.asOf ? fmtDate(d.asOf) : DASH}</td>
+            <td className="whitespace-nowrap px-4 py-3 mono text-slate-400">{d.accountNo ?? DASH}</td>
+            <td className="whitespace-nowrap px-4 py-3 text-slate-400">{d.asOf ? fmtDate(d.asOf) : DASH}</td>
             <td className="px-4 py-3"><StatusPill status={d.status} /></td>
           </tr>)}
         </tbody>
@@ -231,7 +231,7 @@ export function PortfolioLibrary() {
     : undefined;
 
   return (
-    <div className="mx-auto max-w-5xl" data-portfolio-library>
+    <div data-portfolio-library>
       <PageHeader eyebrow="Admin" title="Portfolio Library" trail={trail}
         subtitle="Every statement, filed under each stock it names."
         right={status === "ready" && !openKey ? (
@@ -317,7 +317,7 @@ export function PortfolioLibrary() {
                     : "Statements are filed here once one carries a holding, trade, realised lot or income line. Upload them in the Statement Library."} />
               </Card>
             ) : (
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
                 onClick={(e) => { if (e.target === e.currentTarget) setSelected(null); }}>
                 {folders.map((f) => (
                   <FolderTile key={f.securityKey} label={f.name} docCount={f.docCount} formats={f.formats} status={f.status}

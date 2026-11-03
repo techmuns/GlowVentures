@@ -102,7 +102,7 @@ function FormatBlock({ format, docs, uploads = [], inbox, onOpen, heading = true
       {docs.length > 0 && <Pill>{docs.length} {docs.length === 1 ? "file" : "files"}</Pill>}
     </div>}
     <div className="overflow-x-auto rounded-lg border border-ink-700" data-navigation-scroll={`statement-library-${format}`}>
-      <ExportableTable className="min-w-full text-sm" data-table-static="statement files, with uploads at the top until their archive rows are ready">
+      <ExportableTable className="w-full text-sm" data-table-static="statement files, with uploads at the top until their archive rows are ready">
         <thead className="border-b border-ink-700 text-left text-[11px] uppercase tracking-wide text-slate-500"><tr>
           <th className="px-4 py-2.5 font-medium">Document</th>
           <th className="px-4 py-2.5 font-medium">Owner / entity</th>
@@ -113,13 +113,13 @@ function FormatBlock({ format, docs, uploads = [], inbox, onOpen, heading = true
         </tr></thead>
         <tbody className="divide-y divide-ink-700/70">
           {receipts.map(row => <tr key={row.id} data-upload-status={row.view.key} data-upload-row={row.id}>
-            <td className="min-w-[230px] px-4 py-3 text-slate-200">
+            <td className="px-4 py-3 text-slate-200 [overflow-wrap:anywhere]">
               <span className="inline-flex items-center gap-1.5" title={row.name}>{fileIcon(row.name.split(".").pop()?.toUpperCase() ?? "")}<span className="break-words">{row.name.split("/").pop()}</span></span>
               <UploadActions row={row} inbox={inbox} />
             </td>
             <td className="px-4 py-3 text-slate-500">{row.document?.owner ?? DASH}</td>
-            <td className="px-4 py-3 text-slate-500">{row.document?.accountNo ?? DASH}</td>
-            <td className="px-4 py-3 text-slate-500">{row.document?.asOf ? fmtDate(row.document.asOf) : DASH}</td>
+            <td className="whitespace-nowrap px-4 py-3 text-slate-500">{row.document?.accountNo ?? DASH}</td>
+            <td className="whitespace-nowrap px-4 py-3 text-slate-500">{row.document?.asOf ? fmtDate(row.document.asOf) : DASH}</td>
             <td className="px-4 py-3"><UploadStatus row={row} /></td>
             <td className="px-4 py-3 text-xs text-slate-500">
               {onOpen ? row.providers.map(provider => completed(row) && row.fileKeys.length
@@ -133,15 +133,15 @@ function FormatBlock({ format, docs, uploads = [], inbox, onOpen, heading = true
               onPointerEnter={format === 'PDF' ? prepareStatementPreview : undefined}
               onFocus={format === 'PDF' ? prepareStatementPreview : undefined}
               data-preview-row={d.fileKey} data-upload-status={receipt?.view.key}>
-              <td className="px-4 py-3 text-slate-200"><span className="inline-flex items-center gap-1.5">
+              <td className="px-4 py-3 text-slate-200 [overflow-wrap:anywhere]"><span className="inline-flex items-center gap-1.5">
                 <button type="button" onClick={e => { e.stopPropagation(); preview.open(d.fileKey); }} className="text-left hover:text-accent-400 hover:underline" title={`Open ${d.fileName}`}>{d.reportLabel}</button>
                 {d.hasSheets && <Link to={`/audit?file=${encodeURIComponent(d.fileKey)}`} onClick={e => e.stopPropagation()} className="text-slate-500 hover:text-accent-400" title="Open this document in Data Audit"><ExternalLink className="h-3.5 w-3.5" /></Link>}
               </span></td>
               <td className="px-4 py-3 text-slate-400">{d.owner ?? DASH}</td>
-              <td className="px-4 py-3 mono text-slate-400">{d.accountNo ?? DASH}</td>
-              <td className="px-4 py-3 text-slate-400">{d.asOf ? fmtDate(d.asOf) : DASH}</td>
+              <td className="whitespace-nowrap px-4 py-3 mono text-slate-400">{d.accountNo ?? DASH}</td>
+              <td className="whitespace-nowrap px-4 py-3 text-slate-400">{d.asOf ? fmtDate(d.asOf) : DASH}</td>
               <td className="px-4 py-3">{receipt ? <UploadStatus row={receipt} /> : <StatusPill status={d.status} />}</td>
-              <td className="px-4 py-3 text-slate-500" title={`Source file: ${d.fileName}`}>{d.delivery}</td>
+              <td className="px-4 py-3 text-slate-500 [overflow-wrap:anywhere]" title={`Source file: ${d.fileName}`}>{d.delivery}</td>
             </tr>;
           })}
         </tbody>
@@ -543,7 +543,7 @@ export function StatementLibrary() {
     : undefined;
 
   return (
-    <div className="mx-auto max-w-5xl" data-statement-library>
+    <div data-statement-library>
       <PageHeader eyebrow="Admin" title="Statement Library" trail={trail}
         subtitle="Upload statements for automatic analysis and filing."
         right={status === "ready" && !openProvider ? (
@@ -609,7 +609,7 @@ export function StatementLibrary() {
                   needs="Clear the filter to see every provider, or search a provider name or a file type such as holdings, capital gains or dividend." />
               </Card>
             ) : (
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
                 onClick={(e) => { if (e.target === e.currentTarget) setSelected(null); }}>
                 {folders.map((f) => (
                   <FolderTile key={f.provider} label={f.provider} docCount={f.docCount} formats={f.formats} status={f.status}
