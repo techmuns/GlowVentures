@@ -11722,6 +11722,154 @@
   ]
  },
  {
+  "docKey": "kotak-mahindra-mutual-fund-7125555-2026-11-02-holdings",
+  "provider": "Kotak Mahindra Mutual Fund",
+  "accountNo": "7125555",
+  "owner": "Bharat Ajay Jaisinghani",
+  "ownerId": "bharat-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-11-02",
+  "reportType": "holdings",
+  "sourcePath": "source/_extracted/uploads-2026-11-03/Kotak Mahindra Mutual Fund/kotak statement apr 25 to nov 26 (ankita,ajay,aarti,bharat) (2)/kotak statement apr 25 to nov 26 (ankita,ajay,aarti,bharat)/Acctstmt_K_4509541.pdf",
+  "pages": 4,
+  "sections": [
+   "holdings",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "kotak-mahindra-mutual-fund-7125555-2026-11-02-holdings",
+  "label": "Kotak Mahindra Mutual Fund · 7125555 · holdings",
+  "fy": "2026-11-02",
+  "source": "source/_extracted/uploads-2026-11-03/Kotak Mahindra Mutual Fund/kotak statement apr 25 to nov 26 (ankita,ajay,aarti,bharat) (2)/kotak statement apr 25 to nov 26 (ankita,ajay,aarti,bharat)/Acctstmt_K_4509541.pdf",
+  "sheets": [
+   {
+    "key": "holdings",
+    "name": "holdings",
+    "rows": 5,
+    "cols": 7
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 4,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "kotak-mahindra-mutual-fund-5372722-2026-11-02-holdings",
+  "provider": "Kotak Mahindra Mutual Fund",
+  "accountNo": "5372722",
+  "owner": "Aarti Jaisinghani",
+  "ownerId": "aarti-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-11-02",
+  "reportType": "holdings",
+  "sourcePath": "source/_extracted/uploads-2026-11-03/Kotak Mahindra Mutual Fund/kotak statement apr 25 to nov 26 (ankita,ajay,aarti,bharat) (2)/kotak statement apr 25 to nov 26 (ankita,ajay,aarti,bharat)/Acctstmt_K_5372722.pdf",
+  "pages": 8,
+  "sections": [
+   "holdings",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "kotak-mahindra-mutual-fund-5372722-2026-11-02-holdings",
+  "label": "Kotak Mahindra Mutual Fund · 5372722 · holdings",
+  "fy": "2026-11-02",
+  "source": "source/_extracted/uploads-2026-11-03/Kotak Mahindra Mutual Fund/kotak statement apr 25 to nov 26 (ankita,ajay,aarti,bharat) (2)/kotak statement apr 25 to nov 26 (ankita,ajay,aarti,bharat)/Acctstmt_K_5372722.pdf",
+  "sheets": [
+   {
+    "key": "holdings",
+    "name": "holdings",
+    "rows": 5,
+    "cols": 7
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 8,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "kotak-mahindra-mutual-fund-7125319-2026-11-02-holdings",
+  "provider": "Kotak Mahindra Mutual Fund",
+  "accountNo": "7125319",
+  "owner": "Ankita Jaisinghani",
+  "ownerId": "ankita-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-11-02",
+  "reportType": "holdings",
+  "sourcePath": "source/_extracted/uploads-2026-11-03/Kotak Mahindra Mutual Fund/kotak statement apr 25 to nov 26 (ankita,ajay,aarti,bharat) (2)/kotak statement apr 25 to nov 26 (ankita,ajay,aarti,bharat)/Acctstmt_K_7111388.pdf",
+  "pages": 3,
+  "sections": [
+   "holdings",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "kotak-mahindra-mutual-fund-7125319-2026-11-02-holdings",
+  "label": "Kotak Mahindra Mutual Fund · 7125319 · holdings",
+  "fy": "2026-11-02",
+  "source": "source/_extracted/uploads-2026-11-03/Kotak Mahindra Mutual Fund/kotak statement apr 25 to nov 26 (ankita,ajay,aarti,bharat) (2)/kotak statement apr 25 to nov 26 (ankita,ajay,aarti,bharat)/Acctstmt_K_7111388.pdf",
+  "sheets": [
+   {
+    "key": "holdings",
+    "name": "holdings",
+    "rows": 3,
+    "cols": 7
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 3,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "kotak-mahindra-mutual-fund-7111389-2026-11-02-holdings",
+  "provider": "Kotak Mahindra Mutual Fund",
+  "accountNo": "7111389",
+  "owner": "Ajay T Jaisinghani",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-11-02",
+  "reportType": "holdings",
+  "sourcePath": "source/_extracted/uploads-2026-11-03/Kotak Mahindra Mutual Fund/kotak statement apr 25 to nov 26 (ankita,ajay,aarti,bharat) (2)/kotak statement apr 25 to nov 26 (ankita,ajay,aarti,bharat)/Acctstmt_K_7111389.pdf",
+  "pages": 7,
+  "sections": [
+   "holdings",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "kotak-mahindra-mutual-fund-7111389-2026-11-02-holdings",
+  "label": "Kotak Mahindra Mutual Fund · 7111389 · holdings",
+  "fy": "2026-11-02",
+  "source": "source/_extracted/uploads-2026-11-03/Kotak Mahindra Mutual Fund/kotak statement apr 25 to nov 26 (ankita,ajay,aarti,bharat) (2)/kotak statement apr 25 to nov 26 (ankita,ajay,aarti,bharat)/Acctstmt_K_7111389.pdf",
+  "sheets": [
+   {
+    "key": "holdings",
+    "name": "holdings",
+    "rows": 6,
+    "cols": 7
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 7,
+    "cols": 2
+   }
+  ]
+ },
+ {
   "docKey": "v-e-c-assago-capital-management-llp-128005-unknown-bank-book",
   "provider": "V.E.C Assago Capital Management LLP",
   "accountNo": "128005",
