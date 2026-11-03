@@ -73,7 +73,7 @@
      ],
      "commit": "caa6c13b6f8c9d7d0a7951406f429ff432879651",
      "run": "https://github.com/techmuns/GlowVentures/actions/runs/41603213920",
-     "updatedAt": "2026-11-03T08:32:45.417Z",
+     "updatedAt": "2026-11-03T08:32:48.918Z",
      "neverArrived": null,
      "branch": "codex/statement-delivery-850a4f183fd3da1d",
      "pullRequest": null,
@@ -97,7 +97,8 @@
        "document": "kotak-mahindra-mutual-fund-7125555-2026-11-02-holdings",
        "revision": "9b7171d7444aae04e8ee00e8d85f68c6509829ead8749ab228cf31be9cbb561f"
       }
-     ]
+     ],
+     "publicationDetail": "PR creation will resume from the saved branch: GitHub publication failed: pull request create failed: GraphQL: GitHub Actions is not permitted to create or approve pull requests (createPullRequest)"
     }
    ]
   },
