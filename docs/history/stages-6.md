@@ -950,3 +950,8 @@
 
 - The family (3 Nov 2026), after the Stage 10kf column: *"I'm fine with adding an income row."* Dividends, interest and gain distributions, and equalisation received now read **Income** in Transactions' `txntype`. This covers every row that counts as Income, from income records and capital flows alike.
 - A reversal stays Income. Its minus sign is in Gross and Net, so adding the column up nets it out: 188 of the book's 191 negative income rows have an equal positive on the same day. Only non-cash corporate actions (bonus, spin-off) are left blank, and the column's `blank` reason says why.
+
+### Stage 10kh — NO "LATEST STATEMENTS COULD NOT BE LOADED" BANNER
+
+- The family (3 Nov 2026), on the amber strip *"Latest statements could not be loaded. Showing saved data. Retry"*: *"Never show this garbage to the user please remove."*
+- `renderApp.tsx` no longer draws it. Nothing else changes. When `bootstrapRuntimeBook` cannot fetch a published version, or the version does not match this build's reader, the app still opens on its compiled book. `bootstrapWarning` still sets the background refresh to look every 5 s, so a newer version still loads when it arrives.
