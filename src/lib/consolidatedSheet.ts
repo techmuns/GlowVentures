@@ -41,7 +41,7 @@ import { deriveTransactions, deriveRealisedLots, deriveIncome, type ArchiveDoc }
 import { isAssetClass, type Account, type Position } from "./types";
 
 export type ConsolidatedCell = string | number | null;
-export type ConsolidatedColumn = { key: string; label: string; format: string; width: number };
+export type ConsolidatedColumn = { key: string; label: string; format: string; width: number; blank?: string };
 export type ConsolidatedLink = { sheet?: string; find?: string; where?: Record<string, string>; row?: number; file?: string; record?: string; field?: string; isin?: string };
 export type ConsolidatedRow = { values: ConsolidatedCell[]; kind?: "group" | "total"; links?: Record<string, ConsolidatedLink> };
 export type ConsolidatedTab = { name: string; note: string; columns: ConsolidatedColumn[]; rows: ConsolidatedRow[] };
@@ -93,7 +93,13 @@ const TXN_COLUMNS: ConsolidatedColumn[] = [
   date("date", "Date"), col("name", "Security", "", 30), col("sec", "Security ID", "", 28), col("isin", "ISIN", "", 14),
   col("ent", "Owner / entity", "", 20), col("acct", "Account ID", "", 24), col("provider", "Platform / provider", "", 22),
   col("ac", "Asset class", "", 12), col("cat", "Category", "", 18), col("basket", "Basket", "", 18), col("sector", "Sector", "", 16),
-  col("record", "Record", "", 16), col("type", "Type (as printed)", "", 16), col("counts", "Counts as", "", 14),
+  col("record", "Record", "", 16), col("type", "Type (as printed)", "", 16),
+  // BUY OR SELL (the family, 3 Nov 2026: "the transaction type can only be two
+  // types, which is buy or sell, for the ease of analysis"). A purchase puts
+  // money into a holding, a sale or withdrawal takes it out; income and a
+  // non-cash corporate action are neither, so their cell stays blank.
+  { ...col("txntype", "Transaction type", "", 11), blank: "Neither a buy nor a sell: income and non-cash corporate actions carry no transaction type." },
+  col("counts", "Counts as", "", 14),
   col("qty", "Quantity / units", QTY, 14), col("price", "Price (₹ per unit)", RATE, 14), money("gross", "Gross amount (₹)"), money("chg", "Charges / TDS (₹)"),
   money("net", "Net cash flow to family (₹)"),
   date("pdate", "Lot purchase date"), money("pamt", "Lot purchase amount (₹)"), date("sdate", "Lot sale date"), money("samt", "Lot sale amount (₹)"),
@@ -149,7 +155,7 @@ export function buildConsolidatedSheet(docs: ArchiveDoc[], input: { accounts: Ac
         && (row.printed?.settlementAmount ?? row.net ?? row.gross ?? null) === t.amount);
     const m = mapping(a?.accountId, t.securityKey, t.assetClass);
     transactions.push({ date: t.date, ...accountCols(a), sec: t.securityKey, name: securityLabel(t.securityKey, t.security), ...m, isin: t.isin ?? m.isin,
-      record: "Trade", type: t.side, counts: "Internal trade",
+      record: "Trade", type: t.side, txntype: t.side, counts: "Internal trade",
       qty: raw ? raw.row.quantity : t.qty || null, price: t.price, gross: raw?.row.gross ?? null, chg: raw?.row.charges ?? null,
       net: t.amount == null ? null : t.amount * (t.side === "Buy" ? -1 : 1),
       // The realised gain of a sale is its capital-gain lots' (`realizedBasis`
@@ -171,7 +177,8 @@ export function buildConsolidatedSheet(docs: ArchiveDoc[], input: { accounts: Ac
     transactions.push({ date: mv.date, ...accountCols(a), acct: mv.accountId, sec,
       name: sec ? securityLabel(sec, mv.security ?? held?.security ?? sec) : mv.security ?? a?.strategy ?? a?.provider ?? null, ...m,
       record: "Capital flow", type: mv.label,
-      counts: mv.payoutKind === "income" || mv.payoutKind === "equalisation" ? "Income" : mv.direction === "in" ? "Investment" : "Divestment",
+      ...(mv.payoutKind === "income" || mv.payoutKind === "equalisation" ? { txntype: null, counts: "Income" }
+        : mv.direction === "in" ? { txntype: "Buy", counts: "Investment" } : { txntype: "Sell", counts: "Divestment" }),
       qty: mv.units, gross: mv.amount, chg: mv.charges ?? null, net: mv.amount == null ? null : mv.amount * (mv.direction === "in" ? -1 : 1),
       notes: [mv.fromReview ? reviewNote : mv.fromCall ? "Reconciled call schedule; this is a call, not proof of payment" : "External capital record",
         !mv.securityKey && sec ? "Account-level record; the account holds only this security" : null].filter(Boolean).join("; "),
@@ -180,7 +187,7 @@ export function buildConsolidatedSheet(docs: ArchiveDoc[], input: { accounts: Ac
   for (const e of [...income.cash, ...income.corporate]) {
     const a = sourceAccount(e.source), sec = isIncomeBucket(e.securityKey) ? null : e.securityKey, cash = income.cash.includes(e);
     transactions.push({ date: e.date, ...accountCols(a), sec, name: e.security, ...mapping(a?.accountId, sec),
-      record: cash ? "Income" : "Corporate action", type: e.kind, counts: cash ? "Income" : "Non-cash", qty: e.quantity, price: e.ratePerUnit,
+      record: cash ? "Income" : "Corporate action", type: e.kind, txntype: null, counts: cash ? "Income" : "Non-cash", qty: e.quantity, price: e.ratePerUnit,
       gross: e.net != null && e.tds != null ? e.net + e.tds : null, chg: e.tds, net: e.net,
       notes: e.entitlement ?? null, src: e.source, check: "Reported event", _source: e.source });
   }
@@ -196,7 +203,7 @@ export function buildConsolidatedSheet(docs: ArchiveDoc[], input: { accounts: Ac
     const original = matched.length === 1 ? matched[0] : null;
     const tax = original as (NonNullable<ArchiveDoc["capitalGains"]>[number] & TaxEvidence) | null;
     transactions.push({ date: l.saleDate, ...accountCols(a), sec: l.securityKey, name: securityLabel(l.securityKey, l.security), ...m, isin: original?.isin ?? m.isin,
-      record: "Tax lot — sold", type: "Sale (capital gain statement)", counts: "Tax detail",
+      record: "Tax lot — sold", type: "Sale (capital gain statement)", txntype: "Sell", counts: "Tax detail",
       qty: l.quantity, price: original?.saleRate ?? ratio(l.saleAmount, l.quantity),
       pdate: l.purchaseDate, pamt: l.purchaseAmount, sdate: l.saleDate, samt: l.saleAmount, days: l.daysHeld, term: l.term,
       rgain: l.shortTerm != null || l.longTerm != null ? l.gain : null, st: l.shortTerm, lt: l.longTerm,
@@ -219,7 +226,7 @@ export function buildConsolidatedSheet(docs: ArchiveDoc[], input: { accounts: Ac
     const supported = !!p && p.stCostBasis != null && p.ltCostBasis != null;
     const m = mapping(a?.accountId, l.securityKey);
     transactions.push({ date: l.purchaseDate, ...accountCols(a), sec: l.securityKey, name: securityLabel(l.securityKey, l.security), ...m, isin: l.isin ?? m.isin,
-      record: "Tax lot — open", type: "Purchase lot (open-lot register)", counts: "Tax detail",
+      record: "Tax lot — open", type: "Purchase lot (open-lot register)", txntype: "Buy", counts: "Tax detail",
       qty: l.quantity, price: l.unitCost, pdate: l.purchaseDate, pamt: l.totalCost,
       notes: `Open register at ${d.asOf}. ${supported ? "Units reconcile to the holding." : "Register does not reconcile to the current holding; kept as history."} Carries no cash flow.`,
       src: d.docKey, check: supported ? "Quantity reconciles" : "Historical lot", _source: d.docKey });
