@@ -340,7 +340,6 @@ extraction mirrors each archive's own path under `source/`.
 | Sky Capital Rising Titans Fund | SKY023 | Bharat Jaisinghani Family Trust 2 | 2026-08-31 | ₹0.75 Cr |
 | Sky Capital Rising Titans Fund | SKY024 | Bharat Jaisinghani Family Trust 3 | 2026-08-31 | ₹0.75 Cr |
 | ICICI Prudential Mutual Fund | 36378950 | Ajay Jaisinghani | 2026-10-05 | ₹0.56 Cr |
-| Bandhan Mutual Fund | 8691267 | Ankita Jaisinghani | 2026-09-30 | ₹0.39 Cr |
 | ICICI Prudential Mutual Fund | 36379637 | Bharat Jaisinghani | 2026-10-05 | ₹0.38 Cr |
 | Mirae Asset Mutual Fund | 70413280453 | Hope India Trust | 2026-10-06 | ₹0.10 Cr |
 | Aditya Birla Sun Life Mutual Fund | 1038104611 | Hope India Trust | 2026-08-03 | ₹0.08 Cr |

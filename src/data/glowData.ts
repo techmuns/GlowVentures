@@ -18,14 +18,14 @@ export const BOOK_AS_OF = "2026-11-03";
 
 export const BOOK_SUMMARY: BookSummary = {
   "asOf": "2026-11-03",
-  "listedValue": 7014200978.48,
+  "listedValue": 7010279384.59,
   "privateValue": 2765890203.68,
   "unplacedValue": 0,
-  "totalValue": 9780091182.16,
-  "positionsCount": 475,
+  "totalValue": 9776169588.27,
+  "positionsCount": 474,
   "entitiesCount": 11,
   "startupsCount": 0,
-  "accountsCount": 89
+  "accountsCount": 88
 };
 
 /** Account registry — one row per (provider, account no). Positions join on accountId. */
@@ -368,27 +368,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "noPositionsReason": null,
     "demat": {
       "printed": null,
-      "reason": "none of the 2 statements read for Bandhan Mutual Fund 8652064 prints a DP ID and Client ID"
-    }
-  },
-  {
-    "accountId": "bandhan-mutual-fund-8691267",
-    "provider": "Bandhan Mutual Fund",
-    "accountNo": "8691267",
-    "ownerId": "ankita-jaisinghani",
-    "owner": "Ankita Jaisinghani",
-    "strategy": null,
-    "engagement": "Direct",
-    "providerEngagement": "Mutual fund folio — Resident Individual",
-    "members": [],
-    "asOf": "2026-09-30",
-    "inceptionDate": null,
-    "capitalRecordTo": null,
-    "custodian": "Bandhan Mutual Fund",
-    "noPositionsReason": null,
-    "demat": {
-      "printed": null,
-      "reason": "the statement read for Bandhan Mutual Fund 8691267 prints no DP ID or Client ID"
+      "reason": "the statement read for Bandhan Mutual Fund 8652064 prints no DP ID or Client ID"
     }
   },
   {
@@ -2766,40 +2746,6 @@ export const BOOK_POSITIONS: Position[] = [
       "pointer": "/holdings/0",
       "effectiveOn": "2026-10-07"
     },
-    "avgCostDerived": true
-  },
-  {
-    "statementRecord": {
-      "document": "bandhan-mutual-fund-8691267-2026-09-30-holdings",
-      "pointer": "/holdings/0"
-    },
-    "securityKey": "bndh-l-and-mcf-dp-gr",
-    "security": "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
-    "symbol": null,
-    "isin": "INF194K01V89",
-    "accountId": "bandhan-mutual-fund-8691267",
-    "memberId": null,
-    "sector": "Unclassified",
-    "providerSector": null,
-    "assetClass": "Mutual Fund",
-    "marketSide": "listed",
-    "quantity": 24406.691,
-    "avgCost": 160.882,
-    "currentPrice": 160.677,
-    "costBasis": 3926598.38,
-    "marketValue": 3921593.89,
-    "unrealizedPnL": -5004.49,
-    "realizedPnL": null,
-    "costOfUnitsSold": null,
-    "returnPct": -0.13,
-    "stCostBasis": null,
-    "ltCostBasis": null,
-    "daysToLT": null,
-    "heldSince": null,
-    "priceAsOf": "2026-09-30",
-    "accruedIncome": null,
-    "dividendReceived": null,
-    "positionIrrPct": null,
     "avgCostDerived": true
   },
   {
@@ -24981,6 +24927,45 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "isin": "INF194K01V89",
+    "quantity": 24406.691,
+    "asOf": "2026-07-31",
+    "costBasis": 3926402.01,
+    "heldPurchases": {
+      "first": "2026-04-17",
+      "last": "2026-04-17",
+      "lots": 1
+    },
+    "cashRecord": [
+      {
+        "date": "2026-04-17",
+        "side": "buy",
+        "amount": 3926402.01
+      }
+    ],
+    "unitRecord": [
+      {
+        "date": "2026-04-17",
+        "units": 24406.691
+      }
+    ],
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "dividendReceived": null,
+    "evidence": [
+      {
+        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
+        "sheet": "Transactions since inception",
+        "rows": [
+          624,
+          625
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "isin": "INF740KA1RE3",
     "quantity": 123000,
     "asOf": "2026-07-31",
@@ -29543,55 +29528,42 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "panelComplete": false
   },
   {
-    "period": "2026-10-14",
-    "date": "2026-10-14",
-    "nav": 2780478415.54,
-    "accountsOnDate": 1,
-    "accountsCarried": 22,
+    "period": "2026-10-26",
+    "date": "2026-10-26",
+    "nav": 2802216145.78,
+    "accountsOnDate": 2,
+    "accountsCarried": 21,
     "flowIn": 0,
     "unreportedFlowValue": 0,
     "linkOpen": 2780478415.54,
-    "linkClose": 2780478415.54,
+    "linkClose": 2754088618.44,
     "linkAccounts": 22,
-    "panelComplete": false
-  },
-  {
-    "period": "2026-10-26",
-    "date": "2026-10-26",
-    "nav": 3217280140.16,
-    "accountsOnDate": 3,
-    "accountsCarried": 21,
-    "flowIn": 0,
-    "unreportedFlowValue": 415063994.38,
-    "linkOpen": 2780478415.54,
-    "linkClose": 3169152612.82,
-    "linkAccounts": 23,
     "panelComplete": true
   },
   {
     "period": "2026-11-02",
     "date": "2026-11-02",
-    "nav": 3217090113.17,
+    "nav": 2802026118.79,
     "accountsOnDate": 1,
-    "accountsCarried": 23,
+    "accountsCarried": 22,
     "flowIn": -1765,
     "unreportedFlowValue": 0,
-    "linkOpen": 3217280140.16,
-    "linkClose": 3217090113.17,
-    "linkAccounts": 24,
+    "linkOpen": 2802216145.78,
+    "linkClose": 2802026118.79,
+    "linkAccounts": 23,
     "panelComplete": true
   },
   {
     "period": "2026-11-03",
     "date": "2026-11-03",
-    "nav": 3235208454.85,
+    "nav": 2820144460.47,
     "accountsOnDate": 2,
-    "accountsCarried": 22,
+    "accountsCarried": 21,
     "flowIn": 0,
     "unreportedFlowValue": 0,
-    "linkOpen": 3217090113.17,
-    "linkClose": 3235208454.85,
-    "linkAccounts": 24,
+    "linkOpen": 2802026118.79,
+    "linkClose": 2820144460.47,
+    "linkAccounts": 23,
     "panelComplete": true
   }
 ];
@@ -29667,18 +29639,6 @@ export const BOOK_ACCOUNT_NAV_HISTORY: Record<string, NavPoint[]> = {
       "period": "2026-08-03",
       "date": "2026-08-03",
       "nav": 798563.95
-    }
-  ],
-  "bandhan-mutual-fund-8652064": [
-    {
-      "period": "2026-10-14",
-      "date": "2026-10-14",
-      "nav": 0
-    },
-    {
-      "period": "2026-10-26",
-      "date": "2026-10-26",
-      "nav": 415063994.38
     }
   ],
   "buoyant-capital-103472": [
@@ -30160,23 +30120,6 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
           "to": "2026-08-03",
           "basis": "units-unchanged",
           "net": 0
-        }
-      ]
-    },
-    {
-      "accountId": "bandhan-mutual-fund-8652064",
-      "points": 2,
-      "first": "2026-10-14",
-      "last": "2026-10-26",
-      "latestValue": 415063994.38,
-      "bookValue": 415063994.38,
-      "flowBasis": "unreported",
-      "steps": [
-        {
-          "from": "2026-10-14",
-          "to": "2026-10-26",
-          "basis": "unproven",
-          "net": null
         }
       ]
     },
@@ -30715,11 +30658,11 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "bookValue": 0.34
     },
     {
-      "accountId": "bandhan-mutual-fund-8691267",
+      "accountId": "bandhan-mutual-fund-8652064",
       "provider": "Bandhan Mutual Fund",
-      "accountNo": "8691267",
-      "date": "2026-09-30",
-      "bookValue": 3921593.89
+      "accountNo": "8652064",
+      "date": "2026-10-26",
+      "bookValue": 415063994.38
     },
     {
       "accountId": "baring-private-equity-india-fund-AIFM_BPEPF6_0584",
@@ -31150,14 +31093,14 @@ export const BOOK_ATTRIBUTION: Attribution = {
   "from": "2026-05-31",
   "to": "2026-11-03",
   "openValue": 2736600830.45,
-  "closeValue": 3235208454.85,
+  "closeValue": 2820144460.47,
   "priceEffect": -30438535.89,
   "tradeEffect": 83566773.34,
-  "enteredValue": 586446573.97,
+  "enteredValue": 171382579.59,
   "exitedValue": 99872612.94,
   "undecomposedValue": -41094574.09,
-  "bookValue": 9780091182.16,
-  "coveredBookValue": 3235771535.77,
+  "bookValue": 9776169588.27,
+  "coveredBookValue": 2820707541.39,
   "accounts": [
     {
       "accountId": "360-one-private-wealth-37702",
@@ -31224,23 +31167,6 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "undecomposedValue": 0,
       "rowsHeld": 1,
       "rowsEntered": 0,
-      "rowsExited": 0,
-      "rowsUnpriced": 0
-    },
-    {
-      "accountId": "bandhan-mutual-fund-8652064",
-      "from": "2026-10-14",
-      "to": "2026-10-26",
-      "days": 12,
-      "openValue": 0,
-      "closeValue": 415063994.38,
-      "priceEffect": 0,
-      "tradeEffect": 0,
-      "enteredValue": 415063994.38,
-      "exitedValue": 0,
-      "undecomposedValue": 0,
-      "rowsHeld": 2,
-      "rowsEntered": 2,
       "rowsExited": 0,
       "rowsUnpriced": 0
     },
@@ -33370,40 +33296,6 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "priceEffect": 35.55,
       "tradeEffect": 0,
       "returnPct": 0.5759
-    },
-    {
-      "securityKey": "bandhan-amc-ltd-bandhan-mf-bandhan-cash-fund-direct-pl-growth",
-      "security": "Bandhan Liquid Fund-Direct Plan-Growth",
-      "accountId": "bandhan-mutual-fund-8652064",
-      "from": "2026-10-14",
-      "to": "2026-10-26",
-      "openValue": 0,
-      "closeValue": 0,
-      "openPrice": 3447.7813,
-      "closePrice": 3451.1571,
-      "openQty": 0,
-      "closeQty": 0,
-      "kind": "held",
-      "priceEffect": 0,
-      "tradeEffect": 0,
-      "returnPct": null
-    },
-    {
-      "securityKey": "bandhan-amc-ltd-bandhan-mf-bandhan-overnight-fund-direct-growth",
-      "security": "Bandhan Overnight Fund-Direct Plan-Growth",
-      "accountId": "bandhan-mutual-fund-8652064",
-      "from": "2026-10-14",
-      "to": "2026-10-26",
-      "openValue": 0,
-      "closeValue": 0,
-      "openPrice": 1476.0657,
-      "closePrice": 1478.7935,
-      "openQty": 0,
-      "closeQty": 0,
-      "kind": "held",
-      "priceEffect": 0,
-      "tradeEffect": 0,
-      "returnPct": null
     },
     {
       "securityKey": "cash",
@@ -36228,40 +36120,6 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": null
     },
     {
-      "securityKey": "bandhan-amc-ltd-bandhan-mf-bandhan-arbitrage-fund-direct-pl-growth",
-      "security": "Bandhan Arbitrage Fund-Direct Plan-Growth",
-      "accountId": "bandhan-mutual-fund-8652064",
-      "from": "2026-10-14",
-      "to": "2026-10-26",
-      "openValue": null,
-      "closeValue": 7724469.33,
-      "openPrice": null,
-      "closePrice": 38.1316,
-      "openQty": null,
-      "closeQty": 202573.963,
-      "kind": "entered",
-      "priceEffect": null,
-      "tradeEffect": null,
-      "returnPct": null
-    },
-    {
-      "securityKey": "bndh-l-and-mcf-dp-gr",
-      "security": "Bandhan Large & Mid Cap Fund-Direct Plan-Growth",
-      "accountId": "bandhan-mutual-fund-8652064",
-      "from": "2026-10-14",
-      "to": "2026-10-26",
-      "openValue": null,
-      "closeValue": 407339525.05,
-      "openPrice": null,
-      "closePrice": 154.335,
-      "openQty": null,
-      "closeQty": 2639320.472,
-      "kind": "entered",
-      "priceEffect": null,
-      "tradeEffect": null,
-      "returnPct": null
-    },
-    {
       "securityKey": "cash",
       "security": "Cash",
       "accountId": "buoyant-capital-103472",
@@ -37604,20 +37462,6 @@ export const BOOK_CAPITAL_GAINS: EntityCG[] = [
     "entity": "Ajay Jaisinghani · Bandhan 8652064",
     "accountId": "bandhan-mutual-fund-8652064",
     "ownerId": "ajay-jaisinghani",
-    "realisedST": null,
-    "realisedLT": null,
-    "unrealisedST": null,
-    "unrealisedLT": null,
-    "periodFrom": null,
-    "periodTo": null,
-    "lots": 0,
-    "source": null,
-    "absent": "no capital gain statement issued for this account in this drop"
-  },
-  {
-    "entity": "Ankita Jaisinghani · Bandhan 8691267",
-    "accountId": "bandhan-mutual-fund-8691267",
-    "ownerId": "ankita-jaisinghani",
     "realisedST": null,
     "realisedLT": null,
     "unrealisedST": null,
@@ -39924,11 +39768,6 @@ export const BOOK_ACCOUNT_RETURN_RECORDS: Record<string, AccountReturnCoverage> 
   },
   "bandhan-mutual-fund-8652064": {
     "latestValuationDate": "2026-10-23",
-    "record": null,
-    "gap": "Opening valuation and complete dated cash flows are missing"
-  },
-  "bandhan-mutual-fund-8691267": {
-    "latestValuationDate": "2026-09-30",
     "record": null,
     "gap": "Opening valuation and complete dated cash flows are missing"
   },

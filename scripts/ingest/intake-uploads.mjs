@@ -368,6 +368,9 @@ function readEverything() {
 }
 
 const SEALED = /password|encrypt|sealed/i;
+const PR_REFUSED = /not permitted to create or approve pull requests/i;
+const PR_REFUSED_HOLD = "Verified, but GitHub refused to let the intake open its publication pull request. Allow GitHub Actions to create "
+  + "pull requests (Settings → Actions → General) or add a GLOW_INTAKE_TOKEN secret, then Try again.";
 
 /** One line per kind of finding, with its count: three repeats must not hide a fourth kind. */
 function heldSummary(issues) {
@@ -733,8 +736,14 @@ async function main() {
         results.set(keyOf(item), await monitorPublication(item.publication, { gh,
           currentBase: git(['rev-parse', `${REMOTE}/${MAIN}`]).out, credential: process.env.GLOW_DASHBOARD_PASSWORD,
           baseURL: process.env.GLOW_BASE_URL }));
-      } catch (error) { results.set(keyOf(item), { ...item.publication, status: 'processing', hold: null,
-        reason: 'Your statement is saved. Processing will continue automatically.', publicationDetail: `Publication check will retry: ${clip(error.message)}` }); }
+      } catch (error) {
+        // A refusal no retry can clear must not read as "processing" forever:
+        // the 2 Nov Kotak delivery sat verified for a day on this one error.
+        results.set(keyOf(item), PR_REFUSED.test(error.message)
+          ? { ...item.publication, status: 'held', hold: 'check-failed', reason: PR_REFUSED_HOLD, publicationDetail: clip(error.message) }
+          : { ...item.publication, status: 'processing', hold: null,
+            reason: 'Your statement is saved. Processing will continue automatically.', publicationDetail: `Publication check will retry: ${clip(error.message)}` });
+      }
     }
     for (const [key, result] of await intake(items.filter(i => !i.publication))) results.set(key, result);
   } catch (e) {
