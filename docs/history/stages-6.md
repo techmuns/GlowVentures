@@ -908,3 +908,9 @@
 - Live effect: Ajay's arbitrage moves from 28,067,435.434 units (₹31.90 Cr, sold or moved on 23 Sep and 1 Oct) to ₹2.81 Cr. Liquid BeES is ₹89.86 L on Ajay's demat, ₹2.58 Cr on Ankita's, ₹77.49 L on Aarti's and ₹38.63 L on Bharat's. The live book falls by about ₹25.6 Cr.
 - The Sources popup (`holdingSourceTrace`) still points at the count the statement prints, and it lists the note beside it.
 - `check:pages` re-expresses the carry in `withDepositoryFunds` / `withUnpricedStatementUnits` (`advisedUnits`). `test:ingest` gains `familyAdvisedBalances`.
+
+### Stage 10kb — KOTAK'S MULTI CAP FOLIOS COST THE DEMAT UNITS THEY REPORT
+
+- The client's Kotak ZIP (four folio statements, Apr 2025 – Nov 2026; Ajay, Ankita, Aarti, Bharat) was held in the statement inbox: `test:family` failed with it, `only exact owner/ISIN/quantity matches are recoverable`, 60 against 62.
+- The two records it removes are correct. Kotak folios 7111389 (Ajay) and 5372722 (Aarti) report the exact Multi Cap units (INF174KA1HV3) that the Motilal demats 1201090012539150 and 1201090012838335 recorded, and each folio prints a cost or ties one by FIFO. `recoverHoldingCosts` leaves a same-owner balance that another statement costs without a recovered record, and fund gates 5/7 value the folio rather than the demat.
+- `recoveredCosts.test.ts` names the two balances. It takes one off both pinned counts (records and costed live fund rows) for each folio that costs it, and it checks that the record and the demat row go when the folio arrives and stay until then. A scratch book with the two folio positions added reproduced 60 against 62 on the old test and passes on the new one.
