@@ -1,6 +1,6 @@
 # Return source coverage
 
-18 of 86 accounts have verified opening values, dated external capital and a closing valuation.
+18 of 90 accounts have verified opening values, dated external capital and a closing valuation.
 
 Each account ends at its own verified valuation date. The consolidated return must not include an uncovered account’s closing value without its opening stake and cash history.
 
@@ -55,7 +55,11 @@ Historical opening NAVs come from AMFI’s [31 March 2026 published file](https:
 | Invesco Mutual Fund | 3041491145 | Ajay Jaisinghani | 2026-09-30 | 2026-09-30 | Complete through the selected date |
 | Invesco Mutual Fund | 3041794916 | Ankita Jaisinghani | 2026-09-30 | — | Nil throughout the verified period through 2026-09-30; no invested capital to measure |
 | Kotak Mahindra Mutual Fund | 4295974 | Hope India Trust | 2026-09-30 | — | Opening valuation and complete dated cash flows are missing |
+| Kotak Mahindra Mutual Fund | 5372722 | Aarti Jaisinghani | 2026-11-02 | — | Opening valuation and complete dated cash flows are missing |
+| Kotak Mahindra Mutual Fund | 7111389 | Ajay Jaisinghani | 2026-11-02 | — | Opening valuation and complete dated cash flows are missing |
 | Kotak Mahindra Mutual Fund | 7125255 | Ajay Jaisinghani | 2026-09-30 | 2026-09-30 | Complete through the selected date |
+| Kotak Mahindra Mutual Fund | 7125319 | Ankita Jaisinghani | 2026-11-02 | — | Nil throughout the verified period through 2026-11-02; no invested capital to measure |
+| Kotak Mahindra Mutual Fund | 7125555 | Bharat Jaisinghani | 2026-11-02 | — | Nil throughout the verified period through 2026-11-02; no invested capital to measure |
 | LKP Securities | 98245 | Bharat Jaisinghani | 2026-08-04 | — | Opening valuation and complete dated cash flows are missing |
 | Marathon Trends Advisory Pvt Ltd | 5110758 | Ankita Jaisinghani | 2026-09-09 | — | this manager's statements in the drop — its capital-gain, dividend-statement, income-expense, transaction-statement statement(s) — include no holding statement, so nothing here states what this account holds or what it is worth at 2026-09-09; its transaction statement's last trade is dated 2025-07-22. What would fill it is the manager's own holding statement for this account |
 | Marathon Trends Advisory Pvt Ltd | 5110837 | Ajay Jaisinghani | 2026-09-09 | — | this manager's statements in the drop — its capital-gain, dividend-statement, income-expense, transaction-statement statement(s) — include no holding statement, so nothing here states what this account holds or what it is worth at 2026-09-09; its transaction statement's last trade is dated 2025-07-23. What would fill it is the manager's own holding statement for this account |
