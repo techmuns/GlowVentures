@@ -8,7 +8,7 @@ export type { ActionFeed, ResearchAction } from "../../shared/corporateActions.m
 
 export type ActionLine = {
   action: ResearchAction;
-  status: "in-statement" | "upcoming" | "adjusted" | "declared" | "elective" | "needs-review";
+  status: "in-statement" | "in-roll" | "upcoming" | "adjusted" | "declared" | "elective" | "needs-review";
   quantity: number | null; amount: number | null; reason: string | null;
 };
 export type ActionReturn = {
@@ -136,12 +136,19 @@ export function projectActions(p: Position & { quantity: number }, statementDate
   qi.push(...di.filter((issue) => issue !== COVERAGE_GAP || lag > SHARE_EVENT_LEAD_DAYS));
   let quantity = p.quantity, cash = 0;
   const events = actionsFor(p, feed);
+  const carried = p.rolledForward?.shareEvents ?? [];
   const seen = new Map<string, ResearchAction>();
   for (const action of events) {
     const date = action.exDate;
     const line: ActionLine = { action, status: "needs-review", quantity: null, amount: null, reason: null };
     result.lines.push(line);
     if (date && date <= statementDate) { line.status = "in-statement"; continue; }
+    // A SPLIT THE ROLL ALREADY CARRIES (Stage 10kk): the adviser's record put
+    // the holding's lots through it, so its units are post-split and the
+    // factor is not applied a second time.
+    if (carried.some((e) => e.type === action.type && e.exDate === date && action.factor !== null && Math.abs(e.factor - action.factor) < 1e-9)) {
+      line.status = "in-roll"; line.reason = "Already in the units the adviser's trade record carries"; continue;
+    }
     if (date && date > through) { line.status = "upcoming"; continue; }
     if (isHolderElective(action.type)) { line.status = "elective"; line.reason = HOLDER_ELECTIVE; continue; }
     let reason = action.issue;
@@ -241,7 +248,7 @@ export function applyCorporateActionQuotes(
       // A SHARE EVENT INSIDE THE ROLL cannot be projected: the tape's quantity
       // may already carry it (a bonus credited to the demat) while the opening
       // mark is pre-event, so neither applying its factor nor omitting it is safe.
-      if (plan.lines.some((l) => (l.action.type === "split" || l.action.type === "bonus")
+      if (plan.lines.some((l) => (l.action.type === "split" || l.action.type === "bonus") && l.status !== "in-roll"
         && !!l.action.exDate && l.action.exDate > start && l.action.exDate <= rf.through)) {
         plan.quantityIssues.push("A share adjustment falls between the statement and the account's later trades; a newer holding balance is required");
       }

@@ -58,7 +58,10 @@ for (const [isin, units, cost] of bought) {
       && p.rolledForward.source === "adviser-report" && p.depositoryUnits?.kind === "adviser-trades" && p.costUnavailable === false && !!p.symbol,
     p ? `${p.symbol} ${p.rolledForward?.quantity}` : "missing");
 }
-ok("TAAL, split 1:5 on 22 Sep in the report's own non-exchange entries, is not rolled", !BOOK_SHARE_ROLLS.some((r) => /TAAL/i.test(r.security)));
+const taalRoll = roll(AJAY, "INE524T01029");
+ok("TAAL: 4,000 bought in September, carried through the report's own 22 Sep 5-for-1 SPLIT block to 20,000 (Stage 10kk)",
+  taalRoll?.quantity === 20000 && taalRoll.costBasis === 18009805 && taalRoll.trades === 4
+    && JSON.stringify(taalRoll.shareEvents) === JSON.stringify([{ type: "split", exDate: "2026-09-22", factor: 5 }]));
 
 // ── priced at the roll ────────────────────────────────────────────────────────
 const krbl = cand(AJAY, "INE001B01026")!;
@@ -72,6 +75,24 @@ ok("a fixture quote values KRBL at the rolled 67,500 units, with the report's co
   !!live?.live && live.quantity === 67500 && live.marketValue === 67500 * 440 && live.costBasis === 29581583
     && live.unrealizedPnL === 67500 * 440 - 29581583, live ? `${live.quantity} × ${live.currentPrice}` : "no row");
 ok("...and strikes no period return: the units had no mark on the statement's date", live?.realizedLotsAfter === 0);
+
+// ── a split the roll already carries (Stage 10kk) ─────────────────────────────
+const taal = cand(AJAY, "INE524T01029")!;
+ok("TAAL is a candidate on Ajay's demat with an NSE symbol and the split on its roll",
+  !!taal?.symbol && taal.rolledForward?.quantity === 20000 && taal.rolledForward.shareEvents?.[0]?.factor === 5, taal?.symbol ?? "missing");
+const taalSplit: ActionFeed["rows"][number] = { id: "INE524T01029|EQ|2026-09-22|split", ticker: taal.symbol!, isin: "INE524T01029", company: "TAAL Tech Limited",
+  type: "split", exDate: "2026-09-22", recordDate: "2026-09-22", purpose: "Face Value Split (Sub-Division) - From Rs 10/- Per Share To Rs 2/- Per Share",
+  source: "NSE", sourceUrl: "test", factor: 5, cashPerShare: null, issue: null };
+const taalFeed: QuoteFeed = { ...feed, quotes: { [taal.symbol!]: { ...feed.quotes[krbl.symbol!], price: 900, prevClose: 890 } } };
+const taalActions = (rows: ActionFeed["rows"]): ActionFeed => ({ ...actions, symbols: [taal.symbol!], isins: [taal.isin!], rows });
+const taalLive = depositoryShareHoldings(taalFeed, taalActions([taalSplit]), [taal])[0];
+ok("a capture listing the same split prices TAAL at the roll's 20,000 units — the split is not applied twice",
+  !!taalLive?.live && taalLive.quantity === 20000 && taalLive.marketValue === 20000 * 900 && taalLive.costBasis === 18009805,
+  taalLive ? `${taalLive.quantity} × ${taalLive.currentPrice}` : "no row");
+const unwitnessed = { ...taal, rolledForward: { ...taal.rolledForward!, shareEvents: undefined } };
+ok("the same split on a roll that does not carry it withholds the price", depositoryShareHoldings(taalFeed, taalActions([taalSplit]), [unwitnessed]).length === 0);
+ok("a capture whose split ratio differs from the report's withholds the price",
+  depositoryShareHoldings(taalFeed, taalActions([{ ...taalSplit, factor: 2 }]), [taal]).length === 0);
 
 // ── the gates on constructed rolls ───────────────────────────────────────────
 const base = shareCandidates().filter((p) => p.accountId === AJAY && !p.rolledForward);

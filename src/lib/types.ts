@@ -358,6 +358,8 @@ export type Position = {
     trades: number;
     source?: "review" | "adviser-report";
     hprUnavailableReason?: string;
+    /** Splits the roll's own record already carries in `quantity` (Stage 10kk); the corporate-action gate does not apply them again. */
+    shareEvents?: ShareEvent[];
   };
   /**
    * (unrealised + realised) ÷ (cost of units held + cost of units sold), in
@@ -1161,8 +1163,13 @@ export type ShareRoll = {
   realizedPnL: number;
   costOfUnitsSold: number;
   trades: number;
+  /** A split inside the roll, read off the report's own SPLIT block (Stage 10kk). */
+  shareEvents?: ShareEvent[];
   report: { path: string; asOf: string; sheet: string; rows: number[] };
 };
+
+/** A share split a rolled quantity already carries: its ex-date and whole factor. */
+export type ShareEvent = { type: "split"; exDate: string; factor: number };
 
 /**
  * A MOTILAL DEMAT FUND BALANCE CARRIED TO THE FAMILY'S NOTE (Stage 10ka) —

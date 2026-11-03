@@ -8,7 +8,7 @@ Direct holdings, recorded depository balances and companies disclosed by funds
 are matched by exact ISIN, verified trading symbol or exact normalized listing
 name. Ambiguous identities are refused. Debt ISINs never price equity.
 
-- 622 quote keys; 650 security/issuer keys; 622 listed ISINs.
+- 625 quote keys; 653 security/issuer keys; 625 listed ISINs.
 - 4 BSE quote keys.
 - Unmapped legacy symbols: none.
 

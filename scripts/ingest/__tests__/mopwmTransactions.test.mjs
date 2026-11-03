@@ -5,7 +5,7 @@
 import assert from "node:assert/strict";
 import { classify } from "../lib/classify.mjs";
 import {
-  MOPWM_TRANSACTIONS, MOTILAL_DEMAT, dmyToIso, loadMopwmTransactions, mopwmRowsFor, replayMopwmRows, reportDate, rollMopwmShareTrades,
+  MOPWM_TRANSACTIONS, MOTILAL_DEMAT, dmyToIso, splitOf, loadMopwmTransactions, mopwmRowsFor, replayMopwmRows, reportDate, rollMopwmShareTrades,
 } from "../../lib/mopwmTransactions.mjs";
 import { readSpreadsheet } from "../lib/sheet.mjs";
 import fs from "node:fs";
@@ -106,8 +106,27 @@ assert.match(replayMopwmRows(mopwmRowsFor(report, { isin: "INE1CDF01017", accoun
     [0, 5, 500, "d1"], "a share bought since lands on the demat the report already reproduces");
   const wrongUnits = rollMopwmShareTrades({ path: "x", asOf: "2026-10-23", rows }, { accounts: [acct(1)], records: [{ ...recs[0], quantity: 11 }, recs[1]] });
   assert.match(wrongUnits.refused.find((r) => r.security === AX).reason, /holds 10 on 2026-07-31 where the statement records 11/, "gate 4: the record must be whole");
-  const split = rollMopwmShareTrades({ path: "x", asOf: "2026-10-23", rows: [...rows, t(6, "2026-09-22", "PURCHASE", 5, 0.01, KR, "SPLIT/22/09/2026/1")] }, { accounts: [acct(1)], records: recs });
-  assert.match(split.refused.find((r) => r.security === KR).reason, /SPLIT entry, not a trade/, "gate 1: exchange trades only");
+  const merger = rollMopwmShareTrades({ path: "x", asOf: "2026-10-23", rows: [...rows, t(6, "2026-09-22", "PURCHASE", 5, 0.01, KR, "MERG/22/09/2026/1")] }, { accounts: [acct(1)], records: recs });
+  assert.match(merger.refused.find((r) => r.security === KR).reason, /MERG entry, not a trade/, "gate 1: exchange trades and whole splits only");
+
+  // A SPLIT block (Stage 10kk): every lot out at its own amount and back at
+  // five times its units — one switch of the holding into itself.
+  const S = "SPLIT/22/09/2026/1";
+  const kr2 = t(13, "2026-09-02", "PURCHASE", 3, 330, KR);
+  const lotsOut = [t(20, "2026-09-22", "SELL", 5, 500, KR, S), t(21, "2026-09-22", "SELL", 3, 330, KR, S)];
+  const lotsIn = [t(22, "2026-09-22", "PURCHASE", 25, 500, KR, S), t(23, "2026-09-22", "PURCHASE", 15, 330, KR, S)];
+  const later = t(24, "2026-10-01", "SELL", 10, 160, KR);
+  const split = rollMopwmShareTrades({ path: "x", asOf: "2026-10-23", rows: [...rows, kr2, ...lotsOut, ...lotsIn, later] }, { accounts: [acct(1)], records: recs });
+  const kr = split.rolls.find((r) => r.isin === "INE001B01026");
+  assert.deepEqual([kr.quantity, kr.costBasis, kr.costOfUnitsSold, kr.realizedPnL, kr.trades, kr.through], [30, 630, 200, -40, 3, "2026-10-01"],
+    "8 bought, ×5 = 40, FIFO sells 10 of the first lot's 25 (cost 500 × 10/25 = 200, for 160); the split is not a trade");
+  assert.deepEqual(kr.shareEvents, [{ type: "split", exDate: "2026-09-22", factor: 5 }], "the roll names the split its units carry");
+  assert.deepEqual(splitOf([...lotsOut, ...lotsIn], "X").split, { type: "split", exDate: "2026-09-22", factor: 5 });
+  assert.match(splitOf([lotsOut[0], { ...lotsIn[0], amount: 450 }], "X").reason, /does not come back at its own amount/, "a lot must keep its amount");
+  assert.match(splitOf([lotsOut[0], { ...lotsIn[0], qty: 12 }], "X").reason, /not a whole-number split/);
+  assert.match(splitOf([lotsOut[0], lotsIn[0], lotsIn[1]], "X").reason, /same number of lots/);
+  const partial = rollMopwmShareTrades({ path: "x", asOf: "2026-10-23", rows: [...rows, kr2, lotsOut[0], lotsIn[0]] }, { accounts: [acct(1)], records: recs });
+  assert.match(partial.refused.find((r) => r.security === KR).reason, /splits 5 units where the record holds 8/, "a split must take the whole holding");
   const unknown = rollMopwmShareTrades({ path: "x", asOf: "2026-10-23", rows: [t(1, "2026-09-01", "PURCHASE", 1, 10, "Nobody Ltd")] }, { accounts: [acct(1)], records: [] });
   assert.match(unknown.refused[0].reason, /no alias/, "gate 2: an exact alias");
   const twoDemats = rollMopwmShareTrades({ path: "x", asOf: "2026-10-23", rows }, { accounts: [acct(1), acct(2)], records: [...recs, { ...recs[1], accountId: "d2" }] });
@@ -119,17 +138,21 @@ assert.match(replayMopwmRows(mopwmRowsFor(report, { isin: "INE1CDF01017", accoun
     "only a Motilal demat");
 
   // The real workbook, against the book's own statement records: the eight
-  // rolls the family approved on 28 Oct 2026, and TAAL's split refused.
+  // rolls the family approved on 28 Oct 2026, and TAAL carried through its
+  // 22 Sep split (Stage 10kk).
   const book = fs.readFileSync("src/data/glowData.ts", "utf8");
   const committed = JSON.parse(/export const BOOK_SHARE_ROLLS: ShareRoll\[\] = (\[[\s\S]*?\n\]);/.exec(book)[1]);
   assert.deepEqual(committed.map((r) => [r.accountId.slice(-16), r.isin, r.statementQuantity, r.quantity]), [
     ["1201090012539150", "INE559A01017", 15772, 0], ["1201090012539150", "INE001B01026", 0, 67500],
-    ["1201090012539150", "INE589A01014", 32000, 0], ["1201090012539150", "INE011K01018", 0, 24250],
-    ["1201090012539150", "INE358U01012", 0, 27500], ["1201090012838316", "INE238A01034", 7300, 0],
+    ["1201090012539150", "INE589A01014", 32000, 0], ["1201090012539150", "INE524T01029", 0, 20000],
+    ["1201090012539150", "INE011K01018", 0, 24250], ["1201090012539150", "INE358U01012", 0, 27500],
+    ["1201090012838316", "INE238A01034", 7300, 0],
     ["1201090012838316", "INE090A01021", 14500, 0], ["1201090012838316", "INE062A01020", 27750, 0],
   ], "the committed book carries exactly the reconciled share trades");
   assert.ok(committed.every((r) => r.report.path === MOPWM_TRANSACTIONS && r.report.asOf === "2026-10-23"));
-  assert.ok(!committed.some((r) => /TAAL/.test(r.security)), "TAAL's 22 Sep split is not an exchange trade");
+  const taal = committed.find((r) => /TAAL/.test(r.security));
+  assert.deepEqual([taal.costBasis, taal.trades, taal.shareEvents], [18009805, 4, [{ type: "split", exDate: "2026-09-22", factor: 5 }]],
+    "TAAL: 4,000 bought for ₹1,80,09,805 in September, 20,000 after its 22 Sep 5-for-1 split");
 }
 
 console.log("mopwmTransactions: prefixed workbook read in full, owners, classification, FIFO replay, identity gates and share rolls passed");

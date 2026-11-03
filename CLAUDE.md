@@ -446,7 +446,9 @@ Never derive one side from the others.
   (Stage 10cz); those rows are quantities on the statement basis.
 - **MOPWM's transaction report moves Motilal demat SHARES only** (Stage 10iw):
   its later NSE/BSE trades roll those balances forward on the live basis
-  (`BOOK_SHARE_ROLLS`). Its fund rows move no quantity until the family answers
+  (`BOOK_SHARE_ROLLS`), through a SPLIT block that restates every lot at its own
+  amount (Stage 10kk, TAAL); the gate does not apply a split the roll carries
+  (`shareEvents`). Its fund rows move no quantity until the family answers
   about the 1 Oct 2026 "redemptions".
 - **The family's liquid-holdings note of 21 Oct 2026** (Stage 10ka,
   `scripts/ingest/reference/familyAdvisedBalances.mjs`) carries five Motilal demat
