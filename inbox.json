@@ -9,60 +9,76 @@
      "name": "HELIOS ANKITA ACCOUNT STATEMENT FROM 7-AUG-26 TO 3-NOV-26.pdf",
      "size": 277252,
      "blob": "df97194410390f0acef68bb2cfa12d227b16e4e1",
-     "status": "processing",
+     "status": "duplicate",
      "hold": null,
      "reason": null,
      "landedAs": [],
-     "providers": [],
-     "docKeys": [],
+     "providers": [
+      "Helios Mutual Fund"
+     ],
+     "docKeys": [
+      "helios-mutual-fund-10056154-2026-11-03-holdings"
+     ],
      "commit": null,
      "run": null,
-     "updatedAt": "2026-11-03T10:02:25.754Z",
+     "updatedAt": "2026-11-03T10:02:36.283Z",
      "processor": "github"
     },
     {
      "name": "HELIOS BHARAT ACCOUNT STATEMENT FROM 16-OCT-24 TO 23-NOV-26.pdf",
      "size": 277513,
      "blob": "e4f5baa23c2b8b15950b8c0d22a0ad9158a9632b",
-     "status": "processing",
+     "status": "duplicate",
      "hold": null,
      "reason": null,
      "landedAs": [],
-     "providers": [],
-     "docKeys": [],
+     "providers": [
+      "Helios Mutual Fund"
+     ],
+     "docKeys": [
+      "helios-mutual-fund-10063876-2026-11-03-holdings"
+     ],
      "commit": null,
      "run": null,
-     "updatedAt": "2026-11-03T10:02:25.754Z",
+     "updatedAt": "2026-11-03T10:02:36.283Z",
      "processor": "github"
     },
     {
      "name": "HELIOS AJAY ACCOUNT STATEMENT FROM 7-AUG-24 TO 3-NOV-26.pdf",
      "size": 276985,
      "blob": "ec1af825d25920d817137b3105d8164c3ad50a70",
-     "status": "processing",
+     "status": "duplicate",
      "hold": null,
      "reason": null,
      "landedAs": [],
-     "providers": [],
-     "docKeys": [],
+     "providers": [
+      "Helios Mutual Fund"
+     ],
+     "docKeys": [
+      "helios-mutual-fund-10056128-2026-11-03-holdings"
+     ],
      "commit": null,
      "run": null,
-     "updatedAt": "2026-11-03T10:02:25.754Z",
+     "updatedAt": "2026-11-03T10:02:36.283Z",
      "processor": "github"
     },
     {
      "name": "HELIOS AJAY ACCOUNT STATEMENT FROM 6-AUG-26 TO 03-NOV-26.pdf",
      "size": 280671,
      "blob": "c209672bc37c463127eb5821d9cf239f7b1e813e",
-     "status": "processing",
+     "status": "duplicate",
      "hold": null,
      "reason": null,
      "landedAs": [],
-     "providers": [],
-     "docKeys": [],
+     "providers": [
+      "Helios Mutual Fund"
+     ],
+     "docKeys": [
+      "helios-mutual-fund-10355977-2026-11-03-holdings"
+     ],
      "commit": null,
      "run": null,
-     "updatedAt": "2026-11-03T10:02:25.754Z",
+     "updatedAt": "2026-11-03T10:02:36.283Z",
      "processor": "github"
     }
    ]
