@@ -21,7 +21,7 @@
  "warnings": [
   {
    "code": "price-date-precedes-holding-date",
-   "detail": "the holdings are stated as at 2026-10-31 and every mark on them is the close of 2026-10-30. Both dates are the statement's own; the account is dated by its holdings and the price date is recorded here."
+   "detail": "the holdings are stated as at 2026-10-31 and every mark on them is the close of 2026-10-30. Both dates are the statement's own; the account is dated by its holdings and the price date is recorded here. The report was run on 2026-11-02 at 16:51, and no weekday lies between 2026-10-30 and that run, so the run agrees with the label."
   },
   {
    "code": "value-stitched-across-lines",
