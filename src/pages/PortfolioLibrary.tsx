@@ -123,7 +123,7 @@ function UploadedBlock({ docs }: { docs: HoldingDocument[] }) {
 
 /** The file types a holding's uploads come in, as a folder tile names them. */
 const uploadFormats = (docs: HoldingDocument[]) => [...new Set(docs.map((d) => extOf(d.file.name).toUpperCase() || "FILE"))].sort();
-const NO_STATUS: Record<LibraryDoc["status"], number> = { ok: 0, partial: 0, failed: 0, encrypted: 0, "held-out": 0, "never-arrived": 0 };
+const NO_STATUS: Record<LibraryDoc["status"], number> = { ok: 0, partial: 0, failed: 0, encrypted: 0, "held-out": 0, "never-arrived": 0, "re-sent": 0 };
 
 /** The opened folder: a header naming the security, then one block per file format. */
 function OpenFolder({ folder, onBack, uploaded }: { folder: SecurityFolder; onBack: () => void; uploaded: HoldingDocument[] }) {

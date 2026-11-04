@@ -90,6 +90,9 @@ export const STATEMENT_NOTES = Object.freeze(new Set([
   // the ISIN is the exchange master's, or none where no master carries the symbol.
   "symbol-isin-from-instrument-master",
   "symbol-not-resolved",
+  // A broker trade report that clips a scrip name, named as the account's holding
+  // it sold on the account's own counts (providers/hdfcSecurities.mjs).
+  "scrip-name-evidenced",
   // A scanned row no text-layer statement names: ISIN and quantity checked, spelling not.
   "security-name-from-scan",
 ]));

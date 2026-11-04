@@ -19,8 +19,8 @@ export const BOOK_AS_OF = "2026-11-03";
 export const BOOK_SUMMARY: BookSummary = {
   "asOf": "2026-11-03",
   "listedValue": 7968401917.36,
-  "privateValue": 2745889803.68,
-  "unplacedValue": 40979575,
+  "privateValue": 2786869378.68,
+  "unplacedValue": 0,
   "totalValue": 10755271296.04,
   "positionsCount": 506,
   "entitiesCount": 11,
@@ -906,7 +906,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "noPositionsReason": null,
     "demat": {
       "printed": null,
-      "reason": "the statement read for HDFC Securities 3110320 prints no DP ID or Client ID"
+      "reason": "none of the 2 statements read for HDFC Securities 3110320 prints a DP ID and Client ID"
     }
   },
   {
@@ -10189,6 +10189,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-31",
+      "buys": 0,
+      "sells": 109,
+      "unaccounted": null,
+      "held": null,
+      "reason": "the transaction statements end on 2026-10-31, before this holding's own statement of 2026-11-02, so the trades between the two are not in this drop"
+    },
     "priceAsOf": "2026-11-02",
     "accruedIncome": null,
     "dividendReceived": null,
@@ -10319,6 +10328,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-31",
+      "buys": 0,
+      "sells": 330,
+      "unaccounted": null,
+      "held": null,
+      "reason": "the transaction statements end on 2026-10-31, before this holding's own statement of 2026-11-02, so the trades between the two are not in this drop"
+    },
     "priceAsOf": "2026-11-02",
     "accruedIncome": null,
     "dividendReceived": null,
@@ -11226,7 +11244,7 @@ export const BOOK_POSITIONS: Position[] = [
     "sector": "Unclassified",
     "providerSector": null,
     "assetClass": "AIF",
-    "marketSide": null,
+    "marketSide": "private",
     "quantity": 2275000,
     "avgCost": null,
     "currentPrice": null,
@@ -57013,6 +57031,3083 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
       "quantity": 25,
       "price": 13859.9824,
       "amount": 347123.26
+    }
+  ],
+  "hdfc-securities-3110320|man-industries-india": [
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 255,
+      "price": 940,
+      "amount": 239394.78
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 870,
+      "price": 940,
+      "amount": 816758.6
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 13,
+      "price": 940,
+      "amount": 12204.45
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 13,
+      "price": 940,
+      "amount": 12204.45
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 510,
+      "price": 940,
+      "amount": 478789.53
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 2269,
+      "price": 940,
+      "amount": 2130144
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 3987,
+      "price": 940,
+      "amount": 3743007.49
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 53,
+      "price": 940,
+      "amount": 49756.56
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 53,
+      "price": 940,
+      "amount": 49756.56
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 53,
+      "price": 940,
+      "amount": 49756.56
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 1208,
+      "price": 940,
+      "amount": 1134074.01
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 723,
+      "price": 940,
+      "amount": 678754.57
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 454,
+      "price": 940,
+      "amount": 426216.56
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 2435,
+      "price": 940,
+      "amount": 2285985.28
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 649,
+      "price": 940,
+      "amount": 609283.14
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 5,
+      "price": 940,
+      "amount": 4694.04
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 5,
+      "price": 940,
+      "amount": 4694.04
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 5,
+      "price": 940,
+      "amount": 4694.04
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 5,
+      "price": 940,
+      "amount": 4694.04
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 45,
+      "price": 940,
+      "amount": 42246.14
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 45,
+      "price": 940,
+      "amount": 42246.14
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 1,
+      "price": 940,
+      "amount": 938.8
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 1,
+      "price": 940,
+      "amount": 938.8
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 1,
+      "price": 940,
+      "amount": 938.8
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 1,
+      "price": 940,
+      "amount": 938.8
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 1,
+      "price": 940,
+      "amount": 938.8
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 1,
+      "price": 940,
+      "amount": 938.8
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 12,
+      "price": 940,
+      "amount": 11265.64
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 156,
+      "price": 940,
+      "amount": 146453.26
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 50,
+      "price": 940,
+      "amount": 46940.15
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 200,
+      "price": 940,
+      "amount": 187760.6
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 816,
+      "price": 940,
+      "amount": 766063.22
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 51,
+      "price": 940,
+      "amount": 47878.97
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 500,
+      "price": 940,
+      "amount": 469401.5
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 500,
+      "price": 940,
+      "amount": 469401.5
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 981,
+      "price": 940,
+      "amount": 920965.73
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 18,
+      "price": 940,
+      "amount": 16898.46
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 18,
+      "price": 940,
+      "amount": 16898.46
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 18,
+      "price": 940,
+      "amount": 16898.46
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 35,
+      "price": 940,
+      "amount": 32858.12
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 212,
+      "price": 940,
+      "amount": 199026.22
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 419,
+      "price": 940,
+      "amount": 393358.45
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 522,
+      "price": 940,
+      "amount": 490055.16
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 377,
+      "price": 940,
+      "amount": 353928.73
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 73,
+      "price": 940,
+      "amount": 68532.62
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 73,
+      "price": 940,
+      "amount": 68532.62
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 73,
+      "price": 940,
+      "amount": 68532.62
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 258,
+      "price": 940,
+      "amount": 242211.17
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 400,
+      "price": 940,
+      "amount": 375521.2
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 126,
+      "price": 940,
+      "amount": 118289.17
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 7,
+      "price": 940,
+      "amount": 6571.61
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 47,
+      "price": 940,
+      "amount": 44123.74
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 134,
+      "price": 940,
+      "amount": 125799.59
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 14,
+      "price": 940,
+      "amount": 13143.24
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 3986,
+      "price": 940,
+      "amount": 3742068.71
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 4000,
+      "price": 940,
+      "amount": 3755211.95
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 742,
+      "price": 940,
+      "amount": 696591.8
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 204,
+      "price": 940,
+      "amount": 191515.81
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 147,
+      "price": 940,
+      "amount": 138004.04
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 147,
+      "price": 940,
+      "amount": 138004.04
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 10,
+      "price": 940,
+      "amount": 9388.02
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 10,
+      "price": 940,
+      "amount": 9388.02
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 1250,
+      "price": 940,
+      "amount": 1173503.72
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 1706,
+      "price": 940,
+      "amount": 1601597.9
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 1435,
+      "price": 940,
+      "amount": 1347182.29
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 836,
+      "price": 940,
+      "amount": 784839.28
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 34,
+      "price": 940,
+      "amount": 31919.3
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 584,
+      "price": 940,
+      "amount": 548260.94
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 36,
+      "price": 940,
+      "amount": 33796.92
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 107,
+      "price": 940,
+      "amount": 100451.91
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 924,
+      "price": 940,
+      "amount": 867453.97
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 2,
+      "price": 940,
+      "amount": 1877.6
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 5,
+      "price": 940.2,
+      "amount": 4695.04
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 46,
+      "price": 940.2,
+      "amount": 43194.14
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 36,
+      "price": 940.15,
+      "amount": 33802.32
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 46,
+      "price": 940.15,
+      "amount": 43191.84
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 46,
+      "price": 940.15,
+      "amount": 43191.84
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 79,
+      "price": 940.15,
+      "amount": 74177.27
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 99,
+      "price": 940.1,
+      "amount": 92951.4
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 13,
+      "price": 940.1,
+      "amount": 12205.75
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 1,
+      "price": 940.1,
+      "amount": 938.9
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 250,
+      "price": 940.1,
+      "amount": 234725.73
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 8,
+      "price": 940.05,
+      "amount": 7510.82
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 67,
+      "price": 940.05,
+      "amount": 62903.16
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 8,
+      "price": 940,
+      "amount": 7510.42
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 5,
+      "price": 940.4,
+      "amount": 4696.04
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 79,
+      "price": 940.4,
+      "amount": 74197.01
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 13,
+      "price": 940.4,
+      "amount": 12209.64
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 2,
+      "price": 940.4,
+      "amount": 1878.4
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 14,
+      "price": 940.35,
+      "amount": 13148.14
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 50,
+      "price": 940.35,
+      "amount": 46957.65
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 50,
+      "price": 940.35,
+      "amount": 46957.65
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 18,
+      "price": 940.3,
+      "amount": 16903.83
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 8,
+      "price": 940.3,
+      "amount": 7512.82
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 50,
+      "price": 940.3,
+      "amount": 46955.15
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 13,
+      "price": 940.3,
+      "amount": 12208.35
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 14,
+      "price": 940.25,
+      "amount": 13146.74
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 79,
+      "price": 940.25,
+      "amount": 74185.16
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 2,
+      "price": 940.2,
+      "amount": 1878
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 79,
+      "price": 940.2,
+      "amount": 74181.21
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 1,
+      "price": 940.6,
+      "amount": 939.4
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 14,
+      "price": 940.55,
+      "amount": 13150.94
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 1,
+      "price": 940.55,
+      "amount": 939.35
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 24,
+      "price": 940.5,
+      "amount": 22543.28
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 14,
+      "price": 940.45,
+      "amount": 13149.54
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 79,
+      "price": 940.45,
+      "amount": 74200.96
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 31,
+      "price": 940.45,
+      "amount": 29116.85
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 31,
+      "price": 940.45,
+      "amount": 29116.85
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 31,
+      "price": 940.4,
+      "amount": 29115.31
+    }
+  ],
+  "hdfc-securities-3110320|vedanta": [
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 1324,
+      "price": 267.65,
+      "amount": 353917.46
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 437,
+      "price": 267.65,
+      "amount": 116814.14
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 75,
+      "price": 267.65,
+      "amount": 20048.19
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 304,
+      "price": 267.65,
+      "amount": 81262.01
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 110,
+      "price": 267.65,
+      "amount": 29404.03
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 1150,
+      "price": 267.65,
+      "amount": 307405.63
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 222,
+      "price": 267.65,
+      "amount": 59342.66
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 5,
+      "price": 267.6,
+      "amount": 1336.31
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 310,
+      "price": 267.6,
+      "amount": 82850.37
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 194,
+      "price": 267.6,
+      "amount": 51848.33
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 304,
+      "price": 267.6,
+      "amount": 81246.81
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 210,
+      "price": 267.6,
+      "amount": 56124.42
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 405,
+      "price": 267.6,
+      "amount": 108239.99
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 101,
+      "price": 267.6,
+      "amount": 26993.19
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 279,
+      "price": 267.6,
+      "amount": 74565.34
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 268,
+      "price": 267.6,
+      "amount": 71625.48
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 209,
+      "price": 267.6,
+      "amount": 55857.17
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 175,
+      "price": 267.6,
+      "amount": 46770.38
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 1150,
+      "price": 267.6,
+      "amount": 307348.14
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 71,
+      "price": 267.6,
+      "amount": 18975.42
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 196,
+      "price": 267.6,
+      "amount": 52382.85
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 632,
+      "price": 267.6,
+      "amount": 168907.86
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 992,
+      "price": 267.55,
+      "amount": 265071.61
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 237,
+      "price": 267.55,
+      "amount": 63328.59
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 196,
+      "price": 267.55,
+      "amount": 52373.05
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 16,
+      "price": 267.55,
+      "amount": 4275.35
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 1,
+      "price": 267.55,
+      "amount": 267.22
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 900,
+      "price": 267.55,
+      "amount": 240488.36
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 609,
+      "price": 267.55,
+      "amount": 162730.47
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 139,
+      "price": 267.55,
+      "amount": 37142.1
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 135,
+      "price": 267.55,
+      "amount": 36073.26
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 210,
+      "price": 267.5,
+      "amount": 56103.45
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 196,
+      "price": 267.5,
+      "amount": 52363.25
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 5,
+      "price": 267.5,
+      "amount": 1335.81
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 258,
+      "price": 267.5,
+      "amount": 68927.1
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 113,
+      "price": 267.5,
+      "amount": 30189.01
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 113,
+      "price": 267.5,
+      "amount": 30189.01
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 113,
+      "price": 267.5,
+      "amount": 30189.01
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 121,
+      "price": 267.5,
+      "amount": 32326.29
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 121,
+      "price": 267.5,
+      "amount": 32326.29
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 609,
+      "price": 267.5,
+      "amount": 162700.03
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 65,
+      "price": 267.5,
+      "amount": 17365.36
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 65,
+      "price": 267.5,
+      "amount": 17365.36
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 317,
+      "price": 267.5,
+      "amount": 84689.5
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 317,
+      "price": 267.5,
+      "amount": 84689.5
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 41,
+      "price": 267.5,
+      "amount": 10953.53
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 1,
+      "price": 267.5,
+      "amount": 267.17
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 1,
+      "price": 267.5,
+      "amount": 267.17
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 20,
+      "price": 267.5,
+      "amount": 5343.19
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 309,
+      "price": 267.5,
+      "amount": 82552.21
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 122,
+      "price": 267.5,
+      "amount": 32593.44
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 194,
+      "price": 267.5,
+      "amount": 51828.93
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 1221,
+      "price": 267.5,
+      "amount": 326201.5
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 75,
+      "price": 267.5,
+      "amount": 20036.94
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 6,
+      "price": 267.5,
+      "amount": 1602.96
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 6,
+      "price": 267.5,
+      "amount": 1602.96
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 327,
+      "price": 267.5,
+      "amount": 87361.09
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 153,
+      "price": 267.5,
+      "amount": 40875.37
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 139,
+      "price": 267.5,
+      "amount": 37135.15
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 112,
+      "price": 267.5,
+      "amount": 29921.85
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 277,
+      "price": 267.5,
+      "amount": 74003.14
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 17,
+      "price": 267.5,
+      "amount": 4541.72
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 575,
+      "price": 265.2,
+      "amount": 152296.54
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 468,
+      "price": 265.2,
+      "amount": 123956.16
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 29,
+      "price": 265.25,
+      "amount": 7682.49
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 154,
+      "price": 265.25,
+      "amount": 40796.69
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 9,
+      "price": 265.25,
+      "amount": 2384.22
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 575,
+      "price": 265.25,
+      "amount": 152325.29
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 80,
+      "price": 265.25,
+      "amount": 21193.09
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 576,
+      "price": 265.2,
+      "amount": 152561.41
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 100,
+      "price": 265.2,
+      "amount": 26486.37
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 45,
+      "price": 265.2,
+      "amount": 11918.85
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 218,
+      "price": 265.2,
+      "amount": 57740.25
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 90,
+      "price": 265.2,
+      "amount": 23837.72
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 19,
+      "price": 265.2,
+      "amount": 5032.41
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 20,
+      "price": 265.2,
+      "amount": 5297.27
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 34,
+      "price": 265.2,
+      "amount": 9005.36
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 2,
+      "price": 265.2,
+      "amount": 529.72
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 2362,
+      "price": 265.2,
+      "amount": 625607.67
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 70,
+      "price": 265.3,
+      "amount": 18547.46
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 70,
+      "price": 265.3,
+      "amount": 18547.46
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 70,
+      "price": 265.3,
+      "amount": 18547.46
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 70,
+      "price": 265.3,
+      "amount": 18547.46
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 70,
+      "price": 265.3,
+      "amount": 18547.46
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 70,
+      "price": 265.3,
+      "amount": 18547.46
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 70,
+      "price": 265.3,
+      "amount": 18547.46
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 70,
+      "price": 265.3,
+      "amount": 18547.46
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 70,
+      "price": 265.3,
+      "amount": 18547.46
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 5,
+      "price": 265.3,
+      "amount": 1324.83
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 5,
+      "price": 265.3,
+      "amount": 1324.83
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 5,
+      "price": 265.3,
+      "amount": 1324.83
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 5,
+      "price": 265.3,
+      "amount": 1324.83
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 5,
+      "price": 265.3,
+      "amount": 1324.83
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 5,
+      "price": 265.3,
+      "amount": 1324.83
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 5,
+      "price": 265.3,
+      "amount": 1324.83
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 5,
+      "price": 265.3,
+      "amount": 1324.83
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 120,
+      "price": 265.3,
+      "amount": 31795.63
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 120,
+      "price": 265.3,
+      "amount": 31795.63
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 120,
+      "price": 265.3,
+      "amount": 31795.63
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 120,
+      "price": 265.3,
+      "amount": 31795.63
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 120,
+      "price": 265.3,
+      "amount": 31795.63
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 120,
+      "price": 265.3,
+      "amount": 31795.63
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 120,
+      "price": 265.3,
+      "amount": 31795.63
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 120,
+      "price": 265.3,
+      "amount": 31795.63
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 120,
+      "price": 265.3,
+      "amount": 31795.63
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 265.3,
+      "amount": 264.98
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 111,
+      "price": 265.3,
+      "amount": 29410.96
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 61,
+      "price": 265.3,
+      "amount": 16162.76
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 8,
+      "price": 265.25,
+      "amount": 2119.3
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 265.25,
+      "amount": 264.93
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 15,
+      "price": 265.3,
+      "amount": 3974.46
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 15,
+      "price": 265.3,
+      "amount": 3974.46
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 15,
+      "price": 265.3,
+      "amount": 3974.46
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 15,
+      "price": 265.3,
+      "amount": 3974.46
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 11,
+      "price": 265.3,
+      "amount": 2914.61
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 265.35,
+      "amount": 265.03
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 265.35,
+      "amount": 265.03
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 265.35,
+      "amount": 265.03
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 265.35,
+      "amount": 265.03
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 265.35,
+      "amount": 265.03
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 265.35,
+      "amount": 265.03
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 265.35,
+      "amount": 265.03
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 265.35,
+      "amount": 265.03
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 265.35,
+      "amount": 265.03
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 152,
+      "price": 265.35,
+      "amount": 40282.05
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 152,
+      "price": 265.35,
+      "amount": 40282.05
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 152,
+      "price": 265.35,
+      "amount": 40282.05
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 152,
+      "price": 265.35,
+      "amount": 40282.05
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 152,
+      "price": 265.35,
+      "amount": 40282.05
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 152,
+      "price": 265.35,
+      "amount": 40282.05
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 152,
+      "price": 265.35,
+      "amount": 40282.05
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 152,
+      "price": 265.35,
+      "amount": 40282.05
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 144,
+      "price": 265.35,
+      "amount": 38161.94
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 10,
+      "price": 265.3,
+      "amount": 2649.63
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1012,
+      "price": 265.3,
+      "amount": 268143.09
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1294,
+      "price": 265.3,
+      "amount": 342862.79
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 2,
+      "price": 265.3,
+      "amount": 529.92
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 246,
+      "price": 265.35,
+      "amount": 65193.3
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 15,
+      "price": 265.35,
+      "amount": 3975.21
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 169,
+      "price": 265.4,
+      "amount": 44795.74
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 169,
+      "price": 265.4,
+      "amount": 44795.74
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 169,
+      "price": 265.4,
+      "amount": 44795.74
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 169,
+      "price": 265.4,
+      "amount": 44795.74
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 169,
+      "price": 265.4,
+      "amount": 44795.74
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 169,
+      "price": 265.4,
+      "amount": 44795.74
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 169,
+      "price": 265.4,
+      "amount": 44795.74
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 169,
+      "price": 265.4,
+      "amount": 44795.74
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 169,
+      "price": 265.4,
+      "amount": 44795.74
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 160,
+      "price": 265.4,
+      "amount": 42410.18
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 160,
+      "price": 265.4,
+      "amount": 42410.18
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 160,
+      "price": 265.4,
+      "amount": 42410.18
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 160,
+      "price": 265.4,
+      "amount": 42410.18
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 160,
+      "price": 265.4,
+      "amount": 42410.18
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 160,
+      "price": 265.4,
+      "amount": 42410.18
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 160,
+      "price": 265.4,
+      "amount": 42410.18
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 160,
+      "price": 265.4,
+      "amount": 42410.18
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 173,
+      "price": 265.4,
+      "amount": 45855.98
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 173,
+      "price": 265.4,
+      "amount": 45855.98
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 173,
+      "price": 265.4,
+      "amount": 45855.98
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 173,
+      "price": 265.4,
+      "amount": 45855.98
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 173,
+      "price": 265.4,
+      "amount": 45855.98
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 173,
+      "price": 265.4,
+      "amount": 45855.98
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 173,
+      "price": 265.4,
+      "amount": 45855.98
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 173,
+      "price": 265.4,
+      "amount": 45855.98
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 155,
+      "price": 265.4,
+      "amount": 41084.86
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 155,
+      "price": 265.4,
+      "amount": 41084.86
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 155,
+      "price": 265.4,
+      "amount": 41084.86
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 155,
+      "price": 265.4,
+      "amount": 41084.86
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 155,
+      "price": 265.4,
+      "amount": 41084.86
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 155,
+      "price": 265.4,
+      "amount": 41084.86
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 155,
+      "price": 265.4,
+      "amount": 41084.86
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 155,
+      "price": 265.4,
+      "amount": 41084.86
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 155,
+      "price": 265.4,
+      "amount": 41084.86
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 154,
+      "price": 265.4,
+      "amount": 40819.79
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 168,
+      "price": 265.4,
+      "amount": 44530.69
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 151,
+      "price": 265.4,
+      "amount": 40024.59
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 166,
+      "price": 265.4,
+      "amount": 44000.56
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 64,
+      "price": 265.35,
+      "amount": 16960.85
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 302,
+      "price": 265.35,
+      "amount": 80034.08
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 367,
+      "price": 265.35,
+      "amount": 97259.95
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 111,
+      "price": 265.35,
+      "amount": 29416.51
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 110,
+      "price": 265.35,
+      "amount": 29151.48
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 51,
+      "price": 265.35,
+      "amount": 13515.69
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 2,
+      "price": 265.4,
+      "amount": 530.12
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 2,
+      "price": 265.4,
+      "amount": 530.12
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 2,
+      "price": 265.4,
+      "amount": 530.12
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 2,
+      "price": 265.4,
+      "amount": 530.12
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 2,
+      "price": 265.4,
+      "amount": 530.12
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 2,
+      "price": 265.4,
+      "amount": 530.12
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 265.4,
+      "amount": 265.08
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 265.4,
+      "amount": 265.08
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 265.4,
+      "amount": 265.08
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 265.4,
+      "amount": 265.08
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 265.4,
+      "amount": 265.08
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 95,
+      "price": 265.4,
+      "amount": 25181.04
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 305,
+      "price": 265.4,
+      "amount": 80844.36
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1000,
+      "price": 265.4,
+      "amount": 265063.49
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 52,
+      "price": 265.4,
+      "amount": 13783.3
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 100,
+      "price": 263,
+      "amount": 26266.43
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 100,
+      "price": 263,
+      "amount": 26266.43
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 100,
+      "price": 263,
+      "amount": 26266.43
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 20,
+      "price": 263,
+      "amount": 5253.3
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 20,
+      "price": 263,
+      "amount": 5253.3
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 20,
+      "price": 263,
+      "amount": 5253.3
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 263,
+      "amount": 262.68
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 263,
+      "amount": 262.68
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 263,
+      "amount": 262.68
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 263,
+      "amount": 262.68
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 263,
+      "amount": 262.68
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 263,
+      "amount": 262.68
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 263,
+      "amount": 262.68
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 263,
+      "amount": 262.68
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 263,
+      "amount": 262.68
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 263,
+      "amount": 262.68
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 65,
+      "price": 263,
+      "amount": 17073.16
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 10,
+      "price": 263,
+      "amount": 2626.63
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 10,
+      "price": 263,
+      "amount": 2626.63
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 10,
+      "price": 263,
+      "amount": 2626.63
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 10,
+      "price": 263,
+      "amount": 2626.63
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 10,
+      "price": 263,
+      "amount": 2626.63
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 10,
+      "price": 263,
+      "amount": 2626.63
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 10,
+      "price": 263,
+      "amount": 2626.63
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 5,
+      "price": 263,
+      "amount": 1313.34
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 5,
+      "price": 263,
+      "amount": 1313.34
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 5,
+      "price": 263,
+      "amount": 1313.34
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 5,
+      "price": 263,
+      "amount": 1313.34
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 5,
+      "price": 263,
+      "amount": 1313.34
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 5,
+      "price": 263,
+      "amount": 1313.34
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 5,
+      "price": 263,
+      "amount": 1313.34
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 5,
+      "price": 263,
+      "amount": 1313.34
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 7,
+      "price": 263,
+      "amount": 1838.64
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 2,
+      "price": 263,
+      "amount": 525.32
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 2,
+      "price": 263,
+      "amount": 525.32
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 2,
+      "price": 263,
+      "amount": 525.32
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 6,
+      "price": 263,
+      "amount": 1575.99
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 6,
+      "price": 263,
+      "amount": 1575.99
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 150,
+      "price": 263,
+      "amount": 39399.63
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 3419,
+      "price": 263,
+      "amount": 898048.7
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 50,
+      "price": 263,
+      "amount": 13133.2
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 50,
+      "price": 263,
+      "amount": 13133.2
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 50,
+      "price": 263,
+      "amount": 13133.2
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 50,
+      "price": 263,
+      "amount": 13133.2
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 14,
+      "price": 263,
+      "amount": 3677.29
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 6693,
+      "price": 263,
+      "amount": 1758011.13
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 3000,
+      "price": 263,
+      "amount": 787992.44
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1800,
+      "price": 263,
+      "amount": 472795.47
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 500,
+      "price": 263,
+      "amount": 131332.08
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 220,
+      "price": 263,
+      "amount": 57786.1
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 21,
+      "price": 263,
+      "amount": 5515.94
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 21,
+      "price": 263,
+      "amount": 5515.94
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 12,
+      "price": 263,
+      "amount": 3151.96
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 12,
+      "price": 263,
+      "amount": 3151.96
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 30,
+      "price": 263,
+      "amount": 7879.93
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 600,
+      "price": 263,
+      "amount": 157598.49
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 38,
+      "price": 263,
+      "amount": 9981.23
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 25,
+      "price": 263,
+      "amount": 6566.59
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 40,
+      "price": 263,
+      "amount": 10506.57
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1000,
+      "price": 263,
+      "amount": 262664.16
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 11,
+      "price": 263,
+      "amount": 2889.31
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 700,
+      "price": 263,
+      "amount": 183864.91
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 57,
+      "price": 263.05,
+      "amount": 14974.71
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 57,
+      "price": 263.05,
+      "amount": 14974.71
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 57,
+      "price": 263.05,
+      "amount": 14974.71
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 57,
+      "price": 263.05,
+      "amount": 14974.71
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 57,
+      "price": 263.05,
+      "amount": 14974.71
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 57,
+      "price": 263.05,
+      "amount": 14974.71
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 57,
+      "price": 263.05,
+      "amount": 14974.71
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 57,
+      "price": 263.05,
+      "amount": 14974.71
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 57,
+      "price": 263.05,
+      "amount": 14974.71
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 94,
+      "price": 263.05,
+      "amount": 24695.12
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 94,
+      "price": 263.05,
+      "amount": 24695.12
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 94,
+      "price": 263.05,
+      "amount": 24695.12
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 94,
+      "price": 263.05,
+      "amount": 24695.12
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 94,
+      "price": 263.05,
+      "amount": 24695.12
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 94,
+      "price": 263.05,
+      "amount": 24695.12
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 94,
+      "price": 263.05,
+      "amount": 24695.12
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 94,
+      "price": 263.05,
+      "amount": 24695.12
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 94,
+      "price": 263.05,
+      "amount": 24695.12
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 86,
+      "price": 263.05,
+      "amount": 22593.43
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 53,
+      "price": 263.05,
+      "amount": 13923.85
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 134,
+      "price": 263,
+      "amount": 35197
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 9,
+      "price": 263,
+      "amount": 2363.98
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 3,
+      "price": 263,
+      "amount": 788.01
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 45,
+      "price": 263,
+      "amount": 11819.9
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 90,
+      "price": 263.05,
+      "amount": 23644.26
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 2266,
+      "price": 263.05,
+      "amount": 595310.22
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 181,
+      "price": 263.05,
+      "amount": 47551.27
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 141,
+      "price": 263.05,
+      "amount": 37042.69
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 44,
+      "price": 263.05,
+      "amount": 11559.43
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 185,
+      "price": 263.1,
+      "amount": 48611.38
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 107,
+      "price": 263.1,
+      "amount": 28115.76
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 33,
+      "price": 263.1,
+      "amount": 8671.21
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 33,
+      "price": 263.1,
+      "amount": 8671.21
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 33,
+      "price": 263.1,
+      "amount": 8671.21
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 69,
+      "price": 263.1,
+      "amount": 18130.72
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 69,
+      "price": 263.1,
+      "amount": 18130.72
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 22,
+      "price": 263.1,
+      "amount": 5780.8
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 11,
+      "price": 263.1,
+      "amount": 2890.41
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 162,
+      "price": 263.05,
+      "amount": 42559.69
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 100,
+      "price": 263.05,
+      "amount": 26271.43
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 394,
+      "price": 263.05,
+      "amount": 103509.35
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 271,
+      "price": 263.05,
+      "amount": 71195.52
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 271,
+      "price": 263.05,
+      "amount": 71195.52
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 575,
+      "price": 263.05,
+      "amount": 151060.64
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 575,
+      "price": 263.05,
+      "amount": 151060.64
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 32,
+      "price": 263.15,
+      "amount": 8410.06
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 32,
+      "price": 263.15,
+      "amount": 8410.06
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 11,
+      "price": 263.15,
+      "amount": 2890.96
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 11,
+      "price": 263.15,
+      "amount": 2890.96
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 10,
+      "price": 263.15,
+      "amount": 2628.13
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 43,
+      "price": 263.15,
+      "amount": 11301.02
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 300,
+      "price": 263.1,
+      "amount": 78829.23
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 50,
+      "price": 263.1,
+      "amount": 13138.2
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 263.1,
+      "amount": 262.78
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 263.1,
+      "amount": 262.78
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 70,
+      "price": 263.1,
+      "amount": 18393.49
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 219,
+      "price": 263.1,
+      "amount": 57545.32
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 226,
+      "price": 263.1,
+      "amount": 59384.69
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 263.2,
+      "amount": 262.88
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 263.2,
+      "amount": 262.88
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 3,
+      "price": 263.2,
+      "amount": 788.61
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 3,
+      "price": 263.2,
+      "amount": 788.61
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 3,
+      "price": 263.2,
+      "amount": 788.61
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 3,
+      "price": 263.2,
+      "amount": 788.61
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 5,
+      "price": 263.2,
+      "amount": 1314.34
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 149,
+      "price": 263.2,
+      "amount": 39166.75
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 2,
+      "price": 263.2,
+      "amount": 525.72
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 88,
+      "price": 263.2,
+      "amount": 23132.05
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 2289,
+      "price": 263.15,
+      "amount": 601581.51
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 50,
+      "price": 263.15,
+      "amount": 13140.7
     }
   ],
   "icici-bank-nsdl-demat-49794950|city-union": [
