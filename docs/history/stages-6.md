@@ -1017,3 +1017,10 @@
 - Refresh: `.github/workflows/private-rounds.yml`, Mondays, the fifteen stalest companies, Claude (Messages API, web search + fetch) under the same brief. A source the run did not actually open is dropped, a refresh never deletes a sourced round, and the commit only lands when `--check` and `build` pass. **Needs the `ANTHROPIC_API_KEY` repository secret**; without it the run says so and the pages keep the last record and its date.
 - Private Market: a company row's ↗ opens its page (DrinkPrime's four sellers included); Edit Columns offers Valuation at entry, Latest valuation, Latest valuation date, Latest round and Valuation change since entry, hidden by default, NA on a fund. `/stock/` pages of a private company link to it. Polycab text in a report is dropped (`FENCED`), and the suite asserts the record never names it.
 - Checks: `privateRounds.test.ts` (coverage of every private Unlisted line, sourced rounds, the derivations, the stake rule); `check:pages` routes `private-company`, `-rounds`, `-valuation` (probe `privateCo`).
+
+### Stage 10ks — Private Market's Weight, at cost and at value, of the private investments only
+
+- *"Weights – show only % of pvt investments – show both at cost and latest value"* (4 Nov 2026). The one Weight column becomes two: **Weight at cost** (row cost ÷ the private book's cost, `PrivateBook.privateCost`) and **Weight at value** (row value ÷ `privateValue`, unchanged). Both denominators are the valued private holdings only; each heading's hover names its amount.
+- A valued holding with no cost is named in the at-cost heading (`PrivateBook.costless`) and renders `—` with its reason, never a nil share. None today: both columns add to 100% (private 22.8% / 26.4%, held at cost 77.2% / 73.6%).
+- The Counted once line takes back the duplicated cost's share as it does the value's. `weightCost` sorts on cost, as `weight` sorts on value.
+- Checks: `build`; `privateBook.test.ts`, `privateMarket.test.ts`; `check:pages ONLY=private-market,private-market-tiles` (the one finding, the B-10 distributions hover on the tile strip, does not read either column).
