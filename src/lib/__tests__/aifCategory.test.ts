@@ -285,8 +285,9 @@ ok("an unknown section sorts last", aifSectionOrd("something else") >= AIF_SECTI
 console.log("\n── the family's declared categories ──");
 {
   const keys = Object.keys(DECLARED_AIF_CATEGORY);
-  eq("the family declared exactly the two funds they named", keys.sort(),
-    ["motilal-oswal-wealth-delphi-equity-fund", "neo-infra-income-opportunities-fund-i-class-a5"]);
+  // …and Vantage Oak Fund I on 4 Nov 2026 (Stage 10lb).
+  eq("the family declared exactly the three funds they named", keys.sort(),
+    ["motilal-oswal-wealth-delphi-equity-fund", "neo-infra-income-opportunities-fund-i-class-a5", "vof-i-class-a2"]);
   ok("every declaration is Category II, as they said",
     keys.every((k) => DECLARED_AIF_CATEGORY[k].category === CATEGORY_II));
 
@@ -325,9 +326,12 @@ console.log("\n── the family's declared categories ──");
       // Category II fund investing in listed equity — the Founders Fund's case
       // — and Neo Infra a private one. So the side is whatever their placing
       // says, and the declared category decides the drill-down section alone.
+      // A fund they have declared but not placed (Vantage Oak) takes the side
+      // its category gives, as an undeclared fund's printed category would.
       const placed = familyMarketDecision(p.security, a)?.side ?? null;
-      ok(`…and its side is the family's placing, not the category (${p.accountId})`,
-        placed != null && p.marketSide === placed, `${p.marketSide} vs placed ${placed}`);
+      const want = placed ?? (DECLARED_AIF_CATEGORY[k].category === CATEGORY_III ? "listed" : "private");
+      ok(`…and its side is the family's placing, else its declared category's (${p.accountId})`,
+        p.marketSide === want, `${p.marketSide} vs ${placed ? "placed" : "category"} ${want}`);
     }
   }
 

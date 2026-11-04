@@ -69,7 +69,7 @@ as 3 November.
 
 Its fifth file, `3110320_Equity_Trade_Details_Report (3).xlsx`, NEVER ARRIVED: the mail server left its 85-byte removal notice (Stage 10kn). The client re-sent it on 4 November, and the copy in `november-2026-c/` is read.
 
-`november-2026-c/` holds that re-sent workbook, HDFC Securities' equity trade details report for Ajay's trading account 3110320. It covers 1 April–31 October 2026, downloaded 2 November, with one row per fill. It has 466 sales: Vedanta 67,000 (23 and 29 July), all 1,77,000 of each of the three Vedanta demerger shares (Iron and Steel, Power, Oil and Gas; 23–29 July), and Man Industries 37,317 (23 September). The client sent the ZIP's other four files again with it, byte-identical to the copies in `november-2026-b/`, so they are recorded here and not added (Stage 10la).
+`november-2026-c/` holds that re-sent workbook, HDFC Securities' equity trade details report for Ajay's trading account 3110320. It covers 1 April–31 October 2026, downloaded 2 November, with one row per fill. It has 466 sales: Vedanta 67,000 (23 and 29 July), all 1,77,000 of each of the three Vedanta demerger shares (Iron and Steel, Power, Oil and Gas; 23–29 July), and Man Industries 37,317 (23 September). The client sent the ZIP's other four files again with it, byte-identical to the copies in `november-2026-b/`, so they are recorded here and not added (Stage 10ld).
 
 **These files never reach the browser.** `source/` sits at the repo root, outside
 `public/`, so nothing here is copied into the build or served by the site. Only

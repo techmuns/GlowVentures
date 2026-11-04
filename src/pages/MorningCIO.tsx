@@ -42,7 +42,7 @@ import { fmtPct, fmtCurrency, changeColor, fmtFyPeriod, fmtNum, fmtDate } from "
 import { type XirrResult, fundXirr, startupXirr } from "@/lib/bucketXirr";
 import { fifoTotals, investedWithCapital, type FifoTotals } from "@/lib/fifo";
 import { type PrivateSheet, stockHref } from "@/lib/auditFormulas";
-import { countedOnceNote, commitmentTotals } from "@/lib/privateMarket";
+import { countedOnceNote, commitmentTotals, privateScope, fundRollup } from "@/lib/privateMarket";
 import { privateBookFolios, figuresOf, distributionLeftOutNote } from "@/lib/privateBook";
 import { concentrationNames } from "@/lib/concentration";
 import { BOOK_CORPORATE_ACTIONS } from "@/data/glowData";
@@ -380,6 +380,16 @@ export function MorningCIO() {
     const commitments = cap.onPage;
     const counted = cap.counting.counted;
     const distFig = figuresOf(pbook.folios, true);
+    /**
+     * THE PRIVATE LINE ON THE RETURN CARDS (Stage 10la) is Private Market's own
+     * headline, struck by the same three calls that page makes
+     * (`privateScope` → `fundRollup`): its value, and its unrealised gain since
+     * investment over the valued holdings. Private investments sit outside the
+     * period returns — one value on one date, or held at cost, gives no change.
+     */
+    const privScope = privateScope(pbook.current, (enteredPortfolio ?? statementPortfolio ?? portfolio).accounts);
+    const privFunds = fundRollup(privScope.dedupedRows, pbook.accIdx, privScope.rows);
+    const privateLine = { value: privFunds.reduce((t, f) => t + f.mv, 0), pnl: sumOrNull(privFunds.map((f) => f.pnl)) };
     const enteredCapital = pbook.folios.filter(f => !f.capital && f.counted && f.position?.enteredCapital);
     const fundDeploy = fundTotals([...pm.peFunds, ...pm.preIpoFunds, ...pm.unlistedCompanies, ...pm.debtFunds, ...pm.closedFunds]);
     /**
@@ -936,7 +946,7 @@ export function MorningCIO() {
       capitalCounting: cap.counting,
       // The private book's folios, for the Distributions tile to name what it
       // counts once as the page it opens names it (B-10).
-      privateFolios: pbook.folios,
+      privateFolios: pbook.folios, privateLine,
       distReported: distFig.distributedOf,
       distAccounts: distFig.distributionAccounts,
       // No capital account and no letter reports one, and no fund-of-funds row
@@ -1057,14 +1067,45 @@ export function MorningCIO() {
   const coverageInfo = (r: AvailableCardReturn, field: 'gain' | 'return') => <>
     <CardBenchmarkInfo card={r} accounts={returnAccounts} money={money} />
     <AvailableReturnCoverage line={r.total} selection={r.selection} accounts={returnAccounts}
-      money={(n, sign = false) => fmtFromBase(n, { compact: true, sign })} field={field} notes={r.notes} /></>;
+      money={(n, sign = false) => fmtFromBase(n, { compact: true, sign })} field={field} notes={r.notes} starts={r.starts} /></>;
   const coveredCaption = (r: AvailableCardReturn) => <span data-card-coverage
     data-card-gain={r.total.gain ?? ''} data-card-return={r.total.returnPct ?? ''}
     data-card-covered={r.coveredHoldings} data-card-holdings={r.totalHoldings}
     data-card-value={r.coveredValue} data-card-accounts={r.coveredAccounts} data-card-total-accounts={r.totalAccounts}
     data-card-from={r.from ?? ''} data-card-to={r.to ?? ''} data-card-basis={r.total.measured?.basis ?? ''}>
     {r.total.units.length ? 'Available data' : 'No usable return records'} · {r.coveredHoldings} of {r.totalHoldings} holdings<br />
-    {money(r.coveredValue)} covered · {r.coveredAccounts} accounts <HoldingAssumptionInfo units={r.total.units} /></span>;
+    {money(r.coveredValue)} covered · {r.coveredAccounts} {r.coveredAccounts === 1 ? 'account' : 'accounts'} <HoldingAssumptionInfo units={r.total.units} /></span>;
+  /**
+   * THE THREE RETURN CARDS' CAPTION (Stage 10la; the family, 4 Nov 2026): how
+   * much of the PUBLIC investments the figure covers, by value — what is
+   * measured apart from what is held at its last value, so the caption never
+   * widens the figure — and the private investments on their own line.
+   */
+  const periodCaption = (r: AvailableCardReturn) => {
+    const c = r.coverage, pub = c.publicValue, covered = c.measuredValue + c.heldValue, waiting = c.waitingValue;
+    const share = (v: number) => (pub > 0 ? Math.min(100, Math.round((v / pub) * 100)) : 0), width = (v: number) => `${pub > 0 ? Math.min(100, (v / pub) * 100) : 0}%`;
+    const pl = m.privateLine;
+    // A block of its own, so the declared reason covers its lines (`data-prose-ok`).
+    return <div data-card-coverage data-card-period data-prose-ok="the share of the public investments the return covers, on the card at the family's request (4 Nov 2026)"
+      data-card-gain={r.total.gain ?? ''} data-card-return={r.total.returnPct ?? ''}
+      data-card-covered={r.coveredHoldings} data-card-holdings={r.totalHoldings}
+      data-card-value={r.coveredValue} data-card-accounts={r.coveredAccounts} data-card-total-accounts={r.totalAccounts}
+      data-card-from={r.from ?? ''} data-card-to={r.to ?? ''} data-card-basis={r.total.measured?.basis ?? ''}
+      data-card-public={pub} data-card-measured={c.measuredValue} data-card-held={c.heldValue} data-card-waiting={waiting}
+      data-card-measured-holdings={c.measuredHoldings} data-card-measured-accounts={c.measuredAccounts} data-card-held-count={c.heldUnits.length}
+      data-card-private={pl.value} data-card-private-gain={pl.pnl ?? ''}>
+      <span className="mb-1 flex h-1.5 w-full overflow-hidden rounded-full bg-ink-700" aria-hidden>
+        <span className="h-full bg-champagne-500" style={{ width: width(c.measuredValue) }} />
+        <span className="h-full bg-ink-600" style={{ width: width(c.heldValue) }} />
+      </span>
+      Covers {share(covered)}% of public investments · {money(covered)} of {money(pub)}<br />
+      {share(c.measuredValue)}% measured · {share(c.heldValue)}% held at last value
+      {waiting > 5e5 && <> · {money(waiting)} waiting for prices</>}
+      {/* Labelled assumed on the face; the owner-specific explanation is behind the card's one info button. */}
+      {(() => { const n = r.total.units.filter(u => u.assumption).length; return n > 0 && <span data-holding-assumption data-assumed-count={n} className="text-slate-500"> · assumed</span>; })()}<br />
+      <span data-card-private-line title="Private investments are reported apart, at Private Market's latest value and gain since investment — not this period's return.">
+        Private investments {money(pl.value)}{pl.pnl != null && <> · {money(pl.pnl, true)} since investment</>}</span></div>;
+  };
   const history = m.available.history;
   const historyAnnual = history.total.measured?.basis === 'annual';
   const historyLabel = historyAnnual ? 'Annualised return' : 'Return over available history';
@@ -1130,17 +1171,27 @@ export function MorningCIO() {
       value: historyValue,
       calculation: coverageInfo(history, 'return'),
       second: <span className="whitespace-normal">{measuredDates(history)} · {historyAnnual ? 'yearly rate' : 'not annualised'}{benchLine(history)}</span>,
-      sub: coveredCaption(history),
+      sub: periodCaption(history),
     },
     ...(['fytd', 'ytd'] as const).map((period): TileMetric => {
       const r = m.available[period];
+      /**
+       * YTD FROM THE FIRST DATE WE HAVE (Stage 10kq). No statement values most
+       * holdings on 1 January, so the year opens on each part's first dated
+       * value — and the card says so rather than print a full year's dates.
+       */
+      const partYear = period === 'ytd' && !r.fullPeriod && r.total.units.length > 0;
+      const startsTitle = `Measured from, by value now: ${r.starts.map((s) => `${s.date ? fmtDate(s.date) : 'bought this year, from nil'} ${money(s.close)}`).join(' · ')}. Not annualised.`;
       return {
         id: period, label: period === 'fytd' ? 'Return this financial year' : 'Return this calendar year',
         icon: <CalendarDays className="h-4 w-4" />, href: returnsHref(period),
-        hrefTitle: `Return for available data from ${r.selection.start} through ${r.to ?? 'the latest verified statement'}. The info button explains coverage and missing records. Open the same period in Return attribution.`,
+        hrefTitle: partYear
+          ? `Year to date for available data through ${r.to ?? 'the latest verified statement'}. No statement values most holdings on 1 January, so each account and holding is measured from its first dated value this year, as the Portfolio Monitor's YTD is. The info button lists each one's dates and the records still missing. Open the same period in Return attribution.`
+          : `Return for available data from ${r.selection.start} through ${r.to ?? 'the latest verified statement'}. The info button explains coverage and missing records. Open the same period in Return attribution.`,
         value: pct1(r.total.returnPct), calculation: coverageInfo(r, 'return'),
-        second: <span className="whitespace-normal">{period.toUpperCase()} · {measuredDates(r)}{r.total.gain != null && <> · {money(r.total.gain, true)}</>}{benchLine(r)}</span>,
-        sub: coveredCaption(r),
+        second: <span className="whitespace-normal">{partYear
+          ? <span data-card-part-year title={startsTitle}>YTD from first dated value</span> : period.toUpperCase()} · {measuredDates(r)}{r.total.gain != null && <> · {money(r.total.gain, true)}</>}{benchLine(r)}</span>,
+        sub: periodCaption(r),
       };
     }),
     {

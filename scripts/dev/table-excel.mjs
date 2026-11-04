@@ -80,7 +80,19 @@ export async function assertPrivateMarketFilterExport(page) {
   await picker.selectOption('funds');
   const visible = await table.locator('[data-pm-group]').count();
   const filtered = await downloadTableWorkbook(table, 'private-funds-filter');
-  assert.deepEqual(filtered.getSheetValues(), complete.getSheetValues(), 'Companies/Funds cannot narrow Excel');
+  // A FILTER NEVER NARROWS THE ROWS; ITS COLUMNS ARE ITS OWN (Stage 10kw). Funds
+  // keep their own arrangement (Quarterly NAV and IRR, no YTD), so the two sheets
+  // are compared row for row on every column both carry, by heading.
+  const rowsOf = sheet => sheet.getSheetValues().filter(Boolean);
+  const all = rowsOf(complete), funds = rowsOf(filtered);
+  assert.equal(funds.length, all.length, 'Companies/Funds cannot narrow Excel');
+  const head = rows => rows.find(r => (r ?? []).includes('Brand')) ?? [];
+  const columns = row => new Map(row.flatMap((h, i) => typeof h === 'string' ? [[h, i]] : []));
+  const a = columns(head(all)), f = columns(head(funds)), shared = [...a.keys()].filter(h => f.has(h));
+  assert.ok(shared.includes('Brand') && shared.includes('Value'), 'Companies/Funds exports share their identity columns');
+  for (let i = 0; i < all.length; i++) for (const h of shared) {
+    assert.deepEqual(funds[i]?.[f.get(h)] ?? null, all[i]?.[a.get(h)] ?? null, `Companies/Funds cannot narrow Excel: row ${i + 1}, ${h}`);
+  }
   assert.equal(await picker.inputValue(), 'funds');
   assert.equal(await table.locator('[data-pm-group]').count(), visible);
   await assertUnfilteredSearchExport(page,table,page.getByPlaceholder('Search brands, funds or entities…'),'private-market');
