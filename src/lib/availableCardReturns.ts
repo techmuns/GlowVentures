@@ -5,6 +5,7 @@ import { nothingToMeasure } from './returns';
 import { accountInputs, periodStart, windowReturns, type AccountInput, type AccountWindow } from './periodReturns';
 import { selectedSegmentReturns, type ReturnGap, type ReturnSelection } from './selectedSegmentReturns';
 import { assumedHoldingReturns, type AssumedReturnBook } from './assumedHoldingReturns';
+import { ytdBook, ytdSelection } from './ytdAvailable';
 import {
   BOOK_ACCOUNT_NAV_HISTORY, BOOK_ACCOUNT_CASH_FLOWS, BOOK_NAV_COVERAGE,
   BOOK_UNDATED_CAPITAL, BOOK_CAPITAL_FROM_INCEPTION,
@@ -26,7 +27,8 @@ export function availableCardReturns(statement: Portfolio, display: readonly Pos
   const calculationCurrent = currentHoldings(recorded), exited = exitedRows(recorded);
   const end = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
   const make = (selection: ReturnSelection, availableHistory = false) => {
-    if (!selection.inception && assumptions) {
+    // A selection that brings its own holding records (YTD's) keeps them.
+    if (!selection.inception && assumptions && !selection.assumedUnits) {
       const extra = assumedHoldingReturns(current, statement.accounts, availableHistory ? null : selection.start, end, assumptions);
       selection = { ...selection, assumedUnits: extra.units, assumptionGaps: extra.gaps };
     }
@@ -41,15 +43,29 @@ export function availableCardReturns(statement: Portfolio, display: readonly Pos
       return !selection.inception && included.has(a.accountId) && c?.record && c.gap ? [{ label: `${a.owner} · ${a.provider} · account ${a.accountNo}`,
         reason: `${c.latestValuationDate ?? a.asOf}: ${c.gap}` }] : [];
     });
+    // Where each part of the money starts, by the value it closes at. Money
+    // first put in during the period (it opens at nil) covers the whole of it;
+    // the period is full only where every part does.
+    const opens = new Map<string, { close: number; opened: boolean }>();
+    for (const u of result.total.units) {
+      const opened = !!u.window?.openedInWindow && u.window.openValue === 0, key = opened ? 'opened' : u.from;
+      if (!key) continue;
+      const s = opens.get(key) ?? { close: 0, opened };
+      s.close += u.close; opens.set(key, s);
+    }
+    const starts = [...opens].map(([key, s]) => ({ date: s.opened ? null : key, close: s.close }))
+      .sort((x, y) => (x.date ?? '').localeCompare(y.date ?? ''));
+    const fullPeriod = !!selection.start && starts.length > 0 && starts.every(s => s.date == null || s.date <= selection.start!);
     return { ...result, selection, coveredAccounts, totalAccounts, totalHoldings: current.length,
-      from: dates[0] ?? null, to: closes.at(-1) ?? null, notes };
+      from: dates[0] ?? null, to: closes.at(-1) ?? null, notes, starts, fullPeriod };
   };
   const gain = make({ inception: true, type: 'absolute', start: null, end: null, windows: [], inceptionRows: [], excluded: [] });
-  const period = (key: 'fytd' | 'ytd') => {
-    const start = periodStart(key, end)!;
-    const w = windowReturns(inputs, start, end);
-    return make({ inception: false, type: 'xirr', start, end, windows: w.included, inceptionRows: [], excluded: w.excluded, outside: w.outside });
-  };
+  const fytdStart = periodStart('fytd', end)!, fytdWindow = windowReturns(inputs, fytdStart, end);
+  const fytd = make({ inception: false, type: 'xirr', start: fytdStart, end, windows: fytdWindow.included, inceptionRows: [],
+    excluded: fytdWindow.excluded, outside: fytdWindow.outside });
+  // YTD from the first date we have, on the Monitor's own records (Stage 10kq).
+  const year = ytdBook({ inputs, held: current, accounts: statement.accounts, end, assumptions: assumptions ?? null, money: String });
+  const ytd = make({ inception: false, type: 'xirr', start: year.yearOpen, end, inceptionRows: [], ...ytdSelection(year, inputs, current) });
   // Latest usable history may begin on different dates for different accounts.
   // Measure each from its own verified opening, then pool only those windows.
   const windows: AccountWindow[] = [], excluded: ReturnGap[] = [], outside: ReturnGap[] = [];
@@ -63,7 +79,7 @@ export function availableCardReturns(statement: Portfolio, display: readonly Pos
   const start = windows.map(w => w.openDate).sort()[0] ?? null;
   // XIRR from a year; under a year the absolute return, never a rate per year (Stage 10hk).
   const history = make({ inception: false, type: 'xirr', start, end, windows, inceptionRows: [], excluded, outside }, true);
-  return { gain, history, fytd: period('fytd'), ytd: period('ytd') };
+  return { gain, history, fytd, ytd };
 }
 
 export type AvailableCardReturn = ReturnType<typeof availableCardReturns>['gain'];

@@ -1,6 +1,6 @@
 // YTD FROM THE FIRST DATE WE HAVE (Stage 10jl).   npm run test:family (ONLY="ytd from the first date")
 import assert from 'node:assert/strict';
-import { ytdBook } from '../ytdAvailable';
+import { ytdBook, ytdSelection } from '../ytdAvailable';
 import { measuredReturn } from '../analytics';
 import { statementReturnInputs } from '../availableCardReturns';
 import type { AccountInput } from '../periodReturns';
@@ -100,5 +100,24 @@ for (const v of vec) { const one = real.of(BOOK_POSITIONS.filter((p) => p.accoun
   const split = ytdBook({ inputs: [], held: [held], accounts: [acct], end: '2026-10-30', money,
     assumptions: { ...(assumptions as object), histories: { 'example-d': { ...hist, splits: [{ date: '2026-03-01', factor: 2 }] } } } as never }).of([held]);
   assert.ok(!split.shown || split.from !== '2025-12-31', 'no 1 January start across an unchecked split');
+  // THE POOLED SURFACES READ THE SAME RECORD (Stage 10kq): the purchase record's
+  // full year is a unit, said to be assumed from the statement on.
+  const pooledBook = ytdBook({ inputs: [], held: [held], accounts: [acct], end: '2026-10-30', assumptions, money });
+  const pooled = ytdSelection(pooledBook, [], [held]);
+  assert.equal(pooled.assumedUnits!.length, 1); assert.equal(pooled.windows.length, 0);
+  const u = pooled.assumedUnits![0];
+  assert.equal(u.from, '2025-12-31'); assert.equal(u.assumption?.owner, 'Owner D'); assert.equal(u.assumption?.statementDate, '2026-07-31');
+  near(u.gain, u.window!.gain); near(u.close, 43 * 150);
+}
+// A whole account takes its own window and its holdings none; an account with
+// no window this year names each holding's reason instead.
+{
+  const pooled = ytdSelection(book, [input], held);
+  assert.deepEqual(pooled.windows.map((w) => w.accountId), ['a']);
+  assert.equal(pooled.assumedUnits!.length, 0); assert.equal(pooled.excluded.length, 0);
+  const refused = { ...input, flowsUnknown: 'No opening valuation or dated money record' };
+  const gaps = ytdSelection(ytdBook({ inputs: [refused], held, accounts, end: '2026-10-30', assumptions: null, money }), [refused], held);
+  assert.equal(gaps.windows.length, 0); assert.match(gaps.excluded[0].reason, /No opening valuation/);
+  assert.deepEqual(gaps.assumptionGaps!.map((g) => g.securityKey), ['x']); assert.match(gaps.assumptionGaps![0].reason, /Prices are still loading/);
 }
 console.log('ok   ytd from the first date we have — whole accounts, part accounts, a full year, a refused record, parts valued apart, the purchase record and the archive');

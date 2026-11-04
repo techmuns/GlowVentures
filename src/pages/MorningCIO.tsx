@@ -1064,7 +1064,7 @@ export function MorningCIO() {
     data-card-value={r.coveredValue} data-card-accounts={r.coveredAccounts} data-card-total-accounts={r.totalAccounts}
     data-card-from={r.from ?? ''} data-card-to={r.to ?? ''} data-card-basis={r.total.measured?.basis ?? ''}>
     {r.total.units.length ? 'Available data' : 'No usable return records'} · {r.coveredHoldings} of {r.totalHoldings} holdings<br />
-    {money(r.coveredValue)} covered · {r.coveredAccounts} accounts <HoldingAssumptionInfo units={r.total.units} /></span>;
+    {money(r.coveredValue)} covered · {r.coveredAccounts} {r.coveredAccounts === 1 ? 'account' : 'accounts'} <HoldingAssumptionInfo units={r.total.units} /></span>;
   const history = m.available.history;
   const historyAnnual = history.total.measured?.basis === 'annual';
   const historyLabel = historyAnnual ? 'Annualised return' : 'Return over available history';
@@ -1134,12 +1134,22 @@ export function MorningCIO() {
     },
     ...(['fytd', 'ytd'] as const).map((period): TileMetric => {
       const r = m.available[period];
+      /**
+       * YTD FROM THE FIRST DATE WE HAVE (Stage 10kq). No statement values most
+       * holdings on 1 January, so the year opens on each part's first dated
+       * value — and the card says so rather than print a full year's dates.
+       */
+      const partYear = period === 'ytd' && !r.fullPeriod && r.total.units.length > 0;
+      const startsTitle = `Measured from, by value now: ${r.starts.map((s) => `${s.date ? fmtDate(s.date) : 'bought this year, from nil'} ${money(s.close)}`).join(' · ')}. Not annualised.`;
       return {
         id: period, label: period === 'fytd' ? 'Return this financial year' : 'Return this calendar year',
         icon: <CalendarDays className="h-4 w-4" />, href: returnsHref(period),
-        hrefTitle: `Return for available data from ${r.selection.start} through ${r.to ?? 'the latest verified statement'}. The info button explains coverage and missing records. Open the same period in Return attribution.`,
+        hrefTitle: partYear
+          ? `Year to date for available data through ${r.to ?? 'the latest verified statement'}. No statement values most holdings on 1 January, so each account and holding is measured from its first dated value this year, as the Portfolio Monitor's YTD is. The info button lists each one's dates and the records still missing. Open the same period in Return attribution.`
+          : `Return for available data from ${r.selection.start} through ${r.to ?? 'the latest verified statement'}. The info button explains coverage and missing records. Open the same period in Return attribution.`,
         value: pct1(r.total.returnPct), calculation: coverageInfo(r, 'return'),
-        second: <span className="whitespace-normal">{period.toUpperCase()} · {measuredDates(r)}{r.total.gain != null && <> · {money(r.total.gain, true)}</>}{benchLine(r)}</span>,
+        second: <span className="whitespace-normal">{partYear
+          ? <span data-card-part-year title={startsTitle}>YTD from first dated value</span> : period.toUpperCase()} · {measuredDates(r)}{r.total.gain != null && <> · {money(r.total.gain, true)}</>}{benchLine(r)}</span>,
         sub: coveredCaption(r),
       };
     }),

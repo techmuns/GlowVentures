@@ -21,6 +21,7 @@
  */
 import type { Account, Position } from './types';
 import type { Flow } from './periodReturns';
+import type { ReturnGap, ReturnSelection, ReturnUnit } from './selectedSegmentReturns';
 import { ytdTagDay } from './analytics';
 import { OPENING_MARK_TOLERANCE_DAYS, measureWindow, windowReturns, type AccountInput, type AccountWindow } from './periodReturns';
 import { assumedHolding, assumedHoldingReturns, holdingAssumptionAnchor, holdingAssumptionText, publishedClose, type AssumedReturnBook } from './assumedHoldingReturns';
@@ -42,7 +43,22 @@ export type YtdFrom =
     }
   | { shown: false; reason: string; pending?: boolean };
 
-export type YtdBook = { yearOpen: string; end: string; of: (ps: readonly Position[]) => YtdFrom };
+/**
+ * One account's or one holding's record this year: its window, or why there is
+ * none. `outside` is an account with nothing to measure (nil throughout, or a
+ * statement the book holds outside every return); `unit` is a holding's window
+ * as the pooled surfaces carry it, with the assumption it rests on.
+ */
+export type YtdFound = { window: AccountWindow; owner?: string; recorded?: boolean; unit?: ReturnUnit }
+  | { reason: string; pending?: boolean; outside?: boolean };
+
+export type YtdBook = {
+  yearOpen: string; end: string; of: (ps: readonly Position[]) => YtdFrom;
+  /** The whole account from its first verified value this year. */
+  account: (accountId: string) => YtdFound;
+  /** One holding: a full year from its purchase record, else carried from its statement balance. */
+  holding: (p: Position) => YtdFound;
+};
 
 const longDay = (d: string) => `${ytdTagDay(d)} ${d.slice(0, 4)}`;
 const dayBefore = (d: string) => new Date(Date.parse(`${d}T00:00:00Z`) - 864e5).toISOString().slice(0, 10);
@@ -50,7 +66,7 @@ const dayBefore = (d: string) => new Date(Date.parse(`${d}T00:00:00Z`) - 864e5).
 const CLOSE_SPAN_DAYS = OPENING_MARK_TOLERANCE_DAYS;
 const sentence = (s: string) => { const t = s.trim(); return t ? `${t[0].toUpperCase()}${t.slice(1)}${/[.!?]$/.test(t) ? '' : '.'}` : t; };
 
-type Found = { window: AccountWindow; owner?: string; recorded?: boolean } | { reason: string; pending?: boolean };
+type Found = YtdFound;
 
 /**
  * ── A FULL YEAR TO DATE FROM THE PURCHASE RECORD (Stage 10jo) ───────────────
@@ -109,9 +125,18 @@ function recordedYearWindow(p: Position, a: Account, yearOpen: string, end: stri
   const gain = closeValue - openValue - capitalIn + capitalOut;
   if (![openValue, closeValue, gain].every(Number.isFinite)) return null;
   const label = `${p.security} · ${a.owner} · ${a.provider} · account ${a.accountNo}`;
-  return { owner: a.owner, recorded: true, window: { accountId: `${p.accountId}|${p.securityKey}`, owner: a.owner, label,
+  const window: AccountWindow = { accountId: `${p.accountId}|${p.securityKey}`, owner: a.owner, label,
     openDate: open.date, closeDate: closing.date, openValue, closeValue, openedInWindow: units0 === 0,
-    flows, capitalIn, capitalOut, gain } };
+    flows, capitalIn, capitalOut, gain };
+  const income = flows.filter((f) => f.amount > 0 && f.description !== 'Sale on the record');
+  // From the statement on, the units are carried at published closes: an
+  // assumption, named on every pooled surface as `assumedHolding`'s are.
+  const unit: ReturnUnit = { key: window.accountId, accountId: p.accountId, label, positions: [p], gain,
+    invested: openValue + capitalIn, close: closeValue, from: open.date, to: closing.date, window,
+    assumption: { owner: a.owner, statementDate: anchor.date, quantity: anchor.quantity, source: h.source,
+      opening: openValue, closing: closeValue, income: income.reduce((t, f) => t + f.amount, 0),
+      incomeDates: income.map((f) => ({ date: f.date, amount: f.amount })) } };
+  return { owner: a.owner, recorded: true, window, unit };
 }
 
 export function ytdBook({ inputs, held, accounts, end, assumptions, money }: {
@@ -136,7 +161,7 @@ export function ytdBook({ inputs, held, accounts, end, assumptions, money }: {
     const input = inputOf.get(accountId);
     let found: Found;
     if (!input) found = { reason: 'no verified return record is kept for this account' };
-    else if (input.outside) found = { reason: input.outside };
+    else if (input.outside) found = { reason: input.outside, outside: true };
     else {
       const first = [...input.valuations.map((v) => v.date), ...input.flows.filter((f) => f.amount < 0).map((f) => f.date)].sort()[0];
       const start = [input.knownFrom ?? (first ? dayBefore(first) : end), yearOpen].sort().at(-1)!;
@@ -148,7 +173,7 @@ export function ytdBook({ inputs, held, accounts, end, assumptions, money }: {
       for (const s of new Set(tries)) {
         const w = windowReturns([input], s, end);
         if (w.included.length) { found = { window: w.included[0] }; break; }
-        if (w.outside.length) { found = { reason: w.outside[0].reason }; break; }
+        if (w.outside.length) { found = { reason: w.outside[0].reason, outside: true }; break; }
         reason ??= w.excluded[0]?.reason ?? null;
         found = { reason: reason ?? 'no statement values it this year' };
       }
@@ -174,7 +199,7 @@ export function ytdBook({ inputs, held, accounts, end, assumptions, money }: {
       const start = anchor && anchor.date <= yearOpen ? yearOpen : null;
       const r = assumedHoldingReturns([p], accounts as Account[], start, end, assumptions);
       const u = r.units[0];
-      found = u?.window ? { window: u.window, owner: u.assumption?.owner } : { reason: r.gaps[0]?.reason ?? 'no dated balance of this holding is on record', pending: r.pending > 0 };
+      found = u?.window ? { window: u.window, owner: u.assumption?.owner, unit: u } : { reason: r.gaps[0]?.reason ?? 'no dated balance of this holding is on record', pending: r.pending > 0 };
     }
     holdingMemo.set(p, found);
     return found;
@@ -239,5 +264,40 @@ export function ytdBook({ inputs, held, accounts, end, assumptions, money }: {
     rowMemo.set(ps, out);
     return out;
   };
-  return { yearOpen, end, of };
+  return { yearOpen, end, of, account: accountWindow, holding: holdingWindow };
+}
+
+/**
+ * ── THE SAME YEAR TO DATE, POOLED (Stage 10kq) ─────────────────────────────
+ *
+ * Morning CIO's "Return this calendar year" card and the Returns tab's YTD
+ * asked for a value on 31 December, which no statement in this book carries:
+ * the card read one fund of 509 holdings (Helios, bought in August, the only
+ * account that opens at nil). The Monitor's YTD column has measured from the
+ * first date we have since Stage 10jl. Every surface for one question reads
+ * the same record, so these read `ytdBook`'s too: each account from its first
+ * verified value this year, else each of its holdings — a full year from its
+ * purchase record, or carried from its statement balance at published
+ * closes, assumed — and what neither covers is named.
+ */
+export function ytdSelection(book: YtdBook, inputs: readonly AccountInput[], held: readonly Position[]):
+  Pick<ReturnSelection, 'windows' | 'excluded' | 'outside' | 'assumedUnits' | 'assumptionGaps'> {
+  const windows: AccountWindow[] = [], excluded: ReturnGap[] = [], outside: ReturnGap[] = [];
+  for (const i of inputs) {
+    const f = book.account(i.accountId);
+    const gap = { accountId: i.accountId, label: i.label, owner: i.owner };
+    if ('window' in f) windows.push(f.window);
+    else (f.outside ? outside : excluded).push({ ...gap, reason: f.reason });
+  }
+  // THE WHOLE ACCOUNT, OR ITS HOLDINGS ONE BY ONE — never both, as on the Monitor.
+  const measured = new Set(windows.map((w) => w.accountId));
+  const assumedUnits: ReturnUnit[] = [], assumptionGaps: ReturnGap[] = [];
+  for (const p of held) {
+    if (measured.has(p.accountId) || (!(p.marketValue > 0) && !((p.quantity ?? 0) > 0))) continue;
+    const f = book.holding(p);
+    if ('unit' in f && f.unit) { assumedUnits.push(f.unit); continue; }
+    if ('reason' in f) assumptionGaps.push({ accountId: p.accountId, securityKey: p.securityKey, label: p.security,
+      reason: sentence(f.reason), plainReason: true, value: p.marketValue });
+  }
+  return { windows, excluded, outside, assumedUnits, assumptionGaps };
 }

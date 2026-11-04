@@ -8260,6 +8260,8 @@ const ROUTES = [
   ["cio-allocation", "/cio?tab=allocation"],
   // Optional return tiles still publish figures consumed by the holdings checks.
   ["cio-return-metrics", "/cio?tab=allocation&tiles=value,return,mwr,uncalled,distributions"],
+  // Stage 10kq — the calendar-year card, which no default strip draws.
+  ["cio-ytd-card", "/cio?tiles=value,gain,annualised,fytd,ytd"],
   /**
    * ── THE STRIP'S CHOICE, SAVED FOR EVERYONE ───────────────────────────────
    *
@@ -19502,6 +19504,25 @@ const CIO_BOOK_RETURN = [
 ];
 
 /**
+ * ── THE CALENDAR-YEAR CARD READS YTD FROM THE FIRST DATE WE HAVE (Stage 10kq) ─
+ *
+ * It asked for a value on 31 December, which no statement here carries, and
+ * read one fund of 509 holdings — Helios, the one account that opens at nil.
+ * It now reads the Monitor's YTD record (`ytdSelection`), re-derived here off
+ * `glowData.ts`: the same figure and coverage, at least every account the
+ * financial year reads, and a face that says when it is not a full year.
+ */
+const CIO_YTD_CARD = [
+  ["the calendar-year card reads YTD from the first date we have, never a strict 31 Dec opening", (t, ctx) => {
+    const tile = ctx?.kpiTiles?.find(x => x.slot === 'ytd'), r = AVAILABLE_CARDS_BOOK?.ytd;
+    return !!r && headlineMatches(tile, r)
+      && r.coveredAccounts >= AVAILABLE_CARDS_BOOK.fytd.coveredAccounts && r.coveredHoldings > 1
+      && (r.fullPeriod ? /^YTD ·/.test(tile.second ?? '') : /^YTD from first dated value ·/.test(tile.second ?? ''))
+      && tile.coverage.cardFrom === r.from && tile.coverage.cardTo === r.to;
+  }],
+];
+
+/**
  * ── THE "N HELD" PILL (CK-C11) ────────────────────────────────────────────
  * Counts the sections the axis NAMES and names the not-classified row beside
  * the count. Struck on the rows' own labels, read cell by cell.
@@ -27362,6 +27383,7 @@ const INVARIANTS = {
   "cio-attribution-legacy": [...CIO_SHARED, ...CIO_SEGMENTS_LEGACY],
   "cio-nav": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_NAV, ...NAV_BENCH, ...NAV_BENCH_OFFLINE, ...NAV_BASIS, ...NAV_STARTS],
   "cio-tiles-saved": CIO_TILES_SAVED,
+  "cio-ytd-card": [...CIO_SHARED, ...CIO_YTD_CARD],
   "cio-return-metrics": [...CIO_RETURN_RETIREMENT, ...CIO_ALLOC.filter(([description]) => CIO_OPTIONAL_CAPITAL_CHECKS.has(description))],
   ...Object.fromEntries(["annualised", "fytd", "ytd"].map((kind) => [`performance-${kind}`, [
     ["the tile's address opens its own return, period and coverage", (t, ctx) =>
