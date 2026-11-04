@@ -996,17 +996,19 @@ export function PortfolioMonitor() {
    * so they live in one hook now rather than being re-derived per page. See the
    * note there.
    *
-   * ONLY ON THIS AXIS. The other three group the book's own positions and never
-   * ask what a fund holds, so they must not pay for 21 fetches.
+   * ON EVERY AXIS since Stage 10kn: the Sector column reads the filings' tier
+   * too (below), and the look-through is one read-model request, not a fetch
+   * per fund (`check-data-performance` asserts no browser fan-out).
    */
-  const exposure = useStockExposure(consolidated, bySecurity);
+  const exposure = useStockExposure(consolidated, true);
   // A fund-only company has a market price even though the family owns no
-  // directly recorded shares. Register the whole company scope, including BSE.
+  // directly recorded shares. Register the whole company scope, including BSE —
+  // on the Security axis, the one that draws those companies.
   useEffect(() => {
-    if (exposure.status !== "ok") return;
+    if (!bySecurity || exposure.status !== "ok") return;
     requestSymbols([...exposure.byKey.values()].map((e) => quoteSymbolFor({ securityKey: e.key, isin: e.isin }))
       .filter((s): s is string => !!s));
-  }, [exposure, requestSymbols]);
+  }, [bySecurity, exposure, requestSymbols]);
   /**
    * ── ONE ANSWER TO "WHAT SECTOR IS THIS COMPANY IN" (MH-07, MSX-6) ─────────
    *
@@ -1026,12 +1028,12 @@ export function PortfolioMonitor() {
    * Entities builds it: a company's sector does not depend on how much of it
    * the family holds.
    *
-   * THE FUND TIER IS LOADED ON THE SECURITY AXIS ONLY, and that costs nothing
-   * on the other three — measured, and asserted by `monitorSectors.test.ts`:
-   * for every company share this book holds, the fund filings place nothing
-   * the statement and screener.in do not already place. The suite fails the
-   * day a drop brings one they would, which is when this has to load the
-   * filings everywhere.
+   * THE FUND TIER IS LOADED ON EVERY AXIS. It was the Security axis only while
+   * the filings placed no held company the statement and screener.in did not
+   * already place (`monitorSectors.test.ts` measured it). The November 2026
+   * delivery brought one: a fund files Sterlite Technologies under Information
+   * Technology where screener.in says Communication Services, so a row's sector
+   * would have changed with the axis.
    */
   const companySectors = useMemo(
     () => companySectorIndex(consolidated.filter(isCompanyShare), exposure),

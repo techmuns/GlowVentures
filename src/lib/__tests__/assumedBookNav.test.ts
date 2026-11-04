@@ -168,10 +168,14 @@ const run = (b: AssumedReturnBook = book, units: NavUnit[] = [other, unit]) =>
   ok("each demat's end value moves by exactly what its published closes add", ties);
   ok("…and the investments outside the demats are untouched", WHOLE_BOOK_NAV.coverage.units.every((u) =>
     byAccount.has(u.accountId) || Math.abs((r.series.coverage.units.find((x) => x.key === u.key)?.endValue ?? 0) - (u.endValue ?? 0)) <= 1e-6));
-  // The ICICI demat's listings no price reaches stay at its 31 Mar statement.
-  const carried = r.series.coverage.units.find((u) => u.key === "icici-bank-nsdl-demat-49794950");
-  ok("a demat's holdings left at statement values keep their statement date", !carried || carried.lastValued === "2026-03-31",
-    carried ? `${((carried.endValue ?? 0) / 1e7).toFixed(2)} Cr from ${carried.lastValued}` : "no carried part");
+  // The ICICI demat was valued on 31 Mar, before its 31 Oct share count (Stage
+  // 10kn): that earlier value is the whole account's and cannot be split, so the
+  // shares at their closes and the listings no price reaches stay ONE investment,
+  // valued through the series' end — never a carried part dated 31 Oct beside it.
+  const icici = r.series.coverage.units.filter((u) => u.accountId === "icici-bank-nsdl-demat-49794950");
+  ok("a demat valued before its shares' statement stays one investment, valued at the closes",
+    icici.length === 1 && icici[0].key === "icici-bank-nsdl-demat-49794950" && icici[0].lastValued === end,
+    icici.map((u) => `${u.key} ${((u.endValue ?? 0) / 1e7).toFixed(2)} Cr to ${u.lastValued}`).join("; "));
   ok("every holding not valued this way says why", r.holdings.every((h) => h.status === "assumed" ? h.reason === null : !!h.reason));
   ok("the start days still include the series' first", r.starts[0] === WHOLE_BOOK_NAV.coverage.from);
 }

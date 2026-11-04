@@ -45,6 +45,8 @@ import * as bandhanFolio from "./providers/bandhanFolio.mjs";
 import * as franklinAif from "./providers/franklinAif.mjs";
 import * as schemePortfolio from "./providers/schemePortfolio.mjs";
 import * as nsdlScan from "./providers/nsdlScan.mjs";
+import * as hdfcSecurities from "./providers/hdfcSecurities.mjs";
+import * as equityOrderBook from "./providers/equityOrderBook.mjs";
 import { openScan, scanOcrAvailable, SCAN_ENGINE } from "./lib/scan.mjs";
 import { isRemovalNotice } from "../../shared/statementBytes.mjs";
 import { reconcile, writeReports } from "./reconcile.mjs";
@@ -103,6 +105,10 @@ const EXTRACTORS = Object.fromEntries([
   // its primitives where the CDSL statement's are quantity and rate. It is the
   // only source anywhere in `source/` for their unlisted and pre-IPO holdings.
   [nsdlDemat.PROVIDER, nsdlDemat],
+  // Ajay's HDFC Securities trading account, from the broker's InvestRight app:
+  // a dated equity portfolio by symbol and an undated depository view by name,
+  // read as ONE snapshot (`pairDematPortfolio`).
+  [hdfcSecurities.PROVIDER, hdfcSecurities],
   // HDFC Bank's NSDL arm. Its two statements carry no text layer — their glyphs
   // are vector outlines — so their words are recovered by rendering the page
   // (lib/ocr.mjs) and the reader refuses to publish a row that does not
@@ -195,6 +201,17 @@ const BY_PROVIDER_REPORT_TYPE = {
   // classifier types it on its file name AND its page-3 headings — and the same
   // reader takes it, with that page's own checks (`buoyantSnapCheck`).
   "Buoyant Capital": { holdings: altFunds, unknown: altFunds, "portfolio-snap": altFunds },
+  // The ICICI Bank NSDL account's TRADES arrive as a broker's order book filed
+  // under the demat account they settle into; its holdings stay with nsdlDemat.
+  // The 31 Oct 2026 Statement of Holding's own footer ("…holdings and
+  // transaction statements of your account") types it a transaction statement
+  // too, so a file that is not an order book goes on to the holdings reader.
+  "ICICI Bank (NSDL demat)": {
+    [equityOrderBook.REPORT_TYPE]: {
+      PROVIDER: "equityOrderBook / nsdlDemat",
+      extract: (args) => equityOrderBook.extract(args) ?? nsdlDemat.extract(args),
+    },
+  },
 };
 
 /** Which reader produced a document, for a warning that has to be actionable. */
@@ -1412,9 +1429,13 @@ export function backfillStatementDocuments(docs, grids = new Map()) {
     const recovered = extractOne(path.join(ROOT, doc.sourcePath), grid, null, provider);
     grids.delete(doc); grids.set(recovered, grid); docs[i] = recovered;
   }
+  // Before the sole-account rule, which would key the undated depository view
+  // by provider alone where its own pairing is the evidence.
+  hdfcSecurities.pairDematPortfolio(docs, { rekey });
   backfillAccountNumbers(docs);
   backfillSoleAccount(docs);
   backfillOwners(docs);
+  equityOrderBook.nameTradesByIsin(docs);
   const scanNamed = nameScannedHoldings(docs);
   const renamed = backfillSecurityNames(docs);
   return { scanNamed, renamed };

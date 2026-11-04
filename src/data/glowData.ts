@@ -18,14 +18,14 @@ export const BOOK_AS_OF = "2026-11-03";
 
 export const BOOK_SUMMARY: BookSummary = {
   "asOf": "2026-11-03",
-  "listedValue": 7112999883.11,
-  "privateValue": 2765890203.68,
-  "unplacedValue": 0,
-  "totalValue": 9878890086.79,
-  "positionsCount": 492,
+  "listedValue": 7968401917.36,
+  "privateValue": 2745889803.68,
+  "unplacedValue": 40979575,
+  "totalValue": 10755271296.04,
+  "positionsCount": 506,
   "entitiesCount": 11,
   "startupsCount": 0,
-  "accountsCount": 94
+  "accountsCount": 95
 };
 
 /** Account registry — one row per (provider, account no). Positions join on accountId. */
@@ -890,6 +890,26 @@ export const BOOK_ACCOUNTS: Account[] = [
     }
   },
   {
+    "accountId": "hdfc-securities-3110320",
+    "provider": "HDFC Securities",
+    "accountNo": "3110320",
+    "ownerId": "ajay-jaisinghani",
+    "owner": "Ajay Jaisinghani",
+    "strategy": null,
+    "engagement": "Direct",
+    "providerEngagement": "HDFC Securities trading account 3110320 — the InvestRight equity portfolio, at the LTP of 02/11/2026",
+    "members": [],
+    "asOf": "2026-11-02",
+    "inceptionDate": null,
+    "capitalRecordTo": null,
+    "custodian": "HDFC Securities",
+    "noPositionsReason": null,
+    "demat": {
+      "printed": null,
+      "reason": "the statement read for HDFC Securities 3110320 prints no DP ID or Client ID"
+    }
+  },
+  {
     "accountId": "helios-mutual-fund-10056128",
     "provider": "Helios Mutual Fund",
     "accountNo": "10056128",
@@ -977,9 +997,9 @@ export const BOOK_ACCOUNTS: Account[] = [
     "owner": "Ajay Jaisinghani",
     "strategy": null,
     "engagement": "Direct",
-    "providerEngagement": "NSDL depository account at IN302902 — Non House Beneficiary, Resident Ordinary",
+    "providerEngagement": "equity order book — every trade settles into IN302902-49794950; the broker is not named on the export",
     "members": [],
-    "asOf": "2026-03-31",
+    "asOf": "2026-10-31",
     "inceptionDate": null,
     "capitalRecordTo": null,
     "custodian": "ICICI Bank (NSDL demat)",
@@ -991,8 +1011,9 @@ export const BOOK_ACCOUNTS: Account[] = [
         "clientId": "49794950",
         "participant": "ICICI Bank",
         "accountId": "icici-bank-nsdl-demat-49794950",
-        "asOf": "2026-03-31",
+        "asOf": "2026-10-31",
         "documents": [
+          "icici-bank-nsdl-demat-49794950-2026-10-31-holdings",
           "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
         ]
       }
@@ -10079,6 +10100,264 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
+      "document": "hdfc-securities-3110320-2026-11-02-holdings",
+      "pointer": "/holdings/0"
+    },
+    "securityKey": "deepak-fertilisers-and-petrochemicals",
+    "security": "DEEPAK FERTILISERS AND PETROCHEMICALS CORPORATION LTD EQ",
+    "symbol": null,
+    "accountId": "hdfc-securities-3110320",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Equity",
+    "marketSide": "listed",
+    "quantity": 10930,
+    "avgCost": 945.33,
+    "currentPrice": 1146,
+    "costBasis": 10332501.24,
+    "marketValue": 12525780,
+    "unrealizedPnL": 2193278.76,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": 21.23,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-11-02",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "statementRecord": {
+      "document": "hdfc-securities-3110320-2026-11-02-holdings",
+      "pointer": "/holdings/1"
+    },
+    "securityKey": "kingfa-science-and-technology-india",
+    "security": "KINGFA SCIENCE&TECHNOLOGY (INDIA) LIMITED EQ",
+    "symbol": "KINGFA",
+    "accountId": "hdfc-securities-3110320",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Equity",
+    "marketSide": "listed",
+    "quantity": 1808,
+    "avgCost": 2856.17,
+    "currentPrice": 6687,
+    "costBasis": 5163949.2,
+    "marketValue": 12090096,
+    "unrealizedPnL": 6926146.8,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": 134.12,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-11-02",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "statementRecord": {
+      "document": "hdfc-securities-3110320-2026-11-02-holdings",
+      "pointer": "/holdings/2"
+    },
+    "securityKey": "man-industries-india",
+    "security": "MAN INDUSTRIES (INDIA) LIMITED EQ NEW RS. 5/",
+    "symbol": "MANINDS",
+    "accountId": "hdfc-securities-3110320",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Equity",
+    "marketSide": "listed",
+    "quantity": 480000,
+    "avgCost": 327.64,
+    "currentPrice": 725.5,
+    "costBasis": 157268856.77,
+    "marketValue": 348240000,
+    "unrealizedPnL": 190971143.23,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": 121.43,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-11-02",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "statementRecord": {
+      "document": "hdfc-securities-3110320-2026-11-02-holdings",
+      "pointer": "/holdings/3"
+    },
+    "securityKey": "manorama-industries",
+    "security": "MANORAMA INDUSTRIES LIMITED EQ NEW FV RS 2/",
+    "symbol": "MANORAMA",
+    "accountId": "hdfc-securities-3110320",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Equity",
+    "marketSide": "listed",
+    "quantity": 4000,
+    "avgCost": 1099.06,
+    "currentPrice": 1817.6,
+    "costBasis": 4396247.68,
+    "marketValue": 7270400,
+    "unrealizedPnL": 2874152.32,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": 65.38,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-11-02",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "statementRecord": {
+      "document": "hdfc-securities-3110320-2026-11-02-holdings",
+      "pointer": "/holdings/8"
+    },
+    "securityKey": "sterlite-technologies",
+    "security": "STERLITE TECHNOLOGIES LIMITED EQ NEW FV RS.2/",
+    "symbol": "STLTECH",
+    "isin": "INE089C01029",
+    "accountId": "hdfc-securities-3110320",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Equity",
+    "marketSide": "listed",
+    "quantity": 1850,
+    "avgCost": null,
+    "currentPrice": 783.3,
+    "costBasis": null,
+    "marketValue": 1449105,
+    "unrealizedPnL": null,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": null,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-11-02",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "statementRecord": {
+      "document": "hdfc-securities-3110320-2026-11-02-holdings",
+      "pointer": "/holdings/9"
+    },
+    "securityKey": "stl-networks",
+    "security": "STL NETWORKS LIMITED EQ",
+    "symbol": "STLNETWORK",
+    "isin": "INE1VXE01018",
+    "accountId": "hdfc-securities-3110320",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Equity",
+    "marketSide": "listed",
+    "quantity": 1850,
+    "avgCost": null,
+    "currentPrice": 35.49,
+    "costBasis": null,
+    "marketValue": 65656.5,
+    "unrealizedPnL": null,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": null,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-11-02",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "statementRecord": {
+      "document": "hdfc-securities-3110320-2026-11-02-holdings",
+      "pointer": "/holdings/5"
+    },
+    "securityKey": "vedanta",
+    "security": "VEDANTA LIMITED EQ NEW RS.1/",
+    "symbol": "VEDL",
+    "accountId": "hdfc-securities-3110320",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Equity",
+    "marketSide": "listed",
+    "quantity": 110000,
+    "avgCost": 238.99,
+    "currentPrice": 246,
+    "costBasis": 26289379.66,
+    "marketValue": 27060000,
+    "unrealizedPnL": 770620.34,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": 2.93,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-11-02",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "statementRecord": {
+      "document": "hdfc-securities-3110320-2026-11-02-holdings",
+      "pointer": "/holdings/4"
+    },
+    "securityKey": "vedanta-aluminium-metal",
+    "security": "VEDANTA ALUMINIUM METAL LIMITED EQ",
+    "symbol": "VAML",
+    "accountId": "hdfc-securities-3110320",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Equity",
+    "marketSide": "listed",
+    "quantity": 177000,
+    "avgCost": 32.63,
+    "currentPrice": 360.1,
+    "costBasis": 5775556.33,
+    "marketValue": 63737700,
+    "unrealizedPnL": 57962143.67,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": 1003.58,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-11-02",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "statementRecord": {
       "document": "helios-mutual-fund-10056128-2026-11-03-holdings",
       "pointer": "/holdings/0"
     },
@@ -10231,8 +10510,41 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings",
-      "pointer": "/holdings/4"
+      "document": "icici-bank-nsdl-demat-49794950-2026-10-31-holdings",
+      "pointer": "/holdings/5"
+    },
+    "securityKey": "city-union",
+    "security": "CITY UNION BANK LIMITED - EQ NEW RS. 1/",
+    "symbol": "CUB",
+    "isin": "INE491A01021",
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Equity",
+    "marketSide": "listed",
+    "quantity": 104400,
+    "avgCost": null,
+    "currentPrice": null,
+    "costBasis": null,
+    "marketValue": 22362480,
+    "unrealizedPnL": null,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": null,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-10-30",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "statementRecord": {
+      "document": "icici-bank-nsdl-demat-49794950-2026-10-31-holdings",
+      "pointer": "/holdings/6"
     },
     "securityKey": "clean-max-enviro-energy-solutions",
     "security": "CLEAN MAX ENVIRO ENERGY SOLUTIONS LIMITED - EQ NEW FV RE.1/",
@@ -10249,16 +10561,16 @@ export const BOOK_POSITIONS: Position[] = [
     "currentPrice": null,
     "costBasis": 93857991,
     "costBasisSource": "supplementary-record",
-    "marketValue": 126923395.5,
-    "unrealizedPnL": 33065404.5,
+    "marketValue": 117996497.5,
+    "unrealizedPnL": 24138506.5,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": 35.22918416184723,
+    "returnPct": 25.718115466588245,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "priceAsOf": "2026-03-30",
+    "priceAsOf": "2026-10-30",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
@@ -10268,7 +10580,7 @@ export const BOOK_POSITIONS: Position[] = [
       "accountId": "icici-bank-nsdl-demat-49794950",
       "isin": "INE647U01026",
       "quantity": 94967,
-      "asOf": "2026-03-31",
+      "asOf": "2026-10-31",
       "costBasis": 93857991,
       "heldPurchases": {
         "first": "2026-01-30",
@@ -10296,7 +10608,8 @@ export const BOOK_POSITIONS: Position[] = [
           "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
           "sheet": "Transactions since inception",
           "rows": [
-            262
+            262,
+            263
           ]
         }
       ],
@@ -10305,8 +10618,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings",
-      "pointer": "/holdings/6"
+      "document": "icici-bank-nsdl-demat-49794950-2026-10-31-holdings",
+      "pointer": "/holdings/8"
     },
     "securityKey": "ema-partners-india",
     "security": "EMA PARTNERS INDIA LIMITED - EQ NEW FV RS 5/",
@@ -10318,71 +10631,94 @@ export const BOOK_POSITIONS: Position[] = [
     "providerSector": null,
     "assetClass": "Equity",
     "marketSide": "listed",
-    "quantity": 44643,
-    "avgCost": 104,
+    "quantity": 643,
+    "avgCost": null,
     "currentPrice": null,
-    "costBasis": 4642872,
-    "costBasisSource": "supplementary-record",
-    "marketValue": 3660726,
-    "unrealizedPnL": -982146,
+    "costBasis": null,
+    "marketValue": 54622.85,
+    "unrealizedPnL": null,
     "realizedPnL": null,
     "costOfUnitsSold": null,
-    "returnPct": -21.153846153846153,
+    "returnPct": null,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "priceAsOf": "2026-03-30",
+    "priceAsOf": "2026-10-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null,
-    "avgCostDerived": true,
-    "costUnavailable": false,
-    "recoveredCost": {
-      "accountId": "icici-bank-nsdl-demat-49794950",
-      "isin": "INE0ZOL01023",
-      "quantity": 44643,
-      "asOf": "2026-03-31",
-      "costBasis": 4642872,
-      "heldPurchases": {
-        "first": "2024-08-30",
-        "last": "2024-08-30",
-        "lots": 1
-      },
-      "cashRecord": [
-        {
-          "date": "2024-08-30",
-          "side": "buy",
-          "amount": 4642872
-        }
-      ],
-      "unitRecord": [
-        {
-          "date": "2024-08-30",
-          "units": 44643
-        }
-      ],
-      "realizedPnL": null,
-      "costOfUnitsSold": null,
-      "dividendReceived": null,
-      "evidence": [
-        {
-          "path": "source/august-2026-f/NEW INVESTMENT SHEET.xlsx",
-          "sheet": "AJAY SIR - AARTI",
-          "rows": [
-            46
-          ]
-        }
-      ],
-      "notes": [
-        "Payment register matches owner and every unit; no complete separate sales/income record is claimed"
-      ]
-    }
+    "positionIrrPct": null
   },
   {
     "statementRecord": {
-      "document": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings",
-      "pointer": "/holdings/10"
+      "document": "icici-bank-nsdl-demat-49794950-2026-10-31-holdings",
+      "pointer": "/holdings/9"
+    },
+    "securityKey": "esds-software-solution-limited-eq-new-fv-rs-1",
+    "security": "ESDS SOFTWARE SOLUTION LIMITED - EQ NEW FV RS .1/",
+    "symbol": "ESDS",
+    "isin": "INE0DRI01029",
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Equity",
+    "marketSide": "listed",
+    "quantity": 330898,
+    "avgCost": null,
+    "currentPrice": null,
+    "costBasis": null,
+    "marketValue": 383841680,
+    "unrealizedPnL": null,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": null,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-10-30",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "statementRecord": {
+      "document": "icici-bank-nsdl-demat-49794950-2026-10-31-holdings",
+      "pointer": "/holdings/38"
+    },
+    "securityKey": "federal-bank",
+    "security": "THE FEDERAL BANK LIMITED - EQ NEW FV RS.2/",
+    "symbol": "FEDERALBNK",
+    "isin": "INE171A01029",
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Equity",
+    "marketSide": "listed",
+    "quantity": 90361,
+    "avgCost": null,
+    "currentPrice": null,
+    "costBasis": null,
+    "marketValue": 30695631.7,
+    "unrealizedPnL": null,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": null,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-10-30",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "statementRecord": {
+      "document": "icici-bank-nsdl-demat-49794950-2026-10-31-holdings",
+      "pointer": "/holdings/12"
     },
     "securityKey": "fractal-analytics",
     "security": "FRACTAL ANALYTICS LIMITED - EQ",
@@ -10399,16 +10735,16 @@ export const BOOK_POSITIONS: Position[] = [
     "currentPrice": null,
     "costBasis": 176878881,
     "costBasisSource": "supplementary-record",
-    "marketValue": 151724779.25,
-    "unrealizedPnL": -25154101.75,
+    "marketValue": 135147759.25,
+    "unrealizedPnL": -41731121.75,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -14.221088242863772,
+    "returnPct": -23.593049387281006,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "priceAsOf": "2026-03-30",
+    "priceAsOf": "2026-10-30",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
@@ -10418,7 +10754,7 @@ export const BOOK_POSITIONS: Position[] = [
       "accountId": "icici-bank-nsdl-demat-49794950",
       "isin": "INE212S01015",
       "quantity": 180185,
-      "asOf": "2026-03-31",
+      "asOf": "2026-10-31",
       "costBasis": 176878881,
       "heldPurchases": {
         "first": "2025-07-07",
@@ -10451,7 +10787,8 @@ export const BOOK_POSITIONS: Position[] = [
           "sheet": "Transactions since inception",
           "rows": [
             275,
-            276
+            276,
+            277
           ]
         }
       ],
@@ -10460,8 +10797,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings",
-      "pointer": "/holdings/11"
+      "document": "icici-bank-nsdl-demat-49794950-2026-10-31-holdings",
+      "pointer": "/holdings/14"
     },
     "securityKey": "grand-continent-hotels",
     "security": "GRAND CONTINENT HOTELS LIMITED - EQ",
@@ -10478,16 +10815,16 @@ export const BOOK_POSITIONS: Position[] = [
     "currentPrice": null,
     "costBasis": 16277250,
     "costBasisSource": "supplementary-record",
-    "marketValue": 29344893.75,
-    "unrealizedPnL": 13067643.75,
+    "marketValue": 26474625,
+    "unrealizedPnL": 10197375,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": 80.28164309081693,
+    "returnPct": 62.648021010920154,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "priceAsOf": "2026-03-30",
+    "priceAsOf": "2026-10-30",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
@@ -10497,7 +10834,7 @@ export const BOOK_POSITIONS: Position[] = [
       "accountId": "icici-bank-nsdl-demat-49794950",
       "isin": "INE12E301017",
       "quantity": 262125,
-      "asOf": "2026-03-31",
+      "asOf": "2026-10-31",
       "costBasis": 16277250,
       "heldPurchases": {
         "first": "2024-02-14",
@@ -10540,7 +10877,8 @@ export const BOOK_POSITIONS: Position[] = [
           "rows": [
             323,
             324,
-            325
+            325,
+            326
           ]
         }
       ],
@@ -10551,87 +10889,74 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings",
-      "pointer": "/holdings/15"
+      "document": "icici-bank-nsdl-demat-49794950-2026-10-31-holdings",
+      "pointer": "/holdings/16"
     },
-    "securityKey": "insolation-energy",
-    "security": "INSOLATION ENERGY LIMITED - EQ NEW FV RE.1/",
-    "symbol": "INA",
-    "isin": "INE0LGX01024",
+    "securityKey": "indian-bank",
+    "security": "INDIAN BANK - EQ",
+    "symbol": "INDIANB",
+    "isin": "INE562A01011",
     "accountId": "icici-bank-nsdl-demat-49794950",
     "memberId": null,
     "sector": "Unclassified",
     "providerSector": null,
     "assetClass": "Equity",
     "marketSide": "listed",
-    "quantity": 212000,
-    "avgCost": 328.7,
+    "quantity": 27200,
+    "avgCost": null,
     "currentPrice": null,
-    "costBasis": 69684400,
-    "costBasisSource": "supplementary-record",
-    "marketValue": 25251320,
-    "unrealizedPnL": -44433080,
-    "realizedPnL": 0,
-    "costOfUnitsSold": 0,
-    "returnPct": -63.76331000912686,
+    "costBasis": null,
+    "marketValue": 23541600,
+    "unrealizedPnL": null,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": null,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "priceAsOf": "2026-03-30",
+    "priceAsOf": "2026-10-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null,
-    "avgCostDerived": true,
-    "costUnavailable": false,
-    "recoveredCost": {
-      "accountId": "icici-bank-nsdl-demat-49794950",
-      "isin": "INE0LGX01024",
-      "quantity": 212000,
-      "asOf": "2026-03-31",
-      "costBasis": 69684400,
-      "heldPurchases": {
-        "first": "2024-12-11",
-        "last": "2024-12-11",
-        "lots": 1
-      },
-      "cashRecord": [
-        {
-          "date": "2024-12-11",
-          "side": "buy",
-          "amount": 69684400
-        }
-      ],
-      "unitRecord": [
-        {
-          "date": "2024-12-11",
-          "units": 21200
-        },
-        {
-          "date": "2025-01-24",
-          "units": 212000
-        }
-      ],
-      "realizedPnL": 0,
-      "costOfUnitsSold": 0,
-      "dividendReceived": null,
-      "evidence": [
-        {
-          "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
-          "sheet": "Transactions since inception",
-          "rows": [
-            299,
-            300
-          ]
-        }
-      ],
-      "notes": []
-    }
+    "positionIrrPct": null
   },
   {
     "statementRecord": {
-      "document": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings",
+      "document": "icici-bank-nsdl-demat-49794950-2026-10-31-holdings",
       "pointer": "/holdings/17"
+    },
+    "securityKey": "indusind-bank",
+    "security": "INDUSIND BANK LTD. - EQ",
+    "symbol": "INDUSINDBK",
+    "isin": "INE095A01012",
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Equity",
+    "marketSide": "listed",
+    "quantity": 15950,
+    "avgCost": null,
+    "currentPrice": null,
+    "costBasis": null,
+    "marketValue": 13366100,
+    "unrealizedPnL": null,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": null,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-10-30",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "statementRecord": {
+      "document": "icici-bank-nsdl-demat-49794950-2026-10-31-holdings",
+      "pointer": "/holdings/21"
     },
     "securityKey": "jaro-institute-of-technology-management-and-research",
     "security": "JARO INSTITUTE OF TECHNOLOGY MANAGEMENT AND RESEARCH LIMITED - EQ",
@@ -10648,16 +10973,16 @@ export const BOOK_POSITIONS: Position[] = [
     "currentPrice": null,
     "costBasis": 75000350,
     "costBasisSource": "supplementary-record",
-    "marketValue": 57758381.25,
-    "unrealizedPnL": -17241968.75,
+    "marketValue": 38135154,
+    "unrealizedPnL": -36865196,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -22.989184383806208,
+    "returnPct": -49.15336528429534,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "priceAsOf": "2026-03-30",
+    "priceAsOf": "2026-10-30",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
@@ -10667,7 +10992,7 @@ export const BOOK_POSITIONS: Position[] = [
       "accountId": "icici-bank-nsdl-demat-49794950",
       "isin": "INE00YJ01010",
       "quantity": 116979,
-      "asOf": "2026-03-31",
+      "asOf": "2026-10-31",
       "costBasis": 75000350,
       "heldPurchases": {
         "first": "2024-05-29",
@@ -10705,7 +11030,8 @@ export const BOOK_POSITIONS: Position[] = [
           "sheet": "Transactions since inception",
           "rows": [
             305,
-            306
+            306,
+            307
           ]
         }
       ],
@@ -10714,8 +11040,41 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings",
-      "pointer": "/holdings/22"
+      "document": "icici-bank-nsdl-demat-49794950-2026-10-31-holdings",
+      "pointer": "/holdings/39"
+    },
+    "securityKey": "karur-vysya-bank",
+    "security": "THE KARUR VYSYA BANK LIMITED - EQ NEW FV RS. 2/",
+    "symbol": "KARURVYSYA",
+    "isin": "INE036D01028",
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Equity",
+    "marketSide": "listed",
+    "quantity": 50500,
+    "avgCost": null,
+    "currentPrice": null,
+    "costBasis": null,
+    "marketValue": 17983050,
+    "unrealizedPnL": null,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": null,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-10-30",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "statementRecord": {
+      "document": "icici-bank-nsdl-demat-49794950-2026-10-31-holdings",
+      "pointer": "/holdings/26"
     },
     "securityKey": "parth-electricals-and-engineering",
     "security": "PARTH ELECTRICALS & ENGINEERING LIMITED - EQ",
@@ -10732,16 +11091,16 @@ export const BOOK_POSITIONS: Position[] = [
     "currentPrice": null,
     "costBasis": 10030000,
     "costBasisSource": "supplementary-record",
-    "marketValue": 26252050,
-    "unrealizedPnL": 16222050,
+    "marketValue": 27818500,
+    "unrealizedPnL": 17788500,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": 161.73529411764707,
+    "returnPct": 177.35294117647058,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "priceAsOf": "2026-03-30",
+    "priceAsOf": "2026-10-30",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
@@ -10751,7 +11110,7 @@ export const BOOK_POSITIONS: Position[] = [
       "accountId": "icici-bank-nsdl-demat-49794950",
       "isin": "INE1H7V01011",
       "quantity": 59000,
-      "asOf": "2026-03-31",
+      "asOf": "2026-10-31",
       "costBasis": 10030000,
       "heldPurchases": {
         "first": "2025-04-16",
@@ -10779,7 +11138,8 @@ export const BOOK_POSITIONS: Position[] = [
           "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
           "sheet": "Transactions since inception",
           "rows": [
-            374
+            374,
+            375
           ]
         }
       ],
@@ -10788,82 +11148,107 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings",
+      "document": "icici-bank-nsdl-demat-49794950-2026-10-31-holdings",
       "pointer": "/holdings/30"
     },
-    "securityKey": "smartworks-coworking-spaces",
-    "security": "SMARTWORKS COWORKING SPACES LIMITED - EQ",
-    "symbol": "SMARTWORKS",
-    "isin": "INE0NAZ01010",
+    "securityKey": "rbl-bnk",
+    "security": "RBL BANK LIMITED - EQ",
+    "symbol": "RBLBANK",
+    "isin": "INE976G01028",
     "accountId": "icici-bank-nsdl-demat-49794950",
     "memberId": null,
     "sector": "Unclassified",
     "providerSector": null,
     "assetClass": "Equity",
     "marketSide": "listed",
-    "quantity": 187778,
-    "avgCost": 450,
+    "quantity": 40900,
+    "avgCost": null,
     "currentPrice": null,
-    "costBasis": 84500100,
-    "costBasisSource": "supplementary-record",
-    "marketValue": 91269496.9,
-    "unrealizedPnL": 6769396.900000006,
-    "realizedPnL": 0,
-    "costOfUnitsSold": 0,
-    "returnPct": 8.011111111111118,
+    "costBasis": null,
+    "marketValue": 14355900,
+    "unrealizedPnL": null,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": null,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "priceAsOf": "2026-03-30",
+    "priceAsOf": "2026-10-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null,
-    "avgCostDerived": true,
-    "costUnavailable": false,
-    "recoveredCost": {
-      "accountId": "icici-bank-nsdl-demat-49794950",
-      "isin": "INE0NAZ01010",
-      "quantity": 187778,
-      "asOf": "2026-03-31",
-      "costBasis": 84500100,
-      "heldPurchases": {
-        "first": "2024-09-20",
-        "last": "2024-09-20",
-        "lots": 1
-      },
-      "cashRecord": [
-        {
-          "date": "2024-09-20",
-          "side": "buy",
-          "amount": 84500100
-        }
-      ],
-      "unitRecord": [
-        {
-          "date": "2024-09-20",
-          "units": 187778
-        }
-      ],
-      "realizedPnL": 0,
-      "costOfUnitsSold": 0,
-      "dividendReceived": null,
-      "evidence": [
-        {
-          "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
-          "sheet": "Transactions since inception",
-          "rows": [
-            379
-          ]
-        }
-      ],
-      "notes": []
-    }
+    "positionIrrPct": null
   },
   {
     "statementRecord": {
-      "document": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings",
-      "pointer": "/holdings/36"
+      "document": "icici-bank-nsdl-demat-49794950-2026-10-31-holdings",
+      "pointer": "/holdings/35"
+    },
+    "securityKey": "sotefin-bharat",
+    "security": "SOTEFIN BHARAT LIMITED - EQ",
+    "symbol": null,
+    "isin": "INE12Z301012",
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Equity",
+    "marketSide": "listed",
+    "quantity": 171879,
+    "avgCost": null,
+    "currentPrice": null,
+    "costBasis": null,
+    "marketValue": 42625992,
+    "unrealizedPnL": null,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": null,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-10-30",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "statementRecord": {
+      "document": "icici-bank-nsdl-demat-49794950-2026-10-31-holdings",
+      "pointer": "/holdings/42"
+    },
+    "securityKey": "vof-i-class-a2",
+    "security": "VANTAGE OAK FUND - VOF I CL A2 - Restricted Transferability",
+    "symbol": null,
+    "isin": "INF2O4Z22020",
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "AIF",
+    "marketSide": null,
+    "quantity": 2275000,
+    "avgCost": null,
+    "currentPrice": null,
+    "costBasis": null,
+    "marketValue": 40979575,
+    "unrealizedPnL": null,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": null,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "priceAsOf": "2026-10-30",
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "statementRecord": {
+      "document": "icici-bank-nsdl-demat-49794950-2026-10-31-holdings",
+      "pointer": "/holdings/44"
     },
     "securityKey": "yash-highvoltage",
     "security": "YASH HIGHVOLTAGE LIMITED - EQ NEW FV RS. 5/",
@@ -10875,92 +11260,23 @@ export const BOOK_POSITIONS: Position[] = [
     "providerSector": null,
     "assetClass": "Equity",
     "marketSide": "listed",
-    "quantity": 138462,
-    "avgCost": 72.22284814606174,
+    "quantity": 104462,
+    "avgCost": null,
     "currentPrice": null,
-    "costBasis": 10000120,
-    "costBasisSource": "supplementary-record",
-    "marketValue": 125446572,
-    "unrealizedPnL": 115446452,
-    "realizedPnL": 0,
-    "costOfUnitsSold": 0,
-    "realizedLotsAfter": 3,
-    "rolledForward": {
-      "through": "2026-06-30",
-      "quantity": 116462,
-      "costBasis": 8411217.34,
-      "realizedPnL": null,
-      "costOfUnitsSold": 1588902.66,
-      "trades": 3,
-      "source": "review",
-      "hprUnavailableReason": "Sale proceeds are unverified on review row(s) 435, 436, 437; original lots establish remaining cost only"
-    },
-    "returnPct": 1154.450666592001,
+    "costBasis": null,
+    "marketValue": 126195319.1,
+    "unrealizedPnL": null,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": null,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "priceAsOf": "2026-03-30",
+    "priceAsOf": "2026-10-30",
     "accruedIncome": null,
     "dividendReceived": null,
-    "positionIrrPct": null,
-    "avgCostDerived": true,
-    "costUnavailable": false,
-    "recoveredCost": {
-      "accountId": "icici-bank-nsdl-demat-49794950",
-      "isin": "INE00GK01023",
-      "quantity": 138462,
-      "asOf": "2026-03-31",
-      "costBasis": 10000120,
-      "heldPurchases": {
-        "first": "2024-04-15",
-        "last": "2024-04-15",
-        "lots": 1
-      },
-      "cashRecord": [
-        {
-          "date": "2024-04-15",
-          "side": "buy",
-          "amount": 10000120
-        }
-      ],
-      "unitRecord": [
-        {
-          "date": "2024-04-15",
-          "units": 138462
-        }
-      ],
-      "realizedPnL": 0,
-      "costOfUnitsSold": 0,
-      "dividendReceived": null,
-      "salesAfter": 3,
-      "reviewRoll": {
-        "through": "2026-06-30",
-        "quantity": 116462,
-        "costBasis": 8411217.34,
-        "realizedPnL": null,
-        "costOfUnitsSold": 1588902.66,
-        "trades": 3,
-        "source": "review",
-        "hprUnavailableReason": "Sale proceeds are unverified on review row(s) 435, 436, 437; original lots establish remaining cost only",
-        "rows": [
-          435,
-          436,
-          437,
-          438
-        ]
-      },
-      "evidence": [
-        {
-          "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
-          "sheet": "Transactions since inception",
-          "rows": [
-            434
-          ]
-        }
-      ],
-      "notes": []
-    }
+    "positionIrrPct": null
   },
   {
     "statementRecord": {
@@ -13574,7 +13890,7 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2025-11",
       "text": "Nov 2025"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 12. The review's Transactions row: 636 preference shares at ₹78,668, and the ICICI Bank NSDL statement's 636 in Ajay's account."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), PE Funds row 12. The review's Transactions row: 636 preference shares at ₹78,668, and the ICICI Bank NSDL statement's 636 in Ajay's account. A statement says otherwise: the ICICI Bank NSDL statement of 31 Oct 2026 holds 541 Series B preference shares and 20,797 equity shares of the company, now Assetgro Fintech Limited, where the review carries 636 preference shares."
   },
   {
     "securityKey": "big-bang-boom-solutions-private-limited-0-001-pref-12sp44",
@@ -13714,13 +14030,13 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2025-08-20",
       "text": "20 Aug 2025"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 65 — Ajay Jaisinghani's ₹1,00,000 of the line. Two holders; the family's investment register records ₹1 L each. A statement says otherwise: the ICICI Bank NSDL statement of 31 Mar 2026 values Ajay's units at ₹98,742."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 65 — Ajay Jaisinghani's ₹1,00,000 of the line. Two holders; the family's investment register records ₹1 L each. A statement says otherwise: the ICICI Bank NSDL statement of 31 Oct 2026 values Ajay's 856.736 units at ₹84,595.83."
   },
   {
-    "securityKey": "borosil-renewables-limited-warrants-13ag26",
-    "security": "Borosil Renewables - Warrants 13AG26",
+    "securityKey": "borosil-renewables-limited-eq-new-fv-re-1-listing-trdg-aprvl-awaited",
+    "security": "Borosil Renewables - Preferential Equity (listing awaited)",
     "symbol": null,
-    "isin": "INE666D13019",
+    "isin": "IN8666D01021",
     "accountId": "review-ajay-jaisinghani",
     "memberId": null,
     "sector": "Unclassified",
@@ -13761,7 +14077,7 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2025-02-12",
       "text": "12 Feb 2025"
     },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 19. One holder on the review's own Transactions and on the register. A statement says otherwise: the ICICI Bank NSDL statement of 31 Mar 2026 values the 2,83,018 warrants at ₹70,754.50."
+    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 19. One holder on the review's own Transactions and on the register. A statement says otherwise: the ICICI Bank NSDL statement of 31 Oct 2026 holds 2,83,018 equity shares (IN8666D01021, a preferential allotment awaiting listing, locked in to 7 May 2027) where the review carries the warrants, at their ₹1 face value; the payment that converted them is on no statement in this book."
   },
   {
     "securityKey": "edugorilla-community",
@@ -14225,7 +14541,7 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2023-08",
       "text": "Dec 2022 – Aug 2023"
     },
-    "reviewNote": "Valued at ₹25,93,75,000 on the family's consolidated review (MOPWM, 30 Jun 2026), Direct Equity - Unlisted row 69. 1,25,000 shares on Ajay's ICICI Bank NSDL statement and 75,000 on Ankita's Motilal Oswal demat; the review's ₹12.085 Cr cost split by shares, which is this book's judgement — the review prints one cost for the 2,00,000. Now a listed company: the family confirmed NSE has listed; the statement basis keeps the review's value, and since 22 Oct 2026 the live price is its BSE quote (BSE: NSE, matched by ISIN INE721I01024) (confirmed 2026-10-13)."
+    "reviewNote": "Valued at ₹25,93,75,000 on the family's consolidated review (MOPWM, 30 Jun 2026), Direct Equity - Unlisted row 69. 1,25,000 shares on Ajay's ICICI Bank NSDL statement and 75,000 on Ankita's Motilal Oswal demat; the review's ₹12.085 Cr cost split by shares, which is this book's judgement — the review prints one cost for the 2,00,000. Now a listed company: the family confirmed NSE has listed; the statement basis keeps the review's value, and since 22 Oct 2026 the live price is its BSE quote (BSE: NSE, matched by ISIN INE721I01024) (confirmed 2026-10-13). A statement says otherwise: the ICICI Bank NSDL statement of 31 Oct 2026 marks Ajay's 1,25,000 shares at ₹22,27,62,500 (the 30 Oct close)."
   },
   {
     "securityKey": "oilmax-energy",
@@ -14461,53 +14777,6 @@ export const BOOK_POSITIONS: Position[] = [
       "text": "25 Mar 2025"
     },
     "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 9. One holder on the review's own Transactions and on the register."
-  },
-  {
-    "securityKey": "sotefin-bharat",
-    "security": "SOTEFIN",
-    "symbol": null,
-    "isin": "INE12Z301012",
-    "accountId": "review-ajay-jaisinghani",
-    "memberId": null,
-    "sector": "Unclassified",
-    "providerSector": null,
-    "assetClass": "Unlisted",
-    "marketSide": "private",
-    "quantity": null,
-    "avgCost": null,
-    "currentPrice": null,
-    "costBasis": 20000400,
-    "costBasisSource": "review",
-    "marketValue": 20000400,
-    "unrealizedPnL": null,
-    "realizedPnL": null,
-    "costOfUnitsSold": null,
-    "returnPct": null,
-    "stCostBasis": null,
-    "ltCostBasis": null,
-    "daysToLT": null,
-    "heldSince": null,
-    "priceAsOf": "2026-06-30",
-    "accruedIncome": null,
-    "dividendReceived": null,
-    "positionIrrPct": null,
-    "review": true,
-    "valuedAtCost": true,
-    "reviewTaxonomy": {
-      "assetClass": "Alternate",
-      "basket": "Entrepreneurial Growth"
-    },
-    "reviewSource": {
-      "sheet": "Private Investments",
-      "block": "Private Investments",
-      "row": 28
-    },
-    "investedDates": {
-      "from": "2024-07-12",
-      "to": "2024-07-12",
-      "text": "12 Jul 2024"
-    },
-    "reviewNote": "Held at cost on the family's consolidated review (MOPWM, 30 Jun 2026), Private Investments row 28. One holder on the review's own Transactions and on the register."
   },
   {
     "securityKey": "spray-engineering-devices",
@@ -22970,64 +23239,9 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
   },
   {
     "accountId": "icici-bank-nsdl-demat-49794950",
-    "isin": "INE00GK01023",
-    "quantity": 138462,
-    "asOf": "2026-03-31",
-    "costBasis": 10000120,
-    "heldPurchases": {
-      "first": "2024-04-15",
-      "last": "2024-04-15",
-      "lots": 1
-    },
-    "cashRecord": [
-      {
-        "date": "2024-04-15",
-        "side": "buy",
-        "amount": 10000120
-      }
-    ],
-    "unitRecord": [
-      {
-        "date": "2024-04-15",
-        "units": 138462
-      }
-    ],
-    "realizedPnL": 0,
-    "costOfUnitsSold": 0,
-    "dividendReceived": null,
-    "salesAfter": 3,
-    "reviewRoll": {
-      "through": "2026-06-30",
-      "quantity": 116462,
-      "costBasis": 8411217.34,
-      "realizedPnL": null,
-      "costOfUnitsSold": 1588902.66,
-      "trades": 3,
-      "source": "review",
-      "hprUnavailableReason": "Sale proceeds are unverified on review row(s) 435, 436, 437; original lots establish remaining cost only",
-      "rows": [
-        435,
-        436,
-        437,
-        438
-      ]
-    },
-    "evidence": [
-      {
-        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
-        "sheet": "Transactions since inception",
-        "rows": [
-          434
-        ]
-      }
-    ],
-    "notes": []
-  },
-  {
-    "accountId": "icici-bank-nsdl-demat-49794950",
     "isin": "INE00YJ01010",
     "quantity": 116979,
-    "asOf": "2026-03-31",
+    "asOf": "2026-10-31",
     "costBasis": 75000350,
     "heldPurchases": {
       "first": "2024-05-29",
@@ -23065,138 +23279,18 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "sheet": "Transactions since inception",
         "rows": [
           305,
-          306
+          306,
+          307
         ]
       }
     ],
     "notes": []
-  },
-  {
-    "accountId": "icici-bank-nsdl-demat-49794950",
-    "isin": "INE0LGX01024",
-    "quantity": 212000,
-    "asOf": "2026-03-31",
-    "costBasis": 69684400,
-    "heldPurchases": {
-      "first": "2024-12-11",
-      "last": "2024-12-11",
-      "lots": 1
-    },
-    "cashRecord": [
-      {
-        "date": "2024-12-11",
-        "side": "buy",
-        "amount": 69684400
-      }
-    ],
-    "unitRecord": [
-      {
-        "date": "2024-12-11",
-        "units": 21200
-      },
-      {
-        "date": "2025-01-24",
-        "units": 212000
-      }
-    ],
-    "realizedPnL": 0,
-    "costOfUnitsSold": 0,
-    "dividendReceived": null,
-    "evidence": [
-      {
-        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
-        "sheet": "Transactions since inception",
-        "rows": [
-          299,
-          300
-        ]
-      }
-    ],
-    "notes": []
-  },
-  {
-    "accountId": "icici-bank-nsdl-demat-49794950",
-    "isin": "INE0NAZ01010",
-    "quantity": 187778,
-    "asOf": "2026-03-31",
-    "costBasis": 84500100,
-    "heldPurchases": {
-      "first": "2024-09-20",
-      "last": "2024-09-20",
-      "lots": 1
-    },
-    "cashRecord": [
-      {
-        "date": "2024-09-20",
-        "side": "buy",
-        "amount": 84500100
-      }
-    ],
-    "unitRecord": [
-      {
-        "date": "2024-09-20",
-        "units": 187778
-      }
-    ],
-    "realizedPnL": 0,
-    "costOfUnitsSold": 0,
-    "dividendReceived": null,
-    "evidence": [
-      {
-        "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
-        "sheet": "Transactions since inception",
-        "rows": [
-          379
-        ]
-      }
-    ],
-    "notes": []
-  },
-  {
-    "accountId": "icici-bank-nsdl-demat-49794950",
-    "isin": "INE0ZOL01023",
-    "quantity": 44643,
-    "asOf": "2026-03-31",
-    "costBasis": 4642872,
-    "heldPurchases": {
-      "first": "2024-08-30",
-      "last": "2024-08-30",
-      "lots": 1
-    },
-    "cashRecord": [
-      {
-        "date": "2024-08-30",
-        "side": "buy",
-        "amount": 4642872
-      }
-    ],
-    "unitRecord": [
-      {
-        "date": "2024-08-30",
-        "units": 44643
-      }
-    ],
-    "realizedPnL": null,
-    "costOfUnitsSold": null,
-    "dividendReceived": null,
-    "evidence": [
-      {
-        "path": "source/august-2026-f/NEW INVESTMENT SHEET.xlsx",
-        "sheet": "AJAY SIR - AARTI",
-        "rows": [
-          46
-        ]
-      }
-    ],
-    "notes": [
-      "Payment register matches owner and every unit; no complete separate sales/income record is claimed"
-    ]
   },
   {
     "accountId": "icici-bank-nsdl-demat-49794950",
     "isin": "INE12E301017",
     "quantity": 262125,
-    "asOf": "2026-03-31",
+    "asOf": "2026-10-31",
     "costBasis": 16277250,
     "heldPurchases": {
       "first": "2024-02-14",
@@ -23239,7 +23333,8 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "rows": [
           323,
           324,
-          325
+          325,
+          326
         ]
       }
     ],
@@ -23251,7 +23346,7 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "accountId": "icici-bank-nsdl-demat-49794950",
     "isin": "INE1H7V01011",
     "quantity": 59000,
-    "asOf": "2026-03-31",
+    "asOf": "2026-10-31",
     "costBasis": 10030000,
     "heldPurchases": {
       "first": "2025-04-16",
@@ -23279,7 +23374,8 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
         "sheet": "Transactions since inception",
         "rows": [
-          374
+          374,
+          375
         ]
       }
     ],
@@ -23289,7 +23385,7 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "accountId": "icici-bank-nsdl-demat-49794950",
     "isin": "INE212S01015",
     "quantity": 180185,
-    "asOf": "2026-03-31",
+    "asOf": "2026-10-31",
     "costBasis": 176878881,
     "heldPurchases": {
       "first": "2025-07-07",
@@ -23322,7 +23418,8 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "sheet": "Transactions since inception",
         "rows": [
           275,
-          276
+          276,
+          277
         ]
       }
     ],
@@ -23332,7 +23429,7 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
     "accountId": "icici-bank-nsdl-demat-49794950",
     "isin": "INE647U01026",
     "quantity": 94967,
-    "asOf": "2026-03-31",
+    "asOf": "2026-10-31",
     "costBasis": 93857991,
     "heldPurchases": {
       "first": "2026-01-30",
@@ -23360,7 +23457,8 @@ export const BOOK_RECOVERED_COSTS: RecoveredHoldingCost[] = [
         "path": "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx",
         "sheet": "Transactions since inception",
         "rows": [
-          262
+          262,
+          263
         ]
       }
     ],
@@ -26923,29 +27021,50 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
   },
   {
     "statementRecord": {
-      "document": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings",
-      "pointer": "/holdings/7"
+      "document": "hdfc-securities-3110320-2026-11-02-holdings",
+      "pointer": "/holdings/6"
     },
-    "accountId": "icici-bank-nsdl-demat-49794950",
+    "accountId": "hdfc-securities-3110320",
     "ownerId": "ajay-jaisinghani",
-    "securityKey": "esds-software-solution-limited-eq-new-fv-rs-1",
-    "security": "ESDS SOFTWARE SOLUTION LIMITED - EQ NEW FV RS .1/",
-    "isin": "INE0DRI01029",
+    "securityKey": "sterlite-electric",
+    "security": "STERLITE ELECTRIC LIMITED EQ",
+    "isin": null,
     "assetClass": "Equity",
-    "quantity": 330898,
-    "faceValue": 1,
+    "quantity": 1140,
+    "faceValue": null,
     "lastMovementRate": null,
     "lastMovementValue": null,
     "lastMovementDate": null,
     "lastMovementSide": null,
-    "asOf": "2026-03-31",
+    "asOf": "2026-11-02",
     "sameUnitsReportedBy": null,
-    "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 330898 unit(s) at their face value of 1, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
+    "reason": "the fund's own statement of 2026-11-02 reports 1140 unit(s) and no NAV and no valuation — there is nothing to value them at, and the capital drawn against them is what was paid, not what the stake is worth"
   },
   {
     "statementRecord": {
-      "document": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings",
-      "pointer": "/holdings/13"
+      "document": "hdfc-securities-3110320-2026-11-02-holdings",
+      "pointer": "/holdings/7"
+    },
+    "accountId": "hdfc-securities-3110320",
+    "ownerId": "ajay-jaisinghani",
+    "securityKey": "sterlite-grid-5",
+    "security": "STERLITE GRID 5 LIMITED EQ NEW FV RS 2/",
+    "isin": null,
+    "assetClass": "Equity",
+    "quantity": 1140,
+    "faceValue": null,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
+    "asOf": "2026-11-02",
+    "sameUnitsReportedBy": null,
+    "reason": "the fund's own statement of 2026-11-02 reports 1140 unit(s) and no NAV and no valuation — there is nothing to value them at, and the capital drawn against them is what was paid, not what the stake is worth"
+  },
+  {
+    "statementRecord": {
+      "document": "icici-bank-nsdl-demat-49794950-2026-10-31-holdings",
+      "pointer": "/holdings/18"
     },
     "accountId": "icici-bank-nsdl-demat-49794950",
     "ownerId": "ajay-jaisinghani",
@@ -26953,20 +27072,20 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "security": "INFOBAY AI LIMITED - 0.01% PREF 18AG44",
     "isin": "IN90SE903019",
     "assetClass": "Unlisted",
-    "quantity": 107,
+    "quantity": 91,
     "faceValue": 10,
     "lastMovementRate": null,
     "lastMovementValue": null,
     "lastMovementDate": null,
     "lastMovementSide": null,
-    "asOf": "2026-03-31",
+    "asOf": "2026-10-31",
     "sameUnitsReportedBy": null,
-    "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 107 unit(s) at their face value of 10, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
+    "reason": "the ICICI Bank (NSDL demat) statement of 2026-10-31 records 91 unit(s) at their face value of 10, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
   },
   {
     "statementRecord": {
-      "document": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings",
-      "pointer": "/holdings/14"
+      "document": "icici-bank-nsdl-demat-49794950-2026-10-31-holdings",
+      "pointer": "/holdings/19"
     },
     "accountId": "icici-bank-nsdl-demat-49794950",
     "ownerId": "ajay-jaisinghani",
@@ -26980,14 +27099,35 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "lastMovementValue": null,
     "lastMovementDate": null,
     "lastMovementSide": null,
-    "asOf": "2026-03-31",
+    "asOf": "2026-10-31",
     "sameUnitsReportedBy": null,
-    "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 32017 unit(s) at their face value of 10, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
+    "reason": "the ICICI Bank (NSDL demat) statement of 2026-10-31 records 32017 unit(s) at their face value of 10, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
   },
   {
     "statementRecord": {
-      "document": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings",
-      "pointer": "/holdings/35"
+      "document": "icici-bank-nsdl-demat-49794950-2026-10-31-holdings",
+      "pointer": "/holdings/37"
+    },
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "ownerId": "ajay-jaisinghani",
+    "securityKey": "telawne-power-equipments",
+    "security": "TELAWNE POWER EQUIPMENTS PRIVATE LIMITED - EQ",
+    "isin": "INE1E8Y01016",
+    "assetClass": "Unlisted",
+    "quantity": 30816,
+    "faceValue": 10,
+    "lastMovementRate": null,
+    "lastMovementValue": null,
+    "lastMovementDate": null,
+    "lastMovementSide": null,
+    "asOf": "2026-10-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the ICICI Bank (NSDL demat) statement of 2026-10-31 records 30816 unit(s) at their face value of 10, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
+  },
+  {
+    "statementRecord": {
+      "document": "icici-bank-nsdl-demat-49794950-2026-10-31-holdings",
+      "pointer": "/holdings/43"
     },
     "accountId": "icici-bank-nsdl-demat-49794950",
     "ownerId": "ajay-jaisinghani",
@@ -27001,9 +27141,9 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     "lastMovementValue": null,
     "lastMovementDate": null,
     "lastMovementSide": null,
-    "asOf": "2026-03-31",
+    "asOf": "2026-10-31",
     "sameUnitsReportedBy": null,
-    "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 55 unit(s) at their face value of 10, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
+    "reason": "the ICICI Bank (NSDL demat) statement of 2026-10-31 records 55 unit(s) at their face value of 10, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
   },
   {
     "statementRecord": {
@@ -28311,7 +28451,7 @@ export const BOOK_REVIEW_SUPERSEDED: ReviewSuperseded[] = [
     "kind": "unvalued",
     "reviewLine": "India SME",
     "security": "INDIA SME INVESTMENTS AIF TRUST II - CL A2 - Restricted Transferability",
-    "quantity": 67500,
+    "quantity": 97500,
     "marketValue": null
   },
   {
@@ -28409,17 +28549,8 @@ export const BOOK_REVIEW_SUPERSEDED: ReviewSuperseded[] = [
     "securityKey": "rays-power-experts",
     "kind": "unvalued",
     "reviewLine": "RAY's",
-    "security": "RAYS POWER EXPERTS PRIVATE LIMITED - EQ",
+    "security": "RAYS POWER EXPERTS LIMITED - EQ",
     "quantity": 59000,
-    "marketValue": null
-  },
-  {
-    "accountId": "icici-bank-nsdl-demat-49794950",
-    "securityKey": "sotefin-bharat",
-    "kind": "unvalued",
-    "reviewLine": "SOTEFIN",
-    "security": "SOTEFIN BHARAT LIMITED - EQ",
-    "quantity": 171879,
     "marketValue": null
   },
   {
@@ -28463,27 +28594,36 @@ export const BOOK_REVIEW_SUPERSEDED: ReviewSuperseded[] = [
     "securityKey": "assetgro-fintech-private-limited-1-series-b-pref-25nv44",
     "kind": "unvalued",
     "reviewLine": "Assetgro Fintech Private Limited",
-    "security": "ASSETGRO FINTECH PRIVATE LIMITED - 1% SERIES B PREF 25NV44",
-    "quantity": 636,
+    "security": "ASSETGRO FINTECH LIMITED - 1% SERIES B PREF 25NV44",
+    "quantity": 541,
+    "marketValue": null
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "securityKey": "assetgro-fintech",
+    "kind": "unvalued",
+    "reviewLine": "Assetgro Fintech Private Limited",
+    "security": "ASSETGRO FINTECH LIMITED - EQ NEW FV RS. 2/",
+    "quantity": 20797,
     "marketValue": null
   },
   {
     "accountId": "icici-bank-nsdl-demat-49794950",
     "securityKey": "national-stock-exchange-of-india",
-    "kind": "unvalued",
+    "kind": "position",
     "reviewLine": "National Stock Exchange",
     "security": "NATIONAL STOCK EXCHANGE OF INDIA LTD - EQ NEW FV RE.1/",
     "quantity": 125000,
-    "marketValue": null
+    "marketValue": 222762500
   },
   {
     "accountId": "icici-bank-nsdl-demat-49794950",
-    "securityKey": "borosil-renewables-limited-warrants-13ag26",
-    "kind": "position",
+    "securityKey": "borosil-renewables-limited-eq-new-fv-re-1-listing-trdg-aprvl-awaited",
+    "kind": "unvalued",
     "reviewLine": "Borosil Renewables",
-    "security": "BOROSIL RENEWABLES LIMITED - WARRANTS 13AG26",
+    "security": "BOROSIL RENEWABLES LIMITED - EQ NEW FV RE. 1/- LISTING/TRDG APRVL AWAITED",
     "quantity": 283018,
-    "marketValue": 70754.5
+    "marketValue": null
   },
   {
     "accountId": "icici-bank-nsdl-demat-49794950",
@@ -28491,8 +28631,8 @@ export const BOOK_REVIEW_SUPERSEDED: ReviewSuperseded[] = [
     "kind": "position",
     "reviewLine": "Blue Ashva Varenya Account",
     "security": "BLUE ASHVA VARENYA FUND - BAVF-SER20-C6 - Restricted Transferability",
-    "quantity": 1000,
-    "marketValue": 98742
+    "quantity": 856.736,
+    "marketValue": 84595.83
   },
   {
     "accountId": "india-sme-investments-175962",
@@ -29724,8 +29864,8 @@ export const BOOK_POLYCAB: PolycabHolding[] = [
   },
   {
     "statementRecord": {
-      "document": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings",
-      "pointer": "/holdings/23"
+      "document": "icici-bank-nsdl-demat-49794950-2026-10-31-holdings",
+      "pointer": "/holdings/27"
     },
     "securityKey": "polycab-india",
     "security": "POLYCAB INDIA LIMITED - EQ",
@@ -29741,7 +29881,7 @@ export const BOOK_POLYCAB: PolycabHolding[] = [
     "avgCost": null,
     "currentPrice": null,
     "costBasis": null,
-    "marketValue": 123512419665,
+    "marketValue": 108248870223,
     "unrealizedPnL": null,
     "realizedPnL": null,
     "costOfUnitsSold": null,
@@ -29750,7 +29890,7 @@ export const BOOK_POLYCAB: PolycabHolding[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "priceAsOf": "2026-03-30",
+    "priceAsOf": "2026-10-30",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -29779,8 +29919,8 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
   {
     "period": "2026-03-31",
     "date": "2026-03-31",
-    "nav": 788267717.39,
-    "accountsOnDate": 7,
+    "nav": 1980896771.08,
+    "accountsOnDate": 8,
     "accountsCarried": 0,
     "flowIn": 0,
     "unreportedFlowValue": 0,
@@ -29792,339 +29932,352 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
   {
     "period": "2026-04-30",
     "date": "2026-04-30",
-    "nav": 1025828638.74,
+    "nav": 2218457692.43,
     "accountsOnDate": 2,
-    "accountsCarried": 7,
+    "accountsCarried": 8,
     "flowIn": 0,
     "unreportedFlowValue": 0,
-    "linkOpen": 788267717.39,
-    "linkClose": 788267717.39,
-    "linkAccounts": 7,
+    "linkOpen": 1980896771.08,
+    "linkClose": 1980896771.08,
+    "linkAccounts": 8,
     "panelComplete": false
   },
   {
     "period": "2026-05-31",
     "date": "2026-05-31",
-    "nav": 1061193620.92,
+    "nav": 2253822674.61,
     "accountsOnDate": 4,
-    "accountsCarried": 7,
+    "accountsCarried": 8,
     "flowIn": 0,
     "unreportedFlowValue": 0,
-    "linkOpen": 1025828638.74,
-    "linkClose": 1032376673.1,
-    "linkAccounts": 9,
+    "linkOpen": 2218457692.43,
+    "linkClose": 2225005726.79,
+    "linkAccounts": 10,
     "panelComplete": false
   },
   {
     "period": "2026-06-25",
     "date": "2026-06-25",
-    "nav": 1088896834.7,
+    "nav": 2281525888.39,
     "accountsOnDate": 2,
-    "accountsCarried": 9,
+    "accountsCarried": 10,
     "flowIn": -40738,
     "unreportedFlowValue": 0,
-    "linkOpen": 1061193620.92,
-    "linkClose": 1088896834.7,
-    "linkAccounts": 11,
+    "linkOpen": 2253822674.61,
+    "linkClose": 2281525888.39,
+    "linkAccounts": 12,
     "panelComplete": false
   },
   {
     "period": "2026-06-30",
     "date": "2026-06-30",
-    "nav": 1119877053.25,
+    "nav": 2312506106.94,
     "accountsOnDate": 6,
-    "accountsCarried": 6,
+    "accountsCarried": 7,
     "flowIn": -986,
     "unreportedFlowValue": 0,
-    "linkOpen": 1088896834.7,
-    "linkClose": 1108628804.59,
-    "linkAccounts": 11,
+    "linkOpen": 2281525888.39,
+    "linkClose": 2301257858.28,
+    "linkAccounts": 12,
     "panelComplete": false
   },
   {
     "period": "2026-07-01",
     "date": "2026-07-01",
-    "nav": 1122211497.89,
+    "nav": 2314840551.58,
     "accountsOnDate": 4,
-    "accountsCarried": 12,
+    "accountsCarried": 13,
     "flowIn": 0,
     "unreportedFlowValue": 0,
-    "linkOpen": 1119877053.25,
-    "linkClose": 1119877053.25,
-    "linkAccounts": 12,
+    "linkOpen": 2312506106.94,
+    "linkClose": 2312506106.94,
+    "linkAccounts": 13,
     "panelComplete": false
   },
   {
     "period": "2026-07-02",
     "date": "2026-07-02",
-    "nav": 1123147884.71,
+    "nav": 2315776938.4,
     "accountsOnDate": 1,
-    "accountsCarried": 16,
+    "accountsCarried": 17,
     "flowIn": 0,
     "unreportedFlowValue": 0,
-    "linkOpen": 1122211497.89,
-    "linkClose": 1122211497.89,
-    "linkAccounts": 16,
+    "linkOpen": 2314840551.58,
+    "linkClose": 2314840551.58,
+    "linkAccounts": 17,
     "panelComplete": false
   },
   {
     "period": "2026-07-06",
     "date": "2026-07-06",
-    "nav": 1176282341.76,
+    "nav": 2368911395.45,
     "accountsOnDate": 2,
-    "accountsCarried": 15,
+    "accountsCarried": 16,
     "flowIn": -7494,
     "unreportedFlowValue": 0,
-    "linkOpen": 1123147884.71,
-    "linkClose": 1176282341.76,
-    "linkAccounts": 17,
+    "linkOpen": 2315776938.4,
+    "linkClose": 2368911395.45,
+    "linkAccounts": 18,
     "panelComplete": false
   },
   {
     "period": "2026-07-10",
     "date": "2026-07-10",
-    "nav": 1300206253.15,
+    "nav": 2492835306.84,
     "accountsOnDate": 3,
-    "accountsCarried": 14,
+    "accountsCarried": 15,
     "flowIn": -142601,
     "unreportedFlowValue": 0,
-    "linkOpen": 1176282341.76,
-    "linkClose": 1300206253.15,
-    "linkAccounts": 17,
+    "linkOpen": 2368911395.45,
+    "linkClose": 2492835306.84,
+    "linkAccounts": 18,
     "panelComplete": false
   },
   {
     "period": "2026-07-27",
     "date": "2026-07-27",
-    "nav": 1296533751.87,
+    "nav": 2489162805.56,
     "accountsOnDate": 2,
-    "accountsCarried": 15,
+    "accountsCarried": 16,
     "flowIn": -9559,
     "unreportedFlowValue": 0,
-    "linkOpen": 1300206253.15,
-    "linkClose": 1296533751.87,
-    "linkAccounts": 17,
+    "linkOpen": 2492835306.84,
+    "linkClose": 2489162805.56,
+    "linkAccounts": 18,
     "panelComplete": false
   },
   {
     "period": "2026-07-31",
     "date": "2026-07-31",
-    "nav": 2402912880.08,
+    "nav": 3595541933.77,
     "accountsOnDate": 8,
-    "accountsCarried": 13,
+    "accountsCarried": 14,
     "flowIn": -22945,
     "unreportedFlowValue": 0,
-    "linkOpen": 1296533751.87,
-    "linkClose": 1304898361,
-    "linkAccounts": 17,
+    "linkOpen": 2489162805.56,
+    "linkClose": 2497527414.69,
+    "linkAccounts": 18,
     "panelComplete": false
   },
   {
     "period": "2026-08-03",
     "date": "2026-08-03",
-    "nav": 2402924233.33,
+    "nav": 3595553287.02,
     "accountsOnDate": 3,
-    "accountsCarried": 18,
+    "accountsCarried": 19,
     "flowIn": 0,
     "unreportedFlowValue": 7201.78,
-    "linkOpen": 2402912880.08,
-    "linkClose": 2402924233.33,
-    "linkAccounts": 21,
+    "linkOpen": 3595541933.77,
+    "linkClose": 3595553287.02,
+    "linkAccounts": 22,
     "panelComplete": false
   },
   {
     "period": "2026-08-06",
     "date": "2026-08-06",
-    "nav": 2402928953.22,
+    "nav": 3595558006.91,
     "accountsOnDate": 2,
-    "accountsCarried": 19,
+    "accountsCarried": 20,
     "flowIn": 0,
     "unreportedFlowValue": 0,
-    "linkOpen": 2402924233.33,
-    "linkClose": 2402928953.22,
-    "linkAccounts": 21,
+    "linkOpen": 3595553287.02,
+    "linkClose": 3595558006.91,
+    "linkAccounts": 22,
     "panelComplete": false
   },
   {
     "period": "2026-08-07",
     "date": "2026-08-07",
-    "nav": 2712913453.99,
+    "nav": 3905542507.68,
     "accountsOnDate": 1,
-    "accountsCarried": 21,
+    "accountsCarried": 22,
     "flowIn": 0,
     "unreportedFlowValue": 0,
-    "linkOpen": 2402928953.22,
-    "linkClose": 2402928953.22,
-    "linkAccounts": 21,
+    "linkOpen": 3595558006.91,
+    "linkClose": 3595558006.91,
+    "linkAccounts": 22,
     "panelComplete": false
   },
   {
     "period": "2026-08-10",
     "date": "2026-08-10",
-    "nav": 2708145042.91,
+    "nav": 3900774096.6,
     "accountsOnDate": 1,
-    "accountsCarried": 21,
+    "accountsCarried": 22,
     "flowIn": -30690,
     "unreportedFlowValue": 0,
-    "linkOpen": 2712913453.99,
-    "linkClose": 2708145042.91,
-    "linkAccounts": 22,
+    "linkOpen": 3905542507.68,
+    "linkClose": 3900774096.6,
+    "linkAccounts": 23,
     "panelComplete": false
   },
   {
     "period": "2026-08-11",
     "date": "2026-08-11",
-    "nav": 2717643930.67,
+    "nav": 3910272984.36,
     "accountsOnDate": 2,
-    "accountsCarried": 20,
+    "accountsCarried": 21,
     "flowIn": -65735,
     "unreportedFlowValue": 0,
-    "linkOpen": 2708145042.91,
-    "linkClose": 2717643930.67,
-    "linkAccounts": 22,
+    "linkOpen": 3900774096.6,
+    "linkClose": 3910272984.36,
+    "linkAccounts": 23,
     "panelComplete": false
   },
   {
     "period": "2026-08-13",
     "date": "2026-08-13",
-    "nav": 2827568440.85,
+    "nav": 4020197494.54,
     "accountsOnDate": 2,
-    "accountsCarried": 20,
+    "accountsCarried": 21,
     "flowIn": 112393342,
     "unreportedFlowValue": 0,
-    "linkOpen": 2717643930.67,
-    "linkClose": 2827568440.85,
-    "linkAccounts": 22,
+    "linkOpen": 3910272984.36,
+    "linkClose": 4020197494.54,
+    "linkAccounts": 23,
     "panelComplete": false
   },
   {
     "period": "2026-08-31",
     "date": "2026-08-31",
-    "nav": 2847785105.1,
+    "nav": 4040414158.79,
     "accountsOnDate": 3,
-    "accountsCarried": 19,
+    "accountsCarried": 20,
     "flowIn": -14984.6,
     "unreportedFlowValue": 5781806.04,
-    "linkOpen": 2827568440.85,
-    "linkClose": 2847785105.1,
-    "linkAccounts": 22,
+    "linkOpen": 4020197494.54,
+    "linkClose": 4040414158.79,
+    "linkAccounts": 23,
     "panelComplete": false
   },
   {
     "period": "2026-09-29",
     "date": "2026-09-29",
-    "nav": 2812340110.2,
+    "nav": 4004969163.89,
     "accountsOnDate": 2,
-    "accountsCarried": 20,
+    "accountsCarried": 21,
     "flowIn": 0,
     "unreportedFlowValue": 0,
-    "linkOpen": 2847785105.1,
-    "linkClose": 2812340110.2,
-    "linkAccounts": 22,
+    "linkOpen": 4040414158.79,
+    "linkClose": 4004969163.89,
+    "linkAccounts": 23,
     "panelComplete": false
   },
   {
     "period": "2026-09-30",
     "date": "2026-09-30",
-    "nav": 2791965958.88,
+    "nav": 3984595012.57,
     "accountsOnDate": 9,
-    "accountsCarried": 13,
+    "accountsCarried": 14,
     "flowIn": -81004.8,
     "unreportedFlowValue": 0,
-    "linkOpen": 2812340110.2,
-    "linkClose": 2791965958.88,
-    "linkAccounts": 22,
+    "linkOpen": 4004969163.89,
+    "linkClose": 3984595012.57,
+    "linkAccounts": 23,
     "panelComplete": false
   },
   {
     "period": "2026-10-05",
     "date": "2026-10-05",
-    "nav": 2791973740.84,
+    "nav": 3984602794.53,
     "accountsOnDate": 2,
-    "accountsCarried": 20,
+    "accountsCarried": 21,
     "flowIn": 0,
     "unreportedFlowValue": 7781.96,
-    "linkOpen": 2791965958.88,
-    "linkClose": 2791973740.84,
-    "linkAccounts": 22,
+    "linkOpen": 3984595012.57,
+    "linkClose": 3984602794.53,
+    "linkAccounts": 23,
     "panelComplete": false
   },
   {
     "period": "2026-10-06",
     "date": "2026-10-06",
-    "nav": 2780849110.89,
+    "nav": 3973478164.58,
     "accountsOnDate": 4,
-    "accountsCarried": 18,
+    "accountsCarried": 19,
     "flowIn": -70005,
     "unreportedFlowValue": 7138.6,
-    "linkOpen": 2791973740.84,
-    "linkClose": 2780849110.89,
-    "linkAccounts": 22,
+    "linkOpen": 3984602794.53,
+    "linkClose": 3973478164.58,
+    "linkAccounts": 23,
     "panelComplete": false
   },
   {
     "period": "2026-10-07",
     "date": "2026-10-07",
-    "nav": 2780478415.54,
+    "nav": 3973107469.23,
     "accountsOnDate": 2,
-    "accountsCarried": 20,
+    "accountsCarried": 21,
     "flowIn": -18689,
     "unreportedFlowValue": 0,
-    "linkOpen": 2780849110.89,
-    "linkClose": 2780478415.54,
-    "linkAccounts": 22,
+    "linkOpen": 3973478164.58,
+    "linkClose": 3973107469.23,
+    "linkAccounts": 23,
     "panelComplete": false
   },
   {
     "period": "2026-10-14",
     "date": "2026-10-14",
-    "nav": 3211782792.15,
+    "nav": 4404411845.84,
     "accountsOnDate": 1,
-    "accountsCarried": 22,
+    "accountsCarried": 23,
     "flowIn": 0,
     "unreportedFlowValue": 0,
-    "linkOpen": 2780478415.54,
-    "linkClose": 2780478415.54,
-    "linkAccounts": 22,
+    "linkOpen": 3973107469.23,
+    "linkClose": 3973107469.23,
+    "linkAccounts": 23,
     "panelComplete": false
   },
   {
     "period": "2026-10-26",
     "date": "2026-10-26",
-    "nav": 3217280140.16,
+    "nav": 4409909193.85,
     "accountsOnDate": 3,
-    "accountsCarried": 21,
+    "accountsCarried": 22,
     "flowIn": 0,
     "unreportedFlowValue": 0,
-    "linkOpen": 3211782792.15,
-    "linkClose": 3169152612.82,
-    "linkAccounts": 23,
+    "linkOpen": 4404411845.84,
+    "linkClose": 4361781666.51,
+    "linkAccounts": 24,
+    "panelComplete": true
+  },
+  {
+    "period": "2026-10-31",
+    "date": "2026-10-31",
+    "nav": 5329591524.69,
+    "accountsOnDate": 1,
+    "accountsCarried": 24,
+    "flowIn": 0,
+    "unreportedFlowValue": 919682330.84,
+    "linkOpen": 4409909193.85,
+    "linkClose": 5329591524.69,
+    "linkAccounts": 25,
     "panelComplete": true
   },
   {
     "period": "2026-11-02",
     "date": "2026-11-02",
-    "nav": 3217090113.17,
+    "nav": 5329401497.7,
     "accountsOnDate": 1,
-    "accountsCarried": 23,
+    "accountsCarried": 24,
     "flowIn": -1765,
     "unreportedFlowValue": 0,
-    "linkOpen": 3217280140.16,
-    "linkClose": 3217090113.17,
-    "linkAccounts": 24,
+    "linkOpen": 5329591524.69,
+    "linkClose": 5329401497.7,
+    "linkAccounts": 25,
     "panelComplete": true
   },
   {
     "period": "2026-11-03",
     "date": "2026-11-03",
-    "nav": 3235208454.85,
+    "nav": 5347519839.38,
     "accountsOnDate": 2,
-    "accountsCarried": 22,
+    "accountsCarried": 23,
     "flowIn": 0,
     "unreportedFlowValue": 0,
-    "linkOpen": 3217090113.17,
-    "linkClose": 3235208454.85,
-    "linkAccounts": 24,
+    "linkOpen": 5329401497.7,
+    "linkClose": 5347519839.38,
+    "linkAccounts": 25,
     "panelComplete": true
   }
 ];
@@ -30412,6 +30565,18 @@ export const BOOK_ACCOUNT_NAV_HISTORY: Record<string, NavPoint[]> = {
       "period": "2026-11-03",
       "date": "2026-11-03",
       "nav": 299084367.18
+    }
+  ],
+  "icici-bank-nsdl-demat-49794950": [
+    {
+      "period": "2026-03-31",
+      "date": "2026-03-31",
+      "nav": 1192629053.69
+    },
+    {
+      "period": "2026-10-31",
+      "date": "2026-10-31",
+      "nav": 2112311384.53
     }
   ],
   "kotak-mahindra-mutual-fund-4295974": [
@@ -30980,6 +31145,23 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       ]
     },
     {
+      "accountId": "icici-bank-nsdl-demat-49794950",
+      "points": 2,
+      "first": "2026-03-31",
+      "last": "2026-10-31",
+      "latestValue": 2112311384.53,
+      "bookValue": 1061574486.4,
+      "flowBasis": "unreported",
+      "steps": [
+        {
+          "from": "2026-03-31",
+          "to": "2026-10-31",
+          "basis": "unproven",
+          "net": null
+        }
+      ]
+    },
+    {
       "accountId": "kotak-mahindra-mutual-fund-4295974",
       "points": 3,
       "first": "2026-07-01",
@@ -31318,6 +31500,13 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "bookValue": 26248837.36
     },
     {
+      "accountId": "hdfc-securities-3110320",
+      "provider": "HDFC Securities",
+      "accountNo": "3110320",
+      "date": "2026-11-02",
+      "bookValue": 472438737.5
+    },
+    {
       "accountId": "helios-mutual-fund-10056154",
       "provider": "Helios Mutual Fund",
       "accountNo": "10056154",
@@ -31330,13 +31519,6 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "accountNo": "10063876",
       "date": "2026-11-03",
       "bookValue": 37660829.96
-    },
-    {
-      "accountId": "icici-bank-nsdl-demat-49794950",
-      "provider": "ICICI Bank (NSDL demat)",
-      "accountNo": "49794950",
-      "date": "2026-03-31",
-      "bookValue": 637631614.65
     },
     {
       "accountId": "icici-prudential-mutual-fund-14320536",
@@ -31483,7 +31665,7 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "provider": "Consolidated review (MOPWM)",
       "accountNo": "MOPWM",
       "date": "2026-06-30",
-      "bookValue": 1253986765.57
+      "bookValue": 1233986365.57
     },
     {
       "accountId": "review-ankita-jaisinghani",
@@ -31715,17 +31897,17 @@ export const BOOK_UNDATED_CAPITAL: UndatedCapital[] = [];
  * in the run's notes. See `attributionFrom` in build-book.mjs.
  */
 export const BOOK_ATTRIBUTION: Attribution = {
-  "from": "2026-05-31",
+  "from": "2026-03-31",
   "to": "2026-11-03",
-  "openValue": 3167905207.06,
-  "closeValue": 3235208454.85,
+  "openValue": 4360534260.75,
+  "closeValue": 5347519839.38,
   "priceEffect": -46678918.13,
   "tradeEffect": 83566773.34,
-  "enteredValue": 171382579.59,
-  "exitedValue": 99872612.94,
-  "undecomposedValue": -41094574.09,
-  "bookValue": 9878890086.79,
-  "coveredBookValue": 3235771535.77,
+  "enteredValue": 1183838304.74,
+  "exitedValue": 216464184.34,
+  "undecomposedValue": -17276397,
+  "bookValue": 10755271296.04,
+  "coveredBookValue": 4297346022.17,
   "accounts": [
     {
       "accountId": "360-one-private-wealth-37702",
@@ -31981,6 +32163,23 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "rowsEntered": 0,
       "rowsExited": 0,
       "rowsUnpriced": 0
+    },
+    {
+      "accountId": "icici-bank-nsdl-demat-49794950",
+      "from": "2026-03-31",
+      "to": "2026-10-31",
+      "days": 214,
+      "openValue": 1192629053.69,
+      "closeValue": 2112311384.53,
+      "priceEffect": 0,
+      "tradeEffect": 0,
+      "enteredValue": 1012455725.15,
+      "exitedValue": 116591571.4,
+      "undecomposedValue": 23818177.09,
+      "rowsHeld": 0,
+      "rowsEntered": 11,
+      "rowsExited": 3,
+      "rowsUnpriced": 10
     },
     {
       "accountId": "kotak-mahindra-mutual-fund-4295974",
@@ -37255,6 +37454,414 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": null
     },
     {
+      "securityKey": "blue-ashva-varenya-fund-bavf-ser20-c6-restricted-transferability",
+      "security": "BLUE ASHVA VARENYA FUND - BAVF-SER20-C6 - Restricted Transferability",
+      "accountId": "icici-bank-nsdl-demat-49794950",
+      "from": "2026-03-31",
+      "to": "2026-10-31",
+      "openValue": 98742,
+      "closeValue": 84595.83,
+      "openPrice": null,
+      "closePrice": null,
+      "openQty": 1000,
+      "closeQty": 856.736,
+      "kind": "unpriced",
+      "priceEffect": null,
+      "tradeEffect": null,
+      "returnPct": null
+    },
+    {
+      "securityKey": "borosil-renewables-limited-warrants-13ag26",
+      "security": "BOROSIL RENEWABLES LIMITED - WARRANTS 13AG26",
+      "accountId": "icici-bank-nsdl-demat-49794950",
+      "from": "2026-03-31",
+      "to": "2026-10-31",
+      "openValue": 70754.5,
+      "closeValue": null,
+      "openPrice": null,
+      "closePrice": null,
+      "openQty": 283018,
+      "closeQty": null,
+      "kind": "exited",
+      "priceEffect": null,
+      "tradeEffect": null,
+      "returnPct": null
+    },
+    {
+      "securityKey": "city-union",
+      "security": "CITY UNION BANK LIMITED - EQ NEW RS. 1/",
+      "accountId": "icici-bank-nsdl-demat-49794950",
+      "from": "2026-03-31",
+      "to": "2026-10-31",
+      "openValue": null,
+      "closeValue": 22362480,
+      "openPrice": null,
+      "closePrice": null,
+      "openQty": null,
+      "closeQty": 104400,
+      "kind": "entered",
+      "priceEffect": null,
+      "tradeEffect": null,
+      "returnPct": null
+    },
+    {
+      "securityKey": "clean-max-enviro-energy-solutions",
+      "security": "CLEAN MAX ENVIRO ENERGY SOLUTIONS LIMITED - EQ NEW FV RE.1/",
+      "accountId": "icici-bank-nsdl-demat-49794950",
+      "from": "2026-03-31",
+      "to": "2026-10-31",
+      "openValue": 126923395.5,
+      "closeValue": 117996497.5,
+      "openPrice": null,
+      "closePrice": null,
+      "openQty": 94967,
+      "closeQty": 94967,
+      "kind": "unpriced",
+      "priceEffect": null,
+      "tradeEffect": null,
+      "returnPct": null
+    },
+    {
+      "securityKey": "ema-partners-india",
+      "security": "EMA PARTNERS INDIA LIMITED - EQ NEW FV RS 5/",
+      "accountId": "icici-bank-nsdl-demat-49794950",
+      "from": "2026-03-31",
+      "to": "2026-10-31",
+      "openValue": 3660726,
+      "closeValue": 54622.85,
+      "openPrice": null,
+      "closePrice": null,
+      "openQty": 44643,
+      "closeQty": 643,
+      "kind": "unpriced",
+      "priceEffect": null,
+      "tradeEffect": null,
+      "returnPct": null
+    },
+    {
+      "securityKey": "esds-software-solution-limited-eq-new-fv-rs-1",
+      "security": "ESDS SOFTWARE SOLUTION LIMITED - EQ NEW FV RS .1/",
+      "accountId": "icici-bank-nsdl-demat-49794950",
+      "from": "2026-03-31",
+      "to": "2026-10-31",
+      "openValue": null,
+      "closeValue": 383841680,
+      "openPrice": null,
+      "closePrice": null,
+      "openQty": null,
+      "closeQty": 330898,
+      "kind": "entered",
+      "priceEffect": null,
+      "tradeEffect": null,
+      "returnPct": null
+    },
+    {
+      "securityKey": "federal-bank",
+      "security": "THE FEDERAL BANK LIMITED - EQ NEW FV RS.2/",
+      "accountId": "icici-bank-nsdl-demat-49794950",
+      "from": "2026-03-31",
+      "to": "2026-10-31",
+      "openValue": null,
+      "closeValue": 30695631.7,
+      "openPrice": null,
+      "closePrice": null,
+      "openQty": null,
+      "closeQty": 90361,
+      "kind": "entered",
+      "priceEffect": null,
+      "tradeEffect": null,
+      "returnPct": null
+    },
+    {
+      "securityKey": "fractal-analytics",
+      "security": "FRACTAL ANALYTICS LIMITED - EQ",
+      "accountId": "icici-bank-nsdl-demat-49794950",
+      "from": "2026-03-31",
+      "to": "2026-10-31",
+      "openValue": 151724779.25,
+      "closeValue": 135147759.25,
+      "openPrice": null,
+      "closePrice": null,
+      "openQty": 180185,
+      "closeQty": 180185,
+      "kind": "unpriced",
+      "priceEffect": null,
+      "tradeEffect": null,
+      "returnPct": null
+    },
+    {
+      "securityKey": "franklin-india-credit-aif-scheme-i-unit-class-db2",
+      "security": "FRANKLIN TEMPLETON CATEGORY II ALTERNATIVE INVESTMENT FUND TRUST - IND CR AIF - SCH I CL DB2 - Restricted Transferability",
+      "accountId": "icici-bank-nsdl-demat-49794950",
+      "from": "2026-03-31",
+      "to": "2026-10-31",
+      "openValue": null,
+      "closeValue": 199941216.45,
+      "openPrice": null,
+      "closePrice": null,
+      "openQty": null,
+      "closeQty": 201254.604,
+      "kind": "entered",
+      "priceEffect": null,
+      "tradeEffect": null,
+      "returnPct": null
+    },
+    {
+      "securityKey": "grand-continent-hotels",
+      "security": "GRAND CONTINENT HOTELS LIMITED - EQ",
+      "accountId": "icici-bank-nsdl-demat-49794950",
+      "from": "2026-03-31",
+      "to": "2026-10-31",
+      "openValue": 29344893.75,
+      "closeValue": 26474625,
+      "openPrice": null,
+      "closePrice": null,
+      "openQty": 262125,
+      "closeQty": 262125,
+      "kind": "unpriced",
+      "priceEffect": null,
+      "tradeEffect": null,
+      "returnPct": null
+    },
+    {
+      "securityKey": "indian-bank",
+      "security": "INDIAN BANK - EQ",
+      "accountId": "icici-bank-nsdl-demat-49794950",
+      "from": "2026-03-31",
+      "to": "2026-10-31",
+      "openValue": null,
+      "closeValue": 23541600,
+      "openPrice": null,
+      "closePrice": null,
+      "openQty": null,
+      "closeQty": 27200,
+      "kind": "entered",
+      "priceEffect": null,
+      "tradeEffect": null,
+      "returnPct": null
+    },
+    {
+      "securityKey": "indusind-bank",
+      "security": "INDUSIND BANK LTD. - EQ",
+      "accountId": "icici-bank-nsdl-demat-49794950",
+      "from": "2026-03-31",
+      "to": "2026-10-31",
+      "openValue": null,
+      "closeValue": 13366100,
+      "openPrice": null,
+      "closePrice": null,
+      "openQty": null,
+      "closeQty": 15950,
+      "kind": "entered",
+      "priceEffect": null,
+      "tradeEffect": null,
+      "returnPct": null
+    },
+    {
+      "securityKey": "insolation-energy",
+      "security": "INSOLATION ENERGY LIMITED - EQ NEW FV RE.1/",
+      "accountId": "icici-bank-nsdl-demat-49794950",
+      "from": "2026-03-31",
+      "to": "2026-10-31",
+      "openValue": 25251320,
+      "closeValue": null,
+      "openPrice": null,
+      "closePrice": null,
+      "openQty": 212000,
+      "closeQty": null,
+      "kind": "exited",
+      "priceEffect": null,
+      "tradeEffect": null,
+      "returnPct": null
+    },
+    {
+      "securityKey": "jaro-institute-of-technology-management-and-research",
+      "security": "JARO INSTITUTE OF TECHNOLOGY MANAGEMENT AND RESEARCH LIMITED - EQ",
+      "accountId": "icici-bank-nsdl-demat-49794950",
+      "from": "2026-03-31",
+      "to": "2026-10-31",
+      "openValue": 57758381.25,
+      "closeValue": 38135154,
+      "openPrice": null,
+      "closePrice": null,
+      "openQty": 116979,
+      "closeQty": 116979,
+      "kind": "unpriced",
+      "priceEffect": null,
+      "tradeEffect": null,
+      "returnPct": null
+    },
+    {
+      "securityKey": "karur-vysya-bank",
+      "security": "THE KARUR VYSYA BANK LIMITED - EQ NEW FV RS. 2/",
+      "accountId": "icici-bank-nsdl-demat-49794950",
+      "from": "2026-03-31",
+      "to": "2026-10-31",
+      "openValue": null,
+      "closeValue": 17983050,
+      "openPrice": null,
+      "closePrice": null,
+      "openQty": null,
+      "closeQty": 50500,
+      "kind": "entered",
+      "priceEffect": null,
+      "tradeEffect": null,
+      "returnPct": null
+    },
+    {
+      "securityKey": "national-stock-exchange-of-india",
+      "security": "NATIONAL STOCK EXCHANGE OF INDIA LTD - EQ NEW FV RE.1/",
+      "accountId": "icici-bank-nsdl-demat-49794950",
+      "from": "2026-03-31",
+      "to": "2026-10-31",
+      "openValue": null,
+      "closeValue": 222762500,
+      "openPrice": null,
+      "closePrice": null,
+      "openQty": null,
+      "closeQty": 125000,
+      "kind": "entered",
+      "priceEffect": null,
+      "tradeEffect": null,
+      "returnPct": null
+    },
+    {
+      "securityKey": "parth-electricals-and-engineering",
+      "security": "PARTH ELECTRICALS & ENGINEERING LIMITED - EQ",
+      "accountId": "icici-bank-nsdl-demat-49794950",
+      "from": "2026-03-31",
+      "to": "2026-10-31",
+      "openValue": 26252050,
+      "closeValue": 27818500,
+      "openPrice": null,
+      "closePrice": null,
+      "openQty": 59000,
+      "closeQty": 59000,
+      "kind": "unpriced",
+      "priceEffect": null,
+      "tradeEffect": null,
+      "returnPct": null
+    },
+    {
+      "securityKey": "rbl-bnk",
+      "security": "RBL BANK LIMITED - EQ",
+      "accountId": "icici-bank-nsdl-demat-49794950",
+      "from": "2026-03-31",
+      "to": "2026-10-31",
+      "openValue": null,
+      "closeValue": 14355900,
+      "openPrice": null,
+      "closePrice": null,
+      "openQty": null,
+      "closeQty": 40900,
+      "kind": "entered",
+      "priceEffect": null,
+      "tradeEffect": null,
+      "returnPct": null
+    },
+    {
+      "securityKey": "sanshi-trust-fd-i-cl-a2-restricted-transferability",
+      "security": "SANSHI TRUST - FD I CL A2 - Restricted Transferability",
+      "accountId": "icici-bank-nsdl-demat-49794950",
+      "from": "2026-03-31",
+      "to": "2026-10-31",
+      "openValue": 287175601.93,
+      "closeValue": 324789150.32,
+      "openPrice": null,
+      "closePrice": null,
+      "openQty": 2341480.851,
+      "closeQty": 2341480.851,
+      "kind": "unpriced",
+      "priceEffect": null,
+      "tradeEffect": null,
+      "returnPct": null
+    },
+    {
+      "securityKey": "sanshi-trust-fd-i-cl-e-restricted-transferability",
+      "security": "SANSHI TRUST - FD I CL E - Restricted Transferability",
+      "accountId": "icici-bank-nsdl-demat-49794950",
+      "from": "2026-03-31",
+      "to": "2026-10-31",
+      "openValue": 267652340.61,
+      "closeValue": 303159435.53,
+      "openPrice": null,
+      "closePrice": null,
+      "openQty": 1761264.629,
+      "closeQty": 1761264.629,
+      "kind": "unpriced",
+      "priceEffect": null,
+      "tradeEffect": null,
+      "returnPct": null
+    },
+    {
+      "securityKey": "smartworks-coworking-spaces",
+      "security": "SMARTWORKS COWORKING SPACES LIMITED - EQ",
+      "accountId": "icici-bank-nsdl-demat-49794950",
+      "from": "2026-03-31",
+      "to": "2026-10-31",
+      "openValue": 91269496.9,
+      "closeValue": null,
+      "openPrice": null,
+      "closePrice": null,
+      "openQty": 187778,
+      "closeQty": null,
+      "kind": "exited",
+      "priceEffect": null,
+      "tradeEffect": null,
+      "returnPct": null
+    },
+    {
+      "securityKey": "sotefin-bharat",
+      "security": "SOTEFIN BHARAT LIMITED - EQ",
+      "accountId": "icici-bank-nsdl-demat-49794950",
+      "from": "2026-03-31",
+      "to": "2026-10-31",
+      "openValue": null,
+      "closeValue": 42625992,
+      "openPrice": null,
+      "closePrice": null,
+      "openQty": null,
+      "closeQty": 171879,
+      "kind": "entered",
+      "priceEffect": null,
+      "tradeEffect": null,
+      "returnPct": null
+    },
+    {
+      "securityKey": "vof-i-class-a2",
+      "security": "VANTAGE OAK FUND - VOF I CL A2 - Restricted Transferability",
+      "accountId": "icici-bank-nsdl-demat-49794950",
+      "from": "2026-03-31",
+      "to": "2026-10-31",
+      "openValue": null,
+      "closeValue": 40979575,
+      "openPrice": null,
+      "closePrice": null,
+      "openQty": null,
+      "closeQty": 2275000,
+      "kind": "entered",
+      "priceEffect": null,
+      "tradeEffect": null,
+      "returnPct": null
+    },
+    {
+      "securityKey": "yash-highvoltage",
+      "security": "YASH HIGHVOLTAGE LIMITED - EQ NEW FV RS. 5/",
+      "accountId": "icici-bank-nsdl-demat-49794950",
+      "from": "2026-03-31",
+      "to": "2026-10-31",
+      "openValue": 125446572,
+      "closeValue": 126195319.1,
+      "openPrice": null,
+      "closePrice": null,
+      "openQty": 138462,
+      "closeQty": 104462,
+      "kind": "unpriced",
+      "priceEffect": null,
+      "tradeEffect": null,
+      "returnPct": null
+    },
+    {
       "securityKey": "kotak-flexi-cap-fund-direct-growth",
       "security": "Kotak Flexi Cap Fund Direct Growth",
       "accountId": "kotak-mahindra-mutual-fund-4295974",
@@ -38487,6 +39094,20 @@ export const BOOK_CAPITAL_GAINS: EntityCG[] = [
     "entity": "Bharat Jaisinghani · HDFC 16180583",
     "accountId": "hdfc-mutual-fund-16180583",
     "ownerId": "bharat-jaisinghani",
+    "realisedST": null,
+    "realisedLT": null,
+    "unrealisedST": null,
+    "unrealisedLT": null,
+    "periodFrom": null,
+    "periodTo": null,
+    "lots": 0,
+    "source": null,
+    "absent": "no capital gain statement issued for this account in this drop"
+  },
+  {
+    "entity": "Ajay Jaisinghani · HDFC 3110320",
+    "accountId": "hdfc-securities-3110320",
+    "ownerId": "ajay-jaisinghani",
     "realisedST": null,
     "realisedLT": null,
     "unrealisedST": null,
@@ -41133,6 +41754,11 @@ export const BOOK_ACCOUNT_RETURN_RECORDS: Record<string, AccountReturnCoverage> 
     "record": null,
     "gap": "Opening valuation and complete dated cash flows are missing"
   },
+  "hdfc-securities-3110320": {
+    "latestValuationDate": "2026-11-02",
+    "record": null,
+    "gap": "Opening valuation and complete dated cash flows are missing"
+  },
   "helios-mutual-fund-10056128": {
     "latestValuationDate": "2026-11-02",
     "record": {
@@ -41236,7 +41862,7 @@ export const BOOK_ACCOUNT_RETURN_RECORDS: Record<string, AccountReturnCoverage> 
     "gap": null
   },
   "icici-bank-nsdl-demat-49794950": {
-    "latestValuationDate": "2026-03-31",
+    "latestValuationDate": "2026-10-31",
     "record": null,
     "gap": "Opening valuation and complete dated cash flows are missing"
   },
@@ -56847,6 +57473,168 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
       "quantity": 25,
       "price": 13859.9824,
       "amount": 347123.26
+    }
+  ],
+  "icici-bank-nsdl-demat-49794950|city-union": [
+    {
+      "date": "2026-07-02",
+      "side": "buy",
+      "quantity": 50000,
+      "price": 217.54596719999998,
+      "amount": 10897555.95
+    },
+    {
+      "date": "2026-07-02",
+      "side": "buy",
+      "quantity": 19008,
+      "price": 217.65355113636366,
+      "amount": 4144861.34
+    },
+    {
+      "date": "2026-07-02",
+      "side": "buy",
+      "quantity": 10275,
+      "price": 215.49864525547446,
+      "amount": 2220977.57
+    }
+  ],
+  "icici-bank-nsdl-demat-49794950|ema-partners-india": [
+    {
+      "date": "2026-10-26",
+      "side": "sell",
+      "quantity": 4000,
+      "price": 82,
+      "amount": 327388.8
+    },
+    {
+      "date": "2026-10-26",
+      "side": "sell",
+      "quantity": 20000,
+      "price": 82,
+      "amount": 1636944.01
+    },
+    {
+      "date": "2026-10-26",
+      "side": "sell",
+      "quantity": 20000,
+      "price": 82,
+      "amount": 1636943.94
+    }
+  ],
+  "icici-bank-nsdl-demat-49794950|federal-bank": [
+    {
+      "date": "2026-07-02",
+      "side": "buy",
+      "quantity": 90361,
+      "price": 330.983283717533,
+      "amount": 29968197.09
+    }
+  ],
+  "icici-bank-nsdl-demat-49794950|yash-highvoltage": [
+    {
+      "date": "2026-06-24",
+      "side": "sell",
+      "quantity": 2500,
+      "price": 880.755,
+      "amount": 2197781.49
+    },
+    {
+      "date": "2026-06-24",
+      "side": "sell",
+      "quantity": 1500,
+      "price": 882.9333333333333,
+      "amount": 1321933.59
+    },
+    {
+      "date": "2026-06-24",
+      "side": "sell",
+      "quantity": 1000,
+      "price": 885.75,
+      "amount": 884103.3
+    },
+    {
+      "date": "2026-06-24",
+      "side": "sell",
+      "quantity": 2000,
+      "price": 896.51875,
+      "amount": 1789725.97
+    },
+    {
+      "date": "2026-06-24",
+      "side": "sell",
+      "quantity": 5000,
+      "price": 883.6575,
+      "amount": 4410062.98
+    },
+    {
+      "date": "2026-06-25",
+      "side": "sell",
+      "quantity": 5000,
+      "price": 885.26,
+      "amount": 4418068.97
+    },
+    {
+      "date": "2026-06-30",
+      "side": "sell",
+      "quantity": 2000,
+      "price": 875,
+      "amount": 1746745.21
+    },
+    {
+      "date": "2026-06-30",
+      "side": "sell",
+      "quantity": 3000,
+      "price": 875.3166666666667,
+      "amount": 2621067.08
+    },
+    {
+      "date": "2026-07-07",
+      "side": "sell",
+      "quantity": 1500,
+      "price": 890.1,
+      "amount": 1332667.27
+    },
+    {
+      "date": "2026-07-08",
+      "side": "sell",
+      "quantity": 5000,
+      "price": 910,
+      "amount": 4541538.72
+    },
+    {
+      "date": "2026-07-09",
+      "side": "sell",
+      "quantity": 1500,
+      "price": 958,
+      "amount": 1434334.23
+    },
+    {
+      "date": "2026-07-09",
+      "side": "sell",
+      "quantity": 1000,
+      "price": 955,
+      "amount": 953225.44
+    },
+    {
+      "date": "2026-07-09",
+      "side": "sell",
+      "quantity": 1000,
+      "price": 952,
+      "amount": 950227.99
+    },
+    {
+      "date": "2026-07-09",
+      "side": "sell",
+      "quantity": 1000,
+      "price": 951,
+      "amount": 949228.86
+    },
+    {
+      "date": "2026-07-09",
+      "side": "sell",
+      "quantity": 1000,
+      "price": 950.025,
+      "amount": 948254.68
     }
   ],
   "lkp-securities-98245|belrise-industries": [

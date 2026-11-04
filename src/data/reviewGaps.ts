@@ -68,13 +68,6 @@ export const REVIEW_GAPS: ReviewGap[] = [
     "ask": "Motilal Oswal holding statements for the demat and PWM accounts not in the drop"
   },
   {
-    "name": "Deepak Fert",
-    "aliases": [],
-    "custodian": "HDFC Bank / MOPWM",
-    "why": "held at HDFC Bank — no holding statement for Ajay's HDFC Bank demat is in the drop (Bharat's is a SCAN)",
-    "ask": "HDFC Bank demat holding statements — Ajay's (none in the drop) and Bharat's as a text PDF, not a scan"
-  },
-  {
     "name": "HDFC Liquid Fund -Direct(G)",
     "aliases": [],
     "custodian": "Cash tab",
@@ -159,13 +152,6 @@ export const REVIEW_GAPS: ReviewGap[] = [
     "ask": "Motilal Oswal holding statements for the demat and PWM accounts not in the drop"
   },
   {
-    "name": "Kingfa Science & Technology Ltd.",
-    "aliases": [],
-    "custodian": "HDFC Bank / MOPWM",
-    "why": "held at HDFC Bank — no holding statement for Ajay's HDFC Bank demat is in the drop (Bharat's is a SCAN)",
-    "ask": "HDFC Bank demat holding statements — Ajay's (none in the drop) and Bharat's as a text PDF, not a scan"
-  },
-  {
     "name": "Kotak Equity Arbitrage Scheme(G)",
     "aliases": [],
     "custodian": "Debt tab",
@@ -185,20 +171,6 @@ export const REVIEW_GAPS: ReviewGap[] = [
     "custodian": "MOPWM",
     "why": "held at Motilal Oswal; the drop carries a holding statement for six of its seven demat accounts — quantities only, the rate being the price of the last movement — and only a transaction tape for Ajay's main demat",
     "ask": "Motilal Oswal holding statements for the demat and PWM accounts not in the drop"
-  },
-  {
-    "name": "Man Industries",
-    "aliases": [],
-    "custodian": "HDFC Bank / MOPWM",
-    "why": "held at HDFC Bank — no holding statement for Ajay's HDFC Bank demat is in the drop (Bharat's is a SCAN)",
-    "ask": "HDFC Bank demat holding statements — Ajay's (none in the drop) and Bharat's as a text PDF, not a scan"
-  },
-  {
-    "name": "Manorama Industries Ltd.",
-    "aliases": [],
-    "custodian": "HDFC Bank / MOPWM",
-    "why": "held at HDFC Bank — no holding statement for Ajay's HDFC Bank demat is in the drop (Bharat's is a SCAN)",
-    "ask": "HDFC Bank demat holding statements — Ajay's (none in the drop) and Bharat's as a text PDF, not a scan"
   },
   {
     "name": "Mirae Asset Cash Management Fund-Direct(G)",
@@ -241,13 +213,6 @@ export const REVIEW_GAPS: ReviewGap[] = [
     "custodian": "MOPWM",
     "why": "held at Motilal Oswal; the drop carries a holding statement for six of its seven demat accounts — quantities only, the rate being the price of the last movement — and only a transaction tape for Ajay's main demat",
     "ask": "Motilal Oswal holding statements for the demat and PWM accounts not in the drop"
-  },
-  {
-    "name": "Sterlite Grid 5",
-    "aliases": [],
-    "custodian": "HDFC Bank",
-    "why": "held at HDFC Bank — no holding statement for Ajay's HDFC Bank demat is in the drop (Bharat's is a SCAN)",
-    "ask": "HDFC Bank demat holding statements — Ajay's (none in the drop) and Bharat's as a text PDF, not a scan"
   },
   {
     "name": "Sterlite Power Transmission",

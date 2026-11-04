@@ -252,7 +252,11 @@ ok("a percentage cell is the figure without its sign", witnessCheck(sheet(["12.3
 
 const readJson = (f) => JSON.parse(fs.readFileSync(f, "utf8"));
 const manifest = readJson(path.join(AUDIT, "manifest.json"));
-const witnessEntries = manifest.filter((m) => m.twinOf);
+// A PDF's export. The other kind of witness — a broker's depository view of the
+// same snapshot as a dated CSV beside it (providers/hdfcSecurities.mjs) — names a
+// spreadsheet, not a PDF, and is held by brokerExports.test.mjs.
+const witnessEntries = manifest.filter((m) => m.twinOf
+  && /\.pdf$/i.test(readJson(path.join(AUDIT, m.twinOf, "document.json")).sourcePath ?? ""));
 ok("no two manifest entries share a docKey", new Set(manifest.map((m) => m.docKey)).size === manifest.length);
 
 const SHEET_EXT = /\.(xlsx|xls|csv)$/i;

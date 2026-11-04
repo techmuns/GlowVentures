@@ -298,7 +298,7 @@ export const FAMILY_TAXONOMY: Readonly<Record<string, TaxonomyEntry>> = {
    * already hold a join to. The mandate-held shares belong to their mandate's
    * own product and never reach this map.
    */
-  "sec:borosil-renewables-limited-warrants-13ag26":
+  "sec:borosil-renewables-limited-eq-new-fv-re-1-listing-trdg-aprvl-awaited":
     { assetClass: "Alternate", basket: "Entrepreneurial Growth", reviewProduct: "Borosil Renewables" },
   /**
    * TWO BLUE ASHVA VEHICLES ARE IN THE REVIEW and only one is in this book:

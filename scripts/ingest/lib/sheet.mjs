@@ -82,6 +82,7 @@ export function sniffFormat(buf) {
   const head = buf.slice(0, 2048).toString("latin1").toLowerCase();
   if (/<table|<html|<tr[\s>]|<!doctype html/.test(head)) return "html-table";
   if (looksLikeCsv(buf)) return "csv";
+  if (looksLikeTsv(buf)) return "tsv";
   return "unknown";
 }
 
@@ -111,6 +112,22 @@ function looksLikeCsv(buf) {
   if (text.startsWith("%PDF")) return false;
   const first = text.split(/\r\n|\r|\n/).find((l) => l.trim());
   return Boolean(first && first.includes(","));
+}
+
+/**
+ * Is this TAB-separated text saved under a `.csv` name? Same three tests as
+ * `looksLikeCsv`, with the first line carrying at least two tabs and no comma.
+ * A broker's order book (`orderBook_Equity_….csv`, November 2026) is exactly
+ * that: sixteen tab-separated columns, and read as comma-separated it is one
+ * column of whole lines — or, before this, "unrecognised spreadsheet format".
+ */
+function looksLikeTsv(buf) {
+  const head = buf.subarray(0, 4096);
+  if (!head.length || head.includes(0)) return false;
+  const text = head.toString("latin1").replace(/^\xEF\xBB\xBF/, "");
+  if (text.startsWith("%PDF")) return false;
+  const first = text.split(/\r\n|\r|\n/).find((l) => l.trim());
+  return Boolean(first && !first.includes(",") && (first.match(/\t/g) ?? []).length >= 2);
 }
 
 /**
@@ -154,7 +171,7 @@ function csvText(buf) {
  *
  * @returns {string[][]} the rows, each a list of raw (untrimmed) fields
  */
-export function parseCsv(text) {
+export function parseCsv(text, delimiter = ",") {
   const s = String(text ?? "");
   const rows = [];
   let row = [];
@@ -170,7 +187,7 @@ export function parseCsv(text) {
       continue;
     }
     if (ch === '"' && field === "") { quoted = true; opened = i; continue; }
-    if (ch === ",") { row.push(field); field = ""; continue; }
+    if (ch === delimiter) { row.push(field); field = ""; continue; }
     if (ch === "\r" || ch === "\n") {
       if (ch === "\r" && s[i + 1] === "\n") i++;
       row.push(field); rows.push(row); row = []; field = "";
@@ -193,8 +210,8 @@ export function parseCsv(text) {
  * xlsx reader leaves them — so the address that ran over four lines reads as one
  * line of text, and a reader written against one format reads the other.
  */
-export function readCsv(buf) {
-  const rows = parseCsv(csvText(buf)).map((r) => r.map((c) => String(c).replace(/\s+/g, " ").trim()));
+export function readCsv(buf, delimiter = ",") {
+  const rows = parseCsv(csvText(buf), delimiter).map((r) => r.map((c) => String(c).replace(/\s+/g, " ").trim()));
   return [makeSheet("csv", rows)];
 }
 
@@ -449,6 +466,7 @@ export function readSpreadsheet(input) {
     if (format === "xlsx") return { sheets: readXlsx(buf), format, error: null };
     if (format === "html-table") return { sheets: readHtmlTables(buf.toString("utf8")), format, error: null };
     if (format === "csv") return { sheets: readCsv(buf), format, error: null };
+    if (format === "tsv") return { sheets: readCsv(buf, "\t"), format, error: null };
     if (format === "biff") return { sheets: readBiff(buf), format, error: null };
     return { sheets: [], format, error: "unrecognised spreadsheet format" };
   } catch (e) {

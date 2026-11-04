@@ -106,33 +106,33 @@ ok("…and a buyback beside sales the account records after the statement is sti
 });
 
 // Stage 10hb: "Review's 116,462" — the family, 22 Oct 2026. Yash Highvoltage's
-// ICICI NSDL statement (31 Mar) holds 138,462 and the review sells 22,000 in
-// June with its own 30 Jun closing at 116,462. The BSE quote marks that count;
-// the sale cash is unverified, so no return is struck.
-ok("Yash Highvoltage rolls on the review's June sales: its BSE quote marks 116,462 shares, and no return is struck", () => {
+// ICICI NSDL statement of 31 Mar held 138,462 and the review rolled it on its
+// June sales. Since Stage 10kn the account's own statement of 31 Oct holds
+// 104,462 — after the review's 22,000 and the order book's 12,000 more in July —
+// so the statement is the count and nothing rolls. The BSE quote marks it.
+ok("Yash Highvoltage is the 31 Oct statement's 104,462 shares: nothing rolls, and its BSE quote marks them", () => {
   const y = BOOK_POSITIONS.find((x) => x.securityKey === "yash-highvoltage")!;
-  assert.equal(y.quantity, 138462, "the statement basis keeps the 31 Mar snapshot");
-  assert.equal(y.rolledForward?.source, "review");
-  assert.equal(y.rolledForward?.quantity, 116462);
-  assert.ok(y.rolledForward?.hprUnavailableReason);
+  assert.equal(y.quantity, 104462, "the 31 Oct statement's own count");
+  assert.equal(y.rolledForward, undefined, "no sale on any record falls after the statement");
+  // A capture and a quote after the 31 Oct statement: one dated before it is held back.
   const f = normalizeActionFeed({
-    version: 1, capturedAt: "2026-09-23T10:00:00Z", requestedFrom: "2023-09-24", requestedTo: "2027-09-23",
+    version: 1, capturedAt: "2026-11-03T10:00:00Z", requestedFrom: "2023-11-04", requestedTo: "2027-11-03",
     rowCount: 1, rows: [elsewhere],
-    sources: { nse: { capturedAt: "2026-09-23T10:00:00Z" }, screener: { capturedAt: "2026-09-23T09:00:00Z" } },
+    sources: { nse: { capturedAt: "2026-11-03T10:00:00Z" }, screener: { capturedAt: "2026-11-03T09:00:00Z" } },
   }, ["GATE"], ["INE00GK01023"]);
-  const q: QuoteFeed = { ...quotes(), quotes: { "BSE:YASHHV": { ...quotes().quotes.GATE, price: 950, prevClose: 940 } } };
+  const after = quotes("GATE", "2026-11-03T09:00:00Z");
+  const q: QuoteFeed = { ...after, asOf: "2026-11-03T10:00:00Z", quotes: { "BSE:YASHHV": { ...after.quotes.GATE, price: 950, prevClose: 940 } } };
   const out = applyCorporateActionQuotes([y], BOOK_ACCOUNTS as Account[], q, f);
   const live = out.positions[0];
-  assert.equal(liveWithheldReason(y, out.returns), null, "the recorded sales are inside the roll");
+  assert.equal(liveWithheldReason(y, out.returns), null);
   assert.equal(live.live, true);
-  assert.equal(live.quantity, 116462);
-  assert.equal(live.marketValue, 116462 * 950);
-  assert.equal(live.dayChange, 116462 * 10);
-  assert.equal(live.returnPct, null, "unverified sale cash leaves the return absent");
+  assert.equal(live.quantity, 104462);
+  assert.equal(live.marketValue, 104462 * 950);
+  assert.equal(live.dayChange, 104462 * 10);
+  assert.equal(live.returnPct, null, "no cost is recorded, so no return is struck");
   const offline = applyCorporateActionQuotes([y], BOOK_ACCOUNTS as Account[], null, f).positions[0];
-  assert.equal(offline.quantity, 116462);
-  assert.ok(Math.abs(offline.marketValue - 116462 * (y.marketValue / 138462)) < 0.01,
-    "without a quote the statement's own per-share value marks the rolled count");
+  assert.equal(offline.quantity, 104462);
+  assert.equal(offline.marketValue, y.marketValue, "without a quote the statement's own value stands");
 });
 
 // Stage 10he: Goldstandard's statement prints Poojaa Precision with neither an

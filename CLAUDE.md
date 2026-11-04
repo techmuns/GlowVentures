@@ -285,11 +285,12 @@ extraction mirrors each archive's own path under `source/`.
 
 | Provider | Account | Owner | As of | Market value |
 | --- | --- | --- | --- | ---: |
-| Consolidated review (MOPWM) | MOPWM | Ajay Jaisinghani | 2026-06-30 | ₹125.40 Cr |
+| Consolidated review (MOPWM) | MOPWM | Ajay Jaisinghani | 2026-06-30 | ₹123.40 Cr |
+| ICICI Bank (NSDL demat) | 49794950 | Ajay Jaisinghani | 2026-10-31 | ₹106.16 Cr\*\* |
 | Sanshi Fund | 9039671821 | Aarti Jaisinghani | 2026-06-30 | ₹97.68 Cr |
-| ICICI Bank (NSDL demat) | 49794950 | Ajay Jaisinghani | 2026-03-31 | ₹63.76 Cr\*\* |
 | Buoyant Capital | 103473 | Ajay Jaisinghani | 2026-09-30 | ₹48.07 Cr |
 | HDFC Bank (NSDL demat) | 67776432 | Glowterra LLP | 2026-10-29 | ₹47.62 Cr |
+| HDFC Securities | 3110320 | Ajay Jaisinghani | 2026-11-02 | ₹47.24 Cr |
 | Bandhan Mutual Fund | 8652064 | Ajay Jaisinghani | 2026-10-26 | ₹41.51 Cr |
 | Carnelian Asset Management and Advisors Pvt Ltd | 3517383 | Ajay Jaisinghani | 2026-09-30 | ₹38.16 Cr |
 | Consolidated review (MOPWM) | MOPWM | Bharat Jaisinghani | 2026-06-30 | ₹37.26 Cr |

@@ -149,12 +149,13 @@ const carriedPI: number[] = [], writtenOff: number[] = [], listedSince: number[]
     else elsewhere.push(r);
   }
   ok("each carried line's book rows add to the review's own cost and value", bad.length === 0, bad.slice(0, 4).join("; "));
-  ok("59 lines are carried", carriedPI.length === 59, String(carriedPI.length));
+  // Sotefin Bharat left the carried lines in Stage 10kn: its statement marks it.
+  ok("58 lines are carried", carriedPI.length === 58, String(carriedPI.length));
   const piRows = REV.filter((p) => p.reviewSource?.sheet === PI);
-  ok("…as 71 book rows, one per holder", piRows.length === 71, String(piRows.length));
+  ok("…as 70 book rows, one per holder", piRows.length === 70, String(piRows.length));
   ok("22 are written off", writtenOff.length === 22, String(writtenOff.length));
   ok("4 are now listed", listedSince.length === 4, String(listedSince.length));
-  ok("2 are held elsewhere", elsewhere.length === 2, elsewhere.map((r) => text(cell(PI, r, 1))).join(", "));
+  ok("3 are held elsewhere", elsewhere.length === 3, elsewhere.map((r) => text(cell(PI, r, 1))).join(", "));
   ok("…and together they are all 87, each once",
     new Set([...carriedPI, ...writtenOff, ...listedSince, ...elsewhere]).size === 87 &&
     carriedPI.length + writtenOff.length + listedSince.length + elsewhere.length === 87);
@@ -191,11 +192,14 @@ const carriedPI: number[] = [], writtenOff: number[] = [], listedSince: number[]
   ok("…and none of them is also a review row", listedSince.every((r) => rowsAt(PI, r).length === 0));
 }
 {
-  // HELD ELSEWHERE — exactly two, each named, so a line that simply fell out
+  // HELD ELSEWHERE — exactly three, each named, so a line that simply fell out
   // of the book cannot hide here.
   const names = elsewhere.map((r) => text(cell(PI, r, 1)));
-  ok("the two lines held elsewhere are ESDS and Credit Fair", names.length === 2 && names.some((n) => /^ESDS$/.test(n)) && names.some((n) => /^Credit Fair/.test(n)),
+  ok("the three lines held elsewhere are ESDS, SOTEFIN and Credit Fair", names.length === 3 && names.some((n) => /^ESDS$/.test(n))
+    && names.some((n) => /^SOTEFIN$/.test(n)) && names.some((n) => /^Credit Fair/.test(n)),
     names.join(", "));
+  ok("Sotefin Bharat is on a statement at its mark — ICICI Bank's NSDL account of 31 Oct 2026",
+    NONREV.some((p) => p.securityKey === "sotefin-bharat" && p.marketValue > 0));
   const esdsHeld = NONREV.some((p) => /^esds/.test(p.securityKey)) || BOOK_UNVALUED_HOLDINGS.some((u) => /^esds/.test(u.securityKey));
   ok("ESDS is on a statement — ICICI Bank's NSDL account holds the shares", esdsHeld);
   const cf = elsewhere.find((r) => /^Credit Fair/.test(text(cell(PI, r, 1))));
@@ -291,8 +295,8 @@ console.log("\n4. Nothing is counted twice, and nothing else is carried");
   const stray = REV.filter((p) => !p.reviewSource || !LINES.get(`${p.reviewSource.sheet}|${p.reviewSource.row}`)?.carried);
   ok("every review row in the book points at a private-market line of the review", stray.length === 0,
     stray.slice(0, 3).map((p) => `${p.security} → ${JSON.stringify(p.reviewSource)}`).join("; "));
-  ok("…and there are 89 of them: 71 private investments and 18 PE fund, unlisted and credit rows",
-    REV.length === 89 && REV.length === 71 + blockRows, `${REV.length} rows, ${blockRows} outside Private Investments`);
+  ok("…and there are 88 of them: 70 private investments and 18 PE fund, unlisted and credit rows",
+    REV.length === 88 && REV.length === 70 + blockRows, `${REV.length} rows, ${blockRows} outside Private Investments`);
   const carried = [...LINES.values()].filter((l) => l.carried);
   ok("the review rows add to the carried lines' own value, to the rupee",
     Math.abs(sum(REV.map((p) => p.marketValue)) - sum(carried.map((l) => l.value))) <= 1 + 0.01 * REV.length,

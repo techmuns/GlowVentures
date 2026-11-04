@@ -138,7 +138,7 @@ export const BRAND_NAMES: Readonly<Record<string, BrandName>> = {
     brand: "Matrix Gas and Renewables", legal: "Matrix Gas and Renewables Limited", basis: "own-name",
     source: [ICICI_NSDL, "https://www.outlookbusiness.com/news/matrix-gas-files-ipo-papers-to-list-on-nse-emerge-news-303590"],
   },
-  "borosil-renewables-limited-warrants-13ag26": {
+  "borosil-renewables-limited-eq-new-fv-re-1-listing-trdg-aprvl-awaited": {
     brand: "Borosil Renewables", legal: "Borosil Renewables Limited", basis: "own-name",
     source: [ICICI_NSDL],
   },
