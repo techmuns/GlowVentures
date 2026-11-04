@@ -2,9 +2,12 @@ import { useNavigationState, useNavigationValue, nullableStringNavigation } from
 import { useTableExportFilter, useTableExporting } from "@/lib/tableExportSnapshot";
 import { ExportableTable } from "@/components/ExportableTable";
 import { Fragment, useMemo, type ReactNode } from "react";
-import { Handshake, Landmark, Wallet, TrendingUp, Fuel, Coins, Banknote, HelpCircle, CalendarClock, Layers, Users, ArrowUpRight, Percent } from "lucide-react";
+import { Handshake, Landmark, Wallet, TrendingUp, Fuel, Coins, Banknote, HelpCircle, CalendarClock, Layers, Users, ArrowUpRight, Percent, Paperclip } from "lucide-react";
 import { Link } from "react-router-dom";
 import { PageHeader } from "@/components/PageHeader";
+import { UploadDocuments } from "@/components/UploadDocuments";
+import { useStatementInbox } from "@/lib/statementUploads";
+import { uploadSubjects, holdingDocumentsOf, documentMatches, subjectFolderHref } from "@/lib/holdingDocuments";
 import { Card } from "@/components/Card";
 import { SelectableTiles, type TileMetric } from "@/components/SelectableTiles";
 import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
@@ -559,6 +562,10 @@ export function PrivateMarket() {
    * cell, sort and search below reads ONE resolution.
    */
   const typedProfiles = useEnteredProfiles();
+  // A holding's uploaded documents (Stage 10kx): the button in the header and
+  // the clip on each row read the statement inbox's one log.
+  const inbox = useStatementInbox();
+  const holdingDocs = inbox.state.status === "ready" ? holdingDocumentsOf(inbox.state.batches) : [];
   const typedList = typedProfiles.state.status === "ready" ? typedProfiles.state.profiles : [];
   const profileKeyOf = (f: BookFolio) => callKeyOf(f.fundKey, f.securityKey);
   const effFolio = (f: BookFolio): InvestmentProfile => withEntered(f.profile, typedList, profileKeyOf(f));
@@ -2061,6 +2068,20 @@ export function PrivateMarket() {
                   </Link>
                 );
               })()}
+              {/* THE ROW'S UPLOADED DOCUMENTS (Stage 10kx) — a clip with their
+                  count, opening the holding's Portfolio Library folder. */}
+              {(() => {
+                if (g.kind === "owner") return null;
+                const keys = [g.key, ...g.folios.flatMap((f) => [f.securityKey, f.fundKey]).filter((k): k is string => !!k)];
+                const docs = holdingDocs.filter((d) => documentMatches(d, keys));
+                return docs.length > 0 && (
+                  <Link to={subjectFolderHref(docs[0].subject)} data-no-row-toggle data-pm-documents={docs.length}
+                    title={`${docs.length} uploaded ${docs.length === 1 ? "document" : "documents"} — open ${g.label}'s folder in the Portfolio Library`}
+                    className="ml-1.5 inline-flex items-center gap-0.5 align-[-2px] text-[11px] text-slate-500 transition-colors hover:text-champagne-400">
+                    <Paperclip className="h-3.5 w-3.5" />{docs.length}
+                  </Link>
+                );
+              })()}
             </>}
             sub={groupSub(g)} />
           {inOrder({
@@ -2423,7 +2444,8 @@ export function PrivateMarket() {
 
   return (
     <div>
-      <PageHeader eyebrow="Daily" title="Private Market" />
+      <PageHeader eyebrow="Daily" title="Private Market"
+        right={<UploadDocuments subjects={uploadSubjects(m.byFund, (fs) => companyValuationOf(fs)?.company)} inbox={inbox} />} />
 
       {/* THE "MARKS SPAN" LINE IS GONE, at the family's request (*"its obvious
           from the table what it is"*). Every row's As of cell carries its own

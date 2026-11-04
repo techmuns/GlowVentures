@@ -41,6 +41,23 @@
 //   landed      on `main`, in the book — `landedAs`, `providers`, `docKeys`
 //   duplicate   byte-identical to a statement already in `source/`; nothing to add
 //   held        not landed — `hold` names the kind and `reason` the cause
+//   stored      a holding's document (Stage 10kx): kept on this branch as it
+//               is, filed under its holding, never read into the book
+//
+// ── A HOLDING'S DOCUMENTS (Stage 10kx) ──────────────────────────────────────
+//
+//   *"add a "Upload documents" button where we can choose the company or fund
+//    and upload any kind of file related to it and the dashboard will save that
+//    file in the repo and process it and show the updated data … The files then
+//    also need to be automatically added in the admin pages accordingly at the
+//    right place"* — the family, 4 Nov 2026.
+//
+// An upload from Private Market names its holding: every file carries a
+// `subject` (the company or fund, and the `securityKey`s behind it). A file in
+// a statement format is queued like any other upload, so whatever it carries is
+// read into the book; anything else is `stored` — saved here, linked from the
+// holding's Portfolio Library folder, and fed to nothing. A batch with a subject
+// is never pruned from the log: the log is that holding's document index.
 //
 // The repository is public, so everything uploaded here is public — the same
 // terms every statement already in `source/` is kept on.
@@ -64,7 +81,7 @@ export const MAX_SETTLED_BATCHES = 100;
 const MAX_PATH = 240;
 const MAX_DEPTH = 8;
 
-export const STATUSES = Object.freeze(["queued", "processing", "landed", "duplicate", "held"]);
+export const STATUSES = Object.freeze(["queued", "processing", "landed", "duplicate", "held", "stored"]);
 export const HOLDS = Object.freeze(["needs-reader", "needs-password", "unreadable", "not-a-statement", "check-failed", "intake-error"]);
 const OPEN = new Set(["queued", "processing", "held"]);
 
@@ -122,6 +139,42 @@ export function checkUpload({ name, size }) {
   return { name: clean };
 }
 
+/**
+ * Validate one file of a holding's documents: any kind of file, so only its
+ * name, emptiness and size are checked. Statement formats still go through
+ * the statement reading; this only decides what may be kept.
+ */
+export function checkDocumentUpload({ name, size }) {
+  const clean = cleanUploadPath(name);
+  if (!clean) return { error: "That file has no usable name." };
+  // Before cleaning too: cleaning turns a leading dot into "_".
+  if (isJunkPath(name) || isJunkPath(clean)) return { error: "That is a system file, not a document." };
+  if (!(typeof size === "number" && Number.isFinite(size) && size > 0)) return { error: "That file is empty." };
+  if (size > MAX_FILE_BYTES) return { error: `That file is larger than ${Math.round(MAX_FILE_BYTES / (1024 * 1024))} MB.` };
+  return { name: clean };
+}
+
+/** True when a file of a holding's upload is read as a statement rather than only kept. */
+export const isStatementFile = (name) => STATEMENT_EXT.includes(extOf(name));
+
+const SUBJECT_KINDS = ["fund", "company"];
+const shortText = (v) => (typeof v === "string" ? v.replace(/[\u0000-\u001f\u007f]/g, "").trim().slice(0, 200) : "");
+
+/**
+ * The holding an upload is filed under — `{ kind, key, label, keys }` — or null
+ * when what was sent is not one. `keys` are the `securityKey`s behind it, the
+ * join the Portfolio Library files folders by (rule 1: never a name).
+ */
+export function cleanSubject(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const kind = SUBJECT_KINDS.includes(raw.kind) ? raw.kind : null;
+  const key = shortText(raw.key);
+  const label = shortText(raw.label);
+  const keys = [...new Set((Array.isArray(raw.keys) ? raw.keys : []).map(shortText).filter(Boolean))].slice(0, 40);
+  if (!kind || !key || !label) return null;
+  return { kind, key, label, keys };
+}
+
 /** A batch's id: when it arrived, then a random tail — sortable, and safe as a folder name. */
 export function newBatchId(now = new Date(), rand = () => crypto.randomUUID()) {
   const t = now.toISOString().replace(/\.\d+Z$/, "Z").replace(/[-:]/g, "");
@@ -147,7 +200,8 @@ export function serializeLog(log) {
   return JSON.stringify({ version: 1, batches }, null, 1) + "\n";
 }
 
-const settled = (b) => b.files.every((f) => !OPEN.has(f.status));
+// A holding's documents are its index, so a batch filed under one is kept.
+const settled = (b) => b.files.every((f) => !OPEN.has(f.status) && !f.subject);
 
 /** The log with a new batch added — and the oldest SETTLED batches dropped past the cap. */
 export function withBatch(log, batch) {
@@ -161,18 +215,32 @@ export function withBatch(log, batch) {
 }
 
 /** A new batch's record: every file queued. */
-export function makeBatch(id, files, now = new Date()) {
+export function makeBatch(id, files, now = new Date(), subject = null) {
   const at = now.toISOString();
   return {
     id,
     uploadedAt: at,
     files: files.map((f) => ({
       name: f.name, size: f.size, blob: f.blob,
-      status: "queued", hold: null, reason: null,
+      // A holding's file that is no statement is kept, never queued for a reader.
+      status: subject && !isStatementFile(f.name) ? "stored" : "queued", hold: null, reason: null,
       landedAs: null, providers: null, docKeys: null, commit: null, run: null, updatedAt: at,
+      ...(subject ? { subject } : {}),
     })),
   };
 }
+
+/** Every file filed under a holding, newest upload first. */
+export function holdingDocuments(log) {
+  return [...log.batches].sort((a, b) => b.id.localeCompare(a.id))
+    .flatMap((b) => b.files.filter((f) => f.subject).map((file) => ({ batch: b.id, uploadedAt: b.uploadedAt, file })));
+}
+
+/**
+ * Whether a file's bytes are still on the inbox branch: a landed or duplicate
+ * statement's are taken off once it is in `source/`, and it is opened there.
+ */
+export const bytesOnBranch = (f) => ["queued", "processing", "held", "stored"].includes(f?.status);
 
 /**
  * Two files of one batch cannot share a path; the second becomes `name (2).ext`.
@@ -247,7 +315,7 @@ export function withoutFile(log, batchId, name) {
   const f = b?.files.find((x) => x.name === name);
   if (!f) return { error: "That upload is no longer in the inbox." };
   if (f.status === "processing") return { error: "That file is being read into the book right now; wait for the run to finish." };
-  if (f.status !== "queued" && f.status !== "held") return { error: "That file has already been read; it is part of the library now." };
+  if (f.status !== "queued" && f.status !== "held" && f.status !== "stored") return { error: "That file has already been read; it is part of the library now." };
   const files = b.files.filter((x) => x !== f);
   return {
     removed: f,
@@ -347,6 +415,26 @@ export function githubInbox({ token, repo, branch }, fetchImpl = (...a) => fetch
 
   return {
     read,
+
+    /**
+     * One file's bytes as they sit on the branch, or null when it is not there —
+     * the raw media type, so a file past the contents API's 1 MB JSON limit
+     * still comes back whole.
+     */
+    async readFile(path) {
+      const r = await fetchImpl(`${API}/repos/${repo}/contents/${enc(path)}?ref=${encodeURIComponent(branch)}`, {
+        headers: {
+          authorization: `Bearer ${token}`,
+          accept: "application/vnd.github.raw",
+          "x-github-api-version": "2022-11-28",
+          "user-agent": "glow-ventures-dashboard",
+          "cache-control": "no-cache",
+        },
+      });
+      if (r.status === 404) return null;
+      if (r.status !== 200) throw new InboxError(`GitHub answered HTTP ${r.status} reading the file.`, r.status);
+      return new Uint8Array(await r.arrayBuffer());
+    },
 
     /** Store one file's bytes as a git blob. Nothing points at it until `commit`. */
     async putBlob(bytes) {

@@ -3,7 +3,7 @@ import { useNavigationState, useNavigationValue, nullableStringNavigation } from
 import { ExportableTable } from "@/components/ExportableTable";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Folder, ChevronLeft, Search, ShieldAlert, ExternalLink } from "lucide-react";
+import { Folder, ChevronLeft, Search, ShieldAlert, ExternalLink, Paperclip } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
@@ -15,6 +15,10 @@ import { loadStatementSecurities } from "@/lib/ledger";
 import { buildSecurityLibrary, type ManifestEntry, type SecurityFolder, type LibraryDoc } from "@/lib/statementLibrary";
 import { bucketLabel, UNSTATED_BUCKET } from "@/lib/analytics";
 import { bucketOrd } from "@/lib/groupAxis";
+import { useStatementInbox } from "@/lib/statementUploads";
+import { holdingDocumentsOf, documentMatches, type HoldingDocument } from "@/lib/holdingDocuments";
+import { DocumentLine } from "@/components/UploadDocuments";
+import { extOf } from "../../shared/statementInbox.mjs";
 
 /**
  * ── THE PORTFOLIO LIBRARY: EVERY STATEMENT, ONE FOLDER PER SECURITY ─────────
@@ -98,8 +102,31 @@ function FormatBlock({ format, docs }: { format: string; docs: LibraryDoc[] }) {
   </div>;
 }
 
+/**
+ * A HOLDING'S UPLOADED DOCUMENTS (Stage 10kx) — the files uploaded under it
+ * from Private Market, each opening the file itself (or, once a statement is
+ * read, its document in the Statement Library). A list, not a table: these are
+ * files, not statement rows with owners and accounts.
+ */
+function UploadedBlock({ docs }: { docs: HoldingDocument[] }) {
+  return <div data-uploaded-documents={docs.length}>
+    <div className="mb-2 flex items-center gap-2">
+      <Paperclip className="h-4 w-4 text-champagne-400" />
+      <span className="text-xs font-semibold uppercase tracking-wide text-slate-300">Uploaded documents</span>
+      <Pill>{docs.length} {docs.length === 1 ? "file" : "files"}</Pill>
+    </div>
+    <ul className="divide-y divide-ink-700/70 rounded-lg border border-ink-700 text-sm">
+      {docs.map((d) => <DocumentLine key={`${d.batch}/${d.file.name}`} doc={d} />)}
+    </ul>
+  </div>;
+}
+
+/** The file types a holding's uploads come in, as a folder tile names them. */
+const uploadFormats = (docs: HoldingDocument[]) => [...new Set(docs.map((d) => extOf(d.file.name).toUpperCase() || "FILE"))].sort();
+const NO_STATUS: Record<LibraryDoc["status"], number> = { ok: 0, partial: 0, failed: 0, encrypted: 0, "held-out": 0, "never-arrived": 0 };
+
 /** The opened folder: a header naming the security, then one block per file format. */
-function OpenFolder({ folder, onBack }: { folder: SecurityFolder; onBack: () => void }) {
+function OpenFolder({ folder, onBack, uploaded }: { folder: SecurityFolder; onBack: () => void; uploaded: HoldingDocument[] }) {
   const dateRange = folder.asOfFrom
     ? folder.asOfFrom === folder.asOfTo
       ? fmtDate(folder.asOfFrom)
@@ -156,6 +183,7 @@ function OpenFolder({ folder, onBack }: { folder: SecurityFolder; onBack: () => 
       </Card>
 
       <div className="space-y-5">
+        {uploaded.length > 0 && <UploadedBlock docs={uploaded} />}
         {byFormat.map(([format, docs]) => <FormatBlock key={format} format={format} docs={docs} />)}
       </div>
     </div>
@@ -199,6 +227,26 @@ export function PortfolioLibrary() {
   }, [load]);
 
   const library = useMemo(() => buildSecurityLibrary(manifest, securities), [manifest, securities]);
+  // Read only: uploads are made in the Statement Library and on Private Market.
+  const inbox = useStatementInbox();
+  const holdingDocs = useMemo(() => inbox.state.status === "ready" ? holdingDocumentsOf(inbox.state.batches) : [], [inbox.state]);
+  const uploadedFor = useCallback((keys: string[]) => holdingDocs.filter((d) => documentMatches(d, keys)), [holdingDocs]);
+  /**
+   * A holding no statement names yet (a company held on the review alone) still
+   * gets a folder for what was uploaded under it — one per Private Market row.
+   */
+  const uploadFolders = useMemo(() => {
+    const filedKeys = new Set(library.flatMap((f) => [f.securityKey, ...f.aliases]));
+    const out = new Map<string, { key: string; name: string; docs: HoldingDocument[] }>();
+    for (const d of holdingDocs) {
+      if (d.subject.keys.some((k) => filedKeys.has(k)) || filedKeys.has(d.subject.key)) continue;
+      const key = d.subject.keys[0] ?? d.subject.key;
+      const f = out.get(key) ?? { key, name: d.subject.label, docs: [] };
+      f.docs.push(d);
+      out.set(key, f);
+    }
+    return [...out.values()];
+  }, [library, holdingDocs]);
   const filed = useMemo(() => new Set(library.flatMap((f) => f.docs.map((d) => d.fileKey))).size, [library]);
   const matching = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -225,9 +273,16 @@ export function PortfolioLibrary() {
   const pickCategory = (c: string) => setSearchParams((p) => { if (c === ALL) p.delete(CATEGORY_PARAM); else p.set(CATEGORY_PARAM, c); return p; }, { replace: true });
 
   // A key filed into another folder (same ISIN) opens that folder, so an older link still lands.
-  const current = openKey ? library.find((f) => f.securityKey === openKey) ?? library.find((f) => f.aliases.includes(openKey)) : null;
+  // A link from a holding's uploads may name its row rather than a security: the
+  // folder of any security behind that row opens.
+  const subjectKeys = openKey ? holdingDocs.find((d) => documentMatches(d, [openKey]))?.subject.keys ?? [] : [];
+  const current = openKey
+    ? library.find((f) => f.securityKey === openKey) ?? library.find((f) => f.aliases.includes(openKey))
+      ?? library.find((f) => subjectKeys.includes(f.securityKey) || f.aliases.some((a) => subjectKeys.includes(a)))
+    : null;
+  const uploadOnly = openKey && !current ? uploadFolders.find((f) => f.key === openKey || f.docs.some((d) => documentMatches(d, [openKey]))) : undefined;
   const trail = openKey
-    ? [{ label: "Admin" }, { label: "Portfolio Library", to: "/portfolios" }, { label: current?.name ?? openKey }]
+    ? [{ label: "Admin" }, { label: "Portfolio Library", to: "/portfolios" }, { label: current?.name ?? uploadOnly?.name ?? openKey }]
     : undefined;
 
   return (
@@ -262,8 +317,25 @@ export function PortfolioLibrary() {
 
       {status === "ready" && (openKey
         ? (current
-          ? <OpenFolder folder={current} onBack={back} />
-          : (
+          ? <OpenFolder folder={current} onBack={back} uploaded={uploadedFor([current.securityKey, ...current.aliases])} />
+          : uploadOnly ? (
+            <div data-open-upload-folder={uploadOnly.key}>
+              <button type="button" onClick={back}
+                className="mb-3 inline-flex items-center gap-1 rounded-md border border-ink-600 bg-ink-800 px-3 py-1.5 text-xs font-medium text-slate-300 hover:bg-ink-700">
+                <ChevronLeft className="h-3.5 w-3.5" /> All folders
+              </button>
+              <Card className="mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="grid h-11 w-11 shrink-0 place-items-center rounded-md border border-champagne-500/30 bg-champagne-500/10 text-champagne-400">
+                    <Folder className="h-6 w-6" />
+                  </div>
+                  <span className="font-display text-base font-semibold text-slate-100">{uploadOnly.name}</span>
+                  <Pill tone="info">{uploadOnly.docs.length} {uploadOnly.docs.length === 1 ? "file" : "files"}</Pill>
+                </div>
+              </Card>
+              <UploadedBlock docs={uploadOnly.docs} />
+            </div>
+          ) : (
             <>
               <button type="button" onClick={back}
                 className="mb-3 inline-flex items-center gap-1 rounded-md border border-ink-600 bg-ink-800 px-3 py-1.5 text-xs font-medium text-slate-300 hover:bg-ink-700">
@@ -326,6 +398,15 @@ export function PortfolioLibrary() {
                     onSelect={() => setSelected(f.securityKey)}
                     onOpen={() => open(f.securityKey)} />
                 ))}
+                {category === ALL && uploadFolders
+                  .filter((f) => !query.trim() || f.name.toLowerCase().includes(query.trim().toLowerCase()))
+                  .map((f) => (
+                    <FolderTile key={`upload:${f.key}`} label={f.name} docCount={f.docs.length} formats={uploadFormats(f.docs)} status={NO_STATUS}
+                      data={{ "data-xa": "portfolio-upload-folder", "data-doc-count": f.docs.length, "data-upload-folder": f.key }}
+                      selected={selected === f.key}
+                      onSelect={() => setSelected(f.key)}
+                      onOpen={() => open(f.key)} />
+                  ))}
               </div>
             )}
           </>
