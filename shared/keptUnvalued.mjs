@@ -24,9 +24,11 @@
 // 31 Mar 2026 carries the same count of the same company, 94,967 Clean Max
 // shares, as "Beneficiary - Pre IPO Shares/27-AUG-26", and values them at
 // ₹1,336.50 a share. At that borrowed mark Ankita's shares would read about
-// ₹12.69 Cr. Whether they are those shares moved, or a second equal allotment,
-// no statement here says, and the family have chosen to keep Ankita's shares a
-// quantity with no value until a statement for that account prices them.
+// ₹12.69 Cr. At the time, whether they were those shares moved or a second equal
+// allotment was open, and the family chose to keep Ankita's shares a quantity
+// with no value until a statement for that account prices them. (Settled since:
+// they are a second holding. Each depository holds its 94,967 at the same time,
+// and the review buys them in two separate rows, Stage 10kx.)
 //
 // Keyed on the ACCOUNT the statement names (provider and account number, as
 // printed) and the ISIN it prints — never on a name — so a second holding of

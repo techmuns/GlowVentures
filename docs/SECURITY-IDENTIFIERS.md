@@ -16,8 +16,8 @@ or a name, so a security reaches the APIs if and only if a symbol resolved:
 | `/api/research` — `/financials` | `<SYMBOL>.NS` | NSE symbol |
 | `/api/ratios` | `tickers` | NSE symbol |
 
-**226 reachable · 141 not reachable · 13 not securities at all**
-(cash and receivables) — 226 + 141 + 13 = 380, every distinct
+**225 reachable · 141 not reachable · 13 not securities at all**
+(cash and receivables) — 225 + 141 + 13 = 379, every distinct
 security the archive carries.
 
 Of those, **31 are companies no statement of this family's reports** —
@@ -63,7 +63,6 @@ what is inside a mandate or a folio. No quantity, cost or mark here is theirs.
 | Ceat Ltd | `CEATLTD` | — | name | statement |
 | CHEMFAB ALKALIS LIMITED | `CHEMFAB` | — | name | statement |
 | CITY UNION BANK LIMITED | `CUB` | `INE491A01021` | ISIN (mainboard) | statement |
-| CLEAN MAX ENV | `CLEANMAX` | `INE647U01026` | ISIN (mainboard) | statement |
 | CLEAN MAX ENVIRO ENERGY SOLUTIONS LIMITED | `CLEANMAX` | `INE647U01026` | ISIN (mainboard) | statement |
 | Cosmo First Limited | `COSMOFIRST` | — | name | statement |
 | CREATIVE NEWTECH LIMITED | `CNL` | — | name | statement |
