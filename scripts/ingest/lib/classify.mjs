@@ -1091,18 +1091,38 @@ function dateFromName(name) {
  *     Order Ref. | … | DP Id - Client DP Id`: filed under the demat account its
  *     rows settle into, where a statement's letterhead names that DP ID.
  *
+ *   HDFC Securities' equity trade details report — `Customer Information |
+ *     Customer Name … | Trading ID 3110320 | … | Report Name EQUITY TRADE
+ *     DETAILS`, then one row per fill: the holder, the account and a window.
+ *
  * The two InvestRight layouts are claimed only under the app's own name in the
  * file name; neither prints the broker's, and a header shared with another
- * broker's export must not file it under HDFC Securities.
+ * broker's export must not file it under HDFC Securities. The trade details
+ * report does not print the broker's name either, so it is claimed only for a
+ * trading ID an InvestRight equity portfolio in this book prints
+ * (`HDFC_SECURITIES_TRADING_IDS`); any other ID is left unplaced, and check:reads
+ * names the file.
  */
 export const HDFC_SECURITIES = "HDFC Securities";
 export const INVESTRIGHT_FILE = /invest\s*right/i;
 export const INVESTRIGHT_EQUITY = /^\s*Trading\s+account:\s*(\d{5,})\s+Equity\s+Portfolio\s+Details\s+as\s+on\s+(\d{2})\/(\d{2})\/(\d{4})\b/i;
 export const INVESTRIGHT_DEMAT = /^\s*Symbol\s+LTP\s+STOCK\s+VAL\.?\s+FREE\s+QTY\s+AVAIL\s+QTY\b/i;
 export const ORDER_BOOK_HEADER = /\bDate\s+Stock\s+Action\s+Qty\s+Price\s+Trade\s+Value\s+Order\s+Ref\.?\s+Settlement\s+Segment\s+DP\s+Id\s*-\s*Client\s+DP\s+Id\b/i;
+export const TRADE_DETAILS = /^\s*Customer\s+Information\s+Customer\s+Name\s+([A-Z .]+?)\s+Trading\s+ID\s+(\d{5,})\b[\s\S]*?\bReport\s+Name\s+EQUITY\s+TRADE\s+DETAILS\b/i;
+/** Trading IDs whose InvestRight equity portfolio (`Trading account: <id>`) is in `source/`. */
+export const HDFC_SECURITIES_TRADING_IDS = Object.freeze(new Set(["3110320"]));
 
 function matchBrokerExport(t, name) {
   const base = { ownerName: null, familyGroup: null, strategy: null, confidence: "high" };
+  const td = TRADE_DETAILS.exec(t);
+  if (td) {
+    const known = HDFC_SECURITIES_TRADING_IDS.has(td[2]);
+    return { ...base, provider: known ? HDFC_SECURITIES : null, ownerName: td[1].trim(), accountNo: td[2], asOfDate: null,
+      confidence: known ? "high" : "low",
+      reportType: "transaction-statement", sections: ["transaction-statement"],
+      matchedBy: known ? `equity trade details report for trading ID ${td[2]}, the account an InvestRight equity portfolio prints`
+        : `equity trade details report for trading ID ${td[2]}, which no InvestRight export in this book prints` };
+  }
   if (INVESTRIGHT_FILE.test(name)) {
     const eq = INVESTRIGHT_EQUITY.exec(t);
     if (eq) {

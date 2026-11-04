@@ -325,7 +325,7 @@ A per-contribution breakdown is published for **33** position(s), of which **14*
 
 Of **436** holdings, **240** carry the date their units were bought: 33 by the fund's own dated allotments, 17 by a lot register, 105 by their account's own dated trades (every unit held matched to a buy, first-in, first-out) and 85 by the family's review's investment dates. A drawdown fund's dated calls date a few more on the page.
 
-**1082** dated buys and sells sit behind **165** holdings (`BOOK_HOLDING_TRADES`); **94** of the sales also carry the purchase dates of the lots their capital gain statement settles them with.
+**1521** dated buys and sells sit behind **167** holdings (`BOOK_HOLDING_TRADES`); **94** of the sales also carry the purchase dates of the lots their capital gain statement settles them with.
 
 The rest are undated on the page, each with its reason:
 
@@ -337,13 +337,14 @@ The rest are undated on the page, each with its reason:
 - SVAN Investment Managers LLP 8710067 — the trades do not account for every unit held: 9
 - SVAN Investment Managers LLP 8710090 — the trades do not account for every unit held: 9
 - V.E.C Assago Capital Management LLP 128005 — the trades do not account for every unit held: 9
-- HDFC Securities 3110320 — no transaction statement or dated allotment reaches it: 8
 - LKP Securities 98245 — no transaction statement or dated allotment reaches it: 7
+- HDFC Securities 3110320 — no transaction statement or dated allotment reaches it: 6
 - V.E.C Assago Capital Management LLP 128005 — no trade in the transaction statements' window: 5
 - Carnelian Asset Management and Advisors Pvt Ltd 3517383 — no trade in the transaction statements' window: 4
 - Green Lantern Capital LLP 510861 — the trades do not account for every unit held: 4
 - Bandhan Mutual Fund 8652064 — no transaction statement or dated allotment reaches it: 2
 - Carnelian Asset Management and Advisors Pvt Ltd 3517383 — the trades do not account for every unit held: 2
+- HDFC Securities 3110320 — the trades do not account for every unit held: 2
 - Aditya Birla Sun Life Mutual Fund 1019265797 — no transaction statement or dated allotment reaches it: 1
 - Aditya Birla Sun Life Mutual Fund 1038104611 — no transaction statement or dated allotment reaches it: 1
 - Bandhan Mutual Fund 8691267 — no transaction statement or dated allotment reaches it: 1
