@@ -31977,6 +31977,22 @@ const INVARIANTS = {
   "cio-alloc-treemap": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...ALLOC_CHART_CHECKS],
 
   monitor: [
+    /**
+     * NEVER A RETURN WITH NOTHING UNDER IT (Stage 10lc).
+     *
+     *   *"It should never show blank."*
+     *
+     * Every return the Monitor shows — a row's, an opened line's, a section's,
+     * the footer's — carries its index line: the index on the same dated money,
+     * or a dash that names its cause on its face ("No buy dates"), never a bare
+     * one. Struck on the handles (`[data-bench]`, `[data-absent-label]`).
+     */
+    ["every return carries its index line, and a gap in it names its cause", (t, ctx) => {
+      const m = ctx?.monitorBench;
+      if (!m) return false;
+      if (!m.figures) return { notChecked: "no return figure was on screen on this run" };
+      return m.missing.length === 0 && m.unlabelled.length === 0 && m.lines === m.figures;
+    }],
     // VD-16 / VD-18: a pre-tax mark and a cash line whose every unit is pledged
     // say so in the CMP marker's hover on the category table. The premise is
     // the BOOK's: it holds Sanshi, and the ABSL Liquid line on Bharat's demat.
@@ -41713,9 +41729,50 @@ for (const theme of THEMES) {
        * `null` where no footer is drawn, which the checks treat as a finding
        * wherever the table has rows.
        */
+      /**
+       * EVERY RETURN ON THE MONITOR AND ITS INDEX LINE (Stage 10lc), off their
+       * handles: each return cell that shows a figure — a row's, an opened
+       * line's, a section's, the footer's — and the `[data-bench]` line under
+       * it, with whether a dash there names its cause (`[data-absent-label]`).
+       */
+      const monitorBench = FAST || !/^\/monitor/.test(path) ? null : await page.evaluate(() => {
+        const cells = [...document.querySelectorAll("table td[data-return-cell], table td[data-child-return], tfoot td[data-footer-return-set], tbody tr td")]
+          .filter((td, i, all) => all.indexOf(td) === i);
+        const faceOf = (el) => {
+          const b = [...el.querySelectorAll("[data-bench]")];
+          b.forEach((n) => { n.dataset.checkDisplay = n.style.display; n.style.display = "none"; });
+          const t = el.innerText ?? "";
+          b.forEach((n) => { n.style.display = n.dataset.checkDisplay ?? ""; delete n.dataset.checkDisplay; });
+          return t;
+        };
+        const out = { figures: 0, lines: 0, missing: [], unlabelled: [] };
+        for (const td of cells) {
+          const ret = td.matches("[data-return-cell], [data-child-return], [data-footer-return-set]");
+          const b = td.querySelector("[data-bench]");
+          if (!ret && !b) continue;
+          const face = faceOf(td).replace(/\s+/g, " ").trim();
+          if (!/[+\-−]\d[\d,.]*%/.test(face)) continue;
+          out.figures++;
+          const name = (td.closest("tr")?.cells[0]?.innerText ?? "").split("\n")[0].trim().slice(0, 60);
+          if (!b) { out.missing.push(`${name}: ${face}`); continue; }
+          out.lines++;
+          // The feed's own state (closes loading, the service down) keeps the plain dash; a gap in the record never does.
+          if (b.getAttribute("data-bench") !== "none" && !b.getAttribute("data-bench-pct") && !b.hasAttribute("data-bench-feed") && !b.querySelector("[data-absent-label]")) out.unlabelled.push(`${name}: ${face}`);
+        }
+        return out;
+      });
       const monitorFoot = FAST ? null : await page.evaluate(() => {
         const f = document.querySelector("tfoot tr[data-footer-total]");
         if (!f) return null;
+        // THE FIGURE WITHOUT ITS INDEX LINE (Stage 10lc): the line under a
+        // return is a figure of its own on its own handle (`[data-bench]`).
+        const faceOf = (el) => {
+          const b = [...el.querySelectorAll("[data-bench]")];
+          b.forEach((n) => { n.dataset.checkDisplay = n.style.display; n.style.display = "none"; });
+          const t = el.innerText ?? "";
+          b.forEach((n) => { n.style.display = n.dataset.checkDisplay ?? ""; delete n.dataset.checkDisplay; });
+          return t;
+        };
         const retCell = f.querySelector("td[data-footer-return-set]");
         const basis = f.querySelector("[data-realised-basis]");
         const realisedCell = basis?.closest("td") ?? null;
@@ -41724,9 +41781,9 @@ for (const theme of THEMES) {
             counts: retCell.getAttribute("data-footer-return-set"),
             text: (retCell.getAttribute("data-footer-return-set-text") ?? "").replace(/\s+/g, " ").trim(),
             title: (retCell.getAttribute("title") ?? "").replace(/\s+/g, " ").trim(),
-            face: (retCell.innerText ?? "").replace(/\s+/g, " ").trim(),
+            face: faceOf(retCell).replace(/\s+/g, " ").trim(),
           } : null,
-          returnText: retCell ? (retCell.innerText ?? "").replace(/\s+/g, " ").trim() : null,
+          returnText: retCell ? faceOf(retCell).replace(/\s+/g, " ").trim() : null,
           realised: f.querySelector("td[data-realised]")?.getAttribute("data-realised") ?? null,
           realisedFace: basis?.getAttribute("data-realised-face") ?? null,
           realisedNote: basis?.getAttribute("title") ?? null,
@@ -42857,6 +42914,15 @@ for (const theme of THEMES) {
         };
       });
       const categoryTotals = FAST ? null : await page.evaluate(() => {
+        // THE FIGURE WITHOUT ITS INDEX LINE (Stage 10lc): the line under a
+        // return is a figure of its own on its own handle (`[data-bench]`).
+        const faceOf = (el) => {
+          const b = [...el.querySelectorAll("[data-bench]")];
+          b.forEach((n) => { n.dataset.checkDisplay = n.style.display; n.style.display = "none"; });
+          const t = el.innerText ?? "";
+          b.forEach((n) => { n.style.display = n.dataset.checkDisplay ?? ""; delete n.dataset.checkDisplay; });
+          return t;
+        };
         /**
          * A row read BY COLUMN, not by cell.
          *
@@ -42878,7 +42944,7 @@ for (const theme of THEMES) {
             return Number.isFinite(v) ? v : null;
           };
           for (const td of tr.cells) {
-            const t = (td.innerText ?? "").replace(/\s+/g, " ").trim();
+            const t = faceOf(td).replace(/\s+/g, " ").trim();
             const h = td.getAttribute("title") ?? td.querySelector("[title]")?.getAttribute("title") ?? "";
             const c = attr(td, "data-invested-capital"), k = attr(td, "data-invested-cost-held");
             for (let i = 0; i < (td.colSpan || 1); i++) {
@@ -43208,12 +43274,21 @@ for (const theme of THEMES) {
       const footerCells = FAST ? null : await page.evaluate(() => {
         const tr = document.querySelector("tfoot tr");
         if (!tr) return null;
+        // THE FIGURE WITHOUT ITS INDEX LINE (Stage 10lc): the line under a
+        // return is a figure of its own on its own handle (`[data-bench]`).
+        const faceOf = (el) => {
+          const b = [...el.querySelectorAll("[data-bench]")];
+          b.forEach((n) => { n.dataset.checkDisplay = n.style.display; n.style.display = "none"; });
+          const t = el.innerText ?? "";
+          b.forEach((n) => { n.style.display = n.dataset.checkDisplay ?? ""; delete n.dataset.checkDisplay; });
+          return t;
+        };
         // Accumulated by colSpan: the footer's label spans three columns, so
         // cell-for-cell it does not line up with a data row and a positional
         // read would put Invested under the name.
         const out = [];
         for (const td of tr.cells) {
-          out.push((td.innerText ?? "").replace(/\s+/g, " ").trim());
+          out.push(faceOf(td).replace(/\s+/g, " ").trim());
           for (let i = 1; i < (td.colSpan || 1); i++) out.push("");
         }
         return out;
@@ -46155,7 +46230,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, sectorVs, sectorSplit, shortWindow, feSectors, accountRows, heldAccountRows, pmFunds, pmReviewRows, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, investorReturn, familyLayout, memberScopeDom, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, returnsDom, segDom, sectorAttr, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, quotesServed: QUOTES_SERVED, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, pickTyped: PICK_TYPED[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, mandateSectors, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, privateCo, monitorMember, monitorFoot, txnT, quoteHold, monitorC, headerTitles, mgrT, costGross, inside }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, sectorVs, sectorSplit, shortWindow, feSectors, accountRows, heldAccountRows, pmFunds, pmReviewRows, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, investorReturn, familyLayout, memberScopeDom, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, returnsDom, segDom, sectorAttr, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, quotesServed: QUOTES_SERVED, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, pickTyped: PICK_TYPED[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, mandateSectors, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, privateCo, monitorMember, monitorFoot, monitorBench, txnT, quoteHold, monitorC, headerTitles, mgrT, costGross, inside }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);
