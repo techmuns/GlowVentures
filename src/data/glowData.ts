@@ -27338,7 +27338,7 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
-    "securityKey": "clean-max-env",
+    "securityKey": "clean-max-enviro-energy-solutions",
     "security": "CLEAN MAX ENV-EQ 1/",
     "isin": "INE647U01026",
     "assetClass": "Equity",

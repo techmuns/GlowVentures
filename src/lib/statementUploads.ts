@@ -21,11 +21,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ManifestEntry } from "./statementLibrary";
 import {
-  checkUpload, isJunkPath, MAX_BATCH_FILES,
-  type InboxBatch, type InboxFile,
+  checkUpload, checkDocumentUpload, bytesOnBranch, isJunkPath, MAX_BATCH_FILES,
+  type InboxBatch, type InboxFile, type InboxSubject,
 } from "../../shared/statementInbox.mjs";
 
-export type { InboxBatch, InboxFile };
+export type { InboxBatch, InboxFile, InboxSubject };
 
 export type StoreCause = "not-configured" | "signed-out" | "no-function" | "no-answer" | "error";
 
@@ -140,12 +140,15 @@ export type UploadPlan = {
   ignored: number;
 };
 
-/** Which picked files are statements to send, and why each of the rest is not. */
-export function planUpload(picked: readonly PickedFile[]): UploadPlan {
+/**
+ * Which picked files are statements to send, and why each of the rest is not.
+ * `documents`: a holding's documents (Stage 10kx), where any kind of file is kept.
+ */
+export function planUpload(picked: readonly PickedFile[], documents = false): UploadPlan {
   const plan: UploadPlan = { accepted: [], skipped: [], ignored: 0 };
   for (const { file, path } of picked) {
     if (isJunkPath(path)) { plan.ignored++; continue; }
-    const v = checkUpload({ name: path, size: file.size });
+    const v = (documents ? checkDocumentUpload : checkUpload)({ name: path, size: file.size });
     if (v.name === undefined) { plan.skipped.push({ path, why: v.error }); continue; }
     if (plan.accepted.length >= MAX_BATCH_FILES) {
       plan.skipped.push({ path, why: `One upload takes at most ${MAX_BATCH_FILES} files; upload the rest separately.` });
@@ -159,7 +162,7 @@ export function planUpload(picked: readonly PickedFile[]): UploadPlan {
 // ── WHAT A FILE'S STATUS MEANS ON THE PAGE ──────────────────────────────────
 
 export type FileView = {
-  key: "queued" | "reading" | "publishing" | "in-library" | "duplicate" | "held";
+  key: "queued" | "reading" | "publishing" | "in-library" | "duplicate" | "held" | "saved";
   label: string;
   tone: "info" | "gain" | "default" | "warn" | "loss";
   /** The hover: what the status means for this file. */
@@ -193,6 +196,20 @@ export function uploadDocumentKeys(f: InboxFile, manifest: readonly Pick<Manifes
 }
 
 /**
+ * Where an uploaded file opens: a statement read into the library opens there,
+ * at its own document; a file still on the inbox branch — a holding's document,
+ * or a statement not read yet — opens from the inbox itself. Null when neither.
+ */
+export function uploadedFileHref(batch: string, f: InboxFile, manifest: readonly Pick<ManifestEntry, "docKey" | "sourcePath">[] = []): string | null {
+  const keys = uploadDocumentKeys(f, manifest);
+  if (keys.length) return `/statements?file=${encodeURIComponent(keys[0])}`;
+  return bytesOnBranch(f) ? `${UPLOADS_ENDPOINT}?file=${encodeURIComponent(`${batch}/${f.name}`)}` : null;
+}
+
+/** True for a file that has come to rest: read, already there, kept, or held. */
+export const settledView = (v: Pick<FileView, "key">) => v.key === "in-library" || v.key === "duplicate" || v.key === "saved";
+
+/**
  * One file's status as the page shows it. A landed file is `in-library` only
  * once the site serving this page has its documents — until the redeploy from
  * the landing commit is live, it is `publishing`.
@@ -214,7 +231,14 @@ export function fileView(f: InboxFile, served: ReadonlySet<string>): FileView {
     }
     case "duplicate":
       return { key: "duplicate", label: "Already in library", tone: "gain", title: "This statement is already in your library. No duplicate was added." };
+    case "stored":
+      return { key: "saved", label: "Saved", tone: "gain", title: `Saved under ${f.subject?.label ?? "its holding"}. It is kept as a document; no figure is read from it.` };
     default:
+      // A holding's PDF or workbook that turns out not to be a statement is
+      // still that holding's document — kept, never an error.
+      if (f.subject && f.hold === "not-a-statement") {
+        return { key: "saved", label: "Saved", tone: "gain", title: `Saved under ${f.subject.label}. It is not a statement, so no figure is read from it.` };
+      }
       return { key: "held", label: HOLD_LABEL[f.hold ?? ""] ?? "Needs attention", tone: f.hold === "needs-password" ? "warn" : "loss", title: HOLD_REASON[f.hold ?? ""] ?? "We could not finish analysing this statement. Please try again." };
   }
 }
@@ -294,7 +318,7 @@ export function useStatementInbox() {
    * ticks as each file is stored. A file GitHub refuses is reported by name and
    * the rest are still filed.
    */
-  const upload = useCallback(async (files: UploadPlan["accepted"], progress?: (done: number, of: number) => void, provider?: string): Promise<UploadOutcome> => {
+  const upload = useCallback(async (files: UploadPlan["accepted"], progress?: (done: number, of: number) => void, provider?: string, subject?: InboxSubject): Promise<UploadOutcome> => {
     const ticket = crypto.randomUUID();
     const temporary = files.map((f, i) => ({ id: `${ticket}/${i}`, name: f.name, provider, uploadedAt: new Date().toISOString() }));
     setSending(previous => [...temporary, ...previous]);
@@ -309,6 +333,7 @@ export function useStatementInbox() {
         for (let next = queue.shift(); next && !halt.on; next = queue.shift()) {
           const form = new FormData();
           form.append("name", next.name);
+          if (subject) form.append("document", "1");
           form.append("file", next.file, next.file.name);
           const a = await send({ method: "POST", body: form });
           if (a.ok) {
@@ -329,7 +354,7 @@ export function useStatementInbox() {
       // Files sent at once arrive in any order; the batch keeps the order they were picked in.
       const order = new Map(files.map((f, i) => [f.name, i]));
       staged.sort((a, b) => (order.get(a.name) ?? 0) - (order.get(b.name) ?? 0));
-      const c = accept(await postJson({ op: "commit", files: staged }));
+      const c = accept(await postJson({ op: "commit", files: staged, ...(subject ? { subject } : {}) }));
       if (!c.ok) return c;
       const batch = isBatch(c.body.batch) ? c.body.batch : batchesOf(c.body).find(b => b.files.some(f => staged.some(s => s.blob === f.blob && s.name === f.name)));
       if (batch && provider && alive.current) setLocations(previous => {

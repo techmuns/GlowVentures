@@ -279,7 +279,14 @@ export function seriesCurrency(c: PrivateCompany): string {
 export const sortedRounds = (c: PrivateCompany): FundingRound[] =>
   [...c.rounds].sort((a, b) => dayOf(a.date).localeCompare(dayOf(b.date)) || a.round.localeCompare(b.round));
 
-export type ValuationPoint = { date: string; value: number; basis: "post-money" | "unspecified"; round: string; derived: string | null };
+export type ValuationPoint = {
+  date: string; value: number; basis: "post-money" | "unspecified"; round: string; derived: string | null;
+  /** Only a data vendor's public page states it (Stage 10kz) — said on the figure's face. */
+  vendor: boolean;
+};
+
+/** A round whose every source is a data vendor's public page, not a filing or the press. */
+export const vendorOnly = (r: FundingRound) => r.sources.length > 0 && r.sources.every((s) => s.aggregator);
 
 /** Every round with a valuation in the series currency, oldest first. */
 export function valuationPoints(c: PrivateCompany, currency = seriesCurrency(c)): { points: ValuationPoint[]; leftOut: FundingRound[] } {
@@ -287,7 +294,7 @@ export function valuationPoints(c: PrivateCompany, currency = seriesCurrency(c))
   const leftOut: FundingRound[] = [];
   for (const r of sortedRounds(c)) {
     const v = roundValues(r, currency);
-    if (v.headline) points.push({ date: r.date, value: v.headline.value, basis: v.headline.basis, round: r.round, derived: v.headline.derived });
+    if (v.headline) points.push({ date: r.date, value: v.headline.value, basis: v.headline.basis, round: r.round, derived: v.headline.derived, vendor: vendorOnly(r) });
     else if (r.postMoney || r.preMoney || r.valuation) leftOut.push(r);
   }
   return { points, leftOut };

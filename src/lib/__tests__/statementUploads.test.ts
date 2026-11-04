@@ -19,11 +19,12 @@
 //   · and the client names each failure's cause, and what each status means.
 import { onRequest } from "../../../functions/api/statement-uploads.js";
 import {
+  checkDocumentUpload, cleanSubject, holdingDocuments,
   githubInbox, cleanUploadPath, checkUpload, isJunkPath, newBatchId, isBatchId, withBatch, makeBatch,
   applyUpdates, requeue, withoutFile, uniqueNames, serializeLog, parseLog, emptyLog, inboxPath,
   INBOX_DEFAULTS, MAX_FILE_BYTES, MAX_SETTLED_BATCHES, type InboxLog,
 } from "../../../shared/statementInbox.mjs";
-import { readAnswer, planUpload, fileView, inFlight, uploadDocumentKeys, REASONS, type PickedFile } from "@/lib/statementUploads";
+import { readAnswer, planUpload, fileView, inFlight, uploadDocumentKeys, uploadedFileHref, REASONS, type PickedFile } from "@/lib/statementUploads";
 import { publishedStatementDuplicates, recognisePublishedDuplicates } from "../../../shared/publishedStatementDuplicates.mjs";
 
 let fails = 0;
@@ -67,6 +68,11 @@ function fakeGitHub() {
     if (method === "GET" && p.startsWith("/git/commits/")) {
       const c = commits.get(p.slice("/git/commits/".length));
       return c ? reply(200, { sha: p.split("/").pop(), tree: { sha: c.tree } }) : reply(404, {});
+    }
+    // The raw read a holding's document is served with (`readFile`), against the branch's head.
+    if (method === "GET" && p.startsWith("/contents/") && new Headers(init?.headers).get("accept") === "application/vnd.github.raw") {
+      const sha = head ? trees.get(commits.get(head)!.tree)?.get(p.slice("/contents/".length)) : undefined;
+      return sha ? new Response(blobs.get(sha)! as BlobPart, { status: 200 }) : reply(404, {});
     }
     if (method === "GET" && p === `/contents/${INBOX_DEFAULTS.log}`) {
       const c = commits.get(u.searchParams.get("ref") ?? "");
@@ -321,6 +327,68 @@ async function run() {
   ok("customer status copy contains no infrastructure details", [queued, reading, landed, duplicate, sealed].every(f => !/GitHub|commit|source\/|redeploy|intake run/.test(fileView(f, new Set()).title)));
   ok("the page keeps polling while anything is queued or being read",
     inFlight([makeBatch("20261021T000000Z-y", [{ name: "a.pdf", size: 1, blob: "0".repeat(40) }])]) && !inFlight([{ id: "x", uploadedAt: "", files: [landed] }]));
+
+  // ── 9. A HOLDING'S DOCUMENTS (Stage 10kx) ────────────────────────────────
+  console.log("── a holding's documents ──");
+  ok("a holding's upload takes any kind of file, still refusing empty, oversized and system files",
+    checkDocumentUpload({ name: "Memo.docx", size: 5 }).name === "Memo.docx" && checkDocumentUpload({ name: "deck.pptx", size: 5 }).name === "deck.pptx"
+    && !!checkDocumentUpload({ name: "a.docx", size: 0 }).error && !!checkDocumentUpload({ name: "a.png", size: MAX_FILE_BYTES + 1 }).error
+    && !!checkDocumentUpload({ name: "x/.DS_Store", size: 5 }).error);
+  const subj = { kind: "company", key: "fund:drinkprime", label: "DrinkPrime", keys: ["drinkprime-ccps", "drinkprime-ccps"] };
+  ok("a subject is cleaned and its keys deduped; one with no kind, key or label is refused",
+    JSON.stringify(cleanSubject(subj)) === JSON.stringify({ ...subj, keys: ["drinkprime-ccps"] })
+    && cleanSubject({ ...subj, kind: "owner" }) === null && cleanSubject({ ...subj, label: " " }) === null && cleanSubject("x") === null);
+  const gd = fakeGitHub();
+  const docForm = (name: string, bytes: Uint8Array) => {
+    const form = new FormData();
+    form.append("name", name); form.append("document", "1");
+    form.append("file", new File([bytes as BlobPart], name));
+    return call(gd, { method: "POST", body: form });
+  };
+  const fileUrl = (batch: string, name: string) => new Request(`${SITE}/api/statement-uploads?file=${encodeURIComponent(`${batch}/${name}`)}`);
+  const memoBytes = new TextEncoder().encode("board memo");
+  const sMemo = await jsonBody(await docForm("Board memo.docx", memoBytes));
+  const sPdf = await jsonBody(await docForm("Valuation.pdf", new TextEncoder().encode("%PDF-1.4 valuation")));
+  ok("a holding's documents are stored whatever their type", sMemo.ok === true && sPdf.ok === true);
+  ok("…while a plain statement upload still refuses a non-statement", (await postFile(gd, "Board memo.docx", memoBytes)).status === 400);
+  const badSubject = await postJson(gd, { op: "commit", files: [sMemo.staged], subject: { kind: "fund", key: "", label: "" } });
+  ok("a holding upload with no usable company or fund is refused", badSubject.status === 400);
+  const cd = await jsonBody(await postJson(gd, { op: "commit", files: [sMemo.staged, sPdf.staged], subject: subj }));
+  const filed = gd.log().batches[0];
+  const memo = filed?.files.find((f) => f.name === "Board memo.docx");
+  const pdf = filed?.files.find((f) => f.name === "Valuation.pdf");
+  ok("a document is kept as stored, a statement format is queued to be read, both under the holding",
+    cd.ok === true && memo?.status === "stored" && pdf?.status === "queued" && memo?.subject?.label === "DrinkPrime" && pdf?.subject?.key === "fund:drinkprime");
+  ok("both files' bytes are on the branch", !!gd.bytesAt(inboxPath(filed.id, "Board memo.docx")) && !!gd.bytesAt(inboxPath(filed.id, "Valuation.pdf")));
+  ok("the commit names the holding", /Documents for DrinkPrime/.test(gd.head()?.message ?? ""));
+  ok("the log lists the holding's documents", holdingDocuments(gd.log()).length === 2);
+  const served = await onRequest({ env: ENV, request: fileUrl(filed.id, "Board memo.docx") }, gd.fetchImpl);
+  const servedBytes = new Uint8Array(await served.arrayBuffer());
+  ok("a stored document is served back byte for byte, as a download in a sandbox",
+    served.status === 200 && servedBytes.length === memoBytes.length && servedBytes.every((x, i) => x === memoBytes[i])
+    && /^attachment;/.test(served.headers.get("content-disposition") ?? "") && /sandbox/.test(served.headers.get("content-security-policy") ?? ""));
+  const pdfServed = await onRequest({ env: ENV, request: fileUrl(filed.id, "Valuation.pdf") }, gd.fetchImpl);
+  ok("a PDF opens in the browser", pdfServed.status === 200 && pdfServed.headers.get("content-type") === "application/pdf" && /^inline;/.test(pdfServed.headers.get("content-disposition") ?? ""));
+  const notLogged = await onRequest({ env: ENV, request: fileUrl(filed.id, "../inbox.json") }, gd.fetchImpl);
+  ok("only a file the log names is served", notLogged.status === 404);
+  let pruned = gd.log();
+  for (let i = 0; i < MAX_SETTLED_BATCHES + 5; i++) {
+    const b = makeBatch(`20991231T${String(i).padStart(6, "0")}Z-p${i}`, [{ name: "x.pdf", size: 1, blob: "0".repeat(40) }]);
+    pruned = withBatch(pruned, { ...b, files: b.files.map((f) => ({ ...f, status: "landed" as const })) });
+  }
+  ok("a holding's documents are never pruned from the log", holdingDocuments(pruned).length === 2 && pruned.batches.length === MAX_SETTLED_BATCHES + 1);
+  const rmDoc = await jsonBody(await postJson(gd, { op: "remove", batch: filed.id, name: "Board memo.docx" }));
+  ok("a stored document can be removed", rmDoc.ok === true && !gd.bytesAt(inboxPath(filed.id, "Board memo.docx")));
+  ok("a stored document reads as saved; a holding's PDF that is no statement is saved too, never an error",
+    fileView(memo!, new Set()).key === "saved"
+    && fileView({ ...pdf!, status: "held", hold: "not-a-statement", reason: "x" }, new Set()).key === "saved"
+    && fileView({ ...pdf!, status: "held", hold: "needs-password", reason: "x" }, new Set()).key === "held");
+  ok("a kept file opens from the inbox; a read statement opens at its document in the library",
+    uploadedFileHref(filed.id, memo!) === `/api/statement-uploads?file=${encodeURIComponent(`${filed.id}/Board memo.docx`)}`
+    && uploadedFileHref(filed.id, { ...pdf!, status: "landed", docKeys: ["k9"] }) === "/statements?file=k9"
+    && uploadedFileHref(filed.id, { ...pdf!, status: "landed", docKeys: null }) === null);
+  const anyPlan = planUpload([pick("a/notes.docx"), pick("a/.DS_Store"), pick("a/pic.png")], true);
+  ok("a holding's plan sends every file but system ones", anyPlan.accepted.map((a) => a.name).join("|") === "a/notes.docx|a/pic.png" && anyPlan.ignored === 1);
 
   console.log(fails ? `\n${fails} FAILED` : `\nall passed`);
   process.exit(fails ? 1 : 0);

@@ -253,6 +253,9 @@ One line per area; the history files explain each in depth.
   valued and unpriced holdings; never infer source by equal amounts. Canonical
   data, normalized documents and audit/ledger projections share the revision
   discovered at `/publication.json`. Unknown layouts/identity conflicts stay held.
+- `src/lib/holdingDocuments.ts` + `components/UploadDocuments.tsx` — Private Market's Upload documents: any file filed
+  under a company or fund on the statement inbox (`subject`; non-statements `stored`), listed in its Portfolio
+  Library folder (Stage 10kx).
 - `src/lib/priceAlerts.ts`, `watchlist.ts`, `researchLevels.ts`/`researchSync.ts`
   — price alerts (per browser) and the send to Glow Central Research.
 - `src/lib/searchIndex.ts` + `components/SmartSearch.tsx` — the top-bar search.
@@ -651,7 +654,8 @@ And:
 - `npm run build-book` — the book and its report (then `build-review-columns`,
   `build-profiles` → `src/data/privateProfiles.json` from any profile table in `source/`).
 - `npm run build-private-rounds` — research the stalest private companies' rounds
-  (`ANTHROPIC_API_KEY`; `--import <batch.json>`, `--only <ids>`, `--check`).
+  (`ANTHROPIC_API_KEY`; `--import <batch.json>` [`--merge`: nothing held dropped or
+  overwritten, Stage 10kz], `--only <ids>`, `--check`).
 - `npm run import-private-market` — Inc42 funding rows and private-company headlines
   from Glow Central Research's site (`--offline` re-matches the rows held).
 - `npm run accounts-table` — the accounts table above (`-- --write` splices).
