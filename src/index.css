@@ -806,8 +806,9 @@ html #root table:has(> tfoot) > tbody:last-of-type > tr:last-child > :is(th, td)
    and compare."* Each row's first cell — the name the figures belong to — pins
    to the left edge of the table's own scroller, and its right edge is the
    section rule, as the heading's bottom edge is.
-   A first cell spanning several columns (a footer label, an empty-state or
-   detail row) stays in the flow: pinned, it would slide over its row's figures.
+   A first cell spanning several columns (an empty-state, detail or load-more
+   row) stays in the flow: pinned, it would slide over its row's figures; so
+   `TrFoot` keeps its label to the first column.
    The cell must be OPAQUE or the columns scrolling under it show through, yet a
    row's colour may be translucent or none at all (an odd zebra row shows the
    card). So two layers: `::before` paints the surface the table sits on, and
