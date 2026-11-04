@@ -139,7 +139,7 @@ const roundKey = (r) => `${r.date.slice(0, 7)}|${r.round.toLowerCase().replace(/
 
 /**
  * A refresh adds and fills; it never deletes a sourced round, and never
- * blanks or overwrites a figure one already carries (Stage 10kv): a round the
+ * blanks or overwrites a figure one already carries (Stage 10kz): a round the
  * research returns again keeps every figure it had, takes a figure only where
  * it had none, and gains the new sources. A figure the new research states
  * differently is left as it was and reported, for a person to decide.
@@ -281,7 +281,7 @@ async function main() {
         const reg = PRIVATE_COMPANIES.find((r) => r.id === c.id);
         if (!reg) { problems.push(`${f}: ${c.id} is not in the registry — skipped`); continue; }
         const next = cleanCompany(reg, c, null, problems, batch.researchedOn ?? today());
-        // `--merge` (Stage 10kv): a researched batch joins the record as a refresh
+        // `--merge` (Stage 10kz): a researched batch joins the record as a refresh
         // does — nothing held is dropped or overwritten. Without it the batch
         // replaces the company's record whole.
         byId.set(reg.id, flag("--merge") ? mergeCompany(byId.get(reg.id), next) : next);

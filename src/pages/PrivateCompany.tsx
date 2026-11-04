@@ -88,7 +88,7 @@ function investorsShort(list: readonly string[]): string {
   return more ? `${shown.join(", ")} +${more} more` : shown.join(", ");
 }
 
-/** Why a valuation is marked as a data vendor's (Stage 10kv). */
+/** Why a valuation is marked as a data vendor's (Stage 10kz). */
 const VENDOR_WHY = "Only a data vendor's public page (Inc42 Datalabs, Tracxn, an IPO data site …) states this figure — no filing, offer document or press report of the round does. Shown for what it is, not as a filing.";
 
 const noRoundsWhy = (n: number, note: string | null) => (n ? "no round prints what a stake needs" : note ?? "no credible source prints a priced round for this company");
@@ -149,6 +149,13 @@ function CompanyPage({ company }: { company: Company }) {
   const stakeAbsent = [...stakes.why.values()].find((w) => !w.startsWith("before")) ?? (noRoundsWhy(rounds.length, company.searchNote));
   const noRounds = rounds.length === 0;
   const noRoundWhy = company.searchNote ?? "no credible source prints a priced round for this company";
+  // A TILE CARRIES ONE SHORT LINE (Stage 10kz): the research's full note — what
+  // was searched and what is missing — is the line's hover, not the tile's body.
+  const NO_ROUND_LINE = "no credible source prints a priced round";
+  const absentNoRound = (line: string) => ({
+    value: <AbsentValue />,
+    sub: <span className="text-slate-500" title={noRoundWhy} data-pc-search-note>{line} — hover for what was searched</span>,
+  });
   const entryWords = m.entry
     ? m.entry.match === "at"
       ? `${m.entry.round.round}, dated ${roundDateLabel(m.entry.round.date)} — within ${ENTRY_WINDOW_DAYS} days of the family's first investment on ${roundDateLabel(investedFrom!)}`
@@ -192,7 +199,7 @@ function CompanyPage({ company }: { company: Company }) {
   const notInInc42 = inc42Covers ? `Inc42's funding table does not list this round — it covers ${inc42Covers}` : "Inc42's funding table has not been read";
 
   // THE FAMILY, WHERE A FILING NAMES IT — an offer document's allottee table, a
-  // report of a round, or a registry's partner list (Stage 10kv). Shown with the
+  // report of a round, or a registry's partner list (Stage 10kz). Shown with the
   // rounds, or alone where the company has none (a family LLP has no round).
   const mentions = company.familyMentions.length > 0 && (
     <div className="border-t border-ink-700 px-4 py-3 text-[12px]" data-pc-mentions={company.familyMentions.length}>
@@ -270,19 +277,19 @@ function CompanyPage({ company }: { company: Company }) {
             ? { value: <span data-pc-entry-post={m.entryValues.headline.value} title={`${entryWords}. ${m.entryValues.headline.basis === "post-money" ? "Post-money" : "Valuation with no pre/post basis stated"}${m.entryValues.headline.derived ? ` — derived: ${m.entryValues.headline.derived}` : ""}.`}>{money(m.entryValues.headline.value)}</span>,
                 second: <span data-pc-entry-pre={m.entryValues.pre?.value ?? ""} title={m.entryValues.pre ? (m.entryValues.pre.derived ? `Pre-money, derived: ${m.entryValues.pre.derived}.` : "Pre-money, as the source prints it.") : "No pre-money: the source prints neither it nor the amount raised beside a post-money."}>pre {m.entryValues.pre ? money(m.entryValues.pre.value) : "—"}</span>,
                 sub: <span className="text-slate-500">{m.entryValues.headline.basis === "post-money" ? "post-money" : "basis not stated"} · {m.entry!.round.round}{vendorOnly(m.entry!.round) && <span data-pc-vendor title={VENDOR_WHY}> · data vendor's figure</span>}</span> }
-            : absentTile(entryWhy))}
+            : noRounds && investedFrom ? absentNoRound(NO_ROUND_LINE) : absentTile(entryWhy))}
           icon={<Landmark className="h-4 w-4" />} />
         <Kpi label="Latest valuation"
           {...(m.latest
             ? { value: <span data-pc-latest={m.latest.value} title={`${m.latest.round}, ${m.latest.basis === "post-money" ? "post-money" : "valuation with no pre/post basis stated"}${m.latest.derived ? ` — derived: ${m.latest.derived}` : ""}.`}>{money(m.latest.value)}</span>,
                 sub: <span className="text-slate-500" data-pc-latest-date={m.latest.date}>{roundDateLabel(m.latest.date)} · {m.latest.round}{m.latest.vendor && <span data-pc-vendor title={VENDOR_WHY}> · data vendor's figure</span>}</span> }
-            : absentTile(noRounds ? noRoundWhy : "no round prints a valuation in one currency"))}
+            : noRounds ? absentNoRound(NO_ROUND_LINE) : absentTile("no round prints a valuation in one currency"))}
           icon={<TrendingUp className="h-4 w-4" />} />
         <Kpi label="Change since entry"
           {...(m.change != null
             ? { value: <span data-pc-change={m.change} title="The latest valuation ÷ the valuation at the family's entry round, both on the same basis — the company's change, not a return on the family's holding.">{fmtNum(m.change, 2)}×</span>,
                 sub: <span className="text-slate-500">{m.subsequent.length} {m.subsequent.length === 1 ? "round" : "rounds"} since entry</span> }
-            : absentTile(!m.entryValues?.headline ? entryWhy : !m.latest ? "no later valuation" : "the entry and latest valuations are on different bases"))}
+            : noRounds && investedFrom ? absentNoRound(NO_ROUND_LINE) : absentTile(!m.entryValues?.headline ? entryWhy : !m.latest ? "no later valuation" : "the entry and latest valuations are on different bases"))}
           icon={<LineIcon className="h-4 w-4" />} />
         <Kpi label="Your stake"
           {...(latestStake

@@ -281,7 +281,7 @@ export const sortedRounds = (c: PrivateCompany): FundingRound[] =>
 
 export type ValuationPoint = {
   date: string; value: number; basis: "post-money" | "unspecified"; round: string; derived: string | null;
-  /** Only a data vendor's public page states it (Stage 10kv) — said on the figure's face. */
+  /** Only a data vendor's public page states it (Stage 10kz) — said on the figure's face. */
   vendor: boolean;
 };
 

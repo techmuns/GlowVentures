@@ -176,7 +176,7 @@ const tr = stakeTrail(withReported, 1000, 1000 * 1000, "2022-06-20", "INR");
 ok("a round known only from Inc42 breaks the stake chain — its table does not say whether it issued shares",
   tr.at.has(withReported.rounds[1]) && !tr.at.has(withReported.rounds[2]) && !tr.at.has(withReported.rounds[3]) && /Inc42/.test(tr.why.get(withReported.rounds[3]) ?? ""));
 
-// ── THE RESEARCH PASS (Stage 10kv) ─────────────────────────────────────────
+// ── THE RESEARCH PASS (Stage 10kz) ─────────────────────────────────────────
 const vendorRound = round("2024-01-01", "Seed", { valuation: { ...inr(50e7), basis: "unspecified" },
   sources: [{ url: "https://inc42.com/company/x/funding/", publisher: "Inc42 Datalabs", published: null, supports: "fixture", aggregator: true }] });
 ok("a valuation only a data vendor's page states is flagged so, on the chart's point too",
