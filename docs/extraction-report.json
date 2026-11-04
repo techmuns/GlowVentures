@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-04T13:45:57.207Z",
+  "generatedAt": "2026-11-04T14:05:05.324Z",
   "summary": {
     "documents": 454,
     "parsed": 448,
@@ -28,7 +28,7 @@
     "stitchesApplied": 134
   },
   "coverage": {
-    "pdfsFound": 443,
+    "pdfsFound": 444,
     "duplicateSources": [
       {
         "path": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_DividendStatement_India177OT.pdf",

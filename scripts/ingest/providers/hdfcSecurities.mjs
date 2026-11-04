@@ -192,20 +192,22 @@ function readTradeDetails(rows, meta) {
   const base = { provider: PROVIDER, accountNo, reportType: "transaction-statement", periodFrom, periodTo, asOf: periodTo };
 
   const holder = HOLDER_BY_TRADING_ACCOUNT[accountNo] ?? null;
+  // The printed name, spelled as the register spells it where the two agree.
+  let owner = printedHolder;
   if (holder && printedHolder && !sameName(holder.owner, printedHolder)) {
     warn(warnings, "owner-differs-from-register",
       `the report prints ${printedHolder} as the holder of trading account ${accountNo}; HOLDER_BY_TRADING_ACCOUNT records ${holder.owner} (${holder.via})`);
-  }
+  } else if (holder) owner = holder.owner;
   if (!periodFrom || !periodTo) {
     warn(warnings, "period-not-read", `the header's Start Date \`${field("Start Date")}\` / End Date \`${field("End Date")}\` were not read as dates; no trade is read without the window it belongs to`);
-    return { ...base, owner: printedHolder, warnings, transactions: [] };
+    return { ...base, owner, warnings, transactions: [] };
   }
 
   const header = findHeader(rows, TRADE_COLUMNS, { minFields: 18, require: ["scrip", "date", "tradeNo", "side", "quantity", "price", "value", "stt", "net", ...CHARGE_FIELDS] });
   if (!header) {
     warn(warnings, "header-not-matched",
       "the `Scrip Name | Trade Date | Trade No. | … | Buy/Sell | Qty | Market Price | Market Value | … | Net Amount` header, with every charge column, was not found; nothing is read rather than reading columns by position");
-    return { ...base, owner: printedHolder, warnings, transactions: [] };
+    return { ...base, owner, warnings, transactions: [] };
   }
 
   const transactions = [];
@@ -261,7 +263,7 @@ function readTradeDetails(rows, meta) {
   // No `providerEngagement`: build-book describes the account by the first
   // document that prints one, and the account is the equity portfolio's — this
   // report only dates its trades.
-  return { ...base, owner: printedHolder, engagement: "Direct", warnings, transactions };
+  return { ...base, owner, engagement: "Direct", warnings, transactions };
 }
 
 function readEquityPortfolio(rows, text, meta) {

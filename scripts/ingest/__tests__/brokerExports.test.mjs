@@ -184,7 +184,7 @@ assert.deepEqual([tc.provider, tc.accountNo, tc.reportType, tc.ownerName], ["HDF
 assert.equal(classify({ fileName: "x.xlsx", text: flat(tdText.replace(`"3110320"`, `"9999999"`)) }).provider, null);
 {
   const td = hdfc.extract({ grid: sheetOf(tdText), meta: { docKey: "td" } });
-  assert.deepEqual([td.accountNo, td.periodFrom, td.periodTo, td.asOf, td.owner], ["3110320", "2026-04-01", "2026-10-31", "2026-10-31", "AJAY JAISINGHANI"]);
+  assert.deepEqual([td.accountNo, td.periodFrom, td.periodTo, td.asOf, td.owner], ["3110320", "2026-04-01", "2026-10-31", "2026-10-31", "Ajay Jaisinghani"]);
   assert.equal(td.transactions.length, 3, "the 2 Nov buy is outside the report's own window");
   assert.ok(td.warnings.some((w) => w.code === "trade-row-not-read" && /outside the report's window/.test(w.detail)));
   const [v, m1, m2] = td.transactions;
