@@ -10,6 +10,11 @@
 //                                            → { ok: true, staged: { name, size, blob } }
 //   POST /api/statement-uploads              { op: "commit", files: [{ name, size, blob }] }
 //                                            → { ok: true, batch, batches, started }
+//   GET  /api/statement-uploads?file=<batch>/<path>
+//                                            → the file's bytes, while they are on the inbox branch
+//   POST /api/statement-uploads              { op: "commit", files, subject }
+//                                            → a holding's documents (Stage 10kx): any file type,
+//                                              statements queued, the rest `stored`
 //   POST /api/statement-uploads              { op: "retry", batch }
 //                                            → { ok: true, batches, started }
 //   POST /api/statement-uploads              { op: "remove", batch, name }
@@ -42,7 +47,7 @@
 // Every `/api/*` route sits behind the edge password gate (`_middleware.js`).
 
 import {
-  inboxFor, checkUpload, newBatchId, makeBatch, withBatch, uniqueNames, inboxPath,
+  inboxFor, checkUpload, checkDocumentUpload, cleanSubject, bytesOnBranch, newBatchId, makeBatch, withBatch, uniqueNames, inboxPath,
   requeue, withoutFile, isBatchId, isBlobSha, InboxError, InboxRefusal, MAX_BATCH_FILES, MAX_FILE_BYTES, extOf,
 } from "../../shared/statementInbox.mjs";
 import { checkStatementBytes } from "../../shared/statementBytes.mjs";
@@ -63,6 +68,41 @@ const json = (status, body) =>
   });
 
 const fail = (status, code, message) => json(status, { ok: false, code, message });
+
+/**
+ * What a kept file is served as. Only types a browser shows without running
+ * anything open in the page; everything else (HTML and SVG included — they
+ * would run on this site's origin) is a download.
+ */
+const SHOWN = { pdf: "application/pdf", png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif", webp: "image/webp", txt: "text/plain; charset=utf-8", csv: "text/plain; charset=utf-8" };
+const asciiName = (n) => n.replace(/[^\x20-\x7e]/g, "_").replace(/["\\]/g, "_");
+
+/** GET ?file=<batch>/<path>: one uploaded file, while its bytes are on the inbox branch. */
+async function serveFile(inbox, ref) {
+  const cut = ref.indexOf("/");
+  const batch = cut > 0 ? ref.slice(0, cut) : "";
+  const name = cut > 0 ? ref.slice(cut + 1) : "";
+  if (!isBatchId(batch) || !name) return fail(400, "INVALID", "That is not an uploaded file.");
+  const { log } = await inbox.read();
+  const f = log.batches.find((b) => b.id === batch)?.files.find((x) => x.name === name);
+  // Only a path the log names: the branch holds nothing else worth serving.
+  if (!f || !bytesOnBranch(f)) return fail(404, "NOT_FOUND", "That file is no longer in the inbox; a statement that was read is opened from the Statement Library.");
+  const bytes = await inbox.readFile(inboxPath(batch, name));
+  if (!bytes) return fail(404, "NOT_FOUND", "That file is no longer in the inbox.");
+  const type = SHOWN[extOf(name)];
+  const base = name.split("/").pop();
+  return new Response(bytes, {
+    status: 200,
+    headers: {
+      "content-type": type ?? "application/octet-stream",
+      "content-disposition": `${type ? "inline" : "attachment"}; filename="${asciiName(base)}"; filename*=UTF-8''${encodeURIComponent(base)}`,
+      "cache-control": "private, no-store",
+      "x-content-type-options": "nosniff",
+      // A browser's PDF viewer will not open under a sandbox; every other type is inert under one.
+      ...(extOf(name) === "pdf" ? {} : { "content-security-policy": "sandbox; default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'" }),
+    },
+  });
+}
 
 const storeFailed = (e, what) => e instanceof InboxError
   ? fail(502, "STORE_ERROR", `${e.message} ${what}`)
@@ -105,6 +145,10 @@ export async function onRequest(context, fetchImpl) {
 
   // ── READ ──────────────────────────────────────────────────────────────────
   if (request.method === "GET") {
+    const ref = new URL(request.url).searchParams.get("file");
+    if (ref !== null) {
+      try { return await serveFile(inbox, ref); } catch (e) { return storeFailed(e, "Try again in a moment."); }
+    }
     try {
       const [{ log }, matches] = await Promise.all([inbox.read(), publishedDuplicates(context, reader)]);
       // Read-only reconciliation also releases an older receipt from its wait
@@ -143,9 +187,19 @@ export async function onRequest(context, fetchImpl) {
     if (!file || typeof file === "string" || typeof file.arrayBuffer !== "function") {
       return fail(400, "INVALID", "No file was attached to the upload.");
     }
-    const v = checkUpload({ name: form.get("name") || file.name, size: file.size });
+    // A holding's document (Stage 10kx) may be any kind of file; whether it is
+    // a statement is the intake run's question, not the door's.
+    const document = form.get("document") === "1";
+    const v = (document ? checkDocumentUpload : checkUpload)({ name: form.get("name") || file.name, size: file.size });
     if (v.error) return fail(400, "INVALID", v.error);
     const bytes = new Uint8Array(await file.arrayBuffer());
+    if (document) {
+      try {
+        return json(200, { ok: true, staged: { name: v.name, size: file.size, blob: await inbox.putBlob(bytes) } });
+      } catch (e) {
+        return storeFailed(e, "The file was not saved; try again.");
+      }
+    }
     // THE BYTES, NOT THE NAME. A mail server's removal notice under a statement's
     // name, or a sign-in page saved as `.pdf`, is refused here with what it is —
     // the moment the person who has the real file can still go and get it.
@@ -173,23 +227,25 @@ export async function onRequest(context, fetchImpl) {
     const raw = Array.isArray(body.files) ? body.files : [];
     if (!raw.length) return fail(400, "INVALID", "No files were uploaded.");
     if (raw.length > MAX_BATCH_FILES) return fail(400, "INVALID", `One upload takes at most ${MAX_BATCH_FILES} files; upload the rest separately.`);
+    const subject = body.subject == null ? null : cleanSubject(body.subject);
+    if (body.subject != null && !subject) return fail(400, "INVALID", "Choose the company or fund these files belong to.");
     const files = [];
     for (const f of raw) {
-      const v = checkUpload({ name: f?.name, size: f?.size });
+      const v = (subject ? checkDocumentUpload : checkUpload)({ name: f?.name, size: f?.size });
       if (v.error) return fail(400, "INVALID", `${String(f?.name ?? "A file")}: ${v.error}`);
       if (!isBlobSha(f?.blob)) return fail(400, "INVALID", `${v.name}: the file was not stored first.`);
       files.push({ name: v.name, size: f.size, blob: f.blob });
     }
     const id = newBatchId();
     const matches = await publishedDuplicates(context, reader);
-    const batch = recognisePublishedDuplicates({ batches: [makeBatch(id, uniqueNames(files))] }, matches).batches[0];
+    const batch = recognisePublishedDuplicates({ batches: [makeBatch(id, uniqueNames(files), undefined, subject)] }, matches).batches[0];
     const routine = !batch.files.some(f => extOf(f.name) === 'zip')
       && batch.files.reduce((total, f) => total + (f.status === 'queued' ? f.size : 0), 0) <= 50 * 1024 * 1024;
     if (routine) for (const file of batch.files) if (file.status === 'queued') file.processor = 'github';
     try {
       const { log } = await inbox.commit({
-        message: `Statement upload ${id}: ${batch.files.length} file${batch.files.length === 1 ? "" : "s"}`,
-        add: batch.files.filter(f => f.status === "queued").map((f) => ({ path: inboxPath(id, f.name), sha: f.blob })),
+        message: `${subject ? `Documents for ${subject.label}` : "Statement upload"} ${id}: ${batch.files.length} file${batch.files.length === 1 ? "" : "s"}`,
+        add: batch.files.filter(f => f.status === "queued" || f.status === "stored").map((f) => ({ path: inboxPath(id, f.name), sha: f.blob })),
         mutate: (current) => withBatch(current, batch),
       });
       // Exact published copies need neither an analysis runner nor a new build.
