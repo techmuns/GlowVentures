@@ -46,6 +46,19 @@ import { SEPARATE_INVESTMENTS } from "../shared/separateInvestments.mjs";
 // names is found in `glowData.ts` by account and ISIN below, and what the card
 // must SAY is struck against the statement's own fact and the family's words.
 import { KEPT_UNVALUED } from "../shared/keptUnvalued.mjs";
+/**
+ * ── A PRIVATE COMPANY'S PAGE, AGAINST ITS OWN RECORD (Stage 10ko) ─────────
+ * The company with the most rounds in `src/data/privateRounds.json` — read off
+ * the file, never typed — and how many of its rounds the table must draw.
+ */
+const PRIVATE_CO = (() => {
+  try {
+    const store = JSON.parse(readFileSync(new URL("../src/data/privateRounds.json", import.meta.url), "utf8"));
+    const c = [...store.companies].sort((a, b) => b.rounds.length - a.rounds.length)[0];
+    return c && c.rounds.length ? { id: c.id, rounds: c.rounds.length,
+      valued: c.rounds.filter((r) => r.postMoney || r.valuation || (r.preMoney && r.amountRaised)).length } : null;
+  } catch { return null; }
+})();
 import { resolveSector, GICS_SECTORS, UNCLASSIFIED as UNCLASSIFIED_SECTOR } from "../shared/sectors.mjs";
 import { readRegister, partitionAgainstBook, REGISTER_PATH } from "./lib/registerRead.mjs";
 import * as XLSX from "xlsx";
@@ -8861,6 +8874,9 @@ const ROUTES = [
   // CLASSES — each one page with every member on it. Addressed at the account
   // the Monitor links (the first by id) and at the fund's own name.
   ["mandate-strategy", () => (MULTI_STRATEGY ? strategyHrefOf(MULTI_STRATEGY) : "/mandate/none-resolved-from-the-book")],
+  ["private-company", () => `/private-company/${PRIVATE_CO?.id ?? "none-in-the-record"}`],
+  ["private-company-rounds", () => `/private-company/${PRIVATE_CO?.id ?? "none-in-the-record"}?tab=rounds`],
+  ["private-company-valuation", () => `/private-company/${PRIVATE_CO?.id ?? "none-in-the-record"}?tab=valuation`],
   ["fund-clubbed", () => (CLUBBED_FUND_BOOK ? `/fund/${encodeURIComponent(CLUBBED_FUND_BOOK.fund)}` : "/fund/none-resolved-from-the-book")],
   /**
    * ── THE DRILL-DOWNS EVERY MORNING CIO FIGURE NOW OPENS ────────────────────
@@ -36113,6 +36129,27 @@ const INVARIANTS = {
    * holding to call whole and found none. The tile must equal the capital
    * return re-derived here, and must never read zero.
    */
+  "private-company": [
+    ["the record carries a company with rounds (load-bearing)", () => !!PRIVATE_CO],
+    ["the route draws that company's page, not a redirect", (t, ctx) => ctx?.privateCo?.id === PRIVATE_CO?.id],
+    ["the same six tiles as a holding's page, under a header with three tabs", (t, ctx) =>
+      ctx?.privateCo?.tiles === 6 && ctx.privateCo.tabs.join() === "position,rounds,valuation"],
+    ["no tile prints a ₹0 or 0.00% — an absent figure is a dash with its reason", (t, ctx) =>
+      !!ctx?.privateCo && !ctx.privateCo.tileTexts.some((x) => /(^|\s)₹0(\s|$)|(^|\s)0\.00%/.test(x))],
+  ],
+  "private-company-rounds": [
+    ["every round in the record is a row of the table", (t, ctx) => !!PRIVATE_CO && ctx?.privateCo?.rows === PRIVATE_CO.rounds],
+    ["every row links the source it is read from", (t, ctx) => !!ctx?.privateCo && ctx.privateCo.rows > 0 && ctx.privateCo.unsourced === 0],
+    ["at most one row is marked as the family's entry", (t, ctx) => !!ctx?.privateCo && ctx.privateCo.entries <= 1],
+  ],
+  "private-company-valuation": [
+    ["the chart draws one dot per round that prints a valuation in its currency, and no more", (t, ctx) => {
+      const c = ctx?.privateCo;
+      if (!c || !PRIVATE_CO) return false;
+      if (c.chartPoints === null) return { notChecked: "no round prints a valuation in one currency" };
+      return c.chartPoints > 0 && c.chartPoints <= PRIVATE_CO.valued && c.chartDots === c.chartPoints;
+    }],
+  ],
   "mandate-closed": [
     ["the route resolves to a real mandate, not the not-found state",
       (t) => !/Mandate not found/i.test(t) && !/This account is not a PMS mandate/i.test(t)],
@@ -44179,6 +44216,24 @@ for (const theme of THEMES) {
           }),
         };
       });
+      /** A PRIVATE COMPANY'S PAGE (Stage 10ko), by its handles. */
+      const privateCo = FAST ? null : await page.evaluate(() => {
+        const root = document.querySelector("[data-private-company]");
+        if (!root) return null;
+        const chart = root.querySelector("[data-pc-chart]");
+        const rows = [...root.querySelectorAll("tr[data-pc-round]")];
+        return {
+          id: root.getAttribute("data-private-company"),
+          tiles: root.querySelector("[data-pc-strip]")?.children.length ?? 0,
+          tileTexts: [...(root.querySelector("[data-pc-strip]")?.children ?? [])].map((e) => e.innerText.replace(/\s+/g, " ").trim()),
+          tabs: [...root.querySelectorAll("[data-pc-tab-key]")].map((e) => e.getAttribute("data-pc-tab-key")),
+          rows: rows.length,
+          unsourced: rows.filter((r) => !r.querySelector("a[data-pc-source]")).length,
+          entries: rows.filter((r) => r.hasAttribute("data-pc-entry")).length,
+          chartPoints: chart ? Number(chart.getAttribute("data-pc-chart")) : null,
+          chartDots: chart ? chart.querySelectorAll(".recharts-line-dots circle, .recharts-line-dot").length : 0,
+        };
+      });
       /**
        * THE POLYCAB PAGE'S COMPANY-LEVEL CARDS, READ STRUCTURALLY.
        *
@@ -46001,7 +46056,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, sectorVs, sectorSplit, shortWindow, feSectors, accountRows, heldAccountRows, pmFunds, pmReviewRows, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, investorReturn, familyLayout, memberScopeDom, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, returnsDom, segDom, sectorAttr, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, quotesServed: QUOTES_SERVED, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, pickTyped: PICK_TYPED[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, mandateSectors, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, monitorMember, monitorFoot, txnT, quoteHold, monitorC, headerTitles, mgrT, costGross, inside }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, sectorVs, sectorSplit, shortWindow, feSectors, accountRows, heldAccountRows, pmFunds, pmReviewRows, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, investorReturn, familyLayout, memberScopeDom, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, returnsDom, segDom, sectorAttr, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, quotesServed: QUOTES_SERVED, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, pickTyped: PICK_TYPED[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, mandateSectors, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, privateCo, monitorMember, monitorFoot, txnT, quoteHold, monitorC, headerTitles, mgrT, costGross, inside }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

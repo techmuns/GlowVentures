@@ -68,6 +68,7 @@ export const PRIVATE_COMPANIES = [
 /** Private-side lines that are not a company with funding rounds, each with why. */
 export const NOT_A_PRIVATE_COMPANY = {
   "borosil-renewables-limited-warrants-13ag26": "warrants of a listed company — the exchange prices it",
+  "borosil-renewables-limited-eq-new-fv-re-1-listing-trdg-aprvl-awaited": "new shares of a listed company awaiting trading approval — the exchange prices it",
   "k-m-global-credit": "a credit instrument, not equity",
 };
 

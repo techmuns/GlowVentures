@@ -3,6 +3,7 @@
   "method": "Funding rounds are public reporting, not the family's statements: each round is recorded from a regulatory filing, an offer document, the company's own release or the business press that read the filing, with the source linked, and only the figures that source states. Refreshed monthly by `npm run build-private-rounds`; a citation the research did not actually open is dropped.",
   "notCompanies": {
     "borosil-renewables-limited-warrants-13ag26": "warrants of a listed company — the exchange prices it",
+    "borosil-renewables-limited-eq-new-fv-re-1-listing-trdg-aprvl-awaited": "new shares of a listed company awaiting trading approval — the exchange prices it",
     "k-m-global-credit": "a credit instrument, not equity"
   },
   "companies": [

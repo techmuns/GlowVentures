@@ -1899,7 +1899,7 @@ export function PrivateMarket() {
     const p = pad("group");
     const v = companyValuationOf(g.folios);
     const td = (col: string, body: ReactNode, data?: Record<string, string | number>) =>
-      <td key={col} data-col-cell={col} className={`${p} tabular whitespace-nowrap text-right`} {...data}>{body}</td>;
+      <td key={col} data-col-cell={col} className={`${p} tabular whitespace-nowrap ${col === "valuationDate" || col === "lastRound" ? "text-left" : "text-right"}`} {...data}>{body}</td>;
     if (!v) {
       const na = <NotApplicableCell reason={NOT_A_COMPANY_WHY} />;
       return Object.fromEntries(VALUATION_COLS.map((c) => [c, td(c, na)]));
@@ -2502,7 +2502,7 @@ export function PrivateMarket() {
                   <SortHeader col="value" view={bookView} pad="px-2 py-2"
                     title="The fund's own mark: what the holding is worth on the fund's own statement date.">Value</SortHeader>
                   {VALUATION_COLS.map((c) => (
-                    <SortHeader key={c} col={c} view={bookView} pad="px-2 py-2" title={VALUATION_LABELS[c].detail}>{VALUATION_LABELS[c].label}</SortHeader>
+                    <SortHeader key={c} col={c} view={bookView} pad="px-2 py-2" align={c === "valuationDate" || c === "lastRound" ? "left" : undefined} title={VALUATION_LABELS[c].detail}>{VALUATION_LABELS[c].label}</SortHeader>
                   ))}
                   {/* ONE HEADING PER PICKED MEASURE, each a `SortHeader` like its
                       neighbours. The count of FUNDS the measure answers and the

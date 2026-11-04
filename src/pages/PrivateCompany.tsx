@@ -101,6 +101,12 @@ function CompanyPage({ company }: { company: Company }) {
   const m = useMemo(() => companyMetrics(company, investedFrom), [company, investedFrom]);
   const cur = m.currency;
   const money = (v: number | null | undefined) => fmtValuation(v, cur, fmtFromBase);
+  // A FIGURE THE SOURCE PRINTS ONLY IN ANOTHER CURRENCY is shown as printed —
+  // never converted at a rate no source gives — and the chart leaves it out.
+  const printed = (x: { value: number; currency: string }, basis?: string) => (
+    <span title={`As the source prints it, in ${x.currency}${basis ? ` (${basis})` : ""} — not in ${cur}, so not converted and not drawn on the chart`} data-pc-printed={x.currency}>
+      {fmtValuation(x.value, x.currency, fmtFromBase)}<sup className="ml-0.5 text-[9px] text-slate-500">{x.currency}</sup>
+    </span>);
   const figure = (f: Figure | null, why: string, data?: Record<string, string | number>) => (f
     ? <span title={f.derived ? `Derived: ${f.derived}.` : "As the round's source prints it."} {...data}>{money(f.value)}{f.derived && <sup className="ml-0.5 text-[9px] text-slate-500">d</sup>}</span>
     : <AbsentCell reason={why} />);
@@ -291,14 +297,15 @@ function CompanyPage({ company }: { company: Company }) {
                               {isEntry && <span className="ml-1.5 rounded bg-champagne-500/20 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-champagne-400" title={entryWords ?? undefined} data-pc-entry-badge>your entry</span>}
                               {r.note && <span className="ml-1 cursor-help text-[11px] text-slate-500" title={r.note}>ⓘ</span>}
                             </td>
-                            <td className="tabular whitespace-nowrap px-3 py-2 text-right">{v.raised != null ? money(v.raised) : <AbsentCell reason={r.amountRaised ? `printed only in ${r.amountRaised.currency}` : "the source prints no amount"} />}</td>
+                            <td className="tabular whitespace-nowrap px-3 py-2 text-right">{v.raised != null ? money(v.raised) : r.amountRaised ? printed(r.amountRaised) : <AbsentCell reason="the source prints no amount" />}</td>
                             <td className="tabular whitespace-nowrap px-3 py-2 text-right">{figure(v.pre, "the source prints no pre-money, and not both a post-money and the amount to derive one")}</td>
                             <td className="tabular whitespace-nowrap px-3 py-2 text-right">
                               {v.post ? figure(v.post, "")
                                 : v.headline ? <span title="The source says the company was valued at this, without saying pre- or post-money">{money(v.headline.value)}<sup className="ml-0.5 text-[9px] text-slate-500">?</sup></span>
-                                : <AbsentCell reason={otherCur ? `printed only in another currency than ${cur}` : "the source prints no valuation"} />}
+                                : otherCur ? printed((r.postMoney ?? r.valuation ?? r.preMoney)!, r.postMoney ? "post-money" : r.valuation ? "basis not stated" : "pre-money")
+                                : <AbsentCell reason="the source prints no valuation" />}
                             </td>
-                            <td className="tabular whitespace-nowrap px-3 py-2 text-right">{v.price != null ? money(v.price) : <AbsentCell reason="the source prints no price per share" />}</td>
+                            <td className="tabular whitespace-nowrap px-3 py-2 text-right">{v.price != null ? money(v.price) : r.pricePerShare ? printed(r.pricePerShare) : <AbsentCell reason="the source prints no price per share" />}</td>
                             <td className="tabular whitespace-nowrap px-3 py-2 text-right">
                               {stake ? <span title={stake.note} data-pc-round-stake={stake.pct}>{fmtNum(stake.pct, 3)}%</span>
                                 : <AbsentCell reason={stakes.why.get(r)} />}
