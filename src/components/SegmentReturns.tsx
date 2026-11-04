@@ -6,8 +6,7 @@ import { MarketReturnInfo } from './MarketReturnInfo';
 import { HoldingAssumptionInfo } from './HoldingAssumptionInfo';
 import { assumedHoldingReturns } from '@/lib/assumedHoldingReturns';
 import { assumedHoldingBook } from '@/lib/assumedHoldingBook';
-import { statementReturnInputs } from '@/lib/availableCardReturns';
-import { ytdBook, ytdSelection } from '@/lib/ytdAvailable';
+import { periodSelection, statementReturnInputs } from '@/lib/availableCardReturns';
 import { CapitalBridge } from './CapitalBridge';
 import { capitalBridge } from '@/lib/capitalBridge';
 import { BOOK_ACCOUNT_BRIDGES, BOOK_CAPITAL_MOVES, BOOK_HOLDING_INCOME } from '@/data/glowData';
@@ -78,11 +77,12 @@ export default function SegmentReturns({ selection: recordedSelection, period, o
   const selection = useMemo(() => {
     if (!statementPortfolio || recordedSelection.inception || !recordedSelection.start || !recordedSelection.end) return recordedSelection;
     const assumptions = assumedHoldingBook({ actions: corporateActions, instruments: marketFeed.instruments, histories: marketFeed.histories });
-    // YTD from the first date we have: Morning CIO's card and the Monitor's own record (Stage 10kq).
-    if (period === 'ytd') {
-      const inputs = statementReturnInputs(statementPortfolio);
-      const year = ytdBook({ inputs, held: current, accounts: statementPortfolio.accounts, end: recordedSelection.end, assumptions, money: String });
-      return { ...recordedSelection, ...ytdSelection(year, inputs, current) };
+    // The financial and calendar year from the first value on record, the rest held at
+    // their last value: Morning CIO's cards' own selection (Stages 10kq, 10kz).
+    if (period === 'ytd' || period === 'fytd') {
+      const picked = periodSelection({ inputs: statementReturnInputs(statementPortfolio), current, accounts: statementPortfolio.accounts,
+        end: recordedSelection.end, assumptions, open: period === 'ytd' ? undefined : recordedSelection.start });
+      return { ...recordedSelection, ...picked, type: recordedSelection.type, start: recordedSelection.start, end: recordedSelection.end };
     }
     const extra = assumedHoldingReturns(current, statementPortfolio.accounts, recordedSelection.start, recordedSelection.end, assumptions);
     return { ...recordedSelection, assumedUnits: extra.units, assumptionGaps: extra.gaps };

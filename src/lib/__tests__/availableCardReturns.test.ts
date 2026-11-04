@@ -3,8 +3,8 @@ import { availableCardReturns, statementReturnInputs } from '../availableCardRet
 import { currentHoldings, dedupedPositions } from '../analytics';
 import { returnGapText } from '../selectedSegmentReturns';
 import type { Account, Portfolio, Position } from '../types';
-import type { AccountInput } from '../periodReturns';
-import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_ACCOUNT_RETURN_RECORDS } from '../../data/glowData';
+import { windowReturns, type AccountInput } from '../periodReturns';
+import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_ACCOUNT_RETURN_RECORDS, BOOK_UNIT_WINDOWS } from '../../data/glowData';
 
 const near = (a: number | null, b: number) => assert.ok(a != null && Math.abs(a - b) < 1e-6, `${a} != ${b}`);
 const position = (o: Partial<Position>) => {
@@ -74,8 +74,17 @@ near(availableCardReturns(statement, positions, [closed], today).history.total.g
 const book = { accounts: BOOK_ACCOUNTS, positions: BOOK_POSITIONS, accountReturnRecords: BOOK_ACCOUNT_RETURN_RECORDS, privateMarkets: {} } as Portfolio;
 const display = dedupedPositions(BOOK_POSITIONS), actual = availableCardReturns(book, display, statementReturnInputs(book), today);
 assert.ok(actual.gain.total.gain != null && actual.gain.coveredHoldings > 0 && actual.gain.coveredHoldings < currentHoldings(display).length);
-near(actual.fytd.total.gain, 214060780.04);
-assert.equal(actual.fytd.coveredAccounts, 17);
+// THE FINANCIAL YEAR FROM THE FIRST VALUE ON RECORD (Stage 10kz): the 17
+// accounts verified from 31 March, unchanged, plus the six whose consecutive
+// statements hold the same units (Buoyant ×2, Founders ×2, Mirae, ABSL),
+// each from its first statement this year.
+const verified = windowReturns(statementReturnInputs(book), '2026-03-31', '2026-10-22').included;
+assert.equal(verified.length, 17);
+for (const w of verified) near(actual.fytd.total.units.find(u => u.accountId === w.accountId)?.gain ?? null, w.gain);
+const unitWindowed = actual.fytd.total.units.filter(u => BOOK_UNIT_WINDOWS[u.accountId]);
+assert.deepEqual(unitWindowed.map(u => u.from).sort(), ['2026-07-01', '2026-07-02', '2026-07-31', '2026-07-31', '2026-07-31', '2026-07-31']);
+near(actual.fytd.total.gain, 198576986.99);
+assert.equal(actual.fytd.coveredAccounts, 23);
 // The calendar-year card reads at least every account the financial year does.
 assert.ok(actual.ytd.coveredAccounts >= actual.fytd.coveredAccounts && actual.ytd.coveredHoldings >= actual.fytd.coveredHoldings);
 assert.ok(actual.history.total.returnPct != null);

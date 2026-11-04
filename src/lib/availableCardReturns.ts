@@ -11,7 +11,7 @@ import {
   BOOK_ACCOUNT_NAV_HISTORY, BOOK_ACCOUNT_CASH_FLOWS, BOOK_NAV_COVERAGE,
   BOOK_UNDATED_CAPITAL, BOOK_CAPITAL_FROM_INCEPTION, BOOK_UNIT_WINDOWS,
 } from '@/data/glowData';
-import type { UnitWindow } from './types';
+import type { Account, UnitWindow } from './types';
 
 /** Shared selected records, including the same fallback gates as attribution. */
 export function statementReturnInputs(statement: Portfolio, unitWindows: Readonly<Record<string, UnitWindow>> = BOOK_UNIT_WINDOWS): AccountInput[] {
@@ -36,36 +36,58 @@ export function statementReturnInputs(statement: Portfolio, unitWindows: Readonl
     });
 }
 
+/**
+ * THE THREE RETURN CARDS, ONE RULE (Stage 10kz; the family, 4 Nov 2026): each
+ * account and holding from its first value on record in the period — the
+ * Monitor's own `ytdBook` with the period's open — and every public holding no
+ * record measures held at its last value. Financial year from 31 March, the
+ * calendar year from 31 December (`open` left out), available history (`null`)
+ * from each first record. Morning CIO's cards and the Returns tab read this one
+ * selection, so a card and its table never disagree.
+ */
+export function periodSelection({ inputs, current, accounts, end, assumptions, open }: {
+  inputs: readonly AccountInput[]; current: readonly Position[]; accounts: readonly Account[]; end: string;
+  assumptions: AssumedReturnBook | null; open?: string | null;
+}): ReturnSelection {
+  const book = ytdBook({ inputs, held: current, accounts, end, assumptions, money: String, open });
+  const picked = ytdSelection(book, inputs, current);
+  const first = [...picked.windows.map(w => w.openDate), ...(picked.assumedUnits ?? []).flatMap(u => u.from ? [u.from] : [])].sort()[0] ?? null;
+  const start = book.open ?? first;
+  /**
+   * HELD AT ITS LAST VALUE (the family, 4 Nov 2026). A public holding no
+   * record measures this period is carried flat from its latest valuation to
+   * the end: in the base at 0%, and named. One still waiting on its price
+   * history is not held — it is loading, and says so.
+   */
+  const accountOf = new Map(accounts.map(a => [a.accountId, a]));
+  const whole = new Set(picked.windows.map(w => w.accountId));
+  const keyOf = (x: { accountId: string; securityKey?: string }) => `${x.accountId}|${x.securityKey}`;
+  const measured = new Set((picked.assumedUnits ?? []).flatMap(u => u.positions.map(keyOf)));
+  const pending = new Set((picked.assumptionGaps ?? []).filter(g => /still loading/i.test(g.reason)).map(keyOf));
+  const held = assumptions ? current.filter(p => p.marketSide !== 'private' && !whole.has(p.accountId) && !measured.has(keyOf(p)) && !pending.has(keyOf(p)))
+    .flatMap(p => {
+      const a = accountOf.get(p.accountId);
+      const g = picked.assumptionGaps?.find(x => keyOf(x) === keyOf(p)) ?? picked.excluded.find(x => x.accountId === p.accountId);
+      const u = a ? heldAtLastValue(p, a, start, end, g?.reason ?? 'No second value on record this period.') : null;
+      return u ? [u] : [];
+    }) : [];
+  const heldKeys = new Set(held.flatMap(u => u.positions.map(keyOf)));
+  return { inception: false, type: 'xirr', start, end, inceptionRows: [], ...picked,
+    assumedUnits: [...(picked.assumedUnits ?? []), ...held],
+    assumptionGaps: (picked.assumptionGaps ?? []).filter(g => !heldKeys.has(keyOf(g))) };
+}
+
 /** The available subset, plus explicit user-authorised holding assumptions where supplied. */
 export function availableCardReturns(statement: Portfolio, display: readonly Position[], inputs: AccountInput[], today: Date, assumptions?: AssumedReturnBook) {
   const current = currentHoldings(display), recorded = dedupedPositions(statement.positions);
   const calculationCurrent = currentHoldings(recorded), exited = exitedRows(recorded);
   const end = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-  const accountOf = new Map(statement.accounts.map(a => [a.accountId, a]));
   const isPublic = (p: Position) => p.marketSide !== 'private';
-  const make = (selection: ReturnSelection, availableHistory = false, holdLast = false) => {
+  const make = (selection: ReturnSelection, availableHistory = false) => {
     // A selection that brings its own holding records (YTD's) keeps them.
     if (!selection.inception && assumptions && !selection.assumedUnits) {
       const extra = assumedHoldingReturns(current, statement.accounts, availableHistory ? null : selection.start, end, assumptions);
       selection = { ...selection, assumedUnits: extra.units, assumptionGaps: extra.gaps };
-    }
-    /**
-     * HELD AT ITS LAST VALUE (the family, 4 Nov 2026). A public holding no
-     * record measures this period is carried flat from its latest valuation to
-     * the end: in the base at 0%, and named. One still waiting on its price
-     * history is not held — it is loading, and says so.
-     */
-    if (holdLast && !selection.inception) {
-      const whole = new Set(selection.windows.map(w => w.accountId));
-      const measured = new Set((selection.assumedUnits ?? []).flatMap(u => u.positions.map(p => `${p.accountId}|${p.securityKey}`)));
-      const pending = new Set((selection.assumptionGaps ?? []).filter(g => /still loading/i.test(g.reason)).map(g => `${g.accountId}|${g.securityKey}`));
-      const held = current.filter(p => isPublic(p) && !whole.has(p.accountId) && !measured.has(`${p.accountId}|${p.securityKey}`) && !pending.has(`${p.accountId}|${p.securityKey}`))
-        .flatMap(p => { const a = accountOf.get(p.accountId); const g = selection.assumptionGaps?.find(x => x.accountId === p.accountId && x.securityKey === p.securityKey)
-          ?? selection.excluded.find(x => x.accountId === p.accountId);
-          const u = a ? heldAtLastValue(p, a, selection.start, end, g?.reason ?? 'No second value on record this period.') : null; return u ? [u] : []; });
-      const heldKeys = new Set(held.map(u => u.key));
-      selection = { ...selection, assumedUnits: [...(selection.assumedUnits ?? []), ...held],
-        assumptionGaps: (selection.assumptionGaps ?? []).filter(g => !heldKeys.has(`${g.accountId}|${g.securityKey}`)) };
     }
     const result = selectedSegmentReturns(current, exited, statement.accounts, 'category', selection, () => null, calculationCurrent);
     const coveredAccounts = new Set(result.total.units.map(u => u.accountId)).size;
@@ -109,19 +131,9 @@ export function availableCardReturns(statement: Portfolio, display: readonly Pos
       from: dates[0] ?? null, to: closes.at(-1) ?? null, notes, starts, fullPeriod, coverage };
   };
   const gain = make({ inception: true, type: 'absolute', start: null, end: null, windows: [], inceptionRows: [], excluded: [] });
-  /**
-   * THE THREE RETURN CARDS, ONE RULE (Stage 10kz; the family, 4 Nov 2026): each
-   * account and holding from its first value on record in the period — the
-   * Monitor's own `ytdBook` with the period's open — and every public holding
-   * no record measures held at its last value. Financial year from 31 March,
-   * calendar year from 31 December, available history from each first record.
-   */
-  const period = (open: string | null | undefined) => {
-    const book = ytdBook({ inputs, held: current, accounts: statement.accounts, end, assumptions: assumptions ?? null, money: String, open });
-    const picked = ytdSelection(book, inputs, current);
-    const first = [...picked.windows.map(w => w.openDate), ...(picked.assumedUnits ?? []).flatMap(u => u.from ? [u.from] : [])].sort()[0] ?? null;
-    return make({ inception: false, type: 'xirr', start: book.open ?? first, end, inceptionRows: [], ...picked }, false, true);
-  };
+  // The three return cards: financial year, calendar year, available history (`periodSelection`).
+  const period = (open: string | null | undefined) =>
+    make(periodSelection({ inputs, current, accounts: statement.accounts, end, assumptions: assumptions ?? null, open }));
   const fytd = period(periodStart('fytd', end)!);
   const ytd = period(undefined);
   // XIRR from a year; under a year the absolute return, never a rate per year (Stage 10hk).
