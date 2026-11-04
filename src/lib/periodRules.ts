@@ -141,8 +141,10 @@ export function heldAtLastValue(p: Position, a: Account, open: string | null, en
   const from = open && valuedOn < open ? open : valuedOn;
   if (!(from < end)) return null;
   const key = marketHoldingKey(p), label = labelOf(p, a);
+  // Measured on its valuation date and carried flat to the end: the card's date
+  // stays the latest one a record measures, never advanced by a held value.
   const window: AccountWindow = { accountId: key, owner: a.owner, label, openDate: from, openValue: p.marketValue, openedInWindow: false,
-    closeDate: end, closeValue: p.marketValue, flows: [], capitalIn: 0, capitalOut: 0, gain: 0 };
-  return { key, accountId: p.accountId, label, positions: [p], gain: 0, invested: p.marketValue, close: p.marketValue, from, to: end, window,
+    closeDate: from, closeValue: p.marketValue, carriedTo: end, flows: [], capitalIn: 0, capitalOut: 0, gain: 0 };
+  return { key, accountId: p.accountId, label, positions: [p], gain: 0, invested: p.marketValue, close: p.marketValue, from, to: from, window,
     held: { date: valuedOn, reason } };
 }

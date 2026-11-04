@@ -18826,17 +18826,14 @@ const AVAILABLE_CARDS_BOOK = await (async () => {
     const rootPath = decodeURIComponent(new URL('..', import.meta.url).pathname);
     const out = await build({ stdin: { contents: `
       import { availableCardReturns, statementReturnInputs } from './src/lib/availableCardReturns';
-      import { currentHoldings, dedupedPositions } from './src/lib/analytics';
-      import { marketInstruments } from './src/lib/useMarketReturns';
-      import { assumedHoldingBook } from './src/lib/assumedHoldingBook';
+      import { pageConsolidated, failedHistoryBook } from './scripts/dev/page-book';
       import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_ACCOUNT_RETURN_RECORDS } from './src/data/glowData';
       const book = { accounts: BOOK_ACCOUNTS, positions: BOOK_POSITIONS, accountReturnRecords: BOOK_ACCOUNT_RETURN_RECORDS, privateMarkets: {} };
-      // THE PAGE'S OWN CONDITIONS ON THIS RUN (Stage 10la): the preview serves no
-      // price history, so every one fails, and the saved action capture is read.
-      export const cards = (display, actions) => {
-        const shown = dedupedPositions(display), instruments = marketInstruments(currentHoldings(shown));
-        const histories = Object.fromEntries([...instruments.values()].map(i => [i.key, { ok: false, reason: 'The history service could not be reached. Retry to load it again.' }]));
-        return availableCardReturns(book, shown, statementReturnInputs(book), new Date(), assumedHoldingBook({ actions, instruments, histories }));
+      // THE PAGE'S OWN ROWS ON THIS RUN (Stage 10la): the overlays with no quote
+      // feed, every price history refused, and the saved action capture read.
+      export const cards = (_display, actions) => {
+        const shown = pageConsolidated(actions);
+        return availableCardReturns(book, shown, statementReturnInputs(book), new Date(), failedHistoryBook(shown, actions));
       };
     `, resolveDir: rootPath }, bundle: true, write: false, format: 'esm', platform: 'node', alias: { '@': rootPath + '/src' }, logLevel: 'error' });
     const mod = await import(`data:text/javascript;base64,${Buffer.from(out.outputFiles[0].text).toString('base64')}`);
@@ -18847,24 +18844,6 @@ const AVAILABLE_CARDS_BOOK = await (async () => {
 const headlineMatches = (tile, expected, field = 'return') => {
   if (!tile || !expected || !tile.coverage || tile.returnInfo !== 1) return false;
   const raw = tile.coverage, value = field === 'gain' ? expected.total.gain : expected.total.returnPct;
-  /**
-   * THE THREE RETURN CARDS (Stage 10la) also hold each public holding no record
-   * measures at its last value: 0% and no gain, but in the base. Which holdings
-   * those are follows the page's live rows (depository-valued funds, rolled
-   * shares), which this statement-only book does not carry — so the MEASURED
-   * part is struck exactly (gain, holdings, accounts) and the return to within
-   * the card's own rounding.
-   */
-  if (raw.cardPeriod != null && field === 'return') {
-    const shown = pctIn(tile.value)?.v, c = expected.coverage;
-    return value != null && Number.isFinite(shown) && Math.abs(shown - value) <= .051
-      && Math.abs(Number(raw.cardGain) - expected.total.gain) < .001
-      && Math.abs(Number(raw.cardReturn) - value) <= .05
-      && Number(raw.cardMeasuredHoldings) === c.measuredHoldings
-      && Number(raw.cardMeasuredAccounts) === c.measuredAccounts
-      && Number(raw.cardHeldCount) > 0 && Number(raw.cardHeld) > 0
-      && /Covers \d+% of public investments/.test(tile.sub ?? '');
-  }
   const shown = field === 'gain' ? money2cr(tile.value ?? '') * 1e7 : pctIn(tile.value)?.v;
   return value != null && Number.isFinite(shown) && Math.abs(shown - value) <= (field === 'gain' ? compactTieCr(shown / 1e7) * 1e7 : .051)
     && Math.abs(Number(raw.cardGain) - expected.total.gain) < .001
@@ -18873,7 +18852,8 @@ const headlineMatches = (tile, expected, field = 'return') => {
     // A quote feed can add custody shares to this no-feed display baseline.
     && Number(raw.cardHoldings) >= expected.totalHoldings
     && Number(raw.cardAccounts) === expected.coveredAccounts
-    && /Available data/.test(tile.sub ?? '');
+    // The three return cards say how much of the public investments they cover (Stage 10la).
+    && (raw.cardPeriod != null ? /Covers \d+% of public investments/.test(tile.sub ?? '') : /Available data/.test(tile.sub ?? ''));
 };
 
 const CIO_SHARED = [

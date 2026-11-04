@@ -79,7 +79,7 @@ const march: EarlierBalance[] = [{ accountId: 'd', securityKey: 'example-d', isi
   const fund = { ...held, quantity: 5, marketValue: 2e6, navDate: '2026-08-06' } as Position;
   const u = heldAtLastValue(fund, acct, '2026-03-31', '2026-11-03', 'One statement only.');
   assert.ok(u);
-  assert.equal(u!.gain, 0); assert.equal(u!.from, '2026-08-06'); assert.equal(u!.to, '2026-11-03');
+  assert.equal(u!.gain, 0); assert.equal(u!.from, '2026-08-06'); assert.equal(u!.to, '2026-08-06'); assert.equal(u!.window!.carriedTo, '2026-11-03');
   near(u!.window!.openValue, 2e6); near(u!.window!.closeValue, 2e6); assert.deepEqual(u!.held, { date: '2026-08-06', reason: 'One statement only.' });
   // Valued before the period opens: held from the opening.
   assert.equal(heldAtLastValue({ ...fund, navDate: '2026-01-15' } as Position, acct, '2026-03-31', '2026-11-03', 'x')!.from, '2026-03-31');
