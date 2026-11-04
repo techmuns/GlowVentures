@@ -133,6 +133,7 @@
  */
 import type { Position } from "./types";
 import { isCashEquivalent } from "./analytics";
+import { placementOf } from "./familyPlacements";
 
 export type FamilyBasket =
   | "Stable Growth" | "Entrepreneurial Growth" | "Thematic & Tactical" | "Liquidity";
@@ -165,6 +166,8 @@ export const UNCLASSIFIED_WHY =
  *   `derived`   — our own asset class already answered it beyond doubt.
  *   `family`    — the family's own word on a holding the review cannot name,
  *                 because it was bought after it (`FAMILY_SAID_CLASS`).
+ *   `moved`     — the family moved the row to this section on the Portfolio
+ *                 Monitor itself (`familyPlacements.ts`, Stage 10la).
  *
  * TWO RULES, TWO SOURCES, and that is not pedantry. Both are the family
  * speaking, and on screen a section heading prints how much of it a rule
@@ -173,7 +176,7 @@ export const UNCLASSIFIED_WHY =
  * to Thematic & Tactical", which is a sentence about the wrong rule, under the
  * wrong basket, attached to the largest figure in the section.
  */
-export type TaxonomySource = "review" | "rule" | "cash-rule" | "derived" | "family";
+export type TaxonomySource = "review" | "rule" | "cash-rule" | "derived" | "family" | "moved";
 
 export type TaxonomyEntry = {
   assetClass: FamilyAssetClass;
@@ -518,11 +521,36 @@ const cashByInstruction = (p: Classifiable, isMandate: boolean): boolean =>
   !isMandate && isCashEquivalent(p);
 
 /**
+ * ── A ROW THE FAMILY MOVED ON THE PAGE, READ BEFORE EVERYTHING ELSE ────────
+ *
+ * Their move is the newest word on that one product, so it wins over the
+ * review, both rules and the derivation alike — including the cash instruction,
+ * which is itself only a default for products nobody has spoken about since.
+ * A placement naming a section this axis does not have is ignored, never drawn
+ * as a heading of its own. The review's citation is kept: the product is still
+ * the row the workbook names, and the review columns still join to it.
+ */
+function moved<T extends string>(
+  axis: "basket" | "assetClass", order: readonly T[], p: Classifiable, isMandate: boolean,
+  stated: Resolved<T> | null,
+): Resolved<T> | null {
+  const to = placementOf(axis, productKeyOf(p, isMandate))?.section;
+  if (!to || !(order as readonly string[]).includes(to)) return null;
+  return { value: to as T, source: "moved", reviewProduct: stated?.reviewProduct ?? null };
+}
+
+/**
  * WHICH BASKET, AND ON WHOSE AUTHORITY. `null` where nobody has said — which is
  * a section on screen with its reason, never a holding quietly dropped from the
  * table or swept into whichever basket happens to be first.
  */
 export function familyBasket(p: Classifiable, isMandate: boolean): Resolved<FamilyBasket> | null {
+  const stated = statedBasket(p, isMandate);
+  return moved("basket", BASKET_ORDER, p, isMandate, stated) ?? stated;
+}
+
+/** The basket before any move on the page — where "Move back" returns a row to. */
+export function statedBasket(p: Classifiable, isMandate: boolean): Resolved<FamilyBasket> | null {
   const hit = FAMILY_TAXONOMY[productKeyOf(p, isMandate)];
   if (cashByInstruction(p, isMandate)) {
     return hit?.basket === "Liquidity"
@@ -539,6 +567,12 @@ export function familyBasket(p: Classifiable, isMandate: boolean): Resolved<Fami
 
 /** The family's asset class, same contract. */
 export function familyAssetClass(p: Classifiable, isMandate: boolean): Resolved<FamilyAssetClass> | null {
+  const stated = statedAssetClass(p, isMandate);
+  return moved("assetClass", FAMILY_CLASS_ORDER, p, isMandate, stated) ?? stated;
+}
+
+/** The asset class before any move on the page. */
+export function statedAssetClass(p: Classifiable, isMandate: boolean): Resolved<FamilyAssetClass> | null {
   const hit = FAMILY_TAXONOMY[productKeyOf(p, isMandate)];
   if (cashByInstruction(p, isMandate)) {
     return hit?.assetClass === "Cash"
@@ -579,8 +613,8 @@ export function taxonomyCoverage(
   rows: readonly { position: Position; isMandate: boolean; marketValue: number }[],
   axis: "basket" | "assetClass",
 ) {
-  const count = { review: 0, rule: 0, "cash-rule": 0, derived: 0, family: 0, none: 0 };
-  const value = { review: 0, rule: 0, "cash-rule": 0, derived: 0, family: 0, none: 0 };
+  const count = { review: 0, rule: 0, "cash-rule": 0, derived: 0, family: 0, moved: 0, none: 0 };
+  const value = { review: 0, rule: 0, "cash-rule": 0, derived: 0, family: 0, moved: 0, none: 0 };
   for (const r of rows) {
     const res = axis === "basket" ? familyBasket(r.position, r.isMandate) : familyAssetClass(r.position, r.isMandate);
     const k: TaxonomySource | "none" = res?.source ?? "none";

@@ -56,7 +56,9 @@ import {
 import {
   basketKeyOf, familyClassKeyOf, basketOrd, familyClassOrd,
   familyBasket, familyAssetClass, type TaxonomySource, type Classifiable,
+  statedBasket, statedAssetClass, productKeyOf, UNCLASSIFIED, BASKET_ORDER, FAMILY_CLASS_ORDER,
 } from "./familyTaxonomy";
+import { placementOf } from "./familyPlacements";
 
 /**
  * WHICH SECTION A HOLDING BELONGS IN on the category axis. `holdingBucket`
@@ -95,6 +97,38 @@ export const heldUnderMandate = (idx: AccountIndex, p: Classifiable) => isMandat
  */
 export const BUCKET_ORDER = [DIRECT_EQUITY_BUCKET, MANDATE_BUCKET, UNROUTED_EQUITY_BUCKET, "ETF", "Mutual Fund", "AIF", "Bond", "Structured Product", "Unlisted", AT_COST_BUCKET, "Cash"];
 export const bucketOrd = (b: string) => { const i = BUCKET_ORDER.indexOf(b); return i < 0 ? BUCKET_ORDER.length : i; };
+
+/**
+ * ── THE TABS A ROW CAN BE MOVED TO, per axis (Stage 10la) ───────────────────
+ *
+ *   "Allow the ability for any security or row to move any sub tab by doing
+ *    right click."
+ *
+ * Every section the axis declares, less three category headings that are each a
+ * claim a move cannot make true: PMS mandates counts MANDATES (a share bought
+ * directly would be counted as one), private investments at cost says the row
+ * carries no valuation, and the unrouted heading says the account states no
+ * route. A row already under one of them can still go back to it — the page
+ * offers a row's own section as "move back". "Not classified" is not a tab a
+ * row is moved TO: it names an absence, and a row the family has placed is not
+ * one.
+ */
+export const CATEGORY_MOVE_TARGETS: readonly string[] =
+  BUCKET_ORDER.filter((b) => b !== MANDATE_BUCKET && b !== AT_COST_BUCKET && b !== UNROUTED_EQUITY_BUCKET);
+
+/**
+ * THE CATEGORY A ROW WAS MOVED TO ON THE PAGE, read before `holdingBucket` for
+ * the reason the family axes read theirs first (`familyTaxonomy.ts`). Keyed on
+ * the same PRODUCT, so every share of a mandate moves with its mandate.
+ */
+const movedCategory = (p: Classifiable, isMandate: boolean): string | null => {
+  const to = placementOf("category", productKeyOf(p, isMandate))?.section;
+  return to && CATEGORY_MOVE_TARGETS.includes(to) ? to : null;
+};
+
+/** The category section, a move included — for a caller holding an engagement rather than an index. */
+export const categoryKeyFor = (p: Classifiable, engagement: string | null | undefined): string =>
+  movedCategory(p, isMandateHeld(engagement || null)) ?? holdingBucket(p, engagement || null);
 
 export const GROUP_AXES = ["category", "assetClass", "basket"] as const;
 export type GroupAxis = (typeof GROUP_AXES)[number];
@@ -186,10 +220,32 @@ export const MONITOR_GROUP_VIEWS: readonly { key: MonitorAxis; label: string; ti
  */
 export const groupKeyFor = (axis: MonitorAxis, idx: AccountIndex, p: Classifiable): string => {
   if (axis === SECURITY_AXIS) return SECURITY_SECTION;
-  if (axis === "category") return bucketFor(idx, p);
+  if (axis === "category") return categoryKeyFor(p, engagementFor(idx, p));
   const isMandate = heldUnderMandate(idx, p);
   return axis === "basket" ? basketKeyOf(p, isMandate) : familyClassKeyOf(p, isMandate);
 };
+
+/**
+ * WHERE A ROW SAT BEFORE THE FAMILY MOVED IT — the section "Move back" returns
+ * it to, and the one a moved row's hover names. Equal to `groupKeyFor` for every
+ * row nobody has moved.
+ */
+export const statedGroupKeyFor = (axis: GroupAxis, idx: AccountIndex, p: Classifiable): string => {
+  if (axis === "category") return bucketFor(idx, p);
+  const isMandate = heldUnderMandate(idx, p);
+  return (axis === "basket" ? statedBasket(p, isMandate) : statedAssetClass(p, isMandate))?.value ?? UNCLASSIFIED;
+};
+
+/** The tabs a row in `from` can be moved to on this axis, in reading order, its own included. */
+export const moveTargetsFor = (axis: GroupAxis, from: string): string[] => {
+  const declared = axis === "category" ? CATEGORY_MOVE_TARGETS : axis === "basket" ? BASKET_ORDER : FAMILY_CLASS_ORDER;
+  const ord = groupOrdFor(axis);
+  return [...new Set([...declared, ...(from === UNCLASSIFIED ? [] : [from])])].sort((a, b) => ord(a) - ord(b));
+};
+
+/** The products a row stands for: one per security, or one per mandate account. */
+export const productKeysFor = (idx: AccountIndex, ps: readonly Classifiable[]): string[] =>
+  [...new Set(ps.map((p) => productKeyOf(p, heldUnderMandate(idx, p))))];
 
 /**
  * HOW A ROW'S SECTION KEY WAS AUTHORISED on the active axis. Null on the
@@ -198,8 +254,10 @@ export const groupKeyFor = (axis: MonitorAxis, idx: AccountIndex, p: Classifiabl
  */
 export const groupSourceFor = (axis: MonitorAxis, idx: AccountIndex, p: Classifiable): TaxonomySource | null => {
   // Both the category and the security axes are derived from the book itself and
-  // ask nothing of the family, so neither heading has anything to disclose.
-  if (axis === SECURITY_AXIS || axis === "category") return "review";
+  // ask nothing of the family, so neither heading has anything to disclose —
+  // unless the family moved the row on the page.
+  if (axis === SECURITY_AXIS) return "review";
+  if (axis === "category") return movedCategory(p, heldUnderMandate(idx, p)) ? "moved" : "review";
   const isMandate = heldUnderMandate(idx, p);
   const r = axis === "basket" ? familyBasket(p, isMandate) : familyAssetClass(p, isMandate);
   return r?.source ?? null;

@@ -28,8 +28,9 @@ import {
   BOOK_COMMITMENTS, BOOK_CAPITAL_MOVES, BOOK_POSITION_TRANCHES,
   BOOK_CAPITAL_FROM_INCEPTION, BOOK_REVIEW_FLOWS, BOOK_REVIEW_WRITTEN_OFF, BOOK_SHARE_MOVEMENTS, BOOK_RECOVERED_COSTS, BOOK_POLYCAB,
 } from "../data/glowData";
-import { dedupedPositions, holdingBucket, bucketLabel, isMandateHeld, MANDATE_BUCKET } from "./analytics";
+import { dedupedPositions, bucketLabel, isMandateHeld, MANDATE_BUCKET } from "./analytics";
 import { basketKeyOf, familyClassKeyOf } from "./familyTaxonomy";
+import { categoryKeyFor } from "./groupAxis";
 import { ownerDisplayName, ownerById } from "./owners";
 import { securityLabel } from "./securityLabel";
 import { readAifCategory } from "./aifCategory";
@@ -126,7 +127,7 @@ export function buildConsolidatedSheet(docs: ArchiveDoc[], input: { accounts: Ac
   const totalValue = rows.reduce((s, p) => s + p.marketValue, 0);
   const classify = (p: Pick<Position, "accountId" | "securityKey" | "assetClass"> & Partial<Position>) => {
     const a = accountById.get(p.accountId), mandate = isMandateHeld(a?.engagement);
-    return { ac: familyClassKeyOf(p, mandate), cat: bucketLabel(holdingBucket(p, a?.engagement)), basket: basketKeyOf(p, mandate) };
+    return { ac: familyClassKeyOf(p, mandate), cat: bucketLabel(categoryKeyFor(p, a?.engagement)), basket: basketKeyOf(p, mandate) };
   };
   const positionOf = (acct: string | null | undefined, sec: string | null | undefined) =>
     acct && sec ? positions.find(p => p.accountId === acct && p.securityKey === sec) : undefined;

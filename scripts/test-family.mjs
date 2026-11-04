@@ -158,6 +158,7 @@ SUITES.push(["private market capital cells", "src/lib/__tests__/capitalEntry.tes
 SUITES.push(["under a year absolute", "src/lib/__tests__/underAYear.test.ts"]);
 SUITES.push(["holdings against their own index", "src/lib/__tests__/holdingBenchmark.test.ts"]);
 SUITES.push(["private company funding rounds", "src/lib/__tests__/privateRounds.test.ts"]);
+SUITES.push(["moved holdings", "src/lib/__tests__/familyPlacements.test.ts"]);
 for (const [name, rel] of SUITES) {
   if (ONLY.length && !ONLY.includes(name)) continue;
   const out = path.join(DIR, path.basename(rel).replace(/\.ts$/, ".mjs"));
