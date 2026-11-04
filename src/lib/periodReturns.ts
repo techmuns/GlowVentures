@@ -123,6 +123,13 @@ export type AccountWindow = {
    * and `closeDate` stays the date the record actually measures.
    */
   carriedTo?: string;
+  /**
+   * THE RECORD'S OWN DATED VALUES BETWEEN ITS OPEN AND CLOSE (Stage 10la):
+   * statement marks, or units at each published close. The return line draws
+   * through them (`periodLine.ts`); no measure reads them, and a record with
+   * none is held at its last value until its next.
+   */
+  marks?: { date: string; value: number }[];
   flows: Flow[];
   capitalIn: number;
   capitalOut: number;
@@ -298,6 +305,7 @@ export function windowReturns(accounts: AccountInput[], start: string, end: stri
       accountId: a.accountId, label: a.label, owner: a.owner,
       openDate: open.date, openValue: open.value, openedInWindow,
       closeDate: close.date, closeValue: close.value,
+      marks: vals.filter((v) => v.date > open.date && v.date < close.date).map((v) => ({ date: v.date, value: v.value })),
       flows, capitalIn, capitalOut,
       gain: close.value - open.value - capitalIn + capitalOut,
     });
