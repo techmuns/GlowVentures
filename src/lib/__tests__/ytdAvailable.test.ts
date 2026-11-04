@@ -100,6 +100,19 @@ for (const v of vec) { const one = real.of(BOOK_POSITIONS.filter((p) => p.accoun
   const split = ytdBook({ inputs: [], held: [held], accounts: [acct], end: '2026-10-30', money,
     assumptions: { ...(assumptions as object), histories: { 'example-d': { ...hist, splits: [{ date: '2026-03-01', factor: 2 }] } } } as never }).of([held]);
   assert.ok(!split.shown || split.from !== '2025-12-31', 'no 1 January start across an unchecked split');
+  // ANY OPENING DAY (Stage 10kq). 31 March: the units held then at that day's
+  // close, and the sales after it; null: from the record's first row at nil.
+  const marched = { ...hist, t: ['2025-12-31', '2026-03-31', '2026-07-31', '2026-10-29'], v: [1, 1, 1, 1], c: [100, 120, 140, 150] };
+  const withMarch = { ...(assumptions as object), histories: { 'example-d': marched } } as never;
+  const fy = ytdSelection(ytdBook({ inputs: [], held: [held], accounts: [acct], end: '2026-10-30', assumptions: withMarch, money, open: '2026-03-31' }), [], [held]).assumedUnits![0];
+  assert.equal(fy.from, '2026-03-31'); near(fy.window!.openValue, 90 * 120); near(fy.gain, 43 * 150 - 90 * 120 + 4200 + 1560);
+  const sinceFirst = ytdBook({ inputs: [], held: [held], accounts: [acct], end: '2026-10-30', assumptions, money, open: null });
+  assert.equal(sinceFirst.open, null);
+  const life = ytdSelection(sinceFirst, [], [held]).assumedUnits![0];
+  assert.equal(life.from, '2024-11-12'); assert.equal(life.window!.openValue, 0); assert.ok(life.window!.openedInWindow);
+  near(life.gain, 43 * 150 - 9000 + 4200 + 1560);
+  // Left out, the opening is 31 December — the year to date, unchanged.
+  assert.equal(ytdBook({ inputs: [], held: [held], accounts: [acct], end: '2026-10-30', assumptions, money }).open, '2025-12-31');
   // THE POOLED SURFACES READ THE SAME RECORD (Stage 10kq): the purchase record's
   // full year is a unit, said to be assumed from the statement on.
   const pooledBook = ytdBook({ inputs: [], held: [held], accounts: [acct], end: '2026-10-30', assumptions, money });
@@ -114,6 +127,11 @@ for (const v of vec) { const one = real.of(BOOK_POSITIONS.filter((p) => p.accoun
 {
   const pooled = ytdSelection(book, [input], held);
   assert.deepEqual(pooled.windows.map((w) => w.accountId), ['a']);
+  // An account's window opens at the later of the period's open and its own first record.
+  for (const open of ['2026-03-31', null]) {
+    const w = ytdSelection(ytdBook({ inputs: [input], held, accounts, end: '2026-10-30', assumptions: null, money, open }), [input], held).windows[0];
+    assert.equal(w.openDate, '2026-03-31'); near(w.gain, 132 - 100 - 20);
+  }
   assert.equal(pooled.assumedUnits!.length, 0); assert.equal(pooled.excluded.length, 0);
   const refused = { ...input, flowsUnknown: 'No opening valuation or dated money record' };
   const gaps = ytdSelection(ytdBook({ inputs: [refused], held, accounts, end: '2026-10-30', assumptions: null, money }), [refused], held);

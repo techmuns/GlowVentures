@@ -120,7 +120,7 @@ export function availableCardReturns(statement: Portfolio, display: readonly Pos
     const book = ytdBook({ inputs, held: current, accounts: statement.accounts, end, assumptions: assumptions ?? null, money: String, open });
     const picked = ytdSelection(book, inputs, current);
     const first = [...picked.windows.map(w => w.openDate), ...(picked.assumedUnits ?? []).flatMap(u => u.from ? [u.from] : [])].sort()[0] ?? null;
-    return make({ inception: false, type: 'xirr', start: book.yearOpen ?? first, end, inceptionRows: [], ...picked }, false, true);
+    return make({ inception: false, type: 'xirr', start: book.open ?? first, end, inceptionRows: [], ...picked }, false, true);
   };
   const fytd = period(periodStart('fytd', end)!);
   const ytd = period(undefined);

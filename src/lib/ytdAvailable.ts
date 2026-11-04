@@ -54,7 +54,10 @@ export type YtdFound = { window: AccountWindow; owner?: string; recorded?: boole
   | { reason: string; pending?: boolean; outside?: boolean };
 
 export type YtdBook = {
-  yearOpen: string | null; end: string; of: (ps: readonly Position[]) => YtdFrom;
+  /** The period's opening day — 31 Dec for YTD — or null: each part from its own first record. */
+  open: string | null; end: string;
+  /** One row's return, worded for the Monitor's YTD column. */
+  of: (ps: readonly Position[]) => YtdFrom;
   /** The whole account from its first verified value this year. */
   account: (accountId: string) => YtdFound;
   /** One holding: a full year from its purchase record, else carried from its statement balance. */
@@ -85,13 +88,15 @@ type Found = YtdFound;
  * held. Null — the caller's own path — wherever any part of that is not on
  * record: no unit record, a statement other than the record's, a split this
  * year before the statement, a dividend the action feed cannot vouch for.
+ *
+ * ANY OPENING DAY (Stage 10kq): 31 December for YTD, 31 March for the
+ * financial year; `null` opens the day before the record's first row, at nil,
+ * so every purchase and sale on it is money in and out.
  */
-function recordedYearWindow(p: Position, a: Account, periodOpen: string | null, end: string, b: AssumedReturnBook): Found | null {
+function recordedYearWindow(p: Position, a: Account, openAt: string | null, end: string, b: AssumedReturnBook): Found | null {
   const r = recordedHoldingOf(p);
   if (!r?.unitRecord?.length || !r.cashRecord?.length) return null;
-  // From its own first record where the period has no open (available history).
-  const firstRecord = [...r.unitRecord.map((x) => x.date), ...r.cashRecord.map((x) => x.date)].sort()[0];
-  const yearOpen = periodOpen ?? dayBefore(firstRecord);
+  const yearOpen = openAt ?? dayBefore([...r.unitRecord, ...r.cashRecord].map((x) => x.date).sort()[0]);
   if (r.asOf <= yearOpen) return null;
   const carried = assumedHolding(p, a, null, end, b);
   if ('gap' in carried) return carried.gap.pending ? { reason: carried.gap.reason, pending: true } : null;
@@ -144,7 +149,7 @@ function recordedYearWindow(p: Position, a: Account, periodOpen: string | null, 
   return { owner: a.owner, recorded: true, window, unit };
 }
 
-export function ytdBook({ inputs, held, accounts, end, assumptions, money, open }: {
+export function ytdBook({ inputs, held, accounts, end, assumptions, money, open: openAt }: {
   inputs: readonly AccountInput[];
   /** The current holdings an account's rows are struck over — what makes a row the WHOLE account. */
   held: readonly Position[];
@@ -153,13 +158,13 @@ export function ytdBook({ inputs, held, accounts, end, assumptions, money, open 
   assumptions: AssumedReturnBook | null;
   money: (n: number) => string;
   /**
-   * The period's open (Stage 10kz): left out, 31 December (this year to date);
-   * a date, each account and holding clamped to it (31 March for the financial
-   * year); null, each from its own first record (available history).
+   * The period's opening day (Stage 10kq): left out, 31 December before
+   * `end` — the year to date; a date, any other period (31 March for the
+   * financial year); `null`, each account and holding from its own first record.
    */
   open?: string | null;
 }): YtdBook {
-  const yearOpen: string | null = open === undefined ? `${Number(end.slice(0, 4)) - 1}-12-31` : open;
+  const yearOpen = openAt === undefined ? `${Number(end.slice(0, 4)) - 1}-12-31` : openAt;
   const inputOf = new Map(inputs.map((i) => [i.accountId, i]));
   const keysOf = new Map<string, Set<string>>();
   for (const p of held) (keysOf.get(p.accountId) ?? keysOf.set(p.accountId, new Set()).get(p.accountId)!).add(p.securityKey);
@@ -274,7 +279,7 @@ export function ytdBook({ inputs, held, accounts, end, assumptions, money, open 
       if (!m.shown || m.pct == null || !m.working) out = { shown: false, reason: sentence(m.reason ?? 'these values do not give a return') };
       else {
         const { from, to } = m.working;
-        const fullYear = !!yearOpen && from <= yearOpen;
+        const fullYear = yearOpen != null && from <= yearOpen;
         const assumed = owners.size > 0;
         out = { shown: true, pct: m.pct, from, to, fullYear, assumed, accounts: pooled,
           note: `${fullYear ? 'Year to date' : `From ${longDay(from)}, the first date this year with a dated value,`} to ${longDay(to)} — not annualised${fullYear ? '' : ', and not a full year to date: no statement here values it on 1 January'}. ${m.worked ?? ''}`.trim()
@@ -285,7 +290,7 @@ export function ytdBook({ inputs, held, accounts, end, assumptions, money, open 
     rowMemo.set(ps, out);
     return out;
   };
-  return { yearOpen, end, of, account: accountWindow, holding: holdingWindow };
+  return { open: yearOpen, end, of, account: accountWindow, holding: holdingWindow };
 }
 
 /**

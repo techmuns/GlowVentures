@@ -301,6 +301,11 @@ const KEY_ALIASES = Object.freeze({
   "vantage-oak-fund-vof-i-cl-a2-restricted-transferability": "vof-i-class-a2",
   "sbi": "state-bank-of-india",
   "the-karur-vys": "karur-vysya-bank",
+  // Exact ISIN match, INE647U01026 → CLEANMAX (Stage 10ky): `CLEAN MAX ENV-EQ 1/-`
+  // on Ankita's Motilal demat 1201090012838316 is the company Ajay's ICICI NSDL
+  // statement spells out. These are two holdings of 94,967 shares each, not one
+  // holding counted twice (see `fundNavs.test.ts`), and now one company.
+  "clean-max-env": "clean-max-enviro-energy-solutions",
   "crompton-greaves-consumer-elec": "crompton-greaves-consumer-electrical",
 });
 
