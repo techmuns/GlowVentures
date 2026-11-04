@@ -65,7 +65,7 @@ export function availableCardReturns(statement: Portfolio, display: readonly Pos
     excluded: fytdWindow.excluded, outside: fytdWindow.outside });
   // YTD from the first date we have, on the Monitor's own records (Stage 10kq).
   const year = ytdBook({ inputs, held: current, accounts: statement.accounts, end, assumptions: assumptions ?? null, money: String });
-  const ytd = make({ inception: false, type: 'xirr', start: year.yearOpen, end, inceptionRows: [], ...ytdSelection(year, inputs, current) });
+  const ytd = make({ inception: false, type: 'xirr', start: year.open, end, inceptionRows: [], ...ytdSelection(year, inputs, current) });
   // Latest usable history may begin on different dates for different accounts.
   // Measure each from its own verified opening, then pool only those windows.
   const windows: AccountWindow[] = [], excluded: ReturnGap[] = [], outside: ReturnGap[] = [];
