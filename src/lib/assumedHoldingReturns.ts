@@ -4,6 +4,7 @@ import type { MarketHistory, MarketInstrument, MarketResult } from './marketRetu
 import type { ReturnGap, ReturnUnit } from './selectedSegmentReturns';
 import { marketHoldingKey } from './marketReturns';
 import { projectActions, type ActionFeed } from './corporateActions';
+import { acquisitionIdentity, fundUnitBasis } from '../../shared/fundUnitActions.mjs';
 
 export type HoldingAssumption = { owner: string; statementDate: string; quantity: number; source: string;
   opening: number; closing: number; income: number; incomeDates: { date: string; amount: number }[];
@@ -116,9 +117,27 @@ export function assumedHolding(p: Position, a: Account | undefined, start: strin
   if (h.basis === 'nav') {
     // “Growth Opportunities Fund — IDCW” is a dividend option, despite its
     // strategy name. Require the option suffix, and reject payout wording.
-    const growth = /\b(?:growth|accumulation)(?:\s+option)?\s*$/i.test(h.name)
+    // ICICI Prudential files its growth option as “Cumulative” (as `fundNavs`
+    // already reads it), so that suffix is the growth option too. A gold or
+    // silver ETF holds bullion, which earns nothing to distribute: AMFI files
+    // it in its own ETF category and names no option (Stage 10kp).
+    const bullion = /-\s*(?:gold|silver) ETF\s*$/i.test(h.category ?? '');
+    const growth = (bullion || /\b(?:growth|accumulation|cumulative)(?:\s+option)?\s*$/i.test(h.name))
       && !/\b(?:idcw|reinvestment|payout)\b/i.test(h.name);
     if (!growth) return gap('This fund may pay distributions. Its dated payouts are needed as well as NAVs.');
+    // A fund whose units were sub-divided (Stage 10hq): the history is on
+    // today's unit, so the statement's count is converted through the same
+    // documented terms the NAV overlay uses, and must agree with the series.
+    const navSplits = (h.splits ?? []).filter(x => x.date > anchor.date && x.date <= h.last);
+    const source = acquisitionIdentity(anchor.position);
+    const basis = source.isin ? fundUnitBasis(source.isin, anchor.date, h.last) : null;
+    if (navSplits.length || basis?.actions.length) {
+      if (!basis || basis.reason || basis.actions.length !== navSplits.length
+        || basis.actions.some(a => !navSplits.some(x => x.date === a.exDate && Math.abs(x.factor - a.factor) < 1e-6))) {
+        return gap('The NAV history and unit-split records do not match. A checked NAV and unit balance are needed.', basis?.reason ?? undefined);
+      }
+      quantity = anchor.quantity * basis.factor;
+    }
   } else {
     // Close is already split-adjusted to the history's last day. Put source units on
     // that SAME basis, then use public gross entitlements without dividend reinvestment.
