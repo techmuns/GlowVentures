@@ -31,6 +31,10 @@ export function verifyCustodyLinks(positions, accounts, documents, links = CUSTO
     const newer = acc.get(link.fundAccountId), older = acc.get(link.custodyAccountId);
     if (!newer || !older) continue;
     const evidence = docs.get(link.document);
+    // Until its evidence statement is in the archive the link abstains and the
+    // older custody balance stands (a rehearsal replays that statement as a new
+    // upload). A statement that is present and disagrees still throws.
+    if (!evidence) continue;
     const holdingIndex = evidence?.holdings?.findIndex(h => h.isin === link.isin && h.custodyRematOn === link.rematOn) ?? -1;
     if (older.ownerId !== link.ownerId || newer.ownerId !== link.ownerId
       || evidence?.ownerId !== link.ownerId || evidence.status !== 'ok' || holdingIndex < 0
