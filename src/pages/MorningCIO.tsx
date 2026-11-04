@@ -381,7 +381,7 @@ export function MorningCIO() {
     const counted = cap.counting.counted;
     const distFig = figuresOf(pbook.folios, true);
     /**
-     * THE PRIVATE LINE ON THE RETURN CARDS (Stage 10kz) is Private Market's own
+     * THE PRIVATE LINE ON THE RETURN CARDS (Stage 10la) is Private Market's own
      * headline, struck by the same three calls that page makes
      * (`privateScope` → `fundRollup`): its value, and its unrealised gain since
      * investment over the valued holdings. Private investments sit outside the
@@ -1076,21 +1076,23 @@ export function MorningCIO() {
     {r.total.units.length ? 'Available data' : 'No usable return records'} · {r.coveredHoldings} of {r.totalHoldings} holdings<br />
     {money(r.coveredValue)} covered · {r.coveredAccounts} {r.coveredAccounts === 1 ? 'account' : 'accounts'} <HoldingAssumptionInfo units={r.total.units} /></span>;
   /**
-   * THE THREE RETURN CARDS' CAPTION (Stage 10kz; the family, 4 Nov 2026): how
+   * THE THREE RETURN CARDS' CAPTION (Stage 10la; the family, 4 Nov 2026): how
    * much of the PUBLIC investments the figure covers, by value — what is
    * measured apart from what is held at its last value, so the caption never
    * widens the figure — and the private investments on their own line.
    */
   const periodCaption = (r: AvailableCardReturn) => {
-    const c = r.coverage, pub = c.publicValue, covered = c.measuredValue + c.heldValue, waiting = pub - covered;
-    const share = (v: number) => (pub > 0 ? Math.round((v / pub) * 100) : 0), width = (v: number) => `${pub > 0 ? Math.min(100, (v / pub) * 100) : 0}%`;
+    const c = r.coverage, pub = c.publicValue, covered = c.measuredValue + c.heldValue, waiting = c.waitingValue;
+    const share = (v: number) => (pub > 0 ? Math.min(100, Math.round((v / pub) * 100)) : 0), width = (v: number) => `${pub > 0 ? Math.min(100, (v / pub) * 100) : 0}%`;
     const pl = m.privateLine;
-    return <span data-card-coverage data-card-period
+    // A block of its own, so the declared reason covers its lines (`data-prose-ok`).
+    return <div data-card-coverage data-card-period data-prose-ok="the share of the public investments the return covers, on the card at the family's request (4 Nov 2026)"
       data-card-gain={r.total.gain ?? ''} data-card-return={r.total.returnPct ?? ''}
       data-card-covered={r.coveredHoldings} data-card-holdings={r.totalHoldings}
       data-card-value={r.coveredValue} data-card-accounts={r.coveredAccounts} data-card-total-accounts={r.totalAccounts}
       data-card-from={r.from ?? ''} data-card-to={r.to ?? ''} data-card-basis={r.total.measured?.basis ?? ''}
       data-card-public={pub} data-card-measured={c.measuredValue} data-card-held={c.heldValue} data-card-waiting={waiting}
+      data-card-measured-holdings={c.measuredHoldings} data-card-measured-accounts={c.measuredAccounts} data-card-held-count={c.heldUnits.length}
       data-card-private={pl.value} data-card-private-gain={pl.pnl ?? ''}>
       <span className="mb-1 flex h-1.5 w-full overflow-hidden rounded-full bg-ink-700" aria-hidden>
         <span className="h-full bg-champagne-500" style={{ width: width(c.measuredValue) }} />
@@ -1098,9 +1100,11 @@ export function MorningCIO() {
       </span>
       Covers {share(covered)}% of public investments · {money(covered)} of {money(pub)}<br />
       {share(c.measuredValue)}% measured · {share(c.heldValue)}% held at last value
-      {waiting > 5e5 && <> · {money(waiting)} waiting for prices</>} <HoldingAssumptionInfo units={r.total.units} /><br />
-      <Link to="/private-market" className="ring-focus rounded hover:text-champagne-400" data-card-private-line>
-        Private investments {money(pl.value)}{pl.pnl != null && <> · {money(pl.pnl, true)} since investment</>} ›</Link></span>;
+      {waiting > 5e5 && <> · {money(waiting)} waiting for prices</>}
+      {/* Labelled assumed on the face; the owner-specific explanation is behind the card's one info button. */}
+      {(() => { const n = r.total.units.filter(u => u.assumption).length; return n > 0 && <span data-holding-assumption data-assumed-count={n} className="text-slate-500"> · assumed</span>; })()}<br />
+      <span data-card-private-line title="Private investments are reported apart, at Private Market's latest value and gain since investment — not this period's return.">
+        Private investments {money(pl.value)}{pl.pnl != null && <> · {money(pl.pnl, true)} since investment</>}</span></div>;
   };
   const history = m.available.history;
   const historyAnnual = history.total.measured?.basis === 'annual';

@@ -211,7 +211,7 @@ export function ytdBook({ inputs, held, accounts, end, assumptions, money, open:
       const a = accounts.find((x) => x.accountId === p.accountId);
       const recorded = a ? recordedYearWindow(p, a, yearOpen, end, assumptions) : null;
       if (recorded) { holdingMemo.set(p, recorded); return recorded; }
-      // THE FURTHER FIRST VALUES THE ARCHIVE CARRIES (Stage 10kz, `periodRules.ts`):
+      // THE FURTHER FIRST VALUES THE ARCHIVE CARRIES (Stage 10la, `periodRules.ts`):
       // a fund NAV printed on a later statement, an older balance and the broker's
       // trades since — each only where its own evidence holds.
       const extra = a ? statementNavWindow(p, a, yearOpen, end) ?? tradedWindow(p, a, yearOpen, end, assumptions) : null;

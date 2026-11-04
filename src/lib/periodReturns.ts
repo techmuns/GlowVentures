@@ -102,7 +102,7 @@ export type AccountInput = {
    * the whole, never a gap in it.
    */
   outside?: string | null;
-  /** Measured from consecutive statements holding the same units (Stage 10kz): the evidence, in words. */
+  /** Measured from consecutive statements holding the same units (Stage 10la): the evidence, in words. */
   unitWindow?: string;
 };
 
@@ -116,6 +116,13 @@ export type AccountWindow = {
   openedInWindow: boolean;
   closeDate: string;
   closeValue: number;
+  /**
+   * CARRIED AT ITS LATEST VALUE TO THE PERIOD'S END (Stage 10la; the family,
+   * 4 Nov 2026). A pooled measure counts the closing value as still at work
+   * until this day, not withdrawn on `closeDate`; nothing is added to the gain
+   * and `closeDate` stays the date the record actually measures.
+   */
+  carriedTo?: string;
   flows: Flow[];
   capitalIn: number;
   capitalOut: number;
@@ -308,12 +315,14 @@ export function windowReturns(accounts: AccountInput[], start: string, end: stri
 }
 
 /** The pooled dated flows of a window, investor's view: each opening an outflow, each closing an inflow. */
+/** Where a window's closing value leaves the pool: its own close, or the day it is carried to. */
+const endOf = (r: AccountWindow) => (r.carriedTo && r.carriedTo > r.closeDate ? r.carriedTo : r.closeDate);
 export function windowFlows(rows: AccountWindow[]): DatedFlow[] {
   const out: DatedFlow[] = [];
   for (const r of rows) {
     if (r.openValue !== 0) out.push({ date: new Date(t(r.openDate)), amount: -r.openValue });
     for (const f of r.flows) out.push({ date: new Date(t(f.date)), amount: f.amount });
-    if (r.closeValue !== 0) out.push({ date: new Date(t(r.closeDate)), amount: r.closeValue });
+    if (r.closeValue !== 0) out.push({ date: new Date(t(endOf(r))), amount: r.closeValue });
   }
   return out;
 }
@@ -347,7 +356,7 @@ function absoluteUnderAYear(a: Measured, type: ReturnType, days: number): Measur
 export function measureWindow(rows: AccountWindow[], type: ReturnType, money: (n: number) => string, opts: MeasureOptions = {}): Measured {
   if (!rows.length) return { shown: false, reason: "no account can be measured over this window", formula: FORMULAS[type] };
   const from = rows.map((r) => r.openDate).sort()[0];
-  const to = rows.map((r) => r.closeDate).sort().at(-1)!;
+  const to = rows.map(endOf).sort().at(-1)!;
   const D = daysBetween(from, to);
   const V0 = rows.reduce((s, r) => s + r.openValue, 0);
   const V1 = rows.reduce((s, r) => s + r.closeValue, 0);

@@ -1179,7 +1179,7 @@ export type ShareEvent = { type: "split"; exDate: string; factor: number };
  * `recordAsOf`) on the LIVE basis only.
  */
 /**
- * WHAT THE RETURN CARDS MAY START FROM (Stage 10kz, `scripts/lib/periodEvidence.mjs`).
+ * WHAT THE RETURN CARDS MAY START FROM (Stage 10la, `scripts/lib/periodEvidence.mjs`).
  * Read by the period engine to choose a start date; none of it is a holding,
  * a value or part of any total.
  */

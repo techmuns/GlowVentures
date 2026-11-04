@@ -5649,7 +5649,7 @@ function emit(book) {
   L.push(`export const BOOK_ADVISED_BALANCES: AdvisedBalance[] = ${j(book.advisedBalances)};`);
   L.push("");
   L.push("/**");
-  L.push(" * WHAT THE RETURN CARDS MAY START FROM (Stage 10kz, `scripts/lib/periodEvidence.mjs`): older");
+  L.push(" * WHAT THE RETURN CARDS MAY START FROM (Stage 10la, `scripts/lib/periodEvidence.mjs`): older");
   L.push(" * statements' balances of holdings still carried, statement-printed NAVs for fund units");
   L.push(" * with no public price, and accounts whose consecutive statements hold the same units.");
   L.push(" * Each row names its statement. Never a holding, a value or part of a total.");

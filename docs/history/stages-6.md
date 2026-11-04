@@ -1086,3 +1086,18 @@
 - HEG Graphite stays unmapped. SVAN's 30 Sep appraisal splits the same 8,220 HEG Ltd shares into HEG Advanced Materials (117.96) and HEG Graphite (309.42), which sum to the old 427.37: a demerger. HEG Graphite is on no NSE master, and `HEGAM` is the parent's price.
 - DSP Gold and Silver ETFs (3 holdings, ~₹20.7 Cr on the Motilal demats) had no history. DSP split both ten for one on 28 Aug 2026 under new ISINs (Stage 10hq), and AMFI publishes only the successor. `marketInstruments` now asks for a fund by its `pricingIsin`. `market-history` puts a successor's NAVs before the ex-date on today's unit from `FUND_UNIT_ACTIONS` and lists the split, as Yahoo's close is split-adjusted. `assumedHolding` converts the 31 Jul count through `fundUnitBasis` and refuses when the history's splits and the documented terms disagree. A bullion ETF ("ETFs - Gold ETF" / "Silver ETF", AMFI's category now on the history) counts as the growth option. A plain ISIN alias would have read the tenfold drop as a ~90% loss.
 - Measured off the book with today's public histories and corporate-action capture: the card's cover goes from 359 to 367 holdings (the page adds the live-priced shares). DSP Gold −3.7%, Silver −19.2% since 31 Jul; each close ties to the NAV overlay's value.
+
+### Stage 10la — The three return cards: each investment from its first value on record, the rest held at last value
+
+*"approve"* — the family, 4 Nov 2026, on the three cards' design (financial year, calendar year, available history).
+
+- One selection for every card and the Returns tab: `periodSelection` in `src/lib/availableCardReturns.ts` runs the Monitor's `ytdBook` with the period's `open` (31 Mar, 31 Dec, or `null` for each part's first record), so a card and its table never disagree.
+- Further first values, each only where its own evidence holds (`src/lib/periodRules.ts`, off `scripts/lib/periodEvidence.mjs` → `BOOK_EARLIER_BALANCES`, `BOOK_STATEMENT_UNIT_NAVS`, `BOOK_UNIT_WINDOWS`):
+  - consecutive statements with the same units, so no money moved between them (Buoyant, Founders, Mirae, ABSL);
+  - fund units at a NAV a later statement prints, linked by units that tie (Sanshi on Ajay's ICICI demat);
+  - an older balance plus the broker's dated trades, which must reconcile to the units held now (Yash, the bank shares);
+  - an older balance of the same units, opened on the first exchange close if the holding listed later (ESDS, NSE).
+- Whatever public holding none of these measures is **held at its last value**: 0%, in the base from its valuation date, and named in the ⓘ with its reason. A price service that did not answer is "waiting for prices", never held.
+- Every part is carried at its latest value to the card's end in the pooled measure (`AccountWindow.carriedTo`). A record that closes on 30 Sep is no longer read as money withdrawn that day, and each record keeps the date it actually measures.
+- The caption shows coverage of public investments by value, split into measured and held, with private investments on their own line (Private Market's value and gain since investment, not this period's). There is one ⓘ per card, and the assumed label sits on the face.
+- Merges #331 (DSP bullion ETFs across their split, ICICI "Cumulative", Deepak) and #342 (`ytdBook({ open })`).

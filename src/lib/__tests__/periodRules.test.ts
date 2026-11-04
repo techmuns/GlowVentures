@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict';
 import { earlierBalanceOptions, heldAtLastValue, statementNavWindow, tradedWindow } from '../periodRules';
 import { periodEvidence } from '../../../scripts/lib/periodEvidence.mjs';
+import { measureWindow, type AccountWindow } from '../periodReturns';
 import type { Account, EarlierBalance, Position } from '../types';
 
 /**
- * THE RETURN CARDS' EXTRA STARTS (Stage 10kz): each first value the archive
+ * THE RETURN CARDS' EXTRA STARTS (Stage 10la): each first value the archive
  * carries is used only where its own evidence holds, and whatever none of them
  * measures is held at its last value — a named 0%, never a blended zero.
  */
@@ -118,6 +119,18 @@ const march: EarlierBalance[] = [{ accountId: 'd', securityKey: 'example-d', isi
   assert.deepEqual(periodEvidence({ byAccount, accounts, positions, accountReturnRecords: { x: { record: {} }, y: { record: {} } }, links }).earlierBalances, []);
   // A NAV link whose units tie to no book holding throws rather than price another security.
   assert.throws(() => periodEvidence({ byAccount, accounts, positions: positions.slice(0, 2), accountReturnRecords: records, links }), /not verified/);
+}
+
+// CARRIED AT ITS LATEST VALUE TO THE END: a record that closes on 30 Sep stays
+// invested in the pool — the same gain, never money withdrawn on 30 Sep.
+{
+  const w = (closeDate: string, closeValue: number, carriedTo?: string): AccountWindow => ({ accountId: closeDate, label: closeDate, owner: '', openDate: '2026-03-31',
+    openValue: 100, openedInWindow: false, closeDate, closeValue, carriedTo, flows: [], capitalIn: 0, capitalOut: 0, gain: closeValue - 100 });
+  const rows = [w('2026-09-30', 110), w('2026-10-31', 100)];
+  const plain = measureWindow(rows, 'absolute', String), carried = measureWindow([{ ...rows[0], carriedTo: '2026-10-31' }, rows[1]], 'absolute', String);
+  near(plain.working!.gain, 10); near(carried.working!.gain, 10);
+  near(carried.pct!, 10 / 200 * 100); // both at work all 214 days
+  assert.ok(plain.pct! > carried.pct!, 'an early close read as a withdrawal shrinks the base');
 }
 
 console.log('ok   period rules — broker trades, earlier balances, printed NAVs, held at last value, build evidence');

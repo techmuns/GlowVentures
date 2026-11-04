@@ -74,7 +74,7 @@ near(availableCardReturns(statement, positions, [closed], today).history.total.g
 const book = { accounts: BOOK_ACCOUNTS, positions: BOOK_POSITIONS, accountReturnRecords: BOOK_ACCOUNT_RETURN_RECORDS, privateMarkets: {} } as Portfolio;
 const display = dedupedPositions(BOOK_POSITIONS), actual = availableCardReturns(book, display, statementReturnInputs(book), today);
 assert.ok(actual.gain.total.gain != null && actual.gain.coveredHoldings > 0 && actual.gain.coveredHoldings < currentHoldings(display).length);
-// THE FINANCIAL YEAR FROM THE FIRST VALUE ON RECORD (Stage 10kz): the 17
+// THE FINANCIAL YEAR FROM THE FIRST VALUE ON RECORD (Stage 10la): the 17
 // accounts verified from 31 March, unchanged, plus the six whose consecutive
 // statements hold the same units (Buoyant ×2, Founders ×2, Mirae, ABSL),
 // each from its first statement this year.

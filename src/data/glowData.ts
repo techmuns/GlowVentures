@@ -64914,7 +64914,7 @@ export const BOOK_ADVISED_BALANCES: AdvisedBalance[] = [
 ];
 
 /**
- * WHAT THE RETURN CARDS MAY START FROM (Stage 10kz, `scripts/lib/periodEvidence.mjs`): older
+ * WHAT THE RETURN CARDS MAY START FROM (Stage 10la, `scripts/lib/periodEvidence.mjs`): older
  * statements' balances of holdings still carried, statement-printed NAVs for fund units
  * with no public price, and accounts whose consecutive statements hold the same units.
  * Each row names its statement. Never a holding, a value or part of a total.

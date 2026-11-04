@@ -30,7 +30,7 @@ export function AvailableReturnCoverage({ line: l, selection, accounts, money, f
   const gaps = [...l.missing].sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
   const count = new Set(l.units.map(u => u.accountId)).size;
   const assumed = l.units.filter(u => u.assumption);
-  // HELD AT LAST VALUE (Stage 10kz): named one by one, never shown as measured.
+  // HELD AT LAST VALUE (Stage 10la): named one by one, never shown as measured.
   const held = l.units.filter(u => u.held).sort((a, b) => b.close - a.close);
   const BASIS: Record<string, string> = { 'unit-window': 'same units on consecutive statements', 'statement-nav': 'NAV printed on a later statement',
     'broker-trades': 'older balance and the broker’s dated trades', 'earlier-balance': 'share count on an older statement', 'listing-day': 'from its listing day' };

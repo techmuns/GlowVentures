@@ -18826,18 +18826,45 @@ const AVAILABLE_CARDS_BOOK = await (async () => {
     const rootPath = decodeURIComponent(new URL('..', import.meta.url).pathname);
     const out = await build({ stdin: { contents: `
       import { availableCardReturns, statementReturnInputs } from './src/lib/availableCardReturns';
-      import { dedupedPositions } from './src/lib/analytics';
+      import { currentHoldings, dedupedPositions } from './src/lib/analytics';
+      import { marketInstruments } from './src/lib/useMarketReturns';
+      import { assumedHoldingBook } from './src/lib/assumedHoldingBook';
       import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_ACCOUNT_RETURN_RECORDS } from './src/data/glowData';
       const book = { accounts: BOOK_ACCOUNTS, positions: BOOK_POSITIONS, accountReturnRecords: BOOK_ACCOUNT_RETURN_RECORDS, privateMarkets: {} };
-      export const cards = (display) => availableCardReturns(book, dedupedPositions(display), statementReturnInputs(book), new Date());
+      // THE PAGE'S OWN CONDITIONS ON THIS RUN (Stage 10la): the preview serves no
+      // price history, so every one fails, and the saved action capture is read.
+      export const cards = (display, actions) => {
+        const shown = dedupedPositions(display), instruments = marketInstruments(currentHoldings(shown));
+        const histories = Object.fromEntries([...instruments.values()].map(i => [i.key, { ok: false, reason: 'The history service could not be reached. Retry to load it again.' }]));
+        return availableCardReturns(book, shown, statementReturnInputs(book), new Date(), assumedHoldingBook({ actions, instruments, histories }));
+      };
     `, resolveDir: rootPath }, bundle: true, write: false, format: 'esm', platform: 'node', alias: { '@': rootPath + '/src' }, logLevel: 'error' });
     const mod = await import(`data:text/javascript;base64,${Buffer.from(out.outputFiles[0].text).toString('base64')}`);
-    return mod.cards(bookArray(readFileSync(new URL('../src/data/glowData.ts', import.meta.url), 'utf8'), 'BOOK_POSITIONS'));
+    const saved = (() => { try { return JSON.parse(readFileSync(new URL('../public/data/corporate-actions.json', import.meta.url), 'utf8')); } catch { return null; } })();
+    return mod.cards(bookArray(readFileSync(new URL('../src/data/glowData.ts', import.meta.url), 'utf8'), 'BOOK_POSITIONS'), saved);
   } catch (e) { console.error('Headline coverage inputs unavailable:', e.message); return null; }
 })();
 const headlineMatches = (tile, expected, field = 'return') => {
   if (!tile || !expected || !tile.coverage || tile.returnInfo !== 1) return false;
   const raw = tile.coverage, value = field === 'gain' ? expected.total.gain : expected.total.returnPct;
+  /**
+   * THE THREE RETURN CARDS (Stage 10la) also hold each public holding no record
+   * measures at its last value: 0% and no gain, but in the base. Which holdings
+   * those are follows the page's live rows (depository-valued funds, rolled
+   * shares), which this statement-only book does not carry — so the MEASURED
+   * part is struck exactly (gain, holdings, accounts) and the return to within
+   * the card's own rounding.
+   */
+  if (raw.cardPeriod != null && field === 'return') {
+    const shown = pctIn(tile.value)?.v, c = expected.coverage;
+    return value != null && Number.isFinite(shown) && Math.abs(shown - value) <= .051
+      && Math.abs(Number(raw.cardGain) - expected.total.gain) < .001
+      && Math.abs(Number(raw.cardReturn) - value) <= .05
+      && Number(raw.cardMeasuredHoldings) === c.measuredHoldings
+      && Number(raw.cardMeasuredAccounts) === c.measuredAccounts
+      && Number(raw.cardHeldCount) > 0 && Number(raw.cardHeld) > 0
+      && /Covers \d+% of public investments/.test(tile.sub ?? '');
+  }
   const shown = field === 'gain' ? money2cr(tile.value ?? '') * 1e7 : pctIn(tile.value)?.v;
   return value != null && Number.isFinite(shown) && Math.abs(shown - value) <= (field === 'gain' ? compactTieCr(shown / 1e7) * 1e7 : .051)
     && Math.abs(Number(raw.cardGain) - expected.total.gain) < .001

@@ -23,7 +23,7 @@ export function statementReturnInputs(statement: Portfolio, unitWindows: Readonl
   }).map(i => ({ ...i, outside: nothingToMeasure(statement, statement.accounts.find(a => a.accountId === i.accountId)!) }))
     .map(i => {
       /**
-       * NO MONEY MOVED BETWEEN THESE STATEMENTS (Stage 10kz). An account whose
+       * NO MONEY MOVED BETWEEN THESE STATEMENTS (Stage 10la). An account whose
        * verified record is refused, but whose consecutive statements hold
        * exactly the same units (`BOOK_UNIT_WINDOWS`), is measured from the
        * first of them: its value moved by the market alone, with no dated flow.
@@ -37,7 +37,7 @@ export function statementReturnInputs(statement: Portfolio, unitWindows: Readonl
 }
 
 /**
- * THE THREE RETURN CARDS, ONE RULE (Stage 10kz; the family, 4 Nov 2026): each
+ * THE THREE RETURN CARDS, ONE RULE (Stage 10la; the family, 4 Nov 2026): each
  * account and holding from its first value on record in the period — the
  * Monitor's own `ytdBook` with the period's open — and every public holding no
  * record measures held at its last value. Financial year from 31 March, the
@@ -63,7 +63,8 @@ export function periodSelection({ inputs, current, accounts, end, assumptions, o
   const whole = new Set(picked.windows.map(w => w.accountId));
   const keyOf = (x: { accountId: string; securityKey?: string }) => `${x.accountId}|${x.securityKey}`;
   const measured = new Set((picked.assumedUnits ?? []).flatMap(u => u.positions.map(keyOf)));
-  const pending = new Set((picked.assumptionGaps ?? []).filter(g => /still loading/i.test(g.reason)).map(keyOf));
+  // Prices still loading, or a price service that did not answer, wait for prices: never held.
+  const pending = new Set((picked.assumptionGaps ?? []).filter(g => /still loading|could not load/i.test(g.reason)).map(keyOf));
   const held = assumptions ? current.filter(p => p.marketSide !== 'private' && !whole.has(p.accountId) && !measured.has(keyOf(p)) && !pending.has(keyOf(p)))
     .flatMap(p => {
       const a = accountOf.get(p.accountId);
@@ -72,8 +73,13 @@ export function periodSelection({ inputs, current, accounts, end, assumptions, o
       return u ? [u] : [];
     }) : [];
   const heldKeys = new Set(held.flatMap(u => u.positions.map(keyOf)));
+  // EVERY PART IS CARRIED AT ITS LATEST VALUE TO THE END (the family, 4 Nov 2026):
+  // a record that closes on 30 Sep is still invested, never money taken out that
+  // day. Each keeps the date it measures; only the pooled weights run on.
+  const carry = (w: AccountWindow): AccountWindow => (w.closeDate < end ? { ...w, carriedTo: end } : w);
   return { inception: false, type: 'xirr', start, end, inceptionRows: [], ...picked,
-    assumedUnits: [...(picked.assumedUnits ?? []), ...held],
+    windows: picked.windows.map(carry),
+    assumedUnits: [...(picked.assumedUnits ?? []), ...held].map(u => (u.window ? { ...u, window: carry(u.window) } : u)),
     assumptionGaps: (picked.assumptionGaps ?? []).filter(g => !heldKeys.has(keyOf(g))) };
 }
 
@@ -117,15 +123,21 @@ export function availableCardReturns(statement: Portfolio, display: readonly Pos
      * COVERAGE BY VALUE, OF THE PUBLIC INVESTMENTS (the family, 4 Nov 2026):
      * a holding count read as broken. Private investments are their own line;
      * what is held at its last value is said apart from what is measured, so
-     * the caption never widens the figure it describes.
+     * the caption never widens the figure it describes. An overdrawn balance
+     * is not an investment, so the public total is of holdings with value.
      */
     const coveredKeys = new Set(result.total.units.flatMap(u => u.positions.map(p => `${p.accountId}|${p.securityKey}`)));
     const heldKeys = new Set(result.total.units.filter(u => u.held).flatMap(u => u.positions.map(p => `${p.accountId}|${p.securityKey}`)));
-    const publicRows = current.filter(isPublic), valueOf = (ps: Position[]) => ps.reduce((t, p) => t + p.marketValue, 0);
+    const publicRows = current.filter(p => isPublic(p) && p.marketValue > 0), valueOf = (ps: Position[]) => ps.reduce((t, p) => t + p.marketValue, 0);
     const coverage = { publicValue: valueOf(publicRows),
       measuredValue: valueOf(publicRows.filter(p => coveredKeys.has(`${p.accountId}|${p.securityKey}`) && !heldKeys.has(`${p.accountId}|${p.securityKey}`))),
       heldValue: valueOf(publicRows.filter(p => heldKeys.has(`${p.accountId}|${p.securityKey}`))),
+      // What no record covers yet, as a positive amount: an overdrawn balance is not "waiting".
+      waitingValue: valueOf(publicRows.filter(p => !coveredKeys.has(`${p.accountId}|${p.securityKey}`))),
       heldUnits: result.total.units.filter(u => u.held),
+      // What the figure MEASURES, apart from what it holds flat: holdings and accounts.
+      measuredHoldings: new Set(result.total.units.filter(u => !u.held).flatMap(u => u.positions.map(p => `${p.accountId}|${p.securityKey}`))).size,
+      measuredAccounts: new Set(result.total.units.filter(u => !u.held).map(u => u.accountId)).size,
       privateValue: valueOf(current.filter(p => !isPublic(p))) };
     return { ...result, selection, coveredAccounts, totalAccounts, totalHoldings: current.length,
       from: dates[0] ?? null, to: closes.at(-1) ?? null, notes, starts, fullPeriod, coverage };

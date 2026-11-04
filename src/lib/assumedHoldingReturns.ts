@@ -8,10 +8,10 @@ import { acquisitionIdentity, fundUnitBasis } from '../../shared/fundUnitActions
 
 export type HoldingAssumption = { owner: string; statementDate: string; quantity: number; source: string;
   opening: number; closing: number; income: number; incomeDates: { date: string; amount: number }[];
-  /** Listed after the period opened: measured from its first exchange close (Stage 10kz). */
+  /** Listed after the period opened: measured from its first exchange close (Stage 10la). */
   listedFrom?: string };
 /**
- * Options a period surface may pass (Stage 10kz), both off by default so every
+ * Options a period surface may pass (Stage 10la), both off by default so every
  * other caller keeps the one rule unchanged:
  *   • `anchor` — an EARLIER dated balance of the same units (an older statement
  *     of the same account, `BOOK_EARLIER_BALANCES`), used where no trade,
