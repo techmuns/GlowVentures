@@ -7,6 +7,9 @@
 //   npm run build-private-rounds -- --only zepto,stay-vista
 //   npm run build-private-rounds -- --import a.json b.json
 //                                                take a researched batch as is
+//   npm run build-private-rounds -- --import a.json --merge
+//                                                fold a batch into the record:
+//                                                nothing held dropped or overwritten
 //   npm run build-private-rounds -- --check      validate; write nothing
 //
 // *"Fetch information like valuation, funding rounds, etc. for all the private
@@ -108,7 +111,9 @@ function cleanCompany(reg, c, seen, problems, checkedOn) {
   // dropped whole, since its figures cannot be split between them.
   const mentions = (c?.familyMentions ?? []).flatMap((m) => {
     const who = String(m?.who ?? "");
-    const said = String(m?.text ?? (who && m?.what ? `${who}: ${m.what}` : m?.says ?? ""));
+    const told = String(m?.text ?? (who && m?.what ? `${who}: ${m.what}` : m?.says ?? ""));
+    // A line that does not itself name the member is printed with the member's name first.
+    const said = who && !/Jaisinghani/i.test(told) ? `${who} — ${told}` : told;
     const people = who.split(/;|,|\band\b/).map((x) => x.trim()).filter(Boolean);
     const member = (x) => FAMILY_NAME.test(/Jaisinghani|glow/i.test(x) ? x : `${x} Jaisinghani`);
     if (FENCED.test(said) || (who ? !people.every(member) : !FAMILY_NAME.test(said))) return [];
@@ -132,13 +137,33 @@ const sortRounds = (rs) => [...rs].sort((a, b) => dayOf(a.date).localeCompare(da
 const normUrl = (u) => u.replace(/^https?:\/\/(www\.)?/, "").replace(/[#?].*$/, "").replace(/\/$/, "").toLowerCase();
 const roundKey = (r) => `${r.date.slice(0, 7)}|${r.round.toLowerCase().replace(/[^a-z0-9]+/g, "")}`;
 
-/** A refresh adds and updates; it never deletes a sourced round. */
+/**
+ * A refresh adds and fills; it never deletes a sourced round, and never
+ * blanks or overwrites a figure one already carries (Stage 10kz): a round the
+ * research returns again keeps every figure it had, takes a figure only where
+ * it had none, and gains the new sources. A figure the new research states
+ * differently is left as it was and reported, for a person to decide.
+ */
+const ROUND_FIGURES = ["amountRaised", "preMoney", "postMoney", "valuation", "pricePerShare", "sharesAllotted", "dateBasis", "note"];
+const conflicts = [];
+function mergeRound(prev, r, where) {
+  const out = { ...prev };
+  for (const k of ROUND_FIGURES) {
+    if (out[k] == null && r[k] != null) out[k] = r[k];
+    else if (out[k] != null && r[k] != null && k !== "note" && k !== "dateBasis" && JSON.stringify(out[k]) !== JSON.stringify(r[k])) {
+      conflicts.push(`${where} ${prev.round} ${prev.date}: ${k} kept ${JSON.stringify(out[k])}, research says ${JSON.stringify(r[k])}`);
+    }
+  }
+  out.leadInvestors = [...new Set([...(prev.leadInvestors ?? []), ...(r.leadInvestors ?? [])])];
+  out.sources = dedupeSources([...prev.sources, ...r.sources]);
+  return out;
+}
 function mergeCompany(old, next) {
   if (!old) return next;
   const byKey = new Map(old.rounds.map((r) => [roundKey(r), r]));
   for (const r of next.rounds) {
     const prev = byKey.get(roundKey(r));
-    byKey.set(roundKey(r), prev ? { ...r, sources: dedupeSources([...r.sources, ...prev.sources]) } : r);
+    byKey.set(roundKey(r), prev ? mergeRound(prev, r, old.id) : r);
   }
   return {
     ...next,
@@ -255,10 +280,15 @@ async function main() {
       for (const c of batch.companies ?? []) {
         const reg = PRIVATE_COMPANIES.find((r) => r.id === c.id);
         if (!reg) { problems.push(`${f}: ${c.id} is not in the registry — skipped`); continue; }
-        byId.set(reg.id, cleanCompany(reg, c, null, problems, batch.researchedOn ?? today()));
+        const next = cleanCompany(reg, c, null, problems, batch.researchedOn ?? today());
+        // `--merge` (Stage 10kz): a researched batch joins the record as a refresh
+        // does — nothing held is dropped or overwritten. Without it the batch
+        // replaces the company's record whole.
+        byId.set(reg.id, flag("--merge") ? mergeCompany(byId.get(reg.id), next) : next);
       }
     }
     for (const p of problems) console.warn(`  ${p}`);
+    for (const c of conflicts) console.warn(`  conflict: ${c}`);
     const out = writeStore(byId);
     console.log(`✓ ${out.companies.length} companies written · ${out.companies.reduce((s, c) => s + c.rounds.length, 0)} rounds`);
     return;
@@ -291,6 +321,7 @@ async function main() {
     }
   }
   for (const p of problems) console.warn(`  ${p}`);
+  for (const c of conflicts) console.warn(`  conflict: ${c}`);
   writeStore(byId);
 }
 

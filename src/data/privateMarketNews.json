@@ -326,7 +326,10 @@
     "url": "https://inc42.com/buzz/from-darwinbox-to-insurancedekho-indian-startups-raised-386-mn-this-week/",
     "title": "From Darwinbox To InsuranceDekho — Indian Startups Raised $386 Mn This Week",
     "published": "2025-03-08",
-    "fold": null
+    "fold": {
+     "key": "2025-03-06|Series M (first tranche)",
+     "why": "the same amount, an investor both name, the same day"
+    }
    },
    {
     "id": "6e52aa26c3fce00be5ebaa86",

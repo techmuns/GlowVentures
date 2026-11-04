@@ -654,7 +654,8 @@ And:
 - `npm run build-book` — the book and its report (then `build-review-columns`,
   `build-profiles` → `src/data/privateProfiles.json` from any profile table in `source/`).
 - `npm run build-private-rounds` — research the stalest private companies' rounds
-  (`ANTHROPIC_API_KEY`; `--import <batch.json>`, `--only <ids>`, `--check`).
+  (`ANTHROPIC_API_KEY`; `--import <batch.json>` [`--merge`: nothing held dropped or
+  overwritten, Stage 10kz], `--only <ids>`, `--check`).
 - `npm run import-private-market` — Inc42 funding rows and private-company headlines
   from Glow Central Research's site (`--offline` re-matches the rows held).
 - `npm run accounts-table` — the accounts table above (`-- --write` splices).
