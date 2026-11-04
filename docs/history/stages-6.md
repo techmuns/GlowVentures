@@ -1110,3 +1110,23 @@
 - Every part is carried at its latest value to the card's end in the pooled measure (`AccountWindow.carriedTo`). A record that closes on 30 Sep is no longer read as money withdrawn that day, and each record keeps the date it actually measures.
 - The caption shows coverage of public investments by value, split into measured and held, with private investments on their own line (Private Market's value and gain since investment, not this period's). There is one ⓘ per card, and the assumed label sits on the face.
 - Merges #331 (DSP bullion ETFs across their split, ICICI "Cumulative", Deepak) and #342 (`ytdBook({ open })`). `build-upstox-instruments` is re-run, so Deepak (now on NSE) carries its listed ISIN to Glow Central Research, and the map also covers Man Industries, Kingfa and Sotefin on BSE.
+
+### Stage 10lb — Our book vs benchmarks draws the return card's own line; Gain / Loss covers every investment
+
+*"how can our book by 6.1% when all the above things are showing 12% … everything should match … as i change time filters it would change"* and *"make coverage 100%"*, from the family on 4 Nov 2026.
+
+- **The chart is the card.** `NavVsIndex` draws the selected card's selection (`availableCardReturns`, the same rows, histories and records as Morning CIO's cards). On each day it shows the card's figure as if the period ended there (`src/lib/periodLine.ts`), so its last point is the card to the decimal.
+  - Each benchmark is the same dated money put into the index (`pmeWindowRows`), which is the card's own "vs" figure.
+  - The picker offers the financial year and the calendar year.
+  - Available history is left out: a few small holdings reach back to 2023 and nearly all the money joins in 2026, so a money-weighted line swings far past anything the book did (−30% to +130%). That line waits on the family's choice of measure.
+  - Records carry their dated values between open and close (`AccountWindow.marks`: statement marks, published closes, printed NAVs). Nothing is interpolated.
+- **Gain / Loss: 100% of investments.**
+  - A holding is measured from its purchase record where there is one, otherwise from its first value on record. That second case uses the available-history card's unit, marked `sinceFirst`.
+  - What neither measures is held at its value: no gain, in the base, named with the record it needs.
+  - The caption reads "S% since investment · F% from first value · H% held at value".
+  - Since investment accepts only units marked `sinceFirst` or `held`, so an assumed holding never stands in for a purchase cost.
+- A held value is measured on its valuation date and only carried to the end, so it sets neither a card's dates nor its end (Stage 10la follow-up, `heldAtLastValue`).
+- Checks:
+  - `scripts/dev/page-book.ts` gives the page's own rows with no quote feed, and the cards are re-derived from it exactly.
+  - Thirteen NAV checks that asserted the old engine (chained links, statement series, valuation-day starts) are retired. `NAV_CARD_LINE` strikes the new line against the cards.
+  - `check-nav-assumed` is rewritten for the new line.

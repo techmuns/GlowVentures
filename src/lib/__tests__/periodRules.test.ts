@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { earlierBalanceOptions, heldAtLastValue, statementNavWindow, tradedWindow } from '../periodRules';
 import { periodEvidence } from '../../../scripts/lib/periodEvidence.mjs';
-import { measureWindow, type AccountWindow } from '../periodReturns';
+import { measureWindow, pmeWindowRows, type AccountWindow } from '../periodReturns';
+import { periodLine, valueOn, windowOn } from '../periodLine';
 import type { Account, EarlierBalance, Position } from '../types';
 
 /**
@@ -131,6 +132,27 @@ const march: EarlierBalance[] = [{ accountId: 'd', securityKey: 'example-d', isi
   near(plain.working!.gain, 10); near(carried.working!.gain, 10);
   near(carried.pct!, 10 / 200 * 100); // both at work all 214 days
   assert.ok(plain.pct! > carried.pct!, 'an early close read as a withdrawal shrinks the base');
+}
+
+// THE RETURN LINE (Stage 10la): the card's measure ended on each day — its last
+// point is the card; between marks a record holds its value, plus money moved.
+{
+  const a: AccountWindow = { accountId: 'a', label: 'a', owner: '', openDate: '2026-03-31', openValue: 100, openedInWindow: false,
+    closeDate: '2026-09-30', closeValue: 150, marks: [{ date: '2026-06-30', value: 120 }], carriedTo: '2026-10-31',
+    flows: [{ date: '2026-07-15', amount: -20 }], capitalIn: 20, capitalOut: 0, gain: 30 };
+  const b: AccountWindow = { accountId: 'b', label: 'b', owner: '', openDate: '2026-08-06', openValue: 50, openedInWindow: false,
+    closeDate: '2026-08-06', closeValue: 50, carriedTo: '2026-10-31', flows: [], capitalIn: 0, capitalOut: 0, gain: 0 };
+  near(valueOn(a, '2026-05-01'), 100); near(valueOn(a, '2026-07-01'), 120); near(valueOn(a, '2026-07-20'), 140); near(valueOn(a, '2026-10-01'), 150);
+  assert.equal(windowOn(b, '2026-08-01'), null, 'a record joins on its own first value');
+  const line = periodLine([a, b], 'xirr', '2026-03-31', '2026-10-31');
+  assert.equal(line[0].date, '2026-03-31'); near(line[0].pct!, 0);
+  near(line.at(-1)!.pct!, measureWindow([a, b], 'xirr', String).working!.periodPct!, 1e-9);
+  near(line.at(-1)!.gain, 30);
+  assert.ok(line.some((p) => p.date === '2026-06-30') && line.some((p) => p.date === '2026-08-06'), 'drawn through every mark and opening');
+  // The index on the same money: its last point is the card's own comparison.
+  const level = (d: string) => (d < '2026-06-01' ? 1000 : d < '2026-09-01' ? 1100 : 1050);
+  const pme = periodLine([a, b], 'xirr', '2026-03-31', '2026-10-31', { level });
+  near(pme.at(-1)!.pct!, measureWindow(pmeWindowRows([a, b], level).rows!, 'xirr', String).working!.periodPct!, 1e-9);
 }
 
 console.log('ok   period rules — broker trades, earlier balances, printed NAVs, held at last value, build evidence');

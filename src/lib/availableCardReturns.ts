@@ -3,7 +3,7 @@ import { currentHoldings, dedupedPositions, mandateLabel } from './analytics';
 import { exitedRows } from './drilldown';
 import { nothingToMeasure } from './returns';
 import { accountInputs, periodStart, windowReturns, type AccountInput, type AccountWindow } from './periodReturns';
-import { selectedSegmentReturns, type ReturnGap, type ReturnSelection } from './selectedSegmentReturns';
+import { selectedSegmentReturns, type ReturnGap, type ReturnSelection, type ReturnUnit } from './selectedSegmentReturns';
 import { assumedHoldingReturns, type AssumedReturnBook } from './assumedHoldingReturns';
 import { ytdBook, ytdSelection } from './ytdAvailable';
 import { heldAtLastValue } from './periodRules';
@@ -89,6 +89,7 @@ export function availableCardReturns(statement: Portfolio, display: readonly Pos
   const calculationCurrent = currentHoldings(recorded), exited = exitedRows(recorded);
   const end = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
   const isPublic = (p: Position) => p.marketSide !== 'private';
+  const accountOf = new Map(statement.accounts.map(a => [a.accountId, a]));
   const make = (selection: ReturnSelection, availableHistory = false) => {
     // A selection that brings its own holding records (YTD's) keeps them.
     if (!selection.inception && assumptions && !selection.assumedUnits) {
@@ -144,7 +145,7 @@ export function availableCardReturns(statement: Portfolio, display: readonly Pos
     return { ...result, selection, coveredAccounts, totalAccounts, totalHoldings: current.length,
       from: dates[0] ?? null, to: closes.at(-1) ?? null, notes, starts, fullPeriod, coverage };
   };
-  const gain = make({ inception: true, type: 'absolute', start: null, end: null, windows: [], inceptionRows: [], excluded: [] });
+  const sinceInvestment = make({ inception: true, type: 'absolute', start: null, end: null, windows: [], inceptionRows: [], excluded: [] });
   // The three return cards: financial year, calendar year, available history (`periodSelection`).
   const period = (open: string | null | undefined) =>
     make(periodSelection({ inputs, current, accounts: statement.accounts, end, assumptions: assumptions ?? null, open }));
@@ -152,7 +153,34 @@ export function availableCardReturns(statement: Portfolio, display: readonly Pos
   const ytd = period(undefined);
   // XIRR from a year; under a year the absolute return, never a rate per year (Stage 10hk).
   const history = period(null);
-  return { gain, history, fytd, ytd };
+  /**
+   * GAIN SINCE INVESTMENT, OVER EVERY INVESTMENT (the family, 4 Nov 2026: "make
+   * coverage 100%"). A purchase record measures what it can; a holding it cannot
+   * is measured from its first value on record — the available-history card's
+   * own record of it, that value treated as money arriving that day — and what
+   * neither measures is held at its value: no gain, in the base, and named.
+   */
+  const keyOf = (p: Position) => `${p.accountId}|${p.securityKey}`;
+  const byCost = new Set(sinceInvestment.total.units.flatMap(u => u.positions.map(keyOf)));
+  const fromFirst = history.total.units.filter(u => !u.held && u.positions.length > 0 && u.positions.every(p => !byCost.has(keyOf(p))))
+    .map((u): ReturnUnit => ({ ...u, sinceFirst: true }));
+  const firstKeys = new Set(fromFirst.flatMap(u => u.positions.map(keyOf)));
+  const reasonOf = (p: Position) => sinceInvestment.total.missing.find(g => g.accountId === p.accountId && (!g.securityKey || g.securityKey === p.securityKey))?.reason
+    ?? 'No purchase cost or second value is on record.';
+  const heldAtValue = current.filter(p => p.marketValue > 0 && !byCost.has(keyOf(p)) && !firstKeys.has(keyOf(p))).map((p): ReturnUnit => {
+    const a = accountOf.get(p.accountId), on = p.navDate ?? a?.asOf ?? end;
+    const label = `${p.security} · ${a?.owner ?? ''} · ${a?.provider ?? ''} · account ${a?.accountNo ?? ''}`;
+    return { key: keyOf(p), accountId: p.accountId, label, positions: [p], gain: 0, invested: p.marketValue, close: p.marketValue,
+      from: on, to: on, held: { date: on, reason: reasonOf(p) } };
+  });
+  const gain = make({ inception: true, type: 'absolute', start: null, end: null, windows: [], inceptionRows: [], excluded: [],
+    assumedUnits: [...fromFirst, ...heldAtValue], assumptionGaps: [] });
+  const valueOfKeys = (keys: Set<string>) => current.filter(p => p.marketValue > 0 && keys.has(keyOf(p))).reduce((t, p) => t + p.marketValue, 0);
+  const gainCoverage = { totalValue: current.filter(p => p.marketValue > 0).reduce((t, p) => t + p.marketValue, 0),
+    sinceInvestmentValue: valueOfKeys(byCost), sinceFirstValue: valueOfKeys(firstKeys),
+    heldValue: valueOfKeys(new Set(heldAtValue.map(u => u.key))), sinceFirstCount: fromFirst.length, heldCount: heldAtValue.length };
+  return { gain: { ...gain, gainCoverage }, history, fytd, ytd };
 }
 
-export type AvailableCardReturn = ReturnType<typeof availableCardReturns>['gain'];
+export type AvailableCardReturn = ReturnType<typeof availableCardReturns>['fytd'];
+export type GainCardReturn = ReturnType<typeof availableCardReturns>['gain'];

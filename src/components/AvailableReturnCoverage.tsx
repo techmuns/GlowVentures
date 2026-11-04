@@ -32,6 +32,7 @@ export function AvailableReturnCoverage({ line: l, selection, accounts, money, f
   const assumed = l.units.filter(u => u.assumption);
   // HELD AT LAST VALUE (Stage 10la): named one by one, never shown as measured.
   const held = l.units.filter(u => u.held).sort((a, b) => b.close - a.close);
+  const fromFirst = l.units.filter(u => u.sinceFirst);
   const BASIS: Record<string, string> = { 'unit-window': 'same units on consecutive statements', 'statement-nav': 'NAV printed on a later statement',
     'broker-trades': 'older balance and the broker’s dated trades', 'earlier-balance': 'share count on an older statement', 'listing-day': 'from its listing day' };
   const bases = [...new Set(l.units.flatMap(u => u.basis ? [BASIS[u.basis]] : []))];
@@ -47,6 +48,10 @@ export function AvailableReturnCoverage({ line: l, selection, accounts, money, f
           <p className="font-semibold text-slate-100">Measured from</p>
           <p className="mt-1">Each investment counts from its first value on record in the period; that value is treated as money arriving that day.{bases.length ? ` Starts include: ${bases.join('; ')}.` : ''}</p>
           <ul className="mt-2 space-y-1 text-xs">{starts.map((x, i) => <li key={i}>{x.date ? fmtDate(x.date) : 'Bought this period, from nil'} · {money(x.close)} now</li>)}</ul>
+        </div>}
+        {fromFirst.length > 0 && <div data-return-from-first>
+          <p className="font-semibold text-slate-100">From the first value on record · {money(fromFirst.reduce((t, u) => t + u.close, 0))}</p>
+          <p className="mt-1">{fromFirst.length} {fromFirst.length === 1 ? 'holding has' : 'holdings have'} no purchase record, so each counts from its first value on record, that value treated as money arriving that day.</p>
         </div>}
         {held.length > 0 && <div data-return-held>
           <p className="font-semibold text-slate-100">Held at last value · {money(held.reduce((t, u) => t + u.close, 0))}</p>

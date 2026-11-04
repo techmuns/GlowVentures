@@ -1,5 +1,5 @@
-// A local/preview browser regression for the NAV card's demat shares at published
-// closes (Stage 10iz). Prices are explicit test fixtures, never written to records.
+// A local/preview browser regression for the NAV card (Stages 10iz, 10la): its book line is the
+// return card's own, demat shares at published closes. Prices are test fixtures, never written to records.
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import { build } from 'esbuild';
@@ -32,35 +32,42 @@ const open = async (serveHistory) => {
     return r.fulfill({ json: { ok: true, version: 2, symbol: fund || symbol + '.NS', isin: q.get('isin'), name: fund ? 'Example NAV fixture - Growth' : symbol,
       source: 'Public-price layout fixture', basis: fund ? 'nav' : 'adjusted-close', first: dates[0], last: dates.at(-1), t: dates, v: prices, c: prices, splits: [] } });
   });
-  await page.goto(base + '/cio?tab=nav');
+  await page.goto(base + '/cio?tab=nav&tiles=annualised,fytd,ytd');
   await page.locator('[data-testid="nav-book-chip"]').waitFor();
   return { context, errors };
 };
 try {
-  // ── With published prices: the line values the demats' shares at every close ──
+  // ── THE CARD'S OWN LINE (Stage 10la): its last point is the return card ──
+  const near = (a, b) => Math.abs(Number(a) - Number(b)) < 1e-8;
+  const cardOf = (slot) => page.locator(`[data-tile-slot="${slot}"] [data-card-coverage]`);
   const priced = await open(true);
-  await page.waitForFunction(() => document.querySelector('[data-testid="nav-book-chip"]')?.getAttribute('data-nav-basis') === 'assumed', null, { timeout: 120000 });
   const chip = page.locator('[data-testid="nav-book-chip"]');
+  // Once the histories are in, the financial-year card values the demats' shares at published closes.
+  await page.waitForFunction(() => Number(document.querySelector('[data-testid="nav-book-chip"]')?.getAttribute('data-nav-assumed-count')) > 0, null, { timeout: 120000 });
   const count = Number(await chip.getAttribute('data-nav-assumed-count'));
-  assert.ok(count > 0, 'demat shares are valued at published closes');
-  assert.match(await chip.innerText(), /assumed holdings/);
+  assert.equal(await chip.getAttribute('data-nav-period'), 'fytd', 'the line opens on the financial year');
+  assert.ok(near(await chip.getAttribute('data-nav-ret'), await cardOf('fytd').getAttribute('data-card-return')), 'the line ends on the financial-year card');
+  assert.ok(near(await chip.getAttribute('data-nav-card-gain'), await cardOf('fytd').getAttribute('data-card-gain')));
   const hover = await chip.getAttribute('title');
+  assert.match(hover, /the card's own figure on every day/);
   assert.match(hover, /No sale appears in the records we have\. We assume .+ still hold these shares\./);
-  assert.match(hover, /valued at each day's published close from their statement dates/);
+  assert.match(hover, /Covers \d+% of public investments/);
   // THE FOLD UNDER THE CHART IS GONE (Stage 10jz); the hover says what the line covers.
   assert.equal(await page.locator('[data-testid="nav-excluded"]').count(), 0);
   await page.screenshot({ path: out + '/assumed.png', fullPage: false });
+  // The calendar year: the same, on its own card.
+  await page.locator('[data-start="ytd"]').click();
+  await page.waitForFunction(() => document.querySelector('[data-testid="nav-book-chip"]')?.getAttribute('data-nav-period') === 'ytd');
+  assert.ok(near(await chip.getAttribute('data-nav-ret'), await cardOf('ytd').getAttribute('data-card-return')), 'the line ends on the calendar-year card');
   assert.deepEqual(priced.errors, []);
   await priced.context.close();
 
-  // ── Without them: the statement line, saying why ──
+  // ── Without them: still the card's figure, and what waits for prices is named ──
   const unpriced = await open(false);
-  await page.waitForFunction(() => /at their statement values/.test(document.querySelector('[data-testid="nav-book-chip"]')?.getAttribute('title') ?? ''), null, { timeout: 120000 });
-  assert.equal(await page.locator('[data-testid="nav-book-chip"]').getAttribute('data-nav-basis'), 'statement');
-  assert.doesNotMatch(await page.locator('[data-testid="nav-book-chip"]').innerText(), /assumed/);
-  // A HISTORY THAT FAILED IS NAMED ON THE BOOK'S HOVER (Stage 10jj: the retry button is gone).
-  assert.match(await page.locator('[data-testid="nav-book-chip"]').getAttribute('title'), /\d+ demat price histories could not load/);
+  await page.waitForTimeout(3000);
+  assert.ok(near(await page.locator('[data-testid="nav-book-chip"]').getAttribute('data-nav-ret'), await cardOf('fytd').getAttribute('data-card-return')));
+  assert.match(await page.locator('[data-testid="nav-book-chip"]').getAttribute('title'), /waiting for prices/);
   assert.deepEqual(unpriced.errors, []);
   await unpriced.context.close();
-  console.log('NAV card demat shares: published closes, owner assumption, statement fallback and failed histories passed.', { count });
+  console.log('NAV card: the line ends on the financial- and calendar-year cards, with and without published prices.', { count });
 } catch (error) { await page?.screenshot({ path: out + '/failure.png' }).catch(() => {}); throw error; } finally { await browser.close(); }
