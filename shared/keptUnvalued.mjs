@@ -28,7 +28,7 @@
 // allotment was open, and the family chose to keep Ankita's shares a quantity
 // with no value until a statement for that account prices them. (Settled since:
 // they are a second holding. Each depository holds its 94,967 at the same time,
-// and the review buys them in two separate rows, Stage 10kx.)
+// and the review buys them in two separate rows, Stage 10ky.)
 //
 // Keyed on the ACCOUNT the statement names (provider and account number, as
 // printed) and the ISIN it prints — never on a name — so a second holding of

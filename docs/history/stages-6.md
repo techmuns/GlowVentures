@@ -1049,7 +1049,7 @@
 - Funds: the picker does not offer YTD (`omit`, `resolveReturnMeasures`); the XIRR column is headed IRR; a Quarterly NAV column sits after Value — value ÷ units over the held folios of ONE fund vehicle valued on ONE date (`navOf` in `privateBook.ts`), its Indian FY quarter under it (any other date printed as the date). A company, a held-at-cost line, a row without a unit count and a band over several funds show `—` with the reason.
 - Checks: `privateBook.test.ts` [E] re-derives each NAV off the folios; `tableView.test.ts` covers `omit`. `check:pages` on the six Private Market routes matches main's findings.
 
-### Stage 10kx — Clean Max on two demats is two holdings, now under one key
+### Stage 10ky — Clean Max on two demats is two holdings, now under one key
 
 - Defect 3 of the 4 Nov review (#333) asked whether Clean Max's 94,967 shares on Ajay's ICICI demat 49794950 and Ankita's Motilal demat 1201090012838316 are a double count on the live basis. **They are two holdings, each counted once.**
   - Both depositories hold their 94,967 at the same time: Ajay's NSDL account on 31 Mar and 31 Oct, and Ankita's CDSL account (in lock-in) through a tape that moves none of them from 1 Apr to 31 Jul.

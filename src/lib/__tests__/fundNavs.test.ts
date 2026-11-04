@@ -609,7 +609,7 @@ ok("a feed pricing Clean Max makes it a row at its statement's units × the quot
 ok("...and the account's own note says its statement values none of its holdings",
   /values none of them/.test(partialValuationNotes(cmPriced).get("motilal-oswal-financial-services-demat-1201090012838316") ?? ""));
 /**
- * TWO HOLDINGS, EACH COUNTED ONCE (Stage 10kx). The 4 Nov 2026 return-coverage
+ * TWO HOLDINGS, EACH COUNTED ONCE (Stage 10ky). The 4 Nov 2026 return-coverage
  * review (#333, defect 3) asked whether Clean Max's 94,967 shares on two demats
  * are a double count on the live basis. They are two holdings. Each depository
  * holds its 94,967 at the same time: Ajay's NSDL account on 31 Mar and 31 Oct,
