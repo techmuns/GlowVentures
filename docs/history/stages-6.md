@@ -1133,6 +1133,13 @@
 - Book: 439 of the trades sit behind the two held positions (`BOOK_HOLDING_TRADES` 1,082 → 1,521). The 27 spin-off fills have no holding. Totals are unchanged. The account stays described by its equity portfolio, because the report sets no `providerEngagement`.
 - A removal notice whose file is in `source/` under the same name is now "re-sent" (`attachment-resent`, manifest `resentAs`), not "never arrived". This flows through check:reads, coverage:source (class `re-sent`) and the Statement Library ("Re-sent" pill, no folder flag). The LKP pair stays never arrived.
 
+### Stage 10lc — Return card coverage review: findings, the approved method and its outcome
+
+- Why: the FYTD card read +20.0% over "203 of 509 holdings · ₹167.3 Cr" — about 13–15% of the book by value; the family read it as broken.
+- Recorded in `docs/RETURN-COVERAGE-REVIEW.md`: the method discussed on 4 Nov 2026 (measure from the first value on record, labelled; mid-year arrivals in at market value; newly listed from listing day; private on its own line; coverage against public only), and the figure it gives — +13.0% (+₹55.8 Cr) on ₹932 Cr of ₹992 Cr public (94%), statement values and market closes to 3 Nov. Decided: build it (preview first); one-statement funds held at their last value until the next statement, which gives +12.3% on 99% of public.
+- Six data defects: the ICICI "31 March 2026" holding statement is valued at 20 Jul closes; MOPWM share rolls do not reproduce sale proceeds; Clean Max 94,967 on two demats; NSE (listed 24 Sep) at the review's unlisted mark on the statement basis only, since the live basis prices it at BSE since 22 Oct; VOF (Vantage Oak Fund I) unplaced; Grand Continent and Parth are NSE SME listings, not private.
+- Outcome: the family approved the method on 4 Nov 2026, and it is built in Stages 10la (#343: the three cards) and 10le (#350: the chart drawn as the card, Gain / Loss at 100%). Of the six defects, the ICICI 31 Mar pricing is fixed by Stage 10ku (#337) and Clean Max by Stage 10ky (#341). Each remaining one is in the review's own list.
+
 ### Stage 10le — Our book vs benchmarks draws the return card's own line; Gain / Loss covers every investment
 
 *"how can our book by 6.1% when all the above things are showing 12% … everything should match … as i change time filters it would change"* and *"make coverage 100%"*, from the family on 4 Nov 2026.
