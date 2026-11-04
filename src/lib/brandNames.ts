@@ -87,6 +87,11 @@ export const BRAND_NAMES: Readonly<Record<string, BrandName>> = {
     brand: "Franklin India Credit AIF – Scheme I", legal: "Franklin India Credit AIF – Scheme I", basis: "own-name",
     source: ["statement:franklin-india-credit-aif-10387-2026-10-22-holdings"],
   },
+  // Stage 10la — the Motilal tape prints the scheme in full ("VANTAGE OAK FUND I-CLASS A2").
+  "vof-i-class-a2": {
+    brand: "Vantage Oak Fund I", legal: "Vantage Oak Fund I", basis: "own-name",
+    source: ["statement:icici-bank-nsdl-demat-49794950-2026-10-31-holdings", "statement:motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-demat-transactions"],
+  },
   "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii": {
     brand: "360 ONE Special Opportunities Fund", legal: "360 ONE Special Opportunities Fund", basis: "own-name",
     source: ["statement:360-one-private-wealth-37702-2026-07-31-holdings"],

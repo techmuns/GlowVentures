@@ -5045,7 +5045,8 @@ function build(archived, archiveCount = archived.length, references = {}) {
     notes.push(`market side: ${declared.length} holding(s) take a SEBI category the FAMILY declared, because no `
       + `statement for them prints one${declared.length ? ` — ${[...new Set(declared.map((p) => p.security))].sort().join("; ")}` : ""}. `
       + "A declaration only ever fills a category the statements leave empty and never overrides one they print; "
-      + "which side of the book each sits on is the family's own placing, noted above.");
+      + "which side of the book each sits on is the family's own placing where they gave one (noted above), "
+      + "and otherwise the side its category gives.");
     /**
      * THE PE OVERRIDE, NAMED. A fund whose own name says private equity or
      * venture is private whatever category it prints, and Transition Venture's

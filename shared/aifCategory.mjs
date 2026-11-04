@@ -196,6 +196,13 @@ export function categoriesNamedIn(text) {
  * no registration number, so that entry rests on the family's word alone and
  * says so.
  *
+ * VANTAGE OAK FUND I (Stage 10la, 4 Nov 2026: "Move it now anyway") is Delphi's
+ * case: neither the ICICI demat's line nor the Motilal tape's private-placement
+ * allotment of 31 Jul 2026 prints a category, so the family's word places it. A
+ * public listing citing SEBI's register gives its registration as
+ * IN/AIF2/25-26/1873 (not checked on sebi.gov.in); that is outside the archive,
+ * so the entry claims no corroboration.
+ *
  * Written as plain literals, one entry per line of `"key": {`, because
  * `check-pages.mjs` reads this block as committed DATA and re-derives the side
  * from it rather than importing this module — a check that imports the helper
@@ -204,6 +211,7 @@ export function categoriesNamedIn(text) {
 export const DECLARED_AIF_CATEGORY = {
   "motilal-oswal-wealth-delphi-equity-fund": { category: "Category II", source: "family", declaredOn: "2026-09-23", corroboration: null },
   "neo-infra-income-opportunities-fund-i-class-a5": { category: "Category II", source: "family", declaredOn: "2026-09-23", corroboration: "the statement prints its SEBI registration, AIF -Category-II No : IN/AIF2/22-23/1042, and the family's demat files the units as CAT II AIF" },
+  "vof-i-class-a2": { category: "Category II", source: "family", declaredOn: "2026-11-04", corroboration: null },
 };
 
 /** The family's declared category for a fund, where there is one. */
