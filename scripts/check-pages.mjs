@@ -41712,7 +41712,8 @@ for (const theme of THEMES) {
           const name = (td.closest("tr")?.cells[0]?.innerText ?? "").split("\n")[0].trim().slice(0, 60);
           if (!b) { out.missing.push(`${name}: ${face}`); continue; }
           out.lines++;
-          if (b.getAttribute("data-bench") !== "none" && !b.getAttribute("data-bench-pct") && !b.querySelector("[data-absent-label]")) out.unlabelled.push(`${name}: ${face}`);
+          // The feed's own state (closes loading, the service down) keeps the plain dash; a gap in the record never does.
+          if (b.getAttribute("data-bench") !== "none" && !b.getAttribute("data-bench-pct") && !b.hasAttribute("data-bench-feed") && !b.querySelector("[data-absent-label]")) out.unlabelled.push(`${name}: ${face}`);
         }
         return out;
       });

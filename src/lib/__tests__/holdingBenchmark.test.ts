@@ -97,7 +97,6 @@ assert.equal(label("the index is bought with this holding's own dated payments, 
 assert.equal(label("the index is bought with every row's own dated payments, and 25 of the 25 rows with a return here are not dated in full — each row names its own cause"), 'No buy dates');
 assert.equal(label("2 of the 2 investments behind this row carry no dated record a money-weighted return can be solved over — x: its capital is known only as a total since inception"), 'No dated capital');
 assert.equal(label("the index is bought with this holding's own dated payments, and its record dates the purchases only as a span, Dec 2022 to Aug 2023, not each payment and what it paid"), 'Range only');
-assert.equal(label('Fetching the Nifty 500 closes'), 'Loading');
 assert.equal(label('the index has no close on or before 1 May 2024'), 'Index starts later');
 
 console.log('holding benchmark: ok');

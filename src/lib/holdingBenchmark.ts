@@ -201,7 +201,8 @@ export function rowBenchmark(ps: readonly Position[], mandateAccountIds: readonl
 // ── THE INDEX ON THE SAME MONEY ─────────────────────────────────────────────
 export type IndexFigure =
   | { shown: true; pct: number; annual: boolean; from: string; to: string; how: string }
-  | { shown: false; reason: string };
+  /** `feed`: the index's closes are still loading or the price service failed — not a gap in the record (Stage 10lc). */
+  | { shown: false; reason: string; feed?: true };
 
 const dayList = (a: string, b: string) => Math.round((Date.parse(b) - Date.parse(a)) / 864e5);
 const fmtDay = (d: string) => new Date(`${d}T00:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
@@ -277,12 +278,13 @@ export function pooledLegs(rows: readonly (readonly CapitalLeg[] | null)[]): { l
  * ── THE INDEX LINE NAMES ITS GAP (Stage 10lc) ───────────────────────────────
  *
  * The return cell above it says "— No cost" (Stage 10jm); a bare "N500 —" under
- * a figure read as a blank. The cause in a few words, the full reason its hover,
- * most specific first. "2 of the 2" is every line, not a part of them.
+ * a figure read as a blank. A gap in the RECORD names its cause in a few words,
+ * the full reason its hover, most specific first. "2 of the 2" is every line,
+ * not a part of them. The feed's own state (closes loading, the price service
+ * down) is not one: it keeps the plain dash with its reason as the hover, so the
+ * line does not change width when a fetch settles (`IndexFigure.feed`).
  */
 const BENCH_GAPS: [RegExp, string][] = [
-  [/^Fetching/i, "Loading"],
-  [/price service|price feed|feed returned|answered for|did not say which instrument/i, "Feed unavailable"],
   [/no close on or before/i, "Index starts later"],
   [/more money came out/i, "No like-for-like"],
   [/do not solve/i, "No solution"],

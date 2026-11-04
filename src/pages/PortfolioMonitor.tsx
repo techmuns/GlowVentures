@@ -78,6 +78,7 @@ import { useDatedCapital } from "@/lib/useDatedCapital";
 import { BenchLine, useBenchmarkLevels } from "@/components/HoldingBenchmark";
 import { closeLegsOn, indexCompound, indexMove, indexOnSameMoney, onePaymentLeg, pooledLegs, rowBenchmark, type HoldingBenchmark, type IndexFigure } from "@/lib/holdingBenchmark";
 import { BENCHMARKS, benchmarkByKey } from "@/lib/benchmarks";
+import type { IndexLevel } from "@/lib/periodReturns";
 // `weightFormula` is deliberately NOT imported, and the REASON has changed under
 // this comment — which is why it is being restated rather than left standing.
 //
@@ -1147,22 +1148,25 @@ export function PortfolioMonitor() {
   const benchFigure = (hb: HoldingBenchmark, res: Extract<MeasuredReturn, { shown: true }>, input: ReturnInput, asOf: string,
     ps?: readonly Position[], legs?: readonly CapitalLeg[]): IndexFigure | null => {
     if (!hb.bench) return null;
-    const lv = benchLevels(hb.bench.key);
-    if ("reason" in lv) return { shown: false, reason: lv.reason };
-    const yf = input.ytdFrom, cap = input.capital;
-    if (res.from && yf?.shown) return indexMove(yf.from, yf.to, lv.level);
+    const yf = input.ytdFrom, cap = input.capital, heldSince = input.heldSince;
     const annual = res.tag === "XIRR" || res.tag === "CAGR";
     const end = input.valuedAt === undefined ? asOf : input.valuedAt;
+    // WHICH MONEY BUYS THE INDEX is settled before any close arrives (Stage 10lc),
+    // so a gap in the record shows at once and a fetch never moves the line.
     // The rate is solved on the record's own closes; the HPR on the row's value date.
-    if (legs?.length) return indexOnSameMoney(legs, lv.level, annual, annual ? null : end);
-    if (cap?.dated && cap.legs?.length) return indexOnSameMoney(cap.legs, lv.level, annual, annual ? null : end);
-    if (res.tag === "CAGR" && input.heldSince && end) return indexCompound(input.heldSince, end, lv.level);
-    // ONE PURCHASE, NEVER SOLD (Stage 10lc): the CAGR gate's own proof dates every
-    // rupee of its cost on that day, so its HPR and a YTD opened this year buy
-    // the index there too.
+    // ONE PURCHASE, NEVER SOLD: the CAGR gate's own proof dates every rupee of its
+    // cost on that day, so its HPR and a YTD opened this year buy the index there too.
     const one = ownLegs(input, asOf);
-    if (one) return indexOnSameMoney(one, lv.level, annual, null);
-    return { shown: false, reason: cap && !cap.dated ? cap.reason.replace(/\.$/, "") : undatedMoneyWhy(ps) };
+    const strike: ((level: IndexLevel) => IndexFigure) | null =
+      res.from && yf?.shown ? (l) => indexMove(yf.from, yf.to, l)
+      : legs?.length ? (l) => indexOnSameMoney(legs, l, annual, annual ? null : end)
+      : cap?.dated && cap.legs?.length ? (l) => indexOnSameMoney(cap.legs!, l, annual, annual ? null : end)
+      : res.tag === "CAGR" && heldSince && end ? (l) => indexCompound(heldSince, end, l)
+      : one ? (l) => indexOnSameMoney(one, l, annual, null)
+      : null;
+    if (!strike) return { shown: false, reason: cap && !cap.dated ? cap.reason.replace(/\.$/, "") : undatedMoneyWhy(ps) };
+    const lv = benchLevels(hb.bench.key);
+    return "reason" in lv ? { shown: false, reason: lv.reason, feed: true } : strike(lv.level);
   };
   /**
    * A SECTION'S OR THE TABLE'S TOTAL AGAINST ITS INDEX (Stage 10lc): the index
@@ -1179,8 +1183,6 @@ export function PortfolioMonitor() {
       ? (hbs[0].bench ? { bench: hbs[0].bench, why: `Every row here is compared with the ${hbs[0].bench.name}.` } : hbs[0])
       : { bench: benchmarkByKey("nifty-500"), why: "The rows here are compared with different indices, so their total is compared with the broad Nifty 500." };
     if (!hb.bench) return { hb, fig: null };
-    const lv = benchLevels(hb.bench.key);
-    if ("reason" in lv) return { hb, fig: { shown: false, reason: lv.reason } };
     // Duplicates are counted once in the total; their legs would count twice.
     if (shown.some((r) => rowPositionsOf(r).some((p) => p.dedupeGroup))) {
       return { hb, fig: { shown: false, reason: "a holding two members both report is behind these rows and is counted once in the total, so its dated money cannot be pooled without counting it twice" } };
@@ -1189,7 +1191,8 @@ export function PortfolioMonitor() {
     if ("undated" in pool) {
       return { hb, fig: { shown: false, reason: `the index is bought with every row's own dated payments, and ${pool.undated} of the ${pool.of} rows with a return here are not dated in full — each row names its own cause` } };
     }
-    return { hb, fig: indexOnSameMoney(pool.legs, lv.level, false, null) };
+    const lv = benchLevels(hb.bench.key);
+    return { hb, fig: "reason" in lv ? { shown: false, reason: lv.reason, feed: true } : indexOnSameMoney(pool.legs, lv.level, false, null) };
   };
   const holdAccessors = useMemo(
     // `portfolio` is not narrowed until the guard below and a hook cannot sit
