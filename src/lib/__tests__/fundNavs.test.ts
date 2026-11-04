@@ -27,9 +27,10 @@ import { BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
 import type { QuoteFeed } from "../quotes";
 import type { ActionFeed } from "../corporateActions";
 import { validActionFeed } from "../../../shared/corporateActions.mjs";
-import { isCashEquivalent } from "../analytics";
+import { isCashEquivalent, dedupedPositions } from "../analytics";
 import { BOOK_FUND_NAVS } from "@/data/fundNavs";
-import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_SHARE_MOVEMENTS, BOOK_CAPITAL_MOVES, BOOK_ADVISED_BALANCES } from "@/data/glowData";
+import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_SHARE_MOVEMENTS, BOOK_CAPITAL_MOVES, BOOK_ADVISED_BALANCES, BOOK_RECOVERED_COSTS } from "@/data/glowData";
+import { LIVE_PRICED } from "./liveBook";
 import NSE_SYMBOLS from "@/data/nseSymbols.json";
 import { UPSTOX_INSTRUMENTS } from "../../../shared/upstoxInstruments.mjs";
 import type { Position } from "../types";
@@ -607,6 +608,45 @@ ok("a feed pricing Clean Max makes it a row at its statement's units × the quot
   cmPriced.map((p) => `${p.symbol} ${p.marketValue} ${p.costBasisSource}`).join("; "));
 ok("...and the account's own note says its statement values none of its holdings",
   /values none of them/.test(partialValuationNotes(cmPriced).get("motilal-oswal-financial-services-demat-1201090012838316") ?? ""));
+/**
+ * TWO HOLDINGS, EACH COUNTED ONCE (Stage 10ky). The 4 Nov 2026 return-coverage
+ * review (#333, defect 3) asked whether Clean Max's 94,967 shares on two demats
+ * are a double count on the live basis. They are two holdings. Each depository
+ * holds its 94,967 at the same time: Ajay's NSDL account on 31 Mar and 31 Oct,
+ * and Ankita's CDSL account through a tape that moves none of them between
+ * 1 Apr and 31 Jul. The review also buys them in two separate rows, each at
+ * ₹9,38,57,991. So the whole live book carries exactly those two rows, under one
+ * company key, each at its own recovered cost, and the consolidated count keeps
+ * both. Until this stage Ankita's statement row was keyed `clean-max-env`, one
+ * ISIN under two keys; `KEY_ALIASES` now files it under the key Ajay's row carries.
+ */
+{
+  const CM = "INE647U01026";
+  const isCm = (p: { isin?: string | null }) => p.isin?.toUpperCase() === CM;
+  const ajayRow = BOOK_POSITIONS.filter(isCm);
+  const ankitaRow = BOOK_UNVALUED_HOLDINGS.filter(isCm);
+  ok("on the statement basis Clean Max is one company: Ankita's quantity row carries the key Ajay's valued row does",
+    ajayRow.length === 1 && ankitaRow.length === 1 && ankitaRow[0].securityKey === ajayRow[0].securityKey
+      && ajayRow[0].accountId !== ankitaRow[0].accountId,
+    [...ajayRow, ...ankitaRow].map((p) => `${p.accountId} ${p.securityKey}`).join("; "));
+  const live = LIVE_PRICED.filter(isCm);
+  const byAccount = new Map(live.map((p) => [p.accountId, p]));
+  ok("the whole live book carries Clean Max as exactly the two statement holdings, one row each, never a third",
+    live.length === 2 && byAccount.size === 2 && ajayRow.length === 1 && ankitaRow.length === 1
+      && byAccount.get(ajayRow[0].accountId)?.quantity === ajayRow[0].quantity
+      && byAccount.get(ankitaRow[0].accountId)?.quantity === ankitaRow[0].quantity
+      && new Set(live.map((p) => p.securityKey)).size === 1,
+    live.map((p) => `${p.accountId} ${p.quantity} ${p.securityKey}`).join("; "));
+  const records = BOOK_RECOVERED_COSTS.filter(isCm);
+  ok("…each at its own purchase record, so neither holding borrows the other's cost",
+    records.length === 2 && new Set(records.map((r) => r.accountId)).size === 2
+      && live.every((p) => records.some((r) => r.accountId === p.accountId && r.quantity === p.quantity && r.costBasis === p.costBasis)),
+    records.map((r) => `${r.accountId} ${r.quantity} ₹${r.costBasis}`).join("; "));
+  const consolidated = dedupedPositions(LIVE_PRICED).filter(isCm);
+  ok("…and the consolidated count keeps both: neither is a dedupe twin of the other",
+    consolidated.length === 2 && live.every((p) => !p.dedupeGroup),
+    consolidated.map((p) => `${p.accountId} ${p.dedupeGroup ?? "—"}`).join("; "));
+}
 const cmWords = cleanMax ? describeDepositoryUnits(cleanMax.depositoryUnits!) : "";
 ok("its hover says the statement recorded it with no usable price, and never that no holding statement was sent",
   /holding statement of 2026-07-31 records with no usable price/.test(cmWords) && !/no holding statement/.test(cmWords), cmWords);

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-04T12:33:23.376Z",
+  "generatedAt": "2026-11-04T13:01:24.984Z",
   "summary": {
     "documents": 453,
     "parsed": 447,
@@ -20,7 +20,7 @@
     "datedRounding": 354,
     "crossReportDeltas": 63,
     "suspectedDuplicates": 0,
-    "quantityOnlyMatches": 4,
+    "quantityOnlyMatches": 5,
     "confirmedSeparateByFamily": 4,
     "suspectedDuplicateEarnings": 1,
     "securitiesWithoutSymbol": 36,
@@ -232029,6 +232029,38 @@
   ],
   "duplicateHoldings": [],
   "quantityOnlyMatches": [
+    {
+      "security": "CLEAN MAX ENV-EQ 1/",
+      "securityKey": "clean-max-enviro-energy-solutions",
+      "quantity": 94967,
+      "owners": [
+        "ankita-jaisinghani",
+        "ajay-jaisinghani"
+      ],
+      "accounts": [
+        "1201090012838316",
+        "49794950"
+      ],
+      "occurrences": [
+        {
+          "docKey": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-holdings",
+          "owner": "Ankita Jaisinghani",
+          "ownerId": "ankita-jaisinghani",
+          "accountNo": "1201090012838316",
+          "asOf": "2026-07-31",
+          "reportType": "holdings"
+        },
+        {
+          "docKey": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings",
+          "owner": "Ajay Jaisinghani",
+          "ownerId": "ajay-jaisinghani",
+          "accountNo": "49794950",
+          "asOf": "2026-03-31",
+          "reportType": "holdings"
+        }
+      ],
+      "resolution": "NOT a dedupe group. The only figure these rows share is the quantity, and no statement here values them, so there is nothing to double-count and nothing to collapse. Treat as two real holdings unless a statement says otherwise — a shared unit count alone is not evidence of one."
+    },
     {
       "security": "India SME Investments Fund II — Class A2",
       "securityKey": "india-sme-investments-fund-ii-class-a2",

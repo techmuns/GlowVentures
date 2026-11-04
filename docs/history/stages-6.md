@@ -1058,6 +1058,15 @@
 - Admin pages: the Portfolio Library lists a holding's uploads in the folder of any security behind it (Uploaded documents). A holding with no statement folder (review-only, e.g. Aksum; or Sky Capital, whose row key is fund-level while its folders are per class) gets an upload folder named after the row. The Statement Library's recent uploads link the holding's folder and the file. Private Market rows show a clip with the count, linking to the folder.
 - Checks: `statementUploads.test.ts` §9 (document types, subject validation, stored vs queued, served bytes and headers, no pruning, removal, links). `check:pages` on private-market, private-market-tiles, statements and portfolios matches a main control build (B-10 fails on both).
 
+### Stage 10ky — Clean Max on two demats is two holdings, now under one key
+
+- Defect 3 of the 4 Nov review (#333) asked whether Clean Max's 94,967 shares on Ajay's ICICI demat 49794950 and Ankita's Motilal demat 1201090012838316 are a double count on the live basis. **They are two holdings, each counted once.**
+  - Both depositories hold their 94,967 at the same time: Ajay's NSDL account on 31 Mar and 31 Oct, and Ankita's CDSL account (in lock-in) through a tape that moves none of them from 1 Apr to 31 Jul.
+  - The review buys them in two separate rows (262–263 and 264–265), ₹9,38,57,991 each. Its 1,89,934 total and the register's ₹18.77 Cr are both holdings together.
+  - The live book carries exactly those two rows, each at its own recovered cost; the consolidated count keeps both.
+- The real defect was identity: Ankita's statement row was keyed `clean-max-env`, so one ISIN was two keys on the statement basis, with its own `/stock/clean-max-env` ledger view. `KEY_ALIASES` now maps it to `clean-max-enviro-energy-solutions` on the exact ISIN (INE647U01026 → CLEANMAX). `rekey:archive` moved 1 row (its `--check` control was a no-op first). The book report's split-ISIN list goes 12 → 11. The extraction report now names the pair under "Matched on QUANTITY ALONE — NOT deduped".
+- `fundNavs.test.ts` asserts one key on the statement basis, exactly two live rows (never a third), a recovered cost per account, and both kept by the dedupe. Run against main's book, the key assertion fails.
+
 ### Stage 10kq — RETURN THIS CALENDAR YEAR: YTD FROM THE FIRST DATE WE HAVE, NOT ONE FUND
 
 - The family (4 Nov 2026) found Morning CIO's "Return this calendar year" card reading −3.5% on "1 of 509 holdings · ₹29.9 Cr · 1 accounts": Ajay's Helios 10355977 alone. The card opened every account on 31 Dec 2025 (`windowReturns`) and carried a holding only from a share count dated by then (`assumedHolding`). No statement here is dated before 31 Mar 2026, so the only account it could measure was the one bought in August, which opens at nil. The Returns tab's YTD, which the card opens, read the same single fund.
