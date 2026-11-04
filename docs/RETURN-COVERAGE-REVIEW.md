@@ -4,8 +4,9 @@ Morning CIO's **Return this financial year** card read **+20.0%** over "203 of 5
 holdings · ₹167.3 Cr covered · 22 accounts assumed", and the family read it as broken.
 This file records what the card actually measures, the method discussed with the
 dashboard's operator on 4 Nov 2026, the figures that method gives, and six data
-defects found on the way. **No app code changed.** The proposed card is waiting for
-the go-ahead to build (Stage 10kp).
+defects found on the way. **No app code changed.** Decisions on 4 Nov 2026: build the card
+(preview first), hold the one-statement funds at their last value (rule 8), fix main's CI
+(Stage 10kq) and fix the data defects in a separate change (Stage 10kp).
 
 ## What the card measures today
 
@@ -37,7 +38,7 @@ day, and to label it. The rules below follow that. Each window is pooled with
 | 5 | Broker trades as cash flows | Ajay's ICICI order book (`orderBook_Equity_*.csv`, 24 Jun – 27 Oct): Smartworks, Insolation, Yash, Federal, Pine Labs, SBI | Units reconcile: 31 Mar count + trades = 31 Oct count |
 | 6 | Sanshi: each folio's 30 Jun units × the class NAV printed on Ajay's 31 Oct ICICI demat statement (A2 ₹1,387.2, E ₹1,721.5) | All five folios | Ajay's units match the demat exactly. The others are **assumed** held since 30 Jun |
 | 7 | Private kept on its own line: value plus gain since investment from the Private Market tab | `marketSide === 'private'`, ₹275 Cr, +₹12.6 Cr | The tab's IRR reads "—" today (1 of 8 funds lacks a dated record) |
-| 8 | One-statement funds: value kept at the last statement | Motilal Active Momentum (6 Aug, the purchase), Carnelian Amritkaal (31 Jul), Delphi (30 Jun) | **Open question.** Leave them out of the % (recommended), or hold at last value, which counts them at 0% |
+| 8 | One-statement funds: held at the last statement value (0% since) until the next statement, which then counts the whole change. **Decided 4 Nov 2026** | Motilal Active Momentum (6 Aug, the purchase), Carnelian Amritkaal (31 Jul), Delphi (30 Jun) | The info button names each fund and the date it is held at |
 
 The bar measures coverage against **public** investments only. Private is reported separately.
 
@@ -56,7 +57,7 @@ The bar measures coverage against **public** investments only. Private is report
 | Shares at market close from statement date (rule 2) | ₹96.1 Cr | −₹3.07 Cr |
 | **Headline** | **₹932 Cr of ₹992 Cr public (94%)** | **+₹55.8 Cr · +13.0%** |
 
-- If the three one-statement funds are held at last value: **+12.4%** on 99% of public.
+- **With rule 8 as decided** (the three funds held at last value): **+12.4%** on ₹980 Cr of ₹992 Cr public (99%). Without them: +13.0% on 94%.
 - Still not measurable: ₹61 Cr. Active Momentum ₹21 Cr, Carnelian Amritkaal ₹16 Cr,
   Delphi ₹11 Cr, VOF ₹4 Cr, plus ~₹8 Cr of Motilal liquid balances that changed on
   unknown dates and KRBL/Tega/Zota (see defect 2).
@@ -82,9 +83,12 @@ The bar measures coverage against **public** investments only. Private is report
 3. **Clean Max 94,967 shares appear on two demats:** Ajay's ICICI (31 Oct, valued) and Ankita's
    Motilal 1201090012838316 (31 Jul depository-share candidate). Check for a double count on the
    live basis.
-4. **NSE (INE721I01024) listed on 24 Sep 2026**, yet the book still carries the review's 30 Jun
-   unlisted mark: Ajay 125,000 shares ₹25.94 Cr, Ankita 75,000 ₹15.56 Cr, total ₹41.5 Cr. At the
-   3 Nov close of ₹1,803.80 they are worth ₹36.1 Cr.
+4. **NSE (INE721I01024) listed on 24 Sep 2026.** *Correction:* this is not a defect on the live
+   screen. Since 22 Oct the live basis already prices both holdings at the BSE quote (see the review
+   note). Only the statement basis keeps the review's 30 Jun unlisted mark (Ajay 125,000 shares
+   ₹25.94 Cr, Ankita 75,000 ₹15.56 Cr), and it does so by design. The ICICI statement of 31 Oct marks
+   Ajay's at ₹22.28 Cr, so the record says "A statement says otherwise". The calculation above used
+   statement values, so NSE's covered value is the review mark there.
 5. **VOF is Vantage Oak Fund I, Class A2 (INF2O4Z22020).** It is an AIF private placement,
    allotted 31 Jul (Ankita's tape: 1,225,000 units). Ajay holds 2,275,000 units, ₹4.10 Cr on
    ICICI. It has `marketSide: null` (unplaced) and needs the allotment amount.
