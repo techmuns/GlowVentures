@@ -36,6 +36,10 @@ comment citing "CLAUDE.md §…" or "Stage 10xx" resolves there:
 `grep -n 'Stage 10ak' docs/history/*.md`. Read the stage before changing the
 code it describes.
 
+**Open review awaiting the go-ahead:** `docs/RETURN-COVERAGE-REVIEW.md` (4 Nov 2026,
+Stage 10kp) — the return card's coverage, the method discussed and six data defects.
+Read it before touching `availableCardReturns.ts` or the ICICI, MOPWM or NSE records.
+
 ## The standing rule
 
 **Latest verified data (15 October 2026):** always select the newest usable source record for each
