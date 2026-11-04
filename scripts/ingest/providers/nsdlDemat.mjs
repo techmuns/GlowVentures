@@ -337,11 +337,64 @@ export function extract({ grid, meta = {} }) {
    * — never the title's date, which is a claim about the balance.
    */
   const asOf = toIso((/Statement\s+of\s+Holding\s+(\d{1,2}-[A-Za-z]{3}-\d{4})/i.exec(text) ?? [])[1]);
-  const priceAsOf = toIso((/Prices\s+as\s+on\s+(\d{1,2}-[A-Za-z]{3}-\d{4})/i.exec(text) ?? [])[1]);
-  if (asOf && priceAsOf && asOf !== priceAsOf) {
+  const labelledPriceAsOf = toIso((/Prices\s+as\s+on\s+(\d{1,2}-[A-Za-z]{3}-\d{4})/i.exec(text) ?? [])[1]);
+
+  /**
+   * THE VALUES ARE THE PRICES ON FILE WHEN THE REPORT IS RUN, WHATEVER DATE IT
+   * IS RUN FOR — and the label does not say so.
+   *
+   * `Holding Statement Ajay Jaisinghani As on 31 March 2026.pdf` is headed
+   * `Statement of Holding 31-Mar-2026`, its total row reads `( Prices as on
+   * 30-Mar-2026 )`, and every page footer reads `Tuesday, July 21, 2026 03:57
+   * PM`. Its values are not the 30 March close. Each listed row's value ÷
+   * balance is the 20 JULY close to the paisa: Polycab ₹8,885.00 (30 Mar:
+   * ₹6,843.50), Clean Max ₹1,336.50 (₹769.70), Fractal ₹842.05 (₹759.45),
+   * Smartworks ₹486.05 (₹372.45), Insolation ₹119.11 (₹82.18), Yash Highvoltage
+   * ₹906.00 (₹417.75). ICICI's report took the 31 March BALANCES and priced them
+   * at the last close on file when it ran, which was Monday 20 July, then
+   * printed the as-on date's session over them. Its 31 October statement shows
+   * the same rule from the other side: run Monday 2 November 16:51, valued at
+   * Friday 30 October's close, which is also what its label says.
+   *
+   * So the label is believed only where the run CORROBORATES it. The labelled
+   * session falls on or before the run day, and no weekday lies strictly
+   * between them, so no session can have closed in between. Without a trading
+   * calendar, weekdays are a superset of sessions. A holiday can only make this
+   * refuse a label that was right, which renders as an em dash with a reason;
+   * it can never make it accept one that was wrong. Where the run contradicts the label,
+   * the balances stand (they are the statement's own fact at its own date),
+   * and no row carries a market value or a pricing date. A balance at one date
+   * priced at another is a valuation of the account on NO date: not 31 March,
+   * whose prices it lacks, and not 20 July, whose balances it lacks. The
+   * figure each priced row printed is kept as `valueWhenRun`, so the archive
+   * still shows what the column said, and the printed total still checks the
+   * rows read.
+   *
+   * Where no run stamp is printed, nothing contradicts the label and it is
+   * read as before.
+   */
+  const run = runStamp(text);
+  const claimed = labelledPriceAsOf ?? asOf;
+  const between = run && claimed ? weekdaysStrictlyBetween(claimed, run.date) : null;
+  const struckWhenRun = !!(run && claimed && (claimed > run.date || between > 0));
+  const priceAsOf = struckWhenRun ? null : labelledPriceAsOf;
+
+  if (struckWhenRun) {
+    warn(warnings, "values-priced-when-run",
+      `the balances are stated as at ${asOf ?? "(no date read)"}`
+      + (labelledPriceAsOf ? ` and the total row's \`Prices as on\` labels the values as priced on ${labelledPriceAsOf}` : "")
+      + `, but the page footer says the report was run on ${run.date} at ${run.time}, `
+      + (claimed > run.date ? `before ${claimed} itself. ` : `and ${between} weekday(s) lie between ${claimed} and that run. `)
+      + `This report values a balance at the prices on file when it is run, which is the last `
+      + `close before the run day and no later than ${lastWeekdayBefore(run.date)}. So ${labelledPriceAsOf ? "the label" : "the statement date"} `
+      + `does not date its values. They are the ${asOf ?? "statement's"} balances priced on another day, a valuation of `
+      + "the account on no date. Every row keeps its balance and carries NO market value and no pricing date; each priced row's "
+      + "printed figure is kept as `valueWhenRun`, and the printed total still checks the rows read.");
+  } else if (asOf && priceAsOf && asOf !== priceAsOf) {
     warn(warnings, "price-date-precedes-holding-date",
       `the holdings are stated as at ${asOf} and every mark on them is the close of ${priceAsOf}. `
-      + "Both dates are the statement's own; the account is dated by its holdings and the price date is recorded here.");
+      + "Both dates are the statement's own; the account is dated by its holdings and the price date is recorded here."
+      + (run ? ` The report was run on ${run.date} at ${run.time}, and no weekday lies between ${priceAsOf} and that run, so the run agrees with the label.` : ""));
   }
 
   /**
@@ -374,10 +427,54 @@ export function extract({ grid, meta = {} }) {
     warnings,
   };
 
-  return { ...base, ...readHoldings(pages, text, meta, warnings, priceAsOf) };
+  return { ...base, ...readHoldings(pages, text, meta, warnings, priceAsOf, struckWhenRun) };
 }
 
-function readHoldings(pages, text, meta, warnings, priceAsOf = null) {
+const MONTHS = { January: 1, February: 2, March: 3, April: 4, May: 5, June: 6, July: 7,
+  August: 8, September: 9, October: 10, November: 11, December: 12 };
+const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const isoDay = (ms) => new Date(ms).toISOString().slice(0, 10);
+const DAY = 86400000;
+
+/**
+ * THE RUN STAMP every page footer carries: `Tuesday, July 21, 2026 03:57 PM`.
+ * It is accepted only where its weekday agrees with its date. A stamp misread
+ * into another day would otherwise decide whether the values are believed. The
+ * first agreeing stamp is the run, since every page of one report is printed
+ * in one run.
+ */
+export function runStamp(text) {
+  const re = /\b(Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday),\s+([A-Z][a-z]+)\s+(\d{1,2}),\s+(\d{4})\s+(\d{1,2}):(\d{2})\s*([AP]M)\b/g;
+  for (const m of String(text ?? "").matchAll(re)) {
+    const month = MONTHS[m[2]];
+    if (!month) continue;
+    const ms = Date.UTC(Number(m[4]), month - 1, Number(m[3]));
+    const d = new Date(ms);
+    if (d.getUTCMonth() !== month - 1 || WEEKDAYS[d.getUTCDay()] !== m[1]) continue;
+    const h = (Number(m[5]) % 12) + (m[7] === "PM" ? 12 : 0);
+    return { date: isoDay(ms), time: `${String(h).padStart(2, "0")}:${m[6]}` };
+  }
+  return null;
+}
+
+/** Monday–Friday dates strictly after `fromIso` and strictly before `toIso`. */
+export function weekdaysStrictlyBetween(fromIso, toIso) {
+  let n = 0;
+  for (let t = Date.parse(`${fromIso}T00:00:00Z`) + DAY; t < Date.parse(`${toIso}T00:00:00Z`); t += DAY) {
+    const wd = new Date(t).getUTCDay();
+    if (wd !== 0 && wd !== 6) n++;
+  }
+  return n;
+}
+
+/** The last Monday–Friday before `iso`: an upper bound on the close a run on `iso` can carry. */
+function lastWeekdayBefore(iso) {
+  let t = Date.parse(`${iso}T00:00:00Z`) - DAY;
+  while ([0, 6].includes(new Date(t).getUTCDay())) t -= DAY;
+  return isoDay(t);
+}
+
+function readHoldings(pages, text, meta, warnings, priceAsOf = null, struckWhenRun = false) {
   const source = meta.docKey ?? null;
   const bands = bandsFromHeader(pages);
   if (!bands) {
@@ -521,13 +618,22 @@ function readHoldings(pages, text, meta, warnings, priceAsOf = null) {
        * statement had printed one.
        */
       marketPrice: null,
-      marketValue: face ? null : value,
+      /**
+       * NONE on a statement whose run contradicts its label (see
+       * `values-priced-when-run` above): a balance priced at another date's
+       * close is not a valuation of this one.
+       */
+      marketValue: face || struckWhenRun ? null : value,
       /** What the depository DID print, so the archive shows the document. */
       faceValue: face ? face.price : null,
+      /** …and on a statement valued when it was run, the figure its column printed. */
+      valueWhenRun: struckWhenRun && !face ? value : null,
       /**
        * The date the statement says its values are priced at — the total row's
        * `Prices as on`. On a par row it dates the depository's own figure,
-       * which this book does not carry as a mark.
+       * which this book does not carry as a mark. Null where the run
+       * contradicts the label, because then the statement prints no date its
+       * values are struck at.
        */
       priceAsOn: priceAsOf,
       source,

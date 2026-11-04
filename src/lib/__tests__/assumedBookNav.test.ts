@@ -17,7 +17,7 @@
 //   5. On the real book, the line's end level is the statement series' plus
 //      exactly what the published closes add.
 import assert from "node:assert/strict";
-import { assumedBookNav, dematHoldings } from "../assumedBookNav";
+import { assumedBookNav, dematHoldings, ASSUMED_KEY } from "../assumedBookNav";
 import { bookNavSeries, type NavUnit } from "../bookNav";
 import { navIndexSeries } from "../navSeries";
 import type { AssumedReturnBook } from "../assumedHoldingReturns";
@@ -116,6 +116,18 @@ const run = (b: AssumedReturnBook = book, units: NavUnit[] = [other, unit]) =>
     r.holdings.find((h) => h.securityKey === "share")?.status === "statement");
 }
 {
+  // An account valued BEFORE its shares' statement too: that earlier value is
+  // the whole account's and cannot be split, so the shares at their closes and
+  // the listings no price reaches stay ONE investment, valued through the end.
+  // It is never a carried part left at the statement date beside the shares.
+  const earlier: NavUnit = { ...unit, marks: [{ date: "2026-01-31", value: 6500, source: "statement" }, ...unit.marks] };
+  const r = run(book, [other, earlier]);
+  const d = r.series.coverage.units.filter((u) => u.accountId === "d");
+  ok("a demat valued before its shares' statement stays one investment, valued at the closes",
+    d.length === 1 && d[0].key === "d" && d[0].lastValued === "2026-09-30" && near(d[0].endValue, 2000 + 10 * 400),
+    d.map((u) => `${u.key} ${u.endValue} to ${u.lastValued}`).join("; "));
+}
+{
   const r = run({ ...book, histories: { loose: book.histories.loose } });
   ok("a price still loading is pending, never valued", r.pending === 1 && r.holdings.find((h) => h.securityKey === "share")?.pending === true);
 }
@@ -168,13 +180,21 @@ const run = (b: AssumedReturnBook = book, units: NavUnit[] = [other, unit]) =>
   ok("each demat's end value moves by exactly what its published closes add", ties);
   ok("…and the investments outside the demats are untouched", WHOLE_BOOK_NAV.coverage.units.every((u) =>
     byAccount.has(u.accountId) || Math.abs((r.series.coverage.units.find((x) => x.key === u.key)?.endValue ?? 0) - (u.endValue ?? 0)) <= 1e-6));
-  // The ICICI demat was valued on 31 Mar, before its 31 Oct share count (Stage
-  // 10kn): that earlier value is the whole account's and cannot be split, so the
-  // shares at their closes and the listings no price reaches stay ONE investment,
-  // valued through the series' end — never a carried part dated 31 Oct beside it.
-  const icici = r.series.coverage.units.filter((u) => u.accountId === "icici-bank-nsdl-demat-49794950");
-  ok("a demat valued before its shares' statement stays one investment, valued at the closes",
-    icici.length === 1 && icici[0].key === "icici-bank-nsdl-demat-49794950" && icici[0].lastValued === end,
+  // The ICICI demat is first valued at its shares' own 31 Oct statement. Its
+  // "31 March" statement prices the 31 March balances at 20 July's closes, so
+  // the reader carries those balances with no value (Stage 10ku). With nothing
+  // valued earlier, it splits like any demat: the listings no published price
+  // reaches stay one investment at the statement's own date, and the shares are
+  // a second one at their closes through the series' end. (Until Stage 10ku
+  // that misdated 31 March figure held the account together as one investment.
+  // The constructed case above keeps that branch covered.)
+  const iciciId = "icici-bank-nsdl-demat-49794950";
+  const iciciAsOf = BOOK_ACCOUNTS.find((a) => a.accountId === iciciId)?.asOf;
+  const icici = r.series.coverage.units.filter((u) => u.accountId === iciciId);
+  const iciciKept = icici.find((u) => u.key === iciciId);
+  const iciciShares = icici.find((u) => u.key === `${iciciId}${ASSUMED_KEY}`);
+  ok("a demat first valued at its shares' own statement splits: the rest at that date, the shares at the closes",
+    icici.length === 2 && !!iciciKept && !!iciciShares && iciciKept.lastValued === iciciAsOf && iciciShares.lastValued === end,
     icici.map((u) => `${u.key} ${((u.endValue ?? 0) / 1e7).toFixed(2)} Cr to ${u.lastValued}`).join("; "));
   ok("every holding not valued this way says why", r.holdings.every((h) => h.status === "assumed" ? h.reason === null : !!h.reason));
   ok("the start days still include the series' first", r.starts[0] === WHOLE_BOOK_NAV.coverage.from);

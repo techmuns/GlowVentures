@@ -100,7 +100,7 @@
 // units are already counted on the line above.
 import type { Account, Commitment, Position, ReviewFlow, ReviewWrittenOff } from "./types";
 import { BOOK_REVIEW_FLOWS } from "@/data/glowData";
-import { sum, sumOrNull, dedupedPositions, isPrivateClass, currentHoldings, isValuedAtCost } from "./analytics";
+import { sum, sumOrNull, dedupedPositions, isPrivateClass, currentHoldings, isValuedAtCost, isFundVehicle } from "./analytics";
 import { type AccountIndex, accountIndex, ownerOf, providerOf } from "./accounts";
 import { aifSectionOf, categoriesNamedIn, readsAsPrivateEquity, PRIVATE_EQUITY_SECTION, AIF_UNSTATED_SECTION } from "./aifCategory";
 import {
@@ -442,6 +442,14 @@ export type BookFigures = {
   cost: number | null;
   value: number | null;
   pnl: number | null;
+  /**
+   * THE QUARTERLY NAV (Stage 10kw): value ÷ units off the fund's own statement,
+   * and the date that statement strikes it on. Only over the held folios of ONE
+   * fund, each with a unit count and a value, all valued on ONE date — anything
+   * else would divide a blend. Null with the reason in `navWhy`.
+   */
+  nav: { perUnit: number; date: string } | null;
+  navWhy: string | null;
   /** The value of the holdings that report a cost — the numerator any return needs. */
   costedValue: number;
   /** How many holdings are summed into cost/value, and how many report a cost. */
@@ -578,8 +586,16 @@ export type PrivateBook = {
    * sections, so one total carries them all.
    */
   privateTotal: BookFigures;
-  /** The consolidated private value — the denominator of every Weight cell. */
+  /** The consolidated private value — the denominator of every Weight-at-value cell. */
   privateValue: number;
+  /**
+   * The consolidated private COST — the denominator of every Weight-at-cost
+   * cell: what the valued holdings that report a cost cost, the ones held at
+   * cost included. Null when no holding reports one.
+   */
+  privateCost: number | null;
+  /** The valued holdings counted in `privateValue` that report no cost, so are outside `privateCost`. */
+  costless: string[];
   /** Every folio, in no particular order. */
   folios: BookFolio[];
 };
@@ -1167,6 +1183,19 @@ function unvaluedFolio(
  * contributes nothing, and the coverage count says how many did. A `?? 0` here
  * would report a fund with nothing left to call.
  */
+function navOf(held: BookFolio[], funds: number): Pick<BookFigures, "nav" | "navWhy"> {
+  const no = (navWhy: string) => ({ nav: null, navWhy });
+  if (!held.length) return no("no statement values a holding on this row");
+  if (funds > 1) return no("a NAV per unit belongs to one fund, and this row spans several");
+  if (held.some((f) => f.section === "atCost")) return no("held at the price paid — no fund statement strikes a NAV for it");
+  if (held.some((f) => !f.position || !isFundVehicle(f.position))) return no("not a fund — a NAV is a fund's value per unit, and a company's share has none");
+  if (held.some((f) => f.value == null)) return no("no statement values this holding");
+  if (held.some((f) => f.units == null || f.units <= 0)) return no("the statement values this holding without a unit count, so it states no NAV per unit");
+  const dates = [...new Set(held.map((f) => f.asOf))];
+  if (dates.length !== 1 || dates[0] == null) return no("its folios are valued on different dates, and one NAV would blend them");
+  return { nav: { perUnit: sum(held.map((f) => f.value!)) / sum(held.map((f) => f.units!)), date: dates[0] }, navWhy: null };
+}
+
 export function figuresOf(folios: BookFolio[], consolidated: boolean): BookFigures {
   const held = folios.filter((f) => f.position && (!consolidated || f.counted));
   // THE CAPITAL ON THE SAME BASIS AS THE HOLDING: every statement's own on a
@@ -1231,6 +1260,7 @@ export function figuresOf(folios: BookFolio[], consolidated: boolean): BookFigur
     cost,
     value,
     pnl,
+    ...navOf(held, funds.size),
     costedValue,
     holdings: held.length,
     costed: held.filter((f) => f.cost != null).length,
@@ -1321,7 +1351,11 @@ const byValueThenPaid = (a: { value: number | null; paid: number | null; committ
 export function privateBook(folios: BookFolio[], grouping: BookGrouping): PrivateBook {
   // Every private holding with a value — the measured ones AND the ones held at
   // cost — which is BOOK_SUMMARY.privateValue on the statement basis.
-  const privateValue = figuresOf(folios.filter((f) => f.section !== "unvalued"), true).value ?? 0;
+  const valued = folios.filter((f) => f.section !== "unvalued");
+  const privateValue = figuresOf(valued, true).value ?? 0;
+  // THE SAME HOLDINGS ON COST: a holding with no cost is named, never weighed as nil.
+  const privateCost = figuresOf(valued, true).cost;
+  const costless = [...new Set(valued.filter((f) => f.position && f.counted && f.cost == null).map((f) => f.fundName))];
   const sections = {} as Record<BookSectionId, BookSection>;
   for (const id of BOOK_SECTIONS) {
     const mine = folios.filter((f) => f.section === id);
@@ -1384,6 +1418,8 @@ export function privateBook(folios: BookFolio[], grouping: BookGrouping): Privat
     sections,
     privateTotal: figuresOf(folios, true),
     privateValue,
+    privateCost,
+    costless,
     folios,
   };
 }
