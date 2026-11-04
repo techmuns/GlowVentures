@@ -1147,6 +1147,19 @@
 - Which money buys the index is decided before any close arrives, so a record gap shows at once. The feed's own state (closes loading, the price service down) keeps the plain dash with its reason as the hover (`IndexFigure.feed`, `data-bench-feed`). A label that changed as the fetch failed reflowed the table, and CI's navigation check restored scroll 16px short.
 - `check:pages` (monitor): new invariant "every return carries its index line, and a gap in it names its cause" (`monitorBench`). Removing the footer's line makes it fail. The footer and section captures read the figure without its `[data-bench]` line, so "only the figure on its face" still holds.
 
+### Stage 10lt — A holding's Transactions tab lists every buy, sell, switch and income
+
+- *"If there is any transaction on any security or asset where dividends, or any income etc is coming it will show in transactions as buy sell or income … if now tomorrow interest payments come in how will you show and also say what happens when I redeem from somewhere and I invest somewhere else … populate if we have missed anything at all"* — the family, 4 Nov 2026, on Buoyant A4's Transactions tab, which showed one purchase out of ten.
+- A holding's Transaction history now draws Data Audit → Transactions' own rows for it (`holdingRecordsFrom` in `consolidatedSheet.ts`, carried in `ledger/stocks/<key>.json` as `records` by `deriveHoldingLedgers`, on the build and the statement publication alike). These are trades, purchases, redemptions and contributions, switches, income and non-cash actions, each badged BUY / SELL / INCOME. Tax lots stay on Data Audit. First bought and Last added read the same rows (Buoyant: 1 Jun 2024, not 2026). 210 holdings gain rows; none loses one.
+- Across a class switch the holding keeps its history. The Class A1 deposits the book carried into A4 (`carriedFrom`) are on the A4 page, marked "bought as Class A1". Each switch's two legs are one neutral SWITCH row, so Buoyant A4's buys add to the ₹70.85 Cr paid, and with the ₹58,862 reinvested gain distribution they add to its cost.
+- Data Audit gains what it missed:
+  - **Switches**: 186 legs (`kind: "reclassification"`), each its holding's Buy or Sell. They count as "Internal switch", are signed like a trade, and each names its other leg (the nearest-dated partner).
+  - **Income on a fund's unit record**: 687 rows for IDCW reinvestments and payouts and Buoyant's reinvested gain distribution. That was ₹48.2 L the returns counted with no row. `build-book` now tags those `BOOK_HOLDING_INCOME` entries `via: "unit-record"` (and `earnedOn` where income followed a class switch); no figure moved. Every statement-sourced holding's Income rows now add to the income its return counts.
+- **Interest is income the day it arrives.** `shared/incomeKind.mjs` is the single cash rule that `build-book` and `deriveIncome` both read: dividend, IDCW, interest, coupon, distribution. Bonus, split, spin-off, rights and mergers stay non-cash. Before this, an interest row would have been a blank corporate action, outside income. Today's archive has none, so nothing moves.
+- Redeeming and reinvesting elsewhere: through the bank it is a Sell (redemption) on one holding and a Buy (purchase) on the other, each external capital to its account. As a switch it is a Sell leg and a Buy leg that name each other, internal, with no capital flow.
+- The type badges are one `.txn-type` class with both themes defined. The old BUY tag was indigo-300 on ivory in light mode.
+- Checks: `consolidatedSheet.test.ts` (cash rule, unit-record rows, income tie, switch legs, Buoyant's lineage, holding records); `readModels.test.ts` against `deriveHoldingLedger`.
+
 ### Stage 10lf — Return card coverage review: findings, the approved method and its outcome
 
 - Why: the FYTD card read +20.0% over "203 of 509 holdings · ₹167.3 Cr" — about 13–15% of the book by value; the family read it as broken.
