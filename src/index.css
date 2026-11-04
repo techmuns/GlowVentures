@@ -277,6 +277,9 @@ body {
      variant washed the pill out to a near-invisible smudge on the page. This
      carries explicit colours for each theme so neither can drift. */
   .ret-tag { @apply rounded px-1 text-[9px] font-semibold tracking-wide; background-color: rgba(148, 163, 184, 0.22); color: #cbd5e1; }
+  /* The index's name on the line under a holding's return (Stage 10lb): a label,
+     not a figure — small caps in the line's own muted colour. */
+  .bench-name { @apply text-[9.5px] font-semibold uppercase tracking-[0.05em]; }
   /* THE RETURNS TAB'S OWN SURFACES (Stage 10fp) — a segmented control's well,
      a figure's tile, a window chip and a benchmark's bar track. Explicit colours
      for each theme, as `.ret-tag` carries, so none needs an opacity remap. */

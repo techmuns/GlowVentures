@@ -1083,3 +1083,9 @@
 - A first cell spanning several columns (empty-state, detail and load-more rows) stays in the flow. `TrFoot`'s label now sits in the first column with one blank cell over the rest of its run, so "Total · N rows" freezes too; `data-foot-span` carries the run, and the `monitor-arrange` probe reads it. A sticky footer sits above the frozen cells (`z-index: 20`), as the heading does.
 - Checked in the browser on each nav route that draws a table, light and dark: no table's surface differs from what it is drawn on, and expanded child rows keep their guide.
 - `check-source-trace` opens the Quantity evidence list before it scrolls the tables 65px: at that offset the Quantity column sits under the frozen one, and the click would scroll it back.
+
+### Stage 10lb — The Monitor's return cells: the holding's figure leads, its index under it
+
+- *"make the main return bold and the bottom benchmark also better ui so can easily read the cell"*. In every return column of the Portfolio Monitor (HPR, XIRR, YTD…) a shown figure is a size up (13px in a 12px table) and semibold, in its gain/loss colour. A withheld figure keeps its plain "— reason".
+- The index line under it (`BenchLine`, Stage 10kd) sits 4px lower, so the figure's dashed formula underline belongs to the figure. Its name is a small-caps label (`.bench-name`: 9.5px, semibold, letter-spaced, muted), and the index's return is a medium-weight figure beside it, one shade stronger than the label. The cell's text is unchanged ("S250 +20.9%"), so nothing that reads it moves.
+- Checked with before/after screenshots in both themes on a named stand-in index feed. `check:pages ONLY=monitor,monitor-arrange` matches main (the money-heading sort invariant fails on both); `check-assumed-holdings`, `check-investment-dates` and the `holdingBenchmark` suite pass.
