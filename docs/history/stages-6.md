@@ -1133,6 +1133,20 @@
 - Book: 439 of the trades sit behind the two held positions (`BOOK_HOLDING_TRADES` 1,082 → 1,521). The 27 spin-off fills have no holding. Totals are unchanged. The account stays described by its equity portfolio, because the report sets no `providerEngagement`.
 - A removal notice whose file is in `source/` under the same name is now "re-sent" (`attachment-resent`, manifest `resentAs`), not "never arrived". This flows through check:reads, coverage:source (class `re-sent`) and the Statement Library ("Re-sent" pill, no folder flag). The LKP pair stays never arrived.
 
+### Stage 10lc — Every Monitor return carries its index line; a gap names its cause
+
+- *"It should never show blank … read how we have fixed a lot of things here which would fill in a lot of blanks so no confusion."* — the family, 4 Nov 2026, on "N500 —" under a return and a total with nothing under it.
+- Checked first: Sanshi Fund-I's N500 −0.4% is right. Its ten payments (21 Mar–16 Dec 2025, ₹157.5 Cr) bought into the Nifty 500 on their own days and valued on Sanshi's own 30 Jun 2026 statement date are worth ₹156.95 Cr (−0.35%), recomputed off Yahoo's ^CRSLDX closes.
+- Filled (`PortfolioMonitor.tsx`, `holdingBenchmark.ts`):
+  - an opened row's lines (each holder, unit class, mandate account, share in a mandate) carry their own index on their own dated money, a mandate account by its manager's printed index. Before this, about 600 figures in the Category view had nothing under them.
+  - each contribution under a fund buys the index with its one payment (`onePaymentLeg`).
+  - a holding bought once and never sold (the CAGR gate's own proof, `singlePurchaseGap`) buys the index on that day for its HPR and a YTD opened this year.
+  - the footer and each section pool every row's legs, each closed on its own value date (`closeLegsOn`, `pooledLegs`), against the index the rows share, else the Nifty 500.
+- A gap names its cause on its face, as the return cell's own dash does (Stage 10jm): `benchGapLabel` gives "No buy dates", "Dates incomplete", "Range only", "No dated capital" and so on. The hover now gives the row's actual cause (`undatedMoneyWhy`), for example units bought before a PMS manager's transaction statements begin, 86 of 516 units on a dated trade, or a review that dates only a span.
+- Left as a dash on purpose: 91 of the default view's 94 HPR dashes are holdings no record dates, so their Investment date cell is "—" too. The other three are dated only as a span or in part: NSE and Manorama by the review's range, ZF Commercial Vehicle with 86 of 516 units on a dated trade. Mostly they are PMS shares (Goldstandard, Green Lantern, etc.) bought before each manager's transaction statements in the drop begin on 1 Apr 2026. They fill when those statements arrive back to purchase.
+- Which money buys the index is decided before any close arrives, so a record gap shows at once. The feed's own state (closes loading, the price service down) keeps the plain dash with its reason as the hover (`IndexFigure.feed`, `data-bench-feed`). A label that changed as the fetch failed reflowed the table, and CI's navigation check restored scroll 16px short.
+- `check:pages` (monitor): new invariant "every return carries its index line, and a gap in it names its cause" (`monitorBench`). Removing the footer's line makes it fail. The footer and section captures read the figure without its `[data-bench]` line, so "only the figure on its face" still holds.
+
 ### Stage 10lt — A holding's Transactions tab lists every buy, sell, switch and income
 
 - *"If there is any transaction on any security or asset where dividends, or any income etc is coming it will show in transactions as buy sell or income … if now tomorrow interest payments come in how will you show and also say what happens when I redeem from somewhere and I invest somewhere else … populate if we have missed anything at all"* — the family, 4 Nov 2026, on Buoyant A4's Transactions tab, which showed one purchase out of ten.
