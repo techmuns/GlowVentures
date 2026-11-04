@@ -167,7 +167,7 @@ for (const [axis, key] of [["basket", basketKeyOf], ["asset class", familyClassK
      franklin.every((p) => basketKeyOf(p, isM(p)) === UNCLASSIFIED));
 }
 
-// ── THE SEVEN THAT SAT UNDER "NOT CLASSIFIED" (Stage 10la) ──────────────────
+// ── THE SEVEN THAT SAT UNDER "NOT CLASSIFIED" (Stage 10lb) ──────────────────
 // HDFC Balanced Advantage on its own folios is the review's; the other six are
 // the family's word, on both axes, and only where the review is silent.
 {

@@ -1,4 +1,5 @@
 // Public market history only; no portfolio, account or transaction data goes upstream.
+import { FUND_UNIT_ACTIONS } from '../../shared/fundUnitActions.mjs';
 const TTL = 6 * 3600;
 const json = (body, cache = 'no-store') => new Response(JSON.stringify(body), { headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': cache } });
 async function boundedJson(response) {
@@ -23,23 +24,32 @@ export async function onRequest(context) {
   if (fund ? !/^\d{3,9}$/.test(fund) || !/^[A-Z]{2}[A-Z0-9]{10}$/.test(isin) : !/^[A-Z0-9&^_.=-]{1,40}$/.test(raw)) return json({ ok: false, reason: 'A verified stock symbol or fund code and ISIN is needed.' });
   const symbol = fund ? fund : raw.includes('.') || raw.startsWith('^') ? raw : `${raw}.NS`;
   const today = new Date(Date.now() + 330 * 60000).toISOString().slice(0, 10);
-  const key = new Request(`${url.origin}/__cache/market-history/v2/${today}/${fund ? `fund/${fund}/${isin}` : `stock/${encodeURIComponent(symbol)}`}`);
+  const key = new Request(`${url.origin}/__cache/market-history/v2/${today}/${fund ? `fund/${fund}/${isin}/units-v1` : `stock/${encodeURIComponent(symbol)}`}`);
   const hit = await caches.default.match(key).catch(() => null); if (hit) return hit;
   const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 20000);
   try {
     const upstream = fund ? `https://api.mfapi.in/mf/${fund}` : `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?period1=0&period2=9999999999&interval=1d&events=div%2Csplits&includeAdjustedClose=true`;
     const data = await boundedJson(await fetch(upstream, { signal: controller.signal, redirect: 'manual', headers: { 'User-Agent': 'Mozilla/5.0 (compatible; GlowVenturesDashboard/1.0)', accept: 'application/json' } }));
     const points = new Map(), closes = new Map();
-    let name, source, basis, splits = [];
+    let name, source, basis, category = null, splits = [];
     if (fund) {
       const meta = data?.meta;
       if (String(meta?.scheme_code) !== fund || ![meta?.isin_growth, meta?.isin_div_reinvestment].includes(isin)) throw new Error('The fund history did not match the holding’s exact ISIN and scheme code.');
       name = meta.scheme_name; source = 'AMFI NAV history via MFapi.in'; basis = 'nav';
+      category = typeof meta.scheme_category === 'string' ? meta.scheme_category : null;
       for (const row of data.data ?? []) {
         const match = /^(\d{2})-(\d{2})-(\d{4})$/.exec(row.date || '');
         if (!match) continue;
         const date = `${match[3]}-${match[2]}-${match[1]}`, value = Number(row.nav);
         if (Number.isFinite(Date.parse(`${date}T00:00:00Z`)) && new Date(`${date}T00:00:00Z`).toISOString().slice(0, 10) === date && date <= today && Number.isFinite(value) && value > 0) points.set(date, value);
+      }
+      // A documented sub-division into this ISIN (Stage 10hq): AMFI's series
+      // drops by the factor on the ex-date, so earlier NAVs are put on today's
+      // unit, as Yahoo's close is split-adjusted, and the split is listed.
+      for (let to = isin, a, n = 0; n < FUND_UNIT_ACTIONS.length && (a = FUND_UNIT_ACTIONS.find(x => x.newIsin === to)); to = a.oldIsin, n++) {
+        if (a.exDate > today) continue;
+        for (const [date, value] of points) if (date < a.exDate) points.set(date, value / a.factor);
+        splits.push({ date: a.exDate, factor: a.factor });
       }
     } else {
       const r = data?.chart?.result?.[0];
@@ -65,7 +75,7 @@ export async function onRequest(context) {
     if (!ordered.length) throw new Error('No completed daily prices are available for this investment.');
     // Yahoo's Close adjusts for splits only; Adj Close also adjusts for dividends.
     // Keep both: an adjusted return index must never be multiplied by share units.
-    const response = json({ ok: true, version: 2, symbol, isin: fund ? isin : null, name, source, basis, first: ordered[0][0], last: ordered.at(-1)[0], t: ordered.map(([d]) => d), v: ordered.map(([, v]) => v), c: ordered.map(([d, v]) => fund ? v : closes.get(d) ?? null), splits }, `public, max-age=${TTL}`);
+    const response = json({ ok: true, version: 2, symbol, isin: fund ? isin : null, name, source, basis, category, first: ordered[0][0], last: ordered.at(-1)[0], t: ordered.map(([d]) => d), v: ordered.map(([, v]) => v), c: ordered.map(([d, v]) => fund ? v : closes.get(d) ?? null), splits }, `public, max-age=${TTL}`);
     context.waitUntil(caches.default.put(key, response.clone()).catch(() => {}));
     return response;
   } catch (error) {

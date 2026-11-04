@@ -361,7 +361,7 @@ export function fundDatedRecords(
       }
     }
     if (withoutAccount === g.length) {
-      // Vantage Oak's depository line reports no cost either (Stage 10la), so the sentence says which.
+      // Vantage Oak's depository line reports no cost either (Stage 10lb), so the sentence says which.
       const costed = g.every((p) => p.costBasis != null);
       gaps.push(`no capital account for this fund is in the book — its statements report the holding${costed ? " and its cost," : ", no cost"} and no dated contribution`);
     } else if (withoutAccount > 0) {

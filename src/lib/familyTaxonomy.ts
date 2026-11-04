@@ -375,7 +375,7 @@ export const FAMILY_TAXONOMY: Readonly<Record<string, TaxonomyEntry>> = {
     { assetClass: "Equity", basket: "Liquidity", reviewProduct: "HDFC Balanced Advantage Fund" },
   "sec:hdfc-baf-r-grow":
     { assetClass: "Equity", basket: "Liquidity", reviewProduct: "HDFC Balanced Advantage Fund" },
-  // Stage 10la — the same fund on HDFC Mutual Fund's own folio statements
+  // Stage 10lb — the same fund on HDFC Mutual Fund's own folio statements
   // (15644806 Ajay, 16002141 Ankita), which spell the scheme out in full. The
   // short key above matches only the Motilal demat's unvalued rows, so the
   // valued units fell to "not classified". Both folios tie to the review's
@@ -488,7 +488,7 @@ export type Resolved<T> = { value: T; source: TaxonomySource; reviewProduct: str
  * and cites a workbook row, and this holding has neither. A later review naming
  * it takes over, because the map is read first.
  *
- * THE SIX THE REVIEW DOES NOT NAME (Stage 10la, 4 Nov 2026: "Apply all seven").
+ * THE SIX THE REVIEW DOES NOT NAME (Stage 10lb, 4 Nov 2026: "Apply all seven").
  * Active Momentum (6 Aug), Vantage Oak (31 Jul) and Nzuri (25 Sep and 1 Oct)
  * were bought after it; the Low Volatility FOF (Oct 2024) and Aarti's Kotak
  * Flexi Cap (2018) were held on 30 June and are on none of its 25 tabs. Each

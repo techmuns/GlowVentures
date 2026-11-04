@@ -24,6 +24,14 @@ cache.clear(); payload = stock(); delete (payload as any).chart.result[0].indica
 payload = { meta: { scheme_code: 131666, isin_growth: 'INF084M01AB8', scheme_name: 'Exact fund' }, data: [{ date: '21-10-2026', nav: '120' }, { date: '20-10-2026', nav: '100' }, { date: '99-99-2026', nav: '200' }, { date: '22-10-2099', nav: '300' }, { date: '19-10-2026', nav: '0' }] };
 const nav = await request('fund=131666&isin=INF084M01AB8'); assert.equal(nav.basis, 'nav'); assert.deepEqual(nav.v, [100,120]); assert.equal(nav.isin, 'INF084M01AB8');
 cache.clear(); assert.equal((await request('fund=131666&isin=INF084M01AB9')).ok, false, 'similar fund name never substitutes for exact ISIN');
+// DSP split its Gold ETF ten for one on 28 Aug 2026 under a new ISIN (Stage 10hq):
+// AMFI's series drops tenfold, so earlier NAVs are put on today's unit and the split is listed (Stage 10kp).
+cache.clear(); payload = { meta: { scheme_code: 151737, isin_growth: 'INF740KA1ZP2', scheme_name: 'DSP Gold ETF', scheme_category: 'Exchange Traded Funds (ETFs) - Gold ETF' },
+  data: [{ date: '29-08-2026', nav: '15.2' }, { date: '28-08-2026', nav: '15.3425' }, { date: '27-08-2026', nav: '152.3813' }] };
+const gold = await request('fund=151737&isin=INF740KA1ZP2');
+assert.deepEqual(gold.t, ['2026-08-27', '2026-08-28', '2026-08-29']); assert.ok(Math.abs(gold.v[0] - 15.23813) < 1e-9 && gold.v[1] === 15.3425, 'NAVs before the ex-date are on the post-split unit');
+assert.deepEqual(gold.c, gold.v); assert.deepEqual(gold.splits, [{ date: '2026-08-28', factor: 10 }]); assert.equal(gold.category, 'Exchange Traded Funds (ETFs) - Gold ETF');
+assert.deepEqual(nav.splits, [], 'a fund with no documented split is served as published');
 Object.defineProperty(globalThis, 'caches', { configurable: true, value: { default: { match: async () => { throw new Error('offline'); }, put: async () => { throw new Error('offline'); } } } });
 payload = stock(); assert.equal((await request()).ok, true, 'cache failure does not hide a usable provider');
 globalThis.fetch = async () => new Response(null, { status: 302, headers: { location: 'https://evil.invalid' } }); assert.equal((await request()).ok, false);

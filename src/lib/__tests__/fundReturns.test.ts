@@ -377,7 +377,7 @@ console.log("── a fund with no capital account ──");
   ok("this book has a private fund with no capital account", bare.length > 0);
   for (const f of bare) {
     const gap = dated.get(f.securityKey)!.gap!;
-    // A FUND WITH NO COST AT ALL (Vantage Oak, Stage 10la) has no capital for
+    // A FUND WITH NO COST AT ALL (Vantage Oak, Stage 10lb) has no capital for
     // any measure, so where the missing cost is what stops one, it is named.
     const noCost = f.cost == null;
     for (const m of ["cagr", "xirr", "ytd"] as const) {

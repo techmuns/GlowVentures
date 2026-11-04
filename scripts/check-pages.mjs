@@ -3962,7 +3962,7 @@ const PM_RETURN_BOOK = (() => {
     /** The funds held at cost — a row each in the table's at-cost section, in no return. */
     const atCostFunds = new Set(priv.filter(atCost).map((p) => p.securityKey));
     /**
-     * THE PAGE'S COVERAGE GATE, re-expressed (Stage 10la): the book's HPR is
+     * THE PAGE'S COVERAGE GATE, re-expressed (Stage 10lb): the book's HPR is
      * struck only where the valued holdings' cost covers 99.5% of their value
      * (`COST_COVERAGE_MIN`). A valued holding that reports no cost — Vantage Oak
      * — leaves it short, and the footer must be refused, naming it.
@@ -8281,6 +8281,8 @@ const ROUTES = [
   ["cio-allocation", "/cio?tab=allocation"],
   // Optional return tiles still publish figures consumed by the holdings checks.
   ["cio-return-metrics", "/cio?tab=allocation&tiles=value,return,mwr,uncalled,distributions"],
+  // Stage 10kq — the calendar-year card, which no default strip draws.
+  ["cio-ytd-card", "/cio?tiles=value,gain,annualised,fytd,ytd"],
   /**
    * ── THE STRIP'S CHOICE, SAVED FOR EVERYONE ───────────────────────────────
    *
@@ -17655,7 +17657,7 @@ const PM_OVERLAP_HINT = ["the 'Counted once' line says what it does in its hover
 const pmHprCell = (cells) => Object.entries(cells ?? {})
   .find(([col, c]) => /^ret:/.test(col) && c?.retShown === "1" && (c.retTag === "HPR" || col === "ret:absolute"))?.[1] ?? null;
 /**
- * THE BOOK'S HPR REFUSED FOR WANT OF COST (Stage 10la): no percentage, the
+ * THE BOOK'S HPR REFUSED FOR WANT OF COST (Stage 10lb): no percentage, the
  * coverage reason, and every valued holding that reports no cost named — off
  * `glowData.ts`, never the page's own list.
  */
@@ -17685,7 +17687,7 @@ const PM_DEPLOYED_CHECK = ["an HPR struck over more than its Cost column names w
   if (!B.redeemed) return { notChecked: "no private holding in this book has redeemed units, so every HPR divides by its own Cost column" };
   const near = (a, b) => Number.isFinite(a) && Number.isFinite(b) && Math.abs(a - b) <= 2;
   const tc = pmHprCell((pv.totals ?? [])[0]?.cells);
-  // A TOTAL WHOSE COST FALLS SHORT OF ITS VALUE STRIKES NO HPR (Stage 10la), so
+  // A TOTAL WHOSE COST FALLS SHORT OF ITS VALUE STRIKES NO HPR (Stage 10lb), so
   // there is no denominator on it to name; the fund rows below still carry theirs.
   if (!B.costCovers) { if (tc) return false; }
   else {
@@ -18555,7 +18557,7 @@ const PM_RETURN_CHECKS = [
    */
   ["the private book's HPR hover says it is FIFO, and what it counts of the cash paid back", (t, ctx) => {
     if (!PM_RETURN_BOOK) return false;
-    // Refused for want of cost (Stage 10la): no FIFO figure, so the dash names why.
+    // Refused for want of cost (Stage 10lb): no FIFO figure, so the dash names why.
     if (!PM_RETURN_BOOK.costCovers) {
       const cells = (ctx?.pmReturn?.foot ?? []).filter((x) => x.measure === "auto" || x.measure === "absolute");
       return cells.length > 0 && cells.every(pmFootRefused);
@@ -18681,7 +18683,7 @@ const PM_RETURN_ROUTE_CHECKS = [
   ["the HPR footer is FIFO over the whole private book — the gain on units held and redeemed, over the capital deployed in both", (t, ctx) => {
     const foot = ctx?.pmReturn?.foot?.find((x) => x.measure === "absolute");
     if (!foot || !PM_RETURN_BOOK) return false;
-    if (!PM_RETURN_BOOK.costCovers) return pmFootRefused(foot);   // Stage 10la
+    if (!PM_RETURN_BOOK.costCovers) return pmFootRefused(foot);   // Stage 10lb
     if (PM_RETURN_BOOK.footHpr == null) return false;
     // A RETURN COUNTS EVERYTHING THE MONEY EARNED (Stage 10fz): the private
     // funds' income — the review's dated income rows and the statements' own
@@ -18865,13 +18867,19 @@ const AVAILABLE_CARDS_BOOK = await (async () => {
     const rootPath = decodeURIComponent(new URL('..', import.meta.url).pathname);
     const out = await build({ stdin: { contents: `
       import { availableCardReturns, statementReturnInputs } from './src/lib/availableCardReturns';
-      import { dedupedPositions } from './src/lib/analytics';
+      import { pageConsolidated, failedHistoryBook } from './scripts/dev/page-book';
       import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_ACCOUNT_RETURN_RECORDS } from './src/data/glowData';
       const book = { accounts: BOOK_ACCOUNTS, positions: BOOK_POSITIONS, accountReturnRecords: BOOK_ACCOUNT_RETURN_RECORDS, privateMarkets: {} };
-      export const cards = (display) => availableCardReturns(book, dedupedPositions(display), statementReturnInputs(book), new Date());
+      // THE PAGE'S OWN ROWS ON THIS RUN (Stage 10la): the overlays with no quote
+      // feed, every price history refused, and the saved action capture read.
+      export const cards = (_display, actions) => {
+        const shown = pageConsolidated(actions);
+        return availableCardReturns(book, shown, statementReturnInputs(book), new Date(), failedHistoryBook(shown, actions));
+      };
     `, resolveDir: rootPath }, bundle: true, write: false, format: 'esm', platform: 'node', alias: { '@': rootPath + '/src' }, logLevel: 'error' });
     const mod = await import(`data:text/javascript;base64,${Buffer.from(out.outputFiles[0].text).toString('base64')}`);
-    return mod.cards(bookArray(readFileSync(new URL('../src/data/glowData.ts', import.meta.url), 'utf8'), 'BOOK_POSITIONS'));
+    const saved = (() => { try { return JSON.parse(readFileSync(new URL('../public/data/corporate-actions.json', import.meta.url), 'utf8')); } catch { return null; } })();
+    return mod.cards(bookArray(readFileSync(new URL('../src/data/glowData.ts', import.meta.url), 'utf8'), 'BOOK_POSITIONS'), saved);
   } catch (e) { console.error('Headline coverage inputs unavailable:', e.message); return null; }
 })();
 const headlineMatches = (tile, expected, field = 'return') => {
@@ -18885,7 +18893,8 @@ const headlineMatches = (tile, expected, field = 'return') => {
     // A quote feed can add custody shares to this no-feed display baseline.
     && Number(raw.cardHoldings) >= expected.totalHoldings
     && Number(raw.cardAccounts) === expected.coveredAccounts
-    && /Available data/.test(tile.sub ?? '');
+    // The three return cards say how much of the public investments they cover (Stage 10la).
+    && (raw.cardPeriod != null ? /Covers \d+% of public investments/.test(tile.sub ?? '') : /Available data/.test(tile.sub ?? ''));
 };
 
 const CIO_SHARED = [
@@ -19548,6 +19557,25 @@ const CIO_BOOK_RETURN = [
     const tile = ctx?.kpiTiles?.find(x => x.slot === 'fytd');
     return headlineMatches(tile, AVAILABLE_CARDS_BOOK?.fytd) && /FYTD/.test(tile.second ?? '')
       && !!tile.coverage.cardFrom && !!tile.coverage.cardTo;
+  }],
+];
+
+/**
+ * ── THE CALENDAR-YEAR CARD READS YTD FROM THE FIRST DATE WE HAVE (Stage 10kq) ─
+ *
+ * It asked for a value on 31 December, which no statement here carries, and
+ * read one fund of 509 holdings — Helios, the one account that opens at nil.
+ * It now reads the Monitor's YTD record (`ytdSelection`), re-derived here off
+ * `glowData.ts`: the same figure and coverage, at least every account the
+ * financial year reads, and a face that says when it is not a full year.
+ */
+const CIO_YTD_CARD = [
+  ["the calendar-year card reads YTD from the first date we have, never a strict 31 Dec opening", (t, ctx) => {
+    const tile = ctx?.kpiTiles?.find(x => x.slot === 'ytd'), r = AVAILABLE_CARDS_BOOK?.ytd;
+    return !!r && headlineMatches(tile, r)
+      && r.coveredAccounts >= AVAILABLE_CARDS_BOOK.fytd.coveredAccounts && r.coveredHoldings > 1
+      && (r.fullPeriod ? /^YTD ·/.test(tile.second ?? '') : /^YTD from first dated value ·/.test(tile.second ?? ''))
+      && tile.coverage.cardFrom === r.from && tile.coverage.cardTo === r.to;
   }],
 ];
 
@@ -27412,6 +27440,7 @@ const INVARIANTS = {
   "cio-attribution-legacy": [...CIO_SHARED, ...CIO_SEGMENTS_LEGACY],
   "cio-nav": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_NAV, ...NAV_BENCH, ...NAV_BENCH_OFFLINE, ...NAV_BASIS, ...NAV_STARTS],
   "cio-tiles-saved": CIO_TILES_SAVED,
+  "cio-ytd-card": [...CIO_SHARED, ...CIO_YTD_CARD],
   "cio-return-metrics": [...CIO_RETURN_RETIREMENT, ...CIO_ALLOC.filter(([description]) => CIO_OPTIONAL_CAPITAL_CHECKS.has(description))],
   ...Object.fromEntries(["annualised", "fytd", "ytd"].map((kind) => [`performance-${kind}`, [
     ["the tile's address opens its own return, period and coverage", (t, ctx) =>
@@ -30537,7 +30566,7 @@ const INVARIANTS = {
       if (!pr) return false;
       const cells = pr.rows.flatMap((r) => r.cells).filter((c) => c.shown && (c.tag === "HPR" || c.measure === "absolute"));
       const footAll = (pr.foot ?? []).filter((c) => c.measure === "absolute");
-      // A footer refused for want of cost (Stage 10la) strikes no HPR to describe; it names why.
+      // A footer refused for want of cost (Stage 10lb) strikes no HPR to describe; it names why.
       const refused = !!PM_RETURN_BOOK && !PM_RETURN_BOOK.costCovers;
       if (!cells.length || !footAll.length || (refused && !footAll.every(pmFootRefused))) return false;
       const foot = refused ? [] : footAll;

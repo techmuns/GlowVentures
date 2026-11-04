@@ -881,7 +881,7 @@ export function PortfolioMonitor() {
   // Validate saved sections against the current book and the active axis.
   // On Holdings the tabs come from the rows the table draws (`currentHoldings`),
   // so a section only closed positions sit in offers no tab onto an empty table
-  // (Stage 10la). Transactions keeps every position: a redeemed fund's trades are its rows.
+  // (Stage 10lb). Transactions keeps every position: a redeemed fund's trades are its rows.
   const buckets = useMemo(
     () => ["All", ...Array.from(new Set((view === "holdings" ? currentHoldings(positions) : positions)
       .map((p) => groupKeyFor(activeAxis, accIdx, p))))

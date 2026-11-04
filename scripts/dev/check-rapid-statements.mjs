@@ -33,13 +33,19 @@ assert.ok(!fs.existsSync(remote), 'Preserve prior evidence; use another scratch 
 execFileSync('git', ['init', '--bare', remote], { stdio: 'ignore' });
 const control = path.join(output, 'control.json'); writeControl(control, { dispatches: 0 });
 const read = file => JSON.parse(fs.readFileSync(file));
-const manifest = read('public/audit/manifest.json'), all = manifest.map(d => read(`public/audit/${d.docKey}/document.json`));
-const key = 'bandhan-mutual-fund-8652064-2026-10-26-holdings', source = all.find(d => d.docKey === key); assert.ok(source);
+const key = 'bandhan-mutual-fund-8652064-2026-10-26-holdings';
+// The drop must bring a genuinely new account, so the rehearsal's archive leaves out
+// the folio's other statements (its 14 Oct statement arrived in Stage 10kl). Every
+// comparison below is struck on this same set.
+const archived = read('public/audit/manifest.json'), folio = archived.find(d => d.docKey === key); assert.ok(folio);
+const sibling = d => d.docKey !== key && d.provider === folio.provider && d.accountNo === folio.accountNo;
+const manifest = archived.filter(d => !sibling(d)), all = manifest.map(d => read(`public/audit/${d.docKey}/document.json`));
+const source = all.find(d => d.docKey === key); assert.ok(source);
 const bytes = fs.readFileSync(source.sourcePath), baseline = all.filter(d => d.docKey !== key), refs = prepareBookReferences();
 const values = docs => canonicalBookValues(buildCanonicalBook(docs.filter(d => d.status !== 'failed'), docs.length, refs));
 const fullBook = values(all), initialBook = values(baseline), instantiate = await prepareRuntimeModel();
 const readModels = read('src/data/readModels.json'), fileIndex = read('public/statement-files/index.json');
-delete fileIndex.files[key];
+delete fileIndex.files[key]; for (const d of archived.filter(sibling)) delete fileIndex.files[d.docKey];
 const initial = { schemaVersion: 1, readerRevision: readModels.readerRevision, revision: digest(initialBook).slice(0, 20),
   baseCommit: 'a'.repeat(40), archiveRevision: archiveRevision(baseline), book: initialBook, documents: baseline,
   manifest: manifest.filter(d => d.docKey !== key), records: {}, originals: fileIndex.files, missingOriginals: fileIndex.missing,

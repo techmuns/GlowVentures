@@ -690,7 +690,7 @@ console.log("\n── the funds the audit named (Stage 10fz): before → after �
     `₹${bt.distributed} (${bt.distributedOf} of ${bt.distributionAccounts}) → ₹${at.distributed} (${at.distributedOf} of ${at.distributionAccounts})`);
 
   // ── DPI / RVPI / TVPI, by a second path ──
-  // VANTAGE OAK (Stage 10la) is in the band, and no capital account or review row
+  // VANTAGE OAK (Stage 10lb) is in the band, and no capital account or review row
   // records what was paid in, so the book's multiple is REFUSED naming it — the
   // family chose that over leaving the fund off this page. The arithmetic is
   // checked on the band without it; the day its paid-in lands, this must fail.
@@ -812,7 +812,7 @@ console.log("\n── figuresOf on a constructed pair: absent is skipped, never 
 // Neo Infra's capital redemption — load-bearing, or the page's "on ₹X" marker
 // is a claim nothing here could fail.
 {
-  // A VALUED HOLDING WITH NO COST (Vantage Oak, Stage 10la) leaves the band's
+  // A VALUED HOLDING WITH NO COST (Vantage Oak, Stage 10lb) leaves the band's
   // cost short of its value, so the band and the total refuse a return rather
   // than divide one set by another. The arithmetic below is struck on the build
   // without it; the day its cost lands, the first check fails.

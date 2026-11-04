@@ -31,7 +31,7 @@ try {
   await tile.locator('[data-return-info]').waitFor();
   assert((await tile.innerText()).includes(faceDate));
   assert(Number(await tile.locator('[data-card-coverage]').getAttribute('data-card-accounts')) >= selected.length);
-  assert.match(await tile.innerText(), /Available data/);
+  assert.match(await tile.innerText(), /Covers \d+% of public investments/); // the period cards' caption (Stage 10la)
   const shown = Number((await tile.locator('[data-kpi-value]').innerText()).replace(/[^0-9.+-]/g, ''));
   await tile.locator('[data-return-info]').click();
   const dialog = page.getByRole('dialog');

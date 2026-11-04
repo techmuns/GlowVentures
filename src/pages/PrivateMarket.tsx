@@ -1578,7 +1578,7 @@ export function PrivateMarket() {
       if (allAtCost) return { shown: false, tag, reason: AT_COST_RETURN };
       if (measure === "auto" || measure === "absolute") {
         if (fig.returnPct == null) {
-          // THE HOLDINGS THAT LEAVE IT SHORT ARE NAMED (Stage 10la): Vantage Oak
+          // THE HOLDINGS THAT LEAVE IT SHORT ARE NAMED (Stage 10lb): Vantage Oak
           // reports a value and no cost, and a dash over the whole band says why.
           const costless = [...new Set(held.filter((f) => f.cost == null && (f.value ?? 0) > 0).map((f) => f.fundName))];
           return { shown: false, tag, reason: fig.cost == null

@@ -133,7 +133,7 @@ ok("a review line the family declared listed is on the listed side, off this pag
 // Franklin India Credit AIF (Stage 10hx) was bought on 22 Oct, after the 30 June
 // review, so its own statement is its only source; the LLPs' Nzuri lines (Stage 10jq)
 // likewise, two lines an LLP; and Vantage Oak, allotted 31 Jul and declared
-// Category II by the family (Stage 10la).
+// Category II by the family (Stage 10lb).
 eq("the statement rows the review does not supersede — Neo Infra, Franklin, the LLPs' Nzuri and Vantage Oak",
   statementPrivate.map((p) => p.securityKey), ["franklin-india-credit-aif-scheme-i-unit-class-db2", "nzuri-pune-knowledge-park", "nzuri-pune-knowledge-park-private-limited-pref-24sp46",
     "nzuri-pune-knowledge-park", "nzuri-pune-knowledge-park-private-limited-pref-24sp46", "vof-i-class-a2", "neo-infra-income-opportunities-fund-i-class-a5"]);
@@ -152,7 +152,7 @@ ok("no private row carries a dedupe group", scope.rows.every((p) => !p.dedupeGro
 const unvaluedEarly = unvaluedAccounts(BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_COMMITMENTS);
 eq("accounts in scope = accounts with a private row + private folios holding nothing", scope.accounts.length,
   new Set(scope.rows.map((p) => p.accountId)).size + unvaluedEarly.filter((u) => u.side === "private").length);
-// ICICI 49794950 joins with Vantage Oak (Stage 10la).
+// ICICI 49794950 joins with Vantage Oak (Stage 10lb).
 eq("accounts in scope", scope.accounts.length, 25);
 ok("the review's holder accounts are in scope",
   BOOK_ACCOUNTS.filter((a) => a.reviewHolder).every((a) => scope.accounts.some((s) => s.accountId === a.accountId)));
@@ -252,7 +252,7 @@ near("cost", sumOrNull(funds.map((f) => f.cost)), 48583720 + 200000000 + (349608
 near("…the at-cost lines' cost is their value", sum(atCostReview.map((p) => p.costBasis ?? NaN)), sum(atCostReview.map((p) => p.marketValue)));
 ok("an at-cost line carries no P&L, no return and no per-unit mark",
   atCostReview.every((p) => p.unrealizedPnL == null && p.returnPct == null && p.currentPrice == null));
-// Vantage Oak's statement reports no cost, so it has no P&L to add (Stage 10la).
+// Vantage Oak's statement reports no cost, so it has no P&L to add (Stage 10lb).
 near("unrealised P&L = value less cost on the valued rows alone", sumOrNull(funds.map((f) => f.pnl)),
   sum([...statementPrivate, ...valuedReview].filter((p) => p.costBasis != null).map((p) => p.marketValue - (p.costBasis as number))));
 near("unrealised P&L", sumOrNull(funds.map((f) => f.pnl)), (55498303.25 - 48583720) + (199990000.57 - 200000000) + (119061690.39 - 2 * 20807.04));

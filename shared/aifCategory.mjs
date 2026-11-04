@@ -196,7 +196,7 @@ export function categoriesNamedIn(text) {
  * no registration number, so that entry rests on the family's word alone and
  * says so.
  *
- * VANTAGE OAK FUND I (Stage 10la, 4 Nov 2026: "Move it now anyway") is Delphi's
+ * VANTAGE OAK FUND I (Stage 10lb, 4 Nov 2026: "Move it now anyway") is Delphi's
  * case: neither the ICICI demat's line nor the Motilal tape's private-placement
  * allotment of 31 Jul 2026 prints a category, so the family's word places it. A
  * public listing citing SEBI's register gives its registration as

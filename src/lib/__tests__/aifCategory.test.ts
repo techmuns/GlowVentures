@@ -285,7 +285,7 @@ ok("an unknown section sorts last", aifSectionOrd("something else") >= AIF_SECTI
 console.log("\n── the family's declared categories ──");
 {
   const keys = Object.keys(DECLARED_AIF_CATEGORY);
-  // …and Vantage Oak Fund I on 4 Nov 2026 (Stage 10la).
+  // …and Vantage Oak Fund I on 4 Nov 2026 (Stage 10lb).
   eq("the family declared exactly the three funds they named", keys.sort(),
     ["motilal-oswal-wealth-delphi-equity-fund", "neo-infra-income-opportunities-fund-i-class-a5", "vof-i-class-a2"]);
   ok("every declaration is Category II, as they said",

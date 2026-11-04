@@ -36,6 +36,7 @@ import { PROVIDER as HDFC_NSDL_PROVIDER } from "./ingest/providers/hdfcNsdl.mjs"
 import { SEPARATE_INVESTMENTS } from "../shared/separateInvestments.mjs";
 import { KEPT_UNVALUED, keptUnvaluedFor, keptUnvaluedReason } from "../shared/keptUnvalued.mjs";
 import { buildAccountReturnRecords } from "./lib/accountReturnRecords.mjs";
+import { periodEvidence } from "./lib/periodEvidence.mjs";
 import { returnCoverageReport } from "./lib/returnCoverageReport.mjs";
 import { recoverHoldingCosts, recoveryReport } from "./lib/recoverHoldingCosts.mjs";
 import { applyRecoveredCost } from "../shared/recoveredCosts.mjs";
@@ -5274,10 +5275,11 @@ function build(archived, archiveCount = archived.length, references = {}) {
   for (const c of advised.confirmed) notes.push(`the family's liquid-holdings note confirms ${c}`);
   for (const r of advised.refused) notes.push(`the family's liquid-holdings note is not applied to ${r}`);
 
+  const accountReturnRecords = buildAccountReturnRecords({ accounts, accountCashFlows, byAccount,
+    historicalNavs: references.historicalNavs ?? JSON.parse(fs.readFileSync(path.join(ROOT, 'scripts/ingest/reference/amfi-opening-navs.json'), 'utf8')) });
   return {
     accounts, positions, polycab, owners, capitalGains, accountCashFlows, entityCashFlows,
-    accountReturnRecords: buildAccountReturnRecords({ accounts, accountCashFlows, byAccount,
-      historicalNavs: references.historicalNavs ?? JSON.parse(fs.readFileSync(path.join(ROOT, 'scripts/ingest/reference/amfi-opening-navs.json'), 'utf8')) }),
+    accountReturnRecords, ...periodEvidence({ byAccount, accounts, positions, accountReturnRecords }),
     capitalMoves, positionTranches, shareMovements, shareRolls: shareRolls.rolls, advisedBalances: advised.balances, holdingCostRecovery,
     // Keyed on the holdings this book carries, in key order, so the file
     // regenerates byte-identically however the accounts were walked.
@@ -5390,6 +5392,9 @@ export function canonicalBookValues(book) {
     BOOK_SHARE_MOVEMENTS: book.shareMovements,
     BOOK_SHARE_ROLLS: book.shareRolls,
     BOOK_ADVISED_BALANCES: book.advisedBalances,
+    BOOK_EARLIER_BALANCES: book.earlierBalances,
+    BOOK_STATEMENT_UNIT_NAVS: book.statementUnitNavs,
+    BOOK_UNIT_WINDOWS: book.unitWindows,
     BOOK_ENTITY_CASH_FLOWS: book.entityCashFlows,
     BOOK_ACCOUNT_RETURNS: book.accountReturns,
     BOOK_ACCOUNT_BRIDGES: book.accountBridges,
@@ -5416,7 +5421,7 @@ function emit(book) {
   L.push("// carry, and the UI renders them as an em dash. See docs/BOOK-REPORT.md for the");
   L.push("// list and what document would supply each.");
   L.push("import type {");
-  L.push("  Account, AccountBridge, AdvisedBalance, AccountReturnBlock, AccountReturnCoverage, BookSummary, CapitalMove, CashFlow, Commitment,");
+  L.push("  Account, AccountBridge, AdvisedBalance, EarlierBalance, StatementUnitNavs, UnitWindow, AccountReturnBlock, AccountReturnCoverage, BookSummary, CapitalMove, CashFlow, Commitment,");
   L.push("  Attribution, CorporateAction, EntityCG, FundInvestment, HoldingTrade, NavCoverage, NavPoint, Position, PositionTranches,");
   L.push("  PolycabHolding, RealisedByClass, RecoveredHoldingCost, ReviewFlow, ReviewSuperseded, ReviewWrittenOff, ShareMovement, ShareRoll, StartupInvestment, UndatedCapital, UnvaluedStatementHolding,");
   L.push('} from "@/lib/types";');
@@ -5643,6 +5648,18 @@ function emit(book) {
   L.push(" * keeps the statement's own units.");
   L.push(" */");
   L.push(`export const BOOK_ADVISED_BALANCES: AdvisedBalance[] = ${j(book.advisedBalances)};`);
+  L.push("");
+  L.push("/**");
+  L.push(" * WHAT THE RETURN CARDS MAY START FROM (Stage 10la, `scripts/lib/periodEvidence.mjs`): older");
+  L.push(" * statements' balances of holdings still carried, statement-printed NAVs for fund units");
+  L.push(" * with no public price, and accounts whose consecutive statements hold the same units.");
+  L.push(" * Each row names its statement. Never a holding, a value or part of a total.");
+  L.push(" */");
+  L.push(`export const BOOK_EARLIER_BALANCES: EarlierBalance[] = ${j(book.earlierBalances)};`);
+  L.push("");
+  L.push(`export const BOOK_STATEMENT_UNIT_NAVS: Record<string, StatementUnitNavs> = ${j(book.statementUnitNavs)};`);
+  L.push("");
+  L.push(`export const BOOK_UNIT_WINDOWS: Record<string, UnitWindow> = ${j(book.unitWindows)};`);
   L.push("");
   L.push("/**");
   L.push(" * The same flows keyed by OWNER — a person's money-weighted return is over");
