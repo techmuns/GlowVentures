@@ -1,9 +1,10 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import ExcelJS from "exceljs";
-import { buildConsolidatedSheet, CONSOLIDATED_VIEW, TRANSACTIONS, type ConsolidatedBook } from "../consolidatedSheet";
+import { buildConsolidatedSheet, holdingRecordsFrom, deriveHoldingLedger, CONSOLIDATED_VIEW, TRANSACTIONS, type ConsolidatedBook } from "../consolidatedSheet";
+import { isCashIncomeKind } from "../../../shared/incomeKind.mjs";
 import { createConsolidatedWorkbook, consolidatedExcelTarget } from "../exportConsolidatedExcel";
-import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_AS_OF, BOOK_SUMMARY, BOOK_COMMITMENTS, BOOK_RECOVERED_COSTS, BOOK_POLYCAB } from "../../data/glowData";
+import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_AS_OF, BOOK_SUMMARY, BOOK_COMMITMENTS, BOOK_RECOVERED_COSTS, BOOK_POLYCAB, BOOK_HOLDING_INCOME } from "../../data/glowData";
 import { deriveTransactions, deriveRealisedLots, type ArchiveDoc } from "../ledgerModel";
 import revision from "../../data/readModels.json";
 
@@ -94,12 +95,71 @@ assert.equal(idx(TRANSACTIONS, "txntype"), idx(TRANSACTIONS, "type") + 1, "Trans
   const expected = (i: number) => record[i] === "Trade" ? type[i]
     : record[i] === "Tax lot — sold" ? "Sell" : record[i] === "Tax lot — open" ? "Buy"
     : record[i] === "Income" ? "Income"
+    // A switch leg is its holding's Buy where units came in, its Sell where they left (Stage 10la).
+    : record[i] === "Switch" ? ((value(TRANSACTIONS, i, "net") as number) < 0 ? "Buy" : "Sell")
     : record[i] === "Capital flow" ? (counts[i] === "Investment" ? "Buy" : counts[i] === "Divestment" ? "Sell" : counts[i] === "Income" ? "Income" : null) : null;
   txntype.forEach((v, i) => {
     assert.ok(v === "Buy" || v === "Sell" || v === "Income" || (v === null && record[i] === "Corporate action"), `row ${i}: transaction type is Buy, Sell or Income (blank only for a corporate action), not ${v}`);
     assert.equal(v, expected(i), `row ${i} (${record[i]} · ${type[i]} · ${counts[i]})`);
   });
   assert.ok(txntype.includes("Buy") && txntype.includes("Sell") && txntype.includes("Income"));
+}
+// STAGE 10la — WHAT A HOLDING EARNED AND WHERE ITS MONEY WENT, EACH A ROW.
+{
+  const T = sheet(TRANSACTIONS), at = (j: number, k: string) => T.rows[j].values[idx(TRANSACTIONS, k)];
+  const rowsOf = (pred: (j: number) => boolean) => T.rows.map((_, j) => j).filter(pred);
+  // Interest and a coupon are cash the day a statement prints one; a bonus never is.
+  for (const k of ["dividend", "Interest", "interest on NCD", "Coupon", "IDCW", "distribution", "Final Dividend"]) assert.ok(isCashIncomeKind(k), `${k} is cash income`);
+  for (const k of ["bonus", "spin off", "split", "rights", "Bonus in lieu of dividend", "", null]) assert.ok(!isCashIncomeKind(k), `${k} is not cash income`);
+  // Every payment the book reads off a fund's own unit record is ONE Income row, its gross the book's.
+  const unitRecord = Object.entries(BOOK_HOLDING_INCOME).flatMap(([k, es]) => es.filter(e => e.via === "unit-record").map(e => ({ k, e })));
+  assert.ok(unitRecord.length > 600, "the archive's IDCW reinvestments and reinvested distributions are tagged");
+  for (const { k, e } of unitRecord) {
+    const cut = k.lastIndexOf("|"), hits = rowsOf(j => at(j, "record") === "Income" && at(j, "acct") === k.slice(0, cut) && at(j, "sec") === k.slice(cut + 1)
+      && at(j, "date") === e.date && Math.abs((at(j, "gross") as number) - e.amount) <= 0.01);
+    assert.ok(hits.length >= 1, `${k} ${e.date}: the unit record's income has its row`);
+    assert.ok(hits.every(j => at(j, "src")), `${k} ${e.date}: its row opens the statement that prints it`);
+  }
+  // …so a statement-sourced holding's Income rows add to the income its return counts, to the rupee.
+  const asOf = new Map(BOOK_ACCOUNTS.map(a => [a.accountId, a.asOf]));
+  for (const [k, es] of Object.entries(BOOK_HOLDING_INCOME)) {
+    const cut = k.lastIndexOf("|"), acct = k.slice(0, cut), sec = k.slice(cut + 1);
+    if (BOOK_POSITIONS.find(p => p.accountId === acct && p.securityKey === sec)?.review !== false) continue;
+    const listed = rowsOf(j => at(j, "txntype") === "Income" && at(j, "acct") === acct && at(j, "sec") === sec
+      && (!at(j, "date") || String(at(j, "date")) <= String(asOf.get(acct) ?? "9999")))
+      .reduce((s, j) => s + ((at(j, "gross") ?? at(j, "net") ?? 0) as number), 0);
+    near(listed, es.reduce((s, e) => s + e.amount, 0));
+  }
+  // A switch is two legs that name each other, net to nothing, and are never also a capital flow.
+  const legs = rowsOf(j => at(j, "record") === "Switch");
+  assert.ok(legs.length > 100, "the archive's switches are on the sheet");
+  const flows = new Set(rowsOf(j => at(j, "record") === "Capital flow").map(j => [at(j, "acct"), at(j, "sec"), at(j, "date"), Math.abs(at(j, "net") as number).toFixed(0)].join("|")));
+  for (const j of legs) {
+    assert.equal(at(j, "counts"), "Internal switch");
+    assert.match(String(at(j, "notes")), /^Switched (in from|out to) (?!another scheme)/, `switch leg ${j} names its other leg`);
+    assert.ok(!flows.has([at(j, "acct"), at(j, "sec"), at(j, "date"), Math.abs(at(j, "net") as number).toFixed(0)].join("|")), `switch leg ${j} is not also a capital flow`);
+  }
+  near(Math.abs(legs.filter(j => at(j, "txntype") === "Buy").length - legs.filter(j => at(j, "txntype") === "Sell").length), 0);
+  // EACH HOLDING'S PAGE draws these rows; across a class switch, its history comes with it.
+  const records = holdingRecordsFrom(book);
+  const A4 = "buoyant-opportunities-strategy-category-iii-class-a4", a4 = records.get(A4)!;
+  const a4Positions = BOOK_POSITIONS.filter(p => p.securityKey === A4);
+  // The buys are what was paid; the distribution reinvested in a deposit bought units too, so cost holds both.
+  const reinvested = a4.filter(r => r.txntype === "Income" && /reinvested/i.test(r.type ?? "")).reduce((s, r) => s + r.amount!, 0);
+  assert.ok(reinvested > 0, "Buoyant's reinvested gain distribution is on its page");
+  near(a4.filter(r => r.txntype === "Buy").reduce((s, r) => s + r.amount!, 0) + reinvested, a4Positions.reduce((s, p) => s + p.costBasis!, 0));
+  near(a4.filter(r => r.txntype === "Income").reduce((s, r) => s + r.amount!, 0), a4Positions.reduce((s, p) => s + (p.dividendReceived ?? 0), 0));
+  assert.deepEqual(a4.filter(r => r.record === "Switch").map(r => [r.date, r.txntype, r.type]),
+    [["2026-06-01", null, "Class A1 → Class A4"], ["2025-02-01", null, "Class A1 → Class A4"]], "each class switch is one row, neither a buy nor a sell");
+  assert.ok(a4.some(r => r.heldAs && r.txntype === "Buy"), "what was paid for Class A1 is on the Class A4 page, named as such");
+  for (const [sec, rs] of records) {
+    assert.ok(rs.every(r => !r.record.startsWith("Tax lot")), `${sec}: tax lots stay on Data Audit; the sale is its trade row`);
+    assert.ok(rs.every(r => r.amount == null || r.amount >= 0 || r.txntype === "Income"), `${sec}: only an income reversal is drawn below zero`);
+    assert.ok(rs.every(r => r.qty == null || r.qty >= 0), `${sec}: unit counts are drawn unsigned`);
+  }
+  const ledger = deriveHoldingLedger(docs, A4);
+  assert.deepEqual(ledger.records, a4, "the page's read model carries exactly the sheet's rows");
+  assert.deepEqual(deriveHoldingLedger(docs, "").records, [], "the empty ledger carries no rows");
 }
 assert.ok(column(TRANSACTIONS, "gf").some(v => typeof v === "number") && column(TRANSACTIONS, "taxlt").some(v => typeof v === "number"),
   "source-stated FMV and taxable long-term gain are kept, not discarded");

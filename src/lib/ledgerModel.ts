@@ -35,6 +35,7 @@ import {
   type LotGroup, type DaySale,
 } from "../../shared/lotSettlement.mjs";
 import { resolveSector } from "../../shared/sectors.mjs";
+import { isCashIncomeKind } from "../../shared/incomeKind.mjs";
 import { BOOK_ACCOUNTS, BOOK_CAPITAL_MOVES, BOOK_CAPITAL_GAINS, BOOK_POSITIONS } from "../data/glowData";
 import { holdingBucket, UNSTATED_BUCKET, UNROUTED_EQUITY_BUCKET } from "./analytics";
 import { bookKeyForShare } from "./depositoryShares";
@@ -732,13 +733,11 @@ export type IncomeRow = {
 };
 export type IncomeData = {
   asOf: string;
-  cash: IncomeRow[];        // dividends, with an amount
+  cash: IncomeRow[];        // dividends, interest and distributions, with an amount
   corporate: IncomeRow[];   // bonus / split / rights — an entitlement, not cash
   totalCash: number | null; totalTds: number | null;
   accounts: string[]; accountsWithout: string[];
 };
-
-const CASH_KIND = /^dividend$/i;
 
 export function deriveIncome(docs: ArchiveDoc[]): IncomeData {
   // Dividend statements first, so a cash event listed on both wins from there.
@@ -785,7 +784,10 @@ export function deriveIncome(docs: ArchiveDoc[]): IncomeData {
       ratePerUnit: ev.ratePerUnit, net: ev.netAmount, tds: ev.tds,
       entitlement: ev.entitlement, source: d.docKey,
     };
-    if (CASH_KIND.test(ev.kind)) {
+    // CASH IS `shared/incomeKind.mjs`'s list, the one `build-book` counts a
+    // holding's income by: a dividend, IDCW, interest, coupon or distribution
+    // is cash the day a statement prints it (Stage 10la).
+    if (isCashIncomeKind(ev.kind)) {
       const k = `${d.accountNo}|${row.date}|${ev.securityKey}|${ev.netAmount}`;
       const nth = (inDoc.get(`${d.docKey}\u0001${k}`) ?? 0) + 1;
       inDoc.set(`${d.docKey}\u0001${k}`, nth);
@@ -967,6 +969,30 @@ export type StockLedger = {
    * exactly (`lotsForPosition`).
    */
   openLots: StockOpenLot[];
+  /**
+   * EVERY DATED RECORD OF THIS HOLDING — Data Audit's Transactions rows for it:
+   * trades, purchases and redemptions, switches, income and corporate actions,
+   * each a Buy, Sell or Income (`holdingRecordsFrom`, Stage 10la). Absent on a
+   * ledger an older reader built; the page then draws the trade tape alone.
+   */
+  records?: HoldingRecord[];
+};
+/** One dated record on a holding's page. See `holdingRecordsFrom` in `consolidatedSheet.ts`. */
+export type HoldingRecord = {
+  date: string | null;
+  /** Buy, Sell or Income; null for a non-cash corporate action, or a class switch inside the holding. */
+  txntype: "Buy" | "Sell" | "Income" | null;
+  /** Trade, Capital flow, Switch, Income or Corporate action — the sheet's Record. */
+  record: string;
+  /** What the statement printed — "Cash Deposits", "IDCW Reinvested @ Rs.0.05 per unit". */
+  type: string | null;
+  accountId: string | null; entity: string | null; provider: string | null;
+  qty: number | null; rate: number | null;
+  /** What moved, in ₹: positive, except an income reversal, which keeps its minus. Null where nothing moved or none is printed. */
+  amount: number | null;
+  /** The class this record is on, where the holding's money was carried from it through a switch. */
+  heldAs?: string;
+  notes: string | null; source: string | null;
 };
 export type StockOpenLot = {
   account: string; accountNo: string; provider: string;
