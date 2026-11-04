@@ -16,7 +16,7 @@ The family approved the method ("approve") and it is live.
   - The extra evidence is in `periodRules.ts` / `scripts/lib/periodEvidence.mjs`.
   - What nothing measures is held at its last value: 0%, in the base, and named.
   - Every part is carried to the card's end.
-- **Stage 10ld (#350):** Our book vs benchmarks draws the card's own line, so its last point
+- **Stage 10le (#350):** Our book vs benchmarks draws the card's own line, so its last point
   is the card. The benchmark is the same dated money in the index. Gain / Loss covers 100%
   of investments: from cost, else from first value, else held at value.
 - **The family's rules:**

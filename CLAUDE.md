@@ -38,7 +38,7 @@ code it describes.
 
 **Return cards' method:** `docs/RETURN-COVERAGE-REVIEW.md` (4 Nov 2026, Stage 10lc) records
 why the cards measure from the first value on record, the rules the family approved, and
-the data defects still open. It is built in Stages 10la and 10ld. Read it before touching
+the data defects still open. It is built in Stages 10la and 10le. Read it before touching
 `availableCardReturns.ts`, `periodRules.ts`, `periodLine.ts` or the ICICI, MOPWM or NSE records.
 
 ## The standing rule
