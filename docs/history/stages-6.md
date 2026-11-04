@@ -1123,7 +1123,17 @@
 - `check-pages.mjs`: `PM_RETURN_BOOK` re-expresses the page's 99.5% cost-coverage gate (`costCovers`, `costless`), and the four checks on the book's HPR footer (DL-16, PM-C1, FIFO hover, FIFO footer) hold a refused footer to its reason and names (`pmFootRefused`) when the book says the gate trips.
 - Checks: `familyTaxonomy.test.ts` asserts the HDFC entry is the review's, each of the six lands on the family's word on both axes and repeats no review product, and no fund or company but Franklin is left without a basket. `aifCategory.test.ts` takes three declarations; a declared, unplaced fund's side is its category's. `privateBook.test.ts` asserts the band's multiple and HPR are refused naming only Vantage Oak, and strikes the DPI/RVPI/TVPI and DL-16 arithmetic on a build without it, so the day its paid-in lands those first checks fail. `privateMarket.test.ts` and `fundReturns.test.ts` follow. `check-pages.mjs`'s drill-down re-derivation reads `FAMILY_SAID_BASKET`.
 
-### Stage 10ld — Our book vs benchmarks draws the return card's own line; Gain / Loss covers every investment
+### Stage 10ld — HDFC Securities 3110320's trade details report arrives: 466 dated sales, April–October 2026
+
+- The client re-sent `3110320_Equity_Trade_Details_Report (3).xlsx` (523 KB), the file `november-2026-b`'s ZIP carried only as an 85-byte removal notice (Stage 10kn). It is in `source/november-2026-c/`. The other four files sent with it are byte-identical to the ZIP's and are not added.
+- `providers/hdfcSecurities.mjs` `readTradeDetails` reads one transaction per fill. Holder, trading ID and window (1 Apr–31 Oct 2026) come from the header. Each row checks QTY × MARKET PRICE = MARKET VALUE to the paisa, and value less the nine charges and STT = NET AMOUNT to the rupee (the largest gap over 466 rows is ₹0.82). The printed holder must agree with `HOLDER_BY_TRADING_ACCOUNT`, and a fill outside the window is refused.
+- The report prints no broker name. `classify.mjs` claims it for HDFC Securities only for a trading ID an InvestRight equity portfolio prints (`HDFC_SECURITIES_TRADING_IDS`).
+- `lib/sheet.mjs` `readXlsx` now reads `<v xml:space="preserve">`; it had read the report's four two-line headers as blank cells. No other archived document changed.
+- The 466 trades: Vedanta 67,000 and Man Industries 37,317, which tie the 30 June review's HDFC Bank block (1,77,000 and 5,17,317) to the 2 Nov portfolio (1,10,000 and 4,80,000), plus all 1,77,000 of each of Vedanta Iron and Steel, Vedanta Power and Vedanta Oil and Gas. `MAN INDUSTRIES (I) LTD.` is named onto the held `man-industries-india` on that evidence (`EVIDENCED_SCRIPS`, note `scrip-name-evidenced`).
+- Book: 439 of the trades sit behind the two held positions (`BOOK_HOLDING_TRADES` 1,082 → 1,521). The 27 spin-off fills have no holding. Totals are unchanged. The account stays described by its equity portfolio, because the report sets no `providerEngagement`.
+- A removal notice whose file is in `source/` under the same name is now "re-sent" (`attachment-resent`, manifest `resentAs`), not "never arrived". This flows through check:reads, coverage:source (class `re-sent`) and the Statement Library ("Re-sent" pill, no folder flag). The LKP pair stays never arrived.
+
+### Stage 10le — Our book vs benchmarks draws the return card's own line; Gain / Loss covers every investment
 
 *"how can our book by 6.1% when all the above things are showing 12% … everything should match … as i change time filters it would change"* and *"make coverage 100%"*, from the family on 4 Nov 2026.
 

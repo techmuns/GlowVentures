@@ -63,7 +63,7 @@ import { chartTooltipStyle, chartTooltipLabelStyle } from "@/lib/chartTheme";
 //  · The "In the return: …" fold under the chart is gone, at the family's ask of
 //    2 Nov 2026 (Stage 10jz). What the line covers stays on the book pill's hover.
 //  · *"how can our book be 6.1% when all the above things are showing 12%"* —
-//    the family, 4 Nov 2026 (Stage 10ld). The time-weighted index above is
+//    the family, 4 Nov 2026 (Stage 10le). The time-weighted index above is
 //    retired from this card: the book's line is the return card's own selection,
 //    ended on each day (`periodLine`), and each benchmark the same dated money in
 //    the index. Its periods are the cards'; its last point is the card.
