@@ -16503,8 +16503,10 @@ const DROPPED_BOOK = (() => {
       .map((m) => [m[1], { assetClass: m[2], basket: m[3] }]));
     const si = tsrc.indexOf("export const FAMILY_SAID_CLASS"), se = tsrc.indexOf("\n};", si);
     const SAID = new Map([...tsrc.slice(si, se).matchAll(/"([a-z]+:[^"]+)":\s*"([^"]+)"/g)].map((m) => [m[1], m[2]]));
+    const bi = tsrc.indexOf("export const FAMILY_SAID_BASKET"), be = tsrc.indexOf("\n};", bi);
+    const SAID_BASKET = new Map(bi < 0 ? [] : [...tsrc.slice(bi, be).matchAll(/"([a-z]+:[^"]+)":\s*"([^"]+)"/g)].map((m) => [m[1], m[2]]));
     const um = /export const UNCLASSIFIED = "([^"]+)"/.exec(tsrc);
-    if (!TAX.size || !SAID.size || !um) return null;
+    if (!TAX.size || !SAID.size || !SAID_BASKET.size || !um) return null;
     const UNCLASSIFIED = um[1];
     const acc = new Map(accounts.map((a) => [a.accountId, a]));
     const eng = (p) => acc.get(p.accountId)?.engagement;
@@ -16522,6 +16524,8 @@ const DROPPED_BOOK = (() => {
         if (!mandate(p) && cashEq(p)) return "Liquidity";
         const h = hit(p);
         if (h) return h.basket;
+        const said = SAID_BASKET.get(mandate(p) ? `mandate:${p.accountId}` : `sec:${p.securityKey}`);
+        if (said) return said;
         return !mandate(p) && p.assetClass === "Equity" ? "Thematic & Tactical" : UNCLASSIFIED;
       },
       "family-class": (p) => {

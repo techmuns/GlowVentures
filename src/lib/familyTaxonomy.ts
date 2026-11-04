@@ -163,8 +163,9 @@ export const UNCLASSIFIED_WHY =
  *   `cash-rule` — their instruction that ARBITRAGE AND LIQUID FUNDS ARE CASH,
  *                 wherever the review files one elsewhere or does not name it.
  *   `derived`   — our own asset class already answered it beyond doubt.
- *   `family`    — the family's own word on a holding the review cannot name,
- *                 because it was bought after it (`FAMILY_SAID_CLASS`).
+ *   `family`    — the family's own word on a holding the review does not name,
+ *                 because it was bought after it or left out of it
+ *                 (`FAMILY_SAID_CLASS`, `FAMILY_SAID_BASKET`).
  *
  * TWO RULES, TWO SOURCES, and that is not pedantry. Both are the family
  * speaking, and on screen a section heading prints how much of it a rule
@@ -374,6 +375,13 @@ export const FAMILY_TAXONOMY: Readonly<Record<string, TaxonomyEntry>> = {
     { assetClass: "Equity", basket: "Liquidity", reviewProduct: "HDFC Balanced Advantage Fund" },
   "sec:hdfc-baf-r-grow":
     { assetClass: "Equity", basket: "Liquidity", reviewProduct: "HDFC Balanced Advantage Fund" },
+  // Stage 10la — the same fund on HDFC Mutual Fund's own folio statements
+  // (15644806 Ajay, 16002141 Ankita), which spell the scheme out in full. The
+  // short key above matches only the Motilal demat's unvalued rows, so the
+  // valued units fell to "not classified". Both folios tie to the review's
+  // "Transactions since inception" by units: 83,001.863 and 49,917.632.
+  "sec:hdfc-balanced-advantage-fund-regular-plan-growth":
+    { assetClass: "Equity", basket: "Liquidity", reviewProduct: "HDFC Balanced Advantage Fund" },
   "sec:icici-pru-baf-dp-grw":
     { assetClass: "Equity", basket: "Liquidity", reviewProduct: "ICICI Pru Balanced Advantage Fund" },
   "sec:woc-maaf-d-grow":
@@ -479,9 +487,39 @@ export type Resolved<T> = { value: T; source: TaxonomySource; reviewProduct: str
  * Asset class only, so no `FAMILY_TAXONOMY` entry: that map carries a basket too
  * and cites a workbook row, and this holding has neither. A later review naming
  * it takes over, because the map is read first.
+ *
+ * THE SIX THE REVIEW DOES NOT NAME (Stage 10la, 4 Nov 2026: "Apply all seven").
+ * Active Momentum (6 Aug), Vantage Oak (31 Jul) and Nzuri (25 Sep and 1 Oct)
+ * were bought after it; the Low Volatility FOF (Oct 2024) and Aarti's Kotak
+ * Flexi Cap (2018) were held on 30 June and are on none of its 25 tabs. Each
+ * placement follows the review's own treatment of its nearest kind:
+ *
+ *   - Active Momentum: AMFI's Sectoral/Thematic, which the family's email puts
+ *     in Thematic & Tactical.
+ *   - Kotak Flexi Cap and the Low Volatility FOF: diversified equity funds,
+ *     which the review files Stable Growth without exception.
+ *   - Vantage Oak (a privately placed AIF) and both Nzuri lines (a Pune office
+ *     developer's unlisted equity and preference shares): private capital,
+ *     which the review files Alternate / Entrepreneurial Growth.
  */
 export const FAMILY_SAID_CLASS: Readonly<Record<string, FamilyAssetClass>> = {
   "sec:franklin-india-credit-aif-scheme-i-unit-class-db2": "Debt",
+  "sec:motilal-oswal-active-momentum-fund-direct-plan-growth-option": "Equity",
+  "sec:kotak-flexi-cap-fund-direct-growth": "Equity",
+  "sec:icici-prudential-nifty-100-low-volatility-30-etf-fof-direct-plan-growth": "Equity",
+  "sec:vof-i-class-a2": "Alternate",
+  "sec:nzuri-pune-knowledge-park": "Alternate",
+  "sec:nzuri-pune-knowledge-park-private-limited-pref-24sp46": "Alternate",
+};
+
+/** …and their basket, on the same word. Franklin is absent: "in basket you can show it as not classified". */
+export const FAMILY_SAID_BASKET: Readonly<Record<string, FamilyBasket>> = {
+  "sec:motilal-oswal-active-momentum-fund-direct-plan-growth-option": "Thematic & Tactical",
+  "sec:kotak-flexi-cap-fund-direct-growth": "Stable Growth",
+  "sec:icici-prudential-nifty-100-low-volatility-30-etf-fof-direct-plan-growth": "Stable Growth",
+  "sec:vof-i-class-a2": "Entrepreneurial Growth",
+  "sec:nzuri-pune-knowledge-park": "Entrepreneurial Growth",
+  "sec:nzuri-pune-knowledge-park-private-limited-pref-24sp46": "Entrepreneurial Growth",
 };
 
 /**
@@ -532,6 +570,8 @@ export function familyBasket(p: Classifiable, isMandate: boolean): Resolved<Fami
   if (hit) return { value: hit.basket, source: "review", reviewProduct: hit.reviewProduct };
   // A line the review itself is the source for carries the review's own code (Stage 10dh).
   if (p.reviewTaxonomy) return { value: p.reviewTaxonomy.basket, source: "review", reviewProduct: null };
+  const said = FAMILY_SAID_BASKET[productKeyOf(p, isMandate)];
+  if (said) return { value: said, source: "family", reviewProduct: null };
   // A mandate is never rule-filled: see `basketByRule`.
   const byRule = isMandate ? null : basketByRule(p);
   return byRule ? { value: byRule, source: "rule", reviewProduct: null } : null;
