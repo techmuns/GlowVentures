@@ -281,9 +281,10 @@ export function Tr({ view, children, reviewScope, sourcePositions, investmentDat
 /**
  * ── AND A FOOTER FOLLOWS THE SAME ORDER, OR IT TOTALS THE WRONG COLUMN ──────
  *
- * A footer's label spans the leading columns that have no total — "Total · 73
- * rows" over the security and its chips — and the rest carry one cell each. The
- * span is therefore a FUNCTION of the current order rather than a literal:
+ * A footer's label covers the leading columns that have no total — "Total · 73
+ * rows" in the security's column, one blank cell over the rest of the run — and
+ * the rest carry one cell each. The run is therefore a FUNCTION of the current
+ * order rather than a literal:
  * computed as the leading run of columns with no cell in the map, it reproduces
  * today's markup exactly while nothing has been dragged, and it follows when
  * something has.
@@ -298,7 +299,7 @@ export function Tr({ view, children, reviewScope, sourcePositions, investmentDat
  */
 export function TrFoot({ view, label, labelTitle, cells, sourcePositions, sourceColumns, className = "", ...rest }: {
   view: TableView;
-  /** The label cell's CONTENT — `TrFoot` computes its `colSpan`. */
+  /** The label cell's CONTENT — `TrFoot` computes the run it covers. */
   label: ReactNode;
   /**
    * A hover on the LABEL CELL, never on the row. A claim about what a total
@@ -320,9 +321,14 @@ export function TrFoot({ view, label, labelTitle, cells, sourcePositions, source
   // A footer with a total in its very first column has no label span at all,
   // which is legitimate and must not become `colSpan={0}`.
   const span = Math.max(lead, 1);
+  // The label sits in the FIRST column, which is frozen (Stage 10la), and the
+  // rest of its run is one blank cell. A label spanning the run could not be
+  // pinned without sliding over the totals beside it. `data-foot-span` keeps
+  // the run's length readable as one number.
   return (
     <tr {...rest}>
-      <td colSpan={span} className={className} title={labelTitle}>{label}</td>
+      <td className={className} title={labelTitle} data-foot-span={span}>{label}</td>
+      {span > 1 && <td colSpan={span - 1} className={className} />}
       {/* A COLUMN WITH NO TOTAL STILL NEEDS ITS CELL, and it takes the row's
           own class: the footer carries a top rule, and an unstyled filler
           breaks that line across the table. */}
