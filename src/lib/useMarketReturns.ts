@@ -82,7 +82,9 @@ export function marketInstruments(positions: readonly Position[]): Map<string, M
   for (const p of positions) {
     const fund = fundNavFor(p), quoteSymbol = holdingQuoteSymbolFor(p);
     const symbol = quoteSymbol?.startsWith('BSE:') ? `${quoteSymbol.slice(4)}.BO` : quoteSymbol;
-    if (fund) map.set(p.securityKey, { key: `fund:${fund.schemecode}:${fund.isin}`, query: new URLSearchParams({ fund: fund.schemecode, isin: fund.isin }).toString() });
+    // A sub-divided fund is published under its successor ISIN (Stage 10hq).
+    const isin = fund?.pricingIsin ?? fund?.isin;
+    if (fund && isin) map.set(p.securityKey, { key: `fund:${fund.schemecode}:${isin}`, query: new URLSearchParams({ fund: fund.schemecode, isin }).toString() });
     else if (symbol && p.marketSide !== 'private' && !p.valuedAtCost) map.set(p.securityKey, { key: `stock:${symbol}`, query: new URLSearchParams({ symbol }).toString() });
   }
   return map;
