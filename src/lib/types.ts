@@ -1178,6 +1178,18 @@ export type ShareEvent = { type: "split"; exDate: string; factor: number };
  * the paisa, and it replaces `recordQuantity` (the statement's count of
  * `recordAsOf`) on the LIVE basis only.
  */
+/**
+ * WHAT THE RETURN CARDS MAY START FROM (Stage 10la, `scripts/lib/periodEvidence.mjs`).
+ * Read by the period engine to choose a start date; none of it is a holding,
+ * a value or part of any total.
+ */
+/** The units an older statement of the same account held of a holding the book still carries. A balance, never a value. */
+export type EarlierBalance = { accountId: string; securityKey: string; isin: string | null; asOf: string; quantity: number; docKey: string };
+/** The NAV per unit a statement prints for fund units with no public price, joined through a reviewed, unit-tied link. */
+export type StatementUnitNavs = { isin: string; navs: { date: string; nav: number; docKey: string }[] };
+/** Consecutive valued statements holding exactly the same units: no money moved between them. */
+export type UnitWindow = { valuations: { date: string; value: number; docKey: string }[]; evidence: string };
+
 export type AdvisedBalance = {
   accountId: string;
   isin: string;

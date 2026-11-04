@@ -6,6 +6,7 @@ import { MarketReturnInfo } from './MarketReturnInfo';
 import { HoldingAssumptionInfo } from './HoldingAssumptionInfo';
 import { assumedHoldingReturns } from '@/lib/assumedHoldingReturns';
 import { assumedHoldingBook } from '@/lib/assumedHoldingBook';
+import { periodSelection, statementReturnInputs } from '@/lib/availableCardReturns';
 import { CapitalBridge } from './CapitalBridge';
 import { capitalBridge } from '@/lib/capitalBridge';
 import { BOOK_ACCOUNT_BRIDGES, BOOK_CAPITAL_MOVES, BOOK_HOLDING_INCOME } from '@/data/glowData';
@@ -75,10 +76,17 @@ export default function SegmentReturns({ selection: recordedSelection, period, o
   const marketFeed = useMarketHistories(current);
   const selection = useMemo(() => {
     if (!statementPortfolio || recordedSelection.inception || !recordedSelection.start || !recordedSelection.end) return recordedSelection;
-    const extra = assumedHoldingReturns(current, statementPortfolio.accounts, recordedSelection.start, recordedSelection.end,
-      assumedHoldingBook({ actions: corporateActions, instruments: marketFeed.instruments, histories: marketFeed.histories }));
+    const assumptions = assumedHoldingBook({ actions: corporateActions, instruments: marketFeed.instruments, histories: marketFeed.histories });
+    // The financial and calendar year from the first value on record, the rest held at
+    // their last value: Morning CIO's cards' own selection (Stages 10kq, 10kz).
+    if (period === 'ytd' || period === 'fytd') {
+      const picked = periodSelection({ inputs: statementReturnInputs(statementPortfolio), current, accounts: statementPortfolio.accounts,
+        end: recordedSelection.end, assumptions, open: period === 'ytd' ? undefined : recordedSelection.start });
+      return { ...recordedSelection, ...picked, type: recordedSelection.type, start: recordedSelection.start, end: recordedSelection.end };
+    }
+    const extra = assumedHoldingReturns(current, statementPortfolio.accounts, recordedSelection.start, recordedSelection.end, assumptions);
     return { ...recordedSelection, assumedUnits: extra.units, assumptionGaps: extra.gaps };
-  }, [recordedSelection, current, statementPortfolio, corporateActions, marketFeed.instruments, marketFeed.histories]);
+  }, [recordedSelection, period, current, statementPortfolio, corporateActions, marketFeed.instruments, marketFeed.histories]);
   // The Sector axis is Sector Composition's own sectors (`SectorAttribution`, Stage 10gs), never this grouping.
   const sectorAxis = axis === 'sector';
   const a = useMemo(() => statementPortfolio && !sectorAxis ? selectedSegmentReturns(current, exited, statementPortfolio.accounts, axis, selection,

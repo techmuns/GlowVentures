@@ -16,8 +16,8 @@ or a name, so a security reaches the APIs if and only if a symbol resolved:
 | `/api/research` — `/financials` | `<SYMBOL>.NS` | NSE symbol |
 | `/api/ratios` | `tickers` | NSE symbol |
 
-**225 reachable · 141 not reachable · 13 not securities at all**
-(cash and receivables) — 225 + 141 + 13 = 379, every distinct
+**226 reachable · 140 not reachable · 13 not securities at all**
+(cash and receivables) — 226 + 140 + 13 = 379, every distinct
 security the archive carries.
 
 Of those, **31 are companies no statement of this family's reports** —
@@ -71,6 +71,7 @@ what is inside a mandate or a folio. No quantity, cost or mark here is theirs.
 | Cyient Ltd | `CYIENT` | — | name | statement |
 | DCW LIMITED | `DCW` | — | name | statement |
 | Deep Industries Ltd. | `DEEPINDS` | — | name | statement |
+| DEEPAK FERTILISERS AND PETROCHEMICALS CORPORATION LTD | `DEEPAKFERT` | — | override | statement |
 | Diffusion Engineers Ltd | `DIFFNKG` | — | name | statement |
 | Dilip Buildcon Ltd | `DBL` | — | name | statement |
 | eClerx Services Ltd. | `ECLERX` | — | name | statement |
@@ -290,7 +291,6 @@ what is inside a mandate or a folio. No quantity, cost or mark here is theirs.
 | CHEELIZZA IND | `INE0MSX01027` | statement | **ISIN `INE0MSX01027` is on no NSE master** (mainboard, SME or ETF). Unlisted, delisted, or a warrant / preference line rather than the equity. Fix: nothing until it lists. |
 | Cosmo Films Ltd | — | statement | **No ISIN printed and no NSE name match.** This is a company, so a symbol should exist. Fix: ask the issuer for a statement carrying the ISIN, or add a hand-checked `OVERRIDES` entry. |
 | Credit Access Grameen Limited | — | statement | **No ISIN printed and no NSE name match.** This is a company, so a symbol should exist. Fix: ask the issuer for a statement carrying the ISIN, or add a hand-checked `OVERRIDES` entry. |
-| DEEPAK FERTILISERS AND PETROCHEMICALS CORPORATION LTD | — | statement | **No ISIN printed and no NSE name match.** This is a company, so a symbol should exist. Fix: ask the issuer for a statement carrying the ISIN, or add a hand-checked `OVERRIDES` entry. |
 | DSP GOLD ETF | `INF740KA1SW3` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
 | DSP SILVER ETF | `INF740KA1RE3` | statement | **A fund, not a company.** An AIF / PMS / mutual-fund unit is one purchase of a manager's portfolio. NSE lists no equity symbol for it, so no research endpoint can ever answer — this is a permanent absence, not a missing identifier. Look through to the underlying only if the manager publishes a scheme portfolio. |
 | EFPL PREF 18042043 | `INE0LTR03090` | statement | **ISIN `INE0LTR03090` is on no NSE master** (mainboard, SME or ETF). Unlisted, delisted, or a warrant / preference line rather than the equity. Fix: nothing until it lists. |
