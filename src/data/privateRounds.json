@@ -1,0 +1,4336 @@
+{
+  "updatedOn": "2026-11-04",
+  "method": "Funding rounds are public reporting, not the family's statements: each round is recorded from a regulatory filing, an offer document, the company's own release or the business press that read the filing, with the source linked, and only the figures that source states. Refreshed monthly by `npm run build-private-rounds`; a citation the research did not actually open is dropped.",
+  "notCompanies": {
+    "borosil-renewables-limited-warrants-13ag26": "warrants of a listed company — the exchange prices it",
+    "borosil-renewables-limited-eq-new-fv-re-1-listing-trdg-aprvl-awaited": "new shares of a listed company awaiting trading approval — the exchange prices it",
+    "k-m-global-credit": "a credit instrument, not equity"
+  },
+  "companies": [
+    {
+      "id": "zepto",
+      "legalName": "Zepto Limited (formerly Kiranakart Technologies Private Limited)",
+      "brand": "Zepto",
+      "fundKeys": [
+        "zepto"
+      ],
+      "website": "https://www.zepto.com",
+      "sector": "Quick commerce (10-minute grocery delivery)",
+      "listed": null,
+      "rounds": [
+        {
+          "date": "2021-11-01",
+          "dateBasis": "announced",
+          "round": "Early-stage round",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 60000000,
+            "currency": "USD"
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "Glade Brook Capital",
+            "Nexus Venture Partners",
+            "Y Combinator"
+          ],
+          "note": "Company stated only a range ('valuation of $200 Mn-$300 Mn'), so no single figure is recorded. Other outlets label this round Series A or B; Inc42 calls it an 'early-stage' round.",
+          "sources": [
+            {
+              "url": "https://inc42.com/startups/zepto-looks-to-take-on-indias-online-grocery-giants-with-60-mn-funding",
+              "publisher": "Inc42",
+              "published": "2021-11-01",
+              "supports": "$60 Mn early-stage round; company said valuation $200-300 Mn"
+            }
+          ]
+        },
+        {
+          "date": "2021-12-21",
+          "dateBasis": "announced",
+          "round": "Series C",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 100000000,
+            "currency": "USD"
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": {
+            "value": 570000000,
+            "currency": "USD",
+            "basis": "unspecified"
+          },
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "Y Combinator Continuity Fund"
+          ],
+          "note": null,
+          "sources": [
+            {
+              "url": "https://inc42.com/buzz/five-months-into-launch-quick-commerce-startup-zepto-raises-100-mn-at-570-mn-valuation",
+              "publisher": "Inc42",
+              "published": "2021-12-21",
+              "supports": "$100 Mn Series C at $570 Mn valuation, YC Continuity led"
+            }
+          ]
+        },
+        {
+          "date": "2022-05-03",
+          "dateBasis": "announced",
+          "round": "Series D",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 200000000,
+            "currency": "USD"
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": {
+            "value": 900000000,
+            "currency": "USD",
+            "basis": "unspecified"
+          },
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "Y Combinator Continuity",
+            "Kaiser Permanente"
+          ],
+          "note": "Some outlets label this round Series E; Business Today calls it Series D.",
+          "sources": [
+            {
+              "url": "https://www.businesstoday.in/amp/entrepreneurship/news/story/9-month-old-zepto-inches-towards-unicorn-club-with-new-200-mn-fund-raise-332136-2022-05-03",
+              "publisher": "Business Today",
+              "published": "2022-05-03",
+              "supports": "$200 Mn Series D at $900 Mn valuation"
+            }
+          ]
+        },
+        {
+          "date": "2023-08-25",
+          "dateBasis": "announced",
+          "round": "Series E",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 200000000,
+            "currency": "USD"
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": {
+            "value": 1400000000,
+            "currency": "USD",
+            "basis": "unspecified"
+          },
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [],
+          "note": "Inc42 names new investors StepStone Group and Goodwater Capital plus existing Nexus, Glade Brook, Lachy Groom, without naming a lead; other reports say StepStone led.",
+          "sources": [
+            {
+              "url": "https://inc42.com/buzz/zepto-becomes-indias-111th-unicorn-with-200-mn-funding-at-1-4-bn-valuation",
+              "publisher": "Inc42",
+              "published": "2023-08-25",
+              "supports": "$200 Mn Series E at $1.4 Bn valuation"
+            }
+          ]
+        },
+        {
+          "date": "2024-06",
+          "dateBasis": "announced",
+          "round": "Series F",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 665000000,
+            "currency": "USD"
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": {
+            "value": 3600000000,
+            "currency": "USD",
+            "basis": "unspecified"
+          },
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "Glade Brook Capital",
+            "Nexus Venture Partners",
+            "StepStone Group"
+          ],
+          "note": "TechCrunch adds DST Global co-led per people familiar; company did not disclose that.",
+          "sources": [
+            {
+              "url": "https://ca.finance.yahoo.com/news/zepto-10-minute-delivery-app-053033904.html",
+              "publisher": "TechCrunch (via Yahoo Finance)",
+              "published": "2024-06-22",
+              "supports": "$665 Mn Series F, valuation $3.6 Bn, co-leads named"
+            }
+          ]
+        },
+        {
+          "date": "2024-08-29",
+          "dateBasis": "announced",
+          "round": "Follow-on (Series F extension)",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 340000000,
+            "currency": "USD"
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": {
+            "value": 5000000000,
+            "currency": "USD",
+            "basis": "unspecified"
+          },
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "General Catalyst"
+          ],
+          "note": null,
+          "sources": [
+            {
+              "url": "https://entrackr.com/2024/08/zepto-raises-340-mn-at-5-bn-valuation",
+              "publisher": "Entrackr",
+              "published": "2024-08-29",
+              "supports": "$340 Mn follow-on at $5 Bn valuation, General Catalyst led"
+            }
+          ]
+        },
+        {
+          "date": "2024-11-22",
+          "dateBasis": "announced",
+          "round": "Domestic round",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 350000000,
+            "currency": "USD",
+            "alt": [
+              {
+                "value": 29500000000,
+                "currency": "INR"
+              }
+            ]
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": {
+            "value": 5000000000,
+            "currency": "USD",
+            "basis": "unspecified"
+          },
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "Motilal Oswal Private Wealth"
+          ],
+          "note": "Inc42's announcement story cites earlier reports of a $5 Bn valuation without confirming it; Inc42 (May 2025) later states this round was at $5 Bn. Participants included domestic HNIs and family offices.",
+          "sources": [
+            {
+              "url": "https://inc42.com/buzz/zepto-bags-another-350-mn-from-domestic-investors",
+              "publisher": "Inc42",
+              "published": "2024-11-22",
+              "supports": "$350 Mn (~INR 2,950 Cr) domestic round led by Motilal Oswal wealth"
+            },
+            {
+              "url": "https://inc42.com/buzz/zepto-gets-domestic-shareholding-boost-in-100-mn-round",
+              "publisher": "Inc42",
+              "published": "2025-05-12",
+              "supports": "says November 2024 $350 Mn round was at $5 Bn valuation"
+            }
+          ]
+        },
+        {
+          "date": "2025-05-12",
+          "dateBasis": "announced",
+          "round": "Secondary sale (part of ~$350 Mn secondary)",
+          "kind": "secondary",
+          "amountRaised": {
+            "value": 100000000,
+            "currency": "USD"
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": {
+            "value": 5000000000,
+            "currency": "USD",
+            "basis": "unspecified"
+          },
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "Motilal Oswal",
+            "Raamdeo Agrawal"
+          ],
+          "note": "Secondary purchase from early foreign investors; Oswal and Agrawal reportedly bought $50 Mn each; remainder of ~$350 Mn to come from Motilal Oswal clients incl. family offices.",
+          "sources": [
+            {
+              "url": "https://inc42.com/buzz/zepto-gets-domestic-shareholding-boost-in-100-mn-round",
+              "publisher": "Inc42",
+              "published": "2025-05-12",
+              "supports": "$100 Mn secondary executed at $5 Bn valuation"
+            }
+          ]
+        },
+        {
+          "date": "2025-07-29",
+          "dateBasis": "filing",
+          "round": "Preferential allotment (Elcid Investment)",
+          "kind": "preferential",
+          "amountRaised": {
+            "value": 75000000,
+            "currency": "INR"
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": {
+            "value": 33.23,
+            "currency": "INR"
+          },
+          "sharesAllotted": 2255639,
+          "leadInvestors": [
+            "Elcid Investment"
+          ],
+          "note": "Entrackr's page conflicts on valuation: subheading says Rs 19,231 Cr ($2.26 Bn); updated body quotes a Zepto spokesperson saying valuation is 'higher than $5 billion'. No single figure recorded. Price per share Rs 33.23 differs sharply from the Rs 53.26 secondary price reported for 2025 in the DRHP coverage.",
+          "sources": [
+            {
+              "url": "https://entrackr.com/zepto-raises-fresh-funds-from-elcid-investment-5-bn-valuation-9601713",
+              "publisher": "Entrackr",
+              "published": "2025-07-29",
+              "supports": "Rs 7.5 Cr; 22,55,639 shares at Rs 33.23; valuation conflicting"
+            }
+          ]
+        },
+        {
+          "date": "2025-08",
+          "dateBasis": "filing",
+          "round": "Secondary sale to MOFSL (disclosed in DRHP)",
+          "kind": "secondary",
+          "amountRaised": null,
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": {
+            "value": 53.26,
+            "currency": "INR"
+          },
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "Motilal Oswal Financial Services Limited"
+          ],
+          "note": "Early foreign backers sold shares worth 'more than Rs 577 Cr' to MOFSL in August 2025; Nexus Venture Partners sold 6.7 Cr shares at Rs 53.26 each. Kaiser Permanente (3.7 Cr shares) and Razor Capital (~61 lakh shares) also sold. Total not recorded because the source says 'more than'.",
+          "sources": [
+            {
+              "url": "https://inc42.com/buzz/zepto-drhp-a-look-at-shareholding-pattern-key-executives/",
+              "publisher": "Inc42",
+              "published": "2026-06-09",
+              "supports": "DRHP: >Rs 577 Cr secondary to MOFSL; Nexus sold at Rs 53.26"
+            }
+          ]
+        },
+        {
+          "date": "2025-08-12",
+          "dateBasis": "filing",
+          "round": "Preferential allotment (MOFSL CCPS)",
+          "kind": "preferential",
+          "amountRaised": {
+            "value": 4000000000,
+            "currency": "INR",
+            "alt": [
+              {
+                "value": 46000000,
+                "currency": "USD"
+              }
+            ]
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": 75500000,
+          "leadInvestors": [
+            "Motilal Oswal Financial Services Limited"
+          ],
+          "note": "7.55 crore compulsorily convertible preference shares; price per share and valuation not stated.",
+          "sources": [
+            {
+              "url": "https://entrackr.com/news/zepto-secures-rs-400-cr-investment-from-motilal-oswal-9654008",
+              "publisher": "Entrackr",
+              "published": "2025-08-12",
+              "supports": "Rs 400 Cr from MOFSL via 7.55 crore CCPS"
+            }
+          ]
+        },
+        {
+          "date": "2025-10-16",
+          "dateBasis": "announced",
+          "round": "Pre-IPO round",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 450000000,
+            "currency": "USD"
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": {
+            "value": 7000000000,
+            "currency": "USD",
+            "basis": "unspecified"
+          },
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "California Public Employees' Retirement System (CalPERS)"
+          ],
+          "note": "Mix of primary and secondary capital; existing investors Avenir, Avra, Lightspeed, Glade Brook, StepStone and Nexus participated.",
+          "sources": [
+            {
+              "url": "https://entrackr.com/news/zepto-raises-450-mn-led-by-calpers-plans-ipo-next-year-10568597",
+              "publisher": "Entrackr",
+              "published": "2025-10-16",
+              "supports": "$450 Mn led by CalPERS at $7 Bn valuation"
+            },
+            {
+              "url": "https://news.ventureintelligence.com/private-equity/quick-commerce-co.-zepto-raises-%24450-m-led-by-calpers-at-%247-b-valuation",
+              "publisher": "Venture Intelligence",
+              "published": "2025-10-16",
+              "supports": "$450 Mn, primary and secondary, $7 Bn valuation",
+              "aggregator": true
+            }
+          ]
+        }
+      ],
+      "familyMentions": [],
+      "searchNote": "Not listed as of the newest sources found: confidential DRHP Dec 2025, SEBI nod May 2026, UDRHP-I filed ~8 Jun 2026 (Rs 8,010 Cr fresh issue + OFS), price band not announced in any source read (latest Oct 2026). No round found dated Feb 2025 (family's entry); the family's entry may have been a secondary purchase not reported. A Jan 2021 KiranaKart pre-seed ($730K at $2.5M per Wikipedia) was not recorded (no credible source opened). Entrackr exclusives' bodies are often paywalled. No Jaisinghani/Glow mention found.",
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "waterwala-labs",
+      "legalName": "Waterwala Labs Private Limited",
+      "brand": "DrinkPrime",
+      "fundKeys": [
+        "waterwala-labs-private-limited-drink-prime",
+        "vineet-sethia-drink-prime",
+        "ajay-jain-drink-prime",
+        "hanok-reuben-medhari-drink-prime"
+      ],
+      "website": "https://drinkprime.in",
+      "sector": "Subscription RO water purifiers (IoT)",
+      "listed": null,
+      "rounds": [
+        {
+          "date": "2020-08-18",
+          "dateBasis": "announced",
+          "round": "Pre-Series A",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 210000000,
+            "currency": "INR"
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "Omidyar Network India",
+            "Sequoia Surge"
+          ],
+          "note": "HRnxt names Omidyar Network India as lead with Sequoia Surge participating; later Entrackr stories describe Surge as lead. A Rs 21.56 Cr figure attributed to Entrackr in search snippets could not be opened and is not recorded.",
+          "sources": [
+            {
+              "url": "https://inc42.com/buzz/drinkprime-raises-inr-21-cr-from-omidyar-network-india-sequoia-surge",
+              "publisher": "Inc42",
+              "published": "2020-08-18",
+              "supports": "INR 21 Cr pre-Series A from Omidyar Network India, Sequoia Surge"
+            },
+            {
+              "url": "https://hrnxt.com/news/investment/drinkprime-bags-rs21-cr-in-pre-series-a-funding-from-omidyar-network-india-sequoia-surge/23287/2020/08/18",
+              "publisher": "HRnxt",
+              "published": "2020-08-18",
+              "supports": "Rs 21 Cr pre-Series A; lists earlier seed angels"
+            }
+          ]
+        },
+        {
+          "date": "2022-07-20",
+          "dateBasis": "announced",
+          "round": "Series A",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 600000000,
+            "currency": "INR"
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "Omidyar Network India",
+            "Sequoia Surge",
+            "9Unicorns"
+          ],
+          "note": "Rs 60 Cr is a mix of equity and debt (debt from Northern Arc Capital, Unitus Capital); equity split not disclosed.",
+          "sources": [
+            {
+              "url": "https://entrackr.com/2022/07/drinkprime-raises-rs-60-cr",
+              "publisher": "Entrackr",
+              "published": "2022-07-20",
+              "supports": "Rs 60 Cr equity+debt led by Omidyar, Surge, 9Unicorns"
+            },
+            {
+              "url": "https://news.ventureintelligence.com/private-equity/water-purification-player-drinkprime-raises-rs.60-cr-from-omidyar,-surge,-9unicorns,-others",
+              "publisher": "Venture Intelligence",
+              "published": "2022-07-21",
+              "supports": "Rs 60 Cr Series A, investors named",
+              "aggregator": true
+            }
+          ]
+        },
+        {
+          "date": "2024-05-15",
+          "dateBasis": "announced",
+          "round": "Series A extension",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 3000000,
+            "currency": "USD"
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "SIDBI Venture Capital"
+          ],
+          "note": "Round label not given by Entrackr; existing investors participated.",
+          "sources": [
+            {
+              "url": "https://entrackr.com/2024/05/drinkprime-raises-3-mn-from-sidbi-ventures",
+              "publisher": "Entrackr",
+              "published": "2024-05-15",
+              "supports": "$3 Mn led by SIDBI Venture Capital"
+            }
+          ]
+        },
+        {
+          "date": "2026-03",
+          "dateBasis": "filing",
+          "round": "Extended Series A (Series A3)",
+          "kind": "preferential",
+          "amountRaised": {
+            "value": 200000000,
+            "currency": "INR"
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": {
+            "value": 3400000000,
+            "currency": "INR",
+            "basis": "unspecified"
+          },
+          "pricePerShare": {
+            "value": 9205,
+            "currency": "INR"
+          },
+          "sharesAllotted": 21718,
+          "leadInvestors": [
+            "Artha Venture Fund (Artha Continuum Fund)",
+            "Mirabilis Investment Trust"
+          ],
+          "note": "21,718 Series A3 CCPS plus 10 equity shares. Inc42 gives Rs 340 Cr valuation without pre/post wording (prior Rs 260 Cr); Venture Intelligence says 'post transaction' valued at Rs 340 Cr; Entrackr's figure is reportedly its own estimate. Inc42 also mentions undisclosed debt.",
+          "sources": [
+            {
+              "url": "https://inc42.com/buzz/d2c-water-purifier-brand-drinkprime-raises-%E2%82%B920-cr-valuation-jumps-to-36-8-mn/",
+              "publisher": "Inc42",
+              "published": "2026-03-17",
+              "supports": "Rs 20 Cr, 21,718 Series A3 CCPS, valuation Rs 340 Cr"
+            },
+            {
+              "url": "https://news.ventureintelligence.com/private-equity/water-purifier-seller-drinkprime-raises-rs.20-cr-from-artha-venture%2C-mirabilis",
+              "publisher": "Venture Intelligence",
+              "published": "2026-03-12",
+              "supports": "Rs 9,205 per share; post-transaction value Rs 340 Cr",
+              "aggregator": true
+            }
+          ]
+        }
+      ],
+      "familyMentions": [
+        {
+          "text": "Bharat Jaisinghani: Named among angel investors in DrinkPrime's earlier seed round (amount undisclosed); no shares, amount or price stated.",
+          "shares": null,
+          "source": {
+            "url": "https://hrnxt.com/news/investment/drinkprime-bags-rs21-cr-in-pre-series-a-funding-from-omidyar-network-india-sequoia-surge/23287/2020/08/18",
+            "publisher": "HRnxt",
+            "published": "2020-08-18",
+            "supports": ""
+          }
+        }
+      ],
+      "searchNote": "Family held Feb 2020 to Jul 2023; no exit price/secondary in 2023 found. Seed tranches (~Rs 6 Cr from Kunal Bahl, Rohit Bansal and others) reported only in snippets, no figure recorded. YourStory pages returned 403. No valuation found for 2020-2024 rounds from a source opened.",
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "assetgro-fintech",
+      "legalName": "Assetgro Fintech Private Limited",
+      "brand": "StockGro",
+      "fundKeys": [
+        "assetgro-fintech-private-limited-1-series-b-pref-25nv44"
+      ],
+      "website": "https://www.stockgro.club",
+      "sector": "Social investing / investment education and advisory platform",
+      "listed": null,
+      "rounds": [
+        {
+          "date": "2022-01-20",
+          "dateBasis": "announced",
+          "round": "Series A",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 32000000,
+            "currency": "USD"
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "BITKRAFT Ventures",
+            "General Catalyst",
+            "Itai Tsiddon"
+          ],
+          "note": "Inc42 first reported ~$10 Mn on 27 Dec 2021, updated 20 Jan 2022 to the officially announced $32 Mn.",
+          "sources": [
+            {
+              "url": "https://inc42.com/buzz/exclusive-stockgro-mops-up-10-mn-from-fortnite-backer-bitkraft",
+              "publisher": "Inc42",
+              "published": "2022-01-20",
+              "supports": "$32 Mn Series A led by BITKRAFT, General Catalyst"
+            }
+          ]
+        },
+        {
+          "date": "2025-11-28",
+          "dateBasis": "filing",
+          "round": "Series B",
+          "kind": "preferential",
+          "amountRaised": {
+            "value": 1500000000,
+            "currency": "INR",
+            "alt": [
+              {
+                "value": 17000000,
+                "currency": "USD"
+              }
+            ]
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": {
+            "value": 78668,
+            "currency": "INR"
+          },
+          "sharesAllotted": 12707,
+          "leadInvestors": [
+            "Mukul Mahavir Agrawal (Param Capital) and affiliates"
+          ],
+          "note": "Rs 100 Cr via 12,707 Series B CCPS at Rs 78,668 plus Rs 50 Cr via 6,356 Series B1 partly paid-up shares. Siliconindia reports a 'post-money valuation of over $362 million' (Entrackr's headline says 'over $360 Mn'); Entrepreneur India says the round is convertible and valuation 'will be finalised later'. No valuation recorded. Trifecta's Rs 50 Cr convertible debt (Sep 2025) to convert in this round",
+          "sources": [
+            {
+              "url": "https://entrackr.com/exclusive/exclusive-stockgro-to-kick-off-series-b-round-at-over-360-mn-valuation-10820975",
+              "publisher": "Entrackr",
+              "published": "2025-11-28",
+              "supports": "Rs 150 Cr: Rs 100 Cr Series B CCPS + Rs 50 Cr B1 partly paid"
+            },
+            {
+              "url": "https://www.siliconindia.com/startup/startup-funding/stockgro-set-to-raise-series-b-at-362-million-valuation-nwid-52433.html",
+              "publisher": "Siliconindia (StartupCity)",
+              "published": "2025-11-28",
+              "supports": "12,707 CCPS at Rs 78,668; post-money over $362 Mn"
+            },
+            {
+              "url": "https://india.entrepreneur.com/news-and-trends/stockgro-raises-inr-150-cr-in-series-b-round-from-mukul/500319",
+              "publisher": "Entrepreneur India",
+              "published": "2025-12-02",
+              "supports": "INR 150 Cr Series B; valuation to be finalised later"
+            }
+          ]
+        },
+        {
+          "date": "2025-12-19",
+          "dateBasis": "announced",
+          "round": "Series B1",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 13000000,
+            "currency": "USD",
+            "alt": [
+              {
+                "value": 1173000000,
+                "currency": "INR"
+              }
+            ]
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "BITKRAFT Ventures"
+          ],
+          "note": null,
+          "sources": [
+            {
+              "url": "https://inc42.com/buzz/stockgro-raises-13-mn-to-fuel-geographic-expansion/",
+              "publisher": "Inc42",
+              "published": "2025-12-19",
+              "supports": "$13 Mn (INR 117.3 Cr) Series B1 led by BITKRAFT"
+            }
+          ]
+        },
+        {
+          "date": "2026-10-06",
+          "dateBasis": "filing",
+          "round": "Series B extension",
+          "kind": "preferential",
+          "amountRaised": {
+            "value": 1101600000,
+            "currency": "INR"
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": {
+            "value": 78668,
+            "currency": "INR"
+          },
+          "sharesAllotted": 14004,
+          "leadInvestors": [
+            "BITKRAFT Ventures"
+          ],
+          "note": "14,004 Series B CCPS; aggregate Rs 110.16 Cr per filing. BITKRAFT Rs 60.1 Cr, Aditum Venture Capital Fund Rs 23.1 Cr, plus India SME Growth Fund, Systematix Fincorp and angels. Inc42 says the company pre-filed draft IPO papers confidentially with SEBI on 26 Sep.",
+          "sources": [
+            {
+              "url": "https://inc42.com/buzz/exclusive-ahead-of-ipo-stockgro-looks-to-raise-₹110-cr-from-existing-backers/",
+              "publisher": "Inc42",
+              "published": "2026-10-06",
+              "supports": "14,004 Series B CCPS at Rs 78,668; Rs 110.16 Cr"
+            }
+          ]
+        }
+      ],
+      "familyMentions": [],
+      "searchNote": "Earlier angel round (~$1 Mn) and pre-Series A ($5 Mn, ~Aug 2021, led by Roots Ventures/Velo Partners) are mentioned only without dates in sources opened; not recorded. Entrackr (Feb 2026) reported talks for up to $15 Mn pre-Series C led by Tawuniya, not confirmed closed; not recorded. Confidential DRHP pre-filed Sep 2026; not listed. Family's Nov 2025 entry matches the Series B CCPS at Rs 78,668. No Jaisinghani/Glow mention found.",
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "everest-fleet",
+      "legalName": "Everest Fleet Private Limited",
+      "brand": "Everest Fleet",
+      "fundKeys": [
+        "everest-fleet"
+      ],
+      "website": "https://everestfleet.com",
+      "sector": "CNG/EV cab fleet operator for ride-hailing",
+      "listed": null,
+      "rounds": [
+        {
+          "date": "2023-06-14",
+          "dateBasis": "announced",
+          "round": "Series B",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 20000000,
+            "currency": "USD"
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "Uber"
+          ],
+          "note": "Entrackr (2024) says this round also gave early backer Artha Venture a partial exit. Round label 'Series B' is from other reports; Entrepreneur India gives no label.",
+          "sources": [
+            {
+              "url": "https://india.entrepreneur.com/?p=18517",
+              "publisher": "Entrepreneur India",
+              "published": "2023-06-14",
+              "supports": "$20 Mn round led by Uber"
+            },
+            {
+              "url": "https://entrackr.com/2024/09/exclusive-uber-invests-30-mn-in-everest-fleet-at-425-mn-valuation",
+              "publisher": "Entrackr",
+              "published": "2024-09-19",
+              "supports": "June 2023 $20 Mn led by Uber, partial exit to Artha"
+            }
+          ]
+        },
+        {
+          "date": "2023-09-21",
+          "dateBasis": "announced",
+          "round": "Strategic round",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 500000000,
+            "currency": "INR",
+            "alt": [
+              {
+                "value": 6000000,
+                "currency": "USD"
+              }
+            ]
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "Paragon Partners"
+          ],
+          "note": "Inc42 does not say whether primary or secondary.",
+          "sources": [
+            {
+              "url": "https://inc42.com/buzz/uber-backed-mobility-platform-everest-fleet-bags-inr-50-cr-to-venture-into-new-markets",
+              "publisher": "Inc42",
+              "published": "2023-09-21",
+              "supports": "INR 50 Cr from Paragon Partners"
+            }
+          ]
+        },
+        {
+          "date": "2023-10-04",
+          "dateBasis": "announced",
+          "round": "Secondary (Artha, Rockstud partial exits)",
+          "kind": "secondary",
+          "amountRaised": null,
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": {
+            "value": 16000000000,
+            "currency": "INR",
+            "alt": [
+              {
+                "value": 192000000,
+                "currency": "USD"
+              }
+            ],
+            "basis": "unspecified"
+          },
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [],
+          "note": "Rockstud sold 50% of its stake; 'the deal valued Everest Fleet at INR 1,600 Cr'. Artha made ~$2 Mn (~INR 17 Cr) on a partial sale of a stake bought for INR 10 Cr in 2019. Buyers not named.",
+          "sources": [
+            {
+              "url": "https://inc42.com/?p=418545",
+              "publisher": "Inc42",
+              "published": "2023-10-04",
+              "supports": "secondary valued company at INR 1,600 Cr (~$192 Mn)"
+            }
+          ]
+        },
+        {
+          "date": "2024-09-19",
+          "dateBasis": "filing",
+          "round": "Series C",
+          "kind": "preferential",
+          "amountRaised": {
+            "value": 2517000000,
+            "currency": "INR",
+            "alt": [
+              {
+                "value": 30000000,
+                "currency": "USD"
+              }
+            ]
+          },
+          "preMoney": null,
+          "postMoney": {
+            "value": 425000000,
+            "currency": "USD"
+          },
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": 13726,
+          "leadInvestors": [
+            "Uber"
+          ],
+          "note": "13,726 Series C CCPS (face value INR 1; Inc42 gives premium ~INR 1.83 lakh). Post-money is TheKredible's estimate ('around $425 million post-allotment'), not a company disclosure. Inc42's update gives $30 Mn as INR 250.7 Cr. IFC committed $20 Mn equity to the Series C (Aug 2024).",
+          "sources": [
+            {
+              "url": "https://entrackr.com/2024/09/exclusive-uber-invests-30-mn-in-everest-fleet-at-425-mn-valuation",
+              "publisher": "Entrackr",
+              "published": "2024-09-19",
+              "supports": "Rs 251.7 Cr, 13,726 Series C shares, ~$425 Mn post-allotment est."
+            },
+            {
+              "url": "https://inc42.com/buzz/everest-fleet-raises-inr-251-cr-from-uber-to-expand-operations",
+              "publisher": "Inc42",
+              "published": "2024-09-20",
+              "supports": "13,726 Series C CCPS to Uber India"
+            }
+          ]
+        },
+        {
+          "date": "2025-11-07",
+          "dateBasis": "filing",
+          "round": "Series C (second tranche)",
+          "kind": "preferential",
+          "amountRaised": {
+            "value": 1775000000,
+            "currency": "INR",
+            "alt": [
+              {
+                "value": 20000000,
+                "currency": "USD"
+              }
+            ]
+          },
+          "preMoney": null,
+          "postMoney": {
+            "value": 37000000000,
+            "currency": "INR",
+            "alt": [
+              {
+                "value": 420000000,
+                "currency": "USD"
+              }
+            ]
+          },
+          "valuation": null,
+          "pricePerShare": {
+            "value": 183388,
+            "currency": "INR"
+          },
+          "sharesAllotted": 9682,
+          "leadInvestors": [
+            "Uber India"
+          ],
+          "note": "Board approved 9,682 Series C CCPS at Rs 1,83,388 each. Post-money is Entrackr's own estimate ('expected to remain flat at around Rs 3,700 crore'). Uber India to hold ~15.62%.",
+          "sources": [
+            {
+              "url": "https://entrackr.com/exclusive/exclusive-uber-india-to-invest-another-20-mn-in-everest-fleet-10635661",
+              "publisher": "Entrackr",
+              "published": "2025-11-07",
+              "supports": "9,682 CCPS at Rs 1,83,388; ~Rs 3,700 Cr post-money est."
+            }
+          ]
+        }
+      ],
+      "familyMentions": [],
+      "searchNote": "No priced round found inside the family's holding window (Jan 2022 to May 2023); earlier equity (~$8 Mn across three rounds per Entrackr, Artha INR 10 Cr and Rockstud ~$1.1 Mn in 2019) reported without valuations. YourStory pages (incl. Tracxn-cited $217 Mn post-money for Sep 2024) returned 403 and are not recorded. Uber venture debt (Jan 2026, per Preqin) not recorded. No Jaisinghani/Glow mention found.",
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "swapeco-solutions",
+      "legalName": "Swapeco Solutions Private Limited",
+      "brand": "ScrapUncle",
+      "fundKeys": [
+        "swapeco-solutions",
+        "swapeco-solutions-private-limited-scrap-uncle-mukul-chabra"
+      ],
+      "website": "https://scrapuncle.com",
+      "sector": "Scrap collection / recycling (reverse logistics)",
+      "listed": null,
+      "rounds": [
+        {
+          "date": "2023-08-29",
+          "dateBasis": "announced",
+          "round": "Pre-seed",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 37000000,
+            "currency": "INR"
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "Bestvantage",
+            "Family office of the promoters of Madhuram Papers"
+          ],
+          "note": "Angel investors including Bharat Jaisinghani participated.",
+          "sources": [
+            {
+              "url": "https://entrackr.com/2023/08/reverse-logistics-startup-scrapuncle-raises-pre-seed-round/",
+              "publisher": "Entrackr",
+              "published": "2023-08-29",
+              "supports": "Rs 3.7 Cr pre-seed co-led by Bestvantage, Madhuram Papers FO"
+            }
+          ]
+        },
+        {
+          "date": "2026-01-28",
+          "dateBasis": "announced",
+          "round": "Pre-Series A",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 220000000,
+            "currency": "INR",
+            "alt": [
+              {
+                "value": 2400000,
+                "currency": "USD"
+              }
+            ]
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "Orios Venture Partners",
+            "Acumen Fund"
+          ],
+          "note": "Also Upaya Social Ventures, Venture Catalysts, We Founder Circle, Soonicorn Ventures and angel Bharat Jaisinghani. Valuation not disclosed.",
+          "sources": [
+            {
+              "url": "https://entrackr.com/snippets/clean-tech-startup-scrapuncle-raises-rs-22-cr-in-pre-series-a-round-11036941",
+              "publisher": "Entrackr",
+              "published": "2026-01-28",
+              "supports": "Rs 22 Cr pre-Series A co-led by Orios and Acumen"
+            },
+            {
+              "url": "https://india.entrepreneur.com/news-and-trends/scrapuncle-raises-inr-22-cr-in-pre-series-a-funding-round/502265",
+              "publisher": "Entrepreneur India",
+              "published": "2026-01-29",
+              "supports": "INR 22 Cr pre-Series A; investors incl. Bharat Jaisinghani"
+            }
+          ]
+        }
+      ],
+      "familyMentions": [
+        {
+          "text": "Bharat Jaisinghani: Named as an angel investor in the Rs 3.7 Cr pre-seed round; no shares, amount or price stated.",
+          "shares": null,
+          "source": {
+            "url": "https://entrackr.com/2023/08/reverse-logistics-startup-scrapuncle-raises-pre-seed-round/",
+            "publisher": "Entrackr",
+            "published": "2023-08-29",
+            "supports": ""
+          }
+        },
+        {
+          "text": "Bharat Jaisinghani: Named as an angel investor in the Rs 22 Cr pre-Series A round; no shares, amount or price stated.",
+          "shares": null,
+          "source": {
+            "url": "https://entrackr.com/snippets/clean-tech-startup-scrapuncle-raises-rs-22-cr-in-pre-series-a-round-11036941",
+            "publisher": "Entrackr",
+            "published": "2026-01-28",
+            "supports": ""
+          }
+        }
+      ],
+      "searchNote": "Entrepreneur India also mentions a Rs 3.2 Cr seed round from unnamed investors with no date (possibly the family's Aug 2025 entry); not recorded as a separate round. Valuations shown on aggregator pages (CB Insights, Inc42 datalabs, PremierAlts) are model estimates and not recorded.",
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "hyprkytchen-foodtech",
+      "legalName": "Hyprkytchen Foodtech Private Limited",
+      "brand": "Kytchens",
+      "fundKeys": [
+        "hyprkytchen-foodtech-private-limited-mr-bansi"
+      ],
+      "website": null,
+      "sector": "Cloud kitchen platform",
+      "listed": null,
+      "rounds": [
+        {
+          "date": "2022-06",
+          "dateBasis": "announced",
+          "round": "Pre-Series A",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 65000000,
+            "currency": "INR"
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "Anicut Capital"
+          ],
+          "note": "Angel investors Anand Ladsariya, Bharat Jaisinghani and Neeraj Goenka participated. Valuation not disclosed. No Tier 1-3 outlet coverage could be opened; TechGraph is a startup news site.",
+          "sources": [
+            {
+              "url": "https://techgraph.co/startup/cloud-kitchen-startup-kytchens-secures-rs-6-5-cr-anicut-capital/",
+              "publisher": "TechGraph",
+              "published": "2022-06-19",
+              "supports": "Rs 6.5 Cr equity pre-Series A led by Anicut Capital"
+            },
+            {
+              "url": "https://news.ventureintelligence.com/private-equity/cloud-kitchen-consulting-firm-kytchens-raises-rs.6.5-cr-from-anicut-capital,-others",
+              "publisher": "Venture Intelligence",
+              "published": "2022-06-17",
+              "supports": "INR 6.5 Cr pre-Series A led by Anicut; angels named",
+              "aggregator": true
+            }
+          ]
+        }
+      ],
+      "familyMentions": [
+        {
+          "text": "Bharat Jaisinghani: Named as an angel investor in the Rs 6.5 Cr pre-Series A round led by Anicut Capital; no shares, amount or price stated.",
+          "shares": null,
+          "source": {
+            "url": "https://techgraph.co/startup/cloud-kitchen-startup-kytchens-secures-rs-6-5-cr-anicut-capital/",
+            "publisher": "TechGraph",
+            "published": "2022-06-19",
+            "supports": ""
+          }
+        }
+      ],
+      "searchNote": "No 2020-2021 round found (family's window Dec 2020 to Dec 2021). An IPO Platform listing shows Rs 7.03 Cr pre-Series A from Anicut for Hyprkytchen (aggregator, not opened); aggregator valuations ($3.94M Feb 2022) not recorded. TheKredible page returned 530. No Entrackr/Inc42/YourStory article found.",
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "head-infotech",
+      "legalName": "Head Infotech India Private Limited (now Head Digital Works)",
+      "brand": "A23",
+      "fundKeys": [
+        "head-infotech"
+      ],
+      "website": "https://hdworks.in",
+      "sector": "Online skill gaming (rummy, poker)",
+      "listed": null,
+      "rounds": [
+        {
+          "date": "2017-04-28",
+          "dateBasis": "announced",
+          "round": "Majority-stake investment (Clairvest)",
+          "kind": "acquisition",
+          "amountRaised": {
+            "value": 73700000,
+            "currency": "USD",
+            "alt": [
+              {
+                "value": 4740000000,
+                "currency": "INR"
+              }
+            ]
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "Clairvest Group (with Clairvest Equity Partners V)"
+          ],
+          "note": "Clairvest's own portion ~US$40 Mn. Inc42: founder said company 'valued at close to $100 Mn' (approximate; not recorded). Matrix Partners India exited; primary/secondary split not stated.",
+          "sources": [
+            {
+              "url": "https://www.clairvest.com/clairvest-adds-to-gaming-portfolio-with-a-new-investment-in-head-infotech/",
+              "publisher": "Clairvest Group (press release)",
+              "published": "2017-04-28",
+              "supports": "US$73.7 Mn invested in Head InfoTech"
+            },
+            {
+              "url": "https://inc42.com/buzz/clairvest-acquires-ace2three",
+              "publisher": "Inc42",
+              "published": "2017-04-29",
+              "supports": "$73.7 Mn (INR 474 Cr) for majority stake"
+            }
+          ]
+        },
+        {
+          "date": "2025-09",
+          "dateBasis": "closed",
+          "round": "Investor write-off (Clairvest)",
+          "kind": "mark",
+          "amountRaised": null,
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [],
+          "note": "Clairvest fully provisioned its investment in the quarter ended 30 Sep 2025 after a 'material adverse regulatory change' in India; its stake had a C$121 Mn carrying value at 30 Jun 2025 (C$127.8 Mn at 31 Mar 2025). FY2026 results say the investment was realized 'for nil value'. This marks Clairvest's stake, not a company-wide valuation.",
+          "sources": [
+            {
+              "url": "https://www.finanznachrichten.de/nachrichten-2025-11/66967720-clairvest-group-inc-clairvest-reports-fiscal-2026-second-quarter-results-399.htm",
+              "publisher": "Clairvest Group via GlobeNewswire",
+              "published": "2025-11-12",
+              "supports": "full provision of HDW stake; C$121 Mn carrying value at 30 Jun 2025"
+            },
+            {
+              "url": "https://www.bnnbloomberg.ca/press-releases/2026/06/25/clairvest-reports-fiscal-2026-fourth-quarter-and-year-end-results/",
+              "publisher": "Clairvest Group via BNN Bloomberg",
+              "published": "2026-06-25",
+              "supports": "investment in HDW realized for nil value"
+            }
+          ]
+        }
+      ],
+      "familyMentions": [],
+      "searchNote": "No priced round found around Feb 2022 (family's entry). Feb 2025: HDW agreed to acquire Deltatech Gaming (Adda52) from Delta Corp for ~Rs 491 Cr in two steps (51% then merger), giving Delta Corp ~5.7% of HDW (Storyboard18, 2025-02-21); no HDW share price or HDW valuation stated, so not recorded as a round. Nov 2024 ESOP buyback of $3 Mn (Entrackr) had no price. Aggregator figures (~$400M 2023) not recorded.",
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "edugorilla-community",
+      "legalName": "EduGorilla Community Private Limited",
+      "brand": "EduGorilla",
+      "fundKeys": [
+        "edugorilla-community"
+      ],
+      "website": "https://edugorilla.com",
+      "sector": "Edtech (test preparation, vernacular)",
+      "listed": null,
+      "rounds": [
+        {
+          "date": "2020-10-01",
+          "dateBasis": "announced",
+          "round": "Pre-Series A",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 53000000,
+            "currency": "INR"
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "Auxano Entrepreneur Fund"
+          ],
+          "note": "HRnxt (citing YourStory) gives 'about Rs 5.3 crore'; angels Venture Garage (SucSEED), Pune Angels, Hem Angels, VG Angels participated. YourStory original returned 403.",
+          "sources": [
+            {
+              "url": "https://hrnxt.com/news/investment/lucknow-based-edtech-startup-edugorilla-raises-rs-5-3-cr-in-funding/24572/2020/10/01",
+              "publisher": "HRnxt",
+              "published": "2020-10-01",
+              "supports": "about Rs 5.3 Cr from Auxano Entrepreneur Fund, angels"
+            }
+          ]
+        },
+        {
+          "date": "2022-06-07",
+          "dateBasis": "announced",
+          "round": "Funding round",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 165000000,
+            "currency": "INR"
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "SucSEED Indovation Fund"
+          ],
+          "note": "Also Lead Angels Fund, Mumbai Angels, TiE India, VG Angels, WeFounderCircle, Ah Ventures. Valuation not disclosed.",
+          "sources": [
+            {
+              "url": "https://india.entrepreneur.com/en-in/news-and-trends/edugorilla-raises-inr-165-crore-funding-led-by-sucseed/429013",
+              "publisher": "Entrepreneur India",
+              "published": "2022-06-07",
+              "supports": "INR 16.5 Cr led by SucSEED Indovation Fund"
+            }
+          ]
+        },
+        {
+          "date": "2025-09-10",
+          "dateBasis": "announced",
+          "round": "Secondary (Auxano Capital partial exit)",
+          "kind": "secondary",
+          "amountRaised": null,
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [],
+          "note": "Auxano reported a 5.5X return on invested capital; buyer, amount, price and valuation not disclosed. Timing coincides with the family's Aug 2025 entry, but no source names the buyer.",
+          "sources": [
+            {
+              "url": "https://entrackr.com/snippets/auxano-capital-clocks-55x-return-on-edugorilla-exit-10068567",
+              "publisher": "Entrackr",
+              "published": "2025-09-10",
+              "supports": "Auxano partial exit at 5.5X return; no figures"
+            },
+            {
+              "url": "https://india.entrepreneur.com/news-and-trends/auxano-capital-exits-edugorilla-with-55x-gain/496934",
+              "publisher": "Entrepreneur India",
+              "published": "2025-09-10",
+              "supports": "part exit, 5.5x return; first invested 2020"
+            }
+          ]
+        }
+      ],
+      "familyMentions": [],
+      "searchNote": "No valuation found in any credible source opened; aggregator figures ($8.31M Mar 2022, The Company Check) not recorded. No 2023-2025 primary round found.",
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "stay-vista",
+      "legalName": "Stay Vista Private Limited",
+      "brand": "StayVista",
+      "fundKeys": [
+        "stay-vista-private-limited-artha-energy-projects",
+        "stay-vista-private-limited-anandkumar-radhakrishna-ladsariya"
+      ],
+      "website": "https://www.stayvista.com",
+      "sector": "Luxury villa rentals / hospitality",
+      "listed": null,
+      "rounds": [
+        {
+          "date": "2021-01",
+          "dateBasis": "announced",
+          "round": "Funding round",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 100000000,
+            "currency": "INR",
+            "alt": [
+              {
+                "value": 1320000,
+                "currency": "USD"
+              }
+            ]
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [],
+          "note": "Only source opened is trade publication Short Term Rentalz, which refers to the 'previous most recent Rs 10 crore funding round' in January 2021 without naming investors.",
+          "sources": [
+            {
+              "url": "https://shorttermrentalz.com/news/stayvista-seriesb-funding-india/",
+              "publisher": "Short Term Rentalz",
+              "published": "2022-09-07",
+              "supports": "Rs 10 Cr ($1.32 Mn) round in January 2021"
+            }
+          ]
+        },
+        {
+          "date": "2022-09-07",
+          "dateBasis": "announced",
+          "round": "Strategic round",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 400000000,
+            "currency": "INR"
+          },
+          "preMoney": null,
+          "postMoney": {
+            "value": 2200000000,
+            "currency": "INR"
+          },
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "DSG Consumer Partners"
+          ],
+          "note": "Entrackr (citing ET): 'valued at Rs 220 crore after the funding round'. Inc42 says 'more than INR 40 Cr' with Capri Global and CA Holdings; Short Term Rentalz calls it Series B.",
+          "sources": [
+            {
+              "url": "https://entrackr.com/2022/09/stayvista-raises-rs-40-cr-led-by-dsg",
+              "publisher": "Entrackr",
+              "published": "2022-09-07",
+              "supports": "Rs 40 Cr led by DSG; valued Rs 220 Cr post-round"
+            },
+            {
+              "url": "https://inc42.com/buzz/hospitality-startup-stayvista-raises-inr-40-cr-to-fuel-growth-strengthen-tech-infra",
+              "publisher": "Inc42",
+              "published": "2022-09-07",
+              "supports": "more than INR 40 Cr led by DSG Consumer Partners"
+            }
+          ]
+        },
+        {
+          "date": "2025-06-26",
+          "dateBasis": "announced",
+          "round": "Series B",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 400000000,
+            "currency": "INR"
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "JSW Ventures"
+          ],
+          "note": "Existing investors DSG Consumer Partners and Capri Global Family Office participated. Valuation not disclosed (Dealroom's $25M not recorded).",
+          "sources": [
+            {
+              "url": "https://entrackr.com/snippets/stayvista-raises-rs-40-cr-in-series-b-round-led-by-jsw-ventures-9439300",
+              "publisher": "Entrackr",
+              "published": "2025-06-26",
+              "supports": "Rs 40 Cr Series B led by JSW Ventures"
+            },
+            {
+              "url": "https://inc42.com/buzz/stayvista-nets-inr-40-cr-from-jsw-ventures-others",
+              "publisher": "Inc42",
+              "published": "2025-06-26",
+              "supports": "INR 40 Cr Series B led by JSW Ventures"
+            }
+          ]
+        }
+      ],
+      "familyMentions": [],
+      "searchNote": "No round found around Feb 2023 (family's second entry). Web search budget ran out before a targeted search for a 2023 round or for the Jan 2021 round's investors could be made; a follow-up search may find more. Aggregator valuations not recorded. No Jaisinghani/Glow mention found.",
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "innoviti",
+      "legalName": "Innoviti Technologies Private Limited (formerly Innoviti Payment Solutions)",
+      "brand": "Innoviti",
+      "fundKeys": [
+        "innoviti-payment-solutions-private-ltd-pranav-koranne"
+      ],
+      "website": "https://innoviti.com",
+      "sector": "Payments (PoS and payment gateway) fintech",
+      "listed": null,
+      "rounds": [
+        {
+          "date": "2022-01",
+          "dateBasis": "announced",
+          "round": "Series D (first close)",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 800000000,
+            "currency": "INR",
+            "alt": [
+              {
+                "value": 10700000,
+                "currency": "USD"
+              }
+            ]
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "Trifecta Debt Fund",
+            "Patni Advisors",
+            "Bessemer Venture Partners"
+          ],
+          "note": "Mix of equity and debt. The company said its valuation had multiplied 2.5X from its Series C (closed a few months earlier) but no absolute valuation was printed. Individual investors named: Sanjoy Bhattacharya and Bharat Jaisinghani. Company targeted INR 400 Cr total Series D primary.",
+          "sources": [
+            {
+              "url": "https://inc42.com/buzz/fintech-startup-innoviti-closes-first-tranche-of-10-7-mn-in-ongoing-series-d-round",
+              "publisher": "Inc42",
+              "published": "2022-01-05",
+              "supports": "INR 80 Cr (~$10.7 Mn) equity+debt first close; names Bharat Jaisinghani"
+            }
+          ]
+        },
+        {
+          "date": "2022-07-08",
+          "dateBasis": "announced",
+          "round": "Series D (final close)",
+          "kind": "primary",
+          "amountRaised": null,
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "Panthera Growth Partners"
+          ],
+          "note": "Inc42 reports $45 Mn as the cumulative Series D total (equity and debt, incl. Trifecta Capital debt), which includes the Jan 2022 first close; Panthera put in $15 Mn from its Fund II. Amount left null to avoid double counting. Other participants: Alumni Ventures, Patni Family Office, FMO, Bessemer, Sanjoy Bhattacharya, Bharat Jaisinghani. No valuation printed.",
+          "sources": [
+            {
+              "url": "https://inc42.com/buzz/innoviti-secures-45-mn-in-closing-series-d-funding-round",
+              "publisher": "Inc42",
+              "published": "2022-07-08",
+              "supports": "Series D totals $45 Mn equity+debt; Panthera $15 Mn lead"
+            }
+          ]
+        },
+        {
+          "date": "2024-04-01",
+          "dateBasis": "announced",
+          "round": "Series E (first close)",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 400000000,
+            "currency": "INR"
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "Bessemer Venture Partners",
+            "Patni Family Office"
+          ],
+          "note": "No valuation printed in the article; several angel investors also joined.",
+          "sources": [
+            {
+              "url": "https://entrackr.com/2024/04/innoviti-kicks-off-series-e-round-with-rs-40-cr-led-by-bessemer/",
+              "publisher": "Entrackr",
+              "published": "2024-04-01",
+              "supports": "Rs 40 Cr Series E led by Bessemer and Patni Family Office"
+            }
+          ]
+        },
+        {
+          "date": "2024-08-12",
+          "dateBasis": "announced",
+          "round": "Series E (second tranche)",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 700000000,
+            "currency": "INR",
+            "alt": [
+              {
+                "value": 8500000,
+                "currency": "USD"
+              }
+            ]
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "Random Walk Solutions"
+          ],
+          "note": "Combination of equity and debt. Existing investors Bessemer, Patni Family Office and Alumni Ventures participated. No valuation printed.",
+          "sources": [
+            {
+              "url": "https://entrackr.com/2024/08/payment-gateway-and-pos-firm-innoviti-closes-series-e-funding/",
+              "publisher": "Entrackr",
+              "published": "2024-08-12",
+              "supports": "Rs 70 Cr ($8.5 Mn) equity+debt second tranche led by Random Walk"
+            }
+          ]
+        },
+        {
+          "date": "2026-02-28",
+          "dateBasis": "announced",
+          "round": "Series M",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 1040000000,
+            "currency": "INR",
+            "alt": [
+              {
+                "value": 11400000,
+                "currency": "USD"
+              }
+            ]
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [],
+          "note": "Inc42 names no lead; participants include Bessemer Venture Partners, Ashutosh Joshi, Arihant Patni (Patni Family Office), Deepak Vinchhi. Inc42 had earlier reported a first tranche of INR 35 Cr in March 2025 for this round. No valuation printed.",
+          "sources": [
+            {
+              "url": "https://inc42.com/?p=550818",
+              "publisher": "Inc42",
+              "published": "2026-02-28",
+              "supports": "Series M closed at INR 104 Cr ($11.4 Mn); no valuation"
+            }
+          ]
+        }
+      ],
+      "familyMentions": [],
+      "searchNote": "No absolute valuation for any round found in credible press. Inc42's company data page shows a 'last known valuation $200.61M as of 01 Apr 2024' and PremierAlts a derived mark; neither recorded (aggregator estimates without a round basis). A search snippet attributed a Rs 370 Cr post-allotment estimate to Entrackr for the Series E, but the Entrackr article itself carries no valuation, so it was not recorded. Series C (2020) amount undisclosed.",
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "incred-holdings",
+      "legalName": "InCred Holdings Limited",
+      "brand": "InCred",
+      "fundKeys": [
+        "incred-holdings"
+      ],
+      "website": "https://www.incred.com",
+      "sector": "NBFC / financial services holding company",
+      "listed": null,
+      "rounds": [
+        {
+          "date": "2023-12-25",
+          "dateBasis": "announced",
+          "round": "Series D",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 60000000,
+            "currency": "USD",
+            "alt": [
+              {
+                "value": 5000000000,
+                "currency": "INR"
+              }
+            ]
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": {
+            "value": 1040000000,
+            "currency": "USD",
+            "basis": "unspecified"
+          },
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "Ranjan Pai (MEMG family office)"
+          ],
+          "note": "Sources disagree on the valuation: Inc42 (Dec 2023) 'valued at $1.04 Bn'; Editorji (Nov 2023, commitment stage) 'approximately ₹8,800 crore or $1.05 billion'; Inc42 (May 2024) calls '$1.2 Bn' the most recent valuation from the Dec 2023 fundraise. Other investors: Ravi Pillai ($5.4 Mn), Ram Nayak ($1.2 Mn), Varanium Capital, Sattva Group, UHNIs/family offices via InCred Wealth. Round was announced ",
+          "sources": [
+            {
+              "url": "https://inc42.com/buzz/incred-closes-60-mn-series-d-round-becomes-second-unicorn-of-2023",
+              "publisher": "Inc42",
+              "published": "2023-12-25",
+              "supports": "$60 Mn (INR 500 Cr) Series D, valued at $1.04 Bn"
+            },
+            {
+              "url": "https://editorji.com/business-news/incred-secures-60mn-funding-becomes-second-unicorn-of-2023-1699591978151",
+              "publisher": "Editorji",
+              "published": "2023-11-10",
+              "supports": "₹500 Cr Series D at approx ₹8,800 Cr / $1.05 Bn valuation"
+            },
+            {
+              "url": "https://inc42.com/buzz/mizuho-eyes-kkrs-part-stake-in-incred-finance",
+              "publisher": "Inc42",
+              "published": "2024-05-17",
+              "supports": "Most recent valuation $1.2 Bn from Dec 2023 $60 Mn raise"
+            }
+          ]
+        }
+      ],
+      "familyMentions": [],
+      "searchNote": "Not listed as of research date: SEBI approved the IPO on 5 Feb 2026 and an updated DRHP was filed in May 2026 (fresh issue ₹1,250 Cr plus OFS of up to 99,020,833 shares); no price band or listing date found. Inc42's May 2026 UDRHP shareholding piece names KKR, MEMG, V'Ocean, Moore Strategic and promoters, no Jaisinghani/Glow. Not recorded: InCred Money (a subsidiary) raised ₹250 Cr at ₹1,650 Cr valuation (subsidiary, not the holding company); 2022 KKR India Financial merger was all-stock with no valuation printed; May 2024 reports of a KKR secondary at 30-40% premium were talks only. No pre-IPO placement price found. Search budget was exhausted before checking the UDRHP itself for last allotment prices.",
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "wevois-labs",
+      "legalName": "WeVOIS Labs Private Limited",
+      "brand": "WeVOIS",
+      "fundKeys": [
+        "we-voise"
+      ],
+      "website": "https://wevois.com",
+      "sector": "Waste-management technology (Jaipur)",
+      "listed": null,
+      "rounds": [
+        {
+          "date": "2023-06",
+          "dateBasis": "announced",
+          "round": "Pre-Series A",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 4000000,
+            "currency": "USD"
+          },
+          "preMoney": null,
+          "postMoney": {
+            "value": 10000000,
+            "currency": "USD"
+          },
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "Innovana Thinklabs Limited"
+          ],
+          "note": "Combination of equity and debt. Only the S&P Capital IQ feed (MarketScreener, an aggregator) labels the $10M as post-money; BizzBuzz prints 'a valuation of $10 million' without pre/post. Other investors: Upaya Social Ventures, Recur Club, angels Sunil Kumar Singhvi and Rajendra Lora.",
+          "sources": [
+            {
+              "url": "https://uk.marketscreener.com/quote/stock/INNOVANA-THINKLABS-LIMITE-39004916/news/WeVOIS-Labs-announced-that-it-has-received-4-million-in-funding-from-Recur-Club-Technologies-Privat-44222577",
+              "publisher": "MarketScreener (S&P Capital IQ)",
+              "published": "2023-06-22",
+              "supports": "$4M equity+debt, post-money valuation $10M, Innovana lead",
+              "aggregator": true
+            },
+            {
+              "url": "https://bizzbuzz.news/bizz-talk/jaipur-startup-wevois-makes-waste-collection-smart-efficient-1311259",
+              "publisher": "BizzBuzz",
+              "published": "2024-05-01",
+              "supports": "$4M pre-Series A resulting in a $10 million valuation"
+            }
+          ]
+        },
+        {
+          "date": "2025-01-16",
+          "dateBasis": "announced",
+          "round": "Series A",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 360000000,
+            "currency": "INR",
+            "alt": [
+              {
+                "value": 4200000,
+                "currency": "USD"
+              }
+            ]
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "Negen Capital",
+            "Vyom Wealth"
+          ],
+          "note": null,
+          "sources": [
+            {
+              "url": "https://entrackr.com/snippets/wevois-raises-rs-36-cr-in-series-a-round-from-negen-capital-8626156",
+              "publisher": "Entrackr",
+              "published": "2025-01-16",
+              "supports": "Rs 36 Cr ($4.2 Mn) Series A led by Negen Capital, Vyom Wealth"
+            },
+            {
+              "url": "https://inc42.com/buzz/wevois-raises-inr-36-cr-to-scale-waste-management-operations",
+              "publisher": "Inc42",
+              "published": "2025-01-17",
+              "supports": "INR 36 Cr Series A; no valuation"
+            }
+          ]
+        }
+      ],
+      "familyMentions": [],
+      "searchNote": null,
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "since99-apparel",
+      "legalName": "Since99 Apparel Private Limited",
+      "brand": "Freakins",
+      "fundKeys": [
+        "since-99-apparel-pvt-limited-punit-sehgal-dexter-capital"
+      ],
+      "website": "https://freakins.com",
+      "sector": "D2C women's denim apparel",
+      "listed": null,
+      "rounds": [
+        {
+          "date": "2023-07-05",
+          "dateBasis": "announced",
+          "round": "Seed",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 4000000,
+            "currency": "USD"
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": {
+            "value": 1020000000,
+            "currency": "INR",
+            "basis": "unspecified"
+          },
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "Matrix Partners India",
+            "Blume Ventures"
+          ],
+          "note": "Valuation comes from Entrackr's 2025 Series A article ('up from Rs 102 crore in its previous seed round'), not stated at the time of the seed announcement. 30+ angels also participated.",
+          "sources": [
+            {
+              "url": "https://z47.com/news/gen-z-focused-womens-denimwear-brand-freakins-raises-4m-led-by-matrix-partners-india-and-blume-ventures",
+              "publisher": "Z47 (Matrix Partners India) press release",
+              "published": "2023-07-05",
+              "supports": "$4M seed led by Matrix Partners India and Blume"
+            },
+            {
+              "url": "https://entrackr.com/exclusive/exclusive-matrix-and-blume-invest-in-d2c-fashion-brand-freakins-8917142",
+              "publisher": "Entrackr",
+              "published": "2025-04-02",
+              "supports": "previous seed round valuation Rs 102 crore"
+            }
+          ]
+        },
+        {
+          "date": "2025-04-02",
+          "dateBasis": "filing",
+          "round": "Series A (Series A1 CCPS)",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 250000000,
+            "currency": "INR",
+            "alt": [
+              {
+                "value": 3000000,
+                "currency": "USD"
+              }
+            ]
+          },
+          "preMoney": null,
+          "postMoney": {
+            "value": 2300000000,
+            "currency": "INR",
+            "alt": [
+              {
+                "value": 27000000,
+                "currency": "USD"
+              }
+            ]
+          },
+          "valuation": null,
+          "pricePerShare": {
+            "value": 7156,
+            "currency": "INR"
+          },
+          "sharesAllotted": 34936,
+          "leadInvestors": [
+            "Matrix Partners India",
+            "Blume Ventures"
+          ],
+          "note": "Entrackr read the allotment off RoC filings; the post-money is Entrackr's estimate. After allotment Matrix and Blume each hold 17.34%.",
+          "sources": [
+            {
+              "url": "https://entrackr.com/exclusive/exclusive-matrix-and-blume-invest-in-d2c-fashion-brand-freakins-8917142",
+              "publisher": "Entrackr",
+              "published": "2025-04-02",
+              "supports": "Rs 25 Cr; 34,936 CCPS at Rs 7,156; post-money ~Rs 230 Cr ($27M)"
+            }
+          ]
+        }
+      ],
+      "familyMentions": [],
+      "searchNote": "No round after April 2025 found. Family's Mar 2023 entry predates the July 2023 seed announcement; no source names Jaisinghani/Glow.",
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "perplexity-ai",
+      "legalName": "Perplexity AI, Inc.",
+      "brand": "Perplexity",
+      "fundKeys": [
+        "perplexity-investment"
+      ],
+      "website": "https://www.perplexity.ai",
+      "sector": "AI search / answer engine",
+      "listed": null,
+      "rounds": [
+        {
+          "date": "2023-03-28",
+          "dateBasis": "announced",
+          "round": "Series A",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 25600000,
+            "currency": "USD"
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "New Enterprise Associates (NEA)"
+          ],
+          "note": "Valuation not disclosed (a tear-sheet estimate of $150M post was not recorded).",
+          "sources": [
+            {
+              "url": "https://finance.yahoo.com/news/ai-search-startup-raises-26-110035896.html",
+              "publisher": "Bloomberg (via Yahoo Finance)",
+              "published": "2023-03-28",
+              "supports": "$25.6 million round led by NEA; no valuation"
+            }
+          ]
+        },
+        {
+          "date": "2024-01-04",
+          "dateBasis": "announced",
+          "round": "Series B",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 73600000,
+            "currency": "USD"
+          },
+          "preMoney": null,
+          "postMoney": {
+            "value": 520000000,
+            "currency": "USD"
+          },
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "IVP"
+          ],
+          "note": "NEA, Databricks Ventures and others also invested.",
+          "sources": [
+            {
+              "url": "https://techcrunch.com/2024/01/04/ai-powered-search-engine-perplexity-ai-now-valued-at-520m-raises-70m/",
+              "publisher": "TechCrunch",
+              "published": "2024-01-04",
+              "supports": "$73.6M; values Perplexity at $520M post-money; IVP lead"
+            }
+          ]
+        },
+        {
+          "date": "2024-04-23",
+          "dateBasis": "announced",
+          "round": "Series C",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 62700000,
+            "currency": "USD"
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": {
+            "value": 1040000000,
+            "currency": "USD",
+            "basis": "unspecified"
+          },
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "Daniel Gross"
+          ],
+          "note": "SiliconANGLE says 'more than $1 billion'; DT Next prints $1.04 billion.",
+          "sources": [
+            {
+              "url": "https://www.dtnext.in/news/business/perplexity-turns-unicorn-after-raising-627-million-781073",
+              "publisher": "DT Next",
+              "published": "2024-04-23",
+              "supports": "$62.7 mn at $1.04 billion valuation, led by Daniel Gross"
+            },
+            {
+              "url": "https://siliconangle.com/?p=653247",
+              "publisher": "SiliconANGLE",
+              "published": "2024-04-23",
+              "supports": "$62.7M; valuation more than $1 billion"
+            }
+          ]
+        },
+        {
+          "date": "2024-06-27",
+          "dateBasis": "announced",
+          "round": "Series C extension (SoftBank Vision Fund 2)",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 250000000,
+            "currency": "USD"
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": {
+            "value": 3000000000,
+            "currency": "USD",
+            "basis": "unspecified"
+          },
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [],
+          "note": "Bloomberg reported SoftBank Vision Fund 2 investing $10-20M as part of a larger $250M round at a $3B valuation; at the time the deal was not finalized. CNBC (May 2025) later refers to Perplexity's '$3 billion valuation in June 2024'. No lead named.",
+          "sources": [
+            {
+              "url": "https://uk.finance.yahoo.com/news/softbank-back-ai-startup-perplexity-040725933.html",
+              "publisher": "Bloomberg (via Yahoo Finance)",
+              "published": "2024-06-27",
+              "supports": "$250M round at $3 billion valuation; SoftBank $10-20M; not finalized"
+            },
+            {
+              "url": "https://www.cnbc.com/2025/05/12/perplexity-funding-round-comet.html",
+              "publisher": "CNBC",
+              "published": "2025-05-12",
+              "supports": "cites $3 billion valuation in June 2024"
+            }
+          ]
+        },
+        {
+          "date": "2024-12",
+          "dateBasis": "closed",
+          "round": "Series D",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 500000000,
+            "currency": "USD"
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": {
+            "value": 9000000000,
+            "currency": "USD",
+            "basis": "unspecified"
+          },
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "IVP"
+          ],
+          "note": "Entrepreneur India says the round 'concluded earlier this month' (December 2024).",
+          "sources": [
+            {
+              "url": "https://india.entrepreneur.com/news-and-trends/ivp-led-usd-500-mn-round-propels-perplexity-to-usd-9-bn/484608",
+              "publisher": "Entrepreneur India",
+              "published": "2024-12-20",
+              "supports": "USD 500 Mn led by IVP, valuation USD 9 billion"
+            },
+            {
+              "url": "https://www.cnbc.com/2025/05/12/perplexity-funding-round-comet.html",
+              "publisher": "CNBC",
+              "published": "2025-05-12",
+              "supports": "prior valuation $9 billion in December"
+            }
+          ]
+        },
+        {
+          "date": "2025-05",
+          "dateBasis": "announced",
+          "round": "Series E",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 500000000,
+            "currency": "USD"
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": {
+            "value": 14000000000,
+            "currency": "USD",
+            "basis": "unspecified"
+          },
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "Accel"
+          ],
+          "note": "CNBC (12 May 2025) reported late-stage talks; TechCrunch (Sep 2025, citing Bloomberg) describes the $500M at $14B led by Accel as completed earlier in 2025. Round label 'Series E' is conventional, not printed by these sources. March 2025 talks at $18B post-money were not consummated at that price.",
+          "sources": [
+            {
+              "url": "https://www.cnbc.com/2025/05/12/perplexity-funding-round-comet.html",
+              "publisher": "CNBC",
+              "published": "2025-05-12",
+              "supports": "$500 million at a $14 billion valuation, Accel leading (late-stage talks)"
+            },
+            {
+              "url": "https://techcrunch.com/2025/09/10/perplexity-reportedly-raised-200m-at-20b-valuation/",
+              "publisher": "TechCrunch",
+              "published": "2025-09-10",
+              "supports": "earlier 2025: $500M at $14B led by Accel"
+            }
+          ]
+        },
+        {
+          "date": "2025-07-17",
+          "dateBasis": "announced",
+          "round": "Series E extension",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 100000000,
+            "currency": "USD"
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": {
+            "value": 18000000000,
+            "currency": "USD",
+            "basis": "unspecified"
+          },
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [],
+          "note": "Reported by Bloomberg on 17 Jul 2025 as an extension of the $14B round; investors not named.",
+          "sources": [
+            {
+              "url": "https://www.pymnts.com/?p=2837762",
+              "publisher": "PYMNTS",
+              "published": "2025-07-18",
+              "supports": "$100 million, valuation to $18 billion; extension of $14B round"
+            },
+            {
+              "url": "https://techcrunch.com/2025/09/10/perplexity-reportedly-raised-200m-at-20b-valuation/",
+              "publisher": "TechCrunch",
+              "published": "2025-09-10",
+              "supports": "July 2025: $100M at $18B (Bloomberg)"
+            }
+          ]
+        },
+        {
+          "date": "2025-09-10",
+          "dateBasis": "announced",
+          "round": "Growth round",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 200000000,
+            "currency": "USD"
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": {
+            "value": 20000000000,
+            "currency": "USD",
+            "basis": "unspecified"
+          },
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [],
+          "note": "Per The Information, relayed by TechCrunch and Reuters; not company-confirmed; lead unclear. Reuters (Aug 2026) refers back to this as the finalized $20B round.",
+          "sources": [
+            {
+              "url": "https://techcrunch.com/2025/09/10/perplexity-reportedly-raised-200m-at-20b-valuation/",
+              "publisher": "TechCrunch",
+              "published": "2025-09-10",
+              "supports": "$200M new capital at $20B valuation (per The Information)"
+            },
+            {
+              "url": "https://www.deccanchronicle.com/technology/perplexity-finalizes-20-billion-valuation-round-report-1903016",
+              "publisher": "Deccan Chronicle (Reuters)",
+              "published": "2025-09-11",
+              "supports": "$200 million at $20 billion valuation"
+            },
+            {
+              "url": "https://www.thestar.com.my/tech/tech-news/2026/08/24/nvidia-discusses-perplexity-investment-at-30-billion-plus-valuation-the-information-reports",
+              "publisher": "The Star (Reuters)",
+              "published": "2026-08-24",
+              "supports": "September 2025 round finalized at $20 billion valuation"
+            }
+          ]
+        }
+      ],
+      "familyMentions": [],
+      "searchNote": "All figures USD as printed. Not recorded: Aug 2026 reports (The Information/Reuters) of Nvidia talks at a >$30B valuation (talks, not closed as of research date); aggregator claims of a Jan 2026 'Series E-6' at $20.4B-$23B (DeFiLlama, Tracxn, blogs) with no credible press confirmation found; 2022 seed round not researched. Round labels beyond Series C are conventional; press mostly does not name them.",
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "third-eye-distillery",
+      "legalName": "Third Eye Distillery Holdings Private Limited",
+      "brand": "Stranger & Sons",
+      "fundKeys": [
+        "third-eye-distillery-holdings-pvt-ltd-skyventures-lv-angel-fund-aakash-sachdev"
+      ],
+      "website": "https://www.strangerandsons.com",
+      "sector": "Alcoholic beverages (craft gin and spirits)",
+      "listed": null,
+      "rounds": [],
+      "familyMentions": [],
+      "searchNote": "No credible priced round found. Searched Entrackr/TheKredible/VCCircle/Inc42/ET terms for Third Eye Distillery and Stranger & Sons funding, allotment and valuation. Only aggregator or interview data exists: Caplight ($10.5M total, seed 2018, valuation not public), CB Insights (investors Yukti Securities, Pivot Ventures, Utsav Somani), TheCompanyCheck (~$19.6M across 9 rounds, automated), Inc42 data page (seed stage, last funding 31/12/2019), and a co-founder interview (The Established) saying ~US$10M raised over three rounds. A Deccan Herald piece on plans to raise $5-6M could not be opened (403). The 2022 acquisition of 51% of Svami at a ₹100 Cr valuation is a valuation of the target, not of Third Eye, so not recorded.",
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "collabmates",
+      "legalName": "Collabmates Private Limited",
+      "brand": "LikeMinds",
+      "fundKeys": [
+        "al-trust-collabmates-pvt-ltd-angellist-likeminds"
+      ],
+      "website": "https://www.likeminds.community",
+      "sector": "Community / chat and feed SDK software",
+      "listed": null,
+      "rounds": [
+        {
+          "date": "2022-10",
+          "dateBasis": "closed",
+          "round": "Seed",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 46380000,
+            "currency": "INR"
+          },
+          "preMoney": null,
+          "postMoney": {
+            "value": 470360000,
+            "currency": "INR"
+          },
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "LetsVenture",
+            "Venture Gurukool"
+          ],
+          "note": "Only source is an aggregator (Preqin); no press coverage found. Preqin lists the investors as new investors in the round, not explicitly as leads.",
+          "sources": [
+            {
+              "url": "https://www.preqin.com/data/profile/asset/likeminds/399321",
+              "publisher": "Preqin",
+              "published": "2022-10",
+              "supports": "INR 46.38M seed; INR 470.36M post-money",
+              "aggregator": true
+            }
+          ]
+        }
+      ],
+      "familyMentions": [],
+      "searchNote": "No Entrackr/Inc42/YourStory coverage of any LikeMinds round found. The family's Feb 2023 entry (via an AngelList trust) is not matched to a reported round. Bounce Watch/Village list a Sprint VC seed with no amount; CB Insights 'LikeMinds' pages belong to a different company.",
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "karban-envirotech",
+      "legalName": "Karban Envirotech Private Limited",
+      "brand": "Karban",
+      "fundKeys": [
+        "al-trust-karban-envirotech-ruv-nilesh-angelist"
+      ],
+      "website": "https://karban.in",
+      "sector": "Energy-efficient smart home appliances",
+      "listed": null,
+      "rounds": [
+        {
+          "date": "2024-04-24",
+          "dateBasis": "announced",
+          "round": "Seed",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 89300000,
+            "currency": "INR",
+            "alt": [
+              {
+                "value": 1070000,
+                "currency": "USD"
+              }
+            ]
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "All In Capital",
+            "Titan Capital",
+            "Rainmatter"
+          ],
+          "note": "Co-led. Also Urban Company, JK family office, Anupam Mittal, Kunal Shah, Natasha Malpani Oswal. No valuation printed.",
+          "sources": [
+            {
+              "url": "https://inc42.com/?p=453803",
+              "publisher": "Inc42",
+              "published": "2024-04-24",
+              "supports": "INR 8.93 Cr ($1.07 Mn) seed co-led by All In, Titan, Rainmatter"
+            }
+          ]
+        }
+      ],
+      "familyMentions": [],
+      "searchNote": "No valuation or later round found. The family's Dec 2023 entry (via an AngelList trust) likely precedes the April 2024 seed announcement; not confirmed.",
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "gsharp-media",
+      "legalName": "GSharp Media Private Limited",
+      "brand": "Hoopr",
+      "fundKeys": [
+        "lv-angel-fund-lets-venture-hoopr-vaibhav-karnavat"
+      ],
+      "website": "https://hoopr.ai",
+      "sector": "Music licensing marketplace",
+      "listed": null,
+      "rounds": [
+        {
+          "date": "2021-12-14",
+          "dateBasis": "announced",
+          "round": "Seed",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 1500000,
+            "currency": "USD"
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "9Unicorns",
+            "Venture Catalysts"
+          ],
+          "note": "Angels included Ashneer Grover, Anshoo Sharma, Sahil Barua and others. Valuation not disclosed.",
+          "sources": [
+            {
+              "url": "https://inc42.com/?p=271199",
+              "publisher": "Inc42",
+              "published": "2021-12-14",
+              "supports": "$1.5 Mn seed led by 9Unicorns and Venture Catalysts"
+            }
+          ]
+        },
+        {
+          "date": "2025-11-17",
+          "dateBasis": "announced",
+          "round": "Pre-Series A (first tranche)",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 40000000,
+            "currency": "INR"
+          },
+          "preMoney": null,
+          "postMoney": {
+            "value": 1600000000,
+            "currency": "INR"
+          },
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "Inflection Point Ventures"
+          ],
+          "note": "Family offices and existing investors also participated; round still open with more capital expected. Total raised to date Rs 18 Cr. MediaNews4U headline calls it 2x growth in valuation (prior figure not printed).",
+          "sources": [
+            {
+              "url": "https://entrackr.com/snippets/music-licensing-platform-hoopr-raises-funds-in-extended-pre-series-a-round-10782011",
+              "publisher": "Entrackr",
+              "published": "2025-11-17",
+              "supports": "Rs 4 Cr first tranche, values company at Rs 160 Cr post-money"
+            },
+            {
+              "url": "https://www.medianews4u.com/hoopr-opens-pre-series-a-round-with-2x-growth-in-valuation/",
+              "publisher": "MediaNews4U",
+              "published": "2025-11-18",
+              "supports": "₹4 Cr first tranche at ₹160 Cr post-money"
+            }
+          ]
+        }
+      ],
+      "familyMentions": [],
+      "searchNote": "The family's Feb 2022 entry (via LetsVenture angel fund) is not matched to a separately reported round; it may be part of the Dec 2021 seed. Aggregator valuation marks (TheCompanyCheck $9.31M May 2022; Inc42 data page $13.55M Nov 2025) not recorded.",
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "reliance-retail-ventures",
+      "legalName": "Reliance Retail Ventures Limited",
+      "brand": "Reliance Retail",
+      "fundKeys": [
+        "rurash-financials-private-ltd-reliance-retail"
+      ],
+      "website": "https://www.relianceretail.com",
+      "sector": "Retail (holding company of Reliance Group retail businesses)",
+      "listed": null,
+      "rounds": [
+        {
+          "date": "2020-09-09",
+          "dateBasis": "announced",
+          "round": "Strategic investment — Silver Lake",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 75000000000,
+            "currency": "INR"
+          },
+          "preMoney": {
+            "value": 4210000000000,
+            "currency": "INR"
+          },
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "Silver Lake"
+          ],
+          "note": "1.75% on a fully diluted basis. Subscription received and shares allotted to SLP Rainbow Holdings around 26 Sep 2020.",
+          "sources": [
+            {
+              "url": "https://www.tribuneindia.com/news/business/silver-lake-picks-1-75-per-cent-stake-in-reliance-retail-for-rs-7-500-crore-138672/amp",
+              "publisher": "The Tribune (PTI)",
+              "published": "2020-09-09",
+              "supports": "Rs 7,500 Cr for 1.75%; pre-money equity value Rs 4.21 lakh crore"
+            }
+          ]
+        },
+        {
+          "date": "2020-09-23",
+          "dateBasis": "announced",
+          "round": "Strategic investment — KKR",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 55500000000,
+            "currency": "INR"
+          },
+          "preMoney": {
+            "value": 4210000000000,
+            "currency": "INR"
+          },
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "KKR"
+          ],
+          "note": "1.28% on a fully diluted basis.",
+          "sources": [
+            {
+              "url": "https://www.tribuneindia.com/news/business/kkr-picks-up-1-28-stake-in-reliance-retail-for-rs5-550-cr-145582",
+              "publisher": "The Tribune (PTI)",
+              "published": "2020-09-24",
+              "supports": "Rs 5,550 Cr for 1.28%; pre-money Rs 4.21 lakh crore"
+            }
+          ]
+        },
+        {
+          "date": "2020-09-29",
+          "dateBasis": "announced",
+          "round": "Strategic investment — General Atlantic",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 36750000000,
+            "currency": "INR"
+          },
+          "preMoney": {
+            "value": 4285000000000,
+            "currency": "INR"
+          },
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "General Atlantic"
+          ],
+          "note": "0.84% on a fully diluted basis. Indian press dates the announcement 30 Sep 2020 (IST). BloombergQuint reportedly printed a price of Rs 682.25 per share, but that article could not be opened, so it is not recorded.",
+          "sources": [
+            {
+              "url": "https://www.generalatlantic.com/media-article/general-atlantic-to-invest-%E2%82%B9-3675-crore-in-reliance-retail-ventures",
+              "publisher": "General Atlantic press release",
+              "published": "2020-09-29",
+              "supports": "₹3,675 Cr for 0.84%; pre-money equity value ₹4.285 lakh crore"
+            }
+          ]
+        },
+        {
+          "date": "2020-09-30",
+          "dateBasis": "announced",
+          "round": "Strategic investment — Silver Lake co-investors (additional)",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 18750000000,
+            "currency": "INR"
+          },
+          "preMoney": {
+            "value": 4285000000000,
+            "currency": "INR"
+          },
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "Silver Lake (co-investors)"
+          ],
+          "note": "Takes Silver Lake and co-investors' total to INR 9,375 Cr, 2.13% equity.",
+          "sources": [
+            {
+              "url": "https://inc42.com/buzz/silver-lake-co-investors-infuse-another-inr-1-8k-cr-in-reliance-retail",
+              "publisher": "Inc42",
+              "published": "2020-10-01",
+              "supports": "INR 1,875 Cr more at pre-money INR 4.285 lakh Cr; total 2.13%"
+            }
+          ]
+        },
+        {
+          "date": "2020-10-01",
+          "dateBasis": "announced",
+          "round": "Strategic investment — Mubadala",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 62475000000,
+            "currency": "INR"
+          },
+          "preMoney": {
+            "value": 4285000000000,
+            "currency": "INR"
+          },
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "Mubadala Investment Company"
+          ],
+          "note": "1.40% on a fully diluted basis; release also prints AED 3.1 billion.",
+          "sources": [
+            {
+              "url": "https://www.mubadala.com/en/news/mubadala-invest-in-reliance-retail-ventures",
+              "publisher": "Mubadala press release",
+              "published": "2020-10-01",
+              "supports": "₹6,247.5 Cr (AED 3.1 bn) for 1.40%; pre-money ₹4.285 lakh crore"
+            }
+          ]
+        },
+        {
+          "date": "2020-10-03",
+          "dateBasis": "announced",
+          "round": "Strategic investment — GIC",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 55125000000,
+            "currency": "INR"
+          },
+          "preMoney": {
+            "value": 4285000000000,
+            "currency": "INR"
+          },
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "GIC"
+          ],
+          "note": "1.22% stake. Announced together with TPG.",
+          "sources": [
+            {
+              "url": "https://www.tribuneindia.com/news/business/reliance-raises-rs-7-350-crore-from-gic-tpg-150396/amp",
+              "publisher": "The Tribune (PTI)",
+              "published": "2020-10-03",
+              "supports": "GIC Rs 5,512.5 Cr for 1.22%; pre-money Rs 4.285 lakh crore"
+            }
+          ]
+        },
+        {
+          "date": "2020-10-03",
+          "dateBasis": "announced",
+          "round": "Strategic investment — TPG",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 18375000000,
+            "currency": "INR"
+          },
+          "preMoney": {
+            "value": 4285000000000,
+            "currency": "INR"
+          },
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "TPG"
+          ],
+          "note": "0.41% stake. Announced together with GIC.",
+          "sources": [
+            {
+              "url": "https://www.tribuneindia.com/news/business/reliance-raises-rs-7-350-crore-from-gic-tpg-150396/amp",
+              "publisher": "The Tribune (PTI)",
+              "published": "2020-10-03",
+              "supports": "TPG Rs 1,837.5 Cr for 0.41%; pre-money Rs 4.285 lakh crore"
+            }
+          ]
+        },
+        {
+          "date": "2020-10-06",
+          "dateBasis": "announced",
+          "round": "Strategic investment — ADIA",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 55125000000,
+            "currency": "INR"
+          },
+          "preMoney": {
+            "value": 4285000000000,
+            "currency": "INR"
+          },
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "Abu Dhabi Investment Authority (ADIA)"
+          ],
+          "note": "1.20% on a fully diluted basis. Release states RRVL had raised ₹37,710 Cr in under four weeks.",
+          "sources": [
+            {
+              "url": "https://www.ril.com/sites/default/files/2023-01/Media-Release-RRVL-06102020.pdf",
+              "publisher": "Reliance Retail Ventures media release",
+              "published": "2020-10-06",
+              "supports": "₹5,512.50 Cr for 1.20%; pre-money equity value ₹4.285 lakh crore"
+            }
+          ]
+        },
+        {
+          "date": "2020-11-05",
+          "dateBasis": "announced",
+          "round": "Strategic investment — PIF",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 95550000000,
+            "currency": "INR",
+            "alt": [
+              {
+                "value": 1300000000,
+                "currency": "USD"
+              }
+            ]
+          },
+          "preMoney": {
+            "value": 4587000000000,
+            "currency": "INR",
+            "alt": [
+              {
+                "value": 62400000000,
+                "currency": "USD"
+              }
+            ]
+          },
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "Public Investment Fund (Saudi Arabia)"
+          ],
+          "note": "2.04% stake. With this, RRVL had raised Rs 47,265 Cr in the 2020 round; reports differ on the aggregate stake (10.09% vs 10.52%).",
+          "sources": [
+            {
+              "url": "https://www.thenewsminute.com/money/reliance-retail-raises-rs-9555-crore-saudi-arabia-s-sovereign-wealth-fund-pif-136979",
+              "publisher": "The News Minute",
+              "published": "2020-11-05",
+              "supports": "Rs 9,555 Cr (~$1.3 bn) for 2.04%; pre-money Rs 4.587 lakh crore (~$62.4 bn)"
+            }
+          ]
+        },
+        {
+          "date": "2023-08-23",
+          "dateBasis": "announced",
+          "round": "Strategic investment — QIA",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 82780000000,
+            "currency": "INR"
+          },
+          "preMoney": {
+            "value": 8278000000000,
+            "currency": "INR"
+          },
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": 68635010,
+          "leadInvestors": [
+            "Qatar Investment Authority (QIA)"
+          ],
+          "note": "0.99% on a fully diluted basis. Subscription received and 6,86,35,010 shares allotted to Qatar Holding LLC on ~6 Sep 2023. Per-share price not printed (not derived here).",
+          "sources": [
+            {
+              "url": "https://www.tribuneindia.com/news/business/qatar-fund-to-buy-1-stake-in-reliance-retail-for-rs-8-278-crore-537762/amp",
+              "publisher": "The Tribune (PTI)",
+              "published": "2023-08-24",
+              "supports": "Rs 8,278 Cr for 0.99%; pre-money Rs 8.278 lakh crore"
+            },
+            {
+              "url": "https://www.siasat.com/reliance-receives-rs-8278-cr-from-qatar-authority-allots-6-86-cr-shares-2688106/",
+              "publisher": "Siasat (PTI)",
+              "published": "2023-09-06",
+              "supports": "Rs 8,278 Cr received; 6,86,35,010 shares allotted to QIA"
+            }
+          ]
+        },
+        {
+          "date": "2023-09-11",
+          "dateBasis": "announced",
+          "round": "Strategic investment — KKR (follow-on)",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 20695000000,
+            "currency": "INR"
+          },
+          "preMoney": {
+            "value": 8361000000000,
+            "currency": "INR"
+          },
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": 17158752,
+          "leadInvestors": [
+            "KKR"
+          ],
+          "note": "0.25% additional, taking KKR to 1.42%. 1,71,58,752 shares allotted to Alyssum Asia Holdings II (KKR) ~24 Sep 2023. Storyboard18 body text has a typo ('8,361 lakh crore'); headline/subhead give 8.361 lakh crore.",
+          "sources": [
+            {
+              "url": "https://www.storyboard18.com/amp/quantum-brief/kkr-to-invest-rs-2069-crore-in-reliance-retail-at-rs-8-361-lakh-crore-equity-valuation-13715.htm",
+              "publisher": "Storyboard18",
+              "published": "2023-09-12",
+              "supports": "Rs 2,069 Cr for 0.25%; pre-money Rs 8.361 lakh crore"
+            },
+            {
+              "url": "https://www.freepressjournal.in/business/reliance-retail-receives-full-subscription-amount-of-206950-cr-from-kkr-allots-171-cr-shares",
+              "publisher": "Free Press Journal",
+              "published": "2023-09-24",
+              "supports": "Rs 2,069.50 Cr received; 1,71,58,752 shares allotted"
+            }
+          ]
+        },
+        {
+          "date": "2023-10-06",
+          "dateBasis": "announced",
+          "round": "Strategic investment — ADIA (follow-on)",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 49668000000,
+            "currency": "INR"
+          },
+          "preMoney": {
+            "value": 8380000000000,
+            "currency": "INR"
+          },
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "Abu Dhabi Investment Authority (ADIA)"
+          ],
+          "note": "0.59% on a fully diluted basis. Business Today prints Rs 8.38 lakh crore; other reports of the RRVL release give ₹8.381 lakh crore. Amount per release ₹4,966.80 Cr (Business Today rounds to Rs 4,967 Cr).",
+          "sources": [
+            {
+              "url": "https://www.businesstoday.in/latest/corporate/story/adia-to-invest-nearly-rs-5000-cr-in-reliance-retail-for-059-stake-401071-2023-10-06",
+              "publisher": "Business Today",
+              "published": "2023-10-06",
+              "supports": "Rs 4,967 Cr for 0.59%; pre-money Rs 8.38 lakh crore"
+            }
+          ]
+        }
+      ],
+      "familyMentions": [],
+      "searchNote": "Unlisted subsidiary of Reliance Industries. The 2020 round (Sep-Nov) raised Rs 47,265 Cr across eight investors; the 2023 round added QIA, KKR and ADIA. No per-share price was found stated in any opened source (per-share figures in search snippets were reporters' or search-tool divisions and were not recorded). Silver Lake's 2020 share count was not found. The family's Aug 2020 broker purchase is a secondary trade with no source; nothing names Jaisinghani/Glow. Search budget was exhausted before checking for post-2023 RRVL events.",
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "integris-medtech",
+      "legalName": "Integris Medtech Limited",
+      "brand": "Integris",
+      "fundKeys": [
+        "integris-medtech"
+      ],
+      "website": "https://www.integrismedtech.com",
+      "sector": "Medical devices (cardiac stents)",
+      "listed": null,
+      "rounds": [
+        {
+          "date": "2025-01-09",
+          "dateBasis": "announced",
+          "round": "Pre-IPO primary raise",
+          "kind": "primary",
+          "amountRaised": null,
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "Mukul Agarwal",
+            "India SME Fund"
+          ],
+          "note": "Amount, price and valuation not disclosed by either source; described only as primary capital from a consortium. Everstone Capital is the controlling backer.",
+          "sources": [
+            {
+              "url": "https://entrackr.com/snippets/integris-health-raises-primary-capital-ahead-of-planned-ipo-8604374",
+              "publisher": "Entrackr",
+              "published": "2025-01-09",
+              "supports": "primary capital from Mukul Agarwal, India SME Fund; amount undisclosed"
+            },
+            {
+              "url": "https://news.ventureintelligence.com/private-equity/cardiac-stents-maker-integris-health-raises-funding-from-india-sme-fund%2C-others",
+              "publisher": "Venture Intelligence",
+              "published": "2025-01-09",
+              "supports": "raise from India SME Fund, Mukul Agarwal, others; no figures"
+            }
+          ]
+        }
+      ],
+      "familyMentions": [],
+      "searchNote": "Not listed. DRHP filed 9 Oct 2025 (fresh issue Rs 925 Cr + OFS 21,674,531 shares; possible pre-IPO placement up to Rs 185 Cr), SEBI approval reported Feb 2026; SEBI addendum dated 26 Oct 2026 cut the fresh issue to Rs 6,000 million and the OFS to 10,837,266 shares (Evercure only), price band still blank. The DRHP's capital-structure section (which would carry the Dec 2024/Jan 2025 allotment price) is on NSE (nsearchives Registration_10102025124732_DRHP.pdf) but timed out on every fetch, so no allotment price could be read. Press valuation talk (Rs 11,000-13,000 Cr 'insiders eyeing') is not a priced event and was not recorded. Search budget ran out before a BSE copy of the DRHP could be located.",
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "mother-india-forming",
+      "legalName": "Mother India Forming Private Limited",
+      "brand": "Mother India Forming",
+      "fundKeys": [
+        "mother-india-forming"
+      ],
+      "website": null,
+      "sector": "Cold roll-formed metal components",
+      "listed": null,
+      "rounds": [],
+      "familyMentions": [],
+      "searchNote": "Searched the legal name with funding/raise/equity/IPO/SME terms. No credible press, exchange filing or offer document mentions a funding round or valuation; only directory-style profiles (roll forming, ~57 employees) surfaced. No DRHP on BSE SME / NSE Emerge found.",
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "electromech-infraprojects",
+      "legalName": "Electromech Infraprojects Limited",
+      "brand": "Electromech Infraprojects",
+      "fundKeys": [
+        "electromech-infraprojects"
+      ],
+      "website": null,
+      "sector": "MEP solutions for data centres / digital infrastructure",
+      "listed": null,
+      "rounds": [
+        {
+          "date": "2026-09-23",
+          "dateBasis": "filing",
+          "round": "DRHP disclosure of acquisition prices (pre-IPO)",
+          "kind": "mark",
+          "amountRaised": null,
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [],
+          "note": "Not a single round: the SEBI draft abridged prospectus states, adjusted for bonus issue and share split (face value Rs 5), acquisition price ranges of Rs 222.60-264.00 per share over the last 18 months and Rs 222.60-223.00 over the last 1 year before the DRHP (WACA Rs 116.51 and Rs 111.40 respectively; last 3 years range printed as Nil-40,000, WACA Rs 47.50). Individual allotment dates/prices (inc",
+          "sources": [
+            {
+              "url": "https://www.sebi.gov.in/sebi_data/commondocs/oct-2026/Electromech%20Infraprojects%20Limited%20-%20ADP_p.pdf",
+              "publisher": "SEBI (draft abridged prospectus)",
+              "published": "2026-10-05",
+              "supports": "acquisition price ranges 222.60-264.00 (18m), 222.60-223.00 (1y); shareholders"
+            },
+            {
+              "url": "https://www.pv-magazine-india.com/press-releases/electromech-infraprojects-files-drhp-for-its-proposed-ipo/",
+              "publisher": "pv magazine India (company press release)",
+              "published": "2026-10-27",
+              "supports": "DRHP dated 23 Sep 2026; Rs 326 Cr fresh issue, 18.91 lakh OFS"
+            }
+          ]
+        }
+      ],
+      "familyMentions": [],
+      "searchNote": "Not listed; DRHP filed with SEBI/BSE/NSE (SEBI listing 5 Oct 2026). Full DRHP PDF (sebi attachdocs 1791199559126.pdf) exceeded the 10 MB fetch limit, so the per-allotment capital history could not be read; figures above come from the abridged prospectus. AIG Direct LLC holds 25,77,576 shares (7.04%) and Vikasa India EIF I Fund 11,20,000 (3.06%).",
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "onix-renewable",
+      "legalName": "Onix Renewable Limited",
+      "brand": "Onix Renewable",
+      "fundKeys": [
+        "onix-renewable"
+      ],
+      "website": "https://onixrenewable.com",
+      "sector": "Solar EPC, modules and renewable energy",
+      "listed": null,
+      "rounds": [],
+      "familyMentions": [],
+      "searchNote": "No round recorded because no credible source could be opened. Business Standard (2 Mar 2025, 'Onix Renewable plans Rs 1,000 cr IPO, targets Rs 10,000 cr valuation') reportedly says the last valuation was Rs 6,250 Cr, and IPO Central reports a Rs 487 Cr pre-IPO round at Rs 6,250 Cr with Ashish Kacholia, AL Maha, EBISU Global, Arix Capital, Six Sigma; both pages returned 403 and were not recorded. Other hits were unlisted-share dealers (excluded) and Tracxn (figures masked). The Rs 264/share open offer (June 2025) is for listed subsidiary Onix Solar Energy Ltd, not Onix Renewable. Listing route: reverse amalgamation into BSE-listed Eureka Industries (scrip 521137) via a pre-packaged insolvency plan; Eureka's EGM on 18 May 2026 approved it, subject to NCLT Ahmedabad and other approvals (Eurek",
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "spray-engineering-devices",
+      "legalName": "Spray Engineering Devices Limited",
+      "brand": "SED",
+      "fundKeys": [
+        "spray-engineering-devices"
+      ],
+      "website": "https://www.sprayengineering.com",
+      "sector": "Process engineering for sugar, ethanol and wastewater",
+      "listed": null,
+      "rounds": [
+        {
+          "date": "2024-05-06",
+          "dateBasis": "announced",
+          "round": "Preferential issue (pre-IPO)",
+          "kind": "preferential",
+          "amountRaised": null,
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": {
+            "value": 287,
+            "currency": "INR"
+          },
+          "sharesAllotted": 2509642,
+          "leadInvestors": [],
+          "note": "Date is the EGM that approved the issue (same EGM approved raising capital through an IPO). Allotment date not stated in the source; allottees not named. The company's current shareholding pattern shows 25,096,423 shares outstanding.",
+          "sources": [
+            {
+              "url": "https://www.sprayengineering.com/pdfs/financial-results/Director-Report-2025.pdf",
+              "publisher": "Spray Engineering Devices Ltd (Directors' Report FY2024-25, secretarial audit)",
+              "published": null,
+              "supports": "EGM 06.05.2024 approved 25,09,642 shares at Rs 287 preferential issue"
+            }
+          ]
+        }
+      ],
+      "familyMentions": [],
+      "searchNote": "Not listed; no DRHP found. Company site's shareholding pattern names no Jaisinghani/Glow holder. Other price figures seen were unlisted-dealer quotes (excluded).",
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "matrix-gas-and-renewables",
+      "legalName": "Matrix Gas and Renewables Limited",
+      "brand": "Matrix Gas and Renewables",
+      "fundKeys": [
+        "matrix-gas-and-renewables"
+      ],
+      "website": "https://www.matrixgas.in",
+      "sector": "Natural gas aggregation, green hydrogen",
+      "listed": null,
+      "rounds": [
+        {
+          "date": "2023-07-06",
+          "dateBasis": "allotment",
+          "round": "Private placement (pre-IPO)",
+          "kind": "preferential",
+          "amountRaised": null,
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": {
+            "value": 132,
+            "currency": "INR"
+          },
+          "sharesAllotted": 564800,
+          "leadInvestors": [
+            "Singhvi Heritage LLP",
+            "Gunavanthkumar G Vaid",
+            "Ash Grove LLP",
+            "Ashneer Grover"
+          ],
+          "note": "Face value Rs 10, premium Rs 122. Cumulative shares after allotment 1,55,74,800. The NSE Emerge IPO this preceded (fresh issue 56 lakh shares) was later dropped.",
+          "sources": [
+            {
+              "url": "https://archives.nseindia.com/emerge/corporates/content/MatrixGas_DRHP.pdf",
+              "publisher": "NSE Emerge (DRHP dated 15 Jul 2023)",
+              "published": "2023-07-15",
+              "supports": "5,64,800 shares allotted 6 Jul 2023 at Rs 132; allottee list"
+            },
+            {
+              "url": "https://india.entrepreneur.com/?p=17526",
+              "publisher": "Entrepreneur India",
+              "published": "2023-07-18",
+              "supports": "pre-IPO preferential allotment 6 Jul 2023; investors incl. Ashneer Grover"
+            }
+          ]
+        },
+        {
+          "date": "2024-03-05",
+          "dateBasis": "announced",
+          "round": "Pre-IPO round",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 3500000000,
+            "currency": "INR",
+            "alt": [
+              {
+                "value": 42000000,
+                "currency": "USD"
+              }
+            ]
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "Gunavanth Vaid (4GCapital Venture)",
+            "Sarda Group",
+            "Sunil Kumar Singhvi (Singhvi Heritage LLP)",
+            "Blue Lotus Fund",
+            "NAV Capital Emerging Fund"
+          ],
+          "note": "Promoters also participated. The CapTable's headline put the fresh funding at Rs 300 Cr and said the IPO plan was scrapped; the press release and other outlets say Rs 350 Cr. No valuation or price disclosed.",
+          "sources": [
+            {
+              "url": "http://www.pv-magazine-india.com/2024/03/05/matrix-gas-renewables-raises-inr-350-crore-in-pre-ipo-round/",
+              "publisher": "pv magazine India",
+              "published": "2024-03-05",
+              "supports": "Rs 350 Cr pre-IPO round; investor list"
+            },
+            {
+              "url": "https://theprint.in/ani-press-releases/matrix-gas-renewables-raises-inr-350-crore-in-pre-ipo-round/1990074",
+              "publisher": "ANI/PRNewswire via ThePrint",
+              "published": "2024-03-06",
+              "supports": "company release: Rs 350 Cr pre-IPO round"
+            },
+            {
+              "url": "https://dealstreetasia.com/stories/matrix-gas-renewables-pre-ipo-round-386561",
+              "publisher": "DealStreetAsia",
+              "published": "2024-03-06",
+              "supports": "raised $42m in pre-IPO round"
+            },
+            {
+              "url": "https://the-captable.com/2024/03/matrix-gas-scraps-ipo-plan-raises-fresh-funding",
+              "publisher": "The CapTable",
+              "published": "2024-03-05",
+              "supports": "Rs 300 Cr fresh funding; IPO plan scrapped"
+            }
+          ]
+        }
+      ],
+      "familyMentions": [],
+      "searchNote": "Not listed. 2023 NSE Emerge DRHP dropped (The CapTable, Mar 2024); DealStreetAsia (3 Oct 2024) reported plans for an IPO of up to $143m, no filing found. No Jaisinghani/Glow name in the 2023 DRHP allottee lists. Promoters Anmol and Puneet Singh Jaggi (Gensol group).",
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "big-bang-boom-solutions",
+      "legalName": "Big Bang Boom Solutions Private Limited",
+      "brand": "Big Bang Boom Solutions",
+      "fundKeys": [
+        "big-bang-boom-solutions-private-limited-0-001-pref-12sp44"
+      ],
+      "website": null,
+      "sector": "Defence tech (anti-drone systems)",
+      "listed": null,
+      "rounds": [
+        {
+          "date": "2020-06",
+          "dateBasis": "closed",
+          "round": "Seed",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 1500000,
+            "currency": "USD"
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "Mumbai Angels Network"
+          ],
+          "note": "USD 1 million of the USD 1.5 million seed round came through Mumbai Angels Network.",
+          "sources": [
+            {
+              "url": "https://news.ventureintelligence.com/private-equity/defence-tech-co.-big-bang-boom-solutions-attracts-rs.250-cr-from-mumbai-angels,-others",
+              "publisher": "Venture Intelligence",
+              "published": "2024-09-23",
+              "supports": "June 2020: $1M via Mumbai Angels, part of $1.5M seed"
+            }
+          ]
+        },
+        {
+          "date": "2024-09-20",
+          "dateBasis": "announced",
+          "round": "Growth round (primary + secondary)",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 2500000000,
+            "currency": "INR",
+            "alt": [
+              {
+                "value": 30000000,
+                "currency": "USD"
+              }
+            ]
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "Mumbai Angels Network",
+            "Vyom Family Office",
+            "SBI Startup Branch Chennai",
+            "Asquare Investing"
+          ],
+          "note": "Venture Intelligence describes it as primary and secondary issues; the company release says existing investors were offered an exit given oversubscription and headlines a '15x return to early investors' (unverified company claim). Instrument not stated; the family's ISIN INE1BRB03089 is a preference-share ISIN. No valuation disclosed.",
+          "sources": [
+            {
+              "url": "https://inc42.com/buzz/big-bang-boom-pockets-30-mn-to-boost-its-anti-drone-tech-playbook",
+              "publisher": "Inc42",
+              "published": "2024-09-20",
+              "supports": "$30 Mn (INR 250 Cr); investors named; no valuation"
+            },
+            {
+              "url": "https://news.ventureintelligence.com/private-equity/defence-tech-co.-big-bang-boom-solutions-attracts-rs.250-cr-from-mumbai-angels,-others",
+              "publisher": "Venture Intelligence",
+              "published": "2024-09-23",
+              "supports": "Rs 250 Cr via primary and secondary issues"
+            },
+            {
+              "url": "https://theprint.in/ani-press-releases/rise-of-first-indian-defence-dragon-big-bang-boom-solutions-raises-rs-250-crore-with-a-15x-return-to-early-investors/2281320",
+              "publisher": "ANI/NewsVoir press release via ThePrint",
+              "published": "2024-09-24",
+              "supports": "over Rs 250 Cr; existing investors offered exit"
+            }
+          ]
+        }
+      ],
+      "familyMentions": [],
+      "searchNote": "No 2025-2026 round, valuation or IPO filing found; no Entrackr/TheKredible RoC coverage surfaced. YourStory pages returned 403.",
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "telawne-power",
+      "legalName": "Telawne Power Equipments Private Limited",
+      "brand": "Telawne Power Equipments",
+      "fundKeys": [
+        "telawne-power"
+      ],
+      "website": null,
+      "sector": "Power and distribution transformers",
+      "listed": null,
+      "rounds": [
+        {
+          "date": "2025-01-21",
+          "dateBasis": "announced",
+          "round": "Equity infusion",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 200000000,
+            "currency": "INR"
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "Ramesh Jaisinghani (via family office Vyom)",
+            "Mastermind JPIN"
+          ],
+          "note": "Rs 10 Cr each from the two investors per T&D India. No valuation or price disclosed.",
+          "sources": [
+            {
+              "url": "https://news.ventureintelligence.com/private-equity/transformer-maker-telawne-power-equipments-raises-rs.20-cr",
+              "publisher": "Venture Intelligence",
+              "published": "2025-01-21",
+              "supports": "Rs 20 Cr from Ramesh Jaisinghani and Mastermind JPIN"
+            },
+            {
+              "url": "https://www.tndindia.com/telawne-power-equipments-announces-strategic-equity-infusion",
+              "publisher": "T&D India",
+              "published": "2025-01-22",
+              "supports": "Rs 20 Cr; Rs 10 Cr each via Vyom and Mastermind JPIN"
+            }
+          ]
+        }
+      ],
+      "familyMentions": [],
+      "searchNote": "No IPO/DRHP or later round found.",
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "oilmax-energy",
+      "legalName": "Oilmax Energy Private Limited",
+      "brand": "Oilmax",
+      "fundKeys": [
+        "oilmax-energy"
+      ],
+      "website": null,
+      "sector": "Oil and gas exploration and production",
+      "listed": null,
+      "rounds": [
+        {
+          "date": "2025-09",
+          "dateBasis": "announced",
+          "round": "Reverse merger into Asian Energy Services Ltd (swap valuation)",
+          "kind": "acquisition",
+          "amountRaised": null,
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": {
+            "value": 25820000000,
+            "currency": "INR",
+            "basis": "unspecified"
+          },
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [],
+          "note": "Source says Oilmax valued at 'approximately Rs 2,582 crore'; swap ratio 117 AESL (NSE: ASIANENE) shares per 10 Oilmax shares; Oilmax's ~2.72 crore AESL shares valued at Rs 371 each. Ratio set by Bansi S. Mehta Valuers LLP. Oilmax is AESL's promoter (60.83%). On completion Oilmax holders receive listed AESL shares; completion was subject to NCLT and government approvals (not verified as effective).",
+          "sources": [
+            {
+              "url": "https://www.indianchemicalnews.com/energy/asian-energy-services-aims-rs-3000-crore-revenue-by-2029-27645",
+              "publisher": "Indian Chemical News",
+              "published": "2025-09-29",
+              "supports": "Oilmax valued ~Rs 2,582 Cr; swap 117:10; AESL shares at Rs 371"
+            },
+            {
+              "url": "https://filingreader.com/news-wire/mumbai/2025-09-12/asian-energy-services-to-merge-with-oilmax-energy-private-limited",
+              "publisher": "FilingReader (exchange filing summary)",
+              "published": "2025-09-12",
+              "supports": "merger approved; ratio set by Bansi S. Mehta Valuers"
+            }
+          ]
+        }
+      ],
+      "familyMentions": [],
+      "searchNote": "No external funding round for Oilmax found (Dealroom lists none). Business Standard merger article returned 403. NSE filings on the NCLT order (Sep/Oct 2026) timed out, so the merger's effective status and any AESL listing of the new shares are unverified; if effective, the family's Oilmax shares become AESL shares at 11.7 per Oilmax share.",
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "landcraft-retail",
+      "legalName": "Landcraft Retail Private Limited",
+      "brand": "Food Square",
+      "fundKeys": [
+        "landcraft-retail-pvt-ltd-food-square"
+      ],
+      "website": null,
+      "sector": "Gourmet food retail (Mumbai)",
+      "listed": null,
+      "rounds": [
+        {
+          "date": "2023-10",
+          "dateBasis": "announced",
+          "round": "Inaugural funding round",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 300000000,
+            "currency": "INR",
+            "alt": [
+              {
+                "value": 4000000,
+                "currency": "USD"
+              }
+            ]
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [],
+          "note": "Sources disagree on the amount. Bar & Bench (legal adviser's deal note) says Rs 30 Cr (~$4 million). Indian Retailer says $3.6 million. Indian Retailer names Masaba Gupta, Mukul Agrawal, Purple Style Labs, Sanket Parekh, Rahul Kalyan (SMIFS) and Harminder Sahni among the investors. No lead is named. The ~$4 million in alt is Bar & Bench's own conversion.",
+          "sources": [
+            {
+              "url": "https://www.barandbench.com/dealstreet/triumvir-law-advises-landcraft-group-on-leasing-salman-khans-commercial-property",
+              "publisher": "Bar & Bench",
+              "published": "2023-10-03",
+              "supports": "Triumvir Law assisted Landcraft Retail raise Rs 30 Cr (~$4 million)"
+            },
+            {
+              "url": "https://www.indianretailer.com/news/retail-india-news-food-square-elevates-gourmet-retail-luxury-store-mumbai",
+              "publisher": "Indian Retailer",
+              "published": "2023-10-16",
+              "supports": "inaugural funding round of $3.6 million; names investors"
+            }
+          ]
+        },
+        {
+          "date": "2024-05",
+          "dateBasis": "announced",
+          "round": "Angel round",
+          "kind": "primary",
+          "amountRaised": null,
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [],
+          "note": "Amount and valuation undisclosed. Investors: Ujjwala Raut, Vartika Singh, Payal Singhal, Simone Khambatta, Purple Style Labs and other angels. Purple Style Labs is also named in the October 2023 coverage, so this may be a further close of the same raise. No source says either way.",
+          "sources": [
+            {
+              "url": "https://news.ventureintelligence.com/private-equity/gourmet-food-retailer-food-square-raises-funding-from-angels%2C-purple-style-labs",
+              "publisher": "Venture Intelligence",
+              "published": "2024-05-13",
+              "supports": "Landcraft Retail (Food Square) raises undisclosed angel funding; names investors"
+            },
+            {
+              "url": "https://www.indianretailer.com/news/retail-india-news-landcraft-retail-debuts-gourmet-store-bandra-west",
+              "publisher": "Indian Retailer",
+              "published": "2024-05-21",
+              "supports": "undisclosed funding round; same named investors"
+            }
+          ]
+        }
+      ],
+      "familyMentions": [],
+      "searchNote": "Searched Landcraft Retail / Food Square funding, valuation, Entrackr/Inc42/VCCircle, Bar & Bench, Venture Intelligence, ANI press release (lokmattimes, 403). No valuation or price per share is published anywhere. Nothing covers the August 2024 period when the family invested. Jaisinghani / Glow Ventures are not named.",
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "sks-fasteners",
+      "legalName": "SKS Fasteners Limited",
+      "brand": "SKS Fasteners",
+      "fundKeys": [
+        "sks-fasteners"
+      ],
+      "website": null,
+      "sector": "High-tensile automotive fasteners (Chakan, Pune)",
+      "listed": null,
+      "rounds": [
+        {
+          "date": "2025-03",
+          "dateBasis": "filing",
+          "round": "Equity infusion (FY2025)",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 725000000,
+            "currency": "INR"
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [],
+          "note": "ICRA's rating rationale says only 'equity infusion of Rs. 72.5 crore in FY2025' (April 2024 to March 2025). The 2025-03 date is the fiscal year-end, not an allotment date. ICRA does not name the investors or give a price.",
+          "sources": [
+            {
+              "url": "https://www.icra.in/Rating/GetRationalReportFilePdf?id=139118",
+              "publisher": "ICRA (rating rationale)",
+              "published": "2025-11-21",
+              "supports": "fresh equity infusion of Rs 72.5 Cr in FY2025"
+            }
+          ]
+        },
+        {
+          "date": "2025-11",
+          "dateBasis": "filing",
+          "round": "Equity infusion (FY2026 year-to-date)",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 100000000,
+            "currency": "INR"
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [],
+          "note": "ICRA says Rs 10 crore of equity came in during FY2026 year-to-date, as of its 21 Nov 2025 rationale. That makes Rs 82.5 Cr in total, funding a Rs 200 Cr capex. No date, price or investors are given.",
+          "sources": [
+            {
+              "url": "https://www.icra.in/Rating/GetRationalReportFilePdf?id=139118",
+              "publisher": "ICRA (rating rationale)",
+              "published": "2025-11-21",
+              "supports": "Rs 10 Cr equity in YTD FY2026; Rs 82.5 Cr total"
+            }
+          ]
+        }
+      ],
+      "familyMentions": [],
+      "searchNote": "Searched SKS Fasteners preferential allotment, DRHP/IPO, SEBI, the ISIN INE593N01019 (no hits) and ICRA. No DRHP or SEBI/BSE/NSE filing was found, and the company is unlisted (Tofler). Most 'SKS' hits are SKS Microfinance, an unrelated company. The ICRA April 2022 rationale mentions no equity raise. No valuation or price per share is published.",
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "urb-ventures",
+      "legalName": "URB Ventures Private Limited",
+      "brand": "URB Ventures",
+      "fundKeys": [
+        "urb-ventures"
+      ],
+      "website": null,
+      "sector": null,
+      "listed": null,
+      "rounds": [],
+      "familyMentions": [],
+      "searchNote": "Searched 'URB Ventures', the ISIN INE0Q8701015 (no hits) and the CIN. Registry aggregators (infyner, qorpiq) give CIN U55209MH2019PTC436236, incorporated 8 Mar 2019, Mumbai. Qorpiq shows the company now named 'Urbanwrk Private Limited', directors Anuj Munot and Harsh Mehta (the UrbanWrk managed-workspace founders) and a nominee director from May 2022. Qorpiq also lists preferential allotments on 29 Mar 2023, 13 Feb 2024 and 27 Sep 2024, a bonus and preference-share conversion on 13 Jan 2025, and a private placement on 13 Aug 2025, with prices and amounts hidden. No credible press (Entrackr, Inc42, VCCircle, ET, YourStory) reports any UrbanWrk or URB Ventures funding round with a figure, so no round is recorded. The rename and the UrbanWrk link come from an aggregator only and are unconfirm",
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "rays-power-experts",
+      "legalName": "Rays Power Experts Private Limited",
+      "brand": "Rays Experts",
+      "fundKeys": [
+        "rays-power-experts"
+      ],
+      "website": null,
+      "sector": "Solar park developer / solar EPC (Jaipur)",
+      "listed": null,
+      "rounds": [
+        {
+          "date": "2024-07-25",
+          "dateBasis": "announced",
+          "round": "Equity round",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 200000000,
+            "currency": "INR"
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "Swastika Investmart Limited"
+          ],
+          "note": "Other investors: the Sunil Singhania family office, Vyom Wealth Advisors, Lalit Dua (Rajasthan Global Securities), Vineet Arora (NAV Capital) and Moheet Agarwal. Valuation not disclosed. Venture Intelligence reports the same Rs 20 Cr round but also calls the company 'Rays Power Infra' and gives a cumulative Rs 200 Cr. That looks like a conflation with Rays Power Infra Ltd (CIN U40106MH2011PLC26768",
+          "sources": [
+            {
+              "url": "https://india.entrepreneur.com/news-and-trends/rays-power-experts-secures-inr-200-m-via-equity-funding/477553",
+              "publisher": "Entrepreneur India",
+              "published": "2024-07-25",
+              "supports": "raised INR 200 million equity led by Swastika Investmart"
+            },
+            {
+              "url": "https://news.ventureintelligence.com/private-equity/solar-parks-developer-rays-power-raises-rs.20-cr-more",
+              "publisher": "Venture Intelligence",
+              "published": "2024-07-29",
+              "supports": "Rs 20 Cr equity led by Swastika Investmart; valuation undisclosed"
+            }
+          ]
+        }
+      ],
+      "familyMentions": [],
+      "searchNote": "Searched Rays Power Experts funding, IPO/DRHP and the ISIN INE0WSH01011 (no hits). Opened SEBI's Dec 2023 DRHP of Rays Power Infra Ltd: there is no mention of Rays Power Experts, its group companies are other 'Rays' entities, and the CIN differs. Registry aggregators give Rays Power Experts CIN U40106RJ2011PLC034452 (Jaipur), now a public limited company. No DRHP for Rays Power Experts itself was found, and it is unlisted. Nothing covers the June 2024 period when the family invested beyond the July 2024 round.",
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "sotefin-bharat",
+      "legalName": "Sotefin Bharat Limited",
+      "brand": "Sotefin Bharat",
+      "fundKeys": [
+        "sotefin-bharat"
+      ],
+      "website": "https://www.sotefinbharat.com",
+      "sector": "Mechanised and automated car parking systems",
+      "listed": {
+        "exchange": "BSE SME",
+        "symbol": "SOTEFIN",
+        "date": "2026-07-23"
+      },
+      "rounds": [
+        {
+          "date": "2017-11-15",
+          "dateBasis": "allotment",
+          "round": "Rights issue",
+          "kind": "rights",
+          "amountRaised": null,
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": {
+            "value": 60.06,
+            "currency": "INR"
+          },
+          "sharesAllotted": 499470,
+          "leadInvestors": [
+            "Rakesh P Shah",
+            "Jignesh Pravinchandra Sanghavi"
+          ],
+          "note": "Face value Rs 10. Allotted 2,49,735 shares each to the two named allottees.",
+          "sources": [
+            {
+              "url": "https://www.bseindia.com/downloads/ipo/Sotefin%20Bharat%20Ltd%20-%20RHP&GID_150720262012.zip",
+              "publisher": "BSE (Sotefin Bharat RHP dated 9 Jul 2026)",
+              "published": "2026-07-09",
+              "supports": "share capital history: 4,99,470 shares at Rs 60.06"
+            }
+          ]
+        },
+        {
+          "date": "2024-07-20",
+          "dateBasis": "allotment",
+          "round": "Rights issue (new investors)",
+          "kind": "rights",
+          "amountRaised": null,
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": {
+            "value": 1100,
+            "currency": "INR"
+          },
+          "sharesAllotted": 152730,
+          "leadInvestors": [],
+          "note": "The RHP calls this a 'Rights Issue', but it went to 32 outside allottees, including Ajay T Jaisinghani and Ritika Nikhil Jaisinghani. Face value Rs 10. The price is before the 10:1 bonus of 25 Jun 2025.",
+          "sources": [
+            {
+              "url": "https://www.bseindia.com/downloads/ipo/Sotefin%20Bharat%20Ltd%20-%20RHP&GID_150720262012.zip",
+              "publisher": "BSE (Sotefin Bharat RHP dated 9 Jul 2026)",
+              "published": "2026-07-09",
+              "supports": "1,52,730 shares at Rs 1,100 on 20 Jul 2024; allottee list"
+            }
+          ]
+        },
+        {
+          "date": "2024-08-24",
+          "dateBasis": "allotment",
+          "round": "Rights issue (second tranche)",
+          "kind": "rights",
+          "amountRaised": null,
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": {
+            "value": 1100,
+            "currency": "INR"
+          },
+          "sharesAllotted": 5454,
+          "leadInvestors": [
+            "Nabs Vriddhi LLP",
+            "Blue Angel Stock Brokers Private Limited"
+          ],
+          "note": "Face value Rs 10. Price is before the 10:1 bonus.",
+          "sources": [
+            {
+              "url": "https://www.bseindia.com/downloads/ipo/Sotefin%20Bharat%20Ltd%20-%20RHP&GID_150720262012.zip",
+              "publisher": "BSE (Sotefin Bharat RHP dated 9 Jul 2026)",
+              "published": "2026-07-09",
+              "supports": "5,454 shares at Rs 1,100 on 24 Aug 2024"
+            }
+          ]
+        },
+        {
+          "date": "2025-11-11",
+          "dateBasis": "allotment",
+          "round": "Pre-IPO private placement",
+          "kind": "preferential",
+          "amountRaised": null,
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": {
+            "value": 160,
+            "currency": "INR"
+          },
+          "sharesAllotted": 631943,
+          "leadInvestors": [
+            "Wealthwave Capital Fund"
+          ],
+          "note": "Face value Rs 10. This came after the 10:1 bonus of 25 Jun 2025 (1,15,71,240 bonus shares). Wealthwave Capital Fund took the largest block, 1,94,443 shares. Ritika Nikhil Jaisinghani and Ajay Jaisinghani are among the allottees.",
+          "sources": [
+            {
+              "url": "https://www.bseindia.com/downloads/ipo/Sotefin%20Bharat%20Ltd%20-%20RHP&GID_150720262012.zip",
+              "publisher": "BSE (Sotefin Bharat RHP dated 9 Jul 2026)",
+              "published": "2026-07-09",
+              "supports": "6,31,943 shares at Rs 160 on 11 Nov 2025; allottee list"
+            }
+          ]
+        },
+        {
+          "date": "2026-07-23",
+          "dateBasis": "closed",
+          "round": "IPO (BSE SME)",
+          "kind": "ipo",
+          "amountRaised": {
+            "value": 897600000,
+            "currency": "INR"
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": {
+            "value": 3396000000,
+            "currency": "INR",
+            "basis": "unspecified"
+          },
+          "pricePerShare": {
+            "value": 187,
+            "currency": "INR"
+          },
+          "sharesAllotted": 4800000,
+          "leadInvestors": [],
+          "note": "Book-built, all fresh issue, price band Rs 178-187, bidding 16-20 Jul 2026. Listed 23 Jul 2026 at Rs 205 and closed day one at the Rs 215.25 upper circuit. Anchor portion Rs 25.58 Cr on 15 Jul 2026. Choice Capital Advisors was BRLM. The valuation is the post-issue market cap at the Rs 187 offer price, from Chittorgarh (aggregator). BSE scrip code 544832.",
+          "sources": [
+            {
+              "url": "https://www.tribuneindia.com/news/business/sotefin-bharat-limited-ipo-opens-on-thursday-july-16-2026/",
+              "publisher": "The Tribune (ANI/PNN release)",
+              "published": "2026-07-15",
+              "supports": "48 lakh shares, price band Rs 178-187, ~Rs 89.76 Cr, BSE SME"
+            },
+            {
+              "url": "https://www.5paisa.com/news/sotefin-bharat-ipo-listing",
+              "publisher": "5paisa",
+              "published": "2026-07-24",
+              "supports": "listed 23 Jul 2026 at Rs 205 vs issue Rs 187; Rs 89.76 Cr fresh"
+            },
+            {
+              "url": "https://www.chittorgarh.com/ipo/sotefin-bharat-ipo-ipo/2836/",
+              "publisher": "Chittorgarh",
+              "published": "2026-07",
+              "supports": "market cap at offer price Rs 339.60 Cr; BSE code 544832",
+              "aggregator": true
+            }
+          ]
+        }
+      ],
+      "familyMentions": [
+        {
+          "text": "Ajay T Jaisinghani: 11,364 shares at Rs 1,100 in the 20 Jul 2024 rights issue; 1,13,640 bonus shares (25 Jun 2025)",
+          "shares": null,
+          "source": {
+            "url": "https://www.bseindia.com/downloads/ipo/Sotefin%20Bharat%20Ltd%20-%20RHP&GID_150720262012.zip",
+            "publisher": "BSE (Sotefin Bharat RHP)",
+            "published": "2026-07-09",
+            "supports": ""
+          }
+        }
+      ],
+      "searchNote": "Read the RHP dated 9 Jul 2026 (zip on BSE) for the full share capital history. The 2014 rights issues at par to the founders are omitted. The 10:1 bonus of 25 Jun 2025 is unpriced and is recorded only in notes. The 'SOTEFIN' symbol appears only on aggregator pages; Chittorgarh confirms BSE code 544832. July 2025 press (Business Standard, Outlook Business) reported an earlier ~Rs 80 Cr IPO plan.",
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "autocracy-machinery",
+      "legalName": "Autocracy Machinery Private Limited",
+      "brand": "Autocracy Machinery",
+      "fundKeys": [
+        "autocracy-machinery"
+      ],
+      "website": null,
+      "sector": "Construction and agri machinery (trenchers, mowers); Hyderabad",
+      "listed": null,
+      "rounds": [
+        {
+          "date": "2023-09-25",
+          "dateBasis": "announced",
+          "round": "Seed",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 1200000,
+            "currency": "USD"
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "Venture Catalysts"
+          ],
+          "note": "Participants: Nikhil and Bharat Jaisinghani, Meghna Agarwal, Abhishek Rungta, Srikanth Iyengar, Abhishek Modi, HEM Angels, VC Grid and S Four Capital. Valuation not disclosed.",
+          "sources": [
+            {
+              "url": "https://entrackr.com/2023/09/autocracy-machinery-raises-1-2-mn-in-seed-round-led-by-venture-catalysts",
+              "publisher": "Entrackr",
+              "published": "2023-09-25",
+              "supports": "$1.2 Mn seed led by Venture Catalysts; names Nikhil and Bharat Jaisinghani"
+            }
+          ]
+        },
+        {
+          "date": "2024-06-27",
+          "dateBasis": "announced",
+          "round": "Pre-Series A",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 50000000,
+            "currency": "INR"
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "Venture Catalysts"
+          ],
+          "note": "Participants: Nikhil Jaisinghani, Bharat Jaisinghani and SFour Capital. Valuation not disclosed. Entrackr's URL slug says 'seed' but its text says pre-Series A.",
+          "sources": [
+            {
+              "url": "https://entrackr.com/2024/06/autocracy-machinery-raises-seed-round-led-by-venture-catalysts",
+              "publisher": "Entrackr",
+              "published": "2024-06-27",
+              "supports": "Rs 5 Cr pre-Series A led by Venture Catalysts; names Jaisinghanis"
+            }
+          ]
+        }
+      ],
+      "familyMentions": [],
+      "searchNote": "Searched funding, valuation, allotment price and Series A 2025. No price per share, valuation or later round was found in Entrackr, Inc42, ET or the press. The 'construction robotics' framing appears only in a database profile; the press calls it a trencher and construction-machinery maker.",
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "zenith-leisure-holidays",
+      "legalName": "Zenith Leisure Holidays Limited",
+      "brand": "Zenith Leisure Holidays",
+      "fundKeys": [
+        "zenith-leisure-holidays"
+      ],
+      "website": null,
+      "sector": "Travel / tour operator (Kolkata)",
+      "listed": null,
+      "rounds": [],
+      "familyMentions": [],
+      "searchNote": "Searched Zenith Leisure Holidays IPO, DRHP, prospectus, private placement, preferential, Zenith Holidays Kolkata funding and the ISIN INE0ETS01014. Tofler shows an unlisted public company, CIN U55101WB2001PLC093294, incorporated 12 Jun 2001, Kolkata. No DRHP on SEBI, BSE SME or NSE Emerge, and no press report of any round, allotment price or valuation. IPO hits were for Zenith Drugs, an unrelated company.",
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "radiant-innovative-manufacturing",
+      "legalName": "Radiant Innovative Manufacturing Limited",
+      "brand": "Radiant Innovative Manufacturing",
+      "fundKeys": [
+        "radiant-innovative-manufacturing"
+      ],
+      "website": "https://www.radiantiml.com",
+      "sector": "Engineering plastic components for automotive",
+      "listed": null,
+      "rounds": [
+        {
+          "date": "2016-12-28",
+          "dateBasis": "allotment",
+          "round": "Private placement",
+          "kind": "preferential",
+          "amountRaised": null,
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": {
+            "value": 605,
+            "currency": "INR"
+          },
+          "sharesAllotted": 28900,
+          "leadInvestors": [
+            "Nitin Bahl",
+            "Sumita Jayee"
+          ],
+          "note": "Face value Rs 100, before the 10:1 split of 14 Mar 2024.",
+          "sources": [
+            {
+              "url": "https://www.bseindia.com/corporates/download/323795/DRHP_Radiant_20240926223811.pdf",
+              "publisher": "BSE (Radiant DRHP dated 26 Sep 2024)",
+              "published": "2024-09-26",
+              "supports": "28,900 shares at Rs 605 on 28 Dec 2016"
+            }
+          ]
+        },
+        {
+          "date": "2022-02-11",
+          "dateBasis": "allotment",
+          "round": "Conversion of debentures (promoters)",
+          "kind": "preferential",
+          "amountRaised": null,
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": {
+            "value": 100,
+            "currency": "INR"
+          },
+          "sharesAllotted": 417480,
+          "leadInvestors": [
+            "Nalin Bahl",
+            "Nitin Bahl"
+          ],
+          "note": "Convertible debentures converted at par (face value Rs 100). A further 3,00,000 shares at Rs 100 went to Kunal Bahl on 18 Feb 2022 on conversion of a security deposit. Both are promoter conversions, not outside rounds.",
+          "sources": [
+            {
+              "url": "https://www.bseindia.com/corporates/download/323795/DRHP_Radiant_20240926223811.pdf",
+              "publisher": "BSE (Radiant DRHP dated 26 Sep 2024)",
+              "published": "2024-09-26",
+              "supports": "4,17,480 shares at Rs 100 on debenture conversion"
+            }
+          ]
+        },
+        {
+          "date": "2023-01-03",
+          "dateBasis": "allotment",
+          "round": "Private placement",
+          "kind": "preferential",
+          "amountRaised": null,
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": {
+            "value": 1556,
+            "currency": "INR"
+          },
+          "sharesAllotted": 298711,
+          "leadInvestors": [
+            "DMI Finance Private Limited"
+          ],
+          "note": "Face value Rs 100, before the 10:1 split.",
+          "sources": [
+            {
+              "url": "https://www.bseindia.com/corporates/download/323795/DRHP_Radiant_20240926223811.pdf",
+              "publisher": "BSE (Radiant DRHP dated 26 Sep 2024)",
+              "published": "2024-09-26",
+              "supports": "2,98,711 shares at Rs 1,556 to DMI Finance"
+            }
+          ]
+        },
+        {
+          "date": "2023-07-14",
+          "dateBasis": "allotment",
+          "round": "Private placement (strategic)",
+          "kind": "preferential",
+          "amountRaised": null,
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": {
+            "value": 859,
+            "currency": "INR"
+          },
+          "sharesAllotted": 177211,
+          "leadInvestors": [
+            "Fuji Electronics Industries Co. Ltd"
+          ],
+          "note": "Face value Rs 100, before the 10:1 split. Priced below the January 2023 DMI placement (Rs 1,556).",
+          "sources": [
+            {
+              "url": "https://www.bseindia.com/corporates/download/323795/DRHP_Radiant_20240926223811.pdf",
+              "publisher": "BSE (Radiant DRHP dated 26 Sep 2024)",
+              "published": "2024-09-26",
+              "supports": "1,77,211 shares at Rs 859 to Fuji Electronics"
+            }
+          ]
+        },
+        {
+          "date": "2024-07-25",
+          "dateBasis": "allotment",
+          "round": "Pre-IPO private placement",
+          "kind": "preferential",
+          "amountRaised": null,
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": {
+            "value": 140,
+            "currency": "INR"
+          },
+          "sharesAllotted": 1000000,
+          "leadInvestors": [],
+          "note": "Face value Rs 10, after the 10:1 split of 14 Mar 2024. 34 allottees; the largest are Reina Ramesh Jaisinghani (2,35,800) and Raghav Karol (2,14,200). The DRHP (BSE SME, 26 Sep 2024) proposed 52,26,000 shares (43,64,400 fresh + 6,00,000 OFS, ex-market maker). Chittorgarh shows the exchange approval (3 Feb 2025) expiring on 3 Feb 2026 with no IPO dates set. The company is not listed.",
+          "sources": [
+            {
+              "url": "https://www.bseindia.com/corporates/download/323795/DRHP_Radiant_20240926223811.pdf",
+              "publisher": "BSE (Radiant DRHP dated 26 Sep 2024)",
+              "published": "2024-09-26",
+              "supports": "10,00,000 shares at Rs 140 on 25 Jul 2024; allottee list"
+            },
+            {
+              "url": "https://www.chittorgarh.com/ipo/radiant-innovative-ipo/2240/",
+              "publisher": "Chittorgarh",
+              "published": null,
+              "supports": "IPO dates not announced; approval 3 Feb 2025 lapsed 3 Feb 2026",
+              "aggregator": true
+            }
+          ]
+        }
+      ],
+      "familyMentions": [
+        {
+          "text": "Ajay Thakurdas Jaisinghani: 71,400 shares at Rs 140 in the 25 Jul 2024 private placement",
+          "shares": null,
+          "source": {
+            "url": "https://www.bseindia.com/corporates/download/323795/DRHP_Radiant_20240926223811.pdf",
+            "publisher": "BSE (Radiant DRHP)",
+            "published": "2024-09-26",
+            "supports": ""
+          }
+        }
+      ],
+      "searchNote": "Read the DRHP's share capital history. Pre-2016 allotments at par are omitted, as are the 2008 bonus and the 2024 split, which are unpriced. No RHP was found, and no listing on BSE SME as of this research. Searches for 'Radiant Innovative IPO 2026' show only placeholder pages.",
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "ema-partners",
+      "legalName": "EMA Partners India Limited",
+      "brand": "EMA Partners",
+      "fundKeys": [
+        "ema-preferred-shares"
+      ],
+      "website": "https://www.emapartners.in",
+      "sector": "Executive search / leadership hiring",
+      "listed": {
+        "exchange": "NSE Emerge (SME)",
+        "symbol": "EMAPARTNER",
+        "date": "2025-01-24"
+      },
+      "rounds": [
+        {
+          "date": "2022-08-29",
+          "dateBasis": "allotment",
+          "round": "Buyback",
+          "kind": "secondary",
+          "amountRaised": null,
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": {
+            "value": 263.01,
+            "currency": "INR"
+          },
+          "sharesAllotted": null,
+          "leadInvestors": [],
+          "note": "The company bought back 77,150 shares (face value Rs 1) from Subramanian Krishnaprakash at Rs 263.01, total Rs 2,02,91,000. This was before the July 2024 consolidation to Rs 5 face value and the 200:1 bonus. Money paid out, not raised.",
+          "sources": [
+            {
+              "url": "https://nsearchives.nseindia.com/emerge/corporates/content/Registration_16092024220403_DRHP_16092024.pdf",
+              "publisher": "NSE Emerge (EMA Partners DRHP dated 16 Sep 2024)",
+              "published": "2024-09-16",
+              "supports": "buyback of 77,150 shares at Rs 263.01"
+            }
+          ]
+        },
+        {
+          "date": "2024-09-02",
+          "dateBasis": "allotment",
+          "round": "Pre-IPO private placement",
+          "kind": "preferential",
+          "amountRaised": {
+            "value": 95041024,
+            "currency": "INR"
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": {
+            "value": 104,
+            "currency": "INR"
+          },
+          "sharesAllotted": 913856,
+          "leadInvestors": [],
+          "note": "Face value Rs 5 (premium Rs 99), after the 17 Aug 2024 200:1 bonus. 34 allottees; the largest are Negen Undiscovered Value Fund (1,78,572) and Ritika Nikhil Jaisinghani (1,33,929). The DRHP says the company had no preference shares or convertibles outstanding and made no separate 'pre-IPO placement' as it defines the term. The family's 'Aug 2024 preferred shares' entry matches this equity allotmen",
+          "sources": [
+            {
+              "url": "https://nsearchives.nseindia.com/emerge/corporates/content/Registration_16092024220403_DRHP_16092024.pdf",
+              "publisher": "NSE Emerge (EMA Partners DRHP dated 16 Sep 2024)",
+              "published": "2024-09-16",
+              "supports": "9,13,856 shares at Rs 104, total Rs 9,50,41,024; allottee list"
+            }
+          ]
+        },
+        {
+          "date": "2025-01-24",
+          "dateBasis": "closed",
+          "round": "IPO (NSE SME)",
+          "kind": "ipo",
+          "amountRaised": {
+            "value": 760100000,
+            "currency": "INR"
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": {
+            "value": 124,
+            "currency": "INR"
+          },
+          "sharesAllotted": null,
+          "leadInvestors": [],
+          "note": "Price band Rs 117-124, bidding 17-21 Jan 2025. Reported split: Rs 66.14 Cr fresh plus Rs 9.87 Cr OFS. Listed 24 Jan 2025 at Rs 156.50, a 26% premium. Upstox reports the market cap reached Rs 348.7 Cr at listing, a trading figure not an issue-price valuation, so it is not recorded as one. The symbol EMAPARTNER comes from Chittorgarh (aggregator).",
+          "sources": [
+            {
+              "url": "https://upstox.com/news/market-news/ipo/ema-partners-india-shares-hit-5-lower-circuit-after-listing-at-26-premium-on-nse-sme/article-142080",
+              "publisher": "Upstox News",
+              "published": "2025-01-24",
+              "supports": "issue price Rs 124, raised Rs 76.01 Cr, listed Rs 156.5 on 24 Jan 2025"
+            },
+            {
+              "url": "https://www.chittorgarh.com/ipo/ema-partners-ipo/1963/",
+              "publisher": "Chittorgarh",
+              "published": "2025-01",
+              "supports": "price band, listing date 24 Jan 2025 NSE SME, symbol",
+              "aggregator": true
+            }
+          ]
+        }
+      ],
+      "familyMentions": [
+        {
+          "text": "Ajay T Jaisinghani: 44,643 equity shares at Rs 104 in the 2 Sep 2024 private placement",
+          "shares": null,
+          "source": {
+            "url": "https://nsearchives.nseindia.com/emerge/corporates/content/Registration_16092024220403_DRHP_16092024.pdf",
+            "publisher": "NSE Emerge (EMA Partners DRHP)",
+            "published": "2024-09-16",
+            "supports": ""
+          }
+        }
+      ],
+      "searchNote": "Read the DRHP's share capital history (pp. 82-84) and Risk Factor 51. The DRHP's two-column allottee table misaligns in layout text extraction; the share counts above come from reading order, where Ajay T = 44,643 and Ritika = 1,33,929. A raw-PDF check before publishing is advisable. Business Standard listing pages returned 403. Earlier history (2006-2007 allotments at par, the 2024 consolidation and the 200:1 bonus) is unpriced or at par and is omitted.",
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "nopo-nanotechnologies",
+      "legalName": "NoPo Nanotechnologies India Private Limited",
+      "brand": "NoPo Nanotechnologies",
+      "fundKeys": [
+        "nopo-nanotechnologies-india-pvt-ltd-gadhadar-reddy"
+      ],
+      "website": "https://nopo.in",
+      "sector": "Single-walled carbon nanotubes (deep tech materials)",
+      "listed": null,
+      "rounds": [
+        {
+          "date": "2024-05-22",
+          "dateBasis": "announced",
+          "round": "Pre-Series A",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 3000000,
+            "currency": "USD"
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "Micelio Fund (Axilor)",
+            "Inflexor Ventures"
+          ],
+          "note": "Co-led; Spectrum Impact, Aureolis and angel investors also participated. No valuation disclosed by any press source. Inc42 Datalabs files it as a Seed round dated 21 May 2024. CB Insights shows a modelled $9-12M valuation estimate for May 2024; that is an aggregator estimate, not a reported figure, and is not recorded.",
+          "sources": [
+            {
+              "url": "https://cxotoday.com/press-release/nopo-nanotechnologies-secures-usd-3-mn-in-pre-series-a-round-led-by-axilors-micelio-fund-inflexor-ventures-and-other-climate-deep-tech-investors/",
+              "publisher": "CXOToday (company press release)",
+              "published": "2024-05-22",
+              "supports": "USD 3 Mn pre-Series A co-led by Micelio Fund and Inflexor Ventures"
+            },
+            {
+              "url": "https://news.ventureintelligence.com/private-equity/nanotech-startup-nopo-attracts-$3-m-from-micelio-fund,-inflexor,-others",
+              "publisher": "Venture Intelligence",
+              "published": "2024-05-23",
+              "supports": "$3M pre-Series A; Micelio, Inflexor co-led; Spectrum Impact, Aureolis joined"
+            }
+          ]
+        }
+      ],
+      "familyMentions": [],
+      "searchNote": "Searched general web, Business Standard (403 on fetch), Venture Intelligence, Inc42 Datalabs, CB Insights, Entrackr. Only priced/amount-bearing round is the May 2024 $3M pre-Series A; no valuation published. Inc42 also lists an undisclosed Aug 2017 'seed' from Elevate 100 (a Karnataka government grant programme) and a Jan 2023 iDEX grant; CB Insights lists a Sept 2025 Third Derivative accelerator entry - none carry amounts, so not recorded as rounds. No 2025/2026 Series A found. No RoC allotment coverage (Entrackr/TheKredible) found; family not named.",
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "homepecked",
+      "legalName": "Homepecked e-Marketplace Services Private Limited",
+      "brand": "Homepecked",
+      "fundKeys": [
+        "home-pecked-e-marketplace-services"
+      ],
+      "website": null,
+      "sector": "B2B construction-tech marketplace (procurement and credit for SME builders)",
+      "listed": null,
+      "rounds": [],
+      "familyMentions": [],
+      "searchNote": "Searched general web, Inc42 company/funding pages, YourStory company page, Entrackr. Inc42 Datalabs (entity shown as HOMEPECKED TECHNOLOGIES PTE. LTD) lists only a seed stage with last funding 31/12/2017 and no amount or investors; no press report of any round, amount or valuation found. Founders listed as Parag Sen and Samrat Banerjee. Nothing credible to record.",
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "aksum-trademart",
+      "legalName": "Aksum Trademart Private Limited",
+      "brand": "Aksum",
+      "fundKeys": [
+        "aksum-trademart-pvt-ltd-ankit-jain"
+      ],
+      "website": null,
+      "sector": "B2B supply-chain-as-a-service / trade platform for MSMEs",
+      "listed": null,
+      "rounds": [
+        {
+          "date": "2023-04-27",
+          "dateBasis": "announced",
+          "round": "Pre-Series A",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 1000000,
+            "currency": "USD"
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "Inflection Point Ventures"
+          ],
+          "note": "The $1M is a mix of equity and debt; the split is not disclosed. No valuation disclosed. Inc42 Datalabs files it as a seed round dated 26 April 2023.",
+          "sources": [
+            {
+              "url": "https://india.entrepreneur.com/news-and-trends/b2b-scaas-platform-aksum-raises-1-million-in-pre-series-a/450489",
+              "publisher": "Entrepreneur India",
+              "published": "2023-04-27",
+              "supports": "$1M equity-and-debt pre-Series A led by Inflection Point Ventures"
+            }
+          ]
+        }
+      ],
+      "familyMentions": [],
+      "searchNote": "Searched general web, Entrepreneur India, Business Standard, Inc42, YourStory. Aug 2022 press (Business Standard, Zee Business) reported a PLAN to raise $25M over 12 months - not a closed round, not recorded. FY24 and FY25 revenue press releases (CXOToday) mention no new equity round. No Series A or valuation found; family not named.",
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "zippmat",
+      "legalName": "Zippmat Private Limited",
+      "brand": "Zippmat",
+      "fundKeys": [
+        "zippmat-private-ltd-abhijeet-kudva"
+      ],
+      "website": null,
+      "sector": "Construction materials supply chain (SCaaS)",
+      "listed": null,
+      "rounds": [
+        {
+          "date": "2022-03-07",
+          "dateBasis": "closed",
+          "round": "Seed",
+          "kind": "primary",
+          "amountRaised": null,
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [],
+          "note": "Aggregator-only entry ('Seed VC'); amount and investors are paywalled. CB Insights names Zephyr Peacock India as a participant in both seed rounds. No press coverage of this round found.",
+          "sources": [
+            {
+              "url": "https://www.cbinsights.com/company/zippmat/financials",
+              "publisher": "CB Insights",
+              "published": null,
+              "supports": "Seed VC round dated 7 Mar 2022, amount undisclosed",
+              "aggregator": true
+            }
+          ]
+        },
+        {
+          "date": "2022-09-08",
+          "dateBasis": "announced",
+          "round": "Seed",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 10000000,
+            "currency": "USD"
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "Matrix Partners India"
+          ],
+          "note": "The $10M combines equity and debt (split not disclosed): equity from Matrix Partners India (lead) and existing investor Zephyr Peacock; debt from HDFC Bank and TradeCred. CB Insights files the $10M as a Debt round plus a separate undisclosed 'Seed VC - II'. No valuation disclosed.",
+          "sources": [
+            {
+              "url": "https://www.indiainfoline.com/news/markets/zippmat-raises-10-million-in-debt-and-equity-funding",
+              "publisher": "IIFL (India Infoline)",
+              "published": "2022-09-08",
+              "supports": "$10M equity and debt led by Matrix; Zephyr Peacock equity; HDFC, TradeCred debt"
+            },
+            {
+              "url": "https://www.globalprivatecapital.org/newsroom/matrix-partners-leads-usd10m-equity-and-debt-round-for-indias-zippmat/",
+              "publisher": "GPCA (citing Economic Times)",
+              "published": "2022-09-08",
+              "supports": "USD 10M equity and debt round led by Matrix Partners"
+            }
+          ]
+        }
+      ],
+      "familyMentions": [],
+      "searchNote": "Searched general web, YourStory (403 on fetch), IIFL, GPCA, CB Insights, Entrackr. No Series A, later round or valuation found after Sept 2022. Family not named.",
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "runable",
+      "legalName": "Runable",
+      "brand": "Runable",
+      "fundKeys": [
+        "runable-investment"
+      ],
+      "website": null,
+      "sector": "AI agent platform for small businesses",
+      "listed": null,
+      "rounds": [
+        {
+          "date": "2026-08-26",
+          "dateBasis": "announced",
+          "round": "Series A",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 21000000,
+            "currency": "USD"
+          },
+          "preMoney": null,
+          "postMoney": {
+            "value": 65000000,
+            "currency": "USD"
+          },
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "Susquehanna Venture Capital",
+            "Nexus Venture Partners"
+          ],
+          "note": "TechCrunch: all-equity primary round that 'valued Runable at $65 million after investment', per CEO Umesh Kumar (company-stated). Existing investors Together Fund and Array VC participated. Inc42 gives the amount as about Rs 200 Cr and discloses no valuation. No source found for the earlier round(s) by Together Fund / Array VC (amount, date or valuation).",
+          "sources": [
+            {
+              "url": "https://techcrunch.com/?p=3156706",
+              "publisher": "TechCrunch",
+              "published": "2026-08-26",
+              "supports": "$21M Series A; valued at $65M after investment; co-leads named"
+            },
+            {
+              "url": "https://inc42.com/buzz/ai-agent-platform-runable-raises-21-mn-to-help-small-businesses-grow/",
+              "publisher": "Inc42",
+              "published": "2026-08-26",
+              "supports": "$21 Mn Series A co-led by Susquehanna and Nexus"
+            },
+            {
+              "url": "https://www.dealstreetasia.com/stories/runable-susquehanna-vc-nexus-493411",
+              "publisher": "DealStreetAsia",
+              "published": "2026-08-27",
+              "supports": "$21M round co-led by Susquehanna VC and Nexus"
+            }
+          ]
+        }
+      ],
+      "familyMentions": [],
+      "searchNote": "Searched general web, TechCrunch, Inc42, YourStory (403 on fetch), DealStreetAsia. Legal entity name not found in any source. Family invested Jul 2025, before the Series A; no public report of a 2025 seed/pre-seed round (Together Fund and Array VC are described only as 'existing investors'). Family not named.",
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "nzuri-pune-knowledge-park",
+      "legalName": "Nzuri Pune Knowledge Park Private Limited",
+      "brand": "Nzuri Pune Knowledge Park",
+      "fundKeys": [
+        "nzuri-pune-knowledge-park",
+        "nzuri-pune-knowledge-park-private-limited-pref-24sp46"
+      ],
+      "website": null,
+      "sector": "Commercial real estate (office park development, Pune)",
+      "listed": null,
+      "rounds": [],
+      "familyMentions": [],
+      "searchNote": "Searched general web for the legal name and the project. Found only a Cushman & Wakefield leasing listing (Nzuri Knowledge Park, Koregaon Park, Pune, under construction) and a registry aggregator entry (CIN U45500MH2019PTC329792, incorporated 27 Aug 2019, construction) - registry facts, not funding. No equity raise, valuation or investor reporting found.",
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "transigo-fleet",
+      "legalName": "Transigo Fleet LLP",
+      "brand": "Transigo Fleet",
+      "fundKeys": [
+        "transigo-fleet"
+      ],
+      "website": null,
+      "sector": null,
+      "listed": null,
+      "rounds": [],
+      "familyMentions": [],
+      "searchNote": "Searched the exact name and EV-fleet variants. No press, registry or funding record found; results were unrelated (Transit Fleet Ltd UK, Transvolt Mobility). Likely a private deal vehicle with no public funding record.",
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "inflexor-technologies",
+      "legalName": "Inflexor Technologies",
+      "brand": "Inflexor Technologies",
+      "fundKeys": [
+        "inflexor-technologies"
+      ],
+      "website": null,
+      "sector": "Venture capital fund manager (Inflexor Ventures)",
+      "listed": null,
+      "rounds": [],
+      "familyMentions": [],
+      "searchNote": "No operating company named 'Inflexor Technologies' found. Results all concern Inflexor Ventures, a VC manager whose funds include the 'Inflexor Technology Fund' (first close Rs 230 Cr reported) and Fund II (final close over Rs 600 Cr, Jul 2021, YourStory). The family's Nov 2020 - Nov 2022 holding is most likely a commitment to one of these funds; fund closes are not company funding rounds or valuations, so nothing is recorded.",
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "sky-vision-cure",
+      "legalName": "Sky Vision Cure LLP",
+      "brand": "Sky Vision Cure",
+      "fundKeys": [
+        "sky-vision-cure"
+      ],
+      "website": null,
+      "sector": null,
+      "listed": null,
+      "rounds": [],
+      "familyMentions": [],
+      "searchNote": "Quick check only. Registry aggregator (Qorpiq) shows LLPIN AAW-4474, incorporated 23 Mar 2021, ROC Mumbai, active - registry facts, not funding. No press or funding record found; likely a private deal vehicle.",
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "procyon-enterprise",
+      "legalName": "Procyon Enterprise LLP",
+      "brand": "Procyon Enterprise",
+      "fundKeys": [
+        "procyon-enterprise-llp-abhishek-murarka"
+      ],
+      "website": null,
+      "sector": null,
+      "listed": null,
+      "rounds": [],
+      "familyMentions": [],
+      "searchNote": "Quick check only. Registry aggregator (Qorpiq, LLPIN ACA-5518) lists it as active, ROC Mumbai, activity rental and leasing - registry facts, not funding. No press or funding record found; likely a private deal vehicle.",
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "sky-enable-tech",
+      "legalName": "Sky Enable Tech LLP",
+      "brand": "Sky Enable Tech",
+      "fundKeys": [
+        "sky-enable-tech"
+      ],
+      "website": null,
+      "sector": null,
+      "listed": null,
+      "rounds": [],
+      "familyMentions": [],
+      "searchNote": "Quick check only. Registry aggregator (Qorpiq) shows 'Sky Enabletech LLP', LLPIN ACE-8162, incorporated 9 Jan 2024, ROC Mumbai, NIC human health activities - registry facts, not funding. No press or funding record found; likely a private deal vehicle.",
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "fh-enable",
+      "legalName": "FH Enable LLP",
+      "brand": "FH Enable",
+      "fundKeys": [
+        "fh-enable-llp-aakash-sachdev"
+      ],
+      "website": null,
+      "sector": null,
+      "listed": null,
+      "rounds": [],
+      "familyMentions": [],
+      "searchNote": "Quick check only. Appears only in partner histories on registry aggregators (LLPIN AAS-6262 per a Zauba snippet; Qorpiq's FH Learn LLP page links a partner to FH Enable LLP). No press or funding record found; likely a private deal vehicle.",
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "fh-edutech",
+      "legalName": "FH Edutech LLP",
+      "brand": "FH Edutech",
+      "fundKeys": [
+        "fh-edutech"
+      ],
+      "website": null,
+      "sector": null,
+      "listed": null,
+      "rounds": [],
+      "familyMentions": [],
+      "searchNote": "Quick check only. A Zauba Corp search snippet (LLPIN AAS-6258, incorporated 15 Jun 2020, ROC Mumbai, Worli address) lists designated partners including 'Bharat Ajay Jaisinghani' - a registry fact, not a funding round; the page returned 403 so it could not be opened and is not recorded as a familyMention. No press or funding record found.",
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "variance-pt-ventures",
+      "legalName": "Variance PT Ventures LLP",
+      "brand": "Variance PT Ventures",
+      "fundKeys": [
+        "variance-pt-ventures-llp-romil-kapadia"
+      ],
+      "website": null,
+      "sector": null,
+      "listed": null,
+      "rounds": [],
+      "familyMentions": [],
+      "searchNote": "Quick check only. Search snippets point to a Gurugram-registered LLP among several 'Variance ... Partners/Ventures LLP' entities (registry aggregator data, not opened in full) - registry facts, not funding. No press or funding record found; likely a deal vehicle.",
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "id": "a-k-enterprises",
+      "legalName": "A K Enterprises",
+      "brand": "A K Enterprises",
+      "fundKeys": [
+        "a-k-enterprises"
+      ],
+      "website": null,
+      "sector": null,
+      "listed": null,
+      "rounds": [],
+      "familyMentions": [],
+      "searchNote": "Name too generic to identify (many unrelated firms). Searched with 'Jaisinghani'; nothing links any A K Enterprises to the family. No funding record found; likely a proprietorship/partnership with no public record.",
+      "checkedOn": "2026-11-04"
+    }
+  ]
+}

@@ -57,6 +57,7 @@ import { useDatedCapital } from "@/lib/useDatedCapital";
 import { TREE_ROW, TreeSectionCell } from "@/components/TreeTable";
 import { ownerDisplayName } from "@/lib/owners";
 import { stockHref } from "@/lib/auditFormulas";
+import { privateCompanyOf, privateCompanyHref } from "@/lib/privateRounds";
 import { istToday, lotsForPosition, termSplitOn } from "@/lib/ltDate";
 import {
   heldThrough, heldRouteOf, measuredTotals, HELD_ROUTES, HELD_ROUTE_LABEL, HELD_ROUTE_NOTE,
@@ -1826,6 +1827,11 @@ export function StockInfo() {
                 return <span className="text-[11px] text-slate-600" data-stock-isin-absent title={w.tip}>{w.text}</span>;
               })()}
           {sym && <span className="mono text-[11px] text-slate-500">{sym}</span>}
+          {/* A PRIVATE COMPANY'S FUNDING RECORD IS ON ITS OWN PAGE (Stage 10ko). */}
+          {privateCompanyOf(securityKey) && (
+            <Link to={privateCompanyHref(privateCompanyOf(securityKey)!.id)} data-stock-private-company={privateCompanyOf(securityKey)!.id}
+              className="text-[12px] text-champagne-400 hover:underline">Funding rounds &amp; valuation →</Link>
+          )}
           {/* WHAT THE PILL CLAIMS DEPENDS ON WHICH OF THREE THINGS THIS IS, and
               while the look-through has not answered a no-row page cannot tell
               them apart — so it claims nothing rather than "Position closed". */}

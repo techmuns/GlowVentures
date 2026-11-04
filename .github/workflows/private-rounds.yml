@@ -1,0 +1,80 @@
+name: Private company rounds
+
+# Weekly refresh of each private company's funding rounds and valuations
+# (`scripts/build-private-rounds.mjs` → `src/data/privateRounds.json`), the
+# record behind every `/private-company/<id>` page and the valuation columns in
+# Private Market's Edit Columns (Stage 10ko).
+#
+# *"Fetch information like valuation, funding rounds, etc. for all the private
+# investments thru credible sources and these should be automatically
+# updated."* — the family, 4 Nov 2026.
+#
+# No free feed publishes Indian private-company rounds; they are in RoC filings
+# as the business press reports them. So each run researches the FIFTEEN
+# companies whose record is oldest (every company is re-read about every four
+# weeks), with Claude's web search and web fetch, and the builder keeps only
+# what a source the run actually opened states — see the script's header.
+#
+# NEEDS THE `ANTHROPIC_API_KEY` SECRET. Without it the run says so and commits
+# nothing; the pages keep the last researched record and show its date.
+on:
+  schedule:
+    - cron: "0 4 * * 1"
+  workflow_dispatch:
+    inputs:
+      only:
+        description: "Comma-separated company ids to research (blank = the stalest fifteen)"
+        required: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: private-rounds
+  cancel-in-progress: false
+
+jobs:
+  private-rounds:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      # The API client is needed by this job alone, so it is installed here
+      # rather than added to the app's dependencies.
+      - run: npm install --no-save @anthropic-ai/sdk@^0.136.0
+
+      - name: Research the stalest companies
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ONLY: ${{ github.event.inputs.only }}
+        run: |
+          if [ -n "$ONLY" ]; then npm run build-private-rounds -- --only "$ONLY"; else npm run build-private-rounds -- --limit 15; fi
+          npm run build-private-rounds -- --check
+
+      - name: Verify the app still builds against the new record
+        run: npm run build
+
+      - name: Commit if anything changed
+        run: |
+          git config user.name  "glow-harvest[bot]"
+          git config user.email "glow-harvest[bot]@users.noreply.github.com"
+          if git diff --quiet -- src/data/privateRounds.json docs/PRIVATE-ROUNDS.md; then
+            echo "No company's record changed — nothing to commit."
+            exit 0
+          fi
+          git add src/data/privateRounds.json docs/PRIVATE-ROUNDS.md
+          git commit -m "Private company rounds: weekly research refresh
+
+          Automated run of \`npm run build-private-rounds\`. Every round carries
+          the source the run opened; docs/PRIVATE-ROUNDS.md lists each company's
+          latest valued round and when it was checked."
+          for i in 1 2 3 4; do
+            git push && break || { echo "push failed, retrying"; sleep $((2**i)); git pull --rebase origin ${{ github.ref_name }}; }
+          done
