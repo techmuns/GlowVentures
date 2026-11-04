@@ -198,6 +198,18 @@ export function makeHolding(input) {
      */
     lastMovementRate: num(input.lastMovementRate),
     lastMovementValue: num(input.lastMovementValue),
+    /**
+     * THE VALUE COLUMN OF A STATEMENT VALUED WHEN IT WAS RUN, NOT AT ITS DATE.
+     * ICICI's NSDL report prices a historical balance at the last close on file
+     * when it runs, and prints the as-on date's session over it: the 31 March
+     * 2026 statement run on 21 July carries 20 July's closes. The figure is
+     * the balance at another date's price, a valuation on no date. So it never
+     * becomes `marketValue` (or `printed.marketValue`, which `deriveHolding`
+     * would adopt). It is kept only so the archive shows what the column said.
+     * Written only where a reader sets it, like `custodyRematOn`, so no other
+     * document's shape changes.
+     */
+    ...(input.valueWhenRun != null ? { valueWhenRun: num(input.valueWhenRun) } : {}),
 
     // ── DERIVED — filled by deriveHolding(); null until then ────────────────
     marketValue: null,
