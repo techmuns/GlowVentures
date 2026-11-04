@@ -69,7 +69,7 @@ export function BenchLine({ hb, fig, holdingPct }: { hb: HoldingBenchmark; fig: 
       data-bench-to={fig?.shown ? fig.to : undefined} data-bench-annual={fig?.shown && fig.annual ? "true" : undefined}
       title={title} className="inline-block w-full whitespace-nowrap text-[10px] leading-tight text-slate-500">
       {BENCH_SHORT[b.key]}{" "}
-      {/* A gap names its cause in a few words, as the return cell above does (Stage 10la). */}
+      {/* A gap names its cause in a few words, as the return cell above does (Stage 10lc). */}
       {fig?.shown ? <span className="mono">{fmtPct(fig.pct, { sign: true, decimals: 1 })}</span> : <AbsentCell reason={fig?.reason} label={benchGapLabel(fig?.reason)} />}
     </span>
   );

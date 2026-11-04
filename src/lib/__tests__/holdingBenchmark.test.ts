@@ -72,7 +72,7 @@ const early = indexOnSameMoney([{ flows: [{ date: '2024-05-01', amount: -100 }],
 assert.ok(!early.shown && /1 May 2024/.test(early.reason));
 assert.ok(!indexOnSameMoney([], level, false).shown);
 
-// ── STAGE 10la: NEVER A BARE DASH, AND TOTALS ON THE SAME MONEY ─────────────
+// ── STAGE 10lc: NEVER A BARE DASH, AND TOTALS ON THE SAME MONEY ─────────────
 // One payment never sold buys the index on its day: its HPR is the index's move.
 const single = indexOnSameMoney([onePaymentLeg('2026-03-31', 100, '2026-09-30', 130)], level, false);
 near(single.shown ? single.pct : null, 21);

@@ -65,6 +65,10 @@ try {
  assert.equal(sheet.views[0].state,'frozen'); assert.ok(sheet.columns.every(c=>c.width>=12));
  const values=sheet.getSheetValues().flat(2); assert.ok(values.includes('Holding basis')); assert.ok(values.some(v=>typeof v==='string'&&v.includes('Assumed held')));
  assert.ok(values.some(v=>typeof v==='number'&&Number.isFinite(v)));
+ // The card ends today; the custom period above left the toolbar's end on 22 Oct. Every record is
+ // carried to its period's end (Stage 10la), so the two are compared over the same days.
+ const today=await page.evaluate(()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;});
+ await inputs.nth(1).fill(today);
  await page.locator('[data-returns-period="fytd"]').click(); await page.locator('[data-returns-type-select]').selectOption('xirr');
  const card=page.locator('[data-tile-slot="fytd"] [data-card-coverage]');
  await page.waitForFunction(()=>Number(document.querySelector('[data-tile-slot="fytd"] [data-holding-assumption]')?.dataset.assumedCount)>0);

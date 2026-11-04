@@ -259,7 +259,7 @@ export const onePaymentLeg = (date: string, paid: number, to: string, value: num
   ({ flows: [{ date, amount: -paid }], close: value > 0 ? { date: to, value } : null });
 
 /**
- * ── A TOTAL ON THE SAME MONEY (Stage 10la) ──────────────────────────────────
+ * ── A TOTAL ON THE SAME MONEY (Stage 10lc) ──────────────────────────────────
  *
  *   *"It should never show blank."*
  *
@@ -274,7 +274,7 @@ export function pooledLegs(rows: readonly (readonly CapitalLeg[] | null)[]): { l
 }
 
 /**
- * ── THE INDEX LINE NAMES ITS GAP (Stage 10la) ───────────────────────────────
+ * ── THE INDEX LINE NAMES ITS GAP (Stage 10lc) ───────────────────────────────
  *
  * The return cell above it says "— No cost" (Stage 10jm); a bare "N500 —" under
  * a figure read as a blank. The cause in a few words, the full reason its hover,

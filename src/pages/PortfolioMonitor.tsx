@@ -1135,7 +1135,7 @@ export function PortfolioMonitor() {
     if (!hb) { hb = rowBenchmark(rowPositionsOf(r), r.mandate ? r.mandate.accounts.map((a) => a.accountId) : null); ROW_BENCH.set(r, hb); }
     return hb;
   }, []);
-  /** The dated money a row's index is bought with: its record's legs, or its one purchase never sold (Stage 10la). */
+  /** The dated money a row's index is bought with: its record's legs, or its one purchase never sold (Stage 10lc). */
   const ownLegs = (input: ReturnInput, asOf: string): CapitalLeg[] | null => {
     const cap = input.capital, end = input.valuedAt === undefined ? asOf : input.valuedAt;
     if (cap?.dated && cap.legs?.length) return closeLegsOn(cap.legs, end);
@@ -1157,7 +1157,7 @@ export function PortfolioMonitor() {
     if (legs?.length) return indexOnSameMoney(legs, lv.level, annual, annual ? null : end);
     if (cap?.dated && cap.legs?.length) return indexOnSameMoney(cap.legs, lv.level, annual, annual ? null : end);
     if (res.tag === "CAGR" && input.heldSince && end) return indexCompound(input.heldSince, end, lv.level);
-    // ONE PURCHASE, NEVER SOLD (Stage 10la): the CAGR gate's own proof dates every
+    // ONE PURCHASE, NEVER SOLD (Stage 10lc): the CAGR gate's own proof dates every
     // rupee of its cost on that day, so its HPR and a YTD opened this year buy
     // the index there too.
     const one = ownLegs(input, asOf);
@@ -1165,7 +1165,7 @@ export function PortfolioMonitor() {
     return { shown: false, reason: cap && !cap.dated ? cap.reason.replace(/\.$/, "") : undatedMoneyWhy(ps) };
   };
   /**
-   * A SECTION'S OR THE TABLE'S TOTAL AGAINST ITS INDEX (Stage 10la): the index
+   * A SECTION'S OR THE TABLE'S TOTAL AGAINST ITS INDEX (Stage 10lc): the index
    * the rows share — the broad Nifty 500 where they differ — bought with every
    * row's own dated money, each closed on its own value date (`pooledLegs`).
    * Struck over the rows that show an HPR, the set the total's return is.
@@ -2948,7 +2948,7 @@ export function PortfolioMonitor() {
    * use: tagged wherever the figure is not the measure the column promises.
    */
   /**
-   * …AND ITS OWN INDEX UNDER IT (Stage 10la). An opened row's lines showed a
+   * …AND ITS OWN INDEX UNDER IT (Stage 10lc). An opened row's lines showed a
    * return with nothing beneath it: each now carries the index its own lines
    * are compared with (a mandate account by its manager's report), bought with
    * its own dated money — `legs` where the caller holds a line's money itself,
@@ -3034,7 +3034,7 @@ export function PortfolioMonitor() {
     return "the statements report this holding's cost but not the date it was bought — no lot register or dated allotment for it is in this book";
   };
   /**
-   * WHY A ROW'S MONEY CANNOT BUY ITS INDEX (Stage 10la): the cause true of its
+   * WHY A ROW'S MONEY CANNOT BUY ITS INDEX (Stage 10lc): the cause true of its
    * own lines — units no dated trade reaches, a review that dates only a span,
    * a manager whose statements begin after the purchase — rather than one
    * sentence under every row.
@@ -3232,7 +3232,7 @@ export function PortfolioMonitor() {
         // ONE PAYMENT BY CONSTRUCTION (Stage 10fz): a contribution is a single
         // dated purchase with nothing sold out of it, which is what the CAGR gate
         // asks a row to prove — so it says so rather than reading "not counted".
-        // Its index on the same one payment: what bought units, on its day (Stage 10la).
+        // Its index on the same one payment: what bought units, on its day (Stage 10lc).
         ret: (measure) => childReturn({ returnPct: x.returnPct, heldSince: x.date, valuedAt: x.valuedAt, assetClass, costNA: false, purchaseDates: 1, costOfUnitsSold: null }, measure,
           undefined, { hb, legs: [onePaymentLeg(x.date, x.invested, x.valuedAt, x.value)] }),
       }, {
@@ -3562,7 +3562,7 @@ export function PortfolioMonitor() {
                 title={`Everything account ${l.accountNo} has booked since it opened — every sale its manager made, and its income less its fees.`}>
                 {fmtFromBase(l.realised, { compact: true, sign: true })}
               </span>,
-          // A mandate account against the index its manager's report prints (Stage 10la).
+          // A mandate account against the index its manager's report prints (Stage 10lc).
           ret: (measure) => childReturn({ fifo: l.fifo, returnPct: l.returnPct, heldSince: null, valuedAt: l.valuedAt, assetClass: "", costNA: l.costNA, costBasis: l.costBasis, marketValue: l.marketValue, capital: l.capital ?? null }, measure, l.positions,
             { hb: rowBenchmark(l.positions, [l.accountId]) }),
           sector: <AbsentCell reason="a mandate spans many sectors and is not one holding; each share under this line carries its own" />,
@@ -4653,7 +4653,7 @@ export function PortfolioMonitor() {
                             const why = !onCost
                               ? `${label} is a category, not a holding: ${AGG_NO_MEASURE[measure]} Its cumulative return on cost shows under HPR — tick Holding Period Return to see it.`
                               : retWhy;
-                            // The section's own index under its return (Stage 10la).
+                            // The section's own index under its return (Stage 10lc).
                             const sb = onCost && ret !== null ? pooledBench(grp.rows, portfolio.asOf) : null;
                             return (
                               <td key={measure} className={`px-2 py-1.5 text-right mono ${sb ? "" : "whitespace-nowrap"} ${!onCost || ret === null ? "text-slate-500" : changeColor(ret)}`}>
@@ -5619,7 +5619,7 @@ export function PortfolioMonitor() {
                         things. */
                     ...Object.fromEntries(returnMeasures.map((measure) => {
                       const onCost = measure === "auto" || measure === "absolute";
-                      // The table's own index under its total (Stage 10la).
+                      // The table's own index under its total (Stage 10lc).
                       const fb = onCost && totalRet !== null ? pooledBench(rows, portfolio.asOf) : null;
                       return [`ret:${measure}`, (
                         /* ONLY THE FIGURE ON THE FACE. Which holdings the book

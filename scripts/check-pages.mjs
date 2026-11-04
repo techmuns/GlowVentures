@@ -8268,6 +8268,8 @@ const ROUTES = [
   ["cio-allocation", "/cio?tab=allocation"],
   // Optional return tiles still publish figures consumed by the holdings checks.
   ["cio-return-metrics", "/cio?tab=allocation&tiles=value,return,mwr,uncalled,distributions"],
+  // Stage 10kq — the calendar-year card, which no default strip draws.
+  ["cio-ytd-card", "/cio?tiles=value,gain,annualised,fytd,ytd"],
   /**
    * ── THE STRIP'S CHOICE, SAVED FOR EVERYONE ───────────────────────────────
    *
@@ -18824,13 +18826,19 @@ const AVAILABLE_CARDS_BOOK = await (async () => {
     const rootPath = decodeURIComponent(new URL('..', import.meta.url).pathname);
     const out = await build({ stdin: { contents: `
       import { availableCardReturns, statementReturnInputs } from './src/lib/availableCardReturns';
-      import { dedupedPositions } from './src/lib/analytics';
+      import { pageConsolidated, failedHistoryBook } from './scripts/dev/page-book';
       import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_ACCOUNT_RETURN_RECORDS } from './src/data/glowData';
       const book = { accounts: BOOK_ACCOUNTS, positions: BOOK_POSITIONS, accountReturnRecords: BOOK_ACCOUNT_RETURN_RECORDS, privateMarkets: {} };
-      export const cards = (display) => availableCardReturns(book, dedupedPositions(display), statementReturnInputs(book), new Date());
+      // THE PAGE'S OWN ROWS ON THIS RUN (Stage 10la): the overlays with no quote
+      // feed, every price history refused, and the saved action capture read.
+      export const cards = (_display, actions) => {
+        const shown = pageConsolidated(actions);
+        return availableCardReturns(book, shown, statementReturnInputs(book), new Date(), failedHistoryBook(shown, actions));
+      };
     `, resolveDir: rootPath }, bundle: true, write: false, format: 'esm', platform: 'node', alias: { '@': rootPath + '/src' }, logLevel: 'error' });
     const mod = await import(`data:text/javascript;base64,${Buffer.from(out.outputFiles[0].text).toString('base64')}`);
-    return mod.cards(bookArray(readFileSync(new URL('../src/data/glowData.ts', import.meta.url), 'utf8'), 'BOOK_POSITIONS'));
+    const saved = (() => { try { return JSON.parse(readFileSync(new URL('../public/data/corporate-actions.json', import.meta.url), 'utf8')); } catch { return null; } })();
+    return mod.cards(bookArray(readFileSync(new URL('../src/data/glowData.ts', import.meta.url), 'utf8'), 'BOOK_POSITIONS'), saved);
   } catch (e) { console.error('Headline coverage inputs unavailable:', e.message); return null; }
 })();
 const headlineMatches = (tile, expected, field = 'return') => {
@@ -18844,7 +18852,8 @@ const headlineMatches = (tile, expected, field = 'return') => {
     // A quote feed can add custody shares to this no-feed display baseline.
     && Number(raw.cardHoldings) >= expected.totalHoldings
     && Number(raw.cardAccounts) === expected.coveredAccounts
-    && /Available data/.test(tile.sub ?? '');
+    // The three return cards say how much of the public investments they cover (Stage 10la).
+    && (raw.cardPeriod != null ? /Covers \d+% of public investments/.test(tile.sub ?? '') : /Available data/.test(tile.sub ?? ''));
 };
 
 const CIO_SHARED = [
@@ -19507,6 +19516,25 @@ const CIO_BOOK_RETURN = [
     const tile = ctx?.kpiTiles?.find(x => x.slot === 'fytd');
     return headlineMatches(tile, AVAILABLE_CARDS_BOOK?.fytd) && /FYTD/.test(tile.second ?? '')
       && !!tile.coverage.cardFrom && !!tile.coverage.cardTo;
+  }],
+];
+
+/**
+ * ── THE CALENDAR-YEAR CARD READS YTD FROM THE FIRST DATE WE HAVE (Stage 10kq) ─
+ *
+ * It asked for a value on 31 December, which no statement here carries, and
+ * read one fund of 509 holdings — Helios, the one account that opens at nil.
+ * It now reads the Monitor's YTD record (`ytdSelection`), re-derived here off
+ * `glowData.ts`: the same figure and coverage, at least every account the
+ * financial year reads, and a face that says when it is not a full year.
+ */
+const CIO_YTD_CARD = [
+  ["the calendar-year card reads YTD from the first date we have, never a strict 31 Dec opening", (t, ctx) => {
+    const tile = ctx?.kpiTiles?.find(x => x.slot === 'ytd'), r = AVAILABLE_CARDS_BOOK?.ytd;
+    return !!r && headlineMatches(tile, r)
+      && r.coveredAccounts >= AVAILABLE_CARDS_BOOK.fytd.coveredAccounts && r.coveredHoldings > 1
+      && (r.fullPeriod ? /^YTD ·/.test(tile.second ?? '') : /^YTD from first dated value ·/.test(tile.second ?? ''))
+      && tile.coverage.cardFrom === r.from && tile.coverage.cardTo === r.to;
   }],
 ];
 
@@ -27371,6 +27399,7 @@ const INVARIANTS = {
   "cio-attribution-legacy": [...CIO_SHARED, ...CIO_SEGMENTS_LEGACY],
   "cio-nav": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_NAV, ...NAV_BENCH, ...NAV_BENCH_OFFLINE, ...NAV_BASIS, ...NAV_STARTS],
   "cio-tiles-saved": CIO_TILES_SAVED,
+  "cio-ytd-card": [...CIO_SHARED, ...CIO_YTD_CARD],
   "cio-return-metrics": [...CIO_RETURN_RETIREMENT, ...CIO_ALLOC.filter(([description]) => CIO_OPTIONAL_CAPITAL_CHECKS.has(description))],
   ...Object.fromEntries(["annualised", "fytd", "ytd"].map((kind) => [`performance-${kind}`, [
     ["the tile's address opens its own return, period and coverage", (t, ctx) =>
@@ -31905,7 +31934,7 @@ const INVARIANTS = {
 
   monitor: [
     /**
-     * NEVER A RETURN WITH NOTHING UNDER IT (Stage 10la).
+     * NEVER A RETURN WITH NOTHING UNDER IT (Stage 10lc).
      *
      *   *"It should never show blank."*
      *
@@ -41657,7 +41686,7 @@ for (const theme of THEMES) {
        * wherever the table has rows.
        */
       /**
-       * EVERY RETURN ON THE MONITOR AND ITS INDEX LINE (Stage 10la), off their
+       * EVERY RETURN ON THE MONITOR AND ITS INDEX LINE (Stage 10lc), off their
        * handles: each return cell that shows a figure — a row's, an opened
        * line's, a section's, the footer's — and the `[data-bench]` line under
        * it, with whether a dash there names its cause (`[data-absent-label]`).
@@ -41690,7 +41719,7 @@ for (const theme of THEMES) {
       const monitorFoot = FAST ? null : await page.evaluate(() => {
         const f = document.querySelector("tfoot tr[data-footer-total]");
         if (!f) return null;
-        // THE FIGURE WITHOUT ITS INDEX LINE (Stage 10la): the line under a
+        // THE FIGURE WITHOUT ITS INDEX LINE (Stage 10lc): the line under a
         // return is a figure of its own on its own handle (`[data-bench]`).
         const faceOf = (el) => {
           const b = [...el.querySelectorAll("[data-bench]")];
@@ -42840,7 +42869,7 @@ for (const theme of THEMES) {
         };
       });
       const categoryTotals = FAST ? null : await page.evaluate(() => {
-        // THE FIGURE WITHOUT ITS INDEX LINE (Stage 10la): the line under a
+        // THE FIGURE WITHOUT ITS INDEX LINE (Stage 10lc): the line under a
         // return is a figure of its own on its own handle (`[data-bench]`).
         const faceOf = (el) => {
           const b = [...el.querySelectorAll("[data-bench]")];
@@ -43200,7 +43229,7 @@ for (const theme of THEMES) {
       const footerCells = FAST ? null : await page.evaluate(() => {
         const tr = document.querySelector("tfoot tr");
         if (!tr) return null;
-        // THE FIGURE WITHOUT ITS INDEX LINE (Stage 10la): the line under a
+        // THE FIGURE WITHOUT ITS INDEX LINE (Stage 10lc): the line under a
         // return is a figure of its own on its own handle (`[data-bench]`).
         const faceOf = (el) => {
           const b = [...el.querySelectorAll("[data-bench]")];
