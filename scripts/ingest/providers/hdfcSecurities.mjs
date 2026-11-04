@@ -23,18 +23,26 @@
 // four extra holdings carried in the trading view's document under their own
 // source.
 //
+// A third export, `3110320_Equity_Trade_Details_Report.xlsx`, is the account's
+// trades, one row per FILL, over the window its header prints
+// (`readTradeDetails`, below).
+//
 // ── WHOSE ACCOUNT ─────────────────────────────────────────────────────────────
 //
-// Neither file prints a holder. `HOLDER_BY_TRADING_ACCOUNT` is the committed
-// answer and says what it rests on; the reader names it on the document
-// (`owner-from-register`) rather than resolving a name nobody printed.
+// Neither portfolio file prints a holder. `HOLDER_BY_TRADING_ACCOUNT` is the
+// committed answer and says what it rests on; the reader names it on the
+// document (`owner-from-register`) rather than resolving a name nobody printed.
+// The trade details report does print one, and it must agree.
 import { parseNum } from "../lib/parseNum.mjs";
-import { makeHolding, makeTotals, deriveDocument } from "../lib/document.mjs";
+import { makeHolding, makeTotals, deriveDocument, makeTransaction } from "../lib/document.mjs";
 import { findHeader, readRows } from "../lib/sheet.mjs";
 import { securityKeyOf } from "../../../shared/securityKey.mjs";
 
-// The two exports, told apart by their own first lines (lib/classify.mjs).
-import { HDFC_SECURITIES, INVESTRIGHT_EQUITY as EQUITY_PORTFOLIO, INVESTRIGHT_DEMAT as DEMAT_PORTFOLIO } from "../lib/classify.mjs";
+// The three exports, told apart by their own first lines (lib/classify.mjs).
+import {
+  HDFC_SECURITIES, INVESTRIGHT_EQUITY as EQUITY_PORTFOLIO, INVESTRIGHT_DEMAT as DEMAT_PORTFOLIO,
+  TRADE_DETAILS, toIso,
+} from "../lib/classify.mjs";
 
 export const PROVIDER = HDFC_SECURITIES;
 
@@ -94,7 +102,168 @@ export function extract({ grid, meta = {} }) {
   const text = rows.map((r) => r.join(" ")).join("\n");
   if (EQUITY_PORTFOLIO.test(text)) return readEquityPortfolio(rows, text, meta);
   if (DEMAT_PORTFOLIO.test(text)) return readDematPortfolio(rows, meta);
+  if (TRADE_DETAILS.test(text.replace(/\s+/g, " "))) return readTradeDetails(rows, meta);
   return null;
+}
+
+// ── THE EQUITY TRADE DETAILS REPORT ─────────────────────────────────────────
+
+const TRADE_COLUMNS = {
+  scrip:         [/^scrip name$/],
+  date:          [/^trade date$/],
+  tradeNo:       [/^trade no$/],
+  orderNo:       [/^order no$/],
+  exchange:      [/^exchange$/],
+  settNo:        [/^sett no$/],
+  settType:      [/^sett type$/],
+  side:          [/^buy sell$/],
+  quantity:      [/^qty$/],
+  price:         [/^market price$/],
+  value:         [/^market value$/],
+  delivery:      [/^squp del$/],
+  brokerage:     [/^brok amount$/],
+  gst:           [/^gst$/],
+  stamp:         [/^stamp duty$/],
+  txn:           [/^transaction charges$/],
+  gstTxn:        [/^gst on transaction charges$/],
+  stt:           [/^stt$/],
+  sebi:          [/^sebi turnover taxes$/],
+  eduCess:       [/^edu cess$/],
+  higherEduCess: [/^higher edu cess$/],
+  other:         [/^other charges$/],
+  net:           [/^net amount$/],
+  product:       [/^product$/],
+};
+/** Every charge the row prints; Net Amount is the market value less (a sell) or plus (a buy) their sum. */
+const CHARGE_FIELDS = ["brokerage", "gst", "stamp", "txn", "gstTxn", "sebi", "eduCess", "higherEduCess", "other"];
+
+/**
+ * A SCRIP NAME THE BROKER CLIPS, pinned by the account's own statements.
+ * Nothing else is aliased; every other scrip keys from the name it prints.
+ *
+ * `MAN INDUSTRIES (I) LTD.` keys `man-industries-i`, and the holding it sold
+ * keys `man-industries-india`. The 30 June review's HDFC Bank block holds
+ * 5,17,317 Man Industries for Ajay, the InvestRight portfolio of 2 November
+ * holds 4,80,000 MANINDS on this account, and this report sells 37,317
+ * `MAN INDUSTRIES (I) LTD.` on 23 September — the whole difference.
+ */
+const EVIDENCED_SCRIPS = Object.freeze({
+  "MAN INDUSTRIES (I) LTD.": {
+    security: "MAN INDUSTRIES (INDIA) LIMITED",
+    why: "the 30 June 2026 review's HDFC Bank block holds 5,17,317 Man Industries for Ajay and the 2 November InvestRight portfolio holds 4,80,000 MANINDS on this account; the 37,317 sold here on 23 Sep 2026 are the whole difference",
+  },
+});
+
+/**
+ * A header date as the workbook stores it: an Excel serial (`46113` is
+ * 1 April 2026), or `dd-Mon-yyyy` text. The export's own download stamp is
+ * `11/2/2026` — month first — so a numeric `d/m` string is never guessed at.
+ */
+function sheetDate(v) {
+  const s = String(v ?? "").trim();
+  if (/^\d{5}(\.\d+)?$/.test(s)) {
+    return new Date(Date.UTC(1899, 11, 30) + Math.floor(Number(s)) * 864e5).toISOString().slice(0, 10);
+  }
+  return /^\d{1,2}-[A-Za-z]{3}-\d{4}$/.test(s) ? toIso(s) : null;
+}
+
+const sameName = (a, b) => String(a ?? "").replace(/\s+/g, " ").trim().toUpperCase() === String(b ?? "").replace(/\s+/g, " ").trim().toUpperCase();
+
+/**
+ * One row per FILL: an order split into many trades is many rows, each with its
+ * own trade number, quantity, price and charges. Two fills of the same size at
+ * the same price on one day are two events (build-book keeps a repeat within
+ * one document), so nothing is merged here.
+ *
+ * Every row is checked against itself before it is read: QTY × MARKET PRICE is
+ * the MARKET VALUE to the paisa, and the market value less (a sell) or plus (a
+ * buy) its nine charges and STT is the printed NET AMOUNT to the rupee — the
+ * charges are printed rounded from unrounded components, and across this
+ * report's 466 fills the largest gap is ₹0.82.
+ */
+function readTradeDetails(rows, meta) {
+  const warnings = [];
+  const source = meta.docKey ?? null;
+  const field = (label) => rows.find((r) => sameName(r?.[0], label))?.[1] ?? null;
+  const accountNo = String(field("Trading ID") ?? "").trim() || null;
+  const printedHolder = String(field("Customer Name") ?? "").trim() || null;
+  const periodFrom = sheetDate(field("Start Date"));
+  const periodTo = sheetDate(field("End Date"));
+  const base = { provider: PROVIDER, accountNo, reportType: "transaction-statement", periodFrom, periodTo, asOf: periodTo };
+
+  const holder = HOLDER_BY_TRADING_ACCOUNT[accountNo] ?? null;
+  // The printed name, spelled as the register spells it where the two agree.
+  let owner = printedHolder;
+  if (holder && printedHolder && !sameName(holder.owner, printedHolder)) {
+    warn(warnings, "owner-differs-from-register",
+      `the report prints ${printedHolder} as the holder of trading account ${accountNo}; HOLDER_BY_TRADING_ACCOUNT records ${holder.owner} (${holder.via})`);
+  } else if (holder) owner = holder.owner;
+  if (!periodFrom || !periodTo) {
+    warn(warnings, "period-not-read", `the header's Start Date \`${field("Start Date")}\` / End Date \`${field("End Date")}\` were not read as dates; no trade is read without the window it belongs to`);
+    return { ...base, owner, warnings, transactions: [] };
+  }
+
+  const header = findHeader(rows, TRADE_COLUMNS, { minFields: 18, require: ["scrip", "date", "tradeNo", "side", "quantity", "price", "value", "stt", "net", ...CHARGE_FIELDS] });
+  if (!header) {
+    warn(warnings, "header-not-matched",
+      "the `Scrip Name | Trade Date | Trade No. | … | Buy/Sell | Qty | Market Price | Market Value | … | Net Amount` header, with every charge column, was not found; nothing is read rather than reading columns by position");
+    return { ...base, owner, warnings, transactions: [] };
+  }
+
+  const transactions = [];
+  const evidenced = new Set();
+  for (const { fields: f, row } of readRows(rows, header, { requireField: "scrip" })) {
+    const scrip = String(f.scrip).replace(/\s+/g, " ").trim();
+    const date = sheetDate(f.date);
+    const side = /^buy$/i.test(f.side) ? "buy" : /^sell$/i.test(f.side) ? "sell" : null;
+    const quantity = num(f.quantity);
+    const price = num(f.price);
+    const value = num(f.value);
+    const net = num(f.net);
+    const stt = num(f.stt);
+    const charges = CHARGE_FIELDS.map((k) => num(f[k]));
+    const fails = [];
+    if (!date) fails.push(`trade date \`${f.date}\` not read`);
+    else if (date < periodFrom || date > periodTo) fails.push(`trade date ${date} is outside the report's window ${periodFrom} – ${periodTo}`);
+    if (!side) fails.push(`Buy/Sell \`${f.side}\` is neither`);
+    if (!(quantity > 0) || !(price > 0)) fails.push("no quantity or market price");
+    else if (!close(quantity * price, value, 0.01)) fails.push(`QTY × MARKET PRICE is ${(quantity * price).toFixed(2)}, not the printed MARKET VALUE ${f.value}`);
+    if (stt == null || charges.some((c) => c == null) || net == null) fails.push("a charge or the net amount is blank");
+    else if (side && value != null) {
+      const all = stt + charges.reduce((a, c) => a + c, 0);
+      const derived = side === "sell" ? value - all : value + all;
+      if (!close(derived, net, 1)) fails.push(`MARKET VALUE ${side === "sell" ? "less" : "plus"} its charges is ${derived.toFixed(2)}, not the printed NET AMOUNT ${f.net}`);
+    }
+    if (fails.length) { warn(warnings, "trade-row-not-read", `row ${row + 1} (${scrip} ${f.date}, trade ${f.tradeNo}): ${fails.join("; ")}`); continue; }
+
+    const alias = EVIDENCED_SCRIPS[scrip];
+    if (alias) evidenced.add(scrip);
+    transactions.push(makeTransaction({
+      date,
+      settlementDate: null,
+      side,
+      security: alias?.security ?? scrip,
+      exchange: String(f.exchange ?? "").trim().toUpperCase() || null,
+      assetClass: "Equity",
+      description: `${alias ? `${scrip}: ` : ""}trade ${f.tradeNo}, order ${f.orderNo}, settlement ${f.settNo} (${f.settType}${/^d$/i.test(String(f.delivery).trim()) ? ", delivery" : `, ${f.delivery}`})`,
+      quantity,
+      unitPrice: price,
+      stt,
+      otherCharges: Math.round(charges.reduce((a, c) => a + c, 0) * 100) / 100,
+      settlementAmount: net,
+      source,
+    }));
+  }
+  if (evidenced.size) {
+    warn(warnings, "scrip-name-evidenced",
+      `the report clips ${evidenced.size} scrip name(s); each trade is named as the account's holding it sold: ${[...evidenced].map((s) => `${s} → ${EVIDENCED_SCRIPS[s].security} (${EVIDENCED_SCRIPS[s].why})`).join("; ")}`);
+  }
+  if (!transactions.length) warn(warnings, "no-trade-rows", "no row under the header reproduced its own market value and net amount");
+
+  // No `providerEngagement`: build-book describes the account by the first
+  // document that prints one, and the account is the equity portfolio's — this
+  // report only dates its trades.
+  return { ...base, owner, engagement: "Direct", warnings, transactions };
 }
 
 function readEquityPortfolio(rows, text, meta) {

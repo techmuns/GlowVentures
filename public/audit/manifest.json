@@ -7020,8 +7020,9 @@
    "pages"
   ],
   "status": "failed",
-  "warnings": 1,
+  "warnings": 2,
   "failedBecause": "attachment-removed",
+  "resentAs": "source/november-2026-c/3110320_Equity_Trade_Details_Report (3).xlsx",
   "fileKey": "unknown-unknown-unknown-unknown",
   "label": "(unidentified) · unknown",
   "fy": "",
@@ -14302,6 +14303,36 @@
     "rows": 5,
     "cols": 4
    },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 1,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "hdfc-securities-3110320-2026-10-31-transaction-statement",
+  "provider": "HDFC Securities",
+  "accountNo": "3110320",
+  "owner": "Ajay Jaisinghani",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-10-31",
+  "reportType": "transaction-statement",
+  "sourcePath": "source/november-2026-c/3110320_Equity_Trade_Details_Report (3).xlsx",
+  "pages": 1,
+  "sections": [
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 1,
+  "fileKey": "hdfc-securities-3110320-2026-10-31-transaction-statement",
+  "label": "HDFC Securities · 3110320 · transaction-statement",
+  "fy": "2026-10-31",
+  "source": "source/november-2026-c/3110320_Equity_Trade_Details_Report (3).xlsx",
+  "sheets": [
    {
     "key": "pages",
     "name": "Raw page text",

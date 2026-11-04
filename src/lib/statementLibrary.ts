@@ -34,6 +34,8 @@ export interface ManifestEntry {
   status: "ok" | "partial" | "failed" | "encrypted";
   /** A failed document's first warning code — `attachment-removed` is a statement that never arrived. */
   failedBecause?: string | null;
+  /** For a statement that never arrived: the copy the sender re-sent, which is read. */
+  resentAs?: string;
   warnings: number;
   fileKey: string;
   label: string;
@@ -60,7 +62,7 @@ export interface LibraryDoc {
    * keeps it `failed` — build-book, the reconcile and source-coverage all key on
    * that — but on this page "Failed" would say it could not be read.
    */
-  status: ManifestEntry["status"] | "held-out" | "never-arrived";
+  status: ManifestEntry["status"] | "held-out" | "never-arrived" | "re-sent";
   warnings: number;
   /** Where this file arrived — the delivery folder or archive it came in. */
   delivery: string;
@@ -179,7 +181,7 @@ const isNotAStatement = (provider: string): boolean => provider.toLowerCase().in
 
 /** The status a document shows — see `LibraryDoc.status`. */
 function displayStatus(e: ManifestEntry): LibraryDoc["status"] {
-  if (e.status === "failed" && e.failedBecause === "attachment-removed") return "never-arrived";
+  if (e.status === "failed" && e.failedBecause === "attachment-removed") return e.resentAs ? "re-sent" : "never-arrived";
   return e.status === "failed" && isNotAStatement(e.provider ?? "") ? "held-out" : e.status;
 }
 
@@ -220,7 +222,7 @@ function folderStats(docs: readonly LibraryDoc[]) {
   const formats = new Set<string>();
   const owners = new Set<string>();
   const accounts = new Set<string>();
-  const status = { ok: 0, partial: 0, failed: 0, encrypted: 0, "held-out": 0, "never-arrived": 0 };
+  const status = { ok: 0, partial: 0, failed: 0, encrypted: 0, "held-out": 0, "never-arrived": 0, "re-sent": 0 };
   let asOfFrom: string | null = null;
   let asOfTo: string | null = null;
   for (const d of docs) {
