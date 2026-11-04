@@ -205,7 +205,7 @@ export function assumedBookNav(input: {
      * of their own, so a share priced every day never makes them look freshly
      * valued: Ajay's ICICI demat keeps the listings no published price reaches
      * at its 31 Oct statement, and the card names them as carried from then
-     * (Stage 10kp). Where the account was valued BEFORE the shares' statement too, its
+     * (Stage 10ku). Where the account was valued BEFORE the shares' statement too, its
      * earlier value is the whole account's and cannot be split, so the two stay
      * one investment.
      */

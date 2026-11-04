@@ -1,0 +1,1123 @@
+{
+ "_provenance": "Public reporting about the family's private companies, read from Glow Central Research's published captures — never the family's statements. Funding rows are Inc42's weekly Funding Galore tables (date, round, round size, investors, lead investor, sector, subsector, business model), matched to a company by its exact name; headlines are those that name the company, matched there by reviewed name. Written by `npm run import-private-market`; never edit by hand.",
+ "funding": {
+  "source": "https://inc42.com/tag/funding-galore/",
+  "via": "https://glow-central-research.tech-441.workers.dev/data/private-market-news.json",
+  "sourceCheckedOn": "2026-11-04",
+  "capturedOn": "2026-11-04",
+  "archive": {
+   "complete": false,
+   "pagesRead": 41,
+   "pages": 48
+  },
+  "roundups": 571,
+  "rowsRead": 3220,
+  "from": "2023-08-15",
+  "to": "2026-10-30",
+  "rows": [
+   {
+    "id": "8224ccb0690e69718c6a9652",
+    "company": "assetgro-fintech",
+    "date": "2026-10-06",
+    "dateText": "6 Oct 2026",
+    "name": "StockGro",
+    "round": "Series B",
+    "amountText": "$10.4 Mn ***",
+    "amount": {
+     "value": 10400000,
+     "currency": "USD"
+    },
+    "footnote": "Part of a larger round",
+    "investors": [
+     "BITKRAFT Ventures",
+     "Aditum Venture Capital Fund",
+     "India SME Growth Fund",
+     "Sunil Shetty (Actor)"
+    ],
+    "leadInvestors": [
+     "BITKRAFT Ventures"
+    ],
+    "sector": "Fintech",
+    "subsector": "Investment Tech",
+    "businessModel": "B2C",
+    "url": "https://inc42.com/buzz/from-dailyobjects-to-stockgro-indian-startups-raised-about-123-mn-this-week/",
+    "title": "From DailyObjects To StockGro — Indian Startups Raised About $123 Mn This Week",
+    "published": "2026-10-10",
+    "fold": {
+     "key": "2026-10-06|Series B extension",
+     "why": "an investor both name, the same day, the same series"
+    }
+   },
+   {
+    "id": "af05350a67349aa4572c028c",
+    "company": "assetgro-fintech",
+    "date": "2025-12-19",
+    "dateText": "19 Dec 2025",
+    "name": "StockGro",
+    "round": "Series B",
+    "amountText": "$13 Mn",
+    "amount": {
+     "value": 13000000,
+     "currency": "USD"
+    },
+    "footnote": null,
+    "investors": [
+     "BITKRAFT Ventures"
+    ],
+    "leadInvestors": [
+     "BITKRAFT Ventures"
+    ],
+    "sector": "Fintech",
+    "subsector": "Investment Tech",
+    "businessModel": "B2C",
+    "url": "https://inc42.com/buzz/from-moengage-to-digantara-indian-startups-raised-347-mn-this-week/",
+    "title": "From MoEngage To Digantara — Indian Startups Raised $347 Mn This Week",
+    "published": "2025-12-20",
+    "fold": {
+     "key": "2025-12-19|Series B1",
+     "why": "the same amount, an investor both name, the same day"
+    }
+   },
+   {
+    "id": "8efd7834081782a1f7c96b54",
+    "company": "assetgro-fintech",
+    "date": "2025-12-02",
+    "dateText": "2 Dec 2025",
+    "name": "StockGro",
+    "round": "Series B",
+    "amountText": "$16.7 Mn",
+    "amount": {
+     "value": 16700000,
+     "currency": "USD"
+    },
+    "footnote": null,
+    "investors": [
+     "Mukul Agrawal (Param Capital)"
+    ],
+    "leadInvestors": [
+     "Mukul Agrawal (Param Capital)"
+    ],
+    "sector": "Fintech",
+    "subsector": "Investment Tech",
+    "businessModel": "B2C",
+    "url": "https://inc42.com/buzz/from-ultraviolette-to-furlenco-indian-startups-raised-133-mn-this-week/",
+    "title": "From Ultraviolette To Furlenco— Indian Startups Raised $133 Mn This Week",
+    "published": "2025-12-06",
+    "fold": {
+     "key": "2025-11-28|Series B",
+     "why": "the same amount, an investor both name, the same series"
+    }
+   },
+   {
+    "id": "d3e25e556b712a2b54f8b3f8",
+    "company": "autocracy-machinery",
+    "date": "2023-09-26",
+    "dateText": "26 Sept 2023",
+    "name": "Autocracy Machinery",
+    "round": "Seed",
+    "amountText": "$1.2 Mn",
+    "amount": {
+     "value": 1200000,
+     "currency": "USD"
+    },
+    "footnote": null,
+    "investors": [
+     "Venture Catalysts",
+     "Nikhil Jaisinghani",
+     "Bharat Jaisinghani",
+     "Meghna Agarwal",
+     "Abhishek Rungta",
+     "Srikanth Iyengar",
+     "Abhishek Modi",
+     "VC Grid",
+     "S Four capital"
+    ],
+    "leadInvestors": [
+     "Venture Catalysts"
+    ],
+    "sector": "Agritech",
+    "subsector": "Farm Inputs",
+    "businessModel": "B2B",
+    "url": "https://inc42.com/buzz/from-bright-money-to-doceree-indian-startups-raised-194-mn-this-week/",
+    "title": "From Bright Money To Doceree — Indian Startups Raised $194 Mn This Week",
+    "published": "2023-09-30",
+    "familyNamed": [
+     "Bharat Jaisinghani"
+    ],
+    "fold": {
+     "key": "2023-09-25|Seed",
+     "why": "the same amount, an investor both name, the same series"
+    }
+   },
+   {
+    "id": "fb9d0e4cedd63fcad858c59c",
+    "company": "big-bang-boom-solutions",
+    "date": "2024-09-20",
+    "dateText": "20 Sep 2024",
+    "name": "Big Bang Boom",
+    "round": null,
+    "amountText": "$30 Mn",
+    "amount": {
+     "value": 30000000,
+     "currency": "USD"
+    },
+    "footnote": null,
+    "investors": [
+     "Mumbai Angels Network",
+     "Vyom Family Office",
+     "SBI Startup Branch Chennai",
+     "Asquare Investing"
+    ],
+    "leadInvestors": [],
+    "sector": "Deeptech",
+    "subsector": "Defensetech",
+    "businessModel": "B2B",
+    "url": "https://inc42.com/buzz/from-physics-wallah-to-ibus-indian-startups-raised-447-mn-this-week/",
+    "title": "From Physics Wallah To iBUS – Indian Startups Raised $447 Mn This Week",
+    "published": "2024-09-21",
+    "fold": {
+     "key": "2024-09-20|Growth round (primary + secondary)",
+     "why": "the same amount, an investor both name, the same day"
+    }
+   },
+   {
+    "id": "094f71432a5d0bfb63881bab",
+    "company": "everest-fleet",
+    "date": "2024-09-19",
+    "dateText": "19 Sep 2024",
+    "name": "Everest Fleet",
+    "round": "Series C",
+    "amountText": "$30 Mn",
+    "amount": {
+     "value": 30000000,
+     "currency": "USD"
+    },
+    "footnote": null,
+    "investors": [
+     "Uber"
+    ],
+    "leadInvestors": [
+     "Uber"
+    ],
+    "sector": "Travel Tech",
+    "subsector": "Transpor Tech",
+    "businessModel": "B2B-B2C",
+    "url": "https://inc42.com/buzz/from-physics-wallah-to-ibus-indian-startups-raised-447-mn-this-week/",
+    "title": "From Physics Wallah To iBUS – Indian Startups Raised $447 Mn This Week",
+    "published": "2024-09-21",
+    "fold": {
+     "key": "2024-09-19|Series C",
+     "why": "the same amount, an investor both name, the same day, the same series"
+    }
+   },
+   {
+    "id": "e33097b7d509d7a880288e70",
+    "company": "everest-fleet",
+    "date": "2023-09-21",
+    "dateText": "21 Sept 2023",
+    "name": "Everest Fleet",
+    "round": null,
+    "amountText": "$6 Mn",
+    "amount": {
+     "value": 6000000,
+     "currency": "USD"
+    },
+    "footnote": null,
+    "investors": [
+     "Paragon Partners"
+    ],
+    "leadInvestors": [],
+    "sector": "Travel Tech",
+    "subsector": "Transport Tech",
+    "businessModel": "B2B-B2C",
+    "url": "https://inc42.com/buzz/from-kuku-fm-to-eloelo-indian-startups-raised-91-mn-this-week/",
+    "title": "From Kuku FM To Eloelo — Indian Startups Raised $91 Mn This Week",
+    "published": "2023-09-23",
+    "fold": {
+     "key": "2023-09-21|Strategic round",
+     "why": "the same amount, an investor both name, the same day"
+    }
+   },
+   {
+    "id": "8962b02a212684c6d72873df",
+    "company": "gsharp-media",
+    "date": "2025-11-18",
+    "dateText": "18 Nov 2025",
+    "name": "Hoopr",
+    "round": "Pre-Series A",
+    "amountText": "$451K",
+    "amount": {
+     "value": 451000,
+     "currency": "USD"
+    },
+    "footnote": null,
+    "investors": [
+     "Inflection Point Ventures"
+    ],
+    "leadInvestors": [
+     "Inflection Point Ventures"
+    ],
+    "sector": "Media & Entertainment",
+    "subsector": "OTT",
+    "businessModel": "B2C",
+    "url": "https://inc42.com/buzz/from-yubi-to-agrostar-indian-startups-raised-171-mn-funding-this-week/",
+    "title": "From Yubi To AgroStar — Indian Startups Raised $171 Mn Funding This Week",
+    "published": "2025-11-22",
+    "fold": {
+     "key": "2025-11-17|Pre-Series A (first tranche)",
+     "why": "an investor both name, the same series"
+    }
+   },
+   {
+    "id": "dc9936197e1658f52346632e",
+    "company": "incred-holdings",
+    "date": "2023-12-25",
+    "dateText": "25 Dec 2023",
+    "name": "InCred",
+    "round": "Series D",
+    "amountText": "$60 Mn",
+    "amount": {
+     "value": 60000000,
+     "currency": "USD"
+    },
+    "footnote": null,
+    "investors": [
+     "Ranjan Pai",
+     "Ravi Pillai",
+     "Ram Nayak",
+     "Varanium Capital Advisors",
+     "Sattva Group"
+    ],
+    "leadInvestors": [
+     "Ranjan Pai"
+    ],
+    "sector": "Fintech",
+    "subsector": "Lendingtech",
+    "businessModel": "B2B-B2C",
+    "url": "https://inc42.com/buzz/from-incred-to-revfin-indian-startups-raised-90-mn-this-week/",
+    "title": "From InCred To Revfin— Indian Startups Raised $90 Mn This Week",
+    "published": "2023-12-30",
+    "fold": {
+     "key": "2023-12-25|Series D",
+     "why": "the same amount, an investor both name, the same day, the same series"
+    }
+   },
+   {
+    "id": "90229dd2dc83876016ac290f",
+    "company": "innoviti",
+    "date": "2025-03-06",
+    "dateText": "6 Mar 2025",
+    "name": "Innoviti",
+    "round": null,
+    "amountText": "$4 Mn",
+    "amount": {
+     "value": 4000000,
+     "currency": "USD"
+    },
+    "footnote": null,
+    "investors": [
+     "Ashutosh Joshi",
+     "Bessemer Venture Partners"
+    ],
+    "leadInvestors": [],
+    "sector": "Fintech",
+    "subsector": "Payments",
+    "businessModel": "B2B",
+    "url": "https://inc42.com/buzz/from-darwinbox-to-insurancedekho-indian-startups-raised-386-mn-this-week/",
+    "title": "From Darwinbox To InsuranceDekho — Indian Startups Raised $386 Mn This Week",
+    "published": "2025-03-08",
+    "fold": null
+   },
+   {
+    "id": "6e52aa26c3fce00be5ebaa86",
+    "company": "innoviti",
+    "date": "2024-08-12",
+    "dateText": "12 Aug 2024",
+    "name": "Innoviti",
+    "round": "Series E",
+    "amountText": "$8.3 Mn",
+    "amount": {
+     "value": 8300000,
+     "currency": "USD"
+    },
+    "footnote": null,
+    "investors": [
+     "Random Walk Solutions",
+     "Bessemer Venture Partners",
+     "Patni Family Office India",
+     "Alumni Ventures"
+    ],
+    "leadInvestors": [
+     "Random Walk Solutions"
+    ],
+    "sector": "Fintech",
+    "subsector": "Payments",
+    "businessModel": "B2B",
+    "url": "https://inc42.com/buzz/from-oyo-to-ather-energy-indian-startups-raised-395-mn-this-week/",
+    "title": "From OYO to Ather Energy- Indian Startups Raised $395 Mn This Week",
+    "published": "2024-08-17",
+    "fold": {
+     "key": "2024-08-12|Series E (second tranche)",
+     "why": "the same amount, an investor both name, the same day, the same series"
+    }
+   },
+   {
+    "id": "1c62fc0aebb5e4da28f0ed4b",
+    "company": "innoviti",
+    "date": "2024-04-01",
+    "dateText": "1 Apr 2024",
+    "name": "Innoviti",
+    "round": null,
+    "amountText": "$4.8 Mn",
+    "amount": {
+     "value": 4800000,
+     "currency": "USD"
+    },
+    "swapped": true,
+    "footnote": null,
+    "investors": [
+     "Bessemer Venture Partners",
+     "Patni Family Office"
+    ],
+    "leadInvestors": [
+     "Bessemer Venture Partners",
+     "Patni Family Office"
+    ],
+    "sector": "Fintech",
+    "subsector": "Payments",
+    "businessModel": "B2B-B2C",
+    "url": "https://inc42.com/buzz/from-ola-electric-to-namdev-finvest-indian-startups-raised-151-mn-this-week/",
+    "title": "From Ola Electric To Namdev Finvest — Indian Startups Raised $151 Mn This Week",
+    "published": "2024-04-06",
+    "fold": {
+     "key": "2024-04-01|Series E (first close)",
+     "why": "an investor both name, the same day"
+    }
+   },
+   {
+    "id": "af39b554b64689ffba80e2a1",
+    "company": "karban-envirotech",
+    "date": "2024-04-24",
+    "dateText": "24 Apr 2024",
+    "name": "KARBAN Envirotech",
+    "round": "Seed",
+    "amountText": "$1.07 Mn",
+    "amount": {
+     "value": 1070000,
+     "currency": "USD"
+    },
+    "footnote": null,
+    "investors": [
+     "All in Capitals",
+     "Titan Capital",
+     "Rainmatter",
+     "Urban Company",
+     "JK family office",
+     "Anupam Mittal",
+     "Kunal Shah",
+     "Natasha Malpani Oswa"
+    ],
+    "leadInvestors": [
+     "All in Capitals",
+     "Titan Capital",
+     "Rainmatter"
+    ],
+    "sector": "Ecommerce",
+    "subsector": "D2C",
+    "businessModel": "B2B-B2C",
+    "url": "https://inc42.com/buzz/from-northern-arc-to-dhruva-aerospace-indian-startups-raised-172-mn-this-week/",
+    "title": "From Northern Arc To Dhruva Aerospace — Indian Startups Raised $172 Mn This Week",
+    "published": "2024-04-27",
+    "fold": {
+     "key": "2024-04-24|Seed",
+     "why": "the same amount, an investor both name, the same day, the same series"
+    }
+   },
+   {
+    "id": "cf34137f086d6bed5ffed7f6",
+    "company": "nopo-nanotechnologies",
+    "date": "2024-05-22",
+    "dateText": "22 May 2024",
+    "name": "NoPo Nanotechnologies",
+    "round": "Pre-Series A",
+    "amountText": "$3 Mn",
+    "amount": {
+     "value": 3000000,
+     "currency": "USD"
+    },
+    "footnote": null,
+    "investors": [
+     "Axilor Ventures",
+     "Inflexor Ventures",
+     "Spectrum Impact",
+     "Aureolis"
+    ],
+    "leadInvestors": [
+     "Axilor Ventures",
+     "Inflexor Ventures"
+    ],
+    "sector": "Deeptech",
+    "subsector": "IoT & Hardware",
+    "businessModel": "B2B",
+    "url": "https://inc42.com/buzz/from-navi-finserv-to-portl-indian-startups-raised-58-mn-this-week/",
+    "title": "From Navi Finserv to Portl- Indian Startups Raised $58 Mn This Week",
+    "published": "2024-05-25",
+    "fold": {
+     "key": "2024-05-22|Pre-Series A",
+     "why": "the same amount, an investor both name, the same day, the same series"
+    }
+   },
+   {
+    "id": "0a3126364f99d76aa6a56026",
+    "company": "runable",
+    "date": "2026-08-26",
+    "dateText": "26 Aug 2026",
+    "name": "Runable",
+    "round": "Series A",
+    "amountText": "$21 Mn",
+    "amount": {
+     "value": 21000000,
+     "currency": "USD"
+    },
+    "footnote": null,
+    "investors": [
+     "Susquehanna Venture Capital",
+     "Nexus Venture Partners",
+     "Together Fund",
+     "Array VC"
+    ],
+    "leadInvestors": [
+     "Susquehanna Venture Capital",
+     "Nexus Venture Partners"
+    ],
+    "sector": "AI",
+    "subsector": "Application Layer",
+    "businessModel": "B2B",
+    "url": "https://inc42.com/buzz/from-third-wave-coffee-to-matter-indian-startups-raised-over-210-mn-this-week/",
+    "title": "From Third Wave Coffee To MATTER — Indian Startups Raised Over $210 Mn This Week",
+    "published": "2026-08-29",
+    "fold": {
+     "key": "2026-08-26|Series A",
+     "why": "the same amount, an investor both name, the same day, the same series"
+    }
+   },
+   {
+    "id": "a4ab110133a7311482ce53f3",
+    "company": "stay-vista",
+    "date": "2025-06-26",
+    "dateText": "26 Jun 2025",
+    "name": "StayVista",
+    "round": "Series B",
+    "amountText": "$5 Mn",
+    "amount": {
+     "value": 5000000,
+     "currency": "USD"
+    },
+    "footnote": null,
+    "investors": [
+     "JSW Ventures",
+     "DSG Consumer Partners",
+     "Capri Global Family Office"
+    ],
+    "leadInvestors": [
+     "JSW Ventures"
+    ],
+    "sector": "Travel Tech",
+    "subsector": "Booking Services",
+    "businessModel": "B2C",
+    "url": "https://inc42.com/buzz/from-raphe-mphibr-to-gokwik-indian-startups-raised-278-mn-this-week/",
+    "title": "From Raphe mPhibr To GoKwik — Indian Startups Raised $278 Mn This Week",
+    "published": "2025-06-28",
+    "fold": {
+     "key": "2025-06-26|Series B",
+     "why": "an investor both name, the same day, the same series"
+    }
+   },
+   {
+    "id": "3a0fcca09f9e40673318b599",
+    "company": "swapeco-solutions",
+    "date": "2026-01-28",
+    "dateText": "28 Jan 2026",
+    "name": "ScrapUncle",
+    "round": "Pre-Series A",
+    "amountText": "$2.4 Mn",
+    "amount": {
+     "value": 2400000,
+     "currency": "USD"
+    },
+    "footnote": null,
+    "investors": [
+     "Orios Venture Partners",
+     "Acumen Fund",
+     "Upaya Social Ventures",
+     "Venture Catalysts",
+     "We Founder Circle",
+     "Soonicorn Ventures",
+     "Bharat Jaisinghani"
+    ],
+    "leadInvestors": [
+     "Orios Venture Partners",
+     "Acumen Fund"
+    ],
+    "sector": "Consumer Services",
+    "subsector": "Hyperlocal Serices",
+    "businessModel": "B2C",
+    "url": "https://inc42.com/buzz/from-easy-home-finance-to-4basecare-indian-startups-raised-96-mn-this-week/",
+    "title": "From Easy Home Finance To 4baseCare— Indian Startups Raised $96 Mn This Week",
+    "published": "2026-01-31",
+    "familyNamed": [
+     "Bharat Jaisinghani"
+    ],
+    "fold": {
+     "key": "2026-01-28|Pre-Series A",
+     "why": "the same amount, an investor both name, the same day, the same series"
+    }
+   },
+   {
+    "id": "8ad675830d11aa8342046f16",
+    "company": "swapeco-solutions",
+    "date": "2023-08-29",
+    "dateText": "29 Aug 2023",
+    "name": "ScrapUncle",
+    "round": "Seed",
+    "amountText": "$447K",
+    "amount": {
+     "value": 447000,
+     "currency": "USD"
+    },
+    "footnote": null,
+    "investors": [
+     "Madhuram Papers family office",
+     "Bharat Jaisinghani"
+    ],
+    "leadInvestors": [
+     "Madhuram Papers family office"
+    ],
+    "sector": "Consumer Services",
+    "subsector": "Hyperlocal Services",
+    "businessModel": "B2C",
+    "url": "https://inc42.com/buzz/from-medibuddy-to-satsure-indian-startups-raised-52-mn-this-week/",
+    "title": "From MediBuddy To SatSure — Indian Startups Raised $52 Mn This Week",
+    "published": "2023-09-02",
+    "familyNamed": [
+     "Bharat Jaisinghani"
+    ],
+    "fold": {
+     "key": "2023-08-29|Pre-seed",
+     "why": "an investor both name, the same day"
+    }
+   },
+   {
+    "id": "d9ea6210c59e3de8e9c27dbb",
+    "company": "waterwala-labs",
+    "date": "2026-03-17",
+    "dateText": "17 Mar 2026",
+    "name": "DrinkPrime",
+    "round": null,
+    "amountText": "$2.2 Mn",
+    "amount": {
+     "value": 2200000,
+     "currency": "USD"
+    },
+    "footnote": null,
+    "investors": [
+     "Mirabilis Investment Trust",
+     "Artha Continuum Fund"
+    ],
+    "leadInvestors": [],
+    "sector": "Ecommerce",
+    "subsector": "D2C",
+    "businessModel": "B2C",
+    "url": "https://inc42.com/buzz/from-neo-to-atlys-indian-startups-raised-228-mn-this-week-2/",
+    "title": "From Neo To Atlys— Indian Startups Raised $228 Mn This Week",
+    "published": "2026-03-21",
+    "fold": {
+     "key": "2026-03|Extended Series A (Series A3)",
+     "why": "an investor both name"
+    }
+   },
+   {
+    "id": "b5ea0180f603eeeec87af867",
+    "company": "waterwala-labs",
+    "date": "2024-05-15",
+    "dateText": "15 May 2024",
+    "name": "DrinkPrime",
+    "round": null,
+    "amountText": "$3 Mn",
+    "amount": {
+     "value": 3000000,
+     "currency": "USD"
+    },
+    "footnote": null,
+    "investors": [
+     "SIDBI Venture Capital"
+    ],
+    "leadInvestors": [
+     "SIDBI Venture Capital"
+    ],
+    "sector": "Ecommerce",
+    "subsector": "D2C",
+    "businessModel": "B2C",
+    "url": "https://inc42.com/buzz/from-propelld-to-red-health-indian-startups-raised-122-mn-this-week/",
+    "title": "From Propelld To RED.Health — Indian Startups Raised $122 Mn This Week",
+    "published": "2024-05-18",
+    "fold": {
+     "key": "2024-05-15|Series A extension",
+     "why": "the same amount, an investor both name, the same day"
+    }
+   },
+   {
+    "id": "07faba19656f2074c9a91207",
+    "company": "wevois-labs",
+    "date": "2025-01-17",
+    "dateText": "17 Jan 2025",
+    "name": "WeVOIS",
+    "round": "Series A",
+    "amountText": "$4.2 Mn",
+    "amount": {
+     "value": 4200000,
+     "currency": "USD"
+    },
+    "footnote": null,
+    "investors": [
+     "Negen Capital",
+     "Vyom Wealth",
+     "Venture Catalysts",
+     "SN Capital",
+     "Warmup Ventures",
+     "Marsshot Ventures"
+    ],
+    "leadInvestors": [
+     "Negen Capital",
+     "Vyom Wealth"
+    ],
+    "sector": "Cleantech",
+    "subsector": "Waste Management",
+    "businessModel": "B2B",
+    "url": "https://inc42.com/buzz/from-netradyne-to-foxtale-indian-startups-raised-308-mn-this-week/",
+    "title": "From Netradyne To Foxtale — Indian Startups Raised $308 Mn This Week",
+    "published": "2025-01-18",
+    "fold": {
+     "key": "2025-01-16|Series A",
+     "why": "the same amount, an investor both name, the same series"
+    }
+   },
+   {
+    "id": "4025670564c0d8620f39330a",
+    "company": "zepto",
+    "date": "2025-10-16",
+    "dateText": "16 Oct 2025",
+    "name": "Zepto",
+    "round": null,
+    "amountText": "$450 Mn*",
+    "amount": {
+     "value": 450000000,
+     "currency": "USD"
+    },
+    "footnote": "Mix of primary and secondary transactions",
+    "investors": [
+     "California Public Employees Retirement System",
+     "Avenir",
+     "Avra",
+     "Lightspeed",
+     "Glade Brook",
+     "Stepstone Group",
+     "Nexus Venture Partners"
+    ],
+    "leadInvestors": [
+     "California Public Employees Retirement System"
+    ],
+    "sector": "Consumer Services",
+    "subsector": "Quick Commerce",
+    "businessModel": "B2C",
+    "url": "https://inc42.com/buzz/from-zepto-to-kuku-fm-indian-startups-raised-737-mn-this-week/",
+    "title": "From Zepto To Kuku FM — Indian Startups Raised $737 Mn This Week",
+    "published": "2025-10-18",
+    "fold": {
+     "key": "2025-10-16|Pre-IPO round",
+     "why": "the same amount, an investor both name, the same day"
+    }
+   },
+   {
+    "id": "f3197724daa4a22761e4c3b0",
+    "company": "zepto",
+    "date": "2025-08-12",
+    "dateText": "12 Aug 2025",
+    "name": "Zepto",
+    "round": null,
+    "amountText": "$45.7 Mn",
+    "amount": {
+     "value": 45700000,
+     "currency": "USD"
+    },
+    "footnote": null,
+    "investors": [
+     "Motilal Oswal Financial Services Ltd"
+    ],
+    "leadInvestors": [
+     "Motilal Oswal Financial Services Ltd"
+    ],
+    "sector": "Consumer Services",
+    "subsector": "Quick Commerce",
+    "businessModel": "B2C",
+    "url": "https://inc42.com/buzz/from-truemeds-to-ultraviolette-indian-startups-raised-272-mn-this-week/",
+    "title": "From Truemeds To Ultraviolette — Indian Startups Raised $272 Mn This Week",
+    "published": "2025-08-16",
+    "fold": {
+     "key": "2025-08-12|Preferential allotment (MOFSL CCPS)",
+     "why": "the same amount, an investor both name, the same day"
+    }
+   },
+   {
+    "id": "95f1edc67efb1fa764419bb5",
+    "company": "zepto",
+    "date": "2025-08-07",
+    "dateText": "7 Aug 2025",
+    "name": "Zepto",
+    "round": null,
+    "amountText": "$2.9 Mn",
+    "amount": {
+     "value": 2900000,
+     "currency": "USD"
+    },
+    "footnote": null,
+    "investors": [
+     "MapmyIndia"
+    ],
+    "leadInvestors": [
+     "MapmyIndia"
+    ],
+    "sector": "Consumer Services",
+    "subsector": "Quick Commerce",
+    "businessModel": "B2C",
+    "url": "https://inc42.com/buzz/from-the-sleep-company-to-jeh-aerospace-indian-startups-raised-197-mn-this-week/",
+    "title": "From The Sleep Company To Jeh Aerospace — Indian Startups Raised $197 Mn This Week",
+    "published": "2025-08-09",
+    "fold": null
+   },
+   {
+    "id": "5dd308877f16230b14015890",
+    "company": "zepto",
+    "date": "2025-07-29",
+    "dateText": "29 Jul 2025",
+    "name": "Zepto",
+    "round": null,
+    "amountText": "$857K",
+    "amount": {
+     "value": 857000,
+     "currency": "USD"
+    },
+    "footnote": null,
+    "investors": [
+     "Elcid Investments"
+    ],
+    "leadInvestors": [
+     "Elcid Investments"
+    ],
+    "sector": "Consumer Services",
+    "subsector": "Quick Commerce",
+    "businessModel": "B2C",
+    "url": "https://inc42.com/buzz/from-safe-security-to-stan-indian-startups-raised-104-mn-this-week/",
+    "title": "From Safe Security To STAN— Indian Startups Raised $104 Mn This Week",
+    "published": "2025-08-02",
+    "fold": {
+     "key": "2025-07-29|Preferential allotment (Elcid Investment)",
+     "why": "an investor both name, the same day"
+    }
+   },
+   {
+    "id": "abd719eb8d586357d01bc71f",
+    "company": "zepto",
+    "date": "2024-11-22",
+    "dateText": "22 Nov 2024",
+    "name": "Zepto",
+    "round": null,
+    "amountText": "$350 Mn",
+    "amount": {
+     "value": 350000000,
+     "currency": "USD"
+    },
+    "footnote": null,
+    "investors": [
+     "Motilal Oswal",
+     "Taparia Family Office",
+     "Mankind Pharma Family Office",
+     "RP Sanjiv Goenka Group",
+     "Cello Family Office",
+     "Haldiram Snacks Family Office",
+     "Sekhsaria Family Office",
+     "Kalyan Family Office",
+     "Happy Forgings Family Office",
+     "Mothers Recipe Family Office",
+     "Abhishek Bachchan",
+     "Sachin Tendulkar"
+    ],
+    "leadInvestors": [
+     "Motilal Oswal"
+    ],
+    "sector": "Consumer Services",
+    "subsector": "Hyperlocal Delivery",
+    "businessModel": "B2C",
+    "url": "https://inc42.com/buzz/from-zepto-to-healthkart-indian-startups-raised-580-mn-this-week/",
+    "title": "From Zepto To HealthKart – Indian Startups Raised $580 Mn This Week",
+    "published": "2024-11-23",
+    "fold": {
+     "key": "2024-11-22|Domestic round",
+     "why": "the same amount, an investor both name, the same day"
+    }
+   },
+   {
+    "id": "2a7930f29d9c0519f5f15350",
+    "company": "zepto",
+    "date": "2024-08-30",
+    "dateText": "30 Aug 2024",
+    "name": "Zepto",
+    "round": null,
+    "amountText": "$340 Mn",
+    "amount": {
+     "value": 340000000,
+     "currency": "USD"
+    },
+    "footnote": null,
+    "investors": [
+     "General Catalyst",
+     "Dragon Fund",
+     "Epiq Capital",
+     "StepStone",
+     "Lightspeed",
+     "DST",
+     "Contrary"
+    ],
+    "leadInvestors": [
+     "General Catalyst"
+    ],
+    "sector": "Consumer Services",
+    "subsector": "Hyperlocal Services",
+    "businessModel": "B2C",
+    "url": "https://inc42.com/buzz/from-zepto-to-blue-tokai-indian-startups-raised-466-mn-this-week/",
+    "title": "From Zepto To Blue Tokai — Indian Startups Raised $466 Mn This Week",
+    "published": "2024-08-31",
+    "fold": {
+     "key": "2024-08-29|Follow-on (Series F extension)",
+     "why": "the same amount, an investor both name"
+    }
+   },
+   {
+    "id": "b905c4d7bb87c8ab83acf90a",
+    "company": "zepto",
+    "date": "2024-06-21",
+    "dateText": "21 Jun 2024",
+    "name": "Zepto",
+    "round": "Series F",
+    "amountText": "$665 Mn",
+    "amount": {
+     "value": 665000000,
+     "currency": "USD"
+    },
+    "footnote": null,
+    "investors": [
+     "Glade Brook",
+     "Nexus",
+     "StepStone",
+     "Goodwater",
+     "Lachy Groom",
+     "Avenir Growth",
+     "Lightspeed",
+     "Avra"
+    ],
+    "leadInvestors": [
+     "Glade Brook",
+     "Nexus",
+     "StepStone"
+    ],
+    "sector": "Consumer Services",
+    "subsector": "Hyperlocal Delivery",
+    "businessModel": "B2C",
+    "url": "https://inc42.com/buzz/from-zepto-to-bira-91-indian-startups-raised-800-mn-this-week/",
+    "title": "From Zepto to Bira 91 – Indian Startups Raised $800 Mn This Week",
+    "published": "2024-06-22",
+    "fold": {
+     "key": "2024-06|Series F",
+     "why": "the same amount, an investor both name, the same series"
+    }
+   },
+   {
+    "id": "ed3901c462ea6a6f729464c8",
+    "company": "zepto",
+    "date": "2023-11-08",
+    "dateText": "8 Nov 2023",
+    "name": "Zepto",
+    "round": "Series E",
+    "amountText": "$31 Mn",
+    "amount": {
+     "value": 31000000,
+     "currency": "USD"
+    },
+    "footnote": null,
+    "investors": [
+     "Goodwater Capital",
+     "Nexus Venture Partners",
+     "Oliver and Lish Jiung",
+     "Mangum II LLC"
+    ],
+    "leadInvestors": [
+     "Goodwater Capital",
+     "Nexus Venture Partners"
+    ],
+    "sector": "Consumer Services",
+    "subsector": "Hyperlocal Delivery",
+    "businessModel": "B2C",
+    "url": "https://inc42.com/buzz/from-xpressbees-to-zepto-indian-startups-raised-159-mn-this-week/",
+    "title": "From Xpressbees To Zepto — Indian Startups Raised $159 Mn This Week",
+    "published": "2023-11-11",
+    "fold": null
+   },
+   {
+    "id": "36bc41cde65862511d363481",
+    "company": "zepto",
+    "date": "2023-08-25",
+    "dateText": "25 Aug 2023",
+    "name": "Zepto",
+    "round": "Series E",
+    "amountText": "$200 Mn",
+    "amount": {
+     "value": 200000000,
+     "currency": "USD"
+    },
+    "footnote": null,
+    "investors": [
+     "StepStone Group",
+     "Goodwater Capital",
+     "Nexus Venture Partners",
+     "Glade Brook Capital",
+     "Lachy Groom"
+    ],
+    "leadInvestors": [
+     "StepStone Group",
+     "Goodwater Capital"
+    ],
+    "sector": "Consumer Services",
+    "subsector": "Hyperlocal Delivery",
+    "businessModel": "B2C",
+    "url": "https://inc42.com/buzz/from-zepto-to-gradright-indian-startups-raised-231-mn-this-week/",
+    "title": "From Zepto To GradRight — Indian Startups Raised $231 Mn This Week",
+    "published": "2023-08-26",
+    "fold": {
+     "key": "2023-08-25|Series E",
+     "why": "the same amount, the same day, the same series"
+    }
+   }
+  ]
+ },
+ "headlines": {
+  "via": "https://glow-central-research.tech-441.workers.dev/data/private-company-news.json",
+  "capturedOn": "2026-11-04",
+  "windowDays": 120,
+  "rows": [
+   {
+    "company": "assetgro-fintech",
+    "at": "2026-09-24T00:58:27.000Z",
+    "title": "AssetGro Fintech to file DRHP with Sebi for Rs 2,000-2,500 cr IPO",
+    "summary": "AssetGro Fintech is gearing up to file its draft IPO documents with Sebi by the end of September. With expectations to raise between ₹2,000 and ₹2,500 crore, the IPO will feature a fresh issue of around ₹800 crore. The remainder will consist of an offer for sale by current shareholders. Emirates NBD",
+    "url": "https://economictimes.indiatimes.com/markets/ipos/fpos/assetgro-fintech-plans-rs-2000-2500-crore-ipo-filing-with-sebi/articleshow/134448939.cms",
+    "publisher": "Economic Times"
+   },
+   {
+    "company": "perplexity-ai",
+    "at": "2026-10-26T12:51:54.000Z",
+    "title": "Aravind Srinivas’ failed startup before Perplexity",
+    "summary": null,
+    "url": "https://economictimes.indiatimes.com/world/people/before-perplexity-aravind-srinivas-built-a-twitter-search-tool-that-changed-his-startups-direction/articleshow/135212233.cms",
+    "publisher": "Economic Times"
+   },
+   {
+    "company": "perplexity-ai",
+    "at": "2026-09-03T10:45:14.000Z",
+    "title": "Perplexity may have a way to run LLMs on consumer hardware: How it works",
+    "summary": "Perplexity's experiment with a 35-billion-parameter model shows how inference engines, quantisation and memory optimisation can unlock more performance from existing hardware",
+    "url": "https://www.business-standard.com/technology/tech-news/perplexity-run-llms-consumer-hardware-how-it-works-126090300889_1.html",
+    "publisher": "Business Standard"
+   },
+   {
+    "company": "stay-vista",
+    "at": "2026-10-19T05:35:05.000Z",
+    "title": "StayVista looks to acquire other businesses, expand into resorts and events",
+    "summary": "Holiday-home operator StayVista is seeking to boost property use and revenue by managing resorts, offering rooms individually and hosting events.&nbsp;",
+    "url": "https://www.livemint.com/companies/news/stayvista-acquisitions-expansion-resorts-events-weddings-11792327318349.html",
+    "publisher": "Mint"
+   },
+   {
+    "company": "zepto",
+    "at": "2026-11-03T11:30:24.000Z",
+    "title": "Dhanteras 2026: Buying gold and silver coins on Blinkit, Zepto or Instamart? 5 things to check before placing an order",
+    "summary": "Buying gold and silver coins on Blinkit, Zepto and Instamart can be convenient this Dhanteras. But before ordering, check the seller, purity, weight, certification, final price and refund policy. Here's how to buy precious metals safely online.",
+    "url": "https://www.livemint.com/money/personal-finance/dhanteras-2026-buying-gold-and-silver-coins-on-blinkit-zepto-or-instamart-5-things-to-check-before-placing-an-order-11793705064434.html",
+    "publisher": "Mint"
+   },
+   {
+    "company": "zepto",
+    "at": "2026-10-19T10:12:00.000Z",
+    "title": "FSSAI issues notice to Zepto over complaint of delivering expired besan",
+    "summary": "Food regulator FSSAI has issued a notice to e-commerce firm Zepto for the alleged delivery of expired besan (gram flour) to a customer. In a social media post on Monday, the Food Safety and Standards Authority of India (FSSAI) said it has issued a notice to Zepto Marketplace Pvt Ltd regarding a comp",
+    "url": "https://www.business-standard.com/industry/news/fssai-issues-notice-to-zepto-over-complaint-of-delivering-expired-besan-126101900604_1.html",
+    "publisher": "Business Standard"
+   },
+   {
+    "company": "zepto",
+    "at": "2026-10-19T10:07:16.000Z",
+    "title": "FSSAI issues notice to Zepto over alleged delivery of expired besan",
+    "summary": "The Food Safety and Standards Authority of India issued a notice to Zepto regarding a consumer complaint. The complaint involved the delivery of two packs of expired besan. The packages were marked with a use-by date of September 12, 2026. The regulator has requested details about the delivery and a",
+    "url": "https://economictimes.indiatimes.com/industry/cons-products/food/fssai-issues-notice-to-zepto-over-alleged-delivery-of-expired-besan/articleshow/135045667.cms",
+    "publisher": "Economic Times"
+   },
+   {
+    "company": "zepto",
+    "at": "2026-10-01T04:04:21.000Z",
+    "title": "Telangana suspends licences of Swiggy Instamart, Flipkart, Zepto dark stores over food safety violations",
+    "summary": "Telangana's food safety authorities inspected 16 dark stores across the city and found serious hygiene violations. Four establishments had their licenses suspended for acute health hazards identified during the inspections. Violations included expired food products, pest infestations, and improper s",
+    "url": "https://economictimes.indiatimes.com/industry/cons-products/food/telangana-food-safety-teams-inspect-16-quick-commerce-dark-stores-suspend-four-fssai-licences/articleshow/134607669.cms",
+    "publisher": "Economic Times"
+   },
+   {
+    "company": "zepto",
+    "at": "2026-09-27T10:28:36.000Z",
+    "title": "Beyond listed stocks: MSEI rallies 125%, Zepto retreats 48%; here’s how other pre-IPO names fared",
+    "summary": "The unlisted-share market has seen wide price swings in 2026, with MSEI more than doubling its indicative value, while Zepto has nearly halved. According to Unlisted Arena data, Goodluck Defence & Aerospace, PPFAS, API Holdings and Prisma Global AI were among the other notable gainers, while NCDEX, ",
+    "url": "https://economictimes.indiatimes.com/markets/ipos/fpos/beyond-listed-stocks-msei-rallies-125-zepto-retreats-48-heres-how-other-pre-ipo-names-fared/articleshow/134518428.cms",
+    "publisher": "Economic Times"
+   },
+   {
+    "company": "zepto",
+    "at": "2026-09-24T13:36:42.000Z",
+    "title": "Amazon plans to invest ₹25,000 crore in India's quick-commerce sector, but can it catch up to Blinkit, Zepto and Swiggy?",
+    "summary": "Amazon plans to invest $3 billion in its India quick-commerce business by 2030, aiming to increase its market presence. Currently, Amazon holds a 6.2% market share, competing against rivals like Swiggy and Blinkit, which dominate with 77% of the sector.",
+    "url": "https://www.livemint.com/companies/news/amazon-plans-to-invest-25-000-crore-in-indias-quick-commerce-sector-but-can-it-catch-up-to-blinkit-zepto-and-swiggy-11790254959528.html",
+    "publisher": "Mint"
+   },
+   {
+    "company": "zepto",
+    "at": "2026-09-23T15:23:06.000Z",
+    "title": "FSSAI takes penal action against Amazon, Flipkart, Zepto and two others",
+    "summary": "FSSAI has initiated penal action against five e-commerce platforms over product claims, information and the listing of prohibited food articles under food safety regulations",
+    "url": "https://www.business-standard.com/industry/news/fssai-takes-penal-action-against-amazon-flipkart-zepto-and-two-others-126092301408_1.html",
+    "publisher": "Business Standard"
+   },
+   {
+    "company": "zepto",
+    "at": "2026-09-21T14:37:22.000Z",
+    "title": "Zepto Cafe cuts footprint across cities, scales back menu after expansion",
+    "summary": "Zepto Cafe's footprint has fallen to an estimated 250-350 locations from a peak of 850-900 as the quick-commerce firm focuses on select high-performing markets",
+    "url": "https://www.business-standard.com/companies/news/zepto-cafe-cuts-footprint-across-cities-scales-back-menu-after-expansion-126092101192_1.html",
+    "publisher": "Business Standard"
+   },
+   {
+    "company": "zepto",
+    "at": "2026-09-10T13:42:22.000Z",
+    "title": "New credit card offers 7.5% cashback on DMart, Blinkit, Zepto, BigBasket",
+    "summary": "The new RuPay credit card offers 7.5% cashback on eligible grocery purchases, including spends at DMart, Reliance Fresh, Blinkit, Zepto and BigBasket, but the total cashback is capped at ₹1,000/month",
+    "url": "https://www.business-standard.com/finance/personal-finance/new-credit-card-offers-7-5-cashback-on-dmart-blinkit-zepto-bigbasket-126091001302_1.html",
+    "publisher": "Business Standard"
+   }
+  ]
+ }
+}

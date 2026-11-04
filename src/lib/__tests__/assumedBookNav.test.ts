@@ -182,10 +182,10 @@ const run = (b: AssumedReturnBook = book, units: NavUnit[] = [other, unit]) =>
     byAccount.has(u.accountId) || Math.abs((r.series.coverage.units.find((x) => x.key === u.key)?.endValue ?? 0) - (u.endValue ?? 0)) <= 1e-6));
   // The ICICI demat is first valued at its shares' own 31 Oct statement. Its
   // "31 March" statement prices the 31 March balances at 20 July's closes, so
-  // the reader carries those balances with no value (Stage 10kp). With nothing
+  // the reader carries those balances with no value (Stage 10ku). With nothing
   // valued earlier, it splits like any demat: the listings no published price
   // reaches stay one investment at the statement's own date, and the shares are
-  // a second one at their closes through the series' end. (Until Stage 10kp
+  // a second one at their closes through the series' end. (Until Stage 10ku
   // that misdated 31 March figure held the account together as one investment.
   // The constructed case above keeps that branch covered.)
   const iciciId = "icici-bank-nsdl-demat-49794950";

@@ -1,0 +1,24 @@
+export const FUNDING_SOURCE: string;
+export const RESEARCH_ORIGIN: string;
+export const RESEARCH_FUNDING_URL: string;
+export const RESEARCH_HEADLINES_URL: string;
+export const RESEARCH_COMPANIES_URL: string;
+export const FOLD_DAYS: number;
+export const AMOUNT_TOLERANCE: number;
+export function unfenced(s: unknown): string | null;
+export function nameKey(v: unknown): string;
+export function namesOf(company: { brand: string; legalName?: string | null; aliases?: string[] }): string[];
+export function companyMatcher<T extends { brand: string; legalName?: string | null; aliases?: string[] }>(companies: T[]): (name: string) => T | null;
+export type PrintedMoney = { value: number; currency: string };
+export function parseMoney(raw: unknown): PrintedMoney | null;
+export function footnoteFor(n: number, notes?: string[]): string | null;
+export type FoldableRow = { date: string | null; round: string | null; amount: PrintedMoney | null; investors: readonly string[]; leadInvestors: readonly string[] };
+export type FoldableRound = {
+  date: string; round: string;
+  amountRaised: (PrintedMoney & { alt?: readonly PrintedMoney[] }) | null;
+  leadInvestors: readonly string[]; investors?: readonly string[];
+};
+export function readRow(deal: Record<string, unknown>, article: { notes?: string[] } | undefined, company: string, familyName?: RegExp): FoldableRow & Record<string, unknown>;
+export function roundKeyOf(r: { date: string; round: string }): string;
+export function foldEvidence(row: FoldableRow, round: FoldableRound): { score: number; why: string[]; contradiction: string | null };
+export function foldRows<R extends FoldableRow, D extends FoldableRound>(rows: R[], rounds: D[]): Map<R, { key: string; why: string } | null>;
