@@ -82,7 +82,7 @@ const PM_DEFAULT_TILES = ["value", "cost", "pnl", "uncalled"] as const;
  */
 const BOOK_COLS = ["name", "strategy", "description", "invested", "committed", "called", "paid", "uncalled", "units", "cost", "value", "entryValuation", "latestValuation", "valuationDate", "lastRound", "valuationChange", "return", "weightCost", "weight", "asOf", "call"] as const;
 /**
- * ── THE FUNDS FILTER'S OWN COLUMNS (Stage 10kv) ─────────────────────────────
+ * ── THE FUNDS FILTER'S OWN COLUMNS (Stage 10kw) ─────────────────────────────
  *
  *   *"for the Funds, remove YTD performance column. Add quarterly NAV – show
  *    IRR."* — the family.
@@ -562,7 +562,7 @@ export function PrivateMarket() {
    *
    * MEMOISED ON THE MEASURES, NOT REBUILT PER RENDER.
    */
-  // ONE PICK AND ONE ARRANGEMENT PER FILTER (Stage 10kv), keyed on the filter
+  // ONE PICK AND ONE ARRANGEMENT PER FILTER (Stage 10kw), keyed on the filter
   // the reader chose — an export widens the rows, never the columns. Each reads
   // the page's old shared key until its first edit.
   const fundCols = showFilter === "funds";
@@ -1851,7 +1851,7 @@ export function PrivateMarket() {
     out.value = r.value != null ? td("value", money(r.value), k === "folio" ? "text-slate-200" : "text-slate-100")
       : ctx.nil ? td("value", <span title={ctx.nil} data-pm-nil>{money(0)} <span className="text-[10px] font-normal text-slate-500">redeemed</span></span>, "text-slate-400")
         : absent("value", ctx.noValue ?? "no statement here carries a valuation");
-    // THE QUARTERLY NAV (Stage 10kv): per unit, off the statement, its quarter under it.
+    // THE QUARTERLY NAV (Stage 10kw): per unit, off the statement, its quarter under it.
     out.nav = r.nav
       ? td("nav", <>{moneyFull(r.nav.perUnit)}
           <div className="text-[10.5px] font-normal text-slate-500" data-pm-nav-date={r.nav.date}

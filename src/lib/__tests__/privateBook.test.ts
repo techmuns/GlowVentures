@@ -839,7 +839,7 @@ function doubleCountHoldings({ label, b, overlap }: Run) {
 }
 for (const run of RUNS) doubleCountHoldings(run);
 
-// ── [E] THE QUARTERLY NAV (Stage 10kv) ──────────────────────────────────────
+// ── [E] THE QUARTERLY NAV (Stage 10kw) ──────────────────────────────────────
 {
   console.log("\n── the quarterly NAV: value ÷ units of one fund, on one date ──");
   const FUNDS = new Set(["AIF", "Mutual Fund", "ETF"]);

@@ -443,7 +443,7 @@ export type BookFigures = {
   value: number | null;
   pnl: number | null;
   /**
-   * THE QUARTERLY NAV (Stage 10kv): value ÷ units off the fund's own statement,
+   * THE QUARTERLY NAV (Stage 10kw): value ÷ units off the fund's own statement,
    * and the date that statement strikes it on. Only over the held folios of ONE
    * fund, each with a unit count and a value, all valued on ONE date — anything
    * else would divide a blend. Null with the reason in `navWhy`.

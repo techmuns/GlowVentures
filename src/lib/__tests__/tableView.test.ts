@@ -190,7 +190,7 @@ const oldRule = (stored: string[], declared: string[]) => {
   const addr = resolveReturnMeasures("xirr,cagr", ["auto"]);
   ok("an address wins over a saved pick, in the picker's order", same(addr.measures, ["cagr", "xirr"]) && addr.from === "address");
   ok("?ret=auto names the methodology view", same(resolveReturnMeasures("auto", null).measures, ["auto"]));
-  // Stage 10kv: a table that does not offer a measure drops it from every source.
+  // Stage 10kw: a table that does not offer a measure drops it from every source.
   const noYtd = ALL.filter((m) => m !== "ytd");
   ok("an omitted measure leaves the default", same(resolveReturnMeasures(null, null, ["ytd"]).measures, noYtd));
   ok("…and a saved pick", same(resolveReturnMeasures(null, ["absolute", "ytd"], ["ytd"]).measures, ["absolute"]));

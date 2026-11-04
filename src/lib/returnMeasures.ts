@@ -55,7 +55,7 @@ export function normaliseMeasures(list: readonly unknown[]): ReturnMeasure[] | n
  * not. `?ret=auto` names the methodology view.
  *
  * `omit` names measures a table does not offer (Private Market's Funds filter
- * draws no YTD, Stage 10kv): they are dropped from every source, and a source
+ * draws no YTD, Stage 10kw): they are dropped from every source, and a source
  * left with nothing gives way to the next.
  */
 export function resolveReturnMeasures(param: string | null, saved: readonly ReturnMeasure[] | null, omit: readonly ReturnMeasure[] = []): {

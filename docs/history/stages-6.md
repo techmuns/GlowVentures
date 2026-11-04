@@ -1042,7 +1042,7 @@
 - Book: ICICI 49794950's ₹119.26 Cr 31 March point (Polycab already fenced out) leaves `BOOK_ACCOUNT_NAV_HISTORY`. Valued only at 31 Oct now, the account leaves the multi-date NAV panel: 28 → 27 points, 25 → 24 accounts, last point ₹534.75 → ₹323.52 Cr. The attribution window now opens 31 May. Positions, the book total and the return records are unchanged. The Sanshi A2 / E units on that statement (122.647 / 151.966) carried the NAV on file at the run, on an unprinted date, and are now quantities only.
 - The NAV card's assumed line now splits the ICICI demat like any demat first valued at its shares' statement: the rest at 31 Oct, the shares at their closes. `assumedBookNav.test.ts` asserts this, and a constructed case keeps the "valued earlier → one investment" branch covered. `nsdlPriceDate.test.mjs` covers the contradicted, corroborated and misread-stamp cases.
 
-### Stage 10kv — Private Market: columns per filter; Funds show Quarterly NAV and IRR, no YTD
+### Stage 10kw — Private Market: columns per filter; Funds show Quarterly NAV and IRR, no YTD
 
 - *"whatever columns we edit for companies or for funds should be saved for that particular filter only … for the Funds, remove YTD performance column. Add quarterly NAV – show IRR."* — the family, 4 Nov 2026.
 - `useTableView` takes a `memoryKey`: the table keeps its identity (`pm-book`) and saves one arrangement per filter (`pm-book:companies|funds|both`). `useReturnMeasures` saves one pick per filter (`private-market:<filter>`). Both read the old shared key until the first edit under a filter.

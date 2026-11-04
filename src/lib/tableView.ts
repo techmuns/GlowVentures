@@ -269,7 +269,7 @@ export function nudgeColumn(stored: readonly string[], declared: readonly string
  * is read before the first paint, so a page never opens on the declared order
  * and then jumps. `legacyKeys` names keys a merged table used to save under.
  * `memoryKey` saves one table's arrangement under several keys — a table whose
- * filter draws different rows keeps one arrangement per filter (Stage 10kv) —
+ * filter draws different rows keeps one arrangement per filter (Stage 10kw) —
  * while `storageKey` stays the table's identity in the DOM and the checks.
  * Deliberately NOT a URL param: there are fifty-odd tables and a param each
  * would make every address unreadable. Visibility and arrangement only change
