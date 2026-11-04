@@ -55,6 +55,10 @@ export const STATEMENT_NOTES = Object.freeze(new Set([
   "value-is-face-value-par",
   "value-is-face-value-scheme",
   "value-stitched-across-lines",
+  // ICICI's NSDL report run long after its date: balances at the date, values at
+  // the run's prices. Every row is read; the column is named for what it is and
+  // carried as no valuation (providers/nsdlDemat.mjs).
+  "values-priced-when-run",
   "depository-movements-are-not-trades",
   "tds-transfers-are-not-trades",
   "unit-movements-are-not-trades",
