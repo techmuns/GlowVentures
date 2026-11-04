@@ -268,11 +268,15 @@ export function nudgeColumn(stored: readonly string[], declared: readonly string
  * a sort on such a column is kept too, and applies again when it is drawn. It
  * is read before the first paint, so a page never opens on the declared order
  * and then jumps. `legacyKeys` names keys a merged table used to save under.
+ * `memoryKey` saves one table's arrangement under several keys — a table whose
+ * filter draws different rows keeps one arrangement per filter (Stage 10kw) —
+ * while `storageKey` stays the table's identity in the DOM and the checks.
  * Deliberately NOT a URL param: there are fifty-odd tables and a param each
  * would make every address unreadable. Visibility and arrangement only change
  * presentation; the records, calculations and export data remain intact.
  */
-export function useTableView(storageKey: string, columns: readonly string[], opts?: { legacyKeys?: readonly string[]; optional?: readonly string[]; manualEditor?: boolean; reviewKind?: ReviewKind; investmentDates?: boolean }): TableView {
+export function useTableView(storageKey: string, columns: readonly string[], opts?: { legacyKeys?: readonly string[]; memoryKey?: string; optional?: readonly string[]; manualEditor?: boolean; reviewKind?: ReviewKind; investmentDates?: boolean }): TableView {
+  const memoryKey = opts?.memoryKey ?? storageKey;
   // Keyed on the CONTENT of the list, so a caller that rebuilds the same list
   // every render does not re-derive the arrangement every render.
   const colKey = columns.join("\u0001");
@@ -291,8 +295,8 @@ export function useTableView(storageKey: string, columns: readonly string[], opt
   const legacy = opts?.legacyKeys ?? NO_LEGACY;
   const legacyKey = legacy.join("\u0001");
 
-  const subscribe = useCallback((l: () => void) => subscribeMemory(KEY(storageKey), l), [storageKey]);
-  const read = () => storedView(storageKey, legacy);
+  const subscribe = useCallback((l: () => void) => subscribeMemory(KEY(memoryKey), l), [memoryKey]);
+  const read = () => storedView(memoryKey, legacy);
   const rawStored = useSyncExternalStore(subscribe, read, read);
   const stored = useMemo(() => mergeColumnAliases(rawStored, aliases), [rawStored, aliases]);
   const optionalKey = opts?.optional?.join("\u0001") ?? "";
@@ -307,8 +311,8 @@ export function useTableView(storageKey: string, columns: readonly string[], opt
   // Every change reads what is saved NOW rather than what this render saw, so
   // two quick changes cannot write over each other.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const current = useCallback(() => mergeColumnAliases(storedView(storageKey, legacy), aliases), [storageKey, legacyKey, aliases]);
-  const save = useCallback((next: StoredView) => writeMemory(KEY(storageKey), next), [storageKey]);
+  const current = useCallback(() => mergeColumnAliases(storedView(memoryKey, legacy), aliases), [memoryKey, legacyKey, aliases]);
+  const save = useCallback((next: StoredView) => writeMemory(KEY(memoryKey), next), [memoryKey]);
 
   const toggleSort = useCallback((col: string) => {
     const cur = current();
