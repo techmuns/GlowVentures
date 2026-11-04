@@ -1048,3 +1048,12 @@
 - `useTableView` takes a `memoryKey`: the table keeps its identity (`pm-book`) and saves one arrangement per filter (`pm-book:companies|funds|both`). `useReturnMeasures` saves one pick per filter (`private-market:<filter>`). Both read the old shared key until the first edit under a filter.
 - Funds: the picker does not offer YTD (`omit`, `resolveReturnMeasures`); the XIRR column is headed IRR; a Quarterly NAV column sits after Value — value ÷ units over the held folios of ONE fund vehicle valued on ONE date (`navOf` in `privateBook.ts`), its Indian FY quarter under it (any other date printed as the date). A company, a held-at-cost line, a row without a unit count and a band over several funds show `—` with the reason.
 - Checks: `privateBook.test.ts` [E] re-derives each NAV off the folios; `tableView.test.ts` covers `omit`. `check:pages` on the six Private Market routes matches main's findings.
+
+### Stage 10kx — Clean Max on two demats is two holdings, now under one key
+
+- Defect 3 of the 4 Nov review (#333) asked whether Clean Max's 94,967 shares on Ajay's ICICI demat 49794950 and Ankita's Motilal demat 1201090012838316 are a double count on the live basis. **They are two holdings, each counted once.**
+  - Both depositories hold their 94,967 at the same time: Ajay's NSDL account on 31 Mar and 31 Oct, and Ankita's CDSL account (in lock-in) through a tape that moves none of them from 1 Apr to 31 Jul.
+  - The review buys them in two separate rows (262–263 and 264–265), ₹9,38,57,991 each. Its 1,89,934 total and the register's ₹18.77 Cr are both holdings together.
+  - The live book carries exactly those two rows, each at its own recovered cost; the consolidated count keeps both.
+- The real defect was identity: Ankita's statement row was keyed `clean-max-env`, so one ISIN was two keys on the statement basis, with its own `/stock/clean-max-env` ledger view. `KEY_ALIASES` now maps it to `clean-max-enviro-energy-solutions` on the exact ISIN (INE647U01026 → CLEANMAX). `rekey:archive` moved 1 row (its `--check` control was a no-op first). The book report's split-ISIN list goes 12 → 11. The extraction report now names the pair under "Matched on QUANTITY ALONE — NOT deduped".
+- `fundNavs.test.ts` asserts one key on the statement basis, exactly two live rows (never a third), a recovered cost per account, and both kept by the dedupe. Run against main's book, the key assertion fails.
