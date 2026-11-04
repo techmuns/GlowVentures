@@ -1042,6 +1042,13 @@
 - Book: ICICI 49794950's ₹119.26 Cr 31 March point (Polycab already fenced out) leaves `BOOK_ACCOUNT_NAV_HISTORY`. Valued only at 31 Oct now, the account leaves the multi-date NAV panel: 28 → 27 points, 25 → 24 accounts, last point ₹534.75 → ₹323.52 Cr. The attribution window now opens 31 May. Positions, the book total and the return records are unchanged. The Sanshi A2 / E units on that statement (122.647 / 151.966) carried the NAV on file at the run, on an unprinted date, and are now quantities only.
 - The NAV card's assumed line now splits the ICICI demat like any demat first valued at its shares' statement: the rest at 31 Oct, the shares at their closes. `assumedBookNav.test.ts` asserts this, and a constructed case keeps the "valued earlier → one investment" branch covered. `nsdlPriceDate.test.mjs` covers the contradicted, corroborated and misread-stamp cases.
 
+### Stage 10kw — Private Market: columns per filter; Funds show Quarterly NAV and IRR, no YTD
+
+- *"whatever columns we edit for companies or for funds should be saved for that particular filter only … for the Funds, remove YTD performance column. Add quarterly NAV – show IRR."* — the family, 4 Nov 2026.
+- `useTableView` takes a `memoryKey`: the table keeps its identity (`pm-book`) and saves one arrangement per filter (`pm-book:companies|funds|both`). `useReturnMeasures` saves one pick per filter (`private-market:<filter>`). Both read the old shared key until the first edit under a filter.
+- Funds: the picker does not offer YTD (`omit`, `resolveReturnMeasures`); the XIRR column is headed IRR; a Quarterly NAV column sits after Value — value ÷ units over the held folios of ONE fund vehicle valued on ONE date (`navOf` in `privateBook.ts`), its Indian FY quarter under it (any other date printed as the date). A company, a held-at-cost line, a row without a unit count and a band over several funds show `—` with the reason.
+- Checks: `privateBook.test.ts` [E] re-derives each NAV off the folios; `tableView.test.ts` covers `omit`. `check:pages` on the six Private Market routes matches main's findings.
+
 ### Stage 10kq — RETURN THIS CALENDAR YEAR: YTD FROM THE FIRST DATE WE HAVE, NOT ONE FUND
 
 - The family (4 Nov 2026) found Morning CIO's "Return this calendar year" card reading −3.5% on "1 of 509 holdings · ₹29.9 Cr · 1 accounts": Ajay's Helios 10355977 alone. The card opened every account on 31 Dec 2025 (`windowReturns`) and carried a holding only from a share count dated by then (`assumedHolding`). No statement here is dated before 31 Mar 2026, so the only account it could measure was the one bought in August, which opens at nil. The Returns tab's YTD, which the card opens, read the same single fund.

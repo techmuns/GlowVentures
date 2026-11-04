@@ -53,17 +53,26 @@ export function normaliseMeasures(list: readonly unknown[]): ReturnMeasure[] | n
  * The address wins where it names a measure, so a link like "open Private
  * Market on XIRR" still opens on XIRR; it is not saved, exactly as `?tiles=` is
  * not. `?ret=auto` names the methodology view.
+ *
+ * `omit` names measures a table does not offer (Private Market's Funds filter
+ * draws no YTD, Stage 10kw): they are dropped from every source, and a source
+ * left with nothing gives way to the next.
  */
-export function resolveReturnMeasures(param: string | null, saved: readonly ReturnMeasure[] | null): {
+export function resolveReturnMeasures(param: string | null, saved: readonly ReturnMeasure[] | null, omit: readonly ReturnMeasure[] = []): {
   measures: readonly ReturnMeasure[];
   from: "address" | "saved" | "default";
 } {
+  const keep = (ms: readonly ReturnMeasure[] | null) => {
+    const kept = (ms ?? []).filter((m) => !omit.includes(m));
+    return kept.length ? kept : null;
+  };
   if (param != null) {
-    const fromParam = normaliseMeasures(param.split(",").map((s) => s.trim()));
+    const fromParam = keep(normaliseMeasures(param.split(",").map((s) => s.trim())));
     if (fromParam) return { measures: fromParam, from: "address" };
   }
-  if (saved && saved.length) return { measures: saved, from: "saved" };
-  return { measures: DEFAULT_RETURN_MEASURES, from: "default" };
+  const fromSaved = keep(saved);
+  if (fromSaved) return { measures: fromSaved, from: "saved" };
+  return { measures: keep(DEFAULT_RETURN_MEASURES) ?? ["auto"], from: "default" };
 }
 
 /** The key a page's pick is saved under. One per page: the Monitor's two tables share it. */
