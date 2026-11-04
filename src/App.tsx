@@ -19,6 +19,7 @@ const MorningCIO = lazy(() => import("@/pages/MorningCIO").then((m) => ({ defaul
 const Polycab = lazy(() => import("@/pages/Polycab").then((m) => ({ default: m.Polycab })));
 const PortfolioMonitor = lazy(() => import("@/pages/PortfolioMonitor").then((m) => ({ default: m.PortfolioMonitor })));
 const PrivateMarket = lazy(() => import("@/pages/PrivateMarket").then((m) => ({ default: m.PrivateMarket })));
+const PrivateCompany = lazy(() => import("@/pages/PrivateCompany").then((m) => ({ default: m.PrivateCompany })));
 const RealEstate = lazy(() => import("@/pages/RealEstate").then((m) => ({ default: m.RealEstate })));
 const FamilyEntities = lazy(() => import("@/pages/FamilyEntities").then((m) => ({ default: m.FamilyEntities })));
 const SectorComposition = lazy(() => import("@/pages/SectorComposition").then((m) => ({ default: m.SectorComposition })));
@@ -170,6 +171,10 @@ export default function App() {
                 fund-of-funds tracker removed at Stage 10f. See the note on the
                 redirects below, and the header of PrivateMarket.tsx. */}
             <Route path="/private-market" element={<Gate><PrivateMarket /></Gate>} />
+            {/* A PRIVATE COMPANY'S OWN PAGE (Stage 10ko) — its funding rounds and
+                valuation history beside the family's holding; the private twin
+                of `/stock/:securityKey`. */}
+            <Route path="/private-company/:companyId" element={<Gate><PrivateCompany /></Gate>} />
             <Route path="/real-estate" element={<RealEstate />} />
             {/* Keyed by securityKey, not ISIN: several providers in this book print
                 no ISIN at all, so a route keyed on one would have no address for

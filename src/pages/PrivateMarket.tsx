@@ -15,7 +15,7 @@ import { EditColumns } from "@/components/EditColumns";
 import { Pill } from "@/components/Pill";
 import { SearchInput } from "@/components/SearchInput";
 import { useViewParam } from "@/components/ViewToggle";
-import { AbsentCell, AbsentSection, AbsentValue, DASH } from "@/components/Absent";
+import { AbsentCell, AbsentSection, AbsentValue, NotApplicableCell, DASH } from "@/components/Absent";
 import { CallCell, CallEditor } from "@/components/EnteredCalls";
 import { ProfileCellInput, profileTitle } from "@/components/EnteredProfiles";
 import { CapitalCellInput } from "@/components/CapitalCellInput";
@@ -29,6 +29,7 @@ import {
 import { usePortfolio } from "@/context/PortfolioContext";
 import { ownerDisplayName } from "@/lib/owners";
 import { stockHref } from "@/lib/auditFormulas";
+import { companyValuationOf, privateCompanyHref, sortedRounds, roundDateLabel, fmtValuation, dayOf } from "@/lib/privateRounds";
 import {
   sum, sumOrNull, consolidatedMarketValue, returnMeasureDef, isPrivateClass, dedupedPositions,
   isValuedAtCost, AT_COST_RETURN, AT_COST_BUCKET, allDebt, isDebtHolding,
@@ -79,7 +80,25 @@ const PM_DEFAULT_TILES = ["value", "cost", "pnl", "uncalled"] as const;
  * what the units held cost (the holding statement). They agree on most funds and
  * they are different documents; the header says which is which.
  */
-const BOOK_COLS = ["name", "strategy", "description", "invested", "committed", "called", "paid", "uncalled", "units", "cost", "value", "return", "weight", "asOf", "call"] as const;
+const BOOK_COLS = ["name", "strategy", "description", "invested", "committed", "called", "paid", "uncalled", "units", "cost", "value", "entryValuation", "latestValuation", "valuationDate", "lastRound", "valuationChange", "return", "weight", "asOf", "call"] as const;
+/**
+ * ── THE COMPANY'S OWN VALUATION, ONE PICK AWAY IN EDIT COLUMNS (Stage 10ko) ──
+ *
+ * A private company's funding rounds (`src/lib/privateRounds.ts`) are public
+ * reporting, not the family's statements, so they start HIDDEN and a reader
+ * turns them on in Edit Columns. Each is the company's figure, never the
+ * holding's: the row's Value stays the cost its statement carries. A fund row
+ * has none — it raises no rounds; its value is its NAV.
+ */
+const VALUATION_COLS = ["entryValuation", "latestValuation", "valuationDate", "lastRound", "valuationChange"] as const;
+const VALUATION_LABELS = {
+  entryValuation: { label: "Valuation at entry", detail: "The company's post-money at the round the family came in on — public reporting, each round sourced" },
+  latestValuation: { label: "Latest valuation", detail: "The company's valuation at its latest priced round" },
+  valuationDate: { label: "Latest valuation date", detail: "When that round is dated" },
+  lastRound: { label: "Latest round", detail: "The company's most recent funding round" },
+  valuationChange: { label: "Valuation change since entry", detail: "Latest valuation ÷ valuation at entry, on one basis" },
+};
+const NOT_A_COMPANY_WHY = "not a private company with funding rounds — a fund's value is its NAV, a listed security's its price";
 /**
  * Strategy and Description start visible beside the name, with their editable
  * fields open. Explicit column visibility choices still belong to the reader.
@@ -377,6 +396,18 @@ const aggHprNote = (held: BookFolio[], money: (n: number) => string): string => 
       + (incomeIn ? ` ${incomeIn.charAt(0).toUpperCase()}${incomeIn.slice(1)}. Any other cash paid back is not — XIRR counts it.` : " Cash the funds have paid back is not in it — XIRR counts it.");
 };
 
+/** The valuation columns' sort values, read off a row's folios. */
+const valuationAccessors = (foliosOf: (r: RowFigures & { label?: string }) => BookFolio[] | null) => {
+  const of = (r: RowFigures & { label?: string }) => { const fs = foliosOf(r); return fs ? companyValuationOf(fs) : null; };
+  return {
+    entryValuation: (r: RowFigures & { label?: string }) => of(r)?.m.entryValues?.headline?.value ?? null,
+    latestValuation: (r: RowFigures & { label?: string }) => of(r)?.m.latest?.value ?? null,
+    valuationDate: (r: RowFigures & { label?: string }) => { const d = of(r)?.m.latest?.date; return d ? dayOf(d) : null; },
+    lastRound: (r: RowFigures & { label?: string }) => { const v = of(r); return v ? sortedRounds(v.company).at(-1)?.round ?? null : null; },
+    valuationChange: (r: RowFigures & { label?: string }) => of(r)?.m.change ?? null,
+  };
+};
+
 /** One set of accessors for every row kind, so a column sorts parents and their folios alike. */
 const bookAccessors = (
   label: (r: RowFigures & { label?: string }) => string | null,
@@ -384,6 +415,9 @@ const bookAccessors = (
   measures: readonly ReturnMeasure[],
 ): Record<string, Accessor<RowFigures & { label?: string }>> => ({
   name: (r) => label(r),
+  // THE COMPANY'S VALUATION COLUMNS sort the rows that carry them — a legal-name
+  // or brand row of one company; every other row sorts last.
+  ...valuationAccessors((r) => ((r as { folios?: BookFolio[]; kind?: string }).kind === "owner" ? null : (r as { folios?: BookFolio[] }).folios ?? null)),
   // A row with no supplied text sorts last in both directions, like every absence.
   strategy: (r) => r.profile?.strategy.value ?? null,
   description: (r) => r.profile?.description.value ?? null,
@@ -501,7 +535,7 @@ export function PrivateMarket() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const bookCols = useMemo(() => withReturnCols(BOOK_COLS, returnMeasures), [measureKey]);
   // `invested` already renders the investment date/range for groups and folios.
-  const bookView = useTableView("pm-book", bookCols, { reviewKind: "holding", investmentDates: false, manualEditor: true });
+  const bookView = useTableView("pm-book", bookCols, { reviewKind: "holding", investmentDates: false, manualEditor: true, optional: VALUATION_COLS });
   const callView = useTableView("pm-calls", CALL_COLS, { manualEditor: true });
   /**
    * THE CALLS THE FAMILY HAS ENTERED, and which row's editor is open. Called up
@@ -1823,6 +1857,39 @@ export function PrivateMarket() {
     return out;
   };
   /**
+   * THE COMPANY'S VALUATION CELLS on a legal-name or brand row of ONE private
+   * company (Stage 10ko) — read off its funding record, each figure with its
+   * round on the hover. A fund or a listed security has none: NA, not a dash.
+   */
+  const valuationCells = (g: BookGroup): Cells => {
+    const p = pad("group");
+    const v = companyValuationOf(g.folios);
+    const td = (col: string, body: ReactNode, data?: Record<string, string | number>) =>
+      <td key={col} data-col-cell={col} className={`${p} tabular whitespace-nowrap text-right`} {...data}>{body}</td>;
+    if (!v) {
+      const na = <NotApplicableCell reason={NOT_A_COMPANY_WHY} />;
+      return Object.fromEntries(VALUATION_COLS.map((c) => [c, td(c, na)]));
+    }
+    const { company, m: vm } = v;
+    const money = (n: number) => fmtValuation(n, vm.currency, (x, o) => fmtFromBase(x, o));
+    const none = company.rounds.length ? "no round in its funding record prints a valuation for this" : (company.searchNote ?? "no credible source prints a priced round for this company");
+    const last = sortedRounds(company).at(-1) ?? null;
+    const entryWhy = !g.invested?.from && !g.folios.some((f) => f.invested) ? "no source dates the family's investment" : company.rounds.length ? "no priced round is dated at or before the family's investment" : none;
+    return {
+      entryValuation: td("entryValuation", vm.entryValues?.headline
+        ? <span title={`${vm.entry!.round.round}, ${roundDateLabel(vm.entry!.round.date)} — ${vm.entryValues.headline.basis === "post-money" ? "post-money" : "valuation, basis not stated"}${vm.entryValues.pre ? `; pre-money ${money(vm.entryValues.pre.value)}` : ""}`}>{money(vm.entryValues.headline.value)}</span>
+        : <AbsentCell reason={entryWhy} />, { "data-pm-entry-valuation": vm.entryValues?.headline?.value ?? "" }),
+      latestValuation: td("latestValuation", vm.latest
+        ? <span title={`${vm.latest.round} — ${vm.latest.basis === "post-money" ? "post-money" : "valuation, basis not stated"}`}>{money(vm.latest.value)}</span>
+        : <AbsentCell reason={none} />, { "data-pm-latest-valuation": vm.latest?.value ?? "" }),
+      valuationDate: td("valuationDate", vm.latest ? roundDateLabel(vm.latest.date) : <AbsentCell reason={none} />),
+      lastRound: td("lastRound", last ? <span title={roundDateLabel(last.date)}>{last.round}</span> : <AbsentCell reason={none} />),
+      valuationChange: td("valuationChange", vm.change != null
+        ? <span title="Latest valuation ÷ valuation at entry — the company's change, not a return on the holding">{fmtNum(vm.change, 2)}×</span>
+        : <AbsentCell reason={!vm.entryValues?.headline ? entryWhy : !vm.latest ? none : "the entry and latest valuations are on different bases"} />),
+    };
+  };
+  /**
    * A row's cells in the DECLARED order `<Tr>` expects, an empty cell where a
    * column has none — walked over the EXPANDED list, so a return column the
    * reader picked is a column on every row.
@@ -1945,12 +2012,21 @@ export function PrivateMarket() {
               {g.brand ? <span title={g.kind === "fund" ? legalHover(g.label, g.brand) : brandHover(g.label, g.brand)}>{g.label}</span> : g.label}
               {/* THE FUND'S OWN PAGE, as its own small link — the row itself
                   opens the folios, so the name is not a second click target. */}
-              {g.securityKey && (
-                <Link to={stockHref(g.securityKey)} title={`${g.label} — open its page`} data-no-row-toggle
-                  className="ml-1.5 inline-flex align-[-2px] text-slate-500 transition-colors hover:text-champagne-400">
-                  <ArrowUpRight className="h-3.5 w-3.5" />
-                </Link>
-              )}
+              {/* A PRIVATE COMPANY OPENS ITS OWN PAGE (Stage 10ko) — its funding
+                  rounds and valuation beside the holding — where a fund keeps
+                  the security page. A legal-name row of several sellers' lines
+                  (DrinkPrime's four) is one company, so it links too. */}
+              {(() => {
+                const company = g.kind !== "owner" ? companyValuationOf(g.folios)?.company : null;
+                const to = company ? privateCompanyHref(company.id) : g.securityKey ? stockHref(g.securityKey) : null;
+                return to && (
+                  <Link to={to} title={company ? `${g.label} — open its page: funding rounds and valuation` : `${g.label} — open its page`} data-no-row-toggle
+                    data-pm-company-link={company?.id}
+                    className="ml-1.5 inline-flex align-[-2px] text-slate-500 transition-colors hover:text-champagne-400">
+                    <ArrowUpRight className="h-3.5 w-3.5" />
+                  </Link>
+                );
+              })()}
             </>}
             sub={groupSub(g)} />
           {inOrder({
@@ -1967,6 +2043,7 @@ export function PrivateMarket() {
             ties: g.ties,
             }),
             ...(fundCall ? { call: callCell(fundRowId, fundCall, g.label) } : {}),
+            ...(g.kind !== "owner" ? valuationCells(g) : {}),
           }, "group")}
         </Tr>
         {fundCall && callEditorRow(fundRowId, fundCall, g.label)}
@@ -2331,7 +2408,7 @@ export function PrivateMarket() {
         right={
           <div className="flex flex-wrap items-center justify-end gap-2">
             {tabs}
-            <EditColumns view={view === "transactions" ? callView : bookView} />
+            <EditColumns view={view === "transactions" ? callView : bookView} labels={view === "transactions" ? undefined : VALUATION_LABELS} />
             <SearchInput value={q} onChange={setQ}
               placeholder={view === "transactions" ? "Search calls…" : view === "brands" ? "Search brands, funds or entities…" : "Search companies, funds or brands…"}
               className="w-56"
@@ -2390,6 +2467,9 @@ export function PrivateMarket() {
                     title="Of the units held: what they cost, off the holding statement — a different document from the capital account's Paid in.">Cost</SortHeader>
                   <SortHeader col="value" view={bookView} pad="px-2 py-2"
                     title="The fund's own mark: what the holding is worth on the fund's own statement date.">Value</SortHeader>
+                  {VALUATION_COLS.map((c) => (
+                    <SortHeader key={c} col={c} view={bookView} pad="px-2 py-2" title={VALUATION_LABELS[c].detail}>{VALUATION_LABELS[c].label}</SortHeader>
+                  ))}
                   {/* ONE HEADING PER PICKED MEASURE, each a `SortHeader` like its
                       neighbours. The count of FUNDS the measure answers and the
                       reason the rest do not are the heading's HOVER — the count

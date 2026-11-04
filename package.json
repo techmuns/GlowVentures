@@ -25,6 +25,7 @@
     "postbuild-book": "npm run build-review-columns && npm run build-profiles",
     "build-review-columns": "node scripts/build-review-columns.mjs",
     "build-profiles": "node scripts/build-private-profiles.mjs",
+    "build-private-rounds": "node scripts/build-private-rounds.mjs",
     "replay:calls": "node scripts/replay-capital-calls.mjs",
     "replay:owners": "node scripts/replay-owners.mjs",
     "replay:dedupe": "node scripts/replay-dedupe.mjs",
