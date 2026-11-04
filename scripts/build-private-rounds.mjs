@@ -111,7 +111,9 @@ function cleanCompany(reg, c, seen, problems, checkedOn) {
   // dropped whole, since its figures cannot be split between them.
   const mentions = (c?.familyMentions ?? []).flatMap((m) => {
     const who = String(m?.who ?? "");
-    const said = String(m?.text ?? (who && m?.what ? `${who}: ${m.what}` : m?.says ?? ""));
+    const told = String(m?.text ?? (who && m?.what ? `${who}: ${m.what}` : m?.says ?? ""));
+    // A line that does not itself name the member is printed with the member's name first.
+    const said = who && !/Jaisinghani/i.test(told) ? `${who} — ${told}` : told;
     const people = who.split(/;|,|\band\b/).map((x) => x.trim()).filter(Boolean);
     const member = (x) => FAMILY_NAME.test(/Jaisinghani|glow/i.test(x) ? x : `${x} Jaisinghani`);
     if (FENCED.test(said) || (who ? !people.every(member) : !FAMILY_NAME.test(said))) return [];

@@ -188,6 +188,24 @@ function CompanyPage({ company }: { company: Company }) {
   const inc42Covers = funding ? `Inc42's weekly funding tables from ${funding.from ? fmtDate(funding.from) : "—"} to ${funding.to ? fmtDate(funding.to) : "—"}${funding.archive.complete ? "" : ` (Glow Central Research has read ${funding.archive.pagesRead} of the archive's ${funding.archive.pages ?? "?"} pages; older roundups are still being read)`}` : null;
   const notInInc42 = inc42Covers ? `Inc42's funding table does not list this round — it covers ${inc42Covers}` : "Inc42's funding table has not been read";
 
+  // THE FAMILY, WHERE A FILING NAMES IT — an offer document's allottee table, a
+  // report of a round, or a registry's partner list (Stage 10kv). Shown with the
+  // rounds, or alone where the company has none (a family LLP has no round).
+  const mentions = company.familyMentions.length > 0 && (
+    <div className="border-t border-ink-700 px-4 py-3 text-[12px]" data-pc-mentions={company.familyMentions.length}>
+      <div className="mb-1 font-medium text-slate-300" title="Where a filing, a report of a round or a registry names a member of the family as an investor, allottee or partner">Named in the filings</div>
+      <ul className="space-y-1 text-slate-400">
+        {company.familyMentions.map((x, i) => (
+          <li key={i}>
+            {x.text}{" "}
+            <a href={x.source.url} target="_blank" rel="noreferrer" className="text-champagne-400 hover:underline"
+              title={`${x.source.publisher}${x.source.published ? `, ${fmtDate(x.source.published)}` : ""}${x.source.aggregator ? " (a data vendor's public page)" : ""}`}>{x.source.publisher}</a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+
   const chartRows = points.map((p) => ({ t: Date.parse(dayOf(p.date)), ...p }));
 
   return (
@@ -307,7 +325,10 @@ function CompanyPage({ company }: { company: Company }) {
 
         {tab === "rounds" && (
           noRounds
-            ? <div className="mt-5" data-pc-no-rounds><AbsentSection what={`No priced funding round found for ${company.brand}`} needs={noRoundWhy} /></div>
+            ? <div className="mt-5" data-pc-no-rounds>
+                <AbsentSection what={`No priced funding round found for ${company.brand}`} needs={noRoundWhy} />
+                {mentions && <Card className="mt-3" pad={false}>{mentions}</Card>}
+              </div>
             : (
               <Card className="mt-5" title="Funding rounds" subtitle="Every round on record, oldest first — researched from filings and the press, and Inc42's weekly funding table; the family's entry round is marked" pad={false}>
                 <div className="overflow-x-auto">
@@ -375,22 +396,7 @@ function CompanyPage({ company }: { company: Company }) {
                     </tbody>
                   </ExportableTable>
                 </div>
-                {/* THE FAMILY, WHERE A FILING NAMES IT — an offer document's
-                    allottee table or a report of the round, each linked. */}
-                {company.familyMentions.length > 0 && (
-                  <div className="border-t border-ink-700 px-4 py-3 text-[12px]" data-pc-mentions={company.familyMentions.length}>
-                    <div className="mb-1 font-medium text-slate-300" title="Where a filing or a report of a round names a member of the family as an investor or allottee">Named in the filings</div>
-                    <ul className="space-y-1 text-slate-400">
-                      {company.familyMentions.map((x, i) => (
-                        <li key={i}>
-                          {x.text}{" "}
-                          <a href={x.source.url} target="_blank" rel="noreferrer" className="text-champagne-400 hover:underline"
-                            title={`${x.source.publisher}${x.source.published ? `, ${fmtDate(x.source.published)}` : ""}`}>{x.source.publisher}</a>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+                {mentions}
               </Card>
             )
         )}
