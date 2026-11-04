@@ -454,7 +454,7 @@
         }
       ],
       "familyMentions": [],
-      "searchNote": "New: the 1 Aug 2026 pre-IPO placement (>₹1,000 Cr, ~$4.5 Bn per Storyboard18; $4–4.2 Bn per Kotak Neo), after the IPO was paused in July 2026. Sources dated 28 Oct 2026 say no price band or IPO date is announced and listing is now targeted for 2027. Also added the >₹577 Cr amount to the Aug 2025 MOFSL secondary. Not found: the UDRHP-I PDF itself (no URL surfaced), the pre-IPO allotment price or allottees, and any round dated Feb 2025 (the family's entry). The shared web-search budget ran out mid-research, so September–November 2026 allotment filings were not checked. No Jaisinghani/Glow mention found.",
+      "searchNote": "Sep-Nov 2026: no closing, allotment, price band or IPO date reported. Zepto's own release (investors.zepto.com) says it 'agreed with major shareholders to close' a pre-IPO placement but gives no amount, price or valuation, and Outlook Business (3 Aug 2026) still says Zepto is 'looking to raise' ~₹1,000 Cr. So the 2026-08-01 row reflects reports of an agreement; no allotment has been reported. The UDRHP-I abridged prospectus (8 Jun 2026, on Morgan Stanley's site) allows a pre-IPO placement of up to ₹1,602 Cr and gives sellers' average costs (Nexus VII ₹23.65, Razor ₹11.37), but no per-round issue prices. A ~$4.6 Bn pre-investment figure (Oct 2024) was only talks. Still no Feb 2025 round. No Jaisinghani/Glow mention.",
       "checkedOn": "2026-11-04"
     },
     {
@@ -472,6 +472,68 @@
       "listed": null,
       "rounds": [
         {
+          "date": "2019-08",
+          "dateBasis": "announced",
+          "round": "Angel round (maiden seed tranche)",
+          "kind": "primary",
+          "amountRaised": null,
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": {
+            "value": 712,
+            "currency": "INR"
+          },
+          "sharesAllotted": null,
+          "leadInvestors": [],
+          "note": "DrinkPrime's 22 Apr 2020 release says it 'had raised an angel round in August 2019'. Entrackr (4 Aug 2020) gives the price of its 'maiden funding tranche' as Rs 712 per preference share, without dating it. Entrackr says the seed came in two tranches in the 12 months before Aug 2020 (about Rs 6 Cr in all), and HRNXT says the earlier one was in 2019. So the maiden tranche is taken to be the Aug 2019",
+          "sources": [
+            {
+              "url": "https://drinkprime.in/blog/wp-json/wp/v2/posts/141",
+              "publisher": "DrinkPrime (company press release)",
+              "published": "2020-04-22",
+              "supports": "DrinkPrime had raised an angel round in August 2019."
+            },
+            {
+              "url": "https://entrackr.com/2020/08/drinkprime-raises-pre-series-a-round-led-by-sequoia-surge/",
+              "publisher": "Entrackr",
+              "published": "2020-08-04",
+              "supports": "in DrinkPrime's maiden funding tranche at Rs 712 per share."
+            }
+          ]
+        },
+        {
+          "date": "2020-04-22",
+          "dateBasis": "announced",
+          "round": "Seed",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 36000000,
+            "currency": "INR"
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [],
+          "note": "The amount is a floor: 'over Rs 3.6 crore' (HRNXT). Named participants include the Snapdeal founders, Ankit Agarwal (Innoven Capital), Abhishek Goyal (Tracxn), FirstCheque and Bharat Jaisinghani. Entrackr puts total seed funding over the two tranches at about Rs 6 Cr. No valuation or issue price is stated for this tranche. It is the round nearest the family's Feb 2020 entry.",
+          "sources": [
+            {
+              "url": "https://hrnxt.com/news/investment/bengaluru-based-drink-prime-raises-rs3-6-cr-seed-funding-from-snapdeal-founders-others/18189/2020/04/27",
+              "publisher": "HRNXT",
+              "published": "2020-04-27",
+              "supports": "has raised over Rs 3.6 crore as part of its seed round of funding"
+            },
+            {
+              "url": "https://drinkprime.in/blog/wp-json/wp/v2/posts/141",
+              "publisher": "DrinkPrime (company press release)",
+              "published": "2020-04-22",
+              "supports": "DrinkPrime raises its seed funding round."
+            }
+          ]
+        },
+        {
           "date": "2020-08-18",
           "dateBasis": "announced",
           "round": "Pre-Series A",
@@ -481,7 +543,10 @@
             "currency": "INR"
           },
           "preMoney": null,
-          "postMoney": null,
+          "postMoney": {
+            "value": 850000000,
+            "currency": "INR"
+          },
           "valuation": null,
           "pricePerShare": {
             "value": 3336,
@@ -510,7 +575,7 @@
               "url": "https://entrackr.com/2020/08/drinkprime-raises-pre-series-a-round-led-by-sequoia-surge/",
               "publisher": "Entrackr",
               "published": "2020-08-04",
-              "supports": "has secured Rs 21.56 crore in its pre-Series A funding round led by Sequoia Surge"
+              "supports": "According to Fintrackr ’s estimates, DrinkPrime has been valued at around Rs 85 crore after the latest allotment of shares."
             }
           ]
         },
@@ -644,6 +709,26 @@
       ],
       "familyMentions": [
         {
+          "text": "DrinkPrime's own release announcing its seed round (22 Apr 2020) names Bharat Jaisinghani among the participating investors and quotes him as 'a renowned angel investor'. The sentence follows a mention of the Aug 2019 angel round, so the release does not settle which tranche he joined. HRNXT places him in the seed round.",
+          "shares": null,
+          "source": {
+            "url": "https://drinkprime.in/blog/wp-json/wp/v2/posts/141",
+            "publisher": "DrinkPrime (company press release)",
+            "published": "2020-04-22",
+            "supports": "Some of the investors who participated in the round are Abhishek Goyal (Tracxn), Bharat Jaisinghani, and FirstCheque."
+          }
+        },
+        {
+          "text": "HRNXT's report of the Rs 3.6 Cr seed round names 'Angel investor Bharath Jaisinghani' among its participants (spelled 'Bharath').",
+          "shares": null,
+          "source": {
+            "url": "https://hrnxt.com/news/investment/bengaluru-based-drink-prime-raises-rs3-6-cr-seed-funding-from-snapdeal-founders-others/18189/2020/04/27",
+            "publisher": "HRNXT",
+            "published": "2020-04-27",
+            "supports": "Angel investor Bharath Jaisinghani and Ankit Agarwal, who is the director at Innoven Capital, also participated"
+          }
+        },
+        {
           "text": "Bharat Jaisinghani: Named among angel investors in DrinkPrime's earlier seed round (amount undisclosed); no shares, amount or price stated.",
           "shares": null,
           "source": {
@@ -654,7 +739,7 @@
           }
         }
       ],
-      "searchNote": "Web search budget ran out partway through; this company was researched by opening the record's sources and Entrackr's DrinkPrime tag page. New: per-share price and share count for the Aug 2020 pre-Series A (Rs 3,336 × 64,613 CCPS), and a Rs 261 Cr valuation for the 2024 round (stated in 2026 as the 'previous round'). The 2022 Series A (Rs 60 Cr) still has no valuation or issue price in any source opened. Inc42 Datalabs lists an undated-amount seed round on 22 Apr 2020 (Titan Capital and others), near the family's Feb 2020 entry; no price found. No family member is named among the Aug 2020 allottees. No secondary or exit price around Jul 2023 found.",
+      "searchNote": "7 searches plus opening the company's Apr 2020 release, HRNXT, Entrackr (2020, 2024), Inc42 (2022, 2024) and India Education Diary. New: the Aug 2019 angel/maiden tranche (Rs 712 per preference share), the Apr 2020 seed (over Rs 3.6 Cr), Entrackr's ~Rs 85 Cr post-money estimate for the Aug 2020 round, and Bharat Jaisinghani named as an angel investor in the seed. Not recorded as rounds: Rs 8 Cr of debt in Jun 2021 (UC Inclusive Credit Rs 5 Cr, Western Capital Rs 3 Cr), and the Jul 2022 equity share (Rs 30-35 Cr per ET via Inc42). The 2022 Series A still has no valuation or issue price in any source. No 2023 round or secondary price found near the family's Jul 2023 entry. Entrackr's Aug 2020 allottee list names none of the four family members.",
       "checkedOn": "2026-11-04"
     },
     {
@@ -827,6 +912,41 @@
       "sector": "CNG/EV cab fleet operator for ride-hailing",
       "listed": null,
       "rounds": [
+        {
+          "date": "2019-09",
+          "dateBasis": "announced",
+          "round": "Seed",
+          "kind": "primary",
+          "amountRaised": {
+            "value": 1100000,
+            "currency": "USD"
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "Rockstud Capital",
+            "Artha Venture Fund"
+          ],
+          "note": "YourStory's report (Sep 2019) returned HTTP 403 when opened; its headline in the search result states the amount. Inc42 Datalabs dates the round 6 Sep 2019. DealStreetAsia (5 Sep 2019) headlines 'Rockstud invests in Everest Fleet' behind a paywall. No valuation stated. This is before the family's Jan 2022 entry.",
+          "sources": [
+            {
+              "url": "https://yourstory.com/2019/09/startup-funding-everest-fleet-artha-ventures-rockstud-cab-aggregators",
+              "publisher": "YourStory",
+              "published": null,
+              "supports": "[Funding alert] Rockstud, Artha Ventures invest $1.1M in Everest Fleet"
+            },
+            {
+              "url": "https://inc42.com/company/everest-fleet/funding/",
+              "publisher": "Inc42 Datalabs",
+              "published": null,
+              "supports": "06 Sept 2019 Seed - Everest Fleet Rockstud Capital , + 1 More $1.10 Mn Early Stage",
+              "aggregator": true
+            }
+          ]
+        },
         {
           "date": "2023-06-14",
           "dateBasis": "announced",
@@ -1014,7 +1134,7 @@
         }
       ],
       "familyMentions": [],
-      "searchNote": "Web search budget ran out before this company; researched by opening the record's sources plus Entrackr's Everest Fleet tag page (Jun 2023 Series B, Oct 2023 Artha exit, FY23/FY24 results) and Inc42 Datalabs. New: share counts for both Series C allotments. Still no priced round inside the family's window (Jan 2022 to May 2023): Inc42 Datalabs lists a 30 Apr 2022 seed round (Rockstud and four others) with the amount undisclosed. The Jun 2023 Series B articles state no valuation. The Oct 2023 Artha partial exit (19x) carries no price. No family mention found.",
+      "searchNote": "6 searches; opened Venture Intelligence (Jun and Sep 2023), Inc42 (Nov 2025) and Inc42 Datalabs. Still no priced round inside the family's window (Jan 2022 to May 2023). Inc42 Datalabs lists a 30 Apr 2022 seed (Rockstud and four others) with the amount undisclosed. Venture Intelligence's totals for Sep 2019 to May 2022 disagree: 'over USD 8 M' (14 Jun 2023) against 'USD 15 M from Artha India Ventures, Rockstud Capital and others' (21 Sep 2023). Neither gives a round-level figure or a valuation. The Jun 2023 Series B has no stated valuation; Business Standard and AVCJ could not be opened. YourStory reportedly gives $440M post-money for the Sep 2024 Series C, against Entrackr's $425M; unverified, not recorded. IFC talks (DealStreetAsia) are not a round. No 2026 event found. Family not named.",
       "checkedOn": "2026-11-04"
     },
     {
@@ -1521,7 +1641,9 @@
           "valuation": null,
           "pricePerShare": null,
           "sharesAllotted": null,
-          "leadInvestors": [],
+          "leadInvestors": [
+            "DSG Consumer Partners"
+          ],
           "note": "Only source opened is trade publication Short Term Rentalz, which refers to the 'previous most recent Rs 10 crore funding round' in January 2021 without naming investors.",
           "sources": [
             {
@@ -1529,6 +1651,12 @@
               "publisher": "Short Term Rentalz",
               "published": "2022-09-07",
               "supports": "Rs 10 Cr ($1.32 Mn) round in January 2021"
+            },
+            {
+              "url": "https://india.entrepreneur.com/finance/vista-rooms-raises-inr-10-cr-in-funding-round-led-by-dsg/364226",
+              "publisher": "Entrepreneur India",
+              "published": "2021-01-27",
+              "supports": "Vista Rooms on Wednesday announced to have raised INR 10 crore in a funding round led by DSG Consumer Partners"
             }
           ]
         },
@@ -1579,17 +1707,13 @@
           },
           "preMoney": null,
           "postMoney": null,
-          "valuation": {
-            "value": 48590000,
-            "currency": "USD",
-            "basis": "unspecified"
-          },
+          "valuation": null,
           "pricePerShare": null,
           "sharesAllotted": null,
           "leadInvestors": [
             "JSW Ventures"
           ],
-          "note": "Existing investors DSG Consumer Partners and Capri Global Family Office participated. Valuation not disclosed (Dealroom's $25M not recorded).",
+          "note": "Existing investors DSG Consumer Partners and Capri Global Family Office participated. Valuation not disclosed (Dealroom's $25M not recorded). No valuation recorded: data vendors disagree (8.59 Mn on Inc42 Datalabs, about 5 Mn elsewhere) and no filing or press report of the round states one.",
           "sources": [
             {
               "url": "https://entrackr.com/snippets/stayvista-raises-rs-40-cr-in-series-b-round-led-by-jsw-ventures-9439300",
@@ -1602,19 +1726,12 @@
               "publisher": "Inc42",
               "published": "2025-06-26",
               "supports": "INR 40 Cr Series B led by JSW Ventures"
-            },
-            {
-              "url": "https://inc42.com/company/stayvista/funding/",
-              "publisher": "Inc42 Datalabs",
-              "published": null,
-              "supports": "StayVista's last known valuation was $48.59 million as of 26 June 2025.",
-              "aggregator": true
             }
           ]
         }
       ],
       "familyMentions": [],
-      "searchNote": "Web search budget ran out before this company; researched by opening the record's sources, Entrackr's StayVista tag page (FY24 and FY25 results) and Inc42 Datalabs. Inc42 Datalabs lists the Jan 2021 round as a 26 Jan 2021 seed ($1.37 Mn, Artha Group and three others), with no valuation. Still no round found around the family's second entry (Feb 2023). Entrackr's FY24 piece gives shareholding (DSG 17%, founders 32.4%) but no valuation. The only valuation found is Inc42 Datalabs' figure for the Jun 2025 Series B (aggregator). No family mention found.",
+      "searchNote": "7 searches; opened Entrepreneur India (Jan 2021), Entrackr (Sep 2022), Inc42 (Jun 2025), DealStreetAsia and South Asian Herald. New: a source and the lead investor (DSG Consumer Partners) for the Jan 2021 Rs 10 Cr round. Its valuation is still not stated anywhere. No round, tranche or secondary found near the family's Feb 2023 entry. The Sep 2022 and Jun 2025 reports state no issue price or share count; Inc42 (Jun 2025) gives none either. Aggregator valuations for the Jun 2025 Series B disagree ($25.0M on Dealroom/PremierAlts against Inc42 Datalabs' $48.59M already on record), so no new figure is recorded. A '2028 IPO and fundraise' headline is a target, not a round. No 2026 round found. Family not named.",
       "checkedOn": "2026-11-04"
     },
     {
@@ -2650,7 +2767,7 @@
         }
       ],
       "familyMentions": [],
-      "searchNote": "Nothing new recorded. The Star/Reuters (24 Aug 2026) says the Nvidia round under discussion (>$30 Bn) \"would increase Perplexity's valuation by more than 50% from its previous financing a year ago\". So no priced round closed between the Sep 2025 $20 Bn financing and Aug 2026. Not recorded: Cristiano Ronaldo's undisclosed stake (Bloomberg, 5 Dec 2025: no amount or valuation); a \"Series E-6\" at $21.21 Bn (uncited on Wikipedia, aggregator-only); the Jan 2026 $750 Mn Microsoft Azure deal (a cloud contract, not equity). The shared web-search budget ran out before Sep–Nov 2026 could be checked, so whether the Nvidia round closed is unknown. No Jaisinghani/Glow mention.",
+      "searchNote": "Sep-Nov 2026: no closed round found. The Nvidia round (The Information/Reuters, 23-24 Aug 2026, >$30 Bn) is still reported only as talks; 24/7 Wall St on Yahoo Finance (27 Aug 2026) says the CEO has discussed a 2028 IPO. Not recorded: a 'January 2026 $23 Bn round' that TechFundingNews (24 Aug 2026) states with no source, and aggregator pages giving a 9 Jan 2026 'Series E-6' at conflicting values ($20.4 Bn, $21.21 Bn, $22.6 Bn). No Reuters, Bloomberg or Information report confirms it, and Reuters' 'previous financing a year ago' points to the Sep 2025 $20 Bn round. Vendor marks for Oct 2026 (~$19.7 Bn) are estimates, not rounds. No tender offer found. No Jaisinghani/Glow mention.",
       "checkedOn": "2026-11-04"
     },
     {
@@ -2713,7 +2830,7 @@
         }
       ],
       "familyMentions": [],
-      "searchNote": "One web search (LikeMinds community SDK raises / Collabmates) before the shared search budget ran out; a 'Collabmates funding/allotment/valuation' search could not run. Re-opened Preqin (Oct 2022 seed: INR 46.38M, INR 470.36M post-money; its deals table shows two 'Seed' rows with hidden details). Inc42's data page (legal name COLLABMATES PRIVATE LIMITED) shows no rounds and labels it 'Bootstrapped'. Village.ai and YourStory company pages returned 403. No press report of any round, and nothing matching the family's Feb 2023 AngelList-trust entry. A follow-up search pass is needed for Entrackr/TheKredible/Inc42 news coverage.",
+      "searchNote": "Second pass, 7 searches: LikeMinds + LetsVenture/Venture Gurukool, + Elevation Capital, + Ankurit Capital, + founder Nipun Goyal, '\"Collabmates\" funding/allotment', LikeMinds raises 2023-2025, '\"Venture Gurukool\" LikeMinds'. Re-opened Preqin: still only the Oct 2022 seed (INR 46.38M, INR 470.36M post-money). Preqin lists Elevation Capital, LVX and Venture Gurukool as current investors, with no round attached. A PitchBook snippet lists an Ankurit Capital deal (12 May 2020) with no amount and no press source. CB Insights' 'LikeMinds' pages are a different, US-based company. No press report (Entrackr, TheKredible, Inc42, ET, YourStory) of any round, valuation or allotment price, and nothing matching the family's Feb 2023 AngelList-trust entry. Family not named.",
       "checkedOn": "2026-11-04"
     },
     {
@@ -2852,10 +2969,40 @@
               "supports": "₹4 Cr first tranche at ₹160 Cr post-money"
             }
           ]
+        },
+        {
+          "date": "2026-02-21",
+          "dateBasis": "announced",
+          "round": "Pre-Series A (The Chennai Angels tranche)",
+          "kind": "primary",
+          "amountRaised": null,
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": null,
+          "sharesAllotted": null,
+          "leadInvestors": [
+            "The Chennai Angels"
+          ],
+          "note": "A further tranche of the ongoing Pre-Series A round, which opened in Nov 2025 with IPV's Rs 4 Cr at Rs 160 Cr post-money. The amount was not disclosed. The Ascendants also names MeitY among the round's participants.",
+          "sources": [
+            {
+              "url": "https://ascendants.in/funding-feed/hoopr-funding-chennai-angels-pre-series-a/",
+              "publisher": "The Ascendants",
+              "published": "2026-02-21",
+              "supports": "has raised an undisclosed amount from The Chennai Angels as part of its ongoing Pre-Series A round."
+            },
+            {
+              "url": "https://www.musicplus.in/?p=13980",
+              "publisher": "Music Plus",
+              "published": "2026-02-24",
+              "supports": "has raised Pre-Series A funding from early-stage investor network The Chennai Angels , as part of its ongoing growth round."
+            }
+          ]
         }
       ],
       "familyMentions": [],
-      "searchNote": "Web search budget was exhausted before Hoopr; checked by opening known pages only. Re-opened Entrackr (17 Nov 2025: Rs 4 Cr first tranche, Rs 160 Cr post-money, Rs 18 Cr raised to date) and MediaNews4U (18 Nov 2025: '2x growth in valuation' but no earlier figure stated). Inc42 data page lists only the Dec 2021 seed and Nov 2025 pre-Series A (last known valuation $13.55M, aggregator, not recorded as it duplicates the Entrackr figure). The ~Rs 3 Cr gap between Rs 18 Cr total and the two reported rounds suggests an unreported raise; not found. No later tranche found. Family not named.",
+      "searchNote": "6 searches. The ~Rs 3 Cr gap between Entrackr's Rs 18 Cr raised to date and the two recorded rounds is explained by Venture Intelligence (17 Nov 2025): 'Between Feb 2022 and Dec 2023, Hoopr had attracted about USD 2 M from Beacon India, Z Nation Lab, Capier Investments, Dholakia Ventures and others.' This is a cumulative figure over a period that starts the month of the family's 18 Feb 2022 LV Angel Fund entry. No source dates or prices a single round, so it is not recorded as one. Searches on those investor names found nothing more. New: an undisclosed Pre-Series A tranche from The Chennai Angels (Feb 2026). No valuation found for any round other than Nov 2025's Rs 160 Cr post-money. Family not named.",
       "checkedOn": "2026-11-04"
     },
     {
@@ -2871,6 +3018,42 @@
       "rounds": [
         {
           "date": "2020-09-09",
+          "dateBasis": "reported",
+          "round": "Private placement to Reliance Industries (promoter)",
+          "kind": "preferential",
+          "amountRaised": {
+            "value": 116500000000,
+            "currency": "INR"
+          },
+          "preMoney": null,
+          "postMoney": null,
+          "valuation": null,
+          "pricePerShare": {
+            "value": 682.25,
+            "currency": "INR"
+          },
+          "sharesAllotted": 171000000,
+          "leadInvestors": [
+            "Reliance Industries Limited"
+          ],
+          "note": "Capitalmind (9 Sep 2020) says the placement happened 'a few days back', so the exact allotment date is not stated; the date here is the first report. The share count is printed rounded ('17.1 crore'). Capitalmind gives the amount as 'close to ₹ 11,650 crore'; Business Today (8 Oct 2020) reports Rs 11,650 crore.",
+          "sources": [
+            {
+              "url": "https://premium.capitalmind.in/2020/09/what-silver-lakes-investment-in-reliance-retail-ventures-reveals/",
+              "publisher": "Capitalmind",
+              "published": "2020-09-09",
+              "supports": "A few days back, RRVL conducted a private placement where it issued 17.1 crore shares to RIL at ₹ 682.25."
+            },
+            {
+              "url": "https://www.businesstoday.in/amp/latest/corporate/story/reliance-industries-pumps-in-rs-11650-crore-into-retail-unit-275075-2020-10-08",
+              "publisher": "Business Today",
+              "published": "2020-10-08",
+              "supports": "has infused fresh capital of Rs 11,650 crore as a promoter in its retail arm"
+            }
+          ]
+        },
+        {
+          "date": "2020-09-09",
           "dateBasis": "announced",
           "round": "Strategic investment — Silver Lake",
           "kind": "primary",
@@ -2884,7 +3067,10 @@
           },
           "postMoney": null,
           "valuation": null,
-          "pricePerShare": null,
+          "pricePerShare": {
+            "value": 682.25,
+            "currency": "INR"
+          },
           "sharesAllotted": null,
           "leadInvestors": [
             "Silver Lake"
@@ -2896,6 +3082,12 @@
               "publisher": "The Tribune (PTI)",
               "published": "2020-09-09",
               "supports": "Rs 7,500 Cr for 1.75%; pre-money equity value Rs 4.21 lakh crore"
+            },
+            {
+              "url": "https://premium.capitalmind.in/2020/09/what-silver-lakes-investment-in-reliance-retail-ventures-reveals/",
+              "publisher": "Capitalmind",
+              "published": "2020-09-09",
+              "supports": "Also, the new shares issued to Silver Lake is been done at ₹ 682.25, at the very same price."
             }
           ]
         },
@@ -3106,6 +3298,12 @@
               "publisher": "Reliance Retail Ventures media release",
               "published": "2020-10-06",
               "supports": "₹5,512.50 Cr for 1.20%; pre-money equity value ₹4.285 lakh crore"
+            },
+            {
+              "url": "https://techcrunch.com/2020/10/06/india-reliance-retail-to-sell-752-million-stake-to-abu-dhabi-investment-authority",
+              "publisher": "TechCrunch",
+              "published": "2020-10-06",
+              "supports": "selling a 1.2% stake in the business to Abu Dhabi Investment Authority for about $752 million … pre-money valuation of $58.5 billion"
             }
           ]
         },
@@ -3184,6 +3382,12 @@
               "publisher": "Siasat (PTI)",
               "published": "2023-09-06",
               "supports": "allotted 6,86,35,010 equity shares to QIA"
+            },
+            {
+              "url": "https://bseindia.com/xml-data/corpfiling/AttachHis/6b840d65-d69e-49f7-87d8-4c90d08e103a.pdf",
+              "publisher": "Reliance Industries Limited (BSE Regulation 30 filing)",
+              "published": "2023-09-06",
+              "supports": "Reliance Retail Ventures Limited today received the subscription amount of ₹ 8,278 crore from Qatar Holding LLC (QIA) and allotted 6,86,35,010 equity shares to QIA."
             }
           ]
         },
@@ -3265,7 +3469,7 @@
         }
       ],
       "familyMentions": [],
-      "searchNote": "Added share counts to the 2023 QIA (6,86,35,010) and KKR (1,71,58,752) allotments, and the $100 Bn USD valuation (TechCrunch) to the 2023 ADIA round. Still no per-share allotment price stated in any source opened; dividing amount by shares was not done. The Wikipedia reference list shows no RRVL equity event after Oct 2023, only the Jul 2025 Kelvinator brand acquisition (no amount). The shared web-search budget ran out, so RIL exchange filings for 2024–2026 RRVL allotments, buybacks or IPO steps were not searched. No Jaisinghani/Glow mention.",
+      "searchNote": "New: ₹682.25 per share for Silver Lake and for RIL's ~₹11,650 Cr placement (17.1 crore shares) just before it (Capitalmind, 9 Sep 2020); a BloombergQuint piece in search results gives the same price but its host could not be opened. No source opened states a per-share price for the other 2020 tranches (KKR, GA, Mubadala, GIC, TPG, ADIA, PIF) or for the 2023 QIA/KKR/ADIA allotments. The QIA BSE filing gives shares only, and amount ÷ shares was not computed. The 19 Nov 2020 completion release reports 69,27,81,234 shares allotted to the nine investors in total for ₹47,265 Cr (10.09%), with no price. One search found no RRVL equity event in 2024-2026. No Jaisinghani/Glow mention.",
       "checkedOn": "2026-11-04"
     },
     {
@@ -3569,12 +3773,12 @@
       "fundKeys": [
         "mother-india-forming"
       ],
-      "website": null,
+      "website": "https://migoldline.com",
       "sector": "Cold roll-formed metal components",
       "listed": null,
       "rounds": [],
       "familyMentions": [],
-      "searchNote": "Not re-searched this run: the session's shared web-search budget was exhausted before this company was reached, and a direct check of www.motherindiaforming.com failed (host could not be resolved/reached from this session, so it may need to be allowed in network settings or may not exist). Earlier research (legal name with funding/raise/equity/IPO/SME terms; BSE SME and NSE Emerge offer documents) found no round, valuation or offer document. Still missing: any priced allotment around the family's 24 Jan 2025 investment (an MCA PAS-3/MGT-7 or a later SME offer document would carry it).",
+      "searchNote": "Searched the legal name and brand with funding/raises/investment, private placement/preferential allotment/rights issue/valuation, MI Goldline, director names (Sankhla), and Jaisinghani/Glow Ventures. Found only registry and trade-press profiles: CIN U27202KA1999PTC024731 (incorporated 5 Feb 1999, RoC Bangalore), Bommasandra plant, cold roll-formed tubular sections and profiles; the TradeFlock interview links the company to migoldline.com. The website and the TradeFlock and NBMCW articles carry no funding, investor, share-capital or IPO information. No round, valuation, price per share or offer document was found. Still missing: the priced allotment around the family's 24 Jan 2025 investment (it would appear in an MCA PAS-3/MGT-7 filing).",
       "checkedOn": "2026-11-04"
     },
     {
@@ -3991,7 +4195,10 @@
           "dateBasis": "announced",
           "round": "Preferential issue (pre-IPO)",
           "kind": "preferential",
-          "amountRaised": null,
+          "amountRaised": {
+            "value": 720000000,
+            "currency": "INR"
+          },
           "preMoney": null,
           "postMoney": null,
           "valuation": null,
@@ -4014,12 +4221,18 @@
               "publisher": "Spray Engineering Devices Ltd (audited standalone financial statements FY2024-25, CARO report)",
               "published": null,
               "supports": "The Company has made a private placement of 25,09,642 equity shares during the year in compliance with the requirements of Section 42 and Section 62"
+            },
+            {
+              "url": "https://www.icra.in/Rating/GetRationalReportFilePdf?id=133919",
+              "publisher": "ICRA",
+              "published": "2025-03-26",
+              "supports": "There was an equity infusion of Rs. 72 crore in H1 FY2025, which further strengthened SEDL’s capital structure and coverage metrics."
             }
           ]
         }
       ],
       "familyMentions": [],
-      "searchNote": "Read the company's investor page and downloaded its FY2024-25 Directors' Report and standalone financial statements for FY2021-22 to FY2024-25. The CARO reports for FY2021-22, FY2022-23 and FY2023-24 each say no preferential allotment or private placement was made in those years, so the May 2024 issue at Rs 287 (25,09,642 shares, added above) is the only priced allotment in that period. No valuation is stated in any document read. The EGM of 6 May 2024 approved an IPO, but no DRHP was found in earlier research; web-search budget was exhausted before a fresh DRHP/listing check this run. No Jaisinghani or Glow name found in documents read.",
+      "searchNote": "Searched IPO/DRHP (SEBI, BSE, NSE), raises/funding/pre-IPO/investors, private equity stake, and rating rationales. ICRA's 26 Mar 2025 rationale states a Rs 72 crore equity infusion in H1 FY2025, added to the May 2024 preferential round. ICRA's 26 Dec 2025 reaffirmation and Infomerics' 9 Dec 2024 upgrade carry no valuation or new infusion. The FY2024-25 Secretarial Audit Report confirms the 6 May 2024 EGM approved an IPO and the 25,09,642-share issue at Rs 287, and a 20 Sep 2024 EGM adopted new Articles. No DRHP, listing, valuation or later round was found. Unlisted-dealer price pages were ignored. No Jaisinghani or Glow name was found in any document read.",
       "checkedOn": "2026-11-04"
     },
     {
@@ -4126,7 +4339,7 @@
         }
       ],
       "familyMentions": [],
-      "searchNote": "Re-read the 2023 NSE Emerge DRHP (dated 15 Jul 2023): its capital history has only the 2018 MoA subscription at par, a 1500:1 bonus (28 Mar 2023) and the 6 Jul 2023 placement at Rs 132 (share count added above); no Jaisinghani/Glow name. Re-opened the March 2024 round's sources: ThePrint/ANI (6 Mar 2024) states Rs 350 Cr raised with no valuation or price; The CapTable (5 Mar 2024) reports the SME IPO was scrapped and gives no valuation; the DealStreetAsia body is paywalled beyond its '$42m' headline. Web-search budget was exhausted before a fresh search for a later DRHP, listing or 2025-26 round. Not listed.",
+      "searchNote": "Searched raises/IPO 2025–26, valuation/per share, Entrackr/TheKredible/VCCircle/ET/Mint, rating rationales, Gensol links and 2026 news. Inc42 lists one round (5 Mar 2024, $42.26M) with no valuation. Its cap table is as of 21 Oct 2024 (41 shareholders) and names no Jaisinghani. DealStreetAsia/Reuters (3 Oct 2024) and Renewable Watch (7 Oct 2024) give only an IPO plan of up to Rs 12 billion. Republic (18 Apr 2025) says the IPO was put on hold after the SEBI order against the Jaggi promoters. A Mint piece (17 Apr 2025, paywalled, not opened) reportedly gives a Rs 122 premium in July 2023, which matches the recorded Rs 132. Rs 400 per share for the 2024 tranches appears only on an unlisted-dealer site, so it is not recorded. No credit rating, DRHP or listing was found.",
       "checkedOn": "2026-11-04"
     },
     {
@@ -4217,7 +4430,7 @@
         }
       ],
       "familyMentions": [],
-      "searchNote": "Re-read the Sept 2024 sources (Inc42, Venture Intelligence, the ANI/ThePrint release); none states a valuation or price per share. Venture Intelligence says the Rs 250 Cr came 'via primary and secondary issues of shares', facilitated by Negen Wealth. Inc42's company page lists a 31 Dec 2022 seed (Forge Innovation & Ventures, undisclosed), a 2 Jul 2020 $1.00 Mn angel round and a 2019 iDEX grant. The company site lists '$ 28 Mn. Fund raised' in 2024, against $30 Mn in the press. The shared web-search budget ran out before dedicated 2025-2026 round and valuation searches could be run, so a later round or valuation may still be missing. Family not named.",
+      "searchNote": "No valuation found for any round. Inc42's funding page lists four rounds (grant Apr 2019 $217.82K; angel 2 Jul 2020 $1 Mn; seed 31 Dec 2022, amount undisclosed; 19 Sep 2024 $30 Mn) and shows no valuation or price. Entrepreneur India (21 Sep 2024) states none either. Not recorded: Caplight's 21 Nov 2025 'Convertible Debt' entry (amount and valuation locked) and its 'Est. Valuation' of $139.2M (a vendor estimate, not a round); an October 2025 $170.6K angel round that The Company Check reports in a search snippet (page returned 403, unverified). No Entrackr or TheKredible coverage found, and no 2026 round. bigbangboom.solutions redirects to bigbangboom.com. Family not named.",
       "checkedOn": "2026-11-04"
     },
     {
@@ -4267,7 +4480,7 @@
         }
       ],
       "familyMentions": [],
-      "searchNote": "Re-opened both existing sources: T&D India (22 Jan 2025) and Venture Intelligence (21 Jan 2025) state the Rs 20 Cr equity infusion (Rs 10 Cr each from the two investors) but give no valuation, stake or price per share. The company website (telawne.com: transformer maker, Thane, Maharashtra; services subsidiary Prajash Projects and Services) carries nothing on funding, share capital or an IPO. The session's web-search budget was exhausted before fresh searches for a DRHP/SME prospectus or later round could be run; earlier research found none. Neither source names Ajay, Bharat, Ankita or Aarti Jaisinghani or Glow Ventures.",
+      "searchNote": "Searched IPO/DRHP/SME IPO 2026, valuation/stake/per share, credit ratings (ICRA, CRISIL, CARE, India Ratings, Acuite), Mastermind JPIN, and Entrackr/TheKredible/VCCircle. PowerPeak Digest (23 Jan 2025) repeats the Rs 200 million infusion (Rs 100 million from each investor) with no stake, price or valuation. The only ratings found are old bank-loan ratings: ICRA B+ in 2017; SMERA/Acuite 2016–2018, later issuer not cooperating and withdrawn. The Acuite page could not be opened, and none of these ratings mentions the 2025 infusion. Premier Alternatives (aggregator, 403) shows an implied $22.1M valuation derived from the round. No source states it, so it is not recorded. No DRHP or listing found. No Ajay, Bharat, Ankita or Aarti Jaisinghani or Glow Ventures named.",
       "checkedOn": "2026-11-04"
     },
     {
@@ -4478,12 +4691,12 @@
       "fundKeys": [
         "urb-ventures"
       ],
-      "website": null,
-      "sector": null,
+      "website": "https://www.urbanwrk.com",
+      "sector": "Managed / flexible office workspaces (UrbanWrk brand)",
       "listed": null,
       "rounds": [],
       "familyMentions": [],
-      "searchNote": "Prior research: CIN U55209MH2019PTC436236, and an aggregator registry shows a rename to Urbanwrk Private Limited and 2023-2025 allotments with prices hidden. This pass: Inc42's UrbanWrk profile (urbanwrk.in) lists no funding rounds and tags the company 'Bootstrapped'. It does not name the legal entity, so the URB Ventures-UrbanWrk link stays unconfirmed and website/sector are left null. urbanwrk.com shows no legal name (client-rendered). The shared web-search budget ran out before press searches for UrbanWrk funding could be run, so a check of RoC-based reports (Entrackr/TheKredible) is still outstanding. No round recorded; family not named.",
+      "searchNote": "Link confirmed: QorpIQ (registry aggregator) lists CIN U55209MH2019PTC436236 (inc. 8 Mar 2019; URL slug urb-ventures-private-limited) as Urbanwrk Private Limited. Its office (504 Tower A, Peninsula Corporate Park, Mumbai) matches the entity named in urbanwrk.com's privacy policy. Director Anuj Munot is UrbanWrk's 'CEO & Founder' (UrbanWrk release, 22 Sep 2026). A second Urbanwrk Pvt Ltd (CIN U70109MH2020PTC345114) shows 'Amalgamated'; the counterparty is not stated. Registry rows (prices masked): preferential allotments 29 Mar 2023, 13 Feb 2024, 27 Sep 2024; CCPS conversion and bonus 13 Jan 2025; private placement 13 Aug 2025. Paid-up ₹21.56 Cr. No press report of funding or valuation found. Family not named.",
       "checkedOn": "2026-11-04"
     },
     {
