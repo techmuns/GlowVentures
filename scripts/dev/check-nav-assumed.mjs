@@ -59,6 +59,10 @@ try {
   await page.locator('[data-start="ytd"]').click();
   await page.waitForFunction(() => document.querySelector('[data-testid="nav-book-chip"]')?.getAttribute('data-nav-period') === 'ytd');
   assert.ok(near(await chip.getAttribute('data-nav-ret'), await cardOf('ytd').getAttribute('data-card-return')), 'the line ends on the calendar-year card');
+  // The available history: the chip carries the card's own figure (a rate a year past one year).
+  await page.locator('[data-start="history"]').click();
+  await page.waitForFunction(() => document.querySelector('[data-testid="nav-book-chip"]')?.getAttribute('data-nav-period') === 'history');
+  assert.ok(near(await chip.getAttribute('data-nav-card-return'), await cardOf('annualised').getAttribute('data-card-return')), 'the line is the available-history card');
   assert.deepEqual(priced.errors, []);
   await priced.context.close();
 
@@ -69,5 +73,5 @@ try {
   assert.match(await page.locator('[data-testid="nav-book-chip"]').getAttribute('title'), /waiting for prices/);
   assert.deepEqual(unpriced.errors, []);
   await unpriced.context.close();
-  console.log('NAV card: the line ends on the financial- and calendar-year cards, with and without published prices.', { count });
+  console.log('NAV card: the line ends on its return card for each period, with and without published prices.', { count });
 } catch (error) { await page?.screenshot({ path: out + '/failure.png' }).catch(() => {}); throw error; } finally { await browser.close(); }

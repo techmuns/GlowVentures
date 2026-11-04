@@ -20441,7 +20441,7 @@ const navWindowPoints = (c) => (NAV_SERIES_BOOK?.points ?? []).filter((p) => p.d
  * return card for the period picked, ended on each day; its last point is the
  * card, re-derived here on the page's own rows (`AVAILABLE_CARDS_BOOK`).
  */
-const NAV_PERIODS = ["fytd", "ytd"];
+const NAV_PERIODS = ["fytd", "ytd", "history"];
 const navDay = (d) => new Date(`${d}T00:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
 const NAV_CARD_LINE = [
   ["the book's line ends on its return card, to the decimal, over one of the cards' periods", (t, ctx) => {
@@ -20452,7 +20452,7 @@ const NAV_CARD_LINE = [
     const periodPct = r.total.measured?.working?.periodPct ?? r.total.returnPct;
     return Math.abs(chip.ret - periodPct) < 1e-8 && Math.abs(chip.cardReturn - r.total.returnPct) < 1e-8;
   }],
-  ["the period picker offers the financial and calendar year, one active", (t, ctx) => {
+  ["the period picker offers the three return cards' periods, one active", (t, ctx) => {
     const c = ctx?.navChart;
     if (!c) return navBasisMissing(ctx);
     return c.startTabs.map((x) => x.date).join(" ") === NAV_PERIODS.join(" ") && c.startTabs.filter((x) => x.active).length === 1

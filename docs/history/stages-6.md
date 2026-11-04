@@ -1117,8 +1117,8 @@
 
 - **The chart is the card.** `NavVsIndex` draws the selected card's selection (`availableCardReturns`, the same rows, histories and records as Morning CIO's cards). On each day it shows the card's figure as if the period ended there (`src/lib/periodLine.ts`), so its last point is the card to the decimal.
   - Each benchmark is the same dated money put into the index (`pmeWindowRows`), which is the card's own "vs" figure.
-  - The picker offers the financial year and the calendar year.
-  - Available history is left out: a few small holdings reach back to 2023 and nearly all the money joins in 2026, so a money-weighted line swings far past anything the book did (−30% to +130%). That line waits on the family's choice of measure.
+  - The picker offers the three cards' periods: financial year, calendar year and available history.
+  - Over the available history the line is cumulative and the card is a rate a year (+70.7% over the period = +16.9% a year). A few small holdings reach back to 2023 and most of the money joins in 2026, so its early points rest on little money, and the hover says so.
   - Records carry their dated values between open and close (`AccountWindow.marks`: statement marks, published closes, printed NAVs). Nothing is interpolated.
 - **Gain / Loss: 100% of investments.**
   - A holding is measured from its purchase record where there is one, otherwise from its first value on record. That second case uses the available-history card's unit, marked `sinceFirst`.

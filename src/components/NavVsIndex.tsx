@@ -126,15 +126,15 @@ const assumptionText = (owners: readonly string[]) => owners.length <= 1
   : `No sale appears in the records we have. We assume ${owners.slice(0, -1).join(", ")} and ${owners.at(-1)} still hold these shares.`;
 
 /**
- * The periods the line can cover — the return cards' own (Stage 10la). Not the
- * available history: a few small holdings reach back to 2023 and nearly all the
- * money joins in 2026, so a money-weighted figure ended on each day swings far
- * past anything the book did (−30% to +130%) and the line would say what the
- * card does not. It waits on the family's choice of measure for that line.
+ * The periods the line can cover — the return cards' own three (Stage 10la).
+ * Over the available history the line is cumulative and the card a rate a year;
+ * a few small holdings reach back to 2023 and most of the money joins in 2026,
+ * so its early points rest on little money, and the hover says so.
  */
 const PERIOD_PICKS = [
   { key: "fytd", label: "This financial year", card: "Return this financial year" },
   { key: "ytd", label: "This calendar year", card: "Return this calendar year" },
+  { key: "history", label: "Available history", card: "Return over available history" },
 ] as const;
 type PeriodPick = (typeof PERIOD_PICKS)[number]["key"];
 /** An index's close on or before a day, from its own points. */
@@ -291,6 +291,7 @@ export function NavVsIndex() {
     `Covers ${share(cov.measuredValue + cov.heldValue)}% of public investments: ${c(cov.measuredValue)} measured, ${c(cov.heldValue)} held at its last value (0% until its next value)${cov.waitingValue > 5e5 ? `, ${c(cov.waitingValue)} waiting for prices` : ""}. Private investments, ${c(cov.privateValue)}, are reported apart.`,
     "Each investment is held at its latest valuation until the next: a statement, a published close or a printed NAV. Nothing is interpolated between them.",
     assumedOwners.length ? assumptionText(assumedOwners) : "",
+    annual ? `Over the available history the line is the return so far, money-weighted: where only a little money was invested, as before ${fmtDate(card.starts.find((s) => s.date && s.close > 0.5 * cov.measuredValue)?.date ?? to)}, a small move reads large.` : "",
     bookRet != null ? `${fmtDate(from)} → ${fmtDate(to)}: ${pctText(bookRet)}${annual ? `, ${pctText(card.total.returnPct)} a year` : ", not annualised"} — the card's figure.` : "",
   ].filter(Boolean).join("\n\n");
   const basisHover = [
