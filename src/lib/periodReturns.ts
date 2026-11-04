@@ -102,6 +102,8 @@ export type AccountInput = {
    * the whole, never a gap in it.
    */
   outside?: string | null;
+  /** Measured from consecutive statements holding the same units (Stage 10kz): the evidence, in words. */
+  unitWindow?: string;
 };
 
 export type AccountWindow = {

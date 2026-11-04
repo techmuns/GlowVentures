@@ -6,7 +6,19 @@ import { marketHoldingKey } from './marketReturns';
 import { projectActions, type ActionFeed } from './corporateActions';
 
 export type HoldingAssumption = { owner: string; statementDate: string; quantity: number; source: string;
-  opening: number; closing: number; income: number; incomeDates: { date: string; amount: number }[] };
+  opening: number; closing: number; income: number; incomeDates: { date: string; amount: number }[];
+  /** Listed after the period opened: measured from its first exchange close (Stage 10kz). */
+  listedFrom?: string };
+/**
+ * Options a period surface may pass (Stage 10kz), both off by default so every
+ * other caller keeps the one rule unchanged:
+ *   • `anchor` — an EARLIER dated balance of the same units (an older statement
+ *     of the same account, `BOOK_EARLIER_BALANCES`), used where no trade,
+ *     movement or withdrawal since contradicts it;
+ *   • `fromListing` — a holding held before it was listed opens on its first
+ *     exchange close, since no market price exists before it.
+ */
+export type AssumeOptions = { anchor?: { quantity: number; date: string }; fromListing?: boolean };
 export const holdingAssumptionText = (owner?: string) => `No sale appears in the records we have. We assume ${owner || 'the owner'} still holds these shares.`;
 export type AssumedReturnBook = {
   positions: readonly Position[]; unvalued: readonly UnvaluedStatementHolding[];
@@ -48,6 +60,7 @@ export type AssumedHolding = {
   opening: { date: string; value: number };
   closing: { date: string; value: number };
   incomeDates: { date: string; amount: number }[];
+  listedFrom?: string;
 };
 export type AssumedHoldingGap = { reason: string; detail?: string; pending?: boolean; retry?: boolean };
 
@@ -57,7 +70,7 @@ export type AssumedHoldingGap = { reason: string; detail?: string; pending?: boo
  * returns and the NAV card's book line — asks this, so a holding is assumed
  * held, refused or still loading for the same reason on both.
  */
-export function assumedHolding(p: Position, a: Account | undefined, start: string | null, end: string, b: AssumedReturnBook): AssumedHolding | { gap: AssumedHoldingGap } {
+export function assumedHolding(p: Position, a: Account | undefined, start: string | null, end: string, b: AssumedReturnBook, o: AssumeOptions = {}): AssumedHolding | { gap: AssumedHoldingGap } {
   const gap = (reason: string, detail?: string, pending = false, retry = false) => ({ gap: { reason, detail, pending, retry } });
   if (!a) return gap('The holding’s owner and account must be identified.');
   const k = marketHoldingKey(p);
@@ -68,7 +81,7 @@ export function assumedHolding(p: Position, a: Account | undefined, start: strin
   if (!instrument || p.assetClass === 'Cash') {
     return gap('A published market price or fund NAV is needed. Assuming it is still held cannot supply a missing valuation.');
   }
-  const anchor = holdingAssumptionAnchor(p, a, b);
+  const anchor = o.anchor ? { quantity: o.anchor.quantity, date: o.anchor.date, position: p } : holdingAssumptionAnchor(p, a, b);
   if (!anchor) return gap('A dated statement showing the number of shares or units is needed.');
   const requestedStart = start ?? anchor.date;
   if (requestedStart < anchor.date) return gap(`The share count used is dated ${anchor.date}. A confirmed count on or before ${requestedStart} is needed.`);
@@ -87,7 +100,14 @@ export function assumedHolding(p: Position, a: Account | undefined, start: strin
   const h = b.histories[instrument.key];
   if (!h) return gap('Prices are still loading. No new statement is needed yet.', undefined, true);
   if (!h.ok) return gap('Historical prices could not load. Retry the price history; no new statement is needed yet.', h.reason, false, true);
-  const opening = publishedClose(h, requestedStart), closing = publishedClose(h, end);
+  let opening = publishedClose(h, requestedStart), listedFrom: string | undefined;
+  const closing = publishedClose(h, end);
+  // HELD BEFORE IT LISTED: no market price exists before its first exchange
+  // close, so that close is its first value on record (`fromListing`).
+  if (!opening && o.fromListing && h.first > requestedStart) {
+    const i = h.t.findIndex((d, j) => d >= requestedStart && positive(h.c?.[j]));
+    if (i >= 0) { opening = { date: h.t[i], value: h.c![i]! }; listedFrom = h.t[i]; }
+  }
   if (!opening || !closing || closing.date <= opening.date) {
     return gap(`A published closing price is needed near ${requestedStart} and ${end}. Available history: ${h.first} → ${h.last}.`);
   }
@@ -120,23 +140,23 @@ export function assumedHolding(p: Position, a: Account | undefined, start: strin
     for (const line of incomePlan.lines) if (line.status === 'declared' && line.amount != null && line.action.exDate
       && line.action.exDate > opening.date && line.action.exDate <= closing.date) incomeDates.push({ date: line.action.exDate, amount: line.amount });
   }
-  return { anchor, quantity, history: h, opening, closing, incomeDates };
+  return { anchor, quantity, history: h, opening, closing, incomeDates, ...(listedFrom ? { listedFrom } : {}) };
 }
 
 /** Fill only eligible holdings. A statement return takes precedence at the caller. */
-export function assumedHoldingReturns(positions: readonly Position[], accounts: readonly Account[], start: string | null, end: string, b: AssumedReturnBook) {
+export function assumedHoldingReturns(positions: readonly Position[], accounts: readonly Account[], start: string | null, end: string, b: AssumedReturnBook, opts?: (p: Position) => AssumeOptions) {
   const units: ReturnUnit[] = [], gaps: ReturnGap[] = []; let pending = 0;
   const accountMap = new Map(accounts.map(a => [a.accountId, a]));
   for (const p of positions) {
     const a = accountMap.get(p.accountId), k = marketHoldingKey(p);
     const label = `${p.security} · ${a?.owner ?? 'Owner unavailable'} · ${a?.provider ?? 'Provider unavailable'} · account ${a?.accountNo ?? 'unknown'}`;
-    const r = assumedHolding(p, a, start, end, b);
+    const r = assumedHolding(p, a, start, end, b, opts?.(p));
     if ('gap' in r) {
       if (r.gap.pending) pending++;
       gaps.push({ accountId: p.accountId, securityKey: p.securityKey, label, reason: r.gap.reason, detail: r.gap.detail, plainReason: true, value: p.marketValue });
       continue;
     }
-    const { quantity, opening, closing, incomeDates, history: h, anchor } = r;
+    const { quantity, opening, closing, incomeDates, history: h, anchor, listedFrom } = r;
     const openValue = quantity * opening.value, closeValue = quantity * closing.value;
     const income = incomeDates.reduce((s, x) => s + x.amount, 0), gain = closeValue - openValue + income;
     if (![openValue, closeValue, income, gain].every(Number.isFinite)) {
@@ -146,7 +166,7 @@ export function assumedHoldingReturns(positions: readonly Position[], accounts: 
     units.push({ key: k, accountId: p.accountId, label, positions: [p], gain, invested: openValue, close: closeValue,
       from: opening.date, to: closing.date,
       assumption: { owner: a!.owner, statementDate: anchor.date, quantity: anchor.quantity, source: h.source,
-        opening: openValue, closing: closeValue, income, incomeDates },
+        opening: openValue, closing: closeValue, income, incomeDates, ...(listedFrom ? { listedFrom } : {}) },
       window: { accountId: k, owner: a!.owner, label, openDate: opening.date, closeDate: closing.date,
         openValue, closeValue, openedInWindow: false, flows: incomeDates.map(x => ({ date: x.date, amount: x.amount, description: 'Gross dividend entitlement; holding assumed unchanged' })),
         capitalIn: 0, capitalOut: income, gain } });

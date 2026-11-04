@@ -27,6 +27,7 @@ import { OPENING_MARK_TOLERANCE_DAYS, measureWindow, windowReturns, type Account
 import { assumedHolding, assumedHoldingReturns, holdingAssumptionAnchor, holdingAssumptionText, publishedClose, type AssumedReturnBook } from './assumedHoldingReturns';
 import { recordedHoldingOf } from './holdingFlows';
 import { projectActions } from './corporateActions';
+import { earlierBalanceOptions, statementNavWindow, tradedWindow } from './periodRules';
 
 export type YtdFrom =
   | {
@@ -53,7 +54,7 @@ export type YtdFound = { window: AccountWindow; owner?: string; recorded?: boole
   | { reason: string; pending?: boolean; outside?: boolean };
 
 export type YtdBook = {
-  yearOpen: string; end: string; of: (ps: readonly Position[]) => YtdFrom;
+  yearOpen: string | null; end: string; of: (ps: readonly Position[]) => YtdFrom;
   /** The whole account from its first verified value this year. */
   account: (accountId: string) => YtdFound;
   /** One holding: a full year from its purchase record, else carried from its statement balance. */
@@ -85,9 +86,13 @@ type Found = YtdFound;
  * record: no unit record, a statement other than the record's, a split this
  * year before the statement, a dividend the action feed cannot vouch for.
  */
-function recordedYearWindow(p: Position, a: Account, yearOpen: string, end: string, b: AssumedReturnBook): Found | null {
+function recordedYearWindow(p: Position, a: Account, periodOpen: string | null, end: string, b: AssumedReturnBook): Found | null {
   const r = recordedHoldingOf(p);
-  if (!r?.unitRecord?.length || !r.cashRecord?.length || r.asOf <= yearOpen) return null;
+  if (!r?.unitRecord?.length || !r.cashRecord?.length) return null;
+  // From its own first record where the period has no open (available history).
+  const firstRecord = [...r.unitRecord.map((x) => x.date), ...r.cashRecord.map((x) => x.date)].sort()[0];
+  const yearOpen = periodOpen ?? dayBefore(firstRecord);
+  if (r.asOf <= yearOpen) return null;
   const carried = assumedHolding(p, a, null, end, b);
   if ('gap' in carried) return carried.gap.pending ? { reason: carried.gap.reason, pending: true } : null;
   const { anchor, history: h, closing, incomeDates } = carried;
@@ -139,7 +144,7 @@ function recordedYearWindow(p: Position, a: Account, yearOpen: string, end: stri
   return { owner: a.owner, recorded: true, window, unit };
 }
 
-export function ytdBook({ inputs, held, accounts, end, assumptions, money }: {
+export function ytdBook({ inputs, held, accounts, end, assumptions, money, open }: {
   inputs: readonly AccountInput[];
   /** The current holdings an account's rows are struck over — what makes a row the WHOLE account. */
   held: readonly Position[];
@@ -147,8 +152,14 @@ export function ytdBook({ inputs, held, accounts, end, assumptions, money }: {
   end: string;
   assumptions: AssumedReturnBook | null;
   money: (n: number) => string;
+  /**
+   * The period's open (Stage 10kz): left out, 31 December (this year to date);
+   * a date, each account and holding clamped to it (31 March for the financial
+   * year); null, each from its own first record (available history).
+   */
+  open?: string | null;
 }): YtdBook {
-  const yearOpen = `${Number(end.slice(0, 4)) - 1}-12-31`;
+  const yearOpen: string | null = open === undefined ? `${Number(end.slice(0, 4)) - 1}-12-31` : open;
   const inputOf = new Map(inputs.map((i) => [i.accountId, i]));
   const keysOf = new Map<string, Set<string>>();
   for (const p of held) (keysOf.get(p.accountId) ?? keysOf.set(p.accountId, new Set()).get(p.accountId)!).add(p.securityKey);
@@ -164,7 +175,8 @@ export function ytdBook({ inputs, held, accounts, end, assumptions, money }: {
     else if (input.outside) found = { reason: input.outside, outside: true };
     else {
       const first = [...input.valuations.map((v) => v.date), ...input.flows.filter((f) => f.amount < 0).map((f) => f.date)].sort()[0];
-      const start = [input.knownFrom ?? (first ? dayBefore(first) : end), yearOpen].sort().at(-1)!;
+      const own = input.knownFrom ?? (first ? dayBefore(first) : end);
+      const start = yearOpen && yearOpen > own ? yearOpen : own;
       // A window opens on a mark: where the first date fails, the next value
       // this year is the next date we have.
       const tries = [start, ...input.valuations.map((v) => v.date).filter((d) => d > start && d < end).sort()];
@@ -194,11 +206,20 @@ export function ytdBook({ inputs, held, accounts, end, assumptions, money }: {
       const a = accounts.find((x) => x.accountId === p.accountId);
       const recorded = a ? recordedYearWindow(p, a, yearOpen, end, assumptions) : null;
       if (recorded) { holdingMemo.set(p, recorded); return recorded; }
-      const anchor = a ? holdingAssumptionAnchor(p, a, assumptions) : null;
+      // THE FURTHER FIRST VALUES THE ARCHIVE CARRIES (Stage 10kz, `periodRules.ts`):
+      // a fund NAV printed on a later statement, an older balance and the broker's
+      // trades since — each only where its own evidence holds.
+      const extra = a ? statementNavWindow(p, a, yearOpen, end) ?? tradedWindow(p, a, yearOpen, end, assumptions) : null;
+      if (extra) { holdingMemo.set(p, extra); return extra; }
+      // An older statement's balance of the same units dates the count earlier;
+      // a holding that listed after it opens on its first exchange close.
+      const options = earlierBalanceOptions(p, assumptions);
+      const anchor = options.anchor ?? (a ? holdingAssumptionAnchor(p, a, assumptions) : null);
       // A balance dated before the year opens is carried from 1 January itself.
-      const start = anchor && anchor.date <= yearOpen ? yearOpen : null;
-      const r = assumedHoldingReturns([p], accounts as Account[], start, end, assumptions);
+      const start = yearOpen && anchor && anchor.date <= yearOpen ? yearOpen : null;
+      const r = assumedHoldingReturns([p], accounts as Account[], start, end, assumptions, () => options);
       const u = r.units[0];
+      if (u) u.basis = u.assumption?.listedFrom ? 'listing-day' : options.anchor ? 'earlier-balance' : u.basis;
       found = u?.window ? { window: u.window, owner: u.assumption?.owner, unit: u } : { reason: r.gaps[0]?.reason ?? 'no dated balance of this holding is on record', pending: r.pending > 0 };
     }
     holdingMemo.set(p, found);
@@ -253,7 +274,7 @@ export function ytdBook({ inputs, held, accounts, end, assumptions, money }: {
       if (!m.shown || m.pct == null || !m.working) out = { shown: false, reason: sentence(m.reason ?? 'these values do not give a return') };
       else {
         const { from, to } = m.working;
-        const fullYear = from <= yearOpen;
+        const fullYear = !!yearOpen && from <= yearOpen;
         const assumed = owners.size > 0;
         out = { shown: true, pct: m.pct, from, to, fullYear, assumed, accounts: pooled,
           note: `${fullYear ? 'Year to date' : `From ${longDay(from)}, the first date this year with a dated value,`} to ${longDay(to)} — not annualised${fullYear ? '' : ', and not a full year to date: no statement here values it on 1 January'}. ${m.worked ?? ''}`.trim()

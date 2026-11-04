@@ -8,7 +8,7 @@
 // carry, and the UI renders them as an em dash. See docs/BOOK-REPORT.md for the
 // list and what document would supply each.
 import type {
-  Account, AccountBridge, AdvisedBalance, AccountReturnBlock, AccountReturnCoverage, BookSummary, CapitalMove, CashFlow, Commitment,
+  Account, AccountBridge, AdvisedBalance, EarlierBalance, StatementUnitNavs, UnitWindow, AccountReturnBlock, AccountReturnCoverage, BookSummary, CapitalMove, CashFlow, Commitment,
   Attribution, CorporateAction, EntityCG, FundInvestment, HoldingTrade, NavCoverage, NavPoint, Position, PositionTranches,
   PolycabHolding, RealisedByClass, RecoveredHoldingCost, ReviewFlow, ReviewSuperseded, ReviewWrittenOff, ShareMovement, ShareRoll, StartupInvestment, UndatedCapital, UnvaluedStatementHolding,
 } from "@/lib/types";
@@ -64912,6 +64912,587 @@ export const BOOK_ADVISED_BALANCES: AdvisedBalance[] = [
     "source": "the family's note of its demat and physical liquid holdings, valued at AMFI's NAV of 21 Oct 2026"
   }
 ];
+
+/**
+ * WHAT THE RETURN CARDS MAY START FROM (Stage 10kz, `scripts/lib/periodEvidence.mjs`): older
+ * statements' balances of holdings still carried, statement-printed NAVs for fund units
+ * with no public price, and accounts whose consecutive statements hold the same units.
+ * Each row names its statement. Never a holding, a value or part of a total.
+ */
+export const BOOK_EARLIER_BALANCES: EarlierBalance[] = [
+  {
+    "accountId": "360-one-private-wealth-37702",
+    "securityKey": "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii",
+    "isin": null,
+    "asOf": "2026-05-31",
+    "quantity": 990429.684,
+    "docKey": "360-one-private-wealth-37702-2026-05-31-holdings"
+  },
+  {
+    "accountId": "360-one-private-wealth-37702",
+    "securityKey": "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii",
+    "isin": null,
+    "asOf": "2026-06-30",
+    "quantity": 990429.684,
+    "docKey": "360-one-private-wealth-37702-2026-06-30-holdings"
+  },
+  {
+    "accountId": "360-one-private-wealth-37702",
+    "securityKey": "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii",
+    "isin": null,
+    "asOf": "2026-07-31",
+    "quantity": 990429.684,
+    "docKey": "360-one-private-wealth-37702-2026-07-31-holdings"
+  },
+  {
+    "accountId": "360-one-private-wealth-60117",
+    "securityKey": "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii",
+    "isin": null,
+    "asOf": "2026-05-31",
+    "quantity": 990429.684,
+    "docKey": "360-one-private-wealth-60117-2026-05-31-holdings"
+  },
+  {
+    "accountId": "360-one-private-wealth-60117",
+    "securityKey": "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii",
+    "isin": null,
+    "asOf": "2026-06-30",
+    "quantity": 990429.684,
+    "docKey": "360-one-private-wealth-60117-2026-06-30-holdings"
+  },
+  {
+    "accountId": "aditya-birla-sun-life-mutual-fund-1038104611",
+    "securityKey": "absl-liquid-fund-direct-growth",
+    "isin": null,
+    "asOf": "2026-07-01",
+    "quantity": 1752.565,
+    "docKey": "aditya-birla-sun-life-mutual-fund-1038104611-2026-07-01-holdings"
+  },
+  {
+    "accountId": "bandhan-mutual-fund-8652064",
+    "securityKey": "bandhan-amc-ltd-bandhan-mf-bandhan-arbitrage-fund-direct-pl-growth",
+    "isin": "INF194K01Y60",
+    "asOf": "2026-10-14",
+    "quantity": 202573.963,
+    "docKey": "bandhan-mutual-fund-8652064-2026-10-14-holdings"
+  },
+  {
+    "accountId": "bandhan-mutual-fund-8652064",
+    "securityKey": "bndh-l-and-mcf-dp-gr",
+    "isin": "INF194K01V89",
+    "asOf": "2026-10-14",
+    "quantity": 2639320.472,
+    "docKey": "bandhan-mutual-fund-8652064-2026-10-14-holdings"
+  },
+  {
+    "accountId": "buoyant-capital-103472",
+    "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4",
+    "isin": null,
+    "asOf": "2026-07-31",
+    "quantity": 1918953.2,
+    "docKey": "buoyant-capital-103472-2026-07-31-appraisal"
+  },
+  {
+    "accountId": "buoyant-capital-103472",
+    "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4",
+    "isin": null,
+    "asOf": "2026-07-31",
+    "quantity": 1918953.2003,
+    "docKey": "buoyant-capital-103472-2026-07-31-holdings"
+  },
+  {
+    "accountId": "buoyant-capital-103472",
+    "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4",
+    "isin": null,
+    "asOf": "2026-08-31",
+    "quantity": 1918953.2003,
+    "docKey": "buoyant-capital-103472-2026-08-31-portfolio-snap"
+  },
+  {
+    "accountId": "buoyant-capital-103472",
+    "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4",
+    "isin": null,
+    "asOf": "2026-09-29",
+    "quantity": 1918953.2003,
+    "docKey": "buoyant-capital-103472-2026-09-29-holdings"
+  },
+  {
+    "accountId": "buoyant-capital-103473",
+    "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4",
+    "isin": null,
+    "asOf": "2026-07-31",
+    "quantity": 3416657.417,
+    "docKey": "buoyant-capital-103473-2026-07-31-appraisal"
+  },
+  {
+    "accountId": "buoyant-capital-103473",
+    "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4",
+    "isin": null,
+    "asOf": "2026-07-31",
+    "quantity": 3416657.4167,
+    "docKey": "buoyant-capital-103473-2026-07-31-holdings"
+  },
+  {
+    "accountId": "buoyant-capital-103473",
+    "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4",
+    "isin": null,
+    "asOf": "2026-07-31",
+    "quantity": 3416657.4167,
+    "docKey": "buoyant-capital-103473-2026-07-31-holdings-2"
+  },
+  {
+    "accountId": "buoyant-capital-103473",
+    "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4",
+    "isin": null,
+    "asOf": "2026-08-31",
+    "quantity": 3416657.4167,
+    "docKey": "buoyant-capital-103473-2026-08-31-portfolio-snap"
+  },
+  {
+    "accountId": "buoyant-capital-103473",
+    "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4",
+    "isin": null,
+    "asOf": "2026-09-29",
+    "quantity": 3416657.4167,
+    "docKey": "buoyant-capital-103473-2026-09-29-holdings"
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "securityKey": "clean-max-enviro-energy-solutions",
+    "isin": "INE647U01026",
+    "asOf": "2026-03-31",
+    "quantity": 94967,
+    "docKey": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "securityKey": "ema-partners-india",
+    "isin": "INE0ZOL01023",
+    "asOf": "2026-03-31",
+    "quantity": 44643,
+    "docKey": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "securityKey": "esds-software-solution-limited-eq-new-fv-rs-1",
+    "isin": "INE0DRI01029",
+    "asOf": "2026-03-31",
+    "quantity": 330898,
+    "docKey": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "securityKey": "fractal-analytics",
+    "isin": "INE212S01015",
+    "asOf": "2026-03-31",
+    "quantity": 180185,
+    "docKey": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "securityKey": "grand-continent-hotels",
+    "isin": "INE12E301017",
+    "asOf": "2026-03-31",
+    "quantity": 262125,
+    "docKey": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "securityKey": "jaro-institute-of-technology-management-and-research",
+    "isin": "INE00YJ01010",
+    "asOf": "2026-03-31",
+    "quantity": 116979,
+    "docKey": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "securityKey": "parth-electricals-and-engineering",
+    "isin": "INE1H7V01011",
+    "asOf": "2026-03-31",
+    "quantity": 59000,
+    "docKey": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "securityKey": "sotefin-bharat",
+    "isin": "INE12Z301012",
+    "asOf": "2026-03-31",
+    "quantity": 171879,
+    "docKey": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "securityKey": "yash-highvoltage",
+    "isin": "INE00GK01023",
+    "asOf": "2026-03-31",
+    "quantity": 138462,
+    "docKey": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-4295974",
+    "securityKey": "kotak-liquid-fund-direct-plan-daily-idcw",
+    "isin": "INF174K01NH1",
+    "asOf": "2026-07-01",
+    "quantity": 632.65,
+    "docKey": "kotak-mahindra-mutual-fund-4295974-2026-07-01-holdings"
+  },
+  {
+    "accountId": "mirae-asset-mutual-fund-70413280453",
+    "securityKey": "mirae-asset-liquid-fund-formerly-mirae-asset-cash-management-fund-direct-plan-mirae-asset-liquid-fund-formerly-mirae-asset-cash-management-fund-direct-plan-growth",
+    "isin": "INF769K01CM1",
+    "asOf": "2026-07-02",
+    "quantity": 316.19,
+    "docKey": "mirae-asset-mutual-fund-70413280453-2026-07-02-holdings"
+  },
+  {
+    "accountId": "mirae-asset-mutual-fund-70413280453",
+    "securityKey": "mirae-asset-liquid-fund-formerly-mirae-asset-cash-management-fund-direct-plan-mirae-asset-liquid-fund-formerly-mirae-asset-cash-management-fund-direct-plan-growth",
+    "isin": "INF769K01CM1",
+    "asOf": "2026-08-06",
+    "quantity": 316.19,
+    "docKey": "mirae-asset-mutual-fund-70413280453-2026-08-06-holdings"
+  },
+  {
+    "accountId": "molecule-ventures-llp-7810404",
+    "securityKey": "arvind-fashions",
+    "isin": null,
+    "asOf": "2026-06-30",
+    "quantity": 4000,
+    "docKey": "molecule-ventures-llp-7810404-2026-06-30-holdings"
+  },
+  {
+    "accountId": "molecule-ventures-llp-7810404",
+    "securityKey": "arvind-fashions",
+    "isin": null,
+    "asOf": "2026-07-31",
+    "quantity": 4000,
+    "docKey": "molecule-ventures-llp-7810404-2026-07-31-holdings"
+  },
+  {
+    "accountId": "molecule-ventures-llp-7810404",
+    "securityKey": "cash",
+    "isin": null,
+    "asOf": "2026-06-30",
+    "quantity": 214462.907,
+    "docKey": "molecule-ventures-llp-7810404-2026-06-30-holdings"
+  },
+  {
+    "accountId": "molecule-ventures-llp-7810404",
+    "securityKey": "cash",
+    "isin": null,
+    "asOf": "2026-07-31",
+    "quantity": 213783.099,
+    "docKey": "molecule-ventures-llp-7810404-2026-07-31-holdings"
+  },
+  {
+    "accountId": "molecule-ventures-llp-7810404",
+    "securityKey": "chemfab-alkalis",
+    "isin": null,
+    "asOf": "2026-06-30",
+    "quantity": 1000,
+    "docKey": "molecule-ventures-llp-7810404-2026-06-30-holdings"
+  },
+  {
+    "accountId": "molecule-ventures-llp-7810404",
+    "securityKey": "chemfab-alkalis",
+    "isin": null,
+    "asOf": "2026-07-31",
+    "quantity": 1000,
+    "docKey": "molecule-ventures-llp-7810404-2026-07-31-holdings"
+  },
+  {
+    "accountId": "molecule-ventures-llp-7810404",
+    "securityKey": "dcw",
+    "isin": null,
+    "asOf": "2026-06-30",
+    "quantity": 3000,
+    "docKey": "molecule-ventures-llp-7810404-2026-06-30-holdings"
+  },
+  {
+    "accountId": "molecule-ventures-llp-7810404",
+    "securityKey": "dcw",
+    "isin": null,
+    "asOf": "2026-07-31",
+    "quantity": 3000,
+    "docKey": "molecule-ventures-llp-7810404-2026-07-31-holdings"
+  },
+  {
+    "accountId": "molecule-ventures-llp-7810404",
+    "securityKey": "indian-metals-and-ferro-alloys",
+    "isin": null,
+    "asOf": "2026-06-30",
+    "quantity": 1500,
+    "docKey": "molecule-ventures-llp-7810404-2026-06-30-holdings"
+  },
+  {
+    "accountId": "molecule-ventures-llp-7810404",
+    "securityKey": "indian-metals-and-ferro-alloys",
+    "isin": null,
+    "asOf": "2026-07-31",
+    "quantity": 1500,
+    "docKey": "molecule-ventures-llp-7810404-2026-07-31-holdings"
+  },
+  {
+    "accountId": "molecule-ventures-llp-7810404",
+    "securityKey": "jayaswal-neco-industries",
+    "isin": null,
+    "asOf": "2026-06-30",
+    "quantity": 23000,
+    "docKey": "molecule-ventures-llp-7810404-2026-06-30-holdings"
+  },
+  {
+    "accountId": "molecule-ventures-llp-7810404",
+    "securityKey": "jayaswal-neco-industries",
+    "isin": null,
+    "asOf": "2026-07-31",
+    "quantity": 23000,
+    "docKey": "molecule-ventures-llp-7810404-2026-07-31-holdings"
+  },
+  {
+    "accountId": "molecule-ventures-llp-7810404",
+    "securityKey": "kirloskar-ferrous-industries",
+    "isin": null,
+    "asOf": "2026-06-30",
+    "quantity": 2967,
+    "docKey": "molecule-ventures-llp-7810404-2026-06-30-holdings"
+  },
+  {
+    "accountId": "molecule-ventures-llp-7810404",
+    "securityKey": "kirloskar-ferrous-industries",
+    "isin": null,
+    "asOf": "2026-07-31",
+    "quantity": 2967,
+    "docKey": "molecule-ventures-llp-7810404-2026-07-31-holdings"
+  },
+  {
+    "accountId": "molecule-ventures-llp-7810404",
+    "securityKey": "manali-petrochemical",
+    "isin": null,
+    "asOf": "2026-06-30",
+    "quantity": 10000,
+    "docKey": "molecule-ventures-llp-7810404-2026-06-30-holdings"
+  },
+  {
+    "accountId": "molecule-ventures-llp-7810404",
+    "securityKey": "manali-petrochemical",
+    "isin": null,
+    "asOf": "2026-07-31",
+    "quantity": 10000,
+    "docKey": "molecule-ventures-llp-7810404-2026-07-31-holdings"
+  },
+  {
+    "accountId": "molecule-ventures-llp-7810404",
+    "securityKey": "sansera-engineering",
+    "isin": null,
+    "asOf": "2026-06-30",
+    "quantity": 800,
+    "docKey": "molecule-ventures-llp-7810404-2026-06-30-holdings"
+  },
+  {
+    "accountId": "molecule-ventures-llp-7810404",
+    "securityKey": "sansera-engineering",
+    "isin": null,
+    "asOf": "2026-07-31",
+    "quantity": 800,
+    "docKey": "molecule-ventures-llp-7810404-2026-07-31-holdings"
+  },
+  {
+    "accountId": "molecule-ventures-llp-7810404",
+    "securityKey": "sasken-communication-technologies",
+    "isin": null,
+    "asOf": "2026-06-30",
+    "quantity": 100,
+    "docKey": "molecule-ventures-llp-7810404-2026-06-30-holdings"
+  },
+  {
+    "accountId": "molecule-ventures-llp-7810404",
+    "securityKey": "sasken-communication-technologies",
+    "isin": null,
+    "asOf": "2026-07-31",
+    "quantity": 100,
+    "docKey": "molecule-ventures-llp-7810404-2026-07-31-holdings"
+  },
+  {
+    "accountId": "motilal-oswal-founders-fund-90410016093",
+    "securityKey": "motilal-oswal-founders-fund-series-ii-class-g1",
+    "isin": null,
+    "asOf": "2026-07-31",
+    "quantity": 9514997.798,
+    "docKey": "motilal-oswal-founders-fund-90410016093-2026-07-31-holdings"
+  },
+  {
+    "accountId": "motilal-oswal-founders-fund-90410016104",
+    "securityKey": "motilal-oswal-founders-fund-series-ii-class-g1",
+    "isin": null,
+    "asOf": "2026-07-31",
+    "quantity": 18895852.36,
+    "docKey": "motilal-oswal-founders-fund-90410016104-2026-07-31-holdings"
+  },
+  {
+    "accountId": "motilal-oswal-founders-fund-90410016104",
+    "securityKey": "motilal-oswal-founders-fund-series-ii-class-g1",
+    "isin": null,
+    "asOf": "2026-07-31",
+    "quantity": 18895852.36,
+    "docKey": "motilal-oswal-founders-fund-90410016104-2026-07-31-holdings-2"
+  }
+];
+
+export const BOOK_STATEMENT_UNIT_NAVS: Record<string, StatementUnitNavs> = {
+  "sanshi-fund-i-open-ended-aif-cat-iii-class-a2": {
+    "isin": "INF1ISW22038",
+    "navs": [
+      {
+        "date": "2026-10-30",
+        "nav": 138.711,
+        "docKey": "icici-bank-nsdl-demat-49794950-2026-10-31-holdings"
+      }
+    ]
+  },
+  "sanshi-fund-i-open-ended-aif-cat-iii-class-e": {
+    "isin": "INF1ISW22079",
+    "navs": [
+      {
+        "date": "2026-10-30",
+        "nav": 172.126,
+        "docKey": "icici-bank-nsdl-demat-49794950-2026-10-31-holdings"
+      }
+    ]
+  }
+};
+
+export const BOOK_UNIT_WINDOWS: Record<string, UnitWindow> = {
+  "aditya-birla-sun-life-mutual-fund-1038104611": {
+    "valuations": [
+      {
+        "date": "2026-07-01",
+        "value": 794412.48,
+        "docKey": "aditya-birla-sun-life-mutual-fund-1038104611-2026-07-01-holdings"
+      },
+      {
+        "date": "2026-08-03",
+        "value": 798563.95,
+        "docKey": "aditya-birla-sun-life-mutual-fund-1038104611-2026-08-03-holdings"
+      }
+    ],
+    "evidence": "the same units of the same holding on every statement from 2026-07-01 to 2026-08-03"
+  },
+  "bandhan-mutual-fund-8652064": {
+    "valuations": [
+      {
+        "date": "2026-10-14",
+        "value": 431304376.61,
+        "docKey": "bandhan-mutual-fund-8652064-2026-10-14-holdings"
+      },
+      {
+        "date": "2026-10-26",
+        "value": 415063994.38,
+        "docKey": "bandhan-mutual-fund-8652064-2026-10-26-holdings"
+      }
+    ],
+    "evidence": "the same units of the same holdings on every statement from 2026-10-14 to 2026-10-26"
+  },
+  "buoyant-capital-103472": {
+    "valuations": [
+      {
+        "date": "2026-07-31",
+        "value": 276881535.57,
+        "docKey": "buoyant-capital-103472-2026-07-31-holdings"
+      },
+      {
+        "date": "2026-08-31",
+        "value": 282663341.57,
+        "docKey": "buoyant-capital-103472-2026-08-31-portfolio-snap"
+      },
+      {
+        "date": "2026-09-29",
+        "value": 269915543.56,
+        "docKey": "buoyant-capital-103472-2026-09-29-holdings"
+      },
+      {
+        "date": "2026-09-30",
+        "value": 269970617.52,
+        "docKey": "buoyant-capital-103472-2026-09-30-holdings"
+      }
+    ],
+    "evidence": "the same units of the same holding on every statement from 2026-07-31 to 2026-09-30"
+  },
+  "buoyant-capital-103473": {
+    "valuations": [
+      {
+        "date": "2026-07-31",
+        "value": 492981982.01,
+        "docKey": "buoyant-capital-103473-2026-07-31-holdings"
+      },
+      {
+        "date": "2026-08-31",
+        "value": 503276370.81,
+        "docKey": "buoyant-capital-103473-2026-08-31-portfolio-snap"
+      },
+      {
+        "date": "2026-09-29",
+        "value": 480579173.92,
+        "docKey": "buoyant-capital-103473-2026-09-29-holdings"
+      },
+      {
+        "date": "2026-09-30",
+        "value": 480677231.99,
+        "docKey": "buoyant-capital-103473-2026-09-30-holdings"
+      }
+    ],
+    "evidence": "the same units of the same holding on every statement from 2026-07-31 to 2026-09-30"
+  },
+  "mirae-asset-mutual-fund-70413280453": {
+    "valuations": [
+      {
+        "date": "2026-07-02",
+        "value": 936386.82,
+        "docKey": "mirae-asset-mutual-fund-70413280453-2026-07-02-holdings"
+      },
+      {
+        "date": "2026-08-06",
+        "value": 941106.71,
+        "docKey": "mirae-asset-mutual-fund-70413280453-2026-08-06-holdings"
+      },
+      {
+        "date": "2026-10-06",
+        "value": 950812.26,
+        "docKey": "mirae-asset-mutual-fund-70413280453-2026-10-06-holdings"
+      }
+    ],
+    "evidence": "the same units of the same holding on every statement from 2026-07-02 to 2026-10-06"
+  },
+  "motilal-oswal-founders-fund-90410016093": {
+    "valuations": [
+      {
+        "date": "2026-07-31",
+        "value": 109900127.57,
+        "docKey": "motilal-oswal-founders-fund-90410016093-2026-07-31-holdings"
+      },
+      {
+        "date": "2026-09-30",
+        "value": 111143737.78,
+        "docKey": "motilal-oswal-founders-fund-90410016093-2026-09-30-holdings"
+      }
+    ],
+    "evidence": "the same units of the same holding on every statement from 2026-07-31 to 2026-09-30"
+  },
+  "motilal-oswal-founders-fund-90410016104": {
+    "valuations": [
+      {
+        "date": "2026-07-31",
+        "value": 218250873.93,
+        "docKey": "motilal-oswal-founders-fund-90410016104-2026-07-31-holdings"
+      },
+      {
+        "date": "2026-09-30",
+        "value": 220720561.83,
+        "docKey": "motilal-oswal-founders-fund-90410016104-2026-09-30-holdings"
+      }
+    ],
+    "evidence": "the same units of the same holding on every statement from 2026-07-31 to 2026-09-30"
+  }
+};
 
 /**
  * The same flows keyed by OWNER — a person's money-weighted return is over
