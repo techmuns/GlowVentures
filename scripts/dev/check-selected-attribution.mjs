@@ -9,13 +9,28 @@ const base = process.env.BASE || 'http://127.0.0.1:4173';
 assert.ok(['localhost', '127.0.0.1'].includes(new URL(base).hostname));
 const out = '.cache/returns-period';
 await fs.mkdir(out, { recursive: true });
-const bundle = await build({ stdin: { contents: `export * from './src/data/glowData'; export * from './src/lib/periodReturns'; export { nothingToMeasure } from './src/lib/returns'; export { ytdBook, ytdSelection } from './src/lib/ytdAvailable';`, resolveDir: process.cwd() }, bundle: true, write: false, platform: 'node', format: 'esm', logLevel: 'error' });
+const bundle = await build({ stdin: { contents: `export * from './src/data/glowData'; export * from './src/lib/periodReturns'; export { nothingToMeasure } from './src/lib/returns'; export { ytdBook, ytdSelection } from './src/lib/ytdAvailable'; export { periodSelection, statementReturnInputs } from './src/lib/availableCardReturns'; export { currentHoldings } from './src/lib/analytics'; export { pageConsolidated, failedHistoryBook } from './scripts/dev/page-book';`, resolveDir: process.cwd() }, bundle: true, write: false, platform: 'node', format: 'esm', alias: { '@': process.cwd() + '/src' }, logLevel: 'error' });
 const b = await import(`data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString('base64')}`);
 const statement = { accounts: b.BOOK_ACCOUNTS, positions: b.BOOK_POSITIONS, accountReturnRecords: b.BOOK_ACCOUNT_RETURN_RECORDS, privateMarkets: {} };
 const inputs = b.accountInputs({ accounts: b.BOOK_ACCOUNTS, positions: b.BOOK_POSITIONS, returnRecords: b.BOOK_ACCOUNT_RETURN_RECORDS, navHistory: b.BOOK_ACCOUNT_NAV_HISTORY,
  cashFlows: b.BOOK_ACCOUNT_CASH_FLOWS, groups: [], coverage: b.BOOK_NAV_COVERAGE.covered, undated: b.BOOK_UNDATED_CAPITAL, fromInception: b.BOOK_CAPITAL_FROM_INCEPTION, labelOf: a => a.provider })
  .map(i => ({ ...i, outside: b.nothingToMeasure(statement, b.BOOK_ACCOUNTS.find(a => a.accountId === i.accountId)) }));
 const end = '2026-10-22'; // Toolbar defaults to today; account measures retain their own verified closes.
+/**
+ * THE FINANCIAL AND CALENDAR YEAR ARE MORNING CIO'S CARDS' OWN SELECTION (Stage 10la):
+ * each account and holding from its first value on record, the rest held at its
+ * last value — re-derived on the page's own rows with every price history refused,
+ * as `/api` is here, and the saved action capture the page reads.
+ */
+const actions = JSON.parse(await fs.readFile('public/data/corporate-actions.json', 'utf8'));
+const pageRows = b.currentHoldings(b.pageConsolidated(actions));
+const cardWindows = (period) => {
+ const sel = b.periodSelection({ inputs: b.statementReturnInputs(statement), current: pageRows, accounts: b.BOOK_ACCOUNTS, end,
+  assumptions: b.failedHistoryBook(pageRows, actions), open: period === 'ytd' ? undefined : b.periodStart(period, end) });
+ const included = [...sel.windows, ...(sel.assumedUnits ?? []).map(u => u.window)];
+ const accounts = new Set([...sel.windows.map(w => w.accountId), ...(sel.assumedUnits ?? []).map(u => u.accountId)]).size;
+ return { included, gain: included.reduce((t, w) => t + w.gain, 0), accounts };
+};
 const browser = await chromium.launch({ executablePath: process.env.CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true });
 let page;
 try {
@@ -34,7 +49,8 @@ try {
   await card.locator('[data-card-coverage]').waitFor();
   const numeric = await card.locator('[data-card-coverage]').evaluate(el => ({ ...el.dataset }));
   assert.notEqual(numeric.cardGain, ''); assert.notEqual(numeric.cardReturn, '');
-  assert.match(await card.innerText(), /Available data/);
+  // The three return cards say how much of the public investments they cover (Stage 10la); Gain / Loss stays "Available data".
+  assert.match(await card.innerText(), id === 'gain' ? /Available data/ : /Covers \d+% of public investments/);
   assert.equal(await card.locator('[data-return-info]').count(), 1);
   await card.locator('[data-return-info]').click();
   const popup = page.getByRole('dialog'); await popup.waitFor();
@@ -82,10 +98,7 @@ try {
   await page.locator(`[data-returns-period="${period}"]`).click();
   // YTD reads the Monitor's record from the first date we have (Stage 10kq);
   // with /api refused here no price loads, so its accounts' own windows alone.
-  const start = b.periodStart(period, end), win = period !== 'ytd' ? b.windowReturns(inputs, start, end) : (() => {
-   const included = b.ytdSelection(b.ytdBook({ inputs, held: [], accounts: b.BOOK_ACCOUNTS, end, assumptions: null, money: String }), inputs, []).windows;
-   return { included, gain: included.reduce((t, w) => t + w.gain, 0) };
-  })();
+  const start = b.periodStart(period, end), win = period === 'ytd' || period === 'fytd' ? cardWindows(period) : b.windowReturns(inputs, start, end);
   for (const type of ['xirr', 'absolute', 'cagr']) {
    const measured = b.measureWindow(win.included, type, String);
    await page.locator('[data-returns-type-select]').selectOption(type);
@@ -155,7 +168,7 @@ try {
  assert.equal(await total.locator('[data-return-info]').count(), 3);
  await total.getByRole('button', { name: 'What is included in total return?', exact: true }).click();
  const dialog = page.getByRole('dialog'); await dialog.waitFor();
- assert.match(await dialog.innerText(), /Based on the available records for 17 accounts only/);
+ assert.match(await dialog.innerText(), new RegExp(`Based on the available records for ${cardWindows('fytd').accounts} accounts only`));
  assert.match(await dialog.innerText(), /What is missing/);
  assert.ok(await dialog.locator('[data-return-gap]').count() > 0);
  assert.match(await dialog.innerText(), /We need/);

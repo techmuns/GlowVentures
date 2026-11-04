@@ -98,8 +98,10 @@ export function availableCardReturns(statement: Portfolio, display: readonly Pos
     const result = selectedSegmentReturns(current, exited, statement.accounts, 'category', selection, () => null, calculationCurrent);
     const coveredAccounts = new Set(result.total.units.map(u => u.accountId)).size;
     const totalAccounts = new Set([...result.total.units, ...result.total.missing].map(u => u.accountId)).size;
-    const dates = result.total.units.flatMap(u => u.from ? [u.from] : []).sort();
-    const closes = result.total.units.map(u => u.to).filter(Boolean).sort();
+    // The card's dates are what its records MEASURE: a value held flat sets neither.
+    const measuredUnits = result.total.units.filter(u => !u.held);
+    const dates = measuredUnits.flatMap(u => u.from ? [u.from] : []).sort();
+    const closes = measuredUnits.map(u => u.to).filter(Boolean).sort();
     const included = new Set(result.total.units.map(u => u.accountId));
     const notes = statement.accounts.flatMap(a => {
       const c = statement.accountReturnRecords?.[a.accountId];
