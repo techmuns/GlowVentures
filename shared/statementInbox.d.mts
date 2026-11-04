@@ -2,7 +2,17 @@
 // repository's `statement-inbox` branch. Plain JS so the Pages Function, the
 // intake run (Node) and the browser's tests share one implementation.
 
-export type InboxStatus = "queued" | "processing" | "landed" | "duplicate" | "held";
+export type InboxStatus = "queued" | "processing" | "landed" | "duplicate" | "held" | "stored";
+
+/** The company or fund a Private Market upload is filed under (Stage 10kx). */
+export type InboxSubject = {
+  kind: "fund" | "company";
+  /** The Private Market row's own key. */
+  key: string;
+  label: string;
+  /** The `securityKey`s behind it — the Portfolio Library folders it belongs in. */
+  keys: string[];
+};
 export type InboxHold = "needs-reader" | "needs-password" | "unreadable" | "not-a-statement" | "check-failed" | "intake-error";
 
 export type InboxFile = {
@@ -35,6 +45,8 @@ export type InboxFile = {
   documentVersions?: { document: string; revision: string }[] | null;
   /** Files inside a ZIP a mail server removed (their notices landed as never arrived). */
   neverArrived?: string[] | null;
+  /** Filed under a holding from Private Market (Stage 10kx). */
+  subject?: InboxSubject | null;
   /** The intake run that last touched it. */
   run: string | null;
   updatedAt: string;
@@ -56,6 +68,11 @@ export declare function extOf(name: unknown): string;
 export declare function isJunkPath(p: unknown): boolean;
 export declare function cleanUploadPath(raw: unknown): string | null;
 export declare function checkUpload(draft: { name?: unknown; size?: unknown }): { name: string; error?: undefined } | { error: string; name?: undefined };
+export declare function checkDocumentUpload(draft: { name?: unknown; size?: unknown }): { name: string; error?: undefined } | { error: string; name?: undefined };
+export declare function isStatementFile(name: unknown): boolean;
+export declare function cleanSubject(raw: unknown): InboxSubject | null;
+export declare function holdingDocuments(log: Pick<InboxLog, "batches">): { batch: string; uploadedAt: string; file: InboxFile }[];
+export declare function bytesOnBranch(f: Pick<InboxFile, "status"> | null | undefined): boolean;
 export declare function newBatchId(now?: Date, rand?: () => string): string;
 export declare function isBatchId(s: unknown): boolean;
 export declare function isBlobSha(s: unknown): boolean;
@@ -64,7 +81,7 @@ export declare function emptyLog(): InboxLog;
 export declare function parseLog(text: string): InboxLog;
 export declare function serializeLog(log: InboxLog): string;
 export declare function withBatch(log: InboxLog, batch: InboxBatch): InboxLog;
-export declare function makeBatch(id: string, files: { name: string; size: number; blob: string }[], now?: Date): InboxBatch;
+export declare function makeBatch(id: string, files: { name: string; size: number; blob: string }[], now?: Date, subject?: InboxSubject | null): InboxBatch;
 export declare function uniqueNames<T extends { name: string }>(files: T[]): T[];
 export declare function queuedFiles(log: InboxLog): { batch: string; file: InboxFile }[];
 export declare function waitingStatementFiles(log: InboxLog): { batch: string; file: InboxFile }[];
@@ -83,6 +100,7 @@ export type Fetch = (input: string, init?: RequestInit) => Promise<Response>;
 
 export type GitHubInbox = {
   read(): Promise<{ head: string | null; tree: string | null; log: InboxLog }>;
+  readFile(path: string): Promise<Uint8Array | null>;
   putBlob(bytes: ArrayBuffer | Uint8Array): Promise<string>;
   commit(opts: {
     message: string;

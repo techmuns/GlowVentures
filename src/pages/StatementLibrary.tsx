@@ -17,9 +17,10 @@ import { AbsentSection, DASH } from "@/components/Absent";
 import { fmtDate, fmtDateTime } from "@/lib/format";
 import { buildLibrary, type ManifestEntry, type ProviderFolder, type LibraryDoc } from "@/lib/statementLibrary";
 import {
-  useStatementInbox, fromDrop, fromInput, planUpload, fileView, uploadDocumentKeys,
+  useStatementInbox, fromDrop, fromInput, planUpload, fileView, uploadDocumentKeys, uploadedFileHref, settledView,
   type PickedFile, type InboxFile, type FileView,
 } from "@/lib/statementUploads";
+import { subjectFolderHref } from "@/lib/holdingDocuments";
 import { MAX_FILE_BYTES } from "../../shared/statementInbox.mjs";
 
 // The library reads the SAME archive index the Data Audit viewer does —
@@ -43,7 +44,7 @@ type UploadRow = {
 };
 
 function UploadStatus({ row }: { row: UploadRow }) {
-  const done = row.view.key === "in-library" || row.view.key === "duplicate";
+  const done = row.view.key !== "uploading" && settledView({ key: row.view.key });
   const moving = !done && row.view.key !== "held";
   return <div title={row.view.title} role="status" className={`min-w-[155px] text-xs ${done ? "text-gain" : moving ? "text-accent-400" : "text-loss"}`}>
     <span className="inline-flex items-center gap-1.5">
@@ -66,8 +67,9 @@ function UploadActions({ row, inbox }: { row: UploadRow; inbox: ReturnType<typeo
   };
   return <>
     {row.view.key === "held" && <p className="mt-1 text-xs text-slate-500">{row.view.title}</p>}
-    {(row.file?.status === "held" || row.file?.status === "queued") && <span className="mt-1 inline-flex items-center gap-3 text-xs">
-      {row.file.status === "held" && <button type="button" disabled={busy} onClick={() => void act()} data-upload-retry className="text-accent-400 hover:underline disabled:opacity-50">Try again</button>}
+    {(row.file?.status === "held" || row.file?.status === "queued" || row.file?.status === "stored") && <span className="mt-1 flex items-center gap-3 text-xs">
+      {/* A holding's document kept as it is has nothing to retry (Stage 10kx). */}
+      {row.file.status === "held" && row.view.key !== "saved" && <button type="button" disabled={busy} onClick={() => void act()} data-upload-retry className="text-accent-400 hover:underline disabled:opacity-50">Try again</button>}
       <button type="button" disabled={busy} onClick={() => void act(true)} className="text-slate-500 hover:underline disabled:opacity-50">Remove</button>
     </span>}
     {error && <p className="mt-1 text-xs text-loss" role="alert">{error}</p>}
@@ -114,7 +116,12 @@ function FormatBlock({ format, docs, uploads = [], inbox, onOpen, heading = true
         <tbody className="divide-y divide-ink-700/70">
           {receipts.map(row => <tr key={row.id} data-upload-status={row.view.key} data-upload-row={row.id}>
             <td className="px-4 py-3 text-slate-200 [overflow-wrap:anywhere]">
-              <span className="inline-flex items-center gap-1.5" title={row.name}>{fileIcon(row.name.split(".").pop()?.toUpperCase() ?? "")}<span className="break-words">{row.name.split("/").pop()}</span></span>
+              {(() => {
+                const name = <span className="inline-flex items-center gap-1.5" title={row.name}>{fileIcon(row.name.split(".").pop()?.toUpperCase() ?? "")}<span className="break-words">{row.name.split("/").pop()}</span></span>;
+                // A file still in the inbox opens from it (a holding's document, Stage 10kx).
+                const href = row.batch && row.file ? uploadedFileHref(row.batch, row.file) : null;
+                return href?.startsWith("/api/") ? <a href={href} target="_blank" rel="noopener" data-upload-file-link className="hover:text-accent-400 hover:underline">{name}</a> : name;
+              })()}
               <UploadActions row={row} inbox={inbox} />
             </td>
             <td className="px-4 py-3 text-slate-500">{row.document?.owner ?? DASH}</td>
@@ -122,6 +129,8 @@ function FormatBlock({ format, docs, uploads = [], inbox, onOpen, heading = true
             <td className="whitespace-nowrap px-4 py-3 text-slate-500">{row.document?.asOf ? fmtDate(row.document.asOf) : DASH}</td>
             <td className="px-4 py-3"><UploadStatus row={row} /></td>
             <td className="px-4 py-3 text-xs text-slate-500">
+              {row.file?.subject && <Link to={subjectFolderHref(row.file.subject)} data-upload-subject-link={row.file.subject.key}
+                className="mr-2 text-accent-400 hover:underline" title="This holding's folder in the Portfolio Library">{row.file.subject.label}</Link>}
               {onOpen ? row.providers.map(provider => completed(row) && row.fileKeys.length
                 ? <button key={provider} type="button" onClick={() => onOpen(provider)} className="mr-2 text-accent-400 hover:underline">{provider}</button>
                 : <span key={provider}>{provider}</span>) : fmtDateTime(row.uploadedAt)}
@@ -156,7 +165,7 @@ function FormatBlock({ format, docs, uploads = [], inbox, onOpen, heading = true
  *  Its pills say what is still moving or held while it is closed. */
 function RecentToggle({ uploads, open, onToggle }: { uploads: UploadRow[]; open: boolean; onToggle: () => void }) {
   const held = uploads.filter(row => row.view.key === "held").length;
-  const moving = uploads.filter(row => !["in-library", "duplicate", "held"].includes(row.view.key)).length;
+  const moving = uploads.filter(row => !["in-library", "duplicate", "held", "saved"].includes(row.view.key)).length;
   return <button type="button" onClick={onToggle} aria-expanded={open} aria-controls="recent-statements" data-recent-statements-toggle
     className="inline-flex items-center gap-2 rounded-md border border-ink-600 bg-ink-800 px-3 py-2 text-sm text-slate-300 hover:bg-ink-700">
     <FileText className="h-4 w-4 text-slate-400" />
@@ -577,7 +586,7 @@ export function StatementLibrary() {
 
       {status === "ready" && (openProvider
         ? (current
-          ? <OpenFolder folder={current} onBack={back} inbox={inbox} uploads={uploads.filter(row => row.providers.length ? row.providers.includes(current.provider) : !row.destination || row.destination === current.provider)} />
+          ? <OpenFolder folder={current} onBack={back} inbox={inbox} uploads={uploads.filter(row => row.view.key !== "saved" && (row.providers.length ? row.providers.includes(current.provider) : !row.destination || row.destination === current.provider))} />
           : (
             <>
               <button type="button" onClick={back}
