@@ -10,7 +10,7 @@
 // as `privateRounds.ts` says and nowhere else.
 import { BOOK_POSITIONS } from "@/data/glowData";
 import {
-  PRIVATE_ROUNDS, PRIVATE_MARKET_NEWS, privateCompanyOf, roundValues, entryRound, companyMetrics, stakeTrail, valuationPoints, seriesCurrency,
+  PRIVATE_ROUNDS, PRIVATE_MARKET_NEWS, privateCompanyOf, roundValues, entryRound, companyMetrics, stakeTrail, valuationPoints, seriesCurrency, vendorOnly,
   type FundingRound, type PrivateCompany,
 } from "@/lib/privateRounds";
 import RAW_ROUNDS from "@/data/privateRounds.json";
@@ -175,6 +175,17 @@ const withReported: PrivateCompany = { ...diluting, rounds: [...diluting.rounds.
 const tr = stakeTrail(withReported, 1000, 1000 * 1000, "2022-06-20", "INR");
 ok("a round known only from Inc42 breaks the stake chain — its table does not say whether it issued shares",
   tr.at.has(withReported.rounds[1]) && !tr.at.has(withReported.rounds[2]) && !tr.at.has(withReported.rounds[3]) && /Inc42/.test(tr.why.get(withReported.rounds[3]) ?? ""));
+
+// ── THE RESEARCH PASS (Stage 10kv) ─────────────────────────────────────────
+const vendorRound = round("2024-01-01", "Seed", { valuation: { ...inr(50e7), basis: "unspecified" },
+  sources: [{ url: "https://inc42.com/company/x/funding/", publisher: "Inc42 Datalabs", published: null, supports: "fixture", aggregator: true }] });
+ok("a valuation only a data vendor's page states is flagged so, on the chart's point too",
+  vendorOnly(vendorRound) && valuationPoints({ ...fixture, rounds: [vendorRound] }, "INR").points[0]?.vendor === true
+  && !vendorOnly(fixture.rounds[0]));
+const unnamed = PRIVATE_ROUNDS.companies.flatMap((c) => c.familyMentions.filter((x) => !/Jaisinghani|Glow Ventures/i.test(x.text)).map(() => c.id));
+ok("every family line names the member it is about", unnamed.length === 0, unnamed.join(", "));
+const mentionHosts = PRIVATE_ROUNDS.companies.flatMap((c) => c.familyMentions.map((x) => host(x.source.url))).filter((h) => !h || (BLOCKED_SOURCE_HOSTS as string[]).some((b) => h === b || h.endsWith(`.${b}`)));
+ok("every family line links a credible source", mentionHosts.length === 0, mentionHosts.join(", "));
 
 if (fails) { console.log(`\n${fails} failing`); process.exit(1); }
 console.log("\nall private-round checks pass");

@@ -23,7 +23,7 @@ import { chartTooltipStyle, chartTooltipLabelStyle } from "@/lib/chartTheme";
 import { fmtDate, fmtNum } from "@/lib/format";
 import {
   PRIVATE_ROUNDS, PRIVATE_MARKET_NEWS, privateCompanyById, companyMetrics, roundValues, sortedRounds, valuationPoints, stakeTrail,
-  roundDateLabel, dayOf, fmtValuation, ENTRY_WINDOW_DAYS, type FundingRound, type Headline, type PrivateCompany as Company, type Figure,
+  roundDateLabel, dayOf, fmtValuation, vendorOnly, ENTRY_WINDOW_DAYS, type FundingRound, type Headline, type PrivateCompany as Company, type Figure,
 } from "@/lib/privateRounds";
 
 /**
@@ -87,6 +87,9 @@ function investorsShort(list: readonly string[]): string {
   const more = list.length - shown.length;
   return more ? `${shown.join(", ")} +${more} more` : shown.join(", ");
 }
+
+/** Why a valuation is marked as a data vendor's (Stage 10kv). */
+const VENDOR_WHY = "Only a data vendor's public page (Inc42 Datalabs, Tracxn, an IPO data site …) states this figure — no filing, offer document or press report of the round does. Shown for what it is, not as a filing.";
 
 const noRoundsWhy = (n: number, note: string | null) => (n ? "no round prints what a stake needs" : note ?? "no credible source prints a priced round for this company");
 
@@ -266,13 +269,13 @@ function CompanyPage({ company }: { company: Company }) {
           {...(m.entryValues?.headline
             ? { value: <span data-pc-entry-post={m.entryValues.headline.value} title={`${entryWords}. ${m.entryValues.headline.basis === "post-money" ? "Post-money" : "Valuation with no pre/post basis stated"}${m.entryValues.headline.derived ? ` — derived: ${m.entryValues.headline.derived}` : ""}.`}>{money(m.entryValues.headline.value)}</span>,
                 second: <span data-pc-entry-pre={m.entryValues.pre?.value ?? ""} title={m.entryValues.pre ? (m.entryValues.pre.derived ? `Pre-money, derived: ${m.entryValues.pre.derived}.` : "Pre-money, as the source prints it.") : "No pre-money: the source prints neither it nor the amount raised beside a post-money."}>pre {m.entryValues.pre ? money(m.entryValues.pre.value) : "—"}</span>,
-                sub: <span className="text-slate-500">{m.entryValues.headline.basis === "post-money" ? "post-money" : "basis not stated"} · {m.entry!.round.round}</span> }
+                sub: <span className="text-slate-500">{m.entryValues.headline.basis === "post-money" ? "post-money" : "basis not stated"} · {m.entry!.round.round}{vendorOnly(m.entry!.round) && <span data-pc-vendor title={VENDOR_WHY}> · data vendor's figure</span>}</span> }
             : absentTile(entryWhy))}
           icon={<Landmark className="h-4 w-4" />} />
         <Kpi label="Latest valuation"
           {...(m.latest
             ? { value: <span data-pc-latest={m.latest.value} title={`${m.latest.round}, ${m.latest.basis === "post-money" ? "post-money" : "valuation with no pre/post basis stated"}${m.latest.derived ? ` — derived: ${m.latest.derived}` : ""}.`}>{money(m.latest.value)}</span>,
-                sub: <span className="text-slate-500" data-pc-latest-date={m.latest.date}>{roundDateLabel(m.latest.date)} · {m.latest.round}</span> }
+                sub: <span className="text-slate-500" data-pc-latest-date={m.latest.date}>{roundDateLabel(m.latest.date)} · {m.latest.round}{m.latest.vendor && <span data-pc-vendor title={VENDOR_WHY}> · data vendor's figure</span>}</span> }
             : absentTile(noRounds ? noRoundWhy : "no round prints a valuation in one currency"))}
           icon={<TrendingUp className="h-4 w-4" />} />
         <Kpi label="Change since entry"
@@ -368,6 +371,7 @@ function CompanyPage({ company }: { company: Company }) {
                             <td className="tabular whitespace-nowrap px-3 py-2 text-right" title={r.reported?.amountText ? `Inc42's table prints ${r.reported.amountText}${r.reported.footnote ? ` — ${r.reported.footnote}` : ""}` : undefined}>{v.raised != null ? money(v.raised) : r.amountRaised ? printed(r.amountRaised) : <AbsentCell reason={r.reported ? "Inc42's table prints no amount for this round" : "the source prints no amount"} />}</td>
                             <td className="tabular whitespace-nowrap px-3 py-2 text-right">{figure(v.pre, "the source prints no pre-money, and not both a post-money and the amount to derive one")}</td>
                             <td className="tabular whitespace-nowrap px-3 py-2 text-right">
+                              {vendorOnly(r) && (v.post || v.headline) && <sup className="mr-0.5 text-[9px] text-slate-500" title={VENDOR_WHY} data-pc-vendor>v</sup>}
                               {v.post ? figure(v.post, "")
                                 : v.headline ? <span title="The source says the company was valued at this, without saying pre- or post-money">{money(v.headline.value)}<sup className="ml-0.5 text-[9px] text-slate-500">?</sup></span>
                                 : otherCur ? printed((r.postMoney ?? r.valuation ?? r.preMoney)!, r.postMoney ? "post-money" : r.valuation ? "basis not stated" : "pre-money")
@@ -463,7 +467,7 @@ function CompanyPage({ company }: { company: Company }) {
                           <div style={{ ...chartTooltipStyle, padding: "8px 10px" }}>
                             <div style={chartTooltipLabelStyle}>{roundDateLabel(row.date)} · {row.round}</div>
                             <div className="mt-1 tabular font-semibold">{money(row.value)}</div>
-                            <div className="mt-0.5 opacity-70">{row.basis === "post-money" ? (row.derived ? "post-money, derived" : "post-money") : "valuation, basis not stated"}</div>
+                            <div className="mt-0.5 opacity-70">{row.basis === "post-money" ? (row.derived ? "post-money, derived" : "post-money") : "valuation, basis not stated"}{row.vendor ? " · a data vendor's figure" : ""}</div>
                           </div>
                         );
                       }} />
