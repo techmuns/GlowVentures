@@ -29,7 +29,8 @@ import { carriedCostOf, carriedCostNote, grossPaidOf, grossPaidNote } from "@/li
 import { BOOK_POSITION_TRANCHES } from "@/data/glowData";
 import type { Position } from "@/lib/types";
 
-import { loadStockLedger, type StockLedger } from "@/lib/ledger";
+import { loadStockLedger, holdingRecordsOf, type StockLedger, type HoldingRecord } from "@/lib/ledger";
+import { splitFundClass } from "../../shared/securityKey.mjs";
 import { symbolFor, symbolForKey } from "@/lib/quotes";
 import { accountIndex, ownerOf, providerOf, strategyOf, engagementOf } from "@/lib/accounts";
 import { ResearchPanel } from "@/components/ResearchPanel";
@@ -217,7 +218,30 @@ const STOCK_TABS = [
  * be "just a click".
  */
 const POS_COLS = ["entity", "managedBy", "qty", "avgCost", "cmp", "invested", "current", "pnl", "return"] as const;
-const STOCK_TXN_COLS = ["date", "type", "entity", "qty", "rate", "amount"] as const;
+const STOCK_TXN_COLS = ["date", "type", "detail", "entity", "qty", "rate", "amount"] as const;
+
+/**
+ * BUY, SELL OR INCOME ON THE FACE OF EVERY ROW (Stage 10lt) — the Transaction
+ * type Data Audit gives the same row. Two records are none of the three, and
+ * say so in a neutral tone rather than borrow a colour: a class switch inside
+ * the holding (no money in or out) and a bonus, split or spin-off (no money at
+ * all). Each reason is the badge's hover.
+ */
+const TXN_BADGE: Record<"Buy" | "Sell" | "Income", { label: string; tone: string }> = {
+  Buy: { label: "BUY", tone: "buy" }, Sell: { label: "SELL", tone: "sell" }, Income: { label: "INCOME", tone: "income" },
+};
+const txnBadge = (r: HoldingRecord) => r.txntype ? { ...TXN_BADGE[r.txntype], why: undefined }
+  : r.record === "Switch"
+    ? { label: "SWITCH", tone: "neutral", why: "A class switch inside the fund: the units moved from one class to another for the same rupees, so no money came in or went out. The purchases it carried are the buys." }
+    : { label: "NO CASH", tone: "neutral", why: "A non-cash corporate action (bonus, split, spin-off): no money moved, so it is not a buy, a sell or income." };
+/** What the statement printed for the row, and what the reader needs beside it. */
+const txnDetail = (r: HoldingRecord): { main: string; sub: string | null } => ({
+  // A reader's normalised kind ("dividend", "bonus") reads as a word, capitalised.
+  main: r.record === "Trade" ? "Trade" : (r.type ?? r.record).replace(/^[a-z]/, (c) => c.toUpperCase()),
+  sub: r.heldAs ? `bought as ${splitFundClass(r.heldAs) ? `Class ${splitFundClass(r.heldAs)!.cls}` : r.heldAs}`
+    : r.record === "Switch" && r.txntype ? "switch · no money left the fund house"
+    : null,
+});
 
 /**
  * ── THE SUB-TABS ON THE POSITION TABLE — every way the family holds a company ─
@@ -327,8 +351,13 @@ export function StockInfo() {
   // struck over every account's lots and is not split by member, so a scoped
   // view carries none rather than another member's.
   const led = useMemo<StockLedger | null | undefined>(() => (ledWhole && scope.owners
-    ? { ...ledWhole, txns: ledWhole.txns.filter((t) => labelInScope(portfolio?.accounts ?? [], t.account)), realizedProfit: null }
+    ? { ...ledWhole, txns: ledWhole.txns.filter((t) => labelInScope(portfolio?.accounts ?? [], t.account)),
+      // Every dated record by its account id, which the scoped book's accounts carry.
+      records: ledWhole.records?.filter((r) => r.accountId != null && (portfolio?.accounts ?? []).some((a) => a.accountId === r.accountId)),
+      realizedProfit: null }
     : ledWhole), [ledWhole, scope.owners, portfolio]);
+  /** The holding's every dated row — Data Audit's Transactions rows for it (Stage 10lt). */
+  const records = useMemo(() => (led ? holdingRecordsOf(led) : led), [led]);
 
   const rows = useMemo(() => (portfolio ? portfolio.positions.filter((p) => p.securityKey === securityKey) : []), [portfolio, securityKey]);
   // COUNT ONCE. Two of this book's securities are reported under two members
@@ -342,6 +371,11 @@ export function StockInfo() {
   // page shows any holding, AIF units included, and those are not listed.
   const bookMV = useMemo(() => (portfolio ? consolidatedMarketValue(portfolio.positions) : 0), [portfolio]);
   const accIdx = useMemo(() => accountIndex(portfolio?.accounts ?? []), [portfolio]);
+  /** Whose money, on which platform and account number — the label the trade tape printed. */
+  const entityOf = (r: HoldingRecord) => {
+    const a = r.accountId ? accIdx.get(r.accountId) : undefined;
+    return a ? `${r.entity ?? ownerDisplayName(a.ownerId)} · ${a.provider.split(" ")[0]} ${a.accountNo}` : r.entity ?? DASH;
+  };
   const nowMs = useMemo(() => Date.now(), []);
   // The demat statements' own opening-to-closing quantity account for this
   // name, one row per account that issues a transaction statement.
@@ -515,6 +549,7 @@ export function StockInfo() {
     for (const t of ledWhole?.txns ?? []) {
       for (const a of wholePortfolio.accounts) if (labelInScope([a], t.account)) add(a.accountId);
     }
+    for (const r of ledWhole?.records ?? []) if (r.accountId) add(r.accountId);
     return [...owners];
   }, [scope.owners, wholePortfolio, securityKey, ledWhole]);
   const recordedOnly = rows.length === 0 && recorded.length > 0;
@@ -563,7 +598,7 @@ export function StockInfo() {
   const recordedHead = recorded.find((l) => l.securityKey === securityKey) ?? recorded[0];
   // The chosen members hold, record and traded none of it; the whole family does.
   if (scope.owners && rows.length === 0 && recorded.length === 0 && !fundOnly && !resolving
-    && (led?.txns.length ?? 0) === 0 && outOfScopeOwners.length > 0) {
+    && (records?.length ?? 0) === 0 && outOfScopeOwners.length > 0) {
     const wholeRow = wholePortfolio?.positions.find((p) => p.securityKey === securityKey);
     const heading = wholeRow ? securityLabel(securityKey, wholeRow.security) : ledWhole?.name ?? securityKey;
     return (
@@ -1114,9 +1149,12 @@ export function StockInfo() {
   // VD-18): a pre-tax NAV, or units that are all pledged. A few words on the
   // line, the statement's sentence in the hover; no figure of its own.
   const markNote = statementNoteForSet(rows);
-  const buys = (led?.txns ?? []).filter((t) => t.side === "Buy");
-  const firstBought = buys.length ? buys[buys.length - 1].date : null;
-  const lastAdded = buys.length ? buys[0].date : null;
+  // FIRST BOUGHT AND LAST ADDED READ THE ROWS THE TABLE BELOW DRAWS (Stage
+  // 10lt): every purchase, a switch in, and what a class switch carried in —
+  // not the trade tape alone, which dated Buoyant's first purchase to 2026.
+  const buyDates = (records ?? []).filter((r) => r.txntype === "Buy" && r.date).map((r) => r.date as string).sort();
+  const firstBought = buyDates[0] ?? null;
+  const lastAdded = buyDates.at(-1) ?? null;
   // Null when the long-term cost is unknown — the bar is hidden rather than
   // drawn at zero, which would read as "none of this is long-term".
   // OVER THE ROWS THAT CARRY A SPLIT ONLY (Stage 10fz) — never over `cost`,
@@ -2201,7 +2239,7 @@ export function StockInfo() {
                 in this card is about the family's OWN lots — cost, purchase
                 dates, dividends — and there are none (main's #88). */}
             {resolving && resolvingNote}
-            {fundOnly && led != null && led.txns.length === 0 && (
+            {fundOnly && records != null && records.length === 0 && (
               <Card className="mt-5" title="Transactions">
                 <p className="text-[12.5px] leading-relaxed text-slate-400" data-stock-activity="funds-only"
                   title={`No statement issued to this family records a buy or a sell of ${name}, so there is no lot, cost or tax split of your own to show. The transaction history, the tax split and the quantity account are all records of the family's own accounts; a company held only inside a fund is bought and sold by the fund, and the fund's own trades are not reported to this family.`}>
@@ -2278,9 +2316,13 @@ export function StockInfo() {
                 demat that a fund still holds). Otherwise it would be a card
                 explaining an empty window for a holding that was never theirs to
                 trade, and the one line above says so instead. */}
-            {!resolving && (!fundOnly || led === undefined || led === null || led.txns.length > 0) && (
-            <Card className="mt-5" title="Transaction history" subtitle='Every dated buy & sell from the ledger — the "Transaction Info" drill-down' pad={false}
-              right={led && led.txns.length ? <Pill>{led.txns.length} rows · {led.txns.filter((t) => t.side === "Sell").length} sells</Pill> : undefined}>
+            {!resolving && (!fundOnly || records == null || records.length > 0) && (
+            <Card className="mt-5" title="Transaction history" subtitle="Every dated buy, sell, switch and income on this holding — the rows Data Audit lists for it" pad={false}
+              right={records && records.length ? (
+                <span title="Buy: money into the holding (a purchase, a contribution, a switch in). Sell: money out (a sale, a redemption, a switch out). Income: what it paid without a unit being sold (a dividend, IDCW, interest or distribution).">
+                  <Pill>{records.length} rows · {records.filter((r) => r.txntype === "Buy").length} buys · {records.filter((r) => r.txntype === "Sell").length} sells · {records.filter((r) => r.txntype === "Income").length} income</Pill>
+                </span>
+              ) : undefined}>
               <div className="max-h-[460px] overflow-auto" data-navigation-scroll="stockinfo-3">
                 {led === undefined ? (
                   <div className="grid h-32 place-items-center text-sm text-slate-500">Loading transactions…</div>
@@ -2289,7 +2331,7 @@ export function StockInfo() {
                     The audit archive didn't respond. Refresh to retry — it is served alongside the app, so this is the
                     archive being unreachable rather than your session being stale.
                   </div>
-                ) : led.txns.length === 0 ? (
+                ) : !records || records.length === 0 ? (
                   <div className="grid h-32 place-items-center px-6 text-center text-[12.5px] leading-relaxed text-slate-500">
                     {/* ONE SHORT LINE (Stage 10cp): the state and its window on the
                         face, the sentence saying what the window is on its hover. */}
@@ -2305,6 +2347,7 @@ export function StockInfo() {
                       <Tr view={txnView}>
                         <SortHeader col="date" view={txnView} align="left">Date</SortHeader>
                         <SortHeader col="type" view={txnView} align="left">Type</SortHeader>
+                        <SortHeader col="detail" view={txnView} align="left">Details</SortHeader>
                         <SortHeader col="entity" view={txnView} align="left">Entity</SortHeader>
                         <SortHeader col="qty" view={txnView}>Qty</SortHeader>
                         <SortHeader col="rate" view={txnView}>Rate</SortHeader>
@@ -2312,25 +2355,35 @@ export function StockInfo() {
                       </Tr>
                     </thead>
                     <tbody className="divide-y divide-ink-700/60">
-                      {sortRows(led.txns, txnView.sort, {
-                        date: (t) => t.date,
-                        type: (t) => t.side,
-                        entity: (t) => t.account,
-                        qty: (t) => t.qty,
-                        rate: (t) => t.rate,
-                        amount: (t) => t.amount,
-                      }).map((t, i) => (
-                        <Tr view={txnView} key={i} className="hover:bg-ink-700/40">
-                          <td className="px-4 py-2 mono text-[12px] text-slate-400">{fmtDate(t.date)}</td>
-                          <td className="px-4 py-2">
-                            <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${t.side === "Buy" ? "bg-indigo-500/10 text-indigo-300" : "bg-red-500/15 text-loss"}`}>{t.side === "Buy" ? "BUY" : "SELL"}</span>
-                          </td>
-                          <td className="px-4 py-2 text-[13px] text-slate-300">{t.account}</td>
-                          <td className="px-4 py-2 text-right mono text-slate-300">{fmtNum(t.qty)}</td>
-                          <td className="px-4 py-2 text-right mono text-slate-400">{t.rate == null ? <AbsentCell reason="this trade row reports no unit price and no settled amount on its statement" /> : price(t.rate)}</td>
-                          <td className="px-4 py-2 text-right mono text-slate-200">{t.amount == null ? <AbsentCell reason="this trade row reports neither a net nor a gross amount on its statement" /> : fmtFromBase(t.amount, { compact: true })}</td>
-                        </Tr>
-                      ))}
+                      {sortRows(records, txnView.sort, {
+                        date: (r) => r.date,
+                        type: (r) => txnBadge(r).label,
+                        detail: (r) => txnDetail(r).main,
+                        entity: (r) => entityOf(r),
+                        qty: (r) => r.qty,
+                        rate: (r) => r.rate,
+                        amount: (r) => r.amount,
+                      }).map((r, i) => {
+                        const badge = txnBadge(r), detail = txnDetail(r);
+                        return (
+                          <Tr view={txnView} key={i} className="hover:bg-ink-700/40" data-stock-txn={badge.tone} data-stock-record={r.record}>
+                            <td className="px-4 py-2 mono text-[12px] text-slate-400">{r.date ? fmtDate(r.date) : <AbsentCell reason="the statement prints no date for this row" />}</td>
+                            <td className="px-4 py-2"><span className="txn-type" data-txn={badge.tone} title={badge.why}>{badge.label}</span></td>
+                            <td className="max-w-[300px] px-4 py-2" title={r.notes ?? undefined}>
+                              <span className="block truncate text-[12.5px] text-slate-300">{detail.main}</span>
+                              {detail.sub && <span className="block truncate text-[10.5px] text-slate-500">{detail.sub}</span>}
+                            </td>
+                            <td className="px-4 py-2 text-[13px] text-slate-300">{entityOf(r)}</td>
+                            <td className="px-4 py-2 text-right mono text-slate-300">{r.qty == null
+                              ? <AbsentCell reason={r.txntype === "Income" ? "a payment, not a movement of units — the statement prints no unit count on it" : "the statement prints no unit count for this row"} />
+                              : fmtNum(r.qty, Number.isInteger(r.qty) ? 0 : 3)}</td>
+                            <td className="px-4 py-2 text-right mono text-slate-400">{r.rate == null ? <AbsentCell reason="the statement prints no unit price for this row, and no unit count to derive one from" /> : price(r.rate)}</td>
+                            <td className="px-4 py-2 text-right mono text-slate-200">{r.amount == null
+                              ? <AbsentCell reason={r.record === "Corporate action" ? "a bonus, split or spin-off moves no money" : "the statement prints no amount for this row"} />
+                              : fmtFromBase(r.amount, { compact: true })}</td>
+                          </Tr>
+                        );
+                      })}
                     </tbody>
                   </ExportableTable>
                 )}
