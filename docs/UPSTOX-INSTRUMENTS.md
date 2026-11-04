@@ -8,8 +8,8 @@ Direct holdings, recorded depository balances and companies disclosed by funds
 are matched by exact ISIN, verified trading symbol or exact normalized listing
 name. Ambiguous identities are refused. Debt ISINs never price equity.
 
-- 625 quote keys; 653 security/issuer keys; 625 listed ISINs.
-- 4 BSE quote keys.
+- 629 quote keys; 653 security/issuer keys; 629 listed ISINs.
+- 5 BSE quote keys.
 - Unmapped legacy symbols: none.
 
 ## Unresolved holdings and fund equity lines
@@ -19,6 +19,7 @@ name. Ambiguous identities are refused. Debt ISINs never price equity.
 - **GSPL India Transco Ltd** (`gspl-india-transco`) — no exact listing identity.
 - **HEG Graphite Limited** (`heg-graphite`) — no exact listing identity.
 - **NICCO CORPORATION LIMITED EQ NEW FV RS. 2/** (`nicco`) — no listed share/unit carries INE241C01026.
-- **STERLITE ELECTRIC LIMITED EQ** (`sterlite-electric`) — no listed share/unit carries INE110V01015.
+- **STERLITE ELECTRIC LIMITED EQ** (`sterlite-electric`) — no exact listing identity.
 - **STERLITE GRID LIMITED EQ NEW FV RS 2/** (`sterlite-grid`) — no listed share/unit carries INE03QT01027.
+- **STERLITE GRID 5 LIMITED EQ NEW FV RS 2/** (`sterlite-grid-5`) — no exact listing identity.
 - **Talwandi Sabo Power Ltd.** (`talwandi-sabo-power`) — no exact listing identity.

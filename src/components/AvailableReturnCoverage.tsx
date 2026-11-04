@@ -5,10 +5,12 @@ import { RETURN_TYPES } from '@/lib/periodReturns';
 import { returnGapText, type ReturnSelection, type SelectedLine } from '@/lib/selectedSegmentReturns';
 
 /** The same plain coverage explanation on attribution rows and headline cards. */
-export function AvailableReturnCoverage({ line: l, selection, accounts, money, field, notes = [] }: {
+export function AvailableReturnCoverage({ line: l, selection, accounts, money, field, notes = [], starts = [] }: {
   line: SelectedLine; selection: ReturnSelection; accounts: Account[];
   money: (n: number, sign?: boolean) => string; field: 'gain' | 'return';
   notes?: { label: string; reason: string }[];
+  /** Where each part of the money starts, by the value it closes at (Stage 10kq). */
+  starts?: { date: string | null; close: number }[];
 }) {
   // The measure the figure IS: under a year, the absolute return in place of an XIRR or CAGR (Stage 10hk).
   const shownAs = l.measured?.shownAs ?? selection.type;
@@ -28,6 +30,11 @@ export function AvailableReturnCoverage({ line: l, selection, accounts, money, f
   const gaps = [...l.missing].sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
   const count = new Set(l.units.map(u => u.accountId)).size;
   const assumed = l.units.filter(u => u.assumption);
+  // HELD AT LAST VALUE (Stage 10la): named one by one, never shown as measured.
+  const held = l.units.filter(u => u.held).sort((a, b) => b.close - a.close);
+  const BASIS: Record<string, string> = { 'unit-window': 'same units on consecutive statements', 'statement-nav': 'NAV printed on a later statement',
+    'broker-trades': 'older balance and the broker’s dated trades', 'earlier-balance': 'share count on an older statement', 'listing-day': 'from its listing day' };
+  const bases = [...new Set(l.units.flatMap(u => u.basis ? [BASIS[u.basis]] : []))];
   const reason = (line: SelectedLine) => !line.measured?.reason && line.missing[0]?.plainReason ? line.missing[0].reason
     : returnGapText(line.measured?.reason ?? line.missing[0]?.reason ?? 'We need values and dated payments for these dates.', selection.start);
   return (
@@ -35,6 +42,20 @@ export function AvailableReturnCoverage({ line: l, selection, accounts, money, f
         {assumed.length > 0 && <div className="rounded-lg bg-ink-900 p-3" data-return-assumption-summary>
           <p>{holdingAssumptionText(new Set(assumed.map(u => u.assumption!.owner)).size === 1 ? assumed[0].assumption!.owner : 'each owner')}</p>
           <p className="mt-1 text-xs">{assumed.length} assumed holdings · published prices and gross dividend entitlements. No new purchase cost is assumed.</p>
+        </div>}
+        {!selection.inception && starts.filter(x => x.date || x.close).length > 0 && <div data-return-starts>
+          <p className="font-semibold text-slate-100">Measured from</p>
+          <p className="mt-1">Each investment counts from its first value on record in the period; that value is treated as money arriving that day.{bases.length ? ` Starts include: ${bases.join('; ')}.` : ''}</p>
+          <ul className="mt-2 space-y-1 text-xs">{starts.map((x, i) => <li key={i}>{x.date ? fmtDate(x.date) : 'Bought this period, from nil'} · {money(x.close)} now</li>)}</ul>
+        </div>}
+        {held.length > 0 && <div data-return-held>
+          <p className="font-semibold text-slate-100">Held at last value · {money(held.reduce((t, u) => t + u.close, 0))}</p>
+          <p className="mt-1">No second value is on record this period, so each is carried flat (0%) from its latest valuation until a new statement arrives; then the whole change counts.</p>
+          <ul className="mt-2 space-y-2">{held.map(u => <li key={u.key} data-return-held-item={u.key} className="rounded-lg bg-ink-900 p-3">
+            <p className="font-medium text-slate-100">{u.positions[0]?.security ?? u.label}</p>
+            <p className="mt-1 text-xs">{money(u.close)} · valued {fmtDate(u.held!.date)} · {(() => { const a = accounts.find(x => x.accountId === u.accountId); return a ? `${a.owner} · ${a.provider} · account ${a.accountNo}` : u.accountId; })()}</p>
+            <p className="mt-1 text-xs text-slate-400">{u.held!.reason}</p>
+          </li>)}</ul>
         </div>}
         <p className="text-slate-100">{count ? <>Based on the available records for <strong>{count} {count === 1 ? 'account' : 'accounts'}</strong> only.</>
           : 'No account has enough information for this calculation on these dates.'}</p>

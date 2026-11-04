@@ -1,0 +1,75 @@
+name: Private market funding and headlines
+
+# Twice a day, reads what Glow Central Research publishes about private
+# companies — Inc42's weekly "Funding Galore" tables (its News → Private
+# Market tab) and the headlines that name the family's private companies — and
+# keeps the rows that are the family's companies in `src/data/privateMarketNews.json`,
+# the record behind each `/private-company/<id>` page's investors, Inc42 rounds
+# and News tab (Stage 10kt, `scripts/import-private-market.mjs`).
+#
+# *"Access the private market news section in the Glow Central Research to
+# understand how we are fetching data for it and use that knowledge to fetch
+# and show data for private markets investments."* — the family, 4 Nov 2026.
+#
+# No secret is needed: both files are public on Glow Central Research's site,
+# which walks Inc42 itself every six hours; nothing here scrapes Inc42 again.
+# A failed read leaves the record as it was and fails the run, so a stale
+# record is visible here rather than silent on the page.
+on:
+  schedule:
+    - cron: "41 1,13 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: private-rounds
+  cancel-in-progress: false
+
+jobs:
+  private-market-news:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Read Glow Central Research's private-market publications
+        run: npm run import-private-market
+
+      - name: Anything new?
+        id: diff
+        run: |
+          if git diff --quiet -- src/data/privateMarketNews.json; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No company's funding rows or headlines changed — nothing to commit."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - if: steps.diff.outputs.changed == 'true'
+        run: npm ci
+
+      - name: Check the record and the app against it
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          ONLY="private company funding rounds" node scripts/test-family.mjs
+          npm run build
+
+      - name: Commit
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          git config user.name  "glow-harvest[bot]"
+          git config user.email "glow-harvest[bot]@users.noreply.github.com"
+          git add src/data/privateMarketNews.json
+          git commit -m "Private market: Inc42 funding rows and headlines refreshed
+
+          Automated run of \`npm run import-private-market\`, reading Glow Central
+          Research's published Inc42 funding capture and private-company headlines."
+          for i in 1 2 3 4; do
+            git push && break || { echo "push failed, retrying"; sleep $((2**i)); git pull --rebase origin ${{ github.ref_name }}; }
+          done

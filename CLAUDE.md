@@ -36,9 +36,10 @@ comment citing "CLAUDE.md §…" or "Stage 10xx" resolves there:
 `grep -n 'Stage 10ak' docs/history/*.md`. Read the stage before changing the
 code it describes.
 
-**Open review awaiting the go-ahead:** `docs/RETURN-COVERAGE-REVIEW.md` (4 Nov 2026,
-Stage 10kp) — the return card's coverage, the method discussed and six data defects.
-Read it before touching `availableCardReturns.ts` or the ICICI, MOPWM or NSE records.
+**Return cards' method:** `docs/RETURN-COVERAGE-REVIEW.md` (4 Nov 2026, Stage 10lc) records
+why the cards measure from the first value on record, the rules the family approved, and
+the data defects still open. It is built in Stages 10la and 10lb. Read it before touching
+`availableCardReturns.ts`, `periodRules.ts`, `periodLine.ts` or the ICICI, MOPWM or NSE records.
 
 ## The standing rule
 
@@ -200,7 +201,10 @@ One line per area; the history files explain each in depth.
 - `src/lib/privateRounds.ts` + `pages/PrivateCompany.tsx` — a private company's
   funding rounds, valuations and stake (`/private-company/:id`, Private Market's
   valuation columns), off `src/data/privateRounds.json`: public reporting, every
-  round sourced, never a value for the holding (Stage 10ko).
+  round sourced, never a value for the holding (Stage 10ko). Inc42's weekly funding
+  rows (Glow Central Research's News → Private Market) and the headlines naming each
+  company join it from `src/data/privateMarketNews.json` — exact-name match, folded
+  onto a researched round only on evidence (`scripts/lib/privateFunding.mjs`; Stage 10kt).
 - `shared/realEstate.mjs` + `shared/propertyTax.mjs` — Real Estate's record (entered on
   the page, kept in the shared store) and the capital gains tax on selling a
   property today: the Cost Inflation Index table, the 2024 rules, per owner,
@@ -224,7 +228,9 @@ One line per area; the history files explain each in depth.
   its Portfolio Monitor holding columns are `lineHoldingFigures.ts`, Stage 10hz),
   `capitalBridge.ts` (the tab's start → money in/out → gain → end bridge, gain split
   only by a statement P&L or fund unit record; Stage 10gu), `ytdAvailable.ts` (the
-  Monitor's YTD from the first dated value this year, on those records; Stage 10jl), `useMarketReturns.ts` +
+  Monitor's YTD from the first dated value this year, on those records; Stage 10jl;
+  any period's open, `periodSelection` + `periodRules.ts` for Morning CIO's three
+  return cards, Stage 10la), `useMarketReturns.ts` +
   `marketHistoryStore.ts` (public histories kept in the browser, warmed by Morning CIO),
   `returnMeasures.ts`, `returnColumns.ts`.
 - `src/lib/fundNavs.ts` (AMFI NAV overlay; never sets `live`; depository cash and
@@ -254,6 +260,9 @@ One line per area; the history files explain each in depth.
   valued and unpriced holdings; never infer source by equal amounts. Canonical
   data, normalized documents and audit/ledger projections share the revision
   discovered at `/publication.json`. Unknown layouts/identity conflicts stay held.
+- `src/lib/holdingDocuments.ts` + `components/UploadDocuments.tsx` — Private Market's Upload documents: any file filed
+  under a company or fund on the statement inbox (`subject`; non-statements `stored`), listed in its Portfolio
+  Library folder (Stage 10kx).
 - `src/lib/priceAlerts.ts`, `watchlist.ts`, `researchLevels.ts`/`researchSync.ts`
   — price alerts (per browser) and the send to Glow Central Research.
 - `src/lib/searchIndex.ts` + `components/SmartSearch.tsx` — the top-bar search.
@@ -565,6 +574,8 @@ All steps are idempotent; `glowData.ts` regenerates byte-identically.
   capture. `stock-exposure.ts` — the look-through read model.
 - Workflows: `harvest.yml` (macro series store), `fund-navs.yml` (AMFI NAVs),
   `private-rounds.yml` (private companies' rounds, weekly; needs `ANTHROPIC_API_KEY`),
+  `private-market-news.yml` (Inc42 funding rows + headlines from Glow Central Research,
+  twice daily; no secret),
   `polycab.yml` (Polycab exchange data), `index-sectors.yml` (NSE factsheet
   sector weights, days 1–15 monthly), `statement-intake.yml` (dashboard uploads
   → the book; dispatched by each upload, every 20 min as a backstop; sealed
@@ -650,7 +661,10 @@ And:
 - `npm run build-book` — the book and its report (then `build-review-columns`,
   `build-profiles` → `src/data/privateProfiles.json` from any profile table in `source/`).
 - `npm run build-private-rounds` — research the stalest private companies' rounds
-  (`ANTHROPIC_API_KEY`; `--import <batch.json>`, `--only <ids>`, `--check`).
+  (`ANTHROPIC_API_KEY`; `--import <batch.json>` [`--merge`: nothing held dropped or
+  overwritten, Stage 10kz], `--only <ids>`, `--check`).
+- `npm run import-private-market` — Inc42 funding rows and private-company headlines
+  from Glow Central Research's site (`--offline` re-matches the rows held).
 - `npm run accounts-table` — the accounts table above (`-- --write` splices).
 - Replays (each `--check` is a no-op control; follow with `build-book`):
   `rekey:archive`, `replay:calls`, `replay:owners`, `replay:dedupe`,

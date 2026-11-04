@@ -54,8 +54,16 @@ import { KEPT_UNVALUED } from "../shared/keptUnvalued.mjs";
 const PRIVATE_CO = (() => {
   try {
     const store = JSON.parse(readFileSync(new URL("../src/data/privateRounds.json", import.meta.url), "utf8"));
-    const c = [...store.companies].sort((a, b) => b.rounds.length - a.rounds.length)[0];
-    return c && c.rounds.length ? { id: c.id, rounds: c.rounds.length,
+    // Stage 10kt: Inc42's funding rows join each company's rounds — a row is
+    // its own round unless its `fold` names a researched round the record
+    // carries — and the headlines that name it fill its News tab.
+    const news = JSON.parse(readFileSync(new URL("../src/data/privateMarketNews.json", import.meta.url), "utf8"));
+    const own = (c) => (news.funding?.rows ?? []).filter((r) => r.company === c.id && r.date
+      && !(r.fold && c.rounds.some((x) => `${x.date}|${x.round}` === r.fold.key))).length;
+    const c = [...store.companies].sort((a, b) => (b.rounds.length + own(b)) - (a.rounds.length + own(a)))[0];
+    return c && c.rounds.length ? { id: c.id, rounds: c.rounds.length + own(c), reported: own(c),
+      investorRows: (news.funding?.rows ?? []).filter((r) => r.company === c.id && r.date && r.investors.length).length,
+      headlines: (news.headlines?.rows ?? []).filter((h) => h.company === c.id).length,
       valued: c.rounds.filter((r) => r.postMoney || r.valuation || (r.preMoney && r.amountRaised)).length } : null;
   } catch { return null; }
 })();
@@ -8260,6 +8268,8 @@ const ROUTES = [
   ["cio-allocation", "/cio?tab=allocation"],
   // Optional return tiles still publish figures consumed by the holdings checks.
   ["cio-return-metrics", "/cio?tab=allocation&tiles=value,return,mwr,uncalled,distributions"],
+  // Stage 10kq — the calendar-year card, which no default strip draws.
+  ["cio-ytd-card", "/cio?tiles=value,gain,annualised,fytd,ytd"],
   /**
    * ── THE STRIP'S CHOICE, SAVED FOR EVERYONE ───────────────────────────────
    *
@@ -8877,6 +8887,7 @@ const ROUTES = [
   ["private-company", () => `/private-company/${PRIVATE_CO?.id ?? "none-in-the-record"}`],
   ["private-company-rounds", () => `/private-company/${PRIVATE_CO?.id ?? "none-in-the-record"}?tab=rounds`],
   ["private-company-valuation", () => `/private-company/${PRIVATE_CO?.id ?? "none-in-the-record"}?tab=valuation`],
+  ["private-company-news", () => `/private-company/${PRIVATE_CO?.id ?? "none-in-the-record"}?tab=news`],
   ["fund-clubbed", () => (CLUBBED_FUND_BOOK ? `/fund/${encodeURIComponent(CLUBBED_FUND_BOOK.fund)}` : "/fund/none-resolved-from-the-book")],
   /**
    * ── THE DRILL-DOWNS EVERY MORNING CIO FIGURE NOW OPENS ────────────────────
@@ -18815,13 +18826,19 @@ const AVAILABLE_CARDS_BOOK = await (async () => {
     const rootPath = decodeURIComponent(new URL('..', import.meta.url).pathname);
     const out = await build({ stdin: { contents: `
       import { availableCardReturns, statementReturnInputs } from './src/lib/availableCardReturns';
-      import { dedupedPositions } from './src/lib/analytics';
+      import { pageConsolidated, failedHistoryBook } from './scripts/dev/page-book';
       import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_ACCOUNT_RETURN_RECORDS } from './src/data/glowData';
       const book = { accounts: BOOK_ACCOUNTS, positions: BOOK_POSITIONS, accountReturnRecords: BOOK_ACCOUNT_RETURN_RECORDS, privateMarkets: {} };
-      export const cards = (display) => availableCardReturns(book, dedupedPositions(display), statementReturnInputs(book), new Date());
+      // THE PAGE'S OWN ROWS ON THIS RUN (Stage 10la): the overlays with no quote
+      // feed, every price history refused, and the saved action capture read.
+      export const cards = (_display, actions) => {
+        const shown = pageConsolidated(actions);
+        return availableCardReturns(book, shown, statementReturnInputs(book), new Date(), failedHistoryBook(shown, actions));
+      };
     `, resolveDir: rootPath }, bundle: true, write: false, format: 'esm', platform: 'node', alias: { '@': rootPath + '/src' }, logLevel: 'error' });
     const mod = await import(`data:text/javascript;base64,${Buffer.from(out.outputFiles[0].text).toString('base64')}`);
-    return mod.cards(bookArray(readFileSync(new URL('../src/data/glowData.ts', import.meta.url), 'utf8'), 'BOOK_POSITIONS'));
+    const saved = (() => { try { return JSON.parse(readFileSync(new URL('../public/data/corporate-actions.json', import.meta.url), 'utf8')); } catch { return null; } })();
+    return mod.cards(bookArray(readFileSync(new URL('../src/data/glowData.ts', import.meta.url), 'utf8'), 'BOOK_POSITIONS'), saved);
   } catch (e) { console.error('Headline coverage inputs unavailable:', e.message); return null; }
 })();
 const headlineMatches = (tile, expected, field = 'return') => {
@@ -18835,7 +18852,8 @@ const headlineMatches = (tile, expected, field = 'return') => {
     // A quote feed can add custody shares to this no-feed display baseline.
     && Number(raw.cardHoldings) >= expected.totalHoldings
     && Number(raw.cardAccounts) === expected.coveredAccounts
-    && /Available data/.test(tile.sub ?? '');
+    // The three return cards say how much of the public investments they cover (Stage 10la).
+    && (raw.cardPeriod != null ? /Covers \d+% of public investments/.test(tile.sub ?? '') : /Available data/.test(tile.sub ?? ''));
 };
 
 const CIO_SHARED = [
@@ -19498,6 +19516,25 @@ const CIO_BOOK_RETURN = [
     const tile = ctx?.kpiTiles?.find(x => x.slot === 'fytd');
     return headlineMatches(tile, AVAILABLE_CARDS_BOOK?.fytd) && /FYTD/.test(tile.second ?? '')
       && !!tile.coverage.cardFrom && !!tile.coverage.cardTo;
+  }],
+];
+
+/**
+ * ── THE CALENDAR-YEAR CARD READS YTD FROM THE FIRST DATE WE HAVE (Stage 10kq) ─
+ *
+ * It asked for a value on 31 December, which no statement here carries, and
+ * read one fund of 509 holdings — Helios, the one account that opens at nil.
+ * It now reads the Monitor's YTD record (`ytdSelection`), re-derived here off
+ * `glowData.ts`: the same figure and coverage, at least every account the
+ * financial year reads, and a face that says when it is not a full year.
+ */
+const CIO_YTD_CARD = [
+  ["the calendar-year card reads YTD from the first date we have, never a strict 31 Dec opening", (t, ctx) => {
+    const tile = ctx?.kpiTiles?.find(x => x.slot === 'ytd'), r = AVAILABLE_CARDS_BOOK?.ytd;
+    return !!r && headlineMatches(tile, r)
+      && r.coveredAccounts >= AVAILABLE_CARDS_BOOK.fytd.coveredAccounts && r.coveredHoldings > 1
+      && (r.fullPeriod ? /^YTD ·/.test(tile.second ?? '') : /^YTD from first dated value ·/.test(tile.second ?? ''))
+      && tile.coverage.cardFrom === r.from && tile.coverage.cardTo === r.to;
   }],
 ];
 
@@ -27362,6 +27399,7 @@ const INVARIANTS = {
   "cio-attribution-legacy": [...CIO_SHARED, ...CIO_SEGMENTS_LEGACY],
   "cio-nav": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_NAV, ...NAV_BENCH, ...NAV_BENCH_OFFLINE, ...NAV_BASIS, ...NAV_STARTS],
   "cio-tiles-saved": CIO_TILES_SAVED,
+  "cio-ytd-card": [...CIO_SHARED, ...CIO_YTD_CARD],
   "cio-return-metrics": [...CIO_RETURN_RETIREMENT, ...CIO_ALLOC.filter(([description]) => CIO_OPTIONAL_CAPITAL_CHECKS.has(description))],
   ...Object.fromEntries(["annualised", "fytd", "ytd"].map((kind) => [`performance-${kind}`, [
     ["the tile's address opens its own return, period and coverage", (t, ctx) =>
@@ -36132,8 +36170,8 @@ const INVARIANTS = {
   "private-company": [
     ["the record carries a company with rounds (load-bearing)", () => !!PRIVATE_CO],
     ["the route draws that company's page, not a redirect", (t, ctx) => ctx?.privateCo?.id === PRIVATE_CO?.id],
-    ["the same six tiles as a holding's page, under a header with three tabs", (t, ctx) =>
-      ctx?.privateCo?.tiles === 6 && ctx.privateCo.tabs.join() === "position,rounds,valuation"],
+    ["the same six tiles as a holding's page, under a header with four tabs", (t, ctx) =>
+      ctx?.privateCo?.tiles === 6 && ctx.privateCo.tabs.join() === "position,rounds,valuation,news"],
     ["no tile prints a ₹0 or 0.00% — an absent figure is a dash with its reason", (t, ctx) =>
       !!ctx?.privateCo && !ctx.privateCo.tileTexts.some((x) => /(^|\s)₹0(\s|$)|(^|\s)0\.00%/.test(x))],
   ],
@@ -36141,6 +36179,18 @@ const INVARIANTS = {
     ["every round in the record is a row of the table", (t, ctx) => !!PRIVATE_CO && ctx?.privateCo?.rows === PRIVATE_CO.rounds],
     ["every row links the source it is read from", (t, ctx) => !!ctx?.privateCo && ctx.privateCo.rows > 0 && ctx.privateCo.unsourced === 0],
     ["at most one row is marked as the family's entry", (t, ctx) => !!ctx?.privateCo && ctx.privateCo.entries <= 1],
+    ["a round known only from Inc42's funding table is marked so, once per such row", (t, ctx) =>
+      !!ctx?.privateCo && !!PRIVATE_CO && ctx.privateCo.reported === PRIVATE_CO.reported],
+    ["every round Inc42 lists investors for shows them in the Investors column (Stage 10kt)", (t, ctx) =>
+      !!ctx?.privateCo && !!PRIVATE_CO && ctx.privateCo.investorCells === PRIVATE_CO.investorRows],
+  ],
+  "private-company-news": [
+    ["the News tab draws one row per headline that names the company, each opening its story — or says none does", (t, ctx) => {
+      const c = ctx?.privateCo;
+      if (!c || !PRIVATE_CO) return false;
+      if (PRIVATE_CO.headlines === 0) return c.newsEmpty;
+      return c.newsRows === PRIVATE_CO.headlines && c.newsLinked === PRIVATE_CO.headlines;
+    }],
   ],
   "private-company-valuation": [
     ["the chart draws one dot per round that prints a valuation in its currency, and no more", (t, ctx) => {
@@ -44230,6 +44280,11 @@ for (const theme of THEMES) {
           rows: rows.length,
           unsourced: rows.filter((r) => !r.querySelector("a[data-pc-source]")).length,
           entries: rows.filter((r) => r.hasAttribute("data-pc-entry")).length,
+          reported: rows.filter((r) => r.querySelector("[data-pc-reported]")).length,
+          investorCells: [...root.querySelectorAll("td[data-pc-investors]")].filter((td) => Number(td.getAttribute("data-pc-investors")) > 0).length,
+          newsRows: root.querySelectorAll("tr[data-pc-headline]").length,
+          newsLinked: [...root.querySelectorAll("tr[data-pc-headline]")].filter((r) => r.querySelector("a[href^='http']")).length,
+          newsEmpty: !!root.querySelector("[data-pc-no-news]"),
           chartPoints: chart ? Number(chart.getAttribute("data-pc-chart")) : null,
           chartDots: chart ? chart.querySelectorAll(".recharts-line-dots circle, .recharts-line-dot").length : 0,
         };

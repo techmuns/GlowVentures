@@ -8,7 +8,7 @@
 // carry, and the UI renders them as an em dash. See docs/BOOK-REPORT.md for the
 // list and what document would supply each.
 import type {
-  Account, AccountBridge, AdvisedBalance, AccountReturnBlock, AccountReturnCoverage, BookSummary, CapitalMove, CashFlow, Commitment,
+  Account, AccountBridge, AdvisedBalance, EarlierBalance, StatementUnitNavs, UnitWindow, AccountReturnBlock, AccountReturnCoverage, BookSummary, CapitalMove, CashFlow, Commitment,
   Attribution, CorporateAction, EntityCG, FundInvestment, HoldingTrade, NavCoverage, NavPoint, Position, PositionTranches,
   PolycabHolding, RealisedByClass, RecoveredHoldingCost, ReviewFlow, ReviewSuperseded, ReviewWrittenOff, ShareMovement, ShareRoll, StartupInvestment, UndatedCapital, UnvaluedStatementHolding,
 } from "@/lib/types";
@@ -10105,7 +10105,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "securityKey": "deepak-fertilisers-and-petrochemicals",
     "security": "DEEPAK FERTILISERS AND PETROCHEMICALS CORPORATION LTD EQ",
-    "symbol": null,
+    "symbol": "DEEPAKFERT",
     "accountId": "hdfc-securities-3110320",
     "memberId": null,
     "sector": "Unclassified",
@@ -27320,7 +27320,7 @@ export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
     },
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "ownerId": "ankita-jaisinghani",
-    "securityKey": "clean-max-env",
+    "securityKey": "clean-max-enviro-energy-solutions",
     "security": "CLEAN MAX ENV-EQ 1/",
     "isin": "INE647U01026",
     "assetClass": "Equity",
@@ -29919,8 +29919,8 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
   {
     "period": "2026-03-31",
     "date": "2026-03-31",
-    "nav": 1980896771.08,
-    "accountsOnDate": 8,
+    "nav": 788267717.39,
+    "accountsOnDate": 7,
     "accountsCarried": 0,
     "flowIn": 0,
     "unreportedFlowValue": 0,
@@ -29932,352 +29932,339 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
   {
     "period": "2026-04-30",
     "date": "2026-04-30",
-    "nav": 2218457692.43,
+    "nav": 1025828638.74,
     "accountsOnDate": 2,
-    "accountsCarried": 8,
+    "accountsCarried": 7,
     "flowIn": 0,
     "unreportedFlowValue": 0,
-    "linkOpen": 1980896771.08,
-    "linkClose": 1980896771.08,
-    "linkAccounts": 8,
+    "linkOpen": 788267717.39,
+    "linkClose": 788267717.39,
+    "linkAccounts": 7,
     "panelComplete": false
   },
   {
     "period": "2026-05-31",
     "date": "2026-05-31",
-    "nav": 2253822674.61,
+    "nav": 1061193620.92,
     "accountsOnDate": 4,
-    "accountsCarried": 8,
+    "accountsCarried": 7,
     "flowIn": 0,
     "unreportedFlowValue": 0,
-    "linkOpen": 2218457692.43,
-    "linkClose": 2225005726.79,
-    "linkAccounts": 10,
+    "linkOpen": 1025828638.74,
+    "linkClose": 1032376673.1,
+    "linkAccounts": 9,
     "panelComplete": false
   },
   {
     "period": "2026-06-25",
     "date": "2026-06-25",
-    "nav": 2281525888.39,
+    "nav": 1088896834.7,
     "accountsOnDate": 2,
-    "accountsCarried": 10,
+    "accountsCarried": 9,
     "flowIn": -40738,
     "unreportedFlowValue": 0,
-    "linkOpen": 2253822674.61,
-    "linkClose": 2281525888.39,
-    "linkAccounts": 12,
+    "linkOpen": 1061193620.92,
+    "linkClose": 1088896834.7,
+    "linkAccounts": 11,
     "panelComplete": false
   },
   {
     "period": "2026-06-30",
     "date": "2026-06-30",
-    "nav": 2312506106.94,
+    "nav": 1119877053.25,
     "accountsOnDate": 6,
-    "accountsCarried": 7,
+    "accountsCarried": 6,
     "flowIn": -986,
     "unreportedFlowValue": 0,
-    "linkOpen": 2281525888.39,
-    "linkClose": 2301257858.28,
-    "linkAccounts": 12,
+    "linkOpen": 1088896834.7,
+    "linkClose": 1108628804.59,
+    "linkAccounts": 11,
     "panelComplete": false
   },
   {
     "period": "2026-07-01",
     "date": "2026-07-01",
-    "nav": 2314840551.58,
+    "nav": 1122211497.89,
     "accountsOnDate": 4,
-    "accountsCarried": 13,
+    "accountsCarried": 12,
     "flowIn": 0,
     "unreportedFlowValue": 0,
-    "linkOpen": 2312506106.94,
-    "linkClose": 2312506106.94,
-    "linkAccounts": 13,
+    "linkOpen": 1119877053.25,
+    "linkClose": 1119877053.25,
+    "linkAccounts": 12,
     "panelComplete": false
   },
   {
     "period": "2026-07-02",
     "date": "2026-07-02",
-    "nav": 2315776938.4,
+    "nav": 1123147884.71,
     "accountsOnDate": 1,
-    "accountsCarried": 17,
+    "accountsCarried": 16,
     "flowIn": 0,
     "unreportedFlowValue": 0,
-    "linkOpen": 2314840551.58,
-    "linkClose": 2314840551.58,
-    "linkAccounts": 17,
+    "linkOpen": 1122211497.89,
+    "linkClose": 1122211497.89,
+    "linkAccounts": 16,
     "panelComplete": false
   },
   {
     "period": "2026-07-06",
     "date": "2026-07-06",
-    "nav": 2368911395.45,
+    "nav": 1176282341.76,
     "accountsOnDate": 2,
-    "accountsCarried": 16,
+    "accountsCarried": 15,
     "flowIn": -7494,
     "unreportedFlowValue": 0,
-    "linkOpen": 2315776938.4,
-    "linkClose": 2368911395.45,
-    "linkAccounts": 18,
+    "linkOpen": 1123147884.71,
+    "linkClose": 1176282341.76,
+    "linkAccounts": 17,
     "panelComplete": false
   },
   {
     "period": "2026-07-10",
     "date": "2026-07-10",
-    "nav": 2492835306.84,
+    "nav": 1300206253.15,
     "accountsOnDate": 3,
-    "accountsCarried": 15,
+    "accountsCarried": 14,
     "flowIn": -142601,
     "unreportedFlowValue": 0,
-    "linkOpen": 2368911395.45,
-    "linkClose": 2492835306.84,
-    "linkAccounts": 18,
+    "linkOpen": 1176282341.76,
+    "linkClose": 1300206253.15,
+    "linkAccounts": 17,
     "panelComplete": false
   },
   {
     "period": "2026-07-27",
     "date": "2026-07-27",
-    "nav": 2489162805.56,
+    "nav": 1296533751.87,
     "accountsOnDate": 2,
-    "accountsCarried": 16,
+    "accountsCarried": 15,
     "flowIn": -9559,
     "unreportedFlowValue": 0,
-    "linkOpen": 2492835306.84,
-    "linkClose": 2489162805.56,
-    "linkAccounts": 18,
+    "linkOpen": 1300206253.15,
+    "linkClose": 1296533751.87,
+    "linkAccounts": 17,
     "panelComplete": false
   },
   {
     "period": "2026-07-31",
     "date": "2026-07-31",
-    "nav": 3595541933.77,
+    "nav": 2402912880.08,
     "accountsOnDate": 8,
-    "accountsCarried": 14,
+    "accountsCarried": 13,
     "flowIn": -22945,
     "unreportedFlowValue": 0,
-    "linkOpen": 2489162805.56,
-    "linkClose": 2497527414.69,
-    "linkAccounts": 18,
+    "linkOpen": 1296533751.87,
+    "linkClose": 1304898361,
+    "linkAccounts": 17,
     "panelComplete": false
   },
   {
     "period": "2026-08-03",
     "date": "2026-08-03",
-    "nav": 3595553287.02,
+    "nav": 2402924233.33,
     "accountsOnDate": 3,
-    "accountsCarried": 19,
+    "accountsCarried": 18,
     "flowIn": 0,
     "unreportedFlowValue": 7201.78,
-    "linkOpen": 3595541933.77,
-    "linkClose": 3595553287.02,
-    "linkAccounts": 22,
+    "linkOpen": 2402912880.08,
+    "linkClose": 2402924233.33,
+    "linkAccounts": 21,
     "panelComplete": false
   },
   {
     "period": "2026-08-06",
     "date": "2026-08-06",
-    "nav": 3595558006.91,
+    "nav": 2402928953.22,
     "accountsOnDate": 2,
-    "accountsCarried": 20,
+    "accountsCarried": 19,
     "flowIn": 0,
     "unreportedFlowValue": 0,
-    "linkOpen": 3595553287.02,
-    "linkClose": 3595558006.91,
-    "linkAccounts": 22,
+    "linkOpen": 2402924233.33,
+    "linkClose": 2402928953.22,
+    "linkAccounts": 21,
     "panelComplete": false
   },
   {
     "period": "2026-08-07",
     "date": "2026-08-07",
-    "nav": 3905542507.68,
+    "nav": 2712913453.99,
     "accountsOnDate": 1,
-    "accountsCarried": 22,
+    "accountsCarried": 21,
     "flowIn": 0,
     "unreportedFlowValue": 0,
-    "linkOpen": 3595558006.91,
-    "linkClose": 3595558006.91,
-    "linkAccounts": 22,
+    "linkOpen": 2402928953.22,
+    "linkClose": 2402928953.22,
+    "linkAccounts": 21,
     "panelComplete": false
   },
   {
     "period": "2026-08-10",
     "date": "2026-08-10",
-    "nav": 3900774096.6,
+    "nav": 2708145042.91,
     "accountsOnDate": 1,
-    "accountsCarried": 22,
+    "accountsCarried": 21,
     "flowIn": -30690,
     "unreportedFlowValue": 0,
-    "linkOpen": 3905542507.68,
-    "linkClose": 3900774096.6,
-    "linkAccounts": 23,
+    "linkOpen": 2712913453.99,
+    "linkClose": 2708145042.91,
+    "linkAccounts": 22,
     "panelComplete": false
   },
   {
     "period": "2026-08-11",
     "date": "2026-08-11",
-    "nav": 3910272984.36,
+    "nav": 2717643930.67,
     "accountsOnDate": 2,
-    "accountsCarried": 21,
+    "accountsCarried": 20,
     "flowIn": -65735,
     "unreportedFlowValue": 0,
-    "linkOpen": 3900774096.6,
-    "linkClose": 3910272984.36,
-    "linkAccounts": 23,
+    "linkOpen": 2708145042.91,
+    "linkClose": 2717643930.67,
+    "linkAccounts": 22,
     "panelComplete": false
   },
   {
     "period": "2026-08-13",
     "date": "2026-08-13",
-    "nav": 4020197494.54,
+    "nav": 2827568440.85,
     "accountsOnDate": 2,
-    "accountsCarried": 21,
+    "accountsCarried": 20,
     "flowIn": 112393342,
     "unreportedFlowValue": 0,
-    "linkOpen": 3910272984.36,
-    "linkClose": 4020197494.54,
-    "linkAccounts": 23,
+    "linkOpen": 2717643930.67,
+    "linkClose": 2827568440.85,
+    "linkAccounts": 22,
     "panelComplete": false
   },
   {
     "period": "2026-08-31",
     "date": "2026-08-31",
-    "nav": 4040414158.79,
+    "nav": 2847785105.1,
     "accountsOnDate": 3,
-    "accountsCarried": 20,
+    "accountsCarried": 19,
     "flowIn": -14984.6,
     "unreportedFlowValue": 5781806.04,
-    "linkOpen": 4020197494.54,
-    "linkClose": 4040414158.79,
-    "linkAccounts": 23,
+    "linkOpen": 2827568440.85,
+    "linkClose": 2847785105.1,
+    "linkAccounts": 22,
     "panelComplete": false
   },
   {
     "period": "2026-09-29",
     "date": "2026-09-29",
-    "nav": 4004969163.89,
+    "nav": 2812340110.2,
     "accountsOnDate": 2,
-    "accountsCarried": 21,
+    "accountsCarried": 20,
     "flowIn": 0,
     "unreportedFlowValue": 0,
-    "linkOpen": 4040414158.79,
-    "linkClose": 4004969163.89,
-    "linkAccounts": 23,
+    "linkOpen": 2847785105.1,
+    "linkClose": 2812340110.2,
+    "linkAccounts": 22,
     "panelComplete": false
   },
   {
     "period": "2026-09-30",
     "date": "2026-09-30",
-    "nav": 3984595012.57,
+    "nav": 2791965958.88,
     "accountsOnDate": 9,
-    "accountsCarried": 14,
+    "accountsCarried": 13,
     "flowIn": -81004.8,
     "unreportedFlowValue": 0,
-    "linkOpen": 4004969163.89,
-    "linkClose": 3984595012.57,
-    "linkAccounts": 23,
+    "linkOpen": 2812340110.2,
+    "linkClose": 2791965958.88,
+    "linkAccounts": 22,
     "panelComplete": false
   },
   {
     "period": "2026-10-05",
     "date": "2026-10-05",
-    "nav": 3984602794.53,
+    "nav": 2791973740.84,
     "accountsOnDate": 2,
-    "accountsCarried": 21,
+    "accountsCarried": 20,
     "flowIn": 0,
     "unreportedFlowValue": 7781.96,
-    "linkOpen": 3984595012.57,
-    "linkClose": 3984602794.53,
-    "linkAccounts": 23,
+    "linkOpen": 2791965958.88,
+    "linkClose": 2791973740.84,
+    "linkAccounts": 22,
     "panelComplete": false
   },
   {
     "period": "2026-10-06",
     "date": "2026-10-06",
-    "nav": 3973478164.58,
+    "nav": 2780849110.89,
     "accountsOnDate": 4,
-    "accountsCarried": 19,
+    "accountsCarried": 18,
     "flowIn": -70005,
     "unreportedFlowValue": 7138.6,
-    "linkOpen": 3984602794.53,
-    "linkClose": 3973478164.58,
-    "linkAccounts": 23,
+    "linkOpen": 2791973740.84,
+    "linkClose": 2780849110.89,
+    "linkAccounts": 22,
     "panelComplete": false
   },
   {
     "period": "2026-10-07",
     "date": "2026-10-07",
-    "nav": 3973107469.23,
+    "nav": 2780478415.54,
     "accountsOnDate": 2,
-    "accountsCarried": 21,
+    "accountsCarried": 20,
     "flowIn": -18689,
     "unreportedFlowValue": 0,
-    "linkOpen": 3973478164.58,
-    "linkClose": 3973107469.23,
-    "linkAccounts": 23,
+    "linkOpen": 2780849110.89,
+    "linkClose": 2780478415.54,
+    "linkAccounts": 22,
     "panelComplete": false
   },
   {
     "period": "2026-10-14",
     "date": "2026-10-14",
-    "nav": 4404411845.84,
+    "nav": 3211782792.15,
     "accountsOnDate": 1,
-    "accountsCarried": 23,
+    "accountsCarried": 22,
     "flowIn": 0,
     "unreportedFlowValue": 0,
-    "linkOpen": 3973107469.23,
-    "linkClose": 3973107469.23,
-    "linkAccounts": 23,
+    "linkOpen": 2780478415.54,
+    "linkClose": 2780478415.54,
+    "linkAccounts": 22,
     "panelComplete": false
   },
   {
     "period": "2026-10-26",
     "date": "2026-10-26",
-    "nav": 4409909193.85,
+    "nav": 3217280140.16,
     "accountsOnDate": 3,
-    "accountsCarried": 22,
+    "accountsCarried": 21,
     "flowIn": 0,
     "unreportedFlowValue": 0,
-    "linkOpen": 4404411845.84,
-    "linkClose": 4361781666.51,
-    "linkAccounts": 24,
-    "panelComplete": true
-  },
-  {
-    "period": "2026-10-31",
-    "date": "2026-10-31",
-    "nav": 5329591524.69,
-    "accountsOnDate": 1,
-    "accountsCarried": 24,
-    "flowIn": 0,
-    "unreportedFlowValue": 919682330.84,
-    "linkOpen": 4409909193.85,
-    "linkClose": 5329591524.69,
-    "linkAccounts": 25,
+    "linkOpen": 3211782792.15,
+    "linkClose": 3169152612.82,
+    "linkAccounts": 23,
     "panelComplete": true
   },
   {
     "period": "2026-11-02",
     "date": "2026-11-02",
-    "nav": 5329401497.7,
+    "nav": 3217090113.17,
     "accountsOnDate": 1,
-    "accountsCarried": 24,
+    "accountsCarried": 23,
     "flowIn": -1765,
     "unreportedFlowValue": 0,
-    "linkOpen": 5329591524.69,
-    "linkClose": 5329401497.7,
-    "linkAccounts": 25,
+    "linkOpen": 3217280140.16,
+    "linkClose": 3217090113.17,
+    "linkAccounts": 24,
     "panelComplete": true
   },
   {
     "period": "2026-11-03",
     "date": "2026-11-03",
-    "nav": 5347519839.38,
+    "nav": 3235208454.85,
     "accountsOnDate": 2,
-    "accountsCarried": 23,
+    "accountsCarried": 22,
     "flowIn": 0,
     "unreportedFlowValue": 0,
-    "linkOpen": 5329401497.7,
-    "linkClose": 5347519839.38,
-    "linkAccounts": 25,
+    "linkOpen": 3217090113.17,
+    "linkClose": 3235208454.85,
+    "linkAccounts": 24,
     "panelComplete": true
   }
 ];
@@ -30565,18 +30552,6 @@ export const BOOK_ACCOUNT_NAV_HISTORY: Record<string, NavPoint[]> = {
       "period": "2026-11-03",
       "date": "2026-11-03",
       "nav": 299084367.18
-    }
-  ],
-  "icici-bank-nsdl-demat-49794950": [
-    {
-      "period": "2026-03-31",
-      "date": "2026-03-31",
-      "nav": 1192629053.69
-    },
-    {
-      "period": "2026-10-31",
-      "date": "2026-10-31",
-      "nav": 2112311384.53
     }
   ],
   "kotak-mahindra-mutual-fund-4295974": [
@@ -31145,23 +31120,6 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       ]
     },
     {
-      "accountId": "icici-bank-nsdl-demat-49794950",
-      "points": 2,
-      "first": "2026-03-31",
-      "last": "2026-10-31",
-      "latestValue": 2112311384.53,
-      "bookValue": 1061574486.4,
-      "flowBasis": "unreported",
-      "steps": [
-        {
-          "from": "2026-03-31",
-          "to": "2026-10-31",
-          "basis": "unproven",
-          "net": null
-        }
-      ]
-    },
-    {
       "accountId": "kotak-mahindra-mutual-fund-4295974",
       "points": 3,
       "first": "2026-07-01",
@@ -31519,6 +31477,13 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "accountNo": "10063876",
       "date": "2026-11-03",
       "bookValue": 37660829.96
+    },
+    {
+      "accountId": "icici-bank-nsdl-demat-49794950",
+      "provider": "ICICI Bank (NSDL demat)",
+      "accountNo": "49794950",
+      "date": "2026-10-31",
+      "bookValue": 1061574486.4
     },
     {
       "accountId": "icici-prudential-mutual-fund-14320536",
@@ -31897,17 +31862,17 @@ export const BOOK_UNDATED_CAPITAL: UndatedCapital[] = [];
  * in the run's notes. See `attributionFrom` in build-book.mjs.
  */
 export const BOOK_ATTRIBUTION: Attribution = {
-  "from": "2026-03-31",
+  "from": "2026-05-31",
   "to": "2026-11-03",
-  "openValue": 4360534260.75,
-  "closeValue": 5347519839.38,
+  "openValue": 3167905207.06,
+  "closeValue": 3235208454.85,
   "priceEffect": -46678918.13,
   "tradeEffect": 83566773.34,
-  "enteredValue": 1183838304.74,
-  "exitedValue": 216464184.34,
-  "undecomposedValue": -17276397,
+  "enteredValue": 171382579.59,
+  "exitedValue": 99872612.94,
+  "undecomposedValue": -41094574.09,
   "bookValue": 10755271296.04,
-  "coveredBookValue": 4297346022.17,
+  "coveredBookValue": 3235771535.77,
   "accounts": [
     {
       "accountId": "360-one-private-wealth-37702",
@@ -32163,23 +32128,6 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "rowsEntered": 0,
       "rowsExited": 0,
       "rowsUnpriced": 0
-    },
-    {
-      "accountId": "icici-bank-nsdl-demat-49794950",
-      "from": "2026-03-31",
-      "to": "2026-10-31",
-      "days": 214,
-      "openValue": 1192629053.69,
-      "closeValue": 2112311384.53,
-      "priceEffect": 0,
-      "tradeEffect": 0,
-      "enteredValue": 1012455725.15,
-      "exitedValue": 116591571.4,
-      "undecomposedValue": 23818177.09,
-      "rowsHeld": 0,
-      "rowsEntered": 11,
-      "rowsExited": 3,
-      "rowsUnpriced": 10
     },
     {
       "accountId": "kotak-mahindra-mutual-fund-4295974",
@@ -37449,414 +37397,6 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "openQty": 4093,
       "closeQty": null,
       "kind": "exited",
-      "priceEffect": null,
-      "tradeEffect": null,
-      "returnPct": null
-    },
-    {
-      "securityKey": "blue-ashva-varenya-fund-bavf-ser20-c6-restricted-transferability",
-      "security": "BLUE ASHVA VARENYA FUND - BAVF-SER20-C6 - Restricted Transferability",
-      "accountId": "icici-bank-nsdl-demat-49794950",
-      "from": "2026-03-31",
-      "to": "2026-10-31",
-      "openValue": 98742,
-      "closeValue": 84595.83,
-      "openPrice": null,
-      "closePrice": null,
-      "openQty": 1000,
-      "closeQty": 856.736,
-      "kind": "unpriced",
-      "priceEffect": null,
-      "tradeEffect": null,
-      "returnPct": null
-    },
-    {
-      "securityKey": "borosil-renewables-limited-warrants-13ag26",
-      "security": "BOROSIL RENEWABLES LIMITED - WARRANTS 13AG26",
-      "accountId": "icici-bank-nsdl-demat-49794950",
-      "from": "2026-03-31",
-      "to": "2026-10-31",
-      "openValue": 70754.5,
-      "closeValue": null,
-      "openPrice": null,
-      "closePrice": null,
-      "openQty": 283018,
-      "closeQty": null,
-      "kind": "exited",
-      "priceEffect": null,
-      "tradeEffect": null,
-      "returnPct": null
-    },
-    {
-      "securityKey": "city-union",
-      "security": "CITY UNION BANK LIMITED - EQ NEW RS. 1/",
-      "accountId": "icici-bank-nsdl-demat-49794950",
-      "from": "2026-03-31",
-      "to": "2026-10-31",
-      "openValue": null,
-      "closeValue": 22362480,
-      "openPrice": null,
-      "closePrice": null,
-      "openQty": null,
-      "closeQty": 104400,
-      "kind": "entered",
-      "priceEffect": null,
-      "tradeEffect": null,
-      "returnPct": null
-    },
-    {
-      "securityKey": "clean-max-enviro-energy-solutions",
-      "security": "CLEAN MAX ENVIRO ENERGY SOLUTIONS LIMITED - EQ NEW FV RE.1/",
-      "accountId": "icici-bank-nsdl-demat-49794950",
-      "from": "2026-03-31",
-      "to": "2026-10-31",
-      "openValue": 126923395.5,
-      "closeValue": 117996497.5,
-      "openPrice": null,
-      "closePrice": null,
-      "openQty": 94967,
-      "closeQty": 94967,
-      "kind": "unpriced",
-      "priceEffect": null,
-      "tradeEffect": null,
-      "returnPct": null
-    },
-    {
-      "securityKey": "ema-partners-india",
-      "security": "EMA PARTNERS INDIA LIMITED - EQ NEW FV RS 5/",
-      "accountId": "icici-bank-nsdl-demat-49794950",
-      "from": "2026-03-31",
-      "to": "2026-10-31",
-      "openValue": 3660726,
-      "closeValue": 54622.85,
-      "openPrice": null,
-      "closePrice": null,
-      "openQty": 44643,
-      "closeQty": 643,
-      "kind": "unpriced",
-      "priceEffect": null,
-      "tradeEffect": null,
-      "returnPct": null
-    },
-    {
-      "securityKey": "esds-software-solution-limited-eq-new-fv-rs-1",
-      "security": "ESDS SOFTWARE SOLUTION LIMITED - EQ NEW FV RS .1/",
-      "accountId": "icici-bank-nsdl-demat-49794950",
-      "from": "2026-03-31",
-      "to": "2026-10-31",
-      "openValue": null,
-      "closeValue": 383841680,
-      "openPrice": null,
-      "closePrice": null,
-      "openQty": null,
-      "closeQty": 330898,
-      "kind": "entered",
-      "priceEffect": null,
-      "tradeEffect": null,
-      "returnPct": null
-    },
-    {
-      "securityKey": "federal-bank",
-      "security": "THE FEDERAL BANK LIMITED - EQ NEW FV RS.2/",
-      "accountId": "icici-bank-nsdl-demat-49794950",
-      "from": "2026-03-31",
-      "to": "2026-10-31",
-      "openValue": null,
-      "closeValue": 30695631.7,
-      "openPrice": null,
-      "closePrice": null,
-      "openQty": null,
-      "closeQty": 90361,
-      "kind": "entered",
-      "priceEffect": null,
-      "tradeEffect": null,
-      "returnPct": null
-    },
-    {
-      "securityKey": "fractal-analytics",
-      "security": "FRACTAL ANALYTICS LIMITED - EQ",
-      "accountId": "icici-bank-nsdl-demat-49794950",
-      "from": "2026-03-31",
-      "to": "2026-10-31",
-      "openValue": 151724779.25,
-      "closeValue": 135147759.25,
-      "openPrice": null,
-      "closePrice": null,
-      "openQty": 180185,
-      "closeQty": 180185,
-      "kind": "unpriced",
-      "priceEffect": null,
-      "tradeEffect": null,
-      "returnPct": null
-    },
-    {
-      "securityKey": "franklin-india-credit-aif-scheme-i-unit-class-db2",
-      "security": "FRANKLIN TEMPLETON CATEGORY II ALTERNATIVE INVESTMENT FUND TRUST - IND CR AIF - SCH I CL DB2 - Restricted Transferability",
-      "accountId": "icici-bank-nsdl-demat-49794950",
-      "from": "2026-03-31",
-      "to": "2026-10-31",
-      "openValue": null,
-      "closeValue": 199941216.45,
-      "openPrice": null,
-      "closePrice": null,
-      "openQty": null,
-      "closeQty": 201254.604,
-      "kind": "entered",
-      "priceEffect": null,
-      "tradeEffect": null,
-      "returnPct": null
-    },
-    {
-      "securityKey": "grand-continent-hotels",
-      "security": "GRAND CONTINENT HOTELS LIMITED - EQ",
-      "accountId": "icici-bank-nsdl-demat-49794950",
-      "from": "2026-03-31",
-      "to": "2026-10-31",
-      "openValue": 29344893.75,
-      "closeValue": 26474625,
-      "openPrice": null,
-      "closePrice": null,
-      "openQty": 262125,
-      "closeQty": 262125,
-      "kind": "unpriced",
-      "priceEffect": null,
-      "tradeEffect": null,
-      "returnPct": null
-    },
-    {
-      "securityKey": "indian-bank",
-      "security": "INDIAN BANK - EQ",
-      "accountId": "icici-bank-nsdl-demat-49794950",
-      "from": "2026-03-31",
-      "to": "2026-10-31",
-      "openValue": null,
-      "closeValue": 23541600,
-      "openPrice": null,
-      "closePrice": null,
-      "openQty": null,
-      "closeQty": 27200,
-      "kind": "entered",
-      "priceEffect": null,
-      "tradeEffect": null,
-      "returnPct": null
-    },
-    {
-      "securityKey": "indusind-bank",
-      "security": "INDUSIND BANK LTD. - EQ",
-      "accountId": "icici-bank-nsdl-demat-49794950",
-      "from": "2026-03-31",
-      "to": "2026-10-31",
-      "openValue": null,
-      "closeValue": 13366100,
-      "openPrice": null,
-      "closePrice": null,
-      "openQty": null,
-      "closeQty": 15950,
-      "kind": "entered",
-      "priceEffect": null,
-      "tradeEffect": null,
-      "returnPct": null
-    },
-    {
-      "securityKey": "insolation-energy",
-      "security": "INSOLATION ENERGY LIMITED - EQ NEW FV RE.1/",
-      "accountId": "icici-bank-nsdl-demat-49794950",
-      "from": "2026-03-31",
-      "to": "2026-10-31",
-      "openValue": 25251320,
-      "closeValue": null,
-      "openPrice": null,
-      "closePrice": null,
-      "openQty": 212000,
-      "closeQty": null,
-      "kind": "exited",
-      "priceEffect": null,
-      "tradeEffect": null,
-      "returnPct": null
-    },
-    {
-      "securityKey": "jaro-institute-of-technology-management-and-research",
-      "security": "JARO INSTITUTE OF TECHNOLOGY MANAGEMENT AND RESEARCH LIMITED - EQ",
-      "accountId": "icici-bank-nsdl-demat-49794950",
-      "from": "2026-03-31",
-      "to": "2026-10-31",
-      "openValue": 57758381.25,
-      "closeValue": 38135154,
-      "openPrice": null,
-      "closePrice": null,
-      "openQty": 116979,
-      "closeQty": 116979,
-      "kind": "unpriced",
-      "priceEffect": null,
-      "tradeEffect": null,
-      "returnPct": null
-    },
-    {
-      "securityKey": "karur-vysya-bank",
-      "security": "THE KARUR VYSYA BANK LIMITED - EQ NEW FV RS. 2/",
-      "accountId": "icici-bank-nsdl-demat-49794950",
-      "from": "2026-03-31",
-      "to": "2026-10-31",
-      "openValue": null,
-      "closeValue": 17983050,
-      "openPrice": null,
-      "closePrice": null,
-      "openQty": null,
-      "closeQty": 50500,
-      "kind": "entered",
-      "priceEffect": null,
-      "tradeEffect": null,
-      "returnPct": null
-    },
-    {
-      "securityKey": "national-stock-exchange-of-india",
-      "security": "NATIONAL STOCK EXCHANGE OF INDIA LTD - EQ NEW FV RE.1/",
-      "accountId": "icici-bank-nsdl-demat-49794950",
-      "from": "2026-03-31",
-      "to": "2026-10-31",
-      "openValue": null,
-      "closeValue": 222762500,
-      "openPrice": null,
-      "closePrice": null,
-      "openQty": null,
-      "closeQty": 125000,
-      "kind": "entered",
-      "priceEffect": null,
-      "tradeEffect": null,
-      "returnPct": null
-    },
-    {
-      "securityKey": "parth-electricals-and-engineering",
-      "security": "PARTH ELECTRICALS & ENGINEERING LIMITED - EQ",
-      "accountId": "icici-bank-nsdl-demat-49794950",
-      "from": "2026-03-31",
-      "to": "2026-10-31",
-      "openValue": 26252050,
-      "closeValue": 27818500,
-      "openPrice": null,
-      "closePrice": null,
-      "openQty": 59000,
-      "closeQty": 59000,
-      "kind": "unpriced",
-      "priceEffect": null,
-      "tradeEffect": null,
-      "returnPct": null
-    },
-    {
-      "securityKey": "rbl-bnk",
-      "security": "RBL BANK LIMITED - EQ",
-      "accountId": "icici-bank-nsdl-demat-49794950",
-      "from": "2026-03-31",
-      "to": "2026-10-31",
-      "openValue": null,
-      "closeValue": 14355900,
-      "openPrice": null,
-      "closePrice": null,
-      "openQty": null,
-      "closeQty": 40900,
-      "kind": "entered",
-      "priceEffect": null,
-      "tradeEffect": null,
-      "returnPct": null
-    },
-    {
-      "securityKey": "sanshi-trust-fd-i-cl-a2-restricted-transferability",
-      "security": "SANSHI TRUST - FD I CL A2 - Restricted Transferability",
-      "accountId": "icici-bank-nsdl-demat-49794950",
-      "from": "2026-03-31",
-      "to": "2026-10-31",
-      "openValue": 287175601.93,
-      "closeValue": 324789150.32,
-      "openPrice": null,
-      "closePrice": null,
-      "openQty": 2341480.851,
-      "closeQty": 2341480.851,
-      "kind": "unpriced",
-      "priceEffect": null,
-      "tradeEffect": null,
-      "returnPct": null
-    },
-    {
-      "securityKey": "sanshi-trust-fd-i-cl-e-restricted-transferability",
-      "security": "SANSHI TRUST - FD I CL E - Restricted Transferability",
-      "accountId": "icici-bank-nsdl-demat-49794950",
-      "from": "2026-03-31",
-      "to": "2026-10-31",
-      "openValue": 267652340.61,
-      "closeValue": 303159435.53,
-      "openPrice": null,
-      "closePrice": null,
-      "openQty": 1761264.629,
-      "closeQty": 1761264.629,
-      "kind": "unpriced",
-      "priceEffect": null,
-      "tradeEffect": null,
-      "returnPct": null
-    },
-    {
-      "securityKey": "smartworks-coworking-spaces",
-      "security": "SMARTWORKS COWORKING SPACES LIMITED - EQ",
-      "accountId": "icici-bank-nsdl-demat-49794950",
-      "from": "2026-03-31",
-      "to": "2026-10-31",
-      "openValue": 91269496.9,
-      "closeValue": null,
-      "openPrice": null,
-      "closePrice": null,
-      "openQty": 187778,
-      "closeQty": null,
-      "kind": "exited",
-      "priceEffect": null,
-      "tradeEffect": null,
-      "returnPct": null
-    },
-    {
-      "securityKey": "sotefin-bharat",
-      "security": "SOTEFIN BHARAT LIMITED - EQ",
-      "accountId": "icici-bank-nsdl-demat-49794950",
-      "from": "2026-03-31",
-      "to": "2026-10-31",
-      "openValue": null,
-      "closeValue": 42625992,
-      "openPrice": null,
-      "closePrice": null,
-      "openQty": null,
-      "closeQty": 171879,
-      "kind": "entered",
-      "priceEffect": null,
-      "tradeEffect": null,
-      "returnPct": null
-    },
-    {
-      "securityKey": "vof-i-class-a2",
-      "security": "VANTAGE OAK FUND - VOF I CL A2 - Restricted Transferability",
-      "accountId": "icici-bank-nsdl-demat-49794950",
-      "from": "2026-03-31",
-      "to": "2026-10-31",
-      "openValue": null,
-      "closeValue": 40979575,
-      "openPrice": null,
-      "closePrice": null,
-      "openQty": null,
-      "closeQty": 2275000,
-      "kind": "entered",
-      "priceEffect": null,
-      "tradeEffect": null,
-      "returnPct": null
-    },
-    {
-      "securityKey": "yash-highvoltage",
-      "security": "YASH HIGHVOLTAGE LIMITED - EQ NEW FV RS. 5/",
-      "accountId": "icici-bank-nsdl-demat-49794950",
-      "from": "2026-03-31",
-      "to": "2026-10-31",
-      "openValue": 125446572,
-      "closeValue": 126195319.1,
-      "openPrice": null,
-      "closePrice": null,
-      "openQty": 138462,
-      "closeQty": 104462,
-      "kind": "unpriced",
       "priceEffect": null,
       "tradeEffect": null,
       "returnPct": null
@@ -65372,6 +64912,587 @@ export const BOOK_ADVISED_BALANCES: AdvisedBalance[] = [
     "source": "the family's note of its demat and physical liquid holdings, valued at AMFI's NAV of 21 Oct 2026"
   }
 ];
+
+/**
+ * WHAT THE RETURN CARDS MAY START FROM (Stage 10la, `scripts/lib/periodEvidence.mjs`): older
+ * statements' balances of holdings still carried, statement-printed NAVs for fund units
+ * with no public price, and accounts whose consecutive statements hold the same units.
+ * Each row names its statement. Never a holding, a value or part of a total.
+ */
+export const BOOK_EARLIER_BALANCES: EarlierBalance[] = [
+  {
+    "accountId": "360-one-private-wealth-37702",
+    "securityKey": "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii",
+    "isin": null,
+    "asOf": "2026-05-31",
+    "quantity": 990429.684,
+    "docKey": "360-one-private-wealth-37702-2026-05-31-holdings"
+  },
+  {
+    "accountId": "360-one-private-wealth-37702",
+    "securityKey": "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii",
+    "isin": null,
+    "asOf": "2026-06-30",
+    "quantity": 990429.684,
+    "docKey": "360-one-private-wealth-37702-2026-06-30-holdings"
+  },
+  {
+    "accountId": "360-one-private-wealth-37702",
+    "securityKey": "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii",
+    "isin": null,
+    "asOf": "2026-07-31",
+    "quantity": 990429.684,
+    "docKey": "360-one-private-wealth-37702-2026-07-31-holdings"
+  },
+  {
+    "accountId": "360-one-private-wealth-60117",
+    "securityKey": "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii",
+    "isin": null,
+    "asOf": "2026-05-31",
+    "quantity": 990429.684,
+    "docKey": "360-one-private-wealth-60117-2026-05-31-holdings"
+  },
+  {
+    "accountId": "360-one-private-wealth-60117",
+    "securityKey": "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii",
+    "isin": null,
+    "asOf": "2026-06-30",
+    "quantity": 990429.684,
+    "docKey": "360-one-private-wealth-60117-2026-06-30-holdings"
+  },
+  {
+    "accountId": "aditya-birla-sun-life-mutual-fund-1038104611",
+    "securityKey": "absl-liquid-fund-direct-growth",
+    "isin": null,
+    "asOf": "2026-07-01",
+    "quantity": 1752.565,
+    "docKey": "aditya-birla-sun-life-mutual-fund-1038104611-2026-07-01-holdings"
+  },
+  {
+    "accountId": "bandhan-mutual-fund-8652064",
+    "securityKey": "bandhan-amc-ltd-bandhan-mf-bandhan-arbitrage-fund-direct-pl-growth",
+    "isin": "INF194K01Y60",
+    "asOf": "2026-10-14",
+    "quantity": 202573.963,
+    "docKey": "bandhan-mutual-fund-8652064-2026-10-14-holdings"
+  },
+  {
+    "accountId": "bandhan-mutual-fund-8652064",
+    "securityKey": "bndh-l-and-mcf-dp-gr",
+    "isin": "INF194K01V89",
+    "asOf": "2026-10-14",
+    "quantity": 2639320.472,
+    "docKey": "bandhan-mutual-fund-8652064-2026-10-14-holdings"
+  },
+  {
+    "accountId": "buoyant-capital-103472",
+    "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4",
+    "isin": null,
+    "asOf": "2026-07-31",
+    "quantity": 1918953.2,
+    "docKey": "buoyant-capital-103472-2026-07-31-appraisal"
+  },
+  {
+    "accountId": "buoyant-capital-103472",
+    "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4",
+    "isin": null,
+    "asOf": "2026-07-31",
+    "quantity": 1918953.2003,
+    "docKey": "buoyant-capital-103472-2026-07-31-holdings"
+  },
+  {
+    "accountId": "buoyant-capital-103472",
+    "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4",
+    "isin": null,
+    "asOf": "2026-08-31",
+    "quantity": 1918953.2003,
+    "docKey": "buoyant-capital-103472-2026-08-31-portfolio-snap"
+  },
+  {
+    "accountId": "buoyant-capital-103472",
+    "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4",
+    "isin": null,
+    "asOf": "2026-09-29",
+    "quantity": 1918953.2003,
+    "docKey": "buoyant-capital-103472-2026-09-29-holdings"
+  },
+  {
+    "accountId": "buoyant-capital-103473",
+    "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4",
+    "isin": null,
+    "asOf": "2026-07-31",
+    "quantity": 3416657.417,
+    "docKey": "buoyant-capital-103473-2026-07-31-appraisal"
+  },
+  {
+    "accountId": "buoyant-capital-103473",
+    "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4",
+    "isin": null,
+    "asOf": "2026-07-31",
+    "quantity": 3416657.4167,
+    "docKey": "buoyant-capital-103473-2026-07-31-holdings"
+  },
+  {
+    "accountId": "buoyant-capital-103473",
+    "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4",
+    "isin": null,
+    "asOf": "2026-07-31",
+    "quantity": 3416657.4167,
+    "docKey": "buoyant-capital-103473-2026-07-31-holdings-2"
+  },
+  {
+    "accountId": "buoyant-capital-103473",
+    "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4",
+    "isin": null,
+    "asOf": "2026-08-31",
+    "quantity": 3416657.4167,
+    "docKey": "buoyant-capital-103473-2026-08-31-portfolio-snap"
+  },
+  {
+    "accountId": "buoyant-capital-103473",
+    "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4",
+    "isin": null,
+    "asOf": "2026-09-29",
+    "quantity": 3416657.4167,
+    "docKey": "buoyant-capital-103473-2026-09-29-holdings"
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "securityKey": "clean-max-enviro-energy-solutions",
+    "isin": "INE647U01026",
+    "asOf": "2026-03-31",
+    "quantity": 94967,
+    "docKey": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "securityKey": "ema-partners-india",
+    "isin": "INE0ZOL01023",
+    "asOf": "2026-03-31",
+    "quantity": 44643,
+    "docKey": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "securityKey": "esds-software-solution-limited-eq-new-fv-rs-1",
+    "isin": "INE0DRI01029",
+    "asOf": "2026-03-31",
+    "quantity": 330898,
+    "docKey": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "securityKey": "fractal-analytics",
+    "isin": "INE212S01015",
+    "asOf": "2026-03-31",
+    "quantity": 180185,
+    "docKey": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "securityKey": "grand-continent-hotels",
+    "isin": "INE12E301017",
+    "asOf": "2026-03-31",
+    "quantity": 262125,
+    "docKey": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "securityKey": "jaro-institute-of-technology-management-and-research",
+    "isin": "INE00YJ01010",
+    "asOf": "2026-03-31",
+    "quantity": 116979,
+    "docKey": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "securityKey": "parth-electricals-and-engineering",
+    "isin": "INE1H7V01011",
+    "asOf": "2026-03-31",
+    "quantity": 59000,
+    "docKey": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "securityKey": "sotefin-bharat",
+    "isin": "INE12Z301012",
+    "asOf": "2026-03-31",
+    "quantity": 171879,
+    "docKey": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "securityKey": "yash-highvoltage",
+    "isin": "INE00GK01023",
+    "asOf": "2026-03-31",
+    "quantity": 138462,
+    "docKey": "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
+  },
+  {
+    "accountId": "kotak-mahindra-mutual-fund-4295974",
+    "securityKey": "kotak-liquid-fund-direct-plan-daily-idcw",
+    "isin": "INF174K01NH1",
+    "asOf": "2026-07-01",
+    "quantity": 632.65,
+    "docKey": "kotak-mahindra-mutual-fund-4295974-2026-07-01-holdings"
+  },
+  {
+    "accountId": "mirae-asset-mutual-fund-70413280453",
+    "securityKey": "mirae-asset-liquid-fund-formerly-mirae-asset-cash-management-fund-direct-plan-mirae-asset-liquid-fund-formerly-mirae-asset-cash-management-fund-direct-plan-growth",
+    "isin": "INF769K01CM1",
+    "asOf": "2026-07-02",
+    "quantity": 316.19,
+    "docKey": "mirae-asset-mutual-fund-70413280453-2026-07-02-holdings"
+  },
+  {
+    "accountId": "mirae-asset-mutual-fund-70413280453",
+    "securityKey": "mirae-asset-liquid-fund-formerly-mirae-asset-cash-management-fund-direct-plan-mirae-asset-liquid-fund-formerly-mirae-asset-cash-management-fund-direct-plan-growth",
+    "isin": "INF769K01CM1",
+    "asOf": "2026-08-06",
+    "quantity": 316.19,
+    "docKey": "mirae-asset-mutual-fund-70413280453-2026-08-06-holdings"
+  },
+  {
+    "accountId": "molecule-ventures-llp-7810404",
+    "securityKey": "arvind-fashions",
+    "isin": null,
+    "asOf": "2026-06-30",
+    "quantity": 4000,
+    "docKey": "molecule-ventures-llp-7810404-2026-06-30-holdings"
+  },
+  {
+    "accountId": "molecule-ventures-llp-7810404",
+    "securityKey": "arvind-fashions",
+    "isin": null,
+    "asOf": "2026-07-31",
+    "quantity": 4000,
+    "docKey": "molecule-ventures-llp-7810404-2026-07-31-holdings"
+  },
+  {
+    "accountId": "molecule-ventures-llp-7810404",
+    "securityKey": "cash",
+    "isin": null,
+    "asOf": "2026-06-30",
+    "quantity": 214462.907,
+    "docKey": "molecule-ventures-llp-7810404-2026-06-30-holdings"
+  },
+  {
+    "accountId": "molecule-ventures-llp-7810404",
+    "securityKey": "cash",
+    "isin": null,
+    "asOf": "2026-07-31",
+    "quantity": 213783.099,
+    "docKey": "molecule-ventures-llp-7810404-2026-07-31-holdings"
+  },
+  {
+    "accountId": "molecule-ventures-llp-7810404",
+    "securityKey": "chemfab-alkalis",
+    "isin": null,
+    "asOf": "2026-06-30",
+    "quantity": 1000,
+    "docKey": "molecule-ventures-llp-7810404-2026-06-30-holdings"
+  },
+  {
+    "accountId": "molecule-ventures-llp-7810404",
+    "securityKey": "chemfab-alkalis",
+    "isin": null,
+    "asOf": "2026-07-31",
+    "quantity": 1000,
+    "docKey": "molecule-ventures-llp-7810404-2026-07-31-holdings"
+  },
+  {
+    "accountId": "molecule-ventures-llp-7810404",
+    "securityKey": "dcw",
+    "isin": null,
+    "asOf": "2026-06-30",
+    "quantity": 3000,
+    "docKey": "molecule-ventures-llp-7810404-2026-06-30-holdings"
+  },
+  {
+    "accountId": "molecule-ventures-llp-7810404",
+    "securityKey": "dcw",
+    "isin": null,
+    "asOf": "2026-07-31",
+    "quantity": 3000,
+    "docKey": "molecule-ventures-llp-7810404-2026-07-31-holdings"
+  },
+  {
+    "accountId": "molecule-ventures-llp-7810404",
+    "securityKey": "indian-metals-and-ferro-alloys",
+    "isin": null,
+    "asOf": "2026-06-30",
+    "quantity": 1500,
+    "docKey": "molecule-ventures-llp-7810404-2026-06-30-holdings"
+  },
+  {
+    "accountId": "molecule-ventures-llp-7810404",
+    "securityKey": "indian-metals-and-ferro-alloys",
+    "isin": null,
+    "asOf": "2026-07-31",
+    "quantity": 1500,
+    "docKey": "molecule-ventures-llp-7810404-2026-07-31-holdings"
+  },
+  {
+    "accountId": "molecule-ventures-llp-7810404",
+    "securityKey": "jayaswal-neco-industries",
+    "isin": null,
+    "asOf": "2026-06-30",
+    "quantity": 23000,
+    "docKey": "molecule-ventures-llp-7810404-2026-06-30-holdings"
+  },
+  {
+    "accountId": "molecule-ventures-llp-7810404",
+    "securityKey": "jayaswal-neco-industries",
+    "isin": null,
+    "asOf": "2026-07-31",
+    "quantity": 23000,
+    "docKey": "molecule-ventures-llp-7810404-2026-07-31-holdings"
+  },
+  {
+    "accountId": "molecule-ventures-llp-7810404",
+    "securityKey": "kirloskar-ferrous-industries",
+    "isin": null,
+    "asOf": "2026-06-30",
+    "quantity": 2967,
+    "docKey": "molecule-ventures-llp-7810404-2026-06-30-holdings"
+  },
+  {
+    "accountId": "molecule-ventures-llp-7810404",
+    "securityKey": "kirloskar-ferrous-industries",
+    "isin": null,
+    "asOf": "2026-07-31",
+    "quantity": 2967,
+    "docKey": "molecule-ventures-llp-7810404-2026-07-31-holdings"
+  },
+  {
+    "accountId": "molecule-ventures-llp-7810404",
+    "securityKey": "manali-petrochemical",
+    "isin": null,
+    "asOf": "2026-06-30",
+    "quantity": 10000,
+    "docKey": "molecule-ventures-llp-7810404-2026-06-30-holdings"
+  },
+  {
+    "accountId": "molecule-ventures-llp-7810404",
+    "securityKey": "manali-petrochemical",
+    "isin": null,
+    "asOf": "2026-07-31",
+    "quantity": 10000,
+    "docKey": "molecule-ventures-llp-7810404-2026-07-31-holdings"
+  },
+  {
+    "accountId": "molecule-ventures-llp-7810404",
+    "securityKey": "sansera-engineering",
+    "isin": null,
+    "asOf": "2026-06-30",
+    "quantity": 800,
+    "docKey": "molecule-ventures-llp-7810404-2026-06-30-holdings"
+  },
+  {
+    "accountId": "molecule-ventures-llp-7810404",
+    "securityKey": "sansera-engineering",
+    "isin": null,
+    "asOf": "2026-07-31",
+    "quantity": 800,
+    "docKey": "molecule-ventures-llp-7810404-2026-07-31-holdings"
+  },
+  {
+    "accountId": "molecule-ventures-llp-7810404",
+    "securityKey": "sasken-communication-technologies",
+    "isin": null,
+    "asOf": "2026-06-30",
+    "quantity": 100,
+    "docKey": "molecule-ventures-llp-7810404-2026-06-30-holdings"
+  },
+  {
+    "accountId": "molecule-ventures-llp-7810404",
+    "securityKey": "sasken-communication-technologies",
+    "isin": null,
+    "asOf": "2026-07-31",
+    "quantity": 100,
+    "docKey": "molecule-ventures-llp-7810404-2026-07-31-holdings"
+  },
+  {
+    "accountId": "motilal-oswal-founders-fund-90410016093",
+    "securityKey": "motilal-oswal-founders-fund-series-ii-class-g1",
+    "isin": null,
+    "asOf": "2026-07-31",
+    "quantity": 9514997.798,
+    "docKey": "motilal-oswal-founders-fund-90410016093-2026-07-31-holdings"
+  },
+  {
+    "accountId": "motilal-oswal-founders-fund-90410016104",
+    "securityKey": "motilal-oswal-founders-fund-series-ii-class-g1",
+    "isin": null,
+    "asOf": "2026-07-31",
+    "quantity": 18895852.36,
+    "docKey": "motilal-oswal-founders-fund-90410016104-2026-07-31-holdings"
+  },
+  {
+    "accountId": "motilal-oswal-founders-fund-90410016104",
+    "securityKey": "motilal-oswal-founders-fund-series-ii-class-g1",
+    "isin": null,
+    "asOf": "2026-07-31",
+    "quantity": 18895852.36,
+    "docKey": "motilal-oswal-founders-fund-90410016104-2026-07-31-holdings-2"
+  }
+];
+
+export const BOOK_STATEMENT_UNIT_NAVS: Record<string, StatementUnitNavs> = {
+  "sanshi-fund-i-open-ended-aif-cat-iii-class-a2": {
+    "isin": "INF1ISW22038",
+    "navs": [
+      {
+        "date": "2026-10-30",
+        "nav": 138.711,
+        "docKey": "icici-bank-nsdl-demat-49794950-2026-10-31-holdings"
+      }
+    ]
+  },
+  "sanshi-fund-i-open-ended-aif-cat-iii-class-e": {
+    "isin": "INF1ISW22079",
+    "navs": [
+      {
+        "date": "2026-10-30",
+        "nav": 172.126,
+        "docKey": "icici-bank-nsdl-demat-49794950-2026-10-31-holdings"
+      }
+    ]
+  }
+};
+
+export const BOOK_UNIT_WINDOWS: Record<string, UnitWindow> = {
+  "aditya-birla-sun-life-mutual-fund-1038104611": {
+    "valuations": [
+      {
+        "date": "2026-07-01",
+        "value": 794412.48,
+        "docKey": "aditya-birla-sun-life-mutual-fund-1038104611-2026-07-01-holdings"
+      },
+      {
+        "date": "2026-08-03",
+        "value": 798563.95,
+        "docKey": "aditya-birla-sun-life-mutual-fund-1038104611-2026-08-03-holdings"
+      }
+    ],
+    "evidence": "the same units of the same holding on every statement from 2026-07-01 to 2026-08-03"
+  },
+  "bandhan-mutual-fund-8652064": {
+    "valuations": [
+      {
+        "date": "2026-10-14",
+        "value": 431304376.61,
+        "docKey": "bandhan-mutual-fund-8652064-2026-10-14-holdings"
+      },
+      {
+        "date": "2026-10-26",
+        "value": 415063994.38,
+        "docKey": "bandhan-mutual-fund-8652064-2026-10-26-holdings"
+      }
+    ],
+    "evidence": "the same units of the same holdings on every statement from 2026-10-14 to 2026-10-26"
+  },
+  "buoyant-capital-103472": {
+    "valuations": [
+      {
+        "date": "2026-07-31",
+        "value": 276881535.57,
+        "docKey": "buoyant-capital-103472-2026-07-31-holdings"
+      },
+      {
+        "date": "2026-08-31",
+        "value": 282663341.57,
+        "docKey": "buoyant-capital-103472-2026-08-31-portfolio-snap"
+      },
+      {
+        "date": "2026-09-29",
+        "value": 269915543.56,
+        "docKey": "buoyant-capital-103472-2026-09-29-holdings"
+      },
+      {
+        "date": "2026-09-30",
+        "value": 269970617.52,
+        "docKey": "buoyant-capital-103472-2026-09-30-holdings"
+      }
+    ],
+    "evidence": "the same units of the same holding on every statement from 2026-07-31 to 2026-09-30"
+  },
+  "buoyant-capital-103473": {
+    "valuations": [
+      {
+        "date": "2026-07-31",
+        "value": 492981982.01,
+        "docKey": "buoyant-capital-103473-2026-07-31-holdings"
+      },
+      {
+        "date": "2026-08-31",
+        "value": 503276370.81,
+        "docKey": "buoyant-capital-103473-2026-08-31-portfolio-snap"
+      },
+      {
+        "date": "2026-09-29",
+        "value": 480579173.92,
+        "docKey": "buoyant-capital-103473-2026-09-29-holdings"
+      },
+      {
+        "date": "2026-09-30",
+        "value": 480677231.99,
+        "docKey": "buoyant-capital-103473-2026-09-30-holdings"
+      }
+    ],
+    "evidence": "the same units of the same holding on every statement from 2026-07-31 to 2026-09-30"
+  },
+  "mirae-asset-mutual-fund-70413280453": {
+    "valuations": [
+      {
+        "date": "2026-07-02",
+        "value": 936386.82,
+        "docKey": "mirae-asset-mutual-fund-70413280453-2026-07-02-holdings"
+      },
+      {
+        "date": "2026-08-06",
+        "value": 941106.71,
+        "docKey": "mirae-asset-mutual-fund-70413280453-2026-08-06-holdings"
+      },
+      {
+        "date": "2026-10-06",
+        "value": 950812.26,
+        "docKey": "mirae-asset-mutual-fund-70413280453-2026-10-06-holdings"
+      }
+    ],
+    "evidence": "the same units of the same holding on every statement from 2026-07-02 to 2026-10-06"
+  },
+  "motilal-oswal-founders-fund-90410016093": {
+    "valuations": [
+      {
+        "date": "2026-07-31",
+        "value": 109900127.57,
+        "docKey": "motilal-oswal-founders-fund-90410016093-2026-07-31-holdings"
+      },
+      {
+        "date": "2026-09-30",
+        "value": 111143737.78,
+        "docKey": "motilal-oswal-founders-fund-90410016093-2026-09-30-holdings"
+      }
+    ],
+    "evidence": "the same units of the same holding on every statement from 2026-07-31 to 2026-09-30"
+  },
+  "motilal-oswal-founders-fund-90410016104": {
+    "valuations": [
+      {
+        "date": "2026-07-31",
+        "value": 218250873.93,
+        "docKey": "motilal-oswal-founders-fund-90410016104-2026-07-31-holdings"
+      },
+      {
+        "date": "2026-09-30",
+        "value": 220720561.83,
+        "docKey": "motilal-oswal-founders-fund-90410016104-2026-09-30-holdings"
+      }
+    ],
+    "evidence": "the same units of the same holding on every statement from 2026-07-31 to 2026-09-30"
+  }
+};
 
 /**
  * The same flows keyed by OWNER — a person's money-weighted return is over

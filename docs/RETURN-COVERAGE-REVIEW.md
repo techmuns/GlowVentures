@@ -4,9 +4,38 @@ Morning CIO's **Return this financial year** card read **+20.0%** over "203 of 5
 holdings · ₹167.3 Cr covered · 22 accounts assumed", and the family read it as broken.
 This file records what the card actually measures, the method discussed with the
 dashboard's operator on 4 Nov 2026, the figures that method gives, and six data
-defects found on the way. **No app code changed.** Decisions on 4 Nov 2026: build the card
-(preview first), hold the one-statement funds at their last value (rule 8), fix main's CI
-(Stage 10kq) and fix the data defects in a separate change (Stage 10kp).
+defects found on the way.
+
+## Outcome (4 Nov 2026)
+
+The family approved the method ("approve") and it is live.
+
+- **Stage 10la (#343):** the three cards (financial year, calendar year, available
+  history) read one selection, `periodSelection`.
+  - Each investment counts from its first value on record.
+  - The extra evidence is in `periodRules.ts` / `scripts/lib/periodEvidence.mjs`.
+  - What nothing measures is held at its last value: 0%, in the base, and named.
+  - Every part is carried to the card's end.
+- **Stage 10lb (#350):** Our book vs benchmarks draws the card's own line, so its last point
+  is the card. The benchmark is the same dated money in the index. Gain / Loss covers 100%
+  of investments: from cost, else from first value, else held at value.
+- **The family's rules:**
+  - near-cash funds whose unit changes are undated are held at their last value;
+  - Vantage Oak and other small leftovers are held at last value;
+  - private investments sit on their own line;
+  - nothing is asked again that these rules settle.
+- **Live figures on 4 Nov:**
+  - financial year +13.1% (+₹63.6 Cr);
+  - calendar year +14.7% (+₹54.6 Cr);
+  - available history +16.9% a year;
+  - Gain / Loss +₹178.4 Cr at 13.6% on all ₹1,220 Cr.
+- **Why these differ from the preview figures below:** the engine is stricter than the
+  offline preview. It measures each holding only where its own records support it, and a
+  price service that does not answer is "waiting for prices", never held.
+- **Defects fixed since:**
+  - the ICICI 31 Mar statement's 20 Jul pricing (Stage 10ku, #337);
+  - Clean Max on two demats (Stage 10ky, #341);
+  - DSP bullion ETFs across their split, and ICICI "Cumulative" (#331, via #343).
 
 ## What the card measures today
 
@@ -22,7 +51,7 @@ defects found on the way. **No app code changed.** Decisions on 4 Nov 2026: buil
 - **"22 accounts assumed" is misleading.** "assumed" is `HoldingAssumptionInfo`'s label, and
   it applies to ~11 holdings, not to the 22 accounts.
 
-## The method discussed (pending go-ahead)
+## The method (approved 4 Nov 2026)
 
 Industry practice (performance start date / transfer in at market value) is to measure an
 investment from the **first value on record**, treating that value as money arriving that

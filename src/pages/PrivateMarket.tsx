@@ -2,9 +2,12 @@ import { useNavigationState, useNavigationValue, nullableStringNavigation } from
 import { useTableExportFilter, useTableExporting } from "@/lib/tableExportSnapshot";
 import { ExportableTable } from "@/components/ExportableTable";
 import { Fragment, useMemo, type ReactNode } from "react";
-import { Handshake, Landmark, Wallet, TrendingUp, Fuel, Coins, Banknote, HelpCircle, CalendarClock, Layers, Users, ArrowUpRight, Percent } from "lucide-react";
+import { Handshake, Landmark, Wallet, TrendingUp, Fuel, Coins, Banknote, HelpCircle, CalendarClock, Layers, Users, ArrowUpRight, Percent, Paperclip } from "lucide-react";
 import { Link } from "react-router-dom";
 import { PageHeader } from "@/components/PageHeader";
+import { UploadDocuments } from "@/components/UploadDocuments";
+import { useStatementInbox } from "@/lib/statementUploads";
+import { uploadSubjects, holdingDocumentsOf, documentMatches, subjectFolderHref } from "@/lib/holdingDocuments";
 import { Card } from "@/components/Card";
 import { SelectableTiles, type TileMetric } from "@/components/SelectableTiles";
 import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
@@ -80,7 +83,21 @@ const PM_DEFAULT_TILES = ["value", "cost", "pnl", "uncalled"] as const;
  * what the units held cost (the holding statement). They agree on most funds and
  * they are different documents; the header says which is which.
  */
-const BOOK_COLS = ["name", "strategy", "description", "invested", "committed", "called", "paid", "uncalled", "units", "cost", "value", "entryValuation", "latestValuation", "valuationDate", "lastRound", "valuationChange", "return", "weight", "asOf", "call"] as const;
+const BOOK_COLS = ["name", "strategy", "description", "invested", "committed", "called", "paid", "uncalled", "units", "cost", "value", "entryValuation", "latestValuation", "valuationDate", "lastRound", "valuationChange", "return", "weightCost", "weight", "asOf", "call"] as const;
+/**
+ * ── THE FUNDS FILTER'S OWN COLUMNS (Stage 10kw) ─────────────────────────────
+ *
+ *   *"for the Funds, remove YTD performance column. Add quarterly NAV – show
+ *    IRR."* — the family.
+ *
+ * A drawdown fund reports quarterly, so its NAV per unit off that statement
+ * sits beside Value, YTD is not offered, and the XIRR column is headed IRR.
+ * Each filter keeps its own column arrangement and return pick, so editing one
+ * never rearranges the other.
+ */
+const FUND_BOOK_COLS = BOOK_COLS.flatMap((c) => (c === "value" ? [c, "nav"] : [c]));
+const FUND_OMIT: readonly ReturnMeasure[] = ["ytd"];
+const NO_OMIT: readonly ReturnMeasure[] = [];
 /**
  * ── THE COMPANY'S OWN VALUATION, ONE PICK AWAY IN EDIT COLUMNS (Stage 10ko) ──
  *
@@ -301,7 +318,7 @@ const SECTION_COPY: Record<BookSectionId, { title: string; marker: ReactNode; de
 };
 
 /** A row of figures in the shape the accessors read — a group, a section, a total or a folio. */
-type RowFigures = Pick<BookFigures, "committed" | "called" | "paid" | "uncalled" | "units" | "cost" | "value" | "returnPct" | "deployed" | "deployedHeld" | "asOf" | "invested" | "investedOf" | "investedAcross">
+type RowFigures = Pick<BookFigures, "committed" | "called" | "paid" | "uncalled" | "units" | "cost" | "value" | "nav" | "navWhy" | "returnPct" | "deployed" | "deployedHeld" | "asOf" | "invested" | "investedOf" | "investedAcross">
   & {
     /** The fund whose entered calls this row's Capital call cell shows — none on a member row or a band. */
     callKey?: string | null;
@@ -433,12 +450,14 @@ const bookAccessors = (
   units: (r) => r.units,
   cost: (r) => r.cost,
   value: (r) => r.value,
+  nav: (r) => r.nav?.perUnit ?? null,
   // ONE ACCESSOR PER PICKED MEASURE, reading the figure its own column prints —
   // `returnAccessorsFor` sorts an absent return LAST in both directions, which
   // `sortRows` does for every null.
   ...returnAccessorsFor<RowFigures & { label?: string }>(measures, (r, m) => (r.ret ? r.ret(m) : NO_RETURN)),
-  // Weight is value ÷ one denominator, so it orders exactly as value does; a
-  // second expression of one figure would be a second chance to disagree.
+  // Each weight is one figure ÷ one denominator, so it orders exactly as that
+  // figure does; a second expression of one figure would be a second chance to disagree.
+  weightCost: (r) => r.cost,
   weight: (r) => r.value,
   asOf: (r) => r.asOf[r.asOf.length - 1] ?? null,
   // The date of the call the cell shows. A row with none sorts last in both
@@ -488,6 +507,19 @@ const valueWhy = (status: BookGroup["status"], reason: string | null): string =>
 const rangeStart = (a: string, b: string) =>
   a.slice(0, 4) === b.slice(0, 4) ? fmtDate(a).replace(/\s\d{4}$/, "") : fmtDate(a);
 
+/**
+ * A NAV's date as its Indian financial-year quarter ("Q1 FY27" for 30 Jun 2026)
+ * where it is a quarter end; any other date is printed as the date, never
+ * rounded to a quarter it is not.
+ */
+const navQuarter = (iso: string) => {
+  const [y, mo, d] = iso.split("-").map(Number);
+  const end = new Date(Date.UTC(y, mo, 0)).getUTCDate();
+  if (mo % 3 !== 0 || d !== end) return fmtDate(iso);
+  const q = mo === 3 ? 4 : mo / 3 - 1;
+  return `Q${q} FY${String((mo === 3 ? y : y + 1) % 100).padStart(2, "0")}`;
+};
+
 export function PrivateMarket() {
   /**
    * TWO BASES, EACH WHERE IT BELONGS (B-01). The ROWS are statement marks — a
@@ -533,12 +565,17 @@ export function PrivateMarket() {
    *
    * MEMOISED ON THE MEASURES, NOT REBUILT PER RENDER.
    */
-  const [returnMeasures, setReturnMeasures, returnSource] = useReturnMeasures("private-market");
+  // ONE PICK AND ONE ARRANGEMENT PER FILTER (Stage 10kw), keyed on the filter
+  // the reader chose — an export widens the rows, never the columns. Each reads
+  // the page's old shared key until its first edit.
+  const fundCols = showFilter === "funds";
+  const omitMeasures = fundCols ? FUND_OMIT : NO_OMIT;
+  const [returnMeasures, setReturnMeasures, returnSource] = useReturnMeasures(`private-market:${showFilter}`, { legacyPage: "private-market", omit: omitMeasures });
   const measureKey = returnMeasures.join(",");
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const bookCols = useMemo(() => withReturnCols(BOOK_COLS, returnMeasures), [measureKey]);
+  const bookCols = useMemo(() => withReturnCols(fundCols ? FUND_BOOK_COLS : BOOK_COLS, returnMeasures), [measureKey, fundCols]);
   // `invested` already renders the investment date/range for groups and folios.
-  const bookView = useTableView("pm-book", bookCols, { reviewKind: "holding", investmentDates: false, manualEditor: true, optional: VALUATION_COLS });
+  const bookView = useTableView("pm-book", bookCols, { memoryKey: `pm-book:${showFilter}`, legacyKeys: ["pm-book"], reviewKind: "holding", investmentDates: false, manualEditor: true, optional: VALUATION_COLS });
   const callView = useTableView("pm-calls", CALL_COLS, { manualEditor: true });
   /**
    * THE CALLS THE FAMILY HAS ENTERED, and which row's editor is open. Called up
@@ -559,6 +596,10 @@ export function PrivateMarket() {
    * cell, sort and search below reads ONE resolution.
    */
   const typedProfiles = useEnteredProfiles();
+  // A holding's uploaded documents (Stage 10kx): the button in the header and
+  // the clip on each row read the statement inbox's one log.
+  const inbox = useStatementInbox();
+  const holdingDocs = inbox.state.status === "ready" ? holdingDocumentsOf(inbox.state.batches) : [];
   const typedList = typedProfiles.state.status === "ready" ? typedProfiles.state.profiles : [];
   const profileKeyOf = (f: BookFolio) => callKeyOf(f.fundKey, f.securityKey);
   const effFolio = (f: BookFolio): InvestmentProfile => withEntered(f.profile, typedList, profileKeyOf(f));
@@ -1414,7 +1455,15 @@ export function PrivateMarket() {
    * the foot of the section takes it back. The arithmetic is right; a column of
    * shares that adds to 129.9% under "Weight" needs its own hover to say so.
    */
-  const weightHeadTitle = "Of the private book: the row's value as a share of the private market value — the same denominator on every row.";
+  const weightHeadTitle = `Of the private investments only: the row's value as a share of the private market value (${money(book.privateValue)}) — the same denominator on every row.`;
+  /**
+   * WEIGHT AT COST — the same rows on what was paid: the row's cost over the
+   * private book's cost. A holding that reports no cost is named here and in
+   * its own cell, never weighed as nil.
+   */
+  const pctCost = (v: number | null) => (v == null || !(book.privateCost != null && book.privateCost > 0) ? null : (v / book.privateCost) * 100);
+  const weightCostHeadTitle = `Of the private investments only: the row's cost as a share of the private book's cost (${money(book.privateCost)}) — the same denominator on every row.`
+    + (book.costless.length ? ` ${book.costless.length} valued ${book.costless.length === 1 ? "holding reports" : "holdings report"} no cost and ${book.costless.length === 1 ? "is" : "are"} outside it: ${book.costless.join("; ")}.` : "");
 
   // ── WHICH RETURN A ROW SHOWS, AND SAYING WHICH ──────────────────────────────
   //
@@ -1673,6 +1722,9 @@ export function PrivateMarket() {
     /** `undefined` leaves the cell empty; `null` is an absence with `weightWhy`. */
     weight?: number | null;
     weightWhy?: string;
+    /** As `weight`, on cost over the private book's cost. */
+    weightCost?: number | null;
+    weightCostWhy?: string;
     stale?: number | null;
     ties?: boolean | null;
     implied?: number | null;
@@ -1806,6 +1858,12 @@ export function PrivateMarket() {
     out.value = r.value != null ? td("value", money(r.value), k === "folio" ? "text-slate-200" : "text-slate-100")
       : ctx.nil ? td("value", <span title={ctx.nil} data-pm-nil>{money(0)} <span className="text-[10px] font-normal text-slate-500">redeemed</span></span>, "text-slate-400")
         : absent("value", ctx.noValue ?? "no statement here carries a valuation");
+    // THE QUARTERLY NAV (Stage 10kw): per unit, off the statement, its quarter under it.
+    out.nav = r.nav
+      ? td("nav", <>{moneyFull(r.nav.perUnit)}
+          <div className="text-[10.5px] font-normal text-slate-500" data-pm-nav-date={r.nav.date}
+            title={`Value ÷ units on the fund's statement dated ${fmtDate(r.nav.date)}`}>{navQuarter(r.nav.date)}</div></>)
+      : absent("nav", r.navWhy ?? "no statement values a holding on this row");
     // ONE CELL PER PICKED MEASURE, each labelled where its header does not
     // already name what it shows: always under the methodology (whose header
     // can only say "Return"), and under a concrete measure only where the guard
@@ -1864,6 +1922,10 @@ export function PrivateMarket() {
     if (ctx.weight !== undefined) {
       out.weight = ctx.weight == null ? absent("weight", ctx.weightWhy ?? "no value to weigh")
         : td("weight", `${ctx.weight.toFixed(1)}%`, "text-slate-400");
+    }
+    if (ctx.weightCost !== undefined) {
+      out.weightCost = ctx.weightCost == null ? absent("weightCost", ctx.weightCostWhy ?? "no cost to weigh")
+        : td("weightCost", `${ctx.weightCost.toFixed(1)}%`, "text-slate-400");
     }
     if (holdingRow || k === "section") out.asOf = asOfCell();
     if (holdingRow || k === "section") out.invested = investedCell();
@@ -1996,6 +2058,9 @@ export function PrivateMarket() {
         : "no capital-account statement for these folios";
 
   const weightWhy = (_section: BookSectionId) => "no value to weigh — a share of the private market value needs a value";
+  const weightCostWhy = (section: BookSectionId, cost: number | null) => section === "unvalued"
+    ? "not in the private book's cost — a holding the statements carry no value for is weighed on neither basis"
+    : cost == null ? "no cost reported — a share of the private book's cost needs a cost" : "no cost to weigh";
 
   /** A fund or member row, its folios when open, and its "counted once" line. */
   const renderGroup = (g: BookGroup) => {
@@ -2061,6 +2126,20 @@ export function PrivateMarket() {
                   </Link>
                 );
               })()}
+              {/* THE ROW'S UPLOADED DOCUMENTS (Stage 10kx) — a clip with their
+                  count, opening the holding's Portfolio Library folder. */}
+              {(() => {
+                if (g.kind === "owner") return null;
+                const keys = [g.key, ...g.folios.flatMap((f) => [f.securityKey, f.fundKey]).filter((k): k is string => !!k)];
+                const docs = holdingDocs.filter((d) => documentMatches(d, keys));
+                return docs.length > 0 && (
+                  <Link to={subjectFolderHref(docs[0].subject)} data-no-row-toggle data-pm-documents={docs.length}
+                    title={`${docs.length} uploaded ${docs.length === 1 ? "document" : "documents"} — open ${g.label}'s folder in the Portfolio Library`}
+                    className="ml-1.5 inline-flex items-center gap-0.5 align-[-2px] text-[11px] text-slate-500 transition-colors hover:text-champagne-400">
+                    <Paperclip className="h-3.5 w-3.5" />{docs.length}
+                  </Link>
+                );
+              })()}
             </>}
             sub={groupSub(g)} />
           {inOrder({
@@ -2073,6 +2152,8 @@ export function PrivateMarket() {
             noHolding: g.holdings === 0 ? "no valued holding on these statements" : undefined,
             weight: inPrivate ? pct(g.value) : null,
             weightWhy: weightWhy(g.section),
+            weightCost: inPrivate ? pctCost(g.cost) : null,
+            weightCostWhy: weightCostWhy(g.section, g.cost),
             stale: g.staleDays,
             ties: g.ties,
             }),
@@ -2155,6 +2236,8 @@ export function PrivateMarket() {
                     : "no valued holding on this statement",
                 weight: inPrivate ? pct(f.value) : null,
                 weightWhy: weightWhy(g.section),
+                weightCost: inPrivate ? pctCost(f.cost) : null,
+                weightCostWhy: weightCostWhy(g.section, f.cost),
                 stale: s?.staleDays ?? null,
                 ties: s?.uncalledTies ?? null,
                 implied: s?.impliedUncalled ?? null,
@@ -2216,6 +2299,8 @@ export function PrivateMarket() {
           value: adj("value", o.value > 0 ? o.value : null),
           weight: adj("weight", weigh && o.value > 0 && pct(o.value) != null ? o.value : null,
             weigh && o.value > 0 && pct(o.value) != null ? `−${pct(o.value)!.toFixed(1)}%` : undefined),
+          weightCost: adj("weightCost", weigh && o.cost != null && o.cost > 0 && pctCost(o.cost) != null ? o.cost : null,
+            weigh && o.cost != null && o.cost > 0 && pctCost(o.cost) != null ? `−${pctCost(o.cost)!.toFixed(1)}%` : undefined),
         }, "folio")}
       </Tr>
     );
@@ -2273,6 +2358,8 @@ export function PrivateMarket() {
             noHolding: id === "unvalued" ? "no valued holding in this section" : undefined,
             weight: id !== "unvalued" ? pct(s.value) : null,
             weightWhy: weightWhy(id),
+            weightCost: id !== "unvalued" ? pctCost(s.cost) : null,
+            weightCostWhy: weightCostWhy(id, s.cost),
           }), "section")}
         </Tr>
         {open && shown.map(renderGroup)}
@@ -2306,6 +2393,8 @@ export function PrivateMarket() {
         noCapital: fig.capitalAccounts === 0 ? "no capital account on this page" : undefined,
         noValue: "no value",
         weight: 100,
+        weightCost: book.privateCost != null && book.privateCost > 0 ? 100 : null,
+        weightCostWhy: "no holding in the private book reports a cost",
         titles: extra.titles,
       }) as Record<string, ReactNode>} />
   );
@@ -2423,7 +2512,8 @@ export function PrivateMarket() {
 
   return (
     <div>
-      <PageHeader eyebrow="Daily" title="Private Market" />
+      <PageHeader eyebrow="Daily" title="Private Market"
+        right={<UploadDocuments subjects={uploadSubjects(m.byFund, (fs) => companyValuationOf(fs)?.company)} inbox={inbox} />} />
 
       {/* THE "MARKS SPAN" LINE IS GONE, at the family's request (*"its obvious
           from the table what it is"*). Every row's As of cell carries its own
@@ -2463,7 +2553,7 @@ export function PrivateMarket() {
               </select>
             )}
             {(view === "funds" || view === "brands") && (
-              <ReturnMeasureSelect measures={returnMeasures} onChange={setReturnMeasures} hints={PM_RETURN_HINTS} source={returnSource} />
+              <ReturnMeasureSelect measures={returnMeasures} onChange={setReturnMeasures} hints={PM_RETURN_HINTS} source={returnSource} omit={omitMeasures} />
             )}
             {(view === "funds" || view === "brands") && <ExpandAllButton allOpen={allOpen} onClick={toggleAll} />}
           </div>
@@ -2501,6 +2591,8 @@ export function PrivateMarket() {
                     title="Of the units held: what they cost, off the holding statement — a different document from the capital account's Paid in.">Cost</SortHeader>
                   <SortHeader col="value" view={bookView} pad="px-2 py-2"
                     title="The fund's own mark: what the holding is worth on the fund's own statement date.">Value</SortHeader>
+                  {fundCols && <SortHeader col="nav" view={bookView} pad="px-2 py-2"
+                    title="The fund's NAV per unit on its latest quarterly statement — the value it prints over the units it prints, on one date. The quarter is under the figure.">Quarterly<br />NAV</SortHeader>}
                   {VALUATION_COLS.map((c) => (
                     <SortHeader key={c} col={c} view={bookView} pad="px-2 py-2" align={c === "valuationDate" || c === "lastRound" ? "left" : undefined} title={VALUATION_LABELS[c].detail}>{VALUATION_LABELS[c].label}</SortHeader>
                   ))}
@@ -2520,12 +2612,14 @@ export function PrivateMarket() {
                       <SortHeader key={measure} col={returnColId(measure)} view={bookView} pad="px-2 py-2"
                         title={auto ? PM_RETURN_HINTS.auto : meta?.title}
                         coverage={meta?.note}>
-                        {auto ? "Return" : def.tag}
+                        {auto ? "Return" : fundCols && measure === "xirr" ? "IRR" : def.tag}
                       </SortHeader>
                     );
                   })}
+                  <SortHeader col="weightCost" view={bookView} pad="px-2 py-2"
+                    title={weightCostHeadTitle}>Weight at cost</SortHeader>
                   <SortHeader col="weight" view={bookView} pad="px-2 py-2"
-                    title={weightHeadTitle}>Weight</SortHeader>
+                    title={weightHeadTitle}>Weight at value</SortHeader>
                   <SortHeader col="asOf" view={bookView} pad="px-2 py-2" align="left">As of</SortHeader>
                   {/* THE COLUMN THAT REPLACED THE CAPITAL-CALL TIMELINE. Its hover
                       is where the reason it exists lives — no fund publishes a

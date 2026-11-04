@@ -30,6 +30,7 @@
  * cost its statement carries (`valuedAtCost`).
  */
 import STORE from "@/data/privateRounds.json";
+import REPORTED from "@/data/privateMarketNews.json";
 
 export type Money = { value: number; currency: string; alt?: readonly { value: number; currency: string }[] };
 export type RoundSource = {
@@ -41,7 +42,8 @@ export type RoundSource = {
   /** A data vendor's public page rather than a filing or the press. */
   aggregator?: boolean;
 };
-export type RoundKind = "primary" | "secondary" | "ipo" | "rights" | "preferential" | "acquisition" | "mark";
+/** `reported` — a round known only from Inc42's weekly funding table, which says neither what it issued nor at what valuation. */
+export type RoundKind = "primary" | "secondary" | "ipo" | "rights" | "preferential" | "acquisition" | "mark" | "reported";
 export type FundingRound = {
   /** `YYYY-MM-DD`, or `YYYY-MM` where the source names only the month. */
   date: string;
@@ -58,7 +60,44 @@ export type FundingRound = {
   leadInvestors: readonly string[];
   note: string | null;
   sources: readonly RoundSource[];
+  /** Every investor Inc42's funding table lists for the round (Stage 10kt); absent where it does not cover it. */
+  investors?: readonly string[];
+  /** The Inc42 row this round is, or was read from (Stage 10kt). */
+  reported?: ReportedRow;
 };
+
+/**
+ * ONE ROW OF INC42'S WEEKLY FUNDING TABLE (Stage 10kt), as Glow Central
+ * Research publishes it and `npm run import-private-market` matched it to a
+ * company by its exact name — every field as the table prints it. `fold` names
+ * the researched round it is (and the evidence), or is null for a round the
+ * research does not carry. See `scripts/lib/privateFunding.mjs`.
+ */
+export type ReportedRow = {
+  id: string;
+  company: string;
+  date: string | null;
+  dateText: string;
+  name: string;
+  round: string | null;
+  amountText: string | null;
+  amount: Money | null;
+  swapped?: boolean;
+  footnote: string | null;
+  investors: readonly string[];
+  leadInvestors: readonly string[];
+  sector: string | null;
+  subsector: string | null;
+  businessModel: string | null;
+  url: string;
+  title: string | null;
+  published: string | null;
+  sourceMissing?: boolean;
+  familyNamed?: readonly string[];
+  fold: { key: string; why: string } | null;
+};
+/** A headline that names the company — a name in a headline, not a verified event. */
+export type Headline = { company: string; at: string | null; title: string; summary: string | null; url: string; publisher: string | null };
 export type FamilyMention = {
   text: string;
   shares?: number | null;
@@ -79,6 +118,12 @@ export type PrivateCompany = {
   searchNote: string | null;
   /** The day this company's record was last researched. */
   checkedOn: string;
+  /** How Inc42's funding table classifies the company, off its newest row (Stage 10kt). */
+  classification?: { sector: string | null; subsector: string | null; businessModel: string | null; date: string | null } | null;
+  /** Inc42 funding rows matched to the company (Stage 10kt). */
+  reportedRows?: readonly ReportedRow[];
+  /** Headlines that name the company, newest first (Stage 10kt). */
+  headlines?: readonly Headline[];
 };
 export type PrivateRoundsStore = {
   updatedOn: string;
@@ -86,7 +131,84 @@ export type PrivateRoundsStore = {
   companies: readonly PrivateCompany[];
 };
 
-export const PRIVATE_ROUNDS = STORE as unknown as PrivateRoundsStore;
+/** What the import read: Inc42's coverage as Glow Central Research publishes it, and its headline capture. */
+export type PrivateMarketNews = {
+  funding: {
+    source: string; via: string; sourceCheckedOn: string | null; capturedOn: string | null;
+    archive: { complete: boolean; pagesRead: number; pages: number | null };
+    roundups: number; rowsRead: number; from: string | null; to: string | null; error?: string;
+    rows: readonly ReportedRow[];
+  } | null;
+  headlines: { via: string; capturedOn: string | null; windowDays: number | null; rows: readonly Headline[] } | null;
+};
+export const PRIVATE_MARKET_NEWS = REPORTED as unknown as PrivateMarketNews;
+
+/** "Series A", or what the row prints in its place. */
+export const reportedRoundName = (r: ReportedRow) => r.round ?? "Round type not named";
+const reportedSource = (r: ReportedRow): RoundSource => ({
+  url: r.url,
+  publisher: "Inc42 Funding Galore",
+  published: r.published,
+  supports: `${r.amountText ?? "no amount printed"}${r.round ? ` · ${r.round}` : ""}, ${r.dateText} — Inc42's weekly funding table${r.fold ? ` (the same round: ${r.fold.why})` : ""}`,
+});
+const reportedNote = (r: ReportedRow) => [
+  r.footnote ? `Inc42's footnote on the amount: ${r.footnote}.` : null,
+  r.swapped ? "Inc42's table prints this amount in its round-type column." : null,
+  r.sourceMissing ? "Inc42 has since taken this row out of its table; it is kept as it was read." : null,
+].filter(Boolean).join(" ") || null;
+
+/**
+ * A COMPANY'S RECORD WITH INC42'S ROWS IN IT (Stage 10kt). A row that is a
+ * researched round adds to it — Inc42's full investor list, its link, and the
+ * amount where the research found none — and never overwrites a figure. A row
+ * that is no researched round is one of its own, `kind: "reported"`: no
+ * valuation (Inc42 prints none), and its stake chain breaks there, since the
+ * table does not say whether it issued shares. Every row stays on the company.
+ */
+function withReported(c: PrivateCompany, rows: readonly ReportedRow[], headlines: readonly Headline[]): PrivateCompany {
+  const byKey = new Map<string, FundingRound>(c.rounds.map((r) => [`${r.date}|${r.round}`, r]));
+  const added = new Map<FundingRound, ReportedRow>();
+  const own: FundingRound[] = [];
+  for (const row of rows) {
+    const into = row.fold ? byKey.get(row.fold.key) : undefined;
+    if (into && !added.has(into)) { added.set(into, row); continue; }
+    if (!row.date) continue;
+    own.push({
+      date: row.date, dateBasis: "date in Inc42's funding table", round: reportedRoundName(row), kind: "reported",
+      amountRaised: row.amount, preMoney: null, postMoney: null, valuation: null, pricePerShare: null, sharesAllotted: null,
+      leadInvestors: row.leadInvestors, investors: row.investors, note: reportedNote(row), sources: [reportedSource(row)], reported: row,
+    });
+  }
+  const rounds = c.rounds.map((r) => {
+    const row = added.get(r);
+    if (!row) return r;
+    return {
+      ...r, reported: row, investors: row.investors.length ? row.investors : undefined,
+      amountRaised: r.amountRaised ?? row.amount,
+      sources: [...r.sources, reportedSource(row)],
+    };
+  });
+  const mentions = rows.filter((r) => r.familyNamed?.length).map((r) => ({
+    text: `${r.familyNamed!.join(", ")} — listed among the investors in its ${reportedRoundName(r)} of ${r.dateText} by Inc42's funding table`,
+    source: reportedSource(r),
+  }));
+  const newest = [...rows].filter((r) => r.sector).sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""))[0];
+  return {
+    ...c, rounds: [...rounds, ...own],
+    familyMentions: [...c.familyMentions, ...mentions],
+    classification: newest ? { sector: newest.sector, subsector: newest.subsector, businessModel: newest.businessModel, date: newest.date } : null,
+    reportedRows: rows, headlines,
+  };
+}
+
+const rowsOf = <T extends { company: string }>(rows: readonly T[] | undefined, id: string) => (rows ?? []).filter((r) => r.company === id);
+export const PRIVATE_ROUNDS: PrivateRoundsStore = (() => {
+  const store = STORE as unknown as PrivateRoundsStore;
+  return {
+    ...store,
+    companies: store.companies.map((c) => withReported(c, rowsOf(PRIVATE_MARKET_NEWS.funding?.rows, c.id), rowsOf(PRIVATE_MARKET_NEWS.headlines?.rows, c.id))),
+  };
+})();
 
 const BY_ID = new Map(PRIVATE_ROUNDS.companies.map((c) => [c.id, c]));
 const BY_FUND_KEY = new Map(PRIVATE_ROUNDS.companies.flatMap((c) => c.fundKeys.map((k) => [k, c] as const)));
@@ -157,7 +279,14 @@ export function seriesCurrency(c: PrivateCompany): string {
 export const sortedRounds = (c: PrivateCompany): FundingRound[] =>
   [...c.rounds].sort((a, b) => dayOf(a.date).localeCompare(dayOf(b.date)) || a.round.localeCompare(b.round));
 
-export type ValuationPoint = { date: string; value: number; basis: "post-money" | "unspecified"; round: string; derived: string | null };
+export type ValuationPoint = {
+  date: string; value: number; basis: "post-money" | "unspecified"; round: string; derived: string | null;
+  /** Only a data vendor's public page states it (Stage 10kz) — said on the figure's face. */
+  vendor: boolean;
+};
+
+/** A round whose every source is a data vendor's public page, not a filing or the press. */
+export const vendorOnly = (r: FundingRound) => r.sources.length > 0 && r.sources.every((s) => s.aggregator);
 
 /** Every round with a valuation in the series currency, oldest first. */
 export function valuationPoints(c: PrivateCompany, currency = seriesCurrency(c)): { points: ValuationPoint[]; leftOut: FundingRound[] } {
@@ -165,7 +294,7 @@ export function valuationPoints(c: PrivateCompany, currency = seriesCurrency(c))
   const leftOut: FundingRound[] = [];
   for (const r of sortedRounds(c)) {
     const v = roundValues(r, currency);
-    if (v.headline) points.push({ date: r.date, value: v.headline.value, basis: v.headline.basis, round: r.round, derived: v.headline.derived });
+    if (v.headline) points.push({ date: r.date, value: v.headline.value, basis: v.headline.basis, round: r.round, derived: v.headline.derived, vendor: vendorOnly(r) });
     else if (r.postMoney || r.preMoney || r.valuation) leftOut.push(r);
   }
   return { points, leftOut };
@@ -275,6 +404,10 @@ export function stakeTrail(c: PrivateCompany, shares: number | null, cost: numbe
     if (r === entry.round) { at.set(r, { pct, note: `${trail[0]}. The family's cost per share is this round's price, so the share count is on its basis.` }); continue; }
     if (dayOf(r.date) < dayOf(entry.round.date)) { why.set(r, "before the round the family came in on"); continue; }
     if (broken) { why.set(r, broken); continue; }
+    if (r.kind === "reported") {
+      broken = `${r.round} (${roundDateLabel(r.date)}) is known only from Inc42's funding table, which says neither whether it issued shares nor at what valuation — so the stake cannot be carried through it`;
+      why.set(r, broken); continue;
+    }
     if (ISSUES_SHARES.has(String(r.kind))) {
       const v = roundValues(r, currency);
       if (!v.pre || !v.post) { broken = `${r.round} issued shares and its source prints no pre- and post-money to dilute the stake through`; why.set(r, broken); continue; }

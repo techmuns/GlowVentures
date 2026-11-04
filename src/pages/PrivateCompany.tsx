@@ -22,8 +22,8 @@ import { TREE_ROW } from "@/components/TreeTable";
 import { chartTooltipStyle, chartTooltipLabelStyle } from "@/lib/chartTheme";
 import { fmtDate, fmtNum } from "@/lib/format";
 import {
-  PRIVATE_ROUNDS, privateCompanyById, companyMetrics, roundValues, sortedRounds, valuationPoints, stakeTrail,
-  roundDateLabel, dayOf, fmtValuation, ENTRY_WINDOW_DAYS, type FundingRound, type PrivateCompany as Company, type Figure,
+  PRIVATE_ROUNDS, PRIVATE_MARKET_NEWS, privateCompanyById, companyMetrics, roundValues, sortedRounds, valuationPoints, stakeTrail,
+  roundDateLabel, dayOf, fmtValuation, vendorOnly, ENTRY_WINDOW_DAYS, type FundingRound, type Headline, type PrivateCompany as Company, type Figure,
 } from "@/lib/privateRounds";
 
 /**
@@ -40,6 +40,15 @@ import {
  *                   where its statement carries a share count
  *   Valuation       the company's valuation round by round, as a line, with the
  *                   date the family invested on it
+ *   News            the headlines that name it (Stage 10kt)
+ *
+ * Since Stage 10kt the rounds also carry Inc42's weekly funding table — the
+ * rows behind Glow Central Research's News → Private Market tab, matched to
+ * the company by its exact name (`npm run import-private-market`): every
+ * investor in a round, its round size and type as Inc42 prints them, and the
+ * company's sector, subsector and business model in Inc42's own words. A row
+ * that is a researched round adds to it; one that is not is its own row,
+ * marked "Inc42".
  *
  * The rounds are public reporting, not the family's statements
  * (`src/lib/privateRounds.ts`), so each one links its source, and a figure no
@@ -51,10 +60,12 @@ const PC_TABS = [
   { key: "position", label: "Position", title: "Who holds it, through which account, when and at what cost" },
   { key: "rounds", label: "Funding rounds", title: "Every priced round the company has raised, each with its source" },
   { key: "valuation", label: "Valuation", title: "The company's valuation round by round, and when the family invested" },
+  { key: "news", label: "News", title: "Headlines that name the company, from Glow Central Research's news capture" },
 ] as const;
 
 const POS_COLS = ["entity", "account", "invested", "units", "cost", "value", "asOf"] as const;
-const ROUND_COLS = ["date", "round", "raised", "pre", "post", "price", "stake", "investors", "source"] as const;
+const ROUND_COLS = ["date", "round", "raised", "pre", "post", "price", "stake", "investors", "allInvestors", "source"] as const;
+const NEWS_COLS = ["at", "headline", "publisher"] as const;
 
 const GRID_COLOR = "var(--chart-grid, #2b2668)";
 const AXIS_COLOR = "var(--chart-axis, #6b6880)";
@@ -64,6 +75,21 @@ const LINE_COLOR = "#d9c48f";
 const spanText = (f: BookFolio) => (f.invested
   ? f.invested.from === f.invested.to ? roundDateLabel(f.invested.from) : `${roundDateLabel(f.invested.from)} → ${roundDateLabel(f.invested.to)}`
   : null);
+
+/** A round's investors in one short line — the first names that fit, then how many more; the whole list is the hover. */
+const INVESTORS_LINE = 90;
+function investorsShort(list: readonly string[]): string {
+  const shown: string[] = [];
+  for (const name of list) {
+    if (shown.length && [...shown, name].join(", ").length > INVESTORS_LINE) break;
+    shown.push(name);
+  }
+  const more = list.length - shown.length;
+  return more ? `${shown.join(", ")} +${more} more` : shown.join(", ");
+}
+
+/** Why a valuation is marked as a data vendor's (Stage 10kz). */
+const VENDOR_WHY = "Only a data vendor's public page (Inc42 Datalabs, Tracxn, an IPO data site …) states this figure — no filing, offer document or press report of the round does. Shown for what it is, not as a filing.";
 
 const noRoundsWhy = (n: number, note: string | null) => (n ? "no round prints what a stake needs" : note ?? "no credible source prints a priced round for this company");
 
@@ -80,6 +106,7 @@ function CompanyPage({ company }: { company: Company }) {
   const [tab, setTab] = useViewParam(PC_TABS, {}, "tab");
   const posView = useTableView("pc-position", POS_COLS);
   const roundView = useTableView("pc-rounds", ROUND_COLS);
+  const newsView = useTableView("pc-news", NEWS_COLS);
 
   const keys = useMemo(() => new Set(company.fundKeys), [company]);
   const folios = useMemo(() => (portfolio
@@ -122,6 +149,13 @@ function CompanyPage({ company }: { company: Company }) {
   const stakeAbsent = [...stakes.why.values()].find((w) => !w.startsWith("before")) ?? (noRoundsWhy(rounds.length, company.searchNote));
   const noRounds = rounds.length === 0;
   const noRoundWhy = company.searchNote ?? "no credible source prints a priced round for this company";
+  // A TILE CARRIES ONE SHORT LINE (Stage 10kz): the research's full note — what
+  // was searched and what is missing — is the line's hover, not the tile's body.
+  const NO_ROUND_LINE = "no credible source prints a priced round";
+  const absentNoRound = (line: string) => ({
+    value: <AbsentValue />,
+    sub: <span className="text-slate-500" title={noRoundWhy} data-pc-search-note>{line} — hover for what was searched</span>,
+  });
   const entryWords = m.entry
     ? m.entry.match === "at"
       ? `${m.entry.round.round}, dated ${roundDateLabel(m.entry.round.date)} — within ${ENTRY_WINDOW_DAYS} days of the family's first investment on ${roundDateLabel(investedFrom!)}`
@@ -153,8 +187,34 @@ function CompanyPage({ company }: { company: Company }) {
     raised: (r) => roundValues(r, cur).raised, pre: (r) => roundValues(r, cur).pre?.value ?? null,
     post: (r) => roundValues(r, cur).headline?.value ?? null, price: (r) => roundValues(r, cur).price,
     stake: (r) => stakes.at.get(r)?.pct ?? null,
-    investors: (r) => r.leadInvestors.join(", ") || null, source: (r) => r.sources[0]?.publisher ?? null,
+    investors: (r) => r.leadInvestors.join(", ") || null, allInvestors: (r) => r.investors?.length ?? null,
+    source: (r) => r.sources[0]?.publisher ?? null,
   };
+  const newsAcc: Record<string, Accessor<Headline>> = {
+    at: (h) => h.at, headline: (h) => h.title, publisher: (h) => h.publisher,
+  };
+  const headlines = company.headlines ?? [];
+  const funding = PRIVATE_MARKET_NEWS.funding;
+  const inc42Covers = funding ? `Inc42's weekly funding tables from ${funding.from ? fmtDate(funding.from) : "—"} to ${funding.to ? fmtDate(funding.to) : "—"}${funding.archive.complete ? "" : ` (Glow Central Research has read ${funding.archive.pagesRead} of the archive's ${funding.archive.pages ?? "?"} pages; older roundups are still being read)`}` : null;
+  const notInInc42 = inc42Covers ? `Inc42's funding table does not list this round — it covers ${inc42Covers}` : "Inc42's funding table has not been read";
+
+  // THE FAMILY, WHERE A FILING NAMES IT — an offer document's allottee table, a
+  // report of a round, or a registry's partner list (Stage 10kz). Shown with the
+  // rounds, or alone where the company has none (a family LLP has no round).
+  const mentions = company.familyMentions.length > 0 && (
+    <div className="border-t border-ink-700 px-4 py-3 text-[12px]" data-pc-mentions={company.familyMentions.length}>
+      <div className="mb-1 font-medium text-slate-300" title="Where a filing, a report of a round or a registry names a member of the family as an investor, allottee or partner">Named in the filings</div>
+      <ul className="space-y-1 text-slate-400">
+        {company.familyMentions.map((x, i) => (
+          <li key={i}>
+            {x.text}{" "}
+            <a href={x.source.url} target="_blank" rel="noreferrer" className="text-champagne-400 hover:underline"
+              title={`${x.source.publisher}${x.source.published ? `, ${fmtDate(x.source.published)}` : ""}${x.source.aggregator ? " (a data vendor's public page)" : ""}`}>{x.source.publisher}</a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 
   const chartRows = points.map((p) => ({ t: Date.parse(dayOf(p.date)), ...p }));
 
@@ -180,12 +240,24 @@ function CompanyPage({ company }: { company: Company }) {
           <Pill tone="core"><span title="Private company — held at the cost its statement carries; the valuations on this page are the company's, from public reporting">Private company</span></Pill>
           {company.legalName !== company.brand && <span className="text-[12px] text-slate-400" data-pc-legal>{company.legalName}</span>}
           {company.sector && <Pill><span title="The company's line of business, as its sources describe it">{company.sector}</span></Pill>}
+          {company.classification && (
+            <span className="inline-flex flex-wrap items-center gap-1" data-pc-classification
+              title={`How Inc42's weekly funding table classifies ${company.brand}: sector, subsector and business model as it prints them${company.classification.date ? `, on its row of ${fmtDate(company.classification.date)}` : ""}`}>
+              {[company.classification.sector, company.classification.subsector, company.classification.businessModel].filter(Boolean).map((x) => <Pill key={x}>{x}</Pill>)}
+            </span>
+          )}
           {company.listed && <Pill tone="info"><span title={`Listed${company.listed.date ? ` on ${fmtDate(company.listed.date)}` : ""} — its price since is a market quote, not a funding round`}>{company.listed.exchange}: {company.listed.symbol}</span></Pill>}
           {company.website && <a href={company.website} target="_blank" rel="noreferrer" className="text-[12px] text-champagne-400 hover:underline">{company.website.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "")}</a>}
           <span className="text-[11px] text-slate-500" data-pc-checked={company.checkedOn}
             title={`${PRIVATE_ROUNDS.method} This company's record was last researched on ${fmtDate(company.checkedOn)}.`}>
             rounds checked {fmtDate(company.checkedOn)}
           </span>
+          {funding && (
+            <span className="text-[11px] text-slate-500" data-pc-inc42={funding.sourceCheckedOn ?? ""}
+              title={`Inc42's weekly funding tables, read by Glow Central Research (its News → Private Market tab) and matched to ${company.brand} by its exact name: ${(company.reportedRows ?? []).length} row${(company.reportedRows ?? []).length === 1 ? "" : "s"}. Coverage: ${inc42Covers}.${funding.error ? ` Its latest walk reported: ${funding.error}.` : ""}`}>
+              · Inc42 checked {funding.sourceCheckedOn ? fmtDate(funding.sourceCheckedOn) : "—"}
+            </span>
+          )}
         </div>
       </div>
 
@@ -204,20 +276,20 @@ function CompanyPage({ company }: { company: Company }) {
           {...(m.entryValues?.headline
             ? { value: <span data-pc-entry-post={m.entryValues.headline.value} title={`${entryWords}. ${m.entryValues.headline.basis === "post-money" ? "Post-money" : "Valuation with no pre/post basis stated"}${m.entryValues.headline.derived ? ` — derived: ${m.entryValues.headline.derived}` : ""}.`}>{money(m.entryValues.headline.value)}</span>,
                 second: <span data-pc-entry-pre={m.entryValues.pre?.value ?? ""} title={m.entryValues.pre ? (m.entryValues.pre.derived ? `Pre-money, derived: ${m.entryValues.pre.derived}.` : "Pre-money, as the source prints it.") : "No pre-money: the source prints neither it nor the amount raised beside a post-money."}>pre {m.entryValues.pre ? money(m.entryValues.pre.value) : "—"}</span>,
-                sub: <span className="text-slate-500">{m.entryValues.headline.basis === "post-money" ? "post-money" : "basis not stated"} · {m.entry!.round.round}</span> }
-            : absentTile(entryWhy))}
+                sub: <span className="text-slate-500">{m.entryValues.headline.basis === "post-money" ? "post-money" : "basis not stated"} · {m.entry!.round.round}{vendorOnly(m.entry!.round) && <span data-pc-vendor title={VENDOR_WHY}> · data vendor's figure</span>}</span> }
+            : noRounds && investedFrom ? absentNoRound(NO_ROUND_LINE) : absentTile(entryWhy))}
           icon={<Landmark className="h-4 w-4" />} />
         <Kpi label="Latest valuation"
           {...(m.latest
             ? { value: <span data-pc-latest={m.latest.value} title={`${m.latest.round}, ${m.latest.basis === "post-money" ? "post-money" : "valuation with no pre/post basis stated"}${m.latest.derived ? ` — derived: ${m.latest.derived}` : ""}.`}>{money(m.latest.value)}</span>,
-                sub: <span className="text-slate-500" data-pc-latest-date={m.latest.date}>{roundDateLabel(m.latest.date)} · {m.latest.round}</span> }
-            : absentTile(noRounds ? noRoundWhy : "no round prints a valuation in one currency"))}
+                sub: <span className="text-slate-500" data-pc-latest-date={m.latest.date}>{roundDateLabel(m.latest.date)} · {m.latest.round}{m.latest.vendor && <span data-pc-vendor title={VENDOR_WHY}> · data vendor's figure</span>}</span> }
+            : noRounds ? absentNoRound(NO_ROUND_LINE) : absentTile("no round prints a valuation in one currency"))}
           icon={<TrendingUp className="h-4 w-4" />} />
         <Kpi label="Change since entry"
           {...(m.change != null
             ? { value: <span data-pc-change={m.change} title="The latest valuation ÷ the valuation at the family's entry round, both on the same basis — the company's change, not a return on the family's holding.">{fmtNum(m.change, 2)}×</span>,
                 sub: <span className="text-slate-500">{m.subsequent.length} {m.subsequent.length === 1 ? "round" : "rounds"} since entry</span> }
-            : absentTile(!m.entryValues?.headline ? entryWhy : !m.latest ? "no later valuation" : "the entry and latest valuations are on different bases"))}
+            : noRounds && investedFrom ? absentNoRound(NO_ROUND_LINE) : absentTile(!m.entryValues?.headline ? entryWhy : !m.latest ? "no later valuation" : "the entry and latest valuations are on different bases"))}
           icon={<LineIcon className="h-4 w-4" />} />
         <Kpi label="Your stake"
           {...(latestStake
@@ -263,9 +335,12 @@ function CompanyPage({ company }: { company: Company }) {
 
         {tab === "rounds" && (
           noRounds
-            ? <div className="mt-5" data-pc-no-rounds><AbsentSection what={`No priced funding round found for ${company.brand}`} needs={noRoundWhy} /></div>
+            ? <div className="mt-5" data-pc-no-rounds>
+                <AbsentSection what={`No priced funding round found for ${company.brand}`} needs={noRoundWhy} />
+                {mentions && <Card className="mt-3" pad={false}>{mentions}</Card>}
+              </div>
             : (
-              <Card className="mt-5" title="Funding rounds" subtitle="Every priced round, oldest first; the family's entry round is marked" pad={false}>
+              <Card className="mt-5" title="Funding rounds" subtitle="Every round on record, oldest first — researched from filings and the press, and Inc42's weekly funding table; the family's entry round is marked" pad={false}>
                 <div className="overflow-x-auto">
                   <ExportableTable exportName={`${company.brand} — funding rounds`} className="min-w-full text-sm" data-pc-rounds={rounds.length}>
                     <thead className="border-b border-ink-700">
@@ -278,6 +353,7 @@ function CompanyPage({ company }: { company: Company }) {
                         <SortHeader col="price" view={roundView}>Price / share</SortHeader>
                         <SortHeader col="stake" view={roundView} title="The family's shares × the round's price per share ÷ its post-money — only where the family's statement carries a share count">Your stake</SortHeader>
                         <SortHeader col="investors" view={roundView} align="left">Lead investors</SortHeader>
+                        <SortHeader col="allInvestors" view={roundView} align="left" title="Every investor Inc42's weekly funding table lists for the round, as it prints them">Investors</SortHeader>
                         <SortHeader col="source" view={roundView} align="left">Source</SortHeader>
                       </Tr>
                     </thead>
@@ -295,11 +371,14 @@ function CompanyPage({ company }: { company: Company }) {
                             <td className="px-3 py-2 text-left">
                               <span className="text-slate-200">{r.round}</span>
                               {isEntry && <span className="ml-1.5 rounded bg-champagne-500/20 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-champagne-400" title={entryWords ?? undefined} data-pc-entry-badge>your entry</span>}
+                              {r.kind === "reported" && <span className="ml-1.5 rounded bg-ink-700/60 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-slate-400" data-pc-reported
+                                title={`Known only from Inc42's weekly funding table (${r.reported?.dateText ?? roundDateLabel(r.date)}): the round type, size and investors as it prints them. It prints no valuation or price, and does not say whether the round issued shares.`}>Inc42</span>}
                               {r.note && <span className="ml-1 cursor-help text-[11px] text-slate-500" title={r.note}>ⓘ</span>}
                             </td>
-                            <td className="tabular whitespace-nowrap px-3 py-2 text-right">{v.raised != null ? money(v.raised) : r.amountRaised ? printed(r.amountRaised) : <AbsentCell reason="the source prints no amount" />}</td>
+                            <td className="tabular whitespace-nowrap px-3 py-2 text-right" title={r.reported?.amountText ? `Inc42's table prints ${r.reported.amountText}${r.reported.footnote ? ` — ${r.reported.footnote}` : ""}` : undefined}>{v.raised != null ? money(v.raised) : r.amountRaised ? printed(r.amountRaised) : <AbsentCell reason={r.reported ? "Inc42's table prints no amount for this round" : "the source prints no amount"} />}</td>
                             <td className="tabular whitespace-nowrap px-3 py-2 text-right">{figure(v.pre, "the source prints no pre-money, and not both a post-money and the amount to derive one")}</td>
                             <td className="tabular whitespace-nowrap px-3 py-2 text-right">
+                              {vendorOnly(r) && (v.post || v.headline) && <sup className="mr-0.5 text-[9px] text-slate-500" title={VENDOR_WHY} data-pc-vendor>v</sup>}
                               {v.post ? figure(v.post, "")
                                 : v.headline ? <span title="The source says the company was valued at this, without saying pre- or post-money">{money(v.headline.value)}<sup className="ml-0.5 text-[9px] text-slate-500">?</sup></span>
                                 : otherCur ? printed((r.postMoney ?? r.valuation ?? r.preMoney)!, r.postMoney ? "post-money" : r.valuation ? "basis not stated" : "pre-money")
@@ -311,6 +390,10 @@ function CompanyPage({ company }: { company: Company }) {
                                 : <AbsentCell reason={stakes.why.get(r)} />}
                             </td>
                             <td className="max-w-[16rem] px-3 py-2 text-left text-slate-400">{r.leadInvestors.length ? r.leadInvestors.join(", ") : <AbsentCell reason="the source names no lead investor" />}</td>
+                            <td className="min-w-[14rem] max-w-[22rem] px-3 py-2 text-left text-slate-400" data-pc-investors={r.investors?.length ?? 0}>
+                              {r.investors?.length ? <span title={`Every investor Inc42's table lists: ${r.investors.join(", ")}`}>{investorsShort(r.investors)}</span>
+                                : <AbsentCell reason={r.reported ? "Inc42's table names no investor for this round" : notInInc42} />}
+                            </td>
                             <td className="px-3 py-2 text-left">
                               {r.sources.map((s, j) => (
                                 <a key={j} href={s.url} target="_blank" rel="noreferrer" data-pc-source={s.url}
@@ -324,22 +407,43 @@ function CompanyPage({ company }: { company: Company }) {
                     </tbody>
                   </ExportableTable>
                 </div>
-                {/* THE FAMILY, WHERE A FILING NAMES IT — an offer document's
-                    allottee table or a report of the round, each linked. */}
-                {company.familyMentions.length > 0 && (
-                  <div className="border-t border-ink-700 px-4 py-3 text-[12px]" data-pc-mentions={company.familyMentions.length}>
-                    <div className="mb-1 font-medium text-slate-300" title="Where a filing or a report of a round names a member of the family as an investor or allottee">Named in the filings</div>
-                    <ul className="space-y-1 text-slate-400">
-                      {company.familyMentions.map((x, i) => (
-                        <li key={i}>
-                          {x.text}{" "}
-                          <a href={x.source.url} target="_blank" rel="noreferrer" className="text-champagne-400 hover:underline"
-                            title={`${x.source.publisher}${x.source.published ? `, ${fmtDate(x.source.published)}` : ""}`}>{x.source.publisher}</a>
-                        </li>
+                {mentions}
+              </Card>
+            )
+        )}
+
+        {tab === "news" && (
+          headlines.length === 0
+            ? <div className="mt-5" data-pc-no-news><AbsentSection what={`No headline names ${company.brand}`}
+                needs={PRIVATE_MARKET_NEWS.headlines
+                  ? `Glow Central Research's news capture is matched to the family's private companies by reviewed name; no headline in its last ${PRIVATE_MARKET_NEWS.headlines.windowDays ?? "—"} days (read ${PRIVATE_MARKET_NEWS.headlines.capturedOn ? fmtDate(PRIVATE_MARKET_NEWS.headlines.capturedOn) : "—"}) names this company, and none held from earlier reads does.`
+                  : "Glow Central Research's headline capture has not been read yet."} /></div>
+            : (
+              <Card className="mt-5" title="Headlines"
+                subtitle="Headlines that name the company, newest first — a name in a headline, not a verified event" pad={false}>
+                <div className="overflow-x-auto">
+                  <ExportableTable exportName={`${company.brand} — headlines`} className="min-w-full text-sm" data-pc-news={headlines.length}>
+                    <thead className="border-b border-ink-700">
+                      <Tr view={newsView}>
+                        <SortHeader col="at" view={newsView} align="left">Published</SortHeader>
+                        <SortHeader col="headline" view={newsView} align="left" title="The headline as its publisher printed it; it opens the story">Headline</SortHeader>
+                        <SortHeader col="publisher" view={newsView} align="left">Publisher</SortHeader>
+                      </Tr>
+                    </thead>
+                    <tbody className="divide-y divide-ink-700/60">
+                      {sortRows(headlines, newsView.sort, newsAcc).map((h) => (
+                        <Tr view={newsView} key={h.url} className={TREE_ROW.parent} data-pc-headline={h.url}>
+                          <td className="whitespace-nowrap px-3 py-2 text-left text-slate-400">{h.at ? fmtDate(h.at.slice(0, 10)) : <AbsentCell reason="the publisher prints no time for this story" />}</td>
+                          <td className="px-3 py-2 text-left">
+                            <a href={h.url} target="_blank" rel="noreferrer" className="text-slate-200 hover:text-champagne-400 hover:underline"
+                              title={h.summary ?? `Headlines are matched to ${company.brand} by Glow Central Research, by its reviewed name in the headline`}>{h.title}</a>
+                          </td>
+                          <td className="whitespace-nowrap px-3 py-2 text-left text-slate-400">{h.publisher ?? <AbsentCell reason="the capture names no publisher" />}</td>
+                        </Tr>
                       ))}
-                    </ul>
-                  </div>
-                )}
+                    </tbody>
+                  </ExportableTable>
+                </div>
               </Card>
             )
         )}
@@ -370,7 +474,7 @@ function CompanyPage({ company }: { company: Company }) {
                           <div style={{ ...chartTooltipStyle, padding: "8px 10px" }}>
                             <div style={chartTooltipLabelStyle}>{roundDateLabel(row.date)} · {row.round}</div>
                             <div className="mt-1 tabular font-semibold">{money(row.value)}</div>
-                            <div className="mt-0.5 opacity-70">{row.basis === "post-money" ? (row.derived ? "post-money, derived" : "post-money") : "valuation, basis not stated"}</div>
+                            <div className="mt-0.5 opacity-70">{row.basis === "post-money" ? (row.derived ? "post-money, derived" : "post-money") : "valuation, basis not stated"}{row.vendor ? " · a data vendor's figure" : ""}</div>
                           </div>
                         );
                       }} />
