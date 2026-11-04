@@ -161,6 +161,48 @@ assert.equal(book.extract({ grid: sheetOf("a,b,c\n1,2,3\n"), meta: {} }), null);
   assert.match(fed.description, /^FEDERALBNK: /);
 }
 
+// ── HDFC Securities' equity trade details report ──────────────────────────────
+const TD_HEAD = ["Scrip Name", "Trade Date", "Trade No.", "Order No.", "Exchange", "Sett No.", "Sett Type", "Trade Time", "Order Time",
+  "Buy/Sell", "Qty", "Market Price", "Market Value", "Squp/Del", "Brok Amount", "GST", "Stamp Duty", "Transaction Charges",
+  "GST on Transaction Charges", "STT", "Sebi Turnover Taxes", "Edu cess", "Higher Edu Cess", "Other Charges", "Net Amount", "Product", "SIP Flag", "SIP Ref No."];
+const tdRow = (name, date, no, side, qty, price, value, stt, net) => [name, date, no, "O1", "NSE", "2026137", "Normal", "09:45:23", "09:45:23",
+  side, qty, price, value, "D", "1", "0.18", "0", "0.5", "0.09", stt, "0.01", "0", "0", "0", net, "Cash", "N", "0"];
+const TD = [
+  ["Customer Information", ""], ["Customer Name", "AJAY JAISINGHANI"], ["Trading ID", "3110320"], ["Basis", "Trade"], [],
+  ["Report Details", ""], ["Report Name", "EQUITY TRADE DETAILS"], ["Start Date", "46113"], ["End Date", "46326.69634259259"], [],
+  TD_HEAD,
+  tdRow("VEDANTA LIMITED", "23-Jul-2026", "T1", "Sell", "100", "267.65", "26765", "26.77", "26736.45"),
+  // The same fill twice is two trades, both read.
+  tdRow("MAN INDUSTRIES (I) LTD.", "23-Sep-2026", "T2", "Sell", "31", "940.45", "29153.95", "29.14", "29123.03"),
+  tdRow("MAN INDUSTRIES (I) LTD.", "23-Sep-2026", "T3", "Sell", "31", "940.45", "29153.95", "29.14", "29123.03"),
+  tdRow("ABC LIMITED", "02-Nov-2026", "T4", "Buy", "10", "100", "1000", "1", "1002.78"),
+];
+const tdText = TD.map((r) => r.map((c) => `"${c}"`).join(",")).join("\n");
+const tc = classify({ fileName: "3110320_Equity_Trade_Details_Report.xlsx", text: flat(tdText) });
+assert.deepEqual([tc.provider, tc.accountNo, tc.reportType, tc.ownerName], ["HDFC Securities", "3110320", "transaction-statement", "AJAY JAISINGHANI"]);
+// A trading ID no InvestRight export prints is not filed under HDFC Securities.
+assert.equal(classify({ fileName: "x.xlsx", text: flat(tdText.replace(`"3110320"`, `"9999999"`)) }).provider, null);
+{
+  const td = hdfc.extract({ grid: sheetOf(tdText), meta: { docKey: "td" } });
+  assert.deepEqual([td.accountNo, td.periodFrom, td.periodTo, td.asOf, td.owner], ["3110320", "2026-04-01", "2026-10-31", "2026-10-31", "AJAY JAISINGHANI"]);
+  assert.equal(td.transactions.length, 3, "the 2 Nov buy is outside the report's own window");
+  assert.ok(td.warnings.some((w) => w.code === "trade-row-not-read" && /outside the report's window/.test(w.detail)));
+  const [v, m1, m2] = td.transactions;
+  assert.deepEqual([v.date, v.side, v.securityKey, v.quantity, v.unitPrice, v.stt, v.otherCharges, v.printed.settlementAmount],
+    ["2026-07-23", "sell", "vedanta", 100, 267.65, 26.77, 1.78, 26736.45]);
+  // The clipped scrip takes the name of the holding it sold, and says so.
+  assert.equal(m1.securityKey, "man-industries-india");
+  assert.match(m1.description, /^MAN INDUSTRIES \(I\) LTD\.: trade T2/);
+  assert.equal(m2.securityKey, "man-industries-india");
+  assert.ok(td.warnings.some((w) => w.code === "scrip-name-evidenced"));
+  // A net amount more than a rupee from its own market value and charges refuses the row.
+  const off = hdfc.extract({ grid: sheetOf(tdText.replace(`"26736.45"`, `"26700.00"`)), meta: { docKey: "td" } });
+  assert.equal(off.transactions.length, 2);
+  // A holder the register contradicts is named.
+  const other = hdfc.extract({ grid: sheetOf(tdText.replace("AJAY JAISINGHANI", "ANKITA JAISINGHANI")), meta: { docKey: "td" } });
+  assert.ok(other.warnings.some((w) => w.code === "owner-differs-from-register"));
+}
+
 // ── The committed archive ─────────────────────────────────────────────────────
 const AUDIT = "public/audit";
 const read = (k) => JSON.parse(fs.readFileSync(`${AUDIT}/${k}/document.json`, "utf8"));
@@ -180,6 +222,20 @@ if (fs.existsSync(`${AUDIT}/hdfc-securities-3110320-2026-11-02-holdings`)) {
   assert.equal(sold("insolation-energy"), 212000);
   assert.equal(sold("ema-partners-india"), 44000);
   assert.equal(sold("yash-highvoltage"), 34000);
+}
+const TD_KEY = "hdfc-securities-3110320-2026-10-31-transaction-statement";
+if (fs.existsSync(`${AUDIT}/${TD_KEY}`)) {
+  const td = read(TD_KEY);
+  assert.equal(td.status, "ok");
+  assert.equal(td.ownerId, "ajay-jaisinghani");
+  assert.equal(td.transactions.length, 466);
+  const sold = (key) => td.transactions.filter((x) => x.securityKey === key && x.side === "sell").reduce((s, x) => s + x.quantity, 0);
+  // 1,77,000 Vedanta and 5,17,317 Man Industries at 30 June; 1,10,000 and 4,80,000 on 2 November.
+  assert.equal(sold("vedanta"), 67000);
+  assert.equal(sold("man-industries-india"), 37317);
+  for (const k of ["vedanta-iron-and-steel", "vedanta-power", "vedanta-oil-and-gas"]) assert.equal(sold(k), 177000, k);
+  const held = read("hdfc-securities-3110320-2026-11-02-holdings").holdings.map((h) => h.securityKey);
+  assert.ok(held.includes("man-industries-india") && held.includes("vedanta"), "the trades join the account's own holdings");
 }
 
 console.log("brokerExports: ok");
