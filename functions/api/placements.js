@@ -2,7 +2,7 @@
 //
 // *"Allow the ability for any security or row to move any sub tab by doing
 //  right click — for example if i want to move DSP gold from alternate to any
-//  other i should be able to do so"* — the family, 4 Nov 2026 (Stage 10la).
+//  other i should be able to do so"* — the family, 4 Nov 2026 (Stage 10lm).
 //
 //   GET  /api/placements   → { ok: true, placements: [{ axis, product, section, updatedAt }] }
 //   POST /api/placements   { axis, products, section }  → { ok: true, placements }
@@ -28,7 +28,7 @@
 import { storeFor } from "../../shared/dashboardStore.mjs";
 
 const PREFIX = "placement:";
-export const PLACEMENT_AXES = ["category", "assetClass", "basket"];
+const PLACEMENT_AXES = ["category", "assetClass", "basket"];
 /** `sec:<securityKey>` or `mandate:<accountId>` — the book's own slugs (account ids keep a statement's capitals). */
 const PRODUCT = /^(sec|mandate):[A-Za-z0-9][A-Za-z0-9_-]{0,199}$/;
 /** A heading the page draws: words, `&`, `/` and `'` — never markup. */

@@ -405,7 +405,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   // so the statement figures stay available and unmutated underneath.
   const [bookPortfolio, setPortfolio] = useState<Portfolio | null>(() => defaultPortfolio());
   /**
-   * THE FAMILY'S MOVES REISSUE THE BOOK (Stage 10la). A row moved to another tab
+   * THE FAMILY'S MOVES REISSUE THE BOOK (Stage 10lm). A row moved to another tab
    * changes the section it sits in on every surface (`familyPlacements.ts`), and
    * those surfaces memoise on the positions and accounts arrays — so a move hands
    * the same rows out in new arrays and every table re-sections. Nothing in a

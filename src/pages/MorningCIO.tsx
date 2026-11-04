@@ -750,7 +750,7 @@ export function MorningCIO() {
        * what was.
        */
       derivedMV: number;
-      /** …and the value the family moved into it on the Portfolio Monitor (Stage 10la). */
+      /** …and the value the family moved into it on the Portfolio Monitor (Stage 10lm). */
       movedMV: number;
       /**
        * TRUE where the family's review places this row nowhere — the

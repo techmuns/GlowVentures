@@ -2,7 +2,7 @@
 //
 // *"Allow the ability for any security or row to move any sub tab by doing
 //  right click — for example if i want to move DSP gold from alternate to any
-//  other i should be able to do so"* — the family, 4 Nov 2026 (Stage 10la).
+//  other i should be able to do so"* — the family, 4 Nov 2026 (Stage 10lm).
 //
 // The store (`/api/placements`) against an in-memory KV, and the one section
 // rule every surface reads (`groupKeyFor`): a move must land, be undoable, keep

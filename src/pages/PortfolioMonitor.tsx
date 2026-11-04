@@ -917,7 +917,7 @@ export function PortfolioMonitor() {
   /** The holdings table's Export / Edit / Upload controls, drawn at the right of the section tabs. */
   const [tableTools, setTableTools] = useState<HTMLSpanElement | null>(null);
   /**
-   * RIGHT-CLICK A ROW TO MOVE IT TO ANOTHER TAB (Stage 10la).
+   * RIGHT-CLICK A ROW TO MOVE IT TO ANOTHER TAB (Stage 10lm).
    *
    *   "Allow the ability for any security or row to move any sub tab by doing
    *    right click."
@@ -2502,7 +2502,7 @@ export function PortfolioMonitor() {
         const ruleSeen = new Set<string>();
         let ruleMV = 0;
         let cashRuleMV = 0;
-        // Rows the family moved here on the page (Stage 10la), named on the heading.
+        // Rows the family moved here on the page (Stage 10lm), named on the heading.
         const movedNames = rs.filter((r) => r.groupSource === "moved").map((r) => r.security);
         for (const r of rs) {
           if (r.groupSource !== "rule" && r.groupSource !== "cash-rule") continue;
@@ -4379,7 +4379,7 @@ export function PortfolioMonitor() {
                                 · {fmtFromBase(grp.cashRuleMV, { compact: true })} by the family&rsquo;s cash instruction
                               </span></>
                             )}
-                            {/* AND ROWS THE FAMILY MOVED HERE ON THE PAGE (Stage 10la):
+                            {/* AND ROWS THE FAMILY MOVED HERE ON THE PAGE (Stage 10lm):
                                 their own word, newer than the review, said apart. */}
                             {grp.movedNames.length > 0 && (
                               <>{" "}<span title={`Moved to this tab on the dashboard: ${grp.movedNames.join(", ")}. Right-click a row to move it again or back.`}>
@@ -4904,7 +4904,7 @@ export function PortfolioMonitor() {
                             </>
                           )}
                           {/* A ROW THE FAMILY MOVED SAYS SO, and the hover says
-                              from where (Stage 10la) — the tab heading counts it. */}
+                              from where (Stage 10lm) — the tab heading counts it. */}
                           {r.groupSource === "moved" && (
                             <>{" "}<span className="ml-1 align-middle" data-moved-pill
                               title={`Moved here from ${groupLabelFor(groupAxis)(statedGroupKeyFor(groupAxis as GroupAxis, accIdx, rowPositionsOf(r)[0]))} on this dashboard. Right-click the row to move it again or back.`}>

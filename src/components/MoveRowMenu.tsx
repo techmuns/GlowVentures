@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { Check, CornerUpLeft } from "lucide-react";
 
 /**
- * ── RIGHT-CLICK A ROW, MOVE IT TO ANOTHER TAB (Stage 10la) ──────────────────
+ * ── RIGHT-CLICK A ROW, MOVE IT TO ANOTHER TAB (Stage 10lm) ──────────────────
  *
  *   "Allow the ability for any security or row to move any sub tab by doing
  *    right click — for example if i want to move DSP gold from alternate to any

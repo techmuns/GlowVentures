@@ -943,7 +943,7 @@ html:not(.dark) .preview-hatch {
 }
 
 /* ---------------------------------------------------------------------------
-   THE MOVE-TO-TAB MENU AND ITS UNDO (Stage 10la). A right-click on a Portfolio
+   THE MOVE-TO-TAB MENU AND ITS UNDO (Stage 10lm). A right-click on a Portfolio
    Monitor row. It grows from the corner under the pointer (`transform-origin`
    is set inline by `MoveRowMenu`) and opens instantly from the keyboard; the
    highlighted item is the FOCUSED one, so pointer and arrow keys never point at

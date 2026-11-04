@@ -99,7 +99,7 @@ export const BUCKET_ORDER = [DIRECT_EQUITY_BUCKET, MANDATE_BUCKET, UNROUTED_EQUI
 export const bucketOrd = (b: string) => { const i = BUCKET_ORDER.indexOf(b); return i < 0 ? BUCKET_ORDER.length : i; };
 
 /**
- * ── THE TABS A ROW CAN BE MOVED TO, per axis (Stage 10la) ───────────────────
+ * ── THE TABS A ROW CAN BE MOVED TO, per axis (Stage 10lm) ───────────────────
  *
  *   "Allow the ability for any security or row to move any sub tab by doing
  *    right click."

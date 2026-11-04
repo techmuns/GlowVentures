@@ -1076,7 +1076,7 @@
 - Record: 104 → 141 rounds, valued rounds 29 → 39 (companies with a valuation 13 → 19), per-share prices 22 → 55 (offer documents: InCred, Integris, Electromech, Sotefin, Radiant, EMA), family lines 7 → 40 (allottee tables, round reports, LLP partner registers), websites 26 → 41. Sixteen companies still print no round anywhere public; their notes say what was searched.
 - Page: a valuation only a data vendor's page states is marked so (tiles, table `v`, chart tooltip); "Named in the filings" shows without rounds too; an absent valuation tile carries one line with the research note as its hover.
 
-### Stage 10la — Right-click a holding to move it to another tab
+### Stage 10lm — Right-click a holding to move it to another tab
 
 - *"Allow the ability for any security or row to move any sub tab by doing right click — for example if i want to move DSP gold from alternate to any other i should be able to do so"* — the family, 4 Nov 2026.
 - On the Portfolio Monitor's Holdings table, on the Category, Asset class and Basket axes, right-clicking a row (or the menu key on a focused control in it) opens a menu of that axis's tabs. The row's current tab is ticked. Once a row has been moved, the menu also offers "Move back". A toast confirms the move and offers Undo. A moved row carries a `moved` pill, with the tab it came from in the hover, and its tab heading says "N moved here". All Securities has no tabs, so right-clicking there keeps the browser's own menu.

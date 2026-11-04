@@ -167,7 +167,7 @@ export const UNCLASSIFIED_WHY =
  *   `family`    — the family's own word on a holding the review cannot name,
  *                 because it was bought after it (`FAMILY_SAID_CLASS`).
  *   `moved`     — the family moved the row to this section on the Portfolio
- *                 Monitor itself (`familyPlacements.ts`, Stage 10la).
+ *                 Monitor itself (`familyPlacements.ts`, Stage 10lm).
  *
  * TWO RULES, TWO SOURCES, and that is not pedantry. Both are the family
  * speaking, and on screen a section heading prints how much of it a rule

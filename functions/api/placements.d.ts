@@ -13,7 +13,6 @@ export type PlacementsContext = {
 export type StoredPlacement = { axis: "category" | "assetClass" | "basket"; product: string; section: string; updatedAt: string };
 export type PlacementChange = { axis: StoredPlacement["axis"]; products: string[]; section: string | null; updatedAt: string };
 
-export const PLACEMENT_AXES: readonly StoredPlacement["axis"][];
 export function onRequest(context: PlacementsContext): Promise<Response>;
 export function isPlacement(p: unknown): p is StoredPlacement;
 export function validatePlacementChange(body: unknown, now?: Date):
