@@ -190,6 +190,12 @@ const oldRule = (stored: string[], declared: string[]) => {
   const addr = resolveReturnMeasures("xirr,cagr", ["auto"]);
   ok("an address wins over a saved pick, in the picker's order", same(addr.measures, ["cagr", "xirr"]) && addr.from === "address");
   ok("?ret=auto names the methodology view", same(resolveReturnMeasures("auto", null).measures, ["auto"]));
+  // Stage 10kv: a table that does not offer a measure drops it from every source.
+  const noYtd = ALL.filter((m) => m !== "ytd");
+  ok("an omitted measure leaves the default", same(resolveReturnMeasures(null, null, ["ytd"]).measures, noYtd));
+  ok("…and a saved pick", same(resolveReturnMeasures(null, ["absolute", "ytd"], ["ytd"]).measures, ["absolute"]));
+  const onlyYtd = resolveReturnMeasures("ytd", ["ytd"], ["ytd"]);
+  ok("a pick of only the omitted measure gives way to the default", same(onlyYtd.measures, noYtd) && onlyYtd.from === "default");
   ok("an address naming nothing falls back to the saved pick", same(resolveReturnMeasures("garbage", ["ytd"]).measures, ["ytd"]));
   ok("a concrete measure beats auto in one list", same(normaliseMeasures(["auto", "ytd", "absolute"]) ?? [], ["absolute", "ytd"]));
   ok("an empty list is no pick", normaliseMeasures([]) === null && parseSavedMeasures({ measures: ["cagr"] }) === null);

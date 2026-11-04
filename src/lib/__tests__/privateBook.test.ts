@@ -839,6 +839,26 @@ function doubleCountHoldings({ label, b, overlap }: Run) {
 }
 for (const run of RUNS) doubleCountHoldings(run);
 
+// ── [E] THE QUARTERLY NAV (Stage 10kv) ──────────────────────────────────────
+{
+  console.log("\n── the quarterly NAV: value ÷ units of one fund, on one date ──");
+  const FUNDS = new Set(["AIF", "Mutual Fund", "ETF"]);
+  let struck = 0;
+  for (const g of byFund.sections.private.groups) {
+    const held = g.folios.filter((f) => f.position && f.counted);
+    const one = new Set(held.map((f) => f.fundKey)).size === 1
+      && held.every((f) => f.value != null && f.units != null && f.units > 0 && FUNDS.has(f.position!.assetClass))
+      && new Set(held.map((f) => f.asOf)).size === 1 && held[0]?.asOf != null;
+    if (!one) { ok(`${g.label}: no NAV, with a reason`, g.nav == null && !!g.navWhy); continue; }
+    struck++;
+    near(`${g.label}: NAV = value ÷ units`, g.nav?.perUnit, sum(held.map((f) => f.value!)) / sum(held.map((f) => f.units!)), 1e-6);
+    ok(`${g.label}: dated on its statement`, g.nav?.date === held[0].asOf);
+  }
+  ok("some private fund strikes a NAV", struck > 0);
+  ok("a band over several funds strikes none", byFund.sections.private.nav == null && !!byFund.sections.private.navWhy);
+  for (const g of byFund.sections.atCost.groups) ok(`${g.label}: held at cost, so no NAV`, g.nav == null);
+}
+
 if (fails) {
   console.log(`\n${fails} failure(s)`);
   process.exit(1);

@@ -39,11 +39,17 @@ export { MEASURE_KEYS, DEFAULT_RETURN_MEASURES } from "@/lib/returnMeasures";
  * CAGR means "show me that one", not "that one on top of the rule", so a
  * concrete selection replaces auto and clearing everything falls back to it.
  */
-export function useReturnMeasures(page: string): [ReturnMeasure[], (next: ReturnMeasure[]) => void, "address" | "saved" | "default"] {
+export function useReturnMeasures(page: string, opts?: {
+  /** Where the pick was saved before this page kept one per filter; read until the first pick here. */
+  legacyPage?: string;
+  /** Measures this table does not offer — see `resolveReturnMeasures`. */
+  omit?: readonly ReturnMeasure[];
+}): [ReturnMeasure[], (next: ReturnMeasure[]) => void, "address" | "saved" | "default"] {
   const [sp, setSp] = useSearchParams();
   const param = sp.get("ret");
-  const saved = useMemory(returnMeasuresKey(page), parseSavedMeasures);
-  const { measures, from } = resolveReturnMeasures(param, saved);
+  const own = useMemory(returnMeasuresKey(page), parseSavedMeasures);
+  const legacy = useMemory(returnMeasuresKey(opts?.legacyPage ?? page), parseSavedMeasures);
+  const { measures, from } = resolveReturnMeasures(param, own ?? legacy, opts?.omit);
   const key = measures.join(",");
   // A STABLE ARRAY, so a column list built from it is not rebuilt every render.
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -69,13 +75,15 @@ export function useReturnMeasures(page: string): [ReturnMeasure[], (next: Return
  * tick on and off together. It is never empty — unticking the last one falls back
  * to auto — because an empty selection is not a state a reader means to be in.
  */
-export function ReturnMeasureSelect({ measures, onChange, hints, source }: {
+export function ReturnMeasureSelect({ measures, onChange, hints, source, omit = [] }: {
   measures: ReturnMeasure[];
   onChange: (m: ReturnMeasure[]) => void;
   /** Per-measure hint text where this page's truth differs from the Monitor's. */
   hints?: Partial<Record<ReturnMeasure, string>>;
   /** Where the ticked measures came from — `useReturnMeasures`' third value. */
   source?: "address" | "saved" | "default";
+  /** Measures this table does not offer — the list `useReturnMeasures` was given. */
+  omit?: readonly ReturnMeasure[];
 }) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -95,14 +103,15 @@ export function ReturnMeasureSelect({ measures, onChange, hints, source }: {
     set.has(k) ? set.delete(k) : set.add(k);
     onChange(MEASURE_KEYS.filter((m) => m !== "auto" && set.has(m)));
   };
-  const all = !isAuto && DEFAULT_RETURN_MEASURES.every((k) => measures.includes(k));
+  const offered = PICKER_KEYS.filter((k) => !omit.includes(k));
+  const all = !isAuto && DEFAULT_RETURN_MEASURES.filter((k) => !omit.includes(k)).every((k) => measures.includes(k));
   const label = isAuto ? "Return · by methodology"
     : all ? "Returns · all"
     : measures.length === 1 ? returnMeasureDef(measures[0]).label
     : `${measures.length} return types`;
   return (
     <div ref={wrapRef} className="relative"
-      data-return-measures={PICKER_KEYS.join(",")} data-return-active={measures.join(",")}
+      data-return-measures={offered.join(",")} data-return-active={measures.join(",")}
       data-return-source={source ?? ""}>
       <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-haspopup="listbox"
         title="Which return to show — the methodology, or pick one or more explicitly. Every cell is labelled with the return it is showing."
@@ -123,7 +132,7 @@ export function ReturnMeasureSelect({ measures, onChange, hints, source }: {
         <div className="absolute right-0 z-50 mt-1 w-[min(22rem,92vw)] overflow-hidden rounded-lg border border-ink-700 bg-ink-800 shadow-xl shadow-black/40" role="listbox" aria-multiselectable="true">
           <div className="border-b border-ink-700 px-3 py-1.5 text-[11px] text-slate-500">Pick the return to show. Each cell is labelled with it.</div>
           <ul className="max-h-80 overflow-auto py-1">
-            {RETURN_MEASURES.filter((m) => PICKER_KEYS.includes(m.key)).map((m) => {
+            {RETURN_MEASURES.filter((m) => offered.includes(m.key)).map((m) => {
               const on = ticked(m.key);
               return (
                 <li key={m.key} role="option" aria-selected={on} data-return-option={m.key}
