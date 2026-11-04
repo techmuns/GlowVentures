@@ -13,6 +13,14 @@ export type ReturnGap = { accountId: string; label: string; owner?: string; reas
 export type ReturnUnit = { key: string; accountId: string; label: string; positions: readonly Position[];
   gain: number; invested: number; close: number; from: string | null; to: string;
   assumption?: HoldingAssumption;
+  /**
+   * HELD AT ITS LAST VALUE (Stage 10la, the family's 4 Nov decision): no second
+   * value this period, so it is carried flat from its latest valuation to the
+   * period's end — a 0% that is named, never shown as measured.
+   */
+  held?: { date: string; reason: string };
+  /** How the start was chosen, where it is not the engine's default (Stage 10la). */
+  basis?: 'unit-window' | 'statement-nav' | 'broker-trades' | 'earlier-balance' | 'listing-day';
   gainParts?: { unrealised: number | null; realised: number | null; income: number | null };
   window?: AccountWindow; inception?: InceptionRow };
 export type SelectedLine = { key: string; label: string; positions: readonly Position[]; value: number;
