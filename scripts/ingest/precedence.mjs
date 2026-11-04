@@ -484,13 +484,32 @@ PRECEDENCE["Motilal Oswal Financial Services (demat)"] = {
  * "price" of Re 1.00 for National Stock Exchange of India Ltd.
  *
  * Holdings only, and nothing named for cost: a depository does not know what
- * shares cost. Nothing named for transactions either — this account issues no
- * tape in this drop, and a depository movement would not be a trade if it did.
+ * shares cost. The account's TRADES arrive, since November 2026, as a broker's
+ * equity order book whose every row settles into it
+ * (providers/equityOrderBook.mjs) — trades with a trade value and every charge,
+ * never a depository movement. It prints no period, so it dates its trades and
+ * opens no window.
  */
 PRECEDENCE["ICICI Bank (NSDL demat)"] = {
   holdings: { reportType: "holdings", note: "`Statement of Holding` — the only source in this corpus for the family's unlisted, pre-IPO and promoter holdings." },
   quantity: { reportType: "holdings", note: "the `Balance` column." },
   marketValue: { reportType: "holdings", note: "the `Value (Rs.)` column, ADOPTED where it is a mark and REFUSED where it is the face value the security was allotted at. The rows read reproduce the statement's own printed grand total to the rupee." },
+  transactions: { reportType: "transaction-statement", note: "the equity order book filed under the demat account its trades settle into." },
+};
+
+/**
+ * HDFC SECURITIES — Ajay's trading account 3110320, from the InvestRight app's
+ * two CSV exports read as one snapshot (providers/hdfcSecurities.mjs). The
+ * equity portfolio is the document; the demat portfolio is its witness.
+ */
+PRECEDENCE["HDFC Securities"] = {
+  holdings: { reportType: "holdings", note: "the InvestRight equity portfolio, named and completed by the demat portfolio of the same snapshot." },
+  quantity: { reportType: "holdings", note: "`QTY`, equal to the demat portfolio's `FREE QTY` on every row." },
+  unitCost: { reportType: "holdings", note: "`AVG PRICE`, printed to two decimals." },
+  totalCost: { reportType: "holdings", note: "`INVESTMENT VALUE` — the primitive; AVG PRICE × QTY misses it by the price's rounding." },
+  marketPrice: { reportType: "holdings", note: "`LTP` at the export's own time stamp." },
+  marketValue: { reportType: "holdings", note: "derived as LTP × QTY; the printed `CURRENT VALUE` is the check." },
+  accountTotals: { reportType: "holdings" },
 };
 
 /**

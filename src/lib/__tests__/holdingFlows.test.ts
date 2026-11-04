@@ -152,7 +152,9 @@ ok("the book dates holdings' money by their trades and by their lots", byTrades.
 
 // ── 6. RECOVERED LOTS REACH THE RETURN (Stage 10jf) ─────────────────────────
 {
-  ok("the book dates holdings' money by their recovered purchase records", byRecovered.length >= 7, `${byRecovered.length} lines`);
+  // Five since Stage 10kn: Ajay's ICICI statement of 31 Oct no longer holds the
+  // exact units four of the records bought (Smartworks, Insolation, Yash, EMA).
+  ok("the book dates holdings' money by their recovered purchase records", byRecovered.length >= 5, `${byRecovered.length} lines`);
   // Each record's cash, struck against the FIFO figures it did not produce:
   // bought less the cost of what was sold is the cost still held, and sold less
   // that same cost is the realised gain.
@@ -173,7 +175,8 @@ ok("the book dates holdings' money by their trades and by their lots", byTrades.
   // its units assumed still held from their statement; an undated price, or one
   // older than the statement, closes nothing.
   ok("a live quote with no date of its own closes no recovered record", flowsOf({ ...one, live: true }) === null);
-  const quoteDay = "2026-10-29", quoted = { ...one, live: true, marketValue: one.marketValue * 1.1,
+  // A day after the line's own statement (Ajay's ICICI NSDL one is of 31 Oct).
+  const quoteDay = "2026-11-03", quoted = { ...one, live: true, marketValue: one.marketValue * 1.1,
     priceEvidence: { kind: "quote" as const, source: "Upstox", instrument: "NSE:X", value: 1, effectiveAt: `${quoteDay}T10:00:00Z`, observedAt: null } };
   const mf = flowsOf(quoted);
   ok("a dated market price closes the record on its own date, assumed held from the statement",

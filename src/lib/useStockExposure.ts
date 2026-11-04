@@ -26,9 +26,9 @@ import { lookthroughCompanies } from "@/lib/recordedHoldings";
  * So they are made once, here, and both pages call this. Same reasoning as
  * `holdingBucket` and `companyExposure`: one definition, not a per-page reflex.
  *
- * `enabled` is false where a view does not ask what a fund holds — the Monitor's
- * other three axes group the book's own positions and must not pay for 21
- * fetches. Disabled, the state stays `loading`, which is the honest thing for a
+ * `enabled` is false where a view does not ask what a fund holds (an entity's
+ * own look-through off the Monitor's Security axis, Family & Entities until its
+ * sectors are wanted). Disabled, the state stays `loading`, which is the honest thing for a
  * caller that is not asking rather than a fabricated empty answer; no caller
  * renders it while disabled.
  */

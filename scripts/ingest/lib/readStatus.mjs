@@ -79,6 +79,13 @@ export const STATEMENT_NOTES = Object.freeze(new Set([
   "account-no-from-client-code",
   "account-no-from-sole-account",
   "security-name-from-isin",
+  // A broker export named by symbol, named from the depository view of the same
+  // snapshot (providers/hdfcSecurities.mjs).
+  "security-name-from-depository-view",
+  // An order book prints symbols, never ISINs (providers/equityOrderBook.mjs):
+  // the ISIN is the exchange master's, or none where no master carries the symbol.
+  "symbol-isin-from-instrument-master",
+  "symbol-not-resolved",
   // A scanned row no text-layer statement names: ISIN and quantity checked, spelling not.
   "security-name-from-scan",
 ]));

@@ -33144,7 +33144,7 @@ const INVARIANTS = {
       if (!row) return false;
       const shown = rupeesCell(row.cells[COL_STOCK.avgCost]);
       return Math.abs(shown - b.mixed.avg) <= 0.01 && Math.abs(shown - b.mixed.oldAvg) > 1
-        && /reports? a cost/i.test(row.cellTitles[COL_STOCK.avgCost] ?? "");
+        && /reports? a cost/i.test(row.cellAllTitles?.[COL_STOCK.avgCost] ?? "");
     }],
     ["...and its P&L is the costed shares' value less their cost, with the uncosted part named (A-02)", (t, ctx) => {
       const b = CLUBBED_BOOK;
@@ -33154,7 +33154,7 @@ const INVARIANTS = {
       if (!row) return false;
       const shown = moneyCell(row.cells[COL_STOCK.pnl]);
       return pmClose(shown, b.mixed.pnl / 1e7) && !pmClose(shown, b.mixed.oldPnl / 1e7)
-        && /reports? none/i.test(row.cellTitles[COL_STOCK.pnl] ?? "");
+        && /reports? none/i.test(row.cellAllTitles?.[COL_STOCK.pnl] ?? "");
     }],
     /**
      * THE P&L COLUMN TIES TO ITS OWN FOOTER. The rows once summed to ₹15.92 Cr
@@ -41494,6 +41494,10 @@ for (const theme of THEMES) {
            */
           cellTitles: [...tr.cells].map((td) =>
             td.querySelector("[title]")?.getAttribute("title") ?? td.getAttribute("title") ?? ""),
+          // EVERY title in the cell: a "Trace … to its sources" button can come
+          // before the figure's own hover, and `cellTitles` reads only the first.
+          cellAllTitles: [...tr.cells].map((td) =>
+            [td, ...td.querySelectorAll("[title]")].map((e) => e.getAttribute("title")).filter(Boolean).join(" | ")),
           /**
            * THE SECTOR CELL, off its own handle (MH-07): `data-sector` is what
            * the shared three-tier index placed the company in, and its `title`

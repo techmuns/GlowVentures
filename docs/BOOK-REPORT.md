@@ -7,9 +7,9 @@ Generated — **do not edit by hand**.
 
 | | |
 | --- | ---: |
-| Consolidated market value | 9,87,88,90,086.79 |
-| Positions | 492 |
-| Accounts | 94 |
+| Consolidated market value | 10,75,52,71,296.04 |
+| Positions | 506 |
+| Accounts | 95 |
 | Owners | 11 |
 | Newest as-of | 2026-11-03 |
 
@@ -51,11 +51,12 @@ Generated — **do not edit by hand**.
 | 15725046 | HDFC Mutual Fund | Aarti Jaisinghani | — | 2026-10-01 | 5 | 1,97,295.01 |
 | 16002141 | HDFC Mutual Fund | Ankita Jaisinghani | — | 2026-10-01 | 4 | 2,62,48,837.36 |
 | 16180583 | HDFC Mutual Fund | Bharat Jaisinghani | — | 2026-10-05 | 2 | 0 |
+| 3110320 | HDFC Securities | Ajay Jaisinghani | — | 2026-11-02 | 8 | 47,24,38,737.5 |
 | 10056128 | Helios Mutual Fund | Ajay Jaisinghani | — | 2026-11-03 | 1 | 5,07,56,205.51 |
 | 10056154 | Helios Mutual Fund | Ankita Jaisinghani | — | 2026-11-03 | 1 | 7,97,79,402.82 |
 | 10063876 | Helios Mutual Fund | Bharat Jaisinghani | — | 2026-11-03 | 1 | 3,76,60,829.96 |
 | 10355977 | Helios Mutual Fund | Ajay Jaisinghani | — | 2026-11-03 | 1 | 29,90,84,367.18 |
-| 49794950 | ICICI Bank (NSDL demat) | Ajay Jaisinghani | — | 2026-03-31 | 9 | 63,76,31,614.65 |
+| 49794950 | ICICI Bank (NSDL demat) | Ajay Jaisinghani | — | 2026-10-31 | 16 | 1,06,15,74,486.4 |
 | 14320536 | ICICI Prudential Mutual Fund | Ankita Jaisinghani | — | 2026-10-01 | 3 | 0 |
 | 36378950 | ICICI Prudential Mutual Fund | Ajay Jaisinghani | — | 2026-10-05 | 1 | 56,29,906.02 |
 | 36379637 | ICICI Prudential Mutual Fund | Bharat Jaisinghani | — | 2026-10-05 | 1 | 37,53,270.69 |
@@ -90,7 +91,7 @@ Generated — **do not edit by hand**.
 | 90410014574 | Motilal Oswal Hedged Equity Multi Factor Strategy | Ajay Jaisinghani | — | 2026-07-31 | 2 | 0 |
 | 90414963315 | Motilal Oswal Mutual Fund | Ajay Jaisinghani | — | 2026-09-30 | 3 | 0 |
 | 9039920536 | Neo Infra Income Opportunities Fund | Ajay Jaisinghani | — | 2026-06-30 | 1 | 5,54,98,303.25 |
-| MOPWM | Consolidated review (MOPWM) | Ajay Jaisinghani | — | 2026-06-30 | 27 | 1,25,39,86,765.57 |
+| MOPWM | Consolidated review (MOPWM) | Ajay Jaisinghani | — | 2026-06-30 | 26 | 1,23,39,86,365.57 |
 | MOPWM | Consolidated review (MOPWM) | Ankita Jaisinghani | — | 2026-06-30 | 12 | 29,04,27,491.87 |
 | MOPWM | Consolidated review (MOPWM) | Bharat Jaisinghani | — | 2026-06-30 | 31 | 37,26,33,638.62 |
 | MOPWM | Consolidated review (MOPWM) | Bharat Jaisinghani Family Trust 2 | — | 2026-06-30 | 1 | 1,35,00,875 |
@@ -129,7 +130,7 @@ Stage 10dh: the review (MOPWM, 30 Jun 2026) is the source for private-market hol
 | motilal-oswal-financial-services-demat-1201090012838316 | TOCF-I — Class A2 | unvalued | 12899.355 | The OAKS Consumer Fund I - SANTOSH PARAB |
 | motilal-oswal-financial-services-demat-1201090012838316 | CHEELIZZA IND-EQ1/ | unvalued | 350980 | Cheelizza - ANIMESH LODHA |
 | icici-bank-nsdl-demat-49794950 | SKY CAPITAL RISING TITANS FUND I - SKYCRTF ONCAREA3 - Restricted Transferability | unvalued | 15000 | Sky Capital Titan Rising Funds 1 |
-| icici-bank-nsdl-demat-49794950 | INDIA SME INVESTMENTS AIF TRUST II - CL A2 - Restricted Transferability | unvalued | 67500 | India SME |
+| icici-bank-nsdl-demat-49794950 | INDIA SME INVESTMENTS AIF TRUST II - CL A2 - Restricted Transferability | unvalued | 97500 | India SME |
 | icici-bank-nsdl-demat-49794950 | EVEREST FLEET PRIVATE LIMITED - EQ NEW FV RS. 1/ | unvalued | 710 | Everest Fleet Private Ltd - SIDDHARTH LADSARIYA |
 | icici-bank-nsdl-demat-49794950 | EVEREST FLEET PRIVATE LIMITED - 0.001% SERIES B NEW PREF 18AP43 | unvalued | 100 | Everest Fleet Private Ltd - SIDDHARTH LADSARIYA |
 | icici-bank-nsdl-demat-49794950 | URB VENTURES PRIVATE LIMITED - EQ | unvalued | 148000 | URB Ventures Pvt Ltd - ANUJ MUNOT |
@@ -140,16 +141,16 @@ Stage 10dh: the review (MOPWM, 30 Jun 2026) is the source for private-market hol
 | icici-bank-nsdl-demat-49794950 | MATRIX GAS AND RENEWABLES LIMITED - EQ | unvalued | 75000 | Matrix Gas And Renewables Limited |
 | icici-bank-nsdl-demat-49794950 | OILMAX ENERGY PRIVATE LIMITED - EQ | unvalued | 17000 | Oil Max |
 | icici-bank-nsdl-demat-49794950 | BIG BANG BOOM SOLUTIONS PRIVATE LIMITED - 0.001% PREF 12SP44 | unvalued | 48 | BIG BANG BOOM |
-| icici-bank-nsdl-demat-49794950 | RAYS POWER EXPERTS PRIVATE LIMITED - EQ | unvalued | 59000 | RAY's |
-| icici-bank-nsdl-demat-49794950 | SOTEFIN BHARAT LIMITED - EQ | unvalued | 171879 | SOTEFIN |
+| icici-bank-nsdl-demat-49794950 | RAYS POWER EXPERTS LIMITED - EQ | unvalued | 59000 | RAY's |
 | icici-bank-nsdl-demat-49794950 | ZENITH LEISURE HOLIDAYS LIMITED - EQ | unvalued | 32791 | Zenith |
 | icici-bank-nsdl-demat-49794950 | RADIANT INNOVATIVE MANUFACTURING LIMITED - EQ NEW FV RS. 10/ | unvalued | 71400 | Radiant |
 | icici-bank-nsdl-demat-49794950 | ELECTROMECH INFRAPROJECTS LIMITED - EQ NEW FV RS.5/ | unvalued | 378788 | Electromech Infraprojects Pvt Ltd |
 | icici-bank-nsdl-demat-49794950 | ONIX RENEWABLE LIMITED - EQ | unvalued | 90000 | Onix Renewable |
-| icici-bank-nsdl-demat-49794950 | ASSETGRO FINTECH PRIVATE LIMITED - 1% SERIES B PREF 25NV44 | unvalued | 636 | Assetgro Fintech Private Limited |
-| icici-bank-nsdl-demat-49794950 | NATIONAL STOCK EXCHANGE OF INDIA LTD - EQ NEW FV RE.1/ | unvalued | 125000 | National Stock Exchange |
-| icici-bank-nsdl-demat-49794950 | BOROSIL RENEWABLES LIMITED - WARRANTS 13AG26 | position | 283018 | Borosil Renewables |
-| icici-bank-nsdl-demat-49794950 | BLUE ASHVA VARENYA FUND - BAVF-SER20-C6 - Restricted Transferability | position | 1000 | Blue Ashva Varenya Account |
+| icici-bank-nsdl-demat-49794950 | ASSETGRO FINTECH LIMITED - 1% SERIES B PREF 25NV44 | unvalued | 541 | Assetgro Fintech Private Limited |
+| icici-bank-nsdl-demat-49794950 | ASSETGRO FINTECH LIMITED - EQ NEW FV RS. 2/ | unvalued | 20797 | Assetgro Fintech Private Limited |
+| icici-bank-nsdl-demat-49794950 | NATIONAL STOCK EXCHANGE OF INDIA LTD - EQ NEW FV RE.1/ | position | 125000 | National Stock Exchange |
+| icici-bank-nsdl-demat-49794950 | BOROSIL RENEWABLES LIMITED - EQ NEW FV RE. 1/- LISTING/TRDG APRVL AWAITED | unvalued | 283018 | Borosil Renewables |
+| icici-bank-nsdl-demat-49794950 | BLUE ASHVA VARENYA FUND - BAVF-SER20-C6 - Restricted Transferability | position | 856.736 | Blue Ashva Varenya Account |
 | india-sme-investments-175962 | India SME Investments Fund II — Class A2 | unvalued | 81000 | India SME |
 | india-sme-investments-175964 | India SME Investments Fund II — Class A2 | unvalued | 27000 | India SME |
 | india-sme-investments-177302 | India SME Investments Fund II — Class A2 | unvalued | 27000 | India SME |
@@ -181,15 +182,17 @@ Stage 10dh: the review (MOPWM, 30 Jun 2026) is the source for private-market hol
 | hdfc-bank-nsdl-demat-22025655 | ZIPPMAT PRIVATE LIMITED 0.01% SERIES SEED 2 PREF | unvalued | 34 | Zippmat Private Ltd - ABHIJEET KUDVA |
 | hdfc-bank-nsdl-demat-22025655 | ZIPPMAT PRIVATE LIMITED 0.01% SERIES SEED 4 PREF 27AG44 | unvalued | 7 | Zippmat Private Ltd - ABHIJEET KUDVA |
 
-Where a statement disagrees, the review is followed and the statement named (11 rows):
+Where a statement disagrees, the review is followed and the statement named (13 rows):
 
 - 360-one-private-wealth-37702 · 360 ONE Special Opportunities Fund — Series 8 — Class A3 (AIF Category II): CRN37702's statement of 31 Jul 2026 values the same units at ₹1,46,68,362.66.
 - baring-private-equity-india-fund-AIFM_BPEPF6_0584 · Baring Private Equity India Fund 6 — Class A1: Ankita's Motilal Oswal demat records 252.5 units on 31 Jul 2026, against the 202.5 the fund's statement and the review carry; the fund's statement of 31 Mar 2026 prints ₹56,161 paid out (₹18,909 on 30 Sep 2025 and ₹37,252 on 31 Mar 2026) where the review carries ₹1,42,867.
 - india-sme-investments-175962 · India SME Investments Fund II — Class A2: the review's own closing carries 54,000 units at ₹1,770 a unit; the fund's statement prints the 81,000 units held.
 - india-sme-investments-175964 · India SME Investments Fund II — Class A2: the review's own closing carries 18,000 units; the fund's statement prints the 27,000 units held.
 - india-sme-investments-177302 · India SME Investments Fund II — Class A2: the review's own closing carries 18,000 units; the fund's statement prints the 27,000 units held; the fund's statement dates the ₹50,00,000 call the review puts on 29 Nov 2024 on 14 Jul 2025.
-- review-ajay-jaisinghani · Blue Ashva Varenya Account: the ICICI Bank NSDL statement of 31 Mar 2026 values Ajay's units at ₹98,742.
-- review-ajay-jaisinghani · Borosil Renewables - Warrants 13AG26: the ICICI Bank NSDL statement of 31 Mar 2026 values the 2,83,018 warrants at ₹70,754.50.
+- review-ajay-jaisinghani · Assetgro Fintech Private Limited — Series B Preference: the ICICI Bank NSDL statement of 31 Oct 2026 holds 541 Series B preference shares and 20,797 equity shares of the company, now Assetgro Fintech Limited, where the review carries 636 preference shares.
+- review-ajay-jaisinghani · Blue Ashva Varenya Account: the ICICI Bank NSDL statement of 31 Oct 2026 values Ajay's 856.736 units at ₹84,595.83.
+- review-ajay-jaisinghani · Borosil Renewables - Preferential Equity (listing awaited): the ICICI Bank NSDL statement of 31 Oct 2026 holds 2,83,018 equity shares (IN8666D01021, a preferential allotment awaiting listing, locked in to 7 May 2027) where the review carries the warrants, at their ₹1 face value; the payment that converted them is on no statement in this book.
+- review-ajay-jaisinghani · National Stock Exchange of India: the ICICI Bank NSDL statement of 31 Oct 2026 marks Ajay's 1,25,000 shares at ₹22,27,62,500 (the 30 Oct close).
 - review-ajay-jaisinghani · Zepto: Ajay's Motilal Oswal demat 1201090012539150 shows the 4,716 preference shares converted, and 37,38,119 equity shares held on 31 Jul 2026.
 - sky-capital-rising-titans-fund-SKY003 · Sky Capital Rising Titans Fund I: SKY003's statement of 31 Jul 2026 prints ₹1,72,85,000 drawn — its 22 Apr 2026 call of ₹1,35,000 is on no row of the review.
 - transition-venture-capital-TVC262 · Transition Venture Capital Fund I — Class A1: the trust's own statement of 31 Mar 2026 values its 7,500 units at ₹1,71,45,962.25 (₹2,286.13 a unit) against the review's 28 Feb mark.
@@ -222,7 +225,7 @@ The review's dated rows behind the holdings it values (65 rows, `BOOK_REVIEW_FLO
 
 | Owner | Accounts | Positions | Market value |
 | --- | ---: | ---: | ---: |
-| Ajay Jaisinghani | 36 | 238 | 5,62,60,49,684.75 |
+| Ajay Jaisinghani | 37 | 252 | 6,50,24,30,894 |
 | Ankita Jaisinghani | 22 | 119 | 1,69,94,85,896.91 |
 | Bharat Jaisinghani | 16 | 101 | 79,03,34,777.23 |
 | Aarti Jaisinghani | 4 | 10 | 99,08,07,227.64 |
@@ -268,17 +271,17 @@ page alone. `BOOK_POLYCAB` is its only reader; remove its key from
 | Security | Holder | Account | As of | Shares | Market value |
 | --- | --- | --- | --- | ---: | ---: |
 | POLYCAB INDIA LIMITED - EQ | Bharat Jaisinghani | HDFC Bank (NSDL demat) 22025655 | 2026-03-31 | 51,08,911 | — |
-| POLYCAB INDIA LIMITED - EQ | Ajay Jaisinghani | ICICI Bank (NSDL demat) 49794950 | 2026-03-31 | 1,39,01,229 | 1,23,51,24,19,665 |
+| POLYCAB INDIA LIMITED - EQ | Ajay Jaisinghani | ICICI Bank (NSDL demat) 49794950 | 2026-10-31 | 1,39,01,229 | 1,08,24,88,70,223 |
 
-Together **1,23,51,24,19,665**, excluded from the 9,87,88,90,086.79 consolidated market value above.
+Together **1,08,24,88,70,223**, excluded from the 10,75,52,71,296.04 consolidated market value above.
 
 ## The family's own dated investments
 
 **29** of those account(s) start every class's record at nil — a printed running unit balance that starts from zero on the class's first allotment, or a first allotment on the day the class's own series name says it was issued — which proves their record reaches inception: 3p-investment-managers-3000048, ask-absolute-return-fund-9039917111, ask-absolute-return-fund-9039917144, bandhan-mutual-fund-1802619, bandhan-mutual-fund-8652064, bandhan-mutual-fund-8691267, baring-private-equity-india-fund-AIFM_BPEPF6_0584, buoyant-capital-103472, buoyant-capital-103473, carnelian-bharat-amritkaal-fund-4551, hdfc-mutual-fund-16002141, helios-mutual-fund-10056128, helios-mutual-fund-10056154, helios-mutual-fund-10063876, helios-mutual-fund-10355977, icici-prudential-mutual-fund-14320536, icici-prudential-mutual-fund-36378950, icici-prudential-mutual-fund-36379637, invesco-mutual-fund-3041491081, invesco-mutual-fund-3041491145, invesco-mutual-fund-3041794916, kotak-mahindra-mutual-fund-5372722, kotak-mahindra-mutual-fund-7125255, kotak-mahindra-mutual-fund-7125319, motilal-oswal-active-momentum-fund-904168868444, motilal-oswal-delphi-equity-fund-9049241536, motilal-oswal-founders-fund-90410016093, motilal-oswal-founders-fund-90410016104, motilal-oswal-hedged-equity-multi-factor-strategy-90410014574.
 
-**181** dated contribution(s) totalling **8,00,57,25,594.04** and **430** withdrawal(s) totalling **2,33,07,66,023.06**, across **54 of 94** account(s).
+**181** dated contribution(s) totalling **8,00,57,25,594.04** and **430** withdrawal(s) totalling **2,33,07,66,023.06**, across **54 of 95** account(s).
 
-These are movements the STATEMENTS type as a contribution or a withdrawal — what the family put in and took out — and not the trades their managers made inside a mandate. The other 40 account(s) publish no dated capital record at all: their subscription happened, and no statement in this drop says when.
+These are movements the STATEMENTS type as a contribution or a withdrawal — what the family put in and took out — and not the trades their managers made inside a mandate. The other 41 account(s) publish no dated capital record at all: their subscription happened, and no statement in this drop says when.
 
 A per-contribution breakdown is published for **33** position(s), of which **14** were bought over more than one date. That needs UNITS allotted per contribution, and the allotted units accounting for every unit held — without both, a tranche's value today cannot be struck, and a return on part of a position would read as a return on all of it.
 
@@ -320,9 +323,9 @@ A per-contribution breakdown is published for **33** position(s), of which **14*
 
 ## When each holding was bought (Stage 10fm)
 
-Of **422** holdings, **241** carry the date their units were bought: 33 by the fund's own dated allotments, 17 by a lot register, 105 by their account's own dated trades (every unit held matched to a buy, first-in, first-out) and 86 by the family's review's investment dates. A drawdown fund's dated calls date a few more on the page.
+Of **436** holdings, **240** carry the date their units were bought: 33 by the fund's own dated allotments, 17 by a lot register, 105 by their account's own dated trades (every unit held matched to a buy, first-in, first-out) and 85 by the family's review's investment dates. A drawdown fund's dated calls date a few more on the page.
 
-**1060** dated buys and sells sit behind **161** holdings (`BOOK_HOLDING_TRADES`); **94** of the sales also carry the purchase dates of the lots their capital gain statement settles them with.
+**1082** dated buys and sells sit behind **165** holdings (`BOOK_HOLDING_TRADES`); **94** of the sales also carry the purchase dates of the lots their capital gain statement settles them with.
 
 The rest are undated on the page, each with its reason:
 
@@ -330,10 +333,11 @@ The rest are undated on the page, each with its reason:
 - SVAN Investment Managers LLP 8710090 — no trade in the transaction statements' window: 32
 - Goldstandard Wealth Private Limited 100022 — no trade in the transaction statements' window: 23
 - Goldstandard Wealth Private Limited 100023 — no trade in the transaction statements' window: 23
-- ICICI Bank (NSDL demat) 49794950 — no transaction statement or dated allotment reaches it: 9
+- ICICI Bank (NSDL demat) 49794950 — no transaction statement or dated allotment reaches it: 16
 - SVAN Investment Managers LLP 8710067 — the trades do not account for every unit held: 9
 - SVAN Investment Managers LLP 8710090 — the trades do not account for every unit held: 9
 - V.E.C Assago Capital Management LLP 128005 — the trades do not account for every unit held: 9
+- HDFC Securities 3110320 — no transaction statement or dated allotment reaches it: 8
 - LKP Securities 98245 — no transaction statement or dated allotment reaches it: 7
 - V.E.C Assago Capital Management LLP 128005 — no trade in the transaction statements' window: 5
 - Carnelian Asset Management and Advisors Pvt Ltd 3517383 — no trade in the transaction statements' window: 4
@@ -356,18 +360,18 @@ The rest are undated on the page, each with its reason:
 
 | Sector | Market value | Share |
 | --- | ---: | ---: |
-| Unclassified | 8,47,31,23,426.83 | 85.77% |
-| Financials | 65,23,65,261.42 | 6.60% |
-| Health Care | 18,25,47,786.1 | 1.85% |
-| Consumer Discretionary | 18,07,07,727.82 | 1.83% |
-| Industrials | 14,70,50,797.65 | 1.49% |
-| Information Technology | 9,34,24,695.48 | 0.95% |
-| Cash | 7,82,08,032.44 | 0.79% |
-| Materials | 2,37,31,146.25 | 0.24% |
-| Consumer Staples | 2,24,78,869.8 | 0.23% |
-| Communication Services | 1,05,04,208.2 | 0.11% |
+| Unclassified | 9,34,95,04,636.08 | 86.93% |
+| Financials | 65,23,65,261.42 | 6.07% |
+| Health Care | 18,25,47,786.1 | 1.70% |
+| Consumer Discretionary | 18,07,07,727.82 | 1.68% |
+| Industrials | 14,70,50,797.65 | 1.37% |
+| Information Technology | 9,34,24,695.48 | 0.87% |
+| Cash | 7,82,08,032.44 | 0.73% |
+| Materials | 2,37,31,146.25 | 0.22% |
+| Consumer Staples | 2,24,78,869.8 | 0.21% |
+| Communication Services | 1,05,04,208.2 | 0.10% |
 | Utilities | 91,44,294.8 | 0.09% |
-| Real Estate | 56,03,840 | 0.06% |
+| Real Estate | 56,03,840 | 0.05% |
 
 ## Unclassified sectors
 
@@ -388,7 +392,7 @@ never guessed into the nearest plausible bucket.
 
 - Glowsphere LLP: NZURI PUNE KNOWLEDGE PARK PRIVATE LIMITED — amount invested ₹75245856 is ₹4754139.5 below its own 4507042 units × ₹17.75; the amount is the cost, and the family have not said why they differ
 - Glowterra LLP: NZURI PUNE KNOWLEDGE PARK PRIVATE LIMITED — amount invested ₹225710084 is ₹14289920.25 below its own 13521127 units × ₹17.75; the amount is the cost, and the family have not said why they differ
-- 18 spreadsheet export(s) are witnesses of the PDF beside each (`twinOf`) and are not documents of this book — ASK Investment Managers Limited 10, Marathon Trends Advisory Pvt Ltd 8. Each carries no facts; every figure in it was checked against its PDF at extraction (docs/EXTRACTION-REPORT.md).
+- 19 spreadsheet export(s) are witnesses of the PDF beside each (`twinOf`) and are not documents of this book — ASK Investment Managers Limited 10, HDFC Securities 1, Marathon Trends Advisory Pvt Ltd 8. Each carries no facts; every figure in it was checked against its PDF at extraction (docs/EXTRACTION-REPORT.md).
 - identity: 12 ISIN(s) are held under TWO OR MORE securityKeys — one security keyed twice, so its rows never add up. Each is a name one issuer CLIPS and another spells out, which no rule here bridges: the depository strip only ever REMOVES furniture and never supplies a name the statement did not print. Closing them needs a hand-checked alias, not another statement: INE0LTR03090 (everest-fleet-private-limited-0-001-series-b-new-pref-18ap43 / efpl-pref-18042043); INF0XAZ22055 (india-sme-investments-aif-trust-ii-cl-a2-restricted-transferability / india-sme-investments-fund-ii-class-a2); INF1ISW22079 (sanshi-trust-fd-i-cl-e-restricted-transferability / sanshi-fund-i-class-e); INF179K01830 (hdfc-balanced-advantage-fund-regular-plan-growth / hdfc-baf-r-grow); INF0R8701046 (helios-flexi-cap-fund-direct-growth / helios-fcf-d-grow); INF0VGG22429 (blue-ashva-varenya-fund-bavf-ser20-c6-restricted-transferability / bavf-series-20-class-c6); INE647U01026 (clean-max-enviro-energy-solutions / clean-max-env); INE721I01024 (national-stock-exchange-of-india / national-stock-ex); INF1V9N22050 (sky-capital-rising-titans-fund-i-skycrtf-oncarea3-restricted-transferability / sky-capital-rising-titans-fund-oncare-class-a3); INF205K01KR8 (invesco-india-arbitrage-fund-direct-plan-growth-af-d1 / inves-arbf-d-grow); INF174K01LT0 (kotak-midcap-fund-direct-plan-growth-erstwhile-kotak-emerging-equity-scheme / kotak-mid-cap-fund-direct-growth); INF174K01LS2 (kotak-flexicap-fund-direct-growth-erstwhile-kotak-standard-multicap-fund-dir-gr / kotak-flexi-cap-fund-direct-growth)
 - identity: 0 securityKey(s) carry two different ISINs — no key in this archive names two securities.
 - account 1000632: 1 income row(s) print neither a gross nor a TDS figure, so they are carried as printed — any TDS on them is not on the page
@@ -658,6 +662,10 @@ never guessed into the nearest plausible bucket.
 - account 16180583: no time-weighted return series in any statement
 - account 16180583: no flow block in any statement, so no value bridge
 - account 16180583: no external capital movements found, so no money-weighted return series
+- account 3110320 (HDFC Securities) carries 2 of 10 holding(s) with NO market value, so they are in the archive and out of every total: STERLITE ELECTRIC LIMITED EQ (1140 unit(s), no price published); STERLITE GRID 5 LIMITED EQ NEW FV RS 2/ (1140 unit(s), no price published). A depository prints the value a security was allotted at, or the price its last movement went through at, where it holds no mark for it, and neither is a valuation: carried, either would state one nobody struck. The remaining 8 row(s) on the same statement ARE marked and are in the book.
+- account 3110320: no time-weighted return series in any statement
+- account 3110320: no flow block in any statement, so no value bridge
+- account 3110320: no external capital movements found, so no money-weighted return series
 - account Helios Mutual Fund::10056128: holdings 2026-10-26 superseded for SNAPSHOT facts by 2026-11-03 — `helios-mutual-fund-10056128-2026-10-26-holdings`; its dated rows are still counted
 - account 10056128: no time-weighted return series in any statement
 - account 10056128: no flow block in any statement, so no value bridge
@@ -673,7 +681,8 @@ never guessed into the nearest plausible bucket.
 - account 10355977: no time-weighted return series in any statement
 - account 10355977: no flow block in any statement, so no value bridge
 - account 10355977: no external capital movements found, so no money-weighted return series
-- account 49794950 (ICICI Bank (NSDL demat)) carries 24 of 38 holding(s) with NO market value, so they are in the archive and out of every total: ASSETGRO FINTECH PRIVATE LIMITED - 1% SERIES B PREF 25NV44 (636 unit(s), recorded at a face value of 10); BIG BANG BOOM SOLUTIONS PRIVATE LIMITED - 0.001% PREF 12SP44 (48 unit(s), recorded at a face value of 10); ELECTROMECH INFRAPROJECTS LIMITED - EQ NEW FV RS.5/ (378788 unit(s), recorded at a face value of 5); ESDS SOFTWARE SOLUTION LIMITED - EQ NEW FV RS .1/ (330898 unit(s), recorded at a face value of 1); EVEREST FLEET PRIVATE LIMITED - 0.001% SERIES B NEW PREF 18AP43 (100 unit(s), recorded at a face value of 1); EVEREST FLEET PRIVATE LIMITED - EQ NEW FV RS. 1/ (710 unit(s), recorded at a face value of 1); INDIA SME INVESTMENTS AIF TRUST II - CL A2 - Restricted Transferability (67500 unit(s), recorded at a face value of 1000); INFOBAY AI LIMITED - 0.01% PREF 18AG44 (107 unit(s), recorded at a face value of 10); INNOVITI TECHNOLOGIES PRIVATE LIMITED - EQ (32017 unit(s), recorded at a face value of 10); INTEGRIS MEDTECH LIMITED - EQ NEW FV RE.1/ (177981 unit(s), recorded at a face value of 1); MATRIX GAS AND RENEWABLES LIMITED - EQ (75000 unit(s), recorded at a face value of 10); NATIONAL STOCK EXCHANGE OF INDIA LTD - EQ NEW FV RE.1/ (125000 unit(s), recorded at a face value of 1); OILMAX ENERGY PRIVATE LIMITED - EQ (17000 unit(s), recorded at a face value of 10); ONIX RENEWABLE LIMITED - EQ (90000 unit(s), recorded at a face value of 10); RADIANT INNOVATIVE MANUFACTURING LIMITED - EQ NEW FV RS. 10/ (71400 unit(s), recorded at a face value of 10); RAYS POWER EXPERTS PRIVATE LIMITED - EQ (59000 unit(s), recorded at a face value of 10); SKS FASTENERS LIMITED - EQ (24800 unit(s), recorded at a face value of 10); SKY CAPITAL RISING TITANS FUND I - SKYCRTF ONCAREA3 - Restricted Transferability (15000 unit(s), recorded at a face value of 1000); SOTEFIN BHARAT LIMITED - EQ (171879 unit(s), recorded at a face value of 10); SPRAY ENGINEERING DEVICES LIMITED - EQ (165566 unit(s), recorded at a face value of 10); URB VENTURES PRIVATE LIMITED - 0.001% PREF 07JL42 (4000 unit(s), recorded at a face value of 10); URB VENTURES PRIVATE LIMITED - EQ (148000 unit(s), recorded at a face value of 10); WEVOIS LABS PRIVATE LIMITED - EQ (55 unit(s), recorded at a face value of 10); ZENITH LEISURE HOLIDAYS LIMITED - EQ (32791 unit(s), recorded at a face value of 10). A depository prints the value a security was allotted at, or the price its last movement went through at, where it holds no mark for it, and neither is a valuation: carried, either would state one nobody struck. The remaining 14 row(s) on the same statement ARE marked and are in the book.
+- account ICICI Bank (NSDL demat)::49794950: holdings 2026-03-31 superseded for SNAPSHOT facts by 2026-10-31 — `icici-bank-nsdl-demat-49794950-2026-03-31-holdings`; its dated rows are still counted
+- account 49794950 (ICICI Bank (NSDL demat)) carries 24 of 46 holding(s) with NO market value, so they are in the archive and out of every total: ASSETGRO FINTECH LIMITED - 1% SERIES B PREF 25NV44 (541 unit(s), recorded at a face value of 10); ASSETGRO FINTECH LIMITED - EQ NEW FV RS. 2/ (20797 unit(s), recorded at a face value of 2); BIG BANG BOOM SOLUTIONS PRIVATE LIMITED - 0.001% PREF 12SP44 (48 unit(s), recorded at a face value of 10); BOROSIL RENEWABLES LIMITED - EQ NEW FV RE. 1/- LISTING/TRDG APRVL AWAITED (283018 unit(s), recorded at a face value of 1); ELECTROMECH INFRAPROJECTS LIMITED - EQ NEW FV RS.5/ (378788 unit(s), recorded at a face value of 5); EVEREST FLEET PRIVATE LIMITED - 0.001% SERIES B NEW PREF 18AP43 (100 unit(s), recorded at a face value of 1); EVEREST FLEET PRIVATE LIMITED - EQ NEW FV RS. 1/ (710 unit(s), recorded at a face value of 1); INDIA SME INVESTMENTS AIF TRUST II - CL A2 - Restricted Transferability (97500 unit(s), recorded at a face value of 1000); INFOBAY AI LIMITED - 0.01% PREF 18AG44 (91 unit(s), recorded at a face value of 10); INNOVITI TECHNOLOGIES PRIVATE LIMITED - EQ (32017 unit(s), recorded at a face value of 10); INTEGRIS MEDTECH LIMITED - EQ NEW FV RE.1/ (177981 unit(s), recorded at a face value of 1); MATRIX GAS AND RENEWABLES LIMITED - EQ (75000 unit(s), recorded at a face value of 10); OILMAX ENERGY PRIVATE LIMITED - EQ (17000 unit(s), recorded at a face value of 10); ONIX RENEWABLE LIMITED - EQ (90000 unit(s), recorded at a face value of 10); RADIANT INNOVATIVE MANUFACTURING LIMITED - EQ NEW FV RS. 10/ (71400 unit(s), recorded at a face value of 10); RAYS POWER EXPERTS LIMITED - EQ (59000 unit(s), recorded at a face value of 10); SKS FASTENERS LIMITED - EQ (24800 unit(s), recorded at a face value of 10); SKY CAPITAL RISING TITANS FUND I - SKYCRTF ONCAREA3 - Restricted Transferability (15000 unit(s), recorded at a face value of 1000); SPRAY ENGINEERING DEVICES LIMITED - EQ (165566 unit(s), recorded at a face value of 10); TELAWNE POWER EQUIPMENTS PRIVATE LIMITED - EQ (30816 unit(s), recorded at a face value of 10); URB VENTURES PRIVATE LIMITED - 0.001% PREF 07JL42 (4000 unit(s), recorded at a face value of 10); URB VENTURES PRIVATE LIMITED - EQ (148000 unit(s), recorded at a face value of 10); WEVOIS LABS PRIVATE LIMITED - EQ (55 unit(s), recorded at a face value of 10); ZENITH LEISURE HOLIDAYS LIMITED - EQ (32791 unit(s), recorded at a face value of 10). A depository prints the value a security was allotted at, or the price its last movement went through at, where it holds no mark for it, and neither is a valuation: carried, either would state one nobody struck. The remaining 22 row(s) on the same statement ARE marked and are in the book.
 - account 49794950: no time-weighted return series in any statement
 - account 49794950: no flow block in any statement, so no value bridge
 - account 49794950: no external capital movements found, so no money-weighted return series
@@ -935,34 +944,36 @@ never guessed into the nearest plausible bucket.
 - account V.E.C Assago Capital Management LLP::128005: 11 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
 - account 128005: its dated capital record runs to 2026-08-13 — the capital register whose balances tie reaches that date
 - account 128005: 4 movement(s) from its capital register (112400000 in, 9162 out) merged into its dated capital record — each witnessed by the register's own opening and closing balance, and none already on the account's typed record
+- 1 depository row(s) for Franklin India Credit AIF are NOT carried: the unit count matches that fund's own statement exactly, so they are the same holding seen from custody, and the fund is the authority on what its own units are worth.
 - 2 depository row(s) for Sanshi Fund are NOT carried: the unit count matches that fund's own statement exactly, so they are the same holding seen from custody, and the fund is the authority on what its own units are worth.
 - identity: 0 NSE symbol(s) are carried by two securityKeys among the positions — no listed company is keyed twice.
 - review: 360 ONE Special Opportunities Fund — Series 8 — Class A3 (AIF Category II) — Ajay Jaisinghani's Transactions rows walk to 9,94,198.706 units; the closing holds 9,90,429.68, so 3,769.026 units are on no dated row
 - review: 360 ONE Special Opportunities Fund — Series 8 — Class A3 (AIF Category II) — Ajay Jaisinghani's cost is FIFO over the review's dated rows: ₹99,41,987.06 held, ₹57,512.96 of cost sold for a realised ₹20,807.04; the review's purchases less sale proceeds (₹99,21,180.02) is kept as the check
 - review: 360 ONE Special Opportunities Fund — Series 8 — Class A3 (AIF Category II) — Bharat Jaisinghani's Transactions rows walk to 9,94,198.706 units; the closing holds 9,90,429.68, so 3,769.026 units are on no dated row
 - review: 360 ONE Special Opportunities Fund — Series 8 — Class A3 (AIF Category II) — Bharat Jaisinghani's cost is FIFO over the review's dated rows: ₹99,41,987.06 held, ₹57,512.96 of cost sold for a realised ₹20,807.04; the review's purchases less sale proceeds (₹99,21,180.02) is kept as the check
-- review: 89 private-market rows from the consolidated review (MOPWM, 30 Jun 2026) — 62 statement rows superseded, 22 written-off lines named
+- review: 88 private-market rows from the consolidated review (MOPWM, 30 Jun 2026) — 62 statement rows superseded, 22 written-off lines named
 - review: 65 dated rows (purchases, sales, income) behind 16 valued holdings
 - review: 15 account(s) carry the review's dated rows, and every holding with money on them is the review's own
 - the custodian reports 1416918.692 unit(s) of 3P India Equity Fund 1 — Class B3 on motilal-oswal-financial-services-demat-1201090012838316 (2026-07-31) with no value, and no 3P Investment Managers account of the same owner's is in this book. Both are listed as printed: two statements that do not agree on a unit count are not assumed to describe one holding.
 - the custodian reports 2053614.026 unit(s) of 3P India Equity Fund 1 — Class B3 on motilal-oswal-financial-services-demat-1201090037359311 (2026-07-31) with no value, and the same owner's 3P Investment Managers account(s) carry 0 unit(s) of 3P India Equity Fund 1 - Class B1 (3p-investment-managers-3000048); 0 unit(s) of 3P India Equity Fund 1 - Class B2 (3p-investment-managers-3000048); 0 unit(s) of 3P India Equity Fund 1 - Class B3 (3p-investment-managers-3000048). Both are listed as printed: two statements that do not agree on a unit count are not assumed to describe one holding.
-- 2 ring-fenced holding(s) — POLYCAB INDIA LIMITED - EQ, POLYCAB INDIA LIMITED - EQ, 1,23,51,24,19,665 — are carried in the archive and in BOOK_POLYCAB, and OUT of every consolidated total, listed/private split, allocation, sector, entity and holdings table. This is the family's PROMOTER stock, shown only on the Polycab page. Remove the key from RINGFENCED_SECURITY_KEYS in build-book.mjs to fold it back into the book.
+- 2 ring-fenced holding(s) — POLYCAB INDIA LIMITED - EQ, POLYCAB INDIA LIMITED - EQ, 1,08,24,88,70,223 — are carried in the archive and in BOOK_POLYCAB, and OUT of every consolidated total, listed/private split, allocation, sector, entity and holdings table. This is the family's PROMOTER stock, shown only on the Polycab page. Remove the key from RINGFENCED_SECURITY_KEYS in build-book.mjs to fold it back into the book.
 - separate investments, confirmed by the family on 2026-09-28: 360 ONE Special Opportunities Fund — Series 8 — Class A3 (AIF Category II) under Ajay Jaisinghani (37702) and Bharat Jaisinghani (60117) — each counted in full, 2,91,60,825.51 across 2 account(s).
 - separate investments, confirmed by the family on 2026-09-28: Transition Venture Capital Fund I — Class A1 under Bharat Jaisinghani Family Trust 2 (TVC262) and Bharat Jaisinghani Family Trust 3 (TVC263) — each counted in full, 1,93,61,508 across 2 account(s).
-- market side: listed 7,11,29,99,883.11 over 395 holding(s), private 2,76,58,90,203.68 over 93, and 0 over 4 that nothing places on either side. An AIF is placed first by the family's own classification of what the fund invests in (FAMILY_MARKET_SIDE in shared/aifCategory.mjs), then by a fund naming its own discipline as private equity or venture, then by the SEBI category the statements print: Category III trades LISTED securities, Categories I and II are private capital. The three are summed from the positions and none is the remainder of the other two.
+- market side: listed 7,96,84,01,917.36 over 409 holding(s), private 2,74,58,89,803.68 over 92, and 4,09,79,575 over 5 that nothing places on either side. An AIF is placed first by the family's own classification of what the fund invests in (FAMILY_MARKET_SIDE in shared/aifCategory.mjs), then by a fund naming its own discipline as private equity or venture, then by the SEBI category the statements print: Category III trades LISTED securities, Categories I and II are private capital. The three are summed from the positions and none is the remainder of the other two.
 - market side: 23 AIF holding(s) placed by the family's own classification of what the fund invests in; 6 of them, in 3 fund(s), differ from what the printed SEBI category alone would say — India SME Investments Fund II — Class A2 (no category printed → private: private equity in early-growth SMEs); Motilal Oswal Founders Fund Series II — Class G1 (no category printed → listed: listed Indian equities); Motilal Oswal Wealth Delphi Equity Fund (no category printed → listed: Category III equity managers, as a fund of funds). The statement's category is unchanged; only the side is taken from the family.
-- market side: 3 fund(s) print NO SEBI category and the family have not classified them, so they are on neither side and are counted apart rather than defaulted to one: ASK Absolute Return Fund — Class A6 Series 31/01/2025; Motilal Oswal Hedged Equity Multi Factor Strategy — Class B2; Motilal Oswal Hedged Equity Multi Factor Strategy — Class F1. Putting them private would claim they are private capital and putting them listed would claim the opposite, and no document in this archive makes either claim. One line from the family, or a fund's own SEBI registration, settles each one.
+- market side: 4 fund(s) print NO SEBI category and the family have not classified them, so they are on neither side and are counted apart rather than defaulted to one: ASK Absolute Return Fund — Class A6 Series 31/01/2025; Motilal Oswal Hedged Equity Multi Factor Strategy — Class B2; Motilal Oswal Hedged Equity Multi Factor Strategy — Class F1; VANTAGE OAK FUND - VOF I CL A2 - Restricted Transferability. Putting them private would claim they are private capital and putting them listed would claim the opposite, and no document in this archive makes either claim. One line from the family, or a fund's own SEBI registration, settles each one.
 - market side: 1 holding(s) take a SEBI category the FAMILY declared, because no statement for them prints one — Motilal Oswal Wealth Delphi Equity Fund. A declaration only ever fills a category the statements leave empty and never overrides one they print; which side of the book each sits on is the family's own placing, noted above.
 - navHistory: 10 dated point(s) are a manager's own PRINTED OPENING VALUE (a performance summary's or investor report's opening corpus, dated the day before its window) rather than a holdings statement — carnelian-asset-management-and-advisors-pvt-ltd-3517383 2026-03-31; goldstandard-wealth-private-limited-100022 2026-03-31; goldstandard-wealth-private-limited-100023 2026-03-31; green-lantern-capital-llp-510854 2026-03-31; green-lantern-capital-llp-510861 2026-03-31; svan-investment-managers-llp-8710067 2026-04-30; svan-investment-managers-llp-8710090 2026-04-30, 2026-08-31; v-e-c-assago-capital-management-llp-128004 2026-03-31; v-e-c-assago-capital-management-llp-128005 2026-03-31. Where an opening and a holdings statement value one account on the same day (4 case(s)), the holdings statement is used and the two differ by at most 0.074% — the opening corpus can include accrued income the holdings basis carries apart. No attribution is struck across an opening value, because it carries no holding a price or a unit can be read off.
-- navHistory: 27 dated point(s) from 2026-03-31 to 2026-11-03 (217 days), over the 24 account(s) that publish MORE THAN ONE dated valuation (₹323.52 Cr at the last point, each dedupeGroup counted once). 42 account(s) publish exactly one dated valuation and 22 publish none — both are named in the coverage block rather than carried into the series as a flat line, which would drag its return towards a figure nothing measured. The panel is complete from 2026-10-26; before that each link is struck over the accounts valued at BOTH its ends, so an account ARRIVING contributes 0.00% instead of a step. The raw NAV level is only a book NAV from the date the panel completes, and is flagged per point.
-- navHistory: the capital moving between each covered account's marks is established by the statements themselves — dated-record: buoyant-capital-103473, carnelian-asset-management-and-advisors-pvt-ltd-3517383, green-lantern-capital-llp-510854, green-lantern-capital-llp-510861, svan-investment-managers-llp-8710067, svan-investment-managers-llp-8710090; printed totals (fact-sheet, performance-history, performance-summary): carnelian-asset-management-and-advisors-pvt-ltd-3517383, goldstandard-wealth-private-limited-100022, goldstandard-wealth-private-limited-100023, v-e-c-assago-capital-management-llp-128004, v-e-c-assago-capital-management-llp-128005; printed totals (fact-sheet): green-lantern-capital-llp-510854, molecule-ventures-llp-7810404; printed totals (investor-report): svan-investment-managers-llp-8710067, svan-investment-managers-llp-8710090; printed totals (performance-summary): carnelian-asset-management-and-advisors-pvt-ltd-3517383, goldstandard-wealth-private-limited-100022, goldstandard-wealth-private-limited-100023, v-e-c-assago-capital-management-llp-128004, v-e-c-assago-capital-management-llp-128005; units-unchanged: 360-one-private-wealth-37702, 360-one-private-wealth-60117, aditya-birla-sun-life-mutual-fund-1038104611, bandhan-mutual-fund-8652064, buoyant-capital-103472, buoyant-capital-103473, hdfc-mutual-fund-16180583, helios-mutual-fund-10056128, helios-mutual-fund-10355977, mirae-asset-mutual-fund-70413280453, motilal-oswal-founders-fund-90410016093, motilal-oswal-founders-fund-90410016104; unproven: aditya-birla-sun-life-mutual-fund-1019265797, buoyant-capital-103472, kotak-mahindra-mutual-fund-4295974. A step no statement settles is netted at nothing and its MOVE is carried as `unreportedFlowValue`.
+- navHistory: 28 dated point(s) from 2026-03-31 to 2026-11-03 (217 days), over the 25 account(s) that publish MORE THAN ONE dated valuation (₹534.75 Cr at the last point, each dedupeGroup counted once). 42 account(s) publish exactly one dated valuation and 22 publish none — both are named in the coverage block rather than carried into the series as a flat line, which would drag its return towards a figure nothing measured. The panel is complete from 2026-10-26; before that each link is struck over the accounts valued at BOTH its ends, so an account ARRIVING contributes 0.00% instead of a step. The raw NAV level is only a book NAV from the date the panel completes, and is flagged per point.
+- navHistory: the capital moving between each covered account's marks is established by the statements themselves — dated-record: buoyant-capital-103473, carnelian-asset-management-and-advisors-pvt-ltd-3517383, green-lantern-capital-llp-510854, green-lantern-capital-llp-510861, svan-investment-managers-llp-8710067, svan-investment-managers-llp-8710090; printed totals (fact-sheet, performance-history, performance-summary): carnelian-asset-management-and-advisors-pvt-ltd-3517383, goldstandard-wealth-private-limited-100022, goldstandard-wealth-private-limited-100023, v-e-c-assago-capital-management-llp-128004, v-e-c-assago-capital-management-llp-128005; printed totals (fact-sheet): green-lantern-capital-llp-510854, molecule-ventures-llp-7810404; printed totals (investor-report): svan-investment-managers-llp-8710067, svan-investment-managers-llp-8710090; printed totals (performance-summary): carnelian-asset-management-and-advisors-pvt-ltd-3517383, goldstandard-wealth-private-limited-100022, goldstandard-wealth-private-limited-100023, v-e-c-assago-capital-management-llp-128004, v-e-c-assago-capital-management-llp-128005; units-unchanged: 360-one-private-wealth-37702, 360-one-private-wealth-60117, aditya-birla-sun-life-mutual-fund-1038104611, bandhan-mutual-fund-8652064, buoyant-capital-103472, buoyant-capital-103473, hdfc-mutual-fund-16180583, helios-mutual-fund-10056128, helios-mutual-fund-10355977, mirae-asset-mutual-fund-70413280453, motilal-oswal-founders-fund-90410016093, motilal-oswal-founders-fund-90410016104; unproven: aditya-birla-sun-life-mutual-fund-1019265797, buoyant-capital-103472, icici-bank-nsdl-demat-49794950, kotak-mahindra-mutual-fund-4295974. A step no statement settles is netted at nothing and its MOVE is carried as `unreportedFlowValue`.
 - navHistory: aditya-birla-sun-life-mutual-fund-1019265797 2026-07-01 → 2026-08-03 is NOT PROVEN to be performance — no statement prints the capital that moved between these two marks. Its move over the step is named on screen as the part of the return that might be capital.
 - navHistory: aditya-birla-sun-life-mutual-fund-1019265797 2026-08-03 → 2026-10-06 is NOT PROVEN to be performance — no statement prints the capital that moved between these two marks. Its move over the step is named on screen as the part of the return that might be capital.
 - navHistory: buoyant-capital-103472 2026-07-31 → 2026-08-31 is NOT PROVEN to be performance — no statement prints the capital that moved between these two marks. Its move over the step is named on screen as the part of the return that might be capital.
+- navHistory: icici-bank-nsdl-demat-49794950 2026-03-31 → 2026-10-31 is NOT PROVEN to be performance — no statement prints the capital that moved between these two marks. Its move over the step is named on screen as the part of the return that might be capital.
 - navHistory: kotak-mahindra-mutual-fund-4295974 2026-07-01 → 2026-08-03 is NOT PROVEN to be performance — no statement prints the capital that moved between these two marks. Its move over the step is named on screen as the part of the return that might be capital.
 - navHistory: kotak-mahindra-mutual-fund-4295974 2026-08-03 → 2026-10-05 is NOT PROVEN to be performance — no statement prints the capital that moved between these two marks. Its move over the step is named on screen as the part of the return that might be capital.
-- attribution: 24 account(s) publish a valued holdings statement at two or more dates, so 272 holding(s) are priced at both ends of a window. Over 2026-05-31 → 2026-11-03 the covered set runs ₹316.79 Cr → ₹323.52 Cr, of which price ₹-4.67 Cr, trading ₹8.36 Cr, bought in ₹17.14 Cr, sold out ₹9.99 Cr. Largest detractor Bandhan Large & Mid Cap Fund-Direct Plan-Growth ₹-162.74 L. It covers ₹323.58 Cr of the book's ₹987.89 Cr; every other account publishes one statement, and one statement is a level rather than a change.
-- unrealised short/long-term split is populated on 17 of 492 position(s), across 2 of 94 account(s) (lkp-securities-98245, v-e-c-assago-capital-management-llp-128004): those are the accounts whose broker publishes a LOT REGISTER with dated acquisitions. It is NULL on the rest, because the capital register the managed accounts issue is a capital-account ledger (contributions, withdrawals, TDS transfers) and carries no purchase dates.
+- attribution: 25 account(s) publish a valued holdings statement at two or more dates, so 272 holding(s) are priced at both ends of a window. Over 2026-03-31 → 2026-11-03 the covered set runs ₹436.05 Cr → ₹534.75 Cr, of which price ₹-4.67 Cr, trading ₹8.36 Cr, bought in ₹118.38 Cr, sold out ₹21.65 Cr. Largest detractor Bandhan Large & Mid Cap Fund-Direct Plan-Growth ₹-162.74 L. It covers ₹429.73 Cr of the book's ₹1075.53 Cr; every other account publishes one statement, and one statement is a level rather than a change.
+- unrealised short/long-term split is populated on 17 of 506 position(s), across 2 of 95 account(s) (lkp-securities-98245, v-e-c-assago-capital-management-llp-128004): those are the accounts whose broker publishes a LOT REGISTER with dated acquisitions. It is NULL on the rest, because the capital register the managed accounts issue is a capital-account ledger (contributions, withdrawals, TDS transfers) and carries no purchase dates.
 - realised is NULL, not ₹0, on BELRISE INDUSTRIES LIMITED (lkp-securities-98245): every one of its 1 capital-gain lot(s) was sold after the holding's own statement date, so the record holds no sale of it up to that date — a zero there would read as "sold nothing" where the record simply does not reach the holding.
 - realised is NULL, not ₹0, on CAPRI GLOBAL CAPITAL LIMITED (lkp-securities-98245): every one of its 2 capital-gain lot(s) was sold after the holding's own statement date, so the record holds no sale of it up to that date — a zero there would read as "sold nothing" where the record simply does not reach the holding.
 - realised is NULL, not ₹0, on Electronics Mart India Limited (lkp-securities-98245): every one of its 3 capital-gain lot(s) was sold after the holding's own statement date, so the record holds no sale of it up to that date — a zero there would read as "sold nothing" where the record simply does not reach the holding.
@@ -1149,8 +1160,7 @@ never guessed into the nearest plausible bucket.
 - FIFO and the class-switch carry disagree on Kotak Flexi Cap Fund Direct Growth (kotak-mahindra-mutual-fund-5372722): FIFO over the unit record holds 500000 of cost, and the switch carry did not restate the statement's 500000. The statement's cost stands; see the switch notes above for why it was not carried.
 - share movements: 90 holding-window(s) from the demat statements, 90 of which walk their own printed opening balance to their own printed closing balance and carry an opening-to-closing split. 0 join a position this book carries and 23 a holding it carries as a quantity with no value; 39 close at nil, securities the account sold out of during the window; 19 close with units still held on an account that sent no holding statement, so the tape's closing balance is the only record of them; 9 sit on an account whose own holding statement is in the drop and are deliberately not carried as positions — a fund reporting its own units, or a row with no mark. 0 movement row(s) matched no known particular and are counted in the in/out totals by their own balance change.
 - share movements: 18 window(s) in an account that carries no position for the security are filed under the key the rest of the book carries for the same ISIN, so the company's page shows them (7 close at nil; 11 close with units still held on an account that sent no holding statement); 0 ISIN(s) the book files under two keys keep the statement's own name rather than picking one; 12 window(s) are the depository's copy of AIF units a fund's own statement reports and stay off the fund's page; 0 block(s) would have landed on a key their account already filed and keep their own name instead; 0 window(s) were overwritten by a second block under one key.
-- icici-bank-nsdl-demat-49794950: yash-highvoltage rolled forward on the review's dated trades from 138462 on 2026-03-31 to 116462 on 2026-06-30 (3 trade(s); witnessed by the review's own closing); sale proceeds unverified, so realised gain and HPR stay absent
-- cost recovery: 57 exact account/ISIN/quantity records from the saved workbooks; 33 recorded security balances still require acquisition or movement evidence. See docs/COST-RECOVERY.md.
+- cost recovery: 53 exact account/ISIN/quantity records from the saved workbooks; 44 recorded security balances still require acquisition or movement evidence. See docs/COST-RECOVERY.md.
 - motilal-oswal-financial-services-demat-1201090012539150: IFB Industries Ltd (INE559A01017) carried from 15772 on 2026-07-31 to 0 on 2026-09-09 by 2 exchange trade(s) on MOPWM's transaction report of 2026-10-23, live basis only (the report's own record holds the statement's units on 2026-07-31)
 - motilal-oswal-financial-services-demat-1201090012539150: KRBL Ltd (INE001B01026) carried from 0 on 2026-07-31 to 67500 on 2026-08-28 by 2 exchange trade(s) on MOPWM's transaction report of 2026-10-23, live basis only (the report's own record holds the statement's units on 2026-07-31)
 - motilal-oswal-financial-services-demat-1201090012539150: NLC India Ltd (INE589A01014) carried from 32000 on 2026-07-31 to 0 on 2026-09-07 by 1 exchange trade(s) on MOPWM's transaction report of 2026-10-23, live basis only (the report's own record holds the statement's units on 2026-07-31)

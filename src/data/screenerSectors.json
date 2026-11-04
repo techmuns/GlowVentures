@@ -687,6 +687,14 @@
     "screenerIndustry": "Industrial Products",
     "joinedBy": "nse-symbol"
   },
+  "KINGFA": {
+    "gics": "Industrials",
+    "screenerSector": "Capital Goods",
+    "screenerSectorCode": "IN07/IN0702",
+    "screenerBroadSector": "Industrials",
+    "screenerIndustry": "Plastic Products - Industrial",
+    "joinedBy": "nse-symbol"
+  },
   "KIRLFER": {
     "gics": "Materials",
     "screenerSector": "Metals & Mining",
@@ -757,6 +765,22 @@
     "screenerSectorCode": "IN02/IN0201",
     "screenerBroadSector": "Consumer Discretionary",
     "screenerIndustry": "Passenger Cars & Utility Vehicles",
+    "joinedBy": "nse-symbol"
+  },
+  "MANINDS": {
+    "gics": "Industrials",
+    "screenerSector": "Capital Goods",
+    "screenerSectorCode": "IN07/IN0702",
+    "screenerBroadSector": "Industrials",
+    "screenerIndustry": "Iron & Steel Products",
+    "joinedBy": "nse-symbol"
+  },
+  "MANORAMA": {
+    "gics": "Consumer Staples",
+    "screenerSector": "Fast Moving Consumer Goods",
+    "screenerSectorCode": "IN04/IN0401",
+    "screenerBroadSector": "Fast Moving Consumer Goods",
+    "screenerIndustry": "Other Food Products",
     "joinedBy": "nse-symbol"
   },
   "MASTEK": {
@@ -1069,6 +1093,22 @@
     "screenerSectorCode": "IN05/IN0501",
     "screenerBroadSector": "Financial Services",
     "screenerIndustry": "General Insurance",
+    "joinedBy": "nse-symbol"
+  },
+  "STLNETWORK": {
+    "gics": "Communication Services",
+    "screenerSector": "Telecommunication",
+    "screenerSectorCode": "IN10/IN1001",
+    "screenerBroadSector": "Telecommunication",
+    "screenerIndustry": "Other Telecom Services",
+    "joinedBy": "nse-symbol"
+  },
+  "STLTECH": {
+    "gics": "Communication Services",
+    "screenerSector": "Telecommunication",
+    "screenerSectorCode": "IN10/IN1001",
+    "screenerBroadSector": "Telecommunication",
+    "screenerIndustry": "Telecom - Equipment & Accessories",
     "joinedBy": "nse-symbol"
   },
   "STOVEKRAFT": {

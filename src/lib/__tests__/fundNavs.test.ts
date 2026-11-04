@@ -542,10 +542,12 @@ ok("Clean Max on Ankita's Motilal demat is a candidate at its 94,967 shares — 
     && cleanMax.symbol === "CLEANMAX" && cleanMax.securityKey === "clean-max-enviro-energy-solutions"
     && cleanMax.depositoryUnits?.kind === "no-price",
   cleanMax ? `${cleanMax.accountId} ${cleanMax.quantity} ${cleanMax.symbol} ${cleanMax.depositoryUnits?.kind}` : "missing");
-ok("ESDS on Ajay's ICICI NSDL account is a candidate at its 330,898 shares, named without the depository's furniture",
-  !!esds && esds.accountId === "icici-bank-nsdl-demat-49794950" && esds.quantity === 330898 && esds.symbol === "ESDS"
-    && esds.security === "ESDS Software Solution Limited",
-  esds ? `${esds.accountId} ${esds.quantity} ${esds.symbol} "${esds.security}"` : "missing");
+// ESDS was the ICICI NSDL case until Stage 10kn: the 31 Oct 2026 statement
+// marks the 330,898 shares, so they are a statement row and no candidate.
+ok("ESDS on Ajay's ICICI NSDL account is no candidate once its 31 Oct statement marks the 330,898 shares",
+  !esds && BOOK_POSITIONS.some((p) => p.accountId === "icici-bank-nsdl-demat-49794950" && p.isin === "INE0DRI01029"
+    && p.quantity === 330898 && p.marketValue > 0),
+  esds ? `${esds.accountId} ${esds.quantity}` : "statement row");
 // WHAT THE STATEMENT PRINTED BESIDE IT decides the kind: no rate (or face
 // value) is `no-price`, and the price of the holding's last depository movement
 // (the Motilal statements, Stage 10cz) is `last-movement` — a price the
@@ -597,17 +599,18 @@ const npFeed = (sym: string, price: number): QuoteFeed => ({
     marketCap: null, volume: null, yearChangePct: null, ageS: 0, source: "upstox" } },
   asOf: "2026-09-25T10:00:00Z", missing: [], pending: [], fresh: 1, stale: 0,
 });
-const esdsPriced = depositoryShareHoldings(npFeed("ESDS", 400), CAPTURE);
-ok("a feed pricing ESDS makes it a row at its statement's units × the quote, live, with no cost",
-  esdsPriced.length === 1 && esdsPriced[0].isin === "INE0DRI01029" && esdsPriced[0].marketValue === 330898 * 400
-    && esdsPriced[0].live === true && esdsPriced[0].costBasis === null,
-  esdsPriced.map((p) => `${p.symbol} ${p.marketValue}`).join("; "));
-ok("...and the account-level note for a transaction-only account is never written for it",
-  !partialValuationNotes(esdsPriced).has("icici-bank-nsdl-demat-49794950"));
-const esdsWords = esds ? describeDepositoryUnits(esds.depositoryUnits!) : "";
+const cmPriced = depositoryShareHoldings(npFeed("CLEANMAX", 400), CAPTURE);
+// Its cost is Ankita's own purchase record, never the quote's.
+ok("a feed pricing Clean Max makes it a row at its statement's units × the quote, live, at its recovered cost",
+  cmPriced.length === 1 && cmPriced[0].isin === "INE647U01026" && cmPriced[0].marketValue === 94967 * 400
+    && cmPriced[0].live === true && cmPriced[0].costBasisSource === "supplementary-record",
+  cmPriced.map((p) => `${p.symbol} ${p.marketValue} ${p.costBasisSource}`).join("; "));
+ok("...and the account's own note says its statement values none of its holdings",
+  /values none of them/.test(partialValuationNotes(cmPriced).get("motilal-oswal-financial-services-demat-1201090012838316") ?? ""));
+const cmWords = cleanMax ? describeDepositoryUnits(cleanMax.depositoryUnits!) : "";
 ok("its hover says the statement recorded it with no usable price, and never that no holding statement was sent",
-  /holding statement of 2026-03-31 records with no usable price/.test(esdsWords) && !/no holding statement/.test(esdsWords), esdsWords);
-const gist = depositoryUnitsGist([...(esdsPriced as Position[]), ...FUNDS]);
+  /holding statement of 2026-07-31 records with no usable price/.test(cmWords) && !/no holding statement/.test(cmWords), cmWords);
+const gist = depositoryUnitsGist([...(cmPriced as Position[]), ...FUNDS]);
 ok("a list mixing a closing balance and a no-price share names both sources",
   /closing balance/.test(gist) && /no usable price/.test(gist) && /^either /.test(gist), gist);
 

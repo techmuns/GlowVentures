@@ -9,6 +9,7 @@
 //
 // Two provider signatures are seeded from real documents; the generic
 // keyword pass catches the rest.
+import { dematAccountOf } from "./depositoryParticipants.mjs";
 
 export const REPORT_TYPES = [
   "holdings", "appraisal", "fact-sheet", "performance-summary", "performance-history",
@@ -1079,6 +1080,52 @@ function dateFromName(name) {
 }
 
 /**
+ * BROKER EXPORTS — files with no letterhead at all, placed by their own first
+ * line, which is the whole of what they say about themselves.
+ *
+ *   HDFC Securities' InvestRight equity portfolio — `Trading account: 3110320,
+ *     Equity Portfolio Details as on 02/11/2026 …`: the account and the date.
+ *   …and its demat portfolio — `Symbol | LTP | STOCK VAL. | FREE QTY | AVAIL QTY`,
+ *     no account and no date (providers/hdfcSecurities.mjs pairs the two).
+ *   An equity order book — `Date | Stock | Action | Qty | Price | Trade Value |
+ *     Order Ref. | … | DP Id - Client DP Id`: filed under the demat account its
+ *     rows settle into, where a statement's letterhead names that DP ID.
+ *
+ * The two InvestRight layouts are claimed only under the app's own name in the
+ * file name; neither prints the broker's, and a header shared with another
+ * broker's export must not file it under HDFC Securities.
+ */
+export const HDFC_SECURITIES = "HDFC Securities";
+export const INVESTRIGHT_FILE = /invest\s*right/i;
+export const INVESTRIGHT_EQUITY = /^\s*Trading\s+account:\s*(\d{5,})\s+Equity\s+Portfolio\s+Details\s+as\s+on\s+(\d{2})\/(\d{2})\/(\d{4})\b/i;
+export const INVESTRIGHT_DEMAT = /^\s*Symbol\s+LTP\s+STOCK\s+VAL\.?\s+FREE\s+QTY\s+AVAIL\s+QTY\b/i;
+export const ORDER_BOOK_HEADER = /\bDate\s+Stock\s+Action\s+Qty\s+Price\s+Trade\s+Value\s+Order\s+Ref\.?\s+Settlement\s+Segment\s+DP\s+Id\s*-\s*Client\s+DP\s+Id\b/i;
+
+function matchBrokerExport(t, name) {
+  const base = { ownerName: null, familyGroup: null, strategy: null, confidence: "high" };
+  if (INVESTRIGHT_FILE.test(name)) {
+    const eq = INVESTRIGHT_EQUITY.exec(t);
+    if (eq) {
+      return { ...base, provider: HDFC_SECURITIES, accountNo: eq[1], asOfDate: `${eq[4]}-${eq[3]}-${eq[2]}`,
+        reportType: "holdings", sections: ["holdings"], matchedBy: "InvestRight equity portfolio: trading account and date on its first line" };
+    }
+    if (INVESTRIGHT_DEMAT.test(t)) {
+      return { ...base, provider: HDFC_SECURITIES, accountNo: null, asOfDate: null, confidence: "medium",
+        reportType: "holdings", sections: ["holdings"], matchedBy: "InvestRight demat portfolio header (no account or date printed)" };
+    }
+  }
+  if (ORDER_BOOK_HEADER.test(t)) {
+    const accounts = new Set([...t.matchAll(/\b(IN\d{6})\s*-\s*(\d{6,})\b/g)].map((m) => `${m[1]}-${m[2]}`));
+    const one = accounts.size === 1 ? dematAccountOf([...accounts][0]) : null;
+    return { ...base, provider: one?.provider ?? null, accountNo: one?.clientId ?? null, asOfDate: null,
+      confidence: one?.provider ? "high" : "low",
+      reportType: "transaction-statement", sections: ["transaction-statement"],
+      matchedBy: one?.provider ? `equity order book settling into ${[...accounts][0]}` : `equity order book settling into ${accounts.size} demat account(s) no letterhead names` };
+  }
+  return null;
+}
+
+/**
  * Classify one PDF from its filename and extracted text.
  * Returns { provider, ownerName, accountNo, asOfDate, reportType, sections,
  *           strategy, confidence, matchedBy } — any field may be null.
@@ -1093,6 +1140,9 @@ export function classify({ fileName, text }) {
   // "HDFC", which is also an AMC and a depository participant here.
   const bank = matchBankStatement(t, name);
   if (bank) return bank;
+
+  const broker = matchBrokerExport(t, name);
+  if (broker) return broker;
 
   const seeded = match360One(t, name) || matchGoldstandard(t, name);
   if (seeded) return seeded;
