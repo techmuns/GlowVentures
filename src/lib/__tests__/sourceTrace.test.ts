@@ -85,9 +85,11 @@ const nse = BOOK_POSITIONS.find(p => p.reviewNote?.includes('Now a listed compan
 const nseReview = holdingSourceTrace([nse], 'quantity').sources.find(s => s.review)!;
 assert.equal(nseReview.note, nse.reviewNote, 'the full audit note stays under Full detail');
 assert.deepEqual(nseReview.review, { value: 259375000, cost: nse.costBasis, units: 125000, unitWord: 'shares', asOf: '30 Jun 2026',
-  atCost: false, splitByShares: true, shared: false, noHolder: false, listed: true, differs: false });
+  // ICICI's 31 Oct statement marks these shares at the 30 Oct close (Stage 10kn).
+  atCost: false, splitByShares: true, shared: false, noHolder: false, listed: true, differs: true });
 const plain = renderToStaticMarkup(createElement(MemoryRouter, null, createElement(SourceDetails, { trace: holdingSourceTrace([nse], 'quantity') })));
 assert.ok(plain.includes('Worth ₹25.94 Cr for 1,25,000 shares on 30 Jun 2026'), plain);
+assert.ok(plain.includes('A newer statement shows a different figure'), 'the newer statement is named on its face');
 assert.ok(plain.includes('family review (MOPWM)') && !plain.includes('a/c …'), 'a review record names the review, not an account number');
 const atCostLine = BOOK_POSITIONS.find(p => p.valuedAtCost && p.reviewNote?.startsWith('Held at cost') && /of the line\./.test(p.reviewNote))!;
 const atCostFacts = holdingSourceTrace([atCostLine], 'costBasis').sources.find(s => s.review)!.review!;

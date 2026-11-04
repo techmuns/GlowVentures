@@ -109,4 +109,15 @@ assert.equal(custodySuccessor(old, accounts.map(a => a.accountId === 'folio' ? {
 assert.equal(custodySuccessor(old, accounts, [position, { ...position }]), null);
 assert.throws(() => verifyCustodyLinks([position], accounts, [{ ...proof, holdings: [] }], [link]), /not verified/);
 assert.throws(() => verifyCustodyLinks([position], accounts, [{ ...proof, status: 'partial' }], [link]), /not verified/);
+// The folio's evidence, newest first: the newest present is the proof, and a
+// book built before it arrived verifies on the older statement's own record.
+const both = { ...link, document: undefined, documents: ['proof', 'older'] };
+const older = { ...proof, docKey: 'older', asOf: '2026-10-14' };
+const p1 = { ...position }; verifyCustodyLinks([p1], accounts, [older, proof], [both]);
+assert.equal(p1.custodyEvidence.document, 'proof');
+const p2 = { ...position }; verifyCustodyLinks([p2], accounts, [older], [both]);
+assert.equal(p2.custodyEvidence.document, 'older');
+// A newer statement that is present but fails never falls back to the older one.
+assert.throws(() => verifyCustodyLinks([{ ...position }], accounts, [older, { ...proof, status: 'partial' }], [both]), /not verified/);
+assert.throws(() => verifyCustodyLinks([{ ...position }], accounts, [], [both]), /not verified/);
 console.log('Bandhan ingestion and custody succession checks passed');

@@ -1,13 +1,18 @@
 // Reviewed custody-to-folio continuity. Owner + ISIN alone is insufficient:
 // Ajay also owns a separate, redeemed non-demat Motilal arbitrage folio.
 // Bandhan's 26 October statement acknowledges rematerialisation on 7 October
-// for these two schemes. Keep the account link explicit and verify its source
+// for these two schemes, and so does its 14 October statement (Stage 10kl),
+// with the same units. Keep the account link explicit and verify its source
 // on every book build; future statements of this same folio then take over.
+//
+// `documents` is the folio's evidence, newest first: the newest one present
+// is the proof, so a book built before the 26 October statement arrived (the
+// rapid-statement rehearsal's baseline) still verifies on 14 October's.
 export const CUSTODY_FOLIO_LINKS = Object.freeze([
   ...['INF194K01Y60', 'INF194K01V89'].map(isin => ({
     custodyAccountId: 'motilal-oswal-financial-services-demat-1201090012539150',
     fundAccountId: 'bandhan-mutual-fund-8652064', ownerId: 'ajay-jaisinghani', isin,
-    document: 'bandhan-mutual-fund-8652064-2026-10-26-holdings', rematOn: '2026-10-07',
+    documents: ['bandhan-mutual-fund-8652064-2026-10-26-holdings', 'bandhan-mutual-fund-8652064-2026-10-14-holdings'], rematOn: '2026-10-07',
   })),
   // Helios's 3 November statements acknowledge rematerialisation on 6 October,
   // and each folio holds exactly the units its owner's Motilal demat printed on
@@ -30,7 +35,9 @@ export function verifyCustodyLinks(positions, accounts, documents, links = CUSTO
   for (const link of links) {
     const newer = acc.get(link.fundAccountId), older = acc.get(link.custodyAccountId);
     if (!newer || !older) continue;
-    const evidence = docs.get(link.document);
+    // The newest named statement present. One that is present but does not
+    // verify still refuses: an older one never stands in for a failed read.
+    const evidence = docs.get((link.documents ?? [link.document]).find(k => docs.has(k)));
     const holdingIndex = evidence?.holdings?.findIndex(h => h.isin === link.isin && h.custodyRematOn === link.rematOn) ?? -1;
     if (older.ownerId !== link.ownerId || newer.ownerId !== link.ownerId
       || evidence?.ownerId !== link.ownerId || evidence.status !== 'ok' || holdingIndex < 0
