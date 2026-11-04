@@ -1017,3 +1017,13 @@
 - Refresh: `.github/workflows/private-rounds.yml`, Mondays, the fifteen stalest companies, Claude (Messages API, web search + fetch) under the same brief. A source the run did not actually open is dropped, a refresh never deletes a sourced round, and the commit only lands when `--check` and `build` pass. **Needs the `ANTHROPIC_API_KEY` repository secret**; without it the run says so and the pages keep the last record and its date.
 - Private Market: a company row's ↗ opens its page (DrinkPrime's four sellers included); Edit Columns offers Valuation at entry, Latest valuation, Latest valuation date, Latest round and Valuation change since entry, hidden by default, NA on a fund. `/stock/` pages of a private company link to it. Polycab text in a report is dropped (`FENCED`), and the suite asserts the record never names it.
 - Checks: `privateRounds.test.ts` (coverage of every private Unlisted line, sourced rounds, the derivations, the stake rule); `check:pages` routes `private-company`, `-rounds`, `-valuation` (probe `privateCo`).
+
+### Stage 10kp — ICICI's "Cumulative" option is the growth option; Deepak Fertilisers gets its NSE symbol
+
+*"This is showing only 362"* — the family, 4 Nov 2026, on Morning CIO's Return over available history card (362 of 509 holdings).
+
+- Most of the 147 holdings left out are left out correctly: review lines valued on one date, AIFs with one valuation and no dated capital, holdings at cost, later trades with no newer balance, funds that pay out.
+- `assumedHolding` refused every NAV whose scheme name did not end in Growth or Accumulation. ICICI Prudential files its growth option as "Cumulative", which `fundNavs` has always read as growth, so Equity Savings and India Opportunities (four holdings on the Motilal demats, ~₹48 Cr) were refused as payers. `Cumulative` / `Cumulative Option` now passes; a payout word still refuses. `assumedHoldingReturns.test.ts` covers both, plus a "Cumulative" strategy name with an IDCW option.
+- `build-nse-symbols` override `deepak-fertilisers-and-petrochemicals` → `DEEPAKFERT`. HDFC Securities prints "Fertilisers" and no ISIN; NSE lists "Fertilizers" (INE501A01019). The book changed by that one symbol.
+- HEG Graphite stays unmapped. SVAN's 30 Sep appraisal splits the same 8,220 HEG Ltd shares into HEG Advanced Materials (117.96) and HEG Graphite (309.42), which sum to the old 427.37: a demerger. HEG Graphite is on no NSE master, and `HEGAM` is the parent's price.
+- Measured off the book with today's public histories and corporate-action capture: the card's cover goes from 359 to 364 holdings (the page adds the live-priced shares).

@@ -67,6 +67,10 @@ const fundBook = {...b,positions:[fund],actions:null,histories:{example:{...h,ba
 assert.equal(assumedHoldingReturns([fund],[account],'2026-09-01','2026-10-22',fundBook).units.length,1,'growth NAVs do not depend on equity events');
 assert.equal(assumedHoldingReturns([fund],[account],'2026-09-01','2026-10-22',{...fundBook,histories:{example:{...h,basis:'nav',name:'Example Dividend Yield Fund - Growth'}}}).units.length,1,'a dividend-yield strategy can still have an explicit growth option');
 assert.match(assumedHoldingReturns([fund],[account],'2026-09-01','2026-10-22',{...fundBook,histories:{example:{...h,basis:'nav',name:'Example IDCW'}}}).gaps[0].reason,/dated payouts/);
+// ICICI Prudential names its growth option “Cumulative”; AMFI files it so (Stage 10kp).
+assert.equal(assumedHoldingReturns([fund],[account],'2026-09-01','2026-10-22',{...fundBook,histories:{example:{...h,basis:'nav',name:'ICICI Prudential Equity Savings Fund - Direct Plan - Cumulative'}}}).units.length,1,'a Cumulative option is the growth option');
+assert.equal(assumedHoldingReturns([fund],[account],'2026-09-01','2026-10-22',{...fundBook,histories:{example:{...h,basis:'nav',name:'Example Fund - Cumulative Option'}}}).units.length,1,'a Cumulative Option suffix is the growth option');
+assert.equal(assumedHoldingReturns([fund],[account],'2026-09-01','2026-10-22',{...fundBook,histories:{example:{...h,basis:'nav',name:'Example Cumulative Fund - IDCW'}}}).units.length,0,'a Cumulative strategy name with a payout option still pays out');
 for (const name of ['Example Growth Opportunities - IDCW','Example Growth Opportunities - Dividend Reinvestment','Example Growth Opportunities - Regular Plan']) {
  assert.equal(assumedHoldingReturns([fund],[account],'2026-09-01','2026-10-22',{...fundBook,histories:{example:{...h,basis:'nav',name}}}).units.length,0,'a strategy name is not proof of the growth option');
 }

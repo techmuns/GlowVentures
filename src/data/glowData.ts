@@ -10105,7 +10105,7 @@ export const BOOK_POSITIONS: Position[] = [
     },
     "securityKey": "deepak-fertilisers-and-petrochemicals",
     "security": "DEEPAK FERTILISERS AND PETROCHEMICALS CORPORATION LTD EQ",
-    "symbol": null,
+    "symbol": "DEEPAKFERT",
     "accountId": "hdfc-securities-3110320",
     "memberId": null,
     "sector": "Unclassified",
