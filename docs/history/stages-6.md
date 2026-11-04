@@ -986,3 +986,12 @@
 - A publication PR GitHub refuses to open ("Actions is not permitted to create … pull requests") is now held with that cause instead of `processing` forever. The 2 Nov Kotak ZIP sat verified for a day on it; it lands here canonically (folios 7111389, 5372722, 7125319, 7125555 as of 2 Nov).
 - `bandhanFolio.mjs`: a ledger carried onto the next page reprints its scheme heading and column header and is now joined, not counted as a second scheme. Page furniture and the `EISC-…--NNNN` stamp are stripped. A ledger with no opening line opens at nil only when its first row's running balance is its units. `Purchase` (80C) is a contribution, with its `Transaction charges` as the levy. A folio redeemed to nil (no account summary) totals its ledgers' printed nil values. `classify.mjs` also knows Bandhan by its transaction slip.
 - Read: Ajay 8652064 to 14 Oct (12 purchases from 2 Apr and the Overnight→Large & Mid Cap legs the 26 Oct statement lacks), Ankita 8691267 (₹39.2 L in Large & Mid Cap) and Ankita's 2017 ELSS folio 1802619 (redeemed 21 Apr 2023). Aarti's statement is not in `source/`; it needs her password in the vault, or an unlocked copy.
+
+### Stage 10km — Private Market's tile picker offers IRR
+
+*"In the KPI tiles give the option to select IRR"*
+
+- A new **IRR** metric in the Private Market picker (after Unrealised P&L). It reads `aggRet(…, "total")("xirr")`, the same resolver the table's total row uses under XIRR, so the tile and that cell cannot disagree.
+- **Whole or absent (Stage 10fc).** The tile shows a rate only when every valued fund's dated record joins the pool. Otherwise it shows `—`, and the hover names each fund left out. Holdings carried at cost have no return by decision; the hover names them, as Unrealised P&L does. Under a year, the tile shows the holding-period return and says so.
+- On this book the tile is `—`: Franklin India Credit AIF DB2 has a 22 Oct call after its 21 Oct valuation. The table's total still pools 7 of 71 funds, as before.
+- `check:pages`: `irr` is in the picker's `mustOffer`. On `private-market-tiles`, `PM_IRR_TILE_CHECK` compares the tile with `PM_RETURN_BOOK`'s own pool and fails if the tile prints a partial pool. Proved by reintroducing the bug.
