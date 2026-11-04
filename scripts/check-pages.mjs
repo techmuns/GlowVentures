@@ -17784,6 +17784,22 @@ const PM_SUBYEAR_CHECK = ["the pooled XIRR names each record held under a year, 
   const said = signedPctOf(/Without (?:it|them), the pool reads ([+\-−]?[\d.]+%)/i.exec(title)?.[1]);
   return Math.abs(Number(c.withoutSub) - B.pooledWithoutSubYear) <= 0.06 && Math.abs(said - B.pooledWithoutSubYear) <= 0.06;
 }];
+/**
+ * THE IRR TILE IS THE POOLED XIRR, WHOLE OR ABSENT (Stage 10km). Struck only
+ * where every fund the Private funds band values carries a complete dated
+ * record — then it is the book's own pool — and otherwise a dash whose hover
+ * names each fund that stops it (Stage 10fc: a pooled return is never partial).
+ */
+const PM_IRR_TILE_CHECK = ["the IRR tile is the whole private pool's XIRR, or absent naming each fund left out", (t, ctx) => {
+  const txt = ctx?.tileStrip?.texts?.irr, d = ctx?.tileStrip?.details?.irr ?? "";
+  const B = PM_RETURN_BOOK;
+  if (txt == null || !B) return false;
+  if (!B.funds.length) return { notChecked: "no private fund in this book is valued, so nothing is pooled" };
+  const missing = B.funds.filter((f) => !f.complete);
+  if (missing.length || B.pooled == null) return !/%/.test(txt) && missing.every((f) => d.includes(f.security));
+  if (B.pooledWindow < 365) return /holding-period/i.test(txt);
+  return /XIRR/.test(txt) && Math.abs(pctOfCell(txt) - B.pooled) <= 0.06;
+}];
 /** The value-as-printed tile's count of the holdings behind the double count, off the book. */
 const PM_RAW_HOLDINGS_CHECK = ["the value-as-printed tile counts the holdings behind the double count off the book", (t, ctx) => {
   const d = ctx?.tileStrip?.details?.raw ?? "";
@@ -29054,7 +29070,7 @@ const INVARIANTS = {
   "private-market": [
     // [D] — DL-16, PM-D1, PM-D2 and the double count's holdings (the two tile
     // claims are FULL_STRIP_ONLY: their tiles are not on the default strip).
-    PM_DEPLOYED_CHECK, PM_PNL_HOVER_CHECK, PM_WEIGHT_FUNDS_CHECK, PM_REALISED_RUPEES_CHECK, PM_RAW_HOLDINGS_CHECK,
+    PM_DEPLOYED_CHECK, PM_PNL_HOVER_CHECK, PM_WEIGHT_FUNDS_CHECK, PM_REALISED_RUPEES_CHECK, PM_RAW_HOLDINGS_CHECK, PM_IRR_TILE_CHECK,
     /**
      * ── THE CLIENT ASKED WHAT TWO OF THESE TILES MEAN, AND THEN ASKED FOR THE
      *    ANSWER TO BE SHORT ────────────────────────────────────────────────────
@@ -37961,6 +37977,7 @@ const INVARIANTS = {
  * of being quietly retired.
  */
 const FULL_STRIP_ONLY = new Set([
+  "the IRR tile is the whole private pool's XIRR, or absent naming each fund left out",
   "the distributions tile says what it is, and the two things a reader would get wrong",
   "the tile carries the client's own word for it, and the answer under it",
   "the realised tile states what the book realised, over the holdings it covers, and why the rest carry none (DL-13)",
@@ -38149,7 +38166,7 @@ function headingsWhole(st) {
 
 const TILE_PICKER_CHECKS = tilePickerChecks({
   defaults: ["value", "cost", "pnl", "uncalled"],
-  mustOffer: ["value", "cost", "pnl", "uncalled", "realised", "multiple"],
+  mustOffer: ["value", "cost", "pnl", "irr", "uncalled", "realised", "multiple"],
   minMenu: 12,
 });
 

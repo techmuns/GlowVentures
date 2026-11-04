@@ -2,7 +2,7 @@ import { useNavigationState, useNavigationValue, nullableStringNavigation } from
 import { useTableExportFilter, useTableExporting } from "@/lib/tableExportSnapshot";
 import { ExportableTable } from "@/components/ExportableTable";
 import { Fragment, useMemo, type ReactNode } from "react";
-import { Handshake, Landmark, Wallet, TrendingUp, Fuel, Coins, Banknote, HelpCircle, CalendarClock, Layers, Users, ArrowUpRight } from "lucide-react";
+import { Handshake, Landmark, Wallet, TrendingUp, Fuel, Coins, Banknote, HelpCircle, CalendarClock, Layers, Users, ArrowUpRight, Percent } from "lucide-react";
 import { Link } from "react-router-dom";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
@@ -304,7 +304,10 @@ type RowFigures = Pick<BookFigures, "committed" | "called" | "paid" | "uncalled"
  * the cell (Stage 10bw's footer rule, carried onto every band and total).
  */
 type RowReturn = MeasuredReturn & {
-  pool?: { covers: number; of: number };
+  /** `atCost`: the funds in `of` held at cost, which carry no return by decision. */
+  pool?: { covers: number; of: number; atCost?: number };
+  /** On a pooled XIRR: each valued record left out of the pool, with why. */
+  missing?: string[];
   /** The pooled records held under a year, and the pool without them (PM-D3). */
   subYear?: { name: string; days: number }[];
   withoutSubYear?: number | null;
@@ -1502,7 +1505,8 @@ export function PrivateMarket() {
       if (measure === "xirr") {
         // WHICH RECORDS THE RATE POOLS, carried whether or not it shows one: a
         // refused rate over "0 of 4" says as much as a struck one over "3 of 4".
-        const pool = { covers: pooledIn.length, of: poolOf };
+        const pool = { covers: pooledIn.length, of: poolOf, atCost: atCostFunds };
+        const missing = pooledOut.map((r) => `${r.name} — ${r.d?.gap ?? "its payout record is not carried"}`);
         if (!pooledIn.length) {
           return { shown: false, tag, pool, reason: "no fund here carries a complete dated record of what went in and what came back, so no money-weighted return can be struck across them"
             + (atCostClause ? `; ${atCostClause}` : "") };
@@ -1513,13 +1517,13 @@ export function PrivateMarket() {
         // return, never an annual rate and never a dash where one is struck.
         if (!pooled.annualised) {
           if (fig.returnPct != null) {
-            return { shown: true, pct: fig.returnPct, tag: "HPR", pool,
+            return { shown: true, pct: fig.returnPct, tag: "HPR", pool, missing,
               note: `The pooled flows span ${pooled.windowDays} days — under a year, so this is not an annual rate but the holding-period return. ${aggHprNote(held, (n) => money(n))}${wo}` };
           }
           return { shown: false, tag, pool, reason: `the pooled flows span ${pooled.windowDays} days — under a year, so this shows the holding-period return, and the cost here does not cover the value to strike one` };
         }
         const left = [
-          ...pooledOut.map((r) => `${r.name} — ${r.d?.gap ?? "its payout record is not carried"}`),
+          ...missing,
           ...(atCostClause ? [atCostClause] : []),
         ].join("; ");
         /**
@@ -1542,7 +1546,7 @@ export function PrivateMarket() {
               ? ` Without ${one ? "it" : "them"}, the pool reads ${fmtPct(without.pct, { sign: true, decimals: 1 })}.`
               : "")
           : "";
-        return { shown: true, pct: pooled.pct, tag, pool,
+        return { shown: true, pct: pooled.pct, tag, pool, missing,
           subYear: subYear.map((x) => ({ name: x.r.name, days: x.w!.windowDays! })),
           withoutSubYear: without?.pct != null && without.annualised ? without.pct : null,
           note: `Pooled across ${pooledIn.length} of ${poolOf} ${unit(poolOf)}: every dated call, every dated payout and each fund's own valuation date, annualised over the ${pooled.windowDays} days since the first call.`
@@ -1560,6 +1564,36 @@ export function PrivateMarket() {
   const fundCells = (measure: ReturnMeasure) =>
     [...m.byFund.sections.private.groups, ...m.byFund.sections.atCost.groups]
       .filter((g) => g.value != null).map((g) => groupRet(g)(measure));
+
+  /* ── IRR, THE TABLE'S OWN TOTAL ─────────────────────────────────────────────
+      *"In the KPI tiles give the option to select IRR"* — the money-weighted
+      return the total row strikes under XIRR, read off the same resolver, so
+      the tile and that cell cannot disagree. NEVER PARTIAL (Stage 10fc): where
+      a valued fund's dated record cannot join the pool, the tile is absent and
+      names it rather than print a rate over the rest. What is held at cost
+      carries no return by decision and is named, as on Unrealised P&L. */
+  const irr = aggRet(m.byFund.folios, true, "total")("xirr");
+  const irrAtCost = irr.pool?.atCost ?? 0;
+  const irrAtCostNote = irrAtCost > 0
+    ? ` ${atCostNote(m.privAtCost, (n) => money(n))} — no return, so not in the pool.`
+    : "";
+  const irrMissing = irr.missing ?? [];
+  const irrShown = irr.shown && irrMissing.length === 0;
+  const irrTile: TileMetric = {
+    id: "irr", label: "IRR", icon: <Percent className="h-4 w-4" />,
+    value: irrShown && irr.shown
+      ? <span className={changeColor(irr.pct)} data-pm-irr={irr.pct.toFixed(4)} data-pm-irr-tag={irr.tag}>{fmtPct(irr.pct, { sign: true, decimals: 1 })}</span>
+      : <AbsentValue />,
+    sub: !irr.shown ? absentLine("No complete dated record")
+      : irrMissing.length ? absentLine(`${irrMissing.length} of ${irr.pool!.covers + irrMissing.length} funds can't say`)
+      : irr.tag === "XIRR" ? `XIRR · ${irr.pool!.covers} ${irr.pool!.covers === 1 ? "fund" : "funds"}${irrAtCost ? " · valued only" : ""}`
+      : "Under a year · holding-period",
+    detail: !irr.shown ? `No money-weighted return: ${irr.reason}.`
+      : irrMissing.length
+        ? `A money-weighted return pools every valued fund's dated calls, payouts and own valuation date. ${irrMissing.length} cannot join: ${irrMissing.join("; ")}. A rate over the rest would be a partial return, so none is shown.` + irrAtCostNote
+        : (irr.note ?? "") + (irr.tag === "XIRR" ? " The same figure as the table's total under XIRR." : ""),
+  };
+  const pmTiles = tileMetrics.flatMap((t) => (t.id === "pnl" ? [t, irrTile] : [t]));
 
   // ── THE CELLS, ONE WRITER FOR EVERY ROW KIND ────────────────────────────────
   //
@@ -2320,7 +2354,7 @@ export function PrivateMarket() {
           mark on this page — and `check:pages` holds the newest of them to the
           book's own newest private mark. */}
 
-      <SelectableTiles page="private-market" storageKey={PM_TILES_KEY} defaults={PM_DEFAULT_TILES} metrics={tileMetrics} />
+      <SelectableTiles page="private-market" storageKey={PM_TILES_KEY} defaults={PM_DEFAULT_TILES} metrics={pmTiles} />
 
       {/* ── THE ONE TABLE ────────────────────────────────────────────────────
           Three tabs of one card. The first two are the same folios grouped two
