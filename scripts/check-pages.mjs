@@ -54,8 +54,16 @@ import { KEPT_UNVALUED } from "../shared/keptUnvalued.mjs";
 const PRIVATE_CO = (() => {
   try {
     const store = JSON.parse(readFileSync(new URL("../src/data/privateRounds.json", import.meta.url), "utf8"));
-    const c = [...store.companies].sort((a, b) => b.rounds.length - a.rounds.length)[0];
-    return c && c.rounds.length ? { id: c.id, rounds: c.rounds.length,
+    // Stage 10kp: Inc42's funding rows join each company's rounds — a row is
+    // its own round unless its `fold` names a researched round the record
+    // carries — and the headlines that name it fill its News tab.
+    const news = JSON.parse(readFileSync(new URL("../src/data/privateMarketNews.json", import.meta.url), "utf8"));
+    const own = (c) => (news.funding?.rows ?? []).filter((r) => r.company === c.id && r.date
+      && !(r.fold && c.rounds.some((x) => `${x.date}|${x.round}` === r.fold.key))).length;
+    const c = [...store.companies].sort((a, b) => (b.rounds.length + own(b)) - (a.rounds.length + own(a)))[0];
+    return c && c.rounds.length ? { id: c.id, rounds: c.rounds.length + own(c), reported: own(c),
+      investorRows: (news.funding?.rows ?? []).filter((r) => r.company === c.id && r.date && r.investors.length).length,
+      headlines: (news.headlines?.rows ?? []).filter((h) => h.company === c.id).length,
       valued: c.rounds.filter((r) => r.postMoney || r.valuation || (r.preMoney && r.amountRaised)).length } : null;
   } catch { return null; }
 })();
@@ -8877,6 +8885,7 @@ const ROUTES = [
   ["private-company", () => `/private-company/${PRIVATE_CO?.id ?? "none-in-the-record"}`],
   ["private-company-rounds", () => `/private-company/${PRIVATE_CO?.id ?? "none-in-the-record"}?tab=rounds`],
   ["private-company-valuation", () => `/private-company/${PRIVATE_CO?.id ?? "none-in-the-record"}?tab=valuation`],
+  ["private-company-news", () => `/private-company/${PRIVATE_CO?.id ?? "none-in-the-record"}?tab=news`],
   ["fund-clubbed", () => (CLUBBED_FUND_BOOK ? `/fund/${encodeURIComponent(CLUBBED_FUND_BOOK.fund)}` : "/fund/none-resolved-from-the-book")],
   /**
    * ── THE DRILL-DOWNS EVERY MORNING CIO FIGURE NOW OPENS ────────────────────
@@ -36132,8 +36141,8 @@ const INVARIANTS = {
   "private-company": [
     ["the record carries a company with rounds (load-bearing)", () => !!PRIVATE_CO],
     ["the route draws that company's page, not a redirect", (t, ctx) => ctx?.privateCo?.id === PRIVATE_CO?.id],
-    ["the same six tiles as a holding's page, under a header with three tabs", (t, ctx) =>
-      ctx?.privateCo?.tiles === 6 && ctx.privateCo.tabs.join() === "position,rounds,valuation"],
+    ["the same six tiles as a holding's page, under a header with four tabs", (t, ctx) =>
+      ctx?.privateCo?.tiles === 6 && ctx.privateCo.tabs.join() === "position,rounds,valuation,news"],
     ["no tile prints a ₹0 or 0.00% — an absent figure is a dash with its reason", (t, ctx) =>
       !!ctx?.privateCo && !ctx.privateCo.tileTexts.some((x) => /(^|\s)₹0(\s|$)|(^|\s)0\.00%/.test(x))],
   ],
@@ -36141,6 +36150,18 @@ const INVARIANTS = {
     ["every round in the record is a row of the table", (t, ctx) => !!PRIVATE_CO && ctx?.privateCo?.rows === PRIVATE_CO.rounds],
     ["every row links the source it is read from", (t, ctx) => !!ctx?.privateCo && ctx.privateCo.rows > 0 && ctx.privateCo.unsourced === 0],
     ["at most one row is marked as the family's entry", (t, ctx) => !!ctx?.privateCo && ctx.privateCo.entries <= 1],
+    ["a round known only from Inc42's funding table is marked so, once per such row", (t, ctx) =>
+      !!ctx?.privateCo && !!PRIVATE_CO && ctx.privateCo.reported === PRIVATE_CO.reported],
+    ["every round Inc42 lists investors for shows them in the Investors column (Stage 10kp)", (t, ctx) =>
+      !!ctx?.privateCo && !!PRIVATE_CO && ctx.privateCo.investorCells === PRIVATE_CO.investorRows],
+  ],
+  "private-company-news": [
+    ["the News tab draws one row per headline that names the company, each opening its story — or says none does", (t, ctx) => {
+      const c = ctx?.privateCo;
+      if (!c || !PRIVATE_CO) return false;
+      if (PRIVATE_CO.headlines === 0) return c.newsEmpty;
+      return c.newsRows === PRIVATE_CO.headlines && c.newsLinked === PRIVATE_CO.headlines;
+    }],
   ],
   "private-company-valuation": [
     ["the chart draws one dot per round that prints a valuation in its currency, and no more", (t, ctx) => {
@@ -44230,6 +44251,11 @@ for (const theme of THEMES) {
           rows: rows.length,
           unsourced: rows.filter((r) => !r.querySelector("a[data-pc-source]")).length,
           entries: rows.filter((r) => r.hasAttribute("data-pc-entry")).length,
+          reported: rows.filter((r) => r.querySelector("[data-pc-reported]")).length,
+          investorCells: [...root.querySelectorAll("td[data-pc-investors]")].filter((td) => Number(td.getAttribute("data-pc-investors")) > 0).length,
+          newsRows: root.querySelectorAll("tr[data-pc-headline]").length,
+          newsLinked: [...root.querySelectorAll("tr[data-pc-headline]")].filter((r) => r.querySelector("a[href^='http']")).length,
+          newsEmpty: !!root.querySelector("[data-pc-no-news]"),
           chartPoints: chart ? Number(chart.getAttribute("data-pc-chart")) : null,
           chartDots: chart ? chart.querySelectorAll(".recharts-line-dots circle, .recharts-line-dot").length : 0,
         };

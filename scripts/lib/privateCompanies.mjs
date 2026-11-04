@@ -10,16 +10,21 @@
 // (Borosil Renewables is priced by the exchange). `privateRounds.test.ts` fails
 // on any private company line in the book that no entry names, so the next
 // drop's new company is added here, never left without a page.
+//
+// The optional fifth field is the other names a funding table may print the
+// company under (Stage 10kp, `privateFunding.mjs`) — each one the company's own:
+// the same reviewed spellings Glow Central Research matches on (its
+// `REVIEWED` table), never a guess. A name is matched exactly, never as a part.
 export const PRIVATE_COMPANIES = [
   ["zepto", "Zepto Limited (formerly Kiranakart Technologies Private Limited)", "Zepto", ["zepto"]],
-  ["waterwala-labs", "Waterwala Labs Private Limited", "DrinkPrime", ["waterwala-labs-private-limited-drink-prime", "vineet-sethia-drink-prime", "ajay-jain-drink-prime", "hanok-reuben-medhari-drink-prime"]],
-  ["assetgro-fintech", "Assetgro Fintech Private Limited", "StockGro", ["assetgro-fintech-private-limited-1-series-b-pref-25nv44"]],
+  ["waterwala-labs", "Waterwala Labs Private Limited", "DrinkPrime", ["waterwala-labs-private-limited-drink-prime", "vineet-sethia-drink-prime", "ajay-jain-drink-prime", "hanok-reuben-medhari-drink-prime"], ["Drink Prime", "Waterwala Labs"]],
+  ["assetgro-fintech", "Assetgro Fintech Private Limited", "StockGro", ["assetgro-fintech-private-limited-1-series-b-pref-25nv44"], ["Assetgro"]],
   ["everest-fleet", "Everest Fleet Private Limited", "Everest Fleet", ["everest-fleet"]],
-  ["swapeco-solutions", "Swapeco Solutions Private Limited", "ScrapUncle", ["swapeco-solutions", "swapeco-solutions-private-limited-scrap-uncle-mukul-chabra"]],
+  ["swapeco-solutions", "Swapeco Solutions Private Limited", "ScrapUncle", ["swapeco-solutions", "swapeco-solutions-private-limited-scrap-uncle-mukul-chabra"], ["Scrap Uncle"]],
   ["hyprkytchen-foodtech", "Hyprkytchen Foodtech Private Limited", "Kytchens", ["hyprkytchen-foodtech-private-limited-mr-bansi"]],
   ["head-infotech", "Head Infotech India Private Limited (now Head Digital Works)", "A23", ["head-infotech"]],
   ["edugorilla-community", "EduGorilla Community Private Limited", "EduGorilla", ["edugorilla-community"]],
-  ["stay-vista", "Stay Vista Private Limited", "StayVista", ["stay-vista-private-limited-artha-energy-projects", "stay-vista-private-limited-anandkumar-radhakrishna-ladsariya"]],
+  ["stay-vista", "Stay Vista Private Limited", "StayVista", ["stay-vista-private-limited-artha-energy-projects", "stay-vista-private-limited-anandkumar-radhakrishna-ladsariya"], ["Stay Vista"]],
   ["innoviti", "Innoviti Technologies Private Limited (formerly Innoviti Payment Solutions)", "Innoviti", ["innoviti-payment-solutions-private-ltd-pranav-koranne"]],
   ["incred-holdings", "InCred Holdings Limited", "InCred", ["incred-holdings"]],
   ["wevois-labs", "WeVOIS Labs Private Limited", "WeVOIS", ["we-voise"]],
@@ -36,9 +41,9 @@ export const PRIVATE_COMPANIES = [
   ["onix-renewable", "Onix Renewable Limited", "Onix Renewable", ["onix-renewable"]],
   ["spray-engineering-devices", "Spray Engineering Devices Limited", "SED", ["spray-engineering-devices"]],
   ["matrix-gas-and-renewables", "Matrix Gas and Renewables Limited", "Matrix Gas and Renewables", ["matrix-gas-and-renewables"]],
-  ["big-bang-boom-solutions", "Big Bang Boom Solutions Private Limited", "Big Bang Boom Solutions", ["big-bang-boom-solutions-private-limited-0-001-pref-12sp44"]],
+  ["big-bang-boom-solutions", "Big Bang Boom Solutions Private Limited", "Big Bang Boom Solutions", ["big-bang-boom-solutions-private-limited-0-001-pref-12sp44"], ["Big Bang Boom"]],
   ["telawne-power", "Telawne Power Equipments Private Limited", "Telawne Power Equipments", ["telawne-power"]],
-  ["oilmax-energy", "Oilmax Energy Private Limited", "Oilmax", ["oilmax-energy"]],
+  ["oilmax-energy", "Oilmax Energy Private Limited", "Oilmax", ["oilmax-energy"], ["Oil Max"]],
   ["landcraft-retail", "Landcraft Retail Private Limited", "Food Square", ["landcraft-retail-pvt-ltd-food-square"]],
   ["sks-fasteners", "SKS Fasteners Limited", "SKS Fasteners", ["sks-fasteners"]],
   ["urb-ventures", "URB Ventures Private Limited", "URB Ventures", ["urb-ventures"]],
@@ -63,7 +68,7 @@ export const PRIVATE_COMPANIES = [
   ["fh-edutech", "FH Edutech LLP", "FH Edutech", ["fh-edutech"]],
   ["variance-pt-ventures", "Variance PT Ventures LLP", "Variance PT Ventures", ["variance-pt-ventures-llp-romil-kapadia"]],
   ["a-k-enterprises", "A K Enterprises", "A K Enterprises", ["a-k-enterprises"]],
-].map(([id, legalName, brand, fundKeys]) => ({ id, legalName, brand, fundKeys }));
+].map(([id, legalName, brand, fundKeys, aliases = []]) => ({ id, legalName, brand, fundKeys, aliases }));
 
 /** Private-side lines that are not a company with funding rounds, each with why. */
 export const NOT_A_PRIVATE_COMPANY = {

@@ -10,10 +10,12 @@
 // as `privateRounds.ts` says and nowhere else.
 import { BOOK_POSITIONS } from "@/data/glowData";
 import {
-  PRIVATE_ROUNDS, privateCompanyOf, roundValues, entryRound, companyMetrics, stakeTrail, valuationPoints, seriesCurrency,
+  PRIVATE_ROUNDS, PRIVATE_MARKET_NEWS, privateCompanyOf, roundValues, entryRound, companyMetrics, stakeTrail, valuationPoints, seriesCurrency,
   type FundingRound, type PrivateCompany,
 } from "@/lib/privateRounds";
-import { BLOCKED_SOURCE_HOSTS } from "../../../scripts/lib/privateCompanies.mjs";
+import RAW_ROUNDS from "@/data/privateRounds.json";
+import { BLOCKED_SOURCE_HOSTS, PRIVATE_COMPANIES } from "../../../scripts/lib/privateCompanies.mjs";
+import { parseMoney, footnoteFor, foldEvidence, foldRows, nameKey, namesOf, companyMatcher } from "../../../scripts/lib/privateFunding.mjs";
 
 let fails = 0;
 const ok = (name: string, pass: boolean, detail = "") => {
@@ -117,6 +119,62 @@ const offBasis = stakeTrail(diluting, 1000, 31_810 * 1000, "2022-06-20", "INR");
 ok("no stake where the family's cost per share is not the entry round's price (a split, a secondary purchase)",
   offBasis.at.size === 0 && /another price or share basis/.test(offBasis.why.get(diluting.rounds[1]) ?? ""));
 ok("no stake without a share count", stakeTrail(diluting, null, 1e6, "2022-06-20", "INR").at.size === 0);
+
+// ── INC42'S FUNDING TABLE, FOLDED IN (Stage 10kp) ───────────────────────────
+// The rows behind Glow Central Research's News → Private Market tab, matched to
+// a company by its exact name and merged into its record. What the page may do
+// with them is checked here: a row is the company's only by one of its own
+// names, it adds a round only where no researched round is the same one, it
+// never carries a valuation, and every row of the import is on the page.
+const raw = RAW_ROUNDS as unknown as { companies: { id: string; rounds: { date: string; round: string }[] }[] };
+const funding = PRIVATE_MARKET_NEWS.funding;
+ok("the import carries Inc42's coverage and its rows", !!funding && funding.rowsRead > 0 && funding.rows.length > 0,
+  funding ? `${funding.rows.length} rows of ${funding.rowsRead}, ${funding.from} → ${funding.to}` : "no funding block");
+const registry = new Map(PRIVATE_COMPANIES.map((c) => [c.id, c]));
+const misnamed = (funding?.rows ?? []).filter((r) => !namesOf(registry.get(r.company)!).some((n) => nameKey(n) === nameKey(r.name)));
+ok("every Inc42 row prints one of its company's own names, exactly", misnamed.length === 0, misnamed.map((r) => `${r.company}:${r.name}`).join(", "));
+const shown = new Map(PRIVATE_ROUNDS.companies.map((c) => [c.id, c]));
+const lost = (funding?.rows ?? []).filter((r) => r.date && !shown.get(r.company)?.rounds.some((x) => x.reported?.id === r.id));
+ok("every dated Inc42 row is on its company's page — folded into a round or as a round of its own", lost.length === 0, lost.map((r) => r.id).join(", "));
+const rawCount = (id: string) => raw.companies.find((c) => c.id === id)?.rounds.length ?? 0;
+const unresolved = (id: string) => (funding?.rows ?? []).filter((r) => r.company === id && r.date
+  && !(r.fold && raw.companies.find((c) => c.id === id)?.rounds.some((x) => `${x.date}|${x.round}` === r.fold!.key))).length;
+const counts = PRIVATE_ROUNDS.companies.filter((c) => c.rounds.length !== rawCount(c.id) + unresolved(c.id));
+ok("a company's rounds are its researched rounds plus the Inc42 rows that are none of them — nothing counted twice", counts.length === 0, counts.map((c) => c.id).join(", "));
+const valued = PRIVATE_ROUNDS.companies.flatMap((c) => c.rounds).filter((r) => r.kind === "reported" && (r.preMoney || r.postMoney || r.valuation || r.pricePerShare));
+ok("a round known only from Inc42 carries no valuation or price (its table prints none)", valued.length === 0);
+const noLink = PRIVATE_ROUNDS.companies.flatMap((c) => c.rounds).filter((r) => r.reported && !r.sources.some((x) => x.url === r.reported!.url));
+ok("every round Inc42 reports links the roundup it was read from", noLink.length === 0);
+ok("the imported record names no ring-fenced holding", !/polycab/i.test(JSON.stringify(PRIVATE_MARKET_NEWS)));
+const headlineCos = new Set((PRIVATE_MARKET_NEWS.headlines?.rows ?? []).map((h) => h.company));
+ok("every headline belongs to a company in the registry", [...headlineCos].every((id) => registry.has(id)));
+
+ok("an amount is read as printed — $21 Mn, $447K, ₹20 Cr — and a dash or 'Undisclosed' is no amount",
+  parseMoney("$21 Mn")?.value === 21e6 && parseMoney("$447K")?.value === 447e3 && parseMoney("$450 Mn*")?.value === 450e6
+  && parseMoney("₹20 Cr")?.currency === "INR" && parseMoney("₹20 Cr")?.value === 2e8 && parseMoney("–") === null && parseMoney("Undisclosed") === null);
+ok("a footnote star reads the roundup's own note for that many stars",
+  footnoteFor(2, ["Source: Inc42\n*Mix of equity and debt\n** Part of a larger round"]) === "Part of a larger round");
+const match = companyMatcher([{ brand: "Hoopr", legalName: "GSharp Media Private Limited" }, { brand: "Acme", legalName: "Acme Ltd" }, { brand: "Acme Labs", legalName: "Acme" }]);
+ok("a name matches exactly, by brand or legal name; a part of a name never does, and a name two companies share matches neither",
+  match("HOOPR")?.brand === "Hoopr" && match("GSharp Media Pvt. Ltd.")?.brand === "Hoopr" && match("Hoopr Music") === null && match("Acme") === null);
+const fx = (date: string, round: string | null, amount: { value: number; currency: string } | null, investors: string[]) => ({ date, round, amount, investors, leadInvestors: [] as string[] });
+const researched = (date: string, round: string, amountRaised: { value: number; currency: string; alt?: { value: number; currency: string }[] } | null, leadInvestors: string[]) => ({ date, round, amountRaised, leadInvestors });
+const usd = (value: number) => ({ value, currency: "USD" });
+ok("the same round folds on the same amount and an investor both name",
+  foldEvidence(fx("2025-08-12", null, usd(45.7e6), ["Motilal Oswal Financial Services Ltd"]), researched("2025-08-12", "Preferential allotment", { value: 4e9, currency: "INR", alt: [usd(46e6)] }, ["Motilal Oswal Financial Services Limited"])).score >= 2);
+ok("…but never across a different amount in one currency",
+  foldEvidence(fx("2025-08-07", null, usd(2.9e6), ["MapmyIndia"]), researched("2025-08-12", "Preferential allotment", { value: 4e9, currency: "INR", alt: [usd(46e6)] }, ["Motilal Oswal"])).contradiction !== null);
+ok("…or two different series", foldEvidence(fx("2024-01-10", "Series B", usd(5e6), ["Foo Capital"]), researched("2024-01-10", "Series A", usd(5e6), ["Foo Capital"])).contradiction !== null);
+ok("…and a seed and a pre-seed of one day with one investor are the same cheque",
+  foldEvidence(fx("2023-08-29", "Seed", usd(447e3), ["Madhuram Papers family office"]), researched("2023-08-29", "Pre-seed", inr(3.7e7), ["Family office of the promoters of Madhuram Papers"])).score >= 2);
+const rowA = fx("2024-05-15", null, usd(3e6), ["SIDBI Venture Capital"]), rowB = fx("2024-05-20", null, usd(3e6), ["SIDBI Venture Capital"]);
+const folded = foldRows([rowA, rowB], [researched("2024-05-15", "Series A extension", usd(3e6), ["SIDBI Venture Capital"])]);
+ok("a researched round takes one Inc42 row — the strongest; the other stays a row of its own", !!folded.get(rowA) && folded.get(rowB) === null);
+const withReported: PrivateCompany = { ...diluting, rounds: [...diluting.rounds.slice(0, 2),
+  round("2022-09-01", "Round type not named", { kind: "reported", amountRaised: { value: 2e6, currency: "USD" } }), diluting.rounds[3]] };
+const tr = stakeTrail(withReported, 1000, 1000 * 1000, "2022-06-20", "INR");
+ok("a round known only from Inc42 breaks the stake chain — its table does not say whether it issued shares",
+  tr.at.has(withReported.rounds[1]) && !tr.at.has(withReported.rounds[2]) && !tr.at.has(withReported.rounds[3]) && /Inc42/.test(tr.why.get(withReported.rounds[3]) ?? ""));
 
 if (fails) { console.log(`\n${fails} failing`); process.exit(1); }
 console.log("\nall private-round checks pass");

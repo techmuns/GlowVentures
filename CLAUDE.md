@@ -196,7 +196,10 @@ One line per area; the history files explain each in depth.
 - `src/lib/privateRounds.ts` + `pages/PrivateCompany.tsx` — a private company's
   funding rounds, valuations and stake (`/private-company/:id`, Private Market's
   valuation columns), off `src/data/privateRounds.json`: public reporting, every
-  round sourced, never a value for the holding (Stage 10ko).
+  round sourced, never a value for the holding (Stage 10ko). Inc42's weekly funding
+  rows (Glow Central Research's News → Private Market) and the headlines naming each
+  company join it from `src/data/privateMarketNews.json` — exact-name match, folded
+  onto a researched round only on evidence (`scripts/lib/privateFunding.mjs`; Stage 10kp).
 - `shared/realEstate.mjs` + `shared/propertyTax.mjs` — Real Estate's record (entered on
   the page, kept in the shared store) and the capital gains tax on selling a
   property today: the Cost Inflation Index table, the 2024 rules, per owner,
@@ -561,6 +564,8 @@ All steps are idempotent; `glowData.ts` regenerates byte-identically.
   capture. `stock-exposure.ts` — the look-through read model.
 - Workflows: `harvest.yml` (macro series store), `fund-navs.yml` (AMFI NAVs),
   `private-rounds.yml` (private companies' rounds, weekly; needs `ANTHROPIC_API_KEY`),
+  `private-market-news.yml` (Inc42 funding rows + headlines from Glow Central Research,
+  twice daily; no secret),
   `polycab.yml` (Polycab exchange data), `index-sectors.yml` (NSE factsheet
   sector weights, days 1–15 monthly), `statement-intake.yml` (dashboard uploads
   → the book; dispatched by each upload, every 20 min as a backstop; sealed
@@ -647,6 +652,8 @@ And:
   `build-profiles` → `src/data/privateProfiles.json` from any profile table in `source/`).
 - `npm run build-private-rounds` — research the stalest private companies' rounds
   (`ANTHROPIC_API_KEY`; `--import <batch.json>`, `--only <ids>`, `--check`).
+- `npm run import-private-market` — Inc42 funding rows and private-company headlines
+  from Glow Central Research's site (`--offline` re-matches the rows held).
 - `npm run accounts-table` — the accounts table above (`-- --write` splices).
 - Replays (each `--check` is a no-op control; follow with `build-book`):
   `rekey:archive`, `replay:calls`, `replay:owners`, `replay:dedupe`,

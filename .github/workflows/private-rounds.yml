@@ -57,6 +57,8 @@ jobs:
         run: |
           if [ -n "$ONLY" ]; then npm run build-private-rounds -- --only "$ONLY"; else npm run build-private-rounds -- --limit 15; fi
           npm run build-private-rounds -- --check
+          # Inc42's rows fold onto the researched rounds; re-match them against the refreshed record (Stage 10kp).
+          npm run import-private-market -- --offline
 
       - name: Verify the app still builds against the new record
         run: npm run build
@@ -65,11 +67,11 @@ jobs:
         run: |
           git config user.name  "glow-harvest[bot]"
           git config user.email "glow-harvest[bot]@users.noreply.github.com"
-          if git diff --quiet -- src/data/privateRounds.json docs/PRIVATE-ROUNDS.md; then
+          if git diff --quiet -- src/data/privateRounds.json docs/PRIVATE-ROUNDS.md src/data/privateMarketNews.json; then
             echo "No company's record changed — nothing to commit."
             exit 0
           fi
-          git add src/data/privateRounds.json docs/PRIVATE-ROUNDS.md
+          git add src/data/privateRounds.json docs/PRIVATE-ROUNDS.md src/data/privateMarketNews.json
           git commit -m "Private company rounds: weekly research refresh
 
           Automated run of \`npm run build-private-rounds\`. Every round carries
