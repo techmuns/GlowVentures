@@ -58,7 +58,7 @@ const consolidated = model.buildConsolidatedSheet(docs);
 put('consolidated/book.json', consolidated);
 const keys = new Set([...model.BOOK_POSITIONS.map(p => p.securityKey), ...docs.flatMap(d => ['transactions','capitalGains','holdings','income','openLots'].flatMap(k => (d[k] || []).map(r => r.securityKey)))]);
 const stockKeys = [...keys].filter(Boolean).sort();
-// Each holding's ledger carries its rows of the sheet above (Stage 10la).
+// Each holding's ledger carries its rows of the sheet above (Stage 10lt).
 for (const [key, ledger] of Object.entries(model.deriveHoldingLedgers(docs, stockKeys, consolidated))) {
   if (!/^[a-z0-9-]+$/.test(key)) throw new Error(`Invalid security key: ${key}`);
   put(`ledger/stocks/${key}.json`, ledger);

@@ -1076,7 +1076,7 @@
 - Record: 104 → 141 rounds, valued rounds 29 → 39 (companies with a valuation 13 → 19), per-share prices 22 → 55 (offer documents: InCred, Integris, Electromech, Sotefin, Radiant, EMA), family lines 7 → 40 (allottee tables, round reports, LLP partner registers), websites 26 → 41. Sixteen companies still print no round anywhere public; their notes say what was searched.
 - Page: a valuation only a data vendor's page states is marked so (tiles, table `v`, chart tooltip); "Named in the filings" shows without rounds too; an absent valuation tile carries one line with the research note as its hover.
 
-### Stage 10la — A holding's Transactions tab lists every buy, sell, switch and income
+### Stage 10lt — A holding's Transactions tab lists every buy, sell, switch and income
 
 - *"If there is any transaction on any security or asset where dividends, or any income etc is coming it will show in transactions as buy sell or income … if now tomorrow interest payments come in how will you show and also say what happens when I redeem from somewhere and I invest somewhere else … populate if we have missed anything at all"* — the family, 4 Nov 2026, on Buoyant A4's Transactions tab, which showed one purchase out of ten.
 - A holding's Transaction history now draws Data Audit → Transactions' own rows for it (`holdingRecordsFrom` in `consolidatedSheet.ts`, carried in `ledger/stocks/<key>.json` as `records` by `deriveHoldingLedgers`, on the build and the statement publication alike). These are trades, purchases, redemptions and contributions, switches, income and non-cash actions, each badged BUY / SELL / INCOME. Tax lots stay on Data Audit. First bought and Last added read the same rows (Buoyant: 1 Jun 2024, not 2026). 210 holdings gain rows; none loses one.

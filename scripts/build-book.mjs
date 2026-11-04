@@ -3254,7 +3254,7 @@ function build(archived, archiveCount = archived.length, references = {}) {
     //
     // WHICH KINDS ARE CASH is `shared/incomeKind.mjs`, read by the ledger's
     // Transactions rows too: interest and a coupon are income the day a
-    // statement prints them, never a non-cash action (Stage 10la).
+    // statement prints them, never a non-cash action (Stage 10lt).
     const LETTER_KIND = /^distribution$/i;
     const cashSeen = new Set();
     const dividendByKey = new Map();
@@ -3286,7 +3286,7 @@ function build(archived, archiveCount = archived.length, references = {}) {
       dividendByKey.set(key, r2((dividendByKey.get(key) ?? 0) + amount));
       // `via` and `earnedOn` ride along only where set: "unit-record" names a
       // payment read off the fund's own unit record, which no income statement
-      // lists, so the Transactions sheet adds it as its own row (Stage 10la).
+      // lists, so the Transactions sheet adds it as its own row (Stage 10lt).
       datedIncomeByKey.set(key, [...(datedIncomeByKey.get(key) ?? []), ...dated.map((d) => ({ date: d.date ?? null, amount: r2(d.amount),
         ...(d.via ? { via: d.via } : {}), ...(d.earnedOn ? { earnedOn: d.earnedOn } : {}) }))]);
       const was = dividendFromByKey.get(key);

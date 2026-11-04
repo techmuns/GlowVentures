@@ -221,7 +221,7 @@ const POS_COLS = ["entity", "managedBy", "qty", "avgCost", "cmp", "invested", "c
 const STOCK_TXN_COLS = ["date", "type", "detail", "entity", "qty", "rate", "amount"] as const;
 
 /**
- * BUY, SELL OR INCOME ON THE FACE OF EVERY ROW (Stage 10la) — the Transaction
+ * BUY, SELL OR INCOME ON THE FACE OF EVERY ROW (Stage 10lt) — the Transaction
  * type Data Audit gives the same row. Two records are none of the three, and
  * say so in a neutral tone rather than borrow a colour: a class switch inside
  * the holding (no money in or out) and a bonus, split or spin-off (no money at
@@ -356,7 +356,7 @@ export function StockInfo() {
       records: ledWhole.records?.filter((r) => r.accountId != null && (portfolio?.accounts ?? []).some((a) => a.accountId === r.accountId)),
       realizedProfit: null }
     : ledWhole), [ledWhole, scope.owners, portfolio]);
-  /** The holding's every dated row — Data Audit's Transactions rows for it (Stage 10la). */
+  /** The holding's every dated row — Data Audit's Transactions rows for it (Stage 10lt). */
   const records = useMemo(() => (led ? holdingRecordsOf(led) : led), [led]);
 
   const rows = useMemo(() => (portfolio ? portfolio.positions.filter((p) => p.securityKey === securityKey) : []), [portfolio, securityKey]);
@@ -1150,7 +1150,7 @@ export function StockInfo() {
   // line, the statement's sentence in the hover; no figure of its own.
   const markNote = statementNoteForSet(rows);
   // FIRST BOUGHT AND LAST ADDED READ THE ROWS THE TABLE BELOW DRAWS (Stage
-  // 10la): every purchase, a switch in, and what a class switch carried in —
+  // 10lt): every purchase, a switch in, and what a class switch carried in —
   // not the trade tape alone, which dated Buoyant's first purchase to 2026.
   const buyDates = (records ?? []).filter((r) => r.txntype === "Buy" && r.date).map((r) => r.date as string).sort();
   const firstBought = buyDates[0] ?? null;

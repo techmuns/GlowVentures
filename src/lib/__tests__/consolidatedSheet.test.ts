@@ -95,7 +95,7 @@ assert.equal(idx(TRANSACTIONS, "txntype"), idx(TRANSACTIONS, "type") + 1, "Trans
   const expected = (i: number) => record[i] === "Trade" ? type[i]
     : record[i] === "Tax lot — sold" ? "Sell" : record[i] === "Tax lot — open" ? "Buy"
     : record[i] === "Income" ? "Income"
-    // A switch leg is its holding's Buy where units came in, its Sell where they left (Stage 10la).
+    // A switch leg is its holding's Buy where units came in, its Sell where they left (Stage 10lt).
     : record[i] === "Switch" ? ((value(TRANSACTIONS, i, "net") as number) < 0 ? "Buy" : "Sell")
     : record[i] === "Capital flow" ? (counts[i] === "Investment" ? "Buy" : counts[i] === "Divestment" ? "Sell" : counts[i] === "Income" ? "Income" : null) : null;
   txntype.forEach((v, i) => {
@@ -104,7 +104,7 @@ assert.equal(idx(TRANSACTIONS, "txntype"), idx(TRANSACTIONS, "type") + 1, "Trans
   });
   assert.ok(txntype.includes("Buy") && txntype.includes("Sell") && txntype.includes("Income"));
 }
-// STAGE 10la — WHAT A HOLDING EARNED AND WHERE ITS MONEY WENT, EACH A ROW.
+// STAGE 10lt — WHAT A HOLDING EARNED AND WHERE ITS MONEY WENT, EACH A ROW.
 {
   const T = sheet(TRANSACTIONS), at = (j: number, k: string) => T.rows[j].values[idx(TRANSACTIONS, k)];
   const rowsOf = (pred: (j: number) => boolean) => T.rows.map((_, j) => j).filter(pred);

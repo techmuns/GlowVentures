@@ -19,7 +19,7 @@ export async function loadStockLedger(securityKey: string): Promise<StockLedger 
 }
 /**
  * A HOLDING'S DATED RECORD — every buy, sell, switch and income row Data Audit
- * lists for it (Stage 10la). A ledger an older reader built carries only the
+ * lists for it (Stage 10lt). A ledger an older reader built carries only the
  * trade tape, which is then what is drawn, each trade its own Buy or Sell.
  */
 export const holdingRecordsOf = (l: StockLedger): HoldingRecord[] => l.records ?? l.txns.map((t) => ({

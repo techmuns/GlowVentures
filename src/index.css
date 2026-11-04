@@ -942,7 +942,7 @@ html:not(.dark) .preview-hatch {
   a[href] { text-decoration: none !important; color: inherit !important; }
 }
 
-/* A DATED RECORD'S TYPE on a holding's Transactions tab (Stage 10la): one
+/* A DATED RECORD'S TYPE on a holding's Transactions tab (Stage 10lt): one
    shape, four tones, each legible on both grounds — the BUY tag it replaces
    was indigo-300 on ivory in light mode, which barely read. */
 .txn-type { display: inline-flex; align-items: center; border-radius: 4px; padding: 2px 6px; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; line-height: 1.25; white-space: nowrap; }

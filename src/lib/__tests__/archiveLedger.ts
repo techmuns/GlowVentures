@@ -11,5 +11,5 @@ export const loadTransactions = async () => model.deriveTransactions(docs);
 export const loadSales = async () => model.deriveSales(docs);
 export const loadRealisedLots = async () => model.deriveRealisedLots(docs);
 export const loadIncome = async () => model.deriveIncome(docs);
-// A holding's ledger carries its Transactions rows (Stage 10la), as the build writes it.
+// A holding's ledger carries its Transactions rows (Stage 10lt), as the build writes it.
 export const loadStockLedger = async (key: string) => deriveHoldingLedger(docs, key);

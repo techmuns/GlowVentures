@@ -20,7 +20,7 @@
 //                      and the capital-gain statements' sold and open tax lots
 //                      (detail rows, which carry no cash flow so nothing is
 //                      counted twice). Each holding's own page draws its rows
-//                      (`holdingRecordsFrom`, Stage 10la).
+//                      (`holdingRecordsFrom`, Stage 10lt).
 //
 // Full INR throughout, so a reader (or another system) can add the columns.
 import { investedOnOf } from "./investedOn";
@@ -201,7 +201,7 @@ export function buildConsolidatedSheet(docs: ArchiveDoc[], input: { accounts: Ac
         !mv.securityKey && sec ? "Account-level record; the account holds only this security" : null].filter(Boolean).join("; "),
       src: mv.fromReview ? reviewNote : null, check: mv.amount == null ? "Amount not reported" : "OK" });
   }
-  // SWITCHES (Stage 10la). *"what happens when I redeem from somewhere and I
+  // SWITCHES (Stage 10lt). *"what happens when I redeem from somewhere and I
   // invest somewhere else"* — the family, 4 Nov 2026. A switch is that move made
   // inside a fund house: the statement prints a leg out of one scheme or unit
   // class and a leg into another for the same rupees, and no money reaches the
@@ -258,7 +258,7 @@ export function buildConsolidatedSheet(docs: ArchiveDoc[], input: { accounts: Ac
         : "another scheme or class; the other leg is not on this account's statements"}. Moved inside the fund house: no money reached or left the family, so it is not a capital flow. Net is the leg's own amount, signed as a trade's is.`,
       src: d.docKey, check: a ? "Reported switch" : "Account join missing", _source: d.docKey });
   }
-  // INCOME ON A FUND'S OWN UNIT RECORD (Stage 10la): an IDCW reinvested in units
+  // INCOME ON A FUND'S OWN UNIT RECORD (Stage 10lt): an IDCW reinvested in units
   // or paid out, a distribution, a gain distribution reinvested in a deposit.
   // The book counts each in its holding's income and return, gross of TDS
   // (`BOOK_HOLDING_INCOME`, `via: "unit-record"`), and no income statement lists
@@ -479,7 +479,7 @@ export function buildConsolidatedSheet(docs: ArchiveDoc[], input: { accounts: Ac
   ] };
 }
 
-// ── EACH HOLDING'S OWN RECORD (Stage 10la) ─────────────────────────────────
+// ── EACH HOLDING'S OWN RECORD (Stage 10lt) ─────────────────────────────────
 //
 // *"If there is any transaction on any security or asset where dividends, or any
 // income etc is coming it will show in transactions as buy sell or income"* —

@@ -786,7 +786,7 @@ export function deriveIncome(docs: ArchiveDoc[]): IncomeData {
     };
     // CASH IS `shared/incomeKind.mjs`'s list, the one `build-book` counts a
     // holding's income by: a dividend, IDCW, interest, coupon or distribution
-    // is cash the day a statement prints it (Stage 10la).
+    // is cash the day a statement prints it (Stage 10lt).
     if (isCashIncomeKind(ev.kind)) {
       const k = `${d.accountNo}|${row.date}|${ev.securityKey}|${ev.netAmount}`;
       const nth = (inDoc.get(`${d.docKey}\u0001${k}`) ?? 0) + 1;
@@ -972,7 +972,7 @@ export type StockLedger = {
   /**
    * EVERY DATED RECORD OF THIS HOLDING — Data Audit's Transactions rows for it:
    * trades, purchases and redemptions, switches, income and corporate actions,
-   * each a Buy, Sell or Income (`holdingRecordsFrom`, Stage 10la). Absent on a
+   * each a Buy, Sell or Income (`holdingRecordsFrom`, Stage 10lt). Absent on a
    * ledger an older reader built; the page then draws the trade tape alone.
    */
   records?: HoldingRecord[];
