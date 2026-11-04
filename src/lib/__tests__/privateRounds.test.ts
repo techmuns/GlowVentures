@@ -120,7 +120,7 @@ ok("no stake where the family's cost per share is not the entry round's price (a
   offBasis.at.size === 0 && /another price or share basis/.test(offBasis.why.get(diluting.rounds[1]) ?? ""));
 ok("no stake without a share count", stakeTrail(diluting, null, 1e6, "2022-06-20", "INR").at.size === 0);
 
-// ── INC42'S FUNDING TABLE, FOLDED IN (Stage 10kp) ───────────────────────────
+// ── INC42'S FUNDING TABLE, FOLDED IN (Stage 10kt) ───────────────────────────
 // The rows behind Glow Central Research's News → Private Market tab, matched to
 // a company by its exact name and merged into its record. What the page may do
 // with them is checked here: a row is the company's only by one of its own

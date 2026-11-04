@@ -57,7 +57,7 @@ jobs:
         run: |
           if [ -n "$ONLY" ]; then npm run build-private-rounds -- --only "$ONLY"; else npm run build-private-rounds -- --limit 15; fi
           npm run build-private-rounds -- --check
-          # Inc42's rows fold onto the researched rounds; re-match them against the refreshed record (Stage 10kp).
+          # Inc42's rows fold onto the researched rounds; re-match them against the refreshed record (Stage 10kt).
           npm run import-private-market -- --offline
 
       - name: Verify the app still builds against the new record

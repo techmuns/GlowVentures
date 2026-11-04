@@ -12,7 +12,7 @@
 // drop's new company is added here, never left without a page.
 //
 // The optional fifth field is the other names a funding table may print the
-// company under (Stage 10kp, `privateFunding.mjs`) — each one the company's own:
+// company under (Stage 10kt, `privateFunding.mjs`) — each one the company's own:
 // the same reviewed spellings Glow Central Research matches on (its
 // `REVIEWED` table), never a guess. A name is matched exactly, never as a part.
 export const PRIVATE_COMPANIES = [

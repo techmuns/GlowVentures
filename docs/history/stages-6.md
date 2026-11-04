@@ -1018,7 +1018,14 @@
 - Private Market: a company row's ↗ opens its page (DrinkPrime's four sellers included); Edit Columns offers Valuation at entry, Latest valuation, Latest valuation date, Latest round and Valuation change since entry, hidden by default, NA on a fund. `/stock/` pages of a private company link to it. Polycab text in a report is dropped (`FENCED`), and the suite asserts the record never names it.
 - Checks: `privateRounds.test.ts` (coverage of every private Unlisted line, sourced rounds, the derivations, the stake rule); `check:pages` routes `private-company`, `-rounds`, `-valuation` (probe `privateCo`).
 
-### Stage 10kp — Private company pages read Inc42's funding table and the company's headlines
+### Stage 10ks — Private Market's Weight, at cost and at value, of the private investments only
+
+- *"Weights – show only % of pvt investments – show both at cost and latest value"* (4 Nov 2026). The one Weight column becomes two: **Weight at cost** (row cost ÷ the private book's cost, `PrivateBook.privateCost`) and **Weight at value** (row value ÷ `privateValue`, unchanged). Both denominators are the valued private holdings only; each heading's hover names its amount.
+- A valued holding with no cost is named in the at-cost heading (`PrivateBook.costless`) and renders `—` with its reason, never a nil share. None today: both columns add to 100% (private 22.8% / 26.4%, held at cost 77.2% / 73.6%).
+- The Counted once line takes back the duplicated cost's share as it does the value's. `weightCost` sorts on cost, as `weight` sorts on value.
+- Checks: `build`; `privateBook.test.ts`, `privateMarket.test.ts`; `check:pages ONLY=private-market,private-market-tiles` (the one finding, the B-10 distributions hover on the tile strip, does not read either column).
+
+### Stage 10kt — Private company pages read Inc42's funding table and the company's headlines
 
 - *"The drill down pages of the private companies need to show complete information … access the private market news section in the Glow Central Research to understand how we are fetching data for it and use that knowledge to fetch and show data for private markets investments."* — the family, 4 Nov 2026.
 - What Glow Central Research does: its News → Private Market tab is Inc42's weekly "Funding Galore" tables (date, company, sector, subsector, business model, round size, round type, investors, lead investor), walked every six hours from the public table and published at `data/private-market-news.json` (3,220 rows, Aug 2023 → Oct 2026, archive 41 of 48 pages read). Its rule is that a Glow dashboard never scrapes Inc42 a second time, so `npm run import-private-market` reads that publication — as `import-corporate-actions.mjs` reads its corporate actions — plus `data/private-company-news.json` (headlines naming a family private company) and `data/portfolio-companies.json` (which book lines each is). No key; `.github/workflows/private-market-news.yml` runs it twice a day and commits `src/data/privateMarketNews.json` only on change, after the rounds suite and `build`.

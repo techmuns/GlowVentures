@@ -5,7 +5,7 @@ name: Private market funding and headlines
 # Market tab) and the headlines that name the family's private companies — and
 # keeps the rows that are the family's companies in `src/data/privateMarketNews.json`,
 # the record behind each `/private-company/<id>` page's investors, Inc42 rounds
-# and News tab (Stage 10kp, `scripts/import-private-market.mjs`).
+# and News tab (Stage 10kt, `scripts/import-private-market.mjs`).
 #
 # *"Access the private market news section in the Glow Central Research to
 # understand how we are fetching data for it and use that knowledge to fetch

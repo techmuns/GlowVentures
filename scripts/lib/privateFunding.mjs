@@ -1,4 +1,4 @@
-// ── THE PRIVATE COMPANIES' REPORTED FUNDING, FROM GLOW CENTRAL RESEARCH (Stage 10kp)
+// ── THE PRIVATE COMPANIES' REPORTED FUNDING, FROM GLOW CENTRAL RESEARCH (Stage 10kt)
 //
 // *"The drill down pages of the private companies need to show complete
 // information … access the private market news section in the Glow Central

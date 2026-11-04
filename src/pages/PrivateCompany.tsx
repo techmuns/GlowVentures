@@ -40,9 +40,9 @@ import {
  *                   where its statement carries a share count
  *   Valuation       the company's valuation round by round, as a line, with the
  *                   date the family invested on it
- *   News            the headlines that name it (Stage 10kp)
+ *   News            the headlines that name it (Stage 10kt)
  *
- * Since Stage 10kp the rounds also carry Inc42's weekly funding table — the
+ * Since Stage 10kt the rounds also carry Inc42's weekly funding table — the
  * rows behind Glow Central Research's News → Private Market tab, matched to
  * the company by its exact name (`npm run import-private-market`): every
  * investor in a round, its round size and type as Inc42 prints them, and the

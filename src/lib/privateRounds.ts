@@ -60,14 +60,14 @@ export type FundingRound = {
   leadInvestors: readonly string[];
   note: string | null;
   sources: readonly RoundSource[];
-  /** Every investor Inc42's funding table lists for the round (Stage 10kp); absent where it does not cover it. */
+  /** Every investor Inc42's funding table lists for the round (Stage 10kt); absent where it does not cover it. */
   investors?: readonly string[];
-  /** The Inc42 row this round is, or was read from (Stage 10kp). */
+  /** The Inc42 row this round is, or was read from (Stage 10kt). */
   reported?: ReportedRow;
 };
 
 /**
- * ONE ROW OF INC42'S WEEKLY FUNDING TABLE (Stage 10kp), as Glow Central
+ * ONE ROW OF INC42'S WEEKLY FUNDING TABLE (Stage 10kt), as Glow Central
  * Research publishes it and `npm run import-private-market` matched it to a
  * company by its exact name — every field as the table prints it. `fold` names
  * the researched round it is (and the evidence), or is null for a round the
@@ -118,11 +118,11 @@ export type PrivateCompany = {
   searchNote: string | null;
   /** The day this company's record was last researched. */
   checkedOn: string;
-  /** How Inc42's funding table classifies the company, off its newest row (Stage 10kp). */
+  /** How Inc42's funding table classifies the company, off its newest row (Stage 10kt). */
   classification?: { sector: string | null; subsector: string | null; businessModel: string | null; date: string | null } | null;
-  /** Inc42 funding rows matched to the company (Stage 10kp). */
+  /** Inc42 funding rows matched to the company (Stage 10kt). */
   reportedRows?: readonly ReportedRow[];
-  /** Headlines that name the company, newest first (Stage 10kp). */
+  /** Headlines that name the company, newest first (Stage 10kt). */
   headlines?: readonly Headline[];
 };
 export type PrivateRoundsStore = {
@@ -158,7 +158,7 @@ const reportedNote = (r: ReportedRow) => [
 ].filter(Boolean).join(" ") || null;
 
 /**
- * A COMPANY'S RECORD WITH INC42'S ROWS IN IT (Stage 10kp). A row that is a
+ * A COMPANY'S RECORD WITH INC42'S ROWS IN IT (Stage 10kt). A row that is a
  * researched round adds to it — Inc42's full investor list, its link, and the
  * amount where the research found none — and never overwrites a figure. A row
  * that is no researched round is one of its own, `kind: "reported"`: no

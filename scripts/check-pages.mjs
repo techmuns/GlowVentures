@@ -54,7 +54,7 @@ import { KEPT_UNVALUED } from "../shared/keptUnvalued.mjs";
 const PRIVATE_CO = (() => {
   try {
     const store = JSON.parse(readFileSync(new URL("../src/data/privateRounds.json", import.meta.url), "utf8"));
-    // Stage 10kp: Inc42's funding rows join each company's rounds — a row is
+    // Stage 10kt: Inc42's funding rows join each company's rounds — a row is
     // its own round unless its `fold` names a researched round the record
     // carries — and the headlines that name it fill its News tab.
     const news = JSON.parse(readFileSync(new URL("../src/data/privateMarketNews.json", import.meta.url), "utf8"));
@@ -36152,7 +36152,7 @@ const INVARIANTS = {
     ["at most one row is marked as the family's entry", (t, ctx) => !!ctx?.privateCo && ctx.privateCo.entries <= 1],
     ["a round known only from Inc42's funding table is marked so, once per such row", (t, ctx) =>
       !!ctx?.privateCo && !!PRIVATE_CO && ctx.privateCo.reported === PRIVATE_CO.reported],
-    ["every round Inc42 lists investors for shows them in the Investors column (Stage 10kp)", (t, ctx) =>
+    ["every round Inc42 lists investors for shows them in the Investors column (Stage 10kt)", (t, ctx) =>
       !!ctx?.privateCo && !!PRIVATE_CO && ctx.privateCo.investorCells === PRIVATE_CO.investorRows],
   ],
   "private-company-news": [

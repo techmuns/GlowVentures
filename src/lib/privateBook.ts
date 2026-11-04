@@ -578,8 +578,16 @@ export type PrivateBook = {
    * sections, so one total carries them all.
    */
   privateTotal: BookFigures;
-  /** The consolidated private value — the denominator of every Weight cell. */
+  /** The consolidated private value — the denominator of every Weight-at-value cell. */
   privateValue: number;
+  /**
+   * The consolidated private COST — the denominator of every Weight-at-cost
+   * cell: what the valued holdings that report a cost cost, the ones held at
+   * cost included. Null when no holding reports one.
+   */
+  privateCost: number | null;
+  /** The valued holdings counted in `privateValue` that report no cost, so are outside `privateCost`. */
+  costless: string[];
   /** Every folio, in no particular order. */
   folios: BookFolio[];
 };
@@ -1321,7 +1329,11 @@ const byValueThenPaid = (a: { value: number | null; paid: number | null; committ
 export function privateBook(folios: BookFolio[], grouping: BookGrouping): PrivateBook {
   // Every private holding with a value — the measured ones AND the ones held at
   // cost — which is BOOK_SUMMARY.privateValue on the statement basis.
-  const privateValue = figuresOf(folios.filter((f) => f.section !== "unvalued"), true).value ?? 0;
+  const valued = folios.filter((f) => f.section !== "unvalued");
+  const privateValue = figuresOf(valued, true).value ?? 0;
+  // THE SAME HOLDINGS ON COST: a holding with no cost is named, never weighed as nil.
+  const privateCost = figuresOf(valued, true).cost;
+  const costless = [...new Set(valued.filter((f) => f.position && f.counted && f.cost == null).map((f) => f.fundName))];
   const sections = {} as Record<BookSectionId, BookSection>;
   for (const id of BOOK_SECTIONS) {
     const mine = folios.filter((f) => f.section === id);
@@ -1384,6 +1396,8 @@ export function privateBook(folios: BookFolio[], grouping: BookGrouping): Privat
     sections,
     privateTotal: figuresOf(folios, true),
     privateValue,
+    privateCost,
+    costless,
     folios,
   };
 }

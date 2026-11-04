@@ -199,7 +199,7 @@ One line per area; the history files explain each in depth.
   round sourced, never a value for the holding (Stage 10ko). Inc42's weekly funding
   rows (Glow Central Research's News → Private Market) and the headlines naming each
   company join it from `src/data/privateMarketNews.json` — exact-name match, folded
-  onto a researched round only on evidence (`scripts/lib/privateFunding.mjs`; Stage 10kp).
+  onto a researched round only on evidence (`scripts/lib/privateFunding.mjs`; Stage 10kt).
 - `shared/realEstate.mjs` + `shared/propertyTax.mjs` — Real Estate's record (entered on
   the page, kept in the shared store) and the capital gains tax on selling a
   property today: the Cost Inflation Index table, the 2024 rules, per owner,

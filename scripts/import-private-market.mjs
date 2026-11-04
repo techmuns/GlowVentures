@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // ── THE PRIVATE COMPANIES' REPORTED FUNDING AND HEADLINES → src/data/privateMarketNews.json
-//   (Stage 10kp)
+//   (Stage 10kt)
 //
 //   npm run import-private-market                  read Glow Central Research's publications
 //   npm run import-private-market -- --offline     re-match the rows already held
