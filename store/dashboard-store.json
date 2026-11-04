@@ -30,15 +30,16 @@
    }
   },
   "tile-set:private-market": {
-   "value": "{\"page\":\"private-market\",\"ids\":[\"pnl\",\"uncalled\",\"value\"],\"updatedAt\":\"2026-11-04T06:38:56.419Z\"}",
+   "value": "{\"page\":\"private-market\",\"ids\":[\"pnl\",\"uncalled\",\"value\",\"cost\"],\"updatedAt\":\"2026-11-04T06:40:28.174Z\"}",
    "metadata": {
     "page": "private-market",
     "ids": [
      "pnl",
      "uncalled",
-     "value"
+     "value",
+     "cost"
     ],
-    "updatedAt": "2026-11-04T06:38:56.419Z"
+    "updatedAt": "2026-11-04T06:40:28.174Z"
    }
   },
   "tile-set:real-estate": {
