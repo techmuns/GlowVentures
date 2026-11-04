@@ -29,11 +29,30 @@ const missing: AccountInput = { ...input, accountId: 'b', owner: 'Ankita', label
 const today = new Date(2026, 9, 22);
 const r = availableCardReturns(statement, positions, [input, missing], today);
 near(r.gain.total.gain, 3000); // 20 held + 10 sold, without the unverified sale.
-near(r.gain.total.invested, 15000); near(r.gain.total.returnPct, 20);
-near(r.gain.total.units.reduce((s, u) => s + Object.values(u.gainParts!).reduce<number>((n, v) => n + (v ?? 0), 0), 0), r.gain.total.gain!);
-assert.equal(r.gain.coveredHoldings, 1); near(r.gain.coveredValue, 12000);
-assert.ok(r.gain.total.missing.some(g => /Missing purchase/.test(g.label) && /purchase cost/.test(g.reason)));
-assert.ok(r.gain.total.missing.some(g => /Unchecked sale/.test(g.label) && /sale record/.test(g.reason)));
+near(r.gain.total.units.reduce((s, u) => s + Object.values(u.gainParts ?? {}).reduce<number>((n, v) => n + (v ?? 0), 0), 0), r.gain.total.gain!);
+// GAIN SINCE INVESTMENT OVER EVERY INVESTMENT (Stage 10la; "make coverage 100%"):
+// what no purchase record or first value measures is held at its value — no
+// gain, in the base, and named with the record it still needs.
+near(r.gain.total.invested, 15000 + 40000 + 3000); near(r.gain.total.returnPct, 3000 / 58000 * 100);
+assert.equal(r.gain.coveredHoldings, 3); near(r.gain.coveredValue, 55000);
+const heldAtValue = r.gain.total.units.filter(u => u.held);
+assert.ok(heldAtValue.every(u => u.gain === 0));
+assert.ok(heldAtValue.some(u => /Missing purchase/.test(u.label) && /purchase cost/.test(u.held!.reason)));
+assert.ok(heldAtValue.some(u => /Unchecked sale/.test(u.label) && /sale record/.test(u.held!.reason)));
+assert.deepEqual([r.gain.gainCoverage.heldCount, r.gain.gainCoverage.sinceFirstCount], [2, 0]);
+near(r.gain.gainCoverage.sinceInvestmentValue, 12000);
+// A holding with no purchase cost but two values on record counts from the first of them.
+{
+  const fundAcct = { accountId: 'c', accountNo: '333', owner: 'Aarti', provider: 'Fund', asOf: '2026-09-30' } as Account;
+  const fundPos = position({ accountId: 'c', securityKey: 'fund', security: 'Fund units', marketValue: 110, costBasis: null, unrealizedPnL: null });
+  const fundIn: AccountInput = { ...input, accountId: 'c', owner: 'Aarti', label: 'Fund · 333', flows: [],
+    valuations: [{ date: '2026-03-31', value: 10000 }, { date: '2026-09-30', value: 11000 }] };
+  const g = availableCardReturns({ ...statement, accounts: [...accounts, fundAcct], positions: [...positions, fundPos] }, [...positions, fundPos],
+    [input, missing, fundIn], today).gain;
+  const first = g.total.units.find(u => u.sinceFirst);
+  assert.equal(first?.accountId, 'c'); near(first!.gain, 1000); near(first!.invested, 10000);
+  near(g.total.gain, 4000); assert.equal(g.gainCoverage.sinceFirstCount, 1); near(g.gainCoverage.sinceFirstValue, 11000);
+}
 const saleExplanation = returnGapText('Sale proceeds are unverified on review row(s) 474; original lots establish remaining cost only', null);
 assert.match(saleExplanation, /sale statement showing what was sold/);
 assert.doesNotMatch(saleExplanation, /review row|original lots/);
@@ -58,7 +77,7 @@ assert.equal(opened.fullPeriod, true); assert.deepEqual(opened.starts, [{ date: 
 // Today's quotes change only the displayed coverage value, never recorded gain or return.
 const live = availableCardReturns(statement, positions.map(p => ({ ...p, marketValue: p.marketValue * 2 })), [input, missing], today);
 near(live.gain.total.gain, 3000); near(live.fytd.total.gain, 12); near(live.history.total.returnPct, r.history.total.returnPct!);
-near(live.gain.coveredValue, 24000);
+near(live.gain.coveredValue, 110000); // every holding, at today's values
 // A genuine break-even measurement is a number; empty or unavailable records stay absent.
 const zero = availableCardReturns({ ...statement, positions: [position({ marketValue: 100, unrealizedPnL: 0 })] }, [position({ marketValue: 100, unrealizedPnL: 0 })], [], today);
 near(zero.gain.total.gain, 0); near(zero.gain.total.returnPct, 0);
@@ -73,7 +92,9 @@ near(availableCardReturns(statement, positions, [closed], today).history.total.g
 // dated cards must not be poisoned by the other accounts or today's price overlay.
 const book = { accounts: BOOK_ACCOUNTS, positions: BOOK_POSITIONS, accountReturnRecords: BOOK_ACCOUNT_RETURN_RECORDS, privateMarkets: {} } as Portfolio;
 const display = dedupedPositions(BOOK_POSITIONS), actual = availableCardReturns(book, display, statementReturnInputs(book), today);
-assert.ok(actual.gain.total.gain != null && actual.gain.coveredHoldings > 0 && actual.gain.coveredHoldings < currentHoldings(display).length);
+// Every current holding holding value is in the gain card: measured from cost, from its first value, or held (Stage 10la).
+assert.ok(actual.gain.total.gain != null && actual.gain.coveredHoldings === currentHoldings(display).length);
+assert.ok(actual.gain.gainCoverage.sinceInvestmentValue > 0 && actual.gain.gainCoverage.heldValue > 0);
 // THE FINANCIAL YEAR FROM THE FIRST VALUE ON RECORD (Stage 10la): the 17
 // accounts verified from 31 March, unchanged, plus the six whose consecutive
 // statements hold the same units (Buoyant ×2, Founders ×2, Mirae, ABSL),

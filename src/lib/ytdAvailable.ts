@@ -24,7 +24,7 @@ import type { Flow } from './periodReturns';
 import type { ReturnGap, ReturnSelection, ReturnUnit } from './selectedSegmentReturns';
 import { ytdTagDay } from './analytics';
 import { OPENING_MARK_TOLERANCE_DAYS, measureWindow, windowReturns, type AccountInput, type AccountWindow } from './periodReturns';
-import { assumedHolding, assumedHoldingReturns, holdingAssumptionAnchor, holdingAssumptionText, publishedClose, type AssumedReturnBook } from './assumedHoldingReturns';
+import { assumedHolding, assumedHoldingReturns, closeMarks, holdingAssumptionAnchor, holdingAssumptionText, publishedClose, type AssumedReturnBook } from './assumedHoldingReturns';
 import { recordedHoldingOf } from './holdingFlows';
 import { projectActions } from './corporateActions';
 import { earlierBalanceOptions, statementNavWindow, tradedWindow } from './periodRules';
@@ -137,6 +137,7 @@ function recordedYearWindow(p: Position, a: Account, openAt: string | null, end:
   const label = `${p.security} · ${a.owner} · ${a.provider} · account ${a.accountNo}`;
   const window: AccountWindow = { accountId: `${p.accountId}|${p.securityKey}`, owner: a.owner, label,
     openDate: open.date, closeDate: closing.date, openValue, closeValue, openedInWindow: units0 === 0,
+    marks: closeMarks(h, open.date, closing.date, (d) => (d <= r.asOf ? heldOn(d) * factor : carried.quantity)),
     flows, capitalIn, capitalOut, gain };
   const income = flows.filter((f) => f.amount > 0 && f.description !== 'Sale on the record');
   // From the statement on, the units are carried at published closes: an

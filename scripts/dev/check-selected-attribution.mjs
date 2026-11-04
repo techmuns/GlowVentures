@@ -49,8 +49,8 @@ try {
   await card.locator('[data-card-coverage]').waitFor();
   const numeric = await card.locator('[data-card-coverage]').evaluate(el => ({ ...el.dataset }));
   assert.notEqual(numeric.cardGain, ''); assert.notEqual(numeric.cardReturn, '');
-  // The three return cards say how much of the public investments they cover (Stage 10la); Gain / Loss stays "Available data".
-  assert.match(await card.innerText(), id === 'gain' ? /Available data/ : /Covers \d+% of public investments/);
+  // The three return cards say how much of the public investments they cover, Gain / Loss how much of every investment (Stage 10la).
+  assert.match(await card.innerText(), id === 'gain' ? /Covers \d+% of investments/ : /Covers \d+% of public investments/);
   assert.equal(await card.locator('[data-return-info]').count(), 1);
   await card.locator('[data-return-info]').click();
   const popup = page.getByRole('dialog'); await popup.waitFor();

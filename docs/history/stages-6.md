@@ -1159,3 +1159,30 @@
 - Redeeming and reinvesting elsewhere: through the bank it is a Sell (redemption) on one holding and a Buy (purchase) on the other, each external capital to its account. As a switch it is a Sell leg and a Buy leg that name each other, internal, with no capital flow.
 - The type badges are one `.txn-type` class with both themes defined. The old BUY tag was indigo-300 on ivory in light mode.
 - Checks: `consolidatedSheet.test.ts` (cash rule, unit-record rows, income tie, switch legs, Buoyant's lineage, holding records); `readModels.test.ts` against `deriveHoldingLedger`.
+
+### Stage 10lf — Return card coverage review: findings, the approved method and its outcome
+
+- Why: the FYTD card read +20.0% over "203 of 509 holdings · ₹167.3 Cr" — about 13–15% of the book by value; the family read it as broken.
+- Recorded in `docs/RETURN-COVERAGE-REVIEW.md`: the method discussed on 4 Nov 2026 (measure from the first value on record, labelled; mid-year arrivals in at market value; newly listed from listing day; private on its own line; coverage against public only), and the figure it gives — +13.0% (+₹55.8 Cr) on ₹932 Cr of ₹992 Cr public (94%), statement values and market closes to 3 Nov. Decided: build it (preview first); one-statement funds held at their last value until the next statement, which gives +12.3% on 99% of public.
+- Six data defects: the ICICI "31 March 2026" holding statement is valued at 20 Jul closes; MOPWM share rolls do not reproduce sale proceeds; Clean Max 94,967 on two demats; NSE (listed 24 Sep) at the review's unlisted mark on the statement basis only, since the live basis prices it at BSE since 22 Oct; VOF (Vantage Oak Fund I) unplaced; Grand Continent and Parth are NSE SME listings, not private.
+- Outcome: the family approved the method on 4 Nov 2026, and it is built in Stages 10la (#343: the three cards) and 10le (#350: the chart drawn as the card, Gain / Loss at 100%). Of the six defects, the ICICI 31 Mar pricing is fixed by Stage 10ku (#337) and Clean Max by Stage 10ky (#341). Each remaining one is in the review's own list.
+
+### Stage 10le — Our book vs benchmarks draws the return card's own line; Gain / Loss covers every investment
+
+*"how can our book by 6.1% when all the above things are showing 12% … everything should match … as i change time filters it would change"* and *"make coverage 100%"*, from the family on 4 Nov 2026.
+
+- **The chart is the card.** `NavVsIndex` draws the selected card's selection (`availableCardReturns`, the same rows, histories and records as Morning CIO's cards). On each day it shows the card's figure as if the period ended there (`src/lib/periodLine.ts`), so its last point is the card to the decimal.
+  - Each benchmark is the same dated money put into the index (`pmeWindowRows`), which is the card's own "vs" figure.
+  - The picker offers the three cards' periods: financial year, calendar year and available history.
+  - Over the available history the line is cumulative and the card is a rate a year (+70.7% over the period = +16.9% a year). A few small holdings reach back to 2023 and most of the money joins in 2026, so its early points rest on little money, and the hover says so.
+  - Records carry their dated values between open and close (`AccountWindow.marks`: statement marks, published closes, printed NAVs). Nothing is interpolated.
+- **Gain / Loss: 100% of investments.**
+  - A holding is measured from its purchase record where there is one, otherwise from its first value on record. That second case uses the available-history card's unit, marked `sinceFirst`.
+  - What neither measures is held at its value: no gain, in the base, named with the record it needs.
+  - The caption reads "S% since investment · F% from first value · H% held at value".
+  - Since investment accepts only units marked `sinceFirst` or `held`, so an assumed holding never stands in for a purchase cost.
+- A held value is measured on its valuation date and only carried to the end, so it sets neither a card's dates nor its end (Stage 10la follow-up, `heldAtLastValue`).
+- Checks:
+  - `scripts/dev/page-book.ts` gives the page's own rows with no quote feed, and the cards are re-derived from it exactly.
+  - Thirteen NAV checks that asserted the old engine (chained links, statement series, valuation-day starts) are retired. `NAV_CARD_LINE` strikes the new line against the cards.
+  - `check-nav-assumed` is rewritten for the new line.

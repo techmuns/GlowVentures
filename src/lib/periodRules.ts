@@ -25,7 +25,7 @@
 import type { Account, EarlierBalance, HoldingTrade, Position, StatementUnitNavs } from './types';
 import type { AccountWindow, Flow } from './periodReturns';
 import type { ReturnUnit } from './selectedSegmentReturns';
-import { publishedClose, type AssumeOptions, type AssumedReturnBook } from './assumedHoldingReturns';
+import { closeMarks, publishedClose, type AssumeOptions, type AssumedReturnBook } from './assumedHoldingReturns';
 import { marketHoldingKey } from './marketReturns';
 import { projectActions } from './corporateActions';
 import { BOOK_EARLIER_BALANCES, BOOK_STATEMENT_UNIT_NAVS } from '@/data/glowData';
@@ -80,8 +80,9 @@ export function statementNavWindow(p: Position, a: Account, open: string | null,
   if (open && from < open) return null;
   const later = link.navs.filter((n) => n.date > from && n.date <= end).at(-1);
   if (!later) return { reason: `No statement after ${from} prints this fund's NAV.` };
+  const marks = link.navs.filter((n) => n.date > from && n.date < later.date).map((n) => ({ date: n.date, value: p.quantity! * n.nav }));
   return unitOf(p, a, { openDate: from, openValue: p.marketValue, openedInWindow: false, closeDate: later.date,
-    closeValue: p.quantity! * later.nav, flows: [] }, 'statement-nav', `NAV printed on ${later.docKey}`, from, p.quantity!);
+    closeValue: p.quantity! * later.nav, marks, flows: [] }, 'statement-nav', `NAV printed on ${later.docKey}`, from, p.quantity!);
 }
 
 /**
@@ -126,7 +127,7 @@ export function tradedWindow(p: Position, a: Account, open: string | null, end: 
   }
   flows.sort((x, y) => x.date.localeCompare(y.date));
   return unitOf(p, a, { openDate: opening.date, openValue: u0 * opening.value, openedInWindow: u0 === 0, closeDate: closing.date,
-    closeValue: p.quantity! * closing.value, flows }, 'broker-trades', h.source, a.asOf, p.quantity!);
+    closeValue: p.quantity! * closing.value, marks: closeMarks(h, opening.date, closing.date, unitsAt), flows }, 'broker-trades', h.source, a.asOf, p.quantity!);
 }
 
 /**
