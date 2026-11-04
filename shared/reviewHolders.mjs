@@ -80,8 +80,8 @@ export const PRIVATE_INVESTMENT_HOLDERS = [
   { line: /^Innoviti Payment Solutions/, assetClass: "Unlisted",
     split: [{ owner: AJ, cost: 14999980.38 }, { owner: BH, cost: 4999993.46 }], why: `two holders; ${REG} records each one's payment` },
   { line: /^Oil Max$/, key: "oilmax-energy", assetClass: "Unlisted", ...one(AJ, "the ICICI Bank NSDL statement holds the 17,000 shares in Ajay's account") },
-  { line: /^Borosil Renewables$/, key: "borosil-renewables-limited-warrants-13ag26", assetClass: "Unlisted",
-    name: "Borosil Renewables - Warrants 13AG26", ...one(AJ) },
+  { line: /^Borosil Renewables$/, key: "borosil-renewables-limited-eq-new-fv-re-1-listing-trdg-aprvl-awaited", assetClass: "Unlisted",
+    name: "Borosil Renewables - Preferential Equity (listing awaited)", ...one(AJ) },
   { line: /^BIG BANG BOOM$/, key: "big-bang-boom-solutions-private-limited-0-001-pref-12sp44", assetClass: "Unlisted",
     split: [{ owner: AJ, cost: 30240000 }, { owner: BH, cost: 10080000 }], why: `two holders; ${REG} records each one's payment` },
   { line: /^RAY's$/, key: "rays-power-experts", assetClass: "Unlisted", ...one(AJ) },
@@ -90,7 +90,6 @@ export const PRIVATE_INVESTMENT_HOLDERS = [
   { line: /^Incred Holdings/, assetClass: "Unlisted", ...one(BH) },
   { line: /^Autocracy Machinery/, assetClass: "Unlisted", ...one(BH) },
   { line: /^The OAKS Consumer Fund I/, key: "tocf-i-class-a2", assetClass: "AIF", ...one(AN) },
-  { line: /^SOTEFIN$/, key: "sotefin-bharat", assetClass: "Unlisted", ...one(AJ) },
   { line: /^WE VOISE$/, assetClass: "Unlisted", ...one(AJ) },
   { line: /^Zenith$/, key: "zenith-leisure-holidays", assetClass: "Unlisted", ...one(AJ) },
   { line: /^Radiant$/, key: "radiant-innovative-manufacturing", assetClass: "Unlisted", ...one(AJ) },
@@ -141,12 +140,13 @@ export const PRIVATE_INVESTMENT_HOLDERS = [
  * Every line of the tab is in exactly one of the two lists, or the build refuses.
  */
 export const PRIVATE_INVESTMENT_ELSEWHERE = [
-  { line: /^ESDS$/, why: "listed since; the ICICI Bank NSDL statement's 3,30,898 shares stay on the statement and are valued at the live quote" },
+  { line: /^ESDS$/, why: "listed since; the ICICI Bank NSDL statement holds the 3,30,898 shares (pre-IPO shares, locked in to 4 Mar 2027), marked on 31 Oct 2026 at ₹38,38,41,680, and they stay on the statement" },
   { line: /^Credit Fair-K M Global/, why: "counted once, inside the review's own 15% K M Global credit line on its Debt tab" },
   { line: /^M\/S Grand Continent Hotels$/, why: "now listed — a statement holds the shares" },
   { line: /^Parth Electrical & Engineering$/, why: "listed in Aug'25 — a statement holds the shares" },
   { line: /^Fractual Analytics$/, why: "now listed — a statement holds the shares" },
   { line: /^Clean Max Solar$/, why: "now listed — a statement holds the shares" },
+  { line: /^SOTEFIN$/, why: "listed since; the ICICI Bank NSDL statement of 31 Oct 2026 marks Ajay's 1,71,879 shares (pre-IPO shares, locked in to 24 Jul 2027) at ₹4,26,25,992, and they stay on the statement" },
 ];
 
 /**
@@ -243,11 +243,16 @@ export const SUPERSEDED = [
     "everest-fleet", "everest-fleet-private-limited-0-001-series-b-new-pref-18ap43",
     "urb-ventures", "urb-ventures-private-limited-0-001-pref-07jl42", "integris-medtech", "sks-fasteners",
     "spray-engineering-devices", "matrix-gas-and-renewables", "oilmax-energy",
-    "big-bang-boom-solutions-private-limited-0-001-pref-12sp44", "rays-power-experts", "sotefin-bharat",
+    "big-bang-boom-solutions-private-limited-0-001-pref-12sp44", "rays-power-experts",
     "zenith-leisure-holidays", "radiant-innovative-manufacturing", "electromech-infraprojects", "onix-renewable",
-    "assetgro-fintech-private-limited-1-series-b-pref-25nv44", "national-stock-exchange-of-india",
+    "assetgro-fintech-private-limited-1-series-b-pref-25nv44", "assetgro-fintech",
   ].map((securityKey) => ({ accountId: "icici-bank-nsdl-demat-49794950", securityKey, kind: "unvalued" })),
-  { accountId: "icici-bank-nsdl-demat-49794950", securityKey: "borosil-renewables-limited-warrants-13ag26", kind: "position" },
+  // Marked by the depository since it listed; the family's decision keeps the
+  // review's value on the statement basis (see its line above).
+  { accountId: "icici-bank-nsdl-demat-49794950", securityKey: "national-stock-exchange-of-india", kind: "position" },
+  // The 2,83,018 warrants of 31 Mar are 2,83,018 equity shares on 31 Oct 2026 —
+  // a preferential allotment awaiting listing, carried at its ₹1 face value.
+  { accountId: "icici-bank-nsdl-demat-49794950", securityKey: "borosil-renewables-limited-eq-new-fv-re-1-listing-trdg-aprvl-awaited", kind: "unvalued" },
   { accountId: "icici-bank-nsdl-demat-49794950", securityKey: "blue-ashva-varenya-fund-bavf-ser20-c6-restricted-transferability", kind: "position" },
   ...["india-sme-investments-175962", "india-sme-investments-175964", "india-sme-investments-177302"]
     .map((accountId) => ({ accountId, securityKey: "india-sme-investments-fund-ii-class-a2", kind: "unvalued" })),
@@ -296,9 +301,13 @@ export const FRESHER_STATEMENT = [
   { key: "transition-venture-capital-fund-i-class-a1", owner: T3,
     text: "the trust's own statement of 31 Mar 2026 values its 7,500 units at ₹1,71,45,962.25 (₹2,286.13 a unit) against the review's 28 Feb mark" },
   { key: "blue-ashva-varenya-fund-bavf-ser20-c6-restricted-transferability", owner: AJ,
-    text: "the ICICI Bank NSDL statement of 31 Mar 2026 values Ajay's units at ₹98,742" },
-  { key: "borosil-renewables-limited-warrants-13ag26", owner: AJ,
-    text: "the ICICI Bank NSDL statement of 31 Mar 2026 values the 2,83,018 warrants at ₹70,754.50" },
+    text: "the ICICI Bank NSDL statement of 31 Oct 2026 values Ajay's 856.736 units at ₹84,595.83" },
+  { key: "national-stock-exchange-of-india", owner: AJ,
+    text: "the ICICI Bank NSDL statement of 31 Oct 2026 marks Ajay's 1,25,000 shares at ₹22,27,62,500 (the 30 Oct close)" },
+  { key: "assetgro-fintech-private-limited-1-series-b-pref-25nv44", owner: AJ,
+    text: "the ICICI Bank NSDL statement of 31 Oct 2026 holds 541 Series B preference shares and 20,797 equity shares of the company, now Assetgro Fintech Limited, where the review carries 636 preference shares" },
+  { key: "borosil-renewables-limited-eq-new-fv-re-1-listing-trdg-aprvl-awaited", owner: AJ,
+    text: "the ICICI Bank NSDL statement of 31 Oct 2026 holds 2,83,018 equity shares (IN8666D01021, a preferential allotment awaiting listing, locked in to 7 May 2027) where the review carries the warrants, at their ₹1 face value; the payment that converted them is on no statement in this book" },
   { key: "sky-capital-rising-titans-fund-i", owner: BH,
     text: "SKY003's statement of 31 Jul 2026 prints ₹1,72,85,000 drawn — its 22 Apr 2026 call of ₹1,35,000 is on no row of the review" },
   { key: "baring-private-equity-india-fund-6-class-a1", owner: AN,

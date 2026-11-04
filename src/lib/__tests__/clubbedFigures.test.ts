@@ -72,14 +72,15 @@ for (const [key, ps] of byKey) {
 ok("every consolidated row strikes cost, units, value and gain on one set", true, `${byKey.size} rows`);
 ok("some row really does club a costed line with an uncosted one (load-bearing)", mixed > 0, `${mixed} such rows`);
 
-// Ajay's 212,000 ICICI NSDL shares carry their recovered cost; his 110,000 in
-// Motilal and Bharat's 91,000 in HDFC do not (their lots run through a split).
-console.log("\n── the book's own case: Insolation Energy ──");
+// Ankita's 30,000 on her Motilal demat carry their recovered cost; Ajay's 90,361
+// on his ICICI NSDL statement of 31 Oct 2026 do not — a depository prints no
+// cost. (Insolation Energy was this case until Ajay sold his 212,000, Stage 10kn.)
+console.log("\n── the book's own case: Federal Bank ──");
 {
-  const ps = byKey.get("insolation-energy") ?? [];
+  const ps = byKey.get("federal-bank") ?? [];
   const f = costedFigures(ps);
   const allUnits = ps.reduce((s, p) => s + (p.quantity ?? 0), 0);
-  ok("Insolation Energy is held through lines that report a cost and lines that do not",
+  ok("Federal Bank is held through lines that report a cost and lines that do not",
     ps.some(reportsCost) && ps.some((p) => !reportsCost(p)), `${ps.length} lines`);
   ok("its average cost is cost over the COSTED units, not over every unit",
     f.avgCost !== null && f.cost !== null && Math.abs(f.avgCost - f.cost / allUnits) > 100,

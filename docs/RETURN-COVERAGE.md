@@ -1,6 +1,6 @@
 # Return source coverage
 
-20 of 94 accounts have verified opening values, dated external capital and a closing valuation.
+20 of 95 accounts have verified opening values, dated external capital and a closing valuation.
 
 Each account ends at its own verified valuation date. The consolidated return must not include an uncovered account’s closing value without its opening stake and cash history.
 
@@ -44,11 +44,12 @@ Historical opening NAVs come from AMFI’s [31 March 2026 published file](https:
 | HDFC Mutual Fund | 15725046 | Aarti Jaisinghani | 2026-09-30 | 2026-09-30 | Complete through the selected date |
 | HDFC Mutual Fund | 16002141 | Ankita Jaisinghani | 2026-08-31 | 2026-08-31 | Complete through the selected date |
 | HDFC Mutual Fund | 16180583 | Bharat Jaisinghani | 2026-09-30 | — | Opening valuation and complete dated cash flows are missing |
+| HDFC Securities | 3110320 | Ajay Jaisinghani | 2026-11-02 | — | Opening valuation and complete dated cash flows are missing |
 | Helios Mutual Fund | 10056128 | Ajay Jaisinghani | 2026-11-03 | 2026-11-02 | Complete through the selected date |
 | Helios Mutual Fund | 10056154 | Ankita Jaisinghani | 2026-11-03 | 2026-11-02 | Complete through the selected date |
 | Helios Mutual Fund | 10063876 | Bharat Jaisinghani | 2026-11-03 | 2026-11-02 | Complete through the selected date |
 | Helios Mutual Fund | 10355977 | Ajay Jaisinghani | 2026-11-03 | 2026-11-02 | Complete through the selected date |
-| ICICI Bank (NSDL demat) | 49794950 | Ajay Jaisinghani | 2026-03-31 | — | Opening valuation and complete dated cash flows are missing |
+| ICICI Bank (NSDL demat) | 49794950 | Ajay Jaisinghani | 2026-10-31 | — | Opening valuation and complete dated cash flows are missing |
 | ICICI Prudential Mutual Fund | 14320536 | Ankita Jaisinghani | 2026-10-01 | — | Opening valuation and complete dated cash flows are missing |
 | ICICI Prudential Mutual Fund | 36378950 | Ajay Jaisinghani | 2026-10-05 | 2026-10-01 | Complete through the selected date |
 | ICICI Prudential Mutual Fund | 36379637 | Bharat Jaisinghani | 2026-10-05 | 2026-10-01 | Complete through the selected date |

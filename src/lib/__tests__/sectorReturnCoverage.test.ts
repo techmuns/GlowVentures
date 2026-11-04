@@ -40,6 +40,6 @@ const source = sectorReturnHolding(polycab, accountIndex(BOOK_ACCOUNTS));
 assert.equal(source.owner, "Ajay Jaisinghani");
 assert.equal(source.provider, "ICICI Bank (NSDL demat)");
 assert.equal(source.accountNo, "49794950");
-assert.equal(source.statementDate, "2026-03-31");
+assert.equal(source.statementDate, "2026-10-31");
 assert.match(source.missing!, /purchase cost is missing/);
 console.log("Sector coverage: account-specific stock identities, verified/absent cost, zero cost, unknown source and actual statement passed");

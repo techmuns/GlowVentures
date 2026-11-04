@@ -240,6 +240,9 @@ export const AIF_UNITS = {
   INF0XAZ22055: { name: "India SME Investments Fund II — Class A2", reportedBy: "India SME Investments" },
   INF0RRH22DW6: { name: "Motilal Oswal Founders Fund Series II — Class G1", reportedBy: "Motilal Oswal Founders Fund" },
   INF0VIS22016: { name: "Transition Venture Capital Fund I — Class A1", reportedBy: "Transition Venture Capital" },
+  // Ajay's ICICI Bank NSDL statement of 31 Oct 2026 holds 201,254.604 units —
+  // folio 10387's own allotment of 22 Oct (providers/franklinAif.mjs).
+  INF1CLO22066: { name: "Franklin India Credit AIF – Scheme I — Class DB2", reportedBy: "Franklin India Credit AIF" },
   // Recognised as AIF units, reported by NOTHING in this drop, so they are
   // CARRIED. Named here so the class is right and so a future drop that brings
   // their fund statements has one place to record the join.

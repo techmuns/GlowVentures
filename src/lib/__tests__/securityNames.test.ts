@@ -178,6 +178,12 @@ console.log("\n── 5. a company's paper joins the company the book holds (con
  * same shape is constructed here, and the store is served from memory: this
  * suite fetches nothing else.
  *
+ * SINCE STAGE 10kn THE NAME TIER REACHES CITY UNION TOO: Ajay's ICICI statement
+ * of 31 Oct spells it `city-union-bank`, which `KEY_ALIASES` files under the
+ * book's `city-union`, so the filer's `City Union Bank Ltd.` keys the same.
+ * The depository spelling below is therefore a clipping no alias closes —
+ * constructed, like the store — so the case still needs the seed.
+ *
  * AND THE FIRST MEASUREMENT OF THIS WAS WRONG, which is worth keeping. It read
  * every scheme file in the store, not the ones the page loads, and one of those
  * — a fund redeemed to nil — files City Union's SHARE; so it reported that the
@@ -221,13 +227,14 @@ const funds: HeldFund[] = [{ securityKey: "constructed-liquid-fund", name: "Cons
 // and the filer's name must key apart, or this would test nothing the real book
 // does not already test.
 ok("the case needs the seed: the depository's key and the filer's name key apart",
-  securityKeyOf("CITY UNION -EQ RE1/") !== issuerKeyOf(cdLine),
-  `${securityKeyOf("CITY UNION -EQ RE1/")} vs ${issuerKeyOf(cdLine)}`);
+  securityKeyOf("CITY UNION BK -EQ RE1/") !== issuerKeyOf(cdLine),
+  `${securityKeyOf("CITY UNION BK -EQ RE1/")} vs ${issuerKeyOf(cdLine)}`);
 
-const seeded = await loadStockExposure(funds, new Map([["INE491A01021", "city-union"]]));
+const BOOK_KEY = securityKeyOf("CITY UNION BK -EQ RE1/");
+const seeded = await loadStockExposure(funds, new Map([["INE491A01021", BOOK_KEY]]));
 const seededKeys = seeded.status === "ok" ? [...seeded.byKey.keys()] : [];
-eq("the certificate of deposit joins the company the book holds, by the prefix of its ISIN", seededKeys, ["city-union"]);
-const cdRow = seeded.status === "ok" ? seeded.byKey.get("city-union") : undefined;
+eq("the certificate of deposit joins the company the book holds, by the prefix of its ISIN", seededKeys, [BOOK_KEY]);
+const cdRow = seeded.status === "ok" ? seeded.byKey.get(BOOK_KEY) : undefined;
 eq("...named as its filer names the ISSUER, not as the instrument",
   cdRow?.name ?? null, "City Union Bank Ltd.");
 ok("...while the instrument under it keeps its maturity",
@@ -239,7 +246,7 @@ ok("...while the instrument under it keeps its maturity",
  * the name tier and stands as its filer named it.
  */
 const refused = await loadStockExposure(funds,
-  new Map([["INE491A01021", "city-union"], ["INE491A01039", "city-union-class-b"]]));
+  new Map([["INE491A01021", BOOK_KEY], ["INE491A01039", `${BOOK_KEY}-class-b`]]));
 eq("a prefix two book companies share seeds neither", refused.status === "ok" ? [...refused.byKey.keys()] : [],
   [issuerKeyOf(cdLine)]);
 

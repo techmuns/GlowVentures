@@ -35,7 +35,10 @@ const costedAtFolio = FOLIO_COSTED_DEMATS.filter(([account, isin, units]) => BOO
 for (const [account, isin, units] of FOLIO_COSTED_DEMATS)
   assert.equal(BOOK_RECOVERED_COSTS.some(r => r.accountId === account && r.isin === isin && r.quantity === units),
     !costedAtFolio.some(([a, i]) => a === account && i === isin), `${account}: recovered only while no folio of the owner costs the same units`);
-assert.equal(BOOK_RECOVERED_COSTS.length, 62 - costedAtFolio.length, "only exact owner/ISIN/quantity matches are recoverable");
+// Less four on Ajay's ICICI NSDL account whose 31 Mar counts its 31 Oct statement
+// no longer holds (Stage 10kn): Smartworks and Insolation Energy sold to nil, Yash
+// Highvoltage 1,38,462 → 1,04,462 and EMA Partners 44,643 → 643.
+assert.equal(BOOK_RECOVERED_COSTS.length, 58 - costedAtFolio.length, "only exact owner/ISIN/quantity matches are recoverable");
 const MOPWM = "source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx";
 assert.equal(BOOK_RECOVERED_COSTS.filter(r => r.evidence.some(e => e.path === MOPWM)).length, 17);
 // Bharat's scanned HDFC Bank NSDL statement (Stage 10gk) prints the 1,01,111
@@ -45,13 +48,11 @@ const bharat = BOOK_RECOVERED_COSTS.filter(r => r.accountId === "hdfc-bank-nsdl-
 assert.deepEqual(bharat.map(r => [r.isin, r.quantity, r.costBasis]), [["INE0NAZ01010", 101111, 45499950]]);
 const icici = BOOK_POSITIONS.filter(p => p.accountId === "icici-bank-nsdl-demat-49794950");
 const recovered = icici.filter(p => p.recoveredCost);
-assert.equal(recovered.length, 9);
+assert.equal(recovered.length, 5);
 const expected: Record<string, [number, number]> = {
   INE647U01026: [94967, 93857991], INE212S01015: [180185, 176878881],
-  INE12E301017: [262125, 16277250], INE0LGX01024: [212000, 69684400],
+  INE12E301017: [262125, 16277250],
   INE00YJ01010: [116979, 75000350], INE1H7V01011: [59000, 10030000],
-  INE0NAZ01010: [187778, 84500100], INE00GK01023: [138462, 10000120],
-  INE0ZOL01023: [44643, 4642872],
 };
 for (const p of recovered) {
   const [units, cost] = expected[p.isin!];
@@ -62,13 +63,16 @@ for (const p of recovered) {
   assert.ok(p.recoveredCost!.evidence.every(e => e.rows.length > 0 && e.sheet && e.path.startsWith("source/")));
   near(p.returnPct, fifoReturnPct(p.marketValue, cost, p.realizedPnL, p.costOfUnitsSold, p.dividendReceived)!);
 }
-assert.equal(BOOK_ACCOUNTS.find(a => a.accountId === recovered[0].accountId)!.asOf, "2026-03-31");
-const ema = recovered.find(p => p.isin === "INE0ZOL01023")!;
-assert.equal(ema.realizedPnL, null, "a payment register does not establish realised income");
-assert.equal(ema.dividendReceived, null);
-const yash = recovered.find(p => p.isin === "INE00GK01023")!;
-assert.equal(yash.quantity, 138462, "unverified June disposals never advance the March snapshot");
-assert.equal(yash.realizedLotsAfter, 3, "known later disposals block live pricing of the old units");
+assert.equal(BOOK_ACCOUNTS.find(a => a.accountId === recovered[0].accountId)!.asOf, "2026-10-31");
+// The 31 Oct statement holds fewer EMA Partners and Yash Highvoltage shares than
+// the purchase records bought: no exact match, so no recovered cost — never the
+// old record divided down to the new count.
+for (const [isin, units] of [["INE0ZOL01023", 643], ["INE00GK01023", 104462]] as const) {
+  const p = icici.find(p => p.isin === isin)!;
+  assert.equal(p.quantity, units);
+  assert.equal(p.recoveredCost ?? null, null);
+  assert.equal(p.costBasis ?? null, null);
+}
 
 const candidates = shareCandidates();
 // Twelve: Bharat's Smartworks shares on his HDFC Bank NSDL statement (Stage 10gk) are the twelfth.

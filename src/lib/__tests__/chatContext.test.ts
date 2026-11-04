@@ -451,10 +451,13 @@ ok("the context is a non-empty set of named blocks",
   ok("...and a demat that prints quantities only is named as outside the value, not counted in it at zero",
     unvaluedAccts.every((a) => f.valueBasis.includes(a.accountNo)) && (unvaluedAccts.length === 0 || /prints quantities only/.test(f.valueBasis)),
     f.valueBasis);
+  // One date where every demat's statement shares it, else each date — since
+  // Stage 10kn Ajay's ICICI statement is of 31 Oct and Bharat's HDFC one of 31 Mar.
+  const fencedDates = [...new Set(fencedAccts.map((a) => a.asOf))];
   ok("...with its share count, its statement's date and the account it covers",
     f.shares === add(BOOK_POLYCAB.map((p) => p.quantity!))
       && f.heldIn.length === fencedAccts.length && f.heldIn.every((h, i) => h.accountNo === fencedAccts[i].accountNo && h.statementAsOf === fencedAccts[i].asOf)
-      && (f.statementAsOf === fencedAccts[0]?.asOf),
+      && JSON.stringify(f.statementAsOf) === JSON.stringify(fencedDates.length === 1 ? fencedDates[0] : fencedDates),
     `${f.shares} shares, ${JSON.stringify(f.statementAsOf)}`);
   ok("...and its basis, so a statement value is not passed off as today's",
     /statement's mark/i.test(f.valueBasis) && /not today's price/.test(f.valueBasis)

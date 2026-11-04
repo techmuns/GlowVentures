@@ -55,6 +55,7 @@ import { readSpreadsheet } from "./ingest/lib/sheet.mjs";
 import { securityKeyOf } from "../shared/securityKey.mjs";
 import { readReviewPrivate } from "./lib/reviewPrivateRead.mjs";
 import { PRIVATE_INVESTMENT_ELSEWHERE } from "../shared/reviewHolders.mjs";
+import { REVIEW_PRIVATE_JOIN } from "../shared/reviewPrivateJoin.mjs";
 import { makeSecurityMatcher } from "../shared/nameMatch.mjs";
 
 const WORKBOOK = "source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx";
@@ -1190,8 +1191,21 @@ const PI_LINES = RP.privateInvestments.lines;
 const piCarried = (l) => (REVIEW_BY_ROW.get(`Private Investments|${l.row}`) ?? []);
 const piElsewhere = PI_LINES.map((l) => ({ l, e: PRIVATE_INVESTMENT_ELSEWHERE.find((x) => x.line.test(l.product)) }))
   .filter((x) => x.e && piCarried(x.l).length === 0 && (x.l.value ?? 0) > 0);
-const ESDS_LINE = piElsewhere.find((x) => /^ESDS$/.test(x.l.product))?.l ?? null;
 const CREDIT_FAIR_LINE = piElsewhere.find((x) => /^Credit Fair/.test(x.l.product))?.l ?? null;
+/**
+ * THE LINES NAMED ELSEWHERE BECAUSE THEY HAVE LISTED — on a statement now, each
+ * with what the book holds of it there. ESDS was a face-value quantity on the
+ * 31 Mar statement and is marked on the 31 Oct one, and Sotefin Bharat joined it
+ * (Stage 10kn): which of the two a line is, is read off the book's own rows by
+ * the line's join keys, never assumed.
+ */
+const LISTED_ELSEWHERE = piElsewhere.filter((x) => x.l !== CREDIT_FAIR_LINE).map(({ l, e }) => {
+  const keys = REVIEW_PRIVATE_JOIN.find((j) => j.line.test(l.product))?.keys ?? [];
+  const rows = POSITIONS.filter((p) => !p.review && keys.includes(p.securityKey) && (p.marketValue ?? 0) > 0);
+  return { l, e, valued: rows.length > 0, bookMv: rows.reduce((t, p) => t + p.marketValue, 0) };
+});
+// A listed line the statement still holds only as a quantity — the step in G.
+const QUANTITY_ELSEWHERE = LISTED_ELSEWHERE.filter((x) => !x.valued);
 {
   // Every Private Investments line is exactly one of: carried, named elsewhere,
   // or a measured ₹0 (now listed, or written off). Anything else stops the run.
@@ -1216,7 +1230,7 @@ for (const l of [...eq.filter((x) => !x.isSection), ...assetLines]) {
   const bookMv = rows.reduce((t, p) => t + (p.marketValue ?? 0), 0);
   // The aggregate is carried less what the Private Investments tab names elsewhere.
   const expect = l.aggregate
-    ? l.mv * CR - (ESDS_LINE?.value ?? 0) - (CREDIT_FAIR_LINE?.value ?? 0)
+    ? l.mv * CR - piElsewhere.reduce((t, x) => t + (x.l.value ?? 0), 0)
     : l.mv * CR;
   if (Math.abs(bookMv - expect) > Math.max(1, Math.abs(expect) * 1e-6)) {
     throw new Error(`carried review line '${l.product}' (${l.tab ?? "Equity"} row ${l.row}): book ₹${bookMv.toFixed(2)} vs review ₹${expect.toFixed(2)}`);
@@ -1261,11 +1275,15 @@ for (const l of carriedLines) {
 }
 say(`| **Total** | | **${carriedLines.reduce((t, l) => t + l.rows.length, 0)}** | **₹${cr(carriedLines.reduce((t, l) => t + l.mv, 0))} Cr** | **₹${cr(carriedLines.reduce((t, l) => t + l.bookMv, 0) / CR)} Cr** |`);
 say();
-if (ESDS_LINE || CREDIT_FAIR_LINE) {
-  say("The `Private Equity` line is carried less two of its own `Private Investments` lines, each named");
+if (piElsewhere.length) {
+  const WORDS_N = ["no", "one", "two", "three", "four", "five", "six"];
+  say(`The \`Private Equity\` line is carried less ${WORDS_N[piElsewhere.length] ?? piElsewhere.length} of its own \`Private Investments\` lines, each named`);
   say("rather than taken as a difference:");
   say();
-  if (ESDS_LINE) say(`- **${ESDS_LINE.product}**, ₹${cr(ESDS_LINE.value / CR)} Cr — listed since; the ICICI Bank NSDL statement holds the shares at face value, so the book records them as a quantity and the live layer values them at the quote. In section F's quantity step.`);
+  for (const x of LISTED_ELSEWHERE) {
+    say(`- **${x.l.product}**, ₹${cr(x.l.value / CR)} Cr — ${x.e.why}. `
+      + (x.valued ? `The book carries the statement's ₹${cr(x.bookMv / CR)} Cr.` : "The statement holds it as a quantity with no value; in section G's quantity step."));
+  }
   if (CREDIT_FAIR_LINE) say(`- **${CREDIT_FAIR_LINE.product}**, ₹${cr(CREDIT_FAIR_LINE.value / CR)} Cr — the review counts it twice: here, and inside its own 15% K M Global credit line on the Debt tab, which the book carries once. Its own step in section F.`);
   say();
 }
@@ -1710,7 +1728,7 @@ const bookInvested = costed.reduce((t, p) => t + p.costBasis, 0) / CR;
 const costlessMV = costless.reduce((t, p) => t + p.marketValue, 0) / CR;
 const absentValue = gapNoStatement - aggregateTotal;
 // The two `Private Investments` lines the book does not carry (C0), in crores.
-const esdsCr = (ESDS_LINE?.value ?? 0) / CR;
+const esdsCr = QUANTITY_ELSEWHERE.reduce((t, x) => t + (x.l.value ?? 0), 0) / CR;
 const creditFairCr = (CREDIT_FAIR_LINE?.value ?? 0) / CR;
 const quantityCr = gapReportedUnvalued + esdsCr;
 
@@ -1806,7 +1824,7 @@ const steps = [
   ["less: lines no statement in `source/` reports", -(gapNoStatement - aggregateTotal),
     "section D, read on the holders' own statements — the HDFC Bank, Motilal Oswal and AMC statements that have not been supplied"],
   ["less: lines a statement reports as a quantity this book does not value", -quantityCr,
-    `section D${esdsCr > 0 ? ", and ESDS from the review's `Private Investments` tab (C0)" : ""} — on a statement, but as a quantity with no value: a depository's last-movement rate, a face value, a transaction tape with no holding statement`],
+    `section D${esdsCr > 0 ? `, and ${QUANTITY_ELSEWHERE.map((x) => x.l.product).join(", ")} from the review's \`Private Investments\` tab (C0)` : ""} — on a statement, but as a quantity with no value: a depository's last-movement rate, a face value, a transaction tape with no holding statement`],
   ...(creditFairCr > 0 ? [["less: a line the review counts twice", -creditFairCr,
     `\`${CREDIT_FAIR_LINE.product}\` — on the \`Private Investments\` tab and again inside the review's own 15% K M Global credit line on its Debt tab, which the book carries once (C0)`]] : []),
 ];

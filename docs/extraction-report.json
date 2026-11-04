@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-11-03T19:58:09.871Z",
+  "generatedAt": "2026-11-04T08:45:11.307Z",
   "summary": {
-    "documents": 448,
-    "parsed": 443,
+    "documents": 453,
+    "parsed": 447,
     "partial": 0,
-    "failed": 5,
-    "rowSumChecks": 428,
+    "failed": 6,
+    "rowSumChecks": 432,
     "totalMismatches": 143,
     "totalsMaterial": 1,
     "totalsExplained": 58,
-    "totalsRounding": 175,
+    "totalsRounding": 177,
     "derivedVsPrintedDeltas": 962,
     "derivedMaterial": 8,
     "derivedExplained": 402,
@@ -23,12 +23,12 @@
     "quantityOnlyMatches": 4,
     "confirmedSeparateByFamily": 4,
     "suspectedDuplicateEarnings": 1,
-    "securitiesWithoutSymbol": 32,
+    "securitiesWithoutSymbol": 36,
     "ownerNamesUnmatched": 0,
     "stitchesApplied": 134
   },
   "coverage": {
-    "pdfsFound": 438,
+    "pdfsFound": 443,
     "duplicateSources": [
       {
         "path": "source/_extracted/august-2026-c/VEC - ANKITA/G128004_145038_DividendStatement_India177OT.pdf",
@@ -246,9 +246,9 @@
         "sha256": "7cbc776b8cfe6baacfa8c753d86d46de2fec08fbcbae7b36d8dba58029d627fc"
       }
     ],
-    "parsed": 443,
+    "parsed": 447,
     "partial": 0,
-    "failed": 5,
+    "failed": 6,
     "byProvider": {
       "Goldstandard Wealth Private Limited": {
         "bank-book": {
@@ -749,18 +749,37 @@
           "failed": 0
         }
       },
+      "(unidentified)": {
+        "unknown": {
+          "ok": 0,
+          "partial": 0,
+          "failed": 3
+        }
+      },
+      "HDFC Securities": {
+        "holdings": {
+          "ok": 2,
+          "partial": 0,
+          "failed": 0
+        }
+      },
+      "ICICI Bank (NSDL demat)": {
+        "transaction-statement": {
+          "ok": 1,
+          "partial": 0,
+          "failed": 0
+        },
+        "holdings": {
+          "ok": 2,
+          "partial": 0,
+          "failed": 0
+        }
+      },
       "ICICI Prudential Mutual Fund": {
         "holdings": {
           "ok": 3,
           "partial": 0,
           "failed": 0
-        }
-      },
-      "(unidentified)": {
-        "unknown": {
-          "ok": 0,
-          "partial": 0,
-          "failed": 2
         }
       },
       "Molecule Ventures LLP": {
@@ -877,13 +896,6 @@
           "failed": 1
         }
       },
-      "ICICI Bank (NSDL demat)": {
-        "holdings": {
-          "ok": 1,
-          "partial": 0,
-          "failed": 0
-        }
-      },
       "HDFC Bank (NSDL demat)": {
         "holdings": {
           "ok": 5,
@@ -996,6 +1008,15 @@
     },
     "failures": [
       {
+        "docKey": "unknown-unknown-unknown-unknown",
+        "sourcePath": "source/_extracted/november-2026-b/ATJ Reports - ICICI + HDFC as on 31-10-2026/3110320_Equity_Trade_Details_Report (3).xlsx",
+        "provider": "(unidentified)",
+        "reportType": "unknown",
+        "reasons": [
+          "attachment-removed: 3110320_Equity_Trade_Details_Report (3).xlsx NEVER ARRIVED: a mail server removed the attachment in transit and left this 85-byte notice under its name — \"This attachment was removed because it contains data that could pose a security risk.\". There is no statement here to read; ask the sender to re-send it another way (a download link, or zipped), and upload it on the Statement Library."
+        ]
+      },
+      {
         "docKey": "unknown-unknown-2026-10-06-unknown",
         "sourcePath": "source/_extracted/october-2026-c/LKP EQUITY/519_06102026124925.xls",
         "provider": "(unidentified)",
@@ -1045,8 +1066,8 @@
     "partials": []
   },
   "consolidated": {
-    "naive": 139767421378.47,
-    "deduped": 139767421378.47,
+    "naive": 250601041723.5,
+    "deduped": 250601041723.5,
     "doubleCounted": 0
   },
   "rowSumChecks": [
@@ -3854,6 +3875,76 @@
       "delta": 0,
       "rowsSummed": 10,
       "rowsMissingField": 0,
+      "matches": true,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "hdfc-securities-3110320-2026-11-02-holdings",
+      "provider": "HDFC Securities",
+      "accountNo": "3110320",
+      "asOf": "2026-11-02",
+      "reportType": "holdings",
+      "check": "total market value (incl. cash)",
+      "rowSum": 472438737.5,
+      "printedTotal": 472438737.5,
+      "delta": 0,
+      "rowsSummed": 8,
+      "rowsMissingField": 2,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null,
+      "outstandingDividend": null
+    },
+    {
+      "docKey": "hdfc-securities-3110320-2026-11-02-holdings",
+      "provider": "HDFC Securities",
+      "accountNo": "3110320",
+      "asOf": "2026-11-02",
+      "reportType": "holdings",
+      "check": "% of assets sums to 100",
+      "rowSum": 100,
+      "printedTotal": 100,
+      "delta": 0,
+      "rowsSummed": 8,
+      "rowsMissingField": 2,
+      "matches": true,
+      "severity": "rounding",
+      "cause": null,
+      "accruedIncome": null
+    },
+    {
+      "docKey": "icici-bank-nsdl-demat-49794950-2026-10-31-holdings",
+      "provider": "ICICI Bank (NSDL demat)",
+      "accountNo": "49794950",
+      "asOf": "2026-10-31",
+      "reportType": "holdings",
+      "check": "total market value (incl. cash)",
+      "rowSum": 110361181607.53,
+      "printedTotal": 110361181607.53001,
+      "delta": 0,
+      "rowsSummed": 22,
+      "rowsMissingField": 24,
+      "matches": true,
+      "severity": "ok",
+      "cause": null,
+      "accruedIncome": null,
+      "outstandingDividend": null
+    },
+    {
+      "docKey": "icici-bank-nsdl-demat-49794950-2026-10-31-holdings",
+      "provider": "ICICI Bank (NSDL demat)",
+      "accountNo": "49794950",
+      "asOf": "2026-10-31",
+      "reportType": "holdings",
+      "check": "% of assets sums to 100",
+      "rowSum": 99.99,
+      "printedTotal": 100,
+      "delta": -0.01,
+      "rowsSummed": 22,
+      "rowsMissingField": 24,
       "matches": true,
       "severity": "rounding",
       "cause": null,
@@ -232504,6 +232595,132 @@
         ]
       },
       {
+        "security": "STERLITE ELECTRIC LIMITED EQ",
+        "securityKey": "sterlite-electric",
+        "docs": [
+          "hdfc-securities-3110320-2026-11-02-holdings",
+          "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings"
+        ]
+      },
+      {
+        "security": "STERLITE GRID 5 LIMITED EQ NEW FV RS 2/",
+        "securityKey": "sterlite-grid-5",
+        "docs": [
+          "hdfc-securities-3110320-2026-11-02-holdings"
+        ]
+      },
+      {
+        "security": "ASSETGRO FINTECH LIMITED - EQ NEW FV RS. 2/",
+        "securityKey": "assetgro-fintech",
+        "docs": [
+          "icici-bank-nsdl-demat-49794950-2026-10-31-holdings"
+        ]
+      },
+      {
+        "security": "BOROSIL RENEWABLES LIMITED - EQ NEW FV RE. 1/- LISTING/TRDG APRVL AWAITED",
+        "securityKey": "borosil-renewables-limited-eq-new-fv-re-1-listing-trdg-aprvl-awaited",
+        "docs": [
+          "icici-bank-nsdl-demat-49794950-2026-10-31-holdings"
+        ]
+      },
+      {
+        "security": "ELECTROMECH INFRAPROJECTS LIMITED - EQ NEW FV RS.5/",
+        "securityKey": "electromech-infraprojects",
+        "docs": [
+          "icici-bank-nsdl-demat-49794950-2026-10-31-holdings",
+          "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
+        ]
+      },
+      {
+        "security": "INTEGRIS MEDTECH LIMITED - EQ NEW FV RE.1/",
+        "securityKey": "integris-medtech",
+        "docs": [
+          "icici-bank-nsdl-demat-49794950-2026-10-31-holdings",
+          "icici-bank-nsdl-demat-49794950-2026-03-31-holdings",
+          "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings"
+        ]
+      },
+      {
+        "security": "MATRIX GAS AND RENEWABLES LIMITED - EQ",
+        "securityKey": "matrix-gas-and-renewables",
+        "docs": [
+          "icici-bank-nsdl-demat-49794950-2026-10-31-holdings",
+          "icici-bank-nsdl-demat-49794950-2026-03-31-holdings",
+          "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings"
+        ]
+      },
+      {
+        "security": "NATIONAL STOCK EXCHANGE OF INDIA LTD - EQ NEW FV RE.1/",
+        "securityKey": "national-stock-exchange-of-india",
+        "docs": [
+          "icici-bank-nsdl-demat-49794950-2026-10-31-holdings",
+          "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
+        ]
+      },
+      {
+        "security": "ONIX RENEWABLE LIMITED - EQ",
+        "securityKey": "onix-renewable",
+        "docs": [
+          "icici-bank-nsdl-demat-49794950-2026-10-31-holdings",
+          "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
+        ]
+      },
+      {
+        "security": "RADIANT INNOVATIVE MANUFACTURING LIMITED - EQ NEW FV RS. 10/",
+        "securityKey": "radiant-innovative-manufacturing",
+        "docs": [
+          "icici-bank-nsdl-demat-49794950-2026-10-31-holdings",
+          "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
+        ]
+      },
+      {
+        "security": "RAYS POWER EXPERTS LIMITED - EQ",
+        "securityKey": "rays-power-experts",
+        "docs": [
+          "icici-bank-nsdl-demat-49794950-2026-10-31-holdings"
+        ]
+      },
+      {
+        "security": "SKS FASTENERS LIMITED - EQ",
+        "securityKey": "sks-fasteners",
+        "docs": [
+          "icici-bank-nsdl-demat-49794950-2026-10-31-holdings",
+          "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
+        ]
+      },
+      {
+        "security": "SOTEFIN BHARAT LIMITED - EQ",
+        "securityKey": "sotefin-bharat",
+        "docs": [
+          "icici-bank-nsdl-demat-49794950-2026-10-31-holdings",
+          "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
+        ]
+      },
+      {
+        "security": "SPRAY ENGINEERING DEVICES LIMITED - EQ",
+        "securityKey": "spray-engineering-devices",
+        "docs": [
+          "icici-bank-nsdl-demat-49794950-2026-10-31-holdings",
+          "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
+        ]
+      },
+      {
+        "security": "YASH HIGHVOLTAGE LIMITED - EQ NEW FV RS. 5/",
+        "securityKey": "yash-highvoltage",
+        "docs": [
+          "icici-bank-nsdl-demat-49794950-2026-10-31-holdings",
+          "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
+        ]
+      },
+      {
+        "security": "ZENITH LEISURE HOLIDAYS LIMITED - EQ",
+        "securityKey": "zenith-leisure-holidays",
+        "docs": [
+          "icici-bank-nsdl-demat-49794950-2026-10-31-holdings",
+          "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
+        ]
+      },
+      {
         "security": "HEG Graphite Limited",
         "securityKey": "heg-graphite",
         "docs": [
@@ -232565,94 +232782,8 @@
         ]
       },
       {
-        "security": "ELECTROMECH INFRAPROJECTS LIMITED - EQ NEW FV RS.5/",
-        "securityKey": "electromech-infraprojects",
-        "docs": [
-          "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
-        ]
-      },
-      {
-        "security": "INTEGRIS MEDTECH LIMITED - EQ NEW FV RE.1/",
-        "securityKey": "integris-medtech",
-        "docs": [
-          "icici-bank-nsdl-demat-49794950-2026-03-31-holdings",
-          "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings"
-        ]
-      },
-      {
-        "security": "MATRIX GAS AND RENEWABLES LIMITED - EQ",
-        "securityKey": "matrix-gas-and-renewables",
-        "docs": [
-          "icici-bank-nsdl-demat-49794950-2026-03-31-holdings",
-          "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings"
-        ]
-      },
-      {
-        "security": "NATIONAL STOCK EXCHANGE OF INDIA LTD - EQ NEW FV RE.1/",
-        "securityKey": "national-stock-exchange-of-india",
-        "docs": [
-          "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
-        ]
-      },
-      {
-        "security": "ONIX RENEWABLE LIMITED - EQ",
-        "securityKey": "onix-renewable",
-        "docs": [
-          "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
-        ]
-      },
-      {
-        "security": "RADIANT INNOVATIVE MANUFACTURING LIMITED - EQ NEW FV RS. 10/",
-        "securityKey": "radiant-innovative-manufacturing",
-        "docs": [
-          "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
-        ]
-      },
-      {
-        "security": "SKS FASTENERS LIMITED - EQ",
-        "securityKey": "sks-fasteners",
-        "docs": [
-          "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
-        ]
-      },
-      {
-        "security": "SOTEFIN BHARAT LIMITED - EQ",
-        "securityKey": "sotefin-bharat",
-        "docs": [
-          "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
-        ]
-      },
-      {
-        "security": "SPRAY ENGINEERING DEVICES LIMITED - EQ",
-        "securityKey": "spray-engineering-devices",
-        "docs": [
-          "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
-        ]
-      },
-      {
-        "security": "YASH HIGHVOLTAGE LIMITED - EQ NEW FV RS. 5/",
-        "securityKey": "yash-highvoltage",
-        "docs": [
-          "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
-        ]
-      },
-      {
-        "security": "ZENITH LEISURE HOLIDAYS LIMITED - EQ",
-        "securityKey": "zenith-leisure-holidays",
-        "docs": [
-          "icici-bank-nsdl-demat-49794950-2026-03-31-holdings"
-        ]
-      },
-      {
         "security": "NICCO CORPORATION LIMITED EQ NEW FV RS. 2/",
         "securityKey": "nicco",
-        "docs": [
-          "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings"
-        ]
-      },
-      {
-        "security": "STERLITE ELECTRIC LIMITED EQ",
-        "securityKey": "sterlite-electric",
         "docs": [
           "hdfc-bank-nsdl-demat-22025655-2026-03-31-holdings"
         ]
@@ -232749,6 +232880,7 @@
       "360 ONE Private Wealth",
       "Motilal Oswal Financial Services (demat)",
       "ICICI Bank (NSDL demat)",
+      "HDFC Securities",
       "HDFC Bank (NSDL demat)",
       "Helios Mutual Fund",
       "Motilal Oswal Founders Fund",

@@ -9,24 +9,25 @@ if it is not, so a delivery that lands a file nobody reads cannot pass silently.
 
 | Outcome | Files | What it means |
 | --- | ---: | --- |
-| Read | 408 | one or more documents in `public/audit/` |
+| Read | 418 | one or more documents in `public/audit/` |
 | Read via a byte-identical twin | 43 | the pipeline reads each md5 once; the data IS in the archive |
-| Read as a witness | 18 | a spreadsheet export of the PDF beside it — rows archived, figures checked, no facts |
+| Read as a witness | 19 | a spreadsheet export of the PDF beside it — rows archived, figures checked, no facts |
 | Read by `build-book` | 3 | the review supplies private lines and exact lot costs; the register supplies verified payment evidence |
 | Held out by decision | 0 | read perfectly and deliberately not a source |
 | Not a document | 156 | macOS `__MACOSX/._*` resource forks — checked, not assumed |
 | Excluded by policy | 2 | the drop's own password notes |
-| **Never arrived** | **2** | **a mail server's removal notice in place of the statement — ask the sender to re-send it** |
+| **Never arrived** | **3** | **a mail server's removal notice in place of the statement — ask the sender to re-send it** |
 | **Unread** | **0** | **must be zero** |
-| **Total leaf files** | **632** | |
+| **Total leaf files** | **644** | |
 
-Those files produce **441 documents** in the archive.
+Those files produce **453 documents** in the archive.
 
 ## ⚠ Statements that never arrived
 
 A mail server removed each of these attachments in transit and left a short notice under its name.
 There is nothing in the file to read; the statement has to be re-sent another way and uploaded.
 
+- `source/_extracted/november-2026-b/ATJ Reports - ICICI + HDFC as on 31-10-2026/3110320_Equity_Trade_Details_Report (3).xlsx`
 - `source/_extracted/october-2026-c/LKP EQUITY/519_06102026124925.xls`
 - `source/_extracted/october-2026-c/LKP EQUITY/666125807_06102026125819.xls`
 
@@ -120,6 +121,7 @@ checked against the figures the PDF prints (see each document's `witness-of` war
 
 | File | Witness of |
 | --- | --- |
+| `_extracted/november-2026-b/ATJ Reports - ICICI + HDFC as on 31-10-2026/Invest Right Demat Portfolio (1).csv` | `hdfc-securities-3110320-2026-11-02-holdings` (ok) |
 | `_extracted/september-2026/Ajay Jaisinghani/Ajay Jaisinghani/Z1211_5110837_CapitalGain90CT.csv` | `marathon-trends-advisory-pvt-ltd-5110837-2026-09-09-capital-gain` (ok) |
 | `_extracted/september-2026/Ajay Jaisinghani/Ajay Jaisinghani/Z1211_5110837_DividendStatement_India177CT.csv` | `marathon-trends-advisory-pvt-ltd-5110837-2026-09-09-dividend-statement` (ok) |
 | `_extracted/september-2026/Ajay Jaisinghani/Ajay Jaisinghani/Z1211_5110837_IncomeExpenseCSV1538CT.csv` | `marathon-trends-advisory-pvt-ltd-5110837-2026-09-09-income-expense` (ok) |

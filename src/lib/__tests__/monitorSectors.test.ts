@@ -14,12 +14,14 @@
 //
 // ── THE PREMISE THE PAGE STANDS ON ──────────────────────────────────────────
 //
-// The fund filings are the expensive tier — 21 scheme files — and the Monitor
-// loads them on the Security axis only. That costs nothing on the other three
-// ONLY IF, for every company share this book holds, the filings place nothing
-// the statement and screener.in do not already place. This suite measures that
-// on the committed store and FAILS the day a drop brings a company they would
-// place, which is the day the Monitor has to load the filings on every axis.
+// The Monitor loaded the fund filings on the Security axis only, which cost
+// nothing on the other three ONLY IF the filings placed no held company the
+// statement and screener.in did not already place. The November 2026 delivery
+// (Stage 10kn) brought one: a fund files Sterlite Technologies under Information
+// Technology where screener.in says Communication Services. So the Monitor loads
+// the filings on every axis, and this suite now holds the rule that makes that
+// safe: wherever the filings move a held company's sector, it is the FILING tier
+// outranking screener.in — never a statement overruled.
 //
 // ── IT EXERCISES THE REAL FUNCTIONS ─────────────────────────────────────────
 //
@@ -76,10 +78,14 @@ const withFilings = companySectorIndex(stocks, state);
 const withoutFilings = companySectorIndex(stocks, { status: "loading" });
 const sectorOf = (m: ReturnType<typeof companySectorIndex>, k: string) => m.get(k)?.sector || UNCLASSIFIED;
 
-console.log("\n── the premise: the filings place no held company the other two tiers leave unplaced ──");
+console.log("\n── where the filings move a held company's sector, the filing tier is why ──");
 const differ = held.filter((k) => sectorOf(withFilings, k) !== sectorOf(withoutFilings, k));
-ok("for every company share this book holds, the fund filings change no sector", differ.length === 0,
-  differ.length ? `the filings would place ${differ.slice(0, 6).join(", ")} — load them on every axis` : `${held.length} companies`);
+const bookSectored = (k: string) => stocks.some((p) => p.securityKey === k && !!p.sector && p.sector !== UNCLASSIFIED);
+ok("every held company the filings move is placed BY the filing, over no statement's sector",
+  differ.every((k) => withFilings.get(k)?.from === "disclosure" && !bookSectored(k)),
+  differ.map((k) => `${k}: ${sectorOf(withoutFilings, k)} → ${sectorOf(withFilings, k)} (${withFilings.get(k)?.from})`).join("; ") || "none");
+ok("…and the November 2026 case is one of them: Sterlite Technologies, which is why the Monitor loads the filings on every axis",
+  differ.includes("sterlite-technologies"), differ.join(", "));
 /**
  * LOAD-BEARING: the filings DO place companies — just none this book holds that
  * the other tiers miss. A store that answered with nothing would satisfy the

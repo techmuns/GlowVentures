@@ -61,6 +61,14 @@ as 3 November.
 
 `october-2026-f/` holds the two HDFC Bank NSDL holding statements of 29 October for the newly incorporated Glowterra LLP (`Glowterra.pdf`) and Glowsphere LLP (`LLP.pdf`). The family's covering note, with the dates and amounts of those investments, is word for word in `scripts/ingest/reference/familyAdvisedInvestments.mjs` (Stage 10jq).
 
+`november-2026-b/` holds the client's ZIP "Fw: ATJ Sir's Reports – ICICI + HDFC as on 31-10-2026", renamed here without the apostrophe. It contains:
+
+- ICICI Bank's Statement of Holding for Ajay's NSDL account 49794950 at 31 October.
+- An equity order book whose every trade settles into that account.
+- HDFC Securities' InvestRight equity and demat portfolios for Ajay's trading account 3110320, exported on 2 November and read as one snapshot.
+
+Its fifth file, `3110320_Equity_Trade_Details_Report (3).xlsx`, NEVER ARRIVED: the mail server left its 85-byte removal notice. Ask for it again (Stage 10kn).
+
 **These files never reach the browser.** `source/` sits at the repo root, outside
 `public/`, so nothing here is copied into the build or served by the site. Only
 the derived, reviewed extracts under `public/audit/` ship, and those sit behind

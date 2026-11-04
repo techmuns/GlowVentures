@@ -283,6 +283,22 @@ const KEY_ALIASES = Object.freeze({
   // Exact ISIN matches on the Kotak folios received 2 Nov 2026 (INF174K01LC6, INF174KA1HV3).
   "kotak-arbitrage-fund-direct-plan-growth": "kotak-arbfd-dp-grow",
   "kotak-multi-cap-fund-direct-plan-growth": "kotak-mtcf-d-grow",
+  // Exact ISIN matches on ICICI Bank's NSDL statement for 49794950 of 31 Oct 2026
+  // (Stage 10kn), each kept under the key the verified book already files that
+  // ISIN under: City Union Bank INE491A01021, Federal Bank INE171A01029, Karur
+  // Vysya Bank INE036D01028 and RBL Bank INE976G01028 (Ankita's Motilal demat);
+  // Assetgro Fintech's Series B preference INE1BZY03142, the same account's
+  // 31 Mar spelling before the company dropped "Private"; and two AIF classes the
+  // fund's own statement or another demat names first — Franklin India Credit AIF
+  // – Scheme I Class DB2 INF1CLO22066 (folio 10387) and Vantage Oak Fund I
+  // Class A2 INF2O4Z22020 (Ankita's Motilal demat).
+  "city-union-bank": "city-union",
+  "the-federal-bank": "federal-bank",
+  "the-karur-vysya-bank": "karur-vysya-bank",
+  "rbl-bank": "rbl-bnk",
+  "assetgro-fintech-limited-1-series-b-pref-25nv44": "assetgro-fintech-private-limited-1-series-b-pref-25nv44",
+  "franklin-templeton-category-ii-alternative-investment-fund-trust-ind-cr-aif-sch-i-cl-db2-restricted-transferability": "franklin-india-credit-aif-scheme-i-unit-class-db2",
+  "vantage-oak-fund-vof-i-cl-a2-restricted-transferability": "vof-i-class-a2",
   "sbi": "state-bank-of-india",
   "the-karur-vys": "karur-vysya-bank",
   "crompton-greaves-consumer-elec": "crompton-greaves-consumer-electrical",
