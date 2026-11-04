@@ -880,10 +880,14 @@ export function PortfolioMonitor() {
   const activeAxis: MonitorAxis = view === "holdings" ? groupAxis : txnAxis;
   const entities = useMemo(() => ["All", ...Array.from(new Set(positions.map((p) => ownerOf(accIdx, p)))).sort()], [positions, accIdx]);
   // Validate saved sections against the current book and the active axis.
+  // On Holdings the tabs come from the rows the table draws (`currentHoldings`),
+  // so a section only closed positions sit in offers no tab onto an empty table
+  // (Stage 10lb). Transactions keeps every position: a redeemed fund's trades are its rows.
   const buckets = useMemo(
-    () => ["All", ...Array.from(new Set(positions.map((p) => groupKeyFor(activeAxis, accIdx, p))))
+    () => ["All", ...Array.from(new Set((view === "holdings" ? currentHoldings(positions) : positions)
+      .map((p) => groupKeyFor(activeAxis, accIdx, p))))
       .sort((a, b) => groupOrdFor(activeAxis)(a) - groupOrdFor(activeAxis)(b))],
-    [positions, accIdx, activeAxis]);
+    [positions, accIdx, activeAxis, view]);
   // These three filters are global — they drive both the Holdings table and the
   // Transactions tape at once. `selected` is a set of security names (empty = all).
   /**

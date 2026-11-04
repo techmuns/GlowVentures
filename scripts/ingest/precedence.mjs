@@ -500,7 +500,8 @@ PRECEDENCE["ICICI Bank (NSDL demat)"] = {
 /**
  * HDFC SECURITIES — Ajay's trading account 3110320, from the InvestRight app's
  * two CSV exports read as one snapshot (providers/hdfcSecurities.mjs). The
- * equity portfolio is the document; the demat portfolio is its witness.
+ * equity portfolio is the document; the demat portfolio is its witness. Its
+ * trades come from the broker's equity trade details report.
  */
 PRECEDENCE["HDFC Securities"] = {
   holdings: { reportType: "holdings", note: "the InvestRight equity portfolio, named and completed by the demat portfolio of the same snapshot." },
@@ -510,6 +511,7 @@ PRECEDENCE["HDFC Securities"] = {
   marketPrice: { reportType: "holdings", note: "`LTP` at the export's own time stamp." },
   marketValue: { reportType: "holdings", note: "derived as LTP × QTY; the printed `CURRENT VALUE` is the check." },
   accountTotals: { reportType: "holdings" },
+  transactions: { reportType: "transaction-statement", note: "the equity trade details report — one row per fill over the window its header prints; NET AMOUNT is the check." },
 };
 
 /**

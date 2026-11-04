@@ -306,7 +306,10 @@ export function readXlsx(buf) {
     const rows = [];
     const p = prefixOf(xml, "worksheet");
     const cellRe = new RegExp(`<${p}c([^>]*?)(?:\\/>|>([\\s\\S]*?)<\\/${p}c>)`, "g");
-    const valueRe = new RegExp(`<${p}v>([\\s\\S]*?)<\\/${p}v>`);
+    // `<v xml:space="preserve">` too: HDFC Securities' trade details export
+    // writes every two-line header that way ("GST on\nTransaction Charges"), and
+    // a bare `<v>` pattern read those four headers as blank cells.
+    const valueRe = new RegExp(`<${p}v(?:\\s[^>]*)?>([\\s\\S]*?)<\\/${p}v>`);
     const textRe = new RegExp(`<${p}t[^>]*>([\\s\\S]*?)<\\/${p}t>`, "g");
     for (const rowMatch of xml.matchAll(new RegExp(`<${p}row[^>]*>([\\s\\S]*?)<\\/${p}row>`, "g"))) {
       const cells = [];

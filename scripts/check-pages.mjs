@@ -3961,7 +3961,20 @@ const PM_RETURN_BOOK = (() => {
       : null;
     /** The funds held at cost — a row each in the table's at-cost section, in no return. */
     const atCostFunds = new Set(priv.filter(atCost).map((p) => p.securityKey));
+    /**
+     * THE PAGE'S COVERAGE GATE, re-expressed (Stage 10lb): the book's HPR is
+     * struck only where the valued holdings' cost covers 99.5% of their value
+     * (`COST_COVERAGE_MIN`). A valued holding that reports no cost — Vantage Oak
+     * — leaves it short, and the footer must be refused, naming it.
+     */
+    const struckValue = struck.reduce((t, p) => t + (Number(p.marketValue) || 0), 0);
+    const costedValue = costed.reduce((t, p) => t + Number(p.marketValue), 0);
+    const costCovers = costedValue >= struckValue * 0.995;
+    const costless = [...new Set(struck.filter((p) => p.costBasis == null && Number(p.marketValue) > 0).map((p) => p.security))];
     return {
+      costCovers,
+      /** The valued private holdings that report no cost, as printed — what a refused footer names. */
+      costless,
       funds, byKey: new Map(funds.map((f) => [f.key, f])),
       atCostFunds: atCostFunds.size,
       /** What a pooled rate's "of" counts: every valued fund, and every fund held at cost. */
@@ -3975,7 +3988,7 @@ const PM_RETURN_BOOK = (() => {
       bookCost,
       /** …and the value it is a return ON: the valued holdings' own market value. */
       bookValue: costed.reduce((t, p) => t + Number(p.marketValue), 0),
-      footHpr: bookCost + bookSold > 0 ? ((bookPnL + bookRealised + bookIncome) / (bookCost + bookSold)) * 100 : null,
+      footHpr: costCovers && bookCost + bookSold > 0 ? ((bookPnL + bookRealised + bookIncome) / (bookCost + bookSold)) * 100 : null,
       /** …and what it read before income was in it — the figure it must no longer be. */
       footHprNoIncome: bookCost + bookSold > 0 ? ((bookPnL + bookRealised) / (bookCost + bookSold)) * 100 : null,
       bookIncome,
@@ -16505,8 +16518,10 @@ const DROPPED_BOOK = (() => {
       .map((m) => [m[1], { assetClass: m[2], basket: m[3] }]));
     const si = tsrc.indexOf("export const FAMILY_SAID_CLASS"), se = tsrc.indexOf("\n};", si);
     const SAID = new Map([...tsrc.slice(si, se).matchAll(/"([a-z]+:[^"]+)":\s*"([^"]+)"/g)].map((m) => [m[1], m[2]]));
+    const bi = tsrc.indexOf("export const FAMILY_SAID_BASKET"), be = tsrc.indexOf("\n};", bi);
+    const SAID_BASKET = new Map(bi < 0 ? [] : [...tsrc.slice(bi, be).matchAll(/"([a-z]+:[^"]+)":\s*"([^"]+)"/g)].map((m) => [m[1], m[2]]));
     const um = /export const UNCLASSIFIED = "([^"]+)"/.exec(tsrc);
-    if (!TAX.size || !SAID.size || !um) return null;
+    if (!TAX.size || !SAID.size || !SAID_BASKET.size || !um) return null;
     const UNCLASSIFIED = um[1];
     const acc = new Map(accounts.map((a) => [a.accountId, a]));
     const eng = (p) => acc.get(p.accountId)?.engagement;
@@ -16524,6 +16539,8 @@ const DROPPED_BOOK = (() => {
         if (!mandate(p) && cashEq(p)) return "Liquidity";
         const h = hit(p);
         if (h) return h.basket;
+        const said = SAID_BASKET.get(mandate(p) ? `mandate:${p.accountId}` : `sec:${p.securityKey}`);
+        if (said) return said;
         return !mandate(p) && p.assetClass === "Equity" ? "Thematic & Tactical" : UNCLASSIFIED;
       },
       "family-class": (p) => {
@@ -17640,6 +17657,17 @@ const PM_OVERLAP_HINT = ["the 'Counted once' line says what it does in its hover
 const pmHprCell = (cells) => Object.entries(cells ?? {})
   .find(([col, c]) => /^ret:/.test(col) && c?.retShown === "1" && (c.retTag === "HPR" || col === "ret:absolute"))?.[1] ?? null;
 /**
+ * THE BOOK'S HPR REFUSED FOR WANT OF COST (Stage 10lb): no percentage, the
+ * coverage reason, and every valued holding that reports no cost named — off
+ * `glowData.ts`, never the page's own list.
+ */
+const pmFootRefused = (cell) => {
+  const t = String(cell?.titles ?? cell?.title ?? "").toLowerCase();
+  return !!cell && !/%/.test(cell.text ?? "") && /covers only part of this row's value/.test(t)
+    && (PM_RETURN_BOOK?.costless ?? []).length > 0
+    && PM_RETURN_BOOK.costless.every((s) => t.includes(String(s).toLowerCase().slice(0, 24)));
+};
+/**
  * DL-16 — THE FOOTER'S HPR IS FIFO, SO ITS DENOMINATOR IS NOT A COLUMN. Its own
  * columns gave ₹1.995 Cr ÷ ₹8.62 Cr = 23.1% beside a printed 22.8%, because
  * FIFO also divides by what Neo Infra's redeemed units cost. The denominator is
@@ -17659,17 +17687,22 @@ const PM_DEPLOYED_CHECK = ["an HPR struck over more than its Cost column names w
   if (!B.redeemed) return { notChecked: "no private holding in this book has redeemed units, so every HPR divides by its own Cost column" };
   const near = (a, b) => Number.isFinite(a) && Number.isFinite(b) && Math.abs(a - b) <= 2;
   const tc = pmHprCell((pv.totals ?? [])[0]?.cells);
-  if (!tc || !near(Number(tc.deployed), B.bookDeployed)) return false;
-  if (!pmClose(pmMoney(tc.deployedText), B.bookDeployed / 1e7)) return false;
-  const title = String(tc.deployedTitle ?? "");
-  const figs = [...title.matchAll(/₹-?[\d,]+(?:\.\d+)?\s*(?:Cr|L|K)?/g)].map((x) => pmMoney(x[0]));
-  // The two parts, and the claim about the Cost column ONLY where that cell IS
-  // the cost of the units still held — on the total it spans the at-cost lines.
-  const costCell = pmMoney((pv.totals ?? [])[0]?.cells?.cost?.text ?? null);
-  if (!/units still held/i.test(title)
-    || !figs.some((v) => pmClose(v, B.bookCost / 1e7))
-    || !figs.some((v) => pmClose(v, (B.bookDeployed - B.bookCost) / 1e7))
-    || /Cost column/i.test(title) !== pmClose(costCell, B.bookCost / 1e7)) return false;
+  // A TOTAL WHOSE COST FALLS SHORT OF ITS VALUE STRIKES NO HPR (Stage 10lb), so
+  // there is no denominator on it to name; the fund rows below still carry theirs.
+  if (!B.costCovers) { if (tc) return false; }
+  else {
+    if (!tc || !near(Number(tc.deployed), B.bookDeployed)) return false;
+    if (!pmClose(pmMoney(tc.deployedText), B.bookDeployed / 1e7)) return false;
+    const title = String(tc.deployedTitle ?? "");
+    const figs = [...title.matchAll(/₹-?[\d,]+(?:\.\d+)?\s*(?:Cr|L|K)?/g)].map((x) => pmMoney(x[0]));
+    // The two parts, and the claim about the Cost column ONLY where that cell IS
+    // the cost of the units still held — on the total it spans the at-cost lines.
+    const costCell = pmMoney((pv.totals ?? [])[0]?.cells?.cost?.text ?? null);
+    if (!/units still held/i.test(title)
+      || !figs.some((v) => pmClose(v, B.bookCost / 1e7))
+      || !figs.some((v) => pmClose(v, (B.bookDeployed - B.bookCost) / 1e7))
+      || /Cost column/i.test(title) !== pmClose(costCell, B.bookCost / 1e7)) return false;
+  }
   // THE FUND ROWS, where the Absolute column is drawn: the marker exactly on
   // the funds that redeemed units, at their own cost + cost of units sold.
   if (!(pv.heads ?? []).includes("ret:absolute")) return true;
@@ -18523,8 +18556,14 @@ const PM_RETURN_CHECKS = [
    * words beside it.
    */
   ["the private book's HPR hover says it is FIFO, and what it counts of the cash paid back", (t, ctx) => {
+    if (!PM_RETURN_BOOK) return false;
+    // Refused for want of cost (Stage 10lb): no FIFO figure, so the dash names why.
+    if (!PM_RETURN_BOOK.costCovers) {
+      const cells = (ctx?.pmReturn?.foot ?? []).filter((x) => x.measure === "auto" || x.measure === "absolute");
+      return cells.length > 0 && cells.every(pmFootRefused);
+    }
     const foot = ctx?.pmReturn?.foot?.find((x) => (x.measure === "auto" || x.measure === "absolute") && /%/.test(x.text));
-    if (!foot || !PM_RETURN_BOOK) return false;
+    if (!foot) return false;
     const says = foot.titles ?? "";
     if (!/\bFIFO\b/.test(says)) return false;
     return PM_RETURN_BOOK.redeemed
@@ -18643,7 +18682,9 @@ const PM_RETURN_ROUTE_CHECKS = [
   }],
   ["the HPR footer is FIFO over the whole private book — the gain on units held and redeemed, over the capital deployed in both", (t, ctx) => {
     const foot = ctx?.pmReturn?.foot?.find((x) => x.measure === "absolute");
-    if (!foot || !PM_RETURN_BOOK || PM_RETURN_BOOK.footHpr == null) return false;
+    if (!foot || !PM_RETURN_BOOK) return false;
+    if (!PM_RETURN_BOOK.costCovers) return pmFootRefused(foot);   // Stage 10lb
+    if (PM_RETURN_BOOK.footHpr == null) return false;
     // A RETURN COUNTS EVERYTHING THE MONEY EARNED (Stage 10fz): the private
     // funds' income — the review's dated income rows and the statements' own
     // payouts, gross of TDS — is in the gain. Where the book carries any, the
@@ -30524,8 +30565,11 @@ const INVARIANTS = {
       const pr = ctx?.pmReturn;
       if (!pr) return false;
       const cells = pr.rows.flatMap((r) => r.cells).filter((c) => c.shown && (c.tag === "HPR" || c.measure === "absolute"));
-      const foot = (pr.foot ?? []).filter((c) => c.measure === "absolute");
-      if (!cells.length || !foot.length) return false;
+      const footAll = (pr.foot ?? []).filter((c) => c.measure === "absolute");
+      // A footer refused for want of cost (Stage 10lb) strikes no HPR to describe; it names why.
+      const refused = !!PM_RETURN_BOOK && !PM_RETURN_BOOK.costCovers;
+      if (!cells.length || !footAll.length || (refused && !footAll.every(pmFootRefused))) return false;
+      const foot = refused ? [] : footAll;
       const cost = /over what (?:those units|they) cost|against the cost it carries/i;
       return !(ctx?.titles ?? []).some((x) => /over the capital paid in/i.test(x))
         && [...cells, ...foot].every((c) => cost.test(c.titles ?? "") && /not a return on Paid in/i.test(c.titles ?? ""));

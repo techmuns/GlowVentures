@@ -17,6 +17,9 @@ export function StatusPill({ status }: { status: LibraryDoc["status"] }) {
   if (status === "held-out") {
     return <Pill tone="default"><span title="Read in full and deliberately not a statement source: no institution issued it, so no book figure is taken from it">Held out</span></Pill>;
   }
+  if (status === "re-sent") {
+    return <Pill tone="default"><span title="A mail server removed this attachment in transit and left a short notice under its name. The sender has since sent the statement again, and that copy is read.">Re-sent</span></Pill>;
+  }
   if (status === "never-arrived") {
     return <Pill tone="warn"><span title="A mail server removed this attachment in transit and left a short notice under its name — the statement itself never arrived. Ask the sender to re-send it (a download link, or zipped) and upload it here.">Never arrived</span></Pill>;
   }

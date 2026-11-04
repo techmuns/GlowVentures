@@ -28,6 +28,7 @@ import {
 } from "@/lib/analytics";
 import {
   FAMILY_TAXONOMY, BASKET_ORDER, FAMILY_CLASS_ORDER, UNCLASSIFIED,
+  FAMILY_SAID_CLASS, FAMILY_SAID_BASKET,
   basketKeyOf, familyClassKeyOf, familyBasket, familyAssetClass, productKeyOf,
 } from "@/lib/familyTaxonomy";
 
@@ -164,6 +165,39 @@ for (const [axis, key] of [["basket", basketKeyOf], ["asset class", familyClassK
      franklin.every((p) => familyAssetClass(p, isM(p))?.value === "Debt" && familyAssetClass(p, isM(p))?.source === "family"));
   ok("...and its basket stays not classified",
      franklin.every((p) => basketKeyOf(p, isM(p)) === UNCLASSIFIED));
+}
+
+// ── THE SEVEN THAT SAT UNDER "NOT CLASSIFIED" (Stage 10lb) ──────────────────
+// HDFC Balanced Advantage on its own folios is the review's; the other six are
+// the family's word, on both axes, and only where the review is silent.
+{
+  const held = (k: string) => BOOK_POSITIONS.filter((p) => productKeyOf(p, isM(p)) === k && p.marketValue > 0);
+  const baf = held("sec:hdfc-balanced-advantage-fund-regular-plan-growth");
+  ok("HDFC Balanced Advantage is held on its own folios", baf.length === 2, `${baf.length} folio(s)`);
+  ok("...and is the review's Equity / Liquidity",
+     baf.every((p) => familyAssetClass(p, isM(p))?.source === "review" && familyClassKeyOf(p, isM(p)) === "Equity"
+       && familyBasket(p, isM(p))?.source === "review" && basketKeyOf(p, isM(p)) === "Liquidity"));
+
+  const said = Object.keys(FAMILY_SAID_BASKET);
+  ok("every family basket has its family asset class beside it", said.every((k) => k in FAMILY_SAID_CLASS));
+  ok("...and neither repeats a product the review names", said.every((k) => !(k in FAMILY_TAXONOMY)));
+  for (const k of said) {
+    const rows = held(k);
+    ok(`${k} is held`, rows.length > 0);
+    ok(`...and lands on the family's word on both axes`,
+       rows.every((p) => familyAssetClass(p, isM(p))?.source === "family" && familyClassKeyOf(p, isM(p)) === FAMILY_SAID_CLASS[k]
+         && familyBasket(p, isM(p))?.source === "family" && basketKeyOf(p, isM(p)) === FAMILY_SAID_BASKET[k]),
+       `${FAMILY_SAID_CLASS[k]} / ${FAMILY_SAID_BASKET[k]}`);
+  }
+
+  // Left without a basket: Franklin, by the family's choice, and balances our own
+  // class already calls Cash. No fund or company is.
+  const un = dedupedPositions(BOOK_POSITIONS).filter((p) => p.marketValue > 0 && basketKeyOf(p, isM(p)) === UNCLASSIFIED);
+  ok("no fund or company is left without a basket but Franklin",
+     un.every((p) => p.securityKey === "franklin-india-credit-aif-scheme-i-unit-class-db2" || familyAssetClass(p, isM(p))?.source === "derived"),
+     un.map((p) => p.security).join("; ") || "none");
+  ok("...and nothing is left without an asset class",
+     dedupedPositions(BOOK_POSITIONS).every((p) => !(p.marketValue > 0) || familyClassKeyOf(p, isM(p)) !== UNCLASSIFIED));
 }
 
 // ── 8. THE UNCLASSIFIED REMAINDER IS SMALL AND NAMED ────────────────────────
