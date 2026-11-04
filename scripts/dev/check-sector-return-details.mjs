@@ -9,7 +9,7 @@ const base = process.env.BASE || 'http://127.0.0.1:4173';
 assert.ok(['localhost', '127.0.0.1'].includes(new URL(base).hostname));
 const out = '.cache/sector-return-details';
 await fs.mkdir(out, { recursive: true });
-const bundle = await build({ stdin: { contents: 'export { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_POLYCAB } from "./src/data/glowData.ts"; export { CAPTURE, stubShareFeed } from "./src/lib/__tests__/liveBook.ts"; export { shareCandidates, depositoryShareHoldings } from "./src/lib/depositoryShares.ts"; export { quoteSymbolFor } from "./src/lib/quotes.ts";', resolveDir: process.cwd() }, bundle: true, write: false, platform: 'node', format: 'esm', logLevel: 'error' });
+const bundle = await build({ stdin: { contents: 'export { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_POLYCAB } from "./src/data/glowData.ts"; export { CAPTURE, stubShareFeed } from "./src/lib/__tests__/liveBook.ts"; export { shareCandidates, depositoryShareHoldings } from "./src/lib/depositoryShares.ts"; export { quoteSymbolFor } from "./src/lib/quotes.ts"; export { securityLabel } from "./src/lib/securityLabel.ts";', resolveDir: process.cwd() }, bundle: true, write: false, platform: 'node', format: 'esm', logLevel: 'error' });
 const book = await import(`data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString('base64')}`);
 const quotes = book.stubShareFeed();
 // The API now keys quotes by exchange instrument where one is mapped. Preserve
@@ -71,7 +71,10 @@ try {
       assert.ok(p && a, 'an excluded holding must point to an actual stock/account pair');
       assert.ok(p.costBasis === null || p.costUnavailable, 'a costed stock must not be blamed for missing cost');
       const text = await item.innerText();
-      for (const label of [p.security, a.provider, a.accountNo]) assert.ok(text.includes(label), `source identity ${label}`);
+      // The book's one name per key (`labelledPositions`, PortfolioContext), not
+      // a statement's own spelling: ICICI's 31 Oct "THE FEDERAL BANK LIMITED -
+      // EQ NEW FV RS.2/" is Federal Bank on every page (Stage 10kn).
+      for (const label of [book.securityLabel(p.securityKey, p.security), a.provider, a.accountNo]) assert.ok(text.includes(label), `source identity ${label}`);
       assert.match(text, /purchase cost.*(missing|verified)/i);
       assert.match(text, /Needed: a purchase record or broker cost report/);
     }

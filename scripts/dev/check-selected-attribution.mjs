@@ -9,7 +9,7 @@ const base = process.env.BASE || 'http://127.0.0.1:4173';
 assert.ok(['localhost', '127.0.0.1'].includes(new URL(base).hostname));
 const out = '.cache/returns-period';
 await fs.mkdir(out, { recursive: true });
-const bundle = await build({ stdin: { contents: `export * from './src/data/glowData'; export * from './src/lib/periodReturns'; export { nothingToMeasure } from './src/lib/returns';`, resolveDir: process.cwd() }, bundle: true, write: false, platform: 'node', format: 'esm', logLevel: 'error' });
+const bundle = await build({ stdin: { contents: `export * from './src/data/glowData'; export * from './src/lib/periodReturns'; export { nothingToMeasure } from './src/lib/returns'; export { ytdBook, ytdSelection } from './src/lib/ytdAvailable';`, resolveDir: process.cwd() }, bundle: true, write: false, platform: 'node', format: 'esm', logLevel: 'error' });
 const b = await import(`data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString('base64')}`);
 const statement = { accounts: b.BOOK_ACCOUNTS, positions: b.BOOK_POSITIONS, accountReturnRecords: b.BOOK_ACCOUNT_RETURN_RECORDS, privateMarkets: {} };
 const inputs = b.accountInputs({ accounts: b.BOOK_ACCOUNTS, positions: b.BOOK_POSITIONS, returnRecords: b.BOOK_ACCOUNT_RETURN_RECORDS, navHistory: b.BOOK_ACCOUNT_NAV_HISTORY,
@@ -80,7 +80,12 @@ try {
  const results = [];
  for (const period of ['fytd', 'mtd', 'ytd', 'y1', 'y2', 'y3']) {
   await page.locator(`[data-returns-period="${period}"]`).click();
-  const start = b.periodStart(period, end), win = b.windowReturns(inputs, start, end);
+  // YTD reads the Monitor's record from the first date we have (Stage 10kq);
+  // with /api refused here no price loads, so its accounts' own windows alone.
+  const start = b.periodStart(period, end), win = period !== 'ytd' ? b.windowReturns(inputs, start, end) : (() => {
+   const included = b.ytdSelection(b.ytdBook({ inputs, held: [], accounts: b.BOOK_ACCOUNTS, end, assumptions: null, money: String }), inputs, []).windows;
+   return { included, gain: included.reduce((t, w) => t + w.gain, 0) };
+  })();
   for (const type of ['xirr', 'absolute', 'cagr']) {
    const measured = b.measureWindow(win.included, type, String);
    await page.locator('[data-returns-type-select]').selectOption(type);
