@@ -57,7 +57,7 @@ The bar measures coverage against **public** investments only. Private is report
 | Shares at market close from statement date (rule 2) | ₹96.1 Cr | −₹3.07 Cr |
 | **Headline** | **₹932 Cr of ₹992 Cr public (94%)** | **+₹55.8 Cr · +13.0%** |
 
-- **With rule 8 as decided** (the three funds held at last value): **+12.4%** on ₹980 Cr of ₹992 Cr public (99%). Without them: +13.0% on 94%.
+- **With rule 8 as decided** (the three funds held at last value): **+12.3%** (12.34%, +₹55.8 Cr) on ₹981 Cr of ₹995 Cr public (99%), recomputed on main c89773d after that day's fund NAV refresh. Without them: +13.0% on 94%.
 - Still not measurable: ₹61 Cr. Active Momentum ₹21 Cr, Carnelian Amritkaal ₹16 Cr,
   Delphi ₹11 Cr, VOF ₹4 Cr, plus ~₹8 Cr of Motilal liquid balances that changed on
   unknown dates and KRBL/Tega/Zota (see defect 2).
