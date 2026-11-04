@@ -1109,4 +1109,4 @@
 - Whatever public holding none of these measures is **held at its last value**: 0%, in the base from its valuation date, and named in the ⓘ with its reason. A price service that did not answer is "waiting for prices", never held.
 - Every part is carried at its latest value to the card's end in the pooled measure (`AccountWindow.carriedTo`). A record that closes on 30 Sep is no longer read as money withdrawn that day, and each record keeps the date it actually measures.
 - The caption shows coverage of public investments by value, split into measured and held, with private investments on their own line (Private Market's value and gain since investment, not this period's). There is one ⓘ per card, and the assumed label sits on the face.
-- Merges #331 (DSP bullion ETFs across their split, ICICI "Cumulative", Deepak) and #342 (`ytdBook({ open })`).
+- Merges #331 (DSP bullion ETFs across their split, ICICI "Cumulative", Deepak) and #342 (`ytdBook({ open })`). `build-upstox-instruments` is re-run, so Deepak (now on NSE) carries its listed ISIN to Glow Central Research, and the map also covers Man Industries, Kingfa and Sotefin on BSE.

@@ -608,6 +608,12 @@ export const UPSTOX_INSTRUMENTS = Object.freeze({
   "series": "M",
   "joinedBy": "symbol+isin"
  },
+ "BSE:SOTEFIN": {
+  "key": "BSE_EQ|INE12Z301012",
+  "tradingSymbol": "SOTEFIN",
+  "series": "M",
+  "joinedBy": "isin"
+ },
  "BSE:YASHHV": {
   "key": "BSE_EQ|INE00GK01023",
   "tradingSymbol": "YASHHV",
@@ -923,6 +929,12 @@ export const UPSTOX_INSTRUMENTS = Object.freeze({
  "DCW": {
   "key": "NSE_EQ|INE500A01029",
   "tradingSymbol": "DCW",
+  "series": "EQ",
+  "joinedBy": "symbol"
+ },
+ "DEEPAKFERT": {
+  "key": "NSE_EQ|INE501A01019",
+  "tradingSymbol": "DEEPAKFERT",
   "series": "EQ",
   "joinedBy": "symbol"
  },
@@ -1970,6 +1982,12 @@ export const UPSTOX_INSTRUMENTS = Object.freeze({
   "series": "EQ",
   "joinedBy": "isin"
  },
+ "KINGFA": {
+  "key": "NSE_EQ|INE473D01015",
+  "tradingSymbol": "KINGFA",
+  "series": "EQ",
+  "joinedBy": "symbol"
+ },
  "KIRLFER": {
   "key": "NSE_EQ|INE884B01025",
   "tradingSymbol": "KIRLFER",
@@ -2209,6 +2227,12 @@ export const UPSTOX_INSTRUMENTS = Object.freeze({
   "tradingSymbol": "MANAPPURAM",
   "series": "EQ",
   "joinedBy": "name"
+ },
+ "MANINDS": {
+  "key": "NSE_EQ|INE993A01026",
+  "tradingSymbol": "MANINDS",
+  "series": "EQ",
+  "joinedBy": "symbol"
  },
  "MANIPALHOS": {
   "key": "NSE_EQ|INE459N01021",
@@ -3888,8 +3912,6 @@ export const UPSTOX_SECURITY_SYMBOLS = Object.freeze({
  "cie-automotive-india": "CIEINDIA",
  "cipla": "CIPLA",
  "city-union": "CUB",
- "city-union-bank": "CUB",
- "clean-max-env": "CLEANMAX",
  "clean-max-enviro-energy-solutions": "CLEANMAX",
  "coal-india": "COALINDIA",
  "coforge": "COFORGE",
@@ -3914,6 +3936,7 @@ export const UPSTOX_SECURITY_SYMBOLS = Object.freeze({
  "dcb-bank": "DCBBANK",
  "dcw": "DCW",
  "deep-industries": "DEEPINDS",
+ "deepak-fertilisers-and-petrochemicals": "DEEPAKFERT",
  "delhivery": "DELHIVERY",
  "devyani-international": "DEVYANI",
  "diamond-power-infrastructure": "DIACABS",
@@ -4094,6 +4117,7 @@ export const UPSTOX_SECURITY_SYMBOLS = Object.freeze({
  "kec-international": "KEC",
  "kei-industries": "KEI",
  "kfin-technologies": "KFINTECH",
+ "kingfa-science-and-technology-india": "KINGFA",
  "kirloskar-ferrous-industries": "KIRLFER",
  "kirloskar-oil-engines": "KIRLOSENG",
  "knowledge-realty-trust": "KRT",
@@ -4129,6 +4153,7 @@ export const UPSTOX_SECURITY_SYMBOLS = Object.freeze({
  "mahanagar-telephone-nigam": "MTNL",
  "mahindra-and-mahindra": "M&M",
  "mahindra-and-mahindra-financial-services": "M&MFIN",
+ "man-industries-india": "MANINDS",
  "manali-petrochemical": "MANALIPETC",
  "manappuram-finance": "MANAPPURAM",
  "manipal-health-enterprises": "MANIPALHOS",
@@ -4235,7 +4260,6 @@ export const UPSTOX_SECURITY_SYMBOLS = Object.freeze({
  "rainbow-childrens-medicare": "RAINBOW",
  "ramco-systems": "RAMCOSYS",
  "ratnamani-metals-and-tubes": "RATNAMANI",
- "rbl-bank": "RBLBANK",
  "rbl-bnk": "RBLBANK",
  "rec": "RECLTD",
  "red-tape": "REDTAPE",
@@ -4291,6 +4315,7 @@ export const UPSTOX_SECURITY_SYMBOLS = Object.freeze({
  "solar-industries-india": "SOLARINDS",
  "sona-blw-precision-forgings": "SONACOMS",
  "sonata-software": "SONATSOFTW",
+ "sotefin-bharat": "BSE:SOTEFIN",
  "south-indian-bank": "SOUTHBANK",
  "srf": "SRF",
  "star-health-and-allied-insurance": "STARHEALTH",
@@ -4335,7 +4360,6 @@ export const UPSTOX_SECURITY_SYMBOLS = Object.freeze({
  "tenneco-clean-air-india": "TENNIND",
  "texmaco-rail-and-engineering": "TEXRAIL",
  "the-anup-engineering": "ANUP",
- "the-federal-bank": "FEDERALBNK",
  "the-great-eastern-shipping": "GESHIP",
  "the-indian-hotels": "INDHOTEL",
  "the-jammu-and-kashmir-bank": "J&KBANK",
@@ -4602,6 +4626,7 @@ export const UPSTOX_ISIN_SYMBOLS = Object.freeze({
  "INE12E301017": "GCHOTELS",
  "INE12F801023": "KISSHT",
  "INE12UN01015": "SHADOWFAX",
+ "INE12Z301012": "BSE:SOTEFIN",
  "INE130B01031": "SURANAT&P",
  "INE133A01029": "JSWDULUX",
  "INE133Y01011": "IFGLEXPOR",
@@ -4811,6 +4836,7 @@ export const UPSTOX_ISIN_SYMBOLS = Object.freeze({
  "INE467B01029": "TCS",
  "INE470A01017": "3MINDIA",
  "INE472A01039": "BLUESTARCO",
+ "INE473D01015": "KINGFA",
  "INE474Q01031": "MEDANTA",
  "INE475E01026": "CAPLIPOINT",
  "INE476A01022": "CANBK",
@@ -4831,6 +4857,7 @@ export const UPSTOX_ISIN_SYMBOLS = Object.freeze({
  "INE498B01024": "SHOPERSTOP",
  "INE498L01015": "LTF",
  "INE500A01029": "DCW",
+ "INE501A01019": "DEEPAKFERT",
  "INE503A01015": "DCBBANK",
  "INE506V01022": "RUBICON",
  "INE508G01029": "TIMETECHNO",
@@ -5032,7 +5059,8 @@ export const UPSTOX_ISIN_SYMBOLS = Object.freeze({
  "INE982J01020": "PAYTM",
  "INE985W01018": "CNL",
  "INE989C01038": "DIACABS",
+ "INE993A01026": "MANINDS",
  "INE999A01023": "KSB",
  "INF732E01037": "LIQUIDBEES"
 });
-export const UPSTOX_INSTRUMENT_COVERAGE = Object.freeze({"asked":625,"mapped":625,"unmapped":[]});
+export const UPSTOX_INSTRUMENT_COVERAGE = Object.freeze({"asked":629,"mapped":629,"unmapped":[]});
