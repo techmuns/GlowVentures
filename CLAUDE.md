@@ -193,6 +193,10 @@ One line per area; the history files explain each in depth.
   `investedOn.ts` (a holding's Invested on and its dated trades, every holdings
   table; built off `Position.tradeRecord` / `BOOK_HOLDING_TRADES` from
   `scripts/lib/holdingTrades.mjs`; Stage 10fm).
+- `src/lib/privateRounds.ts` + `pages/PrivateCompany.tsx` — a private company's
+  funding rounds, valuations and stake (`/private-company/:id`, Private Market's
+  valuation columns), off `src/data/privateRounds.json`: public reporting, every
+  round sourced, never a value for the holding (Stage 10ko).
 - `shared/realEstate.mjs` + `shared/propertyTax.mjs` — Real Estate's record (entered on
   the page, kept in the shared store) and the capital gains tax on selling a
   property today: the Cost Inflation Index table, the 2024 rules, per owner,
@@ -556,6 +560,7 @@ All steps are idempotent; `glowData.ts` regenerates byte-identically.
   the statement inbox, same token. `corporate-actions.js` — the Glow Central Research
   capture. `stock-exposure.ts` — the look-through read model.
 - Workflows: `harvest.yml` (macro series store), `fund-navs.yml` (AMFI NAVs),
+  `private-rounds.yml` (private companies' rounds, weekly; needs `ANTHROPIC_API_KEY`),
   `polycab.yml` (Polycab exchange data), `index-sectors.yml` (NSE factsheet
   sector weights, days 1–15 monthly), `statement-intake.yml` (dashboard uploads
   → the book; dispatched by each upload, every 20 min as a backstop; sealed
@@ -640,6 +645,8 @@ And:
   `report:extraction` (extraction report from the archive).
 - `npm run build-book` — the book and its report (then `build-review-columns`,
   `build-profiles` → `src/data/privateProfiles.json` from any profile table in `source/`).
+- `npm run build-private-rounds` — research the stalest private companies' rounds
+  (`ANTHROPIC_API_KEY`; `--import <batch.json>`, `--only <ids>`, `--check`).
 - `npm run accounts-table` — the accounts table above (`-- --write` splices).
 - Replays (each `--check` is a no-op control; follow with `build-book`):
   `rekey:archive`, `replay:calls`, `replay:owners`, `replay:dedupe`,
