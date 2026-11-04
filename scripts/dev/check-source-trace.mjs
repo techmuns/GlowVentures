@@ -169,13 +169,17 @@ try {
   await page.keyboard.press('Escape');
   await venue.locator('button[data-source-metric="quantity"]').scrollIntoViewIfNeeded();
   const origin = page.url();
+  // The evidence list opens before the scroll is set: 65px puts the Quantity
+  // column under the frozen first column (Stage 10la), and a click there would
+  // scroll the table back itself.
+  const statement = await dematStatement(venue);
   const snapshot = await page.locator('main').evaluate(el => {
     const scrolls = [...el.querySelectorAll('*')].filter(e=>e.scrollWidth>e.clientWidth+5 && e.clientWidth>0 && /auto|scroll/.test(getComputedStyle(e).overflowX));
     for (const scroll of scrolls) scroll.scrollLeft = Math.min(65,scroll.scrollWidth-scroll.clientWidth);
     window.__sourceReturn = scrolls.map(el=>({el,left:el.scrollLeft,top:el.scrollTop}));
     return {top:el.scrollTop};
   });
-  await (await dematStatement(venue)).click();
+  await statement.click();
   await page.locator(`[data-statement-preview="${doc}"]`).waitFor();
   assert.equal(await page.locator('a a, button button, a button, button a').count(),0,'source links never nest interactive controls');
   await page.locator('[data-source-back]').click();

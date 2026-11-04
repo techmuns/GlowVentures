@@ -40006,7 +40006,7 @@ for (const theme of THEMES) {
         ARRANGE.before = await tb.evaluate((t) => ({
           cols: [...t.querySelectorAll("thead tr:last-child > *")].map((c) => c.getAttribute("data-col")),
           rows: [...t.querySelectorAll("tbody tr[data-security-key]")].map((r) => r.getAttribute("data-security-key")),
-          footSpan: Number(t.querySelector("tfoot tr > td")?.getAttribute("colspan") || 1),
+          footSpan: Number(t.querySelector("tfoot tr > td")?.getAttribute("data-foot-span") || 1),
         }));
         /**
          * TWICE, AND THE SECOND CLICK IS THE ONE THAT PROVES ANYTHING.
@@ -40040,8 +40040,9 @@ for (const theme of THEMES) {
          * THE FOOTER'S SPAN IS EXPANDED PER COLUMN, and a SECOND move is what
          * makes it testable at all.
          *
-         * `TrFoot` computes its label's `colSpan` as the leading run of columns
-         * that carry no total. Nudging `qty` past `avgCost` moves two columns
+         * `TrFoot` computes its label's run (`data-foot-span`; the label sits in
+         * the frozen first column, a blank cell covers the rest — Stage 10la) as
+         * the leading run of columns that carry no total. Nudging `qty` past `avgCost` moves two columns
          * that are both inside that run, so the span is 3 before and after —
          * and a literal 3 in place of the computation passes. Found by
          * reintroducing exactly that and watching a clean sweep.
@@ -40072,7 +40073,7 @@ for (const theme of THEMES) {
             cols,
             firstRow: [...(t.querySelectorAll("tbody tr[data-security-key]")[0]?.children ?? [])]
               .map((c) => c.textContent.trim().slice(0, 24)),
-            footSpan: Number(foot?.querySelector("td")?.getAttribute("colspan") || 1),
+            footSpan: Number(foot?.querySelector("td")?.getAttribute("data-foot-span") || 1),
             footPerCol: perCol,
             rows: [...t.querySelectorAll("tbody tr[data-security-key]")].map((r) => r.getAttribute("data-security-key")),
           };

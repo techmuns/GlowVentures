@@ -53,10 +53,15 @@ const PRICE_BASIS = "A price index: dividends are not in it.";
 /**
  * The line itself. `inline-block w-full` puts it under the figure without a
  * line break in the cell's text, which the page sweep reads row by row.
+ * Quieter than the holding's figure above it (Stage 10lb): the index's name is
+ * a small-caps label and its return a lighter figure beside it, so the cell
+ * reads as the holding first and its index second.
  */
+const LINE = "mt-1 inline-block w-full whitespace-nowrap text-[10.5px] font-normal leading-tight text-slate-500";
+
 export function BenchLine({ hb, fig, holdingPct }: { hb: HoldingBenchmark; fig: IndexFigure | null; holdingPct: number | null }) {
   if (!hb.bench) {
-    return <span data-bench="none" title={hb.why} className="inline-block w-full whitespace-nowrap text-[10px] leading-tight text-slate-500">no index</span>;
+    return <span data-bench="none" title={hb.why} className={LINE}>no index</span>;
   }
   const b = hb.bench;
   const gap = fig?.shown && holdingPct != null ? holdingPct - fig.pct : null;
@@ -67,9 +72,9 @@ export function BenchLine({ hb, fig, holdingPct }: { hb: HoldingBenchmark; fig: 
   return (
     <span data-bench={b.key} data-bench-pct={fig?.shown ? fig.pct : ""} data-bench-from={fig?.shown ? fig.from : undefined}
       data-bench-to={fig?.shown ? fig.to : undefined} data-bench-annual={fig?.shown && fig.annual ? "true" : undefined}
-      title={title} className="inline-block w-full whitespace-nowrap text-[10px] leading-tight text-slate-500">
-      {BENCH_SHORT[b.key]}{" "}
-      {fig?.shown ? <span className="mono">{fmtPct(fig.pct, { sign: true, decimals: 1 })}</span> : <AbsentCell reason={fig?.reason} />}
+      title={title} className={LINE}>
+      <span className="bench-name">{BENCH_SHORT[b.key]}</span>{" "}
+      {fig?.shown ? <span className="mono ml-0.5 font-medium text-slate-400">{fmtPct(fig.pct, { sign: true, decimals: 1 })}</span> : <AbsentCell reason={fig?.reason} />}
     </span>
   );
 }

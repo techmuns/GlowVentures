@@ -5123,8 +5123,8 @@ export function PortfolioMonitor() {
                             ? res.na ? <NotApplicableCell reason={res.reason} /> : <AbsentCell reason={res.reason} label={returnGapLabel(res.reason)} />
                             : res.tag === "HPR" && !r.live
                               ? <Auditable formula={returnFormula(pnlValue, r.costBasis, r.returnPct, money, r.fifo ? { realised: r.fifo.realised, deployed: r.fifo.deployed, income: r.fifo.income,
-                                  capital: m && r.fifo.wholeMandates.length ? { value: r.fifo.marketValue, contributed: r.fifo.wholeContributed, withdrawn: r.fifo.wholeWithdrawn } : null } : undefined)}><span className={changeColor(res.pct)} title={res.note}>{fmtPct(res.pct, { sign: true })}</span></Auditable>
-                              : <span className={changeColor(res.pct)} title={res.note}>{fmtPct(res.pct, { sign: true })}</span>;
+                                  capital: m && r.fifo.wholeMandates.length ? { value: r.fifo.marketValue, contributed: r.fifo.wholeContributed, withdrawn: r.fifo.wholeWithdrawn } : null } : undefined)}><span className={`font-semibold ${changeColor(res.pct)}`} title={res.note}>{fmtPct(res.pct, { sign: true })}</span></Auditable>
+                              : <span className={`font-semibold ${changeColor(res.pct)}`} title={res.note}>{fmtPct(res.pct, { sign: true })}</span>;
                           /**
                            * TAG UNLESS THE HEADER ALREADY NAMES IT.
                            *
@@ -5168,7 +5168,8 @@ export function PortfolioMonitor() {
                               /* A shown figure keeps itself on one line and lets the index line under it wrap below. */
                               className={`px-2 py-1.5 text-right mono ${res.shown ? "" : "whitespace-nowrap"}`}
                               title={r.live && !r.costNA ? mixedBasisNote : undefined}>
-                              <span className="whitespace-nowrap">
+                              {/* THE HOLDING'S FIGURE LEADS (Stage 10lb): a size up and semibold, the index line under it quieter. */}
+                              <span className={`whitespace-nowrap ${res.shown ? "text-[13px] leading-tight" : ""}`}>
                                 {offMeasure && <span className="ret-tag mr-0.5">{res.tag}</span>}
                                 {res.shown && res.assumed && <AssumedMark note={res.note} />}
                                 {value}

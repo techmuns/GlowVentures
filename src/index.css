@@ -103,6 +103,9 @@ html.dark .statement-drop-message { background: #172554; color: #dbeafe; border-
   --table-grid: #9690a3;
   --table-grid-thin: #ddd7ca;
   --table-header-bg: #faf8f1;
+  /* What a table is drawn on — the card, unless a surface class below says
+     otherwise. The frozen first column paints it under its row's own colour. */
+  --table-surface: #ffffff;
 }
 
 html.dark {
@@ -146,6 +149,7 @@ html.dark {
   --table-grid: #716b91;
   --table-grid-thin: #3a3463;
   --table-header-bg: #151233;
+  --table-surface: #151233;
 }
 
 html, body, #root { height: 100%; }
@@ -273,6 +277,9 @@ body {
      variant washed the pill out to a near-invisible smudge on the page. This
      carries explicit colours for each theme so neither can drift. */
   .ret-tag { @apply rounded px-1 text-[9px] font-semibold tracking-wide; background-color: rgba(148, 163, 184, 0.22); color: #cbd5e1; }
+  /* The index's name on the line under a holding's return (Stage 10lb): a label,
+     not a figure — small caps in the line's own muted colour. */
+  .bench-name { @apply text-[9.5px] font-semibold uppercase tracking-[0.05em]; }
   /* THE RETURNS TAB'S OWN SURFACES (Stage 10fp) — a segmented control's well,
      a figure's tile, a window chip and a benchmark's bar track. Explicit colours
      for each theme, as `.ret-tag` carries, so none needs an opacity remap. */
@@ -797,6 +804,58 @@ html #root table:has(> tfoot) > tbody:last-of-type > tr:last-child > :is(th, td)
   --table-grid-width: calc(1px / var(--app-zoom));
   --table-grid: var(--table-grid-thin);
 }
+/* THE FIRST COLUMN IS FROZEN, ON EVERY TABLE (Stage 10la). *"Freeze the first
+   column of every table so even when we are scrolling right we can easily see
+   and compare."* Each row's first cell — the name the figures belong to — pins
+   to the left edge of the table's own scroller, and its right edge is the
+   section rule, as the heading's bottom edge is.
+   A first cell spanning several columns (an empty-state, detail or load-more
+   row) stays in the flow: pinned, it would slide over its row's figures; so
+   `TrFoot` keeps its label to the first column.
+   The cell must be OPAQUE or the columns scrolling under it show through, yet a
+   row's colour may be translucent or none at all (an odd zebra row shows the
+   card). So two layers: `::before` paints the surface the table sits on, and
+   `::after` repeats the cell's own paint over it — its row's colour (inherited
+   only where the cell sets none), the sorted-column fill and the child-row
+   guide. Both sit under the content, inside the cell's stacking context. */
+:is(#root, .return-calculation) table > :is(thead, tbody, tfoot) > tr > :first-child:not([colspan]:not([colspan="1"])) {
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  border-right-width: var(--table-section-width);
+}
+:where(:is(#root, .return-calculation) table > :is(thead, tbody, tfoot) > tr) > :where(:first-child:not([colspan]:not([colspan="1"]))) {
+  background-color: inherit;
+}
+:is(#root, .return-calculation) table > :is(thead, tbody, tfoot) > tr > :first-child:not([colspan]:not([colspan="1"]))::before,
+:is(#root, .return-calculation) table > :is(thead, tbody, tfoot) > tr > :first-child:not([colspan]:not([colspan="1"]))::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+:is(#root, .return-calculation) table > :is(thead, tbody, tfoot) > tr > :first-child:not([colspan]:not([colspan="1"]))::before {
+  background-color: var(--table-surface);
+}
+:is(#root, .return-calculation) table > thead > tr > :first-child:not([colspan]:not([colspan="1"]))::before {
+  background-color: var(--table-header-bg);
+}
+:is(#root, .return-calculation) table > :is(thead, tbody, tfoot) > tr > :first-child:not([colspan]:not([colspan="1"]))::after {
+  background: inherit;
+  box-shadow: inherit;
+}
+/* A footer pinned to the bottom stays above the frozen cells scrolling under it,
+   as the heading does. */
+:is(#root, .return-calculation) table > tfoot { z-index: 20; }
+/* The surface each opaque panel gives a table drawn on it (`--table-surface`).
+   The page shell is ink-950, so a card must restate its own. */
+.bg-ink-950 { --table-surface: #070615; }
+.bg-ink-900 { --table-surface: #0b0a1f; }
+:is(.card, .bg-ink-800) { --table-surface: #151233; }
+html:not(.dark) .bg-ink-950 { --table-surface: #f4f2ec; }
+html:not(.dark) .bg-ink-900 { --table-surface: #efece3; }
+html:not(.dark) :is(.card, .bg-ink-800) { --table-surface: #ffffff; }
 /* THE COLUMN THE TABLE IS SORTED BY (`src/lib/sortedColumn.ts`). The fill is a
    background IMAGE so it lies over whatever the cell already shows: a stripe, a
    hovered row, a pinned column's opaque surface. The edge only recolours the
