@@ -71,9 +71,8 @@ try {
       assert.ok(p && a, 'an excluded holding must point to an actual stock/account pair');
       assert.ok(p.costBasis === null || p.costUnavailable, 'a costed stock must not be blamed for missing cost');
       const text = await item.innerText();
-      // The book's one name per key (`labelledPositions`, PortfolioContext), not
-      // a statement's own spelling: ICICI's 31 Oct "THE FEDERAL BANK LIMITED -
-      // EQ NEW FV RS.2/" is Federal Bank on every page (Stage 10kn).
+      // The page names a security once per key (securityLabel), as every table does,
+      // not in whichever statement's spelling this row was read from.
       for (const label of [book.securityLabel(p.securityKey, p.security), a.provider, a.accountNo]) assert.ok(text.includes(label), `source identity ${label}`);
       assert.match(text, /purchase cost.*(missing|verified)/i);
       assert.match(text, /Needed: a purchase record or broker cost report/);
