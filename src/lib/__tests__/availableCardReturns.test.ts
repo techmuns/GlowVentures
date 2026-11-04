@@ -3,8 +3,8 @@ import { availableCardReturns, statementReturnInputs } from '../availableCardRet
 import { currentHoldings, dedupedPositions } from '../analytics';
 import { returnGapText } from '../selectedSegmentReturns';
 import type { Account, Portfolio, Position } from '../types';
-import type { AccountInput } from '../periodReturns';
-import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_ACCOUNT_RETURN_RECORDS } from '../../data/glowData';
+import { windowReturns, type AccountInput } from '../periodReturns';
+import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_ACCOUNT_RETURN_RECORDS, BOOK_UNIT_WINDOWS } from '../../data/glowData';
 
 const near = (a: number | null, b: number) => assert.ok(a != null && Math.abs(a - b) < 1e-6, `${a} != ${b}`);
 const position = (o: Partial<Position>) => {
@@ -43,6 +43,18 @@ assert.equal(r.history.total.measured?.basis, 'window');
 assert.ok(r.fytd.total.returnPct! > 0); assert.equal(r.fytd.coveredAccounts, 1);
 assert.equal(r.fytd.totalAccounts, 2);
 assert.ok(r.fytd.total.missing.some(g => g.accountId === 'b'));
+assert.equal(r.fytd.fullPeriod, true);
+// YTD FROM THE FIRST DATE WE HAVE (Stage 10kq): no record values 'a' on
+// 31 Dec, so the year opens on its first verified value — never a 1-holding card.
+near(r.ytd.total.gain, 12); assert.equal(r.ytd.coveredAccounts, 1); assert.equal(r.ytd.selection.start, '2025-12-31');
+assert.equal(r.ytd.from, '2026-03-31'); assert.equal(r.ytd.fullPeriod, false);
+assert.deepEqual(r.ytd.starts, [{ date: '2026-03-31', close: 132 }]);
+near(r.ytd.total.returnPct!, r.fytd.total.returnPct!);
+assert.ok(r.ytd.total.missing.some(g => g.accountId === 'b'));
+// Money first put in this year opens at nil: a full year to date.
+const fresh: AccountInput = { ...input, knownFrom: null, valuations: [{ date: '2026-09-30', value: 105 }], flows: [{ date: '2026-08-06', amount: -100 }] };
+const opened = availableCardReturns(statement, positions, [fresh], today).ytd;
+assert.equal(opened.fullPeriod, true); assert.deepEqual(opened.starts, [{ date: null, close: 105 }]); near(opened.total.gain, 5);
 // Today's quotes change only the displayed coverage value, never recorded gain or return.
 const live = availableCardReturns(statement, positions.map(p => ({ ...p, marketValue: p.marketValue * 2 })), [input, missing], today);
 near(live.gain.total.gain, 3000); near(live.fytd.total.gain, 12); near(live.history.total.returnPct, r.history.total.returnPct!);
@@ -62,8 +74,19 @@ near(availableCardReturns(statement, positions, [closed], today).history.total.g
 const book = { accounts: BOOK_ACCOUNTS, positions: BOOK_POSITIONS, accountReturnRecords: BOOK_ACCOUNT_RETURN_RECORDS, privateMarkets: {} } as Portfolio;
 const display = dedupedPositions(BOOK_POSITIONS), actual = availableCardReturns(book, display, statementReturnInputs(book), today);
 assert.ok(actual.gain.total.gain != null && actual.gain.coveredHoldings > 0 && actual.gain.coveredHoldings < currentHoldings(display).length);
-near(actual.fytd.total.gain, 214060780.04);
-assert.equal(actual.fytd.coveredAccounts, 17);
+// THE FINANCIAL YEAR FROM THE FIRST VALUE ON RECORD (Stage 10la): the 17
+// accounts verified from 31 March, unchanged, plus the six whose consecutive
+// statements hold the same units (Buoyant ×2, Founders ×2, Mirae, ABSL),
+// each from its first statement this year.
+const verified = windowReturns(statementReturnInputs(book), '2026-03-31', '2026-10-22').included;
+assert.equal(verified.length, 17);
+for (const w of verified) near(actual.fytd.total.units.find(u => u.accountId === w.accountId)?.gain ?? null, w.gain);
+const unitWindowed = actual.fytd.total.units.filter(u => BOOK_UNIT_WINDOWS[u.accountId]);
+assert.deepEqual(unitWindowed.map(u => u.from).sort(), ['2026-07-01', '2026-07-02', '2026-07-31', '2026-07-31', '2026-07-31', '2026-07-31']);
+near(actual.fytd.total.gain, 198576986.99);
+assert.equal(actual.fytd.coveredAccounts, 23);
+// The calendar-year card reads at least every account the financial year does.
+assert.ok(actual.ytd.coveredAccounts >= actual.fytd.coveredAccounts && actual.ytd.coveredHoldings >= actual.fytd.coveredHoldings);
 assert.ok(actual.history.total.returnPct != null);
 assert.ok(actual.history.total.missing.length > 0);
 console.log('available headline returns: verified gain, exits, partial periods, live isolation, real coverage');
