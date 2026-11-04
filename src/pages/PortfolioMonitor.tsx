@@ -24,8 +24,8 @@ import {
   sum, sumOrNull, consolidatedMarketValue, dedupedPositions, isFundVehicle, isCompanyShare,
   holdingRoute, ROUTE_LABEL,
   mandateLabel, MANDATE_BUCKET,
-  measuredReturn, returnCoverage, returnMeasureDef, valueDateOf, commonValueDate, clubbedPurchase,
-  type ReturnMeasure, type ReturnInput, type RowCapital, type MeasuredReturn,
+  measuredReturn, returnCoverage, returnMeasureDef, valueDateOf, commonValueDate, clubbedPurchase, singlePurchaseGap,
+  type ReturnMeasure, type ReturnInput, type RowCapital, type MeasuredReturn, type CapitalLeg,
   costCoversSet, strikesGain, isValuedAtCost, totalQuantity, AT_COST_RETURN, AT_COST_PNL, NO_UNIT_COUNT,
   AT_COST_MARK, REVIEW_NO_MARK, AT_COST_BUCKET,
   currentHoldings, droppedHoldings, NEGLIGIBLE_VALUE_FLOOR, isCashEquivalent, assetClassLabel,
@@ -76,8 +76,8 @@ import { withReturnCols, returnAccessorsFor, AGG_NO_MEASURE, returnColumnMeta, r
 import { datedButUnvalued } from "@/lib/holdingFlows";
 import { useDatedCapital } from "@/lib/useDatedCapital";
 import { BenchLine, useBenchmarkLevels } from "@/components/HoldingBenchmark";
-import { indexCompound, indexMove, indexOnSameMoney, rowBenchmark, type HoldingBenchmark, type IndexFigure } from "@/lib/holdingBenchmark";
-import { BENCHMARKS } from "@/lib/benchmarks";
+import { closeLegsOn, indexCompound, indexMove, indexOnSameMoney, onePaymentLeg, pooledLegs, rowBenchmark, type HoldingBenchmark, type IndexFigure } from "@/lib/holdingBenchmark";
+import { BENCHMARKS, benchmarkByKey } from "@/lib/benchmarks";
 // `weightFormula` is deliberately NOT imported, and the REASON has changed under
 // this comment — which is why it is being restated rather than left standing.
 //
@@ -95,7 +95,7 @@ import { notHeldNote } from "@/components/QuantityMovement";
 import { movementsFor } from "@/lib/shareMovements";
 import { allRecordedLines, recordedLabel, recordedLineFor, carriedBy } from "@/lib/recordedHoldings";
 import type { Position } from "@/lib/types";
-import { investedOnOf, holdingTradesOf, lineUndatedReason, accountInvestedOn, type InvestedOn } from "@/lib/investedOn";
+import { investedOnOf, holdingTradesOf, lineUndatedReason, accountInvestedOn, fmtInvestedDate, type InvestedOn } from "@/lib/investedOn";
 import { InvestedOnCell } from "@/components/InvestedOnCell";
 import { holdingPeriodOf, type HoldingPeriod } from "@/lib/holdingFlows";
 import { AbsentCell, NotApplicableCell, AbsentFromBook, AbsentSection, AbsentValue, DASH } from "@/components/Absent";
@@ -1135,7 +1135,17 @@ export function PortfolioMonitor() {
     if (!hb) { hb = rowBenchmark(rowPositionsOf(r), r.mandate ? r.mandate.accounts.map((a) => a.accountId) : null); ROW_BENCH.set(r, hb); }
     return hb;
   }, []);
-  const benchFigure = (hb: HoldingBenchmark, res: Extract<MeasuredReturn, { shown: true }>, input: ReturnInput, asOf: string): IndexFigure | null => {
+  /** The dated money a row's index is bought with: its record's legs, or its one purchase never sold (Stage 10la). */
+  const ownLegs = (input: ReturnInput, asOf: string): CapitalLeg[] | null => {
+    const cap = input.capital, end = input.valuedAt === undefined ? asOf : input.valuedAt;
+    if (cap?.dated && cap.legs?.length) return closeLegsOn(cap.legs, end);
+    if (input.heldSince && end && singlePurchaseGap(input) === null && input.costBasis != null && input.costBasis > 0 && input.marketValue != null) {
+      return [onePaymentLeg(input.heldSince, input.costBasis, end, input.marketValue)];
+    }
+    return null;
+  };
+  const benchFigure = (hb: HoldingBenchmark, res: Extract<MeasuredReturn, { shown: true }>, input: ReturnInput, asOf: string,
+    ps?: readonly Position[], legs?: readonly CapitalLeg[]): IndexFigure | null => {
     if (!hb.bench) return null;
     const lv = benchLevels(hb.bench.key);
     if ("reason" in lv) return { shown: false, reason: lv.reason };
@@ -1144,10 +1154,42 @@ export function PortfolioMonitor() {
     const annual = res.tag === "XIRR" || res.tag === "CAGR";
     const end = input.valuedAt === undefined ? asOf : input.valuedAt;
     // The rate is solved on the record's own closes; the HPR on the row's value date.
+    if (legs?.length) return indexOnSameMoney(legs, lv.level, annual, annual ? null : end);
     if (cap?.dated && cap.legs?.length) return indexOnSameMoney(cap.legs, lv.level, annual, annual ? null : end);
     if (res.tag === "CAGR" && input.heldSince && end) return indexCompound(input.heldSince, end, lv.level);
-    return { shown: false, reason: cap && !cap.dated ? cap.reason.replace(/\.$/, "")
-      : "the dates and amounts of this holding's purchases are not all on record, so the index cannot be bought with the same money on the same days" };
+    // ONE PURCHASE, NEVER SOLD (Stage 10la): the CAGR gate's own proof dates every
+    // rupee of its cost on that day, so its HPR and a YTD opened this year buy
+    // the index there too.
+    const one = ownLegs(input, asOf);
+    if (one) return indexOnSameMoney(one, lv.level, annual, null);
+    return { shown: false, reason: cap && !cap.dated ? cap.reason.replace(/\.$/, "") : undatedMoneyWhy(ps) };
+  };
+  /**
+   * A SECTION'S OR THE TABLE'S TOTAL AGAINST ITS INDEX (Stage 10la): the index
+   * the rows share — the broad Nifty 500 where they differ — bought with every
+   * row's own dated money, each closed on its own value date (`pooledLegs`).
+   * Struck over the rows that show an HPR, the set the total's return is.
+   */
+  const pooledBench = (rs: readonly Row[], asOf: string): { hb: HoldingBenchmark; fig: IndexFigure | null } | null => {
+    const shown = rs.filter((r) => measuredReturn(r, "absolute", asOf).shown);
+    if (!shown.length) return null;
+    const hbs = shown.map(benchOf);
+    const keys = new Set(hbs.map((h) => h.bench?.key ?? null));
+    const hb: HoldingBenchmark = keys.size === 1
+      ? (hbs[0].bench ? { bench: hbs[0].bench, why: `Every row here is compared with the ${hbs[0].bench.name}.` } : hbs[0])
+      : { bench: benchmarkByKey("nifty-500"), why: "The rows here are compared with different indices, so their total is compared with the broad Nifty 500." };
+    if (!hb.bench) return { hb, fig: null };
+    const lv = benchLevels(hb.bench.key);
+    if ("reason" in lv) return { hb, fig: { shown: false, reason: lv.reason } };
+    // Duplicates are counted once in the total; their legs would count twice.
+    if (shown.some((r) => rowPositionsOf(r).some((p) => p.dedupeGroup))) {
+      return { hb, fig: { shown: false, reason: "a holding two members both report is behind these rows and is counted once in the total, so its dated money cannot be pooled without counting it twice" } };
+    }
+    const pool = pooledLegs(shown.map((r) => ownLegs(r, asOf)));
+    if ("undated" in pool) {
+      return { hb, fig: { shown: false, reason: `the index is bought with every row's own dated payments, and ${pool.undated} of the ${pool.of} rows with a return here are not dated in full — each row names its own cause` } };
+    }
+    return { hb, fig: indexOnSameMoney(pool.legs, lv.level, false, null) };
   };
   const holdAccessors = useMemo(
     // `portfolio` is not narrowed until the guard below and a hook cannot sit
@@ -2905,16 +2947,29 @@ export function PortfolioMonitor() {
    * a line and on the row above it, and the tag rule is the one the row cells
    * use: tagged wherever the figure is not the measure the column promises.
    */
-  const childReturn = (input: ReturnInput, measure: ReturnMeasure, ps?: readonly Position[]) => {
-    const res = measuredReturn(withYtd(input, ps, measure), measure, portfolio.asOf);
+  /**
+   * …AND ITS OWN INDEX UNDER IT (Stage 10la). An opened row's lines showed a
+   * return with nothing beneath it: each now carries the index its own lines
+   * are compared with (a mandate account by its manager's report), bought with
+   * its own dated money — `legs` where the caller holds a line's money itself,
+   * as a contribution does.
+   */
+  const childReturn = (input: ReturnInput, measure: ReturnMeasure, ps?: readonly Position[],
+    bench?: { hb?: HoldingBenchmark; legs?: CapitalLeg[] }) => {
+    const inp = withYtd(input, ps, measure);
+    const res = measuredReturn(inp, measure, portfolio.asOf);
     const off = measure === "auto" || res.tag !== returnMeasureDef(measure).tag;
+    const hb = bench?.hb ?? (ps?.length ? rowBenchmark(ps, null) : null);
     return (
-      <span data-child-return-tag={off ? res.tag : undefined}>
-        {off && <span className="ret-tag mr-0.5">{res.tag}</span>}
-        {res.shown && res.assumed && <AssumedMark note={res.note} />}
-        {res.shown
-          ? <span className={changeColor(res.pct)} title={res.note}>{fmtPct(res.pct, { sign: true })}</span>
-          : res.na ? <NotApplicableCell reason={res.reason} /> : <AbsentCell reason={res.reason} label={returnGapLabel(res.reason)} />}
+      <span data-child-return-tag={off ? res.tag : undefined} className={res.shown && hb ? "whitespace-normal" : undefined}>
+        <span className="whitespace-nowrap">
+          {off && <span className="ret-tag mr-0.5">{res.tag}</span>}
+          {res.shown && res.assumed && <AssumedMark note={res.note} />}
+          {res.shown
+            ? <span className={changeColor(res.pct)} title={res.note}>{fmtPct(res.pct, { sign: true })}</span>
+            : res.na ? <NotApplicableCell reason={res.reason} /> : <AbsentCell reason={res.reason} label={returnGapLabel(res.reason)} />}
+        </span>
+        {res.shown && hb && <BenchLine hb={hb} fig={benchFigure(hb, res, inp, portfolio.asOf, ps, bench?.legs)} holdingPct={res.pct} />}
       </span>
     );
   };
@@ -2977,6 +3032,26 @@ export function PortfolioMonitor() {
       return "this account's lot register does not account for every unit held today, so no purchase date can be read off it";
     }
     return "the statements report this holding's cost but not the date it was bought — no lot register or dated allotment for it is in this book";
+  };
+  /**
+   * WHY A ROW'S MONEY CANNOT BUY ITS INDEX (Stage 10la): the cause true of its
+   * own lines — units no dated trade reaches, a review that dates only a span,
+   * a manager whose statements begin after the purchase — rather than one
+   * sentence under every row.
+   */
+  const undatedMoneyWhy = (ps: readonly Position[] | undefined): string => {
+    const lead = "the index is bought with this holding's own dated payments, and ";
+    if (!ps?.length) return `${lead}the dates and amounts of its purchases are not all on record`;
+    const why = (p: Position): string => {
+      const t = p.tradeRecord;
+      if (t && (t.unaccounted ?? 0) > 0 && t.reason) return t.reason;
+      const d = investedOnOf([p]);
+      if (d && d.payments === null) return `its record dates the purchases only as a span, ${fmtInvestedDate(d.first)} to ${fmtInvestedDate(d.last)}, not each payment and what it paid`;
+      return investedOnWhy([p]);
+    };
+    const undated = ps.filter((p) => !datedCap?.behind([p], holdingsUniverse)?.dated);
+    const cause = why(undated[0] ?? ps[0]);
+    return lead + (undated.length && undated.length < ps.length ? `${undated.length} of the ${ps.length} lines behind this row are not dated in full — ${cause}` : cause);
   };
   /**
    * WHAT A HOLDING'S REALISED FIGURE COVERS (DL-10): each account's capital gain
@@ -3099,7 +3174,7 @@ export function PortfolioMonitor() {
    * construction rather than by a footer printed beside them.
    */
   const trancheRows = (parentKey: string, folioKey: string, cls: string | null, assetClass: string,
-    t: TrancheTable, depth: 1 | 2, ancestorLast: boolean) => {
+    t: TrancheTable, depth: 1 | 2, ancestorLast: boolean, hb: HoldingBenchmark) => {
     const rows: ReactNode[] = [];
     /*
      * NO SENTENCE ABOVE A SWITCHED CONTRIBUTION. It used to explain, once per
@@ -3157,7 +3232,9 @@ export function PortfolioMonitor() {
         // ONE PAYMENT BY CONSTRUCTION (Stage 10fz): a contribution is a single
         // dated purchase with nothing sold out of it, which is what the CAGR gate
         // asks a row to prove — so it says so rather than reading "not counted".
-        ret: (measure) => childReturn({ returnPct: x.returnPct, heldSince: x.date, valuedAt: x.valuedAt, assetClass, costNA: false, purchaseDates: 1, costOfUnitsSold: null }, measure),
+        // Its index on the same one payment: what bought units, on its day (Stage 10la).
+        ret: (measure) => childReturn({ returnPct: x.returnPct, heldSince: x.date, valuedAt: x.valuedAt, assetClass, costNA: false, purchaseDates: 1, costOfUnitsSold: null }, measure,
+          undefined, { hb, legs: [onePaymentLeg(x.date, x.invested, x.valuedAt, x.value)] }),
       }, {
         "data-tranche-row": parentKey, "data-tranche-folio": folioKey, "data-tranche-class": cls ?? "",
         // THE HOLDING-PERIOD RETURN, whatever the cell shows: "cheaper entry,
@@ -3485,7 +3562,9 @@ export function PortfolioMonitor() {
                 title={`Everything account ${l.accountNo} has booked since it opened — every sale its manager made, and its income less its fees.`}>
                 {fmtFromBase(l.realised, { compact: true, sign: true })}
               </span>,
-          ret: (measure) => childReturn({ fifo: l.fifo, returnPct: l.returnPct, heldSince: null, valuedAt: l.valuedAt, assetClass: "", costNA: l.costNA, costBasis: l.costBasis, marketValue: l.marketValue, capital: l.capital ?? null }, measure, l.positions),
+          // A mandate account against the index its manager's report prints (Stage 10la).
+          ret: (measure) => childReturn({ fifo: l.fifo, returnPct: l.returnPct, heldSince: null, valuedAt: l.valuedAt, assetClass: "", costNA: l.costNA, costBasis: l.costBasis, marketValue: l.marketValue, capital: l.capital ?? null }, measure, l.positions,
+            { hb: rowBenchmark(l.positions, [l.accountId]) }),
           sector: <AbsentCell reason="a mandate spans many sectors and is not one holding; each share under this line carries its own" />,
           entity: <span className="text-[12px]">{l.owner}</span>,
         }, {
@@ -3514,7 +3593,7 @@ export function PortfolioMonitor() {
     // BY ENTITY: the row IS one statement, so its contributions hang from it.
     if (!r.venues) {
       if (info?.direct) {
-        out.push(...trancheRows(r.key, r.key, splitFundClass(r.security)?.cls ?? null, r.assetClass, info.direct, 1, false));
+        out.push(...trancheRows(r.key, r.key, splitFundClass(r.security)?.cls ?? null, r.assetClass, info.direct, 1, false, benchOf(r)));
       }
       out.push(...tradeRows(r.key, r.trancheSet, 1, {}));
       return out;
@@ -3648,7 +3727,7 @@ export function PortfolioMonitor() {
         "data-venue-account": v.accountId, "data-venue-key": v.securityKey, "data-venue-mv": v.marketValue,
         ...(t ? { "data-folio-tranches": t.rows.length } : {}),
       }));
-      if (t) out.push(...trancheRows(r.key, fk, v.cls, v.assetClass, t, 2, lastLine));
+      if (t) out.push(...trancheRows(r.key, fk, v.cls, v.assetClass, t, 2, lastLine, rowBenchmark(v.positions, null)));
       if (expanded.has(`${r.key}>${fk}`)) out.push(...tradeRows(`${r.key}>${fk}`, v.positions, 2, { ancestorLast: lastLine }));
     });
     /**
@@ -4574,13 +4653,16 @@ export function PortfolioMonitor() {
                             const why = !onCost
                               ? `${label} is a category, not a holding: ${AGG_NO_MEASURE[measure]} Its cumulative return on cost shows under HPR — tick Holding Period Return to see it.`
                               : retWhy;
+                            // The section's own index under its return (Stage 10la).
+                            const sb = onCost && ret !== null ? pooledBench(grp.rows, portfolio.asOf) : null;
                             return (
-                              <td key={measure} className={`px-2 py-1.5 text-right mono whitespace-nowrap ${!onCost || ret === null ? "text-slate-500" : changeColor(ret)}`}>
+                              <td key={measure} className={`px-2 py-1.5 text-right mono ${sb ? "" : "whitespace-nowrap"} ${!onCost || ret === null ? "text-slate-500" : changeColor(ret)}`}>
                                 {!onCost || ret === null
                                   ? <AbsentCell reason={why} />
-                                  : <span title={`${fifoBasisNote(tot.fifo, (n) => fmtFromBase(n, { compact: true }))}. Cumulative, not annualised — a category has no single purchase date to strike a CAGR or XIRR over.`}>
+                                  : <span className="whitespace-nowrap" title={`${fifoBasisNote(tot.fifo, (n) => fmtFromBase(n, { compact: true }))}. Cumulative, not annualised — a category has no single purchase date to strike a CAGR or XIRR over.`}>
                                       {fmtPct(ret, { sign: true })}
                                     </span>}
+                                {sb && ret !== null && <BenchLine hb={sb.hb} fig={sb.fig} holdingPct={ret} />}
                               </td>
                             );
                           })}
@@ -5174,7 +5256,7 @@ export function PortfolioMonitor() {
                                 {value}
                               </span>
                               {/* THE ROW'S OWN INDEX, ON THE SAME MONEY AND MEASURE (Stage 10kd). */}
-                              {res.shown && <BenchLine hb={benchOf(r)} fig={benchFigure(benchOf(r), res, input, portfolio.asOf)} holdingPct={res.pct} />}
+                              {res.shown && <BenchLine hb={benchOf(r)} fig={benchFigure(benchOf(r), res, input, portfolio.asOf, rowPositionsOf(r))} holdingPct={res.pct} />}
                             </td>
                           );
                         })}
@@ -5537,13 +5619,15 @@ export function PortfolioMonitor() {
                         things. */
                     ...Object.fromEntries(returnMeasures.map((measure) => {
                       const onCost = measure === "auto" || measure === "absolute";
+                      // The table's own index under its total (Stage 10la).
+                      const fb = onCost && totalRet !== null ? pooledBench(rows, portfolio.asOf) : null;
                       return [`ret:${measure}`, (
                         /* ONLY THE FIGURE ON THE FACE. Which holdings the book
                             return is struck over — the set line — rides the td
                             hover (beside the live-recalc note when the feed is
                             on) and the `data-footer-return-set-text` attribute,
                             so the check reads it without a visible sentence. */
-                        <td key={`ret:${measure}`} className={`px-2 py-1.5 text-right mono whitespace-nowrap ${onCost ? changeColor(totalRet) : "text-slate-500"}`}
+                        <td key={`ret:${measure}`} className={`px-2 py-1.5 text-right mono ${fb ? "" : "whitespace-nowrap"} ${onCost ? changeColor(totalRet) : "text-slate-500"}`}
                           title={onCost && totalRet !== null
                             // THE BASIS, EXITS INCLUDED (Stage 10fz): `fifoBasisNote` names
                             // what the exited holdings and mandates put in the figure.
@@ -5560,8 +5644,9 @@ export function PortfolioMonitor() {
                                 : footStruckLines === 0 && footCover.atCost.lines > 0
                                 ? `every holding in this table that reports a cost is ${AT_COST_RETURN}`
                                 : "no holding in this table reports a cost, so there is nothing to strike a return over — each costed holding shows its own on its row")} />
-                            : feedLive ? fmtPct(totalRet, { sign: true })
+                            : feedLive ? <span className="whitespace-nowrap">{fmtPct(totalRet, { sign: true })}</span>
                             : <Auditable formula={{ title: "Total return (FIFO)", excel: "= (Σ unrealised + Σ realised) ÷ Σ capital deployed × 100", plain: "Everything the holdings in this table have produced — the unrealised gain on what is held and the realised gain on what was already sold, matched first-in, first-out — over every rupee that bought a unit of them. A whole mandate is struck on its capital since inception.", worked: `= (${money(totFifoCosted.unrealised ?? 0, true)} + ${money(totFifoCosted.realised ?? 0, true)}${totFifoCosted.income !== null ? ` + ${money(totFifoCosted.income, true)} dividends` : ""}) ÷ ${money(totFifoCosted.deployed ?? 0)} × 100 = ${fmtPct(totalRet, { sign: true })}${exitedNote(totFifoCosted, money) ? ` · ${exitedNote(totFifoCosted, money)}` : ""}${totFifo.uncosted ? ` · over the holdings that report a cost; ${totFifo.uncosted} worth ${money(totFifo.uncostedValue)} report none and are in no part of it` : ""}${totFifo.atCost ? ` · ${atCostNote(totFifo, money)}` : ""}${leftOutNote ? ` · ${leftOutNote}` : ""}` }}>{fmtPct(totalRet, { sign: true })}</Auditable>}
+                          {fb && totalRet !== null && <BenchLine hb={fb.hb} fig={fb.fig} holdingPct={totalRet} />}
                         </td>
                       )];
                     })),

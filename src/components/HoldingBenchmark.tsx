@@ -8,7 +8,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { AbsentCell } from "@/components/Absent";
 import { BENCHMARKS, benchmarkIdentity, benchmarkMismatchReason, type BenchmarkKey } from "@/lib/benchmarks";
-import { BENCH_SHORT, type HoldingBenchmark, type IndexFigure } from "@/lib/holdingBenchmark";
+import { BENCH_SHORT, benchGapLabel, type HoldingBenchmark, type IndexFigure } from "@/lib/holdingBenchmark";
 import { closeOnOrBefore, fetchPriceHistory, priceErrorReason, settledPriceHistory, type PriceResult } from "@/lib/prices";
 import type { IndexLevel } from "@/lib/periodReturns";
 import { fmtPct } from "@/lib/format";
@@ -69,7 +69,8 @@ export function BenchLine({ hb, fig, holdingPct }: { hb: HoldingBenchmark; fig: 
       data-bench-to={fig?.shown ? fig.to : undefined} data-bench-annual={fig?.shown && fig.annual ? "true" : undefined}
       title={title} className="inline-block w-full whitespace-nowrap text-[10px] leading-tight text-slate-500">
       {BENCH_SHORT[b.key]}{" "}
-      {fig?.shown ? <span className="mono">{fmtPct(fig.pct, { sign: true, decimals: 1 })}</span> : <AbsentCell reason={fig?.reason} />}
+      {/* A gap names its cause in a few words, as the return cell above does (Stage 10la). */}
+      {fig?.shown ? <span className="mono">{fmtPct(fig.pct, { sign: true, decimals: 1 })}</span> : <AbsentCell reason={fig?.reason} label={benchGapLabel(fig?.reason)} />}
     </span>
   );
 }

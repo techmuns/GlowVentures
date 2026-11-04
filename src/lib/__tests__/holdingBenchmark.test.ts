@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { BOOK_POSITIONS } from '../../data/glowData';
-import { indexCompound, indexMove, indexOnSameMoney, positionBenchmark, printedBenchmark, rowBenchmark } from '../holdingBenchmark';
+import { benchGapLabel, closeLegsOn, indexCompound, indexMove, indexOnSameMoney, onePaymentLeg, pooledLegs, positionBenchmark, printedBenchmark, rowBenchmark } from '../holdingBenchmark';
 import type { Position } from '../types';
 
 const near = (a: number | null | undefined, b: number) => assert.ok(a != null && Math.abs(a - b) < 1e-6, `${a} != ${b}`);
@@ -71,5 +71,33 @@ near((indexMove('2026-01-01', '2026-09-30', level) as { pct: number }).pct, 21);
 const early = indexOnSameMoney([{ flows: [{ date: '2024-05-01', amount: -100 }], close: { date: '2026-09-30', value: 1 } }], level, false);
 assert.ok(!early.shown && /1 May 2024/.test(early.reason));
 assert.ok(!indexOnSameMoney([], level, false).shown);
+
+// ── STAGE 10la: NEVER A BARE DASH, AND TOTALS ON THE SAME MONEY ─────────────
+// One payment never sold buys the index on its day: its HPR is the index's move.
+const single = indexOnSameMoney([onePaymentLeg('2026-03-31', 100, '2026-09-30', 130)], level, false);
+near(single.shown ? single.pct : null, 21);
+near(single.shown ? single.pct : null, (indexMove('2026-03-31', '2026-09-30', level) as { pct: number }).pct);
+// A held line closes on the later of its record's close and its value date — never earlier.
+assert.equal(closeLegsOn([{ flows: [], close: { date: '2026-06-30', value: 1 } }], '2026-09-30')[0].close?.date, '2026-09-30');
+assert.equal(closeLegsOn([{ flows: [], close: { date: '2026-09-30', value: 1 } }], '2026-06-30')[0].close?.date, '2026-09-30');
+// A total pools every row's legs, each on its own close; one undated row refuses it and is counted.
+const a = onePaymentLeg('2026-03-31', 100, '2026-06-30', 1), b = onePaymentLeg('2026-03-31', 100, '2026-09-30', 1);
+const pooled = pooledLegs([[a], [b]]);
+assert.ok('legs' in pooled);
+// 100 at 100 → 110 on 30 Jun, and 100 at 100 → 121 on 30 Sep: 31 over 200.
+const total = indexOnSameMoney('legs' in pooled ? pooled.legs : [], level, false);
+near(total.shown ? total.pct : null, 31 / 200 * 100);
+assert.deepEqual(pooledLegs([[a], null, []]), { undated: 2, of: 3 });
+// Every gap names its cause in a few words: none falls through to the generic one.
+const label = (r: string) => benchGapLabel(r);
+assert.equal(label("the index is bought with this holding's own dated payments, and none of its 2000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-10-06 and record no buy or sell of it"), 'No buy dates');
+assert.equal(label("the index is bought with this holding's own dated payments, and the transaction statements from 2025-01-13 to 2026-07-27 buy 86 and sell 0 units of it against 516 held, so 430 of them are on no dated trade in this drop"), 'Dates incomplete');
+assert.equal(label("the index is bought with this holding's own dated payments, and the transaction statements from 2026-04-01 to 2026-09-30 buy 0 and sell 64543 units of it against 120000 held, so 120000 of them are on no dated trade in this drop"), 'No buy dates');
+assert.equal(label("the index is bought with this holding's own dated payments, and 1 of the 2 lines behind this row are not dated in full — x"), 'Dates incomplete');
+assert.equal(label("the index is bought with every row's own dated payments, and 25 of the 25 rows with a return here are not dated in full — each row names its own cause"), 'No buy dates');
+assert.equal(label("2 of the 2 investments behind this row carry no dated record a money-weighted return can be solved over — x: its capital is known only as a total since inception"), 'No dated capital');
+assert.equal(label("the index is bought with this holding's own dated payments, and its record dates the purchases only as a span, Dec 2022 to Aug 2023, not each payment and what it paid"), 'Range only');
+assert.equal(label('Fetching the Nifty 500 closes'), 'Loading');
+assert.equal(label('the index has no close on or before 1 May 2024'), 'Index starts later');
 
 console.log('holding benchmark: ok');

@@ -217,9 +217,9 @@ export function indexOnSameMoney(legs: readonly CapitalLeg[], level: IndexLevel,
   if (!legs.length) return { shown: false, reason: "no dated purchase is on record for this row" };
   const flows: { date: Date; amount: number }[] = [];
   let gain = 0, paidIn = 0, from: string | null = null, to: string | null = null, payments = 0;
-  for (const leg of legs) {
+  for (const leg of closeLegsOn(legs, valuedOn)) {
     if (!leg.flows.length) continue;
-    const close = leg.close ? (valuedOn && valuedOn > leg.close.date ? valuedOn : leg.close.date) : leg.flows.map((f) => f.date).sort().at(-1)!;
+    const close = leg.close ? leg.close.date : leg.flows.map((f) => f.date).sort().at(-1)!;
     const l1 = level(close);
     if (l1 == null || !(l1 > 0)) return { shown: false, reason: `the index has no close on or before ${fmtDay(close)}` };
     let units = 0;
@@ -247,6 +247,58 @@ export function indexOnSameMoney(legs: readonly CapitalLeg[], level: IndexLevel,
   if (r == null || !Number.isFinite(r)) return { shown: false, reason: "the index's flows over these dates do not solve to a rate" };
   return { shown: true, pct: r, annual: true, from, to,
     how: `The index bought with ${span} (${dayList(from, to)} days): its money-weighted rate a year.` };
+}
+
+/** Each line still held closed on `valuedOn` where that is later than its record's close — the date its HPR is valued on. */
+export function closeLegsOn(legs: readonly CapitalLeg[], valuedOn: string | null): CapitalLeg[] {
+  return legs.map((l) => (l.close && valuedOn && valuedOn > l.close.date ? { ...l, close: { ...l.close, date: valuedOn } } : l));
+}
+
+/** One dated payment and what it is worth on `to`: a contribution, or a holding bought once and never sold. */
+export const onePaymentLeg = (date: string, paid: number, to: string, value: number): CapitalLeg =>
+  ({ flows: [{ date, amount: -paid }], close: value > 0 ? { date: to, value } : null });
+
+/**
+ * ── A TOTAL ON THE SAME MONEY (Stage 10la) ──────────────────────────────────
+ *
+ *   *"It should never show blank."*
+ *
+ * A section's or the table's return is pooled over its rows, so its index is
+ * bought with every row's own legs, each closed on its own row's value date.
+ * One row with a figure and no dated money leaves the total without a
+ * like-for-like index, and the count says how many.
+ */
+export function pooledLegs(rows: readonly (readonly CapitalLeg[] | null)[]): { legs: CapitalLeg[] } | { undated: number; of: number } {
+  const undated = rows.filter((l) => !l?.length).length;
+  return undated ? { undated, of: rows.length } : { legs: rows.flatMap((l) => [...l!]) };
+}
+
+/**
+ * ── THE INDEX LINE NAMES ITS GAP (Stage 10la) ───────────────────────────────
+ *
+ * The return cell above it says "— No cost" (Stage 10jm); a bare "N500 —" under
+ * a figure read as a blank. The cause in a few words, the full reason its hover,
+ * most specific first. "2 of the 2" is every line, not a part of them.
+ */
+const BENCH_GAPS: [RegExp, string][] = [
+  [/^Fetching/i, "Loading"],
+  [/price service|price feed|feed returned|answered for|did not say which instrument/i, "Feed unavailable"],
+  [/no close on or before/i, "Index starts later"],
+  [/more money came out/i, "No like-for-like"],
+  [/do not solve/i, "No solution"],
+  [/\bbuy 0 and sell/i, "No buy dates"],
+  [/^some of\b|buy [1-9][\d,.]* and sell|does not account for every unit|on no dated trade in this drop/i, "Dates incomplete"],
+  [/not dated in full/i, "No buy dates"],
+  [/only as a span/i, "Range only"],
+  [/record ends .* before/i, "Record ends early"],
+  [/reaches inception/i, "Start not on record"],
+  [/capital is known only as a total|no dated record|no dated payment|dated capital record/i, "No dated capital"],
+  [/purchase|dated trade|bought|lot register|cost but not the date/i, "No buy dates"],
+];
+export function benchGapLabel(reason: string | null | undefined): string {
+  const m = /(\d+) of the (\d+) /.exec(reason ?? "");
+  const r = m && m[1] !== m[2] ? `some of ${reason}` : reason ?? "";
+  return BENCH_GAPS.find(([re]) => re.test(r))?.[1] ?? "Not available";
 }
 
 /** The index's own move between two closes — a YTD window measured from a dated value. */
