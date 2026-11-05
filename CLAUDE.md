@@ -325,12 +325,12 @@ extraction mirrors each archive's own path under `source/`.
 | Sanshi Fund | 9039671854 | Bharat Jaisinghani | 2026-06-30 | ₹19.57 Cr |
 | Goldstandard Wealth Private Limited | 100023 | Ajay Jaisinghani | 2026-10-06 | ₹18.03 Cr |
 | Carnelian Bharat Amritkaal Fund | 4551 | Ankita Jaisinghani | 2026-07-31 | ₹16.31 Cr |
-| SVAN Investment Managers LLP | 8710067 | Ajay Jaisinghani | 2026-09-30 | ₹16.22 Cr |
 | HDFC Bank (NSDL demat) | 67776424 | Glowsphere LLP | 2026-10-29 | ₹15.87 Cr |
+| SVAN Investment Managers LLP | 8710067 | Ajay Jaisinghani | 2026-11-04 | ₹15.47 Cr |
 | Green Lantern Capital LLP | 510861 | Ajay Jaisinghani | 2026-07-27 | ₹11.45 Cr |
 | Motilal Oswal Delphi Equity Fund | 9049241536 | Ajay Jaisinghani | 2026-06-30 | ₹11.13 Cr |
 | Motilal Oswal Founders Fund | 90410016093 | Ankita Jaisinghani | 2026-09-30 | ₹11.11 Cr |
-| SVAN Investment Managers LLP | 8710090 | Bharat Jaisinghani | 2026-09-30 | ₹10.71 Cr |
+| SVAN Investment Managers LLP | 8710090 | Bharat Jaisinghani | 2026-11-04 | ₹10.21 Cr |
 | India SME Investments | 175962 | Ajay Jaisinghani | 2026-06-30 | ₹9.56 Cr |
 | Kotak Mahindra Mutual Fund | 7111389 | Ajay Jaisinghani | 2026-11-02 | ₹8.50 Cr |
 | Helios Mutual Fund | 10056154 | Ankita Jaisinghani | 2026-11-03 | ₹7.98 Cr |
