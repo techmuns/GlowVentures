@@ -40,10 +40,18 @@ try {
   // ── THE CARD'S OWN LINE (Stage 10la): its last point is the return card ──
   const near = (a, b) => Math.abs(Number(a) - Number(b)) < 1e-8;
   const cardOf = (slot) => page.locator(`[data-tile-slot="${slot}"] [data-card-coverage]`);
+  // Histories arrive one by one and the chip and the card each redraw as they do:
+  // compare them once both have taken the same histories in, never mid-arrival.
+  // A line that never meets its card still fails the assertion that follows.
+  const settled = (slot, attr = 'data-nav-ret') => page.waitForFunction(({ slot, attr }) => {
+    const c = document.querySelector('[data-testid="nav-book-chip"]'), k = document.querySelector(`[data-tile-slot="${slot}"] [data-card-coverage]`);
+    return !!c && !!k && Math.abs(Number(c.getAttribute(attr)) - Number(k.getAttribute('data-card-return'))) < 1e-8;
+  }, { slot, attr }, { timeout: 60000 }).catch(() => {});
   const priced = await open(true);
   const chip = page.locator('[data-testid="nav-book-chip"]');
   // Once the histories are in, the financial-year card values the demats' shares at published closes.
   await page.waitForFunction(() => Number(document.querySelector('[data-testid="nav-book-chip"]')?.getAttribute('data-nav-assumed-count')) > 0, null, { timeout: 120000 });
+  await settled('fytd');
   const count = Number(await chip.getAttribute('data-nav-assumed-count'));
   assert.equal(await chip.getAttribute('data-nav-period'), 'fytd', 'the line opens on the financial year');
   assert.ok(near(await chip.getAttribute('data-nav-ret'), await cardOf('fytd').getAttribute('data-card-return')), 'the line ends on the financial-year card');
@@ -58,10 +66,12 @@ try {
   // The calendar year: the same, on its own card.
   await page.locator('[data-start="ytd"]').click();
   await page.waitForFunction(() => document.querySelector('[data-testid="nav-book-chip"]')?.getAttribute('data-nav-period') === 'ytd');
+  await settled('ytd');
   assert.ok(near(await chip.getAttribute('data-nav-ret'), await cardOf('ytd').getAttribute('data-card-return')), 'the line ends on the calendar-year card');
   // The available history: the chip carries the card's own figure (a rate a year past one year).
   await page.locator('[data-start="history"]').click();
   await page.waitForFunction(() => document.querySelector('[data-testid="nav-book-chip"]')?.getAttribute('data-nav-period') === 'history');
+  await settled('annualised', 'data-nav-card-return');
   assert.ok(near(await chip.getAttribute('data-nav-card-return'), await cardOf('annualised').getAttribute('data-card-return')), 'the line is the available-history card');
   assert.deepEqual(priced.errors, []);
   await priced.context.close();
