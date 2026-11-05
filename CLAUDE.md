@@ -230,7 +230,8 @@ One line per area; the history files explain each in depth.
   only by a statement P&L or fund unit record; Stage 10gu), `ytdAvailable.ts` (the
   Monitor's YTD from the first dated value this year, on those records; Stage 10jl;
   any period's open, `periodSelection` + `periodRules.ts` for Morning CIO's three
-  return cards, Stage 10la; `periodLine.ts`, the NAV chart drawn as the card, Stage 10le), `useMarketReturns.ts` +
+  return cards, Stage 10la; `periodLine.ts`, the NAV chart drawn as the card, Stage 10le; `useReturnSelection.ts`, every Returns-tab
+  period on that one selection, and `selectionMarket.ts`, Market performance over its units, Stage 10lg), `useMarketReturns.ts` +
   `marketHistoryStore.ts` (public histories kept in the browser, warmed by Morning CIO),
   `returnMeasures.ts`, `returnColumns.ts`.
 - `src/lib/fundNavs.ts` (AMFI NAV overlay; never sets `live`; depository cash and

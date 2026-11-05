@@ -1186,3 +1186,29 @@
   - `scripts/dev/page-book.ts` gives the page's own rows with no quote feed, and the cards are re-derived from it exactly.
   - Thirteen NAV checks that asserted the old engine (chained links, statement series, valuation-day starts) are retired. `NAV_CARD_LINE` strikes the new line against the cards.
   - `check-nav-assumed` is rewritten for the new line.
+
+### Stage 10lg — Every Returns-tab period, panel and subtab reads the cards' one selection
+
+*"Can you please sync all … FYTD +13.02%, Market performance +29.09% 362 of 509 holdings, YTD different, 1 Y different … it should all follow the logics and be complete for all holdings"*, then *"same since investement"* and *"invested this year fix all"*, from the family on 5 Nov 2026.
+
+- **One selection per period** (`src/lib/useReturnSelection.ts`, `returnSelectionFor`). FYTD, MTD, YTD, 1Y, 2Y, 3Y and a custom date all read `periodSelection`, the cards' rule, each with its own opening.
+  - Since investment, XIRR: the available-history card's selection.
+  - Since investment, absolute: the Gain / Loss card's selection (`sinceInvestmentSelection`, now exported).
+  - The headline, the attribution table, the capital bridge, Market performance and the Benchmarks subtab (`compareToIndex` on the same pool) all strike it.
+  - A node test strikes FYTD, YTD and both since-investment figures against the cards on the page's own rows, to the decimal.
+- **Market performance covers every holding** (`src/lib/selectionMarket.ts`). It is each holding's return over its own part of the period, from the same units, weighted by today's value.
+  - The sources are a published close, a printed NAV or a statement value. A holding held at its last value counts 0%, and a whole mandate's return is each of its holdings'.
+  - It is the period's move whatever the type picked, never annualised.
+  - Private investments are reported apart on a period, as on the cards.
+  - A history that failed to load is named with the source's answer (`code: 'source'`, the `detail` now carried through `ytdBook`). It no longer waits for prices forever.
+  - The old figure was price-only on one shared pair of dates, so mandates, AIFs and unpriced units were out, and "since investment" opened on the youngest listing's first close.
+- **Invested this year places every holding** (`placeEveryHolding`). A holding with no purchase lots this year is placed by the financial year's selection:
+  - "held before this year" if it opens on a value on or before 31 March, or an older statement holds it then;
+  - otherwise "first valued this year", counted from that value as the cards count it and named so in the table;
+  - only what no record values stays in "dates or values to check".
+- The capital bridge steps a period unit with no inception row from its first value, so Since investment · absolute no longer throws on a held unit.
+- `check-market-returns` is rewritten for the new figure:
+  - the total ties to its rows' value-weighted returns and is the same for every type;
+  - its dates stay inside the period, allowing the 7-day opening tolerance;
+  - NSE's 404 and Karur's failed load are named, and retry recovers them;
+  - its clock moves to 5 Nov so the 31 Oct ICICI balances date the counts.
