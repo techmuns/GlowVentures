@@ -13,7 +13,9 @@ export type PurchaseSources = {
 };
 export type YearInvestment = { position: Position; lots: PurchaseLot[]; cost: number; value: number; gain: number;
   first: string; last: string; valuedOn: string; periodPct: number; pct: number | null; annual: boolean; returnMissing: string | null };
-export type YearGap = { position: Position; reason: string };
+export type YearGap = { position: Position; reason: string;
+  /** What is missing: the purchases themselves, or a value after verified purchases (Stage 10lh). */
+  need?: 'purchases' | 'value' };
 const keyOf = (p: Position) => `${p.accountId}|${p.securityKey}`;
 const dated = (d: string) => /^\d{4}-\d{2}-\d{2}$/.test(d) && Number.isFinite(Date.parse(d)) && new Date(d).toISOString().slice(0,10)===d;
 const sum = <T,>(xs: readonly T[], f: (x: T) => number) => xs.reduce((n,x) => n+f(x),0);
@@ -83,14 +85,14 @@ export function investedThisYear(positions: readonly Position[], accounts: reado
     const dates = sources.dates(p);
     if (dates && !dates.reviewSource && !dates.sources.includes('review') && dates.last < start) { older.push(p); continue; }
     const lots = purchaseLots(p,sources);
-    if (!lots) { missing.push({position:p,reason:dates?.first && dates.first<start && dates.last>=start
+    if (!lots) { missing.push({position:p,need:'purchases',reason:dates?.first && dates.first<start && dates.last>=start
       ? 'We need the purchase dates, units and costs for each batch, to separate this year’s units from older units.'
       : 'We need purchase dates, units and costs that match this holding. An account opening date or review date is not enough.'}); continue; }
     const selected = lots.filter(l=>l.date>=start && l.date<=end);
     if (!selected.length) { older.push(p); continue; }
     const valuedOn = valueDateOf(p,registry.get(p.accountId)?.asOf ?? '',now);
     if (!valuedOn || valuedOn>end || selected.some(l=>l.date>valuedOn) || p.valuedAtCost || !(p.marketValue>=0) || !Number.isFinite(p.marketValue)) {
-      missing.push({position:p,reason:'We need a dated market value after these purchases. Purchase cost alone does not show a return.'}); continue;
+      missing.push({position:p,need:'value',reason:'We need a dated market value after these purchases. Purchase cost alone does not show a return.'}); continue;
     }
     const fraction = selected.length===lots.length ? 1 : sum(selected,l=>l.quantity!)/p.quantity!;
     const value=p.marketValue*fraction, cost=sum(selected,l=>l.cost), gain=value-cost, periodPct=gain/cost*100;
@@ -114,4 +116,103 @@ export function investedThisYear(positions: readonly Position[], accounts: reado
     pct:weightValue>0?sum(measured,r=>r.value*r.pct!)/weightValue:null,
     periodPct:weightValue>0?sum(measured,r=>r.value*r.periodPct)/weightValue:null,
     weightValue,annual:measured.length>0 && measured.every(r=>r.annual)};
+}
+
+/**
+ * ── EVERY HOLDING PLACED (Stage 10lg; held to its evidence, Stage 10lh) ─────
+ *
+ * *"invested this year fix all"* — the family, 5 Nov 2026. A holding without
+ * dated purchase lots this year was "needs purchase details". The financial
+ * year's own selection (`useReturnSelection`, the cards' rule) places it:
+ *
+ * - HELD BEFORE THE YEAR: an older statement shows the same units on or before
+ *   31 March with no trade since (`heldBeforeYear`), or its record opens on a
+ *   value on or before 31 March and no money was added to it this year;
+ * - FIRST VALUED THIS YEAR: its record opens after 31 March. Its first value
+ *   and the money added since stand as what was paid, so its row is purchase
+ *   to value like every other row (value − paid = gain), both from its own
+ *   record through its own close date, named so;
+ * - TO CHECK: a record held before the year that money was also added to, or
+ *   one money was taken out of, cannot tell this year's units from older or
+ *   sold ones without purchase records; and a holding whose purchases are
+ *   verified but whose value is missing keeps that reason.
+ */
+export type FirstValueUnit = { positions: readonly Position[]; from: string | null; to: string | null; invested: number; close: number;
+  gain: number; held?: { date: string }; ownPct: number | null;
+  /** The record's own window, where it has one: its opening value and the money it moved. */
+  openValue?: number; capitalIn?: number; capitalOut?: number; flows?: readonly { date: string; amount: number; description?: string }[];
+  /** Opened inside the window at nil: its first money in is its first value. */
+  openedInWindow?: boolean };
+
+/** The same units on an older statement on or before `open`, with no trade since. */
+export function heldBeforeYear(p: Position, open: string, balances: readonly { accountId: string; securityKey: string; asOf: string; quantity: number }[],
+  trades: Readonly<Record<string, readonly { date: string }[]>>) {
+  const q = p.quantity, since = trades[keyOf(p)] ?? [];
+  return typeof q === 'number' && q > 0 && balances.some((b) => b.accountId === p.accountId && b.securityKey === p.securityKey && b.asOf <= open
+    && Math.abs(b.quantity - q) <= Math.max(1e-3, 1e-7 * Math.abs(q)) && !since.some((t) => t.date > b.asOf));
+}
+
+export function placeEveryHolding<R extends globalThis.ReturnType<typeof investedThisYear>>(result: R, units: readonly FirstValueUnit[], fyOpen: string,
+  heldBefore: (p: Position) => boolean, { type }: { type: ReturnType }) {
+  const unitOf = new Map<string, FirstValueUnit>();
+  for (const u of units) for (const p of u.positions) unitOf.set(keyOf(p), u);
+  const firstValued: (YearInvestment & { fromFirstValue: true })[] = [], missing: YearGap[] = [], older = [...result.older];
+  for (const g of result.missing) {
+    const p = g.position, u = unitOf.get(keyOf(p));
+    // Only a holding missing its purchases is placed; a missing value keeps its reason.
+    if (g.need !== 'purchases' || p.valuedAtCost) { missing.push(g); continue; }
+    if (heldBefore(p)) { older.push(p); continue; }
+    // An account opened inside the year opens at nil on the year's first day; its first money in is its start.
+    const opened = !!u?.openedInWindow && !((u.openValue ?? 0) > 0);
+    const firstIn = opened ? (u!.flows ?? []).filter((f) => f.amount < 0).map((f) => f.date).sort()[0] : undefined;
+    const firstOn = u ? (u.held ? u.held.date : opened ? firstIn ?? null : u.from) : null;
+    if (!u || !firstOn) { missing.push(g); continue; }
+    if (firstOn <= fyOpen) {
+      if ((u.capitalIn ?? 0) > 0) missing.push({ position: p, need: 'purchases', reason: 'Held before this year, with money added this year too. We need the purchase dates, units and costs to separate this year’s units from older units.' });
+      else older.push(p);
+      continue;
+    }
+    // Money taken out is a sale or withdrawal; income paid out, and the tax withheld on it
+    // (TDS on Payout, TDS Trf to Capital A/c), leave the units held. Any other flow out counts.
+    const income = (f: { description?: string }) => /dividend|income|interest|distribution|coupon|payout|\btds\b|tax/i.test(f.description ?? '');
+    const takenOut = u.flows ? sum(u.flows.filter((f) => f.amount > 0 && !income(f)), (f) => f.amount) : (u.capitalOut ?? 0);
+    if (takenOut > 0) {
+      missing.push({ position: p, need: 'purchases', reason: 'First valued this year, with money taken out since. We need the purchase dates, units and costs to separate the units still held from those sold.' });
+      continue;
+    }
+    // Paid, value and money moved all come from the record's own window: its close on its
+    // own date, never a later quote over money it has not seen. A whole account's is shared
+    // by its holdings in proportion to their value today.
+    const total = sum(u.positions.filter((x) => x.marketValue > 0), (x) => x.marketValue);
+    const share = total > 0 && p.marketValue > 0 ? p.marketValue / total : 0;
+    const cost = u.invested * share, value = u.close * share, gain = value - cost;
+    if (!(cost > 0) || !Number.isFinite(value)) { missing.push(g); continue; }
+    const on = u.to ?? firstOn;
+    // A close dated before the first value is no closing value for it.
+    if (on < firstOn) { missing.push({ position: p, need: 'value', reason: 'We need a market value dated on or after its first value this year.' }); continue; }
+    const days = daysBetween(firstOn, on), periodPct = gain / cost * 100;
+    const inflows = (u.flows ?? []).filter((f) => f.amount < 0 && f.date > firstOn);
+    let pct: number | null = periodPct, annual = false, returnMissing: string | null = null;
+    // Under a year the purchase-to-value return stands; only debt is annualised (Stage 10hk).
+    if (type !== 'absolute' && mayAnnualise(days, isDebtHolding(p)) && days > 0) {
+      if (type === 'xirr') {
+        const opening = u.openValue != null && !opened ? u.openValue * share : cost - sum(inflows, (f) => -f.amount * share);
+        const r = xirr([{ date: new Date(`${firstOn}T00:00:00Z`), amount: -opening },
+          ...inflows.map((f) => ({ date: new Date(`${f.date}T00:00:00Z`), amount: f.amount * share })),
+          { date: new Date(`${on}T00:00:00Z`), amount: value }]);
+        pct = r != null && Number.isFinite(r) ? r * 100 : null; annual = pct != null;
+        if (pct == null) returnMissing = 'A yearly return needs a value on a later day than the first value.';
+      } else if (!inflows.length && value > 0) { pct = (Math.pow(value / cost, 365 / days) - 1) * 100; annual = true; }
+      else { pct = null; returnMissing = 'CAGR needs one dated amount. Choose Absolute return or XIRR where money was added later.'; }
+    }
+    firstValued.push({ position: p, lots: [], cost, value, gain, first: firstOn, last: firstOn, valuedOn: on,
+      periodPct, pct, annual, returnMissing, fromFirstValue: true });
+  }
+  const included = [...result.included, ...firstValued];
+  const measured = included.filter((r) => r.pct != null && r.value > 0), weightValue = sum(measured, (r) => r.value);
+  return { ...result, included, missing, older, firstValued,
+    cost: sum(included, (r) => r.cost), value: sum(included, (r) => r.value), gain: sum(included, (r) => r.gain),
+    pct: weightValue > 0 ? sum(measured, (r) => r.value * r.pct!) / weightValue : null,
+    periodPct: weightValue > 0 ? sum(measured, (r) => r.value * r.periodPct) / weightValue : null,
+    weightValue, annual: measured.length > 0 && measured.every((r) => r.annual) };
 }

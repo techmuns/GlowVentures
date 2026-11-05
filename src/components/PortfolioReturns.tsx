@@ -45,6 +45,11 @@ import {
 } from "@/lib/periodReturns";
 
 import { statementReturnInputs } from "@/lib/availableCardReturns";
+import { useReturnSelection } from "@/lib/useReturnSelection";
+import { selectedSegmentReturns, type ReturnSelection } from "@/lib/selectedSegmentReturns";
+import { compareToIndex, datedSinceInvestment } from "@/lib/cardBenchmark";
+import { currentHoldings, dedupedPositions } from "@/lib/analytics";
+import { exitedRows } from "@/lib/drilldown";
 
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
 const pctText = (n: number) => `${n >= 0 ? "+" : ""}${n.toFixed(2)}%`;
@@ -129,24 +134,27 @@ export default function PortfolioReturns() {
     : investedYear ? investmentYearStart(end) : period === "inception" ? null : end ? periodStart(period, end) : null;
 
   const win = useMemo(() => (start && end && start < end ? windowReturns(inputs, start, end) : null), [inputs, start, end]);
+  /**
+   * THE TAB'S ONE SELECTION (Stage 10lg, `useReturnSelection`): the cards' rule for
+   * every period, Since investment the Gain / Loss and available-history cards'.
+   * The attribution, the bridge, Market performance and the Benchmarks below all
+   * strike it — the pool here is the attribution's own total.
+   */
+  const { selection: tabSelection, current: tabCurrent } = useReturnSelection({ period, start, end, type: rtype });
+  const pool = useMemo(() => {
+    if (!tabSelection || !statementPortfolio) return null;
+    const recorded = dedupedPositions(statementPortfolio.positions);
+    return selectedSegmentReturns(tabCurrent, exitedRows(recorded), statementPortfolio.accounts, "category", tabSelection, () => null, currentHoldings(recorded)).total;
+  }, [tabSelection, tabCurrent, statementPortfolio]);
 
-  // ── The whole portfolio: one window, one set of figures — or none ────────
-  const excluded = period === "inception" ? inception.skipped : (win?.excluded ?? []).map((e) => ({ label: e.label, reason: e.reason }));
-  const coveredCount = period === "inception" ? inception.rows.length : (win?.included.length ?? 0);
-  const accountsTotal = coveredCount + excluded.length;
-  // NEVER A PARTIAL RETURN: a figure over some accounts is not the portfolio's.
-  const whole = coveredCount > 0 && excluded.length === 0;
-  const incomplete = `${coveredCount === 0 ? `None of the ${accountsTotal} accounts holding value has a` : `${excluded.length} of ${accountsTotal} accounts holding value ${excluded.length === 1 ? "has" : "have"} no`} verified ${period === "inception"
-    ? "dated capital record and valuation since the first purchase"
-    : `valuation on or before ${start ? fmtDate(start) : "the opening date"} with dated capital through a closing valuation`}, so no whole-portfolio return is struck`;
-  const measured: Measured | null = !(period === "inception" || win) ? null
-    : !whole ? { shown: false, formula: (period === "inception" ? INCEPTION_FORMULAS : FORMULAS)[rtype],
-      reason: coveredCount === 0 && excluded.length === 0 ? "no account holds anything to measure over this window" : incomplete }
-    : period === "inception" ? measureInception(inception.rows, rtype, money)
-    : measureWindow(win!.included, rtype, money);
-
-  const measuredFrom = !whole ? null : period === "inception" ? inception.rows.map((r) => r.first).sort()[0] ?? null : win?.measuredFrom ?? null;
-  const measuredTo = !whole ? null : period === "inception" ? inception.rows.map((r) => r.valueAsOf).sort().at(-1) ?? null : win?.measuredTo ?? null;
+  // ── The portfolio's figure: the selection's own total, its coverage named ──
+  const excluded = (pool?.missing ?? []).map((g) => ({ label: g.label, reason: g.reason }));
+  const coveredCount = new Set((pool?.units ?? []).map((u) => u.accountId)).size;
+  const whole = !!pool && pool.units.length > 0;
+  const measured: Measured | null = pool?.measured ?? null;
+  const measuredUnits = (pool?.units ?? []).filter((u) => !u.held);
+  const measuredFrom = measuredUnits.flatMap((u) => (u.from ? [u.from] : [])).sort()[0] ?? null;
+  const measuredTo = measuredUnits.flatMap((u) => (u.to ? [u.to] : [])).sort().at(-1) ?? null;
   const days = measuredFrom && measuredTo ? daysBetween(measuredFrom, measuredTo) : null;
   // The measure the figure IS: an XIRR or CAGR asked of under a year shows the
   // absolute return (Stage 10hk), and the tiles name that, not the selection.
@@ -173,21 +181,13 @@ export default function PortfolioReturns() {
    * move, which is a time-weighted figure over dates part of the pool was not
    * measured on.
    */
+  const pmeCoverage = useMemo(() => pool && tabSelection?.inception && statementPortfolio
+    ? datedSinceInvestment(pool.units, capitalMovesWithCalls(BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, statementPortfolio.accounts, BOOK_REVIEW_FLOWS),
+      BOOK_POSITION_TRANCHES, statementPortfolio.accounts) : null, [pool, tabSelection, statementPortfolio]);
   const pmeOf = (h: PriceHistory): { pct: number | null; reason: string | null } => {
-    if (portfolioPct == null || !measured) return { pct: null, reason: "The portfolio's return is not measured on this window, so the index is not struck on its flows" };
-    const level = (d: string) => closeOnOrBefore(h, d)?.value ?? null;
-    let m: Measured;
-    if (period === "inception") {
-      const p = pmeInceptionRows(inception.rows, level);
-      if (!p.rows) return { pct: null, reason: p.reason };
-      m = measureInception(p.rows, rtype, money);
-    } else {
-      const p = pmeWindowRows(win?.included ?? [], level);
-      if (!p.rows) return { pct: null, reason: p.reason };
-      m = measureWindow(p.rows, rtype, money);
-    }
-    if (!m.shown || m.pct == null) return { pct: null, reason: m.reason ?? "the index's flows do not yield this measure" };
-    return { pct: m.pct, reason: null };
+    if (portfolioPct == null || !measured || !pool || !tabSelection) return { pct: null, reason: "The portfolio's return is not measured on this window, so the index is not struck on its flows" };
+    const c = compareToIndex({ total: pool, selection: tabSelection }, (d) => closeOnOrBefore(h, d)?.value ?? null, pmeCoverage);
+    return c.index == null ? { pct: null, reason: c.reason ?? "the index's flows do not yield this measure" } : { pct: c.index, reason: null };
   };
   const benchRows: BenchRow[] = BENCHMARKS.map((b) => {
     const h = hist[b.key];
@@ -301,11 +301,11 @@ export default function PortfolioReturns() {
 
         {!investedYear && <div role="tabpanel" id={`${tabsId}-panel-attribution`} aria-labelledby={`${tabsId}-tab-attribution`}
           hidden={view !== "attribution"} tabIndex={0} className="shrink-0" data-returns-panel="attribution">
-          <SegmentReturns period={period} onReturnTypeResolved={onReturnTypeResolved} selection={{ inception: period === "inception", type: rtype, start, end,
+          <SegmentReturns period={period} onReturnTypeResolved={onReturnTypeResolved} selection={tabSelection ?? { inception: period === "inception", type: rtype, start, end,
             windows: win?.included ?? [], inceptionRows: inception.rows,
             outside: period === "inception" ? inputs.filter(i => i.outside).map(i => ({ accountId: i.accountId, label: i.label, owner: i.owner, reason: i.outside! })) : win?.outside ?? [],
             excluded: period === "inception" ? inception.skipped : win?.excluded ?? (inputs.filter(i => !i.outside).map(i => ({ accountId: i.accountId, label: i.label, owner: i.owner, reason: "Choose an opening date before the closing date." }))),
-          }} />
+          } as ReturnSelection} />
         </div>}
 
         {/* ── BENCHMARKS AS TILES, ONE BAR SCALE (Stage 10fp). Three columns

@@ -83,6 +83,44 @@ export function periodSelection({ inputs, current, accounts, end, assumptions, o
     assumptionGaps: (picked.assumptionGaps ?? []).filter(g => !heldKeys.has(keyOf(g))) };
 }
 
+/**
+ * GAIN SINCE INVESTMENT, OVER EVERY INVESTMENT (Stage 10le; the family, 4 Nov
+ * 2026: "make coverage 100%"). A purchase record measures what it can; a holding
+ * it cannot is measured from its first value on record — the available-history
+ * selection's own unit for it, that value treated as money arriving that day —
+ * and what neither measures is held at its value: no gain, in the base, and
+ * named. The Gain / Loss card and the Returns tab's Since investment read this.
+ */
+export function sinceInvestmentSelection({ current, accounts, end, base, history }: {
+  current: readonly Position[]; accounts: readonly Account[]; end: string;
+  /** The purchase-record measure (`selectedSegmentReturns` over the inception selection). */
+  base: { units: readonly ReturnUnit[]; missing: readonly ReturnGap[] };
+  /** The available-history pool's units. */
+  history: readonly ReturnUnit[];
+}) {
+  const accountOf = new Map(accounts.map(a => [a.accountId, a]));
+  const keyOf = (p: Position) => `${p.accountId}|${p.securityKey}`;
+  const byCost = new Set(base.units.flatMap(u => u.positions.map(keyOf)));
+  const fromFirst = history.filter(u => !u.held && u.positions.length > 0 && u.positions.every(p => !byCost.has(keyOf(p))))
+    .map((u): ReturnUnit => ({ ...u, sinceFirst: true }));
+  const firstKeys = new Set(fromFirst.flatMap(u => u.positions.map(keyOf)));
+  const reasonOf = (p: Position) => base.missing.find(g => g.accountId === p.accountId && (!g.securityKey || g.securityKey === p.securityKey))?.reason
+    ?? 'No purchase cost or second value is on record.';
+  const heldAtValue = current.filter(p => p.marketValue > 0 && !byCost.has(keyOf(p)) && !firstKeys.has(keyOf(p))).map((p): ReturnUnit => {
+    const a = accountOf.get(p.accountId), on = p.navDate ?? a?.asOf ?? end;
+    const label = `${p.security} · ${a?.owner ?? ''} · ${a?.provider ?? ''} · account ${a?.accountNo ?? ''}`;
+    return { key: keyOf(p), accountId: p.accountId, label, positions: [p], gain: 0, invested: p.marketValue, close: p.marketValue,
+      from: on, to: on, held: { date: on, reason: reasonOf(p) } };
+  });
+  const selection: ReturnSelection = { inception: true, type: 'absolute', start: null, end: null, windows: [], inceptionRows: [], excluded: [],
+    assumedUnits: [...fromFirst, ...heldAtValue], assumptionGaps: [] };
+  const valueOfKeys = (keys: Set<string>) => current.filter(p => p.marketValue > 0 && keys.has(keyOf(p))).reduce((t, p) => t + p.marketValue, 0);
+  const coverage = { totalValue: current.filter(p => p.marketValue > 0).reduce((t, p) => t + p.marketValue, 0),
+    sinceInvestmentValue: valueOfKeys(byCost), sinceFirstValue: valueOfKeys(firstKeys),
+    heldValue: valueOfKeys(new Set(heldAtValue.map(u => u.key))), sinceFirstCount: fromFirst.length, heldCount: heldAtValue.length };
+  return { selection, coverage };
+}
+
 /** The available subset, plus explicit user-authorised holding assumptions where supplied. */
 export function availableCardReturns(statement: Portfolio, display: readonly Position[], inputs: AccountInput[], today: Date, assumptions?: AssumedReturnBook) {
   const current = currentHoldings(display), recorded = dedupedPositions(statement.positions);
@@ -153,32 +191,10 @@ export function availableCardReturns(statement: Portfolio, display: readonly Pos
   const ytd = period(undefined);
   // XIRR from a year; under a year the absolute return, never a rate per year (Stage 10hk).
   const history = period(null);
-  /**
-   * GAIN SINCE INVESTMENT, OVER EVERY INVESTMENT (the family, 4 Nov 2026: "make
-   * coverage 100%"). A purchase record measures what it can; a holding it cannot
-   * is measured from its first value on record — the available-history card's
-   * own record of it, that value treated as money arriving that day — and what
-   * neither measures is held at its value: no gain, in the base, and named.
-   */
-  const keyOf = (p: Position) => `${p.accountId}|${p.securityKey}`;
-  const byCost = new Set(sinceInvestment.total.units.flatMap(u => u.positions.map(keyOf)));
-  const fromFirst = history.total.units.filter(u => !u.held && u.positions.length > 0 && u.positions.every(p => !byCost.has(keyOf(p))))
-    .map((u): ReturnUnit => ({ ...u, sinceFirst: true }));
-  const firstKeys = new Set(fromFirst.flatMap(u => u.positions.map(keyOf)));
-  const reasonOf = (p: Position) => sinceInvestment.total.missing.find(g => g.accountId === p.accountId && (!g.securityKey || g.securityKey === p.securityKey))?.reason
-    ?? 'No purchase cost or second value is on record.';
-  const heldAtValue = current.filter(p => p.marketValue > 0 && !byCost.has(keyOf(p)) && !firstKeys.has(keyOf(p))).map((p): ReturnUnit => {
-    const a = accountOf.get(p.accountId), on = p.navDate ?? a?.asOf ?? end;
-    const label = `${p.security} · ${a?.owner ?? ''} · ${a?.provider ?? ''} · account ${a?.accountNo ?? ''}`;
-    return { key: keyOf(p), accountId: p.accountId, label, positions: [p], gain: 0, invested: p.marketValue, close: p.marketValue,
-      from: on, to: on, held: { date: on, reason: reasonOf(p) } };
-  });
-  const gain = make({ inception: true, type: 'absolute', start: null, end: null, windows: [], inceptionRows: [], excluded: [],
-    assumedUnits: [...fromFirst, ...heldAtValue], assumptionGaps: [] });
-  const valueOfKeys = (keys: Set<string>) => current.filter(p => p.marketValue > 0 && keys.has(keyOf(p))).reduce((t, p) => t + p.marketValue, 0);
-  const gainCoverage = { totalValue: current.filter(p => p.marketValue > 0).reduce((t, p) => t + p.marketValue, 0),
-    sinceInvestmentValue: valueOfKeys(byCost), sinceFirstValue: valueOfKeys(firstKeys),
-    heldValue: valueOfKeys(new Set(heldAtValue.map(u => u.key))), sinceFirstCount: fromFirst.length, heldCount: heldAtValue.length };
+  const since = sinceInvestmentSelection({ current, accounts: statement.accounts, end,
+    base: sinceInvestment.total, history: history.total.units });
+  const gain = make(since.selection);
+  const gainCoverage = since.coverage;
   return { gain: { ...gain, gainCoverage }, history, fytd, ytd };
 }
 

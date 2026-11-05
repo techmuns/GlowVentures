@@ -1187,6 +1187,61 @@
   - Thirteen NAV checks that asserted the old engine (chained links, statement series, valuation-day starts) are retired. `NAV_CARD_LINE` strikes the new line against the cards.
   - `check-nav-assumed` is rewritten for the new line.
 
+### Stage 10lg — Every Returns-tab period, panel and subtab reads the cards' one selection
+
+*"Can you please sync all … FYTD +13.02%, Market performance +29.09% 362 of 509 holdings, YTD different, 1 Y different … it should all follow the logics and be complete for all holdings"*, then *"same since investement"* and *"invested this year fix all"*, from the family on 5 Nov 2026.
+
+- **One selection per period** (`src/lib/useReturnSelection.ts`, `returnSelectionFor`). FYTD, MTD, YTD, 1Y, 2Y, 3Y and a custom date all read `periodSelection`, the cards' rule, each with its own opening.
+  - Since investment, XIRR: the available-history card's selection.
+  - Since investment, absolute: the Gain / Loss card's selection (`sinceInvestmentSelection`, now exported).
+  - The headline, the attribution table, the capital bridge, Market performance and the Benchmarks subtab (`compareToIndex` on the same pool) all strike it.
+  - A node test strikes FYTD, YTD and both since-investment figures against the cards on the page's own rows, to the decimal.
+- **Market performance covers every holding** (`src/lib/selectionMarket.ts`). It is each holding's return over its own part of the period, from the same units, weighted by today's value.
+  - The sources are a published close, a printed NAV or a statement value. A holding held at its last value counts 0%, and a whole mandate's return is each of its holdings'.
+  - It is the period's move whatever the type picked, never annualised.
+  - Private investments are reported apart on a period, as on the cards.
+  - A history that failed to load is named with the source's answer (`code: 'source'`, the `detail` now carried through `ytdBook`). It no longer waits for prices forever.
+  - The old figure was price-only on one shared pair of dates, so mandates, AIFs and unpriced units were out, and "since investment" opened on the youngest listing's first close.
+- **Invested this year places every holding** (`placeEveryHolding`). A holding with no purchase lots this year is placed by the financial year's selection:
+  - "held before this year" if it opens on a value on or before 31 March, or an older statement holds it then;
+  - otherwise "first valued this year", counted from that value as the cards count it and named so in the table;
+  - only what no record values stays in "dates or values to check".
+- The capital bridge steps a period unit with no inception row from its first value, so Since investment · absolute no longer throws on a held unit.
+- `check-market-returns` is rewritten for the new figure:
+  - the total ties to its rows' value-weighted returns and is the same for every type;
+  - its dates stay inside the period, allowing the 7-day opening tolerance;
+  - NSE's 404 and Karur's failed load are named, and retry recovers them;
+  - its clock moves to 5 Nov so the 31 Oct ICICI balances date the counts.
+
+### Stage 10lu — Zepto is a company: Private Market draws a valued companies band
+
+- *"Zepto is a private market company not a fund"* — the family, 5 Nov 2026, on Private market → By brand, where Zepto sat under PRIVATE FUNDS.
+- The Private funds band was every private holding with a measured value, so Zepto — the one company the review values (Direct Equity - Unlisted, ₹22.8 Cr) rather than holds at cost — fell in with the funds.
+- `privateBook.ts` now has a fourth section, `company` ("Private Companies ( Valued )"): a private, valued holding whose class is Unlisted or Equity and not a fund vehicle (`isPrivateCompany`). It is drawn under Companies and Both and starts open. Private funds keeps the funds; K M Global's loan (Bond) stays where it was.
+- The Funds tile names the valued companies apart. The TVPI / DPI multiple's set is unchanged: valued funds and valued companies, never at-cost lines.
+- `check:pages` follows it: `pmBandOf` re-expresses the band, PM_C_BOOK splits `funds.company` out of `funds.valued`, and the Companies view must draw the band while the book holds one.
+
+### Stage 10lh — Review fixes to Stage 10lg: Invested this year places a holding only on its own evidence
+
+Codex's review of #352, verified against the code and the book:
+
+- **Held before this year** needs the same units on an older statement dated on or before 31 March, with no trade since (`heldBeforeYear`). Any older balance used to be enough, which hid units bought this year (2 holdings).
+- **A mixed or partly sold record stays to check, with its reason.**
+  - A record held before the year that money was also added to: 16 accounts, which used to be counted as older.
+  - A record first valued this year that money was taken out of.
+- **A first-valued row is purchase to value** like every other row. Its first value plus the money added since is what was paid, shared across a whole account's holdings by today's value, so value − paid = gain on every row and in the total. The row's value is the record's own close on its own date, never a later quote over money the record has not seen. It used to scale the account's gain, which did not tie.
+- **Only a missing-purchases gap is placed** (`YearGap.need`). A verified purchase with no usable value, or a holding valued at cost, keeps its own reason.
+- **XIRR and CAGR** annualise a first-valued debt holding as they do a purchased one. Equities under a year stay absolute.
+- **Only a sale or withdrawal counts as money taken out.** A dividend or other income paid out, and the tax withheld on it (TDS on Payout, TDS Trf to Capital A/c), leaves the units held, so the holding is still placed. A redemption, or any outgoing flow the book can't classify, still counts.
+- **A value dated before the first value is no closing value.** That holding stays to check.
+- **"Held before" rests on the family's assumed-continued-ownership rule** (22 Oct): a dated balance that no later recorded trade contradicts.
+- **An account opened inside the year starts on its first money in.** It used to open at nil on 31 March and was then read as "held before, with money added".
+- **Market performance:**
+  - a period reports private holdings apart even when a measured account holds them (`selectionMarket(…, { inception })`). That account's public holdings are left unmeasured too, since its return carries the private ones, under their own gap (`code: 'mixed'`) that asks for the holding's own return, not prices;
+  - a holding held at its last value sets no row's dates (`MarketUnit.held`), and a row, or a total, that measured no dates claims none: it no longer falls back to the portfolio's dates.
+  - on a period, its details list the public holdings with value, as the face's denominator does. The private investments reported apart are named in the Overview, with their count and value, and are out of the lists and totals. A row of private holdings alone still lists them.
+- `check-nav-assumed` compares the line and its card on one snapshot of all four figures (return and gain, line and card). It waits until that snapshot matches and holds still for a second, since histories arrive one by one and the two redraw apart. A missing attribute fails rather than reading as 0, and a failure prints the snapshot.
+
 ### Stage 10lm — Right-click a holding to move it to another tab
 
 - *"Allow the ability for any security or row to move any sub tab by doing right click — for example if i want to move DSP gold from alternate to any other i should be able to do so"* — the family, 4 Nov 2026.
