@@ -18910,10 +18910,16 @@ const headlineMatches = (tile, expected, field = 'return') => {
     // A quote feed can add custody shares to this no-feed display baseline.
     && Number(raw.cardHoldings) >= expected.totalHoldings
     && Number(raw.cardAccounts) === expected.coveredAccounts
-    // The three return cards say how much of the public investments they cover, the gain card
-    // how much of every investment (Stage 10la).
-    && (raw.cardPeriod != null ? /Covers \d+% of public investments/.test(tile.sub ?? '')
+    // The three return cards count the public holdings they cover over every public holding
+    // (the family, 5 Nov 2026), the gain card how much of every investment (Stage 10la).
+    && (raw.cardPeriod != null ? periodCountShown(tile.sub, raw)
       : raw.cardSince != null ? /Covers \d+% of investments/.test(tile.sub ?? '') : /Available data/.test(tile.sub ?? ''));
+};
+/** "N of M holdings" on a return card's face is its own handles' count, and N never exceeds M. */
+const periodCountShown = (sub, raw) => {
+  const m = /([\d,]+) of ([\d,]+) holdings/.exec(sub ?? ''), n = (x) => Number(String(x).replace(/,/g, ''));
+  return !!m && n(m[1]) === n(raw.cardPublicCovered) && n(m[2]) === n(raw.cardPublicHoldings)
+    && n(raw.cardPublicCovered) <= n(raw.cardPublicHoldings) && !!raw.cardTo;
 };
 
 const CIO_SHARED = [
@@ -18976,7 +18982,9 @@ const CIO_SHARED = [
    */
   ["a return tile carries the index on the same money, its lead the two figures' difference (Stage 10ji)", (t, ctx) => {
     if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
-    const tiles = ctx.kpiTiles.filter((x) => ["return", "gain", "annualised", "fytd", "ytd"].includes(x.slot) && x.coverage?.cardReturn);
+    // The three return cards carry it in their info button since 5 Nov 2026 (the family: "more
+    // minimal"); `check-selected-attribution.mjs` opens it there.
+    const tiles = ctx.kpiTiles.filter((x) => ["return", "gain", "annualised", "fytd", "ytd"].includes(x.slot) && x.coverage?.cardReturn && x.coverage?.cardPeriod == null);
     if (!tiles.length) return { notChecked: "no return tile with a measured return is on this strip" };
     return tiles.every(({ bench: b, benchLead }) => {
       if (b?.cardBench !== "nifty-500") return false;
@@ -19194,7 +19202,7 @@ const CIO_SHARED = [
   ["the history card shows available records and names its actual scale", (t, ctx) => {
     const tile = ctx?.kpiTiles?.find(x => x.slot === 'annualised'), r = AVAILABLE_CARDS_BOOK?.history;
     return headlineMatches(tile, r) && (tile.hover ?? '').includes(r.to)
-      && (r.total.measured?.basis === 'annual' ? /p.a./.test(tile.value ?? '') : /not annualised/.test(tile.second ?? ''));
+      && (r.total.measured?.basis === 'annual' ? /p.a./.test(tile.value ?? '') : /not annualised/.test(tile.sub ?? ''));
   }],
   ["the retired money-weighted card stays absent, including legacy layouts", (t, ctx) =>
     Array.isArray(ctx?.kpiTiles) && !ctx.kpiTiles.some(x => x.slot === 'mwr')],
@@ -19575,11 +19583,11 @@ const CIO_BOOK_RETURN = [
     const tile = ctx?.kpiTiles?.find(x => x.slot === 'annualised'), r = AVAILABLE_CARDS_BOOK?.history;
     return headlineMatches(tile, r) && (r.total.measured?.basis === 'annual'
       ? /annualised return/i.test(tile.label) && /p.a./.test(tile.value ?? '')
-      : /return over available history/i.test(tile.label) && /not annualised/.test(tile.second ?? '') && !/p.a./.test(tile.value ?? ''));
+      : /return over available history/i.test(tile.label) && /not annualised/.test(tile.sub ?? '') && !/p.a./.test(tile.value ?? ''));
   }],
   ["FYTD shows its measured dates, available return and coverage", (t, ctx) => {
     const tile = ctx?.kpiTiles?.find(x => x.slot === 'fytd');
-    return headlineMatches(tile, AVAILABLE_CARDS_BOOK?.fytd) && /FYTD/.test(tile.second ?? '')
+    return headlineMatches(tile, AVAILABLE_CARDS_BOOK?.fytd) && /financial year/i.test(tile.label)
       && !!tile.coverage.cardFrom && !!tile.coverage.cardTo;
   }],
 ];
@@ -19598,7 +19606,7 @@ const CIO_YTD_CARD = [
     const tile = ctx?.kpiTiles?.find(x => x.slot === 'ytd'), r = AVAILABLE_CARDS_BOOK?.ytd;
     return !!r && headlineMatches(tile, r)
       && r.coveredAccounts >= AVAILABLE_CARDS_BOOK.fytd.coveredAccounts && r.coveredHoldings > 1
-      && (r.fullPeriod ? /^YTD ·/.test(tile.second ?? '') : /^YTD from first dated value ·/.test(tile.second ?? ''))
+      && (r.fullPeriod || /first dated value/.test(tile.hover ?? ''))
       && tile.coverage.cardFrom === r.from && tile.coverage.cardTo === r.to;
   }],
 ];

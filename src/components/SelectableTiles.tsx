@@ -26,6 +26,8 @@ export type TileMetric = {
   label: string;
   icon?: ReactNode;
   value: ReactNode;
+  /** `kpi` variant only: the figure is the card, drawn large. */
+  large?: boolean;
   /** Plain-English working for a return; the popup repeats the tile's value. */
   calculation?: ReactNode;
   /** A return shown as the second figure, such as Gain / loss's return on capital. */
@@ -322,6 +324,7 @@ export function SelectableTiles({ metrics, defaults, storageKey, page, param = "
                 label={picker}
                 labelText={m.label}
                 value={m.value}
+                large={m.large}
                 second={m.second}
                 sub={m.sub}
                 delta={m.delta}

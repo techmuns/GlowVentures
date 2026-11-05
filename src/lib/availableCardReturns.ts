@@ -170,7 +170,12 @@ export function availableCardReturns(statement: Portfolio, display: readonly Pos
     const coveredKeys = new Set(result.total.units.flatMap(u => u.positions.map(p => `${p.accountId}|${p.securityKey}`)));
     const heldKeys = new Set(result.total.units.filter(u => u.held).flatMap(u => u.positions.map(p => `${p.accountId}|${p.securityKey}`)));
     const publicRows = current.filter(p => isPublic(p) && p.marketValue > 0), valueOf = (ps: Position[]) => ps.reduce((t, p) => t + p.marketValue, 0);
+    const rowKey = (p: Position) => `${p.accountId}|${p.securityKey}`;
     const coverage = { publicValue: valueOf(publicRows),
+      // The same public holdings by count (the family, 5 Nov 2026: "number of records covered over total records").
+      publicHoldings: publicRows.length,
+      measuredPublicHoldings: publicRows.filter(p => coveredKeys.has(rowKey(p)) && !heldKeys.has(rowKey(p))).length,
+      heldPublicHoldings: publicRows.filter(p => heldKeys.has(rowKey(p))).length,
       measuredValue: valueOf(publicRows.filter(p => coveredKeys.has(`${p.accountId}|${p.securityKey}`) && !heldKeys.has(`${p.accountId}|${p.securityKey}`))),
       heldValue: valueOf(publicRows.filter(p => heldKeys.has(`${p.accountId}|${p.securityKey}`))),
       // What no record covers yet, as a positive amount: an overdrawn balance is not "waiting".
