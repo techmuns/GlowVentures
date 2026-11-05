@@ -1212,3 +1212,11 @@
   - its dates stay inside the period, allowing the 7-day opening tolerance;
   - NSE's 404 and Karur's failed load are named, and retry recovers them;
   - its clock moves to 5 Nov so the 31 Oct ICICI balances date the counts.
+
+### Stage 10lu — Zepto is a company: Private Market draws a valued companies band
+
+- *"Zepto is a private market company not a fund"* — the family, 5 Nov 2026, on Private market → By brand, where Zepto sat under PRIVATE FUNDS.
+- The Private funds band was every private holding with a measured value, so Zepto — the one company the review values (Direct Equity - Unlisted, ₹22.8 Cr) rather than holds at cost — fell in with the funds.
+- `privateBook.ts` now has a fourth section, `company` ("Private Companies ( Valued )"): a private, valued holding whose class is Unlisted or Equity and not a fund vehicle (`isPrivateCompany`). It is drawn under Companies and Both and starts open. Private funds keeps the funds; K M Global's loan (Bond) stays where it was.
+- The Funds tile names the valued companies apart. The TVPI / DPI multiple's set is unchanged: valued funds and valued companies, never at-cost lines.
+- `check:pages` follows it: `pmBandOf` re-expresses the band, PM_C_BOOK splits `funds.company` out of `funds.valued`, and the Companies view must draw the band while the book holds one.

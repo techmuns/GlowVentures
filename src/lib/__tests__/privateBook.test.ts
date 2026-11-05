@@ -144,14 +144,22 @@ console.log("\n── the private total is the book's private side ──");
    * on its own folios, so adding the two bands is a second path to the figure
    * `privateBook` takes over their union.
    */
-  const bands = (byFund.sections.private.value ?? 0) + (byFund.sections.atCost.value ?? 0);
-  near("…and privateValue is the valued and at-cost bands' own consolidated values, added",
+  const bands = (byFund.sections.private.value ?? 0) + (byFund.sections.company.value ?? 0) + (byFund.sections.atCost.value ?? 0);
+  near("…and privateValue is the valued funds, valued companies and at-cost bands' own consolidated values, added",
     byFund.privateValue, bands);
-  near("the two bands add to the private total (nothing unvalued adds any)", bands, byFund.privateTotal.value);
+  near("the valued bands add to the private total (nothing unvalued adds any)", bands, byFund.privateTotal.value);
   ok("the at-cost band is real on this book — the review's lines held at what was paid",
     (byFund.sections.atCost.value ?? 0) > 1 && byFund.sections.atCost.folios > 0,
     `${byFund.sections.atCost.folios} folios · ₹${((byFund.sections.atCost.value ?? 0) / 1e7).toFixed(2)} Cr`);
   ok("the unvalued section carries NO value — absent, never a zero", byFund.sections.unvalued.value === null);
+  // *"Zepto is a private market company not a fund"*: a company the review
+  // values sits in the companies band, and no company stands under Private funds.
+  const companyKeys = byFund.sections.company.groups.flatMap((g) => g.folios.map((f) => f.securityKey));
+  ok("Zepto — a company the review values — is in the valued companies band", companyKeys.includes("zepto"), companyKeys.join(", "));
+  ok("…and the Private funds band holds no company's shares",
+    byFund.sections.private.groups.flatMap((g) => g.folios).every((f) => !f.position || !["Unlisted", "Equity"].includes(f.position.assetClass)));
+  ok("…and nothing in the valued companies band is a fund",
+    byFund.sections.company.groups.flatMap((g) => g.folios).every((f) => f.position && !["AIF", "Mutual Fund", "ETF"].includes(f.position.assetClass)));
 }
 
 function capitalColumns({ label, b, overlap }: Run) {
@@ -317,7 +325,7 @@ function countedOnce({ label, b, overlap }: Run) {
   // The two bands that carry a value — the valued funds and the review's lines
   // held at cost (Stage 10dh) — are where every private holding's value is, so
   // a member's printed rows are read over both.
-  const valued = (["private", "atCost"] as const).map((id) => byOwner.sections[id]);
+  const valued = (["private", "company", "atCost"] as const).map((id) => byOwner.sections[id]);
   const lineOf = (k: "value" | "committed" | "called" | "paid" | "uncalled") =>
     sum(valued.map((s) => s.overlap?.[k] ?? 0));
   near("the member rows add to the PRINTED total",
@@ -326,7 +334,7 @@ function countedOnce({ label, b, overlap }: Run) {
   else ok("…and no band draws a 'Counted once' line, there being nothing to take back", valued.every((s) => s.overlap == null));
   near("…and the bands less those lines are the consolidated private total",
     sum(valued.map((s) => s.value ?? 0)) - lineOf("value"), byFund.privateTotal.value);
-  for (const id of ["private", "atCost"] as const) {
+  for (const id of ["private", "company", "atCost"] as const) {
     for (const k of ["committed", "called", "paid", "uncalled"] as const) {
       near(`…in the capital columns too: the member ${id} band's ${k} less its line is the fund band's`,
         (byOwner.sections[id][k] ?? 0) - (byOwner.sections[id].overlap?.[k] ?? 0), byFund.sections[id][k] ?? 0);
@@ -702,7 +710,7 @@ console.log("\n── the funds the audit named (Stage 10fz): before → after �
     onBook.missing.map((x) => `${x.folio.accountId}: ${x.why}`).join("; "));
   const counted = folios.filter((f) => !noPaidIn.has(f.securityKey ?? ""));
   const mult = privateMultiples(counted);
-  const band = counted.filter((f) => f.section === "private" && f.position && f.counted && !isValuedAtCost(f.position));
+  const band = counted.filter((f) => (f.section === "private" || f.section === "company") && f.position && f.counted && !isValuedAtCost(f.position));
   const paidInOf = (f: BookFolio) => {
     const at = valuedAtOf(f.position!)!;
     if (f.distributedBasis === "review") return BOOK_REVIEW_FLOWS.filter((r) => r.accountId === f.accountId && r.securityKey === f.fundKey && r.kind === "purchase" && r.date <= at).reduce((t, r) => t + r.amount, 0);
@@ -715,7 +723,7 @@ console.log("\n── the funds the audit named (Stage 10fz): before → after �
     const c = BOOK_COMMITMENTS.find((x) => x.accountId === f.accountId)!;
     return (c.payouts ?? []).filter((p) => p.kind !== "equalisation" && p.date <= at).reduce((t, p) => t + p.gross, 0);
   };
-  ok("every holding of the Private funds band can say what went in and came back, so the multiple is struck",
+  ok("every holding of the Private funds and valued companies bands can say what went in and came back, so the multiple is struck",
     mult.tvpi != null && mult.missing.length === 0 && mult.parts.length === band.length,
     mult.missing.map((x) => `${x.folio.accountId}: ${x.why}`).join("; "));
   const pIn = sum(band.map(paidInOf)), pOut = sum(band.map(distOf)), nav = sum(band.map((f) => f.value ?? 0));
@@ -747,8 +755,11 @@ console.log("\n── the review's write-offs are named wherever the private boo
 
 console.log("\n── units never add across funds ──");
 {
-  ok("no band or total carries a unit count",
-    BOOK_SECTIONS.every((s) => byFund.sections[s].units === null)
+  // A band holding ONE company (the valued companies band: Zepto alone) is that
+  // company's own count; a band across several funds carries none.
+  const fundsIn = (s: (typeof BOOK_SECTIONS)[number]) => new Set(byFund.sections[s].groups.flatMap((g) => g.folios.map((f) => f.fundKey))).size;
+  ok("no band across several funds, and no total, carries a unit count",
+    BOOK_SECTIONS.filter((s) => fundsIn(s) > 1).every((s) => byFund.sections[s].units === null)
     && byFund.privateTotal.units === null);
   const multi = byFund.sections.private.groups.filter((g) => g.folios.filter((f) => f.position).length > 1);
   ok("a fund row held in several folios adds the units it counts",
@@ -828,7 +839,11 @@ console.log("\n── figuresOf on a constructed pair: absent is skipped, never 
   const costHeld = held.reduce((t, f) => t + (f.cost ?? 0), 0);
   ok("a private holding here has redeemed units (so the denominator differs from the Cost column)", sold > 1, `₹${sold.toFixed(2)}`);
   near("the band's deployed is the cost held plus what the redeemed units cost", priv.deployed, costHeld + sold);
-  near("…and the total's is the same", without.byFund.privateTotal.deployed, costHeld + sold);
+  // The total also strikes the valued companies band (Zepto), which no fund's figure carries.
+  const cmpHeld = without.folios.filter((f) => f.section === "company" && f.position && f.counted);
+  near("…and the total's is the same, with the valued companies' own added",
+    without.byFund.privateTotal.deployed,
+    costHeld + sold + cmpHeld.reduce((t, f) => t + (f.cost ?? 0) + (f.position!.costOfUnitsSold ?? 0), 0));
   ok("…and it is NOT the Cost column", priv.deployed != null && priv.cost != null && Math.abs(priv.deployed - priv.cost) > 1);
   // …AND THE INCOME EACH HOLDING CARRIES (Stage 10fz): FIFO's gain is the
   // unrealised and realised gain plus `dividendReceived`, gross of TDS, over the

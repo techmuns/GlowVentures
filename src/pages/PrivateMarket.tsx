@@ -191,8 +191,9 @@ const CALL_COLS = ["date", "fund", "owner", "label", "amount"] as const;
 //   By owner      the same folios grouped by family member, as printed.
 //   Transactions  every dated call, newest first.
 //
-// and three sections inside the first two: the private funds with a value
-// (open), the private investments the family's consolidated review records at
+// and four sections inside the first two: the private funds with a value
+// (open), the private companies held directly with a value (open — a company
+// is not a fund), the private investments the family's consolidated review records at
 // what was paid and no valuation (open — Stage 10dh), and the private accounts
 // with NO value (closed, marked "missing data").
 //
@@ -283,19 +284,19 @@ const BOOK_VIEWS = [
 ] as const;
 
 /**
- * WHICH BANDS THE TABLE DRAWS (Stage 10ee): the private companies the family's
- * review records at cost, the private funds, or both. Companies is first and
+ * WHICH BANDS THE TABLE DRAWS (Stage 10ee): the private companies — valued, and
+ * the ones the family's review records at cost — the private funds, or both. Companies is first and
  * so the param-free default, at the family's request; an unknown `?show=`
  * lands on it. The Private market total is drawn only under Both — over one
  * band it would be a total of rows the table does not draw.
  */
 const BOOK_SHOW = [
-  { key: "companies", label: "Companies", title: "The private companies, held at cost" },
+  { key: "companies", label: "Companies", title: "The private companies, valued and held at cost" },
   { key: "funds", label: "Funds", title: "The private funds, and the accounts no statement values" },
   { key: "both", label: "Both", title: "Funds and companies, with the private market total" },
 ] as const;
 const SHOW_SECTIONS: Record<(typeof BOOK_SHOW)[number]["key"], BookSectionId[]> = {
-  companies: ["atCost"],
+  companies: ["company", "atCost"],
   funds: ["private", "unvalued"],
   both: [...BOOK_SECTIONS],
 };
@@ -303,6 +304,12 @@ const SHOW_SECTIONS: Record<(typeof BOOK_SHOW)[number]["key"], BookSectionId[]> 
 /** The section bands' own words — what each holds, and the marker a reader sees when it is closed. */
 const SECTION_COPY: Record<BookSectionId, { title: string; marker: ReactNode; defaultOpen: boolean }> = {
   private: { title: "Private funds", marker: null, defaultOpen: true },
+  /*
+   * A COMPANY THE FAMILY HOLDS DIRECTLY WITH A MEASURED VALUE. *"Zepto is a
+   * private market company not a fund"* — it stood under Private funds because
+   * that band was every valued private holding (`isPrivateCompany`).
+   */
+  company: { title: "Private Companies ( Valued )", marker: null, defaultOpen: true },
   /*
    * THE FAMILY'S PRIVATE INVESTMENTS AT COST (Stage 10dh): the lines their
    * consolidated review records at what was paid and no valuation. Open on
@@ -951,7 +958,7 @@ export function PrivateMarket() {
    * in the XIRR's own figures rather than a restatement of them.
    */
   const distFig = m.byFund.privateTotal;
-  /** The ILPA multiples over the Private funds band (Stage 10fz) — `privateMultiples`. */
+  /** The ILPA multiples over the Private funds and valued companies bands (Stage 10fz) — `privateMultiples`. */
   const mult = privateMultiples(m.byFund.folios);
   const fmtX = (x: number) => `${x.toFixed(2)}×`;
   /** The review's write-offs, named wherever a figure sums the private book (Stage 10fz). */
@@ -1031,6 +1038,7 @@ export function PrivateMarket() {
    */
   const tableCounts = (() => {
     const priv = m.byFund.sections.private.groups;
+    const cmp = m.byFund.sections.company.groups;
     const atc = m.byFund.sections.atCost.groups;
     const unv = m.byFund.sections.unvalued.groups;
     const lines = (gs: BookGroup[]) => gs.flatMap((g) => g.folios);
@@ -1038,12 +1046,13 @@ export function PrivateMarket() {
     // hold several (Stage 10es), as a brand row may.
     const funds = (gs: BookGroup[]) => new Set(lines(gs).map((f) => f.fundKey)).size;
     return {
-      funds: funds(priv) + funds(atc) + funds(unv),
+      funds: funds(priv) + funds(cmp) + funds(atc) + funds(unv),
       valuedFunds: funds(priv),
+      valuedCompanies: funds(cmp),
       atCostFunds: funds(atc),
       noNavFunds: funds(unv),
-      folios: lines(priv).length + lines(atc).length + lines(unv).length,
-      valuedLines: lines(priv).filter((f) => f.position).length,
+      folios: lines(priv).length + lines(cmp).length + lines(atc).length + lines(unv).length,
+      valuedLines: lines(priv).filter((f) => f.position).length + lines(cmp).filter((f) => f.position).length,
       atCostLines: lines(atc).length,
       views: lines(priv).filter((f) => f.viewOf).length,
       noNavLines: lines(unv).length,
@@ -1267,12 +1276,12 @@ export function PrivateMarket() {
         : `RVPI ${fmtX(mult.rvpi)} · ${mult.parts.length} valued holdings`,
       detail: mult.tvpi == null || mult.dpi == null || mult.rvpi == null
         ? (mult.missing.length
-          ? `A multiple divides what has come back plus what is still inside by what went in, over one set. ${mult.missing.length} of the ${mult.missing.length + mult.parts.length} holdings the Private funds band values cannot say both by the date their value is struck on — `
+          ? `A multiple divides what has come back plus what is still inside by what went in, over one set. ${mult.missing.length} of the ${mult.missing.length + mult.parts.length} holdings the Private funds and valued companies bands value cannot say both by the date their value is struck on — `
             + mult.missing.map((x) => `${x.folio.fundName} (${x.folio.provider} ${x.folio.accountNo}): ${x.why}`).join("; ")
             + " — and a multiple over the rest would be a figure over a set nobody chose."
-          : "No holding of the Private funds band carries a value to divide.")
+          : "No holding of the Private funds or valued companies bands carries a value to divide.")
           + (mult.atCost.holdings ? ` ${atCostNote({ atCost: mult.atCost.holdings, atCostValue: mult.atCost.value }, (n) => money(n))}.` : "")
-        : `Over the ${mult.parts.length} holdings the Private funds band values, each counted once and each on its own value date: `
+        : `Over the ${mult.parts.length} holdings the Private funds and valued companies bands value, each counted once and each on its own value date: `
           + `${money(mult.distributed)} paid back by those dates and ${money(mult.value)} still inside, over ${money(mult.paidIn)} paid in. `
           + `DPI ${fmtX(mult.dpi)} = ${money(mult.distributed)} ÷ ${money(mult.paidIn)}; RVPI ${fmtX(mult.rvpi)} = ${money(mult.value)} ÷ ${money(mult.paidIn)}; TVPI ${fmtX(mult.tvpi)} = DPI + RVPI. `
           + "Paid in is each fund's dated calls, or the purchases the family's consolidated review dates, on or before the value date; paid back is the Distributions figure's own cash to the same date. "
@@ -1290,10 +1299,12 @@ export function PrivateMarket() {
       // rows is not drawn, so a count of nil would name a section that is not there.
       sub: [
         `${tableCounts.valuedFunds} valued`,
+        tableCounts.valuedCompanies ? `${tableCounts.valuedCompanies} valued ${tableCounts.valuedCompanies === 1 ? "company" : "companies"}` : null,
         tableCounts.atCostFunds ? `${tableCounts.atCostFunds} at cost` : null,
         tableCounts.noNavFunds ? `${tableCounts.noNavFunds} with no NAV` : null,
       ].filter(Boolean).join(" · "),
       detail: `Every fund row the table draws: the ${tableCounts.valuedFunds} under Private funds, each counted once however many folios hold it`
+        + (tableCounts.valuedCompanies ? `, the ${tableCounts.valuedCompanies} under ${SECTION_COPY.company.title}, companies held directly with a measured value` : "")
         + (tableCounts.atCostFunds ? `, the ${tableCounts.atCostFunds} under ${SECTION_COPY.atCost.title}, which the family's consolidated review records at what was paid and no valuation` : "")
         + (tableCounts.noNavFunds ? `, and the ${tableCounts.noNavFunds} under Not valued, which publish no NAV` : "")
         + "."
@@ -1649,7 +1660,7 @@ export function PrivateMarket() {
    * funds a reader can open on either tab.
    */
   const fundCells = (measure: ReturnMeasure) =>
-    [...m.byFund.sections.private.groups, ...m.byFund.sections.atCost.groups]
+    [...m.byFund.sections.private.groups, ...m.byFund.sections.company.groups, ...m.byFund.sections.atCost.groups]
       .filter((g) => g.value != null).map((g) => groupRet(g)(measure));
 
   /* ── IRR, THE TABLE'S OWN TOTAL ─────────────────────────────────────────────
@@ -2325,8 +2336,9 @@ export function PrivateMarket() {
     // A held-at-cost row is an INVESTMENT — mostly a company — not a fund, and
     // "61 funds" over it is why the family did not recognise these as the
     // Portfolio Monitor's "Private investments at cost" (Stage 10ee).
-    const noun = id === "atCost" && grouping === "fund" ? (s.groups.length === 1 ? "company" : "companies")
-      : id === "atCost" && grouping !== "owner" ? (s.groups.length === 1 ? "investment" : "investments")
+    const companies = id === "atCost" || id === "company";
+    const noun = companies && grouping === "fund" ? (s.groups.length === 1 ? "company" : "companies")
+      : companies && grouping !== "owner" ? (s.groups.length === 1 ? "investment" : "investments")
       : grouping === "fund" ? (s.groups.length === 1 ? "fund" : "funds")
       : grouping === "brand" ? (s.groups.length === 1 ? "brand" : "brands")
       : (s.groups.length === 1 ? "entity" : "entities");
@@ -2335,7 +2347,7 @@ export function PrivateMarket() {
     // section adds to no value in a line of its own; both ride on the band's
     // hover now, and the band keeps its counts, which are data.
     const sub = `${s.groups.length} ${noun} · ${s.folios} folios`;
-    const hint = id === "private"
+    const hint = id === "private" || id === "company"
       ? (grouping !== "owner"
         ? `Each holding counted once. Where two statements report one holding, the ${grouping} row counts it once and its folios show both, with a Counted once line so they add to the row.`
         : "Each statement as printed. A holding two members' statements both report is on both of their rows, and the Counted once line at the foot of this section takes the overlap out.")
