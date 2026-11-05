@@ -106,7 +106,8 @@ const unit = (key: string, positions: Position[], w: AccountWindow | null, extra
     // Held before the year AND added to this year: this year's units cannot be told apart.
     { positions: [mixed], from: '2026-03-31', to: '2026-10-31', invested: 65, close: 70, gain: 5, ownPct: 7, openValue: 40, capitalIn: 25, capitalOut: 0 },
     // First valued this year, then money taken out: the units still held cannot be told from those sold.
-    { positions: [sold], from: '2026-06-30', to: '2026-10-31', invested: 80, close: 60, gain: 5, ownPct: 6, openValue: 80, capitalIn: 0, capitalOut: 25 },
+    { positions: [sold], from: '2026-06-30', to: '2026-10-31', invested: 80, close: 60, gain: 5, ownPct: 6, openValue: 80, capitalIn: 0, capitalOut: 26,
+      flows: [{ date: '2026-07-15', amount: 1, description: 'TDS on Payout' }, { date: '2026-09-01', amount: 25, description: 'Redemption (net paid)' }] },
     // Verified purchases at cost, and a verified purchase with no value: they keep their own reasons.
     { positions: [atCost], from: '2026-06-30', to: '2026-10-31', invested: 90, close: 90, gain: 0, ownPct: 0, openValue: 90 },
     { positions: [noValue], from: '2026-06-30', to: '2026-10-31', invested: 30, close: 30, gain: 0, ownPct: 0, openValue: 30 },
@@ -123,7 +124,8 @@ const unit = (key: string, positions: Position[], w: AccountWindow | null, extra
   const paid = pos('d', 'paid', 120), stale = pos('d', 'stale', 50);
   result.missing.push(purchases(paid), purchases(stale));
   units.push({ positions: [paid], from: '2026-06-30', to: '2026-11-03', invested: 100, close: 120, gain: 22, ownPct: 22, openValue: 100, capitalIn: 0, capitalOut: 2,
-    flows: [{ date: '2026-08-01', amount: 2, description: 'Gross dividend entitlement' }] },
+    flows: [{ date: '2026-08-01', amount: 2, description: 'Gross dividend entitlement' }, { date: '2026-08-02', amount: 1, description: 'TDS on Payout' },
+      { date: '2026-08-03', amount: 1, description: 'TDS Trf to Capital A/c' }] },
     { positions: [stale], from: '2026-07-01', to: '2026-06-30', invested: 40, close: 50, gain: 10, ownPct: 25, openValue: 40, capitalIn: 0, capitalOut: 0 });
   const place = (type: 'absolute' | 'xirr' | 'cagr') => placeEveryHolding(result as unknown as ReturnType<typeof investedThisYear>, units, '2026-03-31',
     (p) => heldBeforeYear(p, '2026-03-31', quantities, {}), { type });

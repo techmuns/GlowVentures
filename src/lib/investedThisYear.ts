@@ -172,8 +172,9 @@ export function placeEveryHolding<R extends globalThis.ReturnType<typeof investe
       else older.push(p);
       continue;
     }
-    // Money taken out is a sale or withdrawal; a dividend or other income paid out leaves the units held.
-    const income = (f: { description?: string }) => /dividend|income|interest|distribution|coupon/i.test(f.description ?? '');
+    // Money taken out is a sale or withdrawal; income paid out, and the tax withheld on it
+    // (TDS on Payout, TDS Trf to Capital A/c), leave the units held. Any other flow out counts.
+    const income = (f: { description?: string }) => /dividend|income|interest|distribution|coupon|payout|\btds\b|tax/i.test(f.description ?? '');
     const takenOut = u.flows ? sum(u.flows.filter((f) => f.amount > 0 && !income(f)), (f) => f.amount) : (u.capitalOut ?? 0);
     if (takenOut > 0) {
       missing.push({ position: p, need: 'purchases', reason: 'First valued this year, with money taken out since. We need the purchase dates, units and costs to separate the units still held from those sold.' });
