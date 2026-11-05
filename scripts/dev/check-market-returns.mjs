@@ -81,6 +81,7 @@ try {
  const holdingCount=Number(await detail.getAttribute('data-market-holding-total'));
  assert.equal(includedCount+missingCount,holdingCount,'every holding belongs to one of the two lists');
  assert.equal(await dialog.locator('[data-market-source]').count(),0,'Overview stays short; no long list is mounted');
+ assert.ok(Number(await dialog.locator('[data-market-private-apart]').getAttribute('data-market-private-apart'))>0,'the private investments reported apart are named');
  await page.screenshot({path:`${out}/overview-tab.png`});
  await dialog.locator('[data-market-tab="included"]').click();
  assert.equal(await dialog.locator('[data-market-source]').count(),includedCount);
@@ -102,18 +103,11 @@ try {
  const missingKeys=await dialog.locator('[data-market-gap]').evaluateAll(els=>els.map(el=>el.dataset.marketHoldingKey));
  assert.equal(new Set([...includedKeys,...missingKeys]).size,holdingCount,'no overlap or omitted holding');
  assert.ok(await dialog.locator('[data-market-gap]').evaluateAll(els=>els.every(el=>el.querySelector('[data-market-through]')?.textContent.trim()&&el.querySelector('[data-market-category]')?.textContent.trim()&&el.querySelector('[data-market-missing-data]')?.textContent.trim()&&el.querySelector('[data-market-needed]')?.textContent.trim())));
- const aif=dialog.locator('[data-market-gap]').filter({has:page.locator('[data-market-category]').filter({hasText:/^AIF$/})}).first();
- assert.equal(await aif.locator('[data-market-through]').innerText(),await aif.getByRole('heading').innerText());
- assert.match(await aif.locator('[data-market-needed]').innerText(),/fund manager.*NAV/);
- // Listings can become available (NSE now has its own BSE listing). Exercise
- // a real missing-price row instead of requiring a named company to stay unlisted.
- const unpriced = dialog.locator('[data-market-gap]').filter({has:page.locator('[data-market-missing-data]').filter({hasText:'Public price history is missing.'})}).first();
- const missingName = await unpriced.getByRole('heading').innerText();
- await dialog.getByRole('textbox',{name:'Search missing holdings'}).fill(missingName);
- const missingStock = dialog.locator('[data-market-gap]').first();
- assert.match(await missingStock.locator('[data-market-missing-data]').innerText(), /Public price history is missing/);
- assert.match(await missingStock.locator('[data-market-needed]').innerText(), /Return column/);
- assert.ok(await missingStock.evaluate(el => Boolean(el.querySelector('[data-market-missing-data]').compareDocumentPosition(el.querySelector('[data-market-owner]')) & Node.DOCUMENT_POSITION_FOLLOWING)), 'the missing data comes before account metadata');
+ // Stage 10lh: a period reports private investments apart, as the face and the cards do: none is
+ // listed or counted here, and the Overview names how many. Their wording (an AIF's NAVs, an unlisted
+ // share's valuation) is struck in marketReturnCoverage.test.ts.
+ assert.equal(await dialog.locator('[data-market-side="private"]').count(),0,'no private investment is listed on a period');
+ assert.equal(holdingCount,Number(await summary.locator('[data-market-coverage]').getAttribute('data-market-denominator')),'the details count the face\u2019s public holdings');
  await dialog.getByRole('textbox',{name:'Search missing holdings'}).fill('National Stock Exchange of India');
  const nse = dialog.locator('[data-market-gap]').first();
  assert.match(await nse.locator('[data-market-missing-data]').innerText(), /The price source has no history for this listing/);

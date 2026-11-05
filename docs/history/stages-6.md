@@ -1213,7 +1213,36 @@
   - NSE's 404 and Karur's failed load are named, and retry recovers them;
   - its clock moves to 5 Nov so the 31 Oct ICICI balances date the counts.
 
-### Stage 10lu — Morning CIO's three return cards, minimal: the return, and how many holdings it covers
+### Stage 10lu — Zepto is a company: Private Market draws a valued companies band
+
+- *"Zepto is a private market company not a fund"* — the family, 5 Nov 2026, on Private market → By brand, where Zepto sat under PRIVATE FUNDS.
+- The Private funds band was every private holding with a measured value, so Zepto — the one company the review values (Direct Equity - Unlisted, ₹22.8 Cr) rather than holds at cost — fell in with the funds.
+- `privateBook.ts` now has a fourth section, `company` ("Private Companies ( Valued )"): a private, valued holding whose class is Unlisted or Equity and not a fund vehicle (`isPrivateCompany`). It is drawn under Companies and Both and starts open. Private funds keeps the funds; K M Global's loan (Bond) stays where it was.
+- The Funds tile names the valued companies apart. The TVPI / DPI multiple's set is unchanged: valued funds and valued companies, never at-cost lines.
+- `check:pages` follows it: `pmBandOf` re-expresses the band, PM_C_BOOK splits `funds.company` out of `funds.valued`, and the Companies view must draw the band while the book holds one.
+
+### Stage 10lh — Review fixes to Stage 10lg: Invested this year places a holding only on its own evidence
+
+Codex's review of #352, verified against the code and the book:
+
+- **Held before this year** needs the same units on an older statement dated on or before 31 March, with no trade since (`heldBeforeYear`). Any older balance used to be enough, which hid units bought this year (2 holdings).
+- **A mixed or partly sold record stays to check, with its reason.**
+  - A record held before the year that money was also added to: 16 accounts, which used to be counted as older.
+  - A record first valued this year that money was taken out of.
+- **A first-valued row is purchase to value** like every other row. Its first value plus the money added since is what was paid, shared across a whole account's holdings by today's value, so value − paid = gain on every row and in the total. The row's value is the record's own close on its own date, never a later quote over money the record has not seen. It used to scale the account's gain, which did not tie.
+- **Only a missing-purchases gap is placed** (`YearGap.need`). A verified purchase with no usable value, or a holding valued at cost, keeps its own reason.
+- **XIRR and CAGR** annualise a first-valued debt holding as they do a purchased one. Equities under a year stay absolute.
+- **Only a sale or withdrawal counts as money taken out.** A dividend or other income paid out, and the tax withheld on it (TDS on Payout, TDS Trf to Capital A/c), leaves the units held, so the holding is still placed. A redemption, or any outgoing flow the book can't classify, still counts.
+- **A value dated before the first value is no closing value.** That holding stays to check.
+- **"Held before" rests on the family's assumed-continued-ownership rule** (22 Oct): a dated balance that no later recorded trade contradicts.
+- **An account opened inside the year starts on its first money in.** It used to open at nil on 31 March and was then read as "held before, with money added".
+- **Market performance:**
+  - a period reports private holdings apart even when a measured account holds them (`selectionMarket(…, { inception })`). That account's public holdings are left unmeasured too, since its return carries the private ones, under their own gap (`code: 'mixed'`) that asks for the holding's own return, not prices;
+  - a holding held at its last value sets no row's dates (`MarketUnit.held`), and a row, or a total, that measured no dates claims none: it no longer falls back to the portfolio's dates.
+  - on a period, its details list the public holdings with value, as the face's denominator does. The private investments reported apart are named in the Overview, with their count and value, and are out of the lists and totals. A row of private holdings alone still lists them.
+- `check-nav-assumed` compares the line and its card on one snapshot of all four figures (return and gain, line and card). It waits until that snapshot matches and holds still for a second, since histories arrive one by one and the two redraw apart. A missing attribute fails rather than reading as 0, and a failure prints the snapshot.
+
+### Stage 10lv — Morning CIO's three return cards, minimal: the return, and how many holdings it covers
 
 - *"We need to change the design of these card to make it more minimal … Return % in big bold … I rather see number of records covered over total records like before. Rest all … in (i) button"* — the family, 5 Nov 2026.
 - Face (Annualised / history, calendar year, financial year): the label, the return large (`TileMetric.large` → `Kpi large`, 30px), then "N of M holdings" — public holdings covered (measured + held at last value) over every public holding with value (`coverage.publicHoldings`, `measuredPublicHoldings`, `heldPublicHoldings` in `availableCardReturns.ts`) — and a muted line with the measured end date (the standing rule) and "assumed" / "not annualised" where they qualify the figure. The value bar and the three caption lines are gone.

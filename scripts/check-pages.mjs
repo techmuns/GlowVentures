@@ -2544,6 +2544,14 @@ const reviewPrivate = (p) => !!p?.reviewSource
   && REVIEW_PRIVATE_BLOCKS.has(`${p.reviewSource.sheet}/${p.reviewSource.block}`)
   && !(REVIEW_DECLARED_LISTED?.has(p.securityKey));
 
+
+/**
+ * A SHARE IN A PRIVATE COMPANY held directly, valued — the page's
+ * `isPrivateCompany`, re-expressed. *"Zepto is a private market company not a
+ * fund"*: such a line is drawn in a companies band, never under Private funds.
+ */
+const PM_COMPANY_CLASSES = new Set(["Unlisted", "Equity"]);
+const pmBandOf = (p) => p.valuedAtCost === true ? "atCost" : PM_COMPANY_CLASSES.has(p.assetClass) ? "company" : "private";
 const SIDE_BOOK = (() => {
   try {
     const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
@@ -2622,6 +2630,8 @@ const SIDE_BOOK = (() => {
        */
       atCostKeys: new Set(current(positions.filter((p) => sideOf(p) === "private" && p.valuedAtCost === true)).map((p) => p.securityKey)),
       struckKeys: new Set(current(positions.filter((p) => sideOf(p) === "private" && p.valuedAtCost !== true)).map((p) => p.securityKey)),
+      // …of which the companies held directly, drawn in their own band (Zepto).
+      companyKeys: new Set(current(positions.filter((p) => sideOf(p) === "private" && p.valuedAtCost !== true && ["Unlisted", "Equity"].includes(p.assetClass))).map((p) => p.securityKey)),
       /**
        * HOW MANY PRIVATE ROWS REPORT A COST, and how many funds they roll up
        * to with none. Both were LITERALS in the private-market checks (`15 of
@@ -3536,6 +3546,9 @@ const PM_C_BOOK = (() => {
       .filter((p) => capIds.has(p.accountId) && !leftOut.has(p.accountId))
       .map((p) => p.securityKey));
     const valuedFunds = fundsOf(valuedRows);
+    // A company held directly is drawn in its own band, not under Private funds (`pmBandOf`).
+    const fundRows = valuedRows.filter((p) => pmBandOf(p) === "private");
+    const companyFunds = fundsOf(valuedRows.filter((p) => pmBandOf(p) === "company"));
     const atCostFunds = fundsOf(atCostRows);
     const unvaluedFunds = new Set(commitments.filter((c) => UNVALUED_BOOK.ids.includes(c.accountId)).map((c) => c.name));
     const valuedAccounts = new Set(priv.map((p) => p.accountId));
@@ -3544,10 +3557,11 @@ const PM_C_BOOK = (() => {
      * hold (never an income-only view), and which of those send a capital
      * account. Struck over the VALUED rows, because the owner cover the page
      * prints on its private band is that band's own — the at-cost band carries
-     * its own, and a count mixing the two would describe neither.
+     * its own, and a count mixing the two would describe neither. A company
+     * held directly is in the valued companies band, so out of it too.
      */
     const members = new Map();
-    for (const p of valuedRows) {
+    for (const p of fundRows) {
       const owner = acc.get(p.accountId)?.owner ?? p.accountId;
       const m = members.get(owner) ?? { of: 0, with: 0 };
       m.of++; if (capIds.has(p.accountId)) m.with++;
@@ -3656,9 +3670,9 @@ const PM_C_BOOK = (() => {
       holdings: kept.length,
       valuedAccounts: valuedAccounts.size,
       valueNone: UNVALUED_BOOK.accounts + UNVALUED_BOOK.views.length,
-      funds: { valued: valuedFunds.size, atCost: atCostFunds.size, noNav: unvaluedFunds.size },
+      funds: { valued: valuedFunds.size - companyFunds.size, company: companyFunds.size, atCost: atCostFunds.size, noNav: unvaluedFunds.size },
       folios: { valued: valuedRows.length, atCost: atCostRows.length, views: UNVALUED_BOOK.views.length, noNav: UNVALUED_BOOK.accounts },
-      bandCover: `${capFundsOf(valuedRows).size}/${valuedFunds.size}`,
+      bandCover: `${capFundsOf(fundRows).size}/${fundsOf(fundRows).size}`,
       atCostBandCover: `${capFundsOf(atCostRows).size}/${atCostFunds.size}`,
       totalCover: `${capFundsOf(priv).size + unvaluedFunds.size}/${valuedFunds.size + atCostFunds.size + unvaluedFunds.size}`,
       members,
@@ -6562,7 +6576,7 @@ function familyRupees(s) {
  * private book" spans both: a filter on `"private"` alone held this page to 8
  * funds of its 69 and to 5 member rows of its 11.
  */
-const PRIVATE_BANDS = new Set(["private", "atCost"]);
+const PRIVATE_BANDS = new Set(["private", "company", "atCost"]);
 
 const PM_FOLIO_BOOK = (() => {
   try {
@@ -6613,7 +6627,7 @@ const PM_FOLIO_BOOK = (() => {
      */
     const sectionOf = new Map();
     for (const p of raw) {
-      const band = p.valuedAtCost === true ? "atCost" : "private";
+      const band = pmBandOf(p);
       if (sectionOf.has(p.securityKey) && sectionOf.get(p.securityKey) !== band) return null;
       sectionOf.set(p.securityKey, band);
     }
@@ -6643,7 +6657,7 @@ const PM_FOLIO_BOOK = (() => {
     return {
       statements, printed, consolidated, dup, sectionOf,
       funds: statements.size, rows: raw.length,
-      bands: { private: band("private"), atCost: band("atCost") },
+      bands: { private: band("private"), company: band("company"), atCost: band("atCost") },
     };
   } catch { return null; }
 })();
@@ -17960,7 +17974,7 @@ const PRIVATE_SCOPE_CHECKS = [
     const pv = ctx?.pmView;
     if (!pv) return { notChecked: "the private-view probe did not run" };
     const rows = [...pv.groups, ...pv.children];
-    const known = (id) => id === "private" || id === "atCost" || id === "unvalued";
+    const known = (id) => id === "private" || id === "company" || id === "atCost" || id === "unvalued";
     /**
      * THE "HELD AT COST" SECTION IS THE REVIEW'S AT-COST LINES AND NOTHING ELSE
      * (Stage 10dh) — on the fund grouping, its fund rows are exactly the keys
@@ -17973,7 +17987,9 @@ const PRIVATE_SCOPE_CHECKS = [
     const keysIn = (id) => new Set(fundRows.filter((g) => g.section === id).flatMap((g) => g.fundKeys?.length ? g.fundKeys : [g.key]));
     const same = (a, b) => !!b && a.size === b.size && [...a].every((k) => b.has(k));
     const fundsHeld = !fundRows.length
-      || (same(keysIn("atCost"), SIDE_BOOK?.atCostKeys) && same(keysIn("private"), SIDE_BOOK?.struckKeys));
+      || (same(keysIn("atCost"), SIDE_BOOK?.atCostKeys)
+        && same(new Set([...keysIn("private"), ...keysIn("company")]), SIDE_BOOK?.struckKeys)
+        && same(keysIn("company"), SIDE_BOOK?.companyKeys));
     return pv.sections.length > 0
       && pv.sections.every((x) => known(x.id))
       && rows.length > 0
@@ -18094,9 +18110,10 @@ const PM_TABLE_CHECKS = [
       const v = o?.adj?.[c];
       return Number.isFinite(v) ? v / 1e7 : 0;
     };
-    // EVERY SECTION — the private funds, the review's lines held at cost
-    // (Stage 10dh) and the accounts nothing values — makes the one total.
-    const bands = [band.private, band.atCost, band.unvalued];
+    // EVERY SECTION — the private funds, the companies valued directly, the
+    // review's lines held at cost (Stage 10dh) and the accounts nothing values —
+    // makes the one total.
+    const bands = [band.private, band.company, band.atCost, band.unvalued];
     const ok = ["committed", "paid"].every((c) =>
       pmClose(sum(bands.map((b) => col(b, c))) - bandAdj(c), col(tot, c)));
     const once = CAPITAL_BOOK.once;
@@ -18662,7 +18679,7 @@ const PM_RETURN_ROUTE_CHECKS = [
     // The footer pools FUNDS — the book's lines — so it is held to the lines the
     // rows hold, not the rows: a legal-name row may hold several (Stage 10es).
     const drawn = ctx?.pmReturn?.drawnLines;
-    const bookFunds = PM_C_BOOK ? PM_C_BOOK.funds.valued + PM_C_BOOK.funds.atCost + PM_C_BOOK.funds.noNav : null;
+    const bookFunds = PM_C_BOOK ? PM_C_BOOK.funds.valued + PM_C_BOOK.funds.company + PM_C_BOOK.funds.atCost + PM_C_BOOK.funds.noNav : null;
     if (bookFunds == null) return false; // the checker could not state its own expectation
     if (of !== drawn || of !== bookFunds || covers !== PM_RETURN_BOOK.pooledCovers) return false;
     if (PM_RETURN_BOOK.pooled == null) return !/%/.test(foot.text);
@@ -29348,7 +29365,7 @@ const INVARIANTS = {
       const M = PM_C_BOOK?.multiples;
       if (!d || !M) return false; // the checker could not state its own expectation — a finding, never an abstention
       if (M.tvpi == null) {
-        const m = /(\d+) of the (\d+) holdings the Private funds band values cannot say/i.exec(d);
+        const m = /(\d+) of the (\d+) holdings the Private funds and valued companies bands value cannot say/i.exec(d);
         return !!m && Number(m[1]) === M.missing && Number(m[2]) === M.missing + M.holdings && /—/.test(tile);
       }
       const x = (n) => `${n.toFixed(2)}×`;
@@ -29535,7 +29552,8 @@ const INVARIANTS = {
         && (!sec.unvalued || !sec.unvalued.open)
         && pv.children.length === 0 && pv.overlaps.length === 0
         && pv.toggles.length > 0 && pv.toggles.every((x) => !x.open)
-        && pv.groups.length > 0 && pv.groups.every((g) => g.section === "private" || g.section === "atCost");
+        && (!sec.company || sec.company.open)
+        && pv.groups.length > 0 && pv.groups.every((g) => PRIVATE_BANDS.has(g.section));
     }],
     /**
      * …AND THE FOLDED SECTION SAYS WHAT IT IS, WITH ITS SIZE, WHILE FOLDED.
@@ -29652,10 +29670,10 @@ const INVARIANTS = {
       const F = PM_C_BOOK.funds, L = PM_C_BOOK.folios;
       // The parts, in the page's own order, each dropped where the book says it is nil.
       const parts = (xs) => xs.filter(([k]) => k > 0).map(([k, w]) => `${k} ${w}`).join(" · ");
-      const fundSub = parts([[F.valued, "valued"], [F.atCost, "at cost"], [F.noNav, "with no NAV"]]);
+      const fundSub = parts([[F.valued, "valued"], [F.company, F.company === 1 ? "valued company" : "valued companies"], [F.atCost, "at cost"], [F.noNav, "with no NAV"]]);
       const folioSub = parts([[L.valued, "valued"], [L.atCost, "at cost"], [L.views, "income-only"], [L.noNav, "with no NAV"]]);
       return n(st.texts?.funds) === sumOf("funds") && n(st.texts?.folios) === sumOf("folios")
-        && n(st.texts?.funds) === F.valued + F.atCost + F.noNav
+        && n(st.texts?.funds) === F.valued + F.company + F.atCost + F.noNav
         && n(st.texts?.folios) === L.valued + L.atCost + L.views + L.noNav
         && String(st.texts?.funds ?? "").includes(fundSub)
         && String(st.texts?.folios ?? "").includes(folioSub)
@@ -30477,9 +30495,11 @@ const INVARIANTS = {
       if (!pv) return false;
       return pv.show === "companies" && pv.showOptions.join(",") === "companies,funds,both";
     }],
-    ["…and on companies the table draws the companies held at cost and no fund section or total", (t, ctx) => {
+    ["…and on companies the table draws the private companies — valued and held at cost — and no fund section or total", (t, ctx) => {
       const ids = (ctx?.pmView?.sections ?? []).map((s) => s.id);
-      return ids.length > 0 && ids.every((id) => id === "atCost") && !ctx.pmView.totalRow;
+      return ids.length > 0 && ids.every((id) => id === "atCost" || id === "company") && !ctx.pmView.totalRow
+        // …Zepto, the company the review values, is drawn here (`pmBandOf`).
+        && (!(SIDE_BOOK?.companyKeys?.size) || ids.includes("company"));
     }],
     /**
      * BY LEGAL NAME (Stage 10es). *"In the by legal name tab we will show
@@ -30508,7 +30528,7 @@ const INVARIANTS = {
       const pv = ctx?.pmView;
       if (!pv) return false;
       const ids = pv.sections.map((s) => s.id);
-      return pv.show === "funds" && ids.includes("private") && !ids.includes("atCost") && !pv.totalRow;
+      return pv.show === "funds" && ids.includes("private") && !ids.includes("atCost") && !ids.includes("company") && !pv.totalRow;
     }],
   ],
   "private-market-brands": [
@@ -43562,12 +43582,13 @@ for (const theme of THEMES) {
        * cell's titles are read with it.
        */
       const pmReturn = FAST ? null : await page.evaluate(() => {
-        // THE PRIVATE SECTION'S FUND ROWS — the funds a return is struck on.
+        // THE VALUED SECTIONS' ROWS — the private funds and the companies valued
+        // directly (Zepto), the lines a return is struck on.
         // The missing-data section's rows are funds too, and value nothing, so
         // every measure on them is a dash naming why; counted in with the
         // valued ones they would make every per-fund claim about the wrong set.
         const all = [...document.querySelectorAll("main tr[data-pm-fund]")];
-        const rows = all.filter((tr) => tr.getAttribute("data-pm-row-section") === "private");
+        const rows = all.filter((tr) => ["private", "company"].includes(tr.getAttribute("data-pm-row-section")));
         if (!rows.length) return null;
         const titles = (el) => [...el.querySelectorAll("[title]")].map((x) => x.getAttribute("title")).join(" | ");
         const cellsOf = (tr) => [...tr.querySelectorAll("td[data-return-cell]")].map((td) => ({
