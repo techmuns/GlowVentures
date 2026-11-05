@@ -1,12 +1,10 @@
 import {  } from "@/lib/useNavigationState";
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import { useMarketHistories } from '@/lib/useMarketReturns';
-import { marketReturns, marketReturnSummary, marketHoldingKey } from '@/lib/marketReturns';
+import { marketHoldingKey } from '@/lib/marketReturns';
+import { selectionMarket, selectionMarketOf } from '@/lib/selectionMarket';
 import { MarketReturnInfo } from './MarketReturnInfo';
 import { HoldingAssumptionInfo } from './HoldingAssumptionInfo';
-import { assumedHoldingReturns } from '@/lib/assumedHoldingReturns';
-import { assumedHoldingBook } from '@/lib/assumedHoldingBook';
-import { periodSelection, statementReturnInputs } from '@/lib/availableCardReturns';
 import { CapitalBridge } from './CapitalBridge';
 import { capitalBridge } from '@/lib/capitalBridge';
 import { BOOK_ACCOUNT_BRIDGES, BOOK_CAPITAL_MOVES, BOOK_HOLDING_INCOME } from '@/data/glowData';
@@ -74,19 +72,9 @@ export default function SegmentReturns({ selection: recordedSelection, period, o
   const current = useMemo(() => currentHoldings(positions), [positions]);
   const exited = useMemo(() => exitedRows(statementPositions), [statementPositions]);
   const marketFeed = useMarketHistories(current);
-  const selection = useMemo(() => {
-    if (!statementPortfolio || recordedSelection.inception || !recordedSelection.start || !recordedSelection.end) return recordedSelection;
-    const assumptions = assumedHoldingBook({ actions: corporateActions, instruments: marketFeed.instruments, histories: marketFeed.histories });
-    // The financial and calendar year from the first value on record, the rest held at
-    // their last value: Morning CIO's cards' own selection (Stages 10kq, 10kz).
-    if (period === 'ytd' || period === 'fytd') {
-      const picked = periodSelection({ inputs: statementReturnInputs(statementPortfolio), current, accounts: statementPortfolio.accounts,
-        end: recordedSelection.end, assumptions, open: period === 'ytd' ? undefined : recordedSelection.start });
-      return { ...recordedSelection, ...picked, type: recordedSelection.type, start: recordedSelection.start, end: recordedSelection.end };
-    }
-    const extra = assumedHoldingReturns(current, statementPortfolio.accounts, recordedSelection.start, recordedSelection.end, assumptions);
-    return { ...recordedSelection, assumedUnits: extra.units, assumptionGaps: extra.gaps };
-  }, [recordedSelection, period, current, statementPortfolio, corporateActions, marketFeed.instruments, marketFeed.histories]);
+  // THE TAB'S ONE SELECTION (Stage 10lg, `useReturnSelection`): every period the
+  // cards' rule, built once in PortfolioReturns and read here as given.
+  const selection = recordedSelection;
   // The Sector axis is Sector Composition's own sectors (`SectorAttribution`, Stage 10gs), never this grouping.
   const sectorAxis = axis === 'sector';
   const a = useMemo(() => statementPortfolio && !sectorAxis ? selectedSegmentReturns(current, exited, statementPortfolio.accounts, axis, selection,
@@ -104,8 +92,10 @@ export default function SegmentReturns({ selection: recordedSelection, period, o
   const bridge = useMemo(() => pool && statementPortfolio ? capitalBridge(pool.total.units, { accounts: statementPortfolio.accounts,
     positions: statementPortfolio.positions, bridges: BOOK_ACCOUNT_BRIDGES, moves: BOOK_CAPITAL_MOVES, income: BOOK_HOLDING_INCOME }) : null,
   [pool, statementPortfolio]);
-  const market = useMemo(() => marketReturns(current, marketFeed.instruments, marketFeed.histories, selection.start,
-    selection.end ?? new Date().toISOString().slice(0, 10), selection.type, selection.inception), [current, marketFeed.instruments, marketFeed.histories, selection]);
+  // MARKET PERFORMANCE OVER EVERY HOLDING (Stage 10lg): each holding's own return over the
+  // period from the same selection, weighted by today's value (`selectionMarket`).
+  const market = useMemo(() => pool ? selectionMarket(current, pool.total.units, pool.total.missing, selection.start, selection.end)
+    : selectionMarket(current, [], [], selection.start, selection.end), [current, pool, selection.start, selection.end]);
   // A line that is whole PMS accounts is dated, and joined to the review, as
   // the accounts — the Monitor's mandate rows — never by the manager's own
   // purchases inside them. On All Securities a line is a security.
@@ -133,13 +123,13 @@ export default function SegmentReturns({ selection: recordedSelection, period, o
     add(a.total);
     return m;
   }, [a, companySectors, inSession, idx, wholeAccountsOf]);
+  // Since investment covers every holding; a period, the public ones — private investments are reported apart, as on the cards.
+  const marketBase = useMemo(() => current.filter(p => p.marketValue > 0 && (selection.inception || p.marketSide !== 'private')), [current, selection.inception]);
+  const marketPrivate = selection.inception ? 0 : current.filter(p => p.marketValue > 0 && p.marketSide === 'private').length;
   const marketOf = (ps: readonly typeof current[number][]) => {
-    const keys = new Set(ps.map(marketHoldingKey));
-    const units = market.units.filter(u => keys.has(marketHoldingKey(u.position)));
-    const gaps = market.gaps.filter(g => keys.has(marketHoldingKey(g.position)));
-    const summary = marketReturnSummary(units, selection.type, market.from, market.to);
+    const m = selectionMarketOf(market, ps);
     const pending = ps.filter(p => { const i = marketFeed.instruments.get(p.securityKey); return p.marketValue > 0 && i && !marketFeed.histories[i.key]; }).length;
-    return { ...summary, units, gaps, pending };
+    return { ...m, pending };
   };
   const marketInfo = (label: string, ps: readonly typeof current[number][]) => {
     const m = marketOf(ps);
@@ -155,14 +145,14 @@ export default function SegmentReturns({ selection: recordedSelection, period, o
   </div>;
   const title = <>Return attribution · <span className="font-normal text-slate-400" data-seg-basis>{periodLabel} · {type.label} · {dates}</span></>;
   const marketCard = <div className="card flex min-w-0 flex-col p-5" data-market-summary data-market-total={market.pct ?? ''}
-    data-market-period={market.periodPct ?? ''} data-market-covered={market.count} data-market-pending={market.pending} data-market-refreshing={marketFeed.refreshing}>
+    data-market-period={market.periodPct ?? ''} data-market-covered={market.count} data-market-pending={market.pending} data-market-from={market.from ?? ''} data-market-to={market.to ?? ''} data-market-refreshing={marketFeed.refreshing}>
     <div className="flex items-center justify-between gap-3"><h3 className="text-sm font-semibold text-slate-100">Market performance</h3>{marketInfo('Total', current)}</div>
-    <p className="mt-1 text-xs text-slate-400">Current holdings · Portfolio weighted</p>
+    <p className="mt-1 text-xs text-slate-400">Every holding · weighted by today's value</p>
     <div className="my-5">
-      <p className="text-xs text-slate-400">{market.annual ? 'Annualised price return' : 'Price return over the period'}</p>
-      <div className="mt-1" aria-live="polite">{market.pct == null ? <span className="text-sm text-slate-400">{market.pending ? 'Loading historical prices…' : 'History unavailable'}</span> : <strong className={`text-3xl font-semibold tabular ${changeColor(market.pct)}`}>{pct(market.pct)}{market.annual && <span className="ml-1 text-xs font-normal text-slate-400">p.a.</span>}</strong>}</div>
+      <p className="text-xs text-slate-400" title="Each holding's own return over the period, from its first value on record (a published close, a printed NAV or a statement value); a holding with no second value is held at its last value. Weighted by what each is worth today.">Each holding's return over the period</p>
+      <div className="mt-1" aria-live="polite">{market.pct == null ? <span className="text-sm text-slate-400">{market.pending ? 'Loading historical prices…' : 'No holding is measured over these dates'}</span> : <strong className={`text-3xl font-semibold tabular ${changeColor(market.pct)}`}>{pct(market.pct)}{market.annual && <span className="ml-1 text-xs font-normal text-slate-400">p.a.</span>}</strong>}</div>
     </div>
-    <p className="text-xs text-slate-400" data-market-coverage>{market.count} of {current.length} holdings · {money(market.value)} covered{market.pending > 0 && ` · ${market.pending} loading`}{market.pending === 0 && marketFeed.refreshing > 0 && ' · updating'}{market.from && market.to && ` · ${fmtDate(market.from)} → ${fmtDate(market.to)}`}</p>
+    <p className="text-xs text-slate-400" data-market-coverage data-market-denominator={marketBase.length} data-market-private={marketPrivate}>{market.count} of {marketBase.length} {selection.inception ? 'holdings' : 'public holdings'} · {money(market.value)} covered{market.pending > 0 && ` · ${market.pending} waiting for prices`}{market.pending === 0 && marketFeed.refreshing > 0 && ' · updating'}{market.from && market.to && ` · ${fmtDate(market.from)} → ${fmtDate(market.to)}`}{!selection.inception && marketPrivate > 0 && ` · ${marketPrivate} private reported apart`}</p>
     <div className="mt-auto pt-5"><button type="button" className="btn-secondary text-xs" onClick={marketFeed.retry} data-market-retry>Retry missing histories</button></div>
   </div>;
   const bridgeCard = pool && <CapitalBridge bridge={bridge} total={pool.total}

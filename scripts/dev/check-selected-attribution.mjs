@@ -100,7 +100,8 @@ try {
   await page.locator(`[data-returns-period="${period}"]`).click();
   // YTD reads the Monitor's record from the first date we have (Stage 10kq);
   // with /api refused here no price loads, so its accounts' own windows alone.
-  const start = b.periodStart(period, end), win = period === 'ytd' || period === 'fytd' ? cardWindows(period) : b.windowReturns(inputs, start, end);
+  // Every period is the cards' selection (Stage 10lg): each from its first value on record in the period.
+  const start = b.periodStart(period, end), win = cardWindows(period);
   for (const type of ['xirr', 'absolute', 'cagr']) {
    const measured = b.measureWindow(win.included, type, String);
    await page.locator('[data-returns-type-select]').selectOption(type);
