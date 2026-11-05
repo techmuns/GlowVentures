@@ -1,7 +1,7 @@
 import { useTableExportFilter, useTableExportExpansion } from "@/lib/tableExportSnapshot";
 import { ExportableTable } from "@/components/ExportableTable";
 import { InfiniteTableEnd, useInfiniteTable } from "@/components/InfiniteTableBody";
-import { Fragment, useEffect, useMemo, useRef, useState, useCallback, type ReactNode } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState, useCallback, type ReactNode, type MouseEvent as ReactMouseEvent } from "react";
 import { useNavigationState } from '@/lib/useNavigationState';
 import { statementNoteForSet } from "@/lib/statementNotes";
 import { Link, useNavigationType, useSearchParams } from "react-router-dom";
@@ -61,7 +61,10 @@ import {
   SECURITY_AXIS, SECURITY_SECTION,
   groupKeyFor, groupSourceFor, groupOrdFor, groupLabelFor,
   ALL_LABEL, GROUP_COLUMN_HEAD, GROUP_NOUN, bucketFor, heldUnderMandate,
+  statedGroupKeyFor, moveTargetsFor, productKeysFor,
 } from "@/lib/groupAxis";
+import { movePlacement, useFamilyPlacements } from "@/lib/familyPlacements";
+import { MoveRowMenu, MoveRowToast, type MoveRowRequest } from "@/components/MoveRowMenu";
 // WHICH SECTION A DATED RECORD LANDS IN — the same three axes, joined to a
 // trade's own fields. See its header for why the security axis is unreachable
 // from there by type rather than by an omitted button.
@@ -918,6 +921,55 @@ export function PortfolioMonitor() {
   const [bucketFilter, setBucket] = useNavigationState<string>('section', 'All', buckets);
   /** The holdings table's Export / Edit / Upload controls, drawn at the right of the section tabs. */
   const [tableTools, setTableTools] = useState<HTMLSpanElement | null>(null);
+  /**
+   * RIGHT-CLICK A ROW TO MOVE IT TO ANOTHER TAB (Stage 10lm).
+   *
+   *   "Allow the ability for any security or row to move any sub tab by doing
+   *    right click."
+   *
+   * On the three axes that have tabs. The security axis files nothing, so a
+   * right-click there stays the browser's own. The move is saved for everyone
+   * (`familyPlacements.ts`) and read by `groupKeyFor`, so the row lands in the
+   * same tab on Morning CIO, the drill-down and the Excel sheets too.
+   */
+  const placements = useFamilyPlacements();
+  const [moveMenu, setMoveMenu] = useState<(MoveRowRequest & { axis: GroupAxis; products: string[] }) | null>(null);
+  const [moveToast, setMoveToast] = useState<{ text: string; undo: () => void } | null>(null);
+  const closeMoveMenu = useCallback(() => setMoveMenu(null), []);
+  const closeMoveToast = useCallback(() => setMoveToast(null), []);
+  const openMoveMenu = (e: ReactMouseEvent<HTMLTableRowElement>, r: Row) => {
+    if (view !== "holdings" || groupAxis === SECURITY_AXIS) return;
+    const ps = rowPositionsOf(r);
+    if (!ps.length) return;
+    e.preventDefault();
+    const axis: GroupAxis = groupAxis;
+    const label = groupLabelFor(axis);
+    const stated = statedGroupKeyFor(axis, accIdx, ps[0]);
+    // From the keyboard (the menu key, Shift+F10) there is no pointer: the menu
+    // opens under the focused control instead, and without an animation.
+    const keyboard = (e.nativeEvent as { pointerType?: string }).pointerType === "" || (e.clientX === 0 && e.clientY === 0);
+    const at = keyboard ? (e.target as HTMLElement).getBoundingClientRect() : null;
+    const focused = document.activeElement;
+    setMoveMenu({
+      axis, products: productKeysFor(accIdx, ps),
+      x: at ? at.left : e.clientX, y: at ? at.bottom : e.clientY, keyboard,
+      name: r.security, current: r.bucket, stated,
+      targets: [...new Set([...moveTargetsFor(axis, stated), r.bucket])].map((k) => ({ key: k, label: label(k) })),
+      returnFocus: focused instanceof HTMLElement && e.currentTarget.contains(focused) ? focused : null,
+    });
+  };
+  const moveRow = (section: string) => {
+    if (!moveMenu || section === moveMenu.current) return;
+    const { axis, products, stated, current, name } = moveMenu;
+    // Back to where the review, the rules or the book put it is no placement at all.
+    const store = (to: string) => { void movePlacement(axis, products, to === stated ? null : to); };
+    store(section);
+    const label = groupLabelFor(axis);
+    setMoveToast({
+      text: section === stated ? `${name} is back in ${label(section)}` : `${name} moved to ${label(section)}`,
+      undo: () => store(current),
+    });
+  };
   const bucket = useTableExportFilter(bucketFilter, "All");
   /**
    * SWITCHING AXIS CLEARS THE SECTION FILTER, and that is a correctness fix
@@ -2499,6 +2551,8 @@ export function PortfolioMonitor() {
         const ruleSeen = new Set<string>();
         let ruleMV = 0;
         let cashRuleMV = 0;
+        // Rows the family moved here on the page (Stage 10lm), named on the heading.
+        const movedNames = rs.filter((r) => r.groupSource === "moved").map((r) => r.security);
         for (const r of rs) {
           if (r.groupSource !== "rule" && r.groupSource !== "cash-rule") continue;
           if (r.dedupeGroup) { if (ruleSeen.has(r.dedupeGroup)) continue; ruleSeen.add(r.dedupeGroup); }
@@ -2506,7 +2560,7 @@ export function PortfolioMonitor() {
           else cashRuleMV += r.marketValue;
         }
         return {
-          key, rows: rs, subtotal, collapsed, holdings, names, lines, ruleMV, cashRuleMV,
+          key, rows: rs, subtotal, collapsed, holdings, names, lines, ruleMV, cashRuleMV, movedNames,
           day, dayBase, dayLeft, liveRows: live.length,
           dayPct: live.length && dayBase - day !== 0 ? (day / (dayBase - day)) * 100 : null,
           totals,
@@ -4114,6 +4168,9 @@ export function PortfolioMonitor() {
               tablist, never in it — a tablist holds tabs only. On the security
               axis this row is not drawn and the caption comes back. */}
           {view === "holdings" && <span ref={setTableTools} className="ml-auto inline-flex pb-1" data-table-tools />}
+          {moveMenu && <MoveRowMenu request={moveMenu} status={placements.status === "local" ? placements.reason : null}
+            onMove={moveRow} onClose={closeMoveMenu} />}
+          {moveToast && <MoveRowToast text={moveToast.text} onUndo={moveToast.undo} onDone={closeMoveToast} />}
         </div>
       )}
 
@@ -4276,7 +4333,7 @@ export function PortfolioMonitor() {
                       */
                       <tr className={`${TREE_ROW_DENSE.section} cursor-pointer`} data-section={grp.key} data-axis={groupAxis}
                         data-subtotal={grp.subtotal} data-holdings={grp.holdings} data-names={grp.names} data-lines={grp.lines} data-rule-mv={grp.ruleMV}
-                        data-cash-rule-mv={grp.cashRuleMV}
+                        data-cash-rule-mv={grp.cashRuleMV} data-moved-rows={grp.movedNames.length}
                         data-section-open={secOpen ? "open" : "closed"}
                         {...rowToggle(() => toggleSection(secKey))}>
                         <TreeSectionCell density="dense" colSpan={COL_COUNT}
@@ -4406,6 +4463,13 @@ export function PortfolioMonitor() {
                             {grp.cashRuleMV > 0 && (
                               <>{" "}<span title={`${fmtFromBase(grp.cashRuleMV, { compact: true })} of this section is here by the family's instruction that arbitrage and liquid funds are cash — "arbitrage funds need not be classified into any other category except for cash". Their consolidated review (30 June 2026) files its arbitrage funds on its Debt tab, or does not name the holding at all; the instruction overrules it. Each arbitrage fund is identified by AMFI's own SEBI category against its ISIN, never by its name.`}>
                                 · {fmtFromBase(grp.cashRuleMV, { compact: true })} by the family&rsquo;s cash instruction
+                              </span></>
+                            )}
+                            {/* AND ROWS THE FAMILY MOVED HERE ON THE PAGE (Stage 10lm):
+                                their own word, newer than the review, said apart. */}
+                            {grp.movedNames.length > 0 && (
+                              <>{" "}<span title={`Moved to this tab on the dashboard: ${grp.movedNames.join(", ")}. Right-click a row to move it again or back.`}>
+                                · {grp.movedNames.length} moved here
                               </span></>
                             )}
                           </div>} />
@@ -4827,6 +4891,8 @@ export function PortfolioMonitor() {
                         data-tree-parent={expandable ? (isOpen ? "open" : "closed") : undefined}
                         {...(contributions > 0 ? { "data-tranche-rows": String(contributions) } : {})}
                         data-bucket={r.bucket}
+                        onContextMenu={(e) => openMoveMenu(e, r)}
+                        {...(r.groupSource === "moved" ? { "data-moved-from": statedGroupKeyFor(groupAxis as GroupAxis, accIdx, rowPositionsOf(r)[0]) } : {})}
                         {...(r.measuredNA ? { "data-derived-only": "" } : {})}
                         {...(r.securityKey ? { "data-security-key": r.securityKey } : {})}
                         {...(r.venues ? { "data-venues": String(r.venues.length) } : {})}
@@ -4869,7 +4935,7 @@ export function PortfolioMonitor() {
                         <TreeNameCell depth={0} density="dense" className="min-w-[16rem]"
                           open={isOpen} onToggle={expandable ? () => toggleRow(r.key) : undefined}
                           toggleLabel={toggleLabelFor(r, isOpen)}
-                          title={m ? (
+                          title={<>{m ? (
                             <>
                               {/* THE NAME OPENS THE STRATEGY'S ONE PAGE. Several
                                   accounts run one strategy — Aristos for Ajay and for
@@ -4926,6 +4992,13 @@ export function PortfolioMonitor() {
                               */}
                             </>
                           )}
+                          {/* A ROW THE FAMILY MOVED SAYS SO, and the hover says
+                              from where (Stage 10lm) — the tab heading counts it. */}
+                          {r.groupSource === "moved" && (
+                            <>{" "}<span className="ml-1 align-middle" data-moved-pill
+                              title={`Moved here from ${groupLabelFor(groupAxis)(statedGroupKeyFor(groupAxis as GroupAxis, accIdx, rowPositionsOf(r)[0]))} on this dashboard. Right-click the row to move it again or back.`}>
+                              <Pill>moved</Pill></span></>
+                          )}</>}
                           /* THE ONE THING THAT IS NOT A DETAIL STAYS, and only
                              when it is true: under a filter a mandate row's
                              figures cover PART of the mandate, and a reader who
