@@ -57,7 +57,7 @@ export function selectionMarket(current: readonly Position[], units: readonly Re
   const periodPct = value > 0 ? out.reduce((s, u) => s + u.position.marketValue * u.periodPct, 0) / value : null;
   // The dates measured, as on the cards: a holding held at its last value sets neither.
   const dated = out.filter((u) => u.from && u.to && !u.held);
-  const from = dated.map((u) => u.from).sort()[0] ?? start, to = dated.map((u) => u.to).sort().at(-1) ?? end;
+  const from = dated.map((u) => u.from).sort()[0] ?? null, to = dated.map((u) => u.to).sort().at(-1) ?? null;
   return { units: out, gaps, pending, pct: periodPct, periodPct, value, count: out.length, annual: false, days: 0, from, to,
     totalValue: current.reduce((s, p) => s + p.marketValue, 0) };
 }
@@ -71,5 +71,6 @@ export function selectionMarketOf(all: ReturnType<typeof selectionMarket>, ps: r
   const pct = value > 0 ? units.reduce((s, u) => s + u.position.marketValue * u.periodPct, 0) / value : null;
   const dated = units.filter((u) => u.from && u.to && !u.held);
   return { units, gaps, pct, periodPct: pct, value, count: units.length, annual: false, days: 0,
-    from: dated.map((u) => u.from).sort()[0] ?? all.from, to: dated.map((u) => u.to).sort().at(-1) ?? all.to };
+    // A row of holdings held at their last value measured no dates: none are claimed for it.
+    from: dated.map((u) => u.from).sort()[0] ?? null, to: dated.map((u) => u.to).sort().at(-1) ?? null };
 }

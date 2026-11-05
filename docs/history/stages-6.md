@@ -1226,4 +1226,4 @@ Codex's review of #352, verified against the code and the book:
 - **XIRR and CAGR** annualise a first-valued debt holding as they do a purchased one. Equities under a year stay absolute.
 - **Market performance:**
   - a period reports private holdings apart even when a measured account holds them (`selectionMarket(…, { inception })`);
-  - a holding held at its last value sets no row's dates (`MarketUnit.held`).
+  - a holding held at its last value sets no row's dates (`MarketUnit.held`), and a row, or a total, that measured no dates claims none: it no longer falls back to the portfolio's dates.

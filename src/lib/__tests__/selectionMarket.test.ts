@@ -73,6 +73,8 @@ const unit = (key: string, positions: Position[], w: AccountWindow | null, extra
   const row = selectionMarketOf(m, [b, h, priv]);
   assert.equal(row.count, 2); near(row.pct, (600 * 20) / 800, 1e-6); assert.equal(row.gaps.length, 1);
   assert.equal(row.from, '2026-04-15'); assert.equal(row.to, '2026-11-03');
+  const flat = selectionMarketOf(m, [h]);
+  assert.equal(flat.count, 1); assert.equal(flat.from, null); assert.equal(flat.to, null, 'a row held at its last value claims no other holdings’ dates');
   // A private holding inside a measured unit: apart on a period, counted Since investment.
   const pv = pos('acct2', 'unlisted', 100, { marketSide: 'private' }), pl = pos('acct2', 'listed', 100);
   const both = [unit('acct2', [pv, pl], win('acct2', '2026-03-31', 100, '2026-10-31', 200))];
