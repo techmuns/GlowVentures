@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { selectionMarket, selectionMarketOf, unitOwnReturn } from '../selectionMarket';
-import { investedThisYear, placeEveryHolding, type FirstValueUnit } from '../investedThisYear';
+import { marketGapExplanation } from '../marketReturnCoverage';
+import { heldBeforeYear, investedThisYear, placeEveryHolding, type FirstValueUnit } from '../investedThisYear';
 import type { ReturnGap, ReturnUnit } from '../selectedSegmentReturns';
 import type { AccountWindow } from '../periodReturns';
 import type { Position } from '../types';
@@ -69,34 +70,99 @@ const unit = (key: string, positions: Position[], w: AccountWindow | null, extra
   // The dates measured: a holding held at its last value sets neither.
   assert.equal(m.from, '2026-03-31'); assert.equal(m.to, '2026-11-03');
   assert.match(m.units.find((u) => u.position === h)!.source!, /held at its last value since 2026-02-01/);
-  // One row's figure is the same holdings' returns.
+  // One row's figure is the same holdings' returns; its dates, like the total's, skip the held one.
   const row = selectionMarketOf(m, [b, h, priv]);
   assert.equal(row.count, 2); near(row.pct, (600 * 20) / 800, 1e-6); assert.equal(row.gaps.length, 1);
+  assert.equal(row.from, '2026-04-15'); assert.equal(row.to, '2026-11-03');
+  const flat = selectionMarketOf(m, [h]);
+  assert.equal(flat.count, 1); assert.equal(flat.from, null); assert.equal(flat.to, null, 'a row held at its last value claims no other holdings’ dates');
+  // A private holding inside a measured unit: apart on a period, counted Since investment.
+  const pv = pos('acct2', 'unlisted', 100, { marketSide: 'private' }), pl = pos('acct2', 'listed', 100);
+  const both = [unit('acct2', [pv, pl], win('acct2', '2026-03-31', 100, '2026-10-31', 200))];
+  const period = selectionMarket([pv, pl], both, [], '2026-03-31', '2026-11-05');
+  assert.equal(period.count, 0, 'an account return that carries private investments is not the public holding’s own');
+  assert.equal(period.gaps.length, 2); assert.ok(period.gaps.every((g) => /private/i.test(g.reason)));
+  const mixedGap = period.gaps.find((g) => g.position === pl)!;
+  assert.equal(mixedGap.code, 'mixed');
+  assert.doesNotMatch(marketGapExplanation(mixedGap, '2026-03-31', '2026-11-05').needed, /price/i, 'prices would not make an account-wide return this holding’s own');
+  assert.equal(selectionMarket([pv, pl], both, [], '2026-03-31', '2026-11-05', { inception: true }).count, 2);
 }
 
-// INVESTED THIS YEAR: EVERY HOLDING PLACED FROM THE YEAR'S OWN SELECTION.
+// INVESTED THIS YEAR: EVERY HOLDING PLACED FROM THE YEAR'S OWN SELECTION, ON ITS OWN EVIDENCE.
 {
-  const bought = pos('d', 'bought', 110), before = pos('d', 'before', 200), firstMay = pos('acct', 'may', 300), firstMay2 = pos('acct', 'may2', 100);
+  const bought = pos('d', 'bought', 110), before = pos('d', 'before', 200, { quantity: 10 }), firstMay = pos('acct', 'may', 300), firstMay2 = pos('acct', 'may2', 100);
   const opened = pos('d', 'opened', 50), none = pos('d', 'none', 80), older = pos('d', 'older', 40);
+  const mixed = pos('pms', 'mixed', 70), sold = pos('pms2', 'sold', 60), atCost = pos('d', 'at-cost', 90, { valuedAtCost: true }), noValue = pos('d', 'no-value', 30);
+  const bond = pos('debt', 'bond', 105, { assetClass: 'Bond' });
   const included = [{ position: bought, lots: [{ date: '2026-05-02', quantity: 1, cost: 100 }], cost: 100, value: 110, gain: 10, first: '2026-05-02', last: '2026-05-02',
     valuedOn: '2026-11-03', periodPct: 10, pct: 10, annual: false, returnMissing: null }];
-  const result = { included, missing: [before, firstMay, firstMay2, opened, none].map((position) => ({ position, reason: 'We need purchase dates.' })), older: [older],
+  const purchases = (position: Position) => ({ position, need: 'purchases' as const, reason: 'We need purchase dates.' });
+  const result = { included, older: [older],
+    missing: [...[before, firstMay, firstMay2, opened, none, mixed, sold, atCost, bond].map(purchases),
+      { position: noValue, need: 'value' as const, reason: 'We need a dated market value after these purchases.' }],
     cost: 100, value: 110, gain: 10, pct: 10, periodPct: 10, weightValue: 110, annual: false };
   const units: FirstValueUnit[] = [
-    // A whole account first valued on 15 May: its holdings share its money by value.
-    { positions: [firstMay, firstMay2], from: '2026-05-15', to: '2026-10-31', invested: 360, close: 400, gain: 40, ownPct: 40 / 360 * 100 },
-    // A record that opens on the year's own opening value was held before the year.
-    { positions: [opened], from: '2026-03-31', to: '2026-10-31', invested: 45, close: 50, gain: 5, ownPct: 5 / 45 * 100 },
+    // A whole account first valued on 15 May at 300, 60 added on 1 Aug: its holdings share that money by value today.
+    { positions: [firstMay, firstMay2], from: '2026-05-15', to: '2026-10-31', invested: 360, close: 410, gain: 50, ownPct: 13,
+      openValue: 300, capitalIn: 60, capitalOut: 0, flows: [{ date: '2026-08-01', amount: -60 }] },
+    // A record that opens on the year's own opening value, nothing added: held before the year.
+    { positions: [opened], from: '2026-03-31', to: '2026-10-31', invested: 45, close: 50, gain: 5, ownPct: 5 / 45 * 100, openValue: 45, capitalIn: 0, capitalOut: 0 },
+    // Held before the year AND added to this year: this year's units cannot be told apart.
+    { positions: [mixed], from: '2026-03-31', to: '2026-10-31', invested: 65, close: 70, gain: 5, ownPct: 7, openValue: 40, capitalIn: 25, capitalOut: 0 },
+    // First valued this year, then money taken out: the units still held cannot be told from those sold.
+    { positions: [sold], from: '2026-06-30', to: '2026-10-31', invested: 80, close: 60, gain: 5, ownPct: 6, openValue: 80, capitalIn: 0, capitalOut: 26,
+      flows: [{ date: '2026-07-15', amount: 1, description: 'TDS on Payout' }, { date: '2026-09-01', amount: 25, description: 'Redemption (net paid)' }] },
+    // Verified purchases at cost, and a verified purchase with no value: they keep their own reasons.
+    { positions: [atCost], from: '2026-06-30', to: '2026-10-31', invested: 90, close: 90, gain: 0, ownPct: 0, openValue: 90 },
+    { positions: [noValue], from: '2026-06-30', to: '2026-10-31', invested: 30, close: 30, gain: 0, ownPct: 0, openValue: 30 },
+    // Debt first valued on 5 May at 100.
+    { positions: [bond], from: '2026-05-05', to: '2026-11-03', invested: 100, close: 105, gain: 5, ownPct: 5, openValue: 100, capitalIn: 0, capitalOut: 0 },
   ];
-  const r = placeEveryHolding(result as unknown as ReturnType<typeof investedThisYear>, units, '2026-03-31', (p) => p === before);
+  const quantities = [{ accountId: 'd', securityKey: 'before', asOf: '2026-03-31', quantity: 10 }];
+  // An account opened inside the year opens at nil on 31 March; its first money in, on 10 June, is its start.
+  const fresh = pos('new', 'fresh', 55);
+  result.missing.push(purchases(fresh));
+  units.push({ positions: [fresh], from: '2026-03-31', to: '2026-10-31', invested: 50, close: 55, gain: 5, ownPct: 10, openValue: 0, capitalIn: 50, capitalOut: 0,
+    openedInWindow: true, flows: [{ date: '2026-06-10', amount: -50 }] });
+  // A first-valued share that paid a dividend still holds its units; one valued only before its first value has no close.
+  const paid = pos('d', 'paid', 120), stale = pos('d', 'stale', 50);
+  result.missing.push(purchases(paid), purchases(stale));
+  units.push({ positions: [paid], from: '2026-06-30', to: '2026-11-03', invested: 100, close: 120, gain: 22, ownPct: 22, openValue: 100, capitalIn: 0, capitalOut: 2,
+    flows: [{ date: '2026-08-01', amount: 2, description: 'Gross dividend entitlement' }, { date: '2026-08-02', amount: 1, description: 'TDS on Payout' },
+      { date: '2026-08-03', amount: 1, description: 'TDS Trf to Capital A/c' }] },
+    { positions: [stale], from: '2026-07-01', to: '2026-06-30', invested: 40, close: 50, gain: 10, ownPct: 25, openValue: 40, capitalIn: 0, capitalOut: 0 });
+  const place = (type: 'absolute' | 'xirr' | 'cagr') => placeEveryHolding(result as unknown as ReturnType<typeof investedThisYear>, units, '2026-03-31',
+    (p) => heldBeforeYear(p, '2026-03-31', quantities, {}), { type });
+  const r = place('absolute');
   assert.deepEqual(r.older.map((p) => p.securityKey).sort(), ['before', 'older', 'opened']);
-  assert.deepEqual(r.missing.map((g) => g.position.securityKey), ['none'], 'only what no record values stays named');
-  assert.equal(r.firstValued.length, 2);
+  assert.deepEqual(r.missing.map((g) => g.position.securityKey).sort(), ['at-cost', 'mixed', 'no-value', 'none', 'sold', 'stale'], 'what no record separates stays named, with its reason');
+  assert.ok(r.firstValued.some((x) => x.position === paid), 'a dividend is not a sale');
+  const freshRow = r.firstValued.find((x) => x.position === fresh);
+  assert.ok(freshRow, 'an account opened this year is this year’s money, not an older holding added to');
+  assert.equal(freshRow!.first, '2026-06-10'); near(freshRow!.cost, 50); near(freshRow!.value, 55);
+  assert.match(r.missing.find((g) => g.position === stale)!.reason, /on or after its first value/);
+  assert.match(r.missing.find((g) => g.position === mixed)!.reason, /money added this year/);
+  assert.match(r.missing.find((g) => g.position === sold)!.reason, /taken out/);
+  assert.match(r.missing.find((g) => g.position === noValue)!.reason, /market value/, 'a missing value keeps its reason');
+  assert.equal(r.firstValued.length, 5);
   const may = r.firstValued.find((x) => x.position === firstMay)!;
-  assert.equal(may.first, '2026-05-15'); near(may.cost, 360 * 300 / 400); near(may.gain, 40 * 300 / 400); near(may.pct!, 40 / 360 * 100);
-  assert.equal(r.included.length + r.missing.length + r.older.length, 7, 'every holding placed once');
-  near(r.cost, 100 + 360); near(r.gain, 10 + 40); near(r.value, 110 + 400);
-  near(r.pct!, (110 * 10 + 400 * (40 / 360 * 100)) / 510, 1e-9);
+  // Its value is the record's own close on its own date, never a later quote over money it has not seen.
+  assert.equal(may.first, '2026-05-15'); near(may.cost, 360 * 300 / 400); near(may.value, 410 * 300 / 400); assert.equal(may.valuedOn, '2026-10-31');
+  near(may.gain, may.value - may.cost, 1e-9); near(may.pct!, (may.value / may.cost - 1) * 100, 1e-9);
+  for (const x of r.included) near(x.gain, x.value - x.cost, 1e-9);
+  near(r.gain, r.value - r.cost, 1e-9); near(r.cost, 100 + 360 + 100 + 100 + 50); near(r.value, 110 + 410 + 105 + 120 + 55);
+  assert.equal(r.included.length + r.missing.length + r.older.length, 15, 'every holding placed once');
+  // An older balance of OTHER units than held now, or a trade since, is no proof the holding predates the year.
+  assert.equal(heldBeforeYear(before, '2026-03-31', [{ ...quantities[0], quantity: 6 }], {}), false);
+  assert.equal(heldBeforeYear(before, '2026-03-31', quantities, { 'd|before': [{ date: '2026-06-01' }] }), false);
+  assert.equal(heldBeforeYear(before, '2026-03-30', quantities, {}), false);
+  // XIRR: equities under a year stay absolute; first-valued debt is annualised as purchased debt is.
+  const x = place('xirr');
+  const xb = x.firstValued.find((y) => y.position === bond)!, xm = x.firstValued.find((y) => y.position === firstMay)!;
+  assert.equal(xm.annual, false); near(xm.pct!, may.pct!, 1e-9);
+  assert.equal(xb.annual, true); assert.ok(xb.pct! > 5, `${xb.pct}: a yearly rate above the 5% over six months`);
+  const c = place('cagr').firstValued.find((y) => y.position === bond)!;
+  near(c.pct!, (Math.pow(105 / 100, 365 / 182) - 1) * 100, 1e-6);
 }
 
 console.log('selection market: every holding its own return weighted by value, loading vs failed vs private gaps, row figures, and every holding placed this year passed.');

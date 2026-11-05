@@ -38,16 +38,39 @@ const open = async (serveHistory) => {
 };
 try {
   // ── THE CARD'S OWN LINE (Stage 10la): its last point is the return card ──
-  const near = (a, b) => Math.abs(Number(a) - Number(b)) < 1e-8;
+  const near = (a, b) => a != null && b != null && a !== '' && b !== '' && Number.isFinite(Number(a)) && Number.isFinite(Number(b)) && Math.abs(Number(a) - Number(b)) < 1e-8;
   const cardOf = (slot) => page.locator(`[data-tile-slot="${slot}"] [data-card-coverage]`);
+  // Histories arrive one by one and the chip and the card each redraw as they do, so
+  // two reads can straddle a redraw. Read all four figures in one snapshot, and use it
+  // once it matches and holds still for a second; a line that never meets its card
+  // still fails the assertions below, with both values printed.
+  const snapshot = (slot, attr) => page.evaluate(({ slot, attr }) => {
+    const c = document.querySelector('[data-testid="nav-book-chip"]'), k = document.querySelector(`[data-tile-slot="${slot}"] [data-card-coverage]`);
+    return { line: c?.getAttribute(attr) ?? null, card: k?.getAttribute('data-card-return') ?? null,
+      lineGain: c?.getAttribute('data-nav-card-gain') ?? null, cardGain: k?.getAttribute('data-card-gain') ?? null };
+  }, { slot, attr });
+  const sameGain = (a, b) => a != null && b != null && a !== '' && b !== '' && Number.isFinite(Number(a)) && Number.isFinite(Number(b)) && Math.abs(Number(a) - Number(b)) < 1e-3;
+  const settled = async (slot, attr = 'data-nav-ret', gain = false) => {
+    await page.waitForLoadState('networkidle').catch(() => {});
+    let last = null, s = null;
+    for (let i = 0; i < 60; i++) {
+      s = await snapshot(slot, attr);
+      const ok = near(s.line, s.card) && (!gain || sameGain(s.lineGain, s.cardGain));
+      if (ok && last && JSON.stringify(last) === JSON.stringify(s)) return s;
+      last = ok ? s : null;
+      await page.waitForTimeout(1000);
+    }
+    return s;
+  };
   const priced = await open(true);
   const chip = page.locator('[data-testid="nav-book-chip"]');
   // Once the histories are in, the financial-year card values the demats' shares at published closes.
   await page.waitForFunction(() => Number(document.querySelector('[data-testid="nav-book-chip"]')?.getAttribute('data-nav-assumed-count')) > 0, null, { timeout: 120000 });
+  const fy = await settled('fytd', 'data-nav-ret', true);
   const count = Number(await chip.getAttribute('data-nav-assumed-count'));
   assert.equal(await chip.getAttribute('data-nav-period'), 'fytd', 'the line opens on the financial year');
-  assert.ok(near(await chip.getAttribute('data-nav-ret'), await cardOf('fytd').getAttribute('data-card-return')), 'the line ends on the financial-year card');
-  assert.ok(near(await chip.getAttribute('data-nav-card-gain'), await cardOf('fytd').getAttribute('data-card-gain')));
+  assert.ok(near(fy.line, fy.card), `the line ends on the financial-year card: ${JSON.stringify(fy)}`);
+  assert.ok(sameGain(fy.lineGain, fy.cardGain), `the line's gain is the card's: ${JSON.stringify(fy)}`);
   const hover = await chip.getAttribute('title');
   assert.match(hover, /the card's own figure on every day/);
   assert.match(hover, /No sale appears in the records we have\. We assume .+ still hold these shares\./);
@@ -58,18 +81,20 @@ try {
   // The calendar year: the same, on its own card.
   await page.locator('[data-start="ytd"]').click();
   await page.waitForFunction(() => document.querySelector('[data-testid="nav-book-chip"]')?.getAttribute('data-nav-period') === 'ytd');
-  assert.ok(near(await chip.getAttribute('data-nav-ret'), await cardOf('ytd').getAttribute('data-card-return')), 'the line ends on the calendar-year card');
+  const cy = await settled('ytd');
+  assert.ok(near(cy.line, cy.card), `the line ends on the calendar-year card: ${JSON.stringify(cy)}`);
   // The available history: the chip carries the card's own figure (a rate a year past one year).
   await page.locator('[data-start="history"]').click();
   await page.waitForFunction(() => document.querySelector('[data-testid="nav-book-chip"]')?.getAttribute('data-nav-period') === 'history');
-  assert.ok(near(await chip.getAttribute('data-nav-card-return'), await cardOf('annualised').getAttribute('data-card-return')), 'the line is the available-history card');
+  const hi = await settled('annualised', 'data-nav-card-return');
+  assert.ok(near(hi.line, hi.card), `the line is the available-history card: ${JSON.stringify(hi)}`);
   assert.deepEqual(priced.errors, []);
   await priced.context.close();
 
   // ── Without them: still the card's figure, and what waits for prices is named ──
   const unpriced = await open(false);
-  await page.waitForTimeout(3000);
-  assert.ok(near(await page.locator('[data-testid="nav-book-chip"]').getAttribute('data-nav-ret'), await cardOf('fytd').getAttribute('data-card-return')));
+  const un = await settled('fytd');
+  assert.ok(near(un.line, un.card), `without prices the line still ends on the card: ${JSON.stringify(un)}`);
   assert.match(await page.locator('[data-testid="nav-book-chip"]').getAttribute('title'), /waiting for prices/);
   assert.deepEqual(unpriced.errors, []);
   await unpriced.context.close();

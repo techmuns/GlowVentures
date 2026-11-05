@@ -25,6 +25,8 @@ export function marketGapExplanation(g: MarketGap, start: string | null, end: st
       : `A published ${noun} on or within seven days before the start date.` };
     case 'end': return { missing: `Ending ${noun} is missing${at(end)}.`, needed: `A published ${noun} on or within seven days before the end date.${g.last ? ` Latest available: ${fmtDate(g.last)}.` : ''}` };
     case 'shared': return { missing: `A ${noun} is missing${g.dates?.length ? ` on ${g.dates.map(fmtDate).join(' and ')}` : ' on the shared calculation dates'}.`, needed: `The ${noun} on those dates, so this holding uses the same period as the others.` };
+    // Stage 10lh: an account-wide return that also carries private investments is not this holding's own.
+    case 'mixed': return { missing: 'This holding’s own return is not on record: its account’s return also includes private investments, which a period reports apart.', needed: 'A return for this holding on its own over the period: its dated trades, or a statement value at both ends.' };
     case 'source': {
       if (/HTTP 404/i.test(g.reason)) return { missing: 'The price source has no history for this listing.', needed: 'A price history for this exact stock or fund over the selected period.' };
       if (/did not match|not match|verified.*(symbol|fund)|ISIN/i.test(g.reason)) return { missing: 'The price source could not confirm this investment’s identity.', needed: 'Check its exact exchange symbol, or fund scheme code and ISIN.' };
