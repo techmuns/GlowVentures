@@ -114,6 +114,11 @@ const unit = (key: string, positions: Position[], w: AccountWindow | null, extra
     { positions: [bond], from: '2026-05-05', to: '2026-11-03', invested: 100, close: 105, gain: 5, ownPct: 5, openValue: 100, capitalIn: 0, capitalOut: 0 },
   ];
   const quantities = [{ accountId: 'd', securityKey: 'before', asOf: '2026-03-31', quantity: 10 }];
+  // An account opened inside the year opens at nil on 31 March; its first money in, on 10 June, is its start.
+  const fresh = pos('new', 'fresh', 55);
+  result.missing.push(purchases(fresh));
+  units.push({ positions: [fresh], from: '2026-03-31', to: '2026-10-31', invested: 50, close: 55, gain: 5, ownPct: 10, openValue: 0, capitalIn: 50, capitalOut: 0,
+    openedInWindow: true, flows: [{ date: '2026-06-10', amount: -50 }] });
   // A first-valued share that paid a dividend still holds its units; one valued only before its first value has no close.
   const paid = pos('d', 'paid', 120), stale = pos('d', 'stale', 50);
   result.missing.push(purchases(paid), purchases(stale));
@@ -126,18 +131,21 @@ const unit = (key: string, positions: Position[], w: AccountWindow | null, extra
   assert.deepEqual(r.older.map((p) => p.securityKey).sort(), ['before', 'older', 'opened']);
   assert.deepEqual(r.missing.map((g) => g.position.securityKey).sort(), ['at-cost', 'mixed', 'no-value', 'none', 'sold', 'stale'], 'what no record separates stays named, with its reason');
   assert.ok(r.firstValued.some((x) => x.position === paid), 'a dividend is not a sale');
+  const freshRow = r.firstValued.find((x) => x.position === fresh);
+  assert.ok(freshRow, 'an account opened this year is this year’s money, not an older holding added to');
+  assert.equal(freshRow!.first, '2026-06-10'); near(freshRow!.cost, 50); near(freshRow!.value, 55);
   assert.match(r.missing.find((g) => g.position === stale)!.reason, /on or after its first value/);
   assert.match(r.missing.find((g) => g.position === mixed)!.reason, /money added this year/);
   assert.match(r.missing.find((g) => g.position === sold)!.reason, /taken out/);
   assert.match(r.missing.find((g) => g.position === noValue)!.reason, /market value/, 'a missing value keeps its reason');
-  assert.equal(r.firstValued.length, 4);
+  assert.equal(r.firstValued.length, 5);
   const may = r.firstValued.find((x) => x.position === firstMay)!;
   // Its value is the record's own close on its own date, never a later quote over money it has not seen.
   assert.equal(may.first, '2026-05-15'); near(may.cost, 360 * 300 / 400); near(may.value, 410 * 300 / 400); assert.equal(may.valuedOn, '2026-10-31');
   near(may.gain, may.value - may.cost, 1e-9); near(may.pct!, (may.value / may.cost - 1) * 100, 1e-9);
   for (const x of r.included) near(x.gain, x.value - x.cost, 1e-9);
-  near(r.gain, r.value - r.cost, 1e-9); near(r.cost, 100 + 360 + 100 + 100); near(r.value, 110 + 410 + 105 + 120);
-  assert.equal(r.included.length + r.missing.length + r.older.length, 14, 'every holding placed once');
+  near(r.gain, r.value - r.cost, 1e-9); near(r.cost, 100 + 360 + 100 + 100 + 50); near(r.value, 110 + 410 + 105 + 120 + 55);
+  assert.equal(r.included.length + r.missing.length + r.older.length, 15, 'every holding placed once');
   // An older balance of OTHER units than held now, or a trade since, is no proof the holding predates the year.
   assert.equal(heldBeforeYear(before, '2026-03-31', [{ ...quantities[0], quantity: 6 }], {}), false);
   assert.equal(heldBeforeYear(before, '2026-03-31', quantities, { 'd|before': [{ date: '2026-06-01' }] }), false);

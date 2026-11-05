@@ -131,10 +131,18 @@ export default function SegmentReturns({ selection: recordedSelection, period, o
     const pending = ps.filter(p => { const i = marketFeed.instruments.get(p.securityKey); return p.marketValue > 0 && i && !marketFeed.histories[i.key]; }).length;
     return { ...m, pending };
   };
-  const marketInfo = (label: string, ps: readonly typeof current[number][]) => {
+  const marketInfo = (label: string, all: readonly typeof current[number][]) => {
+    // A period reports private investments apart (Stage 10lh): its details list the public holdings,
+    // as the face's denominator does, and name the rest. A row of private holdings alone still lists them.
+    // A holding with no positive value today carries no weight, and is not counted on the face either.
+    const apartOn = !selection.inception && !all.every(p => p.marketSide === 'private');
+    const apart = apartOn ? all.filter(p => p.marketSide === 'private' && p.marketValue > 0) : [];
+    const weighted = all.filter(p => p.marketValue > 0 && !(apartOn && p.marketSide === 'private'));
+    const ps = weighted.length ? weighted : all;
     const m = marketOf(ps);
     return <MarketReturnInfo label={label} value={m.pct == null ? '—' : pct(m.pct)} units={m.units} gaps={m.gaps} positions={ps} accounts={statementPortfolio?.accounts ?? []}
-      totalValue={ps.reduce((s, p) => s + p.marketValue, 0)} from={m.from} to={m.to} annual={m.annual} pending={m.pending} requestedStart={selection.start} requestedEnd={selection.end} onRetry={marketFeed.retry} inception={selection.inception} money={money} />;
+      totalValue={ps.reduce((s, p) => s + p.marketValue, 0)} from={m.from} to={m.to} annual={m.annual} pending={m.pending} requestedStart={selection.start} requestedEnd={selection.end} onRetry={marketFeed.retry} inception={selection.inception} money={money}
+      privateApart={apart.length ? { count: apart.length, value: apart.reduce((s, p) => s + p.marketValue, 0) } : undefined} />;
   };
   const type = RETURN_TYPES.find(t => t.key === selection.type)!;
   const periodLabel = PERIODS.find(p => p.key === period)!.label;

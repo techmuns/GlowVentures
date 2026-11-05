@@ -38,7 +38,7 @@ export default function InvestedThisYearReturns({start,end,type}:{start:string;e
     const recorded=dedupedPositions(statementPortfolio.positions);
     return selectedSegmentReturns(fyCurrent,exitedRows(recorded),statementPortfolio.accounts,'category',fy,()=>null,currentHoldings(recorded)).total.units
       .map(u=>({positions:u.positions,from:u.from,to:u.to,invested:u.invested,close:u.close,gain:u.gain,held:u.held,ownPct:unitOwnReturn(u),
-        openValue:u.window?.openValue,capitalIn:u.window?.capitalIn,capitalOut:u.window?.capitalOut,flows:u.window?.flows}));
+        openValue:u.window?.openValue,capitalIn:u.window?.capitalIn,capitalOut:u.window?.capitalOut,flows:u.window?.flows,openedInWindow:u.window?.openedInWindow}));
   },[fy,fyCurrent,statementPortfolio]);
   const result=useMemo(()=>{
     return placeEveryHolding(investedThisYear(positions,accounts,sources,start,end,type,Date.now()),fyUnits,fyOpen,

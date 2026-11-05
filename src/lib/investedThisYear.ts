@@ -140,7 +140,9 @@ export function investedThisYear(positions: readonly Position[], accounts: reado
 export type FirstValueUnit = { positions: readonly Position[]; from: string | null; to: string | null; invested: number; close: number;
   gain: number; held?: { date: string }; ownPct: number | null;
   /** The record's own window, where it has one: its opening value and the money it moved. */
-  openValue?: number; capitalIn?: number; capitalOut?: number; flows?: readonly { date: string; amount: number; description?: string }[] };
+  openValue?: number; capitalIn?: number; capitalOut?: number; flows?: readonly { date: string; amount: number; description?: string }[];
+  /** Opened inside the window at nil: its first money in is its first value. */
+  openedInWindow?: boolean };
 
 /** The same units on an older statement on or before `open`, with no trade since. */
 export function heldBeforeYear(p: Position, open: string, balances: readonly { accountId: string; securityKey: string; asOf: string; quantity: number }[],
@@ -160,7 +162,10 @@ export function placeEveryHolding<R extends globalThis.ReturnType<typeof investe
     // Only a holding missing its purchases is placed; a missing value keeps its reason.
     if (g.need !== 'purchases' || p.valuedAtCost) { missing.push(g); continue; }
     if (heldBefore(p)) { older.push(p); continue; }
-    const firstOn = u ? (u.held ? u.held.date : u.from) : null;
+    // An account opened inside the year opens at nil on the year's first day; its first money in is its start.
+    const opened = !!u?.openedInWindow && !((u.openValue ?? 0) > 0);
+    const firstIn = opened ? (u!.flows ?? []).filter((f) => f.amount < 0).map((f) => f.date).sort()[0] : undefined;
+    const firstOn = u ? (u.held ? u.held.date : opened ? firstIn ?? null : u.from) : null;
     if (!u || !firstOn) { missing.push(g); continue; }
     if (firstOn <= fyOpen) {
       if ((u.capitalIn ?? 0) > 0) missing.push({ position: p, need: 'purchases', reason: 'Held before this year, with money added this year too. We need the purchase dates, units and costs to separate this year’s units from older units.' });
@@ -190,7 +195,7 @@ export function placeEveryHolding<R extends globalThis.ReturnType<typeof investe
     // Under a year the purchase-to-value return stands; only debt is annualised (Stage 10hk).
     if (type !== 'absolute' && mayAnnualise(days, isDebtHolding(p)) && days > 0) {
       if (type === 'xirr') {
-        const opening = u.openValue != null ? u.openValue * share : cost - sum(inflows, (f) => -f.amount * share);
+        const opening = u.openValue != null && !opened ? u.openValue * share : cost - sum(inflows, (f) => -f.amount * share);
         const r = xirr([{ date: new Date(`${firstOn}T00:00:00Z`), amount: -opening },
           ...inflows.map((f) => ({ date: new Date(`${f.date}T00:00:00Z`), amount: f.amount * share })),
           { date: new Date(`${on}T00:00:00Z`), amount: value }]);

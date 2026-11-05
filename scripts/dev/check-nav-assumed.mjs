@@ -38,14 +38,16 @@ const open = async (serveHistory) => {
 };
 try {
   // ── THE CARD'S OWN LINE (Stage 10la): its last point is the return card ──
-  const near = (a, b) => Math.abs(Number(a) - Number(b)) < 1e-8;
+  const near = (a, b) => a != null && b != null && a !== '' && b !== '' && Number.isFinite(Number(a)) && Number.isFinite(Number(b)) && Math.abs(Number(a) - Number(b)) < 1e-8;
   const cardOf = (slot) => page.locator(`[data-tile-slot="${slot}"] [data-card-coverage]`);
   // Histories arrive one by one and the chip and the card each redraw as they do:
   // compare them once both have taken the same histories in, never mid-arrival.
   // A line that never meets its card still fails the assertion that follows.
   const settled = (slot, attr = 'data-nav-ret') => page.waitForFunction(({ slot, attr }) => {
     const c = document.querySelector('[data-testid="nav-book-chip"]'), k = document.querySelector(`[data-tile-slot="${slot}"] [data-card-coverage]`);
-    return !!c && !!k && Math.abs(Number(c.getAttribute(attr)) - Number(k.getAttribute('data-card-return'))) < 1e-8;
+    const a = c?.getAttribute(attr), b = k?.getAttribute('data-card-return');
+    // Both figures must be on the page: two missing attributes are not two equal returns.
+    return a != null && b != null && a !== '' && b !== '' && Number.isFinite(Number(a)) && Number.isFinite(Number(b)) && Math.abs(Number(a) - Number(b)) < 1e-8;
   }, { slot, attr }, { timeout: 60000 }).catch(() => {});
   const priced = await open(true);
   const chip = page.locator('[data-testid="nav-book-chip"]');

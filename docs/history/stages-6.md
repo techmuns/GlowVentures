@@ -1227,6 +1227,9 @@ Codex's review of #352, verified against the code and the book:
 - **Only a sale or withdrawal counts as money taken out.** A dividend or other income paid out leaves the units held, so the holding is still placed.
 - **A value dated before the first value is no closing value.** That holding stays to check.
 - **"Held before" rests on the family's assumed-continued-ownership rule** (22 Oct): a dated balance that no later recorded trade contradicts.
+- **An account opened inside the year starts on its first money in.** It used to open at nil on 31 March and was then read as "held before, with money added".
 - **Market performance:**
   - a period reports private holdings apart even when a measured account holds them (`selectionMarket(…, { inception })`). That account's public holdings are left unmeasured too, since its return carries the private ones;
   - a holding held at its last value sets no row's dates (`MarketUnit.held`), and a row, or a total, that measured no dates claims none: it no longer falls back to the portfolio's dates.
+  - on a period, its details list the public holdings with value, as the face's denominator does. The private investments reported apart are named in the Overview, with their count and value, and are out of the lists and totals. A row of private holdings alone still lists them.
+- `check-nav-assumed` waits for the line and its card to agree before comparing them, and a missing attribute fails rather than reading as 0.
