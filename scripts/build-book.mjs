@@ -24,6 +24,7 @@ import { resolveSector, UNCLASSIFIED } from "../shared/sectors.mjs";
 import { securityKeyOf } from "../shared/securityKey.mjs";
 import { marketSideOf, readAifCategory, readsAsPrivateEquity, fundMarketSideBasis } from "../shared/aifCategory.mjs";
 import { fifoForClass, fifoReturnPct, fifoFromCashFlows } from "../shared/fifo.mjs";
+import { isCashIncomeKind } from "../shared/incomeKind.mjs";
 import { lotGroupsOf, daySalesOf, settleSales, settledSecurityOf } from "../shared/lotSettlement.mjs";
 import { sourceFor } from "./ingest/precedence.mjs";
 import { AIF_UNITS, PROVIDER as CDSL_DEMAT_PROVIDER } from "./ingest/providers/motilalDemat.mjs";
@@ -3251,7 +3252,10 @@ function build(archived, archiveCount = archived.length, references = {}) {
     // holding's income. On this book neither folio carries a position, so the
     // income reaches nothing — which is right: 360 ONE Private Wealth's review
     // line counts the same payout (`measuredFromRows`).
-    const CASH_KIND = /^(dividend|distribution)$/i;
+    //
+    // WHICH KINDS ARE CASH is `shared/incomeKind.mjs`, read by the ledger's
+    // Transactions rows too: interest and a coupon are income the day a
+    // statement prints them, never a non-cash action (Stage 10lt).
     const LETTER_KIND = /^distribution$/i;
     const cashSeen = new Set();
     const dividendByKey = new Map();
@@ -3281,7 +3285,11 @@ function build(archived, archiveCount = archived.length, references = {}) {
     // the holding's dated money must count the same dividends.
     const addIncome = (key, amount, from, dated = [{ date: null, amount }]) => {
       dividendByKey.set(key, r2((dividendByKey.get(key) ?? 0) + amount));
-      datedIncomeByKey.set(key, [...(datedIncomeByKey.get(key) ?? []), ...dated.map((d) => ({ date: d.date ?? null, amount: r2(d.amount) }))]);
+      // `via` and `earnedOn` ride along only where set: "unit-record" names a
+      // payment read off the fund's own unit record, which no income statement
+      // lists, so the Transactions sheet adds it as its own row (Stage 10lt).
+      datedIncomeByKey.set(key, [...(datedIncomeByKey.get(key) ?? []), ...dated.map((d) => ({ date: d.date ?? null, amount: r2(d.amount),
+        ...(d.via ? { via: d.via } : {}), ...(d.earnedOn ? { earnedOn: d.earnedOn } : {}) }))]);
       const was = dividendFromByKey.get(key);
       dividendFromByKey.set(key, was === undefined ? from ?? null
         : was === null || !from ? null : from < was ? from : was);
@@ -3321,7 +3329,7 @@ function build(archived, archiveCount = archived.length, references = {}) {
     for (const d of ordered) {
       for (const ev of d.income ?? []) {
         if (!ev.securityKey) continue;
-        const isCash = CASH_KIND.test(ev.kind ?? "");
+        const isCash = isCashIncomeKind(ev.kind);
         if (LETTER_KIND.test(ev.kind ?? "")) {
           corporateActions.push({
             security: ev.security, securityKey: ev.securityKey, accountId, kind: ev.kind, exDate: ev.exDate,
@@ -3402,7 +3410,7 @@ function build(archived, archiveCount = archived.length, references = {}) {
       const same = cashCounted.findIndex((e) => e.securityKey === c.securityKey && e.dates.includes(c.date)
         && (Math.abs((e.net ?? NaN) - c.amount) <= 0.01 || Math.abs(e.gross - gross) <= 0.01));
       if (same >= 0) { cashCounted.splice(same, 1); countedTwice += 1; continue; }
-      addIncome(c.securityKey, gross, recordFrom(c), [{ date: c.date ?? null, amount: gross }]);
+      addIncome(c.securityKey, gross, recordFrom(c), [{ date: c.date ?? null, amount: gross, via: "unit-record" }]);
     }
     /**
      * A GAIN DISTRIBUTION REINVESTED INTO AN ALLOTMENT IS INCOME TOO (Stage 10fz).
@@ -3419,7 +3427,7 @@ function build(archived, archiveCount = archived.length, references = {}) {
       if (c.kind !== "contribution" || !c.securityKey || !isNum(c.amount) || !isNum(c.netAmount) || isNum(c.expenses)) continue;
       if (!(c.netAmount > c.amount) || !/Gain Distr[^;]*reinvested/i.test(c.notes ?? "")) continue;
       if (asOf && c.date && c.date > asOf) { lateFundIncome += 1; continue; }
-      addIncome(c.securityKey, r2(c.netAmount - c.amount), recordFrom(c), [{ date: c.date ?? null, amount: r2(c.netAmount - c.amount) }]);
+      addIncome(c.securityKey, r2(c.netAmount - c.amount), recordFrom(c), [{ date: c.date ?? null, amount: r2(c.netAmount - c.amount), via: "unit-record" }]);
     }
     /**
      * INCOME FOLLOWS A WHOLE-CLASS SWITCH (Stage 10fz). Buoyant's Gain Distr. was
@@ -3452,7 +3460,8 @@ function build(archived, archiveCount = archived.length, references = {}) {
         if (to === key || !heldNow.has(to)) continue;
         const amount = dividendByKey.get(key);
         const from = dividendFromByKey.get(key) ?? null;
-        const datedHere = datedIncomeByKey.get(key) ?? [{ date: null, amount }];
+        // Each payment keeps the class it was EARNED on, for the Transactions row that lists it.
+        const datedHere = (datedIncomeByKey.get(key) ?? [{ date: null, amount }]).map((d) => ({ ...d, earnedOn: d.earnedOn ?? key }));
         dividendByKey.delete(key);
         dividendFromByKey.delete(key);
         datedIncomeByKey.delete(key);
@@ -5046,7 +5055,8 @@ function build(archived, archiveCount = archived.length, references = {}) {
     notes.push(`market side: ${declared.length} holding(s) take a SEBI category the FAMILY declared, because no `
       + `statement for them prints one${declared.length ? ` — ${[...new Set(declared.map((p) => p.security))].sort().join("; ")}` : ""}. `
       + "A declaration only ever fills a category the statements leave empty and never overrides one they print; "
-      + "which side of the book each sits on is the family's own placing, noted above.");
+      + "which side of the book each sits on is the family's own placing where they gave one (noted above), "
+      + "and otherwise the side its category gives.");
     /**
      * THE PE OVERRIDE, NAMED. A fund whose own name says private equity or
      * venture is private whatever category it prints, and Transition Venture's
@@ -5600,7 +5610,7 @@ function emit(book) {
   L.push(" * where the statement prints neither. What a money-weighted return over the");
   L.push(" * holding's own dated trades adds on each day.");
   L.push(" */");
-  L.push(`export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: number }[]> = ${j(book.holdingIncome)};`);
+  L.push(`export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: number; via?: "unit-record"; earnedOn?: string }[]> = ${j(book.holdingIncome)};`);
   L.push("");
   L.push("/**");
   L.push(" * THE LOTS A LOT REGISTER DATES A HOLDING BY (Stage 10fw), keyed as");

@@ -377,16 +377,21 @@ console.log("── a fund with no capital account ──");
   ok("this book has a private fund with no capital account", bare.length > 0);
   for (const f of bare) {
     const gap = dated.get(f.securityKey)!.gap!;
+    // A FUND WITH NO COST AT ALL (Vantage Oak, Stage 10lb) has no capital for
+    // any measure, so where the missing cost is what stops one, it is named.
+    const noCost = f.cost == null;
     for (const m of ["cagr", "xirr", "ytd"] as const) {
       const r = resolve(f.securityKey, m);
-      ok(`${f.security.slice(0, 28)} ${m}: refused, naming the gap`, !r.shown && r.reason.includes(gap), r.shown ? `${r.tag} ${r.pct}` : r.reason);
+      ok(`${f.security.slice(0, 28)} ${m}: refused, naming the gap`,
+        !r.shown && (r.reason.includes(gap) || (noCost && /no cost is reported/.test(r.reason))), r.shown ? `${r.tag} ${r.pct}` : r.reason);
     }
     const a = resolve(f.securityKey, "auto");
     // A FUND HELD AT COST (Stage 10dh) has no gain at all, so even the HPR is
-    // refused — with the at-cost reason, never a computed 0%.
+    // refused — with the at-cost reason, never a computed 0%. So is one with no cost.
     const atCost = gap === AT_COST_RETURN || /held at cost/.test(gap);
-    ok(`${f.security.slice(0, 28)} auto: ${atCost ? "held at cost, refused and says why" : "falls back to HPR and says why"}`,
+    ok(`${f.security.slice(0, 28)} auto: ${atCost ? "held at cost, refused and says why" : noCost ? "no cost, refused and says why" : "falls back to HPR and says why"}`,
       atCost ? !a.shown && /held at cost/.test(a.reason)
+        : noCost ? !a.shown && /no cost is reported/.test(a.reason)
         : a.shown && a.tag === "HPR" && /cannot be annualised or money-weighted/.test(a.note ?? ""), a.shown ? a.note : a.reason);
   }
 }

@@ -61,7 +61,8 @@ const noCost = selectedSegmentReturns([position],[],[account],'security',{...sel
 assert.equal(noCost.total.gain,null,'a holding assumption never invents the original purchase cost');
 const cards = availableCardReturns({accounts:[account],positions:[position],privateMarkets:{}} as Portfolio,[position],[],new Date(2026,9,22),splitBook);
 near(cards.fytd.total.gain,1460); assert.equal(cards.fytd.total.units[0].assumption?.owner,'Test owner');
-assert.equal(cards.gain.total.gain,null);
+// Since investment it counts from its first value on record, named so — never an invented purchase cost (Stage 10la).
+assert.ok(cards.gain.total.units.length>0 && cards.gain.total.units.every(u=>u.sinceFirst||u.held)); assert.equal(cards.gain.gainCoverage.sinceInvestmentValue,0);
 const fund = {...position,assetClass:'Mutual Fund',security:'Example Growth',symbol:undefined} as Position;
 const fundBook = {...b,positions:[fund],actions:null,histories:{example:{...h,basis:'nav' as const,name:'Example Direct Growth',isin:fund.isin!}}};
 assert.equal(assumedHoldingReturns([fund],[account],'2026-09-01','2026-10-22',fundBook).units.length,1,'growth NAVs do not depend on equity events');

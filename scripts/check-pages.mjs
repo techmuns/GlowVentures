@@ -3961,7 +3961,20 @@ const PM_RETURN_BOOK = (() => {
       : null;
     /** The funds held at cost — a row each in the table's at-cost section, in no return. */
     const atCostFunds = new Set(priv.filter(atCost).map((p) => p.securityKey));
+    /**
+     * THE PAGE'S COVERAGE GATE, re-expressed (Stage 10lb): the book's HPR is
+     * struck only where the valued holdings' cost covers 99.5% of their value
+     * (`COST_COVERAGE_MIN`). A valued holding that reports no cost — Vantage Oak
+     * — leaves it short, and the footer must be refused, naming it.
+     */
+    const struckValue = struck.reduce((t, p) => t + (Number(p.marketValue) || 0), 0);
+    const costedValue = costed.reduce((t, p) => t + Number(p.marketValue), 0);
+    const costCovers = costedValue >= struckValue * 0.995;
+    const costless = [...new Set(struck.filter((p) => p.costBasis == null && Number(p.marketValue) > 0).map((p) => p.security))];
     return {
+      costCovers,
+      /** The valued private holdings that report no cost, as printed — what a refused footer names. */
+      costless,
       funds, byKey: new Map(funds.map((f) => [f.key, f])),
       atCostFunds: atCostFunds.size,
       /** What a pooled rate's "of" counts: every valued fund, and every fund held at cost. */
@@ -3975,7 +3988,7 @@ const PM_RETURN_BOOK = (() => {
       bookCost,
       /** …and the value it is a return ON: the valued holdings' own market value. */
       bookValue: costed.reduce((t, p) => t + Number(p.marketValue), 0),
-      footHpr: bookCost + bookSold > 0 ? ((bookPnL + bookRealised + bookIncome) / (bookCost + bookSold)) * 100 : null,
+      footHpr: costCovers && bookCost + bookSold > 0 ? ((bookPnL + bookRealised + bookIncome) / (bookCost + bookSold)) * 100 : null,
       /** …and what it read before income was in it — the figure it must no longer be. */
       footHprNoIncome: bookCost + bookSold > 0 ? ((bookPnL + bookRealised) / (bookCost + bookSold)) * 100 : null,
       bookIncome,
@@ -16505,8 +16518,10 @@ const DROPPED_BOOK = (() => {
       .map((m) => [m[1], { assetClass: m[2], basket: m[3] }]));
     const si = tsrc.indexOf("export const FAMILY_SAID_CLASS"), se = tsrc.indexOf("\n};", si);
     const SAID = new Map([...tsrc.slice(si, se).matchAll(/"([a-z]+:[^"]+)":\s*"([^"]+)"/g)].map((m) => [m[1], m[2]]));
+    const bi = tsrc.indexOf("export const FAMILY_SAID_BASKET"), be = tsrc.indexOf("\n};", bi);
+    const SAID_BASKET = new Map(bi < 0 ? [] : [...tsrc.slice(bi, be).matchAll(/"([a-z]+:[^"]+)":\s*"([^"]+)"/g)].map((m) => [m[1], m[2]]));
     const um = /export const UNCLASSIFIED = "([^"]+)"/.exec(tsrc);
-    if (!TAX.size || !SAID.size || !um) return null;
+    if (!TAX.size || !SAID.size || !SAID_BASKET.size || !um) return null;
     const UNCLASSIFIED = um[1];
     const acc = new Map(accounts.map((a) => [a.accountId, a]));
     const eng = (p) => acc.get(p.accountId)?.engagement;
@@ -16524,6 +16539,8 @@ const DROPPED_BOOK = (() => {
         if (!mandate(p) && cashEq(p)) return "Liquidity";
         const h = hit(p);
         if (h) return h.basket;
+        const said = SAID_BASKET.get(mandate(p) ? `mandate:${p.accountId}` : `sec:${p.securityKey}`);
+        if (said) return said;
         return !mandate(p) && p.assetClass === "Equity" ? "Thematic & Tactical" : UNCLASSIFIED;
       },
       "family-class": (p) => {
@@ -17640,6 +17657,17 @@ const PM_OVERLAP_HINT = ["the 'Counted once' line says what it does in its hover
 const pmHprCell = (cells) => Object.entries(cells ?? {})
   .find(([col, c]) => /^ret:/.test(col) && c?.retShown === "1" && (c.retTag === "HPR" || col === "ret:absolute"))?.[1] ?? null;
 /**
+ * THE BOOK'S HPR REFUSED FOR WANT OF COST (Stage 10lb): no percentage, the
+ * coverage reason, and every valued holding that reports no cost named — off
+ * `glowData.ts`, never the page's own list.
+ */
+const pmFootRefused = (cell) => {
+  const t = String(cell?.titles ?? cell?.title ?? "").toLowerCase();
+  return !!cell && !/%/.test(cell.text ?? "") && /covers only part of this row's value/.test(t)
+    && (PM_RETURN_BOOK?.costless ?? []).length > 0
+    && PM_RETURN_BOOK.costless.every((s) => t.includes(String(s).toLowerCase().slice(0, 24)));
+};
+/**
  * DL-16 — THE FOOTER'S HPR IS FIFO, SO ITS DENOMINATOR IS NOT A COLUMN. Its own
  * columns gave ₹1.995 Cr ÷ ₹8.62 Cr = 23.1% beside a printed 22.8%, because
  * FIFO also divides by what Neo Infra's redeemed units cost. The denominator is
@@ -17659,17 +17687,22 @@ const PM_DEPLOYED_CHECK = ["an HPR struck over more than its Cost column names w
   if (!B.redeemed) return { notChecked: "no private holding in this book has redeemed units, so every HPR divides by its own Cost column" };
   const near = (a, b) => Number.isFinite(a) && Number.isFinite(b) && Math.abs(a - b) <= 2;
   const tc = pmHprCell((pv.totals ?? [])[0]?.cells);
-  if (!tc || !near(Number(tc.deployed), B.bookDeployed)) return false;
-  if (!pmClose(pmMoney(tc.deployedText), B.bookDeployed / 1e7)) return false;
-  const title = String(tc.deployedTitle ?? "");
-  const figs = [...title.matchAll(/₹-?[\d,]+(?:\.\d+)?\s*(?:Cr|L|K)?/g)].map((x) => pmMoney(x[0]));
-  // The two parts, and the claim about the Cost column ONLY where that cell IS
-  // the cost of the units still held — on the total it spans the at-cost lines.
-  const costCell = pmMoney((pv.totals ?? [])[0]?.cells?.cost?.text ?? null);
-  if (!/units still held/i.test(title)
-    || !figs.some((v) => pmClose(v, B.bookCost / 1e7))
-    || !figs.some((v) => pmClose(v, (B.bookDeployed - B.bookCost) / 1e7))
-    || /Cost column/i.test(title) !== pmClose(costCell, B.bookCost / 1e7)) return false;
+  // A TOTAL WHOSE COST FALLS SHORT OF ITS VALUE STRIKES NO HPR (Stage 10lb), so
+  // there is no denominator on it to name; the fund rows below still carry theirs.
+  if (!B.costCovers) { if (tc) return false; }
+  else {
+    if (!tc || !near(Number(tc.deployed), B.bookDeployed)) return false;
+    if (!pmClose(pmMoney(tc.deployedText), B.bookDeployed / 1e7)) return false;
+    const title = String(tc.deployedTitle ?? "");
+    const figs = [...title.matchAll(/₹-?[\d,]+(?:\.\d+)?\s*(?:Cr|L|K)?/g)].map((x) => pmMoney(x[0]));
+    // The two parts, and the claim about the Cost column ONLY where that cell IS
+    // the cost of the units still held — on the total it spans the at-cost lines.
+    const costCell = pmMoney((pv.totals ?? [])[0]?.cells?.cost?.text ?? null);
+    if (!/units still held/i.test(title)
+      || !figs.some((v) => pmClose(v, B.bookCost / 1e7))
+      || !figs.some((v) => pmClose(v, (B.bookDeployed - B.bookCost) / 1e7))
+      || /Cost column/i.test(title) !== pmClose(costCell, B.bookCost / 1e7)) return false;
+  }
   // THE FUND ROWS, where the Absolute column is drawn: the marker exactly on
   // the funds that redeemed units, at their own cost + cost of units sold.
   if (!(pv.heads ?? []).includes("ret:absolute")) return true;
@@ -18523,8 +18556,14 @@ const PM_RETURN_CHECKS = [
    * words beside it.
    */
   ["the private book's HPR hover says it is FIFO, and what it counts of the cash paid back", (t, ctx) => {
+    if (!PM_RETURN_BOOK) return false;
+    // Refused for want of cost (Stage 10lb): no FIFO figure, so the dash names why.
+    if (!PM_RETURN_BOOK.costCovers) {
+      const cells = (ctx?.pmReturn?.foot ?? []).filter((x) => x.measure === "auto" || x.measure === "absolute");
+      return cells.length > 0 && cells.every(pmFootRefused);
+    }
     const foot = ctx?.pmReturn?.foot?.find((x) => (x.measure === "auto" || x.measure === "absolute") && /%/.test(x.text));
-    if (!foot || !PM_RETURN_BOOK) return false;
+    if (!foot) return false;
     const says = foot.titles ?? "";
     if (!/\bFIFO\b/.test(says)) return false;
     return PM_RETURN_BOOK.redeemed
@@ -18643,7 +18682,9 @@ const PM_RETURN_ROUTE_CHECKS = [
   }],
   ["the HPR footer is FIFO over the whole private book — the gain on units held and redeemed, over the capital deployed in both", (t, ctx) => {
     const foot = ctx?.pmReturn?.foot?.find((x) => x.measure === "absolute");
-    if (!foot || !PM_RETURN_BOOK || PM_RETURN_BOOK.footHpr == null) return false;
+    if (!foot || !PM_RETURN_BOOK) return false;
+    if (!PM_RETURN_BOOK.costCovers) return pmFootRefused(foot);   // Stage 10lb
+    if (PM_RETURN_BOOK.footHpr == null) return false;
     // A RETURN COUNTS EVERYTHING THE MONEY EARNED (Stage 10fz): the private
     // funds' income — the review's dated income rows and the statements' own
     // payouts, gross of TDS — is in the gain. Where the book carries any, the
@@ -18852,8 +18893,10 @@ const headlineMatches = (tile, expected, field = 'return') => {
     // A quote feed can add custody shares to this no-feed display baseline.
     && Number(raw.cardHoldings) >= expected.totalHoldings
     && Number(raw.cardAccounts) === expected.coveredAccounts
-    // The three return cards say how much of the public investments they cover (Stage 10la).
-    && (raw.cardPeriod != null ? /Covers \d+% of public investments/.test(tile.sub ?? '') : /Available data/.test(tile.sub ?? ''));
+    // The three return cards say how much of the public investments they cover, the gain card
+    // how much of every investment (Stage 10la).
+    && (raw.cardPeriod != null ? /Covers \d+% of public investments/.test(tile.sub ?? '')
+      : raw.cardSince != null ? /Covers \d+% of investments/.test(tile.sub ?? '') : /Available data/.test(tile.sub ?? ''));
 };
 
 const CIO_SHARED = [
@@ -19501,10 +19544,15 @@ const CIO_BOOK_RETURN = [
    * reader who sees ₹140 Cr in the one and nothing in the other is told why —
    * their count and value, the book's, re-derived here.
    */
-  ["the gain card provides coverage and a source explanation for records left out", (t, ctx) => {
-    const tile = ctx?.kpiTiles?.find(x => x.slot === 'gain');
-    return !!tile && tile.returnInfo === 1 && /records they need/.test(tile.hover ?? '')
-      && Number(tile.coverage?.cardCovered) < Number(tile.coverage?.cardHoldings);
+  // Every investment since Stage 10la (the family, 4 Nov 2026: "make coverage 100%"): from its
+  // purchase cost, else its first value on record, else held at its value — each named in the hover.
+  ["the gain card covers every investment and names how each is measured", (t, ctx) => {
+    const tile = ctx?.kpiTiles?.find(x => x.slot === 'gain'), r = AVAILABLE_CARDS_BOOK?.gain;
+    if (!tile || !r) return false;
+    return tile.returnInfo === 1 && /first value on record/.test(tile.hover ?? '')
+      && Number(tile.coverage?.cardCovered) === Number(tile.coverage?.cardHoldings)
+      && Number(tile.coverage?.cardHeldCount) === r.gainCoverage.heldCount
+      && Number(tile.coverage?.cardFromFirstCount) === r.gainCoverage.sinceFirstCount;
   }],
   ["short history is shown as an available period return with its own label", (t, ctx) => {
     const tile = ctx?.kpiTiles?.find(x => x.slot === 'annualised'), r = AVAILABLE_CARDS_BOOK?.history;
@@ -20384,22 +20432,6 @@ const NAV_HOLDING_ACCOUNTS = (() => {
  * card's own claims below; they run when the routes do.)
  */
 const NAV_BASIS = [
-  ["the NAV card's share of the book is struck on the series' statement level, with today's prices named apart (MNT-25)", (t, ctx) => {
-    const h = navBookChip(ctx)?.title;
-    if (h == null) return navBasisMissing(ctx);
-    if (!NAV_RECON_BOOK || !COSTED_BOOK || !NAV_SERIES_BOOK) return false;
-    const m = /of the (₹[\d,.]+\s*(?:Cr|L|K)?) NAV on [^(.]+?( \(today's prices value the holdings at (₹[\d,.]+\s*(?:Cr|L|K)?)\))?\./.exec(h);
-    if (!m) return false;
-    const level = NAV_SERIES_BOOK.levelEnd / 1e7, book = NAV_RECON_BOOK.once / 1e7, live = COSTED_BOOK.totalValue / 1e7;
-    if (!(Math.abs(money2cr(m[1]) - level) <= compactTieCr(level))) return false;
-    // Load-bearing only where the two books differ, which they do on this one
-    // (the published NAVs and the depository's cash funds): a card struck on
-    // the live book prints the live figure where the statement one belongs.
-    if (Math.abs(live - book) <= 2 * compactTieCr(book)) {
-      return m[2] ? false : notChecked("the statement and live books agree on this run, so the two bases cannot be told apart");
-    }
-    return !!m[2] && Math.abs(money2cr(m[3]) - live) <= compactTieCr(live);
-  }],
   ["the NAV card holds each investment at its latest valuation, never 'valued at both of its ends' (MNT-24)", (t, ctx) => {
     const h = navBookChip(ctx)?.title;
     if (h == null) return navBasisMissing(ctx);
@@ -20417,18 +20449,6 @@ const NAV_BASIS = [
  * there is more than one, and each names its window.
  */
 const NAV_STARTS = [
-  ["the comparison starts only on a day the book was valued on, opens on the first, and offers every such day", (t, ctx) => {
-    const c = ctx?.navChart;
-    if (!c) return navBasisMissing(ctx);
-    if (!NAV_FAIR_STARTS || !NAV_SERIES_BOOK) return false;
-    const offered = c.starts.join(" ") === NAV_FAIR_STARTS.join(" ");
-    const opened = c.from === NAV_FAIR_STARTS[0] && c.to === NAV_SERIES_BOOK.seriesTo;
-    const tabs = NAV_FAIR_STARTS.length > 1
-      ? c.startTabs.length === NAV_FAIR_STARTS.length && c.startTabs.filter((x) => x.active).length === 1
-        && c.startTabs.every((x) => NAV_FAIR_STARTS.includes(x.date) && / → /.test(x.title))
-      : c.startTabs.length === 0;
-    return offered && opened && tabs && !/\b(?:1M|3M|6M|1Y|3Y|5Y|Max)\b/.test(c.head);
-  }],
 ];
 
 /**
@@ -20454,71 +20474,49 @@ const navChainAt = (d) => {
 };
 const navWindowPoints = (c) => (NAV_SERIES_BOOK?.points ?? []).filter((p) => p.date > c.from && p.date <= c.to);
 
+/**
+ * ── THE BOOK'S LINE IS THE RETURN CARD'S OWN (Stage 10la) ──────────────────
+ *
+ * *"how can our book be 6.1% when all the above things are showing 12% …
+ * everything should match"* — the family, 4 Nov 2026. The line is Morning CIO's
+ * return card for the period picked, ended on each day; its last point is the
+ * card, re-derived here on the page's own rows (`AVAILABLE_CARDS_BOOK`).
+ */
+const NAV_PERIODS = ["fytd", "ytd", "history"];
+const navDay = (d) => new Date(`${d}T00:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+const NAV_CARD_LINE = [
+  ["the book's line ends on its return card, to the decimal, over one of the cards' periods", (t, ctx) => {
+    const chip = navBookChip(ctx);
+    if (!chip) return navBasisMissing(ctx);
+    const r = NAV_PERIODS.includes(chip.period) ? AVAILABLE_CARDS_BOOK?.[chip.period] : null;
+    if (!r || r.total.returnPct == null) return false;
+    const periodPct = r.total.measured?.working?.periodPct ?? r.total.returnPct;
+    return Math.abs(chip.ret - periodPct) < 1e-8 && Math.abs(chip.cardReturn - r.total.returnPct) < 1e-8;
+  }],
+  ["the period picker offers the three return cards' periods, one active", (t, ctx) => {
+    const c = ctx?.navChart;
+    if (!c) return navBasisMissing(ctx);
+    return c.startTabs.map((x) => x.date).join(" ") === NAV_PERIODS.join(" ") && c.startTabs.filter((x) => x.active).length === 1
+      && c.starts.join(" ") === NAV_PERIODS.join(" ");
+  }],
+  ["the chart's window is its card's own dates", (t, ctx) => {
+    const c = ctx?.navChart, chip = navBookChip(ctx);
+    if (!c || !chip) return navBasisMissing(ctx);
+    const r = AVAILABLE_CARDS_BOOK?.[chip.period];
+    return !!r?.from && !!r?.to && c.window === `${navDay(r.from)} → ${navDay(r.to)}`;
+  }],
+  ["the book's hover says what each investment counts from, what the line covers and that private investments are apart", (t, ctx) => {
+    const h = navBookChip(ctx)?.title;
+    if (h == null) return navBasisMissing(ctx);
+    return /first value on record in the period/.test(h) && /Covers \d+% of public investments/.test(h)
+      && /Private investments, ₹[\d,.]+\s*(?:Cr|L|K)?, are reported apart/.test(h) && /the card's figure/.test(h);
+  }],
+];
+
 const CIO_NAV = [
     ["the return attribution card stays removed", (t, ctx) => {
       if (ctx?.attrib == null) return notChecked("the attribution probe did not run on this pass");
       return ctx.attrib.handles === 0;
-    }],
-    /** The series reaches back to its own first day, counted off the book. */
-    ["the NAV card covers the whole measured span, not only the complete panel", (t, ctx) => {
-      const head = navBasis(ctx);
-      if (head == null || !NAV_SERIES_BOOK) return navBasisMissing(ctx);
-      return head.includes(NAV_SERIES_BOOK.seriesFrom)
-        && new RegExp(`${NAV_SERIES_BOOK.seriesPoints} dated points`).test(head);
-    }],
-    /**
-     * ── THE BOOK'S FIGURE IS THE LINK-CHAINED RETURN OVER THE WINDOW ─────────
-     *
-     * Struck against the book on a path the page does not take, AND against the
-     * wrong chaining: dividing each point's whole NAV by the previous one counts
-     * every investment that joined and every rupee paid in (+36.6% on this book,
-     * against +5.3% chained over each link's own investments).
-     */
-    ["the book's return is chained over each link's own investments from the window's first day, not over the growing NAV", (t, ctx) => {
-      const c = ctx?.navChart;
-      if (!c) return navBasisMissing(ctx);
-      const book = navBookChip(ctx);
-      if (!book || book.ret == null || !NAV_SERIES_BOOK || !c.from || !c.to) return false;
-      const a = navChainAt(c.from), b = navChainAt(c.to);
-      if (a == null || b == null) return false;
-      const want = (b / a - 1) * 100;
-      return Math.abs(book.ret - want) < 1e-6 && book.text.includes(pct1(want))
-        && Math.abs(NAV_SERIES_BOOK.chainByLevel - NAV_SERIES_BOOK.chainAll) > 1;
-    }],
-    /**
-     * THE BOOK IS ONE LINE. It was split into a solid stretch from the day every
-     * valued investment is in the return and a lighter one before it — and when
-     * Bandhan's first valuation landed on the series' last day, the solid line
-     * was a single point and the whole chart the lighter one. It opens at 0% on
-     * the window's first day and runs through every dated point after it.
-     */
-    ["the book is one line, through every dated point of its window", (t, ctx) => {
-      const c = ctx?.navChart;
-      if (!c) return notChecked("the NAV chart was not found on this pass");
-      if (!NAV_SERIES_BOOK || !c.from || !c.to) return false;
-      const i = navBookStroke(c);
-      return i >= 0 && c.strokes.filter((s) => /--chart-book\b/.test(s)).length === 1
-        && c.vertexCounts[i] === 1 + navWindowPoints(c).length;
-    }],
-    /** Available data, named on the book's own chip — Stages 10gh and 10gm's rule for Morning CIO's returns. */
-    ["the book's chip says available data, and its hover names what joined late and what is left out", (t, ctx) => {
-      const book = navBookChip(ctx);
-      if (!book) return navBasisMissing(ctx);
-      if (!NAV_SERIES_BOOK) return false;
-      const h = book.title;
-      const joined = NAV_SERIES_BOOK.joined === 0 || new RegExp(`${NAV_SERIES_BOOK.joined} joined on their first valuation`).test(h);
-      const atCost = NAV_SERIES_BOOK.atCost === 0 || new RegExp(`Left out: ${NAV_SERIES_BOOK.atCost} private lines held at cost`).test(h);
-      return /available data/.test(book.text) && /^Our book:/.test(h)
-        && new RegExp(`Available data: ${NAV_SERIES_BOOK.inReturn} of the ${NAV_SERIES_BOOK.holding} investments holding value`).test(h)
-        && joined && atCost;
-    }],
-  ["the NAV card renders a dated series with its date range and its coverage",
-    (t, ctx) => {
-      const head = navBasis(ctx);
-      if (head == null) return navBasisMissing(ctx);
-      return /Our book vs benchmarks/.test(t)
-        && /\d+ dated points, \d{4}-\d{2}-\d{2} → \d{4}-\d{2}-\d{2}/.test(head)
-        && /\d+ of the \d+ investments holding value in the return/.test(head);
     }],
   /**
    * ── THE CHART ACTUALLY PAINTS ────────────────────────────────────────────
@@ -20546,19 +20544,6 @@ const CIO_NAV = [
     if (!c) return notChecked("the NAV card was not on screen on this run");
     return /^\d{1,2} \S+ \d{4} → \d{1,2} \S+ \d{4}$/.test(c.window) && c.head.includes(c.window);
   }],
-  /** The axis is a change since the window's first day, and the basis says so. */
-  ["the NAV card states what its axis is", (t, ctx) => {
-    const head = navBasis(ctx);
-    if (head == null) return navBasisMissing(ctx);
-    const c = ctx.navChart;
-    return /Every line is its change since \d{1,2} \S+ \d{4}, to \d{1,2} \S+ \d{4}/.test(head) && /Not annualised/.test(head)
-      && c.yTickText.length >= 3 && c.yTickText.every((x) => /^[+-]?\d+%$/.test(x));
-  }],
-  ["the NAV card's methodology is on the book's hover rather than gone", (t, ctx) => {
-    const h = navBookChip(ctx)?.title;
-    if (h == null) return navBasisMissing(ctx);
-    return /held at its latest valuation until the next/.test(h) && /a holding two accounts both report is counted once/.test(h);
-  }],
   /**
    * The header is the title, the window and the start control — no basis line,
    * and no return beside a name: the returns are the chips, below it.
@@ -20579,75 +20564,6 @@ const CIO_NAV = [
       && !/because money added is not money earned/.test(t)
       && !/market history rather than a comparison/.test(t)
       && !/never the nearest in either\s+direction/.test(t)],
-  /**
-   * THE CAPITAL THE BOOK'S LINE NETS OUT, IN RUPEES, OVER ITS OWN WINDOW. The
-   * raw-NAV line and its toggle went with the simplification; the size of what
-   * was netted out did not — a reader must still see that money added is not
-   * counted as gain.
-   */
-  ["the book's hover names the capital that went in and came out over its window, in rupees", (t, ctx) => {
-    const h = navBookChip(ctx)?.title;
-    if (h == null) return navBasisMissing(ctx);
-    const c = ctx.navChart;
-    if (!NAV_SERIES_BOOK || !c.from || !c.to) return false;
-    const pts = navWindowPoints(c);
-    const inn = pts.reduce((a, p) => a + Math.max(p.levelFlowIn ?? 0, 0), 0) / 1e7;
-    const out = -pts.reduce((a, p) => a + Math.min(p.levelFlowIn ?? 0, 0), 0) / 1e7;
-    if (inn <= 0 && out <= 0) return !/went in and/.test(h);
-    const m = /Over the period (₹[\d,.]+\s*(?:Cr|L|K)?) went in and (₹[\d,.]+\s*(?:Cr|L|K)?) came out; neither is counted as gain or loss\./.exec(h);
-    if (!m) return false;
-    return Math.abs(money2cr(m[1]) - inn) <= compactTieCr(inn) && Math.abs(money2cr(m[2]) - out) <= compactTieCr(out);
-  }],
-  /**
-   * A MOVE THAT CANNOT BE SHOWN TO BE PERFORMANCE IS NAMED, WITH ITS
-   * INVESTMENTS — over the window's own points — and where the statements
-   * settle every step, nothing is (A-10).
-   */
-  ["the NAV card names the move whose capital the statements do not settle, and only where there is one",
-    (t, ctx) => {
-      const h = navBookChip(ctx)?.title;
-      if (h == null) return navBasisMissing(ctx);
-      const c = ctx.navChart;
-      if (!NAV_SERIES_BOOK || !c.from || !c.to) return false;
-      const move = navWindowPoints(c).reduce((a, p) => a + (p.unreportedFlowValue ?? 0), 0);
-      const why = h.split(/\n\n/).find((x) => /^Not proven to be performance:/.test(x)) ?? "";
-      if (move <= 0) return why === "" && !/not proven/i.test(h);
-      const m = /^Not proven to be performance: ₹([\d,.]+)\s*(Cr|L|K)? of the move, where no record settles the capital between two valuations \((.+)\)\.$/.exec(why);
-      if (!m) return false;
-      const scale = m[2] === "Cr" ? 1e7 : m[2] === "L" ? 1e5 : m[2] === "K" ? 1e3 : 1;
-      const shown = Number(m[1].replace(/,/g, "")) * scale;
-      return Math.abs(shown - move) <= Math.max(0.051 * scale, 1)
-        && NAV_SERIES_BOOK.unprovenAccounts.length > 0 && m[3].trim().length > 0;
-    }],
-  /**
-   * "…OR STATE THE ACCOUNTS THAT CANNOT SUPPLY ONE" — the other half of the ask,
-   * asserted as a PARTITION rather than as a count. The three lists must account
-   * for every account the page's own coverage line says exist: a filter that
-   * widened or narrowed one list would keep printing a plausible count and only
-   * the partition catches it.
-   */
-  /**
-   * ── THE FOLD UNDER THE CHART IS GONE (the family, 2 Nov 2026; Stage 10jz) ────
-   * The hover and the basis still count what the line covers, every investment
-   * holding value is in the return or held at cost, and every account holding
-   * value in `glowData.ts`, re-derived off the statement positions, is one of the
-   * series' investments: a filter that dropped an account would keep printing
-   * plausible counts.
-   */
-  ["the coverage fold stays removed, the hovers still count what the line covers, and the series stands for every account holding value",
-    (t, ctx) => {
-      const card = navBasis(ctx);
-      if (card == null) return navBasisMissing(ctx);
-      if (!NAV_SERIES_BOOK || !NAV_HOLDING_ACCOUNTS) return false;
-      if (ctx.navChart?.coverageFold !== 0 || /In the return:/.test(t)) return false;
-      const cov = /(\d+) of the (\d+) investments holding value in the return/.exec(card);
-      const h = navBookChip(ctx)?.title ?? "";
-      if (!cov || Number(cov[1]) !== NAV_SERIES_BOOK.inReturn || Number(cov[2]) !== NAV_SERIES_BOOK.holding) return false;
-      return new RegExp(`Available data: ${cov[1]} of the ${cov[2]} investments holding value`).test(h)
-        && NAV_SERIES_BOOK.inReturn + NAV_SERIES_BOOK.atCost === NAV_SERIES_BOOK.holding
-        && !/in the list below/.test(h)
-        && NAV_HOLDING_ACCOUNTS.every((id) => NAV_SERIES_BOOK.holdingAccounts.includes(id));
-    }],
   /**
    * WITH NO FEED, THE MOVERS CARD SAYS SO AND PRINTS NO DAY CHANGE.
    *
@@ -21631,17 +21547,6 @@ const NAV_BENCH = [
 
 /** …and with no price service at all, each chip SAYS so and the book is still drawn. */
 const NAV_BENCH_OFFLINE = [
-  /**
-   * WITH NO PUBLISHED PRICES THE DEMATS STAY ON THEIR STATEMENTS (Stage 10iz),
-   * and the book's hover says so rather than drawing a line it cannot strike.
-   * The published-price path is `scripts/dev/check-nav-assumed.mjs`.
-   */
-  ["with no price history the book line is the statement series, and its hover says why the demats are not at published closes", (t, ctx) => {
-    const book = navBookChip(ctx);
-    if (!book) return notChecked("the NAV card was not on screen on this run");
-    return book.basis === "statement" && !/assumed/.test(book.text)
-      && /Listed demat shares are at their statement values: /.test(book.title);
-  }],
   ["with no price service every benchmark's chip says its history could not be fetched, and the book is still drawn", (t, ctx) => {
     const c = ctx?.navChart;
     if (!c) return notChecked("the NAV card was not on screen on this run");
@@ -27397,7 +27302,7 @@ const INVARIANTS = {
   "cio-returns-security": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT, ...CIO_SEGMENTS],
   "cio-returns-category": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_RETURNS, ...CIO_RETURNS_LAYOUT, ...CIO_SEGMENTS, ...CIO_SEGMENT_HOLDINGS],
   "cio-attribution-legacy": [...CIO_SHARED, ...CIO_SEGMENTS_LEGACY],
-  "cio-nav": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_NAV, ...NAV_BENCH, ...NAV_BENCH_OFFLINE, ...NAV_BASIS, ...NAV_STARTS],
+  "cio-nav": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_NAV, ...NAV_CARD_LINE, ...NAV_BENCH, ...NAV_BENCH_OFFLINE, ...NAV_BASIS, ...NAV_STARTS],
   "cio-tiles-saved": CIO_TILES_SAVED,
   "cio-ytd-card": [...CIO_SHARED, ...CIO_YTD_CARD],
   "cio-return-metrics": [...CIO_RETURN_RETIREMENT, ...CIO_ALLOC.filter(([description]) => CIO_OPTIONAL_CAPITAL_CHECKS.has(description))],
@@ -30524,8 +30429,11 @@ const INVARIANTS = {
       const pr = ctx?.pmReturn;
       if (!pr) return false;
       const cells = pr.rows.flatMap((r) => r.cells).filter((c) => c.shown && (c.tag === "HPR" || c.measure === "absolute"));
-      const foot = (pr.foot ?? []).filter((c) => c.measure === "absolute");
-      if (!cells.length || !foot.length) return false;
+      const footAll = (pr.foot ?? []).filter((c) => c.measure === "absolute");
+      // A footer refused for want of cost (Stage 10lb) strikes no HPR to describe; it names why.
+      const refused = !!PM_RETURN_BOOK && !PM_RETURN_BOOK.costCovers;
+      if (!cells.length || !footAll.length || (refused && !footAll.every(pmFootRefused))) return false;
+      const foot = refused ? [] : footAll;
       const cost = /over what (?:those units|they) cost|against the cost it carries/i;
       return !(ctx?.titles ?? []).some((x) => /over the capital paid in/i.test(x))
         && [...cells, ...foot].every((c) => cost.test(c.titles ?? "") && /not a return on Paid in/i.test(c.titles ?? ""));
@@ -31933,6 +31841,22 @@ const INVARIANTS = {
   "cio-alloc-treemap": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...ALLOC_CHART_CHECKS],
 
   monitor: [
+    /**
+     * NEVER A RETURN WITH NOTHING UNDER IT (Stage 10lc).
+     *
+     *   *"It should never show blank."*
+     *
+     * Every return the Monitor shows — a row's, an opened line's, a section's,
+     * the footer's — carries its index line: the index on the same dated money,
+     * or a dash that names its cause on its face ("No buy dates"), never a bare
+     * one. Struck on the handles (`[data-bench]`, `[data-absent-label]`).
+     */
+    ["every return carries its index line, and a gap in it names its cause", (t, ctx) => {
+      const m = ctx?.monitorBench;
+      if (!m) return false;
+      if (!m.figures) return { notChecked: "no return figure was on screen on this run" };
+      return m.missing.length === 0 && m.unlabelled.length === 0 && m.lines === m.figures;
+    }],
     // VD-16 / VD-18: a pre-tax mark and a cash line whose every unit is pledged
     // say so in the CMP marker's hover on the category table. The premise is
     // the BOOK's: it holds Sanshi, and the ABSL Liquid line on Bharat's demat.
@@ -37661,8 +37585,8 @@ const INVARIANTS = {
   "performance-live": [...PERF_MW_LIVE, ...PERF_MW, ...WITHHELD_PILL],
   performance: [
     // THE SAME NAV CARD AS MORNING CIO'S (PERF-3): its basis hover and range
-    // hovers say the same things there.
-    ...NAV_BASIS, ...NAV_STARTS,
+    // hovers say the same things there, and its line is the same card's (Stage 10la).
+    ...NAV_BASIS, ...NAV_STARTS, ...NAV_CARD_LINE,
     // XA-12: the basis pill reads STATEMENT over a Current Value tile that
     // carries AMFI's published NAV on every fund it prices.
     ...xaNavBasisChecks(),
@@ -37690,12 +37614,6 @@ const INVARIANTS = {
     ["the stale 'no valuation series' absence is gone", (t) =>
       !/No valuation series in this book/i.test(t)
       && !/two points are not a trajectory/i.test(t)],
-    ["and the dated series is drawn here, over the whole measured span", (t, ctx) => {
-      const head = navBasis(ctx);
-      if (head == null || !NAV_SERIES_BOOK) return navBasisMissing(ctx);
-      return head.includes(NAV_SERIES_BOOK.seriesFrom) && head.includes(NAV_SERIES_BOOK.seriesTo)
-        && new RegExp(`${NAV_SERIES_BOOK.seriesPoints} dated points`).test(head);
-    }],
     // ── DL-3: ONE RETURN FOR ONE BOOK ───────────────────────────────────────
     // The tile was FIFO over every consolidated row — the funds redeemed to nil
     // included — so 3P India Equity Fund 1's realised gain and cost of units
@@ -41412,6 +41330,8 @@ for (const theme of THEMES) {
             state: b.getAttribute("data-bench-state"),
             ret: num(b.getAttribute("data-nav-ret")),
             basis: b.getAttribute("data-nav-basis"),
+            period: b.getAttribute("data-nav-period"),
+            cardReturn: num(b.getAttribute("data-nav-card-return")),
             shown: b.tagName === "BUTTON" ? b.getAttribute("aria-selected") === "true" : true,
             text: (b.textContent ?? "").replace(/\s+/g, " ").trim(),
             title: b.getAttribute("title") ?? "",
@@ -41669,9 +41589,50 @@ for (const theme of THEMES) {
        * `null` where no footer is drawn, which the checks treat as a finding
        * wherever the table has rows.
        */
+      /**
+       * EVERY RETURN ON THE MONITOR AND ITS INDEX LINE (Stage 10lc), off their
+       * handles: each return cell that shows a figure — a row's, an opened
+       * line's, a section's, the footer's — and the `[data-bench]` line under
+       * it, with whether a dash there names its cause (`[data-absent-label]`).
+       */
+      const monitorBench = FAST || !/^\/monitor/.test(path) ? null : await page.evaluate(() => {
+        const cells = [...document.querySelectorAll("table td[data-return-cell], table td[data-child-return], tfoot td[data-footer-return-set], tbody tr td")]
+          .filter((td, i, all) => all.indexOf(td) === i);
+        const faceOf = (el) => {
+          const b = [...el.querySelectorAll("[data-bench]")];
+          b.forEach((n) => { n.dataset.checkDisplay = n.style.display; n.style.display = "none"; });
+          const t = el.innerText ?? "";
+          b.forEach((n) => { n.style.display = n.dataset.checkDisplay ?? ""; delete n.dataset.checkDisplay; });
+          return t;
+        };
+        const out = { figures: 0, lines: 0, missing: [], unlabelled: [] };
+        for (const td of cells) {
+          const ret = td.matches("[data-return-cell], [data-child-return], [data-footer-return-set]");
+          const b = td.querySelector("[data-bench]");
+          if (!ret && !b) continue;
+          const face = faceOf(td).replace(/\s+/g, " ").trim();
+          if (!/[+\-−]\d[\d,.]*%/.test(face)) continue;
+          out.figures++;
+          const name = (td.closest("tr")?.cells[0]?.innerText ?? "").split("\n")[0].trim().slice(0, 60);
+          if (!b) { out.missing.push(`${name}: ${face}`); continue; }
+          out.lines++;
+          // The feed's own state (closes loading, the service down) keeps the plain dash; a gap in the record never does.
+          if (b.getAttribute("data-bench") !== "none" && !b.getAttribute("data-bench-pct") && !b.hasAttribute("data-bench-feed") && !b.querySelector("[data-absent-label]")) out.unlabelled.push(`${name}: ${face}`);
+        }
+        return out;
+      });
       const monitorFoot = FAST ? null : await page.evaluate(() => {
         const f = document.querySelector("tfoot tr[data-footer-total]");
         if (!f) return null;
+        // THE FIGURE WITHOUT ITS INDEX LINE (Stage 10lc): the line under a
+        // return is a figure of its own on its own handle (`[data-bench]`).
+        const faceOf = (el) => {
+          const b = [...el.querySelectorAll("[data-bench]")];
+          b.forEach((n) => { n.dataset.checkDisplay = n.style.display; n.style.display = "none"; });
+          const t = el.innerText ?? "";
+          b.forEach((n) => { n.style.display = n.dataset.checkDisplay ?? ""; delete n.dataset.checkDisplay; });
+          return t;
+        };
         const retCell = f.querySelector("td[data-footer-return-set]");
         const basis = f.querySelector("[data-realised-basis]");
         const realisedCell = basis?.closest("td") ?? null;
@@ -41680,9 +41641,9 @@ for (const theme of THEMES) {
             counts: retCell.getAttribute("data-footer-return-set"),
             text: (retCell.getAttribute("data-footer-return-set-text") ?? "").replace(/\s+/g, " ").trim(),
             title: (retCell.getAttribute("title") ?? "").replace(/\s+/g, " ").trim(),
-            face: (retCell.innerText ?? "").replace(/\s+/g, " ").trim(),
+            face: faceOf(retCell).replace(/\s+/g, " ").trim(),
           } : null,
-          returnText: retCell ? (retCell.innerText ?? "").replace(/\s+/g, " ").trim() : null,
+          returnText: retCell ? faceOf(retCell).replace(/\s+/g, " ").trim() : null,
           realised: f.querySelector("td[data-realised]")?.getAttribute("data-realised") ?? null,
           realisedFace: basis?.getAttribute("data-realised-face") ?? null,
           realisedNote: basis?.getAttribute("title") ?? null,
@@ -42813,6 +42774,15 @@ for (const theme of THEMES) {
         };
       });
       const categoryTotals = FAST ? null : await page.evaluate(() => {
+        // THE FIGURE WITHOUT ITS INDEX LINE (Stage 10lc): the line under a
+        // return is a figure of its own on its own handle (`[data-bench]`).
+        const faceOf = (el) => {
+          const b = [...el.querySelectorAll("[data-bench]")];
+          b.forEach((n) => { n.dataset.checkDisplay = n.style.display; n.style.display = "none"; });
+          const t = el.innerText ?? "";
+          b.forEach((n) => { n.style.display = n.dataset.checkDisplay ?? ""; delete n.dataset.checkDisplay; });
+          return t;
+        };
         /**
          * A row read BY COLUMN, not by cell.
          *
@@ -42834,7 +42804,7 @@ for (const theme of THEMES) {
             return Number.isFinite(v) ? v : null;
           };
           for (const td of tr.cells) {
-            const t = (td.innerText ?? "").replace(/\s+/g, " ").trim();
+            const t = faceOf(td).replace(/\s+/g, " ").trim();
             const h = td.getAttribute("title") ?? td.querySelector("[title]")?.getAttribute("title") ?? "";
             const c = attr(td, "data-invested-capital"), k = attr(td, "data-invested-cost-held");
             for (let i = 0; i < (td.colSpan || 1); i++) {
@@ -43164,12 +43134,21 @@ for (const theme of THEMES) {
       const footerCells = FAST ? null : await page.evaluate(() => {
         const tr = document.querySelector("tfoot tr");
         if (!tr) return null;
+        // THE FIGURE WITHOUT ITS INDEX LINE (Stage 10lc): the line under a
+        // return is a figure of its own on its own handle (`[data-bench]`).
+        const faceOf = (el) => {
+          const b = [...el.querySelectorAll("[data-bench]")];
+          b.forEach((n) => { n.dataset.checkDisplay = n.style.display; n.style.display = "none"; });
+          const t = el.innerText ?? "";
+          b.forEach((n) => { n.style.display = n.dataset.checkDisplay ?? ""; delete n.dataset.checkDisplay; });
+          return t;
+        };
         // Accumulated by colSpan: the footer's label spans three columns, so
         // cell-for-cell it does not line up with a data row and a positional
         // read would put Invested under the name.
         const out = [];
         for (const td of tr.cells) {
-          out.push((td.innerText ?? "").replace(/\s+/g, " ").trim());
+          out.push(faceOf(td).replace(/\s+/g, " ").trim());
           for (let i = 1; i < (td.colSpan || 1); i++) out.push("");
         }
         return out;
@@ -46111,7 +46090,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, sectorVs, sectorSplit, shortWindow, feSectors, accountRows, heldAccountRows, pmFunds, pmReviewRows, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, investorReturn, familyLayout, memberScopeDom, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, returnsDom, segDom, sectorAttr, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, quotesServed: QUOTES_SERVED, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, pickTyped: PICK_TYPED[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, mandateSectors, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, privateCo, monitorMember, monitorFoot, txnT, quoteHold, monitorC, headerTitles, mgrT, costGross, inside }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, sectorVs, sectorSplit, shortWindow, feSectors, accountRows, heldAccountRows, pmFunds, pmReviewRows, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, investorReturn, familyLayout, memberScopeDom, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, returnsDom, segDom, sectorAttr, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, quotesServed: QUOTES_SERVED, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, pickTyped: PICK_TYPED[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, mandateSectors, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, privateCo, monitorMember, monitorFoot, monitorBench, txnT, quoteHold, monitorC, headerTitles, mgrT, costGross, inside }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

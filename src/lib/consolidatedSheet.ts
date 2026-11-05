@@ -15,10 +15,12 @@
 //                      units, review write-offs and accounts with no holding
 //                      row are rows too, each with its reason.
 //   Transactions       every dated record the archive carries, newest first:
-//                      trades, external capital, income and corporate actions
-//                      (the cash rows), and the capital-gain statements' sold
-//                      and open tax lots (detail rows, which carry no cash flow
-//                      so nothing is counted twice).
+//                      trades, external capital, switches between schemes or
+//                      classes, income and corporate actions (the cash rows),
+//                      and the capital-gain statements' sold and open tax lots
+//                      (detail rows, which carry no cash flow so nothing is
+//                      counted twice). Each holding's own page draws its rows
+//                      (`holdingRecordsFrom`, Stage 10lt).
 //
 // Full INR throughout, so a reader (or another system) can add the columns.
 import { investedOnOf } from "./investedOn";
@@ -27,6 +29,7 @@ import {
   BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_AS_OF, BOOK_UNVALUED_HOLDINGS,
   BOOK_COMMITMENTS, BOOK_CAPITAL_MOVES, BOOK_POSITION_TRANCHES,
   BOOK_CAPITAL_FROM_INCEPTION, BOOK_REVIEW_FLOWS, BOOK_REVIEW_WRITTEN_OFF, BOOK_SHARE_MOVEMENTS, BOOK_RECOVERED_COSTS, BOOK_POLYCAB,
+  BOOK_HOLDING_INCOME,
 } from "../data/glowData";
 import { dedupedPositions, bucketLabel, isMandateHeld, MANDATE_BUCKET } from "./analytics";
 import { basketKeyOf, familyClassKeyOf } from "./familyTaxonomy";
@@ -38,8 +41,9 @@ import { isIncomeBucket } from "./ledgerModel";
 import { buildDatedCapital } from "./datedCapital";
 import { capitalMovesWithCalls } from "./tranches";
 import { fifoTotals } from "./fifo";
-import { deriveTransactions, deriveRealisedLots, deriveIncome, type ArchiveDoc } from "./ledgerModel";
-import { isAssetClass, type Account, type Position } from "./types";
+import { deriveTransactions, deriveRealisedLots, deriveIncome, deriveStockLedger, deriveStockLedgers, type ArchiveDoc, type HoldingRecord, type StockLedger } from "./ledgerModel";
+import { splitFundClass } from "../../shared/securityKey.mjs";
+import { isAssetClass, type Account, type Position, type PositionTranches } from "./types";
 
 export type ConsolidatedCell = string | number | null;
 export type ConsolidatedColumn = { key: string; label: string; format: string; width: number; blank?: string };
@@ -48,6 +52,13 @@ export type ConsolidatedRow = { values: ConsolidatedCell[]; kind?: "group" | "to
 export type ConsolidatedTab = { name: string; note: string; columns: ConsolidatedColumn[]; rows: ConsolidatedRow[] };
 export type ConsolidatedBook = { client: string; asOf: string; totalValue: number; documents: number; tabs: ConsolidatedTab[] };
 type RecordRow = Record<string, ConsolidatedCell>;
+/** A row of a fund's own unit record, as the readers write it (`document.mjs`). */
+type CashFlowRow = {
+  date: string | null; kind: string; description?: string | null; security?: string | null; securityKey?: string | null;
+  isin?: string | null; assetClass?: string | null; amount: number | null; units: number | null; netAmount?: number | null;
+  expenses?: number | null; notes?: string | null;
+};
+type CashFlowDoc = ArchiveDoc & { cashFlows?: CashFlowRow[] };
 type TaxEvidence = { priceOn31Jan2018?: number | null; effectiveCost?: number | null; effectiveLongTerm?: number | null };
 
 export const CONSOLIDATED_VIEW = "Consolidated View";
@@ -60,6 +71,9 @@ const money = (key: string, label: string) => col(key, label, MONEY, 16);
 const pct = (key: string, label: string) => col(key, label, PCT, 11);
 const date = (key: string, label: string) => col(key, label, DATE, 12);
 const ratio = (n: number | null | undefined, d: number | null | undefined) => n != null && d != null && d > 0 ? n / d : null;
+const r2 = (n: number) => Math.round(n * 100) / 100;
+/** Newest issue first, a document with no date last, ties on the document key. */
+const newestIssueFirst = (a: ArchiveDoc, b: ArchiveDoc) => String(b.asOf ?? "").localeCompare(String(a.asOf ?? "")) || a.docKey.localeCompare(b.docKey);
 const dates = (xs: (string | null | undefined)[]) => xs.filter((d): d is string => !!d).sort();
 const fiscalYear = (d: string | null) => {
   if (!d) return null;
@@ -187,6 +201,100 @@ export function buildConsolidatedSheet(docs: ArchiveDoc[], input: { accounts: Ac
       notes: [mv.fromReview ? reviewNote : mv.fromCall ? "Reconciled call schedule; this is a call, not proof of payment" : "External capital record",
         !mv.securityKey && sec ? "Account-level record; the account holds only this security" : null].filter(Boolean).join("; "),
       src: mv.fromReview ? reviewNote : null, check: mv.amount == null ? "Amount not reported" : "OK" });
+  }
+  // SWITCHES (Stage 10lt). *"what happens when I redeem from somewhere and I
+  // invest somewhere else"* — the family, 4 Nov 2026. A switch is that move made
+  // inside a fund house: the statement prints a leg out of one scheme or unit
+  // class and a leg into another for the same rupees, and no money reaches the
+  // family's bank. Each leg is its holding's Sell or Buy, so each is a row — where
+  // a move routed through the bank is a redemption (Sell) here and a purchase
+  // (Buy) on the other holding. A switch is not external capital
+  // (`classSwitch.mjs`), so it counts as an internal switch, signed as a trade
+  // is. Every issue reprints the legs: each account's are read once, newest
+  // issue first, and a repeat inside one issue is kept as data (`datedRows`).
+  type Leg = { doc: ArchiveDoc; row: CashFlowRow & { date: string; amount: number } };
+  const legs: Leg[] = [];
+  {
+    const byAccount = new Map<string, CashFlowDoc[]>();
+    for (const d of docs as CashFlowDoc[]) {
+      if (d.twinOf || !d.cashFlows?.some(c => c.kind === "reclassification")) continue;
+      const k = `${d.provider}|${d.accountNo}`;
+      byAccount.set(k, [...(byAccount.get(k) ?? []), d]);
+    }
+    for (const group of byAccount.values()) {
+      const seen = new Set<string>();
+      for (const d of [...group].sort(newestIssueFirst)) {
+        const nth = new Map<string, number>();
+        for (const c of d.cashFlows ?? []) {
+          if (c.kind !== "reclassification" || !c.date || c.amount == null || c.amount === 0) continue;
+          const base = [c.date, c.securityKey, c.amount, c.units, c.description].join("\u0001");
+          const n = (nth.get(base) ?? 0) + 1;
+          nth.set(base, n);
+          if (seen.has(`${base}#${n}`)) continue;
+          seen.add(`${base}#${n}`);
+          legs.push({ doc: d, row: c as Leg["row"] });
+        }
+      }
+    }
+  }
+  const daysApart = (a: string, b: string) => Math.abs(Date.parse(a) - Date.parse(b)) / 86_400_000;
+  for (const leg of legs) {
+    const { doc: d, row: c } = leg, a = accountBySource.get(`${d.provider}|${d.accountNo}`), into = c.amount > 0;
+    // THE OTHER LEG: the other side, another security, the same rupees (±₹1 —
+    // each leg is struck at its own NAV and rounded apart) within five days (a
+    // switch settles in one to three, and a holiday stretches that) — the
+    // nearest, where only one is nearest. HDFC switched ₹45,000 from Liquid to
+    // Small Cap every few days, so a window alone finds two.
+    const pair = legs.filter(o => o !== leg && o.doc.provider === d.provider && o.doc.accountNo === d.accountNo && o.row.amount > 0 !== into
+      && o.row.securityKey !== c.securityKey && Math.abs(Math.abs(o.row.amount) - Math.abs(c.amount)) <= 1 && daysApart(o.row.date, c.date) <= 5);
+    const nearest = Math.min(...pair.map(o => daysApart(o.row.date, c.date)));
+    const closest = pair.filter(o => daysApart(o.row.date, c.date) === nearest);
+    const other = closest.length === 1 ? closest[0].row : null;
+    const sec = c.securityKey ?? null, m = mapping(a?.accountId, sec, c.assetClass ?? null);
+    transactions.push({ date: c.date, ...accountCols(a), sec, name: sec ? securityLabel(sec, c.security ?? sec) : c.security ?? null, ...m, isin: c.isin ?? m.isin,
+      record: "Switch", type: c.description ?? (into ? "Switch in" : "Switch out"), txntype: into ? "Buy" : "Sell", counts: "Internal switch",
+      // Units signed as the unit record prints them, as a capital flow's are.
+      qty: c.units, price: ratio(Math.abs(c.amount), c.units == null ? null : Math.abs(c.units)), gross: Math.abs(c.amount), net: -c.amount,
+      notes: `${into ? "Switched in from" : "Switched out to"} ${other ? `${securityLabel(other.securityKey ?? "", other.security ?? other.securityKey ?? "")} (${other.date})`
+        : "another scheme or class; the other leg is not on this account's statements"}. Moved inside the fund house: no money reached or left the family, so it is not a capital flow. Net is the leg's own amount, signed as a trade's is.`,
+      src: d.docKey, check: a ? "Reported switch" : "Account join missing", _source: d.docKey });
+  }
+  // INCOME ON A FUND'S OWN UNIT RECORD (Stage 10lt): an IDCW reinvested in units
+  // or paid out, a distribution, a gain distribution reinvested in a deposit.
+  // The book counts each in its holding's income and return, gross of TDS
+  // (`BOOK_HOLDING_INCOME`, `via: "unit-record"`), and no income statement lists
+  // them, so ₹48 L of income the returns counted had no row here. WHICH payment
+  // counts is the book's; the statement row is found only to name it.
+  const IDCW_REINVEST = /\b(?:IDCW|dividend)\b[^;]*\breinvest|\breinvest\w*\b[^;]*\b(?:IDCW|dividend)\b/i;
+  const unitRows = new Map<string, { doc: ArchiveDoc; row: CashFlowRow }[]>();
+  for (const d of [...docs as CashFlowDoc[]].sort(newestIssueFirst)) {
+    if (d.twinOf) continue;
+    for (const c of d.cashFlows ?? []) {
+      if (!c.date || !c.securityKey || !["allotment", "distribution", "contribution"].includes(c.kind)) continue;
+      const k = `${d.provider}|${d.accountNo}|${c.securityKey}|${c.date}`;
+      unitRows.set(k, [...(unitRows.get(k) ?? []), { doc: d, row: c }]);
+    }
+  }
+  const tdsOf = (c: CashFlowRow) => c.kind === "allotment" && c.expenses != null && /\bTDS\b/.test(c.notes ?? "") ? c.expenses : 0;
+  for (const [key, entries] of Object.entries(BOOK_HOLDING_INCOME)) {
+    const cut = key.lastIndexOf("|"), acct = key.slice(0, cut), sec = key.slice(cut + 1), a = accountById.get(acct);
+    const held = positionOf(acct, sec), m = mapping(acct, sec);
+    for (const e of entries) {
+      if (e.via !== "unit-record") continue;
+      const earned = e.earnedOn ?? sec;
+      const found = (a && e.date ? unitRows.get(`${a.provider}|${a.accountNo}|${earned}|${e.date}`) ?? [] : []).find(({ row: c }) =>
+        c.kind === "contribution" ? c.netAmount != null && c.amount != null && Math.abs(c.netAmount - c.amount - e.amount) <= 0.01
+          : c.amount != null && Math.abs(c.amount + tdsOf(c) - e.amount) <= 0.01);
+      const c = found?.row, tds = c ? tdsOf(c) : 0;
+      const reinvested = c?.kind === "allotment" && IDCW_REINVEST.test(c.description ?? ""), intoDeposit = c?.kind === "contribution";
+      transactions.push({ date: e.date, ...accountCols(a), acct, sec, name: securityLabel(sec, held?.security ?? sec), ...m,
+        record: "Income", type: intoDeposit ? "Gain Distr. reinvested" : c?.description ?? "Income on the fund's unit record", txntype: "Income", counts: "Income",
+        qty: reinvested ? c?.units ?? null : null, gross: e.amount, chg: tds || null, net: r2(e.amount - tds),
+        notes: [reinvested ? `Reinvested in ${c?.units} units of the same scheme: no cash reached the bank` : intoDeposit ? `Reinvested in the ${e.date} deposit (${c?.notes})` : null,
+          e.earnedOn && e.earnedOn !== sec ? `Earned on ${securityLabel(e.earnedOn, e.earnedOn)}; it follows its units through the class switch into this holding` : null,
+          "From the fund's own unit record; counted in this holding's income and return, gross of TDS"].filter(Boolean).join(". "),
+        src: found?.doc.docKey ?? null, check: found ? "Reported event" : "Statement row not located", _source: found?.doc.docKey ?? null });
+    }
   }
   for (const e of [...income.cash, ...income.corporate]) {
     const a = sourceAccount(e.source), sec = isIncomeBucket(e.securityKey) ? null : e.securityKey, cash = income.cash.includes(e);
@@ -365,9 +473,113 @@ export function buildConsolidatedSheet(docs: ArchiveDoc[], input: { accounts: Ac
       + `Market value over the ${counted} rows counted in the family total adds to ${crore(totalValue)}; a holding two statements report is kept on both rows and counted once. `
       + "Absolute return is FIFO: unrealised + realised + income over capital deployed. Blank means the source does not report it.",
       VIEW_COLUMNS, view, holdingLinks),
-    tab(TRANSACTIONS, `Every dated record on file, newest first: ${transactions.filter(t => !String(t.record).startsWith("Tax lot")).length} trades, capital flows and income rows, `
+    tab(TRANSACTIONS, `Every dated record on file, newest first: ${transactions.filter(t => !String(t.record).startsWith("Tax lot")).length} trades, capital flows, switches and income rows, `
       + `and ${transactions.filter(t => String(t.record).startsWith("Tax lot")).length} tax-lot rows from capital-gain statements. Tax lots carry no cash flow and trades carry no realised gain, so neither is counted twice. `
       + "Internal trades are manager dealing, not family capital. A capital call is not proof of payment.",
       TXN_COLUMNS, transactions, txnLinks),
   ] };
+}
+
+// ── EACH HOLDING'S OWN RECORD (Stage 10lt) ─────────────────────────────────
+//
+// *"If there is any transaction on any security or asset where dividends, or any
+// income etc is coming it will show in transactions as buy sell or income"* —
+// the family, 4 Nov 2026, on a holding's Transactions tab, which drew only the
+// trade tape: Buoyant's showed one purchase of the ten that paid for it, and
+// none of its switches or its income. The tab now draws THIS sheet's rows for
+// the holding, so a holding's page and Data Audit cannot disagree about what
+// moved. Tax lots stay off it: each is detail of a sale whose money is already
+// on its trade row.
+//
+// ACROSS A CLASS SWITCH THE HOLDING KEEPS ITS HISTORY. Where the book carried a
+// tranche's cost and date through a switch (`carriedFrom`), the earlier class's
+// rows are this holding's too, named as bought in that class, and the switch's
+// two legs are ONE row that is neither a buy nor a sell: no money came in or
+// went out, and drawing the leg in as a Buy beside the purchases it carried
+// would count them twice.
+
+const recordAmount = (record: string, txntype: string | null, gross: number | null, net: number | null): number | null =>
+  record === "Corporate action" ? null
+    // Income keeps its sign — a reversal is a minus — and is gross of TDS.
+    : txntype === "Income" ? gross ?? net
+    // A trade's money is its settlement; a flow's and a switch's their gross.
+    : record === "Trade" ? (net == null ? null : Math.abs(net))
+    : gross != null ? Math.abs(gross) : net == null ? null : Math.abs(net);
+
+const classLabel = (security: string) => splitFundClass(security) ? `Class ${splitFundClass(security)!.cls}` : security;
+
+export function holdingRecordsFrom(book: ConsolidatedBook, tranches: Record<string, PositionTranches> = BOOK_POSITION_TRANCHES): Map<string, HoldingRecord[]> {
+  const out = new Map<string, HoldingRecord[]>();
+  const tab = book.tabs.find(t => t.name === TRANSACTIONS);
+  if (!tab) return out;
+  const at = new Map(tab.columns.map((c, i) => [c.key, i]));
+  const cell = (r: ConsolidatedRow, k: string) => r.values[at.get(k) ?? -1] ?? null;
+  const str = (r: ConsolidatedRow, k: string) => { const v = cell(r, k); return v == null ? null : String(v); };
+  const num = (r: ConsolidatedRow, k: string) => { const v = cell(r, k); return typeof v === "number" ? v : null; };
+  const toRecord = (r: ConsolidatedRow, heldAs?: string): HoldingRecord => {
+    const record = str(r, "record") ?? "", txntype = str(r, "txntype") as HoldingRecord["txntype"];
+    // The badge says which way the units went, so the count is drawn unsigned.
+    const signed = num(r, "qty"), qty = signed == null ? null : Math.abs(signed), amount = recordAmount(record, txntype, num(r, "gross"), num(r, "net"));
+    return { date: str(r, "date"), txntype, record, type: str(r, "type"), accountId: str(r, "acct"), entity: str(r, "ent"), provider: str(r, "provider"),
+      qty, rate: num(r, "price") ?? (record !== "Income" && amount != null && qty != null && qty > 0 ? amount / qty : null), amount,
+      ...(heldAs ? { heldAs } : {}), notes: str(r, "notes"), source: str(r, "src") };
+  };
+  const bySecurity = new Map<string, ConsolidatedRow[]>();
+  for (const r of tab.rows) {
+    const sec = str(r, "sec");
+    if (!sec || str(r, "record")?.startsWith("Tax lot")) continue;
+    bySecurity.set(sec, [...(bySecurity.get(sec) ?? []), r]);
+  }
+  for (const [sec, rows] of bySecurity) out.set(sec, rows.map(r => toRecord(r)));
+  // The classes each holding's money was carried from, per account and switch day.
+  const carried = new Map<string, Map<string, string>>();
+  for (const t of Object.values(tranches)) for (const m of t.moves) {
+    const from = m.carriedFrom;
+    if (!from?.securityKey || from.securityKey === t.securityKey) continue;
+    const k = `${t.accountId}|${t.securityKey}`;
+    (carried.get(k) ?? carried.set(k, new Map()).get(k)!).set(`${from.securityKey}|${from.switchedOn}`, from.security ?? from.securityKey);
+  }
+  for (const [k, froms] of carried) {
+    const cut = k.lastIndexOf("|"), acct = k.slice(0, cut), to = k.slice(cut + 1);
+    const mine = [...(out.get(to) ?? [])];
+    const toName = str(bySecurity.get(to)?.[0] ?? { values: [] }, "name") ?? to;
+    for (const [fk, fromName] of froms) {
+      const fcut = fk.lastIndexOf("|"), from = fk.slice(0, fcut), on = fk.slice(fcut + 1);
+      const theirs = (bySecurity.get(from) ?? []).filter(r => str(r, "acct") === acct);
+      const merged = new Set<ConsolidatedRow>();
+      for (const leg of theirs.filter(r => str(r, "record") === "Switch" && str(r, "txntype") === "Sell" && str(r, "date") === on)) {
+        const amount = num(leg, "gross");
+        const i = mine.findIndex(x => x.accountId === acct && x.record === "Switch" && x.txntype === "Buy" && x.date === on
+          && amount != null && x.amount != null && Math.abs(x.amount - amount) <= 1);
+        if (i < 0) continue;
+        const into = mine[i];
+        mine[i] = { ...into, txntype: null, type: `${classLabel(fromName)} → ${classLabel(toName)}`,
+          notes: `A class switch inside the fund: it redeemed the ${classLabel(fromName)} units and allotted ${classLabel(toName)} the same day for the same rupees. No money came in or went out, so this is neither a buy nor a sell; what was paid for the ${classLabel(fromName)} units is this holding's cost.` };
+        merged.add(leg);
+      }
+      mine.push(...theirs.filter(r => !merged.has(r)).map(r => toRecord(r, fromName)));
+    }
+    // NEWEST FIRST, an undated record last — the sheet's own order.
+    out.set(to, mine.sort((a, b) => String(b.date ?? "").localeCompare(String(a.date ?? ""))));
+  }
+  return out;
+}
+
+/**
+ * EVERY HOLDING'S LEDGER, WITH ITS RECORD — the per-security read model a
+ * holding's page loads (`ledger/stocks/<key>.json`), struck from ONE sheet per
+ * archive, whichever of the build or a statement publication asks first.
+ */
+const recordsByArchive = new WeakMap<ArchiveDoc[], Map<string, HoldingRecord[]>>();
+const recordsOf = (docs: ArchiveDoc[], book?: ConsolidatedBook) => {
+  let by = recordsByArchive.get(docs);
+  if (!by) recordsByArchive.set(docs, by = holdingRecordsFrom(book ?? buildConsolidatedSheet(docs)));
+  return by;
+};
+export function deriveHoldingLedgers(docs: ArchiveDoc[], keys: string[], book?: ConsolidatedBook): Record<string, StockLedger> {
+  const by = recordsOf(docs, book);
+  return Object.fromEntries(Object.entries(deriveStockLedgers(docs, keys)).map(([k, l]) => [k, { ...l, records: by.get(k) ?? [] }]));
+}
+export function deriveHoldingLedger(docs: ArchiveDoc[], key: string): StockLedger {
+  return { ...deriveStockLedger(docs, key), records: key ? recordsOf(docs).get(key) ?? [] : [] };
 }

@@ -19,8 +19,8 @@ export const BOOK_AS_OF = "2026-11-03";
 export const BOOK_SUMMARY: BookSummary = {
   "asOf": "2026-11-03",
   "listedValue": 7968401917.36,
-  "privateValue": 2745889803.68,
-  "unplacedValue": 40979575,
+  "privateValue": 2786869378.68,
+  "unplacedValue": 0,
   "totalValue": 10755271296.04,
   "positionsCount": 506,
   "entitiesCount": 11,
@@ -906,7 +906,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "noPositionsReason": null,
     "demat": {
       "printed": null,
-      "reason": "the statement read for HDFC Securities 3110320 prints no DP ID or Client ID"
+      "reason": "none of the 2 statements read for HDFC Securities 3110320 prints a DP ID and Client ID"
     }
   },
   {
@@ -10189,6 +10189,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-31",
+      "buys": 0,
+      "sells": 109,
+      "unaccounted": null,
+      "held": null,
+      "reason": "the transaction statements end on 2026-10-31, before this holding's own statement of 2026-11-02, so the trades between the two are not in this drop"
+    },
     "priceAsOf": "2026-11-02",
     "accruedIncome": null,
     "dividendReceived": null,
@@ -10319,6 +10328,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2026-04-01",
+      "to": "2026-10-31",
+      "buys": 0,
+      "sells": 330,
+      "unaccounted": null,
+      "held": null,
+      "reason": "the transaction statements end on 2026-10-31, before this holding's own statement of 2026-11-02, so the trades between the two are not in this drop"
+    },
     "priceAsOf": "2026-11-02",
     "accruedIncome": null,
     "dividendReceived": null,
@@ -11226,7 +11244,7 @@ export const BOOK_POSITIONS: Position[] = [
     "sector": "Unclassified",
     "providerSector": null,
     "assetClass": "AIF",
-    "marketSide": null,
+    "marketSide": "private",
     "quantity": 2275000,
     "avgCost": null,
     "currentPrice": null,
@@ -57015,6 +57033,3083 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
       "amount": 347123.26
     }
   ],
+  "hdfc-securities-3110320|man-industries-india": [
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 255,
+      "price": 940,
+      "amount": 239394.78
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 870,
+      "price": 940,
+      "amount": 816758.6
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 13,
+      "price": 940,
+      "amount": 12204.45
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 13,
+      "price": 940,
+      "amount": 12204.45
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 510,
+      "price": 940,
+      "amount": 478789.53
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 2269,
+      "price": 940,
+      "amount": 2130144
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 3987,
+      "price": 940,
+      "amount": 3743007.49
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 53,
+      "price": 940,
+      "amount": 49756.56
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 53,
+      "price": 940,
+      "amount": 49756.56
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 53,
+      "price": 940,
+      "amount": 49756.56
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 1208,
+      "price": 940,
+      "amount": 1134074.01
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 723,
+      "price": 940,
+      "amount": 678754.57
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 454,
+      "price": 940,
+      "amount": 426216.56
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 2435,
+      "price": 940,
+      "amount": 2285985.28
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 649,
+      "price": 940,
+      "amount": 609283.14
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 5,
+      "price": 940,
+      "amount": 4694.04
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 5,
+      "price": 940,
+      "amount": 4694.04
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 5,
+      "price": 940,
+      "amount": 4694.04
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 5,
+      "price": 940,
+      "amount": 4694.04
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 45,
+      "price": 940,
+      "amount": 42246.14
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 45,
+      "price": 940,
+      "amount": 42246.14
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 1,
+      "price": 940,
+      "amount": 938.8
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 1,
+      "price": 940,
+      "amount": 938.8
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 1,
+      "price": 940,
+      "amount": 938.8
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 1,
+      "price": 940,
+      "amount": 938.8
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 1,
+      "price": 940,
+      "amount": 938.8
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 1,
+      "price": 940,
+      "amount": 938.8
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 12,
+      "price": 940,
+      "amount": 11265.64
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 156,
+      "price": 940,
+      "amount": 146453.26
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 50,
+      "price": 940,
+      "amount": 46940.15
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 200,
+      "price": 940,
+      "amount": 187760.6
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 816,
+      "price": 940,
+      "amount": 766063.22
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 51,
+      "price": 940,
+      "amount": 47878.97
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 500,
+      "price": 940,
+      "amount": 469401.5
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 500,
+      "price": 940,
+      "amount": 469401.5
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 981,
+      "price": 940,
+      "amount": 920965.73
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 18,
+      "price": 940,
+      "amount": 16898.46
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 18,
+      "price": 940,
+      "amount": 16898.46
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 18,
+      "price": 940,
+      "amount": 16898.46
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 35,
+      "price": 940,
+      "amount": 32858.12
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 212,
+      "price": 940,
+      "amount": 199026.22
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 419,
+      "price": 940,
+      "amount": 393358.45
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 522,
+      "price": 940,
+      "amount": 490055.16
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 377,
+      "price": 940,
+      "amount": 353928.73
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 73,
+      "price": 940,
+      "amount": 68532.62
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 73,
+      "price": 940,
+      "amount": 68532.62
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 73,
+      "price": 940,
+      "amount": 68532.62
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 258,
+      "price": 940,
+      "amount": 242211.17
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 400,
+      "price": 940,
+      "amount": 375521.2
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 126,
+      "price": 940,
+      "amount": 118289.17
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 7,
+      "price": 940,
+      "amount": 6571.61
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 47,
+      "price": 940,
+      "amount": 44123.74
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 134,
+      "price": 940,
+      "amount": 125799.59
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 14,
+      "price": 940,
+      "amount": 13143.24
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 3986,
+      "price": 940,
+      "amount": 3742068.71
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 4000,
+      "price": 940,
+      "amount": 3755211.95
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 742,
+      "price": 940,
+      "amount": 696591.8
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 204,
+      "price": 940,
+      "amount": 191515.81
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 147,
+      "price": 940,
+      "amount": 138004.04
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 147,
+      "price": 940,
+      "amount": 138004.04
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 10,
+      "price": 940,
+      "amount": 9388.02
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 10,
+      "price": 940,
+      "amount": 9388.02
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 1250,
+      "price": 940,
+      "amount": 1173503.72
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 1706,
+      "price": 940,
+      "amount": 1601597.9
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 1435,
+      "price": 940,
+      "amount": 1347182.29
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 836,
+      "price": 940,
+      "amount": 784839.28
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 34,
+      "price": 940,
+      "amount": 31919.3
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 584,
+      "price": 940,
+      "amount": 548260.94
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 36,
+      "price": 940,
+      "amount": 33796.92
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 107,
+      "price": 940,
+      "amount": 100451.91
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 924,
+      "price": 940,
+      "amount": 867453.97
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 2,
+      "price": 940,
+      "amount": 1877.6
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 5,
+      "price": 940.2,
+      "amount": 4695.04
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 46,
+      "price": 940.2,
+      "amount": 43194.14
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 36,
+      "price": 940.15,
+      "amount": 33802.32
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 46,
+      "price": 940.15,
+      "amount": 43191.84
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 46,
+      "price": 940.15,
+      "amount": 43191.84
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 79,
+      "price": 940.15,
+      "amount": 74177.27
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 99,
+      "price": 940.1,
+      "amount": 92951.4
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 13,
+      "price": 940.1,
+      "amount": 12205.75
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 1,
+      "price": 940.1,
+      "amount": 938.9
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 250,
+      "price": 940.1,
+      "amount": 234725.73
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 8,
+      "price": 940.05,
+      "amount": 7510.82
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 67,
+      "price": 940.05,
+      "amount": 62903.16
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 8,
+      "price": 940,
+      "amount": 7510.42
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 5,
+      "price": 940.4,
+      "amount": 4696.04
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 79,
+      "price": 940.4,
+      "amount": 74197.01
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 13,
+      "price": 940.4,
+      "amount": 12209.64
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 2,
+      "price": 940.4,
+      "amount": 1878.4
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 14,
+      "price": 940.35,
+      "amount": 13148.14
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 50,
+      "price": 940.35,
+      "amount": 46957.65
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 50,
+      "price": 940.35,
+      "amount": 46957.65
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 18,
+      "price": 940.3,
+      "amount": 16903.83
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 8,
+      "price": 940.3,
+      "amount": 7512.82
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 50,
+      "price": 940.3,
+      "amount": 46955.15
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 13,
+      "price": 940.3,
+      "amount": 12208.35
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 14,
+      "price": 940.25,
+      "amount": 13146.74
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 79,
+      "price": 940.25,
+      "amount": 74185.16
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 2,
+      "price": 940.2,
+      "amount": 1878
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 79,
+      "price": 940.2,
+      "amount": 74181.21
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 1,
+      "price": 940.6,
+      "amount": 939.4
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 14,
+      "price": 940.55,
+      "amount": 13150.94
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 1,
+      "price": 940.55,
+      "amount": 939.35
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 24,
+      "price": 940.5,
+      "amount": 22543.28
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 14,
+      "price": 940.45,
+      "amount": 13149.54
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 79,
+      "price": 940.45,
+      "amount": 74200.96
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 31,
+      "price": 940.45,
+      "amount": 29116.85
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 31,
+      "price": 940.45,
+      "amount": 29116.85
+    },
+    {
+      "date": "2026-09-23",
+      "side": "sell",
+      "quantity": 31,
+      "price": 940.4,
+      "amount": 29115.31
+    }
+  ],
+  "hdfc-securities-3110320|vedanta": [
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 1324,
+      "price": 267.65,
+      "amount": 353917.46
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 437,
+      "price": 267.65,
+      "amount": 116814.14
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 75,
+      "price": 267.65,
+      "amount": 20048.19
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 304,
+      "price": 267.65,
+      "amount": 81262.01
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 110,
+      "price": 267.65,
+      "amount": 29404.03
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 1150,
+      "price": 267.65,
+      "amount": 307405.63
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 222,
+      "price": 267.65,
+      "amount": 59342.66
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 5,
+      "price": 267.6,
+      "amount": 1336.31
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 310,
+      "price": 267.6,
+      "amount": 82850.37
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 194,
+      "price": 267.6,
+      "amount": 51848.33
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 304,
+      "price": 267.6,
+      "amount": 81246.81
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 210,
+      "price": 267.6,
+      "amount": 56124.42
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 405,
+      "price": 267.6,
+      "amount": 108239.99
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 101,
+      "price": 267.6,
+      "amount": 26993.19
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 279,
+      "price": 267.6,
+      "amount": 74565.34
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 268,
+      "price": 267.6,
+      "amount": 71625.48
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 209,
+      "price": 267.6,
+      "amount": 55857.17
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 175,
+      "price": 267.6,
+      "amount": 46770.38
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 1150,
+      "price": 267.6,
+      "amount": 307348.14
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 71,
+      "price": 267.6,
+      "amount": 18975.42
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 196,
+      "price": 267.6,
+      "amount": 52382.85
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 632,
+      "price": 267.6,
+      "amount": 168907.86
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 992,
+      "price": 267.55,
+      "amount": 265071.61
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 237,
+      "price": 267.55,
+      "amount": 63328.59
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 196,
+      "price": 267.55,
+      "amount": 52373.05
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 16,
+      "price": 267.55,
+      "amount": 4275.35
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 1,
+      "price": 267.55,
+      "amount": 267.22
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 900,
+      "price": 267.55,
+      "amount": 240488.36
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 609,
+      "price": 267.55,
+      "amount": 162730.47
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 139,
+      "price": 267.55,
+      "amount": 37142.1
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 135,
+      "price": 267.55,
+      "amount": 36073.26
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 210,
+      "price": 267.5,
+      "amount": 56103.45
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 196,
+      "price": 267.5,
+      "amount": 52363.25
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 5,
+      "price": 267.5,
+      "amount": 1335.81
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 258,
+      "price": 267.5,
+      "amount": 68927.1
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 113,
+      "price": 267.5,
+      "amount": 30189.01
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 113,
+      "price": 267.5,
+      "amount": 30189.01
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 113,
+      "price": 267.5,
+      "amount": 30189.01
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 121,
+      "price": 267.5,
+      "amount": 32326.29
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 121,
+      "price": 267.5,
+      "amount": 32326.29
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 609,
+      "price": 267.5,
+      "amount": 162700.03
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 65,
+      "price": 267.5,
+      "amount": 17365.36
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 65,
+      "price": 267.5,
+      "amount": 17365.36
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 317,
+      "price": 267.5,
+      "amount": 84689.5
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 317,
+      "price": 267.5,
+      "amount": 84689.5
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 41,
+      "price": 267.5,
+      "amount": 10953.53
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 1,
+      "price": 267.5,
+      "amount": 267.17
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 1,
+      "price": 267.5,
+      "amount": 267.17
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 20,
+      "price": 267.5,
+      "amount": 5343.19
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 309,
+      "price": 267.5,
+      "amount": 82552.21
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 122,
+      "price": 267.5,
+      "amount": 32593.44
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 194,
+      "price": 267.5,
+      "amount": 51828.93
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 1221,
+      "price": 267.5,
+      "amount": 326201.5
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 75,
+      "price": 267.5,
+      "amount": 20036.94
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 6,
+      "price": 267.5,
+      "amount": 1602.96
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 6,
+      "price": 267.5,
+      "amount": 1602.96
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 327,
+      "price": 267.5,
+      "amount": 87361.09
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 153,
+      "price": 267.5,
+      "amount": 40875.37
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 139,
+      "price": 267.5,
+      "amount": 37135.15
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 112,
+      "price": 267.5,
+      "amount": 29921.85
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 277,
+      "price": 267.5,
+      "amount": 74003.14
+    },
+    {
+      "date": "2026-07-23",
+      "side": "sell",
+      "quantity": 17,
+      "price": 267.5,
+      "amount": 4541.72
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 575,
+      "price": 265.2,
+      "amount": 152296.54
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 468,
+      "price": 265.2,
+      "amount": 123956.16
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 29,
+      "price": 265.25,
+      "amount": 7682.49
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 154,
+      "price": 265.25,
+      "amount": 40796.69
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 9,
+      "price": 265.25,
+      "amount": 2384.22
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 575,
+      "price": 265.25,
+      "amount": 152325.29
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 80,
+      "price": 265.25,
+      "amount": 21193.09
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 576,
+      "price": 265.2,
+      "amount": 152561.41
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 100,
+      "price": 265.2,
+      "amount": 26486.37
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 45,
+      "price": 265.2,
+      "amount": 11918.85
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 218,
+      "price": 265.2,
+      "amount": 57740.25
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 90,
+      "price": 265.2,
+      "amount": 23837.72
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 19,
+      "price": 265.2,
+      "amount": 5032.41
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 20,
+      "price": 265.2,
+      "amount": 5297.27
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 34,
+      "price": 265.2,
+      "amount": 9005.36
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 2,
+      "price": 265.2,
+      "amount": 529.72
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 2362,
+      "price": 265.2,
+      "amount": 625607.67
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 70,
+      "price": 265.3,
+      "amount": 18547.46
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 70,
+      "price": 265.3,
+      "amount": 18547.46
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 70,
+      "price": 265.3,
+      "amount": 18547.46
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 70,
+      "price": 265.3,
+      "amount": 18547.46
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 70,
+      "price": 265.3,
+      "amount": 18547.46
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 70,
+      "price": 265.3,
+      "amount": 18547.46
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 70,
+      "price": 265.3,
+      "amount": 18547.46
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 70,
+      "price": 265.3,
+      "amount": 18547.46
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 70,
+      "price": 265.3,
+      "amount": 18547.46
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 5,
+      "price": 265.3,
+      "amount": 1324.83
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 5,
+      "price": 265.3,
+      "amount": 1324.83
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 5,
+      "price": 265.3,
+      "amount": 1324.83
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 5,
+      "price": 265.3,
+      "amount": 1324.83
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 5,
+      "price": 265.3,
+      "amount": 1324.83
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 5,
+      "price": 265.3,
+      "amount": 1324.83
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 5,
+      "price": 265.3,
+      "amount": 1324.83
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 5,
+      "price": 265.3,
+      "amount": 1324.83
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 120,
+      "price": 265.3,
+      "amount": 31795.63
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 120,
+      "price": 265.3,
+      "amount": 31795.63
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 120,
+      "price": 265.3,
+      "amount": 31795.63
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 120,
+      "price": 265.3,
+      "amount": 31795.63
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 120,
+      "price": 265.3,
+      "amount": 31795.63
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 120,
+      "price": 265.3,
+      "amount": 31795.63
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 120,
+      "price": 265.3,
+      "amount": 31795.63
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 120,
+      "price": 265.3,
+      "amount": 31795.63
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 120,
+      "price": 265.3,
+      "amount": 31795.63
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 265.3,
+      "amount": 264.98
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 111,
+      "price": 265.3,
+      "amount": 29410.96
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 61,
+      "price": 265.3,
+      "amount": 16162.76
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 8,
+      "price": 265.25,
+      "amount": 2119.3
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 265.25,
+      "amount": 264.93
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 15,
+      "price": 265.3,
+      "amount": 3974.46
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 15,
+      "price": 265.3,
+      "amount": 3974.46
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 15,
+      "price": 265.3,
+      "amount": 3974.46
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 15,
+      "price": 265.3,
+      "amount": 3974.46
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 11,
+      "price": 265.3,
+      "amount": 2914.61
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 265.35,
+      "amount": 265.03
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 265.35,
+      "amount": 265.03
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 265.35,
+      "amount": 265.03
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 265.35,
+      "amount": 265.03
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 265.35,
+      "amount": 265.03
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 265.35,
+      "amount": 265.03
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 265.35,
+      "amount": 265.03
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 265.35,
+      "amount": 265.03
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 265.35,
+      "amount": 265.03
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 152,
+      "price": 265.35,
+      "amount": 40282.05
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 152,
+      "price": 265.35,
+      "amount": 40282.05
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 152,
+      "price": 265.35,
+      "amount": 40282.05
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 152,
+      "price": 265.35,
+      "amount": 40282.05
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 152,
+      "price": 265.35,
+      "amount": 40282.05
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 152,
+      "price": 265.35,
+      "amount": 40282.05
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 152,
+      "price": 265.35,
+      "amount": 40282.05
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 152,
+      "price": 265.35,
+      "amount": 40282.05
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 144,
+      "price": 265.35,
+      "amount": 38161.94
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 10,
+      "price": 265.3,
+      "amount": 2649.63
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1012,
+      "price": 265.3,
+      "amount": 268143.09
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1294,
+      "price": 265.3,
+      "amount": 342862.79
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 2,
+      "price": 265.3,
+      "amount": 529.92
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 246,
+      "price": 265.35,
+      "amount": 65193.3
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 15,
+      "price": 265.35,
+      "amount": 3975.21
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 169,
+      "price": 265.4,
+      "amount": 44795.74
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 169,
+      "price": 265.4,
+      "amount": 44795.74
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 169,
+      "price": 265.4,
+      "amount": 44795.74
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 169,
+      "price": 265.4,
+      "amount": 44795.74
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 169,
+      "price": 265.4,
+      "amount": 44795.74
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 169,
+      "price": 265.4,
+      "amount": 44795.74
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 169,
+      "price": 265.4,
+      "amount": 44795.74
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 169,
+      "price": 265.4,
+      "amount": 44795.74
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 169,
+      "price": 265.4,
+      "amount": 44795.74
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 160,
+      "price": 265.4,
+      "amount": 42410.18
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 160,
+      "price": 265.4,
+      "amount": 42410.18
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 160,
+      "price": 265.4,
+      "amount": 42410.18
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 160,
+      "price": 265.4,
+      "amount": 42410.18
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 160,
+      "price": 265.4,
+      "amount": 42410.18
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 160,
+      "price": 265.4,
+      "amount": 42410.18
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 160,
+      "price": 265.4,
+      "amount": 42410.18
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 160,
+      "price": 265.4,
+      "amount": 42410.18
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 173,
+      "price": 265.4,
+      "amount": 45855.98
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 173,
+      "price": 265.4,
+      "amount": 45855.98
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 173,
+      "price": 265.4,
+      "amount": 45855.98
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 173,
+      "price": 265.4,
+      "amount": 45855.98
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 173,
+      "price": 265.4,
+      "amount": 45855.98
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 173,
+      "price": 265.4,
+      "amount": 45855.98
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 173,
+      "price": 265.4,
+      "amount": 45855.98
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 173,
+      "price": 265.4,
+      "amount": 45855.98
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 155,
+      "price": 265.4,
+      "amount": 41084.86
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 155,
+      "price": 265.4,
+      "amount": 41084.86
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 155,
+      "price": 265.4,
+      "amount": 41084.86
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 155,
+      "price": 265.4,
+      "amount": 41084.86
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 155,
+      "price": 265.4,
+      "amount": 41084.86
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 155,
+      "price": 265.4,
+      "amount": 41084.86
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 155,
+      "price": 265.4,
+      "amount": 41084.86
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 155,
+      "price": 265.4,
+      "amount": 41084.86
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 155,
+      "price": 265.4,
+      "amount": 41084.86
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 154,
+      "price": 265.4,
+      "amount": 40819.79
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 168,
+      "price": 265.4,
+      "amount": 44530.69
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 151,
+      "price": 265.4,
+      "amount": 40024.59
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 166,
+      "price": 265.4,
+      "amount": 44000.56
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 64,
+      "price": 265.35,
+      "amount": 16960.85
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 302,
+      "price": 265.35,
+      "amount": 80034.08
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 367,
+      "price": 265.35,
+      "amount": 97259.95
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 111,
+      "price": 265.35,
+      "amount": 29416.51
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 110,
+      "price": 265.35,
+      "amount": 29151.48
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 51,
+      "price": 265.35,
+      "amount": 13515.69
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 2,
+      "price": 265.4,
+      "amount": 530.12
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 2,
+      "price": 265.4,
+      "amount": 530.12
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 2,
+      "price": 265.4,
+      "amount": 530.12
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 2,
+      "price": 265.4,
+      "amount": 530.12
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 2,
+      "price": 265.4,
+      "amount": 530.12
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 2,
+      "price": 265.4,
+      "amount": 530.12
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 265.4,
+      "amount": 265.08
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 265.4,
+      "amount": 265.08
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 265.4,
+      "amount": 265.08
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 265.4,
+      "amount": 265.08
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 265.4,
+      "amount": 265.08
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 95,
+      "price": 265.4,
+      "amount": 25181.04
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 305,
+      "price": 265.4,
+      "amount": 80844.36
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1000,
+      "price": 265.4,
+      "amount": 265063.49
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 52,
+      "price": 265.4,
+      "amount": 13783.3
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 100,
+      "price": 263,
+      "amount": 26266.43
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 100,
+      "price": 263,
+      "amount": 26266.43
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 100,
+      "price": 263,
+      "amount": 26266.43
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 20,
+      "price": 263,
+      "amount": 5253.3
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 20,
+      "price": 263,
+      "amount": 5253.3
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 20,
+      "price": 263,
+      "amount": 5253.3
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 263,
+      "amount": 262.68
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 263,
+      "amount": 262.68
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 263,
+      "amount": 262.68
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 263,
+      "amount": 262.68
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 263,
+      "amount": 262.68
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 263,
+      "amount": 262.68
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 263,
+      "amount": 262.68
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 263,
+      "amount": 262.68
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 263,
+      "amount": 262.68
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 263,
+      "amount": 262.68
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 65,
+      "price": 263,
+      "amount": 17073.16
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 10,
+      "price": 263,
+      "amount": 2626.63
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 10,
+      "price": 263,
+      "amount": 2626.63
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 10,
+      "price": 263,
+      "amount": 2626.63
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 10,
+      "price": 263,
+      "amount": 2626.63
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 10,
+      "price": 263,
+      "amount": 2626.63
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 10,
+      "price": 263,
+      "amount": 2626.63
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 10,
+      "price": 263,
+      "amount": 2626.63
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 5,
+      "price": 263,
+      "amount": 1313.34
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 5,
+      "price": 263,
+      "amount": 1313.34
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 5,
+      "price": 263,
+      "amount": 1313.34
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 5,
+      "price": 263,
+      "amount": 1313.34
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 5,
+      "price": 263,
+      "amount": 1313.34
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 5,
+      "price": 263,
+      "amount": 1313.34
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 5,
+      "price": 263,
+      "amount": 1313.34
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 5,
+      "price": 263,
+      "amount": 1313.34
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 7,
+      "price": 263,
+      "amount": 1838.64
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 2,
+      "price": 263,
+      "amount": 525.32
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 2,
+      "price": 263,
+      "amount": 525.32
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 2,
+      "price": 263,
+      "amount": 525.32
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 6,
+      "price": 263,
+      "amount": 1575.99
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 6,
+      "price": 263,
+      "amount": 1575.99
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 150,
+      "price": 263,
+      "amount": 39399.63
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 3419,
+      "price": 263,
+      "amount": 898048.7
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 50,
+      "price": 263,
+      "amount": 13133.2
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 50,
+      "price": 263,
+      "amount": 13133.2
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 50,
+      "price": 263,
+      "amount": 13133.2
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 50,
+      "price": 263,
+      "amount": 13133.2
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 14,
+      "price": 263,
+      "amount": 3677.29
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 6693,
+      "price": 263,
+      "amount": 1758011.13
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 3000,
+      "price": 263,
+      "amount": 787992.44
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1800,
+      "price": 263,
+      "amount": 472795.47
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 500,
+      "price": 263,
+      "amount": 131332.08
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 220,
+      "price": 263,
+      "amount": 57786.1
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 21,
+      "price": 263,
+      "amount": 5515.94
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 21,
+      "price": 263,
+      "amount": 5515.94
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 12,
+      "price": 263,
+      "amount": 3151.96
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 12,
+      "price": 263,
+      "amount": 3151.96
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 30,
+      "price": 263,
+      "amount": 7879.93
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 600,
+      "price": 263,
+      "amount": 157598.49
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 38,
+      "price": 263,
+      "amount": 9981.23
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 25,
+      "price": 263,
+      "amount": 6566.59
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 40,
+      "price": 263,
+      "amount": 10506.57
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1000,
+      "price": 263,
+      "amount": 262664.16
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 11,
+      "price": 263,
+      "amount": 2889.31
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 700,
+      "price": 263,
+      "amount": 183864.91
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 57,
+      "price": 263.05,
+      "amount": 14974.71
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 57,
+      "price": 263.05,
+      "amount": 14974.71
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 57,
+      "price": 263.05,
+      "amount": 14974.71
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 57,
+      "price": 263.05,
+      "amount": 14974.71
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 57,
+      "price": 263.05,
+      "amount": 14974.71
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 57,
+      "price": 263.05,
+      "amount": 14974.71
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 57,
+      "price": 263.05,
+      "amount": 14974.71
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 57,
+      "price": 263.05,
+      "amount": 14974.71
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 57,
+      "price": 263.05,
+      "amount": 14974.71
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 94,
+      "price": 263.05,
+      "amount": 24695.12
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 94,
+      "price": 263.05,
+      "amount": 24695.12
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 94,
+      "price": 263.05,
+      "amount": 24695.12
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 94,
+      "price": 263.05,
+      "amount": 24695.12
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 94,
+      "price": 263.05,
+      "amount": 24695.12
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 94,
+      "price": 263.05,
+      "amount": 24695.12
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 94,
+      "price": 263.05,
+      "amount": 24695.12
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 94,
+      "price": 263.05,
+      "amount": 24695.12
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 94,
+      "price": 263.05,
+      "amount": 24695.12
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 86,
+      "price": 263.05,
+      "amount": 22593.43
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 53,
+      "price": 263.05,
+      "amount": 13923.85
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 134,
+      "price": 263,
+      "amount": 35197
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 9,
+      "price": 263,
+      "amount": 2363.98
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 3,
+      "price": 263,
+      "amount": 788.01
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 45,
+      "price": 263,
+      "amount": 11819.9
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 90,
+      "price": 263.05,
+      "amount": 23644.26
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 2266,
+      "price": 263.05,
+      "amount": 595310.22
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 181,
+      "price": 263.05,
+      "amount": 47551.27
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 141,
+      "price": 263.05,
+      "amount": 37042.69
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 44,
+      "price": 263.05,
+      "amount": 11559.43
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 185,
+      "price": 263.1,
+      "amount": 48611.38
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 107,
+      "price": 263.1,
+      "amount": 28115.76
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 33,
+      "price": 263.1,
+      "amount": 8671.21
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 33,
+      "price": 263.1,
+      "amount": 8671.21
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 33,
+      "price": 263.1,
+      "amount": 8671.21
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 69,
+      "price": 263.1,
+      "amount": 18130.72
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 69,
+      "price": 263.1,
+      "amount": 18130.72
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 22,
+      "price": 263.1,
+      "amount": 5780.8
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 11,
+      "price": 263.1,
+      "amount": 2890.41
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 162,
+      "price": 263.05,
+      "amount": 42559.69
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 100,
+      "price": 263.05,
+      "amount": 26271.43
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 394,
+      "price": 263.05,
+      "amount": 103509.35
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 271,
+      "price": 263.05,
+      "amount": 71195.52
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 271,
+      "price": 263.05,
+      "amount": 71195.52
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 575,
+      "price": 263.05,
+      "amount": 151060.64
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 575,
+      "price": 263.05,
+      "amount": 151060.64
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 32,
+      "price": 263.15,
+      "amount": 8410.06
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 32,
+      "price": 263.15,
+      "amount": 8410.06
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 11,
+      "price": 263.15,
+      "amount": 2890.96
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 11,
+      "price": 263.15,
+      "amount": 2890.96
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 10,
+      "price": 263.15,
+      "amount": 2628.13
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 43,
+      "price": 263.15,
+      "amount": 11301.02
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 300,
+      "price": 263.1,
+      "amount": 78829.23
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 50,
+      "price": 263.1,
+      "amount": 13138.2
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 263.1,
+      "amount": 262.78
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 263.1,
+      "amount": 262.78
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 70,
+      "price": 263.1,
+      "amount": 18393.49
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 219,
+      "price": 263.1,
+      "amount": 57545.32
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 226,
+      "price": 263.1,
+      "amount": 59384.69
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 263.2,
+      "amount": 262.88
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 1,
+      "price": 263.2,
+      "amount": 262.88
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 3,
+      "price": 263.2,
+      "amount": 788.61
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 3,
+      "price": 263.2,
+      "amount": 788.61
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 3,
+      "price": 263.2,
+      "amount": 788.61
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 3,
+      "price": 263.2,
+      "amount": 788.61
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 5,
+      "price": 263.2,
+      "amount": 1314.34
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 149,
+      "price": 263.2,
+      "amount": 39166.75
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 2,
+      "price": 263.2,
+      "amount": 525.72
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 88,
+      "price": 263.2,
+      "amount": 23132.05
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 2289,
+      "price": 263.15,
+      "amount": 601581.51
+    },
+    {
+      "date": "2026-07-29",
+      "side": "sell",
+      "quantity": 50,
+      "price": 263.15,
+      "amount": 13140.7
+    }
+  ],
   "icici-bank-nsdl-demat-49794950|city-union": [
     {
       "date": "2026-07-02",
@@ -58454,103 +61549,127 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
  * where the statement prints neither. What a money-weighted return over the
  * holding's own dated trades adds on each day.
  */
-export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: number }[]> = {
+export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: number; via?: "unit-record"; earnedOn?: string }[]> = {
   "aditya-birla-sun-life-mutual-fund-1019265797|aditya-birla-sun-life-liquid-fund-daily-idcw-direct-plan": [
     {
       "date": "2026-09-01",
-      "amount": 199.95
+      "amount": 199.95,
+      "via": "unit-record"
     },
     {
       "date": "2026-09-02",
-      "amount": 249.69
+      "amount": 249.69,
+      "via": "unit-record"
     },
     {
       "date": "2026-09-03",
-      "amount": 277.24
+      "amount": 277.24,
+      "via": "unit-record"
     },
     {
       "date": "2026-09-04",
-      "amount": 169.82
+      "amount": 169.82,
+      "via": "unit-record"
     },
     {
       "date": "2026-09-06",
-      "amount": 236.55
+      "amount": 236.55,
+      "via": "unit-record"
     },
     {
       "date": "2026-09-07",
-      "amount": 105.33
+      "amount": 105.33,
+      "via": "unit-record"
     },
     {
       "date": "2026-09-08",
-      "amount": 97.93
+      "amount": 97.93,
+      "via": "unit-record"
     },
     {
       "date": "2026-09-09",
-      "amount": 143.32
+      "amount": 143.32,
+      "via": "unit-record"
     },
     {
       "date": "2026-09-10",
-      "amount": 136.75
+      "amount": 136.75,
+      "via": "unit-record"
     },
     {
       "date": "2026-09-11",
-      "amount": 62.15
+      "amount": 62.15,
+      "via": "unit-record"
     },
     {
       "date": "2026-09-14",
-      "amount": 360.25
+      "amount": 360.25,
+      "via": "unit-record"
     },
     {
       "date": "2026-09-15",
-      "amount": 29.66
+      "amount": 29.66,
+      "via": "unit-record"
     },
     {
       "date": "2026-09-16",
-      "amount": 96.66
+      "amount": 96.66,
+      "via": "unit-record"
     },
     {
       "date": "2026-09-17",
-      "amount": 112.11
+      "amount": 112.11,
+      "via": "unit-record"
     },
     {
       "date": "2026-09-18",
-      "amount": 110.61
+      "amount": 110.61,
+      "via": "unit-record"
     },
     {
       "date": "2026-09-20",
-      "amount": 251.31
+      "amount": 251.31,
+      "via": "unit-record"
     },
     {
       "date": "2026-09-21",
-      "amount": 169.22
+      "amount": 169.22,
+      "via": "unit-record"
     },
     {
       "date": "2026-09-22",
-      "amount": 191.75
+      "amount": 191.75,
+      "via": "unit-record"
     },
     {
       "date": "2026-09-23",
-      "amount": 115.05
+      "amount": 115.05,
+      "via": "unit-record"
     },
     {
       "date": "2026-09-24",
-      "amount": 49.3
+      "amount": 49.3,
+      "via": "unit-record"
     },
     {
       "date": "2026-09-27",
-      "amount": 199.2
+      "amount": 199.2,
+      "via": "unit-record"
     },
     {
       "date": "2026-09-28",
-      "amount": 93.19
+      "amount": 93.19,
+      "via": "unit-record"
     },
     {
       "date": "2026-09-29",
-      "amount": 109.94
+      "amount": 109.94,
+      "via": "unit-record"
     },
     {
       "date": "2026-09-30",
-      "amount": 173
+      "amount": 173,
+      "via": "unit-record"
     }
   ],
   "baring-private-equity-india-fund-AIFM_BPEPF6_0584|baring-private-equity-india-fund-6-class-a1": [
@@ -58566,7 +61685,9 @@ export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: 
   "buoyant-capital-103473|buoyant-opportunities-strategy-category-iii-class-a4": [
     {
       "date": "2026-04-01",
-      "amount": 58861.66
+      "amount": 58861.66,
+      "via": "unit-record",
+      "earnedOn": "buoyant-opportunities-strategy-category-iii-class-a1"
     }
   ],
   "carnelian-asset-management-and-advisors-pvt-ltd-3517383|biocon": [
@@ -59522,2661 +62643,3323 @@ export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: 
   "hdfc-mutual-fund-15644806|hdfc-liquid-fund-direct-plan-idcw-daily-reinvest": [
     {
       "date": "2019-04-18",
-      "amount": 24226.85
+      "amount": 24226.85,
+      "via": "unit-record"
     },
     {
       "date": "2019-04-21",
-      "amount": 74904.28
+      "amount": 74904.28,
+      "via": "unit-record"
     },
     {
       "date": "2019-04-22",
-      "amount": 23063.91
+      "amount": 23063.91,
+      "via": "unit-record"
     },
     {
       "date": "2019-04-23",
-      "amount": 22322.83
+      "amount": 22322.83,
+      "via": "unit-record"
     },
     {
       "date": "2019-04-24",
-      "amount": 23173.68
+      "amount": 23173.68,
+      "via": "unit-record"
     },
     {
       "date": "2019-04-25",
-      "amount": 24578.76
+      "amount": 24578.76,
+      "via": "unit-record"
     },
     {
       "date": "2019-04-26",
-      "amount": 8991.69
+      "amount": 8991.69,
+      "via": "unit-record"
     },
     {
       "date": "2019-04-29",
-      "amount": 28277.4
+      "amount": 28277.4,
+      "via": "unit-record"
     },
     {
       "date": "2019-04-30",
-      "amount": 8520.12
+      "amount": 8520.12,
+      "via": "unit-record"
     },
     {
       "date": "2019-05-01",
-      "amount": 9415.78
+      "amount": 9415.78,
+      "via": "unit-record"
     },
     {
       "date": "2019-05-02",
-      "amount": 8489.77
+      "amount": 8489.77,
+      "via": "unit-record"
     },
     {
       "date": "2019-05-03",
-      "amount": 9091.74
+      "amount": 9091.74,
+      "via": "unit-record"
     },
     {
       "date": "2019-05-05",
-      "amount": 18793.46
+      "amount": 18793.46,
+      "via": "unit-record"
     },
     {
       "date": "2019-05-06",
-      "amount": 9500.66
+      "amount": 9500.66,
+      "via": "unit-record"
     },
     {
       "date": "2019-05-07",
-      "amount": 10129.38
+      "amount": 10129.38,
+      "via": "unit-record"
     },
     {
       "date": "2019-05-08",
-      "amount": 9934.84
+      "amount": 9934.84,
+      "via": "unit-record"
     },
     {
       "date": "2019-05-09",
-      "amount": 9622.54
+      "amount": 9622.54,
+      "via": "unit-record"
     },
     {
       "date": "2019-05-10",
-      "amount": 9264.34
+      "amount": 9264.34,
+      "via": "unit-record"
     },
     {
       "date": "2019-05-12",
-      "amount": 18688.19
+      "amount": 18688.19,
+      "via": "unit-record"
     },
     {
       "date": "2019-05-13",
-      "amount": 9811.11
+      "amount": 9811.11,
+      "via": "unit-record"
     },
     {
       "date": "2019-05-14",
-      "amount": 10466.72
+      "amount": 10466.72,
+      "via": "unit-record"
     },
     {
       "date": "2019-05-15",
-      "amount": 10402.94
+      "amount": 10402.94,
+      "via": "unit-record"
     },
     {
       "date": "2019-05-16",
-      "amount": 11307.6
+      "amount": 11307.6,
+      "via": "unit-record"
     },
     {
       "date": "2019-05-17",
-      "amount": 9836.92
+      "amount": 9836.92,
+      "via": "unit-record"
     },
     {
       "date": "2019-05-19",
-      "amount": 18570.49
+      "amount": 18570.49,
+      "via": "unit-record"
     },
     {
       "date": "2019-05-20",
-      "amount": 9834.56
+      "amount": 9834.56,
+      "via": "unit-record"
     },
     {
       "date": "2019-05-21",
-      "amount": 9855.65
+      "amount": 9855.65,
+      "via": "unit-record"
     },
     {
       "date": "2019-05-22",
-      "amount": 10322.13
+      "amount": 10322.13,
+      "via": "unit-record"
     },
     {
       "date": "2019-05-23",
-      "amount": 11633.84
+      "amount": 11633.84,
+      "via": "unit-record"
     },
     {
       "date": "2019-05-24",
-      "amount": 10096.21
+      "amount": 10096.21,
+      "via": "unit-record"
     },
     {
       "date": "2019-05-26",
-      "amount": 18190.34
+      "amount": 18190.34,
+      "via": "unit-record"
     },
     {
       "date": "2019-05-27",
-      "amount": 9071.43
+      "amount": 9071.43,
+      "via": "unit-record"
     },
     {
       "date": "2019-05-28",
-      "amount": 10088.74
+      "amount": 10088.74,
+      "via": "unit-record"
     },
     {
       "date": "2019-05-29",
-      "amount": 9618.21
+      "amount": 9618.21,
+      "via": "unit-record"
     },
     {
       "date": "2019-05-30",
-      "amount": 9245.82
+      "amount": 9245.82,
+      "via": "unit-record"
     },
     {
       "date": "2019-05-31",
-      "amount": 2783.26
+      "amount": 2783.26,
+      "via": "unit-record"
     },
     {
       "date": "2019-06-02",
-      "amount": 4272.8
+      "amount": 4272.8,
+      "via": "unit-record"
     },
     {
       "date": "2019-06-03",
-      "amount": 2416.05
+      "amount": 2416.05,
+      "via": "unit-record"
     },
     {
       "date": "2019-06-04",
-      "amount": 2234.51
+      "amount": 2234.51,
+      "via": "unit-record"
     },
     {
       "date": "2019-06-05",
-      "amount": 2244.24
+      "amount": 2244.24,
+      "via": "unit-record"
     },
     {
       "date": "2019-06-06",
-      "amount": 2724.52
+      "amount": 2724.52,
+      "via": "unit-record"
     },
     {
       "date": "2019-06-07",
-      "amount": 2147.67
+      "amount": 2147.67,
+      "via": "unit-record"
     },
     {
       "date": "2019-06-09",
-      "amount": 4179.81
+      "amount": 4179.81,
+      "via": "unit-record"
     },
     {
       "date": "2019-06-10",
-      "amount": 2092.02
+      "amount": 2092.02,
+      "via": "unit-record"
     },
     {
       "date": "2019-06-11",
-      "amount": 2010.67
+      "amount": 2010.67,
+      "via": "unit-record"
     },
     {
       "date": "2019-06-12",
-      "amount": 2095.69
+      "amount": 2095.69,
+      "via": "unit-record"
     },
     {
       "date": "2019-06-13",
-      "amount": 2084.98
+      "amount": 2084.98,
+      "via": "unit-record"
     },
     {
       "date": "2019-06-14",
-      "amount": 2060.13
+      "amount": 2060.13,
+      "via": "unit-record"
     },
     {
       "date": "2019-06-16",
-      "amount": 4178.89
+      "amount": 4178.89,
+      "via": "unit-record"
     },
     {
       "date": "2019-06-17",
-      "amount": 2089.2
+      "amount": 2089.2,
+      "via": "unit-record"
     },
     {
       "date": "2019-06-18",
-      "amount": 2037.63
+      "amount": 2037.63,
+      "via": "unit-record"
     },
     {
       "date": "2019-06-19",
-      "amount": 2061.46
+      "amount": 2061.46,
+      "via": "unit-record"
     },
     {
       "date": "2019-06-20",
-      "amount": 2946.44
+      "amount": 2946.44,
+      "via": "unit-record"
     },
     {
       "date": "2019-06-21",
-      "amount": 1705.32
+      "amount": 1705.32,
+      "via": "unit-record"
     },
     {
       "date": "2019-06-23",
-      "amount": 4008.33
+      "amount": 4008.33,
+      "via": "unit-record"
     },
     {
       "date": "2019-06-24",
-      "amount": 1915.04
+      "amount": 1915.04,
+      "via": "unit-record"
     },
     {
       "date": "2019-06-25",
-      "amount": 1946.72
+      "amount": 1946.72,
+      "via": "unit-record"
     },
     {
       "date": "2019-06-26",
-      "amount": 1942.24
+      "amount": 1942.24,
+      "via": "unit-record"
     },
     {
       "date": "2019-06-27",
-      "amount": 2143.8
+      "amount": 2143.8,
+      "via": "unit-record"
     },
     {
       "date": "2019-06-28",
-      "amount": 2048.13
+      "amount": 2048.13,
+      "via": "unit-record"
     },
     {
       "date": "2019-06-30",
-      "amount": 4027.56
+      "amount": 4027.56,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-01",
-      "amount": 2273.94
+      "amount": 2273.94,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-02",
-      "amount": 2261.67
+      "amount": 2261.67,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-03",
-      "amount": 2515.42
+      "amount": 2515.42,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-04",
-      "amount": 2353.66
+      "amount": 2353.66,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-11",
-      "amount": 686.4
+      "amount": 686.4,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-12",
-      "amount": 647.75
+      "amount": 647.75,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-14",
-      "amount": 1158.27
+      "amount": 1158.27,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-15",
-      "amount": 637.44
+      "amount": 637.44,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-16",
-      "amount": 787.92
+      "amount": 787.92,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-17",
-      "amount": 763.92
+      "amount": 763.92,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-18",
-      "amount": 563.45
+      "amount": 563.45,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-19",
-      "amount": 610.36
+      "amount": 610.36,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-21",
-      "amount": 1124.34
+      "amount": 1124.34,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-22",
-      "amount": 536.74
+      "amount": 536.74,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-23",
-      "amount": 546.27
+      "amount": 546.27,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-24",
-      "amount": 601.25
+      "amount": 601.25,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-25",
-      "amount": 567.23
+      "amount": 567.23,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-26",
-      "amount": 599.5
+      "amount": 599.5,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-28",
-      "amount": 1122.9
+      "amount": 1122.9,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-29",
-      "amount": 725.72
+      "amount": 725.72,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-30",
-      "amount": 7965.53
+      "amount": 7965.53,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-31",
-      "amount": 9708.59
+      "amount": 9708.59,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-01",
-      "amount": 9480.66
+      "amount": 9480.66,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-02",
-      "amount": 8351.57
+      "amount": 8351.57,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-04",
-      "amount": 14679.07
+      "amount": 14679.07,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-05",
-      "amount": 7814.52
+      "amount": 7814.52,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-06",
-      "amount": 8597.75
+      "amount": 8597.75,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-07",
-      "amount": 11962.3
+      "amount": 11962.3,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-08",
-      "amount": 9361.81
+      "amount": 9361.81,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-09",
-      "amount": 9806.92
+      "amount": 9806.92,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-12",
-      "amount": 21379.41
+      "amount": 21379.41,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-13",
-      "amount": 5365.65
+      "amount": 5365.65,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-14",
-      "amount": 4998.2
+      "amount": 4998.2,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-15",
-      "amount": 7180.72
+      "amount": 7180.72,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-16",
-      "amount": 7968.18
+      "amount": 7968.18,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-18",
-      "amount": 14320.38
+      "amount": 14320.38,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-19",
-      "amount": 7894.77
+      "amount": 7894.77,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-20",
-      "amount": 8397.15
+      "amount": 8397.15,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-21",
-      "amount": 8633.79
+      "amount": 8633.79,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-22",
-      "amount": 7424.02
+      "amount": 7424.02,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-23",
-      "amount": 7215.63
+      "amount": 7215.63,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-25",
-      "amount": 14153.86
+      "amount": 14153.86,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-26",
-      "amount": 7459.04
+      "amount": 7459.04,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-27",
-      "amount": 7758.04
+      "amount": 7758.04,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-28",
-      "amount": 7746.28
+      "amount": 7746.28,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-29",
-      "amount": 7290.37
+      "amount": 7290.37,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-30",
-      "amount": 7113.52
+      "amount": 7113.52,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-02",
-      "amount": 21127.12
+      "amount": 21127.12,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-03",
-      "amount": 7275.33
+      "amount": 7275.33,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-04",
-      "amount": 8058.58
+      "amount": 8058.58,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-05",
-      "amount": 8547.85
+      "amount": 8547.85,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-06",
-      "amount": 8124.07
+      "amount": 8124.07,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-08",
-      "amount": 13846.27
+      "amount": 13846.27,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-09",
-      "amount": 7524.14
+      "amount": 7524.14,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-10",
-      "amount": 6896.87
+      "amount": 6896.87,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-11",
-      "amount": 8147.68
+      "amount": 8147.68,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-12",
-      "amount": 7971
+      "amount": 7971,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-13",
-      "amount": 6880.28
+      "amount": 6880.28,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-15",
-      "amount": 13698.55
+      "amount": 13698.55,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-16",
-      "amount": 7187.23
+      "amount": 7187.23,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-17",
-      "amount": 6182.49
+      "amount": 6182.49,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-18",
-      "amount": 6810.91
+      "amount": 6810.91,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-19",
-      "amount": 7223.87
+      "amount": 7223.87,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-20",
-      "amount": 3545.74
+      "amount": 3545.74,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-22",
-      "amount": 12902.37
+      "amount": 12902.37,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-23",
-      "amount": 3140.58
+      "amount": 3140.58,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-24",
-      "amount": 5304.36
+      "amount": 5304.36,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-25",
-      "amount": 6757.9
+      "amount": 6757.9,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-26",
-      "amount": 8123.02
+      "amount": 8123.02,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-27",
-      "amount": 8396.95
+      "amount": 8396.95,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-29",
-      "amount": 14180.82
+      "amount": 14180.82,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-30",
-      "amount": 10914.13
+      "amount": 10914.13,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-01",
-      "amount": 10134.9
+      "amount": 10134.9,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-02",
-      "amount": 6886.24
+      "amount": 6886.24,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-03",
-      "amount": 7496.33
+      "amount": 7496.33,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-04",
-      "amount": 9217.56
+      "amount": 9217.56,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-06",
-      "amount": 13853.7
+      "amount": 13853.7,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-07",
-      "amount": 8141.26
+      "amount": 8141.26,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-08",
-      "amount": 6903.8
+      "amount": 6903.8,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-09",
-      "amount": 7164.96
+      "amount": 7164.96,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-10",
-      "amount": 7205.21
+      "amount": 7205.21,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-11",
-      "amount": 8691.66
+      "amount": 8691.66,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-13",
-      "amount": 13582.15
+      "amount": 13582.15,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-14",
-      "amount": 8218.32
+      "amount": 8218.32,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-15",
-      "amount": 8302.52
+      "amount": 8302.52,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-16",
-      "amount": 7249.76
+      "amount": 7249.76,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-17",
-      "amount": 6837.89
+      "amount": 6837.89,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-18",
-      "amount": 6597.32
+      "amount": 6597.32,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-21",
-      "amount": 20041.65
+      "amount": 20041.65,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-22",
-      "amount": 5056.43
+      "amount": 5056.43,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-23",
-      "amount": 6532.48
+      "amount": 6532.48,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-24",
-      "amount": 7218.84
+      "amount": 7218.84,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-25",
-      "amount": 6895.81
+      "amount": 6895.81,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-28",
-      "amount": 19883.12
+      "amount": 19883.12,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-29",
-      "amount": 6924.07
+      "amount": 6924.07,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-30",
-      "amount": 8151.63
+      "amount": 8151.63,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-31",
-      "amount": 8990.78
+      "amount": 8990.78,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-01",
-      "amount": 6769.42
+      "amount": 6769.42,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-03",
-      "amount": 12905.16
+      "amount": 12905.16,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-04",
-      "amount": 5952.04
+      "amount": 5952.04,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-05",
-      "amount": 5453.28
+      "amount": 5453.28,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-06",
-      "amount": 4012.53
+      "amount": 4012.53,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-07",
-      "amount": 5479.47
+      "amount": 5479.47,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-08",
-      "amount": 5645.03
+      "amount": 5645.03,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-10",
-      "amount": 13183.48
+      "amount": 13183.48,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-11",
-      "amount": 7514.08
+      "amount": 7514.08,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-12",
-      "amount": 6557.52
+      "amount": 6557.52,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-13",
-      "amount": 8608.81
+      "amount": 8608.81,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-14",
-      "amount": 7568.64
+      "amount": 7568.64,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-15",
-      "amount": 6128.01
+      "amount": 6128.01,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-17",
-      "amount": 13266.97
+      "amount": 13266.97,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-18",
-      "amount": 6701.54
+      "amount": 6701.54,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-19",
-      "amount": 7351.46
+      "amount": 7351.46,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-20",
-      "amount": 8425.3
+      "amount": 8425.3,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-21",
-      "amount": 6216.61
+      "amount": 6216.61,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-22",
-      "amount": 6522.04
+      "amount": 6522.04,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-24",
-      "amount": 12912.01
+      "amount": 12912.01,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-25",
-      "amount": 6479.53
+      "amount": 6479.53,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-26",
-      "amount": 6615.35
+      "amount": 6615.35,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-27",
-      "amount": 7625.57
+      "amount": 7625.57,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-28",
-      "amount": 7924.92
+      "amount": 7924.92,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-29",
-      "amount": 9691.43
+      "amount": 9691.43,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-01",
-      "amount": 12411.46
+      "amount": 12411.46,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-02",
-      "amount": 6321.28
+      "amount": 6321.28,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-03",
-      "amount": 6400.04
+      "amount": 6400.04,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-04",
-      "amount": 6781.67
+      "amount": 6781.67,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-06",
-      "amount": 6020.31
+      "amount": 6020.31,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-08",
-      "amount": 12911.85
+      "amount": 12911.85,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-09",
-      "amount": 7699.11
+      "amount": 7699.11,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-10",
-      "amount": 7142.33
+      "amount": 7142.33,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-11",
-      "amount": 6914.54
+      "amount": 6914.54,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-12",
-      "amount": 6597.77
+      "amount": 6597.77,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-13",
-      "amount": 5537.87
+      "amount": 5537.87,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-15",
-      "amount": 12816.94
+      "amount": 12816.94,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-16",
-      "amount": 6530.44
+      "amount": 6530.44,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-17",
-      "amount": 6501.16
+      "amount": 6501.16,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-18",
-      "amount": 6666.9
+      "amount": 6666.9,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-19",
-      "amount": 6832.69
+      "amount": 6832.69,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-20",
-      "amount": 5607.72
+      "amount": 5607.72,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-22",
-      "amount": 12785.17
+      "amount": 12785.17,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-23",
-      "amount": 6485.96
+      "amount": 6485.96,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-24",
-      "amount": 6171.01
+      "amount": 6171.01,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-25",
-      "amount": 6463.67
+      "amount": 6463.67,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-26",
-      "amount": 6419.87
+      "amount": 6419.87,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-27",
-      "amount": 7646.18
+      "amount": 7646.18,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-29",
-      "amount": 12804.42
+      "amount": 12804.42,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-30",
-      "amount": 6060.43
+      "amount": 6060.43,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-31",
-      "amount": 6209.16
+      "amount": 6209.16,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-01",
-      "amount": 7143.13
+      "amount": 7143.13,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-02",
-      "amount": 9283.91
+      "amount": 9283.91,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-03",
-      "amount": 7024.27
+      "amount": 7024.27,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-05",
-      "amount": 12487.53
+      "amount": 12487.53,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-06",
-      "amount": 5457.2
+      "amount": 5457.2,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-07",
-      "amount": 6190.36
+      "amount": 6190.36,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-08",
-      "amount": 6057.61
+      "amount": 6057.61,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-09",
-      "amount": 6305.84
+      "amount": 6305.84,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-10",
-      "amount": 4883.85
+      "amount": 4883.85,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-12",
-      "amount": 12683.73
+      "amount": 12683.73,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-13",
-      "amount": 4097.45
+      "amount": 4097.45,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-14",
-      "amount": 5421.72
+      "amount": 5421.72,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-15",
-      "amount": 6279.31
+      "amount": 6279.31,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-16",
-      "amount": 6597.41
+      "amount": 6597.41,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-17",
-      "amount": 6344.07
+      "amount": 6344.07,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-19",
-      "amount": 12898.96
+      "amount": 12898.96,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-20",
-      "amount": 6015.63
+      "amount": 6015.63,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-21",
-      "amount": 6710.34
+      "amount": 6710.34,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-22",
-      "amount": 6387.23
+      "amount": 6387.23,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-23",
-      "amount": 6229.12
+      "amount": 6229.12,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-24",
-      "amount": 6356.73
+      "amount": 6356.73,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-26",
-      "amount": 12892.53
+      "amount": 12892.53,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-27",
-      "amount": 6320.5
+      "amount": 6320.5,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-28",
-      "amount": 6608.76
+      "amount": 6608.76,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-29",
-      "amount": 6399.91
+      "amount": 6399.91,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-30",
-      "amount": 6972.02
+      "amount": 6972.02,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-31",
-      "amount": 6267.88
+      "amount": 6267.88,
+      "via": "unit-record"
     },
     {
       "date": "2020-02-02",
-      "amount": 13057.75
+      "amount": 13057.75,
+      "via": "unit-record"
     },
     {
       "date": "2020-02-03",
-      "amount": 6282.45
+      "amount": 6282.45,
+      "via": "unit-record"
     },
     {
       "date": "2020-02-04",
-      "amount": 6951.64
+      "amount": 6951.64,
+      "via": "unit-record"
     },
     {
       "date": "2020-02-05",
-      "amount": 6450.8
+      "amount": 6450.8,
+      "via": "unit-record"
     },
     {
       "date": "2020-02-06",
-      "amount": 7149.92
+      "amount": 7149.92,
+      "via": "unit-record"
     },
     {
       "date": "2020-02-07",
-      "amount": 7074.51
+      "amount": 7074.51,
+      "via": "unit-record"
     },
     {
       "date": "2020-02-09",
-      "amount": 13051.79
+      "amount": 13051.79,
+      "via": "unit-record"
     },
     {
       "date": "2020-02-10",
-      "amount": 6632.03
+      "amount": 6632.03,
+      "via": "unit-record"
     },
     {
       "date": "2020-02-11",
-      "amount": 8589.87
+      "amount": 8589.87,
+      "via": "unit-record"
     },
     {
       "date": "2020-02-12",
-      "amount": 7263.94
+      "amount": 7263.94,
+      "via": "unit-record"
     },
     {
       "date": "2020-02-13",
-      "amount": 7302.86
+      "amount": 7302.86,
+      "via": "unit-record"
     },
     {
       "date": "2020-02-14",
-      "amount": 6274.81
+      "amount": 6274.81,
+      "via": "unit-record"
     },
     {
       "date": "2020-02-16",
-      "amount": 12982.76
+      "amount": 12982.76,
+      "via": "unit-record"
     },
     {
       "date": "2020-02-17",
-      "amount": 6861.15
+      "amount": 6861.15,
+      "via": "unit-record"
     },
     {
       "date": "2020-02-18",
-      "amount": 6482.51
+      "amount": 6482.51,
+      "via": "unit-record"
     },
     {
       "date": "2020-02-19",
-      "amount": 6502.21
+      "amount": 6502.21,
+      "via": "unit-record"
     },
     {
       "date": "2020-02-20",
-      "amount": 5937.67
+      "amount": 5937.67,
+      "via": "unit-record"
     },
     {
       "date": "2020-02-23",
-      "amount": 19535.77
+      "amount": 19535.77,
+      "via": "unit-record"
     },
     {
       "date": "2020-02-24",
-      "amount": 6410.12
+      "amount": 6410.12,
+      "via": "unit-record"
     },
     {
       "date": "2020-02-25",
-      "amount": 6126.94
+      "amount": 6126.94,
+      "via": "unit-record"
     },
     {
       "date": "2020-02-26",
-      "amount": 6432.31
+      "amount": 6432.31,
+      "via": "unit-record"
     },
     {
       "date": "2020-02-27",
-      "amount": 3892.79
+      "amount": 3892.79,
+      "via": "unit-record"
     },
     {
       "date": "2020-02-28",
-      "amount": 6446.04
+      "amount": 6446.04,
+      "via": "unit-record"
     },
     {
       "date": "2020-03-01",
-      "amount": 13204.58
+      "amount": 13204.58,
+      "via": "unit-record"
     },
     {
       "date": "2020-03-02",
-      "amount": 6060.48
+      "amount": 6060.48,
+      "via": "unit-record"
     },
     {
       "date": "2020-03-03",
-      "amount": 8056.73
+      "amount": 8056.73,
+      "via": "unit-record"
     },
     {
       "date": "2020-03-04",
-      "amount": 13778.79
+      "amount": 13778.79,
+      "via": "unit-record"
     },
     {
       "date": "2020-03-05",
-      "amount": 8846.98
+      "amount": 8846.98,
+      "via": "unit-record"
     },
     {
       "date": "2020-03-06",
-      "amount": 8390.85
+      "amount": 8390.85,
+      "via": "unit-record"
     },
     {
       "date": "2020-03-08",
-      "amount": 15144.87
+      "amount": 15144.87,
+      "via": "unit-record"
     },
     {
       "date": "2020-03-09",
-      "amount": 8679.84
+      "amount": 8679.84,
+      "via": "unit-record"
     },
     {
       "date": "2020-03-10",
-      "amount": 7843.04
+      "amount": 7843.04,
+      "via": "unit-record"
     },
     {
       "date": "2020-03-11",
-      "amount": 3979.13
+      "amount": 3979.13,
+      "via": "unit-record"
     },
     {
       "date": "2020-03-12",
-      "amount": 2151.77
+      "amount": 2151.77,
+      "via": "unit-record"
     }
   ],
   "hdfc-mutual-fund-15725046|hdfc-arbitrage-fund-direct-plan-monthly-idcw-payout-option": [
     {
       "date": "2019-09-20",
-      "amount": 142666.92
+      "amount": 142666.92,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-25",
-      "amount": 143347.78
+      "amount": 143347.78,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-22",
-      "amount": 144031.82
+      "amount": 144031.82,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-20",
-      "amount": 130247.15
+      "amount": 130247.15,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-24",
-      "amount": 116273.13
+      "amount": 116273.13,
+      "via": "unit-record"
     },
     {
       "date": "2020-02-21",
-      "amount": 131306.97
+      "amount": 131306.97,
+      "via": "unit-record"
     }
   ],
   "hdfc-mutual-fund-15725046|hdfc-liquid-fund-direct-plan-idcw-daily-reinvest": [
     {
       "date": "2019-05-09",
-      "amount": 14433.92
+      "amount": 14433.92,
+      "via": "unit-record"
     },
     {
       "date": "2019-05-10",
-      "amount": 13896.61
+      "amount": 13896.61,
+      "via": "unit-record"
     },
     {
       "date": "2019-05-12",
-      "amount": 28032.49
+      "amount": 28032.49,
+      "via": "unit-record"
     },
     {
       "date": "2019-05-13",
-      "amount": 14716.77
+      "amount": 14716.77,
+      "via": "unit-record"
     },
     {
       "date": "2019-05-14",
-      "amount": 15700.2
+      "amount": 15700.2,
+      "via": "unit-record"
     },
     {
       "date": "2019-05-15",
-      "amount": 15604.52
+      "amount": 15604.52,
+      "via": "unit-record"
     },
     {
       "date": "2019-05-16",
-      "amount": 16961.51
+      "amount": 16961.51,
+      "via": "unit-record"
     },
     {
       "date": "2019-05-17",
-      "amount": 14755.48
+      "amount": 14755.48,
+      "via": "unit-record"
     },
     {
       "date": "2019-05-19",
-      "amount": 27855.94
+      "amount": 27855.94,
+      "via": "unit-record"
     },
     {
       "date": "2019-05-20",
-      "amount": 14751.94
+      "amount": 14751.94,
+      "via": "unit-record"
     },
     {
       "date": "2019-05-21",
-      "amount": 14783.58
+      "amount": 14783.58,
+      "via": "unit-record"
     },
     {
       "date": "2019-05-22",
-      "amount": 15483.3
+      "amount": 15483.3,
+      "via": "unit-record"
     },
     {
       "date": "2019-05-23",
-      "amount": 17450.88
+      "amount": 17450.88,
+      "via": "unit-record"
     },
     {
       "date": "2019-05-24",
-      "amount": 15144.42
+      "amount": 15144.42,
+      "via": "unit-record"
     },
     {
       "date": "2019-05-26",
-      "amount": 27285.7
+      "amount": 27285.7,
+      "via": "unit-record"
     },
     {
       "date": "2019-05-27",
-      "amount": 13607.24
+      "amount": 13607.24,
+      "via": "unit-record"
     },
     {
       "date": "2019-05-28",
-      "amount": 15133.22
+      "amount": 15133.22,
+      "via": "unit-record"
     },
     {
       "date": "2019-05-29",
-      "amount": 14427.41
+      "amount": 14427.41,
+      "via": "unit-record"
     },
     {
       "date": "2019-05-30",
-      "amount": 13868.83
+      "amount": 13868.83,
+      "via": "unit-record"
     },
     {
       "date": "2019-05-31",
-      "amount": 17471.24
+      "amount": 17471.24,
+      "via": "unit-record"
     },
     {
       "date": "2019-06-02",
-      "amount": 26821.46
+      "amount": 26821.46,
+      "via": "unit-record"
     },
     {
       "date": "2019-06-03",
-      "amount": 15166.14
+      "amount": 15166.14,
+      "via": "unit-record"
     },
     {
       "date": "2019-06-04",
-      "amount": 14026.62
+      "amount": 14026.62,
+      "via": "unit-record"
     },
     {
       "date": "2019-06-05",
-      "amount": 14087.65
+      "amount": 14087.65,
+      "via": "unit-record"
     },
     {
       "date": "2019-06-06",
-      "amount": 17102.5
+      "amount": 17102.5,
+      "via": "unit-record"
     },
     {
       "date": "2019-06-07",
-      "amount": 13481.47
+      "amount": 13481.47,
+      "via": "unit-record"
     },
     {
       "date": "2019-06-09",
-      "amount": 26237.73
+      "amount": 26237.73,
+      "via": "unit-record"
     },
     {
       "date": "2019-06-10",
-      "amount": 13132.14
+      "amount": 13132.14,
+      "via": "unit-record"
     },
     {
       "date": "2019-06-11",
-      "amount": 12621.51
+      "amount": 12621.51,
+      "via": "unit-record"
     },
     {
       "date": "2019-06-12",
-      "amount": 13155.22
+      "amount": 13155.22,
+      "via": "unit-record"
     },
     {
       "date": "2019-06-13",
-      "amount": 13087.95
+      "amount": 13087.95,
+      "via": "unit-record"
     },
     {
       "date": "2019-06-14",
-      "amount": 12931.95
+      "amount": 12931.95,
+      "via": "unit-record"
     },
     {
       "date": "2019-06-16",
-      "amount": 26231.97
+      "amount": 26231.97,
+      "via": "unit-record"
     },
     {
       "date": "2019-06-17",
-      "amount": 13114.48
+      "amount": 13114.48,
+      "via": "unit-record"
     },
     {
       "date": "2019-06-18",
-      "amount": 12790.75
+      "amount": 12790.75,
+      "via": "unit-record"
     },
     {
       "date": "2019-06-19",
-      "amount": 12940.32
+      "amount": 12940.32,
+      "via": "unit-record"
     },
     {
       "date": "2019-06-20",
-      "amount": 18495.6
+      "amount": 18495.6,
+      "via": "unit-record"
     },
     {
       "date": "2019-06-21",
-      "amount": 10704.75
+      "amount": 10704.75,
+      "via": "unit-record"
     },
     {
       "date": "2019-06-23",
-      "amount": 25161.31
+      "amount": 25161.31,
+      "via": "unit-record"
     },
     {
       "date": "2019-06-24",
-      "amount": 12021.23
+      "amount": 12021.23,
+      "via": "unit-record"
     },
     {
       "date": "2019-06-25",
-      "amount": 12220.09
+      "amount": 12220.09,
+      "via": "unit-record"
     },
     {
       "date": "2019-06-26",
-      "amount": 12191.95
+      "amount": 12191.95,
+      "via": "unit-record"
     },
     {
       "date": "2019-06-27",
-      "amount": 13457.2
+      "amount": 13457.2,
+      "via": "unit-record"
     },
     {
       "date": "2019-06-28",
-      "amount": 12856.65
+      "amount": 12856.65,
+      "via": "unit-record"
     },
     {
       "date": "2019-06-30",
-      "amount": 25282.05
+      "amount": 25282.05,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-01",
-      "amount": 14274.12
+      "amount": 14274.12,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-02",
-      "amount": 14197.1
+      "amount": 14197.1,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-03",
-      "amount": 15789.95
+      "amount": 15789.95,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-04",
-      "amount": 14774.52
+      "amount": 14774.52,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-05",
-      "amount": 14895.29
+      "amount": 14895.29,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-07",
-      "amount": 24634.74
+      "amount": 24634.74,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-08",
-      "amount": 12953.21
+      "amount": 12953.21,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-09",
-      "amount": 13152.66
+      "amount": 13152.66,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-10",
-      "amount": 14133.53
+      "amount": 14133.53,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-11",
-      "amount": 13848.65
+      "amount": 13848.65,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-12",
-      "amount": 13068.98
+      "amount": 13068.98,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-14",
-      "amount": 24241.6
+      "amount": 24241.6,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-15",
-      "amount": 13341.03
+      "amount": 13341.03,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-16",
-      "amount": 16490.43
+      "amount": 16490.43,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-17",
-      "amount": 15988.23
+      "amount": 15988.23,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-18",
-      "amount": 11792.57
+      "amount": 11792.57,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-19",
-      "amount": 12774.3
+      "amount": 12774.3,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-21",
-      "amount": 23531.45
+      "amount": 23531.45,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-22",
-      "amount": 11233.54
+      "amount": 11233.54,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-23",
-      "amount": 11432.93
+      "amount": 11432.93,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-24",
-      "amount": 12583.59
+      "amount": 12583.59,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-25",
-      "amount": 11871.67
+      "amount": 11871.67,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-26",
-      "amount": 12546.99
+      "amount": 12546.99,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-28",
-      "amount": 23501.28
+      "amount": 23501.28,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-29",
-      "amount": 15188.67
+      "amount": 15188.67,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-30",
-      "amount": 12424.45
+      "amount": 12424.45,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-31",
-      "amount": 15143.23
+      "amount": 15143.23,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-01",
-      "amount": 14808.27
+      "amount": 14808.27,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-02",
-      "amount": 13044.69
+      "amount": 13044.69,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-04",
-      "amount": 22927.89
+      "amount": 22927.89,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-05",
-      "amount": 12205.84
+      "amount": 12205.84,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-06",
-      "amount": 13447.89
+      "amount": 13447.89,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-07",
-      "amount": 18710.44
+      "amount": 18710.44,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-08",
-      "amount": 14663.35
+      "amount": 14663.35,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-09",
-      "amount": 15360.52
+      "amount": 15360.52,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-12",
-      "amount": 33486.45
+      "amount": 33486.45,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-13",
-      "amount": 8404.18
+      "amount": 8404.18,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-14",
-      "amount": 7828.66
+      "amount": 7828.66,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-15",
-      "amount": 11247.12
+      "amount": 11247.12,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-16",
-      "amount": 12480.52
+      "amount": 12480.52,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-18",
-      "amount": 22429.93
+      "amount": 22429.93,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-19",
-      "amount": 12365.54
+      "amount": 12365.54,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-20",
-      "amount": 13152.41
+      "amount": 13152.41,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-21",
-      "amount": 13541.88
+      "amount": 13541.88,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-22",
-      "amount": 11644.39
+      "amount": 11644.39,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-23",
-      "amount": 11317.54
+      "amount": 11317.54,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-25",
-      "amount": 22199.97
+      "amount": 22199.97,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-26",
-      "amount": 11699.32
+      "amount": 11699.32,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-27",
-      "amount": 12168.3
+      "amount": 12168.3,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-28",
-      "amount": 12149.85
+      "amount": 12149.85,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-29",
-      "amount": 11434.77
+      "amount": 11434.77,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-30",
-      "amount": 11157.37
+      "amount": 11157.37,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-02",
-      "amount": 33137.35
+      "amount": 33137.35,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-03",
-      "amount": 11411.18
+      "amount": 11411.18,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-04",
-      "amount": 12657.27
+      "amount": 12657.27,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-05",
-      "amount": 13425.75
+      "amount": 13425.75,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-06",
-      "amount": 12760.13
+      "amount": 12760.13,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-08",
-      "amount": 21747.75
+      "amount": 21747.75,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-09",
-      "amount": 11817.84
+      "amount": 11817.84,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-10",
-      "amount": 10832.62
+      "amount": 10832.62,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-11",
-      "amount": 12797.21
+      "amount": 12797.21,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-12",
-      "amount": 12519.72
+      "amount": 12519.72,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-13",
-      "amount": 7617.77
+      "amount": 7617.77,
+      "via": "unit-record"
     }
   ],
   "hdfc-mutual-fund-16002141|hdfc-liquid-fund-direct-plan-idcw-daily-reinvest": [
     {
       "date": "2019-07-11",
-      "amount": 686.4
+      "amount": 686.4,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-12",
-      "amount": 647.75
+      "amount": 647.75,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-14",
-      "amount": 1167.88
+      "amount": 1167.88,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-15",
-      "amount": 642.73
+      "amount": 642.73,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-16",
-      "amount": 794.45
+      "amount": 794.45,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-17",
-      "amount": 770.26
+      "amount": 770.26,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-18",
-      "amount": 568.13
+      "amount": 568.13,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-19",
-      "amount": 615.42
+      "amount": 615.42,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-21",
-      "amount": 1133.67
+      "amount": 1133.67,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-22",
-      "amount": 541.19
+      "amount": 541.19,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-23",
-      "amount": 550.8
+      "amount": 550.8,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-24",
-      "amount": 606.24
+      "amount": 606.24,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-25",
-      "amount": 571.94
+      "amount": 571.94,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-26",
-      "amount": 604.47
+      "amount": 604.47,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-28",
-      "amount": 1132.21
+      "amount": 1132.21,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-29",
-      "amount": 731.74
+      "amount": 731.74,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-30",
-      "amount": 598.57
+      "amount": 598.57,
+      "via": "unit-record"
     },
     {
       "date": "2019-07-31",
-      "amount": 729.55
+      "amount": 729.55,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-01",
-      "amount": 703.16
+      "amount": 703.16,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-02",
-      "amount": 619.42
+      "amount": 619.42,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-04",
-      "amount": 1088.72
+      "amount": 1088.72,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-05",
-      "amount": 579.59
+      "amount": 579.59,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-06",
-      "amount": 629.27
+      "amount": 629.27,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-07",
-      "amount": 875.52
+      "amount": 875.52,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-08",
-      "amount": 681.8
+      "amount": 681.8,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-09",
-      "amount": 714.21
+      "amount": 714.21,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-12",
-      "amount": 1557.01
+      "amount": 1557.01,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-13",
-      "amount": 390.77
+      "amount": 390.77,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-14",
-      "amount": 364.01
+      "amount": 364.01,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-15",
-      "amount": 522.95
+      "amount": 522.95,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-16",
-      "amount": 580.3
+      "amount": 580.3,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-18",
-      "amount": 1042.92
+      "amount": 1042.92,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-19",
-      "amount": 574.96
+      "amount": 574.96,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-20",
-      "amount": 611.54
+      "amount": 611.54,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-21",
-      "amount": 625.65
+      "amount": 625.65,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-22",
-      "amount": 537.98
+      "amount": 537.98,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-23",
-      "amount": 522.88
+      "amount": 522.88,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-25",
-      "amount": 1025.66
+      "amount": 1025.66,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-26",
-      "amount": 540.52
+      "amount": 540.52,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-27",
-      "amount": 562.19
+      "amount": 562.19,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-28",
-      "amount": 561.33
+      "amount": 561.33,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-29",
-      "amount": 528.3
+      "amount": 528.3,
+      "via": "unit-record"
     },
     {
       "date": "2019-08-30",
-      "amount": 515.48
+      "amount": 515.48,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-02",
-      "amount": 1530.97
+      "amount": 1530.97,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-03",
-      "amount": 527.21
+      "amount": 527.21,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-04",
-      "amount": 572.31
+      "amount": 572.31,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-05",
-      "amount": 607.06
+      "amount": 607.06,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-06",
-      "amount": 576.96
+      "amount": 576.96,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-08",
-      "amount": 983.35
+      "amount": 983.35,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-09",
-      "amount": 534.36
+      "amount": 534.36,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-10",
-      "amount": 489.81
+      "amount": 489.81,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-11",
-      "amount": 578.64
+      "amount": 578.64,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-12",
-      "amount": 566.09
+      "amount": 566.09,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-13",
-      "amount": 488.63
+      "amount": 488.63,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-15",
-      "amount": 972.86
+      "amount": 972.86,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-16",
-      "amount": 510.43
+      "amount": 510.43,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-17",
-      "amount": 430.13
+      "amount": 430.13,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-18",
-      "amount": 473.85
+      "amount": 473.85,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-19",
-      "amount": 502.58
+      "amount": 502.58,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-20",
-      "amount": 246.68
+      "amount": 246.68,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-22",
-      "amount": 897.64
+      "amount": 897.64,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-23",
-      "amount": 218.5
+      "amount": 218.5,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-24",
-      "amount": 369.03
+      "amount": 369.03,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-25",
-      "amount": 470.16
+      "amount": 470.16,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-26",
-      "amount": 565.13
+      "amount": 565.13,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-27",
-      "amount": 584.19
+      "amount": 584.19,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-29",
-      "amount": 986.58
+      "amount": 986.58,
+      "via": "unit-record"
     },
     {
       "date": "2019-09-30",
-      "amount": 759.31
+      "amount": 759.31,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-01",
-      "amount": 705.1
+      "amount": 705.1,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-02",
-      "amount": 474.1
+      "amount": 474.1,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-03",
-      "amount": 516.1
+      "amount": 516.1,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-04",
-      "amount": 634.61
+      "amount": 634.61,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-06",
-      "amount": 953.79
+      "amount": 953.79,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-07",
-      "amount": 560.51
+      "amount": 560.51,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-08",
-      "amount": 475.31
+      "amount": 475.31,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-09",
-      "amount": 493.29
+      "amount": 493.29,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-10",
-      "amount": 490.84
+      "amount": 490.84,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-11",
-      "amount": 592.1
+      "amount": 592.1,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-13",
-      "amount": 925.26
+      "amount": 925.26,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-14",
-      "amount": 559.86
+      "amount": 559.86,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-15",
-      "amount": 559.57
+      "amount": 559.57,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-16",
-      "amount": 488.62
+      "amount": 488.62,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-17",
-      "amount": 460.86
+      "amount": 460.86,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-18",
-      "amount": 444.65
+      "amount": 444.65,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-21",
-      "amount": 1350.77
+      "amount": 1350.77,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-22",
-      "amount": 340.79
+      "amount": 340.79,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-23",
-      "amount": 435.54
+      "amount": 435.54,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-24",
-      "amount": 481.3
+      "amount": 481.3,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-25",
-      "amount": 459.76
+      "amount": 459.76,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-28",
-      "amount": 1325.66
+      "amount": 1325.66,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-29",
-      "amount": 461.65
+      "amount": 461.65,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-30",
-      "amount": 537.57
+      "amount": 537.57,
+      "via": "unit-record"
     },
     {
       "date": "2019-10-31",
-      "amount": 592.91
+      "amount": 592.91,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-01",
-      "amount": 446.42
+      "amount": 446.42,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-03",
-      "amount": 851.05
+      "amount": 851.05,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-04",
-      "amount": 392.52
+      "amount": 392.52,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-05",
-      "amount": 355.66
+      "amount": 355.66,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-06",
-      "amount": 261.7
+      "amount": 261.7,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-07",
-      "amount": 357.37
+      "amount": 357.37,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-08",
-      "amount": 368.17
+      "amount": 368.17,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-10",
-      "amount": 859.83
+      "amount": 859.83,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-11",
-      "amount": 490.07
+      "amount": 490.07,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-12",
-      "amount": 422.92
+      "amount": 422.92,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-13",
-      "amount": 555.21
+      "amount": 555.21,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-14",
-      "amount": 488.13
+      "amount": 488.13,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-15",
-      "amount": 395.21
+      "amount": 395.21,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-17",
-      "amount": 855.63
+      "amount": 855.63,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-18",
-      "amount": 432.2
+      "amount": 432.2,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-19",
-      "amount": 468.77
+      "amount": 468.77,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-20",
-      "amount": 537.25
+      "amount": 537.25,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-21",
-      "amount": 396.41
+      "amount": 396.41,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-22",
-      "amount": 415.88
+      "amount": 415.88,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-24",
-      "amount": 823.34
+      "amount": 823.34,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-25",
-      "amount": 413.17
+      "amount": 413.17,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-26",
-      "amount": 417.02
+      "amount": 417.02,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-27",
-      "amount": 480.7
+      "amount": 480.7,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-28",
-      "amount": 499.57
+      "amount": 499.57,
+      "via": "unit-record"
     },
     {
       "date": "2019-11-29",
-      "amount": 610.93
+      "amount": 610.93,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-01",
-      "amount": 782.39
+      "amount": 782.39,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-02",
-      "amount": 398.48
+      "amount": 398.48,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-03",
-      "amount": 398.78
+      "amount": 398.78,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-04",
-      "amount": 422.56
+      "amount": 422.56,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-06",
-      "amount": 375.12
+      "amount": 375.12,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-08",
-      "amount": 804.53
+      "amount": 804.53,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-09",
-      "amount": 479.73
+      "amount": 479.73,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-10",
-      "amount": 439.83
+      "amount": 439.83,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-11",
-      "amount": 425.8
+      "amount": 425.8,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-12",
-      "amount": 406.29
+      "amount": 406.29,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-13",
-      "amount": 341.02
+      "amount": 341.02,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-15",
-      "amount": 789.27
+      "amount": 789.27,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-16",
-      "amount": 402.15
+      "amount": 402.15,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-17",
-      "amount": 395.6
+      "amount": 395.6,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-18",
-      "amount": 405.69
+      "amount": 405.69,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-19",
-      "amount": 415.78
+      "amount": 415.78,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-20",
-      "amount": 341.24
+      "amount": 341.24,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-22",
-      "amount": 777.99
+      "amount": 777.99,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-23",
-      "amount": 394.68
+      "amount": 394.68,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-24",
-      "amount": 371.01
+      "amount": 371.01,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-25",
-      "amount": 388.6
+      "amount": 388.6,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-26",
-      "amount": 385.97
+      "amount": 385.97,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-27",
-      "amount": 459.7
+      "amount": 459.7,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-29",
-      "amount": 769.82
+      "amount": 769.82,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-30",
-      "amount": 364.36
+      "amount": 364.36,
+      "via": "unit-record"
     },
     {
       "date": "2019-12-31",
-      "amount": 368.77
+      "amount": 368.77,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-01",
-      "amount": 424.23
+      "amount": 424.23,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-02",
-      "amount": 551.38
+      "amount": 551.38,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-03",
-      "amount": 417.18
+      "amount": 417.18,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-05",
-      "amount": 741.64
+      "amount": 741.64,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-06",
-      "amount": 324.11
+      "amount": 324.11,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-07",
-      "amount": 363.13
+      "amount": 363.13,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-08",
-      "amount": 355.34
+      "amount": 355.34,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-09",
-      "amount": 369.9
+      "amount": 369.9,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-10",
-      "amount": 286.49
+      "amount": 286.49,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-12",
-      "amount": 744.02
+      "amount": 744.02,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-13",
-      "amount": 240.36
+      "amount": 240.36,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-14",
-      "amount": 314.07
+      "amount": 314.07,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-15",
-      "amount": 363.75
+      "amount": 363.75,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-16",
-      "amount": 382.18
+      "amount": 382.18,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-17",
-      "amount": 367.5
+      "amount": 367.5,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-19",
-      "amount": 747.21
+      "amount": 747.21,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-20",
-      "amount": 348.47
+      "amount": 348.47,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-21",
-      "amount": 383.81
+      "amount": 383.81,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-22",
-      "amount": 365.33
+      "amount": 365.33,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-23",
-      "amount": 356.28
+      "amount": 356.28,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-24",
-      "amount": 363.58
+      "amount": 363.58,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-26",
-      "amount": 737.4
+      "amount": 737.4,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-27",
-      "amount": 361.51
+      "amount": 361.51,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-28",
-      "amount": 373.15
+      "amount": 373.15,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-29",
-      "amount": 361.36
+      "amount": 361.36,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-30",
-      "amount": 393.67
+      "amount": 393.67,
+      "via": "unit-record"
     },
     {
       "date": "2020-01-31",
-      "amount": 353.91
+      "amount": 353.91,
+      "via": "unit-record"
     },
     {
       "date": "2020-02-02",
-      "amount": 737.29
+      "amount": 737.29,
+      "via": "unit-record"
     },
     {
       "date": "2020-02-03",
-      "amount": 354.73
+      "amount": 354.73,
+      "via": "unit-record"
     },
     {
       "date": "2020-02-04",
-      "amount": 387.42
+      "amount": 387.42,
+      "via": "unit-record"
     },
     {
       "date": "2020-02-05",
-      "amount": 359.51
+      "amount": 359.51,
+      "via": "unit-record"
     },
     {
       "date": "2020-02-06",
-      "amount": 398.47
+      "amount": 398.47,
+      "via": "unit-record"
     },
     {
       "date": "2020-02-07",
-      "amount": 394.27
+      "amount": 394.27,
+      "via": "unit-record"
     },
     {
       "date": "2020-02-09",
-      "amount": 727.39
+      "amount": 727.39,
+      "via": "unit-record"
     },
     {
       "date": "2020-02-10",
-      "amount": 369.61
+      "amount": 369.61,
+      "via": "unit-record"
     },
     {
       "date": "2020-02-11",
-      "amount": 472.42
+      "amount": 472.42,
+      "via": "unit-record"
     },
     {
       "date": "2020-02-12",
-      "amount": 399.5
+      "amount": 399.5,
+      "via": "unit-record"
     },
     {
       "date": "2020-02-13",
-      "amount": 401.64
+      "amount": 401.64,
+      "via": "unit-record"
     },
     {
       "date": "2020-02-14",
-      "amount": 345.1
+      "amount": 345.1,
+      "via": "unit-record"
     },
     {
       "date": "2020-02-16",
-      "amount": 714.01
+      "amount": 714.01,
+      "via": "unit-record"
     },
     {
       "date": "2020-02-17",
-      "amount": 377.34
+      "amount": 377.34,
+      "via": "unit-record"
     },
     {
       "date": "2020-02-18",
-      "amount": 351.76
+      "amount": 351.76,
+      "via": "unit-record"
     },
     {
       "date": "2020-02-19",
-      "amount": 352.83
+      "amount": 352.83,
+      "via": "unit-record"
     },
     {
       "date": "2020-02-20",
-      "amount": 322.2
+      "amount": 322.2,
+      "via": "unit-record"
     },
     {
       "date": "2020-02-23",
-      "amount": 1060.07
+      "amount": 1060.07,
+      "via": "unit-record"
     },
     {
       "date": "2020-02-24",
-      "amount": 347.83
+      "amount": 347.83,
+      "via": "unit-record"
     },
     {
       "date": "2020-02-25",
-      "amount": 327.97
+      "amount": 327.97,
+      "via": "unit-record"
     },
     {
       "date": "2020-02-26",
-      "amount": 344.31
+      "amount": 344.31,
+      "via": "unit-record"
     },
     {
       "date": "2020-02-27",
-      "amount": 208.38
+      "amount": 208.38,
+      "via": "unit-record"
     },
     {
       "date": "2020-02-28",
-      "amount": 345.05
+      "amount": 345.05,
+      "via": "unit-record"
     },
     {
       "date": "2020-03-01",
-      "amount": 706.82
+      "amount": 706.82,
+      "via": "unit-record"
     },
     {
       "date": "2020-03-02",
-      "amount": 324.41
+      "amount": 324.41,
+      "via": "unit-record"
     },
     {
       "date": "2020-03-03",
-      "amount": 425.34
+      "amount": 425.34,
+      "via": "unit-record"
     },
     {
       "date": "2020-03-04",
-      "amount": 727.43
+      "amount": 727.43,
+      "via": "unit-record"
     },
     {
       "date": "2020-03-05",
-      "amount": 467.06
+      "amount": 467.06,
+      "via": "unit-record"
     },
     {
       "date": "2020-03-06",
-      "amount": 442.98
+      "amount": 442.98,
+      "via": "unit-record"
     },
     {
       "date": "2020-03-08",
-      "amount": 799.55
+      "amount": 799.55,
+      "via": "unit-record"
     },
     {
       "date": "2020-03-09",
-      "amount": 458.24
+      "amount": 458.24,
+      "via": "unit-record"
     },
     {
       "date": "2020-03-10",
-      "amount": 408.3
+      "amount": 408.3,
+      "via": "unit-record"
     },
     {
       "date": "2020-03-11",
-      "amount": 385.86
+      "amount": 385.86,
+      "via": "unit-record"
     },
     {
       "date": "2020-03-12",
-      "amount": 208.66
+      "amount": 208.66,
+      "via": "unit-record"
     }
   ],
   "icici-prudential-mutual-fund-14320536|icici-prudential-arbitrage-fund-direct-plan-idcw-idcw-reinvestment": [
     {
       "date": "2020-02-06",
-      "amount": 18174.23
+      "amount": 18174.23,
+      "via": "unit-record"
     },
     {
       "date": "2020-02-17",
-      "amount": 18195.96
+      "amount": 18195.96,
+      "via": "unit-record"
     },
     {
       "date": "2020-02-25",
-      "amount": 18217.73
+      "amount": 18217.73,
+      "via": "unit-record"
     }
   ],
   "kotak-mahindra-mutual-fund-4295974|kotak-liquid-fund-direct-plan-daily-idcw": [
     {
       "date": "2026-06-05",
-      "amount": 225.55
+      "amount": 225.55,
+      "via": "unit-record"
     },
     {
       "date": "2026-06-07",
-      "amount": 276.87
+      "amount": 276.87,
+      "via": "unit-record"
     },
     {
       "date": "2026-06-08",
-      "amount": 182.82
+      "amount": 182.82,
+      "via": "unit-record"
     },
     {
       "date": "2026-06-09",
-      "amount": 282.82
+      "amount": 282.82,
+      "via": "unit-record"
     },
     {
       "date": "2026-06-10",
-      "amount": 167.62
+      "amount": 167.62,
+      "via": "unit-record"
     },
     {
       "date": "2026-06-11",
-      "amount": 143.62
+      "amount": 143.62,
+      "via": "unit-record"
     },
     {
       "date": "2026-06-12",
-      "amount": 181.22
+      "amount": 181.22,
+      "via": "unit-record"
     },
     {
       "date": "2026-06-14",
-      "amount": 269.27
+      "amount": 269.27,
+      "via": "unit-record"
     },
     {
       "date": "2026-06-15",
-      "amount": 281.02
+      "amount": 281.02,
+      "via": "unit-record"
     },
     {
       "date": "2026-06-16",
-      "amount": 276.11
+      "amount": 276.11,
+      "via": "unit-record"
     },
     {
       "date": "2026-06-17",
-      "amount": 108.71
+      "amount": 108.71,
+      "via": "unit-record"
     },
     {
       "date": "2026-06-18",
-      "amount": 153.59
+      "amount": 153.59,
+      "via": "unit-record"
     },
     {
       "date": "2026-06-19",
-      "amount": 132.57
+      "amount": 132.57,
+      "via": "unit-record"
     },
     {
       "date": "2026-06-21",
-      "amount": 261.83
+      "amount": 261.83,
+      "via": "unit-record"
     },
     {
       "date": "2026-06-22",
-      "amount": 106.88
+      "amount": 106.88,
+      "via": "unit-record"
     },
     {
       "date": "2026-06-23",
-      "amount": 111.35
+      "amount": 111.35,
+      "via": "unit-record"
     },
     {
       "date": "2026-06-24",
-      "amount": 154.09
+      "amount": 154.09,
+      "via": "unit-record"
     },
     {
       "date": "2026-06-25",
-      "amount": 178.03
+      "amount": 178.03,
+      "via": "unit-record"
     },
     {
       "date": "2026-06-28",
-      "amount": 398.2
+      "amount": 398.2,
+      "via": "unit-record"
     },
     {
       "date": "2026-06-29",
-      "amount": 74.53
+      "amount": 74.53,
+      "via": "unit-record"
     },
     {
       "date": "2026-06-30",
-      "amount": 520.41
+      "amount": 520.41,
+      "via": "unit-record"
     },
     {
       "date": "2026-07-01",
-      "amount": 345.33
+      "amount": 345.33,
+      "via": "unit-record"
     },
     {
       "date": "2026-07-02",
-      "amount": 156.58
+      "amount": 156.58,
+      "via": "unit-record"
     },
     {
       "date": "2026-07-03",
-      "amount": 122.84
+      "amount": 122.84,
+      "via": "unit-record"
     },
     {
       "date": "2026-07-05",
-      "amount": 247.65
+      "amount": 247.65,
+      "via": "unit-record"
     },
     {
       "date": "2026-07-08",
-      "amount": 29.67
+      "amount": 29.67,
+      "via": "unit-record"
     },
     {
       "date": "2026-07-09",
-      "amount": 181.72
+      "amount": 181.72,
+      "via": "unit-record"
     },
     {
       "date": "2026-07-10",
-      "amount": 240.64
+      "amount": 240.64,
+      "via": "unit-record"
     },
     {
       "date": "2026-07-12",
-      "amount": 254.24
+      "amount": 254.24,
+      "via": "unit-record"
     },
     {
       "date": "2026-07-13",
-      "amount": 115.92
+      "amount": 115.92,
+      "via": "unit-record"
     },
     {
       "date": "2026-07-14",
-      "amount": 6.23
+      "amount": 6.23,
+      "via": "unit-record"
     },
     {
       "date": "2026-07-15",
-      "amount": 90.29
+      "amount": 90.29,
+      "via": "unit-record"
     },
     {
       "date": "2026-07-16",
-      "amount": 164.17
+      "amount": 164.17,
+      "via": "unit-record"
     },
     {
       "date": "2026-07-17",
-      "amount": 222.18
+      "amount": 222.18,
+      "via": "unit-record"
     },
     {
       "date": "2026-07-19",
-      "amount": 259.03
+      "amount": 259.03,
+      "via": "unit-record"
     },
     {
       "date": "2026-07-20",
-      "amount": 94.35
+      "amount": 94.35,
+      "via": "unit-record"
     },
     {
       "date": "2026-07-21",
-      "amount": 128.02
+      "amount": 128.02,
+      "via": "unit-record"
     },
     {
       "date": "2026-07-22",
-      "amount": 63.56
+      "amount": 63.56,
+      "via": "unit-record"
     },
     {
       "date": "2026-07-23",
-      "amount": 156.25
+      "amount": 156.25,
+      "via": "unit-record"
     },
     {
       "date": "2026-07-24",
-      "amount": 186.08
+      "amount": 186.08,
+      "via": "unit-record"
     },
     {
       "date": "2026-07-26",
-      "amount": 262.11
+      "amount": 262.11,
+      "via": "unit-record"
     },
     {
       "date": "2026-07-27",
-      "amount": 110.82
+      "amount": 110.82,
+      "via": "unit-record"
     },
     {
       "date": "2026-07-28",
-      "amount": 96.53
+      "amount": 96.53,
+      "via": "unit-record"
     },
     {
       "date": "2026-07-29",
-      "amount": 136.68
+      "amount": 136.68,
+      "via": "unit-record"
     },
     {
       "date": "2026-07-30",
-      "amount": 134.5
+      "amount": 134.5,
+      "via": "unit-record"
     },
     {
       "date": "2026-07-31",
-      "amount": 189.29
+      "amount": 189.29,
+      "via": "unit-record"
     },
     {
       "date": "2026-09-01",
-      "amount": 198.63
+      "amount": 198.63,
+      "via": "unit-record"
     },
     {
       "date": "2026-09-02",
-      "amount": 250.2
+      "amount": 250.2,
+      "via": "unit-record"
     },
     {
       "date": "2026-09-03",
-      "amount": 298.84
+      "amount": 298.84,
+      "via": "unit-record"
     },
     {
       "date": "2026-09-04",
-      "amount": 158.7
+      "amount": 158.7,
+      "via": "unit-record"
     },
     {
       "date": "2026-09-06",
-      "amount": 228.87
+      "amount": 228.87,
+      "via": "unit-record"
     },
     {
       "date": "2026-09-07",
-      "amount": 92.9
+      "amount": 92.9,
+      "via": "unit-record"
     },
     {
       "date": "2026-09-08",
-      "amount": 102.66
+      "amount": 102.66,
+      "via": "unit-record"
     },
     {
       "date": "2026-09-09",
-      "amount": 142.95
+      "amount": 142.95,
+      "via": "unit-record"
     },
     {
       "date": "2026-09-10",
-      "amount": 120.82
+      "amount": 120.82,
+      "via": "unit-record"
     },
     {
       "date": "2026-09-11",
-      "amount": 73.65
+      "amount": 73.65,
+      "via": "unit-record"
     },
     {
       "date": "2026-09-14",
-      "amount": 349.18
+      "amount": 349.18,
+      "via": "unit-record"
     },
     {
       "date": "2026-09-15",
-      "amount": 48.83
+      "amount": 48.83,
+      "via": "unit-record"
     },
     {
       "date": "2026-09-16",
-      "amount": 95.35
+      "amount": 95.35,
+      "via": "unit-record"
     },
     {
       "date": "2026-09-17",
-      "amount": 105.74
+      "amount": 105.74,
+      "via": "unit-record"
     },
     {
       "date": "2026-09-18",
-      "amount": 118.51
+      "amount": 118.51,
+      "via": "unit-record"
     },
     {
       "date": "2026-09-20",
-      "amount": 249.79
+      "amount": 249.79,
+      "via": "unit-record"
     },
     {
       "date": "2026-09-21",
-      "amount": 160.67
+      "amount": 160.67,
+      "via": "unit-record"
     },
     {
       "date": "2026-09-22",
-      "amount": 181.64
+      "amount": 181.64,
+      "via": "unit-record"
     },
     {
       "date": "2026-09-23",
-      "amount": 114.83
+      "amount": 114.83,
+      "via": "unit-record"
     },
     {
       "date": "2026-09-24",
-      "amount": 53.93
+      "amount": 53.93,
+      "via": "unit-record"
     },
     {
       "date": "2026-09-27",
-      "amount": 202.17
+      "amount": 202.17,
+      "via": "unit-record"
     },
     {
       "date": "2026-09-28",
-      "amount": 87
+      "amount": 87,
+      "via": "unit-record"
     },
     {
       "date": "2026-09-29",
-      "amount": 126.33
+      "amount": 126.33,
+      "via": "unit-record"
     },
     {
       "date": "2026-09-30",
-      "amount": 172.19
+      "amount": 172.19,
+      "via": "unit-record"
     }
   ],
   "molecule-ventures-llp-7810404|indian-metals-and-ferro-alloys": [

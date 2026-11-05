@@ -690,8 +690,19 @@ console.log("\n── the funds the audit named (Stage 10fz): before → after �
     `₹${bt.distributed} (${bt.distributedOf} of ${bt.distributionAccounts}) → ₹${at.distributed} (${at.distributedOf} of ${at.distributionAccounts})`);
 
   // ── DPI / RVPI / TVPI, by a second path ──
-  const mult = privateMultiples(folios);
-  const band = folios.filter((f) => f.section === "private" && f.position && f.counted && !isValuedAtCost(f.position));
+  // VANTAGE OAK (Stage 10lb) is in the band, and no capital account or review row
+  // records what was paid in, so the book's multiple is REFUSED naming it — the
+  // family chose that over leaving the fund off this page. The arithmetic is
+  // checked on the band without it; the day its paid-in lands, this must fail.
+  const noPaidIn = new Set(["vof-i-class-a2"]);
+  const onBook = privateMultiples(folios);
+  ok("the book's multiple is refused, naming only the holdings no document records a paid-in for",
+    onBook.tvpi == null && onBook.dpi == null && onBook.missing.length > 0
+      && onBook.missing.every((x) => noPaidIn.has(x.folio.securityKey ?? "") && x.why.length > 0),
+    onBook.missing.map((x) => `${x.folio.accountId}: ${x.why}`).join("; "));
+  const counted = folios.filter((f) => !noPaidIn.has(f.securityKey ?? ""));
+  const mult = privateMultiples(counted);
+  const band = counted.filter((f) => f.section === "private" && f.position && f.counted && !isValuedAtCost(f.position));
   const paidInOf = (f: BookFolio) => {
     const at = valuedAtOf(f.position!)!;
     if (f.distributedBasis === "review") return BOOK_REVIEW_FLOWS.filter((r) => r.accountId === f.accountId && r.securityKey === f.fundKey && r.kind === "purchase" && r.date <= at).reduce((t, r) => t + r.amount, 0);
@@ -801,13 +812,23 @@ console.log("\n── figuresOf on a constructed pair: absent is skipped, never 
 // Neo Infra's capital redemption — load-bearing, or the page's "on ₹X" marker
 // is a claim nothing here could fail.
 {
-  const priv = byFund.sections.private;
-  const held = folios.filter((f) => f.section === "private" && f.position && f.counted);
+  // A VALUED HOLDING WITH NO COST (Vantage Oak, Stage 10lb) leaves the band's
+  // cost short of its value, so the band and the total refuse a return rather
+  // than divide one set by another. The arithmetic below is struck on the build
+  // without it; the day its cost lands, the first check fails.
+  const costless = (p: Position) => p.marketSide === "private" && p.marketValue > 0 && p.costBasis == null && !isValuedAtCost(p);
+  ok("the band refuses a return while a valued private holding reports no cost",
+    byFund.sections.private.returnPct == null && byFund.sections.private.deployed == null && byFund.privateTotal.deployed == null
+      && current.some(costless),
+    current.filter(costless).map((p) => p.security).join("; "));
+  const without = build(BOOK_POSITIONS.filter((p) => !costless(p)));
+  const priv = without.byFund.sections.private;
+  const held = without.folios.filter((f) => f.section === "private" && f.position && f.counted);
   const sold = held.reduce((t, f) => t + (f.position!.costOfUnitsSold ?? 0), 0);
   const costHeld = held.reduce((t, f) => t + (f.cost ?? 0), 0);
   ok("a private holding here has redeemed units (so the denominator differs from the Cost column)", sold > 1, `₹${sold.toFixed(2)}`);
   near("the band's deployed is the cost held plus what the redeemed units cost", priv.deployed, costHeld + sold);
-  near("…and the total's is the same", byFund.privateTotal.deployed, costHeld + sold);
+  near("…and the total's is the same", without.byFund.privateTotal.deployed, costHeld + sold);
   ok("…and it is NOT the Cost column", priv.deployed != null && priv.cost != null && Math.abs(priv.deployed - priv.cost) > 1);
   // …AND THE INCOME EACH HOLDING CARRIES (Stage 10fz): FIFO's gain is the
   // unrealised and realised gain plus `dividendReceived`, gross of TDS, over the

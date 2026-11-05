@@ -56,7 +56,7 @@ import { SectorComposition } from "@/pages/SectorComposition";
 import { CHART_COLORS } from "@/lib/chartTheme";
 import { INVESTOR_DEFAULT_TILES } from "@/lib/investorSummary";
 
-import { availableCardReturns, statementReturnInputs, type AvailableCardReturn } from "@/lib/availableCardReturns";
+import { availableCardReturns, statementReturnInputs, type AvailableCardReturn, type GainCardReturn } from "@/lib/availableCardReturns";
 import { useMarketHistories } from "@/lib/useMarketReturns";
 import { assumedHoldingBook } from "@/lib/assumedHoldingBook";
 import { HoldingAssumptionInfo } from "@/components/HoldingAssumptionInfo";
@@ -1110,6 +1110,29 @@ export function MorningCIO() {
       <span data-card-private-line title="Private investments are reported apart, at Private Market's latest value and gain since investment — not this period's return.">
         Private investments {money(pl.value)}{pl.pnl != null && <> · {money(pl.pnl, true)} since investment</>}</span></div>;
   };
+  /**
+   * THE GAIN CARD'S CAPTION (Stage 10la; the family, 4 Nov 2026: "make coverage
+   * 100%"): every investment, by value — from its purchase cost, from its first
+   * value on record, or held at its value — each share said apart.
+   */
+  const gainCaption = (r: GainCardReturn) => {
+    const c = r.gainCoverage, all = c.totalValue, covered = c.sinceInvestmentValue + c.sinceFirstValue + c.heldValue;
+    const share = (v: number) => (all > 0 ? Math.min(100, Math.round((v / all) * 100)) : 0), width = (v: number) => `${all > 0 ? Math.min(100, (v / all) * 100) : 0}%`;
+    return <div data-card-coverage data-card-since data-prose-ok="the share of the investments the gain covers, on the card at the family's request (4 Nov 2026)"
+      data-card-gain={r.total.gain ?? ''} data-card-return={r.total.returnPct ?? ''}
+      data-card-covered={r.coveredHoldings} data-card-holdings={r.totalHoldings}
+      data-card-value={r.coveredValue} data-card-accounts={r.coveredAccounts} data-card-total-accounts={r.totalAccounts}
+      data-card-from={r.from ?? ''} data-card-to={r.to ?? ''} data-card-basis={r.total.measured?.basis ?? ''}
+      data-card-all={all} data-card-by-cost={c.sinceInvestmentValue} data-card-from-first={c.sinceFirstValue} data-card-held={c.heldValue}
+      data-card-from-first-count={c.sinceFirstCount} data-card-held-count={c.heldCount}>
+      <span className="mb-1 flex h-1.5 w-full overflow-hidden rounded-full bg-ink-700" aria-hidden>
+        <span className="h-full bg-champagne-500" style={{ width: width(c.sinceInvestmentValue) }} />
+        <span className="h-full bg-champagne-500 opacity-50" style={{ width: width(c.sinceFirstValue) }} />
+        <span className="h-full bg-ink-600" style={{ width: width(c.heldValue) }} />
+      </span>
+      Covers {share(covered)}% of investments · {money(covered)} of {money(all)}<br />
+      {share(c.sinceInvestmentValue)}% since investment · {share(c.sinceFirstValue)}% from first value · {share(c.heldValue)}% held at value</div>;
+  };
   const history = m.available.history;
   const historyAnnual = history.total.measured?.basis === 'annual';
   const historyLabel = historyAnnual ? 'Annualised return' : 'Return over available history';
@@ -1162,11 +1185,11 @@ export function MorningCIO() {
     {
       id: "gain", label: "Gain / loss", icon: <TrendingUp className="h-4 w-4" />,
       href: returnsHref('inception'),
-      hrefTitle: 'Recorded gain since investment for the available data. Open Return attribution for the same verified holdings. The info button lists the holdings left out and the records they need.',
+      hrefTitle: 'Gain since investment over every investment: from its purchase cost where a record dates it, otherwise from its first value on record, and anything neither measures held at its value with no gain. The info button names each one.',
       value: since.total.gain == null ? <AbsentValue /> : <span className={changeColor(since.total.gain)}>{money(since.total.gain, true)}</span>,
       second: since.total.returnPct == null ? undefined : <>Return on capital {pct1(since.total.returnPct)}{benchLine(since)}</>,
       calculation: coverageInfo(since, 'gain'),
-      sub: since.total.gain == null ? absentWhy('No verified purchase cost and value') : coveredCaption(since),
+      sub: since.total.gain == null ? absentWhy('No verified purchase cost and value') : gainCaption(since),
     },
     {
       id: "annualised", label: historyLabel, icon: <TrendingUp className="h-4 w-4" />,

@@ -1578,9 +1578,13 @@ export function PrivateMarket() {
       if (allAtCost) return { shown: false, tag, reason: AT_COST_RETURN };
       if (measure === "auto" || measure === "absolute") {
         if (fig.returnPct == null) {
+          // THE HOLDINGS THAT LEAVE IT SHORT ARE NAMED (Stage 10lb): Vantage Oak
+          // reports a value and no cost, and a dash over the whole band says why.
+          const costless = [...new Set(held.filter((f) => f.cost == null && (f.value ?? 0) > 0).map((f) => f.fundName))];
           return { shown: false, tag, reason: fig.cost == null
             ? "no cost is reported across these holdings, so there is no capital to strike a return against"
-            : "the cost reported here covers only part of this row's value, and a percentage across the two would divide one set of holdings by another" };
+            : "the cost reported here covers only part of this row's value, and a percentage across the two would divide one set of holdings by another"
+              + (costless.length ? `. No cost is reported for ${costless.join("; ")}` : "") };
         }
         return { shown: true, pct: fig.returnPct, tag: "HPR",
           note: aggHprNote(held, (n) => money(n)) + (fig.atCostHoldings > 0 ? ` Struck on the valued holdings only: ${atCostNote({ atCost: fig.atCostHoldings, atCostValue: fig.atCostValue }, (n) => money(n))}.` : "") + wo };

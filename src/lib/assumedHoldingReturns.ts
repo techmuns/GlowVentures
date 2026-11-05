@@ -30,6 +30,16 @@ export type AssumedReturnBook = {
 const positive = (n: unknown): n is number => typeof n === 'number' && Number.isFinite(n) && n > 0;
 const time = (d: string) => Date.parse(`${d}T00:00:00Z`);
 
+/** Units at each published close strictly between two dates: a record's marks for the return line (Stage 10la). */
+export function closeMarks(h: MarketHistory, from: string, to: string, unitsOn: (date: string) => number) {
+  const out: { date: string; value: number }[] = [];
+  for (let i = 0; i < h.t.length; i++) {
+    const d = h.t[i], c = h.c?.[i];
+    if (d > from && d < to && positive(c)) out.push({ date: d, value: unitsOn(d) * c });
+  }
+  return out;
+}
+
 /** The split-adjusted close on or before `date`, no more than a week before it — never a later price. */
 export function publishedClose(h: MarketHistory, date: string) {
   for (let i = h.t.length - 1; i >= 0; i--) if (h.t[i] <= date && positive(h.c?.[i])) {
@@ -187,7 +197,7 @@ export function assumedHoldingReturns(positions: readonly Position[], accounts: 
       assumption: { owner: a!.owner, statementDate: anchor.date, quantity: anchor.quantity, source: h.source,
         opening: openValue, closing: closeValue, income, incomeDates, ...(listedFrom ? { listedFrom } : {}) },
       window: { accountId: k, owner: a!.owner, label, openDate: opening.date, closeDate: closing.date,
-        openValue, closeValue, openedInWindow: false, flows: incomeDates.map(x => ({ date: x.date, amount: x.amount, description: 'Gross dividend entitlement; holding assumed unchanged' })),
+        openValue, closeValue, openedInWindow: false, marks: closeMarks(h, opening.date, closing.date, () => quantity), flows: incomeDates.map(x => ({ date: x.date, amount: x.amount, description: 'Gross dividend entitlement; holding assumed unchanged' })),
         capitalIn: 0, capitalOut: income, gain } });
   }
   return { units, gaps, pending };

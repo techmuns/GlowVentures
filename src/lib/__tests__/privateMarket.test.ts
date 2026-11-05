@@ -132,14 +132,15 @@ ok("a review line the family declared listed is on the listed side, off this pag
   familyListed.map((p) => `${p.securityKey}=${p.marketSide}`).join(", ") || "none");
 // Franklin India Credit AIF (Stage 10hx) was bought on 22 Oct, after the 30 June
 // review, so its own statement is its only source; the LLPs' Nzuri lines (Stage 10jq)
-// likewise, two lines an LLP.
-eq("the statement rows the review does not supersede — Neo Infra, Franklin and the LLPs' Nzuri",
+// likewise, two lines an LLP; and Vantage Oak, allotted 31 Jul and declared
+// Category II by the family (Stage 10lb).
+eq("the statement rows the review does not supersede — Neo Infra, Franklin, the LLPs' Nzuri and Vantage Oak",
   statementPrivate.map((p) => p.securityKey), ["franklin-india-credit-aif-scheme-i-unit-class-db2", "nzuri-pune-knowledge-park", "nzuri-pune-knowledge-park-private-limited-pref-24sp46",
-    "nzuri-pune-knowledge-park", "nzuri-pune-knowledge-park-private-limited-pref-24sp46", "neo-infra-income-opportunities-fund-i-class-a5"]);
+    "nzuri-pune-knowledge-park", "nzuri-pune-knowledge-park-private-limited-pref-24sp46", "vof-i-class-a2", "neo-infra-income-opportunities-fund-i-class-a5"]);
 eq("raw private rows = the review's lines + the statement's", scope.rows.length, reviewRows.length + statementPrivate.length);
 // Sotefin Bharat's ₹2,00,00,400 at-cost line left this page in Stage 10kn: the
 // ICICI NSDL statement of 31 Oct marks the listed shares, which stay on it.
-eq("raw private rows", scope.rows.length, 92);
+eq("raw private rows", scope.rows.length, 93);
 eq("…of which the review holds at cost", reviewRows.filter(isValuedAtCost).length, 75);
 // NOTHING IS COUNTED ONCE: both pairs the policy used to tag are separate
 // investments on the family's word, so the deduped set is the raw set.
@@ -151,7 +152,8 @@ ok("no private row carries a dedupe group", scope.rows.every((p) => !p.dedupeGro
 const unvaluedEarly = unvaluedAccounts(BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_COMMITMENTS);
 eq("accounts in scope = accounts with a private row + private folios holding nothing", scope.accounts.length,
   new Set(scope.rows.map((p) => p.accountId)).size + unvaluedEarly.filter((u) => u.side === "private").length);
-eq("accounts in scope", scope.accounts.length, 24);
+// ICICI 49794950 joins with Vantage Oak (Stage 10lb).
+eq("accounts in scope", scope.accounts.length, 25);
 ok("the review's holder accounts are in scope",
   BOOK_ACCOUNTS.filter((a) => a.reviewHolder).every((a) => scope.accounts.some((s) => s.accountId === a.accountId)));
 // THE FAMILY DECLARED BOTH OF THESE CATEGORY II (`DECLARED_AIF_CATEGORY`), and
@@ -179,7 +181,7 @@ const rawMV = sum(scope.rows.map((p) => p.marketValue));
 near("deduped private value === BOOK_SUMMARY.privateValue", dedupedMV, BOOK_SUMMARY.privateValue);
 near("raw private value = the review's lines + the statement's", rawMV,
   sum(reviewRows.map((p) => p.marketValue)) + sum(statementPrivate.map((p) => p.marketValue)));
-near("raw private value", rawMV, 1930944270.36 - 20000400 + 199990000.57 + 158745849.75 + 476210083);
+near("raw private value", rawMV, 1930944270.36 - 20000400 + 199990000.57 + 158745849.75 + 476210083 + 40979575);
 near("double count = raw − deduped", scope.doubleCounted, rawMV - dedupedMV);
 near("the double count is nil — the family confirmed both pairs separate", scope.doubleCounted, 0);
 ok("…and so is the whole book's: every position is in its consolidated total",
@@ -221,7 +223,7 @@ ok("…and so is the whole book's: every position is in its consolidated total",
 console.log("\n── funds ──");
 const funds = fundRollup(scope.dedupedRows, accIdx, scope.rows);
 eq("one fund row per distinct holding", funds.length, new Set(scope.dedupedRows.map((p) => p.securityKey)).size);
-eq("distinct funds", funds.length, 70);
+eq("distinct funds", funds.length, 71);
 eq("…of which the review holds wholly at cost", funds.filter((f) => f.atCost).length, 62);
 near("fund rollup value ties to the deduped total", sum(funds.map((f) => f.mv)), dedupedMV);
 const costedFunds = funds.filter((f) => f.cost != null);
@@ -250,8 +252,9 @@ near("cost", sumOrNull(funds.map((f) => f.cost)), 48583720 + 200000000 + (349608
 near("…the at-cost lines' cost is their value", sum(atCostReview.map((p) => p.costBasis ?? NaN)), sum(atCostReview.map((p) => p.marketValue)));
 ok("an at-cost line carries no P&L, no return and no per-unit mark",
   atCostReview.every((p) => p.unrealizedPnL == null && p.returnPct == null && p.currentPrice == null));
+// Vantage Oak's statement reports no cost, so it has no P&L to add (Stage 10lb).
 near("unrealised P&L = value less cost on the valued rows alone", sumOrNull(funds.map((f) => f.pnl)),
-  sum([...statementPrivate, ...valuedReview].map((p) => p.marketValue - (p.costBasis as number))));
+  sum([...statementPrivate, ...valuedReview].filter((p) => p.costBasis != null).map((p) => p.marketValue - (p.costBasis as number))));
 near("unrealised P&L", sumOrNull(funds.map((f) => f.pnl)), (55498303.25 - 48583720) + (199990000.57 - 200000000) + (119061690.39 - 2 * 20807.04));
 ok("an at-cost fund shows no P&L and no return", funds.filter((f) => f.atCost).every((f) => f.pnl == null && f.returnPct == null));
 // DERIVED, NOT TYPED. The coverage count is a fact about which holdings are

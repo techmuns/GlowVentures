@@ -349,6 +349,18 @@ export function gridFromSpreadsheet(buf) {
   };
 }
 
+/**
+ * A STATEMENT THAT NEVER ARRIVED AND WAS THEN SENT AGAIN.
+ *
+ * `november-2026-b`'s ZIP carries `3110320_Equity_Trade_Details_Report (3).xlsx`
+ * as an 85-byte removal notice; the client re-sent the workbook itself, and it
+ * sits in `november-2026-c/` under the same name. The notice stays what it is —
+ * that delivery never carried the statement — but it no longer asks for a file
+ * that is here. Notice path → the re-sent copy's path, filled in `main` from
+ * every file under `source/`: the same file name, and not itself a notice.
+ */
+const RESENT = new Map();
+
 /** A removal notice, as a grid with nothing on it and the notice's own words. */
 function removalNoticeGrid(buf) {
   const text = buf.toString("latin1").replace(/\s+/g, " ").trim();
@@ -398,10 +410,15 @@ function extractOne(file, grid, part = null, providerWitness = null) {
   };
 
   if (grid.removalNotice) {
-    return makeDocument({ ...base, status: "failed", warnings: [{ code: "attachment-removed",
-      detail: `${fileName} NEVER ARRIVED: a mail server removed the attachment in transit and left this ${grid.noticeBytes}-byte `
-        + `notice under its name — "${grid.noticeText}". There is no statement here to read; ask the sender to re-send `
-        + "it another way (a download link, or zipped), and upload it on the Statement Library." }] });
+    const resent = RESENT.get(file);
+    const removed = `a mail server removed the attachment in transit and left this ${grid.noticeBytes}-byte `
+      + `notice under its name — "${grid.noticeText}".`;
+    return makeDocument({ ...base, status: "failed", warnings: resent
+      ? [{ code: "attachment-removed", detail: `${fileName} never arrived in this delivery: ${removed} It was sent again, and \`${rel(resent)}\` is read.` },
+        { code: "attachment-resent", detail: rel(resent) }]
+      : [{ code: "attachment-removed",
+        detail: `${fileName} NEVER ARRIVED: ${removed} There is no statement here to read; ask the sender to re-send `
+          + "it another way (a download link, or zipped), and upload it on the Statement Library." }] });
   }
   if (grid.error) {
     return makeDocument({ ...base, status: "failed", warnings: [{ code: "pdf-read-failed", detail: grid.error }] });
@@ -1405,6 +1422,9 @@ export function archiveRecord(doc, grid) {
       warnings: doc.warnings.length,
       // WHY A DOCUMENT FAILED, for the Statement Library's status ("Never arrived").
       ...(doc.status === "failed" ? { failedBecause: doc.warnings?.[0]?.code ?? null } : {}),
+      // …and, for one that never arrived, the copy the sender re-sent (`RESENT`).
+      ...(doc.warnings?.some((w) => w.code === "attachment-resent")
+        ? { resentAs: doc.warnings.find((w) => w.code === "attachment-resent").detail } : {}),
       // A file printing the same text as this document's (read once), and the
       // document an export witnesses — provenance, never a second source.
       twinOf: doc.twinOf,
@@ -1448,6 +1468,11 @@ async function main() {
   const files = [];
   walk(SOURCE_DIR, (f) => files.push(f));
   files.sort((a, b) => rel(a).localeCompare(rel(b)));
+  for (const f of files) {
+    if (!isRemovalNotice(fs.readFileSync(f))) continue;
+    const copy = files.find((g) => g !== f && path.basename(g) === path.basename(f) && !isRemovalNotice(fs.readFileSync(g)));
+    if (copy) RESENT.set(f, copy);
+  }
 
   // The SAME FILE, delivered twice. A drop assembled by hand routinely carries
   // `X (1).pdf` beside `X.pdf` — this one carries two VEC bank books and two

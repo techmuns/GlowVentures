@@ -32,7 +32,7 @@ function harness({ refuseSave = false, decision = 'verified', copyInBatch = fals
     } };
   const model = Object.fromEntries(['deriveTransactions', 'deriveRealisedLots', 'deriveIncome', 'deriveSales', 'buildConsolidatedSheet']
     .map(name => [name, docs => { projections.push({ name, docs: docs.map(d => d.docKey) }); return docs; }]));
-  model.deriveStockLedger = (docs, securityKey) => ({ securityKey, txns: docs });
+  model.deriveHoldingLedger = (docs, securityKey) => ({ securityKey, txns: docs });
   const processor = rapidProcessor({ store, inbox, initial, references: {}, passwords: [], dashboardPassword: '',
     instantiate: () => model, baseAsset: async () => null, processorName, dispatchFallback,
     prepare: async ({ baseline, files }) => {
