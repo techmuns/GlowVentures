@@ -5,7 +5,7 @@ import { ArrowUpRight } from "lucide-react";
 // Compact KPI tile — like StatTile but a touch smaller and non-wrapping, so several
 // fit across a strip inside the app frame (with the left nav) without the value
 // breaking onto two lines. Used by the CIO cockpit and the Stock Info page.
-export function Kpi({ label, labelText, value, second, sub, delta, icon, info, href, hrefTitle, action, raise }: {
+export function Kpi({ label, labelText, value, large, second, sub, delta, icon, info, href, hrefTitle, action, raise }: {
   /**
    * NORMALLY A STRING, and a CONTROL where the tile's metric is the reader's to
    * choose — Morning CIO's strip renders `SelectableTiles`' picker here. A
@@ -16,6 +16,8 @@ export function Kpi({ label, labelText, value, second, sub, delta, icon, info, h
   /** The label in words, for the link's accessible name when `label` is a control. */
   labelText?: string;
   value: ReactNode;
+  /** The figure IS the card — Morning CIO's return cards, a return and one line under it (5 Nov 2026). */
+  large?: boolean;
   /**
    * A SECOND FIGURE under the first — the Current Value of Holdings tile shows
    * what was invested beneath what it is worth, at the family's request. A
@@ -119,7 +121,7 @@ export function Kpi({ label, labelText, value, second, sub, delta, icon, info, h
       {/* The wrapper passes clicks to a tile target. Explicit source controls
           take pointer events back on their own boxes, without nesting controls
           inside the tile's sibling anchor. */}
-      <div data-kpi-value className="pointer-events-none relative z-10 mt-2.5 w-fit max-w-full whitespace-nowrap font-display text-[19px] font-bold tracking-tight text-slate-100 tabular">{value}</div>
+      <div data-kpi-value className={`pointer-events-none relative z-10 w-fit max-w-full whitespace-nowrap font-display font-bold tracking-tight text-slate-100 tabular ${large ? "mt-3 text-[30px] leading-none" : "mt-2.5 text-[19px]"}`}>{value}</div>
       {second && (
         <div data-kpi-second className="pointer-events-none relative z-10 mt-1 whitespace-nowrap text-[12.5px] text-slate-300">{second}</div>
       )}

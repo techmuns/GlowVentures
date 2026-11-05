@@ -49,12 +49,14 @@ try {
   await card.locator('[data-card-coverage]').waitFor();
   const numeric = await card.locator('[data-card-coverage]').evaluate(el => ({ ...el.dataset }));
   assert.notEqual(numeric.cardGain, ''); assert.notEqual(numeric.cardReturn, '');
-  // The three return cards say how much of the public investments they cover, Gain / Loss how much of every investment (Stage 10la).
-  assert.match(await card.innerText(), id === 'gain' ? /Covers \d+% of investments/ : /Covers \d+% of public investments/);
+  // The three return cards count the public holdings they cover (5 Nov 2026), Gain / Loss how much of every investment (Stage 10la).
+  assert.match(await card.innerText(), id === 'gain' ? /Covers \d+% of investments/ : /[\d,]+ of [\d,]+ holdings/);
   assert.equal(await card.locator('[data-return-info]').count(), 1);
   await card.locator('[data-return-info]').click();
   const popup = page.getByRole('dialog'); await popup.waitFor();
   assert.match(await popup.innerText(), /Based on the available records/);
+  // What left a return card's face is at the top of its info: the index on the same money among it (5 Nov 2026).
+  if (id !== 'gain') { assert.equal(await popup.locator('[data-card-summary] [data-card-bench="nifty-500"]').count(), 1); assert.match(await popup.innerText(), /Private/); }
   assert.match(await popup.innerText(), /What is missing/);
   assert.ok(await popup.locator('[data-return-gap]').count() > 0);
   assert.equal(await popup.locator('[data-attribution-method]').getAttribute('open'), null);
