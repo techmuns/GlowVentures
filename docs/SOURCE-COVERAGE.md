@@ -9,7 +9,7 @@ if it is not, so a delivery that lands a file nobody reads cannot pass silently.
 
 | Outcome | Files | What it means |
 | --- | ---: | --- |
-| Read | 424 | one or more documents in `public/audit/` |
+| Read | 429 | one or more documents in `public/audit/` |
 | Read via a byte-identical twin | 43 | the pipeline reads each md5 once; the data IS in the archive |
 | Read as a witness | 19 | a spreadsheet export of the PDF beside it — rows archived, figures checked, no facts |
 | Read by `build-book` | 3 | the review supplies private lines and exact lot costs; the register supplies verified payment evidence |
@@ -19,9 +19,9 @@ if it is not, so a delivery that lands a file nobody reads cannot pass silently.
 | **Never arrived** | **2** | **a mail server's removal notice in place of the statement — ask the sender to re-send it** |
 | Never arrived, then re-sent | 1 | a removal notice whose statement the sender sent again — the copy is read |
 | **Unread** | **0** | **must be zero** |
-| **Total leaf files** | **650** | |
+| **Total leaf files** | **655** | |
 
-Those files produce **459 documents** in the archive.
+Those files produce **464 documents** in the archive.
 
 ## ⚠ Statements that never arrived
 

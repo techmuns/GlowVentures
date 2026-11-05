@@ -14342,6 +14342,80 @@
   ]
  },
  {
+  "docKey": "svan-investment-managers-llp-8710067-2026-11-04-bank-book",
+  "provider": "SVAN Investment Managers LLP",
+  "accountNo": "8710067",
+  "owner": "AJAY T JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-11-04",
+  "reportType": "bank-book",
+  "sourcePath": "source/november-2026-d/Z1281_8710067_BankBook178CT.pdf",
+  "pages": 74,
+  "sections": [
+   "bankBook",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "svan-investment-managers-llp-8710067-2026-11-04-bank-book",
+  "label": "SVAN Investment Managers LLP · 8710067 · bank-book",
+  "fy": "2026-11-04",
+  "source": "source/november-2026-d/Z1281_8710067_BankBook178CT.pdf",
+  "sheets": [
+   {
+    "key": "bankBook",
+    "name": "bank-book",
+    "rows": 2195,
+    "cols": 10
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 74,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "svan-investment-managers-llp-8710067-2026-11-04-capital-gain",
+  "provider": "SVAN Investment Managers LLP",
+  "accountNo": "8710067",
+  "owner": "AJAY T JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-11-04",
+  "reportType": "capital-gain",
+  "sourcePath": "source/november-2026-d/Z1281_8710067_CapitalGain90CT.pdf",
+  "pages": 7,
+  "sections": [
+   "capitalGains",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "svan-investment-managers-llp-8710067-2026-11-04-capital-gain",
+  "label": "SVAN Investment Managers LLP · 8710067 · capital-gain",
+  "fy": "2026-11-04",
+  "source": "source/november-2026-d/Z1281_8710067_CapitalGain90CT.pdf",
+  "sheets": [
+   {
+    "key": "capitalGains",
+    "name": "capital-gains",
+    "rows": 140,
+    "cols": 15
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 7,
+    "cols": 2
+   }
+  ]
+ },
+ {
   "docKey": "svan-investment-managers-llp-8710067-2026-11-04-capital-register",
   "provider": "SVAN Investment Managers LLP",
   "accountNo": "8710067",
@@ -14416,6 +14490,43 @@
   ]
  },
  {
+  "docKey": "svan-investment-managers-llp-8710067-2026-11-04-transaction-statement",
+  "provider": "SVAN Investment Managers LLP",
+  "accountNo": "8710067",
+  "owner": "AJAY T JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-11-04",
+  "reportType": "transaction-statement",
+  "sourcePath": "source/november-2026-d/Z1281_8710067_TransactionStatement_India94CT.pdf",
+  "pages": 11,
+  "sections": [
+   "transactions",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "svan-investment-managers-llp-8710067-2026-11-04-transaction-statement",
+  "label": "SVAN Investment Managers LLP · 8710067 · transaction-statement",
+  "fy": "2026-11-04",
+  "source": "source/november-2026-d/Z1281_8710067_TransactionStatement_India94CT.pdf",
+  "sheets": [
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 300,
+    "cols": 10
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 11,
+    "cols": 2
+   }
+  ]
+ },
+ {
   "docKey": "svan-investment-managers-llp-8710090-2026-11-04-bank-book",
   "provider": "SVAN Investment Managers LLP",
   "accountNo": "8710090",
@@ -14448,6 +14559,43 @@
     "key": "pages",
     "name": "Raw page text",
     "rows": 56,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "svan-investment-managers-llp-8710090-2026-11-04-capital-gain",
+  "provider": "SVAN Investment Managers LLP",
+  "accountNo": "8710090",
+  "owner": "BHARAT JAISINGHANI",
+  "ownerId": "bharat-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-11-04",
+  "reportType": "capital-gain",
+  "sourcePath": "source/november-2026-d/Z1281_8710090_CapitalGain90CT.pdf",
+  "pages": 7,
+  "sections": [
+   "capitalGains",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "svan-investment-managers-llp-8710090-2026-11-04-capital-gain",
+  "label": "SVAN Investment Managers LLP · 8710090 · capital-gain",
+  "fy": "2026-11-04",
+  "source": "source/november-2026-d/Z1281_8710090_CapitalGain90CT.pdf",
+  "sheets": [
+   {
+    "key": "capitalGains",
+    "name": "capital-gains",
+    "rows": 118,
+    "cols": 15
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 7,
     "cols": 2
    }
   ]
@@ -14522,6 +14670,43 @@
     "key": "pages",
     "name": "Raw page text",
     "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "svan-investment-managers-llp-8710090-2026-11-04-transaction-statement",
+  "provider": "SVAN Investment Managers LLP",
+  "accountNo": "8710090",
+  "owner": "BHARAT JAISINGHANI",
+  "ownerId": "bharat-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-11-04",
+  "reportType": "transaction-statement",
+  "sourcePath": "source/november-2026-d/Z1281_8710090_TransactionStatement_India94CT.pdf",
+  "pages": 9,
+  "sections": [
+   "transactions",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "svan-investment-managers-llp-8710090-2026-11-04-transaction-statement",
+  "label": "SVAN Investment Managers LLP · 8710090 · transaction-statement",
+  "fy": "2026-11-04",
+  "source": "source/november-2026-d/Z1281_8710090_TransactionStatement_India94CT.pdf",
+  "sheets": [
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 237,
+    "cols": 10
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 9,
     "cols": 2
    }
   ]

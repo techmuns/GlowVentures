@@ -7,6 +7,8 @@ import { resolveOwner } from '../../../shared/owners.mjs';
 import { readGaps } from './readStatus.mjs';
 import { sourceFor } from '../precedence.mjs';
 import { NON_STATEMENT_PROVIDERS } from './classify.mjs';
+import { currentIsin } from '../../../shared/isinSuccessors.mjs';
+import { securityKeyOf } from '../../../shared/securityKey.mjs';
 
 export const RECORD_SECTIONS = ['holdings', 'transactions', 'capitalGains', 'cashFlows', 'income', 'expenses', 'returns'];
 export const stable = value => JSON.stringify(canonical(value));
@@ -131,7 +133,17 @@ export function assessPublication({ baseline, documents, baselineReport = {}, re
   for (const d of baseline) {
     remember(ownerByAccount, accountKey(d), d.ownerId);
     for (const section of RECORD_SECTIONS) for (const r of d[section] ?? []) {
-      if (r.isin && r.securityKey) { remember(isinByKey, r.securityKey, r.isin); remember(keyByIsin, r.isin, r.securityKey); remember(accountsByIsin, r.isin, accountKey(d)); }
+      if (!r.isin || !r.securityKey) continue;
+      const isin = currentIsin(r.isin);
+      // The key a reviewed KEY_ALIASES entry now files an archived key under is
+      // the verified pairing too (`securityKeyOf` is idempotent on a key and
+      // then applies the alias): `rekey:archive` moving that row moves no
+      // identity the book had not verified (Stage 10lx, Vedanta INE205A01025 on
+      // Ajay's Motilal demat).
+      for (const key of new Set([r.securityKey, securityKeyOf(r.securityKey)])) {
+        if (key) { remember(isinByKey, key, isin); remember(keyByIsin, isin, key); }
+      }
+      remember(accountsByIsin, isin, accountKey(d));
     }
   }
   const seenContent = new Map(baseline.map(d => [contentOf(d), d.docKey]));
@@ -191,11 +203,14 @@ export function assessPublication({ baseline, documents, baselineReport = {}, re
           // it already carries — an AIF's units under the depository's name and
           // under the fund's own (`sanshi-trust-fd-i-cl-e-…` and
           // `sanshi-fund-i-class-e`) — is the reviewed state, and a row filed
-          // under one of its keys is not a new split (Stage 10gk).
-          const isins = isinByKey.get(r.securityKey), keys = keyByIsin.get(r.isin);
-          if (isins?.size && !isins.has(r.isin)) add('SECURITY_CONFLICT', d, 'One security key carries conflicting ISINs.', ptr);
-          if (keys?.size && !keys.has(r.securityKey) && (accountsByIsin.get(r.isin)?.has(accountKey(d)) || !issuerNamesFund(d, r))) add('SECURITY_SPLIT', d, 'One ISIN is being filed under different security keys.', ptr);
-          remember(isinByKey, r.securityKey, r.isin); remember(keyByIsin, r.isin, r.securityKey); remember(accountsByIsin, r.isin, accountKey(d));
+          // under one of its keys is not a new split (Stage 10gk). A split's
+          // retired ISIN and its recorded successor are one ISIN here, as in the
+          // book (`shared/isinSuccessors.mjs`, Stage 10lx).
+          const isin = currentIsin(r.isin);
+          const isins = isinByKey.get(r.securityKey), keys = keyByIsin.get(isin);
+          if (isins?.size && !isins.has(isin)) add('SECURITY_CONFLICT', d, 'One security key carries conflicting ISINs.', ptr);
+          if (keys?.size && !keys.has(r.securityKey) && (accountsByIsin.get(isin)?.has(accountKey(d)) || !issuerNamesFund(d, r))) add('SECURITY_SPLIT', d, 'One ISIN is being filed under different security keys.', ptr);
+          remember(isinByKey, r.securityKey, isin); remember(keyByIsin, isin, r.securityKey); remember(accountsByIsin, isin, accountKey(d));
         }
         if (section === 'holdings') {
           const key = stable([r.memberId, r.securityKey]);

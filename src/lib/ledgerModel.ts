@@ -36,6 +36,7 @@ import {
 } from "../../shared/lotSettlement.mjs";
 import { resolveSector } from "../../shared/sectors.mjs";
 import { isCashIncomeKind } from "../../shared/incomeKind.mjs";
+import { currentIsin } from "../../shared/isinSuccessors.mjs";
 import { BOOK_ACCOUNTS, BOOK_CAPITAL_MOVES, BOOK_CAPITAL_GAINS, BOOK_POSITIONS } from "../data/glowData";
 import { holdingBucket, UNSTATED_BUCKET, UNROUTED_EQUITY_BUCKET } from "./analytics";
 import { bookKeyForShare } from "./depositoryShares";
@@ -477,13 +478,15 @@ export function deriveTransactions(docs: ArchiveDoc[]): TxnData {
   /**
    * THE ISIN EACH CAPITAL GAIN LOT PRINTS, per lot group (account, security,
    * sale date). A group whose lots print more than one distinct ISIN lends
-   * none — two identifiers under one key is a conflict, not an answer.
+   * none — two identifiers under one key is a conflict, not an answer. A split's
+   * retired ISIN and its recorded successor are one identifier, lent as the
+   * current one (`shared/isinSuccessors.mjs`, Stage 10lx).
    */
   const lotIsins = new Map<string, Set<string>>();
   for (const { doc: d, row: l } of datedRows(docs, AUTHORITATIVE.capitalGains, "capitalGains")) {
     if (!l.saleDate || !l.isin) continue;
     const k = daySaleKey(d.accountNo, l.securityKey, l.saleDate);
-    (lotIsins.get(k) ?? lotIsins.set(k, new Set()).get(k)!).add(l.isin);
+    (lotIsins.get(k) ?? lotIsins.set(k, new Set()).get(k)!).add(currentIsin(l.isin));
   }
   const accountIdOf = new Map(BOOK_ACCOUNTS.map((a) => [`${a.provider}\u0001${a.accountNo}`, a.accountId]));
   const cgOf = new Map(BOOK_CAPITAL_GAINS.filter((e) => e.accountId).map((e) => [e.accountId!, e]));

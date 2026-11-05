@@ -257,13 +257,16 @@ console.log("\n── MT-10: a sale borrows the ISIN its own lot prints, and fil
   const { accountIndex } = await import("@/lib/accounts");
   const idx = accountIndex(BOOK_ACCOUNTS);
   // RE-EXPRESSED OFF THE DOCUMENTS: every capital-gain lot's (account, key,
-  // sale date) and the ISIN it prints — never through the ledger.
+  // sale date) and the ISIN it prints — never through the ledger. A split's
+  // retired ISIN and its successor count as one (SVAN reprints Shankara
+  // Buildpro's 19 May sale under the post-split ISIN, Stage 10lx).
+  const { currentIsin } = await import("../../../shared/isinSuccessors.mjs");
   const lotIsin = new Map<string, Set<string>>();
   for (const d of manifest.filter((m) => m.reportType === "capital-gain")) {
     for (const l of docOf(d.docKey).capitalGains ?? []) {
       if (!l.isin || !l.saleDate) continue;
       const k = `${d.accountNo}|${l.securityKey}@${l.saleDate}`;
-      (lotIsin.get(k) ?? lotIsin.set(k, new Set()).get(k)!).add(l.isin);
+      (lotIsin.get(k) ?? lotIsin.set(k, new Set()).get(k)!).add(currentIsin(l.isin));
     }
   }
   const lent = txn.txns.filter((t) => t.isinFrom === "lot");
