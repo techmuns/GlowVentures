@@ -51,7 +51,9 @@ export type YtdFrom =
  * as the pooled surfaces carry it, with the assumption it rests on.
  */
 export type YtdFound = { window: AccountWindow; owner?: string; recorded?: boolean; unit?: ReturnUnit }
-  | { reason: string; pending?: boolean; outside?: boolean };
+  | { reason: string; pending?: boolean; outside?: boolean;
+    /** The price source's own answer, where its history did not load (Stage 10lg). */
+    detail?: string };
 
 export type YtdBook = {
   /** The period's opening day — 31 Dec for YTD — or null: each part from its own first record. */
@@ -226,7 +228,7 @@ export function ytdBook({ inputs, held, accounts, end, assumptions, money, open:
       const r = assumedHoldingReturns([p], accounts as Account[], start, end, assumptions, () => options);
       const u = r.units[0];
       if (u) u.basis = u.assumption?.listedFrom ? 'listing-day' : options.anchor ? 'earlier-balance' : u.basis;
-      found = u?.window ? { window: u.window, owner: u.assumption?.owner, unit: u } : { reason: r.gaps[0]?.reason ?? 'no dated balance of this holding is on record', pending: r.pending > 0 };
+      found = u?.window ? { window: u.window, owner: u.assumption?.owner, unit: u } : { reason: r.gaps[0]?.reason ?? 'no dated balance of this holding is on record', pending: r.pending > 0, detail: r.gaps[0]?.detail };
     }
     holdingMemo.set(p, found);
     return found;
@@ -324,7 +326,7 @@ export function ytdSelection(book: YtdBook, inputs: readonly AccountInput[], hel
     const f = book.holding(p);
     if ('unit' in f && f.unit) { assumedUnits.push(f.unit); continue; }
     if ('reason' in f) assumptionGaps.push({ accountId: p.accountId, securityKey: p.securityKey, label: p.security,
-      reason: sentence(f.reason), plainReason: true, value: p.marketValue });
+      reason: sentence(f.reason), plainReason: true, value: p.marketValue, ...('detail' in f && f.detail ? { detail: f.detail } : {}) });
   }
   return { windows, excluded, outside, assumedUnits, assumptionGaps };
 }

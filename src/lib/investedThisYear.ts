@@ -115,3 +115,43 @@ export function investedThisYear(positions: readonly Position[], accounts: reado
     periodPct:weightValue>0?sum(measured,r=>r.value*r.periodPct)/weightValue:null,
     weightValue,annual:measured.length>0 && measured.every(r=>r.annual)};
 }
+
+/**
+ * ── EVERY HOLDING PLACED (Stage 10lg) ───────────────────────────────────────
+ *
+ * *"invested this year fix all"* — the family, 5 Nov 2026. A holding without
+ * dated purchase lots this year was "needs purchase details". The financial
+ * year's own selection (`useReturnSelection`, the cards' rule) places it: held
+ * before the year opened (it opens on a value on or before 31 March, or an older
+ * statement holds it then), or first valued this year — counted from that first
+ * value, as money arriving that day, exactly as the cards count it, and named so.
+ * What no record values at all stays named.
+ */
+export type FirstValueUnit = { positions: readonly Position[]; from: string | null; to: string | null; invested: number; close: number;
+  gain: number; held?: { date: string } ; ownPct: number | null };
+export function placeEveryHolding<R extends globalThis.ReturnType<typeof investedThisYear>>(result: R, units: readonly FirstValueUnit[], fyOpen: string,
+  heldBefore: (p: Position) => boolean) {
+  const key = (p: Position) => `${p.accountId}|${p.securityKey}`;
+  const unitOf = new Map<string, FirstValueUnit>();
+  for (const u of units) for (const p of u.positions) unitOf.set(key(p), u);
+  const firstValued: (YearInvestment & { fromFirstValue: true })[] = [], missing: YearGap[] = [], older = [...result.older];
+  for (const g of result.missing) {
+    const p = g.position, u = unitOf.get(key(p));
+    const firstOn = u ? (u.held ? u.held.date : u.from) : null;
+    if (heldBefore(p) || (firstOn != null && firstOn <= fyOpen)) { older.push(p); continue; }
+    if (!u || !firstOn) { missing.push(g); continue; }
+    // A whole account's unit is shared by its holdings in proportion to their value.
+    const share = u.close > 0 ? p.marketValue / u.close : 0;
+    const cost = u.invested * share, value = p.marketValue, gain = u.gain * share;
+    firstValued.push({ position: p, lots: [], cost, value, gain, first: firstOn, last: firstOn, valuedOn: u.to ?? firstOn,
+      periodPct: u.ownPct ?? 0, pct: u.ownPct, annual: false, returnMissing: null, fromFirstValue: true });
+  }
+  const included = [...result.included, ...firstValued];
+  const sum = <T,>(xs: readonly T[], f: (x: T) => number) => xs.reduce((s, x) => s + f(x), 0);
+  const measured = included.filter((r) => r.pct != null && r.value > 0), weightValue = sum(measured, (r) => r.value);
+  return { ...result, included, missing, older, firstValued,
+    cost: sum(included, (r) => r.cost), value: sum(included, (r) => r.value), gain: sum(included, (r) => r.gain),
+    pct: weightValue > 0 ? sum(measured, (r) => r.value * r.pct!) / weightValue : null,
+    periodPct: weightValue > 0 ? sum(measured, (r) => r.value * r.periodPct) / weightValue : null,
+    weightValue, annual: measured.length > 0 && measured.every((r) => r.annual) };
+}

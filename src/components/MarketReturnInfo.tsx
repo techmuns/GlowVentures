@@ -83,10 +83,10 @@ function MarketReturnDetails({ label, units, gaps, positions, accounts, totalVal
         <p><strong>{units.length} holdings · {money(covered)}</strong> included. Each account holding has its own entry.</p>
         <label className="mt-3 block"><span className="sr-only">Search included holdings</span><input value={includedSearch} onChange={e=>setIncludedSearch(e.target.value)} placeholder="Search security, fund, owner or account" className="ring-focus w-full rounded-lg border border-ink-700 bg-ink-900 px-3 py-2 text-sm" /></label>
         {includedSearch && <p className="mt-2 text-xs text-slate-400">Showing {included.length} of {units.length} included holdings</p>}
-        <ul className="mt-3 space-y-3">{included.map(u=><li key={marketHoldingKey(u.position)} className="rounded-lg border border-ink-700 p-3" data-market-source data-market-holding-key={marketHoldingKey(u.position)}>
+        <ul className="mt-3 space-y-3">{included.map(u=><li key={marketHoldingKey(u.position)} className="rounded-lg border border-ink-700 p-3" data-market-source data-market-holding-key={marketHoldingKey(u.position)} data-market-pct={u.periodPct} data-market-value={u.position.marketValue}>
           {identity(u.position)}
           <p className="mt-2 text-xs"><strong>{money(u.position.marketValue)}</strong> · {covered>0?(u.position.marketValue/covered*100).toFixed(2):'0'}% of included value · {percent(u.periodPct)} for the period</p>
-          <p className="mt-1 text-xs text-slate-400">Price source: {u.history.source} · {u.history.symbol}</p>
+          <p className="mt-1 text-xs text-slate-400">{u.history ? <>Price source: {u.history.source} · {u.history.symbol}</> : <>Measured from: {u.source ?? 'the statement records'} · {u.from} → {u.to}</>}</p>
         </li>)}</ul>
         {!included.length && <p className="mt-3">{includedSearch?'No included holdings match this search.':'No holdings are included yet. See Missing Values for the reason.'}</p>}
       </div>}

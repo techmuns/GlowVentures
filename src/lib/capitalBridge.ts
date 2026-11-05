@@ -160,7 +160,10 @@ function stepOf(u: ReturnUnit, b: BridgeBook): BridgeAccount {
     return { ...base, from: w.openDate, to: w.closeDate, opening: w.openValue, added: w.capitalIn, takenOut: w.capitalOut,
       split, unsplitReason: typeof fund === 'string' ? fund : null };
   }
-  const r = u.inception!;
+  // HELD AT ITS VALUE (Stage 10lg): no record measures a gain; its value is in at no gain, named.
+  if (!u.inception) return { ...base, from: u.from, to: u.to, opening: 0, added: u.invested, takenOut: u.invested + u.gain - u.close,
+    split: null, unsplitReason: u.held ? `held at its value since ${u.held.date}: ${u.held.reason}` : 'no record splits its gain' };
+  const r = u.inception;
   const own = u.key === u.accountId;
   const fromStatement = own ? statementSplit(b, u.accountId, null, r.valueAsOf, u.gain) : null;
   const fund = fromStatement ?? (own ? fundSplit(b, u.accountId, null, r.valueAsOf, u.gain) : 'its return covers one investment of a review, which records no realised gain');
