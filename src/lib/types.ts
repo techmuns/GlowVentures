@@ -532,6 +532,23 @@ export type Position = {
     reason: string | null;
   };
   /**
+   * THE SAME TRADES CARRIED THROUGH THE SPLITS, BONUSES AND DEMERGERS THAT MADE
+   * THE UNITS NO BUY PRINTED (Stage 10ly) — set only where `tradeRecord` holds
+   * some units on no dated trade and the replay through those actions ends on
+   * exactly the units held. `held` is the surviving purchase lots, each dated
+   * when its money went in (a demerged unit: when the parent was bought);
+   * `actions` the actions it went through, each with its source. A source for
+   * the Invested on column ONLY: the money a demerged unit stands for was paid
+   * for its parent, so no reader replays this as the holding's dated money.
+   * Built by `scripts/lib/shareActions.mjs`.
+   */
+  actionRecord?: {
+    units: number;
+    to: string;
+    held: { first: string; last: string; lots: number };
+    actions: { kind: "split" | "bonus" | "demerger"; date: string; factor?: number; ratio?: number; of?: string; label: string; source: string }[];
+  };
+  /**
    * ISO date the STATEMENT says its price or value is struck at — which need
    * not be its account's `asOf`: ICICI's NSDL balance is at 31 Mar 2026 and its
    * values are "Prices as on 30-Mar-2026". Present only where the statement
