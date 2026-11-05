@@ -26,6 +26,7 @@ import { fmtCurrency } from "@/lib/format";
 import { labelledAccounts, labelledPositions } from "@/lib/securityLabel";
 import { WHOLE_BOOK_NAV } from "@/lib/bookNavBook";
 import { readDisplayCurrency, writeDisplayCurrency } from "@/lib/storage";
+import { useFamilyPlacements } from "@/lib/familyPlacements";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   MEMBERS_PARAM, accountIdsFor, memberOptions, parseMembersParam, scopeLabel, scopePortfolio, serializeMembers,
@@ -402,7 +403,18 @@ const PRIORITY_SYMBOLS = (() => {
 export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   // The book as ingested. Live prices are layered on top in `portfolio` below,
   // so the statement figures stay available and unmutated underneath.
-  const [basePortfolio, setPortfolio] = useState<Portfolio | null>(() => defaultPortfolio());
+  const [bookPortfolio, setPortfolio] = useState<Portfolio | null>(() => defaultPortfolio());
+  /**
+   * THE FAMILY'S MOVES REISSUE THE BOOK (Stage 10lm). A row moved to another tab
+   * changes the section it sits in on every surface (`familyPlacements.ts`), and
+   * those surfaces memoise on the positions and accounts arrays — so a move hands
+   * the same rows out in new arrays and every table re-sections. Nothing in a
+   * position or an account changes.
+   */
+  const placements = useFamilyPlacements();
+  const basePortfolio = useMemo(() => bookPortfolio && placements.version > 0
+    ? { ...bookPortfolio, positions: bookPortfolio.positions.slice(), accounts: bookPortfolio.accounts.slice() }
+    : bookPortfolio, [bookPortfolio, placements.version]);
   const inputState = useTableInputs();
   const enteredPortfolio = useMemo(() => applyTableInputs(basePortfolio, inputState.saved), [basePortfolio, inputState.saved]);
   const [corporateActions, setCorporateActions] = useState<ActionFeed | null>(null);

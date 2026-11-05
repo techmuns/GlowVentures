@@ -760,6 +760,8 @@ export function MorningCIO() {
        * what was.
        */
       derivedMV: number;
+      /** …and the value the family moved into it on the Portfolio Monitor (Stage 10lm). */
+      movedMV: number;
       /**
        * TRUE where the family's review places this row nowhere — the
        * unclassified section, and any fund-of-funds row on a family axis. The
@@ -790,7 +792,7 @@ export function MorningCIO() {
       // is no such thing as a drawdown with no call behind it.
       withoutCost: 0, withoutCostMV: 0,
       // The family's review classifies products and names none of these.
-      ruleMV: 0, cashRuleMV: 0, derivedMV: 0, unplaced: false,
+      ruleMV: 0, cashRuleMV: 0, derivedMV: 0, movedMV: 0, unplaced: false,
     });
     // A bucket of POSITIONS — no dated capital-movement flows at bucket level,
     // so no money-weighted rate; its total return on cost is what the row shows.
@@ -809,10 +811,11 @@ export function MorningCIO() {
       const ruleMV = sum(rows.filter((x) => groupSourceFor(axis, accIdx, x) === "rule").map((x) => x.marketValue));
       const cashRuleMV = sum(rows.filter((x) => groupSourceFor(axis, accIdx, x) === "cash-rule").map((x) => x.marketValue));
       const derivedMV = sum(rows.filter((x) => groupSourceFor(axis, accIdx, x) === "derived").map((x) => x.marketValue));
+      const movedMV = sum(rows.filter((x) => groupSourceFor(axis, accIdx, x) === "moved").map((x) => x.marketValue));
       return {
         key, color: sectionColor(axis, key, i), count: g.count, invested: g.invested, current: g.mv,
         investedFifo: g.fifo, vacuous: g.vacuous,
-        fromPositions: true, ruleMV, cashRuleMV, derivedMV, unplaced: key === UNCLASSIFIED,
+        fromPositions: true, ruleMV, cashRuleMV, derivedMV, movedMV, unplaced: key === UNCLASSIFIED,
         retPct: g.ret, distributed: 0, xirr: null, xirrBasis: "ledger", xirrNote: null, sheet: null,
         withoutCost: g.withoutCost, withoutCostMV: g.withoutCostMV, costedMV: g.costedMV,
       };
@@ -846,7 +849,7 @@ export function MorningCIO() {
      * honest the day one does.
      */
     const fundModelBuckets: Bucket[] = [
-      { key: "Startups", color: "#6366f1", fromPositions: false, count: pm.startups.length, invested: st.invested, current: st.fairValue, retPct: st.invested > 0 ? ((st.fairValue - st.invested) / st.invested) * 100 : null, distributed: 0, xirr: stX.pct, xirrBasis: "first-investment", xirrNote: fundBasis(stX), sheet: "startup", investedFifo: null, withoutCost: 0, withoutCostMV: 0, costedMV: st.fairValue, ruleMV: 0, cashRuleMV: 0, derivedMV: 0, unplaced: false },
+      { key: "Startups", color: "#6366f1", fromPositions: false, count: pm.startups.length, invested: st.invested, current: st.fairValue, retPct: st.invested > 0 ? ((st.fairValue - st.invested) / st.invested) * 100 : null, distributed: 0, xirr: stX.pct, xirrBasis: "first-investment", xirrNote: fundBasis(stX), sheet: "startup", investedFifo: null, withoutCost: 0, withoutCostMV: 0, costedMV: st.fairValue, ruleMV: 0, cashRuleMV: 0, derivedMV: 0, movedMV: 0, unplaced: false },
       // Fund buckets: the multiple and the return-on-cost both count cash already
       // returned, so a bucket in repayment isn't read as a loss.
       fundBucket("Unlisted Companies", "#10b981", pm.unlistedCompanies.length, unlF, unlX, "pre-ipo"),
@@ -1009,6 +1012,7 @@ export function MorningCIO() {
   const ruleMV = sections.reduce((a, b) => a + b.ruleMV, 0);
   const cashRuleMV = sections.reduce((a, b) => a + b.cashRuleMV, 0);
   const derivedMV = sections.reduce((a, b) => a + b.derivedMV, 0);
+  const movedMV = sections.reduce((a, b) => a + b.movedMV, 0);
   // Fund commitments exist or they don't. `committed === 0` across zero funds is
   // the absence of a commitment schedule, not a schedule that commits nothing.
   // A commitment schedule exists if ANY source reports one — a drawdown AIF's
@@ -1870,16 +1874,17 @@ export function MorningCIO() {
                         value their direct-stock rule placed are the figures; how
                         the review states it is the hover. */}
                     <p data-testid="alloc-taxonomy-source"
-                      data-derived-mv={derivedMV}
+                      data-derived-mv={derivedMV} data-moved-mv={movedMV}
                       title={`Grouped by the family's own ${GROUP_NOUN[allocAxis].one}, as their consolidated review states it, product by product. No statement in the archive carries ${GROUP_NOUN[allocAxis].one === "basket" ? "a basket" : "one"}.${derivedMV > 0
                         ? ` ${money(derivedMV)} of the ${money(m.totalValue)} above is filed by what the instrument is, where the review does not name the product: a company share is equity exposure under any taxonomy, and cash is cash.`
-                        : " Nothing here is inferred from what the instrument is."}${ruleMV > 0 ? ` ${money(ruleMV)} of the ${money(m.totalValue)} above is placed by their stated rule instead — "all the direct stocks" belong to Thematic & Tactical — because the review does not name those holdings individually.` : ""}`}>
+                        : " Nothing here is inferred from what the instrument is."}${ruleMV > 0 ? ` ${money(ruleMV)} of the ${money(m.totalValue)} above is placed by their stated rule instead — "all the direct stocks" belong to Thematic & Tactical — because the review does not name those holdings individually.` : ""}${movedMV > 0 ? ` ${money(movedMV)} of it the family moved to another ${GROUP_NOUN[allocAxis].one} on the Portfolio Monitor, which overrides the review for those holdings.` : ""}`}>
                       The family&rsquo;s own {GROUP_NOUN[allocAxis].many}
                       {ruleMV > 0 && <> · {money(ruleMV)} by their direct-stock rule</>}
                       {/* WHAT WAS INFERRED, NAMED (CK-C2): the hover said nothing
                           was, over ₹11.2 Cr filed by instrument type. A figure,
                           so on the face beside the rule's. */}
                       {derivedMV > 0 && <> · {money(derivedMV)} by what the instrument is</>}
+                      {movedMV > 0 && <> · {money(movedMV)} moved on the Portfolio Monitor</>}
                     </p>
                     {/* THE OTHER RULE, NAMED AS ITSELF. Their review files its
                         arbitrage funds as Debt; the family have said arbitrage is
