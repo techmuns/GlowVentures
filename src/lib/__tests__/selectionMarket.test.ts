@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { selectionMarket, selectionMarketOf, unitOwnReturn } from '../selectionMarket';
-import { placeEveryHolding, type FirstValueUnit } from '../investedThisYear';
+import { investedThisYear, placeEveryHolding, type FirstValueUnit } from '../investedThisYear';
 import type { ReturnGap, ReturnUnit } from '../selectedSegmentReturns';
 import type { AccountWindow } from '../periodReturns';
 import type { Position } from '../types';
@@ -88,7 +88,7 @@ const unit = (key: string, positions: Position[], w: AccountWindow | null, extra
     // A record that opens on the year's own opening value was held before the year.
     { positions: [opened], from: '2026-03-31', to: '2026-10-31', invested: 45, close: 50, gain: 5, ownPct: 5 / 45 * 100 },
   ];
-  const r = placeEveryHolding(result as never, units, '2026-03-31', (p) => p === before);
+  const r = placeEveryHolding(result as unknown as ReturnType<typeof investedThisYear>, units, '2026-03-31', (p) => p === before);
   assert.deepEqual(r.older.map((p) => p.securityKey).sort(), ['before', 'older', 'opened']);
   assert.deepEqual(r.missing.map((g) => g.position.securityKey), ['none'], 'only what no record values stays named');
   assert.equal(r.firstValued.length, 2);
