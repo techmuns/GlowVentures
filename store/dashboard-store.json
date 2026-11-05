@@ -32,16 +32,16 @@
    }
   },
   "tile-set:private-market": {
-   "value": "{\"page\":\"private-market\",\"ids\":[\"pnl\",\"irr\",\"cost\",\"realised\"],\"updatedAt\":\"2026-11-05T06:16:56.025Z\"}",
+   "value": "{\"page\":\"private-market\",\"ids\":[\"pnl\",\"value\",\"cost\",\"realised\"],\"updatedAt\":\"2026-11-05T06:17:02.679Z\"}",
    "metadata": {
     "page": "private-market",
     "ids": [
      "pnl",
-     "irr",
+     "value",
      "cost",
      "realised"
     ],
-    "updatedAt": "2026-11-05T06:16:56.025Z"
+    "updatedAt": "2026-11-05T06:17:02.679Z"
    }
   },
   "tile-set:real-estate": {
