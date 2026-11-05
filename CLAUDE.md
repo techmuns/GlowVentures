@@ -197,7 +197,9 @@ One line per area; the history files explain each in depth.
   security key → ISIN → name → brand → folio; Stage 10eo),
   `investedOn.ts` (a holding's Invested on and its dated trades, every holdings
   table; built off `Position.tradeRecord` / `BOOK_HOLDING_TRADES` from
-  `scripts/lib/holdingTrades.mjs`; Stage 10fm).
+  `scripts/lib/holdingTrades.mjs`; Stage 10fm; through splits, bonuses and
+  demergers, `Position.actionRecord` from `scripts/lib/shareActions.mjs` and
+  `shared/demergers.mjs`, Stage 10ly).
 - `src/lib/privateRounds.ts` + `pages/PrivateCompany.tsx` — a private company's
   funding rounds, valuations and stake (`/private-company/:id`, Private Market's
   valuation columns), off `src/data/privateRounds.json`: public reporting, every

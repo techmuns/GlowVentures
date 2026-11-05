@@ -18,7 +18,9 @@
  *   • the fund's dated allotments against this very folio (`BOOK_POSITION_TRANCHES`);
  *   • a lot register's acquisition date (`Position.heldSince`);
  *   • the account's own dated trades, where they account for every unit held
- *     (`Position.tradeRecord.held`, matched first-in, first-out in build-book);
+ *     (`Position.tradeRecord.held`, matched first-in, first-out in build-book),
+ *     or do once carried through the splits, bonuses and demergers between them
+ *     (`Position.actionRecord`, Stage 10ly);
  *   • reconciled surviving purchase lots in supplementary records
  *     (`Position.recoveredCost.heldPurchases`, exact account, ISIN and units);
  *   • a drawdown fund's dated calls, where the account holds that fund alone
@@ -44,7 +46,7 @@ import savedActions from "../../public/data/corporate-actions.json";
 import { symbolForKey } from "./quotes";
 import { acquisitionIdentity } from "../../shared/fundUnitActions.mjs";
 
-export type InvestedOnSource = "allotments" | "lots" | "trades" | "bonus-trades" | "recovered-lots" | "calls" | "review" | "account";
+export type InvestedOnSource = "allotments" | "lots" | "trades" | "action-trades" | "bonus-trades" | "recovered-lots" | "calls" | "review" | "account";
 
 /**
  * The first and last date the money went in, and how many dated payments that
@@ -124,6 +126,13 @@ function lineDates(p: Position): LineDates | null {
   if (held) return { dates: [held.first, held.last], source: "trades" };
   const adjusted = bonusPurchaseDates(p);
   if (adjusted) return adjusted;
+  // The same trades carried through every split, bonus and demerger between
+  // them, replayed and reconciled to the units held in build-book (Stage 10ly).
+  const acted = p.actionRecord;
+  if (acted && p.quantity != null && Math.abs(p.quantity - acted.units) <= .0005 && p.tradeRecord?.to === acted.to) {
+    return { dates: [acted.held.first, acted.held.last], source: "action-trades", payments: acted.held.lots,
+      adjustments: acted.actions.map((a) => `${a.date}: ${a.of ? `${a.of}, ` : ""}${a.label}; ${a.source}`) };
+  }
   const recovered = p.recoveredCost;
   const acquisition = acquisitionIdentity(p);
   // The recovery is specific to an account, ISIN, closing date and exact unit
@@ -140,7 +149,7 @@ function lineDates(p: Position): LineDates | null {
 
 /** How many dated payments a line is — null where its source dates a span. */
 function linePayments(p: Position, d: LineDates): number | null {
-  if (d.source === "bonus-trades") return d.payments ?? null;
+  if (d.source === "bonus-trades" || d.source === "action-trades") return d.payments ?? null;
   if (d.source === "trades") return p.tradeRecord?.held?.lots ?? null;
   if (d.source === "recovered-lots") return p.recoveredCost?.heldPurchases?.lots ?? null;
   if (d.source === "review") return d.dates[0] === d.dates[1] && /^\d{4}-\d{2}-\d{2}$/.test(d.dates[0]) ? 1 : null;
@@ -191,6 +200,7 @@ const SOURCE_WORDS: Record<InvestedOnSource, string> = {
   allotments: "the fund's own dated allotments",
   lots: "the lot register's acquisition dates",
   trades: "the account's own dated trades, every unit held matched to the buy that bought it, first-in, first-out",
+  "action-trades": "the account's own dated trades carried through the splits, bonuses and demergers that made the rest of its units, every unit held matched to the purchase that paid for it, first-in, first-out",
   "bonus-trades": "the account's original purchases, carried through the saved noncash bonus into the exact current holding quantity",
   "recovered-lots": "the original purchase lots in the supplementary records, reconciled to this account, ISIN and every unit still held, first-in, first-out",
   calls: "the fund's dated capital calls",

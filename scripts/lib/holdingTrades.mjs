@@ -211,3 +211,59 @@ export function holdingTradeRecord({ rows, quantity, asOf, window }) {
     reason: null,
   };
 }
+
+/**
+ * THE SAME TRADES CARRIED THROUGH THE SHARE-COUNT ACTIONS BETWEEN THEM (Stage 10ly).
+ *
+ * A split or a bonus multiplies every unit held on its ex-date; a demerger
+ * allots the child's units against the parent's held on its record date. None
+ * is a trade, so `holdingTradeRecord`'s arithmetic leaves the units they made
+ * on no dated buy. Replayed through them, oldest first and first-in, first-out
+ * — an action on a date applies before that day's trades, inherited units
+ * before the day's own buys — the window's buys hold `units` in the end, each
+ * lot keeping the date its money went in: a bonus or a split adds no payment,
+ * and a demerged unit is the parent unit's money, bought when the parent was.
+ *
+ * `inherited` is `{ date, lots }`, the child's units at the record date. `at`,
+ * when given, also returns the lots held at the start of that date (after its
+ * actions, before its trades): the parent's side of a demerger.
+ *
+ * Returns `{ lots, units, at }`, or `{ reason }` where a sale takes units no
+ * earlier lot holds. Whether `units` is what a statement holds is the caller's
+ * question.
+ */
+export function actionReplay({ rows, from, to, actions = [], inherited = null, at = null }) {
+  const events = [
+    ...actions.filter((a) => a.date >= from && a.date <= to).map((a) => ({ date: a.date, order: 0, a })),
+    ...(inherited && inherited.date >= from && inherited.date <= to ? [{ date: inherited.date, order: 1, inherited }] : []),
+    ...rows.filter((t) => t.date >= from && t.date <= to).map((t) => ({ date: t.date, order: t.side === "buy" ? 2 : 3, t })),
+  ].sort((x, y) => x.date.localeCompare(y.date) || x.order - y.order);
+  let lots = [];
+  let snapshot = null;
+  // The lots at the start of `at`: before the first event dated after it, or
+  // that day's first trade (its actions apply first).
+  const take = (e) => {
+    if (at && snapshot === null && (e.date > at || (e.date === at && e.order > 0))) snapshot = lots.map((l) => ({ ...l }));
+  };
+  for (const e of events) {
+    take(e);
+    if (e.a) { lots = lots.map((l) => ({ ...l, qty: r6(l.qty * e.a.factor) })); continue; }
+    if (e.inherited) {
+      lots = [...lots, ...e.inherited.lots.map((l) => ({ ...l }))].sort((x, y) => x.date.localeCompare(y.date));
+      continue;
+    }
+    const t = e.t;
+    if (!isNum(t.quantity) || t.quantity <= 0) return { reason: `a trade on ${t.date} prints no unit count` };
+    if (t.side === "buy") { lots.push({ date: t.date, qty: t.quantity }); continue; }
+    let left = t.quantity;
+    while (left > EPS && lots.length) {
+      const q = Math.min(left, lots[0].qty);
+      lots[0].qty = r6(lots[0].qty - q);
+      left = r6(left - q);
+      if (lots[0].qty <= EPS) lots.shift();
+    }
+    if (left > EPS) return { reason: `a sale on ${t.date} takes ${left} units no earlier lot holds` };
+  }
+  take({ date: "9999-12-31", order: 1 });
+  return { lots, units: r6(lots.reduce((n, l) => n + l.qty, 0)), at: at ? snapshot : null };
+}

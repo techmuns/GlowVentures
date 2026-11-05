@@ -509,6 +509,7 @@ never guessed into the nearest plausible bucket.
 - account Carnelian Asset Management and Advisors Pvt Ltd::3517383: 45 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
 - account Carnelian Asset Management and Advisors Pvt Ltd::3517383: investor-report 2026-10-07 (`carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-10-07-investor-report`) is newer than the 2026-09-30 record the book keeps, and is not used: Printed value-bridge lines reach 385169845.54, not the stated closing 385455077.32; retained as printed and not a reconciled return source
 - account 3517383: capital-gain lots printed as `dsp-mutual-fund-dsp-s-and-p-bse` settle this account's sales of `dsp-mutual-fund-dsp-s-and-p-bse-liquid-rate-etf` — same account and date, lot proceeds equal to each day's settled sale to the printed precision — so their realised gain is that holding's
+- account 3517383: pvr-inox is not dated through its corporate actions — PVRINOX's buyback of 2026-09-04 (Buy Back) is not one this replay can carry units through
 - account 3517383: the investor-report value bridge 2026-04-01 → 2026-10-07 is WITHHELD — its lines add to 38,51,69,845.54 against a closing value of 38,54,55,077.32, 2,85,231.78 apart. Its lines do not add to its closing value. Not read from this report: gain prior to takeover and accrued income.
 - account 3517383: the profit-and-loss value bridge 2026-04-01 → 2026-10-07 is WITHHELD — The report prints no opening value for this window, so its lines cannot be added up to its closing value. It prints no gain prior to takeover, profit / loss, accrued income or change in accruals line.
 - account 4551: no time-weighted return series in any statement
@@ -543,6 +544,8 @@ never guessed into the nearest plausible bucket.
 - account Goldstandard Wealth Private Limited::100022: capital-register 2026-10-06 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100022-2026-10-06-capital-register-2`; its dated rows are still counted
 - account Goldstandard Wealth Private Limited::100022: holdings 2026-10-06 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100022-2026-10-06-holdings-2`; its dated rows are still counted
 - account Goldstandard Wealth Private Limited::100022: 15 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
+- account 100022: zydus-lifesciences is not dated through its corporate actions — ZYDUSLIFE's buyback of 2026-05-29 (Buy Back) is not one this replay can carry units through
+- account 100022: life-insurance-corp-of-india is not dated through its corporate actions — its trades from 2026-04-01, carried through bonus of 2026-05-29, end on 0 units where the statement holds 6000
 - account 100022: its capital register's only movements are 12 withdrawal(s) (TDS Trf to Capital A/c, 47209 in all) and it publishes no other dated capital, so they are not listed as the family's own: on their own they would present an account funded before the register's window as one nothing was paid into. The XIRR and the NAV chain still net them.
 - account Goldstandard Wealth Private Limited::100023: appraisal 2026-07-10 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100023-2026-07-10-appraisal`; its dated rows are still counted
 - account Goldstandard Wealth Private Limited::100023: bank-book 2026-07-10 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100023-2026-07-10-bank-book`; its dated rows are still counted
@@ -570,6 +573,8 @@ never guessed into the nearest plausible bucket.
 - account Goldstandard Wealth Private Limited::100023: capital-register 2026-10-06 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100023-2026-10-06-capital-register-2`; its dated rows are still counted
 - account Goldstandard Wealth Private Limited::100023: performance-summary 2026-10-06 superseded for SNAPSHOT facts by 2026-10-06 — `goldstandard-wealth-private-limited-100023-2026-10-06-performance-summary-2`; its dated rows are still counted
 - account Goldstandard Wealth Private Limited::100023: 19 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
+- account 100023: zydus-lifesciences is not dated through its corporate actions — ZYDUSLIFE's buyback of 2026-05-29 (Buy Back) is not one this replay can carry units through
+- account 100023: life-insurance-corp-of-india is not dated through its corporate actions — its trades from 2026-04-01, carried through bonus of 2026-05-29, end on 0 units where the statement holds 16400
 - account 100023: its capital register's only movements are 15 withdrawal(s) (TDS Trf to Capital A/c, 121350 in all) and it publishes no other dated capital, so they are not listed as the family's own: on their own they would present an account funded before the register's window as one nothing was paid into. The XIRR and the NAV chain still net them.
 - account Green Lantern Capital LLP::510854: appraisal 2026-06-25 superseded for SNAPSHOT facts by 2026-07-27 — `green-lantern-capital-llp-510854-2026-06-25-appraisal`; its dated rows are still counted
 - account Green Lantern Capital LLP::510854: capital-gain 2026-06-25 superseded for SNAPSHOT facts by 2026-07-27 — `green-lantern-capital-llp-510854-2026-06-25-capital-gain`; its dated rows are still counted
@@ -588,6 +593,7 @@ never guessed into the nearest plausible bucket.
 - account 510854: capital-gain lots printed as `axis-liquid-fund-direct-plan-growth` settle this account's sales of `axis-liquid-fund-direct-plan-growth-option` — same account and date, lot proceeds equal to each day's settled sale to the printed precision — so their realised gain is that holding's
 - account 510854: aurobindo-pharma is not rolled forward past 2026-07-27 — no depository balance or capital gain lot witnesses the tape; the statement's own quantity stands on the live basis
 - account 510854: alivus-life-sciences is not rolled forward past 2026-07-27 — no depository balance or capital gain lot witnesses the tape; the statement's own quantity stands on the live basis
+- account 510854: zf-commercial-vehicle-control-systems-india's 516 units are its trades carried through bonus of 2026-06-24 — 6 dated purchase lot(s), 2025-05-30 to 2026-03-18
 - account 510854: bajaj-auto is not rolled forward past 2026-07-27 — no depository balance or capital gain lot witnesses the tape; the statement's own quantity stands on the live basis
 - account 510854: graphite-india is not rolled forward past 2026-07-27 — no depository balance or capital gain lot witnesses the tape; the statement's own quantity stands on the live basis
 - account 510854: gujarat-ambuja-exports is not rolled forward past 2026-07-27 — no depository balance or capital gain lot witnesses the tape; the statement's own quantity stands on the live basis
@@ -619,6 +625,7 @@ never guessed into the nearest plausible bucket.
 - account 510861: capital-gain lots printed as `axis-liquid-fund-direct-plan-growth` settle this account's sales of `axis-liquid-fund-direct-plan-growth-option` — same account and date, lot proceeds equal to each day's settled sale to the printed precision — so their realised gain is that holding's
 - account 510861: aurobindo-pharma is not rolled forward past 2026-07-27 — no depository balance or capital gain lot witnesses the tape; the statement's own quantity stands on the live basis
 - account 510861: alivus-life-sciences is not rolled forward past 2026-07-27 — no depository balance or capital gain lot witnesses the tape; the statement's own quantity stands on the live basis
+- account 510861: zf-commercial-vehicle-control-systems-india's 1032 units are its trades carried through bonus of 2026-06-24 — 6 dated purchase lot(s), 2025-05-30 to 2026-03-18
 - account 510861: bajaj-auto is not rolled forward past 2026-07-27 — no depository balance or capital gain lot witnesses the tape; the statement's own quantity stands on the live basis
 - account 510861: graphite-india is not rolled forward past 2026-07-27 — no depository balance or capital gain lot witnesses the tape; the statement's own quantity stands on the live basis
 - account 510861: gujarat-ambuja-exports is not rolled forward past 2026-07-27 — no depository balance or capital gain lot witnesses the tape; the statement's own quantity stands on the live basis
@@ -844,6 +851,11 @@ never guessed into the nearest plausible bucket.
 - account SVAN Investment Managers LLP::8710067: transaction-statement 2026-09-30 superseded for SNAPSHOT facts by 2026-11-04 — `svan-investment-managers-llp-8710067-2026-09-30-transaction-statement`; its dated rows are still counted
 - account SVAN Investment Managers LLP::8710067: 137 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
 - account 8710067: capital-gain lots printed as `hdfc-liquid-fund-direct-plan-growth` settle this account's sales of `hdfc-liquid-fund-direct-plan-growth-option` — same account and date, lot proceeds equal to each day's settled sale to the printed precision — so their realised gain is that holding's
+- account 8710067: v2-retail's 31600 units are its trades carried through split of 2026-03-25 — 5 dated purchase lot(s), 2024-09-04 to 2026-01-06
+- account 8710067: heg-graphite's 8220 units are its trades carried through heg-advanced-materials's split of 2024-10-18, heg-advanced-materials's demerger of 2026-09-07 — 6 dated purchase lot(s), 2024-09-04 to 2025-10-30
+- account 8710067: shankara-buildpro's 18300 units are its trades carried through shankara-building-products's demerger of 2025-09-24, split of 2026-10-08 — 5 dated purchase lot(s), 2024-10-29 to 2026-02-03
+- account 8710067: sharda-motor-industries's 3350 units are its trades carried through bonus of 2025-07-04 — 6 dated purchase lot(s), 2024-10-09 to 2025-03-26
+- account 8710067: time-technoplast's 10900 units are its trades carried through bonus of 2025-09-23 — 3 dated purchase lot(s), 2024-09-04 to 2025-03-24
 - account 8710067: its dated capital record runs to 2026-11-04 — the capital register whose balances tie reaches that date, past the 2026-07-31 its typed rows reach on their own
 - account 8710067: 15 movement(s) from its capital register (0 in, 52138.8 out) merged into its dated capital record — each witnessed by the register's own opening and closing balance, and none already on the account's typed record
 - account 8710067: cash flows carry no opening portfolio value — no performance summary for the window, so a money-weighted return over it cannot be computed
@@ -856,6 +868,11 @@ never guessed into the nearest plausible bucket.
 - account SVAN Investment Managers LLP::8710090: transaction-statement 2026-09-30 superseded for SNAPSHOT facts by 2026-11-04 — `svan-investment-managers-llp-8710090-2026-09-30-transaction-statement`; its dated rows are still counted
 - account SVAN Investment Managers LLP::8710090: 92 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
 - account 8710090: capital-gain lots printed as `hdfc-liquid-fund-direct-plan-growth` settle this account's sales of `hdfc-liquid-fund-direct-plan-growth-option` — same account and date, lot proceeds equal to each day's settled sale to the printed precision — so their realised gain is that holding's
+- account 8710090: v2-retail's 20550 units are its trades carried through split of 2026-03-25 — 4 dated purchase lot(s), 2024-12-03 to 2026-01-06
+- account 8710090: heg-graphite's 5365 units are its trades carried through heg-advanced-materials's demerger of 2026-09-07 — 4 dated purchase lot(s), 2024-12-03 to 2025-10-30
+- account 8710090: shankara-buildpro's 11900 units are its trades carried through shankara-building-products's demerger of 2025-09-24, split of 2026-10-08 — 5 dated purchase lot(s), 2024-12-03 to 2026-02-03
+- account 8710090: sharda-motor-industries's 2390 units are its trades carried through bonus of 2025-07-04 — 6 dated purchase lot(s), 2024-12-03 to 2025-03-26
+- account 8710090: time-technoplast's 7760 units are its trades carried through bonus of 2025-09-23 — 4 dated purchase lot(s), 2024-12-03 to 2025-03-24
 - account 8710090: its dated capital record runs to 2026-11-04 — the capital register whose balances tie reaches that date, past the 2026-09-30 its typed rows reach on their own
 - account 8710090: 3 movement(s) from its capital register (0 in, 10845 out) merged into its dated capital record — each witnessed by the register's own opening and closing balance, and none already on the account's typed record
 - account 8710090: cash flows carry no opening portfolio value — no performance summary for the window, so a money-weighted return over it cannot be computed
@@ -939,6 +956,7 @@ never guessed into the nearest plausible bucket.
 - account V.E.C Assago Capital Management LLP::128004: capital-register 2026-10-07 superseded for SNAPSHOT facts by 2026-10-07 — `v-e-c-assago-capital-management-llp-128004-2026-10-07-capital-register-2`; its dated rows are still counted
 - account V.E.C Assago Capital Management LLP::128004: transaction-statement 2026-10-07 superseded for SNAPSHOT facts by 2026-10-07 — `v-e-c-assago-capital-management-llp-128004-2026-10-07-transaction-statement-2`; its dated rows are still counted
 - account V.E.C Assago Capital Management LLP::128004: 47 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
+- account 128004: nuvama-wealth-management's 1765 units are its trades carried through split of 2025-12-26 — 1 dated purchase lot(s), 2025-08-05 to 2025-08-05
 - account 128004: its dated capital record runs to 2026-10-07 — the capital register whose balances tie reaches that date
 - account 128004: 15 movement(s) from its capital register (50000000 in, 56238 out) merged into its dated capital record — each witnessed by the register's own opening and closing balance, and none already on the account's typed record
 - account 128004: its capital-register runs 2025-07-29 → 2026-10-07, so 9 row(s) before the 2026-04-01 opening value (already inside it) are not flows of its money-weighted window

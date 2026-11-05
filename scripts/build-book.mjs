@@ -30,6 +30,7 @@ import { sourceFor } from "./ingest/precedence.mjs";
 import { AIF_UNITS, PROVIDER as CDSL_DEMAT_PROVIDER } from "./ingest/providers/motilalDemat.mjs";
 import { reclassificationsFrom, carryLotsThroughSwitches, carryCostThroughSwitches, UNIT_TIE } from "./lib/classSwitch.mjs";
 import { tradeWindows, windowThrough, oneCopyPerTrade, holdingTradeRows, holdingTradeRecord } from "./lib/holdingTrades.mjs";
+import { loadSavedActions, actionRecordFor } from "./lib/shareActions.mjs";
 import { PROVIDER as NSDL_DEMAT_PROVIDER } from "./ingest/providers/nsdlDemat.mjs";
 import { applyFamilyAdvice } from "./ingest/reference/familyAdvisedInvestments.mjs";
 import { adviseBalances } from "./ingest/reference/familyAdvisedBalances.mjs";
@@ -2387,6 +2388,9 @@ function build(archived, archiveCount = archived.length, references = {}) {
     try { return JSON.parse(fs.readFileSync(path.join(ROOT, "src/data/nseSymbols.json"), "utf8")); }
     catch { return {}; }
   })();
+  // The saved NSE corporate-action capture, for purchase dates carried through a
+  // split, bonus or demerger (Stage 10ly, `actionRecordFor`).
+  const savedActions = references.savedActions ?? loadSavedActions(ROOT);
 
   // ── ISIN, joined across the drop's own documents ─────────────────────────
   //
@@ -3194,6 +3198,28 @@ function build(archived, archiveCount = archived.length, references = {}) {
 
       return holdingTradeRecord({ rows, quantity: h.quantity, asOf, window: tapeWindow });
     };
+    /**
+     * …AND WHERE THE TRADES ALONE DO NOT HOLD EVERY UNIT, THE SAME TRADES CARRIED
+     * THROUGH THE SPLITS, BONUSES AND DEMERGERS BETWEEN THEM (Stage 10ly) — a
+     * source for the Invested on column only; see `actionRecordFor`.
+     */
+    const actionRecordOf = (h, rec) => {
+      if (!rec || rec.held || !(rec.unaccounted > 0) || h.assetClass === "Cash") return null;
+      const heldOf = (key) => sum((holdingsDoc?.holdings ?? []).filter((x) => x.securityKey === key && isNum(x.quantity)).map((x) => x.quantity));
+      const r = actionRecordFor({
+        saved: savedActions, key: h.securityKey, isin: h.isin ?? null, quantity: h.quantity, window: tapeWindow, asOf,
+        rowsOf: (key) => holdingTradeRows(tapeOf(key)), heldOf, symbolOf: (key) => symbols[key] ?? null,
+      });
+      if (!r) return null;
+      if (r.reason) {
+        notes.push(`account ${accountNo}: ${h.securityKey} is not dated through its corporate actions — ${r.reason}`);
+        return null;
+      }
+      notes.push(`account ${accountNo}: ${h.securityKey}'s ${h.quantity} units are its trades carried through `
+        + r.actions.map((a) => `${a.of ? `${a.of}'s ` : ""}${a.kind} of ${a.date}`).join(", ")
+        + ` — ${r.held.lots} dated purchase lot(s), ${r.held.first} to ${r.held.last}`);
+      return r;
+    };
     const rollForwardOf = (h, base) => {
       if (!asOf || !tapeTo || tapeTo <= asOf || !isNum(h.quantity) || !h.securityKey) return null;
       const rows = dated.transactions
@@ -3967,7 +3993,10 @@ function build(archived, archiveCount = archived.length, references = {}) {
         heldSince,
         ...(purchaseDates !== undefined ? { purchaseDates } : {}),
         /** What the account's own dated trades say about when these units were bought — see `holdingTradeRecord`. */
-        tradeRecord: tradeRecordOf(h) ?? undefined,
+        ...((rec) => {
+          const actionRecord = actionRecordOf(h, rec);
+          return { tradeRecord: rec ?? undefined, ...(actionRecord ? { actionRecord } : {}) };
+        })(tradeRecordOf(h)),
         ...((income) => {
           // THE SAME DIVIDENDS `dividendReceived` TOTALS, each on its day (Stage 10fw).
           if (income.length) {
@@ -6270,6 +6299,7 @@ export function prepareBookReferences(root = ROOT, auditDir = AUDIT_DIR) {
     registerWorkbook: readSpreadsheet(fs.readFileSync(path.join(root, REGISTER))),
     mopwm: loadMopwmTransactions(root), pagesByDocument,
     historicalNavs: JSON.parse(fs.readFileSync(path.join(root, 'scripts/ingest/reference/amfi-opening-navs.json'), 'utf8')),
+    savedActions: loadSavedActions(root),
   };
 }
 

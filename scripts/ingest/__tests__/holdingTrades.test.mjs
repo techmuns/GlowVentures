@@ -127,5 +127,63 @@ const WINDOW = { from: "2025-01-16", to: "2026-09-22" };
   ok("a sale no earlier buy holds dates nothing", r?.held === null && /no earlier buy/.test(r.reason), JSON.stringify(r));
 }
 
+// ── through splits, bonuses and demergers (Stage 10ly) ──────────────────────
+{
+  const { actionReplay } = await import("../../lib/holdingTrades.mjs");
+  const { actionRecordFor } = await import("../../lib/shareActions.mjs");
+  const W = { from: "2024-09-03", to: "2026-11-04" };
+  const saved = (rows) => {
+    const bySymbol = new Map();
+    for (const r of rows) (bySymbol.get(r.ticker) ?? bySymbol.set(r.ticker, []).get(r.ticker)).push(r);
+    return { from: "2023-11-06", through: "2026-11-05", bySymbol };
+  };
+  const split = (ticker, exDate, factor, isin = "INE000000001") => ({ id: `${isin}|${exDate}`, ticker, isin, type: "split", exDate, purpose: `Split ${factor}`, source: "NSE", factor, issue: null });
+  const bonus = (ticker, exDate, factor, isin = "INE000000001") => ({ ...split(ticker, exDate, factor, isin), type: "bonus", purpose: `Bonus ${factor - 1}:1` });
+
+  // A split mid-window multiplies the units held, dates unchanged; a later buy is post-split.
+  const r = actionReplay({ rows: holdingTradeRows([buy("2024-09-04", 100), buy("2025-01-02", 50), buy("2026-05-01", 10)]),
+    from: W.from, to: "2026-11-04", actions: [{ date: "2026-03-25", factor: 10 }] });
+  ok("a split multiplies the lots held on its ex-date, and only those", r.units === 1510 && r.lots[0].date === "2024-09-04" && r.lots[0].qty === 1000,
+    JSON.stringify(r));
+  // FIFO after a split sells the oldest, post-split units.
+  const s = actionReplay({ rows: holdingTradeRows([buy("2024-09-04", 100), buy("2025-01-02", 50), sell("2026-04-01", 1000)]),
+    from: W.from, to: "2026-11-04", actions: [{ date: "2026-03-25", factor: 10 }] });
+  ok("a sale after a split takes the oldest lot's post-split units", s.units === 500 && s.lots.length === 1 && s.lots[0].date === "2025-01-02",
+    JSON.stringify(s));
+
+  const rowsOf = (tapes) => (key) => holdingTradeRows(tapes[key] ?? []);
+  const base = { window: W, asOf: "2026-11-04", isin: null };
+  // A bonus: dated through it only where it lands exactly on the units held.
+  const b = actionRecordFor({ ...base, saved: saved([bonus("ABC", "2025-07-04", 2)]), key: "abc", quantity: 200,
+    rowsOf: rowsOf({ abc: [buy("2024-10-09", 60), buy("2025-03-26", 40)] }), heldOf: () => 0, symbolOf: () => "ABC" });
+  ok("a 1:1 bonus dates the units it doubled to their purchases", b?.held?.first === "2024-10-09" && b.held.lots === 2 && b.actions[0].kind === "bonus", JSON.stringify(b));
+  const off = actionRecordFor({ ...base, saved: saved([bonus("ABC", "2025-07-04", 2)]), key: "abc", quantity: 201,
+    rowsOf: rowsOf({ abc: [buy("2024-10-09", 60), buy("2025-03-26", 40)] }), heldOf: () => 0, symbolOf: () => "ABC" });
+  ok("…and a replay that misses the held units by one dates nothing", !!off?.reason && !off.held, JSON.stringify(off));
+  const bb = actionRecordFor({ ...base, saved: saved([bonus("ABC", "2025-07-04", 2), { ...split("ABC", "2025-12-01", 1), type: "buyback", factor: null, issue: "reconcile" }]),
+    key: "abc", quantity: 200, rowsOf: rowsOf({ abc: [buy("2024-10-09", 100)] }), heldOf: () => 0, symbolOf: () => "ABC" });
+  ok("a buyback in the window refuses the replay", /buyback/.test(bb?.reason ?? ""), JSON.stringify(bb));
+  const stale = actionRecordFor({ ...base, saved: { ...saved([]), through: "2026-10-21" }, key: "abc", quantity: 200,
+    rowsOf: rowsOf({ abc: [buy("2024-10-09", 100)] }), heldOf: () => 0, symbolOf: () => "ABC" });
+  ok("a capture not verified through the holding's date refuses", /cover/.test(stale?.reason ?? ""), JSON.stringify(stale));
+
+  // A demerger: the child inherits the parent's lots held on the record date,
+  // with their dates, and its own split and trades run on top — Shankara.
+  const tapes = {
+    "shankara-building-products": [buy("2024-10-29", 1400), buy("2025-02-17", 600), buy("2025-03-24", 1070), buy("2025-05-08", 225),
+      sell("2025-10-06", 141), sell("2025-10-08", 336), sell("2026-09-03", 2818)],
+    "shankara-buildpro": [buy("2026-02-03", 1415), sell("2026-05-19", 1050)],
+  };
+  const sym = (k) => ({ "shankara-buildpro": "BUILDPRO", "shankara-building-products": "SHANKARA" })[k] ?? null;
+  const d = actionRecordFor({ ...base, saved: saved([split("BUILDPRO", "2026-10-08", 5, "INE24OJ01011")]), key: "shankara-buildpro", quantity: 18300,
+    rowsOf: rowsOf(tapes), heldOf: () => 0, symbolOf: sym });
+  ok("a demerged holding is the parent's lots on the record date, first-in, first-out through its own trades and split",
+    d?.held?.first === "2024-10-29" && d.held.last === "2026-02-03" && d.held.lots === 5
+      && d.actions.map((a) => a.kind).join() === "demerger,split", JSON.stringify(d));
+  const unproven = actionRecordFor({ ...base, saved: saved([split("BUILDPRO", "2026-10-08", 5, "INE24OJ01011")]), key: "shankara-buildpro", quantity: 18300,
+    rowsOf: rowsOf(tapes), heldOf: (k) => (k === "shankara-building-products" ? 10 : 0), symbolOf: sym });
+  ok("…but not where the parent's replay misses what the statement holds of it", /parent/.test(unproven?.reason ?? ""), JSON.stringify(unproven));
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

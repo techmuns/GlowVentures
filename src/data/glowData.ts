@@ -7951,6 +7951,24 @@ export const BOOK_POSITIONS: Position[] = [
       "held": null,
       "reason": "the transaction statements from 2025-01-13 to 2026-07-27 buy 86 and sell 0 units of it against 516 held, so 430 of them are on no dated trade in this drop"
     },
+    "actionRecord": {
+      "units": 516,
+      "to": "2026-07-27",
+      "held": {
+        "first": "2025-05-30",
+        "last": "2026-03-18",
+        "lots": 6
+      },
+      "actions": [
+        {
+          "kind": "bonus",
+          "date": "2026-06-24",
+          "factor": 6,
+          "label": "Bonus 5:1",
+          "source": "NSE + Screener; saved action INE342J01019|EQ|2026-06-24|2026-06-24|Bonus 5:1"
+        }
+      ]
+    },
     "accruedIncome": 2064,
     "dividendReceived": 2064,
     "dividendFrom": "2026-04-01",
@@ -9419,6 +9437,24 @@ export const BOOK_POSITIONS: Position[] = [
       "unaccounted": 860,
       "held": null,
       "reason": "the transaction statements from 2025-01-16 to 2026-07-27 buy 172 and sell 0 units of it against 1032 held, so 860 of them are on no dated trade in this drop"
+    },
+    "actionRecord": {
+      "units": 1032,
+      "to": "2026-07-27",
+      "held": {
+        "first": "2025-05-30",
+        "last": "2026-03-18",
+        "lots": 6
+      },
+      "actions": [
+        {
+          "kind": "bonus",
+          "date": "2026-06-24",
+          "factor": 6,
+          "label": "Bonus 5:1",
+          "source": "NSE + Screener; saved action INE342J01019|EQ|2026-06-24|2026-06-24|Bonus 5:1"
+        }
+      ]
     },
     "accruedIncome": 4128,
     "dividendReceived": 4128,
@@ -18612,6 +18648,33 @@ export const BOOK_POSITIONS: Position[] = [
       "held": null,
       "reason": "none of its 8220 units is on a dated trade: the transaction statements in this drop run from 2024-09-03 to 2026-11-04 and record no buy or sell of it"
     },
+    "actionRecord": {
+      "units": 8220,
+      "to": "2026-11-04",
+      "held": {
+        "first": "2024-09-04",
+        "last": "2025-10-30",
+        "lots": 6
+      },
+      "actions": [
+        {
+          "kind": "split",
+          "date": "2024-10-18",
+          "factor": 5,
+          "label": "Face Value Split (Sub-Division) - From Rs 10/- Per Share To Rs 2/- Per Share",
+          "source": "NSE + Screener; saved action INE545A01024|EQ|2024-10-18|2024-10-18|Face Value Split (Sub-Division) - From Rs 10/- Per Share To Rs 2/- Per Share",
+          "of": "heg-advanced-materials"
+        },
+        {
+          "kind": "demerger",
+          "date": "2026-09-07",
+          "ratio": 1,
+          "of": "heg-advanced-materials",
+          "label": "Demerger: 1 for 1",
+          "source": "HEG's composite scheme, effective 1 Sep 2026: 1 share of HEG Graphite for every 1 HEG share held on the 7 Sep 2026 record date (the record date is NSE's, in the saved corporate-action capture; the entitlement as ICICIdirect reported the company's filing)"
+        }
+      ]
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -19325,6 +19388,32 @@ export const BOOK_POSITIONS: Position[] = [
       "held": null,
       "reason": "the transaction statements from 2024-09-03 to 2026-11-04 buy 1415 and sell 1050 units of it against 18300 held, so 17935 of them are on no dated trade in this drop"
     },
+    "actionRecord": {
+      "units": 18300,
+      "to": "2026-11-04",
+      "held": {
+        "first": "2024-10-29",
+        "last": "2026-02-03",
+        "lots": 5
+      },
+      "actions": [
+        {
+          "kind": "demerger",
+          "date": "2025-09-24",
+          "ratio": 1,
+          "of": "shankara-building-products",
+          "label": "Demerger: 1 for 1",
+          "source": "Shankara Building Products' record-date intimation to NSE and BSE, 12 Sep 2025: 1 equity share of Shankara Buildpro (₹10) for every 1 equity share of the company (₹10) held on 24 Sep 2025"
+        },
+        {
+          "kind": "split",
+          "date": "2026-10-08",
+          "factor": 5,
+          "label": "Face Value Split (Sub-Division) - From Rs 10/- Per Share To Rs 2/- Per Share",
+          "source": "NSE + Screener; saved action INE24OJ01011|EQ|2026-10-08|2026-10-08|Face Value Split (Sub-Division) - From Rs 10/- Per Share To Rs 2/- Per Share"
+        }
+      ]
+    },
     "accruedIncome": null,
     "dividendReceived": 18300,
     "dividendFrom": "2026-04-01",
@@ -19410,6 +19499,24 @@ export const BOOK_POSITIONS: Position[] = [
       "unaccounted": 1675,
       "held": null,
       "reason": "the transaction statements from 2024-09-03 to 2026-11-04 buy 1675 and sell 0 units of it against 3350 held, so 1675 of them are on no dated trade in this drop"
+    },
+    "actionRecord": {
+      "units": 3350,
+      "to": "2026-11-04",
+      "held": {
+        "first": "2024-10-09",
+        "last": "2025-03-26",
+        "lots": 6
+      },
+      "actions": [
+        {
+          "kind": "bonus",
+          "date": "2025-07-04",
+          "factor": 2,
+          "label": "Bonus 1:1",
+          "source": "NSE + Screener; saved action INE597I01010|EQ|2025-07-04|2025-07-04|Bonus 1:1"
+        }
+      ]
     },
     "accruedIncome": null,
     "dividendReceived": 67000,
@@ -19542,6 +19649,24 @@ export const BOOK_POSITIONS: Position[] = [
       "held": null,
       "reason": "the transaction statements from 2024-09-03 to 2026-11-04 buy 5450 and sell 0 units of it against 10900 held, so 5450 of them are on no dated trade in this drop"
     },
+    "actionRecord": {
+      "units": 10900,
+      "to": "2026-11-04",
+      "held": {
+        "first": "2024-09-04",
+        "last": "2025-03-24",
+        "lots": 3
+      },
+      "actions": [
+        {
+          "kind": "bonus",
+          "date": "2025-09-23",
+          "factor": 2,
+          "label": "Bonus 1:1",
+          "source": "NSE + Screener; saved action INE508G01029|EQ|2025-09-23|2025-09-23|Bonus 1:1"
+        }
+      ]
+    },
     "accruedIncome": null,
     "dividendReceived": 16350,
     "dividendFrom": "2026-04-01",
@@ -19582,6 +19707,24 @@ export const BOOK_POSITIONS: Position[] = [
       "unaccounted": 28440,
       "held": null,
       "reason": "the transaction statements from 2024-09-03 to 2026-11-04 buy 3160 and sell 0 units of it against 31600 held, so 28440 of them are on no dated trade in this drop"
+    },
+    "actionRecord": {
+      "units": 31600,
+      "to": "2026-11-04",
+      "held": {
+        "first": "2024-09-04",
+        "last": "2026-01-06",
+        "lots": 5
+      },
+      "actions": [
+        {
+          "kind": "split",
+          "date": "2026-03-25",
+          "factor": 10,
+          "label": "Face Value Split (Sub-Division) - From Rs 10/- Per Share To Re 1/- Per Share",
+          "source": "NSE + Screener; saved action INE945H01013|EQ|2026-03-25|2026-03-26|Face Value Split (Sub-Division) - From Rs 10/- Per Share To Re 1/- Per Share"
+        }
+      ]
     },
     "accruedIncome": null,
     "dividendReceived": null,
@@ -20715,6 +20858,25 @@ export const BOOK_POSITIONS: Position[] = [
       "held": null,
       "reason": "none of its 5365 units is on a dated trade: the transaction statements in this drop run from 2024-12-03 to 2026-11-04 and record no buy or sell of it"
     },
+    "actionRecord": {
+      "units": 5365,
+      "to": "2026-11-04",
+      "held": {
+        "first": "2024-12-03",
+        "last": "2025-10-30",
+        "lots": 4
+      },
+      "actions": [
+        {
+          "kind": "demerger",
+          "date": "2026-09-07",
+          "ratio": 1,
+          "of": "heg-advanced-materials",
+          "label": "Demerger: 1 for 1",
+          "source": "HEG's composite scheme, effective 1 Sep 2026: 1 share of HEG Graphite for every 1 HEG share held on the 7 Sep 2026 record date (the record date is NSE's, in the saved corporate-action capture; the entitlement as ICICIdirect reported the company's filing)"
+        }
+      ]
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -21428,6 +21590,32 @@ export const BOOK_POSITIONS: Position[] = [
       "held": null,
       "reason": "the transaction statements from 2024-12-03 to 2026-11-04 buy 665 and sell 670 units of it against 11900 held, so 11905 of them are on no dated trade in this drop"
     },
+    "actionRecord": {
+      "units": 11900,
+      "to": "2026-11-04",
+      "held": {
+        "first": "2024-12-03",
+        "last": "2026-02-03",
+        "lots": 5
+      },
+      "actions": [
+        {
+          "kind": "demerger",
+          "date": "2025-09-24",
+          "ratio": 1,
+          "of": "shankara-building-products",
+          "label": "Demerger: 1 for 1",
+          "source": "Shankara Building Products' record-date intimation to NSE and BSE, 12 Sep 2025: 1 equity share of Shankara Buildpro (₹10) for every 1 equity share of the company (₹10) held on 24 Sep 2025"
+        },
+        {
+          "kind": "split",
+          "date": "2026-10-08",
+          "factor": 5,
+          "label": "Face Value Split (Sub-Division) - From Rs 10/- Per Share To Rs 2/- Per Share",
+          "source": "NSE + Screener; saved action INE24OJ01011|EQ|2026-10-08|2026-10-08|Face Value Split (Sub-Division) - From Rs 10/- Per Share To Rs 2/- Per Share"
+        }
+      ]
+    },
     "accruedIncome": null,
     "dividendReceived": 11900,
     "dividendFrom": "2026-04-01",
@@ -21513,6 +21701,24 @@ export const BOOK_POSITIONS: Position[] = [
       "unaccounted": 1195,
       "held": null,
       "reason": "the transaction statements from 2024-12-03 to 2026-11-04 buy 1195 and sell 0 units of it against 2390 held, so 1195 of them are on no dated trade in this drop"
+    },
+    "actionRecord": {
+      "units": 2390,
+      "to": "2026-11-04",
+      "held": {
+        "first": "2024-12-03",
+        "last": "2025-03-26",
+        "lots": 6
+      },
+      "actions": [
+        {
+          "kind": "bonus",
+          "date": "2025-07-04",
+          "factor": 2,
+          "label": "Bonus 1:1",
+          "source": "NSE + Screener; saved action INE597I01010|EQ|2025-07-04|2025-07-04|Bonus 1:1"
+        }
+      ]
     },
     "accruedIncome": 47800,
     "dividendReceived": 47800,
@@ -21645,6 +21851,24 @@ export const BOOK_POSITIONS: Position[] = [
       "held": null,
       "reason": "the transaction statements from 2024-12-03 to 2026-11-04 buy 3880 and sell 0 units of it against 7760 held, so 3880 of them are on no dated trade in this drop"
     },
+    "actionRecord": {
+      "units": 7760,
+      "to": "2026-11-04",
+      "held": {
+        "first": "2024-12-03",
+        "last": "2025-03-24",
+        "lots": 4
+      },
+      "actions": [
+        {
+          "kind": "bonus",
+          "date": "2025-09-23",
+          "factor": 2,
+          "label": "Bonus 1:1",
+          "source": "NSE + Screener; saved action INE508G01029|EQ|2025-09-23|2025-09-23|Bonus 1:1"
+        }
+      ]
+    },
     "accruedIncome": null,
     "dividendReceived": 11640,
     "dividendFrom": "2026-04-01",
@@ -21685,6 +21909,24 @@ export const BOOK_POSITIONS: Position[] = [
       "unaccounted": 18495,
       "held": null,
       "reason": "the transaction statements from 2024-12-03 to 2026-11-04 buy 2055 and sell 0 units of it against 20550 held, so 18495 of them are on no dated trade in this drop"
+    },
+    "actionRecord": {
+      "units": 20550,
+      "to": "2026-11-04",
+      "held": {
+        "first": "2024-12-03",
+        "last": "2026-01-06",
+        "lots": 4
+      },
+      "actions": [
+        {
+          "kind": "split",
+          "date": "2026-03-25",
+          "factor": 10,
+          "label": "Face Value Split (Sub-Division) - From Rs 10/- Per Share To Re 1/- Per Share",
+          "source": "NSE + Screener; saved action INE945H01013|EQ|2026-03-25|2026-03-26|Face Value Split (Sub-Division) - From Rs 10/- Per Share To Re 1/- Per Share"
+        }
+      ]
     },
     "accruedIncome": null,
     "dividendReceived": null,
@@ -22468,6 +22710,24 @@ export const BOOK_POSITIONS: Position[] = [
       "unaccounted": 1412,
       "held": null,
       "reason": "the transaction statements from 2025-07-29 to 2026-10-07 buy 353 and sell 0 units of it against 1765 held, so 1412 of them are on no dated trade in this drop"
+    },
+    "actionRecord": {
+      "units": 1765,
+      "to": "2026-10-07",
+      "held": {
+        "first": "2025-08-05",
+        "last": "2025-08-05",
+        "lots": 1
+      },
+      "actions": [
+        {
+          "kind": "split",
+          "date": "2025-12-26",
+          "factor": 5,
+          "label": "Face Value Split (Sub-Division) - From Rs 10/- Per Share To Rs 2/- Per Share",
+          "source": "NSE + Screener; saved action INE531F01015|EQ|2025-12-26|2025-12-26|Face Value Split (Sub-Division) - From Rs 10/- Per Share To Rs 2/- Per Share"
+        }
+      ]
     },
     "accruedIncome": null,
     "dividendReceived": 24710,
