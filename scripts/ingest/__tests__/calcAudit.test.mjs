@@ -184,10 +184,20 @@ for (const acct of ["360-one-private-wealth-37702", "360-one-private-wealth-6011
   ok("a Gain Distr. reinvested in the carried cost is income of the class that holds it", near(p?.dividendReceived, 58861.66),
     String(p?.dividendReceived));
 }
-// A8 — a since-inception capital record must reach the holdings' date.
+// A8 — a since-inception capital record must reach the holdings' date. SVAN
+// 8710067's typed rows stop on 31 Jul; its 4 Nov capital register (Stage 10lw)
+// carries the record to the 4 Nov appraisal, so capital is stamped, and only to
+// the register's own printed totals.
 {
   const a = accounts.find((x) => x.accountId === "svan-investment-managers-llp-8710067");
-  ok("SVAN 8710067's capital is not stamped to 30 Sep over a record that ends 31 Jul", a && a.capitalRecordTo < a.asOf && a.capital === null,
+  for (const a of accounts.filter((x) => x.engagement === "PMS" && x.capital?.source === "capital-record")) {
+    ok(`${a.accountId}: capital from its dated record is stamped only where the record reaches the holdings' date`,
+      !!a.capitalRecordTo && a.capitalRecordTo >= a.asOf && a.capital.to === a.asOf,
+      JSON.stringify({ to: a.capitalRecordTo, asOf: a.asOf, capital: a.capital }));
+  }
+  ok("SVAN 8710067's capital runs to 4 Nov on its register, ₹14.50 Cr in and ₹1,66,345.65 out",
+    a?.asOf === "2026-11-04" && a.capitalRecordTo === "2026-11-04"
+      && near(a.capital?.contributed, 145000000) && near(a.capital?.withdrawn, 166345.65) && a.capital?.from === "2024-09-03",
     JSON.stringify(a && { to: a.capitalRecordTo, asOf: a.asOf, capital: a.capital }));
 }
 // A6 on the book — the LKP lot register at 31 Mar 2026.

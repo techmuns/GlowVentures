@@ -14,14 +14,14 @@ import type {
 } from "@/lib/types";
 
 /** Newest report date across all accounts. Individual accounts can be older. */
-export const BOOK_AS_OF = "2026-11-03";
+export const BOOK_AS_OF = "2026-11-04";
 
 export const BOOK_SUMMARY: BookSummary = {
-  "asOf": "2026-11-03",
-  "listedValue": 7968401917.36,
+  "asOf": "2026-11-04",
+  "listedValue": 7955880313.1,
   "privateValue": 2786869378.68,
   "unplacedValue": 0,
-  "totalValue": 10755271296.04,
+  "totalValue": 10742749691.78,
   "positionsCount": 506,
   "entitiesCount": 11,
   "startupsCount": 0,
@@ -2170,15 +2170,21 @@ export const BOOK_ACCOUNTS: Account[] = [
     "engagement": "PMS",
     "providerEngagement": "Discretionary",
     "members": [],
-    "asOf": "2026-09-30",
+    "asOf": "2026-11-04",
     "inceptionDate": "2024-09-03",
-    "capitalRecordTo": "2026-07-31",
+    "capitalRecordTo": "2026-11-04",
     "custodian": "SVAN Investment Managers LLP",
     "noPositionsReason": null,
-    "capital": null,
+    "capital": {
+      "contributed": 145000000,
+      "withdrawn": 166345.65,
+      "from": "2024-09-03",
+      "to": "2026-11-04",
+      "source": "capital-record"
+    },
     "demat": {
       "printed": null,
-      "reason": "none of the 10 statements read for SVAN Investment Managers LLP 8710067 prints a DP ID and Client ID"
+      "reason": "none of the 12 statements read for SVAN Investment Managers LLP 8710067 prints a DP ID and Client ID"
     }
   },
   {
@@ -2191,21 +2197,21 @@ export const BOOK_ACCOUNTS: Account[] = [
     "engagement": "PMS",
     "providerEngagement": "Portfolio Management Service",
     "members": [],
-    "asOf": "2026-09-30",
+    "asOf": "2026-11-04",
     "inceptionDate": "2024-12-03",
-    "capitalRecordTo": "2026-09-30",
+    "capitalRecordTo": "2026-11-04",
     "custodian": "SVAN Investment Managers LLP",
     "noPositionsReason": null,
     "capital": {
       "contributed": 95000000,
-      "withdrawn": 90306.6,
+      "withdrawn": 101151.6,
       "from": "2024-12-03",
-      "to": "2026-09-30",
+      "to": "2026-11-04",
       "source": "capital-record"
     },
     "demat": {
       "printed": null,
-      "reason": "none of the 11 statements read for SVAN Investment Managers LLP 8710090 prints a DP ID and Client ID"
+      "reason": "none of the 14 statements read for SVAN Investment Managers LLP 8710090 prints a DP ID and Client ID"
     }
   },
   {
@@ -17741,8 +17747,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
-      "pointer": "/holdings/29"
+      "document": "svan-investment-managers-llp-8710067-2026-11-04-appraisal",
+      "pointer": "/holdings/25"
     },
     "securityKey": "apollo-pipes",
     "security": "APOLLO PIPES LIMITED",
@@ -17755,13 +17761,13 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 5700,
     "avgCost": 592.36,
-    "currentPrice": 507.85,
+    "currentPrice": 514.65,
     "costBasis": 3376423.5,
-    "marketValue": 2894745,
-    "unrealizedPnL": -481678.5,
+    "marketValue": 2933505,
+    "unrealizedPnL": -442918.5,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -14.27,
+    "returnPct": -13.12,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -17771,13 +17777,9 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2026-09-30",
       "buys": 1,
       "sells": 0,
-      "unaccounted": 0,
-      "held": {
-        "first": "2026-08-20",
-        "last": "2026-08-20",
-        "lots": 1
-      },
-      "reason": null
+      "unaccounted": null,
+      "held": null,
+      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
     },
     "accruedIncome": null,
     "dividendReceived": null,
@@ -17785,7 +17787,7 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "document": "svan-investment-managers-llp-8710067-2026-11-04-appraisal",
       "pointer": "/holdings/18"
     },
     "securityKey": "arvind-fashions",
@@ -17799,26 +17801,17 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 9360,
     "avgCost": 455.72,
-    "currentPrice": 387.45,
+    "currentPrice": 351.9,
     "costBasis": 4265533.95,
-    "marketValue": 3626532,
-    "unrealizedPnL": -639001.95,
+    "marketValue": 3293784,
+    "unrealizedPnL": -971749.95,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -14.63,
+    "returnPct": -22.43,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 9360,
-      "held": null,
-      "reason": "none of its 9360 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": null,
     "dividendReceived": 14976,
     "dividendFrom": "2026-04-01",
@@ -17826,8 +17819,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
-      "pointer": "/holdings/30"
+      "document": "svan-investment-managers-llp-8710067-2026-11-04-appraisal",
+      "pointer": "/holdings/21"
     },
     "securityKey": "birlasoft",
     "security": "Birlasoft Ltd",
@@ -17840,26 +17833,17 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 10110,
     "avgCost": 409.42,
-    "currentPrice": 271.7,
+    "currentPrice": 319.25,
     "costBasis": 4139219.92,
-    "marketValue": 2746887,
-    "unrealizedPnL": -1392332.92,
+    "marketValue": 3227617.5,
+    "unrealizedPnL": -911602.42,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -32.66,
+    "returnPct": -21.05,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 10110,
-      "held": null,
-      "reason": "none of its 10110 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": null,
     "dividendReceived": 40440,
     "dividendFrom": "2026-04-01",
@@ -17867,8 +17851,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
-      "pointer": "/holdings/22"
+      "document": "svan-investment-managers-llp-8710067-2026-11-04-appraisal",
+      "pointer": "/holdings/31"
     },
     "securityKey": "borosil-renewables",
     "security": "BOROSIL RENEWABLES LTD",
@@ -17881,34 +17865,25 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 6965,
     "avgCost": 645.74,
-    "currentPrice": 458.15,
+    "currentPrice": 389.8,
     "costBasis": 4497550.95,
-    "marketValue": 3191014.75,
-    "unrealizedPnL": -1306536.2,
+    "marketValue": 2714957,
+    "unrealizedPnL": -1782593.95,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -29.05,
+    "returnPct": -39.63,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 6965,
-      "held": null,
-      "reason": "none of its 6965 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
-      "pointer": "/holdings/1"
+      "document": "svan-investment-managers-llp-8710067-2026-11-04-appraisal",
+      "pointer": "/holdings/2"
     },
     "securityKey": "caplin-point-laboratories",
     "security": "Caplin Point Laboratories Ltd",
@@ -17921,13 +17896,13 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 2465,
     "avgCost": 1942.01,
-    "currentPrice": 2716.4,
+    "currentPrice": 2416.1,
     "costBasis": 4787059.15,
-    "marketValue": 6695926,
-    "unrealizedPnL": 1908866.85,
+    "marketValue": 5955686.5,
+    "unrealizedPnL": 1168627.35,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": 40.29,
+    "returnPct": 24.82,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -17937,19 +17912,19 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2026-09-30",
       "buys": 1,
       "sells": 0,
-      "unaccounted": 1930,
+      "unaccounted": null,
       "held": null,
-      "reason": "the transaction statements from 2026-04-01 to 2026-09-30 buy 535 and sell 0 units of it against 2465 held, so 1930 of them are on no dated trade in this drop"
+      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
     },
-    "accruedIncome": 9860,
+    "accruedIncome": null,
     "dividendReceived": 19720,
     "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
-      "pointer": "/holdings/47"
+      "document": "svan-investment-managers-llp-8710067-2026-11-04-appraisal",
+      "pointer": "/holdings/46"
     },
     "securityKey": "cash",
     "security": "Cash",
@@ -17960,11 +17935,11 @@ export const BOOK_POSITIONS: Position[] = [
     "providerSector": null,
     "assetClass": "Cash",
     "marketSide": "listed",
-    "quantity": 137285.633,
+    "quantity": 34595.964,
     "avgCost": 1,
     "currentPrice": 1,
-    "costBasis": 137285.63,
-    "marketValue": 137285.63,
+    "costBasis": 34595.96,
+    "marketValue": 34595.96,
     "unrealizedPnL": 0,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
@@ -17979,8 +17954,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
-      "pointer": "/holdings/48"
+      "document": "svan-investment-managers-llp-8710067-2026-11-04-appraisal",
+      "pointer": "/holdings/47"
     },
     "securityKey": "cash-rec-payable",
     "security": "Cash Rec/Payable",
@@ -17991,11 +17966,11 @@ export const BOOK_POSITIONS: Position[] = [
     "providerSector": null,
     "assetClass": "Cash",
     "marketSide": "listed",
-    "quantity": -2482362.207,
+    "quantity": -4734.82,
     "avgCost": 1,
     "currentPrice": 1,
-    "costBasis": -2482362.21,
-    "marketValue": -2482362.21,
+    "costBasis": -4734.82,
+    "marketValue": -4734.82,
     "unrealizedPnL": 0,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
@@ -18010,8 +17985,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
-      "pointer": "/holdings/6"
+      "document": "svan-investment-managers-llp-8710067-2026-11-04-appraisal",
+      "pointer": "/holdings/4"
     },
     "securityKey": "ceat",
     "security": "Ceat Ltd",
@@ -18024,26 +17999,17 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 1590,
     "avgCost": 2936.43,
-    "currentPrice": 3264.4,
+    "currentPrice": 3415.1,
     "costBasis": 4668927.24,
-    "marketValue": 5190396,
-    "unrealizedPnL": 521468.76,
+    "marketValue": 5430009,
+    "unrealizedPnL": 761081.76,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": 12.36,
+    "returnPct": 17.49,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 1590,
-      "held": null,
-      "reason": "none of its 1590 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": 55650,
     "dividendReceived": 55650,
     "dividendFrom": "2026-04-01",
@@ -18051,8 +18017,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
-      "pointer": "/holdings/11"
+      "document": "svan-investment-managers-llp-8710067-2026-11-04-appraisal",
+      "pointer": "/holdings/10"
     },
     "securityKey": "cosmo-first",
     "security": "Cosmo First Limited",
@@ -18065,26 +18031,17 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 5190,
     "avgCost": 748.85,
-    "currentPrice": 845.6,
+    "currentPrice": 795,
     "costBasis": 3886520.39,
-    "marketValue": 4388664,
-    "unrealizedPnL": 502143.61,
+    "marketValue": 4126050,
+    "unrealizedPnL": 239529.61,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": 13.45,
+    "returnPct": 6.7,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 5190,
-      "held": null,
-      "reason": "none of its 5190 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": null,
     "dividendReceived": 20760,
     "dividendFrom": "2026-04-01",
@@ -18092,8 +18049,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
-      "pointer": "/holdings/14"
+      "document": "svan-investment-managers-llp-8710067-2026-11-04-appraisal",
+      "pointer": "/holdings/5"
     },
     "securityKey": "creative-newtech",
     "security": "CREATIVE NEWTECH LIMITED",
@@ -18106,35 +18063,26 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 3855,
     "avgCost": 792.4,
-    "currentPrice": 1082.2,
+    "currentPrice": 1386.6,
     "costBasis": 3054702.34,
-    "marketValue": 4171881,
-    "unrealizedPnL": 1117178.66,
+    "marketValue": 5345343,
+    "unrealizedPnL": 2290640.66,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": 36.64,
+    "returnPct": 75.05,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 3855,
-      "held": null,
-      "reason": "none of its 3855 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
-    "accruedIncome": 1927.5,
+    "accruedIncome": null,
     "dividendReceived": 1927.5,
     "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
-      "pointer": "/holdings/7"
+      "document": "svan-investment-managers-llp-8710067-2026-11-04-appraisal",
+      "pointer": "/holdings/9"
     },
     "securityKey": "credit-access-grameen",
     "security": "Credit Access Grameen Limited",
@@ -18147,13 +18095,13 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 3860,
     "avgCost": 1292.71,
-    "currentPrice": 1272,
+    "currentPrice": 1073,
     "costBasis": 4989867.2,
-    "marketValue": 4909920,
-    "unrealizedPnL": -79947.2,
+    "marketValue": 4141780,
+    "unrealizedPnL": -848087.2,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -1.6,
+    "returnPct": -17,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -18163,9 +18111,9 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2026-09-30",
       "buys": 1,
       "sells": 0,
-      "unaccounted": 2230,
+      "unaccounted": null,
       "held": null,
-      "reason": "the transaction statements from 2026-04-01 to 2026-09-30 buy 1630 and sell 0 units of it against 3860 held, so 2230 of them are on no dated trade in this drop"
+      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
     },
     "accruedIncome": null,
     "dividendReceived": null,
@@ -18173,8 +18121,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
-      "pointer": "/holdings/32"
+      "document": "svan-investment-managers-llp-8710067-2026-11-04-appraisal",
+      "pointer": "/holdings/34"
     },
     "securityKey": "dilip-buildcon",
     "security": "Dilip Buildcon Ltd",
@@ -18187,26 +18135,17 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 6460,
     "avgCost": 482.03,
-    "currentPrice": 406.2,
+    "currentPrice": 398.75,
     "costBasis": 3113895.72,
-    "marketValue": 2624052,
-    "unrealizedPnL": -489843.72,
+    "marketValue": 2575925,
+    "unrealizedPnL": -537970.72,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -15.52,
+    "returnPct": -17.07,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 6460,
-      "held": null,
-      "reason": "none of its 6460 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": null,
     "dividendReceived": 6460,
     "dividendFrom": "2026-04-01",
@@ -18214,8 +18153,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
-      "pointer": "/holdings/12"
+      "document": "svan-investment-managers-llp-8710067-2026-11-04-appraisal",
+      "pointer": "/holdings/15"
     },
     "securityKey": "edelweiss-financial-services",
     "security": "Edelweiss Financial Services Ltd",
@@ -18228,35 +18167,26 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 29855,
     "avgCost": 97.84,
-    "currentPrice": 142.73,
+    "currentPrice": 121.94,
     "costBasis": 2921161.28,
-    "marketValue": 4261204.15,
-    "unrealizedPnL": 1340042.87,
+    "marketValue": 3640518.7,
+    "unrealizedPnL": 719357.42,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": 47.41,
+    "returnPct": 26.16,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 29855,
-      "held": null,
-      "reason": "none of its 29855 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
-    "accruedIncome": 44782.5,
+    "accruedIncome": null,
     "dividendReceived": 44782.5,
     "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
-      "pointer": "/holdings/24"
+      "document": "svan-investment-managers-llp-8710067-2026-11-04-appraisal",
+      "pointer": "/holdings/30"
     },
     "securityKey": "ester-industries",
     "security": "Ester Industries Limited",
@@ -18269,35 +18199,26 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 31090,
     "avgCost": 124.14,
-    "currentPrice": 101.22,
+    "currentPrice": 88.56,
     "costBasis": 3859572.79,
-    "marketValue": 3146929.8,
-    "unrealizedPnL": -712642.99,
+    "marketValue": 2753330.4,
+    "unrealizedPnL": -1106242.39,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -18.26,
+    "returnPct": -28.46,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 31090,
-      "held": null,
-      "reason": "none of its 31090 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
-    "accruedIncome": 7772.5,
+    "accruedIncome": null,
     "dividendReceived": 7772.5,
     "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
-      "pointer": "/holdings/36"
+      "document": "svan-investment-managers-llp-8710067-2026-11-04-appraisal",
+      "pointer": "/holdings/39"
     },
     "securityKey": "fusion-finance",
     "security": "Fusion Finance Limited",
@@ -18310,34 +18231,25 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 12340,
     "avgCost": 171.67,
-    "currentPrice": 175.08,
+    "currentPrice": 153.54,
     "costBasis": 2118457.7,
-    "marketValue": 2160487.2,
-    "unrealizedPnL": 42029.5,
+    "marketValue": 1894683.6,
+    "unrealizedPnL": -223774.1,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": 1.98,
+    "returnPct": -10.56,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 12340,
-      "held": null,
-      "reason": "none of its 12340 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
-      "pointer": "/holdings/34"
+      "document": "svan-investment-managers-llp-8710067-2026-11-04-appraisal",
+      "pointer": "/holdings/35"
     },
     "securityKey": "ghcl",
     "security": "GHCL Ltd",
@@ -18350,26 +18262,17 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 6085,
     "avgCost": 653.32,
-    "currentPrice": 405.5,
+    "currentPrice": 407.3,
     "costBasis": 3975431.99,
-    "marketValue": 2467467.5,
-    "unrealizedPnL": -1507964.49,
+    "marketValue": 2478420.5,
+    "unrealizedPnL": -1497011.49,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -36.1,
+    "returnPct": -35.82,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 6085,
-      "held": null,
-      "reason": "none of its 6085 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": null,
     "dividendReceived": 73020,
     "dividendFrom": "2026-04-01",
@@ -18377,8 +18280,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
-      "pointer": "/holdings/17"
+      "document": "svan-investment-managers-llp-8710067-2026-11-04-appraisal",
+      "pointer": "/holdings/16"
     },
     "securityKey": "ghcl-textiles",
     "security": "GHCL Textiles Limited",
@@ -18391,13 +18294,13 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 28995,
     "avgCost": 98.78,
-    "currentPrice": 128.9,
+    "currentPrice": 123.95,
     "costBasis": 2864171.77,
-    "marketValue": 3737455.5,
-    "unrealizedPnL": 873283.73,
+    "marketValue": 3593930.25,
+    "unrealizedPnL": 729758.48,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": 30.91,
+    "returnPct": 25.89,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -18407,9 +18310,9 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2026-09-30",
       "buys": 1,
       "sells": 0,
-      "unaccounted": 19850,
+      "unaccounted": null,
       "held": null,
-      "reason": "the transaction statements from 2026-04-01 to 2026-09-30 buy 9145 and sell 0 units of it against 28995 held, so 19850 of them are on no dated trade in this drop"
+      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
     },
     "accruedIncome": null,
     "dividendReceived": 11910,
@@ -18418,8 +18321,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
-      "pointer": "/holdings/16"
+      "document": "svan-investment-managers-llp-8710067-2026-11-04-appraisal",
+      "pointer": "/holdings/11"
     },
     "securityKey": "gland-pharma",
     "security": "GLAND PHARMA LIMITED",
@@ -18432,13 +18335,13 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 1300,
     "avgCost": 2291.32,
-    "currentPrice": 2899.4,
+    "currentPrice": 3159,
     "costBasis": 2978713.92,
-    "marketValue": 3769220,
-    "unrealizedPnL": 790506.08,
+    "marketValue": 4106700,
+    "unrealizedPnL": 1127986.08,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": 27.41,
+    "returnPct": 38.74,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -18448,13 +18351,9 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2026-09-30",
       "buys": 1,
       "sells": 0,
-      "unaccounted": 0,
-      "held": {
-        "first": "2026-06-09",
-        "last": "2026-06-09",
-        "lots": 1
-      },
-      "reason": null
+      "unaccounted": null,
+      "held": null,
+      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
     },
     "accruedIncome": null,
     "dividendReceived": 26000,
@@ -18463,8 +18362,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
-      "pointer": "/holdings/39"
+      "document": "svan-investment-managers-llp-8710067-2026-11-04-appraisal",
+      "pointer": "/holdings/38"
     },
     "securityKey": "graphite-india",
     "security": "Graphite India Ltd",
@@ -18477,13 +18376,13 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 2700,
     "avgCost": 809.91,
-    "currentPrice": 764.8,
+    "currentPrice": 741.45,
     "costBasis": 2186754.57,
-    "marketValue": 2064960,
-    "unrealizedPnL": -121794.57,
+    "marketValue": 2001915,
+    "unrealizedPnL": -184839.57,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -5.57,
+    "returnPct": -8.45,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -18493,13 +18392,9 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2026-09-30",
       "buys": 1,
       "sells": 0,
-      "unaccounted": 0,
-      "held": {
-        "first": "2026-09-09",
-        "last": "2026-09-09",
-        "lots": 1
-      },
-      "reason": null
+      "unaccounted": null,
+      "held": null,
+      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
     },
     "accruedIncome": null,
     "dividendReceived": null,
@@ -18507,49 +18402,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
-      "pointer": "/holdings/41"
-    },
-    "securityKey": "heg-advanced-materials",
-    "security": "HEG Advanced Materials Limited",
-    "symbol": "HEGAM",
-    "accountId": "svan-investment-managers-llp-8710067",
-    "memberId": null,
-    "sector": "Unclassified",
-    "providerSector": null,
-    "assetClass": "Equity",
-    "marketSide": "listed",
-    "quantity": 8220,
-    "avgCost": 117.96,
-    "currentPrice": 237.65,
-    "costBasis": 969592.35,
-    "marketValue": 1953483,
-    "unrealizedPnL": 983890.65,
-    "realizedPnL": 0,
-    "costOfUnitsSold": 0,
-    "returnPct": 104.36,
-    "stCostBasis": null,
-    "ltCostBasis": null,
-    "daysToLT": null,
-    "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 8220,
-      "held": null,
-      "reason": "none of its 8220 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
-    "accruedIncome": null,
-    "dividendReceived": 27948,
-    "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
-  },
-  {
-    "statementRecord": {
-      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
-      "pointer": "/holdings/15"
+      "document": "svan-investment-managers-llp-8710067-2026-11-04-appraisal",
+      "pointer": "/holdings/14"
     },
     "securityKey": "heg-graphite",
     "security": "HEG Graphite Limited",
@@ -18573,23 +18427,14 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 8220,
-      "held": null,
-      "reason": "none of its 8220 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
-      "pointer": "/holdings/33"
+      "document": "svan-investment-managers-llp-8710067-2026-11-04-appraisal",
+      "pointer": "/holdings/37"
     },
     "securityKey": "ifb-industries",
     "security": "IFB Industries Ltd",
@@ -18602,33 +18447,24 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 2095,
     "avgCost": 1448.52,
-    "currentPrice": 1201,
+    "currentPrice": 1101.4,
     "costBasis": 3034658.8,
-    "marketValue": 2516095,
-    "unrealizedPnL": -518563.8,
+    "marketValue": 2307433,
+    "unrealizedPnL": -727225.8,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -17.09,
+    "returnPct": -23.96,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 2095,
-      "held": null,
-      "reason": "none of its 2095 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "document": "svan-investment-managers-llp-8710067-2026-11-04-appraisal",
       "pointer": "/holdings/0"
     },
     "securityKey": "indo-count-industries",
@@ -18642,26 +18478,17 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 16100,
     "avgCost": 334.98,
-    "currentPrice": 460.4,
+    "currentPrice": 525.35,
     "costBasis": 5393164.15,
-    "marketValue": 7412440,
-    "unrealizedPnL": 2019275.85,
+    "marketValue": 8458135,
+    "unrealizedPnL": 3064970.85,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": 37.89,
+    "returnPct": 57.28,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 16100,
-      "held": null,
-      "reason": "none of its 16100 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": null,
     "dividendReceived": 24150,
     "dividendFrom": "2026-04-01",
@@ -18669,8 +18496,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
-      "pointer": "/holdings/38"
+      "document": "svan-investment-managers-llp-8710067-2026-11-04-appraisal",
+      "pointer": "/holdings/22"
     },
     "securityKey": "kajaria-ceramics",
     "security": "Kajaria Ceramics Ltd",
@@ -18681,15 +18508,15 @@ export const BOOK_POSITIONS: Position[] = [
     "providerSector": null,
     "assetClass": "Equity",
     "marketSide": "listed",
-    "quantity": 1700,
-    "avgCost": 1190.71,
-    "currentPrice": 1235.1,
-    "costBasis": 2024212.1,
-    "marketValue": 2099670,
-    "unrealizedPnL": 75457.9,
+    "quantity": 2745,
+    "avgCost": 1198.79,
+    "currentPrice": 1159.6,
+    "costBasis": 3290675.06,
+    "marketValue": 3183102,
+    "unrealizedPnL": -107573.06,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": 3.73,
+    "returnPct": -3.27,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -18699,22 +18526,18 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2026-09-30",
       "buys": 1,
       "sells": 0,
-      "unaccounted": 0,
-      "held": {
-        "first": "2026-09-29",
-        "last": "2026-09-29",
-        "lots": 1
-      },
-      "reason": null
+      "unaccounted": null,
+      "held": null,
+      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
     },
-    "accruedIncome": null,
+    "accruedIncome": 32940,
     "dividendReceived": null,
     "positionIrrPct": null
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
-      "pointer": "/holdings/44"
+      "document": "svan-investment-managers-llp-8710067-2026-11-04-appraisal",
+      "pointer": "/holdings/43"
     },
     "securityKey": "krishca-strapping-solutions",
     "security": "KRISHCA STRAPPING SOLUTIONS LTD",
@@ -18727,34 +18550,25 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 7500,
     "avgCost": 214.37,
-    "currentPrice": 220.15,
+    "currentPrice": 193,
     "costBasis": 1607759.7,
-    "marketValue": 1651125,
-    "unrealizedPnL": 43365.3,
+    "marketValue": 1447500,
+    "unrealizedPnL": -160259.7,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": 2.7,
+    "returnPct": -9.97,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 7500,
-      "held": null,
-      "reason": "none of its 7500 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
-      "pointer": "/holdings/13"
+      "document": "svan-investment-managers-llp-8710067-2026-11-04-appraisal",
+      "pointer": "/holdings/12"
     },
     "securityKey": "laxmi-organic-industries",
     "security": "Laxmi Organic Industries Limited",
@@ -18767,26 +18581,17 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 24000,
     "avgCost": 211.94,
-    "currentPrice": 177.36,
+    "currentPrice": 161.98,
     "costBasis": 5086448.58,
-    "marketValue": 4256640,
-    "unrealizedPnL": -829808.58,
+    "marketValue": 3887520,
+    "unrealizedPnL": -1198928.58,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -16.17,
+    "returnPct": -23.43,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 24000,
-      "held": null,
-      "reason": "none of its 24000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": 7200,
     "dividendReceived": 7200,
     "dividendFrom": "2026-04-01",
@@ -18794,8 +18599,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
-      "pointer": "/holdings/25"
+      "document": "svan-investment-managers-llp-8710067-2026-11-04-appraisal",
+      "pointer": "/holdings/27"
     },
     "securityKey": "mastek",
     "security": "Mastek Ltd",
@@ -18808,26 +18613,17 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 2005,
     "avgCost": 2555.18,
-    "currentPrice": 1562.8,
+    "currentPrice": 1443.7,
     "costBasis": 5123137.85,
-    "marketValue": 3133414,
-    "unrealizedPnL": -1989723.85,
+    "marketValue": 2894618.5,
+    "unrealizedPnL": -2228519.35,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -38.21,
+    "returnPct": -42.87,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 2005,
-      "held": null,
-      "reason": "none of its 2005 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": null,
     "dividendReceived": 32080,
     "dividendFrom": "2026-04-01",
@@ -18835,8 +18631,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
-      "pointer": "/holdings/3"
+      "document": "svan-investment-managers-llp-8710067-2026-11-04-appraisal",
+      "pointer": "/holdings/7"
     },
     "securityKey": "neuland-laboratories",
     "security": "Neuland Laboratories Ltd",
@@ -18847,28 +18643,19 @@ export const BOOK_POSITIONS: Position[] = [
     "providerSector": null,
     "assetClass": "Equity",
     "marketSide": "listed",
-    "quantity": 300,
-    "avgCost": 14552.57,
-    "currentPrice": 21350,
-    "costBasis": 4365772.41,
-    "marketValue": 6405000,
-    "unrealizedPnL": 2039227.59,
+    "quantity": 230,
+    "avgCost": 14803.55,
+    "currentPrice": 19576,
+    "costBasis": 3404816.24,
+    "marketValue": 4502480,
+    "unrealizedPnL": 1097663.76,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": 46.94,
+    "returnPct": 32.54,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 300,
-      "held": null,
-      "reason": "none of its 300 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": 10200,
     "dividendReceived": 10200,
     "dividendFrom": "2026-04-01",
@@ -18876,8 +18663,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
-      "pointer": "/holdings/5"
+      "document": "svan-investment-managers-llp-8710067-2026-11-04-appraisal",
+      "pointer": "/holdings/1"
     },
     "securityKey": "nitin-spinners",
     "security": "NITIN SPINNERS LIMITED",
@@ -18890,13 +18677,13 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 9580,
     "avgCost": 397.99,
-    "currentPrice": 598.3,
+    "currentPrice": 675.85,
     "costBasis": 3812753.59,
-    "marketValue": 5731714,
-    "unrealizedPnL": 1918960.41,
+    "marketValue": 6474643,
+    "unrealizedPnL": 2661889.41,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": 51.08,
+    "returnPct": 70.57,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -18906,18 +18693,18 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2026-09-30",
       "buys": 3,
       "sells": 0,
-      "unaccounted": 8395,
+      "unaccounted": null,
       "held": null,
-      "reason": "the transaction statements from 2026-04-01 to 2026-09-30 buy 1185 and sell 0 units of it against 9580 held, so 8395 of them are on no dated trade in this drop"
+      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
     },
-    "accruedIncome": 28740,
+    "accruedIncome": null,
     "dividendReceived": 28740,
     "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "document": "svan-investment-managers-llp-8710067-2026-11-04-appraisal",
       "pointer": "/holdings/23"
     },
     "securityKey": "paras-defence-and-space-technologies",
@@ -18931,13 +18718,13 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 2430,
     "avgCost": 834.59,
-    "currentPrice": 1311,
+    "currentPrice": 1265.5,
     "costBasis": 2028058.56,
-    "marketValue": 3185730,
-    "unrealizedPnL": 1157671.44,
+    "marketValue": 3075165,
+    "unrealizedPnL": 1047106.44,
     "realizedPnL": 640383,
     "costOfUnitsSold": 1018202.24,
-    "returnPct": 59.1,
+    "returnPct": 55.48,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -18947,13 +18734,9 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2026-09-30",
       "buys": 1,
       "sells": 2,
-      "unaccounted": 0,
-      "held": {
-        "first": "2026-05-07",
-        "last": "2026-05-07",
-        "lots": 1
-      },
-      "reason": null
+      "unaccounted": null,
+      "held": null,
+      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
     },
     "accruedIncome": null,
     "dividendReceived": 2430,
@@ -18962,8 +18745,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
-      "pointer": "/holdings/28"
+      "document": "svan-investment-managers-llp-8710067-2026-11-04-appraisal",
+      "pointer": "/holdings/29"
     },
     "securityKey": "pokarna",
     "security": "Pokarna Ltd",
@@ -18976,26 +18759,17 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 4170,
     "avgCost": 1083.95,
-    "currentPrice": 705.7,
+    "currentPrice": 675.35,
     "costBasis": 4520083.84,
-    "marketValue": 2942769,
-    "unrealizedPnL": -1577314.84,
+    "marketValue": 2816209.5,
+    "unrealizedPnL": -1703874.34,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -34.84,
+    "returnPct": -37.64,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 4170,
-      "held": null,
-      "reason": "none of its 4170 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": 2502,
     "dividendReceived": 2502,
     "dividendFrom": "2026-04-01",
@@ -19003,8 +18777,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
-      "pointer": "/holdings/31"
+      "document": "svan-investment-managers-llp-8710067-2026-11-04-appraisal",
+      "pointer": "/holdings/36"
     },
     "securityKey": "polyplex",
     "security": "Polyplex Corporation Ltd",
@@ -19017,26 +18791,17 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 2515,
     "avgCost": 1124.73,
-    "currentPrice": 1055,
+    "currentPrice": 920.85,
     "costBasis": 2828707.09,
-    "marketValue": 2653325,
-    "unrealizedPnL": -175382.09,
+    "marketValue": 2315937.75,
+    "unrealizedPnL": -512769.34,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -6.11,
+    "returnPct": -18.04,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 2515,
-      "held": null,
-      "reason": "none of its 2515 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": null,
     "dividendReceived": 2515,
     "dividendFrom": "2026-04-01",
@@ -19044,8 +18809,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
-      "pointer": "/holdings/27"
+      "document": "svan-investment-managers-llp-8710067-2026-11-04-appraisal",
+      "pointer": "/holdings/33"
     },
     "securityKey": "punjab-chem-and-crop-prot-l",
     "security": "PUNJAB CHEM & CROP PROT L",
@@ -19058,26 +18823,17 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 2915,
     "avgCost": 864.92,
-    "currentPrice": 1054.5,
+    "currentPrice": 914.8,
     "costBasis": 2521233.58,
-    "marketValue": 3073867.5,
-    "unrealizedPnL": 552633.92,
+    "marketValue": 2666642,
+    "unrealizedPnL": 145408.42,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": 22.27,
+    "returnPct": 6.11,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 2915,
-      "held": null,
-      "reason": "none of its 2915 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": 8745,
     "dividendReceived": 8745,
     "dividendFrom": "2026-04-01",
@@ -19085,8 +18841,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
-      "pointer": "/holdings/20"
+      "document": "svan-investment-managers-llp-8710067-2026-11-04-appraisal",
+      "pointer": "/holdings/19"
     },
     "securityKey": "puravankara",
     "security": "Puravankara Limited",
@@ -19099,34 +18855,25 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 16350,
     "avgCost": 311.2,
-    "currentPrice": 206.34,
+    "currentPrice": 200.84,
     "costBasis": 5088078.54,
-    "marketValue": 3373659,
-    "unrealizedPnL": -1714419.54,
+    "marketValue": 3283734,
+    "unrealizedPnL": -1804344.54,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -33.69,
+    "returnPct": -35.46,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 16350,
-      "held": null,
-      "reason": "none of its 16350 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
-      "pointer": "/holdings/35"
+      "document": "svan-investment-managers-llp-8710067-2026-11-04-appraisal",
+      "pointer": "/holdings/28"
     },
     "securityKey": "sg-mart",
     "security": "SG Mart Limited",
@@ -19140,13 +18887,13 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 3125,
     "avgCost": 371.79,
-    "currentPrice": 750.75,
+    "currentPrice": 903.65,
     "costBasis": 1161856.51,
-    "marketValue": 2346093.75,
-    "unrealizedPnL": 1184237.24,
+    "marketValue": 2823906.25,
+    "unrealizedPnL": 1662049.74,
     "realizedPnL": 2344097.81,
     "costOfUnitsSold": 2190580.78,
-    "returnPct": 105.25,
+    "returnPct": 119.5,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -19156,9 +18903,9 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2026-09-30",
       "buys": 0,
       "sells": 4,
-      "unaccounted": 9930,
+      "unaccounted": null,
       "held": null,
-      "reason": "the transaction statements from 2026-04-01 to 2026-09-30 buy 0 and sell 6805 units of it against 3125 held, so 9930 of them are on no dated trade in this drop"
+      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
     },
     "accruedIncome": null,
     "dividendReceived": null,
@@ -19166,8 +18913,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
-      "pointer": "/holdings/46"
+      "document": "svan-investment-managers-llp-8710067-2026-11-04-appraisal",
+      "pointer": "/holdings/45"
     },
     "securityKey": "shakti-pumps-india",
     "security": "Shakti Pumps India Ltd",
@@ -19180,26 +18927,17 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 1350,
     "avgCost": 816.46,
-    "currentPrice": 461.35,
+    "currentPrice": 359.45,
     "costBasis": 1102221.54,
-    "marketValue": 622822.5,
-    "unrealizedPnL": -479399.04,
+    "marketValue": 485257.5,
+    "unrealizedPnL": -616964.04,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -43.37,
+    "returnPct": -55.85,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 1350,
-      "held": null,
-      "reason": "none of its 1350 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": 1350,
     "dividendReceived": 1350,
     "dividendFrom": "2026-04-01",
@@ -19207,8 +18945,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
-      "pointer": "/holdings/10"
+      "document": "svan-investment-managers-llp-8710067-2026-11-04-appraisal",
+      "pointer": "/holdings/17"
     },
     "securityKey": "shankara-buildpro",
     "security": "Shankara Buildpro Ltd",
@@ -19220,15 +18958,15 @@ export const BOOK_POSITIONS: Position[] = [
     "providerSector": null,
     "assetClass": "Equity",
     "marketSide": "listed",
-    "quantity": 3660,
-    "avgCost": 535.95,
-    "currentPrice": 1231,
+    "quantity": 18300,
+    "avgCost": 107.19,
+    "currentPrice": 182.03,
     "costBasis": 1961589.89,
-    "marketValue": 4505460,
-    "unrealizedPnL": 2543870.11,
+    "marketValue": 3331149,
+    "unrealizedPnL": 1369559.11,
     "realizedPnL": 884106.9,
     "costOfUnitsSold": 332395.17,
-    "returnPct": 150.23,
+    "returnPct": 99.04,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -19238,9 +18976,9 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2026-09-30",
       "buys": 0,
       "sells": 1,
-      "unaccounted": 4710,
+      "unaccounted": null,
       "held": null,
-      "reason": "the transaction statements from 2026-04-01 to 2026-09-30 buy 0 and sell 1050 units of it against 3660 held, so 4710 of them are on no dated trade in this drop"
+      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
     },
     "accruedIncome": null,
     "dividendReceived": 18300,
@@ -19249,8 +18987,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
-      "pointer": "/holdings/45"
+      "document": "svan-investment-managers-llp-8710067-2026-11-04-appraisal",
+      "pointer": "/holdings/44"
     },
     "securityKey": "sharda-cropchem",
     "security": "Sharda Cropchem Ltd",
@@ -19263,26 +19001,17 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 1920,
     "avgCost": 1118.5,
-    "currentPrice": 723.5,
+    "currentPrice": 677.95,
     "costBasis": 2147526.14,
-    "marketValue": 1389120,
-    "unrealizedPnL": -758406.14,
+    "marketValue": 1301664,
+    "unrealizedPnL": -845862.14,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -34.51,
+    "returnPct": -38.58,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 1920,
-      "held": null,
-      "reason": "none of its 1920 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": null,
     "dividendReceived": 17280,
     "dividendFrom": "2026-04-01",
@@ -19290,8 +19019,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
-      "pointer": "/holdings/21"
+      "document": "svan-investment-managers-llp-8710067-2026-11-04-appraisal",
+      "pointer": "/holdings/26"
     },
     "securityKey": "sharda-motor-industries",
     "security": "SHARDA MOTOR INDUSTRIES LIMITED",
@@ -19304,35 +19033,26 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 3350,
     "avgCost": 930.07,
-    "currentPrice": 956.95,
+    "currentPrice": 865,
     "costBasis": 3115725.18,
-    "marketValue": 3205782.5,
-    "unrealizedPnL": 90057.32,
+    "marketValue": 2897750,
+    "unrealizedPnL": -217975.18,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": 5.04,
+    "returnPct": -4.85,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 3350,
-      "held": null,
-      "reason": "none of its 3350 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
-    "accruedIncome": 67000,
+    "accruedIncome": null,
     "dividendReceived": 67000,
     "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
-      "pointer": "/holdings/26"
+      "document": "svan-investment-managers-llp-8710067-2026-11-04-appraisal",
+      "pointer": "/holdings/20"
     },
     "securityKey": "stove-kraft",
     "security": "Stove Kraft Limited",
@@ -19345,26 +19065,17 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 3935,
     "avgCost": 778.53,
-    "currentPrice": 794.95,
+    "currentPrice": 826.85,
     "costBasis": 3063524.48,
-    "marketValue": 3128128.25,
-    "unrealizedPnL": 64603.77,
+    "marketValue": 3253654.75,
+    "unrealizedPnL": 190130.27,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": 2.56,
+    "returnPct": 6.66,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 3935,
-      "held": null,
-      "reason": "none of its 3935 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": null,
     "dividendReceived": 13772.5,
     "dividendFrom": "2026-04-01",
@@ -19372,8 +19083,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
-      "pointer": "/holdings/9"
+      "document": "svan-investment-managers-llp-8710067-2026-11-04-appraisal",
+      "pointer": "/holdings/13"
     },
     "securityKey": "syrma-sgs-technology",
     "security": "Syrma SGS Technology Limited",
@@ -19386,13 +19097,13 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 2550,
     "avgCost": 875.39,
-    "currentPrice": 1782.9,
+    "currentPrice": 1512.6,
     "costBasis": 2232257.01,
-    "marketValue": 4546395,
-    "unrealizedPnL": 2314137.99,
+    "marketValue": 3857130,
+    "unrealizedPnL": 1624872.99,
     "realizedPnL": 234615.84,
     "costOfUnitsSold": 329889.25,
-    "returnPct": 99.63,
+    "returnPct": 72.72,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -19402,9 +19113,9 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2026-09-30",
       "buys": 2,
       "sells": 1,
-      "unaccounted": 2585,
+      "unaccounted": null,
       "held": null,
-      "reason": "the transaction statements from 2026-04-01 to 2026-09-30 buy 350 and sell 385 units of it against 2550 held, so 2585 of them are on no dated trade in this drop"
+      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
     },
     "accruedIncome": null,
     "dividendReceived": 3825,
@@ -19413,7 +19124,7 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "document": "svan-investment-managers-llp-8710067-2026-11-04-appraisal",
       "pointer": "/holdings/40"
     },
     "securityKey": "time-technoplast",
@@ -19427,26 +19138,17 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 10900,
     "avgCost": 194.84,
-    "currentPrice": 182.36,
+    "currentPrice": 171.42,
     "costBasis": 2123707.07,
-    "marketValue": 1987724,
-    "unrealizedPnL": -135983.07,
+    "marketValue": 1868478,
+    "unrealizedPnL": -255229.07,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -5.63,
+    "returnPct": -11.25,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 10900,
-      "held": null,
-      "reason": "none of its 10900 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": null,
     "dividendReceived": 16350,
     "dividendFrom": "2026-04-01",
@@ -19454,8 +19156,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
-      "pointer": "/holdings/2"
+      "document": "svan-investment-managers-llp-8710067-2026-11-04-appraisal",
+      "pointer": "/holdings/6"
     },
     "securityKey": "v2-retail",
     "security": "V2 Retail Ltd",
@@ -19468,33 +19170,24 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 31600,
     "avgCost": 152.41,
-    "currentPrice": 208.74,
+    "currentPrice": 149.13,
     "costBasis": 4816240.17,
-    "marketValue": 6596184,
-    "unrealizedPnL": 1779943.83,
+    "marketValue": 4712508,
+    "unrealizedPnL": -103732.17,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": 36.96,
+    "returnPct": -2.15,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 31600,
-      "held": null,
-      "reason": "none of its 31600 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "document": "svan-investment-managers-llp-8710067-2026-11-04-appraisal",
       "pointer": "/holdings/42"
     },
     "securityKey": "vaibhav-global",
@@ -19508,26 +19201,17 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 9200,
     "avgCost": 294.17,
-    "currentPrice": 204.32,
+    "currentPrice": 160.19,
     "costBasis": 2706407.74,
-    "marketValue": 1879744,
-    "unrealizedPnL": -826663.74,
+    "marketValue": 1473748,
+    "unrealizedPnL": -1232659.74,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -29.52,
+    "returnPct": -44.53,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 9200,
-      "held": null,
-      "reason": "none of its 9200 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": 13800,
     "dividendReceived": 27600,
     "dividendFrom": "2026-04-01",
@@ -19535,8 +19219,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
-      "pointer": "/holdings/4"
+      "document": "svan-investment-managers-llp-8710067-2026-11-04-appraisal",
+      "pointer": "/holdings/3"
     },
     "securityKey": "varroc-engineering",
     "security": "Varroc Engineering Limited",
@@ -19549,13 +19233,13 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 7075,
     "avgCost": 586.99,
-    "currentPrice": 862.95,
+    "currentPrice": 779.15,
     "costBasis": 4152962.9,
-    "marketValue": 6105371.25,
-    "unrealizedPnL": 1952408.35,
+    "marketValue": 5512486.25,
+    "unrealizedPnL": 1359523.35,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": 47.23,
+    "returnPct": 32.95,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -19565,9 +19249,9 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2026-09-30",
       "buys": 1,
       "sells": 0,
-      "unaccounted": 5930,
+      "unaccounted": null,
       "held": null,
-      "reason": "the transaction statements from 2026-04-01 to 2026-09-30 buy 1145 and sell 0 units of it against 7075 held, so 5930 of them are on no dated trade in this drop"
+      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
     },
     "accruedIncome": null,
     "dividendReceived": 8895,
@@ -19576,7 +19260,7 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
+      "document": "svan-investment-managers-llp-8710067-2026-11-04-appraisal",
       "pointer": "/holdings/8"
     },
     "securityKey": "viyash-scientific",
@@ -19590,13 +19274,13 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 19435,
     "avgCost": 255.13,
-    "currentPrice": 235.8,
+    "currentPrice": 228.46,
     "costBasis": 4958379.06,
-    "marketValue": 4582773,
-    "unrealizedPnL": -375606.06,
+    "marketValue": 4440120.1,
+    "unrealizedPnL": -518258.96,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -7.58,
+    "returnPct": -10.45,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -19606,9 +19290,9 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2026-09-30",
       "buys": 2,
       "sells": 0,
-      "unaccounted": 9100,
+      "unaccounted": null,
       "held": null,
-      "reason": "the transaction statements from 2026-04-01 to 2026-09-30 buy 10335 and sell 0 units of it against 19435 held, so 9100 of them are on no dated trade in this drop"
+      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
     },
     "accruedIncome": null,
     "dividendReceived": null,
@@ -19616,8 +19300,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
-      "pointer": "/holdings/19"
+      "document": "svan-investment-managers-llp-8710067-2026-11-04-appraisal",
+      "pointer": "/holdings/24"
     },
     "securityKey": "wockhardt",
     "security": "Wockhardt Ltd",
@@ -19630,13 +19314,13 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 1600,
     "avgCost": 1926.16,
-    "currentPrice": 2116.3,
+    "currentPrice": 1899,
     "costBasis": 3081848,
-    "marketValue": 3386080,
-    "unrealizedPnL": 304232,
+    "marketValue": 3038400,
+    "unrealizedPnL": -43448,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": 9.87,
+    "returnPct": -1.41,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -19646,13 +19330,9 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2026-09-30",
       "buys": 1,
       "sells": 0,
-      "unaccounted": 0,
-      "held": {
-        "first": "2026-05-29",
-        "last": "2026-05-29",
-        "lots": 1
-      },
-      "reason": null
+      "unaccounted": null,
+      "held": null,
+      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
     },
     "accruedIncome": null,
     "dividendReceived": null,
@@ -19660,8 +19340,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
-      "pointer": "/holdings/43"
+      "document": "svan-investment-managers-llp-8710067-2026-11-04-appraisal",
+      "pointer": "/holdings/41"
     },
     "securityKey": "wpil",
     "security": "Wpil Ltd",
@@ -19674,26 +19354,17 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 4245,
     "avgCost": 450.91,
-    "currentPrice": 438.85,
+    "currentPrice": 380.65,
     "costBasis": 1914105.23,
-    "marketValue": 1862918.25,
-    "unrealizedPnL": -51186.98,
+    "marketValue": 1615859.25,
+    "unrealizedPnL": -298245.98,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -2.23,
+    "returnPct": -15.14,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 4245,
-      "held": null,
-      "reason": "none of its 4245 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": 8490,
     "dividendReceived": 8490,
     "dividendFrom": "2026-04-01",
@@ -19701,8 +19372,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710067-2026-09-30-appraisal",
-      "pointer": "/holdings/37"
+      "document": "svan-investment-managers-llp-8710067-2026-11-04-appraisal",
+      "pointer": "/holdings/32"
     },
     "securityKey": "zensar-technologies",
     "security": "Zensar Technologies Ltd",
@@ -19715,26 +19386,17 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 5090,
     "avgCost": 784.74,
-    "currentPrice": 422.1,
+    "currentPrice": 533,
     "costBasis": 3994331,
-    "marketValue": 2148489,
-    "unrealizedPnL": -1845842,
+    "marketValue": 2712970,
+    "unrealizedPnL": -1281361,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -44.61,
+    "returnPct": -30.47,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 5090,
-      "held": null,
-      "reason": "none of its 5090 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": 64134,
     "dividendReceived": 64134,
     "dividendFrom": "2026-04-01",
@@ -19742,8 +19404,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "pointer": "/holdings/0"
+      "document": "svan-investment-managers-llp-8710090-2026-11-04-appraisal",
+      "pointer": "/holdings/30"
     },
     "securityKey": "apollo-pipes",
     "security": "APOLLO PIPES LIMITED",
@@ -19756,13 +19418,13 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 3500,
     "avgCost": 592.36,
-    "currentPrice": 507.85,
+    "currentPrice": 514.65,
     "costBasis": 2073242.5,
-    "marketValue": 1777475,
-    "unrealizedPnL": -295767.5,
+    "marketValue": 1801275,
+    "unrealizedPnL": -271967.5,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -14.27,
+    "returnPct": -13.12,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -19772,13 +19434,9 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2026-09-30",
       "buys": 1,
       "sells": 0,
-      "unaccounted": 0,
-      "held": {
-        "first": "2026-08-20",
-        "last": "2026-08-20",
-        "lots": 1
-      },
-      "reason": null
+      "unaccounted": null,
+      "held": null,
+      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
     },
     "accruedIncome": null,
     "dividendReceived": null,
@@ -19786,8 +19444,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "pointer": "/holdings/1"
+      "document": "svan-investment-managers-llp-8710090-2026-11-04-appraisal",
+      "pointer": "/holdings/16"
     },
     "securityKey": "arvind-fashions",
     "security": "Arvind Fashions Ltd",
@@ -19800,26 +19458,17 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 6660,
     "avgCost": 478.86,
-    "currentPrice": 387.45,
+    "currentPrice": 351.9,
     "costBasis": 3189223.64,
-    "marketValue": 2580417,
-    "unrealizedPnL": -608806.64,
+    "marketValue": 2343654,
+    "unrealizedPnL": -845569.64,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -18.76,
+    "returnPct": -26.18,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 6660,
-      "held": null,
-      "reason": "none of its 6660 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": null,
     "dividendReceived": 10656,
     "dividendFrom": "2026-04-01",
@@ -19827,8 +19476,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "pointer": "/holdings/3"
+      "document": "svan-investment-managers-llp-8710090-2026-11-04-appraisal",
+      "pointer": "/holdings/22"
     },
     "securityKey": "birlasoft",
     "security": "Birlasoft Ltd",
@@ -19841,26 +19490,17 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 6560,
     "avgCost": 412.89,
-    "currentPrice": 271.7,
+    "currentPrice": 319.25,
     "costBasis": 2708538.26,
-    "marketValue": 1782352,
-    "unrealizedPnL": -926186.26,
+    "marketValue": 2094280,
+    "unrealizedPnL": -614258.26,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -33.23,
+    "returnPct": -21.71,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 6560,
-      "held": null,
-      "reason": "none of its 6560 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": null,
     "dividendReceived": 26240,
     "dividendFrom": "2026-04-01",
@@ -19868,8 +19508,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "pointer": "/holdings/2"
+      "document": "svan-investment-managers-llp-8710090-2026-11-04-appraisal",
+      "pointer": "/holdings/32"
     },
     "securityKey": "borosil-renewables",
     "security": "BOROSIL RENEWABLES LTD",
@@ -19882,34 +19522,25 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 4530,
     "avgCost": 646.72,
-    "currentPrice": 458.15,
+    "currentPrice": 389.8,
     "costBasis": 2929620.9,
-    "marketValue": 2075419.5,
-    "unrealizedPnL": -854201.4,
+    "marketValue": 1765794,
+    "unrealizedPnL": -1163826.9,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -29.16,
+    "returnPct": -39.73,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 4530,
-      "held": null,
-      "reason": "none of its 4530 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "pointer": "/holdings/5"
+      "document": "svan-investment-managers-llp-8710090-2026-11-04-appraisal",
+      "pointer": "/holdings/2"
     },
     "securityKey": "caplin-point-laboratories",
     "security": "Caplin Point Laboratories Ltd",
@@ -19922,13 +19553,13 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 1600,
     "avgCost": 1950.59,
-    "currentPrice": 2716.4,
+    "currentPrice": 2416.1,
     "costBasis": 3120945.19,
-    "marketValue": 4346240,
-    "unrealizedPnL": 1225294.81,
+    "marketValue": 3865760,
+    "unrealizedPnL": 744814.81,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": 39.67,
+    "returnPct": 24.28,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -19938,9 +19569,9 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2026-09-30",
       "buys": 1,
       "sells": 0,
-      "unaccounted": 1260,
+      "unaccounted": null,
       "held": null,
-      "reason": "the transaction statements from 2026-04-01 to 2026-09-30 buy 340 and sell 0 units of it against 1600 held, so 1260 of them are on no dated trade in this drop"
+      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
     },
     "accruedIncome": 6400,
     "dividendReceived": 12800,
@@ -19949,7 +19580,7 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
+      "document": "svan-investment-managers-llp-8710090-2026-11-04-appraisal",
       "pointer": "/holdings/46"
     },
     "securityKey": "cash",
@@ -19961,11 +19592,11 @@ export const BOOK_POSITIONS: Position[] = [
     "providerSector": null,
     "assetClass": "Cash",
     "marketSide": "listed",
-    "quantity": 113586.77,
+    "quantity": 158178.714,
     "avgCost": 1,
-    "currentPrice": null,
-    "costBasis": 113586.77,
-    "marketValue": 113586.77,
+    "currentPrice": 1,
+    "costBasis": 158178.71,
+    "marketValue": 158178.71,
     "unrealizedPnL": 0,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
@@ -19980,8 +19611,39 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "pointer": "/holdings/6"
+      "document": "svan-investment-managers-llp-8710090-2026-11-04-appraisal",
+      "pointer": "/holdings/47"
+    },
+    "securityKey": "cash-rec-payable",
+    "security": "Cash Rec/Payable",
+    "symbol": null,
+    "accountId": "svan-investment-managers-llp-8710090",
+    "memberId": null,
+    "sector": "Cash",
+    "providerSector": null,
+    "assetClass": "Cash",
+    "marketSide": "listed",
+    "quantity": -3121.17,
+    "avgCost": 1,
+    "currentPrice": 1,
+    "costBasis": -3121.17,
+    "marketValue": -3121.17,
+    "unrealizedPnL": 0,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "returnPct": null,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710090-2026-11-04-appraisal",
+      "pointer": "/holdings/4"
     },
     "securityKey": "ceat",
     "security": "Ceat Ltd",
@@ -19994,26 +19656,17 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 1040,
     "avgCost": 2938.26,
-    "currentPrice": 3264.4,
+    "currentPrice": 3415.1,
     "costBasis": 3055794.76,
-    "marketValue": 3394976,
-    "unrealizedPnL": 339181.24,
+    "marketValue": 3551704,
+    "unrealizedPnL": 495909.24,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": 12.29,
+    "returnPct": 17.42,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 1040,
-      "held": null,
-      "reason": "none of its 1040 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": null,
     "dividendReceived": 36400,
     "dividendFrom": "2026-04-01",
@@ -20021,8 +19674,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "pointer": "/holdings/7"
+      "document": "svan-investment-managers-llp-8710090-2026-11-04-appraisal",
+      "pointer": "/holdings/10"
     },
     "securityKey": "cosmo-first",
     "security": "Cosmo First Limited",
@@ -20035,26 +19688,17 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 3370,
     "avgCost": 740.34,
-    "currentPrice": 845.6,
+    "currentPrice": 795,
     "costBasis": 2494938.73,
-    "marketValue": 2849672,
-    "unrealizedPnL": 354733.27,
+    "marketValue": 2679150,
+    "unrealizedPnL": 184211.27,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": 14.76,
+    "returnPct": 7.92,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 3370,
-      "held": null,
-      "reason": "none of its 3370 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": null,
     "dividendReceived": 13480,
     "dividendFrom": "2026-04-01",
@@ -20062,8 +19706,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "pointer": "/holdings/4"
+      "document": "svan-investment-managers-llp-8710090-2026-11-04-appraisal",
+      "pointer": "/holdings/5"
     },
     "securityKey": "creative-newtech",
     "security": "CREATIVE NEWTECH LIMITED",
@@ -20076,26 +19720,17 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 2505,
     "avgCost": 872.58,
-    "currentPrice": 1082.2,
+    "currentPrice": 1386.6,
     "costBasis": 2185804.14,
-    "marketValue": 2710911,
-    "unrealizedPnL": 525106.86,
+    "marketValue": 3473433,
+    "unrealizedPnL": 1287628.86,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": 24.08,
+    "returnPct": 58.97,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 2505,
-      "held": null,
-      "reason": "none of its 2505 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": 1252.5,
     "dividendReceived": 1252.5,
     "dividendFrom": "2026-04-01",
@@ -20103,8 +19738,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "pointer": "/holdings/8"
+      "document": "svan-investment-managers-llp-8710090-2026-11-04-appraisal",
+      "pointer": "/holdings/9"
     },
     "securityKey": "credit-access-grameen",
     "security": "Credit Access Grameen Limited",
@@ -20117,13 +19752,13 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 2515,
     "avgCost": 1172.24,
-    "currentPrice": 1272,
+    "currentPrice": 1073,
     "costBasis": 2948171.89,
-    "marketValue": 3199080,
-    "unrealizedPnL": 250908.11,
+    "marketValue": 2698595,
+    "unrealizedPnL": -249576.89,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": 8.51,
+    "returnPct": -8.47,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -20133,9 +19768,9 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2026-09-30",
       "buys": 1,
       "sells": 0,
-      "unaccounted": 1715,
+      "unaccounted": null,
       "held": null,
-      "reason": "the transaction statements from 2026-04-01 to 2026-09-30 buy 800 and sell 0 units of it against 2515 held, so 1715 of them are on no dated trade in this drop"
+      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
     },
     "accruedIncome": null,
     "dividendReceived": null,
@@ -20143,8 +19778,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "pointer": "/holdings/9"
+      "document": "svan-investment-managers-llp-8710090-2026-11-04-appraisal",
+      "pointer": "/holdings/34"
     },
     "securityKey": "dilip-buildcon",
     "security": "Dilip Buildcon Ltd",
@@ -20157,26 +19792,17 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 4215,
     "avgCost": 472.36,
-    "currentPrice": 406.2,
+    "currentPrice": 398.75,
     "costBasis": 1990980.87,
-    "marketValue": 1712133,
-    "unrealizedPnL": -278847.87,
+    "marketValue": 1680731.25,
+    "unrealizedPnL": -310249.62,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -13.79,
+    "returnPct": -15.37,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 4215,
-      "held": null,
-      "reason": "none of its 4215 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": null,
     "dividendReceived": 4215,
     "dividendFrom": "2026-04-01",
@@ -20184,8 +19810,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "pointer": "/holdings/10"
+      "document": "svan-investment-managers-llp-8710090-2026-11-04-appraisal",
+      "pointer": "/holdings/15"
     },
     "securityKey": "edelweiss-financial-services",
     "security": "Edelweiss Financial Services Ltd",
@@ -20198,26 +19824,17 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 19415,
     "avgCost": 95.45,
-    "currentPrice": 142.73,
+    "currentPrice": 121.94,
     "costBasis": 1853227.39,
-    "marketValue": 2771102.95,
-    "unrealizedPnL": 917875.56,
+    "marketValue": 2367465.1,
+    "unrealizedPnL": 514237.71,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": 51.1,
+    "returnPct": 29.32,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 19415,
-      "held": null,
-      "reason": "none of its 19415 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": 29122.5,
     "dividendReceived": 29122.5,
     "dividendFrom": "2026-04-01",
@@ -20225,8 +19842,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "pointer": "/holdings/11"
+      "document": "svan-investment-managers-llp-8710090-2026-11-04-appraisal",
+      "pointer": "/holdings/33"
     },
     "securityKey": "ester-industries",
     "security": "Ester Industries Limited",
@@ -20239,26 +19856,17 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 19685,
     "avgCost": 131.03,
-    "currentPrice": 101.22,
+    "currentPrice": 88.56,
     "costBasis": 2579327.77,
-    "marketValue": 1992515.7,
-    "unrealizedPnL": -586812.07,
+    "marketValue": 1743303.6,
+    "unrealizedPnL": -836024.17,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -22.56,
+    "returnPct": -32.22,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 19685,
-      "held": null,
-      "reason": "none of its 19685 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": 4921.25,
     "dividendReceived": 4921.25,
     "dividendFrom": "2026-04-01",
@@ -20266,8 +19874,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "pointer": "/holdings/12"
+      "document": "svan-investment-managers-llp-8710090-2026-11-04-appraisal",
+      "pointer": "/holdings/40"
     },
     "securityKey": "fusion-finance",
     "security": "Fusion Finance Limited",
@@ -20280,34 +19888,25 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 8050,
     "avgCost": 163.67,
-    "currentPrice": 175.08,
+    "currentPrice": 153.54,
     "costBasis": 1317504.12,
-    "marketValue": 1409394,
-    "unrealizedPnL": 91889.88,
+    "marketValue": 1235997,
+    "unrealizedPnL": -81507.12,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": 6.97,
+    "returnPct": -6.19,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 8050,
-      "held": null,
-      "reason": "none of its 8050 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "pointer": "/holdings/13"
+      "document": "svan-investment-managers-llp-8710090-2026-11-04-appraisal",
+      "pointer": "/holdings/36"
     },
     "securityKey": "ghcl",
     "security": "GHCL Ltd",
@@ -20320,26 +19919,17 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 3970,
     "avgCost": 630.98,
-    "currentPrice": 405.5,
+    "currentPrice": 407.3,
     "costBasis": 2504975.2,
-    "marketValue": 1609835,
-    "unrealizedPnL": -895140.2,
+    "marketValue": 1616981,
+    "unrealizedPnL": -887994.2,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -33.83,
+    "returnPct": -33.55,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 3970,
-      "held": null,
-      "reason": "none of its 3970 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": null,
     "dividendReceived": 47640,
     "dividendFrom": "2026-04-01",
@@ -20347,8 +19937,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "pointer": "/holdings/14"
+      "document": "svan-investment-managers-llp-8710090-2026-11-04-appraisal",
+      "pointer": "/holdings/17"
     },
     "securityKey": "ghcl-textiles",
     "security": "GHCL Textiles Limited",
@@ -20361,13 +19951,13 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 18880,
     "avgCost": 99.48,
-    "currentPrice": 128.9,
+    "currentPrice": 123.95,
     "costBasis": 1878218.01,
-    "marketValue": 2433632,
-    "unrealizedPnL": 555413.99,
+    "marketValue": 2340176,
+    "unrealizedPnL": 461957.99,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": 29.99,
+    "returnPct": 25.01,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -20377,9 +19967,9 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2026-09-30",
       "buys": 1,
       "sells": 0,
-      "unaccounted": 12955,
+      "unaccounted": null,
       "held": null,
-      "reason": "the transaction statements from 2026-04-01 to 2026-09-30 buy 5925 and sell 0 units of it against 18880 held, so 12955 of them are on no dated trade in this drop"
+      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
     },
     "accruedIncome": null,
     "dividendReceived": 7773,
@@ -20388,8 +19978,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "pointer": "/holdings/15"
+      "document": "svan-investment-managers-llp-8710090-2026-11-04-appraisal",
+      "pointer": "/holdings/11"
     },
     "securityKey": "gland-pharma",
     "security": "GLAND PHARMA LIMITED",
@@ -20402,13 +19992,13 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 845,
     "avgCost": 2291.32,
-    "currentPrice": 2899.4,
+    "currentPrice": 3159,
     "costBasis": 1936164.05,
-    "marketValue": 2449993,
-    "unrealizedPnL": 513828.95,
+    "marketValue": 2669355,
+    "unrealizedPnL": 733190.95,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": 27.41,
+    "returnPct": 38.74,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -20418,13 +20008,9 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2026-09-30",
       "buys": 1,
       "sells": 0,
-      "unaccounted": 0,
-      "held": {
-        "first": "2026-06-09",
-        "last": "2026-06-09",
-        "lots": 1
-      },
-      "reason": null
+      "unaccounted": null,
+      "held": null,
+      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
     },
     "accruedIncome": null,
     "dividendReceived": 16900,
@@ -20433,8 +20019,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "pointer": "/holdings/16"
+      "document": "svan-investment-managers-llp-8710090-2026-11-04-appraisal",
+      "pointer": "/holdings/38"
     },
     "securityKey": "graphite-india",
     "security": "Graphite India Ltd",
@@ -20447,13 +20033,13 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 1800,
     "avgCost": 809.91,
-    "currentPrice": 764.8,
+    "currentPrice": 741.45,
     "costBasis": 1457836.38,
-    "marketValue": 1376640,
-    "unrealizedPnL": -81196.38,
+    "marketValue": 1334610,
+    "unrealizedPnL": -123226.38,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -5.57,
+    "returnPct": -8.45,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -20463,13 +20049,9 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2026-09-30",
       "buys": 1,
       "sells": 0,
-      "unaccounted": 0,
-      "held": {
-        "first": "2026-09-09",
-        "last": "2026-09-09",
-        "lots": 1
-      },
-      "reason": null
+      "unaccounted": null,
+      "held": null,
+      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
     },
     "accruedIncome": null,
     "dividendReceived": null,
@@ -20477,49 +20059,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "pointer": "/holdings/17"
-    },
-    "securityKey": "heg-advanced-materials",
-    "security": "HEG Advanced Materials Limited",
-    "symbol": "HEGAM",
-    "accountId": "svan-investment-managers-llp-8710090",
-    "memberId": null,
-    "sector": "Unclassified",
-    "providerSector": null,
-    "assetClass": "Equity",
-    "marketSide": "listed",
-    "quantity": 5365,
-    "avgCost": 121.65,
-    "currentPrice": 237.65,
-    "costBasis": 652652.03,
-    "marketValue": 1274992.25,
-    "unrealizedPnL": 622340.22,
-    "realizedPnL": 0,
-    "costOfUnitsSold": 0,
-    "returnPct": 98.15,
-    "stCostBasis": null,
-    "ltCostBasis": null,
-    "daysToLT": null,
-    "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 5365,
-      "held": null,
-      "reason": "none of its 5365 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
-    "accruedIncome": null,
-    "dividendReceived": 18241,
-    "dividendFrom": "2026-04-01",
-    "positionIrrPct": null
-  },
-  {
-    "statementRecord": {
-      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "pointer": "/holdings/18"
+      "document": "svan-investment-managers-llp-8710090-2026-11-04-appraisal",
+      "pointer": "/holdings/13"
     },
     "securityKey": "heg-graphite",
     "security": "HEG Graphite Limited",
@@ -20543,23 +20084,14 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 5365,
-      "held": null,
-      "reason": "none of its 5365 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "pointer": "/holdings/19"
+      "document": "svan-investment-managers-llp-8710090-2026-11-04-appraisal",
+      "pointer": "/holdings/35"
     },
     "securityKey": "ifb-industries",
     "security": "IFB Industries Ltd",
@@ -20572,34 +20104,25 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 1490,
     "avgCost": 1379.19,
-    "currentPrice": 1201,
+    "currentPrice": 1101.4,
     "costBasis": 2054996.03,
-    "marketValue": 1789490,
-    "unrealizedPnL": -265506.03,
+    "marketValue": 1641086,
+    "unrealizedPnL": -413910.03,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -12.92,
+    "returnPct": -20.14,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 1490,
-      "held": null,
-      "reason": "none of its 1490 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "pointer": "/holdings/20"
+      "document": "svan-investment-managers-llp-8710090-2026-11-04-appraisal",
+      "pointer": "/holdings/0"
     },
     "securityKey": "indo-count-industries",
     "security": "Indo Count Industries Ltd",
@@ -20612,26 +20135,17 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 10505,
     "avgCost": 320.4,
-    "currentPrice": 460.4,
+    "currentPrice": 525.35,
     "costBasis": 3365834.81,
-    "marketValue": 4836502,
-    "unrealizedPnL": 1470667.19,
+    "marketValue": 5518801.75,
+    "unrealizedPnL": 2152966.94,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": 44.16,
+    "returnPct": 64.43,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 10505,
-      "held": null,
-      "reason": "none of its 10505 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": null,
     "dividendReceived": 15757.5,
     "dividendFrom": "2026-04-01",
@@ -20639,8 +20153,39 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "pointer": "/holdings/21"
+      "document": "svan-investment-managers-llp-8710090-2026-11-04-appraisal",
+      "pointer": "/holdings/19"
+    },
+    "securityKey": "kajaria-ceramics",
+    "security": "Kajaria Ceramics Ltd",
+    "symbol": "KAJARIACER",
+    "accountId": "svan-investment-managers-llp-8710090",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Equity",
+    "marketSide": "listed",
+    "quantity": 1900,
+    "avgCost": 1219.59,
+    "currentPrice": 1159.6,
+    "costBasis": 2317226.19,
+    "marketValue": 2203240,
+    "unrealizedPnL": -113986.19,
+    "realizedPnL": 0,
+    "costOfUnitsSold": 0,
+    "returnPct": -4.92,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "accruedIncome": 22800,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
+    "statementRecord": {
+      "document": "svan-investment-managers-llp-8710090-2026-11-04-appraisal",
+      "pointer": "/holdings/43"
     },
     "securityKey": "krishca-strapping-solutions",
     "security": "KRISHCA STRAPPING SOLUTIONS LTD",
@@ -20653,34 +20198,25 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 5000,
     "avgCost": 215.08,
-    "currentPrice": 220.15,
+    "currentPrice": 193,
     "costBasis": 1075423.9,
-    "marketValue": 1100750,
-    "unrealizedPnL": 25326.1,
+    "marketValue": 965000,
+    "unrealizedPnL": -110423.9,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": 2.35,
+    "returnPct": -10.27,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 5000,
-      "held": null,
-      "reason": "none of its 5000 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "pointer": "/holdings/22"
+      "document": "svan-investment-managers-llp-8710090-2026-11-04-appraisal",
+      "pointer": "/holdings/12"
     },
     "securityKey": "laxmi-organic-industries",
     "security": "Laxmi Organic Industries Limited",
@@ -20693,26 +20229,17 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 15660,
     "avgCost": 217.59,
-    "currentPrice": 177.36,
+    "currentPrice": 161.98,
     "costBasis": 3407392.16,
-    "marketValue": 2777457.6,
-    "unrealizedPnL": -629934.56,
+    "marketValue": 2536606.8,
+    "unrealizedPnL": -870785.36,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -18.35,
+    "returnPct": -25.42,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 15660,
-      "held": null,
-      "reason": "none of its 15660 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": null,
     "dividendReceived": 4698,
     "dividendFrom": "2026-04-01",
@@ -20720,8 +20247,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "pointer": "/holdings/23"
+      "document": "svan-investment-managers-llp-8710090-2026-11-04-appraisal",
+      "pointer": "/holdings/28"
     },
     "securityKey": "mastek",
     "security": "Mastek Ltd",
@@ -20734,26 +20261,17 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 1310,
     "avgCost": 2789.05,
-    "currentPrice": 1562.8,
+    "currentPrice": 1443.7,
     "costBasis": 3653659.1,
-    "marketValue": 2047268,
-    "unrealizedPnL": -1606391.1,
+    "marketValue": 1891247,
+    "unrealizedPnL": -1762412.1,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -43.39,
+    "returnPct": -47.66,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 1310,
-      "held": null,
-      "reason": "none of its 1310 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": null,
     "dividendReceived": 20960,
     "dividendFrom": "2026-04-01",
@@ -20761,8 +20279,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "pointer": "/holdings/25"
+      "document": "svan-investment-managers-llp-8710090-2026-11-04-appraisal",
+      "pointer": "/holdings/7"
     },
     "securityKey": "neuland-laboratories",
     "security": "Neuland Laboratories Ltd",
@@ -20773,28 +20291,19 @@ export const BOOK_POSITIONS: Position[] = [
     "providerSector": null,
     "assetClass": "Equity",
     "marketSide": "listed",
-    "quantity": 195,
-    "avgCost": 14771.33,
-    "currentPrice": 21350,
-    "costBasis": 2880409.46,
-    "marketValue": 4163250,
-    "unrealizedPnL": 1282840.54,
+    "quantity": 149,
+    "avgCost": 14940.06,
+    "currentPrice": 19576,
+    "costBasis": 2226068.63,
+    "marketValue": 2916824,
+    "unrealizedPnL": 690755.37,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": 44.77,
+    "returnPct": 31.33,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 195,
-      "held": null,
-      "reason": "none of its 195 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": null,
     "dividendReceived": 6630,
     "dividendFrom": "2026-04-01",
@@ -20802,8 +20311,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "pointer": "/holdings/24"
+      "document": "svan-investment-managers-llp-8710090-2026-11-04-appraisal",
+      "pointer": "/holdings/1"
     },
     "securityKey": "nitin-spinners",
     "security": "NITIN SPINNERS LIMITED",
@@ -20816,13 +20325,13 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 6240,
     "avgCost": 398.4,
-    "currentPrice": 598.3,
+    "currentPrice": 675.85,
     "costBasis": 2486008.53,
-    "marketValue": 3733392,
-    "unrealizedPnL": 1247383.47,
+    "marketValue": 4217304,
+    "unrealizedPnL": 1731295.47,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": 50.93,
+    "returnPct": 70.39,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -20832,9 +20341,9 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2026-09-30",
       "buys": 3,
       "sells": 0,
-      "unaccounted": 5455,
+      "unaccounted": null,
       "held": null,
-      "reason": "the transaction statements from 2026-04-01 to 2026-09-30 buy 785 and sell 0 units of it against 6240 held, so 5455 of them are on no dated trade in this drop"
+      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
     },
     "accruedIncome": 18720,
     "dividendReceived": 18720,
@@ -20843,8 +20352,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "pointer": "/holdings/27"
+      "document": "svan-investment-managers-llp-8710090-2026-11-04-appraisal",
+      "pointer": "/holdings/24"
     },
     "securityKey": "paras-defence-and-space-technologies",
     "security": "Paras Defence and Space Technologies Limited",
@@ -20857,13 +20366,13 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 1575,
     "avgCost": 869.57,
-    "currentPrice": 1311,
+    "currentPrice": 1265.5,
     "costBasis": 1369578.26,
-    "marketValue": 2064825,
-    "unrealizedPnL": 695246.74,
+    "marketValue": 1993162.5,
+    "unrealizedPnL": 623584.24,
     "realizedPnL": 370025.78,
     "costOfUnitsSold": 601655.51,
-    "returnPct": 54.12,
+    "returnPct": 50.49,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -20873,13 +20382,9 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2026-09-30",
       "buys": 2,
       "sells": 2,
-      "unaccounted": 0,
-      "held": {
-        "first": "2026-05-11",
-        "last": "2026-05-11",
-        "lots": 1
-      },
-      "reason": null
+      "unaccounted": null,
+      "held": null,
+      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
     },
     "accruedIncome": null,
     "dividendReceived": 1575,
@@ -20888,8 +20393,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "pointer": "/holdings/28"
+      "document": "svan-investment-managers-llp-8710090-2026-11-04-appraisal",
+      "pointer": "/holdings/26"
     },
     "securityKey": "pokarna",
     "security": "Pokarna Ltd",
@@ -20902,26 +20407,17 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 2885,
     "avgCost": 1185.74,
-    "currentPrice": 705.7,
+    "currentPrice": 675.35,
     "costBasis": 3420859.9,
-    "marketValue": 2035944.5,
-    "unrealizedPnL": -1384915.4,
+    "marketValue": 1948384.75,
+    "unrealizedPnL": -1472475.15,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -40.43,
+    "returnPct": -42.99,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 2885,
-      "held": null,
-      "reason": "none of its 2885 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": null,
     "dividendReceived": 1731,
     "dividendFrom": "2026-04-01",
@@ -20929,8 +20425,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "pointer": "/holdings/29"
+      "document": "svan-investment-managers-llp-8710090-2026-11-04-appraisal",
+      "pointer": "/holdings/37"
     },
     "securityKey": "polyplex",
     "security": "Polyplex Corporation Ltd",
@@ -20943,26 +20439,17 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 1640,
     "avgCost": 1147.69,
-    "currentPrice": 1055,
+    "currentPrice": 920.85,
     "costBasis": 1882216.43,
-    "marketValue": 1730200,
-    "unrealizedPnL": -152016.43,
+    "marketValue": 1510194,
+    "unrealizedPnL": -372022.43,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -7.99,
+    "returnPct": -19.68,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 1640,
-      "held": null,
-      "reason": "none of its 1640 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": null,
     "dividendReceived": 1640,
     "dividendFrom": "2026-04-01",
@@ -20970,8 +20457,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "pointer": "/holdings/26"
+      "document": "svan-investment-managers-llp-8710090-2026-11-04-appraisal",
+      "pointer": "/holdings/27"
     },
     "securityKey": "punjab-chem-and-crop-prot-l",
     "security": "PUNJAB CHEM & CROP PROT L",
@@ -20984,26 +20471,17 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 2075,
     "avgCost": 808.06,
-    "currentPrice": 1054.5,
+    "currentPrice": 914.8,
     "costBasis": 1676722.79,
-    "marketValue": 2188087.5,
-    "unrealizedPnL": 511364.71,
+    "marketValue": 1898210,
+    "unrealizedPnL": 221487.21,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": 30.87,
+    "returnPct": 13.58,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 2075,
-      "held": null,
-      "reason": "none of its 2075 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": null,
     "dividendReceived": 6225,
     "dividendFrom": "2026-04-01",
@@ -21011,8 +20489,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "pointer": "/holdings/30"
+      "document": "svan-investment-managers-llp-8710090-2026-11-04-appraisal",
+      "pointer": "/holdings/18"
     },
     "securityKey": "puravankara",
     "security": "Puravankara Limited",
@@ -21025,34 +20503,25 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 11370,
     "avgCost": 301.57,
-    "currentPrice": 206.34,
+    "currentPrice": 200.84,
     "costBasis": 3428883.91,
-    "marketValue": 2346085.8,
-    "unrealizedPnL": -1082798.11,
+    "marketValue": 2283550.8,
+    "unrealizedPnL": -1145333.11,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -31.58,
+    "returnPct": -33.4,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 11370,
-      "held": null,
-      "reason": "none of its 11370 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "pointer": "/holdings/31"
+      "document": "svan-investment-managers-llp-8710090-2026-11-04-appraisal",
+      "pointer": "/holdings/29"
     },
     "securityKey": "sg-mart",
     "security": "SG Mart Limited",
@@ -21066,13 +20535,13 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 2035,
     "avgCost": 362.02,
-    "currentPrice": 750.75,
+    "currentPrice": 903.65,
     "costBasis": 736706.14,
-    "marketValue": 1527776.25,
-    "unrealizedPnL": 791070.11,
+    "marketValue": 1838927.75,
+    "unrealizedPnL": 1102221.61,
     "realizedPnL": 1525711.26,
     "costOfUnitsSold": 1428531.6,
-    "returnPct": 107,
+    "returnPct": 121.37,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -21082,9 +20551,9 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2026-09-30",
       "buys": 0,
       "sells": 4,
-      "unaccounted": 6480,
+      "unaccounted": null,
       "held": null,
-      "reason": "the transaction statements from 2026-04-01 to 2026-09-30 buy 0 and sell 4445 units of it against 2035 held, so 6480 of them are on no dated trade in this drop"
+      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
     },
     "accruedIncome": null,
     "dividendReceived": null,
@@ -21092,8 +20561,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "pointer": "/holdings/33"
+      "document": "svan-investment-managers-llp-8710090-2026-11-04-appraisal",
+      "pointer": "/holdings/45"
     },
     "securityKey": "shakti-pumps-india",
     "security": "Shakti Pumps India Ltd",
@@ -21106,26 +20575,17 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 980,
     "avgCost": 816.46,
-    "currentPrice": 461.35,
+    "currentPrice": 359.45,
     "costBasis": 800131.19,
-    "marketValue": 452123,
-    "unrealizedPnL": -348008.19,
+    "marketValue": 352261,
+    "unrealizedPnL": -447870.19,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -43.37,
+    "returnPct": -55.85,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 980,
-      "held": null,
-      "reason": "none of its 980 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": null,
     "dividendReceived": 980,
     "dividendFrom": "2026-04-01",
@@ -21133,8 +20593,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "pointer": "/holdings/34"
+      "document": "svan-investment-managers-llp-8710090-2026-11-04-appraisal",
+      "pointer": "/holdings/20"
     },
     "securityKey": "shankara-buildpro",
     "security": "Shankara Buildpro Ltd",
@@ -21146,15 +20606,15 @@ export const BOOK_POSITIONS: Position[] = [
     "providerSector": null,
     "assetClass": "Equity",
     "marketSide": "listed",
-    "quantity": 2380,
-    "avgCost": 502.72,
-    "currentPrice": 1231,
+    "quantity": 11900,
+    "avgCost": 100.54,
+    "currentPrice": 182.03,
     "costBasis": 1196468.3,
-    "marketValue": 2929780,
-    "unrealizedPnL": 1733311.7,
+    "marketValue": 2166157,
+    "unrealizedPnL": 969688.7,
     "realizedPnL": 479010.43,
     "costOfUnitsSold": 297233.74,
-    "returnPct": 148.91,
+    "returnPct": 97.78,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -21164,9 +20624,9 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2026-09-30",
       "buys": 0,
       "sells": 1,
-      "unaccounted": 3050,
+      "unaccounted": null,
       "held": null,
-      "reason": "the transaction statements from 2026-04-01 to 2026-09-30 buy 0 and sell 670 units of it against 2380 held, so 3050 of them are on no dated trade in this drop"
+      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
     },
     "accruedIncome": null,
     "dividendReceived": 11900,
@@ -21175,8 +20635,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "pointer": "/holdings/35"
+      "document": "svan-investment-managers-llp-8710090-2026-11-04-appraisal",
+      "pointer": "/holdings/44"
     },
     "securityKey": "sharda-cropchem",
     "security": "Sharda Cropchem Ltd",
@@ -21189,26 +20649,17 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 1245,
     "avgCost": 1118.5,
-    "currentPrice": 723.5,
+    "currentPrice": 677.95,
     "costBasis": 1392536.49,
-    "marketValue": 900757.5,
-    "unrealizedPnL": -491778.99,
+    "marketValue": 844047.75,
+    "unrealizedPnL": -548488.74,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -34.51,
+    "returnPct": -38.58,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 1245,
-      "held": null,
-      "reason": "none of its 1245 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": null,
     "dividendReceived": 11205,
     "dividendFrom": "2026-04-01",
@@ -21216,8 +20667,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "pointer": "/holdings/32"
+      "document": "svan-investment-managers-llp-8710090-2026-11-04-appraisal",
+      "pointer": "/holdings/23"
     },
     "securityKey": "sharda-motor-industries",
     "security": "SHARDA MOTOR INDUSTRIES LIMITED",
@@ -21230,26 +20681,17 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 2390,
     "avgCost": 919.22,
-    "currentPrice": 956.95,
+    "currentPrice": 865,
     "costBasis": 2196925.59,
-    "marketValue": 2287110.5,
-    "unrealizedPnL": 90184.91,
+    "marketValue": 2067350,
+    "unrealizedPnL": -129575.59,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": 6.28,
+    "returnPct": -3.72,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 2390,
-      "held": null,
-      "reason": "none of its 2390 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": 47800,
     "dividendReceived": 47800,
     "dividendFrom": "2026-04-01",
@@ -21257,8 +20699,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "pointer": "/holdings/36"
+      "document": "svan-investment-managers-llp-8710090-2026-11-04-appraisal",
+      "pointer": "/holdings/21"
     },
     "securityKey": "stove-kraft",
     "security": "Stove Kraft Limited",
@@ -21271,26 +20713,17 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 2570,
     "avgCost": 759.87,
-    "currentPrice": 794.95,
+    "currentPrice": 826.85,
     "costBasis": 1952866.8,
-    "marketValue": 2043021.5,
-    "unrealizedPnL": 90154.7,
+    "marketValue": 2125004.5,
+    "unrealizedPnL": 172137.7,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": 5.08,
+    "returnPct": 9.28,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 2570,
-      "held": null,
-      "reason": "none of its 2570 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": null,
     "dividendReceived": 8995,
     "dividendFrom": "2026-04-01",
@@ -21298,8 +20731,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "pointer": "/holdings/37"
+      "document": "svan-investment-managers-llp-8710090-2026-11-04-appraisal",
+      "pointer": "/holdings/14"
     },
     "securityKey": "syrma-sgs-technology",
     "security": "Syrma SGS Technology Limited",
@@ -21312,13 +20745,13 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 1655,
     "avgCost": 875.63,
-    "currentPrice": 1782.9,
+    "currentPrice": 1512.6,
     "costBasis": 1449162.6,
-    "marketValue": 2950699.5,
-    "unrealizedPnL": 1501536.9,
+    "marketValue": 2503353,
+    "unrealizedPnL": 1054190.4,
     "realizedPnL": 152347.95,
     "costOfUnitsSold": 214213.8,
-    "returnPct": 99.58,
+    "returnPct": 72.68,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -21328,9 +20761,9 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2026-09-30",
       "buys": 2,
       "sells": 1,
-      "unaccounted": 1675,
+      "unaccounted": null,
       "held": null,
-      "reason": "the transaction statements from 2026-04-01 to 2026-09-30 buy 230 and sell 250 units of it against 1655 held, so 1675 of them are on no dated trade in this drop"
+      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
     },
     "accruedIncome": null,
     "dividendReceived": 2482.5,
@@ -21339,8 +20772,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "pointer": "/holdings/38"
+      "document": "svan-investment-managers-llp-8710090-2026-11-04-appraisal",
+      "pointer": "/holdings/39"
     },
     "securityKey": "time-technoplast",
     "security": "Time Technoplast Ltd",
@@ -21353,26 +20786,17 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 7760,
     "avgCost": 201.27,
-    "currentPrice": 182.36,
+    "currentPrice": 171.42,
     "costBasis": 1561890.37,
-    "marketValue": 1415113.6,
-    "unrealizedPnL": -146776.77,
+    "marketValue": 1330219.2,
+    "unrealizedPnL": -231671.17,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -8.65,
+    "returnPct": -14.09,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 7760,
-      "held": null,
-      "reason": "none of its 7760 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": null,
     "dividendReceived": 11640,
     "dividendFrom": "2026-04-01",
@@ -21380,8 +20804,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "pointer": "/holdings/39"
+      "document": "svan-investment-managers-llp-8710090-2026-11-04-appraisal",
+      "pointer": "/holdings/6"
     },
     "securityKey": "v2-retail",
     "security": "V2 Retail Ltd",
@@ -21394,34 +20818,25 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 20550,
     "avgCost": 155.5,
-    "currentPrice": 208.74,
+    "currentPrice": 149.13,
     "costBasis": 3195618.2,
-    "marketValue": 4289607,
-    "unrealizedPnL": 1093988.8,
+    "marketValue": 3064621.5,
+    "unrealizedPnL": -130996.7,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": 34.23,
+    "returnPct": -4.1,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 20550,
-      "held": null,
-      "reason": "none of its 20550 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "pointer": "/holdings/40"
+      "document": "svan-investment-managers-llp-8710090-2026-11-04-appraisal",
+      "pointer": "/holdings/42"
     },
     "securityKey": "vaibhav-global",
     "security": "Vaibhav Global Ltd",
@@ -21434,35 +20849,26 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 6005,
     "avgCost": 297.04,
-    "currentPrice": 204.32,
+    "currentPrice": 160.19,
     "costBasis": 1783711.81,
-    "marketValue": 1226941.6,
-    "unrealizedPnL": -556770.21,
+    "marketValue": 961940.95,
+    "unrealizedPnL": -821770.86,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -30.2,
+    "returnPct": -45.06,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 6005,
-      "held": null,
-      "reason": "none of its 6005 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
-    "accruedIncome": null,
+    "accruedIncome": 9007.5,
     "dividendReceived": 18015,
     "dividendFrom": "2026-04-01",
     "positionIrrPct": null
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "pointer": "/holdings/41"
+      "document": "svan-investment-managers-llp-8710090-2026-11-04-appraisal",
+      "pointer": "/holdings/3"
     },
     "securityKey": "varroc-engineering",
     "security": "Varroc Engineering Limited",
@@ -21475,13 +20881,13 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 4605,
     "avgCost": 522.84,
-    "currentPrice": 862.95,
+    "currentPrice": 779.15,
     "costBasis": 2407699.43,
-    "marketValue": 3973884.75,
-    "unrealizedPnL": 1566185.32,
+    "marketValue": 3587985.75,
+    "unrealizedPnL": 1180286.32,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": 65.32,
+    "returnPct": 49.29,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -21491,9 +20897,9 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2026-09-30",
       "buys": 1,
       "sells": 0,
-      "unaccounted": 4310,
+      "unaccounted": null,
       "held": null,
-      "reason": "the transaction statements from 2026-04-01 to 2026-09-30 buy 295 and sell 0 units of it against 4605 held, so 4310 of them are on no dated trade in this drop"
+      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
     },
     "accruedIncome": null,
     "dividendReceived": 6465,
@@ -21502,8 +20908,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "pointer": "/holdings/42"
+      "document": "svan-investment-managers-llp-8710090-2026-11-04-appraisal",
+      "pointer": "/holdings/8"
     },
     "securityKey": "viyash-scientific",
     "security": "Viyash Scientific Limited",
@@ -21516,13 +20922,13 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 12640,
     "avgCost": 255.12,
-    "currentPrice": 235.8,
+    "currentPrice": 228.46,
     "costBasis": 3224707.46,
-    "marketValue": 2980512,
-    "unrealizedPnL": -244195.46,
+    "marketValue": 2887734.4,
+    "unrealizedPnL": -336973.06,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -7.57,
+    "returnPct": -10.45,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -21532,9 +20938,9 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2026-09-30",
       "buys": 2,
       "sells": 0,
-      "unaccounted": 5925,
+      "unaccounted": null,
       "held": null,
-      "reason": "the transaction statements from 2026-04-01 to 2026-09-30 buy 6715 and sell 0 units of it against 12640 held, so 5925 of them are on no dated trade in this drop"
+      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
     },
     "accruedIncome": null,
     "dividendReceived": null,
@@ -21542,8 +20948,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "pointer": "/holdings/43"
+      "document": "svan-investment-managers-llp-8710090-2026-11-04-appraisal",
+      "pointer": "/holdings/25"
     },
     "securityKey": "wockhardt",
     "security": "Wockhardt Ltd",
@@ -21556,13 +20962,13 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 1045,
     "avgCost": 1926.16,
-    "currentPrice": 2116.3,
+    "currentPrice": 1899,
     "costBasis": 2012831.98,
-    "marketValue": 2211533.5,
-    "unrealizedPnL": 198701.52,
+    "marketValue": 1984455,
+    "unrealizedPnL": -28376.98,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": 9.87,
+    "returnPct": -1.41,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -21572,13 +20978,9 @@ export const BOOK_POSITIONS: Position[] = [
       "to": "2026-09-30",
       "buys": 1,
       "sells": 0,
-      "unaccounted": 0,
-      "held": {
-        "first": "2026-05-29",
-        "last": "2026-05-29",
-        "lots": 1
-      },
-      "reason": null
+      "unaccounted": null,
+      "held": null,
+      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
     },
     "accruedIncome": null,
     "dividendReceived": null,
@@ -21586,8 +20988,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "pointer": "/holdings/44"
+      "document": "svan-investment-managers-llp-8710090-2026-11-04-appraisal",
+      "pointer": "/holdings/41"
     },
     "securityKey": "wpil",
     "security": "Wpil Ltd",
@@ -21600,26 +21002,17 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 3090,
     "avgCost": 622.3,
-    "currentPrice": 438.85,
+    "currentPrice": 380.65,
     "costBasis": 1922919.34,
-    "marketValue": 1356046.5,
-    "unrealizedPnL": -566872.84,
+    "marketValue": 1176208.5,
+    "unrealizedPnL": -746710.84,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -29.16,
+    "returnPct": -38.51,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 3090,
-      "held": null,
-      "reason": "none of its 3090 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": null,
     "dividendReceived": 6180,
     "dividendFrom": "2026-04-01",
@@ -21627,8 +21020,8 @@ export const BOOK_POSITIONS: Position[] = [
   },
   {
     "statementRecord": {
-      "document": "svan-investment-managers-llp-8710090-2026-09-30-investor-report",
-      "pointer": "/holdings/45"
+      "document": "svan-investment-managers-llp-8710090-2026-11-04-appraisal",
+      "pointer": "/holdings/31"
     },
     "securityKey": "zensar-technologies",
     "security": "Zensar Technologies Ltd",
@@ -21641,26 +21034,17 @@ export const BOOK_POSITIONS: Position[] = [
     "marketSide": "listed",
     "quantity": 3320,
     "avgCost": 779.09,
-    "currentPrice": 422.1,
+    "currentPrice": 533,
     "costBasis": 2586568.51,
-    "marketValue": 1401372,
-    "unrealizedPnL": -1185196.51,
+    "marketValue": 1769560,
+    "unrealizedPnL": -817008.51,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
-    "returnPct": -44.2,
+    "returnPct": -29.97,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
-    "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
-      "sells": 0,
-      "unaccounted": 3320,
-      "held": null,
-      "reason": "none of its 3320 units is on a dated trade: the transaction statements in this drop run from 2026-04-01 to 2026-09-30 and record no buy or sell of it"
-    },
     "accruedIncome": null,
     "dividendReceived": 41832,
     "dividendFrom": "2026-04-01",
@@ -30284,6 +29668,19 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "linkClose": 3235208454.85,
     "linkAccounts": 24,
     "panelComplete": true
+  },
+  {
+    "period": "2026-11-04",
+    "date": "2026-11-04",
+    "nav": 3222686850.59,
+    "accountsOnDate": 2,
+    "accountsCarried": 22,
+    "flowIn": -25884,
+    "unreportedFlowValue": 0,
+    "linkOpen": 3235208454.85,
+    "linkClose": 3222686850.59,
+    "linkAccounts": 24,
+    "panelComplete": true
   }
 ];
 
@@ -30672,6 +30069,11 @@ export const BOOK_ACCOUNT_NAV_HISTORY: Record<string, NavPoint[]> = {
       "period": "2026-09-30",
       "date": "2026-09-30",
       "nav": 162233697.32
+    },
+    {
+      "period": "2026-11-04",
+      "date": "2026-11-04",
+      "nav": 154731232.44
     }
   ],
   "svan-investment-managers-llp-8710090": [
@@ -30704,6 +30106,11 @@ export const BOOK_ACCOUNT_NAV_HISTORY: Record<string, NavPoint[]> = {
       "period": "2026-09-30",
       "date": "2026-09-30",
       "nav": 107132060.02
+    },
+    {
+      "period": "2026-11-04",
+      "date": "2026-11-04",
+      "nav": 102112920.64
     }
   ],
   "v-e-c-assago-capital-management-llp-128004": [
@@ -31242,11 +30649,11 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
     },
     {
       "accountId": "svan-investment-managers-llp-8710067",
-      "points": 5,
+      "points": 6,
       "first": "2026-04-30",
-      "last": "2026-09-30",
-      "latestValue": 162233697.32,
-      "bookValue": 162233697.32,
+      "last": "2026-11-04",
+      "latestValue": 154731232.44,
+      "bookValue": 154731232.44,
       "flowBasis": "reported",
       "steps": [
         {
@@ -31272,16 +30679,22 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
           "to": "2026-09-30",
           "basis": "dated-record",
           "net": -37099.8
+        },
+        {
+          "from": "2026-09-30",
+          "to": "2026-11-04",
+          "basis": "dated-record",
+          "net": -15039
         }
       ]
     },
     {
       "accountId": "svan-investment-managers-llp-8710090",
-      "points": 6,
+      "points": 7,
       "first": "2026-04-30",
-      "last": "2026-09-30",
-      "latestValue": 107132060.02,
-      "bookValue": 107132060.02,
+      "last": "2026-11-04",
+      "latestValue": 102112920.64,
+      "bookValue": 102112920.64,
       "flowBasis": "reported",
       "steps": [
         {
@@ -31313,6 +30726,12 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
           "to": "2026-09-30",
           "basis": "printed-totals",
           "net": -6526
+        },
+        {
+          "from": "2026-09-30",
+          "to": "2026-11-04",
+          "basis": "dated-record",
+          "net": -10845
         }
       ]
     },
@@ -31856,7 +31275,7 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
     }
   ],
   "from": "2026-03-31",
-  "to": "2026-11-03",
+  "to": "2026-11-04",
   "panelCompleteFrom": "2026-10-26"
 };
 
@@ -31881,16 +31300,16 @@ export const BOOK_UNDATED_CAPITAL: UndatedCapital[] = [];
  */
 export const BOOK_ATTRIBUTION: Attribution = {
   "from": "2026-05-31",
-  "to": "2026-11-03",
+  "to": "2026-11-04",
   "openValue": 3167905207.06,
-  "closeValue": 3235208454.85,
-  "priceEffect": -46678918.13,
-  "tradeEffect": 83566773.34,
-  "enteredValue": 171382579.59,
+  "closeValue": 3222686850.59,
+  "priceEffect": -62545994.53,
+  "tradeEffect": 84356449.24,
+  "enteredValue": 173996473.56,
   "exitedValue": 99872612.94,
-  "undecomposedValue": -41094574.09,
-  "bookValue": 10755271296.04,
-  "coveredBookValue": 3235771535.77,
+  "undecomposedValue": -41152671.82,
+  "bookValue": 10742749691.78,
+  "coveredBookValue": 3223249931.51,
   "accounts": [
     {
       "accountId": "360-one-private-wealth-37702",
@@ -32235,34 +31654,34 @@ export const BOOK_ATTRIBUTION: Attribution = {
     {
       "accountId": "svan-investment-managers-llp-8710067",
       "from": "2026-05-31",
-      "to": "2026-09-30",
-      "days": 122,
+      "to": "2026-11-04",
+      "days": 157,
       "openValue": 147999299.63,
-      "closeValue": 162233697.32,
-      "priceEffect": 14699952.35,
-      "tradeEffect": 86351,
-      "enteredValue": 18537394.79,
+      "closeValue": 154731232.44,
+      "priceEffect": 5213718.55,
+      "tradeEffect": 514652.2,
+      "enteredValue": 20195552.18,
       "exitedValue": 13016880.86,
-      "undecomposedValue": -6072419.59,
+      "undecomposedValue": -6175109.26,
       "rowsHeld": 40,
-      "rowsEntered": 8,
+      "rowsEntered": 7,
       "rowsExited": 5,
       "rowsUnpriced": 1
     },
     {
       "accountId": "svan-investment-managers-llp-8710090",
       "from": "2026-05-31",
-      "to": "2026-09-30",
-      "days": 122,
+      "to": "2026-11-04",
+      "days": 157,
       "openValue": 96109656.08,
-      "closeValue": 107132060.02,
-      "priceEffect": 9596861.7,
-      "tradeEffect": -515657.5,
-      "enteredValue": 12240933.5,
+      "closeValue": 102112920.64,
+      "priceEffect": 3216019.1,
+      "tradeEffect": -154282.8,
+      "enteredValue": 13196670.08,
       "exitedValue": 7266498.75,
-      "undecomposedValue": -3033235.01,
+      "undecomposedValue": -2988643.07,
       "rowsHeld": 40,
-      "rowsEntered": 6,
+      "rowsEntered": 7,
       "rowsExited": 4,
       "rowsUnpriced": 1
     },
@@ -32337,6 +31756,23 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": 21.243
     },
     {
+      "securityKey": "indo-count-industries",
+      "security": "Indo Count Industries Ltd",
+      "accountId": "svan-investment-managers-llp-8710067",
+      "from": "2026-05-31",
+      "to": "2026-11-04",
+      "openValue": 5024810,
+      "closeValue": 8458135,
+      "openPrice": 312.1,
+      "closePrice": 525.35,
+      "openQty": 16100,
+      "closeQty": 16100,
+      "kind": "held",
+      "priceEffect": 3433325,
+      "tradeEffect": 0,
+      "returnPct": 68.3275
+    },
+    {
       "securityKey": "ather-energy",
       "security": "Ather Energy Ltd",
       "accountId": "v-e-c-assago-capital-management-llp-128005",
@@ -32352,6 +31788,23 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "priceEffect": 3369240,
       "tradeEffect": 0,
       "returnPct": 35.6407
+    },
+    {
+      "securityKey": "creative-newtech",
+      "security": "CREATIVE NEWTECH LIMITED",
+      "accountId": "svan-investment-managers-llp-8710067",
+      "from": "2026-05-31",
+      "to": "2026-11-04",
+      "openValue": 2423060.25,
+      "closeValue": 5345343,
+      "openPrice": 628.55,
+      "closePrice": 1386.6,
+      "openQty": 3855,
+      "closeQty": 3855,
+      "kind": "held",
+      "priceEffect": 2922282.75,
+      "tradeEffect": 0,
+      "returnPct": 120.603
     },
     {
       "securityKey": "kalpataru-projects-international",
@@ -32405,38 +31858,38 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": 1.1316
     },
     {
-      "securityKey": "indo-count-industries",
-      "security": "Indo Count Industries Ltd",
+      "securityKey": "sg-mart",
+      "security": "SG Mart Limited",
       "accountId": "svan-investment-managers-llp-8710067",
       "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 5024810,
-      "closeValue": 7412440,
-      "openPrice": 312.1,
-      "closePrice": 460.4,
-      "openQty": 16100,
-      "closeQty": 16100,
+      "to": "2026-11-04",
+      "openValue": 4296656,
+      "closeValue": 2823906.25,
+      "openPrice": 590.2,
+      "closePrice": 903.65,
+      "openQty": 7280,
+      "closeQty": 3125,
       "kind": "held",
-      "priceEffect": 2387630,
-      "tradeEffect": 0,
-      "returnPct": 47.5168
+      "priceEffect": 2281916,
+      "tradeEffect": -3754665.75,
+      "returnPct": 53.1091
     },
     {
-      "securityKey": "syrma-sgs-technology",
-      "security": "Syrma SGS Technology Limited",
-      "accountId": "svan-investment-managers-llp-8710067",
+      "securityKey": "indo-count-industries",
+      "security": "Indo Count Industries Ltd",
+      "accountId": "svan-investment-managers-llp-8710090",
       "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 3194894.25,
-      "closeValue": 4546395,
-      "openPrice": 1088.55,
-      "closePrice": 1782.9,
-      "openQty": 2935,
-      "closeQty": 2550,
+      "to": "2026-11-04",
+      "openValue": 3278610.5,
+      "closeValue": 5518801.75,
+      "openPrice": 312.1,
+      "closePrice": 525.35,
+      "openQty": 10505,
+      "closeQty": 10505,
       "kind": "held",
-      "priceEffect": 2037917.25,
-      "tradeEffect": -686416.5,
-      "returnPct": 63.7867
+      "priceEffect": 2240191.25,
+      "tradeEffect": 0,
+      "returnPct": 68.3275
     },
     {
       "securityKey": "mps",
@@ -32473,72 +31926,38 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": 29.2874
     },
     {
+      "securityKey": "creative-newtech",
+      "security": "CREATIVE NEWTECH LIMITED",
+      "accountId": "svan-investment-managers-llp-8710090",
+      "from": "2026-05-31",
+      "to": "2026-11-04",
+      "openValue": 1574517.75,
+      "closeValue": 3473433,
+      "openPrice": 628.55,
+      "closePrice": 1386.6,
+      "openQty": 2505,
+      "closeQty": 2505,
+      "kind": "held",
+      "priceEffect": 1898915.25,
+      "tradeEffect": 0,
+      "returnPct": 120.603
+    },
+    {
       "securityKey": "paras-defence-and-space-technologies",
       "security": "Paras Defence and Space Technologies Limited",
       "accountId": "svan-investment-managers-llp-8710067",
       "from": "2026-05-31",
-      "to": "2026-09-30",
+      "to": "2026-11-04",
       "openValue": 2990627.5,
-      "closeValue": 3185730,
+      "closeValue": 3075165,
       "openPrice": 819.35,
-      "closePrice": 1311,
+      "closePrice": 1265.5,
       "openQty": 3650,
       "closeQty": 2430,
       "kind": "held",
-      "priceEffect": 1794522.5,
-      "tradeEffect": -1599420,
-      "returnPct": 60.0049
-    },
-    {
-      "securityKey": "varroc-engineering",
-      "security": "Varroc Engineering Limited",
-      "accountId": "svan-investment-managers-llp-8710067",
-      "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 3352822,
-      "closeValue": 6105371.25,
-      "openPrice": 565.4,
-      "closePrice": 862.95,
-      "openQty": 5930,
-      "closeQty": 7075,
-      "kind": "held",
-      "priceEffect": 1764471.5,
-      "tradeEffect": 988077.75,
-      "returnPct": 52.6265
-    },
-    {
-      "securityKey": "creative-newtech",
-      "security": "CREATIVE NEWTECH LIMITED",
-      "accountId": "svan-investment-managers-llp-8710067",
-      "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 2423060.25,
-      "closeValue": 4171881,
-      "openPrice": 628.55,
-      "closePrice": 1082.2,
-      "openQty": 3855,
-      "closeQty": 3855,
-      "kind": "held",
-      "priceEffect": 1748820.75,
-      "tradeEffect": 0,
-      "returnPct": 72.1741
-    },
-    {
-      "securityKey": "caplin-point-laboratories",
-      "security": "Caplin Point Laboratories Ltd",
-      "accountId": "svan-investment-managers-llp-8710067",
-      "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 4990392.5,
-      "closeValue": 6695926,
-      "openPrice": 2024.5,
-      "closePrice": 2716.4,
-      "openQty": 2465,
-      "closeQty": 2465,
-      "kind": "held",
-      "priceEffect": 1705533.5,
-      "tradeEffect": 0,
-      "returnPct": 34.1763
+      "priceEffect": 1628447.5,
+      "tradeEffect": -1543910,
+      "returnPct": 54.4517
     },
     {
       "securityKey": "shoppers-stop",
@@ -32558,72 +31977,72 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": 20.3826
     },
     {
-      "securityKey": "indo-count-industries",
-      "security": "Indo Count Industries Ltd",
-      "accountId": "svan-investment-managers-llp-8710090",
+      "securityKey": "nitin-spinners",
+      "security": "NITIN SPINNERS LIMITED",
+      "accountId": "svan-investment-managers-llp-8710067",
       "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 3278610.5,
-      "closeValue": 4836502,
-      "openPrice": 312.1,
-      "closePrice": 460.4,
-      "openQty": 10505,
-      "closeQty": 10505,
+      "to": "2026-11-04",
+      "openValue": 4108093.25,
+      "closeValue": 6474643,
+      "openPrice": 489.35,
+      "closePrice": 675.85,
+      "openQty": 8395,
+      "closeQty": 9580,
       "kind": "held",
-      "priceEffect": 1557891.5,
-      "tradeEffect": 0,
-      "returnPct": 47.5168
+      "priceEffect": 1565667.5,
+      "tradeEffect": 800882.25,
+      "returnPct": 38.1118
     },
     {
-      "securityKey": "syrma-sgs-technology",
-      "security": "Syrma SGS Technology Limited",
+      "securityKey": "sg-mart",
+      "security": "SG Mart Limited",
       "accountId": "svan-investment-managers-llp-8710090",
       "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 2073687.75,
-      "closeValue": 2950699.5,
-      "openPrice": 1088.55,
-      "closePrice": 1782.9,
-      "openQty": 1905,
-      "closeQty": 1655,
+      "to": "2026-11-04",
+      "openValue": 2773940,
+      "closeValue": 1838927.75,
+      "openPrice": 590.2,
+      "closePrice": 903.65,
+      "openQty": 4700,
+      "closeQty": 2035,
       "kind": "held",
-      "priceEffect": 1322736.75,
-      "tradeEffect": -445725,
-      "returnPct": 63.7867
+      "priceEffect": 1473215,
+      "tradeEffect": -2408227.25,
+      "returnPct": 53.1091
     },
     {
       "securityKey": "varroc-engineering",
       "security": "Varroc Engineering Limited",
-      "accountId": "svan-investment-managers-llp-8710090",
-      "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 2436874,
-      "closeValue": 3973884.75,
-      "openPrice": 565.4,
-      "closePrice": 862.95,
-      "openQty": 4310,
-      "closeQty": 4605,
-      "kind": "held",
-      "priceEffect": 1282440.5,
-      "tradeEffect": 254570.25,
-      "returnPct": 52.6265
-    },
-    {
-      "securityKey": "neuland-laboratories",
-      "security": "Neuland Laboratories Ltd",
       "accountId": "svan-investment-managers-llp-8710067",
       "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 5126400,
-      "closeValue": 6405000,
-      "openPrice": 17088,
-      "closePrice": 21350,
-      "openQty": 300,
-      "closeQty": 300,
+      "to": "2026-11-04",
+      "openValue": 3352822,
+      "closeValue": 5512486.25,
+      "openPrice": 565.4,
+      "closePrice": 779.15,
+      "openQty": 5930,
+      "closeQty": 7075,
       "kind": "held",
-      "priceEffect": 1278600,
-      "tradeEffect": 0,
-      "returnPct": 24.9415
+      "priceEffect": 1267537.5,
+      "tradeEffect": 892126.75,
+      "returnPct": 37.8051
+    },
+    {
+      "securityKey": "syrma-sgs-technology",
+      "security": "Syrma SGS Technology Limited",
+      "accountId": "svan-investment-managers-llp-8710067",
+      "from": "2026-05-31",
+      "to": "2026-11-04",
+      "openValue": 3194894.25,
+      "closeValue": 3857130,
+      "openPrice": 1088.55,
+      "closePrice": 1512.6,
+      "openQty": 2935,
+      "closeQty": 2550,
+      "kind": "held",
+      "priceEffect": 1244586.75,
+      "tradeEffect": -582351,
+      "returnPct": 38.9555
     },
     {
       "securityKey": "motilal-oswal-founders-fund-series-ii-class-g1",
@@ -32660,123 +32079,106 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": 21.0678
     },
     {
-      "securityKey": "sg-mart",
-      "security": "SG Mart Limited",
-      "accountId": "svan-investment-managers-llp-8710067",
-      "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 4296656,
-      "closeValue": 2346093.75,
-      "openPrice": 590.2,
-      "closePrice": 750.75,
-      "openQty": 7280,
-      "closeQty": 3125,
-      "kind": "held",
-      "priceEffect": 1168804,
-      "tradeEffect": -3119366.25,
-      "returnPct": 27.2026
-    },
-    {
-      "securityKey": "creative-newtech",
-      "security": "CREATIVE NEWTECH LIMITED",
-      "accountId": "svan-investment-managers-llp-8710090",
-      "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 1574517.75,
-      "closeValue": 2710911,
-      "openPrice": 628.55,
-      "closePrice": 1082.2,
-      "openQty": 2505,
-      "closeQty": 2505,
-      "kind": "held",
-      "priceEffect": 1136393.25,
-      "tradeEffect": 0,
-      "returnPct": 72.1741
-    },
-    {
       "securityKey": "paras-defence-and-space-technologies",
       "security": "Paras Defence and Space Technologies Limited",
       "accountId": "svan-investment-managers-llp-8710090",
       "from": "2026-05-31",
-      "to": "2026-09-30",
+      "to": "2026-11-04",
       "openValue": 1872214.75,
-      "closeValue": 2064825,
+      "closeValue": 1993162.5,
       "openPrice": 819.35,
-      "closePrice": 1311,
+      "closePrice": 1265.5,
       "openQty": 2285,
       "closeQty": 1575,
       "kind": "held",
-      "priceEffect": 1123420.25,
-      "tradeEffect": -930810,
-      "returnPct": 60.0049
-    },
-    {
-      "securityKey": "caplin-point-laboratories",
-      "security": "Caplin Point Laboratories Ltd",
-      "accountId": "svan-investment-managers-llp-8710090",
-      "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 3239200,
-      "closeValue": 4346240,
-      "openPrice": 2024.5,
-      "closePrice": 2716.4,
-      "openQty": 1600,
-      "closeQty": 1600,
-      "kind": "held",
-      "priceEffect": 1107040,
-      "tradeEffect": 0,
-      "returnPct": 34.1763
+      "priceEffect": 1019452.75,
+      "tradeEffect": -898505,
+      "returnPct": 54.4517
     },
     {
       "securityKey": "nitin-spinners",
       "security": "NITIN SPINNERS LIMITED",
-      "accountId": "svan-investment-managers-llp-8710067",
-      "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 4108093.25,
-      "closeValue": 5731714,
-      "openPrice": 489.35,
-      "closePrice": 598.3,
-      "openQty": 8395,
-      "closeQty": 9580,
-      "kind": "held",
-      "priceEffect": 914635.25,
-      "tradeEffect": 708985.5,
-      "returnPct": 22.2642
-    },
-    {
-      "securityKey": "edelweiss-financial-services",
-      "security": "Edelweiss Financial Services Ltd",
-      "accountId": "svan-investment-managers-llp-8710067",
-      "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 3368241.1,
-      "closeValue": 4261204.15,
-      "openPrice": 112.82,
-      "closePrice": 142.73,
-      "openQty": 29855,
-      "closeQty": 29855,
-      "kind": "held",
-      "priceEffect": 892963.05,
-      "tradeEffect": 0,
-      "returnPct": 26.5113
-    },
-    {
-      "securityKey": "neuland-laboratories",
-      "security": "Neuland Laboratories Ltd",
       "accountId": "svan-investment-managers-llp-8710090",
       "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 3332160,
-      "closeValue": 4163250,
-      "openPrice": 17088,
-      "closePrice": 21350,
-      "openQty": 195,
-      "closeQty": 195,
+      "to": "2026-11-04",
+      "openValue": 2669404.25,
+      "closeValue": 4217304,
+      "openPrice": 489.35,
+      "closePrice": 675.85,
+      "openQty": 5455,
+      "closeQty": 6240,
       "kind": "held",
-      "priceEffect": 831090,
+      "priceEffect": 1017357.5,
+      "tradeEffect": 530542.25,
+      "returnPct": 38.1118
+    },
+    {
+      "securityKey": "caplin-point-laboratories",
+      "security": "Caplin Point Laboratories Ltd",
+      "accountId": "svan-investment-managers-llp-8710067",
+      "from": "2026-05-31",
+      "to": "2026-11-04",
+      "openValue": 4990392.5,
+      "closeValue": 5955686.5,
+      "openPrice": 2024.5,
+      "closePrice": 2416.1,
+      "openQty": 2465,
+      "closeQty": 2465,
+      "kind": "held",
+      "priceEffect": 965294,
       "tradeEffect": 0,
-      "returnPct": 24.9415
+      "returnPct": 19.343
+    },
+    {
+      "securityKey": "varroc-engineering",
+      "security": "Varroc Engineering Limited",
+      "accountId": "svan-investment-managers-llp-8710090",
+      "from": "2026-05-31",
+      "to": "2026-11-04",
+      "openValue": 2436874,
+      "closeValue": 3587985.75,
+      "openPrice": 565.4,
+      "closePrice": 779.15,
+      "openQty": 4310,
+      "closeQty": 4605,
+      "kind": "held",
+      "priceEffect": 921262.5,
+      "tradeEffect": 229849.25,
+      "returnPct": 37.8051
+    },
+    {
+      "securityKey": "stove-kraft",
+      "security": "Stove Kraft Limited",
+      "accountId": "svan-investment-managers-llp-8710067",
+      "from": "2026-05-31",
+      "to": "2026-11-04",
+      "openValue": 2410384.25,
+      "closeValue": 3253654.75,
+      "openPrice": 612.55,
+      "closePrice": 826.85,
+      "openQty": 3935,
+      "closeQty": 3935,
+      "kind": "held",
+      "priceEffect": 843270.5,
+      "tradeEffect": 0,
+      "returnPct": 34.9849
+    },
+    {
+      "securityKey": "syrma-sgs-technology",
+      "security": "Syrma SGS Technology Limited",
+      "accountId": "svan-investment-managers-llp-8710090",
+      "from": "2026-05-31",
+      "to": "2026-11-04",
+      "openValue": 2073687.75,
+      "closeValue": 2503353,
+      "openPrice": 1088.55,
+      "closePrice": 1512.6,
+      "openQty": 1905,
+      "closeQty": 1655,
+      "kind": "held",
+      "priceEffect": 807815.25,
+      "tradeEffect": -378150,
+      "returnPct": 38.9555
     },
     {
       "securityKey": "sansera-engineering",
@@ -32830,89 +32232,38 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": 12.2631
     },
     {
-      "securityKey": "sg-mart",
-      "security": "SG Mart Limited",
+      "securityKey": "neuland-laboratories",
+      "security": "Neuland Laboratories Ltd",
+      "accountId": "svan-investment-managers-llp-8710067",
+      "from": "2026-05-31",
+      "to": "2026-11-04",
+      "openValue": 5126400,
+      "closeValue": 4502480,
+      "openPrice": 17088,
+      "closePrice": 19576,
+      "openQty": 300,
+      "closeQty": 230,
+      "kind": "held",
+      "priceEffect": 746400,
+      "tradeEffect": -1370320,
+      "returnPct": 14.5599
+    },
+    {
+      "securityKey": "caplin-point-laboratories",
+      "security": "Caplin Point Laboratories Ltd",
       "accountId": "svan-investment-managers-llp-8710090",
       "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 2773940,
-      "closeValue": 1527776.25,
-      "openPrice": 590.2,
-      "closePrice": 750.75,
-      "openQty": 4700,
-      "closeQty": 2035,
+      "to": "2026-11-04",
+      "openValue": 3239200,
+      "closeValue": 3865760,
+      "openPrice": 2024.5,
+      "closePrice": 2416.1,
+      "openQty": 1600,
+      "closeQty": 1600,
       "kind": "held",
-      "priceEffect": 754585,
-      "tradeEffect": -2000748.75,
-      "returnPct": 27.2026
-    },
-    {
-      "securityKey": "stove-kraft",
-      "security": "Stove Kraft Limited",
-      "accountId": "svan-investment-managers-llp-8710067",
-      "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 2410384.25,
-      "closeValue": 3128128.25,
-      "openPrice": 612.55,
-      "closePrice": 794.95,
-      "openQty": 3935,
-      "closeQty": 3935,
-      "kind": "held",
-      "priceEffect": 717744,
+      "priceEffect": 626560,
       "tradeEffect": 0,
-      "returnPct": 29.7772
-    },
-    {
-      "securityKey": "laxmi-organic-industries",
-      "security": "Laxmi Organic Industries Limited",
-      "accountId": "svan-investment-managers-llp-8710067",
-      "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 3553920,
-      "closeValue": 4256640,
-      "openPrice": 148.08,
-      "closePrice": 177.36,
-      "openQty": 24000,
-      "closeQty": 24000,
-      "kind": "held",
-      "priceEffect": 702720,
-      "tradeEffect": 0,
-      "returnPct": 19.7731
-    },
-    {
-      "securityKey": "ghcl-textiles",
-      "security": "GHCL Textiles Limited",
-      "accountId": "svan-investment-managers-llp-8710067",
-      "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 1901828.5,
-      "closeValue": 3737455.5,
-      "openPrice": 95.81,
-      "closePrice": 128.9,
-      "openQty": 19850,
-      "closeQty": 28995,
-      "kind": "held",
-      "priceEffect": 656836.5,
-      "tradeEffect": 1178790.5,
-      "returnPct": 34.5371
-    },
-    {
-      "securityKey": "nitin-spinners",
-      "security": "NITIN SPINNERS LIMITED",
-      "accountId": "svan-investment-managers-llp-8710090",
-      "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 2669404.25,
-      "closeValue": 3733392,
-      "openPrice": 489.35,
-      "closePrice": 598.3,
-      "openQty": 5455,
-      "closeQty": 6240,
-      "kind": "held",
-      "priceEffect": 594322.25,
-      "tradeEffect": 469665.5,
-      "returnPct": 22.2642
+      "returnPct": 19.343
     },
     {
       "securityKey": "karur-vysya-bank",
@@ -32932,21 +32283,38 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": 9.8258
     },
     {
-      "securityKey": "edelweiss-financial-services",
-      "security": "Edelweiss Financial Services Ltd",
+      "securityKey": "ghcl-textiles",
+      "security": "GHCL Textiles Limited",
+      "accountId": "svan-investment-managers-llp-8710067",
+      "from": "2026-05-31",
+      "to": "2026-11-04",
+      "openValue": 1901828.5,
+      "closeValue": 3593930.25,
+      "openPrice": 95.81,
+      "closePrice": 123.95,
+      "openQty": 19850,
+      "closeQty": 28995,
+      "kind": "held",
+      "priceEffect": 558579,
+      "tradeEffect": 1133522.75,
+      "returnPct": 29.3706
+    },
+    {
+      "securityKey": "stove-kraft",
+      "security": "Stove Kraft Limited",
       "accountId": "svan-investment-managers-llp-8710090",
       "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 2190400.3,
-      "closeValue": 2771102.95,
-      "openPrice": 112.82,
-      "closePrice": 142.73,
-      "openQty": 19415,
-      "closeQty": 19415,
+      "to": "2026-11-04",
+      "openValue": 1574253.5,
+      "closeValue": 2125004.5,
+      "openPrice": 612.55,
+      "closePrice": 826.85,
+      "openQty": 2570,
+      "closeQty": 2570,
       "kind": "held",
-      "priceEffect": 580702.65,
+      "priceEffect": 550751,
       "tradeEffect": 0,
-      "returnPct": 26.5113
+      "returnPct": 34.9849
     },
     {
       "securityKey": "eclerx-services",
@@ -33000,72 +32368,38 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": 10.3953
     },
     {
-      "securityKey": "stove-kraft",
-      "security": "Stove Kraft Limited",
+      "securityKey": "neuland-laboratories",
+      "security": "Neuland Laboratories Ltd",
       "accountId": "svan-investment-managers-llp-8710090",
       "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 1574253.5,
-      "closeValue": 2043021.5,
-      "openPrice": 612.55,
-      "closePrice": 794.95,
-      "openQty": 2570,
-      "closeQty": 2570,
+      "to": "2026-11-04",
+      "openValue": 3332160,
+      "closeValue": 2916824,
+      "openPrice": 17088,
+      "closePrice": 19576,
+      "openQty": 195,
+      "closeQty": 149,
       "kind": "held",
-      "priceEffect": 468768,
-      "tradeEffect": 0,
-      "returnPct": 29.7772
-    },
-    {
-      "securityKey": "laxmi-organic-industries",
-      "security": "Laxmi Organic Industries Limited",
-      "accountId": "svan-investment-managers-llp-8710090",
-      "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 2318932.8,
-      "closeValue": 2777457.6,
-      "openPrice": 148.08,
-      "closePrice": 177.36,
-      "openQty": 15660,
-      "closeQty": 15660,
-      "kind": "held",
-      "priceEffect": 458524.8,
-      "tradeEffect": 0,
-      "returnPct": 19.7731
+      "priceEffect": 485160,
+      "tradeEffect": -900496,
+      "returnPct": 14.5599
     },
     {
       "securityKey": "ghcl-textiles",
       "security": "GHCL Textiles Limited",
       "accountId": "svan-investment-managers-llp-8710090",
       "from": "2026-05-31",
-      "to": "2026-09-30",
+      "to": "2026-11-04",
       "openValue": 1241218.55,
-      "closeValue": 2433632,
+      "closeValue": 2340176,
       "openPrice": 95.81,
-      "closePrice": 128.9,
+      "closePrice": 123.95,
       "openQty": 12955,
       "closeQty": 18880,
       "kind": "held",
-      "priceEffect": 428680.95,
-      "tradeEffect": 763732.5,
-      "returnPct": 34.5371
-    },
-    {
-      "securityKey": "sharda-motor-industries",
-      "security": "SHARDA MOTOR INDUSTRIES LIMITED",
-      "accountId": "svan-investment-managers-llp-8710067",
-      "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 2825055,
-      "closeValue": 3205782.5,
-      "openPrice": 843.3,
-      "closePrice": 956.95,
-      "openQty": 3350,
-      "closeQty": 3350,
-      "kind": "held",
-      "priceEffect": 380727.5,
-      "tradeEffect": 0,
-      "returnPct": 13.4768
+      "priceEffect": 364553.7,
+      "tradeEffect": 734403.75,
+      "returnPct": 29.3706
     },
     {
       "securityKey": "motilal-oswal-financial-services",
@@ -33085,21 +32419,21 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": 7.2785
     },
     {
-      "securityKey": "polyplex",
-      "security": "Polyplex Corporation Ltd",
+      "securityKey": "laxmi-organic-industries",
+      "security": "Laxmi Organic Industries Limited",
       "accountId": "svan-investment-managers-llp-8710067",
       "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 2329141.5,
-      "closeValue": 2653325,
-      "openPrice": 926.1,
-      "closePrice": 1055,
-      "openQty": 2515,
-      "closeQty": 2515,
+      "to": "2026-11-04",
+      "openValue": 3553920,
+      "closeValue": 3887520,
+      "openPrice": 148.08,
+      "closePrice": 161.98,
+      "openQty": 24000,
+      "closeQty": 24000,
       "kind": "held",
-      "priceEffect": 324183.5,
+      "priceEffect": 333600,
       "tradeEffect": 0,
-      "returnPct": 13.9186
+      "returnPct": 9.3868
     },
     {
       "securityKey": "bajaj-auto",
@@ -33119,55 +32453,38 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": 13.6188
     },
     {
-      "securityKey": "ester-industries",
-      "security": "Ester Industries Limited",
+      "securityKey": "ceat",
+      "security": "Ceat Ltd",
       "accountId": "svan-investment-managers-llp-8710067",
       "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 2864943.5,
-      "closeValue": 3146929.8,
-      "openPrice": 92.15,
-      "closePrice": 101.22,
-      "openQty": 31090,
-      "closeQty": 31090,
+      "to": "2026-11-04",
+      "openValue": 5153190,
+      "closeValue": 5430009,
+      "openPrice": 3241,
+      "closePrice": 3415.1,
+      "openQty": 1590,
+      "closeQty": 1590,
       "kind": "held",
-      "priceEffect": 281986.3,
+      "priceEffect": 276819,
       "tradeEffect": 0,
-      "returnPct": 9.8426
+      "returnPct": 5.3718
     },
     {
-      "securityKey": "krishca-strapping-solutions",
-      "security": "KRISHCA STRAPPING SOLUTIONS LTD",
+      "securityKey": "edelweiss-financial-services",
+      "security": "Edelweiss Financial Services Ltd",
       "accountId": "svan-investment-managers-llp-8710067",
       "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 1375875,
-      "closeValue": 1651125,
-      "openPrice": 183.45,
-      "closePrice": 220.15,
-      "openQty": 7500,
-      "closeQty": 7500,
+      "to": "2026-11-04",
+      "openValue": 3368241.1,
+      "closeValue": 3640518.7,
+      "openPrice": 112.82,
+      "closePrice": 121.94,
+      "openQty": 29855,
+      "closeQty": 29855,
       "kind": "held",
-      "priceEffect": 275250,
+      "priceEffect": 272277.6,
       "tradeEffect": 0,
-      "returnPct": 20.0055
-    },
-    {
-      "securityKey": "sharda-motor-industries",
-      "security": "SHARDA MOTOR INDUSTRIES LIMITED",
-      "accountId": "svan-investment-managers-llp-8710090",
-      "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 2015487,
-      "closeValue": 2287110.5,
-      "openPrice": 843.3,
-      "closePrice": 956.95,
-      "openQty": 2390,
-      "closeQty": 2390,
-      "kind": "held",
-      "priceEffect": 271623.5,
-      "tradeEffect": 0,
-      "returnPct": 13.4768
+      "returnPct": 8.0837
     },
     {
       "securityKey": "exide-industries",
@@ -33204,23 +32521,6 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": 9.8258
     },
     {
-      "securityKey": "shankara-buildpro",
-      "security": "Shankara Buildpro Ltd",
-      "accountId": "svan-investment-managers-llp-8710067",
-      "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 4263168,
-      "closeValue": 4505460,
-      "openPrice": 1164.8,
-      "closePrice": 1231,
-      "openQty": 3660,
-      "closeQty": 3660,
-      "kind": "held",
-      "priceEffect": 242292,
-      "tradeEffect": 0,
-      "returnPct": 5.6834
-    },
-    {
       "securityKey": "jindal-stainless",
       "security": "Jindal Stainless Ltd",
       "accountId": "goldstandard-wealth-private-limited-100023",
@@ -33236,6 +32536,23 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "priceEffect": 226800,
       "tradeEffect": 0,
       "returnPct": 4.566
+    },
+    {
+      "securityKey": "laxmi-organic-industries",
+      "security": "Laxmi Organic Industries Limited",
+      "accountId": "svan-investment-managers-llp-8710090",
+      "from": "2026-05-31",
+      "to": "2026-11-04",
+      "openValue": 2318932.8,
+      "closeValue": 2536606.8,
+      "openPrice": 148.08,
+      "closePrice": 161.98,
+      "openQty": 15660,
+      "closeQty": 15660,
+      "kind": "held",
+      "priceEffect": 217674,
+      "tradeEffect": 0,
+      "returnPct": 9.3868
     },
     {
       "securityKey": "tech-mahindra",
@@ -33272,23 +32589,6 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": 10.2629
     },
     {
-      "securityKey": "polyplex",
-      "security": "Polyplex Corporation Ltd",
-      "accountId": "svan-investment-managers-llp-8710090",
-      "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 1518804,
-      "closeValue": 1730200,
-      "openPrice": 926.1,
-      "closePrice": 1055,
-      "openQty": 1640,
-      "closeQty": 1640,
-      "kind": "held",
-      "priceEffect": 211396,
-      "tradeEffect": 0,
-      "returnPct": 13.9186
-    },
-    {
       "securityKey": "hindustan-aeronautics",
       "security": "Hindustan Aeronautics Ltd",
       "accountId": "green-lantern-capital-llp-510861",
@@ -33323,6 +32623,23 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": 3.2903
     },
     {
+      "securityKey": "zensar-technologies",
+      "security": "Zensar Technologies Ltd",
+      "accountId": "svan-investment-managers-llp-8710067",
+      "from": "2026-05-31",
+      "to": "2026-11-04",
+      "openValue": 2515223.5,
+      "closeValue": 2712970,
+      "openPrice": 494.15,
+      "closePrice": 533,
+      "openQty": 5090,
+      "closeQty": 5090,
+      "kind": "held",
+      "priceEffect": 197746.5,
+      "tradeEffect": 0,
+      "returnPct": 7.862
+    },
+    {
       "securityKey": "graphite-india",
       "security": "Graphite India Ltd",
       "accountId": "green-lantern-capital-llp-510861",
@@ -33340,21 +32657,21 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": 9.3843
     },
     {
-      "securityKey": "krishca-strapping-solutions",
-      "security": "KRISHCA STRAPPING SOLUTIONS LTD",
+      "securityKey": "ceat",
+      "security": "Ceat Ltd",
       "accountId": "svan-investment-managers-llp-8710090",
       "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 917250,
-      "closeValue": 1100750,
-      "openPrice": 183.45,
-      "closePrice": 220.15,
-      "openQty": 5000,
-      "closeQty": 5000,
+      "to": "2026-11-04",
+      "openValue": 3370640,
+      "closeValue": 3551704,
+      "openPrice": 3241,
+      "closePrice": 3415.1,
+      "openQty": 1040,
+      "closeQty": 1040,
       "kind": "held",
-      "priceEffect": 183500,
+      "priceEffect": 181064,
       "tradeEffect": 0,
-      "returnPct": 20.0055
+      "returnPct": 5.3718
     },
     {
       "securityKey": "sagility",
@@ -33374,21 +32691,21 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": 4.4406
     },
     {
-      "securityKey": "ester-industries",
-      "security": "Ester Industries Limited",
+      "securityKey": "edelweiss-financial-services",
+      "security": "Edelweiss Financial Services Ltd",
       "accountId": "svan-investment-managers-llp-8710090",
       "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 1813972.75,
-      "closeValue": 1992515.7,
-      "openPrice": 92.15,
-      "closePrice": 101.22,
-      "openQty": 19685,
-      "closeQty": 19685,
+      "to": "2026-11-04",
+      "openValue": 2190400.3,
+      "closeValue": 2367465.1,
+      "openPrice": 112.82,
+      "closePrice": 121.94,
+      "openQty": 19415,
+      "closeQty": 19415,
       "kind": "held",
-      "priceEffect": 178542.95,
+      "priceEffect": 177064.8,
       "tradeEffect": 0,
-      "returnPct": 9.8426
+      "returnPct": 8.0837
     },
     {
       "securityKey": "bajaj-auto",
@@ -33406,23 +32723,6 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "priceEffect": 159519.5,
       "tradeEffect": -178936,
       "returnPct": 13.6188
-    },
-    {
-      "securityKey": "shankara-buildpro",
-      "security": "Shankara Buildpro Ltd",
-      "accountId": "svan-investment-managers-llp-8710090",
-      "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 2772224,
-      "closeValue": 2929780,
-      "openPrice": 1164.8,
-      "closePrice": 1231,
-      "openQty": 2380,
-      "closeQty": 2380,
-      "kind": "held",
-      "priceEffect": 157556,
-      "tradeEffect": 0,
-      "returnPct": 5.6834
     },
     {
       "securityKey": "motilal-oswal-financial-services",
@@ -33459,21 +32759,21 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": 5.4226
     },
     {
-      "securityKey": "wockhardt",
-      "security": "Wockhardt Ltd",
-      "accountId": "svan-investment-managers-llp-8710067",
+      "securityKey": "zensar-technologies",
+      "security": "Zensar Technologies Ltd",
+      "accountId": "svan-investment-managers-llp-8710090",
       "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 3250240,
-      "closeValue": 3386080,
-      "openPrice": 2031.4,
-      "closePrice": 2116.3,
-      "openQty": 1600,
-      "closeQty": 1600,
+      "to": "2026-11-04",
+      "openValue": 1640578,
+      "closeValue": 1769560,
+      "openPrice": 494.15,
+      "closePrice": 533,
+      "openQty": 3320,
+      "closeQty": 3320,
       "kind": "held",
-      "priceEffect": 135840,
+      "priceEffect": 128982,
       "tradeEffect": 0,
-      "returnPct": 4.1794
+      "returnPct": 7.862
     },
     {
       "securityKey": "jamna-auto-ind",
@@ -33646,23 +32946,6 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": 9.3843
     },
     {
-      "securityKey": "wockhardt",
-      "security": "Wockhardt Ltd",
-      "accountId": "svan-investment-managers-llp-8710090",
-      "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 2122813,
-      "closeValue": 2211533.5,
-      "openPrice": 2031.4,
-      "closePrice": 2116.3,
-      "openQty": 1045,
-      "closeQty": 1045,
-      "kind": "held",
-      "priceEffect": 88720.5,
-      "tradeEffect": 0,
-      "returnPct": 4.1794
-    },
-    {
       "securityKey": "glenmark-pharmaceuticals",
       "security": "Glenmark Pharmaceuticals Ltd",
       "accountId": "green-lantern-capital-llp-510861",
@@ -33678,23 +32961,6 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "priceEffect": 84032,
       "tradeEffect": 0,
       "returnPct": 1.9309
-    },
-    {
-      "securityKey": "time-technoplast",
-      "security": "Time Technoplast Ltd",
-      "accountId": "svan-investment-managers-llp-8710067",
-      "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 1904339,
-      "closeValue": 1987724,
-      "openPrice": 174.71,
-      "closePrice": 182.36,
-      "openQty": 10900,
-      "closeQty": 10900,
-      "kind": "held",
-      "priceEffect": 83385,
-      "tradeEffect": 0,
-      "returnPct": 4.3787
     },
     {
       "securityKey": "sagility",
@@ -33748,21 +33014,38 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": 1.7526
     },
     {
-      "securityKey": "punjab-chem-and-crop-prot-l",
-      "security": "PUNJAB CHEM & CROP PROT L",
+      "securityKey": "sharda-motor-industries",
+      "security": "SHARDA MOTOR INDUSTRIES LIMITED",
       "accountId": "svan-investment-managers-llp-8710067",
       "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 3013527,
-      "closeValue": 3073867.5,
-      "openPrice": 1033.8,
-      "closePrice": 1054.5,
-      "openQty": 2915,
-      "closeQty": 2915,
+      "to": "2026-11-04",
+      "openValue": 2825055,
+      "closeValue": 2897750,
+      "openPrice": 843.3,
+      "closePrice": 865,
+      "openQty": 3350,
+      "closeQty": 3350,
       "kind": "held",
-      "priceEffect": 60340.5,
+      "priceEffect": 72695,
       "tradeEffect": 0,
-      "returnPct": 2.0023
+      "returnPct": 2.5732
+    },
+    {
+      "securityKey": "krishca-strapping-solutions",
+      "security": "KRISHCA STRAPPING SOLUTIONS LTD",
+      "accountId": "svan-investment-managers-llp-8710067",
+      "from": "2026-05-31",
+      "to": "2026-11-04",
+      "openValue": 1375875,
+      "closeValue": 1447500,
+      "openPrice": 183.45,
+      "closePrice": 193,
+      "openQty": 7500,
+      "closeQty": 7500,
+      "kind": "held",
+      "priceEffect": 71625,
+      "tradeEffect": 0,
+      "returnPct": 5.2058
     },
     {
       "securityKey": "gmm-pfaudler",
@@ -33799,23 +33082,6 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": 3.2648
     },
     {
-      "securityKey": "time-technoplast",
-      "security": "Time Technoplast Ltd",
-      "accountId": "svan-investment-managers-llp-8710090",
-      "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 1355749.6,
-      "closeValue": 1415113.6,
-      "openPrice": 174.71,
-      "closePrice": 182.36,
-      "openQty": 7760,
-      "closeQty": 7760,
-      "kind": "held",
-      "priceEffect": 59364,
-      "tradeEffect": 0,
-      "returnPct": 4.3787
-    },
-    {
       "securityKey": "sharda-motor-industries",
       "security": "Sharda Motor Industries Ltd",
       "accountId": "goldstandard-wealth-private-limited-100022",
@@ -33831,6 +33097,23 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "priceEffect": 59062.5,
       "tradeEffect": 0,
       "returnPct": 5.4226
+    },
+    {
+      "securityKey": "sharda-motor-industries",
+      "security": "SHARDA MOTOR INDUSTRIES LIMITED",
+      "accountId": "svan-investment-managers-llp-8710090",
+      "from": "2026-05-31",
+      "to": "2026-11-04",
+      "openValue": 2015487,
+      "closeValue": 2067350,
+      "openPrice": 843.3,
+      "closePrice": 865,
+      "openQty": 2390,
+      "closeQty": 2390,
+      "kind": "held",
+      "priceEffect": 51863,
+      "tradeEffect": 0,
+      "returnPct": 2.5732
     },
     {
       "securityKey": "alivus-life-sciences",
@@ -33850,21 +33133,21 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": 2.1835
     },
     {
-      "securityKey": "punjab-chem-and-crop-prot-l",
-      "security": "PUNJAB CHEM & CROP PROT L",
+      "securityKey": "krishca-strapping-solutions",
+      "security": "KRISHCA STRAPPING SOLUTIONS LTD",
       "accountId": "svan-investment-managers-llp-8710090",
       "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 2145135,
-      "closeValue": 2188087.5,
-      "openPrice": 1033.8,
-      "closePrice": 1054.5,
-      "openQty": 2075,
-      "closeQty": 2075,
+      "to": "2026-11-04",
+      "openValue": 917250,
+      "closeValue": 965000,
+      "openPrice": 183.45,
+      "closePrice": 193,
+      "openQty": 5000,
+      "closeQty": 5000,
       "kind": "held",
-      "priceEffect": 42952.5,
+      "priceEffect": 47750,
       "tradeEffect": 0,
-      "returnPct": 2.0023
+      "returnPct": 5.2058
     },
     {
       "securityKey": "glenmark-pharmaceuticals",
@@ -33882,23 +33165,6 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "priceEffect": 42432,
       "tradeEffect": 0,
       "returnPct": 1.9309
-    },
-    {
-      "securityKey": "ceat",
-      "security": "Ceat Ltd",
-      "accountId": "svan-investment-managers-llp-8710067",
-      "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 5153190,
-      "closeValue": 5190396,
-      "openPrice": 3241,
-      "closePrice": 3264.4,
-      "openQty": 1590,
-      "closeQty": 1590,
-      "kind": "held",
-      "priceEffect": 37206,
-      "tradeEffect": 0,
-      "returnPct": 0.722
     },
     {
       "securityKey": "bandhan-amc-ltd-bandhan-mf-bandhan-arbitrage-fund-direct-pl-growth",
@@ -33950,57 +33216,6 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "priceEffect": 30444.4,
       "tradeEffect": 0,
       "returnPct": 3.2565
-    },
-    {
-      "securityKey": "wpil",
-      "security": "Wpil Ltd",
-      "accountId": "svan-investment-managers-llp-8710067",
-      "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 1835325.75,
-      "closeValue": 1862918.25,
-      "openPrice": 432.35,
-      "closePrice": 438.85,
-      "openQty": 4245,
-      "closeQty": 4245,
-      "kind": "held",
-      "priceEffect": 27592.5,
-      "tradeEffect": 0,
-      "returnPct": 1.5034
-    },
-    {
-      "securityKey": "ceat",
-      "security": "Ceat Ltd",
-      "accountId": "svan-investment-managers-llp-8710090",
-      "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 3370640,
-      "closeValue": 3394976,
-      "openPrice": 3241,
-      "closePrice": 3264.4,
-      "openQty": 1040,
-      "closeQty": 1040,
-      "kind": "held",
-      "priceEffect": 24336,
-      "tradeEffect": 0,
-      "returnPct": 0.722
-    },
-    {
-      "securityKey": "wpil",
-      "security": "Wpil Ltd",
-      "accountId": "svan-investment-managers-llp-8710090",
-      "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 1335961.5,
-      "closeValue": 1356046.5,
-      "openPrice": 432.35,
-      "closePrice": 438.85,
-      "openQty": 3090,
-      "closeQty": 3090,
-      "kind": "held",
-      "priceEffect": 20085,
-      "tradeEffect": 0,
-      "returnPct": 1.5034
     },
     {
       "securityKey": "punjab-national-bank",
@@ -34377,6 +33592,40 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": null
     },
     {
+      "securityKey": "birlasoft",
+      "security": "Birlasoft Ltd",
+      "accountId": "svan-investment-managers-llp-8710090",
+      "from": "2026-05-31",
+      "to": "2026-11-04",
+      "openValue": 2094936,
+      "closeValue": 2094280,
+      "openPrice": 319.35,
+      "closePrice": 319.25,
+      "openQty": 6560,
+      "closeQty": 6560,
+      "kind": "held",
+      "priceEffect": -656,
+      "tradeEffect": 0,
+      "returnPct": -0.0313
+    },
+    {
+      "securityKey": "birlasoft",
+      "security": "Birlasoft Ltd",
+      "accountId": "svan-investment-managers-llp-8710067",
+      "from": "2026-05-31",
+      "to": "2026-11-04",
+      "openValue": 3228628.5,
+      "closeValue": 3227617.5,
+      "openPrice": 319.35,
+      "closePrice": 319.25,
+      "openQty": 10110,
+      "closeQty": 10110,
+      "kind": "held",
+      "priceEffect": -1011,
+      "tradeEffect": 0,
+      "returnPct": -0.0313
+    },
+    {
       "securityKey": "kovai-medical-center-and-hospital",
       "security": "Kovai Medical Center & Hospital Ltd.",
       "accountId": "goldstandard-wealth-private-limited-100022",
@@ -34392,6 +33641,23 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "priceEffect": -3750,
       "tradeEffect": 0,
       "returnPct": -0.1256
+    },
+    {
+      "securityKey": "polyplex",
+      "security": "Polyplex Corporation Ltd",
+      "accountId": "svan-investment-managers-llp-8710090",
+      "from": "2026-05-31",
+      "to": "2026-11-04",
+      "openValue": 1518804,
+      "closeValue": 1510194,
+      "openPrice": 926.1,
+      "closePrice": 920.85,
+      "openQty": 1640,
+      "closeQty": 1640,
+      "kind": "held",
+      "priceEffect": -8610,
+      "tradeEffect": 0,
+      "returnPct": -0.5669
     },
     {
       "securityKey": "kovai-medical-center-and-hospital",
@@ -34460,6 +33726,23 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "priceEffect": -12755.6,
       "tradeEffect": 5000320.6,
       "returnPct": -0.1357
+    },
+    {
+      "securityKey": "polyplex",
+      "security": "Polyplex Corporation Ltd",
+      "accountId": "svan-investment-managers-llp-8710067",
+      "from": "2026-05-31",
+      "to": "2026-11-04",
+      "openValue": 2329141.5,
+      "closeValue": 2315937.75,
+      "openPrice": 926.1,
+      "closePrice": 920.85,
+      "openQty": 2515,
+      "closeQty": 2515,
+      "kind": "held",
+      "priceEffect": -13203.75,
+      "tradeEffect": 0,
+      "returnPct": -0.5669
     },
     {
       "securityKey": "caplin-point-laboratories",
@@ -34547,21 +33830,21 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": -1.2804
     },
     {
-      "securityKey": "fusion-finance",
-      "security": "Fusion Finance Limited",
+      "securityKey": "time-technoplast",
+      "security": "Time Technoplast Ltd",
       "accountId": "svan-investment-managers-llp-8710090",
       "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 1436683.5,
-      "closeValue": 1409394,
-      "openPrice": 178.47,
-      "closePrice": 175.08,
-      "openQty": 8050,
-      "closeQty": 8050,
+      "to": "2026-11-04",
+      "openValue": 1355749.6,
+      "closeValue": 1330219.2,
+      "openPrice": 174.71,
+      "closePrice": 171.42,
+      "openQty": 7760,
+      "closeQty": 7760,
       "kind": "held",
-      "priceEffect": -27289.5,
+      "priceEffect": -25530.4,
       "tradeEffect": 0,
-      "returnPct": -1.8995
+      "returnPct": -1.8831
     },
     {
       "securityKey": "caplin-point-laboratories",
@@ -34579,6 +33862,23 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "priceEffect": -34800,
       "tradeEffect": 0,
       "returnPct": -0.6638
+    },
+    {
+      "securityKey": "time-technoplast",
+      "security": "Time Technoplast Ltd",
+      "accountId": "svan-investment-managers-llp-8710067",
+      "from": "2026-05-31",
+      "to": "2026-11-04",
+      "openValue": 1904339,
+      "closeValue": 1868478,
+      "openPrice": 174.71,
+      "closePrice": 171.42,
+      "openQty": 10900,
+      "closeQty": 10900,
+      "kind": "held",
+      "priceEffect": -35861,
+      "tradeEffect": 0,
+      "returnPct": -1.8831
     },
     {
       "securityKey": "vedanta",
@@ -34630,40 +33930,6 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "priceEffect": -39402.6,
       "tradeEffect": 0,
       "returnPct": -0.8479
-    },
-    {
-      "securityKey": "credit-access-grameen",
-      "security": "Credit Access Grameen Limited",
-      "accountId": "svan-investment-managers-llp-8710090",
-      "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 2221782.5,
-      "closeValue": 3199080,
-      "openPrice": 1295.5,
-      "closePrice": 1272,
-      "openQty": 1715,
-      "closeQty": 2515,
-      "kind": "held",
-      "priceEffect": -40302.5,
-      "tradeEffect": 1017600,
-      "returnPct": -1.814
-    },
-    {
-      "securityKey": "fusion-finance",
-      "security": "Fusion Finance Limited",
-      "accountId": "svan-investment-managers-llp-8710067",
-      "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 2202319.8,
-      "closeValue": 2160487.2,
-      "openPrice": 178.47,
-      "closePrice": 175.08,
-      "openQty": 12340,
-      "closeQty": 12340,
-      "kind": "held",
-      "priceEffect": -41832.6,
-      "tradeEffect": 0,
-      "returnPct": -1.8995
     },
     {
       "securityKey": "vedanta-aluminium-metal",
@@ -34734,23 +34000,6 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": -2.9007
     },
     {
-      "securityKey": "credit-access-grameen",
-      "security": "Credit Access Grameen Limited",
-      "accountId": "svan-investment-managers-llp-8710067",
-      "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 2888965,
-      "closeValue": 4909920,
-      "openPrice": 1295.5,
-      "closePrice": 1272,
-      "openQty": 2230,
-      "closeQty": 3860,
-      "kind": "held",
-      "priceEffect": -52405,
-      "tradeEffect": 2073360,
-      "returnPct": -1.814
-    },
-    {
       "securityKey": "amrutanjan-health-care",
       "security": "Amrutanjan Health Care Ltd",
       "accountId": "v-e-c-assago-capital-management-llp-128004",
@@ -34802,23 +34051,6 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": -3.8615
     },
     {
-      "securityKey": "shakti-pumps-india",
-      "security": "Shakti Pumps India Ltd",
-      "accountId": "svan-investment-managers-llp-8710090",
-      "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 514255,
-      "closeValue": 452123,
-      "openPrice": 524.75,
-      "closePrice": 461.35,
-      "openQty": 980,
-      "closeQty": 980,
-      "kind": "held",
-      "priceEffect": -62132,
-      "tradeEffect": 0,
-      "returnPct": -12.0819
-    },
-    {
       "securityKey": "state-bank-of-india",
       "security": "State Bank Of India",
       "accountId": "green-lantern-capital-llp-510854",
@@ -34851,6 +34083,23 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "priceEffect": -64159.1,
       "tradeEffect": 0,
       "returnPct": -3.9288
+    },
+    {
+      "securityKey": "ester-industries",
+      "security": "Ester Industries Limited",
+      "accountId": "svan-investment-managers-llp-8710090",
+      "from": "2026-05-31",
+      "to": "2026-11-04",
+      "openValue": 1813972.75,
+      "closeValue": 1743303.6,
+      "openPrice": 92.15,
+      "closePrice": 88.56,
+      "openQty": 19685,
+      "closeQty": 19685,
+      "kind": "held",
+      "priceEffect": -70669.15,
+      "tradeEffect": 0,
+      "returnPct": -3.8958
     },
     {
       "securityKey": "chemfab-alkalis",
@@ -34887,23 +34136,6 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": -3.2181
     },
     {
-      "securityKey": "ifb-industries",
-      "security": "IFB Industries Ltd",
-      "accountId": "svan-investment-managers-llp-8710090",
-      "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 1866225,
-      "closeValue": 1789490,
-      "openPrice": 1252.5,
-      "closePrice": 1201,
-      "openQty": 1490,
-      "closeQty": 1490,
-      "kind": "held",
-      "priceEffect": -76735,
-      "tradeEffect": 0,
-      "returnPct": -4.1118
-    },
-    {
       "securityKey": "nuvama-wealth-management",
       "security": "Nuvama Wealth Management Ltd",
       "accountId": "v-e-c-assago-capital-management-llp-128004",
@@ -34919,57 +34151,6 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "priceEffect": -76777.5,
       "tradeEffect": 0,
       "returnPct": -2.3269
-    },
-    {
-      "securityKey": "dilip-buildcon",
-      "security": "Dilip Buildcon Ltd",
-      "accountId": "svan-investment-managers-llp-8710090",
-      "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 1791796.5,
-      "closeValue": 1712133,
-      "openPrice": 425.1,
-      "closePrice": 406.2,
-      "openQty": 4215,
-      "closeQty": 4215,
-      "kind": "held",
-      "priceEffect": -79663.5,
-      "tradeEffect": 0,
-      "returnPct": -4.446
-    },
-    {
-      "securityKey": "mastek",
-      "security": "Mastek Ltd",
-      "accountId": "svan-investment-managers-llp-8710090",
-      "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 2131370,
-      "closeValue": 2047268,
-      "openPrice": 1627,
-      "closePrice": 1562.8,
-      "openQty": 1310,
-      "closeQty": 1310,
-      "kind": "held",
-      "priceEffect": -84102,
-      "tradeEffect": 0,
-      "returnPct": -3.9459
-    },
-    {
-      "securityKey": "shakti-pumps-india",
-      "security": "Shakti Pumps India Ltd",
-      "accountId": "svan-investment-managers-llp-8710067",
-      "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 708412.5,
-      "closeValue": 622822.5,
-      "openPrice": 524.75,
-      "closePrice": 461.35,
-      "openQty": 1350,
-      "closeQty": 1350,
-      "kind": "held",
-      "priceEffect": -85590,
-      "tradeEffect": 0,
-      "returnPct": -12.0819
     },
     {
       "securityKey": "kirloskar-ferrous-industries",
@@ -35074,38 +34255,38 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": -7.7514
     },
     {
-      "securityKey": "ifb-industries",
-      "security": "IFB Industries Ltd",
-      "accountId": "svan-investment-managers-llp-8710067",
-      "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 2623987.5,
-      "closeValue": 2516095,
-      "openPrice": 1252.5,
-      "closePrice": 1201,
-      "openQty": 2095,
-      "closeQty": 2095,
-      "kind": "held",
-      "priceEffect": -107892.5,
-      "tradeEffect": 0,
-      "returnPct": -4.1118
-    },
-    {
-      "securityKey": "vaibhav-global",
-      "security": "Vaibhav Global Ltd",
+      "securityKey": "dilip-buildcon",
+      "security": "Dilip Buildcon Ltd",
       "accountId": "svan-investment-managers-llp-8710090",
       "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 1337253.45,
-      "closeValue": 1226941.6,
-      "openPrice": 222.69,
-      "closePrice": 204.32,
-      "openQty": 6005,
-      "closeQty": 6005,
+      "to": "2026-11-04",
+      "openValue": 1791796.5,
+      "closeValue": 1680731.25,
+      "openPrice": 425.1,
+      "closePrice": 398.75,
+      "openQty": 4215,
+      "closeQty": 4215,
       "kind": "held",
-      "priceEffect": -110311.85,
+      "priceEffect": -111065.25,
       "tradeEffect": 0,
-      "returnPct": -8.2491
+      "returnPct": -6.1985
+    },
+    {
+      "securityKey": "ester-industries",
+      "security": "Ester Industries Limited",
+      "accountId": "svan-investment-managers-llp-8710067",
+      "from": "2026-05-31",
+      "to": "2026-11-04",
+      "openValue": 2864943.5,
+      "closeValue": 2753330.4,
+      "openPrice": 92.15,
+      "closePrice": 88.56,
+      "openQty": 31090,
+      "closeQty": 31090,
+      "kind": "held",
+      "priceEffect": -111613.1,
+      "tradeEffect": 0,
+      "returnPct": -3.8958
     },
     {
       "securityKey": "bls-international-services",
@@ -35193,23 +34374,6 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": -6.5129
     },
     {
-      "securityKey": "dilip-buildcon",
-      "security": "Dilip Buildcon Ltd",
-      "accountId": "svan-investment-managers-llp-8710067",
-      "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 2746146,
-      "closeValue": 2624052,
-      "openPrice": 425.1,
-      "closePrice": 406.2,
-      "openQty": 6460,
-      "closeQty": 6460,
-      "kind": "held",
-      "priceEffect": -122094,
-      "tradeEffect": 0,
-      "returnPct": -4.446
-    },
-    {
       "securityKey": "state-bank-of-india",
       "security": "State Bank Of India",
       "accountId": "green-lantern-capital-llp-510861",
@@ -35244,38 +34408,21 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": -3.9288
     },
     {
-      "securityKey": "mastek",
-      "security": "Mastek Ltd",
-      "accountId": "svan-investment-managers-llp-8710067",
-      "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 3262135,
-      "closeValue": 3133414,
-      "openPrice": 1627,
-      "closePrice": 1562.8,
-      "openQty": 2005,
-      "closeQty": 2005,
-      "kind": "held",
-      "priceEffect": -128721,
-      "tradeEffect": 0,
-      "returnPct": -3.9459
-    },
-    {
-      "securityKey": "puravankara",
-      "security": "Puravankara Limited",
+      "securityKey": "wockhardt",
+      "security": "Wockhardt Ltd",
       "accountId": "svan-investment-managers-llp-8710090",
       "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 2490257.4,
-      "closeValue": 2346085.8,
-      "openPrice": 219.02,
-      "closePrice": 206.34,
-      "openQty": 11370,
-      "closeQty": 11370,
+      "to": "2026-11-04",
+      "openValue": 2122813,
+      "closeValue": 1984455,
+      "openPrice": 2031.4,
+      "closePrice": 1899,
+      "openQty": 1045,
+      "closeQty": 1045,
       "kind": "held",
-      "priceEffect": -144171.6,
+      "priceEffect": -138358,
       "tradeEffect": 0,
-      "returnPct": -5.7894
+      "returnPct": -6.5177
     },
     {
       "securityKey": "state-bank-of-india",
@@ -35295,6 +34442,23 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": -6.2714
     },
     {
+      "securityKey": "wpil",
+      "security": "Wpil Ltd",
+      "accountId": "svan-investment-managers-llp-8710090",
+      "from": "2026-05-31",
+      "to": "2026-11-04",
+      "openValue": 1335961.5,
+      "closeValue": 1176208.5,
+      "openPrice": 432.35,
+      "closePrice": 380.65,
+      "openQty": 3090,
+      "closeQty": 3090,
+      "kind": "held",
+      "priceEffect": -159753,
+      "tradeEffect": 0,
+      "returnPct": -11.9579
+    },
+    {
       "securityKey": "ksb",
       "security": "KSB Ltd",
       "accountId": "green-lantern-capital-llp-510854",
@@ -35310,6 +34474,23 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "priceEffect": -160599,
       "tradeEffect": 0,
       "returnPct": -6.0951
+    },
+    {
+      "securityKey": "shakti-pumps-india",
+      "security": "Shakti Pumps India Ltd",
+      "accountId": "svan-investment-managers-llp-8710090",
+      "from": "2026-05-31",
+      "to": "2026-11-04",
+      "openValue": 514255,
+      "closeValue": 352261,
+      "openPrice": 524.75,
+      "closePrice": 359.45,
+      "openQty": 980,
+      "closeQty": 980,
+      "kind": "held",
+      "priceEffect": -161994,
+      "tradeEffect": 0,
+      "returnPct": -31.5007
     },
     {
       "securityKey": "zf-commercial-vehicle-control-systems-india",
@@ -35363,21 +34544,21 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": -12.3886
     },
     {
-      "securityKey": "vaibhav-global",
-      "security": "Vaibhav Global Ltd",
+      "securityKey": "dilip-buildcon",
+      "security": "Dilip Buildcon Ltd",
       "accountId": "svan-investment-managers-llp-8710067",
       "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 2048748,
-      "closeValue": 1879744,
-      "openPrice": 222.69,
-      "closePrice": 204.32,
-      "openQty": 9200,
-      "closeQty": 9200,
+      "to": "2026-11-04",
+      "openValue": 2746146,
+      "closeValue": 2575925,
+      "openPrice": 425.1,
+      "closePrice": 398.75,
+      "openQty": 6460,
+      "closeQty": 6460,
       "kind": "held",
-      "priceEffect": -169004,
+      "priceEffect": -170221,
       "tradeEffect": 0,
-      "returnPct": -8.2491
+      "returnPct": -6.1985
     },
     {
       "securityKey": "transport-corp-of-india",
@@ -35414,6 +34595,23 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": -7.3832
     },
     {
+      "securityKey": "ghcl",
+      "security": "GHCL Ltd",
+      "accountId": "svan-investment-managers-llp-8710090",
+      "from": "2026-05-31",
+      "to": "2026-11-04",
+      "openValue": 1802975.5,
+      "closeValue": 1616981,
+      "openPrice": 454.15,
+      "closePrice": 407.3,
+      "openQty": 3970,
+      "closeQty": 3970,
+      "kind": "held",
+      "priceEffect": -185994.5,
+      "tradeEffect": 0,
+      "returnPct": -10.316
+    },
+    {
       "securityKey": "the-anup-engineering",
       "security": "The Anup Engineering Ltd",
       "accountId": "green-lantern-capital-llp-510861",
@@ -35429,23 +34627,6 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "priceEffect": -193103,
       "tradeEffect": 0,
       "returnPct": -6.68
-    },
-    {
-      "securityKey": "ghcl",
-      "security": "GHCL Ltd",
-      "accountId": "svan-investment-managers-llp-8710090",
-      "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 1802975.5,
-      "closeValue": 1609835,
-      "openPrice": 454.15,
-      "closePrice": 405.5,
-      "openQty": 3970,
-      "closeQty": 3970,
-      "kind": "held",
-      "priceEffect": -193140.5,
-      "tradeEffect": 0,
-      "returnPct": -10.7123
     },
     {
       "securityKey": "nuvama-wealth-management",
@@ -35482,23 +34663,6 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": -7.9377
     },
     {
-      "securityKey": "borosil-renewables",
-      "security": "BOROSIL RENEWABLES LTD",
-      "accountId": "svan-investment-managers-llp-8710090",
-      "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 2272927.5,
-      "closeValue": 2075419.5,
-      "openPrice": 501.75,
-      "closePrice": 458.15,
-      "openQty": 4530,
-      "closeQty": 4530,
-      "kind": "held",
-      "priceEffect": -197508,
-      "tradeEffect": 0,
-      "returnPct": -8.6896
-    },
-    {
       "securityKey": "triveni-turbine",
       "security": "Triveni Turbine Ltd",
       "accountId": "green-lantern-capital-llp-510861",
@@ -35514,6 +34678,23 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "priceEffect": -198871.6,
       "tradeEffect": 0,
       "returnPct": -6.8649
+    },
+    {
+      "securityKey": "fusion-finance",
+      "security": "Fusion Finance Limited",
+      "accountId": "svan-investment-managers-llp-8710090",
+      "from": "2026-05-31",
+      "to": "2026-11-04",
+      "openValue": 1436683.5,
+      "closeValue": 1235997,
+      "openPrice": 178.47,
+      "closePrice": 153.54,
+      "openQty": 8050,
+      "closeQty": 8050,
+      "kind": "held",
+      "priceEffect": -200686.5,
+      "tradeEffect": 0,
+      "returnPct": -13.9687
     },
     {
       "securityKey": "indian-energy-exchange",
@@ -35552,19 +34733,19 @@ export const BOOK_ATTRIBUTION: Attribution = {
     {
       "securityKey": "puravankara",
       "security": "Puravankara Limited",
-      "accountId": "svan-investment-managers-llp-8710067",
+      "accountId": "svan-investment-managers-llp-8710090",
       "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 3580977,
-      "closeValue": 3373659,
+      "to": "2026-11-04",
+      "openValue": 2490257.4,
+      "closeValue": 2283550.8,
       "openPrice": 219.02,
-      "closePrice": 206.34,
-      "openQty": 16350,
-      "closeQty": 16350,
+      "closePrice": 200.84,
+      "openQty": 11370,
+      "closeQty": 11370,
       "kind": "held",
-      "priceEffect": -207318,
+      "priceEffect": -206706.6,
       "tradeEffect": 0,
-      "returnPct": -5.7894
+      "returnPct": -8.3006
     },
     {
       "securityKey": "thermax",
@@ -35584,6 +34765,23 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": -7.7514
     },
     {
+      "securityKey": "wockhardt",
+      "security": "Wockhardt Ltd",
+      "accountId": "svan-investment-managers-llp-8710067",
+      "from": "2026-05-31",
+      "to": "2026-11-04",
+      "openValue": 3250240,
+      "closeValue": 3038400,
+      "openPrice": 2031.4,
+      "closePrice": 1899,
+      "openQty": 1600,
+      "closeQty": 1600,
+      "kind": "held",
+      "priceEffect": -211840,
+      "tradeEffect": 0,
+      "returnPct": -6.5177
+    },
+    {
       "securityKey": "amrutanjan-health-care",
       "security": "Amrutanjan Health Care Ltd",
       "accountId": "v-e-c-assago-capital-management-llp-128005",
@@ -35601,21 +34799,55 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": -7.5071
     },
     {
-      "securityKey": "sharda-cropchem",
-      "security": "Sharda Cropchem Ltd",
+      "securityKey": "wpil",
+      "security": "Wpil Ltd",
+      "accountId": "svan-investment-managers-llp-8710067",
+      "from": "2026-05-31",
+      "to": "2026-11-04",
+      "openValue": 1835325.75,
+      "closeValue": 1615859.25,
+      "openPrice": 432.35,
+      "closePrice": 380.65,
+      "openQty": 4245,
+      "closeQty": 4245,
+      "kind": "held",
+      "priceEffect": -219466.5,
+      "tradeEffect": 0,
+      "returnPct": -11.9579
+    },
+    {
+      "securityKey": "shakti-pumps-india",
+      "security": "Shakti Pumps India Ltd",
+      "accountId": "svan-investment-managers-llp-8710067",
+      "from": "2026-05-31",
+      "to": "2026-11-04",
+      "openValue": 708412.5,
+      "closeValue": 485257.5,
+      "openPrice": 524.75,
+      "closePrice": 359.45,
+      "openQty": 1350,
+      "closeQty": 1350,
+      "kind": "held",
+      "priceEffect": -223155,
+      "tradeEffect": 0,
+      "returnPct": -31.5007
+    },
+    {
+      "securityKey": "ifb-industries",
+      "security": "IFB Industries Ltd",
       "accountId": "svan-investment-managers-llp-8710090",
       "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 1126725,
-      "closeValue": 900757.5,
-      "openPrice": 905,
-      "closePrice": 723.5,
-      "openQty": 1245,
-      "closeQty": 1245,
+      "to": "2026-11-04",
+      "openValue": 1866225,
+      "closeValue": 1641086,
+      "openPrice": 1252.5,
+      "closePrice": 1101.4,
+      "openQty": 1490,
+      "closeQty": 1490,
       "kind": "held",
-      "priceEffect": -225967.5,
+      "priceEffect": -225139,
       "tradeEffect": 0,
-      "returnPct": -20.0552
+      "returnPct": -12.0639
     },
     {
       "securityKey": "ratnamani-metals-and-tubes",
@@ -35669,23 +34901,6 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": -8.035
     },
     {
-      "securityKey": "zensar-technologies",
-      "security": "Zensar Technologies Ltd",
-      "accountId": "svan-investment-managers-llp-8710090",
-      "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 1640578,
-      "closeValue": 1401372,
-      "openPrice": 494.15,
-      "closePrice": 422.1,
-      "openQty": 3320,
-      "closeQty": 3320,
-      "kind": "held",
-      "priceEffect": -239206,
-      "tradeEffect": 0,
-      "returnPct": -14.5806
-    },
-    {
       "securityKey": "kaveri-seed",
       "security": "Kaveri Seed Company Ltd",
       "accountId": "green-lantern-capital-llp-510854",
@@ -35701,6 +34916,23 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "priceEffect": -239682,
       "tradeEffect": 0,
       "returnPct": -10.0367
+    },
+    {
+      "securityKey": "mastek",
+      "security": "Mastek Ltd",
+      "accountId": "svan-investment-managers-llp-8710090",
+      "from": "2026-05-31",
+      "to": "2026-11-04",
+      "openValue": 2131370,
+      "closeValue": 1891247,
+      "openPrice": 1627,
+      "closePrice": 1443.7,
+      "openQty": 1310,
+      "closeQty": 1310,
+      "kind": "held",
+      "priceEffect": -240123,
+      "tradeEffect": 0,
+      "returnPct": -11.2661
     },
     {
       "securityKey": "icici-bank",
@@ -35735,6 +34967,23 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "priceEffect": -245250,
       "tradeEffect": 220500,
       "returnPct": -12.9147
+    },
+    {
+      "securityKey": "punjab-chem-and-crop-prot-l",
+      "security": "PUNJAB CHEM & CROP PROT L",
+      "accountId": "svan-investment-managers-llp-8710090",
+      "from": "2026-05-31",
+      "to": "2026-11-04",
+      "openValue": 2145135,
+      "closeValue": 1898210,
+      "openPrice": 1033.8,
+      "closePrice": 914.8,
+      "openQty": 2075,
+      "closeQty": 2075,
+      "kind": "held",
+      "priceEffect": -246925,
+      "tradeEffect": 0,
+      "returnPct": -11.5109
     },
     {
       "securityKey": "eureka-forbes",
@@ -35805,23 +35054,6 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": -6.5129
     },
     {
-      "securityKey": "pokarna",
-      "security": "Pokarna Ltd",
-      "accountId": "svan-investment-managers-llp-8710090",
-      "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 2310019.5,
-      "closeValue": 2035944.5,
-      "openPrice": 800.7,
-      "closePrice": 705.7,
-      "openQty": 2885,
-      "closeQty": 2885,
-      "kind": "held",
-      "priceEffect": -274075,
-      "tradeEffect": 0,
-      "returnPct": -11.8646
-    },
-    {
       "securityKey": "eih",
       "security": "EIH Ltd.",
       "accountId": "goldstandard-wealth-private-limited-100022",
@@ -35839,38 +35071,55 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": -9.0133
     },
     {
-      "securityKey": "viyash-scientific",
-      "security": "Viyash Scientific Limited",
+      "securityKey": "sharda-cropchem",
+      "security": "Sharda Cropchem Ltd",
       "accountId": "svan-investment-managers-llp-8710090",
       "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 2915392.2,
-      "closeValue": 2980512,
-      "openPrice": 261.94,
-      "closePrice": 235.8,
-      "openQty": 11130,
-      "closeQty": 12640,
+      "to": "2026-11-04",
+      "openValue": 1126725,
+      "closeValue": 844047.75,
+      "openPrice": 905,
+      "closePrice": 677.95,
+      "openQty": 1245,
+      "closeQty": 1245,
       "kind": "held",
-      "priceEffect": -290938.2,
-      "tradeEffect": 356058,
-      "returnPct": -9.9794
+      "priceEffect": -282677.25,
+      "tradeEffect": 0,
+      "returnPct": -25.0884
     },
     {
       "securityKey": "ghcl",
       "security": "GHCL Ltd",
       "accountId": "svan-investment-managers-llp-8710067",
       "from": "2026-05-31",
-      "to": "2026-09-30",
+      "to": "2026-11-04",
       "openValue": 2763502.75,
-      "closeValue": 2467467.5,
+      "closeValue": 2478420.5,
       "openPrice": 454.15,
-      "closePrice": 405.5,
+      "closePrice": 407.3,
       "openQty": 6085,
       "closeQty": 6085,
       "kind": "held",
-      "priceEffect": -296035.25,
+      "priceEffect": -285082.25,
       "tradeEffect": 0,
-      "returnPct": -10.7123
+      "returnPct": -10.316
+    },
+    {
+      "securityKey": "puravankara",
+      "security": "Puravankara Limited",
+      "accountId": "svan-investment-managers-llp-8710067",
+      "from": "2026-05-31",
+      "to": "2026-11-04",
+      "openValue": 3580977,
+      "closeValue": 3283734,
+      "openPrice": 219.02,
+      "closePrice": 200.84,
+      "openQty": 16350,
+      "closeQty": 16350,
+      "kind": "held",
+      "priceEffect": -297243,
+      "tradeEffect": 0,
+      "returnPct": -8.3006
     },
     {
       "securityKey": "life-insurance-corp-of-india",
@@ -35890,23 +35139,6 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": -11.3468
     },
     {
-      "securityKey": "borosil-renewables",
-      "security": "BOROSIL RENEWABLES LTD",
-      "accountId": "svan-investment-managers-llp-8710067",
-      "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 3494688.75,
-      "closeValue": 3191014.75,
-      "openPrice": 501.75,
-      "closePrice": 458.15,
-      "openQty": 6965,
-      "closeQty": 6965,
-      "kind": "held",
-      "priceEffect": -303674,
-      "tradeEffect": 0,
-      "returnPct": -8.6896
-    },
-    {
       "securityKey": "greaves-cotton",
       "security": "GREAVES COTTON LTD.",
       "accountId": "v-e-c-assago-capital-management-llp-128004",
@@ -35924,21 +35156,38 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": -5.4247
     },
     {
-      "securityKey": "birlasoft",
-      "security": "Birlasoft Ltd",
-      "accountId": "svan-investment-managers-llp-8710090",
+      "securityKey": "fusion-finance",
+      "security": "Fusion Finance Limited",
+      "accountId": "svan-investment-managers-llp-8710067",
       "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 2094936,
-      "closeValue": 1782352,
-      "openPrice": 319.35,
-      "closePrice": 271.7,
-      "openQty": 6560,
-      "closeQty": 6560,
+      "to": "2026-11-04",
+      "openValue": 2202319.8,
+      "closeValue": 1894683.6,
+      "openPrice": 178.47,
+      "closePrice": 153.54,
+      "openQty": 12340,
+      "closeQty": 12340,
       "kind": "held",
-      "priceEffect": -312584,
+      "priceEffect": -307636.2,
       "tradeEffect": 0,
-      "returnPct": -14.9209
+      "returnPct": -13.9687
+    },
+    {
+      "securityKey": "ifb-industries",
+      "security": "IFB Industries Ltd",
+      "accountId": "svan-investment-managers-llp-8710067",
+      "from": "2026-05-31",
+      "to": "2026-11-04",
+      "openValue": 2623987.5,
+      "closeValue": 2307433,
+      "openPrice": 1252.5,
+      "closePrice": 1101.4,
+      "openQty": 2095,
+      "closeQty": 2095,
+      "kind": "held",
+      "priceEffect": -316554.5,
+      "tradeEffect": 0,
+      "returnPct": -12.0639
     },
     {
       "securityKey": "ksb",
@@ -36043,21 +35292,21 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": -14.9875
     },
     {
-      "securityKey": "sharda-cropchem",
-      "security": "Sharda Cropchem Ltd",
+      "securityKey": "punjab-chem-and-crop-prot-l",
+      "security": "PUNJAB CHEM & CROP PROT L",
       "accountId": "svan-investment-managers-llp-8710067",
       "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 1737600,
-      "closeValue": 1389120,
-      "openPrice": 905,
-      "closePrice": 723.5,
-      "openQty": 1920,
-      "closeQty": 1920,
+      "to": "2026-11-04",
+      "openValue": 3013527,
+      "closeValue": 2666642,
+      "openPrice": 1033.8,
+      "closePrice": 914.8,
+      "openQty": 2915,
+      "closeQty": 2915,
       "kind": "held",
-      "priceEffect": -348480,
+      "priceEffect": -346885,
       "tradeEffect": 0,
-      "returnPct": -20.0552
+      "returnPct": -11.5109
     },
     {
       "securityKey": "indraprastha-medical",
@@ -36077,21 +35326,89 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": -12.0374
     },
     {
-      "securityKey": "zensar-technologies",
-      "security": "Zensar Technologies Ltd",
+      "securityKey": "pokarna",
+      "security": "Pokarna Ltd",
+      "accountId": "svan-investment-managers-llp-8710090",
+      "from": "2026-05-31",
+      "to": "2026-11-04",
+      "openValue": 2310019.5,
+      "closeValue": 1948384.75,
+      "openPrice": 800.7,
+      "closePrice": 675.35,
+      "openQty": 2885,
+      "closeQty": 2885,
+      "kind": "held",
+      "priceEffect": -361634.75,
+      "tradeEffect": 0,
+      "returnPct": -15.6551
+    },
+    {
+      "securityKey": "mastek",
+      "security": "Mastek Ltd",
       "accountId": "svan-investment-managers-llp-8710067",
       "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 2515223.5,
-      "closeValue": 2148489,
-      "openPrice": 494.15,
-      "closePrice": 422.1,
-      "openQty": 5090,
-      "closeQty": 5090,
+      "to": "2026-11-04",
+      "openValue": 3262135,
+      "closeValue": 2894618.5,
+      "openPrice": 1627,
+      "closePrice": 1443.7,
+      "openQty": 2005,
+      "closeQty": 2005,
       "kind": "held",
-      "priceEffect": -366734.5,
+      "priceEffect": -367516.5,
       "tradeEffect": 0,
-      "returnPct": -14.5806
+      "returnPct": -11.2661
+    },
+    {
+      "securityKey": "viyash-scientific",
+      "security": "Viyash Scientific Limited",
+      "accountId": "svan-investment-managers-llp-8710090",
+      "from": "2026-05-31",
+      "to": "2026-11-04",
+      "openValue": 2915392.2,
+      "closeValue": 2887734.4,
+      "openPrice": 261.94,
+      "closePrice": 228.46,
+      "openQty": 11130,
+      "closeQty": 12640,
+      "kind": "held",
+      "priceEffect": -372632.4,
+      "tradeEffect": 344974.6,
+      "returnPct": -12.7816
+    },
+    {
+      "securityKey": "vaibhav-global",
+      "security": "Vaibhav Global Ltd",
+      "accountId": "svan-investment-managers-llp-8710090",
+      "from": "2026-05-31",
+      "to": "2026-11-04",
+      "openValue": 1337253.45,
+      "closeValue": 961940.95,
+      "openPrice": 222.69,
+      "closePrice": 160.19,
+      "openQty": 6005,
+      "closeQty": 6005,
+      "kind": "held",
+      "priceEffect": -375312.5,
+      "tradeEffect": 0,
+      "returnPct": -28.0659
+    },
+    {
+      "securityKey": "credit-access-grameen",
+      "security": "Credit Access Grameen Limited",
+      "accountId": "svan-investment-managers-llp-8710090",
+      "from": "2026-05-31",
+      "to": "2026-11-04",
+      "openValue": 2221782.5,
+      "closeValue": 2698595,
+      "openPrice": 1295.5,
+      "closePrice": 1073,
+      "openQty": 1715,
+      "closeQty": 2515,
+      "kind": "held",
+      "priceEffect": -381587.5,
+      "tradeEffect": 858400,
+      "returnPct": -17.1748
     },
     {
       "securityKey": "tejas-networks",
@@ -36109,23 +35426,6 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "priceEffect": -391005.8,
       "tradeEffect": 0,
       "returnPct": -5.2281
-    },
-    {
-      "securityKey": "pokarna",
-      "security": "Pokarna Ltd",
-      "accountId": "svan-investment-managers-llp-8710067",
-      "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 3338919,
-      "closeValue": 2942769,
-      "openPrice": 800.7,
-      "closePrice": 705.7,
-      "openQty": 4170,
-      "closeQty": 4170,
-      "kind": "held",
-      "priceEffect": -396150,
-      "tradeEffect": 0,
-      "returnPct": -11.8646
     },
     {
       "securityKey": "indian-energy-exchange",
@@ -36247,21 +35547,21 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": -14.2888
     },
     {
-      "securityKey": "v2-retail",
-      "security": "V2 Retail Ltd",
-      "accountId": "svan-investment-managers-llp-8710090",
+      "securityKey": "sharda-cropchem",
+      "security": "Sharda Cropchem Ltd",
+      "accountId": "svan-investment-managers-llp-8710067",
       "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 4727116.5,
-      "closeValue": 4289607,
-      "openPrice": 230.03,
-      "closePrice": 208.74,
-      "openQty": 20550,
-      "closeQty": 20550,
+      "to": "2026-11-04",
+      "openValue": 1737600,
+      "closeValue": 1301664,
+      "openPrice": 905,
+      "closePrice": 677.95,
+      "openQty": 1920,
+      "closeQty": 1920,
       "kind": "held",
-      "priceEffect": -437509.5,
+      "priceEffect": -435936,
       "tradeEffect": 0,
-      "returnPct": -9.2553
+      "returnPct": -25.0884
     },
     {
       "securityKey": "lupin",
@@ -36279,23 +35579,6 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "priceEffect": -443070,
       "tradeEffect": 0,
       "returnPct": -19.666
-    },
-    {
-      "securityKey": "viyash-scientific",
-      "security": "Viyash Scientific Limited",
-      "accountId": "svan-investment-managers-llp-8710067",
-      "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 4488341.9,
-      "closeValue": 4582773,
-      "openPrice": 261.94,
-      "closePrice": 235.8,
-      "openQty": 17135,
-      "closeQty": 19435,
-      "kind": "held",
-      "priceEffect": -447908.9,
-      "tradeEffect": 542340,
-      "returnPct": -9.9794
     },
     {
       "securityKey": "sonata-software",
@@ -36332,23 +35615,6 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": -10.0367
     },
     {
-      "securityKey": "birlasoft",
-      "security": "Birlasoft Ltd",
-      "accountId": "svan-investment-managers-llp-8710067",
-      "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 3228628.5,
-      "closeValue": 2746887,
-      "openPrice": 319.35,
-      "closePrice": 271.7,
-      "openQty": 10110,
-      "closeQty": 10110,
-      "kind": "held",
-      "priceEffect": -481741.5,
-      "tradeEffect": 0,
-      "returnPct": -14.9209
-    },
-    {
       "securityKey": "gateway-distriparks",
       "security": "Gateway Distriparks Ltd",
       "accountId": "v-e-c-assago-capital-management-llp-128005",
@@ -36383,21 +35649,38 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": -16.6524
     },
     {
-      "securityKey": "arvind-fashions",
-      "security": "Arvind Fashions Ltd",
+      "securityKey": "credit-access-grameen",
+      "security": "Credit Access Grameen Limited",
+      "accountId": "svan-investment-managers-llp-8710067",
+      "from": "2026-05-31",
+      "to": "2026-11-04",
+      "openValue": 2888965,
+      "closeValue": 4141780,
+      "openPrice": 1295.5,
+      "closePrice": 1073,
+      "openQty": 2230,
+      "closeQty": 3860,
+      "kind": "held",
+      "priceEffect": -496175,
+      "tradeEffect": 1748990,
+      "returnPct": -17.1748
+    },
+    {
+      "securityKey": "borosil-renewables",
+      "security": "BOROSIL RENEWABLES LTD",
       "accountId": "svan-investment-managers-llp-8710090",
       "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 3072591,
-      "closeValue": 2580417,
-      "openPrice": 461.35,
-      "closePrice": 387.45,
-      "openQty": 6660,
-      "closeQty": 6660,
+      "to": "2026-11-04",
+      "openValue": 2272927.5,
+      "closeValue": 1765794,
+      "openPrice": 501.75,
+      "closePrice": 389.8,
+      "openQty": 4530,
+      "closeQty": 4530,
       "kind": "held",
-      "priceEffect": -492174,
+      "priceEffect": -507133.5,
       "tradeEffect": 0,
-      "returnPct": -16.0182
+      "returnPct": -22.3119
     },
     {
       "securityKey": "suprajit-engineering",
@@ -36415,6 +35698,23 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "priceEffect": -512250,
       "tradeEffect": 0,
       "returnPct": -6.8899
+    },
+    {
+      "securityKey": "pokarna",
+      "security": "Pokarna Ltd",
+      "accountId": "svan-investment-managers-llp-8710067",
+      "from": "2026-05-31",
+      "to": "2026-11-04",
+      "openValue": 3338919,
+      "closeValue": 2816209.5,
+      "openPrice": 800.7,
+      "closePrice": 675.35,
+      "openQty": 4170,
+      "closeQty": 4170,
+      "kind": "held",
+      "priceEffect": -522709.5,
+      "tradeEffect": 0,
+      "returnPct": -15.6551
     },
     {
       "securityKey": "crompton-greaves-consumer-electrical",
@@ -36451,6 +35751,23 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": -12.3148
     },
     {
+      "securityKey": "viyash-scientific",
+      "security": "Viyash Scientific Limited",
+      "accountId": "svan-investment-managers-llp-8710067",
+      "from": "2026-05-31",
+      "to": "2026-11-04",
+      "openValue": 4488341.9,
+      "closeValue": 4440120.1,
+      "openPrice": 261.94,
+      "closePrice": 228.46,
+      "openQty": 17135,
+      "closeQty": 19435,
+      "kind": "held",
+      "priceEffect": -573679.8,
+      "tradeEffect": 525458,
+      "returnPct": -12.7816
+    },
+    {
       "securityKey": "can-fin-homes",
       "security": "Can Fin Homes Ltd.",
       "accountId": "goldstandard-wealth-private-limited-100022",
@@ -36466,6 +35783,23 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "priceEffect": -574200,
       "tradeEffect": 0,
       "returnPct": -20.8929
+    },
+    {
+      "securityKey": "vaibhav-global",
+      "security": "Vaibhav Global Ltd",
+      "accountId": "svan-investment-managers-llp-8710067",
+      "from": "2026-05-31",
+      "to": "2026-11-04",
+      "openValue": 2048748,
+      "closeValue": 1473748,
+      "openPrice": 222.69,
+      "closePrice": 160.19,
+      "openQty": 9200,
+      "closeQty": 9200,
+      "kind": "held",
+      "priceEffect": -575000,
+      "tradeEffect": 0,
+      "returnPct": -28.0659
     },
     {
       "securityKey": "eih",
@@ -36519,40 +35853,6 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": -7.4848
     },
     {
-      "securityKey": "v2-retail",
-      "security": "V2 Retail Ltd",
-      "accountId": "svan-investment-managers-llp-8710067",
-      "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 7268948,
-      "closeValue": 6596184,
-      "openPrice": 230.03,
-      "closePrice": 208.74,
-      "openQty": 31600,
-      "closeQty": 31600,
-      "kind": "held",
-      "priceEffect": -672764,
-      "tradeEffect": 0,
-      "returnPct": -9.2553
-    },
-    {
-      "securityKey": "arvind-fashions",
-      "security": "Arvind Fashions Ltd",
-      "accountId": "svan-investment-managers-llp-8710067",
-      "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": 4318236,
-      "closeValue": 3626532,
-      "openPrice": 461.35,
-      "closePrice": 387.45,
-      "openQty": 9360,
-      "closeQty": 9360,
-      "kind": "held",
-      "priceEffect": -691704,
-      "tradeEffect": 0,
-      "returnPct": -16.0182
-    },
-    {
       "securityKey": "gateway-distriparks",
       "security": "Gateway Distriparks Ltd",
       "accountId": "v-e-c-assago-capital-management-llp-128004",
@@ -36568,6 +35868,23 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "priceEffect": -722433.92,
       "tradeEffect": 0,
       "returnPct": -16.1117
+    },
+    {
+      "securityKey": "arvind-fashions",
+      "security": "Arvind Fashions Ltd",
+      "accountId": "svan-investment-managers-llp-8710090",
+      "from": "2026-05-31",
+      "to": "2026-11-04",
+      "openValue": 3072591,
+      "closeValue": 2343654,
+      "openPrice": 461.35,
+      "closePrice": 351.9,
+      "openQty": 6660,
+      "closeQty": 6660,
+      "kind": "held",
+      "priceEffect": -728937,
+      "tradeEffect": 0,
+      "returnPct": -23.7239
     },
     {
       "securityKey": "tejas-networks",
@@ -36602,6 +35919,23 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "priceEffect": -775350,
       "tradeEffect": 0,
       "returnPct": -18.052
+    },
+    {
+      "securityKey": "borosil-renewables",
+      "security": "BOROSIL RENEWABLES LTD",
+      "accountId": "svan-investment-managers-llp-8710067",
+      "from": "2026-05-31",
+      "to": "2026-11-04",
+      "openValue": 3494688.75,
+      "closeValue": 2714957,
+      "openPrice": 501.75,
+      "closePrice": 389.8,
+      "openQty": 6965,
+      "closeQty": 6965,
+      "kind": "held",
+      "priceEffect": -779731.75,
+      "tradeEffect": 0,
+      "returnPct": -22.3119
     },
     {
       "securityKey": "indraprastha-medical",
@@ -36740,6 +36074,23 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": -24.5981
     },
     {
+      "securityKey": "arvind-fashions",
+      "security": "Arvind Fashions Ltd",
+      "accountId": "svan-investment-managers-llp-8710067",
+      "from": "2026-05-31",
+      "to": "2026-11-04",
+      "openValue": 4318236,
+      "closeValue": 3293784,
+      "openPrice": 461.35,
+      "closePrice": 351.9,
+      "openQty": 9360,
+      "closeQty": 9360,
+      "kind": "held",
+      "priceEffect": -1024452,
+      "tradeEffect": 0,
+      "returnPct": -23.7239
+    },
+    {
       "securityKey": "panacea-biotec",
       "security": "Panacea Biotec Ltd",
       "accountId": "v-e-c-assago-capital-management-llp-128004",
@@ -36789,6 +36140,74 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "priceEffect": -1465508.8,
       "tradeEffect": 0,
       "returnPct": -22.5215
+    },
+    {
+      "securityKey": "v2-retail",
+      "security": "V2 Retail Ltd",
+      "accountId": "svan-investment-managers-llp-8710090",
+      "from": "2026-05-31",
+      "to": "2026-11-04",
+      "openValue": 4727116.5,
+      "closeValue": 3064621.5,
+      "openPrice": 230.03,
+      "closePrice": 149.13,
+      "openQty": 20550,
+      "closeQty": 20550,
+      "kind": "held",
+      "priceEffect": -1662495,
+      "tradeEffect": 0,
+      "returnPct": -35.1693
+    },
+    {
+      "securityKey": "shankara-buildpro",
+      "security": "Shankara Buildpro Ltd",
+      "accountId": "svan-investment-managers-llp-8710090",
+      "from": "2026-05-31",
+      "to": "2026-11-04",
+      "openValue": 2772224,
+      "closeValue": 2166157,
+      "openPrice": 1164.8,
+      "closePrice": 182.03,
+      "openQty": 2380,
+      "closeQty": 11900,
+      "kind": "held",
+      "priceEffect": -2338992.6,
+      "tradeEffect": 1732925.6,
+      "returnPct": -84.3724
+    },
+    {
+      "securityKey": "v2-retail",
+      "security": "V2 Retail Ltd",
+      "accountId": "svan-investment-managers-llp-8710067",
+      "from": "2026-05-31",
+      "to": "2026-11-04",
+      "openValue": 7268948,
+      "closeValue": 4712508,
+      "openPrice": 230.03,
+      "closePrice": 149.13,
+      "openQty": 31600,
+      "closeQty": 31600,
+      "kind": "held",
+      "priceEffect": -2556440,
+      "tradeEffect": 0,
+      "returnPct": -35.1693
+    },
+    {
+      "securityKey": "shankara-buildpro",
+      "security": "Shankara Buildpro Ltd",
+      "accountId": "svan-investment-managers-llp-8710067",
+      "from": "2026-05-31",
+      "to": "2026-11-04",
+      "openValue": 4263168,
+      "closeValue": 3331149,
+      "openPrice": 1164.8,
+      "closePrice": 182.03,
+      "openQty": 3660,
+      "closeQty": 18300,
+      "kind": "held",
+      "priceEffect": -3596938.2,
+      "tradeEffect": 2664919.2,
+      "returnPct": -84.3724
     },
     {
       "securityKey": "star-health-and-allied-insurance",
@@ -37594,11 +37013,11 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "security": "APOLLO PIPES LIMITED",
       "accountId": "svan-investment-managers-llp-8710067",
       "from": "2026-05-31",
-      "to": "2026-09-30",
+      "to": "2026-11-04",
       "openValue": null,
-      "closeValue": 2894745,
+      "closeValue": 2933505,
       "openPrice": null,
-      "closePrice": 507.85,
+      "closePrice": 514.65,
       "openQty": null,
       "closeQty": 5700,
       "kind": "entered",
@@ -37611,7 +37030,7 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "security": "Avalon Technologies Limited",
       "accountId": "svan-investment-managers-llp-8710067",
       "from": "2026-05-31",
-      "to": "2026-09-30",
+      "to": "2026-11-04",
       "openValue": 2349172.5,
       "closeValue": null,
       "openPrice": 1520.5,
@@ -37628,13 +37047,13 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "security": "Cash",
       "accountId": "svan-investment-managers-llp-8710067",
       "from": "2026-05-31",
-      "to": "2026-09-30",
+      "to": "2026-11-04",
       "openValue": 6209705.22,
-      "closeValue": 137285.63,
+      "closeValue": 34595.96,
       "openPrice": null,
       "closePrice": 1,
       "openQty": 6209705.22,
-      "closeQty": 137285.633,
+      "closeQty": 34595.964,
       "kind": "unpriced",
       "priceEffect": null,
       "tradeEffect": null,
@@ -37645,13 +37064,13 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "security": "Cash Rec/Payable",
       "accountId": "svan-investment-managers-llp-8710067",
       "from": "2026-05-31",
-      "to": "2026-09-30",
+      "to": "2026-11-04",
       "openValue": null,
-      "closeValue": -2482362.21,
+      "closeValue": -4734.82,
       "openPrice": null,
       "closePrice": 1,
       "openQty": null,
-      "closeQty": -2482362.207,
+      "closeQty": -4734.82,
       "kind": "entered",
       "priceEffect": null,
       "tradeEffect": null,
@@ -37662,7 +37081,7 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "security": "Cosmo Films Ltd",
       "accountId": "svan-investment-managers-llp-8710067",
       "from": "2026-05-31",
-      "to": "2026-09-30",
+      "to": "2026-11-04",
       "openValue": 3776503.5,
       "closeValue": null,
       "openPrice": 727.65,
@@ -37679,11 +37098,11 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "security": "Cosmo First Limited",
       "accountId": "svan-investment-managers-llp-8710067",
       "from": "2026-05-31",
-      "to": "2026-09-30",
+      "to": "2026-11-04",
       "openValue": null,
-      "closeValue": 4388664,
+      "closeValue": 4126050,
       "openPrice": null,
-      "closePrice": 845.6,
+      "closePrice": 795,
       "openQty": null,
       "closeQty": 5190,
       "kind": "entered",
@@ -37696,11 +37115,11 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "security": "GLAND PHARMA LIMITED",
       "accountId": "svan-investment-managers-llp-8710067",
       "from": "2026-05-31",
-      "to": "2026-09-30",
+      "to": "2026-11-04",
       "openValue": null,
-      "closeValue": 3769220,
+      "closeValue": 4106700,
       "openPrice": null,
-      "closePrice": 2899.4,
+      "closePrice": 3159,
       "openQty": null,
       "closeQty": 1300,
       "kind": "entered",
@@ -37713,11 +37132,11 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "security": "Graphite India Ltd",
       "accountId": "svan-investment-managers-llp-8710067",
       "from": "2026-05-31",
-      "to": "2026-09-30",
+      "to": "2026-11-04",
       "openValue": null,
-      "closeValue": 2064960,
+      "closeValue": 2001915,
       "openPrice": null,
-      "closePrice": 764.8,
+      "closePrice": 741.45,
       "openQty": null,
       "closeQty": 2700,
       "kind": "entered",
@@ -37730,7 +37149,7 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "security": "HEG Ltd",
       "accountId": "svan-investment-managers-llp-8710067",
       "from": "2026-05-31",
-      "to": "2026-09-30",
+      "to": "2026-11-04",
       "openValue": 4659507,
       "closeValue": null,
       "openPrice": 566.85,
@@ -37743,28 +37162,11 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": null
     },
     {
-      "securityKey": "heg-advanced-materials",
-      "security": "HEG Advanced Materials Limited",
-      "accountId": "svan-investment-managers-llp-8710067",
-      "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": null,
-      "closeValue": 1953483,
-      "openPrice": null,
-      "closePrice": 237.65,
-      "openQty": null,
-      "closeQty": 8220,
-      "kind": "entered",
-      "priceEffect": null,
-      "tradeEffect": null,
-      "returnPct": null
-    },
-    {
       "securityKey": "heg-graphite",
       "security": "HEG Graphite Limited",
       "accountId": "svan-investment-managers-llp-8710067",
       "from": "2026-05-31",
-      "to": "2026-09-30",
+      "to": "2026-11-04",
       "openValue": null,
       "closeValue": 3849015,
       "openPrice": null,
@@ -37781,13 +37183,13 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "security": "Kajaria Ceramics Ltd",
       "accountId": "svan-investment-managers-llp-8710067",
       "from": "2026-05-31",
-      "to": "2026-09-30",
+      "to": "2026-11-04",
       "openValue": null,
-      "closeValue": 2099670,
+      "closeValue": 3183102,
       "openPrice": null,
-      "closePrice": 1235.1,
+      "closePrice": 1159.6,
       "openQty": null,
-      "closeQty": 1700,
+      "closeQty": 2745,
       "kind": "entered",
       "priceEffect": null,
       "tradeEffect": null,
@@ -37798,7 +37200,7 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "security": "Shankara Building Products Ltd",
       "accountId": "svan-investment-managers-llp-8710067",
       "from": "2026-05-31",
-      "to": "2026-09-30",
+      "to": "2026-11-04",
       "openValue": 341034.36,
       "closeValue": null,
       "openPrice": 121.02,
@@ -37815,7 +37217,7 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "security": "Surya Roshni Ltd",
       "accountId": "svan-investment-managers-llp-8710067",
       "from": "2026-05-31",
-      "to": "2026-09-30",
+      "to": "2026-11-04",
       "openValue": 1890663.5,
       "closeValue": null,
       "openPrice": 235.45,
@@ -37832,11 +37234,11 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "security": "APOLLO PIPES LIMITED",
       "accountId": "svan-investment-managers-llp-8710090",
       "from": "2026-05-31",
-      "to": "2026-09-30",
+      "to": "2026-11-04",
       "openValue": null,
-      "closeValue": 1777475,
+      "closeValue": 1801275,
       "openPrice": null,
-      "closePrice": 507.85,
+      "closePrice": 514.65,
       "openQty": null,
       "closeQty": 3500,
       "kind": "entered",
@@ -37849,7 +37251,7 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "security": "Avalon Technologies Limited",
       "accountId": "svan-investment-managers-llp-8710090",
       "from": "2026-05-31",
-      "to": "2026-09-30",
+      "to": "2026-11-04",
       "openValue": 1528102.5,
       "closeValue": null,
       "openPrice": 1520.5,
@@ -37866,14 +37268,31 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "security": "Cash",
       "accountId": "svan-investment-managers-llp-8710090",
       "from": "2026-05-31",
-      "to": "2026-09-30",
+      "to": "2026-11-04",
       "openValue": 3146821.78,
-      "closeValue": 113586.77,
+      "closeValue": 158178.71,
       "openPrice": null,
-      "closePrice": null,
+      "closePrice": 1,
       "openQty": 3146821.78,
-      "closeQty": 113586.77,
+      "closeQty": 158178.714,
       "kind": "unpriced",
+      "priceEffect": null,
+      "tradeEffect": null,
+      "returnPct": null
+    },
+    {
+      "securityKey": "cash-rec-payable",
+      "security": "Cash Rec/Payable",
+      "accountId": "svan-investment-managers-llp-8710090",
+      "from": "2026-05-31",
+      "to": "2026-11-04",
+      "openValue": null,
+      "closeValue": -3121.17,
+      "openPrice": null,
+      "closePrice": 1,
+      "openQty": null,
+      "closeQty": -3121.17,
+      "kind": "entered",
       "priceEffect": null,
       "tradeEffect": null,
       "returnPct": null
@@ -37883,7 +37302,7 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "security": "Cosmo Films Ltd",
       "accountId": "svan-investment-managers-llp-8710090",
       "from": "2026-05-31",
-      "to": "2026-09-30",
+      "to": "2026-11-04",
       "openValue": 2452180.5,
       "closeValue": null,
       "openPrice": 727.65,
@@ -37900,11 +37319,11 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "security": "Cosmo First Limited",
       "accountId": "svan-investment-managers-llp-8710090",
       "from": "2026-05-31",
-      "to": "2026-09-30",
+      "to": "2026-11-04",
       "openValue": null,
-      "closeValue": 2849672,
+      "closeValue": 2679150,
       "openPrice": null,
-      "closePrice": 845.6,
+      "closePrice": 795,
       "openQty": null,
       "closeQty": 3370,
       "kind": "entered",
@@ -37917,11 +37336,11 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "security": "GLAND PHARMA LIMITED",
       "accountId": "svan-investment-managers-llp-8710090",
       "from": "2026-05-31",
-      "to": "2026-09-30",
+      "to": "2026-11-04",
       "openValue": null,
-      "closeValue": 2449993,
+      "closeValue": 2669355,
       "openPrice": null,
-      "closePrice": 2899.4,
+      "closePrice": 3159,
       "openQty": null,
       "closeQty": 845,
       "kind": "entered",
@@ -37934,11 +37353,11 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "security": "Graphite India Ltd",
       "accountId": "svan-investment-managers-llp-8710090",
       "from": "2026-05-31",
-      "to": "2026-09-30",
+      "to": "2026-11-04",
       "openValue": null,
-      "closeValue": 1376640,
+      "closeValue": 1334610,
       "openPrice": null,
-      "closePrice": 764.8,
+      "closePrice": 741.45,
       "openQty": null,
       "closeQty": 1800,
       "kind": "entered",
@@ -37951,7 +37370,7 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "security": "HEG Ltd",
       "accountId": "svan-investment-managers-llp-8710090",
       "from": "2026-05-31",
-      "to": "2026-09-30",
+      "to": "2026-11-04",
       "openValue": 3041150.25,
       "closeValue": null,
       "openPrice": 566.85,
@@ -37964,28 +37383,11 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": null
     },
     {
-      "securityKey": "heg-advanced-materials",
-      "security": "HEG Advanced Materials Limited",
-      "accountId": "svan-investment-managers-llp-8710090",
-      "from": "2026-05-31",
-      "to": "2026-09-30",
-      "openValue": null,
-      "closeValue": 1274992.25,
-      "openPrice": null,
-      "closePrice": 237.65,
-      "openQty": null,
-      "closeQty": 5365,
-      "kind": "entered",
-      "priceEffect": null,
-      "tradeEffect": null,
-      "returnPct": null
-    },
-    {
       "securityKey": "heg-graphite",
       "security": "HEG Graphite Limited",
       "accountId": "svan-investment-managers-llp-8710090",
       "from": "2026-05-31",
-      "to": "2026-09-30",
+      "to": "2026-11-04",
       "openValue": null,
       "closeValue": 2512161.25,
       "openPrice": null,
@@ -37998,11 +37400,28 @@ export const BOOK_ATTRIBUTION: Attribution = {
       "returnPct": null
     },
     {
+      "securityKey": "kajaria-ceramics",
+      "security": "Kajaria Ceramics Ltd",
+      "accountId": "svan-investment-managers-llp-8710090",
+      "from": "2026-05-31",
+      "to": "2026-11-04",
+      "openValue": null,
+      "closeValue": 2203240,
+      "openPrice": null,
+      "closePrice": 1159.6,
+      "openQty": null,
+      "closeQty": 1900,
+      "kind": "entered",
+      "priceEffect": null,
+      "tradeEffect": null,
+      "returnPct": null
+    },
+    {
       "securityKey": "shankara-building-products",
       "security": "Shankara Building Products Ltd",
       "accountId": "svan-investment-managers-llp-8710090",
       "from": "2026-05-31",
-      "to": "2026-09-30",
+      "to": "2026-11-04",
       "openValue": 245065.5,
       "closeValue": null,
       "openPrice": 121.02,
@@ -40416,6 +39835,211 @@ export const BOOK_ACCOUNT_CASH_FLOWS: Record<string, CashFlow[]> = {
   ],
   "svan-investment-managers-llp-8710067": [
     {
+      "date": "2024-09-03",
+      "amount": -50000000,
+      "description": "Corpus Deposits"
+    },
+    {
+      "date": "2024-09-24",
+      "amount": 5390,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2024-12-06",
+      "amount": 713,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2024-12-11",
+      "amount": 775,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-01-07",
+      "amount": 2290.75,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-01-16",
+      "amount": -30000000,
+      "description": "Corpus Deposits"
+    },
+    {
+      "date": "2025-01-31",
+      "amount": 3555,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-02-06",
+      "amount": 523,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-02-10",
+      "amount": 950,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-02-17",
+      "amount": -30000000,
+      "description": "Corpus Deposits"
+    },
+    {
+      "date": "2025-02-17",
+      "amount": 545,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-02-18",
+      "amount": 1290,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-03-05",
+      "amount": 1276,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-07-09",
+      "amount": 4701,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-07-24",
+      "amount": 5862,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-07-30",
+      "amount": 4169,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-08-12",
+      "amount": 240,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-08-12",
+      "amount": 1688,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-08-12",
+      "amount": 2224,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-08-19",
+      "amount": 1039,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-08-21",
+      "amount": 2720,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-08-26",
+      "amount": 1680,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-09-01",
+      "amount": 1498,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-09-02",
+      "amount": 4170,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-09-09",
+      "amount": 1299.6,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-09-10",
+      "amount": 10744,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-09-18",
+      "amount": 1362.5,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-09-24",
+      "amount": 5444,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-09-25",
+      "amount": 3627,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-10-06",
+      "amount": 2985,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-10-13",
+      "amount": 2648,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-10-29",
+      "amount": -35000000,
+      "description": "Corpus Deposits"
+    },
+    {
+      "date": "2025-11-11",
+      "amount": 10896,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-11-17",
+      "amount": 1380,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-11-28",
+      "amount": 2008,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-11-28",
+      "amount": 2528,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-12-10",
+      "amount": 1275,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2026-02-10",
+      "amount": 1222,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2026-02-12",
+      "amount": 1152,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2026-02-12",
+      "amount": 1380,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2026-02-13",
+      "amount": 1604,
+      "description": "TDS on Payout"
+    },
+    {
       "date": "2026-06-10",
       "amount": 986,
       "description": "TDS on Payout"
@@ -40514,9 +40138,174 @@ export const BOOK_ACCOUNT_CASH_FLOWS: Record<string, CashFlow[]> = {
       "date": "2026-09-30",
       "amount": 1635,
       "description": "TDS on Payout"
+    },
+    {
+      "date": "2026-10-01",
+      "amount": 6700,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2026-10-06",
+      "amount": 2874,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2026-10-06",
+      "amount": 4479,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2026-10-12",
+      "amount": 986,
+      "description": "TDS on Payout"
     }
   ],
   "svan-investment-managers-llp-8710090": [
+    {
+      "date": "2024-12-03",
+      "amount": -50000000,
+      "description": "Corpus Deposits"
+    },
+    {
+      "date": "2025-01-07",
+      "amount": 2630.75,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-01-31",
+      "amount": 2891.25,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-02-06",
+      "amount": 444,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-02-17",
+      "amount": -30000000,
+      "description": "Corpus Deposits"
+    },
+    {
+      "date": "2025-02-18",
+      "amount": 580.5,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-03-05",
+      "amount": 928,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-07-09",
+      "amount": 3420,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-07-24",
+      "amount": 4170,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-07-30",
+      "amount": 2965,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-08-12",
+      "amount": 1226,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-08-12",
+      "amount": 1584,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-08-21",
+      "amount": 1936,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-08-26",
+      "amount": 1161,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-09-01",
+      "amount": 1066,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-09-02",
+      "amount": 2970,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-09-10",
+      "amount": 7816,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-09-24",
+      "amount": 3884,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-09-25",
+      "amount": 1950,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-10-06",
+      "amount": 2123,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-10-13",
+      "amount": 1928,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-10-29",
+      "amount": -15000000,
+      "description": "Corpus Deposits"
+    },
+    {
+      "date": "2025-11-11",
+      "amount": 7758,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-11-17",
+      "amount": 900.75,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-11-28",
+      "amount": 1500,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-11-28",
+      "amount": 1640,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2026-02-10",
+      "amount": 797,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2026-02-12",
+      "amount": 900.75,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2026-02-13",
+      "amount": 1048,
+      "description": "TDS on Payout"
+    },
     {
       "date": "2026-07-03",
       "amount": 4764,
@@ -40585,6 +40374,26 @@ export const BOOK_ACCOUNT_CASH_FLOWS: Record<string, CashFlow[]> = {
     {
       "date": "2026-09-30",
       "amount": 1164,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2026-10-01",
+      "amount": 4780,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2026-10-06",
+      "amount": 1872,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2026-10-06",
+      "amount": 2913,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2026-10-12",
+      "amount": 1280,
       "description": "TDS on Payout"
     }
   ],
@@ -41780,12 +41589,12 @@ export const BOOK_ACCOUNT_RETURN_RECORDS: Record<string, AccountReturnCoverage> 
     "gap": "Opening valuation and complete dated cash flows are missing"
   },
   "svan-investment-managers-llp-8710067": {
-    "latestValuationDate": "2026-09-30",
+    "latestValuationDate": "2026-11-04",
     "record": null,
     "gap": "Opening valuation and complete dated cash flows are missing"
   },
   "svan-investment-managers-llp-8710090": {
-    "latestValuationDate": "2026-09-30",
+    "latestValuationDate": "2026-11-04",
     "record": null,
     "gap": "Opening valuation and complete dated cash flows are missing"
   },
@@ -48492,6 +48301,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": "motilal-oswal-active-momentum-fund-direct-plan-growth-option"
   },
   {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2026-08-10",
+    "direction": "out",
+    "label": "TDS on Payout",
+    "amount": 6414,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
     "accountId": "svan-investment-managers-llp-8710090",
     "date": "2026-08-10",
     "direction": "out",
@@ -48508,6 +48328,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "direction": "out",
     "label": "TDS Trf to Capital A/c",
     "amount": 6658,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2026-08-13",
+    "direction": "out",
+    "label": "TDS on Payout",
+    "amount": 4174.8,
     "invested": null,
     "units": null,
     "security": null,
@@ -48536,6 +48367,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2026-08-14",
+    "direction": "out",
+    "label": "TDS on Payout",
+    "amount": 3096,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
     "accountId": "svan-investment-managers-llp-8710090",
     "date": "2026-08-14",
     "direction": "out",
@@ -48552,6 +48394,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "direction": "out",
     "label": "TDS Trf to Capital A/c",
     "amount": 5056,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2026-08-21",
+    "direction": "out",
+    "label": "TDS on Payout",
+    "amount": 1728,
     "invested": null,
     "units": null,
     "security": null,
@@ -48580,6 +48433,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2026-08-25",
+    "direction": "out",
+    "label": "TDS on Payout",
+    "amount": 2878,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
     "accountId": "svan-investment-managers-llp-8710090",
     "date": "2026-08-25",
     "direction": "out",
@@ -48591,11 +48455,33 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2026-08-26",
+    "direction": "out",
+    "label": "TDS on Payout",
+    "amount": 5565,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
     "accountId": "svan-investment-managers-llp-8710090",
     "date": "2026-08-26",
     "direction": "out",
     "label": "Capital outflow",
     "amount": 3640,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2026-09-01",
+    "direction": "out",
+    "label": "TDS on Payout",
+    "amount": 2415,
     "invested": null,
     "units": null,
     "security": null,
@@ -48624,11 +48510,33 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2026-09-03",
+    "direction": "out",
+    "label": "TDS on Payout",
+    "amount": 2600,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
     "accountId": "svan-investment-managers-llp-8710090",
     "date": "2026-09-03",
     "direction": "out",
     "label": "Capital outflow",
     "amount": 1690,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2026-09-17",
+    "direction": "out",
+    "label": "TDS on Payout",
+    "amount": 1378,
     "invested": null,
     "units": null,
     "security": null,
@@ -48668,11 +48576,33 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": "motilal-oswal-arbitrage-fund-direct-plan-growth"
   },
   {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2026-09-23",
+    "direction": "out",
+    "label": "TDS on Payout",
+    "amount": 3208,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
     "accountId": "svan-investment-managers-llp-8710090",
     "date": "2026-09-23",
     "direction": "out",
     "label": "Capital outflow",
     "amount": 2096,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2026-09-24",
+    "direction": "out",
+    "label": "TDS on Payout",
+    "amount": 2008,
     "invested": null,
     "units": null,
     "security": null,
@@ -48714,6 +48644,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2026-09-30",
+    "direction": "out",
+    "label": "TDS on Payout",
+    "amount": 1635,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
     "accountId": "svan-investment-managers-llp-8710090",
     "date": "2026-09-30",
     "direction": "out",
@@ -48749,6 +48690,28 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": "nzuri-pune-knowledge-park"
   },
   {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2026-10-01",
+    "direction": "out",
+    "label": "TDS on Payout",
+    "amount": 6700,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "date": "2026-10-01",
+    "direction": "out",
+    "label": "TDS on Payout",
+    "amount": 4780,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
     "accountId": "v-e-c-assago-capital-management-llp-128004",
     "date": "2026-10-03",
     "direction": "out",
@@ -48765,6 +48728,50 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "direction": "out",
     "label": "TDS Trf to Capital A/c",
     "amount": 2952,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2026-10-06",
+    "direction": "out",
+    "label": "TDS on Payout",
+    "amount": 7353,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "date": "2026-10-06",
+    "direction": "out",
+    "label": "TDS on Payout",
+    "amount": 4785,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "date": "2026-10-12",
+    "direction": "out",
+    "label": "TDS on Payout",
+    "amount": 986,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "date": "2026-10-12",
+    "direction": "out",
+    "label": "TDS on Payout",
+    "amount": 1280,
     "invested": null,
     "units": null,
     "security": null,
@@ -66178,12 +66185,6 @@ export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: 
       "amount": 26000
     }
   ],
-  "svan-investment-managers-llp-8710067|heg-advanced-materials": [
-    {
-      "date": "2026-08-13",
-      "amount": 27948
-    }
-  ],
   "svan-investment-managers-llp-8710067|indo-count-industries": [
     {
       "date": "2026-09-01",
@@ -66382,12 +66383,6 @@ export const BOOK_HOLDING_INCOME: Record<string, { date: string | null; amount: 
     {
       "date": "2026-09-03",
       "amount": 16900
-    }
-  ],
-  "svan-investment-managers-llp-8710090|heg-advanced-materials": [
-    {
-      "date": "2026-08-13",
-      "amount": 18241
     }
   ],
   "svan-investment-managers-llp-8710090|indo-count-industries": [
@@ -69118,6 +69113,750 @@ export const BOOK_EARLIER_BALANCES: EarlierBalance[] = [
     "asOf": "2026-07-31",
     "quantity": 18895852.36,
     "docKey": "motilal-oswal-founders-fund-90410016104-2026-07-31-holdings-2"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "securityKey": "apollo-pipes",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 5700,
+    "docKey": "svan-investment-managers-llp-8710067-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "securityKey": "arvind-fashions",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 9360,
+    "docKey": "svan-investment-managers-llp-8710067-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "securityKey": "birlasoft",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 10110,
+    "docKey": "svan-investment-managers-llp-8710067-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "securityKey": "borosil-renewables",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 6965,
+    "docKey": "svan-investment-managers-llp-8710067-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "securityKey": "caplin-point-laboratories",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 2465,
+    "docKey": "svan-investment-managers-llp-8710067-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "securityKey": "cash",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 137285.633,
+    "docKey": "svan-investment-managers-llp-8710067-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "securityKey": "ceat",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 1590,
+    "docKey": "svan-investment-managers-llp-8710067-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "securityKey": "cosmo-first",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 5190,
+    "docKey": "svan-investment-managers-llp-8710067-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "securityKey": "creative-newtech",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 3855,
+    "docKey": "svan-investment-managers-llp-8710067-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "securityKey": "credit-access-grameen",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 3860,
+    "docKey": "svan-investment-managers-llp-8710067-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "securityKey": "dilip-buildcon",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 6460,
+    "docKey": "svan-investment-managers-llp-8710067-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "securityKey": "edelweiss-financial-services",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 29855,
+    "docKey": "svan-investment-managers-llp-8710067-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "securityKey": "ester-industries",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 31090,
+    "docKey": "svan-investment-managers-llp-8710067-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "securityKey": "fusion-finance",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 12340,
+    "docKey": "svan-investment-managers-llp-8710067-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "securityKey": "ghcl",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 6085,
+    "docKey": "svan-investment-managers-llp-8710067-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "securityKey": "ghcl-textiles",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 28995,
+    "docKey": "svan-investment-managers-llp-8710067-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "securityKey": "gland-pharma",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 1300,
+    "docKey": "svan-investment-managers-llp-8710067-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "securityKey": "graphite-india",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 2700,
+    "docKey": "svan-investment-managers-llp-8710067-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "securityKey": "heg-graphite",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 8220,
+    "docKey": "svan-investment-managers-llp-8710067-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "securityKey": "ifb-industries",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 2095,
+    "docKey": "svan-investment-managers-llp-8710067-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "securityKey": "indo-count-industries",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 16100,
+    "docKey": "svan-investment-managers-llp-8710067-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "securityKey": "kajaria-ceramics",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 1700,
+    "docKey": "svan-investment-managers-llp-8710067-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "securityKey": "krishca-strapping-solutions",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 7500,
+    "docKey": "svan-investment-managers-llp-8710067-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "securityKey": "laxmi-organic-industries",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 24000,
+    "docKey": "svan-investment-managers-llp-8710067-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "securityKey": "mastek",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 2005,
+    "docKey": "svan-investment-managers-llp-8710067-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "securityKey": "neuland-laboratories",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 300,
+    "docKey": "svan-investment-managers-llp-8710067-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "securityKey": "nitin-spinners",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 9580,
+    "docKey": "svan-investment-managers-llp-8710067-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "securityKey": "paras-defence-and-space-technologies",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 2430,
+    "docKey": "svan-investment-managers-llp-8710067-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "securityKey": "pokarna",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 4170,
+    "docKey": "svan-investment-managers-llp-8710067-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "securityKey": "polyplex",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 2515,
+    "docKey": "svan-investment-managers-llp-8710067-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "securityKey": "punjab-chem-and-crop-prot-l",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 2915,
+    "docKey": "svan-investment-managers-llp-8710067-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "securityKey": "puravankara",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 16350,
+    "docKey": "svan-investment-managers-llp-8710067-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "securityKey": "sg-mart",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 3125,
+    "docKey": "svan-investment-managers-llp-8710067-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "securityKey": "shakti-pumps-india",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 1350,
+    "docKey": "svan-investment-managers-llp-8710067-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "securityKey": "shankara-buildpro",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 3660,
+    "docKey": "svan-investment-managers-llp-8710067-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "securityKey": "sharda-cropchem",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 1920,
+    "docKey": "svan-investment-managers-llp-8710067-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "securityKey": "sharda-motor-industries",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 3350,
+    "docKey": "svan-investment-managers-llp-8710067-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "securityKey": "stove-kraft",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 3935,
+    "docKey": "svan-investment-managers-llp-8710067-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "securityKey": "syrma-sgs-technology",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 2550,
+    "docKey": "svan-investment-managers-llp-8710067-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "securityKey": "time-technoplast",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 10900,
+    "docKey": "svan-investment-managers-llp-8710067-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "securityKey": "v2-retail",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 31600,
+    "docKey": "svan-investment-managers-llp-8710067-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "securityKey": "vaibhav-global",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 9200,
+    "docKey": "svan-investment-managers-llp-8710067-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "securityKey": "varroc-engineering",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 7075,
+    "docKey": "svan-investment-managers-llp-8710067-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "securityKey": "viyash-scientific",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 19435,
+    "docKey": "svan-investment-managers-llp-8710067-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "securityKey": "wockhardt",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 1600,
+    "docKey": "svan-investment-managers-llp-8710067-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "securityKey": "wpil",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 4245,
+    "docKey": "svan-investment-managers-llp-8710067-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "securityKey": "zensar-technologies",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 5090,
+    "docKey": "svan-investment-managers-llp-8710067-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "securityKey": "apollo-pipes",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 3500,
+    "docKey": "svan-investment-managers-llp-8710090-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "securityKey": "arvind-fashions",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 6660,
+    "docKey": "svan-investment-managers-llp-8710090-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "securityKey": "birlasoft",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 6560,
+    "docKey": "svan-investment-managers-llp-8710090-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "securityKey": "borosil-renewables",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 4530,
+    "docKey": "svan-investment-managers-llp-8710090-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "securityKey": "caplin-point-laboratories",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 1600,
+    "docKey": "svan-investment-managers-llp-8710090-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "securityKey": "cash",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 124553.785,
+    "docKey": "svan-investment-managers-llp-8710090-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "securityKey": "ceat",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 1040,
+    "docKey": "svan-investment-managers-llp-8710090-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "securityKey": "cosmo-first",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 3370,
+    "docKey": "svan-investment-managers-llp-8710090-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "securityKey": "creative-newtech",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 2505,
+    "docKey": "svan-investment-managers-llp-8710090-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "securityKey": "credit-access-grameen",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 2515,
+    "docKey": "svan-investment-managers-llp-8710090-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "securityKey": "dilip-buildcon",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 4215,
+    "docKey": "svan-investment-managers-llp-8710090-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "securityKey": "edelweiss-financial-services",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 19415,
+    "docKey": "svan-investment-managers-llp-8710090-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "securityKey": "ester-industries",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 19685,
+    "docKey": "svan-investment-managers-llp-8710090-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "securityKey": "fusion-finance",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 8050,
+    "docKey": "svan-investment-managers-llp-8710090-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "securityKey": "ghcl",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 3970,
+    "docKey": "svan-investment-managers-llp-8710090-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "securityKey": "ghcl-textiles",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 18880,
+    "docKey": "svan-investment-managers-llp-8710090-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "securityKey": "gland-pharma",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 845,
+    "docKey": "svan-investment-managers-llp-8710090-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "securityKey": "graphite-india",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 1800,
+    "docKey": "svan-investment-managers-llp-8710090-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "securityKey": "heg-graphite",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 5365,
+    "docKey": "svan-investment-managers-llp-8710090-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "securityKey": "ifb-industries",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 1490,
+    "docKey": "svan-investment-managers-llp-8710090-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "securityKey": "indo-count-industries",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 10505,
+    "docKey": "svan-investment-managers-llp-8710090-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "securityKey": "krishca-strapping-solutions",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 5000,
+    "docKey": "svan-investment-managers-llp-8710090-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "securityKey": "laxmi-organic-industries",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 15660,
+    "docKey": "svan-investment-managers-llp-8710090-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "securityKey": "mastek",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 1310,
+    "docKey": "svan-investment-managers-llp-8710090-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "securityKey": "neuland-laboratories",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 195,
+    "docKey": "svan-investment-managers-llp-8710090-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "securityKey": "nitin-spinners",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 6240,
+    "docKey": "svan-investment-managers-llp-8710090-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "securityKey": "paras-defence-and-space-technologies",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 1575,
+    "docKey": "svan-investment-managers-llp-8710090-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "securityKey": "pokarna",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 2885,
+    "docKey": "svan-investment-managers-llp-8710090-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "securityKey": "polyplex",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 1640,
+    "docKey": "svan-investment-managers-llp-8710090-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "securityKey": "punjab-chem-and-crop-prot-l",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 2075,
+    "docKey": "svan-investment-managers-llp-8710090-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "securityKey": "puravankara",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 11370,
+    "docKey": "svan-investment-managers-llp-8710090-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "securityKey": "sg-mart",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 2035,
+    "docKey": "svan-investment-managers-llp-8710090-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "securityKey": "shakti-pumps-india",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 980,
+    "docKey": "svan-investment-managers-llp-8710090-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "securityKey": "shankara-buildpro",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 2380,
+    "docKey": "svan-investment-managers-llp-8710090-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "securityKey": "sharda-cropchem",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 1245,
+    "docKey": "svan-investment-managers-llp-8710090-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "securityKey": "sharda-motor-industries",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 2390,
+    "docKey": "svan-investment-managers-llp-8710090-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "securityKey": "stove-kraft",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 2570,
+    "docKey": "svan-investment-managers-llp-8710090-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "securityKey": "syrma-sgs-technology",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 1655,
+    "docKey": "svan-investment-managers-llp-8710090-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "securityKey": "time-technoplast",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 7760,
+    "docKey": "svan-investment-managers-llp-8710090-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "securityKey": "v2-retail",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 20550,
+    "docKey": "svan-investment-managers-llp-8710090-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "securityKey": "vaibhav-global",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 6005,
+    "docKey": "svan-investment-managers-llp-8710090-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "securityKey": "varroc-engineering",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 4605,
+    "docKey": "svan-investment-managers-llp-8710090-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "securityKey": "viyash-scientific",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 12640,
+    "docKey": "svan-investment-managers-llp-8710090-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "securityKey": "wockhardt",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 1045,
+    "docKey": "svan-investment-managers-llp-8710090-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "securityKey": "wpil",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 3090,
+    "docKey": "svan-investment-managers-llp-8710090-2026-09-30-appraisal"
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "securityKey": "zensar-technologies",
+    "isin": null,
+    "asOf": "2026-09-30",
+    "quantity": 3320,
+    "docKey": "svan-investment-managers-llp-8710090-2026-09-30-appraisal"
   }
 ];
 
@@ -69591,6 +70330,16 @@ export const BOOK_ENTITY_CASH_FLOWS: Record<string, CashFlow[]> = {
       "description": "Full Redemption"
     },
     {
+      "date": "2024-09-03",
+      "amount": -50000000,
+      "description": "Corpus Deposits"
+    },
+    {
+      "date": "2024-09-24",
+      "amount": 5390,
+      "description": "TDS on Payout"
+    },
+    {
       "date": "2024-10-04",
       "amount": 144570.94,
       "description": "Cash Outflow without exit load"
@@ -69604,6 +70353,201 @@ export const BOOK_ENTITY_CASH_FLOWS: Record<string, CashFlow[]> = {
       "date": "2024-11-18",
       "amount": 4065,
       "description": "Full Redemption"
+    },
+    {
+      "date": "2024-12-06",
+      "amount": 713,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2024-12-11",
+      "amount": 775,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-01-07",
+      "amount": 2290.75,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-01-16",
+      "amount": -30000000,
+      "description": "Corpus Deposits"
+    },
+    {
+      "date": "2025-01-31",
+      "amount": 3555,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-02-06",
+      "amount": 523,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-02-10",
+      "amount": 950,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-02-17",
+      "amount": -30000000,
+      "description": "Corpus Deposits"
+    },
+    {
+      "date": "2025-02-17",
+      "amount": 545,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-02-18",
+      "amount": 1290,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-03-05",
+      "amount": 1276,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-07-09",
+      "amount": 4701,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-07-24",
+      "amount": 5862,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-07-30",
+      "amount": 4169,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-08-12",
+      "amount": 240,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-08-12",
+      "amount": 1688,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-08-12",
+      "amount": 2224,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-08-19",
+      "amount": 1039,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-08-21",
+      "amount": 2720,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-08-26",
+      "amount": 1680,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-09-01",
+      "amount": 1498,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-09-02",
+      "amount": 4170,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-09-09",
+      "amount": 1299.6,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-09-10",
+      "amount": 10744,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-09-18",
+      "amount": 1362.5,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-09-24",
+      "amount": 5444,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-09-25",
+      "amount": 3627,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-10-06",
+      "amount": 2985,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-10-13",
+      "amount": 2648,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-10-29",
+      "amount": -35000000,
+      "description": "Corpus Deposits"
+    },
+    {
+      "date": "2025-11-11",
+      "amount": 10896,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-11-17",
+      "amount": 1380,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-11-28",
+      "amount": 2008,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-11-28",
+      "amount": 2528,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-12-10",
+      "amount": 1275,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2026-02-10",
+      "amount": 1222,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2026-02-12",
+      "amount": 1152,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2026-02-12",
+      "amount": 1380,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2026-02-13",
+      "amount": 1604,
+      "description": "TDS on Payout"
     },
     {
       "date": "2026-04-01",
@@ -69904,9 +70848,174 @@ export const BOOK_ENTITY_CASH_FLOWS: Record<string, CashFlow[]> = {
       "date": "2026-09-30",
       "amount": 7800,
       "description": "TDS Trf to Capital A/c"
+    },
+    {
+      "date": "2026-10-01",
+      "amount": 6700,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2026-10-06",
+      "amount": 2874,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2026-10-06",
+      "amount": 4479,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2026-10-12",
+      "amount": 986,
+      "description": "TDS on Payout"
     }
   ],
   "Bharat Jaisinghani": [
+    {
+      "date": "2024-12-03",
+      "amount": -50000000,
+      "description": "Corpus Deposits"
+    },
+    {
+      "date": "2025-01-07",
+      "amount": 2630.75,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-01-31",
+      "amount": 2891.25,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-02-06",
+      "amount": 444,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-02-17",
+      "amount": -30000000,
+      "description": "Corpus Deposits"
+    },
+    {
+      "date": "2025-02-18",
+      "amount": 580.5,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-03-05",
+      "amount": 928,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-07-09",
+      "amount": 3420,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-07-24",
+      "amount": 4170,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-07-30",
+      "amount": 2965,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-08-12",
+      "amount": 1226,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-08-12",
+      "amount": 1584,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-08-21",
+      "amount": 1936,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-08-26",
+      "amount": 1161,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-09-01",
+      "amount": 1066,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-09-02",
+      "amount": 2970,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-09-10",
+      "amount": 7816,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-09-24",
+      "amount": 3884,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-09-25",
+      "amount": 1950,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-10-06",
+      "amount": 2123,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-10-13",
+      "amount": 1928,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-10-29",
+      "amount": -15000000,
+      "description": "Corpus Deposits"
+    },
+    {
+      "date": "2025-11-11",
+      "amount": 7758,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-11-17",
+      "amount": 900.75,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-11-28",
+      "amount": 1500,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2025-11-28",
+      "amount": 1640,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2026-02-10",
+      "amount": 797,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2026-02-12",
+      "amount": 900.75,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2026-02-13",
+      "amount": 1048,
+      "description": "TDS on Payout"
+    },
     {
       "date": "2026-07-03",
       "amount": 4764,
@@ -69975,6 +71084,26 @@ export const BOOK_ENTITY_CASH_FLOWS: Record<string, CashFlow[]> = {
     {
       "date": "2026-09-30",
       "amount": 1164,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2026-10-01",
+      "amount": 4780,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2026-10-06",
+      "amount": 1872,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2026-10-06",
+      "amount": 2913,
+      "description": "TDS on Payout"
+    },
+    {
+      "date": "2026-10-12",
+      "amount": 1280,
       "description": "TDS on Payout"
     }
   ]

@@ -1584,19 +1584,29 @@ function bankBookCapitalWitnessed({ accountId, allIssues, existing, notes, label
      */
     // Compared as the record lists them — ONE MOVE PER DATE AND DIRECTION, so two
     // TDS rows on one day (Green Lantern 510861's 2 April, ₹2,708 and ₹1,339) are
-    // the one ₹4,047 the record carries, not two moves it lacks. A row a second
-    // issue of the bank book prints again is counted once.
-    const seen = new Set();
+    // the one ₹4,047 the record carries, not two moves it lacks. A day a second
+    // issue of the bank book prints again is taken from the NEWEST issue whose
+    // window covers it, never summed across issues: a reissue can print the same
+    // row on a different running balance (SVAN 8710090's 4 Nov bank book slots a
+    // late-settled dividend in earlier, moving the balance on 13 Jul and 25 Aug),
+    // so no row key can match the two copies (Stage 10lw).
     const byDay = new Map();
-    for (const c of books.flatMap((d) => d.cashFlows ?? [])) {
-      if (c.kind !== "bank-book" || !c.date || !isNum(c.depositWithdrawal) || c.depositWithdrawal === 0) continue;
-      const k = `${c.date}|${(c.description ?? "").trim()}|${c.depositWithdrawal}|${c.balance ?? ""}`;
-      if (seen.has(k)) continue;
-      seen.add(k);
-      const direction = c.depositWithdrawal > 0 ? "in" : "out";
-      const e = byDay.get(`${c.date}|${direction}`) ?? { date: c.date, direction, amount: 0 };
-      e.amount += Math.abs(c.depositWithdrawal);
-      byDay.set(`${c.date}|${direction}`, e);
+    const newestFirst = [...books].sort((a, b) => ((b.periodTo ?? b.asOf ?? "") < (a.periodTo ?? a.asOf ?? "") ? -1
+      : (b.periodTo ?? b.asOf ?? "") > (a.periodTo ?? a.asOf ?? "") ? 1 : 0));
+    const covered = [];
+    for (const d of newestFirst) {
+      const own = new Map();
+      for (const c of d.cashFlows ?? []) {
+        if (c.kind !== "bank-book" || !c.date || !isNum(c.depositWithdrawal) || c.depositWithdrawal === 0) continue;
+        if (covered.some((w) => (!w.from || w.from <= c.date) && (!w.to || c.date <= w.to))) continue;
+        const direction = c.depositWithdrawal > 0 ? "in" : "out";
+        const e = own.get(`${c.date}|${direction}`) ?? { date: c.date, direction, amount: 0 };
+        e.amount += Math.abs(c.depositWithdrawal);
+        own.set(`${c.date}|${direction}`, e);
+      }
+      for (const [k, e] of own) byDay.set(k, e);
+      const dates = (d.cashFlows ?? []).map((c) => c.date).filter(Boolean).sort();
+      covered.push({ from: d.periodFrom ?? dates[0] ?? null, to: d.periodTo ?? d.asOf ?? dates.at(-1) ?? null });
     }
     const fresh = [...byDay.values()].filter((x) => !existing.some((m) => m.date === x.date
       && m.direction === x.direction && isNum(m.amount) && Math.abs(m.amount - x.amount) <= 1));
@@ -4452,6 +4462,11 @@ function build(archived, archiveCount = archived.length, references = {}) {
       const mine = capitalMoves.filter((m) => m.accountId === accountId);
       const ins = mine.filter((m) => m.direction === "in" && isNum(m.amount));
       const firstIn = ins.map((m) => m.date).sort()[0] ?? null;
+      // How far the record runs once a register or bank book whose balances tie
+      // has extended it (above), not only the typed rows' own reach: SVAN's
+      // 4 Nov 2026 capital registers run from inception to the appraisal's date
+      // while 8710067's typed rows stop on 31 Jul (Stage 10lw).
+      const recordTo = acctForPositions.capitalRecordTo ?? capitalRecordTo;
       if (si.length) {
         const b = si[0];
         acctForPositions.capital = {
@@ -4471,7 +4486,7 @@ function build(archived, archiveCount = archived.length, references = {}) {
         // ₹37,099.80 of TDS paid out of the mandate in August and September was
         // in no withdrawal — capital stamped "to 30 Sep" over a record that
         // stops two months short.
-        && !!capitalRecordTo && capitalRecordTo >= asOf) {
+        && !!recordTo && recordTo >= asOf) {
         acctForPositions.capital = {
           contributed: r2(sum(ins.map((m) => m.amount))),
           withdrawn: r2(sum(mine.filter((m) => m.direction === "out" && isNum(m.amount)).map((m) => m.amount))),
@@ -4480,8 +4495,8 @@ function build(archived, archiveCount = archived.length, references = {}) {
       } else {
         acctForPositions.capital = null;
         notes.push(`account ${accountNo}: no statement states this mandate's capital since inception as at ${asOf}, `
-          + (ins.length && inception && firstIn <= inception && capitalRecordTo && capitalRecordTo < asOf
-            ? `and its dated capital record runs from inception only to ${capitalRecordTo}, `
+          + (ins.length && inception && firstIn <= inception && recordTo && recordTo < asOf
+            ? `and its dated capital record runs from inception only to ${recordTo}, `
             : "")
           + "so its return is struck holding by holding and carries only the realised gain its capital gain statement's window reports");
       }

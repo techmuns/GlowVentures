@@ -14342,6 +14342,191 @@
   ]
  },
  {
+  "docKey": "svan-investment-managers-llp-8710067-2026-11-04-capital-register",
+  "provider": "SVAN Investment Managers LLP",
+  "accountNo": "8710067",
+  "owner": "AJAY T JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-11-04",
+  "reportType": "capital-register",
+  "sourcePath": "source/november-2026-d/Z1281_8710067_CapitalRegister1173CT.pdf",
+  "pages": 4,
+  "sections": [
+   "capitalRegister",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "svan-investment-managers-llp-8710067-2026-11-04-capital-register",
+  "label": "SVAN Investment Managers LLP · 8710067 · capital-register",
+  "fy": "2026-11-04",
+  "source": "source/november-2026-d/Z1281_8710067_CapitalRegister1173CT.pdf",
+  "sheets": [
+   {
+    "key": "capitalRegister",
+    "name": "capital-register",
+    "rows": 118,
+    "cols": 10
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 4,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "svan-investment-managers-llp-8710067-2026-11-04-appraisal",
+  "provider": "SVAN Investment Managers LLP",
+  "accountNo": "8710067",
+  "owner": "AJAY T JAISINGHANI",
+  "ownerId": "ajay-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-11-04",
+  "reportType": "appraisal",
+  "sourcePath": "source/november-2026-d/Z1281_8710067_PortfolioAppraisal675CT.pdf",
+  "pages": 2,
+  "sections": [
+   "holdings",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "svan-investment-managers-llp-8710067-2026-11-04-appraisal",
+  "label": "SVAN Investment Managers LLP · 8710067 · appraisal",
+  "fy": "2026-11-04",
+  "source": "source/november-2026-d/Z1281_8710067_PortfolioAppraisal675CT.pdf",
+  "sheets": [
+   {
+    "key": "holdings",
+    "name": "holdings",
+    "rows": 63,
+    "cols": 9
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "svan-investment-managers-llp-8710090-2026-11-04-bank-book",
+  "provider": "SVAN Investment Managers LLP",
+  "accountNo": "8710090",
+  "owner": "BHARAT JAISINGHANI",
+  "ownerId": "bharat-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-11-04",
+  "reportType": "bank-book",
+  "sourcePath": "source/november-2026-d/Z1281_8710090_BankBook178CT.pdf",
+  "pages": 56,
+  "sections": [
+   "bankBook",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "svan-investment-managers-llp-8710090-2026-11-04-bank-book",
+  "label": "SVAN Investment Managers LLP · 8710090 · bank-book",
+  "fy": "2026-11-04",
+  "source": "source/november-2026-d/Z1281_8710090_BankBook178CT.pdf",
+  "sheets": [
+   {
+    "key": "bankBook",
+    "name": "bank-book",
+    "rows": 1660,
+    "cols": 10
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 56,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "svan-investment-managers-llp-8710090-2026-11-04-capital-register",
+  "provider": "SVAN Investment Managers LLP",
+  "accountNo": "8710090",
+  "owner": "BHARAT JAISINGHANI",
+  "ownerId": "bharat-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-11-04",
+  "reportType": "capital-register",
+  "sourcePath": "source/november-2026-d/Z1281_8710090_CapitalRegister1173CT.pdf",
+  "pages": 3,
+  "sections": [
+   "capitalRegister",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "svan-investment-managers-llp-8710090-2026-11-04-capital-register",
+  "label": "SVAN Investment Managers LLP · 8710090 · capital-register",
+  "fy": "2026-11-04",
+  "source": "source/november-2026-d/Z1281_8710090_CapitalRegister1173CT.pdf",
+  "sheets": [
+   {
+    "key": "capitalRegister",
+    "name": "capital-register",
+    "rows": 86,
+    "cols": 10
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 3,
+    "cols": 2
+   }
+  ]
+ },
+ {
+  "docKey": "svan-investment-managers-llp-8710090-2026-11-04-appraisal",
+  "provider": "SVAN Investment Managers LLP",
+  "accountNo": "8710090",
+  "owner": "BHARAT JAISINGHANI",
+  "ownerId": "bharat-jaisinghani",
+  "familyGroup": null,
+  "strategy": null,
+  "asOf": "2026-11-04",
+  "reportType": "appraisal",
+  "sourcePath": "source/november-2026-d/Z1281_8710090_PortfolioAppraisal675CT.pdf",
+  "pages": 2,
+  "sections": [
+   "holdings",
+   "pages"
+  ],
+  "status": "ok",
+  "warnings": 0,
+  "fileKey": "svan-investment-managers-llp-8710090-2026-11-04-appraisal",
+  "label": "SVAN Investment Managers LLP · 8710090 · appraisal",
+  "fy": "2026-11-04",
+  "source": "source/november-2026-d/Z1281_8710090_PortfolioAppraisal675CT.pdf",
+  "sheets": [
+   {
+    "key": "holdings",
+    "name": "holdings",
+    "rows": 63,
+    "cols": 9
+   },
+   {
+    "key": "pages",
+    "name": "Raw page text",
+    "rows": 2,
+    "cols": 2
+   }
+  ]
+ },
+ {
   "docKey": "helios-mutual-fund-10355977-2026-11-03-holdings",
   "provider": "Helios Mutual Fund",
   "accountNo": "10355977",
