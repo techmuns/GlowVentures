@@ -1224,6 +1224,9 @@ Codex's review of #352, verified against the code and the book:
 - **A first-valued row is purchase to value** like every other row. Its first value plus the money added since is what was paid, shared across a whole account's holdings by today's value, so value − paid = gain on every row and in the total. It used to scale the account's gain, which did not tie.
 - **Only a missing-purchases gap is placed** (`YearGap.need`). A verified purchase with no usable value, or a holding valued at cost, keeps its own reason.
 - **XIRR and CAGR** annualise a first-valued debt holding as they do a purchased one. Equities under a year stay absolute.
+- **Only a sale or withdrawal counts as money taken out.** A dividend or other income paid out leaves the units held, so the holding is still placed.
+- **A value dated before the first value is no closing value.** That holding stays to check.
+- **"Held before" rests on the family's assumed-continued-ownership rule** (22 Oct): a dated balance that no later recorded trade contradicts.
 - **Market performance:**
-  - a period reports private holdings apart even when a measured account holds them (`selectionMarket(…, { inception })`);
+  - a period reports private holdings apart even when a measured account holds them (`selectionMarket(…, { inception })`). That account's public holdings are left unmeasured too, since its return carries the private ones;
   - a holding held at its last value sets no row's dates (`MarketUnit.held`), and a row, or a total, that measured no dates claims none: it no longer falls back to the portfolio's dates.

@@ -139,7 +139,7 @@ export function investedThisYear(positions: readonly Position[], accounts: reado
 export type FirstValueUnit = { positions: readonly Position[]; from: string | null; to: string | null; invested: number; close: number;
   gain: number; held?: { date: string }; ownPct: number | null;
   /** The record's own window, where it has one: its opening value and the money it moved. */
-  openValue?: number; capitalIn?: number; capitalOut?: number; flows?: readonly { date: string; amount: number }[] };
+  openValue?: number; capitalIn?: number; capitalOut?: number; flows?: readonly { date: string; amount: number; description?: string }[] };
 
 /** The same units on an older statement on or before `open`, with no trade since. */
 export function heldBeforeYear(p: Position, open: string, balances: readonly { accountId: string; securityKey: string; asOf: string; quantity: number }[],
@@ -166,7 +166,10 @@ export function placeEveryHolding<R extends globalThis.ReturnType<typeof investe
       else older.push(p);
       continue;
     }
-    if ((u.capitalOut ?? 0) > 0) {
+    // Money taken out is a sale or withdrawal; a dividend or other income paid out leaves the units held.
+    const income = (f: { description?: string }) => /dividend|income|interest|distribution|coupon/i.test(f.description ?? '');
+    const takenOut = u.flows ? sum(u.flows.filter((f) => f.amount > 0 && !income(f)), (f) => f.amount) : (u.capitalOut ?? 0);
+    if (takenOut > 0) {
       missing.push({ position: p, need: 'purchases', reason: 'First valued this year, with money taken out since. We need the purchase dates, units and costs to separate the units still held from those sold.' });
       continue;
     }
@@ -175,7 +178,10 @@ export function placeEveryHolding<R extends globalThis.ReturnType<typeof investe
     const share = total > 0 && p.marketValue > 0 ? p.marketValue / total : 0;
     const cost = u.invested * share, value = p.marketValue, gain = value - cost;
     if (!(cost > 0)) { missing.push(g); continue; }
-    const on = valuedOn(p) ?? u.to ?? firstOn, days = daysBetween(firstOn, on), periodPct = gain / cost * 100;
+    const on = valuedOn(p) ?? u.to ?? firstOn;
+    // A value dated before the first value is no closing value for it.
+    if (on < firstOn) { missing.push({ position: p, need: 'value', reason: 'We need a market value dated on or after its first value this year.' }); continue; }
+    const days = daysBetween(firstOn, on), periodPct = gain / cost * 100;
     const inflows = (u.flows ?? []).filter((f) => f.amount < 0 && f.date > firstOn);
     let pct: number | null = periodPct, annual = false, returnMissing: string | null = null;
     // Under a year the purchase-to-value return stands; only debt is annualised (Stage 10hk).

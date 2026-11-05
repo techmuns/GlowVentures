@@ -38,6 +38,11 @@ export function selectionMarket(current: readonly Position[], units: readonly Re
     // A period reports private investments apart, as the cards do; Since investment covers them.
     if (!inception && p.marketSide === 'private') { gaps.push({ position: p, reason: 'A private investment: reported apart, at Private Market’s value.', code: 'unmatched' }); continue; }
     const u = byKey.get(marketHoldingKey(p));
+    // An account's return that also carries private investments is not the public holdings' own.
+    if (u && !inception && u.positions.some((x) => x.marketSide === 'private' && x.marketValue > 0)) {
+      gaps.push({ position: p, reason: 'Its account’s return includes private investments, which a period reports apart; this holding’s own return is not on record.', code: 'unmatched' });
+      continue;
+    }
     const r = u ? unitOwnReturn(u) : null;
     if (u && r != null) {
       out.push({ position: p, periodPct: r, from: u.from ?? start ?? '', to: u.to ?? end ?? '', ...(u.held ? { held: true as const } : {}),

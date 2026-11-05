@@ -79,7 +79,8 @@ const unit = (key: string, positions: Position[], w: AccountWindow | null, extra
   const pv = pos('acct2', 'unlisted', 100, { marketSide: 'private' }), pl = pos('acct2', 'listed', 100);
   const both = [unit('acct2', [pv, pl], win('acct2', '2026-03-31', 100, '2026-10-31', 200))];
   const period = selectionMarket([pv, pl], both, [], '2026-03-31', '2026-11-05');
-  assert.equal(period.count, 1); assert.match(period.gaps[0].reason, /private/i);
+  assert.equal(period.count, 0, 'an account return that carries private investments is not the public holding’s own');
+  assert.equal(period.gaps.length, 2); assert.ok(period.gaps.every((g) => /private/i.test(g.reason)));
   assert.equal(selectionMarket([pv, pl], both, [], '2026-03-31', '2026-11-05', { inception: true }).count, 2);
 }
 
@@ -113,21 +114,29 @@ const unit = (key: string, positions: Position[], w: AccountWindow | null, extra
     { positions: [bond], from: '2026-05-05', to: '2026-11-03', invested: 100, close: 105, gain: 5, ownPct: 5, openValue: 100, capitalIn: 0, capitalOut: 0 },
   ];
   const quantities = [{ accountId: 'd', securityKey: 'before', asOf: '2026-03-31', quantity: 10 }];
+  // A first-valued share that paid a dividend still holds its units; one valued only before its first value has no close.
+  const paid = pos('d', 'paid', 120), stale = pos('d', 'stale', 50);
+  result.missing.push(purchases(paid), purchases(stale));
+  units.push({ positions: [paid], from: '2026-06-30', to: '2026-11-03', invested: 100, close: 120, gain: 22, ownPct: 22, openValue: 100, capitalIn: 0, capitalOut: 2,
+    flows: [{ date: '2026-08-01', amount: 2, description: 'Gross dividend entitlement' }] },
+    { positions: [stale], from: '2026-12-01', to: '2026-12-31', invested: 40, close: 50, gain: 10, ownPct: 25, openValue: 40, capitalIn: 0, capitalOut: 0 });
   const place = (type: 'absolute' | 'xirr' | 'cagr') => placeEveryHolding(result as unknown as ReturnType<typeof investedThisYear>, units, '2026-03-31',
     (p) => heldBeforeYear(p, '2026-03-31', quantities, {}), { type, valuedOn: () => '2026-11-03' });
   const r = place('absolute');
   assert.deepEqual(r.older.map((p) => p.securityKey).sort(), ['before', 'older', 'opened']);
-  assert.deepEqual(r.missing.map((g) => g.position.securityKey).sort(), ['at-cost', 'mixed', 'no-value', 'none', 'sold'], 'what no record separates stays named, with its reason');
+  assert.deepEqual(r.missing.map((g) => g.position.securityKey).sort(), ['at-cost', 'mixed', 'no-value', 'none', 'sold', 'stale'], 'what no record separates stays named, with its reason');
+  assert.ok(r.firstValued.some((x) => x.position === paid), 'a dividend is not a sale');
+  assert.match(r.missing.find((g) => g.position === stale)!.reason, /on or after its first value/);
   assert.match(r.missing.find((g) => g.position === mixed)!.reason, /money added this year/);
   assert.match(r.missing.find((g) => g.position === sold)!.reason, /taken out/);
   assert.match(r.missing.find((g) => g.position === noValue)!.reason, /market value/, 'a missing value keeps its reason');
-  assert.equal(r.firstValued.length, 3);
+  assert.equal(r.firstValued.length, 4);
   const may = r.firstValued.find((x) => x.position === firstMay)!;
   assert.equal(may.first, '2026-05-15'); near(may.cost, 360 * 300 / 400); near(may.value, 300);
   near(may.gain, may.value - may.cost, 1e-9); near(may.pct!, (may.value / may.cost - 1) * 100, 1e-9);
   for (const x of r.included) near(x.gain, x.value - x.cost, 1e-9);
-  near(r.gain, r.value - r.cost, 1e-9); near(r.cost, 100 + 360 + 100);
-  assert.equal(r.included.length + r.missing.length + r.older.length, 12, 'every holding placed once');
+  near(r.gain, r.value - r.cost, 1e-9); near(r.cost, 100 + 360 + 100 + 100);
+  assert.equal(r.included.length + r.missing.length + r.older.length, 14, 'every holding placed once');
   // An older balance of OTHER units than held now, or a trade since, is no proof the holding predates the year.
   assert.equal(heldBeforeYear(before, '2026-03-31', [{ ...quantities[0], quantity: 6 }], {}), false);
   assert.equal(heldBeforeYear(before, '2026-03-31', quantities, { 'd|before': [{ date: '2026-06-01' }] }), false);
