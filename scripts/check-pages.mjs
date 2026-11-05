@@ -29357,7 +29357,7 @@ const INVARIANTS = {
       const M = PM_C_BOOK?.multiples;
       if (!d || !M) return false; // the checker could not state its own expectation — a finding, never an abstention
       if (M.tvpi == null) {
-        const m = /(\d+) of the (\d+) holdings the Private funds band values cannot say/i.exec(d);
+        const m = /(\d+) of the (\d+) holdings the Private funds and valued companies bands value cannot say/i.exec(d);
         return !!m && Number(m[1]) === M.missing && Number(m[2]) === M.missing + M.holdings && /—/.test(tile);
       }
       const x = (n) => `${n.toFixed(2)}×`;
@@ -43574,12 +43574,13 @@ for (const theme of THEMES) {
        * cell's titles are read with it.
        */
       const pmReturn = FAST ? null : await page.evaluate(() => {
-        // THE PRIVATE SECTION'S FUND ROWS — the funds a return is struck on.
+        // THE VALUED SECTIONS' ROWS — the private funds and the companies valued
+        // directly (Zepto), the lines a return is struck on.
         // The missing-data section's rows are funds too, and value nothing, so
         // every measure on them is a dash naming why; counted in with the
         // valued ones they would make every per-fund claim about the wrong set.
         const all = [...document.querySelectorAll("main tr[data-pm-fund]")];
-        const rows = all.filter((tr) => tr.getAttribute("data-pm-row-section") === "private");
+        const rows = all.filter((tr) => ["private", "company"].includes(tr.getAttribute("data-pm-row-section")));
         if (!rows.length) return null;
         const titles = (el) => [...el.querySelectorAll("[title]")].map((x) => x.getAttribute("title")).join(" | ");
         const cellsOf = (tr) => [...tr.querySelectorAll("td[data-return-cell]")].map((td) => ({
