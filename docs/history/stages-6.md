@@ -1251,6 +1251,14 @@ Codex's review of #352, verified against the code and the book:
 - Not offered as targets: "Not classified" (it names an absence), and on Category the PMS mandates, at-cost and unrouted headings, because each makes a claim a move cannot make true. A row already under one of them can still go back to it.
 - Checks: `familyPlacements.test.ts` (`moved holdings`) covers the store (stale list, null clears, refusals, NOT_CONFIGURED) and DSP Gold moving from Alternate to Equity and back. It also checks that the citation is kept, an unknown tab is ignored, Carnelian moves whole on Category, and which targets are offered.
 
+### Stage 10lv — Morning CIO's three return cards, minimal: the return, and how many holdings it covers
+
+- *"We need to change the design of these card to make it more minimal … Return % in big bold … I rather see number of records covered over total records like before. Rest all … in (i) button"* — the family, 5 Nov 2026.
+- Face (Annualised / history, calendar year, financial year): the label, the return large (`TileMetric.large` → `Kpi large`, 30px), then "N of M holdings" — public holdings covered (measured + held at last value) over every public holding with value (`coverage.publicHoldings`, `measuredPublicHoldings`, `heldPublicHoldings` in `availableCardReturns.ts`) — and a muted line with the measured end date (the standing rule) and "assumed" / "not annualised" where they qualify the figure. The value bar and the three caption lines are gone.
+- The ⓘ opens on a short summary (`data-card-summary`): period and dates, gain, the Nifty 500 line on the same money (`CardBenchmarkLine`, moved off the face), holdings measured vs held, coverage by value with what waits for prices, and the private investments reported apart. The full working follows unchanged.
+- Gain / Loss and Consolidated return keep their captions.
+- Checks: `headlineMatches` reads "N of M holdings" against `data-card-public-covered` / `data-card-public-holdings`; the Stage 10ji face-index invariant skips the three cards and `check-selected-attribution.mjs` finds the index in their ⓘ; FYTD/YTD/history read the label, hover and caption where they read the removed second line; `check-latest-account-returns.mjs` takes the new caption.
+
 ### Stage 10lw — SVAN's 4 November reports: holdings and since-inception capital to 4 Nov
 
 - *"Integrate all of these files into the dashboard end - to - end. These are futher data that we're received from the client"* — 5 Nov 2026. `source/november-2026-d/` holds five SVAN Velocity reports as of 4 Nov: the appraisal and capital register for 8710067 (Ajay) and 8710090 (Bharat), and 8710090's bank book. All five are read `ok` by the existing PMS-system readers. No reader change was needed.
