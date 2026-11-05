@@ -43,21 +43,25 @@ try {
   // Histories arrive one by one and the chip and the card each redraw as they do:
   // compare them once both have taken the same histories in, never mid-arrival.
   // A line that never meets its card still fails the assertion that follows.
-  const settled = (slot, attr = 'data-nav-ret') => page.waitForFunction(({ slot, attr }) => {
+  // The return and, for the financial year, the gain (in rupees: within a thousandth of one).
+  const settled = (slot, attr = 'data-nav-ret', gain = false) => page.waitForFunction(({ slot, attr, gain }) => {
     const c = document.querySelector('[data-testid="nav-book-chip"]'), k = document.querySelector(`[data-tile-slot="${slot}"] [data-card-coverage]`);
-    const a = c?.getAttribute(attr), b = k?.getAttribute('data-card-return');
     // Both figures must be on the page: two missing attributes are not two equal returns.
-    return a != null && b != null && a !== '' && b !== '' && Number.isFinite(Number(a)) && Number.isFinite(Number(b)) && Math.abs(Number(a) - Number(b)) < 1e-8;
-  }, { slot, attr }, { timeout: 60000 }).catch(() => {});
+    const same = (a, b, eps) => a != null && b != null && a !== '' && b !== '' && Number.isFinite(Number(a)) && Number.isFinite(Number(b)) && Math.abs(Number(a) - Number(b)) < eps;
+    return same(c?.getAttribute(attr), k?.getAttribute('data-card-return'), 1e-8)
+      && (!gain || same(c?.getAttribute('data-nav-card-gain'), k?.getAttribute('data-card-gain'), 1e-3));
+  }, { slot, attr, gain }, { timeout: 60000 }).catch(() => {});
+  const shown = async (slot, attr) => `${attr}=${await chip.getAttribute(attr)} vs card ${await cardOf(slot).getAttribute(attr === 'data-nav-card-gain' ? 'data-card-gain' : 'data-card-return')}`;
   const priced = await open(true);
   const chip = page.locator('[data-testid="nav-book-chip"]');
   // Once the histories are in, the financial-year card values the demats' shares at published closes.
   await page.waitForFunction(() => Number(document.querySelector('[data-testid="nav-book-chip"]')?.getAttribute('data-nav-assumed-count')) > 0, null, { timeout: 120000 });
-  await settled('fytd');
+  await settled('fytd', 'data-nav-ret', true);
   const count = Number(await chip.getAttribute('data-nav-assumed-count'));
   assert.equal(await chip.getAttribute('data-nav-period'), 'fytd', 'the line opens on the financial year');
-  assert.ok(near(await chip.getAttribute('data-nav-ret'), await cardOf('fytd').getAttribute('data-card-return')), 'the line ends on the financial-year card');
-  assert.ok(near(await chip.getAttribute('data-nav-card-gain'), await cardOf('fytd').getAttribute('data-card-gain')));
+  assert.ok(near(await chip.getAttribute('data-nav-ret'), await cardOf('fytd').getAttribute('data-card-return')), `the line ends on the financial-year card: ${await shown('fytd', 'data-nav-ret')}`);
+  const gainA = await chip.getAttribute('data-nav-card-gain'), gainB = await cardOf('fytd').getAttribute('data-card-gain');
+  assert.ok(gainA && gainB && Math.abs(Number(gainA) - Number(gainB)) < 1e-3, `the line's gain is the card's: ${await shown('fytd', 'data-nav-card-gain')}`);
   const hover = await chip.getAttribute('title');
   assert.match(hover, /the card's own figure on every day/);
   assert.match(hover, /No sale appears in the records we have\. We assume .+ still hold these shares\./);
