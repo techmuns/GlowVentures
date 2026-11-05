@@ -78,9 +78,11 @@ assert.equal(applyQuotes([{ ...privateLine, isin: "INE721I01024" }], nseFeed)[0]
   "a private review line is never priced, even when its ISIN resolves");
 // Stage 10he: a face-value split retires an ISIN. Shankara Buildpro's SVAN
 // statements (30 Sep) print INE24OJ01011; after the 8 Oct split only
-// INE24OJ01029 is listed, and the held name still reaches BUILDPRO.
+// INE24OJ01029 is listed, and the held name still reaches BUILDPRO. Since the
+// 4 Nov statements print the successor too, the holding carries the current
+// ISIN, never the retired one (Stage 10lx).
 const buildpro = BOOK_POSITIONS.filter((p) => p.securityKey === "shankara-buildpro");
-assert.ok(buildpro.length > 0 && buildpro.every((p) => p.isin === "INE24OJ01011" && p.symbol === "BUILDPRO"));
+assert.ok(buildpro.length > 0 && buildpro.every((p) => p.isin === "INE24OJ01029" && p.symbol === "BUILDPRO"));
 assert.equal(UPSTOX_INSTRUMENTS.BUILDPRO.key, "NSE_EQ|INE24OJ01029");
 assert.ok(UPSTOX_INSTRUMENTS.BUILDPRO.joinedBy.endsWith("+successor"));
 assert.equal(UPSTOX_ISIN_SYMBOLS["INE24OJ01011"], undefined, "the retired ISIN is not a listed ISIN");

@@ -68,6 +68,7 @@ const CUSTODY_PROVIDERS = new Set([...DEPOSITORY_PROVIDERS, HDFC_NSDL_PROVIDER])
 import { reviewBookLayer } from "./lib/reviewBook.mjs";
 import { verifyCustodyLinks, custodySuccessor } from "../shared/custodySuccessors.mjs";
 import { termSplit } from "./lib/holdingPeriod.mjs";
+import { currentIsin } from "../shared/isinSuccessors.mjs";
 import { capitalRecordFromInception } from "./lib/capitalOrigins.mjs";
 import { NOT_ATTRIBUTED, NOT_ATTRIBUTED_NAME } from "../shared/reviewHolders.mjs";
 import { REVIEW_AS_OF } from "./lib/reviewPrivateRead.mjs";
@@ -2419,12 +2420,17 @@ function build(archived, archiveCount = archived.length, references = {}) {
     for (const arr of [d.holdings, d.transactions, d.capitalGains, d.income]) {
       for (const x of arr ?? []) {
         if (!x?.isin || !x.securityKey) continue;
+        // A split's retired ISIN and its recorded successor are ONE security
+        // (`shared/isinSuccessors.mjs`), carried under the current one: SVAN's
+        // 4 Nov 2026 issues reprint Shankara Buildpro's 19 May sale under the
+        // post-split ISIN the 30 Sep issues printed as the old one (Stage 10lx).
+        const isin = currentIsin(x.isin);
         const seen = isinByKey.get(x.securityKey);
-        if (seen && seen !== x.isin) {
-          isinConflicts.set(x.securityKey, [...new Set([...(isinConflicts.get(x.securityKey) ?? [seen]), x.isin])]);
+        if (seen && seen !== isin) {
+          isinConflicts.set(x.securityKey, [...new Set([...(isinConflicts.get(x.securityKey) ?? [seen]), isin])]);
           continue;
         }
-        isinByKey.set(x.securityKey, x.isin);
+        isinByKey.set(x.securityKey, isin);
       }
     }
   }

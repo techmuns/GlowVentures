@@ -307,6 +307,11 @@ const KEY_ALIASES = Object.freeze({
   // holding counted twice (see `fundNavs.test.ts`), and now one company.
   "clean-max-env": "clean-max-enviro-energy-solutions",
   "crompton-greaves-consumer-elec": "crompton-greaves-consumer-electrical",
+  // Exact ISIN match, INE205A01025 → Vedanta Ltd (Stage 10lx): Ajay's Motilal
+  // demat 1201090012539150 prints `VEDANTA LIMITED#EQUITY SHARES OF RE 1/- AFTER
+  // SPLIT`; SVAN's 4 Nov 2026 capital gain statements print the same ISIN as
+  // `Vedanta Ltd`, the key the book already carries for the company.
+  "vedanta-limited-equity-shares-of-re-1-after-split": "vedanta",
 });
 
 /**

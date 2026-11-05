@@ -323,25 +323,23 @@ A per-contribution breakdown is published for **33** position(s), of which **14*
 
 ## When each holding was bought (Stage 10fm)
 
-Of **435** holdings, **229** carry the date their units were bought: 33 by the fund's own dated allotments, 17 by a lot register, 94 by their account's own dated trades (every unit held matched to a buy, first-in, first-out) and 85 by the family's review's investment dates. A drawdown fund's dated calls date a few more on the page.
+Of **435** holdings, **311** carry the date their units were bought: 33 by the fund's own dated allotments, 17 by a lot register, 176 by their account's own dated trades (every unit held matched to a buy, first-in, first-out) and 85 by the family's review's investment dates. A drawdown fund's dated calls date a few more on the page.
 
-**1521** dated buys and sells sit behind **167** holdings (`BOOK_HOLDING_TRADES`); **94** of the sales also carry the purchase dates of the lots their capital gain statement settles them with.
+**1817** dated buys and sells sit behind **228** holdings (`BOOK_HOLDING_TRADES`); **100** of the sales also carry the purchase dates of the lots their capital gain statement settles them with.
 
 The rest are undated on the page, each with its reason:
 
-- SVAN Investment Managers LLP 8710090 — no transaction statement or dated allotment reaches it: 32
-- SVAN Investment Managers LLP 8710067 — no transaction statement or dated allotment reaches it: 31
 - Goldstandard Wealth Private Limited 100022 — no trade in the transaction statements' window: 23
 - Goldstandard Wealth Private Limited 100023 — no trade in the transaction statements' window: 23
 - ICICI Bank (NSDL demat) 49794950 — no transaction statement or dated allotment reaches it: 16
-- SVAN Investment Managers LLP 8710067 — the trades do not account for every unit held: 15
-- SVAN Investment Managers LLP 8710090 — the trades do not account for every unit held: 14
 - V.E.C Assago Capital Management LLP 128005 — the trades do not account for every unit held: 9
 - LKP Securities 98245 — no transaction statement or dated allotment reaches it: 7
 - HDFC Securities 3110320 — no transaction statement or dated allotment reaches it: 6
 - V.E.C Assago Capital Management LLP 128005 — no trade in the transaction statements' window: 5
 - Carnelian Asset Management and Advisors Pvt Ltd 3517383 — no trade in the transaction statements' window: 4
 - Green Lantern Capital LLP 510861 — the trades do not account for every unit held: 4
+- SVAN Investment Managers LLP 8710067 — the trades do not account for every unit held: 4
+- SVAN Investment Managers LLP 8710090 — the trades do not account for every unit held: 4
 - Bandhan Mutual Fund 8652064 — no transaction statement or dated allotment reaches it: 2
 - Carnelian Asset Management and Advisors Pvt Ltd 3517383 — the trades do not account for every unit held: 2
 - HDFC Securities 3110320 — the trades do not account for every unit held: 2
@@ -356,6 +354,8 @@ The rest are undated on the page, each with its reason:
 - Kotak Mahindra Mutual Fund 4295974 — no transaction statement or dated allotment reaches it: 1
 - Kotak Mahindra Mutual Fund 7111389 — no transaction statement or dated allotment reaches it: 1
 - Mirae Asset Mutual Fund 70413280453 — no transaction statement or dated allotment reaches it: 1
+- SVAN Investment Managers LLP 8710067 — no trade in the transaction statements' window: 1
+- SVAN Investment Managers LLP 8710090 — no trade in the transaction statements' window: 1
 
 ## Sector allocation
 
@@ -839,7 +839,11 @@ never guessed into the nearest plausible bucket.
 - account SVAN Investment Managers LLP::8710067: investor-report 2026-05-31 superseded for SNAPSHOT facts by 2026-07-31 — `svan-investment-managers-llp-8710067-2026-05-31-investor-report`; its dated rows are still counted
 - account SVAN Investment Managers LLP::8710067: investor-report 2026-06-30 superseded for SNAPSHOT facts by 2026-07-31 — `svan-investment-managers-llp-8710067-2026-06-30-investor-report`; its dated rows are still counted
 - account SVAN Investment Managers LLP::8710067: appraisal 2026-09-30 superseded for SNAPSHOT facts by 2026-11-04 — `svan-investment-managers-llp-8710067-2026-09-30-appraisal`; its dated rows are still counted
-- account SVAN Investment Managers LLP::8710067: 13 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
+- account SVAN Investment Managers LLP::8710067: bank-book 2026-09-30 superseded for SNAPSHOT facts by 2026-11-04 — `svan-investment-managers-llp-8710067-2026-09-30-bank-book`; its dated rows are still counted
+- account SVAN Investment Managers LLP::8710067: capital-gain 2026-09-30 superseded for SNAPSHOT facts by 2026-11-04 — `svan-investment-managers-llp-8710067-2026-09-30-capital-gain`; its dated rows are still counted
+- account SVAN Investment Managers LLP::8710067: transaction-statement 2026-09-30 superseded for SNAPSHOT facts by 2026-11-04 — `svan-investment-managers-llp-8710067-2026-09-30-transaction-statement`; its dated rows are still counted
+- account SVAN Investment Managers LLP::8710067: 137 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
+- account 8710067: capital-gain lots printed as `hdfc-liquid-fund-direct-plan-growth` settle this account's sales of `hdfc-liquid-fund-direct-plan-growth-option` — same account and date, lot proceeds equal to each day's settled sale to the printed precision — so their realised gain is that holding's
 - account 8710067: its dated capital record runs to 2026-11-04 — the capital register whose balances tie reaches that date, past the 2026-07-31 its typed rows reach on their own
 - account 8710067: 15 movement(s) from its capital register (0 in, 52138.8 out) merged into its dated capital record — each witnessed by the register's own opening and closing balance, and none already on the account's typed record
 - account 8710067: cash flows carry no opening portfolio value — no performance summary for the window, so a money-weighted return over it cannot be computed
@@ -848,7 +852,10 @@ never guessed into the nearest plausible bucket.
 - account SVAN Investment Managers LLP::8710090: investor-report 2026-07-31 superseded for SNAPSHOT facts by 2026-09-30 — `svan-investment-managers-llp-8710090-2026-07-31-investor-report`; its dated rows are still counted
 - account SVAN Investment Managers LLP::8710090: appraisal 2026-09-30 superseded for SNAPSHOT facts by 2026-11-04 — `svan-investment-managers-llp-8710090-2026-09-30-appraisal`; its dated rows are still counted
 - account SVAN Investment Managers LLP::8710090: bank-book 2026-09-30 superseded for SNAPSHOT facts by 2026-11-04 — `svan-investment-managers-llp-8710090-2026-09-30-bank-book`; its dated rows are still counted
+- account SVAN Investment Managers LLP::8710090: capital-gain 2026-09-30 superseded for SNAPSHOT facts by 2026-11-04 — `svan-investment-managers-llp-8710090-2026-09-30-capital-gain`; its dated rows are still counted
+- account SVAN Investment Managers LLP::8710090: transaction-statement 2026-09-30 superseded for SNAPSHOT facts by 2026-11-04 — `svan-investment-managers-llp-8710090-2026-09-30-transaction-statement`; its dated rows are still counted
 - account SVAN Investment Managers LLP::8710090: 92 dated row(s) come from statements superseded for their snapshot figures — a trade on an earlier statement still happened, and is counted once here.
+- account 8710090: capital-gain lots printed as `hdfc-liquid-fund-direct-plan-growth` settle this account's sales of `hdfc-liquid-fund-direct-plan-growth-option` — same account and date, lot proceeds equal to each day's settled sale to the printed precision — so their realised gain is that holding's
 - account 8710090: its dated capital record runs to 2026-11-04 — the capital register whose balances tie reaches that date, past the 2026-09-30 its typed rows reach on their own
 - account 8710090: 3 movement(s) from its capital register (0 in, 10845 out) merged into its dated capital record — each witnessed by the register's own opening and closing balance, and none already on the account's typed record
 - account 8710090: cash flows carry no opening portfolio value — no performance summary for the window, so a money-weighted return over it cannot be computed
@@ -1164,7 +1171,7 @@ never guessed into the nearest plausible bucket.
 - FIFO and the class-switch carry disagree on HDFC Balanced Advantage Fund - Regular Plan - Growth (hdfc-mutual-fund-16002141): FIFO over the unit record holds 15000000 of cost, and the switch carry did not restate the statement's 15000000. The statement's cost stands; see the switch notes above for why it was not carried.
 - FIFO and the class-switch carry disagree on Kotak Flexi Cap Fund Direct Growth (kotak-mahindra-mutual-fund-5372722): FIFO over the unit record holds 500000 of cost, and the switch carry did not restate the statement's 500000. The statement's cost stands; see the switch notes above for why it was not carried.
 - share movements: 90 holding-window(s) from the demat statements, 90 of which walk their own printed opening balance to their own printed closing balance and carry an opening-to-closing split. 0 join a position this book carries and 23 a holding it carries as a quantity with no value; 39 close at nil, securities the account sold out of during the window; 19 close with units still held on an account that sent no holding statement, so the tape's closing balance is the only record of them; 9 sit on an account whose own holding statement is in the drop and are deliberately not carried as positions — a fund reporting its own units, or a row with no mark. 0 movement row(s) matched no known particular and are counted in the in/out totals by their own balance change.
-- share movements: 18 window(s) in an account that carries no position for the security are filed under the key the rest of the book carries for the same ISIN, so the company's page shows them (7 close at nil; 11 close with units still held on an account that sent no holding statement); 0 ISIN(s) the book files under two keys keep the statement's own name rather than picking one; 12 window(s) are the depository's copy of AIF units a fund's own statement reports and stay off the fund's page; 0 block(s) would have landed on a key their account already filed and keep their own name instead; 0 window(s) were overwritten by a second block under one key.
+- share movements: 19 window(s) in an account that carries no position for the security are filed under the key the rest of the book carries for the same ISIN, so the company's page shows them (8 close at nil; 11 close with units still held on an account that sent no holding statement); 0 ISIN(s) the book files under two keys keep the statement's own name rather than picking one; 12 window(s) are the depository's copy of AIF units a fund's own statement reports and stay off the fund's page; 0 block(s) would have landed on a key their account already filed and keep their own name instead; 0 window(s) were overwritten by a second block under one key.
 - cost recovery: 53 exact account/ISIN/quantity records from the saved workbooks; 44 recorded security balances still require acquisition or movement evidence. See docs/COST-RECOVERY.md.
 - motilal-oswal-financial-services-demat-1201090012539150: IFB Industries Ltd (INE559A01017) carried from 15772 on 2026-07-31 to 0 on 2026-09-09 by 2 exchange trade(s) on MOPWM's transaction report of 2026-10-23, live basis only (the report's own record holds the statement's units on 2026-07-31)
 - motilal-oswal-financial-services-demat-1201090012539150: KRBL Ltd (INE001B01026) carried from 0 on 2026-07-31 to 67500 on 2026-08-28 by 2 exchange trade(s) on MOPWM's transaction report of 2026-10-23, live basis only (the report's own record holds the statement's units on 2026-07-31)

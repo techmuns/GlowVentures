@@ -94,6 +94,21 @@ test('a new ISIN cannot quietly reuse an existing security key', () => {
   const next = later(); next.holdings[0].isin = 'INF999999999';
   assert.ok(has(assess([doc(), next]), 'SECURITY_CONFLICT'));
 });
+test('a split’s recorded successor ISIN is the same security; any other new ISIN still conflicts (Stage 10lx)', () => {
+  const pre = doc(); pre.holdings[0].isin = 'INE24OJ01011';
+  const post = later(); post.holdings[0].isin = 'INE24OJ01029';
+  assert.equal(assess([pre, post], [pre]).decision, 'verified');
+  const other = later(); other.holdings[0].isin = 'INE24OJ01037';
+  assert.ok(has(assess([pre, other], [pre]), 'SECURITY_CONFLICT'));
+});
+test('an archived row re-keyed by a reviewed KEY_ALIASES entry is not a new split (Stage 10lx)', () => {
+  const demat = doc(); demat.holdings[0].isin = 'INE205A01025';
+  demat.holdings[0].securityKey = 'vedanta-limited-equity-shares-of-re-1-after-split';
+  const rekeyed = structuredClone(demat); rekeyed.holdings[0].securityKey = 'vedanta';
+  assert.equal(assess([rekeyed], [demat]).decision, 'verified');
+  const unaliased = structuredClone(demat); unaliased.holdings[0].securityKey = 'vedanta-resources';
+  assert.ok(has(assess([unaliased], [demat]), 'SECURITY_SPLIT'));
+});
 test('a renamed security with the same ISIN needs a verified alias instead of a second holding', () => {
   const next = later(); next.holdings[0].securityKey = 'a-second-name';
   assert.ok(has(assess([doc(), next]), 'SECURITY_SPLIT'));

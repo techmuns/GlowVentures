@@ -2184,7 +2184,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     },
     "demat": {
       "printed": null,
-      "reason": "none of the 12 statements read for SVAN Investment Managers LLP 8710067 prints a DP ID and Client ID"
+      "reason": "none of the 15 statements read for SVAN Investment Managers LLP 8710067 prints a DP ID and Client ID"
     }
   },
   {
@@ -2211,7 +2211,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     },
     "demat": {
       "printed": null,
-      "reason": "none of the 14 statements read for SVAN Investment Managers LLP 8710090 prints a DP ID and Client ID"
+      "reason": "none of the 16 statements read for SVAN Investment Managers LLP 8710090 prints a DP ID and Client ID"
     }
   },
   {
@@ -3895,6 +3895,7 @@ export const BOOK_POSITIONS: Position[] = [
     "securityKey": "caplin-point-laboratories",
     "security": "Caplin Point Laboratories Ltd.",
     "symbol": "CAPLIPOINT",
+    "isin": "INE475E01026",
     "accountId": "goldstandard-wealth-private-limited-100022",
     "memberId": null,
     "sector": "Health Care",
@@ -4012,6 +4013,7 @@ export const BOOK_POSITIONS: Position[] = [
     "securityKey": "eclerx-services",
     "security": "eClerx Services Ltd.",
     "symbol": "ECLERX",
+    "isin": "INE738I01010",
     "accountId": "goldstandard-wealth-private-limited-100022",
     "memberId": null,
     "sector": "Information Technology",
@@ -5269,6 +5271,7 @@ export const BOOK_POSITIONS: Position[] = [
     "securityKey": "caplin-point-laboratories",
     "security": "Caplin Point Laboratories Ltd.",
     "symbol": "CAPLIPOINT",
+    "isin": "INE475E01026",
     "accountId": "goldstandard-wealth-private-limited-100023",
     "memberId": null,
     "sector": "Health Care",
@@ -5386,6 +5389,7 @@ export const BOOK_POSITIONS: Position[] = [
     "securityKey": "eclerx-services",
     "security": "eClerx Services Ltd.",
     "symbol": "ECLERX",
+    "isin": "INE738I01010",
     "accountId": "goldstandard-wealth-private-limited-100023",
     "memberId": null,
     "sector": "Information Technology",
@@ -7834,6 +7838,7 @@ export const BOOK_POSITIONS: Position[] = [
     "securityKey": "vedanta",
     "security": "Vedanta Ltd",
     "symbol": "VEDL",
+    "isin": "INE205A01025",
     "accountId": "green-lantern-capital-llp-510854",
     "memberId": null,
     "sector": "Materials",
@@ -9302,6 +9307,7 @@ export const BOOK_POSITIONS: Position[] = [
     "securityKey": "vedanta",
     "security": "Vedanta Ltd",
     "symbol": "VEDL",
+    "isin": "INE205A01025",
     "accountId": "green-lantern-capital-llp-510861",
     "memberId": null,
     "sector": "Materials",
@@ -10315,6 +10321,7 @@ export const BOOK_POSITIONS: Position[] = [
     "securityKey": "vedanta",
     "security": "VEDANTA LIMITED EQ NEW RS.1/",
     "symbol": "VEDL",
+    "isin": "INE205A01025",
     "accountId": "hdfc-securities-3110320",
     "memberId": null,
     "sector": "Unclassified",
@@ -17773,13 +17780,17 @@ export const BOOK_POSITIONS: Position[] = [
     "daysToLT": null,
     "heldSince": null,
     "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
+      "from": "2024-09-03",
+      "to": "2026-11-04",
       "buys": 1,
       "sells": 0,
-      "unaccounted": null,
-      "held": null,
-      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-08-20",
+        "last": "2026-08-20",
+        "lots": 1
+      },
+      "reason": null
     },
     "accruedIncome": null,
     "dividendReceived": null,
@@ -17812,6 +17823,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-09-03",
+      "to": "2026-11-04",
+      "buys": 5,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2024-09-04",
+        "last": "2025-03-18",
+        "lots": 5
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": 14976,
     "dividendFrom": "2026-04-01",
@@ -17844,6 +17868,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-09-03",
+      "to": "2026-11-04",
+      "buys": 4,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-06-25",
+        "last": "2025-10-30",
+        "lots": 4
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": 40440,
     "dividendFrom": "2026-04-01",
@@ -17876,6 +17913,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-09-03",
+      "to": "2026-11-04",
+      "buys": 4,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-10-10",
+        "last": "2025-10-30",
+        "lots": 4
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -17888,6 +17938,7 @@ export const BOOK_POSITIONS: Position[] = [
     "securityKey": "caplin-point-laboratories",
     "security": "Caplin Point Laboratories Ltd",
     "symbol": "CAPLIPOINT",
+    "isin": "INE475E01026",
     "accountId": "svan-investment-managers-llp-8710067",
     "memberId": null,
     "sector": "Unclassified",
@@ -17900,21 +17951,25 @@ export const BOOK_POSITIONS: Position[] = [
     "costBasis": 4787059.15,
     "marketValue": 5955686.5,
     "unrealizedPnL": 1168627.35,
-    "realizedPnL": 0,
-    "costOfUnitsSold": 0,
+    "realizedPnL": 21171.66,
+    "costOfUnitsSold": 86990.89,
     "returnPct": 24.82,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
     "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 1,
-      "sells": 0,
-      "unaccounted": null,
-      "held": null,
-      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
+      "from": "2024-09-03",
+      "to": "2026-11-04",
+      "buys": 6,
+      "sells": 2,
+      "unaccounted": 0,
+      "held": {
+        "first": "2024-09-04",
+        "last": "2026-04-15",
+        "lots": 6
+      },
+      "reason": null
     },
     "accruedIncome": null,
     "dividendReceived": 19720,
@@ -17991,6 +18046,7 @@ export const BOOK_POSITIONS: Position[] = [
     "securityKey": "ceat",
     "security": "Ceat Ltd",
     "symbol": "CEATLTD",
+    "isin": "INE482A01020",
     "accountId": "svan-investment-managers-llp-8710067",
     "memberId": null,
     "sector": "Unclassified",
@@ -18003,13 +18059,26 @@ export const BOOK_POSITIONS: Position[] = [
     "costBasis": 4668927.24,
     "marketValue": 5430009,
     "unrealizedPnL": 761081.76,
-    "realizedPnL": 0,
-    "costOfUnitsSold": 0,
-    "returnPct": 17.49,
+    "realizedPnL": 64143.18,
+    "costOfUnitsSold": 217030.14,
+    "returnPct": 18.03,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-09-03",
+      "to": "2026-11-04",
+      "buys": 4,
+      "sells": 1,
+      "unaccounted": 0,
+      "held": {
+        "first": "2024-09-04",
+        "last": "2025-10-30",
+        "lots": 4
+      },
+      "reason": null
+    },
     "accruedIncome": 55650,
     "dividendReceived": 55650,
     "dividendFrom": "2026-04-01",
@@ -18042,6 +18111,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-09-03",
+      "to": "2026-11-04",
+      "buys": 6,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2024-12-16",
+        "last": "2026-02-13",
+        "lots": 6
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": 20760,
     "dividendFrom": "2026-04-01",
@@ -18074,6 +18156,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-09-03",
+      "to": "2026-11-04",
+      "buys": 9,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2024-09-04",
+        "last": "2025-12-12",
+        "lots": 9
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": 1927.5,
     "dividendFrom": "2026-04-01",
@@ -18107,13 +18202,17 @@ export const BOOK_POSITIONS: Position[] = [
     "daysToLT": null,
     "heldSince": null,
     "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 1,
+      "from": "2024-09-03",
+      "to": "2026-11-04",
+      "buys": 7,
       "sells": 0,
-      "unaccounted": null,
-      "held": null,
-      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
+      "unaccounted": 0,
+      "held": {
+        "first": "2024-09-04",
+        "last": "2026-08-14",
+        "lots": 7
+      },
+      "reason": null
     },
     "accruedIncome": null,
     "dividendReceived": null,
@@ -18146,6 +18245,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-09-03",
+      "to": "2026-11-04",
+      "buys": 5,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2024-09-04",
+        "last": "2025-10-30",
+        "lots": 5
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": 6460,
     "dividendFrom": "2026-04-01",
@@ -18178,6 +18290,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-09-03",
+      "to": "2026-11-04",
+      "buys": 3,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-05-09",
+        "last": "2026-02-11",
+        "lots": 3
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": 44782.5,
     "dividendFrom": "2026-04-01",
@@ -18210,6 +18335,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-09-03",
+      "to": "2026-11-04",
+      "buys": 8,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2024-09-04",
+        "last": "2026-01-16",
+        "lots": 8
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": 7772.5,
     "dividendFrom": "2026-04-01",
@@ -18242,6 +18380,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-09-03",
+      "to": "2026-11-04",
+      "buys": 2,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-04-23",
+        "last": "2025-10-30",
+        "lots": 2
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -18273,6 +18424,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-09-03",
+      "to": "2026-11-04",
+      "buys": 5,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2024-09-04",
+        "last": "2025-10-30",
+        "lots": 5
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": 73020,
     "dividendFrom": "2026-04-01",
@@ -18306,13 +18470,17 @@ export const BOOK_POSITIONS: Position[] = [
     "daysToLT": null,
     "heldSince": null,
     "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 1,
+      "from": "2024-09-03",
+      "to": "2026-11-04",
+      "buys": 5,
       "sells": 0,
-      "unaccounted": null,
-      "held": null,
-      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
+      "unaccounted": 0,
+      "held": {
+        "first": "2024-09-04",
+        "last": "2026-08-13",
+        "lots": 5
+      },
+      "reason": null
     },
     "accruedIncome": null,
     "dividendReceived": 11910,
@@ -18347,13 +18515,17 @@ export const BOOK_POSITIONS: Position[] = [
     "daysToLT": null,
     "heldSince": null,
     "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
+      "from": "2024-09-03",
+      "to": "2026-11-04",
       "buys": 1,
       "sells": 0,
-      "unaccounted": null,
-      "held": null,
-      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-06-09",
+        "last": "2026-06-09",
+        "lots": 1
+      },
+      "reason": null
     },
     "accruedIncome": null,
     "dividendReceived": 26000,
@@ -18388,13 +18560,17 @@ export const BOOK_POSITIONS: Position[] = [
     "daysToLT": null,
     "heldSince": null,
     "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
+      "from": "2024-09-03",
+      "to": "2026-11-04",
       "buys": 1,
       "sells": 0,
-      "unaccounted": null,
-      "held": null,
-      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-09-09",
+        "last": "2026-09-09",
+        "lots": 1
+      },
+      "reason": null
     },
     "accruedIncome": null,
     "dividendReceived": null,
@@ -18427,6 +18603,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-09-03",
+      "to": "2026-11-04",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 8220,
+      "held": null,
+      "reason": "none of its 8220 units is on a dated trade: the transaction statements in this drop run from 2024-09-03 to 2026-11-04 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -18458,6 +18643,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-09-03",
+      "to": "2026-11-04",
+      "buys": 5,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2024-09-04",
+        "last": "2025-03-28",
+        "lots": 5
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -18489,6 +18687,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-09-03",
+      "to": "2026-11-04",
+      "buys": 5,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2024-09-04",
+        "last": "2025-10-30",
+        "lots": 5
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": 24150,
     "dividendFrom": "2026-04-01",
@@ -18522,13 +18733,17 @@ export const BOOK_POSITIONS: Position[] = [
     "daysToLT": null,
     "heldSince": null,
     "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 1,
+      "from": "2024-09-03",
+      "to": "2026-11-04",
+      "buys": 3,
       "sells": 0,
-      "unaccounted": null,
-      "held": null,
-      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-09-29",
+        "last": "2026-10-19",
+        "lots": 3
+      },
+      "reason": null
     },
     "accruedIncome": 32940,
     "dividendReceived": null,
@@ -18561,6 +18776,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-09-03",
+      "to": "2026-11-04",
+      "buys": 2,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-05-30",
+        "last": "2025-10-30",
+        "lots": 2
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -18592,6 +18820,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-09-03",
+      "to": "2026-11-04",
+      "buys": 4,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-08-18",
+        "last": "2025-10-30",
+        "lots": 4
+      },
+      "reason": null
+    },
     "accruedIncome": 7200,
     "dividendReceived": 7200,
     "dividendFrom": "2026-04-01",
@@ -18624,6 +18865,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-09-03",
+      "to": "2026-11-04",
+      "buys": 6,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2024-09-04",
+        "last": "2025-10-30",
+        "lots": 6
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": 32080,
     "dividendFrom": "2026-04-01",
@@ -18637,6 +18891,7 @@ export const BOOK_POSITIONS: Position[] = [
     "securityKey": "neuland-laboratories",
     "security": "Neuland Laboratories Ltd",
     "symbol": "NEULANDLAB",
+    "isin": "INE794A01010",
     "accountId": "svan-investment-managers-llp-8710067",
     "memberId": null,
     "sector": "Unclassified",
@@ -18649,13 +18904,26 @@ export const BOOK_POSITIONS: Position[] = [
     "costBasis": 3404816.24,
     "marketValue": 4502480,
     "unrealizedPnL": 1097663.76,
-    "realizedPnL": 0,
-    "costOfUnitsSold": 0,
-    "returnPct": 32.54,
+    "realizedPnL": 573899.58,
+    "costOfUnitsSold": 960956.17,
+    "returnPct": 38.52,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-09-03",
+      "to": "2026-11-04",
+      "buys": 5,
+      "sells": 1,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-01-22",
+        "last": "2025-10-30",
+        "lots": 3
+      },
+      "reason": null
+    },
     "accruedIncome": 10200,
     "dividendReceived": 10200,
     "dividendFrom": "2026-04-01",
@@ -18689,13 +18957,17 @@ export const BOOK_POSITIONS: Position[] = [
     "daysToLT": null,
     "heldSince": null,
     "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 3,
+      "from": "2024-09-03",
+      "to": "2026-11-04",
+      "buys": 4,
       "sells": 0,
-      "unaccounted": null,
-      "held": null,
-      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-02-19",
+        "last": "2026-08-18",
+        "lots": 4
+      },
+      "reason": null
     },
     "accruedIncome": null,
     "dividendReceived": 28740,
@@ -18730,13 +19002,17 @@ export const BOOK_POSITIONS: Position[] = [
     "daysToLT": null,
     "heldSince": null,
     "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
+      "from": "2024-09-03",
+      "to": "2026-11-04",
       "buys": 1,
       "sells": 2,
-      "unaccounted": null,
-      "held": null,
-      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-05-07",
+        "last": "2026-05-07",
+        "lots": 1
+      },
+      "reason": null
     },
     "accruedIncome": null,
     "dividendReceived": 2430,
@@ -18770,6 +19046,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-09-03",
+      "to": "2026-11-04",
+      "buys": 9,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2024-09-04",
+        "last": "2025-10-30",
+        "lots": 9
+      },
+      "reason": null
+    },
     "accruedIncome": 2502,
     "dividendReceived": 2502,
     "dividendFrom": "2026-04-01",
@@ -18802,6 +19091,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-09-03",
+      "to": "2026-11-04",
+      "buys": 5,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2024-09-04",
+        "last": "2025-10-30",
+        "lots": 5
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": 2515,
     "dividendFrom": "2026-04-01",
@@ -18834,6 +19136,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-09-03",
+      "to": "2026-11-04",
+      "buys": 5,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2024-09-04",
+        "last": "2025-03-03",
+        "lots": 5
+      },
+      "reason": null
+    },
     "accruedIncome": 8745,
     "dividendReceived": 8745,
     "dividendFrom": "2026-04-01",
@@ -18866,6 +19181,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-09-03",
+      "to": "2026-11-04",
+      "buys": 5,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2024-09-04",
+        "last": "2025-08-12",
+        "lots": 5
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -18899,13 +19227,17 @@ export const BOOK_POSITIONS: Position[] = [
     "daysToLT": null,
     "heldSince": null,
     "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
+      "from": "2024-09-03",
+      "to": "2026-11-04",
+      "buys": 3,
       "sells": 4,
-      "unaccounted": null,
-      "held": null,
-      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-09-04",
+        "last": "2025-10-30",
+        "lots": 2
+      },
+      "reason": null
     },
     "accruedIncome": null,
     "dividendReceived": null,
@@ -18938,6 +19270,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-09-03",
+      "to": "2026-11-04",
+      "buys": 1,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-02-17",
+        "last": "2025-02-17",
+        "lots": 1
+      },
+      "reason": null
+    },
     "accruedIncome": 1350,
     "dividendReceived": 1350,
     "dividendFrom": "2026-04-01",
@@ -18951,7 +19296,7 @@ export const BOOK_POSITIONS: Position[] = [
     "securityKey": "shankara-buildpro",
     "security": "Shankara Buildpro Ltd",
     "symbol": "BUILDPRO",
-    "isin": "INE24OJ01011",
+    "isin": "INE24OJ01029",
     "accountId": "svan-investment-managers-llp-8710067",
     "memberId": null,
     "sector": "Unclassified",
@@ -18972,13 +19317,13 @@ export const BOOK_POSITIONS: Position[] = [
     "daysToLT": null,
     "heldSince": null,
     "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
+      "from": "2024-09-03",
+      "to": "2026-11-04",
+      "buys": 1,
       "sells": 1,
-      "unaccounted": null,
+      "unaccounted": 17935,
       "held": null,
-      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
+      "reason": "the transaction statements from 2024-09-03 to 2026-11-04 buy 1415 and sell 1050 units of it against 18300 held, so 17935 of them are on no dated trade in this drop"
     },
     "accruedIncome": null,
     "dividendReceived": 18300,
@@ -19012,6 +19357,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-09-03",
+      "to": "2026-11-04",
+      "buys": 1,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-02-05",
+        "last": "2026-02-05",
+        "lots": 1
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": 17280,
     "dividendFrom": "2026-04-01",
@@ -19044,6 +19402,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-09-03",
+      "to": "2026-11-04",
+      "buys": 6,
+      "sells": 0,
+      "unaccounted": 1675,
+      "held": null,
+      "reason": "the transaction statements from 2024-09-03 to 2026-11-04 buy 1675 and sell 0 units of it against 3350 held, so 1675 of them are on no dated trade in this drop"
+    },
     "accruedIncome": null,
     "dividendReceived": 67000,
     "dividendFrom": "2026-04-01",
@@ -19076,6 +19443,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-09-03",
+      "to": "2026-11-04",
+      "buys": 5,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2024-09-04",
+        "last": "2025-10-30",
+        "lots": 5
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": 13772.5,
     "dividendFrom": "2026-04-01",
@@ -19109,13 +19489,17 @@ export const BOOK_POSITIONS: Position[] = [
     "daysToLT": null,
     "heldSince": null,
     "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 2,
+      "from": "2024-09-03",
+      "to": "2026-11-04",
+      "buys": 3,
       "sells": 1,
-      "unaccounted": null,
-      "held": null,
-      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-02-05",
+        "last": "2026-04-24",
+        "lots": 3
+      },
+      "reason": null
     },
     "accruedIncome": null,
     "dividendReceived": 3825,
@@ -19149,6 +19533,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-09-03",
+      "to": "2026-11-04",
+      "buys": 3,
+      "sells": 0,
+      "unaccounted": 5450,
+      "held": null,
+      "reason": "the transaction statements from 2024-09-03 to 2026-11-04 buy 5450 and sell 0 units of it against 10900 held, so 5450 of them are on no dated trade in this drop"
+    },
     "accruedIncome": null,
     "dividendReceived": 16350,
     "dividendFrom": "2026-04-01",
@@ -19181,6 +19574,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-09-03",
+      "to": "2026-11-04",
+      "buys": 5,
+      "sells": 0,
+      "unaccounted": 28440,
+      "held": null,
+      "reason": "the transaction statements from 2024-09-03 to 2026-11-04 buy 3160 and sell 0 units of it against 31600 held, so 28440 of them are on no dated trade in this drop"
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -19212,6 +19614,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-09-03",
+      "to": "2026-11-04",
+      "buys": 3,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2024-09-04",
+        "last": "2025-10-30",
+        "lots": 3
+      },
+      "reason": null
+    },
     "accruedIncome": 13800,
     "dividendReceived": 27600,
     "dividendFrom": "2026-04-01",
@@ -19245,13 +19660,17 @@ export const BOOK_POSITIONS: Position[] = [
     "daysToLT": null,
     "heldSince": null,
     "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 1,
+      "from": "2024-09-03",
+      "to": "2026-11-04",
+      "buys": 5,
       "sells": 0,
-      "unaccounted": null,
-      "held": null,
-      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
+      "unaccounted": 0,
+      "held": {
+        "first": "2024-09-04",
+        "last": "2026-08-14",
+        "lots": 5
+      },
+      "reason": null
     },
     "accruedIncome": null,
     "dividendReceived": 8895,
@@ -19286,13 +19705,17 @@ export const BOOK_POSITIONS: Position[] = [
     "daysToLT": null,
     "heldSince": null,
     "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 2,
+      "from": "2024-09-03",
+      "to": "2026-11-04",
+      "buys": 3,
       "sells": 0,
-      "unaccounted": null,
-      "held": null,
-      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-11-19",
+        "last": "2026-07-30",
+        "lots": 3
+      },
+      "reason": null
     },
     "accruedIncome": null,
     "dividendReceived": null,
@@ -19326,13 +19749,17 @@ export const BOOK_POSITIONS: Position[] = [
     "daysToLT": null,
     "heldSince": null,
     "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
+      "from": "2024-09-03",
+      "to": "2026-11-04",
       "buys": 1,
       "sells": 0,
-      "unaccounted": null,
-      "held": null,
-      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-05-29",
+        "last": "2026-05-29",
+        "lots": 1
+      },
+      "reason": null
     },
     "accruedIncome": null,
     "dividendReceived": null,
@@ -19365,6 +19792,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-09-03",
+      "to": "2026-11-04",
+      "buys": 3,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2024-09-04",
+        "last": "2025-02-17",
+        "lots": 3
+      },
+      "reason": null
+    },
     "accruedIncome": 8490,
     "dividendReceived": 8490,
     "dividendFrom": "2026-04-01",
@@ -19397,6 +19837,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-09-03",
+      "to": "2026-11-04",
+      "buys": 5,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2024-09-04",
+        "last": "2025-10-30",
+        "lots": 5
+      },
+      "reason": null
+    },
     "accruedIncome": 64134,
     "dividendReceived": 64134,
     "dividendFrom": "2026-04-01",
@@ -19430,13 +19883,17 @@ export const BOOK_POSITIONS: Position[] = [
     "daysToLT": null,
     "heldSince": null,
     "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
+      "from": "2024-12-03",
+      "to": "2026-11-04",
       "buys": 1,
       "sells": 0,
-      "unaccounted": null,
-      "held": null,
-      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-08-20",
+        "last": "2026-08-20",
+        "lots": 1
+      },
+      "reason": null
     },
     "accruedIncome": null,
     "dividendReceived": null,
@@ -19469,6 +19926,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-12-03",
+      "to": "2026-11-04",
+      "buys": 4,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2024-12-03",
+        "last": "2025-03-18",
+        "lots": 4
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": 10656,
     "dividendFrom": "2026-04-01",
@@ -19501,6 +19971,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-12-03",
+      "to": "2026-11-04",
+      "buys": 3,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-06-25",
+        "last": "2025-10-30",
+        "lots": 3
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": 26240,
     "dividendFrom": "2026-04-01",
@@ -19533,6 +20016,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-12-03",
+      "to": "2026-11-04",
+      "buys": 3,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-10-10",
+        "last": "2025-10-30",
+        "lots": 3
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -19545,6 +20041,7 @@ export const BOOK_POSITIONS: Position[] = [
     "securityKey": "caplin-point-laboratories",
     "security": "Caplin Point Laboratories Ltd",
     "symbol": "CAPLIPOINT",
+    "isin": "INE475E01026",
     "accountId": "svan-investment-managers-llp-8710090",
     "memberId": null,
     "sector": "Unclassified",
@@ -19565,13 +20062,17 @@ export const BOOK_POSITIONS: Position[] = [
     "daysToLT": null,
     "heldSince": null,
     "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 1,
+      "from": "2024-12-03",
+      "to": "2026-11-04",
+      "buys": 5,
       "sells": 0,
-      "unaccounted": null,
-      "held": null,
-      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-02-17",
+        "last": "2026-04-15",
+        "lots": 5
+      },
+      "reason": null
     },
     "accruedIncome": 6400,
     "dividendReceived": 12800,
@@ -19648,6 +20149,7 @@ export const BOOK_POSITIONS: Position[] = [
     "securityKey": "ceat",
     "security": "Ceat Ltd",
     "symbol": "CEATLTD",
+    "isin": "INE482A01020",
     "accountId": "svan-investment-managers-llp-8710090",
     "memberId": null,
     "sector": "Unclassified",
@@ -19660,13 +20162,26 @@ export const BOOK_POSITIONS: Position[] = [
     "costBasis": 3055794.76,
     "marketValue": 3551704,
     "unrealizedPnL": 495909.24,
-    "realizedPnL": 0,
-    "costOfUnitsSold": 0,
-    "returnPct": 17.42,
+    "realizedPnL": 46717.98,
+    "costOfUnitsSold": 234455.34,
+    "returnPct": 17.6,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-12-03",
+      "to": "2026-11-04",
+      "buys": 3,
+      "sells": 1,
+      "unaccounted": 0,
+      "held": {
+        "first": "2024-12-03",
+        "last": "2025-10-30",
+        "lots": 3
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": 36400,
     "dividendFrom": "2026-04-01",
@@ -19699,6 +20214,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-12-03",
+      "to": "2026-11-04",
+      "buys": 3,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2024-12-16",
+        "last": "2026-02-13",
+        "lots": 3
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": 13480,
     "dividendFrom": "2026-04-01",
@@ -19731,6 +20259,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-12-03",
+      "to": "2026-11-04",
+      "buys": 6,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2024-12-03",
+        "last": "2025-12-12",
+        "lots": 6
+      },
+      "reason": null
+    },
     "accruedIncome": 1252.5,
     "dividendReceived": 1252.5,
     "dividendFrom": "2026-04-01",
@@ -19764,13 +20305,17 @@ export const BOOK_POSITIONS: Position[] = [
     "daysToLT": null,
     "heldSince": null,
     "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 1,
+      "from": "2024-12-03",
+      "to": "2026-11-04",
+      "buys": 5,
       "sells": 0,
-      "unaccounted": null,
-      "held": null,
-      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
+      "unaccounted": 0,
+      "held": {
+        "first": "2024-12-03",
+        "last": "2026-08-14",
+        "lots": 5
+      },
+      "reason": null
     },
     "accruedIncome": null,
     "dividendReceived": null,
@@ -19803,6 +20348,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-12-03",
+      "to": "2026-11-04",
+      "buys": 3,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2024-12-03",
+        "last": "2025-10-30",
+        "lots": 3
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": 4215,
     "dividendFrom": "2026-04-01",
@@ -19835,6 +20393,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-12-03",
+      "to": "2026-11-04",
+      "buys": 3,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-05-09",
+        "last": "2026-02-11",
+        "lots": 3
+      },
+      "reason": null
+    },
     "accruedIncome": 29122.5,
     "dividendReceived": 29122.5,
     "dividendFrom": "2026-04-01",
@@ -19867,6 +20438,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-12-03",
+      "to": "2026-11-04",
+      "buys": 5,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2024-12-03",
+        "last": "2026-01-16",
+        "lots": 5
+      },
+      "reason": null
+    },
     "accruedIncome": 4921.25,
     "dividendReceived": 4921.25,
     "dividendFrom": "2026-04-01",
@@ -19899,6 +20483,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-12-03",
+      "to": "2026-11-04",
+      "buys": 2,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-04-23",
+        "last": "2025-10-30",
+        "lots": 2
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -19930,6 +20527,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-12-03",
+      "to": "2026-11-04",
+      "buys": 3,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2024-12-03",
+        "last": "2025-10-30",
+        "lots": 3
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": 47640,
     "dividendFrom": "2026-04-01",
@@ -19963,13 +20573,17 @@ export const BOOK_POSITIONS: Position[] = [
     "daysToLT": null,
     "heldSince": null,
     "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 1,
+      "from": "2024-12-03",
+      "to": "2026-11-04",
+      "buys": 4,
       "sells": 0,
-      "unaccounted": null,
-      "held": null,
-      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
+      "unaccounted": 0,
+      "held": {
+        "first": "2024-12-03",
+        "last": "2026-08-13",
+        "lots": 4
+      },
+      "reason": null
     },
     "accruedIncome": null,
     "dividendReceived": 7773,
@@ -20004,13 +20618,17 @@ export const BOOK_POSITIONS: Position[] = [
     "daysToLT": null,
     "heldSince": null,
     "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
+      "from": "2024-12-03",
+      "to": "2026-11-04",
       "buys": 1,
       "sells": 0,
-      "unaccounted": null,
-      "held": null,
-      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-06-09",
+        "last": "2026-06-09",
+        "lots": 1
+      },
+      "reason": null
     },
     "accruedIncome": null,
     "dividendReceived": 16900,
@@ -20045,13 +20663,17 @@ export const BOOK_POSITIONS: Position[] = [
     "daysToLT": null,
     "heldSince": null,
     "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
+      "from": "2024-12-03",
+      "to": "2026-11-04",
       "buys": 1,
       "sells": 0,
-      "unaccounted": null,
-      "held": null,
-      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-09-09",
+        "last": "2026-09-09",
+        "lots": 1
+      },
+      "reason": null
     },
     "accruedIncome": null,
     "dividendReceived": null,
@@ -20084,6 +20706,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-12-03",
+      "to": "2026-11-04",
+      "buys": 0,
+      "sells": 0,
+      "unaccounted": 5365,
+      "held": null,
+      "reason": "none of its 5365 units is on a dated trade: the transaction statements in this drop run from 2024-12-03 to 2026-11-04 and record no buy or sell of it"
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -20115,6 +20746,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-12-03",
+      "to": "2026-11-04",
+      "buys": 4,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2024-12-03",
+        "last": "2025-03-28",
+        "lots": 4
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -20146,6 +20790,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-12-03",
+      "to": "2026-11-04",
+      "buys": 5,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2024-12-03",
+        "last": "2025-10-30",
+        "lots": 5
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": 15757.5,
     "dividendFrom": "2026-04-01",
@@ -20178,6 +20835,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-12-03",
+      "to": "2026-11-04",
+      "buys": 2,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-10-06",
+        "last": "2026-10-19",
+        "lots": 2
+      },
+      "reason": null
+    },
     "accruedIncome": 22800,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -20209,6 +20879,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-12-03",
+      "to": "2026-11-04",
+      "buys": 2,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-05-30",
+        "last": "2025-10-30",
+        "lots": 2
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -20240,6 +20923,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-12-03",
+      "to": "2026-11-04",
+      "buys": 4,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-08-18",
+        "last": "2025-10-30",
+        "lots": 4
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": 4698,
     "dividendFrom": "2026-04-01",
@@ -20272,6 +20968,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-12-03",
+      "to": "2026-11-04",
+      "buys": 3,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2024-12-03",
+        "last": "2025-10-30",
+        "lots": 3
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": 20960,
     "dividendFrom": "2026-04-01",
@@ -20285,6 +20994,7 @@ export const BOOK_POSITIONS: Position[] = [
     "securityKey": "neuland-laboratories",
     "security": "Neuland Laboratories Ltd",
     "symbol": "NEULANDLAB",
+    "isin": "INE794A01010",
     "accountId": "svan-investment-managers-llp-8710090",
     "memberId": null,
     "sector": "Unclassified",
@@ -20297,13 +21007,26 @@ export const BOOK_POSITIONS: Position[] = [
     "costBasis": 2226068.63,
     "marketValue": 2916824,
     "unrealizedPnL": 690755.37,
-    "realizedPnL": 0,
-    "costOfUnitsSold": 0,
-    "returnPct": 31.33,
+    "realizedPnL": 354278.67,
+    "costOfUnitsSold": 654340.83,
+    "returnPct": 36.51,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-12-03",
+      "to": "2026-11-04",
+      "buys": 4,
+      "sells": 1,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-01-22",
+        "last": "2025-10-30",
+        "lots": 3
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": 6630,
     "dividendFrom": "2026-04-01",
@@ -20337,13 +21060,17 @@ export const BOOK_POSITIONS: Position[] = [
     "daysToLT": null,
     "heldSince": null,
     "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 3,
+      "from": "2024-12-03",
+      "to": "2026-11-04",
+      "buys": 4,
       "sells": 0,
-      "unaccounted": null,
-      "held": null,
-      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-02-19",
+        "last": "2026-08-18",
+        "lots": 4
+      },
+      "reason": null
     },
     "accruedIncome": 18720,
     "dividendReceived": 18720,
@@ -20378,13 +21105,17 @@ export const BOOK_POSITIONS: Position[] = [
     "daysToLT": null,
     "heldSince": null,
     "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
+      "from": "2024-12-03",
+      "to": "2026-11-04",
       "buys": 2,
       "sells": 2,
-      "unaccounted": null,
-      "held": null,
-      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-05-11",
+        "last": "2026-05-11",
+        "lots": 1
+      },
+      "reason": null
     },
     "accruedIncome": null,
     "dividendReceived": 1575,
@@ -20418,6 +21149,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-12-03",
+      "to": "2026-11-04",
+      "buys": 2,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2024-12-03",
+        "last": "2025-02-17",
+        "lots": 2
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": 1731,
     "dividendFrom": "2026-04-01",
@@ -20450,6 +21194,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-12-03",
+      "to": "2026-11-04",
+      "buys": 3,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2024-12-03",
+        "last": "2025-10-30",
+        "lots": 3
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": 1640,
     "dividendFrom": "2026-04-01",
@@ -20482,6 +21239,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-12-03",
+      "to": "2026-11-04",
+      "buys": 5,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2024-12-03",
+        "last": "2025-03-03",
+        "lots": 5
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": 6225,
     "dividendFrom": "2026-04-01",
@@ -20514,6 +21284,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-12-03",
+      "to": "2026-11-04",
+      "buys": 3,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2024-12-03",
+        "last": "2025-08-12",
+        "lots": 3
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -20547,13 +21330,17 @@ export const BOOK_POSITIONS: Position[] = [
     "daysToLT": null,
     "heldSince": null,
     "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
+      "from": "2024-12-03",
+      "to": "2026-11-04",
+      "buys": 3,
       "sells": 4,
-      "unaccounted": null,
-      "held": null,
-      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-09-04",
+        "last": "2025-10-30",
+        "lots": 2
+      },
+      "reason": null
     },
     "accruedIncome": null,
     "dividendReceived": null,
@@ -20586,6 +21373,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-12-03",
+      "to": "2026-11-04",
+      "buys": 1,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-02-17",
+        "last": "2025-02-17",
+        "lots": 1
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": 980,
     "dividendFrom": "2026-04-01",
@@ -20599,7 +21399,7 @@ export const BOOK_POSITIONS: Position[] = [
     "securityKey": "shankara-buildpro",
     "security": "Shankara Buildpro Ltd",
     "symbol": "BUILDPRO",
-    "isin": "INE24OJ01011",
+    "isin": "INE24OJ01029",
     "accountId": "svan-investment-managers-llp-8710090",
     "memberId": null,
     "sector": "Unclassified",
@@ -20620,13 +21420,13 @@ export const BOOK_POSITIONS: Position[] = [
     "daysToLT": null,
     "heldSince": null,
     "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 0,
+      "from": "2024-12-03",
+      "to": "2026-11-04",
+      "buys": 1,
       "sells": 1,
-      "unaccounted": null,
+      "unaccounted": 11905,
       "held": null,
-      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
+      "reason": "the transaction statements from 2024-12-03 to 2026-11-04 buy 665 and sell 670 units of it against 11900 held, so 11905 of them are on no dated trade in this drop"
     },
     "accruedIncome": null,
     "dividendReceived": 11900,
@@ -20660,6 +21460,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-12-03",
+      "to": "2026-11-04",
+      "buys": 1,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-02-05",
+        "last": "2026-02-05",
+        "lots": 1
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": 11205,
     "dividendFrom": "2026-04-01",
@@ -20692,6 +21505,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-12-03",
+      "to": "2026-11-04",
+      "buys": 6,
+      "sells": 0,
+      "unaccounted": 1195,
+      "held": null,
+      "reason": "the transaction statements from 2024-12-03 to 2026-11-04 buy 1195 and sell 0 units of it against 2390 held, so 1195 of them are on no dated trade in this drop"
+    },
     "accruedIncome": 47800,
     "dividendReceived": 47800,
     "dividendFrom": "2026-04-01",
@@ -20724,6 +21546,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-12-03",
+      "to": "2026-11-04",
+      "buys": 4,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2024-12-03",
+        "last": "2025-10-30",
+        "lots": 4
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": 8995,
     "dividendFrom": "2026-04-01",
@@ -20757,13 +21592,17 @@ export const BOOK_POSITIONS: Position[] = [
     "daysToLT": null,
     "heldSince": null,
     "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 2,
+      "from": "2024-12-03",
+      "to": "2026-11-04",
+      "buys": 3,
       "sells": 1,
-      "unaccounted": null,
-      "held": null,
-      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-02-05",
+        "last": "2026-04-24",
+        "lots": 3
+      },
+      "reason": null
     },
     "accruedIncome": null,
     "dividendReceived": 2482.5,
@@ -20797,6 +21636,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-12-03",
+      "to": "2026-11-04",
+      "buys": 4,
+      "sells": 0,
+      "unaccounted": 3880,
+      "held": null,
+      "reason": "the transaction statements from 2024-12-03 to 2026-11-04 buy 3880 and sell 0 units of it against 7760 held, so 3880 of them are on no dated trade in this drop"
+    },
     "accruedIncome": null,
     "dividendReceived": 11640,
     "dividendFrom": "2026-04-01",
@@ -20829,6 +21677,15 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-12-03",
+      "to": "2026-11-04",
+      "buys": 4,
+      "sells": 0,
+      "unaccounted": 18495,
+      "held": null,
+      "reason": "the transaction statements from 2024-12-03 to 2026-11-04 buy 2055 and sell 0 units of it against 20550 held, so 18495 of them are on no dated trade in this drop"
+    },
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -20860,6 +21717,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-12-03",
+      "to": "2026-11-04",
+      "buys": 2,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2024-12-03",
+        "last": "2025-10-30",
+        "lots": 2
+      },
+      "reason": null
+    },
     "accruedIncome": 9007.5,
     "dividendReceived": 18015,
     "dividendFrom": "2026-04-01",
@@ -20893,13 +21763,17 @@ export const BOOK_POSITIONS: Position[] = [
     "daysToLT": null,
     "heldSince": null,
     "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 1,
+      "from": "2024-12-03",
+      "to": "2026-11-04",
+      "buys": 4,
       "sells": 0,
-      "unaccounted": null,
-      "held": null,
-      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
+      "unaccounted": 0,
+      "held": {
+        "first": "2024-12-03",
+        "last": "2026-08-14",
+        "lots": 4
+      },
+      "reason": null
     },
     "accruedIncome": null,
     "dividendReceived": 6465,
@@ -20934,13 +21808,17 @@ export const BOOK_POSITIONS: Position[] = [
     "daysToLT": null,
     "heldSince": null,
     "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
-      "buys": 2,
+      "from": "2024-12-03",
+      "to": "2026-11-04",
+      "buys": 3,
       "sells": 0,
-      "unaccounted": null,
-      "held": null,
-      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
+      "unaccounted": 0,
+      "held": {
+        "first": "2025-11-19",
+        "last": "2026-07-30",
+        "lots": 3
+      },
+      "reason": null
     },
     "accruedIncome": null,
     "dividendReceived": null,
@@ -20974,13 +21852,17 @@ export const BOOK_POSITIONS: Position[] = [
     "daysToLT": null,
     "heldSince": null,
     "tradeRecord": {
-      "from": "2026-04-01",
-      "to": "2026-09-30",
+      "from": "2024-12-03",
+      "to": "2026-11-04",
       "buys": 1,
       "sells": 0,
-      "unaccounted": null,
-      "held": null,
-      "reason": "the transaction statements end on 2026-09-30, before this holding's own statement of 2026-11-04, so the trades between the two are not in this drop"
+      "unaccounted": 0,
+      "held": {
+        "first": "2026-05-29",
+        "last": "2026-05-29",
+        "lots": 1
+      },
+      "reason": null
     },
     "accruedIncome": null,
     "dividendReceived": null,
@@ -21013,6 +21895,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-12-03",
+      "to": "2026-11-04",
+      "buys": 2,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2024-12-03",
+        "last": "2025-02-17",
+        "lots": 2
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": 6180,
     "dividendFrom": "2026-04-01",
@@ -21045,6 +21940,19 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "tradeRecord": {
+      "from": "2024-12-03",
+      "to": "2026-11-04",
+      "buys": 4,
+      "sells": 0,
+      "unaccounted": 0,
+      "held": {
+        "first": "2024-12-03",
+        "last": "2025-10-30",
+        "lots": 4
+      },
+      "reason": null
+    },
     "accruedIncome": null,
     "dividendReceived": 41832,
     "dividendFrom": "2026-04-01",
@@ -38811,43 +39719,67 @@ export const BOOK_CAPITAL_GAINS: EntityCG[] = [
     "entity": "Ajay Jaisinghani · SVAN 8710067",
     "accountId": "svan-investment-managers-llp-8710067",
     "ownerId": "ajay-jaisinghani",
-    "realisedST": 5066073.87,
-    "realisedLT": 2946660.29,
+    "realisedST": 8090661.1,
+    "realisedLT": 3599847.32,
     "unrealisedST": null,
     "unrealisedLT": null,
-    "periodFrom": "2026-04-01",
-    "periodTo": "2026-09-30",
-    "lots": 26,
+    "periodFrom": "2024-09-03",
+    "periodTo": "2026-11-04",
+    "lots": 85,
     "realisedByYear": [
       {
+        "fy": "2024-04-01",
+        "st": 330312.77,
+        "lt": 0,
+        "lots": 7
+      },
+      {
+        "fy": "2025-04-01",
+        "st": 2610021.99,
+        "lt": -837876.97,
+        "lots": 42
+      },
+      {
         "fy": "2026-04-01",
-        "st": 5066073.87,
-        "lt": 2946660.29,
-        "lots": 26
+        "st": 5150326.34,
+        "lt": 4437724.29,
+        "lots": 36
       }
     ],
-    "source": "svan-investment-managers-llp-8710067-2026-09-30-capital-gain"
+    "source": "svan-investment-managers-llp-8710067-2026-11-04-capital-gain"
   },
   {
     "entity": "Bharat Jaisinghani · SVAN 8710090",
     "accountId": "svan-investment-managers-llp-8710090",
     "ownerId": "bharat-jaisinghani",
-    "realisedST": 3115464.6,
-    "realisedLT": 2414024.55,
+    "realisedST": 3273418.64,
+    "realisedLT": 3745836.19,
     "unrealisedST": null,
     "unrealisedLT": null,
-    "periodFrom": "2026-04-01",
-    "periodTo": "2026-09-30",
-    "lots": 26,
+    "periodFrom": "2024-12-03",
+    "periodTo": "2026-11-04",
+    "lots": 69,
     "realisedByYear": [
       {
+        "fy": "2024-04-01",
+        "st": 41474.96,
+        "lt": 0,
+        "lots": 1
+      },
+      {
+        "fy": "2025-04-01",
+        "st": 99948.39,
+        "lt": 386302.31,
+        "lots": 36
+      },
+      {
         "fy": "2026-04-01",
-        "st": 3115464.6,
-        "lt": 2414024.55,
-        "lots": 26
+        "st": 3131995.29,
+        "lt": 3359533.88,
+        "lots": 32
       }
     ],
-    "source": "svan-investment-managers-llp-8710090-2026-09-30-capital-gain"
+    "source": "svan-investment-managers-llp-8710090-2026-11-04-capital-gain"
   },
   {
     "entity": "Bharat Jaisinghani Family Trust 2 · Transition TVC262",
@@ -39083,20 +40015,36 @@ export const BOOK_REALISED_BY_CLASS: RealisedByClass[] = [
     "accountId": "svan-investment-managers-llp-8710067",
     "entity": "Ajay Jaisinghani · SVAN 8710067",
     "assetClass": "Equity",
-    "lots": 26,
-    "realisedST": 5066073.87,
-    "realisedLT": 2946660.29,
+    "lots": 82,
+    "realisedST": 7973046.7,
+    "realisedLT": 3599847.32,
     "securities": [
+      "Amber Enterprises India Ltd",
       "Apl Apollo Tubes Ltd",
       "Avalon Technologies Limited",
+      "CESC Ltd",
+      "Caplin Point Laboratories Ltd",
+      "Ceat Ltd",
+      "Eclerx Services Ltd",
+      "Firstsource Solutions Ltd",
+      "HEG Advanced Materials Limited",
+      "Marksans Pharma Ltd",
+      "Neuland Laboratories Ltd",
       "Paras Defence and Space Technologies",
+      "Ramkrishna Forgings Ltd",
+      "Repco Home Finance Ltd",
+      "S H Kelkar & Co. Ltd",
       "SG Mart Limited",
       "Shankara Building Products Ltd",
       "Shankara Buildpro Ltd",
+      "Shriram Finance Ltd",
       "Shyam Metalics and Energy Limited",
       "Sterlite Technologies Ltd",
       "Surya Roshni Ltd",
-      "Syrma SGS Technology Limited"
+      "Syrma SGS Technology Limited",
+      "THIRUMALAI CHEMICALS LTD.",
+      "Thomas Cook India Ltd",
+      "Vedanta Ltd"
     ]
   },
   {
@@ -39251,20 +40199,33 @@ export const BOOK_REALISED_BY_CLASS: RealisedByClass[] = [
     "accountId": "svan-investment-managers-llp-8710090",
     "entity": "Bharat Jaisinghani · SVAN 8710090",
     "assetClass": "Equity",
-    "lots": 26,
-    "realisedST": 3115464.6,
-    "realisedLT": 2414024.55,
+    "lots": 68,
+    "realisedST": 3231943.68,
+    "realisedLT": 3745836.19,
     "securities": [
+      "Amber Enterprises India Ltd",
       "Apl Apollo Tubes Ltd",
       "Avalon Technologies Limited",
+      "CESC Ltd",
+      "Ceat Ltd",
+      "Eclerx Services Ltd",
+      "Firstsource Solutions Ltd",
+      "HEG Advanced Materials Limited",
+      "Neuland Laboratories Ltd",
       "Paras Defence and Space Technologies",
+      "Repco Home Finance Ltd",
+      "S H Kelkar & Co. Ltd",
       "SG Mart Limited",
       "Shankara Building Products Ltd",
       "Shankara Buildpro Ltd",
+      "Shriram Finance Ltd",
       "Shyam Metalics and Energy Limited",
       "Sterlite Technologies Ltd",
       "Surya Roshni Ltd",
-      "Syrma SGS Technology Limited"
+      "Syrma SGS Technology Limited",
+      "THIRUMALAI CHEMICALS LTD.",
+      "Thomas Cook India Ltd",
+      "Vedanta Ltd"
     ]
   },
   {
@@ -39314,6 +40275,17 @@ export const BOOK_REALISED_BY_CLASS: RealisedByClass[] = [
     ]
   },
   {
+    "accountId": "svan-investment-managers-llp-8710067",
+    "entity": "Ajay Jaisinghani · SVAN 8710067",
+    "assetClass": null,
+    "lots": 3,
+    "realisedST": 117614.4,
+    "realisedLT": 0,
+    "securities": [
+      "HDFC Liquid Fund -Direct Plan - Growth"
+    ]
+  },
+  {
     "accountId": "ask-investment-managers-limited-10032723",
     "entity": "Ankita Jaisinghani · ASK 10032723",
     "assetClass": null,
@@ -39346,6 +40318,17 @@ export const BOOK_REALISED_BY_CLASS: RealisedByClass[] = [
     "securities": [
       "CHOLAMANDALAM INVESTMENT",
       "ORACLE FINANCIAL SERVICES"
+    ]
+  },
+  {
+    "accountId": "svan-investment-managers-llp-8710090",
+    "entity": "Bharat Jaisinghani · SVAN 8710090",
+    "assetClass": null,
+    "lots": 1,
+    "realisedST": 41474.96,
+    "realisedLT": 0,
+    "securities": [
+      "HDFC Liquid Fund -Direct Plan - Growth"
     ]
   }
 ];
@@ -60678,7 +61661,159 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
       "amount": 3379797.5
     }
   ],
+  "svan-investment-managers-llp-8710067|arvind-fashions": [
+    {
+      "date": "2024-09-04",
+      "side": "buy",
+      "quantity": 3920,
+      "price": 554.0576,
+      "amount": 2175380.8
+    },
+    {
+      "date": "2024-10-29",
+      "side": "buy",
+      "quantity": 165,
+      "price": 549.3061,
+      "amount": 90780.89
+    },
+    {
+      "date": "2025-02-17",
+      "side": "buy",
+      "quantity": 2995,
+      "price": 385.4001,
+      "amount": 1156119.75
+    },
+    {
+      "date": "2025-02-20",
+      "side": "buy",
+      "quantity": 220,
+      "price": 423.5733,
+      "amount": 93335.03
+    },
+    {
+      "date": "2025-03-18",
+      "side": "buy",
+      "quantity": 2060,
+      "price": 365.5222,
+      "amount": 754180.49
+    }
+  ],
+  "svan-investment-managers-llp-8710067|birlasoft": [
+    {
+      "date": "2025-06-25",
+      "side": "buy",
+      "quantity": 3560,
+      "price": 434.4801,
+      "amount": 1549224.25
+    },
+    {
+      "date": "2025-06-26",
+      "side": "buy",
+      "quantity": 2000,
+      "price": 443.3563,
+      "amount": 888131.6
+    },
+    {
+      "date": "2025-10-23",
+      "side": "buy",
+      "quantity": 50,
+      "price": 370.4342,
+      "amount": 18551.82
+    },
+    {
+      "date": "2025-10-30",
+      "side": "buy",
+      "quantity": 4500,
+      "price": 374.3899,
+      "amount": 1687450.25
+    }
+  ],
+  "svan-investment-managers-llp-8710067|borosil-renewables": [
+    {
+      "date": "2025-10-10",
+      "side": "buy",
+      "quantity": 1100,
+      "price": 627.5166,
+      "amount": 691372.41
+    },
+    {
+      "date": "2025-10-14",
+      "side": "buy",
+      "quantity": 715,
+      "price": 619.1794,
+      "amount": 443421.89
+    },
+    {
+      "date": "2025-10-20",
+      "side": "buy",
+      "quantity": 1150,
+      "price": 643.753,
+      "amount": 741500.05
+    },
+    {
+      "date": "2025-10-30",
+      "side": "buy",
+      "quantity": 4000,
+      "price": 655.3892,
+      "amount": 2625750.6
+    }
+  ],
   "svan-investment-managers-llp-8710067|caplin-point-laboratories": [
+    {
+      "date": "2024-09-04",
+      "side": "buy",
+      "quantity": 490,
+      "price": 1931.9716,
+      "amount": 948181.09
+    },
+    {
+      "date": "2024-12-18",
+      "side": "sell",
+      "quantity": 10,
+      "price": 2422.749,
+      "amount": 24188.95,
+      "boughtOn": [
+        "2024-09-04"
+      ]
+    },
+    {
+      "date": "2024-12-19",
+      "side": "sell",
+      "quantity": 35,
+      "price": 2400,
+      "amount": 83865.6,
+      "boughtOn": [
+        "2024-09-04"
+      ]
+    },
+    {
+      "date": "2025-02-17",
+      "side": "buy",
+      "quantity": 100,
+      "price": 1983.6655,
+      "amount": 198683.57
+    },
+    {
+      "date": "2025-03-20",
+      "side": "buy",
+      "quantity": 515,
+      "price": 1958.3965,
+      "amount": 1010188.33
+    },
+    {
+      "date": "2025-05-19",
+      "side": "buy",
+      "quantity": 450,
+      "price": 2078.382,
+      "amount": 936768.05
+    },
+    {
+      "date": "2025-10-30",
+      "side": "buy",
+      "quantity": 420,
+      "price": 2031.4947,
+      "amount": 854592.67
+    },
     {
       "date": "2026-04-15",
       "side": "buy",
@@ -60687,7 +61822,198 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
       "amount": 930507.33
     }
   ],
+  "svan-investment-managers-llp-8710067|ceat": [
+    {
+      "date": "2024-09-04",
+      "side": "buy",
+      "quantity": 660,
+      "price": 2892,
+      "amount": 1911774.23
+    },
+    {
+      "date": "2024-10-29",
+      "side": "buy",
+      "quantity": 155,
+      "price": 2782.3031,
+      "amount": 431946.74
+    },
+    {
+      "date": "2025-02-17",
+      "side": "buy",
+      "quantity": 650,
+      "price": 2650.2307,
+      "amount": 1725406.53
+    },
+    {
+      "date": "2025-05-28",
+      "side": "sell",
+      "quantity": 75,
+      "price": 3751.2283,
+      "amount": 280892.32,
+      "boughtOn": [
+        "2024-09-04"
+      ]
+    },
+    {
+      "date": "2025-10-30",
+      "side": "buy",
+      "quantity": 200,
+      "price": 4102.0032,
+      "amount": 821713.88
+    }
+  ],
+  "svan-investment-managers-llp-8710067|cosmo-first": [
+    {
+      "date": "2024-12-16",
+      "side": "buy",
+      "quantity": 1000,
+      "price": 860.2368,
+      "amount": 861612.9
+    },
+    {
+      "date": "2025-01-15",
+      "side": "buy",
+      "quantity": 15,
+      "price": 865.4393,
+      "amount": 13002.38
+    },
+    {
+      "date": "2025-01-16",
+      "side": "buy",
+      "quantity": 20,
+      "price": 867.6285,
+      "amount": 17379.98
+    },
+    {
+      "date": "2025-01-17",
+      "side": "buy",
+      "quantity": 985,
+      "price": 851.1824,
+      "amount": 839755.7
+    },
+    {
+      "date": "2025-02-17",
+      "side": "buy",
+      "quantity": 2200,
+      "price": 663.6072,
+      "amount": 1462271.88
+    },
+    {
+      "date": "2026-02-13",
+      "side": "buy",
+      "quantity": 970,
+      "price": 716.7716,
+      "amount": 696380.55
+    }
+  ],
+  "svan-investment-managers-llp-8710067|creative-newtech": [
+    {
+      "date": "2024-09-04",
+      "side": "buy",
+      "quantity": 1200,
+      "price": 793.3461,
+      "amount": 953538.52
+    },
+    {
+      "date": "2024-09-11",
+      "side": "buy",
+      "quantity": 130,
+      "price": 898.0076,
+      "amount": 116928.03
+    },
+    {
+      "date": "2024-09-12",
+      "side": "buy",
+      "quantity": 120,
+      "price": 929.9982,
+      "amount": 111778.74
+    },
+    {
+      "date": "2025-01-17",
+      "side": "buy",
+      "quantity": 100,
+      "price": 899.5032,
+      "amount": 90094.29
+    },
+    {
+      "date": "2025-02-01",
+      "side": "buy",
+      "quantity": 121,
+      "price": 970.0234,
+      "amount": 117560.25
+    },
+    {
+      "date": "2025-02-03",
+      "side": "buy",
+      "quantity": 69,
+      "price": 967.6096,
+      "amount": 66872.12
+    },
+    {
+      "date": "2025-02-17",
+      "side": "buy",
+      "quantity": 1065,
+      "price": 805.5982,
+      "amount": 859334.9
+    },
+    {
+      "date": "2025-10-30",
+      "side": "buy",
+      "quantity": 630,
+      "price": 673.1775,
+      "amount": 424780.29
+    },
+    {
+      "date": "2025-12-12",
+      "side": "buy",
+      "quantity": 420,
+      "price": 753.2438,
+      "amount": 316868.2
+    }
+  ],
   "svan-investment-managers-llp-8710067|credit-access-grameen": [
+    {
+      "date": "2024-09-04",
+      "side": "buy",
+      "quantity": 520,
+      "price": 1206.349,
+      "amount": 628304.86
+    },
+    {
+      "date": "2025-01-17",
+      "side": "buy",
+      "quantity": 360,
+      "price": 907.1088,
+      "amount": 327082.11
+    },
+    {
+      "date": "2025-01-28",
+      "side": "buy",
+      "quantity": 740,
+      "price": 941.5052,
+      "amount": 697828.88
+    },
+    {
+      "date": "2025-02-17",
+      "side": "buy",
+      "quantity": 50,
+      "price": 992.4924,
+      "amount": 49704.4
+    },
+    {
+      "date": "2025-04-23",
+      "side": "buy",
+      "quantity": 260,
+      "price": 1137.6253,
+      "amount": 296256.06
+    },
+    {
+      "date": "2025-10-30",
+      "side": "buy",
+      "quantity": 300,
+      "price": 1476.497,
+      "amount": 443657.84
+    },
     {
       "date": "2026-08-14",
       "side": "buy",
@@ -60696,7 +62022,206 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
       "amount": 2552021.05
     }
   ],
+  "svan-investment-managers-llp-8710067|dilip-buildcon": [
+    {
+      "date": "2024-09-04",
+      "side": "buy",
+      "quantity": 1700,
+      "price": 552.9489,
+      "amount": 941517.19
+    },
+    {
+      "date": "2024-10-29",
+      "side": "buy",
+      "quantity": 685,
+      "price": 476.2293,
+      "amount": 326738.77
+    },
+    {
+      "date": "2025-01-17",
+      "side": "buy",
+      "quantity": 915,
+      "price": 423.8711,
+      "amount": 388462.75
+    },
+    {
+      "date": "2025-02-17",
+      "side": "buy",
+      "quantity": 1410,
+      "price": 418.7861,
+      "amount": 591433.73
+    },
+    {
+      "date": "2025-10-30",
+      "side": "buy",
+      "quantity": 1750,
+      "price": 495.6959,
+      "amount": 868855.28
+    }
+  ],
+  "svan-investment-managers-llp-8710067|edelweiss-financial-services": [
+    {
+      "date": "2025-05-09",
+      "side": "buy",
+      "quantity": 2900,
+      "price": 76.2221,
+      "amount": 221397.62
+    },
+    {
+      "date": "2025-05-13",
+      "side": "buy",
+      "quantity": 17000,
+      "price": 84.7881,
+      "amount": 1443704
+    },
+    {
+      "date": "2026-02-11",
+      "side": "buy",
+      "quantity": 9955,
+      "price": 126.265,
+      "amount": 1258978.66
+    }
+  ],
+  "svan-investment-managers-llp-8710067|ester-industries": [
+    {
+      "date": "2024-09-04",
+      "side": "buy",
+      "quantity": 4510,
+      "price": 139.2041,
+      "amount": 628815.08
+    },
+    {
+      "date": "2024-10-29",
+      "side": "buy",
+      "quantity": 2210,
+      "price": 147.1253,
+      "amount": 325667.05
+    },
+    {
+      "date": "2024-11-07",
+      "side": "buy",
+      "quantity": 780,
+      "price": 170,
+      "amount": 132812.56
+    },
+    {
+      "date": "2025-01-17",
+      "side": "buy",
+      "quantity": 500,
+      "price": 150.1352,
+      "amount": 75187.65
+    },
+    {
+      "date": "2025-02-17",
+      "side": "buy",
+      "quantity": 3600,
+      "price": 143.9909,
+      "amount": 519197.28
+    },
+    {
+      "date": "2025-03-18",
+      "side": "buy",
+      "quantity": 5030,
+      "price": 124.1775,
+      "amount": 625612.55
+    },
+    {
+      "date": "2025-10-30",
+      "side": "buy",
+      "quantity": 10000,
+      "price": 113.4617,
+      "amount": 1136431
+    },
+    {
+      "date": "2026-01-16",
+      "side": "buy",
+      "quantity": 4460,
+      "price": 93.9546,
+      "amount": 419707.62
+    }
+  ],
+  "svan-investment-managers-llp-8710067|fusion-finance": [
+    {
+      "date": "2025-04-23",
+      "side": "buy",
+      "quantity": 7340,
+      "price": 162.9026,
+      "amount": 1197618.2
+    },
+    {
+      "date": "2025-10-30",
+      "side": "buy",
+      "quantity": 5000,
+      "price": 184.2966,
+      "amount": 922957.5
+    }
+  ],
+  "svan-investment-managers-llp-8710067|ghcl": [
+    {
+      "date": "2024-09-04",
+      "side": "buy",
+      "quantity": 2790,
+      "price": 676.5497,
+      "amount": 1890594.12
+    },
+    {
+      "date": "2025-01-17",
+      "side": "buy",
+      "quantity": 210,
+      "price": 684.2176,
+      "amount": 143915.91
+    },
+    {
+      "date": "2025-02-17",
+      "side": "buy",
+      "quantity": 575,
+      "price": 614.265,
+      "amount": 353767.33
+    },
+    {
+      "date": "2025-03-25",
+      "side": "buy",
+      "quantity": 1310,
+      "price": 619.6666,
+      "amount": 813062.31
+    },
+    {
+      "date": "2025-10-30",
+      "side": "buy",
+      "quantity": 1200,
+      "price": 647.3527,
+      "amount": 778066.32
+    }
+  ],
   "svan-investment-managers-llp-8710067|ghcl-textiles": [
+    {
+      "date": "2024-09-04",
+      "side": "buy",
+      "quantity": 5800,
+      "price": 107.4551,
+      "amount": 624236.68
+    },
+    {
+      "date": "2025-01-17",
+      "side": "buy",
+      "quantity": 2000,
+      "price": 97.2096,
+      "amount": 194729.8
+    },
+    {
+      "date": "2025-02-17",
+      "side": "buy",
+      "quantity": 6050,
+      "price": 80.7033,
+      "amount": 489035.79
+    },
+    {
+      "date": "2025-10-30",
+      "side": "buy",
+      "quantity": 6000,
+      "price": 78.0586,
+      "amount": 469101.4
+    },
     {
       "date": "2026-08-13",
       "side": "buy",
@@ -60723,6 +62248,80 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
       "amount": 2188939.57
     }
   ],
+  "svan-investment-managers-llp-8710067|ifb-industries": [
+    {
+      "date": "2024-09-04",
+      "side": "buy",
+      "quantity": 650,
+      "price": 1931.9685,
+      "amount": 1257789.01
+    },
+    {
+      "date": "2025-01-17",
+      "side": "buy",
+      "quantity": 35,
+      "price": 1769.0951,
+      "amount": 62017.49
+    },
+    {
+      "date": "2025-01-31",
+      "side": "buy",
+      "quantity": 150,
+      "price": 1400,
+      "amount": 210336
+    },
+    {
+      "date": "2025-02-17",
+      "side": "buy",
+      "quantity": 1050,
+      "price": 1175.0361,
+      "amount": 1235762.16
+    },
+    {
+      "date": "2025-03-28",
+      "side": "buy",
+      "quantity": 210,
+      "price": 1292.1587,
+      "amount": 271787.14
+    }
+  ],
+  "svan-investment-managers-llp-8710067|indo-count-industries": [
+    {
+      "date": "2024-09-04",
+      "side": "buy",
+      "quantity": 3730,
+      "price": 420.0462,
+      "amount": 1569279.29
+    },
+    {
+      "date": "2025-01-17",
+      "side": "buy",
+      "quantity": 3535,
+      "price": 331.9934,
+      "amount": 1175473.84
+    },
+    {
+      "date": "2025-02-17",
+      "side": "buy",
+      "quantity": 4965,
+      "price": 316.1237,
+      "amount": 1572065.03
+    },
+    {
+      "date": "2025-03-18",
+      "side": "buy",
+      "quantity": 1370,
+      "price": 266.3402,
+      "amount": 365470
+    },
+    {
+      "date": "2025-10-30",
+      "side": "buy",
+      "quantity": 2500,
+      "price": 286.0484,
+      "amount": 716265
+    }
+  ],
   "svan-investment-managers-llp-8710067|kajaria-ceramics": [
     {
       "date": "2026-09-29",
@@ -60730,9 +62329,169 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
       "quantity": 1700,
       "price": 1189.9991,
       "amount": 2026235.1
+    },
+    {
+      "date": "2026-10-06",
+      "side": "buy",
+      "quantity": 965,
+      "price": 1209.7226,
+      "amount": 1169249.71
+    },
+    {
+      "date": "2026-10-19",
+      "side": "buy",
+      "quantity": 80,
+      "price": 1229.0158,
+      "amount": 98478.25
+    }
+  ],
+  "svan-investment-managers-llp-8710067|krishca-strapping-solutions": [
+    {
+      "date": "2025-05-30",
+      "side": "buy",
+      "quantity": 2000,
+      "price": 230,
+      "amount": 460736
+    },
+    {
+      "date": "2025-10-30",
+      "side": "buy",
+      "quantity": 5500,
+      "price": 208.5083,
+      "amount": 1148630.7
+    }
+  ],
+  "svan-investment-managers-llp-8710067|laxmi-organic-industries": [
+    {
+      "date": "2025-08-18",
+      "side": "buy",
+      "quantity": 3610,
+      "price": 194.902,
+      "amount": 704722.23
+    },
+    {
+      "date": "2025-08-19",
+      "side": "buy",
+      "quantity": 6915,
+      "price": 226.4079,
+      "amount": 1568115.69
+    },
+    {
+      "date": "2025-09-15",
+      "side": "buy",
+      "quantity": 5475,
+      "price": 223.8873,
+      "amount": 1227744.26
+    },
+    {
+      "date": "2025-10-30",
+      "side": "buy",
+      "quantity": 8000,
+      "price": 198.5512,
+      "amount": 1590950.4
+    }
+  ],
+  "svan-investment-managers-llp-8710067|mastek": [
+    {
+      "date": "2024-09-04",
+      "side": "buy",
+      "quantity": 325,
+      "price": 2914.392,
+      "amount": 948692.7
+    },
+    {
+      "date": "2024-10-21",
+      "side": "buy",
+      "quantity": 175,
+      "price": 3045,
+      "amount": 533727.73
+    },
+    {
+      "date": "2024-11-27",
+      "side": "buy",
+      "quantity": 100,
+      "price": 3288.0023,
+      "amount": 329326.51
+    },
+    {
+      "date": "2025-01-17",
+      "side": "buy",
+      "quantity": 200,
+      "price": 2693.829,
+      "amount": 539628.06
+    },
+    {
+      "date": "2025-02-17",
+      "side": "buy",
+      "quantity": 855,
+      "price": 2357.2481,
+      "amount": 2018671.36
+    },
+    {
+      "date": "2025-10-30",
+      "side": "buy",
+      "quantity": 350,
+      "price": 2162.858,
+      "amount": 758211.49
+    }
+  ],
+  "svan-investment-managers-llp-8710067|neuland-laboratories": [
+    {
+      "date": "2025-01-03",
+      "side": "buy",
+      "quantity": 5,
+      "price": 14325,
+      "amount": 71739.98
+    },
+    {
+      "date": "2025-01-17",
+      "side": "buy",
+      "quantity": 55,
+      "price": 13637.3055,
+      "amount": 751251.83
+    },
+    {
+      "date": "2025-01-22",
+      "side": "buy",
+      "quantity": 55,
+      "price": 13870.3138,
+      "amount": 764087.98
+    },
+    {
+      "date": "2025-01-24",
+      "side": "buy",
+      "quantity": 85,
+      "price": 14029.7164,
+      "amount": 1194434.4
+    },
+    {
+      "date": "2025-10-30",
+      "side": "buy",
+      "quantity": 100,
+      "price": 15860.8457,
+      "amount": 1588622.22
+    },
+    {
+      "date": "2026-10-07",
+      "side": "sell",
+      "quantity": 70,
+      "price": 21939.6746,
+      "amount": 1533319.75,
+      "boughtOn": [
+        "2025-01-03",
+        "2025-01-17",
+        "2025-01-22"
+      ]
     }
   ],
   "svan-investment-managers-llp-8710067|nitin-spinners": [
+    {
+      "date": "2026-02-19",
+      "side": "buy",
+      "quantity": 8395,
+      "price": 372.0441,
+      "amount": 3128306.98
+    },
     {
       "date": "2026-08-14",
       "side": "buy",
@@ -60784,7 +62543,204 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
       ]
     }
   ],
+  "svan-investment-managers-llp-8710067|pokarna": [
+    {
+      "date": "2024-09-04",
+      "side": "buy",
+      "quantity": 990,
+      "price": 1021.4173,
+      "amount": 1012820.9
+    },
+    {
+      "date": "2024-10-15",
+      "side": "buy",
+      "quantity": 410,
+      "price": 1108.6401,
+      "amount": 455270.17
+    },
+    {
+      "date": "2024-11-13",
+      "side": "buy",
+      "quantity": 300,
+      "price": 1140,
+      "amount": 342547.2
+    },
+    {
+      "date": "2024-11-19",
+      "side": "buy",
+      "quantity": 400,
+      "price": 1082.3244,
+      "amount": 433622.52
+    },
+    {
+      "date": "2024-11-21",
+      "side": "buy",
+      "quantity": 300,
+      "price": 1047.6549,
+      "amount": 314799.05
+    },
+    {
+      "date": "2024-11-27",
+      "side": "buy",
+      "quantity": 200,
+      "price": 994.5027,
+      "amount": 199218.88
+    },
+    {
+      "date": "2025-01-17",
+      "side": "buy",
+      "quantity": 200,
+      "price": 1288.1071,
+      "amount": 258034
+    },
+    {
+      "date": "2025-02-17",
+      "side": "buy",
+      "quantity": 1170,
+      "price": 1131.3865,
+      "amount": 1325840.4
+    },
+    {
+      "date": "2025-10-30",
+      "side": "buy",
+      "quantity": 200,
+      "price": 910.7872,
+      "amount": 182448.72
+    }
+  ],
+  "svan-investment-managers-llp-8710067|polyplex": [
+    {
+      "date": "2024-09-04",
+      "side": "buy",
+      "quantity": 775,
+      "price": 1223.5519,
+      "amount": 949769.65
+    },
+    {
+      "date": "2025-01-17",
+      "side": "buy",
+      "quantity": 170,
+      "price": 1252.3318,
+      "amount": 213237.15
+    },
+    {
+      "date": "2025-02-17",
+      "side": "buy",
+      "quantity": 535,
+      "price": 1120.3995,
+      "amount": 600373.36
+    },
+    {
+      "date": "2025-03-25",
+      "side": "buy",
+      "quantity": 235,
+      "price": 1237.8708,
+      "amount": 291365.17
+    },
+    {
+      "date": "2025-10-30",
+      "side": "buy",
+      "quantity": 800,
+      "price": 969.4356,
+      "amount": 776788.76
+    }
+  ],
+  "svan-investment-managers-llp-8710067|punjab-chem-and-crop-prot-l": [
+    {
+      "date": "2024-09-04",
+      "side": "buy",
+      "quantity": 720,
+      "price": 1298.0021,
+      "amount": 936057.25
+    },
+    {
+      "date": "2025-02-17",
+      "side": "buy",
+      "quantity": 785,
+      "price": 734.5657,
+      "amount": 577556.02
+    },
+    {
+      "date": "2025-02-27",
+      "side": "buy",
+      "quantity": 1220,
+      "price": 715.3661,
+      "amount": 874143.26
+    },
+    {
+      "date": "2025-02-28",
+      "side": "buy",
+      "quantity": 35,
+      "price": 712.988,
+      "amount": 24994.55
+    },
+    {
+      "date": "2025-03-03",
+      "side": "buy",
+      "quantity": 155,
+      "price": 715,
+      "amount": 111002.5
+    }
+  ],
+  "svan-investment-managers-llp-8710067|puravankara": [
+    {
+      "date": "2024-09-04",
+      "side": "buy",
+      "quantity": 3445,
+      "price": 452.6468,
+      "amount": 1561862.89
+    },
+    {
+      "date": "2024-10-29",
+      "side": "buy",
+      "quantity": 1525,
+      "price": 396.5554,
+      "amount": 605714.78
+    },
+    {
+      "date": "2025-01-17",
+      "side": "buy",
+      "quantity": 1880,
+      "price": 352.579,
+      "amount": 663908.14
+    },
+    {
+      "date": "2025-02-17",
+      "side": "buy",
+      "quantity": 7750,
+      "price": 233.4064,
+      "amount": 1811793.6
+    },
+    {
+      "date": "2025-08-12",
+      "side": "buy",
+      "quantity": 1750,
+      "price": 256.6655,
+      "amount": 449883.13
+    }
+  ],
   "svan-investment-managers-llp-8710067|sg-mart": [
+    {
+      "date": "2025-03-28",
+      "side": "buy",
+      "quantity": 4970,
+      "price": 319.56,
+      "amount": 1590753.95
+    },
+    {
+      "date": "2025-09-04",
+      "side": "buy",
+      "quantity": 1960,
+      "price": 327.55,
+      "amount": 643025.14
+    },
+    {
+      "date": "2025-10-30",
+      "side": "buy",
+      "quantity": 3000,
+      "price": 373.4054,
+      "amount": 1122008.2
+    },
     {
       "date": "2026-04-10",
       "side": "sell",
@@ -60827,7 +62783,23 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
       ]
     }
   ],
+  "svan-investment-managers-llp-8710067|shakti-pumps-india": [
+    {
+      "date": "2025-02-17",
+      "side": "buy",
+      "quantity": 1350,
+      "price": 815.9708,
+      "amount": 1103322.54
+    }
+  ],
   "svan-investment-managers-llp-8710067|shankara-buildpro": [
+    {
+      "date": "2026-02-03",
+      "side": "buy",
+      "quantity": 1415,
+      "price": 789.9848,
+      "amount": 1119617.06
+    },
     {
       "date": "2026-05-19",
       "side": "sell",
@@ -60839,7 +62811,104 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
       ]
     }
   ],
+  "svan-investment-managers-llp-8710067|sharda-cropchem": [
+    {
+      "date": "2026-02-05",
+      "side": "buy",
+      "quantity": 1920,
+      "price": 1117.8326,
+      "amount": 2149672.14
+    }
+  ],
+  "svan-investment-managers-llp-8710067|sharda-motor-industries": [
+    {
+      "date": "2024-10-09",
+      "side": "buy",
+      "quantity": 650,
+      "price": 2090.8099,
+      "amount": 1361200.87
+    },
+    {
+      "date": "2025-01-31",
+      "side": "buy",
+      "quantity": 87,
+      "price": 1769.326,
+      "amount": 154177.72
+    },
+    {
+      "date": "2025-02-01",
+      "side": "buy",
+      "quantity": 276,
+      "price": 1811.7965,
+      "amount": 500855.87
+    },
+    {
+      "date": "2025-02-03",
+      "side": "buy",
+      "quantity": 102,
+      "price": 1819.9472,
+      "amount": 185931.99
+    },
+    {
+      "date": "2025-02-17",
+      "side": "buy",
+      "quantity": 290,
+      "price": 1596.0979,
+      "amount": 463609.12
+    },
+    {
+      "date": "2025-03-26",
+      "side": "buy",
+      "quantity": 270,
+      "price": 1675.3341,
+      "amount": 453063.61
+    }
+  ],
+  "svan-investment-managers-llp-8710067|stove-kraft": [
+    {
+      "date": "2024-09-04",
+      "side": "buy",
+      "quantity": 1125,
+      "price": 815.9864,
+      "amount": 919453.5
+    },
+    {
+      "date": "2024-12-19",
+      "side": "buy",
+      "quantity": 60,
+      "price": 896.4578,
+      "amount": 53873.74
+    },
+    {
+      "date": "2025-01-17",
+      "side": "buy",
+      "quantity": 505,
+      "price": 933.3925,
+      "amount": 472118.01
+    },
+    {
+      "date": "2025-02-17",
+      "side": "buy",
+      "quantity": 1495,
+      "price": 697.6361,
+      "amount": 1044634.78
+    },
+    {
+      "date": "2025-10-30",
+      "side": "buy",
+      "quantity": 750,
+      "price": 767.4482,
+      "amount": 576506.45
+    }
+  ],
   "svan-investment-managers-llp-8710067|syrma-sgs-technology": [
+    {
+      "date": "2026-02-05",
+      "side": "buy",
+      "quantity": 2585,
+      "price": 856.3414,
+      "amount": 2217184.69
+    },
     {
       "date": "2026-04-22",
       "side": "buy",
@@ -60865,7 +62934,118 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
       ]
     }
   ],
+  "svan-investment-managers-llp-8710067|time-technoplast": [
+    {
+      "date": "2024-09-04",
+      "side": "buy",
+      "quantity": 1560,
+      "price": 401.4725,
+      "amount": 627298.9
+    },
+    {
+      "date": "2025-02-17",
+      "side": "buy",
+      "quantity": 1390,
+      "price": 375.4001,
+      "amount": 522641.17
+    },
+    {
+      "date": "2025-03-24",
+      "side": "buy",
+      "quantity": 2500,
+      "price": 389.7322,
+      "amount": 975889
+    }
+  ],
+  "svan-investment-managers-llp-8710067|v2-retail": [
+    {
+      "date": "2024-09-04",
+      "side": "buy",
+      "quantity": 565,
+      "price": 1125.6735,
+      "amount": 637023.13
+    },
+    {
+      "date": "2024-10-30",
+      "side": "buy",
+      "quantity": 975,
+      "price": 1107.5758,
+      "amount": 1081614.3
+    },
+    {
+      "date": "2025-02-27",
+      "side": "buy",
+      "quantity": 870,
+      "price": 1699.7808,
+      "amount": 1481175.61
+    },
+    {
+      "date": "2025-07-01",
+      "side": "buy",
+      "quantity": 225,
+      "price": 1827.3991,
+      "amount": 411822.49
+    },
+    {
+      "date": "2026-01-06",
+      "side": "buy",
+      "quantity": 525,
+      "price": 2299.9737,
+      "amount": 1209418.64
+    }
+  ],
+  "svan-investment-managers-llp-8710067|vaibhav-global": [
+    {
+      "date": "2024-09-04",
+      "side": "buy",
+      "quantity": 3000,
+      "price": 310.6748,
+      "amount": 933515.6
+    },
+    {
+      "date": "2025-01-17",
+      "side": "buy",
+      "quantity": 2600,
+      "price": 284.5226,
+      "amount": 740942.58
+    },
+    {
+      "date": "2025-10-30",
+      "side": "buy",
+      "quantity": 3600,
+      "price": 286.945,
+      "amount": 1034654.56
+    }
+  ],
   "svan-investment-managers-llp-8710067|varroc-engineering": [
+    {
+      "date": "2024-09-04",
+      "side": "buy",
+      "quantity": 1645,
+      "price": 574.9737,
+      "amount": 947345.27
+    },
+    {
+      "date": "2025-01-17",
+      "side": "buy",
+      "quantity": 1020,
+      "price": 599.9225,
+      "amount": 612900.15
+    },
+    {
+      "date": "2025-02-11",
+      "side": "buy",
+      "quantity": 1540,
+      "price": 529.0648,
+      "amount": 816063.59
+    },
+    {
+      "date": "2025-02-17",
+      "side": "buy",
+      "quantity": 1725,
+      "price": 464.518,
+      "amount": 802575.31
+    },
     {
       "date": "2026-08-14",
       "side": "buy",
@@ -60875,6 +63055,13 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     }
   ],
   "svan-investment-managers-llp-8710067|viyash-scientific": [
+    {
+      "date": "2025-11-19",
+      "side": "buy",
+      "quantity": 9100,
+      "price": 253.8597,
+      "amount": 2313819.2
+    },
     {
       "date": "2026-05-20",
       "side": "buy",
@@ -60899,6 +63086,66 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
       "amount": 3084928
     }
   ],
+  "svan-investment-managers-llp-8710067|wpil": [
+    {
+      "date": "2024-09-04",
+      "side": "buy",
+      "quantity": 2750,
+      "price": 451.69,
+      "amount": 1244134.75
+    },
+    {
+      "date": "2024-10-31",
+      "side": "buy",
+      "quantity": 750,
+      "price": 506.02,
+      "amount": 380122.7
+    },
+    {
+      "date": "2025-02-17",
+      "side": "buy",
+      "quantity": 745,
+      "price": 391,
+      "amount": 291760.78
+    }
+  ],
+  "svan-investment-managers-llp-8710067|zensar-technologies": [
+    {
+      "date": "2024-09-04",
+      "side": "buy",
+      "quantity": 1970,
+      "price": 790.6239,
+      "amount": 1560021.65
+    },
+    {
+      "date": "2025-01-17",
+      "side": "buy",
+      "quantity": 645,
+      "price": 752.8451,
+      "amount": 486362.44
+    },
+    {
+      "date": "2025-02-17",
+      "side": "buy",
+      "quantity": 760,
+      "price": 818.7442,
+      "amount": 623241.9
+    },
+    {
+      "date": "2025-03-24",
+      "side": "buy",
+      "quantity": 415,
+      "price": 683.3455,
+      "amount": 284042.53
+    },
+    {
+      "date": "2025-10-30",
+      "side": "buy",
+      "quantity": 1300,
+      "price": 802.2983,
+      "amount": 1044656.48
+    }
+  ],
   "svan-investment-managers-llp-8710090|apollo-pipes": [
     {
       "date": "2026-08-20",
@@ -60908,7 +63155,111 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
       "amount": 2075314.5
     }
   ],
+  "svan-investment-managers-llp-8710090|arvind-fashions": [
+    {
+      "date": "2024-12-03",
+      "side": "buy",
+      "quantity": 3515,
+      "price": 569.7387,
+      "amount": 2005835.96
+    },
+    {
+      "date": "2025-02-17",
+      "side": "buy",
+      "quantity": 1635,
+      "price": 385.4001,
+      "amount": 631137.17
+    },
+    {
+      "date": "2025-02-20",
+      "side": "buy",
+      "quantity": 45,
+      "price": 423.5733,
+      "amount": 19091.23
+    },
+    {
+      "date": "2025-03-18",
+      "side": "buy",
+      "quantity": 1465,
+      "price": 365.5222,
+      "amount": 536347.29
+    }
+  ],
+  "svan-investment-managers-llp-8710090|birlasoft": [
+    {
+      "date": "2025-06-25",
+      "side": "buy",
+      "quantity": 2500,
+      "price": 434.4801,
+      "amount": 1087938
+    },
+    {
+      "date": "2025-06-26",
+      "side": "buy",
+      "quantity": 1460,
+      "price": 443.3563,
+      "amount": 648335.56
+    },
+    {
+      "date": "2025-10-30",
+      "side": "buy",
+      "quantity": 2600,
+      "price": 374.3899,
+      "amount": 974970.7
+    }
+  ],
+  "svan-investment-managers-llp-8710090|borosil-renewables": [
+    {
+      "date": "2025-10-10",
+      "side": "buy",
+      "quantity": 1360,
+      "price": 627.5166,
+      "amount": 854787.62
+    },
+    {
+      "date": "2025-10-20",
+      "side": "buy",
+      "quantity": 270,
+      "price": 643.752,
+      "amount": 174091.32
+    },
+    {
+      "date": "2025-10-30",
+      "side": "buy",
+      "quantity": 2900,
+      "price": 655.3892,
+      "amount": 1903669.96
+    }
+  ],
   "svan-investment-managers-llp-8710090|caplin-point-laboratories": [
+    {
+      "date": "2025-02-17",
+      "side": "buy",
+      "quantity": 400,
+      "price": 1983.6655,
+      "amount": 794736.28
+    },
+    {
+      "date": "2025-03-20",
+      "side": "buy",
+      "quantity": 355,
+      "price": 1958.3965,
+      "amount": 696342.89
+    },
+    {
+      "date": "2025-05-19",
+      "side": "buy",
+      "quantity": 300,
+      "price": 2078.382,
+      "amount": 624512.7
+    },
+    {
+      "date": "2025-10-30",
+      "side": "buy",
+      "quantity": 205,
+      "price": 2031.4947,
+      "amount": 417123.26
+    },
     {
       "date": "2026-04-15",
       "side": "buy",
@@ -60917,7 +63268,135 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
       "amount": 591350.06
     }
   ],
+  "svan-investment-managers-llp-8710090|ceat": [
+    {
+      "date": "2024-12-03",
+      "side": "buy",
+      "quantity": 550,
+      "price": 3124.1967,
+      "amount": 1721057.17
+    },
+    {
+      "date": "2025-02-17",
+      "side": "buy",
+      "quantity": 515,
+      "price": 2650.2307,
+      "amount": 1367052.71
+    },
+    {
+      "date": "2025-05-28",
+      "side": "sell",
+      "quantity": 75,
+      "price": 3751.2283,
+      "amount": 280892.32,
+      "boughtOn": [
+        "2024-12-03"
+      ]
+    },
+    {
+      "date": "2025-10-30",
+      "side": "buy",
+      "quantity": 50,
+      "price": 4102.0032,
+      "amount": 205428.22
+    }
+  ],
+  "svan-investment-managers-llp-8710090|cosmo-first": [
+    {
+      "date": "2024-12-16",
+      "side": "buy",
+      "quantity": 1225,
+      "price": 860.2368,
+      "amount": 1055476.3
+    },
+    {
+      "date": "2025-02-17",
+      "side": "buy",
+      "quantity": 1840,
+      "price": 663.6072,
+      "amount": 1222990.94
+    },
+    {
+      "date": "2026-02-13",
+      "side": "buy",
+      "quantity": 305,
+      "price": 716.7716,
+      "amount": 218965.49
+    }
+  ],
+  "svan-investment-managers-llp-8710090|creative-newtech": [
+    {
+      "date": "2024-12-03",
+      "side": "buy",
+      "quantity": 860,
+      "price": 1010.9078,
+      "amount": 870771.3
+    },
+    {
+      "date": "2025-02-01",
+      "side": "buy",
+      "quantity": 120,
+      "price": 970.0234,
+      "amount": 116588.65
+    },
+    {
+      "date": "2025-02-03",
+      "side": "buy",
+      "quantity": 65,
+      "price": 967.6095,
+      "amount": 62995.36
+    },
+    {
+      "date": "2025-02-17",
+      "side": "buy",
+      "quantity": 995,
+      "price": 805.5982,
+      "amount": 802852.19
+    },
+    {
+      "date": "2025-10-30",
+      "side": "buy",
+      "quantity": 200,
+      "price": 673.1775,
+      "amount": 134851.28
+    },
+    {
+      "date": "2025-12-12",
+      "side": "buy",
+      "quantity": 265,
+      "price": 753.2438,
+      "amount": 199929.36
+    }
+  ],
   "svan-investment-managers-llp-8710090|credit-access-grameen": [
+    {
+      "date": "2024-12-03",
+      "side": "buy",
+      "quantity": 650,
+      "price": 894.7762,
+      "amount": 582535.52
+    },
+    {
+      "date": "2025-01-28",
+      "side": "buy",
+      "quantity": 300,
+      "price": 941.5052,
+      "amount": 282903.03
+    },
+    {
+      "date": "2025-02-17",
+      "side": "buy",
+      "quantity": 265,
+      "price": 992.4923,
+      "amount": 263431.27
+    },
+    {
+      "date": "2025-04-23",
+      "side": "buy",
+      "quantity": 500,
+      "price": 1137.6253,
+      "amount": 569722.95
+    },
     {
       "date": "2026-08-14",
       "side": "buy",
@@ -60926,7 +63405,150 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
       "amount": 1252526.12
     }
   ],
+  "svan-investment-managers-llp-8710090|dilip-buildcon": [
+    {
+      "date": "2024-12-03",
+      "side": "buy",
+      "quantity": 2035,
+      "price": 499.2995,
+      "amount": 1017700.17
+    },
+    {
+      "date": "2025-02-17",
+      "side": "buy",
+      "quantity": 1390,
+      "price": 418.7861,
+      "amount": 583043.99
+    },
+    {
+      "date": "2025-10-30",
+      "side": "buy",
+      "quantity": 790,
+      "price": 495.6959,
+      "amount": 392226.71
+    }
+  ],
+  "svan-investment-managers-llp-8710090|edelweiss-financial-services": [
+    {
+      "date": "2025-05-09",
+      "side": "buy",
+      "quantity": 1450,
+      "price": 76.2221,
+      "amount": 110699.31
+    },
+    {
+      "date": "2025-05-13",
+      "side": "buy",
+      "quantity": 12700,
+      "price": 84.7881,
+      "amount": 1078532.3
+    },
+    {
+      "date": "2026-02-11",
+      "side": "buy",
+      "quantity": 5265,
+      "price": 126.265,
+      "amount": 665848.78
+    }
+  ],
+  "svan-investment-managers-llp-8710090|ester-industries": [
+    {
+      "date": "2024-12-03",
+      "side": "buy",
+      "quantity": 5550,
+      "price": 161.1626,
+      "amount": 895883.12
+    },
+    {
+      "date": "2025-02-17",
+      "side": "buy",
+      "quantity": 2890,
+      "price": 143.9909,
+      "amount": 416799.4
+    },
+    {
+      "date": "2025-03-18",
+      "side": "buy",
+      "quantity": 3395,
+      "price": 124.1775,
+      "amount": 422257.54
+    },
+    {
+      "date": "2025-10-30",
+      "side": "buy",
+      "quantity": 5540,
+      "price": 113.4617,
+      "amount": 629583.54
+    },
+    {
+      "date": "2026-01-16",
+      "side": "buy",
+      "quantity": 2310,
+      "price": 93.9546,
+      "amount": 217382.18
+    }
+  ],
+  "svan-investment-managers-llp-8710090|fusion-finance": [
+    {
+      "date": "2025-04-23",
+      "side": "buy",
+      "quantity": 7800,
+      "price": 162.9026,
+      "amount": 1272673.34
+    },
+    {
+      "date": "2025-10-30",
+      "side": "buy",
+      "quantity": 250,
+      "price": 184.2966,
+      "amount": 46147.78
+    }
+  ],
+  "svan-investment-managers-llp-8710090|ghcl": [
+    {
+      "date": "2024-12-03",
+      "side": "buy",
+      "quantity": 2830,
+      "price": 630.1585,
+      "amount": 1786201.58
+    },
+    {
+      "date": "2025-03-25",
+      "side": "buy",
+      "quantity": 645,
+      "price": 619.6666,
+      "amount": 400324.77
+    },
+    {
+      "date": "2025-10-30",
+      "side": "buy",
+      "quantity": 495,
+      "price": 647.3527,
+      "amount": 320951.85
+    }
+  ],
   "svan-investment-managers-llp-8710090|ghcl-textiles": [
+    {
+      "date": "2024-12-03",
+      "side": "buy",
+      "quantity": 5700,
+      "price": 104.2434,
+      "amount": 595137.63
+    },
+    {
+      "date": "2025-02-17",
+      "side": "buy",
+      "quantity": 4370,
+      "price": 80.7033,
+      "amount": 353237.93
+    },
+    {
+      "date": "2025-10-30",
+      "side": "buy",
+      "quantity": 2885,
+      "price": 78.0586,
+      "amount": 225559.08
+    },
     {
       "date": "2026-08-13",
       "side": "buy",
@@ -60953,7 +63575,207 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
       "amount": 1459293.38
     }
   ],
+  "svan-investment-managers-llp-8710090|ifb-industries": [
+    {
+      "date": "2024-12-03",
+      "side": "buy",
+      "quantity": 500,
+      "price": 1747.5933,
+      "amount": 875194.95
+    },
+    {
+      "date": "2025-02-12",
+      "side": "buy",
+      "quantity": 100,
+      "price": 1201.3027,
+      "amount": 120322.35
+    },
+    {
+      "date": "2025-02-17",
+      "side": "buy",
+      "quantity": 770,
+      "price": 1175.0361,
+      "amount": 906225.65
+    },
+    {
+      "date": "2025-03-28",
+      "side": "buy",
+      "quantity": 120,
+      "price": 1292.1587,
+      "amount": 155307.08
+    }
+  ],
+  "svan-investment-managers-llp-8710090|indo-count-industries": [
+    {
+      "date": "2024-12-03",
+      "side": "buy",
+      "quantity": 4195,
+      "price": 345.9081,
+      "amount": 1453405.94
+    },
+    {
+      "date": "2025-02-12",
+      "side": "buy",
+      "quantity": 665,
+      "price": 288.8813,
+      "amount": 192413.3
+    },
+    {
+      "date": "2025-02-17",
+      "side": "buy",
+      "quantity": 4035,
+      "price": 316.1237,
+      "amount": 1277599.57
+    },
+    {
+      "date": "2025-03-18",
+      "side": "buy",
+      "quantity": 785,
+      "price": 266.3402,
+      "amount": 209411.5
+    },
+    {
+      "date": "2025-10-30",
+      "side": "buy",
+      "quantity": 825,
+      "price": 286.0484,
+      "amount": 236367.5
+    }
+  ],
+  "svan-investment-managers-llp-8710090|kajaria-ceramics": [
+    {
+      "date": "2026-10-06",
+      "side": "buy",
+      "quantity": 1000,
+      "price": 1209.7226,
+      "amount": 1211658.4
+    },
+    {
+      "date": "2026-10-19",
+      "side": "buy",
+      "quantity": 900,
+      "price": 1229.0157,
+      "amount": 1107883.79
+    }
+  ],
+  "svan-investment-managers-llp-8710090|krishca-strapping-solutions": [
+    {
+      "date": "2025-05-30",
+      "side": "buy",
+      "quantity": 1500,
+      "price": 230,
+      "amount": 345552
+    },
+    {
+      "date": "2025-10-30",
+      "side": "buy",
+      "quantity": 3500,
+      "price": 208.5083,
+      "amount": 730946.9
+    }
+  ],
+  "svan-investment-managers-llp-8710090|laxmi-organic-industries": [
+    {
+      "date": "2025-08-18",
+      "side": "buy",
+      "quantity": 350,
+      "price": 194.902,
+      "amount": 68324.61
+    },
+    {
+      "date": "2025-08-19",
+      "side": "buy",
+      "quantity": 7135,
+      "price": 226.4079,
+      "amount": 1618004.3
+    },
+    {
+      "date": "2025-09-15",
+      "side": "buy",
+      "quantity": 3890,
+      "price": 223.8873,
+      "amount": 872315.03
+    },
+    {
+      "date": "2025-10-30",
+      "side": "buy",
+      "quantity": 4285,
+      "price": 198.5512,
+      "amount": 852153.23
+    }
+  ],
+  "svan-investment-managers-llp-8710090|mastek": [
+    {
+      "date": "2024-12-03",
+      "side": "buy",
+      "quantity": 625,
+      "price": 3291.4628,
+      "amount": 2060455.56
+    },
+    {
+      "date": "2025-02-17",
+      "side": "buy",
+      "quantity": 580,
+      "price": 2357.2481,
+      "amount": 1369391.19
+    },
+    {
+      "date": "2025-10-30",
+      "side": "buy",
+      "quantity": 105,
+      "price": 2162.858,
+      "amount": 227463.35
+    }
+  ],
+  "svan-investment-managers-llp-8710090|neuland-laboratories": [
+    {
+      "date": "2025-01-03",
+      "side": "buy",
+      "quantity": 35,
+      "price": 14325,
+      "amount": 502176.83
+    },
+    {
+      "date": "2025-01-22",
+      "side": "buy",
+      "quantity": 30,
+      "price": 13870.3137,
+      "amount": 416775.08
+    },
+    {
+      "date": "2025-01-24",
+      "side": "buy",
+      "quantity": 55,
+      "price": 14029.7164,
+      "amount": 772869.38
+    },
+    {
+      "date": "2025-10-30",
+      "side": "buy",
+      "quantity": 75,
+      "price": 15860.8457,
+      "amount": 1191467.17
+    },
+    {
+      "date": "2026-10-07",
+      "side": "sell",
+      "quantity": 46,
+      "price": 21939.6746,
+      "amount": 1007610.5,
+      "boughtOn": [
+        "2025-01-03",
+        "2025-01-22"
+      ]
+    }
+  ],
   "svan-investment-managers-llp-8710090|nitin-spinners": [
+    {
+      "date": "2026-02-19",
+      "side": "buy",
+      "quantity": 5455,
+      "price": 372.0441,
+      "amount": 2032748.13
+    },
     {
       "date": "2026-08-14",
       "side": "buy",
@@ -61013,7 +63835,127 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
       ]
     }
   ],
+  "svan-investment-managers-llp-8710090|pokarna": [
+    {
+      "date": "2024-12-03",
+      "side": "buy",
+      "quantity": 1860,
+      "price": 1214.59,
+      "amount": 2262751.97
+    },
+    {
+      "date": "2025-02-17",
+      "side": "buy",
+      "quantity": 1025,
+      "price": 1131.3865,
+      "amount": 1161526.93
+    }
+  ],
+  "svan-investment-managers-llp-8710090|polyplex": [
+    {
+      "date": "2024-12-03",
+      "side": "buy",
+      "quantity": 650,
+      "price": 1317.5878,
+      "amount": 857801.96
+    },
+    {
+      "date": "2025-02-17",
+      "side": "buy",
+      "quantity": 430,
+      "price": 1120.3995,
+      "amount": 482542.83
+    },
+    {
+      "date": "2025-10-30",
+      "side": "buy",
+      "quantity": 560,
+      "price": 969.4356,
+      "amount": 543752.64
+    }
+  ],
+  "svan-investment-managers-llp-8710090|punjab-chem-and-crop-prot-l": [
+    {
+      "date": "2024-12-03",
+      "side": "buy",
+      "quantity": 540,
+      "price": 1050.1089,
+      "amount": 567966.06
+    },
+    {
+      "date": "2025-02-17",
+      "side": "buy",
+      "quantity": 555,
+      "price": 734.5657,
+      "amount": 408336.55
+    },
+    {
+      "date": "2025-02-27",
+      "side": "buy",
+      "quantity": 860,
+      "price": 715.3661,
+      "amount": 616198.96
+    },
+    {
+      "date": "2025-02-28",
+      "side": "buy",
+      "quantity": 20,
+      "price": 712.988,
+      "amount": 14282.32
+    },
+    {
+      "date": "2025-03-03",
+      "side": "buy",
+      "quantity": 100,
+      "price": 715,
+      "amount": 71613.9
+    }
+  ],
+  "svan-investment-managers-llp-8710090|puravankara": [
+    {
+      "date": "2024-12-03",
+      "side": "buy",
+      "quantity": 4370,
+      "price": 406.3018,
+      "amount": 1778380.28
+    },
+    {
+      "date": "2025-02-17",
+      "side": "buy",
+      "quantity": 6250,
+      "price": 233.4064,
+      "amount": 1461124
+    },
+    {
+      "date": "2025-08-12",
+      "side": "buy",
+      "quantity": 750,
+      "price": 256.6655,
+      "amount": 192807.63
+    }
+  ],
   "svan-investment-managers-llp-8710090|sg-mart": [
+    {
+      "date": "2025-03-28",
+      "side": "buy",
+      "quantity": 3540,
+      "price": 319.56,
+      "amount": 1133052.02
+    },
+    {
+      "date": "2025-09-04",
+      "side": "buy",
+      "quantity": 1420,
+      "price": 327.55,
+      "amount": 465865.03
+    },
+    {
+      "date": "2025-10-30",
+      "side": "buy",
+      "quantity": 1520,
+      "price": 373.4054,
+      "amount": 568484.69
+    },
     {
       "date": "2026-04-10",
       "side": "sell",
@@ -61056,7 +63998,23 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
       ]
     }
   ],
+  "svan-investment-managers-llp-8710090|shakti-pumps-india": [
+    {
+      "date": "2025-02-17",
+      "side": "buy",
+      "quantity": 980,
+      "price": 815.9708,
+      "amount": 800931.19
+    }
+  ],
   "svan-investment-managers-llp-8710090|shankara-buildpro": [
+    {
+      "date": "2026-02-03",
+      "side": "buy",
+      "quantity": 665,
+      "price": 789.9848,
+      "amount": 526180.03
+    },
     {
       "date": "2026-05-19",
       "side": "sell",
@@ -61068,7 +64026,97 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
       ]
     }
   ],
+  "svan-investment-managers-llp-8710090|sharda-cropchem": [
+    {
+      "date": "2026-02-05",
+      "side": "buy",
+      "quantity": 1245,
+      "price": 1117.8326,
+      "amount": 1393928.49
+    }
+  ],
+  "svan-investment-managers-llp-8710090|sharda-motor-industries": [
+    {
+      "date": "2024-12-03",
+      "side": "buy",
+      "quantity": 415,
+      "price": 2131.757,
+      "amount": 886094.99
+    },
+    {
+      "date": "2025-01-31",
+      "side": "buy",
+      "quantity": 45,
+      "price": 1769.326,
+      "amount": 79747.44
+    },
+    {
+      "date": "2025-02-01",
+      "side": "buy",
+      "quantity": 145,
+      "price": 1811.7965,
+      "amount": 263131.12
+    },
+    {
+      "date": "2025-02-03",
+      "side": "buy",
+      "quantity": 60,
+      "price": 1819.9472,
+      "amount": 109371.35
+    },
+    {
+      "date": "2025-02-17",
+      "side": "buy",
+      "quantity": 360,
+      "price": 1596.0979,
+      "amount": 575515.01
+    },
+    {
+      "date": "2025-03-26",
+      "side": "buy",
+      "quantity": 170,
+      "price": 1675.3341,
+      "amount": 285262.68
+    }
+  ],
+  "svan-investment-managers-llp-8710090|stove-kraft": [
+    {
+      "date": "2024-12-03",
+      "side": "buy",
+      "quantity": 1060,
+      "price": 816.5581,
+      "amount": 866936.88
+    },
+    {
+      "date": "2024-12-19",
+      "side": "buy",
+      "quantity": 75,
+      "price": 896.4579,
+      "amount": 67341.68
+    },
+    {
+      "date": "2025-02-17",
+      "side": "buy",
+      "quantity": 1180,
+      "price": 697.6361,
+      "amount": 824527.55
+    },
+    {
+      "date": "2025-10-30",
+      "side": "buy",
+      "quantity": 255,
+      "price": 767.4482,
+      "amount": 196012.69
+    }
+  ],
   "svan-investment-managers-llp-8710090|syrma-sgs-technology": [
+    {
+      "date": "2026-02-05",
+      "side": "buy",
+      "quantity": 1675,
+      "price": 856.3414,
+      "amount": 1436666.46
+    },
     {
       "date": "2026-04-22",
       "side": "buy",
@@ -61094,7 +64142,104 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
       ]
     }
   ],
+  "svan-investment-managers-llp-8710090|time-technoplast": [
+    {
+      "date": "2024-12-03",
+      "side": "buy",
+      "quantity": 1260,
+      "price": 454.8758,
+      "amount": 574060.36
+    },
+    {
+      "date": "2025-02-12",
+      "side": "buy",
+      "quantity": 510,
+      "price": 335,
+      "amount": 171123.51
+    },
+    {
+      "date": "2025-02-17",
+      "side": "buy",
+      "quantity": 375,
+      "price": 375.4001,
+      "amount": 141000.49
+    },
+    {
+      "date": "2025-03-24",
+      "side": "buy",
+      "quantity": 1735,
+      "price": 389.7322,
+      "amount": 677267.01
+    }
+  ],
+  "svan-investment-managers-llp-8710090|v2-retail": [
+    {
+      "date": "2024-12-03",
+      "side": "buy",
+      "quantity": 1270,
+      "price": 1362.9294,
+      "amount": 1733689.95
+    },
+    {
+      "date": "2025-02-27",
+      "side": "buy",
+      "quantity": 445,
+      "price": 1699.7808,
+      "amount": 757612.32
+    },
+    {
+      "date": "2025-07-01",
+      "side": "buy",
+      "quantity": 160,
+      "price": 1827.3991,
+      "amount": 292851.28
+    },
+    {
+      "date": "2026-01-06",
+      "side": "buy",
+      "quantity": 180,
+      "price": 2299.9737,
+      "amount": 414657.65
+    }
+  ],
+  "svan-investment-managers-llp-8710090|vaibhav-global": [
+    {
+      "date": "2024-12-03",
+      "side": "buy",
+      "quantity": 3870,
+      "price": 302.3294,
+      "amount": 1171886.8
+    },
+    {
+      "date": "2025-10-30",
+      "side": "buy",
+      "quantity": 2135,
+      "price": 286.945,
+      "amount": 613608.01
+    }
+  ],
   "svan-investment-managers-llp-8710090|varroc-engineering": [
+    {
+      "date": "2024-12-03",
+      "side": "buy",
+      "quantity": 2200,
+      "price": 525.2051,
+      "amount": 1157299.44
+    },
+    {
+      "date": "2025-02-11",
+      "side": "buy",
+      "quantity": 295,
+      "price": 529.0648,
+      "amount": 156323.75
+    },
+    {
+      "date": "2025-02-17",
+      "side": "buy",
+      "quantity": 1815,
+      "price": 464.518,
+      "amount": 844449.01
+    },
     {
       "date": "2026-08-14",
       "side": "buy",
@@ -61104,6 +64249,13 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
     }
   ],
   "svan-investment-managers-llp-8710090|viyash-scientific": [
+    {
+      "date": "2025-11-19",
+      "side": "buy",
+      "quantity": 5925,
+      "price": 253.8597,
+      "amount": 1506525.09
+    },
     {
       "date": "2026-05-20",
       "side": "buy",
@@ -61126,6 +64278,52 @@ export const BOOK_HOLDING_TRADES: Record<string, HoldingTrade[]> = {
       "quantity": 1045,
       "price": 1925,
       "amount": 2014843.98
+    }
+  ],
+  "svan-investment-managers-llp-8710090|wpil": [
+    {
+      "date": "2024-12-03",
+      "side": "buy",
+      "quantity": 2580,
+      "price": 667.58,
+      "amount": 1725111.69
+    },
+    {
+      "date": "2025-02-17",
+      "side": "buy",
+      "quantity": 510,
+      "price": 391,
+      "amount": 199728.65
+    }
+  ],
+  "svan-investment-managers-llp-8710090|zensar-technologies": [
+    {
+      "date": "2024-12-03",
+      "side": "buy",
+      "quantity": 2220,
+      "price": 778.006,
+      "amount": 1729936.62
+    },
+    {
+      "date": "2025-02-17",
+      "side": "buy",
+      "quantity": 235,
+      "price": 818.7442,
+      "amount": 192712.32
+    },
+    {
+      "date": "2025-03-24",
+      "side": "buy",
+      "quantity": 240,
+      "price": 683.3455,
+      "amount": 164265.32
+    },
+    {
+      "date": "2025-10-30",
+      "side": "buy",
+      "quantity": 625,
+      "price": 802.2983,
+      "amount": 502238.25
     }
   ],
   "v-e-c-assago-capital-management-llp-128004|amrutanjan-health-care": [
@@ -67387,9 +70585,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012539150|vedanta-limited-equity-shares-of-re-1-after-split": {
+  "motilal-oswal-financial-services-demat-1201090012539150|vedanta": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
-    "securityKey": "vedanta-limited-equity-shares-of-re-1-after-split",
+    "securityKey": "vedanta",
     "security": "VEDANTA LIMITED#EQUITY SHARES OF RE 1/- AFTER SPLIT",
     "isin": "INE205A01025",
     "periodFrom": "2026-04-01",
