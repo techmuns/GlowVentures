@@ -1,7 +1,7 @@
 import { useNavigationState } from "@/lib/useNavigationState";
 import { useMemo } from 'react';
 import { usePortfolio } from '@/context/PortfolioContext';
-import { currentHoldings, valueDateOf } from '@/lib/analytics';
+import { currentHoldings } from '@/lib/analytics';
 import { investedOnOf } from '@/lib/investedOn';
 import { heldBeforeYear, investedThisYear, placeEveryHolding } from '@/lib/investedThisYear';
 import { useReturnSelection } from '@/lib/useReturnSelection';
@@ -41,9 +41,8 @@ export default function InvestedThisYearReturns({start,end,type}:{start:string;e
         openValue:u.window?.openValue,capitalIn:u.window?.capitalIn,capitalOut:u.window?.capitalOut,flows:u.window?.flows}));
   },[fy,fyCurrent,statementPortfolio]);
   const result=useMemo(()=>{
-    const asOf=new Map(accounts.map(a=>[a.accountId,a.asOf])),now=Date.now();
-    return placeEveryHolding(investedThisYear(positions,accounts,sources,start,end,type,now),fyUnits,fyOpen,
-      p=>heldBeforeYear(p,fyOpen,BOOK_EARLIER_BALANCES,BOOK_HOLDING_TRADES),{type,valuedOn:p=>valueDateOf(p,asOf.get(p.accountId)??'',now)});
+    return placeEveryHolding(investedThisYear(positions,accounts,sources,start,end,type,Date.now()),fyUnits,fyOpen,
+      p=>heldBeforeYear(p,fyOpen,BOOK_EARLIER_BALANCES,BOOK_HOLDING_TRADES),{type});
   },[positions,accounts,start,end,type,fyUnits,fyOpen]);
   const registry=new Map(accounts.map(a=>[a.accountId,a]));
   const context=(p:typeof positions[number])=>marketHoldingContext(p,registry.get(p.accountId));

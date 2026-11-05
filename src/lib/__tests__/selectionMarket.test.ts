@@ -119,9 +119,9 @@ const unit = (key: string, positions: Position[], w: AccountWindow | null, extra
   result.missing.push(purchases(paid), purchases(stale));
   units.push({ positions: [paid], from: '2026-06-30', to: '2026-11-03', invested: 100, close: 120, gain: 22, ownPct: 22, openValue: 100, capitalIn: 0, capitalOut: 2,
     flows: [{ date: '2026-08-01', amount: 2, description: 'Gross dividend entitlement' }] },
-    { positions: [stale], from: '2026-12-01', to: '2026-12-31', invested: 40, close: 50, gain: 10, ownPct: 25, openValue: 40, capitalIn: 0, capitalOut: 0 });
+    { positions: [stale], from: '2026-07-01', to: '2026-06-30', invested: 40, close: 50, gain: 10, ownPct: 25, openValue: 40, capitalIn: 0, capitalOut: 0 });
   const place = (type: 'absolute' | 'xirr' | 'cagr') => placeEveryHolding(result as unknown as ReturnType<typeof investedThisYear>, units, '2026-03-31',
-    (p) => heldBeforeYear(p, '2026-03-31', quantities, {}), { type, valuedOn: () => '2026-11-03' });
+    (p) => heldBeforeYear(p, '2026-03-31', quantities, {}), { type });
   const r = place('absolute');
   assert.deepEqual(r.older.map((p) => p.securityKey).sort(), ['before', 'older', 'opened']);
   assert.deepEqual(r.missing.map((g) => g.position.securityKey).sort(), ['at-cost', 'mixed', 'no-value', 'none', 'sold', 'stale'], 'what no record separates stays named, with its reason');
@@ -132,10 +132,11 @@ const unit = (key: string, positions: Position[], w: AccountWindow | null, extra
   assert.match(r.missing.find((g) => g.position === noValue)!.reason, /market value/, 'a missing value keeps its reason');
   assert.equal(r.firstValued.length, 4);
   const may = r.firstValued.find((x) => x.position === firstMay)!;
-  assert.equal(may.first, '2026-05-15'); near(may.cost, 360 * 300 / 400); near(may.value, 300);
+  // Its value is the record's own close on its own date, never a later quote over money it has not seen.
+  assert.equal(may.first, '2026-05-15'); near(may.cost, 360 * 300 / 400); near(may.value, 410 * 300 / 400); assert.equal(may.valuedOn, '2026-10-31');
   near(may.gain, may.value - may.cost, 1e-9); near(may.pct!, (may.value / may.cost - 1) * 100, 1e-9);
   for (const x of r.included) near(x.gain, x.value - x.cost, 1e-9);
-  near(r.gain, r.value - r.cost, 1e-9); near(r.cost, 100 + 360 + 100 + 100);
+  near(r.gain, r.value - r.cost, 1e-9); near(r.cost, 100 + 360 + 100 + 100); near(r.value, 110 + 410 + 105 + 120);
   assert.equal(r.included.length + r.missing.length + r.older.length, 14, 'every holding placed once');
   // An older balance of OTHER units than held now, or a trade since, is no proof the holding predates the year.
   assert.equal(heldBeforeYear(before, '2026-03-31', [{ ...quantities[0], quantity: 6 }], {}), false);

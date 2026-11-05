@@ -130,7 +130,8 @@ export function investedThisYear(positions: readonly Position[], accounts: reado
  *   value on or before 31 March and no money was added to it this year;
  * - FIRST VALUED THIS YEAR: its record opens after 31 March. Its first value
  *   and the money added since stand as what was paid, so its row is purchase
- *   to value like every other row (value − paid = gain), named so;
+ *   to value like every other row (value − paid = gain), both from its own
+ *   record through its own close date, named so;
  * - TO CHECK: a record held before the year that money was also added to, or
  *   one money was taken out of, cannot tell this year's units from older or
  *   sold ones without purchase records; and a holding whose purchases are
@@ -150,7 +151,7 @@ export function heldBeforeYear(p: Position, open: string, balances: readonly { a
 }
 
 export function placeEveryHolding<R extends globalThis.ReturnType<typeof investedThisYear>>(result: R, units: readonly FirstValueUnit[], fyOpen: string,
-  heldBefore: (p: Position) => boolean, { type, valuedOn }: { type: ReturnType; valuedOn: (p: Position) => string | null }) {
+  heldBefore: (p: Position) => boolean, { type }: { type: ReturnType }) {
   const unitOf = new Map<string, FirstValueUnit>();
   for (const u of units) for (const p of u.positions) unitOf.set(keyOf(p), u);
   const firstValued: (YearInvestment & { fromFirstValue: true })[] = [], missing: YearGap[] = [], older = [...result.older];
@@ -173,13 +174,15 @@ export function placeEveryHolding<R extends globalThis.ReturnType<typeof investe
       missing.push({ position: p, need: 'purchases', reason: 'First valued this year, with money taken out since. We need the purchase dates, units and costs to separate the units still held from those sold.' });
       continue;
     }
-    // A whole account's money is shared by its holdings in proportion to their value today.
+    // Paid, value and money moved all come from the record's own window: its close on its
+    // own date, never a later quote over money it has not seen. A whole account's is shared
+    // by its holdings in proportion to their value today.
     const total = sum(u.positions.filter((x) => x.marketValue > 0), (x) => x.marketValue);
     const share = total > 0 && p.marketValue > 0 ? p.marketValue / total : 0;
-    const cost = u.invested * share, value = p.marketValue, gain = value - cost;
-    if (!(cost > 0)) { missing.push(g); continue; }
-    const on = valuedOn(p) ?? u.to ?? firstOn;
-    // A value dated before the first value is no closing value for it.
+    const cost = u.invested * share, value = u.close * share, gain = value - cost;
+    if (!(cost > 0) || !Number.isFinite(value)) { missing.push(g); continue; }
+    const on = u.to ?? firstOn;
+    // A close dated before the first value is no closing value for it.
     if (on < firstOn) { missing.push({ position: p, need: 'value', reason: 'We need a market value dated on or after its first value this year.' }); continue; }
     const days = daysBetween(firstOn, on), periodPct = gain / cost * 100;
     const inflows = (u.flows ?? []).filter((f) => f.amount < 0 && f.date > firstOn);
