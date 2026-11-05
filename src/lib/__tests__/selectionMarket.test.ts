@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { selectionMarket, selectionMarketOf, unitOwnReturn } from '../selectionMarket';
+import { marketGapExplanation } from '../marketReturnCoverage';
 import { heldBeforeYear, investedThisYear, placeEveryHolding, type FirstValueUnit } from '../investedThisYear';
 import type { ReturnGap, ReturnUnit } from '../selectedSegmentReturns';
 import type { AccountWindow } from '../periodReturns';
@@ -81,6 +82,9 @@ const unit = (key: string, positions: Position[], w: AccountWindow | null, extra
   const period = selectionMarket([pv, pl], both, [], '2026-03-31', '2026-11-05');
   assert.equal(period.count, 0, 'an account return that carries private investments is not the public holding’s own');
   assert.equal(period.gaps.length, 2); assert.ok(period.gaps.every((g) => /private/i.test(g.reason)));
+  const mixedGap = period.gaps.find((g) => g.position === pl)!;
+  assert.equal(mixedGap.code, 'mixed');
+  assert.doesNotMatch(marketGapExplanation(mixedGap, '2026-03-31', '2026-11-05').needed, /price/i, 'prices would not make an account-wide return this holding’s own');
   assert.equal(selectionMarket([pv, pl], both, [], '2026-03-31', '2026-11-05', { inception: true }).count, 2);
 }
 

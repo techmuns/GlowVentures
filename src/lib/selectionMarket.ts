@@ -40,7 +40,7 @@ export function selectionMarket(current: readonly Position[], units: readonly Re
     const u = byKey.get(marketHoldingKey(p));
     // An account's return that also carries private investments is not the public holdings' own.
     if (u && !inception && u.positions.some((x) => x.marketSide === 'private' && x.marketValue > 0)) {
-      gaps.push({ position: p, reason: 'Its account’s return includes private investments, which a period reports apart; this holding’s own return is not on record.', code: 'unmatched' });
+      gaps.push({ position: p, reason: 'Its account’s return includes private investments, which a period reports apart; this holding’s own return is not on record.', code: 'mixed' });
       continue;
     }
     const r = u ? unitOwnReturn(u) : null;

@@ -1229,7 +1229,7 @@ Codex's review of #352, verified against the code and the book:
 - **"Held before" rests on the family's assumed-continued-ownership rule** (22 Oct): a dated balance that no later recorded trade contradicts.
 - **An account opened inside the year starts on its first money in.** It used to open at nil on 31 March and was then read as "held before, with money added".
 - **Market performance:**
-  - a period reports private holdings apart even when a measured account holds them (`selectionMarket(…, { inception })`). That account's public holdings are left unmeasured too, since its return carries the private ones;
+  - a period reports private holdings apart even when a measured account holds them (`selectionMarket(…, { inception })`). That account's public holdings are left unmeasured too, since its return carries the private ones, under their own gap (`code: 'mixed'`) that asks for the holding's own return, not prices;
   - a holding held at its last value sets no row's dates (`MarketUnit.held`), and a row, or a total, that measured no dates claims none: it no longer falls back to the portfolio's dates.
   - on a period, its details list the public holdings with value, as the face's denominator does. The private investments reported apart are named in the Overview, with their count and value, and are out of the lists and totals. A row of private holdings alone still lists them.
 - `check-nav-assumed` waits for the line and its card to agree before comparing them, and a missing attribute fails rather than reading as 0.

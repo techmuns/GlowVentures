@@ -13,7 +13,7 @@ export type MarketUnit = { position: Position; periodPct: number; from: string; 
   source?: string;
   /** Held at its last value: a 0% that sets none of the dates measured (Stage 10lh). */
   held?: true };
-export type MarketGap = { position: Position; reason: string; code?: 'value' | 'unmatched' | 'source' | 'dates' | 'start' | 'end' | 'shared'; first?: string; last?: string; dates?: string[] };
+export type MarketGap = { position: Position; reason: string; code?: 'value' | 'unmatched' | 'source' | 'dates' | 'start' | 'end' | 'shared' | 'mixed'; first?: string; last?: string; dates?: string[] };
 export const marketHoldingKey = (p: Pick<Position, 'accountId' | 'securityKey'>) => `${p.accountId}|${p.securityKey}`;
 const day = (s: string) => Date.parse(`${s}T00:00:00Z`);
 /** Never substitute a price after the selected date or a stale previous month. */
