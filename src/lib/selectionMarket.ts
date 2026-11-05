@@ -27,19 +27,21 @@ export function unitOwnReturn(u: ReturnUnit): number | null {
   return u.invested > 0 ? (u.gain / u.invested) * 100 : null;
 }
 
-export function selectionMarket(current: readonly Position[], units: readonly ReturnUnit[], missing: readonly ReturnGap[], start: string | null, end: string | null) {
+export function selectionMarket(current: readonly Position[], units: readonly ReturnUnit[], missing: readonly ReturnGap[], start: string | null, end: string | null,
+  { inception = false }: { inception?: boolean } = {}) {
   const byKey = new Map<string, ReturnUnit>();
   for (const u of units) for (const p of u.positions) byKey.set(marketHoldingKey(p), u);
-  const out: MarketUnit[] = [], gaps: MarketGap[] = [], held = new Set<MarketUnit>();
+  const out: MarketUnit[] = [], gaps: MarketGap[] = [];
   let pending = 0;
   for (const p of current) {
     if (!(p.marketValue > 0)) { gaps.push({ position: p, reason: 'A positive current holding value is needed for its portfolio weight.', code: 'value' }); continue; }
+    // A period reports private investments apart, as the cards do; Since investment covers them.
+    if (!inception && p.marketSide === 'private') { gaps.push({ position: p, reason: 'A private investment: reported apart, at Private Market’s value.', code: 'unmatched' }); continue; }
     const u = byKey.get(marketHoldingKey(p));
     const r = u ? unitOwnReturn(u) : null;
     if (u && r != null) {
-      const m: MarketUnit = { position: p, periodPct: r, from: u.from ?? start ?? '', to: u.to ?? end ?? '',
-        source: u.held ? `held at its last value since ${u.held.date}` : u.assumption ? u.assumption.source : u.sinceFirst ? 'its first value on record' : 'the statement records' };
-      out.push(m); if (u.held) held.add(m);
+      out.push({ position: p, periodPct: r, from: u.from ?? start ?? '', to: u.to ?? end ?? '', ...(u.held ? { held: true as const } : {}),
+        source: u.held ? `held at its last value since ${u.held.date}` : u.assumption ? u.assumption.source : u.sinceFirst ? 'its first value on record' : 'the statement records' });
       continue;
     }
     // The holding's own gap first; its account's only where it has none.
@@ -54,7 +56,7 @@ export function selectionMarket(current: readonly Position[], units: readonly Re
   const value = out.reduce((s, u) => s + u.position.marketValue, 0);
   const periodPct = value > 0 ? out.reduce((s, u) => s + u.position.marketValue * u.periodPct, 0) / value : null;
   // The dates measured, as on the cards: a holding held at its last value sets neither.
-  const dated = out.filter((u) => u.from && u.to && !held.has(u));
+  const dated = out.filter((u) => u.from && u.to && !u.held);
   const from = dated.map((u) => u.from).sort()[0] ?? start, to = dated.map((u) => u.to).sort().at(-1) ?? end;
   return { units: out, gaps, pending, pct: periodPct, periodPct, value, count: out.length, annual: false, days: 0, from, to,
     totalValue: current.reduce((s, p) => s + p.marketValue, 0) };
@@ -67,7 +69,7 @@ export function selectionMarketOf(all: ReturnType<typeof selectionMarket>, ps: r
   const gaps = all.gaps.filter((g) => keys.has(marketHoldingKey(g.position)));
   const value = units.reduce((s, u) => s + u.position.marketValue, 0);
   const pct = value > 0 ? units.reduce((s, u) => s + u.position.marketValue * u.periodPct, 0) / value : null;
-  const dated = units.filter((u) => u.from && u.to);
+  const dated = units.filter((u) => u.from && u.to && !u.held);
   return { units, gaps, pct, periodPct: pct, value, count: units.length, annual: false, days: 0,
     from: dated.map((u) => u.from).sort()[0] ?? all.from, to: dated.map((u) => u.to).sort().at(-1) ?? all.to };
 }

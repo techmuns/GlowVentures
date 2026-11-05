@@ -1212,3 +1212,18 @@
   - its dates stay inside the period, allowing the 7-day opening tolerance;
   - NSE's 404 and Karur's failed load are named, and retry recovers them;
   - its clock moves to 5 Nov so the 31 Oct ICICI balances date the counts.
+
+### Stage 10lh — Review fixes to Stage 10lg: Invested this year places a holding only on its own evidence
+
+Codex's review of #352, verified against the code and the book:
+
+- **Held before this year** needs the same units on an older statement dated on or before 31 March, with no trade since (`heldBeforeYear`). Any older balance used to be enough, which hid units bought this year (2 holdings).
+- **A mixed or partly sold record stays to check, with its reason.**
+  - A record held before the year that money was also added to: 16 accounts, which used to be counted as older.
+  - A record first valued this year that money was taken out of.
+- **A first-valued row is purchase to value** like every other row. Its first value plus the money added since is what was paid, shared across a whole account's holdings by today's value, so value − paid = gain on every row and in the total. It used to scale the account's gain, which did not tie.
+- **Only a missing-purchases gap is placed** (`YearGap.need`). A verified purchase with no usable value, or a holding valued at cost, keeps its own reason.
+- **XIRR and CAGR** annualise a first-valued debt holding as they do a purchased one. Equities under a year stay absolute.
+- **Market performance:**
+  - a period reports private holdings apart even when a measured account holds them (`selectionMarket(…, { inception })`);
+  - a holding held at its last value sets no row's dates (`MarketUnit.held`).

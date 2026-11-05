@@ -1,9 +1,9 @@
 import { useNavigationState } from "@/lib/useNavigationState";
 import { useMemo } from 'react';
 import { usePortfolio } from '@/context/PortfolioContext';
-import { currentHoldings } from '@/lib/analytics';
+import { currentHoldings, valueDateOf } from '@/lib/analytics';
 import { investedOnOf } from '@/lib/investedOn';
-import { investedThisYear, placeEveryHolding } from '@/lib/investedThisYear';
+import { heldBeforeYear, investedThisYear, placeEveryHolding } from '@/lib/investedThisYear';
 import { useReturnSelection } from '@/lib/useReturnSelection';
 import { selectedSegmentReturns } from '@/lib/selectedSegmentReturns';
 import { unitOwnReturn } from '@/lib/selectionMarket';
@@ -37,10 +37,14 @@ export default function InvestedThisYearReturns({start,end,type}:{start:string;e
     if(!fy||!statementPortfolio)return [];
     const recorded=dedupedPositions(statementPortfolio.positions);
     return selectedSegmentReturns(fyCurrent,exitedRows(recorded),statementPortfolio.accounts,'category',fy,()=>null,currentHoldings(recorded)).total.units
-      .map(u=>({positions:u.positions,from:u.from,to:u.to,invested:u.invested,close:u.close,gain:u.gain,held:u.held,ownPct:unitOwnReturn(u)}));
+      .map(u=>({positions:u.positions,from:u.from,to:u.to,invested:u.invested,close:u.close,gain:u.gain,held:u.held,ownPct:unitOwnReturn(u),
+        openValue:u.window?.openValue,capitalIn:u.window?.capitalIn,capitalOut:u.window?.capitalOut,flows:u.window?.flows}));
   },[fy,fyCurrent,statementPortfolio]);
-  const result=useMemo(()=>placeEveryHolding(investedThisYear(positions,accounts,sources,start,end,type,Date.now()),fyUnits,fyOpen,
-    p=>BOOK_EARLIER_BALANCES.some(b=>b.accountId===p.accountId&&b.securityKey===p.securityKey&&b.asOf<=fyOpen)),[positions,accounts,start,end,type,fyUnits,fyOpen]);
+  const result=useMemo(()=>{
+    const asOf=new Map(accounts.map(a=>[a.accountId,a.asOf])),now=Date.now();
+    return placeEveryHolding(investedThisYear(positions,accounts,sources,start,end,type,now),fyUnits,fyOpen,
+      p=>heldBeforeYear(p,fyOpen,BOOK_EARLIER_BALANCES,BOOK_HOLDING_TRADES),{type,valuedOn:p=>valueDateOf(p,asOf.get(p.accountId)??'',now)});
+  },[positions,accounts,start,end,type,fyUnits,fyOpen]);
   const registry=new Map(accounts.map(a=>[a.accountId,a]));
   const context=(p:typeof positions[number])=>marketHoldingContext(p,registry.get(p.accountId));
   const money=(n:number,sign=false)=>fmtFromBase(n,{compact:true,sign});
@@ -71,7 +75,7 @@ export default function InvestedThisYearReturns({start,end,type}:{start:string;e
         <div><p className="text-xs text-slate-400">Latest value</p><strong className="text-xl tabular">{result.included.length?money(result.value):'Unavailable'}</strong></div>
         <div><p className="text-xs text-slate-400">Price gain / loss · still held</p><strong className={`text-xl tabular ${changeColor(result.gain)}`}>{result.included.length?money(result.gain,true):'Unavailable'}</strong></div>
       </div>
-      <p className="mt-3 text-xs text-slate-400" data-year-placed={result.included.length+result.older.length} data-year-first-valued={result.firstValued.length}>{result.included.length} holdings invested this year ({result.firstValued.length} from their first value) · {result.older.length} held before this year{result.missing.length>0&&` · ${result.missing.length} with no value on record`}. Open ⓘ for the names.</p>
+      <p className="mt-3 text-xs text-slate-400" data-year-placed={result.included.length+result.older.length} data-year-first-valued={result.firstValued.length}>{result.included.length} holdings invested this year ({result.firstValued.length} from their first value) · {result.older.length} held before this year{result.missing.length>0&&` · ${result.missing.length} need dates or values`}. Open ⓘ for the names.</p>
     </div>
     <div className="card overflow-hidden p-4">
       <label className="block max-w-lg"><span className="sr-only">Search this year’s investments</span><input className="ring-focus w-full rounded border border-ink-700 bg-ink-900 px-3 py-2 text-sm" placeholder="Search security, fund, owner or account" value={search} onChange={e=>setSearch(e.target.value)}/></label>

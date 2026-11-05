@@ -94,8 +94,8 @@ export default function SegmentReturns({ selection: recordedSelection, period, o
   [pool, statementPortfolio]);
   // MARKET PERFORMANCE OVER EVERY HOLDING (Stage 10lg): each holding's own return over the
   // period from the same selection, weighted by today's value (`selectionMarket`).
-  const market = useMemo(() => pool ? selectionMarket(current, pool.total.units, pool.total.missing, selection.start, selection.end)
-    : selectionMarket(current, [], [], selection.start, selection.end), [current, pool, selection.start, selection.end]);
+  const market = useMemo(() => selectionMarket(current, pool?.total.units ?? [], pool?.total.missing ?? [], selection.start, selection.end,
+    { inception: selection.inception }), [current, pool, selection.start, selection.end, selection.inception]);
   // A line that is whole PMS accounts is dated, and joined to the review, as
   // the accounts — the Monitor's mandate rows — never by the manager's own
   // purchases inside them. On All Securities a line is a security.
