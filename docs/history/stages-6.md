@@ -1315,3 +1315,12 @@ Codex's review of #352, verified against the code and the book:
 - **`recordedLines` (`src/lib/recordedHoldings.ts`) drops a statement line `soldSinceStatement` finds.** The stock page, Monitor pick-list and search read it. They still listed a balance sold to nil as "units held · not valued". That covered the five shares Stage 10iw rolled to nil (Ankita ICICI 14,500, Axis 7,300, SBI 27,750; Ajay IFB, NLC). /stock/dsp-silver-etf now reads Position closed.
 - Not applied, still waiting on the family: every other fund row, including Ankita's DSP Gold ETF (2,05,000 → 20,50,000, redeemed 23 Sep on the same folio).
 - Tests: `mopwmTransactions.test.mjs` adds the gate cases and the real folio; `shareRolls`, `unpricedUnits`, `fundUnitActions` and `recoveredCosts` read the split mechanics without the rolls and assert the sold line is gone.
+
+### Stage 10mb — DSP Gold ETF: the same folio's sale applied
+
+*"Yes, remove Gold"* — the family, 6 Nov 2026, on Stage 10ma's open item.
+
+- Ankita's Motilal demat 1201090012838316 records 2,05,000 DSP Gold ETF units on 31 Jul. MOPWM's folio 466887 (rows 21164–21167) shows them bought on 22 Jan for ₹3,01,93,698.90, split 1:10 on 28 Aug, and all 20,50,000 redeemed on 23 Sep for ₹2,99,99,805.02 (realised −₹1,93,893.88).
+- One entry added to `FAMILY_CONFIRMED_FUND_SALES`, plus the `DSP Gold ETF-G` alias. `rollMopwmFundSales` reconciles it on the same gates; the book changes by that one roll.
+- Aarti's DSP Gold (1201090012838335, 11,95,000 → 1,19,50,000) is untouched and still valued; her folio 470582 shows no sale.
+- Tests: the split-mechanics suites read Ankita's lines without the rolls, and assert only Aarti still holds DSP Gold.
