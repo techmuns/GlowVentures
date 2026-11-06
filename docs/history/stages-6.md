@@ -1324,3 +1324,13 @@ Codex's review of #352, verified against the code and the book:
 - One entry added to `FAMILY_CONFIRMED_FUND_SALES`, plus the `DSP Gold ETF-G` alias. `rollMopwmFundSales` reconciles it on the same gates; the book changes by that one roll.
 - Aarti's DSP Gold (1201090012838335, 11,95,000 → 1,19,50,000) is untouched and still valued; her folio 470582 shows no sale.
 - Tests: the split-mechanics suites read Ankita's lines without the rolls, and assert only Aarti still holds DSP Gold.
+
+### Stage 10mc — Realised and unrealised: gains and losses apart
+
+*"Show realised losses separately and confirm to Yamini that realised gain is net of them"* — the family, 6 Nov 2026.
+
+- **Checked: realised is net on every account.** Every record behind it is signed: a statement's realised line (5 PMS accounts on FYTD), a fund folio's FIFO `realizedPnL` per scheme redeemed in the window (12), and since investment each holding's FIFO result or a whole mandate's capital residual (105). FYTD to 6 Nov: net +₹4.98 Cr = gains +₹7.04 Cr − losses ₹2.06 Cr.
+- `capitalBridge` adds `realisedGains / realisedLosses / unrealisedGains / unrealisedLosses`: each record's signed figure by sign, at the finest record that carries it. A fund record keeps `realisedBy` per scheme.
+- **Capital gain lots.** `realisedByYear` entries now carry `gains` and `losses` (Σ of lots by sign; `gains + losses = st + lt`). Where a statement's FY or since-inception lots add to its realised line within ₹1, the bridge reads them (`lotsBehind`). Carnelian 3517383's −₹17.6 L FYTD is +₹1.88 Cr lot gains and −₹2.06 Cr lot losses, 29 lots. Before this, a per-account split would have shown its loss as −₹17.6 L.
+- The Gain breakdown shows Realised · net and Unrealised · net, each with Gains and Losses beneath it (`data-bridge-part="realised-gains"` and the other three). By account adds Realised gains and Realised losses columns, and the total ties. The info card names every loss-making record and every statement whose realised is one line with no lots (Goldstandard 100022, 100023).
+- Window unrealised is still an account's residual, so its gains and losses are netted per account. Since investment they are per holding or mandate.
