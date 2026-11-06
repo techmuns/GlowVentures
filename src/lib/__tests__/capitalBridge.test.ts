@@ -6,7 +6,7 @@ import { currentHoldings, dedupedPositions } from '../analytics';
 import { exitedRows } from '../drilldown';
 import { nothingToMeasure } from '../returns';
 import {
-  BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_ACCOUNT_RETURN_RECORDS, BOOK_ACCOUNT_NAV_HISTORY, BOOK_ACCOUNT_CASH_FLOWS, BOOK_NAV_COVERAGE,
+  BOOK_CAPITAL_GAINS, BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_ACCOUNT_RETURN_RECORDS, BOOK_ACCOUNT_NAV_HISTORY, BOOK_ACCOUNT_CASH_FLOWS, BOOK_NAV_COVERAGE,
   BOOK_UNDATED_CAPITAL, BOOK_CAPITAL_FROM_INCEPTION, BOOK_ACCOUNT_BRIDGES, BOOK_CAPITAL_MOVES, BOOK_HOLDING_INCOME,
 } from '../../data/glowData';
 import type { Account, AccountBridge, CapitalMove, Portfolio, Position } from '../types';
@@ -68,6 +68,35 @@ const book = (o: Partial<BridgeBook>): BridgeBook => ({ accounts: [], positions:
   assert.equal(capitalBridge([unit(held)], book({ accounts: [acct('fund', 'PMS')], positions, moves: moves.slice(0, 1) }))!.splitCount, 0);
 }
 
+// Stage 10mc: realised and unrealised are net, and their gains and losses are kept apart record by record —
+// a fund record per scheme, a statement per account, a purchase-cost unit per holding.
+{
+  const w = win({ accountId: 'fund', label: 'Fund', closeValue: 0, capitalOut: 125, gain: 25, flows: [{ date: '2026-07-31', amount: 125 }] });
+  const positions = [pos({ securityKey: 'a', security: 'A', realizedPnL: 30 }), pos({ securityKey: 'b', security: 'B', realizedPnL: -6 })];
+  const moves = [move({ securityKey: 'a', date: '2025-01-01' }), move({ securityKey: 'b', date: '2025-01-01' }),
+    move({ securityKey: 'a', date: '2026-07-31', direction: 'out', label: 'Redemption' }), move({ securityKey: 'b', date: '2026-07-31', direction: 'out', label: 'Redemption' })];
+  const pms = win({ accountId: 'pms', label: 'PMS' });
+  const cost: ReturnUnit = { key: 'k', accountId: 'c', label: 'C', positions: [], gain: -4, invested: 50, close: 40, from: null, to: '2026-09-30',
+    gainParts: { unrealised: -7, realised: 3, income: null } };
+  const b = capitalBridge([unit(w), unit(pms)], book({ accounts: [acct('fund', 'Direct'), acct('pms', 'PMS')], positions, moves,
+    bridges: { pms: [bridgeRow({ realized: -2, unrealized: 23 })] } }))!;
+  near(b.realised, 22); near(b.realisedGains, 30); near(b.realisedLosses, -8);
+  assert.deepEqual(b.rows[0].split!.realisedBy, [{ label: 'A', value: 30 }, { label: 'B', value: -6 }]);
+  // The fund's unrealised is 25 − 24 = +1 and the statement's 23: no unrealised loss, a computed zero.
+  near(b.unrealised, 24); near(b.unrealisedGains, 24); near(b.unrealisedLosses, 0);
+  const c = capitalBridge([cost], book({}))!;
+  near(c.realisedGains, 3); near(c.realisedLosses, 0); near(c.unrealisedGains, 0); near(c.unrealisedLosses, -7);
+  // A statement's capital gain lots that make its realised line keep their gains and losses apart; lots that do not are not used.
+  const lots = (st: number, lt: number, gains: number, losses: number) => [{ accountId: 'pms', realisedByYear: [{ fy: '2026-04-01', st, lt, lots: 3, gains, losses }] }] as unknown as BridgeBook['capitalGains'];
+  const withLots = capitalBridge([unit(pms)], book({ accounts: [acct('pms', 'PMS')], bridges: { pms: [bridgeRow({ realized: -2, unrealized: 23 })] }, capitalGains: lots(-12, 10, 9, -11) }))!;
+  near(withLots.realised, -2); near(withLots.realisedGains, 9); near(withLots.realisedLosses, -11);
+  const offLots = capitalBridge([unit(pms)], book({ accounts: [acct('pms', 'PMS')], bridges: { pms: [bridgeRow({ realized: -2, unrealized: 23 })] }, capitalGains: lots(-12, 5, 9, -16) }))!;
+  near(offLots.realisedGains, 0); near(offLots.realisedLosses, -2); assert.equal(offLots.rows[0].split!.realisedBy, undefined);
+  // Nothing split: no gains or losses either, never a ₹0.
+  const none = capitalBridge([unit(pms)], book({ accounts: [acct('pms', 'PMS')] }))!;
+  assert.equal(none.realisedGains, null); assert.equal(none.realisedLosses, null); assert.equal(none.unrealisedLosses, null);
+}
+
 // Since investment on cost, the FIFO parts and the money that came back tie to the value.
 {
   const u: ReturnUnit = { key: 'k', accountId: 'a', label: 'A', positions: [], gain: 30, invested: 150, close: 120, from: null, to: '2026-09-30',
@@ -84,7 +113,7 @@ const book = (o: Partial<BridgeBook>): BridgeBook => ({ accounts: [], positions:
     cashFlows: BOOK_ACCOUNT_CASH_FLOWS, groups: [], coverage: BOOK_NAV_COVERAGE.covered, undated: BOOK_UNDATED_CAPITAL, fromInception: BOOK_CAPITAL_FROM_INCEPTION,
     labelOf: (a) => a.provider }).map((i) => ({ ...i, outside: nothingToMeasure(statement, BOOK_ACCOUNTS.find((a) => a.accountId === i.accountId)!) }));
   const recorded = dedupedPositions(BOOK_POSITIONS), current = currentHoldings(recorded), exited = exitedRows(recorded);
-  const real: BridgeBook = { accounts: BOOK_ACCOUNTS, positions: BOOK_POSITIONS, bridges: BOOK_ACCOUNT_BRIDGES, moves: BOOK_CAPITAL_MOVES, income: BOOK_HOLDING_INCOME };
+  const real: BridgeBook = { accounts: BOOK_ACCOUNTS, positions: BOOK_POSITIONS, bridges: BOOK_ACCOUNT_BRIDGES, moves: BOOK_CAPITAL_MOVES, income: BOOK_HOLDING_INCOME, capitalGains: BOOK_CAPITAL_GAINS };
   const end = '2026-10-22';
   for (const [inception, type] of [[false, 'xirr'], [true, 'absolute'], [true, 'xirr']] as const) {
     const start = inception ? null : periodStart('fytd', end)!, w = inception ? null : windowReturns(inputs, start!, end);
@@ -96,10 +125,15 @@ const book = (o: Partial<BridgeBook>): BridgeBook => ({ accounts: [], positions:
     near(b!.opening + b!.added - b!.takenOut + b!.gain, b!.closing, 1e-3);
     near((b!.realised ?? 0) + (b!.unrealised ?? 0) + (b!.income ?? 0) - (b!.charges ?? 0) + b!.unsplit, b!.gain, 1e-3);
     for (const r of b!.rows) assert.ok(r.split || r.unsplitReason, `${r.label} is split or names why not`);
+    // Realised and unrealised are each gains less losses, over every split account.
+    if (b!.realised != null) { near(b!.realisedGains! + b!.realisedLosses!, b!.realised, 1e-3); assert.ok(b!.realisedLosses! <= 0 && b!.realisedGains! >= 0); }
+    if (b!.unrealised != null) near(b!.unrealisedGains! + b!.unrealisedLosses!, b!.unrealised, 1e-3);
     if (!inception) {
       assert.ok(b!.splitCount >= 10, `FYTD splits most accounts from their own records (${b!.splitCount})`);
       const carnelian = b!.rows.find((r) => r.accountId === 'carnelian-asset-management-and-advisors-pvt-ltd-3517383')!;
       assert.equal(carnelian.split?.source, 'statement'); near(carnelian.split!.realised, -1763423.42, 0.01);
+      // Its −₹17.6 L is 29 capital gain lots: the losses are not hidden inside the net.
+      const [won, lost] = carnelian.split!.realisedBy!; assert.ok(won.value > 0 && lost.value < -1e7); near(won.value + lost.value, -1763423.42, 0.01);
       const threeP = b!.rows.find((r) => r.accountId === '3p-investment-managers-3000048')!;
       assert.equal(threeP.split?.source, 'fund-record'); near(threeP.split!.realised, 25582835.17, 0.01);
     }
