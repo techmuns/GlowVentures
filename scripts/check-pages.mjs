@@ -13947,11 +13947,12 @@ const MONITOR_BASIS_BOOK = (() => {
         if (all.length && all.every((p) => keys.has(p.securityKey))) whole.add(id);
       }
       let gain = 0, deployed = 0, realised = null;
-      const mmv = new Map(), mcost = new Map();
+      const mmv = new Map(), mcost = new Map(), muncosted = new Map();
       for (const p of set) {
         if (whole.has(p.accountId)) {
           mmv.set(p.accountId, (mmv.get(p.accountId) ?? 0) + p.marketValue);
           if (costed(p)) mcost.set(p.accountId, (mcost.get(p.accountId) ?? 0) + p.costBasis);
+          else muncosted.set(p.accountId, (muncosted.get(p.accountId) ?? 0) + p.marketValue);
           continue;
         }
         if (!costed(p)) continue;
@@ -13963,7 +13964,8 @@ const MONITOR_BASIS_BOOK = (() => {
         const cap = acc.get(id).capital;
         gain += (mmv.get(id) ?? 0) + cap.withdrawn - cap.contributed;
         deployed += cap.contributed;
-        realised = (realised ?? 0) + (mcost.get(id) ?? 0) + cap.withdrawn - cap.contributed;
+        // The rest of the capital bridge, an uncosted line's value included (B8; Stage 10mg's rolled lines).
+        realised = (realised ?? 0) + (mcost.get(id) ?? 0) + (muncosted.get(id) ?? 0) + cap.withdrawn - cap.contributed;
       }
       // NO SURVIVORSHIP (Stage 10fz): what the family has left enters the gain
       // and the capital deployed, never the realised cell (which names itself
