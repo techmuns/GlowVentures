@@ -31,6 +31,7 @@ import { AIF_UNITS, PROVIDER as CDSL_DEMAT_PROVIDER } from "./ingest/providers/m
 import { reclassificationsFrom, carryLotsThroughSwitches, carryCostThroughSwitches, UNIT_TIE } from "./lib/classSwitch.mjs";
 import { tradeWindows, windowThrough, oneCopyPerTrade, holdingTradeRows, holdingTradeRecord } from "./lib/holdingTrades.mjs";
 import { loadSavedActions, actionRecordFor } from "./lib/shareActions.mjs";
+import { rollAccountTape } from "./lib/tapeRoll.mjs";
 import { PROVIDER as NSDL_DEMAT_PROVIDER } from "./ingest/providers/nsdlDemat.mjs";
 import { applyFamilyAdvice } from "./ingest/reference/familyAdvisedInvestments.mjs";
 import { adviseBalances } from "./ingest/reference/familyAdvisedBalances.mjs";
@@ -2593,6 +2594,8 @@ function build(archived, archiveCount = archived.length, references = {}) {
   const splitUnreconciled = [];
   /** Every dated buy and sell behind a holding, keyed `${accountId}|${securityKey}` — see `holdingTradeRows`. */
   const holdingTrades = {};
+  /** Lines a PMS account's own tape BOUGHT past its statement (Stage 10mg) — live rows only. */
+  const tapeBoughtRows = [];
   /** The cash income each holding was paid, dated as its statement dates it (Stage 10fw). */
   const holdingIncome = {};
   /** The lots a lot register dates a holding by, where they account for every unit held (Stage 10fw). */
@@ -4030,6 +4033,58 @@ function build(archived, archiveCount = archived.length, references = {}) {
       });
     }
 
+    /**
+     * …AND A PMS ACCOUNT'S OWN TAPE, ROLLED AS ONE MANDATE (Stage 10mg) — every
+     * line, the cash and the names it bought, witnessed by the manager's own
+     * later fact sheet (`scripts/lib/tapeRoll.mjs`). It replaces the per-holding
+     * roll above for the account, or names why it cannot; LIVE basis only.
+     */
+    const laterSheet = asOf ? allIssues.filter((d) => d.reportType === "fact-sheet" && d.factSheetValues?.length && d.asOf > asOf)
+      .sort((a, b) => a.asOf.localeCompare(b.asOf)).at(-1) ?? null : null;
+    if (laterSheet && tapeTo && tapeTo > asOf) {
+      const own = positions.filter((p) => p.accountId === accountId);
+      const tapeDoc = allIssues.filter((d) => d.reportType === "transaction-statement").sort((a, b) => (a.asOf ?? "").localeCompare(b.asOf ?? "")).at(-1)?.docKey ?? null;
+      const seenTrade = new Set();
+      const tapeRows = dated.transactions
+        .filter((t) => t.date > asOf && (t.side === "buy" || t.side === "sell"))
+        .map((t) => ({ date: t.date, side: t.side, securityKey: t.securityKey, security: t.security, quantity: t.quantity,
+          unitPrice: t.unitPrice ?? null, settled: settledOf(t) }))
+        .filter((t) => { const k = [t.date, t.side, t.securityKey, t.quantity, t.unitPrice, t.settled].join("|"); return !seenTrade.has(k) && seenTrade.add(k); })
+        .sort((a, b) => a.date.localeCompare(b.date));
+      const roll = rollAccountTape({ asOf, positions: own, trades: tapeRows, tapeTo, saved: savedActions,
+        factSheet: { asOf: laterSheet.asOf, corpus: laterSheet.flows?.corpus ?? null, docKey: laterSheet.docKey, values: laterSheet.factSheetValues },
+        symbolOf: (k) => symbols[k] ?? null });
+      if (roll.reason) {
+        notes.push(`account ${accountNo}: its own tape is not rolled past ${asOf} as one mandate — ${roll.reason}; the statement's holdings stand on the live basis`);
+      } else {
+        for (const row of roll.rows) {
+          const rf = { through: roll.through, quantity: row.quantity, costBasis: row.costBasis, realizedPnL: row.realizedPnL,
+            costOfUnitsSold: row.costOfUnitsSold, trades: row.trades, source: "account-tape",
+            ...(row.price !== null ? { price: { value: row.price, asOf: row.priceAsOf, source: roll.factSheet } } : {}),
+            ...(row.heldPurchases ? { heldPurchases: row.heldPurchases } : {}) };
+          if (row.statement) { row.statement.rolledForward = rf; continue; }
+          if (!(row.quantity > 0)) continue;
+          const fsLine = laterSheet.factSheetValues.findIndex((v) => v.securityKey === row.securityKey);
+          tapeBoughtRows.push({
+            statementRecord: { document: fsLine >= 0 ? laterSheet.docKey : tapeDoc, pointer: fsLine >= 0 ? `/factSheetValues/${fsLine}` : "/transactions" },
+            securityKey: row.securityKey, security: row.security, symbol: row.cash ? null : symbols[row.securityKey] ?? null,
+            isin: isinByKey.get(row.securityKey) ?? undefined, accountId, memberId: null,
+            sector: row.cash ? "Cash" : "Unclassified", providerSector: fsLine >= 0 ? laterSheet.factSheetValues[fsLine].sector ?? null : null,
+            assetClass: row.cash ? "Cash" : "Equity", marketSide: "listed",
+            quantity: 0, avgCost: null, currentPrice: null, costBasis: null, marketValue: 0, unrealizedPnL: null,
+            realizedPnL: null, costOfUnitsSold: null, returnPct: null, stCostBasis: null, ltCostBasis: null, daysToLT: null,
+            heldSince: null, accruedIncome: null, dividendReceived: null, positionIrrPct: null, rolledForward: rf,
+          });
+        }
+        const moved = roll.rows.filter((r) => r.statement && !r.cash && Math.abs(r.quantity - (r.statement.quantity ?? 0)) > 1e-6);
+        notes.push(`account ${accountNo}: its own tape rolled past ${asOf} as one mandate to ${roll.through} — ${roll.trades} trade(s); `
+          + `${moved.length} holding(s) moved (${moved.filter((r) => r.quantity === 0).map((r) => r.securityKey).join(", ") || "none"} to nil), `
+          + `${roll.rows.filter((r) => !r.statement && !r.cash && r.quantity > 0).map((r) => `${r.securityKey} ${r.quantity}`).join(", ") || "nothing"} bought`
+          + `${roll.demergers.map((d) => `, ${d.childKey} allotted ${d.ratio}:1 on ${d.parentKey} on ${d.recordDate}`).join("")}; `
+          + `every line marked at the ${roll.factSheetAsOf} fact sheet (${roll.factSheet}), which lists exactly the names the roll holds; live basis only`);
+      }
+    }
+
     // ── time-weighted returns, per account ──
     //
     // Each manager publishes its OWN period vocabulary and its OWN benchmark:
@@ -5374,7 +5429,7 @@ function build(archived, archiveCount = archived.length, references = {}) {
   return {
     accounts, positions, polycab, owners, capitalGains, accountCashFlows, entityCashFlows,
     accountReturnRecords, ...periodEvidence({ byAccount, accounts, positions, accountReturnRecords }),
-    capitalMoves, positionTranches, shareMovements, shareRolls: shareRolls.rolls, advisedBalances: advised.balances, holdingCostRecovery,
+    capitalMoves, positionTranches, shareMovements, shareRolls: shareRolls.rolls, tapeRows: tapeBoughtRows, advisedBalances: advised.balances, holdingCostRecovery,
     // Keyed on the holdings this book carries, in key order, so the file
     // regenerates byte-identically however the accounts were walked.
     holdingTrades: Object.fromEntries(Object.keys(holdingTrades).sort()
@@ -5485,6 +5540,7 @@ export function canonicalBookValues(book) {
     BOOK_HOLDING_LOTS: book.holdingLots,
     BOOK_SHARE_MOVEMENTS: book.shareMovements,
     BOOK_SHARE_ROLLS: book.shareRolls,
+    BOOK_TAPE_ROWS: book.tapeRows,
     BOOK_ADVISED_BALANCES: book.advisedBalances,
     BOOK_EARLIER_BALANCES: book.earlierBalances,
     BOOK_STATEMENT_UNIT_NAVS: book.statementUnitNavs,
@@ -5734,6 +5790,15 @@ function emit(book) {
   L.push(" * trades too (Stage 10me, `rollMopwmFundTrades`), up to a transfer of custody.");
   L.push(" */");
   L.push(`export const BOOK_SHARE_ROLLS: ShareRoll[] = ${j(book.shareRolls)};`);
+  L.push("");
+  L.push("/**");
+  L.push(" * LINES A PMS ACCOUNT'S OWN TAPE BOUGHT PAST ITS HOLDING STATEMENT (Stage 10mg,");
+  L.push(" * `scripts/lib/tapeRoll.mjs`): the names, and the cash lines its later fact sheet");
+  L.push(" * prints, that the statement never held. LIVE BASIS ONLY — `PortfolioContext`");
+  L.push(" * marks each at its `rolledForward` units and dated price; the statement basis");
+  L.push(" * never sees them.");
+  L.push(" */");
+  L.push(`export const BOOK_TAPE_ROWS: Position[] = ${j(book.tapeRows)};`);
   L.push("");
   L.push("/**");
   L.push(" * MOTILAL DEMAT FUND BALANCES CARRIED TO THE FAMILY'S NOTE of 21 Oct 2026");

@@ -1084,6 +1084,28 @@ function ensureUniqueDocKeys(docs) {
  * `GLOW_ALLOW_ARCHIVE_SHRINK=1` overrides both, for the legitimate case of
  * deliberately removing a delivery.
  */
+/**
+ * A FACT SHEET'S FIGURES ARE PUBLISHED ONLY WHERE THE BOOK CAN USE THEM (Stage
+ * 10mg): on an account's NEWEST fact sheet, and only where it is dated after the
+ * account's newest holding statement — the later mark a tape roll needs
+ * (`scripts/lib/tapeRoll.mjs`). Everywhere else the holding statement is the
+ * later record, the figures would say nothing it does not, and the document
+ * stays exactly as it was published.
+ */
+function keepUsableFactSheetValues(docs) {
+  const account = (d) => `${d.provider}|${d.accountNo}`;
+  const holdingsAsOf = new Map(), newestSheet = new Map();
+  for (const d of docs) {
+    if (!d.asOf) continue;
+    if (d.reportType !== "fact-sheet" && (d.holdings ?? []).length && (holdingsAsOf.get(account(d)) ?? "") < d.asOf) holdingsAsOf.set(account(d), d.asOf);
+    if (d.reportType === "fact-sheet" && d.factSheetValues && (newestSheet.get(account(d))?.asOf ?? "") < d.asOf) newestSheet.set(account(d), d);
+  }
+  for (const d of docs) {
+    if (!d.factSheetValues) continue;
+    if (newestSheet.get(account(d)) !== d || !(d.asOf > (holdingsAsOf.get(account(d)) ?? ""))) delete d.factSheetValues;
+  }
+}
+
 function guardAgainstShrinkingTheArchive(docs) {
   if (process.env.GLOW_ALLOW_ARCHIVE_SHRINK === "1") return;
   let existing;
@@ -1624,6 +1646,7 @@ async function main() {
     console.log(`witness of ${primary.docKey}: ${doc.status}`);
   }
   ensureUniqueDocKeys(docs);
+  keepUsableFactSheetValues(docs);
   // A document whose every warning describes the STATEMENT — not the reading —
   // was read completely. See lib/readStatus.mjs; this only ever promotes.
   for (const d of docs) settleStatus(d);

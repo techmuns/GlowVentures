@@ -485,6 +485,14 @@ Never derive one side from the others.
   nothing (`transferredOn`). A PMS/AIF folio it pays out in full (at least the
   statement's value, nothing paid in) is redeemed (`mopwmCapitalExits`, MO
   Delphi); smaller capital rows carry no units and are named, not applied.
+- **A PMS account's own tape rolls the whole mandate** (Stage 10mg,
+  `scripts/lib/tapeRoll.mjs`, live basis): where its transaction statements run
+  past its holdings and a later fact sheet prints every line's value
+  (`factSheetValues`, adding to its portfolio value), every line, the cash and
+  the names it bought (`BOOK_TAPE_ROWS`) roll together — only if the fact sheet
+  lists exactly the names the roll holds and each value over the rolled units is
+  a price the tape bears out. A name sold after the capital-gain statement
+  carries no cost. Green Lantern 510854/510861.
 - **The family's liquid-holdings note of 21 Oct 2026** (Stage 10ka,
   `scripts/ingest/reference/familyAdvisedBalances.mjs`) carries five Motilal demat
   fund balances (Ajay's Motilal Arbitrage; Liquid BeES on four demats) to its

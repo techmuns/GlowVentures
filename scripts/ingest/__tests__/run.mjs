@@ -47,6 +47,7 @@ const SUITES = [
   { name: "mfPurchase", file: "mfPurchase.test.mjs", required: true },
   { name: "costRecovery", file: "holdingCostRecovery.test.mjs", required: true },
   { name: "mopwmTransactions", file: "mopwmTransactions.test.mjs", required: true },
+  { name: "tapeRoll", file: "tapeRoll.test.mjs", required: true },
   { name: "franklinAif", file: "franklinAif.test.mjs", required: true },
   { name: "iciciFolio", file: "iciciFolio.test.mjs", required: true },
   { name: "schemeLedger", file: "schemeLedger.test.mjs", required: true },

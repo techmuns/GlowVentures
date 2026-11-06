@@ -1366,3 +1366,20 @@ Codex's review of #352, verified against the code and the book:
   - AMC-folio accounts' statements already postdate their report rows.
 - Still open, in a follow-up: Green Lantern 510854/510861. Their own tape runs to 22–23 Sep (sold out of Gujarat Ambuja, Graphite India, GMM Pfaudler, Ratnamani, Bajaj Auto; bought IEX, HEG AM, Elgi). It is refused because no depository or capital-gain witness exists. A correct roll also needs the cash line, the bought names and HEG's 7 Sep demerger. Baring's 3 Aug ₹50 L call is also open: no units.
 - Tests: `mopwmTransactions.test.mjs` covers the gates, transfer days, partial sales and capital exits, on constructed rows and the real report. `shareRolls`, `unpricedUnits`, `recoveredCosts` and `corporateActions` assert the rolls. The `concentration` and `searchIndex` twin-key checks build a constructed pair when the live book has none (the last pair is sold).
+
+### Stage 10mg — Green Lantern: the account's own tape rolls the whole mandate
+
+*"Yes, do Green Lantern"* — the family, 6 Nov 2026, on Stage 10me's open item.
+
+- **Root cause.** Green Lantern 510854/510861 hold 27 Jul statements, but their own transaction statements run to 22–23 Sep. Stage 10dw's per-holding roll needs a depository balance or capital-gain lots to witness a tape, and a PMS has neither. So about 70 trades per account were on no page. A per-holding roll would also have been wrong for a mandate: a sale moves value into the cash line, and a purchase adds a name the statement never held.
+- **The witness is the manager's own 22 Sep fact sheet.** Its Portfolio Holdings table prints every line's market value, including cash, the Axis Liquid fund and the dividend receivable, and the lines add to the printed portfolio value (₹5,87,49,582 / ₹11,60,19,848). The reader always parsed the figures (`readSectors` → `rows`) and dropped them. It now keeps them apart from the holdings as `factSheetValues` (never a holding, as `readSectors` has always held). A NUMBERED line named like a subtotal ("31 Cash") is now kept there; only an unnumbered one is a subtotal.
+- **`rollAccountTape`** (`scripts/lib/tapeRoll.mjs`) rolls the whole account or none of it. Gates:
+  - the fact sheet postdates the statement, the tape reaches it, and its lines add to its value;
+  - no line goes below nil;
+  - no split or bonus falls in the roll (the saved NSE capture); a registered demerger allots its child on the record date (HEG Graphite, 1:1 on HEG AM, 7 Sep, `shared/demergers.mjs`);
+  - on the fact sheet's date the roll holds exactly the names it lists, and it lists nothing else but cash and receivables;
+  - every printed value over the rolled units is within ×2 of the tape's own last price (a demerger's parent and child together).
+- **Marks and cash.** Each line is marked at value ÷ units (`rolledForward.price`, dated, read by `rolledPosition` and check-pages). Cash is the fact sheet's cash, settled for any later trade; a cash line it no longer prints is nil.
+- **Cost.** A name sold after the 27 Jul capital-gain statement carries no cost or realised figure (null). A name only bought adds its buys. A name the statement never held is FIFO on its own trades. HEG's parent and child carry none: no apportionment is on record.
+- **Bought names** (IEX, HEG AM, HEG Graphite, Elgi, the receivable) are `BOOK_TAPE_ROWS`: live rows through the corporate-action layer, so quotes price them. The statement basis keeps the 27 Jul snapshot.
+- Tests: `tapeRoll.test.mjs` (every gate on constructed rows, a demerger, and the committed book's bought rows).

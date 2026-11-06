@@ -241,7 +241,9 @@ export function applyCorporateActionQuotes(
      */
     // The NAV layer has already converted these units through its price date.
     // Only later events may change them again when an intraday quote arrives.
-    const start = p.fundUnitAdjustment?.through ?? dates.get(p.accountId) ?? "";
+    // A roll that carries a later dated mark (Stage 10mg, the account's own fact
+    // sheet) opens on THAT mark's date: its price is that day's, not the statement's.
+    const start = rf?.price?.asOf ?? p.fundUnitAdjustment?.through ?? dates.get(p.accountId) ?? "";
     const end = q ? marketDay(q.tradedAt || quotes!.asOf) : start;
     const plan = projectActions(p, start, end, feed);
     if (rf) {
@@ -331,12 +333,14 @@ export function applyCorporateActionQuotes(
  */
 function rolledPosition(p: Position, rf: NonNullable<Position["rolledForward"]>): Position {
   const quantity = rf.quantity;
-  const mark = p.currentPrice ?? (typeof p.quantity === "number" && p.quantity > 0 ? p.marketValue / p.quantity : null);
+  // A later dated mark the roll carries (Stage 10mg, the account's own fact sheet) before the statement's.
+  const mark = rf.price?.value ?? p.currentPrice ?? (typeof p.quantity === "number" && p.quantity > 0 ? p.marketValue / p.quantity : null);
   const marketValue = mark === null ? p.marketValue : quantity * mark;
   const cost = rf.costBasis;
   const unrealizedPnL = cost === null ? null : marketValue - cost;
   return {
     ...p, quantity, marketValue,
+    ...(rf.price ? { currentPrice: rf.price.value, priceAsOf: rf.price.asOf } : {}),
     costBasis: cost,
     avgCost: cost === null || !(quantity > 0) ? null : cost / quantity,
     unrealizedPnL,
