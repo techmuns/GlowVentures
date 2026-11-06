@@ -1114,6 +1114,24 @@ const SECURITY_AXIS_BOOK = (() => {
     // summed here from each filing's own lines, never read off the page: the
     // class each line is filed as, the disclosure it comes from, and whether its
     // fund is a liquid fund the holdings tables count as cash.
+    /*
+     * ── WHICH FUND LINES ARE EQUITY EXPOSURE (Stage 10fz, Stage 10md) ──────────
+     * Re-expressed off the committed NAV store's SEBI category and the cash
+     * map, never `fundLineBasis`: a cash-equivalent scheme's lines are cash;
+     * a balanced-advantage or equity-savings scheme's equity is disclosed gross
+     * of its hedges; a CD (`16`) or CP (`14`) by its ISIN type is never
+     * equity. Sector Composition is THIS sleeve alone (Stage 10md).
+     */
+    const categoryOf = new Map((fundNavStore() ?? []).map((e) => [e.securityKey, e.sebiCategory ?? null]));
+    const basisOf = (v) => {
+      const cat = categoryOf.get(v.key) ?? null;
+      if (CASH_EQ_KEYS?.has(v.key) || /^(liquid fund|overnight fund|money market fund)$/i.test(cat ?? "")) return "cash";
+      if (/^(dynamic asset allocation or balanced advantage|equity savings)$/i.test(cat ?? "")
+        || /(balanceds*advantage|bal[s-]*adv|baf|dynamics+assets+allocation|equitys+savings)/i.test(`${v.key.replace(/-/g, " ")} ${v.name}`)) return "gross";
+      return "equity";
+    };
+    const moneyMarket = (isin) => !!isin && /^IN[EF][A-Z0-9]{4}(14|16)/.test(isin);
+    let derivedEquity = 0, derivedNonEquity = 0, derivedGross = 0;
     const derivedByDate = new Map();
     const derivedByClass = { shares: 0, debt: 0, other: 0 };
     let derivedInCashFunds = 0;
@@ -1172,7 +1190,12 @@ const SECURITY_AXIS_BOOK = (() => {
         else derivedByClass.other += value;
         if (CASH_EQ_KEYS?.has(v.key)) derivedInCashFunds += value;
         fundsWithValue.add(v.key);
-        const e = derivedByKey.get(key) ?? { key, name: issuerName(h.name), value: 0, funds: 0, classes: new Set(), instruments: 0, maxInFund: 0, hereN: new Map(), lineNames: new Set(), fundSector: new Map() };
+        const e = derivedByKey.get(key) ?? { key, name: issuerName(h.name), value: 0, equity: 0, funds: 0, classes: new Set(), instruments: 0, maxInFund: 0, hereN: new Map(), lineNames: new Set(), fundSector: new Map() };
+        const isEq = h.assetClass === "Equity" && !moneyMarket(isin);
+        const basis = basisOf(v);
+        if (isEq && basis === "equity") { e.equity += value; derivedEquity += value; }
+        else if (isEq && basis === "gross") derivedGross += value;
+        else derivedNonEquity += value;
         // EVERY issuer spelling the filings give this key — so a list that
         // offers a company the book holds a second time, under whichever of
         // them a page happened to pick, is caught whichever it picked.
@@ -1230,19 +1253,22 @@ const SECURITY_AXIS_BOOK = (() => {
      * count.
      */
     const screener = JSON.parse(readFileSync(new URL("../src/data/screenerSectors.json", import.meta.url), "utf8"));
+    const screenerKeys = JSON.parse(readFileSync(new URL("../src/data/screenerKeys.json", import.meta.url), "utf8"));
+    // Stage 10md: ONE classification — screener.in's wherever it has a page —
+    // then the funds' filing, then the statement, for companies it has none for.
     const placeOf = (k, ps) => {
       const d = derivedByKey.get(k);
       const cls = d?.classes ?? new Set();
       const kind = ps.length || cls.has("Equity") ? "shares" : cls.has("Debt") ? "debt" : "other";
-      const bookSector = ps.find((p) => p.sector && p.sector !== "Unclassified")?.sector ?? null;
-      if (bookSector) return { kind, tier: "book", sector: bookSector };
+      const sym = ps.find((p) => p.symbol)?.symbol ?? nseSym[k] ?? null;
+      const g = (sym ? screener[sym]?.gics : null) ?? (screenerKeys[k] ? screener[screenerKeys[k]]?.gics : null);
+      if (g && g !== "Unclassified") return { kind, tier: "vendor", sector: g };
       const agreed = new Set();
       for (const s of d?.fundSector?.values() ?? []) { const hit = resolveSector(s); if (hit?.matchedBy) agreed.add(hit.sector); }
       if (agreed.size === 1) return { kind, tier: "disclosure", sector: [...agreed][0] };
-      const sym = ps.find((p) => p.symbol)?.symbol ?? nseSym[k] ?? null;
-      const g = sym ? screener[sym]?.gics : null;
-      if (g && g !== "Unclassified") return { kind, tier: "vendor", sector: g };
-      return { kind, tier: null, sector: "Unclassified", sym };
+      const bookSector = ps.find((p) => p.sector && p.sector !== "Unclassified")?.sector ?? null;
+      if (bookSector) return { kind, tier: "book", sector: bookSector };
+      return { kind, tier: null, sector: "Unclassified", sym: sym ?? screenerKeys[k] ?? null };
     };
     const psByKey = (rows) => {
       const m = new Map();
@@ -1262,7 +1288,8 @@ const SECURITY_AXIS_BOOK = (() => {
       for (const k of keys) {
         const ps = byKey.get(k) ?? [];
         const pl = placeOf(k, ps);
-        const total = ps.reduce((a, p) => a + p.marketValue, 0) + (withDerived ? (derivedByKey.get(k)?.value ?? 0) : 0);
+        // Equity lines only (Stage 10md).
+        const total = ps.reduce((a, p) => a + p.marketValue, 0) + (withDerived ? (derivedByKey.get(k)?.equity ?? 0) : 0);
         out.mix[pl.kind] += 1;
         out.sectorOf.set(k, pl.sector);
         out.totalOf.set(k, total);
@@ -1277,7 +1304,7 @@ const SECURITY_AXIS_BOOK = (() => {
       }
       return out;
     };
-    const consTiers = tiersOver(new Set([...measuredKeys.keys(), ...derivedByKey.keys()]), psByKey(stocks), true);
+    const consTiers = tiersOver(new Set([...measuredKeys.keys(), ...[...derivedByKey.values()].filter((e) => e.equity > 0).map((e) => e.key)]), psByKey(stocks), true);
     const ownStocks = stocks.filter((p) => ["Direct", "Execution"].includes(acc.get(p.accountId)?.engagement));
     const ownPs = psByKey(ownStocks);
     const directTiers = tiersOver(new Set(ownStocks.map((p) => p.securityKey)), ownPs, false);
@@ -1397,6 +1424,15 @@ const SECURITY_AXIS_BOOK = (() => {
       pmsCr: sum(stocks.filter((p) => acc.get(p.accountId)?.engagement === "PMS").map((p) => p.marketValue)) / 1e7,
       derived, derivedCr: derived / 1e7,
       totalCr: (measured + derived) / 1e7,
+      // SECTOR COMPOSITION IS THE EQUITY SLEEVE (Stage 10md): the statements'
+      // shares plus the funds' equity lines; what else the funds disclose is
+      // named under "Not on this page". Its rows are the companies reached
+      // through either.
+      sector: {
+        derivedCr: derivedEquity / 1e7, totalCr: (measured + derivedEquity) / 1e7,
+        nonEquityCr: derivedNonEquity / 1e7, grossCr: derivedGross / 1e7,
+        rows: measuredKeys.size + [...derivedByKey.values()].filter((e) => !measuredKeys.has(e.key) && e.equity > 0).length,
+      },
       opaqueCr: skippedValue / 1e7,
       // WAS `nonEquityCr` AND STOPPED BEING TRUE. The store reads each AMC's
       // whole monthly filing now, so a scheme's debt sleeve is INSIDE `derived`
@@ -1692,18 +1728,12 @@ function sectorSourceChecks(bookCount, view = "consolidated") {
       if (!SECTOR_VIEW_BOOK) return { notChecked: "the book could not be read on this run" };
       const src = ctx?.sectorSource;
       if (!src) return false;
-      /*
-       * The book half is EXACT against the book's own count, derived here from
-       * `glowData.ts` by a different path from the page's — the page counts by
-       * classifying its own entries, this counts the positions. That exactness
-       * is also what catches a lower tier OVERRULING a statement, which moves
-       * companies out of `book` and into `vendor` while every wedge still looks
-       * authoritative. The other two only have to be doing work, because each
-       * depends on a store this harness reads at runtime rather than on the
-       * generated book.
-       */
-      return src.book === bookCount(SECTOR_VIEW_BOOK)
-        && src.disclosure > 0 && src.vendor > 0;
+      // Stage 10md: ONE classification. screener.in places every company it
+      // has a page for — exact against the book in the check below — and the
+      // statement only what neither screener nor a filing places, so its count
+      // can never exceed what the statements print.
+      return src.vendor > 0 && src.vendor >= src.book + src.disclosure
+        && src.book <= bookCount(SECTOR_VIEW_BOOK);
     }],
     /*
      * …AND THE FOUR SOURCES PARTITION THE DONUT. Every company on this page was
@@ -1758,8 +1788,8 @@ function sectorSourceChecks(bookCount, view = "consolidated") {
       const causes = x.slice(head.length, colon);
       const num = (re) => Number(re.exec(causes)?.[1] ?? 0);
       const debt = num(/(\d+) reached only through debt paper/);
-      const noSym = num(/(\d+) shares? for which no NSE symbol resolves/);
-      const noSector = num(/(\d+) shares? whose NSE symbol the committed screener\.in lookup gives no sector for/);
+      const noSym = num(/(\d+) shares? for which no NSE or BSE listing resolves/);
+      const noSector = num(/(\d+) shares? whose listing the committed screener\.in lookup gives no sector for/);
       const other = num(/(\d+) lines? a fund's filing classes as neither equity nor debt/);
       return debt + noSym + noSector + other === src.unplaced
         && debt === src.debt && noSym === src.nosymbol
@@ -1897,21 +1927,23 @@ const sectorNear = (s, want) => {
   return !!r && Math.abs(r.v - want) <= r.half + 1;
 };
 const SECTOR_DERIVED_REST = [
-  ["the derived half's hover says what it is made of, in shares and in debt paper, and the two dates that meet in it (FS-15)", (t, ctx) => {
+  /*
+   * Stage 10md: the derived figure is the funds' EQUITY lines, and the hover
+   * names, at their values, what the same filings disclose besides — debt
+   * paper, repo and cash, the liquid funds' paper, and balanced-advantage
+   * equity disclosed gross of its hedges — none of which is in a sector.
+   */
+  ["the derived half's hover says it is the funds' equity, names what it leaves out, and the two dates that meet in it (FS-15)", (t, ctx) => {
     const B = SECURITY_AXIS_BOOK;
-    if (!B?.derivedByClass) return { notChecked: "the book could not be read on this run" };
+    if (!B?.sector) return { notChecked: "the book could not be read on this run" };
     const x = ctx?.sectorLayout?.derivedTitle;
     if (!x) return false;
     const grab = (re) => re.exec(x)?.[1] ?? null;
-    const c = B.derivedByClass;
-    if (!x.includes(`every instrument ${B.covered} of ${B.considered} funds disclose`)) return false;
-    const sh = grab(new RegExp(`— ${SECTOR_M} in shares`));
-    const db = grab(new RegExp(`, ${SECTOR_M} in bonds, CDs, commercial paper, bills`));
-    const ot = grab(new RegExp(`, ${SECTOR_M} in lines their filings class as neither`));
-    const ca = grab(new RegExp(`; ${SECTOR_M} of it is inside the liquid funds the holdings tables count as cash`));
-    if (!sectorNear(sh, c.shares) || !sectorNear(db, c.debt)) return false;
-    if (c.other > 0 ? !sectorNear(ot, c.other) : !!ot) return false;
-    if (B.derivedInCashFunds > 0 ? !sectorNear(ca, B.derivedInCashFunds) : !!ca) return false;
+    if (!x.includes(`the equity lines ${B.covered} of ${B.considered} funds disclose`)) return false;
+    const db = grab(new RegExp(`Left out of every sector: ${SECTOR_M} the same filings disclose as bonds, CDs, commercial paper, bills`));
+    const gr = grab(new RegExp(`, and ${SECTOR_M} of equity in balanced-advantage`));
+    if (!sectorNear(db, B.sector.nonEquityCr * 1e7)) return false;
+    if (B.sector.grossCr * 1e7 >= 1 ? !sectorNear(gr, B.sector.grossCr * 1e7) : !!gr) return false;
     if (!/Two dates meet in it/.test(x)) return false;
     const i0 = x.indexOf("each fund at "), i1 = x.indexOf(", times what it held at its own portfolio disclosure — ");
     if (i0 < 0 || i1 < i0) return false;
@@ -1953,6 +1985,11 @@ const SECTOR_DERIVED_REST = [
     const unresolvedWant = B.considered - B.covered - B.aifCount;
     const unresolved = Number(/(\d+) schemes? the store does not resolve/.exec(aif ?? "")?.[1] ?? 0);
     if (!aif || !sectorNear(aif, B.opaqueCr * 1e7) || aifN !== B.aifCount || unresolved !== unresolvedWant) return false;
+    // Stage 10md: what the funds disclose besides equity is a part of the rest.
+    const nonEq = part(/the funds' filings disclose as bonds, CDs, commercial paper, bills/);
+    if (B.sector.nonEquityCr > 0 ? !sectorNear(nonEq, B.sector.nonEquityCr * 1e7) : !!nonEq) return false;
+    const grossPart = part(/of equity in balanced-advantage and equity-savings funds/);
+    if (B.sector.grossCr > 0 ? !sectorNear(grossPart, B.sector.grossCr * 1e7) : !!grossPart) return false;
     const unacc = part(/of the disclosed funds that no line in their filings accounts for/);
     if (!unacc || !sectorNear(unacc, B.unaccountedCr * 1e7)) return false;
     // THE FENCED LINE A FUND DISCLOSES IS ITS OWN PART, AND IS NEVER NAMED
@@ -5862,17 +5899,21 @@ const MANDATE_SECTOR_BOOK = (() => {
     if (!Array.isArray(positions) || !Array.isArray(accounts)) return null;
     const nse = JSON.parse(readFileSync(new URL("../src/data/nseSymbols.json", import.meta.url), "utf8"));
     const vendor = JSON.parse(readFileSync(new URL("../src/data/screenerSectors.json", import.meta.url), "utf8"));
+    const vendorKeys = JSON.parse(readFileSync(new URL("../src/data/screenerKeys.json", import.meta.url), "utf8"));
     const placed = (x) => !!x && x !== "Unclassified";
     const shares = positions.filter((p) => p.assetClass === "Equity");
     const byKey = new Map();
     for (const p of shares) { const a = byKey.get(p.securityKey) ?? []; a.push(p); byKey.set(p.securityKey, a); }
     const expected = new Map();
+    // Stage 10md: screener.in first for every company, the statement only
+    // where it has no page. (A fund's filing, the middle source, is a fetch
+    // this block does not repeat; a company it would place reads its
+    // statement here, so the walk below only counts screener-placed rows.)
     for (const [k, xs] of byKey) {
-      const book = xs.find((x) => placed(x.sector))?.sector;
-      if (book) { expected.set(k, book); continue; }
       const sym = xs.find((x) => x.symbol)?.symbol ?? nse[k] ?? null;
-      const hit = sym ? vendor[sym] : null;
-      expected.set(k, hit && placed(hit.gics) ? hit.gics : "Unclassified");
+      const hit = (sym ? vendor[sym] : null) ?? (vendorKeys[k] ? vendor[vendorKeys[k]] : null);
+      if (hit && placed(hit.gics)) { expected.set(k, hit.gics); continue; }
+      expected.set(k, xs.find((x) => placed(x.sector))?.sector ?? "Unclassified");
     }
     const pms = new Set(accounts.filter((a) => a.engagement === "PMS").map((a) => a.accountId));
     const moved = new Map();
@@ -9626,18 +9667,22 @@ const XA_BOOK = (() => {
     // count is exact.
     const nse = JSON.parse(readFileSync(new URL("../src/data/nseSymbols.json", import.meta.url), "utf8"));
     const vendor = JSON.parse(readFileSync(new URL("../src/data/screenerSectors.json", import.meta.url), "utf8"));
+    const vendorKeys = JSON.parse(readFileSync(new URL("../src/data/screenerKeys.json", import.meta.url), "utf8"));
     const sharesByKey = new Map();
     for (const x of deduped) {
       if (x.assetClass !== "Equity") continue;
       const a = sharesByKey.get(x.securityKey) ?? [];
       a.push(x); sharesByKey.set(x.securityKey, a);
     }
+    // Stage 10md: screener.in first, so the VENDOR count is exact whatever the
+    // filings answer; a statement places only what screener and the filings
+    // do not, so its count is a ceiling and the union is still the floor.
     const tier1 = new Set(), tier3 = new Set();
     for (const [k, xs] of sharesByKey) {
-      if (xs.some((x) => x.sector && x.sector !== "Unclassified")) { tier1.add(k); continue; }
       const sym = xs.find((x) => x.symbol)?.symbol ?? nse[k] ?? null;
-      const hit = sym ? vendor[sym] : null;
-      if (hit && hit.gics && hit.gics !== "Unclassified") tier3.add(k);
+      const hit = (sym ? vendor[sym] : null) ?? (vendorKeys[k] ? vendor[vendorKeys[k]] : null);
+      if (hit && hit.gics && hit.gics !== "Unclassified") { tier3.add(k); continue; }
+      if (xs.some((x) => x.sector && x.sector !== "Unclassified")) tier1.add(k);
     }
     const tiersOver = (rows) => {
       const keys = new Set(rows.map((x) => x.securityKey));
@@ -9645,7 +9690,7 @@ const XA_BOOK = (() => {
       const floor = [...keys].filter((k) => tier1.has(k) || tier3.has(k)).length;
       const mv = mvOf(rows);
       return {
-        companies: keys.size, book: k1, placedFloor: floor,
+        companies: keys.size, book: k1, vendor: [...keys].filter((k) => tier3.has(k)).length, placedFloor: floor,
         unplacedCeiling: keys.size - floor, bookUnplaced: keys.size - k1,
         coverageFloor: mv > 0 ? (mvOf(rows.filter((x) => tier1.has(x.securityKey) || tier3.has(x.securityKey))) / mv) * 100 : null,
         coverageBookOnly: mv > 0 ? (mvOf(rows.filter((x) => tier1.has(x.securityKey))) / mv) * 100 : null,
@@ -9976,7 +10021,7 @@ const xaSectorSourceChecks = (key, which) => [
     const n = (k) => Number(a[k]);
     return a.status === "ok"
       && n("companies") === b.companies
-      && n("from-book") === b.book
+      && n("from-vendor") === b.vendor && n("from-book") <= b.book
       && n("from-book") + n("from-disclosure") + n("from-vendor") + n("unplaced") === n("companies");
   }],
   ["…and the two lower tiers place companies the statements alone leave unplaced", (t, ctx) => {
@@ -30862,12 +30907,12 @@ const INVARIANTS = {
      * would be two chances to disagree, and this is the check that says they do
      * not.
      */
-    ["its total, both halves and its company count are the Monitor's security axis", (t, ctx) => {
+    ["its total, both halves and its company count are the Monitor's security axis, equity lines only", (t, ctx) => {
       if (!SECURITY_AXIS_BOOK) return { notChecked: "the book could not be read on this run" };
       const grab = (re) => { const m = re.exec(t); return m ? crU(m[1], m[2]) : NaN; };
       const total = grab(/TOTAL EXPOSURE\s*\n\s*₹([\d,.]+)\s*(Cr|L|K)?/i);
       const measured = grab(/Reported by their statements\s*\n\s*₹([\d,.]+)\s*(Cr|L|K)?/i);
-      const derived = grab(/Derived from what their funds disclose\s*\n\s*₹([\d,.]+)\s*(Cr|L|K)?/i);
+      const derived = grab(/Equity their funds disclose\s*\n\s*₹([\d,.]+)\s*(Cr|L|K)?/i);
       /*
        * THE COUNT IS ON THE DONUT HOLE, AND IT IS READ AS AN ATTRIBUTE. It was
        * parsed out of a footer sentence, then out of the hole's own rendered
@@ -30877,10 +30922,11 @@ const INVARIANTS = {
        */
       const rows = ctx?.donut?.count;
       if (![total, measured, derived].every(Number.isFinite) || !Number.isFinite(rows)) return false;
-      return Math.abs(total - SECURITY_AXIS_BOOK.totalCr) <= 0.15
+      // Stage 10md: the same join, narrowed to the equity sleeve.
+      return Math.abs(total - SECURITY_AXIS_BOOK.sector.totalCr) <= 0.15
         && Math.abs(measured - SECURITY_AXIS_BOOK.measuredCr) <= 0.15
-        && Math.abs(derived - SECURITY_AXIS_BOOK.derivedCr) <= 0.15
-        && rows === SECURITY_AXIS_BOOK.rows;
+        && Math.abs(derived - SECURITY_AXIS_BOOK.sector.derivedCr) <= 0.15
+        && rows === SECURITY_AXIS_BOOK.sector.rows;
     }],
     /**
      * AND THE THREE TILES ACCOUNT FOR EVERY RUPEE. A table's total reads as the
@@ -30891,7 +30937,7 @@ const INVARIANTS = {
       if (!SECURITY_AXIS_BOOK) return { notChecked: "the book could not be read on this run" };
       const grab = (re) => { const m = re.exec(t); return m ? crU(m[1], m[2]) : NaN; };
       const measured = grab(/Reported by their statements\s*\n\s*₹([\d,.]+)\s*(Cr|L|K)?/i);
-      const derived = grab(/Derived from what their funds disclose\s*\n\s*₹([\d,.]+)\s*(Cr|L|K)?/i);
+      const derived = grab(/Equity their funds disclose\s*\n\s*₹([\d,.]+)\s*(Cr|L|K)?/i);
       const rest = grab(/Not on this page\s*\n\s*₹([\d,.]+)\s*(Cr|L|K)?/i);
       if (![measured, derived, rest].every(Number.isFinite)) return false;
       return Math.abs(measured + derived + rest - SECURITY_AXIS_BOOK.navCr) <= 0.5;
@@ -30939,7 +30985,8 @@ const INVARIANTS = {
      * send the next reader to the wrong source.
      */
     ["the Unclassified row names its cause, for this view's own sources", (t, ctx) =>
-      (ctx?.titles ?? []).some((x) => /neither the family[\u2019\']s own statement nor any fund disclosure/i.test(x))],
+      // Stage 10md: the three sources in the order they are tried.
+      (ctx?.titles ?? []).some((x) => /screener\.in has no page that names these companies, and neither a fund disclosure nor the family[\u2019\']s own statement/i.test(x))],
   ],
   /**
    * ── THE DIRECT EQUITY VIEW ────────────────────────────────────────────────
