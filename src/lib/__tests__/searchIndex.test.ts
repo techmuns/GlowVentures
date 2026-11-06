@@ -34,6 +34,7 @@ import { REVIEW_GAPS } from "@/data/reviewGaps";
 import { BOOK_FUND_NAVS } from "@/data/fundNavs";
 import SCHEME_NAMES from "@/data/schemeNames.json";
 import { securityKeyOf } from "@/lib/securityKey";
+import type { Position } from "@/lib/types";
 
 let fails = 0;
 const ok = (name: string, pass: boolean, detail = "") => {
@@ -482,15 +483,30 @@ console.log("── what a row says about its figure is true of the figure (SC-C
   // statement book records at a quantity only (Stage 10cz), so the AMC folio's
   // Helios stands alone there, and the pair meets only where AMFI's NAV values
   // the depository's units beside it.
-  const twinRows = screenIndex.filter((e) => e.kind === "holding" && /rows for ISIN/.test(e.detail));
-  const isinKeys = new Map<string, Set<string>>();
-  for (const p of currentHoldings(dedupedPositions(screenPositions))) {
-    const isin = (SCHEME_NAMES as Record<string, { isin: string }>)[p.securityKey]?.isin ?? p.isin;
-    if (isin && !small.has(p.securityKey)) isinKeys.set(isin, (isinKeys.get(isin) ?? new Set()).add(p.securityKey));
-  }
-  const twins = [...isinKeys].filter(([, ks]) => ks.size > 1).flatMap(([, ks]) => [...ks]);
+  // Stage 10me sold the screen book's last such pair (Helios's depository units
+  // moved to their AMC folio), so where it carries none the rule is struck on a
+  // constructed one: a fund row restated under a second key.
+  const twinsOf = (rows: Position[]) => {
+    const isinKeys = new Map<string, Set<string>>();
+    for (const p of currentHoldings(dedupedPositions(rows))) {
+      const isin = (SCHEME_NAMES as Record<string, { isin: string }>)[p.securityKey]?.isin ?? p.isin;
+      if (isin && !small.has(p.securityKey)) isinKeys.set(isin, (isinKeys.get(isin) ?? new Set()).add(p.securityKey));
+    }
+    return [...isinKeys].filter(([, ks]) => ks.size > 1).flatMap(([, ks]) => [...ks]);
+  };
+  const seed = screenPositions.find((p) => !!p.isin && p.assetClass === "Mutual Fund" && p.marketValue > 1e6 && !small.has(p.securityKey));
+  const own = twinsOf(screenPositions);
+  const rows = own.length || !seed ? screenPositions
+    : [...screenPositions, { ...seed, securityKey: `${seed.securityKey}-restated`, accountId: `${seed.accountId}-twin` }];
+  const twinIndex = own.length ? screenIndex : buildSearchIndex({
+    positions: rows, consolidated: dedupedPositions(rows), accounts: screenAccounts, money,
+    recorded: BOOK_UNVALUED_HOLDINGS, capitalMoves: BOOK_CAPITAL_MOVES, fenced: fencedIdentityOf(BOOK_POLYCAB),
+  });
+  const twinRows = twinIndex.filter((e) => e.kind === "holding" && /rows for ISIN/.test(e.detail));
+  const twins = twinsOf(rows);
   ok("a scheme the statements name two ways says so on each of its rows",
-    twins.length > 0 && twins.every((k) => twinRows.some((e) => e.id === `holding:${k}`)), `${twins.length} rows`);
+    twins.length > 0 && twins.every((k) => twinRows.some((e) => e.id === `holding:${k}`)),
+    `${twins.length} rows${own.length ? "" : `, constructed on ${seed?.securityKey}`}`);
 
   // SC-D1 — a share of the book never reads as nothing.
   const zeroPct = index.filter((e) => /\b0\.00% of the book/.test(e.detail)).map((e) => e.label);

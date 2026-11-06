@@ -545,7 +545,8 @@ function withDepositoryFunds(src, positions) {
  *   5. that price within a factor of two of the NAV;
  *   6. no position of the ISIN already in the row's own account;
  *   7. no account of the SAME OWNER carrying the same ISIN at the same units;
- *   8. no roll of the adviser's report taking these units to nil (Stage 10ma).
+ *   8. no roll of the adviser's report taking these units to nil (Stage 10ma);
+ *      one carrying them to other units values those, at its own cost (10me).
  * It deliberately does not read the page's switch, so turning it off fails a
  * check by name rather than leaving a stale model agreeing with a changed page.
  */
@@ -605,7 +606,14 @@ function withUnpricedStatementUnits(src, positions) {
     if (rolls.some((r) => r.accountId === u.accountId && I(r) === isin && r.quantity === 0
       && Math.abs(r.statementQuantity - qty) < 0.0005)) continue;                               // 8
     const book = positions.find((p) => p.securityKey === u.securityKey);
-    const units = (f === 1 ? advisedUnits(src, u.accountId, isin, qty) : null) ?? qty * f;
+    // Stage 10me: a fund roll's units and FIFO cost stand for the statement's.
+    const roll = rolls.find((r) => r.accountId === u.accountId && I(r) === isin && r.quantity > 0
+      && r.report?.sheet === "Mutual Funds" && Math.abs(r.statementQuantity - qty) < 0.0005);
+    const units = roll ? (roll.shareEvents?.length ? roll.quantity : roll.quantity * f)
+      : (f === 1 ? advisedUnits(src, u.accountId, isin, qty) : null) ?? qty * f;
+    const rolledCost = roll ? { costBasis: roll.costBasis, costUnavailable: false, avgCost: roll.costBasis / units,
+      unrealizedPnL: units * nav.nav - roll.costBasis, realizedPnL: roll.realizedPnL, costOfUnitsSold: roll.costOfUnitsSold,
+      rolledForward: { through: roll.through, quantity: units, ...(roll.heldPurchases ? { heldPurchases: roll.heldPurchases } : {}) } } : null;
     out.push(withRecoveredCost({
       securityKey: u.securityKey, security: book?.security ?? u.security ?? u.securityKey, isin: u.isin,
       symbol: book?.symbol ?? keyToSymbol[u.securityKey] ?? null,
@@ -613,6 +621,7 @@ function withUnpricedStatementUnits(src, positions) {
       assetClass: etf ? "ETF" : "Mutual Fund", marketSide: "listed",
       quantity: units, marketValue: units * nav.nav, currentPrice: nav.nav,
       costBasis: null, costUnavailable: true, unrealizedPnL: null, returnPct: null, avgCost: null,
+      ...(rolledCost ?? {}),
       navPriced: true, navDate: nav.date,
       depositoryUnits: ownRate !== null
         ? { asOf: u.asOf, source: null, kind: "last-movement", lastMovementRate: ownRate,
@@ -13481,8 +13490,10 @@ const INVESTED_ON_BOOK = (() => {
     const datedLine = (p) => {
       const own = tranches[`${p.accountId}|${p.securityKey}`];
       const ins = (own?.moves ?? []).filter((m) => m.direction === "in");
+      // Stage 10me: a fund line the adviser report's trades carried, dated by its own surviving lots.
+      const rolledLots = !!p.rolledForward?.heldPurchases && Math.abs(p.rolledForward.quantity - p.quantity) <= 0.0005;
       return Boolean(ins.length || p.heldSince || called.has(`${p.accountId}|${p.securityKey}`)
-        || p.tradeRecord?.held || recoveredLots(p) || p.investedDates);
+        || p.tradeRecord?.held || recoveredLots(p) || rolledLots || p.investedDates);
     };
     // The lines a SECURITY row is built from: current (a closed position and a
     // sub-₹1,000 speck are not rows), each `dedupeGroup` once, and no mandate's.
@@ -13503,6 +13514,28 @@ const INVESTED_ON_BOOK = (() => {
     }
     const dated = new Set();
     for (const [k, xs] of byKey) if (xs.every(datedLine)) dated.add(k);
+    // Stage 10me: a live-only fund line the adviser report's trades carried is
+    // dated by the roll's own surviving lots — where every live line of its key
+    // is: rolled with lots, or recovered at exactly its statement units.
+    {
+      const unvalued = bookArray(src, "BOOK_UNVALUED_HOLDINGS") ?? [];
+      const rolls = bookArray(src, "BOOK_SHARE_ROLLS") ?? [];
+      const recovered = bookArray(src, "BOOK_RECOVERED_COSTS") ?? [];
+      const tie = (a, b) => Math.abs(a - b) <= 0.0005;
+      const rollOf = (u) => rolls.find((r) => r.accountId === u.accountId && r.isin === u.isin && tie(r.statementQuantity, u.quantity));
+      const liveDated = (u) => {
+        const r = rollOf(u);
+        if (r) return r.quantity === 0 || !!r.heldPurchases;
+        return recovered.some((x) => x.accountId === u.accountId && x.isin === u.isin && tie(x.quantity, u.quantity) && x.heldPurchases);
+      };
+      for (const r of rolls) {
+        if (r.report?.sheet !== "Mutual Funds" || !(r.quantity > 0) || !r.heldPurchases) continue;
+        const u = unvalued.find((x) => x.accountId === r.accountId && x.isin === r.isin && tie(x.quantity, r.statementQuantity));
+        if (!u) continue;
+        const lines = unvalued.filter((x) => x.securityKey === u.securityKey && typeof x.quantity === "number" && x.quantity > 0);
+        if (lines.every(liveDated) && (byKey.get(u.securityKey) ?? []).every(datedLine)) dated.add(u.securityKey);
+      }
+    }
     // THE REVIEW'S OWN PRODUCT RANGES — the starts of every "Investment date /
     // range" it records (`src/data/reviewColumns.ts`). The page shows one on a
     // row nothing else dates, labelled "review" (`reviewedInvestmentDates`), and

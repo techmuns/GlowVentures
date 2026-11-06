@@ -13638,6 +13638,15 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 11287535.35,
     "realizedPnL": null,
     "costOfUnitsSold": null,
+    "rolledForward": {
+      "through": "2026-07-16",
+      "quantity": 0,
+      "costBasis": 0,
+      "realizedPnL": 12450217.21,
+      "costOfUnitsSold": 100000000,
+      "trades": 1,
+      "source": "adviser-report"
+    },
     "returnPct": 11.29,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -71881,8 +71890,8 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
  * MOTILAL DEMAT SHARE BALANCES CARRIED PAST THEIR STATEMENTS on the NSE/BSE
  * trades of MOPWM's transaction report (Stage 10iw, `rollMopwmShareTrades`).
  * LIVE BASIS ONLY: `depositoryShares.ts` reads them; every statement-basis
- * figure keeps the statement's own units. No fund row moves a quantity but a
- * sale the family confirmed (Stage 10ma, `rollMopwmFundSales`).
+ * figure keeps the statement's own units. Fund lines roll on the report's fund
+ * trades too (Stage 10me, `rollMopwmFundTrades`), up to a transfer of custody.
  */
 export const BOOK_SHARE_ROLLS: ShareRoll[] = [
   {
@@ -72128,6 +72137,61 @@ export const BOOK_SHARE_ROLLS: ShareRoll[] = [
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "isin": "INF084M01AB8",
+    "security": "Aditya Birla SL Balanced Advantage Reg-G",
+    "statementQuantity": 393095.951,
+    "asOf": "2026-07-31",
+    "through": "2026-09-23",
+    "quantity": 0,
+    "costBasis": 0,
+    "realizedPnL": 12775194.6,
+    "costOfUnitsSold": 31655996.54,
+    "trades": 1,
+    "report": {
+      "path": "source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx",
+      "asOf": "2026-10-23",
+      "sheet": "Mutual Funds",
+      "rows": [
+        21117,
+        21118,
+        21119,
+        21120
+      ]
+    }
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "isin": "INF740KA1SW3",
+    "security": "DSP Gold ETF-G",
+    "statementQuantity": 205000,
+    "asOf": "2026-07-31",
+    "through": "2026-09-23",
+    "quantity": 0,
+    "costBasis": 0,
+    "realizedPnL": -193893.88,
+    "costOfUnitsSold": 30193698.9,
+    "trades": 1,
+    "shareEvents": [
+      {
+        "type": "split",
+        "exDate": "2026-08-28",
+        "factor": 10
+      }
+    ],
+    "report": {
+      "path": "source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx",
+      "asOf": "2026-10-23",
+      "sheet": "Mutual Funds",
+      "rows": [
+        21164,
+        21165,
+        21166,
+        21167
+      ]
+    }
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
     "isin": "INF740KA1RE3",
     "security": "DSP Silver ETF-G",
     "statementQuantity": 123000,
@@ -72160,32 +72224,139 @@ export const BOOK_SHARE_ROLLS: ShareRoll[] = [
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
-    "isin": "INF740KA1SW3",
-    "security": "DSP Gold ETF-G",
-    "statementQuantity": 205000,
+    "isin": "INF179K01830",
+    "security": "HDFC Balanced Advantage Reg-G",
+    "statementQuantity": 37755.485,
     "asOf": "2026-07-31",
     "through": "2026-09-23",
     "quantity": 0,
     "costBasis": 0,
-    "realizedPnL": -193893.88,
-    "costOfUnitsSold": 30193698.9,
+    "realizedPnL": 17454930.03,
+    "costOfUnitsSold": 39499999.91,
     "trades": 1,
-    "shareEvents": [
-      {
-        "type": "split",
-        "exDate": "2026-08-28",
-        "factor": 10
-      }
-    ],
     "report": {
       "path": "source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx",
       "asOf": "2026-10-23",
       "sheet": "Mutual Funds",
       "rows": [
-        21164,
-        21165,
-        21166,
-        21167
+        21489,
+        21491,
+        21492,
+        21493,
+        21494,
+        21495
+      ]
+    }
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
+    "isin": "INF084M01AB8",
+    "security": "Aditya Birla SL Balanced Advantage Reg-G",
+    "statementQuantity": 183499.511,
+    "asOf": "2026-07-31",
+    "through": "2026-09-08",
+    "quantity": 7659.877,
+    "costBasis": 626149.65,
+    "realizedPnL": 5599573.95,
+    "costOfUnitsSold": 14373850.32,
+    "trades": 1,
+    "heldPurchases": {
+      "first": "2023-10-25",
+      "last": "2023-10-25",
+      "lots": 1
+    },
+    "report": {
+      "path": "source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx",
+      "asOf": "2026-10-23",
+      "sheet": "Mutual Funds",
+      "rows": [
+        14167,
+        14168
+      ]
+    }
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
+    "isin": "INF209K01VA3",
+    "security": "Aditya Birla SL Liquid Direct-G",
+    "statementQuantity": 264720.521,
+    "asOf": "2026-07-31",
+    "through": "2026-08-11",
+    "quantity": 1855.521,
+    "costBasis": 841080.95,
+    "realizedPnL": 870714.03,
+    "costOfUnitsSold": 119152919.24,
+    "trades": 1,
+    "transferredOn": "2026-10-01",
+    "heldPurchases": {
+      "first": "2026-07-01",
+      "last": "2026-07-01",
+      "lots": 1
+    },
+    "report": {
+      "path": "source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx",
+      "asOf": "2026-10-23",
+      "sheet": "Mutual Funds",
+      "rows": [
+        14179,
+        14180
+      ]
+    }
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838320",
+    "isin": "INF109K012B0",
+    "security": "ICICI Pru Balanced Advantage Direct-G",
+    "statementQuantity": 146856.943,
+    "asOf": "2026-07-31",
+    "through": "2026-09-09",
+    "quantity": 33256.943,
+    "costBasis": 2534179.06,
+    "realizedPnL": 2541305.74,
+    "costOfUnitsSold": 17468624.83,
+    "trades": 1,
+    "transferredOn": "2026-10-01",
+    "heldPurchases": {
+      "first": "2024-07-24",
+      "last": "2024-07-24",
+      "lots": 1
+    },
+    "report": {
+      "path": "source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx",
+      "asOf": "2026-10-23",
+      "sheet": "Mutual Funds",
+      "rows": [
+        15778,
+        15779,
+        15780
+      ]
+    }
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090032387399",
+    "isin": "INF174K01LC6",
+    "security": "Kotak Arbitrage Direct-G",
+    "statementQuantity": 613293.929,
+    "asOf": "2026-07-31",
+    "through": "2026-09-09",
+    "quantity": 32693.929,
+    "costBasis": 1396619.26,
+    "realizedPnL": 290474.18,
+    "costOfUnitsSold": 24802070.8,
+    "trades": 1,
+    "transferredOn": "2026-10-01",
+    "heldPurchases": {
+      "first": "2026-07-01",
+      "last": "2026-07-01",
+      "lots": 1
+    },
+    "report": {
+      "path": "source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx",
+      "asOf": "2026-10-23",
+      "sheet": "Mutual Funds",
+      "rows": [
+        60,
+        61
       ]
     }
   }
