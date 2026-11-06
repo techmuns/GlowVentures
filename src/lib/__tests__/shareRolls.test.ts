@@ -38,9 +38,12 @@ ok("every roll starts from a balance the statement records, or from none",
     || Object.values(BOOK_SHARE_MOVEMENTS).some((w) => w.accountId === r.accountId && w.isin === r.isin && w.closing === r.statementQuantity)));
 // Stage 10ma: the one fund the family confirmed sold. Every other fund row,
 // the 1 Oct "redemptions" among them, still waits for the family.
-ok("no fund row moves a quantity but the sale the family confirmed — DSP Silver ETF on Ankita's demat, to nil",
+ok("no fund row moves a quantity but the sales the family confirmed — DSP Silver and Gold ETF on Ankita's demat, to nil",
   JSON.stringify(BOOK_SHARE_ROLLS.filter((r) => r.isin.startsWith("INF")).map((r) => [r.accountId, r.isin, r.statementQuantity, r.quantity, r.through]))
-    === JSON.stringify([[ANKITA, "INF740KA1RE3", 123000, 0, "2026-10-13"]]));
+    === JSON.stringify([[ANKITA, "INF740KA1RE3", 123000, 0, "2026-10-13"], [ANKITA, "INF740KA1SW3", 205000, 0, "2026-09-23"]]));
+const gold = roll(ANKITA, "INF740KA1SW3");
+ok("...and DSP Gold ETF (Stage 10mb): 20,50,000 units after the split, redeemed whole on 23 Sep for ₹2,99,99,805.02",
+  gold?.costBasis === 0 && gold.costOfUnitsSold === 30193698.9 && gold.realizedPnL === -193893.88);
 const silver = roll(ANKITA, "INF740KA1RE3");
 ok("...carried through DSP's 28 Aug 1:10 split and redeemed whole: 12,30,000 units for ₹2,56,48,310.01",
   JSON.stringify(silver?.shareEvents) === JSON.stringify([{ type: "split", exDate: "2026-08-28", factor: 10 }])
