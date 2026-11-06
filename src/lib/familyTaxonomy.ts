@@ -137,13 +137,14 @@ import { placementOf } from "./familyPlacements";
 
 export type FamilyBasket =
   | "Stable Growth" | "Entrepreneurial Growth" | "Thematic & Tactical" | "Liquidity";
-export type FamilyAssetClass = "Equity" | "Debt" | "Alternate" | "Cash";
+/** Real Estate is the family's word for the LLPs' Nzuri shares (Stage 10mg; `REAL_ESTATE_KEYS`). */
+export type FamilyAssetClass = "Equity" | "Debt" | "Alternate" | "Real Estate" | "Cash";
 
 /** Reading order for the two new axes. Sections sort by this, never alphabetically. */
 export const BASKET_ORDER: readonly FamilyBasket[] =
   ["Stable Growth", "Entrepreneurial Growth", "Thematic & Tactical", "Liquidity"];
 export const FAMILY_CLASS_ORDER: readonly FamilyAssetClass[] =
-  ["Equity", "Debt", "Alternate", "Cash"];
+  ["Equity", "Debt", "Alternate", "Real Estate", "Cash"];
 
 /**
  * WHAT A HOLDING THE FAMILY HAS NOT CLASSIFIED IS CALLED, and it is deliberately
@@ -503,7 +504,8 @@ export type Resolved<T> = { value: T; source: TaxonomySource; reviewProduct: str
  *     which the review files Stable Growth without exception.
  *   - Vantage Oak (a privately placed AIF) and both Nzuri lines (a Pune office
  *     developer's unlisted equity and preference shares): private capital,
- *     which the review files Alternate / Entrepreneurial Growth.
+ *     which the review files Alternate / Entrepreneurial Growth. The Nzuri
+ *     lines' asset class became Real Estate on the family's word (Stage 10mg).
  */
 export const FAMILY_SAID_CLASS: Readonly<Record<string, FamilyAssetClass>> = {
   "sec:franklin-india-credit-aif-scheme-i-unit-class-db2": "Debt",
@@ -511,8 +513,10 @@ export const FAMILY_SAID_CLASS: Readonly<Record<string, FamilyAssetClass>> = {
   "sec:kotak-flexi-cap-fund-direct-growth": "Equity",
   "sec:icici-prudential-nifty-100-low-volatility-30-etf-fof-direct-plan-growth": "Equity",
   "sec:vof-i-class-a2": "Alternate",
-  "sec:nzuri-pune-knowledge-park": "Alternate",
-  "sec:nzuri-pune-knowledge-park-private-limited-pref-24sp46": "Alternate",
+  // Real Estate since Stage 10mg ("show their Nzuri … holdings under Real
+  // Estate"); the basket below is unchanged.
+  "sec:nzuri-pune-knowledge-park": "Real Estate",
+  "sec:nzuri-pune-knowledge-park-private-limited-pref-24sp46": "Real Estate",
 };
 
 /** …and their basket, on the same word. Franklin is absent: "in basket you can show it as not classified". */

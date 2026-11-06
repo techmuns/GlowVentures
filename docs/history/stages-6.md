@@ -1373,6 +1373,13 @@ Codex's review of #352, verified against the code and the book:
 - `weightBase(book, sections)` in `src/lib/privateBook.ts` totals value and cost over the bands the selector draws (same basis as `privateValue` / `privateCost`: valued holdings, each once, a costless one named). Companies now reads 6.9% + 93.1% at cost, Funds 100%, Both unchanged. The headings name the filter's own total.
 - `privateBook.test.ts` [F] and check:pages `PM_WEIGHT_SHOWN_CHECK` (on `private-market-default`, `-show-funds`, `-folios`): the drawn bands' weights add to 100% at value and at cost under every filter.
 
+### Stage 10mg — The LLPs' Nzuri shares are Real Estate
+
+- *"Glowterra LLP and Glowsphere LLP: show their Nzuri Pune Knowledge Park holdings under Real Estate — as line items on the Real Estate tab and as real-estate exposure on the Category / Asset class views, counted once in the total."*
+- `REAL_ESTATE_KEYS` in `src/lib/analytics.ts` is the one list (the two Nzuri keys). `holdingBucket` files them under `REAL_ESTATE_BUCKET` after cash and before the at-cost section, and `FAMILY_SAID_CLASS` gives them the family's new class, Real Estate (`FAMILY_CLASS_ORDER`: Equity, Debt, Alternate, Real Estate, Cash). The basket stays Entrepreneurial Growth. The same four positions move: Category's at-cost section drops ₹63.50 Cr and Real Estate shows ₹63.50 Cr. Both axes still add to the same NAV. The section is still at cost, so it shows no gain and `costCoversSet` refuses its return. Real Estate is not a Category move target. The Monitor band links to `/real-estate`.
+- Real Estate lists the four lines (`data-book-holding`) under the property rows. They come from the scoped `portfolio`, not the property store, and cannot be edited there. Value and cost add into the tiles and the footer once each ("N holdings via entities"). Appreciation, tax, rent and the property fields render `—` with their reasons, and every total that leaves the holdings out says so in its hover. A property filter hides them; search matches them.
+- Tests: `familyTaxonomy.test.ts` (Real Estate on both axes, nothing else filed there), `familyPlacements` and `portfolioExcel` list five classes. check:pages re-derives the bucket off `REAL_ESTATE_KEYS` in its five copies of `holdingBucket`, adds Real Estate to the asset-class sections, and gives Morning CIO's sweep a tenth allocation slot (`BUCKET_SLOTS`).
+
 ### Stage 10mh — Green Lantern: the account's own tape rolls the whole mandate
 
 *"Yes, do Green Lantern"* — the family, 6 Nov 2026, on Stage 10me's open item.

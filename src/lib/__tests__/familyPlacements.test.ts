@@ -144,7 +144,7 @@ console.log("── a mandate moves whole, on the category axis too ──");
 
 console.log("── the tabs a row can be moved to ──");
 {
-  ok("asset class offers the family's four", moveTargetsFor("assetClass", "Alternate").join("|") === "Equity|Debt|Alternate|Cash");
+  ok("asset class offers the family's five", moveTargetsFor("assetClass", "Alternate").join("|") === "Equity|Debt|Alternate|Real Estate|Cash");
   ok("basket offers the four baskets", moveTargetsFor("basket", UNCLASSIFIED).length === 4);
   ok("no row is moved INTO Not classified", !moveTargetsFor("assetClass", UNCLASSIFIED).includes(UNCLASSIFIED));
   ok("a security is never moved into PMS mandates or the at-cost heading",
