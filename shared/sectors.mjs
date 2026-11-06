@@ -246,6 +246,11 @@ export const SECTOR_MAP = {
   // This book's rule is that the family's OWN statement wins wherever it has
   // one, so a provider that disagrees keeps its answer and this fills a gap.
   "Media, Entertainment & Publication": "Communication Services",
+  // NSE's conglomerate heading, at both its Sector and Broad Industry level
+  // (3M India, Godrej Industries — Stage 10md). GICS files conglomerates under
+  // Industrials ("Industrial Conglomerates"). Listed in full, so the clipped
+  // "Diversified FMCG" / "Diversified Metals" keep their own exact entries.
+  "Diversified": "Industrials",
 
   // ── The GICS names themselves, which are their own answer ──────────────────
   //

@@ -40,6 +40,7 @@ import { UNCLASSIFIED } from "@/lib/sectors";
 import { lookthroughCompanies } from "@/lib/recordedHoldings";
 import NSE_SYMBOLS from "@/data/nseSymbols.json";
 import SCREENER from "@/data/screenerSectors.json";
+import SCREENER_KEYS from "@/data/screenerKeys.json";
 
 let fails = 0;
 const ok = (name: string, pass: boolean, detail = "") => {
@@ -80,12 +81,21 @@ const sectorOf = (m: ReturnType<typeof companySectorIndex>, k: string) => m.get(
 
 console.log("\n── where the filings move a held company's sector, the filing tier is why ──");
 const differ = held.filter((k) => sectorOf(withFilings, k) !== sectorOf(withoutFilings, k));
-const bookSectored = (k: string) => stocks.some((p) => p.securityKey === k && !!p.sector && p.sector !== UNCLASSIFIED);
-ok("every held company the filings move is placed BY the filing, over no statement's sector",
-  differ.every((k) => withFilings.get(k)?.from === "disclosure" && !bookSectored(k)),
+// Stage 10md: screener.in places every company it has a page for, so a filing
+// can only move one it has none for.
+const SYM = NSE_SYMBOLS as Record<string, string>;
+const VENDOR = SCREENER as Record<string, { gics?: string | null }>;
+const VENDOR_KEYS = SCREENER_KEYS as Record<string, string>;
+const vendorSector = (k: string): string | null => {
+  const symbol = stocks.find((p) => p.securityKey === k && !!p.symbol)?.symbol ?? SYM[k] ?? null;
+  const g = (symbol ? VENDOR[symbol]?.gics : null) ?? (VENDOR_KEYS[k] ? VENDOR[VENDOR_KEYS[k]]?.gics : null);
+  return g && g !== UNCLASSIFIED ? g : null;
+};
+ok("every held company the filings move is placed BY the filing, and screener.in has no page for it",
+  differ.every((k) => withFilings.get(k)?.from === "disclosure" && !vendorSector(k)),
   differ.map((k) => `${k}: ${sectorOf(withoutFilings, k)} → ${sectorOf(withFilings, k)} (${withFilings.get(k)?.from})`).join("; ") || "none");
-ok("…and the November 2026 case is one of them: Sterlite Technologies, which is why the Monitor loads the filings on every axis",
-  differ.includes("sterlite-technologies"), differ.join(", "));
+ok("…and Sterlite Technologies, the November 2026 case, is screener.in's whether or not the filings load",
+  !differ.includes("sterlite-technologies") && withoutFilings.get("sterlite-technologies")?.from === "vendor", differ.join(", ") || "none moved");
 /**
  * LOAD-BEARING: the filings DO place companies — just none this book holds that
  * the other tiers miss. A store that answered with nothing would satisfy the
@@ -94,19 +104,13 @@ ok("…and the November 2026 case is one of them: Sterlite Technologies, which i
 const placedByFilings = [...withFilings.values()].filter((x) => x.from === "disclosure").length;
 ok("the filings place companies of their own (so the premise is a measurement, not an empty store)", placedByFilings > 0, `${placedByFilings}`);
 
-console.log("\n── tiers 1 and 3, re-expressed from the book and the two committed maps ──");
-const SYM = NSE_SYMBOLS as Record<string, string>;
-const VENDOR = SCREENER as Record<string, { gics?: string | null }>;
-const expected = (k: string): string => {
-  const rows = stocks.filter((p) => p.securityKey === k);
-  const book = rows.find((p) => !!p.sector && p.sector !== UNCLASSIFIED);
-  if (book) return book.sector;
-  const symbol = rows.find((p) => !!p.symbol)?.symbol ?? SYM[k] ?? null;
-  const g = symbol ? VENDOR[symbol]?.gics : null;
-  return g && g !== UNCLASSIFIED ? g : UNCLASSIFIED;
-};
+console.log("\n── screener.in, then the statement, re-expressed from the book and the committed maps ──");
+const expected = (k: string): string =>
+  vendorSector(k)
+  ?? stocks.find((p) => p.securityKey === k && !!p.sector && p.sector !== UNCLASSIFIED)?.sector
+  ?? UNCLASSIFIED;
 const mismatch = held.filter((k) => expected(k) !== sectorOf(withoutFilings, k));
-ok("every held company's sector is its statement's, else screener.in's, else Unclassified", mismatch.length === 0,
+ok("every held company's sector is screener.in's, else its statement's, else Unclassified", mismatch.length === 0,
   mismatch.slice(0, 6).map((k) => `${k}: index ${sectorOf(withoutFilings, k)} vs ${expected(k)}`).join("; "));
 /**
  * AND THE COLUMN'S WHOLE REASON FOR CHANGING: the index places company shares

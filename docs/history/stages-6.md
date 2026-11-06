@@ -1325,6 +1325,28 @@ Codex's review of #352, verified against the code and the book:
 - Aarti's DSP Gold (1201090012838335, 11,95,000 → 1,19,50,000) is untouched and still valued; her folio 470582 shows no sale.
 - Tests: the split-mechanics suites read Ankita's lines without the rolls, and assert only Aarti still holds DSP Gold.
 
+### Stage 10md — Sectors: screener.in for every company; Sector Composition counts equity only
+
+*"Make sure to use same sector classification for all the holdings, for eg. if you're using sector classification based on screener.in then every holding should be based on it only"* and *"in sector composition we need to show only equity asset class exposure in sectors … gold/silver/debt holdings … should not be included"* — the family, 6 Nov 2026.
+
+- **One classification.** `companyExposure` placed a company by the first source that answered: its statement (each platform's own taxonomy), then a fund's AMFI industry, then screener.in. Before: 90 by a statement, 327 by a filing, 57 by screener, 174 issuers unplaced (₹43 Cr). Now screener.in places every company it has a page for. A fund's filing places a company only where screener has no page, and the statement only where neither does.
+- **`npm run build-sectors` asks about every company the page can draw.** `scripts/lib/sectorUniverse.ts` runs `companyExposure` itself over the book, the depository's funds and shares, and every equity line the funds disclose (550 companies). Each is joined to a listing in this order: the app's symbol, exact ISIN in NSE's mainboard/SME masters, a unique issuer code, a unique `securityKeyOf` name, or the reviewed `LISTED_AS` table (BSE-only listings such as Yash Highvoltage, Sotefin Bharat, NSE India's own BSE listing 544937; renames such as Affle 3i and LTM; listed REITs/InvITs). Each page must echo its NSE symbol or BSE code, or agree on name. 542 of 550 are placed. `src/data/screenerKeys.json` carries company key → listing for the ones the app's symbol does not reach.
+- **GICS comes from screener's Broad Industry**, which is the AMFI industry list funds file under, so a filing-placed company and a screener-placed one go through the same `shared/sectors.mjs` entry. The Sector level is used only where the map has no entry. `"Diversified"` → Industrials was added (3M India, Godrej Industries).
+- **Sector Composition is the equity sleeve** (`equityOnly` in `sectorRollup.ts`). A Consolidated row's derived half is `derivedEquity`: no debt paper, no CD/CP by ISIN type, no liquid/overnight scheme, and no balanced-advantage equity disclosed gross of hedges. Debt-only issuers (T-bills, NABARD, bank CDs) are no longer rows. What is left out (`fundsLeftOut`) is named under "Not on this page" and in the derived figure's hover. The figure is now "Equity their funds disclose". The Returns tab's sector attribution reads the same sets.
+- On the committed book: 425 issuers on Consolidated, 421 placed by screener.in, 4 unplaced (₹0.76 Cr: HEG Graphite, Gujarat Gas, GSPL India Transco, Talwandi Sabo — demerged or merged, no classified page). Direct Equity: 28 of 28 by screener.in.
+- Captions on Family & Entities, Data Refresh, Monitor and Returns name the new order. check-pages' tier re-expressions (`placeOf`, `MANDATE_SECTOR_BOOK`, XA-11, the Monitor index) read screener first. `SECURITY_AXIS_BOOK.sector` carries the equity sleeve the page is held to.
+- Tests: `screenerSectors.test.ts` (Broad-Industry mapping, BSE-code joins), `monitorSectors.test.ts` (a filing moves only a company screener has no page for).
+
+### Stage 10mc — Realised and unrealised: gains and losses apart
+
+*"Show realised losses separately and confirm to Yamini that realised gain is net of them"* — the family, 6 Nov 2026.
+
+- **Checked: realised is net on every account.** Every record behind it is signed: a statement's realised line (5 PMS accounts on FYTD), a fund folio's FIFO `realizedPnL` per scheme redeemed in the window (12), and since investment each holding's FIFO result or a whole mandate's capital residual (105). FYTD to 6 Nov: net +₹4.98 Cr = gains +₹7.04 Cr − losses ₹2.06 Cr.
+- `capitalBridge` adds `realisedGains / realisedLosses / unrealisedGains / unrealisedLosses`: each record's signed figure by sign, at the finest record that carries it. A fund record keeps `realisedBy` per scheme.
+- **Capital gain lots.** `realisedByYear` entries now carry `gains` and `losses` (Σ of lots by sign; `gains + losses = st + lt`). Where a statement's FY or since-inception lots add to its realised line within ₹1, the bridge reads them (`lotsBehind`). Carnelian 3517383's −₹17.6 L FYTD is +₹1.88 Cr lot gains and −₹2.06 Cr lot losses, 29 lots. Before this, a per-account split would have shown its loss as −₹17.6 L.
+- The Gain breakdown shows Realised · net and Unrealised · net, each with Gains and Losses beneath it (`data-bridge-part="realised-gains"` and the other three). By account adds Realised gains and Realised losses columns, and the total ties. The info card names every loss-making record and every statement whose realised is one line with no lots (Goldstandard 100022, 100023).
+- Window unrealised is still an account's residual, so its gains and losses are netted per account. Since investment they are per holding or mandate.
+
 ### Stage 10me — Later transactions update the holdings: MOPWM's fund trades and full exits
 
 *"why were we not considering the sale transactions to update the holdings data? … If we have transaction data that shows buy or sale transactions then those should be considered to update the portfolio"* — the family, 6 Nov 2026.

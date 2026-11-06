@@ -3046,7 +3046,7 @@ export function PortfolioMonitor() {
   const sectorCell = (value: string, key: string, ps: readonly Position[], held: boolean) => {
     if (value !== UNCLASSIFIED_SECTOR) return <span data-sector={value}>{value}</span>;
     const sym = ps.map((x) => symbolFor(x)).find(Boolean) ?? symbolForKey(key);
-    const why = `Unclassified — ${held ? "no statement in this book prints a sector for this company, " : ""}no fund's portfolio filing that names it prints an industry, and ${sym ? `screener.in publishes none for NSE: ${sym}` : "it resolves no NSE symbol, so screener.in cannot be asked"}. It is left unplaced rather than given a sector we would have to guess.`;
+    const why = `Unclassified — ${sym ? `screener.in publishes no sector for ${sym}` : "no NSE or BSE listing joins to it, so screener.in cannot be asked"}, no fund's portfolio filing that names it prints an industry${held ? ", and no statement in this book prints one" : ""}. It is left unplaced rather than given a sector we would have to guess.`;
     return <span data-sector={value} title={why}>{value}</span>;
   };
   /** Why a fund's Sector cell is a dash, true of the kind of fund it is. */

@@ -38843,37 +38843,49 @@ export const BOOK_CAPITAL_GAINS: EntityCG[] = [
         "fy": "2019-04-01",
         "st": -210999.52,
         "lt": 0,
-        "lots": 9
+        "lots": 9,
+        "gains": 19022.86,
+        "losses": -230022.38
       },
       {
         "fy": "2020-04-01",
         "st": 140559.49,
         "lt": 1093669.23,
-        "lots": 64
+        "lots": 64,
+        "gains": 1480521.63,
+        "losses": -246292.91
       },
       {
         "fy": "2021-04-01",
         "st": 7302.64,
         "lt": 3103379.61,
-        "lots": 88
+        "lots": 88,
+        "gains": 3158381.88,
+        "losses": -47699.63
       },
       {
         "fy": "2022-04-01",
         "st": 0,
         "lt": 841964.33,
-        "lots": 76
+        "lots": 76,
+        "gains": 1095925.98,
+        "losses": -253961.65
       },
       {
         "fy": "2023-04-01",
         "st": -141836.15,
         "lt": 4565121.91,
-        "lots": 289
+        "lots": 289,
+        "gains": 6105040.81,
+        "losses": -1681755.05
       },
       {
         "fy": "2024-04-01",
         "st": 5748505.27,
         "lt": 27970406.61,
-        "lots": 575
+        "lots": 575,
+        "gains": 34955364.19,
+        "losses": -1236452.31
       }
     ],
     "source": "ask-investment-managers-limited-10032723-2026-09-08-capital-gain"
@@ -38894,37 +38906,49 @@ export const BOOK_CAPITAL_GAINS: EntityCG[] = [
         "fy": "2019-04-01",
         "st": -109728.1,
         "lt": 0,
-        "lots": 7
+        "lots": 7,
+        "gains": 47141.38,
+        "losses": -156869.48
       },
       {
         "fy": "2020-04-01",
         "st": 188293.15,
         "lt": 1151451.39,
-        "lots": 47
+        "lots": 47,
+        "gains": 1743802.95,
+        "losses": -404058.41
       },
       {
         "fy": "2021-04-01",
         "st": 52448.46,
         "lt": 4741623.73,
-        "lots": 80
+        "lots": 80,
+        "gains": 4848922.46,
+        "losses": -54850.27
       },
       {
         "fy": "2022-04-01",
         "st": -10075.5,
         "lt": 990750.37,
-        "lots": 67
+        "lots": 67,
+        "gains": 1492882.58,
+        "losses": -512207.71
       },
       {
         "fy": "2023-04-01",
         "st": -357374.61,
         "lt": 7915850.11,
-        "lots": 293
+        "lots": 293,
+        "gains": 10684687.19,
+        "losses": -3126211.69
       },
       {
         "fy": "2024-04-01",
         "st": 10242857.72,
         "lt": 47838321.49,
-        "lots": 547
+        "lots": 547,
+        "gains": 60068055.49,
+        "losses": -1986876.28
       }
     ],
     "source": "ask-investment-managers-limited-10034025-2026-09-08-capital-gain"
@@ -39029,7 +39053,9 @@ export const BOOK_CAPITAL_GAINS: EntityCG[] = [
         "fy": "2026-04-01",
         "st": -16568583.12,
         "lt": 14805159.7,
-        "lots": 29
+        "lots": 29,
+        "gains": 18787759.57,
+        "losses": -20551182.99
       }
     ],
     "source": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-09-30-capital-gain"
@@ -39106,7 +39132,9 @@ export const BOOK_CAPITAL_GAINS: EntityCG[] = [
         "fy": "2026-04-01",
         "st": -710831.73,
         "lt": 147393.06,
-        "lots": 84
+        "lots": 84,
+        "gains": 945820.98,
+        "losses": -1509259.65
       }
     ],
     "source": "green-lantern-capital-llp-510854-2026-07-27-capital-gain"
@@ -39127,7 +39155,9 @@ export const BOOK_CAPITAL_GAINS: EntityCG[] = [
         "fy": "2026-04-01",
         "st": -1382686.39,
         "lt": 202985.8,
-        "lots": 83
+        "lots": 83,
+        "gains": 1888055.29,
+        "losses": -3067755.88
       }
     ],
     "source": "green-lantern-capital-llp-510861-2026-07-27-capital-gain"
@@ -39568,7 +39598,9 @@ export const BOOK_CAPITAL_GAINS: EntityCG[] = [
         "fy": "2026-04-01",
         "st": 1241115.44,
         "lt": -539913.5,
-        "lots": 10
+        "lots": 10,
+        "gains": 1328301.21,
+        "losses": -627099.27
       }
     ],
     "source": "lkp-securities-98245-2026-07-31-capital-gain"
@@ -39589,13 +39621,17 @@ export const BOOK_CAPITAL_GAINS: EntityCG[] = [
         "fy": "2024-04-01",
         "st": -5154975.71,
         "lt": 0,
-        "lots": 39
+        "lots": 39,
+        "gains": 92217.23,
+        "losses": -5247192.94
       },
       {
         "fy": "2025-04-01",
         "st": 4902035.35,
         "lt": 0,
-        "lots": 93
+        "lots": 93,
+        "gains": 10371594.9,
+        "losses": -5469559.55
       }
     ],
     "source": "marathon-trends-advisory-pvt-ltd-5110758-2026-09-09-capital-gain"
@@ -39616,13 +39652,17 @@ export const BOOK_CAPITAL_GAINS: EntityCG[] = [
         "fy": "2024-04-01",
         "st": -3174835.72,
         "lt": 0,
-        "lots": 16
+        "lots": 16,
+        "gains": 0,
+        "losses": -3174835.72
       },
       {
         "fy": "2025-04-01",
         "st": 15883483.78,
         "lt": 0,
-        "lots": 99
+        "lots": 99,
+        "gains": 25578521.76,
+        "losses": -9695037.98
       }
     ],
     "source": "marathon-trends-advisory-pvt-ltd-5110837-2026-09-09-capital-gain"
@@ -39657,7 +39697,9 @@ export const BOOK_CAPITAL_GAINS: EntityCG[] = [
         "fy": "2026-04-01",
         "st": 0,
         "lt": -372054.5,
-        "lots": 1
+        "lots": 1,
+        "gains": 0,
+        "losses": -372054.5
       }
     ],
     "source": "molecule-ventures-llp-7810404-2026-06-30-capital-gain"
@@ -40000,19 +40042,25 @@ export const BOOK_CAPITAL_GAINS: EntityCG[] = [
         "fy": "2024-04-01",
         "st": 330312.77,
         "lt": 0,
-        "lots": 7
+        "lots": 7,
+        "gains": 330312.77,
+        "losses": 0
       },
       {
         "fy": "2025-04-01",
         "st": 2610021.99,
         "lt": -837876.97,
-        "lots": 42
+        "lots": 42,
+        "gains": 4477189.78,
+        "losses": -2705044.76
       },
       {
         "fy": "2026-04-01",
         "st": 5150326.34,
         "lt": 4437724.29,
-        "lots": 36
+        "lots": 36,
+        "gains": 9926212.26,
+        "losses": -338161.63
       }
     ],
     "source": "svan-investment-managers-llp-8710067-2026-11-04-capital-gain"
@@ -40033,19 +40081,25 @@ export const BOOK_CAPITAL_GAINS: EntityCG[] = [
         "fy": "2024-04-01",
         "st": 41474.96,
         "lt": 0,
-        "lots": 1
+        "lots": 1,
+        "gains": 41474.96,
+        "losses": 0
       },
       {
         "fy": "2025-04-01",
         "st": 99948.39,
         "lt": 386302.31,
-        "lots": 36
+        "lots": 36,
+        "gains": 2662873.41,
+        "losses": -2176622.71
       },
       {
         "fy": "2026-04-01",
         "st": 3131995.29,
         "lt": 3359533.88,
-        "lots": 32
+        "lots": 32,
+        "gains": 6683767.53,
+        "losses": -192238.36
       }
     ],
     "source": "svan-investment-managers-llp-8710090-2026-11-04-capital-gain"
@@ -40094,7 +40148,9 @@ export const BOOK_CAPITAL_GAINS: EntityCG[] = [
         "fy": "2026-04-01",
         "st": 8760104.31,
         "lt": 3169080.6,
-        "lots": 5
+        "lots": 5,
+        "gains": 11929184.91,
+        "losses": 0
       }
     ],
     "source": "v-e-c-assago-capital-management-llp-128004-2026-10-07-capital-gain"
@@ -40115,7 +40171,9 @@ export const BOOK_CAPITAL_GAINS: EntityCG[] = [
         "fy": "2026-04-01",
         "st": 11221506.09,
         "lt": 0,
-        "lots": 3
+        "lots": 3,
+        "gains": 11221506.09,
+        "losses": 0
       }
     ],
     "source": "v-e-c-assago-capital-management-llp-128005-2026-08-13-capital-gain"

@@ -1301,7 +1301,9 @@ export type EntityCG = {
    * the tax estimate reads the year it is about from here rather than taxing
    * every year in the window. Absent on a row with no capital gain statement.
    */
-  realisedByYear?: { fy: string | null; st: number; lt: number; lots: number }[];
+  realisedByYear?: { fy: string | null; st: number; lt: number; lots: number;
+    /** Σ of the lots sold at a gain, and of those sold at a loss (≤ 0): `gains + losses = st + lt` (Stage 10mc). */
+    gains?: number; losses?: number }[];
   /** docKey of the capital gain statement these lots came from. */
   source?: string | null;
   /** Set when there is no statement: why, in one line, for the row to show. */

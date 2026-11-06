@@ -152,21 +152,28 @@ const sum = (xs) => xs.reduce((a, b) => a + b, 0);
  * account's realised total. A lot with no sale date is counted in no year and
  * carried as its own entry (`fy: null`), so the identity still holds and the
  * page can name what it could not place.
+ *
+ * Each year also keeps its lots' GAINS and LOSSES apart (Stage 10mc): a lot's
+ * result is its short- plus long-term figure, and `gains + losses = st + lt`.
+ * The Returns tab's gain breakdown reads them where they make the statement's
+ * own realised line, so a mandate's realised losses are not hidden in its net.
  */
 function realisedByYearOf(lots) {
   const by = new Map();
   for (const l of lots) {
     const d = typeof l.saleDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(l.saleDate) ? l.saleDate : null;
     const fy = d ? `${Number(d.slice(5, 7)) >= 4 ? Number(d.slice(0, 4)) : Number(d.slice(0, 4)) - 1}-04-01` : null;
-    const e = by.get(fy) ?? { fy, st: 0, lt: 0, lots: 0 };
-    e.st += isNum(l.shortTerm) ? l.shortTerm : 0;
-    e.lt += isNum(l.longTerm) ? l.longTerm : 0;
+    const e = by.get(fy) ?? { fy, st: 0, lt: 0, lots: 0, gains: 0, losses: 0 };
+    const st = isNum(l.shortTerm) ? l.shortTerm : 0, lt = isNum(l.longTerm) ? l.longTerm : 0;
+    e.st += st;
+    e.lt += lt;
     e.lots += 1;
+    if (st + lt > 0) e.gains += st + lt; else e.losses += st + lt;
     by.set(fy, e);
   }
   return [...by.values()]
     .sort((a, b) => (a.fy ?? "").localeCompare(b.fy ?? ""))
-    .map((e) => ({ fy: e.fy, st: r2(e.st), lt: r2(e.lt), lots: e.lots }));
+    .map((e) => ({ fy: e.fy, st: r2(e.st), lt: r2(e.lt), lots: e.lots, gains: r2(e.gains), losses: r2(e.losses) }));
 }
 
 // ── Load ─────────────────────────────────────────────────────────────────────

@@ -177,8 +177,9 @@ One line per area; the history files explain each in depth.
   (`concentrationNames`), never by share-class key (Stage 10fz).
 - `src/lib/accounts.ts` (registry), `securityKey.ts` (join key), `securityLabel.ts`
   (one name per key), `schemeLabel.ts` (AMFI scheme names by ISIN), `sectors.ts`
-  (three sector tiers: statement → fund filing by ISIN → screener.in by symbol;
-  lower tiers only fill).
+  (one classification: screener.in for every listed company, by NSE symbol or
+  BSE code, off its Broad Industry; a fund filing, then the statement, only where it
+  has no page — Stage 10md; Sector Composition counts equity lines only).
 - `src/lib/groupAxis.ts` (Category / Asset class / Basket / All Securities axes),
   `familyTaxonomy.ts` (the family's review-cited baskets and asset classes),
   `drilldown.ts` (which holdings are behind a figure; `/holdings`).
