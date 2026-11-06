@@ -17832,6 +17832,26 @@ const PM_WEIGHT_OWNERS_CHECK = ["by owner, the Weight heading says what its colu
   const back = Number(/takes back ([\d.]+)%/i.exec(title)?.[1]);
   return once > 0 && Math.abs(sum - (printed / once) * 100) <= 0.06 && Math.abs(back - (gap / once) * 100) <= 0.06;
 }];
+/**
+ * THE WEIGHTS ARE OF THE BANDS SHOWN. *"When we are seeing only the companies
+ * filter or the funds filter then the weightage … should be measured for that
+ * particular filter only."* Companies read 77.2% + 22.8% of the whole private
+ * book's cost beside a fund band that was not drawn — so the drawn bands' own
+ * weights must add to 100%, at value and at cost, under every filter, and the
+ * heading must name whose total it divides by.
+ */
+const PM_WEIGHT_SHOWN_CHECK = ["the drawn bands' Weight at value and at cost each add to 100%, and the heading names the filter's own total", (t, ctx) => {
+  const pv = ctx?.pmView;
+  if (!pv?.show || !pv.sections?.length) return false;
+  const noun = { companies: /private companies' value/, funds: /private funds' value/, both: /private market value/ }[pv.show];
+  if (!noun?.test(pv.headTitles?.weight ?? "")) return false;
+  for (const col of ["weight", "weightCost"]) {
+    if (!pv.heads.includes(col)) { if (col === "weight") return false; continue; }
+    const w = pv.sections.map((s) => Number(/(-?[\d.]+)\s*%/.exec(s.cells?.[col]?.text ?? "")?.[1])).filter(Number.isFinite);
+    if (!w.length || Math.abs(w.reduce((a, b) => a + b, 0) - 100) > 0.05 * w.length + 0.01) return false;
+  }
+  return true;
+}];
 /** …and on the fund view, where the fund rows add to 100%, it does not say so. */
 const PM_WEIGHT_FUNDS_CHECK = ["by fund, the Weight heading claims no column total above 100% (PM-D1)", (t, ctx) => {
   const title = ctx?.pmView?.headTitles?.weight;
@@ -29103,7 +29123,7 @@ const INVARIANTS = {
   "private-market": [
     // [D] — DL-16, PM-D1, PM-D2 and the double count's holdings (the two tile
     // claims are FULL_STRIP_ONLY: their tiles are not on the default strip).
-    PM_DEPLOYED_CHECK, PM_PNL_HOVER_CHECK, PM_WEIGHT_FUNDS_CHECK, PM_REALISED_RUPEES_CHECK, PM_RAW_HOLDINGS_CHECK, PM_IRR_TILE_CHECK,
+    PM_DEPLOYED_CHECK, PM_PNL_HOVER_CHECK, PM_WEIGHT_FUNDS_CHECK, PM_WEIGHT_SHOWN_CHECK, PM_REALISED_RUPEES_CHECK, PM_RAW_HOLDINGS_CHECK, PM_IRR_TILE_CHECK,
     /**
      * ── THE CLIENT ASKED WHAT TWO OF THESE TILES MEAN, AND THEN ASKED FOR THE
      *    ANSWER TO BE SHORT ────────────────────────────────────────────────────
@@ -30539,6 +30559,7 @@ const INVARIANTS = {
    */
   "private-market-default": [
     ...pmViewChecks("funds"),
+    PM_WEIGHT_SHOWN_CHECK,
     ["the fund / company selector offers companies, funds and both, and opens on companies", (t, ctx) => {
       const pv = ctx?.pmView;
       if (!pv) return false;
@@ -30573,6 +30594,7 @@ const INVARIANTS = {
   ],
   "private-market-show-funds": [
     ...pmViewChecks("funds"),
+    PM_WEIGHT_SHOWN_CHECK,
     ["on funds the table draws the fund sections only, and no total", (t, ctx) => {
       const pv = ctx?.pmView;
       if (!pv) return false;

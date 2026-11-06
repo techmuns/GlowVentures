@@ -53,7 +53,7 @@ import { isValuedByNoStatement, unvaluedAifFolios } from "@/lib/aifCategory";
 import fs from "node:fs";
 import path from "node:path";
 import { schemeCalls, callTotals } from "@/lib/capitalCalls";
-import { bookFolios, privateBook, figuresOf, privateBookFolios, privateMultiples, writtenOffNote, BOOK_SECTIONS, type BookFolio } from "@/lib/privateBook";
+import { bookFolios, privateBook, figuresOf, privateBookFolios, privateMultiples, writtenOffNote, weightBase, BOOK_SECTIONS, type BookFolio } from "@/lib/privateBook";
 import { BRAND_NAMES, brandNameOf } from "@/lib/brandNames";
 import type { SchemeCall } from "@/lib/capitalCalls";
 import type { Position } from "@/lib/types";
@@ -893,6 +893,29 @@ for (const run of RUNS) doubleCountHoldings(run);
   ok("some private fund strikes a NAV", struck > 0);
   ok("a band over several funds strikes none", byFund.sections.private.nav == null && !!byFund.sections.private.navWhy);
   for (const g of byFund.sections.atCost.groups) ok(`${g.label}: held at cost, so no NAV`, g.nav == null);
+}
+
+// ── [F] THE WEIGHTS ARE OF THE BANDS SHOWN ──────────────────────────────────
+{
+  // "When we are seeing only the companies filter or the funds filter then the
+  // weightage … should be measured for that particular filter only" — so each
+  // filter's rows weigh to 100% of their own bands, and Both is the whole book.
+  console.log("\n── weights: Companies and Funds each weigh against their own bands ──");
+  const all = weightBase(byFund, BOOK_SECTIONS);
+  near("Both's value base is the private value", all.value, byFund.privateValue);
+  near("Both's cost base is the private cost", all.cost, byFund.privateCost);
+  const cmp = weightBase(byFund, ["company", "atCost"]), fnd = weightBase(byFund, ["private", "unvalued"]);
+  ok("both filters have a subject on this book", cmp.value > 1 && fnd.value > 1);
+  near("Companies' value base is the two company bands'", cmp.value,
+    (byFund.sections.company.value ?? 0) + (byFund.sections.atCost.value ?? 0));
+  near("Funds' value base is the private funds band's", fnd.value, byFund.sections.private.value);
+  near("…and the two add to the whole", cmp.value + fnd.value, all.value);
+  near("…on cost too", (cmp.cost ?? 0) + (fnd.cost ?? 0), all.cost);
+  for (const [name, b, ids] of [["Companies", cmp, ["company", "atCost"]], ["Funds", fnd, ["private"]]] as const) {
+    const gs = ids.flatMap((id) => byFund.sections[id].groups);
+    near(`${name}: its rows' value weights add to 100%`, sum(gs.map((g) => ((g.value ?? 0) / b.value) * 100)), 100, 1e-6);
+    near(`${name}: its rows' cost weights add to 100%`, sum(gs.map((g) => ((g.cost ?? 0) / b.cost!) * 100)), 100, 1e-6);
+  }
 }
 
 if (fails) {

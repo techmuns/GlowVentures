@@ -1346,3 +1346,9 @@ Codex's review of #352, verified against the code and the book:
 - **Capital gain lots.** `realisedByYear` entries now carry `gains` and `losses` (Σ of lots by sign; `gains + losses = st + lt`). Where a statement's FY or since-inception lots add to its realised line within ₹1, the bridge reads them (`lotsBehind`). Carnelian 3517383's −₹17.6 L FYTD is +₹1.88 Cr lot gains and −₹2.06 Cr lot losses, 29 lots. Before this, a per-account split would have shown its loss as −₹17.6 L.
 - The Gain breakdown shows Realised · net and Unrealised · net, each with Gains and Losses beneath it (`data-bridge-part="realised-gains"` and the other three). By account adds Realised gains and Realised losses columns, and the total ties. The info card names every loss-making record and every statement whose realised is one line with no lots (Goldstandard 100022, 100023).
 - Window unrealised is still an account's residual, so its gains and losses are netted per account. Since investment they are per holding or mandate.
+
+### Stage 10mf — Private Market weights are of the filter shown
+
+- *"When we are seeing only the companies filter or the funds filter then the weightage of investments should be measured for that particular filter only."* Weight at value and Weight at cost divided every row by the whole private book, so under Companies the two company bands read 5.7% + 77.2% at cost (8.2% + 72.5% at value) beside a fund band that was not drawn.
+- `weightBase(book, sections)` in `src/lib/privateBook.ts` totals value and cost over the bands the selector draws (same basis as `privateValue` / `privateCost`: valued holdings, each once, a costless one named). Companies now reads 6.9% + 93.1% at cost, Funds 100%, Both unchanged. The headings name the filter's own total.
+- `privateBook.test.ts` [F] and check:pages `PM_WEIGHT_SHOWN_CHECK` (on `private-market-default`, `-show-funds`, `-folios`): the drawn bands' weights add to 100% at value and at cost under every filter.

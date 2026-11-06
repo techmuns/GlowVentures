@@ -51,7 +51,7 @@ import {
 import { ReturnMeasureSelect, useReturnMeasures } from "@/components/ReturnMeasureSelect";
 import { withReturnCols, returnAccessorsFor, returnColId } from "@/lib/returnColumns";
 import {
-  privateBookFolios, distributionLeftOutNote, privateBook, figuresOf, BOOK_SECTIONS, investmentIdentities, privateMultiples, writtenOffNote,
+  privateBookFolios, distributionLeftOutNote, privateBook, figuresOf, weightBase, BOOK_SECTIONS, investmentIdentities, privateMultiples, writtenOffNote,
   type BookFigures, type BookFolio, type BookGroup, type BookSectionId, type BrandFacts, type Overlap, type PrivateBook,
 } from "@/lib/privateBook";
 import { callTotals, callHistory } from "@/lib/capitalCalls";
@@ -1457,7 +1457,14 @@ export function PrivateMarket() {
       </td>
     </tr>
   );
-  const pct = (v: number | null) => (v == null || !(book.privateValue > 0) ? null : (v / book.privateValue) * 100);
+  /**
+   * THE WEIGHTS ARE OF THE BANDS SHOWN: under Companies a row's share of the
+   * private companies, under Funds of the private funds, under Both of the
+   * whole private book — so each filter's own rows add to 100%.
+   */
+  const base = weightBase(book, shown);
+  const baseNoun = show === "companies" ? "the private companies'" : show === "funds" ? "the private funds'" : "the private market";
+  const pct = (v: number | null) => (v == null || !(base.value > 0) ? null : (v / base.value) * 100);
   /**
    * BY OWNER THE WEIGHT COLUMN ADDS TO MORE THAN 100% (PM-D1), and its heading
    * says by how much and where it comes back. Every member's statement is
@@ -1466,15 +1473,15 @@ export function PrivateMarket() {
    * the foot of the section takes it back. The arithmetic is right; a column of
    * shares that adds to 129.9% under "Weight" needs its own hover to say so.
    */
-  const weightHeadTitle = `Of the private investments only: the row's value as a share of the private market value (${money(book.privateValue)}) — the same denominator on every row.`;
+  const weightHeadTitle = `Of the rows shown only: the row's value as a share of ${baseNoun} value (${money(base.value)}) — the same denominator on every row.`;
   /**
    * WEIGHT AT COST — the same rows on what was paid: the row's cost over the
-   * private book's cost. A holding that reports no cost is named here and in
+   * shown bands' cost. A holding that reports no cost is named here and in
    * its own cell, never weighed as nil.
    */
-  const pctCost = (v: number | null) => (v == null || !(book.privateCost != null && book.privateCost > 0) ? null : (v / book.privateCost) * 100);
-  const weightCostHeadTitle = `Of the private investments only: the row's cost as a share of the private book's cost (${money(book.privateCost)}) — the same denominator on every row.`
-    + (book.costless.length ? ` ${book.costless.length} valued ${book.costless.length === 1 ? "holding reports" : "holdings report"} no cost and ${book.costless.length === 1 ? "is" : "are"} outside it: ${book.costless.join("; ")}.` : "");
+  const pctCost = (v: number | null) => (v == null || !(base.cost != null && base.cost > 0) ? null : (v / base.cost) * 100);
+  const weightCostHeadTitle = `Of the rows shown only: the row's cost as a share of ${baseNoun} cost (${money(base.cost)}) — the same denominator on every row.`
+    + (base.costless.length ? ` ${base.costless.length} valued ${base.costless.length === 1 ? "holding reports" : "holdings report"} no cost and ${base.costless.length === 1 ? "is" : "are"} outside it: ${base.costless.join("; ")}.` : "");
 
   // ── WHICH RETURN A ROW SHOWS, AND SAYING WHICH ──────────────────────────────
   //
@@ -2409,7 +2416,7 @@ export function PrivateMarket() {
         noCapital: fig.capitalAccounts === 0 ? "no capital account on this page" : undefined,
         noValue: "no value",
         weight: 100,
-        weightCost: book.privateCost != null && book.privateCost > 0 ? 100 : null,
+        weightCost: base.cost != null && base.cost > 0 ? 100 : null,
         weightCostWhy: "no holding in the private book reports a cost",
         titles: extra.titles,
       }) as Record<string, ReactNode>} />
