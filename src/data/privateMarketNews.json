@@ -6,8 +6,8 @@
   "sourceCheckedOn": "2026-11-05",
   "capturedOn": "2026-11-05",
   "archive": {
-   "complete": false,
-   "pagesRead": 47,
+   "complete": true,
+   "pagesRead": 48,
    "pages": 48
   },
   "roundups": 571,
@@ -1014,7 +1014,7 @@
  },
  "headlines": {
   "via": "https://glow-central-research.tech-441.workers.dev/data/private-company-news.json",
-  "capturedOn": "2026-11-05",
+  "capturedOn": "2026-11-06",
   "windowDays": 120,
   "rows": [
    {

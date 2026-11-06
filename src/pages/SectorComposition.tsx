@@ -21,7 +21,7 @@ import { sectorSets, emptySector, type SectorRow } from "@/lib/sectorRollup";
 import { SectorReturnDetails } from "@/components/SectorReturnDetails";
 import { hasSectorReturnCost } from "@/lib/sectorReturnCoverage";
 import { fifoTotals } from "@/lib/fifo";
-import { companySymbol, type CompanyExposure } from "@/lib/lookthrough";
+import { companyListing, type CompanyExposure } from "@/lib/lookthrough";
 import { isArbitrageFund } from "@/lib/fundNavs";
 import { UNCLASSIFIED, GICS_SECTORS } from "@/lib/sectors";
 import { useViewParam, type ViewDef } from "@/components/ViewToggle";
@@ -117,10 +117,10 @@ const LIVE_CELL = "Recalculated from live prices. The cost basis is the statemen
 const unclassifiedWhy = (consolidatedView: boolean, mix?: IssuerMix) => {
   if (!consolidatedView) {
     return "Left unclassified rather than assigned a sector we would have to guess. These are shares in companies, so the sector "
-      + "exists; the statement simply does not report it. A depository prints an ISIN, a quantity and a rate and no industry at all.";
+      + "exists; no screener.in page could be joined to them, and the statement does not report one.";
   }
-  const base = "Left unclassified rather than assigned a sector we would have to guess: neither the family's own statement nor any "
-    + "fund disclosure that names these issuers printed one, and screener.in placed none of them.";
+  const base = "Left unclassified rather than assigned a sector we would have to guess: screener.in has no page that names these "
+    + "companies, and neither a fund disclosure nor the family's own statement prints an industry for them.";
   if (!mix) return base;
   const n = mix.shares + mix.debtOnly + mix.other;
   const parts = [
@@ -431,7 +431,7 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
    * cannot be sized here and sized differently there. `sectorSets` strikes
    * both, and the Returns tab's sector attribution reads the same (Stage 10gs).
    */
-  const { consEntries, directEntries, consSectors, directSectors } = useMemo(
+  const { consEntries, directEntries, consSectors, directSectors, fundsLeftOut } = useMemo(
     () => sectorSets(consolidated, accountIndex(portfolio.accounts), exposure), [consolidated, portfolio.accounts, exposure]);
 
   const entries = consolidatedView ? consEntries : directEntries;
@@ -563,10 +563,8 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
   const sleeveUnplaced = sleeveBySector.get(UNCLASSIFIED) ?? 0;
   const sleeveClassified = sleeveTotal - sleeveUnplaced;
   /** What the comparison leaves out of the family's side, by why (Consolidated only). */
-  const sleeveLeftOut = consolidatedView
-    ? { debtAndCash: entries.reduce((a, e) => a + Math.max(0, e.derived - e.derivedEquity - e.derivedGross), 0),
-        gross: entries.reduce((a, e) => a + e.derivedGross, 0) }
-    : { debtAndCash: 0, gross: 0 };
+  /** What the funds disclose besides equity (`fundsLeftOut`) is out of every sector on both views (Stage 10md). */
+  const sleeveLeftOut = consolidatedView ? fundsLeftOut : { debtAndCash: 0, gross: 0 };
   /** A sector's sleeve and the denominator it is weighed over — the classified sleeve, or for the residual the whole. */
   const vsSleeveOf = (s: SectorRow) => sleeveBySector.get(s.key) ?? 0;
   const vsBaseOf = (s: SectorRow) => (s.key === UNCLASSIFIED ? sleeveTotal : sleeveClassified);
@@ -660,12 +658,12 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
    */
   const unplacedMix = issuerMix(sectorFrom.unplaced);
   const unplacedShares = sectorFrom.unplaced.filter((e) => e.classes.includes("Equity"));
-  const sharesNoSymbol = unplacedShares.filter((e) => !companySymbol(e)).length;
+  const sharesNoSymbol = unplacedShares.filter((e) => !companyListing(e)).length;
   const sharesNoVendorSector = unplacedShares.length - sharesNoSymbol;
   const unplacedCauses = [
     unplacedMix.debtOnly > 0 && `${unplacedMix.debtOnly} reached only through debt paper — ${DEBT_PAPER} — whose filings print a credit rating where an industry would be`,
-    sharesNoSymbol > 0 && `${sharesNoSymbol} ${sharesNoSymbol === 1 ? "share" : "shares"} for which no NSE symbol resolves, so nothing keys the screener.in lookup`,
-    sharesNoVendorSector > 0 && `${sharesNoVendorSector} ${sharesNoVendorSector === 1 ? "share" : "shares"} whose NSE symbol the committed screener.in lookup gives no sector for`,
+    sharesNoSymbol > 0 && `${sharesNoSymbol} ${sharesNoSymbol === 1 ? "share" : "shares"} for which no NSE or BSE listing resolves, so nothing keys the screener.in lookup`,
+    sharesNoVendorSector > 0 && `${sharesNoVendorSector} ${sharesNoVendorSector === 1 ? "share" : "shares"} whose listing the committed screener.in lookup gives no sector for`,
     unplacedMix.other > 0 && `${unplacedMix.other} ${unplacedMix.other === 1 ? "line" : "lines"} a fund's filing classes as neither equity nor debt`,
   ].filter(Boolean);
 
@@ -716,11 +714,15 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
     const join = (l: string[]) => (l.length <= 1 ? l.join("") : `${l.slice(0, -1).join(", ")} and ${l[l.length - 1]}`);
     return { shares, debt, other, inCashFunds, byDate, valuedAt: join(valuedAt), heldAt: join(heldAt) };
   })();
+  /*
+   * EQUITY ONLY (Stage 10md): the figure is the funds' equity lines, and what
+   * their filings disclose besides is named here and counted under "Not on this
+   * page" — never in a sector.
+   */
   const derivedWhy = exposure.status === "ok"
-    ? `DERIVED: their units' share of every instrument ${exposure.covered} of ${exposure.considered} funds disclose — ${
-      money(derivedParts.shares)} in shares, ${money(derivedParts.debt)} in ${DEBT_PAPER}${
-      derivedParts.other > 0 ? `, ${money(derivedParts.other)} in lines their filings class as neither` : ""}${
-      derivedParts.inCashFunds > 0 ? `; ${money(derivedParts.inCashFunds)} of it is inside the liquid funds the holdings tables count as cash` : ""
+    ? `DERIVED: their units' share of the equity lines ${exposure.covered} of ${exposure.considered} funds disclose. Left out of every sector: ${
+      money(fundsLeftOut.debtAndCash)} the same filings disclose as ${DEBT_PAPER}, repo and cash, or hold in the liquid funds the holdings tables count as cash${
+      fundsLeftOut.gross >= 1 ? `, and ${money(fundsLeftOut.gross)} of equity in balanced-advantage and equity-savings funds, disclosed gross of the hedges they run` : ""
       }. Two dates meet in it: each fund at ${derivedParts.valuedAt}, times what it held at its own portfolio disclosure — ${derivedParts.heldAt}.`
     : undefined;
 
@@ -747,12 +749,17 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
     const otherRows = heldConsolidated.filter((x) => !isCompanyShare(x) && !isFundVehicle(x) && x.assetClass !== "Cash");
     const other = sum(otherRows.map((x) => x.marketValue));
     const floor = sum(droppedHoldings(consolidated).negligible.map((x) => x.marketValue));
-    const named = exposure.skippedValue + exposure.unaccountedValue + exposure.fencedValue + arb + cash + other + floor;
+    const named = exposure.skippedValue + exposure.unaccountedValue + exposure.fencedValue + arb + cash + other + floor
+      + fundsLeftOut.debtAndCash + fundsLeftOut.gross;
     const unnamed = notOnPage - named;
     const parts = [
       exposure.skippedValue > 0 && `${money(exposure.skippedValue)} in funds whose portfolio this book cannot read — ${
         aif.length} AIF ${aif.length === 1 ? "holding, which files" : "holdings, which file"} none${
         unresolved > 0 ? `, and ${unresolved} ${unresolved === 1 ? "scheme" : "schemes"} the store does not resolve` : ""}`,
+      // Stage 10md: the page is equity only, so what the funds disclose besides
+      // equity is a part of this residual, never a sector.
+      fundsLeftOut.debtAndCash > 0 && `${money(fundsLeftOut.debtAndCash)} the funds' filings disclose as ${DEBT_PAPER}, repo and cash, or hold in the liquid funds counted as cash`,
+      fundsLeftOut.gross > 0 && `${money(fundsLeftOut.gross)} of equity in balanced-advantage and equity-savings funds, disclosed gross of the hedges they run, so the net equity is not known`,
       exposure.unaccountedValue > 0 && `${money(exposure.unaccountedValue)} of the disclosed funds that no line in their filings accounts for — a scheme's own cash, a gold or silver ETF's metal, rounding`,
       // PC-11: the ring-fenced holding a fund also discloses — a line of its
       // filing, so its own part, and never named.
@@ -818,9 +825,11 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
 
   /**
    * ── WHERE EVERY SECTOR ON THIS PAGE CAME FROM ──────────────────────────────
-   * Three tiers, and a reader cannot infer any of them from the chart. It names
-   * what is still unplaced, with the count and the value — a residual a reader
-   * cannot see is a residual they assume is zero.
+   * One classification — screener.in's — and the two fallbacks for companies
+   * it has no page for, in the order they are tried (Stage 10md). A reader
+   * cannot infer any of them from the chart. It names what is still unplaced,
+   * with the count and the value — a residual a reader cannot see is a
+   * residual they assume is zero.
    */
   const sourceLine = (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-ink-700/70 pt-3 text-[11.5px] text-slate-400"
@@ -831,14 +840,17 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
       data-unplaced={sectorFrom.unplaced.length}
       data-unplaced-mv={Math.round(sectorFrom.unplacedMV)}>
       <span className="text-slate-500">Sector source</span>
-      <span><span className="mono text-slate-200">{sectorFrom.book}</span> from their statements</span>
-      {sectorFrom.disc > 0 && <span><span className="mono text-slate-200">{sectorFrom.disc}</span> from a fund&rsquo;s filing</span>}
-      {sectorFrom.vendor > 0 && <span><span className="mono text-slate-200">{sectorFrom.vendor}</span> from screener.in</span>}
+      <span title="NSE's industry classification as screener.in publishes it, read off each company's page by its NSE symbol or BSE scrip code and mapped to GICS from its Broad Industry">
+        <span className="mono text-slate-200">{sectorFrom.vendor}</span> from screener.in</span>
+      {sectorFrom.disc > 0 && <span title="Companies screener.in has no page for — unlisted, or not yet listed after a demerger — placed by the industry their funds' filings agree on, the same AMFI vocabulary as screener's Broad Industry">
+        <span className="mono text-slate-200">{sectorFrom.disc}</span> unlisted, from a fund&rsquo;s filing</span>}
+      {sectorFrom.book > 0 && <span title="Companies neither screener.in nor any fund filing places, placed by the family's own statement">
+        <span className="mono text-slate-200">{sectorFrom.book}</span> from their statements</span>}
       {sectorFrom.unplaced.length > 0 && (
         <span className="text-slate-500"
           data-unplaced-debt={unplacedMix.debtOnly}
           data-unplaced-nosymbol={sharesNoSymbol}
-          title={`${sectorFrom.unplaced.length} ${consolidatedView ? "issuers" : "companies"} placed by none of the three sources — ${
+          title={`${sectorFrom.unplaced.length} ${consolidatedView ? "issuers" : "companies"} placed by none of the three sources — screener.in, a fund's filing, their statement — ${
             unplacedCauses.join("; ")}: ${sectorFrom.unplaced.map((e) => e.name).join(", ")}`}>
           <span className="mono">{sectorFrom.unplaced.length}</span> unplaced ·{" "}
           <span className="mono">{fmtFromBase(sectorFrom.unplacedMV, { compact: true })}</span>
@@ -861,7 +873,7 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
         {p.length} holdings · {fmtFromBase(mandateMV, { compact: true })} manager-chosen,
         {" "}{fmtFromBase(ownMV, { compact: true })} the family&rsquo;s own
       </Figure>
-      <Figure label="Derived from what their funds disclose" tone="text-champagne-400/90"
+      <Figure label="Equity their funds disclose" tone="text-champagne-400/90"
         value={exposure.status === "ok"
           ? fmtFromBase(derivedMV, { compact: true })
           : <span className="text-slate-500">{exposure.status === "loading" ? "loading…" : "—"}</span>}>
@@ -883,7 +895,7 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
           ? <span data-sector-rest
               title={`The rest of the ${fmtFromBase(portfolio.totalValue, { compact: true })} book, and no sector applies to it: ${
                 (restParts?.parts ?? []).join("; ")}. These three figures cover every rupee.`}>
-              AIFs, cash and what no filing names
+              AIFs, debt, cash, gold and silver
             </span>
           : <>Measurable once the funds&rsquo; disclosures answer.</>}
       </Figure>
