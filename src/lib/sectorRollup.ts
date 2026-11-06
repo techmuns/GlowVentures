@@ -147,7 +147,7 @@ export function emptySector(key: string): SectorRow {
 }
 
 /**
- * ── EQUITY ONLY (Stage 10mc) ─────────────────────────────────────────────────
+ * ── EQUITY ONLY (Stage 10md) ─────────────────────────────────────────────────
  *
  *   "Separate debt held inside PMS / fund portfolios (NABARD, T-bills, repo,
  *    arbitrage) from equity sector exposure — in sector composition we need to

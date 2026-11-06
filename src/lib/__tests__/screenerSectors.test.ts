@@ -108,7 +108,7 @@ ok("and the identifier guard carries the great majority",
  * script decided on its own.
  */
 console.log("\n── the GICS answer is the committed map's, not the script's ──");
-// Stage 10mc: off the BROAD INDUSTRY — the AMFI industry list a fund's filing
+// Stage 10md: off the BROAD INDUSTRY — the AMFI industry list a fund's filing
 // uses, so a fund-placed company and a screener-placed one share the entry —
 // and the Sector level only where the map carries no entry for it.
 const viaMap = (v: Vendor) => {
@@ -149,13 +149,13 @@ ok("the vendor tier places company shares no statement placed",
  * Where the book and the vendor BOTH have an answer they are compared, and the
  * disagreements are counted rather than suppressed: they are genuine taxonomy
  * judgements (GICS files a cinema under Communication Services, several Indian
- * providers under Consumer Discretionary), and since Stage 10mc screener.in's
+ * providers under Consumer Discretionary), and since Stage 10md screener.in's
  * answer is the one every page shows — one classification for every company.
  * The gate is on the AGREEMENT RATE, so a store that started
  * disagreeing wholesale — a shifted column, a renamed label, a wrong page —
  * fails here rather than quietly re-sectoring the book on the next drop.
  */
-console.log("\n── where both have an answer they mostly agree, and screener.in wins (Stage 10mc) ──");
+console.log("\n── where both have an answer they mostly agree, and screener.in wins (Stage 10md) ──");
 // PER COMPANY, NOT PER POSITION. One company can be held in several accounts
 // and each row would count its own agreement again — inflating the sample and
 // printing the same disagreement three times, which reads as three findings.

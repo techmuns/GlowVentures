@@ -81,7 +81,7 @@ const sectorOf = (m: ReturnType<typeof companySectorIndex>, k: string) => m.get(
 
 console.log("\n── where the filings move a held company's sector, the filing tier is why ──");
 const differ = held.filter((k) => sectorOf(withFilings, k) !== sectorOf(withoutFilings, k));
-// Stage 10mc: screener.in places every company it has a page for, so a filing
+// Stage 10md: screener.in places every company it has a page for, so a filing
 // can only move one it has none for.
 const SYM = NSE_SYMBOLS as Record<string, string>;
 const VENDOR = SCREENER as Record<string, { gics?: string | null }>;

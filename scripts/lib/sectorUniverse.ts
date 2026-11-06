@@ -1,5 +1,5 @@
 /**
- * ── EVERY COMPANY A SECTOR TABLE CAN DRAW, FROM THE APP'S OWN CODE (Stage 10mc) ─
+ * ── EVERY COMPANY A SECTOR TABLE CAN DRAW, FROM THE APP'S OWN CODE (Stage 10md) ─
  *
  * `npm run build-sectors` has to ask screener.in about every company the
  * Sector Composition page can put in a row: the shares the statements report,
@@ -58,10 +58,11 @@ export async function sectorUniverse(source: { index: Index; portfolios: Record<
     .map((e) => {
       const lines = exposure.byKey.get(e.key)?.rows.flatMap((r) => r.instruments.filter((i) => i.assetClass === "Equity")) ?? [];
       return {
-        key: e.key, name: e.name, symbol: companySymbol(e),
+        // A recorded line no statement values carries neither a value nor always a name.
+        key: e.key, name: e.name || e.key, symbol: companySymbol(e),
         isins: [...new Set([...e.positions.map((p) => p.isin), ...lines.map((i) => i.isin)]
           .filter((i): i is string => !!i).map((i) => i.trim().toUpperCase()))],
-        value: e.measured + e.derivedEquity + e.derivedGross,
+        value: [e.measured, e.derivedEquity, e.derivedGross].reduce((a, v) => a + (Number.isFinite(v) ? v : 0), 0),
         held: e.positions.length > 0,
       };
     });

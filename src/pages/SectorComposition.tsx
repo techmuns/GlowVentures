@@ -563,7 +563,7 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
   const sleeveUnplaced = sleeveBySector.get(UNCLASSIFIED) ?? 0;
   const sleeveClassified = sleeveTotal - sleeveUnplaced;
   /** What the comparison leaves out of the family's side, by why (Consolidated only). */
-  /** What the funds disclose besides equity (`fundsLeftOut`) is out of every sector on both views (Stage 10mc). */
+  /** What the funds disclose besides equity (`fundsLeftOut`) is out of every sector on both views (Stage 10md). */
   const sleeveLeftOut = consolidatedView ? fundsLeftOut : { debtAndCash: 0, gross: 0 };
   /** A sector's sleeve and the denominator it is weighed over — the classified sleeve, or for the residual the whole. */
   const vsSleeveOf = (s: SectorRow) => sleeveBySector.get(s.key) ?? 0;
@@ -715,7 +715,7 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
     return { shares, debt, other, inCashFunds, byDate, valuedAt: join(valuedAt), heldAt: join(heldAt) };
   })();
   /*
-   * EQUITY ONLY (Stage 10mc): the figure is the funds' equity lines, and what
+   * EQUITY ONLY (Stage 10md): the figure is the funds' equity lines, and what
    * their filings disclose besides is named here and counted under "Not on this
    * page" — never in a sector.
    */
@@ -756,7 +756,7 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
       exposure.skippedValue > 0 && `${money(exposure.skippedValue)} in funds whose portfolio this book cannot read — ${
         aif.length} AIF ${aif.length === 1 ? "holding, which files" : "holdings, which file"} none${
         unresolved > 0 ? `, and ${unresolved} ${unresolved === 1 ? "scheme" : "schemes"} the store does not resolve` : ""}`,
-      // Stage 10mc: the page is equity only, so what the funds disclose besides
+      // Stage 10md: the page is equity only, so what the funds disclose besides
       // equity is a part of this residual, never a sector.
       fundsLeftOut.debtAndCash > 0 && `${money(fundsLeftOut.debtAndCash)} the funds' filings disclose as ${DEBT_PAPER}, repo and cash, or hold in the liquid funds counted as cash`,
       fundsLeftOut.gross > 0 && `${money(fundsLeftOut.gross)} of equity in balanced-advantage and equity-savings funds, disclosed gross of the hedges they run, so the net equity is not known`,
@@ -826,7 +826,7 @@ export function SectorComposition({ embedded = false }: { embedded?: boolean } =
   /**
    * ── WHERE EVERY SECTOR ON THIS PAGE CAME FROM ──────────────────────────────
    * One classification — screener.in's — and the two fallbacks for companies
-   * it has no page for, in the order they are tried (Stage 10mc). A reader
+   * it has no page for, in the order they are tried (Stage 10md). A reader
    * cannot infer any of them from the chart. It names what is still unplaced,
    * with the count and the value — a residual a reader cannot see is a
    * residual they assume is zero.

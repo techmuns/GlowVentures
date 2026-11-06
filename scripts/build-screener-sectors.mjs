@@ -1,5 +1,5 @@
 /**
- * ── ONE SECTOR SOURCE FOR EVERY COMPANY: screener.in (Stage 10mc) ──────────
+ * ── ONE SECTOR SOURCE FOR EVERY COMPANY: screener.in (Stage 10md) ──────────
  *
  *   "We need to make sure every single holdings' sector classification is
  *    correct, [Unclassified] needs to be as low as possible. Make sure to use
@@ -80,8 +80,8 @@ const REUSE = process.env.REUSE === "1";
  *
  * Not listed, on purpose: HEG Graphite (the demerged graphite business, not
  * HEG Advanced Materials, its parent), GSPL India Transco and Talwandi Sabo
- * Power (demerged, unlisted), and LTIMindtree under the name a fund filed (no
- * page answers it). They keep their funds' filing.
+ * Power (demerged, unlisted) and Gujarat Gas (merged; its page keeps no
+ * classification). They keep their funds' filing where it prints one.
  */
 const LISTED_AS = {
   "national-stock-exchange-of-india": "544937",     // its BSE listing; NSE does not list itself
@@ -96,6 +96,7 @@ const LISTED_AS = {
   "chambal-fertilisers-and-chemicals": "CHAMBLFERT", // NSE spells it "Fertilizers"
   "sasken-communication-technologies": "SASKEN",    // renamed Sasken Technologies
   "red-tape": "REDTAPE",
+  "ltimindtree": "LTM",                             // renamed LTM Limited, ISIN INE214T01019 unchanged
   // Listed trusts, which NSE's equity masters do not carry.
   "embassy-office-parks-reit": "EMBASSY",
   "mindspace-business-parks-reit": "MINDSPACE",
@@ -285,7 +286,9 @@ for (const j of ids) {
 const sorted = (o) => Object.fromEntries(Object.keys(o).sort().map((k) => [k, o[k]]));
 writeFileSync(OUT, JSON.stringify(sorted(store), null, 2) + "\n");
 const keyMap = {};
-for (const j of joins) if (j.id && j.joinedBy !== "app-symbol" && store[j.id]) keyMap[j.key] = j.id;
+// Every listing joined, a page that gave no sector included — so the app can
+// say "screener gives no sector for it" rather than "nothing keys the lookup".
+for (const j of joins) if (j.id && j.joinedBy !== "app-symbol") keyMap[j.key] = j.id;
 writeFileSync(KEYS_OUT, JSON.stringify(sorted(keyMap), null, 2) + "\n");
 
 const cr = (v) => `₹${(v / 1e7).toFixed(2)} Cr`;

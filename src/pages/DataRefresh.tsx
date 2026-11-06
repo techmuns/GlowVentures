@@ -126,7 +126,7 @@ export function DataRefresh() {
   const coverage = shareMV > 0 && sectorsSettled ? (classified / shareMV) * 100 : null;
   const notCompany = excludedClasses(held, isCompanyShare);
   // WHICH SOURCE PLACED EACH COMPANY, counted over COMPANIES — the unit a
-  // sector is a property of (screener.in first since Stage 10mc).
+  // sector is a property of (screener.in first since Stage 10md).
   const shareKeys = [...new Set(shareRows.map((x) => x.securityKey))];
   const placedBy = { book: 0, disclosure: 0, vendor: 0 };
   const unplacedKeys: string[] = [];

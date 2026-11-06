@@ -1522,7 +1522,7 @@ export function FamilyEntities() {
                     which is correct, because a sector is a property of the
                     company. Bharat's four come from exactly that, and "their"
                     would have claimed his own statements printed them. */}
-                {/* Stage 10mc: screener.in first — the one classification —
+                {/* Stage 10md: screener.in first — the one classification —
                     and the two fallbacks only for what it has no page for. */}
                 <span><span className="mono text-slate-200">{selPlaced.vendor}</span> from screener.in</span>
                 {selPlaced.disclosure > 0 && <span><span className="mono text-slate-200">{selPlaced.disclosure}</span> unlisted, from a fund&rsquo;s filing</span>}
