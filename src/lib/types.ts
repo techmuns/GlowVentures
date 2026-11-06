@@ -360,6 +360,8 @@ export type Position = {
     hprUnavailableReason?: string;
     /** Splits the roll's own record already carries in `quantity` (Stage 10kk); the corporate-action gate does not apply them again. */
     shareEvents?: ShareEvent[];
+    /** The purchase lots still held after the roll, first-in first-out (Stage 10me): what Invested on dates. */
+    heldPurchases?: { first: string; last: string; lots: number };
   };
   /**
    * (unrealised + realised) ÷ (cost of units held + cost of units sold), in
@@ -1165,8 +1167,9 @@ export type ShareMovement = {
  * statement does not record and the report shows bought after it. Read by the
  * LIVE layer only (`depositoryShares.ts`); the statement basis keeps the
  * snapshot. A share with any non-exchange entry (a split, a transfer) is not
- * rolled. A FUND balance is rolled only to nil, on a sale the family confirmed
- * (Stage 10ma, `rollMopwmFundSales`), with `report.sheet` "Mutual Funds".
+ * rolled. A FUND balance rolls on the report's fund trades (Stage 10me,
+ * `rollMopwmFundTrades`), with `report.sheet` "Mutual Funds", up to a transfer
+ * of custody (`transferredOn`), which moves the units and sells none.
  */
 export type ShareRoll = {
   accountId: string;
@@ -1183,6 +1186,10 @@ export type ShareRoll = {
   trades: number;
   /** A split inside the roll, read off the report's own SPLIT block (Stage 10kk). */
   shareEvents?: ShareEvent[];
+  /** The day a demat-folio "redemption" moved what the roll leaves out of the demat (Stage 10me). */
+  transferredOn?: string;
+  /** A fund roll's purchase lots still held, first-in first-out (Stage 10me). */
+  heldPurchases?: { first: string; last: string; lots: number };
   report: { path: string; asOf: string; sheet: string; rows: number[] };
 };
 
