@@ -147,21 +147,60 @@ export function emptySector(key: string): SectorRow {
 }
 
 /**
+ * ── EQUITY ONLY (Stage 10mc) ─────────────────────────────────────────────────
+ *
+ *   "Separate debt held inside PMS / fund portfolios (NABARD, T-bills, repo,
+ *    arbitrage) from equity sector exposure — in sector composition we need to
+ *    show only equity asset class exposure in sectors … gold/silver/debt
+ *    holdings … should not be included"            — the family, 6 Nov 2026
+ *
+ * A Consolidated row's derived half was EVERY line its funds disclose: a
+ * bank's CDs filed under the bank, the Government's T-bills as a row of their
+ * own, NABARD's bonds, a liquid fund's paper. Now it is `derivedEquity` alone —
+ * the funds' equity lines, net of nothing, with no debt paper, no CD or
+ * commercial paper by its ISIN type, no cash-equivalent scheme and no
+ * balanced-advantage equity disclosed gross of its hedges — and an issuer
+ * reached through none of that is no row. What it leaves out is still COUNTED:
+ * `nonEquity` and `grossEquity` carry it to the page's "not on this page".
+ */
+export type SectorEntry = CompanyExposure & {
+  /** The funds' lines on this issuer that are not equity: debt, money-market paper, cash-equivalent schemes. */
+  nonEquity: number;
+  /** Balanced-advantage / equity-savings equity, disclosed gross of hedges — left out, named. */
+  grossEquity: number;
+};
+export const equityOnly = (e: CompanyExposure): SectorEntry => ({
+  ...e,
+  derived: e.derivedEquity,
+  total: e.measured + e.derivedEquity,
+  nonEquity: Math.max(0, e.derived - e.derivedEquity - e.derivedGross),
+  grossEquity: e.derivedGross,
+  derivedGross: 0,
+  classes: e.derivedEquity > 0 || e.positions.length > 0 ? ["Equity"] : [],
+});
+
+/**
  * ── THE TWO SETS ─────────────────────────────────────────────────────────────
  *
  * Consolidated: every company share the statements report (current holdings,
- * the ₹1,000 floor applied) plus the family's share of every instrument their
- * funds disclose. Direct Equity: the shares in the family's own demat and
+ * the ₹1,000 floor applied) plus the family's share of the EQUITY their funds
+ * disclose (`equityOnly`). Direct Equity: the shares in the family's own demat and
  * broking accounts only — a company owned only inside a fund is not one. The
  * route comes from the ACCOUNT (`engagementOf`), never from the position.
  */
 export function sectorSets(consolidated: Position[], accounts: AccountIndex, exposure: StockExposureState) {
   const shares = currentHoldings(consolidated).filter(isCompanyShare);
   const ownRows = shares.filter((x) => holdingRoute(engagementOf(accounts, x) || null) === "own");
-  const consEntries = companyExposure(shares, exposure);
+  const everyIssuer = companyExposure(shares, exposure).map(equityOnly);
+  const consEntries = everyIssuer.filter((e) => e.total > 0 || e.positions.length > 0);
+  // Summed over EVERY issuer, the debt-only ones no row is drawn for included.
+  const fundsLeftOut = {
+    debtAndCash: everyIssuer.reduce((a, e) => a + e.nonEquity, 0),
+    gross: everyIssuer.reduce((a, e) => a + e.grossEquity, 0),
+  };
   const directEntries = companyExposure(ownRows, exposure).filter((e) => e.positions.length > 0);
   return {
-    shares, ownRows, consEntries, directEntries,
+    shares, ownRows, consEntries, directEntries, fundsLeftOut,
     consSectors: rollSectors(consEntries, (e) => e.total, false),
     directSectors: rollSectors(directEntries, (e) => e.measured, true),
   };

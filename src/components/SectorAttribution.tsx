@@ -115,7 +115,7 @@ export default function SectorAttribution({ consolidated, exposure, marketOf, ma
       key: s.key, label: s.key, positions: s.positions, value: s.mv, derived: s.derived,
       gain: s.gain, deployed: s.gain === null ? null : s.deployed, returnPct: s.returnPct, returnWhy: s.returnWhy,
       sub: consolidatedView ? `${s.count} ${s.count === 1 ? 'issuer' : 'issuers'}` : undefined,
-      hint: s.key === UNCLASSIFIED ? 'No source placed these in a sector — not the family’s own statement, not a fund’s filing, not screener.in — so they are left unclassified rather than guessed.' : undefined,
+      hint: s.key === UNCLASSIFIED ? 'No source placed these in a sector — not screener.in, not a fund’s filing, not the family’s own statement — so they are left unclassified rather than guessed.' : undefined,
       children: children.sort((a, b) => b.value - a.value),
     };
   });

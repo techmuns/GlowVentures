@@ -1522,12 +1522,14 @@ export function FamilyEntities() {
                     which is correct, because a sector is a property of the
                     company. Bharat's four come from exactly that, and "their"
                     would have claimed his own statements printed them. */}
-                <span><span className="mono text-slate-200">{selPlaced.book}</span> from a statement in this book</span>
-                {selPlaced.disclosure > 0 && <span><span className="mono text-slate-200">{selPlaced.disclosure}</span> from a fund&rsquo;s filing</span>}
-                {selPlaced.vendor > 0 && <span><span className="mono text-slate-200">{selPlaced.vendor}</span> from screener.in</span>}
+                {/* Stage 10mc: screener.in first — the one classification —
+                    and the two fallbacks only for what it has no page for. */}
+                <span><span className="mono text-slate-200">{selPlaced.vendor}</span> from screener.in</span>
+                {selPlaced.disclosure > 0 && <span><span className="mono text-slate-200">{selPlaced.disclosure}</span> unlisted, from a fund&rsquo;s filing</span>}
+                {selPlaced.book > 0 && <span><span className="mono text-slate-200">{selPlaced.book}</span> from a statement in this book</span>}
                 {selPlaced.unplaced.length > 0 && (
                   <span className="text-slate-500"
-                    title={`No tier places these — a statement that printed no industry, no fund filing naming the ISIN and no NSE symbol to look one up on. ${selPlaced.unplaced.length} companies: ${selPlaced.unplaced.join(", ")}`}>
+                    title={`No source places these — no screener.in page joins to them, no fund filing names the ISIN, and no statement prints an industry. ${selPlaced.unplaced.length} companies: ${selPlaced.unplaced.join(", ")}`}>
                     <span className="mono">{selPlaced.unplaced.length}</span> unplaced ·{" "}
                     <span className="mono">{money(selUnclassifiedMV)}</span>
                   </span>
