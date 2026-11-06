@@ -1016,12 +1016,13 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
 {
   const baskets = new Set(["Stable Growth", "Entrepreneurial Growth", "Thematic & Tactical", "Liquidity",
                            "Not classified in the family's review"]);
-  const classes = new Set(["Equity", "Debt", "Alternate", "Cash", "Not classified in the family's review"]);
+  // Real Estate is the LLPs' Nzuri shares (Stage 10mg).
+  const classes = new Set(["Equity", "Debt", "Alternate", "Real Estate", "Cash", "Not classified in the family's review"]);
   const bCells = columnUnder(holdings, "Basket (family)", dataLast);
   const cCells = columnUnder(holdings, "Asset Class (family)", dataLast);
   ok("every Basket cell is one of the family's four, or the named remainder",
      bCells.length > 0 && bCells.every((v) => typeof v === "string" && baskets.has(v)), `${new Set(bCells.map(String)).size} distinct`);
-  ok("every Asset Class cell is one of the family's four, or the named remainder",
+  ok("every Asset Class cell is one of the family's five, or the named remainder",
      cCells.length > 0 && cCells.every((v) => typeof v === "string" && classes.has(v)), `${new Set(cCells.map(String)).size} distinct`);
   ok("the sheet distinguishes more than one basket", new Set(bCells.map(String)).size > 1);
   ok("...and more than one family asset class", new Set(cCells.map(String)).size > 1);

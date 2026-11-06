@@ -25,6 +25,7 @@ import { accountIndex, engagementOf } from "@/lib/accounts";
 import {
   holdingBucket, MANDATE_BUCKET, dedupedPositions,
   CASH_EQUIVALENT_KEYS, isCashEquivalent, cashEquivalentCandidates,
+  REAL_ESTATE_KEYS, REAL_ESTATE_BUCKET, isRealEstateHolding,
 } from "@/lib/analytics";
 import {
   FAMILY_TAXONOMY, BASKET_ORDER, FAMILY_CLASS_ORDER, UNCLASSIFIED,
@@ -549,6 +550,20 @@ for (const [axis, key] of [["basket", basketKeyOf], ["asset class", familyClassK
      sleeve.length > 0 && sleeve.every((p) =>
        familyBasket(p, true)?.source !== "cash-rule" && familyAssetClass(p, true)?.source !== "cash-rule"),
      `${sleeve.length} rows`);
+}
+
+// ── REAL ESTATE (Stage 10mg): the LLPs' Nzuri shares, filed once ──────────
+{
+  const re = BOOK_POSITIONS.filter(isRealEstateHolding);
+  ok("every real-estate key names a book holding: two LLPs × equity and preference",
+     Object.keys(REAL_ESTATE_KEYS).every((k) => re.some((p) => p.securityKey === k)) && re.length === 4, `${re.length} lines`);
+  ok("…each filed under Real Estate on the category axis",
+     re.every((p) => holdingBucket(p, engagementOf(idx, p)) === REAL_ESTATE_BUCKET));
+  ok("…and Real Estate on the family's asset class, its basket unchanged",
+     re.every((p) => familyAssetClass(p, isM(p))?.value === "Real Estate" && familyBasket(p, isM(p))?.value === "Entrepreneurial Growth"));
+  ok("…and nothing else is",
+     BOOK_POSITIONS.every((p) => isRealEstateHolding(p)
+       || (holdingBucket(p, engagementOf(idx, p)) !== REAL_ESTATE_BUCKET && familyClassKeyOf(p, isM(p)) !== "Real Estate")));
 }
 
 console.log(fails ? `\n${fails} failed` : "\nall checks passed");

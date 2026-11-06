@@ -51,7 +51,7 @@
 import type { AccountIndex } from "./accounts";
 import {
   holdingBucket, bucketLabel, isMandateHeld,
-  MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, UNROUTED_EQUITY_BUCKET, AT_COST_BUCKET,
+  MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, UNROUTED_EQUITY_BUCKET, AT_COST_BUCKET, REAL_ESTATE_BUCKET,
 } from "./analytics";
 import {
   basketKeyOf, familyClassKeyOf, basketOrd, familyClassOrd,
@@ -95,7 +95,7 @@ export const heldUnderMandate = (idx: AccountIndex, p: Classifiable) => isMandat
  * entry dead: the key that actually arrives fell through the `i < 0` branch and
  * sorted the section BELOW Cash, which is the opposite of what it claimed.
  */
-export const BUCKET_ORDER = [DIRECT_EQUITY_BUCKET, MANDATE_BUCKET, UNROUTED_EQUITY_BUCKET, "ETF", "Mutual Fund", "AIF", "Bond", "Structured Product", "Unlisted", AT_COST_BUCKET, "Cash"];
+export const BUCKET_ORDER = [DIRECT_EQUITY_BUCKET, MANDATE_BUCKET, UNROUTED_EQUITY_BUCKET, "ETF", "Mutual Fund", "AIF", "Bond", "Structured Product", "Unlisted", REAL_ESTATE_BUCKET, AT_COST_BUCKET, "Cash"];
 export const bucketOrd = (b: string) => { const i = BUCKET_ORDER.indexOf(b); return i < 0 ? BUCKET_ORDER.length : i; };
 
 /**
@@ -111,10 +111,11 @@ export const bucketOrd = (b: string) => { const i = BUCKET_ORDER.indexOf(b); ret
  * route. A row already under one of them can still go back to it — the page
  * offers a row's own section as "move back". "Not classified" is not a tab a
  * row is moved TO: it names an absence, and a row the family has placed is not
- * one.
+ * one. Real Estate (Stage 10mg) is the fourth: it is `REAL_ESTATE_KEYS`, which
+ * the Real Estate page lists too, and a move there would reach one page only.
  */
 export const CATEGORY_MOVE_TARGETS: readonly string[] =
-  BUCKET_ORDER.filter((b) => b !== MANDATE_BUCKET && b !== AT_COST_BUCKET && b !== UNROUTED_EQUITY_BUCKET);
+  BUCKET_ORDER.filter((b) => b !== MANDATE_BUCKET && b !== AT_COST_BUCKET && b !== UNROUTED_EQUITY_BUCKET && b !== REAL_ESTATE_BUCKET);
 
 /**
  * THE CATEGORY A ROW WAS MOVED TO ON THE PAGE, read before `holdingBucket` for
@@ -140,8 +141,8 @@ export type GroupAxis = (typeof GROUP_AXES)[number];
  * structurally assignable either way.
  */
 export const GROUP_VIEWS: readonly { key: GroupAxis; label: string; title: string }[] = [
-  { key: "category", label: "Category", title: "What kind of thing this is and who chose it: direct equity, a PMS mandate, an AIF, a mutual fund, an ETF, cash." },
-  { key: "assetClass", label: "Asset class", title: "The family's own asset classes — Equity, Debt, Alternate, Cash — as their consolidated review states them. Not the instrument type: a gold ETF is Alternate and a liquid fund is Cash." },
+  { key: "category", label: "Category", title: "What kind of thing this is and who chose it: direct equity, a PMS mandate, an AIF, a mutual fund, an ETF, real estate, cash." },
+  { key: "assetClass", label: "Asset class", title: "The family's own asset classes — Equity, Debt, Alternate, Real Estate, Cash — as their consolidated review and written instructions state them. Not the instrument type: a gold ETF is Alternate and a liquid fund is Cash." },
   { key: "basket", label: "Basket", title: "The family's four baskets: Stable Growth, Entrepreneurial Growth, Thematic & Tactical, Liquidity." },
 ];
 

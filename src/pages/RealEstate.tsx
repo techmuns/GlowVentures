@@ -19,6 +19,11 @@ import { usePortfolio } from "@/context/PortfolioContext";
 import { fmtNum, fmtPct, fmtDate } from "@/lib/format";
 import { PROPERTY_TYPES, PROPERTY_STATUSES, propertyFigures, wholePropertyFigures, propertyLabel, propertyTotal, hasPin, useProperties, receivedWithoutPurchase, costLabel, acquiredOnLabel, appreciationGap, isEarmarked, earmarkLabel, EARMARK_MARKER_ONLY, propertyGainsTax, financialYear, type Property, type PropertyFigures, type PropertyGainsTax } from "@/lib/realEstate";
 import { todayIso } from "@/lib/enteredCalls";
+import { currentHoldings, isRealEstateHolding, REAL_ESTATE_KEYS, AT_COST_PNL } from "@/lib/analytics";
+import { accountIndex, ownerOf } from "@/lib/accounts";
+import { securityLabel } from "@/lib/securityLabel";
+import { investedOnOf } from "@/lib/investedOn";
+import type { Position } from "@/lib/types";
 const PropertyMap = lazy(() => import("@/components/PropertyMap"));
 const VIEWS = [{ key: "table", label: "Table", icon: Table2 }, { key: "map", label: "Map", icon: MapIcon }] as const;
 const DEFAULT_TILES = ["value", "cost", "rent", "after-tax"];
@@ -44,6 +49,20 @@ const earmarkTitle = (p: Property) => [earmarkLabel(p), p.earmark?.note, EARMARK
 const matchesEarmark = (p: Property, filter: string) => !filter || (filter === EARMARKED ? isEarmarked(p) : filter === NOT_EARMARKED ? !isEarmarked(p)
   : filter.startsWith(TO) && isEarmarked(p) && p.earmark!.recipient === filter.slice(TO.length));
 // Cost totals that include values on the date of inheritance or gift say how many.
+/**
+ * A BOOK HOLDING THE FAMILY FILES AS REAL ESTATE (Stage 10mg; `REAL_ESTATE_KEYS`).
+ * Shares an entity holds, from the statement book rather than the property
+ * store: a line item here, counted once in the totals, never editable here, and
+ * the same position the Category and Asset class views file under Real Estate.
+ */
+type Holding = { id: string; p: Position; name: string; owner: string; custody: string; on: string | null };
+const HOLDING_SUMMED = new Set<string>(["value", "cost"]);
+const holdingWhy = {
+  property: "A company's shares held through an entity, from its statement, not a property record: the statement carries no property details, and none is entered here.",
+  tax: "Shares, not a property: the property capital-gains estimate does not apply to them.",
+  value: `${AT_COST_PNL[0].toUpperCase()}${AT_COST_PNL.slice(1)}.`,
+};
+const holdingsNote = (n: number) => n ? `${n} ${n === 1 ? "holding" : "holdings"} via entities` : "";
 function receivedNote(list: Property[], owners: ReadonlySet<string> | null) {
   const received = list.filter(p => receivedWithoutPurchase(p) && propertyFigures(p, owners).cost !== null);
   if (!received.length) return "";
@@ -53,7 +72,7 @@ function receivedNote(list: Property[], owners: ReadonlySet<string> | null) {
 
 export function RealEstate() {
   const exportingTable = useTableExporting();
-  const { scope, fmtFromBase: money } = usePortfolio();
+  const { scope, fmtFromBase: money, portfolio } = usePortfolio();
   const store = useProperties();
   const [params, setParams] = useSearchParams();
   const [view, setView] = useViewParam(VIEWS);
@@ -75,6 +94,15 @@ export function RealEstate() {
   const scoped = useMemo(() => store.properties.filter(p => !scope.owners || !p.owners.some(o => o.ownerId) || p.owners.some(o => o.ownerId && scope.owners!.has(o.ownerId))), [store.properties, scope.owners]);
   const filtered = useMemo(() => exportingTable ? scoped : scoped.filter(p => (!country || p.country === country) && (!state || p.state === state) && (!city || p.city === city) && (!type || p.type === type) && (!status || p.status === status) && matchesEarmark(p, earmark)
     && (!q.trim() || [propertyLabel(p), p.address, p.city, p.state, p.country, p.pincode, p.type, p.acquisition, p.tenant, p.earmark?.recipient ?? "", ...p.owners.map(o => o.name)].join(" ").toLowerCase().includes(q.trim().toLowerCase()))), [exportingTable, scoped, country, state, city, type, status, earmark, q]);
+  // The member scope is already applied to `portfolio`. A property filter names a
+  // property field these holdings do not carry, so it leaves them out.
+  const holdings = useMemo<Holding[]>(() => {
+    if (!portfolio) return [];
+    const idx = accountIndex(portfolio.accounts);
+    return currentHoldings(portfolio.positions).filter(isRealEstateHolding).map(p => ({ id: `${p.accountId}|${p.securityKey}`, p, name: securityLabel(p.securityKey, p.security), owner: ownerOf(idx, p), custody: idx.get(p.accountId)?.provider ?? "", on: investedOnOf([p])?.first ?? null }));
+  }, [portfolio]);
+  const shownHoldings = useMemo(() => exportingTable ? holdings : country || state || city || type || status || earmark ? []
+    : holdings.filter(h => !q.trim() || [h.name, h.owner, h.custody, REAL_ESTATE_KEYS[h.p.securityKey]].join(" ").toLowerCase().includes(q.trim().toLowerCase())), [exportingTable, holdings, country, state, city, type, status, earmark, q]);
   // A sale today: the date sets the financial year, its index and each holding period.
   const asOf = useMemo(() => todayIso(), []);
   const taxes = useMemo(() => new Map(store.properties.map(p => [p.id, propertyGainsTax(p, { asOf, owners: scope.owners })])), [store.properties, scope.owners, asOf]);
@@ -94,19 +122,30 @@ export function RealEstate() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }])), [scope.owners, taxes]);
   const rows = sortRows(filtered, table.sort, accessors);
+  const holdingRows = sortRows(shownHoldings, table.sort, { name: h => h.name, type: () => "Company shares", owners: h => h.owner, cost: h => h.p.costBasis, value: h => h.p.marketValue, acquisition: () => "Purchased", purchasedOn: h => h.on });
   const selected = store.properties.find(p => p.id === params.get("property"));
   const activeProperty = adding ?? selected;
   const close = () => { if (busy) return; setAdding(null); setEditing(false); setRemoving(false); setRemoveError(""); const next = new URLSearchParams(params); next.delete("property"); setParams(next, { replace: true }); };
   useEffect(() => { if (activeProperty && !dialog.current?.open) dialog.current?.showModal(); else if (!activeProperty && dialog.current?.open) dialog.current.close(); }, [activeProperty]);
   const open = (p: Property) => { setEditing(false); setRemoving(false); setRemoveError(""); const next = new URLSearchParams(params); next.set("property", p.id); setParams(next); };
-  const coverage = (t: ReturnType<typeof propertyTotal>) => t.count && t.known < t.count ? `${t.known} of ${t.count} properties` : `${t.count} ${t.count === 1 ? "property" : "properties"}`;
-  const sum = (key: Summed) => propertyTotal(filtered, key, scope.owners);
+  type Total = ReturnType<typeof propertyTotal> & { holdings?: number };
+  const coverage = (t: Total) => [t.count && t.known < t.count ? `${t.known} of ${t.count} properties` : `${t.count} ${t.count === 1 ? "property" : "properties"}`, holdingsNote(t.holdings ?? 0)].filter(Boolean).join(" · ");
+  // Value and cost add the holdings, once each; every other figure is a
+  // property's alone and says which holdings it leaves out.
+  const sum = (key: Summed): Total => {
+    const t = propertyTotal(filtered, key, scope.owners);
+    if (!HOLDING_SUMMED.has(key) || !shownHoldings.length) return t;
+    const known = shownHoldings.map(h => key === "value" ? h.p.marketValue : h.p.costBasis).filter((n): n is number => typeof n === "number" && Number.isFinite(n));
+    return { ...t, value: known.length ? (t.value ?? 0) + known.reduce((s, n) => s + n, 0) : t.value, holdings: shownHoldings.length };
+  };
+  const leftOut = (key: string) => shownHoldings.length && !HOLDING_SUMMED.has(key) ? `Leaves out ${holdingsNote(shownHoldings.length)}: ${key === "gain" ? "held at cost, with no measured gain" : TAX_KEYS.has(key) ? "shares, not a property" : "not a property record"}.` : "";
   const missingName = (p: Property, id: Summed) => (id === "cost" || id === "gain") && receivedWithoutPurchase(p) && p.cost === null ? `${propertyLabel(p)} (${p.acquisition.toLowerCase()}, no cost entered)` : propertyLabel(p);
   const metric = (id: Summed, label: string, icon: ReactNode): TileMetric => {
     const total = sum(id);
     const note = id === "cost" ? receivedNote(filtered, scope.owners) : "";
     return { id: id === "netRent" ? "net-rent" : id, label, value: money(total.value, { compact: true }), sub: `${coverage(total)}${note ? ` · ${note}` : ""}`, icon,
-      detail: `${shareTitle}${total.known < total.count ? ` Missing: ${filtered.filter(p => propertyFigures(p, scope.owners)[id] === null).map(p => missingName(p, id)).join(", ")}.` : ""}` };
+      detail: [`${shareTitle}${total.known < total.count ? ` Missing: ${filtered.filter(p => propertyFigures(p, scope.owners)[id] === null).map(p => missingName(p, id)).join(", ")}.` : ""}`,
+        total.holdings ? `Includes ${holdingsNote(total.holdings)}, held at cost: ${shownHoldings.map(h => `${h.name} (${h.owner})`).join(", ")}.` : leftOut(id)].filter(Boolean).join(" ") };
   };
   const taxTotal = (key: TaxKey) => {
     const figures = filtered.map(p => taxFigure(taxOf(p), key)), known = figures.filter((n): n is number => n !== null);
@@ -116,7 +155,7 @@ export function RealEstate() {
   const taxMetric = (key: "tax" | "afterTax", label: string, icon: ReactNode): TileMetric => {
     const total = taxTotal(key);
     return { id: key === "afterTax" ? "after-tax" : key, label, value: money(total.value, { compact: true }), sub: coverage(total), icon,
-      detail: `If sold on ${fmtDate(asOf)} (FY ${financialYear(asOf)}). ${key === "afterTax" ? "Current value less the estimated tax on its gain. " : ""}${TAX_RULES} ${shareTitle}${total.known < total.count ? ` Missing: ${taxMissing(key)}.` : ""}` };
+      detail: `If sold on ${fmtDate(asOf)} (FY ${financialYear(asOf)}). ${key === "afterTax" ? "Current value less the estimated tax on its gain. " : ""}${TAX_RULES} ${shareTitle}${total.known < total.count ? ` Missing: ${taxMissing(key)}.` : ""}${leftOut(key) ? ` ${leftOut(key)}` : ""}` };
   };
   const metrics = [metric("value", "Property value", <Building2 className="h-4 w-4" />), metric("cost", "Total cost", <Wallet className="h-4 w-4" />), metric("gain", "Appreciation", <TrendingUp className="h-4 w-4" />), taxMetric("tax", "Est. tax on sale", <Receipt className="h-4 w-4" />), taxMetric("afterTax", "Value after tax", <Scale className="h-4 w-4" />), metric("rent", "Monthly rent", <Banknote className="h-4 w-4" />), metric("debt", "Loan outstanding", <Landmark className="h-4 w-4" />), metric("emi", "EMI / month", <Landmark className="h-4 w-4" />), metric("netRent", "Net monthly rent", <Banknote className="h-4 w-4" />)];
   const filterSelect = (key: string, value: string, label: string, values: string[]) => <select aria-label={label} value={value} onChange={e => setFilter(key, e.target.value)} className="rounded-md border border-ink-600 bg-ink-800 px-2 py-1 text-xs text-slate-200">
@@ -172,11 +211,27 @@ export function RealEstate() {
       default: return p[key as "status"] || <span title="Not entered"><AbsentValue /></span>;
     }
   };
+  const holdingCell = (h: Holding, key: string): ReactNode => {
+    const sub = (text: string) => <span data-export-ignore className="mt-1 block font-sans text-[10px] font-normal text-slate-500">{text}</span>;
+    switch (key) {
+      case "name": return <span className="block font-medium text-slate-100" title={REAL_ESTATE_KEYS[h.p.securityKey]}>{h.name}{sub(`Held through ${h.owner}`)}</span>;
+      case "type": return <span title={REAL_ESTATE_KEYS[h.p.securityKey]}>Company shares</span>;
+      case "owners": return <span title={`${h.owner}, in its ${h.custody} account. ${shareTitle}`}>{h.owner}{sub(h.custody)}</span>;
+      case "cost": return h.p.costBasis === null ? <span title="No cost on the record"><AbsentValue /></span> : <span title={h.p.advisedNote ?? "What was paid"}>{money(h.p.costBasis)}</span>;
+      case "value": return <span title={holdingWhy.value}>{money(h.p.marketValue)}{sub("At cost")}</span>;
+      case "gain": case "gainPct": return gap(AT_COST_PNL, "At cost");
+      case "tax": case "afterTax": return gap(holdingWhy.tax, "Shares");
+      case "acquisition": return "Purchased";
+      case "purchasedOn": return <span title={h.on ? undefined : "No dated purchase on the record"}>{date(h.on)}</span>;
+      case "valuationDate": return <span title={holdingWhy.value}><AbsentValue /></span>;
+      default: return <span title={holdingWhy.property}><AbsentValue /></span>;
+    }
+  };
   return <div>
     <PageHeader eyebrow="Daily" title="Real Estate" right={<div className="flex flex-wrap items-center gap-2"><PropertyBulkEntry shown={scoped} all={store.properties} members={scope.options} ready={store.ready} onSaved={() => void store.reload()} /><button type="button" className="btn-primary" disabled={!store.ready} onClick={() => { setAdding(emptyProperty()); setEditing(true); }}><Plus className="h-4 w-4" />Add property</button></div>} />
     {store.error && <div role="alert" className="mb-4 flex items-center gap-3 rounded-lg border border-ink-600 bg-ink-800 p-3 text-sm text-loss">{store.error}<button type="button" className="btn-ghost" onClick={() => void store.reload()}>Retry</button></div>}
     <SelectableTiles page="real-estate" storageKey="glow:realEstateTiles:v1" defaults={DEFAULT_TILES} metrics={metrics} showSavedWhere={false} />
-    <Card className="mt-5" pad={false} title={`Properties${store.ready ? ` · ${filtered.length}` : ""}`} right={<div className="flex flex-wrap items-center justify-end gap-2">
+    <Card className="mt-5" pad={false} title={`Properties${store.ready ? ` · ${filtered.length}` : ""}${holdingRows.length ? ` · ${holdingsNote(holdingRows.length)}` : ""}`} right={<div className="flex flex-wrap items-center justify-end gap-2">
       <div role="tablist" aria-label="Property views" className="inline-flex items-center gap-0.5 rounded-lg border border-ink-600/60 bg-ink-900/40 p-0.5">
         {VIEWS.map(({ key, label, icon: Icon }) => <button type="button" role="tab" aria-selected={view === key} key={key} onClick={() => setView(key)} className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium ${view === key ? "bg-champagne-500 text-ink-950 shadow-glow" : "text-slate-400 hover:text-slate-200"}`}><Icon className="h-3.5 w-3.5" />{label}</button>)}
       </div>
@@ -200,10 +255,11 @@ export function RealEstate() {
       {view === "table" ? <div className="overflow-x-auto" data-navigation-scroll="realestate-1"><ExportableTable editable exportName="Real Estate — Properties" className="min-w-full text-[13px]" data-real-estate-table>
         <thead className="border-b border-ink-700"><Tr view={table}>{COLS.map(key => <SortHeader key={key} col={key} view={table} align={numeric.has(key) ? "right" : "left"} pad="px-3 py-2" title={numeric.has(key) && key !== "area" && key !== "yield" ? shareTitle : undefined} className={key === "name" ? "min-w-[12rem]" : ""}>{LABELS[key]}</SortHeader>)}</Tr></thead>
         <tbody>{rows.map(p => <Tr key={p.id} view={table} inputRecordId={`property:${p.id}`} className="border-b border-ink-700/50" data-property={p.id}>{COLS.map(key => <td key={key} className={`px-3 py-3 ${numeric.has(key) ? "text-right mono tabular whitespace-nowrap" : "text-slate-300"} ${key === "owners" ? "min-w-[10rem] max-w-[15rem] text-xs" : ""}`}>{cell(p, key)}</td>)}</Tr>)}
-          {!rows.length && <tr><td colSpan={table.order.length} className="px-5 py-14 text-center text-sm text-slate-500">{empty}{store.ready && !scoped.length && !scope.owners && <button type="button" className="mx-auto mt-3 block text-champagne-400 underline" onClick={() => { setAdding(emptyProperty()); setEditing(true); }}>Add property</button>}</td></tr>}
+          {!rows.length && <tr><td colSpan={table.order.length} className={`px-5 ${holdingRows.length ? "py-6" : "py-14"} text-center text-sm text-slate-500`}>{empty}{store.ready && !scoped.length && !scope.owners && <button type="button" className="mx-auto mt-3 block text-champagne-400 underline" onClick={() => { setAdding(emptyProperty()); setEditing(true); }}>Add property</button>}</td></tr>}
+          {holdingRows.map(h => <Tr key={h.id} view={table} sourcePositions={[h.p]} className="border-b border-ink-700/50" data-book-holding={h.p.securityKey} data-holding-account={h.p.accountId} data-holding-value={h.p.marketValue}>{COLS.map(key => <td key={key} className={`px-3 py-3 ${numeric.has(key) ? "text-right mono tabular whitespace-nowrap" : "text-slate-300"} ${key === "owners" ? "min-w-[10rem] max-w-[15rem] text-xs" : ""}`}>{holdingCell(h, key)}</td>)}</Tr>)}
         </tbody>
-        {!!rows.length && <tfoot><TrFoot view={table} label="Total" className="border-t border-ink-600 bg-ink-800/50 font-semibold" cells={{ ...Object.fromEntries((["cost", "value", "gain", "rent", "debt", "emi", "equity", "netRent"] as const).map(key => { const total = sum(key); const note = key === "cost" ? receivedNote(filtered, scope.owners) : ""; return [key, <td key={key} className="px-3 py-3 text-right mono tabular whitespace-nowrap" title={shareTitle}>{key === "gain" ? money(total.value, { sign: true }) : money(total.value)}{(total.known < total.count || note) && <span data-export-ignore className="mt-1 block font-sans text-[10px] font-normal text-slate-500">{[total.known < total.count ? coverage(total) : "", note].filter(Boolean).join(" · ")}</span>}</td>]; })),
-          ...Object.fromEntries((["tax", "afterTax"] as const).map(key => { const total = taxTotal(key); return [key, <td key={key} className="px-3 py-3 text-right mono tabular whitespace-nowrap" title={`${TAX_RULES} ${shareTitle}${total.known < total.count ? ` Missing: ${taxMissing(key)}.` : ""}`}>{money(total.value)}{total.known < total.count && <span data-export-ignore className="mt-1 block font-sans text-[10px] font-normal text-slate-500">{coverage(total)}</span>}</td>]; })) }} /></tfoot>}
+        {!!(rows.length || holdingRows.length) && <tfoot><TrFoot view={table} label="Total" className="border-t border-ink-600 bg-ink-800/50 font-semibold" cells={{ ...Object.fromEntries((["cost", "value", "gain", "rent", "debt", "emi", "equity", "netRent"] as const).map(key => { const total = sum(key); const note = key === "cost" ? receivedNote(filtered, scope.owners) : ""; return [key, <td key={key} className="px-3 py-3 text-right mono tabular whitespace-nowrap" title={[shareTitle, leftOut(key)].filter(Boolean).join(" ")} data-total={key}>{key === "gain" ? money(total.value, { sign: true }) : money(total.value)}{(total.known < total.count || note || total.holdings) && <span data-export-ignore className="mt-1 block font-sans text-[10px] font-normal text-slate-500">{[total.known < total.count || total.holdings ? coverage(total) : "", note].filter(Boolean).join(" · ")}</span>}</td>]; })),
+          ...Object.fromEntries((["tax", "afterTax"] as const).map(key => { const total = taxTotal(key); return [key, <td key={key} className="px-3 py-3 text-right mono tabular whitespace-nowrap" title={`${TAX_RULES} ${shareTitle}${total.known < total.count ? ` Missing: ${taxMissing(key)}.` : ""}${leftOut(key) ? ` ${leftOut(key)}` : ""}`}>{money(total.value)}{total.known < total.count && <span data-export-ignore className="mt-1 block font-sans text-[10px] font-normal text-slate-500">{coverage(total)}</span>}</td>]; })) }} /></tfoot>}
       </ExportableTable></div> : <div className="grid lg:grid-cols-[minmax(0,1fr)_19rem]">
         <div className="min-w-0"><Suspense fallback={<div className="p-16 text-sm text-slate-400">Loading map…</div>}><PropertyMap properties={filtered} onSelect={open} /></Suspense>
           <div className="flex flex-wrap gap-x-4 gap-y-1 border-t border-ink-700 px-4 py-2 text-xs text-slate-400">{distinct(filtered.map(p => p.type)).map(t => <span key={t} className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ background: TYPES_COLOR[t] }} />{t}</span>)}<span className="ml-auto">{filtered.filter(hasPin).length} pinned · {filtered.filter(p => !hasPin(p)).length} need a pin</span></div>
