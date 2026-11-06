@@ -627,6 +627,34 @@ export const UNROUTED_EQUITY_BUCKET = "Equity — how it is held is not stated";
  * uncovered: a return there is refused and says why.
  */
 export const AT_COST_BUCKET = "Private investments at cost";
+
+/**
+ * ── REAL ESTATE HELD AS COMPANY SHARES (Stage 10mg) ─────────────────────────
+ *
+ *   "Glowterra LLP and Glowsphere LLP: show their Nzuri Pune Knowledge Park
+ *    holdings under Real Estate … as line items on the Real Estate tab and as
+ *    real-estate exposure on the Category / Asset class views, counted once in
+ *    the total."
+ *
+ * The two LLPs hold Nzuri Pune Knowledge Park's unlisted equity and preference
+ * shares, at cost (Stage 10jq). This map is the one list of book holdings the
+ * family files as real estate, and three surfaces read it: the Category axis
+ * (`holdingBucket`, ahead of the at-cost section), the family's asset class
+ * (`FAMILY_SAID_CLASS`) and the Real Estate page's line items. Each is the same
+ * book position, so no total moves: a line leaves "Private investments at cost"
+ * or "Alternate" for "Real Estate" and is still counted once.
+ *
+ * Held at cost, a Real Estate section carries no gain and refuses its return
+ * through `costCoversSet`, as the at-cost section did.
+ */
+export const REAL_ESTATE_KEYS: Readonly<Record<string, string>> = {
+  "nzuri-pune-knowledge-park": "Nzuri Pune Knowledge Park equity shares — Glowterra LLP and Glowsphere LLP",
+  "nzuri-pune-knowledge-park-private-limited-pref-24sp46": "Nzuri Pune Knowledge Park preference shares — Glowterra LLP and Glowsphere LLP",
+};
+export const REAL_ESTATE_BUCKET = "Real Estate";
+/** Is this a book holding the family files as real estate? */
+export const isRealEstateHolding = (p: { securityKey?: string }): boolean =>
+  !!p.securityKey && Object.prototype.hasOwnProperty.call(REAL_ESTATE_KEYS, p.securityKey);
 /** Is this a review line held at cost — a value that is its cost, and no measured gain? */
 export const isValuedAtCost = (p: { valuedAtCost?: boolean }): boolean => p.valuedAtCost === true;
 /** The reason a return is absent on a line held at cost, in one wording for every surface. */
@@ -922,6 +950,9 @@ export function holdingBucket(p: { assetClass: string | null; securityKey?: stri
    * the identical reason the ordinary cash sleeve is not lifted either.
    */
   if (isCashEquivalent(p)) return "Cash";
+  // Real estate before at cost: the family files these by what they ARE, and
+  // the section still carries no gain; see `REAL_ESTATE_KEYS`.
+  if (isRealEstateHolding(p)) return REAL_ESTATE_BUCKET;
   // A review line held at cost has no measured gain; see `AT_COST_BUCKET`.
   if (isValuedAtCost(p)) return AT_COST_BUCKET;
   /**

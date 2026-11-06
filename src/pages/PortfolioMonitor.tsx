@@ -27,7 +27,7 @@ import {
   measuredReturn, returnCoverage, returnMeasureDef, valueDateOf, commonValueDate, clubbedPurchase, singlePurchaseGap,
   type ReturnMeasure, type ReturnInput, type RowCapital, type MeasuredReturn, type CapitalLeg,
   costCoversSet, strikesGain, isValuedAtCost, totalQuantity, AT_COST_RETURN, AT_COST_PNL, NO_UNIT_COUNT,
-  AT_COST_MARK, REVIEW_NO_MARK, AT_COST_BUCKET,
+  AT_COST_MARK, REVIEW_NO_MARK, AT_COST_BUCKET, REAL_ESTATE_BUCKET,
   currentHoldings, droppedHoldings, NEGLIGIBLE_VALUE_FLOOR, isCashEquivalent, assetClassLabel,
 } from "@/lib/analytics";
 import { depositoryUnitsGist, describeDepositoryUnits, isArbitrageFund } from "@/lib/fundNavs";
@@ -4347,6 +4347,13 @@ export function PortfolioMonitor() {
                                 title="These investments are also on the Private Market page, under Private Companies (Held at cost), with their capital and returns"
                                 className="text-[11px] font-medium normal-case tracking-normal text-champagne-400 hover:underline">
                                 Also on Private Market →</Link>
+                            // …and the LLPs' Nzuri shares are line items on Real
+                            // Estate (Stage 10mg), on either axis that names it.
+                            : grp.key === REAL_ESTATE_BUCKET && groupAxis !== "basket"
+                            ? <Link to="/real-estate" data-real-estate-link
+                                title="These holdings are also line items on the Real Estate page, counted once in its total"
+                                className="text-[11px] font-medium normal-case tracking-normal text-champagne-400 hover:underline">
+                                Also on Real Estate →</Link>
                             : undefined}
                           open={secOpen} onToggle={() => toggleSection(secKey)}
                           toggleData={{ "data-section-toggle": grp.key }}

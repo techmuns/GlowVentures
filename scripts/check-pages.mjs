@@ -366,6 +366,26 @@ const CASH_EQ_KEYS = (() => {
 })();
 
 /**
+ * THE BOOK HOLDINGS THE FAMILY FILES AS REAL ESTATE (Stage 10mg) —
+ * `REAL_ESTATE_KEYS` in `src/lib/analytics.ts`, parsed like `CASH_EQ_KEYS`.
+ * `holdingBucket` files them under "Real Estate" after cash and before the
+ * at-cost section; every re-expression below follows that order. Null on any
+ * failure, so a caller fails rather than reading a renamed constant as none.
+ */
+const REAL_ESTATE_KEYS = (() => {
+  try {
+    const a = readFileSync(new URL("../src/lib/analytics.ts", import.meta.url), "utf8");
+    const i = a.indexOf("export const REAL_ESTATE_KEYS");
+    if (i < 0) return null;
+    const end = a.indexOf("\n};", i);
+    if (end < 0) return null;
+    const keys = [...a.slice(i, end).matchAll(/^\s*"([a-z0-9-]+)":/gm)].map((m) => m[1]);
+    return keys.length ? new Set(keys) : null;
+  } catch { return null; }
+})();
+const isRealEstateKey = (k) => { if (!REAL_ESTATE_KEYS) throw new Error("REAL_ESTATE_KEYS unreadable"); return REAL_ESTATE_KEYS.has(k); };
+
+/**
  * WHICH SCHEMES AMFI FILES AS ARBITRAGE FUNDS — by the store's key and by ISIN,
  * read off SEBI's own category heading in the committed NAV store. Never a name
  * and never `isArbitrageFund`, which would agree with the page by construction.
@@ -6002,6 +6022,7 @@ const FAMILY_BOOK = (() => {
       // it would put money with no valuation into a section whose return is
       // struck, and this block would then expect sections the page does not
       // draw on four of these entities.
+      if (isRealEstateKey(p.securityKey)) return "Real Estate";
       if (atCostRow(p)) return "Private investments at cost";
       if (p.assetClass !== "Equity") return p.assetClass;
       return e === "Direct" || e === "Execution" ? "Direct Equity" : "Equity — how it is held is not stated";
@@ -6598,6 +6619,7 @@ const SECTOR_BUCKETS = (() => {
        * that was right. A rule written twice has to be moved twice.
        */
       const k = CASH_EQ_KEYS.has(p.securityKey) ? "Cash"
+        : isRealEstateKey(p.securityKey) ? "Real Estate"
         : p.valuedAtCost === true ? "Private investments at cost" : p.assetClass;
       sections.set(k, (sections.get(k) ?? 0) + p.marketValue);
     }
@@ -7704,7 +7726,8 @@ const DRILLDOWN_TOTALS = new Map();
 // has more rows than this sweep has addresses for, which is a one-line
 // diagnosis naming the fix rather than a silent gap.
 // Nine since Stage 10hq: valuing DSP Gold and Silver ETF gave the book an ETF row.
-const BUCKET_SLOTS = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+// Ten since Stage 10mg: the LLPs' Nzuri shares are a Real Estate row.
+const BUCKET_SLOTS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
 /**
  * THE MUTUAL FUND WHOSE LOOK-THROUGH IS WALKED — derived, never typed.
@@ -10876,6 +10899,7 @@ const TXN_SECTIONS = (() => {
       // the family values at what they paid is its own section, whatever class
       // the review filed it under — left out, 76 such rows fell under AIF,
       // Unlisted and Bond and the page's own eighth section matched nothing.
+      if (isRealEstateKey(p.securityKey)) return "Real Estate";
       if (p.valuedAtCost === true) return "Private investments at cost";
       if (p.assetClass !== "Equity") return p.assetClass;
       return e === "Direct" || e === "Execution" ? DIRECT_EQUITY_BUCKET : "Equity — how it is held is not stated";
@@ -12731,6 +12755,7 @@ const INSIDE_BOOK = (() => {
     const bucket = (p) => {
       if (engagement.get(p.accountId) === "PMS") return MANDATE_BUCKET;
       if (CASH_EQ_KEYS.has(p.securityKey)) return "Cash";
+      if (isRealEstateKey(p.securityKey)) return "Real Estate";
       if (p.valuedAtCost === true) return "Private investments at cost";
       return p.assetClass;
     };
@@ -14001,6 +14026,7 @@ const MONITOR_BASIS_BOOK = (() => {
       // ORDER (Stage 10dh). A review line held at cost is its own section, so a
       // re-expression that falls through to the asset class reports one fewer
       // section than the page draws and files its lines under AIF or Unlisted.
+      if (isRealEstateKey(p.securityKey)) return "Real Estate";
       if (p.valuedAtCost === true) return "Private investments at cost";
       if (p.assetClass === "Equity") return e === "Direct" || e === "Execution" ? "Direct Equity" : "Equity — how it is held is not stated";
       return p.assetClass;
@@ -34442,7 +34468,7 @@ const INVARIANTS = {
   // The totals row renders on every axis, so its claims are checked on every
   // axis: the sections it totals are the family's own here, and a partition that
   // adds up on the category axis can still miss on one the family defined.
-  "monitor-assetclass": [...axisChecks("asset class", ["Equity", "Debt", "Alternate", "Cash"]), ...CATEGORY_TOTALS, ...AXIS_EXPANSION, ...FUND_CLASSES,
+  "monitor-assetclass": [...axisChecks("asset class", ["Equity", "Debt", "Alternate", "Real Estate", "Cash"]), ...CATEGORY_TOTALS, ...AXIS_EXPANSION, ...FUND_CLASSES,
     ...CASH_ON_AXIS("assetClass"), ...CASH_RULE_HEADINGS("assetClass"), ...CASH_HEADING_COUNTS, ...NO_PHANTOM_DUPLICATE,
     ...footBasisChecks("all"), ...SECTION_REALISED],
   "monitor-basket": [...axisChecks("basket", ["Stable Growth", "Entrepreneurial Growth", "Thematic & Tactical", "Liquidity"]), ...CATEGORY_TOTALS, ...AXIS_EXPANSION, ...FUND_CLASSES,
