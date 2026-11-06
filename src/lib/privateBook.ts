@@ -1210,6 +1210,24 @@ function navOf(held: BookFolio[], funds: number): Pick<BookFigures, "nav" | "nav
   return { nav: { perUnit: sum(held.map((f) => f.value!)) / sum(held.map((f) => f.units!)), date: dates[0] }, navWhy: null };
 }
 
+/**
+ * THE WEIGHT DENOMINATOR OVER THE BANDS THE TABLE DRAWS. *"When we are seeing
+ * only the companies filter or the funds filter then the weightage … should be
+ * measured for that particular filter only"* — so Companies weighs each row
+ * against the private companies alone, Funds against the private funds alone,
+ * and Both against the whole private book (`privateValue` / `privateCost`).
+ * Same basis as those two: valued holdings, each counted once, a costless one
+ * named and kept out of the cost.
+ */
+export function weightBase(book: PrivateBook, sections: readonly BookSectionId[]): { value: number; cost: number | null; costless: string[] } {
+  const valued = book.folios.filter((f) => f.section !== "unvalued" && sections.includes(f.section));
+  return {
+    value: figuresOf(valued, true).value ?? 0,
+    cost: figuresOf(valued, true).cost,
+    costless: [...new Set(valued.filter((f) => f.position && f.counted && f.cost == null).map((f) => f.fundName))],
+  };
+}
+
 export function figuresOf(folios: BookFolio[], consolidated: boolean): BookFigures {
   const held = folios.filter((f) => f.position && (!consolidated || f.counted));
   // THE CAPITAL ON THE SAME BASIS AS THE HOLDING: every statement's own on a

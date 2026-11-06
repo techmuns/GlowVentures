@@ -1366,3 +1366,9 @@ Codex's review of #352, verified against the code and the book:
   - AMC-folio accounts' statements already postdate their report rows.
 - Still open, in a follow-up: Green Lantern 510854/510861. Their own tape runs to 22–23 Sep (sold out of Gujarat Ambuja, Graphite India, GMM Pfaudler, Ratnamani, Bajaj Auto; bought IEX, HEG AM, Elgi). It is refused because no depository or capital-gain witness exists. A correct roll also needs the cash line, the bought names and HEG's 7 Sep demerger. Baring's 3 Aug ₹50 L call is also open: no units.
 - Tests: `mopwmTransactions.test.mjs` covers the gates, transfer days, partial sales and capital exits, on constructed rows and the real report. `shareRolls`, `unpricedUnits`, `recoveredCosts` and `corporateActions` assert the rolls. The `concentration` and `searchIndex` twin-key checks build a constructed pair when the live book has none (the last pair is sold).
+
+### Stage 10mf — Private Market weights are of the filter shown
+
+- *"When we are seeing only the companies filter or the funds filter then the weightage of investments should be measured for that particular filter only."* Weight at value and Weight at cost divided every row by the whole private book, so under Companies the two company bands read 5.7% + 77.2% at cost (8.2% + 72.5% at value) beside a fund band that was not drawn.
+- `weightBase(book, sections)` in `src/lib/privateBook.ts` totals value and cost over the bands the selector draws (same basis as `privateValue` / `privateCost`: valued holdings, each once, a costless one named). Companies now reads 6.9% + 93.1% at cost, Funds 100%, Both unchanged. The headings name the filter's own total.
+- `privateBook.test.ts` [F] and check:pages `PM_WEIGHT_SHOWN_CHECK` (on `private-market-default`, `-show-funds`, `-folios`): the drawn bands' weights add to 100% at value and at cost under every filter.
