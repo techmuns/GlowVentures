@@ -606,7 +606,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   // `statementPortfolio`, so a page that must reconcile has the printed figures
   // available rather than having to un-mix them.
   // A PMS account's own tape rolled past its statement also BOUGHT names the
-  // statement never held (Stage 10mg, `BOOK_TAPE_ROWS`): live rows only, through
+  // statement never held (Stage 10mh, `BOOK_TAPE_ROWS`): live rows only, through
   // the same layer, so a quote prices them and the statement basis never sees them.
   const corporateActionLayer = useMemo(() => applyCorporateActionQuotes(
     enteredPortfolio ? [...enteredPortfolio.positions, ...BOOK_TAPE_ROWS] : [], enteredPortfolio?.accounts ?? [], quotes, corporateActions,

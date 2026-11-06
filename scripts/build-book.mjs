@@ -2594,7 +2594,7 @@ function build(archived, archiveCount = archived.length, references = {}) {
   const splitUnreconciled = [];
   /** Every dated buy and sell behind a holding, keyed `${accountId}|${securityKey}` — see `holdingTradeRows`. */
   const holdingTrades = {};
-  /** Lines a PMS account's own tape BOUGHT past its statement (Stage 10mg) — live rows only. */
+  /** Lines a PMS account's own tape BOUGHT past its statement (Stage 10mh) — live rows only. */
   const tapeBoughtRows = [];
   /** The cash income each holding was paid, dated as its statement dates it (Stage 10fw). */
   const holdingIncome = {};
@@ -4034,7 +4034,7 @@ function build(archived, archiveCount = archived.length, references = {}) {
     }
 
     /**
-     * …AND A PMS ACCOUNT'S OWN TAPE, ROLLED AS ONE MANDATE (Stage 10mg) — every
+     * …AND A PMS ACCOUNT'S OWN TAPE, ROLLED AS ONE MANDATE (Stage 10mh) — every
      * line, the cash and the names it bought, witnessed by the manager's own
      * later fact sheet (`scripts/lib/tapeRoll.mjs`). It replaces the per-holding
      * roll above for the account, or names why it cannot; LIVE basis only.
@@ -5792,7 +5792,7 @@ function emit(book) {
   L.push(`export const BOOK_SHARE_ROLLS: ShareRoll[] = ${j(book.shareRolls)};`);
   L.push("");
   L.push("/**");
-  L.push(" * LINES A PMS ACCOUNT'S OWN TAPE BOUGHT PAST ITS HOLDING STATEMENT (Stage 10mg,");
+  L.push(" * LINES A PMS ACCOUNT'S OWN TAPE BOUGHT PAST ITS HOLDING STATEMENT (Stage 10mh,");
   L.push(" * `scripts/lib/tapeRoll.mjs`): the names, and the cash lines its later fact sheet");
   L.push(" * prints, that the statement never held. LIVE BASIS ONLY — `PortfolioContext`");
   L.push(" * marks each at its `rolledForward` units and dated price; the statement basis");

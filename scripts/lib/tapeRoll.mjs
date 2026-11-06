@@ -1,4 +1,4 @@
-// A PMS ACCOUNT'S OWN TAPE, CARRIED PAST ITS HOLDING STATEMENT AS ONE MANDATE (Stage 10mg).
+// A PMS ACCOUNT'S OWN TAPE, CARRIED PAST ITS HOLDING STATEMENT AS ONE MANDATE (Stage 10mh).
 //
 // *"If we have transaction data that shows buy or sale transactions then those
 // should be considered to update the portfolio"* — the family, 6 Nov 2026.

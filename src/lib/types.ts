@@ -363,7 +363,7 @@ export type Position = {
     /** The purchase lots still held after the roll, first-in first-out (Stage 10me): what Invested on dates. */
     heldPurchases?: { first: string; last: string; lots: number };
     /**
-     * A LATER DATED MARK (Stage 10mg): the account's own fact sheet's printed
+     * A LATER DATED MARK (Stage 10mh): the account's own fact sheet's printed
      * value for the line over the rolled units on its date — the price the
      * rolled units are valued at until a live quote arrives. Absent: the
      * statement's own mark.

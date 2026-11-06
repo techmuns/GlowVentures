@@ -159,7 +159,7 @@ const funds = BOOK_POSITIONS.filter((p) => p.assetClass !== "Equity");
 // Stage 10me: a fund the adviser report paid out in full after its statement is not held.
 const paidOut = funds.filter((p) => p.rolledForward?.quantity === 0);
 assert.ok(paidOut.some((p) => p.accountId === "motilal-oswal-delphi-equity-fund-9049241536"), "MO Delphi, paid out on 16 Jul 2026");
-// Stage 10mg: a PMS account's cash and liquid fund the account's own tape rolled are marked at the roll.
+// Stage 10mh: a PMS account's cash and liquid fund the account's own tape rolled are marked at the roll.
 const tapeRolled = funds.filter((p) => !paidOut.includes(p) && p.rolledForward?.source === "account-tape");
 assert.ok(tapeRolled.some((p) => p.securityKey === "cash" && p.accountId === "green-lantern-capital-llp-510861"), "Green Lantern's cash rolls with its tape");
 const fundsOut = applyCorporateActionQuotes(funds, BOOK_ACCOUNTS, null, saved).positions;
@@ -203,7 +203,7 @@ assert.equal(JSON.stringify(rolled), rolledSnapshot, "the statement rows are not
 const rRet = applyCorporateActionQuotes(rolled, BOOK_ACCOUNTS, rFeed, { ...saved, verifiedThrough: rDay }).returns;
 for (const x of held) {
   const r = rRet.get(positionActionKey(x))!;
-  // …or, where the roll carries a later dated mark (Stage 10mg), on that mark's date.
+  // …or, where the roll carries a later dated mark (Stage 10mh), on that mark's date.
   const asOf = x.rolledForward!.price?.asOf ?? BOOK_ACCOUNTS.find((a) => a.accountId === x.accountId)!.asOf;
   assert.equal(r.statementDate, asOf, `${x.security}: the window opens on the mark's date (${asOf}), not ${x.rolledForward!.through}`);
   assert.equal(r.openingValue, x.rolledForward!.quantity * (x.rolledForward!.price?.value ?? x.currentPrice as number), `${x.security}: the opening is the rolled units at that date's mark`);

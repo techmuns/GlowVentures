@@ -605,7 +605,7 @@ export function MorningCIO() {
       // FIFO over the row's own holdings — realised on units sold stays in the
       // return, and a whole mandate is struck on its capital (`fifoTotals`).
       const fifo = fifoTotals(rows, { accounts: portfolio.accounts, universe: p });
-      // A whole mandate's uncosted line is no bar: its capital bridge needs no line cost (Stage 10mg).
+      // A whole mandate's uncosted line is no bar: its capital bridge needs no line cost (Stage 10mh).
       const costCoversRow = costCoversSet(mv, withoutCostMV - fifo.wholeUncostedValue);
       return {
         count: rows.length, cost, mv, pnl,

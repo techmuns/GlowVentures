@@ -485,7 +485,7 @@ Never derive one side from the others.
   nothing (`transferredOn`). A PMS/AIF folio it pays out in full (at least the
   statement's value, nothing paid in) is redeemed (`mopwmCapitalExits`, MO
   Delphi); smaller capital rows carry no units and are named, not applied.
-- **A PMS account's own tape rolls the whole mandate** (Stage 10mg,
+- **A PMS account's own tape rolls the whole mandate** (Stage 10mh,
   `scripts/lib/tapeRoll.mjs`, live basis): where its transaction statements run
   past its holdings and a later fact sheet prints every line's value
   (`factSheetValues`, adding to its portfolio value), every line, the cash and

@@ -4533,7 +4533,7 @@ export function PortfolioMonitor() {
                       // left out of the section's FIFO and named (Stage 10jc).
                       const leftOutMV = sum(tot.leftOut.map((x) => x.marketValue));
                       const leftOutNames = [...new Set(tot.leftOut.map((x) => labelByKey.get(x.securityKey) ?? x.security))].join(" and ");
-                      // A whole mandate's uncosted line is no bar: its capital bridge needs no line cost (Stage 10mg).
+                      // A whole mandate's uncosted line is no bar: its capital bridge needs no line cost (Stage 10mh).
                       const covered = costCoversSet(tot.mv, uncostedMV - tot.fifo.wholeUncostedValue + tot.atCostMV + leftOutMV);
                       // Every costed line here is held at cost (the review's own
                       // section, or a family-axis row made only of such lines).

@@ -1,5 +1,5 @@
 // A PMS account's own tape, rolled past its holding statement as one mandate
-// (Stage 10mg): every line, the cash and the names it bought, witnessed by the
+// (Stage 10mh): every line, the cash and the names it bought, witnessed by the
 // manager's own later fact sheet — or nothing, with the reason.
 import assert from "node:assert/strict";
 import fs from "node:fs";

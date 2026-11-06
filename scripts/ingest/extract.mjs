@@ -1086,7 +1086,7 @@ function ensureUniqueDocKeys(docs) {
  */
 /**
  * A FACT SHEET'S FIGURES ARE PUBLISHED ONLY WHERE THE BOOK CAN USE THEM (Stage
- * 10mg): on an account's NEWEST fact sheet, and only where it is dated after the
+ * 10mh): on an account's NEWEST fact sheet, and only where it is dated after the
  * account's newest holding statement — the later mark a tape roll needs
  * (`scripts/lib/tapeRoll.mjs`). Everywhere else the holding statement is the
  * later record, the figures would say nothing it does not, and the document

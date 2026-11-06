@@ -1373,7 +1373,7 @@ Codex's review of #352, verified against the code and the book:
 - `weightBase(book, sections)` in `src/lib/privateBook.ts` totals value and cost over the bands the selector draws (same basis as `privateValue` / `privateCost`: valued holdings, each once, a costless one named). Companies now reads 6.9% + 93.1% at cost, Funds 100%, Both unchanged. The headings name the filter's own total.
 - `privateBook.test.ts` [F] and check:pages `PM_WEIGHT_SHOWN_CHECK` (on `private-market-default`, `-show-funds`, `-folios`): the drawn bands' weights add to 100% at value and at cost under every filter.
 
-### Stage 10mg — Green Lantern: the account's own tape rolls the whole mandate
+### Stage 10mh — Green Lantern: the account's own tape rolls the whole mandate
 
 *"Yes, do Green Lantern"* — the family, 6 Nov 2026, on Stage 10me's open item.
 

@@ -287,7 +287,7 @@ function bookArray(src, name) {
   // with no feed draws none. `DEPOSITORY_SHARE_BOOK` re-expresses both routes
   // to them — a transaction-only demat's closing balances, and a holding
   // statement's shares with no usable price — for the walks that serve a feed.
-  // Stage 10mg: the names a PMS account's own tape bought past its statement
+  // Stage 10mh: the names a PMS account's own tape bought past its statement
   // (`BOOK_TAPE_ROWS`) are live rows too, at their rolled units and dated price.
   return name === "BOOK_POSITIONS"
     ? withPublishedNavs([...withRolledForward([...out, ...(bookArray(src, "BOOK_TAPE_ROWS") ?? [])]), ...withDepositoryFunds(src, out), ...withUnpricedStatementUnits(src, out)])
@@ -308,7 +308,7 @@ function withRolledForward(rows) {
     if (rf.quantity === 0) return [];
     // A statement printing a value and no price marks a unit at that value over
     // its own units (Stage 10hb, the review's roll of Yash Highvoltage).
-    // …or the later dated mark the roll carries (Stage 10mg, the account's own fact sheet).
+    // …or the later dated mark the roll carries (Stage 10mh, the account's own fact sheet).
     const mark = rf.price?.value ?? p.currentPrice ?? (p.quantity > 0 ? p.marketValue / p.quantity : null);
     const mv = mark === null ? p.marketValue : rf.quantity * mark;
     const cost = rf.costBasis;
@@ -13964,7 +13964,7 @@ const MONITOR_BASIS_BOOK = (() => {
         const cap = acc.get(id).capital;
         gain += (mmv.get(id) ?? 0) + cap.withdrawn - cap.contributed;
         deployed += cap.contributed;
-        // The rest of the capital bridge, an uncosted line's value included (B8; Stage 10mg's rolled lines).
+        // The rest of the capital bridge, an uncosted line's value included (B8; Stage 10mh's rolled lines).
         realised = (realised ?? 0) + (mcost.get(id) ?? 0) + (muncosted.get(id) ?? 0) + cap.withdrawn - cap.contributed;
       }
       // NO SURVIVORSHIP (Stage 10fz): what the family has left enters the gain

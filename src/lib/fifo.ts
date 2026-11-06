@@ -102,7 +102,7 @@ export type FifoTotals = {
   wholeCostHeld: number;
   wholeContributed: number;
   wholeWithdrawn: number;
-  /** The value of whole mandates' uncosted lines — in `uncostedValue`, but no bar to their capital return (Stage 10mg). */
+  /** The value of whole mandates' uncosted lines — in `uncostedValue`, but no bar to their capital return (Stage 10mh). */
   wholeUncostedValue: number;
   /** unrealised + realised + income. */
   gain: number | null;
@@ -245,7 +245,7 @@ export function fifoTotals(set: readonly Position[], opts: FifoOptions = {}): Fi
   let income: number | null = null;
   let unverifiedReturn = false;
   let wholeCostHeld = 0, wholeContributed = 0, wholeWithdrawn = 0;
-  /** A whole mandate's uncosted lines: named, but its capital bridge needs no line cost (Stage 10mg). */
+  /** A whole mandate's uncosted lines: named, but its capital bridge needs no line cost (Stage 10mh). */
   let wholeUncostedValue = 0;
   const add = (a: number | null, b: number) => (a ?? 0) + b;
 
@@ -357,7 +357,7 @@ export function fifoTotals(set: readonly Position[], opts: FifoOptions = {}): Fi
     : (unrealised ?? 0) + (realised ?? 0) + (income ?? 0);
   // A WHOLE MANDATE'S GAIN IS ITS CAPITAL BRIDGE — value + withdrawn − paid in —
   // and no line's cost enters it, so an uncosted line of one (a sale after its
-  // capital-gain statement, Stage 10mg) does not count against coverage.
+  // capital-gain statement, Stage 10mh) does not count against coverage.
   const covers = costCoversSet(marketValue, uncostedValue - wholeUncostedValue + atCostValue) || (marketValue === 0 && isNum(deployed) && deployed > 0);
   const returnPct = covers && gain !== null && isNum(deployed) && deployed > 0 ? (gain / deployed) * 100 : null;
   return {

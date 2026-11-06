@@ -898,7 +898,7 @@ export function makeDocument(input) {
     /** A fund's own holdings, for look-through. Never summed into the book. */
     schemeHoldings: input.schemeHoldings ?? [],
     /**
-     * A FACT SHEET'S PRINTED MARKET VALUE AND WEIGHT PER LINE (Stage 10mg) —
+     * A FACT SHEET'S PRINTED MARKET VALUE AND WEIGHT PER LINE (Stage 10mh) —
      * `{ security, securityKey, sector, marketValue, pctAssets }`, no quantity.
      * Never a holding (see `readSectors`): read only as the dated marks of an
      * account's own tape roll, and only where the lines add to the printed
@@ -943,7 +943,7 @@ export function makeDocument(input) {
  * and forgotten here fails loudly instead of vanishing.
  */
 // …and the fields carried only where a document prints them, so every other
-// document stays byte-identical (Stage 10mg's `factSheetValues`).
+// document stays byte-identical (Stage 10mh's `factSheetValues`).
 export const DOCUMENT_FIELDS = Object.freeze([...Object.keys(makeDocument({ docKey: "", provider: "", sourcePath: "" })), "factSheetValues"]);
 
 /** Throw if a document breaks the contract — called on every extractor result. */
