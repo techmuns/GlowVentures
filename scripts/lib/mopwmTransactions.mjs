@@ -147,8 +147,8 @@ export const MOPWM_SECURITIES = Object.freeze({
   INF209K01VA3: "Aditya Birla SL Liquid Direct-G", INF109K012M7: "ICICI Pru Nifty 50 Index Direct-G",
   INF109K01Y80: "ICICI Pru Nifty Next 50 Index Direct-G", INF769K01AX2: "Mirae Asset Large Cap Direct-G",
   INF174K01NH1: "Kotak Liquid Direct-IDCWD Reinvestment",
-  // Stage 10ma: the pre-split ISIN Ankita's Motilal demat statement of 31 Jul prints.
-  INF740KA1RE3: "DSP Silver ETF-G",
+  // Stage 10ma / 10mb: the pre-split ISINs Ankita's Motilal demat statement of 31 Jul prints.
+  INF740KA1RE3: "DSP Silver ETF-G", INF740KA1SW3: "DSP Gold ETF-G",
 });
 
 /**
@@ -161,6 +161,8 @@ export const MOPWM_SECURITIES = Object.freeze({
 export const FAMILY_CONFIRMED_FUND_SALES = Object.freeze([
   { ownerId: "ankita-jaisinghani", isin: "INF740KA1RE3", confirmedOn: "2026-11-06",
     words: "according to the client they have sold dsp silver etf and it should not be showing up in holdings" },
+  // Stage 10mb: the same folio's 23 Sep redemption, applied at the family's go-ahead.
+  { ownerId: "ankita-jaisinghani", isin: "INF740KA1SW3", confirmedOn: "2026-11-06", words: "Yes, remove Gold" },
 ]);
 
 /** An exchange settlement reference (`NSE/M/121/D`): a priced trade, not a book entry. */
