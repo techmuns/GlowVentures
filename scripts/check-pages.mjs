@@ -287,8 +287,10 @@ function bookArray(src, name) {
   // with no feed draws none. `DEPOSITORY_SHARE_BOOK` re-expresses both routes
   // to them — a transaction-only demat's closing balances, and a holding
   // statement's shares with no usable price — for the walks that serve a feed.
+  // Stage 10mh: the names a PMS account's own tape bought past its statement
+  // (`BOOK_TAPE_ROWS`) are live rows too, at their rolled units and dated price.
   return name === "BOOK_POSITIONS"
-    ? withPublishedNavs([...withRolledForward(out), ...withDepositoryFunds(src, out), ...withUnpricedStatementUnits(src, out)])
+    ? withPublishedNavs([...withRolledForward([...out, ...(bookArray(src, "BOOK_TAPE_ROWS") ?? [])]), ...withDepositoryFunds(src, out), ...withUnpricedStatementUnits(src, out)])
     : out;
 }
 
@@ -306,13 +308,15 @@ function withRolledForward(rows) {
     if (rf.quantity === 0) return [];
     // A statement printing a value and no price marks a unit at that value over
     // its own units (Stage 10hb, the review's roll of Yash Highvoltage).
-    const mark = p.currentPrice ?? (p.quantity > 0 ? p.marketValue / p.quantity : null);
+    // …or the later dated mark the roll carries (Stage 10mh, the account's own fact sheet).
+    const mark = rf.price?.value ?? p.currentPrice ?? (p.quantity > 0 ? p.marketValue / p.quantity : null);
     const mv = mark === null ? p.marketValue : rf.quantity * mark;
     const cost = rf.costBasis;
     const unreal = cost === null ? null : mv - cost;
     const denom = cost === null || rf.hprUnavailableReason ? null : cost + (rf.costOfUnitsSold ?? 0);
     return [{
       ...p, statedQuantity: p.quantity, quantity: rf.quantity, marketValue: mv, costBasis: cost,
+      ...(rf.price ? { currentPrice: rf.price.value, priceAsOf: rf.price.asOf } : {}),
       avgCost: cost === null || !(rf.quantity > 0) ? null : cost / rf.quantity,
       unrealizedPnL: unreal, realizedPnL: rf.realizedPnL, costOfUnitsSold: rf.costOfUnitsSold,
       realizedLotsAfter: 0,
@@ -13968,11 +13972,12 @@ const MONITOR_BASIS_BOOK = (() => {
         if (all.length && all.every((p) => keys.has(p.securityKey))) whole.add(id);
       }
       let gain = 0, deployed = 0, realised = null;
-      const mmv = new Map(), mcost = new Map();
+      const mmv = new Map(), mcost = new Map(), muncosted = new Map();
       for (const p of set) {
         if (whole.has(p.accountId)) {
           mmv.set(p.accountId, (mmv.get(p.accountId) ?? 0) + p.marketValue);
           if (costed(p)) mcost.set(p.accountId, (mcost.get(p.accountId) ?? 0) + p.costBasis);
+          else muncosted.set(p.accountId, (muncosted.get(p.accountId) ?? 0) + p.marketValue);
           continue;
         }
         if (!costed(p)) continue;
@@ -13984,7 +13989,8 @@ const MONITOR_BASIS_BOOK = (() => {
         const cap = acc.get(id).capital;
         gain += (mmv.get(id) ?? 0) + cap.withdrawn - cap.contributed;
         deployed += cap.contributed;
-        realised = (realised ?? 0) + (mcost.get(id) ?? 0) + cap.withdrawn - cap.contributed;
+        // The rest of the capital bridge, an uncosted line's value included (B8; Stage 10mh's rolled lines).
+        realised = (realised ?? 0) + (mcost.get(id) ?? 0) + (muncosted.get(id) ?? 0) + cap.withdrawn - cap.contributed;
       }
       // NO SURVIVORSHIP (Stage 10fz): what the family has left enters the gain
       // and the capital deployed, never the realised cell (which names itself

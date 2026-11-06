@@ -51,7 +51,7 @@ export function loadSavedActions(root) {
  * of passes: it allots another company's shares and leaves this one's count
  * alone.
  */
-function countActions(saved, symbol, isin, from, to) {
+export function countActions(saved, symbol, isin, from, to) {
   if (!symbol) return { actions: [] };
   const rows = saved.bySymbol.get(symbol) ?? [];
   const isins = new Set(rows.map((r) => currentIsin(r.isin)).filter(Boolean));

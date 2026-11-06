@@ -159,8 +159,17 @@ const funds = BOOK_POSITIONS.filter((p) => p.assetClass !== "Equity");
 // Stage 10me: a fund the adviser report paid out in full after its statement is not held.
 const paidOut = funds.filter((p) => p.rolledForward?.quantity === 0);
 assert.ok(paidOut.some((p) => p.accountId === "motilal-oswal-delphi-equity-fund-9049241536"), "MO Delphi, paid out on 16 Jul 2026");
-assert.deepEqual(applyCorporateActionQuotes(funds, BOOK_ACCOUNTS, null, saved).positions,
-  funds.filter((p) => !paidOut.includes(p)).map((p) => ({ ...p, live: false })), "fund NAVs and distributions are not equity corporate actions");
+// Stage 10mh: a PMS account's cash and liquid fund the account's own tape rolled are marked at the roll.
+const tapeRolled = funds.filter((p) => !paidOut.includes(p) && p.rolledForward?.source === "account-tape");
+assert.ok(tapeRolled.some((p) => p.securityKey === "cash" && p.accountId === "green-lantern-capital-llp-510861"), "Green Lantern's cash rolls with its tape");
+const fundsOut = applyCorporateActionQuotes(funds, BOOK_ACCOUNTS, null, saved).positions;
+assert.deepEqual(fundsOut.filter((p) => !tapeRolled.some((x) => x.accountId === p.accountId && x.securityKey === p.securityKey)),
+  funds.filter((p) => !paidOut.includes(p) && !tapeRolled.includes(p)).map((p) => ({ ...p, live: false })), "fund NAVs and distributions are not equity corporate actions");
+for (const p of tapeRolled.filter((x) => x.rolledForward!.quantity > 0)) {
+  const out = fundsOut.find((x) => x.accountId === p.accountId && x.securityKey === p.securityKey)!;
+  assert.ok(out && out.quantity === p.rolledForward!.quantity
+    && Math.abs(out.marketValue - p.rolledForward!.quantity * (p.rolledForward!.price?.value ?? p.currentPrice!)) < 0.01, `${p.securityKey}: at the roll's units and mark`);
+}
 
 // ROLLED FORWARD (Stage 10dw): a share the account's own tape carried past its
 // statement is LIVE at the rolled quantity; one rolled to nil is not a row;
@@ -194,9 +203,10 @@ assert.equal(JSON.stringify(rolled), rolledSnapshot, "the statement rows are not
 const rRet = applyCorporateActionQuotes(rolled, BOOK_ACCOUNTS, rFeed, { ...saved, verifiedThrough: rDay }).returns;
 for (const x of held) {
   const r = rRet.get(positionActionKey(x))!;
-  const asOf = BOOK_ACCOUNTS.find((a) => a.accountId === x.accountId)!.asOf;
-  assert.equal(r.statementDate, asOf, `${x.security}: the window opens on the statement's date (${asOf}), not ${x.rolledForward!.through}`);
-  assert.equal(r.openingValue, x.rolledForward!.quantity * (x.currentPrice as number), `${x.security}: the opening is the rolled units at that date's mark`);
+  // …or, where the roll carries a later dated mark (Stage 10mh), on that mark's date.
+  const asOf = x.rolledForward!.price?.asOf ?? BOOK_ACCOUNTS.find((a) => a.accountId === x.accountId)!.asOf;
+  assert.equal(r.statementDate, asOf, `${x.security}: the window opens on the mark's date (${asOf}), not ${x.rolledForward!.through}`);
+  assert.equal(r.openingValue, x.rolledForward!.quantity * (x.rolledForward!.price?.value ?? x.currentPrice as number), `${x.security}: the opening is the rolled units at that date's mark`);
 }
 // Constructed: a dividend going ex between the statement and the roll's last
 // trade is the rolled units' income — it was filed "in-statement" and lost

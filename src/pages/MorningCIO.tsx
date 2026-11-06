@@ -602,10 +602,11 @@ export function MorningCIO() {
        * test are two chances for one screen to show a return the other refuses
        * for the category a reader is comparing them on.
        */
-      const costCoversRow = costCoversSet(mv, withoutCostMV);
       // FIFO over the row's own holdings — realised on units sold stays in the
       // return, and a whole mandate is struck on its capital (`fifoTotals`).
       const fifo = fifoTotals(rows, { accounts: portfolio.accounts, universe: p });
+      // A whole mandate's uncosted line is no bar: its capital bridge needs no line cost (Stage 10mh).
+      const costCoversRow = costCoversSet(mv, withoutCostMV - fifo.wholeUncostedValue);
       return {
         count: rows.length, cost, mv, pnl,
         vacuous: cf.vacuous,

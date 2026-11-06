@@ -356,12 +356,19 @@ export type Position = {
     realizedPnL: number | null;
     costOfUnitsSold: number | null;
     trades: number;
-    source?: "review" | "adviser-report";
+    source?: "review" | "adviser-report" | "account-tape";
     hprUnavailableReason?: string;
     /** Splits the roll's own record already carries in `quantity` (Stage 10kk); the corporate-action gate does not apply them again. */
     shareEvents?: ShareEvent[];
     /** The purchase lots still held after the roll, first-in first-out (Stage 10me): what Invested on dates. */
     heldPurchases?: { first: string; last: string; lots: number };
+    /**
+     * A LATER DATED MARK (Stage 10mh): the account's own fact sheet's printed
+     * value for the line over the rolled units on its date — the price the
+     * rolled units are valued at until a live quote arrives. Absent: the
+     * statement's own mark.
+     */
+    price?: { value: number; asOf: string; source: string };
   };
   /**
    * (unrealised + realised) ÷ (cost of units held + cost of units sold), in

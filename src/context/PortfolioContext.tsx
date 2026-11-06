@@ -36,7 +36,7 @@ import {
   BOOK_SUMMARY, BOOK_ACCOUNTS, BOOK_OWNERS, BOOK_POSITIONS, BOOK_CAPITAL_GAINS,
   BOOK_ACCOUNT_CASH_FLOWS, BOOK_ACCOUNT_RETURN_RECORDS, BOOK_ENTITY_CASH_FLOWS,
   BOOK_PE_FUNDS, BOOK_PREIPO_FUNDS, BOOK_UNLISTED_COMPANIES, BOOK_DEBT_FUNDS, BOOK_CLOSED_FUNDS, BOOK_STARTUPS,
-  BOOK_COMMITMENTS, BOOK_SHARE_MOVEMENTS, BOOK_UNVALUED_HOLDINGS,
+  BOOK_COMMITMENTS, BOOK_SHARE_MOVEMENTS, BOOK_UNVALUED_HOLDINGS, BOOK_TAPE_ROWS,
 } from "@/data/glowData";
 
 /**
@@ -605,8 +605,11 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   // `basePortfolio` is kept intact alongside and handed out as
   // `statementPortfolio`, so a page that must reconcile has the printed figures
   // available rather than having to un-mix them.
+  // A PMS account's own tape rolled past its statement also BOUGHT names the
+  // statement never held (Stage 10mh, `BOOK_TAPE_ROWS`): live rows only, through
+  // the same layer, so a quote prices them and the statement basis never sees them.
   const corporateActionLayer = useMemo(() => applyCorporateActionQuotes(
-    enteredPortfolio?.positions ?? [], enteredPortfolio?.accounts ?? [], quotes, corporateActions,
+    enteredPortfolio ? [...enteredPortfolio.positions, ...BOOK_TAPE_ROWS] : [], enteredPortfolio?.accounts ?? [], quotes, corporateActions,
   ), [enteredPortfolio, quotes, corporateActions]);
   const portfolio = useMemo<Portfolio | null>(() => {
     if (!basePortfolio) return null;

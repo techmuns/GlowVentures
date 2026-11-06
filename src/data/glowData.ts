@@ -6497,6 +6497,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 63451.33,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-23",
+      "quantity": 2822,
+      "costBasis": 1096249.57,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 425.74982282069453,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510854-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": 5.79,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -6541,6 +6555,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 359375.75,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-23",
+      "quantity": 2390,
+      "costBasis": 2410338.13,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "trades": 7,
+      "source": "account-tape",
+      "price": {
+        "value": 1374.2,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510854-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": 17.41,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -6586,6 +6614,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 647119.46,
     "realizedPnL": 34780.44,
     "costOfUnitsSold": 118512.18,
+    "rolledForward": {
+      "through": "2026-09-23",
+      "quantity": 1177,
+      "costBasis": null,
+      "realizedPnL": null,
+      "costOfUnitsSold": null,
+      "trades": 4,
+      "source": "account-tape",
+      "price": {
+        "value": 1700,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510854-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": 33.47,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -6630,6 +6672,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 211.68,
     "realizedPnL": 283865.6,
     "costOfUnitsSold": 5171018.41,
+    "rolledForward": {
+      "through": "2026-09-23",
+      "quantity": 1605.724,
+      "costBasis": 5079943.26,
+      "realizedPnL": 283865.6,
+      "costOfUnitsSold": 5171018.41,
+      "trades": 2,
+      "source": "account-tape",
+      "price": {
+        "value": 3167.072298850861,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510854-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": 5.49,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -6675,6 +6731,15 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 271120.68,
     "realizedPnL": 58224.29,
     "costOfUnitsSold": 133641.31,
+    "rolledForward": {
+      "through": "2026-09-23",
+      "quantity": 0,
+      "costBasis": 0,
+      "realizedPnL": null,
+      "costOfUnitsSold": null,
+      "trades": 4,
+      "source": "account-tape"
+    },
     "returnPct": 34.23,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -6720,6 +6785,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 1527425.01,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-23",
+      "quantity": 7688,
+      "costBasis": 1670398.59,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 425.7999479708637,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510854-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": 92.09,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -6765,6 +6844,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 0,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-23",
+      "quantity": 5343029.57,
+      "costBasis": 5343029.57,
+      "realizedPnL": null,
+      "costOfUnitsSold": null,
+      "trades": 1,
+      "source": "account-tape",
+      "price": {
+        "value": 1,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510854-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": 0,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -6796,6 +6889,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 0,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-23",
+      "quantity": 0,
+      "costBasis": 0,
+      "realizedPnL": null,
+      "costOfUnitsSold": null,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 1,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510854-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": 0,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -6827,6 +6934,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 752514.01,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-23",
+      "quantity": 12643,
+      "costBasis": 2110114.05,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 302.55002768330303,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510854-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": 35.66,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -6871,6 +6992,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 464631,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-23",
+      "quantity": 7117,
+      "costBasis": 2574328,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 429.7000140508641,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510854-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": 18.6,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -6916,6 +7051,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 685820.13,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-23",
+      "quantity": 1020,
+      "costBasis": 1554099.87,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 2461.4,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510854-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": 44.13,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -6960,6 +7109,15 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -501707,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-23",
+      "quantity": 0,
+      "costBasis": 0,
+      "realizedPnL": null,
+      "costOfUnitsSold": null,
+      "trades": 3,
+      "source": "account-tape"
+    },
     "returnPct": -34.2,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -7004,6 +7162,15 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 84893,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-23",
+      "quantity": 0,
+      "costBasis": 0,
+      "realizedPnL": null,
+      "costOfUnitsSold": null,
+      "trades": 13,
+      "source": "account-tape"
+    },
     "returnPct": 9.19,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -7050,6 +7217,15 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 258399.65,
     "realizedPnL": 449121.17,
     "costOfUnitsSold": 1538847.72,
+    "rolledForward": {
+      "through": "2026-09-23",
+      "quantity": 0,
+      "costBasis": 0,
+      "realizedPnL": null,
+      "costOfUnitsSold": null,
+      "trades": 16,
+      "source": "account-tape"
+    },
     "returnPct": 29.4,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -7094,6 +7270,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 48840.52,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-23",
+      "quantity": 425,
+      "costBasis": 1914234.48,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 4800,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510854-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": 2.55,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -7138,6 +7328,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 78473.06,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-23",
+      "quantity": 218,
+      "costBasis": 876127.14,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 4146.701834862385,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510854-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": 9.45,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -7183,6 +7387,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -424290.81,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-23",
+      "quantity": 2186,
+      "costBasis": 1993183.01,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 647.7502287282708,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510854-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": -20.52,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -7228,6 +7446,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -685003.25,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-23",
+      "quantity": 2616,
+      "costBasis": 2932801.25,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 840.75,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510854-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": -23.36,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -7273,6 +7505,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 10068.37,
     "realizedPnL": 23161.92,
     "costOfUnitsSold": 844420.48,
+    "rolledForward": {
+      "through": "2026-09-23",
+      "quantity": 7196,
+      "costBasis": null,
+      "realizedPnL": null,
+      "costOfUnitsSold": null,
+      "trades": 1,
+      "source": "account-tape",
+      "price": {
+        "value": 127.9899944413563,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510854-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": 1.81,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -7318,6 +7564,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -231952.73,
     "realizedPnL": 4464.11,
     "costOfUnitsSold": 89956.22,
+    "rolledForward": {
+      "through": "2026-09-23",
+      "quantity": 2580,
+      "costBasis": 2380318.73,
+      "realizedPnL": 4464.11,
+      "costOfUnitsSold": 89956.22,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 699.7,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510854-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": -9.21,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -7362,6 +7622,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 152182.57,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-23",
+      "quantity": 2820,
+      "costBasis": 2322085.43,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 820.15,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510854-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": 7.06,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -7407,6 +7681,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 315804.87,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-23",
+      "quantity": 3789,
+      "costBasis": 1188807.03,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 415.2000527843758,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510854-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": 26.56,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -7451,6 +7739,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 20731.38,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-23",
+      "quantity": 4175,
+      "costBasis": 1733186.12,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 345.8,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510854-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": 1.2,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -7495,6 +7797,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -17784.12,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-23",
+      "quantity": 4189,
+      "costBasis": 485360.3,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 117,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510854-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": -1.07,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -7540,6 +7856,15 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -78499.72,
     "realizedPnL": -44629.23,
     "costOfUnitsSold": 493890.39,
+    "rolledForward": {
+      "through": "2026-09-23",
+      "quantity": 0,
+      "costBasis": 0,
+      "realizedPnL": null,
+      "costOfUnitsSold": null,
+      "trades": 6,
+      "source": "account-tape"
+    },
     "returnPct": -9.5,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -7584,6 +7909,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -152752.91,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-23",
+      "quantity": 2171,
+      "costBasis": 952006.56,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 307.0999539382773,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510854-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": -16.05,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -7629,6 +7968,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 635255.54,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-23",
+      "quantity": 2580,
+      "costBasis": 1997892.46,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 987,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510854-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": 34.04,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -7674,6 +8027,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 75640.53,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-23",
+      "quantity": 772,
+      "costBasis": 1140259.47,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 1551.5997409326426,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510854-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": 9.07,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -7719,6 +8086,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 162280.4,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-23",
+      "quantity": 637,
+      "costBasis": 1203702.4,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 1663,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510854-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": 13.48,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -7763,6 +8144,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 312687.59,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-23",
+      "quantity": 284,
+      "costBasis": 952390.41,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 3472.200704225352,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510854-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": 33.43,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -7808,6 +8203,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 138119.31,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-23",
+      "quantity": 2191,
+      "costBasis": 1227750.09,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 550.299863076221,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510854-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": 11.25,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -7853,6 +8262,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 150966.21,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-23",
+      "quantity": 4340,
+      "costBasis": 997614.79,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 263,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510854-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": 15.13,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -7897,6 +8320,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 1760950.03,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-23",
+      "quantity": 4340,
+      "costBasis": 136280.97,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 425.35,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510854-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": 1292.15,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -7937,6 +8374,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 4466.23,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-23",
+      "quantity": 516,
+      "costBasis": 1181869.37,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 2362.1996124031007,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510854-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": 0.55,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -7996,6 +8447,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 125893.17,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-22",
+      "quantity": 5570,
+      "costBasis": 2163098.33,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 425.75008976660683,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510861-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": 5.82,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -8040,6 +8505,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 602131.86,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-22",
+      "quantity": 4720,
+      "costBasis": 4866479.66,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "trades": 7,
+      "source": "account-tape",
+      "price": {
+        "value": 1374.2,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510861-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": 14.37,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -8085,6 +8564,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 1277080.42,
     "realizedPnL": 68557.6,
     "costOfUnitsSold": 233605.74,
+    "rolledForward": {
+      "through": "2026-09-22",
+      "quantity": 2575,
+      "costBasis": null,
+      "realizedPnL": null,
+      "costOfUnitsSold": null,
+      "trades": 3,
+      "source": "account-tape",
+      "price": {
+        "value": 1700,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510861-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": 33.47,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -8129,6 +8622,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 191.39,
     "realizedPnL": 578366.03,
     "costOfUnitsSold": 9917814.34,
+    "rolledForward": {
+      "through": "2026-09-22",
+      "quantity": 3126.748,
+      "costBasis": 9892224.97,
+      "realizedPnL": 578366.03,
+      "costOfUnitsSold": 9917814.34,
+      "trades": 2,
+      "source": "account-tape",
+      "price": {
+        "value": 3167.0726262557773,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510861-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": 5.83,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -8174,6 +8681,15 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 526173.72,
     "realizedPnL": 123726.62,
     "costOfUnitsSold": 283987.78,
+    "rolledForward": {
+      "through": "2026-09-22",
+      "quantity": 0,
+      "costBasis": 0,
+      "realizedPnL": null,
+      "costOfUnitsSold": null,
+      "trades": 4,
+      "source": "account-tape"
+    },
     "returnPct": 33.98,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -8219,6 +8735,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 2757758.57,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-22",
+      "quantity": 15193,
+      "costBasis": 3561769.78,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 425.79997367208586,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510861-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": 78.02,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -8264,6 +8794,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 0,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-22",
+      "quantity": 10114232,
+      "costBasis": 10114232,
+      "realizedPnL": null,
+      "costOfUnitsSold": null,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 1,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510861-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": 0,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -8295,6 +8839,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 0,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-22",
+      "quantity": 0,
+      "costBasis": 0,
+      "realizedPnL": null,
+      "costOfUnitsSold": null,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 1,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510861-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": 0,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -8326,6 +8884,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 1486299.93,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-22",
+      "quantity": 24966,
+      "costBasis": 4166501.79,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 302.5499879836578,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510861-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": 35.67,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -8370,6 +8942,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 918132.22,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-22",
+      "quantity": 14050,
+      "costBasis": 5081217.78,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 429.7,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510861-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": 18.62,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -8415,6 +9001,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 1358192.8,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-22",
+      "quantity": 2020,
+      "costBasis": 3077727.2,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 2461.4,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510861-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": 44.13,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -8459,6 +9059,15 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -990010.96,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-22",
+      "quantity": 0,
+      "costBasis": 0,
+      "realizedPnL": null,
+      "costOfUnitsSold": null,
+      "trades": 3,
+      "source": "account-tape"
+    },
     "returnPct": -34.2,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -8503,6 +9112,15 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 167600.51,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-22",
+      "quantity": 0,
+      "costBasis": 0,
+      "realizedPnL": null,
+      "costOfUnitsSold": null,
+      "trades": 13,
+      "source": "account-tape"
+    },
     "returnPct": 9.19,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -8549,6 +9167,15 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 510327.52,
     "realizedPnL": 886660.52,
     "costOfUnitsSold": 3037329.9,
+    "rolledForward": {
+      "through": "2026-09-22",
+      "quantity": 0,
+      "costBasis": 0,
+      "realizedPnL": null,
+      "costOfUnitsSold": null,
+      "trades": 16,
+      "source": "account-tape"
+    },
     "returnPct": 29.42,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -8593,6 +9220,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 105420.96,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-22",
+      "quantity": 839,
+      "costBasis": 3769920.04,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 4800,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510861-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": 2.8,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -8637,6 +9278,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 159029.85,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-22",
+      "quantity": 445,
+      "costBasis": 1789580.65,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 4146.701123595506,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510861-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": 9.38,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -8678,6 +9333,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -834476.48,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-22",
+      "quantity": 4325,
+      "costBasis": 3938528.98,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 647.7500578034682,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510861-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": -20.42,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -8723,6 +9392,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -1474863.82,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-22",
+      "quantity": 5167,
+      "costBasis": 5914608.57,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 840.7499516160248,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510861-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": -24.94,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -8768,6 +9451,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 19734.31,
     "realizedPnL": 42623.98,
     "costOfUnitsSold": 1668708.39,
+    "rolledForward": {
+      "through": "2026-09-22",
+      "quantity": 14213,
+      "costBasis": null,
+      "realizedPnL": null,
+      "costOfUnitsSold": null,
+      "trades": 1,
+      "source": "account-tape",
+      "price": {
+        "value": 127.99000914655598,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510861-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": 1.72,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -8813,6 +9510,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -493241.44,
     "realizedPnL": 7045.79,
     "costOfUnitsSold": 204455.75,
+    "rolledForward": {
+      "through": "2026-09-22",
+      "quantity": 5096,
+      "costBasis": 4736680.64,
+      "realizedPnL": 7045.79,
+      "costOfUnitsSold": 204455.75,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 699.6999607535322,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510861-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": -9.84,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -8857,6 +9568,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 299762.41,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-22",
+      "quantity": 5569,
+      "costBasis": 4586478.19,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 820.149937152092,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510861-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": 7.04,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -8902,6 +9627,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 624416.46,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-22",
+      "quantity": 7483,
+      "costBasis": 2347082.84,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 415.20005345449687,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510861-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": 26.6,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -8946,6 +9685,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -92065.11,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-22",
+      "quantity": 8330,
+      "costBasis": 3591498.11,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 345.8,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510861-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": -2.56,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -8990,6 +9743,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -35174.95,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-22",
+      "quantity": 8271,
+      "costBasis": 958383.97,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 117,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510861-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": -1.08,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -9035,6 +9802,15 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -153412.96,
     "realizedPnL": -90508.97,
     "costOfUnitsSold": 998152.66,
+    "rolledForward": {
+      "through": "2026-09-22",
+      "quantity": 0,
+      "costBasis": 0,
+      "realizedPnL": null,
+      "costOfUnitsSold": null,
+      "trades": 6,
+      "source": "account-tape"
+    },
     "returnPct": -9.53,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -9075,6 +9851,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": -318613.91,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-22",
+      "quantity": 4183,
+      "costBasis": 1858585.36,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 307.0999282811379,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510861-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": -17.14,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -9120,6 +9910,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 1177480.58,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-22",
+      "quantity": 5090,
+      "costBasis": 4017373.42,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 987,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510861-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": 31.51,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -9165,6 +9969,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 151547.2,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-22",
+      "quantity": 1550,
+      "costBasis": 2289702.8,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 1551.6,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510861-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": 9.06,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -9210,6 +10028,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 319431.37,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-22",
+      "quantity": 1258,
+      "costBasis": 2378223.83,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 1663,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510861-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": 13.43,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -9250,6 +10082,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 622011.61,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-22",
+      "quantity": 564,
+      "costBasis": 1890326.39,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 3472.200354609929,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510861-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": 33.5,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -9295,6 +10141,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 273029.43,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-22",
+      "quantity": 4328,
+      "costBasis": 2425045.77,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 550.2999075785582,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510861-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": 11.26,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -9340,6 +10200,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 185064.94,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-22",
+      "quantity": 8569,
+      "costBasis": 2082720.91,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 263,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510861-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": 8.89,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -9384,6 +10258,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 3461424.51,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-22",
+      "quantity": 8569,
+      "costBasis": 284513.84,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 425.34998249504025,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510861-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": 1216.61,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -9424,6 +10312,20 @@ export const BOOK_POSITIONS: Position[] = [
     "unrealizedPnL": 9461.57,
     "realizedPnL": 0,
     "costOfUnitsSold": 0,
+    "rolledForward": {
+      "through": "2026-09-22",
+      "quantity": 1032,
+      "costBasis": 2363209.63,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 2362.1996124031007,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510861-2026-09-22-fact-sheet"
+      }
+    },
     "returnPct": 0.58,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -72358,6 +73260,486 @@ export const BOOK_SHARE_ROLLS: ShareRoll[] = [
         60,
         61
       ]
+    }
+  }
+];
+
+/**
+ * LINES A PMS ACCOUNT'S OWN TAPE BOUGHT PAST ITS HOLDING STATEMENT (Stage 10mh,
+ * `scripts/lib/tapeRoll.mjs`): the names, and the cash lines its later fact sheet
+ * prints, that the statement never held. LIVE BASIS ONLY — `PortfolioContext`
+ * marks each at its `rolledForward` units and dated price; the statement basis
+ * never sees them.
+ */
+export const BOOK_TAPE_ROWS: Position[] = [
+  {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510854-2026-09-22-fact-sheet",
+      "pointer": "/factSheetValues/24"
+    },
+    "securityKey": "indian-energy-exchange",
+    "security": "Indian Energy Exchange Ltd",
+    "symbol": "IEX",
+    "accountId": "green-lantern-capital-llp-510854",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": "Financial Institutions",
+    "assetClass": "Equity",
+    "marketSide": "listed",
+    "quantity": 0,
+    "avgCost": null,
+    "currentPrice": null,
+    "costBasis": null,
+    "marketValue": 0,
+    "unrealizedPnL": null,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": null,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null,
+    "rolledForward": {
+      "through": "2026-09-23",
+      "quantity": 4966,
+      "costBasis": 650589.89,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "trades": 2,
+      "source": "account-tape",
+      "price": {
+        "value": 112.89991945227547,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510854-2026-09-22-fact-sheet"
+      },
+      "heldPurchases": {
+        "first": "2026-07-28",
+        "last": "2026-08-03",
+        "lots": 2
+      }
+    }
+  },
+  {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510854-2026-09-22-fact-sheet",
+      "pointer": "/factSheetValues/23"
+    },
+    "securityKey": "heg-advanced-materials",
+    "security": "HEG Advanced Materials Limited",
+    "symbol": "HEGAM",
+    "accountId": "green-lantern-capital-llp-510854",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": "Other Industrial Goods",
+    "assetClass": "Equity",
+    "marketSide": "listed",
+    "quantity": 0,
+    "avgCost": null,
+    "currentPrice": null,
+    "costBasis": null,
+    "marketValue": 0,
+    "unrealizedPnL": null,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": null,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null,
+    "rolledForward": {
+      "through": "2026-09-23",
+      "quantity": 1316,
+      "costBasis": null,
+      "realizedPnL": null,
+      "costOfUnitsSold": null,
+      "trades": 4,
+      "source": "account-tape",
+      "price": {
+        "value": 232.89969604863222,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510854-2026-09-22-fact-sheet"
+      }
+    }
+  },
+  {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510854-2026-09-22-fact-sheet",
+      "pointer": "/factSheetValues/14"
+    },
+    "securityKey": "elgi-equipments",
+    "security": "Elgi Equipments Ltd",
+    "symbol": "ELGIEQUIP",
+    "accountId": "green-lantern-capital-llp-510854",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": "Industrial Machinery",
+    "assetClass": "Equity",
+    "marketSide": "listed",
+    "quantity": 0,
+    "avgCost": null,
+    "currentPrice": null,
+    "costBasis": null,
+    "marketValue": 0,
+    "unrealizedPnL": null,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": null,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null,
+    "rolledForward": {
+      "through": "2026-09-23",
+      "quantity": 1082,
+      "costBasis": 667602.96,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "trades": 6,
+      "source": "account-tape",
+      "price": {
+        "value": 608.9500924214418,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510854-2026-09-22-fact-sheet"
+      },
+      "heldPurchases": {
+        "first": "2026-08-25",
+        "last": "2026-09-10",
+        "lots": 6
+      }
+    }
+  },
+  {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510854-2026-09-22-fact-sheet",
+      "pointer": "/factSheetValues/0"
+    },
+    "securityKey": "heg-graphite",
+    "security": "HEG Graphite Limited",
+    "symbol": null,
+    "accountId": "green-lantern-capital-llp-510854",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": "Equity",
+    "assetClass": "Equity",
+    "marketSide": "listed",
+    "quantity": 0,
+    "avgCost": null,
+    "currentPrice": null,
+    "costBasis": null,
+    "marketValue": 0,
+    "unrealizedPnL": null,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": null,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null,
+    "rolledForward": {
+      "through": "2026-09-23",
+      "quantity": 1316,
+      "costBasis": null,
+      "realizedPnL": null,
+      "costOfUnitsSold": null,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 468.25,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510854-2026-09-22-fact-sheet"
+      }
+    }
+  },
+  {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510854-2026-09-22-fact-sheet",
+      "pointer": "/factSheetValues/32"
+    },
+    "securityKey": "dividend-interest-receivable",
+    "security": "Dividend / Interest receivable",
+    "symbol": null,
+    "accountId": "green-lantern-capital-llp-510854",
+    "memberId": null,
+    "sector": "Cash",
+    "providerSector": "Dividend / Interest receivable",
+    "assetClass": "Cash",
+    "marketSide": "listed",
+    "quantity": 0,
+    "avgCost": null,
+    "currentPrice": null,
+    "costBasis": null,
+    "marketValue": 0,
+    "unrealizedPnL": null,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": null,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null,
+    "rolledForward": {
+      "through": "2026-09-23",
+      "quantity": 50728,
+      "costBasis": 50728,
+      "realizedPnL": null,
+      "costOfUnitsSold": null,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 1,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510854-2026-09-22-fact-sheet"
+      }
+    }
+  },
+  {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510861-2026-09-22-fact-sheet",
+      "pointer": "/factSheetValues/24"
+    },
+    "securityKey": "indian-energy-exchange",
+    "security": "Indian Energy Exchange Ltd",
+    "symbol": "IEX",
+    "accountId": "green-lantern-capital-llp-510861",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": "Financial Institutions",
+    "assetClass": "Equity",
+    "marketSide": "listed",
+    "quantity": 0,
+    "avgCost": null,
+    "currentPrice": null,
+    "costBasis": null,
+    "marketValue": 0,
+    "unrealizedPnL": null,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": null,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null,
+    "rolledForward": {
+      "through": "2026-09-22",
+      "quantity": 9821,
+      "costBasis": 1286590.53,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "trades": 2,
+      "source": "account-tape",
+      "price": {
+        "value": 112.9000101822625,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510861-2026-09-22-fact-sheet"
+      },
+      "heldPurchases": {
+        "first": "2026-07-28",
+        "last": "2026-08-03",
+        "lots": 2
+      }
+    }
+  },
+  {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510861-2026-09-22-fact-sheet",
+      "pointer": "/factSheetValues/23"
+    },
+    "securityKey": "heg-advanced-materials",
+    "security": "HEG Advanced Materials Limited",
+    "symbol": "HEGAM",
+    "accountId": "green-lantern-capital-llp-510861",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": "Other Industrial Goods",
+    "assetClass": "Equity",
+    "marketSide": "listed",
+    "quantity": 0,
+    "avgCost": null,
+    "currentPrice": null,
+    "costBasis": null,
+    "marketValue": 0,
+    "unrealizedPnL": null,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": null,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null,
+    "rolledForward": {
+      "through": "2026-09-22",
+      "quantity": 2600,
+      "costBasis": null,
+      "realizedPnL": null,
+      "costOfUnitsSold": null,
+      "trades": 4,
+      "source": "account-tape",
+      "price": {
+        "value": 232.9,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510861-2026-09-22-fact-sheet"
+      }
+    }
+  },
+  {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510861-2026-09-22-fact-sheet",
+      "pointer": "/factSheetValues/14"
+    },
+    "securityKey": "elgi-equipments",
+    "security": "Elgi Equipments Ltd",
+    "symbol": "ELGIEQUIP",
+    "accountId": "green-lantern-capital-llp-510861",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": "Industrial Machinery",
+    "assetClass": "Equity",
+    "marketSide": "listed",
+    "quantity": 0,
+    "avgCost": null,
+    "currentPrice": null,
+    "costBasis": null,
+    "marketValue": 0,
+    "unrealizedPnL": null,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": null,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null,
+    "rolledForward": {
+      "through": "2026-09-22",
+      "quantity": 2129,
+      "costBasis": 1313485.66,
+      "realizedPnL": 0,
+      "costOfUnitsSold": 0,
+      "trades": 6,
+      "source": "account-tape",
+      "price": {
+        "value": 608.9502113668389,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510861-2026-09-22-fact-sheet"
+      },
+      "heldPurchases": {
+        "first": "2026-08-25",
+        "last": "2026-09-10",
+        "lots": 6
+      }
+    }
+  },
+  {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510861-2026-09-22-fact-sheet",
+      "pointer": "/factSheetValues/0"
+    },
+    "securityKey": "heg-graphite",
+    "security": "HEG Graphite Limited",
+    "symbol": null,
+    "accountId": "green-lantern-capital-llp-510861",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": "Equity",
+    "assetClass": "Equity",
+    "marketSide": "listed",
+    "quantity": 0,
+    "avgCost": null,
+    "currentPrice": null,
+    "costBasis": null,
+    "marketValue": 0,
+    "unrealizedPnL": null,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": null,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null,
+    "rolledForward": {
+      "through": "2026-09-22",
+      "quantity": 2600,
+      "costBasis": null,
+      "realizedPnL": null,
+      "costOfUnitsSold": null,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 468.25,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510861-2026-09-22-fact-sheet"
+      }
+    }
+  },
+  {
+    "statementRecord": {
+      "document": "green-lantern-capital-llp-510861-2026-09-22-fact-sheet",
+      "pointer": "/factSheetValues/32"
+    },
+    "securityKey": "dividend-interest-receivable",
+    "security": "Dividend / Interest receivable",
+    "symbol": null,
+    "accountId": "green-lantern-capital-llp-510861",
+    "memberId": null,
+    "sector": "Cash",
+    "providerSector": "Dividend / Interest receivable",
+    "assetClass": "Cash",
+    "marketSide": "listed",
+    "quantity": 0,
+    "avgCost": null,
+    "currentPrice": null,
+    "costBasis": null,
+    "marketValue": 0,
+    "unrealizedPnL": null,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": null,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null,
+    "rolledForward": {
+      "through": "2026-09-22",
+      "quantity": 100365,
+      "costBasis": 100365,
+      "realizedPnL": null,
+      "costOfUnitsSold": null,
+      "trades": 0,
+      "source": "account-tape",
+      "price": {
+        "value": 1,
+        "asOf": "2026-09-22",
+        "source": "green-lantern-capital-llp-510861-2026-09-22-fact-sheet"
+      }
     }
   }
 ];

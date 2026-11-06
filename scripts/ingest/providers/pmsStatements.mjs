@@ -885,7 +885,12 @@ function readSectors(pages, warnings) {
     // book the whole position as profit.
     const rowsOut = [];
     for (const g of groups) {
-      if (!g.security || SUBTOTAL_LABEL.test(g.security.trim())) continue;
+      // A NUMBERED line is a line of the table even where its name reads like a
+      // subtotal: Green Lantern prints "31 Cash" (Cash and Equivalent) as a
+      // holding, and without it the figures fall one line short of the
+      // portfolio value (Stage 10mh). A subtotal carries no serial number.
+      const numbered = g.rows.some((r) => /^\d+$/.test(clean(r.fields.rank ?? "")));
+      if (!g.security || (SUBTOTAL_LABEL.test(g.security.trim()) && !numbered)) continue;
       const mv = parseNum(g.rows.map((r) => r.fields.marketValue).find((v) => parseNumInfo(v).status === "ok"));
       const pct = parseNum(g.rows.map((r) => r.fields.pctAssets).find((v) => parseNumInfo(v).status === "ok"));
       if (mv === null) continue;
@@ -2804,7 +2809,7 @@ export function extract({ grid, meta }) {
   const id = readIdentity(pages);
   const reportType = meta.reportType;
 
-  let holdings = [], totals = null, returns = [], flows = null;
+  let holdings = [], totals = null, returns = [], flows = null, factSheetValues = [];
   let transactions = [], capitalGains = [], income = [], expenses = [], cashFlows = [];
   const window = readPeriod(pages, id);
 
@@ -2865,6 +2870,10 @@ export function extract({ grid, meta }) {
        */
       holdings = [...s.sectors.entries()].map(([security, providerSector]) =>
         makeHolding({ security, assetClass: "Equity", providerSector, source }));
+      // …and its printed figures, kept apart from the holdings (Stage 10mh):
+      // dated marks for a tape roll, never a holding of their own.
+      factSheetValues = s.rows.map((r) => ({ security: r.security, securityKey: makeHolding({ security: r.security, source }).securityKey,
+        sector: r.sector, marketValue: r.marketValue, pctAssets: r.pctAssets }));
     }
     // Since inception, not since 1 April — the block is headed "Since 26/12/2025".
     flows = readFactSheetSummary(pages, source, { periodFrom: id.inceptionDate, periodTo: id.asOf });
@@ -3021,6 +3030,7 @@ export function extract({ grid, meta }) {
     // Set only by the three readers above, so every other document is
     // byte-identical to what it was.
     ...(openLots.length ? { openLots } : {}),
+    ...(factSheetValues.length ? { factSheetValues } : {}),
     ...(checks ? { checks } : {}),
     // Every dated statement states its own window in its header. Carried so the
     // reconciler never compares a financial-year figure against a since-inception
