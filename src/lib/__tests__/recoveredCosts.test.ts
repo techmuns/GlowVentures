@@ -144,7 +144,7 @@ const carriedByNote=BOOK_RECOVERED_COSTS.filter(r=>BOOK_ADVISED_BALANCES.some(b=
 // And less the balances a folio costs, whose records are gone (above), and
 // those a sale the family confirmed took to nil (Stage 10ma): no longer held.
 const soldToNil=BOOK_RECOVERED_COSTS.filter(r=>/^INF/.test(r.isin)&&soldSinceStatement(r.accountId,r));
-assert.equal(soldToNil.length,1,"DSP Silver ETF on Ankita's Motilal demat, redeemed on 13 Oct 2026");
+assert.equal(soldToNil.length,2,"DSP Silver and Gold ETF on Ankita's Motilal demat, redeemed on 13 Oct and 23 Sep 2026");
 assert.equal(funds.filter(p=>p.recoveredCost).length,29-reportedByFolio.filter(r=>/^INF/.test(r.isin)).length-carriedByNote.length-costedAtFolio.length-soldToNil.length);
 for (const [account, isin] of FOLIO_COSTED_DEMATS)
   assert.equal(funds.some(p=>p.accountId===account&&p.isin===isin),!costedAtFolio.some(([a,i])=>a===account&&i===isin),`${account}: the folio values its ${isin} units, not the demat`);

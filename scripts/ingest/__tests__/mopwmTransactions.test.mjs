@@ -149,8 +149,8 @@ assert.match(replayMopwmRows(mopwmRowsFor(report, { isin: "INE1CDF01017", accoun
     ["1201090012539150", "INE011K01018", 0, 24250], ["1201090012539150", "INE358U01012", 0, 27500],
     ["1201090012838316", "INE238A01034", 7300, 0],
     ["1201090012838316", "INE090A01021", 14500, 0], ["1201090012838316", "INE062A01020", 27750, 0],
-    ["1201090012838316", "INF740KA1RE3", 123000, 0],
-  ], "the committed book carries exactly the reconciled share trades, and the one fund sale the family confirmed (Stage 10ma)");
+    ["1201090012838316", "INF740KA1RE3", 123000, 0], ["1201090012838316", "INF740KA1SW3", 205000, 0],
+  ], "the committed book carries exactly the reconciled share trades, and the fund sales the family confirmed (Stages 10ma, 10mb)");
   assert.ok(committed.every((r) => r.report.path === MOPWM_TRANSACTIONS && r.report.asOf === "2026-10-23"));
   const taal = committed.find((r) => /TAAL/.test(r.security));
   assert.deepEqual([taal.costBasis, taal.trades, taal.shareEvents], [18009805, 4, [{ type: "split", exDate: "2026-09-22", factor: 5 }]],
@@ -189,7 +189,11 @@ assert.match(replayMopwmRows(mopwmRowsFor(report, { isin: "INE1CDF01017", accoun
     records: [{ accountId: "d", isin: SILVER, quantity: 123000, asOf: "2026-07-31" }] });
   assert.deepEqual(real.rolls.map((r) => [r.quantity, r.through, r.report.rows.join()]), [[0, "2026-10-13", "21484,21485,21486,21487,21488"]],
     "Ankita's folio 466887: 2,30,000 bought, 1,07,000 sold, 1,23,000 on 31 Jul, 12,30,000 after the split, redeemed on 13 Oct 2026");
-  assert.equal(FAMILY_CONFIRMED_FUND_SALES.length, 1);
+  assert.equal(FAMILY_CONFIRMED_FUND_SALES.length, 2);
+  // Stage 10mb: Ankita's DSP Gold on the same folio, 2,05,000 bought on 22 Jan and redeemed whole on 23 Sep.
+  const gold = rollMopwmFundSales(report, { accounts: [{ accountId: "d", provider: MOTILAL_DEMAT, ownerId: OWNER, asOf: "2026-07-31" }],
+    records: [{ accountId: "d", isin: "INF740KA1SW3", quantity: 205000, asOf: "2026-07-31" }] });
+  assert.deepEqual(gold.rolls.map((r) => [r.isin, r.quantity, r.through, r.report.rows.join()]), [["INF740KA1SW3", 0, "2026-09-23", "21164,21165,21166,21167"]]);
 }
 
 console.log("mopwmTransactions: prefixed workbook read in full, owners, classification, FIFO replay, identity gates, share rolls and the confirmed fund sale passed");

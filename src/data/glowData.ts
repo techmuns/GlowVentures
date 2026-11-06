@@ -72099,6 +72099,37 @@ export const BOOK_SHARE_ROLLS: ShareRoll[] = [
         21488
       ]
     }
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "isin": "INF740KA1SW3",
+    "security": "DSP Gold ETF-G",
+    "statementQuantity": 205000,
+    "asOf": "2026-07-31",
+    "through": "2026-09-23",
+    "quantity": 0,
+    "costBasis": 0,
+    "realizedPnL": -193893.88,
+    "costOfUnitsSold": 30193698.9,
+    "trades": 1,
+    "shareEvents": [
+      {
+        "type": "split",
+        "exDate": "2026-08-28",
+        "factor": 10
+      }
+    ],
+    "report": {
+      "path": "source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx",
+      "asOf": "2026-10-23",
+      "sheet": "Mutual Funds",
+      "rows": [
+        21164,
+        21165,
+        21166,
+        21167
+      ]
+    }
   }
 ];
 

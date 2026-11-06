@@ -148,11 +148,11 @@ const dspRows = got.filter((p) => !!p.depositoryUnits?.unitSplit);
 ok("LOAD-BEARING: the book records DSP Gold and Silver ETF units on two Motilal statements, and AMFI's NAV for both is joined across the split",
   dspLines.length === 3 && ["INF740KA1SW3", "INF740KA1RE3"].every((i) => navBy.get(i)?.usableForValue && navBy.get(i)?.unitSplit?.factor === 10),
   dspLines.map((u) => `${u.accountId.slice(-6)} ${u.securityKey} ${u.quantity}`).join("; "));
-// Stage 10ma: DSP Silver on Ankita's demat was redeemed on 13 Oct, a sale the family confirmed.
+// Stages 10ma, 10mb: Ankita's DSP Silver (13 Oct) and Gold (23 Sep) were redeemed, sales the family confirmed.
 const heldDsp = dspLines.filter((u) => !BOOK_SHARE_ROLLS.some((r) => r.accountId === u.accountId && I(r) === I(u) && r.quantity === 0
   && r.statementQuantity === u.quantity));
-ok("every DSP line still held is valued, the one sold to nil is not, and nothing else carries a split",
-  heldDsp.length === 2 && dspRows.length === heldDsp.length && heldDsp.every((u) => dspRows.some((p) => p.accountId === u.accountId && (p.fundUnitAdjustment?.isin ?? I(p)) === I(u))));
+ok("every DSP line still held is valued, those sold to nil are not, and nothing else carries a split",
+  heldDsp.length === 1 && dspRows.length === heldDsp.length && heldDsp.every((u) => dspRows.some((p) => p.accountId === u.accountId && (p.fundUnitAdjustment?.isin ?? I(p)) === I(u))));
 ok("each is the statement's units × 10 at the published NAV, and keeps the statement's own count",
   dspRows.every((p) => {
     const u = dspLines.find((l) => l.accountId === p.accountId && I(l) === (p.fundUnitAdjustment?.isin ?? I(p)))!;
@@ -172,8 +172,8 @@ ok("the sentence names the split, its date and both counts",
     return s.includes(d.exDate) && s.includes(d.publishedIsin)
       && s.includes(d.statementQuantity.toLocaleString("en-IN")) && s.includes((p.quantity as number).toLocaleString("en-IN"));
   }));
-if (dspLines.length) {
-  const line = dspLines[0];
+if (heldDsp.length) {
+  const line = heldDsp[0];
   ok("REFUSED: a line counted on or after the ex-date under the retired ISIN is on neither unit",
     unpricedStatementUnits([{ ...line, asOf: "2026-08-28" }], [{ ...acc.get(line.accountId)!, asOf: "2026-08-28" }], []).length === 0);
   ok("REFUSED: an own rate far from the NAV once the split is applied is still a basis break",
