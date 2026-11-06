@@ -29,14 +29,23 @@ const cand = (account: string, isin: string) => shareCandidates().find((p) => p.
 console.log("──── Adviser report share rolls");
 ok("the book carries rolls, so the claims below have a subject", BOOK_SHARE_ROLLS.length > 0,
   BOOK_SHARE_ROLLS.map((r) => `${r.security} ${r.statementQuantity}→${r.quantity}`).join("; "));
-ok("every roll is a Motilal demat equity ISIN, dated after its statement",
-  BOOK_SHARE_ROLLS.every((r) => r.isin.startsWith("INE") && r.through > r.asOf && r.trades > 0
+ok("every roll is a Motilal demat equity ISIN — or a fund the family confirmed sold, to nil — dated after its statement",
+  BOOK_SHARE_ROLLS.every((r) => (r.isin.startsWith("INE") || (r.report.sheet === "Mutual Funds" && r.quantity === 0)) && r.through > r.asOf && r.trades > 0
     && BOOK_ACCOUNTS.find((a) => a.accountId === r.accountId)?.provider === "Motilal Oswal Financial Services (demat)"));
 ok("every roll starts from a balance the statement records, or from none",
   BOOK_SHARE_ROLLS.every((r) => r.statementQuantity === 0
     || BOOK_UNVALUED_HOLDINGS.some((u) => u.accountId === r.accountId && u.isin === r.isin && u.quantity === r.statementQuantity)
     || Object.values(BOOK_SHARE_MOVEMENTS).some((w) => w.accountId === r.accountId && w.isin === r.isin && w.closing === r.statementQuantity)));
-ok("no fund row moves a quantity — the 1 Oct fund rows wait for the family", BOOK_SHARE_ROLLS.every((r) => !r.isin.startsWith("INF")));
+// Stage 10ma: the one fund the family confirmed sold. Every other fund row,
+// the 1 Oct "redemptions" among them, still waits for the family.
+ok("no fund row moves a quantity but the sale the family confirmed — DSP Silver ETF on Ankita's demat, to nil",
+  JSON.stringify(BOOK_SHARE_ROLLS.filter((r) => r.isin.startsWith("INF")).map((r) => [r.accountId, r.isin, r.statementQuantity, r.quantity, r.through]))
+    === JSON.stringify([[ANKITA, "INF740KA1RE3", 123000, 0, "2026-10-13"]]));
+const silver = roll(ANKITA, "INF740KA1RE3");
+ok("...carried through DSP's 28 Aug 1:10 split and redeemed whole: 12,30,000 units for ₹2,56,48,310.01",
+  JSON.stringify(silver?.shareEvents) === JSON.stringify([{ type: "split", exDate: "2026-08-28", factor: 10 }])
+    && silver?.costBasis === 0 && silver.costOfUnitsSold === 32203865.44 && silver.realizedPnL === 23093912.99, "₹2,96,49,468.42 + ₹2,56,48,310.01 of proceeds less ₹3,22,03,865.44 of cost");
+ok("...is found by account, ISIN and the statement's units", !!soldSinceStatement(ANKITA, { isin: "INF740KA1RE3", quantity: 123000 }));
 
 // ── sold to nil ───────────────────────────────────────────────────────────────
 for (const [account, isin, name, units] of [

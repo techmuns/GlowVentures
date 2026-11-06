@@ -1,6 +1,6 @@
 import { acquisitionIdentity } from "../../../shared/fundUnitActions.mjs";
 import assert from "node:assert/strict";
-import { depositoryFundHoldings, unpricedStatementUnits, applyFundNavs } from "../fundNavs";
+import { depositoryFundHoldings, unpricedStatementUnits, applyFundNavs, soldSinceStatement } from "../fundNavs";
 import { fifoTotals, positionFifoReturn, realisedReason } from "../fifo";
 import { bucketBy, isCostedForFifo, measuredReturn, holdingReturn } from "../analytics";
 import { BOOK_ACCOUNTS, BOOK_ADVISED_BALANCES, BOOK_POSITIONS, BOOK_RECOVERED_COSTS, BOOK_UNVALUED_HOLDINGS } from "../../data/glowData";
@@ -141,12 +141,15 @@ const funds=[...depositoryFundHoldings(),...unpricedStatementUnits()];
 const reportedByFolio=BOOK_RECOVERED_COSTS.filter(r=>r.accountId.includes('-demat-')&&BOOK_POSITIONS.some(p=>p.accountId!==r.accountId&&p.isin===r.isin&&p.quantity!=null&&Math.abs(p.quantity-r.quantity)<=.0005));
 // Less any the family's 21 Oct note carries to other units (Stage 10ka): lots join on exact units only.
 const carriedByNote=BOOK_RECOVERED_COSTS.filter(r=>BOOK_ADVISED_BALANCES.some(b=>b.accountId===r.accountId&&b.isin===r.isin&&Math.abs(b.recordQuantity-r.quantity)<=.0005&&Math.abs(b.quantity-r.quantity)>.0005));
-// And less the balances a folio costs, whose records are gone (above).
-assert.equal(funds.filter(p=>p.recoveredCost).length,29-reportedByFolio.filter(r=>/^INF/.test(r.isin)).length-carriedByNote.length-costedAtFolio.length);
+// And less the balances a folio costs, whose records are gone (above), and
+// those a sale the family confirmed took to nil (Stage 10ma): no longer held.
+const soldToNil=BOOK_RECOVERED_COSTS.filter(r=>/^INF/.test(r.isin)&&soldSinceStatement(r.accountId,r));
+assert.equal(soldToNil.length,1,"DSP Silver ETF on Ankita's Motilal demat, redeemed on 13 Oct 2026");
+assert.equal(funds.filter(p=>p.recoveredCost).length,29-reportedByFolio.filter(r=>/^INF/.test(r.isin)).length-carriedByNote.length-costedAtFolio.length-soldToNil.length);
 for (const [account, isin] of FOLIO_COSTED_DEMATS)
   assert.equal(funds.some(p=>p.accountId===account&&p.isin===isin),!costedAtFolio.some(([a,i])=>a===account&&i===isin),`${account}: the folio values its ${isin} units, not the demat`);
 assert.ok(funds.every(p=>!p.depositoryUnits?.advised||!p.recoveredCost),"a balance the note carried borrows no lots recorded for other units");
-assert.equal(funds.filter(p=>p.recoveredCost&&p.depositoryUnits?.unitSplit).length,3);
+assert.equal(funds.filter(p=>p.recoveredCost&&p.depositoryUnits?.unitSplit).length,3-soldToNil.length);
 const fp=(account:string,isin:string)=>funds.find(p=>p.accountId.endsWith(account)&&p.isin===isin)!;
 for (const [account, first, last, lots] of [['12539150','2025-03-06','2026-03-23',4],['12838316','2025-11-06','2025-11-06',1],['12838320','2025-07-11','2025-07-11',1]] as const) {
   const p = fp(account,'INF109KC1RH9');
@@ -195,12 +198,15 @@ const silver=BOOK_RECOVERED_COSTS.find(r=>r.accountId.endsWith('12838316')&&r.is
 near(silver.costBasis,17222067.17);near(silver.realizedPnL,14667670.15);near(silver.costOfUnitsSold,14981798.27);
 assert.equal(silver.quantity,123000);
 // Since Stage 10hq the basis IS verified — DSP's published 1:10 split of
-// 28 Aug 2026 — so the line is valued, and only on the post-split unit.
-const silverRow=funds.find(p=>p.accountId===silver.accountId&&acquisitionIdentity(p).isin===silver.isin);
+// 28 Aug 2026 — so the line is valued, and only on the post-split unit. Read
+// without the adviser report's rolls: since Stage 10ma it is sold to nil.
+assert.ok(!funds.some(p=>p.accountId===silver.accountId&&acquisitionIdentity(p).isin===silver.isin),'a balance sold to nil is not held');
+const unrolled=unpricedStatementUnits(BOOK_UNVALUED_HOLDINGS,BOOK_ACCOUNTS,BOOK_POSITIONS,BOOK_ADVISED_BALANCES,[]);
+const silverRow=unrolled.find(p=>p.accountId===silver.accountId&&acquisitionIdentity(p).isin===silver.isin);
 assert.ok(silverRow?.depositoryUnits?.unitSplit?.statementQuantity===silver.quantity&&silverRow.quantity===silver.quantity*10,'valued only on the split-adjusted unit');
 // A line whose own rate breaks that basis is refused, its cost notwithstanding.
 const silverLine=BOOK_UNVALUED_HOLDINGS.find(u=>u.accountId===silver.accountId&&u.isin===silver.isin)!;
-assert.equal(unpricedStatementUnits([{...silverLine,lastMovementRate:silverLine.lastMovementRate!*10}]).length,0,'recovering cost must not bypass the valuation/unit-basis gate');
+assert.equal(unpricedStatementUnits([{...silverLine,lastMovementRate:silverLine.lastMovementRate!*10}],BOOK_ACCOUNTS,BOOK_POSITIONS,BOOK_ADVISED_BALANCES,[]).length,0,'recovering cost must not bypass the valuation/unit-basis gate');
 
 const aggregateInputs=[liquid,savings].filter(isCostedForFifo);
 assert.equal(aggregateInputs.length,2,'unknown proceeds must not remove a costed holding from the FIFO pool');

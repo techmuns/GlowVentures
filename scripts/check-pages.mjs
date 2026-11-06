@@ -544,7 +544,8 @@ function withDepositoryFunds(src, positions) {
  *      row's last-movement rate. An ETF takes its own rate or nothing;
  *   5. that price within a factor of two of the NAV;
  *   6. no position of the ISIN already in the row's own account;
- *   7. no account of the SAME OWNER carrying the same ISIN at the same units.
+ *   7. no account of the SAME OWNER carrying the same ISIN at the same units;
+ *   8. no roll of the adviser's report taking these units to nil (Stage 10ma).
  * It deliberately does not read the page's switch, so turning it off fails a
  * check by name rather than leaving a stale model agreeing with a changed page.
  */
@@ -552,6 +553,7 @@ function withUnpricedStatementUnits(src, positions) {
   const unvalued = bookArray(src, "BOOK_UNVALUED_HOLDINGS");
   const recovered = bookArray(src, "BOOK_RECOVERED_COSTS");
   const accounts = bookArray(src, "BOOK_ACCOUNTS");
+  const rolls = bookArray(src, "BOOK_SHARE_ROLLS") ?? [];
   const store = fundNavStore();
   if (!Array.isArray(unvalued) || !Array.isArray(accounts) || !Array.isArray(store)) return [];
   let keyToSymbol = {};
@@ -600,6 +602,8 @@ function withUnpricedStatementUnits(src, positions) {
     const owner = ownerOf(u.accountId);
     if (positions.some((p) => I(p) === isin && Math.abs(Number(p.quantity) - qty) < 0.0005
       && ownerOf(p.accountId) === owner)) continue;                                              // 7
+    if (rolls.some((r) => r.accountId === u.accountId && I(r) === isin && r.quantity === 0
+      && Math.abs(r.statementQuantity - qty) < 0.0005)) continue;                               // 8
     const book = positions.find((p) => p.securityKey === u.securityKey);
     const units = (f === 1 ? advisedUnits(src, u.accountId, isin, qty) : null) ?? qty * f;
     out.push(withRecoveredCost({

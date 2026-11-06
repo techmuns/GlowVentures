@@ -615,8 +615,9 @@ ok("the context is a non-empty set of named blocks",
   const unitKey = (u: Position) => `${u.accountId}|${acquisitionIdentity(u).quantity}`;
   const liveUnits = new Set(UNPRICED.filter((u) => !speck(u.securityKey)).map(unitKey));
   const speckUnits = new Set(UNPRICED.filter((u) => speck(u.securityKey)).map(unitKey));
+  // Three DSP balances crossed the 1:10 split; Ankita's Silver was redeemed since (Stage 10ma).
   const converted = UNPRICED.filter(p=>p.fundUnitAdjustment);
-  ok('converted ETF balances are valued in the assistant audit under their original custody counts', converted.length === 3
+  ok('converted ETF balances are valued in the assistant audit under their original custody counts', converted.length === 2
     && converted.every(p=>lb.rows.some(r=>r.accountId===p.accountId && r.units===acquisitionIdentity(p).quantity && r.shownLiveNow)));
   ok("...each says whether the dashboard values it now — true of every line a fund's NAV values here",
     !!lb && lb.rows.filter((r) => liveUnits.has(`${r.accountId}|${r.units}`)).every((r) => r.shownLiveNow === true)

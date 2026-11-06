@@ -42,7 +42,7 @@ import { periodEvidence } from "./lib/periodEvidence.mjs";
 import { returnCoverageReport } from "./lib/returnCoverageReport.mjs";
 import { recoverHoldingCosts, recoveryReport } from "./lib/recoverHoldingCosts.mjs";
 import { applyRecoveredCost } from "../shared/recoveredCosts.mjs";
-import { loadMopwmTransactions, rollMopwmShareTrades, MOTILAL_DEMAT } from "./lib/mopwmTransactions.mjs";
+import { loadMopwmTransactions, rollMopwmShareTrades, rollMopwmFundSales, MOTILAL_DEMAT } from "./lib/mopwmTransactions.mjs";
 
 /**
  * THE DEPOSITORY ACCOUNTS, BOTH OF THEM.
@@ -5305,20 +5305,27 @@ function build(archived, archiveCount = archived.length, references = {}) {
   // past its date by the report's NSE/BSE trades. The depository share rows are
   // live-only, so `BOOK_SHARE_ROLLS` is read there; a statement position of the
   // same units takes it as `rolledForward`. The statement basis keeps the snapshot.
+  // A fund balance joins them only where the family has confirmed its sale
+  // (Stage 10ma, `rollMopwmFundSales`): the report's fund rows otherwise wait.
   const motilal = new Map(accounts.filter((a) => a.provider === MOTILAL_DEMAT).map((a) => [a.accountId, a]));
-  const shareRolls = rollMopwmShareTrades(references.mopwm ?? loadMopwmTransactions(ROOT), { accounts, records: [
+  const mopwm = references.mopwm ?? loadMopwmTransactions(ROOT);
+  const equityRolls = rollMopwmShareTrades(mopwm, { accounts, records: [
     ...unvaluedHoldings.filter((u) => motilal.has(u.accountId) && u.isin?.startsWith("INE") && isNum(u.quantity))
       .map((u) => ({ accountId: u.accountId, isin: u.isin, quantity: u.quantity, asOf: u.asOf })),
     ...Object.values(shareMovements).filter((w) => motilal.get(w.accountId)?.transactionsOnly && !w.reason && w.isin?.startsWith("INE") && isNum(w.closing))
       .map((w) => ({ accountId: w.accountId, isin: w.isin, quantity: w.closing, asOf: w.periodTo })),
   ] });
+  const fundSales = rollMopwmFundSales(mopwm, { accounts, records: unvaluedHoldings
+    .filter((u) => motilal.has(u.accountId) && u.isin?.startsWith("INF") && isNum(u.quantity))
+    .map((u) => ({ accountId: u.accountId, isin: u.isin, quantity: u.quantity, asOf: u.asOf })) });
+  const shareRolls = { rolls: [...equityRolls.rolls, ...fundSales.rolls], refused: [...equityRolls.refused, ...fundSales.refused] };
   for (const r of shareRolls.rolls) {
     const p = positions.find((x) => x.accountId === r.accountId && x.isin === r.isin && isNum(x.quantity) && Math.abs(x.quantity - r.statementQuantity) <= 0.0005);
     if (p && !p.rolledForward) p.rolledForward = { through: r.through, quantity: r.quantity, costBasis: r.costBasis,
       realizedPnL: r.realizedPnL, costOfUnitsSold: r.costOfUnitsSold, trades: r.trades, source: "adviser-report",
       ...(r.shareEvents ? { shareEvents: r.shareEvents } : {}) };
     notes.push(`${r.accountId}: ${r.security} (${r.isin}) carried from ${r.statementQuantity} on ${r.asOf} to ${r.quantity} on ${r.through} `
-      + `by ${r.trades} exchange trade(s)${(r.shareEvents ?? []).map((e) => ` and its ${e.factor}-for-1 split of ${e.exDate}`).join("")} on MOPWM's transaction report of ${r.report.asOf}, live basis only (the report's own record holds the statement's units on ${r.asOf})`);
+      + `by ${r.trades} ${r.report.sheet === "Mutual Funds" ? "redemption(s) the family confirmed" : "exchange trade(s)"}${(r.shareEvents ?? []).map((e) => ` and its ${e.factor}-for-1 split of ${e.exDate}`).join("")} on MOPWM's transaction report of ${r.report.asOf}, live basis only (the report's own record holds the statement's units on ${r.asOf})`);
   }
   for (const r of shareRolls.refused) {
     notes.push(`${r.accountId ?? r.ownerId}: the MOPWM transaction report's later trades in ${r.security} are not applied — ${r.reason}`);
@@ -5695,7 +5702,8 @@ function emit(book) {
   L.push(" * MOTILAL DEMAT SHARE BALANCES CARRIED PAST THEIR STATEMENTS on the NSE/BSE");
   L.push(" * trades of MOPWM's transaction report (Stage 10iw, `rollMopwmShareTrades`).");
   L.push(" * LIVE BASIS ONLY: `depositoryShares.ts` reads them; every statement-basis");
-  L.push(" * figure keeps the statement's own units. No fund row moves a quantity.");
+  L.push(" * figure keeps the statement's own units. No fund row moves a quantity but a");
+  L.push(" * sale the family confirmed (Stage 10ma, `rollMopwmFundSales`).");
   L.push(" */");
   L.push(`export const BOOK_SHARE_ROLLS: ShareRoll[] = ${j(book.shareRolls)};`);
   L.push("");

@@ -71823,7 +71823,8 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
  * MOTILAL DEMAT SHARE BALANCES CARRIED PAST THEIR STATEMENTS on the NSE/BSE
  * trades of MOPWM's transaction report (Stage 10iw, `rollMopwmShareTrades`).
  * LIVE BASIS ONLY: `depositoryShares.ts` reads them; every statement-basis
- * figure keeps the statement's own units. No fund row moves a quantity.
+ * figure keeps the statement's own units. No fund row moves a quantity but a
+ * sale the family confirmed (Stage 10ma, `rollMopwmFundSales`).
  */
 export const BOOK_SHARE_ROLLS: ShareRoll[] = [
   {
@@ -72064,6 +72065,38 @@ export const BOOK_SHARE_ROLLS: ShareRoll[] = [
         1363,
         1364,
         1365
+      ]
+    }
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "isin": "INF740KA1RE3",
+    "security": "DSP Silver ETF-G",
+    "statementQuantity": 123000,
+    "asOf": "2026-07-31",
+    "through": "2026-10-13",
+    "quantity": 0,
+    "costBasis": 0,
+    "realizedPnL": 23093912.99,
+    "costOfUnitsSold": 32203865.44,
+    "trades": 1,
+    "shareEvents": [
+      {
+        "type": "split",
+        "exDate": "2026-08-28",
+        "factor": 10
+      }
+    ],
+    "report": {
+      "path": "source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx",
+      "asOf": "2026-10-23",
+      "sheet": "Mutual Funds",
+      "rows": [
+        21484,
+        21485,
+        21486,
+        21487,
+        21488
       ]
     }
   }

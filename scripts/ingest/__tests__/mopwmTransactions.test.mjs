@@ -5,7 +5,8 @@
 import assert from "node:assert/strict";
 import { classify } from "../lib/classify.mjs";
 import {
-  MOPWM_TRANSACTIONS, MOTILAL_DEMAT, dmyToIso, splitOf, loadMopwmTransactions, mopwmRowsFor, replayMopwmRows, reportDate, rollMopwmShareTrades,
+  MOPWM_TRANSACTIONS, MOTILAL_DEMAT, FAMILY_CONFIRMED_FUND_SALES, dmyToIso, splitOf, loadMopwmTransactions, mopwmRowsFor, replayMopwmRows, reportDate,
+  rollMopwmFundSales, rollMopwmShareTrades,
 } from "../../lib/mopwmTransactions.mjs";
 import { readSpreadsheet } from "../lib/sheet.mjs";
 import fs from "node:fs";
@@ -148,11 +149,47 @@ assert.match(replayMopwmRows(mopwmRowsFor(report, { isin: "INE1CDF01017", accoun
     ["1201090012539150", "INE011K01018", 0, 24250], ["1201090012539150", "INE358U01012", 0, 27500],
     ["1201090012838316", "INE238A01034", 7300, 0],
     ["1201090012838316", "INE090A01021", 14500, 0], ["1201090012838316", "INE062A01020", 27750, 0],
-  ], "the committed book carries exactly the reconciled share trades");
+    ["1201090012838316", "INF740KA1RE3", 123000, 0],
+  ], "the committed book carries exactly the reconciled share trades, and the one fund sale the family confirmed (Stage 10ma)");
   assert.ok(committed.every((r) => r.report.path === MOPWM_TRANSACTIONS && r.report.asOf === "2026-10-23"));
   const taal = committed.find((r) => /TAAL/.test(r.security));
   assert.deepEqual([taal.costBasis, taal.trades, taal.shareEvents], [18009805, 4, [{ type: "split", exDate: "2026-09-22", factor: 5 }]],
     "TAAL: 4,000 bought for ₹1,80,09,805 in September, 20,000 after its 22 Sep 5-for-1 split");
 }
 
-console.log("mopwmTransactions: prefixed workbook read in full, owners, classification, FIFO replay, identity gates and share rolls passed");
+// ── a fund sale the family confirmed (Stage 10ma) ────────────────────────────
+{
+  const SILVER = "INF740KA1RE3", NAME = "DSP Silver ETF-G", OWNER = "ankita-jaisinghani";
+  const acct = (n) => ({ accountId: `d${n}`, provider: MOTILAL_DEMAT, ownerId: OWNER, asOf: "2026-07-31" });
+  const recs = [{ accountId: "d1", isin: SILVER, quantity: 123, asOf: "2026-07-31" }];
+  const m = (row, date, type, subType, qty, amount, over = {}) =>
+    ({ sheet: "Mutual Funds", row, date, type, subType, qty, amount, price: amount / qty, folio: "466887", ownerId: OWNER, security: NAME, ...over });
+  const rows = [m(1, "2025-09-30", "Buy", "Purchase", 230, 32200), m(2, "2026-01-22", "Sell", "Redemption", 107, 29650),
+    m(3, "2026-08-28", "Buy", "Corpus In", 1230, 17220), m(4, "2026-08-28", "Sell", "Corpus Out", 123, 17220),
+    m(5, "2026-10-13", "Sell", "Redemption", 1230, 25650)];
+  const run = (rs, over = {}) => rollMopwmFundSales({ path: "x", asOf: "2026-10-23", rows: rs }, { accounts: [acct(1)], records: recs, ...over });
+  const out = run(rows);
+  assert.deepEqual(out.rolls.map((r) => [r.accountId, r.isin, r.statementQuantity, r.quantity, r.through, r.trades, r.costOfUnitsSold, r.realizedPnL]),
+    [["d1", SILVER, 123, 0, "2026-10-13", 1, 32200, 23100]], "230 bought, 107 sold, 123 split to 1,230 and redeemed whole; the split is not a trade");
+  assert.deepEqual(out.rolls[0].shareEvents, [{ type: "split", exDate: "2026-08-28", factor: 10 }], "the Corpus block is DSP's recorded 1:10 split");
+  assert.equal(run(rows, { confirmed: [] }).rolls.length, 0, "gate 0: no fund row moves without the family's confirmation");
+  assert.match(run(rows.slice(0, 4)).refused[0].reason, /no row|not a sale of the whole holding/, "a confirmed sale with no redemption after the statement moves nothing");
+  assert.match(run([...rows.slice(0, 4), m(5, "2026-10-13", "Sell", "Redemption", 1000, 20850)]).refused[0].reason, /leaves 230 units/,
+    "gate 5: the family confirmed a sale of all of it");
+  assert.match(run([...rows, m(6, "2025-10-01", "Buy", "Purchase", 1, 140, { folio: "999" })]).refused[0].reason, /2 folios/, "gate 1: one folio");
+  assert.match(run(rows, { records: [{ ...recs[0], quantity: 124 }] }).refused[0].reason, /holds 123 on 2026-07-31 where the statement records 124/,
+    "gate 4: the folio must be this balance");
+  assert.match(run(rows, { accounts: [acct(1), acct(2)], records: [...recs, { ...recs[0], accountId: "d2" }] }).refused[0].reason,
+    /2 of the owner's Motilal demats record/, "gate 3: one account");
+  assert.match(run([...rows.slice(0, 2), m(3, "2026-08-28", "Buy", "Corpus In", 615, 17220), m(4, "2026-08-28", "Sell", "Corpus Out", 123, 17220), rows[4]]).refused[0].reason,
+    /5-for-1 restatement no entry of shared\/fundUnitSplits\.mjs records/, "gate 2: only the sub-division its ISIN is recorded with");
+  assert.match(run(rows, { confirmed: [{ ownerId: OWNER, isin: "INF000000009" }] }).refused[0].reason, /no alias/);
+  // The real report, against the book's own statement record.
+  const real = rollMopwmFundSales(report, { accounts: [{ accountId: "d", provider: MOTILAL_DEMAT, ownerId: OWNER, asOf: "2026-07-31" }],
+    records: [{ accountId: "d", isin: SILVER, quantity: 123000, asOf: "2026-07-31" }] });
+  assert.deepEqual(real.rolls.map((r) => [r.quantity, r.through, r.report.rows.join()]), [[0, "2026-10-13", "21484,21485,21486,21487,21488"]],
+    "Ankita's folio 466887: 2,30,000 bought, 1,07,000 sold, 1,23,000 on 31 Jul, 12,30,000 after the split, redeemed on 13 Oct 2026");
+  assert.equal(FAMILY_CONFIRMED_FUND_SALES.length, 1);
+}
+
+console.log("mopwmTransactions: prefixed workbook read in full, owners, classification, FIFO replay, identity gates, share rolls and the confirmed fund sale passed");
