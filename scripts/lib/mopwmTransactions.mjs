@@ -17,8 +17,9 @@
 // SHARE trades (Stage 10iw, `rollMopwmShareTrades`): a Motilal demat share
 // balance is carried past its statement by the report's NSE/BSE trades, on the
 // live basis only, where the same reconciliation holds. No fund row moves a
-// quantity: the 1 Oct 2026 "redemptions" are at least partly
-// rematerialisations and wait for the family's answer. It never changes a
+// quantity — the 1 Oct 2026 "redemptions" are at least partly
+// rematerialisations and wait for the family's answer — except a sale the
+// family has confirmed (Stage 10ma, `rollMopwmFundSales`). It never changes a
 // valuation or a statement's date.
 //
 // Columns are found by HEADER TEXT, never by position; a holder heading is a row
@@ -30,6 +31,7 @@ import path from "node:path";
 import { readSpreadsheet, findHeader } from "../ingest/lib/sheet.mjs";
 import { ownerIdFor } from "../../shared/owners.mjs";
 import { fifoLedger, UNIT_TIE } from "../../shared/fifo.mjs";
+import { fundUnitSplitFor } from "../../shared/fundUnitSplits.mjs";
 import { num } from "./reviewPrivateRead.mjs";
 
 export const MOPWM_TRANSACTIONS = "source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx";
@@ -145,7 +147,21 @@ export const MOPWM_SECURITIES = Object.freeze({
   INF209K01VA3: "Aditya Birla SL Liquid Direct-G", INF109K012M7: "ICICI Pru Nifty 50 Index Direct-G",
   INF109K01Y80: "ICICI Pru Nifty Next 50 Index Direct-G", INF769K01AX2: "Mirae Asset Large Cap Direct-G",
   INF174K01NH1: "Kotak Liquid Direct-IDCWD Reinvestment",
+  // Stage 10ma: the pre-split ISIN Ankita's Motilal demat statement of 31 Jul prints.
+  INF740KA1RE3: "DSP Silver ETF-G",
 });
+
+/**
+ * FUND SALES THE FAMILY HAS CONFIRMED (Stage 10ma). The report's fund rows wait
+ * on the family's answer about the 1 Oct 2026 "redemptions"; an entry here is
+ * that answer for one owner and ISIN, in the words it was given. It releases
+ * the report's rows to `rollMopwmFundSales`, which still applies them only
+ * where they reconcile. It names no amount, quantity or date of the sale.
+ */
+export const FAMILY_CONFIRMED_FUND_SALES = Object.freeze([
+  { ownerId: "ankita-jaisinghani", isin: "INF740KA1RE3", confirmedOn: "2026-11-06",
+    words: "according to the client they have sold dsp silver etf and it should not be showing up in holdings" },
+]);
 
 /** An exchange settlement reference (`NSE/M/121/D`): a priced trade, not a book entry. */
 const EXCHANGE = /^(NSE|BSE)\//;
@@ -172,6 +188,8 @@ function eventOf(r, isin) {
 
 /** The depository's own split reference (`SPLIT/22/09/2026/712101`). */
 const SPLIT = /^SPLIT\//;
+/** A fund's units restated in place: the lots out and back in of a sub-division. */
+const CORPUS = /^Corpus (In|Out)$/;
 
 /**
  * A SHARE SPLIT AS THE REPORT PRINTS IT (Stage 10kk): under one SPLIT reference
@@ -179,11 +197,13 @@ const SPLIT = /^SPLIT\//;
  * same amount and a whole multiple of its units — TAAL's 22 Sep 2026 1:5, four
  * lots. Read as one FIFO switch of the holding into itself, so each lot keeps
  * its cost and purchase date. Anything that is not exactly that is a reason.
+ * A fund's sub-division prints the same shape as Corpus Out / Corpus In rows
+ * (DSP's metal ETFs, 28 Aug 2026; Stage 10ma).
  */
 export function splitOf(rows, isin) {
   const [first] = rows;
-  const out = rows.filter((r) => r.type === "SELL"), into = rows.filter((r) => r.type === "PURCHASE");
-  const where = `${first.ref} (${first.date})`;
+  const out = rows.filter((r) => r.type === "SELL" || r.type === "Sell"), into = rows.filter((r) => r.type === "PURCHASE" || r.type === "Buy");
+  const where = `${first.ref ?? "Corpus Out / Corpus In"} (${first.date})`;
   if (rows.some((r) => r.date !== first.date)) return { reason: `${where} spans more than one date` };
   if (!out.length || out.length !== into.length || out.length + into.length !== rows.length)
     return { reason: `${where} does not take out and put back the same number of lots` };
@@ -202,18 +222,26 @@ export function splitOf(rows, isin) {
 
 /**
  * Every row of one security as FIFO events, a SPLIT block as one switch that
- * must take the whole holding the record has at that moment. Returns the
- * splits it read, or the first reason a row cannot be read.
+ * must take the whole holding the record has at that moment. A fund's Corpus
+ * block is read the same way, and only as the sub-division
+ * `shared/fundUnitSplits.mjs` records for its ISIN, on that ex-date and factor.
+ * Returns the splits it read, or the first reason a row cannot be read.
  */
 function eventsOf(rows, isin) {
   const events = [], splits = [], read = new Set();
   for (const r of rows) {
     if (read.has(r)) continue;
-    if (r.sheet === "Direct Equity" && SPLIT.test(r.ref ?? "")) {
-      const block = rows.filter((x) => x.ref === r.ref);
+    const shareSplit = r.sheet === "Direct Equity" && SPLIT.test(r.ref ?? "");
+    const fundSplit = r.sheet === "Mutual Funds" && CORPUS.test(r.subType ?? "");
+    if (shareSplit || fundSplit) {
+      const block = rows.filter((x) => shareSplit ? x.ref === r.ref
+        : x.sheet === "Mutual Funds" && x.date === r.date && CORPUS.test(x.subType ?? ""));
       for (const x of block) read.add(x);
       const s = splitOf(block, isin);
       if (s.reason) return { reason: `row ${r.row} (${r.date}): ${s.reason}` };
+      const known = fundSplit ? fundUnitSplitFor(isin) : null;
+      if (fundSplit && !(known && known.exDate === s.split.exDate && known.factor === s.split.factor))
+        return { reason: `row ${r.row} (${r.date}): a ${s.split.factor}-for-1 restatement no entry of shared/fundUnitSplits.mjs records for ${isin}` };
       const held = fifoLedger(events).unitsHeld;
       if (Math.abs(held - s.event.units) > UNIT_TIE)
         return { reason: `row ${r.row} (${r.date}) splits ${s.event.units} units where the record holds ${Math.round(held * 1000) / 1000}` };
@@ -375,6 +403,69 @@ export function rollMopwmShareTrades(report, { accounts, records }) {
         report: { path: report.path, asOf: report.asOf, sheet: "Direct Equity", rows: rows.map((r) => r.row) },
       });
     }
+  }
+  return { rolls, refused };
+}
+
+/**
+ * A FUND BALANCE THE FAMILY CONFIRMS SOLD, CARRIED TO NIL (Stage 10ma).
+ *
+ * *"they have sold dsp silver etf"* — the family, 6 Nov 2026. The report's
+ * Mutual Funds rows are applied for an owner and ISIN of
+ * `FAMILY_CONFIRMED_FUND_SALES` only, and only where:
+ *   1. its name is an exact alias of the ISIN (`MOPWM_SECURITIES`), and every
+ *      row of that owner under it sits in ONE folio;
+ *   2. every row is a priced purchase or redemption that ties (`eventOf`), or
+ *      the Corpus block of the sub-division its ISIN is recorded with;
+ *   3. it lands on ONE account: the owner's Motilal demat whose statement
+ *      records that ISIN;
+ *   4. the rows replayed from the first hold EXACTLY the statement's units on
+ *      the statement's date — the witness that the folio is this balance;
+ *   5. no sale takes units the record does not hold, and the whole record
+ *      ends at nil: what the family confirmed is a sale of all of it.
+ * The roll has the share roll's shape (`ShareRoll`) and the same reader: the
+ * live basis only, where a balance sold to nil is not held.
+ */
+export function rollMopwmFundSales(report, { accounts, records, confirmed = FAMILY_CONFIRMED_FUND_SALES }) {
+  const rolls = [], refused = [];
+  const tie = (a, b) => Math.abs(a - b) <= UNIT_TIE;
+  for (const c of confirmed) {
+    const name = MOPWM_SECURITIES[c.isin];
+    const refuse = (reason, accountId = null) => refused.push({ ownerId: c.ownerId, security: name ?? c.isin, accountId, reason });
+    if (!name) { refuse("no alias pins the ISIN to one name on the report"); continue; }
+    const rows = report.rows.filter((r) => r.sheet === "Mutual Funds" && r.ownerId === c.ownerId && r.security === name)
+      .sort((a, b) => a.date.localeCompare(b.date) || a.row - b.row);
+    if (!rows.length) { refuse("the report records no row of it for this owner"); continue; }
+    const folios = new Set(rows.map((r) => r.folio));
+    if (folios.size !== 1) { refuse(`its rows sit in ${folios.size} folios`); continue; }                 // gate 1
+    const whole = eventsOf(rows, c.isin);
+    if (whole.reason) { refuse(whole.reason); continue; }                                                // gate 2
+    const held = accounts.filter((a) => a.provider === MOTILAL_DEMAT && a.ownerId === c.ownerId && a.asOf
+      && records.some((x) => x.accountId === a.accountId && x.isin === c.isin));
+    if (held.length !== 1) { refuse(`${held.length} of the owner's Motilal demats record ${c.isin}, not exactly one`); continue; } // gate 3
+    const [account] = held;
+    const statementQuantity = records.find((x) => x.accountId === account.accountId && x.isin === c.isin).quantity;
+    const before = fifoLedger(eventsOf(rows.filter((r) => r.date <= account.asOf), c.isin).events);
+    if (before.shortfalls.length || !tie(before.unitsHeld, statementQuantity)) {                        // gate 4
+      refuse(`the report holds ${Math.round(before.unitsHeld * 1000) / 1000} on ${account.asOf} where the statement records ${statementQuantity}`, account.accountId);
+      continue;
+    }
+    const ledger = fifoLedger(whole.events);
+    const later = rows.filter((r) => r.date > account.asOf);
+    if (ledger.shortfalls.length) { refuse("a later sale takes units the record does not hold", account.accountId); continue; } // gate 5
+    if (!later.length || !tie(ledger.unitsHeld, 0)) {
+      refuse(`the report leaves ${Math.round(ledger.unitsHeld * 1000) / 1000} units, not a sale of the whole holding`, account.accountId);
+      continue;
+    }
+    const shareEvents = whole.splits.filter((s) => s.exDate > account.asOf);
+    rolls.push({
+      accountId: account.accountId, isin: c.isin, security: name, statementQuantity, asOf: account.asOf,
+      through: later.at(-1).date, quantity: 0,
+      costBasis: r2(ledger.costHeld), realizedPnL: r2(ledger.realisedGain), costOfUnitsSold: r2(ledger.costSold),
+      trades: later.filter((r) => !CORPUS.test(r.subType ?? "")).length,
+      ...(shareEvents.length ? { shareEvents } : {}),
+      report: { path: report.path, asOf: report.asOf, sheet: "Mutual Funds", rows: rows.map((r) => r.row) },
+    });
   }
   return { rolls, refused };
 }

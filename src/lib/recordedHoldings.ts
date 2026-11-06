@@ -6,7 +6,9 @@
  * a face value, a unit count. The live layer values some of them (a share the
  * quote feed prices, a fund AMFI publishes a NAV for); the rest stay recorded
  * and unvalued. Either way the family holds them, so a page about the company
- * must never say it is "fully exited".
+ * must never say it is "fully exited". A balance the adviser's report sold to
+ * nil since the statement (`soldSinceStatement`: exchange trades, Stage 10iw;
+ * a fund sale the family confirmed, Stage 10ma) is not held, and is no line.
  *
  * THE HOME KEY IS WHERE THE LIVE LAYER WOULD FILE THE LINE, so a line shown as
  * recorded and the same line once priced stand under one company:
@@ -20,14 +22,15 @@
  *   4. otherwise its own key.
  * Joined by identifier only, never by a name.
  */
-import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_UNVALUED_HOLDINGS, BOOK_RECOVERED_COSTS } from "../data/glowData";
+import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_UNVALUED_HOLDINGS, BOOK_RECOVERED_COSTS, BOOK_SHARE_ROLLS } from "../data/glowData";
 import { recoveredCostFor } from "../../shared/recoveredCosts.mjs";
 import { acquisitionIdentity } from "../../shared/fundUnitActions.mjs";
 import type { InvestedOn } from "./investedOn";
 import { custodySuccessor } from "../../shared/custodySuccessors.mjs";
 import { bookKeyForShare } from "./depositoryShares";
+import { soldSinceStatement } from "./fundNavs";
 import { securityLabel } from "./securityLabel";
-import type { Position, UnvaluedStatementHolding, RecoveredHoldingCost } from "./types";
+import type { Position, UnvaluedStatementHolding, RecoveredHoldingCost, ShareRoll } from "./types";
 
 export type RecordedLine = UnvaluedStatementHolding & { quantity: number; homeKey: string;
   costBasis: number | null; avgCost: number | null; recoveredCost?: RecoveredHoldingCost };
@@ -38,10 +41,11 @@ const OWN_KEY_CLASSES = new Set(["Mutual Fund", "ETF"]);
 export function recordedLines(
   unvalued: readonly UnvaluedStatementHolding[] = BOOK_UNVALUED_HOLDINGS,
   positions: readonly Position[] = BOOK_POSITIONS,
+  rolls: readonly ShareRoll[] = BOOK_SHARE_ROLLS,
 ): RecordedLine[] {
   // A line another statement reports at the same units is that statement's.
   const held = unvalued.filter((u) => !u.sameUnitsReportedBy && !custodySuccessor(u, BOOK_ACCOUNTS, positions)
-    && typeof u.quantity === "number" && u.quantity > 0);
+    && typeof u.quantity === "number" && u.quantity > 0 && !soldSinceStatement(u.accountId, u, rolls));
   const twin = new Map<string, UnvaluedStatementHolding>();
   for (const u of held) {
     const isin = isinOf(u);

@@ -18,7 +18,7 @@ import {
   unpricedStatementUnits, describeDepositoryUnits, depositoryUnitsGist, VALUE_UNPRICED_STATEMENT_UNITS,
 } from "../fundNavs";
 import { BOOK_FUND_NAVS } from "@/data/fundNavs";
-import { BOOK_ACCOUNTS, BOOK_ADVISED_BALANCES, BOOK_POSITIONS, BOOK_UNVALUED_HOLDINGS, BOOK_POLYCAB } from "@/data/glowData";
+import { BOOK_ACCOUNTS, BOOK_ADVISED_BALANCES, BOOK_POSITIONS, BOOK_UNVALUED_HOLDINGS, BOOK_POLYCAB, BOOK_SHARE_ROLLS } from "@/data/glowData";
 import { FUND_UNIT_ACTIONS } from "../../../shared/fundUnitActions.mjs";
 import type { Account, Position, UnvaluedStatementHolding } from "../types";
 import { unvaluedHoldingsOf, unvaluedStatementLinesOf } from "../accounts";
@@ -84,6 +84,9 @@ function expected(unvalued: readonly UnvaluedStatementHolding[], accounts: Map<s
     if (positions.some((p) => p.accountId === u.accountId && I(p) === isin)) continue;
     if (positions.some((p) => I(p) === isin && Math.abs((p.quantity ?? NaN) - (u.quantity as number)) < 0.0005
       && ownerOfId(p.accountId) === ownerOfId(u.accountId))) continue;
+    // Stage 10ma: units the adviser report took to nil, on a sale the family confirmed.
+    if (BOOK_SHARE_ROLLS.some((r) => r.accountId === u.accountId && I(r) === isin && r.quantity === 0
+      && Math.abs(r.statementQuantity - (u.quantity as number)) < 0.0005)) continue;
     // Stage 10ka: the family's 21 Oct note carries this exact recorded balance to its own count.
     const advised = factor === 1 ? BOOK_ADVISED_BALANCES.find((b) => b.accountId === u.accountId && b.isin === isin
       && Math.abs(b.recordQuantity - (u.quantity as number)) < 0.0005) : undefined;
@@ -145,8 +148,11 @@ const dspRows = got.filter((p) => !!p.depositoryUnits?.unitSplit);
 ok("LOAD-BEARING: the book records DSP Gold and Silver ETF units on two Motilal statements, and AMFI's NAV for both is joined across the split",
   dspLines.length === 3 && ["INF740KA1SW3", "INF740KA1RE3"].every((i) => navBy.get(i)?.usableForValue && navBy.get(i)?.unitSplit?.factor === 10),
   dspLines.map((u) => `${u.accountId.slice(-6)} ${u.securityKey} ${u.quantity}`).join("; "));
-ok("every DSP line is valued, and nothing else carries a split",
-  dspRows.length === dspLines.length && dspLines.every((u) => dspRows.some((p) => p.accountId === u.accountId && (p.fundUnitAdjustment?.isin ?? I(p)) === I(u))));
+// Stage 10ma: DSP Silver on Ankita's demat was redeemed on 13 Oct, a sale the family confirmed.
+const heldDsp = dspLines.filter((u) => !BOOK_SHARE_ROLLS.some((r) => r.accountId === u.accountId && I(r) === I(u) && r.quantity === 0
+  && r.statementQuantity === u.quantity));
+ok("every DSP line still held is valued, the one sold to nil is not, and nothing else carries a split",
+  heldDsp.length === 2 && dspRows.length === heldDsp.length && heldDsp.every((u) => dspRows.some((p) => p.accountId === u.accountId && (p.fundUnitAdjustment?.isin ?? I(p)) === I(u))));
 ok("each is the statement's units × 10 at the published NAV, and keeps the statement's own count",
   dspRows.every((p) => {
     const u = dspLines.find((l) => l.accountId === p.accountId && I(l) === (p.fundUnitAdjustment?.isin ?? I(p)))!;

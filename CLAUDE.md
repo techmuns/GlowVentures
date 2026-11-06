@@ -476,7 +476,9 @@ Never derive one side from the others.
   (`BOOK_SHARE_ROLLS`), through a SPLIT block that restates every lot at its own
   amount (Stage 10kk, TAAL); the gate does not apply a split the roll carries
   (`shareEvents`). Its fund rows move no quantity until the family answers
-  about the 1 Oct 2026 "redemptions".
+  about the 1 Oct 2026 "redemptions" — except a sale the family confirmed
+  (`FAMILY_CONFIRMED_FUND_SALES`, `rollMopwmFundSales`, Stage 10ma: Ankita's
+  DSP Silver ETF), rolled to nil only where the folio reconciles exactly.
 - **The family's liquid-holdings note of 21 Oct 2026** (Stage 10ka,
   `scripts/ingest/reference/familyAdvisedBalances.mjs`) carries five Motilal demat
   fund balances (Ajay's Motilal Arbitrage; Liquid BeES on four demats) to its

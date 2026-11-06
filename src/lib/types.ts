@@ -1165,7 +1165,8 @@ export type ShareMovement = {
  * statement does not record and the report shows bought after it. Read by the
  * LIVE layer only (`depositoryShares.ts`); the statement basis keeps the
  * snapshot. A share with any non-exchange entry (a split, a transfer) is not
- * rolled.
+ * rolled. A FUND balance is rolled only to nil, on a sale the family confirmed
+ * (Stage 10ma, `rollMopwmFundSales`), with `report.sheet` "Mutual Funds".
  */
 export type ShareRoll = {
   accountId: string;
