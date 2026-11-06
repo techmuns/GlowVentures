@@ -471,14 +471,19 @@ Never derive one side from the others.
   (`AT_COST_BUCKET`, `AT_COST_RETURN`).
 - **The Motilal CDSL "rate" is the last movement's price**, not a mark or a cost
   (Stage 10cz); those rows are quantities on the statement basis.
-- **MOPWM's transaction report moves Motilal demat SHARES only** (Stage 10iw):
-  its later NSE/BSE trades roll those balances forward on the live basis
-  (`BOOK_SHARE_ROLLS`), through a SPLIT block that restates every lot at its own
-  amount (Stage 10kk, TAAL); the gate does not apply a split the roll carries
-  (`shareEvents`). Its fund rows move no quantity until the family answers
-  about the 1 Oct 2026 "redemptions" — except a sale the family confirmed
-  (`FAMILY_CONFIRMED_FUND_SALES`, `rollMopwmFundSales`, Stages 10ma, 10mb: Ankita's
-  DSP Silver and Gold ETFs), rolled to nil only where the folio reconciles exactly.
+- **Later trades in MOPWM's transaction report move the holdings they reconcile
+  with** (live basis; the statement basis keeps the snapshot). Its NSE/BSE trades
+  roll Motilal demat shares (Stage 10iw), through a SPLIT block that restates
+  every lot at its own amount (Stage 10kk, TAAL); the gate does not apply a split
+  the roll carries (`shareEvents`). Its fund trades roll Motilal demat fund
+  lines (`rollMopwmFundTrades`, Stage 10me, `BOOK_SHARE_ROLLS` with sheet
+  "Mutual Funds"): one group of the owner's rows naming AMFI's scheme must hold
+  the line's exact units on its date. **A transfer is not a sale**: the 1 Oct
+  2026 demat-folio "redemptions" reappear unit for unit on AMC folio statements,
+  so a whole-balance demat redemption on such a day moves custody and sells
+  nothing (`transferredOn`). A PMS/AIF folio it pays out in full (at least the
+  statement's value, nothing paid in) is redeemed (`mopwmCapitalExits`, MO
+  Delphi); smaller capital rows carry no units and are named, not applied.
 - **The family's liquid-holdings note of 21 Oct 2026** (Stage 10ka,
   `scripts/ingest/reference/familyAdvisedBalances.mjs`) carries five Motilal demat
   fund balances (Ajay's Motilal Arbitrage; Liquid BeES on four demats) to its

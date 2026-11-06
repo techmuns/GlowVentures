@@ -545,7 +545,8 @@ function withDepositoryFunds(src, positions) {
  *   5. that price within a factor of two of the NAV;
  *   6. no position of the ISIN already in the row's own account;
  *   7. no account of the SAME OWNER carrying the same ISIN at the same units;
- *   8. no roll of the adviser's report taking these units to nil (Stage 10ma).
+ *   8. no roll of the adviser's report taking these units to nil (Stage 10ma);
+ *      one carrying them to other units values those, at its own cost (10me).
  * It deliberately does not read the page's switch, so turning it off fails a
  * check by name rather than leaving a stale model agreeing with a changed page.
  */
@@ -605,7 +606,14 @@ function withUnpricedStatementUnits(src, positions) {
     if (rolls.some((r) => r.accountId === u.accountId && I(r) === isin && r.quantity === 0
       && Math.abs(r.statementQuantity - qty) < 0.0005)) continue;                               // 8
     const book = positions.find((p) => p.securityKey === u.securityKey);
-    const units = (f === 1 ? advisedUnits(src, u.accountId, isin, qty) : null) ?? qty * f;
+    // Stage 10me: a fund roll's units and FIFO cost stand for the statement's.
+    const roll = rolls.find((r) => r.accountId === u.accountId && I(r) === isin && r.quantity > 0
+      && r.report?.sheet === "Mutual Funds" && Math.abs(r.statementQuantity - qty) < 0.0005);
+    const units = roll ? (roll.shareEvents?.length ? roll.quantity : roll.quantity * f)
+      : (f === 1 ? advisedUnits(src, u.accountId, isin, qty) : null) ?? qty * f;
+    const rolledCost = roll ? { costBasis: roll.costBasis, costUnavailable: false, avgCost: roll.costBasis / units,
+      unrealizedPnL: units * nav.nav - roll.costBasis, realizedPnL: roll.realizedPnL, costOfUnitsSold: roll.costOfUnitsSold,
+      rolledForward: { through: roll.through, quantity: units } } : null;
     out.push(withRecoveredCost({
       securityKey: u.securityKey, security: book?.security ?? u.security ?? u.securityKey, isin: u.isin,
       symbol: book?.symbol ?? keyToSymbol[u.securityKey] ?? null,
@@ -613,6 +621,7 @@ function withUnpricedStatementUnits(src, positions) {
       assetClass: etf ? "ETF" : "Mutual Fund", marketSide: "listed",
       quantity: units, marketValue: units * nav.nav, currentPrice: nav.nav,
       costBasis: null, costUnavailable: true, unrealizedPnL: null, returnPct: null, avgCost: null,
+      ...(rolledCost ?? {}),
       navPriced: true, navDate: nav.date,
       depositoryUnits: ownRate !== null
         ? { asOf: u.asOf, source: null, kind: "last-movement", lastMovementRate: ownRate,

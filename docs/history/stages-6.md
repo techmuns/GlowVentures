@@ -1324,3 +1324,23 @@ Codex's review of #352, verified against the code and the book:
 - One entry added to `FAMILY_CONFIRMED_FUND_SALES`, plus the `DSP Gold ETF-G` alias. `rollMopwmFundSales` reconciles it on the same gates; the book changes by that one roll.
 - Aarti's DSP Gold (1201090012838335, 11,95,000 → 1,19,50,000) is untouched and still valued; her folio 470582 shows no sale.
 - Tests: the split-mechanics suites read Ankita's lines without the rolls, and assert only Aarti still holds DSP Gold.
+
+### Stage 10me — Later transactions update the holdings: MOPWM's fund trades and full exits
+
+*"why were we not considering the sale transactions to update the holdings data? … If we have transaction data that shows buy or sale transactions then those should be considered to update the portfolio"* — the family, 6 Nov 2026.
+
+- **Root cause.** The live roll-forward of MOPWM's 23 Oct report covered SHARES only (Stage 10iw, at the family's 28 Oct choice). Its Mutual Funds and PMS_AIF_SP rows waited on the family's answer about the 1 Oct "redemptions". So every fund sold after a 31 Jul Motilal statement stayed on screen. Stages 10ma/10mb released DSP Silver and Gold one confirmation at a time.
+- **The 1 Oct question, answered from the data.** On 1 Oct the report "redeems" every fund balance on all five Motilal demats. Seven of them reappear unit for unit on AMC folio statements dated after that day (Kotak 5372722/7111389, Bandhan 8652064/8691267, Helios 10056128/10056154/10063876), and none contradicts. So a demat-folio redemption of a whole balance on a day another statement of the owner witnesses is a **transfer of custody**, never a sale.
+- **`rollMopwmFundTrades`** (replaces `FAMILY_CONFIRMED_FUND_SALES` / `rollMopwmFundSales`) rolls each Motilal demat fund line on the report's later fund trades where:
+  - ONE group of the owner's rows names AMFI's scheme for the line's ISIN (`sameScheme`, plans told apart);
+  - that group holds the line's exact units on the statement date;
+  - every row ties;
+  - no sale over-sells.
+  The roll stops at a transfer (`transferredOn`). Applied: Ankita ABSL BAF 3,93,096 → 0, HDFC BAF 37,755 → 0, DSP Silver/Gold → 0; Bharat ABSL BAF 1,83,500 → 7,660, ABSL Liquid 2,64,721 → 1,856, ICICI BAF 1,46,857 → 33,257; Bharat's family trust Kotak Arbitrage 6,13,294 → 32,694. A sub-division alone is no roll (`fundUnitSplits` converts it).
+- `unpricedStatementUnits` values a rolled line at the roll's units and FIFO cost (`rolledSinceStatement`); check-pages' model mirrors it.
+- **`mopwmCapitalExits`**: a PMS/AIF folio the report pays out in full after its statement (at least the value it struck, nothing paid in) rolls to nil on the live basis: MO Delphi, ₹11.25 Cr on 16 Jul vs ₹11.13 Cr on 30 Jun. Smaller capital rows carry no units and are named in BOOK-REPORT (Neo Infra's 9 Jul distribution).
+- Audited, nothing to apply:
+  - Ajay's Man Industries, Manorama, Tech Mahindra, Zaggle and Birla Cable sales (no alias) are of Motilal 539150 balances no statement records.
+  - AMC-folio accounts' statements already postdate their report rows.
+- Still open, in a follow-up: Green Lantern 510854/510861. Their own tape runs to 22–23 Sep (sold out of Gujarat Ambuja, Graphite India, GMM Pfaudler, Ratnamani, Bajaj Auto; bought IEX, HEG AM, Elgi). It is refused because no depository or capital-gain witness exists. A correct roll also needs the cash line, the bought names and HEG's 7 Sep demerger. Baring's 3 Aug ₹50 L call is also open: no units.
+- Tests: `mopwmTransactions.test.mjs` covers the gates, transfer days, partial sales and capital exits, on constructed rows and the real report. `shareRolls`, `unpricedUnits`, `recoveredCosts` and `corporateActions` assert the rolls. The `concentration` and `searchIndex` twin-key checks build a constructed pair when the live book has none (the last pair is sold).

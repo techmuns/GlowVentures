@@ -1,6 +1,6 @@
 import { acquisitionIdentity } from "../../../shared/fundUnitActions.mjs";
 import assert from "node:assert/strict";
-import { depositoryFundHoldings, unpricedStatementUnits, applyFundNavs, soldSinceStatement } from "../fundNavs";
+import { depositoryFundHoldings, unpricedStatementUnits, applyFundNavs, soldSinceStatement, rolledSinceStatement } from "../fundNavs";
 import { fifoTotals, positionFifoReturn, realisedReason } from "../fifo";
 import { bucketBy, isCostedForFifo, measuredReturn, holdingReturn } from "../analytics";
 import { BOOK_ACCOUNTS, BOOK_ADVISED_BALANCES, BOOK_POSITIONS, BOOK_RECOVERED_COSTS, BOOK_UNVALUED_HOLDINGS } from "../../data/glowData";
@@ -143,13 +143,14 @@ const reportedByFolio=BOOK_RECOVERED_COSTS.filter(r=>r.accountId.includes('-dema
 const carriedByNote=BOOK_RECOVERED_COSTS.filter(r=>BOOK_ADVISED_BALANCES.some(b=>b.accountId===r.accountId&&b.isin===r.isin&&Math.abs(b.recordQuantity-r.quantity)<=.0005&&Math.abs(b.quantity-r.quantity)>.0005));
 // And less the balances a folio costs, whose records are gone (above), and
 // those a sale the family confirmed took to nil (Stage 10ma): no longer held.
-const soldToNil=BOOK_RECOVERED_COSTS.filter(r=>/^INF/.test(r.isin)&&soldSinceStatement(r.accountId,r));
-assert.equal(soldToNil.length,2,"DSP Silver and Gold ETF on Ankita's Motilal demat, redeemed on 13 Oct and 23 Sep 2026");
+// Stage 10me: and those the report's later fund trades carried to other units, which its own FIFO costs.
+const soldToNil=BOOK_RECOVERED_COSTS.filter(r=>/^INF/.test(r.isin)&&(soldSinceStatement(r.accountId,r)||rolledSinceStatement(r.accountId,r)));
+assert.ok(soldToNil.some(r=>r.isin==="INF740KA1RE3")&&soldToNil.some(r=>r.isin==="INF740KA1SW3"),"DSP Silver and Gold ETF on Ankita's Motilal demat, redeemed on 13 Oct and 23 Sep 2026");
 assert.equal(funds.filter(p=>p.recoveredCost).length,29-reportedByFolio.filter(r=>/^INF/.test(r.isin)).length-carriedByNote.length-costedAtFolio.length-soldToNil.length);
 for (const [account, isin] of FOLIO_COSTED_DEMATS)
   assert.equal(funds.some(p=>p.accountId===account&&p.isin===isin),!costedAtFolio.some(([a,i])=>a===account&&i===isin),`${account}: the folio values its ${isin} units, not the demat`);
 assert.ok(funds.every(p=>!p.depositoryUnits?.advised||!p.recoveredCost),"a balance the note carried borrows no lots recorded for other units");
-assert.equal(funds.filter(p=>p.recoveredCost&&p.depositoryUnits?.unitSplit).length,3-soldToNil.length);
+assert.equal(funds.filter(p=>p.recoveredCost&&p.depositoryUnits?.unitSplit).length,3-soldToNil.filter(r=>["INF740KA1RE3","INF740KA1SW3"].includes(r.isin)).length);
 const fp=(account:string,isin:string)=>funds.find(p=>p.accountId.endsWith(account)&&p.isin===isin)!;
 for (const [account, first, last, lots] of [['12539150','2025-03-06','2026-03-23',4],['12838316','2025-11-06','2025-11-06',1],['12838320','2025-07-11','2025-07-11',1]] as const) {
   const p = fp(account,'INF109KC1RH9');
@@ -191,7 +192,10 @@ const moArbRecord=BOOK_RECOVERED_COSTS.find(r=>r.accountId.endsWith('12539150')&
 near(moArbRecord.costBasis,304201613.1);assert.equal(moArbRecord.evidence[0].path,MOPWM);assert.equal(moArbRecord.quantity,28067435.434);
 const moArb=fp('12539150','INF247L01ED1');
 assert.equal(moArb.quantity,2473221.627);assert.equal(moArb.costBasis,null);assert.equal(moArb.recoveredCost,undefined);
-assert.equal(fp('12838316','INF179K01830').costBasis,null,'a different folio balance cannot supply cost');
+// Ankita's HDFC Balanced Advantage was redeemed on 23 Sep (Stage 10me); the rule holds on the statement's units.
+assert.ok(!funds.some(p=>p.accountId.endsWith('12838316')&&p.isin==='INF179K01830'),'a balance sold to nil is not held');
+const hdfcUnrolled=unpricedStatementUnits(BOOK_UNVALUED_HOLDINGS,BOOK_ACCOUNTS,BOOK_POSITIONS,BOOK_ADVISED_BALANCES,[]).find(p=>p.accountId.endsWith('12838316')&&p.isin==='INF179K01830')!;
+assert.equal(hdfcUnrolled.costBasis,null,'a different folio balance cannot supply cost');
 
 // Costs can be known while a holding's current unit/price basis is unverified.
 const silver=BOOK_RECOVERED_COSTS.find(r=>r.accountId.endsWith('12838316')&&r.isin==='INF740KA1RE3')!;

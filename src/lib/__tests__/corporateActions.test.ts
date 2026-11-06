@@ -156,7 +156,11 @@ assert.equal(liveOn(dayAfter(through, SHARE_EVENT_LEAD_DAYS)), onCapture, "…an
 assert.equal(liveOn(dayAfter(through, SHARE_EVENT_LEAD_DAYS + 1)), 0, "…and none past it");
 
 const funds = BOOK_POSITIONS.filter((p) => p.assetClass !== "Equity");
-assert.deepEqual(applyCorporateActionQuotes(funds, BOOK_ACCOUNTS, null, saved).positions, funds.map((p) => ({ ...p, live: false })), "fund NAVs and distributions are not equity corporate actions");
+// Stage 10me: a fund the adviser report paid out in full after its statement is not held.
+const paidOut = funds.filter((p) => p.rolledForward?.quantity === 0);
+assert.ok(paidOut.some((p) => p.accountId === "motilal-oswal-delphi-equity-fund-9049241536"), "MO Delphi, paid out on 16 Jul 2026");
+assert.deepEqual(applyCorporateActionQuotes(funds, BOOK_ACCOUNTS, null, saved).positions,
+  funds.filter((p) => !paidOut.includes(p)).map((p) => ({ ...p, live: false })), "fund NAVs and distributions are not equity corporate actions");
 
 // ROLLED FORWARD (Stage 10dw): a share the account's own tape carried past its
 // statement is LIVE at the rolled quantity; one rolled to nil is not a row;
