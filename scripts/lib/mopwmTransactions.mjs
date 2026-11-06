@@ -497,6 +497,7 @@ export function rollMopwmFundTrades(report, { accounts, records, names, statemen
     if (ledger.shortfalls.length) { refuse("a later sale takes units the record does not hold"); continue; } // gate 4
     const quantity = Math.round(ledger.unitsHeld * 1e6) / 1e6;
     const shareEvents = e.splits.filter((x) => x.exDate > rec.asOf);
+    const heldDates = ledger.lots.filter((l) => l.units > UNIT_TIE).map((l) => l.date).sort();
     rolls.push({
       accountId: rec.accountId, isin: rec.isin, security: rows[0].security, statementQuantity: rec.quantity, asOf: rec.asOf,
       through: applied.at(-1).date, quantity: tie(quantity, 0) ? 0 : quantity,
@@ -504,6 +505,8 @@ export function rollMopwmFundTrades(report, { accounts, records, names, statemen
       trades: applied.filter((r) => !CORPUS.test(r.subType ?? "")).length,
       ...(shareEvents.length ? { shareEvents } : {}),
       ...(transferredOn ? { transferredOn } : {}),
+      // The purchase lots still held, first-in first-out: what the Invested on column dates.
+      ...(heldDates.length ? { heldPurchases: { first: heldDates[0], last: heldDates.at(-1), lots: heldDates.length } } : {}),
       report: { path: report.path, asOf: report.asOf, sheet: "Mutual Funds", rows: used.map((r) => r.row) },
     });
   }

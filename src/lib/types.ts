@@ -360,6 +360,8 @@ export type Position = {
     hprUnavailableReason?: string;
     /** Splits the roll's own record already carries in `quantity` (Stage 10kk); the corporate-action gate does not apply them again. */
     shareEvents?: ShareEvent[];
+    /** The purchase lots still held after the roll, first-in first-out (Stage 10me): what Invested on dates. */
+    heldPurchases?: { first: string; last: string; lots: number };
   };
   /**
    * (unrealised + realised) ÷ (cost of units held + cost of units sold), in
@@ -1186,6 +1188,8 @@ export type ShareRoll = {
   shareEvents?: ShareEvent[];
   /** The day a demat-folio "redemption" moved what the roll leaves out of the demat (Stage 10me). */
   transferredOn?: string;
+  /** A fund roll's purchase lots still held, first-in first-out (Stage 10me). */
+  heldPurchases?: { first: string; last: string; lots: number };
   report: { path: string; asOf: string; sheet: string; rows: number[] };
 };
 

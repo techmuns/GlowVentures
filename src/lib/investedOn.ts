@@ -141,6 +141,12 @@ function lineDates(p: Position): LineDates | null {
     && acquisition.quantity != null && Math.abs(recovered.quantity - acquisition.quantity) <= .0005) {
     return { dates: [recovered.heldPurchases.first, recovered.heldPurchases.last], source: "recovered-lots" };
   }
+  // A balance the adviser report's later fund trades carried (Stage 10me): its
+  // own surviving lots, only while the row holds exactly the roll's units.
+  const rolled = p.rolledForward;
+  if (rolled?.heldPurchases && p.quantity != null && Math.abs(rolled.quantity - p.quantity) <= .0005) {
+    return { dates: [rolled.heldPurchases.first, rolled.heldPurchases.last], source: "recovered-lots" };
+  }
   const called = CALL_DATES.get(trancheKey(p.accountId, p.securityKey));
   if (called?.length) return { dates: called, source: "calls" };
   if (p.investedDates) return { dates: [p.investedDates.from, p.investedDates.to], source: "review" };
@@ -151,7 +157,7 @@ function lineDates(p: Position): LineDates | null {
 function linePayments(p: Position, d: LineDates): number | null {
   if (d.source === "bonus-trades" || d.source === "action-trades") return d.payments ?? null;
   if (d.source === "trades") return p.tradeRecord?.held?.lots ?? null;
-  if (d.source === "recovered-lots") return p.recoveredCost?.heldPurchases?.lots ?? null;
+  if (d.source === "recovered-lots") return p.recoveredCost?.heldPurchases?.lots ?? p.rolledForward?.heldPurchases?.lots ?? null;
   if (d.source === "review") return d.dates[0] === d.dates[1] && /^\d{4}-\d{2}-\d{2}$/.test(d.dates[0]) ? 1 : null;
   return d.dates.length;
 }

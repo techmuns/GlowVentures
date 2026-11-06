@@ -482,7 +482,8 @@ export function unpricedStatementUnits(
       returnPct: fifoReturnPct(units * nav.nav, roll.costBasis, roll.realizedPnL, roll.costOfUnitsSold, null),
       realizedPnL: roll.realizedPnL, costOfUnitsSold: roll.costOfUnitsSold,
       rolledForward: { through: roll.through, quantity: units, costBasis: roll.costBasis, realizedPnL: roll.realizedPnL,
-        costOfUnitsSold: roll.costOfUnitsSold, trades: roll.trades, source: "adviser-report" as const },
+        costOfUnitsSold: roll.costOfUnitsSold, trades: roll.trades, source: "adviser-report" as const,
+        ...(roll.heldPurchases ? { heldPurchases: roll.heldPurchases } : {}) },
     } : null;
     out.push({
       securityKey: u.securityKey,

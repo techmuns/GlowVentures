@@ -72260,6 +72260,11 @@ export const BOOK_SHARE_ROLLS: ShareRoll[] = [
     "realizedPnL": 5599573.95,
     "costOfUnitsSold": 14373850.32,
     "trades": 1,
+    "heldPurchases": {
+      "first": "2023-10-25",
+      "last": "2023-10-25",
+      "lots": 1
+    },
     "report": {
       "path": "source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx",
       "asOf": "2026-10-23",
@@ -72283,6 +72288,11 @@ export const BOOK_SHARE_ROLLS: ShareRoll[] = [
     "costOfUnitsSold": 119152919.24,
     "trades": 1,
     "transferredOn": "2026-10-01",
+    "heldPurchases": {
+      "first": "2026-07-01",
+      "last": "2026-07-01",
+      "lots": 1
+    },
     "report": {
       "path": "source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx",
       "asOf": "2026-10-23",
@@ -72306,6 +72316,11 @@ export const BOOK_SHARE_ROLLS: ShareRoll[] = [
     "costOfUnitsSold": 17468624.83,
     "trades": 1,
     "transferredOn": "2026-10-01",
+    "heldPurchases": {
+      "first": "2024-07-24",
+      "last": "2024-07-24",
+      "lots": 1
+    },
     "report": {
       "path": "source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx",
       "asOf": "2026-10-23",
@@ -72330,6 +72345,11 @@ export const BOOK_SHARE_ROLLS: ShareRoll[] = [
     "costOfUnitsSold": 24802070.8,
     "trades": 1,
     "transferredOn": "2026-10-01",
+    "heldPurchases": {
+      "first": "2026-07-01",
+      "last": "2026-07-01",
+      "lots": 1
+    },
     "report": {
       "path": "source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx",
       "asOf": "2026-10-23",
