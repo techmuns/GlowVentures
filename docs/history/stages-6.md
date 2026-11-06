@@ -1296,3 +1296,11 @@ Codex's review of #352, verified against the code and the book:
 - Dated now: every share line in both SVAN accounts (only the cash lines stay `—`). Sharda Motor and Time Technoplast show through the display-time bonus rule once the capture covers 4 Nov, and the other six through `action-trades`. V.E.C 128004's Nuvama is also dated (353 bought on 5 Aug 2025, 1,765 after the 5-for-1 split of 26 Dec 2025). No figure changes: `glowData.ts` only gains `actionRecord` on 13 positions.
 - `fundNavs.test.ts`: the refreshed capture now names TEGA, which the adviser report's trades roll to 8 Oct. Its fixed 25 Sep quote check now leaves out shares rolled past that quote, which are priced by design only on a later one.
 - Tests: `holdingTrades.test.mjs` adds 8 constructed cases covering split, FIFO after a split, a bonus, a one-unit miss, a buyback refusal, a stale capture and a demerger, with and without the parent's control. `investedOn.test.ts` checks four SVAN lines and that every action-dated line keeps a not-trade-complete `tradeRecord`.
+
+### Stage 10lz — Returns tab: no separate Market performance card
+
+*"What is the Market performance section … is it causing unnecessary confusion and doesn't make sense. Either remove it if it is showing any redundant data …"* — the family, 6 Nov 2026.
+
+- The card was the attribution table's Total row Market return cell set beside Investment performance as a second headline: same holdings, same figure (`check-market-returns` already asserted the two were equal), same details popover and Retry. It is gone. The market return stays a column, per row and on the Total row.
+- Investment performance is the one summary block and spans the row: the return beside its opening → closing ledger on a wide screen, stacked on a narrow one.
+- The panel wrapper (`[data-segment-returns]`) carries the total's `data-market-*` handles; Retry is the Total row details' Missing tab (`data-market-retry`). The column's hover says it is how today's holdings moved, not the return on the money invested.

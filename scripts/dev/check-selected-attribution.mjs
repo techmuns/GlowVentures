@@ -147,13 +147,14 @@ try {
  assert.equal(await page.locator('[data-returns-type-select]').getAttribute('data-requested-return-type'), 'xirr');
  assert.match(await bridge.locator('[data-bridge-return-label]').innerText(), /Absolute return/);
  assert.equal(await bridge.locator('[data-bridge-split]').getAttribute('open'), null, 'gain breakdown starts collapsed');
+ // Stage 10lz: Investment performance is the one summary; the market return is the Total row's.
  const boxes = await page.locator('[data-return-summary-cards] > .card').evaluateAll(els => els.map(el => {
-  const r = el.getBoundingClientRect(); return { width: r.width, height: r.height, top: r.top };
+  const r = el.getBoundingClientRect(); return { width: r.width, parent: el.parentElement.getBoundingClientRect().width };
  }));
- assert.equal(boxes.length, 2);
- assert.ok(Math.abs(boxes[0].width - boxes[1].width) < 1 && Math.abs(boxes[0].height - boxes[1].height) < 1 && boxes[0].top === boxes[1].top, 'two equal-sized summary blocks');
- assert.equal(await page.locator('[data-market-summary] details, [data-market-summary] [role="progressbar"]').count(), 0);
- assert.match(await page.locator('[data-market-coverage]').innerText(), /holdings · .* covered/);
+ assert.equal(boxes.length, 1, 'one summary block');
+ assert.ok(Math.abs(boxes[0].width - boxes[0].parent) < 1, 'it spans the row');
+ assert.equal(await page.locator('[data-market-summary], [data-market-coverage]').count(), 0, 'no separate market performance card');
+ assert.ok(await table.locator('[data-seg-total] [data-seg-cell="market"]').count() === 1, 'the market return is on the Total row');
  await bridge.locator('[data-bridge-split] summary').click();
  assert.ok(await bridge.locator('[data-bridge-part="realised"]').isVisible());
  await bridge.locator('[data-bridge-split] summary').click();

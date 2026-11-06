@@ -44,7 +44,7 @@ try {
  await page.locator('[data-returns-period="custom"]').click();
  const inputs=page.locator('input[type="date"]'); await inputs.nth(0).fill('2026-09-01'); await inputs.nth(1).fill('2026-10-22');
  await page.waitForFunction(()=>Number(document.querySelector('[data-segment-returns]')?.dataset.segAssumed)>0);
- await page.waitForFunction(()=>document.querySelector('[data-market-summary]')?.dataset.marketPending==='0');
+ await page.waitForFunction(()=>document.querySelector('[data-segment-returns]')?.dataset.marketPending==='0');
  const assumed=Number(await panel.getAttribute('data-seg-assumed')); assert.ok(assumed>=10);
  const hdfc=panel.locator('[data-seg-row]').filter({hasText:'Smartworks'}); await hdfc.first().waitFor();
  assert.ok(await hdfc.first().locator('[data-holding-assumption]').count()>0,'March HDFC shares now carry a period return');
