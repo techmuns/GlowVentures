@@ -152,23 +152,18 @@ export default function SegmentReturns({ selection: recordedSelection, period, o
     {SEGMENT_VIEWS.map(v => <button key={v.key} type="button" role="tab" aria-selected={axis === v.key} title={v.title} data-seg-axis-option={v.key} onClick={() => setAxis(v.key)} className={btn(axis === v.key)}>{v.label}</button>)}
   </div>;
   const title = <>Return attribution · <span className="font-normal text-slate-400" data-seg-basis>{periodLabel} · {type.label} · {dates}</span></>;
-  const marketCard = <div className="card flex min-w-0 flex-col p-5" data-market-summary data-market-total={market.pct ?? ''}
-    data-market-period={market.periodPct ?? ''} data-market-covered={market.count} data-market-pending={market.pending} data-market-from={market.from ?? ''} data-market-to={market.to ?? ''} data-market-refreshing={marketFeed.refreshing}>
-    <div className="flex items-center justify-between gap-3"><h3 className="text-sm font-semibold text-slate-100">Market performance</h3>{marketInfo('Total', current)}</div>
-    <p className="mt-1 text-xs text-slate-400">Every holding · weighted by today's value</p>
-    <div className="my-5">
-      <p className="text-xs text-slate-400" title="Each holding's own return over the period, from its first value on record (a published close, a printed NAV or a statement value); a holding with no second value is held at its last value. Weighted by what each is worth today.">Each holding's return over the period</p>
-      <div className="mt-1" aria-live="polite">{market.pct == null ? <span className="text-sm text-slate-400">{market.pending ? 'Loading historical prices…' : 'No holding is measured over these dates'}</span> : <strong className={`text-3xl font-semibold tabular ${changeColor(market.pct)}`}>{pct(market.pct)}{market.annual && <span className="ml-1 text-xs font-normal text-slate-400">p.a.</span>}</strong>}</div>
-    </div>
-    <p className="text-xs text-slate-400" data-market-coverage data-market-denominator={marketBase.length} data-market-private={marketPrivate}>{market.count} of {marketBase.length} {selection.inception ? 'holdings' : 'public holdings'} · {money(market.value)} covered{market.pending > 0 && ` · ${market.pending} waiting for prices`}{market.pending === 0 && marketFeed.refreshing > 0 && ' · updating'}{market.from && market.to && ` · ${fmtDate(market.from)} → ${fmtDate(market.to)}`}{!selection.inception && marketPrivate > 0 && ` · ${marketPrivate} private reported apart`}</p>
-    <div className="mt-auto pt-5"><button type="button" className="btn-secondary text-xs" onClick={marketFeed.retry} data-market-retry>Retry missing histories</button></div>
-  </div>;
+  // NO MARKET PERFORMANCE CARD (Stage 10lz): its figure, coverage, details and retry were the
+  // Total row's own Market return cell, set beside Investment performance as a rival headline.
+  // The panel carries the total's handles; the Total row draws it.
+  const marketData = { 'data-market-total': market.pct ?? '', 'data-market-period': market.periodPct ?? '', 'data-market-covered': market.count,
+    'data-market-pending': market.pending, 'data-market-from': market.from ?? '', 'data-market-to': market.to ?? '', 'data-market-refreshing': marketFeed.refreshing,
+    'data-market-denominator': marketBase.length, 'data-market-private': marketPrivate };
   const bridgeCard = pool && <CapitalBridge bridge={bridge} total={pool.total}
     typeLabel={pool.total.measured?.shownAs === 'absolute' && selection.type !== 'absolute' ? RETURN_TYPES.find(t => t.key === 'absolute')!.label : type.label}
     caption={`${periodLabel} · ${dates}`} money={money} />;
-  const summaryCards = <div className="mb-3 grid grid-cols-1 items-stretch gap-3 md:grid-cols-2" data-return-summary-cards>{bridgeCard}{marketCard}</div>;
+  const summaryCards = <div className="mb-3" data-return-summary-cards>{bridgeCard}</div>;
   if (sectorAxis && statementPortfolio) return <div className="shrink-0" data-segment-returns data-returns-attribution data-seg-axis={axis} data-seg-period={period} data-seg-type={selection.type}
-    data-seg-start={selection.start ?? ''} data-seg-end={selection.end ?? ''} data-status={exposure.status === 'loading' ? 'loading' : 'ready'}>
+    data-seg-start={selection.start ?? ''} data-seg-end={selection.end ?? ''} data-status={exposure.status === 'loading' ? 'loading' : 'ready'} {...marketData}>
     {summaryCards}
     <Card pad={false} title={title}
       subtitle="Sectors as Sector Composition draws them. Market return follows the selected dates; gain, return on cost and contribution are since investment, over the holdings that report a purchase cost."
@@ -273,7 +268,7 @@ export default function SegmentReturns({ selection: recordedSelection, period, o
     data-seg-start={selection.start ?? ''} data-seg-end={selection.end ?? ''} data-seg-covered={a.coveredHoldings}
     data-seg-total-gain={a.total.gain ?? ''} data-seg-total-deployed={a.denominator ?? a.total.invested ?? ''}
     data-seg-total-value={a.total.value} data-seg-total-ret={a.total.returnPct ?? ''} data-seg-total-period-ret={a.total.periodPct ?? ''}
-    data-seg-assumed={a.total.units.filter(u => u.assumption).length} data-status="ready">
+    data-seg-assumed={a.total.units.filter(u => u.assumption).length} data-status="ready" {...marketData}>
     {summaryCards}
     <Card pad={false} title={title}
       subtitle="Gain and return use available statements plus labelled holding assumptions. Open the info button for shares, dates and missing records. Market return uses current portfolio weights."
@@ -299,7 +294,7 @@ export default function SegmentReturns({ selection: recordedSelection, period, o
           <SortHeader col="gain" view={view} pad="px-4 py-2">Gain / loss</SortHeader>
           <SortHeader col="pnl" view={view} pad="px-4 py-2" title="Value now less purchase cost, over the holdings that report a cost. Since purchase, not the selected period.">Unreal. P&amp;L</SortHeader>
           <SortHeader col="realised" view={view} pad="px-4 py-2" title="Booked on units already sold, first-in first-out, holding by holding from the statements' own records. Since purchase, not the selected period.">Realised P&amp;L</SortHeader>
-          <SortHeader col="market" view={view} pad="px-4 py-2" title="Historical price/NAV performance weighted by current holding values. The info button lists dates, weights, sources and exclusions.">Market return</SortHeader>
+          <SortHeader col="market" view={view} pad="px-4 py-2" title="How the holdings held today moved over the period — each one's price, NAV or statement value, weighted by what it is worth today. Not the return on the money invested (that is the Return column). The info button lists dates, weights, sources and exclusions.">Market return</SortHeader>
           <SortHeader col="ret" view={view} pad="px-4 py-2">Return · {typeHead}</SortHeader>
           <SortHeader col="contrib" view={view} pad="px-4 py-2" title="For Absolute return only: row gain divided by the total's shared money base, so these contributions add to the total return.">Contribution</SortHeader>
           <SortHeader col="basis" view={view} pad="px-4 py-2" title="Assumed held means no later sale or transfer appears in the records we have. This basis is also included in Excel exports.">Holding basis</SortHeader>

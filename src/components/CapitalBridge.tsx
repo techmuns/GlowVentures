@@ -75,6 +75,8 @@ export function CapitalBridge({ bridge: b, total, typeLabel, caption, money }: {
     <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-400" title={caption} data-bridge-caption>
       {accountCount} {accountCount === 1 ? 'account' : 'accounts'} covered <HoldingAssumptionInfo units={total.units} />
     </div>
+    {/* The return beside its ledger on a wide card, stacked on a narrow one (Stage 10lz). */}
+    <div className="md:grid md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] md:items-start md:gap-10">
     <div className="my-5" data-bridge-return={ret ?? ''} data-bridge-period-return={period ?? ''}>
       <p className="text-xs text-slate-400" data-bridge-return-label>{typeLabel}{ret != null && (annual ? ' · annualised' : ' · period')}</p>
       <div className="mt-1" aria-live="polite">{ret != null ? <strong className={`text-3xl font-semibold tabular ${changeColor(ret)}`}>{pct(ret)}{annual && <span className="ml-1 text-xs font-normal text-slate-400">p.a.</span>}</strong> : <AbsentCell reason={total.measured?.reason ?? 'not measured on these dates'} />}</div>
@@ -85,6 +87,7 @@ export function CapitalBridge({ bridge: b, total, typeLabel, caption, money }: {
       <dt className={s.key === 'closing' ? '' : 'text-slate-400'}>{s.label}</dt>
       <dd className={`shrink-0 tabular ${s.sign ? changeColor(s.value) : 'text-slate-100'}`}>{money(s.value)}</dd>
     </div>)}</dl>
+    </div>
     <details className="mt-3" data-bridge-split data-navigation-details="capitalbridge-1">
       <summary className="ring-focus w-fit cursor-pointer rounded text-xs text-slate-300">Gain breakdown</summary>
       <dl className="mt-2 divide-y divide-ink-700 text-xs">

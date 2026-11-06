@@ -95,7 +95,7 @@ function MarketReturnDetails({ label, units, gaps, positions, accounts, totalVal
       </div>}
       {tab==='missing' && <div>
         <div className="flex flex-wrap items-center justify-between gap-2"><p><strong>{missingCount} holdings · {money(missingValue)}</strong> left out{pending>0?` · ${waiting.length} still loading`:''}.</p>
-          {onRetry && gaps.some(g=>g.code==='source') && <button type="button" className="btn-secondary text-xs" onClick={onRetry}>Retry missing histories</button>}</div>
+          {onRetry && gaps.some(g=>g.code==='source') && <button type="button" className="btn-secondary text-xs" onClick={onRetry} data-market-retry>Retry missing histories</button>}</div>
         {(requestedStart || from) && (requestedEnd || to) && <p className="mt-1 text-xs text-slate-400">Dates requested: {fmtDate((requestedStart || from)!)} → {fmtDate((requestedEnd || to)!)}</p>}
         <label className="mt-3 block"><span className="sr-only">Search missing holdings</span><input value={missingSearch} onChange={e=>setMissingSearch(e.target.value)} placeholder="Search security, fund, owner or account" className="ring-focus w-full rounded-lg border border-ink-700 bg-ink-900 px-3 py-2 text-sm" /></label>
         {missingSearch && <p className="mt-2 text-xs text-slate-400">Showing {missing.length+loading.length} of {missingCount} left-out holdings</p>}

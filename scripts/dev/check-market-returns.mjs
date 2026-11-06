@@ -33,8 +33,8 @@ try {
   return r.fulfill({ json: { ok: true, version: 2, symbol: fund || symbol+'.NS', isin, name: fund || symbol, source: fund ? 'NAV fixture' : 'Adjusted stock fixture', basis: fund ? 'nav' : 'adjusted-close', first: t[0], last: t.at(-1), t, v } });
  });
  await page.goto(base + '/cio?tab=returns&tiles=value,gain,fytd');
- const summary = page.locator('[data-market-summary]'), table = page.locator('[data-segment-returns]');
- await page.waitForFunction(() => document.querySelector('[data-market-summary]')?.dataset.marketPending === '0');
+ const table = page.locator('[data-segment-returns]'), summary = table;
+ await page.waitForFunction(() => document.querySelector('[data-segment-returns]')?.dataset.marketPending === '0');
  assert.ok(Number(await summary.getAttribute('data-market-covered')) > 20, 'stock and fund histories resolve from the actual book');
  assert.ok(requests > 10);
  assert.ok(nseSourceFailures > 0, 'the missing-listing-history fixture was exercised');
@@ -47,7 +47,7 @@ try {
   for (const type of ['absolute','xirr','cagr']) {
    await page.locator('[data-returns-type-select]').selectOption(type);
    await page.waitForFunction(({ period,type }) => { const d=document.querySelector('[data-segment-returns]')?.dataset; return d?.segPeriod===period && d?.segType===type; }, {period,type});
-   await page.waitForFunction(() => document.querySelector('[data-market-summary]')?.dataset.marketPending === '0');
+   await page.waitForFunction(() => document.querySelector('[data-segment-returns]')?.dataset.marketPending === '0');
    const actual = Number(await summary.getAttribute('data-market-total'));
    assert.ok(Number.isFinite(actual), `${period}/${type}: a market figure`);
    const footer = table.locator('[data-seg-total] [data-seg-cell="market"]');
@@ -107,7 +107,7 @@ try {
  // listed or counted here, and the Overview names how many. Their wording (an AIF's NAVs, an unlisted
  // share's valuation) is struck in marketReturnCoverage.test.ts.
  assert.equal(await dialog.locator('[data-market-side="private"]').count(),0,'no private investment is listed on a period');
- assert.equal(holdingCount,Number(await summary.locator('[data-market-coverage]').getAttribute('data-market-denominator')),'the details count the face\u2019s public holdings');
+ assert.equal(holdingCount,Number(await summary.getAttribute('data-market-denominator')),'the details count the face\u2019s public holdings');
  await dialog.getByRole('textbox',{name:'Search missing holdings'}).fill('National Stock Exchange of India');
  const nse = dialog.locator('[data-market-gap]').first();
  assert.match(await nse.locator('[data-market-missing-data]').innerText(), /The price source has no history for this listing/);
@@ -124,9 +124,13 @@ try {
  assert.equal(await dialog.locator('[data-market-tab="missing"]').getAttribute('aria-selected'),'true');
  await page.keyboard.press('Escape');
  assert.equal(await summary.getByRole('button',{name:'What is included in total market return?',exact:true}).evaluate(el=>el===document.activeElement),true);
+ // Stage 10lz: the retry is the Total row's own, on its details' Missing tab.
  const before = Number(await summary.getAttribute('data-market-covered')); retrying=true;
- await page.locator('[data-market-retry]').click();
- await page.waitForFunction(n=>Number(document.querySelector('[data-market-summary]')?.dataset.marketCovered)>n, before);
+ await summary.getByRole('button',{name:'What is included in total market return?',exact:true}).click(); await dialog.waitFor();
+ await dialog.locator('[data-market-tab="missing"]').click();
+ await dialog.locator('[data-market-retry]').click();
+ await page.waitForFunction(n=>Number(document.querySelector('[data-segment-returns]')?.dataset.marketCovered)>n, before);
+ await page.keyboard.press('Escape');
  await table.locator('[data-seg-axis-option="sector"]').click();
  await page.waitForFunction(()=>document.querySelector('[data-segment-returns]')?.dataset.segAxis==='sector');
  // Stage 10gs: the Sector axis is Sector Composition's sectors, with the market return per sector.
@@ -136,8 +140,8 @@ try {
  // Stage 10gu: every history is now kept in this browser, so the next visit draws the figure without fetching any.
  const covered = Number(await summary.getAttribute('data-market-covered')), kept = requests;
  await page.reload();
- await page.waitForFunction(n => Number(document.querySelector('[data-market-summary]')?.dataset.marketCovered) === n
-   && document.querySelector('[data-market-summary]')?.dataset.marketPending === '0', covered);
+ await page.waitForFunction(n => Number(document.querySelector('[data-segment-returns]')?.dataset.marketCovered) === n
+   && document.querySelector('[data-segment-returns]')?.dataset.marketPending === '0', covered);
  await page.waitForTimeout(1000);
  assert.equal(requests, kept, 'a reload draws the kept histories instead of refetching them');
  await page.setViewportSize({width:390,height:844});
