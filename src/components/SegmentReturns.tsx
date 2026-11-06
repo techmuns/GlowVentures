@@ -7,7 +7,7 @@ import { MarketReturnInfo } from './MarketReturnInfo';
 import { HoldingAssumptionInfo } from './HoldingAssumptionInfo';
 import { CapitalBridge } from './CapitalBridge';
 import { capitalBridge } from '@/lib/capitalBridge';
-import { BOOK_ACCOUNT_BRIDGES, BOOK_CAPITAL_MOVES, BOOK_HOLDING_INCOME } from '@/data/glowData';
+import { BOOK_ACCOUNT_BRIDGES, BOOK_CAPITAL_MOVES, BOOK_HOLDING_INCOME, BOOK_CAPITAL_GAINS } from '@/data/glowData';
 import { AvailableReturnCoverage } from '@/components/AvailableReturnCoverage';
 import { Card } from '@/components/Card';
 import { ExportableTable } from '@/components/ExportableTable';
@@ -90,7 +90,7 @@ export default function SegmentReturns({ selection: recordedSelection, period, o
     onReturnTypeResolved?.(recordedSelection.type, shownAs ?? recordedSelection.type);
   }, [shownAs, recordedSelection.type, onReturnTypeResolved]);
   const bridge = useMemo(() => pool && statementPortfolio ? capitalBridge(pool.total.units, { accounts: statementPortfolio.accounts,
-    positions: statementPortfolio.positions, bridges: BOOK_ACCOUNT_BRIDGES, moves: BOOK_CAPITAL_MOVES, income: BOOK_HOLDING_INCOME }) : null,
+    positions: statementPortfolio.positions, bridges: BOOK_ACCOUNT_BRIDGES, moves: BOOK_CAPITAL_MOVES, income: BOOK_HOLDING_INCOME, capitalGains: BOOK_CAPITAL_GAINS }) : null,
   [pool, statementPortfolio]);
   // MARKET PERFORMANCE OVER EVERY HOLDING (Stage 10lg): each holding's own return over the
   // period from the same selection, weighted by today's value (`selectionMarket`).
