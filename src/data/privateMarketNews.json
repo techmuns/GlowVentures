@@ -3,11 +3,11 @@
  "funding": {
   "source": "https://inc42.com/tag/funding-galore/",
   "via": "https://glow-central-research.tech-441.workers.dev/data/private-market-news.json",
-  "sourceCheckedOn": "2026-11-07",
-  "capturedOn": "2026-11-07",
+  "sourceCheckedOn": "2026-11-08",
+  "capturedOn": "2026-11-08",
   "archive": {
    "complete": false,
-   "pagesRead": 3,
+   "pagesRead": 7,
    "pages": 49
   },
   "roundups": 572,
@@ -1014,7 +1014,7 @@
  },
  "headlines": {
   "via": "https://glow-central-research.tech-441.workers.dev/data/private-company-news.json",
-  "capturedOn": "2026-11-07",
+  "capturedOn": "2026-11-08",
   "windowDays": 120,
   "rows": [
    {
