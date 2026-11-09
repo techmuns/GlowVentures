@@ -1399,3 +1399,9 @@ Codex's review of #352, verified against the code and the book:
 - **The period window of a roll with a later dated mark opens on that mark's date** (`applyCorporateActionQuotes`), never the statement's.
 - Only three archived documents change: the two Green Lantern 22 Sep fact sheets and V.E.C 128005's 30 Sep one. `keepUsableFactSheetValues` (extract) keeps the figures only on an account's newest fact sheet that postdates its holdings. `statements:verify`: verified.
 - Tests: `tapeRoll.test.mjs` (every gate on constructed rows, a demerger, and the committed book's bought rows).
+
+### Stage 10mi — Real Estate: no empty-state row above entity holdings
+
+- The family asked to remove the "No properties added" section: with no property entered, the table drew that row (with its Add property link) above the four Nzuri holdings held through Glowsphere LLP.
+- The empty-state row now appears only when the table has nothing at all to show — no entered property and no entity holding. The header's Add property button is unchanged.
+- `scripts/dev/check-real-estate.mjs` and `check-real-estate-bulk.mjs` wait for the entity holding rows and assert no empty-state row, instead of waiting for that text.

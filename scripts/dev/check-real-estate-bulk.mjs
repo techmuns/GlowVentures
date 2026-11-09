@@ -60,7 +60,9 @@ async function upload(file) {
 }
 try {
   await page.goto(`${base}/real-estate`);
-  await page.locator("[data-real-estate-table] tbody").getByText("No properties added").waitFor();
+  // Holdings held through entities fill the table, so no empty-state row sits above them.
+  await page.locator("[data-real-estate-table] [data-book-holding]").first().waitFor();
+  assert.equal(await page.locator("[data-real-estate-table] tbody").getByText("No properties added").count(), 0, "No empty-state row while entity holdings are shown.");
   await openBulk();
   assert.equal(await dialog.getByRole("button", { name: /^Download with/ }).count(), 0, "No current properties to include yet.");
   const blank = await download("Download template");
