@@ -1405,3 +1405,10 @@ Codex's review of #352, verified against the code and the book:
 - The family asked to remove the "No properties added" section: with no property entered, the table drew that row (with its Add property link) above the four Nzuri holdings held through Glowsphere LLP.
 - The empty-state row now appears only when the table has nothing at all to show — no entered property and no entity holding. The header's Add property button is unchanged.
 - `scripts/dev/check-real-estate.mjs` and `check-real-estate-bulk.mjs` wait for the entity holding rows and assert no empty-state row, instead of waiting for that text.
+
+### Stage 10mj — HPR's hover names the dividends it holds
+
+*"verify and tell me if HPR is absolute return or something else?"*
+
+- HPR is the measure keyed `absolute`: FIFO (unrealised + realised + recorded dividends) ÷ (cost held + cost sold), cumulative, not annualised. All 382 costed positions in the book tie to that formula; the 174 with `dividendReceived` include it.
+- The picker hint (`RETURN_MEASURES`) and the Excel export note still said individual-share returns exclude dividends — true before Stage 10fb, wrong since. Both now name the dividends; Morning CIO's header already did.
