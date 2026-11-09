@@ -2,7 +2,7 @@
  "version": 1,
  "records": {
   "real-estate:2305c6fb-fa3c-42cd-8d5c-857460910c42": {
-   "value": "{\"id\":\"2305c6fb-fa3c-42cd-8d5c-857460910c42\",\"name\":\"XYZ\",\"address\":\"mars\",\"city\":\"reb\",\"state\":\"fsav\",\"country\":\"India\",\"pincode\":\"\",\"tenant\":\"\",\"notes\":\"\",\"type\":\"Villa / house\",\"status\":\"Under construction\",\"acquisition\":\"\",\"areaUnit\":\"sq ft\",\"titleStatus\":\"Not checked\",\"areaBasis\":\"\",\"cost\":null,\"value\":null,\"monthlyRent\":null,\"monthlyCosts\":null,\"debt\":null,\"area\":null,\"purchasedOn\":null,\"valuationDate\":null,\"leaseEnd\":null,\"owners\":[{\"ownerId\":\"bharat-jaisinghani\",\"name\":\"Bharat Jaisinghani\",\"share\":null}],\"latitude\":null,\"longitude\":null,\"updatedAt\":\"2026-10-22T11:22:51.539Z\"}",
+   "value": "{\"id\":\"2305c6fb-fa3c-42cd-8d5c-857460910c42\",\"name\":\"XYZ\",\"address\":\"mars\",\"city\":\"reb\",\"state\":\"fsav\",\"country\":\"India\",\"pincode\":\"\",\"tenant\":\"\",\"notes\":\"\",\"type\":\"Villa / house\",\"status\":\"Under construction\",\"acquisition\":\"\",\"areaUnit\":\"sq ft\",\"titleStatus\":\"Not checked\",\"areaBasis\":\"\",\"cost\":null,\"value\":null,\"monthlyRent\":null,\"monthlyCosts\":null,\"debt\":null,\"monthlyEmi\":null,\"area\":null,\"priorCost\":null,\"fmv2001\":null,\"ruralAgricultural\":false,\"purchasedOn\":null,\"priorAcquiredOn\":null,\"valuationDate\":null,\"leaseEnd\":null,\"owners\":[{\"ownerId\":\"bharat-jaisinghani\",\"name\":\"Bharat Jaisinghani\",\"share\":null}],\"earmark\":null,\"latitude\":null,\"longitude\":null,\"updatedAt\":\"2026-11-09T11:08:55.179Z\"}",
    "metadata": null
   },
   "real-estate:cc6cd8e0-f614-4faf-bcb0-80e794bb388d": {
