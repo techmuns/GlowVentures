@@ -1,10 +1,6 @@
 {
  "version": 1,
  "records": {
-  "real-estate:2305c6fb-fa3c-42cd-8d5c-857460910c42": {
-   "value": "{\"id\":\"2305c6fb-fa3c-42cd-8d5c-857460910c42\",\"name\":\"XYZ\",\"address\":\"mars\",\"city\":\"reb\",\"state\":\"fsav\",\"country\":\"India\",\"pincode\":\"\",\"tenant\":\"\",\"notes\":\"\",\"type\":\"Villa / house\",\"status\":\"Under construction\",\"acquisition\":\"\",\"areaUnit\":\"sq ft\",\"titleStatus\":\"Not checked\",\"areaBasis\":\"\",\"cost\":null,\"value\":null,\"monthlyRent\":null,\"monthlyCosts\":null,\"debt\":null,\"monthlyEmi\":null,\"area\":null,\"priorCost\":null,\"fmv2001\":null,\"ruralAgricultural\":false,\"purchasedOn\":null,\"priorAcquiredOn\":null,\"valuationDate\":null,\"leaseEnd\":null,\"owners\":[{\"ownerId\":\"bharat-jaisinghani\",\"name\":\"Bharat Jaisinghani\",\"share\":null}],\"earmark\":null,\"latitude\":null,\"longitude\":null,\"updatedAt\":\"2026-11-09T11:08:55.179Z\"}",
-   "metadata": null
-  },
   "real-estate:cc6cd8e0-f614-4faf-bcb0-80e794bb388d": {
    "value": "{\"id\":\"cc6cd8e0-f614-4faf-bcb0-80e794bb388d\",\"name\":\"\",\"address\":\"\",\"city\":\"\",\"state\":\"\",\"country\":\"India\",\"pincode\":\"\",\"tenant\":\"\",\"notes\":\"\",\"type\":\"\",\"status\":\"\",\"acquisition\":\"\",\"areaUnit\":\"sq ft\",\"titleStatus\":\"Not checked\",\"areaBasis\":\"\",\"cost\":100,\"value\":200,\"monthlyRent\":2,\"monthlyCosts\":null,\"debt\":null,\"monthlyEmi\":null,\"area\":null,\"priorCost\":null,\"fmv2001\":null,\"ruralAgricultural\":false,\"improvements\":[],\"purchasedOn\":\"2024-01-28\",\"priorAcquiredOn\":null,\"valuationDate\":\"2026-10-28\",\"leaseEnd\":null,\"owners\":[{\"ownerId\":\"ajay-jaisinghani\",\"name\":\"Ajay Jaisinghani\",\"share\":50},{\"ownerId\":\"ankita-jaisinghani\",\"name\":\"Ankita Jaisinghani\",\"share\":50}],\"earmark\":null,\"latitude\":null,\"longitude\":null,\"updatedAt\":\"2026-10-28T07:23:09.619Z\"}",
    "metadata": null
