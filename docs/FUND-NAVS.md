@@ -21,14 +21,14 @@ ISIN** and never on a name. 14,441 scheme rows read.
 | Security | ISIN | via | SEBI category | NAV | Date | Day |
 | --- | --- | --- | --- | ---: | --- | ---: |
 | ABSL BAL ADV-GROWTH | `INF084M01AB8` | statement | Dynamic Asset Allocation or Balanced Advantage | 115.59 | 2026-11-06 | +0.64% |
-| ABSL LIQF D-GROWTH | `INF209K01VA3` | statement | Liquid Fund | 463.2268 | 2026-11-07 | +0.02% |
+| ABSL LIQF D-GROWTH | `INF209K01VA3` | statement | Liquid Fund | 463.3125 | 2026-11-08 | +0.02% |
 | Bandhan Arbitrage Fund-Direct Plan-Growth | `INF194K01Y60` | statement | Arbitrage Fund | 38.1927 | 2026-11-06 | +0.10% |
 | Bandhan Liquid Fund-Direct Plan-Growth | `INF194K01I60` | statement | Liquid Fund | 3461.2759 | 2026-11-08 | +0.04% |
 | Bandhan Overnight Fund-Direct Plan-Growth | `INF194KB1447` | statement | Overnight Fund | 1481.9858 | 2026-11-08 | +0.03% |
 | Bandhan ELSS - Tax Saver Fund-Regular Plan-Growth | `INF194K01292` | statement | ELSS- Tax Saver Fund | 158.806 | 2026-11-06 | +1.51% |
 | Bandhan Large & Mid Cap Fund-Direct Plan-Growth | `INF194K01V89` | statement | Large & Mid Cap Fund | 166.519 | 2026-11-06 | +0.83% |
-| DSP GOLD ETF | `INF740KA1SW3` | statement | Gold ETF | 13.644 | 2026-11-06 | -1.47% |
-| DSP SILVER ETF | `INF740KA1RE3` | statement | Silver ETF | 17.584 | 2026-11-06 | -1.83% |
+| DSP GOLD ETF | `INF740KA1SW3` | statement | Gold ETF | 13.6437 | 2026-11-08 | -0.00% |
+| DSP SILVER ETF | `INF740KA1RE3` | statement | Silver ETF | 17.5837 | 2026-11-08 | -0.00% |
 | HDFC Arbitrage Fund - Direct Plan - Growth Option | `INF179KA1KT6` | statement | Arbitrage Fund | 21.977 | 2026-11-06 | +0.14% |
 | HDFC Arbitrage Fund - Direct Plan - Monthly IDCW # Payout Option | `INF179KA1KS8` | statement | Arbitrage Fund | 11.366 | 2026-11-06 | +0.14% |
 | HDFC BAF D-GROW | `INF179K01WA6` | statement | Dynamic Asset Allocation or Balanced Advantage | 577.267 | 2026-11-06 | +0.92% |
@@ -40,7 +40,7 @@ ISIN** and never on a name. 14,441 scheme rows read.
 | HELIOS FCF D-GROW | `INF0R8701046` | statement | Flexi Cap Fund | 16.51 | 2026-11-06 | +0.86% |
 | Helios Flexi Cap Fund - Direct Growth | `INF0R8701046` | statement | Flexi Cap Fund | 16.51 | 2026-11-06 | +0.86% |
 | ICICI IOPPF D-GRW | `INF109KC1RH9` | statement | Sectoral/ Thematic | 40.56 | 2026-11-06 | +1.17% |
-| ICICI LIQF D-GROWTH | `INF109K01Q49` | statement | Liquid Fund | 424.1082 | 2026-11-07 | +0.02% |
+| ICICI LIQF D-GROWTH | `INF109K01Q49` | statement | Liquid Fund | 424.1844 | 2026-11-08 | +0.02% |
 | ICICI NFT NT 50 DP G | `INF109K01Y80` | statement | Index Funds | 66.7045 | 2026-11-06 | -0.15% |
 | ICICI NFT NX 50 R GR | `INF109K01IF1` | statement | Index Funds | 62.9843 | 2026-11-06 | -0.15% |
 | ICICI NIFT50IND DP G | `INF109K012M7` | statement | Index Funds | 265.0418 | 2026-11-06 | +2.04% |
@@ -64,7 +64,7 @@ ISIN** and never on a name. 14,441 scheme rows read.
 | Kotak Mid Cap Fund Regular Growth | `INF174K01DS9` | statement | Mid Cap Fund | 138.721 | 2026-11-06 | -0.78% |
 | Kotak Multi Cap Fund Direct Plan - Growth | `INF174KA1HV3` | statement | Multi Cap Fund | 21.558 | 2026-11-06 | +0.26% |
 | Kotak Overnight Fund Direct - Growth | `INF174KA1BF9` | statement | Overnight Fund | 1482.6221 | 2026-11-08 | +0.03% |
-| Mirae Asset Liquid Fund ( formerly Mirae Asset Cash Management Fund ) - Direct Plan Mirae Asset Liquid Fund ( formerly Mirae Asset Cash Management Fund ) - Direct Plan Growth | `INF769K01CM1` | statement | Liquid Fund | 3025.7111 | 2026-11-07 | +0.02% |
+| Mirae Asset Liquid Fund ( formerly Mirae Asset Cash Management Fund ) - Direct Plan Mirae Asset Liquid Fund ( formerly Mirae Asset Cash Management Fund ) - Direct Plan Growth | `INF769K01CM1` | statement | Liquid Fund | 3026.2624 | 2026-11-08 | +0.02% |
 | Motilal Oswal Active Momentum Fund - Direct Plan Growth Option | `INF247L01EP5` | statement | Sectoral/ Thematic | 13.9798 | 2026-11-06 | -1.42% |
 | NIP ETNF1D RTLIQBEES | `INF732E01037` | statement | Other ETFs | 1000 | 2026-11-08 | +0.00% |
 | WOC MAAF D-GROW | `INF03VN01761` | statement | Multi Asset Allocation Fund | 16.747 | 2026-11-06 | +0.25% |
