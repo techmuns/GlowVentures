@@ -1679,7 +1679,9 @@ export const RETURN_MEASURES: ReturnMeasureDef[] = [
   // tag became "Holding Period Return" / "HPR", at the family's request; every
   // branch that prints the total return on cost is tagged "HPR" below.
   { key: "absolute", label: "Holding Period Return", tag: "HPR",
-    hint: "FIFO return on deployed capital, not annualised. Individual-share returns exclude separately paid dividends; dividend-inclusive period returns are on Corporate actions & dividends." },
+    // Stage 10fb put the dividends a statement records into every FIFO return;
+    // this hint said the opposite until Stage 10mj.
+    hint: "FIFO return on deployed capital, not annualised: unrealised plus realised gain plus the dividends the statements record, over the cost of the units held and sold." },
   { key: "cagr", label: "CAGR — annualised", tag: "CAGR",
     hint: "The return on cost annualised — struck only where the money went in on one dated payment at least a year ago; under a year the holding-period return shows instead (debt alone is annualised), and money that went in over several dates a year or more ago is XIRR's." },
   { key: "xirr", label: "XIRR — money-weighted", tag: "XIRR",
