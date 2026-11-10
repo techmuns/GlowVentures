@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { ytdBook, ytdSelection } from '../ytdAvailable';
 import { measuredReturn } from '../analytics';
 import { statementReturnInputs } from '../availableCardReturns';
+import { capitalBridge } from '../capitalBridge';
 import type { AccountInput } from '../periodReturns';
 import type { Account, Portfolio, Position } from '../types';
 import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_ACCOUNT_CASH_FLOWS, BOOK_ACCOUNT_RETURN_RECORDS } from '../../data/glowData';
@@ -121,6 +122,26 @@ for (const v of vec) { const one = real.of(BOOK_POSITIONS.filter((p) => p.accoun
   const u = pooled.assumedUnits![0];
   assert.equal(u.from, '2025-12-31'); assert.equal(u.assumption?.owner, 'Owner D'); assert.equal(u.assumption?.statementDate, '2026-07-31');
   near(u.gain, u.window!.gain); near(u.close, 43 * 150);
+  // THE BRIDGE READS ITS PURCHASES AND SALES (Stage 10mm): start + added − taken
+  // out + gain = end on every such row. Read as nothing added, a record's buy fell
+  // out of the bridge, ₹28.5 L on main's book from 5 Nov. A sale on the record
+  // realised part of the gain, which no cost here splits, so it stays unsplit.
+  const bridgeBook = { accounts: [acct], positions: [held], bridges: {}, moves: [], income: {} };
+  const ties = (b: NonNullable<ReturnType<typeof capitalBridge>>) => near(b.opening + b.added - b.takenOut + b.gain, b.closing);
+  const lifeBridge = capitalBridge([life], bridgeBook)!;
+  ties(lifeBridge); near(lifeBridge.added, 9000); near(lifeBridge.takenOut, 4200 + 1560);
+  assert.equal(lifeBridge.rows[0].split, null); assert.match(lifeBridge.rows[0].unsplitReason!, /sale on its purchase record/);
+  near(lifeBridge.unsplit, life.gain); assert.equal(lifeBridge.realised, null);
+  ties(capitalBridge([fy], bridgeBook)!);
+  // Bought inside the period and never sold: the price change is the units' unrealised gain.
+  const bought = { ...record, quantity: 43, cashRecord: [{ date: '2026-05-18', side: 'buy' as const, amount: 4300 }], unitRecord: [{ date: '2026-05-18', units: 43 }] };
+  const boughtHeld = { ...held, recoveredCost: bought } as unknown as Position;
+  const boughtUnit = ytdSelection(ytdBook({ inputs: [], held: [boughtHeld], accounts: [acct], end: '2026-10-30', money, open: '2026-03-31',
+    assumptions: { ...(withMarch as object), positions: [boughtHeld] } as never }), [], [boughtHeld]).assumedUnits![0];
+  near(boughtUnit.window!.capitalIn, 4300); near(boughtUnit.gain, 43 * 150 - 4300);
+  const boughtBridge = capitalBridge([boughtUnit], { ...bridgeBook, positions: [boughtHeld] })!;
+  ties(boughtBridge); near(boughtBridge.opening, 0); near(boughtBridge.added, 4300); near(boughtBridge.takenOut, 0);
+  assert.equal(boughtBridge.rows[0].split?.source, 'assumed-holding'); near(boughtBridge.unrealised!, 43 * 150 - 4300); near(boughtBridge.realised!, 0);
 }
 // A whole account takes its own window and its holdings none; an account with
 // no window this year names each holding's reason instead.

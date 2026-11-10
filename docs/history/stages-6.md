@@ -1429,3 +1429,11 @@ Codex's review of #352, verified against the code and the book:
 - `ReturnMeasureDef` gains `heading`; every return column heading reads it (Portfolio Monitor holdings and transactions, Private Market). Morning CIO's allocation column is "Return (HPR - Absolute)".
 - Cells, the picker and the Excel Measure column keep the short `HPR` tag, so every `res.tag !== def.tag` comparison is unchanged.
 - `check-pages`: the two header-label invariants read the new heading.
+
+### Stage 10mm — Main's CI green again: the bridge counts a purchase record's money; the check reads the tape rows
+
+*"Yes, fix it"* — the family, 10 Nov 2026, on main's CI, red since 5 Nov.
+
+- `capitalBridge`: an assumed row from a purchase record (`recordedYearWindow`) now takes its purchases as money added and its sales and income as money taken out. Since SVAN's tapes dated its holdings (Stage 10lx), its start + added − taken out + gain missed its end by ₹28.5 L (`check-assumed-holdings`). A row with a sale on its record stays unsplit, saying why.
+- `scripts/dev/page-book.ts` passes `BOOK_TAPE_ROWS` through the corporate-action layer as `PortfolioContext` does (Stage 10mh). Without them `check-selected-attribution` left out Green Lantern's ten tape-only lines (₹65.2 L) and read MTD at 0.10117% against the page's 0.10100%, stopping CI's browser step before the bridge check.
+- `ytdAvailable.test.ts`: the bridge ties for a sale, a since-first and a purchase-only window; it fails on the old bridge.
