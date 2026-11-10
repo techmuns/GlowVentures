@@ -1696,7 +1696,7 @@ export function MorningCIO() {
                       <SortHeader col="invested" view={allocView} pad="px-2 py-2">Invested</SortHeader>
                       <SortHeader col="current" view={allocView} pad="px-2 py-2">Current</SortHeader>
                       <SortHeader col="return" view={allocView} pad="px-2 py-2" className="whitespace-nowrap"
-                        title={`The holding-period return to date on the capital each ${GROUP_NOUN[allocAxis].one} deployed, FIFO: the unrealised gain on what is held plus the gain realised on units already sold, over the cost of the units held plus the cost of the units sold — and a whole PMS mandate on its capital since inception. Cumulative, not annualised. It includes the dividends and distributions the holdings paid, gross of TDS, over the window each holding's income record covers — which need not run from purchase — and a whole mandate's are inside its capital.`}>Return (HPR)</SortHeader>
+                        title={`The holding-period return to date on the capital each ${GROUP_NOUN[allocAxis].one} deployed, FIFO: the unrealised gain on what is held plus the gain realised on units already sold, over the cost of the units held plus the cost of the units sold — and a whole PMS mandate on its capital since inception. Cumulative, not annualised. It includes the dividends and distributions the holdings paid, gross of TDS, over the window each holding's income record covers — which need not run from purchase — and a whole mandate's are inside its capital.`}>Return (HPR - Absolute)</SortHeader>
                       <SortHeader col="weight" view={allocView} pad="px-2 py-2">Weight</SortHeader>
                     </Tr>
                   </thead>

@@ -1421,3 +1421,11 @@ Codex's review of #352, verified against the code and the book:
 - **All alerts.** The tab, its badge and `AllAlerts` are gone, with what only they read (`usePriceAlerts`, `ResearchSummaryLine`, `useResearchSummary`, `KindPill`, `alertBoxesHref`). `?tab=alerts` lands on Daily Movers. A price alert is still set on its company's page, and its box says when it is reached; that card's "All alerts →" link and the search entry are gone. check-pages drops the four `cio-alerts*` walks and asserts five tabs and no badge (on `cio`, `cio-returns`, `cio-ytd-card` and `cio-tiles-saved` the sweep finds nothing main does not); check-family-inputs clears a level in its box instead of on the tab.
 - **Investment performance** is one row: what it covers and the return. Its (i) opens the breakdown: start to end beside the gain's parts, the dates, By account (names wrap so the figures show) and How it is built. The card keeps every `data-bridge-*` figure; `check-selected-attribution` opens the popup to assert the steps, parts, rows and working.
 - CI's attribution step was already red on main (the MTD return check, 0.1010 vs 0.1012), and `check-assumed-holdings`' bridge identity fails on main too. Neither is touched here.
+
+### Stage 10ml — The HPR column is headed "HPR - Absolute"
+
+*"rename the column heading as HPR - Absolute so that it is clear that it is an absolute return only. Do this universally on the dashboard."*
+
+- `ReturnMeasureDef` gains `heading`; every return column heading reads it (Portfolio Monitor holdings and transactions, Private Market). Morning CIO's allocation column is "Return (HPR - Absolute)".
+- Cells, the picker and the Excel Measure column keep the short `HPR` tag, so every `res.tag !== def.tag` comparison is unchanged.
+- `check-pages`: the two header-label invariants read the new heading.

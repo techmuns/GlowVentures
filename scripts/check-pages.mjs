@@ -21502,7 +21502,8 @@ const RETURN_COLUMNS = [
       const autoCells = cells.filter((c) => c.measure === "auto");
       if (autoCells.length && !autoCells.every((c) => /\b(AUTO|HPR|CAGR|XIRR|YTD|CY)\b/.test(c.text))) return false;
       const concrete = head.filter((h) => !/^Return$/i.test(h.label));
-      if (!concrete.every((h) => /^(HPR|CAGR|XIRR|YTD|CY)$/i.test(h.label))) return false;
+      // HPR's heading says it is absolute (Stage 10ml).
+      if (!concrete.every((h) => /^(HPR - Absolute|CAGR|XIRR|YTD|CY)$/i.test(h.label))) return false;
       /**
        * …AND A CELL WHOSE FIGURE IS NOT ITS COLUMN'S MEASURE SAYS SO. The rule
        * is `res.tag !== def.tag`, and the CAGR column is where it bites: a
@@ -21605,7 +21606,7 @@ const RETURN_COLUMNS = [
       (t, ctx) => {
       const head = ctx?.returnHead, foot = ctx?.footerCells;
       if (!head?.length || !foot?.length) return { notChecked: "no return columns or footer captured on this run" };
-      const onCost = (h) => /^(Return|HPR)$/i.test(h.label);
+      const onCost = (h) => /^(Return|HPR - Absolute)$/i.test(h.label);
       for (const h of head) {
         const cell = String(foot[h.headIndex] ?? "").trim();
         if (onCost(h)) { if (!FOOT_RETURN_CELL.test(cell)) return false; }
@@ -24405,7 +24406,7 @@ const INVARIANTS = {
     ["…and the transactions table draws one return column per measure, headed with its own name", (t, ctx) => {
       const heads = (ctx.mineHead ?? []).map((c) => c.text.split("\n")[0].trim().toUpperCase());
       if (!heads.length) return false;
-      return ["HPR", "XIRR", "YTD"].every((h) => heads.includes(h)) && !heads.includes("RETURN") && !heads.includes("CY") && !heads.includes("CAGR");
+      return ["HPR - ABSOLUTE", "XIRR", "YTD"].every((h) => heads.includes(h)) && !heads.includes("RETURN") && !heads.includes("CY") && !heads.includes("CAGR");
     }],
     ["…and every capital row carries a cell in each of them, in order", (t, ctx) => {
       if (!ctx.mineRows?.length) return false;
@@ -33908,7 +33909,7 @@ const INVARIANTS = {
       const head = ctx?.returnHead;
       if (!head?.length) return { notChecked: "no return columns captured on this run" };
       const labels = head.map((h) => h.label.toUpperCase());
-      return head.length === 2 && labels[0] === "HPR" && labels[1] === "CAGR";
+      return head.length === 2 && labels[0] === "HPR - ABSOLUTE" && labels[1] === "CAGR";
     }],
     ["…and no cell carries both measures at once", (t, ctx) => {
       const cells = ctx?.returnCells;
