@@ -1,7 +1,7 @@
 import { navigationMemory } from "@/lib/navigationMemory";
 import { useNavigationValue, booleanNavigation } from "@/lib/useNavigationState";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { X } from "lucide-react";
 import { Card } from "@/components/Card";
 import { usePortfolio } from "@/context/PortfolioContext";
@@ -139,21 +139,15 @@ export function InvestmentTools({ securityKey, name }: { securityKey: string; na
 
   return (
     <div ref={card} id="alerts" data-alerts-card className="mt-5 scroll-mt-4">
-      {/* WHAT THE CARD DOES IS THE TITLE'S HOVER, AND THE WAY TO ALL ALERTS IS
-          A LINK BESIDE THE PRICE (Stage 10cp's rule — main's letter — that no
-          card draws a line under its title). The sentence used to be that line,
-          with the link inside it; a hover can carry only a string, so the link
-          is its own short control now, where the price chip already is. */}
+      {/* WHAT THE CARD DOES IS THE TITLE'S HOVER (Stage 10cp's rule — no card
+          draws a line under its title). Its link to Morning CIO's All alerts
+          went with that tab (Stage 10mk): a reached level shows here, in its box. */}
       <Card
         title="Price alerts"
-        subtitle="Type the price you would act at. When the price gets there, it shows on Morning CIO → All alerts."
+        subtitle="Type the price you would act at. When the price gets there, its box here says so."
         right={
           <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1">
             <PriceNowChip now={now} perUnit={perUnit} feeds={quoteFeeds} asOf={quotesAsOf} />
-            <Link to="/cio?tab=alerts" data-alerts-card-link
-              title="Every alert you have set, on Morning CIO — the ones that have fired first."
-              className="whitespace-nowrap text-[12px] font-medium text-champagne-400 transition-colors hover:text-slate-200">
-              All alerts →</Link>
           </div>
         }>
 

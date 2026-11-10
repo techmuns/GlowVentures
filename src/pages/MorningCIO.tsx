@@ -29,8 +29,6 @@ import {
   BASKET_ORDER, FAMILY_CLASS_ORDER, UNCLASSIFIED, UNCLASSIFIED_WHY,
 } from "@/lib/familyTaxonomy";
 import { useViewParam } from "@/components/ViewToggle";
-import { AllAlerts } from "@/components/AllAlerts";
-import { usePriceAlerts } from "@/lib/usePriceAlerts";
 import { drilldownHref, AXIS_SCOPE, TOP_NAMES, bookReturnOnCost, costedSetLabel, SIDE_NOTE } from "@/lib/drilldown";
 import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
 
@@ -207,20 +205,17 @@ const CIO_TABS = [
    * and Direct Equity only, scoped to whichever family members the TopBar
    * selector holds — so "show these members' sector allocation" needs no wiring
    * here beyond mounting the panel. It sits SECOND so the family's three
-   * arranged panels and All alerts keep their order after it.
+   * arranged panels keep their order after it.
    */
   { key: "sectors", label: "Sector Composition", title: "What the book is exposed to by sector — every issuer their statements report and their funds disclose (Consolidated), or the shares the family bought themselves (Direct Equity), for the members currently selected" },
   { key: "allocation", label: "Allocation & Risk", title: "How the book is split, what is still to be called, and where it is concentrated" },
   { key: "nav", label: "Our Book vs Benchmark", title: "The book's own dated valuation series against every benchmark, net of capital in and out" },
   /**
-   * ...AND A FOURTH, THE FAMILY'S OWN PRICE ALERTS (Stage 10cq). *"in morning
-   * CIO can you make an ALL alerts tab where … whenever the alerts which have
-   * been set are triggered they show simply."* It goes LAST so the three the
-   * family arranged keep their places and the default stays the movers panel;
-   * what makes it findable from any of them is the count badge on the tab
-   * itself, which says how many have fired without the tab being open.
+   * NO ALL ALERTS TAB (Stage 10mk). *"Also remove this all alerts"* — the
+   * family, 10 Nov 2026. It was the last tab (Stage 10cq) and is gone with its
+   * panel; `?tab=alerts` lands on the default panel. A price alert is still set
+   * and shown on its company's page, in the Price alerts boxes.
    */
-  { key: "alerts", label: "All alerts", title: "Every price alert you have set, and which have been reached" },
 ] as const;
 // Fresh visits show the investor's value, gain, yearly rate and FYTD return.
 // Keep the storage key: an explicitly customised layout remains the reader's.
@@ -250,11 +245,7 @@ export function MorningCIO() {
    * family put the attribution inside Returns (Stage 10fd), so a link to it
    * lands there rather than on the movers panel.
    */
-  const [tab, setTab] = useViewParam(CIO_TABS, { attribution: "returns" }, "tab");
-  // THE ALERTS, CHECKED ON EVERY PANEL — not only the alerts panel — because
-  // the tab's badge is how a reader on any of the other panels learns something
-  // has fired. A HOOK, so it sits up here with the others, above the early return.
-  const alerts = usePriceAlerts();
+  const [tab, setTab] = useViewParam(CIO_TABS, { attribution: "returns", alerts: "movers" }, "tab");
   // A HOOK, so it is declared here rather than beside the rows it arranges:
   // this component returns early on an unloaded book, and a hook after that is
   // a different bug from the one being fixed.
@@ -1144,7 +1135,7 @@ export function MorningCIO() {
       data-card-from={r.from ?? ''} data-card-to={r.to ?? ''} data-card-basis={r.total.measured?.basis ?? ''}
       data-card-all={all} data-card-by-cost={c.sinceInvestmentValue} data-card-from-first={c.sinceFirstValue} data-card-held={c.heldValue}
       data-card-from-first-count={c.sinceFirstCount} data-card-held-count={c.heldCount}>
-      <span className="mb-1 flex h-1.5 w-full overflow-hidden rounded-full bg-ink-700" aria-hidden>
+      <span className="mb-1 mt-0.5 flex h-1 w-full overflow-hidden rounded-full bg-ink-700" aria-hidden>
         <span className="h-full bg-champagne-500" style={{ width: width(c.sinceInvestmentValue) }} />
         <span className="h-full bg-champagne-500 opacity-50" style={{ width: width(c.sinceFirstValue) }} />
         <span className="h-full bg-ink-600" style={{ width: width(c.heldValue) }} />
@@ -1504,15 +1495,6 @@ export function MorningCIO() {
                     : "text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"
                 }`}>
                 {v.label}
-                {/* HOW MANY ALERTS HAVE FIRED, on the tab itself — shown only
-                    when some have, so a quiet day adds nothing to the header. */}
-                {v.key === "alerts" && alerts.counts.reached > 0 && (
-                  <span data-cio-alert-badge={alerts.counts.reached}
-                    title={`${alerts.counts.reached} of your price alerts ${alerts.counts.reached === 1 ? "has" : "have"} been reached`}
-                    className="ml-1.5 inline-flex min-w-[1.1rem] items-center justify-center rounded-full border border-loss/40 bg-loss/15 px-1 text-[10px] font-semibold leading-4 text-loss">
-                    {alerts.counts.reached}
-                  </span>
-                )}
               </button>
             ))}
           </div>
@@ -1549,7 +1531,7 @@ export function MorningCIO() {
           `min-h-0` is what makes `flex-1` shrink rather than grow the column
           past the window — without it the panel is as tall as its content and
           the page scrolls again, which is the whole of what was asked. */}
-      <div className={`mt-5 min-h-0 overflow-y-auto ${tab === "returns" ? "flex-none lg:flex-1" : "flex-1"}`} data-cio-panel={tab} data-navigation-scroll="morningcio-1">
+      <div className={`mt-4 min-h-0 overflow-y-auto ${tab === "returns" ? "flex-none lg:flex-1" : "flex-1"}`} data-cio-panel={tab} data-navigation-scroll="morningcio-1">
 
         {/* DAILY MOVERS — the first thing the family asked for, and the first
             card under the strip for that reason. It is the only figure on this
@@ -2062,14 +2044,6 @@ export function MorningCIO() {
             `check:pages` asserts the card STAYS gone AND that the figures it
             carried are still reachable — a removal is verified by asserting it
             happened, never by deleting the test alongside the feature. */}
-        {/* ALL ALERTS — the family's own price levels, checked against the
-            live price (a fund's against its published NAV). See `AllAlerts`. */}
-        {tab === "alerts" && (
-          <div data-cio-section="alerts">
-            <AllAlerts />
-          </div>
-        )}
-
         {tab === "nav" && (
           <div data-cio-section="nav">
 

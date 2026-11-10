@@ -146,7 +146,8 @@ try {
  await page.waitForFunction(() => document.querySelector('[data-returns-type-select]')?.dataset.displayedReturnType === 'absolute');
  assert.equal(await page.locator('[data-returns-type-select]').getAttribute('data-requested-return-type'), 'xirr');
  assert.match(await bridge.locator('[data-bridge-return-label]').innerText(), /Absolute return/);
- assert.equal(await bridge.locator('[data-bridge-split]').getAttribute('open'), null, 'gain breakdown starts collapsed');
+ // Stage 10mk: the card is one row; its breakdown is in its (i) popup, not on the page.
+ assert.equal(await bridge.locator('[data-bridge-steps], [data-bridge-split], [data-bridge-accounts-table]').count(), 0, 'the breakdown is not on the card');
  // Stage 10lz: Investment performance is the one summary; the market return is the Total row's.
  const boxes = await page.locator('[data-return-summary-cards] > .card').evaluateAll(els => els.map(el => {
   const r = el.getBoundingClientRect(); return { width: r.width, parent: el.parentElement.getBoundingClientRect().width };
@@ -155,14 +156,14 @@ try {
  assert.ok(Math.abs(boxes[0].width - boxes[0].parent) < 1, 'it spans the row');
  assert.equal(await page.locator('[data-market-summary], [data-market-coverage]').count(), 0, 'no separate market performance card');
  assert.ok(await table.locator('[data-seg-total] [data-seg-cell="market"]').count() === 1, 'the market return is on the Total row');
- await bridge.locator('[data-bridge-split] summary').click();
- assert.ok(await bridge.locator('[data-bridge-part="realised"]').isVisible());
- await bridge.locator('[data-bridge-split] summary').click();
- assert.ok(Number(await bridge.getAttribute('data-bridge-split-accounts')) >= 10);
- await bridge.locator('[data-bridge-accounts-table] summary').click();
- assert.equal(await bridge.locator('tr[data-bridge-row]').count(), Number(await bridge.getAttribute('data-bridge-accounts')));
- await bridge.getByRole('button', { name: 'What is included in the capital bridge?', exact: true }).click();
+ await bridge.getByRole('button', { name: 'Show the investment performance breakdown', exact: true }).click();
  const bridgeDialog = page.getByRole('dialog'); await bridgeDialog.waitFor();
+ assert.equal(await bridgeDialog.locator('[data-bridge-step]').count(), 5, 'start, money in, money out, gain, end');
+ assert.ok(await bridgeDialog.locator('[data-bridge-part="realised"]').isVisible(), 'the gain breakdown is open in the popup');
+ assert.ok(Number(await bridge.getAttribute('data-bridge-split-accounts')) >= 10);
+ await bridgeDialog.locator('[data-bridge-accounts-table] summary').click();
+ assert.equal(await bridgeDialog.locator('tr[data-bridge-row]').count(), Number(await bridge.getAttribute('data-bridge-accounts')));
+ await bridgeDialog.locator('[data-bridge-how] summary').click();
  assert.match(await bridgeDialog.innerText(), /Statement's own profit and loss/); assert.match(await bridgeDialog.innerText(), /Fund's dated unit record/);
  await page.screenshot({ path: `${out}/capital-bridge.png` });
  await page.keyboard.press('Escape');

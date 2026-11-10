@@ -287,7 +287,10 @@ export function SelectableTiles({ metrics, defaults, storageKey, page, param = "
         <button type="button" data-tile-remove={i}
           onClick={() => commit(ids.filter((_, j) => j !== i))}
           title="Remove this tile" aria-label="Remove this tile"
-          className="grid h-5 w-5 place-items-center rounded border border-ink-700 bg-ink-800/60 text-slate-500 ring-focus transition-colors hover:bg-ink-700/60 hover:text-slate-200">
+          className={variant === "kpi"
+            // A solid chip on a Morning CIO tile: it shows over the caption's corner.
+            ? "grid h-5 w-5 place-items-center rounded border border-ink-700 bg-ink-800 text-slate-500 shadow-sm ring-focus transition-colors hover:bg-ink-700 hover:text-slate-200"
+            : "grid h-5 w-5 place-items-center rounded border border-ink-700 bg-ink-800/60 text-slate-500 ring-focus transition-colors hover:bg-ink-700/60 hover:text-slate-200"}>
           <X className="h-3 w-3" />
         </button>
       )}
@@ -303,7 +306,7 @@ export function SelectableTiles({ metrics, defaults, storageKey, page, param = "
          takes the strip's next column rather than a row of its own: that page
          does not scroll (Stage 10bj), and a second row of KPI tiles would take
          its height from the panel under it. */
-      className={variant === "kpi" ? "kpi-grid grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-3" : "grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-4"}
+      className={variant === "kpi" ? "kpi-grid grid auto-rows-fr gap-3 sm:grid-cols-2 lg:grid-cols-3" : "grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-4"}
       style={variant === "kpi" ? ({ "--kpi-cols": Math.min(Math.max(ids.length + (showAdd ? 1 : 0), 1), 6) } as CSSProperties) : undefined}
       data-testid={variant === "kpi" ? "kpi-strip" : undefined}>
       {ids.map((id, i) => {
@@ -333,7 +336,8 @@ export function SelectableTiles({ metrics, defaults, storageKey, page, param = "
                 href={m.href}
                 hrefTitle={m.hrefTitle ?? m.detail}
                 action={controls(i)}
-                raise={openSlot === i} />
+                raise={openSlot === i}
+                compact />
             ) : (
               <StatTile
                 className={`h-full${openSlot === i ? " relative z-30" : ""}`}

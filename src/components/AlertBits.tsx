@@ -1,9 +1,10 @@
 /**
  * ── WHAT AN ALERT LOOKS LIKE, DEFINED ONCE ──────────────────────────────────
  *
- * The stock page's alert boxes and Morning CIO's All alerts table draw the same
- * five kinds, and a Stop loss that is red on one page and amber on the other is
- * a reader learning two colour codes for one thing. So the colour of each kind,
+ * The stock page's alert boxes drew these five kinds beside Morning CIO's All
+ * alerts table until Stage 10mk removed the table; a Stop loss that is red in
+ * one place and amber in another is a reader learning two colour codes for one
+ * thing. So the colour of each kind,
  * the words for how far a price is from its level and the words for where the
  * price came from all live here.
  *
@@ -30,16 +31,6 @@ export const KIND_TONE: Record<AlertKind, { text: string; dot: string; pill: str
   target: { text: "text-champagne-400", dot: "bg-champagne-500", pill: "border-champagne-500/30 bg-champagne-500/10 text-champagne-400", tint: "bg-champagne-500/[0.07]", border: "border-champagne-500/40" },
   above: { text: "text-slate-300", dot: "bg-slate-400", pill: "border-ink-600 bg-ink-700/60 text-slate-300", tint: "bg-ink-700/40", border: "border-ink-600" },
 };
-
-/** The alert's kind, as a coloured chip — "Stop loss", "Buy at". */
-export function KindPill({ kind }: { kind: AlertKind }) {
-  return (
-    <span data-alert-kind-pill={kind}
-      className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full border px-2 py-0.5 text-[11px] font-medium ${KIND_TONE[kind].pill}`}>
-      {ALERT_DEF[kind].label}
-    </span>
-  );
-}
 
 /**
  * How far the price is from the level, in the words an investor uses:
