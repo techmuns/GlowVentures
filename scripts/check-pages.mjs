@@ -18859,6 +18859,8 @@ let CIO_TILE_COUNT = 0;
  */
 const CIO_TILE_PICKER = [
   ...tilePickerChecks({
+    // Morning CIO's ADD TILE is the narrow end column of the tiles' one row (Stage 10mo).
+    addColumn: true,
     defaults: ["value", "gain", "annualised", "fytd"],
     mustOffer: ["value", "gain", "annualised", "fytd", "ytd", "return", "uncalled", "distributions", "invested", "committed",
       "positions", "names", "top-10", "cross-held", "winners", "losers", "accrued"],
@@ -18877,18 +18879,15 @@ const CIO_TILE_PICKER = [
     return ctx.kpiTiles.length > 0 && ctx.kpiTiles.every((x) => x.controls >= 2 && x.links.length <= 1);
   }],
   /**
-   * ...AND THE ADD TILE CARD TAKES THE STRIP'S NEXT COLUMN, NOT A ROW OF ITS
-   * OWN — Stage 10cl. This page does not scroll (Stage 10bj): a second row of
-   * KPI tiles takes its height from the panel under it. So the card is counted
-   * in `--kpi-cols`, and wherever the strip has fewer than six tiles it sits on
-   * the tiles' own row. Every claim above passes with the card on a row by
-   * itself — it is still the next cell, the size of a tile — so this one is
-   * struck on its ROW.
+   * ...AND THE ADD TILE CARD SHARES THE TILES' ROW — Stage 10cl, and since
+   * Stage 10mo with six tiles too: it is the row's narrow end column, outside
+   * the tiles' grid. This page does not scroll (Stage 10bj): a second row of
+   * KPI tiles takes its height from the panel under it. Every claim above passes
+   * with the card on a row by itself, so this one is struck on its ROW.
    */
-  ["the ADD TILE card shares the tiles' row while the strip has room", (t, ctx) => {
+  ["the ADD TILE card shares the tiles' row", (t, ctx) => {
     const st = ctx?.tileStrip;
     if (!st?.addTile) return false;
-    if (st.slots >= 6) return { notChecked: `${st.slots} tiles fill the six-column strip, so the card takes the next row by design` };
     return st.addTile.sameRow === true;
   }],
 ];
@@ -27130,15 +27129,15 @@ const INVARIANTS = {
       return headingsWhole(st);
     }],
     /**
-     * ...AND THE ADD TILE CARD, ALONE ON THE NEXT ROW, IS STILL THE SIZE OF A
-     * TILE — Stage 10cl. Six tiles fill Morning CIO's six columns, so this is the
-     * one state in which its card sits on a row by itself; `auto-rows-fr` is what
-     * keeps that row as tall as the tiles' rather than as short as two words.
+     * ...AND THE ADD TILE CARD STAYS ON THEIR ROW, AS TALL AS THEY ARE (Stage
+     * 10mo). Six tiles used to fill the six columns and push the card onto a
+     * row of its own (Stage 10cl); it is the row's narrow end column now, so
+     * the six-tile strip is still one row high.
      */
-    ["…and the ADD TILE card, alone on the next row, is still the size of a tile", (t, ctx) => {
+    ["…and the ADD TILE card stays on their row, as tall as they are", (t, ctx) => {
       const a = ctx?.tileStrip?.addTile;
       if (!a) return false;
-      return a.sameSize && a.nextCell && !a.sameRow && a.lastCell;
+      return a.sameRow && a.nextCell && a.lastCell && Math.abs(a.h - a.tileH) <= 2;
     }],
   ],
   // THE ALERTS PANEL (Stage 10cq). `CIO_SHARED` and the tab control ride on all
@@ -37809,7 +37808,7 @@ const FULL_STRIP_ONLY = new Set([
  */
 // A FUNCTION DECLARATION so it is hoisted: Morning CIO's block uses it far
 // above this line, and a `const` would be in its temporal dead zone there.
-function tilePickerChecks({ defaults, mustOffer, minMenu }) {
+function tilePickerChecks({ defaults, mustOffer, minMenu, addColumn = false }) {
   return [
   /**
    * THE DEFAULT IS THE ROW THIS PAGE LEADS WITH, and a default is the one
@@ -37905,11 +37904,25 @@ function tilePickerChecks({ defaults, mustOffer, minMenu }) {
    * a dashed edge rather than a card's; bold is the label's computed weight. A
    * `+` restyled as a larger button passes none of the three.
    */
-  ["the ADD TILE card is a big empty tile, the size of a tile, reading ADD TILE in bold", (t, ctx) => {
-    const a = ctx?.tileStrip?.addTile;
-    if (!a) return false;
-    return a.text === "ADD TILE" && a.weight >= 700 && a.sameSize && a.figures === 0 && a.border === "dashed";
-  }],
+  /*
+   * ...EXCEPT ON MORNING CIO, WHERE IT IS THE ROW'S NARROW END COLUMN (Stage 10mo:
+   * *"they still need to be smaller when they rearrange"*). A tile's width for two
+   * words pushed five tiles onto two rows under 1280px, on a page that does not
+   * scroll. So there it is as TALL as a tile and narrower than one; empty and bold
+   * are measured the same way.
+   */
+  addColumn
+    ? ["the ADD TILE card is an empty dashed column as tall as the tiles, reading ADD TILE in bold", (t, ctx) => {
+      const a = ctx?.tileStrip?.addTile;
+      if (!a) return false;
+      return a.text === "ADD TILE" && a.weight >= 700 && Math.abs(a.h - a.tileH) <= 2 && a.w < a.tileW
+        && a.figures === 0 && a.border === "dashed";
+    }]
+    : ["the ADD TILE card is a big empty tile, the size of a tile, reading ADD TILE in bold", (t, ctx) => {
+      const a = ctx?.tileStrip?.addTile;
+      if (!a) return false;
+      return a.text === "ADD TILE" && a.weight >= 700 && a.sameSize && a.figures === 0 && a.border === "dashed";
+    }],
   /**
    * CLICKING IT OFFERS EXACTLY WHAT IS NOT ON SCREEN, ADDS WHAT WAS PICKED, AND
    * THE NEXT VISIT OPENS ON IT. The walk picks the LAST metric offered: the `+`

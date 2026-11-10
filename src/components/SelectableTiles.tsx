@@ -303,62 +303,79 @@ export function SelectableTiles({ metrics, defaults, storageKey, page, param = "
     </div>
   );
 
+  const tiles = ids.map((id, i) => {
+    const m = byId.get(id);
+    if (!m) return null;
+    const picker = (
+      <MetricPicker slot={i} metrics={metrics} current={m} savedWhere={savedWhere}
+        onOpenChange={(o) => setOpenSlot((s) => (o ? i : s === i ? null : s))}
+        onPick={(next) => choose(i, next)} />
+    );
+    const info = m.calculation ? <ReturnCalculationInfo label={m.calculationLabel ?? m.label} value={m.calculationValue ?? m.value}>
+      {m.calculation}
+    </ReturnCalculationInfo> : undefined;
+    return (
+      <div key={`${id}-${i}`} data-tile-slot={id} className="contents">
+        {variant === "kpi" ? (
+          <Kpi
+            label={picker}
+            labelText={m.label}
+            value={m.value}
+            large={m.large}
+            second={m.second}
+            sub={m.sub}
+            delta={m.delta}
+            icon={m.icon}
+            info={info}
+            href={m.href}
+            hrefTitle={m.hrefTitle ?? m.detail}
+            action={controls(i)}
+            raise={openSlot === i}
+            compact />
+        ) : (
+          <StatTile
+            className={`h-full${openSlot === i ? " relative z-30" : ""}`}
+            icon={info ? <span className="flex items-center gap-2">{info}{m.icon}</span> : m.icon}
+            value={m.value}
+            sub={m.sub}
+            hint={m.hint}
+            title={m.detail}
+            label={picker}
+            action={controls(i)} />
+        )}
+      </div>
+    );
+  });
+  const addTile = showAdd && <AddTile spare={spare} savedWhere={savedWhere} onPick={add} column={variant === "kpi"} />;
+
+  /**
+   * MORNING CIO: THE TILES ARE ONE ROW, AND ADD TILE IS THE ROW'S LAST COLUMN
+   * (Stage 10mo). That page does not scroll (Stage 10bj), so every pixel of
+   * strip height is taken from the panel under it. The tiles get a grid of
+   * their own, one column per tile (`--kpi-cols`, `index.css`), and the ADD
+   * TILE card is a narrow dashed column after it, as tall as the tiles: a full
+   * tile's width for two words pushed five tiles onto two rows under 1280px.
+   */
+  if (variant === "kpi") return (
+    <div data-tile-strip={ids.join(",")} data-tile-saved={store.status} data-testid="kpi-strip"
+      className="flex flex-col gap-3 sm:flex-row">
+      {/* `auto-rows-fr`: every row as tall as the tallest, where a narrow strip wraps. */}
+      <div className="kpi-grid grid min-w-0 flex-1 auto-rows-fr gap-3"
+        style={{ "--kpi-cols": Math.min(Math.max(ids.length, 1), 6) } as CSSProperties}>
+        {tiles}
+      </div>
+      {addTile}
+    </div>
+  );
   return (
     <div data-tile-strip={ids.join(",")} data-tile-saved={store.status}
       /* `auto-rows-fr`: EVERY ROW AS TALL AS THE TALLEST, which is what makes
          the ADD TILE card the size of a tile even when it sits alone on a row
          of its own — without it that row is as short as the card's own two
-         words. And on Morning CIO the card is COUNTED in `--kpi-cols`, so it
-         takes the strip's next column rather than a row of its own: that page
-         does not scroll (Stage 10bj), and a second row of KPI tiles would take
-         its height from the panel under it. */
-      className={variant === "kpi" ? "kpi-grid grid auto-rows-fr gap-3 sm:grid-cols-2 lg:grid-cols-3" : "grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-4"}
-      style={variant === "kpi" ? ({ "--kpi-cols": Math.min(Math.max(ids.length + (showAdd ? 1 : 0), 1), 6) } as CSSProperties) : undefined}
-      data-testid={variant === "kpi" ? "kpi-strip" : undefined}>
-      {ids.map((id, i) => {
-        const m = byId.get(id);
-        if (!m) return null;
-        const picker = (
-          <MetricPicker slot={i} metrics={metrics} current={m} savedWhere={savedWhere}
-            onOpenChange={(o) => setOpenSlot((s) => (o ? i : s === i ? null : s))}
-            onPick={(next) => choose(i, next)} />
-        );
-        const info = m.calculation ? <ReturnCalculationInfo label={m.calculationLabel ?? m.label} value={m.calculationValue ?? m.value}>
-          {m.calculation}
-        </ReturnCalculationInfo> : undefined;
-        return (
-          <div key={`${id}-${i}`} data-tile-slot={id} className="contents">
-            {variant === "kpi" ? (
-              <Kpi
-                label={picker}
-                labelText={m.label}
-                value={m.value}
-                large={m.large}
-                second={m.second}
-                sub={m.sub}
-                delta={m.delta}
-                icon={m.icon}
-                info={info}
-                href={m.href}
-                hrefTitle={m.hrefTitle ?? m.detail}
-                action={controls(i)}
-                raise={openSlot === i}
-                compact />
-            ) : (
-              <StatTile
-                className={`h-full${openSlot === i ? " relative z-30" : ""}`}
-                icon={info ? <span className="flex items-center gap-2">{info}{m.icon}</span> : m.icon}
-                value={m.value}
-                sub={m.sub}
-                hint={m.hint}
-                title={m.detail}
-                label={picker}
-                action={controls(i)} />
-            )}
-          </div>
-        );
-      })}
-      {showAdd && <AddTile spare={spare} savedWhere={savedWhere} onPick={add} />}
+         words. */
+      className="grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {tiles}
+      {addTile}
     </div>
   );
 }
@@ -387,11 +404,11 @@ function useDismiss(open: boolean, box: RefObject<HTMLElement>, close: () => voi
  * TILE. When I click on the ADD TILE button, I should be able to choose what I
  * want to see in that tile."*
  *
- * IT IS THE STRIP'S LAST GRID CELL, which is exactly where the tile a reader
- * adds will appear: beside the last tile where the row has room, on the next
- * row where it does not. It is the size of a tile because the strip's rows are
- * equal (`auto-rows-fr`); on Morning CIO it is also counted as a column, so it
- * never starts a row of its own there.
+ * IT IS THE STRIP'S LAST CELL, which is exactly where the tile a reader adds
+ * will appear: beside the last tile where the row has room, on the next row
+ * where it does not. On Private Market it is the size of a tile because the
+ * strip's rows are equal (`auto-rows-fr`). On Morning CIO it is a narrow column
+ * at the end of the tiles' one row, as tall as they are (Stage 10mo, `column`).
  *
  * DASHED AND UNFILLED, NOT A `.card`, because it is EMPTY — a card drawn like
  * the tiles beside it would read as one more figure that failed to load. It is
@@ -399,33 +416,43 @@ function useDismiss(open: boolean, box: RefObject<HTMLElement>, close: () => voi
  * is a link, choosing a metric here can never navigate.
  *
  * THE MENU OFFERS ONLY WHAT IS NOT ON SCREEN and adds the one picked. It opens
- * OVER the card and exactly as wide, so from the last column it can never run
- * off the right edge of the page; a label wraps rather than being cut, because
- * on Morning CIO's six-column strip the card is narrow. Its last line says
- * where the choice is kept, as the tile picker's does.
+ * OVER the card: exactly as wide on Private Market, and from the column's
+ * right edge on Morning CIO, so from the last column it never runs off the
+ * page. A label wraps rather than being cut. Its last line says where the
+ * choice is kept, as the tile picker's does.
  */
-function AddTile({ spare, onPick, savedWhere }: {
+function AddTile({ spare, onPick, savedWhere, column = false }: {
   spare: readonly TileMetric[];
   onPick: (id: string) => void;
   /** Where the choice is kept, in words — the menu's last line. */
   savedWhere: string;
+  /**
+   * MORNING CIO'S NARROW END COLUMN (Stage 10mo): the tiles' height, 4.5rem
+   * wide, "ADD" over "TILE" in bold. Its menu opens from the column's right
+   * edge, leftward and 16rem wide, because a menu as wide as the column would
+   * be too narrow to read. On a phone it is a short bar under the tiles.
+   */
+  column?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
   const close = useCallback(() => setOpen(false), []);
   useDismiss(open, box, close);
   return (
-    <div ref={box} data-tile-add-slot className="relative">
+    <div ref={box} data-tile-add-slot className={column ? "relative h-11 shrink-0 sm:h-auto sm:w-[4.5rem]" : "relative"}>
       <button type="button" data-tile-add aria-haspopup="listbox" aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
         title={`Add a tile — choose one of the ${spare.length} figure${spare.length === 1 ? "" : "s"} not on screen`}
-        className="flex h-full w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-ink-600 text-slate-400 ring-focus transition-colors hover:border-champagne-500/70 hover:bg-ink-700/30 hover:text-champagne-400">
-        <Plus className="h-5 w-5" aria-hidden />
-        <span data-tile-add-label className="text-sm font-bold uppercase tracking-[0.14em]">Add tile</span>
+        className={`flex h-full w-full items-center justify-center rounded-2xl border-2 border-dashed border-ink-600 text-slate-400 ring-focus transition-[color,background-color,border-color,transform] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] hover:border-champagne-500/70 hover:bg-ink-700/30 hover:text-champagne-400 motion-safe:active:scale-[0.97] ${
+          column ? "gap-2 sm:flex-col sm:gap-1.5" : "flex-col gap-2"}`}>
+        <Plus className={column ? "h-4 w-4" : "h-5 w-5"} aria-hidden />
+        <span data-tile-add-label className={column
+          ? "text-[11px] font-bold uppercase leading-tight tracking-[0.14em] sm:w-min sm:text-center"
+          : "text-sm font-bold uppercase tracking-[0.14em]"}>Add tile</span>
       </button>
       {open && (
         <div data-tile-add-menu
-          className="absolute inset-x-0 top-0 z-40 rounded-md border border-ink-600 bg-ink-800 p-1 text-left shadow-card">
+          className={`absolute top-0 z-40 rounded-md border border-ink-600 bg-ink-800 p-1 text-left shadow-card ${column ? "right-0 w-64" : "inset-x-0"}`}>
           <div className="label-xs px-2 pb-1 pt-1.5">Choose what it shows</div>
           <div role="listbox" aria-label="Choose what the new tile shows" className="max-h-72 overflow-y-auto">
             {spare.map((m) => (
