@@ -18975,9 +18975,10 @@ const headlineMatches = (tile, expected, field = 'return') => {
     && Number(raw.cardHoldings) >= expected.totalHoldings
     && Number(raw.cardAccounts) === expected.coveredAccounts
     // The three return cards count the public holdings they cover over every public holding
-    // (the family, 5 Nov 2026), the gain card how much of every investment (Stage 10la).
+    // (the family, 5 Nov 2026). The gain card's coverage left its face for its info button
+    // (the family, 10 Nov 2026: "Remove this from this tile"; Stage 10mn), so the face carries no caption.
     && (raw.cardPeriod != null ? periodCountShown(tile.sub, raw)
-      : raw.cardSince != null ? /Covers \d+% of investments/.test(tile.sub ?? '') : /Available data/.test(tile.sub ?? ''));
+      : raw.cardSince != null ? tile.sub == null : /Available data/.test(tile.sub ?? ''));
 };
 /** "N of M holdings" on a return card's face is its own handles' count, and N never exceeds M. */
 const periodCountShown = (sub, raw) => {
@@ -19135,7 +19136,7 @@ const CIO_SHARED = [
     return at(/portfolio value/i) === "/holdings?of=book"
       && at(/gain \/ loss/i) === "/cio?tab=returns&rp=inception&rtype=absolute"
       && at(/annualised return|return over available history/i) === "/cio?tab=returns&rp=fytd&rtype=xirr"
-      && at(/return this financial year/i) === "/cio?tab=returns&rp=fytd&rtype=xirr";
+      && at(/^fytd return$|return this financial year/i) === "/cio?tab=returns&rp=fytd&rtype=xirr";
   }],
   /**
    * ── CURRENT VALUE AND CAPITAL INVESTED ARE ONE TILE AND ONE PAGE ─────────
@@ -19348,7 +19349,8 @@ const CIO_SHARED = [
         // Capital invested is part of the value tile's page now, so the return
         // struck on it opens that page on the holdings that report a cost.
         [/^gain \/ loss$/i, "/cio?tab=returns&rp=inception&rtype=absolute"],
-        [/^return this financial year$/i, "/cio?tab=returns&rp=fytd&rtype=xirr"],
+        // The tile's face reads the Returns tab's own pill name (Stage 10mn).
+        [/^(fytd return|return this financial year)$/i, "/cio?tab=returns&rp=fytd&rtype=xirr"],
       ];
       return tiles.every(([label, href]) =>
         ctx.kpiTiles.some((tile) => label.test(tile.label) && tile.links[0] === href));
@@ -19651,7 +19653,7 @@ const CIO_BOOK_RETURN = [
   }],
   ["FYTD shows its measured dates, available return and coverage", (t, ctx) => {
     const tile = ctx?.kpiTiles?.find(x => x.slot === 'fytd');
-    return headlineMatches(tile, AVAILABLE_CARDS_BOOK?.fytd) && /financial year/i.test(tile.label)
+    return headlineMatches(tile, AVAILABLE_CARDS_BOOK?.fytd) && /financial year|^fytd return$/i.test(tile.label)
       && !!tile.coverage.cardFrom && !!tile.coverage.cardTo;
   }],
 ];

@@ -1090,8 +1090,8 @@ export function MorningCIO() {
       data-card-public-covered={covered} data-card-public-holdings={c.publicHoldings}
       data-card-measured-holdings={c.measuredHoldings} data-card-measured-accounts={c.measuredAccounts} data-card-held-count={c.heldUnits.length}
       className="whitespace-normal leading-snug">
-      <span className="block text-[12.5px] text-slate-300"><span className="tabular font-semibold text-slate-100">{fmtNum(covered)}</span> of <span className="tabular">{fmtNum(c.publicHoldings)}</span> holdings</span>
-      <span className="mt-0.5 block text-[11px] text-slate-500">{r.to ? `to ${fmtDate(r.to)}` : 'No verified dates'}{measure && ` · ${measure}`}
+      <span className="block text-[11px] text-slate-300"><span className="tabular font-semibold text-slate-100">{fmtNum(covered)}</span> of <span className="tabular">{fmtNum(c.publicHoldings)}</span> holdings</span>
+      <span className="block text-[10px] text-slate-500">{r.to ? `to ${fmtDate(r.to)}` : 'No verified dates'}{measure && ` · ${measure}`}
         {/* The owner-specific explanation is behind the card's one info button. */}
         {assumed > 0 && <span data-holding-assumption data-assumed-count={assumed}> · assumed</span>}</span>
     </div>;
@@ -1121,27 +1121,49 @@ export function MorningCIO() {
     </dl>;
   };
   /**
-   * THE GAIN CARD'S CAPTION (Stage 10la; the family, 4 Nov 2026: "make coverage
-   * 100%"): every investment, by value — from its purchase cost, from its first
-   * value on record, or held at its value — each share said apart.
+   * THE GAIN CARD'S FIGURE CARRIES ITS COVERAGE HANDLES (Stage 10mn). The
+   * caption that held them left the face (the family, 10 Nov 2026: "Remove this
+   * from this tile … so they dont take so much of space"); the counts and
+   * values a check strikes the card on ride on the figure they describe.
    */
-  const gainCaption = (r: GainCardReturn) => {
-    const c = r.gainCoverage, all = c.totalValue, covered = c.sinceInvestmentValue + c.sinceFirstValue + c.heldValue;
-    const share = (v: number) => (all > 0 ? Math.min(100, Math.round((v / all) * 100)) : 0), width = (v: number) => `${all > 0 ? Math.min(100, (v / all) * 100) : 0}%`;
-    return <div data-card-coverage data-card-since data-prose-ok="the share of the investments the gain covers, on the card at the family's request (4 Nov 2026)"
+  const gainFigure = (r: GainCardReturn, gain: number) => {
+    const c = r.gainCoverage;
+    return <span data-card-coverage data-card-since className={changeColor(gain)}
       data-card-gain={r.total.gain ?? ''} data-card-return={r.total.returnPct ?? ''}
       data-card-covered={r.coveredHoldings} data-card-holdings={r.totalHoldings}
       data-card-value={r.coveredValue} data-card-accounts={r.coveredAccounts} data-card-total-accounts={r.totalAccounts}
       data-card-from={r.from ?? ''} data-card-to={r.to ?? ''} data-card-basis={r.total.measured?.basis ?? ''}
-      data-card-all={all} data-card-by-cost={c.sinceInvestmentValue} data-card-from-first={c.sinceFirstValue} data-card-held={c.heldValue}
-      data-card-from-first-count={c.sinceFirstCount} data-card-held-count={c.heldCount}>
-      <span className="mb-1 mt-0.5 flex h-1 w-full overflow-hidden rounded-full bg-ink-700" aria-hidden>
-        <span className="h-full bg-champagne-500" style={{ width: width(c.sinceInvestmentValue) }} />
-        <span className="h-full bg-champagne-500 opacity-50" style={{ width: width(c.sinceFirstValue) }} />
-        <span className="h-full bg-ink-600" style={{ width: width(c.heldValue) }} />
+      data-card-all={c.totalValue} data-card-by-cost={c.sinceInvestmentValue} data-card-from-first={c.sinceFirstValue} data-card-held={c.heldValue}
+      data-card-from-first-count={c.sinceFirstCount} data-card-held-count={c.heldCount}>{money(gain, true)}</span>;
+  };
+  /**
+   * ...AND ITS COVERAGE IS THE TOP OF ITS ⓘ (Stage 10mn), as the return cards'
+   * is: every investment by value (Stage 10la; the family, 4 Nov 2026: "make
+   * coverage 100%") — from its purchase cost, from its first value on record,
+   * or held at its value — each share said apart, keyed to the bar.
+   */
+  const gainSummary = (r: GainCardReturn) => {
+    const c = r.gainCoverage, all = c.totalValue, covered = c.sinceInvestmentValue + c.sinceFirstValue + c.heldValue;
+    const share = (v: number) => (all > 0 ? Math.min(100, Math.round((v / all) * 100)) : 0), width = (v: number) => `${all > 0 ? Math.min(100, (v / all) * 100) : 0}%`;
+    const parts = [
+      { key: 'cost', term: 'Since investment', v: c.sinceInvestmentValue, tone: 'bg-champagne-500' },
+      { key: 'first', term: 'From first value', v: c.sinceFirstValue, tone: 'bg-champagne-500 opacity-50' },
+      // A neutral, not `bg-ink-600`: light mode paints that the same gold as the first share.
+      { key: 'held', term: 'Held at value', v: c.heldValue, tone: 'bg-slate-500' },
+    ];
+    return <div data-card-gain-summary className="rounded-lg bg-ink-900 p-3">
+      <p className="flex flex-wrap items-baseline justify-between gap-x-3 text-slate-100">
+        <span>Covers <span className="tabular font-semibold">{share(covered)}%</span> of investments</span>
+        <span className="tabular text-slate-400">{money(covered)} of {money(all)}</span></p>
+      <span className="mt-2 flex h-1.5 w-full overflow-hidden rounded-full bg-ink-700" aria-hidden>
+        {parts.map((p) => <span key={p.key} className={`h-full ${p.tone}`} style={{ width: width(p.v) }} />)}
       </span>
-      Covers {share(covered)}% of investments · {money(covered)} of {money(all)}<br />
-      {share(c.sinceInvestmentValue)}% since investment · {share(c.sinceFirstValue)}% from first value · {share(c.heldValue)}% held at value</div>;
+      <dl className="mt-2.5 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5">
+        {parts.map((p) => <div key={p.key} className="contents" data-card-gain-part={p.key}>
+          <dt className="flex items-center gap-2 text-slate-400"><span className={`h-2 w-2 shrink-0 rounded-full ${p.tone}`} aria-hidden />{p.term}</dt>
+          <dd className="text-right tabular text-slate-100">{share(p.v)}% · {money(p.v)}</dd></div>)}
+      </dl>
+    </div>;
   };
   const history = m.available.history;
   const historyAnnual = history.total.measured?.basis === 'annual';
@@ -1196,10 +1218,10 @@ export function MorningCIO() {
       id: "gain", label: "Gain / loss", icon: <TrendingUp className="h-4 w-4" />,
       href: returnsHref('inception'),
       hrefTitle: 'Gain since investment over every investment: from its purchase cost where a record dates it, otherwise from its first value on record, and anything neither measures held at its value with no gain. The info button names each one.',
-      value: since.total.gain == null ? <AbsentValue /> : <span className={changeColor(since.total.gain)}>{money(since.total.gain, true)}</span>,
+      value: since.total.gain == null ? <AbsentValue /> : gainFigure(since, since.total.gain),
       second: since.total.returnPct == null ? undefined : <>Return on capital {pct1(since.total.returnPct)}{benchLine(since)}</>,
-      calculation: coverageInfo(since, 'gain'),
-      sub: since.total.gain == null ? absentWhy('No verified purchase cost and value') : gainCaption(since),
+      calculation: since.total.gain == null ? coverageInfo(since, 'gain') : <>{gainSummary(since)}{coverageInfo(since, 'gain')}</>,
+      sub: since.total.gain == null ? absentWhy('No verified purchase cost and value') : undefined,
     },
     {
       id: "annualised", label: historyLabel, icon: <TrendingUp className="h-4 w-4" />,
@@ -1220,6 +1242,8 @@ export function MorningCIO() {
       const startsTitle = `Measured from, by value now: ${r.starts.map((s) => `${s.date ? fmtDate(s.date) : 'bought this year, from nil'} ${money(s.close)}`).join(' · ')}. Not annualised.`;
       return {
         id: period, label: period === 'fytd' ? 'Return this financial year' : 'Return this calendar year',
+        // On the tile, the Returns tab's own pill name — the period the tile opens (Stage 10mn).
+        short: period === 'fytd' ? 'FYTD return' : 'YTD return',
         icon: <CalendarDays className="h-4 w-4" />, href: returnsHref(period),
         hrefTitle: partYear
           ? `Year to date for available data through ${r.to ?? 'the latest verified statement'}. No statement values most holdings on 1 January, so each account and holding is measured from its first dated value this year, as the Portfolio Monitor's YTD is. The info button lists each one's dates and the records still missing. Open the same period in Return attribution.`
