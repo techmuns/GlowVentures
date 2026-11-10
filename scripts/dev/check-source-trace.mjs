@@ -80,7 +80,6 @@ try {
   for (const [stock, value, expectedY] of [
     ['icici-liqf-d-growth', '46654.378', 0.268],
     ['inves-arbf-d-grow', '1092470.994', 0.294],
-    ['kotak-arbfd-dp-grow', '613293.929', 0.320],
   ]) {
     await gotoStock(stock);
     const quantity = page.locator(`[data-account-row="${trust}"] a[data-source-metric="quantity"]`);
@@ -106,6 +105,17 @@ try {
     await page.locator('[data-source-back]').click();
     assert.ok(page.url().includes('/stock/'+stock));
   }
+  // Stage 10me: MOPWM's later fund trades roll the trust's Kotak units past this
+  // statement (6,13,294 on 31 Jul). The cell is the rolled count, and its sources
+  // say so and cite the statement's own row without claiming its number.
+  await gotoStock('kotak-arbfd-dp-grow');
+  await page.locator(`[data-account-row="${trust}"] button[data-source-metric="quantity"]`).click();
+  await quantitySources.waitFor();
+  assert.match(await quantitySources.innerText(), /includes trades made after the statement date/);
+  const rolledCite = new URL(await quantitySources.locator(`a[data-source-document="${holdingsDoc}"]`).getAttribute('href'), base);
+  assert.equal(rolledCite.searchParams.get('record'), '/holdings/2');
+  assert.equal(rolledCite.searchParams.get('sourceValue'), null, 'a rolled count is not the statement\'s printed number');
+  await page.keyboard.press('Escape');
 
   await gotoStock(motilal);
   const nil = page.locator('[data-account-row="motilal-oswal-mutual-fund-90414963315"] a[data-source-metric="quantity"]');
@@ -250,7 +260,7 @@ try {
   await page.screenshot({path:path.join(out,'workbook-citation.png')});
   assert.deepEqual(errors,[]);
   await fs.writeFile(path.join(out,'results.json'),JSON.stringify({exactDematDocument:true,closingPage:5,separateNilFolio:true,aggregateSources:true,feedDistinct:true,monitorLabels:true,yellowClosingBalance:true,yellowTotalHoldingColumn:true,exactReturnState:true,loadingAndFailedDialog:true,underlyingSourceListRetained:true,filteredMandate:true,workbookSheetAndRow:true,errors},null,2));
-  console.log('PASS source links: monitor account labels, exact demat closing page, ICICI/Invesco/Kotak Total Holding highlights, separate nil folio, combined quantities and feed/statement distinction');
+  console.log('PASS source links: monitor account labels, exact demat closing page, ICICI/Invesco Total Holding highlights, the Kotak rolled count, separate nil folio, combined quantities and feed/statement distinction');
 } catch(e) {
   await fs.writeFile(path.join(out,'failure.json'),JSON.stringify({url:page.url(),errors,text:(await page.locator('body').innerText()).slice(-10000)},null,2));
   await page.screenshot({path:path.join(out,'failure.png')}).catch(()=>{}); throw e;
