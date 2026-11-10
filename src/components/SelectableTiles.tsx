@@ -288,8 +288,8 @@ export function SelectableTiles({ metrics, defaults, storageKey, page, param = "
           onClick={() => commit(ids.filter((_, j) => j !== i))}
           title="Remove this tile" aria-label="Remove this tile"
           className={variant === "kpi"
-            // Beside the header's icons on a Morning CIO tile, drawn like them.
-            ? "grid h-4 w-4 place-items-center rounded text-slate-500 ring-focus transition-colors hover:bg-ink-700/60 hover:text-slate-200"
+            // A solid chip on a Morning CIO tile: it shows over the caption's corner.
+            ? "grid h-5 w-5 place-items-center rounded border border-ink-700 bg-ink-800 text-slate-500 shadow-sm ring-focus transition-colors hover:bg-ink-700 hover:text-slate-200"
             : "grid h-5 w-5 place-items-center rounded border border-ink-700 bg-ink-800/60 text-slate-500 ring-focus transition-colors hover:bg-ink-700/60 hover:text-slate-200"}>
           <X className="h-3 w-3" />
         </button>

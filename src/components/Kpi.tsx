@@ -125,11 +125,7 @@ export function Kpi({ label, labelText, value, large, second, sub, delta, icon, 
             {label}
           </div>
         )}
-        {/* COMPACT: REMOVE JOINS THE HEADER'S ICONS. In the bottom corner it sat
-            over the last line of a tile's caption once the tile was tightened;
-            up here it costs no height and covers nothing. */}
-        {(info || icon || (compact && action)) && <div className={`flex shrink-0 items-center ${compact ? "gap-1" : "gap-1.5"}`}>{info}{icon && <div className="text-slate-500">{icon}</div>}
-          {compact && action && <div className="pointer-events-auto">{action}</div>}</div>}
+        {(info || icon) && <div className={`flex shrink-0 items-center ${compact ? "gap-1" : "gap-1.5"}`}>{info}{icon && <div className="text-slate-500">{icon}</div>}</div>}
       </div>
       {/* The wrapper passes clicks to a tile target. Explicit source controls
           take pointer events back on their own boxes, without nesting controls
@@ -155,7 +151,11 @@ export function Kpi({ label, labelText, value, large, second, sub, delta, icon, 
           clicks through to the tile's link. Adding a tile is not a control
           inside one: it is the ADD TILE card, the strip's own last cell
           (Stage 10cl). */}
-      {action && !compact && <div className="pointer-events-auto absolute bottom-2.5 right-2.5 z-20">{action}</div>}
+      {/* COMPACT: THE CONTROL SHOWS ON HOVER OR FOCUS (`.kpi-tile-action`), on
+          a solid chip. A tightened tile's caption runs into this corner, and a
+          control drawn over it all the time hid its last words; in the header
+          it narrowed the heading. A touch screen, with no hover, shows it always. */}
+      {action && <div className={`pointer-events-auto absolute z-20 ${compact ? "kpi-tile-action bottom-2 right-2" : "bottom-2.5 right-2.5"}`}>{action}</div>}
     </div>
   );
 }

@@ -357,6 +357,14 @@ body {
   .grid.kpi-grid { grid-template-columns: repeat(var(--kpi-cols, 6), minmax(0, 1fr)); }
 }
 
+/* A COMPACT TILE'S REMOVE SHOWS ON HOVER OR FOCUS (Stage 10mk). Its caption
+   runs into the corner the control sits in, so the control appears only when
+   the reader is at the tile. Opacity only, and a touch screen keeps it shown. */
+@media (hover: hover) and (pointer: fine) {
+  .card .kpi-tile-action { opacity: 0; transition: opacity 150ms cubic-bezier(0.23, 1, 0.32, 1); }
+  .card:hover .kpi-tile-action, .card:focus-within .kpi-tile-action { opacity: 1; }
+}
+
 /* A reader who has asked not to be animated gets the depth and none of the
    movement — the shadow still says "raised", the tile just does not jump. */
 @media (prefers-reduced-motion: reduce) {
