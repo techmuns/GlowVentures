@@ -23,8 +23,10 @@ page.on('pageerror',e=>errors.push(e.message));
 await page.route('**/api/**',r=>r.fulfill({status:503,contentType:'application/json',body:'{"status":"unreachable"}'}));
 await installReadModelRoutes(page);
 try {
-  for (const [key,quantity,accounts] of [['dsp-gold-etf',14000000,[['12838316','2026-01-22'],['12838335','2026-01-29']]],
-    ['dsp-silver-etf',1230000,[['12838316','2025-09-30']]]]) {
+  // Stage 10ma/10mb: Ankita's DSP Silver and DSP Gold were sold (the family's
+  // confirmation, MOPWM folio 466887); Aarti's 11,95,000 Gold units, split 1:10,
+  // are the one holding left.
+  for (const [key,quantity,accounts] of [['dsp-gold-etf',11950000,[['12838335','2026-01-29']]]]) {
     await page.goto(base+'/stock/'+key,{waitUntil:'domcontentloaded'});
     await page.locator(`[data-stock-qty="${quantity}"]`).waitFor();
     assert.equal(await page.locator('[data-stock-recorded-value]').count(),0);
@@ -36,21 +38,25 @@ try {
       assert.doesNotMatch(await row.locator('[data-source-metric="costBasis"]').innerText(),/^—$/);
     }
     assert.equal(await table.locator('tr[data-recorded-row]').count(),0,'converted holdings are not repeated as unvalued');
+    assert.equal(await table.locator('tr[data-account-row$="12838316"]').count(),0,"Ankita's sold units are not held");
     await page.screenshot({path:path.join(out,key+'.png')});
   }
+  await page.goto(base+'/stock/dsp-silver-etf',{waitUntil:'domcontentloaded'});
+  await page.getByText('Position closed',{exact:true}).waitFor();
+  assert.equal(await page.locator('[data-stock-qty]').count(),0,'a sold ETF shows no units held');
+  assert.equal(await page.locator('tr[data-account-row]').count(),0);
   await page.goto(base+'/monitor?group=category',{waitUntil:'domcontentloaded'});
   const search=page.getByTestId('smart-search-input');
   await search.fill('dsp');
-  for (const key of ['dsp-gold-etf','dsp-silver-etf']) {
-    const hit=page.locator(`[data-search-result="holding:${key}"]`); await hit.waitFor();
-    assert.doesNotMatch(await hit.innerText(),/not valued/i);
-  }
+  const hit=page.locator('[data-search-result="holding:dsp-gold-etf"]'); await hit.waitFor();
+  assert.doesNotMatch(await hit.innerText(),/not valued/i);
+  assert.equal(await page.locator('[data-search-result="holding:dsp-silver-etf"]').count(),0,'a sold ETF is not a holding');
   await page.keyboard.press('Escape');
   const picker=page.locator('[data-multiselect="All holdings"]');
   await picker.locator('[data-multiselect-toggle]').click();
   await picker.locator('input').fill('dsp');
-  for (const name of ['DSP Gold ETF','DSP Silver ETF'])
-    assert.equal(await picker.locator(`[data-option="${name}"]`).count(),1);
+  assert.equal(await picker.locator('[data-option="DSP Gold ETF"]').count(),1);
+  assert.equal(await picker.locator('[data-option="DSP Silver ETF"]').count(),0);
   await page.screenshot({path:path.join(out,'monitor-dsp-search.png')});
   await picker.locator('input').fill(recordedLabel(unpriced.homeKey));
   await picker.locator(`[data-option="${recordedLabel(unpriced.homeKey)}"]`).click();
@@ -69,7 +75,7 @@ try {
   assert.equal(await page.locator('[data-stock-recorded-value]').count(),1,'known cost does not invent a valuation');
   await page.screenshot({path:path.join(out,'unpriced-acquisition.png')});
   assert.deepEqual(errors,[]);
-  await fs.writeFile(path.join(out,'results.json'),JSON.stringify({goldUnits:14000000,silverUnits:1230000,purchaseDates:true,
+  await fs.writeFile(path.join(out,'results.json'),JSON.stringify({goldUnits:11950000,silverUnits:0,purchaseDates:true,
     bothSearches:true,unpricedCostAndDate:true,errors},null,2));
   console.log('PASS ETF pages, conversion quantities, original purchase dates, both searches and unpriced acquisition details');
 } catch(e) {
