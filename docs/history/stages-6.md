@@ -1451,3 +1451,12 @@ Codex's review of #352, verified against the code and the book:
 - Measured on this book at 1440px with value, gain, annualised, YTD and FYTD: the strip goes from 150px to 114px. The tallest tile here is the short-history card, whose heading "Return over available history" is required by CLAUDE.md. On a book whose history is a year or more, that card reads "Annualised return" on one line.
 - `check:pages` (`cio`, `cio-ytd-card`, `cio-returns`, `cio-tiles-saved`, `cio-tiles-dense`, `cio-return-metrics`, `stock`, `stock-fund`, `mandate`, `private-company`): every failure left is on main's build too (DL-11 invested line, the gain card's covered count, three Returns-tab checks, `stock`'s table fit, `monitor`'s sector rows).
 - Checks: `headlineMatches` asserts the gain card's face carries no caption; the destination probes accept "FYTD return"; `check-selected-attribution` asserts the coverage is in the (i), not on the card.
+
+### Stage 10mo — Morning CIO's tiles stay on one row at any desktop width; ADD TILE is the row's end column
+
+*"I tihnk they still need to be smaller when they rearrange , look how small my bottom returns table look think as the best ui designer in the world"* (10 Nov 2026, from a 1278px window).
+
+- **One row by the strip's own width.** `.grid.kpi-grid` dropped to three columns below 1280px, so five tiles plus ADD TILE took two rows and the Returns panel lost a row's height on a page that does not scroll. The grid is now `repeat(auto-fit, minmax(max(9.5rem, 100% / --kpi-cols), 1fr))` from 640px up. Tiles share one row while each is at least 9.5rem wide, up to `--kpi-cols` (the tile count, at most six), and wrap only below that.
+- **ADD TILE is the row's narrow end column** (`AddTile`'s `column`, Morning CIO only): 4.5rem wide, as tall as the tiles, dashed, "ADD" over "TILE" in bold. It sits outside the tiles' grid, so six tiles are still one row. Its menu opens from the column's right edge, 16rem wide. On a phone it is a short bar under the tiles. Private Market's card is unchanged (the size of a tile, Stage 10cl). Pressing it scales to 0.97 (`motion-safe`).
+- Measured at 1278×680 on this book (value, gain, annualised, YTD, FYTD): strip 207px → 114px, tiles 340px → 185px wide each, and the Returns panel starts 93px higher.
+- Checks: `tilePickerChecks` takes `addColumn`. On Morning CIO, ADD TILE is an empty dashed column as tall as the tiles and narrower than one, reading ADD TILE in bold. It shares the tiles' row with six tiles too, and `cio-tiles-dense` asserts that.

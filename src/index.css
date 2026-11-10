@@ -352,9 +352,19 @@ body {
    responsive variants (`lg:grid-cols-3`) at the very END of the stylesheet, so a
    one-class rule here loses on source order at equal specificity and the strip
    stayed at three columns on a 1500px screen — measured, not reasoned about.
+
+   ONE ROW BY THE STRIP'S OWN WIDTH, NOT THE SCREEN'S (Stage 10mo: *"they still
+   need to be smaller when they rearrange, look how small my bottom returns table
+   look"*). The 1280px breakpoint dropped a 1278px window to three columns: five
+   tiles took two rows and the panel under them lost a row's height on a page that
+   does not scroll. Now every tile shares one row while each is at least 9.5rem
+   wide, up to `--kpi-cols` across, and the strip wraps only below that.
    ------------------------------------------------------------------------- */
-@media (min-width: 1280px) {
-  .grid.kpi-grid { grid-template-columns: repeat(var(--kpi-cols, 6), minmax(0, 1fr)); }
+@media (min-width: 640px) {
+  .grid.kpi-grid {
+    grid-template-columns: repeat(auto-fit,
+      minmax(max(9.5rem, calc((100% - (var(--kpi-cols, 6) - 1) * 0.75rem) / var(--kpi-cols, 6))), 1fr));
+  }
 }
 
 /* A COMPACT TILE'S REMOVE SHOWS ON HOVER OR FOCUS (Stage 10mk). Its caption
