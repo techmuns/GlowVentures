@@ -2635,7 +2635,7 @@ export function PrivateMarket() {
                       <SortHeader key={measure} col={returnColId(measure)} view={bookView} pad="px-2 py-2"
                         title={auto ? PM_RETURN_HINTS.auto : meta?.title}
                         coverage={meta?.note}>
-                        {auto ? "Return" : fundCols && measure === "xirr" ? "IRR" : def.tag}
+                        {auto ? "Return" : fundCols && measure === "xirr" ? "IRR" : def.heading}
                       </SortHeader>
                     );
                   })}

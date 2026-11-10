@@ -1665,28 +1665,34 @@ export type ReturnMeasureDef = {
   label: string;
   /** The tag printed beside the figure, so a cell states which return it is. */
   tag: string;
+  /**
+   * The column heading. The tag, except where the family asked the heading to
+   * say more than the tag: "HPR - Absolute" (Stage 10ml), so a reader sees the
+   * holding-period return is not annualised. Cells keep the short tag.
+   */
+  heading: string;
   /** One line under the picker and in the column caption. */
   hint: string;
 };
 
 /** The picker's options, in reading order — `auto` first, as the default. */
 export const RETURN_MEASURES: ReturnMeasureDef[] = [
-  { key: "auto", label: "By methodology", tag: "AUTO",
+  { key: "auto", label: "By methodology", tag: "AUTO", heading: "Return",
     hint: "Held under a year, or bought on several dates: holding-period return. One purchase held a year or more: CAGR. Fixed income, and an account funded over several dated payments: XIRR. Only debt is annualised under a year. Each cell says which one it is." },
   // The measure KEY stays "absolute" — the URL is `?ret=absolute`, and the
   // internal ReturnMode and HoldingReturn kind are "absolute" too, so the whole
   // not-annualised basis shares one identifier. Only the reader-facing label and
   // tag became "Holding Period Return" / "HPR", at the family's request; every
   // branch that prints the total return on cost is tagged "HPR" below.
-  { key: "absolute", label: "Holding Period Return", tag: "HPR",
+  { key: "absolute", label: "Holding Period Return", tag: "HPR", heading: "HPR - Absolute",
     // Stage 10fb put the dividends a statement records into every FIFO return;
     // this hint said the opposite until Stage 10mj.
     hint: "FIFO return on deployed capital, not annualised: unrealised plus realised gain plus the dividends the statements record, over the cost of the units held and sold." },
-  { key: "cagr", label: "CAGR — annualised", tag: "CAGR",
+  { key: "cagr", label: "CAGR — annualised", tag: "CAGR", heading: "CAGR",
     hint: "The return on cost annualised — struck only where the money went in on one dated payment at least a year ago; under a year the holding-period return shows instead (debt alone is annualised), and money that went in over several dates a year or more ago is XIRR's." },
-  { key: "xirr", label: "XIRR — money-weighted", tag: "XIRR",
+  { key: "xirr", label: "XIRR — money-weighted", tag: "XIRR", heading: "XIRR",
     hint: "A money-weighted return across every cash flow. It needs each payment's date and amount — which the statements carry for a whole account, and for a holding whose every unit its account's dated trades or lot register account for — so it shows on those rows, and is absent, with the reason, everywhere else. Under a year the holding-period return shows instead, never an annual rate (debt alone is annualised)." },
-  { key: "ytd", label: "Year to date", tag: "YTD",
+  { key: "ytd", label: "Year to date", tag: "YTD", heading: "YTD",
     hint: "The holding's own return since 1 January — measurable only where it was opened during the year, because otherwise its value on 1 January is missing." },
 ];
 

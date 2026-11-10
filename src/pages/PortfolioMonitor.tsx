@@ -4292,7 +4292,7 @@ export function PortfolioMonitor() {
                       <SortHeader key={measure} col={`ret:${measure}`} view={holdView} pad="px-2 py-1.5"
                         title={auto ? undefined : def.hint}
                         note={meta?.note} noteTitle={meta?.title}>
-                        {auto ? "Return" : def.tag}
+                        {auto ? "Return" : def.heading}
                       </SortHeader>
                     );
                   })}
@@ -7123,7 +7123,7 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
                     <SortHeader key={measure} col={`ret:${measure}`} view={dv} pad="px-3 py-2.5"
                       title={TXN_MEASURE_HINT[measure]}
                       note={meta?.note} noteTitle={meta?.title}>
-                      {measure === "auto" ? "Return" : def.tag}
+                      {measure === "auto" ? "Return" : def.heading}
                     </SortHeader>
                   );
                 })}
