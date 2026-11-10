@@ -8,7 +8,7 @@
  * Bundled by the checks with esbuild; it imports the helpers under test, so a
  * check built on it strikes the page against the same rows, never a second set.
  */
-import { BOOK_ACCOUNTS, BOOK_POSITIONS } from '../../src/data/glowData';
+import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_TAPE_ROWS } from '../../src/data/glowData';
 import { currentHoldings, dedupedPositions } from '../../src/lib/analytics';
 import { applyFundNavs, depositoryFundHoldings, unpricedStatementUnits } from '../../src/lib/fundNavs';
 import { applyCorporateActionQuotes } from '../../src/lib/corporateActions';
@@ -21,7 +21,10 @@ import type { Position } from '../../src/lib/types';
 
 /** `consolidated` with no quote feed: what the page's cards and tables are struck over. */
 export function pageConsolidated(actions: ActionFeed | null): Position[] {
-  const layer = applyCorporateActionQuotes(BOOK_POSITIONS as Position[], BOOK_ACCOUNTS, null, actions);
+  // The names a PMS account's own tape bought past its statement join the same
+  // layer, as `PortfolioContext` passes them (Stage 10mh): leaving them out held
+  // Green Lantern's ten tape-only lines out of every period the check re-derives.
+  const layer = applyCorporateActionQuotes([...BOOK_POSITIONS, ...BOOK_TAPE_ROWS] as Position[], BOOK_ACCOUNTS, null, actions);
   return dedupedPositions(applyFundNavs([...layer.positions, ...applyQuotes([...depositoryFundHoldings(), ...unpricedStatementUnits()], null),
     ...depositoryShareHoldings(null, actions, undefined, BOOK_ACCOUNTS)]));
 }

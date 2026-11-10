@@ -185,9 +185,24 @@ function stepOf(u: ReturnUnit, b: BridgeBook): BridgeAccount {
   }
   if (u.window) {
     const w = u.window;
-    if (u.assumption) return { ...base, from: w.openDate, to: w.closeDate, opening: w.openValue, added: 0, takenOut: w.capitalOut,
-      split: { realised: 0, unrealised: w.closeValue - w.openValue, income: u.assumption.income, charges: null, source: 'assumed-holding',
-        note: 'Assumed unchanged holding: published prices and gross dividend entitlements; no sale or withdrawal is claimed.' }, unsplitReason: null };
+    /**
+     * A PURCHASE RECORD'S YEAR IS MONEY IN AND OUT ON ITS DATES (Stage 10mm).
+     * `recordedYearWindow` (Stage 10jo) opens on the units held at the period's
+     * open and dates every purchase and sale on the record inside it. Since SVAN's
+     * trade tapes dated most of its holdings (Stage 10lx), such windows carry
+     * purchases; read as nothing added, the bridge's start + added − taken out +
+     * gain fell ₹28.5 L short of its end. Purchases are money added, sales and
+     * income money taken out. Where nothing was sold the price change is the
+     * units' unrealised gain; a sale on the record realised part of it, which no
+     * cost here measures, so that row's gain stays unsplit and says why.
+     */
+    if (u.assumption) {
+      const sold = w.capitalOut - u.assumption.income > 0.005;
+      return { ...base, from: w.openDate, to: w.closeDate, opening: w.openValue, added: w.capitalIn, takenOut: w.capitalOut,
+        split: sold ? null : { realised: 0, unrealised: u.gain - u.assumption.income, income: u.assumption.income, charges: null, source: 'assumed-holding',
+          note: 'Assumed unchanged holding: published prices and gross dividend entitlements; no sale or withdrawal is claimed.' },
+        unsplitReason: sold ? 'a sale on its purchase record realised part of its gain, and no cost here says how much' : null };
+    }
     const own = u.key === u.accountId;
     const fromStatement = own ? statementSplit(b, u.accountId, w.openDate, w.closeDate, w.gain) : null;
     const fund = fromStatement ?? (own ? fundSplit(b, u.accountId, w.openDate, w.closeDate, w.gain) : 'its return covers part of an account');
