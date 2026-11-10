@@ -5,7 +5,7 @@ import { ArrowUpRight } from "lucide-react";
 // Compact KPI tile — like StatTile but a touch smaller and non-wrapping, so several
 // fit across a strip inside the app frame (with the left nav) without the value
 // breaking onto two lines. Used by the CIO cockpit and the Stock Info page.
-export function Kpi({ label, labelText, value, large, second, sub, delta, icon, info, href, hrefTitle, action, raise }: {
+export function Kpi({ label, labelText, value, large, second, sub, delta, icon, info, href, hrefTitle, action, raise, compact = false }: {
   /**
    * NORMALLY A STRING, and a CONTROL where the tile's metric is the reader's to
    * choose — Morning CIO's strip renders `SelectableTiles`' picker here. A
@@ -66,6 +66,15 @@ export function Kpi({ label, labelText, value, large, second, sub, delta, icon, 
   action?: ReactNode;
   /** Raise the tile above its neighbours while its picker's menu hangs over them. */
   raise?: boolean;
+  /**
+   * TIGHTER SPACING AND TYPE, SAME CONTENT (Morning CIO's strip, 10 Nov 2026:
+   * *"Without changing any content on the tiles make them smaller they are
+   * taking too much space because of which the content below is tough to
+   * view"*). That page does not scroll, so every pixel the strip takes is one
+   * the panel under it loses. Padding, the figure's size and the gaps between
+   * lines shrink; no line, figure or control is dropped.
+   */
+  compact?: boolean;
 }) {
   const name = labelText ?? (typeof label === "string" ? label : "");
   return (
@@ -73,7 +82,7 @@ export function Kpi({ label, labelText, value, large, second, sub, delta, icon, 
     // with no `href` — the drill-down page's own four, a stock page's — must
     // keep reading as a panel: a card that presses under the pointer and then
     // does nothing is a worse lie than a flat one.
-    <div className={`card relative p-4${href ? " kpi-btn" : ""}${raise ? " z-30" : ""}`}>
+    <div className={`card relative ${compact ? "px-3 py-2.5" : "p-4"}${href ? " kpi-btn" : ""}${raise ? " z-30" : ""}`}>
       {href && (
         <Link to={href} title={hrefTitle} aria-label={`${name} — open the holdings behind it`}
           className="absolute inset-0 z-0 rounded-2xl ring-focus" />
@@ -116,16 +125,22 @@ export function Kpi({ label, labelText, value, large, second, sub, delta, icon, 
             {label}
           </div>
         )}
-        {(info || icon) && <div className="flex shrink-0 items-center gap-1.5">{info}{icon && <div className="text-slate-500">{icon}</div>}</div>}
+        {/* COMPACT: REMOVE JOINS THE HEADER'S ICONS. In the bottom corner it sat
+            over the last line of a tile's caption once the tile was tightened;
+            up here it costs no height and covers nothing. */}
+        {(info || icon || (compact && action)) && <div className={`flex shrink-0 items-center ${compact ? "gap-1" : "gap-1.5"}`}>{info}{icon && <div className="text-slate-500">{icon}</div>}
+          {compact && action && <div className="pointer-events-auto">{action}</div>}</div>}
       </div>
       {/* The wrapper passes clicks to a tile target. Explicit source controls
           take pointer events back on their own boxes, without nesting controls
           inside the tile's sibling anchor. */}
-      <div data-kpi-value className={`pointer-events-none relative z-10 w-fit max-w-full whitespace-nowrap font-display font-bold tracking-tight text-slate-100 tabular ${large ? "mt-3 text-[30px] leading-none" : "mt-2.5 text-[19px]"}`}>{value}</div>
+      <div data-kpi-value className={`pointer-events-none relative z-10 w-fit max-w-full whitespace-nowrap font-display font-bold tracking-tight text-slate-100 tabular ${compact
+        ? large ? "mt-1.5 text-[24px] leading-none" : "mt-1 text-[17px] leading-tight"
+        : large ? "mt-3 text-[30px] leading-none" : "mt-2.5 text-[19px]"}`}>{value}</div>
       {second && (
-        <div data-kpi-second className="pointer-events-none relative z-10 mt-1 whitespace-nowrap text-[12.5px] text-slate-300">{second}</div>
+        <div data-kpi-second className={`pointer-events-none relative z-10 whitespace-nowrap text-slate-300 ${compact ? "mt-0.5 text-[11px] leading-snug" : "mt-1 text-[12.5px]"}`}>{second}</div>
       )}
-      <div className="pointer-events-none relative z-10 mt-1.5 flex items-center gap-2 text-[11px]">
+      <div className={`pointer-events-none relative z-10 flex items-center gap-2 ${compact ? "mt-1 text-[10px] leading-[1.3]" : "mt-1.5 text-[11px]"}`}>
         {typeof delta === "number" && (
           <span className={`mono ${delta > 0 ? "text-gain" : delta < 0 ? "text-loss" : "text-slate-400"}`}>
             {delta > 0 ? "▲" : delta < 0 ? "▼" : "■"} {Math.abs(delta).toFixed(1)}%
@@ -140,7 +155,7 @@ export function Kpi({ label, labelText, value, large, second, sub, delta, icon, 
           clicks through to the tile's link. Adding a tile is not a control
           inside one: it is the ADD TILE card, the strip's own last cell
           (Stage 10cl). */}
-      {action && <div className="pointer-events-auto absolute bottom-2.5 right-2.5 z-20">{action}</div>}
+      {action && !compact && <div className="pointer-events-auto absolute bottom-2.5 right-2.5 z-20">{action}</div>}
     </div>
   );
 }

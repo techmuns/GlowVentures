@@ -454,12 +454,7 @@ const VIEWS: { id: string; label: string; href: string; words: string[]; detail:
     detail: "Morning CIO · how the book is split, what is still to be called, and where it is concentrated" },
   { id: "view:nav-chart", label: "Our Book vs Benchmark", href: "/cio?tab=nav", words: ["nifty", "nifty 500", "benchmark", "nav chart", "index", "vs nifty"],
     detail: "Morning CIO · the book's dated valuation series against the index" },
-  // THE FAMILY'S OWN PRICE ALERTS (Stage 10cq) — every level they set, and
-  // which have been reached. The words are the ones the alert boxes use.
-  { id: "view:alerts", label: "All alerts", href: "/cio?tab=alerts",
-    words: ["alerts", "alert", "price alerts", "my alerts", "stop loss", "stop losses", "buy level", "sell level",
-      "target price", "entry exit", "triggered alerts"],
-    detail: "Morning CIO · every price alert you have set, and which have been reached" },
+  // No "All alerts" entry: Morning CIO's All alerts tab is gone (Stage 10mk).
   { id: "view:pm-owners", label: "Private market by owner", href: "/private-market?view=owners", words: ["private by owner", "who holds private"],
     detail: "Private Market · each member's private holdings, as their own statements print them" },
   { id: "view:pm-returns", label: "Private fund returns", href: "/private-market?ret=absolute,xirr", words: ["fund returns", "private returns", "fund xirr", "hpr"],

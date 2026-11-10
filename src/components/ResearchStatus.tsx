@@ -1,7 +1,7 @@
 import { AlertTriangle, CheckCircle2, Info, Loader2 } from "lucide-react";
 import { fmtDateTime } from "@/lib/format";
-import { researchLine, summaryLine } from "@/lib/researchLevels";
-import { useResearchState, useResearchStatus, useResearchSummary } from "@/lib/useResearchSync";
+import { researchLine } from "@/lib/researchLevels";
+import { useResearchState, useResearchStatus } from "@/lib/useResearchSync";
 
 // ── WHERE A LEVEL WENT, IN ONE LINE (Stage 10cq) ─────────────────────────────
 //
@@ -43,26 +43,6 @@ export function ResearchStatusLine({ securityKey, updatedAt }: { securityKey: st
       {ICON[line.tone]}
       <span className={line.tone === "ok" || line.tone === "warn" ? "text-slate-300" : undefined}>{line.text}</span>
       {updatedAt ? <span>· last changed {fmtDateTime(updatedAt)}</span> : null}
-    </p>
-  );
-}
-
-/**
- * Under the All alerts table: how many companies' levels are in Glow Central
- * Research, counted rather than claimed, and the one reason any are not. ONE
- * short status line — a note under a table is one short line (Stage 10ci) and
- * no line reads as a sentence (main's Stage 10cp); the sentences it has no room
- * for are its hover. `summaryLine` decides both.
- */
-export function ResearchSummaryLine() {
-  const s = useResearchSummary();
-  const { busy } = useResearchState();
-  const line = summaryLine(s, busy, origin());
-  if (!line) return null;
-  return (
-    <p data-research-summary data-sent={s.sent} data-companies={s.companies} data-waiting={s.waiting}
-      data-declined={s.declined} data-local={s.local} data-code={s.code ?? ""} title={line.title}>
-      {line.text}
     </p>
   );
 }
