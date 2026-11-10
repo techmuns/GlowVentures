@@ -463,6 +463,8 @@ html:not(.dark) .bg-slate-800\/40 { background-color: rgba(234, 228, 213, 0.4); 
 html:not(.dark) .bg-slate-800\/30 { background-color: rgba(234, 228, 213, 0.3); }
 html:not(.dark) .bg-slate-800\/20 { background-color: rgba(234, 228, 213, 0.2); }
 html:not(.dark) .bg-slate-700 { background-color: #d8d3c4; }
+/* The gain card's "held at value" share (Stage 10mn): a warm grey, apart from the gold shares and the cream track. */
+html:not(.dark) .bg-slate-500 { background-color: #a8a291; }
 
 /* Hover variants (Tailwind emits these as separate selectors) */
 html:not(.dark) .hover\:bg-ink-700\/60:hover { background-color: rgba(250, 248, 241, 0.9); }

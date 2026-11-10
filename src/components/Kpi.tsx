@@ -125,7 +125,13 @@ export function Kpi({ label, labelText, value, large, second, sub, delta, icon, 
             {label}
           </div>
         )}
-        {(info || icon) && <div className={`flex shrink-0 items-center ${compact ? "gap-1" : "gap-1.5"}`}>{info}{icon && <div className="text-slate-500">{icon}</div>}</div>}
+        {/* COMPACT: NO DECORATIVE ICON, AND THE ⓘ DOES NOT SET THE ROW'S HEIGHT
+            (Stage 10mn: *"compress them more … so they dont take so much of
+            space"*). The icon only repeated the heading and took the width a
+            heading needs on a six-column strip; the 24px info target keeps its
+            size and hangs into the padding, centred on the heading's line. */}
+        {compact ? info && <div className="-my-[5px] -mr-1 flex shrink-0 items-center">{info}</div>
+          : (info || icon) && <div className="flex shrink-0 items-center gap-1.5">{info}{icon && <div className="text-slate-500">{icon}</div>}</div>}
       </div>
       {/* The wrapper passes clicks to a tile target. Explicit source controls
           take pointer events back on their own boxes, without nesting controls
@@ -136,14 +142,15 @@ export function Kpi({ label, labelText, value, large, second, sub, delta, icon, 
       {second && (
         <div data-kpi-second className={`pointer-events-none relative z-10 whitespace-nowrap text-slate-300 ${compact ? "mt-0.5 text-[11px] leading-snug" : "mt-1 text-[12.5px]"}`}>{second}</div>
       )}
-      <div className={`pointer-events-none relative z-10 flex items-center gap-2 ${compact ? "mt-1 text-[10px] leading-[1.3]" : "mt-1.5 text-[11px]"}`}>
+      {/* No caption, no arrow: no row — an empty one still spent its margin. */}
+      {(sub || typeof delta === "number") && <div className={`pointer-events-none relative z-10 flex items-center gap-2 ${compact ? "mt-1 text-[10px] leading-[1.3]" : "mt-1.5 text-[11px]"}`}>
         {typeof delta === "number" && (
           <span className={`mono ${delta > 0 ? "text-gain" : delta < 0 ? "text-loss" : "text-slate-400"}`}>
             {delta > 0 ? "▲" : delta < 0 ? "▼" : "■"} {Math.abs(delta).toFixed(1)}%
           </span>
         )}
         {sub && <span data-kpi-sub className="text-slate-400">{sub}</span>}
-      </div>
+      </div>}
       {/* THE TILE'S OWN CONTROL — remove — IN THE BOTTOM CORNER, above the
           click target. In the header it took the width the label needed; down
           here it sits beside a figure that is left-aligned and short.

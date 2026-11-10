@@ -24,6 +24,12 @@ import {
 export type TileMetric = {
   id: string;
   label: string;
+  /**
+   * THE HEADING ON THE TILE'S FACE, where `label` would wrap (Stage 10mn): the
+   * same metric in fewer words, never a different one. The picker's menu and
+   * the tile's accessible name keep `label`.
+   */
+  short?: string;
   icon?: ReactNode;
   value: ReactNode;
   /** `kpi` variant only: the figure is the card, drawn large. */
@@ -499,9 +505,11 @@ function MetricPicker({ slot, metrics, current, onPick, onOpenChange, savedWhere
           left beside the chevron: nothing is sized from the text any more, and a
           label wraps only where the tile really is too narrow for it. */}
       <button type="button" data-tile-select={slot} aria-haspopup="listbox" aria-expanded={open}
-        onClick={() => setOpen((v) => !v)} title="Choose what this tile shows"
-        className="label-xs -ml-1 flex w-full items-start gap-1 rounded px-1 py-0.5 text-left text-slate-400 ring-focus transition-colors hover:bg-ink-700/60 hover:text-slate-200">
-        <span className="min-w-0 flex-1 whitespace-normal break-words leading-snug">{current.label}</span>
+        onClick={() => setOpen((v) => !v)} title={current.short ? `${current.label} — choose what this tile shows` : "Choose what this tile shows"}
+        // `-ml-1` aligns the text with the figure below; the 4px it moves left
+        // are given back on the right, so the heading has its column's full width (Stage 10mn).
+        className="label-xs -ml-1 flex w-[calc(100%+0.25rem)] items-start gap-1 rounded px-1 py-0.5 text-left text-slate-400 ring-focus transition-colors hover:bg-ink-700/60 hover:text-slate-200">
+        <span className="min-w-0 flex-1 whitespace-normal break-words leading-snug">{current.short ?? current.label}</span>
         <ChevronDown className="mt-px h-3 w-3 shrink-0" />
       </button>
       {open && (
