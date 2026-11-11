@@ -191,3 +191,19 @@ html.dark .home-hero { background: linear-gradient(110deg, #203c35, #252c37 70%,
 @media (max-width: 700px) { .home-widget-half { grid-column: span 12; } .home-widget-dialog { width: calc(100vw - 20px); max-height: calc(100dvh - 30px); border-radius: 12px; } .home-widget-dialog-content { padding: 20px; } .home-widget-catalog { gap: 20px 14px; } .home-widget-art { height: 110px; } .home-library-filters > select { width: 112px; } .home-widget-dialog-heading h2 { font-size: 22px; } }
 @media (max-width: 430px) { .home-widget-board { gap: 12px; } .home-widget-catalog { grid-template-columns: 1fr; } .home-widget-art { height: 135px; } .home-widget-tools { flex-wrap: wrap; } .home-widget-quarter:has(.home-widget-tools) { grid-column: span 12; } .home-widget-live-preview { padding: 8px; } .home-widget-actions { gap: 5px; } .home-widget-actions .home-button { padding: 7px; font-size: 10px; } }
 @media (prefers-reduced-motion: reduce) { .home-dashboard *, .home-dashboard *::before, .home-dashboard *::after { transition: none !important; scroll-behavior: auto !important; } }
+/* Keep the confirmation action visible while a widget preview scrolls. */
+.home-widget-dialog-content { display: flex; flex-direction: column; max-height: calc(100dvh - 62px); }
+.home-widget-dialog-heading, .home-library-filters, .home-widget-category, .home-widget-description, .home-widget-dialog-footer { flex-shrink: 0; }
+.home-widget-catalog { overflow-y: auto; min-height: 0; padding: 3px 3px 12px; }
+.home-widget-live-preview { flex: 1; min-height: 150px; max-height: min(420px, 45dvh); }
+.home-widget-dialog-footer { background: var(--home-surface); }
+.home-widget-description { margin: 16px 0; }
+.home-coverage-text { overflow: auto; white-space: pre-line; overflow-wrap: anywhere; font-size: 12px; line-height: 1.8; color: var(--home-muted); }
+html #root .home-table { border: 0; --table-grid-width: 0px; --table-section-width: 0px; --table-grid: var(--home-border); }
+html #root .home-table :is(th, td) { border: 0; border-bottom: 1px solid var(--home-border); }
+html #root .home-table tr > :is(th, td):first-child { border-left: 0; }
+html #root .home-table > :is(thead, tbody, tfoot):first-of-type > tr:first-child > :is(th, td),
+html #root .home-table tfoot > tr:first-child > :is(th, td) { border-top: 0; }
+html #root .home-table thead > tr:last-child > :is(th, td) { border-bottom: 1px solid var(--home-border); }
+html #root .home-table tfoot td { border-bottom: 0; }
+@media (max-width: 700px) { .home-widget-dialog-content { max-height: calc(100dvh - 34px); } }

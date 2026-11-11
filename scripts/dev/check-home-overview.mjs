@@ -63,6 +63,9 @@ try {
     await page.waitForFunction(before => {
       const n = document.querySelector('[data-home-benchmark-return]')?.getAttribute('data-home-benchmark-return'); return n && Math.abs(Number(n) - before) > .01;
     }, benchmarkBefore);
+    await page.getByRole('button', { name: 'Return calculation and coverage', exact: true }).first().click();
+    await page.getByRole('dialog', { name: 'Return calculation and coverage', exact: true }).waitFor();
+    await page.getByRole('button', { name: 'Close return coverage', exact: true }).click();
     assert.ok(await page.locator('[data-home-overview]').evaluate(el => el.scrollWidth <= el.clientWidth + 1), 'Home has no page-level horizontal overflow');
     await page.locator('[data-home-overview]').screenshot({ path: path.join(out, `${theme}-${width}.png`) });
     await page.getByRole('button', { name: 'Add widgets', exact: true }).click();
