@@ -35,7 +35,7 @@ function walk(value, visit, pointer = '') {
   else visit(value, pointer);
 }
 const nonempty = v => v !== null && v !== undefined && v !== '';
-const numericFields = new Set(['quantity', 'unitCost', 'totalCost', 'marketPrice', 'marketValue', 'amount', 'gross', 'net', 'price', 'units', 'accruedIncome', 'distributedIncome', 'realized', 'positionIrrPct', 'benchmarkIrrPct', 'purchaseAmount', 'saleAmount', 'shortTerm', 'longTerm']);
+const numericFields = new Set(['quantity', 'unitCost', 'totalCost', 'marketPrice', 'marketValue', 'amount', 'gross', 'net', 'price', 'units', 'accruedIncome', 'distributedIncome', 'realized', 'positionIrrPct', 'benchmarkIrrPct', 'purchaseAmount', 'saleAmount', 'shortTerm', 'longTerm', 'longTermQuantity']);
 const identity = d => stable([d.provider, d.accountNo, d.reportType, d.asOf, d.periodFrom, d.periodTo]);
 const content = d => {
   const copy = structuredClone(d);

@@ -296,6 +296,7 @@ function readEquityPortfolio(rows, text, meta) {
     const unrealised = num(f.unrealised);
     const realised = num(f.realised);
     const total = num(f.totalPnl);
+    const longTerm = num(f.longTermQty);
     /**
      * EVERY ROW IS CHECKED AGAINST ITSELF before a figure is taken: quantity ×
      * LTP is the current value, current less investment is the unrealised P&L,
@@ -307,6 +308,7 @@ function readEquityPortfolio(rows, text, meta) {
     if (!close(quantity * ltp, current, 0.01 * Math.max(1, quantity))) fails.push(`QTY × LTP is ${(quantity * ltp).toFixed(2)}, not the printed CURRENT VALUE ${f.current}`);
     if (!close(current - investment, unrealised, 0.02)) fails.push(`CURRENT − INVESTMENT is ${(current - investment).toFixed(2)}, not the printed UNREALISED P&L ${f.unrealised}`);
     if (total != null && !close(unrealised + (realised ?? 0), total, 0.02)) fails.push(`UNREALISED + REALISED is ${(unrealised + (realised ?? 0)).toFixed(2)}, not the printed TOTAL P&L ${f.totalPnl}`);
+    if (longTerm != null && !(longTerm >= 0 && longTerm <= quantity)) fails.push(`LONG TERM QTY ${f.longTermQty} is not between nil and the QTY ${f.quantity}`);
     if (!close(avg * quantity, investment, 0.005 * quantity + 0.01)) fails.push(`AVG PRICE × QTY is ${(avg * quantity).toFixed(2)}, not the printed INVESTMENT VALUE ${f.investment}`);
     if (fails.length) {
       warn(warnings, "row-does-not-reproduce-itself", `${symbol}: ${fails.join("; ")} — the row is not read.`);
@@ -320,6 +322,9 @@ function readEquityPortfolio(rows, text, meta) {
       printedSecurity: symbol,
       assetClass: "Equity",
       quantity,
+      // What the broker's own lot record holds past twelve months — a check on
+      // any purchase dates the book is given for these units, never a date.
+      longTermQuantity: longTerm,
       unitCost: avg,
       // The INVESTMENT VALUE is the primitive: AVG PRICE is printed to two
       // decimals and times the quantity misses it by the rounding.

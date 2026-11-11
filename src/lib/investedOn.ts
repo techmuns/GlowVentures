@@ -46,7 +46,7 @@ import savedActions from "../../public/data/corporate-actions.json";
 import { symbolForKey } from "./quotes";
 import { acquisitionIdentity } from "../../shared/fundUnitActions.mjs";
 
-export type InvestedOnSource = "allotments" | "lots" | "trades" | "action-trades" | "bonus-trades" | "recovered-lots" | "calls" | "review" | "account";
+export type InvestedOnSource = "allotments" | "lots" | "trades" | "action-trades" | "bonus-trades" | "recovered-lots" | "review-lots" | "calls" | "review" | "account";
 
 /**
  * The first and last date the money went in, and how many dated payments that
@@ -147,6 +147,13 @@ function lineDates(p: Position): LineDates | null {
   if (rolled?.heldPurchases && p.quantity != null && Math.abs(rolled.quantity - p.quantity) <= .0005) {
     return { dates: [rolled.heldPurchases.first, rolled.heldPurchases.last], source: "recovered-lots" };
   }
+  // The review's dated buys carried through the account's own later trades to
+  // exactly the units held, the broker's long-term quantity agreeing (Stage 10mr).
+  const reviewed = p.reviewPurchases;
+  if (reviewed?.first && reviewed.last && reviewed.units != null && p.quantity != null
+    && Math.abs(reviewed.units - p.quantity) <= .0005 && !p.rolledForward) {
+    return { dates: [reviewed.first, reviewed.last], source: "review-lots", payments: reviewed.lots };
+  }
   const called = CALL_DATES.get(trancheKey(p.accountId, p.securityKey));
   if (called?.length) return { dates: called, source: "calls" };
   if (p.investedDates) return { dates: [p.investedDates.from, p.investedDates.to], source: "review" };
@@ -155,7 +162,7 @@ function lineDates(p: Position): LineDates | null {
 
 /** How many dated payments a line is — null where its source dates a span. */
 function linePayments(p: Position, d: LineDates): number | null {
-  if (d.source === "bonus-trades" || d.source === "action-trades") return d.payments ?? null;
+  if (d.source === "bonus-trades" || d.source === "action-trades" || d.source === "review-lots") return d.payments ?? null;
   if (d.source === "trades") return p.tradeRecord?.held?.lots ?? null;
   if (d.source === "recovered-lots") return p.recoveredCost?.heldPurchases?.lots ?? p.rolledForward?.heldPurchases?.lots ?? null;
   if (d.source === "review") return d.dates[0] === d.dates[1] && /^\d{4}-\d{2}-\d{2}$/.test(d.dates[0]) ? 1 : null;
@@ -209,6 +216,7 @@ const SOURCE_WORDS: Record<InvestedOnSource, string> = {
   "action-trades": "the account's own dated trades carried through the splits, bonuses and demergers that made the rest of its units, every unit held matched to the purchase that paid for it, first-in, first-out",
   "bonus-trades": "the account's original purchases, carried through the saved noncash bonus into the exact current holding quantity",
   "recovered-lots": "the original purchase lots in the supplementary records, reconciled to this account, ISIN and every unit still held, first-in, first-out",
+  "review-lots": "the purchase dates in the family's 30 June 2026 review, carried through this account's own dated sales to every unit held, first-in, first-out, the broker's long-term quantity and cost agreeing",
   calls: "the fund's dated capital calls",
   review: "the family's review's investment dates",
   account: "the inception date and capital record the statements print",
@@ -240,6 +248,7 @@ const ACCOUNTS = new Map<string, Account>(BOOK_ACCOUNTS.map((a) => [a.accountId,
  */
 export function lineUndatedReason(p: Position): string | null {
   if (investedOnOf([p])) return null;
+  if (p.reviewPurchases?.reason) return `the review dates its purchases, but ${p.reviewPurchases.reason}`;
   if (p.tradeRecord?.reason) return p.tradeRecord.reason;
   const trades = holdingTradesOf(p);
   const a = ACCOUNTS.get(p.accountId);

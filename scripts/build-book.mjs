@@ -19,7 +19,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { OWNERS, ownerById } from "../shared/owners.mjs";
+import { OWNERS, ownerById, ownerIdFor } from "../shared/owners.mjs";
 import { resolveSector, UNCLASSIFIED } from "../shared/sectors.mjs";
 import { securityKeyOf } from "../shared/securityKey.mjs";
 import { marketSideOf, readAifCategory, readsAsPrivateEquity, fundMarketSideBasis } from "../shared/aifCategory.mjs";
@@ -76,7 +76,8 @@ import { NOT_ATTRIBUTED, NOT_ATTRIBUTED_NAME } from "../shared/reviewHolders.mjs
 import { REVIEW_AS_OF } from "./lib/reviewPrivateRead.mjs";
 import { dematAccountsFor } from "./lib/dematAccounts.mjs";
 import { readSpreadsheet } from "./ingest/lib/sheet.mjs";
-import { REVIEW_WORKBOOK } from "./lib/reviewPrivateRead.mjs";
+import { REVIEW_WORKBOOK, readTransactions as readReviewTransactions } from "./lib/reviewPrivateRead.mjs";
+import { reviewPurchaseDates } from "./lib/reviewPurchaseDates.mjs";
 import { REGISTER } from "./lib/recoverHoldingCosts.mjs";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const AUDIT_DIR = process.env.GLOW_AUDIT_DIR ?? path.join(ROOT, "public", "audit");
@@ -2399,6 +2400,10 @@ function build(archived, archiveCount = archived.length, references = {}) {
   // The saved NSE corporate-action capture, for purchase dates carried through a
   // split, bonus or demerger (Stage 10ly, `actionRecordFor`).
   const savedActions = references.savedActions ?? loadSavedActions(ROOT);
+  /** The review's dated rows, read once and only where a holding asks (Stage 10mr). */
+  let reviewTxnRows = null;
+  const reviewTransactionRows = () => reviewTxnRows ??= readReviewTransactions(references.reviewWorkbook
+    ?? readSpreadsheet(fs.readFileSync(path.join(ROOT, REVIEW_WORKBOOK)))).rows;
 
   // ── ISIN, joined across the drop's own documents ─────────────────────────
   //
@@ -3230,6 +3235,24 @@ function build(archived, archiveCount = archived.length, references = {}) {
         + ` — ${r.held.lots} dated purchase lot(s), ${r.held.first} to ${r.held.last}`);
       return r;
     };
+    /**
+     * …AND WHERE THE ACCOUNT'S WINDOW OPENS AFTER THE PURCHASES, THE REVIEW'S
+     * DATED BUYS CARRIED THROUGH THE WINDOW'S OWN TRADES (Stage 10mr) — a date
+     * source only; the statement's cost stands. See `reviewPurchaseDates.mjs`.
+     */
+    const reviewDatesOf = (h, marketSide) => {
+      const r = reviewPurchaseDates({ accountId, ownerId, holding: { ...h, marketSide }, asOf, window: tapeWindow,
+        trades: holdingTradeRows(tapeOf(h.securityKey)), reviewRows: reviewTransactionRows(), ownerOf: (n) => ownerIdFor(n),
+        workbook: REVIEW_WORKBOOK });
+      if (!r) return {};
+      if (r.reason) {
+        notes.push(`account ${accountNo}: ${h.securityKey} is not dated off the review — ${r.reason}`);
+        return { reviewPurchases: { reason: r.reason } };
+      }
+      notes.push(`account ${accountNo}: ${h.securityKey}'s ${r.units} units are the review's ${r.closing.units} of ${r.closing.date} `
+        + `carried through ${r.sales} sale(s) to ${r.through} — ${r.lots} dated purchase lot(s), ${r.first} to ${r.last}`);
+      return { reviewPurchases: r };
+    };
     const rollForwardOf = (h, base) => {
       if (!asOf || !tapeTo || tapeTo <= asOf || !isNum(h.quantity) || !h.securityKey) return null;
       const rows = dated.transactions
@@ -4007,6 +4030,7 @@ function build(archived, archiveCount = archived.length, references = {}) {
           const actionRecord = actionRecordOf(h, rec);
           return { tradeRecord: rec ?? undefined, ...(actionRecord ? { actionRecord } : {}) };
         })(tradeRecordOf(h)),
+        ...reviewDatesOf(h, marketSideOf({ assetClass: h.assetClass, security: h.security, securityKey: h.securityKey }, acctForPositions)),
         ...((income) => {
           // THE SAME DIVIDENDS `dividendReceived` TOTALS, each on its day (Stage 10fw).
           if (income.length) {

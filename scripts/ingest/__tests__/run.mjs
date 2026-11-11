@@ -36,6 +36,7 @@ const SUITES = [
   // The calculation audit's book-side rules and the figures they moved (Stage 10fz).
   { name: "calcAudit", file: "calcAudit.test.mjs", required: true },
   { name: "holdingTrades", file: "holdingTrades.test.mjs", required: true },
+  { name: "reviewPurchaseDates", file: "reviewPurchaseDates.test.mjs", required: true },
   { name: "capitalCalls", file: "capitalCalls.test.mjs", required: true },
   { name: "payouts", file: "payouts.test.mjs", required: true },
   { name: "hdfcOwner", file: "hdfcNsdlOwner.test.mjs", required: true },
