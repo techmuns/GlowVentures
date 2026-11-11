@@ -1500,3 +1500,8 @@ Codex's review of #352, verified against the code and the book:
 - Identity is an alias table (`REVIEW_PRODUCT_BY_KEY`, `REVIEW_CUSTODY_BY_ACCOUNT`), never an amount or a date.
 - The client request (Stage 10mq) no longer asks HDFC Securities for these three holdings' dates: 41 named records (was 43).
 - Checks: `reviewPurchaseDates.test.mjs` (each gate broken once).
+
+### Stage 10mt — Returns controls share one compact row
+
+- The return-type group's full explanation set its flex basis, pushing it onto a second line while leaving unused space beside the dates. The group now reserves 14rem for its label and dropdown and grows into the remaining row width; the short explanation truncates first, with the full explanation retained on hover.
+- Toolbar gaps are 12px. The period buttons can wrap within the toolbar on narrow screens, and a wrapped return-type group starts at the left edge rather than floating to the right. Period, date and calculation behavior is unchanged.

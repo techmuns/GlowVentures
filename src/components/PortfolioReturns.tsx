@@ -229,8 +229,8 @@ export default function PortfolioReturns() {
     <div className="flex h-auto min-h-0 flex-col gap-3 lg:h-full" data-portfolio-returns>
       {/* ── ONE TOOLBAR (Stage 10fp): the period, the window and the measure on
           one strip, so the cards below start at the top of the panel. ── */}
-      <div className="card flex flex-wrap items-center gap-x-4 gap-y-2 px-3 py-2" data-returns-toolbar>
-        <div className="ret-well flex flex-wrap items-center gap-0.5" data-returns-periods>
+      <div className="card flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2" data-returns-toolbar>
+        <div className="ret-well flex max-w-full flex-wrap items-center gap-0.5" data-returns-periods>
           {PERIODS.map((p) => (
             <button key={p.key} type="button" title={p.title} className={btn(period === p.key)} data-returns-period={p.key} aria-pressed={period === p.key}
               onClick={() => set(p.key === "invested-year" ? {rp:p.key,rto:null,rtype:"absolute",rview:null} : p.key === "custom" ? { rp: "custom", rfrom: start ?? fromParam } : { rp: p.key === "fytd" ? null : p.key })}>
@@ -253,10 +253,12 @@ export default function PortfolioReturns() {
               onChange={(e) => set({ rto: e.target.value || null })} />
           </label>
         </div>
-        <label className="ml-auto flex items-center gap-2 text-[12px] text-slate-400" data-returns-types
+        {/* Reserve room for the controls; the explanation uses only the space
+            left on the row instead of pushing the whole group onto a new one. */}
+        <label className="flex min-w-0 flex-[1_1_14rem] items-center gap-2 text-[12px] text-slate-400" data-returns-types
           title={returnHelp.title}>
-          <span className="label-xs">Return type</span>
-          <select className="rounded-md border border-ink-700 bg-ink-800 px-2 py-1 text-[12.5px] font-semibold text-slate-100" data-returns-type-select
+          <span className="label-xs shrink-0 whitespace-nowrap">Return type</span>
+          <select className="shrink-0 rounded-md border border-ink-700 bg-ink-800 px-2 py-1 text-[12.5px] font-semibold text-slate-100" data-returns-type-select
             data-requested-return-type={rtype} data-displayed-return-type={displayedRtype}
             value={displayedRtype !== rtype ? 'period-absolute' : rtype} onChange={(e) => set({ rtype: e.target.value === "xirr" && !investedYear ? null : e.target.value })}>
             {/* A display-only option keeps all three explicit choices available.
@@ -269,7 +271,7 @@ export default function PortfolioReturns() {
               </option>
             ))}
           </select>
-          <span className="max-w-[16rem] truncate text-[11.5px] text-slate-500" data-returns-type-desc={displayedRtype}>
+          <span className="min-w-0 flex-1 truncate text-[11.5px] text-slate-500" data-returns-type-desc={displayedRtype}>
             {returnHelp.short}
           </span>
         </label>
