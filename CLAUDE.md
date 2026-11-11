@@ -297,8 +297,11 @@ Two LKP workbooks in `october-2026-c/` never arrived — the mail server replace
 each with a removal notice — and stay listed as never arrived until LKP re-sends
 them. The adviser's consolidated review
 workbook, the family's investment register and MOPWM's family transaction
-report (`october-2026-e/`, Stage 10hu) are read and **held out by decision** as
-statement sources. A monthly drop reissues the same filenames, so
+report (`october-2026-e/`, Stage 10hu) are read and are not statement
+sources: no extractor reads them. They supply dated records where a statement
+has none: the review values the private book, and the review, the register and
+the report supply costs, while the register also dates four holdings' money
+(Stage 10mv, `scripts/lib/registerRecords.mjs`). A monthly drop reissues the same filenames, so
 extraction mirrors each archive's own path under `source/`.
 
 **Accounts.** One row per account, regenerated from `BOOK_POSITIONS` by
@@ -463,7 +466,13 @@ Never derive one side from the others.
   owner/ISIN/date/quantity reconciliation; MOPWM's transaction report
   (`scripts/lib/mopwmTransactions.mjs`, Stage 10hu) is tried only where both
   leave a holding unrecovered, replayed to the statement's own date. It never replaces a statement's
-  quantity, valuation, date or existing cost. Every join and unresolved balance
+  quantity, valuation, date or existing cost. The investment register also dates
+  money no statement does (Stage 10mv, `scripts/lib/registerRecords.mjs`, one
+  committed entry per row): Sotefin's purchases through its prospectus's bonus,
+  the payment that opened V.E.C 128005 and Goldstandard 100022/100023 (held to
+  the manager's inception date and 1 Apr 2026 opening balance; the TDS gap is a
+  `assumedDate` outflow), and Ankita's NSE payments (her cost; Ajay's is the
+  review's rest). Every join and unresolved balance
   is in `docs/COST-RECOVERY.md`. Closing rows keep fund folios separate; a known
   cost with unverified sale proceeds carries `hprUnavailableReason`, withholding
   its realised gain and HPR; the Portfolio Monitor's pooled return and Realised
@@ -575,8 +584,8 @@ All steps are idempotent; `glowData.ts` regenerates byte-identically.
   (`attachment-removed`) is listed as NEVER ARRIVED, neither passed nor failed:
   the fix is the sender re-sending it. The upload refuses one outright
   (`shared/statementBytes.mjs`); inside a ZIP the intake lands the other files.
-- **Every file feeds the dashboard** (the family, 21 Oct 2026), except the held-
-  out review/register/transaction report by decision; `acceptedUnread.mjs` is empty. Hope India
+- **Every file feeds the dashboard** (the family, 21 Oct 2026); the review,
+  register and transaction report feed it as records, not as statements; `acceptedUnread.mjs` is empty. Hope India
   Trust is its own entity in the book (`shared/owners.mjs`), not a person's.
 
 ## The live layer
