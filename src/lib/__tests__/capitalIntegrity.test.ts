@@ -13,5 +13,6 @@ assert.match(validateInputChanges([change('called', 70)], [r])!, /still-to-call|
 assert.equal(capitalIssues({ committed: 100, called: 100, paid: 105, pending: 0, undrawn: 0 }, { nonCalledPaidIn: 5 }).length, 0);
 assert.ok(capitalIssues({ committed: 100, called: 100, paid: 106 }, { nonCalledPaidIn: 5 }).length);
 assert.equal(capitalIssues({ committed: null, called: null, paid: 100 }).length, 0, 'missing calls are not invented');
+for (const value of [-1, Infinity, NaN]) assert.ok(capitalIssues({ committed: value }).some(i => i.code === 'INVALID_CAPITAL_AMOUNT'));
 assert.equal(validateInputChanges([{ ...change('called', null), reset: true }], [r]), null, 'restore uses the original value when validating the batch');
 console.log('Capital batch identities, exact money and evidenced reinvestment checks passed');

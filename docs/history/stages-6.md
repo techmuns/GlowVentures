@@ -1525,3 +1525,10 @@ Codex's review of #352, verified against the code and the book:
   - Her line: XIRR 45.49%. The two-owner row stays undated for Ajay's part: the register dates 5,000 of his 25,000 pre-bonus shares, at an amount that does not match its rate.
 - `CapitalMove.fromRegister` / `assumedDate` and `ReviewFlow.register` carry the source into the transaction rows (`consolidatedSheet.ts` notes).
 - Checks: `registerRecords.test.mjs` (test:ingest) reads the real rows and breaks each one: renamed row, other holder, units × rate, bonus ratio, missing MOPWM bonus, subtotal, and each reconciliation refusal.
+
+### Stage 10mw — Financial graph, calculation safeguards and scoped source verification
+
+- Stable instrument identities, effective-dated ownership, metric evidence and a balanced decimal settlement-control journal are published with each immutable book. Independent bank matches require an evidenced account mapping, legal holder, exact reference, date and paise amount. Missing bank links, ownership fractions and valuations remain unavailable.
+- XIRR validates dates and isolates all candidate roots before publishing one stable rate. NAV projections retain actual day-weighted capital and identify undated approximations. Capital corrections validate the whole batch, including restores, against the current published source and retain their history; incompatible corrections invalidate dated returns.
+- Historical material discrepancies now require exact source-bound, dated reviews. Unresolved marks retain their disputed status and have no verified usable value. Gross income is not silently posted as received cash, and corporate-action notices are not booked twice.
+- The existing dashboard layout is retained. Details and limitations: `docs/FINANCIAL-INTEGRITY.md`.

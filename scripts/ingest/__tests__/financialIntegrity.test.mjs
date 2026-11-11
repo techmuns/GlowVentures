@@ -10,6 +10,12 @@ const book = (ps = [position]) => ({ BOOK_AS_OF: '2026-11-01', BOOK_POSITIONS: p
 test('normalization refuses explicit foreign currency and unconverted lakh/crore scales', () => {
   assert.equal(financialUnitIssue({}, 'A US company holds the shares'), null);
   assert.ok(financialUnitIssue({}, 'All amounts in USD'));
+  for (const currency of ['SGD', 'AED', 'JPY', 'CAD', 'AUD']) {
+    assert.ok(financialUnitIssue({}, `All amounts in ${currency}`));
+    assert.ok(financialUnitIssue({}, `Currency: ${currency}`));
+  }
+  assert.equal(financialUnitIssue({}, 'All amounts in INR'), null);
+  assert.equal(financialUnitIssue({}, 'Currency: INR'), null);
   assert.ok(financialUnitIssue({ currency: 'USD' }));
   assert.ok(financialUnitIssue({ financialUnits: { canonicalMultiplier: 100000 } }));
   assert.equal(financialUnitIssue({ financialUnits: { canonicalCurrency: 'INR', canonicalMultiplier: 1 } }), null);

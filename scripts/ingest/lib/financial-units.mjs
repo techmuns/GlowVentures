@@ -8,7 +8,8 @@ export function financialUnitIssue(document, text = '') {
   if (units?.sourceCurrency && units.sourceCurrency !== 'INR') return 'A foreign-currency source needs a separately verified conversion and valuation-date policy.';
   // Only explicit report-unit declarations count. A company name or a prose
   // reference to an overseas investment is not a declaration of units.
-  if (/^\s*(?:(?:all|financial)\s+)?(?:amounts?|figures?|values?)\s+(?:are\s+)?(?:expressed\s+)?in\s+(?:USD|EUR|GBP|US\s*dollars?|euros?|pounds?)\b/im.test(text)
-    || /\bcurrency\s*[:=]\s*(?:USD|EUR|GBP)\b/i.test(text)) return 'The report explicitly declares a foreign currency unsupported by this INR adapter.';
+  const declarations = [...text.matchAll(/(?:^\s*(?:(?:all|financial)\s+)?(?:amounts?|figures?|values?)\s+(?:are\s+)?(?:expressed\s+)?in\s+|\bcurrency\s*[:=]\s*)([a-z]{3})\b/gim)];
+  if (declarations.some(m => m[1].toUpperCase() !== 'INR')
+    || /^\s*(?:(?:all|financial)\s+)?(?:amounts?|figures?|values?)\s+(?:are\s+)?(?:expressed\s+)?in\s+(?:US\s*dollars?|euros?|pounds?)\b/im.test(text)) return 'The report explicitly declares a foreign currency unsupported by this INR adapter.';
   return null;
 }
