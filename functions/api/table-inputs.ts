@@ -89,9 +89,10 @@ export async function onRequest({ request, env }: { request: Request; env: Recor
       if (change.reset) await store.delete(key);
       else {
         const input = current.catalog.find(r => r.id === change.id)!;
+        const unit = input.fields.find(f => f.key === change.field)?.unit ?? 'money';
         await store.put(key, JSON.stringify({ ...change, updatedAt: stamp, audit: {
           previousValue: input.values[change.field] ?? null, originalValue: input.originalValues?.[change.field] ?? null,
-          effectiveDate: input.asOf, currency: 'INR', unit: input.fields.find(f => f.key === change.field)?.unit ?? 'money',
+          effectiveDate: input.asOf, currency: unit === 'money' ? 'INR' : null, unit,
           sourceFingerprint: input.source, validationVersion: 'financial-integrity-v1', actor: 'authenticated-dashboard-session',
         } }));
       }

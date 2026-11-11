@@ -39,11 +39,12 @@ async function request(changes?: unknown, origin = "https://test.example", raw?:
 assert.equal((await request()).status, 200);
 assert.equal((await request([change(target, "quantity", 0)])).status, 200, "a real zero saves");
 const saved = (await request()).body.saved as SavedInput[];
-const audit = (record.get(`table-input:${target.id}:quantity`) as { audit: { previousValue: number | null; originalValue: number | null; validationVersion: string; actor: string } }).audit;
+const audit = (record.get(`table-input:${target.id}:quantity`) as { audit: { previousValue: number | null; originalValue: number | null; validationVersion: string; actor: string; unit: string; currency: string | null } }).audit;
 assert.equal(audit.previousValue, null);
 assert.equal(audit.originalValue, null);
 assert.equal(audit.validationVersion, 'financial-integrity-v1');
 assert.equal(audit.actor, 'authenticated-dashboard-session');
+assert.equal(audit.unit, 'units'); assert.equal(audit.currency, null, 'unit corrections are never labelled as rupees');
 let current = applySavedInputs(source, saved);
 assert.equal(current.find(r => r.id === target.id)!.values.quantity, 0);
 assert.equal(flushes, 1);
