@@ -40,12 +40,16 @@ try {
   await page.waitForFunction(() => { const d = document.querySelector('[data-segment-returns]')?.dataset; return d?.marketPending === '0' && d?.twrPending === '0'; });
   for (const id of columns) assert.ok(await table.locator(`th[data-col="${id}"]`).isVisible(), `${id} visible by default`);
   await table.getByRole('button', { name: 'Expand all', exact: true }).click();
-  const snapshots = async () => table.locator('tr[data-seg-row], tr[data-seg-child]').evaluateAll((rows, columns) => rows.map(row => ({
+  const snapshots = async () => {
+    const expand = table.getByRole('button', { name: 'Expand all', exact: true });
+    if (await expand.count()) await expand.click();
+    return table.locator('tr[data-seg-row], tr[data-seg-child]').evaluateAll((rows, columns) => rows.map(row => ({
     key: row.dataset.segRow ?? `${row.dataset.segChild}::${row.dataset.segChildKey}`,
     selector: row.dataset.segRow ? `tr[data-seg-row="${CSS.escape(row.dataset.segRow)}"]`
       : `tr[data-seg-child="${CSS.escape(row.dataset.segChild)}"][data-seg-child-key="${CSS.escape(row.dataset.segChildKey)}"]`,
     values: Object.fromEntries(columns.map(id => [id, row.querySelector(`[data-seg-cell="${id}"]`)?.getAttribute('data-twr-pct') ?? ''])),
-  })).filter(r => !r.key.startsWith('__')), columns);
+    })).filter(r => !r.key.startsWith('__')), columns);
+  };
   const before = await snapshots();
   await fs.writeFile(path.join(out, 'initial-values.json'), JSON.stringify(before, null, 2));
   if (!before.some(r => r.values.twrMtd !== '')) {
@@ -134,6 +138,18 @@ try {
   assert.ok(await dialog.evaluate(el => { const r = el.getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth + 1 && el.scrollWidth <= el.clientWidth + 1; }));
   await page.screenshot({ path: path.join(out, 'mobile-info.png') }); await page.keyboard.press('Escape');
   // Recovery includes histories requested only for sold investments.
+  // This browser has just cached successful public histories; empty only this
+  // isolated test context's store so the next load actually exercises failures.
+  await page.evaluate(() => new Promise((resolve, reject) => {
+    const req = indexedDB.open('glow-market-history');
+    req.onerror = () => reject(req.error);
+    req.onsuccess = () => {
+      const db = req.result, tx = db.transaction('histories', 'readwrite');
+      tx.objectStore('histories').clear();
+      tx.oncomplete = () => { db.close(); resolve(); };
+      tx.onerror = () => reject(tx.error);
+    };
+  }));
   failHistory = true; await page.reload(); await table.waitFor();
   await page.waitForFunction(() => { const d = document.querySelector('[data-segment-returns]')?.dataset; return d?.marketPending === '0' && d?.twrPending === '0'; });
   await table.locator('tr[data-seg-row] [data-seg-cell="twrMtd"]').first().getByRole('button').click(); await dialog.waitFor();
