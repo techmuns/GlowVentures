@@ -94,3 +94,9 @@ export function homeVolatility(history: { t: string[]; v: number[] }, from: stri
   const pct = Math.sqrt(returns.reduce((s, r) => s + (r - mean) ** 2, 0) / (returns.length - 1));
   return { pct, observations: returns.length, from: points[0].date, to: points.at(-1)!.date };
 }
+
+/** Preserve precision in the standard Excel exporter instead of parsing compact labels. */
+export function homeExportNumber(value: number | null | undefined, format = '#,##0.00') {
+  return { 'data-export-value': value == null ? undefined : String(value),
+    'data-export-type': value == null ? undefined : 'number', 'data-export-format': format };
+}

@@ -12,12 +12,11 @@ import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-// INSIDE node_modules, not in the system temp dir. `--packages=external` leaves
-// real dependencies as bare imports, and Node resolves those by walking UP from
-// the bundle — so a bundle in /tmp cannot find `exceljs`, while one here reaches
-// the repo's own node_modules one level up. (It stays out of the working tree
-// either way: node_modules is ignored.)
-const DIR = fs.mkdtempSync(path.join(ROOT, "node_modules", ".glow-test-"));
+// Keep generated bundles in this checkout even when dependencies are reused by symlink.
+// Bare imports still resolve through the checkout's node_modules ancestor.
+const TEMP_ROOT = path.join(ROOT, ".cache", "family-tests");
+fs.mkdirSync(TEMP_ROOT, { recursive: true });
+const DIR = fs.mkdtempSync(path.join(TEMP_ROOT, "run-"));
 
 const SUITES = [
   ["Home dashboard dates and history", "src/lib/__tests__/homeDashboard.test.ts"],

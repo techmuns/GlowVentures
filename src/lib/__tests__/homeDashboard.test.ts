@@ -50,3 +50,8 @@ assert.equal(homeVolatility(constant, '2025-01-01', dates.at(-1)!), null, 'insuf
 const sparse = { t: dates.map((d, i) => i > 10 ? `2026-02-${String(i).padStart(2, '0')}` : d), v: dates.map(() => 100) };
 assert.equal(homeVolatility(sparse, dates[0], sparse.t.at(-1)!), null, 'a long gap is not a daily return');
 console.log('Widget layout validation, order preservation, empty layouts and daily-volatility coverage passed.');
+
+const { homeExportNumber } = await import('../homeDashboard');
+assert.equal(homeExportNumber(null)['data-export-value'], undefined);
+assert.equal(homeExportNumber(12345678.901)['data-export-value'], '12345678.901');
+assert.equal(homeExportNumber(0)['data-export-type'], 'number');

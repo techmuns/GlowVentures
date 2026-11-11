@@ -4,6 +4,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { build } from 'esbuild';
 import { chromium } from 'playwright-core';
+import ExcelJS from 'exceljs';
 const base = process.env.BASE ?? 'http://127.0.0.1:4173';
 assert.ok(['127.0.0.1', 'localhost'].includes(new URL(base).hostname), 'local environment required');
 const out = path.resolve('.cache/home-dashboard/browser');
@@ -69,6 +70,17 @@ try {
     assert.ok(await page.locator('[data-home-overview]').evaluate(el => el.scrollWidth <= el.clientWidth + 1), 'Home has no page-level horizontal overflow');
     assert.ok(await page.evaluate(() => document.body.scrollWidth <= innerWidth + 1), 'the global toolbar does not widen the mobile page');
     await page.locator('[data-home-overview]').screenshot({ path: path.join(out, `${theme}-${width}.png`) });
+    if (theme === 'light' && width === 1440) {
+      const downloadPromise = page.waitForEvent('download');
+      await page.locator('[data-home-asset-table]').getByRole('button', { name: 'Export Excel', exact: true }).click();
+      const download = await downloadPromise, file = path.join(out, 'assets.xlsx');
+      await download.saveAs(file);
+      const workbook = new ExcelJS.Workbook(); await workbook.xlsx.readFile(file);
+      const sheet = workbook.getWorksheet('Table');
+      assert.ok(sheet.rowCount > 100, 'collapsed underlying assets are included in Excel');
+      const total = sheet.getRows(1, sheet.rowCount).find(row => row.getCell(1).text === 'Total investment AUM');
+      assert.ok(total && typeof total.getCell(2).value === 'number' && Math.abs(total.getCell(2).value - expected) < .01, 'Excel keeps exact numeric AUM instead of rounded crore labels');
+    }
     await page.getByRole('button', { name: 'Add widgets', exact: true }).click();
     const dialog = page.getByRole('dialog');
     await page.getByRole('searchbox', { name: 'Search widgets' }).fill('currency');
