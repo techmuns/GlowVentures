@@ -127,6 +127,7 @@ jobs:
             sleep 1
           done
           node scripts/dev/test-cio-report-period.mjs
+          node scripts/dev/test-table-scroll.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-cio-report.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-statement-drop.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-selected-attribution.mjs
