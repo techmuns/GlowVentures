@@ -81,6 +81,12 @@ try {
       const total = sheet.getRows(1, sheet.rowCount).find(row => row.getCell(1).text === 'Total investment AUM');
       assert.ok(total && typeof total.getCell(2).value === 'number' && Math.abs(total.getCell(2).value - expected) < .01, 'Excel keeps exact numeric AUM instead of rounded crore labels');
     }
+    if (width === 1440) {
+      await page.getByRole('group', { name: 'Display currency', exact: true }).getByRole('button', { name: 'USD', exact: true }).click();
+      await page.waitForFunction(() => document.querySelector('[data-home-aum]')?.textContent.includes('$'));
+      assert.ok(Math.abs(Number(await page.locator('[data-home-aum]').getAttribute('data-home-aum')) - expected) < .01, 'display currency does not change base AUM');
+      await page.getByRole('group', { name: 'Display currency', exact: true }).getByRole('button', { name: 'INR', exact: true }).click();
+    }
     await page.getByRole('button', { name: 'Add widgets', exact: true }).click();
     const dialog = page.getByRole('dialog');
     await page.getByRole('searchbox', { name: 'Search widgets' }).fill('currency');
@@ -124,6 +130,7 @@ try {
     await page.getByRole('button', { name: 'Add widgets', exact: true }).click();
     await page.getByRole('searchbox', { name: 'Search widgets' }).fill('not-a-widget');
     await page.keyboard.press('Escape');
+    await dialog.waitFor({ state: 'hidden' });
     assert.equal(await dialog.isVisible(), false, 'Escape closes and releases focus');
     await page.goto(`${base}/home?members=${owner}`);
     await page.waitForFunction(expected => Math.abs(Number(document.querySelector('[data-home-aum]')?.dataset.homeAum) - expected) < .01, scopedTotal);
