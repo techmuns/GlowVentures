@@ -1,3 +1,4 @@
+import readModelManifest from "../../data/readModels.json";
 import assert from "node:assert/strict";
 import ExcelJS from "exceljs";
 import { BOOK_POSITIONS, BOOK_COMMITMENTS, BOOK_ACCOUNTS } from "../../data/glowData";
@@ -207,3 +208,27 @@ console.log("Table input persistence, source rollups and Excel round-trip contra
 // An edit of dated financial inputs must not leave an apparently reconciled
 // XIRR over the previous dates/amounts. Corrections retain source identity.
 assert.match(position.returnInputsUnavailableReason!, /dated transaction record/);
+
+// Saving must use the current published statement book, not only the one
+// compiled into this deployment. No production endpoint is used by this test.
+{
+  const savedFetch = globalThis.fetch;
+  try {
+    const revised = { ...BOOK_POSITIONS[0], securityKey: 'integrity-new-publication-holding', security: 'Newly published holding' };
+    globalThis.fetch = async (input) => {
+      const url = String(input);
+      if (url.includes('/contents/current.json')) return Response.json({ schemaVersion: 1, storage: 'github-actions-v1', revision: 'a'.repeat(20), readerRevision: readModelManifest.readerRevision });
+      if (url.includes('/bootstrap.json')) return Response.json({ schemaVersion: 1, revision: 'a'.repeat(20), readerRevision: readModelManifest.readerRevision,
+        book: { BOOK_POSITIONS: [revised], BOOK_ACCOUNTS, BOOK_COMMITMENTS: [] } });
+      throw Error('Unexpected fixture request');
+    };
+    const response = await onRequest({ request: new Request('https://test.example/api/table-inputs'), env: { DASHBOARD_STORE: store, GLOW_GITHUB_TOKEN: 'fixture-only' } });
+    assert.equal(response.status, 200);
+    const result = await response.json();
+    assert.ok(result.catalog.some((r: InputRecord) => r.id.includes('integrity-new-publication-holding')));
+    assert.ok(!result.catalog.some((r: InputRecord) => r.kind === 'holding' && !r.id.includes('integrity-new-publication-holding')));
+    globalThis.fetch = async () => Response.json({ schemaVersion: 1, storage: 'github-actions-v1', revision: 'a'.repeat(20), readerRevision: 'b'.repeat(64) });
+    const unavailable = await onRequest({ request: new Request('https://test.example/api/table-inputs'), env: { DASHBOARD_STORE: store, GLOW_GITHUB_TOKEN: 'fixture-only' } });
+    assert.equal(unavailable.status, 502, 'An incompatible publication cannot silently edit stale inputs');
+  } finally { globalThis.fetch = savedFetch; }
+}

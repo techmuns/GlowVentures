@@ -26,6 +26,7 @@ export type InputRecord = {
   label: string; account: string; asOf: string; source: string;
   fields: InputField[]; values: Record<string, number | null>; versions: Record<string, string>;
   originalValues?: Record<string, number | null>;
+  correctionError?: string;
   capitalTerms?: { nonCalledPaidIn: number; reason: string; document: string; pointer: string };
 };
 export type InputChange = { id: string; field: string; value: number | null; version: string; source: string; reset?: boolean };
@@ -79,6 +80,8 @@ export function applySavedInputs(catalog: InputRecord[], saved: readonly SavedIn
       const s = by.get(`${r.id}\n${f.key}`);
       if (s?.source === r.source) { values[f.key] = s.value; versions[f.key] = s.updatedAt; }
     }
+    const issue = (r.kind === 'capital' || r.kind === 'private-capital') && Object.keys(versions).length ? capitalIssues(values, r.capitalTerms)[0] : null;
+    if (issue) return { ...r, versions: {}, correctionError: issue.message };
     return { ...r, values, versions };
   });
 }

@@ -79,3 +79,10 @@ test('an empty ownership projection is unknown unless an actual nil was measured
   graph.nodes[1].verifiedNil = true;
   assert.equal(ownershipExposure(graph, [], 'owner', '2026-11-01').value, 0);
 });
+
+test('a source review is unaffected by password-list order, but financial changes invalidate it', async () => {
+  const { reviewDocumentRevision } = await import('../lib/reconciliation-policy.mjs');
+  const a = { docKey: 'source', holdings: [{ quantity: 10 }], warnings: [{ code: 'pdf-encrypted', index: 1 }] };
+  assert.equal(reviewDocumentRevision(a), reviewDocumentRevision({ ...a, warnings: [{ code: 'pdf-encrypted', index: 5 }] }));
+  assert.notEqual(reviewDocumentRevision(a), reviewDocumentRevision({ ...a, holdings: [{ quantity: 11 }] }));
+});

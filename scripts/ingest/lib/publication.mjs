@@ -1,5 +1,5 @@
 import { financialUnitIssue } from "./financial-units.mjs";
-import { reviewedFinding, RECONCILIATION_EXCEPTIONS, reconciliationReview } from "./reconciliation-policy.mjs";
+import { reviewedFinding, RECONCILIATION_EXCEPTIONS, reconciliationReview, reviewDocumentRevision } from "./reconciliation-policy.mjs";
 // The publication boundary consumes normalized documents, never filenames or UI rows.
 // A delivery can propose facts; only a complete, reconciled, identity-safe version
 // may become a book. Historical exceptions do not authorize a new exception.
@@ -231,7 +231,7 @@ export function assessPublication({ baseline, documents, baselineReport = {}, re
       }
     }
   }
-  const documentRevisions = new Map(documents.map(d => [d.docKey, revisionOf(d)]));
+  const documentRevisions = new Map(documents.map(d => [d.docKey, reviewDocumentRevision(d)]));
   // Compare actual findings, not counts: a new error must not hide behind an old
   // error that disappeared. Include checks involving an unchanged sibling too.
   for (const name of ['rowSumChecks', 'derivedVsPrinted', 'datedTableChecks']) {

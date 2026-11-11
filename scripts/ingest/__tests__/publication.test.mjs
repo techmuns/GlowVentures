@@ -581,10 +581,10 @@ test('unmounting with a pending version request cannot reload a replaced page', 
 });
 
  test('historical exceptions require exact scope, a review owner and an unexpired review', async () => {
-  const { findingId } = await import('../lib/reconciliation-policy.mjs');
+  const { findingId, reviewDocumentRevision } = await import('../lib/reconciliation-policy.mjs');
   const finding = { docKey: doc().docKey, severity: 'material', delta: 7 };
   const baselineReport = { rowSumChecks: [finding] };
-  const review = { status: 'unresolved', section: 'rowSumChecks', id: findingId('rowSumChecks', finding), finding, reason: 'Printed amount disputed; affected claim withheld', owner: 'Test reviewer', reviewedOn: '2026-11-01', reviewBy: '2026-12-01', disposition: 'withhold-affected-claim', affectedMetrics: ['marketValue'], documentRevisions: { [doc().docKey]: digest(doc()) } };
+  const review = { status: 'unresolved', section: 'rowSumChecks', id: findingId('rowSumChecks', finding), finding, reason: 'Printed amount disputed; affected claim withheld', owner: 'Test reviewer', reviewedOn: '2026-11-01', reviewBy: '2026-12-01', disposition: 'withhold-affected-claim', affectedMetrics: ['marketValue'], documentRevisions: { [doc().docKey]: reviewDocumentRevision(doc()) } };
   const extra = { baselineReport, report: baselineReport, exceptions: [review], evaluationDate: '2026-11-11' };
   assert.equal(assess([doc(), later()], [doc()], extra).decision, 'verified');
   assert.ok(has(assess([doc(), later()], [doc()], { ...extra, evaluationDate: '2026-12-02' }), 'RECONCILIATION_FAILED'));

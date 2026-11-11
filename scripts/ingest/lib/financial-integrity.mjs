@@ -11,7 +11,7 @@ import { securityKeyOf } from '../../../shared/securityKey.mjs';
 import { decimalMinor, sumMoney, moneyEqual, roundMoney } from '../../../shared/financialArithmetic.mjs';
 import { capitalIssues } from '../../../shared/capitalValidation.mjs';
 import { CAPITAL_TERMS } from '../../../shared/capitalTerms.mjs';
-import { reconciliationReview, RECONCILIATION_EXCEPTIONS } from './reconciliation-policy.mjs';
+import { reconciliationReview, RECONCILIATION_EXCEPTIONS, reviewDocumentRevision } from './reconciliation-policy.mjs';
 const canonical = v => Array.isArray(v) ? v.map(canonical) : v && typeof v === 'object'
   ? Object.fromEntries(Object.keys(v).sort().filter(k => v[k] !== undefined && k !== 'integrity').map(k => [k, canonical(v[k])])) : v;
 const hash = value => createHash('sha256').update(JSON.stringify(canonical(value))).digest('hex');
@@ -76,13 +76,13 @@ export function buildFinancialIntegrity(book, documents, { report = null, regist
   const positions = book.BOOK_POSITIONS ?? [], accounts = book.BOOK_ACCOUNTS ?? [], accountById = new Map(accounts.map(a => [a.accountId, a]));
   const identities = financialRegistry(positions, registry), issues = [...identities.issues];
   if (!report) {
-    const revisions = new Map(documents.map(d => [d.docKey, hash(d)]));
+    const revisions = new Map(documents.map(d => [d.docKey, reviewDocumentRevision(d)]));
     report = {};
     for (const e of RECONCILIATION_EXCEPTIONS) if (Object.entries(e.documentRevisions ?? {}).every(([key, revision]) => revisions.get(key) === revision))
       (report[e.section] ??= []).push(e.finding);
   }
   const reviewedOn = RECONCILIATION_EXCEPTIONS.map(e => e.reviewedOn).sort().at(-1);
-  const reviews = reconciliationReview(report, { on: evaluationDate ?? reviewedOn ?? book.BOOK_AS_OF, documentRevisions: new Map(documents.map(d => [d.docKey, hash(d)])) });
+  const reviews = reconciliationReview(report, { on: evaluationDate ?? reviewedOn ?? book.BOOK_AS_OF, documentRevisions: new Map(documents.map(d => [d.docKey, reviewDocumentRevision(d)])) });
   const nodes = [], edges = [], metrics = [], checks = [], events = [];
   const node = new Map(), addNode = n => { if (!node.has(n.id)) { node.set(n.id, n); nodes.push(n); } };
   for (const owner of book.BOOK_OWNERS ?? []) { const id = owner.ownerId ?? owner.id; if (id) addNode({ id: `owner:${id}`, kind: 'owner', label: owner.name ?? owner.displayName ?? id }); }
@@ -117,6 +117,7 @@ export function buildFinancialIntegrity(book, documents, { report = null, regist
     const related = reviews.filter(r => r.finding.docKey === p.statementRecord?.document && (!r.finding.securityKey || r.finding.securityKey === p.securityKey)
       && (!r.review?.affectedSecurityKeys || r.review.affectedSecurityKeys.includes(p.securityKey)));
     const positionIndex = positions.indexOf(p);
+    const selected = documents.find(d => d.docKey === p.statementRecord?.document)?.holdings?.[Number(p.statementRecord?.pointer?.split('/').at(-1))];
     const metric = (name, value, basis, formula, dependencies) => {
       const unit = name === 'quantity' ? 'units' : name === 'returnPct' ? 'percent' : ['currentPrice', 'avgCost'].includes(name) ? 'money-per-unit' : 'money';
       const disputed = related.filter(r => r.review?.disposition === 'withhold-affected-claim' || !r.review)
@@ -132,7 +133,7 @@ export function buildFinancialIntegrity(book, documents, { report = null, regist
         currencyBasis: 'canonical INR adapter contract', basis, status, effectiveDate, quantityAsOf: a.asOf, receivedAt: null,
         formula, formulaVersion: 'financial-integrity-v1', inputs: dependencies,
         evidence: name === 'costBasis' && p.recoveredCost ? { kind: 'reconciled-acquisition-record', references: p.recoveredCost.evidence, accountId: p.accountId, isin: p.isin }
-          : ['unrealizedPnL', 'returnPct', 'realizedPnL', 'costOfUnitsSold', 'dividendReceived'].includes(name) || name === 'avgCost' && p.avgCostDerived
+          : ['unrealizedPnL', 'returnPct', 'realizedPnL', 'costOfUnitsSold', 'dividendReceived'].includes(name) || name === 'avgCost' && p.avgCostDerived || selected && sourceField[name] && selected[sourceField[name]] !== value
             ? { kind: 'canonical-projection', canonicalPointer: `/BOOK_POSITIONS/${positionIndex}/${name}`, inputs: dependencies.map(field => `/BOOK_POSITIONS/${positionIndex}/${field}`),
               note: 'Derived or combined from the canonical records; this is not claimed as a directly printed holding field.' }
             : source(p, sourceField[name] ?? name),
@@ -143,7 +144,7 @@ export function buildFinancialIntegrity(book, documents, { report = null, regist
     };
     metric('quantity', p.quantity, 'statement-unit-balance', 'selected quantity', ['quantity']);
     metric('costBasis', p.costBasis, p.recoveredCost ? 'reconciled-acquisition-record' : 'statement-or-family-review', 'selected cost of units held', ['costBasis']);
-    metric('marketValue', p.marketValue, p.valuedAtCost ? 'carrying-cost' : 'statement-valuation', 'selected statement valuation; quantity × price where both are measured', ['quantity', 'currentPrice']);
+    metric('marketValue', p.marketValue, p.valuedAtCost ? 'carrying-cost' : 'statement-valuation', p.valuedAtCost ? 'carrying acquisition cost; no independently measured valuation' : 'selected statement valuation; quantity × price where both are measured', ['quantity', 'currentPrice']);
     for (const name of ['currentPrice', 'avgCost', 'realizedPnL', 'costOfUnitsSold', 'dividendReceived', 'returnPct']) {
       const formula = name === 'returnPct' ? '(marketValue - costBasis + realizedPnL + dividendReceived) / (costBasis + costOfUnitsSold) * 100; subject to holding-return coverage gates'
         : name === 'avgCost' ? p.avgCostDerived ? 'costBasis / quantity' : 'selected printed unit cost' : name === 'currentPrice' ? 'selected statement price' : 'selected source record';

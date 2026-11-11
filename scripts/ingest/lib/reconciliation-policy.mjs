@@ -3,6 +3,10 @@ import registry from '../../../config/reconciliation-exceptions.json' with { typ
 const canonical = value => Array.isArray(value) ? value.map(canonical) : value && typeof value === 'object'
   ? Object.fromEntries(Object.keys(value).sort().filter(k => value[k] !== undefined).map(k => [k, canonical(value[k])])) : value;
 export const findingId = (section, finding) => createHash('sha256').update(JSON.stringify(canonical([section, finding]))).digest('hex');
+export function reviewDocumentRevision(document) {
+  const scoped = { ...document, warnings: (document.warnings ?? []).map(w => w?.code === 'pdf-encrypted' ? { code: w.code } : w) };
+  return createHash('sha256').update(JSON.stringify(canonical(scoped))).digest('hex');
+}
 export const RECONCILIATION_EXCEPTIONS = registry.entries;
 export function reconciliationFindings(report) {
   return ['rowSumChecks', 'derivedVsPrinted', 'datedTableChecks', 'crossReportDeltas', 'duplicateHoldings', 'duplicateAifEarnings']
