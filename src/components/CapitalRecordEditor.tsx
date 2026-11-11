@@ -49,7 +49,7 @@ export function CapitalRecordEditor({ record, initialChanges = [], onSaved, onBu
       <input id={`${prefix}-${f.key}`} data-capital-field={f.key} inputMode="decimal" value={draft[f.key] ?? ''} disabled={!writable || busy}
         onChange={e => { setDraft(d => ({ ...d, [f.key]: e.target.value })); setResets(r => new Set([...r].filter(k => k !== f.key))); setError(''); }}
         onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); void save(); } }}
-        placeholder="Add amount" className="w-full min-w-0 rounded border border-ink-600 bg-ink-900 p-2 text-right text-xs tabular-nums ring-focus" />
+        placeholder="Add amount" className={`w-full min-w-0 rounded border border-ink-600 bg-ink-900 p-2 text-right text-xs tabular-nums ring-focus ${base.values[f.key] == null ? 'border-amber-500/70' : ''}`} />
       {base.versions[f.key] && <button type="button" disabled={busy || !writable} aria-label={`Restore original ${f.label.toLowerCase()}`}
         onClick={() => { setDraft(d => ({ ...d, [f.key]: rupeeText(base.originalValues?.[f.key] ?? null) })); setResets(r => new Set([...r, f.key])); setError(''); }}
         className="mt-1 rounded text-[10px] text-slate-400 underline ring-focus">{resets.has(f.key) ? 'Original staged' : 'Restore original'}</button>}

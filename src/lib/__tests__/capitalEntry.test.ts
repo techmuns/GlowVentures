@@ -33,6 +33,9 @@ assert.equal(byId.get(stated.id!)!.values.committed, figuresOf([stated.f], false
 assert.equal(parseRupees("12,50,000"), 1250000);
 assert.equal(parseRupees("₹2.5 Cr"), 25000000);
 assert.equal(parseRupees("40 lakh"), 4000000);
+assert.equal(parseRupees('1.005'), 1.01, 'typed money uses decimal half-paise rounding');
+assert.equal(parseRupees('.005'), .01);
+assert.equal(parseRupees('0.0000001005 Cr'), 1.01, 'scale conversion precedes exact decimal rounding');
 assert.equal(parseRupees("0"), 0, "a typed zero is a zero");
 assert.equal(parseRupees("  "), null, "blank is not known, never zero");
 assert.ok(Number.isNaN(parseRupees("five crore")!), "words are not an amount");
