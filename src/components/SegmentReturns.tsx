@@ -43,6 +43,9 @@ import { REVIEW_NOTE, reviewColumn, reviewColumnIds, withReviewAccessors, type R
 import { InvestedOnCell } from '@/components/InvestedOnCell';
 import { ReviewColumnCell } from '@/components/ReviewColumnCell';
 import type { Position } from '@/lib/types';
+import { TWR_COLUMNS } from '@/lib/adjustedTwr';
+import { useAdjustedTwrColumns } from '@/lib/useAdjustedTwrColumns';
+import { AdjustedTwrCell } from '@/components/AdjustedTwrCell';
 
 /**
  * PORTFOLIO MONITOR'S HOLDING COLUMNS, HERE TOO (Stage 10hz): Avg cost and
@@ -53,14 +56,14 @@ import type { Position } from '@/lib/types';
 const REVIEW_COLS = reviewColumnIds('holding').filter(id => id !== 'review:investmentRange');
 const REVIEW_SET = new Set(REVIEW_COLS);
 const COLS = ['seg', 'holdings', 'qty', 'avgCost', 'cmp', 'day', 'value', 'weight', 'deployed', 'investedOn', 'cost', 'gain', 'pnl', 'realised',
-  'bench', 'ret', 'contrib', 'basis', 'sector', 'entity', ...REVIEW_COLS];
+  'bench', 'ret', ...TWR_COLUMNS.map(c => c.key), 'contrib', 'basis', 'sector', 'entity', ...REVIEW_COLS];
 const ALL_BENCH_KEYS = BENCHMARKS.map(b => b.key);
 const OPTIONAL = ['qty', 'cmp', 'day', 'cost', 'pnl', 'realised', 'sector', 'entity', ...REVIEW_COLS];
 const pct = (n: number) => `${n >= 0 ? '+' : ''}${n.toFixed(2)}%`;
 const HEAD: Record<string, string> = { category: 'Category', assetClass: 'Asset class', basket: 'Basket', sector: 'Sector / class', side: 'Side', security: 'Security' };
 
-export default function SegmentReturns({ selection: recordedSelection, period }: {
-  selection: ReturnSelection; period: PeriodKey;
+export default function SegmentReturns({ selection: recordedSelection, period, end }: {
+  selection: ReturnSelection; period: PeriodKey; end: string | null;
 }) {
   const { statementPortfolio, consolidated, fmtFromBase, corporateActions, quoteFeed, scope: memberScope } = usePortfolio();
   const [axis, setAxis] = useViewParam(SEGMENT_VIEWS, {}, 'seg');
@@ -83,8 +86,9 @@ export default function SegmentReturns({ selection: recordedSelection, period }:
   const selection = recordedSelection;
   // The Sector axis is Sector Composition's own sectors (`SectorAttribution`, Stage 10gs), never this grouping.
   const sectorAxis = axis === 'sector';
-  const a = useMemo(() => statementPortfolio && !sectorAxis ? selectedSegmentReturns(current, exited, statementPortfolio.accounts, axis, selection,
+  const originalAttribution = useMemo(() => statementPortfolio && !sectorAxis ? selectedSegmentReturns(current, exited, statementPortfolio.accounts, axis, selection,
     () => null, calculationCurrent) : null, [current, exited, statementPortfolio, axis, selection, calculationCurrent, sectorAxis]);
+  const { model: a, of: twrOf, pending: twrPending, retry: retryTwr } = useAdjustedTwrColumns({ model: originalAttribution, current, exited, calculationCurrent, axis, end });
   // The capital bridge is the selected period's total on every axis (Stage 10gu): the table's own total
   // units, or on the Sector view — which draws no dated total of its own — the same pool grouped by category.
   const pool = useMemo(() => a ?? (statementPortfolio ? selectedSegmentReturns(current, exited, statementPortfolio.accounts, 'category', selection,
@@ -199,6 +203,7 @@ export default function SegmentReturns({ selection: recordedSelection, period }:
   const named = (xs: string[], noun: string) => xs.length === 1 ? xs[0] : xs.length ? `${xs.length} ${noun}` : null;
   const accessors = withReviewAccessors<SelectedLine>({ seg: r => r.label, holdings: r => r.positions.length, value: r => r.value,
     weight: r => r.value, deployed: r => r.invested, gain: r => r.gain, bench: r => bench(r).pct, ret: r => r.returnPct, contrib: r => r.contribution,
+    ...Object.fromEntries(TWR_COLUMNS.map(c => [c.key, (r: SelectedLine) => twrOf(r)[c.key].pct])),
     basis: r => r.units.some(u => u.assumption) ? 'Assumed held' : 'Statement records',
     qty: r => fig(r).quantity, avgCost: r => fig(r).avgCost, cmp: r => fig(r).price, day: r => fig(r).day.pct,
     investedOn: r => fig(r).investedOn?.first, cost: r => fig(r).costReason ? null : fig(r).cost.cost,
@@ -269,6 +274,7 @@ export default function SegmentReturns({ selection: recordedSelection, period }:
         title={shownAbsolute(l) ? `Held under a year, so this is the absolute return, not ${type.label}: a return under a year is never annualised.`
           : l.measured?.basis === 'annual' && l.periodPct != null ? `${pct(l.periodPct)} over the period itself, not stated per year` : undefined}>
         {l.returnPct != null ? <>{shownAbsolute(l) && <span className="ret-tag">ABS</span>}{pct(l.returnPct)}{l.measured?.basis === 'annual' && <span className="text-[10px]">p.a.</span>}</> : <AbsentCell reason={reason(l)} />}<HoldingAssumptionInfo units={l.units} />{info(l, 'return')}</span></td>,
+      ...TWR_COLUMNS.map(c => <AdjustedTwrCell key={c.key} column={c.key} result={twrOf(l)[c.key]} pad={pad} label={l.label} onRetry={retryTwr} />),
       <td key="contrib" className={`${pad} text-right mono ${changeColor(l.contribution)}`}>{l.contribution != null ? `${l.contribution >= 0 ? '+' : ''}${l.contribution.toFixed(2)} pp` : <AbsentCell reason={contributionReason} />}</td>,
       <td key="basis" className={`${pad} text-right text-[11px] text-slate-400`}>{l.units.some(u => u.assumption)
         ? l.units.every(u => u.assumption) ? 'Assumed held' : 'Statements + assumed held' : l.units.length ? 'Statement records' : 'Missing records'}</td>,
@@ -280,6 +286,7 @@ export default function SegmentReturns({ selection: recordedSelection, period }:
   // The review's fields are each product's own; the book's total has none.
   const totalByCol = Object.fromEntries(COLS.slice(1).map((key, i) => [key, totalCells[i]]).filter(([key]) => !REVIEW_SET.has(key as string)));
   return <div className="shrink-0" data-segment-returns data-returns-attribution data-seg-axis={axis} data-seg-period={period} data-seg-type={selection.type}
+    data-twr-pending={twrPending}
     data-seg-start={selection.start ?? ''} data-seg-end={selection.end ?? ''} data-seg-covered={a.coveredHoldings}
     data-seg-total-gain={a.total.gain ?? ''} data-seg-total-deployed={a.denominator ?? a.total.invested ?? ''}
     data-seg-total-value={a.total.value} data-seg-total-ret={a.total.returnPct ?? ''} data-seg-total-period-ret={a.total.periodPct ?? ''}
@@ -309,8 +316,10 @@ export default function SegmentReturns({ selection: recordedSelection, period }:
           <SortHeader col="gain" view={view} pad="px-4 py-2">Gain / loss</SortHeader>
           <SortHeader col="pnl" view={view} pad="px-4 py-2" title="Value now less purchase cost, over the holdings that report a cost. Since purchase, not the selected period.">Unreal. P&amp;L</SortHeader>
           <SortHeader col="realised" view={view} pad="px-4 py-2" title="Booked on units already sold, first-in first-out, holding by holding from the statements' own records. Since purchase, not the selected period.">Realised P&amp;L</SortHeader>
-          <SortHeader col="bench" view={view} pad="px-4 py-2" title={`What the row's own index would have earned on the same money, on the Return column's measure. ${BENCH_HOW} A share is compared by AMFI's size class (Nifty 50, Midcap 150, Smallcap 250), a fund by its category, a managed account by the benchmark its manager reports, a private holding with the Nifty 500; a row holding different kinds is a blend of each one's index. Cash, debt, arbitrage and hybrid holdings have no index in the feed and are named in the info button. Price indices: dividends are not in them.`}>Benchmark return</SortHeader>
+          <SortHeader col="bench" view={view} pad="px-4 py-2" title={`INR basis. What the row's own index would have earned on the same money, on the Return column's measure. ${BENCH_HOW} A share is compared by AMFI's size class (Nifty 50, Midcap 150, Smallcap 250), a fund by its category, a managed account by the benchmark its manager reports, a private holding with the Nifty 500; a row holding different kinds is a blend of each one's index. Cash, debt, arbitrage and hybrid holdings have no index in the feed and are named in the info button. Price indices: dividends are not in them.`}>Benchmark return (INR)</SortHeader>
           <SortHeader col="ret" view={view} pad="px-4 py-2">Return · {typeHead}</SortHeader>
+          {TWR_COLUMNS.map(c => <SortHeader key={c.key} col={c.key} view={view} pad="px-4 py-2"
+            title="Time-weighted return from INR values and dated cash flows, linked at every cash-flow date. Fixed calendar period, through the selected ending date or latest common valuation. Missing valuations are explained in the info button. The INR basis is retained when the display currency changes.">{c.label}</SortHeader>)}
           <SortHeader col="contrib" view={view} pad="px-4 py-2" title="For Absolute return only: row gain divided by the total's shared money base, so these contributions add to the total return.">Contribution</SortHeader>
           <SortHeader col="basis" view={view} pad="px-4 py-2" title="Assumed held means no later sale or transfer appears in the records we have. This basis is also included in Excel exports.">Holding basis</SortHeader>
           <SortHeader col="sector" view={view} align="left" pad="px-4 py-2">Sector</SortHeader>
@@ -320,7 +329,7 @@ export default function SegmentReturns({ selection: recordedSelection, period }:
         </Tr></thead>
         <tbody className="divide-y divide-ink-700/60">{rows.map(r => <Fragment key={r.key}>
           <Tr view={view} className={r.children.length ? TREE_ROW.parent : ''} {...(r.children.length ? rowToggle(() => exp.toggle(r.key)) : {})}
-            data-seg-row={r.key} data-seg-value={r.value} data-seg-gain={r.gain ?? ''} data-seg-contrib={r.contribution ?? ''} data-seg-open={exp.isOpen(r.key) ? '1' : '0'} data-seg-securities={fig(r).securities}>
+            data-seg-row={r.key} data-seg-exited={r.exited ? '' : undefined} data-seg-value={r.value} data-seg-gain={r.gain ?? ''} data-seg-contrib={r.contribution ?? ''} data-seg-open={exp.isOpen(r.key) ? '1' : '0'} data-seg-securities={fig(r).securities}>
             <TreeNameCell depth={0} title={r.label} open={r.children.length ? exp.isOpen(r.key) : undefined} onToggle={r.children.length ? () => exp.toggle(r.key) : undefined} toggleData={{ 'data-seg-toggle': r.key }} />
             {cells(r, 'parent')}
           </Tr>

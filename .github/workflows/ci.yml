@@ -143,6 +143,7 @@ jobs:
           CHROME="$(command -v google-chrome)" node scripts/dev/check-statement-drop.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-selected-attribution.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-home-overview.mjs
+          CHROME="$(command -v google-chrome)" node scripts/dev/check-inr-twr.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-market-returns.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-assumed-holdings.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-nav-assumed.mjs
@@ -179,6 +180,7 @@ jobs:
           path: |
             .cache/returns-period/*.png
             .cache/returns-period/browser-results.json
+            .cache/inr-twr-browser/
             .cache/market-returns/*.png
             .cache/market-returns/browser-results.json
             .cache/assumed-holdings/browser/*.png
