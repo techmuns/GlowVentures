@@ -2400,7 +2400,7 @@ function build(archived, archiveCount = archived.length, references = {}) {
   // The saved NSE corporate-action capture, for purchase dates carried through a
   // split, bonus or demerger (Stage 10ly, `actionRecordFor`).
   const savedActions = references.savedActions ?? loadSavedActions(ROOT);
-  /** The review's dated rows, read once and only where a holding asks (Stage 10mr). */
+  /** The review's dated rows, read once and only where a holding asks (Stage 10ms). */
   let reviewTxnRows = null;
   const reviewTransactionRows = () => reviewTxnRows ??= readReviewTransactions(references.reviewWorkbook
     ?? readSpreadsheet(fs.readFileSync(path.join(ROOT, REVIEW_WORKBOOK)))).rows;
@@ -3237,7 +3237,7 @@ function build(archived, archiveCount = archived.length, references = {}) {
     };
     /**
      * …AND WHERE THE ACCOUNT'S WINDOW OPENS AFTER THE PURCHASES, THE REVIEW'S
-     * DATED BUYS CARRIED THROUGH THE WINDOW'S OWN TRADES (Stage 10mr) — a date
+     * DATED BUYS CARRIED THROUGH THE WINDOW'S OWN TRADES (Stage 10ms) — a date
      * source only; the statement's cost stands. See `reviewPurchaseDates.mjs`.
      */
     const reviewDatesOf = (h, marketSide) => {

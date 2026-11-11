@@ -1,4 +1,4 @@
-// A statement-costed holding dated off the review's purchases (Stage 10mr).
+// A statement-costed holding dated off the review's purchases (Stage 10ms).
 // Run: node scripts/ingest/__tests__/reviewPurchaseDates.test.mjs
 //
 // ON CONSTRUCTED INPUTS shaped like Ajay's Man Industries at HDFC Securities

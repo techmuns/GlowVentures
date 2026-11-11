@@ -148,7 +148,7 @@ function lineDates(p: Position): LineDates | null {
     return { dates: [rolled.heldPurchases.first, rolled.heldPurchases.last], source: "recovered-lots" };
   }
   // The review's dated buys carried through the account's own later trades to
-  // exactly the units held, the broker's long-term quantity agreeing (Stage 10mr).
+  // exactly the units held, the broker's long-term quantity agreeing (Stage 10ms).
   const reviewed = p.reviewPurchases;
   if (reviewed?.first && reviewed.last && reviewed.units != null && p.quantity != null
     && Math.abs(reviewed.units - p.quantity) <= .0005 && !p.rolledForward) {

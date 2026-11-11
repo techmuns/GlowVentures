@@ -13503,7 +13503,7 @@ const INVESTED_ON_BOOK = (() => {
       const ins = (own?.moves ?? []).filter((m) => m.direction === "in");
       // Stage 10me: a fund line the adviser report's trades carried, dated by its own surviving lots.
       const rolledLots = !!p.rolledForward?.heldPurchases && Math.abs(p.rolledForward.quantity - p.quantity) <= 0.0005;
-      // Stage 10mr: the review's dated buys carried to exactly the units held.
+      // Stage 10ms: the review's dated buys carried to exactly the units held.
       const reviewLots = !!p.reviewPurchases?.first && !p.rolledForward && p.reviewPurchases.units != null
         && Math.abs(p.reviewPurchases.units - p.quantity) <= 0.0005;
       return Boolean(ins.length || p.heldSince || called.has(`${p.accountId}|${p.securityKey}`)

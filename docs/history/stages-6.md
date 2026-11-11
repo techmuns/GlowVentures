@@ -1490,7 +1490,7 @@ Codex's review of #352, verified against the code and the book:
 - Each record closes the index on its own last value date, as the return does: Sanshi Class E reads N500 −4.78%, the index's 30 Jun → 30 Oct move.
 - The Sector axis keeps its Market return and details; `check-market-returns.mjs` now opens them there. `check-selected-attribution.mjs` asserts the Total row's `data-seg-cell="bench"`. Suite: `lineBenchmark.test.ts`.
 
-### Stage 10mr — Statement-costed holdings dated off the review's purchases (Man Industries, Deepak, Kingfa)
+### Stage 10ms — Statement-costed holdings dated off the review's purchases (Man Industries, Deepak, Kingfa)
 
 *"If we already have the average cost of an holding, then why we are not showing the invested date? … in this man industries, we have the average cost, but we don't have the dates. Is it correct? Or we are missing out on the dates from the files."* — the family, 11 Nov 2026.
 

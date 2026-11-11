@@ -1,5 +1,5 @@
 // WHEN A STATEMENT-COSTED HOLDING WAS BOUGHT, OFF THE REVIEW'S DATED PURCHASES
-// (Stage 10mr).
+// (Stage 10ms).
 //
 // *"If we already have the average cost of a holding, then why are we not
 //  showing the invested date? … in this Man Industries, we have the average

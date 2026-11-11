@@ -214,7 +214,7 @@ export function makeHolding(input) {
      * THE UNITS A BROKER'S PORTFOLIO PRINTS AS LONG-TERM — held past the
      * s.2(42A) period on its own lot record. Not a date and never one; a check
      * a dated purchase record must agree with (`reviewPurchaseDates.mjs`,
-     * Stage 10mr). Written only where a reader sets it.
+     * Stage 10ms). Written only where a reader sets it.
      */
     ...(input.longTermQuantity != null ? { longTermQuantity: num(input.longTermQuantity) } : {}),
 

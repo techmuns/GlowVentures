@@ -559,7 +559,7 @@ export type Position = {
   };
   /**
    * THE REVIEW'S DATED PURCHASES OF A HOLDING WHOSE COST ITS STATEMENT PRINTS
-   * (Stage 10mr) — the review's block for this owner, product and custodian,
+   * (Stage 10ms) — the review's block for this owner, product and custodian,
    * to its own Closing, carried through the account's own later trades to
    * exactly the units held, with the broker's long-term quantity and cost
    * agreeing. `reason` alone where an aliased holding fails a step. A source
