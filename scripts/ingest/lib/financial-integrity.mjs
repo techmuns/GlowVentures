@@ -229,6 +229,7 @@ export function buildFinancialIntegrity(book, documents, { report = null, regist
   }
   for (const c of book.BOOK_COMMITMENTS ?? []) {
     const violations = capitalIssues(c, CAPITAL_TERMS[c.accountId]);
+    if (violations.length) issues.push({ code: 'CAPITAL_DOES_NOT_RECONCILE', accountId: c.accountId, violations });
     checks.push({ kind: 'capital', accountId: c.accountId, status: violations.length ? 'disputed' : 'reconciled', issues: violations,
       adjustment: CAPITAL_TERMS[c.accountId] ?? null });
   }

@@ -39,6 +39,12 @@ test('a complete book version carries source dates, units, exact cash and missin
   assert.equal(f.events[0].amountMinor, '-10000');
   assert.equal(f.checks.find(c => c.kind === 'bank-trade-settlement').status, 'unavailable');
 });
+test('contradictory source capital holds book preparation, while partial balances stay partial', () => {
+  const b = book(); b.BOOK_COMMITMENTS = [{ accountId: account.accountId, committed: 100, called: 10, paid: 5000 }];
+  assert.ok(buildFinancialIntegrity(b, []).issues.some(i => i.code === 'CAPITAL_DOES_NOT_RECONCILE'));
+  b.BOOK_COMMITMENTS = [{ accountId: account.accountId, committed: 100, called: null, paid: 50 }];
+  assert.deepEqual(buildFinancialIntegrity(b, []).issues, []);
+});
 test('ownership paths multiply fractions and reject cycles or overlapping ownership above 100%', () => {
   const nodes = [{ id: 'root', kind: 'owner' }, { id: 'trust', kind: 'owner' }, { id: 'position', kind: 'position' }];
   const edges = [{ id: 'a', owner: 'root', owned: 'trust', relationship: 'owns', fraction: .5 }, { id: 'b', owner: 'trust', owned: 'position', relationship: 'owns', fraction: .4 }];
