@@ -43,6 +43,13 @@ try {
     await page.route(/fonts\.(googleapis|gstatic)\.com/, route => route.abort());
     await page.goto(base + '/');
     await page.locator('[data-home-overview]').waitFor();
+    if (width === 390) {
+      assert.ok((await page.locator('[data-home-overview]').boundingBox()).width > 240, 'the compact navigation leaves room for Home');
+      await page.getByRole('button', { name: 'Expand navigation', exact: true }).click();
+      assert.equal(await page.locator('aside').getAttribute('data-mobile-expanded'), 'true');
+      await page.locator('[data-nav-entry="/home"]').click();
+      assert.equal(await page.locator('aside').getAttribute('data-mobile-expanded'), 'false', 'a navigation selection closes the drawer');
+    }
     assert.equal(new URL(page.url()).pathname, '/home', 'the front door opens Home');
     assert.deepEqual(await page.locator('[data-nav-group="Daily"] [data-nav-entry]').evaluateAll(els => els.slice(0, 2).map(el => el.dataset.navEntry)), ['/home', '/cio']);
     assert.equal(await page.locator('[data-nav-entry="/home"]').getAttribute('aria-current'), 'page');

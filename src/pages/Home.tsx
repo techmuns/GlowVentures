@@ -70,7 +70,8 @@ export function Home() {
       <Card title="AUM" subtitle={valuationHelp} className="min-w-0" right={<span className="label-xs">{displayCurrency}</span>}>
         <Link to={drilldownHref('book')} className="group flex min-w-0 items-start gap-3" title="Open all holdings included in AUM" data-home-aum-link>
           <span className="min-w-0 break-words font-display text-3xl font-semibold tracking-tight text-slate-100 xl:text-4xl tabular" data-home-aum={model.total}>
-            {fmtFromBase(model.total)}
+            <span className="sm:hidden" title={fmtFromBase(model.total)}>{money(model.total)}</span>
+            <span className="hidden sm:inline">{fmtFromBase(model.total)}</span>
           </span>
           <ArrowUpRight className="mt-1 h-5 w-5 shrink-0 text-slate-500" aria-hidden />
         </Link>

@@ -1514,5 +1514,6 @@ Codex's review of #352, verified against the code and the book:
 
 - Home sits above Morning CIO in Daily and is the populated dashboard's front door. The existing Home buttons and global search reach it; an empty book still opens ingestion. The root redirect retains the member query so it cannot race the context's scope restoration.
 - The reference layout becomes an asset-class donut on the left, with AUM and Geography on the right. AUM and every class open their holdings. The total counts each duplicate group once, shares Morning CIO's family asset-class rules, and follows the member and currency selectors.
+- On phones the navigation becomes an icon rail with an expandable menu, leaving room for the cards; AUM uses compact currency notation there. Desktop navigation keeps its saved width.
 - Geography names the unclassified value. The book has no verified country exposure, so no countries, weights or historical AUM change are inferred from the screenshot, listing venue, currency or fund names.
 - Validation covers canonical AUM, dedupe, allocation totals, missing classifications, scoped totals, search, navigation, currency and light/dark desktop/mobile layouts.
