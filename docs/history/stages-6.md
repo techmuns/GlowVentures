@@ -1540,3 +1540,8 @@ Codex's review of #352, verified against the code and the book:
 - XIRR: six holdings dated by original buys plus a bonus (ZF Commercial ×2, Sharda Motor ×2, Time Technoplast ×2) now solve on their trades. A bonus adds units and no money (`holdingFlowsOf`).
 - Client request: the LKP and Bandhan items move to resolved, and so does Sotefin, which Stage 10mv dated and costed but left on the list (36 records).
 - Checks: `registerPurchaseDates.test.mjs` (each gate broken once). `portfolioExcel.test` re-derives the bonus case off the saved capture, and `tranches.test` reads every statement of an account for its printed NAVs.
+
+### Stage 10my — Client records request re-checked on 12 November
+
+- `npm run client:request` re-run after Stages 10ms–10mx: `docs/client/Glow-Ventures-records-still-needed-2026-11-12.pdf`. It has 36 named records (43 on 11 Nov), 68 PMS stocks in 4 accounts (73 in 6), and 75 private records (unchanged).
+- Section 4 now also names the answers those stages applied: Man Industries, Deepak and Kingfa dates (10ms), and Green Lantern's stocks (10mt/10mx). The SOTEFIN note no longer points to a section 1 row that was removed. The column reads "Item on an earlier list".

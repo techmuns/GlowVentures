@@ -221,7 +221,12 @@ const RESOLVED = [
   ["Ajay Jaisinghani | Bandhan folio 8652064", "Bandhan Large & Mid Cap and Arbitrage purchase dates", "Bandhan's own statement of 14 October 2026 dates every purchase and switch in from a nil opening on 2 April 2026.",
     () => ["bndh-l-and-mcf-dp-gr", "bandhan-amc-ltd-bandhan-mf-bandhan-arbitrage-fund-direct-pl-growth"]
       .every((k) => { const p = pos("bandhan-mutual-fund-8652064", k); return !!p && p.dated && p.dateSources.includes("allotments"); })],
-  ["Ajay Jaisinghani | MOPWM", "SOTEFIN (private investment valuation)", "Now listed and priced on the ICICI statement, so it is no longer valued at cost. Its allotment record is asked for in section 1.",
+  ["Ajay Jaisinghani | HDFC Securities 3110320", "Man Industries, Deepak Fertilisers and Kingfa purchase dates", "The 30 June review's transaction history dates every unit held, carried through the account's own later sales (Man Industries 10 January and 25 July 2025; Deepak Fertilisers 30 July 2024; Kingfa 22 November 2024).",
+    () => ["man-industries-india", "deepak-fertilisers-and-petrochemicals", "kingfa-science-and-technology-india"]
+      .every((k) => { const p = pos(HDFC_SEC, k); return !!p && p.dated && p.dateSources.includes("review-lots"); })],
+  ["Ajay and Ankita Jaisinghani | Green Lantern 510861 and 510854", "Purchase dates for Ingersoll Rand, Ratnamani, Anup Engineering and Vedanta Aluminium", "Green Lantern's own from-inception trade records date every stock held; Vedanta Aluminium through the parent's purchases and the 30 April 2026 demerger.",
+    () => !pmsGroups.has("green-lantern-capital-llp-510861") && !pmsGroups.has("green-lantern-capital-llp-510854")],
+  ["Ajay Jaisinghani | MOPWM", "SOTEFIN (private investment valuation)", "Now listed and priced on the ICICI statement, so it is no longer valued at cost; its cost and dates are carried there (above).",
     () => !privateRows.some((r) => /sotefin/i.test(r.name))],
 ];
 const resolvedFailed = RESOLVED.filter(([, , , c]) => !c());
@@ -276,7 +281,7 @@ td.num, th.num { width: 25%; }
 .newpage { break-before: page; }
 </style></head><body>
 <h1>All records still needed from the client</h1>
-<p class="lead">Checked ${checkedLong} against the dashboard's records (latest statement dated ${DATE(F.bookAsOf)}). This list replaces the one checked on 27 October 2026: records received since then are no longer requested, and the newer statements raised the new items below. Includes all client requests: purchase and balance records, PMS stock history, and private investment valuations. One complete broker or fund export can answer several rows.</p>
+<p class="lead">Checked ${checkedLong} against the dashboard's records (latest statement dated ${DATE(F.bookAsOf)}). This list replaces the earlier lists (checked 27 October and 11 November 2026): records received since then are no longer requested and are listed in section 4, and the newer statements raised the new items below. Includes all client requests: purchase and balance records, PMS stock history, and private investment valuations. One complete broker or fund export can answer several rows.</p>
 <h2>1. Purchase, date, balance and other records</h2>
 <table class="s1"><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="c4"></colgroup>
 <thead><tr><th>Holder and account</th><th>Stock, fund or file</th><th>Exactly what to send</th><th>Ask for it from</th></tr></thead><tbody>
@@ -293,7 +298,7 @@ ${s3}
 </tbody></table>
 <h2>4. Received since 27 October: no longer needed</h2>
 <table class="s4"><colgroup><col class="c1"><col class="c2"><col class="c3"></colgroup>
-<thead><tr><th>Holder and account</th><th>Item on the 27 October list</th><th>What answered it</th></tr></thead><tbody>
+<thead><tr><th>Holder and account</th><th>Item on an earlier list</th><th>What answered it</th></tr></thead><tbody>
 ${s4}
 </tbody></table>
 </body></html>`;
