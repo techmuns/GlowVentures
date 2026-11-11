@@ -118,7 +118,8 @@ try {
    }, { period, type, displayed: measured.shownAs ?? type });
    const picker = page.locator('[data-returns-type-select]');
    assert.equal(await picker.getAttribute('data-requested-return-type'), type, 'debt rows retain the requested calculation');
-   if (measured.shownAs === 'absolute') assert.equal(await picker.locator('option:checked').innerText(), 'Absolute return', 'picker names the displayed measure');
+   assert.equal(await picker.inputValue(), type, 'picker retains the requested measure');
+   if (measured.shownAs === 'absolute') assert.match(await page.locator('[data-returns-type-desc]').innerText(), /Under a year: showing absolute return/, 'explain why the short-period figure stays the same');
    const expectedGain = win.included.length ? win.gain : null;
    const expectedReturn = measured.shown ? measured.pct : null;
    const rawGain = await table.getAttribute('data-seg-total-gain'), rawReturn = await table.getAttribute('data-seg-total-ret');
@@ -144,6 +145,45 @@ try {
   if (x && a && underYear) assert.ok(Math.abs(Number(x.return) - Number(a.return)) < 1e-8 && (!c || Math.abs(Number(c.return) - Number(a.return)) < 1e-8), `${period}: XIRR ${x.return} and CAGR ${c?.return} are Absolute ${a.return} under a year`);
   if (x && a && !underYear) assert.ok(Math.abs(Number(x.return) - Number(a.return)) > 0.01, `${period}: XIRR ${x.return} vs Absolute ${a.return}`);
  }
+ // A direct Benchmarks link must resolve the hint on the initial selection.
+ // Keep each explicit choice visible, even when the short-period total is equal.
+ for (const theme of ['light', 'dark']) for (const width of [1440, 390]) {
+  await page.evaluate(theme => localStorage.setItem('glow:theme', theme), theme);
+  await page.setViewportSize({ width, height: 1000 });
+  await page.goto(`${base}/cio?tab=returns&rview=benchmarks&rtype=cagr&rto=${end}`);
+  const picker = page.locator('[data-returns-type-select]');
+  const hint = page.locator('[data-returns-type-desc]');
+  await page.waitForFunction(() => document.querySelector('[data-returns-type-select]')?.dataset.displayedReturnType === 'absolute');
+  assert.equal(await picker.inputValue(), 'cagr', 'a shared link retains the requested CAGR');
+  assert.deepEqual(await picker.locator('option').evaluateAll(els => els.map(el => el.value)), ['xirr', 'absolute', 'cagr'], 'no hidden replacement option');
+  for (const type of ['xirr', 'absolute', 'cagr', 'xirr']) {
+   await picker.selectOption(type);
+   await page.waitForFunction(type => document.querySelector('[data-returns-type-select]')?.dataset.requestedReturnType === type, type);
+   assert.equal(await picker.inputValue(), type, 'the selected option stays selected');
+   assert.equal(new URL(page.url()).searchParams.get('rtype') ?? 'xirr', type);
+   const text = await hint.innerText();
+   assert.match(text, type === 'absolute' ? /Total gain/ : /Under a year: showing absolute return/);
+   assert.match(await page.locator('[data-returns-bench-portfolio]').innerText(), /Portfolio · Absolute return/);
+  }
+  // Native selectOption does not scroll an offscreen toolbar into view.
+  await hint.scrollIntoViewIfNeeded();
+  const layout = await hint.evaluate(el => {
+   const r = el.getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth + 1 && el.scrollWidth <= el.clientWidth + 1;
+  });
+  assert.ok(layout, `${theme}/${width}: the explanation fits without truncation after scrolling it into view`);
+  await page.locator('[data-returns-types]').screenshot({ path: `${out}/return-picker-${theme}-${width}.png` });
+ }
+ await page.setViewportSize({ width: 1440, height: 1000 });
+ await page.getByRole('tab', { name: 'Return attribution', exact: true }).click();
+ assert.equal(await page.locator('[data-returns-type-select]').inputValue(), 'xirr', 'switching subtabs retains the choice');
+ await page.reload();
+ await table.waitFor();
+ assert.equal(await page.locator('[data-returns-type-select]').inputValue(), 'xirr', 'reload retains the URL choice');
+ // Invalid dates clear the fallback explanation rather than reuse an old total.
+ await page.locator('[data-returns-period="custom"]').click();
+ await page.locator('[data-returns-from]').fill('2030-01-01');
+ await page.waitForFunction(() => document.querySelector('[data-returns-type-select]')?.dataset.displayedReturnType === 'xirr');
+ assert.doesNotMatch(await page.locator('[data-returns-type-desc]').innerText(), /showing absolute return/);
  // FYTD's bridge splits most accounts' gain from their own records and names the rest.
  await page.locator('[data-returns-period="fytd"]').click();
  await page.locator('[data-returns-type-select]').selectOption('xirr');
