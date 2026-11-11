@@ -87,7 +87,10 @@ function EmptyScope() {
 
 function RootRedirect() {
   const { portfolio, bookIsEmpty } = usePortfolio();
-  return <Navigate to={portfolio && !bookIsEmpty ? "/home" : "/upload"} replace />;
+  const { search, hash } = useLocation();
+  // Preserve the member scope. Dropping it races the context's URL restore
+  // when the reader uses a page's Home button with a member selected.
+  return <Navigate to={{ pathname: portfolio && !bookIsEmpty ? "/home" : "/upload", search, hash }} replace />;
 }
 
 /**

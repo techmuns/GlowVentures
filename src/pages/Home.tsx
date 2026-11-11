@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import { ArrowUpRight, Globe2 } from 'lucide-react';
 import { usePortfolio } from '@/context/PortfolioContext';
@@ -20,6 +20,7 @@ const COLORS: Record<string, string> = {
 const colorOf = (key: string) => COLORS[key] ?? '#a4a2b4';
 
 export function Home() {
+  const navigate = useNavigate();
   const { portfolio, fmtFromBase, scope, displayCurrency } = usePortfolio();
   const placements = useFamilyPlacements();
   const model = useMemo(() => portfolio ? homeOverview(portfolio.positions, portfolio.accounts) : null, [portfolio, placements]);
@@ -39,7 +40,8 @@ export function Home() {
             <ResponsiveContainer width="100%" height="100%">
               <PieChart accessibilityLayer>
                 <Pie data={model.allocation} dataKey="value" nameKey="label" cx="50%" cy="50%"
-                  innerRadius="62%" outerRadius="88%" paddingAngle={1.5} stroke="var(--chart-tooltip-bg)" strokeWidth={3} isAnimationActive={false}>
+                  innerRadius="62%" outerRadius="88%" paddingAngle={1.5} stroke="var(--chart-tooltip-bg)" strokeWidth={3} isAnimationActive={false}
+                  cursor="pointer" onClick={(_, index) => navigate(drilldownHref('family-class', model.allocation[index].key))}>
                   {model.allocation.map(row => <Cell key={row.key} fill={colorOf(row.key)} />)}
                 </Pie>
                 <Tooltip formatter={(value: number, label: string) => [money(value), label]}
@@ -57,9 +59,9 @@ export function Home() {
             <Link to={drilldownHref('family-class', row.key)} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 rounded-md px-2 py-2 text-sm hover:bg-ink-700/40 sm:grid-cols-[auto_minmax(0,1fr)_auto_auto]"
               title={`Open the holdings in ${row.label}`}>
               <span className="row-span-2 h-2.5 w-2.5 rounded-full sm:row-span-1" style={{ backgroundColor: colorOf(row.key) }} />
-              <span className="min-w-0 text-slate-300">{row.label}</span>
-              <span className="col-start-2 row-start-2 tabular text-slate-100 sm:col-start-3 sm:row-start-1 sm:text-right">{money(row.value)}</span>
-              <span className="col-start-3 row-span-2 row-start-1 text-right tabular text-slate-400 sm:col-start-4 sm:row-span-1">{row.weight == null ? DASH : `${row.weight.toFixed(1)}%`}</span>
+              <span className="min-w-0 break-words text-slate-300">{row.label}</span>
+              <span className="col-start-2 row-start-2 min-w-0 break-words tabular text-slate-100 sm:col-start-3 sm:row-start-1 sm:text-right">{money(row.value)}</span>
+              <span className="col-start-3 row-span-2 row-start-1 text-right tabular text-slate-400 sm:col-start-4 sm:row-span-1">{row.weight == null ? DASH : row.weight > 0 && row.weight < 0.1 ? '<0.1%' : `${row.weight.toFixed(1)}%`}</span>
             </Link>
           </li>)}
         </ul>

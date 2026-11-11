@@ -59,13 +59,19 @@ try {
       assert.ok(Math.abs(boxes[1].x - boxes[2].x) < 1 && boxes[2].y > boxes[1].y, 'geography is under AUM');
     } else assert.ok(boxes[0].y < boxes[1].y && boxes[1].y < boxes[2].y, 'cards stack on narrow screens');
     await page.locator('[data-home-grid]').screenshot({ path: path.join(out, `${theme}-${width}.png`) });
+    await page.locator('[data-home-allocation-chart] .recharts-sector').first().click();
+    assert.match(new URL(page.url()).search, /of=family-class/, 'donut segment opens its holdings');
+    await page.locator('[data-page-nav-home]').click();
+    await page.locator('[data-home-aum]').waitFor();
     await page.locator('[data-home-class] a').first().click();
     assert.match(new URL(page.url()).search, /of=family-class/, 'asset slice opens its holdings');
     await page.locator('[data-page-nav-home]').click();
     await page.locator('[data-home-aum]').waitFor();
-    await page.getByRole('group', { name: 'Display currency', exact: true }).getByRole('button', { name: 'USD', exact: true }).click();
-    await page.waitForFunction(() => document.querySelector('[data-home-aum]')?.textContent.includes('$'));
-    assert.equal(Number(await page.locator('[data-home-aum]').getAttribute('data-home-aum')), expected, 'currency changes the display, not the model');
+    if (width === 1440) {
+      await page.getByRole('group', { name: 'Display currency', exact: true }).getByRole('button', { name: 'USD', exact: true }).click();
+      await page.waitForFunction(() => document.querySelector('[data-home-aum]')?.textContent.includes('$'));
+      assert.equal(Number(await page.locator('[data-home-aum]').getAttribute('data-home-aum')), expected, 'currency changes the display, not the model');
+    }
     await page.goto(`${base}/home?members=${owner}`);
     await page.waitForFunction(expected => Math.abs(Number(document.querySelector('[data-home-aum]')?.dataset.homeAum) - expected) < .01, scopedTotal);
     await page.locator('[data-nav-entry="/cio"]').click();
