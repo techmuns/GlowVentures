@@ -3,11 +3,12 @@ import { usePortfolio } from '@/context/PortfolioContext';
 import { isDebtHolding } from './analytics';
 import { periodSelection, statementReturnInputs } from './availableCardReturns';
 import { assumedHoldingBook } from './assumedHoldingBook';
-import { selectedSegmentReturns, UNSPLIT_RETURNS, type SelectedLine } from './selectedSegmentReturns';
+import { selectedSegmentReturns, type SelectedLine } from './selectedSegmentReturns';
+import { mergeTwrRows } from './twrRows';
 import type { SegmentAxis } from './segmentReturns';
 import type { Position } from './types';
 import { useMarketHistories } from './useMarketReturns';
-import { exitedTwrUnit } from './exitedTwr';
+import { acquiredAfterTwr, exitedTwrUnit, fullyExitedTwr } from './exitedTwr';
 import { adjustedTwr, missingTwr, TWR_COLUMNS, twrPeriodStart, type TwrColumn, type TwrResult } from './adjustedTwr';
 
 type Model = ReturnType<typeof selectedSegmentReturns>;
@@ -31,24 +32,35 @@ export function useAdjustedTwrColumns({ model, current, exited, calculationCurre
   axis: SegmentAxis; end: string | null;
 }) {
   const { statementPortfolio: statement, corporateActions } = usePortfolio();
+  const sold = useMemo(() => exited.filter(fullyExitedTwr), [exited]);
   const universe = useMemo(() => {
     const held = new Set(current.map(p => `${p.accountId}|${p.securityKey}`));
-    return [...current, ...exited.filter(p => !held.has(`${p.accountId}|${p.securityKey}`))];
-  }, [current, exited]);
+    return [...current, ...sold.filter(p => !held.has(`${p.accountId}|${p.securityKey}`))];
+  }, [current, sold]);
   // Sold holdings need their histories too; the shared loader deduplicates
   // these with the active-holdings feed used by the rest of the page.
   const history = useMarketHistories(universe);
   const inputs = useMemo(() => statement ? statementReturnInputs(statement) : [], [statement]);
   const assumptions = useMemo(() => assumedHoldingBook({ actions: corporateActions, instruments: history.instruments, histories: history.histories }),
     [corporateActions, history.instruments, history.histories]);
+  const scope = useMemo(() => {
+    const key = (p: Position) => `${p.accountId}|${p.securityKey}`;
+    const accounts = new Map(statement?.accounts.map(a => [a.accountId, a]));
+    const outside = new Set(universe.filter(p => end && acquiredAfterTwr(p, accounts.get(p.accountId), end)).map(key));
+    const applicable = universe.filter(p => !outside.has(key(p)));
+    const futureAccounts = new Set(universe.filter(p => outside.has(key(p)) && !applicable.some(q => q.accountId === p.accountId)).map(p => p.accountId));
+    return { applicable, active: current.filter(p => !outside.has(key(p))), sold: sold.filter(p => !outside.has(key(p))), outside, futureAccounts };
+  }, [statement, universe, current, sold, end]);
   const sources = useMemo(() => TWR_COLUMNS.map(col => {
     if (!statement || !end || axis === 'sector') return { model: null, rows: new Map<string, SelectedLine>() };
     const start = twrPeriodStart(col.period, end);
-    const selection = periodSelection({ inputs, current: universe, accounts: statement.accounts, end, assumptions, open: start });
+    const { applicable, active, outside, futureAccounts } = scope;
+    const selection = periodSelection({ inputs, current: applicable, accounts: statement.accounts, end, assumptions, open: start });
+    selection.excluded = selection.excluded.filter(g => g.securityKey ? !outside.has(`${g.accountId}|${g.securityKey}`) : !futureAccounts.has(g.accountId));
     const measured = new Set(selection.windows.map(w => w.accountId));
     const held = new Set(current.map(p => `${p.accountId}|${p.securityKey}`));
     const eligible: Position[] = [];
-    for (const p of exited) {
+    for (const p of scope.sold) {
       if (held.has(`${p.accountId}|${p.securityKey}`)) continue;
       const found = exitedTwrUnit(p, statement.accounts.find(a => a.accountId === p.accountId), start, end, assumptions);
       if ('outside' in found) continue;
@@ -57,32 +69,12 @@ export function useAdjustedTwrColumns({ model, current, exited, calculationCurre
       if ('unit' in found) selection.assumedUnits = [...(selection.assumedUnits ?? []), found.unit];
       else if ('reason' in found) selection.excluded.push({ accountId: p.accountId, securityKey: p.securityKey, label: p.security, reason: found.reason, plainReason: true });
     }
-    const result = selectedSegmentReturns([...current, ...eligible], [], statement.accounts, axis, selection, () => null, calculationCurrent);
+    const result = selectedSegmentReturns([...active, ...eligible], [], statement.accounts, axis, selection, () => null, calculationCurrent);
     return { model: result, rows: indexRows(result) };
-  }), [statement, end, axis, inputs, current, universe, exited, calculationCurrent, assumptions]);
+  }), [statement, end, axis, inputs, current, scope, calculationCurrent, assumptions]);
   const displayed = useMemo(() => {
     if (!model) return null;
-    const isExited = (r: SelectedLine) => {
-      const ps = r.positions.length ? r.positions : r.units.flatMap(u => u.positions);
-      return ps.length > 0 && ps.every(p => !(p.marketValue > 0) && !((p.quantity ?? 0) > 0));
-    };
-    const unmeasured = (r: SelectedLine, top = false): SelectedLine => ({ ...r, label: top && isExited(r) ? `${r.label} · exited` : r.label, exited: isExited(r) ? true : undefined,
-      units: [], measured: null, gain: null, invested: null, returnPct: null, periodPct: null, contribution: null,
-      missing: [{ accountId: r.positions[0]?.accountId ?? '', label: r.label, plainReason: true,
-        reason: `${isExited(r) ? 'This investment is fully exited.' : 'The selected-period return is not available for this row.'} Its fixed-horizon TWR is shown where the purchase and sale records support it.` }],
-      children: r.children.map(c => unmeasured(c)),
-    });
-    const merge = (original: SelectedLine[], peers: SelectedLine[][]): SelectedLine[] => {
-      const rows = new Map(original.map(r => [r.key, r]));
-      for (const list of peers) for (const r of list) {
-        if (!rows.has(r.key) && (isExited(r) || r.key === UNSPLIT_RETURNS)) rows.set(r.key, unmeasured(r, true));
-      }
-      return [...rows.values()].map(r => {
-        const matches = peers.flatMap(list => list.filter(other => other.key === r.key));
-        return { ...r, children: merge(r.children, matches.map(other => other.children)) };
-      });
-    };
-    return { ...model, rows: merge(model.rows, sources.map(source => source.model?.rows ?? [])) };
+    return { ...model, rows: mergeTwrRows(model.rows, sources.map(source => source.model?.rows ?? [])) };
   }, [model, sources]);
   const currentRows = useMemo(() => new Map([...indexRows(displayed)].map(([key, row]) => [row, key])), [displayed]);
   const calculate = useMemo(() => {
@@ -117,5 +109,6 @@ export function useAdjustedTwrColumns({ model, current, exited, calculationCurre
     };
   }, [sources, inputs, end]);
   return { model: displayed, of: (row: SelectedLine) => calculate(currentRows.get(row) ?? '__missing'),
+    retry: Object.values(history.histories).some(h => h && !h.ok) ? history.retry : undefined,
     pending: [...history.instruments.values()].filter(i => !history.histories[i.key]).length };
 }

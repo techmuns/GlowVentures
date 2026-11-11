@@ -19,6 +19,7 @@ const price = date => c[t.indexOf(date)];
 const expectedMtd = (price('2026-11-11') / price('2026-10-31') - 1) * 100;
 const browser = await chromium.launch({ executablePath: process.env.CHROME ?? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true });
 let page;
+let failHistory = false;
 try {
   page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
   await page.clock.install({ time: new Date('2026-11-11T06:30:00Z') });
@@ -28,6 +29,7 @@ try {
   await installReadModelRoutes(page);
   await page.route('**/api/fx', r => r.fulfill({ json: { ok: true, inrPerUsd: 90, date: '2026-11-11' } }));
   await page.route('**/api/market-history?*', route => {
+    if (failHistory) return route.fulfill({ status: 503, json: { ok: false, reason: 'Temporary test outage' } });
     const q = new URL(route.request().url()).searchParams;
     return route.fulfill({ json: { ok: true, version: 2, symbol: q.get('symbol') ?? q.get('fund'), isin: q.get('isin'),
       name: q.has('fund') ? 'Deterministic INR Fund - Growth' : 'Deterministic INR stock', source: 'Local INR fixture', basis: q.has('fund') ? 'nav' : 'adjusted-close',
@@ -131,8 +133,15 @@ try {
   await table.locator('[data-seg-cell="twrMtd"]').first().getByRole('button').click(); await dialog.waitFor();
   assert.ok(await dialog.evaluate(el => { const r = el.getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth + 1 && el.scrollWidth <= el.clientWidth + 1; }));
   await page.screenshot({ path: path.join(out, 'mobile-info.png') }); await page.keyboard.press('Escape');
+  // Recovery includes histories requested only for sold investments.
+  failHistory = true; await page.reload(); await table.waitFor();
+  await page.waitForFunction(() => { const d = document.querySelector('[data-segment-returns]')?.dataset; return d?.marketPending === '0' && d?.twrPending === '0'; });
+  await table.locator('tr[data-seg-row] [data-seg-cell="twrMtd"]').first().getByRole('button').click(); await dialog.waitFor();
+  failHistory = false; await dialog.locator('[data-twr-retry]').click();
+  await page.waitForFunction(() => [...document.querySelectorAll('[data-seg-cell="twrMtd"]')].some(c => c.getAttribute('data-twr-pct')));
+  await page.keyboard.press('Escape');
   assert.deepEqual(errors, []);
-  await fs.writeFile(path.join(out, 'results.json'), JSON.stringify({ expectedMtd, matchedHolding: match.key, measurable: Object.fromEntries(columns.map(c => [c, before.filter(r => r.values[c] !== '').length])), checks: 'fixed horizons, INR/ USD display invariance, source gaps, Edit Columns persistence, sorting, numeric Excel export and mobile popup' }, null, 2));
+  await fs.writeFile(path.join(out, 'results.json'), JSON.stringify({ expectedMtd, matchedHolding: match.key, measurable: Object.fromEntries(columns.map(c => [c, before.filter(r => r.values[c] !== '').length])), checks: 'fixed horizons, INR/ USD display invariance, source gaps, Edit Columns persistence, sorting, numeric Excel export, mobile popup and history retry' }, null, 2));
   console.log('INR TWR browser checks passed.');
 } catch (error) { await page?.screenshot({ path: path.join(out, 'failure.png'), fullPage: true }).catch(() => {}); throw error; }
 finally { await browser.close(); }

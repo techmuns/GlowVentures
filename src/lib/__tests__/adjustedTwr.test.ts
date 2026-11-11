@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict';
 import { adjustedTwr, twrPeriodStart, TWR_COLUMNS, type TwrRecord } from '../adjustedTwr';
 import { daysBetween, type AccountWindow } from '../periodReturns';
-import { exitedTwrUnit } from '../exitedTwr';
+import { acquiredAfterTwr, exitedTwrUnit, fullyExitedTwr } from '../exitedTwr';
 import type { Account, Position } from '../types';
 import type { AssumedReturnBook } from '../assumedHoldingReturns';
+import { mergeTwrRows } from '../twrRows';
+import type { SelectedLine } from '../selectedSegmentReturns';
 
 const near = (actual: number | null, expected: number, eps = 1e-9) => assert.ok(actual != null && Math.abs(actual - expected) < eps, `${actual} != ${expected}`);
 const rec = (overrides: Partial<AccountWindow> = {}, key = 'a'): TwrRecord => {
@@ -78,8 +80,12 @@ missing(run([rec({ marks: [{ date: '2026-05-01', value: 100 }, { date: '2026-05-
 missing(run([rec({ flows: [{ date: '2026-12-01', amount: -100 }] })]), /outside/);
 missing(run([rec()], { end: '2026-02-31' }), /ending date/);
 missing(run([{ ...deposit, window: { ...deposit.window, capitalIn: 99 } }]), /reconcile/);
-missing(run([rec({ marks: [{ date: '2026-05-01', value: 0 }, { date: '2026-06-01', value: 100 }],
-  flows: [{ date: '2026-05-01', amount: 100 }, { date: '2026-06-01', amount: -100 }] })]), /no positive invested capital/);
+near(run([rec({ marks: [{ date: '2026-05-01', value: 0 }, { date: '2026-06-01', value: 100 }],
+  flows: [{ date: '2026-05-01', amount: 100 }, { date: '2026-06-01', amount: -100 }] })]).pct, 21);
+const restarted = run([rec({ marks: [{ date: '2026-05-01', value: 0 }, { date: '2026-06-01', value: 110 }],
+  flows: [{ date: '2026-05-01', amount: 120 }, { date: '2026-06-01', amount: -100 }], closeValue: 121 })]);
+near(restarted.pct, 45.2); // First spell 20%, second spell 21%; preserve both (1.2 × 1.21 − 1).
+assert.equal(restarted.from, '2026-01-01');
 missing(run([rec()], { gaps: [{ label: 'Unpriced holding', reason: 'A valuation is missing.' }] }), /missing/);
 
 // Fully exited holdings still earned a realised return. Their verified nil
@@ -90,6 +96,13 @@ const exited = { accountId: 'sold', securityKey: 'exited-fund', security: 'Exite
     costOfUnitsSold: 100, dividendReceived: 0, cashRecord: [{ date: '2026-01-02', side: 'buy', amount: 100 }, { date: '2026-11-05', side: 'sell', amount: 120 }],
     unitRecord: [{ date: '2026-01-02', units: 1 }, { date: '2026-11-05', units: 0 }, { date: '2026-11-11', units: 0 }] } } as Position;
 const account = { accountId: 'sold', accountNo: '1', owner: 'Owner', provider: 'Test', asOf: '2026-11-11' } as Account;
+assert.ok(fullyExitedTwr(exited));
+assert.equal(fullyExitedTwr({ ...exited, quantity: 1, marketValue: 500 }), false, 'small live holdings are not sales');
+assert.equal(fullyExitedTwr({ ...exited, quantity: 1, marketValue: 0 }), false, 'unpriced units are not fully exited');
+assert.equal(acquiredAfterTwr(exited, account, '2026-01-01'), true, 'the complete cash ledger proves no investment yet');
+assert.equal(acquiredAfterTwr(exited, account, '2026-02-01'), false);
+assert.equal(acquiredAfterTwr({ ...exited, recoveredCost: undefined, heldSince: '2026-11-01' }, account, '2026-02-01'), false,
+  'a surviving-lot date alone cannot exclude an earlier investment spell');
 const history = { ok: true as const, version: 2, symbol: 'fund', isin: exited.isin!, name: 'Test', source: 'Fixture', basis: 'nav' as const,
   first: '2026-01-02', last: '2026-11-11', t: ['2026-01-02', '2026-10-31', '2026-11-05', '2026-11-11'], c: [100, 100, 120, 120], v: [100, 100, 120, 120], splits: [] };
 const exitedBook = { positions: [exited], unvalued: [], trades: {}, moves: [], movements: {}, actions: null,
@@ -106,5 +119,24 @@ if ('unit' in found) {
 }
 assert.ok('outside' in exitedTwrUnit(exited, account, '2026-11-30', '2026-12-11', exitedBook), 'a sale before the period is not a current-period gap');
 assert.ok('reason' in exitedTwrUnit(exited, account, '2026-10-31', '2026-11-11', { ...exitedBook, histories: {} }), 'missing exited price histories are not silently omitted');
+const weekendSale = { ...exited, recoveredCost: { ...exited.recoveredCost!,
+  unitRecord: [{ date: '2026-01-02', units: 2 }, { date: '2026-10-31', units: 1 }, { date: '2026-11-05', units: 0 }],
+  cashRecord: [{ date: '2026-01-02', side: 'buy' as const, amount: 200 }, { date: '2026-10-31', side: 'sell' as const, amount: 100 }, { date: '2026-11-05', side: 'sell' as const, amount: 120 }],
+} };
+const fridayHistory = { ...history, t: ['2026-01-02', '2026-10-30', '2026-11-05', '2026-11-11'] };
+const weekend = exitedTwrUnit(weekendSale, account, '2026-10-31', '2026-11-11', { ...exitedBook, histories: { fund: fridayHistory } });
+assert.ok('reason' in weekend && /period boundary/.test(weekend.reason), 'a Friday price cannot value stale units after a Saturday sale');
+const row = (key: string, positions: Position[], children: SelectedLine[] = []): SelectedLine => ({ key, label: key, positions,
+  value: 100, gain: 10, units: [], missing: [], measured: null, invested: 100, returnPct: 10, periodPct: 10, contribution: 10, children });
+const live = { ...exited, accountId: 'live', quantity: 1, marketValue: 100 };
+const original = row('category', [live], [row('live', [live], [row('held', [live])])]);
+const fixed = row('category', [live, exited], [row('live', [live], [row('held', [live]), row('sold-security', [exited])]), row('sold-account', [exited])]);
+const merged = mergeTwrRows([original], [[fixed], [fixed]])[0];
+assert.equal(merged.gain, 10, 'the main-period gain is preserved');
+assert.deepEqual(merged.positions, [live], 'the current holdings and weights retain their selected-period meaning');
+assert.equal(merged.children.length, 2, 'an exited account appears inside an already-present category');
+assert.equal(merged.children[0].children.length, 2, 'an exited security appears inside an already-present account');
+assert.equal(merged.children[1].gain, null, 'source-only rows do not borrow fixed-horizon gains for the main selector');
+assert.equal(merged.children[1].exited, true);
 console.log('Fully exited TWR: realised gain included, common-date grouped return, repeated nil balances and outside-period exits passed.');
 console.log('INR adjusted TWR: calendar boundaries, contributions, withdrawals, dividends, fees, geometric linking, grouped INR values, inception, annualisation, currency invariance and missing-data gates passed.');

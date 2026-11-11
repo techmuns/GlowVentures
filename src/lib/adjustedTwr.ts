@@ -113,10 +113,10 @@ export function adjustedTwr(records: readonly TwrRecord[], { start, end, annuali
     // Investor-view amounts are negative IN, positive OUT.
     const netIn = -sum(records.flatMap(r => r.window.flows.filter(f => f.date === d).map(f => f.amount)));
     const values = records.map((_, i) => valueAt(i, d));
-    if (opening === 0 && steps.length === 0 && netIn > 0) {
+    if (opening === 0 && netIn > 0) {
       // First funding is starting capital. No return is assigned to the empty
       // period before it. A later valuation captures gains since that payment.
-      measuredFrom = d;
+      if (steps.length === 0) measuredFrom = d;
       if (values.some(v => v == null)) { opening = netIn; at = d; continue; }
       const closing = sum(values as number[]), factor = closing / netIn;
       if (!Number.isFinite(factor) || factor < 0) return fail('The initial funding does not establish a valid investment value.');

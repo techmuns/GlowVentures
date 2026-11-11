@@ -88,7 +88,7 @@ export default function SegmentReturns({ selection: recordedSelection, period, e
   const sectorAxis = axis === 'sector';
   const originalAttribution = useMemo(() => statementPortfolio && !sectorAxis ? selectedSegmentReturns(current, exited, statementPortfolio.accounts, axis, selection,
     () => null, calculationCurrent) : null, [current, exited, statementPortfolio, axis, selection, calculationCurrent, sectorAxis]);
-  const { model: a, of: twrOf, pending: twrPending } = useAdjustedTwrColumns({ model: originalAttribution, current, exited, calculationCurrent, axis, end });
+  const { model: a, of: twrOf, pending: twrPending, retry: retryTwr } = useAdjustedTwrColumns({ model: originalAttribution, current, exited, calculationCurrent, axis, end });
   // The capital bridge is the selected period's total on every axis (Stage 10gu): the table's own total
   // units, or on the Sector view — which draws no dated total of its own — the same pool grouped by category.
   const pool = useMemo(() => a ?? (statementPortfolio ? selectedSegmentReturns(current, exited, statementPortfolio.accounts, 'category', selection,
@@ -274,7 +274,7 @@ export default function SegmentReturns({ selection: recordedSelection, period, e
         title={shownAbsolute(l) ? `Held under a year, so this is the absolute return, not ${type.label}: a return under a year is never annualised.`
           : l.measured?.basis === 'annual' && l.periodPct != null ? `${pct(l.periodPct)} over the period itself, not stated per year` : undefined}>
         {l.returnPct != null ? <>{shownAbsolute(l) && <span className="ret-tag">ABS</span>}{pct(l.returnPct)}{l.measured?.basis === 'annual' && <span className="text-[10px]">p.a.</span>}</> : <AbsentCell reason={reason(l)} />}<HoldingAssumptionInfo units={l.units} />{info(l, 'return')}</span></td>,
-      ...TWR_COLUMNS.map(c => <AdjustedTwrCell key={c.key} column={c.key} result={twrOf(l)[c.key]} pad={pad} label={l.label} />),
+      ...TWR_COLUMNS.map(c => <AdjustedTwrCell key={c.key} column={c.key} result={twrOf(l)[c.key]} pad={pad} label={l.label} onRetry={retryTwr} />),
       <td key="contrib" className={`${pad} text-right mono ${changeColor(l.contribution)}`}>{l.contribution != null ? `${l.contribution >= 0 ? '+' : ''}${l.contribution.toFixed(2)} pp` : <AbsentCell reason={contributionReason} />}</td>,
       <td key="basis" className={`${pad} text-right text-[11px] text-slate-400`}>{l.units.some(u => u.assumption)
         ? l.units.every(u => u.assumption) ? 'Assumed held' : 'Statements + assumed held' : l.units.length ? 'Statement records' : 'Missing records'}</td>,

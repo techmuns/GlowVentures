@@ -1,4 +1,4 @@
-import { recordedHoldingOf } from './holdingFlows';
+import { holdingFlowsOf, recordedHoldingOf } from './holdingFlows';
 import { marketHoldingKey } from './marketReturns';
 import { publishedClose, type AssumedReturnBook } from './assumedHoldingReturns';
 import { projectActions } from './corporateActions';
@@ -6,6 +6,13 @@ import type { Account, Position } from './types';
 import type { ReturnUnit } from './selectedSegmentReturns';
 
 export type ExitedTwrFound = { outside: true } | { reason: string } | { unit: ReturnUnit };
+/** The display's "exited" set also contains small live balances. */
+export const fullyExitedTwr = (p: Position) => p.marketValue === 0 && (p.quantity == null || p.quantity === 0);
+/** Surviving lot dates alone cannot rule out an earlier investment spell. */
+export function acquiredAfterTwr(p: Position, a: Account | undefined, end: string): boolean {
+  const record = holdingFlowsOf(p, a?.asOf ?? null);
+  return !!record?.dated && record.since > end;
+}
 /** Recover the performance of a fully sold holding, rather than silently lose
  * its realised return when the period selection iterates today's holdings.
  * A reconciled sale proves nil after its final exit; that needs no price.
@@ -36,6 +43,10 @@ export function exitedTwrUnit(p: Position, a: Account | undefined, start: string
   if (h.splits?.some(s => s.date > from)) return gap('A reconciled split-adjusted ownership history is needed for this exited investment.');
   const opening = unitsOn(from) > 0 ? publishedClose(h, from) : { date: from, value: 0 };
   if (!opening) return gap('The opening price of this exited investment is missing.');
+  if (opening.date < from && (cash.some(x => x.date > opening.date && x.date <= from)
+    || units.some(x => x.date > opening.date && x.date <= from && x.units !== unitsOn(opening.date)))) {
+    return gap('Units or cash changed between the last published opening price and the period boundary. A valuation at the boundary is needed.');
+  }
   const lastHeld = units.reduce((last, row, i) => row.units > 0 ? i : last, -1);
   if (lastHeld < 0) return gap('An invested unit balance before the full exit is needed.');
   const closedOn = units[lastHeld + 1]?.date;
