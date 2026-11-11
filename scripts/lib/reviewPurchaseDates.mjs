@@ -53,6 +53,9 @@ export const REVIEW_PRODUCT_BY_KEY = Object.freeze({
   "deepak-fertilisers-and-petrochemicals": "Deepak Fert",
   "kingfa-science-and-technology-india": "Kingfa Science & Technology Ltd.",
   "manorama-industries": "Manorama Industries Ltd.",
+  // Stage 10mx: 1,77,000 bought 18 Jul 2024; 67,000 sold 23–29 Jul 2026 on the
+  // account's own trade report; 1,10,000 held, every one long-term.
+  vedanta: "Vedanta",
 });
 
 /**

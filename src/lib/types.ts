@@ -463,6 +463,14 @@ export type Position = {
    */
   investedDates?: { from: string; to: string; text: string } | null;
   /**
+   * THE FAMILY'S OWN DATED PAYMENTS BEHIND A LINE THE REVIEW DATES BY MONTH
+   * (Stage 10mx) — the investment register's serial group for this holder, which
+   * adds to the review's cost to the rupee and falls inside `investedDates`'s
+   * months. A date source for Invested on only; built by
+   * `scripts/lib/registerPurchaseDates.mjs`.
+   */
+  registerPayments?: { payments: { date: string; amount: number }[]; evidence: { path: string; sheet: string; rows: number[] } };
+  /**
    * PER-UNIT figures, and NULLABLE — not every provider prints them.
    *
    * The four PMS appraisals print a Unit Cost and a Market Price on every row.
