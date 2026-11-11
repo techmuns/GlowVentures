@@ -292,6 +292,7 @@ const BENCH_GAPS: [RegExp, string][] = [
   [/^some of\b|buy [1-9][\d,.]* and sell|does not account for every unit|on no dated trade in this drop/i, "Dates incomplete"],
   [/not dated in full/i, "No buy dates"],
   [/only as a span/i, "Range only"],
+  [/only as a month/i, "Month only"],
   [/record ends .* before/i, "Record ends early"],
   [/reaches inception/i, "Start not on record"],
   [/capital is known only as a total|no dated record|no dated payment|dated capital record/i, "No dated capital"],

@@ -1460,3 +1460,13 @@ Codex's review of #352, verified against the code and the book:
 - **ADD TILE is the row's narrow end column** (`AddTile`'s `column`, Morning CIO only): 4.5rem wide, as tall as the tiles, dashed, "ADD" over "TILE" in bold. It sits outside the tiles' grid, so six tiles are still one row. Its menu opens from the column's right edge, 16rem wide. On a phone it is a short bar under the tiles. Private Market's card is unchanged (the size of a tile, Stage 10cl). Pressing it scales to 0.97 (`motion-safe`).
 - Measured at 1278×680 on this book (value, gain, annualised, YTD, FYTD): strip 207px → 114px, tiles 340px → 185px wide each, and the Returns panel starts 93px higher.
 - Checks: `tilePickerChecks` takes `addColumn`. On Morning CIO, ADD TILE is an empty dashed column as tall as the tiles and narrower than one, reading ADD TILE in bold. It shares the tiles' row with six tiles too, and `cio-tiles-dense` asserts that.
+
+### Stage 10mp — A review line dated only by months says so: "Range only", not "No dated capital"
+
+*"we have the dates of the investment, but still we are showing in XIRR and in the benchmark return that we don't have any dated capital"* — the family, on National Stock Exchange (Invested on "Dec 2022 → Aug 2023").
+
+- **Root cause.** A review holder line (Stage 10dh) is a "whole account" to `datedCapital.behind`, and with no capital group it fell to the custodian-account reason, "publishes no dated record … capital known only as a total". The XIRR cell read that as "No buy/sell dates" and the index line as "No dated capital". The same row's Invested on showed the review's month span.
+- **What is actually missing.** The review prints the months (Dec 2022 – Aug 2023) and one cost (₹12.085 Cr for 2,00,000 shares). It does not say what was paid on each day, so there is still no rate. Placing the cost inside the span would be an estimate.
+- **Now** (`spanReason` in `datedCapital.ts`): such a line says the review dates it only as a span (or a month), with one cost, and names the holders. XIRR reads "Date range only" (or "Month only"; `returnColumns.ts`), and the index line reads "Range only" (or "Month only"; `holdingBenchmark.ts`). A line whose account has a capital group keeps that group's reason.
+- **Would date it.** The investment register dates part of it: Ankita's 15,000 pre-bonus shares (8 Dec 2022 and 26 Jan 2023 payments, ₹4.28 Cr) and 5,000 of Ajay's (18 Aug 2023; the amount printed does not match its own 5,000 × ₹3,100). Ajay's other 20,000 have no dated purchase. Not applied: it would replace the review's cost split, and that is the family's decision.
+- Checks: `datedCapital.test.ts` (NSE's two lines: undated, reason names the span, XIRR refuses), `holdingBenchmark.test.ts` (labels).
