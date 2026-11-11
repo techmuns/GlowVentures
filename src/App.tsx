@@ -16,6 +16,7 @@ import { navEntry } from "@/lib/nav";
 import { usePortfolio, WholeFamily } from "@/context/PortfolioContext";
 import StatementSourcePreview from "@/components/StatementSourcePreview";
 const MorningCIO = lazy(() => import("@/pages/MorningCIO").then((m) => ({ default: m.MorningCIO })));
+const Home = lazy(() => import("@/pages/Home").then((m) => ({ default: m.Home })));
 const Polycab = lazy(() => import("@/pages/Polycab").then((m) => ({ default: m.Polycab })));
 const PortfolioMonitor = lazy(() => import("@/pages/PortfolioMonitor").then((m) => ({ default: m.PortfolioMonitor })));
 const PrivateMarket = lazy(() => import("@/pages/PrivateMarket").then((m) => ({ default: m.PrivateMarket })));
@@ -86,7 +87,7 @@ function EmptyScope() {
 
 function RootRedirect() {
   const { portfolio, bookIsEmpty } = usePortfolio();
-  return <Navigate to={portfolio && !bookIsEmpty ? "/cio" : "/upload"} replace />;
+  return <Navigate to={portfolio && !bookIsEmpty ? "/home" : "/upload"} replace />;
 }
 
 /**
@@ -165,6 +166,7 @@ export default function App() {
                 RINGFENCED_SECURITY_KEYS in build-book.mjs). Reads BOOK_POLYCAB
                 directly, never the portfolio context, so it cannot leak back in. */}
             <Route path="/polycab" element={<Gate><Polycab /></Gate>} />
+            <Route path="/home" element={<Gate><Home /></Gate>} />
             <Route path="/cio" element={<Gate><MorningCIO /></Gate>} />
             <Route path="/monitor" element={<Gate><PortfolioMonitor /></Gate>} />
             {/* THE PRIVATE BOOK THIS DROP ACTUALLY CARRIES — not the

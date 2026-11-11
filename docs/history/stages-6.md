@@ -1500,3 +1500,10 @@ Codex's review of #352, verified against the code and the book:
 - Identity is an alias table (`REVIEW_PRODUCT_BY_KEY`, `REVIEW_CUSTODY_BY_ACCOUNT`), never an amount or a date.
 - The client request (Stage 10mq) no longer asks HDFC Securities for these three holdings' dates: 41 named records (was 43).
 - Checks: `reviewPurchaseDates.test.mjs` (each gate broken once).
+
+### Stage 10mu — Home: the portfolio at a glance
+
+- Home sits above Morning CIO in Daily and is the populated dashboard's front door. The existing Home buttons and global search reach it; an empty book still opens ingestion.
+- The reference layout becomes an asset-class donut on the left, with AUM and Geography on the right. AUM and every class open their holdings. The total counts each duplicate group once, shares Morning CIO's family asset-class rules, and follows the member and currency selectors.
+- Geography names the unclassified value. The book has no verified country exposure, so no countries, weights or historical AUM change are inferred from the screenshot, listing venue, currency or fund names.
+- Validation covers canonical AUM, dedupe, allocation totals, missing classifications, scoped totals, search, navigation, currency and light/dark desktop/mobile layouts.

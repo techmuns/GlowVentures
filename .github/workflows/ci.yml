@@ -128,6 +128,7 @@ jobs:
           done
           CHROME="$(command -v google-chrome)" node scripts/dev/check-statement-drop.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-selected-attribution.mjs
+          CHROME="$(command -v google-chrome)" node scripts/dev/check-home-overview.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-market-returns.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-assumed-holdings.mjs
           CHROME="$(command -v google-chrome)" node scripts/dev/check-nav-assumed.mjs
