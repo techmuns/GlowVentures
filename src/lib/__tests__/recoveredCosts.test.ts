@@ -37,8 +37,9 @@ for (const [account, isin, units] of FOLIO_COSTED_DEMATS)
     !costedAtFolio.some(([a, i]) => a === account && i === isin), `${account}: recovered only while no folio of the owner costs the same units`);
 // Less four on Ajay's ICICI NSDL account whose 31 Mar counts its 31 Oct statement
 // no longer holds (Stage 10kn): Smartworks and Insolation Energy sold to nil, Yash
-// Highvoltage 1,38,462 → 1,04,462 and EMA Partners 44,643 → 643.
-assert.equal(BOOK_RECOVERED_COSTS.length, 58 - costedAtFolio.length, "only exact owner/ISIN/quantity matches are recoverable");
+// Highvoltage 1,38,462 → 1,04,462 and EMA Partners 44,643 → 643. Plus Sotefin
+// Bharat, which the investment register dates through its bonus (Stage 10mv).
+assert.equal(BOOK_RECOVERED_COSTS.length, 59 - costedAtFolio.length, "only exact owner/ISIN/quantity matches are recoverable");
 const MOPWM = "source/october-2026-e/ANKITA_JAISINGHANI_FAMILY_23Oct2026131535.xlsx";
 assert.equal(BOOK_RECOVERED_COSTS.filter(r => r.evidence.some(e => e.path === MOPWM)).length, 17);
 // Bharat's scanned HDFC Bank NSDL statement (Stage 10gk) prints the 1,01,111
@@ -48,11 +49,13 @@ const bharat = BOOK_RECOVERED_COSTS.filter(r => r.accountId === "hdfc-bank-nsdl-
 assert.deepEqual(bharat.map(r => [r.isin, r.quantity, r.costBasis]), [["INE0NAZ01010", 101111, 45499950]]);
 const icici = BOOK_POSITIONS.filter(p => p.accountId === "icici-bank-nsdl-demat-49794950");
 const recovered = icici.filter(p => p.recoveredCost);
-assert.equal(recovered.length, 5);
+assert.equal(recovered.length, 6);
 const expected: Record<string, [number, number]> = {
   INE647U01026: [94967, 93857991], INE212S01015: [180185, 176878881],
   INE12E301017: [262125, 16277250],
   INE00YJ01010: [116979, 75000350], INE1H7V01011: [59000, 10030000],
+  // Sotefin Bharat: the register's 11,364 at ₹1,100 and 46,875 at ₹160, through the 10:1 bonus (Stage 10mv).
+  INE12Z301012: [171879, 20000400],
 };
 for (const p of recovered) {
   const [units, cost] = expected[p.isin!];
