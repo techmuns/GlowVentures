@@ -759,6 +759,10 @@ html:not(.dark) .hover\:bg-champagne-400:hover { background-image: none; backgro
  * already says something with its colour — a section band, a child row, a total,
  * a fired alert, a hovered row — keeps its own, because any class beats it.
  */
+/* A pinned Security cell inherits its row's opaque surface. Keep this default
+   below the zebra, hierarchy and hover rules in specificity, and before them
+   in source order, so those states continue across the frozen column. */
+:where([data-monitor-table="holdings"] > tbody > tr) { background-color: var(--chart-tooltip-bg); }
 :where(table > tbody > tr:nth-child(even)) { background-color: var(--row-alt); }
 /*
  * THE HOVERED ROW IS OPAQUE, AND ONLY A ROW. *"When I'm hovering over a lighter
@@ -846,6 +850,31 @@ html:not(.dark) :where(#root tr:is(.tree-child-row, .tree-section-row, [data-tab
 :is(#root, .return-calculation) .overflow-x-auto:has(> table > thead) {
   max-height: 36rem;
   overflow-y: auto;
+}
+/* Portfolio Monitor keeps the Security labels beside horizontally scrolled
+   figures as well as keeping its heading row above vertically scrolled rows.
+   Section bands and expanded detail cells span columns and must scroll whole. */
+@media screen {
+  #root [data-monitor-table="holdings"] > thead > tr > [data-col="security"] {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    background-color: var(--table-header-bg);
+  }
+  #root [data-monitor-table="holdings"] > tbody > tr > td:first-child:is(:not([colspan]), [colspan="1"]) {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background-color: inherit;
+  }
+}
+@media screen and (max-width: 640px) {
+  #root [data-monitor-table="holdings"] > tbody > tr > td:first-child:is(:not([colspan]), [colspan="1"]) {
+    width: 10rem;
+    min-width: 10rem;
+    max-width: 10rem;
+    overflow-wrap: anywhere;
+  }
 }
 html #root table :is(th, td) {
   border: 0 solid var(--table-grid);

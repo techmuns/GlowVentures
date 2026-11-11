@@ -5440,7 +5440,7 @@ export function PortfolioMonitor() {
                   "₹0 ₹0 ₹0 0.0%", and a total of nothing is not a measured zero
                   (§2) — the line above already says why the table is empty. */}
               {rows.length > 0 && (
-              <tfoot className="sticky bottom-0 bg-ink-800">
+              <tfoot className="sticky bottom-0 z-10 bg-ink-800">
                 {/* `data-footer-total` is the handle the sweep adds the category
                     totals up against. Read by COLUMN rather than by cell: this
                     row's label spans three of them and a category's spans one,

@@ -1578,6 +1578,8 @@ Codex's review of #352, verified against the code and the book:
 - Classify it as Debt / Stable Growth, matching the review's treatment of the Neo Infra income AIF. Stable Growth is our placement under the current request, not a label claimed from the fund documents or June workbook. Keep provenance `family`, no workbook row, and the Category II AIF wrapper; no source figures change.
 - The existing taxonomy suite checks Franklin's two axes, category and provenance, and now refuses any unclassified fund or company. Only two residual bank balances remain outside a basket in the raw book.
 
+### Stage 10nb — Portfolio Monitor keeps Security labels visible
+
 ### Stage 10nc — Investment performance names how many accounts it covers, of how many
 
 - The client asked what "53 accounts covered" meant when they hold over 100 accounts. The card counted the accounts in the measured total and said nothing about the rest.
