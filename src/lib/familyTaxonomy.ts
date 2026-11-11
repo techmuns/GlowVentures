@@ -483,14 +483,16 @@ const classByDerivation = (p: Classifiable): FamilyAssetClass | null =>
 export type Resolved<T> = { value: T; source: TaxonomySource; reviewProduct: string | null };
 
 /**
- * THE FAMILY'S ASSET CLASS FOR A HOLDING THE 30 JUNE REVIEW PREDATES (Stage 10js).
+ * THE FAMILY'S PLACEMENT FOR HOLDINGS THE 30 JUNE REVIEW DOES NOT NAME.
  *
- *   "in asset class you can show it under as debt, and in basket you can show
- *    it as not classified."
- *
- * Asset class only, so no `FAMILY_TAXONOMY` entry: that map carries a basket too
- * and cites a workbook row, and this holding has neither. A later review naming
- * it takes over, because the map is read first.
+ * Franklin was Debt with no basket on the family's earlier instruction (Stage
+ * 10js). On 12 Nov 2026 they asked to research it and classify the remaining
+ * holding. Its private-credit / operating-cashflow strategy fits Stable Growth
+ * alongside the review's Debt / Neo Infra Income Opportunities AIF. This is a
+ * placement under the new request, not a claim that the June workbook names it.
+ * Fund-authored investor deck (financial-services credit, senior securities):
+ * https://www.scribd.com/document/1038011103/Franklin-India-Credit-AIF-Scheme-I-Investor-Deck-Regular
+ * A later review naming it takes over, because that map is read first.
  *
  * THE SIX THE REVIEW DOES NOT NAME (Stage 10lb, 4 Nov 2026: "Apply all seven").
  * Active Momentum (6 Aug), Vantage Oak (31 Jul) and Nzuri (25 Sep and 1 Oct)
@@ -519,8 +521,9 @@ export const FAMILY_SAID_CLASS: Readonly<Record<string, FamilyAssetClass>> = {
   "sec:nzuri-pune-knowledge-park-private-limited-pref-24sp46": "Real Estate",
 };
 
-/** …and their basket, on the same word. Franklin is absent: "in basket you can show it as not classified". */
+/** …and their basket, under the same family instructions and research above. */
 export const FAMILY_SAID_BASKET: Readonly<Record<string, FamilyBasket>> = {
+  "sec:franklin-india-credit-aif-scheme-i-unit-class-db2": "Stable Growth",
   "sec:motilal-oswal-active-momentum-fund-direct-plan-growth-option": "Thematic & Tactical",
   "sec:kotak-flexi-cap-fund-direct-growth": "Stable Growth",
   "sec:icici-prudential-nifty-100-low-volatility-30-etf-fof-direct-plan-growth": "Stable Growth",

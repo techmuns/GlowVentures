@@ -22,6 +22,7 @@ import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_SUMMARY, BOOK_SHARE_MOVEMENTS, BOOK
 import { BOOK_FUND_NAVS } from "@/data/fundNavs";
 import { depositoryCashHoldings, depositoryFundHoldings, isArbitrageFund, unpricedStatementUnits } from "@/lib/fundNavs";
 import { accountIndex, engagementOf } from "@/lib/accounts";
+import { aifCategoryOf, CATEGORY_II } from "@/lib/aifCategory";
 import {
   holdingBucket, MANDATE_BUCKET, dedupedPositions,
   CASH_EQUIVALENT_KEYS, isCashEquivalent, cashEquivalentCandidates,
@@ -158,14 +159,18 @@ for (const [axis, key] of [["basket", basketKeyOf], ["asset class", familyClassK
      ambiguous.map(([k, v]) => `${k} → ${[...v].join("/")}`).join("; "));
 }
 
-// ── THE FAMILY'S WORD ON FRANKLIN: DEBT, AND NO BASKET (Stage 10js) ──────────
+// ── FRANKLIN: DEBT / STABLE GROWTH AFTER THE 12 NOV CLASSIFICATION REQUEST ──
 {
   const franklin = BOOK_POSITIONS.filter((p) => p.securityKey === "franklin-india-credit-aif-scheme-i-unit-class-db2");
   ok("Franklin India Credit AIF is held", franklin.length > 0);
   ok("...its asset class is Debt, on the family's word and not the review's",
      franklin.every((p) => familyAssetClass(p, isM(p))?.value === "Debt" && familyAssetClass(p, isM(p))?.source === "family"));
-  ok("...and its basket stays not classified",
-     franklin.every((p) => basketKeyOf(p, isM(p)) === UNCLASSIFIED));
+  ok("...and its basket is Stable Growth under the new request, not the old review",
+     franklin.every((p) => familyBasket(p, isM(p))?.value === "Stable Growth"
+       && familyBasket(p, isM(p))?.source === "family"
+       && familyBasket(p, isM(p))?.reviewProduct === null));
+  ok("...and its Category II AIF wrapper is preserved",
+     franklin.every((p) => holdingBucket(p, engagementOf(idx, p) || null) === "AIF" && aifCategoryOf(idx, p).category === CATEGORY_II));
 }
 
 // ── THE SEVEN THAT SAT UNDER "NOT CLASSIFIED" (Stage 10lb) ──────────────────
@@ -191,11 +196,11 @@ for (const [axis, key] of [["basket", basketKeyOf], ["asset class", familyClassK
        `${FAMILY_SAID_CLASS[k]} / ${FAMILY_SAID_BASKET[k]}`);
   }
 
-  // Left without a basket: Franklin, by the family's choice, and balances our own
-  // class already calls Cash. No fund or company is.
+  // Only residual cash balances can lack a basket. Every fund and company,
+  // including Franklin, has a placement.
   const un = dedupedPositions(BOOK_POSITIONS).filter((p) => p.marketValue > 0 && basketKeyOf(p, isM(p)) === UNCLASSIFIED);
-  ok("no fund or company is left without a basket but Franklin",
-     un.every((p) => p.securityKey === "franklin-india-credit-aif-scheme-i-unit-class-db2" || familyAssetClass(p, isM(p))?.source === "derived"),
+  ok("no fund or company is left without a basket",
+     un.every((p) => familyAssetClass(p, isM(p))?.value === "Cash" && familyAssetClass(p, isM(p))?.source === "derived"),
      un.map((p) => p.security).join("; ") || "none");
   ok("...and nothing is left without an asset class",
      dedupedPositions(BOOK_POSITIONS).every((p) => !(p.marketValue > 0) || familyClassKeyOf(p, isM(p)) !== UNCLASSIFIED));
