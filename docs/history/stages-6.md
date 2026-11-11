@@ -1510,6 +1510,15 @@ Codex's review of #352, verified against the code and the book:
 - `build-book` now reads the tape (`saleRows`: the holding trades and the day's sales settled against capital-gain lots) from the winning report type alone, deduped among itself, which is the runtime ledger's `datedRows` rule. Book: 1,817 → 1,820 trades, Green Lantern 510861 28 → 31 of 34 lines dated; no value, cost, realised gain or summary moves. Client request: 73 → 70 PMS stocks.
 - Check: `holdingTrades.test.mjs` restates the tape off the archive for every account issuing both report types and fails on main's book with exactly those three holdings.
 
+### Stage 10mu — Home: the portfolio at a glance
+
+- Home sits above Morning CIO in Daily and is the populated dashboard's front door. The existing Home buttons and global search reach it; an empty book still opens ingestion. The root redirect retains the member query so it cannot race the context's scope restoration.
+- The reference layout becomes an asset-class donut on the left, with AUM and Geography on the right. AUM and every class open their holdings. The total counts each duplicate group once, shares Morning CIO's family asset-class rules, and follows the member and currency selectors.
+- On phones the navigation becomes an icon rail with an expandable menu, leaving room for the cards; AUM uses compact currency notation there. Desktop navigation keeps its saved width.
+- Residual-only classes stay in AUM but offer no empty current-holdings link; classes with current holdings retain their arc and legend links.
+- Geography names the unclassified value. The book has no verified country exposure, so no countries, weights or historical AUM change are inferred from the screenshot, listing venue, currency or fund names.
+- Validation covers canonical AUM, dedupe, allocation totals, missing classifications, scoped totals, search, navigation, currency and light/dark desktop/mobile layouts.
+
 ### Stage 10mv — The investment register dates money no statement does: Sotefin, V.E.C 128005, Goldstandard ×2, Ankita's NSE
 
 *"whatever data we have available, we need to use that, right?"* · *"Yes, apply all four"* — the family, 11 Nov 2026, after an audit of the 180 holdings with no dated money (99 valued, ₹211 Cr).
@@ -1525,14 +1534,6 @@ Codex's review of #352, verified against the code and the book:
   - Her line: XIRR 45.49%. The two-owner row stays undated for Ajay's part: the register dates 5,000 of his 25,000 pre-bonus shares, at an amount that does not match its rate.
 - `CapitalMove.fromRegister` / `assumedDate` and `ReviewFlow.register` carry the source into the transaction rows (`consolidatedSheet.ts` notes).
 - Checks: `registerRecords.test.mjs` (test:ingest) reads the real rows and breaks each one: renamed row, other holder, units × rate, bonus ratio, missing MOPWM bonus, subtotal, and each reconciliation refusal.
-
-### Stage 10mu — Home: the portfolio at a glance
-
-- Home sits above Morning CIO in Daily and is the populated dashboard's front door. The existing Home buttons and global search reach it; an empty book still opens ingestion. The root redirect retains the member query so it cannot race the context's scope restoration.
-- The reference layout becomes an asset-class donut on the left, with AUM and Geography on the right. AUM and every class open their holdings. The total counts each duplicate group once, shares Morning CIO's family asset-class rules, and follows the member and currency selectors.
-- On phones the navigation becomes an icon rail with an expandable menu, leaving room for the cards; AUM uses compact currency notation there. Desktop navigation keeps its saved width.
-- Geography names the unclassified value. The book has no verified country exposure, so no countries, weights or historical AUM change are inferred from the screenshot, listing venue, currency or fund names.
-- Validation covers canonical AUM, dedupe, allocation totals, missing classifications, scoped totals, search, navigation, currency and light/dark desktop/mobile layouts.
 
 ### Stage 10mw — Home: date-scoped overview and a configurable widget library
 

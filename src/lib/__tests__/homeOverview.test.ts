@@ -19,6 +19,8 @@ assert.equal(result.allocation.find(row => row.key === UNCLASSIFIED)?.value, 25,
 assert.ok(Math.abs(result.allocation.reduce((sum, row) => sum + (row.weight ?? 0), 0) - 100) < 1e-10);
 assert.equal(result.chartable, true);
 assert.equal(homeOverview([], []).chartable, false, 'an empty allocation is not a measured 0% chart');
+assert.equal(homeOverview([holding({ marketValue: 211 })], [account]).allocation[0].canOpen, false, 'a residual-only class cannot open an empty current-holdings page');
+assert.equal(homeOverview([holding({ marketValue: 2000 })], [account]).allocation[0].canOpen, true);
 const negative = homeOverview([holding(), holding({ securityKey: 'liability', assetClass: 'Cash', marketValue: -10 })], [account]);
 assert.equal(negative.total, 90);
 assert.equal(negative.chartable, false, 'negative classes are listed without a misleading positive pie slice');
