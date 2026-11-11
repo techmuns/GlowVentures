@@ -65,7 +65,7 @@ export function cioReportSnapshot({ portfolio, positions, summary, scope, curren
   }).sort((a, b) => b.value - a.value);
   const privateRows = summary.privateFolios.filter(f => f.counted || f.capitalCounted).map(f => ({
     name: f.fundName, owner: f.owner, date: f.asOf, figures: figuresOf([f], true),
-  }));
+  })).filter(r => [r.figures.committed, r.figures.called, r.figures.uncalled, r.figures.distributed].some(n => n != null));
   const periods = [{ label: period.label, card: selected }];
   const allocated = summary.buckets.filter(b => b.count > 0 || b.current !== 0);
   return { brand: REPORT_BRAND, date: period.to, exportedOn: date, period, selected, historical: selected.historical,

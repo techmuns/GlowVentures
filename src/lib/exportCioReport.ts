@@ -212,13 +212,13 @@ export async function exportCioReport(s: CioReportSnapshot) {
   if (performance.length) {
     page('Performance by Asset Class & Mandate');
     heading('Return over the selected reporting period', M, 122, 351);
-    bars(performance.filter(r => r.returnPct != null).map(r => ({ label: r.label, value: r.returnPct!, display: s.percent(r.returnPct) })), M, 156, 351, 220, true);
+    bars(performance.filter(r => r.returnPct != null).map(r => ({ label: r.label, value: r.returnPct!, display: s.percent(r.returnPct) })), M, 156, 351, 145, true);
     heading('Gain / loss over the selected period', 431, 122, RIGHT - 431);
-    bars(performance.filter(r => r.gain != null).map(r => ({ label: r.label, value: r.gain!, display: s.money(r.gain) })), 431, 156, RIGHT - 431, 220, true);
-    para('The requested dates filter opening and closing values and dated money movements. Where a complete period is unavailable, the first and last supported values are used and their dates are disclosed. Annualised returns are marked p.a.; returns under one year are shown as period returns.', M, 391, RIGHT - M, 8);
+    bars(performance.filter(r => r.gain != null).map(r => ({ label: r.label, value: r.gain!, display: s.money(r.gain) })), 431, 156, RIGHT - 431, 145, true);
+    para('The requested dates filter opening and closing values and dated money movements. Where a complete period is unavailable, the first and last supported values are used and their dates are disclosed. Annualised returns are marked p.a.; returns under one year are shown as period returns.', M, 320, RIGHT - M, 8);
     table('Performance by Asset Class & Mandate', [{ label: 'Asset class / mandate', width: .29 }, { label: 'Opening + additions', width: .18, right: true },
       { label: 'Covered closing value', width: .18, right: true }, { label: 'Gain / loss', width: .18, right: true }, { label: 'Return / basis', width: .17, right: true }],
-    performance.map(r => [r.label, s.money(r.invested), s.money(r.units.reduce((t, u) => t + u.close, 0)), s.money(r.gain), `${s.percent(r.returnPct)}${r.measured?.basis === 'annual' ? ' p.a.' : ''}`]), 450);
+    performance.map(r => [r.label, s.money(r.invested), s.money(r.units.reduce((t, u) => t + u.close, 0)), s.money(r.gain), `${s.percent(r.returnPct)}${r.measured?.basis === 'annual' ? ' p.a.' : ''}`]), 365);
   }
 
   // Only draw benchmark comparisons when the same identity-checked history is already available in CIO.
@@ -288,10 +288,10 @@ export async function exportCioReport(s: CioReportSnapshot) {
     holdingTable('Cash Holdings', cash, 348);
   }
   }
-  const windows = s.selected.total.units.filter(u => u.window).map(u => ({ label: u.label, w: u.window! }));
+  const windows = s.selected.total.units.filter(u => u.window && !u.held && u.key === u.accountId).map(u => ({ label: u.label, w: u.window! }));
   if (windows.length) {
     page('Cash Flows - Selected Period');
-    para('Only supported account and holding windows within the selected reporting dates are shown. Opening value is a valuation, not a cash contribution. Holdings measured by other methods are excluded from this activity table.', M, 120, RIGHT - M, 8);
+    para('Whole-account capital windows within the selected dates only. Opening value is a valuation, not a contribution. Trading within accounts and investments held flat are excluded, so they cannot be mistaken for external capital movements.', M, 120, RIGHT - M, 8);
     table('Cash Flows - Selected Period', [{ label: 'Account / investment', width: .28 }, { label: 'Window', width: .18 },
       { label: 'Opening value', width: .135, right: true }, { label: 'Capital added', width: .135, right: true },
       { label: 'Capital withdrawn', width: .135, right: true }, { label: 'Closing value', width: .135, right: true }],
