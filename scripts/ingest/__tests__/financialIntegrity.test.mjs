@@ -16,7 +16,7 @@ test('normalization refuses explicit foreign currency and unconverted lakh/crore
   }
   assert.equal(financialUnitIssue({}, 'All amounts in INR'), null);
   assert.equal(financialUnitIssue({}, 'Currency: INR'), null);
-  for (const declaration of ['Figures in crore', 'Amounts are expressed in INR lakhs', 'Values are in Rs. lakhs', 'All figures in ₹ crores', 'INR in millions', 'Amount (Rs. in Lakhs)', 'Currency: INR lakhs', '₹ crores']) assert.ok(financialUnitIssue({}, declaration), declaration);
+  for (const declaration of ['Figures in crore', 'Amounts are expressed in INR lakhs', 'Values are in Rs. lakhs', 'All figures in ₹ crores', 'INR in millions', 'Amount (Rs. in Lakhs)', 'Currency: INR lakhs', '₹ crores', 'Figures (in crores)', 'All amounts (Rs. in lakh)']) assert.ok(financialUnitIssue({}, declaration), declaration);
   assert.equal(financialUnitIssue({}, 'The company raised 100 crore.\nAmounts in INR'), null);
   assert.ok(financialUnitIssue({ currency: 'USD' }));
   assert.ok(financialUnitIssue({ financialUnits: { canonicalMultiplier: 100000 } }));
