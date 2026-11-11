@@ -147,7 +147,7 @@ try {
  }
  // A direct Benchmarks link must resolve the hint on the initial selection.
  // Keep each explicit choice visible, even when the short-period total is equal.
- for (const theme of ['light', 'dark']) for (const width of [1440, 390]) {
+ for (const theme of ['light', 'dark']) for (const width of [1440, 1278, 390]) {
   await page.evaluate(theme => localStorage.setItem('glow:theme', theme), theme);
   await page.setViewportSize({ width, height: 1000 });
   await page.goto(`${base}/cio?tab=returns&rview=benchmarks&rtype=cagr&rto=${end}`);
@@ -163,14 +163,26 @@ try {
    assert.equal(new URL(page.url()).searchParams.get('rtype') ?? 'xirr', type);
    const text = await hint.innerText();
    assert.match(text, type === 'absolute' ? /Total gain/ : /Under a year: showing absolute return/);
+   assert.equal(await picker.getAttribute('aria-describedby'), await hint.getAttribute('id'), 'the picker retains its accessible explanation');
+   assert.equal(await hint.getAttribute('aria-live'), 'polite', 'a changed explanation remains announced');
+   assert.ok((await page.locator('[data-returns-types]').getAttribute('title')).includes(text), 'the complete short-period explanation is available on hover');
    assert.match(await page.locator('[data-returns-bench-portfolio]').innerText(), /Portfolio · Absolute return/);
   }
   // Native selectOption does not scroll an offscreen toolbar into view.
-  await hint.scrollIntoViewIfNeeded();
-  const layout = await hint.evaluate(el => {
-   const r = el.getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth + 1 && el.scrollWidth <= el.clientWidth + 1;
+  await picker.scrollIntoViewIfNeeded();
+  const layout = await picker.evaluate(el => {
+   const r = el.getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth + 1 && r.width > 0 && r.height > 0;
   });
-  assert.ok(layout, `${theme}/${width}: the explanation fits without truncation after scrolling it into view`);
+  assert.ok(layout, `${theme}/${width}: the selected return type stays readable inside the viewport`);
+  if (width >= 1278) {
+   const compact = await page.locator('[data-returns-toolbar]').evaluate(el => {
+    const centers = [...el.children].map(child => { const r = child.getBoundingClientRect(); return r.y + r.height / 2; });
+    const rect = el.getBoundingClientRect();
+    return { width: rect.width, height: rect.height, centers, groupWidths: [...el.children].map(child => child.getBoundingClientRect().width) };
+   });
+   assert.ok(compact.height < 55 && Math.max(...compact.centers) - Math.min(...compact.centers) < 2,
+    `${theme}/${width}: periods, dates and return type share one compact row: ${JSON.stringify(compact)}`);
+  }
   await page.locator('[data-returns-types]').screenshot({ path: `${out}/return-picker-${theme}-${width}.png` });
  }
  await page.setViewportSize({ width: 1440, height: 1000 });

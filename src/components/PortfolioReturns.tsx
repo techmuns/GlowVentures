@@ -19,6 +19,7 @@
  * hover on the figure or control it explains.
  */
 import { useEffect, useId, useMemo, useState } from "react";
+import { Info } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { Card } from "@/components/Card";
 import { AbsentCell } from "@/components/Absent";
@@ -216,7 +217,7 @@ export default function PortfolioReturns() {
   });
   const gapOf = (r: BenchRow) => (portfolioPct != null && r.pme != null ? portfolioPct - r.pme : null);
 
-  const btn = (on: boolean) => `rounded-md px-2.5 py-1 text-[12px] font-semibold transition ${on ? "bg-champagne-400 text-ink-900 shadow-sm" : "text-slate-400 hover:text-slate-200"}`;
+  const btn = (on: boolean, compact = false) => `rounded-md ${compact ? "px-1.5" : "px-2.5"} py-1 text-[12px] font-semibold transition ${on ? "bg-champagne-400 text-ink-900 shadow-sm" : "text-slate-400 hover:text-slate-200"}`;
   const basisTag = annualise ? "a year" : "not annualised";
   // THE BARS ARE ONE SCALE: the largest move on the table, the portfolio's
   // included, fills half a track either side of zero.
@@ -232,10 +233,10 @@ export default function PortfolioReturns() {
     <div className="flex h-auto min-h-0 flex-col gap-3 lg:h-full" data-portfolio-returns>
       {/* ── ONE TOOLBAR (Stage 10fp): the period, the window and the measure on
           one strip, so the cards below start at the top of the panel. ── */}
-      <div className="card flex flex-wrap items-center gap-x-4 gap-y-2 px-3 py-2" data-returns-toolbar>
-        <div className="ret-well flex flex-wrap items-center gap-0.5" data-returns-periods>
+      <div className="card flex flex-wrap items-center gap-x-2 gap-y-2 px-3 py-2" data-returns-toolbar>
+        <div className="ret-well flex max-w-full flex-wrap items-center gap-0.5" data-returns-periods>
           {PERIODS.map((p) => (
-            <button key={p.key} type="button" title={p.title} className={btn(period === p.key)} data-returns-period={p.key} aria-pressed={period === p.key}
+            <button key={p.key} type="button" title={p.title} className={btn(period === p.key, true)} data-returns-period={p.key} aria-pressed={period === p.key}
               onClick={() => set(p.key === "invested-year" ? {rp:p.key,rto:null,rtype:"absolute",rview:null} : p.key === "custom" ? { rp: "custom", rfrom: start ?? fromParam } : { rp: p.key === "fytd" ? null : p.key })}>
               {p.label}
             </button>
@@ -250,16 +251,18 @@ export default function PortfolioReturns() {
           </label>
           <span className="text-slate-500" aria-hidden>→</span>
           <label className="flex items-center gap-1.5" title={investedYear ? 'Purchases through today; each holding shows its actual latest value date' : "Market prices close on or before this day. Recorded returns retain each account’s own verified statement date."}>
-            <span className="label-xs">To</span>
+            <span className="label-xs sr-only min-[1440px]:not-sr-only">To</span>
             <input type="date" className="rounded-md border border-ink-700 bg-ink-800 px-1.5 py-0.5 text-[12px] text-slate-200" data-returns-to
               value={end ?? ""} max={currentDate} disabled={period === "inception" || investedYear}
               onChange={(e) => set({ rto: e.target.value || null })} />
           </label>
         </div>
-        <label className="ml-auto flex min-w-0 max-w-full flex-wrap items-center gap-2 text-[12px] text-slate-400" data-returns-types
-          title={returnHelp.title}>
-          <span className="label-xs">Return type</span>
-          <select className="rounded-md border border-ink-700 bg-ink-800 px-2 py-1 text-[12.5px] font-semibold text-slate-100" data-returns-type-select
+        {/* Reserve room for the controls; the explanation uses only the space
+            left on the row instead of pushing the whole group onto a new one. */}
+        <label className="flex min-w-0 max-w-full flex-[1_1_13rem] flex-wrap items-center gap-1.5 text-[12px] text-slate-400" data-returns-types
+          title={`${returnHelp.short}. ${returnHelp.title}`}>
+          <span className="label-xs shrink-0 whitespace-nowrap">Return<span className="sr-only min-[1440px]:not-sr-only"> type</span></span>
+          <select className="max-w-full shrink-0 rounded-md border border-ink-700 bg-ink-800 px-2 py-1 text-[12.5px] font-semibold text-slate-100" data-returns-type-select
             data-requested-return-type={rtype} data-displayed-return-type={displayedRtype}
             value={rtype} aria-describedby={`${tabsId}-return-type-help`}
             onChange={(e) => set({ rtype: e.target.value === "xirr" && !investedYear ? null : e.target.value })}>
@@ -269,7 +272,8 @@ export default function PortfolioReturns() {
               </option>
             ))}
           </select>
-          <span id={`${tabsId}-return-type-help`} className="min-w-0 max-w-[16rem] text-[11.5px] text-slate-500" aria-live="polite" data-returns-type-desc={displayedRtype}>
+          <Info aria-hidden="true" size={12} className="shrink-0 min-[1440px]:hidden" />
+          <span id={`${tabsId}-return-type-help`} className="sr-only text-[11.5px] text-slate-500 min-[1440px]:not-sr-only min-[1440px]:min-w-0 min-[1440px]:flex-1 min-[1440px]:truncate" aria-live="polite" data-returns-type-desc={displayedRtype}>
             {returnHelp.short}
           </span>
         </label>
