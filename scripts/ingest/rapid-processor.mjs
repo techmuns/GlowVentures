@@ -15,6 +15,8 @@ export function rapidProcessor({ store, inbox, initial, references, instantiate,
   let current = initial, state = null, queue = Promise.resolve(), ready = false;
   const versions = new Map(), models = new Map(), jobs = new Map(), evidenceReaders = new WeakMap(), integrityBySnapshot = new WeakMap();
   const integrityFor = snap => {
+    if (!snap.financialIntegrity && snap.readerRevision !== initial.readerRevision)
+      throw new ReaderVersionChanged('Financial evidence requires the matching reader; the old source facts remain inspectable');
     if (!integrityBySnapshot.has(snap)) integrityBySnapshot.set(snap, snap.financialIntegrity ?? buildFinancialIntegrity(snap.book, snap.documents, { readerRevision: snap.readerRevision, bookRevision: digest(snap.book) }));
     return integrityBySnapshot.get(snap);
   };
