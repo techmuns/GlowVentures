@@ -13,7 +13,8 @@ import { closeOnOrBefore, fetchPriceHistory, priceErrorReason, settledPriceHisto
 import type { IndexLevel } from "@/lib/periodReturns";
 import { fmtPct } from "@/lib/format";
 
-export type BenchLevels = (key: BenchmarkKey) => { level: IndexLevel } | { reason: string };
+/** `pending`: the closes are still loading, not a failure (Stage 10mp). */
+export type BenchLevels = (key: BenchmarkKey) => { level: IndexLevel } | { reason: string; pending?: true };
 
 /**
  * Every index the table needs, each fetched once through the NAV card's own
@@ -31,12 +32,12 @@ export function useBenchmarkLevels(keys: readonly BenchmarkKey[]): BenchLevels {
     return () => { live = false; };
   }, [wanted]);
   return useMemo<BenchLevels>(() => {
-    const cache = new Map<BenchmarkKey, { level: IndexLevel } | { reason: string }>();
+    const cache = new Map<BenchmarkKey, { level: IndexLevel } | { reason: string; pending?: true }>();
     return (key) => {
       let hit = cache.get(key);
       if (hit) return hit;
       const b = BENCHMARKS.find((x) => x.key === key)!, h = hist[key];
-      if (!h) hit = { reason: `Fetching the ${b.name} closes` };
+      if (!h) hit = { reason: `Fetching the ${b.name} closes`, pending: true };
       else if (!h.ok) hit = { reason: priceErrorReason(h, true) };
       else {
         const id = benchmarkIdentity(h, b);

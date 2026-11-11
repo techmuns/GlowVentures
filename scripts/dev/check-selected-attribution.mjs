@@ -162,7 +162,9 @@ try {
  assert.equal(boxes.length, 1, 'one summary block');
  assert.ok(Math.abs(boxes[0].width - boxes[0].parent) < 1, 'it spans the row');
  assert.equal(await page.locator('[data-market-summary], [data-market-coverage]').count(), 0, 'no separate market performance card');
- assert.ok(await table.locator('[data-seg-total] [data-seg-cell="market"]').count() === 1, 'the market return is on the Total row');
+ // Stage 10mp: the Market return column restated the Return column; each row is set against its own index instead.
+ assert.equal(await table.locator('[data-seg-cell="market"]').count(), 0, 'no Market return column on the attribution table');
+ assert.ok(await table.locator('[data-seg-total] [data-seg-cell="bench"]').count() === 1, 'the benchmark return is on the Total row');
  await bridge.getByRole('button', { name: 'Show the investment performance breakdown', exact: true }).click();
  const bridgeDialog = page.getByRole('dialog'); await bridgeDialog.waitFor();
  assert.equal(await bridgeDialog.locator('[data-bridge-step]').count(), 5, 'start, money in, money out, gain, end');

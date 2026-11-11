@@ -1460,3 +1460,12 @@ Codex's review of #352, verified against the code and the book:
 - **ADD TILE is the row's narrow end column** (`AddTile`'s `column`, Morning CIO only): 4.5rem wide, as tall as the tiles, dashed, "ADD" over "TILE" in bold. It sits outside the tiles' grid, so six tiles are still one row. Its menu opens from the column's right edge, 16rem wide. On a phone it is a short bar under the tiles. Private Market's card is unchanged (the size of a tile, Stage 10cl). Pressing it scales to 0.97 (`motion-safe`).
 - Measured at 1278×680 on this book (value, gain, annualised, YTD, FYTD): strip 207px → 114px, tiles 340px → 185px wide each, and the Returns panel starts 93px higher.
 - Checks: `tilePickerChecks` takes `addColumn`. On Morning CIO, ADD TILE is an empty dashed column as tall as the tiles and narrower than one, reading ADD TILE in bold. It shares the tiles' row with six tiles too, and `cio-tiles-dense` asserts that.
+
+### Stage 10mp — Returns attribution: Benchmark return replaces Market return
+
+*"the market return column and the return XIRR column are showing the same returns … replace the market column with benchmark return similar to what we have in portfolio monitor"* — the family, 11 Nov 2026.
+
+- On a one-holding row, Market return (the holding's own move, `selectionMarket`) equalled the Return column. The attribution table now draws **Benchmark return** (`lineBenchmark.ts`, `LineBenchmarkCell.tsx`). Every unit behind the row's return goes into ITS OWN index, chosen by the Monitor's `rowBenchmark`: the manager's printed benchmark for a whole PMS account, AMFI size class for a share, fund category, Nifty 500 for a private holding. The money goes in through `pmeWindowRows` / `pmeInceptionRows` / dated since-investment money, and the Return column's own measure and debt rule are then struck. A mixed row is a **Blend**, weighted by each unit's money.
+- Cash, debt, arbitrage, hybrid and metal units have no index in the feed. They are named in the info card and left out of BOTH sides: `book` is the row's figure over the same units, and ◦ marks a partial blend. A row of them alone reads "No index". Equity savings funds are now hybrid in `holdingBenchmark.ts` (Monitor too).
+- Each record closes the index on its own last value date, as the return does: Sanshi Class E reads N500 −4.78%, the index's 30 Jun → 30 Oct move.
+- The Sector axis keeps its Market return and details; `check-market-returns.mjs` now opens them there. `check-selected-attribution.mjs` asserts the Total row's `data-seg-cell="bench"`. Suite: `lineBenchmark.test.ts`.
