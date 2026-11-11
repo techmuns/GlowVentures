@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import { adjustedTwr, twrPeriodStart, TWR_COLUMNS, type TwrRecord } from '../adjustedTwr';
 import { daysBetween, type AccountWindow } from '../periodReturns';
+import { exitedTwrUnit } from '../exitedTwr';
+import type { Account, Position } from '../types';
+import type { AssumedReturnBook } from '../assumedHoldingReturns';
 
 const near = (actual: number | null, expected: number, eps = 1e-9) => assert.ok(actual != null && Math.abs(actual - expected) < eps, `${actual} != ${expected}`);
 const rec = (overrides: Partial<AccountWindow> = {}, key = 'a'): TwrRecord => {
@@ -78,4 +81,29 @@ missing(run([{ ...deposit, window: { ...deposit.window, capitalIn: 99 } }]), /re
 missing(run([rec({ marks: [{ date: '2026-05-01', value: 0 }, { date: '2026-06-01', value: 100 }],
   flows: [{ date: '2026-05-01', amount: 100 }, { date: '2026-06-01', amount: -100 }] })]), /no positive invested capital/);
 missing(run([rec()], { gaps: [{ label: 'Unpriced holding', reason: 'A valuation is missing.' }] }), /missing/);
+
+// Fully exited holdings still earned a realised return. Their verified nil
+// after sale needs no later market price and must not dilute SI annualisation.
+const exited = { accountId: 'sold', securityKey: 'exited-fund', security: 'Exited Fund Growth', isin: 'INF000000001',
+  quantity: 0, marketValue: 0, assetClass: 'Mutual Fund', marketSide: 'listed', costBasis: 0, realizedPnL: 20, costOfUnitsSold: 100,
+  recoveredCost: { accountId: 'sold', isin: 'INF000000001', quantity: 0, asOf: '2026-11-11', costBasis: 0, realizedPnL: 20,
+    costOfUnitsSold: 100, dividendReceived: 0, cashRecord: [{ date: '2026-01-02', side: 'buy', amount: 100 }, { date: '2026-11-05', side: 'sell', amount: 120 }],
+    unitRecord: [{ date: '2026-01-02', units: 1 }, { date: '2026-11-05', units: 0 }, { date: '2026-11-11', units: 0 }] } } as Position;
+const account = { accountId: 'sold', accountNo: '1', owner: 'Owner', provider: 'Test', asOf: '2026-11-11' } as Account;
+const history = { ok: true as const, version: 2, symbol: 'fund', isin: exited.isin!, name: 'Test', source: 'Fixture', basis: 'nav' as const,
+  first: '2026-01-02', last: '2026-11-11', t: ['2026-01-02', '2026-10-31', '2026-11-05', '2026-11-11'], c: [100, 100, 120, 120], v: [100, 100, 120, 120], splits: [] };
+const exitedBook = { positions: [exited], unvalued: [], trades: {}, moves: [], movements: {}, actions: null,
+  instruments: new Map([['exited-fund', { key: 'fund', query: 'fund=test' }]]), histories: { fund: history } } as AssumedReturnBook;
+const found = exitedTwrUnit(exited, account, '2026-10-31', '2026-11-11', exitedBook);
+assert.ok('unit' in found);
+if ('unit' in found) {
+  const sold: TwrRecord = { key: found.unit.key, label: found.unit.label, window: found.unit.window!, closedOn: found.unit.closedOn, inceptionKnown: true };
+  assert.equal(sold.closedOn, '2026-11-05', 'the clock stops at the exit, not a later repeated nil balance');
+  const result = adjustedTwr([sold], { start: '2026-10-31', end: '2026-11-11' }); near(result.pct, 20); assert.equal(result.to, '2026-11-05');
+  const held = rec({ openDate: '2026-10-31', closeValue: 110, marks: [{ date: '2026-11-05', value: 100 }] }, 'still-held');
+  near(adjustedTwr([sold, held], { start: '2026-10-31', end: '2026-11-11' }).pct, 21, 1e-8);
+}
+assert.ok('outside' in exitedTwrUnit(exited, account, '2026-11-30', '2026-12-11', exitedBook), 'a sale before the period is not a current-period gap');
+assert.ok('reason' in exitedTwrUnit(exited, account, '2026-10-31', '2026-11-11', { ...exitedBook, histories: {} }), 'missing exited price histories are not silently omitted');
+console.log('Fully exited TWR: realised gain included, common-date grouped return, repeated nil balances and outside-period exits passed.');
 console.log('INR adjusted TWR: calendar boundaries, contributions, withdrawals, dividends, fees, geometric linking, grouped INR values, inception, annualisation, currency invariance and missing-data gates passed.');

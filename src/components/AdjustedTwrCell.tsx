@@ -21,7 +21,7 @@ export function AdjustedTwrCell({ column, result: r, pad, label }: { column: Twr
           <p>Calculated from INR valuations and INR cash flows. The display currency does not change these return percentages.</p>
           {r.pct != null && r.from && r.to && <p>{fmtDate(r.from)} → {fmtDate(r.to)} · {r.records} investment record{r.records === 1 ? '' : 's'} · {r.annual ? 'annualised' : 'period return'}.</p>}
           {periodOnly && <p>The measured history is under a year, so this is the period TWR without annualising.</p>}
-          {r.assumed && <p>Some holdings use published prices with the recorded units assumed unchanged. Dividend entitlements are gross; actual receipt and unknown trading charges are not verified.</p>}
+          {r.assumed && <p>Holding assumptions or gross dividend entitlements are used. Dividend amounts are gross; actual receipt and unknown trading charges are not verified.</p>}
           <p>Each contribution or withdrawal is removed from investment performance before the intervals are compounded. Subsequent cash flows are treated at the end of their day. Initial funding establishes the starting capital. A grouped row uses the combined INR values at each step.</p>
           {r.gaps.length > 0 && <div data-twr-gaps><p className="font-semibold">Records needed</p><ul className="mt-1 space-y-2">{r.gaps.map((g, i) => <li key={i}><span className="font-medium">{g.label}</span> · {g.reason}</li>)}</ul></div>}
           {r.steps.length > 0 && <details data-twr-working><summary className="cursor-pointer">Calculation steps in INR</summary>

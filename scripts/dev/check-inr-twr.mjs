@@ -35,7 +35,7 @@ try {
   });
   await page.goto(`${base}/cio?tab=returns&seg=security&rto=2026-11-11`);
   const table = page.locator('[data-segment-returns]'); await table.waitFor();
-  await page.waitForFunction(() => document.querySelector('[data-segment-returns]')?.dataset.marketPending === '0');
+  await page.waitForFunction(() => { const d = document.querySelector('[data-segment-returns]')?.dataset; return d?.marketPending === '0' && d?.twrPending === '0'; });
   for (const id of columns) assert.ok(await table.locator(`th[data-col="${id}"]`).isVisible(), `${id} visible by default`);
   const snapshots = async () => table.locator('tr[data-seg-row]').evaluateAll((rows, columns) => rows.map(row => ({
     key: row.dataset.segRow,
@@ -89,7 +89,7 @@ try {
   assert.equal(await table.locator('th[data-col="twrMtd"]').count(), 0, 'hidden choice survives reload');
   await edit.click(); editor = page.locator('[data-column-editor="cio-attribution"]');
   await editor.locator('[data-column-checkbox="twrMtd"]').check(); await page.keyboard.press('Escape');
-  await page.waitForFunction(() => document.querySelector('[data-segment-returns]')?.dataset.marketPending === '0');
+  await page.waitForFunction(() => { const d = document.querySelector('[data-segment-returns]')?.dataset; return d?.marketPending === '0' && d?.twrPending === '0'; });
   const heading = table.locator('th[data-col="twrMtd"]'); await heading.locator('[data-col-button]').click();
   const direction = await heading.getAttribute('aria-sort');
   const sorted = (await snapshots()).filter(r => r.values.twrMtd !== '').map(r => Number(r.values.twrMtd));

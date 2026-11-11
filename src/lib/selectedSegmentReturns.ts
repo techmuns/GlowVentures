@@ -19,6 +19,8 @@ export type ReturnUnit = { key: string; accountId: string; label: string; positi
    * period's end — a 0% that is named, never shown as measured.
    */
   held?: { date: string; reason: string };
+  /** A reconciled unit ledger proves the investment is fully sold from this date. */
+  closedOn?: string;
   /** Since investment: measured from its first value on record, not a purchase cost (Stage 10la). */
   sinceFirst?: true;
   /** How the start was chosen, where it is not the engine's default (Stage 10la). */
@@ -26,6 +28,8 @@ export type ReturnUnit = { key: string; accountId: string; label: string; positi
   gainParts?: { unrealised: number | null; realised: number | null; income: number | null };
   window?: AccountWindow; inception?: InceptionRow };
 export type SelectedLine = { key: string; label: string; positions: readonly Position[]; value: number;
+  /** Added for fixed-horizon performance of investments no longer held. */
+  exited?: true;
   units: ReturnUnit[]; missing: ReturnGap[]; measured: Measured | null; gain: number | null;
   invested: number | null; returnPct: number | null;
   /** The return over the measured period itself, not annualised — beside a yearly XIRR or CAGR. */

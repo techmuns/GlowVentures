@@ -14,7 +14,7 @@ export const TWR_COLUMNS = [
 ] as const;
 export type TwrColumn = typeof TWR_COLUMNS[number]['key'];
 export type TwrGap = { label: string; reason: string };
-export type TwrRecord = { key: string; label: string; window: AccountWindow; assumed?: boolean; inceptionKnown?: boolean };
+export type TwrRecord = { key: string; label: string; window: AccountWindow; assumed?: boolean; inceptionKnown?: boolean; closedOn?: string };
 export type TwrStep = { from: string; to: string; opening: number; closing: number; netIn: number; growth: number };
 export type TwrResult = { pct: number | null; periodPct: number | null; annual: boolean; from: string | null; to: string | null;
   assumed: boolean; records: number; gaps: TwrGap[]; steps: TwrStep[] };
@@ -88,6 +88,7 @@ export function adjustedTwr(records: readonly TwrRecord[], { start, end, annuali
   const valueAt = (i: number, d: string): number | null => {
     const w = records[i].window, mark = maps[i]!.get(d);
     if (mark != null) return mark;
+    if (records[i].closedOn && d >= records[i].closedOn!) return 0;
     if (w.openedInWindow && w.openValue === 0 && d < (w.flows.filter(f => f.amount < 0).map(f => f.date).sort()[0] ?? w.openDate)) return 0;
     return null;
   };
@@ -122,18 +123,23 @@ export function adjustedTwr(records: readonly TwrRecord[], { start, end, annuali
       const i = values.findIndex(v => v == null);
       return fail(`A valuation on ${d}, when money moved, is needed. Sparse statement marks cannot establish this TWR.`, records[i].label);
     }
+    const closing = sum(values as number[]);
+    // Verified nil after a full exit is absence of invested capital, not a
+    // fabricated flat mark. Preserve the earned return and stop its clock.
+    if (opening === 0 && closing === 0 && netIn === 0) { at = d; continue; }
     if (!(opening > 0)) return fail('A return cannot be linked through a period with no positive invested capital.');
-    const closing = sum(values as number[]), factor = (closing - netIn) / opening;
+    const factor = (closing - netIn) / opening;
     if (!Number.isFinite(factor) || factor < 0) return fail(`The cash flow and valuation on ${d} imply an invalid investment value.`);
     growth *= factor;
     steps.push({ from: at, to: d, opening, closing, netIn, growth: factor });
     opening = closing; at = d;
   }
-  const days = daysBetween(measuredFrom, to);
+  const measuredTo = steps.at(-1)?.to ?? to;
+  const days = daysBetween(measuredFrom, measuredTo);
   if (days <= 0 || !Number.isFinite(growth)) return fail('There is no completed investment period to measure.');
   const periodPct = (growth - 1) * 100;
   const annual = annualise && (days >= 365 || debt);
   const pct = annual ? (Math.pow(growth, 365 / days) - 1) * 100 : periodPct;
   if (!Number.isFinite(pct)) return fail('The linked growth does not yield a finite return.');
-  return { pct, periodPct, annual, from: measuredFrom, to, records: records.length, assumed, gaps: [], steps };
+  return { pct, periodPct, annual, from: measuredFrom, to: measuredTo, records: records.length, assumed, gaps: [], steps };
 }

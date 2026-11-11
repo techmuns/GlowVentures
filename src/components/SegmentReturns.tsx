@@ -86,13 +86,13 @@ export default function SegmentReturns({ selection: recordedSelection, period }:
   const selection = recordedSelection;
   // The Sector axis is Sector Composition's own sectors (`SectorAttribution`, Stage 10gs), never this grouping.
   const sectorAxis = axis === 'sector';
-  const a = useMemo(() => statementPortfolio && !sectorAxis ? selectedSegmentReturns(current, exited, statementPortfolio.accounts, axis, selection,
+  const originalAttribution = useMemo(() => statementPortfolio && !sectorAxis ? selectedSegmentReturns(current, exited, statementPortfolio.accounts, axis, selection,
     () => null, calculationCurrent) : null, [current, exited, statementPortfolio, axis, selection, calculationCurrent, sectorAxis]);
+  const { model: a, of: twrOf, pending: twrPending } = useAdjustedTwrColumns({ model: originalAttribution, current, exited, calculationCurrent, axis, end: selection.end });
   // The capital bridge is the selected period's total on every axis (Stage 10gu): the table's own total
   // units, or on the Sector view — which draws no dated total of its own — the same pool grouped by category.
   const pool = useMemo(() => a ?? (statementPortfolio ? selectedSegmentReturns(current, exited, statementPortfolio.accounts, 'category', selection,
     () => null, calculationCurrent) : null), [a, current, exited, statementPortfolio, selection, calculationCurrent]);
-  const twrOf = useAdjustedTwrColumns({ model: a, current, exited, calculationCurrent, axis, end: selection.end, feed: marketFeed });
   const bridge = useMemo(() => pool && statementPortfolio ? capitalBridge(pool.total.units, { accounts: statementPortfolio.accounts,
     positions: statementPortfolio.positions, bridges: BOOK_ACCOUNT_BRIDGES, moves: BOOK_CAPITAL_MOVES, income: BOOK_HOLDING_INCOME, capitalGains: BOOK_CAPITAL_GAINS }) : null,
   [pool, statementPortfolio]);
@@ -286,6 +286,7 @@ export default function SegmentReturns({ selection: recordedSelection, period }:
   // The review's fields are each product's own; the book's total has none.
   const totalByCol = Object.fromEntries(COLS.slice(1).map((key, i) => [key, totalCells[i]]).filter(([key]) => !REVIEW_SET.has(key as string)));
   return <div className="shrink-0" data-segment-returns data-returns-attribution data-seg-axis={axis} data-seg-period={period} data-seg-type={selection.type}
+    data-twr-pending={twrPending}
     data-seg-start={selection.start ?? ''} data-seg-end={selection.end ?? ''} data-seg-covered={a.coveredHoldings}
     data-seg-total-gain={a.total.gain ?? ''} data-seg-total-deployed={a.denominator ?? a.total.invested ?? ''}
     data-seg-total-value={a.total.value} data-seg-total-ret={a.total.returnPct ?? ''} data-seg-total-period-ret={a.total.periodPct ?? ''}
@@ -328,7 +329,7 @@ export default function SegmentReturns({ selection: recordedSelection, period }:
         </Tr></thead>
         <tbody className="divide-y divide-ink-700/60">{rows.map(r => <Fragment key={r.key}>
           <Tr view={view} className={r.children.length ? TREE_ROW.parent : ''} {...(r.children.length ? rowToggle(() => exp.toggle(r.key)) : {})}
-            data-seg-row={r.key} data-seg-value={r.value} data-seg-gain={r.gain ?? ''} data-seg-contrib={r.contribution ?? ''} data-seg-open={exp.isOpen(r.key) ? '1' : '0'} data-seg-securities={fig(r).securities}>
+            data-seg-row={r.key} data-seg-exited={r.exited ? '' : undefined} data-seg-value={r.value} data-seg-gain={r.gain ?? ''} data-seg-contrib={r.contribution ?? ''} data-seg-open={exp.isOpen(r.key) ? '1' : '0'} data-seg-securities={fig(r).securities}>
             <TreeNameCell depth={0} title={r.label} open={r.children.length ? exp.isOpen(r.key) : undefined} onToggle={r.children.length ? () => exp.toggle(r.key) : undefined} toggleData={{ 'data-seg-toggle': r.key }} />
             {cells(r, 'parent')}
           </Tr>
