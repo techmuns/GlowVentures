@@ -13,7 +13,7 @@ import { closeOnOrBefore, fetchPriceHistory, priceErrorReason, settledPriceHisto
 import type { IndexLevel } from "@/lib/periodReturns";
 import { fmtPct } from "@/lib/format";
 
-/** `pending`: the closes are still loading, not a failure (Stage 10mp). */
+/** `pending`: the closes are still loading, not a failure (Stage 10mq). */
 export type BenchLevels = (key: BenchmarkKey) => { level: IndexLevel } | { reason: string; pending?: true };
 
 /**

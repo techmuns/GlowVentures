@@ -129,7 +129,7 @@ export default function SegmentReturns({ selection: recordedSelection, period, o
     add(a.total);
     return m;
   }, [a, companySectors, inSession, idx, wholeAccountsOf]);
-  // EACH ROW AGAINST ITS OWN INDEX, ON ITS OWN MONEY (Stage 10mp, `lineBenchmark`): in place of
+  // EACH ROW AGAINST ITS OWN INDEX, ON ITS OWN MONEY (Stage 10mq, `lineBenchmark`): in place of
   // the Market return column, which restated the Return column wherever a row is one holding.
   const benchLevels = useBenchmarkLevels(ALL_BENCH_KEYS);
   const benchCtx = useMemo(() => {

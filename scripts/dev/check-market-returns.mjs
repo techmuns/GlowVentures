@@ -50,7 +50,7 @@ try {
    await page.waitForFunction(() => document.querySelector('[data-segment-returns]')?.dataset.marketPending === '0');
    const actual = Number(await summary.getAttribute('data-market-total'));
    assert.ok(Number.isFinite(actual), `${period}/${type}: a market figure`);
-   // Stage 10mp: the attribution table no longer draws a Market return column (it restated the Return column).
+   // Stage 10mq: the attribution table no longer draws a Market return column (it restated the Return column).
    assert.equal(await table.locator('[data-seg-cell="market"]').count(), 0, `${period}/${type}: no Market return column`);
    assert.ok(Number(await summary.getAttribute('data-market-covered')) > 20, `${period}/${type}: holdings measured`);
    // Each holding from its first value on record in the period: never before
@@ -70,7 +70,7 @@ try {
  for (const period of ['fytd','mtd','ytd','y1','y2','y3']) {
   assert.ok(Math.abs(of(period,'xirr')-of(period,'absolute'))<1e-9 && Math.abs(of(period,'cagr')-of(period,'absolute'))<1e-9, `${period}: each holding's return over the period, whatever the type`);
  }
- // Stage 10mp: the attribution table sets each row against its own index, so the market return and
+ // Stage 10mq: the attribution table sets each row against its own index, so the market return and
  // its details are the Sector axis's (Stage 10gs): Sector Composition's sectors, priced per sector.
  await table.locator('[data-seg-axis-option="sector"]').click();
  await page.waitForFunction(()=>document.querySelector('[data-segment-returns]')?.dataset.segAxis==='sector');

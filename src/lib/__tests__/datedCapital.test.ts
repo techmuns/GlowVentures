@@ -417,5 +417,23 @@ console.log("\n── the family's rule on a dated row ──");
     JSON.stringify(cc));
 }
 
+// ── A REVIEW LINE DATED ONLY BY MONTHS NAMES THAT SPAN (Stage 10mp) ─────────
+//
+// National Stock Exchange's Invested on reads "Dec 2022 – Aug 2023" off the
+// review, and its XIRR and index line said "no dated capital" — the custodian
+// account's wording. The row still carries no rate (one cost for the span is
+// not a dated payment), but its reason must name the span the row shows.
+console.log("\n── a review line dated only as a span ──");
+{
+  const nse = universe.filter((p) => p.securityKey === "national-stock-exchange-of-india" && p.accountId.startsWith("review-"));
+  const r = dc.behind(nse, universe);
+  const why = r && !r.dated ? r.reason : "";
+  ok("NSE's two review lines carry no dated capital", nse.length === 2 && !!r && !r.dated, JSON.stringify(r));
+  ok("…and the reason names the review's span, not 'known only as a total'",
+    /only as a span — Dec 2022 – Aug 2023/.test(why) && !/known only as a total/.test(why), why);
+  const nx = measuredReturn({ ...nse[0], capital: r } as ReturnInput, "xirr", "2026-11-04");
+  ok("…and the XIRR column says so, never a rate", !nx.shown && /only as a span/.test(nx.shown ? "" : nx.reason));
+}
+
 console.log(fails ? `\n${fails} FAILED` : "\nall dated-capital checks passed");
 process.exit(fails ? 1 : 0);

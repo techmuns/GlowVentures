@@ -116,6 +116,28 @@ const noRateReason = (g: CapitalGroup | undefined) =>
       : "these dated payments and this value do not solve to a rate");
 
 /**
+ * ── A LINE THE REVIEW DATES ONLY AS A SPAN (Stage 10mp) ─────────────────────
+ *
+ *   *"we have the dates of the investment, but still we are showing in XIRR
+ *    and in the benchmark return that we don't have any dated capital"* — the
+ *    family, on National Stock Exchange (Invested on "Dec 2022 → Aug 2023").
+ *
+ * A review holder line has no capital group of its own, so it fell to the
+ * custodian ACCOUNT's wording above — "capital known only as a total" — while
+ * the same row's Invested on showed the review's dates. Both are true of a
+ * different thing: the review prints the MONTHS the money went in and ONE cost
+ * for all of it, never what was paid on which day. So the line names that,
+ * and the cells read "Date range only", not "No buy/sell dates". The rate stays
+ * absent: placing the cost anywhere inside the span would be an estimate.
+ */
+const spanReason = (ps: readonly Position[]): string | null => {
+  const d = ps.find((p) => p.investedDates)?.investedDates;
+  if (!d) return null;
+  const month = d.from === d.to;
+  return `the family's review dates this investment only ${month ? "as a month" : "as a span"} — ${d.text} — with one cost for the whole of it, not the amount paid on each day, so there are no dated payments to solve a money-weighted return over`;
+};
+
+/**
  * Build once per book. `positions` and `accounts` are the book the rates are
  * struck on — the STATEMENT book, as the Transactions card reads it.
  */
@@ -231,11 +253,16 @@ export function buildDatedCapital(input: {
     const gs = units.map((u) => byKey.get(u));
     const missing = units.filter((_, i) => !rated(gs[i]));
     if (missing.length) {
-      const why = noRateReason(byKey.get(missing[0]));
+      const g0 = byKey.get(missing[0]);
+      const span = !g0 ? spanReason(set.filter((p) => unitOf(p, holders) === missing[0])) : null;
+      const why = span ?? noRateReason(g0);
+      // A review line is named by its holder, not the review's bucket label (Stage 10mp).
+      const holderOf = (u: string) => ownerOf.get(u.split("|")[0]) ?? unitLabel(u);
       return {
         dated: false,
         accountIds: accts,
         reason: units.length === 1 ? why
+          : span ? `${missing.length} of the ${units.length} investments behind this row (${missing.map(holderOf).join(", ")}) carry no dated payment a money-weighted return can be solved over — ${why}`
           : `${missing.length} of the ${units.length} ${units.some((u) => u.includes("|")) ? "investments" : "accounts"} behind this row carry no dated record a money-weighted return can be solved over — ${unitLabel(missing[0])}: ${why}`,
       };
     }
