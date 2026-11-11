@@ -122,7 +122,10 @@ export function holdingSourceTrace(positions: readonly TracePosition[], metric: 
       if (p.reviewNote && metric !== 'statement') derived = true;
     }
     else missing++;
-    if (p.enteredNumbers?.some(f => f === metric || metric === 'statement' || ['avgCost', 'unrealizedPnL'].includes(metric))) {
+    const familyInputs = metric === 'statement' ? p.enteredNumbers ?? [] : metric === 'avgCost' ? ['costBasis', 'quantity']
+      : metric === 'currentPrice' ? ['marketValue', 'quantity'] : metric === 'unrealizedPnL' ? ['marketValue', 'costBasis']
+      : metric === 'marketValue' && p.valuedAtCost && p.costBasis != null ? ['marketValue', 'costBasis'] : [metric];
+    if (p.enteredNumbers?.some(f => familyInputs.includes(f))) {
       derived = true;
       notes.add('This includes a saved family correction, which the original statement does not show.');
     }

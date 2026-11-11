@@ -218,13 +218,15 @@ console.log("Table input persistence, source rollups and Excel round-trip contra
 // XIRR over the previous dates/amounts. Corrections retain source identity.
 assert.match(position.returnInputsUnavailableReason!, /dated transaction record/);
 {
-  const basePosition = { ...BOOK_POSITIONS.find(p => p.costBasis != null && !p.valuedAtCost)!, marketValue: 120, costBasis: 100, unrealizedPnL: 20 };
+  const basePosition = { ...BOOK_POSITIONS.find(p => p.costBasis != null && !p.valuedAtCost)!, marketValue: 120, costBasis: 100, quantity: 3, avgCost: 33.3333, currentPrice: 39.9999, unrealizedPnL: 20 };
   const sourceMetric = { status: 'source-backed' as const, basis: 'statement', effectiveDate: '2026-11-01', exceptions: [] as string[] };
   basePosition.integrity = { positionId: 'fixture', quantityAsOf: '2026-11-01', formulaVersion: 'fixture', metrics: { costBasis: { ...sourceMetric }, marketValue: { ...sourceMetric }, unrealizedPnL: { ...sourceMetric } } };
   const fixtureBook = { ...book, positions: [basePosition] };
   const input = buildInputCatalog(fixtureBook.positions, fixtureBook.commitments, fixtureBook.accounts).find(r => r.kind === 'holding')!;
   const apply = (field: string, value: number | null) => applyTableInputs(fixtureBook, [{ ...change(input, field, value), updatedAt: '2026-11-11T00:00:00Z' }])!.positions[0];
   assert.equal(apply('dividendReceived', 5).integrity!.metrics.unrealizedPnL.status, 'source-backed');
+  assert.equal(apply('dividendReceived', 5).avgCost, 33.3333, 'income corrections preserve the printed unit-cost precision');
+  assert.equal(apply('dividendReceived', 5).currentPrice, 39.9999, 'income corrections do not replace a source price with division');
   assert.equal(apply('marketValue', 130).integrity!.metrics.unrealizedPnL.status, 'entered');
   assert.equal(apply('costBasis', null).integrity!.metrics.unrealizedPnL.status, 'missing');
   basePosition.integrity.metrics.marketValue = { ...sourceMetric, status: 'disputed', exceptions: ['source-conflict'] };
