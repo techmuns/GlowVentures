@@ -86,3 +86,9 @@ test('a source review is unaffected by password-list order, but financial change
   assert.equal(reviewDocumentRevision(a), reviewDocumentRevision({ ...a, warnings: [{ code: 'pdf-encrypted', index: 5 }] }));
   assert.notEqual(reviewDocumentRevision(a), reviewDocumentRevision({ ...a, holdings: [{ quantity: 11 }] }));
 });
+
+test('duplicate persistent identities and relationship IDs cannot silently merge ownership', () => {
+  const f = financialRegistry([], { instruments: [{ id: 'same', keys: ['a'], isins: [] }, { id: 'same', keys: ['b'], isins: [] }] });
+  assert.ok(f.issues.some(i => i.code === 'DUPLICATE_INSTRUMENT_ID'));
+  assert.ok(validateOwnershipGraph([{ id: 'a' }, { id: 'b' }], [{ id: 'same', relationship: 'owns', owner: 'a', owned: 'b', fraction: .5 }, { id: 'same', relationship: 'owns', owner: 'a', owned: 'b', fraction: .5 }]).some(i => i.code === 'DUPLICATE_RELATIONSHIP'));
+});

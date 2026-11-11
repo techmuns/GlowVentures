@@ -24,8 +24,10 @@ const source = (p, field) => p.statementRecord ? { document: p.statementRecord.d
 const sourceField = { marketValue: 'marketValue', costBasis: 'totalCost', quantity: 'quantity', currentPrice: 'marketPrice', avgCost: 'unitCost' };
 
 export function financialRegistry(positions, previous = seedRegistry) {
-  const entries = structuredClone(previous.instruments ?? []), byKey = new Map(), byIsin = new Map(), issues = [];
+  const entries = structuredClone(previous.instruments ?? []), byKey = new Map(), byIsin = new Map(), byId = new Map(), issues = [];
   const register = e => {
+    if (!e.id || byId.has(e.id) && byId.get(e.id) !== e) issues.push({ code: 'DUPLICATE_INSTRUMENT_ID', id: e.id });
+    else byId.set(e.id, e);
     for (const key of e.keys) { const k = securityKeyOf(key); if (byKey.has(k) && byKey.get(k).id !== e.id) issues.push({ code: 'IDENTITY_KEY_CONFLICT', key: k }); else byKey.set(k, e); }
     for (const raw of e.isins) { const isin = currentIsin(raw); if (byIsin.has(isin) && byIsin.get(isin).id !== e.id) issues.push({ code: 'IDENTITY_ISIN_CONFLICT', isin }); else byIsin.set(isin, e); }
   };
@@ -48,6 +50,11 @@ export function financialRegistry(positions, previous = seedRegistry) {
 export function validateOwnershipGraph(nodes, edges) {
   const ids = new Set(), issues = [];
   for (const n of nodes) { if (!n.id || ids.has(n.id)) issues.push({ code: 'DUPLICATE_ENTITY', id: n.id }); ids.add(n.id); }
+  const edgeIds = new Set();
+  for (const edge of edges) {
+    if (!edge.id || edgeIds.has(edge.id)) issues.push({ code: 'DUPLICATE_RELATIONSHIP', id: edge.id });
+    edgeIds.add(edge.id);
+  }
   const owns = edges.filter(e => e.relationship === 'owns');
   for (const e of owns) {
     if (!ids.has(e.owner) || !ids.has(e.owned)) issues.push({ code: 'DANGLING_OWNERSHIP', id: e.id });
