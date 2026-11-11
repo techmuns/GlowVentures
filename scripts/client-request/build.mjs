@@ -109,9 +109,6 @@ const ITEMS = [
   { holder: "Ajay Jaisinghani", account: "ICICI NSDL 49794950", what: "City Union Bank", units: 104400, from: "ICICI and the broker or account the shares came from",
     send: "The ICICI order book shows 79,283 shares bought on 2 July 2026; the 31 October statement shows 104,400. Send the purchase or transfer record for the other 25,117 shares, with date, shares and amount paid.",
     check: () => noCost(ICICI, "city-union", 104400) && tradesOf(ICICI, "city-union").reduce((n, t) => n + (t.side === "buy" ? t.quantity : -t.quantity), 0) === 79283 },
-  { holder: "Ajay Jaisinghani", account: "ICICI NSDL 49794950", what: "Sotefin Bharat", units: 171879, from: "Client accounts team and ICICI",
-    send: "Send the allotment or purchase record for these shares: date, shares and amount paid. Confirm they are the SOTEFIN investment of Rs 20,000,400 dated 12 July 2024 in the 30 June review, so one purchase is not counted twice.",
-    check: () => noCost(ICICI, "sotefin-bharat", 171879) },
   { holder: "Ajay Jaisinghani", account: "ICICI NSDL 49794950", what: "Vantage Oak Fund I, Class A2", units: 2275000, from: "Vantage Oak / fund manager",
     send: "Send the subscription or drawdown record (dates and amounts paid), the latest fund statement showing the NAV and its date, and the fund's SEBI AIF category. Ankita's Motilal demat 1201090012838316 also shows 1,225,000 units of this class; include her records too.",
     check: () => noCost(ICICI, "vof-i-class-a2", 2275000) && !!unvalued(MO_ANKITA, "vof-i-class-a2") },
@@ -138,14 +135,6 @@ const ITEMS = [
   { holder: "Hope India Trust", account: "Kotak folio 4295974", what: "Kotak Liquid Direct Daily IDCW", units: 641.954, from: "Kotak fund company or registrar",
     send: "Send the missing transactions after 19 October 2023 through the latest statement, including units added from payouts. The saved history leaves 541.2893 units. Explain why the dated statement shows 641.448 but available units show 641.954, and confirm the cost for the agreed balance. The original 2019 purchase is already available.",
     check: () => noCost("kotak-mahindra-mutual-fund-4295974", "kotak-liquid-fund-direct-plan-daily-idcw", 641.954) },
-  { holder: "Bharat Jaisinghani", account: "LKP 98245", what: "Belrise Industries", units: 12500, from: "LKP",
-    send: "Send the original purchase dates and quantities for the 12,500 shares on the 31 March 2026 statement, and the latest holding statement: the sale of 6,000 shares on 25 June leaves 6,500. The purchase cost is already available.",
-    check: () => undated(LKP, "belrise-industries", 12500) && asOf(LKP) === "2026-03-31" },
-  { holder: "Bharat Jaisinghani", account: "LKP 98245", what: "Capri Global, Electronics Mart, Jyothy Labs, Varun Beverages and Pricol",
-    unitsText: "Capri Global 7,000; Electronics Mart 10,000; Jyothy Labs 4,000; Varun Beverages 2,700; Pricol 650 (31 March statement)", from: "LKP",
-    send: "Send the original purchase dates and quantities for these 31 March 2026 balances. Their purchase cost is already available, and their later sales (April to August 2026) are recorded. The dates are needed for the holding period of each sale.",
-    check: () => [["capri-global-capital", 7000], ["electronics-mart-india", 10000], ["jyothy-labs", 4000], ["varun-beverages", 2700], ["pricol", 650]]
-      .every(([k, q]) => undated(LKP, k, q) && pos(LKP, k).costBasis != null) },
   { holder: "Hope India Trust", account: "ABSL folio 1019265797", what: "ABSL Liquid Daily IDCW Direct", units: 7756.542, from: "ABSL fund company or registrar",
     send: "Send the missing transactions after 19 October 2023, including units added from payouts, linking 6,544.5539 units to 7,756.542 units. The original 10 July 2019 purchase and recorded cost are already available.",
     check: () => undated("aditya-birla-sun-life-mutual-fund-1019265797", "aditya-birla-sun-life-liquid-fund-daily-idcw-direct-plan", 7756.542) },
@@ -155,14 +144,6 @@ const ITEMS = [
   { holder: "Hope India Trust", account: "Mirae folio 70413280453", what: "Mirae Asset Liquid Direct Growth", units: 316.19, from: "Mirae fund company or registrar",
     send: "Send the since-inception transaction history: each purchase date, units and amount. The 11 July 2019 entry on the saved statement is an opening balance, not a purchase. The cost is already available.",
     check: () => undated("mirae-asset-mutual-fund-70413280453", "mirae-asset-liquid-fund-formerly-mirae-asset-cash-management-fund-direct-plan-mirae-asset-liquid-fund-formerly-mirae-asset-cash-management-fund-direct-plan-growth", 316.19) },
-  { holder: "Ajay Jaisinghani", account: "Bandhan folio 8652064", what: "Bandhan Large & Mid Cap Direct", units: 2639320.472, from: "Bandhan fund company or registrar",
-    send: "Send the original purchase dates and quantities for the current 2,639,320.472 units. Include the transfer from Motilal on 7 October 2026 and later transactions. The old Motilal balance was 1,925,285.808 units; current purchase cost is already available.",
-    // Dated only by the 30 June review's product range, which does not date every current unit.
-    check: () => { const p = pos("bandhan-mutual-fund-8652064", "bndh-l-and-mcf-dp-gr"); return !!p && near(p.quantity, 2639320.472) && p.costBasis != null
-      && p.dateSources.length === 1 && p.dateSources[0] === "review"; } },
-  { holder: "Ajay Jaisinghani", account: "Bandhan folio 8652064", what: "Bandhan Arbitrage Direct", units: 202573.963, from: "Bandhan fund company or registrar",
-    send: "Send the original purchase dates and quantities for the current 202,573.963 units. Include the transfer from Motilal on 7 October 2026 and later sales or transfers. The old Motilal balance was 3,371,575.697 units; current purchase cost is already available.",
-    check: () => undated("bandhan-mutual-fund-8652064", "bandhan-amc-ltd-bandhan-mf-bandhan-arbitrage-fund-direct-pl-growth", 202573.963) },
   { holder: "Ajay Jaisinghani", account: "ICICI NSDL 49794950", what: "Grand Continent Hotels", units: 262125, from: "Client accounts team",
     send: "Confirm whether any extra money was paid on the 26 September 2024 bonus or split entry. If yes, send payment proof. The same amount appears again on that entry, so we need to confirm it was not a second payment.",
     check: () => !!pos(ICICI, "grand-continent-hotels") && near(pos(ICICI, "grand-continent-hotels").quantity, 262125) },
@@ -232,7 +213,20 @@ const RESOLVED = [
     () => !pmsGroups.has("svan-investment-managers-llp-8710067") && !pmsGroups.has("svan-investment-managers-llp-8710090")],
   ["Ajay Jaisinghani | Molecule Ventures 7810404", "Purchase dates for all 8 stocks", "Molecule's 2 November 2026 statements date every stock held.",
     () => !pmsGroups.has("molecule-ventures-llp-7810404")],
-  ["Ajay Jaisinghani | MOPWM", "SOTEFIN (private investment valuation)", "Now listed and priced on the ICICI statement, so it is no longer valued at cost. Its allotment record is asked for in section 1.",
+  ["Bharat Jaisinghani | LKP 98245", "Purchase dates for the 31 March balances (Belrise, Capri Global, Electronics Mart, Jyothy Labs, Varun Beverages, Pricol)", "LKP's capital gain statement to 31 July 2026 dates every unit held on 31 March: the lots still open and the lots sold after it, at the statement's own cost.",
+    () => [["belrise-industries", 12500], ["capri-global-capital", 7000], ["electronics-mart-india", 10000], ["jyothy-labs", 4000], ["varun-beverages", 2700], ["pricol", 650]]
+      .every(([k, q]) => { const p = pos(LKP, k); return !!p && near(p.quantity, q) && p.dated && p.dateSources.includes("lots"); })],
+  ["Ajay Jaisinghani | ICICI NSDL 49794950", "Sotefin Bharat", "The family's investment register prints both purchases (12 July 2024 and 3 November 2025), and the 10:1 bonus makes them every one of the 1,71,879 shares; its cost is now carried.",
+    () => { const p = pos(ICICI, "sotefin-bharat"); return !!p && near(p.quantity, 171879) && p.costBasis != null && p.dated; }],
+  ["Ajay Jaisinghani | Bandhan folio 8652064", "Bandhan Large & Mid Cap and Arbitrage purchase dates", "Bandhan's own statement of 14 October 2026 dates every purchase and switch in from a nil opening on 2 April 2026.",
+    () => ["bndh-l-and-mcf-dp-gr", "bandhan-amc-ltd-bandhan-mf-bandhan-arbitrage-fund-direct-pl-growth"]
+      .every((k) => { const p = pos("bandhan-mutual-fund-8652064", k); return !!p && p.dated && p.dateSources.includes("allotments"); })],
+  ["Ajay Jaisinghani | HDFC Securities 3110320", "Man Industries, Deepak Fertilisers and Kingfa purchase dates", "The 30 June review's transaction history dates every unit held, carried through the account's own later sales (Man Industries 10 January and 25 July 2025; Deepak Fertilisers 30 July 2024; Kingfa 22 November 2024).",
+    () => ["man-industries-india", "deepak-fertilisers-and-petrochemicals", "kingfa-science-and-technology-india"]
+      .every((k) => { const p = pos(HDFC_SEC, k); return !!p && p.dated && p.dateSources.includes("review-lots"); })],
+  ["Ajay and Ankita Jaisinghani | Green Lantern 510861 and 510854", "Purchase dates for Ingersoll Rand, Ratnamani, Anup Engineering and Vedanta Aluminium", "Green Lantern's own from-inception trade records date every stock held; Vedanta Aluminium through the parent's purchases and the 30 April 2026 demerger.",
+    () => !pmsGroups.has("green-lantern-capital-llp-510861") && !pmsGroups.has("green-lantern-capital-llp-510854")],
+  ["Ajay Jaisinghani | MOPWM", "SOTEFIN (private investment valuation)", "Now listed and priced on the ICICI statement, so it is no longer valued at cost; its cost and dates are carried there (above).",
     () => !privateRows.some((r) => /sotefin/i.test(r.name))],
 ];
 const resolvedFailed = RESOLVED.filter(([, , , c]) => !c());
@@ -287,7 +281,7 @@ td.num, th.num { width: 25%; }
 .newpage { break-before: page; }
 </style></head><body>
 <h1>All records still needed from the client</h1>
-<p class="lead">Checked ${checkedLong} against the dashboard's records (latest statement dated ${DATE(F.bookAsOf)}). This list replaces the one checked on 27 October 2026: records received since then are no longer requested, and the newer statements raised the new items below. Includes all client requests: purchase and balance records, PMS stock history, and private investment valuations. One complete broker or fund export can answer several rows.</p>
+<p class="lead">Checked ${checkedLong} against the dashboard's records (latest statement dated ${DATE(F.bookAsOf)}). This list replaces the earlier lists (checked 27 October and 11 November 2026): records received since then are no longer requested and are listed in section 4, and the newer statements raised the new items below. Includes all client requests: purchase and balance records, PMS stock history, and private investment valuations. One complete broker or fund export can answer several rows.</p>
 <h2>1. Purchase, date, balance and other records</h2>
 <table class="s1"><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="c4"></colgroup>
 <thead><tr><th>Holder and account</th><th>Stock, fund or file</th><th>Exactly what to send</th><th>Ask for it from</th></tr></thead><tbody>
@@ -304,7 +298,7 @@ ${s3}
 </tbody></table>
 <h2>4. Received since 27 October: no longer needed</h2>
 <table class="s4"><colgroup><col class="c1"><col class="c2"><col class="c3"></colgroup>
-<thead><tr><th>Holder and account</th><th>Item on the 27 October list</th><th>What answered it</th></tr></thead><tbody>
+<thead><tr><th>Holder and account</th><th>Item on an earlier list</th><th>What answered it</th></tr></thead><tbody>
 ${s4}
 </tbody></table>
 </body></html>`;

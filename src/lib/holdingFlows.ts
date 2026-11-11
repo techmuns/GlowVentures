@@ -44,6 +44,7 @@
 import { BOOK_ACCOUNTS, BOOK_CAPITAL_MOVES, BOOK_HOLDING_INCOME, BOOK_HOLDING_LOTS, BOOK_HOLDING_TRADES, BOOK_SHARE_MOVEMENTS } from "@/data/glowData";
 import { acquisitionIdentity } from "../../shared/fundUnitActions.mjs";
 import type { Position, RecoveredHoldingCost } from "./types";
+import { bonusPurchaseDates } from "./investedOn";
 
 export type HoldingFlowBasis = "trades" | "lots" | "recovered";
 
@@ -122,7 +123,15 @@ export function holdingFlowsOf(p: Position, asOf: string | null): HoldingFlows |
       ...(m ? { market: { from: statementDate, kind: m.kind } } : {}),
     };
   };
-  if (r && r.unaccounted === 0) {
+  /**
+   * …OR WHERE A BONUS MADE THE REST OF THE UNITS (Stage 10mx). Every unit is one
+   * of the window's own buys or a bonus on them, nothing was sold, and a bonus
+   * adds units and no money — so the buys ARE every rupee that went in, exactly
+   * as `bonusPurchaseDates` already reconciles them for Invested on (ZF Commercial,
+   * Sharda Motor, Time Technoplast). The dividends are the window's, as below.
+   */
+  const bonused = r && r.unaccounted !== 0 && bonusPurchaseDates(p) !== null;
+  if (r && (r.unaccounted === 0 || bonused)) {
     const trades = (BOOK_HOLDING_TRADES[key] ?? []).filter((t) => t.date >= r.from && t.date <= r.to);
     if (!trades.length) return null;
     const unpriced = trades.find((t) => t.amount === null);

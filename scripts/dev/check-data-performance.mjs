@@ -7,6 +7,7 @@ import { installReadModelRoutes } from './read-model-api.mjs';
 import { assertStickyTableHeaders, assertTableHeaderFixture } from './table-headers.mjs';
 import { installProfileStoreFixture, assertInlineProfileEditing } from './private-profile-inputs.mjs';
 import { assertTableExportControls, assertInfiniteTableExport, assertPrivateProfileExport, assertExportRetry, assertCompleteColumnExport, assertCollapsedSectionExport, assertUnfilteredSearchExport, assertPrivateMarketFilterExport, assertMemberFilterExport, assertTransactionFilterExport, assertPortfolioPageExport, downloadTableWorkbook } from './table-excel.mjs';
+import { appendByScrolling, scrollToEnd } from './table-scroll.mjs';
 const base = process.env.BASE || 'http://127.0.0.1:4173';
 assert.ok(['localhost', '127.0.0.1'].includes(new URL(base).hostname));
 const capture = JSON.parse(await fs.readFile('public/data/corporate-actions.json', 'utf8'));
@@ -20,29 +21,6 @@ const source = manifest.flatMap(f => f.sheets.map(s => ({file:f.fileKey, sheet:s
   .filter(s => s.rows > 250).sort((a,b) => a.rows - b.rows)[0];
 assert.ok(source, 'a large source table is available');
 const sourceRoute = `/audit?file=${encodeURIComponent(source.file)}&sheet=${encodeURIComponent(source.sheet)}`;
-// Drive the real scroll surface: automatic append must work without a button.
-async function appendByScrolling(table) {
-  const end = table.locator('[data-table-scroll-end]');
-  const before = Number(await end.getAttribute('data-loaded-rows'));
-  const total = Number(await end.getAttribute('data-total-rows'));
-  assert.ok(before < total, 'more rows are available');
-  await end.scrollIntoViewIfNeeded();
-  await end.page().waitForFunction(({ element, before }) => Number(element.dataset.loadedRows) > before,
-    { element: await end.elementHandle(), before });
-}
-async function scrollToEnd(table) {
-  const end = table.locator('[data-table-scroll-end]');
-  // Each append must advance at least one row. Use the actual table size so a
-  // workbook exceeding 10,000 rows cannot exhaust a fixed 200-batch allowance.
-  const maxAppends = Number(await end.getAttribute('data-total-rows'));
-  for (let i = 0; i <= maxAppends; i++) {
-    const shown = Number(await end.getAttribute('data-loaded-rows'));
-    const total = Number(await end.getAttribute('data-total-rows'));
-    if (shown === total) return total;
-    await appendByScrolling(table);
-  }
-  assert.fail('table never reached its final row');
-}
 try {
   await assertTableHeaderFixture(browser,base);
   for (const route of ['/corporate-actions','/monitor','/monitor?group=category','/monitor?group=basket','/monitor?group=assetClass','/monitor?show=transactions','/ledger','/sectors','/family','/capital-gains','/private-market','/holdings?of=book','/performance','/returns','/audit','/audit?consolidated=Transactions',sourceRoute,'/cio','/polycab','/upload','/statements']) {
