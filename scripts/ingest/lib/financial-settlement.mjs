@@ -65,10 +65,15 @@ export function ownershipExposure(graph, metrics, root, on) {
     && (!edge.from || edge.from <= on) && (!edge.to || on < edge.to))
     (outgoing.get(edge.owner) ?? outgoing.set(edge.owner, []).get(edge.owner)).push(edge);
   const node = new Map(graph.nodes.map(n => [n.id, n]));
+  let measuredNil = false;
   const walk = (id, weight, path) => {
     if (path.has(id)) { issues.push({ code: 'OWNERSHIP_CYCLE', id }); return; }
     const n = node.get(id);
     if (!n) { issues.push({ code: 'MISSING_ENTITY', id }); return; }
+    const children = outgoing.get(id) ?? [];
+    if (!children.length && ['account', 'reporting-group'].includes(n.kind)) {
+      if (n.verifiedNil) measuredNil = true; else issues.push({ code: 'NO_ACCOUNT_VALUATION', id });
+    }
     if (n.kind === 'position') { weights.set(id, (weights.get(id) ?? 0) + weight); return; }
     for (const edge of outgoing.get(id) ?? []) {
       if (edge.fraction == null) { issues.push({ code: 'UNKNOWN_OWNERSHIP_FRACTION', id: edge.id }); continue; }
@@ -83,6 +88,6 @@ export function ownershipExposure(graph, metrics, root, on) {
     lines.push({ positionId: id, fraction, value: metric?.value == null || fraction > 1 + 1e-10 ? null : metric.value * fraction,
       status: metric?.status ?? 'missing', effectiveDate: metric?.effectiveDate ?? null });
   }
-  const complete = issues.length === 0 && lines.every(l => l.value != null && ['source-backed', 'entered'].includes(l.status));
+  const complete = issues.length === 0 && (lines.length > 0 || measuredNil) && lines.every(l => l.value != null && ['source-backed', 'entered'].includes(l.status));
   return { root, on, lines, complete, value: complete ? lines.reduce((sum, line) => sum + line.value, 0) : null, issues };
 }

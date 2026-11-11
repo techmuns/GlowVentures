@@ -72,3 +72,10 @@ test('financial report API selects one immutable version and fails closed on una
   const html = { ASSETS: { fetch: async url => url.pathname === '/publication.json' ? Response.json({ revision: 'a'.repeat(20) }) : new Response('<html>', { headers: { 'Content-Type': 'text/html' } }) } };
   assert.equal((await onRequestGet({ request: request('metrics'), env: html })).status, 503);
 });
+
+test('an empty ownership projection is unknown unless an actual nil was measured', () => {
+  const graph = { nodes: [{ id: 'owner', kind: 'owner' }, { id: 'account', kind: 'account' }], edges: [{ id: 'a', owner: 'owner', owned: 'account', relationship: 'owns', fraction: 1 }] };
+  assert.equal(ownershipExposure(graph, [], 'owner', '2026-11-01').value, null);
+  graph.nodes[1].verifiedNil = true;
+  assert.equal(ownershipExposure(graph, [], 'owner', '2026-11-01').value, 0);
+});

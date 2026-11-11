@@ -21,7 +21,7 @@ const day = value => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(val
 const positionKey = p => JSON.stringify([p.accountId, p.memberId ?? null, p.securityKey]);
 const source = (p, field) => p.statementRecord ? { document: p.statementRecord.document, pointer: `${p.statementRecord.pointer}/${field}` }
   : p.reviewSource ? { kind: 'family-review', ...p.reviewSource, field } : { kind: 'canonical-record', field };
-const sourceField = { marketValue: 'marketValue', costBasis: 'totalCost', quantity: 'quantity' };
+const sourceField = { marketValue: 'marketValue', costBasis: 'totalCost', quantity: 'quantity', currentPrice: 'marketPrice', avgCost: 'unitCost' };
 
 export function financialRegistry(positions, previous = seedRegistry) {
   const entries = structuredClone(previous.instruments ?? []), byKey = new Map(), byIsin = new Map(), issues = [];
@@ -90,7 +90,7 @@ export function buildFinancialIntegrity(book, documents, { report = null, regist
   for (const a of accounts) {
     const ownerId = `owner:${a.ownerId ?? 'unattributed'}`;
     addNode({ id: ownerId, kind: a.ownerId ? 'owner' : 'unattributed', label: a.owner, verification: a.ownerId ? 'canonical-holder' : 'unknown' });
-    addNode({ id: `account:${a.accountId}`, kind: a.reviewHolder ? 'reporting-group' : 'account', label: a.accountNo, provider: a.provider, asOf: a.asOf });
+    addNode({ id: `account:${a.accountId}`, kind: a.reviewHolder ? 'reporting-group' : 'account', label: a.accountNo, provider: a.provider, asOf: a.asOf, verifiedNil: book.BOOK_ACCOUNT_RETURN_RECORDS?.[a.accountId]?.record?.value === 0 });
     edges.push({ id: `holder:${a.accountId}`, owner: ownerId, owned: `account:${a.accountId}`, relationship: a.reviewHolder ? 'reports-for' : 'owns',
       fraction: 1, from: null, to: null, observedAsOf: a.asOf, basis: 'holder-of-record', evidence: { accountId: a.accountId } });
     if (a.demat?.printed) {
@@ -116,6 +116,7 @@ export function buildFinancialIntegrity(book, documents, { report = null, regist
     edges.push({ id: `instrument:${id}`, owner: id, owned: instrument.id, relationship: 'position-in', evidence: source(p, 'securityKey') });
     const related = reviews.filter(r => r.finding.docKey === p.statementRecord?.document && (!r.finding.securityKey || r.finding.securityKey === p.securityKey)
       && (!r.review?.affectedSecurityKeys || r.review.affectedSecurityKeys.includes(p.securityKey)));
+    const positionIndex = positions.indexOf(p);
     const metric = (name, value, basis, formula, dependencies) => {
       const unit = name === 'quantity' ? 'units' : name === 'returnPct' ? 'percent' : ['currentPrice', 'avgCost'].includes(name) ? 'money-per-unit' : 'money';
       const disputed = related.filter(r => r.review?.disposition === 'withhold-affected-claim' || !r.review)
@@ -123,13 +124,18 @@ export function buildFinancialIntegrity(book, documents, { report = null, regist
       let status = value == null ? 'missing' : disputed.length ? 'disputed' : p.valuedAtCost && ['marketValue', 'unrealizedPnL'].includes(name) ? 'at-cost' : 'source-backed';
       const required = name === 'unrealizedPnL' ? [p.marketValue, p.costBasis] : [value];
       if (required.some(v => v == null)) status = 'missing';
-      const effectiveDate = ['marketValue', 'unrealizedPnL'].includes(name) ? p.priceAsOf ?? a.asOf : a.asOf;
+      const effectiveDate = ['marketValue', 'currentPrice', 'unrealizedPnL', 'returnPct'].includes(name) ? p.priceAsOf ?? a.asOf : a.asOf;
       const item = { id: `${id}:${name}`, positionId: id, accountId: p.accountId, securityKey: p.securityKey, memberId: p.memberId ?? null,
         metric: name, value: status === 'missing' ? null : value, amountMinor: finite(value) && unit === 'money' ? String(decimalMinor(value)) : null,
         usableValue: status === 'source-backed' ? value : null, valueDecimal: finite(value) ? String(value) : null,
         unit, currency: ['money', 'money-per-unit'].includes(unit) ? 'INR' : null, scale: unit === 'money' ? 2 : null,
         currencyBasis: 'canonical INR adapter contract', basis, status, effectiveDate, quantityAsOf: a.asOf, receivedAt: null,
-        formula, formulaVersion: 'financial-integrity-v1', inputs: dependencies, evidence: name === 'costBasis' && p.recoveredCost ? { kind: 'reconciled-acquisition-record', references: p.recoveredCost.evidence, accountId: p.accountId, isin: p.isin } : source(p, sourceField[name] ?? name),
+        formula, formulaVersion: 'financial-integrity-v1', inputs: dependencies,
+        evidence: name === 'costBasis' && p.recoveredCost ? { kind: 'reconciled-acquisition-record', references: p.recoveredCost.evidence, accountId: p.accountId, isin: p.isin }
+          : ['unrealizedPnL', 'returnPct', 'realizedPnL', 'costOfUnitsSold', 'dividendReceived'].includes(name) || name === 'avgCost' && p.avgCostDerived
+            ? { kind: 'canonical-projection', canonicalPointer: `/BOOK_POSITIONS/${positionIndex}/${name}`, inputs: dependencies.map(field => `/BOOK_POSITIONS/${positionIndex}/${field}`),
+              note: 'Derived or combined from the canonical records; this is not claimed as a directly printed holding field.' }
+            : source(p, sourceField[name] ?? name),
         exceptions: disputed.map(r => r.id), asOf: book.BOOK_AS_OF, readerRevision, bookRevision };
       const ageDays = day(effectiveDate) ? Math.max(0, Math.floor((Date.parse(book.BOOK_AS_OF) - Date.parse(effectiveDate)) / 86400000)) : null;
       item.freshness = { evaluatedOn: book.BOOK_AS_OF, ageDays, basis: 'dated source observation; not a claim of a current market mark' };
@@ -140,7 +146,7 @@ export function buildFinancialIntegrity(book, documents, { report = null, regist
     metric('marketValue', p.marketValue, p.valuedAtCost ? 'carrying-cost' : 'statement-valuation', 'selected statement valuation; quantity × price where both are measured', ['quantity', 'currentPrice']);
     for (const name of ['currentPrice', 'avgCost', 'realizedPnL', 'costOfUnitsSold', 'dividendReceived', 'returnPct']) {
       const formula = name === 'returnPct' ? '(marketValue - costBasis + realizedPnL + dividendReceived) / (costBasis + costOfUnitsSold) * 100; subject to holding-return coverage gates'
-        : name === 'avgCost' ? 'costBasis / quantity' : name === 'currentPrice' ? 'selected statement price' : 'selected source record';
+        : name === 'avgCost' ? p.avgCostDerived ? 'costBasis / quantity' : 'selected printed unit cost' : name === 'currentPrice' ? 'selected statement price' : 'selected source record';
       metric(name, p[name] ?? null, name === 'returnPct' ? 'derived-holding-period-return' : 'statement-or-reconciled-record', formula, name === 'returnPct' ? ['marketValue', 'costBasis', 'realizedPnL', 'costOfUnitsSold', 'dividendReceived'] : [name]);
     }
     metric('unrealizedPnL', p.valuedAtCost || p.costBasis == null ? null : roundMoney(p.marketValue - p.costBasis), 'derived', 'marketValue - costBasis', ['marketValue', 'costBasis']);

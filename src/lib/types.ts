@@ -754,7 +754,10 @@ export type NavPoint = {
    * — only across each LINK. So each point carries the interval ending at it,
    * struck over the accounts valued at BOTH of its ends:
    *
-   *   r = (linkClose − flowIn) / linkOpen − 1
+   *   r = (linkClose − linkOpen − flowIn) / (linkOpen + flowWeighted)
+   *
+   * The legacy end-dated approximation uses zero weight only where the
+   * dated record is unavailable, with `returnMethod` identifying that basis.
    *
    * An account joining at this date is in neither end of the link that ends
    * here, so its arrival contributes 0.00% rather than a step. Where the panel
