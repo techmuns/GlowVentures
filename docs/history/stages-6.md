@@ -1571,3 +1571,9 @@ Codex's review of #352, verified against the code and the book:
 - XIRR validates dates and isolates all candidate roots before publishing one stable rate. NAV projections retain actual day-weighted capital and identify undated approximations. The normal capital editor stages related balances together. Capital corrections validate the whole batch, including restores, against the current published source and retain their history; incompatible corrections invalidate dated returns.
 - Historical material discrepancies now require exact source-bound, dated reviews. Unresolved marks retain their disputed status and have no verified usable value. Gross income is not silently posted as received cash, and corporate-action notices are not booked twice.
 - The existing dashboard layout is retained. Details and limitations: `docs/FINANCIAL-INTEGRITY.md`.
+
+### Stage 10na — Franklin Credit AIF belongs in Stable Growth
+
+- The family's 12 Nov request to research and classify the remaining Franklin holding supersedes Stage 10js's instruction to leave its basket unclassified. The [fund-authored investor deck](https://www.scribd.com/document/1038011103/Franklin-India-Credit-AIF-Scheme-I-Investor-Deck-Regular) describes financial-services private credit and senior securities; [Finnable's issuer document, p. 93](https://assets.stablebonds.in/bonds-assets/Finnable_KID_18thfeb.pdf#page=93) also names the fund among its NCD holders.
+- Classify it as Debt / Stable Growth, matching the review's treatment of the Neo Infra income AIF. Stable Growth is our placement under the current request, not a label claimed from the fund documents or June workbook. Keep provenance `family`, no workbook row, and the Category II AIF wrapper; no source figures change.
+- The existing taxonomy suite checks Franklin's two axes, category and provenance, and now refuses any unclassified fund or company. Only two residual bank balances remain outside a basket in the raw book.
