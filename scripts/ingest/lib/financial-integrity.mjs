@@ -93,7 +93,6 @@ export function buildFinancialIntegrity(book, documents, { report = null, regist
   const nodes = [], edges = [], metrics = [], checks = [], events = [];
   const node = new Map(), addNode = n => { if (!node.has(n.id)) { node.set(n.id, n); nodes.push(n); } };
   for (const owner of book.BOOK_OWNERS ?? []) { const id = owner.ownerId ?? owner.id; if (id) addNode({ id: `owner:${id}`, kind: 'owner', label: owner.name ?? owner.displayName ?? id }); }
-  for (const entity of ownership.nodes ?? []) addNode(entity);
   for (const a of accounts) {
     const ownerId = `owner:${a.ownerId ?? 'unattributed'}`;
     addNode({ id: ownerId, kind: a.ownerId ? 'owner' : 'unattributed', label: a.owner, verification: a.ownerId ? 'canonical-holder' : 'unknown' });
@@ -234,6 +233,10 @@ export function buildFinancialIntegrity(book, documents, { report = null, regist
       adjustment: CAPITAL_TERMS[c.accountId] ?? null });
   }
   checks.push(...reconcileSettlements(events, documents, accounts, settlementMappings));
+  for (const entity of ownership.nodes ?? []) {
+    if (node.has(entity.id)) issues.push({ code: 'DUPLICATE_ENTITY', id: entity.id });
+    else addNode(entity);
+  }
   issues.push(...validateOwnershipGraph(nodes, edges));
   for (const check of checks.filter(c => c.status === 'disputed')) {
     const affected = check.kind === 'cost-lots' ? ['costBasis', 'avgCost', 'unrealizedPnL', 'returnPct']

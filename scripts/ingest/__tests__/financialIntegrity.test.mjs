@@ -3,7 +3,7 @@ import test from 'node:test';
 import { buildFinancialIntegrity, financialRegistry, validateOwnershipGraph } from '../lib/financial-integrity.mjs';
 import { ownershipExposure, reconcileSettlements } from '../lib/financial-settlement.mjs';
 import { financialUnitIssue } from '../lib/financial-units.mjs';
-import { weightedCapital } from '../../../shared/flowTiming.mjs';
+import { weightedCapital, reconciledWeightedCapital } from '../../../shared/flowTiming.mjs';
 const position = { accountId: 'account-a', securityKey: 'integrity-fixture-fund', security: 'Integrity fixture fund', isin: 'INF000000001', quantity: 10, marketValue: 120, costBasis: 100, currentPrice: 12, unrealizedPnL: 20, returnPct: 20 };
 const account = { accountId: 'account-a', accountNo: 'A', ownerId: 'owner-a', owner: 'Fixture owner', asOf: '2026-11-01' };
 const book = (ps = [position]) => ({ BOOK_AS_OF: '2026-11-01', BOOK_POSITIONS: ps, BOOK_ACCOUNTS: [account], BOOK_OWNERS: [], BOOK_COMMITMENTS: [], BOOK_HOLDING_TRADES: {}, BOOK_HOLDING_INCOME: {}, BOOK_CAPITAL_MOVES: [] });
@@ -16,6 +16,8 @@ test('normalization refuses explicit foreign currency and unconverted lakh/crore
   }
   assert.equal(financialUnitIssue({}, 'All amounts in INR'), null);
   assert.equal(financialUnitIssue({}, 'Currency: INR'), null);
+  for (const declaration of ['Figures in crore', 'Amounts are expressed in INR lakhs', 'Values are in Rs. lakhs', 'All figures in ₹ crores', 'INR in millions', 'Amount (Rs. in Lakhs)', 'Currency: INR lakhs', '₹ crores']) assert.ok(financialUnitIssue({}, declaration), declaration);
+  assert.equal(financialUnitIssue({}, 'The company raised 100 crore.\nAmounts in INR'), null);
   assert.ok(financialUnitIssue({ currency: 'USD' }));
   assert.ok(financialUnitIssue({ financialUnits: { canonicalMultiplier: 100000 } }));
   assert.equal(financialUnitIssue({ financialUnits: { canonicalCurrency: 'INR', canonicalMultiplier: 1 } }), null);
@@ -61,6 +63,9 @@ test('day weights use actual dates, signed withdrawals, valid calendar days and 
   assert.equal(weightedCapital([{ date: '2026-01-31', amount: 300 }], '2026-01-01', '2026-01-31'), 0);
   assert.equal(weightedCapital([{ date: '2026-01-11', amount: -300 }], '2026-01-01', '2026-01-31'), -200);
   assert.equal(weightedCapital([{ date: '2026-02-31', amount: 300 }], '2026-02-01', '2026-03-01'), null);
+  assert.equal(reconciledWeightedCapital([{ date: '2026-01-11', amount: 300 }], '2026-01-01', '2026-01-31', 0), null, 'unchanged units cannot put unmatched cash only in the denominator');
+  assert.equal(reconciledWeightedCapital([{ date: '2026-01-11', amount: 300 }], '2026-01-01', '2026-01-31', 300), 200);
+  assert.equal(reconciledWeightedCapital([], '2026-01-01', '2026-01-31', 0), 0);
 });
 
 test('financial report API selects one immutable version and fails closed on unavailable or HTML assets', async () => {
@@ -97,4 +102,8 @@ test('duplicate persistent identities and relationship IDs cannot silently merge
   const f = financialRegistry([], { instruments: [{ id: 'same', keys: ['a'], isins: [] }, { id: 'same', keys: ['b'], isins: [] }] });
   assert.ok(f.issues.some(i => i.code === 'DUPLICATE_INSTRUMENT_ID'));
   assert.ok(validateOwnershipGraph([{ id: 'a' }, { id: 'b' }], [{ id: 'same', relationship: 'owns', owner: 'a', owned: 'b', fraction: .5 }, { id: 'same', relationship: 'owns', owner: 'a', owned: 'b', fraction: .5 }]).some(i => i.code === 'DUPLICATE_RELATIONSHIP'));
+  const duplicate = buildFinancialIntegrity(book(), [], { ownership: { nodes: [{ id: 'legal-owner', kind: 'owner' }, { id: 'legal-owner', kind: 'trust' }], edges: [] } });
+  assert.ok(duplicate.issues.some(i => i.code === 'DUPLICATE_ENTITY' && i.id === 'legal-owner'));
+  const shadowed = buildFinancialIntegrity(book(), [], { ownership: { nodes: [{ id: 'account:account-a', kind: 'trust' }], edges: [] } });
+  assert.ok(shadowed.issues.some(i => i.code === 'DUPLICATE_ENTITY'));
 });

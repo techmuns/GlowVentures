@@ -8,6 +8,9 @@ export function financialUnitIssue(document, text = '') {
   if (units?.sourceCurrency && units.sourceCurrency !== 'INR') return 'A foreign-currency source needs a separately verified conversion and valuation-date policy.';
   // Only explicit report-unit declarations count. A company name or a prose
   // reference to an overseas investment is not a declaration of units.
+  const scaled = /^\s*(?:(?:(?:all|financial)\s+)?(?:amounts?|figures?|values?)\s+(?:are\s+)?(?:expressed\s+)?in\s+|(?:INR|Rs\.?|₹|Rupees?)\s+in\s+)(?:(?:INR|Rs\.?|₹|Rupees?)\s*)?\(?\s*(?:lakhs?|lacs?|crores?|crs?|millions?|billions?|thousands?)\b/im;
+  const scaleHeader = /^\s*(?:(?:amounts?|figures?|values?)\s*\(\s*|(?:currency\s*[:=]\s*)?)(?:INR|Rs\.?|₹|Rupees?)\s*(?:in\s+)?\(?\s*(?:lakhs?|lacs?|crores?|crs?|millions?|billions?|thousands?)\b/im;
+  if (scaled.test(text) || scaleHeader.test(text)) return 'The report explicitly declares scaled money; a verified scale-conversion adapter is required before publication.';
   const declarations = [...text.matchAll(/(?:^\s*(?:(?:all|financial)\s+)?(?:amounts?|figures?|values?)\s+(?:are\s+)?(?:expressed\s+)?in\s+|\bcurrency\s*[:=]\s*)([a-z]{3})\b/gim)];
   if (declarations.some(m => m[1].toUpperCase() !== 'INR')
     || /^\s*(?:(?:all|financial)\s+)?(?:amounts?|figures?|values?)\s+(?:are\s+)?(?:expressed\s+)?in\s+(?:US\s*dollars?|euros?|pounds?)\b/im.test(text)) return 'The report explicitly declares a foreign currency unsupported by this INR adapter.';

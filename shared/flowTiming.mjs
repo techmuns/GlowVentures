@@ -1,3 +1,4 @@
+import { moneyEqual, sumMoney } from './financialArithmetic.mjs';
 // Capital-in is positive here. End-of-day convention; weights are elapsed
 // calendar days actually invested, never the timestamp a file was received.
 export function weightedCapital(flows, from, to) {
@@ -11,4 +12,11 @@ export function weightedCapital(flows, from, to) {
     if (on > start && on <= end) total += flow.amount * (end - on) / (end - start);
   }
   return Number.isFinite(total) ? total : null;
+}
+/** Timing cannot be verified using cash absent from the link's numerator. */
+export function reconciledWeightedCapital(flows, from, to, net) {
+  if (!Number.isFinite(net) || flows.some(f => !Number.isFinite(f.amount))) return null;
+  const dated = flows.filter(f => f.date > from && f.date <= to);
+  if (!moneyEqual(sumMoney(dated.map(f => f.amount)), net)) return null;
+  return weightedCapital(flows, from, to);
 }

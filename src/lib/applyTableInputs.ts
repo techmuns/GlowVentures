@@ -20,13 +20,6 @@ export function applyTableInputs(book: Portfolio | null, saved: readonly SavedIn
     if (hasCap && capitalIssues(cap.values, cap.capitalTerms).length) return original;
     const p = { ...original, enteredNumbers: fields, enteredCapital: hasCap ? cap.values : undefined };
     if (fields.some(field => field !== 'marketValue')) p.returnInputsUnavailableReason = 'A saved correction changes units, cost or income, but the dated transaction record has not been corrected to reconcile with it.';
-    if (p.integrity) {
-      p.integrity = { ...p.integrity, metrics: { ...p.integrity.metrics } };
-      for (const field of new Set([...fields, 'unrealizedPnL'])) {
-        const previous = p.integrity.metrics[field];
-        if (previous) p.integrity.metrics[field] = { ...previous, status: 'entered', basis: 'family-correction', exceptions: [] };
-      }
-    }
     for (const field of fields) Object.assign(p, { [field]: input!.values[field] });
     // A newly supplied valuation supersedes the old "held at cost" treatment.
     // A cost-only correction keeps that treatment and carries its value with it.
@@ -41,6 +34,23 @@ export function applyTableInputs(book: Portfolio | null, saved: readonly SavedIn
       p.live = false; p.priceEvidence = undefined; p.dayChange = null; p.dayChangePct = null;
       // A rolled statement snapshot cannot replace a deliberate correction.
       if (fields.some(field => field !== "dividendReceived")) p.rolledForward = undefined;
+    }
+    if (p.integrity && fields.length) {
+      p.integrity = { ...p.integrity, metrics: { ...p.integrity.metrics } };
+      for (const field of fields) {
+        const previous = p.integrity.metrics[field];
+        if (previous) p.integrity.metrics[field] = { ...previous, status: input!.values[field] == null ? 'missing' : 'entered', basis: 'family-correction', exceptions: [] };
+      }
+      if (fields.includes('costBasis') && original.valuedAtCost && !fields.includes('marketValue') && p.costBasis != null) {
+        const previous = p.integrity.metrics.marketValue;
+        if (previous) p.integrity.metrics.marketValue = { ...previous, status: 'at-cost', basis: 'carrying-cost-from-family-correction', exceptions: [] };
+      }
+      if (fields.some(field => field === 'marketValue' || field === 'costBasis')) {
+        const previous = p.integrity.metrics.unrealizedPnL;
+        const disputed = ['marketValue', 'costBasis'].flatMap(field => p.integrity!.metrics[field]?.status === 'disputed' ? [p.integrity!.metrics[field]] : []);
+        if (previous) p.integrity.metrics.unrealizedPnL = { ...previous, status: p.unrealizedPnL == null ? 'missing' : disputed.length ? 'disputed' : 'entered',
+          basis: 'derived-from-family-correction', exceptions: disputed.flatMap(m => m.exceptions) };
+      }
     }
     return p;
   });

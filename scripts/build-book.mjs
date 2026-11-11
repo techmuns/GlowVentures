@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { buildFinancialIntegrity, positionIntegrity } from "./ingest/lib/financial-integrity.mjs";
-import { weightedCapital } from "../shared/flowTiming.mjs";
+import { reconciledWeightedCapital } from "../shared/flowTiming.mjs";
 // Build src/data/glowData.ts from the audit archive.
 //
 //   npm run build-book        (after `npm run inventory && npm run extract`)
@@ -809,12 +809,9 @@ function navHistoryFrom(byAccount, keptAccountIds, dedupeByAcctSec, accountCashF
         flowIn += proof.net;
         const dated = (accountCashFlows[id] ?? []).filter(f => !/^Opening portfolio value/i.test(f.description ?? "") && f.date > was.date && f.date <= snap.date)
           .map(f => ({ date: f.date, amount: -f.amount }));
-        const net = sum(dated.map(f => f.amount));
-        if (proof.basis === "units-unchanged" || (Math.abs(net - proof.net) <= 1 && (dated.length || proof.net === 0))) {
-          const weighted = weightedCapital(dated, was.date, snap.date);
-          if (weighted === null) flowTimingKnown = false;
-          else flowWeighted += weighted;
-        } else flowTimingKnown = false;
+        const weighted = reconciledWeightedCapital(dated, was.date, snap.date, proof.net);
+        if (weighted === null) flowTimingKnown = false;
+        else flowWeighted += weighted;
       }
       // What an unproven step cannot show to be performance is its MOVE.
       else { flowUnknownValue += Math.abs(snap.marketValue - was.marketValue); flowTimingKnown = false; }
