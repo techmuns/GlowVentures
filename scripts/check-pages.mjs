@@ -39342,7 +39342,8 @@ for (const theme of THEMES) {
        * child row, a total, a tinted alert) is left out, as is a hovered row:
        * those are the rows the stripe deliberately yields to. Of the rest, a
        * row at an EVEN place must carry `--row-alt` and one at an odd place
-       * must carry nothing, and two PLAIN rows drawn next to each other must
+       * must carry nothing or the table's underlying shade (opaque for frozen
+       * cells), and two PLAIN rows drawn next to each other must
        * not share a shade — the last is the claim a reader sees, and the one a
        * hidden row between them would break while the first two still pass.
        */
@@ -39391,9 +39392,10 @@ for (const theme of THEMES) {
               rec.plain++;
               const even = (i + 1) % 2 === 0;
               if (even && bg !== stripe) { rec.wrongEven++; rec.example ||= `row ${i + 1} is ${bg}`; }
-              if (!even && !clear(bg)) { rec.wrongOdd++; rec.example ||= `row ${i + 1} is ${bg}`; }
-              if (prev !== null && prev === bg) { rec.sameAdjacent++; rec.example ||= `rows ${i} and ${i + 1} are both ${bg}`; }
-              prev = bg;
+              if (!even && !clear(bg) && bg !== rec.under) { rec.wrongOdd++; rec.example ||= `row ${i + 1} is ${bg}`; }
+              const shown = clear(bg) ? rec.under : bg;
+              if (prev !== null && prev === shown) { rec.sameAdjacent++; rec.example ||= `rows ${i} and ${i + 1} are both ${shown}`; }
+              prev = shown;
             });
             if (rec.plain) out.tables.push(rec);
           }

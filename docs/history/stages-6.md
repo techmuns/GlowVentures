@@ -1578,6 +1578,15 @@ Codex's review of #352, verified against the code and the book:
 - Classify it as Debt / Stable Growth, matching the review's treatment of the Neo Infra income AIF. Stable Growth is our placement under the current request, not a label claimed from the fund documents or June workbook. Keep provenance `family`, no workbook row, and the Category II AIF wrapper; no source figures change.
 - The existing taxonomy suite checks Franklin's two axes, category and provenance, and now refuses any unclassified fund or company. Only two residual bank balances remain outside a basket in the raw book.
 
+### Stage 10nb — Portfolio Monitor keeps Security labels visible
+
+- Keep the existing vertically frozen heading row and pin its Security cell plus the holdings' Security names to the left while scrolling sideways. Opaque inherited row surfaces preserve stripes, expanded-row colours and hover highlighting; spanning section/detail cells scroll as before. Totals paint above the pinned body cells.
+- Limit the pinned name column to 10rem on phone widths so adjacent figures remain reachable. The horizontal pin applies on screen only; sorting, column order and the export data are unchanged.
+- Validate actual vertical and horizontal scrolling at desktop, tablet and phone widths, both themes, opaque row surfaces and sorting from the pinned heading. Build and delivery evidence are recorded on the PR.
+- Source-preview regression setup opens the quantity source list before recording the arranged background scroll. Otherwise its automated Qty click first scrolls a control out from beneath the frozen Security column, changing the test's starting state before any document opens. The check still requires a nonzero horizontal offset and exact scroll/DOM/filter/expansion restoration.
+- Give the Total label its own Security cell, with a separate blank span for any remaining leading columns, and freeze that one cell. Pinning the old merged label would cover adjacent totals; leaving it scrolling would put figures below the fixed Security heading. The shared browser header check now measures the heading, name and Total against the real scrollport and requires equal column widths.
+- Integration validation also checks Stage 10ne's two approved register-date choices against their raw workbook rows, holders and amounts. Every other review flow keeps the review-date requirement; all amounts, kinds, units and rates still tie to the review. No financial source values are changed here.
+
 ### Stage 10nc — Investment performance names how many accounts it covers, of how many
 
 - The client asked what "53 accounts covered" meant when they hold over 100 accounts. The card counted the accounts in the measured total and said nothing about the rest.

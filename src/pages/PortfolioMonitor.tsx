@@ -5440,11 +5440,11 @@ export function PortfolioMonitor() {
                   "₹0 ₹0 ₹0 0.0%", and a total of nothing is not a measured zero
                   (§2) — the line above already says why the table is empty. */}
               {rows.length > 0 && (
-              <tfoot className="sticky bottom-0 bg-ink-800">
+              <tfoot className="sticky bottom-0 z-10 bg-ink-800">
                 {/* `data-footer-total` is the handle the sweep adds the category
                     totals up against. Read by COLUMN rather than by cell: this
-                    row's label spans three of them and a category's spans one,
-                    so cell-for-cell the two rows are different measurements. */}
+                    row keeps its frozen label in Security and leaves the other
+                    leading columns blank, so DOM cell counts can differ. */}
                 {/*
                     THE FLOOR IS NAMED IN THE FOOTER'S OWN `title`, AND NOT AS A
                     PARAGRAPH UNDER THE TABLE.
@@ -5458,7 +5458,7 @@ export function PortfolioMonitor() {
                     the figure. Same treatment as the Weight cell's own `title`
                     one column over, which explains its denominator the same way.
                   */}
-                <TrFoot view={holdView} sourcePositions={rows.flatMap(r => r.trancheSet)} sourceColumns={['qty', 'mv']} className="px-2 py-1.5 text-slate-200"
+                <TrFoot view={holdView} labelInFirstColumn sourcePositions={rows.flatMap(r => r.trancheSet)} sourceColumns={['qty', 'mv']} className="px-2 py-1.5 text-slate-200"
                   data-footer-total=""
                   // The same two handles the category rows carry, for the same
                   // reason (Stage 10dh): the footer's own return is refused where
