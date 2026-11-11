@@ -61,7 +61,7 @@ assert.throws(() => registerReviewFlows(wb, { key: "national-stock-exchange-of-i
   mopwm: { rows: mopwm.rows.filter((r) => !/BONUS/.test(r.ref ?? "")) } }));
 assert.throws(() => registerReviewFlows(cell(copy(), "PVT INV", 75, 5, "36351000"), { key: "national-stock-exchange-of-india", owner: "ankita-jaisinghani", quantity: 75000, mopwm }));
 
-// ── 4. the purchase the review and the register date differently: the register's day (Stage 10nd) ──
+// ── 4. the purchase the review and the register date differently: the register's day (Stage 10ne) ──
 const zepto = [{ date: "2025-02-24", kind: "purchase", amount: 150015960, units: 4716, rate: 31810, reviewRow: 443 }];
 const z = registerRedate(wb, { key: "zepto", owner: "ajay-jaisinghani", flows: zepto });
 assert.deepEqual(z.flows.map((f) => [f.date, f.amount, f.units, f.register.row]), [["2024-11-13", 150015960, 4716, 65]]);

@@ -1584,7 +1584,13 @@ Codex's review of #352, verified against the code and the book:
 - The face now reads "N of M accounts covered" (`accountCoverage` in `CapitalBridge.tsx`): M is every account holding an investment today plus any measured account that now holds nothing. The new (i) button says what one account is (a demat, a fund folio, a PMS or AIF account, or one owner's MOPWM review block), gives the book's account count, and lists each account left out with its value, holding count and the record it needs, plus the accounts partly included. Handles: `data-bridge-accounts-covered`, `-of`, `data-bridge-account-outside`, `data-bridge-account-partly`.
 - No figure changes. `check-selected-attribution.mjs` passes.
 
-### Stage 10nd — Where the review and the register date one payment differently, the register's day
+### Stage 10nd — Client records request: valuations at the start of the year
+
+- The client said the YTD and FYTD return cards (~15% each) looked too high. A probe of `availableCardReturns` on the book with real price histories confirmed the formula is right: it is Modified Dietz, and capital is never counted as gain. XIRR on the same dated flows gave FYTD 14.8% for the period against MD 14.5%, and Nifty 500 was +14.8% from 30 Mar. YTD is the overstated one (Nifty 500 −1.3%). About ₹812 Cr of the book has no 31 Dec 2025 value, so each holding starts at its 31 Mar statement. The user chose to explain this rather than change the method.
+- The records request (`scripts/client-request/build.mjs`) never asked for those opening valuations. A new section 4 lists 14 requests for a value on or near 31 Dec 2025 and/or 31 Mar 2026, plus the money moved since: Sanshi ×5, Buoyant ×2, Founders ×2, Carnelian Amritkaal, Active Momentum (only the purchase-day statement), HDFC Securities, SVAN ×2, five Motilal demats, Kotak 7111389/5372722, Bandhan 8691267, ICICI 49794950, the 31-Mar-only PMS accounts and nine MF folios. "Received since 27 October" becomes section 5.
+- Each row is checked against `BOOK_ACCOUNT_NAV_HISTORY` and the verified return record's opening, which `facts.ts` now passes (`navDates`, `returnOpen`). When a valuation for that date arrives, the build stops. Left out: listings during the year (ESDS, NSE, Sotefin), which have no market price before listing, and Bandhan 8652064, whose statement already dates every purchase from nil on 2 Apr.
+
+### Stage 10ne — Where the review and the register date one payment differently, the register's day
 
 *"Use register dates"* — the family, 12 Nov 2026, choosing between the two records for Zepto and Transition Venture Capital (Stage 10mx left both on the review's date).
 
