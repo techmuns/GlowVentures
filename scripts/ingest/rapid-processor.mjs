@@ -1,3 +1,4 @@
+import { buildFinancialIntegrity } from "./lib/financial-integrity.mjs";
 import { performance } from 'node:perf_hooks';
 import { createHash } from 'node:crypto';
 import { prepareRapidStatement } from './rapid-core.mjs';
@@ -12,7 +13,11 @@ export class ReaderVersionChanged extends Error {}
 
 export function rapidProcessor({ store, inbox, initial, references, instantiate, passwords, dashboardPassword, baseAsset, prepare = prepareRapidStatement, seed = false, processorName = 'rapid', recover = true, dispatchFallback = true }) {
   let current = initial, state = null, queue = Promise.resolve(), ready = false;
-  const versions = new Map(), models = new Map(), jobs = new Map(), evidenceReaders = new WeakMap();
+  const versions = new Map(), models = new Map(), jobs = new Map(), evidenceReaders = new WeakMap(), integrityBySnapshot = new WeakMap();
+  const integrityFor = snap => {
+    if (!integrityBySnapshot.has(snap)) integrityBySnapshot.set(snap, snap.financialIntegrity ?? buildFinancialIntegrity(snap.book, snap.documents, { readerRevision: snap.readerRevision, bookRevision: digest(snap.book) }));
+    return integrityBySnapshot.get(snap);
+  };
   const evidenceFor = snap => {
     if (!evidenceReaders.has(snap)) evidenceReaders.set(snap, positionEvidenceReader(snap.documents, snap.book.BOOK_ACCOUNTS));
     return evidenceReaders.get(snap);
@@ -91,7 +96,8 @@ export function rapidProcessor({ store, inbox, initial, references, instantiate,
       files.push({ ...file, bytes, size: bytes.length });
     }
     let candidate = await prepare({ baseline: current.documents, files, references, passwords,
-      sourcePrefix: `source/uploads-rapid-${id}`, readerRevision: initial.readerRevision });
+      sourcePrefix: `source/uploads-rapid-${id}`, readerRevision: initial.readerRevision,
+      registry: integrityFor(current).registry });
     if (candidate.decision === 'slow_path') return fullReader();
     const verified = candidate.decision === 'verified', duplicate = candidate.decision === 'duplicate';
     const now = new Date().toISOString();
@@ -203,10 +209,12 @@ export function rapidProcessor({ store, inbox, initial, references, instantiate,
     async asset(revision, name) {
       const snap = await version(revision);
       if (name === 'canonical/book.json') return snap.book;
+      const financial = /^financial\/(integrity|graph|events|metrics|checks|reconciliationReviews|registry)\.json$/.exec(name);
+      if (financial) return financial[1] === 'integrity' ? integrityFor(snap) : integrityFor(snap)[financial[1]];
       if (name === 'publication.json') return { schemaVersion: 1, readerRevision: snap.readerRevision,
         archiveRevision: snap.archiveRevision, bookRevision: digest(snap.book),
         statementDocuments: snap.documents.map(d => ({ document: d.docKey, revision: digest(d), evidence: `provenance/documents/${d.docKey}.json` })),
-        canonical: 'canonical/book.json', positions: 'provenance/positions.json',
+        canonical: 'canonical/book.json', positions: 'provenance/positions.json', financialIntegrity: 'financial/integrity.json',
         overlays: { livePrices: 'Quotes and NAVs retain their own provider/time; they do not overwrite the statement evidence.',
           enteredData: 'Entered capital calls and investment profiles retain their separate dashboard-store history.' } };
       if (name === 'audit/manifest.json') return snap.manifest;

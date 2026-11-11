@@ -1,3 +1,5 @@
+import { financialUnitIssue } from "./financial-units.mjs";
+import { reviewedFinding, RECONCILIATION_EXCEPTIONS, reconciliationReview } from "./reconciliation-policy.mjs";
 // The publication boundary consumes normalized documents, never filenames or UI rows.
 // A delivery can propose facts; only a complete, reconciled, identity-safe version
 // may become a book. Historical exceptions do not authorize a new exception.
@@ -98,7 +100,7 @@ const issuerNamesFund = (d, r) => / Mutual Fund$/.test(d.provider ?? '') && d.re
   && r.assetClass === 'Mutual Fund' && /^INF/.test(r.isin);
 
 /** No fuzzy owner, account or security matching is allowed at this boundary. */
-export function assessPublication({ baseline, documents, baselineReport = {}, report = {}, expected = {} }) {
+export function assessPublication({ baseline, documents, baselineReport = {}, report = {}, expected = {}, exceptions = RECONCILIATION_EXCEPTIONS, evaluationDate = new Date().toISOString().slice(0, 10) }) {
   // Evaluation-scoped caches: documents may mutate during reconciliation, so
   // no revision is ever cached across candidates or in global state.
   const revisions = new WeakMap(), contents = new WeakMap();
@@ -149,6 +151,8 @@ export function assessPublication({ baseline, documents, baselineReport = {}, re
   const seenContent = new Map(baseline.map(d => [contentOf(d), d.docKey]));
   for (const d of changed) {
     try { assertNormalized(d); stable(d); } catch (error) { add('INVALID_DOCUMENT', d, error.message); continue; }
+    const unitIssue = financialUnitIssue(d);
+    if (unitIssue) add('UNSUPPORTED_FINANCIAL_UNITS', d, unitIssue);
     if (unsafeSource(d.sourcePath)) add('UNSAFE_SOURCE_PATH', d, 'Statement evidence must refer to a source file inside the repository.');
     if (neverArrived(d) || heldOutByDecision(d)) continue;
     if (d.status !== 'ok' || readGaps(d).length) add('READ_GAP', d, 'The reader must account for the whole statement before publication.');
@@ -227,11 +231,12 @@ export function assessPublication({ baseline, documents, baselineReport = {}, re
       }
     }
   }
+  const documentRevisions = new Map(documents.map(d => [d.docKey, revisionOf(d)]));
   // Compare actual findings, not counts: a new error must not hide behind an old
   // error that disappeared. Include checks involving an unchanged sibling too.
   for (const name of ['rowSumChecks', 'derivedVsPrinted', 'datedTableChecks']) {
     const accepted = new Set((baselineReport[name] ?? []).filter(x => x.severity === 'material').map(stable));
-    for (const finding of report[name] ?? []) if (finding.severity === 'material' && !accepted.has(stable(finding))) {
+    for (const finding of report[name] ?? []) if (finding.severity === 'material' && (!accepted.has(stable(finding)) || !reviewedFinding(name, finding, { exceptions, on: evaluationDate, documentRevisions }))) {
       add('RECONCILIATION_FAILED', { docKey: finding.docKey ?? finding.source ?? null }, `${name}: ${stable(finding)}`);
     }
   }
@@ -240,12 +245,12 @@ export function assessPublication({ baseline, documents, baselineReport = {}, re
   // printing precision `rounding`, and only a larger one holds the delivery.
   for (const name of ['crossReportDeltas', 'duplicateHoldings', 'duplicateAifEarnings']) {
     const accepted = new Set((baselineReport[name] ?? []).map(stable));
-    for (const finding of report[name] ?? []) if (finding.severity !== 'rounding' && !accepted.has(stable(finding))) add('CROSS_RECORD_CONFLICT', null, `${name}: ${stable(finding)}`);
+    for (const finding of report[name] ?? []) if (finding.severity !== 'rounding' && (!accepted.has(stable(finding)) || !reviewedFinding(name, finding, { exceptions, on: evaluationDate, documentRevisions }))) add('CROSS_RECORD_CONFLICT', null, `${name}: ${stable(finding)}`);
   }
   if (duplicates.length && duplicates.length !== changed.length) add('MIXED_DUPLICATE_DELIVERY', null, 'Remove repeated documents and reprepare; a mixed delivery must not discard its new statements.');
   const decision = issues.length ? 'needs_review' : duplicates.length ? 'duplicate' : changed.length ? 'verified' : 'unchanged';
   return { schemaVersion: 1, decision, baselineRevision: archiveRevision(baseline, revisionOf), candidateRevision: archiveRevision(documents, revisionOf),
-    changed: [...touched].sort(), duplicates, issues };
+    changed: [...touched].sort(), duplicates, issues, reconciliationReviews: reconciliationReview(report, { exceptions, on: evaluationDate, documentRevisions }) };
 }
 
 /** Content-addressed field evidence. Pointers refer to the immutable normalized

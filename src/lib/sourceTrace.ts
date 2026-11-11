@@ -6,7 +6,7 @@ export type SourceMetric = 'statement' | 'quantity' | 'marketValue' | 'currentPr
 export type TracePosition = Pick<Position, 'accountId' | 'securityKey' | 'security' | 'isin' | 'statementRecord'>
   & Partial<Pick<Position, 'quantity' | 'marketValue' | 'currentPrice' | 'costBasis' | 'avgCost' | 'unrealizedPnL'
     | 'depositoryUnits' | 'enteredNumbers' | 'rolledForward' | 'recoveredCost' | 'costBasisSource' | 'advisedNote' | 'priceEvidence' | 'live' | 'navPriced' | 'navDate' | 'symbol' | 'reviewSource' | 'reviewNote' | 'fundUnitAdjustment'
-    | 'valuedAtCost'>> & { assetClass?: Position['assetClass'] | null };
+    | 'valuedAtCost' | 'integrity'>> & { assetClass?: Position['assetClass'] | null };
 export type SourceEvidence = {
   document?: string; path?: string; sheet?: string; rows?: number[]; pointer?: string; field?: string; isin?: string | null; securityKey: string;
   accountId: string; label: string; value?: number | null; note?: string;
@@ -96,6 +96,10 @@ export function holdingSourceTrace(positions: readonly TracePosition[], metric: 
   const sources: SourceEvidence[] = [], notes = new Set<string>();
   let missing = 0, derived = ['avgCost', 'unrealizedPnL'].includes(metric) || positions.length > 1;
   for (const p of positions) {
+    const check = p.integrity?.metrics[metric];
+    if (check?.status === 'disputed') notes.add('The statement contains an unresolved discrepancy affecting this figure. Its source measurements are retained; this figure is disputed pending corrected source evidence.');
+    if (check?.status === 'at-cost') notes.add('This is a carrying amount at cost, not an independently measured valuation.');
+    if (p.priceEvidence && p.integrity?.quantityAsOf) notes.add(`The price and the units have separate dates: the units were recorded on ${p.integrity.quantityAsOf}. Continued ownership after that date is assumed unless a later reconciled record confirms it.`);
     const original = acquisitionIdentity(p);
     const base = { accountId: p.accountId, securityKey: p.securityKey, isin: original.isin };
     const record = p.statementRecord;

@@ -1,5 +1,6 @@
 import type { Portfolio } from "./types";
 import { buildInputCatalog, applySavedInputs, positionInputId, privateCapitalId, capitalInputId, type SavedInput } from "./tableInputs";
+import { capitalIssues } from "../../shared/capitalValidation.mjs";
 import { publicPrivateSplit } from "./analytics";
 import { fifoReturnPct } from "../../shared/fifo.mjs";
 
@@ -14,7 +15,18 @@ export function applyTableInputs(book: Portfolio | null, saved: readonly SavedIn
     const fields = Object.keys(input?.versions ?? {});
     const hasCap = cap && Object.keys(cap.versions).length > 0 && Object.values(cap.values).some(value => value !== null);
     if (!fields.length && !hasCap) return original;
+    // A retained old correction is rechecked against today's complete source
+    // record, not trusted because it once passed the cell-range validator.
+    if (hasCap && capitalIssues(cap.values, cap.capitalTerms).length) return original;
     const p = { ...original, enteredNumbers: fields, enteredCapital: hasCap ? cap.values : undefined };
+    if (fields.some(field => field !== 'marketValue')) p.returnInputsUnavailableReason = 'A saved correction changes units, cost or income, but the dated transaction record has not been corrected to reconcile with it.';
+    if (p.integrity) {
+      p.integrity = { ...p.integrity, metrics: { ...p.integrity.metrics } };
+      for (const field of new Set([...fields, 'unrealizedPnL'])) {
+        const previous = p.integrity.metrics[field];
+        if (previous) p.integrity.metrics[field] = { ...previous, status: 'entered', basis: 'family-correction', exceptions: [] };
+      }
+    }
     for (const field of fields) Object.assign(p, { [field]: input!.values[field] });
     // A newly supplied valuation supersedes the old "held at cost" treatment.
     // A cost-only correction keeps that treatment and carries its value with it.
@@ -34,7 +46,7 @@ export function applyTableInputs(book: Portfolio | null, saved: readonly SavedIn
   });
   const commitments = book.commitments.map(c => {
     const r = by.get(capitalInputId(c.accountId));
-    if (!r || !Object.keys(r.versions).length) return c;
+    if (!r || !Object.keys(r.versions).length || capitalIssues(r.values, r.capitalTerms).length) return c;
     const next = { ...c };
     for (const key of Object.keys(r.versions)) Object.assign(next, { [key]: r.values[key] });
     return next;

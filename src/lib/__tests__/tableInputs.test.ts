@@ -38,6 +38,11 @@ async function request(changes?: unknown, origin = "https://test.example", raw?:
 assert.equal((await request()).status, 200);
 assert.equal((await request([change(target, "quantity", 0)])).status, 200, "a real zero saves");
 const saved = (await request()).body.saved as SavedInput[];
+const audit = (record.get(`table-input:${target.id}:quantity`) as { audit: { previousValue: number | null; originalValue: number | null; validationVersion: string; actor: string } }).audit;
+assert.equal(audit.previousValue, null);
+assert.equal(audit.originalValue, null);
+assert.equal(audit.validationVersion, 'financial-integrity-v1');
+assert.equal(audit.actor, 'authenticated-dashboard-session');
 let current = applySavedInputs(source, saved);
 assert.equal(current.find(r => r.id === target.id)!.values.quantity, 0);
 assert.equal(flushes, 1);
@@ -198,3 +203,7 @@ try {
   assert.equal(getTableInputState().properties, savedSnapshot.properties, "the save result and table use one property snapshot");
 } finally { globalThis.fetch = originalFetch; if (originalWindow) globals.window = originalWindow; else delete globals.window; }
 console.log("Table input persistence, source rollups and Excel round-trip contracts passed");
+
+// An edit of dated financial inputs must not leave an apparently reconciled
+// XIRR over the previous dates/amounts. Corrections retain source identity.
+assert.match(position.returnInputsUnavailableReason!, /dated transaction record/);

@@ -263,7 +263,7 @@ test('new material discrepancies cannot hide behind the same historical count', 
   const baselineReport = { rowSumChecks: [{ docKey: 'old', severity: 'material', delta: 7 }] };
   const report = { rowSumChecks: [{ docKey: 'new', severity: 'material', delta: 7 }] };
   assert.ok(has(assess([doc(), later()], [doc()], { baselineReport, report }), 'RECONCILIATION_FAILED'));
-  assert.equal(assess([doc(), later()], [doc()], { baselineReport, report: baselineReport }).decision, 'verified');
+  assert.ok(has(assess([doc(), later()], [doc()], { baselineReport, report: baselineReport }), 'RECONCILIATION_FAILED'), 'a historical finding also needs an explicit scoped review');
 });
 test('evidence retains calendar dates, nulls, exact pointers, inputs and reader version', () => {
   const d = doc(), e = documentEvidence(d, { readerRevision: 'reader-v2' });
@@ -578,4 +578,16 @@ test('unmounting with a pending version request cannot reload a replaced page', 
   respond({ ok: true, headers: new Headers({ 'content-type': 'application/json' }), json: async () => ({ schemaVersion: 1, revision: 'b'.repeat(20) }) });
   await new Promise(resolve => setTimeout(resolve, 0));
   assert.equal(loads.length, 0);
+});
+
+ test('historical exceptions require exact scope, a review owner and an unexpired review', async () => {
+  const { findingId } = await import('../lib/reconciliation-policy.mjs');
+  const finding = { docKey: doc().docKey, severity: 'material', delta: 7 };
+  const baselineReport = { rowSumChecks: [finding] };
+  const review = { id: findingId('rowSumChecks', finding), finding, reason: 'Printed amount disputed; affected claim withheld', owner: 'Test reviewer', reviewedOn: '2026-11-01', reviewBy: '2026-12-01', disposition: 'withhold-affected-claim', affectedMetrics: ['marketValue'], documentRevisions: { [doc().docKey]: digest(doc()) } };
+  const extra = { baselineReport, report: baselineReport, exceptions: [review], evaluationDate: '2026-11-11' };
+  assert.equal(assess([doc(), later()], [doc()], extra).decision, 'verified');
+  assert.ok(has(assess([doc(), later()], [doc()], { ...extra, evaluationDate: '2026-12-02' }), 'RECONCILIATION_FAILED'));
+  assert.ok(has(assess([doc(), later()], [doc()], { ...extra, exceptions: [{ ...review, owner: '' }] }), 'RECONCILIATION_FAILED'));
+  assert.ok(has(assess([doc(), later()], [doc()], { ...extra, report: { rowSumChecks: [{ ...finding, delta: 8 }] } }), 'RECONCILIATION_FAILED'));
 });

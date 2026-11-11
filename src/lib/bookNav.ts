@@ -1,3 +1,4 @@
+import { weightedCapital } from "../../shared/flowTiming.mjs";
 /**
  * ── THE WHOLE BOOK'S NAV, STRUCK FROM THE DATED RECORD (Stage 10ge) ─────────
  *
@@ -524,7 +525,7 @@ export function bookNavSeries(units: readonly NavUnit[], start: string | null = 
     const panel = units.filter((u) => inReturn(u, d));
     const valuedOn = panel.filter((u) => u.marks.some((m) => m.date === d) || (u.origin === d && u.originDated));
     const panelValue = sum(panel.map((u) => unitValueAt(u, d) as number));
-    let linkOpen: number | null = null, linkClose: number | null = null, flowIn = 0, unknown = 0;
+    let linkOpen: number | null = null, linkClose: number | null = null, flowIn = 0, flowWeighted = 0, flowTimingKnown = true, unknown = 0;
     let common: NavUnit[] = [];
     if (prev) {
       const p0 = prev;
@@ -532,9 +533,12 @@ export function bookNavSeries(units: readonly NavUnit[], start: string | null = 
       linkOpen = sum(common.map((u) => unitValueAt(u, p0) as number));
       linkClose = sum(common.map((u) => unitValueAt(u, d) as number));
       for (const u of common) {
-        flowIn += sum(u.flows.filter((f) => f.date > p0 && f.date <= d).map((f) => f.amount));
+        const dated = u.flows.filter((f) => f.date > p0 && f.date <= d);
+        flowIn += sum(dated.map((f) => f.amount));
+        const weighted = weightedCapital(dated, p0, d);
+        if (weighted === null) flowTimingKnown = false; else flowWeighted += weighted;
         const s = stepAt.get(`${u.key}|${d}`);
-        if (s) { flowIn += s.undated; if (s.unproven) unknown += s.move; }
+        if (s) { flowIn += s.undated; if (s.undated || s.unproven) flowTimingKnown = false; if (s.unproven) unknown += s.move; }
       }
     }
     points.push({
@@ -544,6 +548,9 @@ export function bookNavSeries(units: readonly NavUnit[], start: string | null = 
       accountsOnDate: valuedOn.length,
       accountsCarried: panel.length - valuedOn.length,
       flowIn: prev ? r2(flowIn) : 0,
+      flowWeighted: flowTimingKnown ? flowWeighted : null,
+      flowTimingKnown,
+      returnMethod: unknown > 0 ? "unproven" : flowTimingKnown ? "modified-dietz" : "end-dated-approximation",
       unreportedFlowValue: prev ? r2(unknown) : 0,
       linkOpen: linkOpen == null ? null : r2(linkOpen),
       linkClose: linkClose == null ? null : r2(linkClose),

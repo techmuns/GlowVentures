@@ -1,3 +1,4 @@
+import { buildFinancialIntegrity } from "./lib/financial-integrity.mjs";
 // Trusted request-time ingestion. It prepares a complete candidate without
 // touching disk, a repository branch, or the currently published version.
 import path from 'node:path';
@@ -27,7 +28,7 @@ function distinguish(doc, keys) {
   return doc;
 }
 
-export async function prepareRapidStatement({ baseline, files, references, passwords = [], sourcePrefix, readerRevision, readPdf = extractLayout }) {
+export async function prepareRapidStatement({ baseline, files, references, passwords = [], sourcePrefix, readerRevision, registry, readPdf = extractLayout }) {
   const start = performance.now(), timings = {};
   if (!/^source\/uploads-rapid-[a-zA-Z0-9-]+$/.test(sourcePrefix)) throw Error('Unsafe statement source prefix');
   if (!Array.isArray(files) || !files.length || files.length > 200) throw Error('Invalid statement batch');
@@ -119,7 +120,9 @@ export async function prepareRapidStatement({ baseline, files, references, passw
   const pagesByDocument = { ...references.pagesByDocument,
     ...Object.fromEntries(records.map(r => [r.manifest.docKey, r.files['pages.json'].pages.map(p => p.text).join('\n')])) };
   const buildStart = performance.now();
-  const book = canonicalBookValues(buildCanonicalBook(candidate.filter(d => d.status !== 'failed'), candidate.length, { ...references, pagesByDocument }));
+  const book = canonicalBookValues(buildCanonicalBook(candidate.filter(d => d.status !== 'failed'), candidate.length, { ...references, pagesByDocument, financialRegistry: registry }));
+  const financialIntegrity = buildFinancialIntegrity(book, candidate, { report, registry, readerRevision, bookRevision: digest(book) });
+  if (financialIntegrity.issues.length) return { decision: 'needs_review', issues: financialIntegrity.issues, timings };
   // The same selected-record checks as statements:verify-book, in memory.
   const identities = new Set();
   const evidenceForPosition = positionEvidenceReader(candidate, book.BOOK_ACCOUNTS);
@@ -137,5 +140,5 @@ export async function prepareRapidStatement({ baseline, files, references, passw
   const revision = digest({ readerRevision, archiveRevision: archive, book }).slice(0, 20);
   timings.totalMs = performance.now() - start;
   return { decision: 'verified', schemaVersion: 1, readerRevision, revision, archiveRevision: archive,
-    documents: candidate, book, records, duplicates: assessment.duplicates, held, timings };
+    documents: candidate, book, financialIntegrity, records, duplicates: assessment.duplicates, held, timings };
 }
