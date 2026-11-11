@@ -1,5 +1,5 @@
 import {  } from "@/lib/useNavigationState";
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { useMarketHistories } from '@/lib/useMarketReturns';
 import { marketHoldingKey } from '@/lib/marketReturns';
 import { selectionMarket, selectionMarketOf } from '@/lib/selectionMarket';
@@ -30,7 +30,7 @@ import { useStockExposure } from '@/lib/useStockExposure';
 import { SEGMENT_VIEWS } from '@/lib/segmentReturns';
 import SectorAttribution from '@/components/SectorAttribution';
 import { exitedRows } from '@/lib/drilldown';
-import { PERIODS, RETURN_TYPES, type PeriodKey, type ReturnType } from '@/lib/periodReturns';
+import { PERIODS, RETURN_TYPES, type PeriodKey } from '@/lib/periodReturns';
 import { selectedSegmentReturns, returnGapText, UNSPLIT_RETURNS, type ReturnSelection, type SelectedLine } from '@/lib/selectedSegmentReturns';
 import { lineHoldingFigures, type LineHoldingFigures } from '@/lib/lineHoldingFigures';
 import { daySessionGate } from '@/lib/dailyMovers';
@@ -59,8 +59,8 @@ const OPTIONAL = ['qty', 'cmp', 'day', 'cost', 'pnl', 'realised', 'sector', 'ent
 const pct = (n: number) => `${n >= 0 ? '+' : ''}${n.toFixed(2)}%`;
 const HEAD: Record<string, string> = { category: 'Category', assetClass: 'Asset class', basket: 'Basket', sector: 'Sector / class', side: 'Side', security: 'Security' };
 
-export default function SegmentReturns({ selection: recordedSelection, period, onReturnTypeResolved }: {
-  selection: ReturnSelection; period: PeriodKey; onReturnTypeResolved?: (requested: ReturnType, displayed: ReturnType) => void;
+export default function SegmentReturns({ selection: recordedSelection, period }: {
+  selection: ReturnSelection; period: PeriodKey;
 }) {
   const { statementPortfolio, consolidated, fmtFromBase, corporateActions, quoteFeed, scope: memberScope } = usePortfolio();
   const [axis, setAxis] = useViewParam(SEGMENT_VIEWS, {}, 'seg');
@@ -89,12 +89,6 @@ export default function SegmentReturns({ selection: recordedSelection, period, o
   // units, or on the Sector view — which draws no dated total of its own — the same pool grouped by category.
   const pool = useMemo(() => a ?? (statementPortfolio ? selectedSegmentReturns(current, exited, statementPortfolio.accounts, 'category', selection,
     () => null, calculationCurrent) : null), [a, current, exited, statementPortfolio, selection, calculationCurrent]);
-  // Resolve the picker's label without replacing the requested calculation:
-  // a mixed total may be absolute while its debt-only rows remain annualised.
-  const shownAs = pool?.total.measured?.shownAs;
-  useEffect(() => {
-    onReturnTypeResolved?.(recordedSelection.type, shownAs ?? recordedSelection.type);
-  }, [shownAs, recordedSelection.type, onReturnTypeResolved]);
   const bridge = useMemo(() => pool && statementPortfolio ? capitalBridge(pool.total.units, { accounts: statementPortfolio.accounts,
     positions: statementPortfolio.positions, bridges: BOOK_ACCOUNT_BRIDGES, moves: BOOK_CAPITAL_MOVES, income: BOOK_HOLDING_INCOME, capitalGains: BOOK_CAPITAL_GAINS }) : null,
   [pool, statementPortfolio]);

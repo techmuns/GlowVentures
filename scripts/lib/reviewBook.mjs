@@ -23,6 +23,8 @@ import { securityKeyOf } from "../../shared/securityKey.mjs";
 import { resolveSector, UNCLASSIFIED } from "../../shared/sectors.mjs";
 import { fifoReturnPct, fifoLedger } from "../../shared/fifo.mjs";
 import { ownerById } from "../../shared/owners.mjs";
+import { readRegisterWorkbook, registerReviewFlows } from "./registerRecords.mjs";
+import { loadMopwmTransactions } from "./mopwmTransactions.mjs";
 
 // A date is a date, never an Excel serial (Stage 10dg): the review stores a
 // single investment date as a serial number, so 45001 is shown as "16 Mar 2023".
@@ -105,7 +107,10 @@ export function measuredFromRows(dated, valuedOn) {
   return { fifo: { costHeld: r2(led.costHeld), realised: r2(led.realisedGain), costSold: r2(led.costSold) }, income, lateIncome, why: null };
 }
 
-export function reviewBookLayer({ root = ".", positions, unvalued, reviewWorkbook }) {
+export function reviewBookLayer({ root = ".", positions, unvalued, reviewWorkbook, registerWorkbook }) {
+  let registerWb = null, mopwm = null;
+  const register = () => registerWb ??= registerWorkbook ?? readRegisterWorkbook(root);
+  const mopwmReport = () => mopwm ??= loadMopwmTransactions(root);
   const listedNames = REVIEW_PRIVATE_JOIN.filter((j) => j.listed).map((j) => j.listed);
   const r = reviewWorkbook ? readReviewPrivate(reviewWorkbook, { listedNames }) : loadReviewPrivate(root, { listedNames });
   const notes = [];
@@ -346,6 +351,15 @@ export function reviewBookLayer({ root = ".", positions, unvalued, reviewWorkboo
     for (const s of parts) {
       if (s.owner === NOT_ATTRIBUTED) fail(`${e.name}: a valued line must name its holder`);
       const f = flowsOf(l.product, s.owner);
+      /**
+       * A LINE THE REVIEW DATES ONLY BY MONTHS, DATED BY THE FAMILY'S REGISTER
+       * (Stage 10mv): its payments, held to the units the line holds and to the
+       * cost the split gives this holder (`registerReviewFlows`).
+       */
+      const reg = f.rows ? null : registerReviewFlows(register(), { key: e.key, owner: s.owner, quantity: s.qty, mopwm: mopwmReport() });
+      if (reg?.reason) fail(`${e.name}: ${ownerName(s.owner)}'s register record does not tie — ${reg.reason}`);
+      if (reg && !near(reg.paid, s.cost)) fail(`${e.name}: ${ownerName(s.owner)}'s cost ${s.cost} is not the ${reg.paid} the register dates`);
+      if (reg) { f.dated = reg.flows; notes.push(`review: ${e.name} — ${ownerName(s.owner)}'s line is ${reg.note}`); }
       if (f.rows) {
         if (!e.atCost && f.closing !== null && !near(f.closing, s.value)) fail(`${e.name}: ${s.owner}'s value ${s.value} is not the Transactions closing ${f.closing}`);
         const tieTo = l.cost > 1 ? f.cost : f.paidIn;

@@ -211,10 +211,13 @@ export const VALUED_HOLDERS = [
       // shared/sectors.mjs resolves that label to, never typed here.
       providerSector: "Capital Markets", sectorWhy: "a stock exchange — AMFI's industry for an exchange is Capital Markets (as for BSE Ltd); no statement prints a sector for it" },
     split: [
-      { owner: AJ, cost: 75531250, value: 259375000, qty: 125000 },
-      { owner: AN, cost: 45318750, value: 155625000, qty: 75000 },
+      // Ankita's cost is what the family's investment register dates her paying
+      // (Stage 10mv, `scripts/lib/registerRecords.mjs`); Ajay's is the review's
+      // ₹12.085 Cr less it, because no record dates his.
+      { owner: AJ, cost: 78086287, value: 259375000, qty: 125000 },
+      { owner: AN, cost: 42763713, value: 155625000, qty: 75000 },
     ],
-    why: "1,25,000 shares on Ajay's ICICI Bank NSDL statement and 75,000 on Ankita's Motilal Oswal demat; the review's ₹12.085 Cr cost split by shares, which is this book's judgement — the review prints one cost for the 2,00,000" },
+    why: "1,25,000 shares on Ajay's ICICI Bank NSDL statement and 75,000 on Ankita's Motilal Oswal demat. The review prints one cost, ₹12.085 Cr, for the 2,00,000: Ankita's ₹4,27,63,713 is the two payments the family's investment register dates for her 15,000 shares (75,000 after the 2024 bonus), and Ajay's is the rest" },
   { tab: "unlisted", line: /^Zepto$/, name: "Zepto", key: "zepto", assetClass: "Unlisted",
     split: [{ owner: AJ, cost: 150015960, value: 228285156.52, qty: 4716 }],
     why: "the review's own Transactions rows — 4,716 bought on 24 Feb 2025, closing at ₹22.83 Cr on 31 Jul 2025" },
