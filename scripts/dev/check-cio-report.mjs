@@ -23,7 +23,8 @@ await page.route(/fonts\.(googleapis|gstatic)\.com/, r => r.abort());
 const readPdf = async download => {
   const file = path.join(out, download.suggestedFilename()); await download.saveAs(file);
   const { getDocument } = await import('pdfjs-dist/legacy/build/pdf.mjs');
-  const pdf = await getDocument({ data: new Uint8Array(await fs.readFile(file)), useSystemFonts: true }).promise;
+  const loading = getDocument({ data: new Uint8Array(await fs.readFile(file)), useSystemFonts: true });
+  const pdf = await loading.promise;
   let text = ''; const bounds = [];
   for (let n = 1; n <= pdf.numPages; n++) {
     const p = await pdf.getPage(n), v = p.getViewport({ scale: 1 }); assert.ok(v.width > v.height, 'Landscape A4');
@@ -35,7 +36,7 @@ const readPdf = async download => {
     text += '\n';
   }
   assert.deepEqual(bounds, [], 'All text stays on the page');
-  const pages = pdf.numPages; await pdf.destroy(); return { file, text, pages };
+  const pages = pdf.numPages; await loading.destroy(); return { file, text, pages };
 };
 const downloadReport = async () => {
   const link = page.getByRole('link', { name: 'Download PDF', exact: true }); await link.waitFor({ timeout: 60000 });
