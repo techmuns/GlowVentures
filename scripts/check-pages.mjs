@@ -10769,7 +10769,7 @@ const isDataRow = (line) => (line.match(/\t/g) ?? []).length >= 5;
  */
 const isCategoryTotalRow = (line) => /^[^\t]*·\s*total\t/i.test(line);
 /**
- * SINCE STAGE 10nd THE TOTALS ARE ON THE BAND ITSELF: the band's first cell is
+ * SINCE STAGE 10ne THE TOTALS ARE ON THE BAND ITSELF: the band's first cell is
  * the heading (its name on one line, `· N holdings · K names · ₹X` on the next)
  * and its other cells are the totals. `innerText` ends that cell's block with a
  * line break — as it does every name cell — so the totals are the first table
@@ -42525,7 +42525,7 @@ for (const theme of THEMES) {
               if (n.hasAttribute("data-category-total")) totals++;
               else if (n.hasAttribute("data-bucket")) rows++;
             }
-            // Since Stage 10nd the band carries its own totals.
+            // Since Stage 10ne the band carries its own totals.
             if (band.hasAttribute("data-category-total")) totals++;
             return { key: band.getAttribute("data-section"), open: band.getAttribute("data-section-open"), rows, totals };
           }),
