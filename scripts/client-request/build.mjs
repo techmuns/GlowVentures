@@ -201,6 +201,94 @@ const privateRows = F.positions.filter((p) => p.bucket === "Private investments 
 const investmentOf = (name) => name.toLowerCase().replace(/\s+/g, " ").trim();
 const distinctInvestments = new Set(privateRows.map((r) => investmentOf(r.name))).size;
 
+// ── Section 4: valuations at the start of the year (written by hand; each checked) ──
+// The return cards measure the financial year from 31 March 2026 and the calendar
+// year from 31 December 2025. Where no valuation on or near that date is on file,
+// an account is measured from its first later value, so the year's return starts
+// late (12 Nov 2026: ~Rs 812 Cr of the book has no 31 December value, and the
+// January–March fall is missed). Each row is held to the book: once a valuation
+// on that date arrives (`BOOK_ACCOUNT_NAV_HISTORY`, or a verified return record
+// opening on 1 April / 1 January), its check fails and the build stops.
+const navsOf = (id) => F.navDates[id] ?? [];
+/** No valuation on file within a week of 31 December 2025. */
+const noDecValue = (id) => !!ACC.get(id) && !navsOf(id).some((d) => d <= "2026-01-07") && !((F.returnOpen[id] ?? "9999") <= "2026-01-01");
+/** No valuation on file within a week of 31 March 2026, and no verified record opening there. */
+const noMarValue = (id) => noDecValue(id) && !navsOf(id).some((d) => d <= "2026-04-07") && F.returnOpen[id] == null;
+const firstOnFile = (id) => navsOf(id)[0] ?? asOf(id);
+const many = (ids, f) => ids.every(f);
+const sanshi = [["Aarti", "9039671821"], ["Ajay", "9039671912"], ["Ajay", "9069671634"], ["Ankita", "9069671554"], ["Bharat", "9039671854"]];
+const MO_DEMATS = [["Ajay", MO_AJAY, "1201090012539150"], ["Ankita", MO_ANKITA, "1201090012838316"], ["Bharat", MO_BHARAT, "1201090012838320"],
+  ["Aarti", MO_AARTI, "1201090012838335"], ["Bharat Jaisinghani Family Trust", MO_TRUST, "1201090032387399"]];
+const BOTH = "31 December 2025 and 31 March 2026";
+const OPENINGS = [
+  { holder: "Ajay, Ankita, Aarti and Bharat Jaisinghani", account: `Sanshi Fund folios ${sanshi.map(([h, n]) => `${n} (${h})`).join(", ")}`, what: "Sanshi Fund-I (Class A2 and Class E)",
+    onFile: `Earliest statement on file: ${DATE("2026-06-30")} (all five folios)`, from: "Sanshi Fund / fund administrator",
+    send: `For each folio, the fund statement as at ${BOTH} showing units, class NAV and value, and every subscription, redemption and distribution after 31 December 2025. Also send the latest month-end statement after 30 June 2026 for each folio.`,
+    check: () => many(sanshi.map(([, n]) => `sanshi-fund-${n}`), (id) => noMarValue(id) && asOf(id) === "2026-06-30") },
+  { holder: "Ajay and Ankita Jaisinghani", account: "Buoyant Capital 103473 (Ajay) and 103472 (Ankita)", what: "Buoyant Opportunities Strategy",
+    onFile: `Earliest valuation on file: ${DATE(firstOnFile("buoyant-capital-103473"))}`, from: "Buoyant Capital",
+    send: `The portfolio statement as at ${BOTH} (holdings, cash and total value), and the capital and transaction statement from 1 January 2026 to 31 July 2026.`,
+    check: () => many(["buoyant-capital-103473", "buoyant-capital-103472"], (id) => noMarValue(id) && firstOnFile(id) === "2026-07-31") },
+  { holder: "Ajay and Ankita Jaisinghani", account: "Motilal Oswal Founders Fund 90410016104 (Ajay) and 90410016093 (Ankita)", what: "Motilal Oswal Founders Fund Series II",
+    onFile: `Earliest valuation on file: ${DATE(firstOnFile("motilal-oswal-founders-fund-90410016104"))}`, from: "Motilal Oswal AMC / fund administrator",
+    send: `The fund statement as at ${BOTH} showing units, NAV and value, and every drawdown, distribution and redemption from 1 January 2026 to 31 July 2026.`,
+    check: () => many(["motilal-oswal-founders-fund-90410016104", "motilal-oswal-founders-fund-90410016093"], (id) => noMarValue(id) && firstOnFile(id) === "2026-07-31") },
+  { holder: "Ankita Jaisinghani", account: "Carnelian Bharat Amritkaal Fund 4551", what: "Carnelian Bharat Amritkaal Fund",
+    onFile: `Only statement on file: ${DATE(asOf("carnelian-bharat-amritkaal-fund-4551"))}`, from: "Carnelian / fund administrator",
+    send: `The fund statement as at ${BOTH}, the latest statement after 31 July 2026, and every drawdown, distribution and redemption after 31 December 2025. With one statement on file, no return can be measured for this fund.`,
+    check: () => noMarValue("carnelian-bharat-amritkaal-fund-4551") && asOf("carnelian-bharat-amritkaal-fund-4551") === "2026-07-31" },
+  { holder: "Ankita Jaisinghani", account: "Motilal Oswal Active Momentum Fund 904168868444", what: "Motilal Oswal Active Momentum Fund",
+    onFile: `Only statement on file: ${DATE(asOf("motilal-oswal-active-momentum-fund-904168868444"))} (the purchase)`, from: "Motilal Oswal AMC / fund administrator",
+    send: "The latest statement showing units, NAV and value, and any payments or payouts after the 6 August 2026 purchase. The only statement on file is dated the day of purchase, so no return can be measured yet.",
+    check: () => noMarValue("motilal-oswal-active-momentum-fund-904168868444") && asOf("motilal-oswal-active-momentum-fund-904168868444") === "2026-08-06" },
+  { holder: "Ajay Jaisinghani", account: "HDFC Securities 3110320", what: "All shares in the account",
+    onFile: `Earliest holding statement on file: ${DATE(asOf(HDFC_SEC))}`, from: "HDFC Securities",
+    send: `The holding statement (shares and value) as at ${BOTH}. The trade details already received cover the purchases and sales.`,
+    check: () => noMarValue(HDFC_SEC) && asOf(HDFC_SEC) === "2026-11-02" },
+  { holder: "Ajay and Bharat Jaisinghani", account: "SVAN 8710067 (Ajay) and 8710090 (Bharat)", what: "SVAN PMS portfolio",
+    onFile: `Earliest valuation on file: ${DATE(firstOnFile("svan-investment-managers-llp-8710067"))}`, from: "SVAN Investment Managers",
+    send: `The portfolio statement as at ${BOTH} (holdings, cash and total value), and capital added or withdrawn from 1 January to 30 April 2026. The trade records already received date every stock.`,
+    check: () => many(["svan-investment-managers-llp-8710067", "svan-investment-managers-llp-8710090"], (id) => noMarValue(id) && firstOnFile(id) === "2026-04-30") },
+  { holder: "Ajay, Ankita, Bharat, Aarti and the Bharat Jaisinghani Family Trust", account: `Motilal demats ${MO_DEMATS.map(([h, , n]) => `${n} (${h})`).join(", ")}`, what: "All shares and funds in these demats",
+    onFile: `Earliest holding statement on file: ${DATE("2026-07-31")}`, from: "Motilal",
+    send: `The demat holding statement as at ${BOTH} for each account, showing the quantity of every share and fund. This is in addition to the current statement requested in section 1.`,
+    check: () => many(MO_DEMATS, ([, id]) => noMarValue(id) && asOf(id) === "2026-07-31") },
+  { holder: "Ajay and Aarti Jaisinghani", account: "Kotak folios 7111389 (Ajay) and 5372722 (Aarti)", what: "Kotak Multi Cap (both) and Kotak Flexi Cap (Aarti)",
+    onFile: `Only statement on file: ${DATE(asOf("kotak-mahindra-mutual-fund-7111389"))}`, from: "Kotak fund company or registrar",
+    send: "The full transaction statement from 1 January 2026 to date, with each purchase date, units and amount, including the Multi Cap purchases from April 2026. For Aarti's Flexi Cap, also the units held on 31 December 2025. The statement on file gives the balance only.",
+    check: () => many(["kotak-mahindra-mutual-fund-7111389", "kotak-mahindra-mutual-fund-5372722"], (id) => noMarValue(id) && asOf(id) === "2026-11-02") },
+  { holder: "Ankita Jaisinghani", account: "Bandhan folio 8691267", what: "Bandhan Large & Mid Cap",
+    onFile: `Only statement on file: ${DATE(asOf("bandhan-mutual-fund-8691267"))}`, from: "Bandhan fund company or registrar",
+    send: "The full transaction statement from the first purchase (April 2026) to date, with each date, units and amount.",
+    check: () => noMarValue("bandhan-mutual-fund-8691267") && asOf("bandhan-mutual-fund-8691267") === "2026-09-30" },
+  { holder: "Ajay Jaisinghani", account: "ICICI NSDL 49794950", what: "All shares in the demat",
+    onFile: `Earliest holding statement on file: ${DATE("2026-03-31")}`, from: "ICICI",
+    send: "The NSDL holding statement as at 31 December 2025 (quantity of every share), and the transaction statement from 1 January to 31 March 2026.",
+    // The account's earliest holding statement is "As on 31 March 2026" (source/august-2026-e/).
+    check: () => noDecValue(ICICI) && asOf(ICICI) === "2026-10-31" },
+  { holder: "Ajay and Ankita Jaisinghani", account: "Carnelian 3517383 (Ajay); Goldstandard 100023 (Ajay) and 100022 (Ankita); V.E.C 128005 (Ajay)", what: "PMS portfolios",
+    onFile: `Earliest valuation on file: ${DATE("2026-03-31")}; transaction statements start 1 April 2026`, from: "Carnelian, Goldstandard and V.E.C Assago",
+    send: "The portfolio statement as at 31 December 2025 (holdings, cash and total value), and the transaction and capital statement from 1 January to 31 March 2026. The same from-inception transaction statement also answers the purchase dates in section 2.",
+    check: () => many(["carnelian-asset-management-and-advisors-pvt-ltd-3517383", "goldstandard-wealth-private-limited-100023", "goldstandard-wealth-private-limited-100022", "v-e-c-assago-capital-management-llp-128005"],
+      (id) => noDecValue(id) && firstOnFile(id) === "2026-03-31") },
+  { holder: "Ajay and Ankita Jaisinghani", account: "V.E.C 128004 (Ankita); Green Lantern 510861 (Ajay) and 510854 (Ankita)", what: "PMS portfolios",
+    onFile: `Earliest valuation on file: ${DATE("2026-03-31")}`, from: "V.E.C Assago and Green Lantern",
+    send: "The portfolio statement as at 31 December 2025 (holdings, cash and total value). Their from-inception transaction statements are already on file.",
+    check: () => many(["v-e-c-assago-capital-management-llp-128004", "green-lantern-capital-llp-510861", "green-lantern-capital-llp-510854"], (id) => noDecValue(id) && firstOnFile(id) === "2026-03-31") },
+  { holder: "Ajay, Ankita, Bharat and Aarti Jaisinghani", account: "Helios 10056128, 10056154, 10063876; HDFC MF 15644806, 16002141, 15725046; Kotak 7125255; ICICI Prudential 36378950, 36379637", what: "Mutual fund folios",
+    onFile: "Units on file from the 31 March 2026 opening balance", from: "Fund companies or registrars (or one CAS)",
+    send: "An account statement for 1 January to 31 March 2026 for each folio, showing the units held on 31 December 2025 and every transaction to 31 March 2026. One consolidated account statement (CAS) for that period covers all nine folios.",
+    check: () => many(["helios-mutual-fund-10056128", "helios-mutual-fund-10056154", "helios-mutual-fund-10063876", "hdfc-mutual-fund-15644806", "hdfc-mutual-fund-16002141",
+      "hdfc-mutual-fund-15725046", "kotak-mahindra-mutual-fund-7125255", "icici-prudential-mutual-fund-36378950", "icici-prudential-mutual-fund-36379637"],
+      (id) => noDecValue(id) && F.returnOpen[id] === "2026-04-01") },
+];
+const openingsFailed = OPENINGS.filter((it) => !it.check());
+if (openingsFailed.length) {
+  console.error("These start-of-year valuation requests are no longer borne out by the book — update or remove them:");
+  for (const it of openingsFailed) console.error(`  • ${it.holder} | ${it.account}`);
+  process.exit(1);
+}
+
 // ── Resolved since 27 October (written by hand; each checked) ────────────────
 const RESOLVED = [
   ["Ankita Jaisinghani | Motilal 1201090012838316", "HDFC Balanced Advantage Regular (37,755.485 units)", "Sold on 23 September 2026; the adviser's transaction report supplies the purchase cost and sale.",
@@ -256,6 +344,7 @@ const s3 = privateRows.map((r, i) => {
   return `<tr><td>${esc(r.owner)}<br>${esc(r.account)}</td><td>${i + 1}. ${esc(r.name)}${r.units != null ? `<br>Recorded shares / units: ${fmt(r.units)}` : ""}</td><td>${rs(r.cost)}</td><td>${ask.join(" ")}</td></tr>`;
 }).join("\n");
 
+const sOpen = OPENINGS.map((it, i) => `<tr><td>${esc(it.holder)}<br>${esc(it.account)}</td><td>${i + 1}. ${esc(it.what)}<br>${esc(it.onFile)}</td><td>${esc(it.send)}</td><td>${esc(it.from)}</td></tr>`).join("\n");
 const s4 = RESOLVED.map(([who, what, why]) => `<tr><td>${esc(who).replace(" | ", "<br>")}</td><td>${esc(what)}</td><td>${esc(why)}</td></tr>`).join("\n");
 const pmsStocks = pms.reduce((n, g) => n + g.rows.length, 0);
 
@@ -281,7 +370,7 @@ td.num, th.num { width: 25%; }
 .newpage { break-before: page; }
 </style></head><body>
 <h1>All records still needed from the client</h1>
-<p class="lead">Checked ${checkedLong} against the dashboard's records (latest statement dated ${DATE(F.bookAsOf)}). This list replaces the earlier lists (checked 27 October and 11 November 2026): records received since then are no longer requested and are listed in section 4, and the newer statements raised the new items below. Includes all client requests: purchase and balance records, PMS stock history, and private investment valuations. One complete broker or fund export can answer several rows.</p>
+<p class="lead">Checked ${checkedLong} against the dashboard's records (latest statement dated ${DATE(F.bookAsOf)}). This list replaces the earlier lists (checked 27 October and 11 November 2026): records received since then are no longer requested and are listed in section 5, and the newer statements raised the new items below. Section 4 is new: the valuations at the start of the year that this year&#8217;s returns need. Includes all client requests: purchase and balance records, PMS stock history, and private investment valuations. One complete broker or fund export can answer several rows.</p>
 <h2>1. Purchase, date, balance and other records</h2>
 <table class="s1"><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="c4"></colgroup>
 <thead><tr><th>Holder and account</th><th>Stock, fund or file</th><th>Exactly what to send</th><th>Ask for it from</th></tr></thead><tbody>
@@ -296,7 +385,13 @@ ${s2.replace(/<table class="grp">/g, '<table class="grp"><colgroup><col class="c
 <thead><tr><th>Holder and account</th><th>Investment</th><th>Amount already recorded</th><th>Exactly what to send</th></tr></thead><tbody>
 ${s3}
 </tbody></table>
-<h2>4. Received since 27 October: no longer needed</h2>
+<h2 class="newpage">4. Valuations at the start of the year</h2>
+<p class="lead">The financial-year return is measured from 31 March 2026 and the calendar-year return from 31 December 2025. Each needs every account's value on that date and the money paid in or out after it. For the accounts below, the earliest valuation on file is later, so their return for the year can only start from that later date. In particular, the January to March 2026 market fall is not captured for most of the book. A statement dated within a few days of 31 December 2025 or 31 March 2026 is enough.</p>
+<table class="s1"><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="c4"></colgroup>
+<thead><tr><th>Holder and account</th><th>Investment</th><th>Exactly what to send</th><th>Ask for it from</th></tr></thead><tbody>
+${sOpen}
+</tbody></table>
+<h2>5. Received since 27 October: no longer needed</h2>
 <table class="s4"><colgroup><col class="c1"><col class="c2"><col class="c3"></colgroup>
 <thead><tr><th>Holder and account</th><th>Item on an earlier list</th><th>What answered it</th></tr></thead><tbody>
 ${s4}
@@ -320,4 +415,4 @@ await page.pdf({
 });
 await browser.close();
 if (process.env.HTML_OUT) writeFileSync(process.env.HTML_OUT, html);
-console.log(`${OUT.replace(ROOT + "\\", "").replace(ROOT + "/", "")}: ${ITEMS.length} named records, ${pmsStocks} PMS stocks in ${pms.length} accounts, ${privateRows.length} private records (${distinctInvestments} investments), ${RESOLVED.length} resolved.`);
+console.log(`${OUT.replace(ROOT + "\\", "").replace(ROOT + "/", "")}: ${ITEMS.length} named records, ${pmsStocks} PMS stocks in ${pms.length} accounts, ${privateRows.length} private records (${distinctInvestments} investments), ${OPENINGS.length} start-of-year valuations, ${RESOLVED.length} resolved.`);
