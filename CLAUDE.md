@@ -223,7 +223,7 @@ One line per area; the history files explain each in depth.
 - `src/lib/navSeries.ts`, `benchCompare.ts` (the NAV card's one start, one end for the book and
   every benchmark; it starts only on `comparableStarts` in `bookNav.ts`, Stage 10iv),
   `attribution.ts` (no caller; kept, tested),
-  `benchmarks.ts` (seven indices, name-checked), `cardBenchmark.ts` (a return tile against the index on the same dated money; Stage 10ji), `holdingBenchmark.ts` (each Monitor row's own index — manager's printed benchmark, AMFI size class, fund category — on the row's dated money, under its return; Stage 10kd), `lineBenchmark.ts` (the Returns attribution table's Benchmark return: each row's units in their own index on their own money, on the Return column's measure; Stage 10mq), `indexSectors.ts` (their sector
+  `benchmarks.ts` (seven indices, name-checked), `cardBenchmark.ts` (a return tile against the index on the same dated money; Stage 10ji), `holdingBenchmark.ts` (each Monitor row's own index — manager's printed benchmark, AMFI size class, fund category — on the row's dated money, under its return; Stage 10kd), `lineBenchmark.ts` (the Returns attribution table's Benchmark return: each row's units in their own index on their own money, on the Return column's measure; Stage 10mr), `indexSectors.ts` (their sector
   weights off NSE's factsheets, through `resolveSector`; Stage 10fe), `indices.ts`, `periodReturns.ts`
   (Morning CIO Returns tab), `segmentReturns.ts` (its attribution section:
   FIFO gain and contribution by any axis, tied to the Gain / Loss tile; its
@@ -685,6 +685,8 @@ And:
 - `npm run import-private-market` — Inc42 funding rows and private-company headlines
   from Glow Central Research's site (`--offline` re-matches the rows held).
 - `npm run accounts-table` — the accounts table above (`-- --write` splices).
+- `npm run client:request` — the client's "records still needed" PDF in `docs/client/`
+  (Stage 10mq); stops on a hand-written request the book no longer bears out.
 - Replays (each `--check` is a no-op control; follow with `build-book`):
   `rekey:archive`, `replay:calls`, `replay:owners`, `replay:dedupe`,
   `replay:movements`, `replay:flows`, `replay:flow-lines`,

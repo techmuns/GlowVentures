@@ -1,5 +1,5 @@
 /**
- * ── EACH RETURNS-TAB ROW AGAINST ITS OWN INDEX, ON ITS OWN MONEY (Stage 10mq) ─
+ * ── EACH RETURNS-TAB ROW AGAINST ITS OWN INDEX, ON ITS OWN MONEY (Stage 10mr) ─
  *
  *   *"the market return column and the return XIRR column are showing the same
  *    returns … replace the market column with benchmark return similar to what
